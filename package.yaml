@@ -24,6 +24,7 @@ dependencies:
 - containers
 - transformers
 - mtl
+- aeson
 
 library:
   source-dirs: src
@@ -49,3 +50,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - function-boys
+    - hspec
+    - QuickCheck
+    - generic-arbitrary

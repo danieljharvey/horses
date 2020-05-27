@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bdc50ad0be3b86476f05beae71eb90a0a34be52ac1a48201e5eefe456ac19dad
+-- hash: 6f89f0d8c958627f4701b8126632a08f96d4521ae34837ae4abcf8b8bacecc4e
 
 name:           function-boys
 version:        0.1.0.0
@@ -28,12 +28,14 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Types
   other-modules:
       Paths_function_boys
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , containers
     , mtl
     , transformers
@@ -47,7 +49,8 @@ executable function-boys-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , containers
     , function-boys
     , mtl
@@ -63,9 +66,13 @@ test-suite function-boys-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
     , containers
     , function-boys
+    , generic-arbitrary
+    , hspec
     , mtl
     , transformers
   default-language: Haskell2010

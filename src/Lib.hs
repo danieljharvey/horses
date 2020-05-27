@@ -15,32 +15,7 @@ where
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
-
-newtype Name = Name {getName :: String}
-  deriving stock (Eq, Ord)
-  deriving newtype (Show)
-
-newtype UniVar = UniVar Int
-  deriving stock (Eq, Ord)
-  deriving newtype (Show, Num)
-
-data Expr
-  = MyInt Int
-  | MyBool Bool
-  | MyString String
-  | MyVar Name
-  | MyLet Name Expr Expr -- binder, expr, body
-  | MyLambda Name Expr -- binder, body
-  | MyApp Expr Expr -- function, argument
-  | MyIf Expr Expr Expr -- expr, thencase, elsecase
-
-data MonoType
-  = MTInt
-  | MTString
-  | MTBool
-  | MTFunction MonoType MonoType -- argument, result
-  | MTUnknown (UniVar)
-  deriving (Eq, Ord, Show)
+import Types
 
 type Environment = M.Map Name MonoType
 
@@ -110,7 +85,7 @@ unify' a (MTUnknown i) = do
   occursCheck i a
   unifyVariable i a
 unify' a b =
-  throwError $ "Can't match" <> show a <> " with " <> show b
+  throwError $ "Can't match " <> show a <> " with " <> show b
 
 occursCheck :: UniVar -> MonoType -> App ()
 occursCheck i mt =
@@ -121,6 +96,7 @@ occursCheck i mt =
 -- all the Ints we've matched back to types
 type Substitutions = M.Map UniVar (Maybe MonoType)
 
+-- replace unknowns with knowns from the substitution list where possible
 apply :: MonoType -> App MonoType
 apply (MTUnknown i) = do
   sub <- join <$> gets (M.lookup i)
