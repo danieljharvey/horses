@@ -25,6 +25,7 @@ dependencies:
 - transformers
 - mtl
 - aeson
+- text
 
 library:
   source-dirs: src
@@ -53,3 +54,4 @@ tests:
     - hspec
     - QuickCheck
     - generic-arbitrary
+    - quickcheck-instances

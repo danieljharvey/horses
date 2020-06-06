@@ -1,10 +1,14 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 import qualified Data.Aeson as JSON
+import Data.Text
+import Language (parseExpr)
 import Lib
 import Test.Hspec
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
+import Test.QuickCheck.Instances ()
 
 instance Arbitrary Name where
   arbitrary = genericArbitrary
@@ -12,7 +16,7 @@ instance Arbitrary Name where
 instance Arbitrary Expr where
   arbitrary = genericArbitrary
 
-exprs :: [(Expr, Either String MonoType)]
+exprs :: [(Expr, Either Text MonoType)]
 exprs =
   [ (MyInt 1, Right MTInt),
     (MyBool True, Right MTBool),
@@ -90,3 +94,14 @@ main = hspec $ do
       (startInference expr) `shouldBe` Right MTInt
     it "Serialisation" $ do
       property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)
+  describe "Parser" $ do
+    it "Parses True" $ do
+      parseExpr "True" `shouldBe` (Right (MyBool True))
+    it "Parses False" $ do
+      parseExpr "False" `shouldBe` (Right (MyBool False))
+    it "Parses 6" $ do
+      parseExpr "6" `shouldBe` (Right (MyInt 6))
+    it "Parses 1234567" $ do
+      parseExpr "1234567" `shouldBe` (Right (MyInt 1234567))
+    it "Parses a string" $ do
+      parseExpr "\"dog\"" `shouldBe` (Right (MyString "dog"))

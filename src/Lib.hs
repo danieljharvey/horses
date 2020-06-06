@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Lib
   ( startInference,
@@ -15,14 +16,16 @@ where
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
+import Data.Text (Text)
+import qualified Data.Text as T
 import Types
 
 type Environment = M.Map Name MonoType
 
-startInference :: Expr -> Either String MonoType
+startInference :: Expr -> Either Text MonoType
 startInference expr = doInference M.empty expr
 
-doInference :: Environment -> Expr -> Either String MonoType
+doInference :: Environment -> Expr -> Either Text MonoType
 doInference env expr =
   (fst <$> either')
   where
@@ -34,7 +37,7 @@ infer _ (MyBool _) = pure MTBool
 infer _ (MyString _) = pure MTString
 infer env (MyVar name) = case M.lookup name env of
   Just a -> pure a
-  _ -> throwError ("Unknown variable " <> show name)
+  _ -> throwError $ T.pack ("Unknown variable " <> show name)
 infer env (MyLet binder expr body) = do
   tyExpr <- infer env expr
   let newEnv = M.insert binder tyExpr env
@@ -85,13 +88,16 @@ unify' a (MTUnknown i) = do
   occursCheck i a
   unifyVariable i a
 unify' a b =
-  throwError $ "Can't match " <> show a <> " with " <> show b
+  throwError $ T.pack $
+    "Can't match " <> show a <> " with " <> show b
 
 occursCheck :: UniVar -> MonoType -> App ()
 occursCheck i mt =
   if (not $ elem i (unknowns mt))
     then pure ()
-    else throwError $ "Cannot unify as " <> show (MTUnknown i) <> " occurs within " <> show mt
+    else
+      throwError $ T.pack $
+        "Cannot unify as " <> show (MTUnknown i) <> " occurs within " <> show mt
 
 -- all the Ints we've matched back to types
 type Substitutions = M.Map UniVar (Maybe MonoType)
@@ -107,7 +113,7 @@ apply (MTFunction args result) =
   MTFunction <$> (apply args) <*> (apply result)
 apply other = pure other
 
-type App = StateT Substitutions (Either String)
+type App = StateT Substitutions (Either Text)
 
 getUnknown :: App MonoType
 getUnknown = do
