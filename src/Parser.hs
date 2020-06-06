@@ -140,6 +140,10 @@ between char' =
             (literal (T.singleton char'))
         )
     )
+
+-- parser with at least one space after
+thenSpace :: Parser a -> Parser a
+thenSpace parser = right space0 (left parser space1)
 {-
 
 interface Element {

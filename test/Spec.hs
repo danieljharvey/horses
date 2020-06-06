@@ -2,9 +2,11 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 import qualified Data.Aeson as JSON
+import Data.Either (isLeft)
 import Data.Text
 import Language (parseExpr)
 import Lib
+import qualified Parser as P
 import Test.Hspec
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
@@ -95,6 +97,17 @@ main = hspec $ do
     it "Serialisation" $ do
       property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)
   describe "Parser" $ do
+    it "thenSpace match" $ do
+      P.runParser (P.thenSpace (P.literal "let")) "let " `shouldBe` Right ("", "let")
+    it "thenSpace mismatch" $ do
+      isLeft (P.runParser (P.thenSpace (P.literal "let")) "let") `shouldBe` True
+    it "applicative" $ do
+      let parser = (,) <$> (P.literal "one") <*> (P.literal "two")
+      P.runParser parser "onetwo" `shouldBe` Right ("", ("one", "two"))
+    it "applicative with thenSpace" $ do
+      let parser = (,) <$> (P.thenSpace (P.literal "one")) <*> (P.thenSpace (P.literal "two"))
+      P.runParser parser "one      two " `shouldBe` Right ("", ("one", "two"))
+  describe "Language" $ do
     it "Parses True" $ do
       parseExpr "True" `shouldBe` (Right (MyBool True))
     it "Parses False" $ do
@@ -105,3 +118,17 @@ main = hspec $ do
       parseExpr "1234567" `shouldBe` (Right (MyInt 1234567))
     it "Parses a string" $ do
       parseExpr "\"dog\"" `shouldBe` (Right (MyString "dog"))
+    it "Parses a variable name" $ do
+      parseExpr "log" `shouldBe` (Right (MyVar (Name "log")))
+    it "Does not accept 'let' as a variable name" $ do
+      isLeft (parseExpr "let") `shouldBe` True
+    it "Does not accept 'in' as a variable name" $ do
+      isLeft (parseExpr "in") `shouldBe` True
+    it "Does not recognise a stupid variable name with crap in it" $ do
+      isLeft (parseExpr "log!dog") `shouldBe` True
+    it "Does a basic let binding" $ do
+      let expected = MyLet (Name "x") (MyBool True) (MyVar (Name "x"))
+      parseExpr "let x = True in x" `shouldBe` Right expected
+    it "Does a basic let binding with excessive whitespace" $ do
+      let expected = MyLet (Name "x") (MyBool True) (MyVar (Name "x"))
+      parseExpr "let       x       =       True       in        x" `shouldBe` Right expected
