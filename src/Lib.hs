@@ -14,6 +14,7 @@ module Lib
     StringType (..),
     parseExpr,
     prettyPrint,
+    chainExprs,
   )
 where
 

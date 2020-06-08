@@ -2,25 +2,35 @@
 
 module Main where
 
+import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Lib
 
 main :: IO ()
 main = do
-  repl
+  repl []
   _ <- traverse (print . startInference) exprs
   pure ()
 
-repl :: IO ()
-repl = do
+repl :: [(Name, Expr)] -> IO ()
+repl exprs' = do
   input <- T.getLine
   case parseExpr input of
-    Left e -> print e
-    Right expr -> case startInference expr of
-      Left e' -> print e'
-      Right type' -> do
-        T.putStrLn $ (prettyPrint expr) <> " :: " <> prettyPrint type'
-  repl
+    Left e -> do
+      print e
+      repl exprs'
+    Right expr -> do
+      let name = mkName $ "var" <> T.pack (show $ length exprs')
+      case startInference (chainExprs expr exprs') of
+        Left e' -> do
+          print e'
+          repl exprs'
+        Right type' -> do
+          T.putStrLn $
+            prettyPrint name <> " | " <> prettyPrint expr
+              <> " :: "
+              <> prettyPrint type'
+          repl (exprs' <> [(name, expr)])
 
 exprs :: [Expr]
 exprs =

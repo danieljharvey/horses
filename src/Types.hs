@@ -14,6 +14,7 @@ module Types
     safeMkName,
     getName,
     validName,
+    chainExprs,
   )
 where
 
@@ -75,3 +76,8 @@ data MonoType
   | MTFunction MonoType MonoType -- argument, result
   | MTUnknown (UniVar)
   deriving (Eq, Ord, Show)
+
+----------
+
+chainExprs :: Expr -> [(Name, Expr)] -> Expr
+chainExprs inner exprs = foldr (\(name, expr) a -> MyLet name expr a) inner exprs
