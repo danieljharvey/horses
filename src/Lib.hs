@@ -11,6 +11,7 @@ module Lib
     Name,
     mkName,
     UniVar (..),
+    StringType (..),
   )
 where
 

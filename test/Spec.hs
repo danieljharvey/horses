@@ -4,9 +4,11 @@
 module Main where
 
 -- import qualified Data.Aeson as JSON
-import Data.Either (isLeft)
+import qualified Data.Char as Ch
+import Data.Either (isLeft, isRight)
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import Language
 import Lib
 import qualified Parser as P
@@ -26,15 +28,35 @@ instance Arbitrary Name where
     let charList = charListToText <$> (listOf1 arbitraryASCIIChar)
      in mkName <$> suchThat charList validName
 
+-- need to make these part of the contruction / parsing of the string type
+-- or learn to unescape this crap
+instance Arbitrary StringType where
+  arbitrary =
+    StringType
+      <$> suchThat
+        arbitrary
+        (\a -> T.length a == T.length (T.filter isGoodChar a))
+    where
+      isGoodChar a =
+        (not $ elem a ['\\', '"', '/', '#'])
+          && Ch.isAscii a
+          && Ch.isPrint a
+
 instance Arbitrary Expr where
   arbitrary = genericArbitrary
+
+newtype WellTypedExpr = WellTypedExpr Expr
+  deriving (Show)
+
+instance Arbitrary WellTypedExpr where
+  arbitrary = WellTypedExpr <$> suchThat arbitrary (isRight . startInference)
 
 exprs :: [(Expr, Either Text MonoType)]
 exprs =
   [ (MyInt 1, Right MTInt),
     (MyBool True, Right MTBool),
     ( MyString
-        "hello",
+        (StringType "hello"),
       Right MTString
     ),
     (MyVar (mkName "x"), Left "Unknown variable \"x\""),
@@ -130,7 +152,7 @@ main = hspec $ do
     it "Parses +6" $ do
       parseExpr "+6" `shouldBe` Right (MyInt 6)
     it "Parses a string" $ do
-      parseExpr "\"dog\"" `shouldBe` (Right (MyString "dog"))
+      parseExpr "\"dog\"" `shouldBe` (Right (MyString (StringType "dog")))
     it "Parses a variable name" $ do
       parseExpr "log"
         `shouldBe` (Right (MyVar (mkName "log")))
@@ -154,18 +176,31 @@ main = hspec $ do
       let expected = MyLet (mkName "x") (MyBool True) (MyVar (mkName "x"))
       parseExpr "let       x       =       True       in        x"
         `shouldBe` Right expected
+    it "Does a let binding inside parens" $ do
+      let expected = MyLet (mkName "x") (MyBool True) (MyVar (mkName "x"))
+      parseExpr "(let x = True in x)"
+        `shouldBe` Right expected
     it "Recognises a basic lambda" $ do
       parseExpr "\\x -> x"
         `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
     it "Recognises a lambda with too much whitespace everywhere" $ do
       parseExpr "\\        x          ->             x"
         `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
-    it "Recognises function application onto a var" $ do
-      parseExpr "add 1"
+    it "Recognises a lambda in parens" $ do
+      parseExpr "(\\x -> x)"
+        `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
+    it "Recognises function application in parens" $ do
+      parseExpr "(add 1)"
         `shouldBe` Right (MyApp (MyVar (mkName "add")) (MyInt 1))
+    it "Recognises double function application onto a var" $ do
+      parseExpr "((add 1) 2)"
+        `shouldBe` Right (MyApp (MyApp (MyVar (mkName "add")) (MyInt 1)) (MyInt 2))
     it "Recognises an if statement" $ do
       let expected = MyIf (MyBool True) (MyInt 1) (MyInt 2)
       parseExpr' "if True then 1 else 2" `shouldBe` Right expected
+    it "Recognises an if statement in parens" $ do
+      let expected = MyIf (MyBool True) (MyInt 1) (MyInt 2)
+      parseExpr' "(if True then 1 else 2)" `shouldBe` Right expected
     it "Recognises an if statement with lots of whitespace" $ do
       let expected = MyIf (MyBool True) (MyInt 1) (MyInt 2)
       parseExpr "if   True    then    1    else    2" `shouldBe` Right expected
@@ -174,4 +209,9 @@ main = hspec $ do
       property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)
     -}
     it "Printing and parsing is an iso" $ do
-      property $ \x -> parseExpr (prettyPrint x) `shouldBe` Right x
+      property $ \(WellTypedExpr x) -> do
+        case startInference x of
+          Right type' -> print type'
+          _ -> pure ()
+        T.putStrLn (prettyPrint x)
+        parseExpr (prettyPrint x) `shouldBe` Right x

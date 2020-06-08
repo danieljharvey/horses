@@ -147,6 +147,15 @@ between char' =
         )
     )
 
+between2 :: Char -> Char -> Parser a -> Parser a
+between2 char1 char2 parser =
+  right
+    (literal (T.singleton char1))
+    ( left
+        parser
+        (literal (T.singleton char2))
+    )
+
 -- parser with at least one space after
 thenSpace :: Parser a -> Parser a
 thenSpace parser = right space0 (left parser space1)

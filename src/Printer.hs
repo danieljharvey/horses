@@ -17,28 +17,43 @@ class Printer a where
 instance Printer Name where
   prettyPrint = getName
 
+instance Printer StringType where
+  prettyPrint (StringType s) = s
+
 instance Printer Expr where
   prettyPrint (MyInt i) = T.pack (show i)
   prettyPrint (MyBool True) = "True"
   prettyPrint (MyBool False) = "False"
-  prettyPrint (MyString str) = "\"" <> str <> "\""
+  prettyPrint (MyString str) = "\"" <> prettyPrint str <> "\""
   prettyPrint (MyVar var) = prettyPrint var
   prettyPrint (MyLet var expr1 expr2) =
     "let " <> prettyPrint var
       <> " = "
-      <> prettyPrint expr1
+      <> printSubExpr expr1
       <> " in "
-      <> prettyPrint expr2
+      <> printSubExpr expr2
   prettyPrint (MyLambda binder expr) =
     "\\"
       <> prettyPrint binder
       <> " -> "
-      <> prettyPrint expr
-  prettyPrint (MyApp func arg) = prettyPrint func <> " " <> prettyPrint arg
+      <> printSubExpr expr
+  prettyPrint (MyApp func arg) = printSubExpr func <> " " <> printSubExpr arg
   prettyPrint (MyIf if' then' else') =
     "if "
-      <> prettyPrint if'
+      <> printSubExpr if'
       <> " then "
-      <> prettyPrint then'
+      <> printSubExpr then'
       <> " else "
-      <> prettyPrint else'
+      <> printSubExpr else'
+
+inParens :: Expr -> Text
+inParens a = "(" <> prettyPrint a <> ")"
+
+-- print simple things with no brackets, and complex things inside brackets
+printSubExpr :: Expr -> Text
+printSubExpr expr = case expr of
+  all'@(MyLet _ _ _) -> inParens all'
+  all'@(MyLambda _ _) -> inParens all'
+  all'@(MyApp _ _) -> inParens all'
+  all'@(MyIf _ _ _) -> inParens all'
+  a -> prettyPrint a

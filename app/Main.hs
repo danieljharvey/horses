@@ -13,7 +13,7 @@ exprs :: [Expr]
 exprs =
   [ MyInt 1,
     MyBool True,
-    MyString "hello",
+    MyString (StringType "hello"),
     MyVar (mkName "x"),
     MyLet (mkName "x") (MyInt 42) (MyBool True),
     MyLet (mkName "x") (MyInt 42) (MyVar (mkName "x")),

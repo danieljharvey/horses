@@ -14,7 +14,13 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Parser (Parser)
 import qualified Parser as P
-import Types (Expr (..), Name, mkName)
+import Types
+  ( Expr (..),
+    Name,
+    StringType (..),
+    mkName,
+    validName,
+  )
 
 -- parse expr, using it all up
 parseExpr :: Text -> Either Text Expr
@@ -30,9 +36,8 @@ parseExpr' input = snd <$> P.runParser expressionParser input
 expressionParser :: Parser Expr
 expressionParser =
   literalParser
-    <|> letParser
-    <|> ifParser
-    <|> functionParser
+    <|> complexParser
+    <|> varParser
 
 literalParser :: Parser Expr
 literalParser =
@@ -40,20 +45,25 @@ literalParser =
     <|> intParser
     <|> stringParser
 
-functionParser :: Parser Expr
-functionParser =
-  lambdaParser
-    <|> appParser
-    <|> varParser
+complexParser :: Parser Expr
+complexParser =
+  let parsers =
+        ( letParser
+            <|> ifParser
+            <|> lambdaParser
+        )
+   in (P.between2 '(' ')' (parsers <|> appParser)) <|> parsers
 
-protectedNames :: Set Name
+protectedNames :: Set Text
 protectedNames =
   S.fromList
-    [ mkName "let",
-      mkName "in",
-      mkName "if",
-      mkName "then",
-      mkName "else"
+    [ "let",
+      "in",
+      "if",
+      "then",
+      "else",
+      "True",
+      "False"
     ]
 
 ----
@@ -75,7 +85,7 @@ intParser = MyInt <$> P.integer
 -----
 
 stringParser :: Parser Expr
-stringParser = MyString <$> (P.between '"')
+stringParser = (MyString . StringType) <$> (P.between '"')
 
 -----
 
@@ -84,9 +94,10 @@ varParser = MyVar <$> nameParser
 
 nameParser :: Parser Name
 nameParser =
-  P.predicate
-    (mkName <$> P.identifier)
-    (\name -> not $ S.member name protectedNames)
+  mkName
+    <$> P.predicate
+      (P.identifier)
+      (\name -> not $ S.member name protectedNames && validName name)
 
 -----
 
@@ -121,10 +132,10 @@ appParser :: Parser Expr
 appParser = MyApp <$> funcParser <*> argParser
 
 funcParser :: Parser Expr
-funcParser = P.thenSpace (varParser <|> literalParser)
+funcParser = P.thenSpace (expressionParser)
 
 argParser :: Parser Expr
-argParser = expressionParser
+argParser = literalParser <|> varParser <|> appParser <|> lambdaParser
 
 -----
 

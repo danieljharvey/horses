@@ -2,11 +2,13 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Types
   ( Expr (..),
     MonoType (..),
     Name,
+    StringType (..),
     UniVar (..),
     mkName,
     safeMkName,
@@ -38,13 +40,18 @@ mkName :: Text -> Name
 mkName a =
   if validName a
     then Name a
-    else error "name fail"
+    else error $ T.unpack $ "name fail for '" <> a <> "'"
 
 safeMkName :: Text -> Maybe Name
 safeMkName a =
   if validName a
     then Just (Name a)
     else Nothing
+
+------------
+
+newtype StringType = StringType Text
+  deriving newtype (Eq, Ord, Show, JSON.FromJSON, JSON.ToJSON)
 
 newtype UniVar = UniVar Int
   deriving stock (Eq, Ord, Generic)
@@ -53,7 +60,7 @@ newtype UniVar = UniVar Int
 data Expr
   = MyInt Int
   | MyBool Bool
-  | MyString Text
+  | MyString StringType
   | MyVar Name
   | MyLet Name Expr Expr -- binder, expr, body
   | MyLambda Name Expr -- binder, body
