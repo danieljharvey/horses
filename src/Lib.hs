@@ -12,6 +12,8 @@ module Lib
     mkName,
     UniVar (..),
     StringType (..),
+    parseExpr,
+    prettyPrint,
   )
 where
 
@@ -20,6 +22,8 @@ import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language
+import Printer
 import Types
 
 type Environment = M.Map Name MonoType

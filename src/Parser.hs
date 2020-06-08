@@ -88,7 +88,7 @@ char =
           else Right (T.tail input, T.head input)
     )
 
-predicate :: Parser a -> (a -> Bool) -> Parser a
+predicate :: (Show a) => Parser a -> (a -> Bool) -> Parser a
 predicate parser predicate' =
   mkParser
     ( \input ->
@@ -96,7 +96,7 @@ predicate parser predicate' =
           >>= \(next, a) ->
             if predicate' a
               then Right (next, a)
-              else Left "Predicate did not hold"
+              else Left $ "Predicate did not hold for " <> T.pack (show a)
     )
 
 literal :: Text -> Parser Text

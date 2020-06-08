@@ -37,10 +37,7 @@ instance Arbitrary StringType where
         arbitrary
         (\a -> T.length a == T.length (T.filter isGoodChar a))
     where
-      isGoodChar a =
-        (not $ elem a ['\\', '"', '/', '#'])
-          && Ch.isAscii a
-          && Ch.isPrint a
+      isGoodChar = Ch.isAlphaNum
 
 instance Arbitrary Expr where
   arbitrary = genericArbitrary
@@ -211,7 +208,9 @@ main = hspec $ do
     it "Printing and parsing is an iso" $ do
       property $ \(WellTypedExpr x) -> do
         case startInference x of
-          Right type' -> print type'
+          Right type' -> do
+            T.putStrLn ""
+            T.putStrLn (prettyPrint type')
           _ -> pure ()
         T.putStrLn (prettyPrint x)
         parseExpr (prettyPrint x) `shouldBe` Right x

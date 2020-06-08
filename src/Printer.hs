@@ -37,7 +37,10 @@ instance Printer Expr where
       <> prettyPrint binder
       <> " -> "
       <> printSubExpr expr
-  prettyPrint (MyApp func arg) = printSubExpr func <> " " <> printSubExpr arg
+  prettyPrint (MyApp func arg) =
+    "(" <> printSubExpr func <> " "
+      <> printSubExpr arg
+      <> ")"
   prettyPrint (MyIf if' then' else') =
     "if "
       <> printSubExpr if'
@@ -57,3 +60,15 @@ printSubExpr expr = case expr of
   all'@(MyApp _ _) -> inParens all'
   all'@(MyIf _ _ _) -> inParens all'
   a -> prettyPrint a
+
+-----------------
+
+instance Printer UniVar where
+  prettyPrint (UniVar a) = T.pack . show $ a
+
+instance Printer MonoType where
+  prettyPrint MTInt = "Int"
+  prettyPrint MTString = "String"
+  prettyPrint MTBool = "Boolean"
+  prettyPrint (MTFunction a b) = prettyPrint a <> " -> " <> prettyPrint b
+  prettyPrint (MTUnknown a) = "U" <> prettyPrint a

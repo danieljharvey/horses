@@ -132,7 +132,7 @@ appParser :: Parser Expr
 appParser = MyApp <$> funcParser <*> argParser
 
 funcParser :: Parser Expr
-funcParser = P.thenSpace (expressionParser)
+funcParser = P.thenSpace expressionParser
 
 argParser :: Parser Expr
 argParser = literalParser <|> varParser <|> appParser <|> lambdaParser
