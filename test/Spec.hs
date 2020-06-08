@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+module Main where
+
 import qualified Data.Aeson as JSON
 import Data.Either (isLeft)
 import Data.Text
-import Language (parseExpr)
+import Language
 import Lib
 import qualified Parser as P
 import Test.Hspec
@@ -119,16 +121,40 @@ main = hspec $ do
     it "Parses a string" $ do
       parseExpr "\"dog\"" `shouldBe` (Right (MyString "dog"))
     it "Parses a variable name" $ do
-      parseExpr "log" `shouldBe` (Right (MyVar (Name "log")))
+      parseExpr "log"
+        `shouldBe` (Right (MyVar (Name "log")))
     it "Does not accept 'let' as a variable name" $ do
-      isLeft (parseExpr "let") `shouldBe` True
-    it "Does not accept 'in' as a variable name" $ do
-      isLeft (parseExpr "in") `shouldBe` True
+      isLeft (parseExpr "let")
+        `shouldBe` True
+    it "Does not accept 'in' as a variable name" $
+      do
+        isLeft (parseExpr "in")
+        `shouldBe` True
+    it "Does not accept 2log as a variable name because it starts with a number" $ do
+      isLeft (parseExpr "2log") `shouldBe` True
     it "Does not recognise a stupid variable name with crap in it" $ do
-      isLeft (parseExpr "log!dog") `shouldBe` True
+      isLeft (parseExpr "log!dog")
+        `shouldBe` True
     it "Does a basic let binding" $ do
       let expected = MyLet (Name "x") (MyBool True) (MyVar (Name "x"))
-      parseExpr "let x = True in x" `shouldBe` Right expected
+      parseExpr "let x = True in x"
+        `shouldBe` Right expected
     it "Does a basic let binding with excessive whitespace" $ do
       let expected = MyLet (Name "x") (MyBool True) (MyVar (Name "x"))
-      parseExpr "let       x       =       True       in        x" `shouldBe` Right expected
+      parseExpr "let       x       =       True       in        x"
+        `shouldBe` Right expected
+    it "Recognises a basic lambda" $ do
+      parseExpr "\\x -> x"
+        `shouldBe` Right (MyLambda (Name "x") (MyVar (Name "x")))
+    it "Recognises a lambda with too much whitespace everywhere" $ do
+      parseExpr "\\        x          ->             x"
+        `shouldBe` Right (MyLambda (Name "x") (MyVar (Name "x")))
+    it "Recognises function application onto a var" $ do
+      parseExpr "add 1"
+        `shouldBe` Right (MyApp (MyVar (Name "add")) (MyInt 1))
+    it "Recognises an if statement" $ do
+      let expected = MyIf (MyBool True) (MyInt 1) (MyInt 2)
+      parseExpr' "if True then 1 else 2" `shouldBe` Right expected
+    it "Recognises an if statement with lots of whitespace" $ do
+      let expected = MyIf (MyBool True) (MyInt 1) (MyInt 2)
+      parseExpr "if   True    then    1    else    2" `shouldBe` Right expected
