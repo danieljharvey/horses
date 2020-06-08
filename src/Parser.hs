@@ -114,8 +114,14 @@ alphaNumeric = predicate char Char.isAlphaNum
 numeric :: Parser Int
 numeric = fmap Char.digitToInt (predicate char Char.isDigit)
 
+natural :: Parser Int
+natural = fmap (foldl (\as a -> a + (as * 10)) 0) (oneOrMore numeric)
+
 integer :: Parser Int
-integer = fmap (foldl (\as a -> a + (as * 10)) 0) (oneOrMore numeric)
+integer =
+  fmap (\a -> a * (-1)) (right (literal "-") natural) -- "-3"
+    <|> right (literal "+") natural -- "+3"
+    <|> natural -- "3"
 
 identifier :: Parser Text
 identifier = fmap (foldr T.cons "") (oneOrMore alphaNumeric)

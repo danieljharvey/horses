@@ -14,7 +14,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Parser (Parser)
 import qualified Parser as P
-import Types (Expr (..), Name (..))
+import Types (Expr (..), Name, mkName)
 
 -- parse expr, using it all up
 parseExpr :: Text -> Either Text Expr
@@ -49,11 +49,11 @@ functionParser =
 protectedNames :: Set Name
 protectedNames =
   S.fromList
-    [ Name "let",
-      Name "in",
-      Name "if",
-      Name "then",
-      Name "else"
+    [ mkName "let",
+      mkName "in",
+      mkName "if",
+      mkName "then",
+      mkName "else"
     ]
 
 ----
@@ -85,7 +85,7 @@ varParser = MyVar <$> nameParser
 nameParser :: Parser Name
 nameParser =
   P.predicate
-    (Name <$> P.identifier)
+    (mkName <$> P.identifier)
     (\name -> not $ S.member name protectedNames)
 
 -----

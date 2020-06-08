@@ -8,7 +8,8 @@ module Lib
     unknowns,
     Expr (..),
     MonoType (..),
-    Name (..),
+    Name,
+    mkName,
     UniVar (..),
   )
 where
