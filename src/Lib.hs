@@ -13,7 +13,6 @@ module Lib
     StringType (..),
     parseExpr,
     prettyPrint,
-    chainExprs,
     repl,
   )
 where

@@ -7,6 +7,7 @@ import qualified Data.Text.IO as T
 import Infer
 import Language
 import Printer
+import Store
 import Types
 
 repl :: [(Name, Expr)] -> IO ()
@@ -23,8 +24,14 @@ repl exprs' = do
           print e'
           repl exprs'
         Right type' -> do
+          (ExprHash hash) <- saveExpr expr
+          print hash
           T.putStrLn $
             prettyPrint name <> " | " <> prettyPrint expr
               <> " :: "
               <> prettyPrint type'
           repl (exprs' <> [(name, expr)])
+
+chainExprs :: Expr -> [(Name, Expr)] -> Expr
+chainExprs inner exprs =
+  foldr (\(name, expr) a -> MyLet name expr a) inner exprs

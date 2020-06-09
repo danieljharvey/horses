@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: df099a275b93bfd56b97fdfc3fc496c0ad77c84735e0c7cab3a819040d86ae8b
+-- hash: 658120139025e65863f990ec7a831fd40a4cd411d35537127a9ca3dd684cc226
 
 name:           function-boys
 version:        0.1.0.0
@@ -33,6 +33,7 @@ library
       Parser
       Printer
       Repl
+      Store
       Types
   other-modules:
       Paths_function_boys
@@ -41,8 +42,9 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bytestring
     , containers
-    , cryptohash
+    , hashable
     , mtl
     , text
     , transformers
@@ -58,9 +60,10 @@ executable function-boys-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bytestring
     , containers
-    , cryptohash
     , function-boys
+    , hashable
     , mtl
     , text
     , transformers
@@ -78,10 +81,11 @@ test-suite function-boys-test
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bytestring
     , containers
-    , cryptohash
     , function-boys
     , generic-arbitrary
+    , hashable
     , hspec
     , mtl
     , quickcheck-instances

@@ -10,11 +10,11 @@ module Types
     Name,
     StringType (..),
     UniVar (..),
+    ExprHash (..),
     mkName,
     safeMkName,
     getName,
     validName,
-    chainExprs,
   )
 where
 
@@ -51,6 +51,8 @@ safeMkName a =
 
 ------------
 
+newtype ExprHash = ExprHash Int
+
 newtype StringType = StringType Text
   deriving newtype (Eq, Ord, Show, JSON.FromJSON, JSON.ToJSON)
 
@@ -76,8 +78,4 @@ data MonoType
   | MTFunction MonoType MonoType -- argument, result
   | MTUnknown (UniVar)
   deriving (Eq, Ord, Show)
-
 ----------
-
-chainExprs :: Expr -> [(Name, Expr)] -> Expr
-chainExprs inner exprs = foldr (\(name, expr) a -> MyLet name expr a) inner exprs
