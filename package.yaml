@@ -26,6 +26,7 @@ dependencies:
 - mtl
 - aeson
 - text
+- cryptohash
 
 library:
   source-dirs: src
