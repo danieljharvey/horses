@@ -2,35 +2,45 @@
 
 module Repl where
 
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Infer
 import Language
 import Printer
 import Store
+import System.Console.Haskeline
 import Types
 
-repl :: [(Name, Expr)] -> IO ()
-repl exprs' = do
-  input <- T.getLine
-  case parseExpr input of
-    Left e -> do
-      print e
-      repl exprs'
-    Right expr -> do
-      let name = mkName $ "var" <> T.pack (show $ length exprs')
-      case startInference (chainExprs expr exprs') of
-        Left e' -> do
-          print e'
-          repl exprs'
-        Right type' -> do
-          (ExprHash hash) <- saveExpr expr
-          print hash
-          T.putStrLn $
-            prettyPrint name <> " | " <> prettyPrint expr
-              <> " :: "
-              <> prettyPrint type'
-          repl (exprs' <> [(name, expr)])
+repl :: IO ()
+repl = runInputT defaultSettings (loop [])
+  where
+    loop :: [(Name, Expr)] -> InputT IO ()
+    loop exprs' = do
+      liftIO (putStrLn "")
+      minput <- getInputLine ":> "
+      case minput of
+        Nothing -> return ()
+        Just "quit" -> return ()
+        Just input -> do
+          case parseExpr (T.pack input) of
+            Left e -> do
+              liftIO (print e)
+              loop exprs'
+            Right expr -> do
+              let name = mkName $ "var" <> T.pack (show $ length exprs')
+              case startInference (chainExprs expr exprs') of
+                Left e' -> do
+                  liftIO (print e')
+                  loop exprs'
+                Right type' -> do
+                  (ExprHash hash) <- liftIO (saveExpr expr)
+                  liftIO (print hash)
+                  liftIO $ T.putStrLn $
+                    prettyPrint name <> " | " <> prettyPrint expr
+                      <> " :: "
+                      <> prettyPrint type'
+                  loop (exprs' <> [(name, expr)])
 
 chainExprs :: Expr -> [(Name, Expr)] -> Expr
 chainExprs inner exprs =

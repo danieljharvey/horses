@@ -28,6 +28,7 @@ dependencies:
 - text
 - hashable
 - bytestring
+- haskeline 
 
 library:
   source-dirs: src
