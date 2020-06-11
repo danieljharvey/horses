@@ -3,6 +3,8 @@
 module Language
   ( parseExpr,
     parseExpr',
+    expressionParser,
+    nameParser,
   )
 where
 

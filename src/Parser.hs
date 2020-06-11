@@ -18,6 +18,13 @@ mkParser = Parser
 runParser :: Parser a -> Text -> Either Error (Text, a)
 runParser (Parser parser) = parser
 
+runParserComplete :: Parser a -> Text -> Either Error a
+runParserComplete parser input = runParser parser input
+  >>= \(leftover, a) ->
+    if T.length leftover == 0
+      then Right a
+      else Left ("Leftover input: " <> leftover)
+
 instance Functor Parser where
   fmap f (Parser parser) =
     mkParser
