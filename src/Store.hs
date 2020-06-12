@@ -1,5 +1,6 @@
-module Store (saveExpr, findExpr, Environment (..), loadEnvironment) where
+module Store (saveExpr, findExpr, Environment (..), loadEnvironment, saveEnvironment) where
 
+import Control.Exception (try)
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Hashable as Hash
@@ -59,10 +60,16 @@ instance Semigroup Environment where
 instance Monoid Environment where
   mempty = Environment mempty mempty
 
-loadEnvironment :: IO Environment
+hush :: Either IOError a -> Maybe a
+hush (Right a) = Just a
+hush _ = Nothing
+
+-- load environment.json and any hashed exprs mentioned in it
+-- should probably consider loading the exprs lazily as required in future
+loadEnvironment :: IO (Maybe Environment)
 loadEnvironment = do
-  envJson <- BS.readFile envPath
-  case JSON.decode envJson of
+  envJson <- try $ BS.readFile envPath
+  case hush envJson >>= JSON.decode of
     Just bindings' -> do
       items' <-
         traverse
@@ -71,5 +78,11 @@ loadEnvironment = do
               pure (hash, item)
           )
           (M.toList bindings')
-      pure (Environment (M.fromList items') bindings')
-    _ -> error "Could not read environment.json"
+      pure $ Just (Environment (M.fromList items') bindings')
+    _ -> pure Nothing
+
+--
+saveEnvironment :: Environment -> IO ()
+saveEnvironment env = do
+  let jsonStr = JSON.encode (bindings env)
+  BS.writeFile envPath jsonStr

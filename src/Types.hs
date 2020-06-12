@@ -26,7 +26,13 @@ import GHC.Generics
 
 newtype Name = Name {getName' :: Text}
   deriving stock (Eq, Ord, Generic)
-  deriving newtype (Show, JSON.FromJSON, JSON.FromJSONKey, JSON.ToJSON)
+  deriving newtype
+    ( Show,
+      JSON.FromJSON,
+      JSON.FromJSONKey,
+      JSON.ToJSON,
+      JSON.ToJSONKey
+    )
 
 getName :: Name -> Text
 getName (Name t) = t

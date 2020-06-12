@@ -6,13 +6,19 @@ import Control.Applicative
 import Control.Monad (join)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Infer
 import qualified Language as Mimsa
 import qualified Parser as P
 import Printer
-import Store (Environment (..), saveExpr)
+import Store
+  ( Environment (..),
+    loadEnvironment,
+    saveEnvironment,
+    saveExpr,
+  )
 import System.Console.Haskeline
 import Types
 
@@ -25,7 +31,11 @@ replParser :: P.Parser ReplAction
 replParser = evaluateParser <|> bindParser <|> listBindingsParser
 
 evaluateParser :: P.Parser ReplAction
-evaluateParser = Evaluate <$> P.right (P.thenSpace (P.literal ":info")) Mimsa.expressionParser
+evaluateParser =
+  Evaluate
+    <$> P.right
+      (P.thenSpace (P.literal ":info"))
+      Mimsa.expressionParser
 
 bindParser :: P.Parser ReplAction
 bindParser =
@@ -43,7 +53,9 @@ fromItem name expr hash = Environment
   }
 
 repl :: IO ()
-repl = runInputT defaultSettings (loop mempty)
+repl = do
+  env <- loadEnvironment
+  runInputT defaultSettings (loop (fromMaybe mempty env))
   where
     loop :: Environment -> InputT IO ()
     loop exprs' = do
@@ -51,7 +63,7 @@ repl = runInputT defaultSettings (loop mempty)
       minput <- getInputLine ":> "
       case minput of
         Nothing -> return ()
-        Just "quit" -> return ()
+        Just ":quit" -> return ()
         Just input -> do
           case P.runParserComplete replParser (T.pack input) of
             Left e -> do
@@ -59,6 +71,7 @@ repl = runInputT defaultSettings (loop mempty)
               loop exprs'
             Right replAction -> do
               newExprs <- liftIO $ doReplAction exprs' replAction
+              liftIO $ saveEnvironment newExprs
               loop newExprs
 
 doReplAction :: Environment -> ReplAction -> IO Environment
