@@ -1,11 +1,11 @@
-module Store (saveExpr, findExpr, Environment (..), loadEnvironment, saveEnvironment) where
+module Language.Mimsa.Store (saveExpr, findExpr, Environment (..), loadEnvironment, saveEnvironment) where
 
 import Control.Exception (try)
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Hashable as Hash
 import qualified Data.Map as M
-import Types (Expr (..), ExprHash (..), Name)
+import Language.Mimsa.Types (Expr (..), ExprHash (..), Name)
 
 storePath :: String
 storePath = "./store/"

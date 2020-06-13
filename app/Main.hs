@@ -2,7 +2,7 @@
 
 module Main where
 
-import Lib
+import Language.Mimsa
 
 main :: IO ()
 main = do

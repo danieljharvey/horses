@@ -4,7 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Types
+module Language.Mimsa.Types
   ( Expr (..),
     MonoType (..),
     Name,

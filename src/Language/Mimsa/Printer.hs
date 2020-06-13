@@ -1,11 +1,11 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Printer where
+module Language.Mimsa.Printer where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import Types
+import Language.Mimsa.Types
 
 class Printer a where
 

@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Infer
+module Language.Mimsa.Infer
   ( startInference,
     doInference,
   )
@@ -13,7 +13,7 @@ import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Types
+import Language.Mimsa.Types
 
 type Environment = M.Map Name MonoType
 

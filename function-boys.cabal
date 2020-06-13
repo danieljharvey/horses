@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9b28537e3aae0c6029e2fbea98eaf3c34c9250255a4c74ee4f5bce00689cd535
+-- hash: ae8a3240c3f175955692183676083b4cd2742ba3db3b96a0032162f12f6fede7
 
 name:           function-boys
 version:        0.1.0.0
@@ -27,14 +27,17 @@ source-repository head
 
 library
   exposed-modules:
-      Infer
-      Language
-      Lib
-      Parser
-      Printer
-      Repl
-      Store
-      Types
+      Language.Mimsa
+      Language.Mimsa.Infer
+      Language.Mimsa.Language
+      Language.Mimsa.Parser
+      Language.Mimsa.Printer
+      Language.Mimsa.Repl
+      Language.Mimsa.Repl.Actions
+      Language.Mimsa.Repl.Parser
+      Language.Mimsa.Repl.Types
+      Language.Mimsa.Store
+      Language.Mimsa.Types
   other-modules:
       Paths_function_boys
   hs-source-dirs:

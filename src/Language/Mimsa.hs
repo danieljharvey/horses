@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib
+module Language.Mimsa
   ( startInference,
     doInference,
     Expr (..),
@@ -17,8 +17,8 @@ module Lib
   )
 where
 
-import Infer (doInference, startInference)
-import Language
-import Printer
-import Repl (repl)
-import Types
+import Language.Mimsa.Infer (doInference, startInference)
+import Language.Mimsa.Language
+import Language.Mimsa.Printer
+import Language.Mimsa.Repl (repl)
+import Language.Mimsa.Types
