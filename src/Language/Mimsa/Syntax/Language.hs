@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Language
+module Language.Mimsa.Syntax.Language
   ( parseExpr,
     parseExpr',
     expressionParser,
@@ -14,8 +14,8 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Parser (Parser)
-import qualified Language.Mimsa.Parser as P
+import Language.Mimsa.Syntax.Parser (Parser)
+import qualified Language.Mimsa.Syntax.Parser as P
 import Language.Mimsa.Types
   ( Expr (..),
     Name,

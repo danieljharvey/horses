@@ -1,11 +1,11 @@
-module Language.Mimsa.Store (saveExpr, findExpr, Environment (..), loadEnvironment, saveEnvironment) where
+module Language.Mimsa.Store (saveExpr, findExpr, loadEnvironment, saveEnvironment) where
 
 import Control.Exception (try)
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Hashable as Hash
 import qualified Data.Map as M
-import Language.Mimsa.Types (Expr (..), ExprHash (..), Name)
+import Language.Mimsa.Types (Expr (..), ExprHash (..), StoreEnv (..))
 
 storePath :: String
 storePath = "./store/"
@@ -44,29 +44,13 @@ findExpr10x hash = do
     Right a -> pure a
     _ -> error "yolo"
 
--------
-
--- our environment contains whichever hash/expr pairs we have flapping about
--- and a list of mappings of names to those pieces
-data Environment
-  = Environment
-      { items :: M.Map ExprHash Expr,
-        bindings :: M.Map Name ExprHash
-      }
-
-instance Semigroup Environment where
-  Environment a a' <> Environment b b' = Environment (a <> b) (a' <> b')
-
-instance Monoid Environment where
-  mempty = Environment mempty mempty
-
 hush :: Either IOError a -> Maybe a
 hush (Right a) = Just a
 hush _ = Nothing
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
-loadEnvironment :: IO (Maybe Environment)
+loadEnvironment :: IO (Maybe StoreEnv)
 loadEnvironment = do
   envJson <- try $ BS.readFile envPath
   case hush envJson >>= JSON.decode of
@@ -78,11 +62,11 @@ loadEnvironment = do
               pure (hash, item)
           )
           (M.toList bindings')
-      pure $ Just (Environment (M.fromList items') bindings')
+      pure $ Just (StoreEnv (M.fromList items') bindings')
     _ -> pure Nothing
 
 --
-saveEnvironment :: Environment -> IO ()
+saveEnvironment :: StoreEnv -> IO ()
 saveEnvironment env = do
   let jsonStr = JSON.encode (bindings env)
   BS.writeFile envPath jsonStr

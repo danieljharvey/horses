@@ -17,8 +17,7 @@ module Language.Mimsa
   )
 where
 
-import Language.Mimsa.Infer (doInference, startInference)
-import Language.Mimsa.Language
-import Language.Mimsa.Printer
 import Language.Mimsa.Repl (repl)
+import Language.Mimsa.Syntax
+import Language.Mimsa.Typechecker (doInference, startInference)
 import Language.Mimsa.Types

@@ -5,55 +5,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types
-  ( Expr (..),
-    MonoType (..),
-    Name,
-    StringType (..),
-    UniVar (..),
-    ExprHash (..),
-    mkName,
-    safeMkName,
-    getName,
-    validName,
+  ( ExprHash (..),
+    StoreEnv (..),
+    module Language.Mimsa.Types.Name,
+    module Language.Mimsa.Types.AST,
   )
 where
 
 import qualified Data.Aeson as JSON
-import qualified Data.Char as Ch
-import Data.Text (Text)
-import qualified Data.Text as T
-import GHC.Generics
-
-newtype Name = Name {getName' :: Text}
-  deriving stock (Eq, Ord, Generic)
-  deriving newtype
-    ( Show,
-      JSON.FromJSON,
-      JSON.FromJSONKey,
-      JSON.ToJSON,
-      JSON.ToJSONKey
-    )
-
-getName :: Name -> Text
-getName (Name t) = t
-
-validName :: Text -> Bool
-validName a =
-  T.length a > 0
-    && T.filter (Ch.isAlphaNum) a == a
-    && Ch.isDigit (T.head a) == False
-
-mkName :: Text -> Name
-mkName a =
-  if validName a
-    then Name a
-    else error $ T.unpack $ "name fail for '" <> a <> "'"
-
-safeMkName :: Text -> Maybe Name
-safeMkName a =
-  if validName a
-    then Just (Name a)
-    else Nothing
+import qualified Data.Map as M
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Name
 
 ------------
 
@@ -61,29 +23,18 @@ newtype ExprHash = ExprHash Int
   deriving (Eq, Ord, Show)
   deriving newtype (JSON.FromJSON, JSON.ToJSON)
 
-newtype StringType = StringType Text
-  deriving newtype (Eq, Ord, Show, JSON.FromJSON, JSON.ToJSON)
+-------
 
-newtype UniVar = UniVar Int
-  deriving stock (Eq, Ord, Generic)
-  deriving newtype (Show, Num)
+-- our environment contains whichever hash/expr pairs we have flapping about
+-- and a list of mappings of names to those pieces
+data StoreEnv
+  = StoreEnv
+      { items :: M.Map ExprHash Expr,
+        bindings :: M.Map Name ExprHash
+      }
 
-data Expr
-  = MyInt Int
-  | MyBool Bool
-  | MyString StringType
-  | MyVar Name
-  | MyLet Name Expr Expr -- binder, expr, body
-  | MyLambda Name Expr -- binder, body
-  | MyApp Expr Expr -- function, argument
-  | MyIf Expr Expr Expr -- expr, thencase, elsecase
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
+instance Semigroup StoreEnv where
+  StoreEnv a a' <> StoreEnv b b' = StoreEnv (a <> b) (a' <> b')
 
-data MonoType
-  = MTInt
-  | MTString
-  | MTBool
-  | MTFunction MonoType MonoType -- argument, result
-  | MTUnknown (UniVar)
-  deriving (Eq, Ord, Show)
-----------
+instance Monoid StoreEnv where
+  mempty = StoreEnv mempty mempty

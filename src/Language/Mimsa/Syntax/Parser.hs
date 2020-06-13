@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Parser where
+module Language.Mimsa.Syntax.Parser where
 
 import Control.Applicative
 import qualified Data.Char as Char

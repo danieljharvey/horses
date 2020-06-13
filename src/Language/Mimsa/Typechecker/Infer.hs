@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Infer
+module Language.Mimsa.Typechecker.Infer
   ( startInference,
     doInference,
   )
@@ -118,5 +118,3 @@ getUnknown = do
 
 unifyVariable :: UniVar -> MonoType -> App ()
 unifyVariable i mType = modify (M.insert i (Just mType))
--------------------------
---

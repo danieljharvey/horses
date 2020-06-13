@@ -3,25 +3,24 @@
 module Language.Mimsa.Repl.Parser where
 
 import Control.Applicative ((<|>))
-import qualified Language.Mimsa.Language as Mimsa
-import qualified Language.Mimsa.Parser as P
 import Language.Mimsa.Repl.Types
+import Language.Mimsa.Syntax
 
-replParser :: P.Parser ReplAction
+replParser :: Parser ReplAction
 replParser = evaluateParser <|> bindParser <|> listBindingsParser
 
-evaluateParser :: P.Parser ReplAction
+evaluateParser :: Parser ReplAction
 evaluateParser =
   Evaluate
-    <$> P.right
-      (P.thenSpace (P.literal ":info"))
-      Mimsa.expressionParser
+    <$> right
+      (thenSpace (literal ":info"))
+      expressionParser
 
-bindParser :: P.Parser ReplAction
+bindParser :: Parser ReplAction
 bindParser =
   Bind
-    <$> P.right (P.thenSpace (P.literal ":bind")) (P.thenSpace Mimsa.nameParser)
-    <*> P.right (P.thenSpace (P.literal "=")) Mimsa.expressionParser
+    <$> right (thenSpace (literal ":bind")) (thenSpace nameParser)
+    <*> right (thenSpace (literal "=")) expressionParser
 
-listBindingsParser :: P.Parser ReplAction
-listBindingsParser = ListBindings <$ P.literal ":list"
+listBindingsParser :: Parser ReplAction
+listBindingsParser = ListBindings <$ literal ":list"

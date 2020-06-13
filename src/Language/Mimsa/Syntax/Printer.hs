@@ -1,7 +1,10 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Printer where
+module Language.Mimsa.Syntax.Printer
+  ( Printer (..),
+  )
+where
 
 import Data.Text (Text)
 import qualified Data.Text as T
