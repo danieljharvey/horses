@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 393b7430306e7e51536e9c0cfd6cfe3e9db7a779cfb6e8b128e6217e4fd16f44
+-- hash: 63f562de4403738a98b789a85da3836f85f9bee592392d6fb4701db68b4ad45e
 
 name:           function-boys
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Language.Mimsa
+      Language.Mimsa.Interpreter
       Language.Mimsa.Repl
       Language.Mimsa.Repl.Actions
       Language.Mimsa.Repl.Parser
@@ -82,6 +83,8 @@ test-suite function-boys-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Test.Interpreter
+      Test.Syntax
       Paths_function_boys
   hs-source-dirs:
       test

@@ -9,6 +9,7 @@ import Control.Monad (join)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (saveExpr)
 import Language.Mimsa.Syntax
@@ -16,6 +17,15 @@ import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
 
 doReplAction :: StoreEnv -> ReplAction -> IO StoreEnv
+doReplAction env Help = do
+  T.putStrLn "~~~ MIMSA ~~~"
+  T.putStrLn ":help - this help screen"
+  T.putStrLn ":info <expr> - get the type of <expr>"
+  T.putStrLn ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
+  T.putStrLn ":list - show a list of current bindings in the environment"
+  T.putStrLn ":quit - give up and leave"
+  T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
+  pure env
 doReplAction env (ListBindings) = do
   let showBind = \(name, expr) -> T.putStrLn $ case getType env expr of
         Right type' ->
@@ -24,6 +34,17 @@ doReplAction env (ListBindings) = do
   _ <- traverse showBind (getExprPairs env)
   pure env
 doReplAction env (Evaluate expr) = do
+  case getType env expr >>= (\type' -> (,) type' <$> interpret expr) of
+    Left e' -> do
+      print e'
+      pure env
+    Right (type', simplified) -> do
+      T.putStrLn $
+        prettyPrint simplified
+          <> " :: "
+          <> prettyPrint type'
+      pure env
+doReplAction env (Info expr) = do
   case getType env expr of
     Left e' -> do
       print e'

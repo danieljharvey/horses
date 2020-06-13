@@ -7,14 +7,27 @@ import Language.Mimsa.Repl.Types
 import Language.Mimsa.Syntax
 
 replParser :: Parser ReplAction
-replParser = evaluateParser <|> bindParser <|> listBindingsParser
+replParser =
+  helpParser
+    <|> infoParser
+    <|> bindParser
+    <|> listBindingsParser
+    <|> evalParser
 
-evaluateParser :: Parser ReplAction
-evaluateParser =
-  Evaluate
+helpParser :: Parser ReplAction
+helpParser = Help <$ literal ":help"
+
+infoParser :: Parser ReplAction
+infoParser =
+  Info
     <$> right
       (thenSpace (literal ":info"))
       expressionParser
+
+evalParser :: Parser ReplAction
+evalParser =
+  Evaluate
+    <$> expressionParser
 
 bindParser :: Parser ReplAction
 bindParser =

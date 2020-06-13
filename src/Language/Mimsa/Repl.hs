@@ -9,6 +9,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Repl.Actions (doReplAction)
 import Language.Mimsa.Repl.Parser (replParser)
+import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (loadEnvironment, saveEnvironment)
 import qualified Language.Mimsa.Syntax as P
 import Language.Mimsa.Types
@@ -16,8 +17,9 @@ import System.Console.Haskeline
 
 repl :: IO ()
 repl = do
-  env <- loadEnvironment
-  runInputT defaultSettings (loop (fromMaybe mempty env))
+  env <- fromMaybe mempty <$> loadEnvironment
+  _ <- doReplAction env Help
+  runInputT defaultSettings (loop env)
   where
     loop :: StoreEnv -> InputT IO ()
     loop exprs' = do
