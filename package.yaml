@@ -1,6 +1,6 @@
-name:                function-boys
+name:                mimsa 
 version:             0.1.0.0
-github:              "githubuser/function-boys"
+github:              "danieljharvey/mimsa"
 license:             BSD3
 author:              "Author name here"
 maintainer:          "example@example.com"
@@ -34,7 +34,7 @@ library:
   source-dirs: src
 
 executables:
-  function-boys-exe:
+  mimsa:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -42,10 +42,10 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - function-boys
+    - mimsa
 
 tests:
-  function-boys-test:
+  mimsa-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -53,7 +53,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - function-boys
+    - mimsa
     - hspec
     - QuickCheck
     - generic-arbitrary

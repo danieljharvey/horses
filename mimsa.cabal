@@ -4,13 +4,13 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 63f562de4403738a98b789a85da3836f85f9bee592392d6fb4701db68b4ad45e
+-- hash: e74c14c9e555fb7d365ba404e80d079d1d1d3bdd0528a50133c3550f9ccb712c
 
-name:           function-boys
+name:           mimsa
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
-homepage:       https://github.com/githubuser/function-boys#readme
-bug-reports:    https://github.com/githubuser/function-boys/issues
+homepage:       https://github.com/danieljharvey/mimsa#readme
+bug-reports:    https://github.com/danieljharvey/mimsa/issues
 author:         Author name here
 maintainer:     example@example.com
 copyright:      2020 Author name here
@@ -23,7 +23,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/function-boys
+  location: https://github.com/danieljharvey/mimsa
 
 library
   exposed-modules:
@@ -44,7 +44,7 @@ library
       Language.Mimsa.Types.AST
       Language.Mimsa.Types.Name
   other-modules:
-      Paths_function_boys
+      Paths_mimsa
   hs-source-dirs:
       src
   build-depends:
@@ -59,10 +59,10 @@ library
     , transformers
   default-language: Haskell2010
 
-executable function-boys-exe
+executable mimsa
   main-is: Main.hs
   other-modules:
-      Paths_function_boys
+      Paths_mimsa
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -71,21 +71,21 @@ executable function-boys-exe
     , base >=4.7 && <5
     , bytestring
     , containers
-    , function-boys
     , hashable
     , haskeline
+    , mimsa
     , mtl
     , text
     , transformers
   default-language: Haskell2010
 
-test-suite function-boys-test
+test-suite mimsa-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
       Test.Interpreter
       Test.Syntax
-      Paths_function_boys
+      Paths_mimsa
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -95,11 +95,11 @@ test-suite function-boys-test
     , base >=4.7 && <5
     , bytestring
     , containers
-    , function-boys
     , generic-arbitrary
     , hashable
     , haskeline
     , hspec
+    , mimsa
     , mtl
     , quickcheck-instances
     , text
