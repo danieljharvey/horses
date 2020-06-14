@@ -18,13 +18,15 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text.IO as T
 import Language.Mimsa.Store.Resolver
+import Language.Mimsa.Syntax
 import Language.Mimsa.Types
   ( Bindings (..),
-    Expr (..),
     ExprHash (..),
     Store (..),
     StoreEnv (..),
+    StoreExpression (..),
   )
 
 storePath :: String
@@ -39,7 +41,7 @@ envPath = storePath <> "environment.json"
 -- the store is where we save all the fucking bullshit
 
 -- take an expression, save it, return ExprHash
-saveExpr :: Expr -> IO ExprHash
+saveExpr :: StoreExpression -> IO ExprHash
 saveExpr expr = do
   let json = JSON.encode expr
   let exprHash = getHash json
@@ -47,12 +49,16 @@ saveExpr expr = do
   pure exprHash
 
 -- find in the store
-findExpr :: ExprHash -> IO (Either Text Expr)
+findExpr :: ExprHash -> IO (Either Text StoreExpression)
 findExpr hash = do
   json <- BS.readFile (filePath hash)
   case JSON.decode json of
-    Just a -> pure (Right a)
-    _ -> pure (Left "Could not find!")
+    Just a -> do
+      T.putStrLn $ "Found expression for " <> prettyPrint hash
+      pure (Right a)
+    _ -> do
+      T.putStrLn $ "Could not find expression for " <> prettyPrint hash
+      pure (Left "Could not find!")
 
 getHash :: BS.ByteString -> ExprHash
 getHash = ExprHash . Hash.hash

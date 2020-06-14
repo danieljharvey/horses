@@ -46,7 +46,7 @@ instance Monoid StoreEnv where
 --------
 
 -- store is where we keep the big map of hashes to expresions
-newtype Store = Store {getStore :: M.Map ExprHash Expr}
+newtype Store = Store {getStore :: M.Map ExprHash StoreExpression}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
 -- a list of names to hashes
