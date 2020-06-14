@@ -7,6 +7,7 @@
 module Language.Mimsa.Types
   ( ExprHash (..),
     StoreEnv (..),
+    StoreExpression (..),
     module Language.Mimsa.Types.Name,
     module Language.Mimsa.Types.AST,
   )
@@ -46,6 +47,7 @@ instance Monoid StoreEnv where
 -- not sure whether to store the builtins we need here too?
 data StoreExpression
   = StoreExpression
-      { bindings :: Map Name ExprHash,
-        expression :: Expr
+      { storeBindings :: M.Map Name ExprHash,
+        storeExpression :: Expr
       }
+  deriving (Eq, Ord, Show)
