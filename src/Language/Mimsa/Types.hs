@@ -17,6 +17,7 @@ where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Map as M
+import GHC.Generics
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Name
 
@@ -60,4 +61,5 @@ data StoreExpression
       { storeBindings :: Bindings,
         storeExpression :: Expr
       }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+  deriving (JSON.ToJSON, JSON.FromJSON)
