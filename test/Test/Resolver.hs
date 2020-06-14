@@ -70,12 +70,12 @@ spec = do
       it "Looks for vars and finds them" $ do
         let hash = ExprHash 1234
             expr = MyVar (Name "missing")
-            storeEnv = StoreEnv mempty (M.singleton (Name "missing") hash)
-            storeExpr = createStoreExpression storeEnv expr
+            bindings' = Bindings $ M.singleton (Name "missing") hash
+            storeExpr = createStoreExpression bindings' expr
         storeExpr
           `shouldBe` Right
             ( StoreExpression
-                { storeBindings = M.singleton (Name "missing") hash,
+                { storeBindings = Bindings $ M.singleton (Name "missing") hash,
                   storeExpression = expr
                 }
             )
