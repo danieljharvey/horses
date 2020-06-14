@@ -57,7 +57,7 @@ newtype Bindings = Bindings {getBindings :: M.Map Name ExprHash}
 -- not sure whether to store the builtins we need here too?
 data StoreExpression
   = StoreExpression
-      { storeBindings :: M.Map Name ExprHash,
+      { storeBindings :: Bindings,
         storeExpression :: Expr
       }
   deriving (Eq, Ord, Show)

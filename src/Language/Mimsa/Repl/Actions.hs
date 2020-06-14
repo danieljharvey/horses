@@ -31,7 +31,7 @@ doReplAction env (ListBindings) = do
         Right type' ->
           prettyPrint name <> " :: " <> prettyPrint type'
         _ -> ""
-  _ <- traverse showBind (getExprPairs env)
+  _ <- traverse showBind (getExprPairs (store env) (bindings env))
   pure env
 doReplAction env (Evaluate expr) = do
   case getType env expr >>= (\type' -> (,) type' <$> interpret expr) of
@@ -79,10 +79,10 @@ doReplAction env (Bind name expr) = do
 getType :: StoreEnv -> Expr -> Either T.Text MonoType
 getType env expr = do
   storeExpr <- createStoreExpression (bindings env) expr
-  startInference (chainExprs storeExpr env)
+  startInference (chainExprs storeExpr (store env))
 
-getExprPairs :: StoreEnv -> [(Name, Expr)]
-getExprPairs (StoreEnv (Store items') (Bindings bindings')) = join $ do
+getExprPairs :: Store -> Bindings -> [(Name, Expr)]
+getExprPairs (Store items') (Bindings bindings') = join $ do
   (name, hash) <- M.toList bindings'
   case M.lookup hash items' of
     Just item -> pure [(name, item)]
@@ -90,10 +90,10 @@ getExprPairs (StoreEnv (Store items') (Bindings bindings')) = join $ do
 
 chainExprs ::
   StoreExpression ->
-  StoreEnv ->
+  Store ->
   Expr
-chainExprs inner env =
-  foldr (\(name, expr) a -> MyLet name expr a) (storeExpression inner) (getExprPairs env)
+chainExprs (StoreExpression bindings' expr) store' =
+  foldr (\(name, expr') a -> MyLet name expr' a) expr (getExprPairs store' bindings')
 
 fromItem :: Name -> Expr -> ExprHash -> StoreEnv
 fromItem name expr hash = StoreEnv

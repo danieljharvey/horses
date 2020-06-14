@@ -41,4 +41,4 @@ createStoreExpression bindings' expr = do
         (,) <$> pure name
           <*> findHashInBindings bindings' name
   hashes <- traverse findHash (S.toList . extractVars $ expr)
-  Right (StoreExpression (M.fromList hashes) expr)
+  Right (StoreExpression (Bindings (M.fromList hashes)) expr)
