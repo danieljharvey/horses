@@ -11,6 +11,8 @@ module Language.Mimsa.Store
 where
 
 import Control.Exception (try)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Hashable as Hash
@@ -49,16 +51,16 @@ saveExpr expr = do
   pure exprHash
 
 -- find in the store
-findExpr :: ExprHash -> IO (Either Text StoreExpression)
+findExpr :: ExprHash -> ExceptT Text IO StoreExpression
 findExpr hash = do
-  json <- BS.readFile (filePath hash)
+  json <- liftIO $ BS.readFile (filePath hash)
   case JSON.decode json of
     Just a -> do
-      T.putStrLn $ "Found expression for " <> prettyPrint hash
-      pure (Right a)
+      liftIO $ T.putStrLn $ "Found expression for " <> prettyPrint hash
+      pure a
     _ -> do
-      T.putStrLn $ "Could not find expression for " <> prettyPrint hash
-      pure (Left "Could not find!")
+      liftIO $ T.putStrLn $ "Could not find expression for " <> prettyPrint hash
+      error "Could not find!"
 
 getHash :: BS.ByteString -> ExprHash
 getHash = ExprHash . Hash.hash
@@ -74,7 +76,7 @@ loadEnvironment = do
   envJson <- try $ BS.readFile envPath
   case hush envJson >>= JSON.decode of
     Just b@(Bindings bindings') -> do
-      items' <- loadBoundExpressions (S.fromList (M.elems bindings'))
+      items' <- runExceptT $ recursiveLoadBoundExpressions (S.fromList (M.elems bindings'))
       case items' of
         Right store' -> pure $ Just (StoreEnv store' b)
         _ -> pure Nothing
@@ -82,18 +84,35 @@ loadEnvironment = do
 
 --
 
-loadBoundExpressions :: Set ExprHash -> IO (Either Text Store)
+loadBoundExpressions :: Set ExprHash -> ExceptT Text IO Store
 loadBoundExpressions hashes = do
   items' <-
     traverse
       ( \hash -> do
           item <- findExpr hash
-          pure $ (,) <$> pure hash <*> item
+          pure (hash, item)
       )
       (S.toList hashes)
-  case sequence items' of
-    Right goodItems -> pure (Right (Store (M.fromList goodItems)))
-    Left a -> pure (Left a)
+  pure
+    (Store (M.fromList items'))
+
+getDependencyHashes :: StoreExpression -> Set ExprHash
+getDependencyHashes (StoreExpression (Bindings bindings') _) = S.fromList (M.elems bindings')
+
+recursiveLoadBoundExpressions :: Set ExprHash -> ExceptT Text IO Store
+recursiveLoadBoundExpressions hashes = do
+  store' <- loadBoundExpressions hashes
+  let newHashes =
+        S.difference
+          ( S.unions $
+              getDependencyHashes <$> (M.elems (getStore store'))
+          )
+          hashes
+  if S.null newHashes
+    then pure store'
+    else do
+      moreStore <- recursiveLoadBoundExpressions newHashes
+      pure (store' <> moreStore)
 
 --
 saveEnvironment :: StoreEnv -> IO ()
