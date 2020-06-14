@@ -11,7 +11,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Store (saveExpr)
+import Language.Mimsa.Store (createStoreExpression, saveExpr)
 import Language.Mimsa.Syntax
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
@@ -56,7 +56,7 @@ doReplAction env (Info expr) = do
           <> prettyPrint type'
       pure env
 doReplAction env (Bind name expr) = do
-  if M.member name (bindings env)
+  if M.member name (getBindings $ bindings env)
     then do
       T.putStrLn $ T.pack (show name) <> " is already bound"
       pure env
@@ -74,22 +74,29 @@ doReplAction env (Bind name expr) = do
           let newEnv = fromItem name expr hash
           pure (env <> newEnv)
 
+----------
+
 getType :: StoreEnv -> Expr -> Either T.Text MonoType
-getType env expr = startInference (chainExprs expr env)
+getType env expr = do
+  storeExpr <- createStoreExpression (bindings env) expr
+  startInference (chainExprs storeExpr env)
 
 getExprPairs :: StoreEnv -> [(Name, Expr)]
-getExprPairs (StoreEnv items' bindings') = join $ do
+getExprPairs (StoreEnv (Store items') (Bindings bindings')) = join $ do
   (name, hash) <- M.toList bindings'
   case M.lookup hash items' of
     Just item -> pure [(name, item)]
     _ -> pure []
 
-chainExprs :: Expr -> StoreEnv -> Expr
+chainExprs ::
+  StoreExpression ->
+  StoreEnv ->
+  Expr
 chainExprs inner env =
-  foldr (\(name, expr) a -> MyLet name expr a) inner (getExprPairs env)
+  foldr (\(name, expr) a -> MyLet name expr a) (storeExpression inner) (getExprPairs env)
 
 fromItem :: Name -> Expr -> ExprHash -> StoreEnv
 fromItem name expr hash = StoreEnv
-  { items = M.singleton hash expr,
-    bindings = M.singleton name hash
+  { store = Store $ M.singleton hash expr,
+    bindings = Bindings $ M.singleton name hash
   }

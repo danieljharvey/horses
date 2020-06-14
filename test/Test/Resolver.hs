@@ -6,6 +6,7 @@ module Test.Resolver
   )
 where
 
+import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Store.Resolver
 import Language.Mimsa.Types
@@ -61,5 +62,20 @@ spec = do
             ( StoreExpression
                 { storeBindings = mempty,
                   storeExpression = MyString (StringType "poo")
+                }
+            )
+      it "Looks for vars and can't find them" $ do
+        createStoreExpression mempty (MyVar (Name "missing"))
+          `shouldBe` Left "A binding for missing could not be found"
+      it "Looks for vars and finds them" $ do
+        let hash = ExprHash 1234
+            expr = MyVar (Name "missing")
+            storeEnv = StoreEnv mempty (M.singleton (Name "missing") hash)
+            storeExpr = createStoreExpression storeEnv expr
+        storeExpr
+          `shouldBe` Right
+            ( StoreExpression
+                { storeBindings = M.singleton (Name "missing") hash,
+                  storeExpression = expr
                 }
             )

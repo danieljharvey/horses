@@ -7,6 +7,8 @@
 module Language.Mimsa.Types
   ( ExprHash (..),
     StoreEnv (..),
+    Bindings (..),
+    Store (..),
     StoreExpression (..),
     module Language.Mimsa.Types.Name,
     module Language.Mimsa.Types.AST,
@@ -30,8 +32,8 @@ newtype ExprHash = ExprHash Int
 -- and a list of mappings of names to those pieces
 data StoreEnv
   = StoreEnv
-      { items :: M.Map ExprHash Expr,
-        bindings :: M.Map Name ExprHash
+      { store :: Store,
+        bindings :: Bindings
       }
 
 instance Semigroup StoreEnv where
@@ -41,6 +43,14 @@ instance Monoid StoreEnv where
   mempty = StoreEnv mempty mempty
 
 --------
+
+-- store is where we keep the big map of hashes to expresions
+newtype Store = Store {getStore :: M.Map ExprHash Expr}
+  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
+
+-- a list of names to hashes
+newtype Bindings = Bindings {getBindings :: M.Map Name ExprHash}
+  deriving newtype (Eq, Ord, Show, Semigroup, Monoid, JSON.FromJSON, JSON.ToJSON)
 
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside

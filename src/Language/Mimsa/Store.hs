@@ -1,11 +1,31 @@
-module Language.Mimsa.Store (saveExpr, findExpr, loadEnvironment, saveEnvironment) where
+{-# LANGUAGE OverloadedStrings #-}
+
+module Language.Mimsa.Store
+  ( saveExpr,
+    findExpr,
+    loadEnvironment,
+    loadBoundExpressions,
+    saveEnvironment,
+    module Language.Mimsa.Store.Resolver,
+  )
+where
 
 import Control.Exception (try)
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Hashable as Hash
 import qualified Data.Map as M
-import Language.Mimsa.Types (Expr (..), ExprHash (..), StoreEnv (..))
+import Data.Set (Set)
+import qualified Data.Set as S
+import Data.Text (Text)
+import Language.Mimsa.Store.Resolver
+import Language.Mimsa.Types
+  ( Bindings (..),
+    Expr (..),
+    ExprHash (..),
+    Store (..),
+    StoreEnv (..),
+  )
 
 storePath :: String
 storePath = "./store/"
@@ -27,7 +47,7 @@ saveExpr expr = do
   pure exprHash
 
 -- find in the store
-findExpr :: ExprHash -> IO (Either String Expr)
+findExpr :: ExprHash -> IO (Either Text Expr)
 findExpr hash = do
   json <- BS.readFile (filePath hash)
   case JSON.decode json of
@@ -36,13 +56,6 @@ findExpr hash = do
 
 getHash :: BS.ByteString -> ExprHash
 getHash = ExprHash . Hash.hash
-
-findExpr10x :: ExprHash -> IO Expr
-findExpr10x hash = do
-  hash' <- findExpr hash
-  case hash' of
-    Right a -> pure a
-    _ -> error "yolo"
 
 hush :: Either IOError a -> Maybe a
 hush (Right a) = Just a
@@ -54,16 +67,27 @@ loadEnvironment :: IO (Maybe StoreEnv)
 loadEnvironment = do
   envJson <- try $ BS.readFile envPath
   case hush envJson >>= JSON.decode of
-    Just bindings' -> do
-      items' <-
-        traverse
-          ( \(_, hash) -> do
-              item <- findExpr10x hash
-              pure (hash, item)
-          )
-          (M.toList bindings')
-      pure $ Just (StoreEnv (M.fromList items') bindings')
+    Just b@(Bindings bindings') -> do
+      items' <- loadBoundExpressions (S.fromList (M.elems bindings'))
+      case items' of
+        Right store' -> pure $ Just (StoreEnv store' b)
+        _ -> pure Nothing
     _ -> pure Nothing
+
+--
+
+loadBoundExpressions :: Set ExprHash -> IO (Either Text Store)
+loadBoundExpressions hashes = do
+  items' <-
+    traverse
+      ( \hash -> do
+          item <- findExpr hash
+          pure $ (,) <$> pure hash <*> item
+      )
+      (S.toList hashes)
+  case sequence items' of
+    Right goodItems -> pure (Right (Store (M.fromList goodItems)))
+    Left a -> pure (Left a)
 
 --
 saveEnvironment :: StoreEnv -> IO ()
