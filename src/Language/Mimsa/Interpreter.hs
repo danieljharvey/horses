@@ -39,8 +39,15 @@ interpretWithScope (MyApp (MyVar f) value) = do
   interpretWithScope (MyApp expr value)
 interpretWithScope (MyApp (MyLambda binder expr) value) =
   interpretWithScope (MyLet binder expr value)
+interpretWithScope (MyApp (MyApp a b) c) = do
+  a' <- interpretWithScope (MyApp a b)
+  interpretWithScope (MyApp a' c)
+interpretWithScope (MyApp (MyBool _) _) = throwError "Cannot apply a value to a boolean"
+interpretWithScope (MyApp (MyInt _) _) = throwError "Cannot apply a value to an integer"
+interpretWithScope (MyApp (MyString _) _) = throwError "Cannot apply a value to a string"
+interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
+interpretWithScope (MyApp (MyLet _ _ _) _) = throwError "Cannot apply a value to an let"
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
-interpretWithScope (MyApp _ _) = throwError "Can only apply a value to a lambda"
 interpretWithScope (MyIf (MyBool pred') true false) =
   if pred'
     then interpretWithScope true

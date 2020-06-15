@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Debug.Trace
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store
@@ -42,7 +43,7 @@ doReplAction env (Evaluate expr) = do
   case getTypecheckedStoreExpression env expr
     >>= ( \(type', _, expr', scope') ->
             (,) type'
-              <$> interpret scope' expr'
+              <$> interpret (traceShowId scope') (traceShowId expr')
         ) of
     Left e' -> do
       print e'
@@ -100,8 +101,13 @@ chainExprs ::
   Expr ->
   Scope ->
   Expr
-chainExprs expr scope =
-  foldr (\(name, expr') a -> MyLet name expr' a) expr (M.toList . getScope $ scope)
+chainExprs expr scope = traceShowId finalExpr
+  where
+    finalExpr =
+      foldl
+        (\a (name, expr') -> MyLet name expr' a)
+        expr
+        (M.toList . getScope $ scope)
 
 fromItem :: Name -> StoreExpression -> ExprHash -> StoreEnv
 fromItem name expr hash = StoreEnv
@@ -113,5 +119,5 @@ getTypecheckedStoreExpression :: StoreEnv -> Expr -> Either Text (MonoType, Stor
 getTypecheckedStoreExpression env expr = do
   storeExpr <- createStoreExpression (bindings env) expr
   (_, newExpr, scope) <- substitute (store env) storeExpr
-  exprType <- getType scope newExpr
+  exprType <- getType (traceShowId scope) (traceShowId newExpr)
   pure (exprType, storeExpr, newExpr, scope)
