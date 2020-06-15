@@ -42,7 +42,7 @@ doSubstitutions :: Store -> StoreExpression -> App Expr
 doSubstitutions store' (StoreExpression bindings' expr) = do
   let scope = createScope store' bindings'
   modify (second $ (<>) scope)
-  newExpr <- mapVar expr
+  newExpr <- mapVar [] expr
   _ <-
     traverse
       ( \(key, storeExpr') -> do
@@ -79,20 +79,24 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 
 -- get a new name for a var, changing it's reference in Scope and adding it to
 -- Swaps list
-getNextVar :: Name -> App Name
-getNextVar name = do
-  let makeName :: Int -> Name
-      makeName i = mkName $ "var" <> T.pack (show i)
-  nextName <- makeName <$> fst <$> gets (first $ M.size)
-  modify (second $ \(Scope scope') -> Scope $ M.mapKeys (\key -> if key == name then nextName else key) scope')
-  modify (first $ M.insert nextName name)
-  pure nextName
+getNextVar :: [Name] -> Name -> App Name
+getNextVar protected name =
+  if elem name protected
+    then pure name
+    else do
+      let makeName :: Int -> Name
+          makeName i = mkName $ "var" <> T.pack (show i)
+      nextName <- makeName <$> fst <$> gets (first $ M.size)
+      modify (second $ \(Scope scope') -> Scope $ M.mapKeys (\key -> if key == name then nextName else key) scope')
+      modify (first $ M.insert nextName name)
+      pure nextName
 
 -- step through Expr, replacing vars with numbered variables
-mapVar :: Expr -> App Expr
-mapVar (MyVar a) = MyVar <$> getNextVar a
-mapVar (MyLet name a b) = MyLet <$> pure name <*> (mapVar a) <*> (mapVar b)
-mapVar (MyLambda name a) = MyLambda <$> pure name <*> (mapVar a)
-mapVar (MyApp a b) = MyApp <$> (mapVar a) <*> (mapVar b)
-mapVar (MyIf a b c) = MyIf <$> (mapVar a) <*> (mapVar b) <*> (mapVar c)
-mapVar a = pure a
+mapVar :: [Name] -> Expr -> App Expr
+mapVar p (MyVar a) = MyVar <$> getNextVar p a
+mapVar p (MyLet name a b) = MyLet <$> pure name <*> (mapVar p a) <*> (mapVar p b)
+mapVar p (MyLambda name a) =
+  MyLambda <$> pure name <*> (mapVar (p <> [name]) a)
+mapVar p (MyApp a b) = MyApp <$> (mapVar p a) <*> (mapVar p b)
+mapVar p (MyIf a b c) = MyIf <$> (mapVar p a) <*> (mapVar p b) <*> (mapVar p c)
+mapVar _ a = pure a
