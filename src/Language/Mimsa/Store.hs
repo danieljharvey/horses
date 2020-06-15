@@ -7,6 +7,7 @@ module Language.Mimsa.Store
     loadBoundExpressions,
     saveEnvironment,
     module Language.Mimsa.Store.Resolver,
+    module Language.Mimsa.Store.Substitutor,
   )
 where
 
@@ -22,6 +23,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Language.Mimsa.Store.Resolver
+import Language.Mimsa.Store.Substitutor
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
   ( Bindings (..),

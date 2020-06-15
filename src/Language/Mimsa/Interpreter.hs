@@ -13,7 +13,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Syntax
-import Language.Mimsa.Types
+import Language.Mimsa.Types hiding (Scope (..))
 
 interpret :: Expr -> Either Text Expr
 interpret expr =

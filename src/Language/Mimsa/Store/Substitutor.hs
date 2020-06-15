@@ -1,7 +1,19 @@
-module Language.Mimsa.Store.Substitutor where
+{-# LANGUAGE OverloadedStrings #-}
 
+module Language.Mimsa.Store.Substitutor
+  ( mapVar,
+    substitute,
+  )
+where
+
+import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
+import Data.Bifunctor (first, second)
+import Data.Map (Map)
+import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Types
 
 -- this turns StoreExpressions back into expressions by substituting their
@@ -12,10 +24,75 @@ import Language.Mimsa.Types
 --
 -- we'll also store what our substitutions were for errors sake
 
-type Swaps = [(Name, Name)]
+type Swaps = Map Name Name
 
-type App = StateT Swaps (Either Text)
+type App = StateT (Swaps, Scope) (Either Text)
 
-substitute :: Store -> StoreExpression -> Either Text (Swaps, StoreExpression, Store)
-substitute _store' (StoreExpression _bindings' _expr') = do
-  pure undefined
+substitute :: Store -> StoreExpression -> Either Text (Swaps, Expr, Scope)
+substitute store' storeExpr = do
+  (expr', (swaps', scope')) <- runSubApp store' storeExpr
+  pure (swaps', expr', scope')
+
+runSubApp :: Store -> StoreExpression -> Either Text (Expr, (Swaps, Scope))
+runSubApp store' storeExpr =
+  runStateT (doSubstitutions store' storeExpr) (mempty, mempty)
+
+-- get the list of deps for this expression, turn from hashes to StoreExprs
+doSubstitutions :: Store -> StoreExpression -> App Expr
+doSubstitutions store' (StoreExpression bindings' expr) = do
+  let scope = createScope store' bindings'
+  modify (second $ (<>) scope)
+  newExpr <- mapVar expr
+  _ <-
+    traverse
+      ( \(key, storeExpr') -> do
+          expr' <- doSubstitutions store' storeExpr'
+          newKey <- substituteKey key <$> gets (fst)
+          modify (second $ (<>) (Scope (M.singleton newKey expr')))
+          pure ()
+      )
+      (getExprPairs store' bindings')
+  pure newExpr
+
+-- give me the original key, i'll give you the new one
+substituteKey :: Name -> Swaps -> Name
+substituteKey name swaps = fromMaybe (Name "notfound") found
+  where
+    matches = M.toList $ M.filter (\v -> v == name) swaps
+    found = case matches of
+      [] -> Nothing
+      ((k, _) : _) -> Just k
+
+-- get everything our nice function wants and plop it in a pile
+createScope :: Store -> Bindings -> Scope
+createScope store' bindings' = Scope . M.fromList $ pairs'
+  where
+    pairs = getExprPairs store' bindings'
+    pairs' = (\(a, (StoreExpression _ b)) -> (a, b)) <$> pairs
+
+getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
+getExprPairs (Store items') (Bindings bindings') = join $ do
+  (name, hash) <- M.toList bindings'
+  case M.lookup hash items' of
+    Just item -> pure [(name, item)]
+    _ -> pure []
+
+-- get a new name for a var, changing it's reference in Scope and adding it to
+-- Swaps list
+getNextVar :: Name -> App Name
+getNextVar name = do
+  let makeName :: Int -> Name
+      makeName i = mkName $ "var" <> T.pack (show i)
+  nextName <- makeName <$> fst <$> gets (first $ M.size)
+  modify (second $ \(Scope scope') -> Scope $ M.mapKeys (\key -> if key == name then nextName else key) scope')
+  modify (first $ M.insert nextName name)
+  pure nextName
+
+-- step through Expr, replacing vars with numbered variables
+mapVar :: Expr -> App Expr
+mapVar (MyVar a) = MyVar <$> getNextVar a
+mapVar (MyLet name a b) = MyLet <$> pure name <*> (mapVar a) <*> (mapVar b)
+mapVar (MyLambda name a) = MyLambda <$> pure name <*> (mapVar a)
+mapVar (MyApp a b) = MyApp <$> (mapVar a) <*> (mapVar b)
+mapVar (MyIf a b c) = MyIf <$> (mapVar a) <*> (mapVar b) <*> (mapVar c)
+mapVar a = pure a

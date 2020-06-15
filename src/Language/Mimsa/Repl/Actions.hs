@@ -10,9 +10,14 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Debug.Trace
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Store (createStoreExpression, saveExpr)
+import Language.Mimsa.Store
+  ( createStoreExpression,
+    saveExpr,
+    substitute,
+  )
 import Language.Mimsa.Syntax
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
@@ -79,7 +84,8 @@ doReplAction env (Bind name expr) = do
 
 getType :: StoreEnv -> StoreExpression -> Either T.Text MonoType
 getType env storeExpr = do
-  startInference (chainExprs storeExpr (store env))
+  (_, expr, scope) <- substitute (store env) storeExpr
+  startInference (chainExprs (traceShowId expr) (traceShowId scope))
 
 getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -89,11 +95,11 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
     _ -> pure []
 
 chainExprs ::
-  StoreExpression ->
-  Store ->
+  Expr ->
+  Scope ->
   Expr
-chainExprs (StoreExpression bindings' expr) store' =
-  foldr (\(name, (StoreExpression _bindingsYikes expr')) a -> MyLet name expr' a) expr (getExprPairs store' bindings')
+chainExprs expr scope =
+  foldr (\(name, expr') a -> MyLet name expr' a) expr (M.toList . getScope $ scope)
 
 fromItem :: Name -> StoreExpression -> ExprHash -> StoreEnv
 fromItem name expr hash = StoreEnv
@@ -104,5 +110,5 @@ fromItem name expr hash = StoreEnv
 getTypecheckedStoreExpression :: StoreEnv -> Expr -> Either Text (MonoType, StoreExpression)
 getTypecheckedStoreExpression env expr = do
   storeExpr <- createStoreExpression (bindings env) expr
-  exprType <- getType env storeExpr
+  exprType <- getType (traceShowId env) (traceShowId storeExpr)
   pure (exprType, storeExpr)

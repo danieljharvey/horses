@@ -8,6 +8,7 @@ module Language.Mimsa.Types
   ( ExprHash (..),
     StoreEnv (..),
     Bindings (..),
+    Scope (..),
     Store (..),
     StoreExpression (..),
     module Language.Mimsa.Types.Name,
@@ -36,6 +37,7 @@ data StoreEnv
       { store :: Store,
         bindings :: Bindings
       }
+  deriving (Eq, Ord, Show)
 
 instance Semigroup StoreEnv where
   StoreEnv a a' <> StoreEnv b b' = StoreEnv (a <> b) (a' <> b')
@@ -52,6 +54,10 @@ newtype Store = Store {getStore :: M.Map ExprHash StoreExpression}
 -- a list of names to hashes
 newtype Bindings = Bindings {getBindings :: M.Map Name ExprHash}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid, JSON.FromJSON, JSON.ToJSON)
+
+-- dependencies resolved into actual expressions
+newtype Scope = Scope {getScope :: M.Map Name Expr}
+  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside
