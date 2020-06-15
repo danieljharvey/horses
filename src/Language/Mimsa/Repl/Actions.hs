@@ -10,7 +10,6 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Debug.Trace
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store
@@ -33,14 +32,18 @@ doReplAction env Help = do
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
   pure env
 doReplAction env (ListBindings) = do
-  let showBind = \(name, expr) -> T.putStrLn $ case getType env expr of
-        Right type' ->
+  let showBind = \(name, (StoreExpression _ expr)) -> T.putStrLn $ case getTypecheckedStoreExpression env expr of
+        Right (type', _, _, _) ->
           prettyPrint name <> " :: " <> prettyPrint type'
         _ -> ""
   _ <- traverse showBind (getExprPairs (store env) (bindings env))
   pure env
 doReplAction env (Evaluate expr) = do
-  case getTypecheckedStoreExpression env expr >>= (\(type', _) -> (,) type' <$> interpret expr) of
+  case getTypecheckedStoreExpression env expr
+    >>= ( \(type', _, expr', scope') ->
+            (,) type'
+              <$> interpret scope' expr'
+        ) of
     Left e' -> do
       print e'
       pure env
@@ -55,7 +58,7 @@ doReplAction env (Info expr) = do
     Left e' -> do
       print e'
       pure env
-    Right (type', _) -> do
+    Right (type', _, _, _) -> do
       T.putStrLn $
         prettyPrint expr
           <> " :: "
@@ -71,7 +74,7 @@ doReplAction env (Bind name expr) = do
         Left e' -> do
           print e'
           pure env
-        Right (type', storeExpr) -> do
+        Right (type', storeExpr, _, _) -> do
           hash <- saveExpr storeExpr
           T.putStrLn $
             "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
@@ -82,10 +85,9 @@ doReplAction env (Bind name expr) = do
 
 ----------
 
-getType :: StoreEnv -> StoreExpression -> Either T.Text MonoType
-getType env storeExpr = do
-  (_, expr, scope) <- substitute (store env) storeExpr
-  startInference (chainExprs (traceShowId expr) (traceShowId scope))
+getType :: Scope -> Expr -> Either T.Text MonoType
+getType scope' expr =
+  startInference (chainExprs expr scope')
 
 getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -107,8 +109,9 @@ fromItem name expr hash = StoreEnv
     bindings = Bindings $ M.singleton name hash
   }
 
-getTypecheckedStoreExpression :: StoreEnv -> Expr -> Either Text (MonoType, StoreExpression)
+getTypecheckedStoreExpression :: StoreEnv -> Expr -> Either Text (MonoType, StoreExpression, Expr, Scope)
 getTypecheckedStoreExpression env expr = do
   storeExpr <- createStoreExpression (bindings env) expr
-  exprType <- getType (traceShowId env) (traceShowId storeExpr)
-  pure (exprType, storeExpr)
+  (_, newExpr, scope) <- substitute (store env) storeExpr
+  exprType <- getType scope newExpr
+  pure (exprType, storeExpr, newExpr, scope)

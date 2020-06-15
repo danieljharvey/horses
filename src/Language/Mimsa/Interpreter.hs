@@ -9,19 +9,16 @@ where
 -- run == simplify, essentially
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
-import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Syntax
-import Language.Mimsa.Types hiding (Scope (..))
+import Language.Mimsa.Types
 
-interpret :: Expr -> Either Text Expr
-interpret expr =
+interpret :: Scope -> Expr -> Either Text Expr
+interpret scope' expr =
   (fst <$> either')
   where
-    either' = runStateT (interpretWithScope expr) M.empty
-
-type Scope = Map Name Expr
+    either' = runStateT (interpretWithScope expr) scope'
 
 type App = StateT Scope (Either Text)
 
@@ -30,10 +27,10 @@ interpretWithScope (MyBool a) = pure $ MyBool a
 interpretWithScope (MyInt a) = pure $ MyInt a
 interpretWithScope (MyString a) = pure $ MyString a
 interpretWithScope (MyLet binder expr body) = do
-  modify ((<>) (M.singleton binder expr))
+  modify ((<>) (Scope $ M.singleton binder expr))
   interpretWithScope body
 interpretWithScope (MyVar a) = do
-  found <- gets (M.lookup a)
+  found <- gets (M.lookup a . getScope)
   case found of
     Just expr -> pure expr
     Nothing -> throwError $ "Could not find " <> prettyPrint a
