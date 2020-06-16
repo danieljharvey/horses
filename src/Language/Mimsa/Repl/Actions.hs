@@ -7,11 +7,16 @@ where
 
 import Control.Monad (join)
 import qualified Data.Map as M
+import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Store (saveExpr)
+import Language.Mimsa.Store
+  ( createStoreExpression,
+    saveExpr,
+    substitute,
+  )
 import Language.Mimsa.Syntax
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
@@ -27,14 +32,18 @@ doReplAction env Help = do
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
   pure env
 doReplAction env (ListBindings) = do
-  let showBind = \(name, expr) -> T.putStrLn $ case getType env expr of
-        Right type' ->
+  let showBind = \(name, (StoreExpression _ expr)) -> T.putStrLn $ case getTypecheckedStoreExpression env expr of
+        Right (type', _, _, _) ->
           prettyPrint name <> " :: " <> prettyPrint type'
         _ -> ""
-  _ <- traverse showBind (getExprPairs env)
+  _ <- traverse showBind (getExprPairs (store env) (bindings env))
   pure env
 doReplAction env (Evaluate expr) = do
-  case getType env expr >>= (\type' -> (,) type' <$> interpret expr) of
+  case getTypecheckedStoreExpression env expr
+    >>= ( \(type', _, expr', scope') ->
+            (,) type'
+              <$> interpret scope' expr'
+        ) of
     Left e' -> do
       print e'
       pure env
@@ -45,51 +54,69 @@ doReplAction env (Evaluate expr) = do
           <> prettyPrint type'
       pure env
 doReplAction env (Info expr) = do
-  case getType env expr of
+  case getTypecheckedStoreExpression env expr of
     Left e' -> do
       print e'
       pure env
-    Right type' -> do
+    Right (type', _, _, _) -> do
       T.putStrLn $
         prettyPrint expr
           <> " :: "
           <> prettyPrint type'
       pure env
 doReplAction env (Bind name expr) = do
-  if M.member name (bindings env)
+  if M.member name (getBindings $ bindings env)
     then do
       T.putStrLn $ T.pack (show name) <> " is already bound"
       pure env
     else do
-      case getType env expr of
+      case getTypecheckedStoreExpression env expr of
         Left e' -> do
           print e'
           pure env
-        Right type' -> do
-          hash <- saveExpr expr
+        Right (type', storeExpr, _, _) -> do
+          hash <- saveExpr storeExpr
           T.putStrLn $
             "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
               <> " :: "
               <> prettyPrint type'
-          let newEnv = fromItem name expr hash
+          let newEnv = fromItem name storeExpr hash
           pure (env <> newEnv)
 
-getType :: StoreEnv -> Expr -> Either T.Text MonoType
-getType env expr = startInference (chainExprs expr env)
+----------
 
-getExprPairs :: StoreEnv -> [(Name, Expr)]
-getExprPairs (StoreEnv items' bindings') = join $ do
+getType :: Scope -> Expr -> Either T.Text MonoType
+getType scope' expr =
+  startInference (chainExprs expr scope')
+
+getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
+getExprPairs (Store items') (Bindings bindings') = join $ do
   (name, hash) <- M.toList bindings'
   case M.lookup hash items' of
     Just item -> pure [(name, item)]
     _ -> pure []
 
-chainExprs :: Expr -> StoreEnv -> Expr
-chainExprs inner env =
-  foldr (\(name, expr) a -> MyLet name expr a) inner (getExprPairs env)
+chainExprs ::
+  Expr ->
+  Scope ->
+  Expr
+chainExprs expr scope = finalExpr
+  where
+    finalExpr =
+      foldl
+        (\a (name, expr') -> MyLet name expr' a)
+        expr
+        (M.toList . getScope $ scope)
 
-fromItem :: Name -> Expr -> ExprHash -> StoreEnv
+fromItem :: Name -> StoreExpression -> ExprHash -> StoreEnv
 fromItem name expr hash = StoreEnv
-  { items = M.singleton hash expr,
-    bindings = M.singleton name hash
+  { store = Store $ M.singleton hash expr,
+    bindings = Bindings $ M.singleton name hash
   }
+
+getTypecheckedStoreExpression :: StoreEnv -> Expr -> Either Text (MonoType, StoreExpression, Expr, Scope)
+getTypecheckedStoreExpression env expr = do
+  storeExpr <- createStoreExpression (bindings env) expr
+  (_, newExpr, scope) <- substitute (store env) storeExpr
+  exprType <- getType scope newExpr
+  pure (exprType, storeExpr, newExpr, scope)

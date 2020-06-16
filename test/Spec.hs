@@ -10,6 +10,8 @@ import Language.Mimsa
 import Test.Hspec
 import qualified Test.Interpreter as Interpreter
 import Test.QuickCheck.Instances ()
+import qualified Test.Resolver as Resolver
+import qualified Test.Substitutor as Substitutor
 import qualified Test.Syntax as Syntax
 
 charListToText :: [Char] -> Text
@@ -84,6 +86,8 @@ main :: IO ()
 main = hspec $ do
   Syntax.spec
   Interpreter.spec
+  Resolver.spec
+  Substitutor.spec
   describe "Typechecker" $ do
     it "Our expressions typecheck as expected" $ do
       _ <- traverse (\(code, expected) -> startInference code `shouldBe` expected) exprs

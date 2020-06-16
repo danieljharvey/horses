@@ -9,19 +9,16 @@ where
 -- run == simplify, essentially
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
-import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
-interpret :: Expr -> Either Text Expr
-interpret expr =
+interpret :: Scope -> Expr -> Either Text Expr
+interpret scope' expr =
   (fst <$> either')
   where
-    either' = runStateT (interpretWithScope expr) M.empty
-
-type Scope = Map Name Expr
+    either' = runStateT (interpretWithScope expr) scope'
 
 type App = StateT Scope (Either Text)
 
@@ -30,20 +27,29 @@ interpretWithScope (MyBool a) = pure $ MyBool a
 interpretWithScope (MyInt a) = pure $ MyInt a
 interpretWithScope (MyString a) = pure $ MyString a
 interpretWithScope (MyLet binder expr body) = do
-  modify ((<>) (M.singleton binder expr))
+  modify ((<>) (Scope $ M.singleton binder expr))
   interpretWithScope body
 interpretWithScope (MyVar a) = do
-  found <- gets (M.lookup a)
+  found <- gets (M.lookup a . getScope)
   case found of
-    Just expr -> pure expr
+    Just expr -> interpretWithScope expr
     Nothing -> throwError $ "Could not find " <> prettyPrint a
 interpretWithScope (MyApp (MyVar f) value) = do
   expr <- interpretWithScope (MyVar f)
   interpretWithScope (MyApp expr value)
 interpretWithScope (MyApp (MyLambda binder expr) value) =
-  interpretWithScope (MyLet binder expr value)
+  interpretWithScope (MyLet binder value expr)
+interpretWithScope (MyApp (MyApp a b) c) = do
+  expr <- interpretWithScope (MyApp a b)
+  interpretWithScope (MyApp expr c)
+interpretWithScope (MyApp (MyLet a b c) d) = do
+  expr <- interpretWithScope (MyLet a b c)
+  interpretWithScope (MyApp expr d)
+interpretWithScope (MyApp (MyBool _) _) = throwError "Cannot apply a value to a boolean"
+interpretWithScope (MyApp (MyInt _) _) = throwError "Cannot apply a value to an integer"
+interpretWithScope (MyApp (MyString _) _) = throwError "Cannot apply a value to a string"
+interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
-interpretWithScope (MyApp _ _) = throwError "Can only apply a value to a lambda"
 interpretWithScope (MyIf (MyBool pred') true false) =
   if pred'
     then interpretWithScope true
