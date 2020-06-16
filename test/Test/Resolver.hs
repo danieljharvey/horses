@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Store.Resolver
 import Language.Mimsa.Types
+import Test.Helpers
 import Test.Hspec
 
 spec :: Spec
@@ -17,9 +18,9 @@ spec = do
   describe "Resolver" $ do
     describe "extractVars" $ do
       it "Finds none where only literals" $ do
-        extractVars (MyBool True) `shouldBe` mempty
-        extractVars (MyInt 1) `shouldBe` mempty
-        extractVars (MyString (StringType "poo")) `shouldBe` mempty
+        extractVars (bool True) `shouldBe` mempty
+        extractVars (int 1) `shouldBe` mempty
+        extractVars (str (StringType "poo")) `shouldBe` mempty
       it "Finds a var" $ do
         extractVars (MyVar (Name "dog")) `shouldBe` S.singleton (Name "dog")
       it "Finds the vars in an if" $ do
@@ -34,7 +35,7 @@ spec = do
         extractVars
           ( MyLet
               (Name "newVar")
-              (MyApp (MyVar (Name "keep")) (MyInt 1))
+              (MyApp (MyVar (Name "keep")) (int 1))
               (MyVar (Name "newVar"))
           )
           `shouldBe` S.singleton (Name "keep")
@@ -43,25 +44,25 @@ spec = do
           `shouldBe` S.singleton (Name "keep")
     describe "createStoreExpression" $ do
       it "Creates expressions from literals with empty StoreEnv" $ do
-        createStoreExpression mempty (MyInt 1)
+        createStoreExpression mempty (int 1)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = MyInt 1
+                  storeExpression = int 1
                 }
             )
-        createStoreExpression mempty (MyBool True)
+        createStoreExpression mempty (bool True)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = MyBool True
+                  storeExpression = bool True
                 }
             )
-        createStoreExpression mempty (MyString (StringType "poo"))
+        createStoreExpression mempty (str (StringType "poo"))
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = MyString (StringType "poo")
+                  storeExpression = str (StringType "poo")
                 }
             )
       it "Looks for vars and can't find them" $ do

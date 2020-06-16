@@ -26,11 +26,14 @@ instance Printer StringType where
 instance Printer ExprHash where
   prettyPrint (ExprHash a) = T.pack . show $ a
 
-instance Printer Expr where
+instance Printer Literal where
   prettyPrint (MyInt i) = T.pack (show i)
   prettyPrint (MyBool True) = "True"
   prettyPrint (MyBool False) = "False"
   prettyPrint (MyString str) = "\"" <> prettyPrint str <> "\""
+
+instance Printer Expr where
+  prettyPrint (MyLiteral l) = prettyPrint l
   prettyPrint (MyVar var) = prettyPrint var
   prettyPrint (MyLet var expr1 expr2) =
     "let " <> prettyPrint var

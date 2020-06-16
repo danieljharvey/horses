@@ -23,9 +23,7 @@ interpret scope' expr =
 type App = StateT Scope (Either Text)
 
 interpretWithScope :: Expr -> App Expr
-interpretWithScope (MyBool a) = pure $ MyBool a
-interpretWithScope (MyInt a) = pure $ MyInt a
-interpretWithScope (MyString a) = pure $ MyString a
+interpretWithScope (MyLiteral a) = pure $ MyLiteral a
 interpretWithScope (MyLet binder expr body) = do
   modify ((<>) (Scope $ M.singleton binder expr))
   interpretWithScope body
@@ -45,17 +43,14 @@ interpretWithScope (MyApp (MyApp a b) c) = do
 interpretWithScope (MyApp (MyLet a b c) d) = do
   expr <- interpretWithScope (MyLet a b c)
   interpretWithScope (MyApp expr d)
-interpretWithScope (MyApp (MyBool _) _) = throwError "Cannot apply a value to a boolean"
-interpretWithScope (MyApp (MyInt _) _) = throwError "Cannot apply a value to an integer"
-interpretWithScope (MyApp (MyString _) _) = throwError "Cannot apply a value to a string"
+interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"
 interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
-interpretWithScope (MyIf (MyBool pred') true false) =
+interpretWithScope (MyIf (MyLiteral (MyBool pred')) true false) =
   if pred'
     then interpretWithScope true
     else interpretWithScope false
-interpretWithScope (MyIf (MyString _) _ _) = throwError "Predicate for If must be a Boolean"
-interpretWithScope (MyIf (MyInt _) _ _) = throwError "Predicate for If must be a Boolean"
+interpretWithScope (MyIf (MyLiteral _) _ _) = throwError "Predicate for If must be a Boolean"
 interpretWithScope (MyIf (MyLambda _ _) _ _) = throwError "Predicate for If must be a Boolean"
 interpretWithScope (MyIf pred' true false) = do
   predExpr <- interpretWithScope pred'

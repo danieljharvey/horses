@@ -6,6 +6,7 @@
 
 module Language.Mimsa.Types.AST
   ( Expr (..),
+    Literal (..),
     MonoType (..),
     StringType (..),
     UniVar (..),
@@ -26,10 +27,14 @@ newtype UniVar = UniVar Int
   deriving stock (Eq, Ord, Generic)
   deriving newtype (Show, Num)
 
-data Expr
+data Literal
   = MyInt Int
   | MyBool Bool
   | MyString StringType
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
+
+data Expr
+  = MyLiteral Literal
   | MyVar Name
   | MyLet Name Expr Expr -- binder, expr, body
   | MyLambda Name Expr -- binder, body

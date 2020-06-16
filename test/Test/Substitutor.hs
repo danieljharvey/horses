@@ -9,10 +9,11 @@ where
 import qualified Data.Map as M
 import Language.Mimsa.Store.Substitutor (substitute)
 import Language.Mimsa.Types
+import Test.Helpers
 import Test.Hspec
 
 trueStoreExpr :: StoreExpression
-trueStoreExpr = StoreExpression mempty (MyBool True)
+trueStoreExpr = StoreExpression mempty (bool True)
 
 falseStoreExpr :: StoreExpression
 falseStoreExpr =
@@ -69,7 +70,7 @@ spec = do
             MyVar (mkName "var0"),
             Scope
               ( M.fromList
-                  [ (Name "var1", MyBool True),
+                  [ (Name "var1", bool True),
                     (Name "var0", MyVar (mkName "var1"))
                   ]
               )

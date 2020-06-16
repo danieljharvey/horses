@@ -15,7 +15,8 @@ import qualified Data.Text.IO as T
 import Language.Mimsa
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
-import Language.Mimsa.Types (validName)
+import Language.Mimsa.Types (Literal, validName)
+import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
@@ -44,6 +45,9 @@ instance Arbitrary StringType where
 instance Arbitrary Expr where
   arbitrary = genericArbitrary
 
+instance Arbitrary Literal where
+  arbitrary = genericArbitrary
+
 newtype WellTypedExpr = WellTypedExpr Expr
   deriving (Show)
 
@@ -65,19 +69,19 @@ spec = do
       P.runParser parser "one      two " `shouldBe` Right ("", ("one", "two"))
   describe "Language" $ do
     it "Parses True" $ do
-      parseExpr "True" `shouldBe` (Right (MyBool True))
+      parseExpr "True" `shouldBe` (Right (bool True))
     it "Parses False" $ do
-      parseExpr "False" `shouldBe` (Right (MyBool False))
+      parseExpr "False" `shouldBe` (Right (bool False))
     it "Parses 6" $ do
-      parseExpr "6" `shouldBe` (Right (MyInt 6))
+      parseExpr "6" `shouldBe` (Right (int 6))
     it "Parses 1234567" $ do
-      parseExpr "1234567" `shouldBe` (Right (MyInt 1234567))
+      parseExpr "1234567" `shouldBe` (Right (int 1234567))
     it "Parses -6" $ do
-      parseExpr "-6" `shouldBe` Right (MyInt (-6))
+      parseExpr "-6" `shouldBe` Right (int (-6))
     it "Parses +6" $ do
-      parseExpr "+6" `shouldBe` Right (MyInt 6)
+      parseExpr "+6" `shouldBe` Right (int 6)
     it "Parses a string" $ do
-      parseExpr "\"dog\"" `shouldBe` (Right (MyString (StringType "dog")))
+      parseExpr "\"dog\"" `shouldBe` (Right (str (StringType "dog")))
     it "Parses a variable name" $ do
       parseExpr "log"
         `shouldBe` (Right (MyVar (mkName "log")))
@@ -94,15 +98,15 @@ spec = do
       isLeft (parseExpr "log!dog")
         `shouldBe` True
     it "Does a basic let binding" $ do
-      let expected = MyLet (mkName "x") (MyBool True) (MyVar (mkName "x"))
+      let expected = MyLet (mkName "x") (bool True) (MyVar (mkName "x"))
       parseExpr "let x = True in x"
         `shouldBe` Right expected
     it "Does a basic let binding with excessive whitespace" $ do
-      let expected = MyLet (mkName "x") (MyBool True) (MyVar (mkName "x"))
+      let expected = MyLet (mkName "x") (bool True) (MyVar (mkName "x"))
       parseExpr "let       x       =       True       in        x"
         `shouldBe` Right expected
     it "Does a let binding inside parens" $ do
-      let expected = MyLet (mkName "x") (MyBool True) (MyVar (mkName "x"))
+      let expected = MyLet (mkName "x") (bool True) (MyVar (mkName "x"))
       parseExpr "(let x = True in x)"
         `shouldBe` Right expected
     it "Recognises a basic lambda" $ do
@@ -116,18 +120,18 @@ spec = do
         `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
     it "Recognises function application in parens" $ do
       parseExpr "(add 1)"
-        `shouldBe` Right (MyApp (MyVar (mkName "add")) (MyInt 1))
+        `shouldBe` Right (MyApp (MyVar (mkName "add")) (int 1))
     it "Recognises double function application onto a var" $ do
       parseExpr "((add 1) 2)"
-        `shouldBe` Right (MyApp (MyApp (MyVar (mkName "add")) (MyInt 1)) (MyInt 2))
+        `shouldBe` Right (MyApp (MyApp (MyVar (mkName "add")) (int 1)) (int 2))
     it "Recognises an if statement" $ do
-      let expected = MyIf (MyBool True) (MyInt 1) (MyInt 2)
+      let expected = MyIf (bool True) (int 1) (int 2)
       parseExpr' "if True then 1 else 2" `shouldBe` Right expected
     it "Recognises an if statement in parens" $ do
-      let expected = MyIf (MyBool True) (MyInt 1) (MyInt 2)
+      let expected = MyIf (bool True) (int 1) (int 2)
       parseExpr' "(if True then 1 else 2)" `shouldBe` Right expected
     it "Recognises an if statement with lots of whitespace" $ do
-      let expected = MyIf (MyBool True) (MyInt 1) (MyInt 2)
+      let expected = MyIf (bool True) (int 1) (int 2)
       parseExpr "if   True    then    1    else    2" `shouldBe` Right expected
   describe "Expression" $ do
     it "Printing and parsing is an iso" $ do
