@@ -26,10 +26,13 @@ doInference env expr =
   where
     either' = runStateT (infer env expr) M.empty
 
+inferLiteral :: Literal -> App MonoType
+inferLiteral (MyInt _) = pure MTInt
+inferLiteral (MyBool _) = pure MTBool
+inferLiteral (MyString _) = pure MTString
+
 infer :: Environment -> Expr -> App MonoType
-infer _ (MyInt _) = pure MTInt
-infer _ (MyBool _) = pure MTBool
-infer _ (MyString _) = pure MTString
+infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) = case M.lookup name env of
   Just a -> pure a
   _ -> throwError $ T.pack ("Unknown variable " <> show name)

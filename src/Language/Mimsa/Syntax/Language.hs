@@ -18,6 +18,7 @@ import Language.Mimsa.Syntax.Parser (Parser)
 import qualified Language.Mimsa.Syntax.Parser as P
 import Language.Mimsa.Types
   ( Expr (..),
+    Literal (..),
     Name,
     StringType (..),
     mkName,
@@ -74,20 +75,20 @@ boolParser :: Parser Expr
 boolParser = trueParser <|> falseParser
 
 trueParser :: Parser Expr
-trueParser = P.literal "True" $> MyBool True
+trueParser = P.literal "True" $> MyLiteral (MyBool True)
 
 falseParser :: Parser Expr
-falseParser = P.literal "False" $> MyBool False
+falseParser = P.literal "False" $> MyLiteral (MyBool False)
 
 -----
 
 intParser :: Parser Expr
-intParser = MyInt <$> P.integer
+intParser = MyLiteral <$> MyInt <$> P.integer
 
 -----
 
 stringParser :: Parser Expr
-stringParser = (MyString . StringType) <$> (P.between '"')
+stringParser = (MyLiteral . MyString . StringType) <$> (P.between '"')
 
 -----
 
