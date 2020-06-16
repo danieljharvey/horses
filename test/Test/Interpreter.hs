@@ -36,7 +36,15 @@ spec = do
                   (MyApp (MyVar (mkName "id")) (MyInt 1))
               )
         interpret mempty f `shouldBe` Right (MyInt 1)
-      it "let const = \\a -> \b -> a in ((const 1) 2)" $ do
+      it "let const = \\a -> \\b -> a in (const 1)" $ do
+        let f =
+              ( MyLet
+                  (mkName "const")
+                  (MyLambda (mkName "a") (MyLambda (mkName "b") (MyVar (Name "a"))))
+                  (MyApp (MyVar (Name "const")) (MyInt 1))
+              )
+        interpret mempty f `shouldBe` Right (MyLambda (Name "b") (MyVar (Name "a")))
+      it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
               ( MyLet
                   (mkName "const")

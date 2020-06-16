@@ -32,21 +32,23 @@ interpretWithScope (MyLet binder expr body) = do
 interpretWithScope (MyVar a) = do
   found <- gets (M.lookup a . getScope)
   case found of
-    Just expr -> pure expr
+    Just expr -> interpretWithScope expr
     Nothing -> throwError $ "Could not find " <> prettyPrint a
 interpretWithScope (MyApp (MyVar f) value) = do
   expr <- interpretWithScope (MyVar f)
   interpretWithScope (MyApp expr value)
 interpretWithScope (MyApp (MyLambda binder expr) value) =
-  interpretWithScope (MyLet binder expr value)
+  interpretWithScope (MyLet binder value expr)
 interpretWithScope (MyApp (MyApp a b) c) = do
-  a' <- interpretWithScope (MyApp a b)
-  interpretWithScope (MyApp a' c)
+  expr <- interpretWithScope (MyApp a b)
+  interpretWithScope (MyApp expr c)
+interpretWithScope (MyApp (MyLet a b c) d) = do
+  expr <- interpretWithScope (MyLet a b c)
+  interpretWithScope (MyApp expr d)
 interpretWithScope (MyApp (MyBool _) _) = throwError "Cannot apply a value to a boolean"
 interpretWithScope (MyApp (MyInt _) _) = throwError "Cannot apply a value to an integer"
 interpretWithScope (MyApp (MyString _) _) = throwError "Cannot apply a value to a string"
 interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
-interpretWithScope (MyApp (MyLet _ _ _) _) = throwError "Cannot apply a value to an let"
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
 interpretWithScope (MyIf (MyBool pred') true false) =
   if pred'
