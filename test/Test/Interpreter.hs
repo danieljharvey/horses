@@ -6,6 +6,7 @@ module Test.Interpreter
   )
 where
 
+import Data.Either (isLeft)
 import Data.Text (Text)
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Types
@@ -89,3 +90,14 @@ spec = do
       it "if True then 1 else 2" $ do
         let f = (MyIf (bool True) (int 1) (int 2))
         testInterpret mempty f (int 1)
+    describe "BuiltIns" $ do
+      it "Can't find stupidMadeUpFunction" $ do
+        let f = MyBuiltIn (FuncName "stupidMadeUpFunction")
+        result <- interpret mempty f
+        result `shouldSatisfy` isLeft
+      it "Finds and uses randomInt" $ do
+        let f = MyBuiltIn (FuncName "randomInt")
+            scope' = mempty
+        result <- interpret scope' f
+        print result
+        result `shouldSatisfy` \_ -> True

@@ -13,6 +13,8 @@ import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Library
+import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
 type Environment = M.Map Name MonoType
@@ -32,7 +34,9 @@ inferLiteral (MyBool _) = pure MTBool
 inferLiteral (MyString _) = pure MTString
 
 inferBuiltIn :: FuncName -> App MonoType
-inferBuiltIn = undefined
+inferBuiltIn funcName = case M.lookup funcName libraryFunctions of
+  Just (type', _) -> pure type'
+  _ -> throwError $ "Could not find built-in function " <> prettyPrint funcName
 
 infer :: Environment -> Expr -> App MonoType
 infer _ (MyLiteral a) = inferLiteral a
