@@ -14,6 +14,7 @@ import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Library (isLibraryName)
 import Language.Mimsa.Types
 
 -- this turns StoreExpressions back into expressions by substituting their
@@ -53,7 +54,6 @@ doSubstitutions store' (StoreExpression bindings' expr) = do
       )
       (getExprPairs store' bindings')
   pure newExpr
-doSubstitutions _ (BuiltIn funcName) = pure $ MyBuiltIn funcName
 
 -- give me the original key, i'll give you the new one
 substituteKey :: Name -> Swaps -> Name
@@ -82,7 +82,7 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 -- Swaps list
 getNextVar :: [Name] -> Name -> App Name
 getNextVar protected name =
-  if elem name protected
+  if elem name protected || isLibraryName name
     then pure name
     else do
       let makeName :: Int -> Name

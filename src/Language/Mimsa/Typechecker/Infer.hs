@@ -8,14 +8,18 @@ module Language.Mimsa.Typechecker.Infer
   )
 where
 
+import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
+import Data.Coerce
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
+
+type App = StateT Substitutions (Except Text)
 
 type Environment = M.Map Name MonoType
 
@@ -26,24 +30,26 @@ doInference :: Environment -> Expr -> Either Text MonoType
 doInference env expr =
   (fst <$> either')
   where
-    either' = runStateT (infer env expr) M.empty
+    either' = runExcept $ runStateT (infer env expr) M.empty
 
 inferLiteral :: Literal -> App MonoType
 inferLiteral (MyInt _) = pure MTInt
 inferLiteral (MyBool _) = pure MTBool
 inferLiteral (MyString _) = pure MTString
 
-inferBuiltIn :: FuncName -> App MonoType
-inferBuiltIn funcName = case M.lookup funcName libraryFunctions of
+inferBuiltIn :: Name -> App MonoType
+inferBuiltIn name = case M.lookup (coerce name) libraryFunctions of
   Just (type', _) -> pure type'
-  _ -> throwError $ "Could not find built-in function " <> prettyPrint funcName
+  _ -> throwError $ "Could not find built-in function " <> prettyPrint name
+
+inferVarFromScope :: Environment -> Name -> App MonoType
+inferVarFromScope env name = case M.lookup name env of
+  Just a -> pure a
+  _ -> throwError $ T.pack ("Unknown variable " <> show name)
 
 infer :: Environment -> Expr -> App MonoType
 infer _ (MyLiteral a) = inferLiteral a
-infer _ (MyBuiltIn a) = inferBuiltIn a
-infer env (MyVar name) = case M.lookup name env of
-  Just a -> pure a
-  _ -> throwError $ T.pack ("Unknown variable " <> show name)
+infer env (MyVar name) = (inferVarFromScope env name) <|> (inferBuiltIn name)
 infer env (MyLet binder expr body) = do
   tyExpr <- infer env expr
   let newEnv = M.insert binder tyExpr env
@@ -118,8 +124,6 @@ apply (MTUnknown i) = do
 apply (MTFunction args result) =
   MTFunction <$> (apply args) <*> (apply result)
 apply other = pure other
-
-type App = StateT Substitutions (Either Text)
 
 getUnknown :: App MonoType
 getUnknown = do

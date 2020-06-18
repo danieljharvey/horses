@@ -26,7 +26,7 @@ exprs =
         (StringType "hello"),
       Right MTString
     ),
-    (MyVar (mkName "x"), Left "Unknown variable \"x\""),
+    -- (MyVar (mkName "x"), Left "Unknown variable \"x\""),
     (MyLet (mkName "x") (int 42) (bool True), Right MTBool),
     (MyLet (mkName "x") (int 42) (MyVar (mkName "x")), Right MTInt),
     ( MyLet

@@ -92,11 +92,11 @@ spec = do
         testInterpret mempty f (int 1)
     describe "BuiltIns" $ do
       it "Can't find stupidMadeUpFunction" $ do
-        let f = MyBuiltIn (FuncName "stupidMadeUpFunction")
+        let f = MyVar (Name "stupidMadeUpFunction")
         result <- interpret mempty f
         result `shouldSatisfy` isLeft
       it "Finds and uses randomInt" $ do
-        let f = MyBuiltIn (FuncName "randomInt")
+        let f = MyVar (Name "randomInt")
             scope' = mempty
         result <- interpret scope' f
         print result

@@ -6,7 +6,6 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import Language.Mimsa.Syntax
 --
 --
 -- this takes the expression, works out what it needs from it's environment
@@ -15,18 +14,26 @@ import Language.Mimsa.Syntax
 -- by replacing all variables internally with a1, a2 etc, we'll get less
 -- repetition, ie \x -> x and \y -> y will be the same function and thus hash
 
+import Language.Mimsa.Library
+import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
 -- important - we must not count variables brought in via lambdas, as those
 -- aren't external deps
 
 extractVars :: Expr -> Set Name
-extractVars (MyVar a) = S.singleton a
-extractVars (MyIf a b c) = extractVars a <> extractVars b <> extractVars c
-extractVars (MyLet newVar a b) = S.delete newVar (extractVars a <> extractVars b)
-extractVars (MyLambda newVar a) = S.delete newVar (extractVars a)
-extractVars (MyApp a b) = extractVars a <> extractVars b
-extractVars _ = mempty
+extractVars = filterBuiltIns . extractVars_
+
+extractVars_ :: Expr -> Set Name
+extractVars_ (MyVar a) = S.singleton a
+extractVars_ (MyIf a b c) = extractVars_ a <> extractVars_ b <> extractVars_ c
+extractVars_ (MyLet newVar a b) = S.delete newVar (extractVars_ a <> extractVars_ b)
+extractVars_ (MyLambda newVar a) = S.delete newVar (extractVars_ a)
+extractVars_ (MyApp a b) = extractVars_ a <> extractVars_ b
+extractVars_ _ = mempty
+
+filterBuiltIns :: Set Name -> Set Name
+filterBuiltIns = S.filter (not . isLibraryName)
 
 findHashInBindings :: Bindings -> Name -> Either Text ExprHash
 findHashInBindings (Bindings bindings') name = case M.lookup name bindings' of

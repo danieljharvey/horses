@@ -67,6 +67,5 @@ data StoreExpression
       { storeBindings :: Bindings,
         storeExpression :: Expr
       }
-  | BuiltIn {biName :: FuncName}
   deriving (Eq, Ord, Show, Generic)
   deriving (JSON.ToJSON, JSON.FromJSON)
