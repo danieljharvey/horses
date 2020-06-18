@@ -100,6 +100,7 @@ loadBoundExpressions hashes = do
 
 getDependencyHashes :: StoreExpression -> Set ExprHash
 getDependencyHashes (StoreExpression (Bindings bindings') _) = S.fromList (M.elems bindings')
+getDependencyHashes (BuiltIn _) = mempty
 
 recursiveLoadBoundExpressions :: Set ExprHash -> ExceptT Text IO Store
 recursiveLoadBoundExpressions hashes = do

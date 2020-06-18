@@ -8,6 +8,7 @@ module Language.Mimsa.Types.AST
   ( Expr (..),
     Literal (..),
     MonoType (..),
+    FuncName (..),
     StringType (..),
     UniVar (..),
   )
@@ -27,6 +28,10 @@ newtype UniVar = UniVar Int
   deriving stock (Eq, Ord, Generic)
   deriving newtype (Show, Num)
 
+newtype FuncName = FuncName Text
+  deriving stock (Eq, Ord, Generic)
+  deriving newtype (Show, JSON.FromJSON, JSON.ToJSON)
+
 data Literal
   = MyInt Int
   | MyBool Bool
@@ -40,6 +45,7 @@ data Expr
   | MyLambda Name Expr -- binder, body
   | MyApp Expr Expr -- function, argument
   | MyIf Expr Expr Expr -- expr, thencase, elsecase
+  | MyBuiltIn FuncName -- name of an internal func provided by the environment
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 data MonoType

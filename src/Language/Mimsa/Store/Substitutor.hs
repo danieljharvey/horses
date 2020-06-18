@@ -53,6 +53,7 @@ doSubstitutions store' (StoreExpression bindings' expr) = do
       )
       (getExprPairs store' bindings')
   pure newExpr
+doSubstitutions _ (BuiltIn funcName) = pure $ MyBuiltIn funcName
 
 -- give me the original key, i'll give you the new one
 substituteKey :: Name -> Swaps -> Name

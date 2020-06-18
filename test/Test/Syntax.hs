@@ -15,7 +15,11 @@ import qualified Data.Text.IO as T
 import Language.Mimsa
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
-import Language.Mimsa.Types (Literal, validName)
+import Language.Mimsa.Types
+  ( FuncName,
+    Literal,
+    validName,
+  )
 import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck
@@ -46,6 +50,9 @@ instance Arbitrary Expr where
   arbitrary = genericArbitrary
 
 instance Arbitrary Literal where
+  arbitrary = genericArbitrary
+
+instance Arbitrary FuncName where
   arbitrary = genericArbitrary
 
 newtype WellTypedExpr = WellTypedExpr Expr

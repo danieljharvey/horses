@@ -31,8 +31,12 @@ inferLiteral (MyInt _) = pure MTInt
 inferLiteral (MyBool _) = pure MTBool
 inferLiteral (MyString _) = pure MTString
 
+inferBuiltIn :: FuncName -> App MonoType
+inferBuiltIn = undefined
+
 infer :: Environment -> Expr -> App MonoType
 infer _ (MyLiteral a) = inferLiteral a
+infer _ (MyBuiltIn a) = inferBuiltIn a
 infer env (MyVar name) = case M.lookup name env of
   Just a -> pure a
   _ -> throwError $ T.pack ("Unknown variable " <> show name)

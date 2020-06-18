@@ -11,16 +11,17 @@ import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Data.Text (Text)
+import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
-interpret :: Scope -> Expr -> Either Text Expr
+interpret :: Scope -> Expr -> IO (Either Text Expr)
 interpret scope' expr =
-  (fst <$> either')
+  ((fmap . fmap) fst either')
   where
-    either' = runStateT (interpretWithScope expr) scope'
+    either' = runExceptT $ runStateT (interpretWithScope expr) scope'
 
-type App = StateT Scope (Either Text)
+type App = StateT Scope (ExceptT Text IO)
 
 interpretWithScope :: Expr -> App Expr
 interpretWithScope (MyLiteral a) = pure $ MyLiteral a
@@ -43,6 +44,7 @@ interpretWithScope (MyApp (MyApp a b) c) = do
 interpretWithScope (MyApp (MyLet a b c) d) = do
   expr <- interpretWithScope (MyLet a b c)
   interpretWithScope (MyApp expr d)
+interpretWithScope (MyApp (MyBuiltIn _) _) = throwError "Haven't worked out how to apply values to built-ins yet"
 interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"
 interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
@@ -55,3 +57,9 @@ interpretWithScope (MyIf (MyLambda _ _) _ _) = throwError "Predicate for If must
 interpretWithScope (MyIf pred' true false) = do
   predExpr <- interpretWithScope pred'
   interpretWithScope (MyIf predExpr true false)
+interpretWithScope (MyBuiltIn a) = do
+  case M.lookup a libraryFunctions of
+    Just (_, io) -> do
+      expr <- liftIO io
+      pure expr
+    Nothing -> throwError $ "Could not find built-in function " <> prettyPrint a
