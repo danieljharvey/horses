@@ -42,7 +42,10 @@ instance Arbitrary StringType where
     StringType
       <$> suchThat
         arbitrary
-        (\a -> T.length a == T.length (T.filter isGoodChar a))
+        ( \a ->
+            T.length a == T.length (T.filter isGoodChar a)
+              && T.length a > 0
+        )
     where
       isGoodChar = Ch.isAlphaNum
 
