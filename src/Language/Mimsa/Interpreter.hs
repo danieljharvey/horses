@@ -10,7 +10,6 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
-import Data.Coerce
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Library
@@ -34,7 +33,7 @@ useVarFromScope name = do
 
 useVarFromBuiltIn :: Name -> App Expr
 useVarFromBuiltIn name = do
-  case M.lookup (coerce name) libraryFunctions of
+  case getLibraryFunction name of
     Just (_, io) -> do
       expr <- liftIO io
       pure expr

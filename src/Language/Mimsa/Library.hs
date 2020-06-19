@@ -2,21 +2,27 @@
 
 module Language.Mimsa.Library
   ( libraryFunctions,
+    getLibraryFunction,
     isLibraryName,
   )
 where
 
 import Data.Coerce
-import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Types
 import System.Random
 
-libraryFunctions :: Map FuncName (MonoType, IO Expr)
-libraryFunctions = M.singleton (FuncName "randomInt") getRandom
+libraryFunctions :: Library
+libraryFunctions =
+  Library $ M.singleton (FuncName "randomInt") getRandom
 
 isLibraryName :: Name -> Bool
-isLibraryName name = M.member (coerce name) libraryFunctions
+isLibraryName name =
+  M.member (coerce name) (getLibrary libraryFunctions)
+
+getLibraryFunction :: Name -> Maybe (MonoType, IO Expr)
+getLibraryFunction name =
+  M.lookup (coerce name) (getLibrary libraryFunctions)
 
 getRandom :: (MonoType, IO Expr)
 getRandom = (mt, action)

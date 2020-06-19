@@ -80,6 +80,8 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 
 -- get a new name for a var, changing it's reference in Scope and adding it to
 -- Swaps list
+-- we don't do this for built-ins (ie, randomInt) or variables introduced by
+-- lambdas
 getNextVar :: [Name] -> Name -> App Name
 getNextVar protected name =
   if elem name protected || isLibraryName name
@@ -88,7 +90,17 @@ getNextVar protected name =
       let makeName :: Int -> Name
           makeName i = mkName $ "var" <> T.pack (show i)
       nextName <- makeName <$> fst <$> gets (first $ M.size)
-      modify (second $ \(Scope scope') -> Scope $ M.mapKeys (\key -> if key == name then nextName else key) scope')
+      modify
+        ( second $ \(Scope scope') ->
+            Scope $
+              M.mapKeys
+                ( \key ->
+                    if key == name
+                      then nextName
+                      else key
+                )
+                scope'
+        )
       modify (first $ M.insert nextName name)
       pure nextName
 

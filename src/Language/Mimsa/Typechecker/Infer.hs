@@ -11,7 +11,6 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
-import Data.Coerce
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -38,7 +37,7 @@ inferLiteral (MyBool _) = pure MTBool
 inferLiteral (MyString _) = pure MTString
 
 inferBuiltIn :: Name -> App MonoType
-inferBuiltIn name = case M.lookup (coerce name) libraryFunctions of
+inferBuiltIn name = case getLibraryFunction name of
   Just (type', _) -> pure type'
   _ -> throwError $ "Could not find built-in function " <> prettyPrint name
 
