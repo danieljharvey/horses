@@ -41,6 +41,11 @@ spec = do
         let expr = MyLambda (mkName "x") (MyVar (mkName "x"))
         substitute mempty (StoreExpression mempty expr)
           `shouldBe` Right (mempty, expr, mempty)
+    describe "Leaves built-ins alone" $ do
+      it "Leaves randomInt unchanged" $ do
+        let expr = (MyVar (mkName "randomInt"))
+        substitute mempty (StoreExpression mempty expr)
+          `shouldBe` Right (mempty, expr, mempty)
     describe "One level of dep" $ do
       it "Renames the dep to var0" $ do
         let hash = ExprHash 1

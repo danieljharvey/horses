@@ -29,6 +29,7 @@ dependencies:
 - hashable
 - bytestring
 - haskeline 
+- random
 
 library:
   source-dirs: src

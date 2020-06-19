@@ -42,6 +42,9 @@ spec = do
       it "Does not introduce vars introduced in lambda" $ do
         extractVars (MyLambda (Name "newVar") (MyApp (MyVar (Name "keep")) (MyVar (Name "newVar"))))
           `shouldBe` S.singleton (Name "keep")
+      it "Does not introduce built-ins" $ do
+        extractVars (MyVar (Name "randomInt"))
+          `shouldBe` S.empty
     describe "createStoreExpression" $ do
       it "Creates expressions from literals with empty StoreEnv" $ do
         createStoreExpression mempty (int 1)
@@ -68,6 +71,14 @@ spec = do
       it "Looks for vars and can't find them" $ do
         createStoreExpression mempty (MyVar (Name "missing"))
           `shouldBe` Left "A binding for missing could not be found"
+      it "Looks for vars and finds a built-in" $ do
+        createStoreExpression mempty (MyVar (Name "randomInt"))
+          `shouldBe` Right
+            ( StoreExpression
+                { storeBindings = mempty,
+                  storeExpression = MyVar (Name "randomInt")
+                }
+            )
       it "Looks for vars and finds them" $ do
         let hash = ExprHash 1234
             expr = MyVar (Name "missing")

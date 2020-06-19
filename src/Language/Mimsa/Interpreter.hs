@@ -7,31 +7,46 @@ where
 
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
+import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Data.Text (Text)
+import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
-interpret :: Scope -> Expr -> Either Text Expr
+interpret :: Scope -> Expr -> IO (Either Text Expr)
 interpret scope' expr =
-  (fst <$> either')
+  ((fmap . fmap) fst either')
   where
-    either' = runStateT (interpretWithScope expr) scope'
+    either' = runExceptT $ runStateT (interpretWithScope expr) scope'
 
-type App = StateT Scope (Either Text)
+type App = StateT Scope (ExceptT Text IO)
+
+useVarFromScope :: Name -> App Expr
+useVarFromScope name = do
+  found <- gets (M.lookup name . getScope)
+  case found of
+    Just expr -> interpretWithScope expr
+    Nothing -> throwError $ "Could not find " <> prettyPrint name
+
+useVarFromBuiltIn :: Name -> App Expr
+useVarFromBuiltIn name = do
+  case getLibraryFunction name of
+    Just (_, io) -> do
+      expr <- liftIO io
+      pure expr
+    Nothing -> throwError $ "Could not find built-in function " <> prettyPrint name
 
 interpretWithScope :: Expr -> App Expr
 interpretWithScope (MyLiteral a) = pure $ MyLiteral a
 interpretWithScope (MyLet binder expr body) = do
   modify ((<>) (Scope $ M.singleton binder expr))
   interpretWithScope body
-interpretWithScope (MyVar a) = do
-  found <- gets (M.lookup a . getScope)
-  case found of
-    Just expr -> interpretWithScope expr
-    Nothing -> throwError $ "Could not find " <> prettyPrint a
+interpretWithScope (MyVar name) =
+  useVarFromBuiltIn name <|> useVarFromScope name
+    <|> (throwError $ "Unknown variable " <> prettyPrint name)
 interpretWithScope (MyApp (MyVar f) value) = do
   expr <- interpretWithScope (MyVar f)
   interpretWithScope (MyApp expr value)

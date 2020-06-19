@@ -8,6 +8,7 @@ module Language.Mimsa.Types.AST
   ( Expr (..),
     Literal (..),
     MonoType (..),
+    FuncName (..),
     StringType (..),
     UniVar (..),
   )
@@ -26,6 +27,10 @@ newtype StringType = StringType Text
 newtype UniVar = UniVar Int
   deriving stock (Eq, Ord, Generic)
   deriving newtype (Show, Num)
+
+newtype FuncName = FuncName Text
+  deriving stock (Eq, Ord, Generic)
+  deriving newtype (Show, JSON.FromJSON, JSON.ToJSON)
 
 data Literal
   = MyInt Int

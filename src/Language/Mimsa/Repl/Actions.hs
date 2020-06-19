@@ -39,20 +39,22 @@ doReplAction env (ListBindings) = do
   _ <- traverse showBind (getExprPairs (store env) (bindings env))
   pure env
 doReplAction env (Evaluate expr) = do
-  case getTypecheckedStoreExpression env expr
-    >>= ( \(type', _, expr', scope') ->
-            (,) type'
-              <$> interpret scope' expr'
-        ) of
+  case getTypecheckedStoreExpression env expr of
     Left e' -> do
       print e'
       pure env
-    Right (type', simplified) -> do
-      T.putStrLn $
-        prettyPrint simplified
-          <> " :: "
-          <> prettyPrint type'
-      pure env
+    Right (type', _, expr', scope') -> do
+      simplified <- interpret scope' expr'
+      case simplified of
+        Left e -> do
+          print e
+          pure env
+        Right simplified' -> do
+          T.putStrLn $
+            prettyPrint simplified'
+              <> " :: "
+              <> prettyPrint type'
+          pure env
 doReplAction env (Info expr) = do
   case getTypecheckedStoreExpression env expr of
     Left e' -> do
