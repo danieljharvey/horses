@@ -68,7 +68,7 @@ loadBoundExpressions hashes = do
     (Store (M.fromList items'))
 
 getDependencyHashes :: StoreExpression -> Set ExprHash
-getDependencyHashes (StoreExpression (Bindings bindings') _) = S.fromList (M.elems bindings')
+getDependencyHashes = S.fromList . M.elems . getBindings . storeBindings
 
 recursiveLoadBoundExpressions :: Set ExprHash -> ExceptT Text IO Store
 recursiveLoadBoundExpressions hashes = do
