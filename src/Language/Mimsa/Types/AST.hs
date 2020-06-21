@@ -44,9 +44,11 @@ data Expr
   = MyLiteral Literal
   | MyVar Name
   | MyLet Name Expr Expr -- binder, expr, body
+      --  | MyLetPair Name Name Expr Expr -- binderA, binderB, expr, body
   | MyLambda Name Expr -- binder, body
   | MyApp Expr Expr -- function, argument
   | MyIf Expr Expr Expr -- expr, thencase, elsecase
+  | MyPair Expr Expr -- (a,b)
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 data MonoType
@@ -55,6 +57,7 @@ data MonoType
   | MTBool
   | MTUnit
   | MTFunction MonoType MonoType -- argument, result
+  | MTPair MonoType MonoType -- (a,b)
   | MTUnknown (UniVar)
   deriving (Eq, Ord, Show)
 

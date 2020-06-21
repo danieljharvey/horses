@@ -73,6 +73,10 @@ infer env (MyIf condition thenCase elseCase) = do
   _ <- unify tyCond MTBool
   _ <- unify tyThen tyElse
   pure tyThen
+infer env (MyPair a b) = do
+  tyA <- infer env a
+  tyB <- infer env b
+  pure (MTPair tyA tyB)
 
 getUniVars :: MonoType -> [UniVar] -> [UniVar]
 getUniVars (MTFunction argument result) as = (getUniVars argument as) ++ (getUniVars result as)

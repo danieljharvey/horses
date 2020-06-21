@@ -166,76 +166,16 @@ between2 char1 char2 parser =
 -- parser with at least one space after
 thenSpace :: Parser a -> Parser a
 thenSpace parser = right space0 (left parser space1)
-{-
 
-interface Element {
-  name: string;
-  attributes: [string, string][];
-  children: Element[];
-}
-
-export const quotedString: Parser<string> = stringBetween('"', '"');
-
-export const attributePair = pair(
-  identifier,
-  right(matchLiteral("="), quotedString),
-);
-
-export const attributes = zeroOrMore(right(space1, attributePair));
-
-const elementStart: Parser<[string, [string, string][]]> = right(
-  matchLiteral("<"),
-  pair(identifier, attributes),
-);
-
-export const singleElement: Parser<Element> = map(
-  left(elementStart, matchLiteral("/>")),
-  ([name, attributes]) => ({
-    name,
-    attributes,
-    children: [],
-  }),
-);
-
-const openElement = map(
-  left(elementStart, matchLiteral(">")),
-  ([name, attributes]) => ({
-    name,
-    attributes,
-    children: [],
-  }),
-);
-
-const closeElement = (expectedName: string) =>
-  pred(
-    right(matchLiteral("</"), left(identifier, matchLiteral(">"))),
-    (name) => name === expectedName,
-  );
-
-const parentElement = andThen(
-  openElement,
-  (el) =>
-    map(left(zeroOrMore(element()), closeElement(el.name)), (children) => ({
-      ...el,
-      children,
-    })),
-);
-
-export const element = (): Parser<Element> =>
-  either(singleElement, parentElement);
-
-export const runParser = <A>(
-  parser: Parser<A>,
-  input: string,
-): R.Result<Error, [string, A]> => parser.parse(input);
-
-const splitString = (
-  input: string,
-  length: number,
-): [string | null, string] => {
-  const match = input.slice(0, length);
-  const actualMatch = match.length >= length ? match : null;
-  const rest = input.slice(length);
-  return [actualMatch, rest];
-};
--}
+-- recurse, but only once
+leftRec ::
+  Parser a ->
+  Parser (a -> a) ->
+  Parser a
+leftRec p op = rest =<< p
+  where
+    rest x =
+      do
+        f <- op
+        rest (f x)
+        <|> return x

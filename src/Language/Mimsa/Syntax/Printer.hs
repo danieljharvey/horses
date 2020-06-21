@@ -61,6 +61,12 @@ instance Printer Expr where
       <> printSubExpr then'
       <> " else "
       <> printSubExpr else'
+  prettyPrint (MyPair a b) =
+    "("
+      <> printSubExpr a
+      <> ", "
+      <> printSubExpr b
+      <> ")"
 
 inParens :: Expr -> Text
 inParens a = "(" <> prettyPrint a <> ")"
@@ -85,4 +91,5 @@ instance Printer MonoType where
   prettyPrint MTBool = "Boolean"
   prettyPrint MTUnit = "Unit"
   prettyPrint (MTFunction a b) = prettyPrint a <> " -> " <> prettyPrint b
+  prettyPrint (MTPair a b) = "(" <> prettyPrint a <> ", " <> prettyPrint b <> ")"
   prettyPrint (MTUnknown a) = "U" <> prettyPrint a

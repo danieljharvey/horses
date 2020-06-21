@@ -85,7 +85,8 @@ unwrapBuiltIn name (TwoArgs _ _) = do
     )
 
 interpretWithScope :: Expr -> App Expr
-interpretWithScope (MyLiteral a) = pure $ MyLiteral a
+interpretWithScope (MyLiteral a) = pure (MyLiteral a)
+interpretWithScope (MyPair a b) = pure (MyPair a b)
 interpretWithScope (MyLet binder expr body) = do
   modify ((<>) (Scope $ M.singleton binder expr))
   interpretWithScope body
@@ -105,6 +106,7 @@ interpretWithScope (MyApp (MyLet a b c) d) = do
   interpretWithScope (MyApp expr d)
 interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"
 interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
+interpretWithScope (MyApp (MyPair _ _) _) = throwError "Cannot apply a value to a Pair"
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
 interpretWithScope (MyIf (MyLiteral (MyBool pred')) true false) =
   if pred'

@@ -39,8 +39,8 @@ parseExpr' input = snd <$> P.runParser expressionParser input
 expressionParser :: Parser Expr
 expressionParser =
   literalParser
-    <|> complexParser
     <|> varParser
+    <|> complexParser
 
 literalParser :: Parser Expr
 literalParser =
@@ -55,6 +55,7 @@ complexParser =
         ( letParser
             <|> ifParser
             <|> lambdaParser
+            <|> pairParser
         )
    in (P.between2 '(' ')' (parsers <|> appParser)) <|> parsers
 
@@ -160,3 +161,10 @@ thenParser = P.right (P.thenSpace (P.literal "then")) expressionParser
 
 elseParser :: Parser Expr
 elseParser = P.right (P.thenSpace (P.literal "else")) expressionParser
+
+-----
+
+pairParser :: Parser Expr
+pairParser =
+  MyPair <$> (P.right (P.literal "(") expressionParser)
+    <*> P.left (P.right (P.thenSpace (P.literal ",")) expressionParser) (P.literal ")")

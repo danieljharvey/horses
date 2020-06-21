@@ -143,6 +143,8 @@ spec = do
     it "Recognises an if statement with lots of whitespace" $ do
       let expected = MyIf (bool True) (int 1) (int 2)
       parseExpr "if   True    then    1    else    2" `shouldBe` Right expected
+    it "Parses a pair of things" $ do
+      parseExpr "(2, 2)" `shouldBe` Right (MyPair (int 2) (int 2))
   describe "Expression" $ do
     it "Printing and parsing is an iso" $ do
       property $ \(WellTypedExpr x) -> do
