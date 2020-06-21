@@ -145,6 +145,26 @@ spec = do
       parseExpr "if   True    then    1    else    2" `shouldBe` Right expected
     it "Parses a pair of things" $ do
       parseExpr "(2, 2)" `shouldBe` Right (MyPair (int 2) (int 2))
+    it "Parses a pair of things with silly whitespace" $ do
+      parseExpr "(     2    ,   2     )" `shouldBe` Right (MyPair (int 2) (int 2))
+    it "Parses a destructuring of pairs" $ do
+      parseExpr' "let (a,b) = ((True,1)) in a"
+        `shouldBe` Right
+          ( MyLetPair
+              (mkName "a")
+              (mkName "b")
+              (MyPair (bool True) (int 1))
+              (MyVar (mkName "a"))
+          )
+    it "Parses a destructuring of pairs with silly whitespace" $ do
+      parseExpr' "let   (    a ,      b ) =    ((       True, 1) ) in a"
+        `shouldBe` Right
+          ( MyLetPair
+              (mkName "a")
+              (mkName "b")
+              (MyPair (bool True) (int 1))
+              (MyVar (mkName "a"))
+          )
   describe "Expression" $ do
     it "Printing and parsing is an iso" $ do
       property $ \(WellTypedExpr x) -> do

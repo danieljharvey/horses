@@ -52,7 +52,8 @@ literalParser =
 complexParser :: Parser Expr
 complexParser =
   let parsers =
-        ( letParser
+        ( letPairParser
+            <|> letParser
             <|> ifParser
             <|> lambdaParser
             <|> pairParser
@@ -127,6 +128,26 @@ inParser = P.right (P.thenSpace (P.literal "in")) expressionParser
 
 -----
 
+letPairParser :: Parser Expr
+letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
+  where
+    binder1 = do
+      _ <- P.thenSpace (P.literal "let")
+      _ <- P.literal "("
+      _ <- P.space0
+      name <- nameParser
+      _ <- P.space0
+      pure name
+    binder2 = do
+      _ <- P.literal ","
+      _ <- P.space0
+      name <- nameParser
+      _ <- P.space0
+      _ <- P.thenSpace (P.literal ")")
+      pure name
+
+-----
+
 lambdaParser :: Parser Expr
 lambdaParser = MyLambda <$> slashNameBinder <*> arrowExprBinder
 
@@ -165,6 +186,15 @@ elseParser = P.right (P.thenSpace (P.literal "else")) expressionParser
 -----
 
 pairParser :: Parser Expr
-pairParser =
-  MyPair <$> (P.right (P.literal "(") expressionParser)
-    <*> P.left (P.right (P.thenSpace (P.literal ",")) expressionParser) (P.literal ")")
+pairParser = do
+  _ <- P.literal "("
+  _ <- P.space0
+  exprA <- expressionParser
+  _ <- P.space0
+  _ <- P.literal ","
+  _ <- P.space0
+  exprB <- expressionParser
+  _ <- P.space0
+  _ <- P.literal ")"
+  _ <- P.space0
+  pure $ MyPair exprA exprB

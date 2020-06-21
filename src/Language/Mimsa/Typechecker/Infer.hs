@@ -54,6 +54,13 @@ infer env (MyLet binder expr body) = do
   tyExpr <- infer env expr
   let newEnv = M.insert binder tyExpr env
   infer newEnv body
+infer env (MyLetPair binder1 binder2 expr body) = do
+  tyExpr <- infer env expr
+  case tyExpr of
+    (MTPair a b) -> do
+      let newEnv = M.insert binder1 a (M.insert binder2 b env)
+      infer newEnv body
+    a -> throwError $ "Expected a pair but instead found " <> prettyPrint a
 infer env (MyLambda binder body) = do
   tyArg <- getUnknown
   let newEnv = M.insert binder tyArg env

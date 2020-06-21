@@ -90,6 +90,12 @@ interpretWithScope (MyPair a b) = pure (MyPair a b)
 interpretWithScope (MyLet binder expr body) = do
   modify ((<>) (Scope $ M.singleton binder expr))
   interpretWithScope body
+interpretWithScope (MyLetPair binderA binderB (MyPair a b) body) = do
+  let newScopes = Scope $ M.fromList [(binderA, a), (binderB, b)]
+  modify ((<>) newScopes)
+  interpretWithScope body
+interpretWithScope (MyLetPair _ _ a _) =
+  throwError $ "Cannot destructure value " <> prettyPrint a <> " as a pair"
 interpretWithScope (MyVar name) =
   useVarFromBuiltIn name <|> useVarFromScope name
     <|> (throwError $ "Unknown variable " <> prettyPrint name)
@@ -104,6 +110,9 @@ interpretWithScope (MyApp (MyApp a b) c) = do
 interpretWithScope (MyApp (MyLet a b c) d) = do
   expr <- interpretWithScope (MyLet a b c)
   interpretWithScope (MyApp expr d)
+interpretWithScope (MyApp (MyLetPair a b c d) e) = do
+  expr <- interpretWithScope (MyLetPair a b c d)
+  interpretWithScope (MyApp expr e)
 interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"
 interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
 interpretWithScope (MyApp (MyPair _ _) _) = throwError "Cannot apply a value to a Pair"

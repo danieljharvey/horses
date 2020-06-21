@@ -73,7 +73,10 @@ exprs =
     ( MyLambda (mkName "x") (MyApp (MyVar (mkName "x")) (MyVar (mkName "x"))),
       Left "Cannot unify as MTUnknown 1 occurs within MTFunction (MTUnknown 1) (MTUnknown 2)"
     ),
-    (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool))
+    (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
+    ( MyLetPair (mkName "a") (mkName "b") (MyPair (int 1) (bool True)) (MyVar (mkName "a")),
+      Right MTInt
+    )
   ]
 
 identity :: Expr

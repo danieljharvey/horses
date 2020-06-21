@@ -44,7 +44,7 @@ data Expr
   = MyLiteral Literal
   | MyVar Name
   | MyLet Name Expr Expr -- binder, expr, body
-      --  | MyLetPair Name Name Expr Expr -- binderA, binderB, expr, body
+  | MyLetPair Name Name Expr Expr -- binderA, binderB, expr, body
   | MyLambda Name Expr -- binder, body
   | MyApp Expr Expr -- function, argument
   | MyIf Expr Expr Expr -- expr, thencase, elsecase
