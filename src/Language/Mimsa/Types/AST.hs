@@ -11,6 +11,7 @@ module Language.Mimsa.Types.AST
     FuncName (..),
     StringType (..),
     UniVar (..),
+    ForeignFunc (..),
   )
 where
 
@@ -54,3 +55,10 @@ data MonoType
   | MTFunction MonoType MonoType -- argument, result
   | MTUnknown (UniVar)
   deriving (Eq, Ord, Show)
+
+------
+
+data ForeignFunc
+  = NoArgs MonoType (IO Expr)
+  | OneArg (MonoType, MonoType) (Expr -> IO Expr)
+  | TwoArgs (MonoType, MonoType, MonoType) (Expr -> Expr -> IO Expr)

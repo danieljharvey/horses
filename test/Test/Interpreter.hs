@@ -100,4 +100,44 @@ spec = do
             scope' = mempty
         result <- interpret scope' f
         print result
-        result `shouldSatisfy` \_ -> True
+        result `shouldSatisfy` \(Right (MyLiteral (MyInt _))) -> True
+      it "Finds and uses randomIntFrom" $ do
+        let f = MyApp (MyVar (Name "randomIntFrom")) (int 10)
+            scope' = mempty
+        result <- interpret scope' f
+        print result
+        result `shouldSatisfy` (\(Right (MyLiteral (MyInt i))) -> i > 9)
+      it "Uses a two arg function inside an If" $ do
+        let f =
+              MyIf
+                ( MyApp
+                    (MyApp (MyVar (Name "eqInt")) (int 1))
+                    (int 2)
+                )
+                (int 1)
+                (int 0)
+            scope' = mempty
+        result <- interpret scope' f
+        result `shouldBe` Right (int 0)
+      it "Uses var names in lambdas that conflict with the ones inside our built-in function without breaking" $ do
+        let ifFunc =
+              MyLambda
+                (Name "x")
+                ( MyLambda
+                    (Name "y")
+                    ( MyIf
+                        ( MyApp
+                            ( MyApp
+                                (MyVar (Name "eqInt"))
+                                (MyVar (Name "x"))
+                            )
+                            (MyVar (Name "y"))
+                        )
+                        (int 1)
+                        (int 0)
+                    )
+                )
+            f = MyApp (MyApp ifFunc (int 1)) (int 2)
+            scope' = mempty
+        result <- interpret scope' f
+        result `shouldBe` Right (int 0)

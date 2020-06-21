@@ -38,7 +38,7 @@ inferLiteral (MyString _) = pure MTString
 
 inferBuiltIn :: Name -> App MonoType
 inferBuiltIn name = case getLibraryFunction name of
-  Just (type', _) -> pure type'
+  Just ff -> pure $ getFFType ff
   _ -> throwError $ "Could not find built-in function " <> prettyPrint name
 
 inferVarFromScope :: Environment -> Name -> App MonoType
