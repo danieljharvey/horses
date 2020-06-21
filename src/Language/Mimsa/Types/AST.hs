@@ -37,6 +37,7 @@ data Literal
   = MyInt Int
   | MyBool Bool
   | MyString StringType
+  | MyUnit
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 data Expr
@@ -52,6 +53,7 @@ data MonoType
   = MTInt
   | MTString
   | MTBool
+  | MTUnit
   | MTFunction MonoType MonoType -- argument, result
   | MTUnknown (UniVar)
   deriving (Eq, Ord, Show)

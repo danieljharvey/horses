@@ -35,6 +35,7 @@ inferLiteral :: Literal -> App MonoType
 inferLiteral (MyInt _) = pure MTInt
 inferLiteral (MyBool _) = pure MTBool
 inferLiteral (MyString _) = pure MTString
+inferLiteral (MyUnit) = pure MTUnit
 
 inferBuiltIn :: Name -> App MonoType
 inferBuiltIn name = case getLibraryFunction name of

@@ -45,6 +45,7 @@ expressionParser =
 literalParser :: Parser Expr
 literalParser =
   boolParser
+    <|> unitParser
     <|> intParser
     <|> stringParser
 
@@ -66,7 +67,8 @@ protectedNames =
       "then",
       "else",
       "True",
-      "False"
+      "False",
+      "Unit"
     ]
 
 ----
@@ -79,6 +81,11 @@ trueParser = P.literal "True" $> MyLiteral (MyBool True)
 
 falseParser :: Parser Expr
 falseParser = P.literal "False" $> MyLiteral (MyBool False)
+
+-----
+
+unitParser :: Parser Expr
+unitParser = P.literal "Unit" $> MyLiteral MyUnit
 
 -----
 

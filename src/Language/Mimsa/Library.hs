@@ -10,6 +10,8 @@ where
 
 import Data.Coerce
 import qualified Data.Map as M
+import qualified Data.Text.IO as T
+import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 import System.Random
 
@@ -22,7 +24,10 @@ libraryFunctions =
         (FuncName "incrementInt", incrementInt),
         (FuncName "eqInt", eqInt),
         (FuncName "eqBool", eqBool),
-        (FuncName "eqString", eqString)
+        (FuncName "eqString", eqString),
+        (FuncName "logInt", logInt),
+        (FuncName "logString", logString),
+        (FuncName "logBool", logBool)
       ]
 
 isLibraryName :: Name -> Bool
@@ -32,6 +37,20 @@ isLibraryName name =
 getLibraryFunction :: Name -> Maybe ForeignFunc
 getLibraryFunction name =
   M.lookup (coerce name) (getLibrary libraryFunctions)
+
+logInt :: ForeignFunc
+logInt = OneArg (MTInt, MTUnit) logExpr
+
+logString :: ForeignFunc
+logString = OneArg (MTString, MTUnit) logExpr
+
+logBool :: ForeignFunc
+logBool = OneArg (MTBool, MTUnit) logExpr
+
+logExpr :: (Printer p) => p -> IO Expr
+logExpr i = do
+  T.putStrLn (prettyPrint i)
+  pure (MyLiteral (MyUnit))
 
 randomInt :: ForeignFunc
 randomInt = NoArgs MTInt action

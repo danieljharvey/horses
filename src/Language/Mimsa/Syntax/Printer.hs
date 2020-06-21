@@ -34,6 +34,7 @@ instance Printer Literal where
   prettyPrint (MyBool True) = "True"
   prettyPrint (MyBool False) = "False"
   prettyPrint (MyString str) = "\"" <> prettyPrint str <> "\""
+  prettyPrint MyUnit = "Unit"
 
 instance Printer Expr where
   prettyPrint (MyLiteral l) = prettyPrint l
@@ -82,5 +83,6 @@ instance Printer MonoType where
   prettyPrint MTInt = "Int"
   prettyPrint MTString = "String"
   prettyPrint MTBool = "Boolean"
+  prettyPrint MTUnit = "Unit"
   prettyPrint (MTFunction a b) = prettyPrint a <> " -> " <> prettyPrint b
   prettyPrint (MTUnknown a) = "U" <> prettyPrint a
