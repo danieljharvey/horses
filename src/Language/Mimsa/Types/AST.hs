@@ -60,5 +60,5 @@ data MonoType
 
 data ForeignFunc
   = NoArgs MonoType (IO Expr)
-  | OneArg (Name, MonoType) MonoType (Expr -> IO Expr)
-  | TwoArgs (Name, MonoType) (Name, MonoType) MonoType (Expr -> Expr -> IO Expr)
+  | OneArg (MonoType, MonoType) (Expr -> IO Expr)
+  | TwoArgs (MonoType, MonoType, MonoType) (Expr -> Expr -> IO Expr)

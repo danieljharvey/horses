@@ -41,8 +41,7 @@ randomInt = NoArgs MTInt action
 randomIntFrom :: ForeignFunc
 randomIntFrom =
   OneArg
-    (mkName "minimum", MTInt)
-    MTInt
+    (MTInt, MTInt)
     ( \(MyLiteral (MyInt i)) -> do
         val <- randomIO
         pure (MyLiteral (MyInt (max val i)))
@@ -51,32 +50,25 @@ randomIntFrom =
 incrementInt :: ForeignFunc
 incrementInt =
   OneArg
-    (mkName "x", MTInt)
-    MTInt
+    (MTInt, MTInt)
     (\(MyLiteral (MyInt i)) -> pure (MyLiteral (MyInt (i + 1))))
 
 eqInt :: ForeignFunc
 eqInt =
   TwoArgs
-    (mkName "x", MTInt)
-    (mkName "y", MTInt)
-    MTBool
+    (MTInt, MTInt, MTBool)
     equality
 
 eqBool :: ForeignFunc
 eqBool =
   TwoArgs
-    (mkName "x", MTBool)
-    (mkName "y", MTBool)
-    MTBool
+    (MTBool, MTBool, MTBool)
     equality
 
 eqString :: ForeignFunc
 eqString =
   TwoArgs
-    (mkName "x", MTString)
-    (mkName "y", MTString)
-    MTBool
+    (MTString, MTString, MTBool)
     equality
 
 equality :: (Monad m) => Expr -> Expr -> m Expr
@@ -84,5 +76,5 @@ equality x y = pure $ MyLiteral (MyBool (x == y))
 
 getFFType :: ForeignFunc -> MonoType
 getFFType (NoArgs out _) = out
-getFFType (OneArg (_, in1) out _) = MTFunction in1 out
-getFFType (TwoArgs (_, in1) (_, in2) out _) = MTFunction in1 (MTFunction in2 out)
+getFFType (OneArg (in1, out) _) = MTFunction in1 out
+getFFType (TwoArgs (in1, in2, out) _) = MTFunction in1 (MTFunction in2 out)
