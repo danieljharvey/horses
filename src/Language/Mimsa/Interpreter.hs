@@ -12,6 +12,7 @@ import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
@@ -31,13 +32,44 @@ useVarFromScope name = do
     Just expr -> interpretWithScope expr
     Nothing -> throwError $ "Could not find " <> prettyPrint name
 
+wrappedName :: Name -> Name
+wrappedName (Name n) = Name (n <> "__unwrapped")
+
+unwrap :: Name -> Maybe Name
+unwrap (Name n) = Name <$> T.stripSuffix "__unwrapped" n
+
+-- return lambda to new function, with __unwrapped in the name
+-- if Name ends in __unwrapped then run it else return new function...
 useVarFromBuiltIn :: Name -> App Expr
-useVarFromBuiltIn name = do
-  case getLibraryFunction name of
-    Just (_, io) -> do
-      expr <- liftIO io
-      pure expr
-    Nothing -> throwError $ "Could not find built-in function " <> prettyPrint name
+useVarFromBuiltIn name =
+  case unwrap name of
+    Nothing -> case getLibraryFunction name of
+      Just ff -> unwrapBuiltIn name ff
+      Nothing -> throwError $ "Could not find built-in function " <> prettyPrint name
+    Just unwrappedName -> case getLibraryFunction unwrappedName of
+      Just ff -> runBuiltIn ff
+      Nothing -> throwError $ "Could not find built-in function " <> prettyPrint name
+
+runBuiltIn :: ForeignFunc -> App Expr
+runBuiltIn (NoArgs _ io) = liftIO io
+runBuiltIn (OneArg (v1, _) _ io) = do
+  expr1 <- useVarFromScope v1
+  liftIO (io expr1)
+runBuiltIn (TwoArgs (v1, _) (v2, _) _ io) = do
+  expr1 <- useVarFromScope v1
+  expr2 <- useVarFromScope v2
+  liftIO (io expr1 expr2)
+
+unwrapBuiltIn :: Name -> ForeignFunc -> App Expr
+unwrapBuiltIn _ (NoArgs t' io) = runBuiltIn (NoArgs t' io)
+unwrapBuiltIn name (OneArg (v1, _) _ _) = do
+  let wrapped = wrappedName name -- rename our foreign func
+  modify ((<>) (Scope $ M.singleton wrapped (MyVar name))) -- add new name to scope
+  pure (MyLambda v1 (MyVar wrapped))
+unwrapBuiltIn name (TwoArgs (v1, _) (v2, _) _ _) = do
+  let wrapped = wrappedName name
+  modify ((<>) (Scope $ M.singleton wrapped (MyVar name))) -- add new name to scope
+  pure (MyLambda v1 (MyLambda v2 (MyVar wrapped)))
 
 interpretWithScope :: Expr -> App Expr
 interpretWithScope (MyLiteral a) = pure $ MyLiteral a

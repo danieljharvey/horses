@@ -42,7 +42,7 @@ newtype Store = Store {getStore :: Map ExprHash StoreExpression}
 
 -- our built-in functions for doing IO things etc
 -- statically defined and made available in all computations for now
-newtype Library = Library {getLibrary :: Map FuncName (MonoType, IO Expr)}
+newtype Library = Library {getLibrary :: Map FuncName ForeignFunc}
 
 -- a list of names to hashes
 newtype Bindings = Bindings {getBindings :: Map Name ExprHash}
