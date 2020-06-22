@@ -10,3 +10,8 @@ int a = MyLiteral (MyInt a)
 
 str :: StringType -> Expr
 str a = MyLiteral (MyString a)
+
+--
+--
+unknown :: Int -> MonoType
+unknown i = MTUnknown (UniVar i)

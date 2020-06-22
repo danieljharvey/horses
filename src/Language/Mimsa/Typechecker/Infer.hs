@@ -14,6 +14,7 @@ import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Debug.Trace
 import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
@@ -58,8 +59,25 @@ infer env (MyLetPair binder1 binder2 expr body) = do
   tyExpr <- infer env expr
   case tyExpr of
     (MTPair a b) -> do
+      _ <- unify tyExpr (MTPair a b)
       let newEnv = M.insert binder1 a (M.insert binder2 b env)
       infer newEnv body
+    (MTUnknown i) -> do
+      unknownA <- getUnknown
+      unknownB <- getUnknown
+      _ <- modify (\s -> traceShowId s)
+      let matches =
+            (\name -> (name, MTPair unknownA unknownB))
+              <$> findByUniVar env i
+      let newEnv =
+            ( M.fromList
+                [ (binder1, unknownA),
+                  (binder2, unknownB)
+                ]
+            )
+              <> M.fromList matches
+              <> env
+      infer (traceShowId newEnv) body
     a -> throwError $ "Expected a pair but instead found " <> prettyPrint a
 infer env (MyLambda binder body) = do
   tyArg <- getUnknown
@@ -84,6 +102,9 @@ infer env (MyPair a b) = do
   tyA <- infer env a
   tyB <- infer env b
   pure (MTPair tyA tyB)
+
+findByUniVar :: Environment -> UniVar -> [Name]
+findByUniVar env i = M.keys $ M.filter ((==) (MTUnknown i)) env
 
 getUniVars :: MonoType -> [UniVar] -> [UniVar]
 getUniVars (MTFunction argument result) as = (getUniVars argument as) ++ (getUniVars result as)
@@ -110,6 +131,9 @@ unify' (MTUnknown i) b = do
 unify' a (MTUnknown i) = do
   occursCheck i a
   unifyVariable i a
+unify' (MTPair a b) (MTPair a' b') = do
+  unify a a'
+  unify b b'
 unify' a b =
   throwError $ T.pack $
     "Can't match " <> show a <> " with " <> show b
@@ -134,6 +158,7 @@ apply (MTUnknown i) = do
     Nothing -> pure (MTUnknown i)
 apply (MTFunction args result) =
   MTFunction <$> (apply args) <*> (apply result)
+apply (MTPair a b) = MTPair <$> (apply a) <*> (apply b)
 apply other = pure other
 
 getUnknown :: App MonoType

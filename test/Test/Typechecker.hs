@@ -76,6 +76,16 @@ exprs =
     (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
     ( MyLetPair (mkName "a") (mkName "b") (MyPair (int 1) (bool True)) (MyVar (mkName "a")),
       Right MTInt
+    ),
+    ( MyLambda
+        (mkName "x")
+        ( MyLetPair
+            (mkName "a")
+            (mkName "b")
+            (MyVar (mkName "x"))
+            (MyVar (mkName "a"))
+        ),
+      Right (MTFunction (MTPair (unknown 1) (unknown 2)) (unknown 1))
     )
   ]
 
