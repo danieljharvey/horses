@@ -12,6 +12,7 @@ module Language.Mimsa.Types.AST
     StringType (..),
     UniVar (..),
     ForeignFunc (..),
+    Scheme (..),
   )
 where
 
@@ -58,8 +59,10 @@ data MonoType
   | MTUnit
   | MTFunction MonoType MonoType -- argument, result
   | MTPair MonoType MonoType -- (a,b)
-  | MTUnknown (UniVar)
+  | MTVar Name
   deriving (Eq, Ord, Show)
+
+data Scheme = Scheme [Name] MonoType
 
 ------
 

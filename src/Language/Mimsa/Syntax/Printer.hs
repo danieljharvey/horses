@@ -6,6 +6,7 @@ module Language.Mimsa.Syntax.Printer
   )
 where
 
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types
@@ -16,6 +17,9 @@ class Printer a where
 
   default prettyPrint :: (Show a) => a -> Text
   prettyPrint = T.pack . show
+
+instance (Printer a) => Printer (S.Set a) where
+  prettyPrint as = foldr (\a as' -> prettyPrint a <> ", " <> as') "" as
 
 instance Printer Name where
   prettyPrint = getName
@@ -98,4 +102,4 @@ instance Printer MonoType where
   prettyPrint MTUnit = "Unit"
   prettyPrint (MTFunction a b) = prettyPrint a <> " -> " <> prettyPrint b
   prettyPrint (MTPair a b) = "(" <> prettyPrint a <> ", " <> prettyPrint b <> ")"
-  prettyPrint (MTUnknown a) = "U" <> prettyPrint a
+  prettyPrint (MTVar a) = "U" <> prettyPrint a

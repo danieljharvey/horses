@@ -37,16 +37,16 @@ exprs =
       Right MTInt
     ),
     ( MyLambda (mkName "x") (bool True),
-      Right $ MTFunction (MTUnknown (UniVar 1)) MTBool
+      Right $ MTFunction (unknown 1) MTBool
     ),
     ( identity,
-      Right $ MTFunction (MTUnknown (UniVar 1)) (MTUnknown (UniVar 1))
+      Right $ MTFunction (unknown 1) (unknown 1)
     ),
     ( MyLambda (mkName "x") (MyLambda (mkName "y") (MyVar (mkName "x"))),
       Right $
         MTFunction
-          (MTUnknown (UniVar 1))
-          (MTFunction (MTUnknown (UniVar 2)) (MTUnknown (UniVar 1)))
+          (unknown 1)
+          (MTFunction (unknown 2) (unknown 1))
     ),
     ( MyApp
         ( MyLambda
@@ -71,7 +71,7 @@ exprs =
       Left "Can't match MTBool with MTInt"
     ),
     ( MyLambda (mkName "x") (MyApp (MyVar (mkName "x")) (MyVar (mkName "x"))),
-      Left "Cannot unify as MTUnknown 1 occurs within MTFunction (MTUnknown 1) (MTUnknown 2)"
+      Left "U1 fails occurs check"
     ),
     (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
     ( MyLetPair (mkName "a") (mkName "b") (MyPair (int 1) (bool True)) (MyVar (mkName "a")),
@@ -99,9 +99,17 @@ spec = do
       _ <- traverse (\(code, expected) -> startInference code `shouldBe` expected) exprs
       pure ()
     it "We can use identity with two different datatypes in one expression" $ do
-      let lambda = (MyLambda (mkName "x") (MyIf (MyApp identity (MyVar (mkName "x"))) (MyApp identity (int 1)) (MyApp identity (int 2))))
+      let lambda =
+            ( MyLambda
+                (mkName "x")
+                ( MyIf
+                    (MyApp identity (MyVar (mkName "x")))
+                    (MyApp identity (int 1))
+                    (MyApp identity (int 2))
+                )
+            )
       let expr = MyApp lambda (bool True)
-      (startInference lambda) `shouldBe` Right (MTFunction (MTUnknown 1) MTInt)
+      (startInference lambda) `shouldBe` Right (MTFunction MTBool MTInt)
       (startInference expr) `shouldBe` Right MTInt
 {-  describe "Serialisation" $ do
 it "Round trip" $ do

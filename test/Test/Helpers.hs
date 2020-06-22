@@ -1,5 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Test.Helpers where
 
+import qualified Data.Text as T
 import Language.Mimsa.Types
 
 bool :: Bool -> Expr
@@ -12,6 +15,5 @@ str :: StringType -> Expr
 str a = MyLiteral (MyString a)
 
 --
---
 unknown :: Int -> MonoType
-unknown i = MTUnknown (UniVar i)
+unknown i = MTVar (mkName $ "U" <> (T.pack (show i)))
