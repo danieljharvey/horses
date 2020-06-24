@@ -123,7 +123,15 @@ spec = do
         let f =
               ( MyLet
                   (mkName "fst")
-                  (MyLambda (mkName "tuple") (MyLetPair (mkName "a") (mkName "b") (MyVar (mkName "tuple")) (MyVar (mkName "a"))))
+                  ( MyLambda
+                      (mkName "tuple")
+                      ( MyLetPair
+                          (mkName "a")
+                          (mkName "b")
+                          (MyVar (mkName "tuple"))
+                          (MyVar (mkName "a"))
+                      )
+                  )
                   ( MyLet
                       (mkName "x")
                       (MyPair (int 1) (int 2))
