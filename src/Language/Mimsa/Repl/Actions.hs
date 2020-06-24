@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Repl.Actions
   ( doReplAction,
+    evaluateText,
   )
 where
 
@@ -116,9 +117,18 @@ fromItem name expr hash = StoreEnv
     bindings = Bindings $ M.singleton name hash
   }
 
-getTypecheckedStoreExpression :: StoreEnv -> Expr -> Either Text (MonoType, StoreExpression, Expr, Scope)
+getTypecheckedStoreExpression ::
+  StoreEnv ->
+  Expr ->
+  Either Text (MonoType, StoreExpression, Expr, Scope)
 getTypecheckedStoreExpression env expr = do
   storeExpr <- createStoreExpression (bindings env) expr
   (_, newExpr, scope) <- substitute (store env) storeExpr
   exprType <- getType scope newExpr
   pure (exprType, storeExpr, newExpr, scope)
+
+evaluateText :: StoreEnv -> Text -> Either Text (MonoType, Expr, Scope)
+evaluateText env input = do
+  expr <- parseExpr input
+  (mt, _, expr', scope') <- getTypecheckedStoreExpression env expr
+  pure (mt, expr', scope')

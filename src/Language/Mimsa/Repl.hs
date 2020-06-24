@@ -1,13 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl where
+module Language.Mimsa.Repl
+  ( repl,
+    evaluateText,
+  )
+where
 
 import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Language.Mimsa.Repl.Actions (doReplAction)
+import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (loadEnvironment, saveEnvironment)

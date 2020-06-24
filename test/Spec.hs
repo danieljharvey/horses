@@ -10,6 +10,7 @@ where
 import Test.Hspec
 import qualified Test.Interpreter as Interpreter
 import Test.QuickCheck.Instances ()
+import qualified Test.Repl as Repl
 import qualified Test.Resolver as Resolver
 import qualified Test.Substitutor as Substitutor
 import qualified Test.Syntax as Syntax
@@ -22,3 +23,4 @@ main = hspec $ do
   Resolver.spec
   Substitutor.spec
   Typechecker.spec
+  Repl.spec

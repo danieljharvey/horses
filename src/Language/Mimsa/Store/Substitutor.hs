@@ -89,7 +89,7 @@ getNextVar protected name =
     else do
       let makeName :: Int -> Name
           makeName i = mkName $ "var" <> T.pack (show i)
-      nextName <- makeName <$> fst <$> gets (first $ M.size)
+      nextName <- makeName <$> gets (M.size . fst)
       modify
         ( second $ \(Scope scope') ->
             Scope $
@@ -107,9 +107,17 @@ getNextVar protected name =
 -- step through Expr, replacing vars with numbered variables
 mapVar :: [Name] -> Expr -> App Expr
 mapVar p (MyVar a) = MyVar <$> getNextVar p a
-mapVar p (MyLet name a b) = MyLet <$> pure name <*> (mapVar p a) <*> (mapVar p b)
+mapVar p (MyLet name a b) =
+  MyLet <$> pure name <*> (mapVar p a)
+    <*> (mapVar (p <> [name]) b)
 mapVar p (MyLambda name a) =
   MyLambda <$> pure name <*> (mapVar (p <> [name]) a)
 mapVar p (MyApp a b) = MyApp <$> (mapVar p a) <*> (mapVar p b)
 mapVar p (MyIf a b c) = MyIf <$> (mapVar p a) <*> (mapVar p b) <*> (mapVar p c)
-mapVar _ a = pure a
+mapVar p (MyPair a b) = MyPair <$> (mapVar p a) <*> (mapVar p b)
+mapVar p (MyLetPair nameA nameB a b) =
+  MyLetPair
+    <$> pure nameA <*> pure nameB
+      <*> (mapVar (p <> [nameA, nameB]) a)
+      <*> (mapVar (p <> [nameA, nameB]) b)
+mapVar _ (MyLiteral a) = pure (MyLiteral a)
