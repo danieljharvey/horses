@@ -114,17 +114,14 @@ nameParser =
 -----
 
 letParser :: Parser Expr
-letParser = MyLet <$> binderParser <*> equalsParser <*> inParser
-
-binderParser :: Parser Name
-binderParser = P.right (P.thenSpace (P.literal "let")) (P.thenSpace nameParser)
-
-equalsParser :: Parser Expr
-equalsParser =
-  P.right (P.thenSpace (P.literal "=")) (P.thenSpace expressionParser)
-
-inParser :: Parser Expr
-inParser = P.right (P.thenSpace (P.literal "in")) expressionParser
+letParser = do
+  _ <- P.thenSpace (P.literal "let")
+  name <- P.thenSpace nameParser
+  _ <- P.thenSpace (P.literal "=")
+  expr <- P.thenSpace expressionParser
+  _ <- P.thenSpace (P.literal "in")
+  inExpr <- expressionParser
+  pure (MyLet name expr inExpr)
 
 -----
 
@@ -145,6 +142,13 @@ letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
       _ <- P.space0
       _ <- P.thenSpace (P.literal ")")
       pure name
+
+equalsParser :: Parser Expr
+equalsParser =
+  P.right (P.thenSpace (P.literal "=")) (P.thenSpace expressionParser)
+
+inParser :: Parser Expr
+inParser = P.right (P.thenSpace (P.literal "in")) expressionParser
 
 -----
 

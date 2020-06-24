@@ -85,7 +85,17 @@ exprs =
             (MyVar (mkName "x"))
             (MyVar (mkName "a"))
         ),
-      Right (MTFunction (MTPair (unknown 1) (unknown 2)) (unknown 1))
+      Right (MTFunction (MTPair (unknown 2) (unknown 3)) (unknown 2))
+    ),
+    ( MyLet
+        (mkName "fst")
+        (MyLambda (mkName "tuple") (MyLetPair (mkName "a") (mkName "b") (MyVar (mkName "tuple")) (MyVar (mkName "a"))))
+        ( MyLet
+            (mkName "x")
+            (MyPair (int 1) (int 2))
+            (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
+        ),
+      Right MTInt
     )
   ]
 

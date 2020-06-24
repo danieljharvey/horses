@@ -130,10 +130,23 @@ spec = do
         `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
     it "Recognises function application in parens" $ do
       parseExpr "(add 1)"
-        `shouldBe` Right (MyApp (MyVar (mkName "add")) (int 1))
+        `shouldBe` Right
+          ( MyApp
+              ( MyVar (mkName "add")
+              )
+              (int 1)
+          )
     it "Recognises double function application onto a var" $ do
       parseExpr "((add 1) 2)"
-        `shouldBe` Right (MyApp (MyApp (MyVar (mkName "add")) (int 1)) (int 2))
+        `shouldBe` Right
+          ( MyApp
+              ( MyApp
+                  ( MyVar (mkName "add")
+                  )
+                  (int 1)
+              )
+              (int 2)
+          )
     it "Recognises an if statement" $ do
       let expected = MyIf (bool True) (int 1) (int 2)
       parseExpr' "if True then 1 else 2" `shouldBe` Right expected
@@ -144,9 +157,29 @@ spec = do
       let expected = MyIf (bool True) (int 1) (int 2)
       parseExpr "if   True    then    1    else    2" `shouldBe` Right expected
     it "Parses a pair of things" $ do
-      parseExpr "(2, 2)" `shouldBe` Right (MyPair (int 2) (int 2))
+      parseExpr "(2, 2)"
+        `shouldBe` Right
+          (MyPair (int 2) (int 2))
     it "Parses a pair of things with silly whitespace" $ do
-      parseExpr "(     2    ,   2     )" `shouldBe` Right (MyPair (int 2) (int 2))
+      parseExpr "(     2    ,   2     )"
+        `shouldBe` Right
+          (MyPair (int 2) (int 2))
+    it "Allows a let to use a pair" $ do
+      parseExpr "let x = ((1,2)) in x"
+        `shouldBe` Right
+          ( MyLet
+              (mkName "x")
+              (MyPair (int 1) (int 2))
+              (MyVar (mkName "x"))
+          )
+    it "Allows a let to use a pair and apply to it" $ do
+      parseExpr "let x = ((1,2)) in (fst x)"
+        `shouldBe` Right
+          ( MyLet
+              (mkName "x")
+              (MyPair (int 1) (int 2))
+              (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
+          )
     it "Parses a destructuring of pairs" $ do
       parseExpr' "let (a,b) = ((True,1)) in a"
         `shouldBe` Right

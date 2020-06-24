@@ -94,9 +94,25 @@ infer env (MyLet binder expr body) = do
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
-infer env (MyLetPair _binder1 _binder2 expr _body) = do
-  (_s1, tyExpr) <- infer env expr
+infer env (MyLetPair binder1 binder2 expr body) = do
+  (s1, tyExpr) <- infer env expr
   case tyExpr of
+    (MTVar _a) -> do
+      tyA <- getUnknown
+      tyB <- getUnknown
+      let schemeA = Scheme [] (applySubst s1 tyA)
+          schemeB = Scheme [] (applySubst s1 tyB)
+          newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
+      s2 <- unify tyExpr (MTPair tyA tyB)
+      (s3, tyBody) <- infer (applySubstCtx (s2 `composeSubst` s1) newEnv) body
+      pure (s3 `composeSubst` s2 `composeSubst` s1, tyBody)
+    (MTPair a b) -> do
+      let schemeA = Scheme [] (applySubst s1 a)
+          schemeB = Scheme [] (applySubst s1 b)
+          newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
+      s2 <- unify tyExpr (MTPair a b)
+      (s3, tyBody) <- infer (applySubstCtx (s2 `composeSubst` s1) newEnv) body
+      pure (s3 `composeSubst` s2 `composeSubst` s1, tyBody)
     a -> throwError $ "Expected a pair but instead found " <> prettyPrint a
 infer env (MyLambda binder body) = do
   tyBinder <- getUnknown

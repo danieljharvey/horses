@@ -94,6 +94,9 @@ interpretWithScope (MyLetPair binderA binderB (MyPair a b) body) = do
   let newScopes = Scope $ M.fromList [(binderA, a), (binderB, b)]
   modify ((<>) newScopes)
   interpretWithScope body
+interpretWithScope (MyLetPair binderA binderB (MyVar v) body) = do
+  expr <- interpretWithScope (MyVar v)
+  interpretWithScope (MyLetPair binderA binderB expr body)
 interpretWithScope (MyLetPair _ _ a _) =
   throwError $ "Cannot destructure value " <> prettyPrint a <> " as a pair"
 interpretWithScope (MyVar name) =

@@ -102,4 +102,4 @@ instance Printer MonoType where
   prettyPrint MTUnit = "Unit"
   prettyPrint (MTFunction a b) = prettyPrint a <> " -> " <> prettyPrint b
   prettyPrint (MTPair a b) = "(" <> prettyPrint a <> ", " <> prettyPrint b <> ")"
-  prettyPrint (MTVar a) = "U" <> prettyPrint a
+  prettyPrint (MTVar a) = prettyPrint a
