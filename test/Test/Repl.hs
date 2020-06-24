@@ -54,3 +54,17 @@ spec = do
         result
           `shouldBe` Right
             (MTInt, int 1)
+      it "\\x -> if x then Left 1 else Right \"yes\"" $ do
+        result <- eval stdLib "\\x -> if x then Right \"yes\" else Left 1"
+        result
+          `shouldBe` Right
+            ( MTFunction MTBool (MTSum MTInt MTString),
+              ( MyLambda
+                  (mkName "x")
+                  ( MyIf
+                      (MyVar (mkName "x"))
+                      (MySum MyRight (str' "yes"))
+                      (MySum MyLeft (int 1))
+                  )
+              )
+            )

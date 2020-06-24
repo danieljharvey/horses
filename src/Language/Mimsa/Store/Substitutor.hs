@@ -120,4 +120,5 @@ mapVar p (MyLetPair nameA nameB a b) =
     <$> pure nameA <*> pure nameB
       <*> (mapVar (p <> [nameA, nameB]) a)
       <*> (mapVar (p <> [nameA, nameB]) b)
+mapVar p (MySum side a) = MySum <$> pure side <*> (mapVar p a)
 mapVar _ (MyLiteral a) = pure (MyLiteral a)

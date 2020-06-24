@@ -18,6 +18,7 @@ import qualified Language.Mimsa.Syntax as P
 import Language.Mimsa.Types
   ( FuncName,
     Literal,
+    SumSide,
     validName,
   )
 import Test.Helpers
@@ -48,6 +49,9 @@ instance Arbitrary StringType where
         )
     where
       isGoodChar = Ch.isAlphaNum
+
+instance Arbitrary SumSide where
+  arbitrary = genericArbitrary
 
 instance Arbitrary Expr where
   arbitrary = genericArbitrary

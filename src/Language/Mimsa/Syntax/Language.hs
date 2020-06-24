@@ -21,6 +21,7 @@ import Language.Mimsa.Types
     Literal (..),
     Name,
     StringType (..),
+    SumSide (..),
     mkName,
     validName,
   )
@@ -57,6 +58,7 @@ complexParser =
             <|> ifParser
             <|> lambdaParser
             <|> pairParser
+            <|> sumParser
         )
    in (P.between2 '(' ')' (parsers <|> appParser)) <|> parsers
 
@@ -70,7 +72,9 @@ protectedNames =
       "else",
       "True",
       "False",
-      "Unit"
+      "Unit",
+      "Left",
+      "Right"
     ]
 
 ----
@@ -202,3 +206,17 @@ pairParser = do
   _ <- P.literal ")"
   _ <- P.space0
   pure $ MyPair exprA exprB
+
+-----
+
+sumParser :: Parser Expr
+sumParser = leftParser <|> rightParser
+  where
+    leftParser = do
+      _ <- P.thenSpace (P.literal "Left")
+      expr <- expressionParser
+      pure (MySum MyLeft expr)
+    rightParser = do
+      _ <- P.thenSpace (P.literal "Right")
+      expr <- expressionParser
+      pure (MySum MyRight expr)

@@ -116,6 +116,9 @@ interpretWithScope (MyApp (MyLet a b c) d) = do
 interpretWithScope (MyApp (MyLetPair a b c d) e) = do
   expr <- interpretWithScope (MyLetPair a b c d)
   interpretWithScope (MyApp expr e)
+interpretWithScope (MySum s a) = pure (MySum s a)
+interpretWithScope (MyApp (MySum MyLeft _) _) = throwError "Cannot apply a value to a Left value"
+interpretWithScope (MyApp (MySum MyRight _) _) = throwError "Cannot apply a value to a Right value"
 interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"
 interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
 interpretWithScope (MyApp (MyPair _ _) _) = throwError "Cannot apply a value to a Pair"
