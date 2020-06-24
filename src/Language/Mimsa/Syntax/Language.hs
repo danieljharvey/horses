@@ -39,8 +39,8 @@ parseExpr' input = snd <$> P.runParser expressionParser input
 expressionParser :: Parser Expr
 expressionParser =
   literalParser
-    <|> complexParser
     <|> varParser
+    <|> complexParser
 
 literalParser :: Parser Expr
 literalParser =
@@ -52,9 +52,11 @@ literalParser =
 complexParser :: Parser Expr
 complexParser =
   let parsers =
-        ( letParser
+        ( letPairParser
+            <|> letParser
             <|> ifParser
             <|> lambdaParser
+            <|> pairParser
         )
    in (P.between2 '(' ')' (parsers <|> appParser)) <|> parsers
 
@@ -112,10 +114,34 @@ nameParser =
 -----
 
 letParser :: Parser Expr
-letParser = MyLet <$> binderParser <*> equalsParser <*> inParser
+letParser = do
+  _ <- P.thenSpace (P.literal "let")
+  name <- P.thenSpace nameParser
+  _ <- P.thenSpace (P.literal "=")
+  expr <- P.thenSpace expressionParser
+  _ <- P.thenSpace (P.literal "in")
+  inExpr <- expressionParser
+  pure (MyLet name expr inExpr)
 
-binderParser :: Parser Name
-binderParser = P.right (P.thenSpace (P.literal "let")) (P.thenSpace nameParser)
+-----
+
+letPairParser :: Parser Expr
+letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
+  where
+    binder1 = do
+      _ <- P.thenSpace (P.literal "let")
+      _ <- P.literal "("
+      _ <- P.space0
+      name <- nameParser
+      _ <- P.space0
+      pure name
+    binder2 = do
+      _ <- P.literal ","
+      _ <- P.space0
+      name <- nameParser
+      _ <- P.space0
+      _ <- P.thenSpace (P.literal ")")
+      pure name
 
 equalsParser :: Parser Expr
 equalsParser =
@@ -160,3 +186,19 @@ thenParser = P.right (P.thenSpace (P.literal "then")) expressionParser
 
 elseParser :: Parser Expr
 elseParser = P.right (P.thenSpace (P.literal "else")) expressionParser
+
+-----
+
+pairParser :: Parser Expr
+pairParser = do
+  _ <- P.literal "("
+  _ <- P.space0
+  exprA <- expressionParser
+  _ <- P.space0
+  _ <- P.literal ","
+  _ <- P.space0
+  exprB <- expressionParser
+  _ <- P.space0
+  _ <- P.literal ")"
+  _ <- P.space0
+  pure $ MyPair exprA exprB

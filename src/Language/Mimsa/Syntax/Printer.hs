@@ -6,6 +6,7 @@ module Language.Mimsa.Syntax.Printer
   )
 where
 
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types
@@ -16,6 +17,9 @@ class Printer a where
 
   default prettyPrint :: (Show a) => a -> Text
   prettyPrint = T.pack . show
+
+instance (Printer a) => Printer (S.Set a) where
+  prettyPrint as = foldr (\a as' -> prettyPrint a <> ", " <> as') "" as
 
 instance Printer Name where
   prettyPrint = getName
@@ -45,6 +49,12 @@ instance Printer Expr where
       <> printSubExpr expr1
       <> " in "
       <> printSubExpr expr2
+  prettyPrint (MyLetPair var1 var2 expr1 body) =
+    "let (" <> prettyPrint var1 <> ", " <> prettyPrint var2
+      <> ") = "
+      <> printSubExpr expr1
+      <> " in "
+      <> printSubExpr body
   prettyPrint (MyLambda binder expr) =
     "\\"
       <> prettyPrint binder
@@ -61,6 +71,12 @@ instance Printer Expr where
       <> printSubExpr then'
       <> " else "
       <> printSubExpr else'
+  prettyPrint (MyPair a b) =
+    "("
+      <> printSubExpr a
+      <> ", "
+      <> printSubExpr b
+      <> ")"
 
 inParens :: Expr -> Text
 inParens a = "(" <> prettyPrint a <> ")"
@@ -85,4 +101,5 @@ instance Printer MonoType where
   prettyPrint MTBool = "Boolean"
   prettyPrint MTUnit = "Unit"
   prettyPrint (MTFunction a b) = prettyPrint a <> " -> " <> prettyPrint b
-  prettyPrint (MTUnknown a) = "U" <> prettyPrint a
+  prettyPrint (MTPair a b) = "(" <> prettyPrint a <> ", " <> prettyPrint b <> ")"
+  prettyPrint (MTVar a) = prettyPrint a

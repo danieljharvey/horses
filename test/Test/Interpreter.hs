@@ -119,6 +119,27 @@ spec = do
             scope' = mempty
         result <- interpret scope' f
         result `shouldBe` Right (int 0)
+      it "Destructures a pair" $ do
+        let f =
+              ( MyLet
+                  (mkName "fst")
+                  ( MyLambda
+                      (mkName "tuple")
+                      ( MyLetPair
+                          (mkName "a")
+                          (mkName "b")
+                          (MyVar (mkName "tuple"))
+                          (MyVar (mkName "a"))
+                      )
+                  )
+                  ( MyLet
+                      (mkName "x")
+                      (MyPair (int 1) (int 2))
+                      (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
+                  )
+              )
+        result <- interpret mempty f
+        result `shouldBe` Right (int 1)
       it "Uses var names in lambdas that conflict with the ones inside our built-in function without breaking" $ do
         let ifFunc =
               MyLambda
