@@ -98,6 +98,19 @@ infer env (MyLet binder expr body) = do
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
+infer env (MyCase sumExpr leftExpr rightExpr) = do
+  (s1, tySum) <- infer env sumExpr
+  case tySum of
+    (MTSum a b) -> do
+      tyLeftRes <- getUnknown
+      tyRightRes <- getUnknown
+      (s2, tyLeftFunc) <- infer (applySubstCtx s1 env) leftExpr
+      (s3, tyRightFunc) <- infer (applySubstCtx (s2 `composeSubst` s1) env) rightExpr
+      s4 <- unify (MTFunction a tyLeftRes) tyLeftFunc
+      s5 <- unify (MTFunction b tyRightRes) tyRightFunc
+      let subs = s5 `composeSubst` s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1
+      pure (subs, applySubst subs tyLeftRes)
+    a -> throwError $ "Expected to case match on a pair but instead found " <> prettyPrint a
 infer env (MyLetPair binder1 binder2 expr body) = do
   (s1, tyExpr) <- infer env expr
   case tyExpr of

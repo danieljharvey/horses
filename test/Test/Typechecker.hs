@@ -96,6 +96,18 @@ exprs =
             (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
         ),
       Right MTInt
+    ),
+    ( MyCase
+        (MySum MyLeft (int 1))
+        (MyLambda (mkName "l") (str' "Left!"))
+        (MyLambda (mkName "r") (str' "Right!")),
+      Right MTString
+    ),
+    ( MyCase
+        (MySum MyRight (int 1))
+        (MyLambda (mkName "l") (str' "Left!"))
+        (MyLambda (mkName "r") (str' "Right!")),
+      Right MTString
     )
   ]
 

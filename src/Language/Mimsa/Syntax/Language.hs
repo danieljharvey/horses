@@ -59,6 +59,7 @@ complexParser =
             <|> lambdaParser
             <|> pairParser
             <|> sumParser
+            <|> caseParser
         )
    in (P.between2 '(' ')' (parsers <|> appParser)) <|> parsers
 
@@ -70,6 +71,8 @@ protectedNames =
       "if",
       "then",
       "else",
+      "case",
+      "of",
       "True",
       "False",
       "Unit",
@@ -220,3 +223,21 @@ sumParser = leftParser <|> rightParser
       _ <- P.thenSpace (P.literal "Right")
       expr <- expressionParser
       pure (MySum MyRight expr)
+
+----
+
+caseParser :: Parser Expr
+caseParser = do
+  _ <- P.thenSpace (P.literal "case")
+  sumExpr <- sumParser <|> varParser
+  _ <- P.thenSpace (P.literal "of")
+  _ <- P.thenSpace (P.literal "Left")
+  _ <- (P.literal "(")
+  leftExpr <- lambdaParser <|> varParser
+  _ <- P.thenSpace (P.literal ")")
+  _ <- P.thenSpace (P.literal "|")
+  _ <- P.thenSpace (P.literal "Right")
+  _ <- P.literal "("
+  rightExpr <- lambdaParser <|> varParser
+  _ <- P.literal ")"
+  pure (MyCase sumExpr leftExpr rightExpr)

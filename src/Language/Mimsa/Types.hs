@@ -9,6 +9,7 @@ module Language.Mimsa.Types
     StoreEnv (..),
     Bindings (..),
     Scope (..),
+    SumSide (..),
     Store (..),
     Library (..),
     StoreExpression (..),

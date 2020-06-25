@@ -79,6 +79,14 @@ instance Printer Expr where
       <> ")"
   prettyPrint (MySum MyLeft a) = "Left " <> printSubExpr a
   prettyPrint (MySum MyRight b) = "Right " <> printSubExpr b
+  prettyPrint (MyCase sumExpr leftFunc rightFunc) =
+    "case "
+      <> printSubExpr sumExpr
+      <> " of Left ("
+      <> printSubExpr leftFunc
+      <> ") | Right ("
+      <> printSubExpr rightFunc
+      <> ")"
 
 inParens :: Expr -> Text
 inParens a = "(" <> prettyPrint a <> ")"

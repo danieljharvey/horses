@@ -53,6 +53,7 @@ data Expr
   | MyLambda Name Expr -- binder, body
   | MyApp Expr Expr -- function, argument
   | MyIf Expr Expr Expr -- expr, thencase, elsecase
+  | MyCase Expr Expr Expr -- sumExpr, leftCase, rightCase
   | MyPair Expr Expr -- (a,b)
   | MySum SumSide Expr -- Left a | Right b
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
