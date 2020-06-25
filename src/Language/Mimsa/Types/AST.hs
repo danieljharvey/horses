@@ -9,6 +9,7 @@ module Language.Mimsa.Types.AST
     Literal (..),
     MonoType (..),
     FuncName (..),
+    SumSide (..),
     StringType (..),
     UniVar (..),
     ForeignFunc (..),
@@ -41,6 +42,9 @@ data Literal
   | MyUnit
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
+data SumSide = MyLeft | MyRight
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
+
 data Expr
   = MyLiteral Literal
   | MyVar Name
@@ -49,7 +53,9 @@ data Expr
   | MyLambda Name Expr -- binder, body
   | MyApp Expr Expr -- function, argument
   | MyIf Expr Expr Expr -- expr, thencase, elsecase
+  | MyCase Expr Expr Expr -- sumExpr, leftCase, rightCase
   | MyPair Expr Expr -- (a,b)
+  | MySum SumSide Expr -- Left a | Right b
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 data MonoType
@@ -59,6 +65,7 @@ data MonoType
   | MTUnit
   | MTFunction MonoType MonoType -- argument, result
   | MTPair MonoType MonoType -- (a,b)
+  | MTSum MonoType MonoType -- a | b
   | MTVar Name
   deriving (Eq, Ord, Show)
 

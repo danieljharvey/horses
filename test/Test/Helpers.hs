@@ -2,6 +2,7 @@
 
 module Test.Helpers where
 
+import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types
 
@@ -13,6 +14,9 @@ int a = MyLiteral (MyInt a)
 
 str :: StringType -> Expr
 str a = MyLiteral (MyString a)
+
+str' :: Text -> Expr
+str' = str . StringType
 
 --
 unknown :: Int -> MonoType

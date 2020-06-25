@@ -77,6 +77,16 @@ instance Printer Expr where
       <> ", "
       <> printSubExpr b
       <> ")"
+  prettyPrint (MySum MyLeft a) = "Left " <> printSubExpr a
+  prettyPrint (MySum MyRight b) = "Right " <> printSubExpr b
+  prettyPrint (MyCase sumExpr leftFunc rightFunc) =
+    "case "
+      <> printSubExpr sumExpr
+      <> " of Left ("
+      <> printSubExpr leftFunc
+      <> ") | Right ("
+      <> printSubExpr rightFunc
+      <> ")"
 
 inParens :: Expr -> Text
 inParens a = "(" <> prettyPrint a <> ")"
@@ -103,3 +113,4 @@ instance Printer MonoType where
   prettyPrint (MTFunction a b) = prettyPrint a <> " -> " <> prettyPrint b
   prettyPrint (MTPair a b) = "(" <> prettyPrint a <> ", " <> prettyPrint b <> ")"
   prettyPrint (MTVar a) = prettyPrint a
+  prettyPrint (MTSum a b) = "Sum " <> prettyPrint a <> " " <> prettyPrint b

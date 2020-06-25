@@ -102,6 +102,17 @@ interpretWithScope (MyLetPair _ _ a _) =
 interpretWithScope (MyVar name) =
   useVarFromBuiltIn name <|> useVarFromScope name
     <|> (throwError $ "Unknown variable " <> prettyPrint name)
+interpretWithScope (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) = do
+  interpretWithScope (MyApp (MyLambda binderL exprL) a)
+interpretWithScope (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) = do
+  interpretWithScope (MyApp (MyLambda binderR exprR) b)
+interpretWithScope (MyCase (MyVar a) l r) = do
+  expr <- interpretWithScope (MyVar a)
+  interpretWithScope (MyCase expr l r)
+interpretWithScope (MyCase (MyApp a b) l r) = do
+  expr <- interpretWithScope (MyApp a b)
+  interpretWithScope (MyCase expr l r)
+interpretWithScope (MyCase a _ _) = throwError $ "Cannot case match on " <> prettyPrint a
 interpretWithScope (MyApp (MyVar f) value) = do
   expr <- interpretWithScope (MyVar f)
   interpretWithScope (MyApp expr value)
@@ -116,9 +127,13 @@ interpretWithScope (MyApp (MyLet a b c) d) = do
 interpretWithScope (MyApp (MyLetPair a b c d) e) = do
   expr <- interpretWithScope (MyLetPair a b c d)
   interpretWithScope (MyApp expr e)
+interpretWithScope (MySum s a) = pure (MySum s a)
+interpretWithScope (MyApp (MySum MyLeft _) _) = throwError "Cannot apply a value to a Left value"
+interpretWithScope (MyApp (MySum MyRight _) _) = throwError "Cannot apply a value to a Right value"
 interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"
 interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
 interpretWithScope (MyApp (MyPair _ _) _) = throwError "Cannot apply a value to a Pair"
+interpretWithScope (MyApp (MyCase _ _ _) _) = throwError "Cannot apply a value to a case match"
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
 interpretWithScope (MyIf (MyLiteral (MyBool pred')) true false) =
   if pred'

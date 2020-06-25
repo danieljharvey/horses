@@ -21,6 +21,7 @@ import Language.Mimsa.Types
     Literal (..),
     Name,
     StringType (..),
+    SumSide (..),
     mkName,
     validName,
   )
@@ -57,6 +58,8 @@ complexParser =
             <|> ifParser
             <|> lambdaParser
             <|> pairParser
+            <|> sumParser
+            <|> caseParser
         )
    in (P.between2 '(' ')' (parsers <|> appParser)) <|> parsers
 
@@ -68,9 +71,13 @@ protectedNames =
       "if",
       "then",
       "else",
+      "case",
+      "of",
       "True",
       "False",
-      "Unit"
+      "Unit",
+      "Left",
+      "Right"
     ]
 
 ----
@@ -202,3 +209,35 @@ pairParser = do
   _ <- P.literal ")"
   _ <- P.space0
   pure $ MyPair exprA exprB
+
+-----
+
+sumParser :: Parser Expr
+sumParser = leftParser <|> rightParser
+  where
+    leftParser = do
+      _ <- P.thenSpace (P.literal "Left")
+      expr <- expressionParser
+      pure (MySum MyLeft expr)
+    rightParser = do
+      _ <- P.thenSpace (P.literal "Right")
+      expr <- expressionParser
+      pure (MySum MyRight expr)
+
+----
+
+caseParser :: Parser Expr
+caseParser = do
+  _ <- P.thenSpace (P.literal "case")
+  sumExpr <- expressionParser
+  _ <- P.thenSpace (P.literal "of")
+  _ <- P.thenSpace (P.literal "Left")
+  _ <- (P.literal "(")
+  leftExpr <- lambdaParser <|> varParser
+  _ <- P.thenSpace (P.literal ")")
+  _ <- P.thenSpace (P.literal "|")
+  _ <- P.thenSpace (P.literal "Right")
+  _ <- P.literal "("
+  rightExpr <- lambdaParser <|> varParser
+  _ <- P.literal ")"
+  pure (MyCase sumExpr leftExpr rightExpr)

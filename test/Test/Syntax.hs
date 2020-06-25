@@ -6,7 +6,6 @@ module Test.Syntax
   )
 where
 
--- import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.Either (isLeft, isRight)
 import Data.Text (Text)
@@ -48,6 +47,9 @@ instance Arbitrary StringType where
         )
     where
       isGoodChar = Ch.isAlphaNum
+
+instance Arbitrary SumSide where
+  arbitrary = genericArbitrary
 
 instance Arbitrary Expr where
   arbitrary = genericArbitrary
@@ -197,6 +199,25 @@ spec = do
               (mkName "b")
               (MyPair (bool True) (int 1))
               (MyVar (mkName "a"))
+          )
+    it "Parses a case statement" $ do
+      parseExpr "case horse of Left (\\l -> True) | Right (\\r -> False)"
+        `shouldBe` Right
+          ( MyCase
+              (MyVar (mkName "horse"))
+              (MyLambda (mkName "l") (bool True))
+              (MyLambda (mkName "r") (bool False))
+          )
+    it "Parses a case statement with an apply in the sum" $ do
+      parseExpr "case (isTen 9) of Left (\\r -> \"It's not ten\") | Right (\\l -> \"It's ten!\")"
+        `shouldBe` Right
+          ( MyCase
+              ( MyApp
+                  (MyVar (mkName "isTen"))
+                  (int 9)
+              )
+              (MyLambda (mkName "r") (str' "It's not ten"))
+              (MyLambda (mkName "l") (str' "It's ten!"))
           )
   describe "Expression" $ do
     it "Printing and parsing is an iso" $ do

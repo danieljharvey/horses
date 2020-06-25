@@ -70,7 +70,11 @@ applySubst subst ty = case ty of
     MTPair
       (applySubst subst a)
       (applySubst subst b)
-  a -> a
+  MTSum a b -> MTSum (applySubst subst a) (applySubst subst b)
+  MTInt -> MTInt
+  MTString -> MTString
+  MTBool -> MTBool
+  MTUnit -> MTUnit
 
 composeSubst :: Substitutions -> Substitutions -> Substitutions
 composeSubst s1 s2 = M.union (M.map (applySubst s1) s2) s1
@@ -94,6 +98,19 @@ infer env (MyLet binder expr body) = do
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
+infer env (MyCase sumExpr leftExpr rightExpr) = do
+  (s1, tySum) <- infer env sumExpr
+  case tySum of
+    (MTSum a b) -> do
+      tyLeftRes <- getUnknown
+      tyRightRes <- getUnknown
+      (s2, tyLeftFunc) <- infer (applySubstCtx s1 env) leftExpr
+      (s3, tyRightFunc) <- infer (applySubstCtx (s2 `composeSubst` s1) env) rightExpr
+      s4 <- unify (MTFunction a tyLeftRes) tyLeftFunc
+      s5 <- unify (MTFunction b tyRightRes) tyRightFunc
+      let subs = s5 `composeSubst` s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1
+      pure (subs, applySubst subs tyLeftRes)
+    a -> throwError $ "Expected to case match on a pair but instead found " <> prettyPrint a
 infer env (MyLetPair binder1 binder2 expr body) = do
   (s1, tyExpr) <- infer env expr
   case tyExpr of
@@ -128,19 +145,29 @@ infer env (MyApp function argument) = do
 infer env (MyIf condition thenCase elseCase) = do
   (s1, tyCond) <- infer env condition
   (s2, tyThen) <- infer (applySubstCtx s1 env) thenCase
-  (s3, tyElse) <- infer (applySubstCtx s2 env) elseCase
-  s4 <- unify tyCond MTBool
-  s5 <- unify tyThen tyElse
+  (s3, tyElse) <- infer (applySubstCtx (s2 `composeSubst` s1) env) elseCase
+  s4 <- unify tyThen tyElse
+  s5 <- unify tyCond MTBool
+  let subs =
+        s5 `composeSubst` s4 `composeSubst` s3
+          `composeSubst` s2
+          `composeSubst` s1
   pure
-    ( s5 `composeSubst` s4 `composeSubst` s3
-        `composeSubst` s2
-        `composeSubst` s1,
-      tyThen
+    ( subs,
+      applySubst subs tyElse
     )
 infer env (MyPair a b) = do
   (s1, tyA) <- infer env a
   (s2, tyB) <- infer (applySubstCtx s1 env) b
   pure (s2 `composeSubst` s1, MTPair tyA tyB)
+infer env (MySum MyLeft left') = do
+  tyRight <- getUnknown
+  (s1, tyLeft) <- infer env left'
+  pure (s1, MTSum tyLeft (applySubst s1 tyRight))
+infer env (MySum MyRight right') = do
+  tyLeft <- getUnknown
+  (s1, tyRight) <- infer env right'
+  pure (s1, MTSum (applySubst s1 tyLeft) tyRight)
 
 freeTypeVars :: MonoType -> S.Set Name
 freeTypeVars ty = case ty of
@@ -168,7 +195,11 @@ unify (MTFunction l r) (MTFunction l' r') = do
   pure (s2 `composeSubst` s1)
 unify (MTPair a b) (MTPair a' b') = do
   s1 <- unify a a'
-  s2 <- unify b b'
+  s2 <- unify (applySubst s1 b) (applySubst s1 b')
+  pure (s2 `composeSubst` s1)
+unify (MTSum a b) (MTSum a' b') = do
+  s1 <- unify a a'
+  s2 <- unify (applySubst s1 b) (applySubst s1 b')
   pure (s2 `composeSubst` s1)
 unify (MTVar u) t = varBind u t
 unify t (MTVar u) = varBind u t

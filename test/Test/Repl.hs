@@ -14,26 +14,52 @@ import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 
-fstExpr :: Expr
-fstExpr =
-  ( MyLambda
-      (mkName "tuple")
-      ( MyLetPair
-          (mkName "a")
-          (mkName "b")
-          (MyVar (mkName "tuple"))
-          (MyVar (mkName "a"))
-      )
-  )
+fstExpr :: StoreExpression
+fstExpr = StoreExpression mempty expr'
+  where
+    expr' =
+      MyLambda
+        (mkName "tuple")
+        ( MyLetPair
+            (mkName "a")
+            (mkName "b")
+            (MyVar (mkName "tuple"))
+            (MyVar (mkName "a"))
+        )
 
-fstStoreExpr :: StoreExpression
-fstStoreExpr = StoreExpression mempty fstExpr
+isTenExpr :: StoreExpression
+isTenExpr = StoreExpression mempty expr'
+  where
+    expr' =
+      MyLambda
+        (mkName "i")
+        ( MyIf
+            ( MyApp
+                ( MyApp
+                    (MyVar (mkName "eqInt"))
+                    (MyVar (mkName "i"))
+                )
+                (int 10)
+            )
+            (MySum MyRight (MyVar (mkName "i")))
+            (MySum MyLeft (MyVar (mkName ("i"))))
+        )
 
 stdLib :: StoreEnv
 stdLib = StoreEnv store' bindings'
   where
-    store' = Store (M.singleton (ExprHash 1) fstStoreExpr)
-    bindings' = Bindings (M.singleton (mkName "fst") (ExprHash 1))
+    store' =
+      Store $
+        M.fromList
+          [ (ExprHash 1, fstExpr),
+            (ExprHash 2, isTenExpr)
+          ]
+    bindings' =
+      Bindings $
+        M.fromList
+          [ (mkName "fst", ExprHash 1),
+            (mkName "isTen", ExprHash 2)
+          ]
 
 eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr))
 eval env input =
@@ -54,3 +80,26 @@ spec = do
         result
           `shouldBe` Right
             (MTInt, int 1)
+      it "\\x -> if x then Left 1 else Right \"yes\"" $ do
+        result <- eval stdLib "\\x -> if x then Right \"yes\" else Left 1"
+        result
+          `shouldBe` Right
+            ( MTFunction MTBool (MTSum MTInt MTString),
+              ( MyLambda
+                  (mkName "x")
+                  ( MyIf
+                      (MyVar (mkName "x"))
+                      (MySum MyRight (str' "yes"))
+                      (MySum MyLeft (int 1))
+                  )
+              )
+            )
+      it "case (isTen 9) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")" $ do
+        result <- eval stdLib "case (isTen 9) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")"
+        result
+          `shouldBe` Right
+            (MTString, str' "It's not ten")
+        result2 <- eval stdLib "case (isTen 10) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")"
+        result2
+          `shouldBe` Right
+            (MTString, str' "It's ten!")
