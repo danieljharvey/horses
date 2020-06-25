@@ -229,7 +229,7 @@ sumParser = leftParser <|> rightParser
 caseParser :: Parser Expr
 caseParser = do
   _ <- P.thenSpace (P.literal "case")
-  sumExpr <- sumParser <|> varParser
+  sumExpr <- expressionParser
   _ <- P.thenSpace (P.literal "of")
   _ <- P.thenSpace (P.literal "Left")
   _ <- (P.literal "(")

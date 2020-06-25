@@ -109,6 +109,9 @@ interpretWithScope (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) = do
 interpretWithScope (MyCase (MyVar a) l r) = do
   expr <- interpretWithScope (MyVar a)
   interpretWithScope (MyCase expr l r)
+interpretWithScope (MyCase (MyApp a b) l r) = do
+  expr <- interpretWithScope (MyApp a b)
+  interpretWithScope (MyCase expr l r)
 interpretWithScope (MyCase a _ _) = throwError $ "Cannot case match on " <> prettyPrint a
 interpretWithScope (MyApp (MyVar f) value) = do
   expr <- interpretWithScope (MyVar f)

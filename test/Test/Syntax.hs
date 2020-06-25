@@ -6,12 +6,11 @@ module Test.Syntax
   )
 where
 
--- import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.Either (isLeft, isRight)
 import Data.Text (Text)
 import qualified Data.Text as T
---import qualified Data.Text.IO as T
+import qualified Data.Text.IO as T
 import Language.Mimsa
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
@@ -201,13 +200,32 @@ spec = do
               (MyPair (bool True) (int 1))
               (MyVar (mkName "a"))
           )
-{-  describe "Expression" $ do
-it "Printing and parsing is an iso" $ do
-  property $ \(WellTypedExpr x) -> do
-    case startInference x of
-      Right type' -> do
-        T.putStrLn ""
-        T.putStrLn (prettyPrint type')
-      _ -> pure ()
-    T.putStrLn (prettyPrint x)
-    parseExpr (prettyPrint x) `shouldBe` Right x -}
+    it "Parses a case statement" $ do
+      parseExpr "case horse of Left (\\l -> True) | Right (\\r -> False)"
+        `shouldBe` Right
+          ( MyCase
+              (MyVar (mkName "horse"))
+              (MyLambda (mkName "l") (bool True))
+              (MyLambda (mkName "r") (bool False))
+          )
+    it "Parses a case statement with an apply in the sum" $ do
+      parseExpr "case (isTen 9) of Left (\\r -> \"It's not ten\") | Right (\\l -> \"It's ten!\")"
+        `shouldBe` Right
+          ( MyCase
+              ( MyApp
+                  (MyVar (mkName "isTen"))
+                  (int 9)
+              )
+              (MyLambda (mkName "r") (str' "It's not ten"))
+              (MyLambda (mkName "l") (str' "It's ten!"))
+          )
+  describe "Expression" $ do
+    it "Printing and parsing is an iso" $ do
+      property $ \(WellTypedExpr x) -> do
+        case startInference x of
+          Right type' -> do
+            T.putStrLn ""
+            T.putStrLn (prettyPrint type')
+          _ -> pure ()
+        T.putStrLn (prettyPrint x)
+        parseExpr (prettyPrint x) `shouldBe` Right x
