@@ -16,6 +16,7 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import Debug.Trace
 import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
@@ -102,14 +103,27 @@ infer env (MyCase sumExpr leftExpr rightExpr) = do
   (s1, tySum) <- infer env sumExpr
   case tySum of
     (MTSum a b) -> do
-      tyLeftRes <- getUnknown
-      tyRightRes <- getUnknown
       (s2, tyLeftFunc) <- infer (applySubstCtx s1 env) leftExpr
       (s3, tyRightFunc) <- infer (applySubstCtx (s2 `composeSubst` s1) env) rightExpr
+      tyLeftRes <- getUnknown
+      tyRightRes <- getUnknown
       s4 <- unify (MTFunction a tyLeftRes) tyLeftFunc
       s5 <- unify (MTFunction b tyRightRes) tyRightFunc
       let subs = s5 `composeSubst` s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1
       pure (subs, applySubst subs tyLeftRes)
+    (MTVar _) -> do
+      tyL <- getUnknown
+      tyR <- getUnknown
+      s2 <- unify (MTSum tyL tyR) tySum
+      (s3, tyLeftFunc) <- infer (applySubstCtx (s2 `composeSubst` s1) env) leftExpr
+      (s4, tyRightFunc) <- infer (applySubstCtx (s3 `composeSubst` s2 `composeSubst` s1) env) rightExpr
+      tyLeftRes <- getUnknown
+      tyRightRes <- getUnknown
+      let subs1 = traceShowId $ s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1
+      s5 <- unify (MTFunction tyL tyLeftRes) tyLeftFunc
+      s6 <- unify (MTFunction tyR tyRightRes) tyRightFunc
+      let subs2 = traceShowId $ s6 `composeSubst` s5 `composeSubst` subs1
+      pure (subs2, applySubst subs2 tyLeftRes)
     a -> throwError $ "Expected to case match on a pair but instead found " <> prettyPrint a
 infer env (MyLetPair binder1 binder2 expr body) = do
   (s1, tyExpr) <- infer env expr

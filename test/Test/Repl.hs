@@ -45,6 +45,17 @@ isTenExpr = StoreExpression mempty expr'
             (MySum MyLeft (MyVar (mkName ("i"))))
         )
 
+eqTenExpr :: StoreExpression
+eqTenExpr = StoreExpression mempty expr'
+  where
+    expr' =
+      MyLambda
+        (mkName "i")
+        ( MyApp
+            (MyVar (mkName "eqInt"))
+            (MyVar (mkName "i"))
+        )
+
 stdLib :: StoreEnv
 stdLib = StoreEnv store' bindings'
   where
@@ -52,13 +63,15 @@ stdLib = StoreEnv store' bindings'
       Store $
         M.fromList
           [ (ExprHash 1, fstExpr),
-            (ExprHash 2, isTenExpr)
+            (ExprHash 2, isTenExpr),
+            (ExprHash 3, eqTenExpr)
           ]
     bindings' =
       Bindings $
         M.fromList
           [ (mkName "fst", ExprHash 1),
-            (mkName "isTen", ExprHash 2)
+            (mkName "isTen", ExprHash 2),
+            (mkName "eqTen", ExprHash 3)
           ]
 
 eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr))
@@ -103,3 +116,31 @@ spec = do
         result2
           `shouldBe` Right
             (MTString, str' "It's ten!")
+      it "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right (eqTen r))" $ do
+        result <- eval stdLib "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right (eqTen r))"
+        result
+          `shouldBe` Right
+            ( MTFunction
+                (MTSum (MTVar (mkName "U6")) MTInt)
+                (MTSum (MTVar (mkName "U6")) MTBool),
+              ( MyLambda
+                  (mkName "sum")
+                  ( MyCase
+                      (MyVar (mkName "sum"))
+                      ( MyLambda
+                          (mkName "l")
+                          (MySum MyLeft (MyVar (mkName "l")))
+                      )
+                      ( MyLambda
+                          (mkName "r")
+                          ( MySum
+                              MyRight
+                              ( MyApp
+                                  (MyVar (mkName "var0"))
+                                  (MyVar (mkName "r"))
+                              )
+                          )
+                      )
+                  )
+              )
+            )
