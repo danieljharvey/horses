@@ -88,6 +88,13 @@ inferVarFromScope env name =
       pure (mempty, ty)
     _ -> throwError $ T.pack ("Unknown variable " <> show name)
 
+inferCaseExpr :: MonoType -> MonoType -> App (Substitutions, MonoType)
+inferCaseExpr tyFunc tyValue = case tyFunc of
+  (MTFunction tyArg tyBody) -> do
+    lS1 <- unify tyValue tyArg
+    pure (lS1, applySubst lS1 tyBody)
+  _ -> throwError "Left side of case must be a lambda function"
+
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
@@ -105,11 +112,18 @@ infer env (MyCase sumExpr leftExpr rightExpr) = do
     (MTSum a b) -> do
       (s2, tyLeftFunc) <- infer (applySubstCtx s1 env) leftExpr
       (s3, tyRightFunc) <- infer (applySubstCtx (s2 `composeSubst` s1) env) rightExpr
-      tyLeftRes <- getUnknown
-      tyRightRes <- getUnknown
-      s4 <- unify (MTFunction a tyLeftRes) tyLeftFunc
-      s5 <- unify (MTFunction b tyRightRes) tyRightFunc
-      let subs = s5 `composeSubst` s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1
+      (s4, tyLeftRes) <- inferCaseExpr tyLeftFunc a
+      (s5, tyRightRes) <- inferCaseExpr tyRightFunc b
+      s6 <- unify (MTFunction a tyLeftRes) tyLeftFunc
+      s7 <- unify (MTFunction b tyRightRes) tyRightFunc
+      let subs =
+            s7
+              `composeSubst` s6
+              `composeSubst` s5
+              `composeSubst` s4
+              `composeSubst` s3
+              `composeSubst` s2
+              `composeSubst` s1
       pure (subs, applySubst subs tyLeftRes)
     (MTVar _) -> do
       tyL <- getUnknown

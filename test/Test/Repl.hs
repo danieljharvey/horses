@@ -116,6 +116,14 @@ spec = do
         result2
           `shouldBe` Right
             (MTString, str' "It's ten!")
+      it "case (Left 1) of Left (\\l -> Left l) | Right (\\r -> Right r)" $ do
+        result <- eval stdLib "case (Left 1) of Left (\\l -> Left l) | Right (\\r -> Right r)"
+        result
+          `shouldBe` Right
+            ( (MTSum MTInt (MTVar (mkName "U3"))),
+              ( MySum MyLeft (int 1)
+              )
+            )
       it "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right (eqTen r))" $ do
         result <- eval stdLib "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right (eqTen r))"
         result

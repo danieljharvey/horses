@@ -8,6 +8,7 @@ where
 
 -- import qualified Data.Aeson as JSON
 import Data.Text (Text)
+import qualified Data.Text.IO as T
 import Language.Mimsa
 import Test.Helpers
 import Test.Hspec
@@ -99,6 +100,16 @@ exprs =
     ),
     ( MyCase
         (MySum MyLeft (int 1))
+        ( MyLambda
+            (mkName "l")
+            (MyVar (mkName "l"))
+        )
+        ( MyLambda (mkName "r") (MyVar (mkName "r"))
+        ),
+      Right MTInt
+    ),
+    ( MyCase
+        (MySum MyLeft (int 1))
         (MyLambda (mkName "l") (str' "Left!"))
         (MyLambda (mkName "r") (str' "Right!")),
       Right MTString
@@ -118,7 +129,13 @@ spec :: Spec
 spec = do
   describe "Typechecker" $ do
     it "Our expressions typecheck as expected" $ do
-      _ <- traverse (\(code, expected) -> startInference code `shouldBe` expected) exprs
+      _ <-
+        traverse
+          ( \(code, expected) -> do
+              T.putStrLn (prettyPrint code)
+              startInference code `shouldBe` expected
+          )
+          exprs
       pure ()
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
