@@ -69,7 +69,7 @@ exprs =
             )
         )
         (int 100),
-      Left "Can't match MTBool with MTInt"
+      Left "Unification error: Can't match MTBool with MTInt"
     ),
     ( MyLambda (mkName "x") (MyApp (MyVar (mkName "x")) (MyVar (mkName "x"))),
       Left "U1 fails occurs check"
@@ -102,11 +102,11 @@ exprs =
         (MySum MyLeft (int 1))
         ( MyLambda
             (mkName "l")
-            (MyVar (mkName "l"))
+            (MySum MyLeft (MyVar (mkName "l")))
         )
-        ( MyLambda (mkName "r") (MyVar (mkName "r"))
+        ( MyLambda (mkName "r") (MySum MyRight (MyVar (mkName "r")))
         ),
-      Right MTInt
+      Right $ MTSum MTInt (MTVar (mkName "U1"))
     ),
     ( MyCase
         (MySum MyLeft (int 1))

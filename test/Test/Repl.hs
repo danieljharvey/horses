@@ -120,7 +120,7 @@ spec = do
         result <- eval stdLib "case (Left 1) of Left (\\l -> Left l) | Right (\\r -> Right r)"
         result
           `shouldBe` Right
-            ( (MTSum MTInt (MTVar (mkName "U3"))),
+            ( (MTSum MTInt (MTVar (mkName "U1"))),
               ( MySum MyLeft (int 1)
               )
             )

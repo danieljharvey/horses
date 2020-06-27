@@ -70,6 +70,7 @@ data MonoType
   deriving (Eq, Ord, Show)
 
 data Scheme = Scheme [Name] MonoType
+  deriving (Eq, Ord, Show)
 
 ------
 
