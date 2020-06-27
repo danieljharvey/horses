@@ -68,7 +68,7 @@ exprs =
             )
         )
         (int 100),
-      Left "Can't match MTBool with MTInt"
+      Left "Unification error: Can't match MTBool with MTInt"
     ),
     ( MyLambda (mkName "x") (MyApp (MyVar (mkName "x")) (MyVar (mkName "x"))),
       Left "U1 fails occurs check"
@@ -99,6 +99,16 @@ exprs =
     ),
     ( MyCase
         (MySum MyLeft (int 1))
+        ( MyLambda
+            (mkName "l")
+            (MySum MyLeft (MyVar (mkName "l")))
+        )
+        ( MyLambda (mkName "r") (MySum MyRight (MyVar (mkName "r")))
+        ),
+      Right $ MTSum MTInt (MTVar (mkName "U1"))
+    ),
+    ( MyCase
+        (MySum MyLeft (int 1))
         (MyLambda (mkName "l") (str' "Left!"))
         (MyLambda (mkName "r") (str' "Right!")),
       Right MTString
@@ -118,7 +128,13 @@ spec :: Spec
 spec = do
   describe "Typechecker" $ do
     it "Our expressions typecheck as expected" $ do
-      _ <- traverse (\(code, expected) -> startInference code `shouldBe` expected) exprs
+      _ <-
+        traverse
+          ( \(code, expected) -> do
+              -- T.putStrLn (prettyPrint code)
+              startInference code `shouldBe` expected
+          )
+          exprs
       pure ()
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =

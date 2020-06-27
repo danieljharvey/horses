@@ -87,6 +87,20 @@ inferVarFromScope env name =
       pure (mempty, ty)
     _ -> throwError $ T.pack ("Unknown variable " <> show name)
 
+inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> App (Substitutions, MonoType)
+inferFuncReturn env binder function tyArg = do
+  let scheme = Scheme [] tyArg
+      newEnv = M.insert binder scheme env
+  tyRes <- getUnknown
+  (s1, tyFun) <- infer newEnv function
+  s2 <- unify (MTFunction tyArg tyFun) (applySubst s1 tyRes)
+  let s3 = mempty
+      subs = s3 `composeSubst` s2 `composeSubst` s1
+  pure (subs, applySubst subs tyFun)
+
+--traceAnd :: (Show a) => Text -> a -> a
+--traceAnd msg a = traceShow (msg, a) a
+
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
@@ -98,19 +112,32 @@ infer env (MyLet binder expr body) = do
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
-infer env (MyCase sumExpr leftExpr rightExpr) = do
+infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = do
   (s1, tySum) <- infer env sumExpr
   case tySum of
-    (MTSum a b) -> do
-      tyLeftRes <- getUnknown
-      tyRightRes <- getUnknown
-      (s2, tyLeftFunc) <- infer (applySubstCtx s1 env) leftExpr
-      (s3, tyRightFunc) <- infer (applySubstCtx (s2 `composeSubst` s1) env) rightExpr
-      s4 <- unify (MTFunction a tyLeftRes) tyLeftFunc
-      s5 <- unify (MTFunction b tyRightRes) tyRightFunc
-      let subs = s5 `composeSubst` s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1
-      pure (subs, applySubst subs tyLeftRes)
+    (MTSum tyA tyB) -> do
+      (s2, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst s1 tyA)
+      (s3, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst s1 tyB)
+      let subs =
+            s3
+              `composeSubst` s2
+              `composeSubst` s1
+      s4 <- unify tyLeftRes tyRightRes
+      pure (s4 `composeSubst` subs, applySubst (s4 `composeSubst` subs) tyLeftRes)
+    (MTVar _a) -> do
+      tyVarL <- getUnknown
+      tyVarR <- getUnknown
+      s2 <- unify (MTSum tyVarL tyVarR) tySum
+      (s3, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst (s2 `composeSubst` s1) tyVarL)
+      (s4, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst (s2 `composeSubst` s1) tyVarR)
+      let subs =
+            s4 `composeSubst` s3
+              `composeSubst` s2
+              `composeSubst` s1
+      s5 <- unify tyLeftRes tyRightRes
+      pure (s5 `composeSubst` subs, applySubst (s5 `composeSubst` subs) tyLeftRes)
     a -> throwError $ "Expected to case match on a pair but instead found " <> prettyPrint a
+infer _env (MyCase _ _ _) = throwError "Arguments to case match must be lambda functions"
 infer env (MyLetPair binder1 binder2 expr body) = do
   (s1, tyExpr) <- infer env expr
   case tyExpr of
@@ -205,7 +232,7 @@ unify (MTVar u) t = varBind u t
 unify t (MTVar u) = varBind u t
 unify a b =
   throwError $ T.pack $
-    "Can't match " <> show a <> " with " <> show b
+    "Unification error: Can't match " <> show a <> " with " <> show b
 
 getUnknown :: App MonoType
 getUnknown = do
