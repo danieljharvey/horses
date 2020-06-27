@@ -52,7 +52,7 @@ eqTenExpr = StoreExpression mempty expr'
       MyLambda
         (mkName "i")
         ( MyApp
-            (MyVar (mkName "eqInt"))
+            (MyApp (MyVar (mkName "eqInt")) (int 10))
             (MyVar (mkName "i"))
         )
 
@@ -129,8 +129,8 @@ spec = do
         result
           `shouldBe` Right
             ( MTFunction
-                (MTSum (MTVar (mkName "U6")) MTInt)
-                (MTSum (MTVar (mkName "U6")) MTBool),
+                (MTSum (MTVar (mkName "U10")) MTInt)
+                (MTSum (MTVar (mkName "U10")) MTBool),
               ( MyLambda
                   (mkName "sum")
                   ( MyCase

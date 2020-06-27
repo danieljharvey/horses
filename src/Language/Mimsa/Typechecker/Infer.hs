@@ -16,7 +16,6 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Debug.Trace
 import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
@@ -93,14 +92,14 @@ inferFuncReturn env binder function tyArg = do
   let scheme = Scheme [] tyArg
       newEnv = M.insert binder scheme env
   tyRes <- getUnknown
-  (s1, tyFun) <- infer (traceAnd "newEnv" newEnv) (traceAnd "function" function)
-  s2 <- unify (MTFunction tyArg tyFun) tyRes
+  (s1, tyFun) <- infer newEnv function
+  s2 <- unify (MTFunction tyArg tyFun) (applySubst s1 tyRes)
   let s3 = mempty
-  let subs = s3 `composeSubst` s2 `composeSubst` s1
+      subs = s3 `composeSubst` s2 `composeSubst` s1
   pure (subs, applySubst subs tyFun)
 
-traceAnd :: (Show a) => Text -> a -> a
-traceAnd msg a = traceShow (msg <> ": " <> T.pack (show a)) a
+--traceAnd :: (Show a) => Text -> a -> a
+--traceAnd msg a = traceShow (msg, a) a
 
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
@@ -123,8 +122,20 @@ infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = d
             s3
               `composeSubst` s2
               `composeSubst` s1
-      s4 <- unify (traceAnd "tyLeftRes" tyLeftRes) (traceAnd "tyRightRes" tyRightRes)
+      s4 <- unify tyLeftRes tyRightRes
       pure (s4 `composeSubst` subs, applySubst (s4 `composeSubst` subs) tyLeftRes)
+    (MTVar _a) -> do
+      tyVarL <- getUnknown
+      tyVarR <- getUnknown
+      s2 <- unify (MTSum tyVarL tyVarR) tySum
+      (s3, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst (s2 `composeSubst` s1) tyVarL)
+      (s4, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst (s2 `composeSubst` s1) tyVarR)
+      let subs =
+            s4 `composeSubst` s3
+              `composeSubst` s2
+              `composeSubst` s1
+      s5 <- unify tyLeftRes tyRightRes
+      pure (s5 `composeSubst` subs, applySubst (s5 `composeSubst` subs) tyLeftRes)
     a -> throwError $ "Expected to case match on a pair but instead found " <> prettyPrint a
 infer _env (MyCase _ _ _) = throwError "Arguments to case match must be lambda functions"
 infer env (MyLetPair binder1 binder2 expr body) = do

@@ -18,7 +18,7 @@ import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
 interpret :: Scope -> Expr -> IO (Either Text Expr)
-interpret scope' expr =
+interpret scope' expr = do
   ((fmap . fmap) fst either')
   where
     either' = runExceptT $ runStateT (interpretWithScope expr) scope'
@@ -103,9 +103,9 @@ interpretWithScope (MyVar name) =
   useVarFromBuiltIn name <|> useVarFromScope name
     <|> (throwError $ "Unknown variable " <> prettyPrint name)
 interpretWithScope (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) = do
-  interpretWithScope (MyApp (MyLambda binderL exprL) a)
+  interpretWithScope (MyLet binderL a exprL)
 interpretWithScope (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) = do
-  interpretWithScope (MyApp (MyLambda binderR exprR) b)
+  interpretWithScope (MyLet binderR b exprR)
 interpretWithScope (MyCase (MyVar a) l r) = do
   expr <- interpretWithScope (MyVar a)
   interpretWithScope (MyCase expr l r)
@@ -127,7 +127,9 @@ interpretWithScope (MyApp (MyLet a b c) d) = do
 interpretWithScope (MyApp (MyLetPair a b c d) e) = do
   expr <- interpretWithScope (MyLetPair a b c d)
   interpretWithScope (MyApp expr e)
-interpretWithScope (MySum s a) = pure (MySum s a)
+interpretWithScope (MySum s a) = do
+  expr <- interpretWithScope a
+  pure (MySum s expr)
 interpretWithScope (MyApp (MySum MyLeft _) _) = throwError "Cannot apply a value to a Left value"
 interpretWithScope (MyApp (MySum MyRight _) _) = throwError "Cannot apply a value to a Right value"
 interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"

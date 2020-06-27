@@ -8,7 +8,6 @@ where
 
 -- import qualified Data.Aeson as JSON
 import Data.Text (Text)
-import qualified Data.Text.IO as T
 import Language.Mimsa
 import Test.Helpers
 import Test.Hspec
@@ -132,7 +131,7 @@ spec = do
       _ <-
         traverse
           ( \(code, expected) -> do
-              T.putStrLn (prettyPrint code)
+              -- T.putStrLn (prettyPrint code)
               startInference code `shouldBe` expected
           )
           exprs
