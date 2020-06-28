@@ -37,11 +37,17 @@ parseExpr input = P.runParser expressionParser input
 parseExpr' :: Text -> Either Text Expr
 parseExpr' input = snd <$> P.runParser expressionParser input
 
+failer :: Parser Expr
+failer = P.mkParser (\input -> Left $ "Could not parse expression for: " <> input)
+
 expressionParser :: Parser Expr
 expressionParser =
-  literalParser
-    <|> varParser
-    <|> complexParser
+  let parsers =
+        literalParser
+          <|> varParser
+          <|> complexParser
+   in (P.between2 '(' ')' parsers <|> parsers)
+        <|> failer
 
 literalParser :: Parser Expr
 literalParser =
