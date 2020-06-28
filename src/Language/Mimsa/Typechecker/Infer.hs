@@ -11,6 +11,7 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.State (State, get, put, runState)
+import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
@@ -70,6 +71,7 @@ applySubst subst ty = case ty of
     MTPair
       (applySubst subst a)
       (applySubst subst b)
+  MTList a -> MTList (applySubst subst a)
   MTSum a b -> MTSum (applySubst subst a) (applySubst subst b)
   MTInt -> MTInt
   MTString -> MTString
@@ -101,11 +103,27 @@ inferFuncReturn env binder function tyArg = do
 --traceAnd :: (Show a) => Text -> a -> a
 --traceAnd msg a = traceShow (msg, a) a
 
+inferList :: Environment -> NonEmpty Expr -> App (Substitutions, MonoType)
+inferList env (a :| as) = do
+  (s1, tyA) <- infer env a
+  let foldFn = \as' a' -> do
+        (s', ty') <- as'
+        (sA, tyB) <- infer env a'
+        sB <- unify ty' tyB
+        pure (sB `composeSubst` sA `composeSubst` s', applySubst sB tyB)
+  foldl
+    foldFn
+    (pure (s1, tyA))
+    as
+
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
   (inferVarFromScope env name)
     <|> (inferBuiltIn name)
+infer env (MyList as) = do
+  (s1, tyItems) <- inferList env as
+  pure (s1, MTList tyItems)
 infer env (MyLet binder expr body) = do
   (s1, tyExpr) <- infer env expr
   let scheme = Scheme [] (applySubst s1 tyExpr)

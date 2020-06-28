@@ -124,4 +124,7 @@ mapVar p (MySum side a) = MySum <$> pure side <*> (mapVar p a)
 mapVar p (MyCase a b c) =
   MyCase <$> (mapVar p a) <*> (mapVar p b)
     <*> (mapVar p c)
+mapVar p (MyList as) = do
+  mas <- traverse (mapVar p) as
+  pure (MyList mas)
 mapVar _ (MyLiteral a) = pure (MyLiteral a)

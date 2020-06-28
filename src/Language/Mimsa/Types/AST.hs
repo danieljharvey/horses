@@ -18,6 +18,7 @@ module Language.Mimsa.Types.AST
 where
 
 import qualified Data.Aeson as JSON
+import Data.List.NonEmpty
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Types.Name
@@ -56,6 +57,7 @@ data Expr
   | MyCase Expr Expr Expr -- sumExpr, leftCase, rightCase
   | MyPair Expr Expr -- (a,b)
   | MySum SumSide Expr -- Left a | Right b
+  | MyList (NonEmpty Expr) -- [a]
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 data MonoType
@@ -66,6 +68,7 @@ data MonoType
   | MTFunction MonoType MonoType -- argument, result
   | MTPair MonoType MonoType -- (a,b)
   | MTSum MonoType MonoType -- a | b
+  | MTList MonoType -- [a]
   | MTVar Name
   deriving (Eq, Ord, Show)
 
