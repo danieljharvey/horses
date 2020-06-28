@@ -60,8 +60,22 @@ instance Printer Expr where
       <> prettyPrint binder
       <> " -> "
       <> printSubExpr expr
+  prettyPrint (MyApp (MyApp (MyApp func arg1) arg2) arg3) =
+    printSubExpr func <> "("
+      <> printSubExpr arg1
+      <> ")("
+      <> printSubExpr arg2
+      <> ")("
+      <> printSubExpr arg3
+      <> ")"
+  prettyPrint (MyApp (MyApp func arg1) arg2) =
+    printSubExpr func <> "("
+      <> printSubExpr arg1
+      <> ")("
+      <> printSubExpr arg2
+      <> ")"
   prettyPrint (MyApp func arg) =
-    "(" <> printSubExpr func <> " "
+    printSubExpr func <> "("
       <> printSubExpr arg
       <> ")"
   prettyPrint (MyIf if' then' else') =
@@ -82,13 +96,12 @@ instance Printer Expr where
   prettyPrint (MyCase sumExpr leftFunc rightFunc) =
     "case "
       <> printSubExpr sumExpr
-      <> " of Left ("
+      <> " of Left "
       <> printSubExpr leftFunc
-      <> ") | Right ("
+      <> " | Right "
       <> printSubExpr rightFunc
-      <> ")"
 
-inParens :: Expr -> Text
+inParens :: (Printer a) => a -> Text
 inParens a = "(" <> prettyPrint a <> ")"
 
 -- print simple things with no brackets, and complex things inside brackets
@@ -110,7 +123,13 @@ instance Printer MonoType where
   prettyPrint MTString = "String"
   prettyPrint MTBool = "Boolean"
   prettyPrint MTUnit = "Unit"
-  prettyPrint (MTFunction a b) = prettyPrint a <> " -> " <> prettyPrint b
-  prettyPrint (MTPair a b) = "(" <> prettyPrint a <> ", " <> prettyPrint b <> ")"
+  prettyPrint (MTFunction a b) = printSubType a <> " -> " <> printSubType b
+  prettyPrint (MTPair a b) = "(" <> printSubType a <> ", " <> printSubType b <> ")"
   prettyPrint (MTVar a) = prettyPrint a
-  prettyPrint (MTSum a b) = "Sum " <> prettyPrint a <> " " <> prettyPrint b
+  prettyPrint (MTSum a b) = "Sum " <> printSubType a <> " " <> printSubType b
+
+-- simple things with no brackets, complex things in brackets
+printSubType :: MonoType -> Text
+printSubType all'@(MTSum _ _) = inParens all'
+printSubType all'@(MTFunction _ _) = inParens all'
+printSubType a = prettyPrint a
