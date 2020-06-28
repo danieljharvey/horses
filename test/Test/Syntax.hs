@@ -131,7 +131,7 @@ spec = do
       parseExpr "(\\x -> x)"
         `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
     it "Recognises function application in parens" $ do
-      parseExpr "(add 1)"
+      parseExpr "add (1)"
         `shouldBe` Right
           ( MyApp
               ( MyVar (mkName "add")
@@ -139,7 +139,7 @@ spec = do
               (int 1)
           )
     it "Recognises double function application onto a var" $ do
-      parseExpr "((add 1) 2)"
+      parseExpr "add (1)(2)"
         `shouldBe` Right
           ( MyApp
               ( MyApp
@@ -175,7 +175,7 @@ spec = do
               (MyVar (mkName "x"))
           )
     it "Allows a let to use a pair and apply to it" $ do
-      parseExpr "let x = ((1,2)) in (fst x)"
+      parseExpr "let x = ((1,2)) in fst(x)"
         `shouldBe` Right
           ( MyLet
               (mkName "x")
@@ -209,7 +209,7 @@ spec = do
               (MyLambda (mkName "r") (bool False))
           )
     it "Parses a case statement with an apply in the sum" $ do
-      parseExpr "case (isTen 9) of Left (\\r -> \"It's not ten\") | Right (\\l -> \"It's ten!\")"
+      parseExpr "case isTen(9) of Left (\\r -> \"It's not ten\") | Right (\\l -> \"It's ten!\")"
         `shouldBe` Right
           ( MyCase
               ( MyApp

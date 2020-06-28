@@ -167,6 +167,9 @@ between2 char1 char2 parser =
 thenSpace :: Parser a -> Parser a
 thenSpace parser = right space0 (left parser space1)
 
+thenOptionalSpace :: Parser a -> Parser a
+thenOptionalSpace parser = left parser space0
+
 -- recurse, but only once
 leftRec ::
   Parser a ->

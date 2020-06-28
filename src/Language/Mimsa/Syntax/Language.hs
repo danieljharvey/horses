@@ -37,11 +37,17 @@ parseExpr input = P.runParser expressionParser input
 parseExpr' :: Text -> Either Text Expr
 parseExpr' input = snd <$> P.runParser expressionParser input
 
+failer :: Parser Expr
+failer = P.mkParser (\input -> Left $ "Could not parse expression for >>>" <> input <> "<<<")
+
 expressionParser :: Parser Expr
 expressionParser =
-  literalParser
-    <|> varParser
-    <|> complexParser
+  let parsers =
+        literalParser
+          <|> complexParser
+          <|> varParser
+   in (P.between2 '(' ')' parsers <|> parsers)
+        <|> failer
 
 literalParser :: Parser Expr
 literalParser =
@@ -52,16 +58,17 @@ literalParser =
 
 complexParser :: Parser Expr
 complexParser =
-  let parsers =
-        ( letPairParser
-            <|> letParser
-            <|> ifParser
-            <|> lambdaParser
-            <|> pairParser
-            <|> sumParser
-            <|> caseParser
-        )
-   in (P.between2 '(' ')' (parsers <|> appParser)) <|> parsers
+  ( letPairParser
+      <|> letParser
+      <|> ifParser
+      <|> lambdaParser
+      <|> pairParser
+      <|> sumParser
+      <|> caseParser
+      <|> appParser3
+      <|> appParser2
+      <|> appParser
+  )
 
 protectedNames :: Set Text
 protectedNames =
@@ -172,13 +179,66 @@ arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
 -----
 
 appParser :: Parser Expr
-appParser = MyApp <$> funcParser <*> argParser
+appParser = do
+  func <- varParser <|> lambdaParser
+  _ <- P.space0
+  _ <- (P.literal "(")
+  _ <- P.space0
+  arg <- expressionParser
+  _ <- P.space0
+  _ <- (P.literal ")")
+  _ <- P.space0
+  pure $ MyApp func arg
 
+appParser2 :: Parser Expr
+appParser2 = do
+  func <- varParser <|> lambdaParser
+  _ <- P.space0
+  _ <- (P.literal "(")
+  _ <- P.space0
+  arg <- expressionParser
+  _ <- P.space0
+  _ <- (P.literal ")")
+  _ <- P.space0
+  _ <- (P.literal "(")
+  _ <- P.space0
+  arg2 <- expressionParser
+  _ <- P.space0
+  _ <- (P.literal ")")
+  _ <- P.space0
+  pure $ MyApp (MyApp func arg) arg2
+
+appParser3 :: Parser Expr
+appParser3 = do
+  func <- varParser <|> lambdaParser
+  _ <- P.space0
+  _ <- (P.literal "(")
+  _ <- P.space0
+  arg <- expressionParser
+  _ <- P.space0
+  _ <- (P.literal ")")
+  _ <- P.space0
+  _ <- (P.literal "(")
+  _ <- P.space0
+  arg2 <- expressionParser
+  _ <- P.space0
+  _ <- (P.literal ")")
+  _ <- P.space0
+  _ <- (P.literal "(")
+  _ <- P.space0
+  arg3 <- expressionParser
+  _ <- P.space0
+  _ <- (P.literal ")")
+  _ <- P.space0
+  pure $ MyApp (MyApp (MyApp func arg) arg2) arg3
+
+{-
 funcParser :: Parser Expr
 funcParser = P.thenSpace expressionParser
 
 argParser :: Parser Expr
 argParser = literalParser <|> varParser <|> appParser <|> lambdaParser
+-}
 
 -----
 
@@ -232,12 +292,8 @@ caseParser = do
   sumExpr <- expressionParser
   _ <- P.thenSpace (P.literal "of")
   _ <- P.thenSpace (P.literal "Left")
-  _ <- (P.literal "(")
-  leftExpr <- lambdaParser <|> varParser
-  _ <- P.thenSpace (P.literal ")")
+  leftExpr <- expressionParser
   _ <- P.thenSpace (P.literal "|")
   _ <- P.thenSpace (P.literal "Right")
-  _ <- P.literal "("
-  rightExpr <- lambdaParser <|> varParser
-  _ <- P.literal ")"
+  rightExpr <- expressionParser
   pure (MyCase sumExpr leftExpr rightExpr)

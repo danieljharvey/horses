@@ -56,6 +56,13 @@ eqTenExpr = StoreExpression mempty expr'
             (MyVar (mkName "i"))
         )
 
+fmapSum :: StoreExpression
+fmapSum = StoreExpression mempty expr
+  where
+    expr =
+      unsafeGetExpr
+        "\\f -> \\a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
+
 stdLib :: StoreEnv
 stdLib = StoreEnv store' bindings'
   where
@@ -64,15 +71,23 @@ stdLib = StoreEnv store' bindings'
         M.fromList
           [ (ExprHash 1, fstExpr),
             (ExprHash 2, isTenExpr),
-            (ExprHash 3, eqTenExpr)
+            (ExprHash 3, eqTenExpr),
+            (ExprHash 4, fmapSum)
           ]
     bindings' =
       Bindings $
         M.fromList
           [ (mkName "fst", ExprHash 1),
             (mkName "isTen", ExprHash 2),
-            (mkName "eqTen", ExprHash 3)
+            (mkName "eqTen", ExprHash 3),
+            (mkName "fmapSum", ExprHash 4)
           ]
+
+unsafeGetExpr :: Text -> Expr
+unsafeGetExpr input =
+  case evaluateText mempty input of
+    Right (_, expr', _) -> expr'
+    _ -> error "oh no"
 
 eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr))
 eval env input =
@@ -88,8 +103,8 @@ spec :: Spec
 spec = do
   describe "Repl" $ do
     describe "End to end parsing to evaluation" $ do
-      it "let x = ((1,2)) in (fst x)" $ do
-        result <- eval stdLib "let x = ((1,2)) in (fst x)"
+      it "let x = ((1,2)) in fst(x)" $ do
+        result <- eval stdLib "let x = ((1,2)) in fst(x)"
         result
           `shouldBe` Right
             (MTInt, int 1)
@@ -107,12 +122,12 @@ spec = do
                   )
               )
             )
-      it "case (isTen 9) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")" $ do
-        result <- eval stdLib "case (isTen 9) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")"
+      it "case isTen(9) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")" $ do
+        result <- eval stdLib "case isTen(9) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")"
         result
           `shouldBe` Right
             (MTString, str' "It's not ten")
-        result2 <- eval stdLib "case (isTen 10) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")"
+        result2 <- eval stdLib "case isTen(10) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")"
         result2
           `shouldBe` Right
             (MTString, str' "It's ten!")
@@ -124,8 +139,8 @@ spec = do
               ( MySum MyLeft (int 1)
               )
             )
-      it "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right (eqTen r))" $ do
-        result <- eval stdLib "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right (eqTen r))"
+      it "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right eqTen(r))" $ do
+        result <- eval stdLib "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right eqTen(r))"
         result
           `shouldBe` Right
             ( MTFunction
@@ -152,3 +167,8 @@ spec = do
                   )
               )
             )
+      it "let sum = (Left 1) in ((fmapSum eqTen) sum)" $ do
+        result <- eval stdLib "let sum = (Left 1) in fmapSum (eqTen) (sum)"
+        result
+          `shouldBe` Right
+            (MTSum MTInt MTBool, MySum MyLeft (int 1))
