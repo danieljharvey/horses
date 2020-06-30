@@ -10,6 +10,7 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -118,6 +119,19 @@ interpretWithScope (MyApp (MyVar f) value) = do
   interpretWithScope (MyApp expr value)
 interpretWithScope (MyApp (MyLambda binder expr) value) =
   interpretWithScope (MyLet binder value expr)
+interpretWithScope (MyLetList binderHead binderRest (MyList as) body) = do
+  let (listHead, listTail) = NE.uncons as
+      tail' = case listTail of
+        Nothing -> MySum MyLeft (MyLiteral MyUnit)
+        Just bs -> MySum MyRight (MyList bs)
+  let newScopes = Scope $ M.fromList [(binderHead, listHead), (binderRest, tail')]
+  modify ((<>) newScopes)
+  interpretWithScope body
+interpretWithScope (MyLetList binderHead binderRest (MyVar b) body) = do
+  expr <- interpretWithScope (MyVar b)
+  interpretWithScope (MyLetList binderHead binderRest expr body)
+interpretWithScope (MyLetList _ _ a _) =
+  throwError $ "Cannot destructure value " <> prettyPrint a <> " as a list"
 interpretWithScope (MyApp (MyApp a b) c) = do
   expr <- interpretWithScope (MyApp a b)
   interpretWithScope (MyApp expr c)
@@ -130,6 +144,9 @@ interpretWithScope (MyApp (MyLetPair a b c d) e) = do
 interpretWithScope (MySum s a) = do
   expr <- interpretWithScope a
   pure (MySum s expr)
+interpretWithScope (MyApp (MyLetList a b c d) e) = do
+  expr <- interpretWithScope (MyLetList a b c d)
+  interpretWithScope (MyApp expr e)
 interpretWithScope (MyList a) = pure (MyList a)
 interpretWithScope (MyApp (MyList _) _) = throwError "Cannot apply a value to a List"
 interpretWithScope (MyApp (MySum MyLeft _) _) = throwError "Cannot apply a value to a Left value"

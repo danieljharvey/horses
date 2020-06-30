@@ -7,6 +7,7 @@ module Test.Typechecker
 where
 
 -- import qualified Data.Aeson as JSON
+import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Language.Mimsa
 import Test.Helpers
@@ -118,6 +119,20 @@ exprs =
         (MyLambda (mkName "l") (str' "Left!"))
         (MyLambda (mkName "r") (str' "Right!")),
       Right MTString
+    ),
+    ( MyLetList
+        (mkName "head")
+        (mkName "tail")
+        (MyList $ NE.fromList [int 1])
+        (MyVar (mkName "head")),
+      Right $ MTInt
+    ),
+    ( MyLetList
+        (mkName "head")
+        (mkName "tail")
+        (MyList $ NE.fromList [int 1])
+        (MyVar (mkName "tail")),
+      Right $ (MTSum MTUnit (MTList MTInt))
     )
   ]
 

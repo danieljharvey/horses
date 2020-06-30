@@ -176,6 +176,29 @@ infer env (MyLetPair binder1 binder2 expr body) = do
       (s3, tyBody) <- infer (applySubstCtx (s2 `composeSubst` s1) newEnv) body
       pure (s3 `composeSubst` s2 `composeSubst` s1, tyBody)
     a -> throwError $ "Expected a pair but instead found " <> prettyPrint a
+infer env (MyLetList binder1 binder2 expr body) = do
+  (s1, tyExpr) <- infer env expr
+  case tyExpr of
+    (MTVar _a) -> do
+      tyHead <- getUnknown
+      tyRest <- getUnknown
+      let schemeHead = Scheme [] (applySubst s1 tyHead)
+          schemeRest = Scheme [] (applySubst s1 tyRest)
+          newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
+      s2 <- unify tyExpr (MTList tyHead)
+      s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
+      (s4, tyBody) <- infer (applySubstCtx (s3 `composeSubst` s2 `composeSubst` s1) newEnv) body
+      pure (s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1, tyBody)
+    (MTList tyHead) -> do
+      tyRest <- getUnknown
+      let schemeHead = Scheme [] (applySubst s1 tyHead)
+          schemeRest = Scheme [] (applySubst s1 tyRest)
+          newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
+      s2 <- unify tyExpr (MTList tyHead)
+      s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
+      (s4, tyBody) <- infer (applySubstCtx (s3 `composeSubst` s2 `composeSubst` s1) newEnv) body
+      pure (s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1, tyBody)
+    a -> throwError $ "Expected a list but instead found " <> prettyPrint a
 infer env (MyLambda binder body) = do
   tyBinder <- getUnknown
   let tmpCtx = M.insert binder (Scheme [] tyBinder) env

@@ -6,6 +6,7 @@ module Test.Repl
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
@@ -172,3 +173,14 @@ spec = do
         result
           `shouldBe` Right
             (MTSum MTInt MTBool, MySum MyLeft (int 1))
+      it "let [head, tail] = ([1,2,3]) in head" $ do
+        result <- eval stdLib "let [head, tail] = ([1,2,3]) in head"
+        result
+          `shouldBe` Right (MTInt, int 1)
+      it "let [head, tail] = ([1,2,3]) in tail" $ do
+        result <- eval stdLib "let [head, tail] = ([1,2,3]) in tail"
+        result
+          `shouldBe` Right
+            ( MTSum MTUnit (MTList MTInt),
+              MySum MyRight $ MyList $ NE.fromList [int 2, int 3]
+            )

@@ -56,6 +56,12 @@ instance Printer Expr where
       <> printSubExpr expr1
       <> " in "
       <> printSubExpr body
+  prettyPrint (MyLetList var1 var2 expr body) =
+    "let [" <> prettyPrint var1 <> ", " <> prettyPrint var2
+      <> "] = "
+      <> printSubExpr expr
+      <> " in "
+      <> printSubExpr body
   prettyPrint (MyLambda binder expr) =
     "\\"
       <> prettyPrint binder

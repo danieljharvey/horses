@@ -186,6 +186,24 @@ spec = do
     it "Parses a list" $ do
       parseExpr "[1,2,3]"
         `shouldBe` Right (MyList (NE.fromList [int 1, int 2, int 3]))
+    it "Parses a destructuring of a list" $ do
+      parseExpr "let [head, rest] = ([1,2,3]) in head"
+        `shouldBe` Right
+          ( MyLetList
+              (mkName "head")
+              (mkName "rest")
+              (MyList $ NE.fromList [int 1, int 2, int 3])
+              (MyVar (mkName "head"))
+          )
+    it "Parses a destructuring of a list with a var" $ do
+      parseExpr "let [head, rest] = myList in head"
+        `shouldBe` Right
+          ( MyLetList
+              (mkName "head")
+              (mkName "rest")
+              (MyVar (mkName "myList"))
+              (MyVar (mkName "head"))
+          )
     it "Parses a destructuring of pairs" $ do
       parseExpr' "let (a,b) = ((True,1)) in a"
         `shouldBe` Right

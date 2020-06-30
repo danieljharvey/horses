@@ -60,6 +60,7 @@ literalParser =
 complexParser :: Parser Expr
 complexParser =
   ( letPairParser
+      <|> letListParser
       <|> letParser
       <|> ifParser
       <|> lambdaParser
@@ -141,6 +142,26 @@ letParser = do
 
 -----
 
+letListParser :: Parser Expr
+letListParser = MyLetList <$> binder1 <*> binder2 <*> equalsParser <*> inParser
+  where
+    binder1 = do
+      _ <- P.thenSpace (P.literal "let")
+      _ <- P.literal "["
+      _ <- P.space0
+      name <- nameParser
+      _ <- P.space0
+      pure name
+    binder2 = do
+      _ <- P.literal ","
+      _ <- P.space0
+      name <- nameParser
+      _ <- P.space0
+      _ <- P.thenSpace (P.literal "]")
+      pure name
+
+-----
+
 letPairParser :: Parser Expr
 letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
   where
@@ -158,6 +179,8 @@ letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
       _ <- P.space0
       _ <- P.thenSpace (P.literal ")")
       pure name
+
+-----
 
 equalsParser :: Parser Expr
 equalsParser =
