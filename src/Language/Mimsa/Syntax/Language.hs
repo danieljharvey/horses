@@ -10,6 +10,7 @@ where
 
 import Control.Applicative ((<|>))
 import Data.Functor
+import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -59,6 +60,7 @@ literalParser =
 complexParser :: Parser Expr
 complexParser =
   ( letPairParser
+      <|> letListParser
       <|> letParser
       <|> ifParser
       <|> lambdaParser
@@ -68,6 +70,7 @@ complexParser =
       <|> appParser3
       <|> appParser2
       <|> appParser
+      <|> listParser
   )
 
 protectedNames :: Set Text
@@ -139,6 +142,26 @@ letParser = do
 
 -----
 
+letListParser :: Parser Expr
+letListParser = MyLetList <$> binder1 <*> binder2 <*> equalsParser <*> inParser
+  where
+    binder1 = do
+      _ <- P.thenSpace (P.literal "let")
+      _ <- P.literal "["
+      _ <- P.space0
+      name <- nameParser
+      _ <- P.space0
+      pure name
+    binder2 = do
+      _ <- P.literal ","
+      _ <- P.space0
+      name <- nameParser
+      _ <- P.space0
+      _ <- P.thenSpace (P.literal "]")
+      pure name
+
+-----
+
 letPairParser :: Parser Expr
 letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
   where
@@ -156,6 +179,8 @@ letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
       _ <- P.space0
       _ <- P.thenSpace (P.literal ")")
       pure name
+
+-----
 
 equalsParser :: Parser Expr
 equalsParser =
@@ -232,13 +257,18 @@ appParser3 = do
   _ <- P.space0
   pure $ MyApp (MyApp (MyApp func arg) arg2) arg3
 
-{-
-funcParser :: Parser Expr
-funcParser = P.thenSpace expressionParser
+-----
 
-argParser :: Parser Expr
-argParser = literalParser <|> varParser <|> appParser <|> lambdaParser
--}
+listParser :: Parser Expr
+listParser = do
+  _ <- P.literal "["
+  _ <- P.space0
+  args <- P.zeroOrMore (P.left expressionParser (P.literal ","))
+  last' <- expressionParser
+  _ <- P.space0
+  _ <- P.literal "]"
+  _ <- P.space0
+  pure (MyList (NE.fromList (args <> [last'])))
 
 -----
 

@@ -120,8 +120,16 @@ mapVar p (MyLetPair nameA nameB a b) =
     <$> pure nameA <*> pure nameB
       <*> (mapVar (p <> [nameA, nameB]) a)
       <*> (mapVar (p <> [nameA, nameB]) b)
+mapVar p (MyLetList nameHead nameRest a b) =
+  MyLetList <$> pure nameHead
+    <*> pure nameRest
+    <*> (mapVar (p <> [nameHead, nameRest]) a)
+    <*> (mapVar (p <> [nameHead, nameRest]) b)
 mapVar p (MySum side a) = MySum <$> pure side <*> (mapVar p a)
 mapVar p (MyCase a b c) =
   MyCase <$> (mapVar p a) <*> (mapVar p b)
     <*> (mapVar p c)
+mapVar p (MyList as) = do
+  mas <- traverse (mapVar p) as
+  pure (MyList mas)
 mapVar _ (MyLiteral a) = pure (MyLiteral a)

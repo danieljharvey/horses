@@ -18,6 +18,7 @@ module Language.Mimsa.Types.AST
 where
 
 import qualified Data.Aeson as JSON
+import Data.List.NonEmpty
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Types.Name
@@ -50,12 +51,14 @@ data Expr
   | MyVar Name
   | MyLet Name Expr Expr -- binder, expr, body
   | MyLetPair Name Name Expr Expr -- binderA, binderB, expr, body
+  | MyLetList Name Name Expr Expr -- binderHead, binderHead, expr, body
   | MyLambda Name Expr -- binder, body
   | MyApp Expr Expr -- function, argument
   | MyIf Expr Expr Expr -- expr, thencase, elsecase
   | MyCase Expr Expr Expr -- sumExpr, leftCase, rightCase
   | MyPair Expr Expr -- (a,b)
   | MySum SumSide Expr -- Left a | Right b
+  | MyList (NonEmpty Expr) -- [a]
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 data MonoType
@@ -66,6 +69,7 @@ data MonoType
   | MTFunction MonoType MonoType -- argument, result
   | MTPair MonoType MonoType -- (a,b)
   | MTSum MonoType MonoType -- a | b
+  | MTList MonoType -- [a]
   | MTVar Name
   deriving (Eq, Ord, Show)
 
