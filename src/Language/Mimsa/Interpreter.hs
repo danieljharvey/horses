@@ -153,13 +153,11 @@ interpretWithScope (MyApp (MyLetList a b c d) e) = do
 interpretWithScope (MyList as) = do
   exprs <- traverse interpretWithScope as
   pure (MyList exprs)
-interpretWithScope (MyApp (MyList _) _) = throwError "Cannot apply a value to a List"
-interpretWithScope (MyApp (MySum MyLeft _) _) = throwError "Cannot apply a value to a Left value"
-interpretWithScope (MyApp (MySum MyRight _) _) = throwError "Cannot apply a value to a Right value"
-interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"
-interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
-interpretWithScope (MyApp (MyPair _ _) _) = throwError "Cannot apply a value to a Pair"
-interpretWithScope (MyApp (MyCase _ _ _) _) = throwError "Cannot apply a value to a case match"
+interpretWithScope (MyRecord as) = do
+  exprs <- traverse interpretWithScope as
+  pure (MyRecord exprs)
+interpretWithScope (MyApp thing _) =
+  throwError $ "Cannot apply a value to " <> prettyPrint thing
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
 interpretWithScope (MyIf (MyLiteral (MyBool pred')) true false) =
   if pred'

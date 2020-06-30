@@ -8,6 +8,7 @@ where
 
 -- import qualified Data.Aeson as JSON
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa
 import Test.Helpers
@@ -133,6 +134,25 @@ exprs =
         (MyList $ NE.fromList [int 1])
         (MyVar (mkName "tail")),
       Right $ (MTSum MTUnit (MTList MTInt))
+    ),
+    ( MyRecord
+        mempty,
+      Right $
+        MTRecord mempty
+    ),
+    ( MyRecord
+        ( M.fromList
+            [ (mkName "dog", int 1),
+              (mkName "cat", int 2)
+            ]
+        ),
+      Right $
+        MTRecord
+          ( M.fromList
+              [ (mkName "dog", MTInt),
+                (mkName "cat", MTInt)
+              ]
+          )
     )
   ]
 

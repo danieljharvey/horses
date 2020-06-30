@@ -12,6 +12,7 @@ import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.State (State, get, put, runState)
 import Data.List.NonEmpty (NonEmpty (..))
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
@@ -72,6 +73,7 @@ applySubst subst ty = case ty of
       (applySubst subst a)
       (applySubst subst b)
   MTList a -> MTList (applySubst subst a)
+  MTRecord a -> MTRecord (applySubst subst <$> a)
   MTSum a b -> MTSum (applySubst subst a) (applySubst subst b)
   MTInt -> MTInt
   MTString -> MTString
@@ -116,6 +118,18 @@ inferList env (a :| as) = do
     (pure (s1, tyA))
     as
 
+splitRecordTypes ::
+  Map Name (Substitutions, MonoType) ->
+  (Substitutions, MonoType)
+splitRecordTypes map' = (subs, MTRecord types)
+  where
+    subs =
+      foldr
+        composeSubst
+        mempty
+        ((fst . snd) <$> M.toList map')
+    types = snd <$> map'
+
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
@@ -124,6 +138,9 @@ infer env (MyVar name) =
 infer env (MyList as) = do
   (s1, tyItems) <- inferList env as
   pure (s1, MTList tyItems)
+infer env (MyRecord map') = do
+  tyItems <- traverse (infer env) map'
+  pure (splitRecordTypes tyItems)
 infer env (MyLet binder expr body) = do
   (s1, tyExpr) <- infer env expr
   let scheme = Scheme [] (applySubst s1 tyExpr)

@@ -11,6 +11,7 @@ where
 import Control.Applicative ((<|>))
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -71,6 +72,7 @@ complexParser =
       <|> appParser2
       <|> appParser
       <|> listParser
+      <|> recordParser
   )
 
 protectedNames :: Set Text
@@ -269,6 +271,40 @@ listParser = do
   _ <- P.literal "]"
   _ <- P.space0
   pure (MyList (NE.fromList (args <> [last'])))
+
+-----
+
+recordParser :: Parser Expr
+recordParser = fullRecordParser <|> emptyRecordParser
+
+emptyRecordParser :: Parser Expr
+emptyRecordParser = do
+  _ <- P.literal "{"
+  _ <- P.space0
+  _ <- P.literal "}"
+  _ <- P.space0
+  pure (MyRecord mempty)
+
+fullRecordParser :: Parser Expr
+fullRecordParser = do
+  _ <- P.literal "{"
+  _ <- P.space0
+  args <- P.zeroOrMore (P.left recordItemParser (P.left (P.literal ",") P.space0))
+  last' <- recordItemParser
+  _ <- P.space0
+  _ <- P.literal "}"
+  _ <- P.space0
+  pure (MyRecord (M.fromList $ args <> [last']))
+
+recordItemParser :: Parser (Name, Expr)
+recordItemParser = do
+  name <- nameParser
+  _ <- P.space0
+  _ <- P.literal ":"
+  _ <- P.space0
+  expr <- expressionParser
+  _ <- P.space0
+  pure (name, expr)
 
 -----
 

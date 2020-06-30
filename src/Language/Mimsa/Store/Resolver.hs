@@ -37,6 +37,7 @@ extractVars_ (MyLetList newVarA newVarB a b) = S.delete newVarA (S.delete newVar
 extractVars_ (MyPair a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MySum _ a) = extractVars_ a
 extractVars_ (MyList as) = foldMap extractVars_ as
+extractVars_ (MyRecord map') = foldMap extractVars_ map'
 
 filterBuiltIns :: Set Name -> Set Name
 filterBuiltIns = S.filter (not . isLibraryName)

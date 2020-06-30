@@ -7,6 +7,7 @@ module Language.Mimsa.Syntax.Printer
 where
 
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -110,6 +111,15 @@ instance Printer Expr where
   prettyPrint (MyList as) = "[" <> T.intercalate ", " exprs' <> "]"
     where
       exprs' = NE.toList $ printSubExpr <$> as
+  prettyPrint (MyRecord map') = "{" <> T.intercalate ", " exprs' <> "}"
+    where
+      exprs' =
+        ( \(name, val) ->
+            prettyPrint name
+              <> ": "
+              <> printSubExpr val
+        )
+          <$> (M.toList map')
 
 inParens :: (Printer a) => a -> Text
 inParens a = "(" <> prettyPrint a <> ")"
@@ -138,6 +148,15 @@ instance Printer MonoType where
   prettyPrint (MTVar a) = prettyPrint a
   prettyPrint (MTSum a b) = "Sum " <> printSubType a <> " " <> printSubType b
   prettyPrint (MTList a) = "List " <> printSubType a
+  prettyPrint (MTRecord as) = "{" <> T.intercalate ", " types <> "}"
+    where
+      types =
+        ( \(name, mt) ->
+            prettyPrint name
+              <> ": "
+              <> printSubType mt
+        )
+          <$> (M.toList as)
 
 -- simple things with no brackets, complex things in brackets
 printSubType :: MonoType -> Text

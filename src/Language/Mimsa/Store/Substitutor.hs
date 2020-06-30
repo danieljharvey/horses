@@ -132,4 +132,7 @@ mapVar p (MyCase a b c) =
 mapVar p (MyList as) = do
   mas <- traverse (mapVar p) as
   pure (MyList mas)
+mapVar p (MyRecord map') = do
+  map2 <- traverse (mapVar p) map'
+  pure (MyRecord map2)
 mapVar _ (MyLiteral a) = pure (MyLiteral a)
