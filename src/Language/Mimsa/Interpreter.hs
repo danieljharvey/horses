@@ -87,7 +87,10 @@ unwrapBuiltIn name (TwoArgs _ _) = do
 
 interpretWithScope :: Expr -> App Expr
 interpretWithScope (MyLiteral a) = pure (MyLiteral a)
-interpretWithScope (MyPair a b) = pure (MyPair a b)
+interpretWithScope (MyPair a b) = do
+  exprA <- interpretWithScope a
+  exprB <- interpretWithScope b
+  pure (MyPair exprA exprB)
 interpretWithScope (MyLet binder expr body) = do
   modify ((<>) (Scope $ M.singleton binder expr))
   interpretWithScope body
@@ -147,7 +150,9 @@ interpretWithScope (MySum s a) = do
 interpretWithScope (MyApp (MyLetList a b c d) e) = do
   expr <- interpretWithScope (MyLetList a b c d)
   interpretWithScope (MyApp expr e)
-interpretWithScope (MyList a) = pure (MyList a)
+interpretWithScope (MyList as) = do
+  exprs <- traverse interpretWithScope as
+  pure (MyList exprs)
 interpretWithScope (MyApp (MyList _) _) = throwError "Cannot apply a value to a List"
 interpretWithScope (MyApp (MySum MyLeft _) _) = throwError "Cannot apply a value to a Left value"
 interpretWithScope (MyApp (MySum MyRight _) _) = throwError "Cannot apply a value to a Right value"

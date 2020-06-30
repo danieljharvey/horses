@@ -132,73 +132,56 @@ infer env (MyLet binder expr body) = do
   pure (s2 `composeSubst` s1, tyBody)
 infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = do
   (s1, tySum) <- infer env sumExpr
-  case tySum of
-    (MTSum tyA tyB) -> do
-      (s2, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst s1 tyA)
-      (s3, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst s1 tyB)
-      let subs =
-            s3
-              `composeSubst` s2
-              `composeSubst` s1
-      s4 <- unify tyLeftRes tyRightRes
-      pure (s4 `composeSubst` subs, applySubst (s4 `composeSubst` subs) tyLeftRes)
+  (tyL, tyR) <- case tySum of
+    (MTSum tyL tyR) -> pure (tyL, tyR)
     (MTVar _a) -> do
-      tyVarL <- getUnknown
-      tyVarR <- getUnknown
-      s2 <- unify (MTSum tyVarL tyVarR) tySum
-      (s3, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst (s2 `composeSubst` s1) tyVarL)
-      (s4, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst (s2 `composeSubst` s1) tyVarR)
-      let subs =
-            s4 `composeSubst` s3
-              `composeSubst` s2
-              `composeSubst` s1
-      s5 <- unify tyLeftRes tyRightRes
-      pure (s5 `composeSubst` subs, applySubst (s5 `composeSubst` subs) tyLeftRes)
+      tyL <- getUnknown
+      tyR <- getUnknown
+      pure (tyL, tyR)
     a -> throwError $ "Expected to case match on a pair but instead found " <> prettyPrint a
+  s2 <- unify (MTSum tyL tyR) tySum
+  (s3, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst (s2 `composeSubst` s1) tyL)
+  (s4, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst (s2 `composeSubst` s1) tyR)
+  let subs =
+        s4 `composeSubst` s3
+          `composeSubst` s2
+          `composeSubst` s1
+  s5 <- unify tyLeftRes tyRightRes
+  pure (s5 `composeSubst` subs, applySubst (s5 `composeSubst` subs) tyLeftRes)
 infer _env (MyCase _ _ _) = throwError "Arguments to case match must be lambda functions"
 infer env (MyLetPair binder1 binder2 expr body) = do
   (s1, tyExpr) <- infer env expr
-  case tyExpr of
+  (tyA, tyB) <- case tyExpr of
     (MTVar _a) -> do
       tyA <- getUnknown
       tyB <- getUnknown
-      let schemeA = Scheme [] (applySubst s1 tyA)
-          schemeB = Scheme [] (applySubst s1 tyB)
-          newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
-      s2 <- unify tyExpr (MTPair tyA tyB)
-      (s3, tyBody) <- infer (applySubstCtx (s2 `composeSubst` s1) newEnv) body
-      pure (s3 `composeSubst` s2 `composeSubst` s1, tyBody)
-    (MTPair a b) -> do
-      let schemeA = Scheme [] (applySubst s1 a)
-          schemeB = Scheme [] (applySubst s1 b)
-          newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
-      s2 <- unify tyExpr (MTPair a b)
-      (s3, tyBody) <- infer (applySubstCtx (s2 `composeSubst` s1) newEnv) body
-      pure (s3 `composeSubst` s2 `composeSubst` s1, tyBody)
+      pure (tyA, tyB)
+    (MTPair a b) -> pure (a, b)
     a -> throwError $ "Expected a pair but instead found " <> prettyPrint a
+  let schemeA = Scheme [] (applySubst s1 tyA)
+      schemeB = Scheme [] (applySubst s1 tyB)
+      newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
+  s2 <- unify tyExpr (MTPair tyA tyB)
+  (s3, tyBody) <- infer (applySubstCtx (s2 `composeSubst` s1) newEnv) body
+  pure (s3 `composeSubst` s2 `composeSubst` s1, tyBody)
 infer env (MyLetList binder1 binder2 expr body) = do
   (s1, tyExpr) <- infer env expr
-  case tyExpr of
+  (tyHead, tyRest) <- case tyExpr of
     (MTVar _a) -> do
       tyHead <- getUnknown
       tyRest <- getUnknown
-      let schemeHead = Scheme [] (applySubst s1 tyHead)
-          schemeRest = Scheme [] (applySubst s1 tyRest)
-          newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
-      s2 <- unify tyExpr (MTList tyHead)
-      s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
-      (s4, tyBody) <- infer (applySubstCtx (s3 `composeSubst` s2 `composeSubst` s1) newEnv) body
-      pure (s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1, tyBody)
+      pure (tyHead, tyRest)
     (MTList tyHead) -> do
       tyRest <- getUnknown
-      let schemeHead = Scheme [] (applySubst s1 tyHead)
-          schemeRest = Scheme [] (applySubst s1 tyRest)
-          newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
-      s2 <- unify tyExpr (MTList tyHead)
-      s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
-      (s4, tyBody) <- infer (applySubstCtx (s3 `composeSubst` s2 `composeSubst` s1) newEnv) body
-      pure (s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1, tyBody)
+      pure (tyHead, tyRest)
     a -> throwError $ "Expected a list but instead found " <> prettyPrint a
+  let schemeHead = Scheme [] (applySubst s1 tyHead)
+      schemeRest = Scheme [] (applySubst s1 tyRest)
+      newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
+  s2 <- unify tyExpr (MTList tyHead)
+  s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
+  (s4, tyBody) <- infer (applySubstCtx (s3 `composeSubst` s2 `composeSubst` s1) newEnv) body
+  pure (s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1, tyBody)
 infer env (MyLambda binder body) = do
   tyBinder <- getUnknown
   let tmpCtx = M.insert binder (Scheme [] tyBinder) env
@@ -270,6 +253,7 @@ unify (MTSum a b) (MTSum a' b') = do
   s2 <- unify (applySubst s1 b) (applySubst s1 b')
   pure (s2 `composeSubst` s1)
 unify (MTVar u) t = varBind u t
+unify (MTList a) (MTList a') = unify a a'
 unify t (MTVar u) = varBind u t
 unify a b =
   throwError $ T.pack $

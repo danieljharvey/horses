@@ -143,4 +143,5 @@ instance Printer MonoType where
 printSubType :: MonoType -> Text
 printSubType all'@(MTSum _ _) = inParens all'
 printSubType all'@(MTFunction _ _) = inParens all'
+printSubType all'@(MTList _) = inParens all'
 printSubType a = prettyPrint a

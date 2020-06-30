@@ -9,6 +9,7 @@ where
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Repl
 import Language.Mimsa.Types
@@ -19,43 +20,19 @@ fstExpr :: StoreExpression
 fstExpr = StoreExpression mempty expr'
   where
     expr' =
-      MyLambda
-        (mkName "tuple")
-        ( MyLetPair
-            (mkName "a")
-            (mkName "b")
-            (MyVar (mkName "tuple"))
-            (MyVar (mkName "a"))
-        )
+      unsafeGetExpr "\\tuple -> let (a,b) = tuple in a"
 
 isTenExpr :: StoreExpression
 isTenExpr = StoreExpression mempty expr'
   where
     expr' =
-      MyLambda
-        (mkName "i")
-        ( MyIf
-            ( MyApp
-                ( MyApp
-                    (MyVar (mkName "eqInt"))
-                    (MyVar (mkName "i"))
-                )
-                (int 10)
-            )
-            (MySum MyRight (MyVar (mkName "i")))
-            (MySum MyLeft (MyVar (mkName ("i"))))
-        )
+      unsafeGetExpr "\\i -> if eqInt(i)(10) then Right i else Left i"
 
 eqTenExpr :: StoreExpression
 eqTenExpr = StoreExpression mempty expr'
   where
     expr' =
-      MyLambda
-        (mkName "i")
-        ( MyApp
-            (MyApp (MyVar (mkName "eqInt")) (int 10))
-            (MyVar (mkName "i"))
-        )
+      unsafeGetExpr "\\i -> eqInt(10)(i)"
 
 fmapSum :: StoreExpression
 fmapSum = StoreExpression mempty expr
@@ -63,6 +40,16 @@ fmapSum = StoreExpression mempty expr
     expr =
       unsafeGetExpr
         "\\f -> \\a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
+
+listUncons :: StoreExpression
+listUncons = StoreExpression mempty expr'
+  where
+    expr' = unsafeGetExpr "\\myList -> let [head,tail] = myList in (head,tail)"
+
+compose :: StoreExpression
+compose = StoreExpression mempty expr
+  where
+    expr = unsafeGetExpr "\\f -> \\g -> \\a -> f(g(a))"
 
 stdLib :: StoreEnv
 stdLib = StoreEnv store' bindings'
@@ -73,7 +60,9 @@ stdLib = StoreEnv store' bindings'
           [ (ExprHash 1, fstExpr),
             (ExprHash 2, isTenExpr),
             (ExprHash 3, eqTenExpr),
-            (ExprHash 4, fmapSum)
+            (ExprHash 4, fmapSum),
+            (ExprHash 5, listUncons),
+            (ExprHash 6, compose)
           ]
     bindings' =
       Bindings $
@@ -81,14 +70,16 @@ stdLib = StoreEnv store' bindings'
           [ (mkName "fst", ExprHash 1),
             (mkName "isTen", ExprHash 2),
             (mkName "eqTen", ExprHash 3),
-            (mkName "fmapSum", ExprHash 4)
+            (mkName "fmapSum", ExprHash 4),
+            (mkName "listUncons", ExprHash 5),
+            (mkName "compose", ExprHash 6)
           ]
 
 unsafeGetExpr :: Text -> Expr
 unsafeGetExpr input =
   case evaluateText mempty input of
     Right (_, expr', _) -> expr'
-    _ -> error "oh no"
+    _ -> error $ "Error evaluating " <> T.unpack input
 
 eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr))
 eval env input =
@@ -184,3 +175,20 @@ spec = do
             ( MTSum MTUnit (MTList MTInt),
               MySum MyRight $ MyList $ NE.fromList [int 2, int 3]
             )
+      it "listUncons([1,2,3])" $ do
+        result <- eval stdLib "listUncons([1,2,3])"
+        result
+          `shouldBe` Right
+            ( MTPair MTInt (MTSum MTUnit (MTList MTInt)),
+              MyPair
+                (int 1)
+                ( MySum
+                    MyRight
+                    ( MyList $
+                        NE.fromList [int 2, int 3]
+                    )
+                )
+            )
+      it "let listHead = (compose(fst)(listUncons)) in listHead([1,2,3])" $ do
+        result <- eval stdLib "let listHead = (compose(fst)(listUncons)) in listHead([1,2,3])"
+        result `shouldBe` Right (MTInt, int 1)
