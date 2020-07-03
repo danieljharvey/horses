@@ -10,7 +10,6 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Debug.Trace
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Repl
 import Language.Mimsa.Syntax
@@ -44,7 +43,7 @@ listUncons =
 
 listHead :: StoreExpression
 listHead =
-  unsafeGetExpr' "compose(fst)(listUncons)" $
+  unsafeGetExpr' "\\i -> compose(fst)(listUncons)(i)" $ -- why does this work but not compose(fst)(listUncons)
     Bindings
       ( M.fromList
           [ (mkName "compose", ExprHash 6),
@@ -79,6 +78,12 @@ list = unsafeGetExpr' "{ head: listHead, tail: listTail }" bindings'
             ]
         )
 
+idExpr :: StoreExpression
+idExpr = unsafeGetExpr "\\i -> i"
+
+constExpr :: StoreExpression
+constExpr = unsafeGetExpr "\\a -> \\b -> a"
+
 stdLib :: StoreEnv
 stdLib = StoreEnv store' bindings'
   where
@@ -94,7 +99,9 @@ stdLib = StoreEnv store' bindings'
             (ExprHash 7, sndExpr),
             (ExprHash 8, listHead),
             (ExprHash 9, listTail),
-            (ExprHash 10, list)
+            (ExprHash 10, list),
+            (ExprHash 11, idExpr),
+            (ExprHash 12, constExpr)
           ]
     bindings' =
       Bindings $
@@ -108,7 +115,9 @@ stdLib = StoreEnv store' bindings'
             (mkName "snd", ExprHash 7),
             (mkName "listHead", ExprHash 8),
             (mkName "listTail", ExprHash 9),
-            (mkName "list", ExprHash 10)
+            (mkName "list", ExprHash 10),
+            (mkName "id", ExprHash 11),
+            (mkName "const", ExprHash 12)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression
@@ -124,7 +133,7 @@ eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr))
 eval env input =
   case evaluateText env input of
     Right (mt, expr', scope') -> do
-      endExpr <- interpret (traceShowId scope') (traceShowId expr')
+      endExpr <- interpret scope' expr'
       case endExpr of
         Right a -> pure (Right (mt, a))
         Left e -> pure (Left e)
@@ -267,3 +276,12 @@ spec = do
       it "list.tail([1])" $ do
         result <- eval stdLib "list.tail([1])"
         result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
+      it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
+        result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
+        result `shouldBe` Right (MTInt, int 1)
+      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(2) }) in reuse.first(100))" $ do
+        result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(2) }) in reuse.first(100))"
+        result `shouldBe` Right (MTInt, int 1)
+      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(2) }) in reuse.second(100))" $ do
+        result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(2) }) in reuse.second(100))"
+        result `shouldBe` Right (MTInt, int 2)

@@ -21,12 +21,16 @@ falseStoreExpr =
     (Bindings $ M.singleton (mkName "true") (ExprHash 1))
     (MyVar (mkName "true"))
 
+idExpr :: StoreExpression
+idExpr = StoreExpression (mempty) (MyLambda (mkName "a") (MyVar (mkName "a")))
+
 storeWithBothIn :: Store
 storeWithBothIn =
   Store
     ( M.fromList
         [ (ExprHash 1, trueStoreExpr),
-          (ExprHash 2, falseStoreExpr)
+          (ExprHash 2, falseStoreExpr),
+          (ExprHash 3, idExpr)
         ]
     )
 
@@ -59,6 +63,38 @@ spec = do
               (MyVar (Name "var0")),
               Scope (M.singleton (Name "var0") (storeExpression trueStoreExpr))
             )
+    describe "Only creates one new var if a function is used twice" $ do
+      it "let id = \\x -> x in { first: id(1), second: id(2) }" $ do
+        let hash = ExprHash 3
+            expr =
+              ( MyRecord $
+                  M.fromList
+                    [ (mkName "first", MyApp (MyVar (mkName "id")) (int 1)),
+                      (mkName "second", MyApp (MyVar (mkName "id")) (int 2))
+                    ]
+              )
+            bindings' = Bindings $ M.singleton (mkName "id") hash
+            storeExpr = StoreExpression bindings' expr
+            store' = Store (M.singleton hash idExpr)
+        substitute store' storeExpr
+          `shouldBe` Right
+            ( M.fromList
+                [ (Name "var0", Name "id"),
+                  (Name "var1", Name "id")
+                ],
+              ( MyRecord $
+                  M.fromList
+                    [ (mkName "first", MyApp (MyVar (mkName "var0")) (int 1)),
+                      (mkName "second", MyApp (MyVar (mkName "var1")) (int 2))
+                    ]
+              ),
+              Scope
+                ( M.fromList
+                    [ (Name "var0", storeExpression idExpr),
+                      (Name "var1", storeExpression idExpr)
+                    ]
+                )
+            )
   describe "Combine two levels" $ do
     it "Combines trueStoreExpr and falseStoreExpr" $ do
       let hash = ExprHash 2
@@ -75,7 +111,8 @@ spec = do
             MyVar (mkName "var0"),
             Scope
               ( M.fromList
-                  [ (Name "var1", bool True),
+                  [ (Name "true", bool True),
+                    (Name "var1", MyVar (mkName "true")),
                     (Name "var0", MyVar (mkName "var1"))
                   ]
               )

@@ -89,7 +89,7 @@ inferVarFromScope env name =
     Just scheme -> do
       ty <- instantiate scheme
       pure (mempty, ty)
-    _ -> throwError $ T.pack ("Unknown variable " <> show name)
+    _ -> throwError $ T.pack ("Unknown variable " <> show name <> " in " <> show env)
 
 inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> App (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
@@ -154,7 +154,7 @@ infer env (MyLet binder expr body) = do
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
 infer env (MyRecordAccess record name) = do
-  (s1, tyRecord) <- infer env record
+  (s1, tyRecord) <- infer env (record)
   tyItem <- case tyRecord of
     (MTRecord map') -> lookupRecordItem name map'
     a -> throwError $ "Expected to access item " <> prettyPrint name <> " from a record but instead found " <> prettyPrint a

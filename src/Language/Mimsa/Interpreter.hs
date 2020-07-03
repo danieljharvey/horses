@@ -103,9 +103,10 @@ interpretWithScope (MyLetPair binderA binderB (MyVar v) body) = do
   interpretWithScope (MyLetPair binderA binderB expr body)
 interpretWithScope (MyLetPair _ _ a _) =
   throwError $ "Cannot destructure value " <> prettyPrint a <> " as a pair"
-interpretWithScope (MyVar name) =
+interpretWithScope (MyVar name) = do
+  scope <- get
   useVarFromBuiltIn name <|> useVarFromScope name
-    <|> (throwError $ "Unknown variable " <> prettyPrint name)
+    <|> (throwError $ "Unknown variable " <> prettyPrint name <> " in " <> (T.pack $ show scope))
 interpretWithScope (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) = do
   interpretWithScope (MyLet binderL a exprL)
 interpretWithScope (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) = do
