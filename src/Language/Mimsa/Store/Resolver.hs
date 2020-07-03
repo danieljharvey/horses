@@ -38,6 +38,7 @@ extractVars_ (MyPair a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MySum _ a) = extractVars_ a
 extractVars_ (MyList as) = foldMap extractVars_ as
 extractVars_ (MyRecord map') = foldMap extractVars_ map'
+extractVars_ (MyRecordAccess a _) = extractVars_ a
 
 filterBuiltIns :: Set Name -> Set Name
 filterBuiltIns = S.filter (not . isLibraryName)

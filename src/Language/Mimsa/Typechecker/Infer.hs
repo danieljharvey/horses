@@ -130,6 +130,12 @@ splitRecordTypes map' = (subs, MTRecord types)
         ((fst . snd) <$> M.toList map')
     types = snd <$> map'
 
+lookupRecordItem :: Name -> Map Name MonoType -> App MonoType
+lookupRecordItem name map' =
+  case M.lookup name map' of
+    Just item -> pure item
+    _ -> throwError $ "Could not find record item " <> prettyPrint name
+
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
@@ -147,6 +153,12 @@ infer env (MyLet binder expr body) = do
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
+infer env (MyRecordAccess record name) = do
+  (s1, tyRecord) <- infer env record
+  tyItem <- case tyRecord of
+    (MTRecord map') -> lookupRecordItem name map'
+    a -> throwError $ "Expected to access item " <> prettyPrint name <> " from a record but instead found " <> prettyPrint a
+  pure (s1, tyItem)
 infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = do
   (s1, tySum) <- infer env sumExpr
   (tyL, tyR) <- case tySum of

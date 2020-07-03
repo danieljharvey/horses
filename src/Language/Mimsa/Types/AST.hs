@@ -61,6 +61,7 @@ data Expr
   | MySum SumSide Expr -- Left a | Right b
   | MyList (NonEmpty Expr) -- [a]
   | MyRecord (Map Name Expr) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
+  | MyRecordAccess Expr Name -- a.foo
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 data MonoType

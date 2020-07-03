@@ -86,6 +86,8 @@ instance Printer Expr where
     printSubExpr func <> "("
       <> printSubExpr arg
       <> ")"
+  prettyPrint (MyRecordAccess expr name) =
+    printSubExpr expr <> "." <> prettyPrint name
   prettyPrint (MyIf if' then' else') =
     "if "
       <> printSubExpr if'

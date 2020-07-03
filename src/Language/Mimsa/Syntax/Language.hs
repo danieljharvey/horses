@@ -71,6 +71,7 @@ complexParser =
       <|> appParser3
       <|> appParser2
       <|> appParser
+      <|> recordAccessParser
       <|> listParser
       <|> recordParser
   )
@@ -207,7 +208,10 @@ arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
 
 appParser :: Parser Expr
 appParser = do
-  func <- varParser <|> lambdaParser
+  func <-
+    recordAccessParser
+      <|> varParser
+      <|> lambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0
@@ -219,7 +223,10 @@ appParser = do
 
 appParser2 :: Parser Expr
 appParser2 = do
-  func <- varParser <|> lambdaParser
+  func <-
+    recordAccessParser
+      <|> varParser
+      <|> lambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0
@@ -237,7 +244,7 @@ appParser2 = do
 
 appParser3 :: Parser Expr
 appParser3 = do
-  func <- varParser <|> lambdaParser
+  func <- recordAccessParser <|> varParser <|> lambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0
@@ -305,6 +312,44 @@ recordItemParser = do
   expr <- expressionParser
   _ <- P.space0
   pure (name, expr)
+
+-----
+
+recordAccessParser :: Parser Expr
+recordAccessParser =
+  recordAccessParser3
+    <|> recordAccessParser2
+    <|> recordAccessParser1
+
+recordAccessParser1 :: Parser Expr
+recordAccessParser1 = do
+  expr <- varParser
+  _ <- P.literal "."
+  name <- nameParser
+  _ <- P.space0
+  pure (MyRecordAccess expr name)
+
+recordAccessParser2 :: Parser Expr
+recordAccessParser2 = do
+  expr <- varParser
+  _ <- P.literal "."
+  name <- nameParser
+  _ <- P.literal "."
+  name2 <- nameParser
+  _ <- P.space0
+  pure (MyRecordAccess (MyRecordAccess expr name) name2)
+
+recordAccessParser3 :: Parser Expr
+recordAccessParser3 = do
+  expr <- varParser
+  _ <- P.literal "."
+  name <- nameParser
+  _ <- P.literal "."
+  name2 <- nameParser
+  _ <- P.literal "."
+  name3 <- nameParser
+  _ <- P.space0
+  pure (MyRecordAccess (MyRecordAccess (MyRecordAccess expr name) name2) name3)
 
 -----
 

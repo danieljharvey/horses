@@ -130,6 +130,21 @@ interpretWithScope (MyLetList binderHead binderRest (MyList as) body) = do
   let newScopes = Scope $ M.fromList [(binderHead, listHead), (binderRest, tail')]
   modify ((<>) newScopes)
   interpretWithScope body
+interpretWithScope (MyRecordAccess (MyRecord record) name) = do
+  case M.lookup name record of
+    Just item -> interpretWithScope item
+    _ -> throwError $ "Could not find " <> prettyPrint name <> " in " <> prettyPrint (MyRecord record)
+interpretWithScope (MyRecordAccess (MyVar a) name) = do
+  expr <- interpretWithScope (MyVar a)
+  interpretWithScope (MyRecordAccess expr name)
+interpretWithScope (MyRecordAccess (MyRecordAccess a name') name) = do
+  expr <- interpretWithScope (MyRecordAccess a name')
+  interpretWithScope (MyRecordAccess expr name)
+interpretWithScope (MyRecordAccess a name) =
+  throwError $
+    "Could not access record item " <> prettyPrint name
+      <> " inside "
+      <> prettyPrint a
 interpretWithScope (MyLetList binderHead binderRest (MyVar b) body) = do
   expr <- interpretWithScope (MyVar b)
   interpretWithScope (MyLetList binderHead binderRest expr body)
@@ -144,6 +159,9 @@ interpretWithScope (MyApp (MyLet a b c) d) = do
 interpretWithScope (MyApp (MyLetPair a b c d) e) = do
   expr <- interpretWithScope (MyLetPair a b c d)
   interpretWithScope (MyApp expr e)
+interpretWithScope (MyApp (MyRecordAccess a b) c) = do
+  expr <- interpretWithScope (MyRecordAccess a b)
+  interpretWithScope (MyApp expr c)
 interpretWithScope (MySum s a) = do
   expr <- interpretWithScope a
   pure (MySum s expr)

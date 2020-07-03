@@ -112,6 +112,7 @@ mapVar p (MyLet name a b) =
     <*> (mapVar (p <> [name]) b)
 mapVar p (MyLambda name a) =
   MyLambda <$> pure name <*> (mapVar (p <> [name]) a)
+mapVar p (MyRecordAccess a name) = MyRecordAccess <$> (mapVar p a) <*> pure name
 mapVar p (MyApp a b) = MyApp <$> (mapVar p a) <*> (mapVar p b)
 mapVar p (MyIf a b c) = MyIf <$> (mapVar p a) <*> (mapVar p b) <*> (mapVar p c)
 mapVar p (MyPair a b) = MyPair <$> (mapVar p a) <*> (mapVar p b)

@@ -10,46 +10,74 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Debug.Trace
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Repl
+import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 
 fstExpr :: StoreExpression
-fstExpr = StoreExpression mempty expr'
-  where
-    expr' =
-      unsafeGetExpr "\\tuple -> let (a,b) = tuple in a"
+fstExpr =
+  unsafeGetExpr "\\tuple -> let (a,b) = tuple in a"
+
+sndExpr :: StoreExpression
+sndExpr = unsafeGetExpr "\\tuple -> let (a,b) = tuple in b"
 
 isTenExpr :: StoreExpression
-isTenExpr = StoreExpression mempty expr'
-  where
-    expr' =
-      unsafeGetExpr "\\i -> if eqInt(i)(10) then Right i else Left i"
+isTenExpr =
+  unsafeGetExpr "\\i -> if eqInt(i)(10) then Right i else Left i"
 
 eqTenExpr :: StoreExpression
-eqTenExpr = StoreExpression mempty expr'
-  where
-    expr' =
-      unsafeGetExpr "\\i -> eqInt(10)(i)"
+eqTenExpr =
+  unsafeGetExpr "\\i -> eqInt(10)(i)"
 
 fmapSum :: StoreExpression
-fmapSum = StoreExpression mempty expr
-  where
-    expr =
-      unsafeGetExpr
-        "\\f -> \\a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
+fmapSum =
+  unsafeGetExpr
+    "\\f -> \\a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
 
 listUncons :: StoreExpression
-listUncons = StoreExpression mempty expr'
-  where
-    expr' = unsafeGetExpr "\\myList -> let [head,tail] = myList in (head,tail)"
+listUncons =
+  unsafeGetExpr "\\myList -> let [head,tail] = myList in (head,tail)"
+
+listHead :: StoreExpression
+listHead =
+  unsafeGetExpr' "compose(fst)(listUncons)" $
+    Bindings
+      ( M.fromList
+          [ (mkName "compose", ExprHash 6),
+            (mkName "fst", ExprHash 1),
+            (mkName "listUncons", ExprHash 5)
+          ]
+      )
+
+listTail :: StoreExpression
+listTail =
+  unsafeGetExpr' "compose(snd)(listUncons)" $
+    Bindings
+      ( M.fromList
+          [ (mkName "compose", ExprHash 6),
+            (mkName "snd", ExprHash 7),
+            (mkName "listUncons", ExprHash 5)
+          ]
+      )
 
 compose :: StoreExpression
-compose = StoreExpression mempty expr
+compose =
+  unsafeGetExpr "\\f -> \\g -> \\a -> f(g(a))"
+
+list :: StoreExpression
+list = unsafeGetExpr' "{ head: listHead, tail: listTail }" bindings'
   where
-    expr = unsafeGetExpr "\\f -> \\g -> \\a -> f(g(a))"
+    bindings' =
+      Bindings
+        ( M.fromList
+            [ (mkName "listHead", ExprHash 8),
+              (mkName "listTail", ExprHash 9)
+            ]
+        )
 
 stdLib :: StoreEnv
 stdLib = StoreEnv store' bindings'
@@ -62,7 +90,11 @@ stdLib = StoreEnv store' bindings'
             (ExprHash 3, eqTenExpr),
             (ExprHash 4, fmapSum),
             (ExprHash 5, listUncons),
-            (ExprHash 6, compose)
+            (ExprHash 6, compose),
+            (ExprHash 7, sndExpr),
+            (ExprHash 8, listHead),
+            (ExprHash 9, listTail),
+            (ExprHash 10, list)
           ]
     bindings' =
       Bindings $
@@ -72,20 +104,27 @@ stdLib = StoreEnv store' bindings'
             (mkName "eqTen", ExprHash 3),
             (mkName "fmapSum", ExprHash 4),
             (mkName "listUncons", ExprHash 5),
-            (mkName "compose", ExprHash 6)
+            (mkName "compose", ExprHash 6),
+            (mkName "snd", ExprHash 7),
+            (mkName "listHead", ExprHash 8),
+            (mkName "listTail", ExprHash 9),
+            (mkName "list", ExprHash 10)
           ]
 
-unsafeGetExpr :: Text -> Expr
-unsafeGetExpr input =
-  case evaluateText mempty input of
-    Right (_, expr', _) -> expr'
-    _ -> error $ "Error evaluating " <> T.unpack input
+unsafeGetExpr' :: Text -> Bindings -> StoreExpression
+unsafeGetExpr' input bindings' =
+  case parseExpr input of
+    Right expr' -> StoreExpression bindings' expr'
+    a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
+
+unsafeGetExpr :: Text -> StoreExpression
+unsafeGetExpr input = unsafeGetExpr' input mempty
 
 eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr))
 eval env input =
   case evaluateText env input of
     Right (mt, expr', scope') -> do
-      endExpr <- interpret scope' expr'
+      endExpr <- interpret (traceShowId scope') (traceShowId expr')
       case endExpr of
         Right a -> pure (Right (mt, a))
         Left e -> pure (Left e)
@@ -192,3 +231,39 @@ spec = do
       it "let listHead = (compose(fst)(listUncons)) in listHead([1,2,3])" $ do
         result <- eval stdLib "let listHead = (compose(fst)(listUncons)) in listHead([1,2,3])"
         result `shouldBe` Right (MTInt, int 1)
+      it "let good = { dog: True } in good.dog" $ do
+        result <- eval stdLib "let good = ({ dog: True }) in good.dog"
+        result `shouldBe` Right (MTBool, bool True)
+      it "let prelude = { id: (\\i -> i) } in prelude.id" $ do
+        result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
+        result
+          `shouldBe` Right
+            ( MTFunction (MTVar (mkName "U1")) (MTVar (mkName "U1")),
+              MyLambda (mkName "i") (MyVar (mkName "i"))
+            )
+      it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
+        result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"
+        result
+          `shouldBe` Right
+            ( MTInt,
+              int 1
+            )
+      it "let bigPrelude = ({ prelude: { id: (\\i -> i) } }) in bigPrelude.prelude.id(1)" $ do
+        result <- eval stdLib "let bigPrelude = ({ prelude: { id: (\\i -> i) } }) in bigPrelude.prelude.id(1)"
+        result
+          `shouldBe` Right
+            ( MTInt,
+              int 1
+            )
+      it "listHead([1])" $ do
+        result <- eval stdLib "listHead([1])"
+        result `shouldBe` Right (MTInt, int 1)
+      it "list.head([1])" $ do
+        result <- eval stdLib "list.head([1])"
+        result `shouldBe` Right (MTInt, int 1)
+      it "listTail([1])" $ do
+        result <- eval stdLib "listTail([1])"
+        result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
+      it "list.tail([1])" $ do
+        result <- eval stdLib "list.tail([1])"
+        result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
