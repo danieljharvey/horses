@@ -10,6 +10,7 @@ where
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
+--import qualified Data.Text.IO as T
 import Language.Mimsa
 import Test.Helpers
 import Test.Hspec
@@ -165,8 +166,8 @@ exprs =
             (int 2)
         ),
       Right $ MTFunction (MTRecord $ M.singleton (mkName "dog") MTBool) MTInt
-    ),
-    ( MyLambda
+    )
+    {-( MyLambda
         (mkName "i")
         ( MyIf
             ( MyRecordAccess
@@ -189,7 +190,8 @@ exprs =
                 ]
           )
           MTInt
-    )
+    )-}
+    -- combining multiple facts about an unknown record is for later
   ]
 
 identity :: Expr
@@ -202,7 +204,7 @@ spec = do
       _ <-
         traverse
           ( \(code, expected) -> do
-              -- T.putStrLn (prettyPrint code)
+              --              T.putStrLn (prettyPrint code)
               startInference code `shouldBe` expected
           )
           exprs

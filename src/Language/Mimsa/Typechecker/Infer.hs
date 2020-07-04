@@ -19,7 +19,6 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Debug.Trace
 import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
@@ -35,7 +34,7 @@ startInference expr = snd <$> doInference M.empty expr
 
 doInference :: Environment -> Expr -> Either Text (Substitutions, MonoType)
 doInference env expr =
-  traceShowId $ fst either'
+  fst either'
   where
     either' = runState (runExceptT (infer env expr)) 1
 
@@ -132,17 +131,6 @@ splitRecordTypes map' = (subs, MTRecord types)
         ((fst . snd) <$> M.toList map')
     types = snd <$> map'
 
-lookupRecordItem ::
-  Name ->
-  Map Name MonoType ->
-  App (Map Name MonoType)
-lookupRecordItem name map' =
-  case traceShowId $ M.lookup name map' of
-    Just _ -> pure map'
-    _ -> do
-      item <- getUnknown
-      pure (M.insert name item map')
-
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
@@ -165,23 +153,31 @@ infer env (MyLet binder expr body) = do
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
-infer env (MyRecordAccess record name) = do
-  tyRecordItem <- getUnknown
-  (s1, tyRecord) <- infer env record
-  (s2, tyRecord2) <- case tyRecord of
-    (MTRecord map') -> do
-      (newMap) <- lookupRecordItem name map'
-      s <- unify tyRecord (MTRecord newMap)
-      pure (s, applySubst s (MTRecord newMap))
-    (MTVar _) -> do
-      tyItem' <- getUnknown
-      s <- unify tyRecord (MTRecord (M.singleton name tyItem'))
-      pure (s, MTRecord (M.singleton name tyItem'))
-    a -> throwError $ "Expected to access item " <> prettyPrint name <> " from a record but instead found " <> prettyPrint a
-  s3 <- unify tyRecord tyRecord2
-  s4 <- unify (applySubst s3 tyRecord2) (MTRecord (M.singleton name tyRecordItem))
-  let subs = traceShowId $ s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1
-  pure (subs, applySubst subs tyRecordItem)
+infer env (MyRecordAccess (MyRecord items') name) = do
+  case M.lookup name items' of
+    Just item -> do
+      infer env item
+    Nothing ->
+      throwError $
+        "Could not find item "
+          <> prettyPrint name
+          <> " in "
+          <> (T.pack $ show items')
+infer env (MyRecordAccess a name) = do
+  (s1, tyItems) <- infer env a
+  tyResult <- case tyItems of
+    (MTRecord bits) -> do
+      case M.lookup name bits of
+        Just mt -> pure mt
+        _ -> getUnknown
+    (MTVar _) -> getUnknown
+    _ -> throwError ""
+  s2 <-
+    unify
+      (MTRecord $ M.singleton name tyResult)
+      tyItems
+  let subs = s2 `composeSubst` s1
+  pure (subs, applySubst subs tyResult)
 infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = do
   (s1, tySum) <- infer env sumExpr
   (tyL, tyR) <- case tySum of
