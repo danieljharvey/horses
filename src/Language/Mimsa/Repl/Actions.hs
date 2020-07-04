@@ -7,6 +7,7 @@ module Language.Mimsa.Repl.Actions
 where
 
 import Control.Monad (join)
+import Data.Bifunctor (first)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -18,7 +19,7 @@ import Language.Mimsa.Store
     saveExpr,
     substitute,
   )
-import Language.Mimsa.Syntax
+import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
 
@@ -42,13 +43,13 @@ doReplAction env (ListBindings) = do
 doReplAction env (Evaluate expr) = do
   case getTypecheckedStoreExpression env expr of
     Left e' -> do
-      print e'
+      T.putStrLn $ prettyPrint e'
       pure env
     Right (type', _, expr', scope') -> do
       simplified <- interpret scope' expr'
       case simplified of
         Left e -> do
-          print e
+          T.putStrLn e
           pure env
         Right simplified' -> do
           T.putStrLn $
@@ -59,7 +60,7 @@ doReplAction env (Evaluate expr) = do
 doReplAction env (Info expr) = do
   case getTypecheckedStoreExpression env expr of
     Left e' -> do
-      print e'
+      T.putStrLn $ prettyPrint e'
       pure env
     Right (type', _, _, _) -> do
       T.putStrLn $
@@ -75,7 +76,7 @@ doReplAction env (Bind name expr) = do
     else do
       case getTypecheckedStoreExpression env expr of
         Left e' -> do
-          print e'
+          T.putStrLn (prettyPrint e')
           pure env
         Right (type', storeExpr, _, _) -> do
           hash <- saveExpr storeExpr
@@ -88,9 +89,9 @@ doReplAction env (Bind name expr) = do
 
 ----------
 
-getType :: Scope -> Expr -> Either T.Text MonoType
+getType :: Scope -> Expr -> Either Error MonoType
 getType scope' expr =
-  startInference (chainExprs expr scope')
+  first TypeErr $ startInference (chainExprs expr scope')
 
 getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -120,15 +121,15 @@ fromItem name expr hash = StoreEnv
 getTypecheckedStoreExpression ::
   StoreEnv ->
   Expr ->
-  Either Text (MonoType, StoreExpression, Expr, Scope)
+  Either Error (MonoType, StoreExpression, Expr, Scope)
 getTypecheckedStoreExpression env expr = do
-  storeExpr <- createStoreExpression (bindings env) expr
-  (_, newExpr, scope) <- substitute (store env) storeExpr
+  storeExpr <- first OtherError $ createStoreExpression (bindings env) expr
+  (_, newExpr, scope) <- first OtherError $ substitute (store env) storeExpr
   exprType <- getType scope newExpr
   pure (exprType, storeExpr, newExpr, scope)
 
-evaluateText :: StoreEnv -> Text -> Either Text (MonoType, Expr, Scope)
+evaluateText :: StoreEnv -> Text -> Either Error (MonoType, Expr, Scope)
 evaluateText env input = do
-  expr <- parseExpr input
+  expr <- first OtherError $ parseExpr input
   (mt, _, expr', scope') <- getTypecheckedStoreExpression env expr
   pure (mt, expr', scope')

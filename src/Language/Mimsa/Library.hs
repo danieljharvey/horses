@@ -11,7 +11,6 @@ where
 import Data.Coerce
 import qualified Data.Map as M
 import qualified Data.Text.IO as T
-import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 import System.Random
 

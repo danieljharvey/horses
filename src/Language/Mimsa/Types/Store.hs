@@ -7,15 +7,21 @@ module Language.Mimsa.Types.Store where
 
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
+import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.ForeignFunc
 import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Printer
 
 ------------
 
 newtype ExprHash = ExprHash Int
   deriving (Eq, Ord, Show)
   deriving newtype (JSON.FromJSON, JSON.ToJSON)
+
+instance Printer ExprHash where
+  prettyPrint (ExprHash a) = T.pack . show $ a
 
 -------
 

@@ -12,7 +12,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Repl
-import Language.Mimsa.Syntax
+import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
@@ -124,14 +124,14 @@ unsafeGetExpr' input bindings' =
 unsafeGetExpr :: Text -> StoreExpression
 unsafeGetExpr input = unsafeGetExpr' input mempty
 
-eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr))
+eval :: StoreEnv -> Text -> IO (Either Error (MonoType, Expr))
 eval env input =
   case evaluateText env input of
     Right (mt, expr', scope') -> do
       endExpr <- interpret scope' expr'
       case endExpr of
         Right a -> pure (Right (mt, a))
-        Left e -> pure (Left e)
+        Left e -> pure (Left (OtherError e))
     Left e -> pure (Left e)
 
 spec :: Spec

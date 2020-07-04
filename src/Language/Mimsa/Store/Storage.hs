@@ -13,9 +13,9 @@ import qualified Data.ByteString.Lazy as BS
 import qualified Data.Hashable as Hash
 import Data.Text (Text)
 import qualified Data.Text.IO as T
-import Language.Mimsa.Syntax
 import Language.Mimsa.Types
   ( ExprHash (..),
+    Printer (..),
     StoreExpression (..),
   )
 

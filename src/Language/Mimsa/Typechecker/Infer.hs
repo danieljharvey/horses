@@ -17,22 +17,16 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
-import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Library
-import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
-type App = ExceptT Text (State Int)
+type App = ExceptT TypeError (State Int)
 
-type Environment = M.Map Name Scheme
-
-type Substitutions = M.Map Name MonoType
-
-startInference :: Expr -> Either Text MonoType
+startInference :: Expr -> Either TypeError MonoType
 startInference expr = snd <$> doInference M.empty expr
 
-doInference :: Environment -> Expr -> Either Text (Substitutions, MonoType)
+doInference :: Environment -> Expr -> Either TypeError (Substitutions, MonoType)
 doInference env expr =
   fst either'
   where
@@ -47,7 +41,7 @@ inferLiteral (MyUnit) = pure (mempty, MTUnit)
 inferBuiltIn :: Name -> App (Substitutions, MonoType)
 inferBuiltIn name = case getLibraryFunction name of
   Just ff -> pure (mempty, getFFType ff)
-  _ -> throwError $ "Could not find built-in function " <> prettyPrint name
+  _ -> throwError $ MissingBuiltIn name
 
 instantiate :: Scheme -> App MonoType
 instantiate (Scheme vars ty) = do
@@ -90,7 +84,7 @@ inferVarFromScope env name =
     Just scheme -> do
       ty <- instantiate scheme
       pure (mempty, ty)
-    _ -> throwError $ T.pack ("Unknown variable " <> show name <> " in " <> show env)
+    _ -> throwError $ VariableNotInEnv name env
 
 inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> App (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
@@ -158,20 +152,16 @@ infer env (MyRecordAccess (MyRecord items') name) = do
     Just item -> do
       infer env item
     Nothing ->
-      throwError $
-        "Could not find item "
-          <> prettyPrint name
-          <> " in "
-          <> (T.pack $ show items')
+      throwError $ MissingRecordMember name items'
 infer env (MyRecordAccess a name) = do
   (s1, tyItems) <- infer env a
   tyResult <- case tyItems of
     (MTRecord bits) -> do
       case M.lookup name bits of
         Just mt -> pure mt
-        _ -> throwError $ "Could not find " <> prettyPrint name
+        _ -> throwError $ MissingRecordTypeMember name bits
     (MTVar _) -> getUnknown
-    _ -> throwError $ "Cannot find type for record"
+    _ -> throwError $ CannotMatchRecord env tyItems
   s2 <-
     unify
       (MTRecord $ M.singleton name tyResult)
@@ -186,7 +176,7 @@ infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = d
       tyL <- getUnknown
       tyR <- getUnknown
       pure (tyL, tyR)
-    a -> throwError $ "Expected to case match on a pair but instead found " <> prettyPrint a
+    otherType -> throwError $ CaseMatchExpectedSum otherType
   s2 <- unify (MTSum tyL tyR) tySum
   (s3, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst (s2 `composeSubst` s1) tyL)
   (s4, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst (s2 `composeSubst` s1) tyR)
@@ -196,7 +186,7 @@ infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = d
           `composeSubst` s1
   s5 <- unify tyLeftRes tyRightRes
   pure (s5 `composeSubst` subs, applySubst (s5 `composeSubst` subs) tyLeftRes)
-infer _env (MyCase _ _ _) = throwError "Arguments to case match must be lambda functions"
+infer _env (MyCase _ l r) = throwError $ CaseMatchExpectedLambda l r
 infer env (MyLetPair binder1 binder2 expr body) = do
   (s1, tyExpr) <- infer env expr
   (tyA, tyB) <- case tyExpr of
@@ -205,7 +195,7 @@ infer env (MyLetPair binder1 binder2 expr body) = do
       tyB <- getUnknown
       pure (tyA, tyB)
     (MTPair a b) -> pure (a, b)
-    a -> throwError $ "Expected a pair but instead found " <> prettyPrint a
+    a -> throwError $ CaseMatchExpectedPair a
   let schemeA = Scheme [] (applySubst s1 tyA)
       schemeB = Scheme [] (applySubst s1 tyB)
       newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
@@ -222,7 +212,7 @@ infer env (MyLetList binder1 binder2 expr body) = do
     (MTList tyHead) -> do
       tyRest <- getUnknown
       pure (tyHead, tyRest)
-    a -> throwError $ "Expected a list but instead found " <> prettyPrint a
+    a -> throwError $ CaseMatchExpectedList a
   let schemeHead = Scheme [] (applySubst s1 tyHead)
       schemeRest = Scheme [] (applySubst s1 tyRest)
       newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
@@ -283,7 +273,7 @@ varBind var ty
   | ty == MTVar var = pure mempty
   | S.member var (freeTypeVars ty) =
     throwError $
-      prettyPrint var <> " fails occurs check"
+      FailsOccursCheck var
   | otherwise = pure (M.singleton var ty)
 
 unify :: MonoType -> MonoType -> App Substitutions
@@ -312,8 +302,7 @@ unify (MTRecord as) (MTRecord bs) = do
   pure (foldl composeSubst mempty s)
 unify t (MTVar u) = varBind u t
 unify a b =
-  throwError $ T.pack $
-    "Unification error: Can't match " <> show a <> " with " <> show b
+  throwError $ UnificationError a b
 
 getTypeOrFresh :: Name -> Map Name MonoType -> App MonoType
 getTypeOrFresh name map' = do

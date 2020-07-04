@@ -9,14 +9,14 @@ where
 -- import qualified Data.Aeson as JSON
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Data.Text (Text)
 --import qualified Data.Text.IO as T
 import Language.Mimsa
+import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck.Instances ()
 
-exprs :: [(Expr, Either Text MonoType)]
+exprs :: [(Expr, Either TypeError MonoType)]
 exprs =
   [ (int 1, Right MTInt),
     (bool True, Right MTBool),
@@ -71,10 +71,10 @@ exprs =
             )
         )
         (int 100),
-      Left "Unification error: Can't match MTBool with MTInt"
+      Left $ UnificationError MTBool MTInt
     ),
     ( MyLambda (mkName "x") (MyApp (MyVar (mkName "x")) (MyVar (mkName "x"))),
-      Left "U1 fails occurs check"
+      Left $ FailsOccursCheck (mkName "U1")
     ),
     (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
     ( MyLetPair (mkName "a") (mkName "b") (MyPair (int 1) (bool True)) (MyVar (mkName "a")),
@@ -181,7 +181,13 @@ exprs =
             )
             (int 3)
         ),
-      Left $ "Could not find cat"
+      Left $
+        MissingRecordTypeMember
+          (mkName "cat")
+          ( M.singleton
+              (mkName "dog")
+              (MTVar (mkName "U2"))
+          )
     )
     -- combining multiple facts about an unknown record is for later
   ]

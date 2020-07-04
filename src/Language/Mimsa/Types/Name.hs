@@ -11,6 +11,7 @@ import qualified Data.Char as Ch
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
+import Language.Mimsa.Types.Printer
 
 newtype Name = Name {getName' :: Text}
   deriving stock (Eq, Ord, Generic)
@@ -21,6 +22,9 @@ newtype Name = Name {getName' :: Text}
       JSON.ToJSON,
       JSON.ToJSONKey
     )
+
+instance Printer Name where
+  prettyPrint = getName
 
 getName :: Name -> Text
 getName (Name t) = t

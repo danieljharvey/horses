@@ -15,7 +15,6 @@ import Data.Text (Text)
 -- repetition, ie \x -> x and \y -> y will be the same function and thus hash
 
 import Language.Mimsa.Library
-import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
 -- important - we must not count variables brought in via lambdas, as those

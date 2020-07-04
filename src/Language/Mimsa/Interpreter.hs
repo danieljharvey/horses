@@ -15,7 +15,6 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Library
-import Language.Mimsa.Syntax
 import Language.Mimsa.Types
 
 interpret :: Scope -> Expr -> IO (Either Text Expr)
