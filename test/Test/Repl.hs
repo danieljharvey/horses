@@ -279,9 +279,9 @@ spec = do
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
         result `shouldBe` Right (MTInt, int 1)
-      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(2) }) in reuse.first(100))" $ do
-        result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(2) }) in reuse.first(100))"
+      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))" $ do
+        result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))"
         result `shouldBe` Right (MTInt, int 1)
-      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(2) }) in reuse.second(100))" $ do
-        result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(2) }) in reuse.second(100))"
+      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))" $ do
+        result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))"
         result `shouldBe` Right (MTInt, int 2)

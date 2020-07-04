@@ -24,13 +24,26 @@ falseStoreExpr =
 idExpr :: StoreExpression
 idExpr = StoreExpression (mempty) (MyLambda (mkName "a") (MyVar (mkName "a")))
 
+constExpr :: StoreExpression
+constExpr =
+  StoreExpression
+    (mempty)
+    ( MyLambda
+        (mkName "a")
+        ( MyLambda
+            (mkName "b")
+            (MyVar (mkName "a"))
+        )
+    )
+
 storeWithBothIn :: Store
 storeWithBothIn =
   Store
     ( M.fromList
         [ (ExprHash 1, trueStoreExpr),
           (ExprHash 2, falseStoreExpr),
-          (ExprHash 3, idExpr)
+          (ExprHash 3, idExpr),
+          (ExprHash 4, constExpr)
         ]
     )
 

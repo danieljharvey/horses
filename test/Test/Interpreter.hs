@@ -68,14 +68,14 @@ spec = do
                   (MyApp (MyVar (mkName "id")) (int 1))
               )
         testInterpret mempty f (int 1)
-      it "let const = \\a -> \\b -> a in (const 1)" $ do
+      it "let const = \\a -> \\b -> a in const(1)" $ do
         let f =
               ( MyLet
                   (mkName "const")
                   (MyLambda (mkName "a") (MyLambda (mkName "b") (MyVar (Name "a"))))
                   (MyApp (MyVar (Name "const")) (int 1))
               )
-        testInterpret mempty f $ MyLambda (Name "b") (MyVar (Name "a"))
+        testInterpret mempty f $ MyLambda (Name "b") (MyVar (Name "var1"))
       it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
               ( MyLet
@@ -164,7 +164,7 @@ spec = do
                         )
                     )
                     ( MyApp
-                        (MyRecordAccess (MyVar (mkName "reuse")) (mkName "second"))
+                        (MyRecordAccess (MyVar (mkName "reuse")) (mkName "first"))
                         (MyLiteral (MyInt 100))
                     )
                 )
