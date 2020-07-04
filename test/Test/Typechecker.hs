@@ -153,6 +153,42 @@ exprs =
                 (mkName "cat", MTInt)
               ]
           )
+    ),
+    ( MyLambda
+        (mkName "i")
+        ( MyIf
+            ( MyRecordAccess
+                (MyVar (mkName "i"))
+                (mkName "dog")
+            )
+            (int 1)
+            (int 2)
+        ),
+      Right $ MTFunction (MTRecord $ M.singleton (mkName "dog") MTBool) MTInt
+    ),
+    ( MyLambda
+        (mkName "i")
+        ( MyIf
+            ( MyRecordAccess
+                (MyVar (mkName "i"))
+                (mkName "dog")
+            )
+            ( MyIf
+                (MyRecordAccess (MyVar (mkName "i")) (mkName "cat"))
+                (int 1)
+                (int 2)
+            )
+            (int 3)
+        ),
+      Right $
+        MTFunction
+          ( MTRecord $
+              M.fromList
+                [ (mkName "dog", MTBool),
+                  (mkName "cat", MTBool)
+                ]
+          )
+          MTInt
     )
   ]
 

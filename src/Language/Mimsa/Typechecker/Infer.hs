@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -18,6 +19,7 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import Debug.Trace
 import Language.Mimsa.Library
 import Language.Mimsa.Syntax
 import Language.Mimsa.Types
@@ -33,7 +35,7 @@ startInference expr = snd <$> doInference M.empty expr
 
 doInference :: Environment -> Expr -> Either Text (Substitutions, MonoType)
 doInference env expr =
-  fst either'
+  traceShowId $ fst either'
   where
     either' = runState (runExceptT (infer env expr)) 1
 
@@ -130,11 +132,16 @@ splitRecordTypes map' = (subs, MTRecord types)
         ((fst . snd) <$> M.toList map')
     types = snd <$> map'
 
-lookupRecordItem :: Name -> Map Name MonoType -> App MonoType
+lookupRecordItem ::
+  Name ->
+  Map Name MonoType ->
+  App (Map Name MonoType)
 lookupRecordItem name map' =
-  case M.lookup name map' of
-    Just item -> pure item
-    _ -> throwError $ "Could not find record item " <> prettyPrint name
+  case traceShowId $ M.lookup name map' of
+    Just _ -> pure map'
+    _ -> do
+      item <- getUnknown
+      pure (M.insert name item map')
 
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
@@ -145,8 +152,13 @@ infer env (MyList as) = do
   (s1, tyItems) <- inferList env as
   pure (s1, MTList tyItems)
 infer env (MyRecord map') = do
-  tyItems <- traverse (infer env) map'
-  pure (splitRecordTypes tyItems)
+  tyRecord <- getUnknown
+  (s1, tyResult) <- splitRecordTypes <$> traverse (infer env) map'
+  s2 <- unify tyResult tyRecord
+  pure
+    ( s2 `composeSubst` s1,
+      applySubst (s2 `composeSubst` s1) tyRecord
+    )
 infer env (MyLet binder expr body) = do
   (s1, tyExpr) <- infer env expr
   let scheme = Scheme [] (applySubst s1 tyExpr)
@@ -154,11 +166,22 @@ infer env (MyLet binder expr body) = do
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
 infer env (MyRecordAccess record name) = do
-  (s1, tyRecord) <- infer env (record)
-  tyItem <- case tyRecord of
-    (MTRecord map') -> lookupRecordItem name map'
+  tyRecordItem <- getUnknown
+  (s1, tyRecord) <- infer env record
+  (s2, tyRecord2) <- case tyRecord of
+    (MTRecord map') -> do
+      (newMap) <- lookupRecordItem name map'
+      s <- unify tyRecord (MTRecord newMap)
+      pure (s, applySubst s (MTRecord newMap))
+    (MTVar _) -> do
+      tyItem' <- getUnknown
+      s <- unify tyRecord (MTRecord (M.singleton name tyItem'))
+      pure (s, MTRecord (M.singleton name tyItem'))
     a -> throwError $ "Expected to access item " <> prettyPrint name <> " from a record but instead found " <> prettyPrint a
-  pure (s1, tyItem)
+  s3 <- unify tyRecord tyRecord2
+  s4 <- unify (applySubst s3 tyRecord2) (MTRecord (M.singleton name tyRecordItem))
+  let subs = traceShowId $ s4 `composeSubst` s3 `composeSubst` s2 `composeSubst` s1
+  pure (subs, applySubst subs tyRecordItem)
 infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = do
   (s1, tySum) <- infer env sumExpr
   (tyL, tyR) <- case tySum of
@@ -283,10 +306,24 @@ unify (MTSum a b) (MTSum a' b') = do
   pure (s2 `composeSubst` s1)
 unify (MTVar u) t = varBind u t
 unify (MTList a) (MTList a') = unify a a'
+unify (MTRecord as) (MTRecord bs) = do
+  let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
+  let getRecordTypes = \k -> do
+        tyLeft <- getTypeOrFresh k as
+        tyRight <- getTypeOrFresh k bs
+        unify tyLeft tyRight
+  s <- traverse getRecordTypes allKeys
+  pure (foldl composeSubst mempty s)
 unify t (MTVar u) = varBind u t
 unify a b =
   throwError $ T.pack $
     "Unification error: Can't match " <> show a <> " with " <> show b
+
+getTypeOrFresh :: Name -> Map Name MonoType -> App MonoType
+getTypeOrFresh name map' = do
+  case M.lookup name map' of
+    Just found -> pure found
+    _ -> getUnknown
 
 getUnknown :: App MonoType
 getUnknown = do

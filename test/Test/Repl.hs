@@ -247,7 +247,7 @@ spec = do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction (MTVar (mkName "U1")) (MTVar (mkName "U1")),
+            ( MTFunction (MTVar (mkName "U2")) (MTVar (mkName "U2")),
               MyLambda (mkName "i") (MyVar (mkName "i"))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
