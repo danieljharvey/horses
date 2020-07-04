@@ -204,7 +204,7 @@ spec = do
       _ <-
         traverse
           ( \(code, expected) -> do
-              --              T.putStrLn (prettyPrint code)
+              --T.putStrLn (prettyPrint code)
               startInference code `shouldBe` expected
           )
           exprs

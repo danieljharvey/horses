@@ -81,9 +81,6 @@ list = unsafeGetExpr' "{ head: listHead, tail: listTail }" bindings'
 idExpr :: StoreExpression
 idExpr = unsafeGetExpr "\\i -> i"
 
-constExpr :: StoreExpression
-constExpr = unsafeGetExpr "\\a -> \\b -> a"
-
 stdLib :: StoreEnv
 stdLib = StoreEnv store' bindings'
   where
@@ -100,8 +97,7 @@ stdLib = StoreEnv store' bindings'
             (ExprHash 8, listHead),
             (ExprHash 9, listTail),
             (ExprHash 10, list),
-            (ExprHash 11, idExpr),
-            (ExprHash 12, constExpr)
+            (ExprHash 11, idExpr)
           ]
     bindings' =
       Bindings $
@@ -116,8 +112,7 @@ stdLib = StoreEnv store' bindings'
             (mkName "listHead", ExprHash 8),
             (mkName "listTail", ExprHash 9),
             (mkName "list", ExprHash 10),
-            (mkName "id", ExprHash 11),
-            (mkName "const", ExprHash 12)
+            (mkName "id", ExprHash 11)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression
