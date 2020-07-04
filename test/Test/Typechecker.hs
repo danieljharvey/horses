@@ -166,8 +166,8 @@ exprs =
             (int 2)
         ),
       Right $ MTFunction (MTRecord $ M.singleton (mkName "dog") MTBool) MTInt
-    )
-    {-( MyLambda
+    ),
+    ( MyLambda
         (mkName "i")
         ( MyIf
             ( MyRecordAccess
@@ -181,16 +181,8 @@ exprs =
             )
             (int 3)
         ),
-      Right $
-        MTFunction
-          ( MTRecord $
-              M.fromList
-                [ (mkName "dog", MTBool),
-                  (mkName "cat", MTBool)
-                ]
-          )
-          MTInt
-    )-}
+      Left $ "Could not find cat"
+    )
     -- combining multiple facts about an unknown record is for later
   ]
 

@@ -169,9 +169,9 @@ infer env (MyRecordAccess a name) = do
     (MTRecord bits) -> do
       case M.lookup name bits of
         Just mt -> pure mt
-        _ -> getUnknown
+        _ -> throwError $ "Could not find " <> prettyPrint name
     (MTVar _) -> getUnknown
-    _ -> throwError ""
+    _ -> throwError $ "Cannot find type for record"
   s2 <-
     unify
       (MTRecord $ M.singleton name tyResult)
