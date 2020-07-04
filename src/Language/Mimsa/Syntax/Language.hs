@@ -11,6 +11,7 @@ where
 import Control.Applicative ((<|>))
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -70,7 +71,9 @@ complexParser =
       <|> appParser3
       <|> appParser2
       <|> appParser
+      <|> recordAccessParser
       <|> listParser
+      <|> recordParser
   )
 
 protectedNames :: Set Text
@@ -205,7 +208,10 @@ arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
 
 appParser :: Parser Expr
 appParser = do
-  func <- varParser <|> lambdaParser
+  func <-
+    recordAccessParser
+      <|> varParser
+      <|> lambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0
@@ -217,7 +223,10 @@ appParser = do
 
 appParser2 :: Parser Expr
 appParser2 = do
-  func <- varParser <|> lambdaParser
+  func <-
+    recordAccessParser
+      <|> varParser
+      <|> lambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0
@@ -235,7 +244,7 @@ appParser2 = do
 
 appParser3 :: Parser Expr
 appParser3 = do
-  func <- varParser <|> lambdaParser
+  func <- recordAccessParser <|> varParser <|> lambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0
@@ -269,6 +278,78 @@ listParser = do
   _ <- P.literal "]"
   _ <- P.space0
   pure (MyList (NE.fromList (args <> [last'])))
+
+-----
+
+recordParser :: Parser Expr
+recordParser = fullRecordParser <|> emptyRecordParser
+
+emptyRecordParser :: Parser Expr
+emptyRecordParser = do
+  _ <- P.literal "{"
+  _ <- P.space0
+  _ <- P.literal "}"
+  _ <- P.space0
+  pure (MyRecord mempty)
+
+fullRecordParser :: Parser Expr
+fullRecordParser = do
+  _ <- P.literal "{"
+  _ <- P.space0
+  args <- P.zeroOrMore (P.left recordItemParser (P.left (P.literal ",") P.space0))
+  last' <- recordItemParser
+  _ <- P.space0
+  _ <- P.literal "}"
+  _ <- P.space0
+  pure (MyRecord (M.fromList $ args <> [last']))
+
+recordItemParser :: Parser (Name, Expr)
+recordItemParser = do
+  name <- nameParser
+  _ <- P.space0
+  _ <- P.literal ":"
+  _ <- P.space0
+  expr <- expressionParser
+  _ <- P.space0
+  pure (name, expr)
+
+-----
+
+recordAccessParser :: Parser Expr
+recordAccessParser =
+  recordAccessParser3
+    <|> recordAccessParser2
+    <|> recordAccessParser1
+
+recordAccessParser1 :: Parser Expr
+recordAccessParser1 = do
+  expr <- varParser
+  _ <- P.literal "."
+  name <- nameParser
+  _ <- P.space0
+  pure (MyRecordAccess expr name)
+
+recordAccessParser2 :: Parser Expr
+recordAccessParser2 = do
+  expr <- varParser
+  _ <- P.literal "."
+  name <- nameParser
+  _ <- P.literal "."
+  name2 <- nameParser
+  _ <- P.space0
+  pure (MyRecordAccess (MyRecordAccess expr name) name2)
+
+recordAccessParser3 :: Parser Expr
+recordAccessParser3 = do
+  expr <- varParser
+  _ <- P.literal "."
+  name <- nameParser
+  _ <- P.literal "."
+  name2 <- nameParser
+  _ <- P.literal "."
+  name3 <- nameParser
+  _ <- P.space0
+  pure (MyRecordAccess (MyRecordAccess (MyRecordAccess expr name) name2) name3)
 
 -----
 

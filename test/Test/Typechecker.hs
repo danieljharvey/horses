@@ -8,7 +8,9 @@ where
 
 -- import qualified Data.Aeson as JSON
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map as M
 import Data.Text (Text)
+--import qualified Data.Text.IO as T
 import Language.Mimsa
 import Test.Helpers
 import Test.Hspec
@@ -133,7 +135,55 @@ exprs =
         (MyList $ NE.fromList [int 1])
         (MyVar (mkName "tail")),
       Right $ (MTSum MTUnit (MTList MTInt))
+    ),
+    ( MyRecord
+        mempty,
+      Right $
+        MTRecord mempty
+    ),
+    ( MyRecord
+        ( M.fromList
+            [ (mkName "dog", int 1),
+              (mkName "cat", int 2)
+            ]
+        ),
+      Right $
+        MTRecord
+          ( M.fromList
+              [ (mkName "dog", MTInt),
+                (mkName "cat", MTInt)
+              ]
+          )
+    ),
+    ( MyLambda
+        (mkName "i")
+        ( MyIf
+            ( MyRecordAccess
+                (MyVar (mkName "i"))
+                (mkName "dog")
+            )
+            (int 1)
+            (int 2)
+        ),
+      Right $ MTFunction (MTRecord $ M.singleton (mkName "dog") MTBool) MTInt
+    ),
+    ( MyLambda
+        (mkName "i")
+        ( MyIf
+            ( MyRecordAccess
+                (MyVar (mkName "i"))
+                (mkName "dog")
+            )
+            ( MyIf
+                (MyRecordAccess (MyVar (mkName "i")) (mkName "cat"))
+                (int 1)
+                (int 2)
+            )
+            (int 3)
+        ),
+      Left $ "Could not find cat"
     )
+    -- combining multiple facts about an unknown record is for later
   ]
 
 identity :: Expr
@@ -146,7 +196,7 @@ spec = do
       _ <-
         traverse
           ( \(code, expected) -> do
-              -- T.putStrLn (prettyPrint code)
+              --T.putStrLn (prettyPrint code)
               startInference code `shouldBe` expected
           )
           exprs

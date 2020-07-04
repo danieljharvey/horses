@@ -20,9 +20,14 @@ import Language.Mimsa.Types
 
 interpret :: Scope -> Expr -> IO (Either Text Expr)
 interpret scope' expr = do
-  ((fmap . fmap) fst either')
+  result <- either'
+  pure (fmap fst result)
   where
-    either' = runExceptT $ runStateT (interpretWithScope expr) scope'
+    either' =
+      runExceptT $
+        runStateT
+          (interpretWithScope expr)
+          (scope')
 
 type App = StateT Scope (ExceptT Text IO)
 
@@ -30,7 +35,12 @@ useVarFromScope :: Name -> App Expr
 useVarFromScope name = do
   found <- gets (M.lookup name . getScope)
   case found of
-    Just expr -> interpretWithScope expr
+    Just expr -> do
+      case expr of
+        (MyLambda binder expr') -> do
+          (freshBinder, freshExpr) <- newLambdaCopy binder expr'
+          interpretWithScope (MyLambda freshBinder freshExpr)
+        other -> interpretWithScope other
     Nothing -> throwError $ "Could not find " <> prettyPrint name
 
 wrappedName :: Name -> Name
@@ -85,6 +95,69 @@ unwrapBuiltIn name (TwoArgs _ _) = do
         (MyLambda (wrappedVarName name 2) (MyVar wrapped))
     )
 
+-- get new var
+newLambdaCopy :: Name -> Expr -> App (Name, Expr)
+newLambdaCopy name expr = do
+  newName' <- newName
+  newExpr <- swapName name newName' expr
+  pure (newName', newExpr)
+
+newName :: App Name
+newName = do
+  let makeName :: Int -> Name
+      makeName i = mkName $ "var" <> T.pack (show i)
+  makeName <$> gets (M.size . getScope)
+
+-- step through Expr, replacing vars with numbered variables
+swapName :: Name -> Name -> Expr -> App Expr
+swapName from to (MyVar from') =
+  pure $
+    if from == from'
+      then MyVar to
+      else MyVar from'
+swapName from to (MyLet name a b) =
+  MyLet <$> pure name <*> (swapName from to a)
+    <*> (swapName from to b)
+swapName from to (MyLambda name a) =
+  MyLambda <$> pure name <*> (swapName from to a)
+swapName from to (MyRecordAccess a name) =
+  MyRecordAccess <$> (swapName from to a) <*> pure name
+swapName from to (MyApp a b) =
+  MyApp <$> (swapName from to a)
+    <*> (swapName from to b)
+swapName from to (MyIf a b c) =
+  MyIf
+    <$> (swapName from to a)
+      <*> (swapName from to b)
+      <*> (swapName from to c)
+swapName from to (MyPair a b) =
+  MyPair
+    <$> (swapName from to a) <*> (swapName from to b)
+swapName from to (MyLetPair nameA nameB a b) =
+  MyLetPair
+    <$> pure nameA <*> pure nameB
+      <*> (swapName from to a)
+      <*> (swapName from to b)
+swapName from to (MyLetList nameHead nameRest a b) =
+  MyLetList <$> pure nameHead
+    <*> pure nameRest
+    <*> (swapName from to a)
+    <*> (swapName from to b)
+swapName from to (MySum side a) =
+  MySum
+    <$> pure side
+      <*> (swapName from to a)
+swapName from to (MyCase a b c) =
+  MyCase <$> (swapName from to a) <*> (swapName from to b)
+    <*> (swapName from to c)
+swapName from to (MyList as) = do
+  mas <- traverse (swapName from to) as
+  pure (MyList mas)
+swapName from to (MyRecord map') = do
+  map2 <- traverse (swapName from to) map'
+  pure (MyRecord map2)
+swapName _ _ (MyLiteral a) = pure (MyLiteral a)
+
 interpretWithScope :: Expr -> App Expr
 interpretWithScope (MyLiteral a) = pure (MyLiteral a)
 interpretWithScope (MyPair a b) = do
@@ -103,9 +176,10 @@ interpretWithScope (MyLetPair binderA binderB (MyVar v) body) = do
   interpretWithScope (MyLetPair binderA binderB expr body)
 interpretWithScope (MyLetPair _ _ a _) =
   throwError $ "Cannot destructure value " <> prettyPrint a <> " as a pair"
-interpretWithScope (MyVar name) =
+interpretWithScope (MyVar name) = do
+  scope <- get
   useVarFromBuiltIn name <|> useVarFromScope name
-    <|> (throwError $ "Unknown variable " <> prettyPrint name)
+    <|> (throwError $ "Unknown variable " <> prettyPrint name <> " in " <> (T.pack $ show scope))
 interpretWithScope (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) = do
   interpretWithScope (MyLet binderL a exprL)
 interpretWithScope (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) = do
@@ -130,6 +204,21 @@ interpretWithScope (MyLetList binderHead binderRest (MyList as) body) = do
   let newScopes = Scope $ M.fromList [(binderHead, listHead), (binderRest, tail')]
   modify ((<>) newScopes)
   interpretWithScope body
+interpretWithScope (MyRecordAccess (MyRecord record) name) = do
+  case M.lookup name record of
+    Just item -> interpretWithScope item
+    _ -> throwError $ "Could not find " <> prettyPrint name <> " in " <> prettyPrint (MyRecord record)
+interpretWithScope (MyRecordAccess (MyVar a) name) = do
+  expr <- interpretWithScope (MyVar a)
+  interpretWithScope (MyRecordAccess expr name)
+interpretWithScope (MyRecordAccess (MyRecordAccess a name') name) = do
+  expr <- interpretWithScope (MyRecordAccess a name')
+  interpretWithScope (MyRecordAccess expr name)
+interpretWithScope (MyRecordAccess a name) =
+  throwError $
+    "Could not access record item " <> prettyPrint name
+      <> " inside "
+      <> prettyPrint a
 interpretWithScope (MyLetList binderHead binderRest (MyVar b) body) = do
   expr <- interpretWithScope (MyVar b)
   interpretWithScope (MyLetList binderHead binderRest expr body)
@@ -144,6 +233,9 @@ interpretWithScope (MyApp (MyLet a b c) d) = do
 interpretWithScope (MyApp (MyLetPair a b c d) e) = do
   expr <- interpretWithScope (MyLetPair a b c d)
   interpretWithScope (MyApp expr e)
+interpretWithScope (MyApp (MyRecordAccess a b) c) = do
+  expr <- interpretWithScope (MyRecordAccess a b)
+  interpretWithScope (MyApp expr c)
 interpretWithScope (MySum s a) = do
   expr <- interpretWithScope a
   pure (MySum s expr)
@@ -153,13 +245,11 @@ interpretWithScope (MyApp (MyLetList a b c d) e) = do
 interpretWithScope (MyList as) = do
   exprs <- traverse interpretWithScope as
   pure (MyList exprs)
-interpretWithScope (MyApp (MyList _) _) = throwError "Cannot apply a value to a List"
-interpretWithScope (MyApp (MySum MyLeft _) _) = throwError "Cannot apply a value to a Left value"
-interpretWithScope (MyApp (MySum MyRight _) _) = throwError "Cannot apply a value to a Right value"
-interpretWithScope (MyApp (MyLiteral _) _) = throwError "Cannot apply a value to a literal value"
-interpretWithScope (MyApp (MyIf _ _ _) _) = throwError "Cannot apply a value to an if"
-interpretWithScope (MyApp (MyPair _ _) _) = throwError "Cannot apply a value to a Pair"
-interpretWithScope (MyApp (MyCase _ _ _) _) = throwError "Cannot apply a value to a case match"
+interpretWithScope (MyRecord as) = do
+  exprs <- traverse interpretWithScope as
+  pure (MyRecord exprs)
+interpretWithScope (MyApp thing _) =
+  throwError $ "Cannot apply a value to " <> prettyPrint thing
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
 interpretWithScope (MyIf (MyLiteral (MyBool pred')) true false) =
   if pred'

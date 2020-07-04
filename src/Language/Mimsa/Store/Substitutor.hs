@@ -8,7 +8,7 @@ where
 
 import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
-import Data.Bifunctor (first, second)
+import Data.Bifunctor (second)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
@@ -78,40 +78,54 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
     Just item -> pure [(name, item)]
     _ -> pure []
 
+findInScope :: Name -> App (Maybe Expr)
+findInScope name = do
+  (swaps', Scope scope') <- get
+  case filter (\(_, v) -> v == name) (M.toList swaps') of
+    [] -> pure Nothing
+    ((k, _) : _) -> do
+      pure $ M.lookup k scope'
+
 -- get a new name for a var, changing it's reference in Scope and adding it to
 -- Swaps list
 -- we don't do this for built-ins (ie, randomInt) or variables introduced by
 -- lambdas
 getNextVar :: [Name] -> Name -> App Name
 getNextVar protected name =
-  if elem name protected || isLibraryName name
+  if elem name protected || isLibraryName (name)
     then pure name
     else do
       let makeName :: Int -> Name
           makeName i = mkName $ "var" <> T.pack (show i)
       nextName <- makeName <$> gets (M.size . fst)
-      modify
-        ( second $ \(Scope scope') ->
-            Scope $
-              M.mapKeys
-                ( \key ->
-                    if key == name
-                      then nextName
-                      else key
-                )
-                scope'
-        )
-      modify (first $ M.insert nextName name)
+      (swaps', (Scope scope')) <- get
+      found <- findInScope name
+      let newScope = case found of
+            (Just expr') ->
+              Scope $ M.insert nextName expr' scope'
+            Nothing ->
+              Scope $
+                M.mapKeys
+                  ( \key ->
+                      if key == name
+                        then nextName
+                        else key
+                  )
+                  scope'
+      let newSwaps = M.insert nextName name swaps'
+      put (newSwaps, newScope)
       pure nextName
 
 -- step through Expr, replacing vars with numbered variables
 mapVar :: [Name] -> Expr -> App Expr
-mapVar p (MyVar a) = MyVar <$> getNextVar p a
+mapVar p (MyVar a) =
+  MyVar <$> getNextVar p a
 mapVar p (MyLet name a b) =
   MyLet <$> pure name <*> (mapVar p a)
     <*> (mapVar (p <> [name]) b)
 mapVar p (MyLambda name a) =
   MyLambda <$> pure name <*> (mapVar (p <> [name]) a)
+mapVar p (MyRecordAccess a name) = MyRecordAccess <$> (mapVar p a) <*> pure name
 mapVar p (MyApp a b) = MyApp <$> (mapVar p a) <*> (mapVar p b)
 mapVar p (MyIf a b c) = MyIf <$> (mapVar p a) <*> (mapVar p b) <*> (mapVar p c)
 mapVar p (MyPair a b) = MyPair <$> (mapVar p a) <*> (mapVar p b)
@@ -132,4 +146,7 @@ mapVar p (MyCase a b c) =
 mapVar p (MyList as) = do
   mas <- traverse (mapVar p) as
   pure (MyList mas)
+mapVar p (MyRecord map') = do
+  map2 <- traverse (mapVar p) map'
+  pure (MyRecord map2)
 mapVar _ (MyLiteral a) = pure (MyLiteral a)

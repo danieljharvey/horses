@@ -19,6 +19,7 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.List.NonEmpty
+import Data.Map (Map)
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Types.Name
@@ -59,6 +60,8 @@ data Expr
   | MyPair Expr Expr -- (a,b)
   | MySum SumSide Expr -- Left a | Right b
   | MyList (NonEmpty Expr) -- [a]
+  | MyRecord (Map Name Expr) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
+  | MyRecordAccess Expr Name -- a.foo
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 data MonoType
@@ -70,6 +73,7 @@ data MonoType
   | MTPair MonoType MonoType -- (a,b)
   | MTSum MonoType MonoType -- a | b
   | MTList MonoType -- [a]
+  | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
   | MTVar Name
   deriving (Eq, Ord, Show)
 

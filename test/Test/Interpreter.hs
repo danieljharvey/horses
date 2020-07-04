@@ -7,6 +7,7 @@ module Test.Interpreter
 where
 
 import Data.Either (isLeft)
+import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Types
@@ -67,14 +68,14 @@ spec = do
                   (MyApp (MyVar (mkName "id")) (int 1))
               )
         testInterpret mempty f (int 1)
-      it "let const = \\a -> \\b -> a in (const 1)" $ do
+      it "let const = \\a -> \\b -> a in const(1)" $ do
         let f =
               ( MyLet
                   (mkName "const")
                   (MyLambda (mkName "a") (MyLambda (mkName "b") (MyVar (Name "a"))))
                   (MyApp (MyVar (Name "const")) (int 1))
               )
-        testInterpret mempty f $ MyLambda (Name "b") (MyVar (Name "a"))
+        testInterpret mempty f $ MyLambda (Name "b") (MyVar (Name "var1"))
       it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
               ( MyLet
@@ -138,6 +139,35 @@ spec = do
                       (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
                   )
               )
+        result <- interpret mempty f
+        result `shouldBe` Right (int 1)
+      it "Uses a higher order function twice without screwing the pooch" $ do
+        let f =
+              MyLet
+                (mkName "const2")
+                (MyLambda (mkName "a") (MyLambda (mkName "b") (MyVar (mkName "a"))))
+                ( MyLet
+                    (mkName "reuse")
+                    ( MyRecord
+                        ( M.fromList
+                            [ ( mkName "first",
+                                MyApp
+                                  (MyVar (mkName "const2"))
+                                  (MyLiteral (MyInt 1))
+                              ),
+                              ( mkName "second",
+                                MyApp
+                                  (MyVar (mkName "const2"))
+                                  (MyLiteral (MyInt 2))
+                              )
+                            ]
+                        )
+                    )
+                    ( MyApp
+                        (MyRecordAccess (MyVar (mkName "reuse")) (mkName "first"))
+                        (MyLiteral (MyInt 100))
+                    )
+                )
         result <- interpret mempty f
         result `shouldBe` Right (int 1)
       it "Uses var names in lambdas that conflict with the ones inside our built-in function without breaking" $ do

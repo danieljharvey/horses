@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -12,6 +13,7 @@ import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.State (State, get, put, runState)
 import Data.List.NonEmpty (NonEmpty (..))
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
@@ -72,6 +74,7 @@ applySubst subst ty = case ty of
       (applySubst subst a)
       (applySubst subst b)
   MTList a -> MTList (applySubst subst a)
+  MTRecord a -> MTRecord (applySubst subst <$> a)
   MTSum a b -> MTSum (applySubst subst a) (applySubst subst b)
   MTInt -> MTInt
   MTString -> MTString
@@ -87,7 +90,7 @@ inferVarFromScope env name =
     Just scheme -> do
       ty <- instantiate scheme
       pure (mempty, ty)
-    _ -> throwError $ T.pack ("Unknown variable " <> show name)
+    _ -> throwError $ T.pack ("Unknown variable " <> show name <> " in " <> show env)
 
 inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> App (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
@@ -116,6 +119,18 @@ inferList env (a :| as) = do
     (pure (s1, tyA))
     as
 
+splitRecordTypes ::
+  Map Name (Substitutions, MonoType) ->
+  (Substitutions, MonoType)
+splitRecordTypes map' = (subs, MTRecord types)
+  where
+    subs =
+      foldr
+        composeSubst
+        mempty
+        ((fst . snd) <$> M.toList map')
+    types = snd <$> map'
+
 infer :: Environment -> Expr -> App (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
@@ -124,12 +139,45 @@ infer env (MyVar name) =
 infer env (MyList as) = do
   (s1, tyItems) <- inferList env as
   pure (s1, MTList tyItems)
+infer env (MyRecord map') = do
+  tyRecord <- getUnknown
+  (s1, tyResult) <- splitRecordTypes <$> traverse (infer env) map'
+  s2 <- unify tyResult tyRecord
+  pure
+    ( s2 `composeSubst` s1,
+      applySubst (s2 `composeSubst` s1) tyRecord
+    )
 infer env (MyLet binder expr body) = do
   (s1, tyExpr) <- infer env expr
   let scheme = Scheme [] (applySubst s1 tyExpr)
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 `composeSubst` s1, tyBody)
+infer env (MyRecordAccess (MyRecord items') name) = do
+  case M.lookup name items' of
+    Just item -> do
+      infer env item
+    Nothing ->
+      throwError $
+        "Could not find item "
+          <> prettyPrint name
+          <> " in "
+          <> (T.pack $ show items')
+infer env (MyRecordAccess a name) = do
+  (s1, tyItems) <- infer env a
+  tyResult <- case tyItems of
+    (MTRecord bits) -> do
+      case M.lookup name bits of
+        Just mt -> pure mt
+        _ -> throwError $ "Could not find " <> prettyPrint name
+    (MTVar _) -> getUnknown
+    _ -> throwError $ "Cannot find type for record"
+  s2 <-
+    unify
+      (MTRecord $ M.singleton name tyResult)
+      tyItems
+  let subs = s2 `composeSubst` s1
+  pure (subs, applySubst subs tyResult)
 infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = do
   (s1, tySum) <- infer env sumExpr
   (tyL, tyR) <- case tySum of
@@ -254,10 +302,24 @@ unify (MTSum a b) (MTSum a' b') = do
   pure (s2 `composeSubst` s1)
 unify (MTVar u) t = varBind u t
 unify (MTList a) (MTList a') = unify a a'
+unify (MTRecord as) (MTRecord bs) = do
+  let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
+  let getRecordTypes = \k -> do
+        tyLeft <- getTypeOrFresh k as
+        tyRight <- getTypeOrFresh k bs
+        unify tyLeft tyRight
+  s <- traverse getRecordTypes allKeys
+  pure (foldl composeSubst mempty s)
 unify t (MTVar u) = varBind u t
 unify a b =
   throwError $ T.pack $
     "Unification error: Can't match " <> show a <> " with " <> show b
+
+getTypeOrFresh :: Name -> Map Name MonoType -> App MonoType
+getTypeOrFresh name map' = do
+  case M.lookup name map' of
+    Just found -> pure found
+    _ -> getUnknown
 
 getUnknown :: App MonoType
 getUnknown = do
