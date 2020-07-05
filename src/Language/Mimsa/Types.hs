@@ -16,12 +16,14 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Error,
     module Language.Mimsa.Types.Printer,
     module Language.Mimsa.Types.ResolverError,
+    module Language.Mimsa.Types.InterpreterError,
   )
 where
 
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.ForeignFunc
+import Language.Mimsa.Types.InterpreterError
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer

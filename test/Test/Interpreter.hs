@@ -8,7 +8,6 @@ where
 
 import Data.Either (isLeft)
 import qualified Data.Map as M
-import Data.Text (Text)
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Types
 import Test.Helpers
@@ -19,7 +18,7 @@ testInterpret scope' expr' expected = do
   result <- interpret scope' expr'
   result `shouldBe` (Right expected)
 
-testInterpretFail :: Scope -> Expr -> Text -> Expectation
+testInterpretFail :: Scope -> Expr -> InterpreterError -> Expectation
 testInterpretFail scope' expr' expected = do
   result <- interpret scope' expr'
   result `shouldBe` (Left expected)
@@ -87,7 +86,7 @@ spec = do
     describe "If" $ do
       it "Blows up when passed a non-bool" $ do
         let f = (MyIf (int 1) (bool True) (bool False))
-        testInterpretFail mempty f "Predicate for If must be a Boolean"
+        testInterpretFail mempty f (PredicateForIfMustBeABoolean (int 1))
       it "if True then 1 else 2" $ do
         let f = (MyIf (bool True) (int 1) (int 2))
         testInterpret mempty f (int 1)

@@ -49,7 +49,7 @@ doReplAction env (Evaluate expr) = do
       simplified <- interpret scope' expr'
       case simplified of
         Left e -> do
-          T.putStrLn e
+          T.putStrLn (prettyPrint e)
           pure env
         Right simplified' -> do
           T.putStrLn $

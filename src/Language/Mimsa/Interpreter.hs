@@ -12,12 +12,11 @@ import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Types
 
-interpret :: Scope -> Expr -> IO (Either Text Expr)
+interpret :: Scope -> Expr -> IO (Either InterpreterError Expr)
 interpret scope' expr = do
   result <- either'
   pure (fmap fst result)
@@ -28,7 +27,7 @@ interpret scope' expr = do
           (interpretWithScope expr)
           (scope')
 
-type App = StateT Scope (ExceptT Text IO)
+type App = StateT Scope (ExceptT InterpreterError IO)
 
 useVarFromScope :: Name -> App Expr
 useVarFromScope name = do
@@ -40,7 +39,9 @@ useVarFromScope name = do
           (freshBinder, freshExpr) <- newLambdaCopy binder expr'
           interpretWithScope (MyLambda freshBinder freshExpr)
         other -> interpretWithScope other
-    Nothing -> throwError $ "Could not find " <> prettyPrint name
+    Nothing -> do
+      scope' <- get
+      throwError $ CouldNotFindVar scope' name
 
 wrappedName :: Name -> Name
 wrappedName (Name n) = Name (n <> "__unwrapped")
@@ -60,10 +61,14 @@ useVarFromBuiltIn name =
   case unwrap name of
     Nothing -> case getLibraryFunction name of
       Just ff -> unwrapBuiltIn name ff
-      Nothing -> throwError $ "Could not find built-in function " <> prettyPrint name
+      Nothing -> do
+        scope' <- get
+        throwError $ CouldNotFindBuiltIn scope' name
     Just unwrappedName -> case getLibraryFunction unwrappedName of
       Just ff -> runBuiltIn unwrappedName ff
-      Nothing -> throwError $ "Could not find built-in function " <> prettyPrint name
+      Nothing -> do
+        scope' <- get
+        throwError $ CouldNotFindBuiltIn scope' name
 
 runBuiltIn :: Name -> ForeignFunc -> App Expr
 runBuiltIn _ (NoArgs _ io) = liftIO io
@@ -174,11 +179,11 @@ interpretWithScope (MyLetPair binderA binderB (MyVar v) body) = do
   expr <- interpretWithScope (MyVar v)
   interpretWithScope (MyLetPair binderA binderB expr body)
 interpretWithScope (MyLetPair _ _ a _) =
-  throwError $ "Cannot destructure value " <> prettyPrint a <> " as a pair"
+  throwError $ CannotDestructureAsPair a
 interpretWithScope (MyVar name) = do
   scope <- get
   useVarFromBuiltIn name <|> useVarFromScope name
-    <|> (throwError $ "Unknown variable " <> prettyPrint name <> " in " <> (T.pack $ show scope))
+    <|> (throwError $ CouldNotFindVar scope name)
 interpretWithScope (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) = do
   interpretWithScope (MyLet binderL a exprL)
 interpretWithScope (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) = do
@@ -189,7 +194,7 @@ interpretWithScope (MyCase (MyVar a) l r) = do
 interpretWithScope (MyCase (MyApp a b) l r) = do
   expr <- interpretWithScope (MyApp a b)
   interpretWithScope (MyCase expr l r)
-interpretWithScope (MyCase a _ _) = throwError $ "Cannot case match on " <> prettyPrint a
+interpretWithScope (MyCase a _ _) = throwError $ CannotDestructureAsSum a
 interpretWithScope (MyApp (MyVar f) value) = do
   expr <- interpretWithScope (MyVar f)
   interpretWithScope (MyApp expr value)
@@ -206,7 +211,7 @@ interpretWithScope (MyLetList binderHead binderRest (MyList as) body) = do
 interpretWithScope (MyRecordAccess (MyRecord record) name) = do
   case M.lookup name record of
     Just item -> interpretWithScope item
-    _ -> throwError $ "Could not find " <> prettyPrint name <> " in " <> prettyPrint (MyRecord record)
+    _ -> throwError $ CannotFindMemberInRecord record name
 interpretWithScope (MyRecordAccess (MyVar a) name) = do
   expr <- interpretWithScope (MyVar a)
   interpretWithScope (MyRecordAccess expr name)
@@ -214,15 +219,12 @@ interpretWithScope (MyRecordAccess (MyRecordAccess a name') name) = do
   expr <- interpretWithScope (MyRecordAccess a name')
   interpretWithScope (MyRecordAccess expr name)
 interpretWithScope (MyRecordAccess a name) =
-  throwError $
-    "Could not access record item " <> prettyPrint name
-      <> " inside "
-      <> prettyPrint a
+  throwError $ CannotDestructureAsRecord a name
 interpretWithScope (MyLetList binderHead binderRest (MyVar b) body) = do
   expr <- interpretWithScope (MyVar b)
   interpretWithScope (MyLetList binderHead binderRest expr body)
 interpretWithScope (MyLetList _ _ a _) =
-  throwError $ "Cannot destructure value " <> prettyPrint a <> " as a list"
+  throwError $ CannotDestructureAsList a
 interpretWithScope (MyApp (MyApp a b) c) = do
   expr <- interpretWithScope (MyApp a b)
   interpretWithScope (MyApp expr c)
@@ -248,14 +250,16 @@ interpretWithScope (MyRecord as) = do
   exprs <- traverse interpretWithScope as
   pure (MyRecord exprs)
 interpretWithScope (MyApp thing _) =
-  throwError $ "Cannot apply a value to " <> prettyPrint thing
+  throwError $ CannotApplyToNonFunction thing
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
 interpretWithScope (MyIf (MyLiteral (MyBool pred')) true false) =
   if pred'
     then interpretWithScope true
     else interpretWithScope false
-interpretWithScope (MyIf (MyLiteral _) _ _) = throwError "Predicate for If must be a Boolean"
-interpretWithScope (MyIf (MyLambda _ _) _ _) = throwError "Predicate for If must be a Boolean"
+interpretWithScope (MyIf all'@(MyLiteral _) _ _) =
+  throwError $ PredicateForIfMustBeABoolean all'
+interpretWithScope (MyIf all'@(MyLambda _ _) _ _) =
+  throwError $ PredicateForIfMustBeABoolean all'
 interpretWithScope (MyIf pred' true false) = do
   predExpr <- interpretWithScope pred'
   interpretWithScope (MyIf predExpr true false)

@@ -131,7 +131,7 @@ eval env input =
       endExpr <- interpret scope' expr'
       case endExpr of
         Right a -> pure (Right (mt, a))
-        Left e -> pure (Left (OtherError e))
+        Left e -> pure (Left (InterpreterErr e))
     Left e -> pure (Left e)
 
 spec :: Spec
