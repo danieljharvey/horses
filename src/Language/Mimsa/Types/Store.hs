@@ -58,6 +58,9 @@ newtype Bindings = Bindings {getBindings :: Map Name ExprHash}
 newtype Scope = Scope {getScope :: Map Name Expr}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
+-- the names that get changed in substitution
+type Swaps = Map Name Name
+
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside
 -- not sure whether to store the builtins we need here too?

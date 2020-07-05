@@ -74,7 +74,7 @@ exprs =
       Left $ UnificationError MTBool MTInt
     ),
     ( MyLambda (mkName "x") (MyApp (MyVar (mkName "x")) (MyVar (mkName "x"))),
-      Left $ FailsOccursCheck (mkName "U1")
+      Left $ FailsOccursCheck (SwappedName (mkName "U1"))
     ),
     (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
     ( MyLetPair (mkName "a") (mkName "b") (MyPair (int 1) (bool True)) (MyVar (mkName "a")),
@@ -183,7 +183,9 @@ exprs =
         ),
       Left $
         MissingRecordTypeMember
-          (mkName "cat")
+          ( SwappedName
+              (mkName "cat")
+          )
           ( M.singleton
               (mkName "dog")
               (MTVar (mkName "U2"))
@@ -203,7 +205,7 @@ spec = do
         traverse
           ( \(code, expected) -> do
               --T.putStrLn (prettyPrint code)
-              startInference code `shouldBe` expected
+              startInference mempty code `shouldBe` expected
           )
           exprs
       pure ()
@@ -218,8 +220,8 @@ spec = do
                 )
             )
       let expr = MyApp lambda (bool True)
-      (startInference lambda) `shouldBe` Right (MTFunction MTBool MTInt)
-      (startInference expr) `shouldBe` Right MTInt
+      (startInference mempty lambda) `shouldBe` Right (MTFunction MTBool MTInt)
+      (startInference mempty expr) `shouldBe` Right MTInt
 {-  describe "Serialisation" $ do
 it "Round trip" $ do
   property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)

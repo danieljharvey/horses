@@ -70,7 +70,8 @@ spec = do
             )
       it "Looks for vars and can't find them" $ do
         createStoreExpression mempty (MyVar (Name "missing"))
-          `shouldBe` Left "A binding for missing could not be found"
+          `shouldBe` Left
+            (MissingBinding (mkName "missing") mempty)
       it "Looks for vars and finds a built-in" $ do
         createStoreExpression mempty (MyVar (Name "randomInt"))
           `shouldBe` Right

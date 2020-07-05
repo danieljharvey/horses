@@ -89,9 +89,9 @@ doReplAction env (Bind name expr) = do
 
 ----------
 
-getType :: Scope -> Expr -> Either Error MonoType
-getType scope' expr =
-  first TypeErr $ startInference (chainExprs expr scope')
+getType :: Swaps -> Scope -> Expr -> Either Error MonoType
+getType swaps scope' expr =
+  first TypeErr $ startInference swaps (chainExprs expr scope')
 
 getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -123,9 +123,9 @@ getTypecheckedStoreExpression ::
   Expr ->
   Either Error (MonoType, StoreExpression, Expr, Scope)
 getTypecheckedStoreExpression env expr = do
-  storeExpr <- first OtherError $ createStoreExpression (bindings env) expr
-  let (_, newExpr, scope) = substitute (store env) storeExpr
-  exprType <- getType scope newExpr
+  storeExpr <- first ResolverErr $ createStoreExpression (bindings env) expr
+  let (swaps, newExpr, scope) = substitute (store env) storeExpr
+  exprType <- getType swaps scope newExpr
   pure (exprType, storeExpr, newExpr, scope)
 
 evaluateText :: StoreEnv -> Text -> Either Error (MonoType, Expr, Scope)

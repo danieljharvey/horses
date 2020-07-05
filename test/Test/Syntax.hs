@@ -66,7 +66,7 @@ newtype WellTypedExpr = WellTypedExpr Expr
   deriving (Show)
 
 instance Arbitrary WellTypedExpr where
-  arbitrary = WellTypedExpr <$> suchThat arbitrary (isRight . startInference)
+  arbitrary = WellTypedExpr <$> suchThat arbitrary (isRight . startInference mempty)
 
 spec :: Spec
 spec = do
@@ -264,7 +264,7 @@ it "Printing and parsing is an iso" $ do
   property $ \(WellTypedExpr x) -> do
     T.putStrLn ""
     T.putStrLn (prettyPrint x)
-    case startInference x of
+    case startInference mempty x of
       Right type' -> do
         T.putStrLn ""
         T.putStrLn (prettyPrint type')

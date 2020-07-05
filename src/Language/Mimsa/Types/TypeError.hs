@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Types.TypeError
   ( TypeError (..),
+    SwappedName (..),
   )
 where
 
@@ -15,14 +16,21 @@ import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Typechecker
 
+newtype SwappedName = SwappedName Name
+  deriving (Eq, Ord, Show)
+
+instance Printer SwappedName where
+  prettyPrint (SwappedName a) =
+    "'" <> prettyPrint a <> "'"
+
 data TypeError
   = UnknownTypeError
-  | FailsOccursCheck Name
+  | FailsOccursCheck SwappedName
   | UnificationError MonoType MonoType
-  | VariableNotInEnv Name Environment
-  | MissingRecordMember Name (Map Name Expr)
-  | MissingRecordTypeMember Name (Map Name MonoType)
-  | MissingBuiltIn Name
+  | VariableNotInEnv SwappedName Environment
+  | MissingRecordMember SwappedName (Map Name Expr)
+  | MissingRecordTypeMember SwappedName (Map Name MonoType)
+  | MissingBuiltIn SwappedName
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedSum MonoType
   | CaseMatchExpectedPair MonoType
@@ -60,7 +68,7 @@ instance Printer TypeError where
     "Expected lambdas but got " <> prettyPrint l <> " and " <> prettyPrint r
 
 instance Semigroup TypeError where
-  _ <> b = b
+  a <> _ = a
 
 instance Monoid TypeError where
   mempty = UnknownTypeError

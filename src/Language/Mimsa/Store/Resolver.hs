@@ -5,7 +5,6 @@ module Language.Mimsa.Store.Resolver where
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Text (Text)
 --
 --
 -- this takes the expression, works out what it needs from it's environment
@@ -42,14 +41,14 @@ extractVars_ (MyRecordAccess a _) = extractVars_ a
 filterBuiltIns :: Set Name -> Set Name
 filterBuiltIns = S.filter (not . isLibraryName)
 
-findHashInBindings :: Bindings -> Name -> Either Text ExprHash
+findHashInBindings :: Bindings -> Name -> Either ResolverError ExprHash
 findHashInBindings (Bindings bindings') name = case M.lookup name bindings' of
   Just a -> Right a
-  _ -> Left $ "A binding for " <> prettyPrint name <> " could not be found"
+  _ -> Left $ MissingBinding name (Bindings bindings')
 
 -- given an expression, and the current environment, create a
 -- store expression that captures the hashes of the functions we'll need
-createStoreExpression :: Bindings -> Expr -> Either Text StoreExpression
+createStoreExpression :: Bindings -> Expr -> Either ResolverError StoreExpression
 createStoreExpression bindings' expr = do
   let findHash name =
         (,) <$> pure name

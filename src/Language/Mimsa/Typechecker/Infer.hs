@@ -11,6 +11,7 @@ where
 
 import Control.Applicative
 import Control.Monad.Except
+import Control.Monad.Reader
 import Control.Monad.State (State, get, put, runState)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
@@ -21,16 +22,16 @@ import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Types
 
-type App = ExceptT TypeError (State Int)
+type App = ExceptT TypeError (ReaderT Swaps (State Int))
 
-startInference :: Expr -> Either TypeError MonoType
-startInference expr = snd <$> doInference M.empty expr
+startInference :: Swaps -> Expr -> Either TypeError MonoType
+startInference swaps expr = snd <$> doInference swaps M.empty expr
 
-doInference :: Environment -> Expr -> Either TypeError (Substitutions, MonoType)
-doInference env expr =
+doInference :: Swaps -> Environment -> Expr -> Either TypeError (Substitutions, MonoType)
+doInference swaps env expr =
   fst either'
   where
-    either' = runState (runExceptT (infer env expr)) 1
+    either' = runState (runReaderT (runExceptT (infer env expr)) swaps) 1
 
 inferLiteral :: Literal -> App (Substitutions, MonoType)
 inferLiteral (MyInt _) = pure (mempty, MTInt)
@@ -41,7 +42,9 @@ inferLiteral (MyUnit) = pure (mempty, MTUnit)
 inferBuiltIn :: Name -> App (Substitutions, MonoType)
 inferBuiltIn name = case getLibraryFunction name of
   Just ff -> pure (mempty, getFFType ff)
-  _ -> throwError $ MissingBuiltIn name
+  _ -> do
+    actualName <- findSwappedName name
+    throwError $ MissingBuiltIn actualName
 
 instantiate :: Scheme -> App MonoType
 instantiate (Scheme vars ty) = do
@@ -78,13 +81,18 @@ applySubst subst ty = case ty of
 composeSubst :: Substitutions -> Substitutions -> Substitutions
 composeSubst s1 s2 = M.union (M.map (applySubst s1) s2) s1
 
+findSwappedName :: Name -> App SwappedName
+findSwappedName name = SwappedName <$> fromMaybe name <$> asks (M.lookup name)
+
 inferVarFromScope :: Environment -> Name -> App (Substitutions, MonoType)
 inferVarFromScope env name =
   case M.lookup name env of
     Just scheme -> do
       ty <- instantiate scheme
       pure (mempty, ty)
-    _ -> throwError $ VariableNotInEnv name env
+    _ -> do
+      actualName <- findSwappedName name
+      throwError $ VariableNotInEnv actualName env
 
 inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> App (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
@@ -151,15 +159,18 @@ infer env (MyRecordAccess (MyRecord items') name) = do
   case M.lookup name items' of
     Just item -> do
       infer env item
-    Nothing ->
-      throwError $ MissingRecordMember name items'
+    Nothing -> do
+      actualName <- findSwappedName name
+      throwError $ MissingRecordMember actualName items'
 infer env (MyRecordAccess a name) = do
   (s1, tyItems) <- infer env a
   tyResult <- case tyItems of
     (MTRecord bits) -> do
       case M.lookup name bits of
         Just mt -> pure mt
-        _ -> throwError $ MissingRecordTypeMember name bits
+        _ -> do
+          actualName <- findSwappedName name
+          throwError $ MissingRecordTypeMember actualName bits
     (MTVar _) -> getUnknown
     _ -> throwError $ CannotMatchRecord env tyItems
   s2 <-
@@ -271,9 +282,10 @@ freeTypeVars ty = case ty of
 varBind :: Name -> MonoType -> App Substitutions
 varBind var ty
   | ty == MTVar var = pure mempty
-  | S.member var (freeTypeVars ty) =
+  | S.member var (freeTypeVars ty) = do
+    actualName <- findSwappedName var
     throwError $
-      FailsOccursCheck var
+      FailsOccursCheck actualName
   | otherwise = pure (M.singleton var ty)
 
 unify :: MonoType -> MonoType -> App Substitutions

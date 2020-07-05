@@ -9,7 +9,6 @@ where
 import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor (second)
-import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
@@ -23,8 +22,6 @@ import Language.Mimsa.Types
 -- var0, var1, var2 etc so we don't have to care about scoping or collisions
 --
 -- we'll also store what our substitutions were for errors sake
-
-type Swaps = Map Name Name
 
 type App = State (Swaps, Scope)
 

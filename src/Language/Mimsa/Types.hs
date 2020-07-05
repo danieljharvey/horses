@@ -15,6 +15,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Typechecker,
     module Language.Mimsa.Types.Error,
     module Language.Mimsa.Types.Printer,
+    module Language.Mimsa.Types.ResolverError,
   )
 where
 
@@ -24,6 +25,7 @@ import Language.Mimsa.Types.ForeignFunc
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
+import Language.Mimsa.Types.ResolverError
 import Language.Mimsa.Types.Scheme
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.TypeError
