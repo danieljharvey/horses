@@ -124,7 +124,7 @@ getTypecheckedStoreExpression ::
   Either Error (MonoType, StoreExpression, Expr, Scope)
 getTypecheckedStoreExpression env expr = do
   storeExpr <- first OtherError $ createStoreExpression (bindings env) expr
-  (_, newExpr, scope) <- first OtherError $ substitute (store env) storeExpr
+  let (_, newExpr, scope) = substitute (store env) storeExpr
   exprType <- getType scope newExpr
   pure (exprType, storeExpr, newExpr, scope)
 

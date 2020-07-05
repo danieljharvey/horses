@@ -12,7 +12,6 @@ import Data.Bifunctor (second)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
-import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Library (isLibraryName)
 import Language.Mimsa.Types
@@ -27,16 +26,16 @@ import Language.Mimsa.Types
 
 type Swaps = Map Name Name
 
-type App = StateT (Swaps, Scope) (Either Text)
+type App = State (Swaps, Scope)
 
-substitute :: Store -> StoreExpression -> Either Text (Swaps, Expr, Scope)
-substitute store' storeExpr = do
-  (expr', (swaps', scope')) <- runSubApp store' storeExpr
-  pure (swaps', expr', scope')
+substitute :: Store -> StoreExpression -> (Swaps, Expr, Scope)
+substitute store' storeExpr =
+  let (expr', (swaps', scope')) = runSubApp store' storeExpr
+   in (swaps', expr', scope')
 
-runSubApp :: Store -> StoreExpression -> Either Text (Expr, (Swaps, Scope))
+runSubApp :: Store -> StoreExpression -> (Expr, (Swaps, Scope))
 runSubApp store' storeExpr =
-  runStateT (doSubstitutions store' storeExpr) (mempty, mempty)
+  runState (doSubstitutions store' storeExpr) (mempty, mempty)
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
 doSubstitutions :: Store -> StoreExpression -> App Expr
