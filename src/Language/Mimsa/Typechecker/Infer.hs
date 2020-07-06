@@ -12,17 +12,16 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State (State, get, put, runState)
+import Control.Monad.State (get, put, runState)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
-import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Library
+import Language.Mimsa.Typechecker.TcMonad
+import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
-
-type App = ExceptT TypeError (ReaderT Swaps (State Int))
 
 startInference :: Swaps -> Expr -> Either TypeError MonoType
 startInference swaps expr = snd <$> doInference swaps M.empty expr
@@ -33,20 +32,7 @@ doInference swaps env expr =
   where
     either' = runState (runReaderT (runExceptT (infer env expr)) swaps) 1
 
-inferLiteral :: Literal -> App (Substitutions, MonoType)
-inferLiteral (MyInt _) = pure (mempty, MTInt)
-inferLiteral (MyBool _) = pure (mempty, MTBool)
-inferLiteral (MyString _) = pure (mempty, MTString)
-inferLiteral (MyUnit) = pure (mempty, MTUnit)
-
-inferBuiltIn :: Name -> App (Substitutions, MonoType)
-inferBuiltIn name = case getLibraryFunction name of
-  Just ff -> pure (mempty, getFFType ff)
-  _ -> do
-    actualName <- findSwappedName name
-    throwError $ MissingBuiltIn actualName
-
-instantiate :: Scheme -> App MonoType
+instantiate :: Scheme -> TcMonad MonoType
 instantiate (Scheme vars ty) = do
   newVars <- traverse (const getUnknown) vars
   let subst = Substitutions $ M.fromList (zip vars newVars)
@@ -62,10 +48,25 @@ applySubstScheme (Substitutions subst) (Scheme vars t) =
 applySubstCtx :: Substitutions -> Environment -> Environment
 applySubstCtx subst ctx = M.map (applySubstScheme subst) ctx
 
-findSwappedName :: Name -> App SwappedName
+findSwappedName :: Name -> TcMonad SwappedName
 findSwappedName name = SwappedName <$> fromMaybe name <$> asks (M.lookup name)
 
-inferVarFromScope :: Environment -> Name -> App (Substitutions, MonoType)
+--------------
+
+inferLiteral :: Literal -> TcMonad (Substitutions, MonoType)
+inferLiteral (MyInt _) = pure (mempty, MTInt)
+inferLiteral (MyBool _) = pure (mempty, MTBool)
+inferLiteral (MyString _) = pure (mempty, MTString)
+inferLiteral (MyUnit) = pure (mempty, MTUnit)
+
+inferBuiltIn :: Name -> TcMonad (Substitutions, MonoType)
+inferBuiltIn name = case getLibraryFunction name of
+  Just ff -> pure (mempty, getFFType ff)
+  _ -> do
+    actualName <- findSwappedName name
+    throwError $ MissingBuiltIn actualName
+
+inferVarFromScope :: Environment -> Name -> TcMonad (Substitutions, MonoType)
 inferVarFromScope env name =
   case M.lookup name env of
     Just scheme -> do
@@ -75,7 +76,7 @@ inferVarFromScope env name =
       actualName <- findSwappedName name
       throwError $ VariableNotInEnv actualName env
 
-inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> App (Substitutions, MonoType)
+inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> TcMonad (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
   let scheme = Scheme [] tyArg
       newEnv = M.insert binder scheme env
@@ -86,10 +87,7 @@ inferFuncReturn env binder function tyArg = do
       subs = s3 <> s2 <> s1
   pure (subs, applySubst subs tyFun)
 
---traceAnd :: (Show a) => Text -> a -> a
---traceAnd msg a = traceShow (msg, a) a
-
-inferList :: Environment -> NonEmpty Expr -> App (Substitutions, MonoType)
+inferList :: Environment -> NonEmpty Expr -> TcMonad (Substitutions, MonoType)
 inferList env (a :| as) = do
   (s1, tyA) <- infer env a
   let foldFn = \as' a' -> do
@@ -114,7 +112,7 @@ splitRecordTypes map' = (subs, MTRecord types)
         ((fst . snd) <$> M.toList map')
     types = snd <$> map'
 
-infer :: Environment -> Expr -> App (Substitutions, MonoType)
+infer :: Environment -> Expr -> TcMonad (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
   (inferVarFromScope env name)
@@ -172,10 +170,7 @@ infer env (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) = d
   s2 <- unify (MTSum tyL tyR) tySum
   (s3, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst (s2 <> s1) tyL)
   (s4, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst (s2 <> s1) tyR)
-  let subs =
-        s4 <> s3
-          <> s2
-          <> s1
+  let subs = s4 <> s3 <> s2 <> s1
   s5 <- unify tyLeftRes tyRightRes
   pure (s5 <> subs, applySubst (s5 <> subs) tyLeftRes)
 infer _env (MyCase _ l r) = throwError $ CaseMatchExpectedLambda l r
@@ -229,10 +224,7 @@ infer env (MyIf condition thenCase elseCase) = do
   (s3, tyElse) <- infer (applySubstCtx (s2 <> s1) env) elseCase
   s4 <- unify tyThen tyElse
   s5 <- unify tyCond MTBool
-  let subs =
-        s5 <> s4 <> s3
-          <> s2
-          <> s1
+  let subs = s5 <> s4 <> s3 <> s2 <> s1
   pure
     ( subs,
       applySubst subs tyElse
@@ -250,60 +242,7 @@ infer env (MySum MyRight right') = do
   (s1, tyRight) <- infer env right'
   pure (s1, MTSum (applySubst s1 tyLeft) tyRight)
 
-freeTypeVars :: MonoType -> S.Set Name
-freeTypeVars ty = case ty of
-  MTVar var ->
-    S.singleton var
-  MTFunction t1 t2 ->
-    S.union (freeTypeVars t1) (freeTypeVars t2)
-  _ ->
-    S.empty
-
--- | Creates a fresh unification variable and binds it to the given type
-varBind :: Name -> MonoType -> App Substitutions
-varBind var ty
-  | ty == MTVar var = pure mempty
-  | S.member var (freeTypeVars ty) = do
-    actualName <- findSwappedName var
-    throwError $
-      FailsOccursCheck actualName
-  | otherwise = pure $ Substitutions (M.singleton var ty)
-
-unify :: MonoType -> MonoType -> App Substitutions
-unify a b | a == b = pure mempty
-unify (MTFunction l r) (MTFunction l' r') = do
-  s1 <- unify l l'
-  s2 <- unify (applySubst s1 r) (applySubst s1 r')
-  pure (s2 <> s1)
-unify (MTPair a b) (MTPair a' b') = do
-  s1 <- unify a a'
-  s2 <- unify (applySubst s1 b) (applySubst s1 b')
-  pure (s2 <> s1)
-unify (MTSum a b) (MTSum a' b') = do
-  s1 <- unify a a'
-  s2 <- unify (applySubst s1 b) (applySubst s1 b')
-  pure (s2 <> s1)
-unify (MTVar u) t = varBind u t
-unify (MTList a) (MTList a') = unify a a'
-unify (MTRecord as) (MTRecord bs) = do
-  let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
-  let getRecordTypes = \k -> do
-        tyLeft <- getTypeOrFresh k as
-        tyRight <- getTypeOrFresh k bs
-        unify tyLeft tyRight
-  s <- traverse getRecordTypes allKeys
-  pure (foldl (<>) mempty s)
-unify t (MTVar u) = varBind u t
-unify a b =
-  throwError $ UnificationError a b
-
-getTypeOrFresh :: Name -> Map Name MonoType -> App MonoType
-getTypeOrFresh name map' = do
-  case M.lookup name map' of
-    Just found -> pure found
-    _ -> getUnknown
-
-getUnknown :: App MonoType
+getUnknown :: TcMonad MonoType
 getUnknown = do
   nextUniVar <- get
   put (nextUniVar + 1)

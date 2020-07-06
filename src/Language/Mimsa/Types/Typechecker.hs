@@ -12,6 +12,7 @@ import Language.Mimsa.Types.Scheme
 type Environment = Map Name Scheme
 
 newtype Substitutions = Substitutions {getSubstitutions :: Map Name MonoType}
+  deriving (Eq, Ord, Show)
 
 instance Semigroup Substitutions where
   (Substitutions s1) <> (Substitutions s2) =
