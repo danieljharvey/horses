@@ -3,6 +3,7 @@
 module Language.Mimsa.Store.Storage
   ( saveExpr,
     findExpr,
+    getStoreExpressionHash,
   )
 where
 
@@ -29,6 +30,9 @@ getHash :: BS.ByteString -> ExprHash
 getHash = ExprHash . Hash.hash
 
 -- the store is where we save all the fucking bullshit
+
+getStoreExpressionHash :: StoreExpression -> ExprHash
+getStoreExpressionHash = getHash . JSON.encode
 
 -- take an expression, save it, return ExprHash
 saveExpr :: StoreExpression -> IO ExprHash

@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Store
-  ( saveExpr,
-    findExpr,
-    loadEnvironment,
+  ( loadEnvironment,
     loadBoundExpressions,
     saveEnvironment,
+    module Language.Mimsa.Store.Storage,
     module Language.Mimsa.Store.Resolver,
     module Language.Mimsa.Store.Substitutor,
+    module Language.Mimsa.Store.DepGraph,
   )
 where
 
@@ -19,6 +19,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import Language.Mimsa.Store.DepGraph
 import Language.Mimsa.Store.Resolver
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Store.Substitutor

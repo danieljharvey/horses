@@ -8,5 +8,6 @@ data ReplAction
   = Help
   | Info Expr
   | Evaluate Expr
+  | Tree Expr
   | Bind Name Expr
   | ListBindings
