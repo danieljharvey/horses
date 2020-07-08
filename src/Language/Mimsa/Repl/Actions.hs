@@ -15,7 +15,8 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store
-  ( createStoreExpression,
+  ( createDepGraph,
+    createStoreExpression,
     saveExpr,
     substitute,
   )
@@ -30,8 +31,9 @@ doReplAction env Help = do
   T.putStrLn ":info <expr> - get the type of <expr>"
   T.putStrLn ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
   T.putStrLn ":list - show a list of current bindings in the environment"
-  T.putStrLn ":quit - give up and leave"
+  T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
+  T.putStrLn ":quit - give up and leave"
   pure env
 doReplAction env (ListBindings) = do
   let showBind = \(name, (StoreExpression _ expr)) -> T.putStrLn $ case getTypecheckedStoreExpression env expr of
@@ -57,6 +59,15 @@ doReplAction env (Evaluate expr) = do
               <> " :: "
               <> prettyPrint type'
           pure env
+doReplAction env (Tree expr) = do
+  case getTypecheckedStoreExpression env expr of
+    Left e' -> do
+      T.putStrLn (prettyPrint e')
+      pure env
+    Right (_, storeExpr, _, _) -> do
+      let graph = createDepGraph (mkName "expression") (store env) storeExpr
+      T.putStrLn (prettyPrint graph)
+      pure env
 doReplAction env (Info expr) = do
   case getTypecheckedStoreExpression env expr of
     Left e' -> do

@@ -12,6 +12,7 @@ replParser =
     <|> infoParser
     <|> bindParser
     <|> listBindingsParser
+    <|> treeParser
     <|> evalParser
 
 helpParser :: Parser ReplAction
@@ -28,6 +29,9 @@ evalParser :: Parser ReplAction
 evalParser =
   Evaluate
     <$> expressionParser
+
+treeParser :: Parser ReplAction
+treeParser = Tree <$> right (thenSpace (literal ":tree")) expressionParser
 
 bindParser :: Parser ReplAction
 bindParser =
