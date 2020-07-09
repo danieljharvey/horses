@@ -134,12 +134,27 @@ nameParser =
 -----
 
 letParser :: Parser Expr
-letParser = do
+letParser = letInParser <|> letNewlineParser
+
+letInParser :: Parser Expr
+letInParser = do
   _ <- P.thenSpace (P.literal "let")
   name <- P.thenSpace nameParser
   _ <- P.thenSpace (P.literal "=")
   expr <- P.thenSpace expressionParser
   _ <- P.thenSpace (P.literal "in")
+  inExpr <- expressionParser
+  pure (MyLet name expr inExpr)
+
+letNewlineParser :: Parser Expr
+letNewlineParser = do
+  _ <- P.thenSpace (P.literal "let")
+  name <- P.thenSpace nameParser
+  _ <- P.thenSpace (P.literal "=")
+  expr <- expressionParser
+  _ <- P.space0
+  _ <- P.literal ";"
+  _ <- P.space0
   inExpr <- expressionParser
   pure (MyLet name expr inExpr)
 

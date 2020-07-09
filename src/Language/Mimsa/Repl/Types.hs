@@ -11,3 +11,4 @@ data ReplAction
   | Tree Expr
   | Bind Name Expr
   | ListBindings
+  | Watch

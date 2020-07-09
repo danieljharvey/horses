@@ -13,6 +13,7 @@ replParser =
     <|> bindParser
     <|> listBindingsParser
     <|> treeParser
+    <|> watchParser
     <|> evalParser
 
 helpParser :: Parser ReplAction
@@ -41,3 +42,6 @@ bindParser =
 
 listBindingsParser :: Parser ReplAction
 listBindingsParser = ListBindings <$ literal ":list"
+
+watchParser :: Parser ReplAction
+watchParser = Watch <$ literal ":watch"

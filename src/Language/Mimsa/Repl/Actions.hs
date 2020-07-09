@@ -14,6 +14,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
+import Language.Mimsa.Repl.Watcher
 import Language.Mimsa.Store
   ( createDepGraph,
     createStoreExpression,
@@ -41,6 +42,31 @@ doReplAction env (ListBindings) = do
           prettyPrint name <> " :: " <> prettyPrint type'
         _ -> ""
   _ <- traverse showBind (getExprPairs (store env) (bindings env))
+  pure env
+doReplAction env Watch = do
+  watchFile
+    "./store/"
+    ( do
+        text <- T.readFile "./store/scratch.mimsa"
+        T.putStrLn "scratch.mimsa updated!"
+        case parseExpr (T.strip text) of
+          Right expr -> do
+            case getTypecheckedStoreExpression env expr of
+              Left e' -> do
+                T.putStrLn $ prettyPrint e'
+              Right (type', _, expr', scope') -> do
+                simplified <- interpret scope' expr'
+                case simplified of
+                  Left e -> do
+                    T.putStrLn (prettyPrint e)
+                  Right simplified' -> do
+                    T.putStrLn $
+                      prettyPrint simplified'
+                        <> " :: "
+                        <> prettyPrint type'
+          Left e -> do
+            T.putStrLn e
+    )
   pure env
 doReplAction env (Evaluate expr) = do
   case getTypecheckedStoreExpression env expr of
@@ -124,10 +150,11 @@ chainExprs expr scope = finalExpr
         (M.toList . getScope $ scope)
 
 fromItem :: Name -> StoreExpression -> ExprHash -> StoreEnv
-fromItem name expr hash = StoreEnv
-  { store = Store $ M.singleton hash expr,
-    bindings = Bindings $ M.singleton name hash
-  }
+fromItem name expr hash =
+  StoreEnv
+    { store = Store $ M.singleton hash expr,
+      bindings = Bindings $ M.singleton name hash
+    }
 
 getTypecheckedStoreExpression ::
   StoreEnv ->
