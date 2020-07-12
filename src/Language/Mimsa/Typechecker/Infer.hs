@@ -17,7 +17,9 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
+import qualified Data.Set as S
 import qualified Data.Text as T
+import Debug.Trace
 import Language.Mimsa.Library
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -30,7 +32,7 @@ doInference :: Swaps -> Environment -> Expr -> Either TypeError (Substitutions, 
 doInference swaps env expr =
   fst either'
   where
-    either' = runState (runReaderT (runExceptT (infer env expr)) swaps) 1
+    either' = runState (runReaderT (runExceptT (infer env (trace (show expr) expr))) swaps) 1
 
 instantiate :: Scheme -> TcMonad MonoType
 instantiate (Scheme vars ty) = do
@@ -74,7 +76,8 @@ inferVarFromScope env name =
       pure (mempty, ty)
     _ -> do
       actualName <- findSwappedName name
-      throwError $ VariableNotInEnv actualName env
+      actualEnv <- traverse findSwappedName (M.keys env)
+      throwError $ VariableNotInEnv actualName (S.fromList actualEnv)
 
 inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> TcMonad (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
@@ -140,7 +143,8 @@ infer env (MyRecordAccess (MyRecord items') name) = do
       infer env item
     Nothing -> do
       actualName <- findSwappedName name
-      throwError $ MissingRecordMember actualName items'
+      itemsActual <- traverse findSwappedName (M.keys items')
+      throwError $ MissingRecordMember actualName (S.fromList itemsActual)
 infer env (MyRecordAccess a name) = do
   (s1, tyItems) <- infer env a
   tyResult <- case tyItems of

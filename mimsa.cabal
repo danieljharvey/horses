@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2d1c4ce15bbd009df729a59bab81c402a20df3feb500a59b4fbcbbc0a2bf72b5
+-- hash: c4b93a3a135a764a348197fbd48c423343df91dacc5bfd7c946a9d444d15ced4
 
 name:           mimsa
 version:        0.1.0.0
@@ -34,6 +34,7 @@ library
       Language.Mimsa.Repl.Actions
       Language.Mimsa.Repl.Parser
       Language.Mimsa.Repl.Types
+      Language.Mimsa.Repl.Watcher
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
       Language.Mimsa.Store.Resolver
@@ -68,6 +69,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , fsnotify
     , hashable
     , haskeline
     , mtl
@@ -88,6 +90,7 @@ executable mimsa
     , base >=4.7 && <5
     , bytestring
     , containers
+    , fsnotify
     , hashable
     , haskeline
     , mimsa
@@ -121,6 +124,7 @@ test-suite mimsa-test
     , base >=4.7 && <5
     , bytestring
     , containers
+    , fsnotify
     , generic-arbitrary
     , hashable
     , haskeline

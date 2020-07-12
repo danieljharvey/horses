@@ -171,3 +171,10 @@ spec = do
       it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))" $ do
         result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))"
         result `shouldBe` Right (MTInt, int 2)
+{- it "let x = (maybe.nothing) in maybe.just(1)" $ do
+result <- eval stdLib "let x = (maybe.nothing) in maybe.just(1)"
+result
+  `shouldBe` Right
+    ( MTSum (MTVar (mkName "U1")) MTInt,
+      MySum MyRight (int 1)
+    )-}

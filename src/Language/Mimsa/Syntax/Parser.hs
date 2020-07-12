@@ -23,7 +23,7 @@ runParserComplete parser input = runParser parser input
   >>= \(leftover, a) ->
     if T.length leftover == 0
       then Right a
-      else Left ("Leftover input: " <> leftover)
+      else Left ("Leftover input: >>" <> leftover <> "<<")
 
 instance Functor Parser where
   fmap f (Parser parser) =
@@ -34,7 +34,6 @@ instance Functor Parser where
       )
 
 instance Applicative Parser where
-
   pure a = mkParser (\input -> Right (input, a))
 
   parserF <*> parserA =
@@ -44,7 +43,6 @@ instance Applicative Parser where
       )
 
 instance Alternative Parser where
-
   empty = mkParser (const $ Left "Failed")
 
   parserA <|> parserB =
@@ -55,7 +53,6 @@ instance Alternative Parser where
       )
 
 instance Monad Parser where
-
   return = pure
 
   parserA >>= aToParserB =
@@ -141,6 +138,9 @@ space0 = zeroOrMore whitespace
 
 space1 :: Parser (NonEmpty Char)
 space1 = oneOrMore whitespace
+
+newline :: Parser Char
+newline = predicate char (\a -> a == '\n')
 
 between :: Char -> Parser Text
 between char' =

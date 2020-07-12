@@ -11,6 +11,7 @@ import Language.Mimsa.Store.Substitutor (substitute)
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
+import Test.StoreData
 
 trueStoreExpr :: StoreExpression
 trueStoreExpr = StoreExpression mempty (bool True)
@@ -21,8 +22,8 @@ falseStoreExpr =
     (Bindings $ M.singleton (mkName "true") (ExprHash 1))
     (MyVar (mkName "true"))
 
-idExpr :: StoreExpression
-idExpr = StoreExpression (mempty) (MyLambda (mkName "a") (MyVar (mkName "a")))
+--idExpr :: StoreExpression
+--idExpr = StoreExpression (mempty) (MyLambda (mkName "a") (MyVar (mkName "a")))
 
 constExpr :: StoreExpression
 constExpr =
@@ -106,6 +107,24 @@ spec = do
                              ]
                          )
                      )
+  {-  describe "Stops doubly importing records" $ do
+      it "let x = (maybe.nothing) in maybe.just" $ do
+        let expr =
+              MyLet
+                (mkName "x")
+                (MyRecordAccess (MyVar (mkName "maybe")) (mkName "nothing"))
+                (MyRecordAccess (MyVar (mkName "maybe")) (mkName "just"))
+            storeExpr =
+              StoreExpression
+                ( Bindings $
+                    M.singleton
+                      (mkName "maybe")
+                      (ExprHash 14)
+                )
+                expr
+        let (swaps, _, _) = substitute (store stdLib) storeExpr
+        M.size swaps `shouldBe` 3
+  -}
   describe "Combine two levels" $ do
     it "Combines trueStoreExpr and falseStoreExpr" $ do
       let hash = ExprHash 2

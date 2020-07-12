@@ -30,6 +30,7 @@ dependencies:
 - bytestring
 - haskeline 
 - random
+- fsnotify
 
 library:
   source-dirs: src
