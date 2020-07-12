@@ -54,12 +54,15 @@ doReplAction env Watch = do
             case getTypecheckedStoreExpression env expr of
               Left e' -> do
                 T.putStrLn $ prettyPrint e'
-              Right (type', _, expr', scope') -> do
+              Right (type', storeExpr', expr', scope') -> do
                 simplified <- interpret scope' expr'
                 case simplified of
                   Left e -> do
                     T.putStrLn (prettyPrint e)
                   Right simplified' -> do
+                    T.putStrLn $
+                      "+ Using the following from scope: "
+                        <> prettyPrint (storeBindings storeExpr')
                     T.putStrLn $
                       prettyPrint simplified'
                         <> " :: "

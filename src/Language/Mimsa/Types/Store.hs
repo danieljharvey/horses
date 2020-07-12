@@ -1,18 +1,19 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
+{-# LANGUAGE OverloadedStrings          #-}
 module Language.Mimsa.Types.Store where
 
-import qualified Data.Aeson as JSON
-import Data.Map (Map)
-import qualified Data.Text as T
-import GHC.Generics
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.ForeignFunc
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
+import qualified Data.Aeson                       as JSON
+import           Data.Map                         (Map)
+import qualified Data.Map                         as M
+import qualified Data.Text                        as T
+import           GHC.Generics
+import           Language.Mimsa.Types.AST
+import           Language.Mimsa.Types.ForeignFunc
+import           Language.Mimsa.Types.Name
+import           Language.Mimsa.Types.Printer
 
 ------------
 
@@ -29,7 +30,7 @@ instance Printer ExprHash where
 -- and a list of mappings of names to those pieces
 data StoreEnv
   = StoreEnv
-      { store :: Store,
+      { store    :: Store,
         bindings :: Bindings
       }
   deriving (Eq, Ord, Show)
@@ -54,9 +55,16 @@ newtype Library = Library {getLibrary :: Map FuncName ForeignFunc}
 newtype Bindings = Bindings {getBindings :: Map Name ExprHash}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid, JSON.FromJSON, JSON.ToJSON)
 
+instance Printer Bindings where
+  prettyPrint (Bindings b) = "{ " <> T.intercalate ", " (prettyPrint <$> M.keys b) <> " }"
+
+
 -- dependencies resolved into actual expressions
 newtype Scope = Scope {getScope :: Map Name Expr}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
+
+instance Printer Scope where
+  prettyPrint (Scope s) = "{ " <> T.intercalate ", " (prettyPrint <$> M.elems s) <> " }"
 
 -- the names that get changed in substitution
 type Swaps = Map Name Name
@@ -66,7 +74,7 @@ type Swaps = Map Name Name
 -- not sure whether to store the builtins we need here too?
 data StoreExpression
   = StoreExpression
-      { storeBindings :: Bindings,
+      { storeBindings   :: Bindings,
         storeExpression :: Expr
       }
   deriving (Eq, Ord, Show, Generic)

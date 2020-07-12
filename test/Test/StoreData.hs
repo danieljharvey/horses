@@ -72,6 +72,24 @@ list = unsafeGetExpr' "{ head: listHead, tail: listTail }" bindings'
 idExpr :: StoreExpression
 idExpr = unsafeGetExpr "\\i -> i"
 
+justExpr :: StoreExpression
+justExpr = unsafeGetExpr "\\a -> Right a"
+
+nothingExpr :: StoreExpression
+nothingExpr = unsafeGetExpr "Left Unit"
+
+maybeExpr :: StoreExpression
+maybeExpr =
+  unsafeGetExpr'
+    "{ just: maybeJust, nothing: maybeNothing}"
+    ( Bindings
+        ( M.fromList
+            [ (mkName "maybeJust", ExprHash 12),
+              (mkName "maybeNothing", ExprHash 13)
+            ]
+        )
+    )
+
 stdLib :: StoreEnv
 stdLib = StoreEnv store' bindings'
   where
@@ -88,7 +106,10 @@ stdLib = StoreEnv store' bindings'
             (ExprHash 8, listHead),
             (ExprHash 9, listTail),
             (ExprHash 10, list),
-            (ExprHash 11, idExpr)
+            (ExprHash 11, idExpr),
+            (ExprHash 12, justExpr),
+            (ExprHash 13, nothingExpr),
+            (ExprHash 14, maybeExpr)
           ]
     bindings' =
       Bindings $
@@ -103,7 +124,8 @@ stdLib = StoreEnv store' bindings'
             (mkName "listHead", ExprHash 8),
             (mkName "listTail", ExprHash 9),
             (mkName "list", ExprHash 10),
-            (mkName "id", ExprHash 11)
+            (mkName "id", ExprHash 11),
+            (mkName "maybe", ExprHash 14)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression

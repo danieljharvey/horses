@@ -6,15 +6,17 @@ module Language.Mimsa.Types.TypeError
   )
 where
 
-import Data.Map (Map)
-import qualified Data.Map as M
-import Data.Text (Text)
-import qualified Data.Text as T
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
-import Language.Mimsa.Types.Typechecker
+import           Data.Map                         (Map)
+import qualified Data.Map                         as M
+import           Data.Set                         (Set)
+import qualified Data.Set                         as S
+import           Data.Text                        (Text)
+import qualified Data.Text                        as T
+import           Language.Mimsa.Types.AST
+import           Language.Mimsa.Types.MonoType
+import           Language.Mimsa.Types.Name
+import           Language.Mimsa.Types.Printer
+import           Language.Mimsa.Types.Typechecker
 
 newtype SwappedName = SwappedName Name
   deriving (Eq, Ord, Show)
@@ -27,8 +29,8 @@ data TypeError
   = UnknownTypeError
   | FailsOccursCheck SwappedName
   | UnificationError MonoType MonoType
-  | VariableNotInEnv SwappedName Environment
-  | MissingRecordMember SwappedName (Map Name Expr)
+  | VariableNotInEnv SwappedName (Set SwappedName)
+  | MissingRecordMember SwappedName (Set SwappedName)
   | MissingRecordTypeMember SwappedName (Map Name MonoType)
   | MissingBuiltIn SwappedName
   | CannotMatchRecord Environment MonoType
@@ -41,6 +43,9 @@ data TypeError
 showKeys :: Map Name a -> Text
 showKeys record = T.intercalate ", " (prettyPrint <$> M.keys record)
 
+showSet :: (Printer a) => Set a -> Text
+showSet set = T.intercalate ", " (prettyPrint <$> S.toList set)
+
 instance Printer TypeError where
   prettyPrint UnknownTypeError =
     "Unknown type error"
@@ -48,10 +53,10 @@ instance Printer TypeError where
     prettyPrint name <> " fails occurs check"
   prettyPrint (UnificationError a b) =
     "Unification error - cannot match " <> prettyPrint a <> " and " <> prettyPrint b
-  prettyPrint (VariableNotInEnv name env) =
-    "Variable " <> prettyPrint name <> " not in scope: { " <> showKeys env <> " }"
-  prettyPrint (MissingRecordMember name record) =
-    "Cannot find " <> prettyPrint name <> " in { " <> showKeys record <> " }"
+  prettyPrint (VariableNotInEnv name members) =
+    "Variable " <> prettyPrint name <> " not in scope: { " <> showSet members <> " }"
+  prettyPrint (MissingRecordMember name members) =
+    "Cannot find " <> prettyPrint name <> " in { " <> showSet members <> " }"
   prettyPrint (MissingRecordTypeMember name types) =
     "Cannot find " <> prettyPrint name <> " in { " <> showKeys types <> " }"
   prettyPrint (MissingBuiltIn name) =
