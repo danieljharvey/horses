@@ -19,20 +19,19 @@ import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import Debug.Trace
 import Language.Mimsa.Library
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
 
-startInference :: Swaps -> Expr -> Either TypeError MonoType
+startInference :: Swaps -> Expr Name -> Either TypeError MonoType
 startInference swaps expr = snd <$> doInference swaps M.empty expr
 
-doInference :: Swaps -> Environment -> Expr -> Either TypeError (Substitutions, MonoType)
+doInference :: Swaps -> Environment -> Expr Name -> Either TypeError (Substitutions, MonoType)
 doInference swaps env expr =
   fst either'
   where
-    either' = runState (runReaderT (runExceptT (infer env (trace (show expr) expr))) swaps) 1
+    either' = runState (runReaderT (runExceptT (infer env expr)) swaps) 1
 
 instantiate :: Scheme -> TcMonad MonoType
 instantiate (Scheme vars ty) = do
@@ -79,7 +78,7 @@ inferVarFromScope env name =
       actualEnv <- traverse findSwappedName (M.keys env)
       throwError $ VariableNotInEnv actualName (S.fromList actualEnv)
 
-inferFuncReturn :: Environment -> Name -> Expr -> MonoType -> TcMonad (Substitutions, MonoType)
+inferFuncReturn :: Environment -> Name -> Expr Name -> MonoType -> TcMonad (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
   let scheme = Scheme [] tyArg
       newEnv = M.insert binder scheme env
@@ -90,7 +89,7 @@ inferFuncReturn env binder function tyArg = do
       subs = s3 <> s2 <> s1
   pure (subs, applySubst subs tyFun)
 
-inferList :: Environment -> NonEmpty Expr -> TcMonad (Substitutions, MonoType)
+inferList :: Environment -> NonEmpty (Expr Name) -> TcMonad (Substitutions, MonoType)
 inferList env (a :| as) = do
   (s1, tyA) <- infer env a
   let foldFn = \as' a' -> do
@@ -115,7 +114,7 @@ splitRecordTypes map' = (subs, MTRecord types)
         ((fst . snd) <$> M.toList map')
     types = snd <$> map'
 
-infer :: Environment -> Expr -> TcMonad (Substitutions, MonoType)
+infer :: Environment -> (Expr Name) -> TcMonad (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
   (inferVarFromScope env name)

@@ -12,7 +12,6 @@ import Data.Bifunctor (second)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Debug.Trace
 import Language.Mimsa.Library (isLibraryName)
 import Language.Mimsa.Types
 
@@ -26,17 +25,17 @@ import Language.Mimsa.Types
 
 type App = State (Swaps, Scope)
 
-substitute :: Store -> StoreExpression -> (Swaps, Expr, Scope)
+substitute :: Store -> StoreExpression -> (Swaps, Expr Name, Scope)
 substitute store' storeExpr =
   let (expr', (swaps', scope')) = runSubApp store' storeExpr
    in (swaps', expr', scope')
 
-runSubApp :: Store -> StoreExpression -> (Expr, (Swaps, Scope))
+runSubApp :: Store -> StoreExpression -> (Expr Name, (Swaps, Scope))
 runSubApp store' storeExpr =
   runState (doSubstitutions store' storeExpr) (mempty, mempty)
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
-doSubstitutions :: Store -> StoreExpression -> App Expr
+doSubstitutions :: Store -> StoreExpression -> App (Expr Name)
 doSubstitutions store' (StoreExpression bindings' expr) = do
   let scope = createScope store' bindings'
   modify (second $ (<>) scope)
@@ -75,7 +74,7 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
     Just item -> pure [(name, item)]
     _ -> pure []
 
-findInScope :: Name -> App (Maybe Expr)
+findInScope :: Name -> App (Maybe (Expr Name))
 findInScope name = do
   (swaps', Scope scope') <- get
   case filter (\(_, v) -> v == name) (M.toList swaps') of
@@ -97,7 +96,7 @@ getNextVar protected name =
       nextName <- makeName <$> gets (M.size . fst)
       (swaps', (Scope scope')) <- get
       found <- findInScope name
-      let newScope = case (trace (show found) found) of
+      let newScope = case found of
             (Just expr') ->
               Scope $ M.insert nextName expr' scope'
             Nothing ->
@@ -114,7 +113,7 @@ getNextVar protected name =
       pure nextName
 
 -- step through Expr, replacing vars with numbered variables
-mapVar :: [Name] -> Expr -> App Expr
+mapVar :: [Name] -> (Expr Name) -> App (Expr Name)
 mapVar p (MyVar a) =
   MyVar <$> getNextVar p a
 mapVar p (MyLet name a b) =

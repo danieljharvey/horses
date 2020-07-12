@@ -13,12 +13,12 @@ import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 
-testInterpret :: Scope -> Expr -> Expr -> Expectation
+testInterpret :: Scope -> Expr Name -> Expr Name -> Expectation
 testInterpret scope' expr' expected = do
   result <- interpret scope' expr'
   result `shouldBe` (Right expected)
 
-testInterpretFail :: Scope -> Expr -> InterpreterError -> Expectation
+testInterpretFail :: Scope -> Expr Name -> InterpreterError -> Expectation
 testInterpretFail scope' expr' expected = do
   result <- interpret scope' expr'
   result `shouldBe` (Left expected)

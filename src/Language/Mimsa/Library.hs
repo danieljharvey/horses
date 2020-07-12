@@ -46,7 +46,7 @@ logString = OneArg (MTString, MTUnit) logExpr
 logBool :: ForeignFunc
 logBool = OneArg (MTBool, MTUnit) logExpr
 
-logExpr :: (Printer p) => p -> IO Expr
+logExpr :: (Printer p) => p -> IO (Expr a)
 logExpr i = do
   T.putStrLn (prettyPrint i)
   pure (MyLiteral (MyUnit))
@@ -89,7 +89,7 @@ eqString =
     (MTString, MTString, MTBool)
     equality
 
-equality :: (Monad m) => Expr -> Expr -> m Expr
+equality :: (Monad m, Eq a) => Expr a -> Expr a -> m (Expr a)
 equality x y = pure $ MyLiteral (MyBool (x == y))
 
 getFFType :: ForeignFunc -> MonoType

@@ -22,7 +22,6 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
-import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 
 ------------
@@ -72,24 +71,24 @@ instance Printer Literal where
 data SumSide = MyLeft | MyRight
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
-data Expr
+data Expr a
   = MyLiteral Literal
-  | MyVar Name
-  | MyLet Name Expr Expr -- binder, expr, body
-  | MyLetPair Name Name Expr Expr -- binderA, binderB, expr, body
-  | MyLetList Name Name Expr Expr -- binderHead, binderHead, expr, body
-  | MyLambda Name Expr -- binder, body
-  | MyApp Expr Expr -- function, argument
-  | MyIf Expr Expr Expr -- expr, thencase, elsecase
-  | MyCase Expr Expr Expr -- sumExpr, leftCase, rightCase
-  | MyPair Expr Expr -- (a,b)
-  | MySum SumSide Expr -- Left a | Right b
-  | MyList (NonEmpty Expr) -- [a]
-  | MyRecord (Map Name Expr) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
-  | MyRecordAccess Expr Name -- a.foo
+  | MyVar a
+  | MyLet a (Expr a) (Expr a) -- binder, expr, body
+  | MyLetPair a a (Expr a) (Expr a) -- binderA, binderB, expr, body
+  | MyLetList a a (Expr a) (Expr a) -- binderHead, binderHead, expr, body
+  | MyLambda a (Expr a) -- binder, body
+  | MyApp (Expr a) (Expr a) -- function, argument
+  | MyIf (Expr a) (Expr a) (Expr a) -- expr, thencase, elsecase
+  | MyCase (Expr a) (Expr a) (Expr a) -- sumExpr, leftCase, rightCase
+  | MyPair (Expr a) (Expr a) -- (a,b)
+  | MySum SumSide (Expr a) -- Left a | Right b
+  | MyList (NonEmpty (Expr a)) -- [a]
+  | MyRecord (Map a (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
+  | MyRecordAccess (Expr a) a -- a.foo
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
-instance Printer Expr where
+instance (Printer a) => Printer (Expr a) where
   prettyPrint (MyLiteral l) = prettyPrint l
   prettyPrint (MyVar var) = prettyPrint var
   prettyPrint (MyLet var expr1 expr2) =
@@ -174,7 +173,7 @@ inParens :: (Printer a) => a -> Text
 inParens a = "(" <> prettyPrint a <> ")"
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubExpr :: Expr -> Text
+printSubExpr :: (Printer a) => Expr a -> Text
 printSubExpr expr = case expr of
   all'@(MyLet _ _ _) -> inParens all'
   all'@(MyLambda _ _) -> inParens all'

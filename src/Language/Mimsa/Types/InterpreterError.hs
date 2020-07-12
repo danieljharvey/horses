@@ -14,13 +14,13 @@ data InterpreterError
   = UnknownInterpreterError
   | CouldNotFindVar Scope Name
   | CouldNotFindBuiltIn Scope Name
-  | CannotDestructureAsPair Expr
-  | CannotDestructureAsSum Expr
-  | CannotDestructureAsRecord Expr Name
-  | CannotDestructureAsList Expr
-  | CannotApplyToNonFunction Expr
-  | CannotFindMemberInRecord (Map Name Expr) Name
-  | PredicateForIfMustBeABoolean Expr
+  | CannotDestructureAsPair (Expr Name)
+  | CannotDestructureAsSum (Expr Name)
+  | CannotDestructureAsRecord (Expr Name) Name
+  | CannotDestructureAsList (Expr Name)
+  | CannotApplyToNonFunction (Expr Name)
+  | CannotFindMemberInRecord (Map Name (Expr Name)) Name
+  | PredicateForIfMustBeABoolean (Expr Name)
   deriving (Eq, Ord, Show)
 
 instance Printer InterpreterError where

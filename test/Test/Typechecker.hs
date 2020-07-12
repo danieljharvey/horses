@@ -16,7 +16,7 @@ import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck.Instances ()
 
-exprs :: [(Expr, Either TypeError MonoType)]
+exprs :: [(Expr Name, Either TypeError MonoType)]
 exprs =
   [ (int 1, Right MTInt),
     (bool True, Right MTBool),
@@ -194,7 +194,7 @@ exprs =
     -- combining multiple facts about an unknown record is for later
   ]
 
-identity :: Expr
+identity :: Expr Name
 identity = (MyLambda (mkName "x") (MyVar (mkName "x")))
 
 spec :: Spec

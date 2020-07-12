@@ -15,7 +15,7 @@ import Test.Helpers
 import Test.Hspec
 import Test.StoreData
 
-eval :: StoreEnv -> Text -> IO (Either Error (MonoType, Expr))
+eval :: StoreEnv -> Text -> IO (Either Error (MonoType, Expr Name))
 eval env input =
   case evaluateText env input of
     Right (mt, expr', scope') -> do

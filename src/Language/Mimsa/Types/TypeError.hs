@@ -6,17 +6,17 @@ module Language.Mimsa.Types.TypeError
   )
 where
 
-import           Data.Map                         (Map)
-import qualified Data.Map                         as M
-import           Data.Set                         (Set)
-import qualified Data.Set                         as S
-import           Data.Text                        (Text)
-import qualified Data.Text                        as T
-import           Language.Mimsa.Types.AST
-import           Language.Mimsa.Types.MonoType
-import           Language.Mimsa.Types.Name
-import           Language.Mimsa.Types.Printer
-import           Language.Mimsa.Types.Typechecker
+import Data.Map (Map)
+import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
+import Data.Text (Text)
+import qualified Data.Text as T
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.MonoType
+import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Printer
+import Language.Mimsa.Types.Typechecker
 
 newtype SwappedName = SwappedName Name
   deriving (Eq, Ord, Show)
@@ -37,7 +37,7 @@ data TypeError
   | CaseMatchExpectedSum MonoType
   | CaseMatchExpectedPair MonoType
   | CaseMatchExpectedList MonoType
-  | CaseMatchExpectedLambda Expr Expr
+  | CaseMatchExpectedLambda (Expr Name) (Expr Name)
   deriving (Eq, Ord, Show)
 
 showKeys :: Map Name a -> Text

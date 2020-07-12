@@ -6,16 +6,16 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types
 
-bool :: Bool -> Expr
+bool :: Bool -> Expr a
 bool a = MyLiteral (MyBool a)
 
-int :: Int -> Expr
+int :: Int -> Expr a
 int a = MyLiteral (MyInt a)
 
-str :: StringType -> Expr
+str :: StringType -> Expr a
 str a = MyLiteral (MyString a)
 
-str' :: Text -> Expr
+str' :: Text -> Expr a
 str' = str . StringType
 
 --

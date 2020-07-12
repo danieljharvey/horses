@@ -6,9 +6,9 @@ import Language.Mimsa.Types
 
 data ReplAction
   = Help
-  | Info Expr
-  | Evaluate Expr
-  | Tree Expr
-  | Bind Name Expr
+  | Info (Expr Name)
+  | Evaluate (Expr Name)
+  | Tree (Expr Name)
+  | Bind Name (Expr Name)
   | ListBindings
   | Watch

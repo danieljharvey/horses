@@ -16,7 +16,7 @@ import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Types
 
-interpret :: Scope -> Expr -> IO (Either InterpreterError Expr)
+interpret :: Scope -> (Expr Name) -> IO (Either InterpreterError (Expr Name))
 interpret scope' expr = do
   result <- either'
   pure (fmap fst result)
@@ -29,7 +29,7 @@ interpret scope' expr = do
 
 type App = StateT Scope (ExceptT InterpreterError IO)
 
-useVarFromScope :: Name -> App Expr
+useVarFromScope :: Name -> App (Expr Name)
 useVarFromScope name = do
   found <- gets (M.lookup name . getScope)
   case found of
@@ -56,7 +56,7 @@ unwrap (Name n) = Name <$> T.stripSuffix "__unwrapped" n
 
 -- return lambda to new function, with __unwrapped in the name
 -- if Name ends in __unwrapped then run it else return new function...
-useVarFromBuiltIn :: Name -> App Expr
+useVarFromBuiltIn :: Name -> App (Expr Name)
 useVarFromBuiltIn name =
   case unwrap name of
     Nothing -> case getLibraryFunction name of
@@ -70,7 +70,7 @@ useVarFromBuiltIn name =
         scope' <- get
         throwError $ CouldNotFindBuiltIn scope' name
 
-runBuiltIn :: Name -> ForeignFunc -> App Expr
+runBuiltIn :: Name -> ForeignFunc -> App (Expr Name)
 runBuiltIn _ (NoArgs _ io) = liftIO io
 runBuiltIn name (OneArg _ io) = do
   expr1 <- useVarFromScope (wrappedVarName name 1)
@@ -80,7 +80,7 @@ runBuiltIn name (TwoArgs _ io) = do
   expr2 <- useVarFromScope (wrappedVarName name 2)
   liftIO (io expr1 expr2)
 
-unwrapBuiltIn :: Name -> ForeignFunc -> App Expr
+unwrapBuiltIn :: Name -> ForeignFunc -> App (Expr Name)
 unwrapBuiltIn name (NoArgs t' io) = runBuiltIn name (NoArgs t' io)
 unwrapBuiltIn name (OneArg _ _) = do
   let wrapped = wrappedName name -- rename our foreign func
@@ -100,7 +100,7 @@ unwrapBuiltIn name (TwoArgs _ _) = do
     )
 
 -- get new var
-newLambdaCopy :: Name -> Expr -> App (Name, Expr)
+newLambdaCopy :: Name -> (Expr Name) -> App (Name, (Expr Name))
 newLambdaCopy name expr = do
   newName' <- newName
   newExpr <- swapName name newName' expr
@@ -113,7 +113,7 @@ newName = do
   makeName <$> gets (M.size . getScope)
 
 -- step through Expr, replacing vars with numbered variables
-swapName :: Name -> Name -> Expr -> App Expr
+swapName :: Name -> Name -> Expr Name -> App (Expr Name)
 swapName from to (MyVar from') =
   pure $
     if from == from'
@@ -162,7 +162,7 @@ swapName from to (MyRecord map') = do
   pure (MyRecord map2)
 swapName _ _ (MyLiteral a) = pure (MyLiteral a)
 
-interpretWithScope :: Expr -> App Expr
+interpretWithScope :: (Expr Name) -> App (Expr Name)
 interpretWithScope (MyLiteral a) = pure (MyLiteral a)
 interpretWithScope (MyPair a b) = do
   exprA <- interpretWithScope a

@@ -53,7 +53,7 @@ instance Arbitrary StringType where
 instance Arbitrary SumSide where
   arbitrary = genericArbitrary
 
-instance Arbitrary Expr where
+instance (Arbitrary a, Ord a) => Arbitrary (Expr a) where
   arbitrary = genericArbitrary
 
 instance Arbitrary Literal where
@@ -62,7 +62,7 @@ instance Arbitrary Literal where
 instance Arbitrary FuncName where
   arbitrary = genericArbitrary
 
-newtype WellTypedExpr = WellTypedExpr Expr
+newtype WellTypedExpr = WellTypedExpr (Expr Name)
   deriving (Show)
 
 instance Arbitrary WellTypedExpr where
