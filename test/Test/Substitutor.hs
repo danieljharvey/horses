@@ -8,12 +8,8 @@ where
 
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Store.Subs2
-  ( Scope (..),
-    Variable (..),
-    substitute,
-  )
-import Language.Mimsa.Types hiding (Scope)
+import Language.Mimsa.Store.Substitutor (substitute)
+import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 import Test.StoreData

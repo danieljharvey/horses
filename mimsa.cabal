@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 46cdd49b3091e0d93475c92183eb0915fed78c9edf212f3b8ab28c99e1dffc67
+-- hash: 37fad2bddabbc1dbcd72053e5da013e90b1bd5e91e76094971ca9bf1939ef160
 
 name:           mimsa
 version:        0.1.0.0
@@ -39,7 +39,6 @@ library
       Language.Mimsa.Store.DepGraph
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
-      Language.Mimsa.Store.Subs2
       Language.Mimsa.Store.Substitutor
       Language.Mimsa.Syntax
       Language.Mimsa.Syntax.Language
@@ -58,9 +57,11 @@ library
       Language.Mimsa.Types.Printer
       Language.Mimsa.Types.ResolverError
       Language.Mimsa.Types.Scheme
+      Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
       Language.Mimsa.Types.Typechecker
       Language.Mimsa.Types.TypeError
+      Language.Mimsa.Types.Variable
   other-modules:
       Paths_mimsa
   hs-source-dirs:

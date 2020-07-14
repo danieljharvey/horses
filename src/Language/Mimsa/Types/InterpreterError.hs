@@ -8,7 +8,7 @@ import qualified Data.Text as T
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
-import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Scope
 
 data InterpreterError
   = UnknownInterpreterError

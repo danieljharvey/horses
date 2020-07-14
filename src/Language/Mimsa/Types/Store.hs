@@ -59,13 +59,6 @@ newtype Bindings = Bindings {getBindings :: Map Name ExprHash}
 instance Printer Bindings where
   prettyPrint (Bindings b) = "{ " <> T.intercalate ", " (prettyPrint <$> M.keys b) <> " }"
 
--- dependencies resolved into actual expressions
-newtype Scope = Scope {getScope :: Map Name (Expr Name)}
-  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
-
-instance Printer Scope where
-  prettyPrint (Scope s) = "{ " <> T.intercalate ", " (prettyPrint <$> M.elems s) <> " }"
-
 -- the names that get changed in substitution
 type Swaps = Map Name Name
 

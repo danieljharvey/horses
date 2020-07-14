@@ -1,19 +1,16 @@
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Store.Substitutor
-  ( mapVar,
-    substitute,
-  )
-where
+module Language.Mimsa.Store.Substitutor where
 
 import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
-import Data.Bifunctor (second)
+import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Language.Mimsa.Library (isLibraryName)
-import Language.Mimsa.Types
+import Language.Mimsa.Types hiding (Scope, Swaps)
 
 -- this turns StoreExpressions back into expressions by substituting their
 -- variables for the deps passed in
@@ -23,49 +20,76 @@ import Language.Mimsa.Types
 --
 -- we'll also store what our substitutions were for errors sake
 
-type App = State (Swaps, Scope)
+data SubsState
+  = SubsState
+      { subsSwaps :: Swaps,
+        subsScope :: Scope,
+        subsCounter :: Int
+      }
 
-substitute :: Store -> StoreExpression -> (Swaps, Expr Name, Scope)
+type App = State SubsState
+
+-- dependencies resolved into actual expressions
+newtype Scope = Scope (Map Variable (Expr Variable))
+  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
+
+instance Printer Scope where
+  prettyPrint (Scope s) = "{ " <> T.intercalate ", " (prettyPrint <$> M.elems s) <> " }"
+
+-- the names that get changed in substitution
+type Swaps = Map Variable Name
+
+substitute :: Store -> StoreExpression -> (Swaps, Expr Variable, Scope)
 substitute store' storeExpr =
-  let (expr', (swaps', scope')) = runSubApp store' storeExpr
+  let startingState = SubsState mempty mempty 0
+      (expr', SubsState swaps' scope' _) =
+        runState
+          (doSubstitutions store' storeExpr)
+          startingState
    in (swaps', expr', scope')
 
-runSubApp :: Store -> StoreExpression -> (Expr Name, (Swaps, Scope))
-runSubApp store' storeExpr =
-  runState (doSubstitutions store' storeExpr) (mempty, mempty)
-
 -- get the list of deps for this expression, turn from hashes to StoreExprs
-doSubstitutions :: Store -> StoreExpression -> App (Expr Name)
+doSubstitutions :: Store -> StoreExpression -> App (Expr Variable)
 doSubstitutions store' (StoreExpression bindings' expr) = do
-  let scope = createScope store' bindings'
-  modify (second $ (<>) scope)
+  newScopes <- traverse (substituteWithKey store') (getExprPairs store' bindings')
+  addScope $ mconcat newScopes
   newExpr <- mapVar [] expr
-  _ <-
-    traverse
-      ( \(key, storeExpr') -> do
-          expr' <- doSubstitutions store' storeExpr'
-          newKey <- substituteKey key <$> gets (fst)
-          modify (second $ (<>) (Scope (M.singleton newKey expr')))
-          pure ()
-      )
-      (getExprPairs store' bindings')
   pure newExpr
 
--- give me the original key, i'll give you the new one
-substituteKey :: Name -> Swaps -> Name
-substituteKey name swaps = fromMaybe (Name "notfound") found
-  where
-    matches = M.toList $ M.filter (\v -> v == name) swaps
-    found = case matches of
-      [] -> Nothing
-      ((k, _) : _) -> Just k
+substituteWithKey :: Store -> (Name, StoreExpression) -> App Scope
+substituteWithKey store' (key, storeExpr') = do
+  expr' <- doSubstitutions store' storeExpr'
+  maybeKey <- scopeExists expr'
+  key' <- case maybeKey of
+    Just existingKey -> pure existingKey
+    Nothing -> getNextVar [] key
+  pure $ Scope (M.singleton key' expr')
 
--- get everything our nice function wants and plop it in a pile
-createScope :: Store -> Bindings -> Scope
-createScope store' bindings' = Scope . M.fromList $ pairs'
-  where
-    pairs = getExprPairs store' bindings'
-    pairs' = (\(a, (StoreExpression _ b)) -> (a, b)) <$> pairs
+-- if the expression we're already saving is in the scope
+-- that's the name we want to use
+scopeExists :: Expr Variable -> App (Maybe Variable)
+scopeExists var = do
+  (Scope scope') <- gets subsScope
+  pure (mapKeyFind ((==) var) scope')
+
+addScope :: Scope -> App ()
+addScope scope' =
+  modify (\s -> s {subsScope = (subsScope s) <> scope'})
+
+addSwap :: Name -> Variable -> App ()
+addSwap old new =
+  modify (\s -> s {subsSwaps = (subsSwaps s) <> (M.singleton new old)})
+
+mapKeyFind :: (a -> Bool) -> Map k a -> Maybe k
+mapKeyFind pred' map' = case M.toList (M.filter pred' map') of
+  [] -> Nothing
+  ((k, _) : _) -> pure k
+
+-- if we've already made up a name for this var, return that
+findInSwaps :: Name -> App (Maybe Variable)
+findInSwaps name = do
+  swaps' <- gets subsSwaps
+  pure (mapKeyFind ((==) name) swaps')
 
 getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -74,67 +98,58 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
     Just item -> pure [(name, item)]
     _ -> pure []
 
-findInScope :: Name -> App (Maybe (Expr Name))
-findInScope name = do
-  (swaps', Scope scope') <- get
-  case filter (\(_, v) -> v == name) (M.toList swaps') of
-    [] -> pure Nothing
-    ((k, _) : _) -> do
-      pure $ M.lookup k scope'
-
 -- get a new name for a var, changing it's reference in Scope and adding it to
 -- Swaps list
 -- we don't do this for built-ins (ie, randomInt) or variables introduced by
 -- lambdas
-getNextVar :: [Name] -> Name -> App Name
+getNextVar :: [Name] -> Name -> App Variable
 getNextVar protected name =
-  if elem name protected || isLibraryName (name)
-    then pure name
-    else do
-      let makeName :: Int -> Name
-          makeName i = mkName $ "var" <> T.pack (show i)
-      nextName <- makeName <$> gets (M.size . fst)
-      (swaps', (Scope scope')) <- get
-      found <- findInScope name
-      let newScope = case found of
-            (Just expr') ->
-              Scope $ M.insert nextName expr' scope'
-            Nothing ->
-              Scope $
-                M.mapKeys
-                  ( \key ->
-                      if key == name
-                        then nextName
-                        else key
-                  )
-                  scope'
-      let newSwaps = M.insert nextName name swaps'
-      put (newSwaps, newScope)
-      pure nextName
+  if elem name protected
+    then pure (NamedVar name)
+    else
+      if isLibraryName (name)
+        then pure (BuiltIn name)
+        else do
+          existing' <- findInSwaps name
+          case existing' of
+            Just existingName -> pure existingName
+            Nothing -> do
+              nextName <- NumberedVar <$> nextNum
+              addSwap name nextName
+              pure nextName
+
+nextNum :: App Int
+nextNum = do
+  p <- gets subsCounter
+  modify (\s -> s {subsCounter = p + 1})
+  pure p
+
+nameToVar :: (Monad m) => Name -> m Variable
+nameToVar = pure . NamedVar
 
 -- step through Expr, replacing vars with numbered variables
-mapVar :: [Name] -> (Expr Name) -> App (Expr Name)
+mapVar :: [Name] -> (Expr Name) -> App (Expr Variable)
 mapVar p (MyVar a) =
   MyVar <$> getNextVar p a
 mapVar p (MyLet name a b) =
-  MyLet <$> pure name <*> (mapVar p a)
+  MyLet <$> nameToVar name <*> (mapVar p a)
     <*> (mapVar (p <> [name]) b)
 mapVar p (MyLambda name a) =
-  MyLambda <$> pure name <*> (mapVar (p <> [name]) a)
+  MyLambda <$> nameToVar name <*> (mapVar (p <> [name]) a)
 mapVar p (MyRecordAccess a name) =
   MyRecordAccess
-    <$> (mapVar p a) <*> pure name
+    <$> (mapVar p a) <*> nameToVar name
 mapVar p (MyApp a b) = MyApp <$> (mapVar p a) <*> (mapVar p b)
 mapVar p (MyIf a b c) = MyIf <$> (mapVar p a) <*> (mapVar p b) <*> (mapVar p c)
 mapVar p (MyPair a b) = MyPair <$> (mapVar p a) <*> (mapVar p b)
 mapVar p (MyLetPair nameA nameB a b) =
   MyLetPair
-    <$> pure nameA <*> pure nameB
+    <$> nameToVar nameA <*> nameToVar nameB
       <*> (mapVar (p <> [nameA, nameB]) a)
       <*> (mapVar (p <> [nameA, nameB]) b)
 mapVar p (MyLetList nameHead nameRest a b) =
-  MyLetList <$> pure nameHead
-    <*> pure nameRest
+  MyLetList <$> nameToVar nameHead
+    <*> nameToVar nameRest
     <*> (mapVar (p <> [nameHead, nameRest]) a)
     <*> (mapVar (p <> [nameHead, nameRest]) b)
 mapVar p (MySum side a) = MySum <$> pure side <*> (mapVar p a)
