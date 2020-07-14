@@ -16,7 +16,7 @@ import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Types
 
-interpret :: Scope -> (Expr Name) -> IO (Either InterpreterError (Expr Name))
+interpret :: Scope -> (Expr Variable) -> IO (Either InterpreterError (Expr Variable))
 interpret scope' expr = do
   result <- either'
   pure (fmap fst result)
@@ -29,7 +29,7 @@ interpret scope' expr = do
 
 type App = StateT Scope (ExceptT InterpreterError IO)
 
-useVarFromScope :: Name -> App (Expr Name)
+useVarFromScope :: Variable -> App (Expr Variable)
 useVarFromScope name = do
   found <- gets (M.lookup name . getScope)
   case found of
@@ -43,20 +43,22 @@ useVarFromScope name = do
       scope' <- get
       throwError $ CouldNotFindVar scope' name
 
-wrappedName :: Name -> Name
-wrappedName (Name n) = Name (n <> "__unwrapped")
+wrappedName :: Variable -> Variable
+wrappedName (NamedVar (Name n)) = NamedVar (Name (n <> "__unwrapped"))
+wrappedName a = a
 
-wrappedVarName :: Name -> Int -> Name
-wrappedVarName name i = Name $ wrapped' <> (T.pack $ show i)
+wrappedVarName :: Variable -> Int -> Variable
+wrappedVarName name i = NamedVar $ Name $ wrapped' <> (T.pack $ show i)
   where
-    (Name wrapped') = wrappedName name
+    (NamedVar (Name wrapped')) = wrappedName name
 
-unwrap :: Name -> Maybe Name
-unwrap (Name n) = Name <$> T.stripSuffix "__unwrapped" n
+unwrap :: Variable -> Maybe Variable
+unwrap (NamedVar (Name n)) = NamedVar . Name <$> T.stripSuffix "__unwrapped" n
+unwrap a = Just a
 
 -- return lambda to new function, with __unwrapped in the name
 -- if Name ends in __unwrapped then run it else return new function...
-useVarFromBuiltIn :: Name -> App (Expr Name)
+useVarFromBuiltIn :: Variable -> App (Expr Variable)
 useVarFromBuiltIn name =
   case unwrap name of
     Nothing -> case getLibraryFunction name of
@@ -70,7 +72,7 @@ useVarFromBuiltIn name =
         scope' <- get
         throwError $ CouldNotFindBuiltIn scope' name
 
-runBuiltIn :: Name -> ForeignFunc -> App (Expr Name)
+runBuiltIn :: Variable -> ForeignFunc -> App (Expr Variable)
 runBuiltIn _ (NoArgs _ io) = liftIO io
 runBuiltIn name (OneArg _ io) = do
   expr1 <- useVarFromScope (wrappedVarName name 1)
@@ -80,7 +82,7 @@ runBuiltIn name (TwoArgs _ io) = do
   expr2 <- useVarFromScope (wrappedVarName name 2)
   liftIO (io expr1 expr2)
 
-unwrapBuiltIn :: Name -> ForeignFunc -> App (Expr Name)
+unwrapBuiltIn :: Variable -> ForeignFunc -> App (Expr Variable)
 unwrapBuiltIn name (NoArgs t' io) = runBuiltIn name (NoArgs t' io)
 unwrapBuiltIn name (OneArg _ _) = do
   let wrapped = wrappedName name -- rename our foreign func
@@ -100,20 +102,18 @@ unwrapBuiltIn name (TwoArgs _ _) = do
     )
 
 -- get new var
-newLambdaCopy :: Name -> (Expr Name) -> App (Name, (Expr Name))
+newLambdaCopy :: Variable -> (Expr Variable) -> App (Variable, (Expr Variable))
 newLambdaCopy name expr = do
   newName' <- newName
   newExpr <- swapName name newName' expr
   pure (newName', newExpr)
 
-newName :: App Name
-newName = do
-  let makeName :: Int -> Name
-      makeName i = mkName $ "var" <> T.pack (show i)
-  makeName <$> gets (M.size . getScope)
+newName :: App Variable
+newName =
+  NumberedVar <$> gets (M.size . getScope)
 
 -- step through Expr, replacing vars with numbered variables
-swapName :: Name -> Name -> Expr Name -> App (Expr Name)
+swapName :: Variable -> Variable -> Expr Variable -> App (Expr Variable)
 swapName from to (MyVar from') =
   pure $
     if from == from'
@@ -162,7 +162,7 @@ swapName from to (MyRecord map') = do
   pure (MyRecord map2)
 swapName _ _ (MyLiteral a) = pure (MyLiteral a)
 
-interpretWithScope :: (Expr Name) -> App (Expr Name)
+interpretWithScope :: (Expr Variable) -> App (Expr Variable)
 interpretWithScope (MyLiteral a) = pure (MyLiteral a)
 interpretWithScope (MyPair a b) = do
   exprA <- interpretWithScope a

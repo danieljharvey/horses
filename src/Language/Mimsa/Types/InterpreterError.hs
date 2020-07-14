@@ -9,18 +9,19 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Scope
+import Language.Mimsa.Types.Variable
 
 data InterpreterError
   = UnknownInterpreterError
-  | CouldNotFindVar Scope Name
-  | CouldNotFindBuiltIn Scope Name
-  | CannotDestructureAsPair (Expr Name)
-  | CannotDestructureAsSum (Expr Name)
-  | CannotDestructureAsRecord (Expr Name) Name
-  | CannotDestructureAsList (Expr Name)
-  | CannotApplyToNonFunction (Expr Name)
-  | CannotFindMemberInRecord (Map Name (Expr Name)) Name
-  | PredicateForIfMustBeABoolean (Expr Name)
+  | CouldNotFindVar Scope Variable
+  | CouldNotFindBuiltIn Scope Variable
+  | CannotDestructureAsPair (Expr Variable)
+  | CannotDestructureAsSum (Expr Variable)
+  | CannotDestructureAsRecord (Expr Variable) Name
+  | CannotDestructureAsList (Expr Variable)
+  | CannotApplyToNonFunction (Expr Variable)
+  | CannotFindMemberInRecord (Map Name (Expr Variable)) Name
+  | PredicateForIfMustBeABoolean (Expr Variable)
   deriving (Eq, Ord, Show)
 
 instance Printer InterpreterError where

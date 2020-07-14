@@ -2,9 +2,9 @@ module Language.Mimsa.Types.ForeignFunc where
 
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Variable
 
-type FFExpr = Expr Name
+type FFExpr = Expr Variable
 
 data ForeignFunc
   = NoArgs MonoType (IO FFExpr)

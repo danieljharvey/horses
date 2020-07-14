@@ -19,6 +19,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.InterpreterError,
     module Language.Mimsa.Types.Variable,
     module Language.Mimsa.Types.Scope,
+    module Language.Mimsa.Types.Swaps,
   )
 where
 
@@ -33,6 +34,7 @@ import Language.Mimsa.Types.ResolverError
 import Language.Mimsa.Types.Scheme
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.TypeError
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Variable

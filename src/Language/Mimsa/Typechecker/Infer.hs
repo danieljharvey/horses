@@ -16,7 +16,6 @@ import Control.Monad.State (get, put, runState)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Library
@@ -24,10 +23,17 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
 
-startInference :: Swaps -> Expr Name -> Either TypeError MonoType
+startInference ::
+  Swaps ->
+  Expr Variable ->
+  Either TypeError MonoType
 startInference swaps expr = snd <$> doInference swaps M.empty expr
 
-doInference :: Swaps -> Environment -> Expr Name -> Either TypeError (Substitutions, MonoType)
+doInference ::
+  Swaps ->
+  Environment ->
+  Expr Variable ->
+  Either TypeError (Substitutions, MonoType)
 doInference swaps env expr =
   fst either'
   where
@@ -49,9 +55,6 @@ applySubstScheme (Substitutions subst) (Scheme vars t) =
 applySubstCtx :: Substitutions -> Environment -> Environment
 applySubstCtx subst ctx = M.map (applySubstScheme subst) ctx
 
-findSwappedName :: Name -> TcMonad SwappedName
-findSwappedName name = SwappedName <$> fromMaybe name <$> asks (M.lookup name)
-
 --------------
 
 inferLiteral :: Literal -> TcMonad (Substitutions, MonoType)
@@ -60,25 +63,27 @@ inferLiteral (MyBool _) = pure (mempty, MTBool)
 inferLiteral (MyString _) = pure (mempty, MTString)
 inferLiteral (MyUnit) = pure (mempty, MTUnit)
 
-inferBuiltIn :: Name -> TcMonad (Substitutions, MonoType)
+inferBuiltIn :: Variable -> TcMonad (Substitutions, MonoType)
 inferBuiltIn name = case getLibraryFunction name of
   Just ff -> pure (mempty, getFFType ff)
   _ -> do
-    actualName <- findSwappedName name
-    throwError $ MissingBuiltIn actualName
+    throwError $ MissingBuiltIn name
 
-inferVarFromScope :: Environment -> Name -> TcMonad (Substitutions, MonoType)
+inferVarFromScope :: Environment -> Variable -> TcMonad (Substitutions, MonoType)
 inferVarFromScope env name =
   case M.lookup name env of
     Just scheme -> do
       ty <- instantiate scheme
       pure (mempty, ty)
     _ -> do
-      actualName <- findSwappedName name
-      actualEnv <- traverse findSwappedName (M.keys env)
-      throwError $ VariableNotInEnv actualName (S.fromList actualEnv)
+      throwError $ VariableNotInEnv name (S.fromList (M.keys env))
 
-inferFuncReturn :: Environment -> Name -> Expr Name -> MonoType -> TcMonad (Substitutions, MonoType)
+inferFuncReturn ::
+  Environment ->
+  Variable ->
+  Expr Variable ->
+  MonoType ->
+  TcMonad (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
   let scheme = Scheme [] tyArg
       newEnv = M.insert binder scheme env
@@ -89,7 +94,7 @@ inferFuncReturn env binder function tyArg = do
       subs = s3 <> s2 <> s1
   pure (subs, applySubst subs tyFun)
 
-inferList :: Environment -> NonEmpty (Expr Name) -> TcMonad (Substitutions, MonoType)
+inferList :: Environment -> NonEmpty (Expr Variable) -> TcMonad (Substitutions, MonoType)
 inferList env (a :| as) = do
   (s1, tyA) <- infer env a
   let foldFn = \as' a' -> do
@@ -114,7 +119,7 @@ splitRecordTypes map' = (subs, MTRecord types)
         ((fst . snd) <$> M.toList map')
     types = snd <$> map'
 
-infer :: Environment -> (Expr Name) -> TcMonad (Substitutions, MonoType)
+infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
 infer env (MyVar name) =
   (inferVarFromScope env name)
@@ -141,9 +146,7 @@ infer env (MyRecordAccess (MyRecord items') name) = do
     Just item -> do
       infer env item
     Nothing -> do
-      actualName <- findSwappedName name
-      itemsActual <- traverse findSwappedName (M.keys items')
-      throwError $ MissingRecordMember actualName (S.fromList itemsActual)
+      throwError $ MissingRecordMember name (S.fromList (M.keys items'))
 infer env (MyRecordAccess a name) = do
   (s1, tyItems) <- infer env a
   tyResult <- case tyItems of
@@ -151,8 +154,7 @@ infer env (MyRecordAccess a name) = do
       case M.lookup name bits of
         Just mt -> pure mt
         _ -> do
-          actualName <- findSwappedName name
-          throwError $ MissingRecordTypeMember actualName bits
+          throwError $ MissingRecordTypeMember name bits
     (MTVar _) -> getUnknown
     _ -> throwError $ CannotMatchRecord env tyItems
   s2 <-

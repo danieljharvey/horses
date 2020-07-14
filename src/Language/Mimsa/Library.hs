@@ -33,9 +33,10 @@ isLibraryName :: Name -> Bool
 isLibraryName name =
   M.member (coerce name) (getLibrary libraryFunctions)
 
-getLibraryFunction :: Name -> Maybe ForeignFunc
-getLibraryFunction name =
+getLibraryFunction :: Variable -> Maybe ForeignFunc
+getLibraryFunction (BuiltIn name) =
   M.lookup (coerce name) (getLibrary libraryFunctions)
+getLibraryFunction _ = Nothing
 
 logInt :: ForeignFunc
 logInt = OneArg (MTInt, MTUnit) logExpr

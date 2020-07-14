@@ -2,7 +2,6 @@
 
 module Language.Mimsa.Types.TypeError
   ( TypeError (..),
-    SwappedName (..),
   )
 where
 
@@ -17,30 +16,24 @@ import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Typechecker
-
-newtype SwappedName = SwappedName Name
-  deriving (Eq, Ord, Show)
-
-instance Printer SwappedName where
-  prettyPrint (SwappedName a) =
-    "'" <> prettyPrint a <> "'"
+import Language.Mimsa.Types.Variable
 
 data TypeError
   = UnknownTypeError
-  | FailsOccursCheck SwappedName
+  | FailsOccursCheck Name
   | UnificationError MonoType MonoType
-  | VariableNotInEnv SwappedName (Set SwappedName)
-  | MissingRecordMember SwappedName (Set SwappedName)
-  | MissingRecordTypeMember SwappedName (Map Name MonoType)
-  | MissingBuiltIn SwappedName
+  | VariableNotInEnv Variable (Set Variable)
+  | MissingRecordMember Name (Set Name)
+  | MissingRecordTypeMember Name (Map Name MonoType)
+  | MissingBuiltIn Variable
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedSum MonoType
   | CaseMatchExpectedPair MonoType
   | CaseMatchExpectedList MonoType
-  | CaseMatchExpectedLambda (Expr Name) (Expr Name)
+  | CaseMatchExpectedLambda (Expr Variable) (Expr Variable)
   deriving (Eq, Ord, Show)
 
-showKeys :: Map Name a -> Text
+showKeys :: (Printer p) => Map p a -> Text
 showKeys record = T.intercalate ", " (prettyPrint <$> M.keys record)
 
 showSet :: (Printer a) => Set a -> Text

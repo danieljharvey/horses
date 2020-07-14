@@ -6,12 +6,12 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Scheme
+import Language.Mimsa.Types.Variable
 
-type Environment = Map Name Scheme
+type Environment = Map Variable Scheme
 
-newtype Substitutions = Substitutions {getSubstitutions :: Map Name MonoType}
+newtype Substitutions = Substitutions {getSubstitutions :: Map Variable MonoType}
   deriving (Eq, Ord, Show)
 
 instance Semigroup Substitutions where
@@ -24,7 +24,7 @@ instance Monoid Substitutions where
 applySubst :: Substitutions -> MonoType -> MonoType
 applySubst subst ty = case ty of
   MTVar i ->
-    fromMaybe (MTVar i) (M.lookup i (getSubstitutions subst))
+    fromMaybe (MTVar i) (M.lookup (NamedVar i) (getSubstitutions subst))
   MTFunction arg res ->
     MTFunction (applySubst subst arg) (applySubst subst res)
   MTPair a b ->

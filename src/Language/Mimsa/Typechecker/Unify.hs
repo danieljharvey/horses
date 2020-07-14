@@ -9,18 +9,13 @@ module Language.Mimsa.Typechecker.Unify
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State (get, put)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types
-
-findSwappedName :: Name -> TcMonad SwappedName
-findSwappedName name = SwappedName <$> fromMaybe name <$> asks (M.lookup name)
 
 freeTypeVars :: MonoType -> S.Set Name
 freeTypeVars ty = case ty of
@@ -43,10 +38,9 @@ varBind :: Name -> MonoType -> TcMonad Substitutions
 varBind var ty
   | ty == MTVar var = pure mempty
   | S.member var (freeTypeVars ty) = do
-    actualName <- findSwappedName var
     throwError $
-      FailsOccursCheck actualName
-  | otherwise = pure $ Substitutions (M.singleton var ty)
+      FailsOccursCheck var
+  | otherwise = pure $ Substitutions (M.singleton (NamedVar var) ty)
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify a b | a == b = pure mempty

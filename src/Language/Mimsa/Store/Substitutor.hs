@@ -8,9 +8,8 @@ import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
 import Data.Map (Map)
 import qualified Data.Map as M
-import qualified Data.Text as T
 import Language.Mimsa.Library (isLibraryName)
-import Language.Mimsa.Types hiding (Scope, Swaps)
+import Language.Mimsa.Types
 
 -- this turns StoreExpressions back into expressions by substituting their
 -- variables for the deps passed in
@@ -28,16 +27,6 @@ data SubsState
       }
 
 type App = State SubsState
-
--- dependencies resolved into actual expressions
-newtype Scope = Scope (Map Variable (Expr Variable))
-  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
-
-instance Printer Scope where
-  prettyPrint (Scope s) = "{ " <> T.intercalate ", " (prettyPrint <$> M.elems s) <> " }"
-
--- the names that get changed in substitution
-type Swaps = Map Variable Name
 
 substitute :: Store -> StoreExpression -> (Swaps, Expr Variable, Scope)
 substitute store' storeExpr =
@@ -138,7 +127,7 @@ mapVar p (MyLambda name a) =
   MyLambda <$> nameToVar name <*> (mapVar (p <> [name]) a)
 mapVar p (MyRecordAccess a name) =
   MyRecordAccess
-    <$> (mapVar p a) <*> nameToVar name
+    <$> (mapVar p a) <*> pure name
 mapVar p (MyApp a b) = MyApp <$> (mapVar p a) <*> (mapVar p b)
 mapVar p (MyIf a b c) = MyIf <$> (mapVar p a) <*> (mapVar p b) <*> (mapVar p c)
 mapVar p (MyPair a b) = MyPair <$> (mapVar p a) <*> (mapVar p b)

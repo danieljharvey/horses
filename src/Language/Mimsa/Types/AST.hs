@@ -86,7 +86,7 @@ data Expr a
   | MySum SumSide (Expr a) -- Left a | Right b
   | MyList (NonEmpty (Expr a)) -- [a]
   | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
-  | MyRecordAccess (Expr a) a -- a.foo
+  | MyRecordAccess (Expr a) Name -- a.foo
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Printer a) => Printer (Expr a) where

@@ -12,6 +12,8 @@ import qualified Data.Text as T
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 
+-- data TypeVar = TVName Name | TVNumber Int
+
 data MonoType
   = MTInt
   | MTString
