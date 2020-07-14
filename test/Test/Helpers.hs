@@ -3,7 +3,6 @@
 module Test.Helpers where
 
 import Data.Text (Text)
-import qualified Data.Text as T
 import Language.Mimsa.Types
 
 bool :: Bool -> Expr a
@@ -20,7 +19,7 @@ str' = str . StringType
 
 --
 unknown :: Int -> MonoType
-unknown i = MTVar (mkName $ "U" <> (T.pack (show i)))
+unknown = MTVar . TVNumber
 
 ---
 
@@ -29,4 +28,8 @@ named = NamedVar . Name
 
 builtIn :: Text -> Variable
 builtIn = BuiltIn . Name
+
 ---
+
+tvName :: Text -> TypeVar
+tvName = TVName . Name

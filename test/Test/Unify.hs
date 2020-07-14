@@ -27,18 +27,18 @@ spec = do
     it "Two same things teach us nothing" $ do
       runUnifier (MTUnit, MTUnit) `shouldBe` Right mempty
     it "Combines a known with an unknown" $ do
-      runUnifier (MTVar (mkName "a"), MTInt)
-        `shouldBe` Right (Substitutions $ M.singleton (named "a") MTInt)
+      runUnifier (MTVar (tvName "a"), MTInt)
+        `shouldBe` Right (Substitutions $ M.singleton (tvName "a") MTInt)
     it "Combines two half pairs" $ do
       runUnifier
-        ( MTPair (MTVar (mkName "a")) MTInt,
-          MTPair MTBool (MTVar (mkName "b"))
+        ( MTPair (MTVar (tvName "a")) MTInt,
+          MTPair MTBool (MTVar (tvName "b"))
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (named "a", MTBool),
-                  (named "b", MTInt)
+                [ (tvName "a", MTBool),
+                  (tvName "b", MTInt)
                 ]
           )
     it "Combines two half records" $ do
@@ -46,19 +46,19 @@ spec = do
         ( MTRecord $
             M.fromList
               [ (mkName "one", MTInt),
-                (mkName "two", MTVar (mkName "a"))
+                (mkName "two", MTVar (tvName "a"))
               ],
           MTRecord $
             M.fromList
-              [ (mkName "one", MTVar (mkName "b")),
+              [ (mkName "one", MTVar (tvName "b")),
                 (mkName "two", MTBool)
               ]
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (named "a", MTBool),
-                  (named "b", MTInt)
+                [ (tvName "a", MTBool),
+                  (tvName "b", MTInt)
                 ]
           )
     it "Combines two records" $ do
@@ -75,7 +75,7 @@ spec = do
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (named "U1", MTInt),
-                  (named "U2", MTBool)
+                [ (TVNumber 1, MTInt),
+                  (TVNumber 2, MTBool)
                 ]
           )

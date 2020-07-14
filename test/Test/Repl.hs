@@ -61,7 +61,7 @@ spec = do
         result <- eval stdLib "case (Left 1) of Left (\\l -> Left l) | Right (\\r -> Right r)"
         result
           `shouldBe` Right
-            ( (MTSum MTInt (MTVar (mkName "U1"))),
+            ( (MTSum MTInt (unknown 1)),
               ( MySum MyLeft (int 1)
               )
             )
@@ -70,8 +70,8 @@ spec = do
         result
           `shouldBe` Right
             ( MTFunction
-                (MTSum (MTVar (mkName "U10")) MTInt)
-                (MTSum (MTVar (mkName "U10")) MTBool),
+                (MTSum (unknown 10) MTInt)
+                (MTSum (unknown 10) MTBool),
               ( MyLambda
                   (named "sum")
                   ( MyCase
@@ -133,7 +133,7 @@ spec = do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction (MTVar (mkName "U2")) (MTVar (mkName "U2")),
+            ( MTFunction (unknown 2) (unknown 2),
               MyLambda (named "i") (MyVar (named "i"))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do

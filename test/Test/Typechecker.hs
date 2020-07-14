@@ -74,7 +74,7 @@ exprs =
       Left $ UnificationError MTBool MTInt
     ),
     ( MyLambda (named "x") (MyApp (MyVar (named "x")) (MyVar (named "x"))),
-      Left $ FailsOccursCheck (mkName "U1")
+      Left $ FailsOccursCheck (TVNumber 1)
     ),
     (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
     ( MyLetPair (named "a") (named "b") (MyPair (int 1) (bool True)) (MyVar (named "a")),
@@ -108,7 +108,7 @@ exprs =
         )
         ( MyLambda (named "r") (MySum MyRight (MyVar (named "r")))
         ),
-      Right $ MTSum MTInt (MTVar (mkName "U1"))
+      Right $ MTSum MTInt (unknown 1)
     ),
     ( MyCase
         (MySum MyLeft (int 1))
@@ -187,7 +187,7 @@ exprs =
           )
           ( M.singleton
               (mkName "dog")
-              (MTVar (mkName "U2"))
+              (unknown 2)
           )
     )
     -- combining multiple facts about an unknown record is for later
