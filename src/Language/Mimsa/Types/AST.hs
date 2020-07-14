@@ -22,6 +22,7 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
+import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 
 ------------
@@ -84,7 +85,7 @@ data Expr a
   | MyPair (Expr a) (Expr a) -- (a,b)
   | MySum SumSide (Expr a) -- Left a | Right b
   | MyList (NonEmpty (Expr a)) -- [a]
-  | MyRecord (Map a (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
+  | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
   | MyRecordAccess (Expr a) a -- a.foo
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
