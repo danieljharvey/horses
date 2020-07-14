@@ -24,7 +24,9 @@ instance Monoid Substitutions where
 applySubst :: Substitutions -> MonoType -> MonoType
 applySubst subst ty = case ty of
   MTVar i ->
-    fromMaybe (MTVar i) (M.lookup (NamedVar i) (getSubstitutions subst))
+    fromMaybe
+      (MTVar i)
+      (M.lookup (NamedVar i) (getSubstitutions subst))
   MTFunction arg res ->
     MTFunction (applySubst subst arg) (applySubst subst res)
   MTPair a b ->

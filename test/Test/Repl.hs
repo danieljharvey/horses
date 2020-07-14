@@ -85,7 +85,7 @@ spec = do
                           ( MySum
                               MyRight
                               ( MyApp
-                                  (MyVar (named "var0"))
+                                  (MyVar (NumberedVar 0))
                                   (MyVar (named "r"))
                               )
                           )

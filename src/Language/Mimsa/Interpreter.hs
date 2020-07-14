@@ -12,6 +12,7 @@ import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
+import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Types
@@ -44,16 +45,21 @@ useVarFromScope name = do
       throwError $ CouldNotFindVar scope' name
 
 wrappedName :: Variable -> Variable
-wrappedName (NamedVar (Name n)) = NamedVar (Name (n <> "__unwrapped"))
-wrappedName a = a
+wrappedName = appendToVar "__unwrapped"
+
+appendToVar :: Text -> Variable -> Variable
+appendToVar tx (NamedVar (Name n)) = NamedVar (Name (n <> tx))
+appendToVar tx (BuiltIn (Name n)) = BuiltIn (Name (n <> tx))
+appendToVar _ a = a
 
 wrappedVarName :: Variable -> Int -> Variable
-wrappedVarName name i = NamedVar $ Name $ wrapped' <> (T.pack $ show i)
+wrappedVarName name i = appendToVar label name
   where
-    (NamedVar (Name wrapped')) = wrappedName name
+    label = "__unwrapped" <> T.pack (show i)
 
 unwrap :: Variable -> Maybe Variable
 unwrap (NamedVar (Name n)) = NamedVar . Name <$> T.stripSuffix "__unwrapped" n
+unwrap (BuiltIn (Name n)) = BuiltIn . Name <$> T.stripSuffix "__unwrapped" n
 unwrap a = Just a
 
 -- return lambda to new function, with __unwrapped in the name

@@ -26,4 +26,7 @@ unknown i = MTVar (mkName $ "U" <> (T.pack (show i)))
 
 named :: Text -> Variable
 named = NamedVar . Name
+
+builtIn :: Text -> Variable
+builtIn = BuiltIn . Name
 ---

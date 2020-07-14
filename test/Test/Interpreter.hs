@@ -74,7 +74,7 @@ spec = do
                   (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "a"))))
                   (MyApp (MyVar (named "const")) (int 1))
               )
-        testInterpret mempty f $ MyLambda (named "b") (MyVar (named "var1"))
+        testInterpret mempty f $ MyLambda (named "b") (MyVar (NumberedVar 1))
       it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
               ( MyLet
@@ -96,13 +96,13 @@ spec = do
         result <- interpret mempty f
         result `shouldSatisfy` isLeft
       it "Finds and uses randomInt" $ do
-        let f = MyVar (named "randomInt")
+        let f = MyVar (builtIn "randomInt")
             scope' = mempty
         result <- interpret scope' f
         print result
         result `shouldSatisfy` \(Right (MyLiteral (MyInt _))) -> True
       it "Finds and uses randomIntFrom" $ do
-        let f = MyApp (MyVar (named "randomIntFrom")) (int 10)
+        let f = MyApp (MyVar (builtIn "randomIntFrom")) (int 10)
             scope' = mempty
         result <- interpret scope' f
         print result
