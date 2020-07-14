@@ -16,7 +16,7 @@ import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck.Instances ()
 
-exprs :: [(Expr Name, Either TypeError MonoType)]
+exprs :: [(Expr Variable, Either TypeError MonoType)]
 exprs =
   [ (int 1, Right MTInt),
     (bool True, Right MTBool),
@@ -24,28 +24,28 @@ exprs =
         (StringType "hello"),
       Right MTString
     ),
-    -- (MyVar (mkName "x"), Left "Unknown variable \"x\""),
-    (MyLet (mkName "x") (int 42) (bool True), Right MTBool),
-    (MyLet (mkName "x") (int 42) (MyVar (mkName "x")), Right MTInt),
+    -- (MyVar (named "x"), Left "Unknown variable \"x\""),
+    (MyLet (named "x") (int 42) (bool True), Right MTBool),
+    (MyLet (named "x") (int 42) (MyVar (named "x")), Right MTInt),
     ( MyLet
-        (mkName "x")
+        (named "x")
         (bool True)
-        (MyLet (mkName "y") (int 42) (MyVar (mkName "x"))),
+        (MyLet (named "y") (int 42) (MyVar (named "x"))),
       Right MTBool
     ),
     ( MyLet
-        (mkName "x")
+        (named "x")
         (bool True)
-        (MyLet (mkName "x") (int 42) (MyVar (mkName "x"))),
+        (MyLet (named "x") (int 42) (MyVar (named "x"))),
       Right MTInt
     ),
-    ( MyLambda (mkName "x") (bool True),
+    ( MyLambda (named "x") (bool True),
       Right $ MTFunction (unknown 1) MTBool
     ),
     ( identity,
       Right $ MTFunction (unknown 1) (unknown 1)
     ),
-    ( MyLambda (mkName "x") (MyLambda (mkName "y") (MyVar (mkName "x"))),
+    ( MyLambda (named "x") (MyLambda (named "y") (MyVar (named "x"))),
       Right $
         MTFunction
           (unknown 1)
@@ -53,7 +53,7 @@ exprs =
     ),
     ( MyApp
         ( MyLambda
-            (mkName "x")
+            (named "x")
             (bool True)
         )
         (int 1),
@@ -66,74 +66,74 @@ exprs =
     ),
     ( MyApp
         ( MyLambda
-            (mkName "x")
-            ( (MyIf (MyVar (mkName "x")) (int 10) (int 10))
+            (named "x")
+            ( (MyIf (MyVar (named "x")) (int 10) (int 10))
             )
         )
         (int 100),
       Left $ UnificationError MTBool MTInt
     ),
-    ( MyLambda (mkName "x") (MyApp (MyVar (mkName "x")) (MyVar (mkName "x"))),
-      Left $ FailsOccursCheck (SwappedName (mkName "U1"))
+    ( MyLambda (named "x") (MyApp (MyVar (named "x")) (MyVar (named "x"))),
+      Left $ FailsOccursCheck (mkName "U1")
     ),
     (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
-    ( MyLetPair (mkName "a") (mkName "b") (MyPair (int 1) (bool True)) (MyVar (mkName "a")),
+    ( MyLetPair (named "a") (named "b") (MyPair (int 1) (bool True)) (MyVar (named "a")),
       Right MTInt
     ),
     ( MyLambda
-        (mkName "x")
+        (named "x")
         ( MyLetPair
-            (mkName "a")
-            (mkName "b")
-            (MyVar (mkName "x"))
-            (MyVar (mkName "a"))
+            (named "a")
+            (named "b")
+            (MyVar (named "x"))
+            (MyVar (named "a"))
         ),
       Right (MTFunction (MTPair (unknown 2) (unknown 3)) (unknown 2))
     ),
     ( MyLet
-        (mkName "fst")
-        (MyLambda (mkName "tuple") (MyLetPair (mkName "a") (mkName "b") (MyVar (mkName "tuple")) (MyVar (mkName "a"))))
+        (named "fst")
+        (MyLambda (named "tuple") (MyLetPair (named "a") (named "b") (MyVar (named "tuple")) (MyVar (named "a"))))
         ( MyLet
-            (mkName "x")
+            (named "x")
             (MyPair (int 1) (int 2))
-            (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
+            (MyApp (MyVar (named "fst")) (MyVar (named "x")))
         ),
       Right MTInt
     ),
     ( MyCase
         (MySum MyLeft (int 1))
         ( MyLambda
-            (mkName "l")
-            (MySum MyLeft (MyVar (mkName "l")))
+            (named "l")
+            (MySum MyLeft (MyVar (named "l")))
         )
-        ( MyLambda (mkName "r") (MySum MyRight (MyVar (mkName "r")))
+        ( MyLambda (named "r") (MySum MyRight (MyVar (named "r")))
         ),
       Right $ MTSum MTInt (MTVar (mkName "U1"))
     ),
     ( MyCase
         (MySum MyLeft (int 1))
-        (MyLambda (mkName "l") (str' "Left!"))
-        (MyLambda (mkName "r") (str' "Right!")),
+        (MyLambda (named "l") (str' "Left!"))
+        (MyLambda (named "r") (str' "Right!")),
       Right MTString
     ),
     ( MyCase
         (MySum MyRight (int 1))
-        (MyLambda (mkName "l") (str' "Left!"))
-        (MyLambda (mkName "r") (str' "Right!")),
+        (MyLambda (named "l") (str' "Left!"))
+        (MyLambda (named "r") (str' "Right!")),
       Right MTString
     ),
     ( MyLetList
-        (mkName "head")
-        (mkName "tail")
+        (named "head")
+        (named "tail")
         (MyList $ NE.fromList [int 1])
-        (MyVar (mkName "head")),
+        (MyVar (named "head")),
       Right $ MTInt
     ),
     ( MyLetList
-        (mkName "head")
-        (mkName "tail")
+        (named "head")
+        (named "tail")
         (MyList $ NE.fromList [int 1])
-        (MyVar (mkName "tail")),
+        (MyVar (named "tail")),
       Right $ (MTSum MTUnit (MTList MTInt))
     ),
     ( MyRecord
@@ -156,10 +156,10 @@ exprs =
           )
     ),
     ( MyLambda
-        (mkName "i")
+        (named "i")
         ( MyIf
             ( MyRecordAccess
-                (MyVar (mkName "i"))
+                (MyVar (named "i"))
                 (mkName "dog")
             )
             (int 1)
@@ -168,14 +168,14 @@ exprs =
       Right $ MTFunction (MTRecord $ M.singleton (mkName "dog") MTBool) MTInt
     ),
     ( MyLambda
-        (mkName "i")
+        (named "i")
         ( MyIf
             ( MyRecordAccess
-                (MyVar (mkName "i"))
+                (MyVar (named "i"))
                 (mkName "dog")
             )
             ( MyIf
-                (MyRecordAccess (MyVar (mkName "i")) (mkName "cat"))
+                (MyRecordAccess (MyVar (named "i")) (mkName "cat"))
                 (int 1)
                 (int 2)
             )
@@ -183,8 +183,7 @@ exprs =
         ),
       Left $
         MissingRecordTypeMember
-          ( SwappedName
-              (mkName "cat")
+          ( (mkName "cat")
           )
           ( M.singleton
               (mkName "dog")
@@ -194,8 +193,8 @@ exprs =
     -- combining multiple facts about an unknown record is for later
   ]
 
-identity :: Expr Name
-identity = (MyLambda (mkName "x") (MyVar (mkName "x")))
+identity :: Expr Variable
+identity = (MyLambda (named "x") (MyVar (named "x")))
 
 spec :: Spec
 spec = do
@@ -212,9 +211,9 @@ spec = do
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             ( MyLambda
-                (mkName "x")
+                (named "x")
                 ( MyIf
-                    (MyApp identity (MyVar (mkName "x")))
+                    (MyApp identity (MyVar (named "x")))
                     (MyApp identity (int 1))
                     (MyApp identity (int 2))
                 )

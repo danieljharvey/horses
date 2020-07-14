@@ -12,6 +12,7 @@ import Control.Monad.State (runState)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
+import Test.Helpers
 import Test.Hspec
 
 runUnifier :: (MonoType, MonoType) -> Either TypeError Substitutions
@@ -27,7 +28,7 @@ spec = do
       runUnifier (MTUnit, MTUnit) `shouldBe` Right mempty
     it "Combines a known with an unknown" $ do
       runUnifier (MTVar (mkName "a"), MTInt)
-        `shouldBe` Right (Substitutions $ M.singleton (mkName "a") MTInt)
+        `shouldBe` Right (Substitutions $ M.singleton (named "a") MTInt)
     it "Combines two half pairs" $ do
       runUnifier
         ( MTPair (MTVar (mkName "a")) MTInt,
@@ -36,8 +37,8 @@ spec = do
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (mkName "a", MTBool),
-                  (mkName "b", MTInt)
+                [ (named "a", MTBool),
+                  (named "b", MTInt)
                 ]
           )
     it "Combines two half records" $ do
@@ -56,8 +57,8 @@ spec = do
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (mkName "a", MTBool),
-                  (mkName "b", MTInt)
+                [ (named "a", MTBool),
+                  (named "b", MTInt)
                 ]
           )
     it "Combines two records" $ do
@@ -74,7 +75,7 @@ spec = do
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (mkName "U1", MTInt),
-                  (mkName "U2", MTBool)
+                [ (named "U1", MTInt),
+                  (named "U2", MTBool)
                 ]
           )

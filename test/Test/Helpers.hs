@@ -21,3 +21,9 @@ str' = str . StringType
 --
 unknown :: Int -> MonoType
 unknown i = MTVar (mkName $ "U" <> (T.pack (show i)))
+
+---
+
+named :: Text -> Variable
+named = NamedVar . Name
+---

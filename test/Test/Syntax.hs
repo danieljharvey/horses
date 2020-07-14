@@ -17,10 +17,6 @@ import Language.Mimsa
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
 import Language.Mimsa.Types
-  ( FuncName,
-    Literal,
-    validName,
-  )
 import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck
@@ -56,13 +52,16 @@ instance Arbitrary SumSide where
 instance (Arbitrary a, Ord a) => Arbitrary (Expr a) where
   arbitrary = genericArbitrary
 
+instance Arbitrary Variable where
+  arbitrary = genericArbitrary
+
 instance Arbitrary Literal where
   arbitrary = genericArbitrary
 
 instance Arbitrary FuncName where
   arbitrary = genericArbitrary
 
-newtype WellTypedExpr = WellTypedExpr (Expr Name)
+newtype WellTypedExpr = WellTypedExpr (Expr Variable)
   deriving (Show)
 
 instance Arbitrary WellTypedExpr where

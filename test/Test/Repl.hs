@@ -15,7 +15,7 @@ import Test.Helpers
 import Test.Hspec
 import Test.StoreData
 
-eval :: StoreEnv -> Text -> IO (Either Error (MonoType, Expr Name))
+eval :: StoreEnv -> Text -> IO (Either Error (MonoType, Expr Variable))
 eval env input =
   case evaluateText env input of
     Right (mt, expr', scope') -> do
@@ -40,9 +40,9 @@ spec = do
           `shouldBe` Right
             ( MTFunction MTBool (MTSum MTInt MTString),
               ( MyLambda
-                  (mkName "x")
+                  (named "x")
                   ( MyIf
-                      (MyVar (mkName "x"))
+                      (MyVar (named "x"))
                       (MySum MyRight (str' "yes"))
                       (MySum MyLeft (int 1))
                   )
@@ -73,20 +73,20 @@ spec = do
                 (MTSum (MTVar (mkName "U10")) MTInt)
                 (MTSum (MTVar (mkName "U10")) MTBool),
               ( MyLambda
-                  (mkName "sum")
+                  (named "sum")
                   ( MyCase
-                      (MyVar (mkName "sum"))
+                      (MyVar (named "sum"))
                       ( MyLambda
-                          (mkName "l")
-                          (MySum MyLeft (MyVar (mkName "l")))
+                          (named "l")
+                          (MySum MyLeft (MyVar (named "l")))
                       )
                       ( MyLambda
-                          (mkName "r")
+                          (named "r")
                           ( MySum
                               MyRight
                               ( MyApp
-                                  (MyVar (mkName "var0"))
-                                  (MyVar (mkName "r"))
+                                  (MyVar (named "var0"))
+                                  (MyVar (named "r"))
                               )
                           )
                       )
@@ -134,7 +134,7 @@ spec = do
         result
           `shouldBe` Right
             ( MTFunction (MTVar (mkName "U2")) (MTVar (mkName "U2")),
-              MyLambda (mkName "i") (MyVar (mkName "i"))
+              MyLambda (named "i") (MyVar (named "i"))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"

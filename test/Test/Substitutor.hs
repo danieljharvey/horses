@@ -7,15 +7,11 @@ module Test.Substitutor
 where
 
 import qualified Data.Map as M
-import Data.Text (Text)
 import Language.Mimsa.Store.Substitutor (substitute)
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 import Test.StoreData
-
-named :: Text -> Variable
-named = NamedVar . Name
 
 trueStoreExpr :: StoreExpression
 trueStoreExpr = StoreExpression mempty (bool True)
