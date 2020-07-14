@@ -20,7 +20,7 @@ import Language.Mimsa.Types.Variable
 
 data TypeError
   = UnknownTypeError
-  | FailsOccursCheck Name
+  | FailsOccursCheck TypeVar
   | UnificationError MonoType MonoType
   | VariableNotInEnv Variable (Set Variable)
   | MissingRecordMember Name (Set Name)

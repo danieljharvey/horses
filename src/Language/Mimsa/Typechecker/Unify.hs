@@ -13,11 +13,10 @@ import Control.Monad.State (get, put)
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import qualified Data.Text as T
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types
 
-freeTypeVars :: MonoType -> S.Set Name
+freeTypeVars :: MonoType -> S.Set TypeVar
 freeTypeVars ty = case ty of
   MTVar var ->
     S.singleton var
@@ -34,13 +33,13 @@ freeTypeVars ty = case ty of
     S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
-varBind :: Name -> MonoType -> TcMonad Substitutions
+varBind :: TypeVar -> MonoType -> TcMonad Substitutions
 varBind var ty
   | ty == MTVar var = pure mempty
   | S.member var (freeTypeVars ty) = do
     throwError $
       FailsOccursCheck var
-  | otherwise = pure $ Substitutions (M.singleton (NamedVar var) ty)
+  | otherwise = pure $ Substitutions (M.singleton var ty)
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify a b | a == b = pure mempty
@@ -80,4 +79,4 @@ getUnknown :: TcMonad MonoType
 getUnknown = do
   nextUniVar <- get
   put (nextUniVar + 1)
-  pure (MTVar (mkName $ "U" <> T.pack (show nextUniVar)))
+  pure (MTVar (TVNumber nextUniVar))

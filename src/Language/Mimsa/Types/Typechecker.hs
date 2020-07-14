@@ -11,7 +11,7 @@ import Language.Mimsa.Types.Variable
 
 type Environment = Map Variable Scheme
 
-newtype Substitutions = Substitutions {getSubstitutions :: Map Variable MonoType}
+newtype Substitutions = Substitutions {getSubstitutions :: Map TypeVar MonoType}
   deriving (Eq, Ord, Show)
 
 instance Semigroup Substitutions where
@@ -26,7 +26,7 @@ applySubst subst ty = case ty of
   MTVar i ->
     fromMaybe
       (MTVar i)
-      (M.lookup (NamedVar i) (getSubstitutions subst))
+      (M.lookup i (getSubstitutions subst))
   MTFunction arg res ->
     MTFunction (applySubst subst arg) (applySubst subst res)
   MTPair a b ->

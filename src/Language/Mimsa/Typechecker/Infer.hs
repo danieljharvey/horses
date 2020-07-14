@@ -17,7 +17,6 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -251,4 +250,4 @@ getUnknown :: TcMonad MonoType
 getUnknown = do
   nextUniVar <- get
   put (nextUniVar + 1)
-  pure (MTVar (mkName $ "U" <> T.pack (show nextUniVar)))
+  pure (MTVar (TVNumber nextUniVar))
