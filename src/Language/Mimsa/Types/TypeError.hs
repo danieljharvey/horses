@@ -20,7 +20,7 @@ import Language.Mimsa.Types.Variable
 
 data TypeError
   = UnknownTypeError
-  | FailsOccursCheck TypeVar
+  | FailsOccursCheck TypeVar MonoType
   | UnificationError MonoType MonoType
   | VariableNotInEnv Variable (Set Variable)
   | MissingRecordMember Name (Set Name)
@@ -42,8 +42,8 @@ showSet set = T.intercalate ", " (prettyPrint <$> S.toList set)
 instance Printer TypeError where
   prettyPrint UnknownTypeError =
     "Unknown type error"
-  prettyPrint (FailsOccursCheck name) =
-    prettyPrint name <> " fails occurs check"
+  prettyPrint (FailsOccursCheck name mt) =
+    prettyPrint name <> " appears inside " <> prettyPrint mt
   prettyPrint (UnificationError a b) =
     "Unification error - cannot match " <> prettyPrint a <> " and " <> prettyPrint b
   prettyPrint (VariableNotInEnv name members) =

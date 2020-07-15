@@ -38,7 +38,7 @@ varBind var ty
   | ty == MTVar var = pure mempty
   | S.member var (freeTypeVars ty) = do
     throwError $
-      FailsOccursCheck var
+      FailsOccursCheck var ty
   | otherwise = pure $ Substitutions (M.singleton var ty)
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions

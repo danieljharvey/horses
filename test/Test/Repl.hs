@@ -150,6 +150,9 @@ spec = do
             ( MTInt,
               int 1
             )
+      it "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)" $ do
+        result <- eval mempty "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)"
+        result `shouldBe` Right (MTInt, int 69)
       it "listHead([1])" $ do
         result <- eval stdLib "listHead([1])"
         result `shouldBe` Right (MTInt, int 1)
