@@ -12,7 +12,6 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Debug.Trace
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Repl.Watcher
@@ -148,11 +147,10 @@ chainExprs ::
 chainExprs expr scope = finalExpr
   where
     finalExpr =
-      traceShowId $
-        foldr
-          (\(name, expr') a -> MyLet name expr' a)
-          expr
-          (M.toList . getScope $ scope)
+      foldr
+        (\(name, expr') a -> MyLet name expr' a)
+        expr
+        (M.toList . getScope $ scope)
 
 fromItem :: Name -> StoreExpression -> ExprHash -> StoreEnv
 fromItem name expr hash =

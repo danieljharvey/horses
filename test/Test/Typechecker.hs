@@ -74,7 +74,7 @@ exprs =
       Left $ UnificationError MTBool MTInt
     ),
     ( MyLambda (named "x") (MyApp (MyVar (named "x")) (MyVar (named "x"))),
-      Left $ FailsOccursCheck (TVNumber 1) (MTVar (TVNumber 1))
+      Left $ FailsOccursCheck (TVNumber 1) (MTFunction (MTVar (TVNumber 1)) (MTVar (TVNumber 2)))
     ),
     (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
     ( MyLetPair (named "a") (named "b") (MyPair (int 1) (bool True)) (MyVar (named "a")),
