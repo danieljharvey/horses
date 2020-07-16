@@ -10,7 +10,6 @@ module Language.Mimsa.Types.AST
     FuncName (..),
     SumSide (..),
     StringType (..),
-    UniVar (..),
   )
 where
 
@@ -32,15 +31,6 @@ newtype StringType = StringType Text
 
 instance Printer StringType where
   prettyPrint (StringType s) = s
-
-------
-
-newtype UniVar = UniVar Int
-  deriving stock (Eq, Ord, Generic)
-  deriving newtype (Show, Num)
-
-instance Printer UniVar where
-  prettyPrint (UniVar a) = T.pack . show $ a
 
 --------
 

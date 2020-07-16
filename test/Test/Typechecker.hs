@@ -6,15 +6,11 @@ module Test.Typechecker
   )
 where
 
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Monad.State (runState)
 -- import qualified Data.Aeson as JSON
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 --import qualified Data.Text.IO as T
 import Language.Mimsa
-import Language.Mimsa.Typechecker.Infer
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
@@ -78,7 +74,14 @@ exprs =
       Left $ UnificationError MTBool MTInt
     ),
     ( MyLambda (named "x") (MyApp (MyVar (named "x")) (MyVar (named "x"))),
-      Left $ FailsOccursCheck mempty (TVNumber 1) (MTFunction (MTVar (TVNumber 1)) (MTVar (TVNumber 2)))
+      Left $
+        FailsOccursCheck
+          mempty
+          (tvFree 1)
+          ( MTFunction
+              (MTVar (tvFree 1))
+              (MTVar (tvFree 2))
+          )
     ),
     (MyPair (int 1) (bool True), Right (MTPair MTInt MTBool)),
     ( MyLetPair (named "a") (named "b") (MyPair (int 1) (bool True)) (MyVar (named "a")),
@@ -200,10 +203,6 @@ exprs =
 identity :: Expr Variable
 identity = (MyLambda (named "x") (MyVar (named "x")))
 
-runInstantiate :: Scheme -> Either TypeError (Substitutions, MonoType)
-runInstantiate scheme =
-  fst $ runState (runReaderT (runExceptT (instantiate scheme)) mempty) 2
-
 spec :: Spec
 spec = do
   describe "Typechecker" $ do
@@ -216,15 +215,6 @@ spec = do
           )
           exprs
       pure ()
-    it "Instantiate with no problems" $ do
-      let scheme = Scheme [] (MTVar (TVNumber 1))
-      snd <$> runInstantiate scheme `shouldBe` Right (MTVar (TVNumber 1))
-    it "Instantiate with no matches" $ do
-      let scheme = Scheme [TVNumber 2] (MTVar (TVNumber 1))
-      snd <$> runInstantiate scheme `shouldBe` Right (MTVar (TVNumber 1))
-    it "Instantiate" $ do
-      let scheme = Scheme [TVNumber 1] (MTVar (TVNumber 1))
-      snd <$> runInstantiate scheme `shouldBe` Right (MTVar (TVNumber 2))
     {-it "Uses a polymorphic function twice with conflicting types" $ do
           let expr =
                 MyLet

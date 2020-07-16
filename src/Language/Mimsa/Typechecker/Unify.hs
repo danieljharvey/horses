@@ -10,7 +10,6 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State (get, put)
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -41,7 +40,13 @@ varBind var ty
     swaps <- ask
     throwError $
       FailsOccursCheck swaps var ty
-  | otherwise = pure $ Substitutions (M.singleton var ty)
+  | otherwise = case var of
+    -- only Free vars can actually be used as substitutions
+    TVFree uniVar -> pure $ Substitutions (M.singleton uniVar ty)
+    -- Bound vars must be instantiated first
+    _ -> do
+      uniVar <- getNextUniVar
+      pure $ Substitutions (M.singleton uniVar ty)
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify a b | a == b = pure mempty
@@ -76,9 +81,3 @@ getTypeOrFresh name map' = do
   case M.lookup name map' of
     Just found -> pure found
     _ -> getUnknown
-
-getUnknown :: TcMonad MonoType
-getUnknown = do
-  nextUniVar <- get
-  put (nextUniVar + 1)
-  pure (MTVar (TVNumber $ nextUniVar))

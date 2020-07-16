@@ -10,7 +10,6 @@ module Language.Mimsa
     SumSide (..),
     Name,
     mkName,
-    UniVar (..),
     StringType (..),
     parseExpr,
     prettyPrint,

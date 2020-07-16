@@ -20,6 +20,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Variable,
     module Language.Mimsa.Types.Scope,
     module Language.Mimsa.Types.Swaps,
+    module Language.Mimsa.Types.UniVar,
   )
 where
 
@@ -37,6 +38,7 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.TypeError
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.UniVar
 import Language.Mimsa.Types.Variable
 
 ------

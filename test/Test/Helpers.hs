@@ -19,7 +19,7 @@ str' = str . StringType
 
 --
 unknown :: Int -> MonoType
-unknown = MTVar . TVNumber
+unknown = MTVar . TVFree . UniVar
 
 ---
 
@@ -32,4 +32,7 @@ builtIn = BuiltIn . Name
 ---
 
 tvName :: Text -> TypeVar
-tvName = TVName . Name
+tvName = TVBound . Name
+
+tvFree :: Int -> TypeVar
+tvFree = TVFree . UniVar

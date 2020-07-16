@@ -28,7 +28,7 @@ spec = do
       runUnifier (MTUnit, MTUnit) `shouldBe` Right mempty
     it "Combines a known with an unknown" $ do
       runUnifier (MTVar (tvName "a"), MTInt)
-        `shouldBe` Right (Substitutions $ M.singleton (tvName "a") MTInt)
+        `shouldBe` Right (Substitutions $ M.singleton (UniVar 1) MTInt)
     it "Combines two half pairs" $ do
       runUnifier
         ( MTPair (MTVar (tvName "a")) MTInt,
@@ -37,8 +37,8 @@ spec = do
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (tvName "a", MTBool),
-                  (tvName "b", MTInt)
+                [ (UniVar 1, MTBool),
+                  (UniVar 2, MTInt)
                 ]
           )
     it "Combines two half records" $ do
@@ -57,8 +57,8 @@ spec = do
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (tvName "a", MTBool),
-                  (tvName "b", MTInt)
+                [ (UniVar 2, MTBool),
+                  (UniVar 1, MTInt)
                 ]
           )
     it "Combines two records" $ do
@@ -75,7 +75,7 @@ spec = do
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (TVNumber 1, MTInt),
-                  (TVNumber 2, MTBool)
+                [ (UniVar 1, MTInt),
+                  (UniVar 2, MTBool)
                 ]
           )

@@ -12,13 +12,14 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
+import Language.Mimsa.Types.UniVar
 
-data TypeVar = TVName Name | TVNumber Int
+data TypeVar = TVBound Name | TVFree UniVar
   deriving (Eq, Ord, Show)
 
 instance Printer TypeVar where
-  prettyPrint (TVName n) = prettyPrint n
-  prettyPrint (TVNumber i) = T.pack (show i)
+  prettyPrint (TVBound n) = prettyPrint n
+  prettyPrint (TVFree i) = T.pack (show i)
 
 -------------
 

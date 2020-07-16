@@ -6,14 +6,13 @@
 module Language.Mimsa.Typechecker.Infer
   ( startInference,
     doInference,
-    instantiate,
   )
 where
 
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State (get, put, runState)
+import Control.Monad.State (runState)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -39,22 +38,8 @@ doInference swaps env expr =
   where
     either' = runState (runReaderT (runExceptT (infer env expr)) swaps) 1
 
-instantiate :: Scheme -> TcMonad (Substitutions, MonoType)
-instantiate (Scheme vars ty) = do
-  newVars <- traverse (const getUnknown) vars
-  let subst = Substitutions $ M.fromList (zip vars newVars)
-      mt = applySubst subst ty
-  pure (mempty, mt)
-
-applySubstScheme :: Substitutions -> Scheme -> Scheme
-applySubstScheme (Substitutions subst) (Scheme vars t) =
-  -- The fold takes care of name shadowing
-  Scheme vars (applySubst subs t)
-  where
-    subs = Substitutions $ foldr M.delete subst vars
-
 applySubstCtx :: Substitutions -> Environment -> Environment
-applySubstCtx subst ctx = M.map (applySubstScheme subst) ctx
+applySubstCtx subst ctx = M.map (applySubst subst) ctx
 
 --------------
 
@@ -73,8 +58,7 @@ inferBuiltIn name = case getLibraryFunction name of
 inferVarFromScope :: Environment -> Variable -> TcMonad (Substitutions, MonoType)
 inferVarFromScope env name =
   case M.lookup name env of
-    Just scheme -> do
-      instantiate scheme
+    Just mt -> pure (mempty, mt)
     _ -> do
       throwError $ VariableNotInEnv name (S.fromList (M.keys env))
 
@@ -85,7 +69,7 @@ inferFuncReturn ::
   MonoType ->
   TcMonad (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
-  let newEnv = M.insert binder (Scheme [] tyArg) env
+  let newEnv = M.insert binder tyArg env
   tyRes <- getUnknown
   (s1, tyFun) <- infer newEnv function
   s2 <- unify (MTFunction tyArg tyFun) (applySubst s1 tyRes)
@@ -126,8 +110,7 @@ inferRecord env map' = do
   pure (subs, MTRecord typesMap)
 
 createScheme :: Environment -> Variable -> MonoType -> Environment
--- createScheme env binder (MTVar tyBinder) = M.insert binder (Scheme [tyBinder] (MTVar tyBinder)) env
-createScheme env binder tyBinder = M.insert binder (Scheme [] tyBinder) env
+createScheme env binder tyBinder = M.insert binder tyBinder env
 
 infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
@@ -147,7 +130,7 @@ infer env (MyRecord map') = do
     )
 infer env (MyLet binder expr body) = do
   (s1, tyExpr) <- infer env expr
-  let scheme = Scheme [] (applySubst s1 tyExpr)
+  let scheme = (applySubst s1 tyExpr)
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 <> s1, tyBody)
@@ -198,8 +181,8 @@ infer env (MyLetPair binder1 binder2 expr body) = do
       pure (tyA, tyB)
     (MTPair a b) -> pure (a, b)
     a -> throwError $ CaseMatchExpectedPair a
-  let schemeA = Scheme [] (applySubst s1 tyA)
-      schemeB = Scheme [] (applySubst s1 tyB)
+  let schemeA = (applySubst s1 tyA)
+      schemeB = (applySubst s1 tyB)
       newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
   s2 <- unify tyExpr (MTPair tyA tyB)
   (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
@@ -215,8 +198,8 @@ infer env (MyLetList binder1 binder2 expr body) = do
       tyRest <- getUnknown
       pure (tyHead, tyRest)
     a -> throwError $ CaseMatchExpectedList a
-  let schemeHead = Scheme [] (applySubst s1 tyHead)
-      schemeRest = Scheme [] (applySubst s1 tyRest)
+  let schemeHead = (applySubst s1 tyHead)
+      schemeRest = (applySubst s1 tyRest)
       newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
   s2 <- unify tyExpr (MTList tyHead)
   s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
@@ -256,9 +239,3 @@ infer env (MySum MyRight right') = do
   tyLeft <- getUnknown
   (s1, tyRight) <- infer env right'
   pure (s1, MTSum (applySubst s1 tyLeft) tyRight)
-
-getUnknown :: TcMonad MonoType
-getUnknown = do
-  nextUniVar <- get
-  put (nextUniVar + 1)
-  pure (MTVar (TVNumber nextUniVar))
