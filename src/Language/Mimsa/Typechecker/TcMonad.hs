@@ -15,3 +15,6 @@ getNextUniVar = do
 
 getUnknown :: TcMonad MonoType
 getUnknown = MTVar . TVFree <$> getNextUniVar
+
+getBoundType :: TcMonad MonoType
+getBoundType = MTVar . TVBound <$> getNextUniVar

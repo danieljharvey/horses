@@ -31,8 +31,8 @@ builtIn = BuiltIn . Name
 
 ---
 
-tvName :: Text -> TypeVar
-tvName = TVBound . Name
+tvBound :: Int -> TypeVar
+tvBound = TVBound . UniVar
 
 tvFree :: Int -> TypeVar
 tvFree = TVFree . UniVar

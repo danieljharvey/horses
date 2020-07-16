@@ -130,6 +130,8 @@ swapName from to (MyLet name a b) =
     <*> (swapName from to b)
 swapName from to (MyLambda name a) =
   MyLambda <$> pure name <*> (swapName from to a)
+swapName from to (MyForAllLambda name a) =
+  MyForAllLambda <$> pure name <*> (swapName from to a)
 swapName from to (MyRecordAccess a name) =
   MyRecordAccess <$> (swapName from to a) <*> pure name
 swapName from to (MyApp a b) =
@@ -206,6 +208,8 @@ interpretWithScope (MyApp (MyVar f) value) = do
   interpretWithScope (MyApp expr value)
 interpretWithScope (MyApp (MyLambda binder expr) value) =
   interpretWithScope (MyLet binder value expr)
+interpretWithScope (MyApp (MyForAllLambda binder expr) value) =
+  interpretWithScope (MyLet binder value expr)
 interpretWithScope (MyLetList binderHead binderRest (MyList as) body) = do
   let (listHead, listTail) = NE.uncons as
       tail' = case listTail of
@@ -258,6 +262,7 @@ interpretWithScope (MyRecord as) = do
 interpretWithScope (MyApp thing _) =
   throwError $ CannotApplyToNonFunction thing
 interpretWithScope (MyLambda a b) = pure (MyLambda a b)
+interpretWithScope (MyForAllLambda a b) = pure (MyForAllLambda a b)
 interpretWithScope (MyIf (MyLiteral (MyBool pred')) true false) =
   if pred'
     then interpretWithScope true

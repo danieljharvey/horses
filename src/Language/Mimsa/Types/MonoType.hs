@@ -14,11 +14,11 @@ import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.UniVar
 
-data TypeVar = TVBound Name | TVFree UniVar
+data TypeVar = TVBound UniVar | TVFree UniVar
   deriving (Eq, Ord, Show)
 
 instance Printer TypeVar where
-  prettyPrint (TVBound n) = prettyPrint n
+  prettyPrint (TVBound i) = "Forall " <> T.pack (show i)
   prettyPrint (TVFree i) = T.pack (show i)
 
 -------------

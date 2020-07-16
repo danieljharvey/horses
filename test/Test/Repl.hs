@@ -175,6 +175,11 @@ spec = do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
         result `shouldBe` Right (MTInt, int 1)
 {-
+      it "let id = \\ forall a -> a in id(1)" $ do
+        result <- eval mempty "let id = \\ forall a -> a in id(1)"
+        result `shouldBe` Right (MTInt, int 1)
+-}
+{-
 it "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)" $ do
   result <- eval stdLib "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)"
   result `shouldBe` Right (MTBool, bool True)

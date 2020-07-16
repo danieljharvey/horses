@@ -40,13 +40,15 @@ varBind var ty
     swaps <- ask
     throwError $
       FailsOccursCheck swaps var ty
-  | otherwise = case var of
-    -- only Free vars can actually be used as substitutions
-    TVFree uniVar -> pure $ Substitutions (M.singleton uniVar ty)
-    -- Bound vars must be instantiated first
-    _ -> do
-      uniVar <- getNextUniVar
-      pure $ Substitutions (M.singleton uniVar ty)
+  | otherwise =
+    case var of
+      -- only Free vars can actually be used as substitutions
+      TVFree uniVar -> pure $ Substitutions (M.singleton uniVar ty)
+      -- Bound vars must be instantiated first
+      _ -> do
+        uniVar <- getNextUniVar
+        pure $
+          Substitutions (M.singleton uniVar ty)
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify a b | a == b = pure mempty

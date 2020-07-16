@@ -123,6 +123,9 @@ mapVar p (MyVar a) =
 mapVar p (MyLet name a b) =
   MyLet <$> nameToVar name <*> (mapVar p a)
     <*> (mapVar (p <> [name]) b)
+mapVar p (MyForAllLambda name a) =
+  MyForAllLambda <$> nameToVar name
+    <*> (mapVar (p <> [name]) a)
 mapVar p (MyLambda name a) =
   MyLambda <$> nameToVar name <*> (mapVar (p <> [name]) a)
 mapVar p (MyRecordAccess a name) =

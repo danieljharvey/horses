@@ -17,6 +17,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Debug.Trace
 import Language.Mimsa.Library
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -210,6 +211,21 @@ infer env (MyLambda binder body) = do
   let tmpCtx = createScheme env binder tyBinder
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
+infer env (MyForAllLambda binder body) = do
+  tyBinder <- getBoundType
+  let tmpCtx = createScheme env binder tyBinder
+  (s1, tyBody) <- infer tmpCtx body
+  pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
+infer env (MyApp (MyForAllLambda _binder body) argument) = do
+  ------here
+  tyRes <- getUnknown
+  tyBinder <- getBoundType
+  (s1, tyFun) <- infer env body
+  (s2, tyArg) <- infer (applySubstCtx s1 env) argument
+  s3 <- unify (applySubst s2 tyFun) (MTFunction tyArg tyRes)
+  s4 <- unify (applySubst s2 tyBinder) tyArg
+  let subs = traceShowId $ s4 <> s3 <> s2 <> s1
+  pure (subs, applySubst (subs) tyRes)
 infer env (MyApp function argument) = do
   tyRes <- getUnknown
   (s1, tyFun) <- infer env function

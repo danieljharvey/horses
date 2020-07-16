@@ -70,7 +70,7 @@ list = unsafeGetExpr' "{ head: listHd, tail: listTl }" bindings'
         )
 
 idExpr :: StoreExpression
-idExpr = unsafeGetExpr "\\i -> i"
+idExpr = unsafeGetExpr "\\ i -> i"
 
 justExpr :: StoreExpression
 justExpr = unsafeGetExpr "\\a -> Right a"
