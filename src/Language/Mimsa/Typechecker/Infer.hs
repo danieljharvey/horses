@@ -105,22 +105,31 @@ inferList env (a :| as) = do
     (pure (s1, tyA))
     as
 
-splitRecordTypes ::
-  Map Name (Substitutions, MonoType) ->
-  (Substitutions, MonoType)
-splitRecordTypes map' = (subs, MTRecord types)
-  where
-    subs =
-      foldr
-        (<>)
-        mempty
-        ((fst . snd) <$> M.toList map')
-    types = snd <$> map'
+-- need to infer whilst accumulating knowledge rather than combining at the end
+inferRecord ::
+  Environment ->
+  Map Name (Expr Variable) ->
+  TcMonad (Substitutions, MonoType)
+inferRecord env map' = do
+  (subs, typesMap) <-
+    foldr
+      ( \(key, var) fromLast -> do
+          (newSubs, newMap) <- fromLast
+          (s1, tyVar) <- infer (applySubstCtx newSubs env) var
+          pure (s1 <> newSubs, newMap <> M.singleton key tyVar)
+      )
+      ( pure
+          (mempty, mempty)
+      )
+      (M.toList map')
+  pure (subs, MTRecord typesMap)
 
+{-
 createSchemeForLambda :: Environment -> Variable -> MonoType -> Environment
---createSchemeForLambda env (NamedVar n) (MTVar t) =
---  M.insert (NamedVar n) (Scheme (pure t) (MTVar t)) env
+createSchemeForLambda env (NamedVar n) (MTVar t) =
+  M.insert (NamedVar n) (Scheme (pure t) (MTVar t)) env
 createSchemeForLambda env binder tyBinder = M.insert binder (Scheme [] tyBinder) env
+-}
 
 infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
@@ -132,7 +141,7 @@ infer env (MyList as) = do
   pure (s1, MTList tyItems)
 infer env (MyRecord map') = do
   tyRecord <- getUnknown
-  (s1, tyResult) <- splitRecordTypes <$> traverse (infer env) map'
+  (s1, tyResult) <- inferRecord env map'
   s2 <- unify tyResult tyRecord
   pure
     ( s2 <> s1,
@@ -217,7 +226,7 @@ infer env (MyLetList binder1 binder2 expr body) = do
   pure (s4 <> s3 <> s2 <> s1, tyBody)
 infer env (MyLambda binder body) = do
   tyBinder <- getUnknown
-  let tmpCtx = createSchemeForLambda env binder tyBinder
+  let tmpCtx = M.insert binder (Scheme [] tyBinder) env
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
 infer env (MyApp function argument) = do

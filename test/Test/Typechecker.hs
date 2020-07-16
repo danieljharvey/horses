@@ -193,6 +193,15 @@ exprs =
               (mkName "dog")
               (unknown 2)
           )
+    ),
+    ( MyLet
+        (named "id")
+        (MyLambda (named "a") (MyVar (named "a")))
+        ( MyPair
+            (MyApp (MyVar (named "id")) (int 1))
+            (MyApp (MyVar (named "id")) (bool True))
+        ),
+      Right (MTPair MTInt MTBool)
     )
     -- combining multiple facts about an unknown record is for later
   ]
