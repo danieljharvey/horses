@@ -193,15 +193,6 @@ exprs =
               (mkName "dog")
               (unknown 2)
           )
-    ),
-    ( MyLet
-        (named "id")
-        (MyLambda (named "a") (MyVar (named "a")))
-        ( MyPair
-            (MyApp (MyVar (named "id")) (int 1))
-            (MyApp (MyVar (named "id")) (bool True))
-        ),
-      Right (MTPair MTInt MTBool)
     )
     -- combining multiple facts about an unknown record is for later
   ]
@@ -225,9 +216,27 @@ spec = do
           )
           exprs
       pure ()
+    it "Instantiate with no problems" $ do
+      let scheme = Scheme [] (MTVar (TVNumber 1))
+      snd <$> runInstantiate scheme `shouldBe` Right (MTVar (TVNumber 1))
+    it "Instantiate with no matches" $ do
+      let scheme = Scheme [TVNumber 2] (MTVar (TVNumber 1))
+      snd <$> runInstantiate scheme `shouldBe` Right (MTVar (TVNumber 1))
     it "Instantiate" $ do
       let scheme = Scheme [TVNumber 1] (MTVar (TVNumber 1))
       snd <$> runInstantiate scheme `shouldBe` Right (MTVar (TVNumber 2))
+    {-it "Uses a polymorphic function twice with conflicting types" $ do
+          let expr =
+                MyLet
+                  (named "id")
+                  (MyLambda (named "a") (MyVar (named "a")))
+                  ( MyPair
+                      (MyApp (MyVar (named "id")) (int 1))
+                      (MyApp (MyVar (named "id")) (bool True))
+                  )
+          let expected = Right (MTPair MTInt MTBool)
+          startInference mempty expr `shouldBe` expected
+    -}
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             ( MyLambda

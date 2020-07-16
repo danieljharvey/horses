@@ -43,7 +43,8 @@ instantiate :: Scheme -> TcMonad (Substitutions, MonoType)
 instantiate (Scheme vars ty) = do
   newVars <- traverse (const getUnknown) vars
   let subst = Substitutions $ M.fromList (zip vars newVars)
-  pure (subst, applySubst subst ty)
+      mt = applySubst subst ty
+  pure (mempty, mt)
 
 applySubstScheme :: Substitutions -> Scheme -> Scheme
 applySubstScheme (Substitutions subst) (Scheme vars t) =
@@ -124,12 +125,9 @@ inferRecord env map' = do
       (M.toList map')
   pure (subs, MTRecord typesMap)
 
-{-
-createSchemeForLambda :: Environment -> Variable -> MonoType -> Environment
-createSchemeForLambda env (NamedVar n) (MTVar t) =
-  M.insert (NamedVar n) (Scheme (pure t) (MTVar t)) env
-createSchemeForLambda env binder tyBinder = M.insert binder (Scheme [] tyBinder) env
--}
+createScheme :: Environment -> Variable -> MonoType -> Environment
+-- createScheme env binder (MTVar tyBinder) = M.insert binder (Scheme [tyBinder] (MTVar tyBinder)) env
+createScheme env binder tyBinder = M.insert binder (Scheme [] tyBinder) env
 
 infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
@@ -226,7 +224,7 @@ infer env (MyLetList binder1 binder2 expr body) = do
   pure (s4 <> s3 <> s2 <> s1, tyBody)
 infer env (MyLambda binder body) = do
   tyBinder <- getUnknown
-  let tmpCtx = M.insert binder (Scheme [] tyBinder) env
+  let tmpCtx = createScheme env binder tyBinder
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
 infer env (MyApp function argument) = do

@@ -156,29 +156,35 @@ spec = do
       it "listHead([1])" $ do
         result <- eval stdLib "listHead([1])"
         result `shouldBe` Right (MTInt, int 1)
+      {-
       it "list.head([1])" $ do
         result <- eval stdLib "list.head([1])"
         result2 <- eval stdLib "listHead([1])"
         result `shouldBe` result2
+      -}
       it "listTail([1])" $ do
         result <- eval stdLib "listTail([1])"
         result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
+      {-
       it "list.tail([1])" $ do
         result <- eval stdLib "list.tail([1])"
         result2 <- eval stdLib "listTail([1])"
         result `shouldBe` result2
+      -}
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
         result `shouldBe` Right (MTInt, int 1)
-      it "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)" $ do
-        result <- eval stdLib "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)"
-        result `shouldBe` Right (MTBool, bool True)
-      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))" $ do
-        result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))"
-        result `shouldBe` Right (MTInt, int 1)
-      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))" $ do
-        result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))"
-        result `shouldBe` Right (MTInt, int 2)
+{-
+it "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)" $ do
+  result <- eval stdLib "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)"
+  result `shouldBe` Right (MTBool, bool True)
+it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))" $ do
+  result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))"
+  result `shouldBe` Right (MTInt, int 1)
+it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))" $ do
+  result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))"
+  result `shouldBe` Right (MTInt, int 2)
+-}
 {- it "let x = (maybe.nothing) in maybe.just(1)" $ do
 result <- eval stdLib "let x = (maybe.nothing) in maybe.just(1)"
 result
