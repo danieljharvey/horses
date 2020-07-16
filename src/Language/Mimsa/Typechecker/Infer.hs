@@ -6,6 +6,7 @@
 module Language.Mimsa.Typechecker.Infer
   ( startInference,
     doInference,
+    instantiate,
   )
 where
 
@@ -38,11 +39,11 @@ doInference swaps env expr =
   where
     either' = runState (runReaderT (runExceptT (infer env expr)) swaps) 1
 
-instantiate :: Scheme -> TcMonad MonoType
+instantiate :: Scheme -> TcMonad (Substitutions, MonoType)
 instantiate (Scheme vars ty) = do
   newVars <- traverse (const getUnknown) vars
   let subst = Substitutions $ M.fromList (zip vars newVars)
-  pure (applySubst subst ty)
+  pure (subst, applySubst subst ty)
 
 applySubstScheme :: Substitutions -> Scheme -> Scheme
 applySubstScheme (Substitutions subst) (Scheme vars t) =
@@ -72,8 +73,7 @@ inferVarFromScope :: Environment -> Variable -> TcMonad (Substitutions, MonoType
 inferVarFromScope env name =
   case M.lookup name env of
     Just scheme -> do
-      ty <- instantiate scheme
-      pure (mempty, ty)
+      instantiate scheme
     _ -> do
       throwError $ VariableNotInEnv name (S.fromList (M.keys env))
 
@@ -84,8 +84,7 @@ inferFuncReturn ::
   MonoType ->
   TcMonad (Substitutions, MonoType)
 inferFuncReturn env binder function tyArg = do
-  let scheme = Scheme [] tyArg
-      newEnv = M.insert binder scheme env
+  let newEnv = M.insert binder (Scheme [] tyArg) env
   tyRes <- getUnknown
   (s1, tyFun) <- infer newEnv function
   s2 <- unify (MTFunction tyArg tyFun) (applySubst s1 tyRes)
@@ -117,6 +116,11 @@ splitRecordTypes map' = (subs, MTRecord types)
         mempty
         ((fst . snd) <$> M.toList map')
     types = snd <$> map'
+
+createSchemeForLambda :: Environment -> Variable -> MonoType -> Environment
+--createSchemeForLambda env (NamedVar n) (MTVar t) =
+--  M.insert (NamedVar n) (Scheme (pure t) (MTVar t)) env
+createSchemeForLambda env binder tyBinder = M.insert binder (Scheme [] tyBinder) env
 
 infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
 infer _ (MyLiteral a) = inferLiteral a
@@ -213,7 +217,7 @@ infer env (MyLetList binder1 binder2 expr body) = do
   pure (s4 <> s3 <> s2 <> s1, tyBody)
 infer env (MyLambda binder body) = do
   tyBinder <- getUnknown
-  let tmpCtx = M.insert binder (Scheme [] tyBinder) env
+  let tmpCtx = createSchemeForLambda env binder tyBinder
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
 infer env (MyApp function argument) = do

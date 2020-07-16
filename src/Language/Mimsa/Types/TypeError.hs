@@ -15,12 +15,13 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
+import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Variable
 
 data TypeError
   = UnknownTypeError
-  | FailsOccursCheck TypeVar MonoType
+  | FailsOccursCheck Swaps TypeVar MonoType
   | UnificationError MonoType MonoType
   | VariableNotInEnv Variable (Set Variable)
   | MissingRecordMember Name (Set Name)
@@ -39,11 +40,14 @@ showKeys record = T.intercalate ", " (prettyPrint <$> M.keys record)
 showSet :: (Printer a) => Set a -> Text
 showSet set = T.intercalate ", " (prettyPrint <$> S.toList set)
 
+showMap :: (Printer k, Printer a) => Map k a -> Text
+showMap map' = T.intercalate ", " (prettyPrint <$> M.toList map')
+
 instance Printer TypeError where
   prettyPrint UnknownTypeError =
     "Unknown type error"
-  prettyPrint (FailsOccursCheck name mt) =
-    prettyPrint name <> " appears inside " <> prettyPrint mt
+  prettyPrint (FailsOccursCheck swaps name mt) =
+    prettyPrint name <> " appears inside " <> prettyPrint mt <> ". Swaps: " <> showMap swaps
   prettyPrint (UnificationError a b) =
     "Unification error - cannot match " <> prettyPrint a <> " and " <> prettyPrint b
   prettyPrint (VariableNotInEnv name members) =
