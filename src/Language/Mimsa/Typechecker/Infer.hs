@@ -89,24 +89,17 @@ inferList env (a :| as) = do
     (pure (s1, tyA))
     as
 
--- need to infer whilst accumulating knowledge rather than combining at the end
-inferRecord ::
-  Environment ->
-  Map Name (Expr Variable) ->
-  TcMonad (Substitutions, MonoType)
-inferRecord env map' = do
-  (subs, typesMap) <-
-    foldr
-      ( \(key, var) fromLast -> do
-          (newSubs, newMap) <- fromLast
-          (s1, tyVar) <- infer (applySubstCtx newSubs env) var
-          pure (s1 <> newSubs, newMap <> M.singleton key tyVar)
-      )
-      ( pure
-          (mempty, mempty)
-      )
-      (M.toList map')
-  pure (subs, MTRecord typesMap)
+splitRecordTypes ::
+  Map Name (Substitutions, MonoType) ->
+  (Substitutions, MonoType)
+splitRecordTypes map' = (subs, MTRecord types)
+  where
+    subs =
+      foldr
+        (<>)
+        mempty
+        ((fst . snd) <$> M.toList map')
+    types = snd <$> map'
 
 createScheme :: Environment -> Variable -> MonoType -> Environment
 createScheme env binder tyBinder = M.insert binder tyBinder env
@@ -121,7 +114,7 @@ infer env (MyList as) = do
   pure (s1, MTList tyItems)
 infer env (MyRecord map') = do
   tyRecord <- getUnknown
-  (s1, tyResult) <- inferRecord env map'
+  (s1, tyResult) <- splitRecordTypes <$> traverse (infer env) map'
   s2 <- unify tyResult tyRecord
   pure
     ( s2 <> s1,
@@ -216,8 +209,8 @@ infer env (MyForAllLambda binder body) = do
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
 infer env (MyApp function argument) = do
   tyRes <- getUnknown
-  (s1, tyFun) <- infer (traceShowId env) function
-  (s2, tyArg) <- infer (traceShowId $ applySubstCtx s1 env) argument
+  (s1, tyFun) <- infer env function
+  (s2, tyArg) <- infer (applySubstCtx s1 env) argument
   s3 <- unify (traceShowId $ applySubst s2 tyFun) (MTFunction tyArg tyRes)
   pure (s3 <> s2 <> s1, applySubst (s3 <> s2 <> s1) tyRes)
 infer env (MyIf condition thenCase elseCase) = do

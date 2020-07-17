@@ -15,15 +15,15 @@ import Test.Helpers
 import Test.Hspec
 import Test.StoreData
 
-eval :: StoreEnv -> Text -> IO (Either Error (MonoType, Expr Variable))
+eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr Variable))
 eval env input =
   case evaluateText env input of
     Right (mt, expr', scope') -> do
       endExpr <- interpret scope' expr'
       case endExpr of
         Right a -> pure (Right (mt, a))
-        Left e -> pure (Left (InterpreterErr e))
-    Left e -> pure (Left e)
+        Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+    Left e -> pure (Left $ prettyPrint e)
 
 spec :: Spec
 spec = do
@@ -153,14 +153,15 @@ spec = do
       it "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)" $ do
         result <- eval mempty "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)"
         result `shouldBe` Right (MTInt, int 69)
-      it "listHead([1])" $ do
-        result <- eval stdLib "listHead([1])"
-        result `shouldBe` Right (MTInt, int 1)
+      it "listHead([1])" $
+        do
+          result <- eval stdLib "listHead([1])"
+          result `shouldBe` Right (MTInt, int 1)
       {-
-      it "list.head([1])" $ do
-        result <- eval stdLib "list.head([1])"
-        result2 <- eval stdLib "listHead([1])"
-        result `shouldBe` result2
+       it "list.head([1])" $ do
+         result <- eval stdLib "list.head([1])"
+         result2 <- eval stdLib "listHead([1])"
+         result `shouldBe` result2
       -}
       it "listTail([1])" $ do
         result <- eval stdLib "listTail([1])"
@@ -174,15 +175,16 @@ spec = do
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
         result `shouldBe` Right (MTInt, int 1)
-{-
       it "let id = \\ forall a -> a in id(1)" $ do
         result <- eval mempty "let id = \\ forall a -> a in id(1)"
         result `shouldBe` Right (MTInt, int 1)
--}
+      it "let reuse = ({ first: id(True), second: id(2) }) in reuse.first" $ do
+        result <- eval stdLib "let reuse = ({ first: id(True), second: id(2) }) in reuse.first"
+        result `shouldBe` Right (MTBool, bool True)
+      it "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)" $ do
+        result <- eval stdLib "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)"
+        result `shouldBe` Right (MTBool, bool True)
 {-
-it "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)" $ do
-  result <- eval stdLib "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)"
-  result `shouldBe` Right (MTBool, bool True)
 it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))" $ do
   result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))"
   result `shouldBe` Right (MTInt, int 1)
