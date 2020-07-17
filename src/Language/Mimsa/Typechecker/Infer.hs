@@ -215,9 +215,8 @@ infer env (MyForAllLambda binder body) = do
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
 infer env (MyApp (MyForAllLambda _binder body) argument) = do
-  ------here
   tyRes <- getUnknown
-  tyBinder <- getBoundType
+  tyBinder <- getUnknown
   (s1, tyFun) <- infer env body
   (s2, tyArg) <- infer (applySubstCtx s1 env) argument
   s3 <- unify (applySubst s2 tyFun) (MTFunction tyArg tyRes)
