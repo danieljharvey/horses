@@ -19,7 +19,7 @@ str' = str . StringType
 
 --
 unknown :: Int -> MonoType
-unknown = MTVar . TVFree . UniVar
+unknown = MTVar . NumberedVar
 
 ---
 
@@ -31,8 +31,8 @@ builtIn = BuiltIn . Name
 
 ---
 
-tvBound :: Int -> TypeVar
-tvBound = TVBound . UniVar
+tvBound :: Int -> Variable
+tvBound = NumberedVar
 
-tvFree :: Int -> TypeVar
-tvFree = TVFree . UniVar
+tvFree :: Int -> Variable
+tvFree = NumberedVar

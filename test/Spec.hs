@@ -9,7 +9,6 @@ where
 -- import qualified Data.Aeson as JSON
 import qualified Test.DepGraph as DepGraph
 import Test.Hspec
-import qualified Test.Instantiate as Instantiate
 import qualified Test.Interpreter as Interpreter
 import Test.QuickCheck.Instances ()
 import qualified Test.Repl as Repl
@@ -29,4 +28,3 @@ main = hspec $ do
   Typechecker.spec
   Repl.spec
   Unify.spec
-  Instantiate.spec
