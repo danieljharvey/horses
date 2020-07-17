@@ -6,12 +6,12 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.UniVar
+import Language.Mimsa.Types.Scheme
 import Language.Mimsa.Types.Variable
 
-type Environment = Map Variable MonoType
+type Environment = Map Variable Scheme
 
-newtype Substitutions = Substitutions {getSubstitutions :: Map UniVar MonoType}
+newtype Substitutions = Substitutions {getSubstitutions :: Map Variable MonoType}
   deriving (Eq, Ord, Show)
 
 instance Semigroup Substitutions where
@@ -21,9 +21,8 @@ instance Semigroup Substitutions where
 instance Monoid Substitutions where
   mempty = Substitutions mempty
 
-substLookup :: Substitutions -> TypeVar -> Maybe MonoType
-substLookup subst (TVFree i) = M.lookup i (getSubstitutions subst)
-substLookup _ _ = Nothing
+substLookup :: Substitutions -> Variable -> Maybe MonoType
+substLookup subst i = M.lookup i (getSubstitutions subst)
 
 applySubst :: Substitutions -> MonoType -> MonoType
 applySubst subst ty = case ty of

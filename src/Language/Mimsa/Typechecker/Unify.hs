@@ -16,7 +16,7 @@ import qualified Data.Set as S
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types
 
-freeTypeVars :: MonoType -> S.Set TypeVar
+freeTypeVars :: MonoType -> S.Set Variable
 freeTypeVars ty = case ty of
   MTVar var ->
     S.singleton var
@@ -33,7 +33,7 @@ freeTypeVars ty = case ty of
     S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
-varBind :: TypeVar -> MonoType -> TcMonad Substitutions
+varBind :: Variable -> MonoType -> TcMonad Substitutions
 varBind var ty
   | ty == MTVar var = pure mempty
   | S.member var (freeTypeVars ty) = do
@@ -41,12 +41,7 @@ varBind var ty
     throwError $
       FailsOccursCheck swaps var ty
   | otherwise =
-    case var of
-      -- only Free vars can actually be used as substitutions
-      TVFree uniVar -> pure $ Substitutions (M.singleton uniVar ty)
-      -- Bound vars must be instantiated first
-      _ -> do
-        throwError (CannotUnifyBoundVariable var ty)
+    pure $ Substitutions (M.singleton var ty)
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify a b | a == b = pure mempty

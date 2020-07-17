@@ -2,7 +2,6 @@
 
 module Language.Mimsa.Types.MonoType
   ( MonoType (..),
-    TypeVar (..),
   )
 where
 
@@ -12,14 +11,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
-import Language.Mimsa.Types.UniVar
-
-data TypeVar = TVBound UniVar | TVFree UniVar
-  deriving (Eq, Ord, Show)
-
-instance Printer TypeVar where
-  prettyPrint (TVBound i) = "Forall " <> T.pack (show i)
-  prettyPrint (TVFree i) = T.pack (show i)
+import Language.Mimsa.Types.Variable
 
 -------------
 
@@ -33,7 +25,7 @@ data MonoType
   | MTSum MonoType MonoType -- a | b
   | MTList MonoType -- [a]
   | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
-  | MTVar TypeVar
+  | MTVar Variable
   deriving (Eq, Ord, Show)
 
 -----------

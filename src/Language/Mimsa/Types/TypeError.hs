@@ -21,13 +21,13 @@ import Language.Mimsa.Types.Variable
 
 data TypeError
   = UnknownTypeError
-  | FailsOccursCheck Swaps TypeVar MonoType
+  | FailsOccursCheck Swaps Variable MonoType
   | UnificationError MonoType MonoType
   | VariableNotInEnv Variable (Set Variable)
   | MissingRecordMember Name (Set Name)
   | MissingRecordTypeMember Name (Map Name MonoType)
   | MissingBuiltIn Variable
-  | CannotUnifyBoundVariable TypeVar MonoType
+  | CannotUnifyBoundVariable Variable MonoType
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedSum MonoType
   | CaseMatchExpectedPair MonoType

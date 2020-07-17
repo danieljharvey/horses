@@ -17,7 +17,6 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Debug.Trace
 import Language.Mimsa.Library
-import Language.Mimsa.Typechecker.Instantiate
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
@@ -37,6 +36,12 @@ doInference swaps env expr = runTcMonad swaps (infer env expr)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
 applySubstCtx subst ctx = M.map (applySubst subst) ctx
+
+instantiate :: Scheme -> TcMonad MonoType
+instantiate (Scheme vars ty) = do
+  newVars <- traverse (const getUnknown) vars
+  let subst = M.fromList (zip vars newVars)
+  pure (applySubst subst ty)
 
 --------------
 

@@ -6,7 +6,7 @@ import Control.Monad.State (State, get, put)
 import Control.Monad.State (runState)
 import Language.Mimsa.Types
 
-type TcMonad = ExceptT TypeError (ReaderT Swaps (State UniVar))
+type TcMonad = ExceptT TypeError (ReaderT Swaps (State Int))
 
 runTcMonad ::
   Swaps ->
@@ -17,11 +17,11 @@ runTcMonad swaps value =
   where
     either' = runState (runReaderT (runExceptT value) swaps) 1
 
-getNextUniVar :: TcMonad UniVar
+getNextUniVar :: TcMonad Int
 getNextUniVar = do
   nextUniVar <- get
   put (nextUniVar + 1)
   pure nextUniVar
 
 getUnknown :: TcMonad MonoType
-getUnknown = MTVar . TVFree <$> getNextUniVar
+getUnknown = MTVar . NumberedVar <$> getNextUniVar
