@@ -11,14 +11,13 @@ where
 
 import Control.Applicative
 import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Monad.State (runState)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Debug.Trace
 import Language.Mimsa.Library
+import Language.Mimsa.Typechecker.Instantiate
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
@@ -34,10 +33,7 @@ doInference ::
   Environment ->
   Expr Variable ->
   Either TypeError (Substitutions, MonoType)
-doInference swaps env expr =
-  fst either'
-  where
-    either' = runState (runReaderT (runExceptT (infer env expr)) swaps) 1
+doInference swaps env expr = runTcMonad swaps (infer env expr)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
 applySubstCtx subst ctx = M.map (applySubst subst) ctx
@@ -59,7 +55,9 @@ inferBuiltIn name = case getLibraryFunction name of
 inferVarFromScope :: Environment -> Variable -> TcMonad (Substitutions, MonoType)
 inferVarFromScope env name =
   case M.lookup name env of
-    Just mt -> pure (mempty, mt)
+    Just mt -> do
+      clearType <- instantiate mt
+      pure (mempty, clearType)
     _ -> do
       throwError $ VariableNotInEnv name (S.fromList (M.keys env))
 
@@ -212,7 +210,7 @@ infer env (MyLambda binder body) = do
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
 infer env (MyForAllLambda binder body) = do
-  tyBinder <- getBoundType
+  tyBinder <- getUnknown
   let tmpCtx = createScheme env binder tyBinder
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
