@@ -26,7 +26,7 @@ eqTenExpr =
 fmapSum :: StoreExpression
 fmapSum =
   unsafeGetExpr
-    "\\f -> \\a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
+    "\\ forall f -> \\a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
 
 listUncons :: StoreExpression
 listUncons =
@@ -56,7 +56,7 @@ listTail =
 
 compose :: StoreExpression
 compose =
-  unsafeGetExpr "\\f -> \\g -> \\a -> f(g(a))"
+  unsafeGetExpr "\\ forall f -> \\ forall g -> \\ forall a -> f(g(a))"
 
 list :: StoreExpression
 list = unsafeGetExpr' "{ head: listHd, tail: listTl }" bindings'
@@ -70,10 +70,10 @@ list = unsafeGetExpr' "{ head: listHd, tail: listTl }" bindings'
         )
 
 idExpr :: StoreExpression
-idExpr = unsafeGetExpr "\\ i -> i"
+idExpr = unsafeGetExpr "\\ forall i -> i"
 
 justExpr :: StoreExpression
-justExpr = unsafeGetExpr "\\a -> Right a"
+justExpr = unsafeGetExpr "\\ forall a -> Right a"
 
 nothingExpr :: StoreExpression
 nothingExpr = unsafeGetExpr "Left Unit"

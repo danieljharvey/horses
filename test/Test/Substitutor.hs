@@ -88,7 +88,7 @@ spec = do
             bindings' = Bindings $ M.singleton (mkName "id") hash
             storeExpr = StoreExpression bindings' expr
             store' = Store (M.singleton hash idExpr)
-            expectedId = MyLambda (named "i") (MyVar (named "i"))
+            expectedId = MyForAllLambda (named "i") (MyVar (named "i"))
         substitute store' storeExpr
           `shouldBe` ( M.fromList
                          [ (NumberedVar 0, Name "id")
