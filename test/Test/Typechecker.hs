@@ -215,18 +215,17 @@ spec = do
           )
           exprs
       pure ()
-    {-it "Uses a polymorphic function twice with conflicting types" $ do
-          let expr =
-                MyLet
-                  (named "id")
-                  (MyForAllLambda (named "a") (MyVar (named "a")))
-                  ( MyPair
-                      (MyApp (MyVar (named "id")) (int 1))
-                      (MyApp (MyVar (named "id")) (bool True))
-                  )
-          let expected = Right (MTPair MTInt MTBool)
-          startInference mempty expr `shouldBe` expected
-    -}
+    it "Uses a polymorphic function twice with conflicting types" $ do
+      let expr =
+            MyLet
+              (named "id")
+              (MyForAllLambda (named "a") (MyVar (named "a")))
+              ( MyPair
+                  (MyApp (MyVar (named "id")) (int 1))
+                  (MyApp (MyVar (named "id")) (bool True))
+              )
+      let expected = Right (MTPair MTInt MTBool)
+      startInference mempty expr `shouldBe` expected
     it "Uses forall lambdas" $ do
       let expr =
             MyLet

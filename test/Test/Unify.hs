@@ -27,12 +27,15 @@ spec = do
     it "Two same things teach us nothing" $ do
       runUnifier (MTUnit, MTUnit) `shouldBe` Right mempty
     it "Combines a known with an unknown" $ do
-      runUnifier (MTVar (tvBound 1), MTInt)
+      runUnifier (MTVar (tvFree 1), MTInt)
         `shouldBe` Right (Substitutions $ M.singleton (UniVar 1) MTInt)
+    it "We learn nothing about bound vars" $ do
+      runUnifier (MTVar (tvBound 1), MTInt)
+        `shouldBe` Left (CannotUnifyBoundVariable (tvBound 1) MTInt)
     it "Combines two half pairs" $ do
       runUnifier
-        ( MTPair (MTVar (tvBound 1)) MTInt,
-          MTPair MTBool (MTVar (tvBound 2))
+        ( MTPair (MTVar (tvFree 1)) MTInt,
+          MTPair MTBool (MTVar (tvFree 2))
         )
         `shouldBe` Right
           ( Substitutions $
@@ -46,19 +49,19 @@ spec = do
         ( MTRecord $
             M.fromList
               [ (mkName "one", MTInt),
-                (mkName "two", MTVar (tvBound 1))
+                (mkName "two", MTVar (tvFree 1))
               ],
           MTRecord $
             M.fromList
-              [ (mkName "one", MTVar (tvBound 2)),
+              [ (mkName "one", MTVar (tvFree 2)),
                 (mkName "two", MTBool)
               ]
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (UniVar 2, MTBool),
-                  (UniVar 1, MTInt)
+                [ (UniVar 1, MTBool),
+                  (UniVar 2, MTInt)
                 ]
           )
     it "Combines two records" $ do
@@ -79,6 +82,3 @@ spec = do
                   (UniVar 2, MTBool)
                 ]
           )
-    it "Instantiates a free var from a bound one" $ do
-      runUnifier (MTInt, MTVar (TVBound 1))
-        `shouldBe` Right (Substitutions $ M.singleton (UniVar 1) MTInt)

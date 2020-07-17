@@ -26,7 +26,7 @@ eqTenExpr =
 fmapSum :: StoreExpression
 fmapSum =
   unsafeGetExpr
-    "\\ forall f -> \\a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
+    "\\ forall f -> \\ forall a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
 
 listUncons :: StoreExpression
 listUncons =

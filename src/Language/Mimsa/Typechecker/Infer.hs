@@ -214,21 +214,12 @@ infer env (MyForAllLambda binder body) = do
   let tmpCtx = createScheme env binder tyBinder
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
-infer env (MyApp (MyForAllLambda _binder body) argument) = do
-  tyRes <- getUnknown
-  tyBinder <- getUnknown
-  (s1, tyFun) <- infer env body
-  (s2, tyArg) <- infer (applySubstCtx s1 env) argument
-  s3 <- unify (applySubst s2 tyFun) (MTFunction tyArg tyRes)
-  s4 <- unify (applySubst s2 tyBinder) tyArg
-  let subs = traceShowId $ s4 <> s3 <> s2 <> s1
-  pure (subs, applySubst (subs) tyRes)
 infer env (MyApp function argument) = do
   tyRes <- getUnknown
-  (s1, tyFun) <- infer env function
-  (s2, tyArg) <- infer (applySubstCtx s1 env) argument
-  s3 <- unify (applySubst s2 tyFun) (MTFunction tyArg tyRes)
-  pure (s3 <> s2 <> s1, applySubst s3 tyRes)
+  (s1, tyFun) <- infer (traceShowId env) function
+  (s2, tyArg) <- infer (traceShowId $ applySubstCtx s1 env) argument
+  s3 <- unify (traceShowId $ applySubst s2 tyFun) (MTFunction tyArg tyRes)
+  pure (s3 <> s2 <> s1, applySubst (s3 <> s2 <> s1) tyRes)
 infer env (MyIf condition thenCase elseCase) = do
   (s1, tyCond) <- infer env condition
   (s2, tyThen) <- infer (applySubstCtx s1 env) thenCase
@@ -242,8 +233,9 @@ infer env (MyIf condition thenCase elseCase) = do
     )
 infer env (MyPair a b) = do
   (s1, tyA) <- infer env a
-  (s2, tyB) <- infer (applySubstCtx s1 env) b
-  pure (s2 <> s1, MTPair tyA tyB)
+  (s2, tyB) <- infer env b
+  let subs = (s2 <> s1)
+  pure (subs, traceShowId $ MTPair tyA tyB)
 infer env (MySum MyLeft left') = do
   tyRight <- getUnknown
   (s1, tyLeft) <- infer env left'

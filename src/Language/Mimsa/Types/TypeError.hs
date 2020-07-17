@@ -27,6 +27,7 @@ data TypeError
   | MissingRecordMember Name (Set Name)
   | MissingRecordTypeMember Name (Map Name MonoType)
   | MissingBuiltIn Variable
+  | CannotUnifyBoundVariable TypeVar MonoType
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedSum MonoType
   | CaseMatchExpectedPair MonoType
@@ -50,6 +51,7 @@ instance Printer TypeError where
     prettyPrint name <> " appears inside " <> prettyPrint mt <> ". Swaps: " <> showMap swaps
   prettyPrint (UnificationError a b) =
     "Unification error - cannot match " <> prettyPrint a <> " and " <> prettyPrint b
+  prettyPrint (CannotUnifyBoundVariable tv mt) = "Cannot unify type " <> prettyPrint mt <> " with bound variable " <> prettyPrint tv
   prettyPrint (VariableNotInEnv name members) =
     "Variable " <> prettyPrint name <> " not in scope: { " <> showSet members <> " }"
   prettyPrint (MissingRecordMember name members) =

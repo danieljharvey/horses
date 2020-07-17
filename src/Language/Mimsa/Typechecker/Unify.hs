@@ -46,9 +46,7 @@ varBind var ty
       TVFree uniVar -> pure $ Substitutions (M.singleton uniVar ty)
       -- Bound vars must be instantiated first
       _ -> do
-        uniVar <- getNextUniVar
-        pure $
-          Substitutions (M.singleton uniVar ty)
+        throwError (CannotUnifyBoundVariable var ty)
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify a b | a == b = pure mempty
