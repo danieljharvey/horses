@@ -123,7 +123,7 @@ infer env (MyRecord map') = do
 infer env (MyLet binder expr body) = do
   (s1, tyExpr) <- infer env expr
   let scheme = (applySubst s1 tyExpr)
-  let newEnv = M.insert binder scheme env
+  let newEnv = traceShowId $ M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 <> s1, tyBody)
 infer env (MyRecordAccess (MyRecord items') name) = do
