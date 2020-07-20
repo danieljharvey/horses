@@ -226,6 +226,13 @@ spec = do
               )
       let expected = Right (MTPair MTInt MTBool)
       startInference mempty expr `shouldBe` expected
+    it "Uses nested forall lambdas" $ do
+      let expr =
+            MyLet
+              (named "const")
+              (MyForAllLambda (named "a") (MyForAllLambda (named "b") (MyVar (named "a"))))
+              (MyApp (MyApp (MyVar (named "const")) (int 1)) (int 2))
+      startInference mempty expr `shouldBe` Right (MTInt)
     it "Uses forall lambdas" $ do
       let expr =
             MyLet
