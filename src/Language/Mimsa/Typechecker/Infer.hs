@@ -17,6 +17,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Library
 import Language.Mimsa.Logging
+import Language.Mimsa.Typechecker.Quantified
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
@@ -112,6 +113,7 @@ splitRecordTypes map' = (subs, MTRecord types)
         ((fst . snd) <$> M.toList map')
     types = snd <$> map'
 
+-- let's pattern match on exactly what's inside more clearly
 inferApplication :: Environment -> Expr Variable -> Expr Variable -> TcMonad (Substitutions, MonoType)
 inferApplication env function argument = do
   tyRes <- getUnknown
@@ -119,6 +121,14 @@ inferApplication env function argument = do
   (s2, tyArg) <- infer (applySubstCtx s1 env) argument
   s3 <- unify (applySubst s2 tyFun) (MTFunction tyArg tyRes)
   pure (s3 <> s2 <> s1, applySubst s3 tyRes)
+
+inferLetBinding :: Environment -> Variable -> Expr Variable -> Expr Variable -> TcMonad (Substitutions, MonoType)
+inferLetBinding env binder expr body = do
+  (s1, tyExpr) <- infer env expr
+  let scheme = Scheme (S.toList (getQuantified expr)) (applySubst s1 tyExpr)
+  let newEnv = M.insert binder scheme env
+  (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
+  pure (s2 <> s1, tyBody)
 
 infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
@@ -138,12 +148,8 @@ infer env inferExpr =
         ( s2 <> s1,
           applySubst (s2 <> s1) tyRecord
         )
-    (MyLet binder expr body) -> do
-      (s1, tyExpr) <- infer env expr
-      let scheme = Scheme [] (applySubst s1 tyExpr)
-      let newEnv = M.insert binder scheme env
-      (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
-      pure (s2 <> s1, tyBody)
+    (MyLet binder expr body) ->
+      inferLetBinding env binder expr body
     (MyRecordAccess (MyRecord items') name) -> do
       case M.lookup name items' of
         Just item -> do
@@ -221,8 +227,8 @@ infer env inferExpr =
       (s1, tyBody) <- infer tmpCtx body
       pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
     (MyForAllLambda binder body) -> do
-      tyBinder <- getUnknown
-      let tmpCtx = M.insert binder (Scheme [binder] tyBinder) env
+      let tyBinder = MTVar binder
+      let tmpCtx = M.insert binder (Scheme [] tyBinder) env
       (s1, tyBody) <- infer tmpCtx body
       pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
     (MyApp function argument) -> inferApplication env function argument
