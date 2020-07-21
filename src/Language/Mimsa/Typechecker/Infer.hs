@@ -125,14 +125,68 @@ inferApplication env function argument = do
 inferLetBinding :: Environment -> Variable -> Expr Variable -> Expr Variable -> TcMonad (Substitutions, MonoType)
 inferLetBinding env binder expr body = do
   (s1, tyExpr) <- infer env expr
-  let scheme = Scheme (S.toList (getQuantified expr)) (applySubst s1 tyExpr)
+  (binders, tyExprNew) <- freshQuantified (getQuantified expr) tyExpr
+  let scheme = Scheme binders (applySubst s1 tyExprNew)
   let newEnv = M.insert binder scheme env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 <> s1, tyBody)
 
+inferLetListBinding ::
+  Environment ->
+  Variable ->
+  Variable ->
+  Expr Variable ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
+inferLetListBinding env binder1 binder2 expr body = do
+  (s1, tyExpr) <- infer env expr
+  (tyHead, tyRest) <- case tyExpr of
+    (MTVar _a) -> do
+      tyHead <- getUnknown
+      tyRest <- getUnknown
+      pure (tyHead, tyRest)
+    (MTList tyHead) -> do
+      tyRest <- getUnknown
+      pure (tyHead, tyRest)
+    a -> throwError $ CaseMatchExpectedList a
+  (headBinders, tyHeadNew) <- freshQuantified (getQuantified expr) tyHead
+  (restBinders, tyRestNew) <- freshQuantified (getQuantified expr) tyRest
+  let schemeHead = Scheme headBinders (applySubst s1 tyHeadNew)
+      schemeRest = Scheme restBinders (applySubst s1 tyRestNew)
+      newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
+  s2 <- unify tyExpr (MTList tyHeadNew)
+  s3 <- unify tyRestNew (MTSum MTUnit (MTList tyHeadNew))
+  (s4, tyBody) <- infer (applySubstCtx (s3 <> s2 <> s1) newEnv) body
+  pure (s4 <> s3 <> s2 <> s1, tyBody)
+
+inferLetPairBinding ::
+  Environment ->
+  Variable ->
+  Variable ->
+  Expr Variable ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
+inferLetPairBinding env binder1 binder2 expr body = do
+  (s1, tyExpr) <- infer env expr
+  (tyA, tyB) <- case tyExpr of
+    (MTVar _a) -> do
+      tyA <- getUnknown
+      tyB <- getUnknown
+      pure (tyA, tyB)
+    (MTPair a b) -> pure (a, b)
+    a -> throwError $ CaseMatchExpectedPair a
+  (bindersA, tyANew) <- freshQuantified (getQuantified expr) tyA
+  (bindersB, tyBNew) <- freshQuantified (getQuantified expr) tyB
+  let schemeA = Scheme bindersA (applySubst s1 tyANew)
+      schemeB = Scheme bindersB (applySubst s1 tyBNew)
+      newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
+  s2 <- unify tyExpr (MTPair tyANew tyBNew)
+  (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
+  pure (s3 <> s2 <> s1, tyBody)
+
 infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
-  case debugLog "expr" inferExpr of
+  case inferExpr of
     (MyLiteral a) -> inferLiteral a
     (MyVar name) ->
       (inferVarFromScope env name)
@@ -188,39 +242,10 @@ infer env inferExpr =
       s5 <- unify tyLeftRes tyRightRes
       pure (s5 <> subs, applySubst (s5 <> subs) tyLeftRes)
     (MyCase _ l r) -> throwError $ CaseMatchExpectedLambda l r
-    (MyLetPair binder1 binder2 expr body) -> do
-      (s1, tyExpr) <- infer env expr
-      (tyA, tyB) <- case tyExpr of
-        (MTVar _a) -> do
-          tyA <- getUnknown
-          tyB <- getUnknown
-          pure (tyA, tyB)
-        (MTPair a b) -> pure (a, b)
-        a -> throwError $ CaseMatchExpectedPair a
-      let schemeA = Scheme [] (applySubst s1 tyA)
-          schemeB = Scheme [] (applySubst s1 tyB)
-          newEnv = M.insert binder1 schemeA (M.insert binder2 schemeB env)
-      s2 <- unify tyExpr (MTPair tyA tyB)
-      (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
-      pure (s3 <> s2 <> s1, tyBody)
-    (MyLetList binder1 binder2 expr body) -> do
-      (s1, tyExpr) <- infer env expr
-      (tyHead, tyRest) <- case tyExpr of
-        (MTVar _a) -> do
-          tyHead <- getUnknown
-          tyRest <- getUnknown
-          pure (tyHead, tyRest)
-        (MTList tyHead) -> do
-          tyRest <- getUnknown
-          pure (tyHead, tyRest)
-        a -> throwError $ CaseMatchExpectedList a
-      let schemeHead = Scheme [] (applySubst s1 tyHead)
-          schemeRest = Scheme [] (applySubst s1 tyRest)
-          newEnv = M.insert binder1 schemeHead (M.insert binder2 schemeRest env)
-      s2 <- unify tyExpr (MTList tyHead)
-      s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
-      (s4, tyBody) <- infer (applySubstCtx (s3 <> s2 <> s1) newEnv) body
-      pure (s4 <> s3 <> s2 <> s1, tyBody)
+    (MyLetPair binder1 binder2 expr body) ->
+      inferLetPairBinding env binder1 binder2 expr body
+    (MyLetList binder1 binder2 expr body) ->
+      inferLetListBinding env binder1 binder2 expr body
     (MyLambda binder body) -> do
       tyBinder <- getUnknown
       let tmpCtx = M.insert binder (Scheme [] tyBinder) env

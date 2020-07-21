@@ -10,10 +10,10 @@ import Language.Mimsa.Types
 
 fstExpr :: StoreExpression
 fstExpr =
-  unsafeGetExpr "\\ forall tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
+  unsafeGetExpr "\\forall tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
 
 sndExpr :: StoreExpression
-sndExpr = unsafeGetExpr "\\ forall tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
+sndExpr = unsafeGetExpr "\\forall tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
 
 isTenExpr :: StoreExpression
 isTenExpr =
@@ -56,7 +56,7 @@ listTail =
 
 compose :: StoreExpression
 compose =
-  unsafeGetExpr "\\ forall f -> \\ forall g -> \\ a -> f(g(a))"
+  unsafeGetExpr "\\ forall f -> \\ forall g -> \\ forall aValue -> f(g(aValue))"
 
 list :: StoreExpression
 list = unsafeGetExpr' "{ head: listHd, tail: listTl }" bindings'

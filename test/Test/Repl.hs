@@ -6,6 +6,7 @@ module Test.Repl
   )
 where
 
+import Data.Either (isRight)
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
@@ -157,12 +158,12 @@ spec = do
         do
           result <- eval stdLib "listHead([1])"
           result `shouldBe` Right (MTInt, int 1)
-      {-
       it "list.head([1])" $ do
         result <- eval stdLib "list.head([1])"
-        result2 <- eval stdLib "listHead([1])"
-        result `shouldBe` result2
-      -}
+        result `shouldBe` Right (MTInt, int 1)
+      it "(listHead,listTail)" $ do
+        result <- eval stdLib "(listHead,listTail)"
+        result `shouldSatisfy` isRight
       it "listTail([1])" $ do
         result <- eval stdLib "listTail([1])"
         result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
