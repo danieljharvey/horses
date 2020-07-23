@@ -15,4 +15,4 @@ instance Printer Scheme where
     where
       varText = case vars of
         [] -> ""
-        a -> "forall " <> T.intercalate " " (prettyPrint <$> a) <> " "
+        a -> "[" <> T.intercalate ", " (prettyPrint <$> a) <> "] "
