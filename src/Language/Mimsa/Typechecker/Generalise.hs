@@ -4,7 +4,7 @@ import Data.List
 import qualified Data.Map as M
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Scheme
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Variable
 
 freeVars :: MonoType -> [Variable]

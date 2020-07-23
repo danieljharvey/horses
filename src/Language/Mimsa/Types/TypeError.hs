@@ -12,11 +12,11 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Environment
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Swaps
-import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Variable
 
 data TypeError
