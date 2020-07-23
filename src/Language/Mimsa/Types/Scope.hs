@@ -16,4 +16,6 @@ newtype Scope = Scope {getScope :: Map Variable (Expr Variable)}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
 instance Printer Scope where
-  prettyPrint (Scope s) = "{ " <> T.intercalate ", " (prettyPrint <$> M.elems s) <> " }"
+  prettyPrint (Scope s) = "{ " <> T.intercalate ", " (printItem <$> M.toList s) <> " }"
+    where
+      printItem (k, a) = prettyPrint k <> ": " <> prettyPrint a

@@ -39,6 +39,9 @@ useVarFromScope name = do
         (MyLambda binder expr') -> do
           (freshBinder, freshExpr) <- newLambdaCopy binder expr'
           interpretWithScope (MyLambda freshBinder freshExpr)
+        (MyForAllLambda binder expr') -> do
+          (freshBinder, freshExpr) <- newLambdaCopy binder expr'
+          interpretWithScope (MyLambda freshBinder freshExpr)
         other -> interpretWithScope other
     Nothing -> do
       scope' <- get
@@ -92,7 +95,7 @@ unwrapBuiltIn :: Variable -> ForeignFunc -> App (Expr Variable)
 unwrapBuiltIn name (NoArgs t' io) = runBuiltIn name (NoArgs t' io)
 unwrapBuiltIn name (OneArg _ _) = do
   let wrapped = wrappedName name -- rename our foreign func
-  modify ((<>) (Scope $ M.singleton wrapped (MyVar name))) -- add new name to scope
+  addToScope (Scope $ M.singleton wrapped (MyVar name)) -- add new name to scope
   pure
     ( MyLambda
         (wrappedVarName name 1)
@@ -100,7 +103,7 @@ unwrapBuiltIn name (OneArg _ _) = do
     )
 unwrapBuiltIn name (TwoArgs _ _) = do
   let wrapped = wrappedName name
-  modify ((<>) (Scope $ M.singleton wrapped (MyVar name))) -- add new name to scope
+  addToScope (Scope $ M.singleton wrapped (MyVar name)) -- add new name to scope
   pure
     ( MyLambda
         (wrappedVarName name 1)
@@ -170,107 +173,112 @@ swapName from to (MyRecord map') = do
   pure (MyRecord map2)
 swapName _ _ (MyLiteral a) = pure (MyLiteral a)
 
+addToScope :: Scope -> App ()
+addToScope scope' = modify ((<>) scope')
+
 interpretWithScope :: (Expr Variable) -> App (Expr Variable)
-interpretWithScope (MyLiteral a) = pure (MyLiteral a)
-interpretWithScope (MyPair a b) = do
-  exprA <- interpretWithScope a
-  exprB <- interpretWithScope b
-  pure (MyPair exprA exprB)
-interpretWithScope (MyLet binder expr body) = do
-  modify ((<>) (Scope $ M.singleton binder expr))
-  interpretWithScope body
-interpretWithScope (MyLetPair binderA binderB (MyPair a b) body) = do
-  let newScopes = Scope $ M.fromList [(binderA, a), (binderB, b)]
-  modify ((<>) newScopes)
-  interpretWithScope body
-interpretWithScope (MyLetPair binderA binderB (MyVar v) body) = do
-  expr <- interpretWithScope (MyVar v)
-  interpretWithScope (MyLetPair binderA binderB expr body)
-interpretWithScope (MyLetPair _ _ a _) =
-  throwError $ CannotDestructureAsPair a
-interpretWithScope (MyVar name) = do
-  scope <- get
-  useVarFromBuiltIn name <|> useVarFromScope name
-    <|> (throwError $ CouldNotFindVar scope name)
-interpretWithScope (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) = do
-  interpretWithScope (MyLet binderL a exprL)
-interpretWithScope (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) = do
-  interpretWithScope (MyLet binderR b exprR)
-interpretWithScope (MyCase (MyVar a) l r) = do
-  expr <- interpretWithScope (MyVar a)
-  interpretWithScope (MyCase expr l r)
-interpretWithScope (MyCase (MyApp a b) l r) = do
-  expr <- interpretWithScope (MyApp a b)
-  interpretWithScope (MyCase expr l r)
-interpretWithScope (MyCase a _ _) = throwError $ CannotDestructureAsSum a
-interpretWithScope (MyApp (MyVar f) value) = do
-  expr <- interpretWithScope (MyVar f)
-  interpretWithScope (MyApp expr value)
-interpretWithScope (MyApp (MyLambda binder expr) value) =
-  interpretWithScope (MyLet binder value expr)
-interpretWithScope (MyApp (MyForAllLambda binder expr) value) =
-  interpretWithScope (MyLet binder value expr)
-interpretWithScope (MyLetList binderHead binderRest (MyList as) body) = do
-  let (listHead, listTail) = NE.uncons as
-      tail' = case listTail of
-        Nothing -> MySum MyLeft (MyLiteral MyUnit)
-        Just bs -> MySum MyRight (MyList bs)
-  let newScopes = Scope $ M.fromList [(binderHead, listHead), (binderRest, tail')]
-  modify ((<>) newScopes)
-  interpretWithScope body
-interpretWithScope (MyRecordAccess (MyRecord record) name) = do
-  case M.lookup name record of
-    Just item -> interpretWithScope item
-    _ -> throwError $ CannotFindMemberInRecord record name
-interpretWithScope (MyRecordAccess (MyVar a) name) = do
-  expr <- interpretWithScope (MyVar a)
-  interpretWithScope (MyRecordAccess expr name)
-interpretWithScope (MyRecordAccess (MyRecordAccess a name') name) = do
-  expr <- interpretWithScope (MyRecordAccess a name')
-  interpretWithScope (MyRecordAccess expr name)
-interpretWithScope (MyRecordAccess a name) =
-  throwError $ CannotDestructureAsRecord a name
-interpretWithScope (MyLetList binderHead binderRest (MyVar b) body) = do
-  expr <- interpretWithScope (MyVar b)
-  interpretWithScope (MyLetList binderHead binderRest expr body)
-interpretWithScope (MyLetList _ _ a _) =
-  throwError $ CannotDestructureAsList a
-interpretWithScope (MyApp (MyApp a b) c) = do
-  expr <- interpretWithScope (MyApp a b)
-  interpretWithScope (MyApp expr c)
-interpretWithScope (MyApp (MyLet a b c) d) = do
-  expr <- interpretWithScope (MyLet a b c)
-  interpretWithScope (MyApp expr d)
-interpretWithScope (MyApp (MyLetPair a b c d) e) = do
-  expr <- interpretWithScope (MyLetPair a b c d)
-  interpretWithScope (MyApp expr e)
-interpretWithScope (MyApp (MyRecordAccess a b) c) = do
-  expr <- interpretWithScope (MyRecordAccess a b)
-  interpretWithScope (MyApp expr c)
-interpretWithScope (MySum s a) = do
-  expr <- interpretWithScope a
-  pure (MySum s expr)
-interpretWithScope (MyApp (MyLetList a b c d) e) = do
-  expr <- interpretWithScope (MyLetList a b c d)
-  interpretWithScope (MyApp expr e)
-interpretWithScope (MyList as) = do
-  exprs <- traverse interpretWithScope as
-  pure (MyList exprs)
-interpretWithScope (MyRecord as) = do
-  exprs <- traverse interpretWithScope as
-  pure (MyRecord exprs)
-interpretWithScope (MyApp thing _) =
-  throwError $ CannotApplyToNonFunction thing
-interpretWithScope (MyLambda a b) = pure (MyLambda a b)
-interpretWithScope (MyForAllLambda a b) = pure (MyForAllLambda a b)
-interpretWithScope (MyIf (MyLiteral (MyBool pred')) true false) =
-  if pred'
-    then interpretWithScope true
-    else interpretWithScope false
-interpretWithScope (MyIf all'@(MyLiteral _) _ _) =
-  throwError $ PredicateForIfMustBeABoolean all'
-interpretWithScope (MyIf all'@(MyLambda _ _) _ _) =
-  throwError $ PredicateForIfMustBeABoolean all'
-interpretWithScope (MyIf pred' true false) = do
-  predExpr <- interpretWithScope pred'
-  interpretWithScope (MyIf predExpr true false)
+interpretWithScope interpretExpr =
+  case interpretExpr of
+    (MyLiteral a) -> pure (MyLiteral a)
+    (MyPair a b) -> do
+      exprA <- interpretWithScope a
+      exprB <- interpretWithScope b
+      pure (MyPair exprA exprB)
+    (MyLet binder expr body) -> do
+      addToScope (Scope $ M.singleton binder expr)
+      interpretWithScope body
+    (MyLetPair binderA binderB (MyPair a b) body) -> do
+      let newScopes = Scope $ M.fromList [(binderA, a), (binderB, b)]
+      addToScope newScopes
+      interpretWithScope body
+    (MyLetPair binderA binderB (MyVar v) body) -> do
+      expr <- interpretWithScope (MyVar v)
+      interpretWithScope (MyLetPair binderA binderB expr body)
+    (MyLetPair _ _ a _) ->
+      throwError $ CannotDestructureAsPair a
+    (MyVar name) -> do
+      scope <- get
+      useVarFromBuiltIn name <|> useVarFromScope name
+        <|> (throwError $ CouldNotFindVar scope name)
+    (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) -> do
+      interpretWithScope (MyLet binderL a exprL)
+    (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) -> do
+      interpretWithScope (MyLet binderR b exprR)
+    (MyCase (MyVar a) l r) -> do
+      expr <- interpretWithScope (MyVar a)
+      interpretWithScope (MyCase expr l r)
+    (MyCase (MyApp a b) l r) -> do
+      expr <- interpretWithScope (MyApp a b)
+      interpretWithScope (MyCase expr l r)
+    (MyCase a _ _) -> throwError $ CannotDestructureAsSum a
+    (MyApp (MyVar f) value) -> do
+      expr <- interpretWithScope (MyVar f)
+      interpretWithScope (MyApp expr value)
+    (MyApp (MyLambda binder expr) value) ->
+      interpretWithScope (MyLet binder value expr)
+    (MyApp (MyForAllLambda binder expr) value) ->
+      interpretWithScope (MyLet binder value expr)
+    (MyLetList binderHead binderRest (MyList as) body) -> do
+      let (listHead, listTail) = NE.uncons as
+          tail' = case listTail of
+            Nothing -> MySum MyLeft (MyLiteral MyUnit)
+            Just bs -> MySum MyRight (MyList bs)
+      let newScopes = Scope $ M.fromList [(binderHead, listHead), (binderRest, tail')]
+      addToScope newScopes
+      interpretWithScope body
+    (MyRecordAccess (MyRecord record) name) -> do
+      case M.lookup name record of
+        Just item -> interpretWithScope item
+        _ -> throwError $ CannotFindMemberInRecord record name
+    (MyRecordAccess (MyVar a) name) -> do
+      expr <- interpretWithScope (MyVar a)
+      interpretWithScope (MyRecordAccess expr name)
+    (MyRecordAccess (MyRecordAccess a name') name) -> do
+      expr <- interpretWithScope (MyRecordAccess a name')
+      interpretWithScope (MyRecordAccess expr name)
+    (MyRecordAccess a name) ->
+      throwError $ CannotDestructureAsRecord a name
+    (MyLetList binderHead binderRest (MyVar b) body) -> do
+      expr <- interpretWithScope (MyVar b)
+      interpretWithScope (MyLetList binderHead binderRest expr body)
+    (MyLetList _ _ a _) ->
+      throwError $ CannotDestructureAsList a
+    (MyApp (MyApp a b) c) -> do
+      expr <- interpretWithScope (MyApp a b)
+      interpretWithScope (MyApp expr c)
+    (MyApp (MyLet a b c) d) -> do
+      expr <- interpretWithScope (MyLet a b c)
+      interpretWithScope (MyApp expr d)
+    (MyApp (MyLetPair a b c d) e) -> do
+      expr <- interpretWithScope (MyLetPair a b c d)
+      interpretWithScope (MyApp expr e)
+    (MyApp (MyRecordAccess a b) c) -> do
+      expr <- interpretWithScope (MyRecordAccess a b)
+      interpretWithScope (MyApp expr c)
+    (MySum s a) -> do
+      expr <- interpretWithScope a
+      pure (MySum s expr)
+    (MyApp (MyLetList a b c d) e) -> do
+      expr <- interpretWithScope (MyLetList a b c d)
+      interpretWithScope (MyApp expr e)
+    (MyList as) -> do
+      exprs <- traverse interpretWithScope as
+      pure (MyList exprs)
+    (MyRecord as) -> do
+      exprs <- traverse interpretWithScope as
+      pure (MyRecord exprs)
+    (MyApp thing _) ->
+      throwError $ CannotApplyToNonFunction thing
+    (MyLambda a b) -> pure (MyLambda a b)
+    (MyForAllLambda a b) -> pure (MyForAllLambda a b)
+    (MyIf (MyLiteral (MyBool pred')) true false) ->
+      if pred'
+        then interpretWithScope true
+        else interpretWithScope false
+    (MyIf all'@(MyLiteral _) _ _) ->
+      throwError $ PredicateForIfMustBeABoolean all'
+    (MyIf all'@(MyLambda _ _) _ _) ->
+      throwError $ PredicateForIfMustBeABoolean all'
+    (MyIf pred' true false) -> do
+      predExpr <- interpretWithScope pred'
+      interpretWithScope (MyIf predExpr true false)

@@ -134,7 +134,7 @@ spec = do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction (unknown 2) (unknown 2),
+            ( MTFunction (unknown 3) (unknown 3),
               MyLambda (named "i") (MyVar (named "i"))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
@@ -167,12 +167,10 @@ spec = do
       it "listTail([1])" $ do
         result <- eval stdLib "listTail([1])"
         result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
-      {-
       it "list.tail([1])" $ do
         result <- eval stdLib "list.tail([1])"
         result2 <- eval stdLib "listTail([1])"
         result `shouldBe` result2
-      -}
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
         result `shouldBe` Right (MTInt, int 1)
@@ -195,6 +193,6 @@ spec = do
         result <- eval stdLib "let x = (maybe.nothing) in maybe.just(1)"
         result
           `shouldBe` Right
-            ( MTSum (MTVar (NumberedVar 1)) MTInt,
+            ( MTSum (MTVar (NumberedVar 13)) MTInt,
               MySum MyRight (int 1)
             )

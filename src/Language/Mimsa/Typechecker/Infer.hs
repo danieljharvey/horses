@@ -16,9 +16,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Library
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.Generalise
-import Language.Mimsa.Typechecker.Quantified
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
@@ -70,7 +68,7 @@ inferBuiltIn name = case getLibraryFunction name of
 inferVarFromScope :: Environment -> Variable -> TcMonad (Substitutions, MonoType)
 inferVarFromScope env name =
   let lookup' name' (Environment env') = M.lookup name' env'
-   in case lookup' (debugPretty "inferVar name" name) (debugPretty "inferVar env" env) of
+   in case lookup' name env of
         Just mt -> do
           instantiate mt
         _ -> do
@@ -153,13 +151,11 @@ inferLetListBinding env binder1 binder2 expr body = do
       tyRest <- getUnknown
       pure (tyHead, tyRest)
     a -> throwError $ CaseMatchExpectedList a
-  (headBinders, tyHeadNew) <- freshQuantified (getQuantified expr) tyHead
-  (restBinders, tyRestNew) <- freshQuantified (getQuantified expr) tyRest
-  let schemeHead = Scheme headBinders (applySubst s1 tyHeadNew)
-      schemeRest = Scheme restBinders (applySubst s1 tyRestNew)
+  let schemeHead = Scheme mempty (applySubst s1 tyHead)
+      schemeRest = Scheme mempty (applySubst s1 tyRest)
       newEnv = createEnv binder1 schemeHead <> createEnv binder2 schemeRest <> env
-  s2 <- unify tyExpr (MTList tyHeadNew)
-  s3 <- unify tyRestNew (MTSum MTUnit (MTList tyHeadNew))
+  s2 <- unify tyExpr (MTList tyHead)
+  s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
   (s4, tyBody) <- infer (applySubstCtx (s3 <> s2 <> s1) newEnv) body
   pure (s4 <> s3 <> s2 <> s1, tyBody)
 
@@ -179,18 +175,16 @@ inferLetPairBinding env binder1 binder2 expr body = do
       pure (tyA, tyB)
     (MTPair a b) -> pure (a, b)
     a -> throwError $ CaseMatchExpectedPair a
-  (bindersA, tyANew) <- freshQuantified (getQuantified expr) tyA
-  (bindersB, tyBNew) <- freshQuantified (getQuantified expr) tyB
-  let schemeA = Scheme bindersA (applySubst s1 tyANew)
-      schemeB = Scheme bindersB (applySubst s1 tyBNew)
+  let schemeA = Scheme mempty (applySubst s1 tyA)
+      schemeB = Scheme mempty (applySubst s1 tyB)
       newEnv = createEnv binder1 schemeA <> createEnv binder2 schemeB <> env
-  s2 <- unify tyExpr (MTPair tyANew tyBNew)
+  s2 <- unify tyExpr (MTPair tyA tyB)
   (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
   pure (s3 <> s2 <> s1, tyBody)
 
 infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
-  case debugPretty "expr" inferExpr of
+  case inferExpr of
     (MyLiteral a) -> inferLiteral a
     (MyVar name) ->
       (inferVarFromScope env name)
