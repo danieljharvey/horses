@@ -251,13 +251,6 @@ infer env inferExpr =
               <> env
       (s1, tyBody) <- infer tmpCtx body
       pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
-    (MyForAllLambda binder body) -> do
-      let tyBinder = MTVar binder
-      let tmpCtx =
-            createEnv binder (Scheme [] tyBinder)
-              <> env
-      (s1, tyBody) <- infer tmpCtx body
-      pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
     (MyApp function argument) -> inferApplication env function argument
     (MyIf condition thenCase elseCase) -> do
       (s1, tyCond) <- infer env condition

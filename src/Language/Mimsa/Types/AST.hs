@@ -68,7 +68,6 @@ data Expr a
   | MyLet a (Expr a) (Expr a) -- binder, expr, body
   | MyLetPair a a (Expr a) (Expr a) -- binderA, binderB, expr, body
   | MyLetList a a (Expr a) (Expr a) -- binderHead, binderHead, expr, body
-  | MyForAllLambda a (Expr a) -- binder, body
   | MyLambda a (Expr a) -- binder, body
   | MyApp (Expr a) (Expr a) -- function, argument
   | MyIf (Expr a) (Expr a) (Expr a) -- expr, thencase, elsecase
@@ -103,11 +102,6 @@ instance (Printer a) => Printer (Expr a) where
       <> printSubExpr body
   prettyPrint (MyLambda binder expr) =
     "\\"
-      <> prettyPrint binder
-      <> " -> "
-      <> printSubExpr expr
-  prettyPrint (MyForAllLambda binder expr) =
-    "\\ forall "
       <> prettyPrint binder
       <> " -> "
       <> printSubExpr expr

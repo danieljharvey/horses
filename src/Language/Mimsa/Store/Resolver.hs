@@ -27,7 +27,6 @@ extractVars_ (MyVar a) = S.singleton a
 extractVars_ (MyIf a b c) = extractVars_ a <> extractVars_ b <> extractVars_ c
 extractVars_ (MyLet newVar a b) = S.delete newVar (extractVars_ a <> extractVars_ b)
 extractVars_ (MyLambda newVar a) = S.delete newVar (extractVars_ a)
-extractVars_ (MyForAllLambda newVar a) = S.delete newVar (extractVars_ a)
 extractVars_ (MyApp a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MyLiteral _) = mempty
 extractVars_ (MyCase sum' l r) = extractVars_ sum' <> extractVars_ l <> extractVars_ r

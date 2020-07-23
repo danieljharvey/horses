@@ -131,12 +131,6 @@ spec = do
     it "Recognises a lambda in parens" $ do
       parseExpr "(\\x -> x)"
         `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
-    it "Recognises a forall lambda" $ do
-      parseExpr "\\forall x -> x"
-        `shouldBe` Right (MyForAllLambda (mkName "x") (MyVar (mkName "x")))
-    it "Recognises a forall lambda with wild whitespace" $ do
-      parseExpr "\\       forall  x -> x"
-        `shouldBe` Right (MyForAllLambda (mkName "x") (MyVar (mkName "x")))
     it "Recognises function application in parens" $ do
       parseExpr "add (1)"
         `shouldBe` Right

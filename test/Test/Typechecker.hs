@@ -219,27 +219,13 @@ spec = do
       let expr =
             MyLet
               (named "id")
-              (MyForAllLambda (named "a") (MyVar (named "a")))
+              (MyLambda (named "a") (MyVar (named "a")))
               ( MyPair
                   (MyApp (MyVar (named "id")) (int 1))
                   (MyApp (MyVar (named "id")) (bool True))
               )
       let expected = Right (MTPair MTInt MTBool)
       startInference mempty expr `shouldBe` expected
-    it "Uses nested forall lambdas" $ do
-      let expr =
-            MyLet
-              (named "const")
-              (MyForAllLambda (named "a") (MyForAllLambda (named "b") (MyVar (named "a"))))
-              (MyApp (MyApp (MyVar (named "const")) (int 1)) (int 2))
-      startInference mempty expr `shouldBe` Right (MTInt)
-    it "Uses forall lambdas" $ do
-      let expr =
-            MyLet
-              (named "id")
-              (MyForAllLambda (named "a") (MyVar (named "a")))
-              (MyApp (MyVar (named "id")) (int 1))
-      startInference mempty expr `shouldBe` Right MTInt
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             ( MyLambda

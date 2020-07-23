@@ -39,9 +39,6 @@ useVarFromScope name = do
         (MyLambda binder expr') -> do
           (freshBinder, freshExpr) <- newLambdaCopy binder expr'
           interpretWithScope (MyLambda freshBinder freshExpr)
-        (MyForAllLambda binder expr') -> do
-          (freshBinder, freshExpr) <- newLambdaCopy binder expr'
-          interpretWithScope (MyLambda freshBinder freshExpr)
         other -> interpretWithScope other
     Nothing -> do
       scope' <- get
@@ -133,8 +130,6 @@ swapName from to (MyLet name a b) =
     <*> (swapName from to b)
 swapName from to (MyLambda name a) =
   MyLambda <$> pure name <*> (swapName from to a)
-swapName from to (MyForAllLambda name a) =
-  MyForAllLambda <$> pure name <*> (swapName from to a)
 swapName from to (MyRecordAccess a name) =
   MyRecordAccess <$> (swapName from to a) <*> pure name
 swapName from to (MyApp a b) =
@@ -216,8 +211,6 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyApp expr value)
     (MyApp (MyLambda binder expr) value) ->
       interpretWithScope (MyLet binder value expr)
-    (MyApp (MyForAllLambda binder expr) value) ->
-      interpretWithScope (MyLet binder value expr)
     (MyLetList binderHead binderRest (MyList as) body) -> do
       let (listHead, listTail) = NE.uncons as
           tail' = case listTail of
@@ -270,7 +263,6 @@ interpretWithScope interpretExpr =
     (MyApp thing _) ->
       throwError $ CannotApplyToNonFunction thing
     (MyLambda a b) -> pure (MyLambda a b)
-    (MyForAllLambda a b) -> pure (MyForAllLambda a b)
     (MyIf (MyLiteral (MyBool pred')) true false) ->
       if pred'
         then interpretWithScope true

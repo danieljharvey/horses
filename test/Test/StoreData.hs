@@ -10,10 +10,10 @@ import Language.Mimsa.Types
 
 fstExpr :: StoreExpression
 fstExpr =
-  unsafeGetExpr "\\forall tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
+  unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
 
 sndExpr :: StoreExpression
-sndExpr = unsafeGetExpr "\\forall tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
+sndExpr = unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
 
 isTenExpr :: StoreExpression
 isTenExpr =
@@ -26,11 +26,11 @@ eqTenExpr =
 fmapSum :: StoreExpression
 fmapSum =
   unsafeGetExpr
-    "\\ forall f -> \\ forall a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
+    "\\f -> \\a -> case a of Left (\\l -> Left l) | Right (\\r -> Right f(r))"
 
 listUncons :: StoreExpression
 listUncons =
-  unsafeGetExpr "\\ forall myList -> let [headA,tailA] = myList in (headA,tailA)"
+  unsafeGetExpr "\\myList -> let [headA,tailA] = myList in (headA,tailA)"
 
 listHead :: StoreExpression
 listHead =
@@ -56,7 +56,7 @@ listTail =
 
 compose :: StoreExpression
 compose =
-  unsafeGetExpr "\\ forall f -> \\ forall g -> \\ forall aValue -> f(g(aValue))"
+  unsafeGetExpr "\\f -> \\g -> \\aValue -> f(g(aValue))"
 
 list :: StoreExpression
 list = unsafeGetExpr' "{ head: listHd, tail: listTl }" bindings'
@@ -70,10 +70,10 @@ list = unsafeGetExpr' "{ head: listHd, tail: listTl }" bindings'
         )
 
 idExpr :: StoreExpression
-idExpr = unsafeGetExpr "\\ forall i -> i"
+idExpr = unsafeGetExpr "\\i -> i"
 
 justExpr :: StoreExpression
-justExpr = unsafeGetExpr "\\ forall a -> Right a"
+justExpr = unsafeGetExpr "\\a -> Right a"
 
 nothingExpr :: StoreExpression
 nothingExpr = unsafeGetExpr "Left Unit"

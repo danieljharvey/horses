@@ -67,7 +67,6 @@ complexParser =
       <|> letParser
       <|> ifParser
       <|> lambdaParser
-      <|> forAllLambdaParser
       <|> pairParser
       <|> sumParser
       <|> caseParser
@@ -224,25 +223,12 @@ arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
 
 -----
 
-forAllLambdaParser :: Parser ParserExpr
-forAllLambdaParser = do
-  _ <- P.literal ("\\")
-  _ <- P.space0
-  _ <- P.thenSpace (P.literal "forall")
-  name <- P.thenSpace nameParser
-  _ <- P.thenSpace (P.literal "->")
-  expr <- expressionParser
-  pure $ MyForAllLambda name expr
-
------
-
 appParser :: Parser ParserExpr
 appParser = do
   func <-
     recordAccessParser
       <|> varParser
       <|> lambdaParser
-      <|> forAllLambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0
@@ -258,7 +244,6 @@ appParser2 = do
     recordAccessParser
       <|> varParser
       <|> lambdaParser
-      <|> forAllLambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0
@@ -276,7 +261,7 @@ appParser2 = do
 
 appParser3 :: Parser ParserExpr
 appParser3 = do
-  func <- recordAccessParser <|> varParser <|> lambdaParser <|> forAllLambdaParser
+  func <- recordAccessParser <|> varParser <|> lambdaParser
   _ <- P.space0
   _ <- (P.literal "(")
   _ <- P.space0

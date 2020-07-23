@@ -174,8 +174,8 @@ spec = do
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
         result `shouldBe` Right (MTInt, int 1)
-      it "let id = \\ forall a -> a in id(1)" $ do
-        result <- eval mempty "let id = \\ forall a -> a in id(1)"
+      it "let id = \\a -> a in id(1)" $ do
+        result <- eval mempty "let id = \\a -> a in id(1)"
         result `shouldBe` Right (MTInt, int 1)
       it "let reuse = ({ first: id(True), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(True), second: id(2) }) in reuse.first"
@@ -193,6 +193,6 @@ spec = do
         result <- eval stdLib "let x = (maybe.nothing) in maybe.just(1)"
         result
           `shouldBe` Right
-            ( MTSum (MTVar (NumberedVar 13)) MTInt,
+            ( MTSum (MTVar (NumberedVar 14)) MTInt,
               MySum MyRight (int 1)
             )
