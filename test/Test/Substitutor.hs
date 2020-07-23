@@ -22,9 +22,6 @@ falseStoreExpr =
     (Bindings $ M.singleton (mkName "true") (ExprHash 1))
     (MyVar (mkName "true"))
 
---idExpr :: StoreExpression
---idExpr = StoreExpression (mempty) (MyLambda (mkName "a") (MyVar (mkName "a")))
-
 constExpr :: StoreExpression
 constExpr =
   StoreExpression
@@ -53,17 +50,19 @@ spec = do
   describe "Substitutor" $ do
     describe "No deps, no problem" $ do
       it "Just unwraps everything" $ do
-        substitute mempty trueStoreExpr `shouldBe` (mempty, (storeExpression trueStoreExpr), mempty)
+        substitute mempty trueStoreExpr `shouldBe` (mempty, bool True, mempty)
     describe "Leaves lambda variable alone" $ do
       it "Leaves x unchanged" $ do
         let expr = MyLambda (mkName "x") (MyVar (mkName "x"))
+            expected = MyLambda (named "x") (MyVar (named "x"))
         substitute mempty (StoreExpression mempty expr)
-          `shouldBe` (mempty, expr, mempty)
+          `shouldBe` (mempty, expected, mempty)
     describe "Leaves built-ins alone" $ do
       it "Leaves randomInt unchanged" $ do
         let expr = (MyVar (mkName "randomInt"))
+            expected = MyVar (BuiltIn (mkName "randomInt"))
         substitute mempty (StoreExpression mempty expr)
-          `shouldBe` (mempty, expr, mempty)
+          `shouldBe` (mempty, expected, mempty)
     describe "One level of dep" $ do
       it "Renames the dep to var0" $ do
         let hash = ExprHash 1
@@ -72,9 +71,9 @@ spec = do
             storeExpr = StoreExpression bindings' expr
             store' = Store (M.singleton hash trueStoreExpr)
         substitute store' storeExpr
-          `shouldBe` ( M.singleton (Name "var0") (Name "exciting"),
-                       (MyVar (Name "var0")),
-                       Scope (M.singleton (Name "var0") (storeExpression trueStoreExpr))
+          `shouldBe` ( M.singleton (NumberedVar 0) (Name "exciting"),
+                       (MyVar (NumberedVar 0)),
+                       Scope (M.singleton (NumberedVar 0) (bool True))
                      )
     describe "Only creates one new var if a function is used twice" $ do
       it "let id = \\x -> x in { first: id(1), second: id(2) }" $ do
@@ -89,25 +88,24 @@ spec = do
             bindings' = Bindings $ M.singleton (mkName "id") hash
             storeExpr = StoreExpression bindings' expr
             store' = Store (M.singleton hash idExpr)
+            expectedId = MyLambda (named "i") (MyVar (named "i"))
         substitute store' storeExpr
           `shouldBe` ( M.fromList
-                         [ (Name "var0", Name "id"),
-                           (Name "var1", Name "id")
+                         [ (NumberedVar 0, Name "id")
                          ],
                        ( MyRecord $
                            M.fromList
-                             [ (mkName "first", MyApp (MyVar (mkName "var0")) (int 1)),
-                               (mkName "second", MyApp (MyVar (mkName "var1")) (int 2))
+                             [ (mkName "first", MyApp (MyVar (NumberedVar 0)) (int 1)),
+                               (mkName "second", MyApp (MyVar (NumberedVar 0)) (int 2))
                              ]
                        ),
                        Scope
                          ( M.fromList
-                             [ (Name "var0", storeExpression idExpr),
-                               (Name "var1", storeExpression idExpr)
+                             [ (NumberedVar 0, expectedId)
                              ]
                          )
                      )
-  {-  describe "Stops doubly importing records" $ do
+    describe "Stops doubly importing records" $ do
       it "let x = (maybe.nothing) in maybe.just" $ do
         let expr =
               MyLet
@@ -124,7 +122,6 @@ spec = do
                 expr
         let (swaps, _, _) = substitute (store stdLib) storeExpr
         M.size swaps `shouldBe` 3
-  -}
   describe "Combine two levels" $ do
     it "Combines trueStoreExpr and falseStoreExpr" $ do
       let hash = ExprHash 2
@@ -134,15 +131,12 @@ spec = do
           store' = storeWithBothIn
       substitute store' storeExpr
         `shouldBe` ( M.fromList
-                       [ (Name "var0", Name "true"),
-                         (Name "var1", Name "true")
+                       [ (NumberedVar 0, Name "true")
                        ],
-                     MyVar (mkName "var0"),
+                     MyVar (NumberedVar 0),
                      Scope
                        ( M.fromList
-                           [ (Name "true", bool True),
-                             (Name "var1", MyVar (mkName "true")),
-                             (Name "var0", MyVar (mkName "var1"))
+                           [ (NumberedVar 0, bool True)
                            ]
                        )
                    )

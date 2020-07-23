@@ -28,21 +28,23 @@ import Language.Mimsa.Types
     validName,
   )
 
+type ParserExpr = Expr Name
+
 -- parse expr, using it all up
-parseExpr :: Text -> Either Text Expr
+parseExpr :: Text -> Either Text ParserExpr
 parseExpr input = P.runParser expressionParser input
   >>= \(leftover, a) ->
     if T.length leftover == 0
       then Right a
       else Left ("Leftover input: " <> leftover)
 
-parseExpr' :: Text -> Either Text Expr
+parseExpr' :: Text -> Either Text ParserExpr
 parseExpr' input = snd <$> P.runParser expressionParser input
 
-failer :: Parser Expr
+failer :: Parser ParserExpr
 failer = P.mkParser (\input -> Left $ "Could not parse expression for >>>" <> input <> "<<<")
 
-expressionParser :: Parser Expr
+expressionParser :: Parser ParserExpr
 expressionParser =
   let parsers =
         literalParser
@@ -51,14 +53,14 @@ expressionParser =
    in (P.between2 '(' ')' parsers <|> parsers)
         <|> failer
 
-literalParser :: Parser Expr
+literalParser :: Parser ParserExpr
 literalParser =
   boolParser
     <|> unitParser
     <|> intParser
     <|> stringParser
 
-complexParser :: Parser Expr
+complexParser :: Parser ParserExpr
 complexParser =
   ( letPairParser
       <|> letListParser
@@ -95,33 +97,33 @@ protectedNames =
 
 ----
 
-boolParser :: Parser Expr
+boolParser :: Parser ParserExpr
 boolParser = trueParser <|> falseParser
 
-trueParser :: Parser Expr
+trueParser :: Parser ParserExpr
 trueParser = P.literal "True" $> MyLiteral (MyBool True)
 
-falseParser :: Parser Expr
+falseParser :: Parser ParserExpr
 falseParser = P.literal "False" $> MyLiteral (MyBool False)
 
 -----
 
-unitParser :: Parser Expr
+unitParser :: Parser ParserExpr
 unitParser = P.literal "Unit" $> MyLiteral MyUnit
 
 -----
 
-intParser :: Parser Expr
+intParser :: Parser ParserExpr
 intParser = MyLiteral <$> MyInt <$> P.integer
 
 -----
 
-stringParser :: Parser Expr
+stringParser :: Parser ParserExpr
 stringParser = (MyLiteral . MyString . StringType) <$> (P.between '"')
 
 -----
 
-varParser :: Parser Expr
+varParser :: Parser ParserExpr
 varParser = MyVar <$> nameParser
 
 nameParser :: Parser Name
@@ -133,10 +135,10 @@ nameParser =
 
 -----
 
-letParser :: Parser Expr
+letParser :: Parser ParserExpr
 letParser = letInParser <|> letNewlineParser
 
-letInParser :: Parser Expr
+letInParser :: Parser ParserExpr
 letInParser = do
   _ <- P.thenSpace (P.literal "let")
   name <- P.thenSpace nameParser
@@ -146,7 +148,7 @@ letInParser = do
   inExpr <- expressionParser
   pure (MyLet name expr inExpr)
 
-letNewlineParser :: Parser Expr
+letNewlineParser :: Parser ParserExpr
 letNewlineParser = do
   _ <- P.thenSpace (P.literal "let")
   name <- P.thenSpace nameParser
@@ -160,7 +162,7 @@ letNewlineParser = do
 
 -----
 
-letListParser :: Parser Expr
+letListParser :: Parser ParserExpr
 letListParser = MyLetList <$> binder1 <*> binder2 <*> equalsParser <*> inParser
   where
     binder1 = do
@@ -180,7 +182,7 @@ letListParser = MyLetList <$> binder1 <*> binder2 <*> equalsParser <*> inParser
 
 -----
 
-letPairParser :: Parser Expr
+letPairParser :: Parser ParserExpr
 letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
   where
     binder1 = do
@@ -200,28 +202,28 @@ letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
 
 -----
 
-equalsParser :: Parser Expr
+equalsParser :: Parser ParserExpr
 equalsParser =
   P.right (P.thenSpace (P.literal "=")) (P.thenSpace expressionParser)
 
-inParser :: Parser Expr
+inParser :: Parser ParserExpr
 inParser = P.right (P.thenSpace (P.literal "in")) expressionParser
 
 -----
 
-lambdaParser :: Parser Expr
+lambdaParser :: Parser ParserExpr
 lambdaParser = MyLambda <$> slashNameBinder <*> arrowExprBinder
 
 -- matches \varName
 slashNameBinder :: Parser Name
 slashNameBinder = P.right (P.literal "\\") (P.thenSpace nameParser)
 
-arrowExprBinder :: Parser Expr
+arrowExprBinder :: Parser ParserExpr
 arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
 
 -----
 
-appParser :: Parser Expr
+appParser :: Parser ParserExpr
 appParser = do
   func <-
     recordAccessParser
@@ -236,7 +238,7 @@ appParser = do
   _ <- P.space0
   pure $ MyApp func arg
 
-appParser2 :: Parser Expr
+appParser2 :: Parser ParserExpr
 appParser2 = do
   func <-
     recordAccessParser
@@ -257,7 +259,7 @@ appParser2 = do
   _ <- P.space0
   pure $ MyApp (MyApp func arg) arg2
 
-appParser3 :: Parser Expr
+appParser3 :: Parser ParserExpr
 appParser3 = do
   func <- recordAccessParser <|> varParser <|> lambdaParser
   _ <- P.space0
@@ -283,7 +285,7 @@ appParser3 = do
 
 -----
 
-listParser :: Parser Expr
+listParser :: Parser ParserExpr
 listParser = do
   _ <- P.literal "["
   _ <- P.space0
@@ -296,10 +298,10 @@ listParser = do
 
 -----
 
-recordParser :: Parser Expr
+recordParser :: Parser ParserExpr
 recordParser = fullRecordParser <|> emptyRecordParser
 
-emptyRecordParser :: Parser Expr
+emptyRecordParser :: Parser ParserExpr
 emptyRecordParser = do
   _ <- P.literal "{"
   _ <- P.space0
@@ -307,7 +309,7 @@ emptyRecordParser = do
   _ <- P.space0
   pure (MyRecord mempty)
 
-fullRecordParser :: Parser Expr
+fullRecordParser :: Parser ParserExpr
 fullRecordParser = do
   _ <- P.literal "{"
   _ <- P.space0
@@ -318,7 +320,7 @@ fullRecordParser = do
   _ <- P.space0
   pure (MyRecord (M.fromList $ args <> [last']))
 
-recordItemParser :: Parser (Name, Expr)
+recordItemParser :: Parser (Name, ParserExpr)
 recordItemParser = do
   name <- nameParser
   _ <- P.space0
@@ -330,13 +332,13 @@ recordItemParser = do
 
 -----
 
-recordAccessParser :: Parser Expr
+recordAccessParser :: Parser ParserExpr
 recordAccessParser =
   recordAccessParser3
     <|> recordAccessParser2
     <|> recordAccessParser1
 
-recordAccessParser1 :: Parser Expr
+recordAccessParser1 :: Parser ParserExpr
 recordAccessParser1 = do
   expr <- varParser
   _ <- P.literal "."
@@ -344,7 +346,7 @@ recordAccessParser1 = do
   _ <- P.space0
   pure (MyRecordAccess expr name)
 
-recordAccessParser2 :: Parser Expr
+recordAccessParser2 :: Parser ParserExpr
 recordAccessParser2 = do
   expr <- varParser
   _ <- P.literal "."
@@ -354,7 +356,7 @@ recordAccessParser2 = do
   _ <- P.space0
   pure (MyRecordAccess (MyRecordAccess expr name) name2)
 
-recordAccessParser3 :: Parser Expr
+recordAccessParser3 :: Parser ParserExpr
 recordAccessParser3 = do
   expr <- varParser
   _ <- P.literal "."
@@ -368,21 +370,21 @@ recordAccessParser3 = do
 
 -----
 
-ifParser :: Parser Expr
+ifParser :: Parser ParserExpr
 ifParser = MyIf <$> predParser <*> thenParser <*> elseParser
 
-predParser :: Parser Expr
+predParser :: Parser ParserExpr
 predParser = P.right (P.thenSpace (P.literal "if")) expressionParser
 
-thenParser :: Parser Expr
+thenParser :: Parser ParserExpr
 thenParser = P.right (P.thenSpace (P.literal "then")) expressionParser
 
-elseParser :: Parser Expr
+elseParser :: Parser ParserExpr
 elseParser = P.right (P.thenSpace (P.literal "else")) expressionParser
 
 -----
 
-pairParser :: Parser Expr
+pairParser :: Parser ParserExpr
 pairParser = do
   _ <- P.literal "("
   _ <- P.space0
@@ -398,7 +400,7 @@ pairParser = do
 
 -----
 
-sumParser :: Parser Expr
+sumParser :: Parser ParserExpr
 sumParser = leftParser <|> rightParser
   where
     leftParser = do
@@ -412,7 +414,7 @@ sumParser = leftParser <|> rightParser
 
 ----
 
-caseParser :: Parser Expr
+caseParser :: Parser ParserExpr
 caseParser = do
   _ <- P.thenSpace (P.literal "case")
   sumExpr <- expressionParser

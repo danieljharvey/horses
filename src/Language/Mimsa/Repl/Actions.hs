@@ -129,7 +129,7 @@ doReplAction env (Bind name expr) = do
 
 ----------
 
-getType :: Swaps -> Scope -> Expr -> Either Error MonoType
+getType :: Swaps -> Scope -> (Expr Variable) -> Either Error MonoType
 getType swaps scope' expr =
   first TypeErr $ startInference swaps (chainExprs expr scope')
 
@@ -141,14 +141,14 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
     _ -> pure []
 
 chainExprs ::
-  Expr ->
+  Expr Variable ->
   Scope ->
-  Expr
+  Expr Variable
 chainExprs expr scope = finalExpr
   where
     finalExpr =
-      foldl
-        (\a (name, expr') -> MyLet name expr' a)
+      foldr
+        (\(name, expr') a -> MyLet name expr' a)
         expr
         (M.toList . getScope $ scope)
 
@@ -161,15 +161,15 @@ fromItem name expr hash =
 
 getTypecheckedStoreExpression ::
   StoreEnv ->
-  Expr ->
-  Either Error (MonoType, StoreExpression, Expr, Scope)
+  Expr Name ->
+  Either Error (MonoType, StoreExpression, Expr Variable, Scope)
 getTypecheckedStoreExpression env expr = do
   storeExpr <- first ResolverErr $ createStoreExpression (bindings env) expr
   let (swaps, newExpr, scope) = substitute (store env) storeExpr
   exprType <- getType swaps scope newExpr
   pure (exprType, storeExpr, newExpr, scope)
 
-evaluateText :: StoreEnv -> Text -> Either Error (MonoType, Expr, Scope)
+evaluateText :: StoreEnv -> Text -> Either Error (MonoType, Expr Variable, Scope)
 evaluateText env input = do
   expr <- first OtherError $ parseExpr input
   (mt, _, expr', scope') <- getTypecheckedStoreExpression env expr

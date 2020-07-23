@@ -10,10 +10,10 @@ import Language.Mimsa.Types
 
 fstExpr :: StoreExpression
 fstExpr =
-  unsafeGetExpr "\\tuple -> let (a,b) = tuple in a"
+  unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
 
 sndExpr :: StoreExpression
-sndExpr = unsafeGetExpr "\\tuple -> let (a,b) = tuple in b"
+sndExpr = unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
 
 isTenExpr :: StoreExpression
 isTenExpr =
@@ -30,11 +30,11 @@ fmapSum =
 
 listUncons :: StoreExpression
 listUncons =
-  unsafeGetExpr "\\myList -> let [head,tail] = myList in (head,tail)"
+  unsafeGetExpr "\\myList -> let [headA,tailA] = myList in (headA,tailA)"
 
 listHead :: StoreExpression
 listHead =
-  unsafeGetExpr' "\\i -> compose(fst)(listUncons)(i)" $ -- why does this work but not compose(fst)(listUncons)
+  unsafeGetExpr' "compose(fst)(listUncons)" $
     Bindings
       ( M.fromList
           [ (mkName "compose", ExprHash 6),
@@ -56,16 +56,16 @@ listTail =
 
 compose :: StoreExpression
 compose =
-  unsafeGetExpr "\\f -> \\g -> \\a -> f(g(a))"
+  unsafeGetExpr "\\f -> \\g -> \\aValue -> f(g(aValue))"
 
 list :: StoreExpression
-list = unsafeGetExpr' "{ head: listHead, tail: listTail }" bindings'
+list = unsafeGetExpr' "{ head: listHd, tail: listTl }" bindings'
   where
     bindings' =
       Bindings
         ( M.fromList
-            [ (mkName "listHead", ExprHash 8),
-              (mkName "listTail", ExprHash 9)
+            [ (mkName "listHd", ExprHash 8),
+              (mkName "listTl", ExprHash 9)
             ]
         )
 

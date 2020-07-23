@@ -1,17 +1,17 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Typechecker where
+module Language.Mimsa.Types.Substitutions where
 
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Scheme
+import Language.Mimsa.Types.Variable
 
-type Environment = Map Name Scheme
+---
 
-newtype Substitutions = Substitutions {getSubstitutions :: Map Name MonoType}
+newtype Substitutions = Substitutions {getSubstitutions :: Map Variable MonoType}
   deriving (Eq, Ord, Show)
 
 instance Semigroup Substitutions where
@@ -21,10 +21,17 @@ instance Semigroup Substitutions where
 instance Monoid Substitutions where
   mempty = Substitutions mempty
 
+---
+
+substLookup :: Substitutions -> Variable -> Maybe MonoType
+substLookup subst i = M.lookup i (getSubstitutions subst)
+
 applySubst :: Substitutions -> MonoType -> MonoType
 applySubst subst ty = case ty of
   MTVar i ->
-    fromMaybe (MTVar i) (M.lookup i (getSubstitutions subst))
+    fromMaybe
+      (MTVar i)
+      (substLookup subst i)
   MTFunction arg res ->
     MTFunction (applySubst subst arg) (applySubst subst res)
   MTPair a b ->

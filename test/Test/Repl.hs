@@ -6,6 +6,7 @@ module Test.Repl
   )
 where
 
+import Data.Either (isRight)
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
@@ -15,15 +16,15 @@ import Test.Helpers
 import Test.Hspec
 import Test.StoreData
 
-eval :: StoreEnv -> Text -> IO (Either Error (MonoType, Expr))
+eval :: StoreEnv -> Text -> IO (Either Text (MonoType, Expr Variable))
 eval env input =
   case evaluateText env input of
     Right (mt, expr', scope') -> do
       endExpr <- interpret scope' expr'
       case endExpr of
         Right a -> pure (Right (mt, a))
-        Left e -> pure (Left (InterpreterErr e))
-    Left e -> pure (Left e)
+        Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+    Left e -> pure (Left $ prettyPrint e)
 
 spec :: Spec
 spec = do
@@ -40,9 +41,9 @@ spec = do
           `shouldBe` Right
             ( MTFunction MTBool (MTSum MTInt MTString),
               ( MyLambda
-                  (mkName "x")
+                  (named "x")
                   ( MyIf
-                      (MyVar (mkName "x"))
+                      (MyVar (named "x"))
                       (MySum MyRight (str' "yes"))
                       (MySum MyLeft (int 1))
                   )
@@ -61,7 +62,7 @@ spec = do
         result <- eval stdLib "case (Left 1) of Left (\\l -> Left l) | Right (\\r -> Right r)"
         result
           `shouldBe` Right
-            ( (MTSum MTInt (MTVar (mkName "U1"))),
+            ( (MTSum MTInt (unknown 1)),
               ( MySum MyLeft (int 1)
               )
             )
@@ -70,23 +71,23 @@ spec = do
         result
           `shouldBe` Right
             ( MTFunction
-                (MTSum (MTVar (mkName "U10")) MTInt)
-                (MTSum (MTVar (mkName "U10")) MTBool),
+                (MTSum (unknown 10) MTInt)
+                (MTSum (unknown 10) MTBool),
               ( MyLambda
-                  (mkName "sum")
+                  (named "sum")
                   ( MyCase
-                      (MyVar (mkName "sum"))
+                      (MyVar (named "sum"))
                       ( MyLambda
-                          (mkName "l")
-                          (MySum MyLeft (MyVar (mkName "l")))
+                          (named "l")
+                          (MySum MyLeft (MyVar (named "l")))
                       )
                       ( MyLambda
-                          (mkName "r")
+                          (named "r")
                           ( MySum
                               MyRight
                               ( MyApp
-                                  (MyVar (mkName "var0"))
-                                  (MyVar (mkName "r"))
+                                  (MyVar (NumberedVar 0))
+                                  (MyVar (named "r"))
                               )
                           )
                       )
@@ -133,8 +134,8 @@ spec = do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction (MTVar (mkName "U2")) (MTVar (mkName "U2")),
-              MyLambda (mkName "i") (MyVar (mkName "i"))
+            ( MTFunction (unknown 3) (unknown 3),
+              MyLambda (named "i") (MyVar (named "i"))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"
@@ -150,31 +151,48 @@ spec = do
             ( MTInt,
               int 1
             )
-      it "listHead([1])" $ do
-        result <- eval stdLib "listHead([1])"
-        result `shouldBe` Right (MTInt, int 1)
+      it "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)" $ do
+        result <- eval mempty "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)"
+        result `shouldBe` Right (MTInt, int 69)
+      it "listHead([1])" $
+        do
+          result <- eval stdLib "listHead([1])"
+          result `shouldBe` Right (MTInt, int 1)
       it "list.head([1])" $ do
         result <- eval stdLib "list.head([1])"
         result `shouldBe` Right (MTInt, int 1)
+      it "(listHead,listTail)" $ do
+        result <- eval stdLib "(listHead,listTail)"
+        result `shouldSatisfy` isRight
       it "listTail([1])" $ do
         result <- eval stdLib "listTail([1])"
         result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
       it "list.tail([1])" $ do
         result <- eval stdLib "list.tail([1])"
-        result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
+        result2 <- eval stdLib "listTail([1])"
+        result `shouldBe` result2
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
         result `shouldBe` Right (MTInt, int 1)
+      it "let id = \\a -> a in id(1)" $ do
+        result <- eval mempty "let id = \\a -> a in id(1)"
+        result `shouldBe` Right (MTInt, int 1)
+      it "let reuse = ({ first: id(True), second: id(2) }) in reuse.first" $ do
+        result <- eval stdLib "let reuse = ({ first: id(True), second: id(2) }) in reuse.first"
+        result `shouldBe` Right (MTBool, bool True)
+      it "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)" $ do
+        result <- eval stdLib "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)"
+        result `shouldBe` Right (MTBool, bool True)
       it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))" $ do
         result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))"
         result `shouldBe` Right (MTInt, int 1)
       it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))" $ do
         result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))"
         result `shouldBe` Right (MTInt, int 2)
-{- it "let x = (maybe.nothing) in maybe.just(1)" $ do
-result <- eval stdLib "let x = (maybe.nothing) in maybe.just(1)"
-result
-  `shouldBe` Right
-    ( MTSum (MTVar (mkName "U1")) MTInt,
-      MySum MyRight (int 1)
-    )-}
+      it "let x = (maybe.nothing) in maybe.just(1)" $ do
+        result <- eval stdLib "let x = (maybe.nothing) in maybe.just(1)"
+        result
+          `shouldBe` Right
+            ( MTSum (MTVar (NumberedVar 14)) MTInt,
+              MySum MyRight (int 1)
+            )

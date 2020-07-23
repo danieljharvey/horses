@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c4b93a3a135a764a348197fbd48c423343df91dacc5bfd7c946a9d444d15ced4
+-- hash: 080765d6d4a4b8937f8b4a5615a9fd52c4572742f62b23fa027f735cc5fe7d9b
 
 name:           mimsa
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       Language.Mimsa
       Language.Mimsa.Interpreter
       Language.Mimsa.Library
+      Language.Mimsa.Logging
       Language.Mimsa.Repl
       Language.Mimsa.Repl.Actions
       Language.Mimsa.Repl.Parser
@@ -44,11 +45,13 @@ library
       Language.Mimsa.Syntax.Language
       Language.Mimsa.Syntax.Parser
       Language.Mimsa.Typechecker
+      Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.Infer
       Language.Mimsa.Typechecker.TcMonad
       Language.Mimsa.Typechecker.Unify
       Language.Mimsa.Types
       Language.Mimsa.Types.AST
+      Language.Mimsa.Types.Environment
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.ForeignFunc
       Language.Mimsa.Types.InterpreterError
@@ -57,9 +60,13 @@ library
       Language.Mimsa.Types.Printer
       Language.Mimsa.Types.ResolverError
       Language.Mimsa.Types.Scheme
+      Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
-      Language.Mimsa.Types.Typechecker
+      Language.Mimsa.Types.Substitutions
+      Language.Mimsa.Types.Swaps
       Language.Mimsa.Types.TypeError
+      Language.Mimsa.Types.UniVar
+      Language.Mimsa.Types.Variable
   other-modules:
       Paths_mimsa
   hs-source-dirs:
