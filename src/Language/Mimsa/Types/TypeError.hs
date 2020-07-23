@@ -61,7 +61,7 @@ instance Printer TypeError where
   prettyPrint (MissingBuiltIn name) =
     "Cannot find built-in function " <> prettyPrint name
   prettyPrint (CannotMatchRecord env mt) =
-    "Cannot match type " <> prettyPrint mt <> " to record in { " <> showKeys env <> " }"
+    "Cannot match type " <> prettyPrint mt <> " to record in { " <> prettyPrint env <> " }"
   prettyPrint (CaseMatchExpectedSum mt) =
     "Expected sum type but got " <> prettyPrint mt
   prettyPrint (CaseMatchExpectedPair mt) =

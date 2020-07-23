@@ -1,3 +1,4 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Typechecker where
@@ -5,11 +6,24 @@ module Language.Mimsa.Types.Typechecker where
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
+import qualified Data.Text as T
 import Language.Mimsa.Types.MonoType
+import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Scheme
 import Language.Mimsa.Types.Variable
 
-type Environment = Map Variable Scheme
+---
+
+newtype Environment = Environment {getEnvironment :: Map Variable Scheme}
+  deriving (Eq, Ord, Show, Semigroup, Monoid)
+
+instance Printer Environment where
+  prettyPrint (Environment items) = "[\n" <> T.intercalate ", \n" (printRow <$> (M.toList items)) <> "\n]"
+    where
+      printRow (var, scheme) =
+        prettyPrint var <> ": " <> prettyPrint scheme
+
+---
 
 newtype Substitutions = Substitutions {getSubstitutions :: Map Variable MonoType}
   deriving (Eq, Ord, Show)
@@ -20,6 +34,8 @@ instance Semigroup Substitutions where
 
 instance Monoid Substitutions where
   mempty = Substitutions mempty
+
+---
 
 substLookup :: Substitutions -> Variable -> Maybe MonoType
 substLookup subst i = M.lookup i (getSubstitutions subst)
