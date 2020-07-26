@@ -7,6 +7,7 @@ module Language.Mimsa.Store
     module Language.Mimsa.Store.Storage,
     module Language.Mimsa.Store.Resolver,
     module Language.Mimsa.Store.Substitutor,
+    module Language.Mimsa.Store.ResolvedDeps,
     module Language.Mimsa.Store.DepGraph,
   )
 where
@@ -20,6 +21,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Store.DepGraph
+import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Resolver
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Store.Substitutor

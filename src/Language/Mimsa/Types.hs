@@ -13,6 +13,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Scheme,
     module Language.Mimsa.Types.ForeignFunc,
     module Language.Mimsa.Types.Substitutions,
+    module Language.Mimsa.Types.ResolvedDeps,
     module Language.Mimsa.Types.Environment,
     module Language.Mimsa.Types.Error,
     module Language.Mimsa.Types.Printer,
@@ -33,6 +34,7 @@ import Language.Mimsa.Types.InterpreterError
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
+import Language.Mimsa.Types.ResolvedDeps
 import Language.Mimsa.Types.ResolverError
 import Language.Mimsa.Types.Scheme
 import Language.Mimsa.Types.Scope

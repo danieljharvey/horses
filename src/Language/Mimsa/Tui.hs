@@ -20,12 +20,13 @@ import qualified Data.Text as T
 import qualified Data.Vector as Vec
 import qualified Graphics.Vty as V
 import Language.Mimsa.Actions (evaluateStoreExpression)
+import Language.Mimsa.Store
 import Language.Mimsa.Types
-  ( Bindings (..),
-    Expr (..),
+  ( Expr (..),
     MonoType (..),
     Name (..),
     Printer,
+    ResolvedDeps (..),
     Store (..),
     StoreEnv (..),
     StoreExpression (..),
@@ -52,16 +53,16 @@ setUIState tui ui = tui {uiState = ui}
 appEvent :: TuiState -> BT.BrickEvent () e -> BT.EventM () (BT.Next TuiState)
 appEvent tuiState (BT.VtyEvent e) =
   case uiState tuiState of
-    NoProject ->
+    TuiError _ ->
       case e of
-        V.EvKey V.KEsc [] -> M.halt (setUIState tuiState NoProject)
-        _ -> M.continue (setUIState tuiState NoProject)
-    (ListScope l) ->
+        V.EvKey V.KEsc [] -> M.halt tuiState
+        _ -> M.continue tuiState
+    (ViewBindings deps l) ->
       case e of
-        V.EvKey V.KEsc [] -> M.halt $ setUIState tuiState (ListScope l)
+        V.EvKey V.KEsc [] -> M.halt tuiState
         ev ->
           M.continue <$> setUIState tuiState
-            <$> ListScope =<< (L.handleListEventVi L.handleListEvent) ev l
+            <$> ViewBindings deps =<< (L.handleListEventVi L.handleListEvent) ev l
 appEvent tui _ = M.continue tui
 
 drawListWithTitle :: (Show a) => String -> L.List () a -> Widget ()
@@ -86,17 +87,31 @@ drawPretty = str . T.unpack . prettyPrint
 drawUI :: TuiState -> [Widget ()]
 drawUI tuiState =
   case uiState tuiState of
-    NoProject -> [C.vCenter $ vBox [str "No project"]]
-    (ListScope l) ->
-      pure $ twoColumnLayout "Current scope" left right
-      where
-        left = C.vCenter $ drawListWithTitle "List of items" l
-        right =
-          C.vCenter
-            ( fromMaybe
-                (drawInfo "-")
-                (drawExpressionInfo <$> getExpressionForBinding tuiState)
-            )
+    TuiError err -> [drawError err]
+    (ViewBindings deps l) -> do
+      let store' = store . storeEnv $ tuiState
+      pure (drawBindingsList store' deps l)
+
+drawBindingsList :: Store -> ResolvedDeps -> L.List () Name -> Widget ()
+drawBindingsList store' deps l = twoColumnLayout "Current scope" left right
+  where
+    left = C.vCenter $ drawListWithTitle "List of items" l
+    right =
+      C.vCenter
+        ( fromMaybe
+            (drawInfo "-")
+            (drawExpressionInfo <$> getExpressionForBinding store' deps l)
+        )
+
+drawError :: UIError -> Widget ()
+drawError (MissingStoreItems missing) =
+  centeredBox
+    ( [ drawInfo "Could not find expressions in the store for the following bindings: "
+      ]
+        <> ( drawPretty
+               <$> missing
+           )
+    )
 
 data ExpressionInfo
   = ExpressionInfo
@@ -123,25 +138,20 @@ drawExpressionInfo exprInfo = ui
           drawPretty (eiExpr exprInfo)
         ]
 
-getStoreExprByName :: Name -> StoreEnv -> Maybe StoreExpression
-getStoreExprByName name (StoreEnv (Store items) (Bindings bindings')) =
-  M.lookup name bindings' >>= (\exprHash -> M.lookup exprHash items)
-
-evaluateStoreExprToInfo :: StoreEnv -> StoreExpression -> Maybe (MonoType, Expr Name)
-evaluateStoreExprToInfo (StoreEnv store' _) storeExpr =
+evaluateStoreExprToInfo :: Store -> StoreExpression -> Maybe (MonoType, Expr Name)
+evaluateStoreExprToInfo store' storeExpr =
   case evaluateStoreExpression store' storeExpr of
     Right (mt, _, _, _) -> Just (mt, storeExpression storeExpr)
     _ -> Nothing
 
-getExpressionForBinding :: TuiState -> Maybe ExpressionInfo
-getExpressionForBinding (TuiState storeEnv' ui) = case ui of
-  (ListScope l) -> case L.listSelectedElement l of
-    Just (_, name) -> getStoreExprByName name storeEnv'
+getExpressionForBinding :: Store -> ResolvedDeps -> L.List () Name -> Maybe ExpressionInfo
+getExpressionForBinding store' (ResolvedDeps deps) l =
+  case L.listSelectedElement l of
+    Just (_, name) -> M.lookup name deps
       >>= \storeExpr' ->
         (\(mt, expr) -> ExpressionInfo mt expr name)
-          <$> evaluateStoreExprToInfo storeEnv' storeExpr'
+          <$> evaluateStoreExprToInfo store' storeExpr'
     _ -> Nothing
-  _ -> Nothing
 
 twoColumnLayout :: String -> Widget a -> Widget a -> Widget a
 twoColumnLayout title left right =
@@ -149,9 +159,9 @@ twoColumnLayout title left right =
     $ B.borderWithLabel (str title)
     $ (centeredBox [left] <+> B.vBorder <+> centeredBox [right])
 
-storeEnvToList :: StoreEnv -> Int -> L.List () Name
-storeEnvToList (StoreEnv _items (Bindings bindings')) i =
-  L.list () (Vec.fromList $ M.keys bindings') i
+resolvedDepsToList :: ResolvedDeps -> Int -> L.List () Name
+resolvedDepsToList (ResolvedDeps deps) i =
+  L.list () (Vec.fromList $ M.keys deps) i
 
 theMap :: A.AttrMap
 theMap =
@@ -179,16 +189,27 @@ data TuiState
         uiState :: UIState
       }
 
-data UIState
-  = NoProject
-  | ListScope (L.List () Name)
+data UIError
+  = MissingStoreItems [Name]
 
+data UIState
+  = TuiError UIError
+  | ViewBindings ResolvedDeps (L.List () Name)
+
+-- if all the deps are in place, we start by showing all the bound items
+-- in the project
 initialState :: StoreEnv -> TuiState
 initialState storeEnv' =
   TuiState
-    { uiState = ListScope $ (storeEnvToList storeEnv' 0),
+    { uiState = initialUiState,
       storeEnv = storeEnv'
     }
+  where
+    initialUiState =
+      case resolveDeps (store storeEnv') (bindings storeEnv') of
+        Right resolvedDeps ->
+          ViewBindings resolvedDeps (resolvedDepsToList resolvedDeps 0)
+        Left missing -> TuiError (MissingStoreItems missing)
 
 goTui :: StoreEnv -> IO StoreEnv
 goTui storeEnv' =
