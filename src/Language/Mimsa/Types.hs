@@ -23,6 +23,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Scope,
     module Language.Mimsa.Types.Swaps,
     module Language.Mimsa.Types.UniVar,
+    module Language.Mimsa.Types.Tui,
   )
 where
 
@@ -41,6 +42,7 @@ import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Swaps
+import Language.Mimsa.Types.Tui
 import Language.Mimsa.Types.TypeError
 import Language.Mimsa.Types.UniVar
 import Language.Mimsa.Types.Variable
