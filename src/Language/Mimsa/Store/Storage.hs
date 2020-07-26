@@ -19,12 +19,19 @@ import Language.Mimsa.Types
     Printer (..),
     StoreExpression (..),
   )
+import System.Directory
 
-storePath :: String
-storePath = "./store/"
+-- get store folder, creating if it does not exist
+-- the store folder usually lives in ~/.local/share
+-- see https://hackage.haskell.org/package/directory-1.3.6.1/docs/System-Directory.html#t:XdgDirectory
+getStoreFolder :: IO FilePath
+getStoreFolder = do
+  path <- getXdgDirectory XdgData "mimsa"
+  createDirectoryIfMissing True path
+  pure (path <> "/")
 
-filePath :: ExprHash -> String
-filePath (ExprHash hash) = storePath <> show hash <> ".json"
+filePath :: FilePath -> ExprHash -> String
+filePath storePath (ExprHash hash) = storePath <> show hash <> ".json"
 
 getHash :: BS.ByteString -> ExprHash
 getHash = ExprHash . Hash.hash
@@ -37,15 +44,17 @@ getStoreExpressionHash = getHash . JSON.encode
 -- take an expression, save it, return ExprHash
 saveExpr :: StoreExpression -> IO ExprHash
 saveExpr expr = do
+  storePath <- getStoreFolder
   let json = JSON.encode expr
   let exprHash = getHash json
-  BS.writeFile (filePath exprHash) json
+  BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
 -- find in the store
 findExpr :: ExprHash -> ExceptT Text IO StoreExpression
 findExpr hash = do
-  json <- liftIO $ BS.readFile (filePath hash)
+  storePath <- liftIO $ getStoreFolder
+  json <- liftIO $ BS.readFile (filePath storePath hash)
   case JSON.decode json of
     Just a -> do
       liftIO $ T.putStrLn $ "Found expression for " <> prettyPrint hash

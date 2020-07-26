@@ -15,6 +15,7 @@ replParser =
     <|> treeParser
     <|> watchParser
     <|> evalParser
+    <|> tuiParser
 
 helpParser :: Parser ReplAction
 helpParser = Help <$ literal ":help"
@@ -45,3 +46,6 @@ listBindingsParser = ListBindings <$ literal ":list"
 
 watchParser :: Parser ReplAction
 watchParser = Watch <$ literal ":watch"
+
+tuiParser :: Parser ReplAction
+tuiParser = Tui <$ literal ":tui"

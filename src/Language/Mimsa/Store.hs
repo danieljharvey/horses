@@ -32,7 +32,7 @@ import Language.Mimsa.Types
   )
 
 storePath :: String
-storePath = "./store/"
+storePath = "./"
 
 envPath :: String
 envPath = storePath <> "environment.json"

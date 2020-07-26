@@ -3,26 +3,20 @@
 module Language.Mimsa.Repl.Actions
   ( doReplAction,
     evaluateText,
+    evaluateStoreExpression,
   )
 where
 
-import Control.Monad (join)
-import Data.Bifunctor (first)
 import qualified Data.Map as M
-import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Repl.Watcher
-import Language.Mimsa.Store
-  ( createDepGraph,
-    createStoreExpression,
-    saveExpr,
-    substitute,
-  )
+import Language.Mimsa.Store (createDepGraph, saveExpr)
 import Language.Mimsa.Syntax (parseExpr)
-import Language.Mimsa.Typechecker
+import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
 
 doReplAction :: StoreEnv -> ReplAction -> IO StoreEnv
@@ -43,6 +37,8 @@ doReplAction env (ListBindings) = do
         _ -> ""
   _ <- traverse showBind (getExprPairs (store env) (bindings env))
   pure env
+doReplAction env Tui = do
+  goTui env
 doReplAction env Watch = do
   watchFile
     "./store/"
@@ -126,51 +122,4 @@ doReplAction env (Bind name expr) = do
               <> prettyPrint type'
           let newEnv = fromItem name storeExpr hash
           pure (env <> newEnv)
-
 ----------
-
-getType :: Swaps -> Scope -> (Expr Variable) -> Either Error MonoType
-getType swaps scope' expr =
-  first TypeErr $ startInference swaps (chainExprs expr scope')
-
-getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
-getExprPairs (Store items') (Bindings bindings') = join $ do
-  (name, hash) <- M.toList bindings'
-  case M.lookup hash items' of
-    Just item -> pure [(name, item)]
-    _ -> pure []
-
-chainExprs ::
-  Expr Variable ->
-  Scope ->
-  Expr Variable
-chainExprs expr scope = finalExpr
-  where
-    finalExpr =
-      foldr
-        (\(name, expr') a -> MyLet name expr' a)
-        expr
-        (M.toList . getScope $ scope)
-
-fromItem :: Name -> StoreExpression -> ExprHash -> StoreEnv
-fromItem name expr hash =
-  StoreEnv
-    { store = Store $ M.singleton hash expr,
-      bindings = Bindings $ M.singleton name hash
-    }
-
-getTypecheckedStoreExpression ::
-  StoreEnv ->
-  Expr Name ->
-  Either Error (MonoType, StoreExpression, Expr Variable, Scope)
-getTypecheckedStoreExpression env expr = do
-  storeExpr <- first ResolverErr $ createStoreExpression (bindings env) expr
-  let (swaps, newExpr, scope) = substitute (store env) storeExpr
-  exprType <- getType swaps scope newExpr
-  pure (exprType, storeExpr, newExpr, scope)
-
-evaluateText :: StoreEnv -> Text -> Either Error (MonoType, Expr Variable, Scope)
-evaluateText env input = do
-  expr <- first OtherError $ parseExpr input
-  (mt, _, expr', scope') <- getTypecheckedStoreExpression env expr
-  pure (mt, expr', scope')

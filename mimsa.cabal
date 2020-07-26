@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 080765d6d4a4b8937f8b4a5615a9fd52c4572742f62b23fa027f735cc5fe7d9b
+-- hash: 9bb710fd7c2f12006c20a3dabe86e89f0e9fbca232924493c7c8b735232b55ca
 
 name:           mimsa
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Language.Mimsa
+      Language.Mimsa.Actions
       Language.Mimsa.Interpreter
       Language.Mimsa.Library
       Language.Mimsa.Logging
@@ -44,6 +45,7 @@ library
       Language.Mimsa.Syntax
       Language.Mimsa.Syntax.Language
       Language.Mimsa.Syntax.Parser
+      Language.Mimsa.Tui
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.Infer
@@ -74,15 +76,20 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , brick
     , bytestring
     , containers
+    , directory
     , fsnotify
     , hashable
     , haskeline
+    , microlens
     , mtl
     , random
     , text
     , transformers
+    , vector
+    , vty
   default-language: Haskell2010
 
 executable mimsa
@@ -95,16 +102,21 @@ executable mimsa
   build-depends:
       aeson
     , base >=4.7 && <5
+    , brick
     , bytestring
     , containers
+    , directory
     , fsnotify
     , hashable
     , haskeline
+    , microlens
     , mimsa
     , mtl
     , random
     , text
     , transformers
+    , vector
+    , vty
   default-language: Haskell2010
 
 test-suite mimsa-test
@@ -129,17 +141,22 @@ test-suite mimsa-test
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , brick
     , bytestring
     , containers
+    , directory
     , fsnotify
     , generic-arbitrary
     , hashable
     , haskeline
     , hspec
+    , microlens
     , mimsa
     , mtl
     , quickcheck-instances
     , random
     , text
     , transformers
+    , vector
+    , vty
   default-language: Haskell2010

@@ -12,3 +12,4 @@ data ReplAction
   | Bind Name (Expr Name)
   | ListBindings
   | Watch
+  | Tui
