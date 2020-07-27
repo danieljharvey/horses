@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 080765d6d4a4b8937f8b4a5615a9fd52c4572742f62b23fa027f735cc5fe7d9b
+-- hash: 523c1e47d7b00637ac2515286286f5800dac4015b01a08e1bac140565bc46891
 
 name:           mimsa
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Language.Mimsa
+      Language.Mimsa.Actions
       Language.Mimsa.Interpreter
       Language.Mimsa.Library
       Language.Mimsa.Logging
@@ -38,12 +39,18 @@ library
       Language.Mimsa.Repl.Watcher
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
+      Language.Mimsa.Store.ResolvedDeps
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
       Language.Mimsa.Store.Substitutor
       Language.Mimsa.Syntax
       Language.Mimsa.Syntax.Language
       Language.Mimsa.Syntax.Parser
+      Language.Mimsa.Tui
+      Language.Mimsa.Tui.Elements
+      Language.Mimsa.Tui.Evaluate
+      Language.Mimsa.Tui.State
+      Language.Mimsa.Tui.Styles
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.Infer
@@ -58,12 +65,14 @@ library
       Language.Mimsa.Types.MonoType
       Language.Mimsa.Types.Name
       Language.Mimsa.Types.Printer
+      Language.Mimsa.Types.ResolvedDeps
       Language.Mimsa.Types.ResolverError
       Language.Mimsa.Types.Scheme
       Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
       Language.Mimsa.Types.Substitutions
       Language.Mimsa.Types.Swaps
+      Language.Mimsa.Types.Tui
       Language.Mimsa.Types.TypeError
       Language.Mimsa.Types.UniVar
       Language.Mimsa.Types.Variable
@@ -74,15 +83,20 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , brick
     , bytestring
     , containers
+    , directory
     , fsnotify
     , hashable
     , haskeline
+    , microlens
     , mtl
     , random
     , text
     , transformers
+    , vector
+    , vty
   default-language: Haskell2010
 
 executable mimsa
@@ -95,16 +109,21 @@ executable mimsa
   build-depends:
       aeson
     , base >=4.7 && <5
+    , brick
     , bytestring
     , containers
+    , directory
     , fsnotify
     , hashable
     , haskeline
+    , microlens
     , mimsa
     , mtl
     , random
     , text
     , transformers
+    , vector
+    , vty
   default-language: Haskell2010
 
 test-suite mimsa-test
@@ -129,17 +148,22 @@ test-suite mimsa-test
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , brick
     , bytestring
     , containers
+    , directory
     , fsnotify
     , generic-arbitrary
     , hashable
     , haskeline
     , hspec
+    , microlens
     , mimsa
     , mtl
     , quickcheck-instances
     , random
     , text
     , transformers
+    , vector
+    , vty
   default-language: Haskell2010

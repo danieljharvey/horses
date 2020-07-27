@@ -28,9 +28,14 @@ dependencies:
 - text
 - hashable
 - bytestring
-- haskeline 
-- random
-- fsnotify
+- directory # store
+- haskeline # repl
+- random # stdlib
+- fsnotify # watch
+- brick # tui
+- vector # tui
+- vty # tui
+- microlens # tui
 
 library:
   source-dirs: src
