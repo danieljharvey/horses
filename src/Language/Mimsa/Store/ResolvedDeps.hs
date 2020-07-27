@@ -2,9 +2,7 @@ module Language.Mimsa.Store.ResolvedDeps (resolveDeps) where
 
 import Data.Either (partitionEithers)
 import qualified Data.Map as M
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.ResolvedDeps
-import Language.Mimsa.Types.Store
+import Language.Mimsa.Types
 
 -- we spend so much time passing the whole store around to match hashes
 -- lets create one way of resolving a pile of them and be done with it
