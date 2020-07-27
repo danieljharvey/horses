@@ -112,20 +112,20 @@ stdLib = StoreEnv store' bindings'
             (ExprHash 14, maybeExpr)
           ]
     bindings' =
-      Bindings $
+      VersionedBindings $
         M.fromList
-          [ (mkName "fst", ExprHash 1),
-            (mkName "isTen", ExprHash 2),
-            (mkName "eqTen", ExprHash 3),
-            (mkName "fmapSum", ExprHash 4),
-            (mkName "listUncons", ExprHash 5),
-            (mkName "compose", ExprHash 6),
-            (mkName "snd", ExprHash 7),
-            (mkName "listHead", ExprHash 8),
-            (mkName "listTail", ExprHash 9),
-            (mkName "list", ExprHash 10),
-            (mkName "id", ExprHash 11),
-            (mkName "maybe", ExprHash 14)
+          [ (mkName "fst", pure $ ExprHash 1),
+            (mkName "isTen", pure $ ExprHash 2),
+            (mkName "eqTen", pure $ ExprHash 3),
+            (mkName "fmapSum", pure $ ExprHash 4),
+            (mkName "listUncons", pure $ ExprHash 5),
+            (mkName "compose", pure $ ExprHash 6),
+            (mkName "snd", pure $ ExprHash 7),
+            (mkName "listHead", pure $ ExprHash 8),
+            (mkName "listTail", pure $ ExprHash 9),
+            (mkName "list", pure $ ExprHash 10),
+            (mkName "id", pure $ ExprHash 11),
+            (mkName "maybe", pure $ ExprHash 14)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression

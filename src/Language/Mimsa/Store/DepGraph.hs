@@ -7,9 +7,7 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Store.Storage
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
-import Language.Mimsa.Types.Store
+import Language.Mimsa.Types
 
 -----
 
