@@ -13,7 +13,11 @@ import Control.Monad (join)
 import Data.Bifunctor (first)
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Store (createStoreExpression, substitute)
+import Language.Mimsa.Store
+  ( createStoreExpression,
+    getCurrentBindings,
+    substitute,
+  )
 import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
@@ -47,7 +51,7 @@ fromItem :: Name -> StoreExpression -> ExprHash -> StoreEnv
 fromItem name expr hash =
   StoreEnv
     { store = Store $ M.singleton hash expr,
-      bindings = Bindings $ M.singleton name hash
+      bindings = VersionedBindings $ M.singleton name (pure hash)
     }
 
 evaluateStoreExpression ::
@@ -64,7 +68,7 @@ getTypecheckedStoreExpression ::
   Expr Name ->
   Either Error (MonoType, StoreExpression, Expr Variable, Scope)
 getTypecheckedStoreExpression env expr = do
-  storeExpr <- first ResolverErr $ createStoreExpression (bindings env) expr
+  storeExpr <- first ResolverErr $ createStoreExpression (getCurrentBindings $ bindings env) expr
   evaluateStoreExpression (store env) storeExpr
 
 evaluateText :: StoreEnv -> Text -> Either Error (MonoType, Expr Variable, Scope)

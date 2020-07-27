@@ -14,7 +14,11 @@ import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Repl.Watcher
-import Language.Mimsa.Store (createDepGraph, saveExpr)
+import Language.Mimsa.Store
+  ( createDepGraph,
+    getCurrentBindings,
+    saveExpr,
+  )
 import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
@@ -35,7 +39,7 @@ doReplAction env (ListBindings) = do
         Right (type', _, _, _) ->
           prettyPrint name <> " :: " <> prettyPrint type'
         _ -> ""
-  _ <- traverse showBind (getExprPairs (store env) (bindings env))
+  _ <- traverse showBind (getExprPairs (store env) (getCurrentBindings $ bindings env))
   pure env
 doReplAction env Tui = do
   goTui env
@@ -105,7 +109,7 @@ doReplAction env (Info expr) = do
           <> prettyPrint type'
       pure env
 doReplAction env (Bind name expr) = do
-  if M.member name (getBindings $ bindings env)
+  if M.member name (getBindings $ getCurrentBindings $ bindings env)
     then do
       T.putStrLn $ T.pack (show name) <> " is already bound"
       pure env

@@ -3,9 +3,9 @@
 
 module Language.Mimsa.Types.Store where
 
+import qualified Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty)
 import Data.Map (Map)
-import Language.Mimsa.Types.Bindings
 import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.StoreExpression
@@ -17,7 +17,7 @@ import Language.Mimsa.Types.StoreExpression
 data StoreEnv
   = StoreEnv
       { store :: Store,
-        bindings :: Bindings
+        bindings :: VersionedBindings
       }
   deriving (Eq, Ord, Show)
 
@@ -36,3 +36,5 @@ newtype Store = Store {getStore :: Map ExprHash StoreExpression}
 -- allows us to version our bindings
 newtype VersionedBindings
   = VersionedBindings {getVersionedBindings :: Map Name (NonEmpty ExprHash)}
+  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
+  deriving (JSON.ToJSON, JSON.FromJSON)
