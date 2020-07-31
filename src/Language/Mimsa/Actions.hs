@@ -15,9 +15,9 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Store
   ( createStoreExpression,
-    getCurrentBindings,
     substitute,
   )
+import Language.Mimsa.Project (getCurrentBindings)
 import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types

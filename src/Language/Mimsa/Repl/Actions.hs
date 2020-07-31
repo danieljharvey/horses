@@ -15,9 +15,9 @@ import Language.Mimsa.Repl.Types
 import Language.Mimsa.Repl.Watcher
 import Language.Mimsa.Store
   ( createDepGraph,
-    getCurrentBindings,
     saveExpr,
   )
+import Language.Mimsa.Project (getCurrentBindings)
 import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types

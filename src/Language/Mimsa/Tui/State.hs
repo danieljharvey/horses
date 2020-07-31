@@ -14,7 +14,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import qualified Data.Vector as Vec
 import qualified Graphics.Vty as V
-import Language.Mimsa.Store (getCurrentBindings)
+import Language.Mimsa.Project (getCurrentBindings)
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Tui.Evaluate
 import Language.Mimsa.Types

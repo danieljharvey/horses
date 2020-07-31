@@ -1,4 +1,7 @@
-module Language.Mimsa.Project where
+{-# LANGUAGE OverloadedStrings #-}
 
--- functions for Projects as opposed to the larger Store
+module Language.Mimsa.Project (
+  module Language.Mimsa.Project.Persistence
+) where
 
+import Language.Mimsa.Project.Persistence
