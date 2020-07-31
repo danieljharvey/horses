@@ -15,18 +15,18 @@ import Language.Mimsa.Types.StoreExpression
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces
-data StoreEnv
-  = StoreEnv
+data Project
+  = Project
       { store :: Store,
         bindings :: VersionedBindings
       }
   deriving (Eq, Ord, Show)
 
-instance Semigroup StoreEnv where
-  StoreEnv a a' <> StoreEnv b b' = StoreEnv (a <> b) (a' <> b')
+instance Semigroup Project where
+  Project a a' <> Project b b' = Project (a <> b) (a' <> b')
 
-instance Monoid StoreEnv where
-  mempty = StoreEnv mempty mempty
+instance Monoid Project where
+  mempty = Project mempty mempty
 
 --------
 

@@ -46,7 +46,7 @@ spec = do
         extractVars (MyVar (Name "randomInt"))
           `shouldBe` S.empty
     describe "createStoreExpression" $ do
-      it "Creates expressions from literals with empty StoreEnv" $ do
+      it "Creates expressions from literals with empty Project" $ do
         createStoreExpression mempty (int 1)
           `shouldBe` Right
             ( StoreExpression

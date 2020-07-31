@@ -31,7 +31,7 @@ import Language.Mimsa.Types
   ( Bindings (..),
     ExprHash (..),
     Store (..),
-    StoreEnv (..),
+    Project (..),
     StoreExpression (..),
     VersionedBindings (..),
   )
@@ -58,14 +58,14 @@ getDependencyHashes = S.fromList . M.elems . getBindings . storeBindings
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
-loadEnvironment :: IO (Maybe StoreEnv)
+loadEnvironment :: IO (Maybe Project)
 loadEnvironment = do
   envJson <- try $ BS.readFile envPath
   case hush envJson >>= JSON.decode of
     Just vb@(VersionedBindings _) -> do
       items' <- runExceptT $ recursiveLoadBoundExpressions (getHashesForAllVersions vb)
       case items' of
-        Right store' -> pure $ Just (StoreEnv store' vb)
+        Right store' -> pure $ Just (Project store' vb)
         _ -> pure Nothing
     _ -> pure Nothing
 
@@ -99,7 +99,7 @@ recursiveLoadBoundExpressions hashes = do
       pure (store' <> moreStore)
 
 --
-saveEnvironment :: StoreEnv -> IO ()
+saveEnvironment :: Project -> IO ()
 saveEnvironment env = do
   let jsonStr = JSON.encode (bindings env)
   BS.writeFile envPath jsonStr

@@ -22,7 +22,7 @@ import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
 
-doReplAction :: StoreEnv -> ReplAction -> IO StoreEnv
+doReplAction :: Project -> ReplAction -> IO Project
 doReplAction env Help = do
   T.putStrLn "~~~ MIMSA ~~~"
   T.putStrLn ":help - this help screen"

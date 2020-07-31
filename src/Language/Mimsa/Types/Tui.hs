@@ -20,7 +20,7 @@ data ExpressionInfo
 
 data TuiState
   = TuiState
-      { storeEnv :: StoreEnv,
+      { project :: Project,
         uiState :: UIState
       }
 

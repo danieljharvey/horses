@@ -31,7 +31,7 @@ appEvent tuiState (BT.VtyEvent e) = do
         V.EvKey V.KUp [] -> GoUp
         V.EvKey V.KDown [] -> GoDown
         _ -> Unknown
-  case reducer (storeEnv tuiState) tuiAction (uiState tuiState) of
+  case reducer (project tuiState) tuiAction (uiState tuiState) of
     Just newState -> M.continue $ tuiState {uiState = newState}
     _ -> M.halt tuiState
 appEvent tui _ = M.continue tui
@@ -48,7 +48,7 @@ data TuiAction
   | GoDown
   | Unknown
 
-reducer :: StoreEnv -> TuiAction -> UIState -> Maybe UIState
+reducer :: Project -> TuiAction -> UIState -> Maybe UIState
 reducer _ Exit _ = Nothing
 reducer _ GoUp (ViewBindings items) =
   let mapF (BindingsList n deps l) = BindingsList n deps (L.listMoveUp l)
@@ -56,9 +56,9 @@ reducer _ GoUp (ViewBindings items) =
 reducer _ GoDown (ViewBindings items) =
   let mapF (BindingsList n deps l) = BindingsList n deps (L.listMoveDown l)
    in Just (ViewBindings (mapHead mapF items))
-reducer storeEnv' GoRight (ViewBindings items) =
+reducer project' GoRight (ViewBindings items) =
   let topItem = NE.head items
-   in case getExpressionForBinding (store storeEnv') (bDeps topItem) (bList topItem) of
+   in case getExpressionForBinding (store project') (bDeps topItem) (bList topItem) of
         Just (ExpressionInfo _ _ newName newDeps)
           | not (hasNoDeps newDeps) ->
             let newItem = makeBindingsList newName newDeps
@@ -80,15 +80,15 @@ mapHead f list = NE.fromList ([hd] <> tl)
 
 -- if all the deps are in place, we start by showing all the bound items
 -- in the project
-initialState :: StoreEnv -> TuiState
-initialState storeEnv' =
+initialState :: Project -> TuiState
+initialState project' =
   TuiState
     { uiState = initialUiState,
-      storeEnv = storeEnv'
+      project = project'
     }
   where
     initialUiState =
-      case resolveDeps (store storeEnv') (getCurrentBindings $ bindings storeEnv') of
+      case resolveDeps (store project') (getCurrentBindings $ bindings project') of
         Right resolvedDeps ->
           ViewBindings $
             pure
