@@ -28,6 +28,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Library,
     module Language.Mimsa.Types.Bindings,
     module Language.Mimsa.Types.StoreExpression,
+    module Language.Mimsa.Types.Project
   )
 where
 
@@ -54,5 +55,6 @@ import Language.Mimsa.Types.Tui
 import Language.Mimsa.Types.TypeError
 import Language.Mimsa.Types.UniVar
 import Language.Mimsa.Types.Variable
+import Language.Mimsa.Types.Project
 
 ------

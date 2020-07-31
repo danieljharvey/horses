@@ -8,7 +8,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.ResolvedDeps
-import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Project
 
 data ExpressionInfo
   = ExpressionInfo
