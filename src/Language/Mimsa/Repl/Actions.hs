@@ -40,7 +40,7 @@ doReplAction env Watch = do
   pure env
 doReplAction env (Evaluate expr) = doEvaluate env expr
 doReplAction env (Tree expr) = do
-  doTree env expr
+  _ <- runReplM $ doTree env expr
   pure env
 doReplAction env (Info expr) = do
   doInfo env expr
@@ -92,13 +92,11 @@ doInfo env expr =
 
 ----------
 
-doTree :: Project -> Expr Name -> IO ()
-doTree env expr = case getTypecheckedStoreExpression env expr of
-  Left e' -> do
-    T.putStrLn (prettyPrint e')
-  Right (_, storeExpr, _, _) -> do
-    let graph = createDepGraph (mkName "expression") (store env) storeExpr
-    T.putStrLn (prettyPrint graph)
+doTree :: Project -> Expr Name -> ReplM ()
+doTree env expr = do
+  (_, storeExpr, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  let graph = createDepGraph (mkName "expression") (store env) storeExpr
+  replPrint graph
 
 -------
 
