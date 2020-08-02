@@ -31,6 +31,7 @@ doReplAction env Help = do
   T.putStrLn ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
   T.putStrLn ":list - show a list of current bindings in the environment"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
+  T.putStrLn ":versions <name> - list all versions of a binding"
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
   T.putStrLn ":quit - give up and leave"
   pure env
