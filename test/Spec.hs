@@ -17,6 +17,7 @@ import qualified Test.Substitutor as Substitutor
 import qualified Test.Syntax as Syntax
 import qualified Test.Typechecker as Typechecker
 import qualified Test.Unify as Unify
+import qualified Test.Usages as Usages
 
 main :: IO ()
 main = hspec $ do
@@ -28,3 +29,4 @@ main = hspec $ do
   Typechecker.spec
   Repl.spec
   Unify.spec
+  Usages.spec
