@@ -16,6 +16,7 @@ replParser =
     <|> watchParser
     <|> evalParser
     <|> tuiParser
+    <|> versionsParser
 
 helpParser :: Parser ReplAction
 helpParser = Help <$ literal ":help"
@@ -49,3 +50,9 @@ watchParser = Watch <$ literal ":watch"
 
 tuiParser :: Parser ReplAction
 tuiParser = Tui <$ literal ":tui"
+
+versionsParser :: Parser ReplAction
+versionsParser = do
+  _ <- thenSpace (literal ":versions")
+  name <- nameParser
+  pure (Versions name)

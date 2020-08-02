@@ -10,6 +10,7 @@ data ReplAction
   | Evaluate (Expr Name)
   | Tree (Expr Name)
   | Bind Name (Expr Name)
+  | Versions Name
   | ListBindings
   | Watch
   | Tui

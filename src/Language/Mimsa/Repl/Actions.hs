@@ -7,17 +7,18 @@ module Language.Mimsa.Repl.Actions
   )
 where
 
+import Data.Foldable (traverse_)
+import qualified Data.List.NonEmpty as NE
+import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter (interpret)
+import Language.Mimsa.Project (getCurrentBindings)
+import Language.Mimsa.Project.Versions
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Repl.Watcher
-import Language.Mimsa.Store
-  ( createDepGraph,
-    saveExpr,
-  )
-import Language.Mimsa.Project (getCurrentBindings)
+import Language.Mimsa.Store (createDepGraph, saveExpr)
 import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
@@ -42,6 +43,22 @@ doReplAction env (ListBindings) = do
   pure env
 doReplAction env Tui = do
   goTui env
+doReplAction env (Versions name) = do
+  case findVersions env name of
+    Right versions ->
+      let showIt (i, mt, expr', usages) = do
+            T.putStrLn $ "#" <> T.pack (show i) <> (if NE.length versions == i then " (current)" else "")
+            T.putStrLn $ (prettyPrint expr') <> ": " <> (prettyPrint mt)
+            if S.null usages
+              then T.putStrLn "Dependency of 0 functions"
+              else
+                T.putStrLn $
+                  "Dependency of " <> (T.pack . show . S.size) usages
+                    <> " functions"
+       in traverse_ showIt versions
+    Left e -> do
+      T.putStrLn (prettyPrint e)
+  pure env
 doReplAction env Watch = do
   watchFile
     "./store/"

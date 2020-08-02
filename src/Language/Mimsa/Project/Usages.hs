@@ -13,14 +13,7 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.StoreExpression
-
-data Usage
-  = Transient Name ExprHash
-  | Direct Name ExprHash
-  deriving (Eq, Ord, Show)
-
-data UsageError = CouldNotResolveDeps [Name]
-  deriving (Eq, Ord, Show)
+import Language.Mimsa.Types.Usage
 
 findUsages :: Project -> ExprHash -> Either UsageError (Set Usage)
 findUsages (Project store' bindings') exprHash' =
