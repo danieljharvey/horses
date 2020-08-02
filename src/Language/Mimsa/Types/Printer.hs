@@ -13,6 +13,9 @@ class Printer a where
   default prettyPrint :: (Show a) => a -> Text
   prettyPrint = T.pack . show
 
+instance Printer Text where
+  prettyPrint a = a
+
 instance (Printer a, Printer b) => Printer (a, b) where
   prettyPrint (a, b) = T.intercalate "\n" [prettyPrint a, prettyPrint b]
 

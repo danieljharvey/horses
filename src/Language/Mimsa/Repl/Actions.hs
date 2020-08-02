@@ -7,9 +7,13 @@ module Language.Mimsa.Repl.Actions
   )
 where
 
+import Control.Monad.IO.Class (liftIO)
+import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
+import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
+import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
@@ -28,24 +32,28 @@ doReplAction env Help = do
   doHelp
   pure env
 doReplAction env (ListBindings) = do
-  doListBindings env
+  _ <- runReplM $ doListBindings env
   pure env
 doReplAction env Tui = do
   goTui env
 doReplAction env (Versions name) = do
-  doVersions env name
+  _ <- runReplM $ doVersions env name
   pure env
 doReplAction env Watch = do
-  doWatch env
+  _ <- runReplM $ doWatch env
   pure env
-doReplAction env (Evaluate expr) = doEvaluate env expr
+doReplAction env (Evaluate expr) = do
+  _ <- runReplM $ doEvaluate env expr
+  pure env
 doReplAction env (Tree expr) = do
   _ <- runReplM $ doTree env expr
   pure env
 doReplAction env (Info expr) = do
-  doInfo env expr
+  _ <- runReplM $ doInfo env expr
   pure env
-doReplAction env (Bind name expr) = doBind env name expr
+doReplAction env (Bind name expr) = do
+  newEnv <- runReplM $ doBind env name expr
+  pure (fromMaybe env newEnv)
 
 ----------
 
@@ -63,32 +71,26 @@ doHelp = do
 
 ----------
 
-doBind :: Project -> Name -> Expr Name -> IO Project
-doBind env name expr = case getTypecheckedStoreExpression env expr of
-  Left e' -> do
-    T.putStrLn (prettyPrint e')
-    pure env
-  Right (type', storeExpr, _, _) -> do
-    hash <- saveExpr storeExpr
-    T.putStrLn $
-      "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
-        <> " :: "
-        <> prettyPrint type'
-    let newEnv = fromItem name storeExpr hash
-    pure (env <> newEnv)
+doBind :: Project -> Name -> Expr Name -> ReplM Project
+doBind env name expr = do
+  (type', storeExpr, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  hash <- liftIO (saveExpr storeExpr)
+  replPrint $
+    "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
+      <> " :: "
+      <> prettyPrint type'
+  let newEnv = fromItem name storeExpr hash
+  pure (env <> newEnv)
 
 -------
 
-doInfo :: Project -> Expr Name -> IO ()
-doInfo env expr =
-  case getTypecheckedStoreExpression env expr of
-    Left e' -> do
-      T.putStrLn $ prettyPrint e'
-    Right (type', _, _, _) -> do
-      T.putStrLn $
-        prettyPrint expr
-          <> " :: "
-          <> prettyPrint type'
+doInfo :: Project -> Expr Name -> ReplM ()
+doInfo env expr = do
+  (type', _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  replPrint $
+    prettyPrint expr
+      <> " :: "
+      <> prettyPrint type'
 
 ----------
 
@@ -100,81 +102,77 @@ doTree env expr = do
 
 -------
 
-doVersions :: Project -> Name -> IO ()
-doVersions env name =
-  case findVersions env name of
-    Right versions ->
-      let showIt (i, mt, expr', usages) = do
-            T.putStrLn $ "#" <> T.pack (show i) <> (if NE.length versions == i then " (current)" else "")
-            T.putStrLn $ (prettyPrint expr') <> ": " <> (prettyPrint mt)
-            if S.null usages
-              then T.putStrLn "Dependency of 0 functions"
-              else
-                T.putStrLn $
-                  "Dependency of " <> (T.pack . show . S.size) usages
-                    <> " functions"
-       in traverse_ showIt versions
-    Left e -> do
-      T.putStrLn (prettyPrint e)
+doVersions :: Project -> Name -> ReplM ()
+doVersions env name = do
+  versions <- liftRepl $ findVersions env name
+  let showIt (i, mt, expr', usages) = do
+        replPrint $
+          "#" <> T.pack (show i)
+            <> ( if NE.length versions == i
+                   then " (current)"
+                   else ""
+               )
+        replPrint (expr', mt)
+        if S.null usages
+          then replPrint ("Dependency of 0 functions" :: Text)
+          else
+            replPrint $
+              "Dependency of " <> (T.pack . show . S.size) usages
+                <> " functions"
+   in traverse_ showIt versions
 
 ------
 
-doListBindings :: Project -> IO ()
+doListBindings :: Project -> ReplM ()
 doListBindings env = do
   let showBind = \(name, (StoreExpression _ expr)) ->
-        T.putStrLn $ case getTypecheckedStoreExpression env expr of
+        case getTypecheckedStoreExpression env expr of
           Right (type', _, _, _) ->
-            prettyPrint name <> " :: " <> prettyPrint type'
-          _ -> ""
-  traverse_ showBind (getExprPairs (store env) (getCurrentBindings $ bindings env))
+            replPrint (prettyPrint name <> " :: " <> prettyPrint type')
+          _ -> pure ()
+  traverse_
+    showBind
+    ( getExprPairs
+        (store env)
+        (getCurrentBindings $ bindings env)
+    )
 
 ----------
 
-doEvaluate :: Project -> Expr Name -> IO Project
-doEvaluate env expr = case getTypecheckedStoreExpression env expr of
-  Left e' -> do
-    T.putStrLn $ prettyPrint e'
-    pure env
-  Right (type', _, expr', scope') -> do
-    simplified <- interpret scope' expr'
-    case simplified of
-      Left e -> do
-        T.putStrLn (prettyPrint e)
-        pure env
-      Right simplified' -> do
-        T.putStrLn $
-          prettyPrint simplified'
-            <> " :: "
-            <> prettyPrint type'
-        pure env
+doEvaluate :: Project -> Expr Name -> ReplM ()
+doEvaluate env expr = do
+  (type', _, expr', scope') <- liftRepl $ getTypecheckedStoreExpression env expr
+  simplified <- liftIO $ interpret scope' expr'
+  simplified' <- liftRepl (first InterpreterErr simplified)
+  replPrint $
+    prettyPrint simplified'
+      <> " :: "
+      <> prettyPrint type'
 
 ---------
 
-doWatch :: Project -> IO ()
+doWatch :: Project -> ReplM ()
 doWatch env =
-  watchFile
-    "./store/"
-    ( do
-        text <- T.readFile "./store/scratch.mimsa"
-        T.putStrLn "scratch.mimsa updated!"
-        case parseExpr (T.strip text) of
-          Right expr -> do
-            case getTypecheckedStoreExpression env expr of
-              Left e' -> do
-                T.putStrLn $ prettyPrint e'
-              Right (type', storeExpr', expr', scope') -> do
-                simplified <- interpret scope' expr'
-                case simplified of
-                  Left e -> do
-                    T.putStrLn (prettyPrint e)
-                  Right simplified' -> do
-                    T.putStrLn $
-                      "+ Using the following from scope: "
-                        <> prettyPrint (storeBindings storeExpr')
-                    T.putStrLn $
-                      prettyPrint simplified'
-                        <> " :: "
-                        <> prettyPrint type'
-          Left e -> do
-            T.putStrLn e
-    )
+  liftIO $
+    watchFile
+      "./"
+      ( do
+          _ <- runReplM (onFileChange env)
+          pure ()
+      )
+
+onFileChange :: Project -> ReplM ()
+onFileChange env = do
+  text <- liftIO $ T.readFile "./scratch.mimsa"
+  replPrint ("scratch.mimsa updated!" :: Text)
+  expr <- liftRepl $ first ParseErr (parseExpr (T.strip text))
+  (type', storeExpr', expr', scope') <- liftRepl $ getTypecheckedStoreExpression env expr
+  simplified <- liftIO $ interpret scope' expr'
+  simplified' <- liftRepl (first InterpreterErr simplified)
+  replPrint $
+    "+ Using the following from scope: "
+      <> prettyPrint (storeBindings storeExpr')
+  replPrint $
+    prettyPrint simplified'
+      <> " :: "
+      <> prettyPrint type'
