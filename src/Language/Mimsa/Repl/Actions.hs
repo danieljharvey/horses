@@ -31,10 +31,10 @@ doReplAction :: Project -> ReplAction -> IO Project
 doReplAction env Help = do
   doHelp
   pure env
-doReplAction env (ListBindings) = do
+doReplAction env ListBindings = do
   _ <- runReplM $ doListBindings env
   pure env
-doReplAction env Tui = do
+doReplAction env Tui =
   goTui env
 doReplAction env (Versions name) = do
   _ <- runReplM $ doVersions env name
@@ -125,7 +125,7 @@ doVersions env name = do
 
 doListBindings :: Project -> ReplM ()
 doListBindings env = do
-  let showBind = \(name, (StoreExpression _ expr)) ->
+  let showBind (name, StoreExpression _ expr) =
         case getTypecheckedStoreExpression env expr of
           Right (type', _, _, _) ->
             replPrint (prettyPrint name <> " :: " <> prettyPrint type')

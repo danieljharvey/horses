@@ -11,7 +11,6 @@ import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Center as C
 import qualified Brick.Widgets.List as L
 import qualified Data.List.NonEmpty as NE
-import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Language.Mimsa.Tui.Elements
 import Language.Mimsa.Tui.Evaluate
@@ -34,9 +33,10 @@ drawBindingsList store' name deps l = twoColumnLayout "Current scope" left right
     left = C.vCenter $ drawListWithTitle (T.unpack $ prettyPrint name) l
     right =
       C.vCenter
-        ( fromMaybe
+        ( maybe
             (drawInfo "-")
-            (drawExpressionInfo <$> getExpressionForBinding store' deps l)
+            drawExpressionInfo
+            (getExpressionForBinding store' deps l)
         )
 
 drawError :: UIError -> Widget ()
@@ -56,8 +56,9 @@ drawExpressionInfo exprInfo = ui
     ui =
       B.borderWithLabel label
         $ vLimit 30
-        $ hLimit 50
-        $ items
+        $ hLimit
+          50
+          items
     items =
       centeredBox
         [ withAttr "highlight" $ drawInfo "type",
@@ -70,7 +71,7 @@ drawExpressionInfo exprInfo = ui
           drawPretty (eiDeps exprInfo)
         ]
 
-theApp :: M.App (TuiState) e ()
+theApp :: M.App TuiState e ()
 theApp =
   M.App
     { M.appDraw = drawUI,

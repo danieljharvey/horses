@@ -17,16 +17,14 @@ import qualified Data.Text as T
 import Language.Mimsa.Library
 import Language.Mimsa.Types
 
-interpret :: Scope -> (Expr Variable) -> IO (Either InterpreterError (Expr Variable))
-interpret scope' expr = do
-  result <- either'
-  pure (fmap fst result)
+interpret :: Scope -> Expr Variable -> IO (Either InterpreterError (Expr Variable))
+interpret scope' expr = fmap fst <$> either'
   where
     either' =
       runExceptT $
         runStateT
           (interpretWithScope expr)
-          (scope')
+          scope'
 
 type App = StateT Scope (ExceptT InterpreterError IO)
 
@@ -34,7 +32,7 @@ useVarFromScope :: Variable -> App (Expr Variable)
 useVarFromScope name = do
   found <- gets (M.lookup name . getScope)
   case found of
-    Just expr -> do
+    Just expr ->
       case expr of
         (MyLambda binder expr') -> do
           (freshBinder, freshExpr) <- newLambdaCopy binder expr'
@@ -108,7 +106,7 @@ unwrapBuiltIn name (TwoArgs _ _) = do
     )
 
 -- get new var
-newLambdaCopy :: Variable -> (Expr Variable) -> App (Variable, (Expr Variable))
+newLambdaCopy :: Variable -> Expr Variable -> App (Variable, Expr Variable)
 newLambdaCopy name expr = do
   newName' <- newName
   newExpr <- swapName name newName' expr
@@ -126,40 +124,41 @@ swapName from to (MyVar from') =
       then MyVar to
       else MyVar from'
 swapName from to (MyLet name a b) =
-  MyLet <$> pure name <*> (swapName from to a)
-    <*> (swapName from to b)
+  MyLet <$> pure name
+    <*> swapName from to a
+    <*> swapName from to b
 swapName from to (MyLambda name a) =
-  MyLambda <$> pure name <*> (swapName from to a)
+  MyLambda <$> pure name <*> swapName from to a
 swapName from to (MyRecordAccess a name) =
-  MyRecordAccess <$> (swapName from to a) <*> pure name
+  MyRecordAccess <$> swapName from to a <*> pure name
 swapName from to (MyApp a b) =
-  MyApp <$> (swapName from to a)
-    <*> (swapName from to b)
+  MyApp <$> swapName from to a
+    <*> swapName from to b
 swapName from to (MyIf a b c) =
   MyIf
-    <$> (swapName from to a)
-      <*> (swapName from to b)
-      <*> (swapName from to c)
+    <$> swapName from to a
+      <*> swapName from to b
+      <*> swapName from to c
 swapName from to (MyPair a b) =
   MyPair
-    <$> (swapName from to a) <*> (swapName from to b)
+    <$> swapName from to a <*> swapName from to b
 swapName from to (MyLetPair nameA nameB a b) =
   MyLetPair
     <$> pure nameA <*> pure nameB
-      <*> (swapName from to a)
-      <*> (swapName from to b)
+      <*> swapName from to a
+      <*> swapName from to b
 swapName from to (MyLetList nameHead nameRest a b) =
   MyLetList <$> pure nameHead
     <*> pure nameRest
-    <*> (swapName from to a)
-    <*> (swapName from to b)
+    <*> swapName from to a
+    <*> swapName from to b
 swapName from to (MySum side a) =
   MySum
     <$> pure side
-      <*> (swapName from to a)
+      <*> swapName from to a
 swapName from to (MyCase a b c) =
-  MyCase <$> (swapName from to a) <*> (swapName from to b)
-    <*> (swapName from to c)
+  MyCase <$> swapName from to a <*> swapName from to b
+    <*> swapName from to c
 swapName from to (MyList as) = do
   mas <- traverse (swapName from to) as
   pure (MyList mas)
@@ -169,9 +168,9 @@ swapName from to (MyRecord map') = do
 swapName _ _ (MyLiteral a) = pure (MyLiteral a)
 
 addToScope :: Scope -> App ()
-addToScope scope' = modify ((<>) scope')
+addToScope scope' = modify $ (<>) scope'
 
-interpretWithScope :: (Expr Variable) -> App (Expr Variable)
+interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
   case interpretExpr of
     (MyLiteral a) -> pure (MyLiteral a)
@@ -194,10 +193,10 @@ interpretWithScope interpretExpr =
     (MyVar name) -> do
       scope <- get
       useVarFromBuiltIn name <|> useVarFromScope name
-        <|> (throwError $ CouldNotFindVar scope name)
-    (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) -> do
+        <|> throwError (CouldNotFindVar scope name)
+    (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) ->
       interpretWithScope (MyLet binderL a exprL)
-    (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) -> do
+    (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) ->
       interpretWithScope (MyLet binderR b exprR)
     (MyCase (MyVar a) l r) -> do
       expr <- interpretWithScope (MyVar a)
@@ -219,7 +218,7 @@ interpretWithScope interpretExpr =
       let newScopes = Scope $ M.fromList [(binderHead, listHead), (binderRest, tail')]
       addToScope newScopes
       interpretWithScope body
-    (MyRecordAccess (MyRecord record) name) -> do
+    (MyRecordAccess (MyRecord record) name) ->
       case M.lookup name record of
         Just item -> interpretWithScope item
         _ -> throwError $ CannotFindMemberInRecord record name

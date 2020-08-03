@@ -13,18 +13,15 @@ import Control.Monad (join)
 import Data.Bifunctor (first)
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Store
-  ( createStoreExpression,
-    substitute,
-  )
 import Language.Mimsa.Project (getCurrentBindings)
+import Language.Mimsa.Store (createStoreExpression, substitute)
 import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
 
 ----------
 
-getType :: Swaps -> Scope -> (Expr Variable) -> Either Error MonoType
+getType :: Swaps -> Scope -> Expr Variable -> Either Error MonoType
 getType swaps scope' expr =
   first TypeErr $ startInference swaps (chainExprs expr scope')
 

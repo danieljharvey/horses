@@ -18,4 +18,4 @@ resolveDeps (Store items) (Bindings bindings') =
           Just storeExpr' -> Right (name, (hash, storeExpr'))
           Nothing -> Left name
       )
-        <$> (M.toList bindings')
+        <$> M.toList bindings'

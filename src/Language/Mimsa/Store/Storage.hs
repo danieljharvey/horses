@@ -53,7 +53,7 @@ saveExpr expr = do
 -- find in the store
 findExpr :: ExprHash -> ExceptT Text IO StoreExpression
 findExpr hash = do
-  storePath <- liftIO $ getStoreFolder
+  storePath <- liftIO getStoreFolder
   json <- liftIO $ BS.readFile (filePath storePath hash)
   case JSON.decode json of
     Just a -> do
