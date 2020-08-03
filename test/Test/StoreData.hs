@@ -90,8 +90,8 @@ maybeExpr =
         )
     )
 
-stdLib :: StoreEnv
-stdLib = StoreEnv store' bindings'
+stdLib :: Project
+stdLib = Project store' bindings'
   where
     store' =
       Store $

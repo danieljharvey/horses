@@ -15,9 +15,9 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Store
   ( createStoreExpression,
-    getCurrentBindings,
     substitute,
   )
+import Language.Mimsa.Project (getCurrentBindings)
 import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
@@ -47,9 +47,9 @@ chainExprs expr scope = finalExpr
         expr
         (M.toList . getScope $ scope)
 
-fromItem :: Name -> StoreExpression -> ExprHash -> StoreEnv
+fromItem :: Name -> StoreExpression -> ExprHash -> Project
 fromItem name expr hash =
-  StoreEnv
+  Project
     { store = Store $ M.singleton hash expr,
       bindings = VersionedBindings $ M.singleton name (pure hash)
     }
@@ -64,14 +64,14 @@ evaluateStoreExpression store' storeExpr = do
   pure (exprType, storeExpr, newExpr, scope)
 
 getTypecheckedStoreExpression ::
-  StoreEnv ->
+  Project ->
   Expr Name ->
   Either Error (MonoType, StoreExpression, Expr Variable, Scope)
 getTypecheckedStoreExpression env expr = do
   storeExpr <- first ResolverErr $ createStoreExpression (getCurrentBindings $ bindings env) expr
   evaluateStoreExpression (store env) storeExpr
 
-evaluateText :: StoreEnv -> Text -> Either Error (MonoType, Expr Variable, Scope)
+evaluateText :: Project -> Text -> Either Error (MonoType, Expr Variable, Scope)
 evaluateText env input = do
   expr <- first OtherError $ parseExpr input
   (mt, _, expr', scope') <- getTypecheckedStoreExpression env expr

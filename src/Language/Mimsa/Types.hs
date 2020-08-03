@@ -7,6 +7,7 @@
 module Language.Mimsa.Types
   ( module Language.Mimsa.Types.Name,
     module Language.Mimsa.Types.ExprHash,
+    module Language.Mimsa.Types.Usage,
     module Language.Mimsa.Types.AST,
     module Language.Mimsa.Types.Store,
     module Language.Mimsa.Types.TypeError,
@@ -28,6 +29,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Library,
     module Language.Mimsa.Types.Bindings,
     module Language.Mimsa.Types.StoreExpression,
+    module Language.Mimsa.Types.Project,
   )
 where
 
@@ -42,6 +44,7 @@ import Language.Mimsa.Types.Library
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps
 import Language.Mimsa.Types.ResolverError
 import Language.Mimsa.Types.Scheme
@@ -53,6 +56,7 @@ import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Tui
 import Language.Mimsa.Types.TypeError
 import Language.Mimsa.Types.UniVar
+import Language.Mimsa.Types.Usage
 import Language.Mimsa.Types.Variable
 
 ------

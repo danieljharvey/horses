@@ -26,7 +26,7 @@ getExpressionForBinding ::
   Maybe ExpressionInfo
 getExpressionForBinding store' (ResolvedDeps deps) l = do
   (_, name) <- L.listSelectedElement l
-  storeExpr' <- M.lookup name deps
+  (_, storeExpr') <- M.lookup name deps
   subDeps <- hush $ resolveDeps store' (storeBindings storeExpr')
   let toInfo (mt, expr) = ExpressionInfo mt expr name subDeps
   toInfo <$> evaluateStoreExprToInfo store' storeExpr'

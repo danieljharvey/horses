@@ -14,18 +14,18 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Store (loadEnvironment, saveEnvironment)
+import Language.Mimsa.Project (loadProject, saveProject)
 import qualified Language.Mimsa.Syntax as P
 import Language.Mimsa.Types
 import System.Console.Haskeline
 
 repl :: IO ()
 repl = do
-  env <- fromMaybe mempty <$> loadEnvironment
+  env <- fromMaybe mempty <$> loadProject
   _ <- doReplAction env Help
   runInputT defaultSettings (loop env)
   where
-    loop :: StoreEnv -> InputT IO ()
+    loop :: Project -> InputT IO ()
     loop exprs' = do
       minput <- getInputLine ":> "
       case minput of
@@ -35,12 +35,12 @@ repl = do
           newEnv <- liftIO $ parseCommand exprs' (T.pack input)
           loop newEnv
 
-parseCommand :: StoreEnv -> Text -> IO StoreEnv
+parseCommand :: Project -> Text -> IO Project
 parseCommand env input = case P.runParserComplete replParser input of
   Left e -> do
     T.putStrLn e
     pure env
   Right replAction -> do
     newExprs <- doReplAction env replAction
-    saveEnvironment newExprs
+    saveProject newExprs
     pure newExprs

@@ -24,7 +24,7 @@ drawUI tuiState =
   case uiState tuiState of
     TuiError err -> [drawError err]
     (ViewBindings items) -> do
-      let store' = store . storeEnv $ tuiState
+      let store' = store . project $ tuiState
           (BindingsList name deps l) = NE.head items
       pure (drawBindingsList store' name deps l)
 
@@ -80,8 +80,8 @@ theApp =
       M.appAttrMap = const stylesAttrMap
     }
 
-goTui :: StoreEnv -> IO StoreEnv
-goTui storeEnv' =
+goTui :: Project -> IO Project
+goTui project' =
   do
-    _ <- M.defaultMain theApp (initialState storeEnv')
-    pure storeEnv'
+    _ <- M.defaultMain theApp (initialState project')
+    pure project'
