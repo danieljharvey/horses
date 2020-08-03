@@ -9,6 +9,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Install hlint
+      run: stack install hlint
+    - name: Hlint files
+      run: hlint .
     - name: Run stack build
       run: stack build
     - name: Run stack test

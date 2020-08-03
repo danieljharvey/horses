@@ -52,12 +52,12 @@ logBool = OneArg (MTBool, MTUnit) logExpr
 logExpr :: (Printer p) => p -> IO (Expr a)
 logExpr i = do
   T.putStrLn (prettyPrint i)
-  pure (MyLiteral (MyUnit))
+  pure (MyLiteral MyUnit)
 
 randomInt :: ForeignFunc
 randomInt = NoArgs MTInt action
   where
-    action = MyLiteral <$> MyInt <$> randomIO
+    action = MyLiteral . MyInt <$> randomIO
 
 randomIntFrom :: ForeignFunc
 randomIntFrom =
