@@ -62,21 +62,20 @@ literalParser =
 
 complexParser :: Parser ParserExpr
 complexParser =
-  ( letPairParser
-      <|> letListParser
-      <|> letParser
-      <|> ifParser
-      <|> lambdaParser
-      <|> pairParser
-      <|> sumParser
-      <|> caseParser
-      <|> appParser3
-      <|> appParser2
-      <|> appParser
-      <|> recordAccessParser
-      <|> listParser
-      <|> recordParser
-  )
+  letPairParser
+    <|> letListParser
+    <|> letParser
+    <|> ifParser
+    <|> lambdaParser
+    <|> pairParser
+    <|> sumParser
+    <|> caseParser
+    <|> appParser3
+    <|> appParser2
+    <|> appParser
+    <|> recordAccessParser
+    <|> listParser
+    <|> recordParser
 
 protectedNames :: Set Text
 protectedNames =
@@ -114,12 +113,12 @@ unitParser = P.literal "Unit" $> MyLiteral MyUnit
 -----
 
 intParser :: Parser ParserExpr
-intParser = MyLiteral <$> MyInt <$> P.integer
+intParser = MyLiteral . MyInt <$> P.integer
 
 -----
 
 stringParser :: Parser ParserExpr
-stringParser = (MyLiteral . MyString . StringType) <$> (P.between '"')
+stringParser = MyLiteral . MyString . StringType <$> P.between '"'
 
 -----
 
@@ -130,7 +129,7 @@ nameParser :: Parser Name
 nameParser =
   mkName
     <$> P.predicate
-      (P.identifier)
+      P.identifier
       (\name -> not $ S.member name protectedNames && validName name)
 
 -----
@@ -138,29 +137,37 @@ nameParser =
 letParser :: Parser ParserExpr
 letParser = letInParser <|> letNewlineParser
 
-letInParser :: Parser ParserExpr
-letInParser = do
+letNameIn :: Parser Name
+letNameIn = do
   _ <- P.thenSpace (P.literal "let")
   name <- P.thenSpace nameParser
   _ <- P.thenSpace (P.literal "=")
+  pure name
+
+letInParser :: Parser ParserExpr
+letInParser = do
+  name <- letNameIn
   expr <- P.thenSpace expressionParser
   _ <- P.thenSpace (P.literal "in")
-  inExpr <- expressionParser
-  pure (MyLet name expr inExpr)
+  MyLet name expr <$> expressionParser
 
 letNewlineParser :: Parser ParserExpr
 letNewlineParser = do
-  _ <- P.thenSpace (P.literal "let")
-  name <- P.thenSpace nameParser
-  _ <- P.thenSpace (P.literal "=")
+  name <- letNameIn
   expr <- expressionParser
   _ <- P.space0
   _ <- P.literal ";"
   _ <- P.space0
-  inExpr <- expressionParser
-  pure (MyLet name expr inExpr)
+  MyLet name expr <$> expressionParser
 
 -----
+
+spacedName :: Parser Name
+spacedName = do
+  _ <- P.space0
+  name <- nameParser
+  _ <- P.space0
+  pure name
 
 letListParser :: Parser ParserExpr
 letListParser = MyLetList <$> binder1 <*> binder2 <*> equalsParser <*> inParser
@@ -168,15 +175,10 @@ letListParser = MyLetList <$> binder1 <*> binder2 <*> equalsParser <*> inParser
     binder1 = do
       _ <- P.thenSpace (P.literal "let")
       _ <- P.literal "["
-      _ <- P.space0
-      name <- nameParser
-      _ <- P.space0
-      pure name
+      spacedName
     binder2 = do
       _ <- P.literal ","
-      _ <- P.space0
-      name <- nameParser
-      _ <- P.space0
+      name <- spacedName
       _ <- P.thenSpace (P.literal "]")
       pure name
 
@@ -188,15 +190,10 @@ letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
     binder1 = do
       _ <- P.thenSpace (P.literal "let")
       _ <- P.literal "("
-      _ <- P.space0
-      name <- nameParser
-      _ <- P.space0
-      pure name
+      spacedName
     binder2 = do
       _ <- P.literal ","
-      _ <- P.space0
-      name <- nameParser
-      _ <- P.space0
+      name <- spacedName
       _ <- P.thenSpace (P.literal ")")
       pure name
 
@@ -229,14 +226,17 @@ appParser = do
     recordAccessParser
       <|> varParser
       <|> lambdaParser
+  MyApp func <$> exprInBrackets
+
+literalWithSpace :: Text -> Parser ()
+literalWithSpace tx = () <$ withOptionalSpace (P.literal tx)
+
+withOptionalSpace :: Parser a -> Parser a
+withOptionalSpace p = do
   _ <- P.space0
-  _ <- (P.literal "(")
+  a <- p
   _ <- P.space0
-  arg <- expressionParser
-  _ <- P.space0
-  _ <- (P.literal ")")
-  _ <- P.space0
-  pure $ MyApp func arg
+  pure a
 
 appParser2 :: Parser ParserExpr
 appParser2 = do
@@ -244,56 +244,31 @@ appParser2 = do
     recordAccessParser
       <|> varParser
       <|> lambdaParser
-  _ <- P.space0
-  _ <- (P.literal "(")
-  _ <- P.space0
-  arg <- expressionParser
-  _ <- P.space0
-  _ <- (P.literal ")")
-  _ <- P.space0
-  _ <- (P.literal "(")
-  _ <- P.space0
-  arg2 <- expressionParser
-  _ <- P.space0
-  _ <- (P.literal ")")
-  _ <- P.space0
-  pure $ MyApp (MyApp func arg) arg2
+  arg <- exprInBrackets
+  MyApp (MyApp func arg) <$> exprInBrackets
 
 appParser3 :: Parser ParserExpr
 appParser3 = do
   func <- recordAccessParser <|> varParser <|> lambdaParser
-  _ <- P.space0
-  _ <- (P.literal "(")
-  _ <- P.space0
-  arg <- expressionParser
-  _ <- P.space0
-  _ <- (P.literal ")")
-  _ <- P.space0
-  _ <- (P.literal "(")
-  _ <- P.space0
-  arg2 <- expressionParser
-  _ <- P.space0
-  _ <- (P.literal ")")
-  _ <- P.space0
-  _ <- (P.literal "(")
-  _ <- P.space0
-  arg3 <- expressionParser
-  _ <- P.space0
-  _ <- (P.literal ")")
-  _ <- P.space0
-  pure $ MyApp (MyApp (MyApp func arg) arg2) arg3
+  arg <- exprInBrackets
+  arg2 <- exprInBrackets
+  MyApp (MyApp (MyApp func arg) arg2) <$> exprInBrackets
+
+exprInBrackets :: Parser ParserExpr
+exprInBrackets = do
+  literalWithSpace "("
+  expr <- expressionParser
+  literalWithSpace ")"
+  pure expr
 
 -----
 
 listParser :: Parser ParserExpr
 listParser = do
-  _ <- P.literal "["
-  _ <- P.space0
+  _ <- literalWithSpace "["
   args <- P.zeroOrMore (P.left expressionParser (P.literal ","))
   last' <- expressionParser
-  _ <- P.space0
-  _ <- P.literal "]"
-  _ <- P.space0
+  _ <- literalWithSpace "]"
   pure (MyList (NE.fromList (args <> [last'])))
 
 -----
@@ -303,31 +278,23 @@ recordParser = fullRecordParser <|> emptyRecordParser
 
 emptyRecordParser :: Parser ParserExpr
 emptyRecordParser = do
-  _ <- P.literal "{"
-  _ <- P.space0
-  _ <- P.literal "}"
-  _ <- P.space0
+  literalWithSpace "{"
+  literalWithSpace "}"
   pure (MyRecord mempty)
 
 fullRecordParser :: Parser ParserExpr
 fullRecordParser = do
-  _ <- P.literal "{"
-  _ <- P.space0
+  literalWithSpace "{"
   args <- P.zeroOrMore (P.left recordItemParser (P.left (P.literal ",") P.space0))
   last' <- recordItemParser
-  _ <- P.space0
-  _ <- P.literal "}"
-  _ <- P.space0
+  literalWithSpace "}"
   pure (MyRecord (M.fromList $ args <> [last']))
 
 recordItemParser :: Parser (Name, ParserExpr)
 recordItemParser = do
   name <- nameParser
-  _ <- P.space0
-  _ <- P.literal ":"
-  _ <- P.space0
-  expr <- expressionParser
-  _ <- P.space0
+  literalWithSpace ":"
+  expr <- withOptionalSpace expressionParser
   pure (name, expr)
 
 -----
@@ -341,18 +308,20 @@ recordAccessParser =
 recordAccessParser1 :: Parser ParserExpr
 recordAccessParser1 = do
   expr <- varParser
-  _ <- P.literal "."
-  name <- nameParser
+  name <- dotName
   _ <- P.space0
   pure (MyRecordAccess expr name)
+
+dotName :: Parser Name
+dotName = do
+  _ <- P.literal "."
+  nameParser
 
 recordAccessParser2 :: Parser ParserExpr
 recordAccessParser2 = do
   expr <- varParser
-  _ <- P.literal "."
-  name <- nameParser
-  _ <- P.literal "."
-  name2 <- nameParser
+  name <- dotName
+  name2 <- dotName
   _ <- P.space0
   pure (MyRecordAccess (MyRecordAccess expr name) name2)
 
@@ -405,12 +374,10 @@ sumParser = leftParser <|> rightParser
   where
     leftParser = do
       _ <- P.thenSpace (P.literal "Left")
-      expr <- expressionParser
-      pure (MySum MyLeft expr)
+      MySum MyLeft <$> expressionParser
     rightParser = do
       _ <- P.thenSpace (P.literal "Right")
-      expr <- expressionParser
-      pure (MySum MyRight expr)
+      MySum MyRight <$> expressionParser
 
 ----
 
@@ -423,5 +390,4 @@ caseParser = do
   leftExpr <- expressionParser
   _ <- P.thenSpace (P.literal "|")
   _ <- P.thenSpace (P.literal "Right")
-  rightExpr <- expressionParser
-  pure (MyCase sumExpr leftExpr rightExpr)
+  MyCase sumExpr leftExpr <$> expressionParser
