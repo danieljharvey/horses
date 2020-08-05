@@ -27,9 +27,10 @@ eval env input =
     Left e -> pure (Left $ prettyPrint e)
 
 spec :: Spec
-spec = do
-  describe "Repl" $ do
-    describe "End to end parsing to evaluation" $ do
+spec =
+  describe "Repl"
+    $ describe "End to end parsing to evaluation"
+    $ do
       it "let x = ((1,2)) in fst(x)" $ do
         result <- eval stdLib "let x = ((1,2)) in fst(x)"
         result
@@ -40,14 +41,13 @@ spec = do
         result
           `shouldBe` Right
             ( MTFunction MTBool (MTSum MTInt MTString),
-              ( MyLambda
-                  (named "x")
-                  ( MyIf
-                      (MyVar (named "x"))
-                      (MySum MyRight (str' "yes"))
-                      (MySum MyLeft (int 1))
-                  )
-              )
+              MyLambda
+                (named "x")
+                ( MyIf
+                    (MyVar (named "x"))
+                    (MySum MyRight (str' "yes"))
+                    (MySum MyLeft (int 1))
+                )
             )
       it "case isTen(9) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")" $ do
         result <- eval stdLib "case isTen(9) of Left (\\l -> \"It's not ten\") | Right (\\r -> \"It's ten!\")"
@@ -62,9 +62,8 @@ spec = do
         result <- eval stdLib "case (Left 1) of Left (\\l -> Left l) | Right (\\r -> Right r)"
         result
           `shouldBe` Right
-            ( (MTSum MTInt (unknown 1)),
-              ( MySum MyLeft (int 1)
-              )
+            ( MTSum MTInt (unknown 1),
+              MySum MyLeft (int 1)
             )
       it "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right eqTen(r))" $ do
         result <- eval stdLib "\\sum -> case sum of Left (\\l -> Left l) | Right (\\r -> Right eqTen(r))"
@@ -73,26 +72,25 @@ spec = do
             ( MTFunction
                 (MTSum (unknown 10) MTInt)
                 (MTSum (unknown 10) MTBool),
-              ( MyLambda
-                  (named "sum")
-                  ( MyCase
-                      (MyVar (named "sum"))
-                      ( MyLambda
-                          (named "l")
-                          (MySum MyLeft (MyVar (named "l")))
-                      )
-                      ( MyLambda
-                          (named "r")
-                          ( MySum
-                              MyRight
-                              ( MyApp
-                                  (MyVar (NumberedVar 0))
-                                  (MyVar (named "r"))
-                              )
-                          )
-                      )
-                  )
-              )
+              MyLambda
+                (named "sum")
+                ( MyCase
+                    (MyVar (named "sum"))
+                    ( MyLambda
+                        (named "l")
+                        (MySum MyLeft (MyVar (named "l")))
+                    )
+                    ( MyLambda
+                        (named "r")
+                        ( MySum
+                            MyRight
+                            ( MyApp
+                                (MyVar (NumberedVar 0))
+                                (MyVar (named "r"))
+                            )
+                        )
+                    )
+                )
             )
       it "let sum = (Left 1) in ((fmapSum eqTen) sum)" $ do
         result <- eval stdLib "let sum = (Left 1) in fmapSum (eqTen) (sum)"

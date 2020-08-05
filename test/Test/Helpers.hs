@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Test.Helpers where
 
 import Data.Text (Text)

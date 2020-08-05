@@ -42,6 +42,7 @@ drawPretty = str . T.unpack . prettyPrint
 
 twoColumnLayout :: String -> Widget a -> Widget a -> Widget a
 twoColumnLayout title left right =
-  Brick.withBorderStyle B.unicode
-    $ B.borderWithLabel (withAttr "title" $ str title)
-    $ (centeredBox [left] <+> B.vBorder <+> centeredBox [right])
+  Brick.withBorderStyle B.unicode $
+    B.borderWithLabel
+      (withAttr "title" $ str title)
+      (centeredBox [left] <+> B.vBorder <+> centeredBox [right])

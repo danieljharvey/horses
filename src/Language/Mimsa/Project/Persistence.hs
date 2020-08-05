@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Project.Persistence (loadProject, saveProject, getCurrentBindings) where
+module Language.Mimsa.Project.Persistence
+  ( loadProject,
+    saveProject,
+    getCurrentBindings,
+  )
+where
 
 -- functions for Projects as opposed to the larger Store
 
@@ -17,8 +22,8 @@ import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types
   ( Bindings (..),
     ExprHash (..),
-    Store (..),
     Project (..),
+    Store (..),
     StoreExpression (..),
     VersionedBindings (..),
   )
@@ -61,7 +66,7 @@ recursiveLoadBoundExpressions hashes = do
   let newHashes =
         S.difference
           ( S.unions $
-              getDependencyHashes <$> (M.elems (getStore store'))
+              getDependencyHashes <$> M.elems (getStore store')
           )
           hashes
   if S.null newHashes

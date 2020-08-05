@@ -13,9 +13,9 @@ import Test.Hspec
 import Test.StoreData
 
 spec :: Spec
-spec = do
+spec =
   describe "Usages" $ do
-    it "Returns empty when passed nothing" $ do
+    it "Returns empty when passed nothing" $
       findUsages mempty (ExprHash 6) `shouldBe` Right mempty
     it "Finds all uses of Compose in Stdlib" $ do
       let expected =

@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Types.Tui where
 
 import qualified Brick.Widgets.List as L
@@ -7,8 +5,8 @@ import Data.List.NonEmpty (NonEmpty)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.ResolvedDeps
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedDeps
 
 data ExpressionInfo
   = ExpressionInfo
@@ -24,7 +22,7 @@ data TuiState
         uiState :: UIState
       }
 
-data UIError
+newtype UIError
   = MissingStoreItems [Name]
 
 data BindingsList

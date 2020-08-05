@@ -6,10 +6,9 @@ module Test.Typechecker
   )
 where
 
--- import qualified Data.Aeson as JSON
+import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
---import qualified Data.Text.IO as T
 import Language.Mimsa
 import Language.Mimsa.Types
 import Test.Helpers
@@ -67,8 +66,7 @@ exprs =
     ( MyApp
         ( MyLambda
             (named "x")
-            ( (MyIf (MyVar (named "x")) (int 10) (int 10))
-            )
+            (MyIf (MyVar (named "x")) (int 10) (int 10))
         )
         (int 100),
       Left $ UnificationError MTBool MTInt
@@ -134,14 +132,14 @@ exprs =
         (named "tail")
         (MyList $ NE.fromList [int 1])
         (MyVar (named "head")),
-      Right $ MTInt
+      Right MTInt
     ),
     ( MyLetList
         (named "head")
         (named "tail")
         (MyList $ NE.fromList [int 1])
         (MyVar (named "tail")),
-      Right $ (MTSum MTUnit (MTList MTInt))
+      Right (MTSum MTUnit (MTList MTInt))
     ),
     ( MyRecord
         mempty,
@@ -190,8 +188,7 @@ exprs =
         ),
       Left $
         MissingRecordTypeMember
-          ( (mkName "cat")
-          )
+          (mkName "cat")
           ( M.singleton
               (mkName "dog")
               (unknown 2)
@@ -201,20 +198,18 @@ exprs =
   ]
 
 identity :: Expr Variable
-identity = (MyLambda (named "x") (MyVar (named "x")))
+identity = MyLambda (named "x") (MyVar (named "x"))
 
 spec :: Spec
-spec = do
+spec =
   describe "Typechecker" $ do
-    it "Our expressions typecheck as expected" $ do
-      _ <-
-        traverse
-          ( \(code, expected) -> do
-              --T.putStrLn (prettyPrint code)
-              startInference mempty code `shouldBe` expected
-          )
-          exprs
-      pure ()
+    it "Our expressions typecheck as expected" $
+      traverse_
+        ( \(code, expected) ->
+            --T.putStrLn (prettyPrint code)
+            startInference mempty code `shouldBe` expected
+        )
+        exprs
     it "Uses a polymorphic function twice with conflicting types" $ do
       let expr =
             MyLet
@@ -228,17 +223,16 @@ spec = do
       startInference mempty expr `shouldBe` expected
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
-            ( MyLambda
-                (named "x")
-                ( MyIf
-                    (MyApp identity (MyVar (named "x")))
-                    (MyApp identity (int 1))
-                    (MyApp identity (int 2))
-                )
-            )
+            MyLambda
+              (named "x")
+              ( MyIf
+                  (MyApp identity (MyVar (named "x")))
+                  (MyApp identity (int 1))
+                  (MyApp identity (int 2))
+              )
       let expr = MyApp lambda (bool True)
-      (startInference mempty lambda) `shouldBe` Right (MTFunction MTBool MTInt)
-      (startInference mempty expr) `shouldBe` Right MTInt
+      startInference mempty lambda `shouldBe` Right (MTFunction MTBool MTInt)
+      startInference mempty expr `shouldBe` Right MTInt
 {-  describe "Serialisation" $ do
 it "Round trip" $ do
   property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)

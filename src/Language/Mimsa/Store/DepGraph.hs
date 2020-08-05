@@ -54,4 +54,4 @@ createDepGraph name (Store store') storeExpr' = Func depInfo leaves
           createDepGraph name' (Store store') (store' ! hash)
       )
         <$> children
-    children = (M.toList . getBindings . storeBindings $ storeExpr')
+    children = M.toList . getBindings . storeBindings $ storeExpr'

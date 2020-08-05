@@ -14,16 +14,16 @@ import Test.Helpers
 import Test.Hspec
 
 spec :: Spec
-spec = do
+spec =
   describe "Resolver" $ do
     describe "extractVars" $ do
       it "Finds none where only literals" $ do
         extractVars (bool True) `shouldBe` mempty
         extractVars (int 1) `shouldBe` mempty
         extractVars (str (StringType "poo")) `shouldBe` mempty
-      it "Finds a var" $ do
+      it "Finds a var" $
         extractVars (MyVar (Name "dog")) `shouldBe` S.singleton (Name "dog")
-      it "Finds the vars in an if" $ do
+      it "Finds the vars in an if" $
         extractVars
           ( MyIf
               (MyVar (Name "one"))
@@ -31,7 +31,7 @@ spec = do
               (MyVar (Name "three"))
           )
           `shouldBe` S.fromList [Name "one", Name "two", Name "three"]
-      it "Does not include var introduced in Let" $ do
+      it "Does not include var introduced in Let" $
         extractVars
           ( MyLet
               (Name "newVar")
@@ -39,10 +39,10 @@ spec = do
               (MyVar (Name "newVar"))
           )
           `shouldBe` S.singleton (Name "keep")
-      it "Does not introduce vars introduced in lambda" $ do
+      it "Does not introduce vars introduced in lambda" $
         extractVars (MyLambda (Name "newVar") (MyApp (MyVar (Name "keep")) (MyVar (Name "newVar"))))
           `shouldBe` S.singleton (Name "keep")
-      it "Does not introduce built-ins" $ do
+      it "Does not introduce built-ins" $
         extractVars (MyVar (Name "randomInt"))
           `shouldBe` S.empty
     describe "createStoreExpression" $ do
@@ -68,11 +68,11 @@ spec = do
                   storeExpression = str (StringType "poo")
                 }
             )
-      it "Looks for vars and can't find them" $ do
+      it "Looks for vars and can't find them" $
         createStoreExpression mempty (MyVar (Name "missing"))
           `shouldBe` Left
             (MissingBinding (mkName "missing") mempty)
-      it "Looks for vars and finds a built-in" $ do
+      it "Looks for vars and finds a built-in" $
         createStoreExpression mempty (MyVar (Name "randomInt"))
           `shouldBe` Right
             ( StoreExpression

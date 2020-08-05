@@ -51,7 +51,7 @@ instance Printer MonoType where
               <> ": "
               <> printSubType mt
         )
-          <$> (M.toList as)
+          <$> M.toList as
 
 -- simple things with no brackets, complex things in brackets
 printSubType :: MonoType -> Text

@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -32,8 +31,8 @@ getName (Name t) = t
 validName :: Text -> Bool
 validName a =
   T.length a > 0
-    && T.filter (Ch.isAlphaNum) a == a
-    && Ch.isDigit (T.head a) == False
+    && T.filter Ch.isAlphaNum a == a
+    && not (Ch.isDigit (T.head a))
 
 mkName :: Text -> Name
 mkName a =

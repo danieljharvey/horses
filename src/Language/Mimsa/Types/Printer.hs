@@ -32,4 +32,4 @@ instance (Printer a, Printer b, Printer c, Printer d) => Printer (a, b, c, d) wh
       [prettyPrint a, prettyPrint b, prettyPrint c, prettyPrint d]
 
 instance (Printer a) => Printer (Set a) where
-  prettyPrint as = "[" <> (T.intercalate ", " (prettyPrint <$> S.toList as)) <> "]"
+  prettyPrint as = "[" <> T.intercalate ", " (prettyPrint <$> S.toList as) <> "]"

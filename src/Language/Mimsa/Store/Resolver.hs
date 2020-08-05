@@ -19,10 +19,10 @@ import Language.Mimsa.Types
 -- important - we must not count variables brought in via lambdas, as those
 -- aren't external deps
 
-extractVars :: (Expr Name) -> Set Name
+extractVars :: Expr Name -> Set Name
 extractVars = filterBuiltIns . extractVars_
 
-extractVars_ :: (Expr Name) -> Set Name
+extractVars_ :: Expr Name -> Set Name
 extractVars_ (MyVar a) = S.singleton a
 extractVars_ (MyIf a b c) = extractVars_ a <> extractVars_ b <> extractVars_ c
 extractVars_ (MyLet newVar a b) = S.delete newVar (extractVars_ a <> extractVars_ b)
@@ -48,7 +48,7 @@ findHashInBindings (Bindings bindings') name = case M.lookup name bindings' of
 
 -- given an expression, and the current environment, create a
 -- store expression that captures the hashes of the functions we'll need
-createStoreExpression :: Bindings -> (Expr Name) -> Either ResolverError StoreExpression
+createStoreExpression :: Bindings -> Expr Name -> Either ResolverError StoreExpression
 createStoreExpression bindings' expr = do
   let findHash name =
         (,) <$> pure name

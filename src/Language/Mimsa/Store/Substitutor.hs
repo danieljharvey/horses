@@ -1,7 +1,3 @@
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Store.Substitutor where
 
 import Control.Monad (join)
@@ -42,8 +38,7 @@ doSubstitutions :: Store -> StoreExpression -> App (Expr Variable)
 doSubstitutions store' (StoreExpression bindings' expr) = do
   newScopes <- traverse (substituteWithKey store') (getExprPairs store' bindings')
   addScope $ mconcat newScopes
-  newExpr <- mapVar [] expr
-  pure newExpr
+  mapVar [] expr
 
 substituteWithKey :: Store -> (Name, StoreExpression) -> App Scope
 substituteWithKey store' (key, storeExpr') = do
@@ -59,15 +54,15 @@ substituteWithKey store' (key, storeExpr') = do
 scopeExists :: Expr Variable -> App (Maybe Variable)
 scopeExists var = do
   (Scope scope') <- gets subsScope
-  pure (mapKeyFind ((==) var) scope')
+  pure (mapKeyFind (var ==) scope')
 
 addScope :: Scope -> App ()
 addScope scope' =
-  modify (\s -> s {subsScope = (subsScope s) <> scope'})
+  modify (\s -> s {subsScope = subsScope s <> scope'})
 
 addSwap :: Name -> Variable -> App ()
 addSwap old new =
-  modify (\s -> s {subsSwaps = (subsSwaps s) <> (M.singleton new old)})
+  modify (\s -> s {subsSwaps = subsSwaps s <> M.singleton new old})
 
 mapKeyFind :: (a -> Bool) -> Map k a -> Maybe k
 mapKeyFind pred' map' = case M.toList (M.filter pred' map') of
@@ -78,7 +73,7 @@ mapKeyFind pred' map' = case M.toList (M.filter pred' map') of
 findInSwaps :: Name -> App (Maybe Variable)
 findInSwaps name = do
   swaps' <- gets subsSwaps
-  pure (mapKeyFind ((==) name) swaps')
+  pure (mapKeyFind (name ==) swaps')
 
 getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -92,20 +87,17 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 -- we don't do this for built-ins (ie, randomInt) or variables introduced by
 -- lambdas
 getNextVar :: [Name] -> Name -> App Variable
-getNextVar protected name =
-  if elem name protected
-    then pure (NamedVar name)
-    else
-      if isLibraryName (name)
-        then pure (BuiltIn name)
-        else do
-          existing' <- findInSwaps name
-          case existing' of
-            Just existingName -> pure existingName
-            Nothing -> do
-              nextName <- NumberedVar <$> nextNum
-              addSwap name nextName
-              pure nextName
+getNextVar protected name
+  | name `elem` protected = pure (NamedVar name)
+  | isLibraryName name = pure (BuiltIn name)
+  | otherwise = do
+    stuff <- findInSwaps name
+    case stuff of
+      Just existingName -> pure existingName
+      Nothing -> do
+        nextName <- NumberedVar <$> nextNum
+        addSwap name nextName
+        pure nextName
 
 nextNum :: App Int
 nextNum = do
@@ -117,34 +109,34 @@ nameToVar :: (Monad m) => Name -> m Variable
 nameToVar = pure . NamedVar
 
 -- step through Expr, replacing vars with numbered variables
-mapVar :: [Name] -> (Expr Name) -> App (Expr Variable)
+mapVar :: [Name] -> Expr Name -> App (Expr Variable)
 mapVar p (MyVar a) =
   MyVar <$> getNextVar p a
 mapVar p (MyLet name a b) =
-  MyLet <$> nameToVar name <*> (mapVar p a)
-    <*> (mapVar (p <> [name]) b)
+  MyLet <$> nameToVar name <*> mapVar p a
+    <*> mapVar (p <> [name]) b
 mapVar p (MyLambda name a) =
-  MyLambda <$> nameToVar name <*> (mapVar (p <> [name]) a)
+  MyLambda <$> nameToVar name <*> mapVar (p <> [name]) a
 mapVar p (MyRecordAccess a name) =
   MyRecordAccess
-    <$> (mapVar p a) <*> pure name
-mapVar p (MyApp a b) = MyApp <$> (mapVar p a) <*> (mapVar p b)
-mapVar p (MyIf a b c) = MyIf <$> (mapVar p a) <*> (mapVar p b) <*> (mapVar p c)
-mapVar p (MyPair a b) = MyPair <$> (mapVar p a) <*> (mapVar p b)
+    <$> mapVar p a <*> pure name
+mapVar p (MyApp a b) = MyApp <$> mapVar p a <*> mapVar p b
+mapVar p (MyIf a b c) = MyIf <$> mapVar p a <*> mapVar p b <*> mapVar p c
+mapVar p (MyPair a b) = MyPair <$> mapVar p a <*> mapVar p b
 mapVar p (MyLetPair nameA nameB a b) =
   MyLetPair
     <$> nameToVar nameA <*> nameToVar nameB
-      <*> (mapVar (p <> [nameA, nameB]) a)
-      <*> (mapVar (p <> [nameA, nameB]) b)
+      <*> mapVar (p <> [nameA, nameB]) a
+      <*> mapVar (p <> [nameA, nameB]) b
 mapVar p (MyLetList nameHead nameRest a b) =
   MyLetList <$> nameToVar nameHead
     <*> nameToVar nameRest
-    <*> (mapVar (p <> [nameHead, nameRest]) a)
-    <*> (mapVar (p <> [nameHead, nameRest]) b)
-mapVar p (MySum side a) = MySum <$> pure side <*> (mapVar p a)
+    <*> mapVar (p <> [nameHead, nameRest]) a
+    <*> mapVar (p <> [nameHead, nameRest]) b
+mapVar p (MySum side a) = MySum <$> pure side <*> mapVar p a
 mapVar p (MyCase a b c) =
-  MyCase <$> (mapVar p a) <*> (mapVar p b)
-    <*> (mapVar p c)
+  MyCase <$> mapVar p a <*> mapVar p b
+    <*> mapVar p c
 mapVar p (MyList as) = do
   mas <- traverse (mapVar p) as
   pure (MyList mas)

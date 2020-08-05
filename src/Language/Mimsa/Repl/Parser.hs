@@ -54,5 +54,4 @@ tuiParser = Tui <$ literal ":tui"
 versionsParser :: Parser ReplAction
 versionsParser = do
   _ <- thenSpace (literal ":versions")
-  name <- nameParser
-  pure (Versions name)
+  Versions <$> nameParser

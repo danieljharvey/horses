@@ -16,15 +16,15 @@ import Test.Hspec
 testInterpret :: Scope -> Expr Variable -> Expr Variable -> Expectation
 testInterpret scope' expr' expected = do
   result <- interpret scope' expr'
-  result `shouldBe` (Right expected)
+  result `shouldBe` Right expected
 
 testInterpretFail :: Scope -> Expr Variable -> InterpreterError -> Expectation
 testInterpretFail scope' expr' expected = do
   result <- interpret scope' expr'
-  result `shouldBe` (Left expected)
+  result `shouldBe` Left expected
 
 spec :: Spec
-spec = do
+spec =
   describe "Interpreter" $ do
     describe "Literals" $ do
       it "Booleans" $ do
@@ -54,41 +54,39 @@ spec = do
           mempty
           (str (StringType "poo"))
           (str (StringType "poo"))
-    describe "Let and Var" $ do
-      it "let x = 1 in 1" $ do
-        let f = (MyLet (named "x") (int 1) (MyVar (named "x")))
+    describe "Let and Var"
+      $ it "let x = 1 in 1"
+      $ do
+        let f = MyLet (named "x") (int 1) (MyVar (named "x"))
         testInterpret mempty f (int 1)
     describe "Lambda and App" $ do
       it "let id = \\x -> x in (id 1)" $ do
         let f =
-              ( MyLet
-                  (named "id")
-                  (MyLambda (named "x") (MyVar (named "x")))
-                  (MyApp (MyVar (named "id")) (int 1))
-              )
+              MyLet
+                (named "id")
+                (MyLambda (named "x") (MyVar (named "x")))
+                (MyApp (MyVar (named "id")) (int 1))
         testInterpret mempty f (int 1)
       it "let const = \\a -> \\b -> a in const(1)" $ do
         let f =
-              ( MyLet
-                  (named "const")
-                  (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "a"))))
-                  (MyApp (MyVar (named "const")) (int 1))
-              )
+              MyLet
+                (named "const")
+                (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "a"))))
+                (MyApp (MyVar (named "const")) (int 1))
         testInterpret mempty f $ MyLambda (named "b") (MyVar (NumberedVar 1))
       it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
-              ( MyLet
-                  (named "const")
-                  (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "a"))))
-                  (MyApp (MyApp (MyVar (named "const")) (int 1)) (int 2))
-              )
+              MyLet
+                (named "const")
+                (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "a"))))
+                (MyApp (MyApp (MyVar (named "const")) (int 1)) (int 2))
         testInterpret mempty f (int 1)
     describe "If" $ do
       it "Blows up when passed a non-bool" $ do
-        let f = (MyIf (int 1) (bool True) (bool False))
+        let f = MyIf (int 1) (bool True) (bool False)
         testInterpretFail mempty f (PredicateForIfMustBeABoolean (int 1))
       it "if True then 1 else 2" $ do
-        let f = (MyIf (bool True) (int 1) (int 2))
+        let f = MyIf (bool True) (int 1) (int 2)
         testInterpret mempty f (int 1)
     describe "BuiltIns" $ do
       it "Can't find stupidMadeUpFunction" $ do
@@ -121,23 +119,22 @@ spec = do
         result `shouldBe` Right (int 0)
       it "Destructures a pair" $ do
         let f =
-              ( MyLet
-                  (named "fst")
-                  ( MyLambda
-                      (named "tuple")
-                      ( MyLetPair
-                          (named "a")
-                          (named "b")
-                          (MyVar (named "tuple"))
-                          (MyVar (named "a"))
-                      )
-                  )
-                  ( MyLet
-                      (named "x")
-                      (MyPair (int 1) (int 2))
-                      (MyApp (MyVar (named "fst")) (MyVar (named "x")))
-                  )
-              )
+              MyLet
+                (named "fst")
+                ( MyLambda
+                    (named "tuple")
+                    ( MyLetPair
+                        (named "a")
+                        (named "b")
+                        (MyVar (named "tuple"))
+                        (MyVar (named "a"))
+                    )
+                )
+                ( MyLet
+                    (named "x")
+                    (MyPair (int 1) (int 2))
+                    (MyApp (MyVar (named "fst")) (MyVar (named "x")))
+                )
         result <- interpret mempty f
         result `shouldBe` Right (int 1)
       it "Uses a higher order function twice without screwing the pooch" $ do
