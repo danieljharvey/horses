@@ -13,9 +13,10 @@ import Test.Hspec
 import Test.StoreData
 
 spec :: Spec
-spec = do
-  describe "DepGraph" $ do
-    it "list" $ do
+spec =
+  describe "DepGraph"
+    $ it "list"
+    $ do
       let result = createDepGraph (mkName "list") (store stdLib) list
       T.putStrLn (prettyPrint result)
       True `shouldBe` True

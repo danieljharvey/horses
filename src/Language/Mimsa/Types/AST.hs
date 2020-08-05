@@ -158,7 +158,7 @@ instance (Printer a) => Printer (Expr a) where
               <> ": "
               <> printSubExpr val
         )
-          <$> (M.toList map')
+          <$> M.toList map'
 
 inParens :: (Printer a) => a -> Text
 inParens a = "(" <> prettyPrint a <> ")"
@@ -166,9 +166,9 @@ inParens a = "(" <> prettyPrint a <> ")"
 -- print simple things with no brackets, and complex things inside brackets
 printSubExpr :: (Printer a) => Expr a -> Text
 printSubExpr expr = case expr of
-  all'@(MyLet _ _ _) -> inParens all'
-  all'@(MyLambda _ _) -> inParens all'
-  all'@(MyApp _ _) -> inParens all'
-  all'@(MyIf _ _ _) -> inParens all'
+  all'@MyLet {} -> inParens all'
+  all'@MyLambda {} -> inParens all'
+  all'@MyApp {} -> inParens all'
+  all'@MyIf {} -> inParens all'
   a -> prettyPrint a
 -----------------

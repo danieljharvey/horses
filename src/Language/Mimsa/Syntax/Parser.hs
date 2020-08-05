@@ -3,6 +3,7 @@
 module Language.Mimsa.Syntax.Parser where
 
 import Control.Applicative
+import Control.Monad ((>=>))
 import qualified Data.Char as Char
 import Data.List.NonEmpty
 import Data.Text (Text)
@@ -30,7 +31,7 @@ instance Functor Parser where
     mkParser
       ( \input -> case parser input of
           Left e -> Left e
-          Right (rest, a) -> Right (rest, f (a))
+          Right (rest, a) -> Right (rest, f a)
       )
 
 instance Applicative Parser where
@@ -38,8 +39,8 @@ instance Applicative Parser where
 
   parserF <*> parserA =
     mkParser
-      ( \input -> runParser parserF input
-          >>= \(rest, f) -> runParser (fmap f parserA) rest
+      ( runParser parserF
+          >=> (\(rest, f) -> runParser (fmap f parserA) rest)
       )
 
 instance Alternative Parser where
@@ -57,18 +58,16 @@ instance Monad Parser where
 
   parserA >>= aToParserB =
     mkParser
-      ( \input ->
-          runParser parserA input
-            >>= \(next, a) -> runParser (aToParserB a) next
+      ( runParser parserA
+          >=> \(next, a) -> runParser (aToParserB a) next
       )
 
 pair :: Parser a -> Parser b -> Parser (a, b)
 pair parserA parserB =
   mkParser
-    ( \input ->
-        runParser parserA input
-          >>= \(restA, a) -> runParser parserB restA
-            >>= \(restB, b) -> pure (restB, (a, b))
+    ( runParser parserA
+        >=> \(restA, a) -> runParser parserB restA
+          >>= \(restB, b) -> pure (restB, (a, b))
     )
 
 left :: Parser a -> Parser b -> Parser a
@@ -95,12 +94,11 @@ char =
 predicate :: (Show a) => Parser a -> (a -> Bool) -> Parser a
 predicate parser predicate' =
   mkParser
-    ( \input ->
-        runParser parser input
-          >>= \(next, a) ->
-            if predicate' a
-              then Right (next, a)
-              else Left $ "Predicate did not hold for " <> T.pack (show a)
+    ( runParser parser
+        >=> \(next, a) ->
+          if predicate' a
+            then Right (next, a)
+            else Left $ "Predicate did not hold for " <> T.pack (show a)
     )
 
 literal :: Text -> Parser Text
@@ -133,14 +131,14 @@ identifier = fmap (foldr T.cons "") (oneOrMore alphaNumeric)
 whitespace :: Parser Char
 whitespace = predicate char Char.isSpace
 
-space0 :: Parser [Char]
+space0 :: Parser String
 space0 = zeroOrMore whitespace
 
 space1 :: Parser (NonEmpty Char)
 space1 = oneOrMore whitespace
 
 newline :: Parser Char
-newline = predicate char (\a -> a == '\n')
+newline = predicate char ('\n' ==)
 
 between :: Char -> Parser Text
 between char' =
@@ -149,7 +147,7 @@ between char' =
     ( right
         (literal (T.singleton char'))
         ( left
-            (zeroOrMore (predicate char (\c -> c /= char')))
+            (zeroOrMore (predicate char (char' /=)))
             (literal (T.singleton char'))
         )
     )

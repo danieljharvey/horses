@@ -1,6 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Types.Substitutions where
 
 import Data.Map (Map)

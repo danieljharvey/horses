@@ -1,6 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Infer
@@ -43,13 +42,13 @@ applySubstScheme (Substitutions subst) (Scheme vars t) =
   -- The fold takes care of name shadowing
   Scheme vars (applySubst newSubst t)
   where
-    newSubst = Substitutions $ (foldr M.delete subst vars)
+    newSubst = Substitutions $ foldr M.delete subst vars
 
 instantiate :: Scheme -> TcMonad (Substitutions, MonoType)
 instantiate (Scheme vars ty) = do
   newVars <- traverse (const getUnknown) vars
   let subst = Substitutions $ M.fromList (zip vars newVars)
-  pure $ (subst, applySubst subst ty)
+  pure (subst, applySubst subst ty)
 
 --------------
 
@@ -57,22 +56,24 @@ inferLiteral :: Literal -> TcMonad (Substitutions, MonoType)
 inferLiteral (MyInt _) = pure (mempty, MTInt)
 inferLiteral (MyBool _) = pure (mempty, MTBool)
 inferLiteral (MyString _) = pure (mempty, MTString)
-inferLiteral (MyUnit) = pure (mempty, MTUnit)
+inferLiteral MyUnit = pure (mempty, MTUnit)
 
 inferBuiltIn :: Variable -> TcMonad (Substitutions, MonoType)
 inferBuiltIn name = case getLibraryFunction name of
   Just ff -> pure (mempty, getFFType ff)
-  _ -> do
-    throwError $ MissingBuiltIn name
+  _ -> throwError $ MissingBuiltIn name
 
 inferVarFromScope :: Environment -> Variable -> TcMonad (Substitutions, MonoType)
 inferVarFromScope env name =
   let lookup' name' (Environment env') = M.lookup name' env'
    in case lookup' name env of
-        Just mt -> do
+        Just mt ->
           instantiate mt
-        _ -> do
-          throwError $ VariableNotInEnv name (S.fromList (M.keys (getEnvironment env)))
+        _ ->
+          throwError $
+            VariableNotInEnv
+              name
+              (S.fromList (M.keys (getEnvironment env)))
 
 createEnv :: Variable -> Scheme -> Environment
 createEnv binder scheme = Environment $ M.singleton binder scheme
@@ -95,7 +96,7 @@ inferFuncReturn env binder function tyArg = do
 inferList :: Environment -> NonEmpty (Expr Variable) -> TcMonad (Substitutions, MonoType)
 inferList env (a :| as) = do
   (s1, tyA) <- infer env a
-  let foldFn = \as' a' -> do
+  let foldFn as' a' = do
         (s', ty') <- as'
         (sA, tyB) <- infer env a'
         sB <- unify ty' tyB
@@ -111,10 +112,7 @@ splitRecordTypes ::
 splitRecordTypes map' = (subs, MTRecord types)
   where
     subs =
-      foldr
-        (<>)
-        mempty
-        ((fst . snd) <$> M.toList map')
+      mconcat (fst . snd <$> M.toList map')
     types = snd <$> map'
 
 -- let's pattern match on exactly what's inside more clearly
@@ -182,13 +180,13 @@ inferLetPairBinding env binder1 binder2 expr body = do
   (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
   pure (s3 <> s2 <> s1, tyBody)
 
-infer :: Environment -> (Expr Variable) -> TcMonad (Substitutions, MonoType)
+infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
   case inferExpr of
     (MyLiteral a) -> inferLiteral a
     (MyVar name) ->
-      (inferVarFromScope env name)
-        <|> (inferBuiltIn name)
+      inferVarFromScope env name
+        <|> inferBuiltIn name
     (MyList as) -> do
       (s1, tyItems) <- inferList env as
       pure (s1, MTList tyItems)
@@ -202,19 +200,19 @@ infer env inferExpr =
         )
     (MyLet binder expr body) ->
       inferLetBinding env binder expr body
-    (MyRecordAccess (MyRecord items') name) -> do
+    (MyRecordAccess (MyRecord items') name) ->
       case M.lookup name items' of
-        Just item -> do
+        Just item ->
           infer env item
-        Nothing -> do
+        Nothing ->
           throwError $ MissingRecordMember name (S.fromList (M.keys items'))
     (MyRecordAccess a name) -> do
       (s1, tyItems) <- infer env a
       tyResult <- case tyItems of
-        (MTRecord bits) -> do
+        (MTRecord bits) ->
           case M.lookup name bits of
             Just mt -> pure mt
-            _ -> do
+            _ ->
               throwError $ MissingRecordTypeMember name bits
         (MTVar _) -> getUnknown
         _ -> throwError $ CannotMatchRecord env tyItems
@@ -266,7 +264,7 @@ infer env inferExpr =
     (MyPair a b) -> do
       (s1, tyA) <- infer env a
       (s2, tyB) <- infer env b
-      let subs = (s2 <> s1)
+      let subs = s2 <> s1
       pure (subs, MTPair tyA tyB)
     (MySum MyLeft left') -> do
       tyRight <- getUnknown

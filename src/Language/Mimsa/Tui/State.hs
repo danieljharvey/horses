@@ -102,5 +102,5 @@ makeBindingsList :: Name -> ResolvedDeps -> BindingsList
 makeBindingsList name deps =
   BindingsList name deps (resolvedDepsToList deps 0)
   where
-    resolvedDepsToList (ResolvedDeps deps') i =
-      L.list () (Vec.fromList $ M.keys deps') i
+    resolvedDepsToList (ResolvedDeps deps') =
+      L.list () (Vec.fromList $ M.keys deps')

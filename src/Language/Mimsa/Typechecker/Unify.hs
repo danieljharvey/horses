@@ -1,6 +1,4 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Unify
@@ -43,24 +41,27 @@ varBind var ty
   | otherwise =
     pure $ Substitutions (M.singleton var ty)
 
+unifyPairs ::
+  (MonoType, MonoType) ->
+  (MonoType, MonoType) ->
+  TcMonad Substitutions
+unifyPairs (a, b) (a', b') = do
+  s1 <- unify a a'
+  s2 <- unify (applySubst s1 b) (applySubst s1 b')
+  pure (s2 <> s1)
+
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify a b | a == b = pure mempty
-unify (MTFunction l r) (MTFunction l' r') = do
-  s1 <- unify l l'
-  s2 <- unify (applySubst s1 r) (applySubst s1 r')
-  pure (s2 <> s1)
-unify (MTPair a b) (MTPair a' b') = do
-  s1 <- unify a a'
-  s2 <- unify (applySubst s1 b) (applySubst s1 b')
-  pure (s2 <> s1)
-unify (MTSum a b) (MTSum a' b') = do
-  s1 <- unify a a'
-  s2 <- unify (applySubst s1 b) (applySubst s1 b')
-  pure (s2 <> s1)
+unify (MTFunction l r) (MTFunction l' r') =
+  unifyPairs (l, r) (l', r')
+unify (MTPair a b) (MTPair a' b') =
+  unifyPairs (a, b) (a', b')
+unify (MTSum a b) (MTSum a' b') =
+  unifyPairs (a, b) (a', b')
 unify (MTList a) (MTList a') = unify a a'
 unify (MTRecord as) (MTRecord bs) = do
   let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
-  let getRecordTypes = \k -> do
+  let getRecordTypes k = do
         tyLeft <- getTypeOrFresh k as
         tyRight <- getTypeOrFresh k bs
         unify tyLeft tyRight
@@ -72,7 +73,7 @@ unify a b =
   throwError $ UnificationError a b
 
 getTypeOrFresh :: Name -> Map Name MonoType -> TcMonad MonoType
-getTypeOrFresh name map' = do
+getTypeOrFresh name map' =
   case M.lookup name map' of
     Just found -> pure found
     _ -> getUnknown

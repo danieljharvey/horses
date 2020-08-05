@@ -22,14 +22,14 @@ runUnifier (a, b) =
     either' = runState (runReaderT (runExceptT (unify a b)) mempty) 1
 
 spec :: Spec
-spec = do
+spec =
   describe "Unify" $ do
-    it "Two same things teach us nothing" $ do
+    it "Two same things teach us nothing" $
       runUnifier (MTUnit, MTUnit) `shouldBe` Right mempty
-    it "Combines a known with an unknown" $ do
+    it "Combines a known with an unknown" $
       runUnifier (MTVar (tvFree 1), MTInt)
         `shouldBe` Right (Substitutions $ M.singleton (NumberedVar 1) MTInt)
-    it "Combines two half pairs" $ do
+    it "Combines two half pairs" $
       runUnifier
         ( MTPair (MTVar (tvFree 1)) MTInt,
           MTPair MTBool (MTVar (tvFree 2))
@@ -41,7 +41,7 @@ spec = do
                   (NumberedVar 2, MTInt)
                 ]
           )
-    it "Combines two half records" $ do
+    it "Combines two half records" $
       runUnifier
         ( MTRecord $
             M.fromList
@@ -61,7 +61,7 @@ spec = do
                   (NumberedVar 2, MTInt)
                 ]
           )
-    it "Combines two records" $ do
+    it "Combines two records" $
       runUnifier
         ( MTRecord $
             M.fromList

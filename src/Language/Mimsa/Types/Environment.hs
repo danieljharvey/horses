@@ -16,7 +16,10 @@ newtype Environment = Environment {getEnvironment :: Map Variable Scheme}
   deriving (Eq, Ord, Show, Semigroup, Monoid)
 
 instance Printer Environment where
-  prettyPrint (Environment items) = "[\n" <> T.intercalate ", \n" (printRow <$> (M.toList items)) <> "\n]"
+  prettyPrint (Environment items) =
+    "[\n"
+      <> T.intercalate ", \n" (printRow <$> M.toList items)
+      <> "\n]"
     where
       printRow (var, scheme) =
         prettyPrint var <> ": " <> prettyPrint scheme

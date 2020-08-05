@@ -2,8 +2,7 @@ module Language.Mimsa.Typechecker.TcMonad where
 
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State (State, get, put)
-import Control.Monad.State (runState)
+import Control.Monad.State (State, get, put, runState)
 import Language.Mimsa.Types
 
 type TcMonad = ExceptT TypeError (ReaderT Swaps (State Int))
