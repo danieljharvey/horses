@@ -205,7 +205,7 @@ spec =
         result `shouldBe` Right (MTInt, int 1)
       it "(\\b -> (\\a -> b))(0)(1)" $ do
         result <- eval stdLib "(\\b -> (\\a -> b))(0)(1)"
-        result `shouldBe` Right (MTInt, int 1)
+        result `shouldBe` Right (MTInt, int 0)
       it "let combine = \\b -> \\a -> \"horse\" in reduceList(combine)(\"\")([1])" $ do
         result <- eval stdLib "let combine = \\b -> \\a -> \"horse\" in reduceList(combine)(\"\")([1])"
         result `shouldBe` Right (MTString, str' "horse")

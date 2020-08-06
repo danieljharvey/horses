@@ -15,6 +15,7 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Library
+import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
 interpret :: Scope -> Expr Variable -> IO (Either InterpreterError (Expr Variable))
@@ -194,7 +195,7 @@ addToScope scope' = modify $ (<>) scope'
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
-  case interpretExpr of
+  case debugPretty "interpretWithScope" interpretExpr of
     (MyLiteral a) -> pure (MyLiteral a)
     (MyPair a b) -> do
       exprA <- interpretWithScope a
@@ -232,6 +233,9 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyApp expr value)
     (MyApp (MyLambda binder expr) value) ->
       interpretWithScope (MyLet binder value expr)
+    (MyApp other value) -> do
+      expr <- interpretWithScope other
+      interpretWithScope (MyApp expr value)
     (MyLetList binderHead binderRest (MyList as) body) -> do
       let (listHead, listTail) = NE.uncons as
           tail' = case listTail of
@@ -257,32 +261,15 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyLetList binderHead binderRest expr body)
     (MyLetList _ _ a _) ->
       throwError $ CannotDestructureAsList a
-    (MyApp (MyApp a b) c) -> do
-      expr <- interpretWithScope (MyApp a b)
-      interpretWithScope (MyApp expr c)
-    (MyApp (MyLet a b c) d) -> do
-      expr <- interpretWithScope (MyLet a b c)
-      interpretWithScope (MyApp expr d)
-    (MyApp (MyLetPair a b c d) e) -> do
-      expr <- interpretWithScope (MyLetPair a b c d)
-      interpretWithScope (MyApp expr e)
-    (MyApp (MyRecordAccess a b) c) -> do
-      expr <- interpretWithScope (MyRecordAccess a b)
-      interpretWithScope (MyApp expr c)
     (MySum s a) -> do
       expr <- interpretWithScope a
       pure (MySum s expr)
-    (MyApp (MyLetList a b c d) e) -> do
-      expr <- interpretWithScope (MyLetList a b c d)
-      interpretWithScope (MyApp expr e)
     (MyList as) -> do
       exprs <- traverse interpretWithScope as
       pure (MyList exprs)
     (MyRecord as) -> do
       exprs <- traverse interpretWithScope as
       pure (MyRecord exprs)
-    (MyApp thing _) ->
-      throwError $ CannotApplyToNonFunction thing
     (MyLambda a b) -> pure (MyLambda a b)
     (MyIf (MyLiteral (MyBool pred')) true false) ->
       if pred'
