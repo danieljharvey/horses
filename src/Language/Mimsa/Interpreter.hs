@@ -15,7 +15,6 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Library
-import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
 interpret :: Scope -> Expr Variable -> IO (Either InterpreterError (Expr Variable))
@@ -24,7 +23,7 @@ interpret scope' expr = fmap fst <$> either'
     either' =
       runExceptT $
         runStateT
-          (interpretWithScope expr)
+          (interpretWithScope expr >>= interpretWithScope)
           scope'
 
 type App = StateT Scope (ExceptT InterpreterError IO)
@@ -195,7 +194,7 @@ addToScope scope' = modify $ (<>) scope'
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
-  case debugPretty "interpretWithScope" interpretExpr of
+  case interpretExpr of
     (MyLiteral a) -> pure (MyLiteral a)
     (MyPair a b) -> do
       exprA <- interpretWithScope a

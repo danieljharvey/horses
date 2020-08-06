@@ -192,14 +192,14 @@ spec =
         let reduceFunc =
               MyLet
                 (named "f")
-                (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "b"))))
+                (MyLambda (named "b") (MyLambda (named "a") (str' "Horse")))
                 ( MyApp
                     ( MyApp
                         (MyVar (named "f"))
-                        (MyLiteral (MyInt 0))
+                        (str' "")
                     )
                     (MyLiteral (MyInt 1))
                 )
             scope' = mempty
         result <- interpret scope' reduceFunc
-        result `shouldBe` Right (int 1)
+        result `shouldBe` Right (str' "Horse")
