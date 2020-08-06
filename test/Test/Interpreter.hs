@@ -109,7 +109,7 @@ spec =
         let f =
               MyIf
                 ( MyApp
-                    (MyApp (MyVar (named "eqInt")) (int 1))
+                    (MyApp (MyVar (builtIn "eqInt")) (int 1))
                     (int 2)
                 )
                 (int 1)
@@ -175,7 +175,7 @@ spec =
                     ( MyIf
                         ( MyApp
                             ( MyApp
-                                (MyVar (named "eqInt"))
+                                (MyVar (builtIn "eqInt"))
                                 (MyVar (named "x"))
                             )
                             (MyVar (named "y"))
