@@ -1,71 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Test.Syntax
   ( spec,
   )
 where
 
-import qualified Data.Char as Ch
-import Data.Either (isLeft, isRight)
+import Data.Either (isLeft)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Data.Text (Text)
-import qualified Data.Text as T
---import qualified Data.Text.IO as T
 import Language.Mimsa
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
-import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
-import Test.QuickCheck
-import Test.QuickCheck.Arbitrary.Generic
-import Test.QuickCheck.Instances ()
-
-charListToText :: String -> Text
-charListToText = foldr T.cons ""
-
--- this is slow, there is probably a nicer way to do this
-instance Arbitrary Name where
-  arbitrary =
-    let charList = charListToText <$> listOf1 arbitraryASCIIChar
-     in mkName <$> suchThat charList validName
-
--- need to make these part of the contruction / parsing of the string type
--- or learn to unescape this crap
-instance Arbitrary StringType where
-  arbitrary =
-    StringType
-      <$> suchThat
-        arbitrary
-        ( \a ->
-            T.length a == T.length (T.filter isGoodChar a)
-              && T.length a > 0
-        )
-    where
-      isGoodChar = Ch.isAlphaNum
-
-instance Arbitrary SumSide where
-  arbitrary = genericArbitrary
-
-instance (Arbitrary a, Ord a) => Arbitrary (Expr a) where
-  arbitrary = genericArbitrary
-
-instance Arbitrary Variable where
-  arbitrary = genericArbitrary
-
-instance Arbitrary Literal where
-  arbitrary = genericArbitrary
-
-instance Arbitrary FuncName where
-  arbitrary = genericArbitrary
-
-newtype WellTypedExpr = WellTypedExpr (Expr Variable)
-  deriving (Show)
-
-instance Arbitrary WellTypedExpr where
-  arbitrary = WellTypedExpr <$> suchThat arbitrary (isRight . startInference mempty)
 
 spec :: Spec
 spec = do
@@ -256,14 +203,3 @@ spec = do
               (MyLambda (mkName "r") (str' "It's not ten"))
               (MyLambda (mkName "l") (str' "It's ten!"))
           )
-{-  describe "Expression" $ do
-it "Printing and parsing is an iso" $ do
-  property $ \(WellTypedExpr x) -> do
-    T.putStrLn ""
-    T.putStrLn (prettyPrint x)
-    case startInference mempty x of
-      Right type' -> do
-        T.putStrLn ""
-        T.putStrLn (prettyPrint type')
-      _ -> pure ()
-    parseExpr (prettyPrint x) `shouldBe` Right x -}

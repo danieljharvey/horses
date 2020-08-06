@@ -85,6 +85,11 @@ runBuiltIn name (TwoArgs _ io) = do
   expr1 <- useVarFromScope (wrappedVarName name 1)
   expr2 <- useVarFromScope (wrappedVarName name 2)
   liftIO (io expr1 expr2)
+runBuiltIn name (ThreeArgs _ io) = do
+  expr1 <- useVarFromScope (wrappedVarName name 1)
+  expr2 <- useVarFromScope (wrappedVarName name 2)
+  expr3 <- useVarFromScope (wrappedVarName name 3)
+  liftIO (io expr1 expr2 expr3)
 
 unwrapBuiltIn :: Variable -> ForeignFunc -> App (Expr Variable)
 unwrapBuiltIn name (NoArgs t' io) = runBuiltIn name (NoArgs t' io)
@@ -102,7 +107,24 @@ unwrapBuiltIn name (TwoArgs _ _) = do
   pure
     ( MyLambda
         (wrappedVarName name 1)
-        (MyLambda (wrappedVarName name 2) (MyVar wrapped))
+        ( MyLambda
+            (wrappedVarName name 2)
+            (MyVar wrapped)
+        )
+    )
+unwrapBuiltIn name (ThreeArgs _ _) = do
+  let wrapped = wrappedName name
+  addToScope (Scope $ M.singleton wrapped (MyVar name)) -- add new name to scope
+  pure
+    ( MyLambda
+        (wrappedVarName name 1)
+        ( MyLambda
+            (wrappedVarName name 2)
+            ( MyLambda
+                (wrappedVarName name 3)
+                (MyVar wrapped)
+            )
+        )
     )
 
 -- get new var

@@ -188,3 +188,18 @@ spec =
             scope' = mempty
         result <- interpret scope' f
         result `shouldBe` Right (int 0)
+      it "Runs the internals of reduce function" $ do
+        let reduceFunc =
+              MyLet
+                (named "f")
+                (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "b"))))
+                ( MyApp
+                    ( MyApp
+                        (MyVar (named "f"))
+                        (MyLiteral (MyInt 0))
+                    )
+                    (MyLiteral (MyInt 1))
+                )
+            scope' = mempty
+        result <- interpret scope' reduceFunc
+        result `shouldBe` Right (int 1)

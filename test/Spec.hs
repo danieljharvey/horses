@@ -10,6 +10,7 @@ where
 import qualified Test.DepGraph as DepGraph
 import Test.Hspec
 import qualified Test.Interpreter as Interpreter
+import qualified Test.Library as Library
 import Test.QuickCheck.Instances ()
 import qualified Test.Repl as Repl
 import qualified Test.Resolver as Resolver
@@ -30,3 +31,4 @@ main = hspec $ do
   Repl.spec
   Unify.spec
   Usages.spec
+  Library.spec

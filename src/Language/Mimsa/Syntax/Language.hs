@@ -50,8 +50,11 @@ expressionParser =
         literalParser
           <|> complexParser
           <|> varParser
-   in (P.between2 '(' ')' parsers <|> parsers)
+   in orInBrackets parsers
         <|> failer
+
+orInBrackets :: Parser a -> Parser a
+orInBrackets parser = P.between2 '(' ')' parser <|> parser
 
 literalParser :: Parser ParserExpr
 literalParser =
@@ -66,7 +69,6 @@ complexParser =
     <|> letListParser
     <|> letParser
     <|> ifParser
-    <|> lambdaParser
     <|> pairParser
     <|> sumParser
     <|> caseParser
@@ -74,6 +76,7 @@ complexParser =
     <|> appParser2
     <|> appParser
     <|> recordAccessParser
+    <|> lambdaParser
     <|> listParser
     <|> recordParser
 
@@ -223,9 +226,11 @@ arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
 appParser :: Parser ParserExpr
 appParser = do
   func <-
-    recordAccessParser
-      <|> varParser
-      <|> lambdaParser
+    orInBrackets
+      ( recordAccessParser
+          <|> lambdaParser
+          <|> varParser
+      )
   MyApp func <$> exprInBrackets
 
 literalWithSpace :: Text -> Parser ()
@@ -241,15 +246,17 @@ withOptionalSpace p = do
 appParser2 :: Parser ParserExpr
 appParser2 = do
   func <-
-    recordAccessParser
-      <|> varParser
-      <|> lambdaParser
+    orInBrackets
+      ( recordAccessParser
+          <|> lambdaParser
+          <|> varParser
+      )
   arg <- exprInBrackets
   MyApp (MyApp func arg) <$> exprInBrackets
 
 appParser3 :: Parser ParserExpr
 appParser3 = do
-  func <- recordAccessParser <|> varParser <|> lambdaParser
+  func <- orInBrackets (recordAccessParser <|> lambdaParser <|> varParser)
   arg <- exprInBrackets
   arg2 <- exprInBrackets
   MyApp (MyApp (MyApp func arg) arg2) <$> exprInBrackets
