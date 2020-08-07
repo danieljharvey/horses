@@ -109,7 +109,7 @@ spec =
         let f =
               MyIf
                 ( MyApp
-                    (MyApp (MyVar (named "eqInt")) (int 1))
+                    (MyApp (MyVar (builtIn "eqInt")) (int 1))
                     (int 2)
                 )
                 (int 1)
@@ -175,7 +175,7 @@ spec =
                     ( MyIf
                         ( MyApp
                             ( MyApp
-                                (MyVar (named "eqInt"))
+                                (MyVar (builtIn "eqInt"))
                                 (MyVar (named "x"))
                             )
                             (MyVar (named "y"))
@@ -188,3 +188,18 @@ spec =
             scope' = mempty
         result <- interpret scope' f
         result `shouldBe` Right (int 0)
+      it "Runs the internals of reduce function" $ do
+        let reduceFunc =
+              MyLet
+                (named "f")
+                (MyLambda (named "b") (MyLambda (named "a") (str' "Horse")))
+                ( MyApp
+                    ( MyApp
+                        (MyVar (named "f"))
+                        (str' "")
+                    )
+                    (MyLiteral (MyInt 1))
+                )
+            scope' = mempty
+        result <- interpret scope' reduceFunc
+        result `shouldBe` Right (str' "Horse")

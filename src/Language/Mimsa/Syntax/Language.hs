@@ -36,7 +36,7 @@ parseExpr input = P.runParser expressionParser input
   >>= \(leftover, a) ->
     if T.length leftover == 0
       then Right a
-      else Left ("Leftover input: " <> leftover)
+      else Left ("Leftover input: >>>" <> leftover <> "<<<")
 
 parseExpr' :: Text -> Either Text ParserExpr
 parseExpr' input = snd <$> P.runParser expressionParser input
@@ -50,8 +50,14 @@ expressionParser =
         literalParser
           <|> complexParser
           <|> varParser
-   in (P.between2 '(' ')' parsers <|> parsers)
+   in orInBrackets parsers
         <|> failer
+
+inBrackets :: Parser a -> Parser a
+inBrackets = P.between2 '(' ')'
+
+orInBrackets :: Parser a -> Parser a
+orInBrackets parser = parser <|> inBrackets parser
 
 literalParser :: Parser ParserExpr
 literalParser =
@@ -66,14 +72,14 @@ complexParser =
     <|> letListParser
     <|> letParser
     <|> ifParser
-    <|> lambdaParser
-    <|> pairParser
     <|> sumParser
     <|> caseParser
     <|> appParser3
     <|> appParser2
     <|> appParser
+    <|> pairParser
     <|> recordAccessParser
+    <|> lambdaParser
     <|> listParser
     <|> recordParser
 
@@ -220,13 +226,12 @@ arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
 
 -----
 
+appFunc :: Parser ParserExpr
+appFunc = recordAccessParser <|> inBrackets lambdaParser <|> varParser
+
 appParser :: Parser ParserExpr
-appParser = do
-  func <-
-    recordAccessParser
-      <|> varParser
-      <|> lambdaParser
-  MyApp func <$> exprInBrackets
+appParser =
+  MyApp <$> appFunc <*> exprInBrackets
 
 literalWithSpace :: Text -> Parser ()
 literalWithSpace tx = () <$ withOptionalSpace (P.literal tx)
@@ -240,16 +245,13 @@ withOptionalSpace p = do
 
 appParser2 :: Parser ParserExpr
 appParser2 = do
-  func <-
-    recordAccessParser
-      <|> varParser
-      <|> lambdaParser
+  func <- appFunc
   arg <- exprInBrackets
   MyApp (MyApp func arg) <$> exprInBrackets
 
 appParser3 :: Parser ParserExpr
 appParser3 = do
-  func <- recordAccessParser <|> varParser <|> lambdaParser
+  func <- appFunc
   arg <- exprInBrackets
   arg2 <- exprInBrackets
   MyApp (MyApp (MyApp func arg) arg2) <$> exprInBrackets
