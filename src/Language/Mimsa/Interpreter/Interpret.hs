@@ -20,17 +20,15 @@ import Language.Mimsa.Types
 
 useVarFromScope :: Variable -> App (Expr Variable)
 useVarFromScope name = do
-  found <- gets (M.lookup name . getScope)
-  case found of
+  scope' <- readScope
+  case M.lookup name (getScope scope') of
     Just expr ->
       case expr of
         (MyLambda binder expr') -> do
           (freshBinder, freshExpr) <- newLambdaCopy binder expr'
           interpretWithScope (MyLambda freshBinder freshExpr)
         other -> interpretWithScope other
-    Nothing -> do
-      scope' <- get
-      throwError $ CouldNotFindVar scope' name
+    Nothing -> throwError $ CouldNotFindVar scope' name
 
 -- return lambda to new function, with __unwrapped in the name
 -- if Name ends in __unwrapped then run it else return new function...
@@ -40,12 +38,12 @@ useVarFromBuiltIn name =
     Nothing -> case getLibraryFunction name of
       Just ff -> unwrapBuiltIn name ff
       Nothing -> do
-        scope' <- get
+        scope' <- gets snd
         throwError $ CouldNotFindBuiltIn scope' name
     Just unwrappedName -> case getLibraryFunction unwrappedName of
       Just ff -> runBuiltIn unwrappedName ff
       Nothing -> do
-        scope' <- get
+        scope' <- gets snd
         throwError $ CouldNotFindBuiltIn scope' name
 
 runBuiltIn :: Variable -> ForeignFunc -> App (Expr Variable)
@@ -102,16 +100,9 @@ unwrapBuiltIn name (ThreeArgs _ _) = do
 -- get new var
 newLambdaCopy :: Variable -> Expr Variable -> App (Variable, Expr Variable)
 newLambdaCopy name expr = do
-  newName' <- newName
+  newName' <- nextVariable
   newExpr <- swapName name newName' expr
   pure (newName', newExpr)
-
-newName :: App Variable
-newName =
-  NumberedVar <$> gets (M.size . getScope)
-
-addToScope :: Scope -> App ()
-addToScope scope' = modify $ (<>) scope'
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
@@ -134,7 +125,7 @@ interpretWithScope interpretExpr =
     (MyLetPair _ _ a _) ->
       throwError $ CannotDestructureAsPair a
     (MyVar name) -> do
-      scope <- get
+      scope <- readScope
       (useVarFromBuiltIn name >>= interpretWithScope)
         <|> (useVarFromScope name >>= interpretWithScope)
         <|> throwError (CouldNotFindVar scope name)
