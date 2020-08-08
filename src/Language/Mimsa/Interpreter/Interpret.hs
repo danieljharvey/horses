@@ -9,92 +9,101 @@ where
 -- run == simplify, essentially
 import Control.Applicative
 import Control.Monad.Except
-import Control.Monad.Trans.State.Lazy
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Language.Mimsa.Interpreter.BuiltIns
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Library
 import Language.Mimsa.Types
 
-useVarFromScope :: Variable -> App (Expr Variable)
-useVarFromScope name = do
-  found <- gets (M.lookup name . getScope)
-  case found of
-    Just expr ->
-      case expr of
-        (MyLambda binder expr') -> do
-          (freshBinder, freshExpr) <- newLambdaCopy binder expr'
-          interpretWithScope (MyLambda freshBinder freshExpr)
-        other -> interpretWithScope other
+useVar :: Variable -> App (Expr Variable)
+useVar (NumberedVar i) = do
+  scope' <- readScope
+  case M.lookup (NumberedVar i) (getScope scope') of
+    Just expr -> instantiateVar expr
+    Nothing -> throwError $ CouldNotFindVar scope' (NumberedVar i)
+useVar (NamedVar n) = do
+  scope' <- readScope
+  case M.lookup (NamedVar n) (getScope scope') of
+    Just expr -> instantiateVar expr
+    Nothing -> throwError $ CouldNotFindVar scope' (NamedVar n)
+useVar (BuiltIn n) =
+  case getLibraryFunction (BuiltIn n) of
+    Just ff -> unwrapBuiltIn n ff
     Nothing -> do
-      scope' <- get
-      throwError $ CouldNotFindVar scope' name
+      scope' <- readScope
+      throwError $ CouldNotFindBuiltIn scope' (BuiltIn n)
+useVar var@(BuiltInActual n ids) =
+  case getLibraryFunction (BuiltIn n) of
+    Just ff -> runBuiltIn ids ff
+    Nothing -> do
+      scope' <- readScope
+      throwError $ CouldNotFindBuiltIn scope' var
 
--- return lambda to new function, with __unwrapped in the name
--- if Name ends in __unwrapped then run it else return new function...
-useVarFromBuiltIn :: Variable -> App (Expr Variable)
-useVarFromBuiltIn name =
-  case unwrap name of
-    Nothing -> case getLibraryFunction name of
-      Just ff -> unwrapBuiltIn name ff
-      Nothing -> do
-        scope' <- get
-        throwError $ CouldNotFindBuiltIn scope' name
-    Just unwrappedName -> case getLibraryFunction unwrappedName of
-      Just ff -> runBuiltIn unwrappedName ff
-      Nothing -> do
-        scope' <- get
-        throwError $ CouldNotFindBuiltIn scope' name
+-- make a fresh copy for us to use
+-- is this necessary?
+instantiateVar :: Expr Variable -> App (Expr Variable)
+instantiateVar expr = case expr of
+  (MyLambda binder expr') -> do
+    (freshBinder, freshExpr) <- newLambdaCopy binder expr'
+    interpretWithScope (MyLambda freshBinder freshExpr)
+  other -> interpretWithScope other
 
-runBuiltIn :: Variable -> ForeignFunc -> App (Expr Variable)
+runBuiltIn :: BiIds -> ForeignFunc -> App (Expr Variable)
 runBuiltIn _ (NoArgs _ io) = liftIO io
-runBuiltIn name (OneArg _ io) = do
-  expr1 <- useVarFromScope (wrappedVarName name 1)
+runBuiltIn (OneId v1) (OneArg _ io) = do
+  expr1 <- useVar v1
   liftIO (io expr1)
-runBuiltIn name (TwoArgs _ io) = do
-  expr1 <- useVarFromScope (wrappedVarName name 1)
-  expr2 <- useVarFromScope (wrappedVarName name 2)
+runBuiltIn (TwoIds v1 v2) (TwoArgs _ io) = do
+  expr1 <- useVar v1
+  expr2 <- useVar v2
   liftIO (io expr1 expr2)
-runBuiltIn name (ThreeArgs _ io) = do
-  expr1 <- useVarFromScope (wrappedVarName name 1)
-  expr2 <- useVarFromScope (wrappedVarName name 2)
-  expr3 <- useVarFromScope (wrappedVarName name 3)
+runBuiltIn (ThreeIds v1 v2 v3) (ThreeArgs _ io) = do
+  expr1 <- useVar v1
+  expr2 <- useVar v2
+  expr3 <- useVar v3
   liftIO (io expr1 expr2 expr3)
+runBuiltIn ids _ = throwError $ CouldNotMatchBuiltInId ids
 
-unwrapBuiltIn :: Variable -> ForeignFunc -> App (Expr Variable)
-unwrapBuiltIn name (NoArgs t' io) = runBuiltIn name (NoArgs t' io)
+unwrapBuiltIn :: Name -> ForeignFunc -> App (Expr Variable)
+unwrapBuiltIn name (NoArgs _ _) = do
+  let actual = BuiltInActual name NoId
+  addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name)))
+  pure (MyVar actual)
 unwrapBuiltIn name (OneArg _ _) = do
-  let wrapped = wrappedName name -- rename our foreign func
-  addToScope (Scope $ M.singleton wrapped (MyVar name)) -- add new name to scope
+  v1 <- nextVariable
+  let actual = BuiltInActual name (OneId v1)
+  addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name))) -- add new name to scope
   pure
-    ( MyLambda
-        (wrappedVarName name 1)
-        (MyVar wrapped)
+    ( MyLambda v1 (MyVar actual)
     )
 unwrapBuiltIn name (TwoArgs _ _) = do
-  let wrapped = wrappedName name
-  addToScope (Scope $ M.singleton wrapped (MyVar name)) -- add new name to scope
+  v1 <- nextVariable
+  v2 <- nextVariable
+  let actual = BuiltInActual name (TwoIds v1 v2)
+  addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name))) -- add new name to scope
   pure
     ( MyLambda
-        (wrappedVarName name 1)
+        v1
         ( MyLambda
-            (wrappedVarName name 2)
-            (MyVar wrapped)
+            v2
+            (MyVar actual)
         )
     )
 unwrapBuiltIn name (ThreeArgs _ _) = do
-  let wrapped = wrappedName name
-  addToScope (Scope $ M.singleton wrapped (MyVar name)) -- add new name to scope
+  v1 <- nextVariable
+  v2 <- nextVariable
+  v3 <- nextVariable
+  let actual = BuiltInActual name (ThreeIds v1 v2 v3)
+  addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name))) -- add new name to scope
   pure
     ( MyLambda
-        (wrappedVarName name 1)
+        v1
         ( MyLambda
-            (wrappedVarName name 2)
+            v2
             ( MyLambda
-                (wrappedVarName name 3)
-                (MyVar wrapped)
+                v3
+                (MyVar actual)
             )
         )
     )
@@ -102,16 +111,9 @@ unwrapBuiltIn name (ThreeArgs _ _) = do
 -- get new var
 newLambdaCopy :: Variable -> Expr Variable -> App (Variable, Expr Variable)
 newLambdaCopy name expr = do
-  newName' <- newName
+  newName' <- nextVariable
   newExpr <- swapName name newName' expr
   pure (newName', newExpr)
-
-newName :: App Variable
-newName =
-  NumberedVar <$> gets (M.size . getScope)
-
-addToScope :: Scope -> App ()
-addToScope scope' = modify $ (<>) scope'
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
@@ -133,11 +135,10 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyLetPair binderA binderB expr body)
     (MyLetPair _ _ a _) ->
       throwError $ CannotDestructureAsPair a
-    (MyVar name) -> do
-      scope <- get
-      (useVarFromBuiltIn name >>= interpretWithScope)
-        <|> (useVarFromScope name >>= interpretWithScope)
-        <|> throwError (CouldNotFindVar scope name)
+    (MyVar var) -> do
+      scope <- readScope
+      (useVar var >>= interpretWithScope)
+        <|> throwError (CouldNotFindVar scope var)
     (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) ->
       interpretWithScope (MyLet binderL a exprL)
     (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) ->

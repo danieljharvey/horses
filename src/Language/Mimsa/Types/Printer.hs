@@ -16,6 +16,9 @@ class Printer a where
 instance Printer Text where
   prettyPrint a = a
 
+instance Printer Int where
+  prettyPrint = T.pack . show
+
 instance (Printer a, Printer b) => Printer (a, b) where
   prettyPrint (a, b) = T.intercalate "\n" [prettyPrint a, prettyPrint b]
 
