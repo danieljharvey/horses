@@ -43,6 +43,8 @@ getLibraryFunction (BuiltIn name) =
   M.lookup (coerce name) (getLibrary libraryFunctions)
 getLibraryFunction (NamedVar name) =
   M.lookup (coerce name) (getLibrary libraryFunctions)
+getLibraryFunction (BuiltInActual name _) =
+  M.lookup (coerce name) (getLibrary libraryFunctions)
 getLibraryFunction _ = Nothing
 
 logInt :: ForeignFunc

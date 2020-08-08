@@ -22,6 +22,8 @@ data InterpreterError
   | CannotApplyToNonFunction (Expr Variable)
   | CannotFindMemberInRecord (Map Name (Expr Variable)) Name
   | PredicateForIfMustBeABoolean (Expr Variable)
+  | CouldNotUnwrapBuiltIn Variable
+  | CouldNotMatchBuiltInId BiIds
   deriving (Eq, Ord, Show)
 
 instance Printer InterpreterError where
@@ -36,6 +38,8 @@ instance Printer InterpreterError where
     where
       list = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
   prettyPrint (PredicateForIfMustBeABoolean expr) = "Expected a boolean as a predicate. Cannot use: " <> prettyPrint expr
+  prettyPrint (CouldNotUnwrapBuiltIn name) = "Could unwrap built-in " <> prettyPrint name
+  prettyPrint (CouldNotMatchBuiltInId ids) = "Could not match built in ids " <> prettyPrint ids
   prettyPrint UnknownInterpreterError = "Unknown interpreter error"
 
 instance Semigroup InterpreterError where

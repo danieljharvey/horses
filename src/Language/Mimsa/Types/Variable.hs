@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Variable where
 
@@ -9,16 +10,22 @@ import Language.Mimsa.Types.Printer
 
 data BiIds
   = NoId
-  | OneId Int
-  | TwoIds Int Int
-  | ThreeIds Int Int Int
+  | OneId Variable
+  | TwoIds Variable Variable
+  | ThreeIds Variable Variable Variable
   deriving (Eq, Ord, Show, Generic)
+
+instance Printer BiIds where
+  prettyPrint NoId = "-"
+  prettyPrint (OneId v1) = prettyPrint v1
+  prettyPrint (TwoIds v1 v2) = T.intercalate ", " (prettyPrint <$> [v1, v2])
+  prettyPrint (ThreeIds v1 v2 v3) = T.intercalate ", " (prettyPrint <$> [v1, v2, v3])
 
 data Variable
   = NamedVar Name
   | NumberedVar Int
   | BuiltIn Name
-  | BuiltInActual Int BiIds
+  | BuiltInActual Name BiIds
   deriving (Eq, Ord, Show, Generic)
 
 instance Printer Variable where
