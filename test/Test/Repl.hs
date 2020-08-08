@@ -234,3 +234,8 @@ spec =
             ( MTSum MTUnit (MTList MTInt),
               MySum MyRight (MyList (NE.fromList [int 10, int 10]))
             )
+      it "foldList(appendList)([[1,2],[3,4]])" $ do
+        result <- eval stdLib "foldList(appendList)([[1,2],[3,4]])"
+        result
+          `shouldBe` Right
+            (MTList MTInt, MyList $ NE.fromList [int 1, int 2, int 3, int 4])
