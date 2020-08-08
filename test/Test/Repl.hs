@@ -218,3 +218,6 @@ spec =
       it "addInt(1)(addInt(addInt(2)(4))(5))" $ do
         result <- eval stdLib "addInt(1)(addInt(addInt(2)(4))(5))"
         result `shouldBe` Right (MTInt, int 12)
+      it "mapList(incrementInt)([1,2,3])" $ do
+        result <- eval stdLib "mapList(incrementInt)([1,2,3])"
+        result `shouldBe` Right (MTList MTInt, MyList (NE.fromList [int 2, int 3, int 4]))
