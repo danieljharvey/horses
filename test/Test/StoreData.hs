@@ -90,6 +90,17 @@ maybeExpr =
         )
     )
 
+listCons :: StoreExpression
+listCons =
+  unsafeGetExpr
+    "\\a -> (\\maybeList -> case maybeList of Left (\\l -> [a]) | Right (\\as -> (appendList(as)([a]))))"
+
+listFilter :: StoreExpression
+listFilter =
+  unsafeGetExpr'
+    "\\pred -> \\as -> let foldFunc = \\a -> \\total -> if pred(a) then Right listCons(a)(total) else total in reduceList(foldFunc)(Left Unit)(as)"
+    (Bindings $ M.singleton (mkName "listCons") (ExprHash 15))
+
 stdLib :: Project
 stdLib = Project store' bindings'
   where
@@ -109,7 +120,9 @@ stdLib = Project store' bindings'
             (ExprHash 11, idExpr),
             (ExprHash 12, justExpr),
             (ExprHash 13, nothingExpr),
-            (ExprHash 14, maybeExpr)
+            (ExprHash 14, maybeExpr),
+            (ExprHash 15, listCons),
+            (ExprHash 16, listFilter)
           ]
     bindings' =
       VersionedBindings $
@@ -125,7 +138,9 @@ stdLib = Project store' bindings'
             (mkName "listTail", pure $ ExprHash 9),
             (mkName "list", pure $ ExprHash 10),
             (mkName "id", pure $ ExprHash 11),
-            (mkName "maybe", pure $ ExprHash 14)
+            (mkName "maybe", pure $ ExprHash 14),
+            (mkName "listCons", pure $ ExprHash 15),
+            (mkName "listFilter", pure $ ExprHash 16)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression

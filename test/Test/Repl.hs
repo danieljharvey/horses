@@ -218,3 +218,24 @@ spec =
       it "addInt(1)(addInt(addInt(2)(4))(5))" $ do
         result <- eval stdLib "addInt(1)(addInt(addInt(2)(4))(5))"
         result `shouldBe` Right (MTInt, int 12)
+      it "mapList(incrementInt)([1,2,3])" $ do
+        result <- eval stdLib "mapList(incrementInt)([1,2,3])"
+        result `shouldBe` Right (MTList MTInt, MyList (NE.fromList [int 2, int 3, int 4]))
+      it "foldList(addInt)([1,2,3])" $ do
+        result <- eval stdLib "foldList(addInt)([1,2,3])"
+        result `shouldBe` Right (MTInt, int 6)
+      it "listFilter(\\a -> eqInt(10)(a))([1])" $ do
+        result <- eval stdLib "listFilter(\\a -> eqInt(10)(a))([1])"
+        result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
+      it "listFilter(\\a -> eqInt(10)(a))([10,10,30])" $ do
+        result <- eval stdLib "listFilter(\\a -> eqInt(10)(a))([10,10,30])"
+        result
+          `shouldBe` Right
+            ( MTSum MTUnit (MTList MTInt),
+              MySum MyRight (MyList (NE.fromList [int 10, int 10]))
+            )
+      it "foldList(appendList)([[1,2],[3,4]])" $ do
+        result <- eval stdLib "foldList(appendList)([[1,2],[3,4]])"
+        result
+          `shouldBe` Right
+            (MTList MTInt, MyList $ NE.fromList [int 1, int 2, int 3, int 4])

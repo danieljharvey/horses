@@ -31,7 +31,9 @@ libraryFunctions =
         (FuncName "logBool", logBool),
         (FuncName "appendList", appendList),
         (FuncName "reduceList", reduceList),
-        (FuncName "addInt", addInt)
+        (FuncName "addInt", addInt),
+        (FuncName "mapList", mapList),
+        (FuncName "foldList", foldList)
       ]
 
 isLibraryName :: Name -> Bool
@@ -132,6 +134,23 @@ reduce f starting as =
   let varF = NamedVar (Name "f")
       result = foldr (\a' b' -> MyApp (MyApp (MyVar varF) a') b') starting as
    in MyLet varF f result
+
+mapList :: ForeignFunc
+mapList =
+  let tyA = MTVar (NamedVar (Name "a"))
+      tyB = MTVar (NamedVar (Name "b"))
+      tyAToB = MTFunction tyA tyB
+   in TwoArgs
+        (tyAToB, MTList tyA, MTList tyB)
+        (\aToB (MyList as) -> pure $ MyList (MyApp aToB <$> as))
+
+foldList :: ForeignFunc
+foldList =
+  let tyA = MTVar (NamedVar (Name "a"))
+      tyAppend = MTFunction tyA (MTFunction tyA tyA)
+   in TwoArgs
+        (tyAppend, MTList tyA, tyA)
+        (\append (MyList as) -> pure $ foldr1 (\a a' -> MyApp (MyApp append a) a') as)
 
 getFFType :: ForeignFunc -> MonoType
 getFFType (NoArgs out _) = out

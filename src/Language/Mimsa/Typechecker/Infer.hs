@@ -60,7 +60,7 @@ inferLiteral MyUnit = pure (mempty, MTUnit)
 
 inferBuiltIn :: Variable -> TcMonad (Substitutions, MonoType)
 inferBuiltIn name = case getLibraryFunction name of
-  Just ff -> pure (mempty, getFFType ff)
+  Just ff -> instantiate (generalise mempty (getFFType ff))
   _ -> throwError $ MissingBuiltIn name
 
 inferVarFromScope :: Environment -> Variable -> TcMonad (Substitutions, MonoType)
