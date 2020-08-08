@@ -214,7 +214,7 @@ spec =
         result `shouldBe` Right (MTString, str' "horse")
       it "reduceList(\\aa -> \\bb -> addInt(aa)(bb))(0)([1,2,3,4,5])" $ do
         result <- eval stdLib "reduceList(\\aa -> \\bb -> addInt(aa)(bb))(0)([1,2,3,4,5])"
-        result `shouldBe` Right (MTInt, int 14)
+        result `shouldBe` Right (MTInt, int 15)
       it "addInt(1)(addInt(addInt(2)(4))(5))" $ do
         result <- eval stdLib "addInt(1)(addInt(addInt(2)(4))(5))"
         result `shouldBe` Right (MTInt, int 12)

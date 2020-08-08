@@ -120,9 +120,9 @@ appendList =
 
 reduceList :: ForeignFunc
 reduceList =
-  let tyB = MTVar (NamedVar (Name "b"))
-      tyA = MTVar (NamedVar (Name "a"))
-      funcType = MTFunction tyB (MTFunction tyA tyB)
+  let tyA = MTVar (NamedVar (Name "a"))
+      tyB = MTVar (NamedVar (Name "b"))
+      funcType = MTFunction tyA (MTFunction tyB tyB)
    in ThreeArgs
         (funcType, tyB, MTList tyA, tyB)
         (\f starting (MyList as) -> pure $ reduce f starting as)
@@ -130,7 +130,7 @@ reduceList =
 reduce :: Expr Variable -> Expr Variable -> NonEmpty (Expr Variable) -> Expr Variable
 reduce f starting as =
   let varF = NamedVar (Name "f")
-      result = foldl (\b' a' -> MyApp (MyApp (MyVar varF) b') a') starting as
+      result = foldr (\a' b' -> MyApp (MyApp (MyVar varF) a') b') starting as
    in MyLet varF f result
 
 getFFType :: ForeignFunc -> MonoType
