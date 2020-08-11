@@ -36,6 +36,8 @@ dependencies:
 - vector # tui
 - vty # tui
 - microlens # tui
+- req # store fetching
+- modern-uri # store fetching
 
 library:
   source-dirs: src

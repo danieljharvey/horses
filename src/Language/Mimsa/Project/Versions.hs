@@ -41,7 +41,7 @@ getStoreExpression ::
   Project ->
   ExprHash ->
   Either UsageError StoreExpression
-getStoreExpression (Project store' _) exprHash =
+getStoreExpression (Project store' _ _) exprHash =
   case M.lookup exprHash (getStore store') of
     Just storeExpression' -> Right storeExpression'
     _ -> Left (CouldNotFindStoreExpression exprHash)

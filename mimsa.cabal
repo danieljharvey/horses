@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a44a704ad2bffedff38bb3f37ad3fcceecc7e185e85063cdf44942025598d249
+-- hash: f967607f3199df6e27e273945f46e3e13f4e7bf286024d0c58c8a655a28f575c
 
 name:           mimsa
 version:        0.1.0.0
@@ -104,8 +104,10 @@ library
     , hashable
     , haskeline
     , microlens
+    , modern-uri
     , mtl
     , random
+    , req
     , text
     , transformers
     , vector
@@ -131,8 +133,10 @@ executable mimsa
     , haskeline
     , microlens
     , mimsa
+    , modern-uri
     , mtl
     , random
+    , req
     , text
     , transformers
     , vector
@@ -173,9 +177,11 @@ test-suite mimsa-test
     , hspec
     , microlens
     , mimsa
+    , modern-uri
     , mtl
     , quickcheck-instances
     , random
+    , req
     , text
     , transformers
     , vector

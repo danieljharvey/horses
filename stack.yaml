@@ -46,7 +46,7 @@ packages:
 
 ghc-options:
     # All packages
-    "$locals": -Wall
+    "$locals": -Wall -Wno-unticked-promoted-constructors
     "$targets": -Werror
     "$everything": -O2
 
