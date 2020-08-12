@@ -7,9 +7,15 @@ import qualified Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Text (Text)
 import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Store
+
+------
+
+newtype ServerUrl = ServerUrl {getServerUrl :: Text}
+  deriving (Eq, Ord, Show)
 
 -------
 
@@ -18,15 +24,17 @@ import Language.Mimsa.Types.Store
 data Project
   = Project
       { store :: Store,
-        bindings :: VersionedBindings
+        bindings :: VersionedBindings,
+        serverUrl :: [ServerUrl]
       }
   deriving (Eq, Ord, Show)
 
 instance Semigroup Project where
-  Project a a' <> Project b b' = Project (a <> b) (a' <> b')
+  Project a a1 a2 <> Project b b1 b2 =
+    Project (a <> b) (a1 <> b1) (a2 <> b2)
 
 instance Monoid Project where
-  mempty = Project mempty mempty
+  mempty = Project mempty mempty mempty
 
 -------------
 

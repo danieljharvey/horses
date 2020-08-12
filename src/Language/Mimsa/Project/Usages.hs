@@ -16,7 +16,7 @@ import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.Usage
 
 findUsages :: Project -> ExprHash -> Either UsageError (Set Usage)
-findUsages (Project store' bindings') =
+findUsages (Project store' bindings' _) =
   findUsages_ store' (getCurrentBindings bindings')
 
 resolveDepsOrUsageError :: Store -> Bindings -> Either UsageError ResolvedDeps

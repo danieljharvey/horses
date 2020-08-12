@@ -102,7 +102,7 @@ listFilter =
     (Bindings $ M.singleton (mkName "listCons") (ExprHash 15))
 
 stdLib :: Project
-stdLib = Project store' bindings'
+stdLib = Project store' bindings' mempty
   where
     store' =
       Store $

@@ -48,7 +48,8 @@ fromItem :: Name -> StoreExpression -> ExprHash -> Project
 fromItem name expr hash =
   Project
     { store = Store $ M.singleton hash expr,
-      bindings = VersionedBindings $ M.singleton name (pure hash)
+      bindings = VersionedBindings $ M.singleton name (pure hash),
+      serverUrl = mempty
     }
 
 evaluateStoreExpression ::
