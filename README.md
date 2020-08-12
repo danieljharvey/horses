@@ -2,9 +2,20 @@
 
 very small language. pls be gentle.
 
+installation...
+
 ```bash
+git clone https://github.com/danieljharvey/mimsa
+cd mimsa
 stack install
-stack exec mimsa
+```
+
+copying example project...
+
+```bash
+git clone https://github.com/danieljharvey/mimsa-test
+cd mimsa-test
+mimsa
 ```
 
 you should then see:
@@ -16,6 +27,7 @@ you should then see:
 :bind <name> = <expr> - binds <expr> to <name> and saves it in the environment
 :list - show a list of current bindings in the environment
 :tree <expr> - draw a dependency tree for <expr>
+:versions <name> - list all versions of a binding
 <expr> - Evaluate <expr>, returning it's simplified form and type
 :quit - give up and leave
 ```
