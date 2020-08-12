@@ -66,6 +66,7 @@ doHelp = do
   T.putStrLn ":list - show a list of current bindings in the environment"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":versions <name> - list all versions of a binding"
+  T.putStrLn ":tui - launch terminal user interface for exploring project"
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
   T.putStrLn ":quit - give up and leave"
 

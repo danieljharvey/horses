@@ -28,6 +28,7 @@ you should then see:
 :list - show a list of current bindings in the environment
 :tree <expr> - draw a dependency tree for <expr>
 :versions <name> - list all versions of a binding
+:tui - launch terminal user interface for exploring project
 <expr> - Evaluate <expr>, returning it's simplified form and type
 :quit - give up and leave
 ```
