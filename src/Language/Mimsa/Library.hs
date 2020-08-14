@@ -23,12 +23,8 @@ libraryFunctions =
       [ (FuncName "randomInt", randomInt),
         (FuncName "randomIntFrom", randomIntFrom),
         (FuncName "incrementInt", incrementInt),
-        (FuncName "eqInt", eqInt),
-        (FuncName "eqBool", eqBool),
-        (FuncName "eqString", eqString),
-        (FuncName "logInt", logInt),
-        (FuncName "logString", logString),
-        (FuncName "logBool", logBool),
+        (FuncName "eq", eq),
+        (FuncName "log", logFn),
         (FuncName "appendList", appendList),
         (FuncName "reduceList", reduceList),
         (FuncName "addInt", addInt),
@@ -49,14 +45,10 @@ getLibraryFunction (BuiltInActual name _) =
   M.lookup (coerce name) (getLibrary libraryFunctions)
 getLibraryFunction _ = Nothing
 
-logInt :: ForeignFunc
-logInt = OneArg (MTInt, MTUnit) logExpr
-
-logString :: ForeignFunc
-logString = OneArg (MTString, MTUnit) logExpr
-
-logBool :: ForeignFunc
-logBool = OneArg (MTBool, MTUnit) logExpr
+logFn :: ForeignFunc
+logFn =
+  let tyA = MTVar (NamedVar (Name "a"))
+   in OneArg (tyA, MTUnit) logExpr
 
 logExpr :: (Printer p) => p -> IO (Expr a)
 logExpr i = do
@@ -83,23 +75,12 @@ incrementInt =
     (MTInt, MTInt)
     (\(MyLiteral (MyInt i)) -> pure (MyLiteral (MyInt (i + 1))))
 
-eqInt :: ForeignFunc
-eqInt =
-  TwoArgs
-    (MTInt, MTInt, MTBool)
-    equality
-
-eqBool :: ForeignFunc
-eqBool =
-  TwoArgs
-    (MTBool, MTBool, MTBool)
-    equality
-
-eqString :: ForeignFunc
-eqString =
-  TwoArgs
-    (MTString, MTString, MTBool)
-    equality
+eq :: ForeignFunc
+eq =
+  let tyA = MTVar (NamedVar (Name "a"))
+   in TwoArgs
+        (tyA, tyA, MTBool)
+        equality
 
 equality :: (Monad m, Eq a) => Expr a -> Expr a -> m (Expr a)
 equality x y = pure $ MyLiteral (MyBool (x == y))

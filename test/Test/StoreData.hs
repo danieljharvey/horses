@@ -17,11 +17,11 @@ sndExpr = unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupl
 
 isTenExpr :: StoreExpression
 isTenExpr =
-  unsafeGetExpr "\\i -> if eqInt(i)(10) then Right i else Left i"
+  unsafeGetExpr "\\i -> if eq(i)(10) then Right i else Left i"
 
 eqTenExpr :: StoreExpression
 eqTenExpr =
-  unsafeGetExpr "\\i -> eqInt(10)(i)"
+  unsafeGetExpr "\\i -> eq(10)(i)"
 
 fmapSum :: StoreExpression
 fmapSum =
