@@ -70,8 +70,8 @@ spec =
         result
           `shouldBe` Right
             ( MTFunction
-                (MTSum (unknown 10) MTInt)
-                (MTSum (unknown 10) MTBool),
+                (MTSum (unknown 11) MTInt)
+                (MTSum (unknown 11) MTBool),
               MyLambda
                 (named "sum")
                 ( MyCase
@@ -224,11 +224,11 @@ spec =
       it "foldList(addInt)([1,2,3])" $ do
         result <- eval stdLib "foldList(addInt)([1,2,3])"
         result `shouldBe` Right (MTInt, int 6)
-      it "listFilter(\\a -> eqInt(10)(a))([1])" $ do
-        result <- eval stdLib "listFilter(\\a -> eqInt(10)(a))([1])"
+      it "listFilter(\\a -> eq(10)(a))([1])" $ do
+        result <- eval stdLib "listFilter(\\a -> eq(10)(a))([1])"
         result `shouldBe` Right (MTSum MTUnit (MTList MTInt), MySum MyLeft (MyLiteral MyUnit))
-      it "listFilter(\\a -> eqInt(10)(a))([10,10,30])" $ do
-        result <- eval stdLib "listFilter(\\a -> eqInt(10)(a))([10,10,30])"
+      it "listFilter(\\a -> eq(10)(a))([10,10,30])" $ do
+        result <- eval stdLib "listFilter(\\a -> eq(10)(a))([10,10,30])"
         result
           `shouldBe` Right
             ( MTSum MTUnit (MTList MTInt),
