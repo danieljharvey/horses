@@ -37,6 +37,8 @@ extractVars_ (MySum _ a) = extractVars_ a
 extractVars_ (MyList as) = foldMap extractVars_ as
 extractVars_ (MyRecord map') = foldMap extractVars_ map'
 extractVars_ (MyRecordAccess a _) = extractVars_ a
+extractVars_ (MyData _ _ a) = extractVars_ a
+extractVars_ (MyConstructor _) = mempty
 
 filterBuiltIns :: Set Name -> Set Name
 filterBuiltIns = S.filter (not . isLibraryName)

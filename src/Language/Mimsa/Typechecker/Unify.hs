@@ -24,6 +24,7 @@ freeTypeVars ty = case ty of
   MTSum l r -> S.union (freeTypeVars l) (freeTypeVars r)
   MTRecord as -> foldr S.union mempty (freeTypeVars <$> as)
   MTList as -> freeTypeVars as
+  MTConstructor _ -> S.empty
   MTString -> S.empty
   MTInt -> S.empty
   MTBool -> S.empty

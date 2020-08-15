@@ -18,6 +18,7 @@ freeVars MTInt = mempty
 freeVars MTString = mempty
 freeVars MTBool = mempty
 freeVars MTUnit = mempty
+freeVars (MTConstructor _) = mempty
 
 generalise :: Substitutions -> MonoType -> Scheme
 generalise (Substitutions subst) ty = Scheme free ty

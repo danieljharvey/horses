@@ -239,3 +239,10 @@ spec =
         result
           `shouldBe` Right
             (MTList MTInt, MyList $ NE.fromList [int 1, int 2, int 3, int 4])
+      it "type LeBool = Vrai | Faux in Vrai" $ do
+        result <- eval stdLib "type LeBool = Vrai | Faux in Vrai"
+        result
+          `shouldBe` Right
+            ( MTConstructor (mkConstruct "LeBool"),
+              MyConstructor (mkConstruct "Vrai")
+            )

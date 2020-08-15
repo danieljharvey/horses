@@ -144,3 +144,5 @@ mapVar p (MyRecord map') = do
   map2 <- traverse (mapVar p) map'
   pure (MyRecord map2)
 mapVar _ (MyLiteral a) = pure (MyLiteral a)
+mapVar p (MyData a b c) = MyData a b <$> mapVar p c
+mapVar _ (MyConstructor name) = pure (MyConstructor name)

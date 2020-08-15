@@ -8,9 +8,9 @@ where
 import Data.Either (isLeft)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Language.Mimsa
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
+import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 
@@ -203,3 +203,41 @@ spec = do
               (MyLambda (mkName "r") (str' "It's not ten"))
               (MyLambda (mkName "l") (str' "It's ten!"))
           )
+    it "Parses an absolute unit" $
+      parseExpr "type AbsoluteUnit = AbsoluteUnit in 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "AbsoluteUnit")
+              (pure (mkConstruct "AbsoluteUnit", mempty))
+              (int 1)
+          )
+    it "Parses a single constructor with one arg" $
+      parseExpr "type Dog = Dog String in 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Dog")
+              (pure (mkConstruct "Dog", [mkConstruct "String"]))
+              (int 1)
+          )
+    it "Parses a french boolean" $
+      parseExpr "type LeBool = Vrai | Faux in 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "LeBool")
+              (NE.fromList [(mkConstruct "Vrai", []), (mkConstruct "Faux", [])])
+              (int 1)
+          )
+    it "Parses a peano number data declaration" $
+      parseExpr "type Nat = Zero | Succ Nat in 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Nat")
+              ( NE.fromList
+                  [ (mkConstruct "Zero", []),
+                    (mkConstruct "Succ", [mkConstruct "Nat"])
+                  ]
+              )
+              (int 1)
+          )
+    it "Uses a constructor" $
+      parseExpr "Vrai" `shouldBe` Right (MyConstructor (mkConstruct "Vrai"))

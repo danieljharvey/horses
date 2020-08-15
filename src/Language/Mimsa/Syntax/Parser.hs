@@ -101,6 +101,14 @@ predicate parser predicate' =
             else Left $ "Predicate did not hold for " <> T.pack (show a)
     )
 
+maybePred :: (Show a) => Parser a -> (a -> Maybe b) -> Parser b
+maybePred parser predicate' =
+  mkParser
+    ( runParser parser >=> \(next, a) -> case predicate' a of
+        Just b -> Right (next, b)
+        Nothing -> Left $ "Predicate did not hold for " <> T.pack (show a)
+    )
+
 literal :: Text -> Parser Text
 literal lit =
   mkParser

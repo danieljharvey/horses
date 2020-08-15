@@ -9,7 +9,9 @@ module Language.Mimsa.Syntax.Language
 where
 
 import Control.Applicative ((<|>))
+import Control.Monad ((>=>))
 import Data.Functor
+import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -19,14 +21,6 @@ import qualified Data.Text as T
 import Language.Mimsa.Syntax.Parser (Parser)
 import qualified Language.Mimsa.Syntax.Parser as P
 import Language.Mimsa.Types
-  ( Expr (..),
-    Literal (..),
-    Name,
-    StringType (..),
-    SumSide (..),
-    mkName,
-    validName,
-  )
 
 type ParserExpr = Expr Name
 
@@ -50,6 +44,7 @@ expressionParser =
         literalParser
           <|> complexParser
           <|> varParser
+          <|> constructorParser
    in orInBrackets parsers
         <|> failer
 
@@ -82,6 +77,7 @@ complexParser =
     <|> lambdaParser
     <|> listParser
     <|> recordParser
+    <|> typeParser
 
 protectedNames :: Set Text
 protectedNames =
@@ -93,6 +89,7 @@ protectedNames =
       "else",
       "case",
       "of",
+      "type",
       "True",
       "False",
       "Unit",
@@ -131,12 +128,27 @@ stringParser = MyLiteral . MyString . StringType <$> P.between '"'
 varParser :: Parser ParserExpr
 varParser = MyVar <$> nameParser
 
+---
+
 nameParser :: Parser Name
 nameParser =
-  mkName
-    <$> P.predicate
-      P.identifier
-      (\name -> not $ S.member name protectedNames && validName name)
+  P.maybePred
+    P.identifier
+    (inProtected >=> safeMkName)
+
+inProtected :: Text -> Maybe Text
+inProtected tx = if S.member tx protectedNames then Nothing else Just tx
+
+---
+
+constructorParser :: Parser ParserExpr
+constructorParser = MyConstructor <$> constructParser
+
+constructParser :: Parser Construct
+constructParser =
+  P.maybePred
+    P.identifier
+    (inProtected >=> safeMkConstruct)
 
 -----
 
@@ -393,3 +405,27 @@ caseParser = do
   _ <- P.thenSpace (P.literal "|")
   _ <- P.thenSpace (P.literal "Right")
   MyCase sumExpr leftExpr <$> expressionParser
+
+---
+
+typeParser :: Parser ParserExpr
+typeParser = do
+  _ <- P.thenSpace (P.literal "type")
+  tyName <- P.thenSpace constructParser
+  _ <- P.thenSpace (P.literal "=")
+  constructors <- manyTypeConstructors <|> pure <$> oneTypeConstructor
+  _ <- P.space1
+  _ <- P.thenSpace (P.literal "in")
+  MyData tyName constructors <$> expressionParser
+
+manyTypeConstructors :: Parser (NonEmpty (Construct, [Construct]))
+manyTypeConstructors = do
+  cons <- P.oneOrMore (P.left oneTypeConstructor (P.thenSpace (P.literal "|")))
+  lastCons <- oneTypeConstructor
+  pure (cons <> pure lastCons)
+
+oneTypeConstructor :: Parser (Construct, [Construct])
+oneTypeConstructor = do
+  name <- constructParser
+  args <- P.zeroOrMore (P.right P.space1 constructParser)
+  pure (name, args)

@@ -3,7 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Name where
+module Language.Mimsa.Types.Construct where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
@@ -12,7 +12,7 @@ import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Types.Printer
 
-newtype Name = Name {getName' :: Text}
+newtype Construct = Construct {getConstruct' :: Text}
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,
@@ -22,27 +22,27 @@ newtype Name = Name {getName' :: Text}
       JSON.ToJSONKey
     )
 
-instance Printer Name where
-  prettyPrint = getName
+instance Printer Construct where
+  prettyPrint = getConstruct
 
-getName :: Name -> Text
-getName (Name t) = t
+getConstruct :: Construct -> Text
+getConstruct (Construct t) = t
 
-validName :: Text -> Bool
-validName a =
+validConstruct :: Text -> Bool
+validConstruct a =
   T.length a > 0
     && T.filter Ch.isAlphaNum a == a
     && not (Ch.isDigit (T.head a))
-    && Ch.isLower (T.head a)
+    && Ch.isUpper (T.head a)
 
-mkName :: Text -> Name
-mkName a =
-  if validName a
-    then Name a
-    else error $ T.unpack $ "Name validation fail for '" <> a <> "'"
+mkConstruct :: Text -> Construct
+mkConstruct a =
+  if validConstruct a
+    then Construct a
+    else error $ T.unpack $ "Construct validation fail for '" <> a <> "'"
 
-safeMkName :: Text -> Maybe Name
-safeMkName a =
-  if validName a
-    then Just (Name a)
+safeMkConstruct :: Text -> Maybe Construct
+safeMkConstruct a =
+  if validConstruct a
+    then Just (Construct a)
     else Nothing

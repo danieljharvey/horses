@@ -21,6 +21,7 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
+import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 
@@ -77,6 +78,8 @@ data Expr a
   | MyList (NonEmpty (Expr a)) -- [a]
   | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
   | MyRecordAccess (Expr a) Name -- a.foo
+  | MyData Construct (NonEmpty (Construct, [Construct])) (Expr a) -- tyName, (consName, fields) body
+  | MyConstructor Construct -- use a constructor by name - WIP
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Printer a) => Printer (Expr a) where
@@ -159,6 +162,15 @@ instance (Printer a) => Printer (Expr a) where
               <> printSubExpr val
         )
           <$> M.toList map'
+  prettyPrint (MyData tyName constructors expr) =
+    "type " <> prettyPrint tyName
+      <> T.intercalate " | " (printCons <$> NE.toList constructors)
+      <> " in "
+      <> printSubExpr expr
+    where
+      printCons (consName, args) =
+        prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> args)
+  prettyPrint (MyConstructor name) = prettyPrint name
 
 inParens :: (Printer a) => a -> Text
 inParens a = "(" <> prettyPrint a <> ")"

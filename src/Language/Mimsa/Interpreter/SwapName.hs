@@ -58,3 +58,6 @@ swapName from to (MyRecord map') = do
   map2 <- traverse (swapName from to) map'
   pure (MyRecord map2)
 swapName _ _ (MyLiteral a) = pure (MyLiteral a)
+swapName from to (MyData tyName constructors expr) =
+  MyData tyName constructors <$> swapName from to expr
+swapName _ _ (MyConstructor n) = pure (MyConstructor n)

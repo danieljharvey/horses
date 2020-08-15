@@ -34,8 +34,8 @@ doInference ::
 doInference swaps env expr = runTcMonad swaps (infer env expr)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
-applySubstCtx subst (Environment env) =
-  Environment $ M.map (applySubstScheme subst) env
+applySubstCtx subst (Environment schemes dt) =
+  Environment (M.map (applySubstScheme subst) schemes) dt
 
 applySubstScheme :: Substitutions -> Scheme -> Scheme
 applySubstScheme (Substitutions subst) (Scheme vars t) =
@@ -63,9 +63,12 @@ inferBuiltIn name = case getLibraryFunction name of
   Just ff -> instantiate (generalise mempty (getFFType ff))
   _ -> throwError $ MissingBuiltIn name
 
-inferVarFromScope :: Environment -> Variable -> TcMonad (Substitutions, MonoType)
+inferVarFromScope ::
+  Environment ->
+  Variable ->
+  TcMonad (Substitutions, MonoType)
 inferVarFromScope env name =
-  let lookup' name' (Environment env') = M.lookup name' env'
+  let lookup' name' (Environment env' _) = M.lookup name' env'
    in case lookup' name env of
         Just mt ->
           instantiate mt
@@ -73,10 +76,11 @@ inferVarFromScope env name =
           throwError $
             VariableNotInEnv
               name
-              (S.fromList (M.keys (getEnvironment env)))
+              (S.fromList (M.keys (getSchemes env)))
 
 createEnv :: Variable -> Scheme -> Environment
-createEnv binder scheme = Environment $ M.singleton binder scheme
+createEnv binder scheme =
+  Environment (M.singleton binder scheme) mempty
 
 inferFuncReturn ::
   Environment ->
@@ -180,6 +184,14 @@ inferLetPairBinding env binder1 binder2 expr body = do
   (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
   pure (s3 <> s2 <> s1, tyBody)
 
+inferDataDeclaration ::
+  Environment ->
+  Construct ->
+  NonEmpty (Construct, [Construct]) ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
+inferDataDeclaration = undefined
+
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
   case inferExpr of
@@ -274,3 +286,6 @@ infer env inferExpr =
       tyLeft <- getUnknown
       (s1, tyRight) <- infer env right'
       pure (s1, MTSum (applySubst s1 tyLeft) tyRight)
+    (MyData tyName constructors expr) ->
+      inferDataDeclaration env tyName constructors expr
+    (MyConstructor name) -> pure (mempty, MTConstructor name)
