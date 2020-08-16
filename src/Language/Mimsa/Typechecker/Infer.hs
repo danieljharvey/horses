@@ -212,7 +212,7 @@ inferDataConstructor env name = do
   args <- findConstructorArgs env constructors name
   case args of
     [] -> pure (mempty, MTData ty)
-    as -> pure (mempty, foldr (\a rest -> MTFunction a rest) (MTData ty) as)
+    as -> pure (mempty, foldr MTFunction (MTData ty) as)
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
@@ -222,7 +222,7 @@ lookupConstructor ::
 lookupConstructor env name =
   let hasMatchingConstructor = M.member name
    in case M.toList $ M.filter hasMatchingConstructor (getDataTypes env) of
-        (a : []) -> pure a -- we only want a single match
+        [a] -> pure a -- we only want a single match
         (_ : _) -> throwError (ConflictingConstructors name)
         _ -> throwError (TypeConstructorNotInScope env name)
 
