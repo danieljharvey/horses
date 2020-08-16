@@ -15,7 +15,10 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Library
-import Language.Mimsa.Typechecker.DataTypes (defaultEnv)
+import Language.Mimsa.Typechecker.DataTypes
+  ( builtInTypes,
+    defaultEnv,
+  )
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -185,6 +188,8 @@ inferLetPairBinding env binder1 binder2 expr body = do
   (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
   pure (s3 <> s2 <> s1, tyBody)
 
+-- given a datatype declaration, checks it makes sense and if so,
+-- add it to the Environment
 inferDataDeclaration ::
   Environment ->
   Construct ->
@@ -198,60 +203,70 @@ inferDataDeclaration env tyName constructors' expr' =
       let newEnv = Environment mempty (M.singleton tyName constructors')
        in infer (newEnv <> env) expr'
 
+-- infer the type of a data constructor
+-- if it has no args, it's a simple MTData
+-- however if it has args it becomes a MTFun from args to the MTData
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
-  (ty, _) <- findMatchingType env name
-  pure (mempty, MTConstructor ty)
+  (ty, constructors) <- lookupConstructor env name
+  args <- findConstructorArgs env constructors name
+  case args of
+    [] -> pure (mempty, MTData ty)
+    as -> pure (mempty, foldr (\a rest -> MTFun a rest) (MTData ty) as)
 
-findMatchingType ::
+-- given a constructor name, return the type it lives in
+lookupConstructor ::
   Environment ->
   Construct ->
   TcMonad (Construct, Map Construct [Construct])
-findMatchingType env name =
+lookupConstructor env name =
   let hasMatchingConstructor = M.member name
    in case M.toList $ M.filter hasMatchingConstructor (getDataTypes env) of
         (a : []) -> pure a -- we only want a single match
         (_ : _) -> throwError (ConflictingConstructors name)
         _ -> throwError (TypeConstructorNotInScope env name)
 
+-- given a data type, return the arguments for a given constructor
 findConstructorArgs ::
+  Environment ->
   Map Construct [Construct] ->
   Construct ->
-  TcMonad [Construct]
-findConstructorArgs type' name =
+  TcMonad [MonoType]
+findConstructorArgs env type' name =
   let withMatchingConstructor = M.lookup name
    in case withMatchingConstructor type' of
-        Just args -> pure args
+        Just args -> traverse (inferType env) args
         _ -> throwError (ConflictingConstructors name)
 
--- this only allows other constructors to be applied
--- this will need to loosened in time to allow, say
--- 'Just 1' to typecheck
 inferConstructorApplication ::
   Environment ->
   Construct ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
 inferConstructorApplication env consName value = do
-  (tyCons, dataType) <- findMatchingType env consName
-  args <- findConstructorArgs dataType consName
+  tyRes <- getUnknown
+  (_, dataType) <- lookupConstructor env consName
+  (s1, tyCons) <- inferDataConstructor env consName
+  args <- findConstructorArgs env dataType consName
   case args of
-    (arg1 : _) -> do
-      tyExpected <- inferType env arg1
-      (s1, tyActual) <- infer env value
-      s2 <- unify tyExpected tyActual
-      pure (s2 <> s1, MTConstructor tyCons)
+    (tyExpectedArg : _) -> do
+      (s2, tyArg) <- infer env value
+      s3 <- unify tyExpectedArg tyArg
+      s4 <- unify (applySubst s3 tyCons) (MTFun tyArg tyRes)
+      pure (s4 <> s3 <> s2 <> s1, applySubst (s4 <> s3) tyRes)
     _ -> throwError (CannotApplyToType consName)
+
+lookupBuiltIn :: Construct -> Maybe MonoType
+lookupBuiltIn name = M.lookup name builtInTypes
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
 inferType :: Environment -> Construct -> TcMonad MonoType
 inferType env name =
   if M.member name (getDataTypes env)
-    then case getConstruct name of
-      "String" -> pure MTString
-      "Int" -> pure MTInt
-      _ -> pure (MTConstructor name)
+    then case lookupBuiltIn name of
+      Just mt -> pure mt
+      _ -> pure (MTData name)
     else throwError (TypeConstructorNotInScope env name)
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)

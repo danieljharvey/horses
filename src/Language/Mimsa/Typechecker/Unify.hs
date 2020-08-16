@@ -24,7 +24,8 @@ freeTypeVars ty = case ty of
   MTSum l r -> S.union (freeTypeVars l) (freeTypeVars r)
   MTRecord as -> foldr S.union mempty (freeTypeVars <$> as)
   MTList as -> freeTypeVars as
-  MTConstructor _ -> S.empty
+  MTData _ -> S.empty
+  MTFun a b -> freeTypeVars a <> freeTypeVars b
   MTString -> S.empty
   MTInt -> S.empty
   MTBool -> S.empty
@@ -52,26 +53,30 @@ unifyPairs (a, b) (a', b') = do
   pure (s2 <> s1)
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
-unify a b | a == b = pure mempty
-unify (MTFunction l r) (MTFunction l' r') =
-  unifyPairs (l, r) (l', r')
-unify (MTPair a b) (MTPair a' b') =
-  unifyPairs (a, b) (a', b')
-unify (MTSum a b) (MTSum a' b') =
-  unifyPairs (a, b) (a', b')
-unify (MTList a) (MTList a') = unify a a'
-unify (MTRecord as) (MTRecord bs) = do
-  let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
-  let getRecordTypes k = do
-        tyLeft <- getTypeOrFresh k as
-        tyRight <- getTypeOrFresh k bs
-        unify tyLeft tyRight
-  s <- traverse getRecordTypes allKeys
-  pure (foldl (<>) mempty s)
-unify (MTVar u) t = varBind u t
-unify t (MTVar u) = varBind u t
-unify a b =
-  throwError $ UnificationError a b
+unify tyA tyB =
+  case (tyA, tyB) of
+    (a, b) | a == b -> pure mempty
+    (MTFunction l r, MTFunction l' r') ->
+      unifyPairs (l, r) (l', r')
+    (MTPair a b, MTPair a' b') -> unifyPairs (a, b) (a', b')
+    (MTSum a b, MTSum a' b') ->
+      unifyPairs (a, b) (a', b')
+    (MTFun a b, MTFun a' b') ->
+      unifyPairs (a, b) (a', b')
+    (MTList a, MTList a') -> unify a a'
+    (MTRecord as, MTRecord bs) -> do
+      let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
+      let getRecordTypes k = do
+            tyLeft <- getTypeOrFresh k as
+            tyRight <- getTypeOrFresh k bs
+            unify tyLeft tyRight
+      s <- traverse getRecordTypes allKeys
+      pure (foldl (<>) mempty s)
+    (MTData a, MTData b) | a == b -> pure mempty
+    (MTVar u, t) -> varBind u t
+    (t, MTVar u) -> varBind u t
+    (a, b) ->
+      throwError $ UnificationError a b
 
 getTypeOrFresh :: Name -> Map Name MonoType -> TcMonad MonoType
 getTypeOrFresh name map' =

@@ -243,21 +243,21 @@ spec =
         result <- eval stdLib "type LeBool = Vrai | Faux in Vrai"
         result
           `shouldBe` Right
-            ( MTConstructor (mkConstruct "LeBool"),
+            ( MTData (mkConstruct "LeBool"),
               MyConstructor (mkConstruct "Vrai")
             )
       it "type Nat = Zero | Suc Nat in Suc Zero" $ do
         result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Zero"
         result
           `shouldBe` Right
-            ( MTConstructor (mkConstruct "Nat"),
+            ( MTData (mkConstruct "Nat"),
               MyConsApp (MyConstructor (mkConstruct "Suc")) (MyConstructor (mkConstruct "Zero"))
             )
       it "type Nat = Zero | Suc Nat in Suc Suc Zero" $ do
         result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Suc Zero"
         result
           `shouldBe` Right
-            ( MTConstructor (mkConstruct "Nat"),
+            ( MTData (mkConstruct "Nat"),
               MyConsApp
                 (MyConstructor (mkConstruct "Suc"))
                 ( MyConsApp (MyConstructor (mkConstruct "Suc")) (MyConstructor (mkConstruct "Zero"))
@@ -271,11 +271,32 @@ spec =
         result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Dog"
         result
           `shouldSatisfy` isLeft
+      it "type Nat = Zero | Suc Nat in Suc" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in Suc"
+        result
+          `shouldBe` Right
+            ( MTFun
+                (MTData (mkConstruct "Nat"))
+                (MTData (mkConstruct "Nat")),
+              MyConstructor (mkConstruct "Suc")
+            )
+      it "type OhNat = Zero | Suc OhNat String in Suc" $ do
+        result <- eval stdLib "type OhNat = Zero | Suc OhNat String in Suc"
+        result
+          `shouldBe` Right
+            ( MTFun
+                (MTData (mkConstruct "OhNat"))
+                ( MTFun
+                    MTString
+                    (MTData (mkConstruct "OhNat"))
+                ),
+              MyConstructor (mkConstruct "Suc")
+            )
       it "type Pet = Cat String | Dog String in Cat \"mimsa\"" $ do
         result <- eval stdLib "type Pet = Cat String | Dog String in Cat \"mimsa\""
         result
           `shouldBe` Right
-            ( MTConstructor (mkConstruct "Pet"),
+            ( MTData (mkConstruct "Pet"),
               MyConsApp (MyConstructor (mkConstruct "Cat")) (str' "mimsa")
             )
       it "type Void in 1" $ do
@@ -284,3 +305,17 @@ spec =
       it "type String = Should | Error in Error" $ do
         result <- eval stdLib "type String = Should | Error in Error"
         result `shouldSatisfy` isLeft
+      it "type LongBoy = Stuff String Int String in Stuff \"yes\"" $ do
+        result <- eval stdLib "type LongBoy = Stuff String Int String in Stuff \"yes\""
+        result
+          `shouldBe` Right
+            ( MTFun
+                MTInt
+                ( MTFun
+                    MTString
+                    (MTData (mkConstruct "LongBoy"))
+                ),
+              MyConsApp
+                (MyConstructor (mkConstruct "Stuff"))
+                (str' "yes")
+            )

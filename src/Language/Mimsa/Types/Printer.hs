@@ -23,19 +23,21 @@ instance (Printer a) => Printer [a] where
   prettyPrint as = T.intercalate ", " (prettyPrint <$> as)
 
 instance (Printer a, Printer b) => Printer (a, b) where
-  prettyPrint (a, b) = T.intercalate "\n" [prettyPrint a, prettyPrint b]
+  prettyPrint (a, b) = "\n " <> T.intercalate "\n " [prettyPrint a, prettyPrint b]
 
 instance (Printer a, Printer b, Printer c) => Printer (a, b, c) where
   prettyPrint (a, b, c) =
-    T.intercalate
-      "\n"
-      [prettyPrint a, prettyPrint b, prettyPrint c]
+    "\n "
+      <> T.intercalate
+        "\n "
+        [prettyPrint a, prettyPrint b, prettyPrint c]
 
 instance (Printer a, Printer b, Printer c, Printer d) => Printer (a, b, c, d) where
   prettyPrint (a, b, c, d) =
-    T.intercalate
-      "\n"
-      [prettyPrint a, prettyPrint b, prettyPrint c, prettyPrint d]
+    "\n "
+      <> T.intercalate
+        "\n "
+        [prettyPrint a, prettyPrint b, prettyPrint c, prettyPrint d]
 
 instance (Printer a) => Printer (Set a) where
   prettyPrint as = "[" <> T.intercalate ", " (prettyPrint <$> S.toList as) <> "]"

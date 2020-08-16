@@ -25,10 +25,10 @@ substLookup subst i = M.lookup i (getSubstitutions subst)
 
 applySubst :: Substitutions -> MonoType -> MonoType
 applySubst subst ty = case ty of
-  MTVar i ->
+  MTVar var ->
     fromMaybe
-      (MTVar i)
-      (substLookup subst i)
+      (MTVar var)
+      (substLookup subst var)
   MTFunction arg res ->
     MTFunction (applySubst subst arg) (applySubst subst res)
   MTPair a b ->
@@ -38,7 +38,8 @@ applySubst subst ty = case ty of
   MTList a -> MTList (applySubst subst a)
   MTRecord a -> MTRecord (applySubst subst <$> a)
   MTSum a b -> MTSum (applySubst subst a) (applySubst subst b)
-  MTConstructor a -> MTConstructor a
+  MTData a -> MTData a
+  MTFun a b -> MTFun (applySubst subst a) (applySubst subst b)
   MTInt -> MTInt
   MTString -> MTString
   MTBool -> MTBool
