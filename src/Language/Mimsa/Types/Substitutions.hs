@@ -39,7 +39,6 @@ applySubst subst ty = case ty of
   MTRecord a -> MTRecord (applySubst subst <$> a)
   MTSum a b -> MTSum (applySubst subst a) (applySubst subst b)
   MTData a -> MTData a
-  MTFun a b -> MTFun (applySubst subst a) (applySubst subst b)
   MTInt -> MTInt
   MTString -> MTString
   MTBool -> MTBool

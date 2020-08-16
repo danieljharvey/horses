@@ -275,7 +275,7 @@ spec =
         result <- eval stdLib "type Nat = Zero | Suc Nat in Suc"
         result
           `shouldBe` Right
-            ( MTFun
+            ( MTFunction
                 (MTData (mkConstruct "Nat"))
                 (MTData (mkConstruct "Nat")),
               MyConstructor (mkConstruct "Suc")
@@ -284,9 +284,9 @@ spec =
         result <- eval stdLib "type OhNat = Zero | Suc OhNat String in Suc"
         result
           `shouldBe` Right
-            ( MTFun
+            ( MTFunction
                 (MTData (mkConstruct "OhNat"))
-                ( MTFun
+                ( MTFunction
                     MTString
                     (MTData (mkConstruct "OhNat"))
                 ),
@@ -309,9 +309,9 @@ spec =
         result <- eval stdLib "type LongBoy = Stuff String Int String in Stuff \"yes\""
         result
           `shouldBe` Right
-            ( MTFun
+            ( MTFunction
                 MTInt
-                ( MTFun
+                ( MTFunction
                     MTString
                     (MTData (mkConstruct "LongBoy"))
                 ),

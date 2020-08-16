@@ -19,7 +19,6 @@ freeVars MTString = mempty
 freeVars MTBool = mempty
 freeVars MTUnit = mempty
 freeVars (MTData _) = mempty
-freeVars (MTFun a b) = freeVars a <> freeVars b
 
 generalise :: Substitutions -> MonoType -> Scheme
 generalise (Substitutions subst) ty = Scheme free ty

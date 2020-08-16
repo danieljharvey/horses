@@ -212,7 +212,7 @@ inferDataConstructor env name = do
   args <- findConstructorArgs env constructors name
   case args of
     [] -> pure (mempty, MTData ty)
-    as -> pure (mempty, foldr (\a rest -> MTFun a rest) (MTData ty) as)
+    as -> pure (mempty, foldr (\a rest -> MTFunction a rest) (MTData ty) as)
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
@@ -252,7 +252,7 @@ inferConstructorApplication env consName value = do
     (tyExpectedArg : _) -> do
       (s2, tyArg) <- infer env value
       s3 <- unify tyExpectedArg tyArg
-      s4 <- unify (applySubst s3 tyCons) (MTFun tyArg tyRes)
+      s4 <- unify (applySubst s3 tyCons) (MTFunction tyArg tyRes)
       pure (s4 <> s3 <> s2 <> s1, applySubst (s4 <> s3) tyRes)
     _ -> throwError (CannotApplyToType consName)
 

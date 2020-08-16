@@ -25,7 +25,6 @@ freeTypeVars ty = case ty of
   MTRecord as -> foldr S.union mempty (freeTypeVars <$> as)
   MTList as -> freeTypeVars as
   MTData _ -> S.empty
-  MTFun a b -> freeTypeVars a <> freeTypeVars b
   MTString -> S.empty
   MTInt -> S.empty
   MTBool -> S.empty
@@ -60,8 +59,6 @@ unify tyA tyB =
       unifyPairs (l, r) (l', r')
     (MTPair a b, MTPair a' b') -> unifyPairs (a, b) (a', b')
     (MTSum a b, MTSum a' b') ->
-      unifyPairs (a, b) (a', b')
-    (MTFun a b, MTFun a' b') ->
       unifyPairs (a, b) (a', b')
     (MTList a, MTList a') -> unify a a'
     (MTRecord as, MTRecord bs) -> do

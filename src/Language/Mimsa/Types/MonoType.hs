@@ -28,7 +28,6 @@ data MonoType
   | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
   | MTVar Variable
   | MTData Construct
-  | MTFun MonoType MonoType
   deriving (Eq, Ord, Show)
 
 -----------
@@ -56,7 +55,6 @@ instance Printer MonoType where
               <> printSubType mt
         )
           <$> M.toList as
-  prettyPrint (MTFun a b) = printSubType a <> " -> " <> printSubType b
 
 -- simple things with no brackets, complex things in brackets
 printSubType :: MonoType -> Text

@@ -12,7 +12,7 @@ defaultEnv :: Environment
 defaultEnv = Environment mempty dts
   where
     dts =
-      M.fromList [(mkConstruct "String", mempty), (mkConstruct "Int", mempty)]
+      mempty <$ builtInTypes
 
 builtInTypes :: Map Construct MonoType
 builtInTypes = M.fromList [(mkConstruct "String", MTString), (mkConstruct "Int", MTInt)]
