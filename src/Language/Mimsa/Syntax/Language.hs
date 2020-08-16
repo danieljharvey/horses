@@ -445,5 +445,6 @@ oneTypeConstructor = do
 
 constructorAppParser :: Parser ParserExpr
 constructorAppParser = do
-  cons <- P.thenSpace constructParser
-  MyConsApp (MyConstructor cons) <$> expressionParser
+  cons <- constructParser
+  exprs <- P.oneOrMore (P.right P.space1 (orInBrackets expressionParser))
+  pure (foldl (\a rest -> MyConsApp a rest) (MyConstructor cons) exprs)

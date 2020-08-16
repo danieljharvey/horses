@@ -246,5 +246,15 @@ spec = do
               )
               (int 1)
           )
+    it "Parses a multiple argument constructor" $
+      parseExpr "Dog \"hi\" \"dog\""
+        `shouldBe` Right
+          ( MyConsApp
+              ( MyConsApp
+                  (MyConstructor $ mkConstruct "Dog")
+                  (str' "hi")
+              )
+              (str' "dog")
+          )
     it "Uses a constructor" $
       parseExpr "Vrai" `shouldBe` Right (MyConstructor (mkConstruct "Vrai"))

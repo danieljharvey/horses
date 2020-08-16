@@ -319,3 +319,15 @@ spec =
                 (MyConstructor (mkConstruct "Stuff"))
                 (str' "yes")
             )
+      it "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)" $ do
+        result <- eval stdLib "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)"
+        result
+          `shouldBe` Right
+            ( MTData (mkConstruct "Tree"),
+              MyConsApp
+                ( MyConsApp
+                    (MyConstructor $ mkConstruct "Branch")
+                    (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1))
+                )
+                (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 2))
+            )

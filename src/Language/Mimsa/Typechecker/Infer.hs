@@ -238,24 +238,6 @@ findConstructorArgs env type' name =
         Just args -> traverse (inferType env) args
         _ -> throwError (ConflictingConstructors name)
 
-inferConstructorApplication ::
-  Environment ->
-  Construct ->
-  Expr Variable ->
-  TcMonad (Substitutions, MonoType)
-inferConstructorApplication env consName value = do
-  tyRes <- getUnknown
-  (_, dataType) <- lookupConstructor env consName
-  (s1, tyCons) <- inferDataConstructor env consName
-  args <- findConstructorArgs env dataType consName
-  case args of
-    (tyExpectedArg : _) -> do
-      (s2, tyArg) <- infer env value
-      s3 <- unify tyExpectedArg tyArg
-      s4 <- unify (applySubst s3 tyCons) (MTFunction tyArg tyRes)
-      pure (s4 <> s3 <> s2 <> s1, applySubst (s4 <> s3) tyRes)
-    _ -> throwError (CannotApplyToType consName)
-
 lookupBuiltIn :: Construct -> Maybe MonoType
 lookupBuiltIn name = M.lookup name builtInTypes
 
@@ -366,5 +348,4 @@ infer env inferExpr =
     (MyData tyName constructors expr) ->
       inferDataDeclaration env tyName constructors expr
     (MyConstructor name) -> inferDataConstructor env name
-    (MyConsApp (MyConstructor fn) val) -> inferConstructorApplication env fn val
-    (MyConsApp a _) -> throwError $ TypeIsNotConstructor a
+    (MyConsApp cons val) -> inferApplication env cons val
