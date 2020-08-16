@@ -204,5 +204,5 @@ interpretWithScope interpretExpr =
     (MyIf pred' true false) -> do
       predExpr <- interpretWithScope pred'
       interpretWithScope (MyIf predExpr true false)
-    (MyData tyName constructors expr) -> pure (MyData tyName constructors expr) -- no-op for now
+    (MyData _tyName _constructors expr) -> interpretWithScope expr
     (MyConstructor a) -> pure (MyConstructor a)

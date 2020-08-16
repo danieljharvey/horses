@@ -12,6 +12,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Environment
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
@@ -33,6 +34,7 @@ data TypeError
   | CaseMatchExpectedPair MonoType
   | CaseMatchExpectedList MonoType
   | CaseMatchExpectedLambda (Expr Variable) (Expr Variable)
+  | TypeConstructorNotInScope Environment Construct
   deriving (Eq, Ord, Show)
 
 showKeys :: (Printer p) => Map p a -> Text
@@ -70,6 +72,7 @@ instance Printer TypeError where
     "Expected list but got " <> prettyPrint mt
   prettyPrint (CaseMatchExpectedLambda l r) =
     "Expected lambdas but got " <> prettyPrint l <> " and " <> prettyPrint r
+  prettyPrint (TypeConstructorNotInScope name env) = "Type constructor for " <> prettyPrint name <> " not found in scope { " <> prettyPrint env <> " }"
 
 instance Semigroup TypeError where
   a <> _ = a

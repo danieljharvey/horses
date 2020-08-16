@@ -11,6 +11,7 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -190,7 +191,18 @@ inferDataDeclaration ::
   NonEmpty (Construct, [Construct]) ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
-inferDataDeclaration = undefined
+inferDataDeclaration env tyName constructors' expr' =
+  let newEnv = Environment mempty (M.singleton tyName constructors')
+   in infer (newEnv <> env) expr'
+
+inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
+inferDataConstructor env name =
+  let hasMatchingConstructor :: NonEmpty (Construct, a) -> Bool
+      hasMatchingConstructor =
+        (> 0) . length . NE.filter (\(const', _) -> const' == name)
+   in case M.toList $ M.filter hasMatchingConstructor (getDataTypes env) of
+        ((tyName, _) : _) -> pure (mempty, MTConstructor tyName)
+        _ -> throwError (TypeConstructorNotInScope env name)
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
@@ -288,4 +300,4 @@ infer env inferExpr =
       pure (s1, MTSum (applySubst s1 tyLeft) tyRight)
     (MyData tyName constructors expr) ->
       inferDataDeclaration env tyName constructors expr
-    (MyConstructor name) -> pure (mempty, MTConstructor name)
+    (MyConstructor name) -> inferDataConstructor env name
