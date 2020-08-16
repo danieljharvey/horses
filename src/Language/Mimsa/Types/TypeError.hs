@@ -5,6 +5,7 @@ module Language.Mimsa.Types.TypeError
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -35,6 +36,9 @@ data TypeError
   | CaseMatchExpectedList MonoType
   | CaseMatchExpectedLambda (Expr Variable) (Expr Variable)
   | TypeConstructorNotInScope Environment Construct
+  | TypeIsNotConstructor (Expr Variable)
+  | ConflictingConstructors Construct
+  | CannotApplyToType Construct
   deriving (Eq, Ord, Show)
 
 showKeys :: (Printer p) => Map p a -> Text
@@ -72,7 +76,25 @@ instance Printer TypeError where
     "Expected list but got " <> prettyPrint mt
   prettyPrint (CaseMatchExpectedLambda l r) =
     "Expected lambdas but got " <> prettyPrint l <> " and " <> prettyPrint r
-  prettyPrint (TypeConstructorNotInScope name env) = "Type constructor for " <> prettyPrint name <> " not found in scope { " <> prettyPrint env <> " }"
+  prettyPrint (TypeConstructorNotInScope env name) =
+    "Type constructor for " <> prettyPrint name
+      <> " not found in scope: "
+      <> printDataTypes env
+  prettyPrint (TypeIsNotConstructor a) = "Type " <> prettyPrint a <> " is not a constructor"
+  prettyPrint (ConflictingConstructors name) = "Multiple constructors found matching " <> prettyPrint name
+  prettyPrint (CannotApplyToType name) = "Cannot apply value to " <> prettyPrint name
+
+printDataTypes :: Environment -> Text
+printDataTypes env = T.intercalate "\n" (printDt <$> M.toList (getDataTypes env))
+  where
+    printDt (tyName, constructors) =
+      prettyPrint tyName
+        <> ": "
+        <> T.intercalate " | " (printCons <$> NE.toList constructors)
+    printCons (consName, args) =
+      prettyPrint consName
+        <> " "
+        <> T.intercalate " " (prettyPrint <$> args)
 
 instance Semigroup TypeError where
   a <> _ = a

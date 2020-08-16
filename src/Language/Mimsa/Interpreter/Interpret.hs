@@ -206,3 +206,4 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyIf predExpr true false)
     (MyData _tyName _constructors expr) -> interpretWithScope expr
     (MyConstructor a) -> pure (MyConstructor a)
+    (MyConsApp fn val) -> pure (MyConsApp fn val)

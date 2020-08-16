@@ -19,6 +19,9 @@ instance Printer Text where
 instance Printer Int where
   prettyPrint = T.pack . show
 
+instance (Printer a) => Printer [a] where
+  prettyPrint as = T.intercalate ", " (prettyPrint <$> as)
+
 instance (Printer a, Printer b) => Printer (a, b) where
   prettyPrint (a, b) = T.intercalate "\n" [prettyPrint a, prettyPrint b]
 

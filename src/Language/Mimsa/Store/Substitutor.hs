@@ -146,3 +146,4 @@ mapVar p (MyRecord map') = do
 mapVar _ (MyLiteral a) = pure (MyLiteral a)
 mapVar p (MyData a b c) = MyData a b <$> mapVar p c
 mapVar _ (MyConstructor name) = pure (MyConstructor name)
+mapVar p (MyConsApp fn var) = MyConsApp <$> mapVar p fn <*> mapVar p var

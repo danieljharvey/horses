@@ -61,3 +61,4 @@ swapName _ _ (MyLiteral a) = pure (MyLiteral a)
 swapName from to (MyData tyName constructors expr) =
   MyData tyName constructors <$> swapName from to expr
 swapName _ _ (MyConstructor n) = pure (MyConstructor n)
+swapName _ _ (MyConsApp a b) = pure (MyConsApp a b)

@@ -78,6 +78,7 @@ complexParser =
     <|> listParser
     <|> recordParser
     <|> typeParser
+    <|> constructorAppParser
 
 protectedNames :: Set Text
 protectedNames =
@@ -429,3 +430,10 @@ oneTypeConstructor = do
   name <- constructParser
   args <- P.zeroOrMore (P.right P.space1 constructParser)
   pure (name, args)
+
+-----
+
+constructorAppParser :: Parser ParserExpr
+constructorAppParser = do
+  cons <- P.thenSpace constructParser
+  MyConsApp (MyConstructor cons) <$> expressionParser

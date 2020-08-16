@@ -196,13 +196,62 @@ inferDataDeclaration env tyName constructors' expr' =
    in infer (newEnv <> env) expr'
 
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
-inferDataConstructor env name =
-  let hasMatchingConstructor :: NonEmpty (Construct, a) -> Bool
-      hasMatchingConstructor =
+inferDataConstructor env name = do
+  (ty, _) <- findMatchingType env name
+  pure (mempty, MTConstructor ty)
+
+findMatchingType ::
+  Environment ->
+  Construct ->
+  TcMonad (Construct, NonEmpty (Construct, [Construct]))
+findMatchingType env name =
+  let hasMatchingConstructor =
         (> 0) . length . NE.filter (\(const', _) -> const' == name)
    in case M.toList $ M.filter hasMatchingConstructor (getDataTypes env) of
-        ((tyName, _) : _) -> pure (mempty, MTConstructor tyName)
+        (a : []) -> pure a
+        (_ : _) -> throwError (ConflictingConstructors name)
         _ -> throwError (TypeConstructorNotInScope env name)
+
+findConstructorArgs ::
+  NonEmpty (Construct, [Construct]) ->
+  Construct ->
+  TcMonad [Construct]
+findConstructorArgs type' name =
+  let hasMatchingConstructor =
+        NE.filter (\(const', _) -> const' == name)
+   in case hasMatchingConstructor type' of
+        ((_, args) : []) -> pure args
+        _ -> throwError (ConflictingConstructors name)
+
+-- this only allows other constructors to be applied
+-- this will need to loosened in time to allow, say
+-- 'Just 1' to typecheck
+inferConstructorApplication ::
+  Environment ->
+  Construct ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
+inferConstructorApplication env consName value = do
+  (tyCons, dataType) <- findMatchingType env consName
+  args <- findConstructorArgs dataType consName
+  case args of
+    (arg1 : _) -> do
+      tyExpected <- inferType env arg1
+      (s1, tyActual) <- infer env value
+      s2 <- unify tyExpected tyActual
+      pure (s2 <> s1, MTConstructor tyCons)
+    _ -> throwError (CannotApplyToType consName)
+
+-- parse a type from it's name
+-- this will soon become insufficient for more complex types
+inferType :: Environment -> Construct -> TcMonad MonoType
+inferType env name =
+  if M.member name (getDataTypes env)
+    then pure (MTConstructor name)
+    else case getConstruct name of
+      "String" -> pure MTString
+      "Int" -> pure MTInt
+      _ -> throwError (TypeConstructorNotInScope env name)
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
@@ -301,3 +350,5 @@ infer env inferExpr =
     (MyData tyName constructors expr) ->
       inferDataDeclaration env tyName constructors expr
     (MyConstructor name) -> inferDataConstructor env name
+    (MyConsApp (MyConstructor fn) val) -> inferConstructorApplication env fn val
+    (MyConsApp a _) -> throwError $ TypeIsNotConstructor a

@@ -6,7 +6,7 @@ module Test.Repl
   )
 where
 
-import Data.Either (isRight)
+import Data.Either (isLeft, isRight)
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
@@ -245,4 +245,36 @@ spec =
           `shouldBe` Right
             ( MTConstructor (mkConstruct "LeBool"),
               MyConstructor (mkConstruct "Vrai")
+            )
+      it "type Nat = Zero | Suc Nat in Suc Zero" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Zero"
+        result
+          `shouldBe` Right
+            ( MTConstructor (mkConstruct "Nat"),
+              MyConsApp (MyConstructor (mkConstruct "Suc")) (MyConstructor (mkConstruct "Zero"))
+            )
+      it "type Nat = Zero | Suc Nat in Suc Suc Zero" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Suc Zero"
+        result
+          `shouldBe` Right
+            ( MTConstructor (mkConstruct "Nat"),
+              MyConsApp
+                (MyConstructor (mkConstruct "Suc"))
+                ( MyConsApp (MyConstructor (mkConstruct "Suc")) (MyConstructor (mkConstruct "Zero"))
+                )
+            )
+      it "type Nat = Zero | Suc Nat in Suc 1" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in Suc 1"
+        result
+          `shouldSatisfy` isLeft
+      it "type Nat = Zero | Suc Nat in Suc Dog" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Dog"
+        result
+          `shouldSatisfy` isLeft
+      it "type Pet = Cat String | Dog String in Cat \"mimsa\"" $ do
+        result <- eval stdLib "type Pet = Cat String | Dog String in Cat \"mimsa\""
+        result
+          `shouldBe` Right
+            ( MTConstructor (mkConstruct "Pet"),
+              MyConsApp (MyConstructor (mkConstruct "Cat")) (str' "mimsa")
             )

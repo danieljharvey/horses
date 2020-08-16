@@ -39,6 +39,7 @@ extractVars_ (MyRecord map') = foldMap extractVars_ map'
 extractVars_ (MyRecordAccess a _) = extractVars_ a
 extractVars_ (MyData _ _ a) = extractVars_ a
 extractVars_ (MyConstructor _) = mempty
+extractVars_ (MyConsApp a b) = extractVars_ a <> extractVars_ b
 
 filterBuiltIns :: Set Name -> Set Name
 filterBuiltIns = S.filter (not . isLibraryName)

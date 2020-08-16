@@ -80,6 +80,7 @@ data Expr a
   | MyRecordAccess (Expr a) Name -- a.foo
   | MyData Construct (NonEmpty (Construct, [Construct])) (Expr a) -- tyName, (consName, fields) body
   | MyConstructor Construct -- use a constructor by name - WIP
+  | MyConsApp (Expr a) (Expr a) -- constructor, value
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Printer a) => Printer (Expr a) where
@@ -171,6 +172,7 @@ instance (Printer a) => Printer (Expr a) where
       printCons (consName, args) =
         prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> args)
   prettyPrint (MyConstructor name) = prettyPrint name
+  prettyPrint (MyConsApp fn val) = prettyPrint fn <> " " <> prettyPrint val
 
 inParens :: (Printer a) => a -> Text
 inParens a = "(" <> prettyPrint a <> ")"
