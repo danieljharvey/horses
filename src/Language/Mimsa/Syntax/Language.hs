@@ -429,20 +429,27 @@ typeParserWithCons = do
   _ <- P.thenSpace (P.literal "in")
   MyData tyName constructors <$> expressionParser
 
-manyTypeConstructors :: Parser (Map Construct [Construct])
+manyTypeConstructors :: Parser (Map Construct [TypeName])
 manyTypeConstructors = do
   cons <- NE.toList <$> P.oneOrMore (P.left oneTypeConstructor (P.thenSpace (P.literal "|")))
   lastCons <- oneTypeConstructor
   pure (mconcat cons <> lastCons)
 
-oneTypeConstructor :: Parser (Map Construct [Construct])
+oneTypeConstructor :: Parser (Map Construct [TypeName])
 oneTypeConstructor = do
   name <- constructParser
-  args <- P.zeroOrMore (P.right P.space1 constructParser)
+  args <- P.zeroOrMore (P.right P.space1 typeNameParser)
   pure (M.singleton name args)
 
 -----
 
+typeNameParser :: Parser TypeName
+typeNameParser =
+  ConsName <$> constructParser
+    <|> VarName <$> nameParser
+
+---
+--
 constructorAppParser :: Parser ParserExpr
 constructorAppParser = do
   cons <- constructParser

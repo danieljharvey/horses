@@ -193,7 +193,7 @@ inferLetPairBinding env binder1 binder2 expr body = do
 inferDataDeclaration ::
   Environment ->
   Construct ->
-  Map Construct [Construct] ->
+  Map Construct [TypeName] ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
 inferDataDeclaration env tyName constructors' expr' =
@@ -218,7 +218,7 @@ inferDataConstructor env name = do
 lookupConstructor ::
   Environment ->
   Construct ->
-  TcMonad (Construct, Map Construct [Construct])
+  TcMonad (Construct, Map Construct [TypeName])
 lookupConstructor env name =
   let hasMatchingConstructor = M.member name
    in case M.toList $ M.filter hasMatchingConstructor (getDataTypes env) of
@@ -229,7 +229,7 @@ lookupConstructor env name =
 -- given a data type, return the arguments for a given constructor
 findConstructorArgs ::
   Environment ->
-  Map Construct [Construct] ->
+  Map Construct [TypeName] ->
   Construct ->
   TcMonad [MonoType]
 findConstructorArgs env type' name =
@@ -243,13 +243,14 @@ lookupBuiltIn name = M.lookup name builtInTypes
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
-inferType :: Environment -> Construct -> TcMonad MonoType
-inferType env name =
-  if M.member name (getDataTypes env)
-    then case lookupBuiltIn name of
+inferType :: Environment -> TypeName -> TcMonad MonoType
+inferType env (ConsName tyName) =
+  if M.member tyName (getDataTypes env)
+    then case lookupBuiltIn tyName of
       Just mt -> pure mt
-      _ -> pure (MTData name)
-    else throwError (TypeConstructorNotInScope env name)
+      _ -> pure (MTData tyName)
+    else throwError (TypeConstructorNotInScope env tyName)
+inferType _ (VarName _) = getUnknown
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =

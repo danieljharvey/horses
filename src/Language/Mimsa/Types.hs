@@ -25,6 +25,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Bindings,
     module Language.Mimsa.Types.StoreExpression,
     module Language.Mimsa.Types.Project,
+    module Language.Mimsa.Types.TypeName,
   )
 where
 
@@ -51,6 +52,7 @@ import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Tui
 import Language.Mimsa.Types.TypeError
+import Language.Mimsa.Types.TypeName
 import Language.Mimsa.Types.UniVar
 import Language.Mimsa.Types.Usage
 import Language.Mimsa.Types.Variable

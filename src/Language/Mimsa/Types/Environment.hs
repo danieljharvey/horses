@@ -8,6 +8,7 @@ import qualified Data.Text as T
 import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Scheme
+import Language.Mimsa.Types.TypeName
 import Language.Mimsa.Types.Variable
 
 ---
@@ -16,7 +17,7 @@ import Language.Mimsa.Types.Variable
 data Environment
   = Environment
       { getSchemes :: Map Variable Scheme,
-        getDataTypes :: Map Construct (Map Construct [Construct])
+        getDataTypes :: Map Construct (Map Construct [TypeName])
       }
   deriving (Eq, Ord, Show)
 

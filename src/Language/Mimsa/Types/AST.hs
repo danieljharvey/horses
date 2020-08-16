@@ -24,6 +24,7 @@ import GHC.Generics
 import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
+import Language.Mimsa.Types.TypeName
 
 ------------
 
@@ -78,8 +79,8 @@ data Expr a
   | MyList (NonEmpty (Expr a)) -- [a]
   | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
   | MyRecordAccess (Expr a) Name -- a.foo
-  | MyData Construct (Map Construct [Construct]) (Expr a) -- tyName, Map constructor args, body
-  | MyConstructor Construct -- use a constructor by name - WIP
+  | MyData Construct (Map Construct [TypeName]) (Expr a) -- tyName, Map constructor args, body
+  | MyConstructor Construct -- use a constructor by name
   | MyConsApp (Expr a) (Expr a) -- constructor, value
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 

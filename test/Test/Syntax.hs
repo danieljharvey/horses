@@ -218,7 +218,7 @@ spec = do
               (mkConstruct "Dog")
               ( M.singleton
                   (mkConstruct "Dog")
-                  [mkConstruct "String"]
+                  [ConsName $ mkConstruct "String"]
               )
               (int 1)
           )
@@ -241,7 +241,7 @@ spec = do
               (mkConstruct "Nat")
               ( M.fromList
                   [ (mkConstruct "Zero", []),
-                    (mkConstruct "Succ", [mkConstruct "Nat"])
+                    (mkConstruct "Succ", [ConsName $ mkConstruct "Nat"])
                   ]
               )
               (int 1)
