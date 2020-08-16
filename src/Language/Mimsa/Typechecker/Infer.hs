@@ -11,11 +11,11 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Library
+import Language.Mimsa.Typechecker.DataTypes (defaultEnv)
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -32,7 +32,7 @@ doInference ::
   Environment ->
   Expr Variable ->
   Either TypeError (Substitutions, MonoType)
-doInference swaps env expr = runTcMonad swaps (infer env expr)
+doInference swaps env expr = runTcMonad swaps (infer (defaultEnv <> env) expr)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
 applySubstCtx subst (Environment schemes dt) =
@@ -188,12 +188,15 @@ inferLetPairBinding env binder1 binder2 expr body = do
 inferDataDeclaration ::
   Environment ->
   Construct ->
-  NonEmpty (Construct, [Construct]) ->
+  Map Construct [Construct] ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
 inferDataDeclaration env tyName constructors' expr' =
-  let newEnv = Environment mempty (M.singleton tyName constructors')
-   in infer (newEnv <> env) expr'
+  if M.member tyName (getDataTypes env)
+    then throwError (DuplicateTypeDeclaration tyName)
+    else
+      let newEnv = Environment mempty (M.singleton tyName constructors')
+       in infer (newEnv <> env) expr'
 
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
@@ -203,24 +206,22 @@ inferDataConstructor env name = do
 findMatchingType ::
   Environment ->
   Construct ->
-  TcMonad (Construct, NonEmpty (Construct, [Construct]))
+  TcMonad (Construct, Map Construct [Construct])
 findMatchingType env name =
-  let hasMatchingConstructor =
-        (> 0) . length . NE.filter (\(const', _) -> const' == name)
+  let hasMatchingConstructor = M.member name
    in case M.toList $ M.filter hasMatchingConstructor (getDataTypes env) of
-        (a : []) -> pure a
+        (a : []) -> pure a -- we only want a single match
         (_ : _) -> throwError (ConflictingConstructors name)
         _ -> throwError (TypeConstructorNotInScope env name)
 
 findConstructorArgs ::
-  NonEmpty (Construct, [Construct]) ->
+  Map Construct [Construct] ->
   Construct ->
   TcMonad [Construct]
 findConstructorArgs type' name =
-  let hasMatchingConstructor =
-        NE.filter (\(const', _) -> const' == name)
-   in case hasMatchingConstructor type' of
-        ((_, args) : []) -> pure args
+  let withMatchingConstructor = M.lookup name
+   in case withMatchingConstructor type' of
+        Just args -> pure args
         _ -> throwError (ConflictingConstructors name)
 
 -- this only allows other constructors to be applied
@@ -247,11 +248,11 @@ inferConstructorApplication env consName value = do
 inferType :: Environment -> Construct -> TcMonad MonoType
 inferType env name =
   if M.member name (getDataTypes env)
-    then pure (MTConstructor name)
-    else case getConstruct name of
+    then case getConstruct name of
       "String" -> pure MTString
       "Int" -> pure MTInt
-      _ -> throwError (TypeConstructorNotInScope env name)
+      _ -> pure (MTConstructor name)
+    else throwError (TypeConstructorNotInScope env name)
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =

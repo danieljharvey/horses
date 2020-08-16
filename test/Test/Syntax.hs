@@ -208,7 +208,7 @@ spec = do
         `shouldBe` Right
           ( MyData
               (mkConstruct "AbsoluteUnit")
-              (pure (mkConstruct "AbsoluteUnit", mempty))
+              (M.singleton (mkConstruct "AbsoluteUnit") mempty)
               (int 1)
           )
     it "Parses a single constructor with one arg" $
@@ -216,7 +216,10 @@ spec = do
         `shouldBe` Right
           ( MyData
               (mkConstruct "Dog")
-              (pure (mkConstruct "Dog", [mkConstruct "String"]))
+              ( M.singleton
+                  (mkConstruct "Dog")
+                  [mkConstruct "String"]
+              )
               (int 1)
           )
     it "Parses a french boolean" $
@@ -224,7 +227,11 @@ spec = do
         `shouldBe` Right
           ( MyData
               (mkConstruct "LeBool")
-              (NE.fromList [(mkConstruct "Vrai", []), (mkConstruct "Faux", [])])
+              ( M.fromList
+                  [ (mkConstruct "Vrai", []),
+                    (mkConstruct "Faux", [])
+                  ]
+              )
               (int 1)
           )
     it "Parses a peano number data declaration" $
@@ -232,7 +239,7 @@ spec = do
         `shouldBe` Right
           ( MyData
               (mkConstruct "Nat")
-              ( NE.fromList
+              ( M.fromList
                   [ (mkConstruct "Zero", []),
                     (mkConstruct "Succ", [mkConstruct "Nat"])
                   ]

@@ -11,8 +11,8 @@ where
 import Control.Applicative ((<|>))
 import Control.Monad ((>=>))
 import Data.Functor
-import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -410,26 +410,36 @@ caseParser = do
 ---
 
 typeParser :: Parser ParserExpr
-typeParser = do
+typeParser = typeParserEmpty <|> typeParserWithCons
+
+typeParserEmpty :: Parser ParserExpr
+typeParserEmpty = do
+  _ <- P.thenSpace (P.literal "type")
+  tyName <- P.thenSpace constructParser
+  _ <- P.thenSpace (P.literal "in")
+  MyData tyName mempty <$> expressionParser
+
+typeParserWithCons :: Parser ParserExpr
+typeParserWithCons = do
   _ <- P.thenSpace (P.literal "type")
   tyName <- P.thenSpace constructParser
   _ <- P.thenSpace (P.literal "=")
-  constructors <- manyTypeConstructors <|> pure <$> oneTypeConstructor
+  constructors <- manyTypeConstructors <|> oneTypeConstructor
   _ <- P.space1
   _ <- P.thenSpace (P.literal "in")
   MyData tyName constructors <$> expressionParser
 
-manyTypeConstructors :: Parser (NonEmpty (Construct, [Construct]))
+manyTypeConstructors :: Parser (Map Construct [Construct])
 manyTypeConstructors = do
-  cons <- P.oneOrMore (P.left oneTypeConstructor (P.thenSpace (P.literal "|")))
+  cons <- NE.toList <$> P.oneOrMore (P.left oneTypeConstructor (P.thenSpace (P.literal "|")))
   lastCons <- oneTypeConstructor
-  pure (cons <> pure lastCons)
+  pure (mconcat cons <> lastCons)
 
-oneTypeConstructor :: Parser (Construct, [Construct])
+oneTypeConstructor :: Parser (Map Construct [Construct])
 oneTypeConstructor = do
   name <- constructParser
   args <- P.zeroOrMore (P.right P.space1 constructParser)
-  pure (name, args)
+  pure (M.singleton name args)
 
 -----
 

@@ -5,7 +5,6 @@ module Language.Mimsa.Types.TypeError
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -39,6 +38,7 @@ data TypeError
   | TypeIsNotConstructor (Expr Variable)
   | ConflictingConstructors Construct
   | CannotApplyToType Construct
+  | DuplicateTypeDeclaration Construct
   deriving (Eq, Ord, Show)
 
 showKeys :: (Printer p) => Map p a -> Text
@@ -57,7 +57,8 @@ instance Printer TypeError where
     prettyPrint name <> " appears inside " <> prettyPrint mt <> ". Swaps: " <> showMap swaps
   prettyPrint (UnificationError a b) =
     "Unification error - cannot match " <> prettyPrint a <> " and " <> prettyPrint b
-  prettyPrint (CannotUnifyBoundVariable tv mt) = "Cannot unify type " <> prettyPrint mt <> " with bound variable " <> prettyPrint tv
+  prettyPrint (CannotUnifyBoundVariable tv mt) =
+    "Cannot unify type " <> prettyPrint mt <> " with bound variable " <> prettyPrint tv
   prettyPrint (VariableNotInEnv name members) =
     "Variable " <> prettyPrint name <> " not in scope: { " <> showSet members <> " }"
   prettyPrint (MissingRecordMember name members) =
@@ -80,9 +81,14 @@ instance Printer TypeError where
     "Type constructor for " <> prettyPrint name
       <> " not found in scope: "
       <> printDataTypes env
-  prettyPrint (TypeIsNotConstructor a) = "Type " <> prettyPrint a <> " is not a constructor"
-  prettyPrint (ConflictingConstructors name) = "Multiple constructors found matching " <> prettyPrint name
-  prettyPrint (CannotApplyToType name) = "Cannot apply value to " <> prettyPrint name
+  prettyPrint (TypeIsNotConstructor a) =
+    "Type " <> prettyPrint a <> " is not a constructor"
+  prettyPrint (ConflictingConstructors name) =
+    "Multiple constructors found matching " <> prettyPrint name
+  prettyPrint (CannotApplyToType name) =
+    "Cannot apply value to " <> prettyPrint name
+  prettyPrint (DuplicateTypeDeclaration name) =
+    "Cannot redeclare existing type name " <> prettyPrint name
 
 printDataTypes :: Environment -> Text
 printDataTypes env = T.intercalate "\n" (printDt <$> M.toList (getDataTypes env))
@@ -90,7 +96,7 @@ printDataTypes env = T.intercalate "\n" (printDt <$> M.toList (getDataTypes env)
     printDt (tyName, constructors) =
       prettyPrint tyName
         <> ": "
-        <> T.intercalate " | " (printCons <$> NE.toList constructors)
+        <> T.intercalate " | " (printCons <$> M.toList constructors)
     printCons (consName, args) =
       prettyPrint consName
         <> " "

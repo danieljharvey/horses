@@ -1,9 +1,7 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Environment where
 
-import Data.List.NonEmpty (NonEmpty)
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -18,7 +16,7 @@ import Language.Mimsa.Types.Variable
 data Environment
   = Environment
       { getSchemes :: Map Variable Scheme,
-        getDataTypes :: Map Construct (NonEmpty (Construct, [Construct]))
+        getDataTypes :: Map Construct (Map Construct [Construct])
       }
   deriving (Eq, Ord, Show)
 

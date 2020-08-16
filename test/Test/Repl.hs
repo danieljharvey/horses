@@ -278,3 +278,9 @@ spec =
             ( MTConstructor (mkConstruct "Pet"),
               MyConsApp (MyConstructor (mkConstruct "Cat")) (str' "mimsa")
             )
+      it "type Void in 1" $ do
+        result <- eval stdLib "type Void in 1"
+        result `shouldBe` Right (MTInt, int 1)
+      it "type String = Should | Error in Error" $ do
+        result <- eval stdLib "type String = Should | Error in Error"
+        result `shouldSatisfy` isLeft
