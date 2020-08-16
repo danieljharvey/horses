@@ -243,21 +243,21 @@ spec =
         result <- eval stdLib "type LeBool = Vrai | Faux in Vrai"
         result
           `shouldBe` Right
-            ( MTData (mkConstruct "LeBool"),
+            ( MTData (mkConstruct "LeBool") [],
               MyConstructor (mkConstruct "Vrai")
             )
       it "type Nat = Zero | Suc Nat in Suc Zero" $ do
         result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Zero"
         result
           `shouldBe` Right
-            ( MTData (mkConstruct "Nat"),
+            ( MTData (mkConstruct "Nat") [],
               MyConsApp (MyConstructor (mkConstruct "Suc")) (MyConstructor (mkConstruct "Zero"))
             )
       it "type Nat = Zero | Suc Nat in Suc Suc Zero" $ do
         result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Suc Zero"
         result
           `shouldBe` Right
-            ( MTData (mkConstruct "Nat"),
+            ( MTData (mkConstruct "Nat") [],
               MyConsApp
                 (MyConstructor (mkConstruct "Suc"))
                 ( MyConsApp (MyConstructor (mkConstruct "Suc")) (MyConstructor (mkConstruct "Zero"))
@@ -276,8 +276,8 @@ spec =
         result
           `shouldBe` Right
             ( MTFunction
-                (MTData (mkConstruct "Nat"))
-                (MTData (mkConstruct "Nat")),
+                (MTData (mkConstruct "Nat") [])
+                (MTData (mkConstruct "Nat") []),
               MyConstructor (mkConstruct "Suc")
             )
       it "type OhNat = Zero | Suc OhNat String in Suc" $ do
@@ -285,10 +285,10 @@ spec =
         result
           `shouldBe` Right
             ( MTFunction
-                (MTData (mkConstruct "OhNat"))
+                (MTData (mkConstruct "OhNat") [])
                 ( MTFunction
                     MTString
-                    (MTData (mkConstruct "OhNat"))
+                    (MTData (mkConstruct "OhNat") [])
                 ),
               MyConstructor (mkConstruct "Suc")
             )
@@ -296,7 +296,7 @@ spec =
         result <- eval stdLib "type Pet = Cat String | Dog String in Cat \"mimsa\""
         result
           `shouldBe` Right
-            ( MTData (mkConstruct "Pet"),
+            ( MTData (mkConstruct "Pet") [],
               MyConsApp (MyConstructor (mkConstruct "Cat")) (str' "mimsa")
             )
       it "type Void in 1" $ do
@@ -313,7 +313,7 @@ spec =
                 MTInt
                 ( MTFunction
                     MTString
-                    (MTData (mkConstruct "LongBoy"))
+                    (MTData (mkConstruct "LongBoy") [])
                 ),
               MyConsApp
                 (MyConstructor (mkConstruct "Stuff"))
@@ -323,11 +323,18 @@ spec =
         result <- eval stdLib "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)"
         result
           `shouldBe` Right
-            ( MTData (mkConstruct "Tree"),
+            ( MTData (mkConstruct "Tree") [],
               MyConsApp
                 ( MyConsApp
                     (MyConstructor $ mkConstruct "Branch")
                     (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1))
                 )
                 (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 2))
+            )
+      it "type Maybe a = Just a | Nothing in Just 1" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in Just 1"
+        result
+          `shouldBe` Right
+            ( MTData (mkConstruct "Maybe") [MTInt],
+              MyConsApp (MyConstructor $ mkConstruct "Just") (int 1)
             )

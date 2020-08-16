@@ -79,7 +79,7 @@ data Expr a
   | MyList (NonEmpty (Expr a)) -- [a]
   | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
   | MyRecordAccess (Expr a) Name -- a.foo
-  | MyData Construct (Map Construct [TypeName]) (Expr a) -- tyName, Map constructor args, body
+  | MyData Construct [Name] (Map Construct [TypeName]) (Expr a) -- tyName, tyArgs, Map constructor args, body
   | MyConstructor Construct -- use a constructor by name
   | MyConsApp (Expr a) (Expr a) -- constructor, value
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
@@ -164,8 +164,10 @@ instance (Printer a) => Printer (Expr a) where
               <> printSubExpr val
         )
           <$> M.toList map'
-  prettyPrint (MyData tyName constructors expr) =
+  prettyPrint (MyData tyName tyArgs constructors expr) =
     "type " <> prettyPrint tyName
+      <> T.intercalate " " (prettyPrint <$> tyArgs)
+      <> " "
       <> T.intercalate " | " (printCons <$> M.toList constructors)
       <> " in "
       <> printSubExpr expr

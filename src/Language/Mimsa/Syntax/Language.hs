@@ -417,17 +417,18 @@ typeParserEmpty = do
   _ <- P.thenSpace (P.literal "type")
   tyName <- P.thenSpace constructParser
   _ <- P.thenSpace (P.literal "in")
-  MyData tyName mempty <$> expressionParser
+  MyData tyName mempty mempty <$> expressionParser
 
 typeParserWithCons :: Parser ParserExpr
 typeParserWithCons = do
   _ <- P.thenSpace (P.literal "type")
   tyName <- P.thenSpace constructParser
+  tyArgs <- P.zeroOrMore (P.left nameParser P.space1)
   _ <- P.thenSpace (P.literal "=")
   constructors <- manyTypeConstructors <|> oneTypeConstructor
   _ <- P.space1
   _ <- P.thenSpace (P.literal "in")
-  MyData tyName constructors <$> expressionParser
+  MyData tyName tyArgs constructors <$> expressionParser
 
 manyTypeConstructors :: Parser (Map Construct [TypeName])
 manyTypeConstructors = do

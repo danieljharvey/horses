@@ -27,7 +27,7 @@ data MonoType
   | MTList MonoType -- [a]
   | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
   | MTVar Variable
-  | MTData Construct
+  | MTData Construct [MonoType] -- name, typeVars
   deriving (Eq, Ord, Show)
 
 -----------
@@ -40,7 +40,9 @@ instance Printer MonoType where
   prettyPrint MTString = "String"
   prettyPrint MTBool = "Boolean"
   prettyPrint MTUnit = "Unit"
-  prettyPrint (MTData consName) = prettyPrint consName <> "'"
+  prettyPrint (MTData consName tyVars) =
+    prettyPrint consName <> " "
+      <> T.intercalate " " (prettyPrint <$> tyVars)
   prettyPrint (MTFunction a b) = printSubType a <> " -> " <> printSubType b
   prettyPrint (MTPair a b) = "(" <> printSubType a <> ", " <> printSubType b <> ")"
   prettyPrint (MTVar a) = prettyPrint a

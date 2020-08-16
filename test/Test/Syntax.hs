@@ -208,6 +208,7 @@ spec = do
         `shouldBe` Right
           ( MyData
               (mkConstruct "AbsoluteUnit")
+              mempty
               (M.singleton (mkConstruct "AbsoluteUnit") mempty)
               (int 1)
           )
@@ -216,6 +217,7 @@ spec = do
         `shouldBe` Right
           ( MyData
               (mkConstruct "Dog")
+              mempty
               ( M.singleton
                   (mkConstruct "Dog")
                   [ConsName $ mkConstruct "String"]
@@ -227,6 +229,7 @@ spec = do
         `shouldBe` Right
           ( MyData
               (mkConstruct "LeBool")
+              mempty
               ( M.fromList
                   [ (mkConstruct "Vrai", []),
                     (mkConstruct "Faux", [])
@@ -239,6 +242,7 @@ spec = do
         `shouldBe` Right
           ( MyData
               (mkConstruct "Nat")
+              mempty
               ( M.fromList
                   [ (mkConstruct "Zero", []),
                     (mkConstruct "Succ", [ConsName $ mkConstruct "Nat"])
@@ -255,6 +259,19 @@ spec = do
                   (str' "hi")
               )
               (str' "dog")
+          )
+    it "Parses a type declaration with variable" $
+      parseExpr "type Maybe a = Just a | Nothing in Nothing"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Maybe")
+              [mkName "a"]
+              ( M.fromList
+                  [ (mkConstruct "Just", [VarName $ mkName "a"]),
+                    (mkConstruct "Nothing", [])
+                  ]
+              )
+              (MyConstructor $ mkConstruct "Nothing")
           )
     it "Uses a constructor" $
       parseExpr "Vrai" `shouldBe` Right (MyConstructor (mkConstruct "Vrai"))

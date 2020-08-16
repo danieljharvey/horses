@@ -97,8 +97,7 @@ inferFuncReturn env binder function tyArg = do
   tyRes <- getUnknown
   (s1, tyFun) <- infer newEnv function
   s2 <- unify (MTFunction tyArg tyFun) (applySubst s1 tyRes)
-  let s3 = mempty
-      subs = s3 <> s2 <> s1
+  let subs = s2 <> s1
   pure (subs, applySubst subs tyFun)
 
 inferList :: Environment -> NonEmpty (Expr Variable) -> TcMonad (Substitutions, MonoType)
@@ -211,8 +210,8 @@ inferDataConstructor env name = do
   (ty, constructors) <- lookupConstructor env name
   args <- findConstructorArgs env constructors name
   case args of
-    [] -> pure (mempty, MTData ty)
-    as -> pure (mempty, foldr MTFunction (MTData ty) as)
+    [] -> pure (mempty, MTData ty mempty)
+    _ -> pure (mempty, foldr MTFunction (MTData ty args) args)
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
@@ -248,9 +247,10 @@ inferType env (ConsName tyName) =
   if M.member tyName (getDataTypes env)
     then case lookupBuiltIn tyName of
       Just mt -> pure mt
-      _ -> pure (MTData tyName)
+      _ -> pure (MTData tyName mempty)
     else throwError (TypeConstructorNotInScope env tyName)
-inferType _ (VarName _) = getUnknown
+inferType _ (VarName _) = do
+  getUnknown
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
@@ -346,7 +346,9 @@ infer env inferExpr =
       tyLeft <- getUnknown
       (s1, tyRight) <- infer env right'
       pure (s1, MTSum (applySubst s1 tyLeft) tyRight)
-    (MyData tyName constructors expr) ->
+    (MyData tyName _tyArgs constructors expr) ->
       inferDataDeclaration env tyName constructors expr
-    (MyConstructor name) -> inferDataConstructor env name
-    (MyConsApp cons val) -> inferApplication env cons val
+    (MyConstructor name) ->
+      inferDataConstructor env name
+    (MyConsApp cons val) ->
+      inferApplication env cons val
