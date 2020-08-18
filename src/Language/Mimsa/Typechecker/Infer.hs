@@ -213,7 +213,7 @@ inferDataConstructor env name = do
   args <- findConstructorArgs constructors name
   (tyVars, tyArgs) <- inferArgTypes env tyVarNames args
   case args of
-    [] -> pure (mempty, MTData ty mempty)
+    [] -> pure (mempty, MTData ty tyVars)
     _ ->
       pure (mempty, foldr MTFunction (MTData ty tyVars) tyArgs)
 

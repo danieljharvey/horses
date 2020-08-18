@@ -340,6 +340,13 @@ spec =
                 (MTData (mkConstruct "Maybe") [MTVar (NumberedVar 1)]),
               MyConstructor $ mkConstruct "Just"
             )
+      it "type Maybe a = Just a | Nothing in Nothing" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in Nothing"
+        result
+          `shouldBe` Right
+            ( MTData (mkConstruct "Maybe") [MTVar (NumberedVar 1)],
+              MyConstructor $ mkConstruct "Nothing"
+            )
       it "type Maybe a = Just a | Nothing in Just 1" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in Just 1"
         result
