@@ -24,7 +24,7 @@ freeTypeVars ty = case ty of
   MTSum l r -> S.union (freeTypeVars l) (freeTypeVars r)
   MTRecord as -> foldr S.union mempty (freeTypeVars <$> as)
   MTList as -> freeTypeVars as
-  MTData _ _ -> S.empty
+  MTData _ as -> foldr S.union mempty (freeTypeVars <$> as)
   MTString -> S.empty
   MTInt -> S.empty
   MTBool -> S.empty
@@ -68,10 +68,12 @@ unify tyA tyB =
             tyRight <- getTypeOrFresh k bs
             unify tyLeft tyRight
       s <- traverse getRecordTypes allKeys
-      pure (foldl (<>) mempty s)
-    (MTData a _, MTData b _)
-      | a == b ->
-        pure mempty
+      pure (mconcat s)
+    (MTData a tyAs, MTData b tyBs)
+      | a == b -> do
+        let pairs = zip tyAs tyBs
+        s <- traverse (\(tyA', tyB') -> unify tyA' tyB') pairs
+        pure (mconcat s)
     (MTVar u, t) -> varBind u t
     (t, MTVar u) -> varBind u t
     (a, b) ->

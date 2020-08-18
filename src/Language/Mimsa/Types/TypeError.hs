@@ -36,6 +36,7 @@ data TypeError
   | CaseMatchExpectedLambda (Expr Variable) (Expr Variable)
   | TypeConstructorNotInScope Environment Construct
   | TypeIsNotConstructor (Expr Variable)
+  | TypeVariableNotInDataType Name [Name]
   | ConflictingConstructors Construct
   | CannotApplyToType Construct
   | DuplicateTypeDeclaration Construct
@@ -89,14 +90,19 @@ instance Printer TypeError where
     "Cannot apply value to " <> prettyPrint name
   prettyPrint (DuplicateTypeDeclaration name) =
     "Cannot redeclare existing type name " <> prettyPrint name
+  prettyPrint (TypeVariableNotInDataType a as) =
+    "Type variable " <> prettyPrint a <> " could not be in found in type vars for datatype: ["
+      <> T.intercalate ", " (prettyPrint <$> as)
+      <> "]"
 
 printDataTypes :: Environment -> Text
 printDataTypes env = T.intercalate "\n" (printDt <$> M.toList (getDataTypes env))
   where
-    printDt (tyName, constructors) =
-      prettyPrint tyName
+    printDt (tyName, (tyVars, constructors)) =
+      prettyPrint tyName <> printTyVars tyVars
         <> ": "
         <> T.intercalate " | " (printCons <$> M.toList constructors)
+    printTyVars as = T.intercalate " " (prettyPrint <$> as)
     printCons (consName, args) =
       prettyPrint consName
         <> " "

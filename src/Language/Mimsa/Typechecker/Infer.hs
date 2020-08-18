@@ -1,5 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Infer
@@ -192,14 +193,15 @@ inferLetPairBinding env binder1 binder2 expr body = do
 inferDataDeclaration ::
   Environment ->
   Construct ->
+  [Name] ->
   Map Construct [TypeName] ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
-inferDataDeclaration env tyName constructors' expr' =
+inferDataDeclaration env tyName tyArgs constructors' expr' =
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName constructors')
+      let newEnv = Environment mempty (M.singleton tyName (tyArgs, constructors'))
        in infer (newEnv <> env) expr'
 
 -- infer the type of a data constructor
@@ -207,19 +209,35 @@ inferDataDeclaration env tyName constructors' expr' =
 -- however if it has args it becomes a MTFun from args to the MTData
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
-  (ty, constructors) <- lookupConstructor env name
-  args <- findConstructorArgs env constructors name
+  (ty, (tyVarNames, constructors)) <- lookupConstructor env name
+  args <- findConstructorArgs constructors name
+  (tyVars, tyArgs) <- inferArgTypes env tyVarNames args
   case args of
     [] -> pure (mempty, MTData ty mempty)
-    _ -> pure (mempty, foldr MTFunction (MTData ty args) args)
+    _ ->
+      pure (mempty, foldr MTFunction (MTData ty tyVars) tyArgs)
+
+-- infer types for data type and it's constructor in one big go
+inferArgTypes :: Environment -> [Name] -> [TypeName] -> TcMonad ([MonoType], [MonoType])
+inferArgTypes env tyNames tyArgs = do
+  let pairWithUnknown a = (,) <$> pure a <*> getUnknown
+  tyVars <- traverse pairWithUnknown tyNames
+  let findType ty = case ty of
+        ConsName cn -> inferType env cn
+        VarName var -> do
+          case filter (\(tyName, _) -> tyName == var) tyVars of
+            [(_, tyFound)] -> pure tyFound
+            _ -> throwError $ TypeVariableNotInDataType var (fst <$> tyVars)
+  tyCons <- traverse findType tyArgs
+  pure (snd <$> tyVars, tyCons)
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
   Environment ->
   Construct ->
-  TcMonad (Construct, Map Construct [TypeName])
+  TcMonad (Construct, ([Name], Map Construct [TypeName]))
 lookupConstructor env name =
-  let hasMatchingConstructor = M.member name
+  let hasMatchingConstructor (_, items) = M.member name items
    in case M.toList $ M.filter hasMatchingConstructor (getDataTypes env) of
         [a] -> pure a -- we only want a single match
         (_ : _) -> throwError (ConflictingConstructors name)
@@ -227,14 +245,13 @@ lookupConstructor env name =
 
 -- given a data type, return the arguments for a given constructor
 findConstructorArgs ::
-  Environment ->
   Map Construct [TypeName] ->
   Construct ->
-  TcMonad [MonoType]
-findConstructorArgs env type' name =
+  TcMonad [TypeName]
+findConstructorArgs type' name =
   let withMatchingConstructor = M.lookup name
    in case withMatchingConstructor type' of
-        Just args -> traverse (inferType env) args
+        Just args -> pure args
         _ -> throwError (ConflictingConstructors name)
 
 lookupBuiltIn :: Construct -> Maybe MonoType
@@ -242,15 +259,13 @@ lookupBuiltIn name = M.lookup name builtInTypes
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
-inferType :: Environment -> TypeName -> TcMonad MonoType
-inferType env (ConsName tyName) =
+inferType :: Environment -> Construct -> TcMonad MonoType
+inferType env tyName =
   if M.member tyName (getDataTypes env)
     then case lookupBuiltIn tyName of
       Just mt -> pure mt
       _ -> pure (MTData tyName mempty)
     else throwError (TypeConstructorNotInScope env tyName)
-inferType _ (VarName _) = do
-  getUnknown
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
@@ -346,8 +361,8 @@ infer env inferExpr =
       tyLeft <- getUnknown
       (s1, tyRight) <- infer env right'
       pure (s1, MTSum (applySubst s1 tyLeft) tyRight)
-    (MyData tyName _tyArgs constructors expr) ->
-      inferDataDeclaration env tyName constructors expr
+    (MyData tyName tyArgs constructors expr) ->
+      inferDataDeclaration env tyName tyArgs constructors expr
     (MyConstructor name) ->
       inferDataConstructor env name
     (MyConsApp cons val) ->

@@ -331,6 +331,15 @@ spec =
                 )
                 (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 2))
             )
+      it "type Maybe a = Just a | Nothing in Just" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in Just"
+        result
+          `shouldBe` Right
+            ( MTFunction
+                (MTVar (NumberedVar 1))
+                (MTData (mkConstruct "Maybe") [MTVar (NumberedVar 1)]),
+              MyConstructor $ mkConstruct "Just"
+            )
       it "type Maybe a = Just a | Nothing in Just 1" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in Just 1"
         result
