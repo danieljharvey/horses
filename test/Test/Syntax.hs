@@ -275,3 +275,30 @@ spec = do
           )
     it "Uses a constructor" $
       parseExpr "Vrai" `shouldBe` Right (MyConstructor (mkConstruct "Vrai"))
+    it "Parses a custom case match" $
+      parseExpr "case Just 1 of Just \\a -> a | Nothing 0"
+        `shouldBe` Right
+          ( MyCaseMatch
+              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
+              [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a"))),
+                (mkConstruct "Nothing", int 0)
+              ]
+              Nothing
+          )
+    it "Parses a custom case match with fall through case" $
+      parseExpr "case Just 1 of Just \\a -> a | otherwise 0"
+        `shouldBe` Right
+          ( MyCaseMatch
+              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
+              [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a")))
+              ]
+              (Just $ int 0)
+          )
+    it "Parses a custom case match with only a fall through case" $
+      parseExpr "case Just 1 of otherwise 0"
+        `shouldBe` Right
+          ( MyCaseMatch
+              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
+              mempty
+              (Just $ int 0)
+          )

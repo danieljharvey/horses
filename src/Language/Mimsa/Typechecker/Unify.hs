@@ -72,7 +72,7 @@ unify tyA tyB =
     (MTData a tyAs, MTData b tyBs)
       | a == b -> do
         let pairs = zip tyAs tyBs
-        s <- traverse (\(tyA', tyB') -> unify tyA' tyB') pairs
+        s <- traverse (uncurry unify) pairs
         pure (mconcat s)
     (MTVar u, t) -> varBind u t
     (t, MTVar u) -> varBind u t

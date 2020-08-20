@@ -11,6 +11,7 @@ import Control.Applicative
 import Control.Monad.Except
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
+import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Library
@@ -155,6 +156,8 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyApp expr value)
     (MyApp (MyLambda binder expr) value) ->
       interpretWithScope (MyLet binder value expr)
+    (MyApp (MyLiteral a) _) ->
+      throwError $ CannotApplyToNonFunction (MyLiteral a)
     (MyApp other value) -> do
       expr <- interpretWithScope other
       interpretWithScope (MyApp expr value)
@@ -207,3 +210,5 @@ interpretWithScope interpretExpr =
     (MyData _tyName _tyArgs _constructors expr) -> interpretWithScope expr
     (MyConstructor a) -> pure (MyConstructor a)
     (MyConsApp fn val) -> pure (MyConsApp fn val)
+    (MyCaseMatch expr' matches catchAll) ->
+      patternMatch expr' matches catchAll >>= interpretWithScope

@@ -1,9 +1,13 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Language.Mimsa.Types.Substitutions where
 
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
+import qualified Data.Text as T
 import Language.Mimsa.Types.MonoType
+import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Variable
 
 ---
@@ -17,6 +21,11 @@ instance Semigroup Substitutions where
 
 instance Monoid Substitutions where
   mempty = Substitutions mempty
+
+instance Printer Substitutions where
+  prettyPrint (Substitutions s1) = "\n  " <> T.intercalate "\n  " (printRow <$> M.toList s1)
+    where
+      printRow (var, mt) = prettyPrint var <> ": " <> prettyPrint mt
 
 ---
 

@@ -79,6 +79,7 @@ complexParser =
     <|> recordParser
     <|> typeParser
     <|> constructorAppParser
+    <|> caseMatchParser
 
 protectedNames :: Set Text
 protectedNames =
@@ -91,6 +92,7 @@ protectedNames =
       "case",
       "of",
       "type",
+      "otherwise",
       "True",
       "False",
       "Unit",
@@ -396,11 +398,16 @@ sumParser = leftParser <|> rightParser
 
 ----
 
-caseParser :: Parser ParserExpr
-caseParser = do
+caseExprOfParser :: Parser ParserExpr
+caseExprOfParser = do
   _ <- P.thenSpace (P.literal "case")
   sumExpr <- expressionParser
   _ <- P.thenSpace (P.literal "of")
+  pure sumExpr
+
+caseParser :: Parser ParserExpr
+caseParser = do
+  sumExpr <- caseExprOfParser
   _ <- P.thenSpace (P.literal "Left")
   leftExpr <- expressionParser
   _ <- P.thenSpace (P.literal "|")
@@ -456,3 +463,33 @@ constructorAppParser = do
   cons <- constructParser
   exprs <- P.oneOrMore (P.right P.space1 (orInBrackets expressionParser))
   pure (foldl MyConsApp (MyConstructor cons) exprs)
+
+----------
+
+caseMatchParser :: Parser ParserExpr
+caseMatchParser = do
+  sumExpr <- caseExprOfParser
+  matches <-
+    matchesParser <|> pure <$> matchParser
+      <|> pure mempty
+  catchAll <-
+    Just <$> otherwiseParser (length matches > 0)
+      <|> pure Nothing
+  pure $ MyCaseMatch sumExpr matches catchAll
+
+otherwiseParser :: Bool -> Parser ParserExpr
+otherwiseParser needsBar = do
+  if needsBar
+    then () <$ P.thenSpace (P.literal "|")
+    else pure ()
+  _ <- P.thenSpace (P.literal "otherwise")
+  expressionParser
+
+matchesParser :: Parser [(Construct, ParserExpr)]
+matchesParser = do
+  cons <- P.zeroOrMore (P.left matchParser (P.thenSpace (P.literal "|")))
+  lastCons <- matchParser
+  pure (cons <> [lastCons])
+
+matchParser :: Parser (Construct, Expr Name)
+matchParser = (,) <$> P.thenSpace constructParser <*> expressionParser

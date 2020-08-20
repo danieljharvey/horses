@@ -40,6 +40,8 @@ data TypeError
   | ConflictingConstructors Construct
   | CannotApplyToType Construct
   | DuplicateTypeDeclaration Construct
+  | IncompletePatternMatch [Construct]
+  | MixedUpPatterns [Construct]
   deriving (Eq, Ord, Show)
 
 showKeys :: (Printer p) => Map p a -> Text
@@ -93,6 +95,14 @@ instance Printer TypeError where
   prettyPrint (TypeVariableNotInDataType a as) =
     "Type variable " <> prettyPrint a <> " could not be in found in type vars for datatype: ["
       <> T.intercalate ", " (prettyPrint <$> as)
+      <> "]"
+  prettyPrint (IncompletePatternMatch names) =
+    "Incomplete pattern match. Missing constructors: ["
+      <> T.intercalate ", " (prettyPrint <$> names)
+      <> "]"
+  prettyPrint (MixedUpPatterns names) =
+    "Mixed up patterns in same match. Constructors: ["
+      <> T.intercalate ", " (prettyPrint <$> names)
       <> "]"
 
 printDataTypes :: Environment -> Text

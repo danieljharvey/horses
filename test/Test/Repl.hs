@@ -354,3 +354,35 @@ spec =
             ( MTData (mkConstruct "Maybe") [MTInt],
               MyConsApp (MyConstructor $ mkConstruct "Just") (int 1)
             )
+      it "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> eq(100)(a) | Nothing False" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> eq(100)(a) | Nothing False"
+        result
+          `shouldBe` Right
+            (MTBool, bool False)
+      it "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> True | Nothing 1" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> True | Nothing 1"
+        result `shouldSatisfy` isLeft
+      it "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> eq(100)(a) | otherwise False" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> eq(100)(a) | otherwise False"
+        result
+          `shouldBe` Right
+            (MTBool, bool False)
+      it "type Stuff = Thing String Int in case Thing \"Hello\" 1 of Thing \\name -> \\num -> name" $ do
+        result <- eval stdLib "type Stuff = Thing String Int in case Thing \"Hello\" 1 of Thing \\name -> \\num -> name"
+        result
+          `shouldBe` Right
+            (MTString, str' "Hello")
+      it "type Result e a = Failure e | Success a in case Failure \"oh no\" of Success \\a -> \"oh yes\" | Failure \\e -> e" $ do
+        result <- eval stdLib "type Result e a = Failure e | Success a in case Failure \"oh no\" of Success \\a -> \"oh yes\" | Failure \\e -> e"
+        result
+          `shouldBe` Right
+            (MTString, str' "oh no")
+      it "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a" $ do
+        result <- eval stdLib "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a"
+        result `shouldBe` Right (MTBool, bool True)
+      it "type Maybe a = Just a | Nothing in case Nothing of Nothing False" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in case Nothing of Nothing False"
+        result `shouldSatisfy` isLeft
+      it "type Maybe a = Just a | Nothing in case Nothing of otherwise False" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in case Nothing of otherwise False"
+        result `shouldBe` Right (MTBool, bool False)
