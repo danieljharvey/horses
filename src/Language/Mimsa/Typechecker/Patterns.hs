@@ -29,7 +29,7 @@ allPatternsExist optNames' (_, (_, dataTypes)) = do
   -- check each one of optNames exists in dataTypes
   let dtNames = S.fromList (M.keys dataTypes)
       optNames = S.fromList optNames'
-  let (_matched, unmatched) = S.partition (\a -> S.member a optNames) dtNames
+  let (_matched, unmatched) = S.partition (`S.member` optNames) dtNames
   if S.size unmatched > 0
     then throwError (IncompletePatternMatch (S.toList unmatched))
     else pure ()
