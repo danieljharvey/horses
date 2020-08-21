@@ -394,3 +394,10 @@ spec =
       it "type Pair a b = Pair a b in case Pair \"dog\" 1 of Pair \a -> a" $ do
         result <- eval stdLib "type Pair a b = Pair a b in case Pair \"dog\" 1 of Pair \a -> a"
         result `shouldSatisfy` isLeft
+      it "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1" $ do
+        result <- eval stdLib "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1"
+        result
+          `shouldBe` Right
+            ( MTData (mkConstruct "Tree") [MTInt],
+              MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1)
+            )

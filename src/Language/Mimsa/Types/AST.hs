@@ -181,7 +181,7 @@ instance (Printer a) => Printer (Expr a) where
     "case "
       <> printSubExpr sumExpr
       <> " of "
-      <> T.intercalate "| " (printMatch <$> matches)
+      <> T.intercalate " | " (printMatch <$> matches)
       <> maybe "" (\catchExpr -> " | otherwise " <> printSubExpr catchExpr) catchAll
     where
       printMatch (construct, expr') =
