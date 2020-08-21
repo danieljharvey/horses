@@ -473,7 +473,7 @@ caseMatchParser = do
     matchesParser <|> pure <$> matchParser
       <|> pure mempty
   catchAll <-
-    Just <$> otherwiseParser (null matches)
+    Just <$> otherwiseParser (not . null $ matches)
       <|> pure Nothing
   pure $ MyCaseMatch sumExpr matches catchAll
 
