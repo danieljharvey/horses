@@ -453,7 +453,7 @@ oneTypeConstructor = do
 
 typeNameParser :: Parser TypeName
 typeNameParser =
-  ConsName <$> constructParser
+  ConsName <$> constructParser <*> pure mempty
     <|> VarName <$> nameParser
 
 ---
@@ -473,7 +473,7 @@ caseMatchParser = do
     matchesParser <|> pure <$> matchParser
       <|> pure mempty
   catchAll <-
-    Just <$> otherwiseParser (length matches > 0)
+    Just <$> otherwiseParser (null matches)
       <|> pure Nothing
   pure $ MyCaseMatch sumExpr matches catchAll
 

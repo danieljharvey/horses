@@ -220,7 +220,7 @@ spec = do
               mempty
               ( M.singleton
                   (mkConstruct "Dog")
-                  [ConsName $ mkConstruct "String"]
+                  [ConsName (mkConstruct "String") mempty]
               )
               (int 1)
           )
@@ -245,7 +245,7 @@ spec = do
               mempty
               ( M.fromList
                   [ (mkConstruct "Zero", []),
-                    (mkConstruct "Succ", [ConsName $ mkConstruct "Nat"])
+                    (mkConstruct "Succ", [ConsName (mkConstruct "Nat") mempty])
                   ]
               )
               (int 1)

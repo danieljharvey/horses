@@ -229,7 +229,7 @@ inferArgTypes env type' tyNames tyArgs = do
   let pairWithUnknown a = (,) <$> pure a <*> getUnknown
   tyVars <- traverse pairWithUnknown tyNames
   let findType ty = case ty of
-        ConsName cn -> inferType env cn
+        ConsName cn vs -> inferType env cn vs
         VarName var ->
           case filter (\(tyName, _) -> tyName == var) tyVars of
             [(_, tyFound)] -> pure tyFound
@@ -253,8 +253,8 @@ lookupBuiltIn name = M.lookup name builtInTypes
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
-inferType :: Environment -> Construct -> TcMonad MonoType
-inferType env tyName =
+inferType :: Environment -> Construct -> [TypeName] -> TcMonad MonoType
+inferType env tyName _vs =
   if M.member tyName (getDataTypes env)
     then case lookupBuiltIn tyName of
       Just mt -> pure mt
