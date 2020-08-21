@@ -36,7 +36,7 @@ data TypeError
   | CaseMatchExpectedLambda (Expr Variable) (Expr Variable)
   | TypeConstructorNotInScope Environment Construct
   | TypeIsNotConstructor (Expr Variable)
-  | TypeVariableNotInDataType Name [Name]
+  | TypeVariableNotInDataType Construct Name [Name]
   | ConflictingConstructors Construct
   | CannotApplyToType Construct
   | DuplicateTypeDeclaration Construct
@@ -92,8 +92,9 @@ instance Printer TypeError where
     "Cannot apply value to " <> prettyPrint name
   prettyPrint (DuplicateTypeDeclaration name) =
     "Cannot redeclare existing type name " <> prettyPrint name
-  prettyPrint (TypeVariableNotInDataType a as) =
-    "Type variable " <> prettyPrint a <> " could not be in found in type vars for datatype: ["
+  prettyPrint (TypeVariableNotInDataType ty a as) =
+    "Type variable " <> prettyPrint a <> " could not be in found in type vars for " <> prettyPrint ty
+      <> ". The following type variables were found: ["
       <> T.intercalate ", " (prettyPrint <$> as)
       <> "]"
   prettyPrint (IncompletePatternMatch names) =

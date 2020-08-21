@@ -212,7 +212,7 @@ inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, Mono
 inferDataConstructor env name = do
   (ty, (tyVarNames, constructors)) <- lookupConstructor env name
   args <- findConstructorArgs constructors name
-  (tyVars, tyArgs) <- inferArgTypes env tyVarNames args
+  (tyVars, tyArgs) <- inferArgTypes env ty tyVarNames args
   case args of
     [] -> pure (mempty, MTData ty tyVars)
     _ ->
@@ -221,10 +221,11 @@ inferDataConstructor env name = do
 -- infer types for data type and it's constructor in one big go
 inferArgTypes ::
   Environment ->
+  Construct ->
   [Name] ->
   [TypeName] ->
   TcMonad ([MonoType], [MonoType])
-inferArgTypes env tyNames tyArgs = do
+inferArgTypes env type' tyNames tyArgs = do
   let pairWithUnknown a = (,) <$> pure a <*> getUnknown
   tyVars <- traverse pairWithUnknown tyNames
   let findType ty = case ty of
@@ -232,7 +233,7 @@ inferArgTypes env tyNames tyArgs = do
         VarName var ->
           case filter (\(tyName, _) -> tyName == var) tyVars of
             [(_, tyFound)] -> pure tyFound
-            _ -> throwError $ TypeVariableNotInDataType var (fst <$> tyVars)
+            _ -> throwError $ TypeVariableNotInDataType type' var (fst <$> tyVars)
   tyCons <- traverse findType tyArgs
   pure (snd <$> tyVars, tyCons)
 
@@ -300,9 +301,9 @@ inferMyCaseMatch env sumExpr matches catchAll = do
 -- however if it has args it becomes a MTFun from args to the MTData
 inferMatch :: Environment -> Construct -> Expr Variable -> TcMonad (Substitutions, MonoType)
 inferMatch env name expr' = do
-  (_, (tyVarNames, constructors)) <- lookupConstructor env name
+  (ty, (tyVarNames, constructors)) <- lookupConstructor env name
   args <- findConstructorArgs constructors name
-  (_, tyArgs) <- inferArgTypes env tyVarNames args
+  (_, tyArgs) <- inferArgTypes env ty tyVarNames args
   case args of
     [] -> infer env expr' -- no arguments to pass to expr'
     _ -> do
