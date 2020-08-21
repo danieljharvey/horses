@@ -210,5 +210,6 @@ interpretWithScope interpretExpr =
     (MyData _tyName _tyArgs _constructors expr) -> interpretWithScope expr
     (MyConstructor a) -> pure (MyConstructor a)
     (MyConsApp fn val) -> pure (MyConsApp fn val)
-    (MyCaseMatch expr' matches catchAll) ->
-      patternMatch expr' matches catchAll >>= interpretWithScope
+    (MyCaseMatch expr' matches catchAll) -> do
+      expr'' <- interpretWithScope expr'
+      patternMatch expr'' matches catchAll >>= interpretWithScope
