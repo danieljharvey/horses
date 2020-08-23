@@ -16,6 +16,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.ResolverError,
     module Language.Mimsa.Types.InterpreterError,
     module Language.Mimsa.Types.Variable,
+    module Language.Mimsa.Types.Construct,
     module Language.Mimsa.Types.Scope,
     module Language.Mimsa.Types.Swaps,
     module Language.Mimsa.Types.UniVar,
@@ -24,11 +25,13 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Bindings,
     module Language.Mimsa.Types.StoreExpression,
     module Language.Mimsa.Types.Project,
+    module Language.Mimsa.Types.TypeName,
   )
 where
 
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Bindings
+import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Environment
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.ExprHash
@@ -49,6 +52,7 @@ import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Tui
 import Language.Mimsa.Types.TypeError
+import Language.Mimsa.Types.TypeName
 import Language.Mimsa.Types.UniVar
 import Language.Mimsa.Types.Usage
 import Language.Mimsa.Types.Variable

@@ -9,8 +9,10 @@ module Language.Mimsa.Syntax.Language
 where
 
 import Control.Applicative ((<|>))
+import Control.Monad ((>=>))
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -19,14 +21,6 @@ import qualified Data.Text as T
 import Language.Mimsa.Syntax.Parser (Parser)
 import qualified Language.Mimsa.Syntax.Parser as P
 import Language.Mimsa.Types
-  ( Expr (..),
-    Literal (..),
-    Name,
-    StringType (..),
-    SumSide (..),
-    mkName,
-    validName,
-  )
 
 type ParserExpr = Expr Name
 
@@ -50,6 +44,7 @@ expressionParser =
         literalParser
           <|> complexParser
           <|> varParser
+          <|> constructorParser
    in orInBrackets parsers
         <|> failer
 
@@ -82,6 +77,9 @@ complexParser =
     <|> lambdaParser
     <|> listParser
     <|> recordParser
+    <|> typeParser
+    <|> constructorAppParser
+    <|> caseMatchParser
 
 protectedNames :: Set Text
 protectedNames =
@@ -93,6 +91,8 @@ protectedNames =
       "else",
       "case",
       "of",
+      "type",
+      "otherwise",
       "True",
       "False",
       "Unit",
@@ -131,12 +131,27 @@ stringParser = MyLiteral . MyString . StringType <$> P.between '"'
 varParser :: Parser ParserExpr
 varParser = MyVar <$> nameParser
 
+---
+
 nameParser :: Parser Name
 nameParser =
-  mkName
-    <$> P.predicate
-      P.identifier
-      (\name -> not $ S.member name protectedNames && validName name)
+  P.maybePred
+    P.identifier
+    (inProtected >=> safeMkName)
+
+inProtected :: Text -> Maybe Text
+inProtected tx = if S.member tx protectedNames then Nothing else Just tx
+
+---
+
+constructorParser :: Parser ParserExpr
+constructorParser = MyConstructor <$> constructParser
+
+constructParser :: Parser Construct
+constructParser =
+  P.maybePred
+    P.identifier
+    (inProtected >=> safeMkConstruct)
 
 -----
 
@@ -383,13 +398,109 @@ sumParser = leftParser <|> rightParser
 
 ----
 
-caseParser :: Parser ParserExpr
-caseParser = do
+caseExprOfParser :: Parser ParserExpr
+caseExprOfParser = do
   _ <- P.thenSpace (P.literal "case")
   sumExpr <- expressionParser
   _ <- P.thenSpace (P.literal "of")
+  pure sumExpr
+
+caseParser :: Parser ParserExpr
+caseParser = do
+  sumExpr <- caseExprOfParser
   _ <- P.thenSpace (P.literal "Left")
   leftExpr <- expressionParser
   _ <- P.thenSpace (P.literal "|")
   _ <- P.thenSpace (P.literal "Right")
   MyCase sumExpr leftExpr <$> expressionParser
+
+---
+
+typeParser :: Parser ParserExpr
+typeParser = typeParserEmpty <|> typeParserWithCons
+
+typeParserEmpty :: Parser ParserExpr
+typeParserEmpty = do
+  _ <- P.thenSpace (P.literal "type")
+  tyName <- P.thenSpace constructParser
+  _ <- P.thenSpace (P.literal "in")
+  MyData tyName mempty mempty <$> expressionParser
+
+typeParserWithCons :: Parser ParserExpr
+typeParserWithCons = do
+  _ <- P.thenSpace (P.literal "type")
+  tyName <- P.thenSpace constructParser
+  tyArgs <- P.zeroOrMore (P.left nameParser P.space1)
+  _ <- P.thenSpace (P.literal "=")
+  constructors <- manyTypeConstructors <|> oneTypeConstructor
+  _ <- P.space1
+  _ <- P.thenSpace (P.literal "in")
+  MyData tyName tyArgs constructors <$> expressionParser
+
+manyTypeConstructors :: Parser (Map Construct [TypeName])
+manyTypeConstructors = do
+  cons <- NE.toList <$> P.oneOrMore (P.left oneTypeConstructor (P.thenSpace (P.literal "|")))
+  lastCons <- oneTypeConstructor
+  pure (mconcat cons <> lastCons)
+
+oneTypeConstructor :: Parser (Map Construct [TypeName])
+oneTypeConstructor = do
+  name <- constructParser
+  args <- P.zeroOrMore (P.right P.space1 typeNameParser)
+  pure (M.singleton name args)
+
+-----
+
+typeNameParser :: Parser TypeName
+typeNameParser =
+  emptyConsParser <|> varNameParser <|> inBrackets parameterisedConsParser <|> varNameParser
+
+emptyConsParser :: Parser TypeName
+emptyConsParser = ConsName <$> constructParser <*> pure mempty
+
+parameterisedConsParser :: Parser TypeName
+parameterisedConsParser = do
+  c <- constructParser
+  params <- P.zeroOrMore (P.right P.space1 typeNameParser)
+  pure $ ConsName c params
+
+varNameParser :: Parser TypeName
+varNameParser = VarName <$> nameParser
+
+---
+--
+constructorAppParser :: Parser ParserExpr
+constructorAppParser = do
+  cons <- constructParser
+  exprs <- P.oneOrMore (P.right P.space1 (orInBrackets expressionParser))
+  pure (foldl MyConsApp (MyConstructor cons) exprs)
+
+----------
+
+caseMatchParser :: Parser ParserExpr
+caseMatchParser = do
+  sumExpr <- caseExprOfParser
+  matches <-
+    matchesParser <|> pure <$> matchParser
+      <|> pure mempty
+  catchAll <-
+    Just <$> otherwiseParser (not . null $ matches)
+      <|> pure Nothing
+  pure $ MyCaseMatch sumExpr matches catchAll
+
+otherwiseParser :: Bool -> Parser ParserExpr
+otherwiseParser needsBar = do
+  if needsBar
+    then () <$ P.thenSpace (P.literal "|")
+    else pure ()
+  _ <- P.thenSpace (P.literal "otherwise")
+  expressionParser
+
+matchesParser :: Parser [(Construct, ParserExpr)]
+matchesParser = do
+  cons <- P.zeroOrMore (P.left matchParser (P.thenSpace (P.literal "|")))
+  lastCons <- matchParser
+  pure (cons <> [lastCons])
+
+matchParser :: Parser (Construct, Expr Name)
+matchParser = (,) <$> P.thenSpace constructParser <*> expressionParser

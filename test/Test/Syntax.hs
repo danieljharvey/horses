@@ -8,9 +8,9 @@ where
 import Data.Either (isLeft)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Language.Mimsa
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
+import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 
@@ -202,4 +202,147 @@ spec = do
               )
               (MyLambda (mkName "r") (str' "It's not ten"))
               (MyLambda (mkName "l") (str' "It's ten!"))
+          )
+    it "Parses an absolute unit" $
+      parseExpr "type AbsoluteUnit = AbsoluteUnit in 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "AbsoluteUnit")
+              mempty
+              (M.singleton (mkConstruct "AbsoluteUnit") mempty)
+              (int 1)
+          )
+    it "Parses a single constructor with one arg" $
+      parseExpr "type Dog = Dog String in 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Dog")
+              mempty
+              ( M.singleton
+                  (mkConstruct "Dog")
+                  [ConsName (mkConstruct "String") mempty]
+              )
+              (int 1)
+          )
+    it "Parses a french boolean" $
+      parseExpr "type LeBool = Vrai | Faux in 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "LeBool")
+              mempty
+              ( M.fromList
+                  [ (mkConstruct "Vrai", []),
+                    (mkConstruct "Faux", [])
+                  ]
+              )
+              (int 1)
+          )
+    it "Parses a peano number data declaration" $
+      parseExpr "type Nat = Zero | Succ Nat in 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Nat")
+              mempty
+              ( M.fromList
+                  [ (mkConstruct "Zero", []),
+                    (mkConstruct "Succ", [ConsName (mkConstruct "Nat") mempty])
+                  ]
+              )
+              (int 1)
+          )
+    it "Parses a multiple argument constructor" $
+      parseExpr "Dog \"hi\" \"dog\""
+        `shouldBe` Right
+          ( MyConsApp
+              ( MyConsApp
+                  (MyConstructor $ mkConstruct "Dog")
+                  (str' "hi")
+              )
+              (str' "dog")
+          )
+    it "Parses a type declaration with variable" $
+      parseExpr "type Maybe a = Just a | Nothing in Nothing"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Maybe")
+              [mkName "a"]
+              ( M.fromList
+                  [ (mkConstruct "Just", [VarName $ mkName "a"]),
+                    (mkConstruct "Nothing", [])
+                  ]
+              )
+              (MyConstructor $ mkConstruct "Nothing")
+          )
+    it "Uses a constructor" $
+      parseExpr "Vrai" `shouldBe` Right (MyConstructor (mkConstruct "Vrai"))
+    it "Parses a custom case match" $
+      parseExpr "case Just 1 of Just \\a -> a | Nothing 0"
+        `shouldBe` Right
+          ( MyCaseMatch
+              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
+              [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a"))),
+                (mkConstruct "Nothing", int 0)
+              ]
+              Nothing
+          )
+    it "Parses a custom case match with fall through case" $
+      parseExpr "case Just 1 of Just \\a -> a | otherwise 0"
+        `shouldBe` Right
+          ( MyCaseMatch
+              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
+              [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a")))
+              ]
+              (Just $ int 0)
+          )
+    it "Parses a custom case match with only a fall through case" $
+      parseExpr "case Just 1 of otherwise 0"
+        `shouldBe` Right
+          ( MyCaseMatch
+              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
+              mempty
+              (Just $ int 0)
+          )
+    it "Parses complex type constructors" $
+      parseExpr "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Tree")
+              [mkName "a"]
+              ( M.fromList
+                  [ (mkConstruct "Leaf", [VarName $ mkName "a"]),
+                    ( mkConstruct "Branch",
+                      [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
+                        ConsName (mkConstruct "Tree") [VarName $ mkName "b"]
+                      ]
+                    )
+                  ]
+              )
+              (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1))
+          )
+    it "Parses even more complex type constructors" $
+      parseExpr "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Tree")
+              [mkName "a"]
+              ( M.fromList
+                  [ (mkConstruct "Empty", mempty),
+                    ( mkConstruct "Branch",
+                      [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
+                        VarName $ mkName "a",
+                        ConsName (mkConstruct "Tree") [VarName $ mkName "a"]
+                      ]
+                    )
+                  ]
+              )
+              ( MyConsApp
+                  ( MyConsApp
+                      ( MyConsApp
+                          (MyConstructor $ mkConstruct "Branch")
+                          (MyConstructor $ mkConstruct "Empty")
+                      )
+                      (int 1)
+                  )
+                  (MyConstructor $ mkConstruct "Empty")
+              )
           )

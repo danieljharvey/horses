@@ -9,6 +9,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Variable
@@ -26,6 +27,7 @@ data MonoType
   | MTList MonoType -- [a]
   | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
   | MTVar Variable
+  | MTData Construct [MonoType] -- name, typeVars
   deriving (Eq, Ord, Show)
 
 -----------
@@ -38,6 +40,9 @@ instance Printer MonoType where
   prettyPrint MTString = "String"
   prettyPrint MTBool = "Boolean"
   prettyPrint MTUnit = "Unit"
+  prettyPrint (MTData consName tyVars) =
+    prettyPrint consName <> " "
+      <> T.intercalate " " (prettyPrint <$> tyVars)
   prettyPrint (MTFunction a b) = printSubType a <> " -> " <> printSubType b
   prettyPrint (MTPair a b) = "(" <> printSubType a <> ", " <> printSubType b <> ")"
   prettyPrint (MTVar a) = prettyPrint a

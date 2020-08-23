@@ -12,6 +12,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Environment
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
@@ -33,6 +34,14 @@ data TypeError
   | CaseMatchExpectedPair MonoType
   | CaseMatchExpectedList MonoType
   | CaseMatchExpectedLambda (Expr Variable) (Expr Variable)
+  | TypeConstructorNotInScope Environment Construct
+  | TypeIsNotConstructor (Expr Variable)
+  | TypeVariableNotInDataType Construct Name [Name]
+  | ConflictingConstructors Construct
+  | CannotApplyToType Construct
+  | DuplicateTypeDeclaration Construct
+  | IncompletePatternMatch [Construct]
+  | MixedUpPatterns [Construct]
   deriving (Eq, Ord, Show)
 
 showKeys :: (Printer p) => Map p a -> Text
@@ -51,7 +60,8 @@ instance Printer TypeError where
     prettyPrint name <> " appears inside " <> prettyPrint mt <> ". Swaps: " <> showMap swaps
   prettyPrint (UnificationError a b) =
     "Unification error - cannot match " <> prettyPrint a <> " and " <> prettyPrint b
-  prettyPrint (CannotUnifyBoundVariable tv mt) = "Cannot unify type " <> prettyPrint mt <> " with bound variable " <> prettyPrint tv
+  prettyPrint (CannotUnifyBoundVariable tv mt) =
+    "Cannot unify type " <> prettyPrint mt <> " with bound variable " <> prettyPrint tv
   prettyPrint (VariableNotInEnv name members) =
     "Variable " <> prettyPrint name <> " not in scope: { " <> showSet members <> " }"
   prettyPrint (MissingRecordMember name members) =
@@ -70,6 +80,44 @@ instance Printer TypeError where
     "Expected list but got " <> prettyPrint mt
   prettyPrint (CaseMatchExpectedLambda l r) =
     "Expected lambdas but got " <> prettyPrint l <> " and " <> prettyPrint r
+  prettyPrint (TypeConstructorNotInScope env name) =
+    "Type constructor for " <> prettyPrint name
+      <> " not found in scope: "
+      <> printDataTypes env
+  prettyPrint (TypeIsNotConstructor a) =
+    "Type " <> prettyPrint a <> " is not a constructor"
+  prettyPrint (ConflictingConstructors name) =
+    "Multiple constructors found matching " <> prettyPrint name
+  prettyPrint (CannotApplyToType name) =
+    "Cannot apply value to " <> prettyPrint name
+  prettyPrint (DuplicateTypeDeclaration name) =
+    "Cannot redeclare existing type name " <> prettyPrint name
+  prettyPrint (TypeVariableNotInDataType ty a as) =
+    "Type variable " <> prettyPrint a <> " could not be in found in type vars for " <> prettyPrint ty
+      <> ". The following type variables were found: ["
+      <> T.intercalate ", " (prettyPrint <$> as)
+      <> "]"
+  prettyPrint (IncompletePatternMatch names) =
+    "Incomplete pattern match. Missing constructors: ["
+      <> T.intercalate ", " (prettyPrint <$> names)
+      <> "]"
+  prettyPrint (MixedUpPatterns names) =
+    "Mixed up patterns in same match. Constructors: ["
+      <> T.intercalate ", " (prettyPrint <$> names)
+      <> "]"
+
+printDataTypes :: Environment -> Text
+printDataTypes env = T.intercalate "\n" (printDt <$> M.toList (getDataTypes env))
+  where
+    printDt (tyName, (tyVars, constructors)) =
+      prettyPrint tyName <> printTyVars tyVars
+        <> ": "
+        <> T.intercalate " | " (printCons <$> M.toList constructors)
+    printTyVars as = T.intercalate " " (prettyPrint <$> as)
+    printCons (consName, args) =
+      prettyPrint consName
+        <> " "
+        <> T.intercalate " " (prettyPrint <$> args)
 
 instance Semigroup TypeError where
   a <> _ = a

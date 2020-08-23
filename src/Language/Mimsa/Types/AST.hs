@@ -21,8 +21,10 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
+import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
+import Language.Mimsa.Types.TypeName
 
 ------------
 
@@ -77,6 +79,10 @@ data Expr a
   | MyList (NonEmpty (Expr a)) -- [a]
   | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
   | MyRecordAccess (Expr a) Name -- a.foo
+  | MyData Construct [Name] (Map Construct [TypeName]) (Expr a) -- tyName, tyArgs, Map constructor args, body
+  | MyConstructor Construct -- use a constructor by name
+  | MyConsApp (Expr a) (Expr a) -- constructor, value
+  | MyCaseMatch (Expr a) [(Construct, Expr a)] (Maybe (Expr a)) -- expr, matches, catchAll
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Printer a) => Printer (Expr a) where
@@ -159,6 +165,27 @@ instance (Printer a) => Printer (Expr a) where
               <> printSubExpr val
         )
           <$> M.toList map'
+  prettyPrint (MyData tyName tyArgs constructors expr) =
+    "type " <> prettyPrint tyName
+      <> T.intercalate " " (prettyPrint <$> tyArgs)
+      <> " "
+      <> T.intercalate " | " (printCons <$> M.toList constructors)
+      <> " in "
+      <> printSubExpr expr
+    where
+      printCons (consName, args) =
+        prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> args)
+  prettyPrint (MyConstructor name) = prettyPrint name
+  prettyPrint (MyConsApp fn val) = prettyPrint fn <> " " <> prettyPrint val
+  prettyPrint (MyCaseMatch sumExpr matches catchAll) =
+    "case "
+      <> printSubExpr sumExpr
+      <> " of "
+      <> T.intercalate " | " (printMatch <$> matches)
+      <> maybe "" (\catchExpr -> " | otherwise " <> printSubExpr catchExpr) catchAll
+    where
+      printMatch (construct, expr') =
+        prettyPrint construct <> " " <> printSubExpr expr'
 
 inParens :: (Printer a) => a -> Text
 inParens a = "(" <> prettyPrint a <> ")"
