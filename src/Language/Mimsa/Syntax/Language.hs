@@ -453,8 +453,19 @@ oneTypeConstructor = do
 
 typeNameParser :: Parser TypeName
 typeNameParser =
-  ConsName <$> constructParser <*> pure mempty
-    <|> VarName <$> nameParser
+  emptyConsParser <|> varNameParser <|> inBrackets parameterisedConsParser <|> varNameParser
+
+emptyConsParser :: Parser TypeName
+emptyConsParser = ConsName <$> constructParser <*> pure mempty
+
+parameterisedConsParser :: Parser TypeName
+parameterisedConsParser = do
+  c <- constructParser
+  params <- P.zeroOrMore (P.right P.space1 typeNameParser)
+  pure $ ConsName c params
+
+varNameParser :: Parser TypeName
+varNameParser = VarName <$> nameParser
 
 ---
 --

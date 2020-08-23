@@ -302,3 +302,47 @@ spec = do
               mempty
               (Just $ int 0)
           )
+    it "Parses complex type constructors" $
+      parseExpr "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Tree")
+              [mkName "a"]
+              ( M.fromList
+                  [ (mkConstruct "Leaf", [VarName $ mkName "a"]),
+                    ( mkConstruct "Branch",
+                      [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
+                        ConsName (mkConstruct "Tree") [VarName $ mkName "b"]
+                      ]
+                    )
+                  ]
+              )
+              (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1))
+          )
+    it "Parses even more complex type constructors" $
+      parseExpr "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
+        `shouldBe` Right
+          ( MyData
+              (mkConstruct "Tree")
+              [mkName "a"]
+              ( M.fromList
+                  [ (mkConstruct "Empty", mempty),
+                    ( mkConstruct "Branch",
+                      [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
+                        VarName $ mkName "a",
+                        ConsName (mkConstruct "Tree") [VarName $ mkName "a"]
+                      ]
+                    )
+                  ]
+              )
+              ( MyConsApp
+                  ( MyConsApp
+                      ( MyConsApp
+                          (MyConstructor $ mkConstruct "Branch")
+                          (MyConstructor $ mkConstruct "Empty")
+                      )
+                      (int 1)
+                  )
+                  (MyConstructor $ mkConstruct "Empty")
+              )
+          )

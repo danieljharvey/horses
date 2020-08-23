@@ -226,16 +226,27 @@ inferArgTypes ::
   [TypeName] ->
   TcMonad ([MonoType], [MonoType])
 inferArgTypes env type' tyNames tyArgs = do
-  let pairWithUnknown a = (,) <$> pure a <*> getUnknown
-  tyVars <- traverse pairWithUnknown tyNames
+  tyVars <- traverse (\a -> (,) <$> pure a <*> getUnknown) tyNames
   let findType ty = case ty of
-        ConsName cn vs -> inferType env cn vs
+        ConsName cn vs -> do
+          vs' <- traverse findType vs
+          inferType env cn vs'
         VarName var ->
           case filter (\(tyName, _) -> tyName == var) tyVars of
             [(_, tyFound)] -> pure tyFound
             _ -> throwError $ TypeVariableNotInDataType type' var (fst <$> tyVars)
   tyCons <- traverse findType tyArgs
   pure (snd <$> tyVars, tyCons)
+
+-- parse a type from it's name
+-- this will soon become insufficient for more complex types
+inferType :: Environment -> Construct -> [MonoType] -> TcMonad MonoType
+inferType env tyName tyVars =
+  case M.lookup tyName (getDataTypes env) of
+    (Just _) -> case lookupBuiltIn tyName of
+      Just mt -> pure mt
+      _ -> pure (MTData tyName tyVars)
+    _ -> throwError (TypeConstructorNotInScope env tyName)
 
 -- given a data type, return the arguments for a given constructor
 findConstructorArgs ::
@@ -250,16 +261,6 @@ findConstructorArgs type' name =
 
 lookupBuiltIn :: Construct -> Maybe MonoType
 lookupBuiltIn name = M.lookup name builtInTypes
-
--- parse a type from it's name
--- this will soon become insufficient for more complex types
-inferType :: Environment -> Construct -> [TypeName] -> TcMonad MonoType
-inferType env tyName _vs =
-  if M.member tyName (getDataTypes env)
-    then case lookupBuiltIn tyName of
-      Just mt -> pure mt
-      _ -> pure (MTData tyName mempty)
-    else throwError (TypeConstructorNotInScope env tyName)
 
 -----
 
