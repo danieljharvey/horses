@@ -278,12 +278,15 @@ spec =
       it "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> case either of Left \\e -> g(e) | Right \\a -> f(a)" $ do
         result <- eval stdLib "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> case either of Left \\e -> g(e) | Right \\a -> f(a)"
         result `shouldSatisfy` isRight
-{-
-      it "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\"" $ do
-        result <- eval stdLib "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\""
-        fst <$> result
-          `shouldBe` Right
-            ( MTFunction (MTData (mkConstruct "Maybe") []) MTString
-            )
-
--}
+      {-
+            it "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\"" $ do
+              result <- eval stdLib "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\""
+              fst <$> result
+                `shouldBe` Right
+                  ( MTFunction (MTData (mkConstruct "Maybe") []) MTString
+                  )
+      
+      -}
+      it "let reduce = (\\b -> \\a -> case a of Left \\l -> b | Right \\as -> let [head,tail] = as in reduce(addInt(b)(head))(tail)) in reduce(0)(Right [1,2,3])" $ do
+        result <- eval stdLib "let reduce = (\\b -> \\a -> case a of Left \\l -> b | Right \\as -> let [head,tail] = as in reduce(addInt(b)(head))(tail)) in reduce(0)(Right [1,2,3])"
+        result `shouldBe` Right (MTInt, int 6)

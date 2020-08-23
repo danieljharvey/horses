@@ -10,6 +10,7 @@ where
 
 import Control.Applicative
 import Control.Monad.Except
+import Control.Monad.Reader
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -79,9 +80,11 @@ inferVarFromScope env name =
    in case lookup' name env of
         Just mt ->
           instantiate mt
-        _ ->
+        _ -> do
+          swaps <- ask
           throwError $
             VariableNotInEnv
+              swaps
               name
               (S.fromList (M.keys (getSchemes env)))
 
