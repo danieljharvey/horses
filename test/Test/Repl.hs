@@ -42,7 +42,7 @@ spec =
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction (unknown 3) (unknown 3),
+            ( MTFunction (unknown 4) (unknown 4),
               MyLambda (named "i") (MyVar (named "i"))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
@@ -290,3 +290,6 @@ spec =
       it "let reduce = (\\b -> \\a -> case a of Left \\l -> b | Right \\as -> let [head,tail] = as in reduce(addInt(b)(head))(tail)) in reduce(0)(Right [1,2,3])" $ do
         result <- eval stdLib "let reduce = (\\b -> \\a -> case a of Left \\l -> b | Right \\as -> let [head,tail] = as in reduce(addInt(b)(head))(tail)) in reduce(0)(Right [1,2,3])"
         result `shouldBe` Right (MTInt, int 6)
+      it "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)" $ do
+        result <- eval stdLib "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)"
+        result `shouldBe` Right (MTInt, int 10)

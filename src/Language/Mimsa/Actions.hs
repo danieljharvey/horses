@@ -13,6 +13,7 @@ import Control.Monad (join)
 import Data.Bifunctor (first)
 import qualified Data.Map as M
 import Data.Text (Text)
+import Language.Mimsa.Interpreter (scopeFromSwaps)
 import Language.Mimsa.Project (getCurrentBindings)
 import Language.Mimsa.Store (createStoreExpression, substitute)
 import Language.Mimsa.Syntax (parseExpr)
@@ -59,7 +60,8 @@ evaluateStoreExpression ::
 evaluateStoreExpression store' storeExpr = do
   let (swaps, newExpr, scope) = substitute store' storeExpr
   exprType <- getType swaps scope newExpr
-  pure (exprType, storeExpr, newExpr, scope)
+  let scopeWithSwaps = scope <> scopeFromSwaps swaps
+  pure (exprType, storeExpr, newExpr, scopeWithSwaps)
 
 getTypecheckedStoreExpression ::
   Project ->

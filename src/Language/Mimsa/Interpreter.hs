@@ -1,5 +1,6 @@
 module Language.Mimsa.Interpreter
   ( interpret,
+    scopeFromSwaps,
   )
 where
 
@@ -20,3 +21,8 @@ interpret scope' expr = fmap fst <$> either'
         runStateT
           (interpretWithScope expr)
           (scopeSize scope', scope')
+
+-- to allow let recursion we need to tell the interpreter about any
+-- swaps we made to put them in scope
+scopeFromSwaps :: Swaps -> Scope
+scopeFromSwaps swaps = Scope $ MyVar . NamedVar <$> swaps
