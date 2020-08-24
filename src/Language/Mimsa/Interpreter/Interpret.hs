@@ -13,6 +13,7 @@ import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Library
+import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
 -- when we come to do let recursive the name of our binder
@@ -130,7 +131,7 @@ newLambdaCopy name expr = do
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
-  case interpretExpr of
+  case debugPretty "interpretExpr" interpretExpr of
     (MyLiteral a) -> pure (MyLiteral a)
     (MyPair a b) -> do
       exprA <- interpretWithScope a
@@ -154,7 +155,8 @@ interpretWithScope interpretExpr =
       expr <- interpretWithScope (MyVar f)
       interpretWithScope (MyApp expr value)
     (MyApp (MyLambda binder expr) value) -> do
-      addToScope (Scope $ M.singleton binder value)
+      value' <- interpretWithScope value
+      addToScope (Scope $ M.singleton binder value')
       interpretWithScope expr
     (MyApp (MyLiteral a) _) ->
       throwError $ CannotApplyToNonFunction (MyLiteral a)

@@ -20,7 +20,6 @@ libraryFunctions =
     M.fromList
       [ (FuncName "randomInt", randomInt),
         (FuncName "randomIntFrom", randomIntFrom),
-        (FuncName "incrementInt", incrementInt),
         (FuncName "eq", eq),
         (FuncName "log", logFn),
         (FuncName "addInt", addInt)
@@ -62,12 +61,6 @@ randomIntFrom =
         val <- randomIO
         pure (MyLiteral (MyInt (max val i)))
     )
-
-incrementInt :: ForeignFunc
-incrementInt =
-  OneArg
-    (MTInt, MTInt)
-    (\(MyLiteral (MyInt i)) -> pure (MyLiteral (MyInt (i + 1))))
 
 eq :: ForeignFunc
 eq =

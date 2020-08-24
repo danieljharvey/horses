@@ -60,7 +60,7 @@ spec =
               int 1
             )
       it "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)" $ do
-        result <- eval mempty "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)"
+        result <- eval stdLib "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)"
         result `shouldBe` Right (MTInt, int 69)
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
