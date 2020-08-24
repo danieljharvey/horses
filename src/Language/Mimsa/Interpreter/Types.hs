@@ -1,4 +1,4 @@
-module Language.Mimsa.Interpreter.Types (App, readScope, nextVariable, addToScope) where
+module Language.Mimsa.Interpreter.Types (App, readScope, nextVariable, addToScope, askForSwaps) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -22,3 +22,6 @@ nextVariable = NumberedVar <$> nextInt
 
 addToScope :: Scope -> App ()
 addToScope scope' = modify $ bimap (1 +) (scope' <>)
+
+askForSwaps :: App Swaps
+askForSwaps = ask

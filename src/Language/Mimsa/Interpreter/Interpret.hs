@@ -8,7 +8,6 @@ where
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
 import Control.Monad.Except
-import Control.Monad.Reader
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
@@ -22,7 +21,7 @@ import Language.Mimsa.Types
 -- so we look it up to make sure we bind the right thing
 findActualBindingInSwaps :: Int -> App Variable
 findActualBindingInSwaps int = do
-  swaps <- ask
+  swaps <- askForSwaps
   scope' <- readScope
   case M.lookup (NumberedVar int) swaps of
     Just i' -> pure (NamedVar i')
@@ -139,7 +138,7 @@ interpretWithScope interpretExpr =
       exprB <- interpretWithScope b
       pure (MyPair exprA exprB)
     (MyLet binder expr body) -> do
-      addToScope (Scope $ M.singleton binder expr)
+      addToScope (Scope $ M.singleton (debugPretty "binder" binder) expr)
       interpretWithScope body
     (MyLetPair binderA binderB (MyPair a b) body) -> do
       let newScopes = Scope $ M.fromList [(binderA, a), (binderB, b)]
