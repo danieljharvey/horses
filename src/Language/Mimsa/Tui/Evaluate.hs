@@ -12,7 +12,7 @@ evaluateStoreExprToInfo ::
   Maybe (MonoType, Expr Name)
 evaluateStoreExprToInfo store' storeExpr =
   case evaluateStoreExpression store' storeExpr of
-    Right (mt, _, _, _) -> Just (mt, storeExpression storeExpr)
+    Right (mt, _, _, _, _) -> Just (mt, storeExpression storeExpr)
     _ -> Nothing
 
 hush :: Either e a -> Maybe a

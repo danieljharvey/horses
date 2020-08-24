@@ -18,8 +18,8 @@ import Test.StoreData
 eval :: Project -> Text -> IO (Either Text (MonoType, Expr Variable))
 eval env input =
   case evaluateText env input of
-    Right (mt, expr', scope') -> do
-      endExpr <- interpret scope' expr'
+    Right (mt, expr', scope', swaps) -> do
+      endExpr <- interpret scope' swaps expr'
       case endExpr of
         Right a -> pure (Right (mt, a))
         Left e -> pure (Left (prettyPrint $ InterpreterErr e))
@@ -293,3 +293,6 @@ spec =
       it "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)" $ do
         result <- eval stdLib "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)"
         result `shouldBe` Right (MTInt, int 10)
+      it "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> loop(as2)(addInt(b)(1))) in loop(Zero)(0)" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> loop(as2)(addInt(b)(1))) in loop(Zero)(0)"
+        result `shouldBe` Right (MTInt, int 0)

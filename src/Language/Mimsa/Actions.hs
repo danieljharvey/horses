@@ -13,7 +13,6 @@ import Control.Monad (join)
 import Data.Bifunctor (first)
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Interpreter (scopeFromSwaps)
 import Language.Mimsa.Project (getCurrentBindings)
 import Language.Mimsa.Store (createStoreExpression, substitute)
 import Language.Mimsa.Syntax (parseExpr)
@@ -56,23 +55,22 @@ fromItem name expr hash =
 evaluateStoreExpression ::
   Store ->
   StoreExpression ->
-  Either Error (MonoType, StoreExpression, Expr Variable, Scope)
+  Either Error (MonoType, StoreExpression, Expr Variable, Scope, Swaps)
 evaluateStoreExpression store' storeExpr = do
   let (swaps, newExpr, scope) = substitute store' storeExpr
   exprType <- getType swaps scope newExpr
-  let scopeWithSwaps = scope <> scopeFromSwaps swaps
-  pure (exprType, storeExpr, newExpr, scopeWithSwaps)
+  pure (exprType, storeExpr, newExpr, scope, swaps)
 
 getTypecheckedStoreExpression ::
   Project ->
   Expr Name ->
-  Either Error (MonoType, StoreExpression, Expr Variable, Scope)
+  Either Error (MonoType, StoreExpression, Expr Variable, Scope, Swaps)
 getTypecheckedStoreExpression env expr = do
   storeExpr <- first ResolverErr $ createStoreExpression (getCurrentBindings $ bindings env) expr
   evaluateStoreExpression (store env) storeExpr
 
-evaluateText :: Project -> Text -> Either Error (MonoType, Expr Variable, Scope)
+evaluateText :: Project -> Text -> Either Error (MonoType, Expr Variable, Scope, Swaps)
 evaluateText env input = do
   expr <- first OtherError $ parseExpr input
-  (mt, _, expr', scope') <- getTypecheckedStoreExpression env expr
-  pure (mt, expr', scope')
+  (mt, _, expr', scope', swaps) <- getTypecheckedStoreExpression env expr
+  pure (mt, expr', scope', swaps)

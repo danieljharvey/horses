@@ -1,11 +1,12 @@
 module Language.Mimsa.Interpreter.Types (App, readScope, nextVariable, addToScope) where
 
 import Control.Monad.Except
+import Control.Monad.Reader
 import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor (bimap, first)
 import Language.Mimsa.Types
 
-type App = StateT (Int, Scope) (ExceptT InterpreterError IO)
+type App = StateT (Int, Scope) (ReaderT Swaps (ExceptT InterpreterError IO))
 
 readScope :: App Scope
 readScope = gets snd

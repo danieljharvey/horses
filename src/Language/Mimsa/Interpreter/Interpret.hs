@@ -7,38 +7,53 @@ where
 
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
-import Control.Applicative
 import Control.Monad.Except
+import Control.Monad.Reader
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Library
+import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
+-- when we come to do let recursive the name of our binder
+-- may already be turned into a number in the expr
+-- so we look it up to make sure we bind the right thing
+findActualBindingInSwaps :: Int -> App Variable
+findActualBindingInSwaps int = do
+  swaps <- ask
+  scope' <- readScope
+  case M.lookup (NumberedVar int) swaps of
+    Just i' -> pure (NamedVar i')
+    _ -> throwError $ CouldNotFindVar scope' (NumberedVar int)
+
 useVar :: Variable -> App (Expr Variable)
-useVar (NumberedVar i) = do
-  scope' <- readScope
-  case M.lookup (NumberedVar i) (getScope scope') of
-    Just expr -> instantiateVar expr
-    Nothing -> throwError $ CouldNotFindVar scope' (NumberedVar i)
-useVar (NamedVar n) = do
-  scope' <- readScope
-  case M.lookup (NamedVar n) (getScope scope') of
-    Just expr -> instantiateVar expr
-    Nothing -> throwError $ CouldNotFindVar scope' (NamedVar n)
-useVar (BuiltIn n) =
-  case getLibraryFunction (BuiltIn n) of
-    Just ff -> unwrapBuiltIn n ff
-    Nothing -> do
-      scope' <- readScope
-      throwError $ CouldNotFindBuiltIn scope' (BuiltIn n)
-useVar var@(BuiltInActual n ids) =
-  case getLibraryFunction (BuiltIn n) of
-    Just ff -> runBuiltIn ids ff
-    Nothing -> do
-      scope' <- readScope
-      throwError $ CouldNotFindBuiltIn scope' var
+useVar var' = case debugPretty "useVar" var' of
+  (NumberedVar i) -> do
+    scope' <- readScope
+    case M.lookup (NumberedVar i) (getScope (debugPretty "scope'" scope')) of
+      Just expr -> instantiateVar expr
+      Nothing -> do
+        var <- findActualBindingInSwaps i -- try it by it's pre-substituted name before failing
+        useVar var
+  (NamedVar n) -> do
+    scope' <- readScope
+    case M.lookup (NamedVar n) (getScope (debugPretty "scope'" scope')) of
+      Just expr -> instantiateVar expr
+      Nothing -> throwError $ CouldNotFindVar scope' (NamedVar n)
+  (BuiltIn n) ->
+    case getLibraryFunction (BuiltIn n) of
+      Just ff -> unwrapBuiltIn n ff
+      Nothing -> do
+        scope' <- readScope
+        throwError $ CouldNotFindBuiltIn scope' (BuiltIn n)
+  var@(BuiltInActual n ids) ->
+    case getLibraryFunction (BuiltIn n) of
+      Just ff -> runBuiltIn ids ff
+      Nothing -> do
+        scope' <- readScope
+        throwError $ CouldNotFindBuiltIn scope' var
 
 -- make a fresh copy for us to use
 -- is this necessary?
@@ -117,7 +132,7 @@ newLambdaCopy name expr = do
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
-  case interpretExpr of
+  case debugPretty "interpretExpr" interpretExpr of
     (MyLiteral a) -> pure (MyLiteral a)
     (MyPair a b) -> do
       exprA <- interpretWithScope a
@@ -135,10 +150,8 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyLetPair binderA binderB expr body)
     (MyLetPair _ _ a _) ->
       throwError $ CannotDestructureAsPair a
-    (MyVar var) -> do
-      scope <- readScope
-      (useVar var >>= interpretWithScope)
-        <|> throwError (CouldNotFindVar scope var)
+    (MyVar var) ->
+      useVar var >>= interpretWithScope
     (MyApp (MyVar f) value) -> do
       expr <- interpretWithScope (MyVar f)
       interpretWithScope (MyApp expr value)
