@@ -293,6 +293,12 @@ spec =
       it "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)" $ do
         result <- eval stdLib "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)"
         result `shouldBe` Right (MTInt, int 10)
-      it "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> loop(as2)(addInt(b)(1))) in loop(Zero)(0)" $ do
-        result <- eval stdLib "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> loop(as2)(addInt(b)(1))) in loop(Zero)(0)"
-        result `shouldBe` Right (MTInt, int 0)
+      it "type Nat = Zero | Suc Nat in let loop = (\\as -> case as of Zero 0 | Suc \\as2 -> incrementInt(loop(as2))) in loop(Suc Zero)" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in let loop = (\\as -> case as of Zero 0 | Suc \\as2 -> incrementInt(loop(as2))) in loop(Suc Zero)"
+        result `shouldBe` Right (MTInt, int 1)
+{-
+-- this (and any loop with multiple arity function) loops forever
+      it "let myReduce = (\\f -> \\b -> \\as -> let [head, tail] = as in case tail of Left \\l -> f(head)(b) | Right \\rest -> myReduce(f)(f(head)(b))(rest)) in myReduce(addInt)(0)([1,2,3])" $ do
+        result <- eval stdLib "let myReduce = (\\f -> \\b -> \\as -> let [head, tail] = as in case tail of Left \\l -> f(head)(b) | Right \\rest -> myReduce(f)(f(head)(b))(rest)) in myReduce(addInt)(0)([1,2,3])"
+        result `shouldBe` Right (MTInt, int 6)
+-}

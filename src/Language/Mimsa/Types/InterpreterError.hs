@@ -25,6 +25,7 @@ data InterpreterError
   | CouldNotUnwrapBuiltIn Variable
   | CouldNotMatchBuiltInId BiIds
   | PatternMatchFailure (Expr Variable)
+  | SelfReferencingBinding Variable
   deriving (Eq, Ord, Show)
 
 instance Printer InterpreterError where
@@ -42,6 +43,7 @@ instance Printer InterpreterError where
   prettyPrint (CouldNotUnwrapBuiltIn name) = "Could unwrap built-in " <> prettyPrint name
   prettyPrint (CouldNotMatchBuiltInId ids) = "Could not match built in ids " <> prettyPrint ids
   prettyPrint (PatternMatchFailure expr') = "Could not pattern match on value " <> prettyPrint expr'
+  prettyPrint (SelfReferencingBinding b) = "Could not bind variable " <> prettyPrint b <> " to itself."
   prettyPrint UnknownInterpreterError = "Unknown interpreter error"
 
 instance Semigroup InterpreterError where

@@ -13,7 +13,6 @@ import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Library
-import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
 -- when we come to do let recursive the name of our binder
@@ -28,17 +27,17 @@ findActualBindingInSwaps int = do
     _ -> throwError $ CouldNotFindVar scope' (NumberedVar int)
 
 useVar :: Variable -> App (Expr Variable)
-useVar var' = case debugPretty "useVar" var' of
+useVar var' = case var' of
   (NumberedVar i) -> do
     scope' <- readScope
-    case M.lookup (NumberedVar i) (getScope (debugPretty "scope'" scope')) of
+    case M.lookup (NumberedVar i) (getScope scope') of
       Just expr -> instantiateVar expr
       Nothing -> do
         var <- findActualBindingInSwaps i -- try it by it's pre-substituted name before failing
         useVar var
   (NamedVar n) -> do
     scope' <- readScope
-    case M.lookup (NamedVar n) (getScope (debugPretty "scope'" scope')) of
+    case M.lookup (NamedVar n) (getScope scope') of
       Just expr -> instantiateVar expr
       Nothing -> throwError $ CouldNotFindVar scope' (NamedVar n)
   (BuiltIn n) ->
@@ -131,14 +130,14 @@ newLambdaCopy name expr = do
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
-  case debugPretty "interpretExpr" interpretExpr of
+  case interpretExpr of
     (MyLiteral a) -> pure (MyLiteral a)
     (MyPair a b) -> do
       exprA <- interpretWithScope a
       exprB <- interpretWithScope b
       pure (MyPair exprA exprB)
     (MyLet binder expr body) -> do
-      addToScope (Scope $ M.singleton (debugPretty "binder" binder) expr)
+      addToScope (Scope $ M.singleton binder expr)
       interpretWithScope body
     (MyLetPair binderA binderB (MyPair a b) body) -> do
       let newScopes = Scope $ M.fromList [(binderA, a), (binderB, b)]
@@ -154,8 +153,9 @@ interpretWithScope interpretExpr =
     (MyApp (MyVar f) value) -> do
       expr <- interpretWithScope (MyVar f)
       interpretWithScope (MyApp expr value)
-    (MyApp (MyLambda binder expr) value) ->
-      interpretWithScope (MyLet binder value expr)
+    (MyApp (MyLambda binder expr) value) -> do
+      addToScope (Scope $ M.singleton binder value)
+      interpretWithScope expr
     (MyApp (MyLiteral a) _) ->
       throwError $ CannotApplyToNonFunction (MyLiteral a)
     (MyApp other value) -> do
@@ -176,7 +176,8 @@ interpretWithScope interpretExpr =
     (MyRecord as) -> do
       exprs <- traverse interpretWithScope as
       pure (MyRecord exprs)
-    (MyLambda a b) -> pure (MyLambda a b)
+    (MyLambda a b) ->
+      pure (MyLambda a b)
     (MyIf (MyLiteral (MyBool pred')) true false) ->
       if pred'
         then interpretWithScope true

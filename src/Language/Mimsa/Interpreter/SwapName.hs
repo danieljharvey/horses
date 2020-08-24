@@ -47,4 +47,6 @@ swapName from to (MyData dataType expr) =
   MyData dataType <$> swapName from to expr
 swapName _ _ (MyConstructor n) = pure (MyConstructor n)
 swapName _ _ (MyConsApp a b) = pure (MyConsApp a b)
-swapName _ _ (MyCaseMatch a b c) = pure (MyCaseMatch a b c)
+swapName from to (MyCaseMatch expr b c) =
+  MyCaseMatch
+    <$> swapName from to expr <*> pure b <*> pure c
