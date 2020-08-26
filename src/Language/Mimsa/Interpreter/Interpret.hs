@@ -13,7 +13,6 @@ import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Library
-import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
 -- when we come to do let recursive the name of our binder
@@ -126,12 +125,12 @@ unwrapBuiltIn name (ThreeArgs _ _) = do
 newLambdaCopy :: Variable -> Expr Variable -> App (Variable, Expr Variable)
 newLambdaCopy name expr = do
   newName' <- nextVariable
-  newExpr <- swapName (debugPretty "name" name) (debugPretty "newName" newName') expr
+  newExpr <- swapName name newName' expr
   pure (newName', newExpr)
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
 interpretWithScope interpretExpr =
-  case debugPretty "interpretExpr" interpretExpr of
+  case interpretExpr of
     (MyLiteral a) -> pure (MyLiteral a)
     (MyPair a b) -> do
       exprA <- interpretWithScope a
