@@ -346,3 +346,22 @@ spec = do
                   (MyConstructor $ mkConstruct "Empty")
               )
           )
+    it "Parses big function application" $
+      parseExpr "thing(1)(2)(3)(4)(5)"
+        `shouldBe` Right
+          ( MyApp
+              ( MyApp
+                  ( MyApp
+                      ( MyApp
+                          ( MyApp
+                              (MyVar (mkName "thing"))
+                              (int 1)
+                          )
+                          (int 2)
+                      )
+                      (int 3)
+                  )
+                  (int 4)
+              )
+              (int 5)
+          )

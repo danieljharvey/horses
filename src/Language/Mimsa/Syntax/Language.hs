@@ -69,8 +69,6 @@ complexParser =
     <|> ifParser
     <|> sumParser
     <|> caseParser
-    <|> appParser3
-    <|> appParser2
     <|> appParser
     <|> pairParser
     <|> recordAccessParser
@@ -245,8 +243,10 @@ appFunc :: Parser ParserExpr
 appFunc = recordAccessParser <|> inBrackets lambdaParser <|> varParser
 
 appParser :: Parser ParserExpr
-appParser =
-  MyApp <$> appFunc <*> exprInBrackets
+appParser = do
+  app <- appFunc
+  exprs <- P.oneOrMore (withOptionalSpace exprInBrackets)
+  pure (foldl MyApp app exprs)
 
 literalWithSpace :: Text -> Parser ()
 literalWithSpace tx = () <$ withOptionalSpace (P.literal tx)
@@ -257,19 +257,6 @@ withOptionalSpace p = do
   a <- p
   _ <- P.space0
   pure a
-
-appParser2 :: Parser ParserExpr
-appParser2 = do
-  func <- appFunc
-  arg <- exprInBrackets
-  MyApp (MyApp func arg) <$> exprInBrackets
-
-appParser3 :: Parser ParserExpr
-appParser3 = do
-  func <- appFunc
-  arg <- exprInBrackets
-  arg2 <- exprInBrackets
-  MyApp (MyApp (MyApp func arg) arg2) <$> exprInBrackets
 
 exprInBrackets :: Parser ParserExpr
 exprInBrackets = do
