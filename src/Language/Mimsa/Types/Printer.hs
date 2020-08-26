@@ -33,6 +33,11 @@ instance (Printer k, Printer v) => Printer (Map k v) where
 instance (Printer a, Printer b) => Printer (a, b) where
   prettyPrint (a, b) = "\n " <> T.intercalate "\n " [prettyPrint a, prettyPrint b]
 
+instance (Printer k, Printer v) => Printer (Map k v) where
+  prettyPrint map' =
+    let printRow (k, v) = prettyPrint k <> ": " <> prettyPrint v
+     in T.intercalate ", " (printRow <$> M.toList map')
+
 instance (Printer a, Printer b, Printer c) => Printer (a, b, c) where
   prettyPrint (a, b, c) =
     "\n "

@@ -126,7 +126,7 @@ unwrapBuiltIn name (ThreeArgs _ _) = do
 newLambdaCopy :: Variable -> Expr Variable -> App (Variable, Expr Variable)
 newLambdaCopy name expr = do
   newName' <- nextVariable
-  newExpr <- swapName name newName' expr
+  newExpr <- swapName (debugPretty "name" name) (debugPretty "newName" newName') expr
   pure (newName', newExpr)
 
 interpretWithScope :: Expr Variable -> App (Expr Variable)
