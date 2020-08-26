@@ -22,7 +22,7 @@ libraryFunctions =
         (FuncName "randomIntFrom", randomIntFrom),
         (FuncName "eq", eq),
         (FuncName "log", logFn),
-        (FuncName "addInt", addInt)
+        (FuncName "addIntPair", addIntPair)
       ]
 
 isLibraryName :: Name -> Bool
@@ -72,12 +72,14 @@ eq =
 equality :: (Monad m, Eq a) => Expr a -> Expr a -> m (Expr a)
 equality x y = pure $ MyLiteral (MyBool (x == y))
 
-addInt :: ForeignFunc
-addInt =
-  TwoArgs
-    (MTInt, MTInt, MTInt)
-    ( \(MyLiteral (MyInt a))
-       (MyLiteral (MyInt b)) -> pure (MyLiteral (MyInt (a + b)))
+addIntPair :: ForeignFunc
+addIntPair =
+  OneArg
+    (MTPair MTInt MTInt, MTInt)
+    ( \( MyPair
+           (MyLiteral (MyInt a))
+           (MyLiteral (MyInt b))
+         ) -> pure (MyLiteral (MyInt (a + b)))
     )
 
 getFFType :: ForeignFunc -> MonoType
