@@ -14,6 +14,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Library
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
   ( builtInTypes,
     defaultEnv,
@@ -223,6 +224,25 @@ matchList =
 
 -----
 
+inferSumExpressionType :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
+inferSumExpressionType env sumExpr =
+  let fromName name = do
+        (s1, tyCons) <- inferDataConstructor env name
+        (s2, tySum) <- infer (debugPretty "env" $ applySubstCtx s1 env) sumExpr
+        s3 <- unify (debugPretty "tyCons" (unwind tyCons)) (debugPretty "tySum" tySum)
+        pure (debugPretty "sum subs" (s3 <> s2 <> s1), applySubst s3 tySum)
+      unwind tyExpr = case tyExpr of
+        MTFunction _ b -> unwind b
+        a -> a
+      findConstructor expr = case (debugPretty "expr" expr) of
+        (MyConsApp a _) -> findConstructor a
+        (MyConstructor a) -> fromName a
+        (MyVar _) -> do
+          tyRes <- getUnknown
+          pure (mempty, tyRes)
+        _ -> throwError $ CannotCaseMatchOnType sumExpr
+   in findConstructor sumExpr
+
 inferMyCaseMatch ::
   Environment ->
   Expr Variable ->
@@ -231,7 +251,7 @@ inferMyCaseMatch ::
   TcMonad (Substitutions, MonoType)
 inferMyCaseMatch env sumExpr matches catchAll = do
   checkCompleteness env matches catchAll
-  (s1, _tySum) <- infer env sumExpr
+  (s1, _tySum) <- inferSumExpressionType env sumExpr
   tyMatches <- traverse (uncurry (inferMatch (applySubstCtx s1 env))) matches
   -- here we need to match tySum with the type of the data constructor
   -- in order to Unify any type variables
@@ -252,23 +272,25 @@ inferMatch :: Environment -> Construct -> Expr Variable -> TcMonad (Substitution
 inferMatch env name expr' = do
   (ty, (tyVarNames, constructors)) <- lookupConstructor env name
   args <- findConstructorArgs constructors name
-  (_, tyArgs) <- inferArgTypes env ty tyVarNames args
+  (tyVars, tyArgs) <- inferArgTypes env ty tyVarNames args
   case args of
     [] -> infer env expr' -- no arguments to pass to expr'
     _ -> do
       (s1, tyExpr) <- infer env expr' -- expression return
-      (s2, tyRes) <- applyList tyArgs tyExpr
+      (s2, tyRes) <- applyList (debugPretty "inferMatch tyVars" tyVars) (debugPretty "inferMatch tyArgs" tyArgs) (debugPretty "inferMatch tyExpr" tyExpr)
       let subs = s2 <> s1
       pure (subs, applySubst subs tyRes)
 
 -- given a function type and a list of args, apply then one by one
-applyList :: [MonoType] -> MonoType -> TcMonad (Substitutions, MonoType)
-applyList vars func = case vars of
+-- i think the problem is we're bringing in fresh unknowns here
+-- rather than using ones from the type
+applyList :: [MonoType] -> [MonoType] -> MonoType -> TcMonad (Substitutions, MonoType)
+applyList tyVars vars func = case vars of
   [] -> pure (mempty, func)
   (var : vars') -> do
     tyRes <- getUnknown
     s1 <- unify func (MTFunction var tyRes)
-    (s2, tyFunc) <- applyList vars' (applySubst s1 tyRes)
+    (s2, tyFunc) <- applyList tyVars vars' (applySubst s1 tyRes)
     pure (s2 <> s1, applySubst (s2 <> s1) tyFunc)
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
