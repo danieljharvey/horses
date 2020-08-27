@@ -10,7 +10,6 @@ where
 
 import Control.Applicative
 import Control.Monad.Except
-import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -88,33 +87,6 @@ createEnv :: Variable -> Scheme -> Environment
 createEnv binder scheme =
   Environment (M.singleton binder scheme) mempty
 
-inferFuncReturn ::
-  Environment ->
-  Variable ->
-  Expr Variable ->
-  MonoType ->
-  TcMonad (Substitutions, MonoType)
-inferFuncReturn env binder function tyArg = do
-  let newEnv = createEnv binder (Scheme [] tyArg) <> env
-  tyRes <- getUnknown
-  (s1, tyFun) <- infer newEnv function
-  s2 <- unify (MTFunction tyArg tyFun) (applySubst s1 tyRes)
-  let subs = s2 <> s1
-  pure (subs, applySubst subs tyFun)
-
-inferList :: Environment -> NonEmpty (Expr Variable) -> TcMonad (Substitutions, MonoType)
-inferList env (a :| as) = do
-  (s1, tyA) <- infer env a
-  let foldFn as' a' = do
-        (s', ty') <- as'
-        (sA, tyB) <- infer env a'
-        sB <- unify ty' tyB
-        pure (sB <> sA <> s', applySubst sB tyB)
-  foldl
-    foldFn
-    (pure (s1, tyA))
-    as
-
 splitRecordTypes ::
   Map Name (Substitutions, MonoType) ->
   (Substitutions, MonoType)
@@ -139,32 +111,6 @@ inferLetBinding env binder expr body = do
   let newEnv = createEnv binder (generalise s1 tyExpr) <> env
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
   pure (s2 <> s1, tyBody)
-
-inferLetListBinding ::
-  Environment ->
-  Variable ->
-  Variable ->
-  Expr Variable ->
-  Expr Variable ->
-  TcMonad (Substitutions, MonoType)
-inferLetListBinding env binder1 binder2 expr body = do
-  (s1, tyExpr) <- infer env expr
-  (tyHead, tyRest) <- case tyExpr of
-    (MTVar _a) -> do
-      tyHead <- getUnknown
-      tyRest <- getUnknown
-      pure (tyHead, tyRest)
-    (MTList tyHead) -> do
-      tyRest <- getUnknown
-      pure (tyHead, tyRest)
-    a -> throwError $ CaseMatchExpectedList a
-  let schemeHead = Scheme mempty (applySubst s1 tyHead)
-      schemeRest = Scheme mempty (applySubst s1 tyRest)
-      newEnv = createEnv binder1 schemeHead <> createEnv binder2 schemeRest <> env
-  s2 <- unify tyExpr (MTList tyHead)
-  s3 <- unify tyRest (MTSum MTUnit (MTList tyHead))
-  (s4, tyBody) <- infer (applySubstCtx (s3 <> s2 <> s1) newEnv) body
-  pure (s4 <> s3 <> s2 <> s1, tyBody)
 
 inferLetPairBinding ::
   Environment ->
@@ -330,9 +276,6 @@ infer env inferExpr =
     (MyVar name) ->
       inferVarFromScope env name
         <|> inferBuiltIn name
-    (MyList as) -> do
-      (s1, tyItems) <- inferList env as
-      pure (s1, MTList tyItems)
     (MyRecord map') -> do
       tyRecord <- getUnknown
       (s1, tyResult) <- splitRecordTypes <$> traverse (infer env) map'
@@ -365,26 +308,8 @@ infer env inferExpr =
           tyItems
       let subs = s2 <> s1
       pure (subs, applySubst subs tyResult)
-    (MyCase sumExpr (MyLambda binderL exprL) (MyLambda binderR exprR)) -> do
-      (s1, tySum) <- infer env sumExpr
-      (tyL, tyR) <- case tySum of
-        (MTSum tyL tyR) -> pure (tyL, tyR)
-        (MTVar _a) -> do
-          tyL <- getUnknown
-          tyR <- getUnknown
-          pure (tyL, tyR)
-        otherType -> throwError $ CaseMatchExpectedSum otherType
-      s2 <- unify (MTSum tyL tyR) tySum
-      (s3, tyLeftRes) <- inferFuncReturn env binderL exprL (applySubst (s2 <> s1) tyL)
-      (s4, tyRightRes) <- inferFuncReturn env binderR exprR (applySubst (s2 <> s1) tyR)
-      let subs = s4 <> s3 <> s2 <> s1
-      s5 <- unify tyLeftRes tyRightRes
-      pure (s5 <> subs, applySubst (s5 <> subs) tyLeftRes)
-    (MyCase _ l r) -> throwError $ CaseMatchExpectedLambda l r
     (MyLetPair binder1 binder2 expr body) ->
       inferLetPairBinding env binder1 binder2 expr body
-    (MyLetList binder1 binder2 expr body) ->
-      inferLetListBinding env binder1 binder2 expr body
     (MyLambda binder body) -> do
       tyBinder <- getUnknown
       let tmpCtx =
@@ -409,14 +334,6 @@ infer env inferExpr =
       (s2, tyB) <- infer env b
       let subs = s2 <> s1
       pure (subs, MTPair tyA tyB)
-    (MySum MyLeft left') -> do
-      tyRight <- getUnknown
-      (s1, tyLeft) <- infer env left'
-      pure (s1, MTSum tyLeft (applySubst s1 tyRight))
-    (MySum MyRight right') -> do
-      tyLeft <- getUnknown
-      (s1, tyRight) <- infer env right'
-      pure (s1, MTSum (applySubst s1 tyLeft) tyRight)
     (MyData tyName tyArgs constructors expr) ->
       inferDataDeclaration env tyName tyArgs constructors expr
     (MyConstructor name) ->

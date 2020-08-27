@@ -3,7 +3,6 @@ module Language.Mimsa
     doInference,
     Expr (..),
     MonoType (..),
-    SumSide (..),
     Name,
     mkName,
     StringType (..),

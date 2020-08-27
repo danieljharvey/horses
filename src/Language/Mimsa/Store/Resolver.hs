@@ -29,18 +29,11 @@ extractVars_ (MyLet newVar a b) = S.delete newVar (extractVars_ a <> extractVars
 extractVars_ (MyLambda newVar a) = S.delete newVar (extractVars_ a)
 extractVars_ (MyApp a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MyLiteral _) = mempty
-extractVars_ (MyCase sum' l r) = extractVars_ sum' <> extractVars_ l <> extractVars_ r
 extractVars_ (MyLetPair newVarA newVarB a b) =
   S.delete
     newVarA
     (S.delete newVarB (extractVars_ a <> extractVars_ b))
-extractVars_ (MyLetList newVarA newVarB a b) =
-  S.delete
-    newVarA
-    (S.delete newVarB (extractVars_ a <> extractVars_ b))
 extractVars_ (MyPair a b) = extractVars_ a <> extractVars_ b
-extractVars_ (MySum _ a) = extractVars_ a
-extractVars_ (MyList as) = foldMap extractVars_ as
 extractVars_ (MyRecord map') = foldMap extractVars_ map'
 extractVars_ (MyRecordAccess a _) = extractVars_ a
 extractVars_ (MyData _ _ _ a) = extractVars_ a
