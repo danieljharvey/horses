@@ -230,11 +230,9 @@ spec =
         result
           `shouldBe` Right
             (MTString, str' "oh no")
-      {-
-            it "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a" $ do
-              result <- eval stdLib "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a"
-              result `shouldBe` Right (MTBool, bool True)
-      -}
+      it "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a" $ do
+        result <- eval stdLib "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a"
+        result `shouldBe` Right (MTBool, bool True)
       it "type Maybe a = Just a | Nothing in case Nothing of Nothing False" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in case Nothing of Nothing False"
         result `shouldSatisfy` isLeft

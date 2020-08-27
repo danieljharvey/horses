@@ -231,8 +231,10 @@ inferMyCaseMatch ::
   TcMonad (Substitutions, MonoType)
 inferMyCaseMatch env sumExpr matches catchAll = do
   checkCompleteness env matches catchAll
-  (s1, _) <- infer env sumExpr
+  (s1, _tySum) <- infer env sumExpr
   tyMatches <- traverse (uncurry (inferMatch (applySubstCtx s1 env))) matches
+  -- here we need to match tySum with the type of the data constructor
+  -- in order to Unify any type variables
   (sCatch, tyCatches) <- case catchAll of
     Just catchAll' -> do
       (s, tyCatchAll) <- infer (applySubstCtx s1 env) catchAll'
