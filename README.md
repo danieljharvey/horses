@@ -109,48 +109,6 @@ Bound fst to \x -> let (a, b) = x in a :: (U2, U3) -> U2
 1 :: Int
 ```
 
-sums:
-
-sum types are either `left` or `right`.
-
-```haskell
-:> Left 1
-Left 1 :: Sum Int U1
-
-:> Right "dog"
-Right "dog" :: Sum U1 String
-
-:> \a -> if a then Left 1 else Right "dog"
-\a -> (if a then Left 1 else Right "dog") :: Boolean -> (Sum Int String)
-
-:> \sum -> case sum of Left (\l -> Left l) | Right (\r -> Right "horse")
-\sum -> case sum of Left (\l -> Left l) | Right (\r -> Right "horse") :: (Sum U7 U3) -> (Sum U7 String)
-```
-
-lists:
-
-lists are never empty.
-
-```haskell
-:> [1]
-[1] :: List Int
-
-:> [1,2,3,4]
-[1, 2, 3, 4] :: List Int
-
-:> []
-Could not parse expression for >>>[]<<<
-
-:> let [a,b] = ([1,2,3]) in a
-1 :: Int
-
-:> let [a,b] = ([1,2,3]) in b
-Right [2, 3] :: Sum Unit (List Int)
-
-:> let [a,b] = ([1]) in b
-Unit :: Sum Unit (List Int)
-```
-
 records:
 
 ```haskell

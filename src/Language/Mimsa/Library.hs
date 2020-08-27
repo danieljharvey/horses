@@ -5,12 +5,10 @@ module Language.Mimsa.Library
     getLibraryFunction,
     isLibraryName,
     getFFType,
-    reduce,
   )
 where
 
 import Data.Coerce
-import Data.List.NonEmpty (NonEmpty)
 import qualified Data.Map as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Types
@@ -25,11 +23,7 @@ libraryFunctions =
         (FuncName "incrementInt", incrementInt),
         (FuncName "eq", eq),
         (FuncName "log", logFn),
-        (FuncName "appendList", appendList),
-        (FuncName "reduceList", reduceList),
-        (FuncName "addInt", addInt),
-        (FuncName "mapList", mapList),
-        (FuncName "foldList", foldList)
+        (FuncName "addInt", addInt)
       ]
 
 isLibraryName :: Name -> Bool
@@ -92,46 +86,6 @@ addInt =
     ( \(MyLiteral (MyInt a))
        (MyLiteral (MyInt b)) -> pure (MyLiteral (MyInt (a + b)))
     )
-
-appendList :: ForeignFunc
-appendList =
-  TwoArgs
-    (listType, listType, listType)
-    (\(MyList listA) (MyList listB) -> pure $ MyList (listA <> listB))
-  where
-    listType = MTList (MTVar (NamedVar (Name "a")))
-
-reduceList :: ForeignFunc
-reduceList =
-  let tyA = MTVar (NamedVar (Name "a"))
-      tyB = MTVar (NamedVar (Name "b"))
-      funcType = MTFunction tyA (MTFunction tyB tyB)
-   in ThreeArgs
-        (funcType, tyB, MTList tyA, tyB)
-        (\f starting (MyList as) -> pure $ reduce f starting as)
-
-reduce :: Expr Variable -> Expr Variable -> NonEmpty (Expr Variable) -> Expr Variable
-reduce f starting as =
-  let varF = NamedVar (Name "f")
-      result = foldr (\a' b' -> MyApp (MyApp (MyVar varF) a') b') starting as
-   in MyLet varF f result
-
-mapList :: ForeignFunc
-mapList =
-  let tyA = MTVar (NamedVar (Name "a"))
-      tyB = MTVar (NamedVar (Name "b"))
-      tyAToB = MTFunction tyA tyB
-   in TwoArgs
-        (tyAToB, MTList tyA, MTList tyB)
-        (\aToB (MyList as) -> pure $ MyList (MyApp aToB <$> as))
-
-foldList :: ForeignFunc
-foldList =
-  let tyA = MTVar (NamedVar (Name "a"))
-      tyAppend = MTFunction tyA (MTFunction tyA tyA)
-   in TwoArgs
-        (tyAppend, MTList tyA, tyA)
-        (\append (MyList as) -> pure $ foldr1 (\a a' -> MyApp (MyApp append a) a') as)
 
 getFFType :: ForeignFunc -> MonoType
 getFFType (NoArgs out _) = out

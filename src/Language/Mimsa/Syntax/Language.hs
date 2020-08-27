@@ -64,16 +64,12 @@ literalParser =
 complexParser :: Parser ParserExpr
 complexParser =
   letPairParser
-    <|> letListParser
     <|> letParser
     <|> ifParser
-    <|> sumParser
-    <|> caseParser
     <|> appParser
     <|> pairParser
     <|> recordAccessParser
     <|> lambdaParser
-    <|> listParser
     <|> recordParser
     <|> typeParser
     <|> constructorAppParser
@@ -188,19 +184,6 @@ spacedName = do
   _ <- P.space0
   pure name
 
-letListParser :: Parser ParserExpr
-letListParser = MyLetList <$> binder1 <*> binder2 <*> equalsParser <*> inParser
-  where
-    binder1 = do
-      _ <- P.thenSpace (P.literal "let")
-      _ <- P.literal "["
-      spacedName
-    binder2 = do
-      _ <- P.literal ","
-      name <- spacedName
-      _ <- P.thenSpace (P.literal "]")
-      pure name
-
 -----
 
 letPairParser :: Parser ParserExpr
@@ -264,16 +247,6 @@ exprInBrackets = do
   expr <- expressionParser
   literalWithSpace ")"
   pure expr
-
------
-
-listParser :: Parser ParserExpr
-listParser = do
-  _ <- literalWithSpace "["
-  args <- P.zeroOrMore (P.left expressionParser (P.literal ","))
-  last' <- expressionParser
-  _ <- literalWithSpace "]"
-  pure (MyList (NE.fromList (args <> [last'])))
 
 -----
 
@@ -373,36 +346,6 @@ pairParser = do
 
 -----
 
-sumParser :: Parser ParserExpr
-sumParser = leftParser <|> rightParser
-  where
-    leftParser = do
-      _ <- P.thenSpace (P.literal "Left")
-      MySum MyLeft <$> expressionParser
-    rightParser = do
-      _ <- P.thenSpace (P.literal "Right")
-      MySum MyRight <$> expressionParser
-
-----
-
-caseExprOfParser :: Parser ParserExpr
-caseExprOfParser = do
-  _ <- P.thenSpace (P.literal "case")
-  sumExpr <- expressionParser
-  _ <- P.thenSpace (P.literal "of")
-  pure sumExpr
-
-caseParser :: Parser ParserExpr
-caseParser = do
-  sumExpr <- caseExprOfParser
-  _ <- P.thenSpace (P.literal "Left")
-  leftExpr <- expressionParser
-  _ <- P.thenSpace (P.literal "|")
-  _ <- P.thenSpace (P.literal "Right")
-  MyCase sumExpr leftExpr <$> expressionParser
-
----
-
 typeParser :: Parser ParserExpr
 typeParser = typeParserEmpty <|> typeParserWithCons
 
@@ -463,6 +406,12 @@ constructorAppParser = do
   pure (foldl MyConsApp (MyConstructor cons) exprs)
 
 ----------
+caseExprOfParser :: Parser ParserExpr
+caseExprOfParser = do
+  _ <- P.thenSpace (P.literal "case")
+  sumExpr <- expressionParser
+  _ <- P.thenSpace (P.literal "of")
+  pure sumExpr
 
 caseMatchParser :: Parser ParserExpr
 caseMatchParser = do

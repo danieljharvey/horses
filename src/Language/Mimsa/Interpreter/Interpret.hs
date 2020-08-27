@@ -9,7 +9,6 @@ where
 -- run == simplify, essentially
 import Control.Applicative
 import Control.Monad.Except
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
@@ -140,17 +139,6 @@ interpretWithScope interpretExpr =
       scope <- readScope
       (useVar var >>= interpretWithScope)
         <|> throwError (CouldNotFindVar scope var)
-    (MyCase (MySum MyLeft a) (MyLambda binderL exprL) _) ->
-      interpretWithScope (MyLet binderL a exprL)
-    (MyCase (MySum MyRight b) _ (MyLambda binderR exprR)) ->
-      interpretWithScope (MyLet binderR b exprR)
-    (MyCase (MyVar a) l r) -> do
-      expr <- interpretWithScope (MyVar a)
-      interpretWithScope (MyCase expr l r)
-    (MyCase (MyApp a b) l r) -> do
-      expr <- interpretWithScope (MyApp a b)
-      interpretWithScope (MyCase expr l r)
-    (MyCase a _ _) -> throwError $ CannotDestructureAsSum a
     (MyApp (MyVar f) value) -> do
       expr <- interpretWithScope (MyVar f)
       interpretWithScope (MyApp expr value)
@@ -161,14 +149,6 @@ interpretWithScope interpretExpr =
     (MyApp other value) -> do
       expr <- interpretWithScope other
       interpretWithScope (MyApp expr value)
-    (MyLetList binderHead binderRest (MyList as) body) -> do
-      let (listHead, listTail) = NE.uncons as
-          tail' = case listTail of
-            Nothing -> MySum MyLeft (MyLiteral MyUnit)
-            Just bs -> MySum MyRight (MyList bs)
-      let newScopes = Scope $ M.fromList [(binderHead, listHead), (binderRest, tail')]
-      addToScope newScopes
-      interpretWithScope body
     (MyRecordAccess (MyRecord record) name) ->
       case M.lookup name record of
         Just item -> interpretWithScope item
@@ -181,17 +161,6 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyRecordAccess expr name)
     (MyRecordAccess a name) ->
       throwError $ CannotDestructureAsRecord a name
-    (MyLetList binderHead binderRest (MyVar b) body) -> do
-      expr <- interpretWithScope (MyVar b)
-      interpretWithScope (MyLetList binderHead binderRest expr body)
-    (MyLetList _ _ a _) ->
-      throwError $ CannotDestructureAsList a
-    (MySum s a) -> do
-      expr <- interpretWithScope a
-      pure (MySum s expr)
-    (MyList as) -> do
-      exprs <- traverse interpretWithScope as
-      pure (MyList exprs)
     (MyRecord as) -> do
       exprs <- traverse interpretWithScope as
       pure (MyRecord exprs)

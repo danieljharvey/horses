@@ -7,7 +7,6 @@ module Main
 where
 
 -- import qualified Data.Aeson as JSON
-import qualified Test.DepGraph as DepGraph
 import Test.Hspec
 import qualified Test.Interpreter as Interpreter
 import Test.QuickCheck.Instances ()
@@ -22,7 +21,6 @@ import qualified Test.Usages as Usages
 main :: IO ()
 main = hspec $ do
   Syntax.spec
-  DepGraph.spec
   Interpreter.spec
   Resolver.spec
   Substitutor.spec

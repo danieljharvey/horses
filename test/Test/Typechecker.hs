@@ -7,7 +7,6 @@ module Test.Typechecker
 where
 
 import Data.Foldable (traverse_)
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa
 import Language.Mimsa.Types
@@ -104,42 +103,6 @@ exprs =
             (MyApp (MyVar (named "fst")) (MyVar (named "x")))
         ),
       Right MTInt
-    ),
-    ( MyCase
-        (MySum MyLeft (int 1))
-        ( MyLambda
-            (named "l")
-            (MySum MyLeft (MyVar (named "l")))
-        )
-        ( MyLambda (named "r") (MySum MyRight (MyVar (named "r")))
-        ),
-      Right $ MTSum MTInt (unknown 1)
-    ),
-    ( MyCase
-        (MySum MyLeft (int 1))
-        (MyLambda (named "l") (str' "Left!"))
-        (MyLambda (named "r") (str' "Right!")),
-      Right MTString
-    ),
-    ( MyCase
-        (MySum MyRight (int 1))
-        (MyLambda (named "l") (str' "Left!"))
-        (MyLambda (named "r") (str' "Right!")),
-      Right MTString
-    ),
-    ( MyLetList
-        (named "head")
-        (named "tail")
-        (MyList $ NE.fromList [int 1])
-        (MyVar (named "head")),
-      Right MTInt
-    ),
-    ( MyLetList
-        (named "head")
-        (named "tail")
-        (MyList $ NE.fromList [int 1])
-        (MyVar (named "tail")),
-      Right (MTSum MTUnit (MTList MTInt))
     ),
     ( MyRecord
         mempty,

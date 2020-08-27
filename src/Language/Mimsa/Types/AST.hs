@@ -8,14 +8,11 @@ module Language.Mimsa.Types.AST
   ( Expr (..),
     Literal (..),
     FuncName (..),
-    SumSide (..),
     StringType (..),
   )
 where
 
 import qualified Data.Aeson as JSON
-import Data.List.NonEmpty
-import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -61,22 +58,15 @@ instance Printer Literal where
 
 -------
 
-data SumSide = MyLeft | MyRight
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
-
 data Expr a
   = MyLiteral Literal
   | MyVar a
   | MyLet a (Expr a) (Expr a) -- binder, expr, body
   | MyLetPair a a (Expr a) (Expr a) -- binderA, binderB, expr, body
-  | MyLetList a a (Expr a) (Expr a) -- binderHead, binderHead, expr, body
   | MyLambda a (Expr a) -- binder, body
   | MyApp (Expr a) (Expr a) -- function, argument
   | MyIf (Expr a) (Expr a) (Expr a) -- expr, thencase, elsecase
-  | MyCase (Expr a) (Expr a) (Expr a) -- sumExpr, leftCase, rightCase
   | MyPair (Expr a) (Expr a) -- (a,b)
-  | MySum SumSide (Expr a) -- Left a | Right b
-  | MyList (NonEmpty (Expr a)) -- [a]
   | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
   | MyRecordAccess (Expr a) Name -- a.foo
   | MyData Construct [Name] (Map Construct [TypeName]) (Expr a) -- tyName, tyArgs, Map constructor args, body
@@ -98,12 +88,6 @@ instance (Printer a) => Printer (Expr a) where
     "let (" <> prettyPrint var1 <> ", " <> prettyPrint var2
       <> ") = "
       <> printSubExpr expr1
-      <> " in "
-      <> printSubExpr body
-  prettyPrint (MyLetList var1 var2 expr body) =
-    "let [" <> prettyPrint var1 <> ", " <> prettyPrint var2
-      <> "] = "
-      <> printSubExpr expr
       <> " in "
       <> printSubExpr body
   prettyPrint (MyLambda binder expr) =
@@ -144,18 +128,6 @@ instance (Printer a) => Printer (Expr a) where
       <> ", "
       <> printSubExpr b
       <> ")"
-  prettyPrint (MySum MyLeft a) = "Left " <> printSubExpr a
-  prettyPrint (MySum MyRight b) = "Right " <> printSubExpr b
-  prettyPrint (MyCase sumExpr leftFunc rightFunc) =
-    "case "
-      <> printSubExpr sumExpr
-      <> " of Left "
-      <> printSubExpr leftFunc
-      <> " | Right "
-      <> printSubExpr rightFunc
-  prettyPrint (MyList as) = "[" <> T.intercalate ", " exprs' <> "]"
-    where
-      exprs' = NE.toList $ printSubExpr <$> as
   prettyPrint (MyRecord map') = "{" <> T.intercalate ", " exprs' <> "}"
     where
       exprs' =

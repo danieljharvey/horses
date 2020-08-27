@@ -6,7 +6,6 @@ module Test.Syntax
 where
 
 import Data.Either (isLeft)
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
@@ -129,27 +128,6 @@ spec = do
               (MyPair (int 1) (int 2))
               (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
           )
-    it "Parses a list" $
-      parseExpr "[1,2,3]"
-        `shouldBe` Right (MyList (NE.fromList [int 1, int 2, int 3]))
-    it "Parses a destructuring of a list" $
-      parseExpr "let [head, rest] = ([1,2,3]) in head"
-        `shouldBe` Right
-          ( MyLetList
-              (mkName "head")
-              (mkName "rest")
-              (MyList $ NE.fromList [int 1, int 2, int 3])
-              (MyVar (mkName "head"))
-          )
-    it "Parses a destructuring of a list with a var" $
-      parseExpr "let [head, rest] = myList in head"
-        `shouldBe` Right
-          ( MyLetList
-              (mkName "head")
-              (mkName "rest")
-              (MyVar (mkName "myList"))
-              (MyVar (mkName "head"))
-          )
     it "Parses an empty record literal" $
       parseExpr "{}" `shouldBe` Right (MyRecord mempty)
     it "Parses a record literal with a single item inside" $
@@ -183,25 +161,6 @@ spec = do
               (mkName "b")
               (MyPair (bool True) (int 1))
               (MyVar (mkName "a"))
-          )
-    it "Parses a case statement" $
-      parseExpr "case horse of Left (\\l -> True) | Right (\\r -> False)"
-        `shouldBe` Right
-          ( MyCase
-              (MyVar (mkName "horse"))
-              (MyLambda (mkName "l") (bool True))
-              (MyLambda (mkName "r") (bool False))
-          )
-    it "Parses a case statement with an apply in the sum" $
-      parseExpr "case isTen(9) of Left (\\r -> \"It's not ten\") | Right (\\l -> \"It's ten!\")"
-        `shouldBe` Right
-          ( MyCase
-              ( MyApp
-                  (MyVar (mkName "isTen"))
-                  (int 9)
-              )
-              (MyLambda (mkName "r") (str' "It's not ten"))
-              (MyLambda (mkName "l") (str' "It's ten!"))
           )
     it "Parses an absolute unit" $
       parseExpr "type AbsoluteUnit = AbsoluteUnit in 1"

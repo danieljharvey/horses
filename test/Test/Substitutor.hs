@@ -107,24 +107,6 @@ spec = do
                              ]
                          )
                      )
-    describe "Stops doubly importing records"
-      $ it "let x = (maybe.nothing) in maybe.just"
-      $ do
-        let expr =
-              MyLet
-                (mkName "x")
-                (MyRecordAccess (MyVar (mkName "maybe")) (mkName "nothing"))
-                (MyRecordAccess (MyVar (mkName "maybe")) (mkName "just"))
-            storeExpr =
-              StoreExpression
-                ( Bindings $
-                    M.singleton
-                      (mkName "maybe")
-                      (ExprHash 14)
-                )
-                expr
-        let (swaps, _, _) = substitute (store stdLib) storeExpr
-        M.size swaps `shouldBe` 3
   describe "Combine two levels"
     $ it "Combines trueStoreExpr and falseStoreExpr"
     $ do

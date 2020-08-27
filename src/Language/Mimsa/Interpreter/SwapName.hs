@@ -39,21 +39,6 @@ swapName from to (MyLetPair nameA nameB a b) =
     <$> pure nameA <*> pure nameB
       <*> swapName from to a
       <*> swapName from to b
-swapName from to (MyLetList nameHead nameRest a b) =
-  MyLetList <$> pure nameHead
-    <*> pure nameRest
-    <*> swapName from to a
-    <*> swapName from to b
-swapName from to (MySum side a) =
-  MySum
-    <$> pure side
-      <*> swapName from to a
-swapName from to (MyCase a b c) =
-  MyCase <$> swapName from to a <*> swapName from to b
-    <*> swapName from to c
-swapName from to (MyList as) = do
-  mas <- traverse (swapName from to) as
-  pure (MyList mas)
 swapName from to (MyRecord map') = do
   map2 <- traverse (swapName from to) map'
   pure (MyRecord map2)
