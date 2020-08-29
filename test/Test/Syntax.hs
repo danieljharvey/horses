@@ -166,20 +166,24 @@ spec = do
       parseExpr "type AbsoluteUnit = AbsoluteUnit in 1"
         `shouldBe` Right
           ( MyData
-              (mkConstruct "AbsoluteUnit")
-              mempty
-              (M.singleton (mkConstruct "AbsoluteUnit") mempty)
+              ( DataType
+                  (mkConstruct "AbsoluteUnit")
+                  mempty
+                  (M.singleton (mkConstruct "AbsoluteUnit") mempty)
+              )
               (int 1)
           )
     it "Parses a single constructor with one arg" $
       parseExpr "type Dog = Dog String in 1"
         `shouldBe` Right
           ( MyData
-              (mkConstruct "Dog")
-              mempty
-              ( M.singleton
+              ( DataType
                   (mkConstruct "Dog")
-                  [ConsName (mkConstruct "String") mempty]
+                  mempty
+                  ( M.singleton
+                      (mkConstruct "Dog")
+                      [ConsName (mkConstruct "String") mempty]
+                  )
               )
               (int 1)
           )
@@ -187,12 +191,14 @@ spec = do
       parseExpr "type LeBool = Vrai | Faux in 1"
         `shouldBe` Right
           ( MyData
-              (mkConstruct "LeBool")
-              mempty
-              ( M.fromList
-                  [ (mkConstruct "Vrai", []),
-                    (mkConstruct "Faux", [])
-                  ]
+              ( DataType
+                  (mkConstruct "LeBool")
+                  mempty
+                  ( M.fromList
+                      [ (mkConstruct "Vrai", []),
+                        (mkConstruct "Faux", [])
+                      ]
+                  )
               )
               (int 1)
           )
@@ -200,12 +206,14 @@ spec = do
       parseExpr "type Nat = Zero | Succ Nat in 1"
         `shouldBe` Right
           ( MyData
-              (mkConstruct "Nat")
-              mempty
-              ( M.fromList
-                  [ (mkConstruct "Zero", []),
-                    (mkConstruct "Succ", [ConsName (mkConstruct "Nat") mempty])
-                  ]
+              ( DataType
+                  (mkConstruct "Nat")
+                  mempty
+                  ( M.fromList
+                      [ (mkConstruct "Zero", []),
+                        (mkConstruct "Succ", [ConsName (mkConstruct "Nat") mempty])
+                      ]
+                  )
               )
               (int 1)
           )
@@ -223,12 +231,14 @@ spec = do
       parseExpr "type Maybe a = Just a | Nothing in Nothing"
         `shouldBe` Right
           ( MyData
-              (mkConstruct "Maybe")
-              [mkName "a"]
-              ( M.fromList
-                  [ (mkConstruct "Just", [VarName $ mkName "a"]),
-                    (mkConstruct "Nothing", [])
-                  ]
+              ( DataType
+                  (mkConstruct "Maybe")
+                  [mkName "a"]
+                  ( M.fromList
+                      [ (mkConstruct "Just", [VarName $ mkName "a"]),
+                        (mkConstruct "Nothing", [])
+                      ]
+                  )
               )
               (MyConstructor $ mkConstruct "Nothing")
           )
@@ -265,16 +275,18 @@ spec = do
       parseExpr "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
         `shouldBe` Right
           ( MyData
-              (mkConstruct "Tree")
-              [mkName "a"]
-              ( M.fromList
-                  [ (mkConstruct "Leaf", [VarName $ mkName "a"]),
-                    ( mkConstruct "Branch",
-                      [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
-                        ConsName (mkConstruct "Tree") [VarName $ mkName "b"]
+              ( DataType
+                  (mkConstruct "Tree")
+                  [mkName "a"]
+                  ( M.fromList
+                      [ (mkConstruct "Leaf", [VarName $ mkName "a"]),
+                        ( mkConstruct "Branch",
+                          [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
+                            ConsName (mkConstruct "Tree") [VarName $ mkName "b"]
+                          ]
+                        )
                       ]
-                    )
-                  ]
+                  )
               )
               (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1))
           )
@@ -282,17 +294,19 @@ spec = do
       parseExpr "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
         `shouldBe` Right
           ( MyData
-              (mkConstruct "Tree")
-              [mkName "a"]
-              ( M.fromList
-                  [ (mkConstruct "Empty", mempty),
-                    ( mkConstruct "Branch",
-                      [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
-                        VarName $ mkName "a",
-                        ConsName (mkConstruct "Tree") [VarName $ mkName "a"]
+              ( DataType
+                  (mkConstruct "Tree")
+                  [mkName "a"]
+                  ( M.fromList
+                      [ (mkConstruct "Empty", mempty),
+                        ( mkConstruct "Branch",
+                          [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
+                            VarName $ mkName "a",
+                            ConsName (mkConstruct "Tree") [VarName $ mkName "a"]
+                          ]
+                        )
                       ]
-                    )
-                  ]
+                  )
               )
               ( MyConsApp
                   ( MyConsApp

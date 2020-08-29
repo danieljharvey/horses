@@ -103,10 +103,10 @@ instance Printer TypeError where
       <> "]"
 
 printDataTypes :: Environment -> Text
-printDataTypes env = T.intercalate "\n" (printDt <$> M.toList (getDataTypes env))
+printDataTypes env = T.intercalate "\n" $ snd <$> M.toList (printDt <$> getDataTypes env)
   where
-    printDt (tyName, (tyVars, constructors)) =
-      prettyPrint tyName <> printTyVars tyVars
+    printDt (DataType tyName tyVars constructors) =
+      prettyPrint tyName <> " " <> printTyVars tyVars
         <> ": "
         <> T.intercalate " | " (printCons <$> M.toList constructors)
     printTyVars as = T.intercalate " " (prettyPrint <$> as)

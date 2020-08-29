@@ -176,7 +176,7 @@ interpretWithScope interpretExpr =
     (MyIf pred' true false) -> do
       predExpr <- interpretWithScope pred'
       interpretWithScope (MyIf predExpr true false)
-    (MyData _tyName _tyArgs _constructors expr) -> interpretWithScope expr
+    (MyData _dataType expr) -> interpretWithScope expr
     (MyConstructor a) -> pure (MyConstructor a)
     (MyConsApp fn val) -> pure (MyConsApp fn val)
     (MyCaseMatch expr' matches catchAll) -> do

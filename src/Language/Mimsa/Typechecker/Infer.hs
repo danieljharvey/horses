@@ -140,16 +140,14 @@ inferLetPairBinding env binder1 binder2 expr body = do
 -- add it to the Environment
 inferDataDeclaration ::
   Environment ->
-  Construct ->
-  [Name] ->
-  Map Construct [TypeName] ->
+  DataType ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
-inferDataDeclaration env tyName tyArgs constructors' expr' =
+inferDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName (tyArgs, constructors'))
+      let newEnv = Environment mempty (M.singleton tyName dt)
        in infer (newEnv <> env) expr'
 
 -- infer the type of a data constructor
@@ -157,7 +155,7 @@ inferDataDeclaration env tyName tyArgs constructors' expr' =
 -- however if it has args it becomes a MTFun from args to the MTData
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
-  (ty, (tyVarNames, constructors)) <- lookupConstructor env name
+  (DataType ty tyVarNames constructors) <- lookupConstructor env name
   args <- findConstructorArgs constructors name
   (tyVars, tyArgs) <- inferArgTypes env ty tyVarNames args
   case args of
@@ -270,7 +268,7 @@ inferMyCaseMatch env sumExpr matches catchAll = do
 -- however if it has args it becomes a MTFun from args to the MTData
 inferMatch :: Environment -> Construct -> Expr Variable -> TcMonad (Substitutions, MonoType)
 inferMatch env name expr' = do
-  (ty, (tyVarNames, constructors)) <- lookupConstructor env name
+  (DataType ty tyVarNames constructors) <- lookupConstructor env name
   args <- findConstructorArgs constructors name
   (tyVars, tyArgs) <- inferArgTypes env ty tyVarNames args
   case args of
@@ -288,8 +286,9 @@ applyList :: [MonoType] -> [MonoType] -> MonoType -> TcMonad (Substitutions, Mon
 applyList tyVars vars func = case vars of
   [] -> pure (mempty, func)
   (var : vars') -> do
+    --let tyRes = head (debugPretty "applyList tyVars" tyVars)
     tyRes <- getUnknown
-    s1 <- unify func (MTFunction var tyRes)
+    s1 <- unify (debugPretty "applyList func" func) (debugPretty "applyList MTFunc" (MTFunction var tyRes))
     (s2, tyFunc) <- applyList tyVars vars' (applySubst s1 tyRes)
     pure (s2 <> s1, applySubst (s2 <> s1) tyFunc)
 
@@ -358,8 +357,8 @@ infer env inferExpr =
       (s2, tyB) <- infer env b
       let subs = s2 <> s1
       pure (subs, MTPair tyA tyB)
-    (MyData tyName tyArgs constructors expr) ->
-      inferDataDeclaration env tyName tyArgs constructors expr
+    (MyData dataType expr) ->
+      inferDataDeclaration env dataType expr
     (MyConstructor name) ->
       inferDataConstructor env name
     (MyConsApp cons val) ->

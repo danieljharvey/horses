@@ -132,7 +132,7 @@ mapVar p (MyRecord map') = do
   map2 <- traverse (mapVar p) map'
   pure (MyRecord map2)
 mapVar _ (MyLiteral a) = pure (MyLiteral a)
-mapVar p (MyData a b c d) = MyData a b c <$> mapVar p d
+mapVar p (MyData a b) = MyData a <$> mapVar p b
 mapVar _ (MyConstructor name) = pure (MyConstructor name)
 mapVar p (MyConsApp fn var) = MyConsApp <$> mapVar p fn <*> mapVar p var
 mapVar p (MyCaseMatch expr' matches catchAll) = do

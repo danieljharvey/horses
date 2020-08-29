@@ -2,7 +2,6 @@ module Language.Mimsa.Typechecker.Patterns where
 
 import Control.Monad.Except
 import Data.List (nub)
-import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.Environment
@@ -24,8 +23,8 @@ checkCompleteness env opts Nothing = do
     _ -> throwError (MixedUpPatterns (fst <$> opts))
   allPatternsExist (fst <$> opts) dataType
 
-allPatternsExist :: [Construct] -> (Construct, ([Name], Map Construct [TypeName])) -> TcMonad ()
-allPatternsExist optNames' (_, (_, dataTypes)) = do
+allPatternsExist :: [Construct] -> DataType -> TcMonad ()
+allPatternsExist optNames' (DataType _ _ dataTypes) = do
   -- check each one of optNames exists in dataTypes
   let dtNames = S.fromList (M.keys dataTypes)
       optNames = S.fromList optNames'
