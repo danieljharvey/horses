@@ -167,7 +167,7 @@ inferDataConstructor env name = do
 inferConstructorTypes ::
   Environment ->
   DataType ->
-  TcMonad (Map Construct Constructor)
+  TcMonad (Map Construct TypeConstructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) <$> pure a <*> getUnknown) tyNames
   let findType ty = case ty of
@@ -180,7 +180,7 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
             _ -> throwError $ TypeVariableNotInDataType typeName var (fst <$> tyVars)
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
-        let constructor = Constructor typeName (snd <$> tyVars) tyCons
+        let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
         pure $ M.singleton consName constructor
   cons' <- traverse inferConstructor (M.toList constructors)
   pure (mconcat cons')
@@ -213,13 +213,13 @@ matchList =
 
 -----
 
-constructorToType :: Constructor -> MonoType
-constructorToType (Constructor typeName tyVars constructTypes) =
+constructorToType :: TypeConstructor -> MonoType
+constructorToType (TypeConstructor typeName tyVars constructTypes) =
   foldr MTFunction (MTData typeName tyVars) constructTypes
 
 inferSumExpressionType ::
   Environment ->
-  Map Construct Constructor ->
+  Map Construct TypeConstructor ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
 inferSumExpressionType env consTypes sumExpr =
@@ -281,23 +281,23 @@ inferMyCaseMatch env sumExpr matches catchAll = do
   let allSubs = s1 <> s <> matchSubs
   pure (allSubs, applySubst allSubs mt)
 
-applySubstToConstructor :: Substitutions -> Constructor -> Constructor
-applySubstToConstructor subs (Constructor name ty b) =
-  Constructor name (applySubst subs <$> ty) (applySubst subs <$> b)
+applySubstToConstructor :: Substitutions -> TypeConstructor -> TypeConstructor
+applySubstToConstructor subs (TypeConstructor name ty b) =
+  TypeConstructor name (applySubst subs <$> ty) (applySubst subs <$> b)
 
 -- infer the type of a case match function
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
 inferMatch ::
   Environment ->
-  Map Construct Constructor ->
+  Map Construct TypeConstructor ->
   Construct ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
 inferMatch env constructTypes name expr' =
   case M.lookup name constructTypes of
     Nothing -> throwError UnknownTypeError
-    Just (Constructor _ _ tyArgs) ->
+    Just (TypeConstructor _ _ tyArgs) ->
       case tyArgs of
         [] -> infer env expr' -- no arguments to pass to expr'
         _ -> do
