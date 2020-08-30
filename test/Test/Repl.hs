@@ -236,9 +236,6 @@ spec =
       it "type Maybe a = Just a | Nothing in case Nothing of Nothing False" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in case Nothing of Nothing False"
         result `shouldSatisfy` isLeft
-      it "type Maybe a = Just a | Nothing in case Nothing of otherwise False" $ do
-        result <- eval stdLib "type Maybe a = Just a | Nothing in case Nothing of otherwise False"
-        result `shouldBe` Right (MTBool, bool False)
       it "type Thing = Thing String in let a = Thing \"string\" in case a of Thing \\s -> s" $ do
         result <- eval stdLib "type Thing = Thing String in let a = Thing \"string\" in case a of Thing \\s -> s"
         result `shouldBe` Right (MTString, str' "string")

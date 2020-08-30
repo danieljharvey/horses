@@ -11,6 +11,7 @@ where
 import Control.Applicative ((<|>))
 import Control.Monad ((>=>))
 import Data.Functor
+import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -418,7 +419,6 @@ caseMatchParser = do
   sumExpr <- caseExprOfParser
   matches <-
     matchesParser <|> pure <$> matchParser
-      <|> pure mempty
   catchAll <-
     Just <$> otherwiseParser (not . null $ matches)
       <|> pure Nothing
@@ -432,11 +432,11 @@ otherwiseParser needsBar = do
   _ <- P.thenSpace (P.literal "otherwise")
   expressionParser
 
-matchesParser :: Parser [(Construct, ParserExpr)]
+matchesParser :: Parser (NonEmpty (Construct, ParserExpr))
 matchesParser = do
   cons <- P.zeroOrMore (P.left matchParser (P.thenSpace (P.literal "|")))
   lastCons <- matchParser
-  pure (cons <> [lastCons])
+  pure $ NE.fromList (cons <> [lastCons])
 
 matchParser :: Parser (Construct, Expr Name)
 matchParser = (,) <$> P.thenSpace constructParser <*> expressionParser

@@ -10,6 +10,8 @@ where
 
 import Control.Applicative
 import Control.Monad.Except
+import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -138,12 +140,12 @@ inferLetPairBinding env binder1 binder2 expr body = do
 
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
-inferDataDeclaration ::
+storeDataDeclaration ::
   Environment ->
   DataType ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
-inferDataDeclaration env dt@(DataType tyName _ _) expr' =
+storeDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
@@ -155,13 +157,34 @@ inferDataDeclaration env dt@(DataType tyName _ _) expr' =
 -- however if it has args it becomes a MTFun from args to the MTData
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
-  (DataType ty tyVarNames constructors) <- lookupConstructor env name
-  args <- findConstructorArgs constructors name
-  (tyVars, tyArgs) <- inferArgTypes env ty tyVarNames args
-  case args of
-    [] -> pure (mempty, MTData ty tyVars)
-    _ ->
-      pure (mempty, foldr MTFunction (MTData ty tyVars) tyArgs)
+  dataType <- lookupConstructor env name
+  allArgs <- inferConstructorTypes env dataType
+  case M.lookup name allArgs of
+    Just tyArg ->
+      pure (mempty, tyArg)
+    Nothing -> throwError $ UnknownTypeError -- shouldn't happen (but will)
+
+-- infer types for data type and it's constructor in one big go
+inferConstructorTypes ::
+  Environment ->
+  DataType ->
+  TcMonad (Map Construct MonoType)
+inferConstructorTypes env (DataType typeName tyNames constructors) = do
+  tyVars <- traverse (\a -> (,) <$> pure a <*> getUnknown) tyNames
+  let findType ty = case ty of
+        ConsName cn vs -> do
+          vs' <- traverse findType vs
+          inferType env cn vs'
+        VarName var ->
+          case filter (\(tyName, _) -> tyName == var) tyVars of
+            [(_, tyFound)] -> pure tyFound
+            _ -> throwError $ TypeVariableNotInDataType typeName var (fst <$> tyVars)
+  let inferConstructor (consName, tyArgs) = do
+        tyCons <- traverse findType tyArgs
+        let mt = foldr MTFunction (MTData typeName (snd <$> tyVars)) tyCons
+        pure $ M.singleton consName mt
+  cons' <- traverse inferConstructor (M.toList constructors)
+  pure (mconcat cons')
 
 -- infer types for data type and it's constructor in one big go
 inferArgTypes ::
@@ -241,14 +264,16 @@ inferSumExpressionType env sumExpr =
         _ -> throwError $ CannotCaseMatchOnType sumExpr
    in findConstructor sumExpr
 
+-------------
+
 inferMyCaseMatch ::
   Environment ->
   Expr Variable ->
-  [(Construct, Expr Variable)] ->
+  NonEmpty (Construct, Expr Variable) ->
   Maybe (Expr Variable) ->
   TcMonad (Substitutions, MonoType)
 inferMyCaseMatch env sumExpr matches catchAll = do
-  checkCompleteness env matches catchAll
+  _dataType <- checkCompleteness env matches catchAll
   (s1, _tySum) <- inferSumExpressionType env sumExpr
   tyMatches <- traverse (uncurry (inferMatch (applySubstCtx s1 env))) matches
   -- here we need to match tySum with the type of the data constructor
@@ -258,8 +283,8 @@ inferMyCaseMatch env sumExpr matches catchAll = do
       (s, tyCatchAll) <- infer (applySubstCtx s1 env) catchAll'
       pure (s, [tyCatchAll])
     _ -> pure (mempty, mempty)
-  let subs = mconcat (fst <$> tyMatches) <> s1 <> sCatch -- all substitutions
-  let actuals = (snd <$> tyMatches) <> tyCatches
+  let subs = mconcat (fst <$> NE.toList tyMatches) <> s1 <> sCatch -- all substitutions
+  let actuals = (snd <$> NE.toList tyMatches) <> tyCatches
   (sMore, mt) <- matchList actuals
   pure (sMore <> subs, applySubst (sMore <> subs) mt)
 
@@ -358,7 +383,7 @@ infer env inferExpr =
       let subs = s2 <> s1
       pure (subs, MTPair tyA tyB)
     (MyData dataType expr) ->
-      inferDataDeclaration env dataType expr
+      storeDataDeclaration env dataType expr
     (MyConstructor name) ->
       inferDataConstructor env name
     (MyConsApp cons val) ->

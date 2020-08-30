@@ -6,6 +6,7 @@ module Test.Syntax
 where
 
 import Data.Either (isLeft)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa.Syntax
 import qualified Language.Mimsa.Syntax as P
@@ -249,9 +250,11 @@ spec = do
         `shouldBe` Right
           ( MyCaseMatch
               (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
-              [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a"))),
-                (mkConstruct "Nothing", int 0)
-              ]
+              ( NE.fromList
+                  [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a"))),
+                    (mkConstruct "Nothing", int 0)
+                  ]
+              )
               Nothing
           )
     it "Parses a custom case match with fall through case" $
@@ -259,16 +262,10 @@ spec = do
         `shouldBe` Right
           ( MyCaseMatch
               (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
-              [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a")))
-              ]
-              (Just $ int 0)
-          )
-    it "Parses a custom case match with only a fall through case" $
-      parseExpr "case Just 1 of otherwise 0"
-        `shouldBe` Right
-          ( MyCaseMatch
-              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
-              mempty
+              ( NE.fromList
+                  [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a")))
+                  ]
+              )
               (Just $ int 0)
           )
     it "Parses complex type constructors" $

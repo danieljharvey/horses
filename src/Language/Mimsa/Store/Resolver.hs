@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Store.Resolver where
 
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -41,7 +42,7 @@ extractVars_ (MyConstructor _) = mempty
 extractVars_ (MyConsApp a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MyCaseMatch sum' matches catchAll) =
   extractVars sum'
-    <> mconcat (extractVars . snd <$> matches)
+    <> mconcat (extractVars . snd <$> NE.toList matches)
     <> maybe mempty extractVars catchAll
 
 filterBuiltIns :: Set Name -> Set Name

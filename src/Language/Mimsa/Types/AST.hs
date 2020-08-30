@@ -14,6 +14,8 @@ module Language.Mimsa.Types.AST
 where
 
 import qualified Data.Aeson as JSON
+import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -93,7 +95,7 @@ data Expr a
   | MyData DataType (Expr a) -- tyName, tyArgs, Map constructor args, body
   | MyConstructor Construct -- use a constructor by name
   | MyConsApp (Expr a) (Expr a) -- constructor, value
-  | MyCaseMatch (Expr a) [(Construct, Expr a)] (Maybe (Expr a)) -- expr, matches, catchAll
+  | MyCaseMatch (Expr a) (NonEmpty (Construct, Expr a)) (Maybe (Expr a)) -- expr, matches, catchAll
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Printer a) => Printer (Expr a) where
@@ -168,7 +170,7 @@ instance (Printer a) => Printer (Expr a) where
     "case "
       <> printSubExpr sumExpr
       <> " of "
-      <> T.intercalate " | " (printMatch <$> matches)
+      <> T.intercalate " | " (printMatch <$> NE.toList matches)
       <> maybe "" (\catchExpr -> " | otherwise " <> printSubExpr catchExpr) catchAll
     where
       printMatch (construct, expr') =
