@@ -3,6 +3,8 @@
 
 module Language.Mimsa.Types.Printer where
 
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -21,6 +23,12 @@ instance Printer Int where
 
 instance (Printer a) => Printer [a] where
   prettyPrint as = T.intercalate ", " (prettyPrint <$> as)
+
+instance (Printer k, Printer v) => Printer (Map k v) where
+  prettyPrint a =
+    T.intercalate
+      ", "
+      ((\(k, v) -> prettyPrint k <> ": " <> prettyPrint v) <$> M.toList a)
 
 instance (Printer a, Printer b) => Printer (a, b) where
   prettyPrint (a, b) = "\n " <> T.intercalate "\n " [prettyPrint a, prettyPrint b]

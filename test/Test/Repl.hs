@@ -274,3 +274,6 @@ spec =
                 )
                 (MyConstructor $ mkConstruct "Empty")
             )
+      it "type Maybe a = Just a | Nothing in case Just True of Just \\a -> a | Nothing \"what\"" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in case Just True of Just \\a -> a | Nothing \"what\""
+        result `shouldSatisfy` isLeft

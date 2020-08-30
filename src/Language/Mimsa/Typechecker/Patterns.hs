@@ -18,7 +18,7 @@ checkCompleteness ::
 checkCompleteness env opts catchAll = do
   -- find data type for each match
   items <- traverse (\(name, _) -> lookupConstructor env name) opts
-  let optionNames = fst <$> (NE.toList opts)
+  let optionNames = fst <$> NE.toList opts
   -- check they are all the same one
   dataType <- case nub (NE.toList items) of
     [a] -> pure a

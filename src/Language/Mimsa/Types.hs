@@ -1,5 +1,6 @@
 module Language.Mimsa.Types
   ( module Language.Mimsa.Types.Name,
+    module Language.Mimsa.Types.Constructor,
     module Language.Mimsa.Types.ExprHash,
     module Language.Mimsa.Types.Usage,
     module Language.Mimsa.Types.AST,
@@ -32,6 +33,7 @@ where
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Bindings
 import Language.Mimsa.Types.Construct
+import Language.Mimsa.Types.Constructor
 import Language.Mimsa.Types.Environment
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.ExprHash
