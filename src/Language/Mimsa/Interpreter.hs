@@ -10,7 +10,6 @@ import Control.Monad.Reader
 import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter.Interpret
-import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
 interpret :: Scope -> Swaps -> Expr Variable -> IO (Either InterpreterError (Expr Variable))
@@ -24,7 +23,4 @@ interpret scope' swaps expr = fmap fst <$> either'
               (interpretWithScope expr)
               (scopeSize scope', scope')
           )
-          ( debugPretty
-              "swaps"
-              swaps
-          )
+          swaps

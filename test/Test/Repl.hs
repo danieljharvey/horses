@@ -287,9 +287,6 @@ spec =
                   )
       
       -}
-      it "let reduce = (\\b -> \\a -> case a of Left \\l -> b | Right \\as -> let [head,tail] = as in reduce(addInt(b)(head))(tail)) in reduce(0)(Right [1,2,3])" $ do
-        result <- eval stdLib "let reduce = (\\b -> \\a -> case a of Left \\l -> b | Right \\as -> let [head,tail] = as in reduce(addInt(b)(head))(tail)) in reduce(0)(Right [1,2,3])"
-        result `shouldBe` Right (MTInt, int 6)
       it "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest" $ do
         result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
         result

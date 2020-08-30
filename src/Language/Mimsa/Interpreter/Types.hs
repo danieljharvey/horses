@@ -6,7 +6,6 @@ import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor (bimap, first)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
-import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
 type App = StateT (Int, Scope) (ReaderT Swaps (ExceptT InterpreterError IO))
@@ -25,7 +24,7 @@ nextVariable = NumberedVar <$> nextInt
 
 addToScope :: Scope -> App ()
 addToScope scope' =
-  case foundALoop (debugPretty "new scope" scope') of
+  case foundALoop scope' of
     Nothing -> modify $ bimap (1 +) (scope' <>)
     Just k -> throwError $ SelfReferencingBinding k
   where
