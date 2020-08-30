@@ -5,20 +5,17 @@ module Language.Mimsa.Types.Environment where
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Construct
-import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Scheme
-import Language.Mimsa.Types.TypeName
 import Language.Mimsa.Types.Variable
-
----
 
 -- everything we need in typechecking environment
 data Environment
   = Environment
       { getSchemes :: Map Variable Scheme,
-        getDataTypes :: Map Construct ([Name], Map Construct [TypeName])
+        getDataTypes :: Map Construct DataType
       }
   deriving (Eq, Ord, Show)
 

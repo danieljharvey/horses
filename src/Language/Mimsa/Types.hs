@@ -1,5 +1,6 @@
 module Language.Mimsa.Types
   ( module Language.Mimsa.Types.Name,
+    module Language.Mimsa.Types.TypeConstructor,
     module Language.Mimsa.Types.ExprHash,
     module Language.Mimsa.Types.Usage,
     module Language.Mimsa.Types.AST,
@@ -51,6 +52,7 @@ import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Tui
+import Language.Mimsa.Types.TypeConstructor
 import Language.Mimsa.Types.TypeError
 import Language.Mimsa.Types.TypeName
 import Language.Mimsa.Types.UniVar

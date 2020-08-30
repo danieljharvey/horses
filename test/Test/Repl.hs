@@ -6,7 +6,7 @@ module Test.Repl
   )
 where
 
-import Data.Either (isLeft)
+import Data.Either (isLeft, isRight)
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Repl
@@ -230,17 +230,12 @@ spec =
         result
           `shouldBe` Right
             (MTString, str' "oh no")
-      {-
-            it "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a" $ do
-              result <- eval stdLib "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a"
-              result `shouldBe` Right (MTBool, bool True)
-      -}
+      it "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a" $ do
+        result <- eval stdLib "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a"
+        result `shouldBe` Right (MTBool, bool True)
       it "type Maybe a = Just a | Nothing in case Nothing of Nothing False" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in case Nothing of Nothing False"
         result `shouldSatisfy` isLeft
-      it "type Maybe a = Just a | Nothing in case Nothing of otherwise False" $ do
-        result <- eval stdLib "type Maybe a = Just a | Nothing in case Nothing of otherwise False"
-        result `shouldBe` Right (MTBool, bool False)
       it "type Thing = Thing String in let a = Thing \"string\" in case a of Thing \\s -> s" $ do
         result <- eval stdLib "type Thing = Thing String in let a = Thing \"string\" in case a of Thing \\s -> s"
         result `shouldBe` Right (MTString, str' "string")
@@ -254,12 +249,10 @@ spec =
             ( MTData (mkConstruct "Tree") [MTInt],
               MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1)
             )
-      {-
       it "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1" $ do
         result <- eval stdLib "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
         result
           `shouldSatisfy` isLeft
-      -}
       it "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Branch (Leaf 1) (Leaf True)" $ do
         result <- eval stdLib "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Branch (Leaf 1) (Leaf True)"
         result
@@ -279,3 +272,18 @@ spec =
                 )
                 (MyConstructor $ mkConstruct "Empty")
             )
+      it "type Maybe a = Just a | Nothing in case Just True of Just \\a -> a | Nothing \"what\"" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in case Just True of Just \\a -> a | Nothing \"what\""
+        result `shouldSatisfy` isLeft
+      it "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> case either of Left \\e -> g(e) | Right \\a -> f(a)" $ do
+        result <- eval stdLib "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> case either of Left \\e -> g(e) | Right \\a -> f(a)"
+        result `shouldSatisfy` isRight
+{-
+      it "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\"" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\""
+        fst <$> result
+          `shouldBe` Right
+            ( MTFunction (MTData (mkConstruct "Maybe") []) MTString
+            )
+
+-}

@@ -10,6 +10,8 @@ where
 
 import Control.Applicative
 import Control.Monad.Except
+import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -137,18 +139,16 @@ inferLetPairBinding env binder1 binder2 expr body = do
 
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
-inferDataDeclaration ::
+storeDataDeclaration ::
   Environment ->
-  Construct ->
-  [Name] ->
-  Map Construct [TypeName] ->
+  DataType ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
-inferDataDeclaration env tyName tyArgs constructors' expr' =
+storeDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName (tyArgs, constructors'))
+      let newEnv = Environment mempty (M.singleton tyName dt)
        in infer (newEnv <> env) expr'
 
 -- infer the type of a data constructor
@@ -156,22 +156,19 @@ inferDataDeclaration env tyName tyArgs constructors' expr' =
 -- however if it has args it becomes a MTFun from args to the MTData
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
-  (ty, (tyVarNames, constructors)) <- lookupConstructor env name
-  args <- findConstructorArgs constructors name
-  (tyVars, tyArgs) <- inferArgTypes env ty tyVarNames args
-  case args of
-    [] -> pure (mempty, MTData ty tyVars)
-    _ ->
-      pure (mempty, foldr MTFunction (MTData ty tyVars) tyArgs)
+  dataType <- lookupConstructor env name
+  allArgs <- inferConstructorTypes env dataType
+  case M.lookup name allArgs of
+    Just tyArg ->
+      pure (mempty, constructorToType tyArg)
+    Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 -- infer types for data type and it's constructor in one big go
-inferArgTypes ::
+inferConstructorTypes ::
   Environment ->
-  Construct ->
-  [Name] ->
-  [TypeName] ->
-  TcMonad ([MonoType], [MonoType])
-inferArgTypes env type' tyNames tyArgs = do
+  DataType ->
+  TcMonad (Map Construct TypeConstructor)
+inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) <$> pure a <*> getUnknown) tyNames
   let findType ty = case ty of
         ConsName cn vs -> do
@@ -180,9 +177,13 @@ inferArgTypes env type' tyNames tyArgs = do
         VarName var ->
           case filter (\(tyName, _) -> tyName == var) tyVars of
             [(_, tyFound)] -> pure tyFound
-            _ -> throwError $ TypeVariableNotInDataType type' var (fst <$> tyVars)
-  tyCons <- traverse findType tyArgs
-  pure (snd <$> tyVars, tyCons)
+            _ -> throwError $ TypeVariableNotInDataType typeName var (fst <$> tyVars)
+  let inferConstructor (consName, tyArgs) = do
+        tyCons <- traverse findType tyArgs
+        let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
+        pure $ M.singleton consName constructor
+  cons' <- traverse inferConstructor (M.toList constructors)
+  pure (mconcat cons')
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
@@ -193,17 +194,6 @@ inferType env tyName tyVars =
       Just mt -> pure mt
       _ -> pure (MTData tyName tyVars)
     _ -> throwError (TypeConstructorNotInScope env tyName)
-
--- given a data type, return the arguments for a given constructor
-findConstructorArgs ::
-  Map Construct [TypeName] ->
-  Construct ->
-  TcMonad [TypeName]
-findConstructorArgs type' name =
-  let withMatchingConstructor = M.lookup name
-   in case withMatchingConstructor type' of
-        Just args -> pure args
-        _ -> throwError (ConflictingConstructors name)
 
 lookupBuiltIn :: Construct -> Maybe MonoType
 lookupBuiltIn name = M.lookup name builtInTypes
@@ -217,57 +207,116 @@ matchList =
     ( \ty' tyB' -> do
         (sA, tyA) <- ty'
         sB <- unify tyA tyB'
-        pure (sA <> sB, applySubst sB tyB')
+        pure (sA <> sB, applySubst (sA <> sB) tyB')
     )
     ((,) <$> pure mempty <*> getUnknown)
 
 -----
 
+constructorToType :: TypeConstructor -> MonoType
+constructorToType (TypeConstructor typeName tyVars constructTypes) =
+  foldr MTFunction (MTData typeName tyVars) constructTypes
+
+inferSumExpressionType ::
+  Environment ->
+  Map Construct TypeConstructor ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
+inferSumExpressionType env consTypes sumExpr =
+  let fromName name =
+        case M.lookup name consTypes of
+          Just tyCons -> do
+            (s1, tySum) <- infer env sumExpr
+            s2 <- unify (unwind (constructorToType tyCons)) tySum
+            pure
+              ( s2 <> s1,
+                applySubst s2 tySum
+              )
+          Nothing -> throwError $ CannotCaseMatchOnType sumExpr
+      unwind tyExpr = case tyExpr of
+        MTFunction _ b -> unwind b
+        a -> a
+      findConstructor expr = case expr of
+        (MyConsApp a _) -> findConstructor a
+        (MyConstructor a) -> fromName a
+        (MyVar _) -> do
+          tyRes <- getUnknown
+          pure (mempty, tyRes)
+        _ -> throwError $ CannotCaseMatchOnType sumExpr
+   in findConstructor sumExpr
+
+-------------
+
 inferMyCaseMatch ::
   Environment ->
   Expr Variable ->
-  [(Construct, Expr Variable)] ->
+  NonEmpty (Construct, Expr Variable) ->
   Maybe (Expr Variable) ->
   TcMonad (Substitutions, MonoType)
 inferMyCaseMatch env sumExpr matches catchAll = do
-  checkCompleteness env matches catchAll
-  (s1, _) <- infer env sumExpr
-  tyMatches <- traverse (uncurry (inferMatch (applySubstCtx s1 env))) matches
+  dataType <- checkCompleteness env matches catchAll
+  constructTypes <- inferConstructorTypes env dataType
+  (s1, _tySum) <-
+    inferSumExpressionType
+      env
+      constructTypes
+      sumExpr
+  tyMatches <-
+    traverse
+      ( uncurry
+          (inferMatch (applySubstCtx s1 env) (applySubstToConstructor s1 <$> constructTypes))
+      )
+      matches
   (sCatch, tyCatches) <- case catchAll of
     Just catchAll' -> do
       (s, tyCatchAll) <- infer (applySubstCtx s1 env) catchAll'
       pure (s, [tyCatchAll])
     _ -> pure (mempty, mempty)
-  let subs = mconcat (fst <$> tyMatches) <> s1 <> sCatch -- all substitutions
-  let actuals = (snd <$> tyMatches) <> tyCatches
-  (sMore, mt) <- matchList actuals
-  pure (sMore <> subs, applySubst (sMore <> subs) mt)
+  let matchSubs =
+        mconcat
+          (fst <$> NE.toList tyMatches)
+          <> sCatch
+      actuals = (snd <$> NE.toList tyMatches) <> tyCatches
+  (s, mt) <- matchList actuals
+  let allSubs = s1 <> s <> matchSubs
+  pure (allSubs, applySubst allSubs mt)
+
+applySubstToConstructor :: Substitutions -> TypeConstructor -> TypeConstructor
+applySubstToConstructor subs (TypeConstructor name ty b) =
+  TypeConstructor name (applySubst subs <$> ty) (applySubst subs <$> b)
 
 -- infer the type of a case match function
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
-inferMatch :: Environment -> Construct -> Expr Variable -> TcMonad (Substitutions, MonoType)
-inferMatch env name expr' = do
-  (ty, (tyVarNames, constructors)) <- lookupConstructor env name
-  args <- findConstructorArgs constructors name
-  (_, tyArgs) <- inferArgTypes env ty tyVarNames args
-  case args of
-    [] -> infer env expr' -- no arguments to pass to expr'
-    _ -> do
-      (s1, tyExpr) <- infer env expr' -- expression return
-      (s2, tyRes) <- applyList tyArgs tyExpr
-      let subs = s2 <> s1
-      pure (subs, applySubst subs tyRes)
+inferMatch ::
+  Environment ->
+  Map Construct TypeConstructor ->
+  Construct ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
+inferMatch env constructTypes name expr' =
+  case M.lookup name constructTypes of
+    Nothing -> throwError UnknownTypeError
+    Just (TypeConstructor _ _ tyArgs) ->
+      case tyArgs of
+        [] -> infer env expr' -- no arguments to pass to expr'
+        _ -> do
+          (s1, tyExpr) <- infer env expr' -- expression return
+          (s2, tyRes) <- applyList tyArgs tyExpr
+          let subs = s2 <> s1
+          pure (subs, applySubst subs tyRes)
 
--- given a function type and a list of args, apply then one by one
 applyList :: [MonoType] -> MonoType -> TcMonad (Substitutions, MonoType)
-applyList vars func = case vars of
-  [] -> pure (mempty, func)
+applyList vars tyFun = case vars of
+  [] -> pure (mempty, tyFun)
   (var : vars') -> do
     tyRes <- getUnknown
-    s1 <- unify func (MTFunction var tyRes)
-    (s2, tyFunc) <- applyList vars' (applySubst s1 tyRes)
-    pure (s2 <> s1, applySubst (s2 <> s1) tyFunc)
+    s1 <-
+      unify
+        (MTFunction var tyRes)
+        tyFun
+    (s2, tyFun') <- applyList vars' (applySubst s1 tyRes)
+    pure (s2 <> s1, applySubst (s2 <> s1) tyFun')
 
 infer :: Environment -> Expr Variable -> TcMonad (Substitutions, MonoType)
 infer env inferExpr =
@@ -334,8 +383,8 @@ infer env inferExpr =
       (s2, tyB) <- infer env b
       let subs = s2 <> s1
       pure (subs, MTPair tyA tyB)
-    (MyData tyName tyArgs constructors expr) ->
-      inferDataDeclaration env tyName tyArgs constructors expr
+    (MyData dataType expr) ->
+      storeDataDeclaration env dataType expr
     (MyConstructor name) ->
       inferDataConstructor env name
     (MyConsApp cons val) ->

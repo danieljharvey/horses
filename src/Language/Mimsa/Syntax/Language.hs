@@ -11,6 +11,7 @@ where
 import Control.Applicative ((<|>))
 import Control.Monad ((>=>))
 import Data.Functor
+import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -89,9 +90,7 @@ protectedNames =
       "otherwise",
       "True",
       "False",
-      "Unit",
-      "Left",
-      "Right"
+      "Unit"
     ]
 
 ----
@@ -354,7 +353,7 @@ typeParserEmpty = do
   _ <- P.thenSpace (P.literal "type")
   tyName <- P.thenSpace constructParser
   _ <- P.thenSpace (P.literal "in")
-  MyData tyName mempty mempty <$> expressionParser
+  MyData (DataType tyName mempty mempty) <$> expressionParser
 
 typeParserWithCons :: Parser ParserExpr
 typeParserWithCons = do
@@ -365,7 +364,7 @@ typeParserWithCons = do
   constructors <- manyTypeConstructors <|> oneTypeConstructor
   _ <- P.space1
   _ <- P.thenSpace (P.literal "in")
-  MyData tyName tyArgs constructors <$> expressionParser
+  MyData (DataType tyName tyArgs constructors) <$> expressionParser
 
 manyTypeConstructors :: Parser (Map Construct [TypeName])
 manyTypeConstructors = do
@@ -418,7 +417,6 @@ caseMatchParser = do
   sumExpr <- caseExprOfParser
   matches <-
     matchesParser <|> pure <$> matchParser
-      <|> pure mempty
   catchAll <-
     Just <$> otherwiseParser (not . null $ matches)
       <|> pure Nothing
@@ -432,11 +430,11 @@ otherwiseParser needsBar = do
   _ <- P.thenSpace (P.literal "otherwise")
   expressionParser
 
-matchesParser :: Parser [(Construct, ParserExpr)]
+matchesParser :: Parser (NonEmpty (Construct, ParserExpr))
 matchesParser = do
   cons <- P.zeroOrMore (P.left matchParser (P.thenSpace (P.literal "|")))
   lastCons <- matchParser
-  pure (cons <> [lastCons])
+  pure $ NE.fromList (cons <> [lastCons])
 
 matchParser :: Parser (Construct, Expr Name)
 matchParser = (,) <$> P.thenSpace constructParser <*> expressionParser

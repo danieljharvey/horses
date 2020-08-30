@@ -9,10 +9,13 @@ module Language.Mimsa.Types.AST
     Literal (..),
     FuncName (..),
     StringType (..),
+    DataType (..),
   )
 where
 
 import qualified Data.Aeson as JSON
+import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -58,6 +61,26 @@ instance Printer Literal where
 
 -------
 
+data DataType
+  = DataType
+      { dtName :: Construct,
+        dtVars :: [Name],
+        dtConstructors :: Map Construct [TypeName]
+      }
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
+
+instance Printer DataType where
+  prettyPrint (DataType name' vars' constructors') =
+    "type " <> prettyPrint name'
+      <> T.intercalate " " (prettyPrint <$> vars')
+      <> " "
+      <> T.intercalate " | " (printCons <$> M.toList constructors')
+    where
+      printCons (consName, args) =
+        prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> args)
+
+-------
+
 data Expr a
   = MyLiteral Literal
   | MyVar a
@@ -69,10 +92,10 @@ data Expr a
   | MyPair (Expr a) (Expr a) -- (a,b)
   | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
   | MyRecordAccess (Expr a) Name -- a.foo
-  | MyData Construct [Name] (Map Construct [TypeName]) (Expr a) -- tyName, tyArgs, Map constructor args, body
+  | MyData DataType (Expr a) -- tyName, tyArgs, Map constructor args, body
   | MyConstructor Construct -- use a constructor by name
   | MyConsApp (Expr a) (Expr a) -- constructor, value
-  | MyCaseMatch (Expr a) [(Construct, Expr a)] (Maybe (Expr a)) -- expr, matches, catchAll
+  | MyCaseMatch (Expr a) (NonEmpty (Construct, Expr a)) (Maybe (Expr a)) -- expr, matches, catchAll
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Printer a) => Printer (Expr a) where
@@ -137,23 +160,17 @@ instance (Printer a) => Printer (Expr a) where
               <> printSubExpr val
         )
           <$> M.toList map'
-  prettyPrint (MyData tyName tyArgs constructors expr) =
-    "type " <> prettyPrint tyName
-      <> T.intercalate " " (prettyPrint <$> tyArgs)
-      <> " "
-      <> T.intercalate " | " (printCons <$> M.toList constructors)
+  prettyPrint (MyData dataType expr) =
+    prettyPrint dataType
       <> " in "
       <> printSubExpr expr
-    where
-      printCons (consName, args) =
-        prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> args)
   prettyPrint (MyConstructor name) = prettyPrint name
   prettyPrint (MyConsApp fn val) = prettyPrint fn <> " " <> prettyPrint val
   prettyPrint (MyCaseMatch sumExpr matches catchAll) =
     "case "
       <> printSubExpr sumExpr
       <> " of "
-      <> T.intercalate " | " (printMatch <$> matches)
+      <> T.intercalate " | " (printMatch <$> NE.toList matches)
       <> maybe "" (\catchExpr -> " | otherwise " <> printSubExpr catchExpr) catchAll
     where
       printMatch (construct, expr') =

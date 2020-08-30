@@ -2,7 +2,8 @@ module Language.Mimsa.Typechecker.Patterns where
 
 import Control.Monad.Except
 import Data.List (nub)
-import Data.Map (Map)
+import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.Environment
@@ -11,21 +12,24 @@ import Language.Mimsa.Types
 
 checkCompleteness ::
   Environment ->
-  [(Construct, Expr Variable)] ->
+  NonEmpty (Construct, Expr Variable) ->
   Maybe (Expr Variable) ->
-  TcMonad ()
-checkCompleteness _ _ (Just _) = pure ()
-checkCompleteness env opts Nothing = do
+  TcMonad DataType
+checkCompleteness env opts catchAll = do
   -- find data type for each match
   items <- traverse (\(name, _) -> lookupConstructor env name) opts
+  let optionNames = fst <$> NE.toList opts
   -- check they are all the same one
-  dataType <- case nub items of
+  dataType <- case nub (NE.toList items) of
     [a] -> pure a
-    _ -> throwError (MixedUpPatterns (fst <$> opts))
-  allPatternsExist (fst <$> opts) dataType
+    _ -> throwError (MixedUpPatterns optionNames)
+  case catchAll of
+    Just _ -> pure ()
+    _ -> allPatternsExist optionNames dataType
+  pure dataType
 
-allPatternsExist :: [Construct] -> (Construct, ([Name], Map Construct [TypeName])) -> TcMonad ()
-allPatternsExist optNames' (_, (_, dataTypes)) = do
+allPatternsExist :: [Construct] -> DataType -> TcMonad ()
+allPatternsExist optNames' (DataType _ _ dataTypes) = do
   -- check each one of optNames exists in dataTypes
   let dtNames = S.fromList (M.keys dataTypes)
       optNames = S.fromList optNames'

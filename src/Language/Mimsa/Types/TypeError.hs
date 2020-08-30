@@ -30,10 +30,9 @@ data TypeError
   | MissingBuiltIn Variable
   | CannotUnifyBoundVariable Variable MonoType
   | CannotMatchRecord Environment MonoType
-  | CaseMatchExpectedSum MonoType
   | CaseMatchExpectedPair MonoType
-  | CaseMatchExpectedList MonoType
   | CaseMatchExpectedLambda (Expr Variable) (Expr Variable)
+  | CannotCaseMatchOnType (Expr Variable)
   | TypeConstructorNotInScope Environment Construct
   | TypeIsNotConstructor (Expr Variable)
   | TypeVariableNotInDataType Construct Name [Name]
@@ -62,6 +61,7 @@ instance Printer TypeError where
     "Unification error - cannot match " <> prettyPrint a <> " and " <> prettyPrint b
   prettyPrint (CannotUnifyBoundVariable tv mt) =
     "Cannot unify type " <> prettyPrint mt <> " with bound variable " <> prettyPrint tv
+  prettyPrint (CannotCaseMatchOnType ty) = "Cannot case match on type: " <> prettyPrint ty
   prettyPrint (VariableNotInEnv name members) =
     "Variable " <> prettyPrint name <> " not in scope: { " <> showSet members <> " }"
   prettyPrint (MissingRecordMember name members) =
@@ -72,12 +72,8 @@ instance Printer TypeError where
     "Cannot find built-in function " <> prettyPrint name
   prettyPrint (CannotMatchRecord env mt) =
     "Cannot match type " <> prettyPrint mt <> " to record in { " <> prettyPrint env <> " }"
-  prettyPrint (CaseMatchExpectedSum mt) =
-    "Expected sum type but got " <> prettyPrint mt
   prettyPrint (CaseMatchExpectedPair mt) =
     "Expected pair but got " <> prettyPrint mt
-  prettyPrint (CaseMatchExpectedList mt) =
-    "Expected list but got " <> prettyPrint mt
   prettyPrint (CaseMatchExpectedLambda l r) =
     "Expected lambdas but got " <> prettyPrint l <> " and " <> prettyPrint r
   prettyPrint (TypeConstructorNotInScope env name) =
@@ -107,10 +103,10 @@ instance Printer TypeError where
       <> "]"
 
 printDataTypes :: Environment -> Text
-printDataTypes env = T.intercalate "\n" (printDt <$> M.toList (getDataTypes env))
+printDataTypes env = T.intercalate "\n" $ snd <$> M.toList (printDt <$> getDataTypes env)
   where
-    printDt (tyName, (tyVars, constructors)) =
-      prettyPrint tyName <> printTyVars tyVars
+    printDt (DataType tyName tyVars constructors) =
+      prettyPrint tyName <> " " <> printTyVars tyVars
         <> ": "
         <> T.intercalate " | " (printCons <$> M.toList constructors)
     printTyVars as = T.intercalate " " (prettyPrint <$> as)
