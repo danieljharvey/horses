@@ -6,7 +6,7 @@ module Test.Repl
   )
 where
 
-import Data.Either (isLeft)
+import Data.Either (isLeft, isRight)
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Repl
@@ -275,3 +275,15 @@ spec =
       it "type Maybe a = Just a | Nothing in case Just True of Just \\a -> a | Nothing \"what\"" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in case Just True of Just \\a -> a | Nothing \"what\""
         result `shouldSatisfy` isLeft
+      it "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> case either of Left \\e -> g(e) | Right \\a -> f(a)" $ do
+        result <- eval stdLib "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> case either of Left \\e -> g(e) | Right \\a -> f(a)"
+        result `shouldSatisfy` isRight
+{-
+      it "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\"" $ do
+        result <- eval stdLib "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\""
+        fst <$> result
+          `shouldBe` Right
+            ( MTFunction (MTData (mkConstruct "Maybe") []) MTString
+            )
+
+-}

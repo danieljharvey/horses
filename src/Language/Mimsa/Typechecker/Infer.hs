@@ -157,7 +157,7 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
   dataType <- lookupConstructor env name
-  (_, allArgs) <- inferConstructorTypes env dataType
+  allArgs <- inferConstructorTypes env dataType
   case M.lookup name allArgs of
     Just tyArg ->
       pure (mempty, constructorToType tyArg)
@@ -167,7 +167,7 @@ inferDataConstructor env name = do
 inferConstructorTypes ::
   Environment ->
   DataType ->
-  TcMonad ([(Name, MonoType)], Map Construct Constructor)
+  TcMonad (Map Construct Constructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) <$> pure a <*> getUnknown) tyNames
   let findType ty = case ty of
@@ -183,7 +183,7 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
         let constructor = Constructor typeName (snd <$> tyVars) tyCons
         pure $ M.singleton consName constructor
   cons' <- traverse inferConstructor (M.toList constructors)
-  pure (tyVars, mconcat cons')
+  pure (mconcat cons')
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
@@ -255,7 +255,7 @@ inferMyCaseMatch ::
   TcMonad (Substitutions, MonoType)
 inferMyCaseMatch env sumExpr matches catchAll = do
   dataType <- checkCompleteness env matches catchAll
-  (_tyVars, constructTypes) <- inferConstructorTypes env dataType
+  constructTypes <- inferConstructorTypes env dataType
   (s1, _tySum) <-
     inferSumExpressionType
       env
@@ -306,9 +306,6 @@ inferMatch env constructTypes name expr' =
           let subs = s2 <> s1
           pure (subs, applySubst subs tyRes)
 
--- given a function type and a list of args, apply then one by one
--- i think the problem is we're bringing in fresh unknowns here
--- rather than using ones from the type
 applyList :: [MonoType] -> MonoType -> TcMonad (Substitutions, MonoType)
 applyList vars tyFun = case vars of
   [] -> pure (mempty, tyFun)

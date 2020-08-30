@@ -90,9 +90,7 @@ protectedNames =
       "otherwise",
       "True",
       "False",
-      "Unit",
-      "Left",
-      "Right"
+      "Unit"
     ]
 
 ----
