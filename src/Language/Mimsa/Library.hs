@@ -113,7 +113,7 @@ reduceList =
 reduce :: Expr Variable -> Expr Variable -> NonEmpty (Expr Variable) -> Expr Variable
 reduce f starting as =
   let varF = NamedVar (Name "f")
-      result = foldr (\a' b' -> MyApp (MyApp (MyVar varF) a') b') starting as
+      result = foldr (MyApp . MyApp (MyVar varF)) starting as
    in MyLet varF f result
 
 mapList :: ForeignFunc
@@ -131,7 +131,7 @@ foldList =
       tyAppend = MTFunction tyA (MTFunction tyA tyA)
    in TwoArgs
         (tyAppend, MTList tyA, tyA)
-        (\append (MyList as) -> pure $ foldr1 (\a a' -> MyApp (MyApp append a) a') as)
+        (\append (MyList as) -> pure $ foldr1 (MyApp . MyApp append) as)
 
 getFFType :: ForeignFunc -> MonoType
 getFFType (NoArgs out _) = out

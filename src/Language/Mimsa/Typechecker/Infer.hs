@@ -226,7 +226,13 @@ inferArgTypes ::
   [TypeName] ->
   TcMonad ([MonoType], [MonoType])
 inferArgTypes env type' tyNames tyArgs = do
-  tyVars <- traverse (\a -> (,) <$> pure a <*> getUnknown) tyNames
+  tyVars <-
+    traverse
+      ( \a -> do
+          tyRes <- getUnknown
+          pure (a, tyRes)
+      )
+      tyNames
   let findType ty = case ty of
         ConsName cn vs -> do
           vs' <- traverse findType vs
@@ -266,14 +272,16 @@ lookupBuiltIn name = M.lookup name builtInTypes
 
 -- check a list of types are all the same
 matchList :: [MonoType] -> TcMonad (Substitutions, MonoType)
-matchList =
+matchList items = do
+  tyRes <- getUnknown
   foldl
     ( \ty' tyB' -> do
         (sA, tyA) <- ty'
         sB <- unify tyA tyB'
         pure (sA <> sB, applySubst sB tyB')
     )
-    ((,) <$> pure mempty <*> getUnknown)
+    (pure (mempty, tyRes))
+    items
 
 -----
 

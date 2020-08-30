@@ -8,7 +8,7 @@ module Language.Mimsa.Syntax.Language
   )
 where
 
-import Control.Applicative ((<|>))
+import Control.Applicative ((<|>), optional)
 import Control.Monad ((>=>))
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
@@ -471,8 +471,7 @@ caseMatchParser = do
     matchesParser <|> pure <$> matchParser
       <|> pure mempty
   catchAll <-
-    Just <$> otherwiseParser (not . null $ matches)
-      <|> pure Nothing
+    optional (otherwiseParser (not . null $ matches))
   pure $ MyCaseMatch sumExpr matches catchAll
 
 otherwiseParser :: Bool -> Parser ParserExpr

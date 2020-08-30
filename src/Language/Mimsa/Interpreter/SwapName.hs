@@ -16,11 +16,11 @@ swapName from to (MyVar from') =
       then MyVar to
       else MyVar from'
 swapName from to (MyLet name a b) =
-  MyLet <$> pure name
-    <*> swapName from to a
+  MyLet name
+    <$> swapName from to a
     <*> swapName from to b
 swapName from to (MyLambda name a) =
-  MyLambda <$> pure name <*> swapName from to a
+  MyLambda name <$> swapName from to a
 swapName from to (MyRecordAccess a name) =
   MyRecordAccess <$> swapName from to a <*> pure name
 swapName from to (MyApp a b) =
@@ -35,19 +35,16 @@ swapName from to (MyPair a b) =
   MyPair
     <$> swapName from to a <*> swapName from to b
 swapName from to (MyLetPair nameA nameB a b) =
-  MyLetPair
-    <$> pure nameA <*> pure nameB
-      <*> swapName from to a
-      <*> swapName from to b
+  MyLetPair nameA nameB
+    <$> swapName from to a
+    <*> swapName from to b
 swapName from to (MyLetList nameHead nameRest a b) =
-  MyLetList <$> pure nameHead
-    <*> pure nameRest
-    <*> swapName from to a
+  MyLetList nameHead nameRest
+    <$> swapName from to a
     <*> swapName from to b
 swapName from to (MySum side a) =
-  MySum
-    <$> pure side
-      <*> swapName from to a
+  MySum side
+    <$> swapName from to a
 swapName from to (MyCase a b c) =
   MyCase <$> swapName from to a <*> swapName from to b
     <*> swapName from to c

@@ -1,3 +1,5 @@
+{-# LANGUAGE BlockArguments #-}
+
 module Language.Mimsa.Store.Substitutor where
 
 import Control.Monad (join)
@@ -133,7 +135,7 @@ mapVar p (MyLetList nameHead nameRest a b) =
     <*> nameToVar nameRest
     <*> mapVar (p <> [nameHead, nameRest]) a
     <*> mapVar (p <> [nameHead, nameRest]) b
-mapVar p (MySum side a) = MySum <$> pure side <*> mapVar p a
+mapVar p (MySum side a) = MySum side <$> mapVar p a
 mapVar p (MyCase a b c) =
   MyCase <$> mapVar p a <*> mapVar p b
     <*> mapVar p c
@@ -148,7 +150,9 @@ mapVar p (MyData a b c d) = MyData a b c <$> mapVar p d
 mapVar _ (MyConstructor name) = pure (MyConstructor name)
 mapVar p (MyConsApp fn var) = MyConsApp <$> mapVar p fn <*> mapVar p var
 mapVar p (MyCaseMatch expr' matches catchAll) = do
-  let mapVarPair (name, expr'') = (,) <$> pure name <*> mapVar p expr''
+  let mapVarPair (name, expr'') = do
+        mappedExpr <- mapVar p expr''
+        pure (name, mappedExpr)
   matches' <- traverse mapVarPair matches
   catchAll' <- traverse (mapVar p) catchAll
   MyCaseMatch <$> mapVar p expr' <*> pure matches' <*> pure catchAll'
