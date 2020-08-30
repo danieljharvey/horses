@@ -249,12 +249,10 @@ spec =
             ( MTData (mkConstruct "Tree") [MTInt],
               MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1)
             )
-      {-
       it "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1" $ do
         result <- eval stdLib "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
         result
           `shouldSatisfy` isLeft
-      -}
       it "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Branch (Leaf 1) (Leaf True)" $ do
         result <- eval stdLib "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Branch (Leaf 1) (Leaf True)"
         result

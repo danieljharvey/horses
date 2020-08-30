@@ -6,7 +6,6 @@ import Control.Monad.Except
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Logging
 import Language.Mimsa.Types
 
 patternMatch ::
@@ -17,7 +16,7 @@ patternMatch ::
 patternMatch expr' options catchAll = do
   const' <- findConstructor expr'
   case NE.filter (\(c, _) -> c == const') options of
-    [(_, found)] -> pure $ createMatchExpression found $ debugPretty "expr" expr'
+    [(_, found)] -> pure $ createMatchExpression found expr'
     _ ->
       case catchAll of
         Just catchAll' -> pure catchAll'

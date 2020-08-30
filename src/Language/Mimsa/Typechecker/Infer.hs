@@ -16,7 +16,6 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Library
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
   ( builtInTypes,
     defaultEnv,
@@ -158,7 +157,7 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
   dataType <- lookupConstructor env name
-  allArgs <- inferConstructorTypes env dataType
+  (_, allArgs) <- inferConstructorTypes env dataType
   case M.lookup name allArgs of
     Just tyArg ->
       pure (mempty, constructorToType tyArg)
@@ -168,7 +167,7 @@ inferDataConstructor env name = do
 inferConstructorTypes ::
   Environment ->
   DataType ->
-  TcMonad (Map Construct Constructor)
+  TcMonad ([(Name, MonoType)], Map Construct Constructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) <$> pure a <*> getUnknown) tyNames
   let findType ty = case ty of
@@ -184,7 +183,7 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
         let constructor = Constructor typeName (snd <$> tyVars) tyCons
         pure $ M.singleton consName constructor
   cons' <- traverse inferConstructor (M.toList constructors)
-  pure (mconcat cons')
+  pure (tyVars, mconcat cons')
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
@@ -225,13 +224,13 @@ inferSumExpressionType ::
   TcMonad (Substitutions, MonoType)
 inferSumExpressionType env consTypes sumExpr =
   let fromName name =
-        case M.lookup name (debugPretty "consTypes" consTypes) of
+        case M.lookup name consTypes of
           Just tyCons -> do
             (s1, tySum) <- infer env sumExpr
-            s2 <- unify (debugPretty "tyCons" (unwind (constructorToType tyCons))) (debugPretty "tySum" tySum)
+            s2 <- unify (unwind (constructorToType tyCons)) tySum
             pure
-              ( debugPretty "sum subs" (s2 <> s1),
-                debugPretty "inferSum result" $ applySubst s2 tySum
+              ( s2 <> s1,
+                applySubst s2 tySum
               )
           Nothing -> throwError $ CannotCaseMatchOnType sumExpr
       unwind tyExpr = case tyExpr of
@@ -256,12 +255,16 @@ inferMyCaseMatch ::
   TcMonad (Substitutions, MonoType)
 inferMyCaseMatch env sumExpr matches catchAll = do
   dataType <- checkCompleteness env matches catchAll
-  constructTypes <- inferConstructorTypes env dataType
-  (s1, _tySum) <- inferSumExpressionType env constructTypes sumExpr
+  (_tyVars, constructTypes) <- inferConstructorTypes env dataType
+  (s1, _tySum) <-
+    inferSumExpressionType
+      env
+      constructTypes
+      sumExpr
   tyMatches <-
     traverse
       ( uncurry
-          (inferMatch (applySubstCtx s1 env) constructTypes)
+          (inferMatch (applySubstCtx s1 env) (applySubstToConstructor s1 <$> constructTypes))
       )
       matches
   (sCatch, tyCatches) <- case catchAll of
@@ -269,15 +272,18 @@ inferMyCaseMatch env sumExpr matches catchAll = do
       (s, tyCatchAll) <- infer (applySubstCtx s1 env) catchAll'
       pure (s, [tyCatchAll])
     _ -> pure (mempty, mempty)
-  let subs =
-        debugPretty "inferMyCaseMatch subs" $
-          s1
-            <> mconcat
-              (fst <$> NE.toList tyMatches)
-            <> sCatch
+  let matchSubs =
+        mconcat
+          (fst <$> NE.toList tyMatches)
+          <> sCatch
       actuals = (snd <$> NE.toList tyMatches) <> tyCatches
   (s, mt) <- matchList actuals
-  pure (s <> subs, applySubst (s <> subs) (debugPretty "inferMyCaseMatch mt" mt))
+  let allSubs = s1 <> s <> matchSubs
+  pure (allSubs, applySubst allSubs mt)
+
+applySubstToConstructor :: Substitutions -> Constructor -> Constructor
+applySubstToConstructor subs (Constructor name ty b) =
+  Constructor name (applySubst subs <$> ty) (applySubst subs <$> b)
 
 -- infer the type of a case match function
 -- if it has no args, it's a simple MTData
@@ -296,9 +302,9 @@ inferMatch env constructTypes name expr' =
         [] -> infer env expr' -- no arguments to pass to expr'
         _ -> do
           (s1, tyExpr) <- infer env expr' -- expression return
-          (s2, tyRes) <- applyList (debugPretty "inferMatch tyArgs" tyArgs) (debugPretty "inferMatch tyExpr" tyExpr)
+          (s2, tyRes) <- applyList tyArgs tyExpr
           let subs = s2 <> s1
-          pure (debugPretty "inferMatch subs" subs, applySubst subs tyRes)
+          pure (subs, applySubst subs tyRes)
 
 -- given a function type and a list of args, apply then one by one
 -- i think the problem is we're bringing in fresh unknowns here
