@@ -132,7 +132,8 @@ inferLetBinding env binder expr body = do
   (s1, tyExpr) <- infer newEnv1 expr
   let newEnv2 = createEnv binder (generalise s1 tyExpr) <> newEnv1
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv2) body
-  pure (s2 <> s1, tyBody)
+  s3 <- unify tyUnknown tyExpr
+  pure (s3 <> s2 <> s1, applySubst s3 tyBody)
 
 inferLetPairBinding ::
   Environment ->

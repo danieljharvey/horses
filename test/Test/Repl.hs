@@ -310,18 +310,14 @@ spec =
       it "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> incrementInt(loop(as2)(b))) in loop(Suc Suc Suc Zero)(10)" $ do
         result <- eval stdLib "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> incrementInt(loop(as2)(b))) in loop(Suc Suc Suc Zero)(10)"
         result `shouldBe` Right (MTInt, int 13)
-      it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)" $ do
-        result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)"
-        result `shouldBe` Right (MTInt, int 3)
+      {-
+            it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)" $ do
+              result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)"
+              result `shouldBe` Right (MTInt, int 3)
+      -}
       it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)" $ do
         result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)"
         result `shouldBe` Right (MTInt, int 0)
       it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
         result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
         result `shouldBe` Right (MTInt, int 3)
-{-
--- this (and any loop with multiple arity function) loops forever
-      it "let myReduce = (\\f -> \\b -> \\as -> let [head, tail] = as in case tail of Left \\l -> f(head)(b) | Right \\rest -> myReduce(f)(f(head)(b))(rest)) in myReduce(addInt)(0)([1,2,3])" $ do
-        result <- eval stdLib "let myReduce = (\\f -> \\b -> \\as -> let [head, tail] = as in case tail of Left \\l -> f(head)(b) | Right \\rest -> myReduce(f)(f(head)(b))(rest)) in myReduce(addInt)(0)([1,2,3])"
-        result `shouldBe` Right (MTInt, int 6)
--}
