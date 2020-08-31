@@ -74,7 +74,7 @@ doHelp = do
 
 doBind :: Project -> Name -> Expr Name -> ReplM Project
 doBind env name expr = do
-  (type', storeExpr, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (type', storeExpr, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
   hash <- liftIO (saveExpr storeExpr)
   replPrint $
     "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
@@ -87,7 +87,7 @@ doBind env name expr = do
 
 doInfo :: Project -> Expr Name -> ReplM ()
 doInfo env expr = do
-  (type', _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (type', _, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
     prettyPrint expr
       <> " :: "
@@ -97,7 +97,7 @@ doInfo env expr = do
 
 doTree :: Project -> Expr Name -> ReplM ()
 doTree env expr = do
-  (_, storeExpr, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (_, storeExpr, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
   let graph = createDepGraph (mkName "expression") (store env) storeExpr
   replPrint graph
 
@@ -128,7 +128,7 @@ doListBindings :: Project -> ReplM ()
 doListBindings env = do
   let showBind (name, StoreExpression _ expr) =
         case getTypecheckedStoreExpression env expr of
-          Right (type', _, _, _) ->
+          Right (type', _, _, _, _) ->
             replPrint (prettyPrint name <> " :: " <> prettyPrint type')
           _ -> pure ()
   traverse_
@@ -142,8 +142,8 @@ doListBindings env = do
 
 doEvaluate :: Project -> Expr Name -> ReplM ()
 doEvaluate env expr = do
-  (type', _, expr', scope') <- liftRepl $ getTypecheckedStoreExpression env expr
-  simplified <- liftIO $ interpret scope' expr'
+  (type', _, expr', scope', swaps) <- liftRepl $ getTypecheckedStoreExpression env expr
+  simplified <- liftIO $ interpret scope' swaps expr'
   simplified' <- liftRepl (first InterpreterErr simplified)
   replPrint $
     prettyPrint simplified'
@@ -167,8 +167,8 @@ onFileChange env = do
   text <- liftIO $ T.readFile "./scratch.mimsa"
   replPrint ("scratch.mimsa updated!" :: Text)
   expr <- liftRepl $ first ParseErr (parseExpr (T.strip text))
-  (type', storeExpr', expr', scope') <- liftRepl $ getTypecheckedStoreExpression env expr
-  simplified <- liftIO $ interpret scope' expr'
+  (type', storeExpr', expr', scope', swaps) <- liftRepl $ getTypecheckedStoreExpression env expr
+  simplified <- liftIO $ interpret scope' swaps expr'
   simplified' <- liftRepl (first InterpreterErr simplified)
   replPrint $
     "+ Using the following from scope: "

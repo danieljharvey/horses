@@ -55,22 +55,22 @@ fromItem name expr hash =
 evaluateStoreExpression ::
   Store ->
   StoreExpression ->
-  Either Error (MonoType, StoreExpression, Expr Variable, Scope)
+  Either Error (MonoType, StoreExpression, Expr Variable, Scope, Swaps)
 evaluateStoreExpression store' storeExpr = do
   let (swaps, newExpr, scope) = substitute store' storeExpr
   exprType <- getType swaps scope newExpr
-  pure (exprType, storeExpr, newExpr, scope)
+  pure (exprType, storeExpr, newExpr, scope, swaps)
 
 getTypecheckedStoreExpression ::
   Project ->
   Expr Name ->
-  Either Error (MonoType, StoreExpression, Expr Variable, Scope)
+  Either Error (MonoType, StoreExpression, Expr Variable, Scope, Swaps)
 getTypecheckedStoreExpression env expr = do
   storeExpr <- first ResolverErr $ createStoreExpression (getCurrentBindings $ bindings env) expr
   evaluateStoreExpression (store env) storeExpr
 
-evaluateText :: Project -> Text -> Either Error (MonoType, Expr Variable, Scope)
+evaluateText :: Project -> Text -> Either Error (MonoType, Expr Variable, Scope, Swaps)
 evaluateText env input = do
   expr <- first OtherError $ parseExpr input
-  (mt, _, expr', scope') <- getTypecheckedStoreExpression env expr
-  pure (mt, expr', scope')
+  (mt, _, expr', scope', swaps) <- getTypecheckedStoreExpression env expr
+  pure (mt, expr', scope', swaps)

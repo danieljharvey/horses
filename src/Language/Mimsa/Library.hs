@@ -20,10 +20,9 @@ libraryFunctions =
     M.fromList
       [ (FuncName "randomInt", randomInt),
         (FuncName "randomIntFrom", randomIntFrom),
-        (FuncName "incrementInt", incrementInt),
         (FuncName "eq", eq),
         (FuncName "log", logFn),
-        (FuncName "addInt", addInt)
+        (FuncName "addIntPair", addIntPair)
       ]
 
 isLibraryName :: Name -> Bool
@@ -63,12 +62,6 @@ randomIntFrom =
         pure (MyLiteral (MyInt (max val i)))
     )
 
-incrementInt :: ForeignFunc
-incrementInt =
-  OneArg
-    (MTInt, MTInt)
-    (\(MyLiteral (MyInt i)) -> pure (MyLiteral (MyInt (i + 1))))
-
 eq :: ForeignFunc
 eq =
   let tyA = MTVar (NamedVar (Name "a"))
@@ -79,12 +72,14 @@ eq =
 equality :: (Monad m, Eq a) => Expr a -> Expr a -> m (Expr a)
 equality x y = pure $ MyLiteral (MyBool (x == y))
 
-addInt :: ForeignFunc
-addInt =
-  TwoArgs
-    (MTInt, MTInt, MTInt)
-    ( \(MyLiteral (MyInt a))
-       (MyLiteral (MyInt b)) -> pure (MyLiteral (MyInt (a + b)))
+addIntPair :: ForeignFunc
+addIntPair =
+  OneArg
+    (MTPair MTInt MTInt, MTInt)
+    ( \( MyPair
+           (MyLiteral (MyInt a))
+           (MyLiteral (MyInt b))
+         ) -> pure (MyLiteral (MyInt (a + b)))
     )
 
 getFFType :: ForeignFunc -> MonoType

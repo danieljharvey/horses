@@ -10,10 +10,12 @@ where
 
 import Control.Applicative
 import Control.Monad.Except
+import Control.Monad.Reader
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.Library
 import Language.Mimsa.Typechecker.DataTypes
@@ -79,9 +81,11 @@ inferVarFromScope env name =
    in case lookup' name env of
         Just mt ->
           instantiate mt
-        _ ->
+        _ -> do
+          swaps <- ask
           throwError $
             VariableNotInEnv
+              swaps
               name
               (S.fromList (M.keys (getSchemes env)))
 
@@ -107,12 +111,29 @@ inferApplication env function argument = do
   s3 <- unify (applySubst s2 tyFun) (MTFunction tyArg tyRes)
   pure (s3 <> s2 <> s1, applySubst s3 tyRes)
 
+-- when we come to do let recursive the name of our binder
+-- may already be turned into a number in the expr
+-- so we look it up to make sure we bind the right thing
+findActualBindingInSwaps :: Variable -> TcMonad Variable
+findActualBindingInSwaps (NamedVar var) = do
+  swaps <- ask
+  case listToMaybe $ M.keys $ M.filter (== var) swaps of
+    Just i -> pure i
+    _ -> pure (NamedVar var)
+findActualBindingInSwaps a = pure a
+
+-- to allow recursion we make a type for the let binding in it's own expression
+-- we may need to unify tyUnknown and tyExpr if it struggles with complex stuff
 inferLetBinding :: Environment -> Variable -> Expr Variable -> Expr Variable -> TcMonad (Substitutions, MonoType)
 inferLetBinding env binder expr body = do
-  (s1, tyExpr) <- infer env expr
-  let newEnv = createEnv binder (generalise s1 tyExpr) <> env
-  (s2, tyBody) <- infer (applySubstCtx s1 newEnv) body
-  pure (s2 <> s1, tyBody)
+  tyUnknown <- getUnknown
+  binderInExpr <- findActualBindingInSwaps binder
+  let newEnv1 = createEnv binderInExpr (Scheme mempty tyUnknown) <> env
+  (s1, tyExpr) <- infer newEnv1 expr
+  let newEnv2 = createEnv binder (generalise s1 tyExpr) <> newEnv1
+  (s2, tyBody) <- infer (applySubstCtx s1 newEnv2) body
+  s3 <- unify tyUnknown tyExpr
+  pure (s3 <> s2 <> s1, applySubst s3 tyBody)
 
 inferLetPairBinding ::
   Environment ->

@@ -26,6 +26,15 @@ compose =
 idExpr :: StoreExpression
 idExpr = unsafeGetExpr "\\i -> i"
 
+incrementInt :: StoreExpression
+incrementInt =
+  unsafeGetExpr'
+    "\\a -> addInt(1)(a)"
+    (Bindings $ M.singleton (mkName "addInt") (ExprHash 18))
+
+addInt :: StoreExpression
+addInt = unsafeGetExpr "\\a -> \\b -> addIntPair((a,b))"
+
 stdLib :: Project
 stdLib = Project store' bindings' mempty
   where
@@ -36,7 +45,9 @@ stdLib = Project store' bindings' mempty
             (ExprHash 3, eqTenExpr),
             (ExprHash 6, compose),
             (ExprHash 7, sndExpr),
-            (ExprHash 11, idExpr)
+            (ExprHash 11, idExpr),
+            (ExprHash 17, incrementInt),
+            (ExprHash 18, addInt)
           ]
     bindings' =
       VersionedBindings $
@@ -45,7 +56,9 @@ stdLib = Project store' bindings' mempty
             (mkName "eqTen", pure $ ExprHash 3),
             (mkName "compose", pure $ ExprHash 6),
             (mkName "snd", pure $ ExprHash 7),
-            (mkName "id", pure $ ExprHash 11)
+            (mkName "id", pure $ ExprHash 11),
+            (mkName "incrementInt", pure $ ExprHash 17),
+            (mkName "addInt", pure $ ExprHash 18)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression

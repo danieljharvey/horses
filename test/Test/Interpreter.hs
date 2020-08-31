@@ -15,12 +15,12 @@ import Test.Hspec
 
 testInterpret :: Scope -> Expr Variable -> Expr Variable -> Expectation
 testInterpret scope' expr' expected = do
-  result <- interpret scope' expr'
+  result <- interpret scope' mempty expr'
   result `shouldBe` Right expected
 
 testInterpretFail :: Scope -> Expr Variable -> InterpreterError -> Expectation
 testInterpretFail scope' expr' expected = do
-  result <- interpret scope' expr'
+  result <- interpret scope' mempty expr'
   result `shouldBe` Left expected
 
 spec :: Spec
@@ -91,18 +91,18 @@ spec =
     describe "BuiltIns" $ do
       it "Can't find stupidMadeUpFunction" $ do
         let f = MyVar (named "stupidMadeUpFunction")
-        result <- interpret mempty f
+        result <- interpret mempty mempty f
         result `shouldSatisfy` isLeft
       it "Finds and uses randomInt" $ do
         let f = MyVar (builtIn "randomInt")
             scope' = mempty
-        result <- interpret scope' f
+        result <- interpret scope' mempty f
         print result
         result `shouldSatisfy` \(Right (MyLiteral (MyInt _))) -> True
       it "Finds and uses randomIntFrom" $ do
         let f = MyApp (MyVar (builtIn "randomIntFrom")) (int 10)
             scope' = mempty
-        result <- interpret scope' f
+        result <- interpret scope' mempty f
         print result
         result `shouldSatisfy` (\(Right (MyLiteral (MyInt i))) -> i > 9)
       it "Uses a two arg function inside an If" $ do
@@ -115,7 +115,7 @@ spec =
                 (int 1)
                 (int 0)
             scope' = mempty
-        result <- interpret scope' f
+        result <- interpret scope' mempty f
         result `shouldBe` Right (int 0)
       it "Destructures a pair" $ do
         let f =
@@ -135,7 +135,7 @@ spec =
                     (MyPair (int 1) (int 2))
                     (MyApp (MyVar (named "fst")) (MyVar (named "x")))
                 )
-        result <- interpret mempty f
+        result <- interpret mempty mempty f
         result `shouldBe` Right (int 1)
       it "Uses a higher order function twice without screwing the pooch" $ do
         let f =
@@ -164,7 +164,7 @@ spec =
                         (MyLiteral (MyInt 100))
                     )
                 )
-        result <- interpret mempty f
+        result <- interpret mempty mempty f
         result `shouldBe` Right (int 1)
       it "Uses var names in lambdas that conflict with the ones inside our built-in function without breaking" $ do
         let ifFunc =
@@ -186,7 +186,7 @@ spec =
                 )
             f = MyApp (MyApp ifFunc (int 1)) (int 2)
             scope' = mempty
-        result <- interpret scope' f
+        result <- interpret scope' mempty f
         result `shouldBe` Right (int 0)
       it "Runs the internals of reduce function" $ do
         let reduceFunc =
@@ -201,5 +201,5 @@ spec =
                     (MyLiteral (MyInt 1))
                 )
             scope' = mempty
-        result <- interpret scope' reduceFunc
+        result <- interpret scope' mempty reduceFunc
         result `shouldBe` Right (str' "Horse")

@@ -7,6 +7,7 @@ where
 
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -24,7 +25,7 @@ data TypeError
   = UnknownTypeError
   | FailsOccursCheck Swaps Variable MonoType
   | UnificationError MonoType MonoType
-  | VariableNotInEnv Variable (Set Variable)
+  | VariableNotInEnv Swaps Variable (Set Variable)
   | MissingRecordMember Name (Set Name)
   | MissingRecordTypeMember Name (Map Name MonoType)
   | MissingBuiltIn Variable
@@ -52,6 +53,12 @@ showSet set = T.intercalate ", " (prettyPrint <$> S.toList set)
 showMap :: (Printer k, Printer a) => Map k a -> Text
 showMap map' = T.intercalate ", " (prettyPrint <$> M.toList map')
 
+withSwap :: Swaps -> Variable -> Name
+withSwap _ (BuiltIn n) = n
+withSwap _ (BuiltInActual n _) = n
+withSwap _ (NamedVar n) = n
+withSwap swaps (NumberedVar i) = fromMaybe (mkName "unknownvar") (M.lookup (NumberedVar i) swaps)
+
 instance Printer TypeError where
   prettyPrint UnknownTypeError =
     "Unknown type error"
@@ -62,8 +69,8 @@ instance Printer TypeError where
   prettyPrint (CannotUnifyBoundVariable tv mt) =
     "Cannot unify type " <> prettyPrint mt <> " with bound variable " <> prettyPrint tv
   prettyPrint (CannotCaseMatchOnType ty) = "Cannot case match on type: " <> prettyPrint ty
-  prettyPrint (VariableNotInEnv name members) =
-    "Variable " <> prettyPrint name <> " not in scope: { " <> showSet members <> " }"
+  prettyPrint (VariableNotInEnv swaps name members) =
+    "Variable " <> prettyPrint (withSwap swaps name) <> " not in scope: { " <> showSet members <> " }"
   prettyPrint (MissingRecordMember name members) =
     "Cannot find " <> prettyPrint name <> " in { " <> showSet members <> " }"
   prettyPrint (MissingRecordTypeMember name types) =

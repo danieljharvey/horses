@@ -53,5 +53,5 @@ getExprDetails ::
 getExprDetails project exprHash = do
   usages <- first UsageErr (findUsages project exprHash)
   storeExpr <- first UsageErr (getStoreExpression project exprHash)
-  (mt, _, expr', _) <- evaluateStoreExpression (store project) storeExpr
+  (mt, _, expr', _, _) <- evaluateStoreExpression (store project) storeExpr
   pure (expr', mt, usages)

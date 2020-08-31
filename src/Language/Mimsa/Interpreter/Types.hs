@@ -1,11 +1,14 @@
-module Language.Mimsa.Interpreter.Types (App, readScope, nextVariable, addToScope) where
+module Language.Mimsa.Interpreter.Types (App, readScope, nextVariable, addToScope, askForSwaps) where
 
 import Control.Monad.Except
+import Control.Monad.Reader
 import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor (bimap, first)
+import qualified Data.Map as M
+import Data.Maybe (listToMaybe)
 import Language.Mimsa.Types
 
-type App = StateT (Int, Scope) (ExceptT InterpreterError IO)
+type App = StateT (Int, Scope) (ReaderT Swaps (ExceptT InterpreterError IO))
 
 readScope :: App Scope
 readScope = gets snd
@@ -20,4 +23,13 @@ nextVariable :: App Variable
 nextVariable = NumberedVar <$> nextInt
 
 addToScope :: Scope -> App ()
-addToScope scope' = modify $ bimap (1 +) (scope' <>)
+addToScope scope' =
+  case foundALoop scope' of
+    Nothing -> modify $ bimap (1 +) (scope' <>)
+    Just k -> throwError $ SelfReferencingBinding k
+  where
+    foundALoop (Scope newScope) =
+      fmap fst . listToMaybe . M.toList . M.filterWithKey (\k a -> MyVar k == a) $ newScope
+
+askForSwaps :: App Swaps
+askForSwaps = ask

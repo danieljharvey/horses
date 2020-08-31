@@ -18,8 +18,8 @@ import Test.StoreData
 eval :: Project -> Text -> IO (Either Text (MonoType, Expr Variable))
 eval env input =
   case evaluateText env input of
-    Right (mt, expr', scope') -> do
-      endExpr <- interpret scope' expr'
+    Right (mt, expr', scope', swaps) -> do
+      endExpr <- interpret scope' swaps expr'
       case endExpr of
         Right a -> pure (Right (mt, a))
         Left e -> pure (Left (prettyPrint $ InterpreterErr e))
@@ -42,7 +42,7 @@ spec =
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction (unknown 3) (unknown 3),
+            ( MTFunction (unknown 4) (unknown 4),
               MyLambda (named "i") (MyVar (named "i"))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
@@ -60,7 +60,7 @@ spec =
               int 1
             )
       it "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)" $ do
-        result <- eval mempty "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)"
+        result <- eval stdLib "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)"
         result `shouldBe` Right (MTInt, int 69)
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
@@ -278,12 +278,46 @@ spec =
       it "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> case either of Left \\e -> g(e) | Right \\a -> f(a)" $ do
         result <- eval stdLib "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> case either of Left \\e -> g(e) | Right \\a -> f(a)"
         result `shouldSatisfy` isRight
-{-
-      it "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\"" $ do
-        result <- eval stdLib "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\""
-        fst <$> result
+      {-
+            it "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\"" $ do
+              result <- eval stdLib "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\""
+              fst <$> result
+                `shouldBe` Right
+                  ( MTFunction (MTData (mkConstruct "Maybe") []) MTString
+                  )
+      
+      -}
+      it "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest" $ do
+        result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
+        result
           `shouldBe` Right
-            ( MTFunction (MTData (mkConstruct "Maybe") []) MTString
+            ( MTData (mkConstruct "Arr") [MTInt],
+              MyConsApp
+                ( MyConsApp
+                    ( MyConstructor
+                        (mkConstruct "Item")
+                    )
+                    (int 2)
+                )
+                (MyConstructor $ mkConstruct "Empty")
             )
-
--}
+      it "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)" $ do
+        result <- eval stdLib "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)"
+        result `shouldBe` Right (MTInt, int 10)
+      it "type Nat = Zero | Suc Nat in let loop = (\\as -> case as of Zero 0 | Suc \\as2 -> incrementInt(loop(as2))) in loop(Suc Suc Suc Zero)" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in let loop = (\\as -> case as of Zero 0 | Suc \\as2 -> incrementInt(loop(as2))) in loop(Suc Suc Suc Zero)"
+        result `shouldBe` Right (MTInt, int 3)
+      it "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> incrementInt(loop(as2)(b))) in loop(Suc Suc Suc Zero)(10)" $ do
+        result <- eval stdLib "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> incrementInt(loop(as2)(b))) in loop(Suc Suc Suc Zero)(10)"
+        result `shouldBe` Right (MTInt, int 13)
+      {-
+            it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)" $ do
+              result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)"
+              result `shouldBe` Right (MTInt, int 3)
+      -}
+      it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)" $ do
+        result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)"
+        result `shouldBe` Right (MTInt, int 0)
+      it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
+        result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
+        result `shouldBe` Right (MTInt, int 3)

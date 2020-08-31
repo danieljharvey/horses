@@ -46,5 +46,11 @@ swapName _ _ (MyLiteral a) = pure (MyLiteral a)
 swapName from to (MyData dataType expr) =
   MyData dataType <$> swapName from to expr
 swapName _ _ (MyConstructor n) = pure (MyConstructor n)
-swapName _ _ (MyConsApp a b) = pure (MyConsApp a b)
-swapName _ _ (MyCaseMatch a b c) = pure (MyCaseMatch a b c)
+swapName from to (MyConsApp a b) =
+  MyConsApp <$> swapName from to a
+    <*> swapName from to b
+swapName from to (MyCaseMatch expr matches catchAll) = do
+  expr' <- swapName from to expr
+  matches' <- traverse (\(k, v) -> (,) <$> pure k <*> swapName from to v) matches
+  catchAll' <- traverse (swapName from to) catchAll
+  pure (MyCaseMatch expr' matches' catchAll')
