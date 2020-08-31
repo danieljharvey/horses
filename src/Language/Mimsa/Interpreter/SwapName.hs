@@ -16,11 +16,11 @@ swapName from to (MyVar from') =
       then MyVar to
       else MyVar from'
 swapName from to (MyLet name a b) =
-  MyLet <$> pure name
-    <*> swapName from to a
+  MyLet name
+    <$> swapName from to a
     <*> swapName from to b
 swapName from to (MyLambda name a) =
-  MyLambda <$> pure name <*> swapName from to a
+  MyLambda name <$> swapName from to a
 swapName from to (MyRecordAccess a name) =
   MyRecordAccess <$> swapName from to a <*> pure name
 swapName from to (MyApp a b) =
@@ -35,10 +35,9 @@ swapName from to (MyPair a b) =
   MyPair
     <$> swapName from to a <*> swapName from to b
 swapName from to (MyLetPair nameA nameB a b) =
-  MyLetPair
-    <$> pure nameA <*> pure nameB
-      <*> swapName from to a
-      <*> swapName from to b
+  MyLetPair nameA nameB
+    <$> swapName from to a
+    <*> swapName from to b
 swapName from to (MyRecord map') = do
   map2 <- traverse (swapName from to) map'
   pure (MyRecord map2)
@@ -51,6 +50,6 @@ swapName from to (MyConsApp a b) =
     <*> swapName from to b
 swapName from to (MyCaseMatch expr matches catchAll) = do
   expr' <- swapName from to expr
-  matches' <- traverse (\(k, v) -> (,) <$> pure k <*> swapName from to v) matches
+  matches' <- traverse (\(k, v) -> (,) k <$> swapName from to v) matches
   catchAll' <- traverse (swapName from to) catchAll
   pure (MyCaseMatch expr' matches' catchAll')

@@ -58,7 +58,7 @@ findHashInBindings (Bindings bindings') name = case M.lookup name bindings' of
 createStoreExpression :: Bindings -> Expr Name -> Either ResolverError StoreExpression
 createStoreExpression bindings' expr = do
   let findHash name =
-        (,) <$> pure name
-          <*> findHashInBindings bindings' name
+        (,) name
+          <$> findHashInBindings bindings' name
   hashes <- traverse findHash (S.toList . extractVars $ expr)
   Right (StoreExpression (Bindings (M.fromList hashes)) expr)
