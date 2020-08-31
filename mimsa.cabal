@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 168bf7ffdd112ec8bb39f436590307a3accd7af20ee18ae4a195b4d2a8df16b9
+-- hash: af684f89f999500e3564f811476b61392af45d96fc9b2b1dfe7302c3491b9f2f
 
 name:           mimsa
 version:        0.1.0.0
@@ -113,6 +113,7 @@ library
     , microlens
     , modern-uri
     , mtl
+    , prettyprinter
     , random
     , req
     , text
@@ -142,6 +143,7 @@ executable mimsa
     , mimsa
     , modern-uri
     , mtl
+    , prettyprinter
     , random
     , req
     , text
@@ -185,6 +187,7 @@ test-suite mimsa-test
     , mimsa
     , modern-uri
     , mtl
+    , prettyprinter
     , quickcheck-instances
     , random
     , req
