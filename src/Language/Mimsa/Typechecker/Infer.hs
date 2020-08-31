@@ -190,7 +190,7 @@ inferConstructorTypes ::
   DataType ->
   TcMonad (Map Construct TypeConstructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
-  tyVars <- traverse (\a -> (,) <$> pure a <*> getUnknown) tyNames
+  tyVars <- traverse (\a -> (,) a <$> getUnknown) tyNames
   let findType ty = case ty of
         ConsName cn vs -> do
           vs' <- traverse findType vs
@@ -230,7 +230,9 @@ matchList =
         sB <- unify tyA tyB'
         pure (sA <> sB, applySubst (sA <> sB) tyB')
     )
-    ((,) <$> pure mempty <*> getUnknown)
+    ( (,) mempty
+        <$> getUnknown
+    )
 
 -----
 

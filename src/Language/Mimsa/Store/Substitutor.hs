@@ -136,7 +136,7 @@ mapVar p (MyData a b) = MyData a <$> mapVar p b
 mapVar _ (MyConstructor name) = pure (MyConstructor name)
 mapVar p (MyConsApp fn var) = MyConsApp <$> mapVar p fn <*> mapVar p var
 mapVar p (MyCaseMatch expr' matches catchAll) = do
-  let mapVarPair (name, expr'') = (,) <$> pure name <*> mapVar p expr''
+  let mapVarPair (name, expr'') = (,) name <$> mapVar p expr''
   matches' <- traverse mapVarPair matches
   catchAll' <- traverse (mapVar p) catchAll
   MyCaseMatch <$> mapVar p expr' <*> pure matches' <*> pure catchAll'
