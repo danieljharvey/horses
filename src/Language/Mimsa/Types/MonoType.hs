@@ -7,8 +7,8 @@ where
 
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text.Prettyprint.Doc
+import Language.Mimsa.Syntax.Prettier
 import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Printer
@@ -23,8 +23,6 @@ data MonoType
   | MTUnit
   | MTFunction MonoType MonoType -- argument, result
   | MTPair MonoType MonoType -- (a,b)
-  | MTSum MonoType MonoType -- a | b
-  | MTList MonoType -- [a]
   | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
   | MTVar Variable
   | MTData Construct [MonoType] -- name, typeVars
@@ -32,35 +30,36 @@ data MonoType
 
 -----------
 
-inParens :: (Printer a) => a -> Text
-inParens a = "(" <> prettyPrint a <> ")"
-
 instance Printer MonoType where
-  prettyPrint MTInt = "Int"
-  prettyPrint MTString = "String"
-  prettyPrint MTBool = "Boolean"
-  prettyPrint MTUnit = "Unit"
-  prettyPrint (MTData consName tyVars) =
-    prettyPrint consName <> " "
-      <> T.intercalate " " (prettyPrint <$> tyVars)
-  prettyPrint (MTFunction a b) = printSubType a <> " -> " <> printSubType b
-  prettyPrint (MTPair a b) = "(" <> printSubType a <> ", " <> printSubType b <> ")"
-  prettyPrint (MTVar a) = prettyPrint a
-  prettyPrint (MTSum a b) = "Sum " <> printSubType a <> " " <> printSubType b
-  prettyPrint (MTList a) = "List " <> printSubType a
-  prettyPrint (MTRecord as) = "{" <> T.intercalate ", " types <> "}"
-    where
-      types =
-        ( \(name, mt) ->
-            prettyPrint name
-              <> ": "
-              <> printSubType mt
-        )
-          <$> M.toList as
+  prettyPrint = renderWithWidth 40 . renderMonoType
 
--- simple things with no brackets, complex things in brackets
-printSubType :: MonoType -> Text
-printSubType all'@(MTSum _ _) = inParens all'
-printSubType all'@(MTFunction _ _) = inParens all'
-printSubType all'@(MTList _) = inParens all'
-printSubType a = prettyPrint a
+----
+
+renderMonoType :: MonoType -> Doc ann
+renderMonoType MTUnit = "Unit"
+renderMonoType MTInt = "Int"
+renderMonoType MTString = "String"
+renderMonoType MTBool = "Boolean"
+renderMonoType (MTFunction a b) =
+  parens (renderMonoType a <+> "->" <+> renderMonoType b)
+renderMonoType (MTPair a b) =
+  tupled [renderMonoType a, renderMonoType b]
+renderMonoType (MTRecord as) =
+  enclose
+    lbrace
+    rbrace
+    ( mconcat $
+        punctuate
+          comma
+          ( indent 1 . renderItem
+              <$> M.toList as
+          )
+    )
+  where
+    renderItem (Name k, v) = pretty k <+> ":" <+> renderMonoType v
+renderMonoType (MTVar a) = case a of
+  (NamedVar (Name n)) -> pretty n
+  (NumberedVar i) -> pretty i
+  (BuiltIn (Name n)) -> pretty n
+  (BuiltInActual (Name n) _) -> pretty n
+renderMonoType (MTData (Construct n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))

@@ -44,9 +44,7 @@ applySubst subst ty = case ty of
     MTPair
       (applySubst subst a)
       (applySubst subst b)
-  MTList a -> MTList (applySubst subst a)
   MTRecord a -> MTRecord (applySubst subst <$> a)
-  MTSum a b -> MTSum (applySubst subst a) (applySubst subst b)
   MTData a ty' -> MTData a (applySubst subst <$> ty')
   MTInt -> MTInt
   MTString -> MTString
