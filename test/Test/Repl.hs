@@ -10,6 +10,7 @@ import Data.Either (isLeft, isRight)
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Repl
+import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
@@ -17,13 +18,29 @@ import Test.StoreData
 
 eval :: Project -> Text -> IO (Either Text (MonoType, Expr Variable))
 eval env input =
-  case evaluateText env input of
-    Right (mt, expr', scope', swaps) -> do
-      endExpr <- interpret scope' swaps expr'
-      case endExpr of
-        Right a -> pure (Right (mt, a))
-        Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+  case prettyPrintingParses input of
     Left e -> pure (Left $ prettyPrint e)
+    Right _ ->
+      case evaluateText env input of
+        Left e -> pure (Left $ prettyPrint e)
+        Right (mt, expr', scope', swaps) -> do
+          endExpr <- interpret scope' swaps expr'
+          case endExpr of
+            Right a -> pure (Right (mt, a))
+            Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+
+-- does the output of our prettyprinting still make sense to the parser?
+prettyPrintingParses :: Text -> Either Text ()
+prettyPrintingParses input = do
+  expr1 <- parseExpr input
+  expr2 <- parseExpr (prettyPrint expr1)
+  if expr1 /= expr2
+    then
+      Left
+        ( prettyPrint expr1 <> " <<< does not match >>> "
+            <> prettyPrint expr2
+        )
+    else pure ()
 
 spec :: Spec
 spec =
