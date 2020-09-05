@@ -10,7 +10,6 @@ import qualified Data.Char as Ch
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
-import Language.Mimsa.Printer
 
 newtype Construct = Construct {getConstruct' :: Text}
   deriving stock (Eq, Ord, Generic)
@@ -21,9 +20,6 @@ newtype Construct = Construct {getConstruct' :: Text}
       JSON.ToJSON,
       JSON.ToJSONKey
     )
-
-instance Printer Construct where
-  prettyPrint = getConstruct
 
 getConstruct :: Construct -> Text
 getConstruct (Construct t) = t

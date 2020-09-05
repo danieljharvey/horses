@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 37f5518d667e2536e879d9bb5fc30ed4ac0d67c97dbf57a7410b3ab13ebaacd5
+-- hash: e91a88b12cf31045271ac2e39a9d0bad96570523e1aab2b3dc3125deb70919d5
 
 name:           mimsa
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
       Language.Mimsa.Parser.Language
       Language.Mimsa.Parser.Parser
       Language.Mimsa.Printer
+      Language.Mimsa.Printer.MonoType
       Language.Mimsa.Project
       Language.Mimsa.Project.Persistence
       Language.Mimsa.Project.Usages
@@ -69,15 +70,18 @@ library
       Language.Mimsa.Typechecker.TcMonad
       Language.Mimsa.Typechecker.Unify
       Language.Mimsa.Types
-      Language.Mimsa.Types.AST
       Language.Mimsa.Types.Bindings
       Language.Mimsa.Types.Construct
+      Language.Mimsa.Types.DataType
       Language.Mimsa.Types.Environment
       Language.Mimsa.Types.Error
+      Language.Mimsa.Types.Expr
       Language.Mimsa.Types.ExprHash
       Language.Mimsa.Types.ForeignFunc
+      Language.Mimsa.Types.FuncName
       Language.Mimsa.Types.InterpreterError
       Language.Mimsa.Types.Library
+      Language.Mimsa.Types.Literal
       Language.Mimsa.Types.MonoType
       Language.Mimsa.Types.Name
       Language.Mimsa.Types.Project
@@ -87,6 +91,7 @@ library
       Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
       Language.Mimsa.Types.StoreExpression
+      Language.Mimsa.Types.StringType
       Language.Mimsa.Types.Substitutions
       Language.Mimsa.Types.Swaps
       Language.Mimsa.Types.Tui

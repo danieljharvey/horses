@@ -2,7 +2,7 @@ module Language.Mimsa.Types.Tui where
 
 import qualified Brick.Widgets.List as L
 import Data.List.NonEmpty (NonEmpty)
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Expr
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Project

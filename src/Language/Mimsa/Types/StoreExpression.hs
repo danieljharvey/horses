@@ -5,8 +5,8 @@ module Language.Mimsa.Types.StoreExpression where
 
 import qualified Data.Aeson as JSON
 import GHC.Generics
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Bindings
+import Language.Mimsa.Types.Expr
 import Language.Mimsa.Types.Name
 
 -- a storeExpression contains the AST Expr
