@@ -65,13 +65,13 @@ literalParser =
 complexParser :: Parser ParserExpr
 complexParser =
   letPairParser
+    <|> recordParser
     <|> letParser
     <|> ifParser
     <|> appParser
     <|> pairParser
     <|> recordAccessParser
     <|> lambdaParser
-    <|> recordParser
     <|> typeParser
     <|> constructorAppParser
     <|> caseMatchParser

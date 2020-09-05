@@ -15,9 +15,9 @@ data TypeName = ConsName Construct [TypeName] | VarName Name
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON)
 
 instance Printer TypeName where
-  prettyPrint (ConsName c tys) = prettyPrint c <> vars tys
+  prettyPrint (ConsName c []) = prettyPrint c
+  prettyPrint (ConsName c tys) = "(" <> prettyPrint c <> vars <> ")"
     where
-      vars ty = case ty of
-        [] -> ""
-        as -> T.intercalate " " (prettyPrint <$> as)
+      vars =
+        " " <> T.intercalate " " (prettyPrint <$> tys)
   prettyPrint (VarName v) = prettyPrint v

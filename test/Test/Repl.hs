@@ -8,6 +8,7 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Repl
 import Language.Mimsa.Syntax (parseExpr)
@@ -37,7 +38,12 @@ prettyPrintingParses input = do
   if expr1 /= expr2
     then
       Left
-        ( prettyPrint expr1 <> " <<< does not match >>> "
+        ( ">>>" <> T.pack (show expr1)
+            <> "<<< does not match >>>"
+            <> T.pack (show expr2)
+            <> "<<< "
+            <> prettyPrint expr1
+            <> " vs "
             <> prettyPrint expr2
         )
     else pure ()

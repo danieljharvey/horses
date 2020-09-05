@@ -72,10 +72,15 @@ data DataType
 instance Printer DataType where
   prettyPrint (DataType name' vars' constructors') =
     "type " <> prettyPrint name'
-      <> T.intercalate " " (prettyPrint <$> vars')
-      <> " "
-      <> T.intercalate " | " (printCons <$> M.toList constructors')
+      <> printVars vars'
+      <> if M.null constructors'
+        then " "
+        else
+          " = "
+            <> T.intercalate " | " (printCons <$> M.toList constructors')
     where
+      printVars [] = ""
+      printVars as = " " <> T.intercalate " " (prettyPrint <$> as)
       printCons (consName, args) =
         prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> args)
 
@@ -165,7 +170,7 @@ instance (Printer a) => Printer (Expr a) where
       <> " in "
       <> printSubExpr expr
   prettyPrint (MyConstructor name) = prettyPrint name
-  prettyPrint (MyConsApp fn val) = prettyPrint fn <> " " <> prettyPrint val
+  prettyPrint (MyConsApp fn val) = prettyPrint fn <> " " <> printSubExpr val
   prettyPrint (MyCaseMatch sumExpr matches catchAll) =
     "case "
       <> printSubExpr sumExpr
@@ -184,7 +189,10 @@ printSubExpr :: (Printer a) => Expr a -> Text
 printSubExpr expr = case expr of
   all'@MyLet {} -> inParens all'
   all'@MyLambda {} -> inParens all'
-  all'@MyApp {} -> inParens all'
+  all'@MyRecord {} -> inParens all'
   all'@MyIf {} -> inParens all'
+  all'@MyConstructor {} -> inParens all'
+  all'@MyConsApp {} -> inParens all'
+  all'@MyPair {} -> inParens all'
   a -> prettyPrint a
 -----------------
