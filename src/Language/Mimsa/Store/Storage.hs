@@ -17,9 +17,9 @@ import qualified Data.Hashable as Hash
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types
   ( ExprHash (..),
-    Printer (..),
     ServerUrl (..),
     StoreExpression (..),
   )

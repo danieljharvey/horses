@@ -5,8 +5,8 @@ module Language.Mimsa.Types.Variable where
 
 import qualified Data.Text as T
 import GHC.Generics
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
 
 data BiIds
   = NoId

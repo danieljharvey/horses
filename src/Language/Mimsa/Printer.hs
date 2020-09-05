@@ -1,7 +1,11 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Printer where
+module Language.Mimsa.Printer where
+
+-- all of the pretty printing will happen here
+-- rather than in the types files
+-- to keep those smaller
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -9,6 +13,13 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text.Prettyprint.Doc
+import Data.Text.Prettyprint.Doc.Render.Text
+
+renderWithWidth :: Int -> Doc ann -> Text
+renderWithWidth w doc = renderStrict (layoutPretty layoutOptions (unAnnotate doc))
+  where
+    layoutOptions = LayoutOptions {layoutPageWidth = AvailablePerLine w 1}
 
 class Printer a where
   prettyPrint :: a -> Text

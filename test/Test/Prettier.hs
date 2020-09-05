@@ -7,6 +7,7 @@ where
 
 import qualified Data.Map as M
 import qualified Data.Text.IO as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types
 import Test.Hspec
 

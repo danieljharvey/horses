@@ -11,11 +11,11 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import qualified Language.Mimsa.Parser as P
+import Language.Mimsa.Project (loadProject, saveProject)
 import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Project (loadProject, saveProject)
-import qualified Language.Mimsa.Syntax as P
 import Language.Mimsa.Types
 import System.Console.Haskeline
 

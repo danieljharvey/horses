@@ -8,10 +8,9 @@ where
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
-import Language.Mimsa.Syntax.Prettier
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Variable
 
 -------------

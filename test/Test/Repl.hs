@@ -10,8 +10,9 @@ import Data.Either (isLeft, isRight)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Interpreter
+import Language.Mimsa.Parser (parseExpr)
+import Language.Mimsa.Printer
 import Language.Mimsa.Repl
-import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec

@@ -5,9 +5,9 @@ module Language.Mimsa.Types.ResolvedDeps where
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.StoreExpression
 
 newtype ResolvedDeps = ResolvedDeps {getResolvedDeps :: Map Name (ExprHash, StoreExpression)}

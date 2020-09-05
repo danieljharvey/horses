@@ -10,7 +10,7 @@ import qualified Data.Char as Ch
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
-import Language.Mimsa.Types.Printer
+import Language.Mimsa.Printer
 
 newtype Name = Name {getName' :: Text}
   deriving stock (Eq, Ord, Generic)

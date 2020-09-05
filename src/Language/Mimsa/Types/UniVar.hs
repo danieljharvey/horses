@@ -6,7 +6,7 @@ module Language.Mimsa.Types.UniVar where
 
 import qualified Data.Text as T
 import GHC.Generics
-import Language.Mimsa.Types.Printer
+import Language.Mimsa.Printer
 
 newtype UniVar = UniVar Int
   deriving stock (Eq, Ord, Generic)

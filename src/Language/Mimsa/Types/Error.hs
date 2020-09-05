@@ -3,8 +3,8 @@
 module Language.Mimsa.Types.Error where
 
 import Data.Text (Text)
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.InterpreterError
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.ResolverError
 import Language.Mimsa.Types.TypeError
 import Language.Mimsa.Types.Usage

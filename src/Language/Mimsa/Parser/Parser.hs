@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Syntax.Parser where
+module Language.Mimsa.Parser.Parser where
 
 import Control.Applicative
 import Control.Monad ((>=>))

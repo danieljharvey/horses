@@ -3,8 +3,8 @@
 module Language.Mimsa.Types.Scheme where
 
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Variable
 
 data Scheme = Scheme [Variable] MonoType

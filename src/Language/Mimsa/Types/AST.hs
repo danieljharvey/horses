@@ -21,9 +21,9 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.TypeName
 
 ------------

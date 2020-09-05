@@ -8,8 +8,8 @@ where
 import Data.Either (isLeft, isRight)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Language.Mimsa.Syntax
-import qualified Language.Mimsa.Syntax as P
+import Language.Mimsa.Parser
+import qualified Language.Mimsa.Parser as P
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec

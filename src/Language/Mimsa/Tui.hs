@@ -12,6 +12,7 @@ import qualified Brick.Widgets.Center as C
 import qualified Brick.Widgets.List as L
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Tui.Elements
 import Language.Mimsa.Tui.Evaluate
 import Language.Mimsa.Tui.State

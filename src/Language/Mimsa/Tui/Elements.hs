@@ -8,8 +8,8 @@ import qualified Brick.Widgets.Border.Style as B
 import qualified Brick.Widgets.Center as C
 import qualified Brick.Widgets.List as L
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Tui.Styles
-import Language.Mimsa.Types
 
 -- file for generic reusable UI pieces that don't know about our state
 

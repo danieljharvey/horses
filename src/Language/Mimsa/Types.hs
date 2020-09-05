@@ -13,7 +13,6 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.ResolvedDeps,
     module Language.Mimsa.Types.Environment,
     module Language.Mimsa.Types.Error,
-    module Language.Mimsa.Types.Printer,
     module Language.Mimsa.Types.ResolverError,
     module Language.Mimsa.Types.InterpreterError,
     module Language.Mimsa.Types.Variable,
@@ -41,7 +40,6 @@ import Language.Mimsa.Types.InterpreterError
 import Language.Mimsa.Types.Library
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps
 import Language.Mimsa.Types.ResolverError
