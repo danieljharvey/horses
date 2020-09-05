@@ -26,6 +26,7 @@ import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.StringType
 import Language.Mimsa.Types.TypeName
+import Language.Mimsa.Types.UniVar
 import Language.Mimsa.Types.Variable
 
 renderWithWidth :: Int -> Doc ann -> Text
@@ -241,3 +242,8 @@ instance Printer TypeName where
       vars =
         " " <> T.intercalate " " (prettyPrint <$> tys)
   prettyPrint (VarName v) = prettyPrint v
+
+-----
+
+instance Printer UniVar where
+  prettyPrint (UniVar a) = T.pack . show $ a
