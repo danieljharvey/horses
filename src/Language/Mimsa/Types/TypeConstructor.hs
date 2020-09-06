@@ -3,9 +3,9 @@
 module Language.Mimsa.Types.TypeConstructor where
 
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Printer
 
 data TypeConstructor
   = TypeConstructor
@@ -13,6 +13,7 @@ data TypeConstructor
         tcTypeVars :: [MonoType],
         tcConsTypes :: [MonoType]
       }
+  deriving (Show)
 
 instance Printer TypeConstructor where
   prettyPrint (TypeConstructor consName _tyTypeVars consTypes) =

@@ -4,6 +4,7 @@ module Language.Mimsa.Repl.Types where
 
 import Control.Monad.Except
 import qualified Data.Text.IO as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types
 
 type ReplM = ExceptT Error IO

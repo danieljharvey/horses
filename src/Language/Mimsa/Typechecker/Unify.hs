@@ -21,9 +21,7 @@ freeTypeVars ty = case ty of
   MTFunction t1 t2 ->
     S.union (freeTypeVars t1) (freeTypeVars t2)
   MTPair t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
-  MTSum l r -> S.union (freeTypeVars l) (freeTypeVars r)
   MTRecord as -> foldr S.union mempty (freeTypeVars <$> as)
-  MTList as -> freeTypeVars as
   MTData _ as -> foldr S.union mempty (freeTypeVars <$> as)
   MTString -> S.empty
   MTInt -> S.empty
@@ -58,9 +56,6 @@ unify tyA tyB =
     (MTFunction l r, MTFunction l' r') ->
       unifyPairs (l, r) (l', r')
     (MTPair a b, MTPair a' b') -> unifyPairs (a, b) (a', b')
-    (MTSum a b, MTSum a' b') ->
-      unifyPairs (a, b) (a', b')
-    (MTList a, MTList a') -> unify a a'
     (MTRecord as, MTRecord bs) -> do
       let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
       let getRecordTypes k = do

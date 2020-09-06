@@ -3,9 +3,9 @@
 module Language.Mimsa.Types.Usage where
 
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
 
 data Usage
   = Transient Name ExprHash

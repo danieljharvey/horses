@@ -9,6 +9,7 @@ where
 -- import qualified Data.Aeson as JSON
 import Test.Hspec
 import qualified Test.Interpreter as Interpreter
+import qualified Test.Prettier as Prettier
 import Test.QuickCheck.Instances ()
 import qualified Test.Repl as Repl
 import qualified Test.Resolver as Resolver
@@ -22,6 +23,7 @@ main :: IO ()
 main = hspec $ do
   Syntax.spec
   Interpreter.spec
+  Prettier.spec
   Resolver.spec
   Substitutor.spec
   Typechecker.spec

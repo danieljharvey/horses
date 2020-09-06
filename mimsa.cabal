@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 168bf7ffdd112ec8bb39f436590307a3accd7af20ee18ae4a195b4d2a8df16b9
+-- hash: 33f17bd8699615f828000a63f7d1eb73e0af3d84c8c36ecaf328260e3a59e482
 
 name:           mimsa
 version:        0.1.0.0
@@ -36,6 +36,10 @@ library
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Library
       Language.Mimsa.Logging
+      Language.Mimsa.Parser
+      Language.Mimsa.Parser.Language
+      Language.Mimsa.Parser.Parser
+      Language.Mimsa.Printer
       Language.Mimsa.Project
       Language.Mimsa.Project.Persistence
       Language.Mimsa.Project.Usages
@@ -51,9 +55,6 @@ library
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
       Language.Mimsa.Store.Substitutor
-      Language.Mimsa.Syntax
-      Language.Mimsa.Syntax.Language
-      Language.Mimsa.Syntax.Parser
       Language.Mimsa.Tui
       Language.Mimsa.Tui.Elements
       Language.Mimsa.Tui.Evaluate
@@ -68,18 +69,20 @@ library
       Language.Mimsa.Typechecker.TcMonad
       Language.Mimsa.Typechecker.Unify
       Language.Mimsa.Types
-      Language.Mimsa.Types.AST
       Language.Mimsa.Types.Bindings
       Language.Mimsa.Types.Construct
+      Language.Mimsa.Types.DataType
       Language.Mimsa.Types.Environment
       Language.Mimsa.Types.Error
+      Language.Mimsa.Types.Expr
       Language.Mimsa.Types.ExprHash
       Language.Mimsa.Types.ForeignFunc
+      Language.Mimsa.Types.FuncName
       Language.Mimsa.Types.InterpreterError
       Language.Mimsa.Types.Library
+      Language.Mimsa.Types.Literal
       Language.Mimsa.Types.MonoType
       Language.Mimsa.Types.Name
-      Language.Mimsa.Types.Printer
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.ResolvedDeps
       Language.Mimsa.Types.ResolverError
@@ -87,6 +90,7 @@ library
       Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
       Language.Mimsa.Types.StoreExpression
+      Language.Mimsa.Types.StringType
       Language.Mimsa.Types.Substitutions
       Language.Mimsa.Types.Swaps
       Language.Mimsa.Types.Tui
@@ -113,6 +117,7 @@ library
     , microlens
     , modern-uri
     , mtl
+    , prettyprinter
     , random
     , req
     , text
@@ -142,6 +147,7 @@ executable mimsa
     , mimsa
     , modern-uri
     , mtl
+    , prettyprinter
     , random
     , req
     , text
@@ -156,6 +162,7 @@ test-suite mimsa-test
   other-modules:
       Test.Helpers
       Test.Interpreter
+      Test.Prettier
       Test.Repl
       Test.Resolver
       Test.StoreData
@@ -185,6 +192,7 @@ test-suite mimsa-test
     , mimsa
     , modern-uri
     , mtl
+    , prettyprinter
     , quickcheck-instances
     , random
     , req

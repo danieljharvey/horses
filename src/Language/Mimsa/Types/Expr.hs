@@ -1,15 +1,10 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.AST
+module Language.Mimsa.Types.Expr
   ( Expr (..),
-    Literal (..),
-    FuncName (..),
-    StringType (..),
-    DataType (..),
   )
 where
 
@@ -21,63 +16,11 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Construct
+import Language.Mimsa.Types.DataType
+import Language.Mimsa.Types.Literal
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
-import Language.Mimsa.Types.TypeName
-
-------------
-
-newtype StringType = StringType Text
-  deriving newtype (Eq, Ord, Show, JSON.FromJSON, JSON.ToJSON)
-
-instance Printer StringType where
-  prettyPrint (StringType s) = s
-
---------
-
-newtype FuncName = FuncName Text
-  deriving stock (Eq, Ord, Generic)
-  deriving newtype (Show, JSON.FromJSON, JSON.ToJSON)
-
-instance Printer FuncName where
-  prettyPrint (FuncName a) = a
-
--------
-
-data Literal
-  = MyInt Int
-  | MyBool Bool
-  | MyString StringType
-  | MyUnit
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
-
-instance Printer Literal where
-  prettyPrint (MyInt i) = T.pack (show i)
-  prettyPrint (MyBool True) = "True"
-  prettyPrint (MyBool False) = "False"
-  prettyPrint (MyString str) = "\"" <> prettyPrint str <> "\""
-  prettyPrint MyUnit = "Unit"
-
--------
-
-data DataType
-  = DataType
-      { dtName :: Construct,
-        dtVars :: [Name],
-        dtConstructors :: Map Construct [TypeName]
-      }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
-
-instance Printer DataType where
-  prettyPrint (DataType name' vars' constructors') =
-    "type " <> prettyPrint name'
-      <> T.intercalate " " (prettyPrint <$> vars')
-      <> " "
-      <> T.intercalate " | " (printCons <$> M.toList constructors')
-    where
-      printCons (consName, args) =
-        prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> args)
 
 -------
 
@@ -98,7 +41,7 @@ data Expr a
   | MyCaseMatch (Expr a) (NonEmpty (Construct, Expr a)) (Maybe (Expr a)) -- expr, matches, catchAll
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
-instance (Printer a) => Printer (Expr a) where
+instance (Show a, Printer a) => Printer (Expr a) where
   prettyPrint (MyLiteral l) = prettyPrint l
   prettyPrint (MyVar var) = prettyPrint var
   prettyPrint (MyLet var expr1 expr2) =
@@ -165,7 +108,7 @@ instance (Printer a) => Printer (Expr a) where
       <> " in "
       <> printSubExpr expr
   prettyPrint (MyConstructor name) = prettyPrint name
-  prettyPrint (MyConsApp fn val) = prettyPrint fn <> " " <> prettyPrint val
+  prettyPrint (MyConsApp fn val) = prettyPrint fn <> " " <> printSubExpr val
   prettyPrint (MyCaseMatch sumExpr matches catchAll) =
     "case "
       <> printSubExpr sumExpr
@@ -176,15 +119,17 @@ instance (Printer a) => Printer (Expr a) where
       printMatch (construct, expr') =
         prettyPrint construct <> " " <> printSubExpr expr'
 
-inParens :: (Printer a) => a -> Text
+inParens :: (Show a, Printer a) => a -> Text
 inParens a = "(" <> prettyPrint a <> ")"
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubExpr :: (Printer a) => Expr a -> Text
+printSubExpr :: (Show a, Printer a) => Expr a -> Text
 printSubExpr expr = case expr of
   all'@MyLet {} -> inParens all'
   all'@MyLambda {} -> inParens all'
-  all'@MyApp {} -> inParens all'
+  all'@MyRecord {} -> inParens all'
   all'@MyIf {} -> inParens all'
+  all'@MyConstructor {} -> inParens all'
+  all'@MyConsApp {} -> inParens all'
+  all'@MyPair {} -> inParens all'
   a -> prettyPrint a
------------------

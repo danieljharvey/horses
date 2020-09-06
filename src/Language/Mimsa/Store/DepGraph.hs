@@ -6,6 +6,7 @@ import Data.Map ((!))
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types
 

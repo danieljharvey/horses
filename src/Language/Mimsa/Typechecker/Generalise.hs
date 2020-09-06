@@ -11,8 +11,6 @@ freeVars :: MonoType -> [Variable]
 freeVars (MTVar b) = [b]
 freeVars (MTFunction t1 t2) = freeVars t1 <> freeVars t2
 freeVars (MTPair a b) = freeVars a <> freeVars b
-freeVars (MTSum a b) = freeVars a <> freeVars b
-freeVars (MTList a) = freeVars a
 freeVars (MTRecord as) = mconcat (freeVars . snd <$> M.toList as)
 freeVars MTInt = mempty
 freeVars MTString = mempty

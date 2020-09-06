@@ -38,6 +38,7 @@ dependencies:
 - microlens # tui
 - req # store fetching
 - modern-uri # store fetching
+- prettyprinter # formatting
 
 library:
   source-dirs: src

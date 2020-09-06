@@ -5,7 +5,7 @@ module Test.StoreData where
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Syntax (parseExpr)
+import Language.Mimsa.Parser (parseExpr)
 import Language.Mimsa.Types
 
 fstExpr :: StoreExpression

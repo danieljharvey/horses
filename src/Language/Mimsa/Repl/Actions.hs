@@ -18,12 +18,13 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter (interpret)
+import Language.Mimsa.Parser (parseExpr)
+import Language.Mimsa.Printer
 import Language.Mimsa.Project (getCurrentBindings)
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Repl.Watcher
 import Language.Mimsa.Store (createDepGraph, saveExpr)
-import Language.Mimsa.Syntax (parseExpr)
 import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
 

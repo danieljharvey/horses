@@ -5,11 +5,11 @@ module Test.Syntax
   )
 where
 
-import Data.Either (isLeft)
+import Data.Either (isLeft, isRight)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Language.Mimsa.Syntax
-import qualified Language.Mimsa.Syntax as P
+import Language.Mimsa.Parser
+import qualified Language.Mimsa.Parser as P
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
@@ -77,6 +77,13 @@ spec = do
     it "Recognises a lambda in parens" $
       parseExpr "(\\x -> x)"
         `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
+    it "Recognises nested lambdas in parens" $
+      parseExpr "(\\a -> (\\b -> a))"
+        `shouldBe` Right
+          ( MyLambda
+              (mkName "a")
+              (MyLambda (mkName "b") (MyVar (mkName "a")))
+          )
     it "Recognises function application in parens" $
       parseExpr "add (1)"
         `shouldBe` Right
@@ -129,6 +136,20 @@ spec = do
               (MyPair (int 1) (int 2))
               (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
           )
+    it "Allows a let to use a nested lambda" $
+      parseExpr "let const2 = (\\a -> (\\b -> a)) in (const2)"
+        `shouldBe` Right
+          ( MyLet
+              (mkName "const2")
+              ( MyLambda
+                  (mkName "a")
+                  (MyLambda (mkName "b") (MyVar (mkName "a")))
+              )
+              (MyVar (mkName "const2"))
+          )
+    it "Parses a complex let expression" $
+      parseExpr "let const2 = (\\a -> (\\b -> a)) in (let reuse = ({first: const2(True), second: const2(2)}) in reuse.second(100))"
+        `shouldSatisfy` isRight
     it "Parses an empty record literal" $
       parseExpr "{}" `shouldBe` Right (MyRecord mempty)
     it "Parses a record literal with a single item inside" $
@@ -137,6 +158,16 @@ spec = do
           (MyRecord (M.singleton (mkName "dog") (int 1)))
     it "Parses a record literal with multiple items inside" $
       parseExpr "{ dog:1, cat:True, horse:\"of course\" }"
+        `shouldBe` Right
+          ( MyRecord $
+              M.fromList
+                [ (mkName "dog", int 1),
+                  (mkName "cat", bool True),
+                  (mkName "horse", str' "of course")
+                ]
+          )
+    it "Parses a record literal with multiple items inside and less spacing" $
+      parseExpr "{dog:1,cat:True,horse:\"of course\"}"
         `shouldBe` Right
           ( MyRecord $
               M.fromList

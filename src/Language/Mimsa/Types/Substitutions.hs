@@ -6,8 +6,8 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Variable
 
 ---
@@ -44,9 +44,7 @@ applySubst subst ty = case ty of
     MTPair
       (applySubst subst a)
       (applySubst subst b)
-  MTList a -> MTList (applySubst subst a)
   MTRecord a -> MTRecord (applySubst subst <$> a)
-  MTSum a b -> MTSum (applySubst subst a) (applySubst subst b)
   MTData a ty' -> MTData a (applySubst subst <$> ty')
   MTInt -> MTInt
   MTString -> MTString

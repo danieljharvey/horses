@@ -3,8 +3,8 @@
 module Language.Mimsa.Repl.Parser where
 
 import Control.Applicative ((<|>))
+import Language.Mimsa.Parser
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Syntax
 
 replParser :: Parser ReplAction
 replParser =

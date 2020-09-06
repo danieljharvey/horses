@@ -2,12 +2,12 @@
 
 module Language.Mimsa.Types.InterpreterError where
 
-import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Map (Map)
 import qualified Data.Text as T
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Printer
+import Language.Mimsa.Types.Expr
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Variable
 
@@ -28,6 +28,12 @@ data InterpreterError
   | SelfReferencingBinding Variable
   deriving (Eq, Ord, Show)
 
+instance Semigroup InterpreterError where
+  a <> _ = a
+
+instance Monoid InterpreterError where
+  mempty = UnknownInterpreterError
+
 instance Printer InterpreterError where
   prettyPrint (CouldNotFindVar _ name) = "Could not find var " <> prettyPrint name
   prettyPrint (CouldNotFindBuiltIn _ name) = "Could not find built-in " <> prettyPrint name
@@ -36,18 +42,12 @@ instance Printer InterpreterError where
   prettyPrint (CannotDestructureAsRecord expr name) = "Expected a record with a member " <> prettyPrint name <> ". Cannot destructure: " <> prettyPrint expr
   prettyPrint (CannotDestructureAsList expr) = "Expected a list. Cannot destructure: " <> prettyPrint expr
   prettyPrint (CannotApplyToNonFunction expr) = "Expected a function. Cannot apply a value to " <> prettyPrint expr
-  prettyPrint (CannotFindMemberInRecord items name) = "Could not find member " <> prettyPrint name <> " in " <> list
+  prettyPrint (CannotFindMemberInRecord items name) = "Could not find member " <> prettyPrint name <> " in " <> itemList
     where
-      list = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
   prettyPrint (PredicateForIfMustBeABoolean expr) = "Expected a boolean as a predicate. Cannot use: " <> prettyPrint expr
   prettyPrint (CouldNotUnwrapBuiltIn name) = "Could unwrap built-in " <> prettyPrint name
   prettyPrint (CouldNotMatchBuiltInId ids) = "Could not match built in ids " <> prettyPrint ids
   prettyPrint (PatternMatchFailure expr') = "Could not pattern match on value " <> prettyPrint expr'
   prettyPrint (SelfReferencingBinding b) = "Could not bind variable " <> prettyPrint b <> " to itself."
   prettyPrint UnknownInterpreterError = "Unknown interpreter error"
-
-instance Semigroup InterpreterError where
-  a <> _ = a
-
-instance Monoid InterpreterError where
-  mempty = UnknownInterpreterError

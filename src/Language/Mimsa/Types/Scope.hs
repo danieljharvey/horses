@@ -7,8 +7,8 @@ module Language.Mimsa.Types.Scope where
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Printer
+import Language.Mimsa.Printer
+import Language.Mimsa.Types.Expr
 import Language.Mimsa.Types.Variable
 
 -- dependencies resolved into actual expressions

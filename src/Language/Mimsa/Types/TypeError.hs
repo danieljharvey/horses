@@ -5,19 +5,20 @@ module Language.Mimsa.Types.TypeError
   )
 where
 
+import Data.Foldable (fold)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Text (Text)
-import qualified Data.Text as T
-import Language.Mimsa.Types.AST
+import Data.Text.Prettyprint.Doc
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Construct
+import Language.Mimsa.Types.DataType
 import Language.Mimsa.Types.Environment
+import Language.Mimsa.Types.Expr
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Printer
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Variable
 
@@ -32,7 +33,6 @@ data TypeError
   | CannotUnifyBoundVariable Variable MonoType
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedPair MonoType
-  | CaseMatchExpectedLambda (Expr Variable) (Expr Variable)
   | CannotCaseMatchOnType (Expr Variable)
   | TypeConstructorNotInScope Environment Construct
   | TypeIsNotConstructor (Expr Variable)
@@ -44,86 +44,117 @@ data TypeError
   | MixedUpPatterns [Construct]
   deriving (Eq, Ord, Show)
 
-showKeys :: (Printer p) => Map p a -> Text
-showKeys record = T.intercalate ", " (prettyPrint <$> M.keys record)
-
-showSet :: (Printer a) => Set a -> Text
-showSet set = T.intercalate ", " (prettyPrint <$> S.toList set)
-
-showMap :: (Printer k, Printer a) => Map k a -> Text
-showMap map' = T.intercalate ", " (prettyPrint <$> M.toList map')
-
-withSwap :: Swaps -> Variable -> Name
-withSwap _ (BuiltIn n) = n
-withSwap _ (BuiltInActual n _) = n
-withSwap _ (NamedVar n) = n
-withSwap swaps (NumberedVar i) = fromMaybe (mkName "unknownvar") (M.lookup (NumberedVar i) swaps)
-
-instance Printer TypeError where
-  prettyPrint UnknownTypeError =
-    "Unknown type error"
-  prettyPrint (FailsOccursCheck swaps name mt) =
-    prettyPrint name <> " appears inside " <> prettyPrint mt <> ". Swaps: " <> showMap swaps
-  prettyPrint (UnificationError a b) =
-    "Unification error - cannot match " <> prettyPrint a <> " and " <> prettyPrint b
-  prettyPrint (CannotUnifyBoundVariable tv mt) =
-    "Cannot unify type " <> prettyPrint mt <> " with bound variable " <> prettyPrint tv
-  prettyPrint (CannotCaseMatchOnType ty) = "Cannot case match on type: " <> prettyPrint ty
-  prettyPrint (VariableNotInEnv swaps name members) =
-    "Variable " <> prettyPrint (withSwap swaps name) <> " not in scope: { " <> showSet members <> " }"
-  prettyPrint (MissingRecordMember name members) =
-    "Cannot find " <> prettyPrint name <> " in { " <> showSet members <> " }"
-  prettyPrint (MissingRecordTypeMember name types) =
-    "Cannot find " <> prettyPrint name <> " in { " <> showKeys types <> " }"
-  prettyPrint (MissingBuiltIn name) =
-    "Cannot find built-in function " <> prettyPrint name
-  prettyPrint (CannotMatchRecord env mt) =
-    "Cannot match type " <> prettyPrint mt <> " to record in { " <> prettyPrint env <> " }"
-  prettyPrint (CaseMatchExpectedPair mt) =
-    "Expected pair but got " <> prettyPrint mt
-  prettyPrint (CaseMatchExpectedLambda l r) =
-    "Expected lambdas but got " <> prettyPrint l <> " and " <> prettyPrint r
-  prettyPrint (TypeConstructorNotInScope env name) =
-    "Type constructor for " <> prettyPrint name
-      <> " not found in scope: "
-      <> printDataTypes env
-  prettyPrint (TypeIsNotConstructor a) =
-    "Type " <> prettyPrint a <> " is not a constructor"
-  prettyPrint (ConflictingConstructors name) =
-    "Multiple constructors found matching " <> prettyPrint name
-  prettyPrint (CannotApplyToType name) =
-    "Cannot apply value to " <> prettyPrint name
-  prettyPrint (DuplicateTypeDeclaration name) =
-    "Cannot redeclare existing type name " <> prettyPrint name
-  prettyPrint (TypeVariableNotInDataType ty a as) =
-    "Type variable " <> prettyPrint a <> " could not be in found in type vars for " <> prettyPrint ty
-      <> ". The following type variables were found: ["
-      <> T.intercalate ", " (prettyPrint <$> as)
-      <> "]"
-  prettyPrint (IncompletePatternMatch names) =
-    "Incomplete pattern match. Missing constructors: ["
-      <> T.intercalate ", " (prettyPrint <$> names)
-      <> "]"
-  prettyPrint (MixedUpPatterns names) =
-    "Mixed up patterns in same match. Constructors: ["
-      <> T.intercalate ", " (prettyPrint <$> names)
-      <> "]"
-
-printDataTypes :: Environment -> Text
-printDataTypes env = T.intercalate "\n" $ snd <$> M.toList (printDt <$> getDataTypes env)
-  where
-    printDt (DataType tyName tyVars constructors) =
-      prettyPrint tyName <> " " <> printTyVars tyVars
-        <> ": "
-        <> T.intercalate " | " (printCons <$> M.toList constructors)
-    printTyVars as = T.intercalate " " (prettyPrint <$> as)
-    printCons (consName, args) =
-      prettyPrint consName
-        <> " "
-        <> T.intercalate " " (prettyPrint <$> args)
-
 instance Semigroup TypeError where
   a <> _ = a
 
 instance Monoid TypeError where
   mempty = UnknownTypeError
+
+instance Printer TypeError where
+  prettyDoc = vsep . renderTypeError
+
+showKeys :: (p -> Doc ann) -> Map p a -> [Doc ann]
+showKeys renderP record = renderP <$> M.keys record
+
+showSet :: (a -> Doc ann) -> Set a -> [Doc ann]
+showSet renderA set = renderA <$> S.toList set
+
+showMap :: (k -> Doc ann) -> (a -> Doc ann) -> Map k a -> [Doc ann]
+showMap renderK renderA map' =
+  (\(k, a) -> renderK k <+> ":" <+> renderA a)
+    <$> M.toList map'
+
+withSwap :: Swaps -> Variable -> Name
+withSwap _ (BuiltIn n) = n
+withSwap _ (BuiltInActual n _) = n
+withSwap _ (NamedVar n) = n
+withSwap swaps (NumberedVar i) =
+  fromMaybe
+    (mkName "unknownvar")
+    (M.lookup (NumberedVar i) swaps)
+
+renderTypeError :: TypeError -> [Doc ann]
+renderTypeError UnknownTypeError =
+  ["Unknown type error"]
+renderTypeError (FailsOccursCheck swaps var mt) =
+  [ prettyDoc var <+> "appears inside" <+> prettyDoc mt <+> ".",
+    "Swaps:"
+  ]
+    <> showMap prettyDoc prettyDoc swaps
+renderTypeError (UnificationError a b) =
+  [ "Unification error",
+    "Cannot match" <+> prettyDoc a <+> "and" <+> prettyDoc b
+  ]
+renderTypeError (CannotUnifyBoundVariable tv mt) =
+  ["Cannot unify type", prettyDoc mt, "with bound variable" <+> prettyDoc tv]
+renderTypeError (CannotCaseMatchOnType ty) =
+  ["Cannot case match on type", pretty (show ty)]
+renderTypeError (VariableNotInEnv swaps name members) =
+  ["Variable" <+> renderName (withSwap swaps name) <+> " not in scope."]
+    <> showSet prettyDoc members
+renderTypeError (MissingRecordMember name members) =
+  [ "Cannot find" <+> prettyDoc name <+> ".",
+    "The following are available:"
+  ]
+    <> showSet renderName members
+renderTypeError (MissingRecordTypeMember name types) =
+  [ "Cannot find" <+> renderName name <+> ".",
+    "The following types are available:"
+  ]
+    <> showKeys renderName types
+renderTypeError (MissingBuiltIn var) =
+  ["Cannot find built-in function" <+> prettyDoc var]
+renderTypeError (CannotMatchRecord env mt) =
+  [ "Cannot match type" <+> prettyDoc mt <+> "to record.",
+    "The following are available:",
+    pretty (show env)
+  ]
+renderTypeError (CaseMatchExpectedPair mt) =
+  ["Expected pair but got" <+> prettyDoc mt]
+renderTypeError (TypeConstructorNotInScope env constructor) =
+  [ "Type constructor for" <+> prettyDoc constructor
+      <+> "not found in scope.",
+    "The following are available:"
+  ]
+    <> printDataTypes env
+renderTypeError (TypeIsNotConstructor expr) =
+  ["Type" <+> pretty (show expr) <+> "is not a constructor."]
+renderTypeError (ConflictingConstructors constructor) =
+  ["Multiple constructors found matching" <+> prettyDoc constructor]
+renderTypeError (CannotApplyToType constructor) =
+  ["Cannot apply value to" <+> prettyDoc constructor]
+renderTypeError (DuplicateTypeDeclaration constructor) =
+  ["Cannot redeclare existing type name" <+> prettyDoc constructor]
+renderTypeError (TypeVariableNotInDataType constructor name as) =
+  [ "Type variable" <+> renderName name
+      <+> "could not be in found in type vars for"
+      <+> prettyDoc constructor,
+    "The following type variables were found:"
+  ]
+    <> (renderName <$> as)
+renderTypeError (IncompletePatternMatch names) =
+  [ "Incomplete pattern match.",
+    "Missing constructors:"
+  ]
+    <> (prettyDoc <$> names)
+renderTypeError (MixedUpPatterns names) =
+  [ "Mixed up patterns in same match.",
+    "Constructors:"
+  ]
+    <> (prettyDoc <$> names)
+
+printDataTypes :: Environment -> [Doc ann]
+printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
+  where
+    printDt :: DataType -> [Doc ann]
+    printDt (DataType tyName tyVars constructors) =
+      [prettyDoc tyName] <> printTyVars tyVars
+        <> zipWith (<>) (":" : repeat "|") (printCons <$> M.toList constructors)
+    printTyVars as = renderName <$> as
+    printCons (consName, args) =
+      fold
+        ( [ prettyDoc
+              consName
+          ]
+            <> (prettyDoc <$> args)
+        )
