@@ -31,8 +31,8 @@ class Printer a where
   prettyPrint = renderWithWidth 40 . prettyDoc
 
   prettyDoc :: a -> Doc ann
-  default prettyDoc :: (Show a) => a -> Doc ann
-  prettyDoc = pretty . show
+  default prettyDoc :: a -> Doc ann
+  prettyDoc = pretty . T.unpack . prettyPrint
 
 instance Printer Text where
   prettyPrint a = a
