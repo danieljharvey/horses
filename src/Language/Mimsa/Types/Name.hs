@@ -9,7 +9,12 @@ import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text.Prettyprint.Doc
 import GHC.Generics
+import Language.Mimsa.Printer
+
+renderName :: Name -> Doc ann
+renderName = pretty . getName
 
 newtype Name = Name {getName' :: Text}
   deriving stock (Eq, Ord, Generic)
@@ -42,3 +47,6 @@ safeMkName a =
   if validName a
     then Just (Name a)
     else Nothing
+
+instance Printer Name where
+  prettyDoc = renderName

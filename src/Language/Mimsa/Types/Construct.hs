@@ -9,7 +9,9 @@ import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text.Prettyprint.Doc
 import GHC.Generics
+import Language.Mimsa.Printer
 
 newtype Construct = Construct {getConstruct' :: Text}
   deriving stock (Eq, Ord, Generic)
@@ -42,3 +44,6 @@ safeMkConstruct a =
   if validConstruct a
     then Just (Construct a)
     else Nothing
+
+instance Printer Construct where
+  prettyDoc = pretty . getConstruct

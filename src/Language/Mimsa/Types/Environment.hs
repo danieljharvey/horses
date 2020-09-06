@@ -1,6 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Language.Mimsa.Types.Environment where
 
 import Data.Map (Map)
+import qualified Data.Map as M
+import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.DataType
 import Language.Mimsa.Types.Scheme
@@ -19,3 +24,12 @@ instance Semigroup Environment where
 
 instance Monoid Environment where
   mempty = Environment mempty mempty
+
+instance Printer Environment where
+  prettyPrint (Environment typeSchemes _dataTypes) =
+    "[\n"
+      <> T.intercalate ", \n" (printRow <$> M.toList typeSchemes)
+      <> "\n]"
+    where
+      printRow (var, scheme) =
+        prettyPrint var <> ": " <> prettyPrint scheme
