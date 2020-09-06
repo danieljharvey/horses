@@ -9,7 +9,3 @@ type FFExpr = Expr Variable
 data ForeignFunc
   = NoArgs MonoType (IO FFExpr)
   | OneArg (MonoType, MonoType) (FFExpr -> IO FFExpr)
-  | TwoArgs (MonoType, MonoType, MonoType) (FFExpr -> FFExpr -> IO FFExpr)
-  | ThreeArgs
-      (MonoType, MonoType, MonoType, MonoType)
-      (FFExpr -> FFExpr -> FFExpr -> IO FFExpr)
