@@ -1,11 +1,17 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Printer where
+module Language.Mimsa.Printer
+  ( Printer (..),
+    renderWithWidth,
+  )
+where
 
--- all of the pretty printing will happen here
--- rather than in the types files
--- to keep those smaller
+-- the Printer type class is used for internal debugging
+-- instances will mostly use the Prettyprinter render functions
+
+-- for code output etc it is better to combine the render function output
+-- directly so that the whole lot is arranged together
 
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -16,18 +22,12 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.Text
+import Language.Mimsa.Printer.Construct
 import Language.Mimsa.Printer.MonoType
-import Language.Mimsa.Types.Construct
-import Language.Mimsa.Types.DataType
-import Language.Mimsa.Types.Expr
-import Language.Mimsa.Types.FuncName
-import Language.Mimsa.Types.Literal
-import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.StringType
-import Language.Mimsa.Types.TypeName
-import Language.Mimsa.Types.UniVar
-import Language.Mimsa.Types.Variable
+import Language.Mimsa.Printer.Name
+import Language.Mimsa.Printer.TypeError
+import Language.Mimsa.Printer.Variable
+import Language.Mimsa.Types
 
 renderWithWidth :: Int -> Doc ann -> Text
 renderWithWidth w doc = renderStrict (layoutPretty layoutOptions (unAnnotate doc))
@@ -81,7 +81,7 @@ instance Printer MonoType where
 ----
 
 instance Printer Name where
-  prettyPrint = getName
+  prettyPrint = renderWithWidth 40 . renderName
 
 ----
 
@@ -92,15 +92,12 @@ instance Printer BiIds where
   prettyPrint (ThreeIds v1 v2 v3) = T.intercalate ", " (prettyPrint <$> [v1, v2, v3])
 
 instance Printer Variable where
-  prettyPrint (NamedVar n) = prettyPrint n
-  prettyPrint (NumberedVar i) = "U" <> T.pack (show i)
-  prettyPrint (BuiltIn n) = prettyPrint n
-  prettyPrint (BuiltInActual n _) = prettyPrint n
+  prettyPrint = renderWithWidth 40 . renderVariable
 
 ----
 
 instance Printer Construct where
-  prettyPrint = getConstruct
+  prettyPrint = renderWithWidth 40 . renderConstruct
 
 ----
 
@@ -247,3 +244,123 @@ instance Printer TypeName where
 
 instance Printer UniVar where
   prettyPrint (UniVar a) = T.pack . show $ a
+
+-----
+
+instance Printer Bindings where
+  prettyPrint (Bindings b) = "{ " <> T.intercalate ", " (prettyPrint <$> M.keys b) <> " }"
+
+-----
+
+instance Printer Environment where
+  prettyPrint (Environment typeSchemes _dataTypes) =
+    "[\n"
+      <> T.intercalate ", \n" (printRow <$> M.toList typeSchemes)
+      <> "\n]"
+    where
+      printRow (var, scheme) =
+        prettyPrint var <> ": " <> prettyPrint scheme
+
+---
+
+instance Printer Error where
+  prettyPrint (TypeErr t) = "TypeError: " <> prettyPrint t
+  prettyPrint (ResolverErr a) = "ResolverError: " <> prettyPrint a
+  prettyPrint (InterpreterErr a) = "InterpreterError: " <> prettyPrint a
+  prettyPrint (UsageErr a) = "UsageError: " <> prettyPrint a
+  prettyPrint (ParseErr a) = "ParseError: " <> a
+  prettyPrint (OtherError a) = "OtherError: " <> a
+
+----
+
+instance Printer ExprHash where
+  prettyPrint (ExprHash a) = T.pack . show $ a
+
+------
+
+instance Printer InterpreterError where
+  prettyPrint (CouldNotFindVar _ name) = "Could not find var " <> prettyPrint name
+  prettyPrint (CouldNotFindBuiltIn _ name) = "Could not find built-in " <> prettyPrint name
+  prettyPrint (CannotDestructureAsPair expr) = "Expected a pair. Cannot destructure: " <> prettyPrint expr
+  prettyPrint (CannotDestructureAsSum expr) = "Expected a sum type. Cannot destructure: " <> prettyPrint expr
+  prettyPrint (CannotDestructureAsRecord expr name) = "Expected a record with a member " <> prettyPrint name <> ". Cannot destructure: " <> prettyPrint expr
+  prettyPrint (CannotDestructureAsList expr) = "Expected a list. Cannot destructure: " <> prettyPrint expr
+  prettyPrint (CannotApplyToNonFunction expr) = "Expected a function. Cannot apply a value to " <> prettyPrint expr
+  prettyPrint (CannotFindMemberInRecord items name) = "Could not find member " <> prettyPrint name <> " in " <> itemList
+    where
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+  prettyPrint (PredicateForIfMustBeABoolean expr) = "Expected a boolean as a predicate. Cannot use: " <> prettyPrint expr
+  prettyPrint (CouldNotUnwrapBuiltIn name) = "Could unwrap built-in " <> prettyPrint name
+  prettyPrint (CouldNotMatchBuiltInId ids) = "Could not match built in ids " <> prettyPrint ids
+  prettyPrint (PatternMatchFailure expr') = "Could not pattern match on value " <> prettyPrint expr'
+  prettyPrint (SelfReferencingBinding b) = "Could not bind variable " <> prettyPrint b <> " to itself."
+  prettyPrint UnknownInterpreterError = "Unknown interpreter error"
+
+-----
+
+instance Printer ResolvedDeps where
+  prettyPrint (ResolvedDeps deps) =
+    "{"
+      <> T.intercalate ", " (prettyPrint <$> M.keys deps)
+      <> "}"
+
+-----
+
+instance Printer ResolverError where
+  prettyPrint (MissingBinding name (Bindings bindings')) = "A binding for " <> prettyPrint name <> " could not be found in " <> bindingsList
+    where
+      bindingsList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys bindings') <> " ]"
+
+-----
+
+instance Printer Scheme where
+  prettyPrint (Scheme vars mt) = varText <> prettyPrint mt
+    where
+      varText = case vars of
+        [] -> ""
+        a -> "[" <> T.intercalate ", " (prettyPrint <$> a) <> "] "
+
+-----
+
+instance Printer Scope where
+  prettyPrint (Scope s) = "{ " <> T.intercalate ", " (printItem <$> M.toList s) <> " }"
+    where
+      printItem (k, a) = prettyPrint k <> ": " <> prettyPrint a
+
+-----
+
+instance Printer Substitutions where
+  prettyPrint (Substitutions s1) = "\n  " <> T.intercalate "\n  " (printRow <$> M.toList s1)
+    where
+      printRow (var, mt) = prettyPrint var <> ": " <> prettyPrint mt
+
+-----
+
+instance Printer TypeConstructor where
+  prettyPrint (TypeConstructor consName _tyTypeVars consTypes) =
+    prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> consTypes)
+
+-----
+
+instance Printer TypeError where
+  prettyPrint = renderWithWidth 40 . align . vcat . renderTypeError
+
+-----
+
+instance Printer Usage where
+  prettyPrint (Transient name _) =
+    "Transient dependency of "
+      <> prettyPrint name
+  prettyPrint (Direct name _) =
+    "Direct dependency of "
+      <> prettyPrint name
+
+----------
+
+instance Printer UsageError where
+  prettyPrint (CouldNotResolveDeps names) =
+    "Could not resolve deps: " <> T.intercalate ", " (prettyPrint <$> names)
+  prettyPrint (CouldNotFindBinding name) =
+    "Could not find binding " <> prettyPrint name
+  prettyPrint (CouldNotFindStoreExpression exprHash) =
+    "Could not find store expression for hash " <> prettyPrint exprHash

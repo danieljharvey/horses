@@ -1,22 +1,17 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Types.ResolvedDeps where
 
 import Data.Map (Map)
 import qualified Data.Map as M
-import qualified Data.Text as T
-import Language.Mimsa.Printer
 import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.StoreExpression
 
-newtype ResolvedDeps = ResolvedDeps {getResolvedDeps :: Map Name (ExprHash, StoreExpression)}
-
-instance Printer ResolvedDeps where
-  prettyPrint (ResolvedDeps deps) =
-    "{"
-      <> T.intercalate ", " (prettyPrint <$> M.keys deps)
-      <> "}"
+newtype ResolvedDeps
+  = ResolvedDeps
+      { getResolvedDeps ::
+          Map Name
+            (ExprHash, StoreExpression)
+      }
 
 hasNoDeps :: ResolvedDeps -> Bool
 hasNoDeps (ResolvedDeps m) = M.size m == 0
