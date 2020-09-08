@@ -67,15 +67,6 @@ runBuiltIn _ (NoArgs _ io) = liftIO io
 runBuiltIn (OneId v1) (OneArg _ io) = do
   expr1 <- useVar v1
   liftIO (io expr1)
-runBuiltIn (TwoIds v1 v2) (TwoArgs _ io) = do
-  expr1 <- useVar v1
-  expr2 <- useVar v2
-  liftIO (io expr1 expr2)
-runBuiltIn (ThreeIds v1 v2 v3) (ThreeArgs _ io) = do
-  expr1 <- useVar v1
-  expr2 <- useVar v2
-  expr3 <- useVar v3
-  liftIO (io expr1 expr2 expr3)
 runBuiltIn ids _ = throwError $ CouldNotMatchBuiltInId ids
 
 unwrapBuiltIn :: Name -> ForeignFunc -> App (Expr Variable)
@@ -89,36 +80,6 @@ unwrapBuiltIn name (OneArg _ _) = do
   addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name))) -- add new name to scope
   pure
     ( MyLambda v1 (MyVar actual)
-    )
-unwrapBuiltIn name (TwoArgs _ _) = do
-  v1 <- nextVariable
-  v2 <- nextVariable
-  let actual = BuiltInActual name (TwoIds v1 v2)
-  addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name))) -- add new name to scope
-  pure
-    ( MyLambda
-        v1
-        ( MyLambda
-            v2
-            (MyVar actual)
-        )
-    )
-unwrapBuiltIn name (ThreeArgs _ _) = do
-  v1 <- nextVariable
-  v2 <- nextVariable
-  v3 <- nextVariable
-  let actual = BuiltInActual name (ThreeIds v1 v2 v3)
-  addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name))) -- add new name to scope
-  pure
-    ( MyLambda
-        v1
-        ( MyLambda
-            v2
-            ( MyLambda
-                v3
-                (MyVar actual)
-            )
-        )
     )
 
 -- get new var

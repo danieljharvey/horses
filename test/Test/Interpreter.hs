@@ -105,18 +105,6 @@ spec =
         result <- interpret scope' mempty f
         print result
         result `shouldSatisfy` (\(Right (MyLiteral (MyInt i))) -> i > 9)
-      it "Uses a two arg function inside an If" $ do
-        let f =
-              MyIf
-                ( MyApp
-                    (MyApp (MyVar (builtIn "eq")) (int 1))
-                    (int 2)
-                )
-                (int 1)
-                (int 0)
-            scope' = mempty
-        result <- interpret scope' mempty f
-        result `shouldBe` Right (int 0)
       it "Destructures a pair" $ do
         let f =
               MyLet
@@ -174,11 +162,11 @@ spec =
                     (named "y")
                     ( MyIf
                         ( MyApp
-                            ( MyApp
-                                (MyVar (builtIn "eq"))
+                            (MyVar (builtIn "eqPair"))
+                            ( MyPair
                                 (MyVar (named "x"))
+                                (MyVar (named "y"))
                             )
-                            (MyVar (named "y"))
                         )
                         (int 1)
                         (int 0)

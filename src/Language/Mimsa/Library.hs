@@ -21,7 +21,7 @@ libraryFunctions =
     M.fromList
       [ (FuncName "randomInt", randomInt),
         (FuncName "randomIntFrom", randomIntFrom),
-        (FuncName "eq", eq),
+        (FuncName "eqPair", eqPair),
         (FuncName "log", logFn),
         (FuncName "addIntPair", addIntPair)
       ]
@@ -63,15 +63,17 @@ randomIntFrom =
         pure (MyLiteral (MyInt (max val i)))
     )
 
-eq :: ForeignFunc
-eq =
+eqPair :: ForeignFunc
+eqPair =
   let tyA = MTVar (NamedVar (Name "a"))
-   in TwoArgs
-        (tyA, tyA, MTBool)
+   in OneArg
+        (MTPair tyA tyA, MTBool)
         equality
 
-equality :: (Monad m, Eq a) => Expr a -> Expr a -> m (Expr a)
-equality x y = pure $ MyLiteral (MyBool (x == y))
+equality :: (Monad m, Eq a) => Expr a -> m (Expr a)
+equality pair' =
+  let (MyPair x y) = pair'
+   in pure $ MyLiteral (MyBool (x == y))
 
 addIntPair :: ForeignFunc
 addIntPair =
@@ -86,5 +88,3 @@ addIntPair =
 getFFType :: ForeignFunc -> MonoType
 getFFType (NoArgs out _) = out
 getFFType (OneArg (in1, out) _) = MTFunction in1 out
-getFFType (TwoArgs (in1, in2, out) _) = MTFunction in1 (MTFunction in2 out)
-getFFType (ThreeArgs (in1, in2, in3, out) _) = MTFunction in1 (MTFunction in2 (MTFunction in3 out))
