@@ -18,13 +18,13 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter (interpret)
-import Language.Mimsa.Parser (parseExpr)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project (getCurrentBindings)
 import Language.Mimsa.Project.Versions
+import Language.Mimsa.Repl.ExpressionBind
+import Language.Mimsa.Repl.ExpressionWatch
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Repl.Watcher
-import Language.Mimsa.Store (createDepGraph, saveExpr)
+import Language.Mimsa.Store (createDepGraph)
 import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
 
@@ -40,9 +40,11 @@ doReplAction env Tui =
 doReplAction env (Versions name) = do
   _ <- runReplM $ doVersions env name
   pure env
-doReplAction env Watch = do
-  _ <- runReplM $ doWatch env
-  pure env
+doReplAction env (Watch name) = do
+  newEnv' <- runReplM $ doWatch env name
+  case newEnv' of
+    Just env' -> pure env'
+    _ -> pure env
 doReplAction env (Evaluate expr) = do
   _ <- runReplM $ doEvaluate env expr
   pure env
@@ -67,24 +69,12 @@ doHelp = do
   T.putStrLn ":list - show a list of current bindings in the environment"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":versions <name> - list all versions of a binding"
+  T.putStrLn ":watch <name> - put <name> into 'scratch.mimsa' and bind any changes"
   T.putStrLn ":tui - launch terminal user interface for exploring project"
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
   T.putStrLn ":quit - give up and leave"
 
 ----------
-
-doBind :: Project -> Name -> Expr Name -> ReplM Project
-doBind env name expr = do
-  (type', storeExpr, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
-  hash <- liftIO (saveExpr storeExpr)
-  replPrint $
-    "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
-      <> " :: "
-      <> prettyPrint type'
-  let newEnv = fromItem name storeExpr hash
-  pure (env <> newEnv)
-
--------
 
 doInfo :: Project -> Expr Name -> ReplM ()
 doInfo env expr = do
@@ -150,31 +140,4 @@ doEvaluate env expr = do
     prettyPrint simplified'
       <> " :: "
       <> prettyPrint type'
-
 ---------
-
-doWatch :: Project -> ReplM ()
-doWatch env =
-  liftIO $
-    watchFile
-      "./"
-      ( do
-          _ <- runReplM (onFileChange env)
-          pure ()
-      )
-
-onFileChange :: Project -> ReplM ()
-onFileChange env = do
-  text <- liftIO $ T.readFile "./scratch.mimsa"
-  replPrint ("scratch.mimsa updated!" :: Text)
-  expr <- liftRepl $ first ParseErr (parseExpr (T.strip text))
-  (type', storeExpr', expr', scope', swaps) <- liftRepl $ getTypecheckedStoreExpression env expr
-  simplified <- liftIO $ interpret scope' swaps expr'
-  simplified' <- liftRepl (first InterpreterErr simplified)
-  replPrint $
-    "+ Using the following from scope: "
-      <> prettyPrint (storeBindings storeExpr')
-  replPrint $
-    prettyPrint simplified'
-      <> " :: "
-      <> prettyPrint type'

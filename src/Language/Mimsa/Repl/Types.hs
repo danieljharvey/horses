@@ -33,5 +33,5 @@ data ReplAction
   | Bind Name (Expr Name)
   | Versions Name
   | ListBindings
-  | Watch
+  | Watch Name
   | Tui

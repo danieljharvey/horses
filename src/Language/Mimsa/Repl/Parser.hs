@@ -46,7 +46,9 @@ listBindingsParser :: Parser ReplAction
 listBindingsParser = ListBindings <$ literal ":list"
 
 watchParser :: Parser ReplAction
-watchParser = Watch <$ literal ":watch"
+watchParser = do
+  _ <- thenSpace (literal ":watch")
+  Watch <$> nameParser
 
 tuiParser :: Parser ReplAction
 tuiParser = Tui <$ literal ":tui"
