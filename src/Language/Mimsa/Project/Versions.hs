@@ -1,4 +1,4 @@
-module Language.Mimsa.Project.Versions (findVersions) where
+module Language.Mimsa.Project.Versions (findVersions, findStoreExpressionByName) where
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
@@ -45,6 +45,16 @@ getStoreExpression (Project store' _ _) exprHash =
   case M.lookup exprHash (getStore store') of
     Just storeExpression' -> Right storeExpression'
     _ -> Left (CouldNotFindStoreExpression exprHash)
+
+hush :: Either e a -> Maybe a
+hush (Right a) = Just a
+hush _ = Nothing
+
+findStoreExpressionByName :: Project -> Name -> Maybe StoreExpression
+findStoreExpressionByName env name =
+  case findInProject env name of
+    Right hashes -> hush $ getStoreExpression env (NE.last hashes)
+    _ -> Nothing
 
 getExprDetails ::
   Project ->

@@ -4,7 +4,9 @@
 module Language.Mimsa.Types.Project where
 
 import qualified Data.Aeson as JSON
+import Data.List (nub)
 import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -46,4 +48,12 @@ newtype VersionedBindings
 
 instance Semigroup VersionedBindings where
   (VersionedBindings a) <> (VersionedBindings b) =
-    VersionedBindings (M.unionWith (<>) a b)
+    VersionedBindings (M.unionWith combineUnique a b)
+
+-- we don't want duplicates in list
+-- nub keeps first instance, we want last instance, hence the reversing
+combineUnique :: (Eq a) => NonEmpty a -> NonEmpty a -> NonEmpty a
+combineUnique as bs =
+  let as' = NE.toList as
+      bs' = NE.toList bs
+   in NE.fromList . reverse . nub . reverse $ as' <> bs'
