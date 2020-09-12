@@ -117,7 +117,7 @@ doVersions env name = do
 
 doListBindings :: Project -> ReplM ()
 doListBindings env = do
-  let showBind (name, StoreExpression _ expr) =
+  let showBind (name, StoreExpression expr _ _) =
         case getTypecheckedStoreExpression env expr of
           Right (type', _, _, _, _) ->
             replPrint (prettyPrint name <> " :: " <> prettyPrint type')

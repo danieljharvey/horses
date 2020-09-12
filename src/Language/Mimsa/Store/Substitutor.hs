@@ -35,7 +35,7 @@ substitute store' storeExpr =
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
 doSubstitutions :: Store -> StoreExpression -> App (Expr Variable)
-doSubstitutions store' (StoreExpression bindings' expr) = do
+doSubstitutions store' (StoreExpression expr bindings' _) = do
   newScopes <- traverse (substituteWithKey store') (getExprPairs store' bindings')
   addScope $ mconcat newScopes
   mapVar [] expr

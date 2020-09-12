@@ -61,4 +61,4 @@ createStoreExpression bindings' expr = do
         (,) name
           <$> findHashInBindings bindings' name
   hashes <- traverse findHash (S.toList . extractVars $ expr)
-  Right (StoreExpression (Bindings (M.fromList hashes)) expr)
+  Right (StoreExpression expr (Bindings (M.fromList hashes)) mempty)
