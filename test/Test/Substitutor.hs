@@ -14,18 +14,18 @@ import Test.Hspec
 import Test.StoreData
 
 trueStoreExpr :: StoreExpression
-trueStoreExpr = StoreExpression mempty (bool True)
+trueStoreExpr = StoreExpression (bool True) mempty mempty
 
 falseStoreExpr :: StoreExpression
 falseStoreExpr =
   StoreExpression
-    (Bindings $ M.singleton (mkName "true") (ExprHash 1))
     (MyVar (mkName "true"))
+    (Bindings $ M.singleton (mkName "true") (ExprHash 1))
+    mempty
 
 constExpr :: StoreExpression
 constExpr =
   StoreExpression
-    mempty
     ( MyLambda
         (mkName "a")
         ( MyLambda
@@ -33,6 +33,8 @@ constExpr =
             (MyVar (mkName "a"))
         )
     )
+    mempty
+    mempty
 
 storeWithBothIn :: Store
 storeWithBothIn =
@@ -56,14 +58,14 @@ spec = do
       $ do
         let expr = MyLambda (mkName "x") (MyVar (mkName "x"))
             expected = MyLambda (named "x") (MyVar (named "x"))
-        substitute mempty (StoreExpression mempty expr)
+        substitute mempty (StoreExpression expr mempty mempty)
           `shouldBe` (mempty, expected, mempty)
     describe "Leaves built-ins alone"
       $ it "Leaves randomInt unchanged"
       $ do
         let expr = MyVar (mkName "randomInt")
             expected = MyVar (BuiltIn (mkName "randomInt"))
-        substitute mempty (StoreExpression mempty expr)
+        substitute mempty (StoreExpression expr mempty mempty)
           `shouldBe` (mempty, expected, mempty)
     describe "One level of dep"
       $ it "Renames the dep to var0"
@@ -71,7 +73,7 @@ spec = do
         let hash = ExprHash 1
             expr = MyVar (Name "exciting")
             bindings' = Bindings $ M.singleton (Name "exciting") hash
-            storeExpr = StoreExpression bindings' expr
+            storeExpr = StoreExpression expr bindings' mempty
             store' = Store (M.singleton hash trueStoreExpr)
         substitute store' storeExpr
           `shouldBe` ( M.singleton (NumberedVar 0) (Name "exciting"),
@@ -89,7 +91,7 @@ spec = do
                     (mkName "second", MyApp (MyVar (mkName "id")) (int 2))
                   ]
             bindings' = Bindings $ M.singleton (mkName "id") hash
-            storeExpr = StoreExpression bindings' expr
+            storeExpr = StoreExpression expr bindings' mempty
             store' = Store (M.singleton hash idExpr)
             expectedId = MyLambda (named "i") (MyVar (named "i"))
         substitute store' storeExpr
@@ -113,7 +115,7 @@ spec = do
       let hash = ExprHash 2
           expr = MyVar (mkName "true")
           bindings' = Bindings (M.singleton (mkName "true") hash)
-          storeExpr = StoreExpression bindings' expr
+          storeExpr = StoreExpression expr bindings' mempty
           store' = storeWithBothIn
       substitute store' storeExpr
         `shouldBe` ( M.fromList

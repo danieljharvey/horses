@@ -51,21 +51,24 @@ spec =
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = int 1
+                  storeExpression = int 1,
+                  storeTypeBindings = mempty
                 }
             )
         createStoreExpression mempty (bool True)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = bool True
+                  storeExpression = bool True,
+                  storeTypeBindings = mempty
                 }
             )
         createStoreExpression mempty (str (StringType "poo"))
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = str (StringType "poo")
+                  storeExpression = str (StringType "poo"),
+                  storeTypeBindings = mempty
                 }
             )
       it "Looks for vars and can't find them" $
@@ -77,7 +80,8 @@ spec =
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = MyVar (Name "randomInt")
+                  storeExpression = MyVar (Name "randomInt"),
+                  storeTypeBindings = mempty
                 }
             )
       it "Looks for vars and finds them" $ do
@@ -89,6 +93,7 @@ spec =
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = Bindings $ M.singleton (Name "missing") hash,
-                  storeExpression = expr
+                  storeExpression = expr,
+                  storeTypeBindings = mempty
                 }
             )

@@ -71,7 +71,7 @@ stdLib = Project store' bindings' mempty
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression
 unsafeGetExpr' input bindings' =
   case parseExpr input of
-    Right expr' -> StoreExpression bindings' expr'
+    Right expr' -> StoreExpression expr' bindings' mempty
     a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
 
 unsafeGetExpr :: Text -> StoreExpression
