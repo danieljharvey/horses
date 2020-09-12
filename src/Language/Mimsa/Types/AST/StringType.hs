@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Types.StringType
+module Language.Mimsa.Types.AST.StringType
   ( StringType (..),
   )
 where

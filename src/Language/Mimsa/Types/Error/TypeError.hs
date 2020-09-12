@@ -13,9 +13,8 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.DataType
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Environment
-import Language.Mimsa.Types.Expr
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Swaps

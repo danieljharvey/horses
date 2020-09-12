@@ -3,7 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.DataType
+module Language.Mimsa.Types.AST.DataType
   ( DataType (..),
   )
 where

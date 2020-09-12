@@ -8,7 +8,7 @@ where
 
 import Data.Map (Map)
 import qualified Data.Map as M
-import Language.Mimsa.Types.DataType
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Environment
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType

@@ -8,8 +8,8 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import Language.Mimsa.Actions
 import Language.Mimsa.Project.Usages
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Expr
 import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType

@@ -1,6 +1,6 @@
 module Language.Mimsa.Types.ForeignFunc where
 
-import Language.Mimsa.Types.Expr
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
 

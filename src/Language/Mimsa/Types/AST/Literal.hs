@@ -3,7 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Literal
+module Language.Mimsa.Types.AST.Literal
   ( Literal (..),
   )
 where
@@ -12,7 +12,7 @@ import qualified Data.Aeson as JSON
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.StringType
+import Language.Mimsa.Types.AST.StringType
 
 -------
 
