@@ -2,7 +2,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Types.FuncName where
+module Language.Mimsa.Types.Identifiers.FuncName where
 
 import qualified Data.Aeson as JSON
 import Data.Text (Text)

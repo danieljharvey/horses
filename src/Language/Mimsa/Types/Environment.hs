@@ -6,10 +6,9 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.DataType
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scheme
-import Language.Mimsa.Types.Variable
 
 -- everything we need in typechecking environment
 data Environment

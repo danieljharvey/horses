@@ -1,15 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.InterpreterError where
+module Language.Mimsa.Types.Error.InterpreterError where
 
-import qualified Data.Map as M
 import Data.Map (Map)
+import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Expr
-import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
-import Language.Mimsa.Types.Variable
 
 data InterpreterError
   = UnknownInterpreterError

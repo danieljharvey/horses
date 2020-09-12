@@ -3,9 +3,8 @@
 module Language.Mimsa.Types.Project where
 
 import Data.Text (Text)
-import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.ExprHash
-import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.VersionedMap
 

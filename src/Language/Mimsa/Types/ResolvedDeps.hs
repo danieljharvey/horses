@@ -7,7 +7,7 @@ import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.ExprHash
-import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.StoreExpression
 
 newtype ResolvedDeps

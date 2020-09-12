@@ -14,9 +14,7 @@ import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.Construct
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.TypeName
+import Language.Mimsa.Types.Identifiers
 
 -------
 

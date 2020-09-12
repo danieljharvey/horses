@@ -8,7 +8,7 @@ import Language.Mimsa.Project.Persistence (getCurrentBindings)
 import Language.Mimsa.Store.ResolvedDeps (resolveDeps)
 import Language.Mimsa.Types.Bindings
 import Language.Mimsa.Types.ExprHash
-import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps
 import Language.Mimsa.Types.Store

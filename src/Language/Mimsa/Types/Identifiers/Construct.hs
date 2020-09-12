@@ -3,7 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Construct where
+module Language.Mimsa.Types.Identifiers.Construct where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch

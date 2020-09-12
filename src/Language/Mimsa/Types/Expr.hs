@@ -17,10 +17,9 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.Construct
 import Language.Mimsa.Types.DataType
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Literal
-import Language.Mimsa.Types.Name
 
 -------
 

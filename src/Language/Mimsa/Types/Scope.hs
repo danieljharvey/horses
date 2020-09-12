@@ -9,7 +9,7 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Expr
-import Language.Mimsa.Types.Variable
+import Language.Mimsa.Types.Identifiers
 
 -- dependencies resolved into actual expressions
 newtype Scope = Scope {getScope :: Map Variable (Expr Variable)}

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f3681ad639cb71da63d9f5bc1ec85625fde24c25a65b99b0695be9ee3965dd5b
+-- hash: 24f5ac689a92749493cf18172d8af1531594052132855435667228b3f9af2b62
 
 name:           mimsa
 version:        0.1.0.0
@@ -72,22 +72,26 @@ library
       Language.Mimsa.Typechecker.Unify
       Language.Mimsa.Types
       Language.Mimsa.Types.Bindings
-      Language.Mimsa.Types.Construct
       Language.Mimsa.Types.DataType
       Language.Mimsa.Types.Environment
       Language.Mimsa.Types.Error
+      Language.Mimsa.Types.Error.InterpreterError
+      Language.Mimsa.Types.Error.ResolverError
+      Language.Mimsa.Types.Error.TypeError
       Language.Mimsa.Types.Expr
       Language.Mimsa.Types.ExprHash
       Language.Mimsa.Types.ForeignFunc
-      Language.Mimsa.Types.FuncName
-      Language.Mimsa.Types.InterpreterError
+      Language.Mimsa.Types.Identifiers
+      Language.Mimsa.Types.Identifiers.Construct
+      Language.Mimsa.Types.Identifiers.FuncName
+      Language.Mimsa.Types.Identifiers.Name
+      Language.Mimsa.Types.Identifiers.TypeName
+      Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.Library
       Language.Mimsa.Types.Literal
       Language.Mimsa.Types.MonoType
-      Language.Mimsa.Types.Name
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.ResolvedDeps
-      Language.Mimsa.Types.ResolverError
       Language.Mimsa.Types.Scheme
       Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
@@ -98,11 +102,8 @@ library
       Language.Mimsa.Types.Tui
       Language.Mimsa.Types.TypeBindings
       Language.Mimsa.Types.TypeConstructor
-      Language.Mimsa.Types.TypeError
-      Language.Mimsa.Types.TypeName
       Language.Mimsa.Types.UniVar
       Language.Mimsa.Types.Usage
-      Language.Mimsa.Types.Variable
       Language.Mimsa.Types.VersionedMap
   other-modules:
       Paths_mimsa

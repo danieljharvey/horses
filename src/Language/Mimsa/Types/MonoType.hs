@@ -9,9 +9,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.Construct
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Variable
+import Language.Mimsa.Types.Identifiers
 
 data MonoType
   = MTInt

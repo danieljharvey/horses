@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Variable
+module Language.Mimsa.Types.Identifiers.Variable
   ( Variable (..),
     BiIds (..),
   )
@@ -11,7 +11,7 @@ import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Identifiers.Name
 
 data BiIds
   = NoId
