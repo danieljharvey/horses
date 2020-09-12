@@ -8,11 +8,11 @@ module Language.Mimsa.Project.Persistence
 where
 
 -- functions for Projects as opposed to the larger Store
-
 import Control.Exception (try)
 import Control.Monad.Trans.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
+import Data.Coerce
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -20,14 +20,6 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types
-  ( Bindings (..),
-    ExprHash (..),
-    Project (..),
-    ServerUrl (..),
-    Store (..),
-    StoreExpression (..),
-    VersionedBindings (..),
-  )
 
 servers :: [ServerUrl]
 servers = pure (ServerUrl "https://raw.githubusercontent.com/danieljharvey/mimsa-store/master/")
@@ -38,10 +30,10 @@ loadProject :: IO (Maybe Project)
 loadProject = do
   envJson <- try $ BS.readFile envPath
   case hush envJson >>= JSON.decode of
-    Just vb@(VersionedBindings _) -> do
+    Just vb -> do
       items' <- runExceptT $ recursiveLoadBoundExpressions servers (getHashesForAllVersions vb)
       case items' of
-        Right store' -> pure $ Just (Project store' vb servers)
+        Right store' -> pure $ Just (Project store' vb mempty servers)
         _ -> pure Nothing
     _ -> pure Nothing
 
@@ -91,12 +83,12 @@ hush (Right a) = Just a
 hush _ = Nothing
 
 getCurrentBindings :: VersionedBindings -> Bindings
-getCurrentBindings (VersionedBindings versioned) =
-  Bindings (NE.last <$> versioned)
+getCurrentBindings versioned =
+  Bindings (NE.last <$> getVersionedMap versioned)
 
 getHashesForAllVersions :: VersionedBindings -> Set ExprHash
-getHashesForAllVersions (VersionedBindings versioned) =
-  mconcat $ M.elems (S.fromList . NE.toList <$> versioned)
+getHashesForAllVersions versioned =
+  mconcat $ M.elems (S.fromList . NE.toList <$> coerce versioned)
 
 getDependencyHashes :: StoreExpression -> Set ExprHash
 getDependencyHashes =

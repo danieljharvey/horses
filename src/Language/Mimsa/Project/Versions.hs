@@ -18,6 +18,7 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.Usage
 import Language.Mimsa.Types.Variable
+import Language.Mimsa.Types.VersionedMap
 
 -- find which versions of a given binding are in use
 
@@ -33,7 +34,7 @@ findVersions project name = do
 
 findInProject :: Project -> Name -> Either UsageError (NonEmpty ExprHash)
 findInProject project name =
-  case M.lookup name (getVersionedBindings $ bindings project) of
+  case M.lookup name (getVersionedMap $ bindings project) of
     Just versioned -> Right versioned
     _ -> throwError $ CouldNotFindBinding name
 
@@ -41,7 +42,7 @@ getStoreExpression ::
   Project ->
   ExprHash ->
   Either UsageError StoreExpression
-getStoreExpression (Project store' _ _) exprHash =
+getStoreExpression (Project store' _ _ _) exprHash =
   case M.lookup exprHash (getStore store') of
     Just storeExpression' -> Right storeExpression'
     _ -> Left (CouldNotFindStoreExpression exprHash)

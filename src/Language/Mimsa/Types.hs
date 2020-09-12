@@ -31,6 +31,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.StringType,
     module Language.Mimsa.Types.DataType,
     module Language.Mimsa.Types.TypeBindings,
+    module Language.Mimsa.Types.VersionedMap,
   )
 where
 
@@ -66,5 +67,6 @@ import Language.Mimsa.Types.TypeName
 import Language.Mimsa.Types.UniVar
 import Language.Mimsa.Types.Usage
 import Language.Mimsa.Types.Variable
+import Language.Mimsa.Types.VersionedMap
 
 ------

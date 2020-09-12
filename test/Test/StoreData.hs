@@ -41,7 +41,7 @@ eqExpr :: StoreExpression
 eqExpr = unsafeGetExpr "\\a -> \\b -> eqPair((a,b))"
 
 stdLib :: Project
-stdLib = Project store' bindings' mempty
+stdLib = Project store' bindings' mempty mempty
   where
     store' =
       Store $
@@ -56,7 +56,7 @@ stdLib = Project store' bindings' mempty
             (ExprHash 18, addInt)
           ]
     bindings' =
-      VersionedBindings $
+      VersionedMap $
         M.fromList
           [ (mkName "fst", pure $ ExprHash 1),
             (mkName "eq", pure $ ExprHash 2),
