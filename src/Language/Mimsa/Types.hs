@@ -30,6 +30,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.FuncName,
     module Language.Mimsa.Types.StringType,
     module Language.Mimsa.Types.DataType,
+    module Language.Mimsa.Types.TypeBindings,
   )
 where
 
@@ -58,6 +59,7 @@ import Language.Mimsa.Types.StringType
 import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Tui
+import Language.Mimsa.Types.TypeBindings
 import Language.Mimsa.Types.TypeConstructor
 import Language.Mimsa.Types.TypeError
 import Language.Mimsa.Types.TypeName
