@@ -57,6 +57,9 @@ doReplAction env (Info expr) = do
 doReplAction env (Bind name expr) = do
   newEnv <- runReplM $ doBind env name expr
   pure (fromMaybe env newEnv)
+doReplAction env (BindType dt) = do
+  newEnv <- runReplM $ doBindType env dt
+  pure (fromMaybe env newEnv)
 
 ----------
 

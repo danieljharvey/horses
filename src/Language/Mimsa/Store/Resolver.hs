@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Store.Resolver where
+module Language.Mimsa.Store.Resolver
+  ( extractVars,
+    createStoreExpression,
+    createTypeStoreExpression,
+  )
+where
 
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
@@ -62,3 +67,28 @@ createStoreExpression bindings' expr = do
           <$> findHashInBindings bindings' name
   hashes <- traverse findHash (S.toList . extractVars $ expr)
   Right (StoreExpression expr (Bindings (M.fromList hashes)) mempty)
+
+-----------
+--
+findHashInTypeBindings :: TypeBindings -> Construct -> Either ResolverError ExprHash
+findHashInTypeBindings (TypeBindings bindings') cName = case M.lookup cName bindings' of
+  Just a -> Right a
+  _ -> Left $ MissingType cName (TypeBindings bindings')
+
+-- get all the constructors mentioned in the datatype
+extractConstructors :: DataType -> Set Construct
+extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.toList cons)
+  where
+    extractFromCons as = mconcat (extractFromCon <$> as)
+    extractFromCon (VarName _) = mempty
+    extractFromCon (ConsName name as) = S.singleton name <> mconcat (extractFromCon <$> as)
+
+-- given a data type declaration, create a StoreExpression for it
+createTypeStoreExpression :: TypeBindings -> DataType -> Either ResolverError StoreExpression
+createTypeStoreExpression tBindings dt = do
+  let findHash cName =
+        (,) cName
+          <$> findHashInTypeBindings tBindings cName
+  hashes <- traverse findHash (S.toList . extractConstructors $ dt)
+  let newTypeBindings = TypeBindings $ M.fromList hashes
+  pure (StoreExpression (MyData dt (MyRecord mempty)) mempty newTypeBindings)

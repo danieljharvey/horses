@@ -13,7 +13,7 @@ import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Identifiers
 
 -- a list of names to hashes
-newtype TypeBindings = TypeBindings {getTypeBindings :: Map Name ExprHash}
+newtype TypeBindings = TypeBindings {getTypeBindings :: Map Construct ExprHash}
   deriving newtype
     ( Eq,
       Ord,

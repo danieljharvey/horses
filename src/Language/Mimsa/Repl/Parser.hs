@@ -42,6 +42,11 @@ bindParser =
     <$> right (thenSpace (literal ":bind")) (thenSpace nameParser)
     <*> right (thenSpace (literal "=")) expressionParser
 
+bindTypeParser :: Parser ReplAction
+bindTypeParser = do
+  _ <- thenSpace (literal ":bindType")
+  BindType <$> typeDeclParser
+
 listBindingsParser :: Parser ReplAction
 listBindingsParser = ListBindings <$ literal ":list"
 

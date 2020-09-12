@@ -5,6 +5,8 @@ module Language.Mimsa.Parser.Language
     parseExpr',
     expressionParser,
     nameParser,
+    constructParser,
+    typeDeclParser,
   )
 where
 
@@ -345,18 +347,18 @@ pairParser = do
 
 -----
 
-typeParser :: Parser ParserExpr
-typeParser = typeParserEmpty <|> typeParserWithCons
+typeDeclParser :: Parser DataType
+typeDeclParser = typeDeclParserEmpty <|> typeDeclParserWithCons
 
-typeParserEmpty :: Parser ParserExpr
-typeParserEmpty = do
+typeDeclParserEmpty :: Parser DataType
+typeDeclParserEmpty = do
   _ <- P.thenSpace (P.literal "type")
   tyName <- P.thenSpace constructParser
   _ <- P.thenSpace (P.literal "in")
-  MyData (DataType tyName mempty mempty) <$> expressionParser
+  pure (DataType tyName mempty mempty)
 
-typeParserWithCons :: Parser ParserExpr
-typeParserWithCons = do
+typeDeclParserWithCons :: Parser DataType
+typeDeclParserWithCons = do
   _ <- P.thenSpace (P.literal "type")
   tyName <- P.thenSpace constructParser
   tyArgs <- P.zeroOrMore (P.left nameParser P.space1)
@@ -364,7 +366,14 @@ typeParserWithCons = do
   constructors <- manyTypeConstructors <|> oneTypeConstructor
   _ <- P.space1
   _ <- P.thenSpace (P.literal "in")
-  MyData (DataType tyName tyArgs constructors) <$> expressionParser
+  pure $ DataType tyName tyArgs constructors
+
+--------
+
+typeParser :: Parser ParserExpr
+typeParser = MyData <$> (typeDeclParserEmpty <|> typeDeclParserWithCons) <*> expressionParser
+
+----
 
 manyTypeConstructors :: Parser (Map Construct [TypeName])
 manyTypeConstructors = do

@@ -5,6 +5,7 @@
 module Language.Mimsa.Typechecker.Infer
   ( startInference,
     doInference,
+    doDataTypeInference,
   )
 where
 
@@ -41,6 +42,10 @@ doInference ::
   Expr Variable ->
   Either TypeError (Substitutions, MonoType)
 doInference swaps env expr = runTcMonad swaps (infer (defaultEnv <> env) expr)
+
+doDataTypeInference :: Environment -> DataType -> Either TypeError (Map Construct TypeConstructor)
+doDataTypeInference env dt =
+  runTcMonad mempty (inferConstructorTypes (defaultEnv <> env) dt)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
 applySubstCtx subst (Environment schemes dt) =
