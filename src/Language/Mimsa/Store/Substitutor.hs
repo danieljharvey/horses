@@ -24,14 +24,14 @@ data SubsState
 
 type App = State SubsState
 
-substitute :: Store -> StoreExpression -> (Swaps, Expr Variable, Scope)
+substitute :: Store -> StoreExpression -> SubstitutedExpression
 substitute store' storeExpr =
   let startingState = SubsState mempty mempty 0
       (expr', SubsState swaps' scope' _) =
         runState
           (doSubstitutions store' storeExpr)
           startingState
-   in (swaps', expr', scope')
+   in SubstitutedExpression swaps' expr' scope'
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
 doSubstitutions :: Store -> StoreExpression -> App (Expr Variable)

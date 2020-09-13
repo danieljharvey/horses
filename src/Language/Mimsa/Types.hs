@@ -23,6 +23,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.TypeBindings,
     module Language.Mimsa.Types.VersionedMap,
     module Language.Mimsa.Types.ResolvedExpression,
+    module Language.Mimsa.Types.SubstitutedExpression,
   )
 where
 
@@ -42,6 +43,7 @@ import Language.Mimsa.Types.Scheme
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.StoreExpression
+import Language.Mimsa.Types.SubstitutedExpression
 import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Tui

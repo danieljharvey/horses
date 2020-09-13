@@ -70,7 +70,7 @@ resolveStoreExpression ::
   StoreExpression ->
   Either Error ResolvedExpression
 resolveStoreExpression store' storeExpr = do
-  let (swaps, newExpr, scope) = substitute store' storeExpr
+  let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
   exprType <- getType swaps scope newExpr
   pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
 
