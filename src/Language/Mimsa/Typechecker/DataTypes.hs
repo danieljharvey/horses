@@ -23,5 +23,7 @@ builtInTypes :: Map Construct MonoType
 builtInTypes =
   M.fromList
     [ (mkConstruct "String", MTString),
-      (mkConstruct "Int", MTInt)
+      (mkConstruct "Int", MTInt),
+      (mkConstruct "Boolean", MTBool),
+      (mkConstruct "Unit", MTUnit)
     ]

@@ -47,7 +47,7 @@ spec =
           `shouldBe` S.empty
     describe "createStoreExpression" $ do
       it "Creates expressions from literals with empty Project" $ do
-        createStoreExpression mempty (int 1)
+        createStoreExpression mempty mempty (int 1)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
@@ -55,7 +55,7 @@ spec =
                   storeTypeBindings = mempty
                 }
             )
-        createStoreExpression mempty (bool True)
+        createStoreExpression mempty mempty (bool True)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
@@ -63,7 +63,7 @@ spec =
                   storeTypeBindings = mempty
                 }
             )
-        createStoreExpression mempty (str (StringType "poo"))
+        createStoreExpression mempty mempty (str (StringType "poo"))
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
@@ -72,11 +72,11 @@ spec =
                 }
             )
       it "Looks for vars and can't find them" $
-        createStoreExpression mempty (MyVar (Name "missing"))
+        createStoreExpression mempty mempty (MyVar (Name "missing"))
           `shouldBe` Left
             (MissingBinding (mkName "missing") mempty)
       it "Looks for vars and finds a built-in" $
-        createStoreExpression mempty (MyVar (Name "randomInt"))
+        createStoreExpression mempty mempty (MyVar (Name "randomInt"))
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
@@ -88,7 +88,7 @@ spec =
         let hash = ExprHash 1234
             expr = MyVar (Name "missing")
             bindings' = Bindings $ M.singleton (Name "missing") hash
-            storeExpr = createStoreExpression bindings' expr
+            storeExpr = createStoreExpression bindings' mempty expr
         storeExpr
           `shouldBe` Right
             ( StoreExpression
@@ -101,7 +101,7 @@ spec =
       it "Creates the most basic StoreExpression for a type" $ do
         let dt = DataType (mkConstruct "Void") mempty mempty
             expr = MyData dt (MyRecord mempty)
-            storeExpr = createTypeStoreExpression mempty dt
+            storeExpr = createStoreExpression mempty mempty expr
         storeExpr
           `shouldBe` Right
             ( StoreExpression
@@ -120,7 +120,7 @@ spec =
             storeExpr = createTypeStoreExpression mempty dt
         storeExpr
           `shouldBe` Left (MissingType (mkConstruct "MyUnit") mempty)
-      it "Creates the most basic StoreExpression" $ do
+      it "Creates a StoreExpression that uses a type from the type bindings" $ do
         let cons' = ConsName (mkConstruct "MyUnit") []
             dt =
               DataType

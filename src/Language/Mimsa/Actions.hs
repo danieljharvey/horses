@@ -14,7 +14,10 @@ import Data.Bifunctor (first)
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Parser (parseExpr)
-import Language.Mimsa.Project (getCurrentBindings)
+import Language.Mimsa.Project
+  ( getCurrentBindings,
+    getCurrentTypeBindings,
+  )
 import Language.Mimsa.Store (createStoreExpression, substitute)
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
@@ -67,7 +70,12 @@ getTypecheckedStoreExpression ::
   Expr Name ->
   Either Error (MonoType, StoreExpression, Expr Variable, Scope, Swaps)
 getTypecheckedStoreExpression env expr = do
-  storeExpr <- first ResolverErr $ createStoreExpression (getCurrentBindings $ bindings env) expr
+  storeExpr <-
+    first ResolverErr $
+      createStoreExpression
+        (getCurrentBindings $ bindings env)
+        (getCurrentTypeBindings $ typeBindings env)
+        expr
   evaluateStoreExpression (store env) storeExpr
 
 evaluateText :: Project -> Text -> Either Error (MonoType, Expr Variable, Scope, Swaps)

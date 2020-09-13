@@ -4,6 +4,7 @@ module Language.Mimsa.Project.Persistence
   ( loadProject,
     saveProject,
     getCurrentBindings,
+    getCurrentTypeBindings,
   )
 where
 
@@ -85,6 +86,10 @@ hush _ = Nothing
 getCurrentBindings :: VersionedBindings -> Bindings
 getCurrentBindings versioned =
   Bindings (NE.last <$> getVersionedMap versioned)
+
+getCurrentTypeBindings :: VersionedTypeBindings -> TypeBindings
+getCurrentTypeBindings versioned =
+  TypeBindings (NE.last <$> getVersionedMap versioned)
 
 getHashesForAllVersions :: VersionedBindings -> Set ExprHash
 getHashesForAllVersions versioned =
