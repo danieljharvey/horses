@@ -14,6 +14,7 @@ import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.Usage
@@ -63,5 +64,5 @@ getExprDetails ::
 getExprDetails project exprHash = do
   usages <- first UsageErr (findUsages project exprHash)
   storeExpr <- first UsageErr (getStoreExpression project exprHash)
-  (mt, _, expr', _, _) <- evaluateStoreExpression (store project) storeExpr
+  (ResolvedExpression mt _ expr' _ _) <- resolveStoreExpression (store project) storeExpr
   pure (expr', mt, usages)

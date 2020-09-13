@@ -25,7 +25,7 @@ eval env input =
     Right _ ->
       case evaluateText env input of
         Left e -> pure (Left $ prettyPrint e)
-        Right (mt, expr', scope', swaps) -> do
+        Right (ResolvedExpression mt _ expr' scope' swaps) -> do
           endExpr <- interpret scope' swaps expr'
           case endExpr of
             Right a -> pure (Right (mt, a))

@@ -3,7 +3,7 @@
 module Language.Mimsa.Repl.Actions
   ( doReplAction,
     evaluateText,
-    evaluateStoreExpression,
+    resolveStoreExpression,
   )
 where
 
@@ -81,7 +81,7 @@ doHelp = do
 
 doInfo :: Project -> Expr Name -> ReplM ()
 doInfo env expr = do
-  (type', _, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression type' _ _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
     prettyPrint expr
       <> " :: "
@@ -91,7 +91,7 @@ doInfo env expr = do
 
 doTree :: Project -> Expr Name -> ReplM ()
 doTree env expr = do
-  (_, storeExpr, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   let graph = createDepGraph (mkName "expression") (store env) storeExpr
   replPrint graph
 
@@ -122,7 +122,7 @@ doListBindings :: Project -> ReplM ()
 doListBindings env = do
   let showBind (name, StoreExpression expr _ _) =
         case getTypecheckedStoreExpression env expr of
-          Right (type', _, _, _, _) ->
+          Right (ResolvedExpression type' _ _ _ _) ->
             replPrint (prettyPrint name <> " :: " <> prettyPrint type')
           _ -> pure ()
   traverse_
@@ -136,7 +136,7 @@ doListBindings env = do
 
 doEvaluate :: Project -> Expr Name -> ReplM ()
 doEvaluate env expr = do
-  (type', _, expr', scope', swaps) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression type' _ expr' scope' swaps) <- liftRepl $ getTypecheckedStoreExpression env expr
   simplified <- liftIO $ interpret scope' swaps expr'
   simplified' <- liftRepl (first InterpreterErr simplified)
   replPrint $

@@ -18,7 +18,7 @@ import Language.Mimsa.Types
 
 doBind :: Project -> Name -> Expr Name -> ReplM Project
 doBind env name expr = do
-  (type', storeExpr, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
     "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
       <> " :: "

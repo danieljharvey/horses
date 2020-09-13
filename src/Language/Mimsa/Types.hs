@@ -22,6 +22,7 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Project,
     module Language.Mimsa.Types.TypeBindings,
     module Language.Mimsa.Types.VersionedMap,
+    module Language.Mimsa.Types.ResolvedExpression,
   )
 where
 
@@ -36,6 +37,7 @@ import Language.Mimsa.Types.Library
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Scheme
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
