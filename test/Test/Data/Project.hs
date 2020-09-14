@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.StoreData where
+module Test.Data.Project where
 
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -40,6 +40,9 @@ addInt = unsafeGetExpr "\\a -> \\b -> addIntPair((a,b))"
 eqExpr :: StoreExpression
 eqExpr = unsafeGetExpr "\\a -> \\b -> eqPair((a,b))"
 
+optionExpr :: StoreExpression
+optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
+
 stdLib :: Project
 stdLib = Project store' bindings' mempty mempty
   where
@@ -49,6 +52,7 @@ stdLib = Project store' bindings' mempty mempty
           [ (ExprHash 1, fstExpr),
             (ExprHash 2, eqExpr),
             (ExprHash 3, eqTenExpr),
+            (ExprHash 4, optionExpr),
             (ExprHash 6, compose),
             (ExprHash 7, sndExpr),
             (ExprHash 11, idExpr),
@@ -61,6 +65,7 @@ stdLib = Project store' bindings' mempty mempty
           [ (mkName "fst", pure $ ExprHash 1),
             (mkName "eq", pure $ ExprHash 2),
             (mkName "eqTen", pure $ ExprHash 3),
+            (mkName "tyOption", pure $ ExprHash 4),
             (mkName "compose", pure $ ExprHash 6),
             (mkName "snd", pure $ ExprHash 7),
             (mkName "id", pure $ ExprHash 11),

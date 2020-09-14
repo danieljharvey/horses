@@ -9,9 +9,9 @@ where
 import qualified Data.Map as M
 import Language.Mimsa.Store.Substitutor (substitute)
 import Language.Mimsa.Types
+import Test.Data.Project
 import Test.Helpers
 import Test.Hspec
-import Test.StoreData
 
 trueStoreExpr :: StoreExpression
 trueStoreExpr = StoreExpression (bool True) mempty mempty
