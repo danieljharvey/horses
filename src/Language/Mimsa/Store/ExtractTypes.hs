@@ -1,6 +1,7 @@
 module Language.Mimsa.Store.ExtractTypes
   ( extractTypes,
     extractTypeDecl,
+    extractDataTypes,
   )
 where
 
@@ -58,26 +59,32 @@ extractLocalTypeDeclarations (DataType cName _ cons) =
   S.singleton cName
     <> mconcat (S.singleton . fst <$> M.toList cons)
 
-----------
+-----------
 
 extractTypeDecl :: Expr a -> Set Construct
-extractTypeDecl (MyVar _) = mempty
-extractTypeDecl (MyIf a b c) = extractTypeDecl a <> extractTypeDecl b <> extractTypeDecl c
-extractTypeDecl (MyLet _ a b) = extractTypeDecl a <> extractTypeDecl b
-extractTypeDecl (MyLambda _ a) = extractTypeDecl a
-extractTypeDecl (MyApp a b) = extractTypeDecl a <> extractTypeDecl b
-extractTypeDecl (MyLiteral _) = mempty
-extractTypeDecl (MyLetPair _ _ a b) =
-  extractTypeDecl a <> extractTypeDecl b
-extractTypeDecl (MyPair a b) = extractTypeDecl a <> extractTypeDecl b
-extractTypeDecl (MyRecord map') = foldMap extractTypeDecl map'
-extractTypeDecl (MyRecordAccess a _) = extractTypeDecl a
-extractTypeDecl (MyData dt a) =
-  extractTypeDecl a
-    <> extractLocalTypeDeclarations dt
-extractTypeDecl (MyConstructor _) = mempty
-extractTypeDecl (MyConsApp a b) = extractTypeDecl a <> extractTypeDecl b
-extractTypeDecl (MyCaseMatch sum' matches catchAll) =
-  extractTypeDecl sum'
-    <> mconcat (extractTypeDecl . snd <$> NE.toList matches)
-    <> maybe mempty extractTypeDecl catchAll
+extractTypeDecl = withDataTypes extractLocalTypeDeclarations
+
+extractDataTypes :: Expr a -> Set DataType
+extractDataTypes = withDataTypes S.singleton
+
+withDataTypes :: (Monoid b) => (DataType -> b) -> Expr a -> b
+withDataTypes _ (MyVar _) = mempty
+withDataTypes f (MyIf a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
+withDataTypes f (MyLet _ a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyLambda _ a) = withDataTypes f a
+withDataTypes f (MyApp a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes _ (MyLiteral _) = mempty
+withDataTypes f (MyLetPair _ _ a b) =
+  withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyPair a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyRecord map') = foldMap (withDataTypes f) map'
+withDataTypes f (MyRecordAccess a _) = withDataTypes f a
+withDataTypes f (MyData dt a) =
+  withDataTypes f a
+    <> f dt
+withDataTypes _ (MyConstructor _) = mempty
+withDataTypes f (MyConsApp a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyCaseMatch sum' matches catchAll) =
+  withDataTypes f sum'
+    <> mconcat (withDataTypes f . snd <$> NE.toList matches)
+    <> maybe mempty (withDataTypes f) catchAll

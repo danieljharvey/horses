@@ -4,7 +4,9 @@ import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
 import Data.Map (Map)
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Language.Mimsa.Library (isLibraryName)
+import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types
 
 -- this turns StoreExpressions back into expressions by substituting their
@@ -31,14 +33,45 @@ substitute store' storeExpr =
         runState
           (doSubstitutions store' storeExpr)
           startingState
-   in SubstitutedExpression swaps' expr' scope'
+   in SubstitutedExpression
+        swaps'
+        expr'
+        scope'
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
 doSubstitutions :: Store -> StoreExpression -> App (Expr Variable)
-doSubstitutions store' (StoreExpression expr bindings' _) = do
+doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
   newScopes <- traverse (substituteWithKey store') (getExprPairs store' bindings')
   addScope $ mconcat newScopes
-  mapVar [] expr
+  expr' <- mapVar [] expr
+  dtList <- toDataTypeList <$> resolveTypes store' tBindings
+  pure $ addDataTypesToExpr expr' dtList
+
+------------ type stuff
+
+-- why doesn't this exist already
+lookupStoreItem :: Store -> ExprHash -> Maybe StoreExpression
+lookupStoreItem (Store s') hash' = M.lookup hash' s'
+
+-- find all types needed by our expression in the store
+resolveTypes :: Store -> TypeBindings -> App [StoreExpression]
+resolveTypes store' (TypeBindings tBindings) =
+  let typeLookup (_, hash) = case lookupStoreItem store' hash of
+        Just sExpr -> pure [sExpr]
+        _ -> pure mempty
+   in mconcat <$> traverse typeLookup (M.toList tBindings)
+
+toDataTypeList :: [StoreExpression] -> [DataType]
+toDataTypeList sExprs =
+  let getDts sExpr = extractDataTypes (storeExpression sExpr)
+   in S.toList . mconcat $ (getDts <$> sExprs)
+
+-- add required type declarations into our Expr
+addDataTypesToExpr :: Expr a -> [DataType] -> Expr a
+addDataTypesToExpr =
+  foldr MyData
+
+--------------
 
 substituteWithKey :: Store -> (Name, StoreExpression) -> App Scope
 substituteWithKey store' (key, storeExpr') = do
@@ -132,7 +165,8 @@ mapVar p (MyRecord map') = do
   map2 <- traverse (mapVar p) map'
   pure (MyRecord map2)
 mapVar _ (MyLiteral a) = pure (MyLiteral a)
-mapVar p (MyData a b) = MyData a <$> mapVar p b
+mapVar p (MyData dt b) =
+  MyData dt <$> mapVar p b
 mapVar _ (MyConstructor name) = pure (MyConstructor name)
 mapVar p (MyConsApp fn var) = MyConsApp <$> mapVar p fn <*> mapVar p var
 mapVar p (MyCaseMatch expr' matches catchAll) = do

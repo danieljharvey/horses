@@ -36,6 +36,26 @@ constExpr =
     mempty
     mempty
 
+maybeDecl :: DataType
+maybeDecl =
+  DataType (mkConstruct "Maybe") [mkName "a"] cons'
+  where
+    cons' =
+      M.fromList
+        [ (mkConstruct "Just", [VarName (mkName "a")]),
+          (mkConstruct "Nothing", [])
+        ]
+
+maybeExpr :: StoreExpression
+maybeExpr =
+  StoreExpression
+    ( MyData
+        maybeDecl
+        (MyRecord mempty)
+    )
+    mempty
+    mempty
+
 storeWithBothIn :: Store
 storeWithBothIn =
   Store
@@ -43,7 +63,8 @@ storeWithBothIn =
         [ (ExprHash 1, trueStoreExpr),
           (ExprHash 2, falseStoreExpr),
           (ExprHash 3, idExpr),
-          (ExprHash 4, constExpr)
+          (ExprHash 4, constExpr),
+          (ExprHash 5, maybeExpr)
         ]
     )
 
@@ -138,3 +159,18 @@ spec = do
               [ (NumberedVar 0, bool True)
               ]
           )
+  describe "Extracts types"
+    $ it "Good job"
+    $ do
+      let hash = ExprHash 5
+          expr = MyLiteral MyUnit
+          storeExpr =
+            StoreExpression
+              expr
+              mempty
+              (TypeBindings $ M.singleton (mkConstruct "Maybe") hash)
+          store' = storeWithBothIn
+          ans = substitute store' storeExpr
+      seSwaps ans `shouldBe` mempty
+      seExpr ans `shouldBe` MyData maybeDecl (MyLiteral MyUnit)
+      seScope ans `shouldBe` mempty
