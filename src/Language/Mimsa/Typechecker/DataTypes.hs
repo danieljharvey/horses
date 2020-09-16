@@ -8,9 +8,9 @@ where
 
 import Data.Map (Map)
 import qualified Data.Map as M
-import Language.Mimsa.Types.Construct
-import Language.Mimsa.Types.DataType
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Environment
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
 
 defaultEnv :: Environment
@@ -23,5 +23,7 @@ builtInTypes :: Map Construct MonoType
 builtInTypes =
   M.fromList
     [ (mkConstruct "String", MTString),
-      (mkConstruct "Int", MTInt)
+      (mkConstruct "Int", MTInt),
+      (mkConstruct "Boolean", MTBool),
+      (mkConstruct "Unit", MTUnit)
     ]

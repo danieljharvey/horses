@@ -58,7 +58,7 @@ onFileChange env name = do
   replPrint (T.pack scratchFilename <> " updated!")
   expr <-
     liftRepl $ first ParseErr (parseExpr (T.strip text))
-  (type', storeExpr, _, _, _) <-
+  (ResolvedExpression type' storeExpr _ _ _) <-
     liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
     "+ Using the following from scope: "

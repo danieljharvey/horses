@@ -5,7 +5,9 @@ module Language.Mimsa.Repl.Types where
 import Control.Monad.Except
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
 
 type ReplM = ExceptT Error IO
 
@@ -31,6 +33,7 @@ data ReplAction
   | Evaluate (Expr Name)
   | Tree (Expr Name)
   | Bind Name (Expr Name)
+  | BindType DataType
   | Versions Name
   | ListBindings
   | Watch Name

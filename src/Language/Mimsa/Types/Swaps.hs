@@ -1,8 +1,7 @@
 module Language.Mimsa.Types.Swaps where
 
 import Data.Map (Map)
-import Language.Mimsa.Types.Name
-import Language.Mimsa.Types.Variable
+import Language.Mimsa.Types.Identifiers
 
 -- the names that get changed in substitution
 -- Name is the original name

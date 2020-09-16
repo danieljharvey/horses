@@ -1,12 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Error where
+module Language.Mimsa.Types.Error
+  ( Error (..),
+    InterpreterError (..),
+    ResolverError (..),
+    TypeError (..),
+  )
+where
 
 import Data.Text (Text)
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.InterpreterError
-import Language.Mimsa.Types.ResolverError
-import Language.Mimsa.Types.TypeError
+import Language.Mimsa.Types.Error.InterpreterError
+import Language.Mimsa.Types.Error.ResolverError
+import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Usage
 
 data Error

@@ -4,7 +4,7 @@ module Language.Mimsa.Types.TypeConstructor where
 
 import qualified Data.Text as T
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.Construct
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
 
 data TypeConstructor

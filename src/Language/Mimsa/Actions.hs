@@ -1,21 +1,33 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Actions
   ( evaluateText,
-    evaluateStoreExpression,
+    resolveStoreExpression,
     getTypecheckedStoreExpression,
     getExprPairs,
+    getTypesFromStore,
     fromItem,
+    fromType,
   )
 where
 
 import Control.Monad (join)
 import Data.Bifunctor (first)
 import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser (parseExpr)
-import Language.Mimsa.Project (getCurrentBindings)
-import Language.Mimsa.Store (createStoreExpression, substitute)
+import Language.Mimsa.Project
+  ( getCurrentBindings,
+    getCurrentTypeBindings,
+  )
+import Language.Mimsa.Store
+  ( createStoreExpression,
+    substitute,
+  )
+import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
 
@@ -32,45 +44,79 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
     Just item -> pure [(name, item)]
     _ -> pure []
 
+getTypesFromStore :: Store -> TypeBindings -> Set DataType
+getTypesFromStore (Store items') (TypeBindings tBindings) =
+  S.fromList $ join $ do
+    (_, hash) <- M.toList tBindings
+    let getDt (StoreExpression expr' _ _) =
+          case expr' of
+            (MyData dt _) -> Just dt
+            _ -> Nothing
+    case M.lookup hash items' >>= getDt of
+      Just item -> pure [item]
+      _ -> pure []
+
 chainExprs ::
   Expr Variable ->
   Scope ->
   Expr Variable
-chainExprs expr scope = finalExpr
-  where
-    finalExpr =
-      foldr
-        (\(name, expr') a -> MyLet name expr' a)
-        expr
-        (M.toList . getScope $ scope)
+chainExprs expr scope =
+  foldr
+    (\(name, expr') a -> MyLet name expr' a)
+    expr
+    (M.toList . getScope $ scope)
 
 fromItem :: Name -> StoreExpression -> ExprHash -> Project
 fromItem name expr hash =
   Project
     { store = Store $ M.singleton hash expr,
-      bindings = VersionedBindings $ M.singleton name (pure hash),
-      serverUrl = mempty
+      bindings = VersionedMap $ M.singleton name (pure hash),
+      serverUrl = mempty,
+      typeBindings = VersionedMap $ M.fromList typeList
     }
+  where
+    typeConsUsed =
+      extractTypeDecl (storeExpression expr)
+    typeList =
+      (,pure hash) <$> S.toList typeConsUsed
 
-evaluateStoreExpression ::
+fromType :: StoreExpression -> ExprHash -> Project
+fromType expr hash =
+  Project
+    { store = Store $ M.singleton hash expr,
+      bindings = mempty,
+      serverUrl = mempty,
+      typeBindings = VersionedMap $ M.fromList typeList
+    }
+  where
+    typeConsUsed =
+      extractTypeDecl (storeExpression expr)
+    typeList =
+      (,pure hash) <$> S.toList typeConsUsed
+
+resolveStoreExpression ::
   Store ->
   StoreExpression ->
-  Either Error (MonoType, StoreExpression, Expr Variable, Scope, Swaps)
-evaluateStoreExpression store' storeExpr = do
-  let (swaps, newExpr, scope) = substitute store' storeExpr
+  Either Error ResolvedExpression
+resolveStoreExpression store' storeExpr = do
+  let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
   exprType <- getType swaps scope newExpr
-  pure (exprType, storeExpr, newExpr, scope, swaps)
+  pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
 
 getTypecheckedStoreExpression ::
   Project ->
   Expr Name ->
-  Either Error (MonoType, StoreExpression, Expr Variable, Scope, Swaps)
+  Either Error ResolvedExpression
 getTypecheckedStoreExpression env expr = do
-  storeExpr <- first ResolverErr $ createStoreExpression (getCurrentBindings $ bindings env) expr
-  evaluateStoreExpression (store env) storeExpr
+  storeExpr <-
+    first ResolverErr $
+      createStoreExpression
+        (getCurrentBindings $ bindings env)
+        (getCurrentTypeBindings $ typeBindings env)
+        expr
+  resolveStoreExpression (store env) storeExpr
 
-evaluateText :: Project -> Text -> Either Error (MonoType, Expr Variable, Scope, Swaps)
+evaluateText :: Project -> Text -> Either Error ResolvedExpression
 evaluateText env input = do
   expr <- first OtherError $ parseExpr input
-  (mt, _, expr', scope', swaps) <- getTypecheckedStoreExpression env expr
-  pure (mt, expr', scope', swaps)
+  getTypecheckedStoreExpression env expr

@@ -8,16 +8,17 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import Language.Mimsa.Actions
 import Language.Mimsa.Project.Usages
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Expr
 import Language.Mimsa.Types.ExprHash
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Name
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.Usage
-import Language.Mimsa.Types.Variable
+import Language.Mimsa.Types.VersionedMap
 
 -- find which versions of a given binding are in use
 
@@ -33,7 +34,7 @@ findVersions project name = do
 
 findInProject :: Project -> Name -> Either UsageError (NonEmpty ExprHash)
 findInProject project name =
-  case M.lookup name (getVersionedBindings $ bindings project) of
+  case M.lookup name (getVersionedMap $ bindings project) of
     Just versioned -> Right versioned
     _ -> throwError $ CouldNotFindBinding name
 
@@ -41,7 +42,7 @@ getStoreExpression ::
   Project ->
   ExprHash ->
   Either UsageError StoreExpression
-getStoreExpression (Project store' _ _) exprHash =
+getStoreExpression (Project store' _ _ _) exprHash =
   case M.lookup exprHash (getStore store') of
     Just storeExpression' -> Right storeExpression'
     _ -> Left (CouldNotFindStoreExpression exprHash)
@@ -63,5 +64,5 @@ getExprDetails ::
 getExprDetails project exprHash = do
   usages <- first UsageErr (findUsages project exprHash)
   storeExpr <- first UsageErr (getStoreExpression project exprHash)
-  (mt, _, expr', _, _) <- evaluateStoreExpression (store project) storeExpr
+  (ResolvedExpression mt _ expr' _ _) <- resolveStoreExpression (store project) storeExpr
   pure (expr', mt, usages)

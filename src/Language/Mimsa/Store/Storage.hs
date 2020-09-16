@@ -120,4 +120,4 @@ findExprInLocalStore hash = do
           pure a
         _ -> do
           liftIO $ T.putStrLn $ "Could not find expression for " <> prettyPrint hash
-          error "Could not find!"
+          throwError "Could not find!"

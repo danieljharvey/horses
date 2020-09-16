@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f0f822b1024d4c72f55b1e840472a6d7017d27377b92a261e3369ab21b2199c7
+-- hash: 5d695ec456b1104fe3a63a55f0afb63c31fab04cb4f59470227f42212f83c46a
 
 name:           mimsa
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
       Language.Mimsa.Parser.Parser
       Language.Mimsa.Printer
       Language.Mimsa.Project
+      Language.Mimsa.Project.Default
       Language.Mimsa.Project.Persistence
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
@@ -53,6 +54,8 @@ library
       Language.Mimsa.Repl.Watcher
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
+      Language.Mimsa.Store.ExtractTypes
+      Language.Mimsa.Store.ExtractVars
       Language.Mimsa.Store.ResolvedDeps
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
@@ -71,37 +74,43 @@ library
       Language.Mimsa.Typechecker.TcMonad
       Language.Mimsa.Typechecker.Unify
       Language.Mimsa.Types
+      Language.Mimsa.Types.AST
+      Language.Mimsa.Types.AST.DataType
+      Language.Mimsa.Types.AST.Expr
+      Language.Mimsa.Types.AST.Literal
+      Language.Mimsa.Types.AST.StringType
       Language.Mimsa.Types.Bindings
-      Language.Mimsa.Types.Construct
-      Language.Mimsa.Types.DataType
       Language.Mimsa.Types.Environment
       Language.Mimsa.Types.Error
-      Language.Mimsa.Types.Expr
+      Language.Mimsa.Types.Error.InterpreterError
+      Language.Mimsa.Types.Error.ResolverError
+      Language.Mimsa.Types.Error.TypeError
       Language.Mimsa.Types.ExprHash
       Language.Mimsa.Types.ForeignFunc
-      Language.Mimsa.Types.FuncName
-      Language.Mimsa.Types.InterpreterError
+      Language.Mimsa.Types.Identifiers
+      Language.Mimsa.Types.Identifiers.Construct
+      Language.Mimsa.Types.Identifiers.FuncName
+      Language.Mimsa.Types.Identifiers.Name
+      Language.Mimsa.Types.Identifiers.TypeName
+      Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.Library
-      Language.Mimsa.Types.Literal
       Language.Mimsa.Types.MonoType
-      Language.Mimsa.Types.Name
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.ResolvedDeps
-      Language.Mimsa.Types.ResolverError
+      Language.Mimsa.Types.ResolvedExpression
       Language.Mimsa.Types.Scheme
       Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
       Language.Mimsa.Types.StoreExpression
-      Language.Mimsa.Types.StringType
+      Language.Mimsa.Types.SubstitutedExpression
       Language.Mimsa.Types.Substitutions
       Language.Mimsa.Types.Swaps
       Language.Mimsa.Types.Tui
+      Language.Mimsa.Types.TypeBindings
       Language.Mimsa.Types.TypeConstructor
-      Language.Mimsa.Types.TypeError
-      Language.Mimsa.Types.TypeName
       Language.Mimsa.Types.UniVar
       Language.Mimsa.Types.Usage
-      Language.Mimsa.Types.Variable
+      Language.Mimsa.Types.VersionedMap
   other-modules:
       Paths_mimsa
   hs-source-dirs:
@@ -162,12 +171,12 @@ test-suite mimsa-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Test.Data.Project
       Test.Helpers
       Test.Interpreter
       Test.Prettier
       Test.Repl
       Test.Resolver
-      Test.StoreData
       Test.Substitutor
       Test.Syntax
       Test.Typechecker

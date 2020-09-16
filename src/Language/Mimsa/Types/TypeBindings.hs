@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Bindings where
+module Language.Mimsa.Types.TypeBindings where
 
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
@@ -13,7 +13,7 @@ import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Identifiers
 
 -- a list of names to hashes
-newtype Bindings = Bindings {getBindings :: Map Name ExprHash}
+newtype TypeBindings = TypeBindings {getTypeBindings :: Map Construct ExprHash}
   deriving newtype
     ( Eq,
       Ord,
@@ -24,5 +24,5 @@ newtype Bindings = Bindings {getBindings :: Map Name ExprHash}
       JSON.ToJSON
     )
 
-instance Printer Bindings where
-  prettyPrint (Bindings b) = "{ " <> T.intercalate ", " (prettyPrint <$> M.keys b) <> " }"
+instance Printer TypeBindings where
+  prettyPrint (TypeBindings b) = "{ " <> T.intercalate ", " (prettyPrint <$> M.keys b) <> " }"

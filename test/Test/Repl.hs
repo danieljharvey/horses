@@ -14,9 +14,9 @@ import Language.Mimsa.Parser (parseExpr)
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl
 import Language.Mimsa.Types
+import Test.Data.Project
 import Test.Helpers
 import Test.Hspec
-import Test.StoreData
 
 eval :: Project -> Text -> IO (Either Text (MonoType, Expr Variable))
 eval env input =
@@ -25,7 +25,7 @@ eval env input =
     Right _ ->
       case evaluateText env input of
         Left e -> pure (Left $ prettyPrint e)
-        Right (mt, expr', scope', swaps) -> do
+        Right (ResolvedExpression mt _ expr' scope' swaps) -> do
           endExpr <- interpret scope' swaps expr'
           case endExpr of
             Right a -> pure (Right (mt, a))
@@ -345,3 +345,12 @@ spec =
       it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
         result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
         result `shouldBe` Right (MTInt, int 3)
+      it "let some = \\a -> Some a in if True then some(1) else Nowt" $ do
+        result <- eval stdLib "let some = \\a -> Some a in if True then some(1) else Nowt"
+        result
+          `shouldBe` Right
+            ( MTData (mkConstruct "Option") [MTInt],
+              MyConsApp
+                (MyConstructor (mkConstruct "Some"))
+                (int 1)
+            )

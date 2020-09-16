@@ -47,48 +47,95 @@ spec =
           `shouldBe` S.empty
     describe "createStoreExpression" $ do
       it "Creates expressions from literals with empty Project" $ do
-        createStoreExpression mempty (int 1)
+        createStoreExpression mempty mempty (int 1)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = int 1
+                  storeExpression = int 1,
+                  storeTypeBindings = mempty
                 }
             )
-        createStoreExpression mempty (bool True)
+        createStoreExpression mempty mempty (bool True)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = bool True
+                  storeExpression = bool True,
+                  storeTypeBindings = mempty
                 }
             )
-        createStoreExpression mempty (str (StringType "poo"))
+        createStoreExpression mempty mempty (str (StringType "poo"))
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = str (StringType "poo")
+                  storeExpression = str (StringType "poo"),
+                  storeTypeBindings = mempty
                 }
             )
       it "Looks for vars and can't find them" $
-        createStoreExpression mempty (MyVar (Name "missing"))
+        createStoreExpression mempty mempty (MyVar (Name "missing"))
           `shouldBe` Left
             (MissingBinding (mkName "missing") mempty)
       it "Looks for vars and finds a built-in" $
-        createStoreExpression mempty (MyVar (Name "randomInt"))
+        createStoreExpression mempty mempty (MyVar (Name "randomInt"))
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = MyVar (Name "randomInt")
+                  storeExpression = MyVar (Name "randomInt"),
+                  storeTypeBindings = mempty
                 }
             )
       it "Looks for vars and finds them" $ do
         let hash = ExprHash 1234
             expr = MyVar (Name "missing")
             bindings' = Bindings $ M.singleton (Name "missing") hash
-            storeExpr = createStoreExpression bindings' expr
+            storeExpr = createStoreExpression bindings' mempty expr
         storeExpr
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = Bindings $ M.singleton (Name "missing") hash,
+                  storeExpression = expr,
+                  storeTypeBindings = mempty
+                }
+            )
+    describe "createTypeStoreExpression" $ do
+      it "Creates the most basic StoreExpression for a type" $ do
+        let dt = DataType (mkConstruct "Void") mempty mempty
+            expr = MyData dt (MyRecord mempty)
+            storeExpr = createStoreExpression mempty mempty expr
+        storeExpr
+          `shouldBe` Right
+            ( StoreExpression
+                { storeBindings = mempty,
+                  storeTypeBindings = mempty,
+                  storeExpression = expr
+                }
+            )
+      it "Throws when trying to use an unavailable type" $ do
+        let cons' = ConsName (mkConstruct "MyUnit") []
+            dt =
+              DataType
+                (mkConstruct "VoidBox")
+                mempty
+                (M.singleton (mkConstruct "Box") [cons'])
+            storeExpr = createTypeStoreExpression mempty dt
+        storeExpr
+          `shouldBe` Left (MissingType (mkConstruct "MyUnit") mempty)
+      it "Creates a StoreExpression that uses a type from the type bindings" $ do
+        let cons' = ConsName (mkConstruct "MyUnit") []
+            dt =
+              DataType
+                (mkConstruct "VoidBox")
+                mempty
+                (M.singleton (mkConstruct "Box") [cons'])
+            hash = ExprHash 123
+            tBindings' = TypeBindings $ M.singleton (Construct "MyUnit") hash
+            storeExpr = createTypeStoreExpression tBindings' dt
+            expr = MyData dt (MyRecord mempty)
+        storeExpr
+          `shouldBe` Right
+            ( StoreExpression
+                { storeBindings = mempty,
+                  storeTypeBindings = tBindings',
                   storeExpression = expr
                 }
             )

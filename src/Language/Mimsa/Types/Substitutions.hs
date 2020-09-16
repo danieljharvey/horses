@@ -7,8 +7,8 @@ import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Variable
 
 ---
 

@@ -8,7 +8,7 @@ import Language.Mimsa.Project.Persistence (getCurrentBindings)
 import Language.Mimsa.Store.ResolvedDeps (resolveDeps)
 import Language.Mimsa.Types.Bindings
 import Language.Mimsa.Types.ExprHash
-import Language.Mimsa.Types.Name
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps
 import Language.Mimsa.Types.Store
@@ -16,7 +16,7 @@ import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.Usage
 
 findUsages :: Project -> ExprHash -> Either UsageError (Set Usage)
-findUsages (Project store' bindings' _) =
+findUsages (Project store' bindings' _ _) =
   findUsages_ store' (getCurrentBindings bindings')
 
 resolveDepsOrUsageError :: Store -> Bindings -> Either UsageError ResolvedDeps

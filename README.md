@@ -25,9 +25,11 @@ you should then see:
 :help - this help screen
 :info <expr> - get the type of <expr>
 :bind <name> = <expr> - binds <expr> to <name> and saves it in the environment
+:bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment
 :list - show a list of current bindings in the environment
 :tree <expr> - draw a dependency tree for <expr>
 :versions <name> - list all versions of a binding
+:watch <name> - put <name> into 'scratch.mimsa' and bind any changes
 :tui - launch terminal user interface for exploring project
 <expr> - Evaluate <expr>, returning it's simplified form and type
 :quit - give up and leave
@@ -127,3 +129,26 @@ True :: Boolean
 :> \i -> if i.predicate then 1 else 2
 \i -> (if i.predicate then 1 else 2) :: {predicate: Boolean} -> Int
 ```
+
+type declarations:
+
+```haskell
+:bindType type Either e a = Left e | Right a
+
+:> \a -> if a then Right a else Left "Oh no"
+\a -> (if a then (Right a) else (Left "Oh no")) :: (7 -> Either String 7)
+```
+
+case matching:
+
+```haskell
+:> :bind eitherMap = \f -> \either -> case either of Left \e -> Left e | Right \a -> Right f(a)
+Bound eitherMap to \f -> (\either -> case either of Left (\e -> (Left e)) | Right (\a -> (Right f(a)))) :: ((11 -> 15) -> (2 -> Either 13 15))
+
+:> eitherMap(\a -> "dog")(Left "what")
+Left "poo" :: Either 14 String -- you may notice this is wrong, see issues
+
+:> eitherMap(\a -> "dog")(Right "poo")
+Right "dog" :: Either 14 String -- this is OK though
+```
+

@@ -2,7 +2,7 @@ module Language.Mimsa.Tui.Evaluate (getExpressionForBinding) where
 
 import qualified Brick.Widgets.List as L
 import qualified Data.Map as M
-import Language.Mimsa.Actions (evaluateStoreExpression)
+import Language.Mimsa.Actions (resolveStoreExpression)
 import Language.Mimsa.Store
 import Language.Mimsa.Types
 
@@ -11,8 +11,8 @@ evaluateStoreExprToInfo ::
   StoreExpression ->
   Maybe (MonoType, Expr Name)
 evaluateStoreExprToInfo store' storeExpr =
-  case evaluateStoreExpression store' storeExpr of
-    Right (mt, _, _, _, _) -> Just (mt, storeExpression storeExpr)
+  case resolveStoreExpression store' storeExpr of
+    Right (ResolvedExpression mt _ _ _ _) -> Just (mt, storeExpression storeExpr)
     _ -> Nothing
 
 hush :: Either e a -> Maybe a

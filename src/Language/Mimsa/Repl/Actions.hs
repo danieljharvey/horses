@@ -3,7 +3,7 @@
 module Language.Mimsa.Repl.Actions
   ( doReplAction,
     evaluateText,
-    evaluateStoreExpression,
+    resolveStoreExpression,
   )
 where
 
@@ -19,7 +19,10 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
-import Language.Mimsa.Project (getCurrentBindings)
+import Language.Mimsa.Project
+  ( getCurrentBindings,
+    getCurrentTypeBindings,
+  )
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Repl.ExpressionBind
 import Language.Mimsa.Repl.ExpressionWatch
@@ -57,6 +60,9 @@ doReplAction env (Info expr) = do
 doReplAction env (Bind name expr) = do
   newEnv <- runReplM $ doBind env name expr
   pure (fromMaybe env newEnv)
+doReplAction env (BindType dt) = do
+  newEnv <- runReplM $ doBindType env dt
+  pure (fromMaybe env newEnv)
 
 ----------
 
@@ -66,6 +72,7 @@ doHelp = do
   T.putStrLn ":help - this help screen"
   T.putStrLn ":info <expr> - get the type of <expr>"
   T.putStrLn ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
+  T.putStrLn ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
   T.putStrLn ":list - show a list of current bindings in the environment"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":versions <name> - list all versions of a binding"
@@ -78,7 +85,7 @@ doHelp = do
 
 doInfo :: Project -> Expr Name -> ReplM ()
 doInfo env expr = do
-  (type', _, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression type' _ _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
     prettyPrint expr
       <> " :: "
@@ -88,7 +95,7 @@ doInfo env expr = do
 
 doTree :: Project -> Expr Name -> ReplM ()
 doTree env expr = do
-  (_, storeExpr, _, _, _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   let graph = createDepGraph (mkName "expression") (store env) storeExpr
   replPrint graph
 
@@ -117,9 +124,9 @@ doVersions env name = do
 
 doListBindings :: Project -> ReplM ()
 doListBindings env = do
-  let showBind (name, StoreExpression _ expr) =
+  let showBind (name, StoreExpression expr _ _) =
         case getTypecheckedStoreExpression env expr of
-          Right (type', _, _, _, _) ->
+          Right (ResolvedExpression type' _ _ _ _) ->
             replPrint (prettyPrint name <> " :: " <> prettyPrint type')
           _ -> pure ()
   traverse_
@@ -128,12 +135,19 @@ doListBindings env = do
         (store env)
         (getCurrentBindings $ bindings env)
     )
+  let showType dt = replPrint (prettyPrint dt)
+  traverse_
+    showType
+    ( getTypesFromStore
+        (store env)
+        (getCurrentTypeBindings $ typeBindings env)
+    )
 
 ----------
 
 doEvaluate :: Project -> Expr Name -> ReplM ()
 doEvaluate env expr = do
-  (type', _, expr', scope', swaps) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression type' _ expr' scope' swaps) <- liftRepl $ getTypecheckedStoreExpression env expr
   simplified <- liftIO $ interpret scope' swaps expr'
   simplified' <- liftRepl (first InterpreterErr simplified)
   replPrint $

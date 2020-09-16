@@ -62,6 +62,9 @@ instance Monad Parser where
           >=> \(next, a) -> runParser (aToParserB a) next
       )
 
+parseFail :: (Text -> Text) -> Parser a
+parseFail f = mkParser (Left . f)
+
 pair :: Parser a -> Parser b -> Parser (a, b)
 pair parserA parserB =
   mkParser

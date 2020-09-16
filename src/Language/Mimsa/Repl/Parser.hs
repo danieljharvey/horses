@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Parser where
+module Language.Mimsa.Repl.Parser
+  ( replParser,
+  )
+where
 
 import Control.Applicative ((<|>))
 import Language.Mimsa.Parser
@@ -11,12 +14,17 @@ replParser =
   helpParser
     <|> infoParser
     <|> bindParser
+    <|> bindTypeParser
     <|> listBindingsParser
     <|> treeParser
     <|> watchParser
     <|> evalParser
     <|> tuiParser
     <|> versionsParser
+    <|> failer
+
+failer :: Parser a
+failer = parseFail (\input -> "Could not parse expression for >>>" <> input <> "<<<")
 
 helpParser :: Parser ReplAction
 helpParser = Help <$ literal ":help"
@@ -41,6 +49,11 @@ bindParser =
   Bind
     <$> right (thenSpace (literal ":bind")) (thenSpace nameParser)
     <*> right (thenSpace (literal "=")) expressionParser
+
+bindTypeParser :: Parser ReplAction
+bindTypeParser = do
+  _ <- thenSpace (literal ":bindType")
+  BindType <$> typeDeclParser
 
 listBindingsParser :: Parser ReplAction
 listBindingsParser = ListBindings <$ literal ":list"

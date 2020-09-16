@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.StoreData where
+module Test.Data.Project where
 
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -40,8 +40,11 @@ addInt = unsafeGetExpr "\\a -> \\b -> addIntPair((a,b))"
 eqExpr :: StoreExpression
 eqExpr = unsafeGetExpr "\\a -> \\b -> eqPair((a,b))"
 
+optionExpr :: StoreExpression
+optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
+
 stdLib :: Project
-stdLib = Project store' bindings' mempty
+stdLib = Project store' bindings' typeBindings' mempty
   where
     store' =
       Store $
@@ -49,6 +52,7 @@ stdLib = Project store' bindings' mempty
           [ (ExprHash 1, fstExpr),
             (ExprHash 2, eqExpr),
             (ExprHash 3, eqTenExpr),
+            (ExprHash 4, optionExpr),
             (ExprHash 6, compose),
             (ExprHash 7, sndExpr),
             (ExprHash 11, idExpr),
@@ -56,7 +60,7 @@ stdLib = Project store' bindings' mempty
             (ExprHash 18, addInt)
           ]
     bindings' =
-      VersionedBindings $
+      VersionedMap $
         M.fromList
           [ (mkName "fst", pure $ ExprHash 1),
             (mkName "eq", pure $ ExprHash 2),
@@ -67,11 +71,17 @@ stdLib = Project store' bindings' mempty
             (mkName "incrementInt", pure $ ExprHash 17),
             (mkName "addInt", pure $ ExprHash 18)
           ]
+    typeBindings' =
+      VersionedMap $
+        M.fromList
+          [ (mkConstruct "Some", pure $ ExprHash 4),
+            (mkConstruct "Nowt", pure $ ExprHash 4)
+          ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression
 unsafeGetExpr' input bindings' =
   case parseExpr input of
-    Right expr' -> StoreExpression bindings' expr'
+    Right expr' -> StoreExpression expr' bindings' mempty
     a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
 
 unsafeGetExpr :: Text -> StoreExpression
