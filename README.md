@@ -25,9 +25,11 @@ you should then see:
 :help - this help screen
 :info <expr> - get the type of <expr>
 :bind <name> = <expr> - binds <expr> to <name> and saves it in the environment
+:bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment
 :list - show a list of current bindings in the environment
 :tree <expr> - draw a dependency tree for <expr>
 :versions <name> - list all versions of a binding
+:watch <name> - put <name> into 'scratch.mimsa' and bind any changes
 :tui - launch terminal user interface for exploring project
 <expr> - Evaluate <expr>, returning it's simplified form and type
 :quit - give up and leave

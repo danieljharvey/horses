@@ -19,7 +19,10 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
-import Language.Mimsa.Project (getCurrentBindings)
+import Language.Mimsa.Project
+  ( getCurrentBindings,
+    getCurrentTypeBindings,
+  )
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Repl.ExpressionBind
 import Language.Mimsa.Repl.ExpressionWatch
@@ -69,6 +72,7 @@ doHelp = do
   T.putStrLn ":help - this help screen"
   T.putStrLn ":info <expr> - get the type of <expr>"
   T.putStrLn ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
+  T.putStrLn ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
   T.putStrLn ":list - show a list of current bindings in the environment"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":versions <name> - list all versions of a binding"
@@ -130,6 +134,13 @@ doListBindings env = do
     ( getExprPairs
         (store env)
         (getCurrentBindings $ bindings env)
+    )
+  let showType dt = replPrint (prettyPrint dt)
+  traverse_
+    showType
+    ( getTypesFromStore
+        (store env)
+        (getCurrentTypeBindings $ typeBindings env)
     )
 
 ----------

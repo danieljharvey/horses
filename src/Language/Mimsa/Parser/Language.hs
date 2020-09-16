@@ -39,7 +39,7 @@ parseExpr' :: Text -> Either Text ParserExpr
 parseExpr' input = snd <$> P.runParser expressionParser input
 
 failer :: Parser ParserExpr
-failer = P.mkParser (\input -> Left $ "Could not parse expression for >>>" <> input <> "<<<")
+failer = P.parseFail (\input -> "Could not parse expression for >>>" <> input <> "<<<")
 
 expressionParser :: Parser ParserExpr
 expressionParser =
@@ -348,13 +348,12 @@ pairParser = do
 -----
 
 typeDeclParser :: Parser DataType
-typeDeclParser = typeDeclParserEmpty <|> typeDeclParserWithCons
+typeDeclParser = typeDeclParserWithCons <|> typeDeclParserEmpty
 
 typeDeclParserEmpty :: Parser DataType
 typeDeclParserEmpty = do
   _ <- P.thenSpace (P.literal "type")
-  tyName <- P.thenSpace constructParser
-  _ <- P.thenSpace (P.literal "in")
+  tyName <- constructParser
   pure (DataType tyName mempty mempty)
 
 typeDeclParserWithCons :: Parser DataType
@@ -364,14 +363,20 @@ typeDeclParserWithCons = do
   tyArgs <- P.zeroOrMore (P.left nameParser P.space1)
   _ <- P.thenSpace (P.literal "=")
   constructors <- manyTypeConstructors <|> oneTypeConstructor
-  _ <- P.space1
-  _ <- P.thenSpace (P.literal "in")
   pure $ DataType tyName tyArgs constructors
 
 --------
 
 typeParser :: Parser ParserExpr
-typeParser = MyData <$> (typeDeclParserEmpty <|> typeDeclParserWithCons) <*> expressionParser
+typeParser =
+  MyData <$> (typeDeclParserWithCons <|> typeDeclParserEmpty)
+    <*> inExpr
+
+inExpr :: Parser ParserExpr
+inExpr = do
+  _ <- P.space0
+  _ <- P.thenSpace (P.literal "in")
+  expressionParser
 
 ----
 

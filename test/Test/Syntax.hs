@@ -194,6 +194,17 @@ spec = do
               (MyPair (bool True) (int 1))
               (MyVar (mkName "a"))
           )
+    it "Parses Void" $
+      parseExpr "type Void in 1"
+        `shouldBe` Right
+          ( MyData
+              ( DataType
+                  (mkConstruct "Void")
+                  mempty
+                  mempty
+              )
+              (int 1)
+          )
     it "Parses an absolute unit" $
       parseExpr "type AbsoluteUnit = AbsoluteUnit in 1"
         `shouldBe` Right

@@ -6,6 +6,7 @@ module Language.Mimsa.Actions
     resolveStoreExpression,
     getTypecheckedStoreExpression,
     getExprPairs,
+    getTypesFromStore,
     fromItem,
     fromType,
   )
@@ -14,6 +15,7 @@ where
 import Control.Monad (join)
 import Data.Bifunctor (first)
 import qualified Data.Map as M
+import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser (parseExpr)
@@ -41,6 +43,18 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
   case M.lookup hash items' of
     Just item -> pure [(name, item)]
     _ -> pure []
+
+getTypesFromStore :: Store -> TypeBindings -> Set DataType
+getTypesFromStore (Store items') (TypeBindings tBindings) =
+  S.fromList $ join $ do
+    (_, hash) <- M.toList tBindings
+    let getDt (StoreExpression expr' _ _) =
+          case expr' of
+            (MyData dt _) -> Just dt
+            _ -> Nothing
+    case M.lookup hash items' >>= getDt of
+      Just item -> pure [item]
+      _ -> pure []
 
 chainExprs ::
   Expr Variable ->
