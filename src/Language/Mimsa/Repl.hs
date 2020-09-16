@@ -7,12 +7,16 @@ module Language.Mimsa.Repl
 where
 
 import Control.Monad.IO.Class (liftIO)
-import Data.Maybe (fromMaybe)
+import Control.Monad.Trans.Except
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Parser as P
-import Language.Mimsa.Project (loadProject, saveProject)
+import Language.Mimsa.Project
+  ( defaultProject,
+    loadProject,
+    saveProject,
+  )
 import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Repl.Types
@@ -21,7 +25,10 @@ import System.Console.Haskeline
 
 repl :: IO ()
 repl = do
-  env <- fromMaybe mempty <$> loadProject
+  loadedEnv <- runExceptT loadProject
+  let env = case loadedEnv of
+        Right env' -> env'
+        _ -> defaultProject
   _ <- doReplAction env Help
   runInputT defaultSettings (loop env)
   where
@@ -36,11 +43,12 @@ repl = do
           loop newEnv
 
 parseCommand :: Project -> Text -> IO Project
-parseCommand env input = case P.runParserComplete replParser input of
-  Left e -> do
-    T.putStrLn e
-    pure env
-  Right replAction -> do
-    newExprs <- doReplAction env replAction
-    saveProject newExprs
-    pure newExprs
+parseCommand env input =
+  case P.runParserComplete replParser input of
+    Left e -> do
+      T.putStrLn e
+      pure env
+    Right replAction -> do
+      newExprs <- doReplAction env replAction
+      _ <- runExceptT $ saveProject newExprs
+      pure newExprs

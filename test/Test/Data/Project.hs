@@ -44,7 +44,7 @@ optionExpr :: StoreExpression
 optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
 
 stdLib :: Project
-stdLib = Project store' bindings' mempty mempty
+stdLib = Project store' bindings' typeBindings' mempty
   where
     store' =
       Store $
@@ -65,12 +65,17 @@ stdLib = Project store' bindings' mempty mempty
           [ (mkName "fst", pure $ ExprHash 1),
             (mkName "eq", pure $ ExprHash 2),
             (mkName "eqTen", pure $ ExprHash 3),
-            (mkName "tyOption", pure $ ExprHash 4),
             (mkName "compose", pure $ ExprHash 6),
             (mkName "snd", pure $ ExprHash 7),
             (mkName "id", pure $ ExprHash 11),
             (mkName "incrementInt", pure $ ExprHash 17),
             (mkName "addInt", pure $ ExprHash 18)
+          ]
+    typeBindings' =
+      VersionedMap $
+        M.fromList
+          [ (mkConstruct "Some", pure $ ExprHash 4),
+            (mkConstruct "Nowt", pure $ ExprHash 4)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression

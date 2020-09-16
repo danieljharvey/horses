@@ -9,8 +9,8 @@ module Language.Mimsa.Project.Persistence
 where
 
 -- functions for Projects as opposed to the larger Store
-import Control.Exception (try)
-import Control.Monad.Trans.Except
+import Control.Exception
+import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.Coerce
@@ -19,33 +19,42 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types
 
-servers :: [ServerUrl]
-servers = pure (ServerUrl "https://raw.githubusercontent.com/danieljharvey/mimsa-store/master/")
+type PersistApp a = ExceptT Text IO a
+
+hush :: Either IOError a -> Maybe a
+hush (Right a) = pure a
+hush _ = Nothing
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
-loadProject :: IO (Maybe Project)
+loadProject :: PersistApp Project
 loadProject = do
-  envJson <- try $ BS.readFile envPath
-  case hush envJson >>= JSON.decode of
-    Just vb -> do
-      items' <- runExceptT $ recursiveLoadBoundExpressions servers (getHashesForAllVersions vb)
-      case items' of
-        Right store' -> pure $ Just (Project store' vb mempty servers)
-        _ -> pure Nothing
-    _ -> pure Nothing
+  project' <- liftIO $ try $ BS.readFile envPath
+  case hush project' >>= JSON.decode of
+    Just sp -> do
+      store' <-
+        recursiveLoadBoundExpressions
+          (projectServers sp)
+          (getItemsForAllVersions . projectBindings $ sp)
+      typeStore' <-
+        recursiveLoadBoundExpressions
+          (projectServers sp)
+          (getItemsForAllVersions . projectTypes $ sp)
+      pure $ projectFromSaved (store' <> typeStore') sp
+    _ -> throwError $ "Could not decode file at " <> T.pack envPath
 
-saveProject :: Project -> IO ()
+saveProject :: Project -> PersistApp ()
 saveProject env = do
-  let jsonStr = JSON.encode (bindings env)
-  BS.writeFile envPath jsonStr
+  let jsonStr = JSON.encode (projectToSaved env)
+  liftIO $ BS.writeFile envPath jsonStr
 
 --
 
-loadBoundExpressions :: [ServerUrl] -> Set ExprHash -> ExceptT Text IO Store
+loadBoundExpressions :: [ServerUrl] -> Set ExprHash -> PersistApp Store
 loadBoundExpressions urls hashes = do
   items' <-
     traverse
@@ -57,7 +66,7 @@ loadBoundExpressions urls hashes = do
   pure
     (Store (M.fromList items'))
 
-recursiveLoadBoundExpressions :: [ServerUrl] -> Set ExprHash -> ExceptT Text IO Store
+recursiveLoadBoundExpressions :: [ServerUrl] -> Set ExprHash -> PersistApp Store
 recursiveLoadBoundExpressions urls hashes = do
   store' <- loadBoundExpressions urls hashes
   let newHashes =
@@ -79,10 +88,6 @@ storePath = "./"
 envPath :: String
 envPath = storePath <> "environment.json"
 
-hush :: Either IOError a -> Maybe a
-hush (Right a) = Just a
-hush _ = Nothing
-
 getCurrentBindings :: VersionedBindings -> Bindings
 getCurrentBindings versioned =
   Bindings (NE.last <$> getVersionedMap versioned)
@@ -91,8 +96,8 @@ getCurrentTypeBindings :: VersionedTypeBindings -> TypeBindings
 getCurrentTypeBindings versioned =
   TypeBindings (NE.last <$> getVersionedMap versioned)
 
-getHashesForAllVersions :: VersionedBindings -> Set ExprHash
-getHashesForAllVersions versioned =
+getItemsForAllVersions :: (Ord a) => VersionedMap k a -> Set a
+getItemsForAllVersions versioned =
   mconcat $ M.elems (S.fromList . NE.toList <$> coerce versioned)
 
 getDependencyHashes :: StoreExpression -> Set ExprHash

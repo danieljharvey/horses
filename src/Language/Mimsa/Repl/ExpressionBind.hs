@@ -8,12 +8,10 @@ module Language.Mimsa.Repl.ExpressionBind
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Bifunctor
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (saveExpr)
-import Language.Mimsa.Typechecker
 import Language.Mimsa.Types
 
 doBind :: Project -> Name -> Expr Name -> ReplM Project
@@ -27,8 +25,17 @@ doBind env name expr = do
 
 doBindType :: Project -> DataType -> ReplM Project
 doBindType env dt = do
-  _ <- liftRepl $ first TypeErr $ doDataTypeInference (undefined env) dt
-  pure env
+  let expr = MyData dt (MyRecord mempty)
+  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  replPrint $
+    "Bound type " <> prettyPrint dt
+  bindTypeExpression env storeExpr
+
+bindTypeExpression :: (MonadIO m) => Project -> StoreExpression -> m Project
+bindTypeExpression env storeExpr = do
+  hash <- liftIO (saveExpr storeExpr)
+  let newEnv = fromType storeExpr hash
+  pure (env <> newEnv)
 
 -- save an expression in the store and bind it to name
 bindStoreExpression ::

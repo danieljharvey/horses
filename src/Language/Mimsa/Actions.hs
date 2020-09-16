@@ -7,6 +7,7 @@ module Language.Mimsa.Actions
     getTypecheckedStoreExpression,
     getExprPairs,
     fromItem,
+    fromType,
   )
 where
 
@@ -56,6 +57,20 @@ fromItem name expr hash =
   Project
     { store = Store $ M.singleton hash expr,
       bindings = VersionedMap $ M.singleton name (pure hash),
+      serverUrl = mempty,
+      typeBindings = VersionedMap $ M.fromList typeList
+    }
+  where
+    typeConsUsed =
+      extractTypeDecl (storeExpression expr)
+    typeList =
+      (,pure hash) <$> S.toList typeConsUsed
+
+fromType :: StoreExpression -> ExprHash -> Project
+fromType expr hash =
+  Project
+    { store = Store $ M.singleton hash expr,
+      bindings = mempty,
       serverUrl = mempty,
       typeBindings = VersionedMap $ M.fromList typeList
     }

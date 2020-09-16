@@ -153,7 +153,8 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyIf predExpr true false)
     (MyData _dataType expr) -> interpretWithScope expr
     (MyConstructor a) -> pure (MyConstructor a)
-    (MyConsApp fn val) -> pure (MyConsApp fn val)
+    (MyConsApp fn val) ->
+      MyConsApp fn <$> interpretWithScope val
     (MyCaseMatch expr' matches catchAll) -> do
       expr'' <- interpretWithScope expr'
       patternMatch expr'' matches catchAll >>= interpretWithScope
