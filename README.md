@@ -129,3 +129,26 @@ True :: Boolean
 :> \i -> if i.predicate then 1 else 2
 \i -> (if i.predicate then 1 else 2) :: {predicate: Boolean} -> Int
 ```
+
+type declarations:
+
+```haskell
+:bindType type Either e a = Left e | Right a
+
+:> \a -> if a then Right a else Left "Oh no"
+\a -> (if a then (Right a) else (Left "Oh no")) :: (7 -> Either String 7)
+```
+
+case matching:
+
+```haskell
+:> :bind eitherMap = \f -> \either -> case either of Left \e -> Left e | Right \a -> Right f(a)
+Bound eitherMap to \f -> (\either -> case either of Left (\e -> (Left e)) | Right (\a -> (Right f(a)))) :: ((11 -> 15) -> (2 -> Either 13 15))
+
+:> eitherMap(\a -> "dog")(Left "what")
+Left "poo" :: Either 14 String -- you may notice this is wrong, see issues
+
+:> eitherMap(\a -> "dog")(Right "poo")
+Right "dog" :: Either 14 String -- this is OK though
+```
+
