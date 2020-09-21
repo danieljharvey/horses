@@ -354,3 +354,9 @@ spec =
                 (MyConstructor (mkConstruct "Some"))
                 (int 1)
             )
+      it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)" $ do
+        result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)"
+        result `shouldSatisfy` isLeft
+      it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")" $ do
+        result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")"
+        result `shouldBe` Right (MTString, str' "Dog")
