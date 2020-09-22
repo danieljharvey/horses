@@ -354,3 +354,18 @@ spec =
                 (MyConstructor (mkConstruct "Some"))
                 (int 1)
             )
+      it "\\a -> case a of Some \\as -> True | Nowt 100" $ do
+        result <- eval stdLib "\\a -> case a of Some \\as -> True | Nowt 100"
+        fst <$> result
+          `shouldSatisfy` isLeft
+      it "\\a -> case a of Some \\as -> as | Nowt 100" $ do
+        result <- eval stdLib "\\a -> case a of Some \\as -> as | Nowt 100"
+        fst <$> result
+          `shouldBe` Right
+            (MTFunction (MTData (mkConstruct "Option") [MTInt]) MTInt)
+      it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)" $ do
+        result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)"
+        result `shouldSatisfy` isLeft
+      it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")" $ do
+        result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")"
+        result `shouldBe` Right (MTString, str' "Dog")

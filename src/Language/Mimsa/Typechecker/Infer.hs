@@ -41,11 +41,20 @@ doInference ::
   Environment ->
   Expr Variable ->
   Either TypeError (Substitutions, MonoType)
-doInference swaps env expr = runTcMonad swaps (infer (defaultEnv <> env) expr)
+doInference swaps env expr = runTcMonad swaps (inferAndSubst (defaultEnv <> env) expr)
 
 doDataTypeInference :: Environment -> DataType -> Either TypeError (Map Construct TypeConstructor)
 doDataTypeInference env dt =
-  runTcMonad mempty (inferConstructorTypes (defaultEnv <> env) dt)
+  runTcMonad mempty (snd <$> inferConstructorTypes (defaultEnv <> env) dt)
+
+-- run inference, and substitute everything possible
+inferAndSubst ::
+  Environment ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
+inferAndSubst env expr = do
+  (s, tyExpr) <- infer env expr
+  pure (s, applySubst s tyExpr)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
 applySubstCtx subst (Environment schemes dt) =
@@ -108,7 +117,11 @@ splitRecordTypes map' = (subs, MTRecord types)
     types = snd <$> map'
 
 -- let's pattern match on exactly what's inside more clearly
-inferApplication :: Environment -> Expr Variable -> Expr Variable -> TcMonad (Substitutions, MonoType)
+inferApplication ::
+  Environment ->
+  Expr Variable ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
 inferApplication env function argument = do
   tyRes <- getUnknown
   (s1, tyFun) <- infer env function
@@ -129,7 +142,12 @@ findActualBindingInSwaps a = pure a
 
 -- to allow recursion we make a type for the let binding in it's own expression
 -- we may need to unify tyUnknown and tyExpr if it struggles with complex stuff
-inferLetBinding :: Environment -> Variable -> Expr Variable -> Expr Variable -> TcMonad (Substitutions, MonoType)
+inferLetBinding ::
+  Environment ->
+  Variable ->
+  Expr Variable ->
+  Expr Variable ->
+  TcMonad (Substitutions, MonoType)
 inferLetBinding env binder expr body = do
   tyUnknown <- getUnknown
   binderInExpr <- findActualBindingInSwaps binder
@@ -183,7 +201,7 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
 inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
   dataType <- lookupConstructor env name
-  allArgs <- inferConstructorTypes env dataType
+  (_, allArgs) <- inferConstructorTypes env dataType
   case M.lookup name allArgs of
     Just tyArg ->
       pure (mempty, constructorToType tyArg)
@@ -193,7 +211,7 @@ inferDataConstructor env name = do
 inferConstructorTypes ::
   Environment ->
   DataType ->
-  TcMonad (Map Construct TypeConstructor)
+  TcMonad (MonoType, Map Construct TypeConstructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) a <$> getUnknown) tyNames
   let findType ty = case ty of
@@ -209,7 +227,8 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
         let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
         pure $ M.singleton consName constructor
   cons' <- traverse inferConstructor (M.toList constructors)
-  pure (mconcat cons')
+  let dt = MTData typeName (snd <$> tyVars)
+  pure (dt, mconcat cons')
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
@@ -267,37 +286,39 @@ inferSumExpressionType env consTypes sumExpr =
       findConstructor expr = case expr of
         (MyConsApp a _) -> findConstructor a
         (MyConstructor a) -> fromName a
-        (MyVar _) -> do
-          tyRes <- getUnknown
-          pure (mempty, tyRes)
-        _ -> throwError $ CannotCaseMatchOnType sumExpr
+        somethingElse ->
+          infer env somethingElse
    in findConstructor sumExpr
 
 -------------
 
-inferMyCaseMatch ::
+inferCaseMatch ::
   Environment ->
   Expr Variable ->
   NonEmpty (Construct, Expr Variable) ->
   Maybe (Expr Variable) ->
   TcMonad (Substitutions, MonoType)
-inferMyCaseMatch env sumExpr matches catchAll = do
+inferCaseMatch env sumExpr matches catchAll = do
   dataType <- checkCompleteness env matches catchAll
-  constructTypes <- inferConstructorTypes env dataType
-  (s1, _tySum) <-
+  (tyData, constructTypes) <- inferConstructorTypes env dataType
+  (s1, tySum) <-
     inferSumExpressionType
       env
       constructTypes
       sumExpr
+  s2 <- unify tySum tyData
   tyMatches <-
     traverse
       ( uncurry
-          (inferMatch (applySubstCtx s1 env) (applySubstToConstructor s1 <$> constructTypes))
+          ( inferMatch
+              (applySubstCtx (s2 <> s1) env)
+              (applySubstToConstructor (s2 <> s1) <$> constructTypes)
+          )
       )
       matches
   (sCatch, tyCatches) <- case catchAll of
     Just catchAll' -> do
-      (s, tyCatchAll) <- infer (applySubstCtx s1 env) catchAll'
+      (s, tyCatchAll) <- infer (applySubstCtx (s2 <> s1) env) catchAll'
       pure (s, [tyCatchAll])
     _ -> pure (mempty, mempty)
   let matchSubs =
@@ -306,7 +327,7 @@ inferMyCaseMatch env sumExpr matches catchAll = do
           <> sCatch
       actuals = (snd <$> NE.toList tyMatches) <> tyCatches
   (s, mt) <- matchList actuals
-  let allSubs = s1 <> s <> matchSubs
+  let allSubs = s2 <> s1 <> s <> matchSubs
   pure (allSubs, applySubst allSubs mt)
 
 applySubstToConstructor :: Substitutions -> TypeConstructor -> TypeConstructor
@@ -418,4 +439,4 @@ infer env inferExpr =
     (MyConsApp cons val) ->
       inferApplication env cons val
     (MyCaseMatch expr' matches catchAll) ->
-      inferMyCaseMatch env expr' matches catchAll
+      inferCaseMatch env expr' matches catchAll
