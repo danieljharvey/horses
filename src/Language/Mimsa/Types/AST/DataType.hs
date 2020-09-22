@@ -31,7 +31,7 @@ instance Printer DataType where
 
 renderDataType :: DataType -> Doc ann
 renderDataType (DataType construct' vars' constructors') =
-  "type " <+> prettyDoc construct'
+  "type" <+> prettyDoc construct'
     <+> printVars vars'
     <+> if M.null constructors'
       then space

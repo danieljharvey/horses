@@ -13,8 +13,7 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType
@@ -41,26 +40,29 @@ data Expr a
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Show a, Printer a) => Printer (Expr a) where
-  prettyPrint (MyLiteral l) = prettyPrint l
-  prettyPrint (MyVar var) = prettyPrint var
-  prettyPrint (MyLet var expr1 expr2) =
-    "let " <> prettyPrint var
-      <> " = "
-      <> printSubExpr expr1
-      <> " in "
-      <> printSubExpr expr2
-  prettyPrint (MyLetPair var1 var2 expr1 body) =
-    "let (" <> prettyPrint var1 <> ", " <> prettyPrint var2
-      <> ") = "
-      <> printSubExpr expr1
-      <> " in "
-      <> printSubExpr body
-  prettyPrint (MyLambda binder expr) =
+  prettyPrint = renderWithWidth 20 . prettyDoc
+
+  prettyDoc (MyLiteral l) = prettyDoc l
+  prettyDoc (MyVar var) = prettyDoc var
+  prettyDoc (MyLet var expr1 expr2) =
+    "let" <+> prettyDoc var
+      <+> "="
+      <+> printSubExpr expr1
+      <+> "in"
+      <+> printSubExpr expr2
+  prettyDoc (MyLetPair var1 var2 expr1 body) =
+    "let" <+> "(" <+> prettyDoc var1 <+> "," <+> prettyDoc var2
+      <+> ")"
+      <+> "="
+      <+> printSubExpr expr1
+      <+> "in"
+      <+> printSubExpr body
+  prettyDoc (MyLambda binder expr) =
     "\\"
-      <> prettyPrint binder
-      <> " -> "
-      <> printSubExpr expr
-  prettyPrint (MyApp (MyApp (MyApp func arg1) arg2) arg3) =
+      <> prettyDoc binder
+      <+> "->"
+      <+> printSubExpr expr
+  prettyDoc (MyApp (MyApp (MyApp func arg1) arg2) arg3) =
     printSubExpr func <> "("
       <> printSubExpr arg1
       <> ")("
@@ -68,61 +70,72 @@ instance (Show a, Printer a) => Printer (Expr a) where
       <> ")("
       <> printSubExpr arg3
       <> ")"
-  prettyPrint (MyApp (MyApp func arg1) arg2) =
+  prettyDoc (MyApp (MyApp func arg1) arg2) =
     printSubExpr func <> "("
       <> printSubExpr arg1
       <> ")("
       <> printSubExpr arg2
       <> ")"
-  prettyPrint (MyApp func arg) =
+  prettyDoc (MyApp func arg) =
     printSubExpr func <> "("
       <> printSubExpr arg
       <> ")"
-  prettyPrint (MyRecordAccess expr name) =
-    printSubExpr expr <> "." <> prettyPrint name
-  prettyPrint (MyIf if' then' else') =
-    "if "
-      <> printSubExpr if'
-      <> " then "
-      <> printSubExpr then'
-      <> " else "
-      <> printSubExpr else'
-  prettyPrint (MyPair a b) =
-    "("
-      <> printSubExpr a
-      <> ", "
-      <> printSubExpr b
-      <> ")"
-  prettyPrint (MyRecord map') = "{" <> T.intercalate ", " exprs' <> "}"
+  prettyDoc (MyRecordAccess expr name) =
+    printSubExpr expr <> "." <> prettyDoc name
+  prettyDoc (MyIf if' then' else') =
+    vsep
+      [ "if",
+        hang 2 (printSubExpr if'),
+        "then",
+        printSubExpr then',
+        "else",
+        hang 2 (printSubExpr else')
+      ]
+  prettyDoc (MyPair a b) =
+    tupled
+      [ printSubExpr a,
+        printSubExpr b
+      ]
+  prettyDoc (MyRecord map') = encloseSep lbrace rbrace comma exprs'
     where
       exprs' =
         ( \(name, val) ->
-            prettyPrint name
+            prettyDoc name
               <> ": "
               <> printSubExpr val
         )
           <$> M.toList map'
-  prettyPrint (MyData dataType expr) =
-    prettyPrint dataType
-      <> " in "
-      <> printSubExpr expr
-  prettyPrint (MyConstructor name) = prettyPrint name
-  prettyPrint (MyConsApp fn val) = prettyPrint fn <> " " <> printSubExpr val
-  prettyPrint (MyCaseMatch sumExpr matches catchAll) =
-    "case "
-      <> printSubExpr sumExpr
-      <> " of "
-      <> T.intercalate " | " (printMatch <$> NE.toList matches)
-      <> maybe "" (\catchExpr -> " | otherwise " <> printSubExpr catchExpr) catchAll
+  prettyDoc (MyData dataType expr) =
+    prettyDoc dataType
+      <+> "in"
+      <+> printSubExpr expr
+  prettyDoc (MyConstructor name) = prettyDoc name
+  prettyDoc (MyConsApp fn val) = prettyDoc fn <> " " <> printSubExpr val
+  prettyDoc (MyCaseMatch sumExpr matches catchAll) =
+    "case"
+      <+> printSubExpr sumExpr
+      <+> align
+        ( vsep
+            ( zipWith
+                (<+>)
+                ("of" : repeat "|")
+                options
+            )
+        )
     where
+      catchAll' = case catchAll of
+        Just catchExpr -> pure ("otherwise" <+> printSubExpr catchExpr)
+        _ -> mempty
+      options =
+        (printMatch <$> NE.toList matches) <> catchAll'
       printMatch (construct, expr') =
-        prettyPrint construct <> " " <> printSubExpr expr'
+        prettyDoc construct <+> printSubExpr expr'
 
-inParens :: (Show a, Printer a) => a -> Text
-inParens a = "(" <> prettyPrint a <> ")"
+inParens :: (Show a, Printer a) => a -> Doc ann
+inParens = parens . prettyDoc
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubExpr :: (Show a, Printer a) => Expr a -> Text
+printSubExpr :: (Show a, Printer a) => Expr a -> Doc ann
 printSubExpr expr = case expr of
   all'@MyLet {} -> inParens all'
   all'@MyLambda {} -> inParens all'
@@ -131,4 +144,4 @@ printSubExpr expr = case expr of
   all'@MyConstructor {} -> inParens all'
   all'@MyConsApp {} -> inParens all'
   all'@MyPair {} -> inParens all'
-  a -> prettyPrint a
+  a -> prettyDoc a

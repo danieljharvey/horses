@@ -216,6 +216,26 @@ spec = do
               )
               (int 1)
           )
+    it "Parses an absolute unit with type var" $
+      parseExpr "type Arr a = Empty\n| Item\na\n in 1"
+        `shouldBe` Right
+          ( MyData
+              ( DataType
+                  (mkConstruct "Arr")
+                  [mkName "a"]
+                  ( M.fromList
+                      [ (mkConstruct "Empty", mempty),
+                        ( mkConstruct "Item",
+                          [VarName $mkName "a"]
+                        )
+                      ]
+                  )
+              )
+              (int 1)
+          )
+    it "case (Just 1) of Just (\\ a -> eq(100)(a)) | \nNothing False" $
+      parseExpr "case (Just 1) of Just (\\ a -> eq(100)(a)) | \nNothing False"
+        `shouldSatisfy` isRight
     it "Parses a single constructor with one arg" $
       parseExpr "type Dog = Dog String in 1"
         `shouldBe` Right
