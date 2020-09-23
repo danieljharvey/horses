@@ -29,7 +29,7 @@ type ParserExpr = Expr Name
 
 -- parse expr, using it all up
 parseExpr :: Text -> Either Text ParserExpr
-parseExpr input = P.runParser expressionParser input
+parseExpr input = P.runParser (P.thenOptionalSpace expressionParser) input
   >>= \(leftover, a) ->
     if T.length leftover == 0
       then Right a
@@ -171,9 +171,7 @@ letNewlineParser :: Parser ParserExpr
 letNewlineParser = do
   name <- letNameIn
   expr <- expressionParser
-  _ <- P.space0
-  _ <- P.literal ";"
-  _ <- P.space0
+  _ <- literalWithSpace ";"
   MyLet name expr <$> expressionParser
 
 -----
@@ -216,7 +214,10 @@ lambdaParser = MyLambda <$> slashNameBinder <*> arrowExprBinder
 
 -- matches \varName
 slashNameBinder :: Parser Name
-slashNameBinder = P.right (P.literal "\\") (P.thenSpace nameParser)
+slashNameBinder = do
+  _ <- P.literal "\\"
+  _ <- P.space0
+  P.thenSpace nameParser
 
 arrowExprBinder :: Parser ParserExpr
 arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
@@ -247,6 +248,7 @@ exprInBrackets = do
   literalWithSpace "("
   expr <- expressionParser
   literalWithSpace ")"
+  _ <- P.space0
   pure expr
 
 -----
@@ -370,7 +372,12 @@ typeDeclParserWithCons = do
 typeParser :: Parser ParserExpr
 typeParser =
   MyData <$> (typeDeclParserWithCons <|> typeDeclParserEmpty)
-    <*> inExpr
+    <*> (inExpr <|> inNewLineExpr)
+
+inNewLineExpr :: Parser ParserExpr
+inNewLineExpr = do
+  _ <- literalWithSpace ";"
+  expressionParser
 
 inExpr :: Parser ParserExpr
 inExpr = do

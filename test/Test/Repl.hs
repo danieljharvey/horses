@@ -35,19 +35,21 @@ eval env input =
 prettyPrintingParses :: Text -> Either Text ()
 prettyPrintingParses input = do
   expr1 <- parseExpr input
-  expr2 <- parseExpr (prettyPrint expr1)
-  if expr1 /= expr2
-    then
-      Left
-        ( ">>>" <> T.pack (show expr1)
-            <> "<<< does not match >>>"
-            <> T.pack (show expr2)
-            <> "<<< "
-            <> prettyPrint expr1
-            <> " vs "
-            <> prettyPrint expr2
-        )
-    else pure ()
+  case parseExpr (prettyPrint expr1) of
+    Left _ -> Left ("Could not parse >>>" <> prettyPrint expr1 <> "<<<")
+    Right expr2 ->
+      if expr1 /= expr2
+        then
+          Left
+            ( ">>>" <> T.pack (show expr1)
+                <> "<<< does not match >>>"
+                <> T.pack (show expr2)
+                <> "<<< "
+                <> prettyPrint expr1
+                <> " vs "
+                <> prettyPrint expr2
+            )
+        else pure ()
 
 spec :: Spec
 spec =

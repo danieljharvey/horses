@@ -31,18 +31,29 @@ instance Printer DataType where
 
 renderDataType :: DataType -> Doc ann
 renderDataType (DataType construct' vars' constructors') =
-  "type " <+> prettyDoc construct'
-    <+> printVars vars'
+  "type" <+> prettyDoc construct'
+    <> printVars vars'
     <+> if M.null constructors'
-      then space
+      then mempty
       else
-        sep $
-          zipWith
-            (<+>)
-            ("=" : repeat "|")
-            (printCons <$> M.toList constructors')
+        line
+          <> indent
+            2
+            ( align $ vsep $
+                zipWith
+                  (<+>)
+                  ("=" : repeat "|")
+                  (printCons <$> M.toList constructors')
+            )
   where
     printVars [] = mempty
-    printVars as = sep $ renderName <$> as
+    printVars as = space <> sep (renderName <$> as)
+    printCons (consName, []) = prettyDoc consName
     printCons (consName, args) =
-      sep $ [prettyDoc consName] <> (prettyDoc <$> args)
+      prettyDoc consName
+        <> softline
+        <> hang
+          0
+          ( align $
+              vsep (prettyDoc <$> args)
+          )
