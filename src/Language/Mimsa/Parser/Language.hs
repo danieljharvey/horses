@@ -171,9 +171,7 @@ letNewlineParser :: Parser ParserExpr
 letNewlineParser = do
   name <- letNameIn
   expr <- expressionParser
-  _ <- P.space0
-  _ <- P.literal ";"
-  _ <- P.space0
+  _ <- literalWithSpace ";"
   MyLet name expr <$> expressionParser
 
 -----
@@ -378,9 +376,7 @@ typeParser =
 
 inNewLineExpr :: Parser ParserExpr
 inNewLineExpr = do
-  _ <- P.space0
-  _ <- P.literal ";"
-  _ <- P.space0
+  _ <- literalWithSpace ";"
   expressionParser
 
 inExpr :: Parser ParserExpr
