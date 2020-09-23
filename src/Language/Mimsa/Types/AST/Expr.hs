@@ -66,24 +66,8 @@ instance (Show a, Printer a) => Printer (Expr a) where
         indent 3 $
           prettyDoc expr
       ]
-  prettyDoc (MyApp (MyApp (MyApp func arg1) arg2) arg3) =
-    printSubExpr func <> "("
-      <> printSubExpr arg1
-      <> ")("
-      <> printSubExpr arg2
-      <> ")("
-      <> printSubExpr arg3
-      <> ")"
-  prettyDoc (MyApp (MyApp func arg1) arg2) =
-    printSubExpr func <> "("
-      <> printSubExpr arg1
-      <> ")("
-      <> printSubExpr arg2
-      <> ")"
   prettyDoc (MyApp func arg) =
-    printSubExpr func <> "("
-      <> printSubExpr arg
-      <> ")"
+    printSubExpr func <> parens (printSubExpr arg)
   prettyDoc (MyRecordAccess expr name) =
     printSubExpr expr <> "." <> prettyDoc name
   prettyDoc (MyIf if' then' else') =

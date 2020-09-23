@@ -32,7 +32,7 @@ instance Printer DataType where
 renderDataType :: DataType -> Doc ann
 renderDataType (DataType construct' vars' constructors') =
   "type" <+> prettyDoc construct'
-    <+> printVars vars'
+    <> printVars vars'
     <+> if M.null constructors'
       then mempty
       else
@@ -47,7 +47,7 @@ renderDataType (DataType construct' vars' constructors') =
             )
   where
     printVars [] = mempty
-    printVars as = sep $ renderName <$> as
+    printVars as = space <> sep (renderName <$> as)
     printCons (consName, []) = prettyDoc consName
     printCons (consName, args) =
       prettyDoc consName
