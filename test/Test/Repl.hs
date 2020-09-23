@@ -10,6 +10,7 @@ import Data.Either (isLeft, isRight)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Interpreter
+import Language.Mimsa.Logging
 import Language.Mimsa.Parser (parseExpr)
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl
@@ -35,7 +36,7 @@ eval env input =
 prettyPrintingParses :: Text -> Either Text ()
 prettyPrintingParses input = do
   expr1 <- parseExpr input
-  case parseExpr (prettyPrint expr1) of
+  case parseExpr (prettyPrint (debugPretty "rendered" expr1)) of
     Left _ -> Left ("Could not parse >>>" <> prettyPrint expr1 <> "<<<")
     Right expr2 ->
       if expr1 /= expr2

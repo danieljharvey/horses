@@ -47,9 +47,10 @@ instance (Show a, Printer a) => Printer (Expr a) where
   prettyDoc (MyLet var expr1 expr2) =
     "let" <+> prettyDoc var
       <+> "="
-      <+> printSubExpr expr1
-      <+> "in"
-      <+> printSubExpr expr2
+      <+> prettyDoc expr1
+      <> ";"
+      <> line
+      <> prettyDoc expr2
   prettyDoc (MyLetPair var1 var2 expr1 body) =
     "let" <+> "(" <+> prettyDoc var1 <+> "," <+> prettyDoc var2
       <+> ")"
@@ -61,7 +62,7 @@ instance (Show a, Printer a) => Printer (Expr a) where
     "\\"
       <> prettyDoc binder
       <+> "->"
-      <+> printSubExpr expr
+      <+> prettyDoc expr
   prettyDoc (MyApp (MyApp (MyApp func arg1) arg2) arg3) =
     printSubExpr func <> "("
       <> printSubExpr arg1
@@ -84,12 +85,18 @@ instance (Show a, Printer a) => Printer (Expr a) where
     printSubExpr expr <> "." <> prettyDoc name
   prettyDoc (MyIf if' then' else') =
     vsep
-      [ "if",
-        hang 2 (printSubExpr if'),
-        "then",
-        printSubExpr then',
-        "else",
-        hang 2 (printSubExpr else')
+      [ "if"
+          <+> printSubExpr if',
+        indent
+          2
+          ( "then"
+              <+> printSubExpr then'
+          ),
+        indent
+          2
+          ( "else"
+              <+> printSubExpr else'
+          )
       ]
   prettyDoc (MyPair a b) =
     tupled
@@ -107,10 +114,11 @@ instance (Show a, Printer a) => Printer (Expr a) where
           <$> M.toList map'
   prettyDoc (MyData dataType expr) =
     prettyDoc dataType
-      <+> "in"
-      <+> printSubExpr expr
+      <> ";"
+      <> line
+      <> prettyDoc expr
   prettyDoc (MyConstructor name) = prettyDoc name
-  prettyDoc (MyConsApp fn val) = prettyDoc fn <> " " <> printSubExpr val
+  prettyDoc (MyConsApp fn val) = prettyDoc fn <+> printSubExpr val
   prettyDoc (MyCaseMatch sumExpr matches catchAll) =
     "case"
       <+> printSubExpr sumExpr

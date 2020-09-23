@@ -374,7 +374,14 @@ typeDeclParserWithCons = do
 typeParser :: Parser ParserExpr
 typeParser =
   MyData <$> (typeDeclParserWithCons <|> typeDeclParserEmpty)
-    <*> inExpr
+    <*> (inExpr <|> inNewLineExpr)
+
+inNewLineExpr :: Parser ParserExpr
+inNewLineExpr = do
+  _ <- P.space0
+  _ <- P.literal ";"
+  _ <- P.space0
+  expressionParser
 
 inExpr :: Parser ParserExpr
 inExpr = do
