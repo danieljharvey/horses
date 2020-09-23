@@ -59,10 +59,13 @@ instance (Show a, Printer a) => Printer (Expr a) where
       <+> "in"
       <+> printSubExpr body
   prettyDoc (MyLambda binder expr) =
-    "\\"
-      <> prettyDoc binder
-      <+> "->"
-      <+> prettyDoc expr
+    vsep
+      [ "\\"
+          <> prettyDoc binder
+          <+> "->",
+        indent 3 $
+          prettyDoc expr
+      ]
   prettyDoc (MyApp (MyApp (MyApp func arg1) arg2) arg3) =
     printSubExpr func <> "("
       <> printSubExpr arg1
@@ -122,14 +125,18 @@ instance (Show a, Printer a) => Printer (Expr a) where
   prettyDoc (MyCaseMatch sumExpr matches catchAll) =
     "case"
       <+> printSubExpr sumExpr
-      <+> align
-        ( vsep
-            ( zipWith
-                (<+>)
-                ("of" : repeat "|")
-                options
-            )
-        )
+      <+> "of"
+      <+> line
+        <> indent
+          2
+          ( align $
+              vsep
+                ( zipWith
+                    (<+>)
+                    (" " : repeat "|")
+                    options
+                )
+          )
     where
       catchAll' = case catchAll of
         Just catchExpr -> pure ("otherwise" <+> printSubExpr catchExpr)
