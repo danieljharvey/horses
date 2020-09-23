@@ -40,8 +40,6 @@ data Expr a
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Show a, Printer a) => Printer (Expr a) where
-  prettyPrint = renderWithWidth 20 . prettyDoc
-
   prettyDoc (MyLiteral l) = prettyDoc l
   prettyDoc (MyVar var) = prettyDoc var
   prettyDoc (MyLet var expr1 expr2) =
