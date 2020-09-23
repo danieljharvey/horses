@@ -7,6 +7,15 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser (parseExpr)
 import Language.Mimsa.Types
+  ( Bindings (Bindings),
+    ExprHash (ExprHash),
+    Project (Project),
+    Store (Store),
+    StoreExpression (StoreExpression),
+    VersionedMap (VersionedMap),
+    mkName,
+    mkTyCon,
+  )
 
 fstExpr :: StoreExpression
 fstExpr =
@@ -74,8 +83,8 @@ stdLib = Project store' bindings' typeBindings' mempty
     typeBindings' =
       VersionedMap $
         M.fromList
-          [ (mkConstruct "Some", pure $ ExprHash 4),
-            (mkConstruct "Nowt", pure $ ExprHash 4)
+          [ (mkTyCon "Some", pure $ ExprHash 4),
+            (mkTyCon "Nowt", pure $ ExprHash 4)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression

@@ -7,11 +7,11 @@ module Language.Mimsa.Types.Project where
 
 import qualified Data.Aeson as JSON
 import Data.Text (Text)
-import GHC.Generics
-import Language.Mimsa.Types.ExprHash
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.VersionedMap
+import GHC.Generics (Generic)
+import Language.Mimsa.Types.ExprHash (ExprHash)
+import Language.Mimsa.Types.Identifiers (Name, TyCon)
+import Language.Mimsa.Types.Store (Store)
+import Language.Mimsa.Types.VersionedMap (VersionedMap)
 
 ------
 
@@ -23,13 +23,12 @@ newtype ServerUrl = ServerUrl {getServerUrl :: Text}
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces
-data Project
-  = Project
-      { store :: Store,
-        bindings :: VersionedBindings,
-        typeBindings :: VersionedTypeBindings,
-        serverUrl :: [ServerUrl]
-      }
+data Project = Project
+  { store :: Store,
+    bindings :: VersionedBindings,
+    typeBindings :: VersionedTypeBindings,
+    serverUrl :: [ServerUrl]
+  }
   deriving (Eq, Ord, Show)
 
 instance Semigroup Project where
@@ -43,17 +42,16 @@ instance Monoid Project where
 
 type VersionedBindings = VersionedMap Name ExprHash
 
-type VersionedTypeBindings = VersionedMap Construct ExprHash
+type VersionedTypeBindings = VersionedMap TyCon ExprHash
 
 --------
 
-data SaveProject
-  = SaveProject
-      { projectVersion :: Int,
-        projectBindings :: VersionedBindings,
-        projectTypes :: VersionedTypeBindings,
-        projectServers :: [ServerUrl]
-      }
+data SaveProject = SaveProject
+  { projectVersion :: Int,
+    projectBindings :: VersionedBindings,
+    projectTypes :: VersionedTypeBindings,
+    projectServers :: [ServerUrl]
+  }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 -----

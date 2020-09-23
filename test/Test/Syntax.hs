@@ -199,7 +199,7 @@ spec = do
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "Void")
+                  (mkTyCon "Void")
                   mempty
                   mempty
               )
@@ -210,9 +210,9 @@ spec = do
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "AbsoluteUnit")
+                  (mkTyCon "AbsoluteUnit")
                   mempty
-                  (M.singleton (mkConstruct "AbsoluteUnit") mempty)
+                  (M.singleton (mkTyCon "AbsoluteUnit") mempty)
               )
               (int 1)
           )
@@ -221,11 +221,11 @@ spec = do
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "Arr")
+                  (mkTyCon "Arr")
                   [mkName "a"]
                   ( M.fromList
-                      [ (mkConstruct "Empty", mempty),
-                        ( mkConstruct "Item",
+                      [ (mkTyCon "Empty", mempty),
+                        ( mkTyCon "Item",
                           [VarName $mkName "a"]
                         )
                       ]
@@ -241,11 +241,11 @@ spec = do
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "Dog")
+                  (mkTyCon "Dog")
                   mempty
                   ( M.singleton
-                      (mkConstruct "Dog")
-                      [ConsName (mkConstruct "String") mempty]
+                      (mkTyCon "Dog")
+                      [ConsName (mkTyCon "String") mempty]
                   )
               )
               (int 1)
@@ -255,11 +255,11 @@ spec = do
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "LeBool")
+                  (mkTyCon "LeBool")
                   mempty
                   ( M.fromList
-                      [ (mkConstruct "Vrai", []),
-                        (mkConstruct "Faux", [])
+                      [ (mkTyCon "Vrai", []),
+                        (mkTyCon "Faux", [])
                       ]
                   )
               )
@@ -270,11 +270,11 @@ spec = do
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "Nat")
+                  (mkTyCon "Nat")
                   mempty
                   ( M.fromList
-                      [ (mkConstruct "Zero", []),
-                        (mkConstruct "Succ", [ConsName (mkConstruct "Nat") mempty])
+                      [ (mkTyCon "Zero", []),
+                        (mkTyCon "Succ", [ConsName (mkTyCon "Nat") mempty])
                       ]
                   )
               )
@@ -285,7 +285,7 @@ spec = do
         `shouldBe` Right
           ( MyConsApp
               ( MyConsApp
-                  (MyConstructor $ mkConstruct "Dog")
+                  (MyConstructor $ mkTyCon "Dog")
                   (str' "hi")
               )
               (str' "dog")
@@ -295,26 +295,26 @@ spec = do
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "Maybe")
+                  (mkTyCon "Maybe")
                   [mkName "a"]
                   ( M.fromList
-                      [ (mkConstruct "Just", [VarName $ mkName "a"]),
-                        (mkConstruct "Nothing", [])
+                      [ (mkTyCon "Just", [VarName $ mkName "a"]),
+                        (mkTyCon "Nothing", [])
                       ]
                   )
               )
-              (MyConstructor $ mkConstruct "Nothing")
+              (MyConstructor $ mkTyCon "Nothing")
           )
     it "Uses a constructor" $
-      parseExpr "Vrai" `shouldBe` Right (MyConstructor (mkConstruct "Vrai"))
+      parseExpr "Vrai" `shouldBe` Right (MyConstructor (mkTyCon "Vrai"))
     it "Parses a custom case match" $
       parseExpr "case Just 1 of Just \\a -> a | Nothing 0"
         `shouldBe` Right
           ( MyCaseMatch
-              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
+              (MyConsApp (MyConstructor $ mkTyCon "Just") (int 1))
               ( NE.fromList
-                  [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a"))),
-                    (mkConstruct "Nothing", int 0)
+                  [ (mkTyCon "Just", MyLambda (mkName "a") (MyVar (mkName "a"))),
+                    (mkTyCon "Nothing", int 0)
                   ]
               )
               Nothing
@@ -323,9 +323,9 @@ spec = do
       parseExpr "case Just 1 of Just \\a -> a | otherwise 0"
         `shouldBe` Right
           ( MyCaseMatch
-              (MyConsApp (MyConstructor $ mkConstruct "Just") (int 1))
+              (MyConsApp (MyConstructor $ mkTyCon "Just") (int 1))
               ( NE.fromList
-                  [ (mkConstruct "Just", MyLambda (mkName "a") (MyVar (mkName "a")))
+                  [ (mkTyCon "Just", MyLambda (mkName "a") (MyVar (mkName "a")))
                   ]
               )
               (Just $ int 0)
@@ -335,33 +335,33 @@ spec = do
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "Tree")
+                  (mkTyCon "Tree")
                   [mkName "a"]
                   ( M.fromList
-                      [ (mkConstruct "Leaf", [VarName $ mkName "a"]),
-                        ( mkConstruct "Branch",
-                          [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
-                            ConsName (mkConstruct "Tree") [VarName $ mkName "b"]
+                      [ (mkTyCon "Leaf", [VarName $ mkName "a"]),
+                        ( mkTyCon "Branch",
+                          [ ConsName (mkTyCon "Tree") [VarName $ mkName "a"],
+                            ConsName (mkTyCon "Tree") [VarName $ mkName "b"]
                           ]
                         )
                       ]
                   )
               )
-              (MyConsApp (MyConstructor $ mkConstruct "Leaf") (int 1))
+              (MyConsApp (MyConstructor $ mkTyCon "Leaf") (int 1))
           )
     it "Parses even more complex type constructors" $
       parseExpr "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
         `shouldBe` Right
           ( MyData
               ( DataType
-                  (mkConstruct "Tree")
+                  (mkTyCon "Tree")
                   [mkName "a"]
                   ( M.fromList
-                      [ (mkConstruct "Empty", mempty),
-                        ( mkConstruct "Branch",
-                          [ ConsName (mkConstruct "Tree") [VarName $ mkName "a"],
+                      [ (mkTyCon "Empty", mempty),
+                        ( mkTyCon "Branch",
+                          [ ConsName (mkTyCon "Tree") [VarName $ mkName "a"],
                             VarName $ mkName "a",
-                            ConsName (mkConstruct "Tree") [VarName $ mkName "a"]
+                            ConsName (mkTyCon "Tree") [VarName $ mkName "a"]
                           ]
                         )
                       ]
@@ -370,12 +370,12 @@ spec = do
               ( MyConsApp
                   ( MyConsApp
                       ( MyConsApp
-                          (MyConstructor $ mkConstruct "Branch")
-                          (MyConstructor $ mkConstruct "Empty")
+                          (MyConstructor $ mkTyCon "Branch")
+                          (MyConstructor $ mkTyCon "Empty")
                       )
                       (int 1)
                   )
-                  (MyConstructor $ mkConstruct "Empty")
+                  (MyConstructor $ mkTyCon "Empty")
               )
           )
     it "Parses big function application" $

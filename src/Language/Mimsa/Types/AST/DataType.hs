@@ -12,17 +12,22 @@ import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
-import GHC.Generics
-import Language.Mimsa.Printer
+import GHC.Generics (Generic)
+import Language.Mimsa.Printer (Printer (prettyDoc))
 import Language.Mimsa.Types.Identifiers
+  ( Name,
+    TyCon,
+    TypeName,
+    renderName,
+  )
 
 -------
 
 data DataType
   = DataType
-      { dtName :: Construct,
+      { dtName :: TyCon,
         dtVars :: [Name],
-        dtConstructors :: Map Construct [TypeName]
+        dtConstructors :: Map TyCon [TypeName]
       }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
@@ -30,8 +35,8 @@ instance Printer DataType where
   prettyDoc = renderDataType
 
 renderDataType :: DataType -> Doc ann
-renderDataType (DataType construct' vars' constructors') =
-  "type" <+> prettyDoc construct'
+renderDataType (DataType tyCon vars' constructors') =
+  "type" <+> prettyDoc tyCon
     <> printVars vars'
     <+> if M.null constructors'
       then mempty

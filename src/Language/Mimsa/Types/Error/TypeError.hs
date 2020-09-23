@@ -12,12 +12,25 @@ import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text.Prettyprint.Doc
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+  ( Doc,
+    Pretty (pretty),
+    vsep,
+    (<+>),
+  )
+import Language.Mimsa.Printer (Printer (prettyDoc))
+import Language.Mimsa.Types.AST (DataType (DataType), Expr)
 import Language.Mimsa.Types.Environment
+  ( Environment (getDataTypes),
+  )
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Swaps
+  ( Name,
+    TyCon,
+    Variable (..),
+    mkName,
+    renderName,
+  )
+import Language.Mimsa.Types.MonoType (MonoType)
+import Language.Mimsa.Types.Swaps (Swaps)
 
 data TypeError
   = UnknownTypeError
@@ -31,14 +44,14 @@ data TypeError
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedPair MonoType
   | CannotCaseMatchOnType (Expr Variable)
-  | TypeConstructorNotInScope Environment Construct
+  | TypeConstructorNotInScope Environment TyCon
   | TypeIsNotConstructor (Expr Variable)
-  | TypeVariableNotInDataType Construct Name [Name]
-  | ConflictingConstructors Construct
-  | CannotApplyToType Construct
-  | DuplicateTypeDeclaration Construct
-  | IncompletePatternMatch [Construct]
-  | MixedUpPatterns [Construct]
+  | TypeVariableNotInDataType TyCon Name [Name]
+  | ConflictingConstructors TyCon
+  | CannotApplyToType TyCon
+  | DuplicateTypeDeclaration TyCon
+  | IncompletePatternMatch [TyCon]
+  | MixedUpPatterns [TyCon]
   deriving (Eq, Ord, Show)
 
 instance Semigroup TypeError where

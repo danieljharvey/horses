@@ -4,5 +4,10 @@ module Language.Mimsa.Project
   )
 where
 
-import Language.Mimsa.Project.Default
+import Language.Mimsa.Project.Default (defaultProject)
 import Language.Mimsa.Project.Persistence
+  ( getCurrentBindings,
+    getCurrentTypeBindings,
+    loadProject,
+    saveProject,
+  )

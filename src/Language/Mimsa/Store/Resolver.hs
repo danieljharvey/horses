@@ -12,6 +12,16 @@ import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes (extractTypes)
 import Language.Mimsa.Store.ExtractVars (extractVars)
 import Language.Mimsa.Types
+  ( Bindings (Bindings),
+    DataType,
+    Expr (MyData, MyRecord),
+    ExprHash,
+    Name,
+    ResolverError (..),
+    StoreExpression (StoreExpression),
+    TyCon,
+    TypeBindings (TypeBindings),
+  )
 
 --
 --
@@ -48,7 +58,7 @@ findBindings bindings' expr = do
 
 -----------
 --
-findHashInTypeBindings :: TypeBindings -> Construct -> Either ResolverError ExprHash
+findHashInTypeBindings :: TypeBindings -> TyCon -> Either ResolverError ExprHash
 findHashInTypeBindings (TypeBindings bindings') cName =
   case M.lookup cName bindings' of
     Just a -> Right a

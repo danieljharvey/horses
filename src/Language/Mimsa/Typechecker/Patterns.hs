@@ -6,13 +6,20 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Language.Mimsa.Typechecker.Environment
-import Language.Mimsa.Typechecker.TcMonad
+import Language.Mimsa.Typechecker.Environment (lookupConstructor)
+import Language.Mimsa.Typechecker.TcMonad (TcMonad)
 import Language.Mimsa.Types
+  ( DataType (DataType),
+    Environment,
+    Expr,
+    TyCon,
+    TypeError (IncompletePatternMatch, MixedUpPatterns),
+    Variable,
+  )
 
 checkCompleteness ::
   Environment ->
-  NonEmpty (Construct, Expr Variable) ->
+  NonEmpty (TyCon, Expr Variable) ->
   Maybe (Expr Variable) ->
   TcMonad DataType
 checkCompleteness env opts catchAll = do
@@ -28,7 +35,7 @@ checkCompleteness env opts catchAll = do
     _ -> allPatternsExist optionNames dataType
   pure dataType
 
-allPatternsExist :: [Construct] -> DataType -> TcMonad ()
+allPatternsExist :: [TyCon] -> DataType -> TcMonad ()
 allPatternsExist optNames' (DataType _ _ dataTypes) = do
   -- check each one of optNames exists in dataTypes
   let dtNames = S.fromList (M.keys dataTypes)
