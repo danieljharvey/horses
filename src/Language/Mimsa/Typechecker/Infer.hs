@@ -43,7 +43,10 @@ doInference ::
   Either TypeError (Substitutions, MonoType)
 doInference swaps env expr = runTcMonad swaps (inferAndSubst (defaultEnv <> env) expr)
 
-doDataTypeInference :: Environment -> DataType -> Either TypeError (Map Construct TypeConstructor)
+doDataTypeInference ::
+  Environment ->
+  DataType ->
+  Either TypeError (Map TyCon TypeConstructor)
 doDataTypeInference env dt =
   runTcMonad mempty (snd <$> inferConstructorTypes (defaultEnv <> env) dt)
 
@@ -198,7 +201,7 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
 -- infer the type of a data constructor
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
-inferDataConstructor :: Environment -> Construct -> TcMonad (Substitutions, MonoType)
+inferDataConstructor :: Environment -> TyCon -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
   dataType <- lookupConstructor env name
   (_, allArgs) <- inferConstructorTypes env dataType
@@ -211,7 +214,7 @@ inferDataConstructor env name = do
 inferConstructorTypes ::
   Environment ->
   DataType ->
-  TcMonad (MonoType, Map Construct TypeConstructor)
+  TcMonad (MonoType, Map TyCon TypeConstructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) a <$> getUnknown) tyNames
   let findType ty = case ty of
@@ -232,7 +235,7 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
-inferType :: Environment -> Construct -> [MonoType] -> TcMonad MonoType
+inferType :: Environment -> TyCon -> [MonoType] -> TcMonad MonoType
 inferType env tyName tyVars =
   case M.lookup tyName (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
@@ -240,7 +243,7 @@ inferType env tyName tyVars =
       _ -> pure (MTData tyName tyVars)
     _ -> throwError (TypeConstructorNotInScope env tyName)
 
-lookupBuiltIn :: Construct -> Maybe MonoType
+lookupBuiltIn :: TyCon -> Maybe MonoType
 lookupBuiltIn name = M.lookup name builtInTypes
 
 -----
@@ -266,7 +269,7 @@ constructorToType (TypeConstructor typeName tyVars constructTypes) =
 
 inferSumExpressionType ::
   Environment ->
-  Map Construct TypeConstructor ->
+  Map TyCon TypeConstructor ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
 inferSumExpressionType env consTypes sumExpr =
@@ -295,7 +298,7 @@ inferSumExpressionType env consTypes sumExpr =
 inferCaseMatch ::
   Environment ->
   Expr Variable ->
-  NonEmpty (Construct, Expr Variable) ->
+  NonEmpty (TyCon, Expr Variable) ->
   Maybe (Expr Variable) ->
   TcMonad (Substitutions, MonoType)
 inferCaseMatch env sumExpr matches catchAll = do
@@ -339,8 +342,8 @@ applySubstToConstructor subs (TypeConstructor name ty b) =
 -- however if it has args it becomes a MTFun from args to the MTData
 inferMatch ::
   Environment ->
-  Map Construct TypeConstructor ->
-  Construct ->
+  Map TyCon TypeConstructor ->
+  TyCon ->
   Expr Variable ->
   TcMonad (Substitutions, MonoType)
 inferMatch env constructTypes name expr' =

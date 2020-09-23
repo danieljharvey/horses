@@ -5,14 +5,14 @@ module Language.Mimsa.Parser.Language
     parseExpr',
     expressionParser,
     nameParser,
-    constructParser,
+    tyConParser,
     typeDeclParser,
   )
 where
 
 import Control.Applicative ((<|>), optional)
 import Control.Monad ((>=>))
-import Data.Functor
+import Data.Functor (($>))
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -24,6 +24,16 @@ import qualified Data.Text as T
 import Language.Mimsa.Parser.Parser (Parser)
 import qualified Language.Mimsa.Parser.Parser as P
 import Language.Mimsa.Types
+  ( DataType (DataType),
+    Expr (..),
+    Literal (MyBool, MyInt, MyString, MyUnit),
+    Name,
+    StringType (StringType),
+    TyCon,
+    TypeName (..),
+    safeMkName,
+    safeMkTyCon,
+  )
 
 type ParserExpr = Expr Name
 
@@ -140,13 +150,13 @@ inProtected tx = if S.member tx protectedNames then Nothing else Just tx
 ---
 
 constructorParser :: Parser ParserExpr
-constructorParser = MyConstructor <$> constructParser
+constructorParser = MyConstructor <$> tyConParser
 
-constructParser :: Parser Construct
-constructParser =
+tyConParser :: Parser TyCon
+tyConParser =
   P.maybePred
     P.identifier
-    (inProtected >=> safeMkConstruct)
+    (inProtected >=> safeMkTyCon)
 
 -----
 
@@ -355,13 +365,13 @@ typeDeclParser = typeDeclParserWithCons <|> typeDeclParserEmpty
 typeDeclParserEmpty :: Parser DataType
 typeDeclParserEmpty = do
   _ <- P.thenSpace (P.literal "type")
-  tyName <- constructParser
+  tyName <- tyConParser
   pure (DataType tyName mempty mempty)
 
 typeDeclParserWithCons :: Parser DataType
 typeDeclParserWithCons = do
   _ <- P.thenSpace (P.literal "type")
-  tyName <- P.thenSpace constructParser
+  tyName <- P.thenSpace tyConParser
   tyArgs <- P.zeroOrMore (P.left nameParser P.space1)
   _ <- P.thenSpace (P.literal "=")
   constructors <- manyTypeConstructors <|> oneTypeConstructor
@@ -387,15 +397,15 @@ inExpr = do
 
 ----
 
-manyTypeConstructors :: Parser (Map Construct [TypeName])
+manyTypeConstructors :: Parser (Map TyCon [TypeName])
 manyTypeConstructors = do
   cons <- NE.toList <$> P.oneOrMore (P.left oneTypeConstructor (P.thenSpace (P.literal "|")))
   lastCons <- oneTypeConstructor
   pure (mconcat cons <> lastCons)
 
-oneTypeConstructor :: Parser (Map Construct [TypeName])
+oneTypeConstructor :: Parser (Map TyCon [TypeName])
 oneTypeConstructor = do
-  name <- constructParser
+  name <- tyConParser
   args <- P.zeroOrMore (P.right P.space1 typeNameParser)
   pure (M.singleton name args)
 
@@ -406,11 +416,11 @@ typeNameParser =
   emptyConsParser <|> varNameParser <|> inBrackets parameterisedConsParser <|> varNameParser
 
 emptyConsParser :: Parser TypeName
-emptyConsParser = ConsName <$> constructParser <*> pure mempty
+emptyConsParser = ConsName <$> tyConParser <*> pure mempty
 
 parameterisedConsParser :: Parser TypeName
 parameterisedConsParser = do
-  c <- constructParser
+  c <- tyConParser
   params <- P.zeroOrMore (P.right P.space1 typeNameParser)
   pure $ ConsName c params
 
@@ -421,7 +431,7 @@ varNameParser = VarName <$> nameParser
 --
 constructorAppParser :: Parser ParserExpr
 constructorAppParser = do
-  cons <- constructParser
+  cons <- tyConParser
   exprs <- P.oneOrMore (P.right P.space1 (orInBrackets expressionParser))
   pure (foldl MyConsApp (MyConstructor cons) exprs)
 
@@ -450,11 +460,11 @@ otherwiseParser needsBar = do
   _ <- P.thenSpace (P.literal "otherwise")
   expressionParser
 
-matchesParser :: Parser (NonEmpty (Construct, ParserExpr))
+matchesParser :: Parser (NonEmpty (TyCon, ParserExpr))
 matchesParser = do
   cons <- P.zeroOrMore (P.left matchParser (P.thenSpace (P.literal "|")))
   lastCons <- matchParser
   pure $ NE.fromList (cons <> [lastCons])
 
-matchParser :: Parser (Construct, Expr Name)
-matchParser = (,) <$> P.thenSpace constructParser <*> expressionParser
+matchParser :: Parser (TyCon, Expr Name)
+matchParser = (,) <$> P.thenSpace tyConParser <*> expressionParser

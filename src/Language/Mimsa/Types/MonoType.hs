@@ -20,7 +20,7 @@ data MonoType
   | MTPair MonoType MonoType -- (a,b)
   | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
   | MTVar Variable
-  | MTData Construct [MonoType] -- name, typeVars
+  | MTData TyCon [MonoType] -- name, typeVars
   deriving (Eq, Ord, Show)
 
 instance Printer MonoType where
@@ -53,4 +53,4 @@ renderMonoType (MTVar a) = case a of
   (NumberedVar i) -> pretty i
   (BuiltIn (Name n)) -> pretty n
   (BuiltInActual (Name n) _) -> pretty n
-renderMonoType (MTData (Construct n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))
+renderMonoType (MTData (TyCon n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))

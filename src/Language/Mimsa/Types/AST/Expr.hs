@@ -14,11 +14,11 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
-import GHC.Generics
+import GHC.Generics (Generic)
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST.DataType
-import Language.Mimsa.Types.AST.Literal
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.AST.DataType (DataType)
+import Language.Mimsa.Types.AST.Literal (Literal)
+import Language.Mimsa.Types.Identifiers (Name, TyCon)
 
 -------
 
@@ -34,9 +34,9 @@ data Expr a
   | MyRecord (Map Name (Expr a)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
   | MyRecordAccess (Expr a) Name -- a.foo
   | MyData DataType (Expr a) -- tyName, tyArgs, Map constructor args, body
-  | MyConstructor Construct -- use a constructor by name
+  | MyConstructor TyCon -- use a constructor by name
   | MyConsApp (Expr a) (Expr a) -- constructor, value
-  | MyCaseMatch (Expr a) (NonEmpty (Construct, Expr a)) (Maybe (Expr a)) -- expr, matches, catchAll
+  | MyCaseMatch (Expr a) (NonEmpty (TyCon, Expr a)) (Maybe (Expr a)) -- expr, matches, catchAll
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (Show a, Printer a) => Printer (Expr a) where

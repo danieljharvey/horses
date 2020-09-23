@@ -3,7 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Identifiers.Construct where
+module Language.Mimsa.Types.Identifiers.TyCon where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
@@ -13,7 +13,7 @@ import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 
-newtype Construct = Construct {getConstruct' :: Text}
+newtype TyCon = TyCon Text
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,
@@ -23,27 +23,27 @@ newtype Construct = Construct {getConstruct' :: Text}
       JSON.ToJSONKey
     )
 
-getConstruct :: Construct -> Text
-getConstruct (Construct t) = t
+getTyCon :: TyCon -> Text
+getTyCon (TyCon t) = t
 
-validConstruct :: Text -> Bool
-validConstruct a =
+validTyCon :: Text -> Bool
+validTyCon a =
   T.length a > 0
     && T.filter Ch.isAlphaNum a == a
     && not (Ch.isDigit (T.head a))
     && Ch.isUpper (T.head a)
 
-mkConstruct :: Text -> Construct
-mkConstruct a =
-  if validConstruct a
-    then Construct a
-    else error $ T.unpack $ "Construct validation fail for '" <> a <> "'"
+mkTyCon :: Text -> TyCon
+mkTyCon a =
+  if validTyCon a
+    then TyCon a
+    else error $ T.unpack $ "TyCon validation fail for '" <> a <> "'"
 
-safeMkConstruct :: Text -> Maybe Construct
-safeMkConstruct a =
-  if validConstruct a
-    then Just (Construct a)
+safeMkTyCon :: Text -> Maybe TyCon
+safeMkTyCon a =
+  if validTyCon a
+    then Just (TyCon a)
     else Nothing
 
-instance Printer Construct where
-  prettyDoc = pretty . getConstruct
+instance Printer TyCon where
+  prettyDoc = pretty . getTyCon

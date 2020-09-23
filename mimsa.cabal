@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5d695ec456b1104fe3a63a55f0afb63c31fab04cb4f59470227f42212f83c46a
+-- hash: cce0c1249c01bff207b8e7093e23a2fc5544c114c6b5278c1ff77ad73e501f74
 
 name:           mimsa
 version:        0.1.0.0
@@ -88,9 +88,9 @@ library
       Language.Mimsa.Types.ExprHash
       Language.Mimsa.Types.ForeignFunc
       Language.Mimsa.Types.Identifiers
-      Language.Mimsa.Types.Identifiers.Construct
       Language.Mimsa.Types.Identifiers.FuncName
       Language.Mimsa.Types.Identifiers.Name
+      Language.Mimsa.Types.Identifiers.TyCon
       Language.Mimsa.Types.Identifiers.TypeName
       Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.Library

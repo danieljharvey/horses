@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Interpreter.PatternMatch where
+module Language.Mimsa.Interpreter.PatternMatch (patternMatch) where
 
 import Control.Monad.Except
 import Data.List.NonEmpty (NonEmpty)
@@ -10,7 +10,7 @@ import Language.Mimsa.Types
 
 patternMatch ::
   Expr Variable ->
-  NonEmpty (Construct, Expr Variable) ->
+  NonEmpty (TyCon, Expr Variable) ->
   Maybe (Expr Variable) ->
   App (Expr Variable)
 patternMatch expr' options catchAll = do
@@ -23,7 +23,7 @@ patternMatch expr' options catchAll = do
         _ -> throwError $ PatternMatchFailure expr'
 
 -- when given an applied constructor, find the name for matching
-findConstructor :: Expr Variable -> App Construct
+findConstructor :: Expr Variable -> App TyCon
 findConstructor (MyConstructor c) = pure c
 findConstructor (MyConsApp c _) = findConstructor c
 findConstructor e = throwError $ PatternMatchFailure e

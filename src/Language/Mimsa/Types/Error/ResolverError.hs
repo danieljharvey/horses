@@ -4,14 +4,16 @@ module Language.Mimsa.Types.Error.ResolverError where
 
 import qualified Data.Map as M
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Bindings
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Printer (Printer (prettyPrint))
+import Language.Mimsa.Types.Bindings (Bindings (Bindings))
+import Language.Mimsa.Types.Identifiers (Name, TyCon)
 import Language.Mimsa.Types.TypeBindings
+  ( TypeBindings (TypeBindings),
+  )
 
 data ResolverError
   = MissingBinding Name Bindings
-  | MissingType Construct TypeBindings
+  | MissingType TyCon TypeBindings
   deriving (Eq, Ord, Show)
 
 instance Printer ResolverError where
