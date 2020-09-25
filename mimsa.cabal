@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 10a364551a31a0db06e759158eed29ad7ad642caf45af9754f9194c60d743c89
+-- hash: 60a738f10193c56ad069c5cb470ae8fb86ddf2cb5dd9d4c1b522dd9728f59807
 
 name:           mimsa
 version:        0.1.0.0
@@ -172,6 +172,7 @@ test-suite mimsa-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Test.BackendJS
       Test.Data.Project
       Test.Helpers
       Test.Interpreter

@@ -52,6 +52,12 @@ eqExpr = unsafeGetExpr "\\a -> \\b -> eqPair((a,b))"
 optionExpr :: StoreExpression
 optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
 
+aPairExpr :: StoreExpression
+aPairExpr = unsafeGetExpr "(1,2)"
+
+aRecordExpr :: StoreExpression
+aRecordExpr = unsafeGetExpr "{ a: 1, b: \"dog\" }"
+
 stdLib :: Project
 stdLib = Project store' bindings' typeBindings' mempty
   where
@@ -62,8 +68,10 @@ stdLib = Project store' bindings' typeBindings' mempty
             (ExprHash 2, eqExpr),
             (ExprHash 3, eqTenExpr),
             (ExprHash 4, optionExpr),
+            (ExprHash 5, aPairExpr),
             (ExprHash 6, compose),
             (ExprHash 7, sndExpr),
+            (ExprHash 8, aRecordExpr),
             (ExprHash 11, idExpr),
             (ExprHash 17, incrementInt),
             (ExprHash 18, addInt)
@@ -74,8 +82,10 @@ stdLib = Project store' bindings' typeBindings' mempty
           [ (mkName "fst", pure $ ExprHash 1),
             (mkName "eq", pure $ ExprHash 2),
             (mkName "eqTen", pure $ ExprHash 3),
+            (mkName "aPair", pure $ ExprHash 5),
             (mkName "compose", pure $ ExprHash 6),
             (mkName "snd", pure $ ExprHash 7),
+            (mkName "aRecord", pure $ ExprHash 8),
             (mkName "id", pure $ ExprHash 11),
             (mkName "incrementInt", pure $ ExprHash 17),
             (mkName "addInt", pure $ ExprHash 18)
