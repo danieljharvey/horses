@@ -38,6 +38,16 @@ evalWithDeps env input =
           T.putStrLn (prettyPrint a)
           pure (Right a)
 
+evalModule :: Project -> Text -> IO (Either Text Javascript)
+evalModule env input =
+  case evaluateText env input of
+    Left e -> pure $ Left $ prettyPrint e
+    Right (ResolvedExpression _ storeExpr _ _ _) ->
+      let a = outputCommonJS storeExpr
+       in do
+            T.putStrLn (prettyPrint a)
+            pure (Right a)
+
 successes :: [(Text, Javascript)]
 successes =
   [ ("True", "true"),
@@ -71,5 +81,8 @@ spec =
   describe "JS" $ do
     it "Outputs an expression with it's dependents" $ do
       result <- evalWithDeps stdLib "id(123123123)"
+      result `shouldSatisfy` isRight
+    it "Outputs a module" $ do
+      result <- evalModule stdLib "\\a -> compose(id)(id)(a)"
       result `shouldSatisfy` isRight
     traverse_ testIt successes
