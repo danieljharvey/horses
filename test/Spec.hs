@@ -7,6 +7,7 @@ module Main
 where
 
 -- import qualified Data.Aeson as JSON
+import qualified Test.BackendJS as JS
 import Test.Hspec
 import qualified Test.Interpreter as Interpreter
 import qualified Test.Prettier as Prettier
@@ -30,3 +31,4 @@ main = hspec $ do
   Repl.spec
   Unify.spec
   Usages.spec
+  JS.spec
