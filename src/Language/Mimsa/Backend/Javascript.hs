@@ -1,13 +1,16 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Language.Mimsa.Backend.Javascript
   ( output,
+    jsStandardLibrary,
     Javascript (..),
   )
 where
 
 import Data.Coerce
+import Data.FileEmbed
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -16,18 +19,26 @@ import Data.Monoid
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 
 ----
 newtype Javascript = Javascript Text
-  deriving (Eq, Ord, Show, Semigroup)
+  deriving (Eq, Ord, Show, Semigroup, Monoid, Printer)
 
 instance IsString Javascript where
   fromString = Javascript . T.pack
 
 ----
+
+-- these are saved in a file that is included in compilation
+jsStandardLibrary :: Javascript
+jsStandardLibrary =
+  Javascript $ T.decodeUtf8 $(embedFile "static/backend/javascript/stdlib.js")
+
+---
 
 outputLiteral :: Literal -> Javascript
 outputLiteral MyUnit = "{}"

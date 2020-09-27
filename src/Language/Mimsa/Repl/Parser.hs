@@ -21,6 +21,7 @@ replParser =
     <|> evalParser
     <|> tuiParser
     <|> versionsParser
+    <|> compileJSParser
     <|> failer
 
 failer :: Parser a
@@ -70,3 +71,8 @@ versionsParser :: Parser ReplAction
 versionsParser = do
   _ <- thenSpace (literal ":versions")
   Versions <$> nameParser
+
+compileJSParser :: Parser ReplAction
+compileJSParser = do
+  _ <- thenSpace (literal ":compileJS")
+  CompileJS <$> expressionParser

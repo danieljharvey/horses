@@ -39,6 +39,7 @@ dependencies:
 - req # store fetching
 - modern-uri # store fetching
 - prettyprinter # formatting
+- file-embed # js compiling
 
 library:
   source-dirs: src

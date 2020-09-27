@@ -1,5 +1,6 @@
-module Language.Mimsa.Store.ResolvedDeps (resolveDeps) where
+module Language.Mimsa.Store.ResolvedDeps (resolveDeps, recursiveResolve) where
 
+import Data.Bifunctor (second)
 import Data.Either (partitionEithers)
 import qualified Data.Map as M
 import Language.Mimsa.Types
@@ -19,3 +20,11 @@ resolveDeps (Store items) (Bindings bindings') =
           Nothing -> Left name
       )
         <$> M.toList bindings'
+
+recursiveResolve :: Store -> StoreExpression -> Either [Name] [(Name, Expr Name)]
+recursiveResolve store' storeExpr = do
+  (ResolvedDeps deps) <- resolveDeps store' (storeBindings storeExpr)
+  let storeExprs :: [(Name, StoreExpression)]
+      storeExprs = (\(name, (_, se)) -> (name, se)) <$> M.toList deps
+  subExprs <- traverse (recursiveResolve store') (snd <$> storeExprs)
+  pure $ mconcat subExprs <> (second storeExpression <$> storeExprs)

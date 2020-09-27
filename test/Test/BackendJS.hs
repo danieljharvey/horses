@@ -6,9 +6,12 @@ module Test.BackendJS
   )
 where
 
+import Data.Either (isRight)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
+import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl
@@ -16,13 +19,24 @@ import Language.Mimsa.Types
 import Test.Data.Project
 import Test.Hspec
 
-eval :: Project -> Text -> IO (Either Text Javascript)
+eval :: Project -> Text -> Either Text Javascript
 eval env input =
   case evaluateText env input of
-    Left e -> pure (Left $ prettyPrint e)
+    Left e -> Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
-      pure $ Right $
+      pure $
         output (storeExpression storeExpr)
+
+evalWithDeps :: Project -> Text -> IO (Either Text Javascript)
+evalWithDeps env input =
+  case evaluateText env input of
+    Left e -> pure $ Left $ prettyPrint e
+    Right (ResolvedExpression _ storeExpr _ _ _) ->
+      case assembleJS (store env) storeExpr (mkName "main") of
+        Left _ -> pure $ Left "oh no"
+        Right a -> do
+          T.putStrLn (prettyPrint a)
+          pure (Right a)
 
 successes :: [(Text, Javascript)]
 successes =
@@ -48,11 +62,14 @@ successes =
   ]
 
 testIt :: (Text, Javascript) -> Spec
-testIt (q, a) = it (T.unpack q) $ do
-  result <- eval stdLib q
-  result `shouldBe` Right a
+testIt (q, a) =
+  it (T.unpack q) $
+    eval stdLib q `shouldBe` Right a
 
 spec :: Spec
 spec =
-  describe "JS" $
+  describe "JS" $ do
+    it "Outputs an expression with it's dependents" $ do
+      result <- evalWithDeps stdLib "id(123123123)"
+      result `shouldSatisfy` isRight
     traverse_ testIt successes

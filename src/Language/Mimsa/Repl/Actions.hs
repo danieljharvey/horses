@@ -17,6 +17,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
+import Language.Mimsa.Backend.Backend (assembleJS)
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -63,6 +64,9 @@ doReplAction env (Bind name expr) = do
 doReplAction env (BindType dt) = do
   newEnv <- runReplM $ doBindType env dt
   pure (fromMaybe env newEnv)
+doReplAction env (CompileJS expr) = do
+  _ <- runReplM (doCompileJS env expr)
+  pure env
 
 ----------
 
@@ -73,6 +77,7 @@ doHelp = do
   T.putStrLn ":info <expr> - get the type of <expr>"
   T.putStrLn ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
   T.putStrLn ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
+  T.putStrLn ":compileJS <expr> - show JS code for <expr>"
   T.putStrLn ":list - show a list of current bindings in the environment"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":versions <name> - list all versions of a binding"
@@ -147,11 +152,22 @@ doListBindings env = do
 
 doEvaluate :: Project -> Expr Name -> ReplM ()
 doEvaluate env expr = do
-  (ResolvedExpression type' _ expr' scope' swaps) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression type' _ expr' scope' swaps) <-
+    liftRepl $ getTypecheckedStoreExpression env expr
   simplified <- liftIO $ interpret scope' swaps expr'
   simplified' <- liftRepl (first InterpreterErr simplified)
   replPrint $
     prettyPrint simplified'
       <> " :: "
       <> prettyPrint type'
+
 ---------
+
+doCompileJS :: Project -> Expr Name -> ReplM ()
+doCompileJS env expr = do
+  (ResolvedExpression _ storeExpr' _ _ _) <-
+    liftRepl $ getTypecheckedStoreExpression env expr
+  js <-
+    liftRepl $ first UsageErr $
+      assembleJS (store env) storeExpr' (mkName "main")
+  replPrint js
