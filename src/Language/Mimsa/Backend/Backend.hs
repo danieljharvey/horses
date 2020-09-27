@@ -1,14 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Backend
-  ( assembleCommonJS,
-    outputCommonJS,
+  ( outputCommonJS,
     goCompile,
     Backend (..),
   )
 where
 
-import Data.Bifunctor (first)
 import Data.Coerce
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
@@ -19,10 +17,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Printer
-import Language.Mimsa.Store.ResolvedDeps
-  ( recursiveResolve,
-    recursiveResolveSE,
-  )
+import Language.Mimsa.Store.ResolvedDeps (recursiveResolve)
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Bindings
@@ -30,7 +25,6 @@ import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.StoreExpression
-import Language.Mimsa.Types.Usage
 import System.Directory
 
 data Backend
@@ -55,16 +49,31 @@ createOutputFolder = do
 transpileStoreExpression :: Backend -> StoreExpression -> IO FilePath
 transpileStoreExpression be se = do
   _ <- createOutputFolder
-  let jsOutput = outputCommonJS se
   let filename = outputFilename be (getStoreExpressionHash se)
   let path = "./output/" <> filename
-  T.putStrLn $ "Writing " <> path <> "..."
-  T.writeFile (T.unpack path) (coerce jsOutput)
+  exists <- doesFileExist (T.unpack path)
+  if exists
+    then T.putStrLn $ path <> " already exists"
+    else do
+      let jsOutput = outputCommonJS se
+      T.putStrLn $ "Writing " <> path <> "..."
+      T.writeFile (T.unpack path) (coerce jsOutput)
   pure (T.unpack path)
+
+createIndexFile :: Backend -> ExprHash -> IO ()
+createIndexFile CommonJS hash' = do
+  let file = "const main = require('./" <> outputFilename CommonJS hash' <> "').main;\nconsole.log(main)"
+      path = "./output/index.js"
+  T.writeFile path file
+
+writeStdLib :: Backend -> IO ()
+writeStdLib CommonJS = do
+  let path = "./output/" <> stdLibFilename CommonJS
+  T.writeFile (T.unpack path) (coerce commonJSStandardLibrary)
 
 -- recursively get all the StoreExpressions we need to output
 getOutputList :: Store -> StoreExpression -> Set StoreExpression
-getOutputList store' se = case recursiveResolveSE store' se of
+getOutputList store' se = case recursiveResolve store' se of
   Right as -> S.fromList as
   Left _ -> mempty
 
@@ -72,6 +81,10 @@ goCompile :: Backend -> Store -> StoreExpression -> IO ()
 goCompile be store' se = do
   let list = getOutputList store' se
   traverse_ (transpileStoreExpression be) list
+  _ <- transpileStoreExpression be se
+  createIndexFile be (getStoreExpressionHash se)
+  writeStdLib be
+  pure ()
 
 ----
 
@@ -112,28 +125,5 @@ outputCommonJS =
         renderExport = \be name -> Javascript $ outputExport be name,
         renderStdLib = \be ->
           let filename = stdLibFilename be
-           in Javascript $ "const { __app, __match } = require(\"." <> filename <> "\");\n"
+           in Javascript $ "const { __app, __match } = require(\"./" <> filename <> "\");\n"
       }
-
-assemble ::
-  (Monoid a) =>
-  (Name -> Expr Name -> a) ->
-  Store ->
-  StoreExpression ->
-  Name ->
-  Either UsageError a
-assemble render store storeExpr name = do
-  deps <- first CouldNotResolveDeps $ recursiveResolve store storeExpr
-  let renderWithName = uncurry render
-  pure $ foldMap renderWithName deps <> render name (storeExpression storeExpr)
-
-assembleCommonJS :: Store -> StoreExpression -> Name -> Either UsageError Javascript
-assembleCommonJS store' storeExpr name' = do
-  jsOutput <-
-    assemble
-      (\name expr -> "const " <> coerce name <> " = " <> output expr <> ";\n")
-      store'
-      storeExpr
-      name'
-  let exports = "module.exports = { " <> coerce name' <> ": " <> coerce name' <> "}"
-  pure $ commonJSStandardLibrary <> jsOutput <> exports

@@ -27,17 +27,6 @@ eval env input =
       pure $
         output (storeExpression storeExpr)
 
-evalWithDeps :: Project -> Text -> IO (Either Text Javascript)
-evalWithDeps env input =
-  case evaluateText env input of
-    Left e -> pure $ Left $ prettyPrint e
-    Right (ResolvedExpression _ storeExpr _ _ _) ->
-      case assembleCommonJS (store env) storeExpr (mkName "main") of
-        Left _ -> pure $ Left "oh no"
-        Right a -> do
-          T.putStrLn (prettyPrint a)
-          pure (Right a)
-
 evalModule :: Project -> Text -> IO (Either Text Javascript)
 evalModule env input =
   case evaluateText env input of
@@ -79,9 +68,6 @@ testIt (q, a) =
 spec :: Spec
 spec =
   describe "JS" $ do
-    it "Outputs an expression with it's dependents" $ do
-      result <- evalWithDeps stdLib "id(123123123)"
-      result `shouldSatisfy` isRight
     it "Outputs a module" $ do
       result <- evalModule stdLib "\\a -> compose(id)(id)(a)"
       result `shouldSatisfy` isRight

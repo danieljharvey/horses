@@ -17,11 +17,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
-import Language.Mimsa.Backend.Backend
-  ( Backend (..),
-    assembleCommonJS,
-    goCompile,
-  )
+import Language.Mimsa.Backend.Backend (Backend (..), goCompile)
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -172,7 +168,4 @@ doOutputJS env expr = do
   (ResolvedExpression _ storeExpr' _ _ _) <-
     liftRepl $ getTypecheckedStoreExpression env expr
   liftIO $ goCompile CommonJS (store env) storeExpr'
-  js <-
-    liftRepl $ first UsageErr $
-      assembleCommonJS (store env) storeExpr' (mkName "main")
-  replPrint js
+  replPrint ("Output to output/index.js" :: Text)
