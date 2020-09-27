@@ -33,7 +33,7 @@ data ReplAction
   | Evaluate (Expr Name)
   | Tree (Expr Name)
   | Bind Name (Expr Name)
-  | CompileJS (Expr Name)
+  | OutputJS (Expr Name)
   | BindType DataType
   | Versions Name
   | ListBindings

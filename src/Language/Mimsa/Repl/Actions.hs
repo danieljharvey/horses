@@ -64,8 +64,8 @@ doReplAction env (Bind name expr) = do
 doReplAction env (BindType dt) = do
   newEnv <- runReplM $ doBindType env dt
   pure (fromMaybe env newEnv)
-doReplAction env (CompileJS expr) = do
-  _ <- runReplM (doCompileJS env expr)
+doReplAction env (OutputJS expr) = do
+  _ <- runReplM (doOutputJS env expr)
   pure env
 
 ----------
@@ -77,8 +77,8 @@ doHelp = do
   T.putStrLn ":info <expr> - get the type of <expr>"
   T.putStrLn ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
   T.putStrLn ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
-  T.putStrLn ":compileJS <expr> - show JS code for <expr>"
   T.putStrLn ":list - show a list of current bindings in the environment"
+  T.putStrLn ":outputJS <expr> - show JS code for <expr>"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":versions <name> - list all versions of a binding"
   T.putStrLn ":watch <name> - put <name> into 'scratch.mimsa' and bind any changes"
@@ -163,8 +163,8 @@ doEvaluate env expr = do
 
 ---------
 
-doCompileJS :: Project -> Expr Name -> ReplM ()
-doCompileJS env expr = do
+doOutputJS :: Project -> Expr Name -> ReplM ()
+doOutputJS env expr = do
   (ResolvedExpression _ storeExpr' _ _ _) <-
     liftRepl $ getTypecheckedStoreExpression env expr
   js <-
