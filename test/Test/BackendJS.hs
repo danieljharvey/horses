@@ -32,7 +32,7 @@ evalWithDeps env input =
   case evaluateText env input of
     Left e -> pure $ Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
-      case assembleJS (store env) storeExpr (mkName "main") of
+      case assembleCommonJS (store env) storeExpr (mkName "main") of
         Left _ -> pure $ Left "oh no"
         Right a -> do
           T.putStrLn (prettyPrint a)

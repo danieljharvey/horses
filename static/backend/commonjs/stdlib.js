@@ -10,3 +10,8 @@ const __match = (val, matches, catchAll) => {
   }
   return val.vars.reduce((f, a) => f(a), branch);
 };
+
+module.exports = {
+  __app: __app,
+  __match: __match
+}

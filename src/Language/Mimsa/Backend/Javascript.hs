@@ -4,7 +4,7 @@
 
 module Language.Mimsa.Backend.Javascript
   ( output,
-    jsStandardLibrary,
+    commonJSStandardLibrary,
     Javascript (..),
   )
 where
@@ -34,9 +34,9 @@ instance IsString Javascript where
 ----
 
 -- these are saved in a file that is included in compilation
-jsStandardLibrary :: Javascript
-jsStandardLibrary =
-  Javascript $ T.decodeUtf8 $(embedFile "static/backend/javascript/stdlib.js")
+commonJSStandardLibrary :: Javascript
+commonJSStandardLibrary =
+  Javascript $ T.decodeUtf8 $(embedFile "static/backend/commonjs/stdlib.js")
 
 ---
 

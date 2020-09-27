@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Backend
-  ( assembleJS,
+  ( assembleCommonJS,
   )
 where
 
@@ -27,12 +27,13 @@ assemble render store storeExpr name = do
   let renderWithName = uncurry render
   pure $ foldMap renderWithName deps <> render name (storeExpression storeExpr)
 
-assembleJS :: Store -> StoreExpression -> Name -> Either UsageError Javascript
-assembleJS store' storeExpr name' = do
+assembleCommonJS :: Store -> StoreExpression -> Name -> Either UsageError Javascript
+assembleCommonJS store' storeExpr name' = do
   jsOutput <-
     assemble
-      (\name expr -> "export const " <> coerce name <> " = " <> output expr <> ";\n")
+      (\name expr -> "const " <> coerce name <> " = " <> output expr <> ";\n")
       store'
       storeExpr
       name'
-  pure $ jsStandardLibrary <> jsOutput
+  let exports = "module.exports = { " <> coerce name' <> ": " <> coerce name' <> "}"
+  pure $ commonJSStandardLibrary <> jsOutput <> exports
