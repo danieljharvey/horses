@@ -47,10 +47,14 @@ getHash = ExprHash . Hash.hash
 
 -- the store is where we save all the fucking bullshit
 
-getStoreExpressionHash :: StoreExpression -> ExprHash
+getStoreExpressionHash :: (JSON.ToJSON a) => StoreExpression a -> ExprHash
 getStoreExpressionHash = getHash . JSON.encode
 
-validateStoreExpression :: StoreExpression -> ExprHash -> Either Text StoreExpression
+validateStoreExpression ::
+  JSON.ToJSON a =>
+  StoreExpression a ->
+  ExprHash ->
+  Either Text (StoreExpression a)
 validateStoreExpression storeExpr exprHash =
   if getStoreExpressionHash storeExpr == exprHash
     then pure storeExpr
@@ -62,7 +66,7 @@ validateStoreExpression storeExpr exprHash =
           <> prettyPrint (getStoreExpressionHash storeExpr)
 
 -- take an expression, save it, return ExprHash
-saveExpr :: StoreExpression -> IO ExprHash
+saveExpr :: (JSON.ToJSON a) => StoreExpression a -> IO ExprHash
 saveExpr expr = do
   storePath <- getStoreFolder
   let json = JSON.encode expr
@@ -70,10 +74,10 @@ saveExpr expr = do
   BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
-findExpr :: [ServerUrl] -> ExprHash -> ExceptT Text IO StoreExpression
+findExpr :: (JSON.ToJSON a, JSON.FromJSON a) => [ServerUrl] -> ExprHash -> ExceptT Text IO (StoreExpression a)
 findExpr urls hash = findExprInLocalStore hash <|> tryServers hash urls
 
-tryServers :: ExprHash -> [ServerUrl] -> ExceptT Text IO StoreExpression
+tryServers :: (JSON.ToJSON a, JSON.FromJSON a) => ExprHash -> [ServerUrl] -> ExceptT Text IO (StoreExpression a)
 tryServers _ [] = throwError "Could not find expression on any server"
 tryServers hash (url : urls) = findExprFromServer url hash <|> tryServers hash urls
 
@@ -86,7 +90,7 @@ getPath hash serverUrl = do
     _ -> throwError "oh no"
 
 -- find in the store
-findExprFromServer :: ServerUrl -> ExprHash -> ExceptT Text IO StoreExpression
+findExprFromServer :: (JSON.ToJSON a, JSON.FromJSON a) => ServerUrl -> ExprHash -> ExceptT Text IO (StoreExpression a)
 findExprFromServer serverUrl hash = do
   path <- getPath hash serverUrl
   body <-
@@ -107,7 +111,7 @@ findExprFromServer serverUrl hash = do
       throwError e
 
 -- find in the store
-findExprInLocalStore :: ExprHash -> ExceptT Text IO StoreExpression
+findExprInLocalStore :: (JSON.FromJSON a) => ExprHash -> ExceptT Text IO (StoreExpression a)
 findExprInLocalStore hash = do
   storePath <- liftIO getStoreFolder
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)

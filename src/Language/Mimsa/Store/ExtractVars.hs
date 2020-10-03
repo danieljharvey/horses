@@ -12,27 +12,27 @@ import Language.Mimsa.Types
 -- important - we must not count variables brought in via lambdas, as those
 -- aren't external deps
 
-extractVars :: Expr Name -> Set Name
+extractVars :: Expr ann Name -> Set Name
 extractVars = filterBuiltIns . extractVars_
 
-extractVars_ :: Expr Name -> Set Name
-extractVars_ (MyVar a) = S.singleton a
-extractVars_ (MyIf a b c) = extractVars_ a <> extractVars_ b <> extractVars_ c
-extractVars_ (MyLet newVar a b) = S.delete newVar (extractVars_ a <> extractVars_ b)
-extractVars_ (MyLambda newVar a) = S.delete newVar (extractVars_ a)
-extractVars_ (MyApp a b) = extractVars_ a <> extractVars_ b
-extractVars_ (MyLiteral _) = mempty
-extractVars_ (MyLetPair newVarA newVarB a b) =
+extractVars_ :: Expr ann Name -> Set Name
+extractVars_ (MyVar _ a) = S.singleton a
+extractVars_ (MyIf _ a b c) = extractVars_ a <> extractVars_ b <> extractVars_ c
+extractVars_ (MyLet _ newVar a b) = S.delete newVar (extractVars_ a <> extractVars_ b)
+extractVars_ (MyLambda _ newVar a) = S.delete newVar (extractVars_ a)
+extractVars_ (MyApp _ a b) = extractVars_ a <> extractVars_ b
+extractVars_ (MyLiteral _ _) = mempty
+extractVars_ (MyLetPair _ newVarA newVarB a b) =
   S.delete
     newVarA
     (S.delete newVarB (extractVars_ a <> extractVars_ b))
-extractVars_ (MyPair a b) = extractVars_ a <> extractVars_ b
-extractVars_ (MyRecord map') = foldMap extractVars_ map'
-extractVars_ (MyRecordAccess a _) = extractVars_ a
-extractVars_ (MyData _ a) = extractVars_ a
-extractVars_ (MyConstructor _) = mempty
-extractVars_ (MyConsApp a b) = extractVars_ a <> extractVars_ b
-extractVars_ (MyCaseMatch sum' matches catchAll) =
+extractVars_ (MyPair _ a b) = extractVars_ a <> extractVars_ b
+extractVars_ (MyRecord _ map') = foldMap extractVars_ map'
+extractVars_ (MyRecordAccess _ a _) = extractVars_ a
+extractVars_ (MyData _ _ a) = extractVars_ a
+extractVars_ (MyConstructor _ _) = mempty
+extractVars_ (MyConsApp _ a b) = extractVars_ a <> extractVars_ b
+extractVars_ (MyCaseMatch _ sum' matches catchAll) =
   extractVars sum'
     <> mconcat (extractVars . snd <$> NE.toList matches)
     <> maybe mempty extractVars catchAll

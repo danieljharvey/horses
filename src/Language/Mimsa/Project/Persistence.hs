@@ -31,7 +31,7 @@ hush _ = Nothing
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
-loadProject :: PersistApp Project
+loadProject :: (JSON.FromJSON ann, JSON.ToJSON ann) => PersistApp (Project ann)
 loadProject = do
   project' <- liftIO $ try $ BS.readFile envPath
   case hush project' >>= JSON.decode of
@@ -47,14 +47,14 @@ loadProject = do
       pure $ projectFromSaved (store' <> typeStore') sp
     _ -> throwError $ "Could not decode file at " <> T.pack envPath
 
-saveProject :: Project -> PersistApp ()
+saveProject :: Project ann -> PersistApp ()
 saveProject env = do
   let jsonStr = JSON.encode (projectToSaved env)
   liftIO $ BS.writeFile envPath jsonStr
 
 --
 
-loadBoundExpressions :: [ServerUrl] -> Set ExprHash -> PersistApp Store
+loadBoundExpressions :: (JSON.ToJSON ann, JSON.FromJSON ann) => [ServerUrl] -> Set ExprHash -> PersistApp (Store ann)
 loadBoundExpressions urls hashes = do
   items' <-
     traverse
@@ -66,7 +66,11 @@ loadBoundExpressions urls hashes = do
   pure
     (Store (M.fromList items'))
 
-recursiveLoadBoundExpressions :: [ServerUrl] -> Set ExprHash -> PersistApp Store
+recursiveLoadBoundExpressions ::
+  (JSON.ToJSON ann, JSON.FromJSON ann) =>
+  [ServerUrl] ->
+  Set ExprHash ->
+  PersistApp (Store ann)
 recursiveLoadBoundExpressions urls hashes = do
   store' <- loadBoundExpressions urls hashes
   let newHashes =
@@ -100,6 +104,6 @@ getItemsForAllVersions :: (Ord a) => VersionedMap k a -> Set a
 getItemsForAllVersions versioned =
   mconcat $ M.elems (S.fromList . NE.toList <$> coerce versioned)
 
-getDependencyHashes :: StoreExpression -> Set ExprHash
+getDependencyHashes :: StoreExpression ann -> Set ExprHash
 getDependencyHashes =
   S.fromList . M.elems . getBindings . storeBindings

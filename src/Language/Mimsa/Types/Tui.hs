@@ -8,30 +8,30 @@ import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps
 
-data ExpressionInfo
+data ExpressionInfo a
   = ExpressionInfo
       { eiType :: MonoType,
-        eiExpr :: Expr Name,
+        eiExpr :: Expr a Name,
         eiName :: Name,
-        eiDeps :: ResolvedDeps
+        eiDeps :: ResolvedDeps a
       }
 
-data TuiState
+data TuiState a
   = TuiState
-      { project :: Project,
-        uiState :: UIState
+      { project :: Project a,
+        uiState :: UIState a
       }
 
 newtype UIError
   = MissingStoreItems [Name]
 
-data BindingsList
+data BindingsList a
   = BindingsList
       { bName :: Name,
-        bDeps :: ResolvedDeps,
+        bDeps :: ResolvedDeps a,
         bList :: L.List () Name
       }
 
-data UIState
+data UIState a
   = TuiError UIError
-  | ViewBindings (NonEmpty BindingsList)
+  | ViewBindings (NonEmpty (BindingsList a))

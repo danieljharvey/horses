@@ -17,48 +17,48 @@ import Language.Mimsa.Types
     mkTyCon,
   )
 
-fstExpr :: StoreExpression
+fstExpr :: StoreExpression ()
 fstExpr =
   unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
 
-sndExpr :: StoreExpression
+sndExpr :: StoreExpression ()
 sndExpr = unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
 
-eqTenExpr :: StoreExpression
+eqTenExpr :: StoreExpression ()
 eqTenExpr =
   unsafeGetExpr'
     "\\i -> eq(10)(i)"
     (Bindings $ M.singleton (mkName "eq") (ExprHash 2))
 
-compose :: StoreExpression
+compose :: StoreExpression ()
 compose =
   unsafeGetExpr "\\f -> \\g -> \\aValue -> f(g(aValue))"
 
-idExpr :: StoreExpression
+idExpr :: StoreExpression ()
 idExpr = unsafeGetExpr "\\i -> i"
 
-incrementInt :: StoreExpression
+incrementInt :: StoreExpression ()
 incrementInt =
   unsafeGetExpr'
     "\\a -> addInt(1)(a)"
     (Bindings $ M.singleton (mkName "addInt") (ExprHash 18))
 
-addInt :: StoreExpression
+addInt :: StoreExpression ()
 addInt = unsafeGetExpr "\\a -> \\b -> addIntPair((a,b))"
 
-eqExpr :: StoreExpression
+eqExpr :: StoreExpression ()
 eqExpr = unsafeGetExpr "\\a -> \\b -> eqPair((a,b))"
 
-optionExpr :: StoreExpression
+optionExpr :: StoreExpression ()
 optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
 
-aPairExpr :: StoreExpression
+aPairExpr :: StoreExpression ()
 aPairExpr = unsafeGetExpr "(1,2)"
 
-aRecordExpr :: StoreExpression
+aRecordExpr :: StoreExpression ()
 aRecordExpr = unsafeGetExpr "{ a: 1, b: \"dog\" }"
 
-stdLib :: Project
+stdLib :: Project ()
 stdLib = Project store' bindings' typeBindings' mempty
   where
     store' =
@@ -97,11 +97,11 @@ stdLib = Project store' bindings' typeBindings' mempty
             (mkTyCon "Nowt", pure $ ExprHash 4)
           ]
 
-unsafeGetExpr' :: Text -> Bindings -> StoreExpression
+unsafeGetExpr' :: Text -> Bindings -> StoreExpression ()
 unsafeGetExpr' input bindings' =
   case parseExpr input of
     Right expr' -> StoreExpression expr' bindings' mempty
     a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
 
-unsafeGetExpr :: Text -> StoreExpression
+unsafeGetExpr :: Text -> StoreExpression ()
 unsafeGetExpr input = unsafeGetExpr' input mempty

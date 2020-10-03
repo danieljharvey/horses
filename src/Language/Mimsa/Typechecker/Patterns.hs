@@ -19,9 +19,9 @@ import Language.Mimsa.Types
 
 checkCompleteness ::
   Environment ->
-  NonEmpty (TyCon, Expr Variable) ->
-  Maybe (Expr Variable) ->
-  TcMonad DataType
+  NonEmpty (TyCon, Expr ann Variable) ->
+  Maybe (Expr ann Variable) ->
+  TcMonad ann DataType
 checkCompleteness env opts catchAll = do
   -- find data type for each match
   items <- traverse (\(name, _) -> lookupConstructor env name) opts
@@ -35,7 +35,7 @@ checkCompleteness env opts catchAll = do
     _ -> allPatternsExist optionNames dataType
   pure dataType
 
-allPatternsExist :: [TyCon] -> DataType -> TcMonad ()
+allPatternsExist :: [TyCon] -> DataType -> TcMonad ann ()
 allPatternsExist optNames' (DataType _ _ dataTypes) = do
   -- check each one of optNames exists in dataTypes
   let dtNames = S.fromList (M.keys dataTypes)

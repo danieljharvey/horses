@@ -9,9 +9,9 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 
-type ReplM = ExceptT Error IO
+type ReplM a = ExceptT (Error a) IO
 
-runReplM :: ReplM a -> IO (Maybe a)
+runReplM :: (Show ann) => ReplM ann a -> IO (Maybe a)
 runReplM computation = do
   either' <- runExceptT computation
   case either' of
@@ -20,20 +20,20 @@ runReplM computation = do
       T.putStrLn (prettyPrint a)
       pure Nothing
 
-replPrint :: (Printer a) => a -> ReplM ()
+replPrint :: (Printer a) => a -> ReplM ann ()
 replPrint a = liftIO $ T.putStrLn (prettyPrint a)
 
-liftRepl :: Either Error a -> ReplM a
+liftRepl :: Either (Error ann) a -> ReplM ann a
 liftRepl (Right a) = pure a
 liftRepl (Left e) = throwError e
 
-data ReplAction
+data ReplAction a
   = Help
-  | Info (Expr Name)
-  | Evaluate (Expr Name)
-  | Tree (Expr Name)
-  | Bind Name (Expr Name)
-  | OutputJS (Expr Name)
+  | Info (Expr a Name)
+  | Evaluate (Expr a Name)
+  | Tree (Expr a Name)
+  | Bind Name (Expr a Name)
+  | OutputJS (Expr a Name)
   | BindType DataType
   | Versions Name
   | ListBindings

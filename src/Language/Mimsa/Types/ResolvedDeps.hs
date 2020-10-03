@@ -10,17 +10,17 @@ import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.StoreExpression
 
-newtype ResolvedDeps
+newtype ResolvedDeps a
   = ResolvedDeps
       { getResolvedDeps ::
           Map Name
-            (ExprHash, StoreExpression)
+            (ExprHash, StoreExpression a)
       }
 
-hasNoDeps :: ResolvedDeps -> Bool
+hasNoDeps :: ResolvedDeps a -> Bool
 hasNoDeps (ResolvedDeps m) = M.size m == 0
 
-instance Printer ResolvedDeps where
+instance Printer (ResolvedDeps a) where
   prettyDoc (ResolvedDeps deps) =
     encloseSep
       lbrace

@@ -10,30 +10,30 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
 
-data InterpreterError
+data InterpreterError a
   = UnknownInterpreterError
-  | CouldNotFindVar Scope Variable
-  | CouldNotFindBuiltIn Scope Variable
-  | CannotDestructureAsPair (Expr Variable)
-  | CannotDestructureAsSum (Expr Variable)
-  | CannotDestructureAsRecord (Expr Variable) Name
-  | CannotDestructureAsList (Expr Variable)
-  | CannotApplyToNonFunction (Expr Variable)
-  | CannotFindMemberInRecord (Map Name (Expr Variable)) Name
-  | PredicateForIfMustBeABoolean (Expr Variable)
+  | CouldNotFindVar (Scope a) Variable
+  | CouldNotFindBuiltIn (Scope a) Variable
+  | CannotDestructureAsPair (Expr a Variable)
+  | CannotDestructureAsSum (Expr a Variable)
+  | CannotDestructureAsRecord (Expr a Variable) Name
+  | CannotDestructureAsList (Expr a Variable)
+  | CannotApplyToNonFunction (Expr a Variable)
+  | CannotFindMemberInRecord (Map Name (Expr a Variable)) Name
+  | PredicateForIfMustBeABoolean (Expr a Variable)
   | CouldNotUnwrapBuiltIn Variable
   | CouldNotMatchBuiltInId BiIds
-  | PatternMatchFailure (Expr Variable)
+  | PatternMatchFailure (Expr a Variable)
   | SelfReferencingBinding Variable
   deriving (Eq, Ord, Show)
 
-instance Semigroup InterpreterError where
+instance Semigroup (InterpreterError a) where
   a <> _ = a
 
-instance Monoid InterpreterError where
+instance Monoid (InterpreterError a) where
   mempty = UnknownInterpreterError
 
-instance Printer InterpreterError where
+instance Printer (InterpreterError a) where
   prettyPrint (CouldNotFindVar _ name) = "Could not find var " <> prettyPrint name
   prettyPrint (CouldNotFindBuiltIn _ name) = "Could not find built-in " <> prettyPrint name
   prettyPrint (CannotDestructureAsPair expr) = "Expected a pair. Cannot destructure: " <> prettyPrint expr

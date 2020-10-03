@@ -12,10 +12,10 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 
 -- dependencies resolved into actual expressions
-newtype Scope = Scope {getScope :: Map Variable (Expr Variable)}
+newtype Scope a = Scope {getScope :: Map Variable (Expr a Variable)}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
-instance Printer Scope where
+instance Printer (Scope a) where
   prettyPrint (Scope s) = "{ " <> T.intercalate ", " (printItem <$> M.toList s) <> " }"
     where
       printItem (k, a) = prettyPrint k <> ": " <> prettyPrint a

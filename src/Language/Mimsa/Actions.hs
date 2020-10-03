@@ -33,40 +33,46 @@ import Language.Mimsa.Types
 
 ----------
 
-getType :: Swaps -> Scope -> Expr Variable -> Either Error MonoType
+getType ::
+  Monoid ann =>
+  Swaps ->
+  Scope ann ->
+  Expr ann Variable ->
+  Either (Error ann) MonoType
 getType swaps scope' expr =
   first TypeErr $ startInference swaps (chainExprs expr scope')
 
-getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
+getExprPairs :: Store ann -> Bindings -> [(Name, StoreExpression ann)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
   (name, hash) <- M.toList bindings'
   case M.lookup hash items' of
     Just item -> pure [(name, item)]
     _ -> pure []
 
-getTypesFromStore :: Store -> TypeBindings -> Set DataType
+getTypesFromStore :: Store ann -> TypeBindings -> Set DataType
 getTypesFromStore (Store items') (TypeBindings tBindings) =
   S.fromList $ join $ do
     (_, hash) <- M.toList tBindings
     let getDt (StoreExpression expr' _ _) =
           case expr' of
-            (MyData dt _) -> Just dt
+            (MyData _ dt _) -> Just dt
             _ -> Nothing
     case M.lookup hash items' >>= getDt of
       Just item -> pure [item]
       _ -> pure []
 
 chainExprs ::
-  Expr Variable ->
-  Scope ->
-  Expr Variable
+  Monoid ann =>
+  Expr ann Variable ->
+  Scope ann ->
+  Expr ann Variable
 chainExprs expr scope =
   foldr
-    (\(name, expr') a -> MyLet name expr' a)
+    (\(name, expr') a -> MyLet mempty name expr' a)
     expr
     (M.toList . getScope $ scope)
 
-fromItem :: Name -> StoreExpression -> ExprHash -> Project
+fromItem :: Name -> StoreExpression ann -> ExprHash -> Project ann
 fromItem name expr hash =
   Project
     { store = Store $ M.singleton hash expr,
@@ -80,7 +86,7 @@ fromItem name expr hash =
     typeList =
       (,pure hash) <$> S.toList typeConsUsed
 
-fromType :: StoreExpression -> ExprHash -> Project
+fromType :: StoreExpression ann -> ExprHash -> Project ann
 fromType expr hash =
   Project
     { store = Store $ M.singleton hash expr,
@@ -95,18 +101,20 @@ fromType expr hash =
       (,pure hash) <$> S.toList typeConsUsed
 
 resolveStoreExpression ::
-  Store ->
-  StoreExpression ->
-  Either Error ResolvedExpression
+  (Monoid ann, Eq ann) =>
+  Store ann ->
+  StoreExpression ann ->
+  Either (Error ann) (ResolvedExpression ann)
 resolveStoreExpression store' storeExpr = do
   let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
   exprType <- getType swaps scope newExpr
   pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
 
 getTypecheckedStoreExpression ::
-  Project ->
-  Expr Name ->
-  Either Error ResolvedExpression
+  (Monoid ann, Eq ann) =>
+  Project ann ->
+  Expr ann Name ->
+  Either (Error ann) (ResolvedExpression ann)
 getTypecheckedStoreExpression env expr = do
   storeExpr <-
     first ResolverErr $
@@ -116,7 +124,7 @@ getTypecheckedStoreExpression env expr = do
         expr
   resolveStoreExpression (store env) storeExpr
 
-evaluateText :: Project -> Text -> Either Error ResolvedExpression
+evaluateText :: Project ann -> Text -> Either (Error ann) (ResolvedExpression ann)
 evaluateText env input = do
   expr <- first OtherError $ parseExpr input
   getTypecheckedStoreExpression env expr

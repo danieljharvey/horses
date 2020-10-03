@@ -6,4 +6,4 @@ import Language.Mimsa.Types.Identifiers
 
 -- our built-in functions for doing IO things etc
 -- statically defined and made available in all computations for now
-newtype Library = Library {getLibrary :: Map FuncName ForeignFunc}
+newtype Library a = Library {getLibrary :: Map FuncName (ForeignFunc a)}

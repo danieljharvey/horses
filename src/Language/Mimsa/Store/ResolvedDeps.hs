@@ -11,7 +11,7 @@ import Language.Mimsa.Types
 -- we spend so much time passing the whole store around to match hashes
 -- lets create one way of resolving a pile of them and be done with it
 
-resolveDeps :: Store -> Bindings -> Either [Name] ResolvedDeps
+resolveDeps :: Store a -> Bindings -> Either [Name] (ResolvedDeps a)
 resolveDeps (Store items) (Bindings bindings') =
   case partitionEithers foundItems of
     ([], found) -> Right (ResolvedDeps (M.fromList found))
@@ -24,10 +24,9 @@ resolveDeps (Store items) (Bindings bindings') =
       )
         <$> M.toList bindings'
 
-recursiveResolve :: Store -> StoreExpression -> Either [Name] [StoreExpression]
+recursiveResolve :: Store a -> StoreExpression a -> Either [Name] [StoreExpression a]
 recursiveResolve store' storeExpr = do
   (ResolvedDeps deps) <- resolveDeps store' (storeBindings storeExpr)
-  let storeExprs :: [(Name, StoreExpression)]
-      storeExprs = (\(name, (_, se)) -> (name, se)) <$> M.toList deps
+  let storeExprs = (\(name, (_, se)) -> (name, se)) <$> M.toList deps
   subExprs <- traverse (recursiveResolve store') (snd <$> storeExprs)
   pure $ mconcat subExprs <> (snd <$> storeExprs)

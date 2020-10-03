@@ -7,11 +7,11 @@ import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.Swaps
 
-data ResolvedExpression
+data ResolvedExpression a
   = ResolvedExpression
       { reMonoType :: MonoType,
-        reStoreExpression :: StoreExpression,
-        reExpression :: Expr Variable,
-        reScope :: Scope,
+        reStoreExpression :: StoreExpression a,
+        reExpression :: Expr a Variable,
+        reScope :: Scope a,
         reSwaps :: Swaps
       }

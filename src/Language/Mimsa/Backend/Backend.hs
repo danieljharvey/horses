@@ -7,6 +7,7 @@ module Language.Mimsa.Backend.Backend
   )
 where
 
+import qualified Data.Aeson as JSON
 import Data.Coerce
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
@@ -30,9 +31,9 @@ import System.Directory
 data Backend
   = CommonJS
 
-data Renderer a
+data Renderer ann a
   = Renderer
-      { renderFunc :: Name -> Expr Name -> a,
+      { renderFunc :: Name -> Expr ann Name -> a,
         renderImport :: Backend -> (Name, ExprHash) -> a,
         renderStdLib :: Backend -> a,
         renderExport :: Backend -> Name -> a
@@ -46,7 +47,7 @@ createOutputFolder = do
   createDirectoryIfMissing True path
   pure (path <> "/")
 
-transpileStoreExpression :: Backend -> StoreExpression -> IO FilePath
+transpileStoreExpression :: (JSON.ToJSON ann) => Backend -> StoreExpression ann -> IO FilePath
 transpileStoreExpression be se = do
   _ <- createOutputFolder
   let filename = outputFilename be (getStoreExpressionHash se)
@@ -72,12 +73,12 @@ writeStdLib CommonJS = do
   T.writeFile (T.unpack path) (coerce commonJSStandardLibrary)
 
 -- recursively get all the StoreExpressions we need to output
-getOutputList :: Store -> StoreExpression -> Set StoreExpression
+getOutputList :: (Ord ann) => Store ann -> StoreExpression ann -> Set (StoreExpression ann)
 getOutputList store' se = case recursiveResolve store' se of
   Right as -> S.fromList as
   Left _ -> mempty
 
-goCompile :: Backend -> Store -> StoreExpression -> IO ()
+goCompile :: (Ord ann, JSON.ToJSON ann) => Backend -> Store ann -> StoreExpression ann -> IO ()
 goCompile be store' se = do
   let list = getOutputList store' se
   traverse_ (transpileStoreExpression be) list
@@ -97,7 +98,7 @@ outputFilename CommonJS hash' = "cjs-" <> prettyPrint hash' <> ".js"
 outputExport :: Backend -> Name -> Text
 outputExport CommonJS name = "module.exports = { " <> coerce name <> ": " <> coerce name <> " }"
 
-outputStoreExpression :: (Monoid a) => Backend -> Renderer a -> StoreExpression -> a
+outputStoreExpression :: (Monoid a) => Backend -> Renderer ann a -> StoreExpression ann -> a
 outputStoreExpression be renderer se =
   let funcName = mkName "main"
       deps = mconcat $ renderImport renderer be <$> M.toList (getBindings $ storeBindings se)
@@ -106,7 +107,7 @@ outputStoreExpression be renderer se =
       export = renderExport renderer be funcName
    in deps <> stdLib <> func <> export
 
-outputCommonJS :: StoreExpression -> Javascript
+outputCommonJS :: StoreExpression ann -> Javascript
 outputCommonJS =
   outputStoreExpression
     CommonJS
