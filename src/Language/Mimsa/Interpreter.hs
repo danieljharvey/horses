@@ -12,7 +12,12 @@ import qualified Data.Map as M
 import Language.Mimsa.Interpreter.Interpret
 import Language.Mimsa.Types
 
-interpret :: Scope -> Swaps -> Expr Variable -> IO (Either InterpreterError (Expr Variable))
+interpret ::
+  (Eq ann, Monoid ann) =>
+  Scope ann ->
+  Swaps ->
+  Expr ann Variable ->
+  IO (Either (InterpreterError ann) (Expr ann Variable))
 interpret scope' swaps expr = fmap fst <$> either'
   where
     scopeSize = M.size . getScope

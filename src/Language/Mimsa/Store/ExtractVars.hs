@@ -1,3 +1,7 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+
 module Language.Mimsa.Store.ExtractVars
   ( extractVars,
   )
@@ -12,10 +16,10 @@ import Language.Mimsa.Types
 -- important - we must not count variables brought in via lambdas, as those
 -- aren't external deps
 
-extractVars :: Expr ann Name -> Set Name
-extractVars = filterBuiltIns . extractVars_
+extractVars :: forall ann. (Eq ann, Monoid ann) => Expr ann Name -> Set Name
+extractVars = filterBuiltIns @ann . extractVars_
 
-extractVars_ :: Expr ann Name -> Set Name
+extractVars_ :: (Eq ann, Monoid ann) => Expr ann Name -> Set Name
 extractVars_ (MyVar _ a) = S.singleton a
 extractVars_ (MyIf _ a b c) = extractVars_ a <> extractVars_ b <> extractVars_ c
 extractVars_ (MyLet _ newVar a b) = S.delete newVar (extractVars_ a <> extractVars_ b)
@@ -37,5 +41,9 @@ extractVars_ (MyCaseMatch _ sum' matches catchAll) =
     <> mconcat (extractVars . snd <$> NE.toList matches)
     <> maybe mempty extractVars catchAll
 
-filterBuiltIns :: Set Name -> Set Name
-filterBuiltIns = S.filter (not . isLibraryName)
+filterBuiltIns ::
+  forall ann.
+  (Eq ann, Monoid ann) =>
+  Set Name ->
+  Set Name
+filterBuiltIns = S.filter (not . isLibraryName @ann)

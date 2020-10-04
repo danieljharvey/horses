@@ -7,9 +7,10 @@ import Language.Mimsa.Store
 import Language.Mimsa.Types
 
 evaluateStoreExprToInfo ::
-  Store ->
-  StoreExpression ->
-  Maybe (MonoType, Expr Name)
+  (Eq ann, Monoid ann) =>
+  Store ann ->
+  StoreExpression ann ->
+  Maybe (MonoType, Expr ann Name)
 evaluateStoreExprToInfo store' storeExpr =
   case resolveStoreExpression store' storeExpr of
     Right (ResolvedExpression mt _ _ _ _) -> Just (mt, storeExpression storeExpr)
@@ -20,10 +21,11 @@ hush (Right a) = Just a
 hush _ = Nothing
 
 getExpressionForBinding ::
-  Store ->
-  ResolvedDeps ->
+  (Eq ann, Monoid ann) =>
+  Store ann ->
+  ResolvedDeps ann ->
   L.List () Name ->
-  Maybe ExpressionInfo
+  Maybe (ExpressionInfo ann)
 getExpressionForBinding store' (ResolvedDeps deps) l = do
   (_, name) <- L.listSelectedElement l
   (_, storeExpr') <- M.lookup name deps

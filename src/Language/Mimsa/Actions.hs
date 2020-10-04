@@ -34,7 +34,7 @@ import Language.Mimsa.Types
 ----------
 
 getType ::
-  Monoid ann =>
+  (Eq ann, Monoid ann) =>
   Swaps ->
   Scope ann ->
   Expr ann Variable ->
@@ -124,7 +124,11 @@ getTypecheckedStoreExpression env expr = do
         expr
   resolveStoreExpression (store env) storeExpr
 
-evaluateText :: Project ann -> Text -> Either (Error ann) (ResolvedExpression ann)
+evaluateText ::
+  (Eq ann, Monoid ann) =>
+  Project ann ->
+  Text ->
+  Either (Error ann) (ResolvedExpression ann)
 evaluateText env input = do
   expr <- first OtherError $ parseExpr input
   getTypecheckedStoreExpression env expr

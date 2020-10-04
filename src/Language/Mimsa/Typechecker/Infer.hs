@@ -1,6 +1,8 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Language.Mimsa.Typechecker.Infer
   ( startInference,
@@ -31,12 +33,14 @@ import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
 
 startInference ::
+  (Eq ann, Monoid ann) =>
   Swaps ->
   Expr ann Variable ->
   Either (TypeError ann) MonoType
 startInference swaps expr = snd <$> doInference swaps mempty expr
 
 doInference ::
+  (Eq ann, Monoid ann) =>
   Swaps ->
   Environment ->
   Expr ann Variable ->
@@ -52,6 +56,7 @@ doDataTypeInference env dt =
 
 -- run inference, and substitute everything possible
 inferAndSubst ::
+  (Eq ann, Monoid ann) =>
   Environment ->
   Expr ann Variable ->
   TcMonad ann (Substitutions, MonoType)
@@ -84,8 +89,12 @@ inferLiteral (MyBool _) = pure (mempty, MTBool)
 inferLiteral (MyString _) = pure (mempty, MTString)
 inferLiteral MyUnit = pure (mempty, MTUnit)
 
-inferBuiltIn :: Variable -> TcMonad ann (Substitutions, MonoType)
-inferBuiltIn name = case getLibraryFunction name of
+inferBuiltIn ::
+  forall ann.
+  (Eq ann, Monoid ann) =>
+  Variable ->
+  TcMonad ann (Substitutions, MonoType)
+inferBuiltIn name = case getLibraryFunction @ann name of
   Just ff -> instantiate (generalise mempty (getFFType ff))
   _ -> throwError $ MissingBuiltIn name
 
@@ -121,6 +130,7 @@ splitRecordTypes map' = (subs, MTRecord types)
 
 -- let's pattern match on exactly what's inside more clearly
 inferApplication ::
+  (Eq ann, Monoid ann) =>
   Environment ->
   Expr ann Variable ->
   Expr ann Variable ->
@@ -146,6 +156,7 @@ findActualBindingInSwaps a = pure a
 -- to allow recursion we make a type for the let binding in it's own expression
 -- we may need to unify tyUnknown and tyExpr if it struggles with complex stuff
 inferLetBinding ::
+  (Eq ann, Monoid ann) =>
   Environment ->
   Variable ->
   Expr ann Variable ->
@@ -162,6 +173,7 @@ inferLetBinding env binder expr body = do
   pure (s3 <> s2 <> s1, applySubst s3 tyBody)
 
 inferLetPairBinding ::
+  (Eq ann, Monoid ann) =>
   Environment ->
   Variable ->
   Variable ->
@@ -187,6 +199,7 @@ inferLetPairBinding env binder1 binder2 expr body = do
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
 storeDataDeclaration ::
+  (Eq ann, Monoid ann) =>
   Environment ->
   DataType ->
   Expr ann Variable ->
@@ -268,6 +281,7 @@ constructorToType (TypeConstructor typeName tyVars constructTypes) =
   foldr MTFunction (MTData typeName tyVars) constructTypes
 
 inferSumExpressionType ::
+  (Eq ann, Monoid ann) =>
   Environment ->
   Map TyCon TypeConstructor ->
   Expr ann Variable ->
@@ -296,6 +310,7 @@ inferSumExpressionType env consTypes sumExpr =
 -------------
 
 inferCaseMatch ::
+  (Eq ann, Monoid ann) =>
   Environment ->
   Expr ann Variable ->
   NonEmpty (TyCon, Expr ann Variable) ->
@@ -341,6 +356,7 @@ applySubstToConstructor subs (TypeConstructor name ty b) =
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
 inferMatch ::
+  (Eq ann, Monoid ann) =>
   Environment ->
   Map TyCon TypeConstructor ->
   TyCon ->
@@ -370,7 +386,11 @@ applyList vars tyFun = case vars of
     (s2, tyFun') <- applyList vars' (applySubst s1 tyRes)
     pure (s2 <> s1, applySubst (s2 <> s1) tyFun')
 
-infer :: Environment -> Expr ann Variable -> TcMonad ann (Substitutions, MonoType)
+infer ::
+  (Eq ann, Monoid ann) =>
+  Environment ->
+  Expr ann Variable ->
+  TcMonad ann (Substitutions, MonoType)
 infer env inferExpr =
   case inferExpr of
     (MyLiteral _ a) -> inferLiteral a

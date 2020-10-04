@@ -3,16 +3,16 @@ module Test.Helpers where
 import Data.Text (Text)
 import Language.Mimsa.Types
 
-bool :: Bool -> Expr a
-bool a = MyLiteral (MyBool a)
+bool :: (Monoid ann) => Bool -> Expr ann a
+bool a = MyLiteral mempty (MyBool a)
 
-int :: Int -> Expr a
-int a = MyLiteral (MyInt a)
+int :: (Monoid ann) => Int -> Expr ann a
+int a = MyLiteral mempty (MyInt a)
 
-str :: StringType -> Expr a
-str a = MyLiteral (MyString a)
+str :: (Monoid ann) => StringType -> Expr ann a
+str a = MyLiteral mempty (MyString a)
 
-str' :: Text -> Expr a
+str' :: (Monoid ann) => Text -> Expr ann a
 str' = str . StringType
 
 --

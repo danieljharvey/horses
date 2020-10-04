@@ -1,3 +1,6 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+
 module Language.Mimsa.Store.Substitutor where
 
 import Control.Monad (join)
@@ -131,10 +134,15 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 -- Swaps list
 -- we don't do this for built-ins (ie, randomInt) or variables introduced by
 -- lambdas
-getNextVar :: [Name] -> Name -> App ann Variable
+getNextVar ::
+  forall ann.
+  (Eq ann, Monoid ann) =>
+  [Name] ->
+  Name ->
+  App ann Variable
 getNextVar protected name
   | name `elem` protected = pure (NamedVar name)
-  | isLibraryName name = pure (BuiltIn name)
+  | isLibraryName @ann name = pure (BuiltIn name)
   | otherwise = do
     stuff <- findInSwaps name
     case stuff of
@@ -154,7 +162,11 @@ nameToVar :: (Monad m) => Name -> m Variable
 nameToVar = pure . NamedVar
 
 -- step through Expr, replacing vars with numbered variables
-mapVar :: [Name] -> Expr ann Name -> App ann (Expr ann Variable)
+mapVar ::
+  (Eq ann, Monoid ann) =>
+  [Name] ->
+  Expr ann Name ->
+  App ann (Expr ann Variable)
 mapVar p (MyVar ann a) =
   MyVar ann <$> getNextVar p a
 mapVar p (MyLet ann name a b) =

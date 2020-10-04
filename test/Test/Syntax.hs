@@ -44,7 +44,7 @@ spec = do
       parseExpr "\"dog\"" `shouldBe` Right (str (StringType "dog"))
     it "Parses a variable name" $
       parseExpr "log"
-        `shouldBe` Right (MyVar (mkName "log"))
+        `shouldBe` Right (MyVar mempty (mkName "log"))
     it "Does not accept 'let' as a variable name" $
       isLeft (parseExpr "let")
         `shouldBe` True
@@ -57,38 +57,40 @@ spec = do
       isLeft (parseExpr "log!dog")
         `shouldBe` True
     it "Does a basic let binding" $ do
-      let expected = MyLet (mkName "x") (bool True) (MyVar (mkName "x"))
+      let expected = MyLet mempty (mkName "x") (bool True) (MyVar mempty (mkName "x"))
       parseExpr "let x = True in x"
         `shouldBe` Right expected
     it "Does a basic let binding with excessive whitespace" $ do
-      let expected = MyLet (mkName "x") (bool True) (MyVar (mkName "x"))
+      let expected = MyLet mempty (mkName "x") (bool True) (MyVar mempty (mkName "x"))
       parseExpr "let       x       =       True       in        x"
         `shouldBe` Right expected
     it "Does a let binding inside parens" $ do
-      let expected = MyLet (mkName "x") (bool True) (MyVar (mkName "x"))
+      let expected = MyLet mempty (mkName "x") (bool True) (MyVar mempty (mkName "x"))
       parseExpr "(let x = True in x)"
         `shouldBe` Right expected
     it "Recognises a basic lambda" $
       parseExpr "\\x -> x"
-        `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
+        `shouldBe` Right (MyLambda mempty (mkName "x") (MyVar mempty (mkName "x")))
     it "Recognises a lambda with too much whitespace everywhere" $
       parseExpr "\\        x          ->             x"
-        `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
+        `shouldBe` Right (MyLambda mempty (mkName "x") (MyVar mempty (mkName "x")))
     it "Recognises a lambda in parens" $
       parseExpr "(\\x -> x)"
-        `shouldBe` Right (MyLambda (mkName "x") (MyVar (mkName "x")))
+        `shouldBe` Right (MyLambda mempty (mkName "x") (MyVar mempty (mkName "x")))
     it "Recognises nested lambdas in parens" $
       parseExpr "(\\a -> (\\b -> a))"
         `shouldBe` Right
           ( MyLambda
+              mempty
               (mkName "a")
-              (MyLambda (mkName "b") (MyVar (mkName "a")))
+              (MyLambda mempty (mkName "b") (MyVar mempty (mkName "a")))
           )
     it "Recognises function application in parens" $
       parseExpr "add (1)"
         `shouldBe` Right
           ( MyApp
-              ( MyVar (mkName "add")
+              mempty
+              ( MyVar mempty (mkName "add")
               )
               (int 1)
           )
@@ -96,70 +98,76 @@ spec = do
       parseExpr "add (1)(2)"
         `shouldBe` Right
           ( MyApp
+              mempty
               ( MyApp
-                  ( MyVar (mkName "add")
+                  mempty
+                  ( MyVar mempty (mkName "add")
                   )
                   (int 1)
               )
               (int 2)
           )
     it "Recognises an if statement" $ do
-      let expected = MyIf (bool True) (int 1) (int 2)
+      let expected = MyIf mempty (bool True) (int 1) (int 2)
       parseExpr' "if True then 1 else 2" `shouldBe` Right expected
     it "Recognises an if statement in parens" $ do
-      let expected = MyIf (bool True) (int 1) (int 2)
+      let expected = MyIf mempty (bool True) (int 1) (int 2)
       parseExpr' "(if True then 1 else 2)" `shouldBe` Right expected
     it "Recognises an if statement with lots of whitespace" $ do
-      let expected = MyIf (bool True) (int 1) (int 2)
+      let expected = MyIf mempty (bool True) (int 1) (int 2)
       parseExpr "if   True    then    1    else    2" `shouldBe` Right expected
     it "Parses a pair of things" $
       parseExpr "(2, 2)"
         `shouldBe` Right
-          (MyPair (int 2) (int 2))
+          (MyPair mempty (int 2) (int 2))
     it "Parses a pair of things with silly whitespace" $
       parseExpr "(     2    ,   2     )"
         `shouldBe` Right
-          (MyPair (int 2) (int 2))
+          (MyPair mempty (int 2) (int 2))
     it "Allows a let to use a pair" $
       parseExpr "let x = ((1,2)) in x"
         `shouldBe` Right
           ( MyLet
+              mempty
               (mkName "x")
-              (MyPair (int 1) (int 2))
-              (MyVar (mkName "x"))
+              (MyPair mempty (int 1) (int 2))
+              (MyVar mempty (mkName "x"))
           )
     it "Allows a let to use a pair and apply to it" $
       parseExpr "let x = ((1,2)) in fst(x)"
         `shouldBe` Right
           ( MyLet
+              mempty
               (mkName "x")
-              (MyPair (int 1) (int 2))
-              (MyApp (MyVar (mkName "fst")) (MyVar (mkName "x")))
+              (MyPair mempty (int 1) (int 2))
+              (MyApp mempty (MyVar mempty (mkName "fst")) (MyVar mempty (mkName "x")))
           )
     it "Allows a let to use a nested lambda" $
       parseExpr "let const2 = (\\a -> (\\b -> a)) in (const2)"
         `shouldBe` Right
           ( MyLet
+              mempty
               (mkName "const2")
               ( MyLambda
+                  mempty
                   (mkName "a")
-                  (MyLambda (mkName "b") (MyVar (mkName "a")))
+                  (MyLambda mempty (mkName "b") (MyVar mempty (mkName "a")))
               )
-              (MyVar (mkName "const2"))
+              (MyVar mempty (mkName "const2"))
           )
     it "Parses a complex let expression" $
       parseExpr "let const2 = (\\a -> (\\b -> a)) in (let reuse = ({first: const2(True), second: const2(2)}) in reuse.second(100))"
         `shouldSatisfy` isRight
     it "Parses an empty record literal" $
-      parseExpr "{}" `shouldBe` Right (MyRecord mempty)
+      parseExpr "{}" `shouldBe` Right (MyRecord mempty mempty)
     it "Parses a record literal with a single item inside" $
       parseExpr "{ dog: 1 }"
         `shouldBe` Right
-          (MyRecord (M.singleton (mkName "dog") (int 1)))
+          (MyRecord mempty (M.singleton (mkName "dog") (int 1)))
     it "Parses a record literal with multiple items inside" $
       parseExpr "{ dog:1, cat:True, horse:\"of course\" }"
         `shouldBe` Right
-          ( MyRecord $
+          ( MyRecord mempty $
               M.fromList
                 [ (mkName "dog", int 1),
                   (mkName "cat", bool True),
@@ -169,7 +177,7 @@ spec = do
     it "Parses a record literal with multiple items inside and less spacing" $
       parseExpr "{dog:1,cat:True,horse:\"of course\"}"
         `shouldBe` Right
-          ( MyRecord $
+          ( MyRecord mempty $
               M.fromList
                 [ (mkName "dog", int 1),
                   (mkName "cat", bool True),
@@ -180,24 +188,27 @@ spec = do
       parseExpr' "let (a,b) = ((True,1)) in a"
         `shouldBe` Right
           ( MyLetPair
+              mempty
               (mkName "a")
               (mkName "b")
-              (MyPair (bool True) (int 1))
-              (MyVar (mkName "a"))
+              (MyPair mempty (bool True) (int 1))
+              (MyVar mempty (mkName "a"))
           )
     it "Parses a destructuring of pairs with silly whitespace" $
       parseExpr' "let   (    a ,      b ) =    ((       True, 1) ) in a"
         `shouldBe` Right
           ( MyLetPair
+              mempty
               (mkName "a")
               (mkName "b")
-              (MyPair (bool True) (int 1))
-              (MyVar (mkName "a"))
+              (MyPair mempty (bool True) (int 1))
+              (MyVar mempty (mkName "a"))
           )
     it "Parses Void" $
       parseExpr "type Void in 1"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "Void")
                   mempty
@@ -209,6 +220,7 @@ spec = do
       parseExpr "type AbsoluteUnit = AbsoluteUnit in 1"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "AbsoluteUnit")
                   mempty
@@ -220,6 +232,7 @@ spec = do
       parseExpr "type Arr a = Empty\n| Item\na\n in 1"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "Arr")
                   [mkName "a"]
@@ -240,6 +253,7 @@ spec = do
       parseExpr "type Dog = Dog String in 1"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "Dog")
                   mempty
@@ -254,6 +268,7 @@ spec = do
       parseExpr "type LeBool = Vrai | Faux in 1"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "LeBool")
                   mempty
@@ -269,6 +284,7 @@ spec = do
       parseExpr "type Nat = Zero | Succ Nat in 1"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "Nat")
                   mempty
@@ -284,8 +300,10 @@ spec = do
       parseExpr "Dog \"hi\" \"dog\""
         `shouldBe` Right
           ( MyConsApp
+              mempty
               ( MyConsApp
-                  (MyConstructor $ mkTyCon "Dog")
+                  mempty
+                  (MyConstructor mempty $ mkTyCon "Dog")
                   (str' "hi")
               )
               (str' "dog")
@@ -294,6 +312,7 @@ spec = do
       parseExpr "type Maybe a = Just a | Nothing in Nothing"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "Maybe")
                   [mkName "a"]
@@ -303,17 +322,18 @@ spec = do
                       ]
                   )
               )
-              (MyConstructor $ mkTyCon "Nothing")
+              (MyConstructor mempty $ mkTyCon "Nothing")
           )
     it "Uses a constructor" $
-      parseExpr "Vrai" `shouldBe` Right (MyConstructor (mkTyCon "Vrai"))
+      parseExpr "Vrai" `shouldBe` Right (MyConstructor mempty (mkTyCon "Vrai"))
     it "Parses a custom case match" $
       parseExpr "case Just 1 of Just \\a -> a | Nothing 0"
         `shouldBe` Right
           ( MyCaseMatch
-              (MyConsApp (MyConstructor $ mkTyCon "Just") (int 1))
+              mempty
+              (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Just") (int 1))
               ( NE.fromList
-                  [ (mkTyCon "Just", MyLambda (mkName "a") (MyVar (mkName "a"))),
+                  [ (mkTyCon "Just", MyLambda mempty (mkName "a") (MyVar mempty (mkName "a"))),
                     (mkTyCon "Nothing", int 0)
                   ]
               )
@@ -323,9 +343,10 @@ spec = do
       parseExpr "case Just 1 of Just \\a -> a | otherwise 0"
         `shouldBe` Right
           ( MyCaseMatch
-              (MyConsApp (MyConstructor $ mkTyCon "Just") (int 1))
+              mempty
+              (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Just") (int 1))
               ( NE.fromList
-                  [ (mkTyCon "Just", MyLambda (mkName "a") (MyVar (mkName "a")))
+                  [ (mkTyCon "Just", MyLambda mempty (mkName "a") (MyVar mempty (mkName "a")))
                   ]
               )
               (Just $ int 0)
@@ -334,6 +355,7 @@ spec = do
       parseExpr "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "Tree")
                   [mkName "a"]
@@ -347,12 +369,13 @@ spec = do
                       ]
                   )
               )
-              (MyConsApp (MyConstructor $ mkTyCon "Leaf") (int 1))
+              (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Leaf") (int 1))
           )
     it "Parses even more complex type constructors" $
       parseExpr "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
         `shouldBe` Right
           ( MyData
+              mempty
               ( DataType
                   (mkTyCon "Tree")
                   [mkName "a"]
@@ -368,25 +391,33 @@ spec = do
                   )
               )
               ( MyConsApp
+                  mempty
                   ( MyConsApp
+                      mempty
                       ( MyConsApp
-                          (MyConstructor $ mkTyCon "Branch")
-                          (MyConstructor $ mkTyCon "Empty")
+                          mempty
+                          (MyConstructor mempty $ mkTyCon "Branch")
+                          (MyConstructor mempty $ mkTyCon "Empty")
                       )
                       (int 1)
                   )
-                  (MyConstructor $ mkTyCon "Empty")
+                  (MyConstructor mempty $ mkTyCon "Empty")
               )
           )
     it "Parses big function application" $
       parseExpr "thing(1)(2)(3)(4)(5)"
         `shouldBe` Right
           ( MyApp
+              mempty
               ( MyApp
+                  mempty
                   ( MyApp
+                      mempty
                       ( MyApp
+                          mempty
                           ( MyApp
-                              (MyVar (mkName "thing"))
+                              mempty
+                              (MyVar mempty (mkName "thing"))
                               (int 1)
                           )
                           (int 2)

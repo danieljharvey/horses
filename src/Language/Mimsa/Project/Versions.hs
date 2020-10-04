@@ -23,25 +23,26 @@ import Language.Mimsa.Types.VersionedMap
 -- find which versions of a given binding are in use
 
 findVersions ::
-  Project ->
+  (Eq ann, Monoid ann) =>
+  Project ann ->
   Name ->
-  Either Error (NonEmpty (Int, Expr Variable, MonoType, Set Usage))
+  Either (Error ann) (NonEmpty (Int, Expr ann Variable, MonoType, Set Usage))
 findVersions project name = do
   versioned <- first UsageErr (findInProject project name)
   as <- traverse (getExprDetails project) versioned
   let nice = NE.zip (NE.fromList [1 ..]) as
   pure $ NE.reverse $ (\(i, (a, b, c)) -> (i, a, b, c)) <$> nice
 
-findInProject :: Project -> Name -> Either UsageError (NonEmpty ExprHash)
+findInProject :: Project ann -> Name -> Either UsageError (NonEmpty ExprHash)
 findInProject project name =
   case M.lookup name (getVersionedMap $ bindings project) of
     Just versioned -> Right versioned
     _ -> throwError $ CouldNotFindBinding name
 
 getStoreExpression ::
-  Project ->
+  Project ann ->
   ExprHash ->
-  Either UsageError StoreExpression
+  Either UsageError (StoreExpression ann)
 getStoreExpression (Project store' _ _ _) exprHash =
   case M.lookup exprHash (getStore store') of
     Just storeExpression' -> Right storeExpression'
@@ -51,16 +52,17 @@ hush :: Either e a -> Maybe a
 hush (Right a) = Just a
 hush _ = Nothing
 
-findStoreExpressionByName :: Project -> Name -> Maybe StoreExpression
+findStoreExpressionByName :: Project ann -> Name -> Maybe (StoreExpression ann)
 findStoreExpressionByName env name =
   case findInProject env name of
     Right hashes -> hush $ getStoreExpression env (NE.last hashes)
     _ -> Nothing
 
 getExprDetails ::
-  Project ->
+  (Eq ann, Monoid ann) =>
+  Project ann ->
   ExprHash ->
-  Either Error (Expr Variable, MonoType, Set Usage)
+  Either (Error ann) (Expr ann Variable, MonoType, Set Usage)
 getExprDetails project exprHash = do
   usages <- first UsageErr (findUsages project exprHash)
   storeExpr <- first UsageErr (getStoreExpression project exprHash)

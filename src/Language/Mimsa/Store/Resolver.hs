@@ -40,6 +40,7 @@ findHashInBindings (Bindings bindings') name =
 -- given an expression, and the current environment, create a
 -- store expression that captures the hashes of the functions we'll need
 createStoreExpression ::
+  (Eq ann, Monoid ann) =>
   Bindings ->
   TypeBindings ->
   Expr ann Name ->
@@ -48,7 +49,11 @@ createStoreExpression bindings' tBindings expr =
   StoreExpression expr <$> findBindings bindings' expr
     <*> findTypeBindings tBindings expr
 
-findBindings :: Bindings -> Expr ann Name -> Either ResolverError Bindings
+findBindings ::
+  (Eq ann, Monoid ann) =>
+  Bindings ->
+  Expr ann Name ->
+  Either ResolverError Bindings
 findBindings bindings' expr = do
   let findValueHash name =
         (,) name
@@ -74,7 +79,7 @@ findTypeBindings tBindings expr = do
 
 -- given a data type declaration, create a StoreExpression for it
 createTypeStoreExpression ::
-  (Monoid ann) =>
+  (Eq ann, Monoid ann) =>
   TypeBindings ->
   DataType ->
   Either ResolverError (StoreExpression ann)
