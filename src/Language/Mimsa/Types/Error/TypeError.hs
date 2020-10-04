@@ -30,7 +30,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType (MonoType)
 import Language.Mimsa.Types.Swaps (Swaps)
 
-data TypeError a
+data TypeError ann
   = UnknownTypeError
   | FailsOccursCheck Swaps Variable MonoType
   | UnificationError MonoType MonoType
@@ -41,9 +41,9 @@ data TypeError a
   | CannotUnifyBoundVariable Variable MonoType
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedPair MonoType
-  | CannotCaseMatchOnType (Expr a Variable)
+  | CannotCaseMatchOnType (Expr Variable ann)
   | TypeConstructorNotInScope Environment TyCon
-  | TypeIsNotConstructor (Expr a Variable)
+  | TypeIsNotConstructor (Expr Variable ann)
   | TypeVariableNotInDataType TyCon Name [Name]
   | ConflictingConstructors TyCon
   | CannotApplyToType TyCon

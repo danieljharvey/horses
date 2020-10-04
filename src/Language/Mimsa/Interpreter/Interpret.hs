@@ -18,7 +18,7 @@ import Language.Mimsa.Types
 -- when we come to do let recursive the name of our binder
 -- may already be turned into a number in the expr
 -- so we look it up to make sure we bind the right thing
-findActualBindingInSwaps :: Int -> App Variable ann
+findActualBindingInSwaps :: Int -> App ann Variable
 findActualBindingInSwaps int = do
   swaps <- askForSwaps
   scope' <- readScope
@@ -91,7 +91,7 @@ unwrapBuiltIn name (OneArg _ _) = do
     )
 
 -- get new var
-newLambdaCopy :: Variable -> Expr ann Variable -> App ann (Variable, Expr Variable ann)
+newLambdaCopy :: Variable -> Expr Variable ann -> App ann (Variable, Expr Variable ann)
 newLambdaCopy name expr = do
   newName' <- nextVariable
   newExpr <- swapName name newName' expr

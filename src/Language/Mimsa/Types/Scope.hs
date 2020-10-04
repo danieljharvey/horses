@@ -12,7 +12,10 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 
 -- dependencies resolved into actual expressions
-newtype Scope ann = Scope {getScope :: Map Variable (Expr Variable ann)}
+newtype Scope ann
+  = Scope
+      { getScope :: Map Variable (Expr Variable ann)
+      }
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
 instance (Show ann, Printer ann) => Printer (Scope ann) where

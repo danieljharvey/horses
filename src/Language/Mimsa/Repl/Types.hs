@@ -11,7 +11,7 @@ import Language.Mimsa.Types.Identifiers
 
 type ReplM a = ExceptT (Error a) IO
 
-runReplM :: (Show ann) => ReplM ann a -> IO (Maybe a)
+runReplM :: (Printer ann, Show ann) => ReplM ann a -> IO (Maybe a)
 runReplM computation = do
   either' <- runExceptT computation
   case either' of

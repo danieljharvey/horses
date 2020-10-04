@@ -78,7 +78,7 @@ toDataTypeList sExprs =
    in S.toList . mconcat $ (getDts <$> sExprs)
 
 -- add required type declarations into our Expr
-addDataTypesToExpr :: (Monoid ann) => Expr ann a -> [DataType] -> Expr ann a
+addDataTypesToExpr :: (Monoid ann) => Expr var ann -> [DataType] -> Expr var ann
 addDataTypesToExpr =
   foldr (MyData mempty)
 
@@ -99,7 +99,7 @@ substituteWithKey store' (key, storeExpr') = do
 
 -- if the expression we're already saving is in the scope
 -- that's the name we want to use
-scopeExists :: (Eq ann) => Expr ann Variable -> App ann (Maybe Variable)
+scopeExists :: (Eq ann) => Expr Variable ann -> App ann (Maybe Variable)
 scopeExists var = do
   (Scope scope') <- gets subsScope
   pure (mapKeyFind (var ==) scope')
@@ -165,8 +165,8 @@ nameToVar = pure . NamedVar
 mapVar ::
   (Eq ann, Monoid ann) =>
   [Name] ->
-  Expr ann Name ->
-  App ann (Expr ann Variable)
+  Expr Name ann ->
+  App ann (Expr Variable ann)
 mapVar p (MyVar ann a) =
   MyVar ann <$> getNextVar p a
 mapVar p (MyLet ann name a b) =
