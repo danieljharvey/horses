@@ -19,7 +19,7 @@ doBind ::
   (Eq ann, Monoid ann, JSON.ToJSON ann) =>
   Project ann ->
   Name ->
-  Expr ann Name ->
+  Expr Name ann ->
   ReplM ann (Project ann)
 doBind env name expr = do
   (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr

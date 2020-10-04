@@ -37,7 +37,7 @@ getType ::
   (Eq ann, Monoid ann) =>
   Swaps ->
   Scope ann ->
-  Expr ann Variable ->
+  Expr Variable ann ->
   Either (Error ann) MonoType
 getType swaps scope' expr =
   first TypeErr $ startInference swaps (chainExprs expr scope')
@@ -63,9 +63,9 @@ getTypesFromStore (Store items') (TypeBindings tBindings) =
 
 chainExprs ::
   Monoid ann =>
-  Expr ann Variable ->
+  Expr Variable ann ->
   Scope ann ->
-  Expr ann Variable
+  Expr Variable ann
 chainExprs expr scope =
   foldr
     (\(name, expr') a -> MyLet mempty name expr' a)
@@ -113,7 +113,7 @@ resolveStoreExpression store' storeExpr = do
 getTypecheckedStoreExpression ::
   (Monoid ann, Eq ann) =>
   Project ann ->
-  Expr ann Name ->
+  Expr Name ann ->
   Either (Error ann) (ResolvedExpression ann)
 getTypecheckedStoreExpression env expr = do
   storeExpr <-

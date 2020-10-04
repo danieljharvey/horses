@@ -8,12 +8,12 @@ import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps
 
-data ExpressionInfo a
+data ExpressionInfo ann
   = ExpressionInfo
       { eiType :: MonoType,
-        eiExpr :: Expr a Name,
+        eiExpr :: Expr Name ann,
         eiName :: Name,
-        eiDeps :: ResolvedDeps a
+        eiDeps :: ResolvedDeps ann
       }
 
 data TuiState a

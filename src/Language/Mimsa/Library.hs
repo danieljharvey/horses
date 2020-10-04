@@ -49,7 +49,7 @@ getLibraryFunction (BuiltInActual name _) =
   M.lookup (coerce name) (getLibrary libraryFunctions)
 getLibraryFunction _ = Nothing
 
-logFn :: Monoid ann => ForeignFunc ann
+logFn :: (Monoid ann) => ForeignFunc ann
 logFn =
   let tyA = MTVar (NamedVar (Name "a"))
    in OneArg (tyA, MTUnit) logExpr

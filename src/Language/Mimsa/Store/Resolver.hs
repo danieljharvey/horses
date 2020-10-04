@@ -43,7 +43,7 @@ createStoreExpression ::
   (Eq ann, Monoid ann) =>
   Bindings ->
   TypeBindings ->
-  Expr ann Name ->
+  Expr Name ann ->
   Either ResolverError (StoreExpression ann)
 createStoreExpression bindings' tBindings expr =
   StoreExpression expr <$> findBindings bindings' expr
@@ -52,7 +52,7 @@ createStoreExpression bindings' tBindings expr =
 findBindings ::
   (Eq ann, Monoid ann) =>
   Bindings ->
-  Expr ann Name ->
+  Expr Name ann ->
   Either ResolverError Bindings
 findBindings bindings' expr = do
   let findValueHash name =
@@ -69,7 +69,7 @@ findHashInTypeBindings (TypeBindings bindings') cName =
     Just a -> Right a
     _ -> Left $ MissingType cName (TypeBindings bindings')
 
-findTypeBindings :: TypeBindings -> Expr ann Name -> Either ResolverError TypeBindings
+findTypeBindings :: TypeBindings -> Expr Name ann -> Either ResolverError TypeBindings
 findTypeBindings tBindings expr = do
   let findTypeHash cName =
         (,) cName

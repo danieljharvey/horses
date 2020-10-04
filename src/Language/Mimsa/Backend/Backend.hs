@@ -33,7 +33,7 @@ data Backend
 
 data Renderer ann a
   = Renderer
-      { renderFunc :: Name -> Expr ann Name -> a,
+      { renderFunc :: Name -> Expr Name ann -> a,
         renderImport :: Backend -> (Name, ExprHash) -> a,
         renderStdLib :: Backend -> a,
         renderExport :: Backend -> Name -> a

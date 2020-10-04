@@ -22,24 +22,24 @@ import Language.Mimsa.Types.Identifiers (Name, TyCon)
 
 -------
 
-data Expr a var
-  = MyLiteral a Literal
-  | MyVar a var
-  | MyLet a var (Expr a var) (Expr a var) -- binder, expr, body
-  | MyLetPair a var var (Expr a var) (Expr a var) -- binderA, binderB, expr, body
-  | MyLambda a var (Expr a var) -- binder, body
-  | MyApp a (Expr a var) (Expr a var) -- function, argument
-  | MyIf a (Expr a var) (Expr a var) (Expr a var) -- expr, thencase, elsecase
-  | MyPair a (Expr a var) (Expr a var) -- (a,b)
-  | MyRecord a (Map Name (Expr a var)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
-  | MyRecordAccess a (Expr a var) Name -- a.foo
-  | MyData a DataType (Expr a var) -- tyName, tyArgs, Map constructor args, body
-  | MyConstructor a TyCon -- use a constructor by name
-  | MyConsApp a (Expr a var) (Expr a var) -- constructor, value
-  | MyCaseMatch a (Expr a var) (NonEmpty (TyCon, Expr a var)) (Maybe (Expr a var)) -- expr, matches, catchAll
+data Expr var ann
+  = MyLiteral ann Literal
+  | MyVar ann var
+  | MyLet ann var (Expr var ann) (Expr var ann) -- binder, expr, body
+  | MyLetPair ann var var (Expr var ann) (Expr var ann) -- binderA, binderB, expr, body
+  | MyLambda ann var (Expr var ann) -- binder, body
+  | MyApp ann (Expr var ann) (Expr var ann) -- function, argument
+  | MyIf ann (Expr var ann) (Expr var ann) (Expr var ann) -- expr, thencase, elsecase
+  | MyPair ann (Expr var ann) (Expr var ann) -- (a,b)
+  | MyRecord ann (Map Name (Expr var ann)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
+  | MyRecordAccess ann (Expr var ann) Name -- a.foo
+  | MyData ann DataType (Expr var ann) -- tyName, tyArgs, Map constructor args, body
+  | MyConstructor ann TyCon -- use a constructor by name
+  | MyConsApp ann (Expr var ann) (Expr var ann) -- constructor, value
+  | MyCaseMatch ann (Expr var ann) (NonEmpty (TyCon, Expr var ann)) (Maybe (Expr var ann)) -- expr, matches, catchAll
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
-instance (Show var, Printer var) => Printer (Expr a var) where
+instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) = prettyDoc l
   prettyDoc (MyVar _ var) = prettyDoc var
   prettyDoc (MyLet _ var expr1 expr2) =
@@ -128,11 +128,11 @@ instance (Show var, Printer var) => Printer (Expr a var) where
       printMatch (construct, expr') =
         prettyDoc construct <+> printSubExpr expr'
 
-inParens :: (Show var, Printer var) => Expr a var -> Doc ann
+inParens :: (Show var, Printer var) => Expr var ann -> Doc style
 inParens = parens . prettyDoc
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubExpr :: (Show var, Printer var) => Expr a var -> Doc ann
+printSubExpr :: (Show var, Printer var) => Expr var ann -> Doc style
 printSubExpr expr = case expr of
   all'@MyLet {} -> inParens all'
   all'@MyLambda {} -> inParens all'

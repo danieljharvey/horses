@@ -15,16 +15,16 @@ import Language.Mimsa.Types.Error.ResolverError
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Usage
 
-data Error a
-  = TypeErr (TypeError a)
+data Error ann
+  = TypeErr (TypeError ann)
   | ResolverErr ResolverError
-  | InterpreterErr (InterpreterError a)
+  | InterpreterErr (InterpreterError ann)
   | UsageErr UsageError
   | ParseErr Text
   | OtherError Text
   deriving (Eq, Ord, Show)
 
-instance (Show a) => Printer (Error a) where
+instance (Show ann, Printer ann) => Printer (Error ann) where
   prettyPrint (TypeErr t) = "TypeError: " <> prettyPrint t
   prettyPrint (ResolverErr a) = "ResolverError: " <> prettyPrint a
   prettyPrint (InterpreterErr a) = "InterpreterError: " <> prettyPrint a

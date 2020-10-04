@@ -36,7 +36,7 @@ import Language.Mimsa.Types
     safeMkTyCon,
   )
 
-type ParserExpr a = Expr a Name
+type ParserExpr ann = Expr Name ann
 
 -- parse expr, using it all up
 parseExpr :: Monoid ann => Text -> Either Text (ParserExpr ann)

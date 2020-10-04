@@ -19,8 +19,8 @@ import Language.Mimsa.Types
 
 checkCompleteness ::
   Environment ->
-  NonEmpty (TyCon, Expr ann Variable) ->
-  Maybe (Expr ann Variable) ->
+  NonEmpty (TyCon, Expr Variable ann) ->
+  Maybe (Expr Variable ann) ->
   TcMonad ann DataType
 checkCompleteness env opts catchAll = do
   -- find data type for each match

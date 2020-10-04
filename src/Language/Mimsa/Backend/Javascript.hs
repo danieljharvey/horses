@@ -50,7 +50,7 @@ outputLiteral (MyInt i) = fromString $ show i
 intercal :: Javascript -> [Javascript] -> Javascript
 intercal sep as = Javascript $ T.intercalate (coerce sep) (coerce as)
 
-outputRecord :: Map Name (Expr a Name) -> Javascript
+outputRecord :: Map Name (Expr Name ann) -> Javascript
 outputRecord as =
   "{ "
     <> intercal
@@ -63,13 +63,13 @@ outputRecord as =
     outputRecordItem (name, val) =
       Javascript (prettyPrint name) <> ": " <> outputJS val
 
-outputConsApp :: Expr a Name -> Expr a Name -> Javascript
+outputConsApp :: Expr Name ann -> Expr Name ann -> Javascript
 outputConsApp c a = "__app(" <> outputJS c <> ", " <> outputJS a <> ")"
 
 outputCaseMatch ::
-  Expr a Name ->
-  NonEmpty (TyCon, Expr a Name) ->
-  Maybe (Expr a Name) ->
+  Expr Name ann ->
+  NonEmpty (TyCon, Expr Name ann) ->
+  Maybe (Expr Name ann) ->
   Javascript
 outputCaseMatch value matches catchAll =
   "__match(" <> outputJS value <> ", " <> matchList <> ", " <> catcher <> ")"
@@ -81,15 +81,15 @@ outputCaseMatch value matches catchAll =
     catcher =
       maybe "null" outputJS catchAll
 
-output :: Expr a Name -> Javascript
+output :: Expr Name ann -> Javascript
 output = outputJS
 
 -- are there any more bindings in this expression?
-containsLet :: Expr a Name -> Bool
+containsLet :: Expr Name ann -> Bool
 containsLet = getAny . foundLet
 
 -- check for let expressions
-foundLet :: Expr a Name -> Any
+foundLet :: Expr Name ann -> Any
 foundLet (MyVar _ _) = mempty
 foundLet (MyIf _ a b c) = foundLet a <> foundLet b <> foundLet c
 foundLet MyLet {} = Any True
@@ -110,14 +110,14 @@ foundLet (MyCaseMatch _ sum' matches catchAll) =
     <> maybe mempty foundLet catchAll
 
 -- if this is the last binding, then we should 'return' the statement
-addReturn :: Expr a Name -> Javascript -> Javascript
+addReturn :: Expr Name ann -> Javascript -> Javascript
 addReturn expr js = if not $ containsLet expr then "return " <> js else js
 
 -- if a return contains let expresssions, it needs to be wrapped in curly lads
-withCurlyBoys :: Expr a Name -> Javascript -> Javascript
+withCurlyBoys :: Expr Name ann -> Javascript -> Javascript
 withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else js
 
-outputJS :: Expr a Name -> Javascript
+outputJS :: Expr Name ann -> Javascript
 outputJS expr =
   case expr of
     MyLiteral _ a ->

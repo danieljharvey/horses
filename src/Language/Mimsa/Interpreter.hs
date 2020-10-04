@@ -16,8 +16,8 @@ interpret ::
   (Eq ann, Monoid ann) =>
   Scope ann ->
   Swaps ->
-  Expr ann Variable ->
-  IO (Either (InterpreterError ann) (Expr ann Variable))
+  Expr Variable ann ->
+  IO (Either (InterpreterError ann) (Expr Variable ann))
 interpret scope' swaps expr = fmap fst <$> either'
   where
     scopeSize = M.size . getScope

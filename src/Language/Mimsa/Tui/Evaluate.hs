@@ -10,7 +10,7 @@ evaluateStoreExprToInfo ::
   (Eq ann, Monoid ann) =>
   Store ann ->
   StoreExpression ann ->
-  Maybe (MonoType, Expr ann Name)
+  Maybe (MonoType, Expr Name ann)
 evaluateStoreExprToInfo store' storeExpr =
   case resolveStoreExpression store' storeExpr of
     Right (ResolvedExpression mt _ _ _ _) -> Just (mt, storeExpression storeExpr)

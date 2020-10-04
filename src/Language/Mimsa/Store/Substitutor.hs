@@ -50,7 +50,7 @@ doSubstitutions ::
   (Monoid ann, Eq ann) =>
   Store ann ->
   StoreExpression ann ->
-  App ann (Expr ann Variable)
+  App ann (Expr Variable ann)
 doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
   newScopes <- traverse (substituteWithKey store') (getExprPairs store' bindings')
   addScope $ mconcat newScopes

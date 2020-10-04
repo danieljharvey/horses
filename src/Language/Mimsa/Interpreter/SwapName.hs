@@ -9,7 +9,7 @@ import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types
 
 -- step through Expr, replacing vars with numbered variables
-swapName :: Variable -> Variable -> Expr ann Variable -> App ann (Expr ann Variable)
+swapName :: Variable -> Variable -> Expr Variable ann -> App ann (Expr Variable ann)
 swapName from to (MyVar ann from') =
   pure $
     if from == from'

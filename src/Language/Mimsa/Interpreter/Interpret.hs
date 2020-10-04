@@ -18,7 +18,7 @@ import Language.Mimsa.Types
 -- when we come to do let recursive the name of our binder
 -- may already be turned into a number in the expr
 -- so we look it up to make sure we bind the right thing
-findActualBindingInSwaps :: Int -> App ann Variable
+findActualBindingInSwaps :: Int -> App Variable ann
 findActualBindingInSwaps int = do
   swaps <- askForSwaps
   scope' <- readScope
@@ -26,7 +26,7 @@ findActualBindingInSwaps int = do
     Just i' -> pure (NamedVar i')
     _ -> throwError $ CouldNotFindVar scope' (NumberedVar int)
 
-useVar :: (Eq ann, Monoid ann) => Variable -> App ann (Expr ann Variable)
+useVar :: (Eq ann, Monoid ann) => Variable -> App ann (Expr Variable ann)
 useVar var' = case var' of
   (NumberedVar i) -> do
     scope' <- readScope
@@ -55,7 +55,7 @@ useVar var' = case var' of
 
 -- make a fresh copy for us to use
 -- is this necessary?
-instantiateVar :: (Eq ann, Monoid ann) => Expr ann Variable -> App ann (Expr ann Variable)
+instantiateVar :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 instantiateVar expr = case expr of
   (MyLambda ann binder expr') -> do
     (freshBinder, freshExpr) <- newLambdaCopy binder expr'
@@ -66,7 +66,7 @@ runBuiltIn ::
   (Eq ann, Monoid ann) =>
   BiIds ->
   ForeignFunc ann ->
-  App ann (Expr ann Variable)
+  App ann (Expr Variable ann)
 runBuiltIn _ (NoArgs _ io) = liftIO io
 runBuiltIn (OneId v1) (OneArg _ io) = do
   expr1 <- useVar v1
@@ -77,7 +77,7 @@ unwrapBuiltIn ::
   (Eq ann, Monoid ann) =>
   Name ->
   ForeignFunc ann ->
-  App ann (Expr ann Variable)
+  App ann (Expr Variable ann)
 unwrapBuiltIn name (NoArgs _ _) = do
   let actual = BuiltInActual name NoId
   addToScope (Scope $ M.singleton actual (MyVar mempty (BuiltIn name)))
@@ -91,13 +91,13 @@ unwrapBuiltIn name (OneArg _ _) = do
     )
 
 -- get new var
-newLambdaCopy :: Variable -> Expr ann Variable -> App ann (Variable, Expr ann Variable)
+newLambdaCopy :: Variable -> Expr ann Variable -> App ann (Variable, Expr Variable ann)
 newLambdaCopy name expr = do
   newName' <- nextVariable
   newExpr <- swapName name newName' expr
   pure (newName', newExpr)
 
-interpretWithScope :: (Eq ann, Monoid ann) => Expr ann Variable -> App ann (Expr ann Variable)
+interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 interpretWithScope interpretExpr =
   case interpretExpr of
     (MyLiteral ann a) -> pure (MyLiteral ann a)

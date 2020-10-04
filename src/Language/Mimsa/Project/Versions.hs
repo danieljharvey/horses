@@ -26,7 +26,7 @@ findVersions ::
   (Eq ann, Monoid ann) =>
   Project ann ->
   Name ->
-  Either (Error ann) (NonEmpty (Int, Expr ann Variable, MonoType, Set Usage))
+  Either (Error ann) (NonEmpty (Int, Expr Variable ann, MonoType, Set Usage))
 findVersions project name = do
   versioned <- first UsageErr (findInProject project name)
   as <- traverse (getExprDetails project) versioned
@@ -62,7 +62,7 @@ getExprDetails ::
   (Eq ann, Monoid ann) =>
   Project ann ->
   ExprHash ->
-  Either (Error ann) (Expr ann Variable, MonoType, Set Usage)
+  Either (Error ann) (Expr Variable ann, MonoType, Set Usage)
 getExprDetails project exprHash = do
   usages <- first UsageErr (findUsages project exprHash)
   storeExpr <- first UsageErr (getStoreExpression project exprHash)

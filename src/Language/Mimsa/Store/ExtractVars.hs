@@ -16,10 +16,10 @@ import Language.Mimsa.Types
 -- important - we must not count variables brought in via lambdas, as those
 -- aren't external deps
 
-extractVars :: forall ann. (Eq ann, Monoid ann) => Expr ann Name -> Set Name
+extractVars :: forall ann. (Eq ann, Monoid ann) => Expr Name ann -> Set Name
 extractVars = filterBuiltIns @ann . extractVars_
 
-extractVars_ :: (Eq ann, Monoid ann) => Expr ann Name -> Set Name
+extractVars_ :: (Eq ann, Monoid ann) => Expr Name ann -> Set Name
 extractVars_ (MyVar _ a) = S.singleton a
 extractVars_ (MyIf _ a b c) = extractVars_ a <> extractVars_ b <> extractVars_ c
 extractVars_ (MyLet _ newVar a b) = S.delete newVar (extractVars_ a <> extractVars_ b)

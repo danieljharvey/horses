@@ -18,10 +18,10 @@ import Language.Mimsa.Types.Identifiers (Name, TyCon, TypeName (ConsName, VarNam
 
 -- this works out which external types have been used in a given expression
 -- therefore, we must remove any which are declared in the expression itself
-extractTypes :: Expr a Name -> Set TyCon
+extractTypes :: Expr Name ann -> Set TyCon
 extractTypes = filterBuiltIns . extractTypes_
 
-extractTypes_ :: Expr a Name -> Set TyCon
+extractTypes_ :: Expr Name ann -> Set TyCon
 extractTypes_ (MyVar _ _) = mempty
 extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
 extractTypes_ (MyLet _ _ a b) = extractTypes_ a <> extractTypes_ b
@@ -64,13 +64,13 @@ extractLocalTypeDeclarations (DataType cName _ cons) =
 
 -----------
 
-extractTypeDecl :: Expr a var -> Set TyCon
+extractTypeDecl :: Expr var ann -> Set TyCon
 extractTypeDecl = withDataTypes extractLocalTypeDeclarations
 
-extractDataTypes :: Expr a var -> Set DataType
+extractDataTypes :: Expr var ann -> Set DataType
 extractDataTypes = withDataTypes S.singleton
 
-withDataTypes :: (Monoid b) => (DataType -> b) -> Expr a var -> b
+withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
 withDataTypes _ (MyVar _ _) = mempty
 withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
 withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b

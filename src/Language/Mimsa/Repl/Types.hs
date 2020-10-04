@@ -27,13 +27,13 @@ liftRepl :: Either (Error ann) a -> ReplM ann a
 liftRepl (Right a) = pure a
 liftRepl (Left e) = throwError e
 
-data ReplAction a
+data ReplAction ann
   = Help
-  | Info (Expr a Name)
-  | Evaluate (Expr a Name)
-  | Tree (Expr a Name)
-  | Bind Name (Expr a Name)
-  | OutputJS (Expr a Name)
+  | Info (Expr Name ann)
+  | Evaluate (Expr Name ann)
+  | Tree (Expr Name ann)
+  | Bind Name (Expr Name ann)
+  | OutputJS (Expr Name ann)
   | BindType DataType
   | Versions Name
   | ListBindings

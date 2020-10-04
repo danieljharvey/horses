@@ -35,7 +35,7 @@ import Language.Mimsa.Types
 startInference ::
   (Eq ann, Monoid ann) =>
   Swaps ->
-  Expr ann Variable ->
+  Expr Variable ann ->
   Either (TypeError ann) MonoType
 startInference swaps expr = snd <$> doInference swaps mempty expr
 
@@ -43,7 +43,7 @@ doInference ::
   (Eq ann, Monoid ann) =>
   Swaps ->
   Environment ->
-  Expr ann Variable ->
+  Expr Variable ann ->
   Either (TypeError ann) (Substitutions, MonoType)
 doInference swaps env expr = runTcMonad swaps (inferAndSubst (defaultEnv <> env) expr)
 
@@ -58,7 +58,7 @@ doDataTypeInference env dt =
 inferAndSubst ::
   (Eq ann, Monoid ann) =>
   Environment ->
-  Expr ann Variable ->
+  Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
 inferAndSubst env expr = do
   (s, tyExpr) <- infer env expr
@@ -132,8 +132,8 @@ splitRecordTypes map' = (subs, MTRecord types)
 inferApplication ::
   (Eq ann, Monoid ann) =>
   Environment ->
-  Expr ann Variable ->
-  Expr ann Variable ->
+  Expr Variable ann ->
+  Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
 inferApplication env function argument = do
   tyRes <- getUnknown
@@ -159,8 +159,8 @@ inferLetBinding ::
   (Eq ann, Monoid ann) =>
   Environment ->
   Variable ->
-  Expr ann Variable ->
-  Expr ann Variable ->
+  Expr Variable ann ->
+  Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
 inferLetBinding env binder expr body = do
   tyUnknown <- getUnknown
@@ -177,8 +177,8 @@ inferLetPairBinding ::
   Environment ->
   Variable ->
   Variable ->
-  Expr ann Variable ->
-  Expr ann Variable ->
+  Expr Variable ann ->
+  Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
 inferLetPairBinding env binder1 binder2 expr body = do
   (s1, tyExpr) <- infer env expr
@@ -202,7 +202,7 @@ storeDataDeclaration ::
   (Eq ann, Monoid ann) =>
   Environment ->
   DataType ->
-  Expr ann Variable ->
+  Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
 storeDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
@@ -284,7 +284,7 @@ inferSumExpressionType ::
   (Eq ann, Monoid ann) =>
   Environment ->
   Map TyCon TypeConstructor ->
-  Expr ann Variable ->
+  Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
 inferSumExpressionType env consTypes sumExpr =
   let fromName name =
@@ -312,9 +312,9 @@ inferSumExpressionType env consTypes sumExpr =
 inferCaseMatch ::
   (Eq ann, Monoid ann) =>
   Environment ->
-  Expr ann Variable ->
-  NonEmpty (TyCon, Expr ann Variable) ->
-  Maybe (Expr ann Variable) ->
+  Expr Variable ann ->
+  NonEmpty (TyCon, Expr Variable ann) ->
+  Maybe (Expr Variable ann) ->
   TcMonad ann (Substitutions, MonoType)
 inferCaseMatch env sumExpr matches catchAll = do
   dataType <- checkCompleteness env matches catchAll
@@ -360,7 +360,7 @@ inferMatch ::
   Environment ->
   Map TyCon TypeConstructor ->
   TyCon ->
-  Expr ann Variable ->
+  Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
 inferMatch env constructTypes name expr' =
   case M.lookup name constructTypes of
@@ -389,7 +389,7 @@ applyList vars tyFun = case vars of
 infer ::
   (Eq ann, Monoid ann) =>
   Environment ->
-  Expr ann Variable ->
+  Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
 infer env inferExpr =
   case inferExpr of
