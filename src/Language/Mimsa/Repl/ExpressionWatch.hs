@@ -36,7 +36,12 @@ writeExpression env name =
     Nothing -> pure ()
 
 doWatch ::
-  (Eq ann, Monoid ann, Show ann, JSON.ToJSON ann) =>
+  ( Eq ann,
+    Monoid ann,
+    Show ann,
+    Printer ann,
+    JSON.ToJSON ann
+  ) =>
   Project ann ->
   Name ->
   ReplM ann (Project ann)

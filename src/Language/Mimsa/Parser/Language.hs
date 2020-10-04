@@ -21,7 +21,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Void
 import Language.Mimsa.Parser.Parser (Parser)
 import qualified Language.Mimsa.Parser.Parser as P
 import Language.Mimsa.Types

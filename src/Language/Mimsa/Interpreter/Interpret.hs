@@ -105,7 +105,7 @@ interpretWithScope interpretExpr =
       exprA <- interpretWithScope a
       exprB <- interpretWithScope b
       pure (MyPair ann exprA exprB)
-    (MyLet ann binder expr body) -> do
+    (MyLet _ binder expr body) -> do
       addToScope (Scope $ M.singleton binder expr)
       interpretWithScope body
     (MyLetPair _ binderA binderB (MyPair _ a b) body) -> do

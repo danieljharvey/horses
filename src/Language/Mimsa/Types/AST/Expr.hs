@@ -1,10 +1,12 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.Expr
   ( Expr (..),
+    toEmptyAnnotation,
   )
 where
 
@@ -37,7 +39,13 @@ data Expr var ann
   | MyConstructor ann TyCon -- use a constructor by name
   | MyConsApp ann (Expr var ann) (Expr var ann) -- constructor, value
   | MyCaseMatch ann (Expr var ann) (NonEmpty (TyCon, Expr var ann)) (Maybe (Expr var ann)) -- expr, matches, catchAll
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
+  deriving (Eq, Ord, Show, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
+
+toEmptyAnnotation ::
+  (Monoid b) =>
+  Expr var a ->
+  Expr var b
+toEmptyAnnotation = fmap (const mempty)
 
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) = prettyDoc l
