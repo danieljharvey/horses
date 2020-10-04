@@ -19,7 +19,7 @@ import Language.Mimsa.Tui.State
 import Language.Mimsa.Tui.Styles
 import Language.Mimsa.Types
 
-drawUI :: TuiState -> [Widget ()]
+drawUI :: (Eq ann, Monoid ann) => TuiState ann -> [Widget ()]
 drawUI tuiState =
   case uiState tuiState of
     TuiError err -> [drawError err]
@@ -28,7 +28,13 @@ drawUI tuiState =
           (BindingsList name deps l) = NE.head items
       pure (drawBindingsList store' name deps l)
 
-drawBindingsList :: Store -> Name -> ResolvedDeps -> L.List () Name -> Widget ()
+drawBindingsList ::
+  (Eq ann, Monoid ann) =>
+  Store ann ->
+  Name ->
+  ResolvedDeps ann ->
+  L.List () Name ->
+  Widget ()
 drawBindingsList store' name deps l = twoColumnLayout "Current scope" left right
   where
     left = C.vCenter $ drawListWithTitle (T.unpack $ prettyPrint name) l
@@ -50,7 +56,7 @@ drawError (MissingStoreItems missing) =
            )
     )
 
-drawExpressionInfo :: ExpressionInfo -> Widget ()
+drawExpressionInfo :: ExpressionInfo ann -> Widget ()
 drawExpressionInfo exprInfo = ui
   where
     label = withAttr "title" . str . T.unpack . prettyPrint . eiName $ exprInfo
@@ -72,7 +78,7 @@ drawExpressionInfo exprInfo = ui
           drawPretty (eiDeps exprInfo)
         ]
 
-theApp :: M.App TuiState e ()
+theApp :: (Eq ann, Monoid ann) => M.App (TuiState ann) e ()
 theApp =
   M.App
     { M.appDraw = drawUI,
@@ -82,7 +88,7 @@ theApp =
       M.appAttrMap = const stylesAttrMap
     }
 
-goTui :: Project -> IO Project
+goTui :: (Eq ann, Monoid ann) => Project ann -> IO (Project ann)
 goTui project' =
   do
     _ <- M.defaultMain theApp (initialState project')

@@ -32,7 +32,7 @@ repl = do
   _ <- doReplAction env Help
   runInputT defaultSettings (loop env)
   where
-    loop :: Project -> InputT IO ()
+    loop :: Project ann -> InputT IO ()
     loop exprs' = do
       minput <- getInputLine ":> "
       case minput of
@@ -42,7 +42,7 @@ repl = do
           newEnv <- liftIO $ parseCommand exprs' (T.pack input)
           loop newEnv
 
-parseCommand :: Project -> Text -> IO Project
+parseCommand :: Project ann -> Text -> IO (Project ann)
 parseCommand env input =
   case P.runParserComplete replParser input of
     Left e -> do
