@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Test.Substitutor
@@ -72,13 +73,19 @@ storeWithBothIn =
         ]
     )
 
+testSubstitute ::
+  Store () ->
+  StoreExpression () ->
+  SubstitutedExpression ()
+testSubstitute = substitute
+
 spec :: Spec
 spec = do
   describe "Substitutor" $ do
     describe "No deps, no problem"
       $ it "Just unwraps everything"
       $ do
-        let ans = substitute mempty trueStoreExpr
+        let ans = testSubstitute mempty trueStoreExpr
         seSwaps ans `shouldBe` mempty
         seExpr ans `shouldBe` bool True
         seScope ans `shouldBe` mempty
@@ -95,14 +102,14 @@ spec = do
                 mempty
                 (named "x")
                 (MyVar mempty (named "x"))
-            ans = substitute mempty (StoreExpression expr mempty mempty)
+            ans = testSubstitute mempty (StoreExpression expr mempty mempty)
         ans `shouldBe` SubstitutedExpression mempty expected mempty
     describe "Leaves built-ins alone"
       $ it "Leaves randomInt unchanged"
       $ do
         let expr = MyVar mempty (mkName "randomInt")
             expected = MyVar mempty (BuiltIn (mkName "randomInt"))
-            ans = substitute mempty (StoreExpression expr mempty mempty)
+            ans = testSubstitute mempty (StoreExpression expr mempty mempty)
         ans `shouldBe` SubstitutedExpression mempty expected mempty
     describe "One level of dep"
       $ it "Renames the dep to var0"
@@ -112,7 +119,7 @@ spec = do
             bindings' = Bindings $ M.singleton (Name "exciting") hash
             storeExpr = StoreExpression expr bindings' mempty
             store' = Store (M.singleton hash trueStoreExpr)
-            ans = substitute store' storeExpr
+            ans = testSubstitute store' storeExpr
         seSwaps ans
           `shouldBe` M.singleton (NumberedVar 0) (Name "exciting")
         seExpr ans
@@ -133,7 +140,7 @@ spec = do
             storeExpr = StoreExpression expr bindings' mempty
             store' = Store (M.singleton hash idExpr)
             expectedId = MyLambda mempty (named "i") (MyVar mempty (named "i"))
-        let ans = substitute store' storeExpr
+        let ans = testSubstitute store' storeExpr
         seSwaps ans
           `shouldBe` M.fromList
             [ (NumberedVar 0, Name "id")
@@ -160,7 +167,7 @@ spec = do
           bindings' = Bindings (M.singleton (mkName "true") hash)
           storeExpr = StoreExpression expr bindings' mempty
           store' = storeWithBothIn
-      let ans = substitute store' storeExpr
+      let ans = testSubstitute store' storeExpr
       seSwaps ans
         `shouldBe` M.fromList
           [ (NumberedVar 0, Name "true")
@@ -183,7 +190,7 @@ spec = do
               mempty
               (TypeBindings $ M.singleton (mkTyCon "Maybe") hash)
           store' = storeWithBothIn
-          ans = substitute store' storeExpr
+          ans = testSubstitute store' storeExpr
       seSwaps ans `shouldBe` mempty
       seExpr ans `shouldBe` MyData mempty maybeDecl (MyLiteral mempty MyUnit)
       seScope ans `shouldBe` mempty

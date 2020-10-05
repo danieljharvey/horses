@@ -21,7 +21,11 @@ import Language.Mimsa.Types
 
 -- we don't want this to do much so binning it in exchange for an Elm style
 -- reducer pattern
-appEvent :: (Eq ann, Monoid ann) => TuiState ann -> BT.BrickEvent () e -> BT.EventM () (BT.Next (TuiState ann))
+appEvent ::
+  (Eq ann, Monoid ann) =>
+  TuiState ann ->
+  BT.BrickEvent () e ->
+  BT.EventM () (BT.Next (TuiState ann))
 appEvent tuiState (BT.VtyEvent e) = do
   let tuiAction = case e of
         V.EvKey V.KEsc [] -> Exit

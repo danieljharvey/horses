@@ -17,4 +17,4 @@ spec =
     it "Returns empty when passed nothing" $
       findUsages mempty (ExprHash 6) `shouldBe` Right mempty
     it "Finds all uses of Compose in Stdlib" $
-      findUsages stdLib (ExprHash 6) `shouldBe` Right mempty
+      findUsages (stdLib :: Project ()) (ExprHash 6) `shouldBe` Right mempty

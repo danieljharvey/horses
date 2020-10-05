@@ -9,7 +9,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 
-type ReplM a = ExceptT (Error a) IO
+type ReplM ann = ExceptT (Error ann) IO
 
 runReplM :: (Printer ann, Show ann) => ReplM ann a -> IO (Maybe a)
 runReplM computation = do

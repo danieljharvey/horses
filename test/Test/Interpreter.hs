@@ -13,15 +13,30 @@ import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 
-testInterpret :: Scope -> Expr Variable -> Expr Variable -> Expectation
+testInterpret ::
+  Scope () ->
+  Expr Variable () ->
+  Expr Variable () ->
+  Expectation
 testInterpret scope' expr' expected = do
   result <- interpret scope' mempty expr'
   result `shouldBe` Right expected
 
-testInterpretFail :: Scope -> Expr Variable -> InterpreterError -> Expectation
+testInterpretFail ::
+  Scope () ->
+  Expr Variable () ->
+  InterpreterError () ->
+  Expectation
 testInterpretFail scope' expr' expected = do
   result <- interpret scope' mempty expr'
   result `shouldBe` Left expected
+
+interpret' ::
+  Scope () ->
+  Swaps ->
+  Expr Variable () ->
+  IO (Either (InterpreterError ()) (Expr Variable ()))
+interpret' = interpret
 
 spec :: Spec
 spec =
@@ -57,137 +72,158 @@ spec =
     describe "Let and Var"
       $ it "let x = 1 in 1"
       $ do
-        let f = MyLet (named "x") (int 1) (MyVar (named "x"))
+        let f = MyLet mempty (named "x") (int 1) (MyVar mempty (named "x"))
         testInterpret mempty f (int 1)
     describe "Lambda and App" $ do
       it "let id = \\x -> x in (id 1)" $ do
         let f =
               MyLet
+                mempty
                 (named "id")
-                (MyLambda (named "x") (MyVar (named "x")))
-                (MyApp (MyVar (named "id")) (int 1))
+                (MyLambda mempty (named "x") (MyVar mempty (named "x")))
+                (MyApp mempty (MyVar mempty (named "id")) (int 1))
         testInterpret mempty f (int 1)
       it "let const = \\a -> \\b -> a in const(1)" $ do
         let f =
               MyLet
+                mempty
                 (named "const")
-                (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "a"))))
-                (MyApp (MyVar (named "const")) (int 1))
-        testInterpret mempty f $ MyLambda (named "b") (MyVar (NumberedVar 1))
+                (MyLambda mempty (named "a") (MyLambda mempty (named "b") (MyVar mempty (named "a"))))
+                (MyApp mempty (MyVar mempty (named "const")) (int 1))
+        testInterpret mempty f $ MyLambda mempty (named "b") (MyVar mempty (NumberedVar 1))
       it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
               MyLet
+                mempty
                 (named "const")
-                (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "a"))))
-                (MyApp (MyApp (MyVar (named "const")) (int 1)) (int 2))
+                (MyLambda mempty (named "a") (MyLambda mempty (named "b") (MyVar mempty (named "a"))))
+                (MyApp mempty (MyApp mempty (MyVar mempty (named "const")) (int 1)) (int 2))
         testInterpret mempty f (int 1)
     describe "If" $ do
       it "Blows up when passed a non-bool" $ do
-        let f = MyIf (int 1) (bool True) (bool False)
+        let f = MyIf mempty (int 1) (bool True) (bool False)
         testInterpretFail mempty f (PredicateForIfMustBeABoolean (int 1))
       it "if True then 1 else 2" $ do
-        let f = MyIf (bool True) (int 1) (int 2)
+        let f = MyIf mempty (bool True) (int 1) (int 2)
         testInterpret mempty f (int 1)
     describe "BuiltIns" $ do
       it "Can't find stupidMadeUpFunction" $ do
-        let f = MyVar (named "stupidMadeUpFunction")
-        result <- interpret mempty mempty f
+        let f = MyVar mempty (named "stupidMadeUpFunction")
+        result <- interpret' mempty mempty f
         result `shouldSatisfy` isLeft
       it "Finds and uses randomInt" $ do
-        let f = MyVar (builtIn "randomInt")
+        let f = MyVar mempty (builtIn "randomInt")
             scope' = mempty
-        result <- interpret scope' mempty f
+        result <- interpret' scope' mempty f
         print result
-        result `shouldSatisfy` \(Right (MyLiteral (MyInt _))) -> True
+        result `shouldSatisfy` \(Right (MyLiteral _ (MyInt _))) -> True
       it "Finds and uses randomIntFrom" $ do
-        let f = MyApp (MyVar (builtIn "randomIntFrom")) (int 10)
+        let f = MyApp mempty (MyVar mempty (builtIn "randomIntFrom")) (int 10)
             scope' = mempty
-        result <- interpret scope' mempty f
+        result <- interpret' scope' mempty f
         print result
-        result `shouldSatisfy` (\(Right (MyLiteral (MyInt i))) -> i > 9)
+        result `shouldSatisfy` (\(Right (MyLiteral _ (MyInt i))) -> i > 9)
       it "Destructures a pair" $ do
         let f =
               MyLet
+                mempty
                 (named "fst")
                 ( MyLambda
+                    mempty
                     (named "tuple")
                     ( MyLetPair
+                        mempty
                         (named "a")
                         (named "b")
-                        (MyVar (named "tuple"))
-                        (MyVar (named "a"))
+                        (MyVar mempty (named "tuple"))
+                        (MyVar mempty (named "a"))
                     )
                 )
                 ( MyLet
+                    mempty
                     (named "x")
-                    (MyPair (int 1) (int 2))
-                    (MyApp (MyVar (named "fst")) (MyVar (named "x")))
+                    (MyPair mempty (int 1) (int 2))
+                    (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "x")))
                 )
-        result <- interpret mempty mempty f
+        result <- interpret' mempty mempty f
         result `shouldBe` Right (int 1)
       it "Uses a higher order function twice without screwing the pooch" $ do
         let f =
               MyLet
+                mempty
                 (named "const2")
-                (MyLambda (named "a") (MyLambda (named "b") (MyVar (named "a"))))
+                (MyLambda mempty (named "a") (MyLambda mempty (named "b") (MyVar mempty (named "a"))))
                 ( MyLet
+                    mempty
                     (named "reuse")
                     ( MyRecord
+                        mempty
                         ( M.fromList
                             [ ( mkName "first",
                                 MyApp
-                                  (MyVar (named "const2"))
-                                  (MyLiteral (MyInt 1))
+                                  mempty
+                                  (MyVar mempty (named "const2"))
+                                  (MyLiteral mempty (MyInt 1))
                               ),
                               ( mkName "second",
                                 MyApp
-                                  (MyVar (named "const2"))
-                                  (MyLiteral (MyInt 2))
+                                  mempty
+                                  (MyVar mempty (named "const2"))
+                                  (MyLiteral mempty (MyInt 2))
                               )
                             ]
                         )
                     )
                     ( MyApp
-                        (MyRecordAccess (MyVar (named "reuse")) (mkName "first"))
-                        (MyLiteral (MyInt 100))
+                        mempty
+                        (MyRecordAccess mempty (MyVar mempty (named "reuse")) (mkName "first"))
+                        (MyLiteral mempty (MyInt 100))
                     )
                 )
-        result <- interpret mempty mempty f
+        result <- interpret' mempty mempty f
         result `shouldBe` Right (int 1)
       it "Uses var names in lambdas that conflict with the ones inside our built-in function without breaking" $ do
         let ifFunc =
               MyLambda
+                mempty
                 (named "x")
                 ( MyLambda
+                    mempty
                     (named "y")
                     ( MyIf
+                        mempty
                         ( MyApp
-                            (MyVar (builtIn "eqPair"))
+                            mempty
+                            (MyVar mempty (builtIn "eqPair"))
                             ( MyPair
-                                (MyVar (named "x"))
-                                (MyVar (named "y"))
+                                mempty
+                                (MyVar mempty (named "x"))
+                                (MyVar mempty (named "y"))
                             )
                         )
                         (int 1)
                         (int 0)
                     )
                 )
-            f = MyApp (MyApp ifFunc (int 1)) (int 2)
+            f = MyApp mempty (MyApp mempty ifFunc (int 1)) (int 2)
             scope' = mempty
-        result <- interpret scope' mempty f
+        result <- interpret' scope' mempty f
         result `shouldBe` Right (int 0)
       it "Runs the internals of reduce function" $ do
         let reduceFunc =
               MyLet
+                mempty
                 (named "f")
-                (MyLambda (named "b") (MyLambda (named "a") (str' "Horse")))
+                (MyLambda mempty (named "b") (MyLambda mempty (named "a") (str' "Horse")))
                 ( MyApp
+                    mempty
                     ( MyApp
-                        (MyVar (named "f"))
+                        mempty
+                        (MyVar mempty (named "f"))
                         (str' "")
                     )
-                    (MyLiteral (MyInt 1))
+                    (MyLiteral mempty (MyInt 1))
                 )
             scope' = mempty
-        result <- interpret scope' mempty reduceFunc
+        result <- interpret' scope' mempty reduceFunc
         result `shouldBe` Right (str' "Horse")

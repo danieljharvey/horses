@@ -29,9 +29,11 @@ hush :: Either IOError a -> Maybe a
 hush (Right a) = pure a
 hush _ = Nothing
 
+type LoadProject = Project ()
+
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
-loadProject :: (JSON.FromJSON ann, JSON.ToJSON ann) => PersistApp (Project ann)
+loadProject :: PersistApp LoadProject
 loadProject = do
   project' <- liftIO $ try $ BS.readFile envPath
   case hush project' >>= JSON.decode of
@@ -54,7 +56,11 @@ saveProject env = do
 
 --
 
-loadBoundExpressions :: (JSON.ToJSON ann, JSON.FromJSON ann) => [ServerUrl] -> Set ExprHash -> PersistApp (Store ann)
+loadBoundExpressions ::
+  (JSON.ToJSON ann, JSON.FromJSON ann) =>
+  [ServerUrl] ->
+  Set ExprHash ->
+  PersistApp (Store ann)
 loadBoundExpressions urls hashes = do
   items' <-
     traverse
