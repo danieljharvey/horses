@@ -21,7 +21,11 @@ import Language.Mimsa.Types
 
 -- we don't want this to do much so binning it in exchange for an Elm style
 -- reducer pattern
-appEvent :: TuiState -> BT.BrickEvent () e -> BT.EventM () (BT.Next TuiState)
+appEvent ::
+  (Eq ann, Monoid ann) =>
+  TuiState ann ->
+  BT.BrickEvent () e ->
+  BT.EventM () (BT.Next (TuiState ann))
 appEvent tuiState (BT.VtyEvent e) = do
   let tuiAction = case e of
         V.EvKey V.KEsc [] -> Exit
@@ -48,7 +52,7 @@ data TuiAction
   | GoDown
   | Unknown
 
-reducer :: Project -> TuiAction -> UIState -> Maybe UIState
+reducer :: (Eq ann, Monoid ann) => Project ann -> TuiAction -> UIState ann -> Maybe (UIState ann)
 reducer _ Exit _ = Nothing
 reducer _ GoUp (ViewBindings items) =
   let mapF (BindingsList n deps l) = BindingsList n deps (L.listMoveUp l)
@@ -80,7 +84,7 @@ mapHead f list = NE.fromList ([hd] <> tl)
 
 -- if all the deps are in place, we start by showing all the bound items
 -- in the project
-initialState :: Project -> TuiState
+initialState :: Project ann -> TuiState ann
 initialState project' =
   TuiState
     { uiState = initialUiState,
@@ -98,7 +102,7 @@ initialState project' =
               )
         Left missing -> TuiError (MissingStoreItems missing)
 
-makeBindingsList :: Name -> ResolvedDeps -> BindingsList
+makeBindingsList :: Name -> ResolvedDeps ann -> BindingsList ann
 makeBindingsList name deps =
   BindingsList name deps (resolvedDepsToList deps 0)
   where

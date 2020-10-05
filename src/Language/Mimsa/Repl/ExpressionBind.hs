@@ -8,13 +8,19 @@ module Language.Mimsa.Repl.ExpressionBind
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import qualified Data.Aeson as JSON
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (saveExpr)
 import Language.Mimsa.Types
 
-doBind :: Project -> Name -> Expr Name -> ReplM Project
+doBind ::
+  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
+  Project ann ->
+  Name ->
+  Expr Name ann ->
+  ReplM ann (Project ann)
 doBind env name expr = do
   (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
@@ -23,15 +29,23 @@ doBind env name expr = do
       <> prettyPrint type'
   bindStoreExpression env storeExpr name
 
-doBindType :: Project -> DataType -> ReplM Project
+doBindType ::
+  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
+  Project ann ->
+  DataType ->
+  ReplM ann (Project ann)
 doBindType env dt = do
-  let expr = MyData dt (MyRecord mempty)
+  let expr = MyData mempty dt (MyRecord mempty mempty)
   (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
     "Bound type " <> prettyPrint dt
   bindTypeExpression env storeExpr
 
-bindTypeExpression :: (MonadIO m) => Project -> StoreExpression -> m Project
+bindTypeExpression ::
+  (MonadIO m, JSON.ToJSON ann) =>
+  Project ann ->
+  StoreExpression ann ->
+  m (Project ann)
 bindTypeExpression env storeExpr = do
   hash <- liftIO (saveExpr storeExpr)
   let newEnv = fromType storeExpr hash
@@ -39,11 +53,11 @@ bindTypeExpression env storeExpr = do
 
 -- save an expression in the store and bind it to name
 bindStoreExpression ::
-  (MonadIO m) =>
-  Project ->
-  StoreExpression ->
+  (MonadIO m, JSON.ToJSON ann) =>
+  Project ann ->
+  StoreExpression ann ->
   Name ->
-  m Project
+  m (Project ann)
 bindStoreExpression env storeExpr name = do
   hash <- liftIO (saveExpr storeExpr)
   let newEnv = fromItem name storeExpr hash

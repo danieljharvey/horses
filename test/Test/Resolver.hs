@@ -7,47 +7,75 @@ module Test.Resolver
 where
 
 import qualified Data.Map as M
+import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Store.Resolver
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 
+extractVars' :: Expr Name () -> Set Name
+extractVars' = extractVars
+
+createStoreExpression' ::
+  Bindings ->
+  TypeBindings ->
+  Expr Name () ->
+  Either ResolverError (StoreExpression ())
+createStoreExpression' = createStoreExpression
+
+createTypeStoreExpression' ::
+  TypeBindings ->
+  DataType ->
+  Either ResolverError (StoreExpression ())
+createTypeStoreExpression' = createTypeStoreExpression
+
 spec :: Spec
 spec =
   describe "Resolver" $ do
     describe "extractVars" $ do
       it "Finds none where only literals" $ do
-        extractVars (bool True) `shouldBe` mempty
-        extractVars (int 1) `shouldBe` mempty
-        extractVars (str (StringType "poo")) `shouldBe` mempty
+        extractVars' (bool True) `shouldBe` mempty
+        extractVars' (int 1) `shouldBe` mempty
+        extractVars' (str (StringType "poo")) `shouldBe` mempty
       it "Finds a var" $
-        extractVars (MyVar (Name "dog")) `shouldBe` S.singleton (Name "dog")
+        extractVars' (MyVar mempty (Name "dog")) `shouldBe` S.singleton (Name "dog")
       it "Finds the vars in an if" $
-        extractVars
+        extractVars'
           ( MyIf
-              (MyVar (Name "one"))
-              (MyVar (Name "two"))
-              (MyVar (Name "three"))
+              mempty
+              (MyVar mempty (Name "one"))
+              (MyVar mempty (Name "two"))
+              (MyVar mempty (Name "three"))
           )
           `shouldBe` S.fromList [Name "one", Name "two", Name "three"]
       it "Does not include var introduced in Let" $
-        extractVars
+        extractVars'
           ( MyLet
+              mempty
               (Name "newVar")
-              (MyApp (MyVar (Name "keep")) (int 1))
-              (MyVar (Name "newVar"))
+              (MyApp mempty (MyVar mempty (Name "keep")) (int 1))
+              (MyVar mempty (Name "newVar"))
           )
           `shouldBe` S.singleton (Name "keep")
       it "Does not introduce vars introduced in lambda" $
-        extractVars (MyLambda (Name "newVar") (MyApp (MyVar (Name "keep")) (MyVar (Name "newVar"))))
+        extractVars'
+          ( MyLambda
+              mempty
+              (Name "newVar")
+              ( MyApp
+                  mempty
+                  (MyVar mempty (Name "keep"))
+                  (MyVar mempty (Name "newVar"))
+              )
+          )
           `shouldBe` S.singleton (Name "keep")
       it "Does not introduce built-ins" $
-        extractVars (MyVar (Name "randomInt"))
+        extractVars' (MyVar mempty (Name "randomInt"))
           `shouldBe` S.empty
-    describe "createStoreExpression" $ do
+    describe "createStoreExpression'" $ do
       it "Creates expressions from literals with empty Project" $ do
-        createStoreExpression mempty mempty (int 1)
+        createStoreExpression' mempty mempty (int 1)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
@@ -55,7 +83,7 @@ spec =
                   storeTypeBindings = mempty
                 }
             )
-        createStoreExpression mempty mempty (bool True)
+        createStoreExpression' mempty mempty (bool True)
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
@@ -63,7 +91,7 @@ spec =
                   storeTypeBindings = mempty
                 }
             )
-        createStoreExpression mempty mempty (str (StringType "poo"))
+        createStoreExpression' mempty mempty (str (StringType "poo"))
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
@@ -72,23 +100,23 @@ spec =
                 }
             )
       it "Looks for vars and can't find them" $
-        createStoreExpression mempty mempty (MyVar (Name "missing"))
+        createStoreExpression' mempty mempty (MyVar mempty (Name "missing"))
           `shouldBe` Left
             (MissingBinding (mkName "missing") mempty)
       it "Looks for vars and finds a built-in" $
-        createStoreExpression mempty mempty (MyVar (Name "randomInt"))
+        createStoreExpression' mempty mempty (MyVar mempty (Name "randomInt"))
           `shouldBe` Right
             ( StoreExpression
                 { storeBindings = mempty,
-                  storeExpression = MyVar (Name "randomInt"),
+                  storeExpression = MyVar mempty (Name "randomInt"),
                   storeTypeBindings = mempty
                 }
             )
       it "Looks for vars and finds them" $ do
         let hash = ExprHash 1234
-            expr = MyVar (Name "missing")
+            expr = MyVar mempty (Name "missing")
             bindings' = Bindings $ M.singleton (Name "missing") hash
-            storeExpr = createStoreExpression bindings' mempty expr
+            storeExpr = createStoreExpression' bindings' mempty expr
         storeExpr
           `shouldBe` Right
             ( StoreExpression
@@ -100,8 +128,8 @@ spec =
     describe "createTypeStoreExpression" $ do
       it "Creates the most basic StoreExpression for a type" $ do
         let dt = DataType (mkTyCon "Void") mempty mempty
-            expr = MyData dt (MyRecord mempty)
-            storeExpr = createStoreExpression mempty mempty expr
+            expr = MyData mempty dt (MyRecord mempty mempty)
+            storeExpr = createStoreExpression' mempty mempty expr
         storeExpr
           `shouldBe` Right
             ( StoreExpression
@@ -117,7 +145,7 @@ spec =
                 (mkTyCon "VoidBox")
                 mempty
                 (M.singleton (mkTyCon "Box") [cons'])
-            storeExpr = createTypeStoreExpression mempty dt
+            storeExpr = createTypeStoreExpression' mempty dt
         storeExpr
           `shouldBe` Left (MissingType (mkTyCon "MyUnit") mempty)
       it "Creates a StoreExpression that uses a type from the type bindings" $ do
@@ -129,8 +157,8 @@ spec =
                 (M.singleton (mkTyCon "Box") [cons'])
             hash = ExprHash 123
             tBindings' = TypeBindings $ M.singleton (TyCon "MyUnit") hash
-            storeExpr = createTypeStoreExpression tBindings' dt
-            expr = MyData dt (MyRecord mempty)
+            storeExpr = createTypeStoreExpression' tBindings' dt
+            expr = MyData mempty dt (MyRecord mempty mempty)
         storeExpr
           `shouldBe` Right
             ( StoreExpression

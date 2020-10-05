@@ -18,7 +18,7 @@ import Language.Mimsa.Types
 -- when we come to do let recursive the name of our binder
 -- may already be turned into a number in the expr
 -- so we look it up to make sure we bind the right thing
-findActualBindingInSwaps :: Int -> App Variable
+findActualBindingInSwaps :: Int -> App ann Variable
 findActualBindingInSwaps int = do
   swaps <- askForSwaps
   scope' <- readScope
@@ -26,7 +26,7 @@ findActualBindingInSwaps int = do
     Just i' -> pure (NamedVar i')
     _ -> throwError $ CouldNotFindVar scope' (NumberedVar int)
 
-useVar :: Variable -> App (Expr Variable)
+useVar :: (Eq ann, Monoid ann) => Variable -> App ann (Expr Variable ann)
 useVar var' = case var' of
   (NumberedVar i) -> do
     scope' <- readScope
@@ -55,106 +55,114 @@ useVar var' = case var' of
 
 -- make a fresh copy for us to use
 -- is this necessary?
-instantiateVar :: Expr Variable -> App (Expr Variable)
+instantiateVar :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 instantiateVar expr = case expr of
-  (MyLambda binder expr') -> do
+  (MyLambda ann binder expr') -> do
     (freshBinder, freshExpr) <- newLambdaCopy binder expr'
-    interpretWithScope (MyLambda freshBinder freshExpr)
+    interpretWithScope (MyLambda ann freshBinder freshExpr)
   other -> interpretWithScope other
 
-runBuiltIn :: BiIds -> ForeignFunc -> App (Expr Variable)
+runBuiltIn ::
+  (Eq ann, Monoid ann) =>
+  BiIds ->
+  ForeignFunc ann ->
+  App ann (Expr Variable ann)
 runBuiltIn _ (NoArgs _ io) = liftIO io
 runBuiltIn (OneId v1) (OneArg _ io) = do
   expr1 <- useVar v1
   liftIO (io expr1)
 runBuiltIn ids _ = throwError $ CouldNotMatchBuiltInId ids
 
-unwrapBuiltIn :: Name -> ForeignFunc -> App (Expr Variable)
+unwrapBuiltIn ::
+  (Eq ann, Monoid ann) =>
+  Name ->
+  ForeignFunc ann ->
+  App ann (Expr Variable ann)
 unwrapBuiltIn name (NoArgs _ _) = do
   let actual = BuiltInActual name NoId
-  addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name)))
-  pure (MyVar actual)
+  addToScope (Scope $ M.singleton actual (MyVar mempty (BuiltIn name)))
+  pure (MyVar mempty actual)
 unwrapBuiltIn name (OneArg _ _) = do
   v1 <- nextVariable
   let actual = BuiltInActual name (OneId v1)
-  addToScope (Scope $ M.singleton actual (MyVar (BuiltIn name))) -- add new name to scope
+  addToScope (Scope $ M.singleton actual (MyVar mempty (BuiltIn name))) -- add new name to scope
   pure
-    ( MyLambda v1 (MyVar actual)
+    ( MyLambda mempty v1 (MyVar mempty actual)
     )
 
 -- get new var
-newLambdaCopy :: Variable -> Expr Variable -> App (Variable, Expr Variable)
+newLambdaCopy :: Variable -> Expr Variable ann -> App ann (Variable, Expr Variable ann)
 newLambdaCopy name expr = do
   newName' <- nextVariable
   newExpr <- swapName name newName' expr
   pure (newName', newExpr)
 
-interpretWithScope :: Expr Variable -> App (Expr Variable)
+interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 interpretWithScope interpretExpr =
   case interpretExpr of
-    (MyLiteral a) -> pure (MyLiteral a)
-    (MyPair a b) -> do
+    (MyLiteral ann a) -> pure (MyLiteral ann a)
+    (MyPair ann a b) -> do
       exprA <- interpretWithScope a
       exprB <- interpretWithScope b
-      pure (MyPair exprA exprB)
-    (MyLet binder expr body) -> do
+      pure (MyPair ann exprA exprB)
+    (MyLet _ binder expr body) -> do
       addToScope (Scope $ M.singleton binder expr)
       interpretWithScope body
-    (MyLetPair binderA binderB (MyPair a b) body) -> do
+    (MyLetPair _ binderA binderB (MyPair _ a b) body) -> do
       let newScopes = Scope $ M.fromList [(binderA, a), (binderB, b)]
       addToScope newScopes
       interpretWithScope body
-    (MyLetPair binderA binderB (MyVar v) body) -> do
-      expr <- interpretWithScope (MyVar v)
-      interpretWithScope (MyLetPair binderA binderB expr body)
-    (MyLetPair _ _ a _) ->
+    (MyLetPair ann binderA binderB (MyVar ann' v) body) -> do
+      expr <- interpretWithScope (MyVar ann' v)
+      interpretWithScope (MyLetPair ann binderA binderB expr body)
+    (MyLetPair _ _ _ a _) ->
       throwError $ CannotDestructureAsPair a
-    (MyVar var) ->
+    (MyVar _ var) ->
       useVar var >>= interpretWithScope
-    (MyApp (MyVar f) value) -> do
-      expr <- interpretWithScope (MyVar f)
-      interpretWithScope (MyApp expr value)
-    (MyApp (MyLambda binder expr) value) -> do
+    (MyApp ann (MyVar ann' f) value) -> do
+      expr <- interpretWithScope (MyVar ann' f)
+      interpretWithScope (MyApp ann expr value)
+    (MyApp _ (MyLambda _ binder expr) value) -> do
       value' <- interpretWithScope value
       addToScope (Scope $ M.singleton binder value')
       interpretWithScope expr
-    (MyApp (MyLiteral a) _) ->
-      throwError $ CannotApplyToNonFunction (MyLiteral a)
-    (MyApp other value) -> do
+    (MyApp _ (MyLiteral ann a) _) ->
+      throwError $ CannotApplyToNonFunction (MyLiteral ann a)
+    (MyApp ann other value) -> do
       expr <- interpretWithScope other
-      interpretWithScope (MyApp expr value)
-    (MyRecordAccess (MyRecord record) name) ->
+      interpretWithScope (MyApp ann expr value)
+    (MyRecordAccess _ (MyRecord _ record) name) ->
       case M.lookup name record of
         Just item -> interpretWithScope item
         _ -> throwError $ CannotFindMemberInRecord record name
-    (MyRecordAccess (MyVar a) name) -> do
-      expr <- interpretWithScope (MyVar a)
-      interpretWithScope (MyRecordAccess expr name)
-    (MyRecordAccess (MyRecordAccess a name') name) -> do
-      expr <- interpretWithScope (MyRecordAccess a name')
-      interpretWithScope (MyRecordAccess expr name)
-    (MyRecordAccess a name) ->
+    (MyRecordAccess ann (MyVar ann' a) name) -> do
+      expr <- interpretWithScope (MyVar ann' a)
+      interpretWithScope (MyRecordAccess ann expr name)
+    (MyRecordAccess ann (MyRecordAccess ann' a name') name) -> do
+      expr <- interpretWithScope (MyRecordAccess ann' a name')
+      interpretWithScope (MyRecordAccess ann expr name)
+    (MyRecordAccess _ a name) ->
       throwError $ CannotDestructureAsRecord a name
-    (MyRecord as) -> do
+    (MyRecord ann as) -> do
       exprs <- traverse interpretWithScope as
-      pure (MyRecord exprs)
-    (MyLambda a b) ->
-      pure (MyLambda a b)
-    (MyIf (MyLiteral (MyBool pred')) true false) ->
+      pure (MyRecord ann exprs)
+    (MyLambda ann a b) ->
+      pure (MyLambda ann a b)
+    (MyIf _ (MyLiteral _ (MyBool pred')) true false) ->
       if pred'
         then interpretWithScope true
         else interpretWithScope false
-    (MyIf all'@(MyLiteral _) _ _) ->
+    (MyIf _ all'@(MyLiteral _ _) _ _) ->
       throwError $ PredicateForIfMustBeABoolean all'
-    (MyIf all'@(MyLambda _ _) _ _) ->
+    (MyIf _ all'@MyLambda {} _ _) ->
       throwError $ PredicateForIfMustBeABoolean all'
-    (MyIf pred' true false) -> do
+    (MyIf ann pred' true false) -> do
       predExpr <- interpretWithScope pred'
-      interpretWithScope (MyIf predExpr true false)
-    (MyData _dataType expr) -> interpretWithScope expr
-    (MyConstructor a) -> pure (MyConstructor a)
-    (MyConsApp fn val) ->
-      MyConsApp fn <$> interpretWithScope val
-    (MyCaseMatch expr' matches catchAll) -> do
+      interpretWithScope (MyIf ann predExpr true false)
+    (MyData _ _ expr) -> interpretWithScope expr
+    (MyConstructor ann a) -> pure (MyConstructor ann a)
+    (MyConsApp ann fn val) ->
+      MyConsApp ann fn <$> interpretWithScope val
+    (MyCaseMatch _ expr' matches catchAll) -> do
       expr'' <- interpretWithScope expr'
       patternMatch expr'' matches catchAll >>= interpretWithScope

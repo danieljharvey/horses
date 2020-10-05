@@ -34,6 +34,9 @@ class Printer a where
   default prettyDoc :: a -> Doc ann
   prettyDoc = pretty . T.unpack . prettyPrint
 
+instance Printer () where
+  prettyDoc = const ""
+
 instance Printer Text where
   prettyPrint a = a
   prettyDoc = pretty

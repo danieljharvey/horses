@@ -40,15 +40,20 @@ findHashInBindings (Bindings bindings') name =
 -- given an expression, and the current environment, create a
 -- store expression that captures the hashes of the functions we'll need
 createStoreExpression ::
+  (Eq ann, Monoid ann) =>
   Bindings ->
   TypeBindings ->
-  Expr Name ->
-  Either ResolverError StoreExpression
+  Expr Name ann ->
+  Either ResolverError (StoreExpression ann)
 createStoreExpression bindings' tBindings expr =
   StoreExpression expr <$> findBindings bindings' expr
     <*> findTypeBindings tBindings expr
 
-findBindings :: Bindings -> Expr Name -> Either ResolverError Bindings
+findBindings ::
+  (Eq ann, Monoid ann) =>
+  Bindings ->
+  Expr Name ann ->
+  Either ResolverError Bindings
 findBindings bindings' expr = do
   let findValueHash name =
         (,) name
@@ -64,7 +69,7 @@ findHashInTypeBindings (TypeBindings bindings') cName =
     Just a -> Right a
     _ -> Left $ MissingType cName (TypeBindings bindings')
 
-findTypeBindings :: TypeBindings -> Expr Name -> Either ResolverError TypeBindings
+findTypeBindings :: TypeBindings -> Expr Name ann -> Either ResolverError TypeBindings
 findTypeBindings tBindings expr = do
   let findTypeHash cName =
         (,) cName
@@ -73,7 +78,11 @@ findTypeBindings tBindings expr = do
   pure (TypeBindings $ M.fromList hashes)
 
 -- given a data type declaration, create a StoreExpression for it
-createTypeStoreExpression :: TypeBindings -> DataType -> Either ResolverError StoreExpression
+createTypeStoreExpression ::
+  (Eq ann, Monoid ann) =>
+  TypeBindings ->
+  DataType ->
+  Either ResolverError (StoreExpression ann)
 createTypeStoreExpression tBindings dt =
-  let expr = MyData dt (MyRecord mempty)
+  let expr = MyData mempty dt (MyRecord mempty mempty)
    in createStoreExpression mempty tBindings expr

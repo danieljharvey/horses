@@ -17,48 +17,48 @@ import Language.Mimsa.Types
     mkTyCon,
   )
 
-fstExpr :: StoreExpression
+fstExpr :: (Monoid ann, Show ann) => StoreExpression ann
 fstExpr =
   unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
 
-sndExpr :: StoreExpression
+sndExpr :: (Monoid ann, Show ann) => StoreExpression ann
 sndExpr = unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
 
-eqTenExpr :: StoreExpression
+eqTenExpr :: (Monoid ann, Show ann) => StoreExpression ann
 eqTenExpr =
   unsafeGetExpr'
     "\\i -> eq(10)(i)"
     (Bindings $ M.singleton (mkName "eq") (ExprHash 2))
 
-compose :: StoreExpression
+compose :: (Monoid ann, Show ann) => StoreExpression ann
 compose =
   unsafeGetExpr "\\f -> \\g -> \\aValue -> f(g(aValue))"
 
-idExpr :: StoreExpression
+idExpr :: (Monoid ann, Show ann) => StoreExpression ann
 idExpr = unsafeGetExpr "\\i -> i"
 
-incrementInt :: StoreExpression
+incrementInt :: (Monoid ann, Show ann) => StoreExpression ann
 incrementInt =
   unsafeGetExpr'
     "\\a -> addInt(1)(a)"
     (Bindings $ M.singleton (mkName "addInt") (ExprHash 18))
 
-addInt :: StoreExpression
+addInt :: (Monoid ann, Show ann) => StoreExpression ann
 addInt = unsafeGetExpr "\\a -> \\b -> addIntPair((a,b))"
 
-eqExpr :: StoreExpression
+eqExpr :: (Monoid ann, Show ann) => StoreExpression ann
 eqExpr = unsafeGetExpr "\\a -> \\b -> eqPair((a,b))"
 
-optionExpr :: StoreExpression
+optionExpr :: (Monoid ann, Show ann) => StoreExpression ann
 optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
 
-aPairExpr :: StoreExpression
+aPairExpr :: (Monoid ann, Show ann) => StoreExpression ann
 aPairExpr = unsafeGetExpr "(1,2)"
 
-aRecordExpr :: StoreExpression
+aRecordExpr :: (Monoid ann, Show ann) => StoreExpression ann
 aRecordExpr = unsafeGetExpr "{ a: 1, b: \"dog\" }"
 
-stdLib :: Project
+stdLib :: (Monoid ann, Show ann) => Project ann
 stdLib = Project store' bindings' typeBindings' mempty
   where
     store' =
@@ -97,11 +97,11 @@ stdLib = Project store' bindings' typeBindings' mempty
             (mkTyCon "Nowt", pure $ ExprHash 4)
           ]
 
-unsafeGetExpr' :: Text -> Bindings -> StoreExpression
+unsafeGetExpr' :: (Monoid ann, Show ann) => Text -> Bindings -> StoreExpression ann
 unsafeGetExpr' input bindings' =
   case parseExpr input of
     Right expr' -> StoreExpression expr' bindings' mempty
     a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
 
-unsafeGetExpr :: Text -> StoreExpression
+unsafeGetExpr :: (Monoid ann, Show ann) => Text -> StoreExpression ann
 unsafeGetExpr input = unsafeGetExpr' input mempty

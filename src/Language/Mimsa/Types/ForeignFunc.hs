@@ -4,8 +4,8 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
 
-type FFExpr = Expr Variable
+type FFExpr ann = Expr Variable ann
 
-data ForeignFunc
-  = NoArgs MonoType (IO FFExpr)
-  | OneArg (MonoType, MonoType) (FFExpr -> IO FFExpr)
+data ForeignFunc ann
+  = NoArgs MonoType (IO (FFExpr ann))
+  | OneArg (MonoType, MonoType) (FFExpr ann -> IO (FFExpr ann))

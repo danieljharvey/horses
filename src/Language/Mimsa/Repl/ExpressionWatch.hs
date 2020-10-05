@@ -6,6 +6,7 @@ module Language.Mimsa.Repl.ExpressionWatch
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import qualified Data.Aeson as JSON
 import Data.Bifunctor (first)
 import Data.IORef
 import qualified Data.Text as T
@@ -24,7 +25,7 @@ import Language.Mimsa.Types
 scratchFilename :: String
 scratchFilename = "scratch.mimsa"
 
-writeExpression :: (MonadIO m) => Project -> Name -> m ()
+writeExpression :: (MonadIO m) => Project ann -> Name -> m ()
 writeExpression env name =
   case findStoreExpressionByName env name of
     Just storeExpr ->
@@ -34,7 +35,16 @@ writeExpression env name =
           (prettyPrint (storeExpression storeExpr))
     Nothing -> pure ()
 
-doWatch :: Project -> Name -> ReplM Project
+doWatch ::
+  ( Eq ann,
+    Monoid ann,
+    Show ann,
+    Printer ann,
+    JSON.ToJSON ann
+  ) =>
+  Project ann ->
+  Name ->
+  ReplM ann (Project ann)
 doWatch env name = do
   writeExpression env name
   ioEnv <- liftIO $ newIORef env
@@ -51,7 +61,11 @@ doWatch env name = do
         )
   liftIO $ readIORef ioEnv
 
-onFileChange :: Project -> Name -> ReplM Project
+onFileChange ::
+  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
+  Project ann ->
+  Name ->
+  ReplM ann (Project ann)
 onFileChange env name = do
   text <-
     liftIO $ T.readFile $ "./" <> scratchFilename

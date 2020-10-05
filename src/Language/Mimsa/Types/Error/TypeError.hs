@@ -12,16 +12,14 @@ import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text.Prettyprint.Doc
-  ( Doc,
+  ( (<+>),
+    Doc,
     Pretty (pretty),
     vsep,
-    (<+>),
   )
 import Language.Mimsa.Printer (Printer (prettyDoc))
 import Language.Mimsa.Types.AST (DataType (DataType), Expr)
-import Language.Mimsa.Types.Environment
-  ( Environment (getDataTypes),
-  )
+import Language.Mimsa.Types.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Identifiers
   ( Name,
     TyCon,
@@ -32,7 +30,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType (MonoType)
 import Language.Mimsa.Types.Swaps (Swaps)
 
-data TypeError
+data TypeError ann
   = UnknownTypeError
   | FailsOccursCheck Swaps Variable MonoType
   | UnificationError MonoType MonoType
@@ -43,9 +41,9 @@ data TypeError
   | CannotUnifyBoundVariable Variable MonoType
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedPair MonoType
-  | CannotCaseMatchOnType (Expr Variable)
+  | CannotCaseMatchOnType (Expr Variable ann)
   | TypeConstructorNotInScope Environment TyCon
-  | TypeIsNotConstructor (Expr Variable)
+  | TypeIsNotConstructor (Expr Variable ann)
   | TypeVariableNotInDataType TyCon Name [Name]
   | ConflictingConstructors TyCon
   | CannotApplyToType TyCon
@@ -54,13 +52,13 @@ data TypeError
   | MixedUpPatterns [TyCon]
   deriving (Eq, Ord, Show)
 
-instance Semigroup TypeError where
+instance Semigroup (TypeError a) where
   a <> _ = a
 
-instance Monoid TypeError where
+instance Monoid (TypeError a) where
   mempty = UnknownTypeError
 
-instance Printer TypeError where
+instance (Show a) => Printer (TypeError a) where
   prettyDoc = vsep . renderTypeError
 
 showKeys :: (p -> Doc ann) -> Map p a -> [Doc ann]
@@ -83,7 +81,7 @@ withSwap swaps (NumberedVar i) =
     (mkName "unknownvar")
     (M.lookup (NumberedVar i) swaps)
 
-renderTypeError :: TypeError -> [Doc ann]
+renderTypeError :: (Show a) => TypeError a -> [Doc ann]
 renderTypeError UnknownTypeError =
   ["Unknown type error"]
 renderTypeError (FailsOccursCheck swaps var mt) =

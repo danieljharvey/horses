@@ -35,23 +35,23 @@ import Language.Mimsa.Types
     safeMkTyCon,
   )
 
-type ParserExpr = Expr Name
+type ParserExpr ann = Expr Name ann
 
 -- parse expr, using it all up
-parseExpr :: Text -> Either Text ParserExpr
+parseExpr :: Monoid ann => Text -> Either Text (ParserExpr ann)
 parseExpr input = P.runParser (P.thenOptionalSpace expressionParser) input
   >>= \(leftover, a) ->
     if T.length leftover == 0
       then Right a
       else Left ("Leftover input: >>>" <> leftover <> "<<<")
 
-parseExpr' :: Text -> Either Text ParserExpr
+parseExpr' :: Monoid ann => Text -> Either Text (ParserExpr ann)
 parseExpr' input = snd <$> P.runParser expressionParser input
 
-failer :: Parser ParserExpr
+failer :: Parser (ParserExpr ann)
 failer = P.parseFail (\input -> "Could not parse expression for >>>" <> input <> "<<<")
 
-expressionParser :: Parser ParserExpr
+expressionParser :: Monoid ann => Parser (ParserExpr ann)
 expressionParser =
   let parsers =
         literalParser
@@ -67,14 +67,14 @@ inBrackets = P.between2 '(' ')'
 orInBrackets :: Parser a -> Parser a
 orInBrackets parser = parser <|> inBrackets parser
 
-literalParser :: Parser ParserExpr
+literalParser :: Monoid ann => Parser (ParserExpr ann)
 literalParser =
   boolParser
     <|> unitParser
     <|> intParser
     <|> stringParser
 
-complexParser :: Parser ParserExpr
+complexParser :: Monoid ann => Parser (ParserExpr ann)
 complexParser =
   letPairParser
     <|> recordParser
@@ -107,34 +107,34 @@ protectedNames =
 
 ----
 
-boolParser :: Parser ParserExpr
+boolParser :: Monoid ann => Parser (ParserExpr ann)
 boolParser = trueParser <|> falseParser
 
-trueParser :: Parser ParserExpr
-trueParser = P.literal "True" $> MyLiteral (MyBool True)
+trueParser :: Monoid ann => Parser (ParserExpr ann)
+trueParser = P.literal "True" $> MyLiteral mempty (MyBool True)
 
-falseParser :: Parser ParserExpr
-falseParser = P.literal "False" $> MyLiteral (MyBool False)
-
------
-
-unitParser :: Parser ParserExpr
-unitParser = P.literal "Unit" $> MyLiteral MyUnit
+falseParser :: Monoid ann => Parser (ParserExpr ann)
+falseParser = P.literal "False" $> MyLiteral mempty (MyBool False)
 
 -----
 
-intParser :: Parser ParserExpr
-intParser = MyLiteral . MyInt <$> P.integer
+unitParser :: Monoid ann => Parser (ParserExpr ann)
+unitParser = P.literal "Unit" $> MyLiteral mempty MyUnit
 
 -----
 
-stringParser :: Parser ParserExpr
-stringParser = MyLiteral . MyString . StringType <$> P.between '"'
+intParser :: Monoid ann => Parser (ParserExpr ann)
+intParser = MyLiteral mempty . MyInt <$> P.integer
 
 -----
 
-varParser :: Parser ParserExpr
-varParser = MyVar <$> nameParser
+stringParser :: Monoid ann => Parser (ParserExpr ann)
+stringParser = MyLiteral mempty . MyString . StringType <$> P.between '"'
+
+-----
+
+varParser :: Monoid ann => Parser (ParserExpr ann)
+varParser = MyVar mempty <$> nameParser
 
 ---
 
@@ -149,8 +149,8 @@ inProtected tx = if S.member tx protectedNames then Nothing else Just tx
 
 ---
 
-constructorParser :: Parser ParserExpr
-constructorParser = MyConstructor <$> tyConParser
+constructorParser :: Monoid ann => Parser (ParserExpr ann)
+constructorParser = MyConstructor mempty <$> tyConParser
 
 tyConParser :: Parser TyCon
 tyConParser =
@@ -160,7 +160,7 @@ tyConParser =
 
 -----
 
-letParser :: Parser ParserExpr
+letParser :: Monoid ann => Parser (ParserExpr ann)
 letParser = letInParser <|> letNewlineParser
 
 letNameIn :: Parser Name
@@ -170,19 +170,19 @@ letNameIn = do
   _ <- P.thenSpace (P.literal "=")
   pure name
 
-letInParser :: Parser ParserExpr
+letInParser :: Monoid ann => Parser (ParserExpr ann)
 letInParser = do
   name <- letNameIn
   expr <- P.thenSpace expressionParser
   _ <- P.thenSpace (P.literal "in")
-  MyLet name expr <$> expressionParser
+  MyLet mempty name expr <$> expressionParser
 
-letNewlineParser :: Parser ParserExpr
+letNewlineParser :: Monoid ann => Parser (ParserExpr ann)
 letNewlineParser = do
   name <- letNameIn
   expr <- expressionParser
   _ <- literalWithSpace ";"
-  MyLet name expr <$> expressionParser
+  MyLet mempty name expr <$> expressionParser
 
 -----
 
@@ -195,8 +195,11 @@ spacedName = do
 
 -----
 
-letPairParser :: Parser ParserExpr
-letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
+letPairParser :: Monoid ann => Parser (ParserExpr ann)
+letPairParser =
+  MyLetPair mempty <$> binder1 <*> binder2
+    <*> equalsParser
+    <*> inParser
   where
     binder1 = do
       _ <- P.thenSpace (P.literal "let")
@@ -210,17 +213,17 @@ letPairParser = MyLetPair <$> binder1 <*> binder2 <*> equalsParser <*> inParser
 
 -----
 
-equalsParser :: Parser ParserExpr
+equalsParser :: Monoid ann => Parser (ParserExpr ann)
 equalsParser =
   P.right (P.thenSpace (P.literal "=")) (P.thenSpace expressionParser)
 
-inParser :: Parser ParserExpr
+inParser :: Monoid ann => Parser (ParserExpr ann)
 inParser = P.right (P.thenSpace (P.literal "in")) expressionParser
 
 -----
 
-lambdaParser :: Parser ParserExpr
-lambdaParser = MyLambda <$> slashNameBinder <*> arrowExprBinder
+lambdaParser :: Monoid ann => Parser (ParserExpr ann)
+lambdaParser = MyLambda mempty <$> slashNameBinder <*> arrowExprBinder
 
 -- matches \varName
 slashNameBinder :: Parser Name
@@ -229,19 +232,19 @@ slashNameBinder = do
   _ <- P.space0
   P.thenSpace nameParser
 
-arrowExprBinder :: Parser ParserExpr
+arrowExprBinder :: Monoid ann => Parser (ParserExpr ann)
 arrowExprBinder = P.right (P.thenSpace (P.literal "->")) expressionParser
 
 -----
 
-appFunc :: Parser ParserExpr
+appFunc :: Monoid ann => Parser (ParserExpr ann)
 appFunc = recordAccessParser <|> inBrackets lambdaParser <|> varParser
 
-appParser :: Parser ParserExpr
+appParser :: Monoid ann => Parser (ParserExpr ann)
 appParser = do
   app <- appFunc
   exprs <- P.oneOrMore (withOptionalSpace exprInBrackets)
-  pure (foldl MyApp app exprs)
+  pure (foldl (MyApp mempty) app exprs)
 
 literalWithSpace :: Text -> Parser ()
 literalWithSpace tx = () <$ withOptionalSpace (P.literal tx)
@@ -253,7 +256,7 @@ withOptionalSpace p = do
   _ <- P.space0
   pure a
 
-exprInBrackets :: Parser ParserExpr
+exprInBrackets :: Monoid ann => Parser (ParserExpr ann)
 exprInBrackets = do
   literalWithSpace "("
   expr <- expressionParser
@@ -263,24 +266,24 @@ exprInBrackets = do
 
 -----
 
-recordParser :: Parser ParserExpr
+recordParser :: Monoid ann => Parser (ParserExpr ann)
 recordParser = fullRecordParser <|> emptyRecordParser
 
-emptyRecordParser :: Parser ParserExpr
+emptyRecordParser :: Monoid ann => Parser (ParserExpr ann)
 emptyRecordParser = do
   literalWithSpace "{"
   literalWithSpace "}"
-  pure (MyRecord mempty)
+  pure (MyRecord mempty mempty)
 
-fullRecordParser :: Parser ParserExpr
+fullRecordParser :: Monoid ann => Parser (ParserExpr ann)
 fullRecordParser = do
   literalWithSpace "{"
   args <- P.zeroOrMore (P.left recordItemParser (P.left (P.literal ",") P.space0))
   last' <- recordItemParser
   literalWithSpace "}"
-  pure (MyRecord (M.fromList $ args <> [last']))
+  pure (MyRecord mempty (M.fromList $ args <> [last']))
 
-recordItemParser :: Parser (Name, ParserExpr)
+recordItemParser :: Monoid ann => Parser (Name, ParserExpr ann)
 recordItemParser = do
   name <- nameParser
   literalWithSpace ":"
@@ -289,33 +292,33 @@ recordItemParser = do
 
 -----
 
-recordAccessParser :: Parser ParserExpr
+recordAccessParser :: Monoid ann => Parser (ParserExpr ann)
 recordAccessParser =
   recordAccessParser3
     <|> recordAccessParser2
     <|> recordAccessParser1
 
-recordAccessParser1 :: Parser ParserExpr
+recordAccessParser1 :: Monoid ann => Parser (ParserExpr ann)
 recordAccessParser1 = do
   expr <- varParser
   name <- dotName
   _ <- P.space0
-  pure (MyRecordAccess expr name)
+  pure (MyRecordAccess mempty expr name)
 
 dotName :: Parser Name
 dotName = do
   _ <- P.literal "."
   nameParser
 
-recordAccessParser2 :: Parser ParserExpr
+recordAccessParser2 :: Monoid ann => Parser (ParserExpr ann)
 recordAccessParser2 = do
   expr <- varParser
   name <- dotName
   name2 <- dotName
   _ <- P.space0
-  pure (MyRecordAccess (MyRecordAccess expr name) name2)
+  pure (MyRecordAccess mempty (MyRecordAccess mempty expr name) name2)
 
-recordAccessParser3 :: Parser ParserExpr
+recordAccessParser3 :: Monoid ann => Parser (ParserExpr ann)
 recordAccessParser3 = do
   expr <- varParser
   _ <- P.literal "."
@@ -325,25 +328,25 @@ recordAccessParser3 = do
   _ <- P.literal "."
   name3 <- nameParser
   _ <- P.space0
-  pure (MyRecordAccess (MyRecordAccess (MyRecordAccess expr name) name2) name3)
+  pure (MyRecordAccess mempty (MyRecordAccess mempty (MyRecordAccess mempty expr name) name2) name3)
 
 -----
 
-ifParser :: Parser ParserExpr
-ifParser = MyIf <$> predParser <*> thenParser <*> elseParser
+ifParser :: Monoid ann => Parser (ParserExpr ann)
+ifParser = MyIf mempty <$> predParser <*> thenParser <*> elseParser
 
-predParser :: Parser ParserExpr
+predParser :: Monoid ann => Parser (ParserExpr ann)
 predParser = P.right (P.thenSpace (P.literal "if")) expressionParser
 
-thenParser :: Parser ParserExpr
+thenParser :: Monoid ann => Parser (ParserExpr ann)
 thenParser = P.right (P.thenSpace (P.literal "then")) expressionParser
 
-elseParser :: Parser ParserExpr
+elseParser :: Monoid ann => Parser (ParserExpr ann)
 elseParser = P.right (P.thenSpace (P.literal "else")) expressionParser
 
 -----
 
-pairParser :: Parser ParserExpr
+pairParser :: Monoid ann => Parser (ParserExpr ann)
 pairParser = do
   _ <- P.literal "("
   _ <- P.space0
@@ -355,7 +358,7 @@ pairParser = do
   _ <- P.space0
   _ <- P.literal ")"
   _ <- P.space0
-  pure $ MyPair exprA exprB
+  pure $ MyPair mempty exprA exprB
 
 -----
 
@@ -379,17 +382,17 @@ typeDeclParserWithCons = do
 
 --------
 
-typeParser :: Parser ParserExpr
+typeParser :: Monoid ann => Parser (ParserExpr ann)
 typeParser =
-  MyData <$> (typeDeclParserWithCons <|> typeDeclParserEmpty)
+  MyData mempty <$> (typeDeclParserWithCons <|> typeDeclParserEmpty)
     <*> (inExpr <|> inNewLineExpr)
 
-inNewLineExpr :: Parser ParserExpr
+inNewLineExpr :: Monoid ann => Parser (ParserExpr ann)
 inNewLineExpr = do
   _ <- literalWithSpace ";"
   expressionParser
 
-inExpr :: Parser ParserExpr
+inExpr :: Monoid ann => Parser (ParserExpr ann)
 inExpr = do
   _ <- P.space0
   _ <- P.thenSpace (P.literal "in")
@@ -429,30 +432,30 @@ varNameParser = VarName <$> nameParser
 
 ---
 --
-constructorAppParser :: Parser ParserExpr
+constructorAppParser :: Monoid ann => Parser (ParserExpr ann)
 constructorAppParser = do
   cons <- tyConParser
   exprs <- P.oneOrMore (P.right P.space1 (orInBrackets expressionParser))
-  pure (foldl MyConsApp (MyConstructor cons) exprs)
+  pure (foldl (MyConsApp mempty) (MyConstructor mempty cons) exprs)
 
 ----------
-caseExprOfParser :: Parser ParserExpr
+caseExprOfParser :: Monoid ann => Parser (ParserExpr ann)
 caseExprOfParser = do
   _ <- P.thenSpace (P.literal "case")
   sumExpr <- expressionParser
   _ <- P.thenSpace (P.literal "of")
   pure sumExpr
 
-caseMatchParser :: Parser ParserExpr
+caseMatchParser :: Monoid ann => Parser (ParserExpr ann)
 caseMatchParser = do
   sumExpr <- caseExprOfParser
   matches <-
     matchesParser <|> pure <$> matchParser
   catchAll <-
     optional (otherwiseParser (not . null $ matches))
-  pure $ MyCaseMatch sumExpr matches catchAll
+  pure $ MyCaseMatch mempty sumExpr matches catchAll
 
-otherwiseParser :: Bool -> Parser ParserExpr
+otherwiseParser :: Monoid ann => Bool -> Parser (ParserExpr ann)
 otherwiseParser needsBar = do
   if needsBar
     then () <$ P.thenSpace (P.literal "|")
@@ -460,11 +463,11 @@ otherwiseParser needsBar = do
   _ <- P.thenSpace (P.literal "otherwise")
   expressionParser
 
-matchesParser :: Parser (NonEmpty (TyCon, ParserExpr))
+matchesParser :: Monoid ann => Parser (NonEmpty (TyCon, ParserExpr ann))
 matchesParser = do
   cons <- P.zeroOrMore (P.left matchParser (P.thenSpace (P.literal "|")))
   lastCons <- matchParser
   pure $ NE.fromList (cons <> [lastCons])
 
-matchParser :: Parser (TyCon, Expr Name)
+matchParser :: Monoid ann => Parser (TyCon, ParserExpr ann)
 matchParser = (,) <$> P.thenSpace tyConParser <*> expressionParser

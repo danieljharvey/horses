@@ -1,4 +1,7 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Language.Mimsa.Library
   ( libraryFunctions,
@@ -15,7 +18,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types
 import System.Random
 
-libraryFunctions :: Library
+libraryFunctions :: (Eq ann, Monoid ann) => Library ann
 libraryFunctions =
   Library $
     M.fromList
@@ -26,11 +29,18 @@ libraryFunctions =
         (FuncName "addIntPair", addIntPair)
       ]
 
-isLibraryName :: Name -> Bool
+isLibraryName ::
+  forall ann.
+  (Eq ann, Monoid ann) =>
+  Name ->
+  Bool
 isLibraryName name =
-  M.member (coerce name) (getLibrary libraryFunctions)
+  M.member (coerce name) (getLibrary @ann libraryFunctions)
 
-getLibraryFunction :: Variable -> Maybe ForeignFunc
+getLibraryFunction ::
+  (Eq ann, Monoid ann) =>
+  Variable ->
+  Maybe (ForeignFunc ann)
 getLibraryFunction (BuiltIn name) =
   M.lookup (coerce name) (getLibrary libraryFunctions)
 getLibraryFunction (NamedVar name) =
@@ -39,52 +49,51 @@ getLibraryFunction (BuiltInActual name _) =
   M.lookup (coerce name) (getLibrary libraryFunctions)
 getLibraryFunction _ = Nothing
 
-logFn :: ForeignFunc
+logFn :: (Monoid ann) => ForeignFunc ann
 logFn =
   let tyA = MTVar (NamedVar (Name "a"))
    in OneArg (tyA, MTUnit) logExpr
+  where
+    logExpr i = do
+      T.putStrLn (prettyPrint i)
+      pure (MyLiteral mempty MyUnit)
 
-logExpr :: (Printer p) => p -> IO (Expr a)
-logExpr i = do
-  T.putStrLn (prettyPrint i)
-  pure (MyLiteral MyUnit)
-
-randomInt :: ForeignFunc
+randomInt :: Monoid ann => ForeignFunc ann
 randomInt = NoArgs MTInt action
   where
-    action = MyLiteral . MyInt <$> randomIO
+    action = MyLiteral mempty . MyInt <$> randomIO
 
-randomIntFrom :: ForeignFunc
+randomIntFrom :: Monoid ann => ForeignFunc ann
 randomIntFrom =
   OneArg
     (MTInt, MTInt)
-    ( \(MyLiteral (MyInt i)) -> do
+    ( \(MyLiteral _ (MyInt i)) -> do
         val <- randomIO
-        pure (MyLiteral (MyInt (max val i)))
+        pure (MyLiteral mempty (MyInt (max val i)))
     )
 
-eqPair :: ForeignFunc
+eqPair :: (Eq ann, Monoid ann) => ForeignFunc ann
 eqPair =
   let tyA = MTVar (NamedVar (Name "a"))
    in OneArg
         (MTPair tyA tyA, MTBool)
         equality
+  where
+    equality pair' =
+      let (MyPair _ x y) = pair'
+       in pure $ MyLiteral mempty (MyBool (x == y))
 
-equality :: (Monad m, Eq a) => Expr a -> m (Expr a)
-equality pair' =
-  let (MyPair x y) = pair'
-   in pure $ MyLiteral (MyBool (x == y))
-
-addIntPair :: ForeignFunc
+addIntPair :: Monoid ann => ForeignFunc ann
 addIntPair =
   OneArg
     (MTPair MTInt MTInt, MTInt)
     ( \( MyPair
-           (MyLiteral (MyInt a))
-           (MyLiteral (MyInt b))
-         ) -> pure (MyLiteral (MyInt (a + b)))
+           _
+           (MyLiteral _ (MyInt a))
+           (MyLiteral _ (MyInt b))
+         ) -> pure (MyLiteral mempty (MyInt (a + b)))
     )
 
-getFFType :: ForeignFunc -> MonoType
+getFFType :: ForeignFunc ann -> MonoType
 getFFType (NoArgs out _) = out
 getFFType (OneArg (in1, out) _) = MTFunction in1 out

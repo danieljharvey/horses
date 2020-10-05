@@ -14,7 +14,7 @@ import Language.Mimsa.Types
 lookupConstructor ::
   Environment ->
   TyCon ->
-  TcMonad DataType
+  TcMonad ann DataType
 lookupConstructor env name =
   case M.toList $ M.filter (containsConstructor name) (getDataTypes env) of
     [(_, a)] -> pure a -- we only want a single match

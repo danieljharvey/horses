@@ -1,3 +1,6 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+
 module Language.Mimsa.Store.Substitutor where
 
 import Control.Monad (join)
@@ -17,16 +20,20 @@ import Language.Mimsa.Types
 --
 -- we'll also store what our substitutions were for errors sake
 
-data SubsState
+data SubsState ann
   = SubsState
       { subsSwaps :: Swaps,
-        subsScope :: Scope,
+        subsScope :: Scope ann,
         subsCounter :: Int
       }
 
-type App = State SubsState
+type App ann = State (SubsState ann)
 
-substitute :: Store -> StoreExpression -> SubstitutedExpression
+substitute ::
+  (Eq ann, Monoid ann) =>
+  Store ann ->
+  StoreExpression ann ->
+  SubstitutedExpression ann
 substitute store' storeExpr =
   let startingState = SubsState mempty mempty 0
       (expr', SubsState swaps' scope' _) =
@@ -39,7 +46,11 @@ substitute store' storeExpr =
         scope'
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
-doSubstitutions :: Store -> StoreExpression -> App (Expr Variable)
+doSubstitutions ::
+  (Monoid ann, Eq ann) =>
+  Store ann ->
+  StoreExpression ann ->
+  App ann (Expr Variable ann)
 doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
   newScopes <- traverse (substituteWithKey store') (getExprPairs store' bindings')
   addScope $ mconcat newScopes
@@ -50,30 +61,34 @@ doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
 ------------ type stuff
 
 -- why doesn't this exist already
-lookupStoreItem :: Store -> ExprHash -> Maybe StoreExpression
+lookupStoreItem :: Store ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupStoreItem (Store s') hash' = M.lookup hash' s'
 
 -- find all types needed by our expression in the store
-resolveTypes :: Store -> TypeBindings -> App [StoreExpression]
+resolveTypes :: Store ann -> TypeBindings -> App ann [StoreExpression ann]
 resolveTypes store' (TypeBindings tBindings) =
   let typeLookup (_, hash) = case lookupStoreItem store' hash of
         Just sExpr -> pure [sExpr]
         _ -> pure mempty
    in mconcat <$> traverse typeLookup (M.toList tBindings)
 
-toDataTypeList :: [StoreExpression] -> [DataType]
+toDataTypeList :: [StoreExpression ann] -> [DataType]
 toDataTypeList sExprs =
   let getDts sExpr = extractDataTypes (storeExpression sExpr)
    in S.toList . mconcat $ (getDts <$> sExprs)
 
 -- add required type declarations into our Expr
-addDataTypesToExpr :: Expr a -> [DataType] -> Expr a
+addDataTypesToExpr :: (Monoid ann) => Expr var ann -> [DataType] -> Expr var ann
 addDataTypesToExpr =
-  foldr MyData
+  foldr (MyData mempty)
 
 --------------
 
-substituteWithKey :: Store -> (Name, StoreExpression) -> App Scope
+substituteWithKey ::
+  (Eq ann, Monoid ann) =>
+  Store ann ->
+  (Name, StoreExpression ann) ->
+  App ann (Scope ann)
 substituteWithKey store' (key, storeExpr') = do
   expr' <- doSubstitutions store' storeExpr'
   maybeKey <- scopeExists expr'
@@ -84,16 +99,16 @@ substituteWithKey store' (key, storeExpr') = do
 
 -- if the expression we're already saving is in the scope
 -- that's the name we want to use
-scopeExists :: Expr Variable -> App (Maybe Variable)
+scopeExists :: (Eq ann) => Expr Variable ann -> App ann (Maybe Variable)
 scopeExists var = do
   (Scope scope') <- gets subsScope
   pure (mapKeyFind (var ==) scope')
 
-addScope :: Scope -> App ()
+addScope :: Scope ann -> App ann ()
 addScope scope' =
   modify (\s -> s {subsScope = subsScope s <> scope'})
 
-addSwap :: Name -> Variable -> App ()
+addSwap :: Name -> Variable -> App ann ()
 addSwap old new =
   modify (\s -> s {subsSwaps = subsSwaps s <> M.singleton new old})
 
@@ -103,12 +118,12 @@ mapKeyFind pred' map' = case M.toList (M.filter pred' map') of
   ((k, _) : _) -> pure k
 
 -- if we've already made up a name for this var, return that
-findInSwaps :: Name -> App (Maybe Variable)
+findInSwaps :: Name -> App ann (Maybe Variable)
 findInSwaps name = do
   swaps' <- gets subsSwaps
   pure (mapKeyFind (name ==) swaps')
 
-getExprPairs :: Store -> Bindings -> [(Name, StoreExpression)]
+getExprPairs :: Store ann -> Bindings -> [(Name, StoreExpression ann)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
   (name, hash) <- M.toList bindings'
   case M.lookup hash items' of
@@ -119,10 +134,15 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 -- Swaps list
 -- we don't do this for built-ins (ie, randomInt) or variables introduced by
 -- lambdas
-getNextVar :: [Name] -> Name -> App Variable
+getNextVar ::
+  forall ann.
+  (Eq ann, Monoid ann) =>
+  [Name] ->
+  Name ->
+  App ann Variable
 getNextVar protected name
   | name `elem` protected = pure (NamedVar name)
-  | isLibraryName name = pure (BuiltIn name)
+  | isLibraryName @ann name = pure (BuiltIn name)
   | otherwise = do
     stuff <- findInSwaps name
     case stuff of
@@ -132,7 +152,7 @@ getNextVar protected name
         addSwap name nextName
         pure nextName
 
-nextNum :: App Int
+nextNum :: App ann Int
 nextNum = do
   p <- gets subsCounter
   modify (\s -> s {subsCounter = p + 1})
@@ -142,35 +162,39 @@ nameToVar :: (Monad m) => Name -> m Variable
 nameToVar = pure . NamedVar
 
 -- step through Expr, replacing vars with numbered variables
-mapVar :: [Name] -> Expr Name -> App (Expr Variable)
-mapVar p (MyVar a) =
-  MyVar <$> getNextVar p a
-mapVar p (MyLet name a b) =
-  MyLet <$> nameToVar name <*> mapVar p a
+mapVar ::
+  (Eq ann, Monoid ann) =>
+  [Name] ->
+  Expr Name ann ->
+  App ann (Expr Variable ann)
+mapVar p (MyVar ann a) =
+  MyVar ann <$> getNextVar p a
+mapVar p (MyLet ann name a b) =
+  MyLet ann <$> nameToVar name <*> mapVar p a
     <*> mapVar (p <> [name]) b
-mapVar p (MyLambda name a) =
-  MyLambda <$> nameToVar name <*> mapVar (p <> [name]) a
-mapVar p (MyRecordAccess a name) =
-  MyRecordAccess
+mapVar p (MyLambda ann name a) =
+  MyLambda ann <$> nameToVar name <*> mapVar (p <> [name]) a
+mapVar p (MyRecordAccess ann a name) =
+  MyRecordAccess ann
     <$> mapVar p a <*> pure name
-mapVar p (MyApp a b) = MyApp <$> mapVar p a <*> mapVar p b
-mapVar p (MyIf a b c) = MyIf <$> mapVar p a <*> mapVar p b <*> mapVar p c
-mapVar p (MyPair a b) = MyPair <$> mapVar p a <*> mapVar p b
-mapVar p (MyLetPair nameA nameB a b) =
-  MyLetPair
+mapVar p (MyApp ann a b) = MyApp ann <$> mapVar p a <*> mapVar p b
+mapVar p (MyIf ann a b c) = MyIf ann <$> mapVar p a <*> mapVar p b <*> mapVar p c
+mapVar p (MyPair ann a b) = MyPair ann <$> mapVar p a <*> mapVar p b
+mapVar p (MyLetPair ann nameA nameB a b) =
+  MyLetPair ann
     <$> nameToVar nameA <*> nameToVar nameB
       <*> mapVar (p <> [nameA, nameB]) a
       <*> mapVar (p <> [nameA, nameB]) b
-mapVar p (MyRecord map') = do
+mapVar p (MyRecord ann map') = do
   map2 <- traverse (mapVar p) map'
-  pure (MyRecord map2)
-mapVar _ (MyLiteral a) = pure (MyLiteral a)
-mapVar p (MyData dt b) =
-  MyData dt <$> mapVar p b
-mapVar _ (MyConstructor name) = pure (MyConstructor name)
-mapVar p (MyConsApp fn var) = MyConsApp <$> mapVar p fn <*> mapVar p var
-mapVar p (MyCaseMatch expr' matches catchAll) = do
+  pure (MyRecord ann map2)
+mapVar _ (MyLiteral ann a) = pure (MyLiteral ann a)
+mapVar p (MyData ann dt b) =
+  MyData ann dt <$> mapVar p b
+mapVar _ (MyConstructor ann name) = pure (MyConstructor ann name)
+mapVar p (MyConsApp ann fn var) = MyConsApp ann <$> mapVar p fn <*> mapVar p var
+mapVar p (MyCaseMatch ann expr' matches catchAll) = do
   let mapVarPair (name, expr'') = (,) name <$> mapVar p expr''
   matches' <- traverse mapVarPair matches
   catchAll' <- traverse (mapVar p) catchAll
-  MyCaseMatch <$> mapVar p expr' <*> pure matches' <*> pure catchAll'
+  MyCaseMatch ann <$> mapVar p expr' <*> pure matches' <*> pure catchAll'

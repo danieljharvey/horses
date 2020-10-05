@@ -23,19 +23,20 @@ newtype ServerUrl = ServerUrl {getServerUrl :: Text}
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces
-data Project = Project
-  { store :: Store,
-    bindings :: VersionedBindings,
-    typeBindings :: VersionedTypeBindings,
-    serverUrl :: [ServerUrl]
-  }
+data Project a
+  = Project
+      { store :: Store a,
+        bindings :: VersionedBindings,
+        typeBindings :: VersionedTypeBindings,
+        serverUrl :: [ServerUrl]
+      }
   deriving (Eq, Ord, Show)
 
-instance Semigroup Project where
+instance Semigroup (Project a) where
   Project a a1 a2 a3 <> Project b b1 b2 b3 =
     Project (a <> b) (a1 <> b1) (a2 <> b2) (a3 <> b3)
 
-instance Monoid Project where
+instance Monoid (Project a) where
   mempty = Project mempty mempty mempty mempty
 
 -------------
@@ -46,17 +47,18 @@ type VersionedTypeBindings = VersionedMap TyCon ExprHash
 
 --------
 
-data SaveProject = SaveProject
-  { projectVersion :: Int,
-    projectBindings :: VersionedBindings,
-    projectTypes :: VersionedTypeBindings,
-    projectServers :: [ServerUrl]
-  }
+data SaveProject
+  = SaveProject
+      { projectVersion :: Int,
+        projectBindings :: VersionedBindings,
+        projectTypes :: VersionedTypeBindings,
+        projectServers :: [ServerUrl]
+      }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 -----
 
-projectFromSaved :: Store -> SaveProject -> Project
+projectFromSaved :: Store a -> SaveProject -> Project a
 projectFromSaved store' sp =
   Project
     { store = store',
@@ -65,7 +67,7 @@ projectFromSaved store' sp =
       serverUrl = projectServers sp
     }
 
-projectToSaved :: Project -> SaveProject
+projectToSaved :: Project a -> SaveProject
 projectToSaved proj =
   SaveProject
     { projectVersion = 1,

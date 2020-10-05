@@ -8,10 +8,12 @@ where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Except
+import qualified Data.Aeson as JSON
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Parser as P
+import Language.Mimsa.Printer
 import Language.Mimsa.Project
   ( defaultProject,
     loadProject,
@@ -32,7 +34,15 @@ repl = do
   _ <- doReplAction env Help
   runInputT defaultSettings (loop env)
   where
-    loop :: Project -> InputT IO ()
+    loop ::
+      ( Ord ann,
+        Printer ann,
+        Monoid ann,
+        Show ann,
+        JSON.ToJSON ann
+      ) =>
+      Project ann ->
+      InputT IO ()
     loop exprs' = do
       minput <- getInputLine ":> "
       case minput of
@@ -42,7 +52,11 @@ repl = do
           newEnv <- liftIO $ parseCommand exprs' (T.pack input)
           loop newEnv
 
-parseCommand :: Project -> Text -> IO Project
+parseCommand ::
+  (Ord ann, Monoid ann, Show ann, JSON.ToJSON ann, Printer ann) =>
+  Project ann ->
+  Text ->
+  IO (Project ann)
 parseCommand env input =
   case P.runParserComplete replParser input of
     Left e -> do

@@ -15,15 +15,15 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.Usage
 
-findUsages :: Project -> ExprHash -> Either UsageError (Set Usage)
+findUsages :: Project ann -> ExprHash -> Either UsageError (Set Usage)
 findUsages (Project store' bindings' _ _) =
   findUsages_ store' (getCurrentBindings bindings')
 
-resolveDepsOrUsageError :: Store -> Bindings -> Either UsageError ResolvedDeps
+resolveDepsOrUsageError :: Store ann -> Bindings -> Either UsageError (ResolvedDeps ann)
 resolveDepsOrUsageError store' bindings' =
   first CouldNotResolveDeps (resolveDeps store' bindings')
 
-findUsages_ :: Store -> Bindings -> ExprHash -> Either UsageError (Set Usage)
+findUsages_ :: Store ann -> Bindings -> ExprHash -> Either UsageError (Set Usage)
 findUsages_ store' bindings' exprHash = do
   (ResolvedDeps resolvedDeps) <- resolveDepsOrUsageError store' bindings'
   let directDeps = mconcat $ addUsageIfMatching exprHash <$> M.toList resolvedDeps
@@ -38,7 +38,7 @@ findUsages_ store' bindings' exprHash = do
       (M.toList resolvedDeps)
   pure $ directDeps <> mconcat inDirectDeps
 
-addUsageIfMatching :: ExprHash -> (Name, (ExprHash, StoreExpression)) -> Set Usage
+addUsageIfMatching :: ExprHash -> (Name, (ExprHash, StoreExpression ann)) -> Set Usage
 addUsageIfMatching exprHash (name, (hash, storeExpr')) =
   let matchingNames = getMatches exprHash (storeBindings storeExpr')
    in if S.null matchingNames

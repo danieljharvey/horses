@@ -30,7 +30,7 @@ freeTypeVars ty = case ty of
     S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
-varBind :: Variable -> MonoType -> TcMonad Substitutions
+varBind :: Variable -> MonoType -> TcMonad ann Substitutions
 varBind var ty
   | ty == MTVar var = pure mempty
   | S.member var (freeTypeVars ty) = do
@@ -43,13 +43,13 @@ varBind var ty
 unifyPairs ::
   (MonoType, MonoType) ->
   (MonoType, MonoType) ->
-  TcMonad Substitutions
+  TcMonad ann Substitutions
 unifyPairs (a, b) (a', b') = do
   s1 <- unify a a'
   s2 <- unify (applySubst s1 b) (applySubst s1 b')
   pure (s2 <> s1)
 
-unify :: MonoType -> MonoType -> TcMonad Substitutions
+unify :: MonoType -> MonoType -> TcMonad ann Substitutions
 unify tyA tyB =
   case (tyA, tyB) of
     (a, b) | a == b -> pure mempty
@@ -74,7 +74,7 @@ unify tyA tyB =
     (a, b) ->
       throwError $ UnificationError a b
 
-getTypeOrFresh :: Name -> Map Name MonoType -> TcMonad MonoType
+getTypeOrFresh :: Name -> Map Name MonoType -> TcMonad ann MonoType
 getTypeOrFresh name map' =
   case M.lookup name map' of
     Just found -> pure found

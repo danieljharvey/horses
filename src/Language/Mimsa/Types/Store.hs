@@ -8,5 +8,5 @@ import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.StoreExpression
 
 -- store is where we keep the big map of hashes to expresions
-newtype Store = Store {getStore :: Map ExprHash StoreExpression}
+newtype Store a = Store {getStore :: Map ExprHash (StoreExpression a)}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)

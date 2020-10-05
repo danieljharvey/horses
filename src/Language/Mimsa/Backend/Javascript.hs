@@ -50,7 +50,7 @@ outputLiteral (MyInt i) = fromString $ show i
 intercal :: Javascript -> [Javascript] -> Javascript
 intercal sep as = Javascript $ T.intercalate (coerce sep) (coerce as)
 
-outputRecord :: Map Name (Expr Name) -> Javascript
+outputRecord :: Map Name (Expr Name ann) -> Javascript
 outputRecord as =
   "{ "
     <> intercal
@@ -63,10 +63,14 @@ outputRecord as =
     outputRecordItem (name, val) =
       Javascript (prettyPrint name) <> ": " <> outputJS val
 
-outputConsApp :: Expr Name -> Expr Name -> Javascript
+outputConsApp :: Expr Name ann -> Expr Name ann -> Javascript
 outputConsApp c a = "__app(" <> outputJS c <> ", " <> outputJS a <> ")"
 
-outputCaseMatch :: Expr Name -> NonEmpty (TyCon, Expr Name) -> Maybe (Expr Name) -> Javascript
+outputCaseMatch ::
+  Expr Name ann ->
+  NonEmpty (TyCon, Expr Name ann) ->
+  Maybe (Expr Name ann) ->
+  Javascript
 outputCaseMatch value matches catchAll =
   "__match(" <> outputJS value <> ", " <> matchList <> ", " <> catcher <> ")"
   where
@@ -77,65 +81,65 @@ outputCaseMatch value matches catchAll =
     catcher =
       maybe "null" outputJS catchAll
 
-output :: Expr Name -> Javascript
+output :: Expr Name ann -> Javascript
 output = outputJS
 
 -- are there any more bindings in this expression?
-containsLet :: Expr Name -> Bool
+containsLet :: Expr Name ann -> Bool
 containsLet = getAny . foundLet
 
 -- check for let expressions
-foundLet :: Expr Name -> Any
-foundLet (MyVar _) = mempty
-foundLet (MyIf a b c) = foundLet a <> foundLet b <> foundLet c
+foundLet :: Expr Name ann -> Any
+foundLet (MyVar _ _) = mempty
+foundLet (MyIf _ a b c) = foundLet a <> foundLet b <> foundLet c
 foundLet MyLet {} = Any True
-foundLet (MyLambda _ a) = foundLet a
-foundLet (MyApp a b) = foundLet a <> foundLet b
-foundLet (MyLiteral _) = mempty
+foundLet (MyLambda _ _ a) = foundLet a
+foundLet (MyApp _ a b) = foundLet a <> foundLet b
+foundLet (MyLiteral _ _) = mempty
 foundLet MyLetPair {} = Any True
-foundLet (MyPair a b) = foundLet a <> foundLet b
-foundLet (MyRecord map') = foldMap foundLet map'
-foundLet (MyRecordAccess a _) = foundLet a
-foundLet (MyData _ a) =
+foundLet (MyPair _ a b) = foundLet a <> foundLet b
+foundLet (MyRecord _ map') = foldMap foundLet map'
+foundLet (MyRecordAccess _ a _) = foundLet a
+foundLet (MyData _ _ a) =
   foundLet a
-foundLet (MyConstructor _) = mempty
-foundLet (MyConsApp a b) = foundLet a <> foundLet b
-foundLet (MyCaseMatch sum' matches catchAll) =
+foundLet (MyConstructor _ _) = mempty
+foundLet (MyConsApp _ a b) = foundLet a <> foundLet b
+foundLet (MyCaseMatch _ sum' matches catchAll) =
   foundLet sum'
     <> mconcat (foundLet . snd <$> NE.toList matches)
     <> maybe mempty foundLet catchAll
 
 -- if this is the last binding, then we should 'return' the statement
-addReturn :: Expr Name -> Javascript -> Javascript
+addReturn :: Expr Name ann -> Javascript -> Javascript
 addReturn expr js = if not $ containsLet expr then "return " <> js else js
 
 -- if a return contains let expresssions, it needs to be wrapped in curly lads
-withCurlyBoys :: Expr Name -> Javascript -> Javascript
+withCurlyBoys :: Expr Name ann -> Javascript -> Javascript
 withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else js
 
-outputJS :: Expr Name -> Javascript
+outputJS :: Expr Name ann -> Javascript
 outputJS expr =
   case expr of
-    MyLiteral a ->
+    MyLiteral _ a ->
       outputLiteral a
-    MyVar a -> coerce a
-    MyLambda arg func -> coerce arg <> " => " <> withCurlyBoys func (outputJS func)
-    MyApp f a -> outputJS f <> "(" <> outputJS a <> ")"
-    MyIf p a b -> outputJS p <> " ? " <> outputJS a <> " : " <> outputJS b
-    MyLet n a b ->
+    MyVar _ a -> coerce a
+    MyLambda _ arg func -> coerce arg <> " => " <> withCurlyBoys func (outputJS func)
+    MyApp _ f a -> outputJS f <> "(" <> outputJS a <> ")"
+    MyIf _ p a b -> outputJS p <> " ? " <> outputJS a <> " : " <> outputJS b
+    MyLet _ n a b ->
       "const " <> coerce n <> " = "
         <> outputJS a
         <> ";\n"
         <> addReturn b (outputJS b)
-    MyRecord as -> outputRecord as
-    MyLetPair m n a b ->
+    MyRecord _ as -> outputRecord as
+    MyLetPair _ m n a b ->
       "const [" <> coerce m <> "," <> coerce n <> "] = "
         <> outputJS a
         <> ";\n"
         <> addReturn b (outputJS b)
-    MyPair a b -> "[" <> outputJS a <> "," <> outputJS b <> "]"
-    MyRecordAccess r a -> outputJS r <> "." <> coerce a
-    MyData _ a -> outputJS a -- don't output types
-    MyConstructor a -> "{ type: \"" <> coerce a <> "\", vars: [] }"
-    MyConsApp c a -> outputConsApp c a
-    MyCaseMatch a matches catch -> outputCaseMatch a matches catch
+    MyPair _ a b -> "[" <> outputJS a <> "," <> outputJS b <> "]"
+    MyRecordAccess _ r a -> outputJS r <> "." <> coerce a
+    MyData _ _ a -> outputJS a -- don't output types
+    MyConstructor _ a -> "{ type: \"" <> coerce a <> "\", vars: [] }"
+    MyConsApp _ c a -> outputConsApp c a
+    MyCaseMatch _ a matches catch -> outputCaseMatch a matches catch

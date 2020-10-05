@@ -10,37 +10,36 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.DataTypes (builtInTypes)
-import Language.Mimsa.Types.AST (DataType (DataType), Expr (..))
-import Language.Mimsa.Types.Identifiers
-  ( Name,
-    TyCon,
-    TypeName (ConsName, VarName),
+import Language.Mimsa.Types.AST
+  ( DataType (DataType),
+    Expr (..),
   )
+import Language.Mimsa.Types.Identifiers (Name, TyCon, TypeName (ConsName, VarName))
 
 -- this works out which external types have been used in a given expression
 -- therefore, we must remove any which are declared in the expression itself
-extractTypes :: Expr Name -> Set TyCon
+extractTypes :: Expr Name ann -> Set TyCon
 extractTypes = filterBuiltIns . extractTypes_
 
-extractTypes_ :: Expr Name -> Set TyCon
-extractTypes_ (MyVar _) = mempty
-extractTypes_ (MyIf a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
-extractTypes_ (MyLet _ a b) = extractTypes_ a <> extractTypes_ b
-extractTypes_ (MyLambda _ a) = extractTypes_ a
-extractTypes_ (MyApp a b) = extractTypes_ a <> extractTypes_ b
-extractTypes_ (MyLiteral _) = mempty
-extractTypes_ (MyLetPair _ _ a b) =
+extractTypes_ :: Expr Name ann -> Set TyCon
+extractTypes_ (MyVar _ _) = mempty
+extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
+extractTypes_ (MyLet _ _ a b) = extractTypes_ a <> extractTypes_ b
+extractTypes_ (MyLambda _ _ a) = extractTypes_ a
+extractTypes_ (MyApp _ a b) = extractTypes_ a <> extractTypes_ b
+extractTypes_ (MyLiteral _ _) = mempty
+extractTypes_ (MyLetPair _ _ _ a b) =
   extractTypes_ a <> extractTypes_ b
-extractTypes_ (MyPair a b) = extractTypes_ a <> extractTypes_ b
-extractTypes_ (MyRecord map') = foldMap extractTypes_ map'
-extractTypes_ (MyRecordAccess a _) = extractTypes_ a
-extractTypes_ (MyData dt a) =
+extractTypes_ (MyPair _ a b) = extractTypes_ a <> extractTypes_ b
+extractTypes_ (MyRecord _ map') = foldMap extractTypes_ map'
+extractTypes_ (MyRecordAccess _ a _) = extractTypes_ a
+extractTypes_ (MyData _ dt a) =
   S.difference
     (extractConstructors dt <> extractTypes_ a)
     (extractLocalTypeDeclarations dt)
-extractTypes_ (MyConstructor t) = S.singleton t
-extractTypes_ (MyConsApp a b) = extractTypes_ a <> extractTypes_ b
-extractTypes_ (MyCaseMatch sum' matches catchAll) =
+extractTypes_ (MyConstructor _ t) = S.singleton t
+extractTypes_ (MyConsApp _ a b) = extractTypes_ a <> extractTypes_ b
+extractTypes_ (MyCaseMatch _ sum' matches catchAll) =
   extractTypes_ sum'
     <> mconcat (extractTypes_ . snd <$> NE.toList matches)
     <> mconcat (S.singleton . fst <$> NE.toList matches)
@@ -65,30 +64,30 @@ extractLocalTypeDeclarations (DataType cName _ cons) =
 
 -----------
 
-extractTypeDecl :: Expr a -> Set TyCon
+extractTypeDecl :: Expr var ann -> Set TyCon
 extractTypeDecl = withDataTypes extractLocalTypeDeclarations
 
-extractDataTypes :: Expr a -> Set DataType
+extractDataTypes :: Expr var ann -> Set DataType
 extractDataTypes = withDataTypes S.singleton
 
-withDataTypes :: (Monoid b) => (DataType -> b) -> Expr a -> b
-withDataTypes _ (MyVar _) = mempty
-withDataTypes f (MyIf a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
-withDataTypes f (MyLet _ a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyLambda _ a) = withDataTypes f a
-withDataTypes f (MyApp a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes _ (MyLiteral _) = mempty
-withDataTypes f (MyLetPair _ _ a b) =
+withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
+withDataTypes _ (MyVar _ _) = mempty
+withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
+withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyLambda _ _ a) = withDataTypes f a
+withDataTypes f (MyApp _ a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes _ (MyLiteral _ _) = mempty
+withDataTypes f (MyLetPair _ _ _ a b) =
   withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyPair a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyRecord map') = foldMap (withDataTypes f) map'
-withDataTypes f (MyRecordAccess a _) = withDataTypes f a
-withDataTypes f (MyData dt a) =
+withDataTypes f (MyPair _ a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyRecord _ map') = foldMap (withDataTypes f) map'
+withDataTypes f (MyRecordAccess _ a _) = withDataTypes f a
+withDataTypes f (MyData _ dt a) =
   withDataTypes f a
     <> f dt
-withDataTypes _ (MyConstructor _) = mempty
-withDataTypes f (MyConsApp a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyCaseMatch sum' matches catchAll) =
+withDataTypes _ (MyConstructor _ _) = mempty
+withDataTypes f (MyConsApp _ a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyCaseMatch _ sum' matches catchAll) =
   withDataTypes f sum'
     <> mconcat (withDataTypes f . snd <$> NE.toList matches)
     <> maybe mempty (withDataTypes f) catchAll

@@ -5,10 +5,10 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Swaps
 
-data SubstitutedExpression
+data SubstitutedExpression ann
   = SubstitutedExpression
       { seSwaps :: Swaps,
-        seExpr :: Expr Variable,
-        seScope :: Scope
+        seExpr :: Expr Variable ann,
+        seScope :: Scope ann
       }
   deriving (Eq, Ord, Show)
