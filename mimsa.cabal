@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 97cdece8a86bff8eedb357519f9afd9202f1ef0935a4d260e7039157c586d8ae
+-- hash: 8192855912727a068b0665172706525ed1d76acb330c70736c0f040e12fa658a
 
 name:           mimsa
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
       Language.Mimsa.Logging
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Language
+      Language.Mimsa.Parser.LanguageNew
       Language.Mimsa.Parser.Parser
       Language.Mimsa.Printer
       Language.Mimsa.Project
@@ -77,6 +78,7 @@ library
       Language.Mimsa.Typechecker.Unify
       Language.Mimsa.Types
       Language.Mimsa.Types.AST
+      Language.Mimsa.Types.AST.Annotation
       Language.Mimsa.Types.AST.DataType
       Language.Mimsa.Types.AST.Expr
       Language.Mimsa.Types.AST.Literal
@@ -128,6 +130,7 @@ library
     , fsnotify
     , hashable
     , haskeline
+    , megaparsec
     , microlens
     , modern-uri
     , mtl
@@ -158,6 +161,7 @@ executable mimsa
     , fsnotify
     , hashable
     , haskeline
+    , megaparsec
     , microlens
     , mimsa
     , modern-uri
@@ -205,6 +209,7 @@ test-suite mimsa-test
     , hashable
     , haskeline
     , hspec
+    , megaparsec
     , microlens
     , mimsa
     , modern-uri

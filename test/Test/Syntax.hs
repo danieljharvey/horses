@@ -9,15 +9,24 @@ import Data.Either (isLeft, isRight)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Parser
 import qualified Language.Mimsa.Parser as P
+import Language.Mimsa.Parser.LanguageNew
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
+import Text.Megaparsec
 
 -- specialisation of parseExpr
-testParse :: Text -> Either Text (Expr Name ())
-testParse = parseExpr
+testParse :: Text -> Either String (Expr Name ())
+testParse t = case parseExpr t of
+  Right a -> pure a
+  Left e -> Left $ errorBundlePretty e
+
+testParseName :: Text -> Either ParseErrorType Name
+testParseName = parse nameParser "file.mimsa"
+
+testParseVar :: Text -> Either ParseErrorType (Expr Name ())
+testParseVar = parse varParser "file.mimsa"
 
 spec :: Spec
 spec = do
@@ -32,6 +41,14 @@ spec = do
     it "applicative with thenSpace" $ do
       let parser = (,) <$> P.thenSpace (P.literal "one") <*> P.thenSpace (P.literal "two")
       P.runParser parser "one      two " `shouldBe` Right ("", ("one", "two"))
+  describe "Name"
+    $ it "dog"
+    $ testParseName "dog" `shouldBe` Right (mkName "dog")
+  describe "Var" $ do
+    it "dog" $
+      testParseVar "dog" `shouldBe` Right (MyVar mempty (mkName "dog"))
+    it "2dog" $
+      testParseVar "2dog" `shouldSatisfy` isLeft
   describe "Language" $ do
     it "Parses True" $
       testParse "True" `shouldBe` Right (bool True)
@@ -57,13 +74,13 @@ spec = do
       isLeft (testParse "in")
         `shouldBe` True
     it "Does not accept 2log as a variable name because it starts with a number" $
-      isLeft (testParse "2log") `shouldBe` True
+      testParse "2log" `shouldSatisfy` isLeft
     it "Does not recognise a stupid variable name with crap in it" $
-      isLeft (testParse "log!dog")
-        `shouldBe` True
+      testParse "log!dog"
+        `shouldSatisfy` isLeft
     it "Does a basic let binding" $ do
-      let expected = MyLet mempty (mkName "x") (bool True) (MyVar mempty (mkName "x"))
-      testParse "let x = True in x"
+      let expected = MyLet mempty (mkName "xa") (bool True) (MyVar mempty (mkName "xa"))
+      testParse "let xa = True in xa"
         `shouldBe` Right expected
     it "Does a basic let binding with excessive whitespace" $ do
       let expected = MyLet mempty (mkName "x") (bool True) (MyVar mempty (mkName "x"))
