@@ -71,7 +71,7 @@ expressionParser =
         try literalParser
           <|> try complexParser
           <|> try varParser
-          <|> constructorParser
+          <|> try constructorParser
    in orInBrackets parsers
 
 between2 :: Char -> Char -> Parser a -> Parser a
@@ -85,14 +85,14 @@ inBrackets :: Parser a -> Parser a
 inBrackets = between2 '(' ')'
 
 orInBrackets :: Parser a -> Parser a
-orInBrackets parser = try parser <|> inBrackets parser
+orInBrackets parser = try parser <|> try (inBrackets parser)
 
 literalParser :: Monoid ann => Parser (ParserExpr ann)
 literalParser =
   try boolParser
     <|> try unitParser
     <|> try intParser
-    <|> stringParser
+    <|> try stringParser
 
 complexParser :: Monoid ann => Parser (ParserExpr ann)
 complexParser =
@@ -333,7 +333,7 @@ emptyRecordParser = do
 fullRecordParser :: Monoid ann => Parser (ParserExpr ann)
 fullRecordParser = do
   literalWithSpace "{"
-  args <- some $ do
+  args <- many $ do
     item <- recordItemParser
     _ <- string ","
     _ <- space
@@ -353,9 +353,9 @@ recordItemParser = do
 
 recordAccessParser :: Monoid ann => Parser (ParserExpr ann)
 recordAccessParser =
-  recordAccessParser3
-    <|> recordAccessParser2
-    <|> recordAccessParser1
+  try recordAccessParser3
+    <|> try recordAccessParser2
+    <|> try recordAccessParser1
 
 recordAccessParser1 :: Monoid ann => Parser (ParserExpr ann)
 recordAccessParser1 = do
@@ -486,7 +486,10 @@ oneTypeConstructor = do
 
 typeNameParser :: Parser TypeName
 typeNameParser =
-  emptyConsParser <|> varNameParser <|> inBrackets parameterisedConsParser <|> varNameParser
+  try emptyConsParser
+    <|> try varNameParser
+    <|> try (inBrackets parameterisedConsParser)
+    <|> try varNameParser
 
 emptyConsParser :: Parser TypeName
 emptyConsParser = ConsName <$> tyConParser <*> pure mempty
