@@ -503,9 +503,10 @@ varNameParser = VarName <$> nameParser
 constructorAppParser :: Monoid ann => Parser (ParserExpr ann)
 constructorAppParser = do
   cons <- tyConParser
-  exprs <- many $ do
-    _ <- space1
-    orInBrackets expressionParser
+  exprs <-
+    sepBy
+      (withOptionalSpace (orInBrackets expressionParser))
+      space
   pure (foldl (MyConsApp mempty) (MyConstructor mempty cons) exprs)
 
 ----------
