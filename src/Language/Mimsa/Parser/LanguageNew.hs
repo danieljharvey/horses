@@ -414,29 +414,40 @@ pairParser = do
 -----
 
 typeDeclParser :: Parser DataType
-typeDeclParser = typeDeclParserWithCons <|> typeDeclParserEmpty
+typeDeclParser =
+  try typeDeclParserWithCons
+    <|> try typeDeclParserEmpty
 
+-- it's your "type Void in ..."
 typeDeclParserEmpty :: Parser DataType
 typeDeclParserEmpty = do
   _ <- thenSpace (string "type")
   tyName <- tyConParser
   pure (DataType tyName mempty mempty)
 
+-- it's your more complex cases
 typeDeclParserWithCons :: Parser DataType
 typeDeclParserWithCons = do
   _ <- thenSpace (string "type")
   tyName <- thenSpace tyConParser
-  tyArgs <- many $ thenSpace nameParser
+  tyArgs <- try $ many (thenSpace nameParser)
   _ <- thenSpace (string "=")
-  constructors <- manyTypeConstructors <|> oneTypeConstructor
+  constructors <-
+    try manyTypeConstructors
+      <|> try oneTypeConstructor
   pure $ DataType tyName tyArgs constructors
 
 --------
 
 typeParser :: Monoid ann => Parser (ParserExpr ann)
 typeParser =
-  MyData mempty <$> (typeDeclParserWithCons <|> typeDeclParserEmpty)
-    <*> (inExpr <|> inNewLineExpr)
+  MyData mempty
+    <$> ( try typeDeclParserWithCons
+            <|> try typeDeclParserEmpty
+        )
+    <*> ( try inExpr
+            <|> try inNewLineExpr
+        )
 
 inNewLineExpr :: Monoid ann => Parser (ParserExpr ann)
 inNewLineExpr = do
@@ -453,19 +464,16 @@ inExpr = do
 
 manyTypeConstructors :: Parser (Map TyCon [TypeName])
 manyTypeConstructors = do
-  cons <- many $ do
-    item <- oneTypeConstructor
-    _ <- thenSpace (string "|")
-    pure item
-  lastCons <- oneTypeConstructor
-  pure (mconcat cons <> lastCons)
+  tyCons <-
+    sepBy
+      (withOptionalSpace oneTypeConstructor)
+      (literalWithSpace "|")
+  pure (mconcat tyCons)
 
 oneTypeConstructor :: Parser (Map TyCon [TypeName])
 oneTypeConstructor = do
-  name <- tyConParser
-  args <- many $ do
-    _ <- space1
-    typeNameParser
+  name <- thenSpace tyConParser
+  args <- sepBy (withOptionalSpace typeNameParser) space
   pure (M.singleton name args)
 
 -----
@@ -475,17 +483,16 @@ typeNameParser =
   try emptyConsParser
     <|> try varNameParser
     <|> try (inBrackets parameterisedConsParser)
-    <|> try varNameParser
 
+-- Simple type like String
 emptyConsParser :: Parser TypeName
 emptyConsParser = ConsName <$> tyConParser <*> pure mempty
 
+--
 parameterisedConsParser :: Parser TypeName
 parameterisedConsParser = do
-  c <- tyConParser
-  params <- many $ do
-    _ <- space1
-    typeNameParser
+  c <- thenSpace tyConParser
+  params <- try (sepBy (withOptionalSpace typeNameParser) space1) <|> pure mempty
   pure $ ConsName c params
 
 varNameParser :: Parser TypeName
@@ -513,7 +520,8 @@ caseMatchParser :: Monoid ann => Parser (ParserExpr ann)
 caseMatchParser = do
   sumExpr <- caseExprOfParser
   matches <-
-    matchesParser <|> pure <$> matchParser
+    try matchesParser
+      <|> pure <$> matchParser
   catchAll <-
     optional (otherwiseParser (not . null $ matches))
   pure $ MyCaseMatch mempty sumExpr matches catchAll
@@ -527,13 +535,11 @@ otherwiseParser needsBar = do
   expressionParser
 
 matchesParser :: Monoid ann => Parser (NonEmpty (TyCon, ParserExpr ann))
-matchesParser = do
-  cons <- many $ do
-    val <- matchParser
-    _ <- thenSpace (string "|")
-    pure val
-  lastCons <- matchParser
-  pure $ NE.fromList (cons <> [lastCons])
+matchesParser =
+  NE.fromList
+    <$> sepBy
+      (withOptionalSpace matchParser)
+      (literalWithSpace "|")
 
 matchParser :: Monoid ann => Parser (TyCon, ParserExpr ann)
 matchParser = (,) <$> thenSpace tyConParser <*> expressionParser

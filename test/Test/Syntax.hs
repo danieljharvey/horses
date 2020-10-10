@@ -251,7 +251,7 @@ spec = do
               (int 1)
           )
     it "Parses an absolute unit with type var" $
-      testParse "type Arr a = Empty\n| Item\na\n in 1"
+      testParse "type Arr a = Empty\n | Item a\nin 1"
         `shouldBe` Right
           ( MyData
               mempty
