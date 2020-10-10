@@ -322,25 +322,11 @@ exprInBrackets = do
 -----
 
 recordParser :: Monoid ann => Parser (ParserExpr ann)
-recordParser = try fullRecordParser <|> try emptyRecordParser
-
-emptyRecordParser :: Monoid ann => Parser (ParserExpr ann)
-emptyRecordParser = do
+recordParser = do
   literalWithSpace "{"
+  args <- sepBy (withOptionalSpace recordItemParser) (literalWithSpace ",")
   literalWithSpace "}"
-  pure (MyRecord mempty mempty)
-
-fullRecordParser :: Monoid ann => Parser (ParserExpr ann)
-fullRecordParser = do
-  literalWithSpace "{"
-  args <- many $ do
-    item <- recordItemParser
-    _ <- string ","
-    _ <- space
-    pure item
-  last' <- recordItemParser
-  literalWithSpace "}"
-  pure (MyRecord mempty (M.fromList $ args <> [last']))
+  pure (MyRecord mempty (M.fromList args))
 
 recordItemParser :: Monoid ann => Parser (Name, ParserExpr ann)
 recordItemParser = do
