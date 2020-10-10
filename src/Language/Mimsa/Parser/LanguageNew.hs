@@ -2,16 +2,20 @@
 
 module Language.Mimsa.Parser.LanguageNew
   ( parseExpr,
+    parseAndFormat,
     expressionParser,
     varParser,
     nameParser,
     tyConParser,
     typeDeclParser,
     ParseErrorType,
+    Parser,
+    thenSpace,
   )
 where
 
 import Control.Monad ((>=>))
+import Data.Bifunctor (first)
 import Data.Char as Char
 import Data.Functor (($>))
 import Data.List.NonEmpty (NonEmpty)
@@ -64,6 +68,9 @@ thenSpace parser = do
 -- parse expr, using it all up
 parseExpr :: Monoid ann => Text -> Either ParseErrorType (ParserExpr ann)
 parseExpr = parse (expressionParser <* eof) "file.mimsa"
+
+parseAndFormat :: Parser a -> Text -> Either Text a
+parseAndFormat p = first (T.pack . errorBundlePretty) . parse p "repl"
 
 expressionParser :: Monoid ann => Parser (ParserExpr ann)
 expressionParser =
