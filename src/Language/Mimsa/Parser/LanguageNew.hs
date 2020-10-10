@@ -220,7 +220,7 @@ tyConParser =
 -----
 
 letParser :: Monoid ann => Parser (ParserExpr ann)
-letParser = letInParser <|> letNewlineParser
+letParser = try letInParser <|> letNewlineParser
 
 letNameIn :: Parser Name
 letNameIn = do
@@ -232,7 +232,7 @@ letNameIn = do
 letInParser :: Monoid ann => Parser (ParserExpr ann)
 letInParser = do
   name <- letNameIn
-  expr <- thenSpace expressionParser
+  expr <- withOptionalSpace expressionParser
   _ <- thenSpace (string "in")
   MyLet mempty name expr <$> expressionParser
 

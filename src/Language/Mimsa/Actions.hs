@@ -18,7 +18,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import Language.Mimsa.Parser (parseExpr)
+import Language.Mimsa.Parser.LanguageNew (parseExprAndFormatError)
 import Language.Mimsa.Project
   ( getCurrentBindings,
     getCurrentTypeBindings,
@@ -130,5 +130,5 @@ evaluateText ::
   Text ->
   Either (Error ann) (ResolvedExpression ann)
 evaluateText env input = do
-  expr <- first OtherError $ parseExpr input
+  expr <- first OtherError $ parseExprAndFormatError input
   getTypecheckedStoreExpression env expr
