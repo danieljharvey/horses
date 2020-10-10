@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Parser.LanguageNew
   ( parseExpr,
+    parseExprAndFormatError,
     parseAndFormat,
     expressionParser,
     varParser,
@@ -68,6 +69,9 @@ thenSpace parser = do
 -- parse expr, using it all up
 parseExpr :: Monoid ann => Text -> Either ParseErrorType (ParserExpr ann)
 parseExpr = parse (expressionParser <* eof) "file.mimsa"
+
+parseExprAndFormatError :: Monoid ann => Text -> Either Text (ParserExpr ann)
+parseExprAndFormatError = parseAndFormat (expressionParser <* eof)
 
 parseAndFormat :: Parser a -> Text -> Either Text a
 parseAndFormat p = first (T.pack . errorBundlePretty) . parse p "repl"

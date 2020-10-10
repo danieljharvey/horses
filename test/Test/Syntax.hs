@@ -9,7 +9,6 @@ import Data.Either (isLeft, isRight)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
-import qualified Language.Mimsa.Parser as P
 import Language.Mimsa.Parser.LanguageNew
 import Language.Mimsa.Types
 import Test.Helpers
@@ -30,17 +29,6 @@ testParseVar = parse varParser "file.mimsa"
 
 spec :: Spec
 spec = do
-  describe "Parser" $ do
-    it "thenSpace match" $
-      P.runParser (P.thenSpace (P.literal "let")) "let " `shouldBe` Right ("", "let")
-    it "thenSpace mismatch" $
-      isLeft (P.runParser (P.thenSpace (P.literal "let")) "let") `shouldBe` True
-    it "applicative" $ do
-      let parser = (,) <$> P.literal "one" <*> P.literal "two"
-      P.runParser parser "onetwo" `shouldBe` Right ("", ("one", "two"))
-    it "applicative with thenSpace" $ do
-      let parser = (,) <$> P.thenSpace (P.literal "one") <*> P.thenSpace (P.literal "two")
-      P.runParser parser "one      two " `shouldBe` Right ("", ("one", "two"))
   describe "Name"
     $ it "dog"
     $ testParseName "dog" `shouldBe` Right (mkName "dog")

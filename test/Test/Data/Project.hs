@@ -5,7 +5,7 @@ module Test.Data.Project where
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Parser (parseExpr)
+import Language.Mimsa.Parser.LanguageNew (parseExpr)
 import Language.Mimsa.Types
   ( Bindings (Bindings),
     ExprHash (ExprHash),
