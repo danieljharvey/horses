@@ -14,7 +14,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Interpreter
-import Language.Mimsa.Parser (parseExpr)
+import Language.Mimsa.Parser.LanguageNew (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl
 import Language.Mimsa.Types
@@ -50,9 +50,9 @@ eval env input =
 -- does the output of our prettyprinting still make sense to the parser?
 prettyPrintingParses :: Text -> Either Text ()
 prettyPrintingParses input = do
-  expr1 <- parseExpr input
-  case parseExpr (prettyPrint expr1) of
-    Left _ -> Left ("Could not parse >>>" <> prettyPrint expr1 <> "<<<")
+  expr1 <- parseExprAndFormatError input
+  case parseExprAndFormatError (prettyPrint expr1) of
+    Left e -> Left e
     Right (expr2 :: Expr Name ()) ->
       if expr1 /= expr2
         then
