@@ -5,7 +5,7 @@ module Language.Mimsa.Repl.Parser
   )
 where
 
-import Language.Mimsa.Parser.LanguageNew
+import Language.Mimsa.Parser
 import Language.Mimsa.Repl.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char

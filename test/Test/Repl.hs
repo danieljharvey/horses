@@ -14,7 +14,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Interpreter
-import Language.Mimsa.Parser.LanguageNew (parseExprAndFormatError)
+import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl
 import Language.Mimsa.Types

@@ -9,7 +9,7 @@ import Data.Either (isLeft, isRight)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Parser.LanguageNew
+import Language.Mimsa.Parser
 import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec

@@ -18,7 +18,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import Language.Mimsa.Parser.LanguageNew (parseExprAndFormatError)
+import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Project
   ( getCurrentBindings,
     getCurrentTypeBindings,

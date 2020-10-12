@@ -12,7 +12,7 @@ import qualified Data.Aeson as JSON
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Language.Mimsa.Parser.LanguageNew
+import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
   ( defaultProject,
