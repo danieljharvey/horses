@@ -424,6 +424,29 @@ pairParser = do
 
 -----
 
+typeParser :: Monoid ann => Parser (ParserExpr ann)
+typeParser =
+  MyData mempty
+    <$> ( try typeDeclParserWithCons
+            <|> try typeDeclParserEmpty
+        )
+    <*> ( try inExpr
+            <|> try inNewLineExpr
+        )
+
+inNewLineExpr :: Monoid ann => Parser (ParserExpr ann)
+inNewLineExpr = do
+  _ <- literalWithSpace ";"
+  expressionParser
+
+inExpr :: Monoid ann => Parser (ParserExpr ann)
+inExpr = do
+  _ <- space
+  _ <- thenSpace (string "in")
+  expressionParser
+
+-----
+
 typeDeclParser :: Parser DataType
 typeDeclParser =
   try typeDeclParserWithCons
@@ -450,27 +473,6 @@ typeDeclParserWithCons = do
 
 --------
 
-typeParser :: Monoid ann => Parser (ParserExpr ann)
-typeParser =
-  MyData mempty
-    <$> ( try typeDeclParserWithCons
-            <|> try typeDeclParserEmpty
-        )
-    <*> ( try inExpr
-            <|> try inNewLineExpr
-        )
-
-inNewLineExpr :: Monoid ann => Parser (ParserExpr ann)
-inNewLineExpr = do
-  _ <- literalWithSpace ";"
-  expressionParser
-
-inExpr :: Monoid ann => Parser (ParserExpr ann)
-inExpr = do
-  _ <- space
-  _ <- thenSpace (string "in")
-  expressionParser
-
 ----
 
 manyTypeConstructors :: Parser (Map TyCon [TypeName])
@@ -483,8 +485,14 @@ manyTypeConstructors = do
 
 oneTypeConstructor :: Parser (Map TyCon [TypeName])
 oneTypeConstructor = do
-  name <- thenSpace tyConParser
-  args <- sepBy (withOptionalSpace typeNameParser) space
+  name <- tyConParser
+  args <-
+    try
+      ( do
+          _ <- space1
+          sepBy (withOptionalSpace typeNameParser) space
+      )
+      <|> pure mempty
   pure (M.singleton name args)
 
 -----
