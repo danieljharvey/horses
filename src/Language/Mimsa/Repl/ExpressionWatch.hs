@@ -12,7 +12,7 @@ import Data.IORef
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
-import Language.Mimsa.Parser (parseExpr)
+import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Repl.ExpressionBind
@@ -71,7 +71,7 @@ onFileChange env name = do
     liftIO $ T.readFile $ "./" <> scratchFilename
   replPrint (T.pack scratchFilename <> " updated!")
   expr <-
-    liftRepl $ first ParseErr (parseExpr (T.strip text))
+    liftRepl $ first ParseErr (parseExprAndFormatError (T.strip text))
   (ResolvedExpression type' storeExpr _ _ _) <-
     liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $

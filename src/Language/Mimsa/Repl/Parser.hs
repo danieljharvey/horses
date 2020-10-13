@@ -5,37 +5,32 @@ module Language.Mimsa.Repl.Parser
   )
 where
 
-import Control.Applicative ((<|>))
 import Language.Mimsa.Parser
 import Language.Mimsa.Repl.Types
+import Text.Megaparsec
+import Text.Megaparsec.Char
 
 replParser :: (Monoid ann) => Parser (ReplAction ann)
 replParser =
-  helpParser
-    <|> infoParser
-    <|> bindParser
-    <|> bindTypeParser
-    <|> listBindingsParser
-    <|> treeParser
-    <|> watchParser
-    <|> evalParser
-    <|> tuiParser
-    <|> versionsParser
+  try helpParser
+    <|> try infoParser
+    <|> try bindParser
+    <|> try bindTypeParser
+    <|> try listBindingsParser
+    <|> try treeParser
+    <|> try watchParser
+    <|> try evalParser
+    <|> try tuiParser
+    <|> try versionsParser
     <|> outputJSParser
-    <|> failer
-
-failer :: Parser a
-failer = parseFail (\input -> "Could not parse expression for >>>" <> input <> "<<<")
 
 helpParser :: Parser (ReplAction ann)
-helpParser = Help <$ literal ":help"
+helpParser = Help <$ string ":help"
 
 infoParser :: (Monoid ann) => Parser (ReplAction ann)
-infoParser =
-  Info
-    <$> right
-      (thenSpace (literal ":info"))
-      expressionParser
+infoParser = do
+  _ <- thenSpace (string ":info")
+  Info <$> expressionParser
 
 evalParser :: (Monoid ann) => Parser (ReplAction ann)
 evalParser =
@@ -43,36 +38,39 @@ evalParser =
     <$> expressionParser
 
 treeParser :: (Monoid ann) => Parser (ReplAction ann)
-treeParser = Tree <$> right (thenSpace (literal ":tree")) expressionParser
+treeParser = do
+  _ <- thenSpace (string ":tree")
+  Tree <$> expressionParser
 
 bindParser :: (Monoid ann) => Parser (ReplAction ann)
-bindParser =
-  Bind
-    <$> right (thenSpace (literal ":bind")) (thenSpace nameParser)
-    <*> right (thenSpace (literal "=")) expressionParser
+bindParser = do
+  _ <- thenSpace (string ":bind")
+  name <- thenSpace nameParser
+  _ <- thenSpace (string "=")
+  Bind name <$> expressionParser
 
 bindTypeParser :: Parser (ReplAction ann)
 bindTypeParser = do
-  _ <- thenSpace (literal ":bindType")
+  _ <- thenSpace (string ":bindType")
   BindType <$> typeDeclParser
 
 listBindingsParser :: Parser (ReplAction ann)
-listBindingsParser = ListBindings <$ literal ":list"
+listBindingsParser = ListBindings <$ string ":list"
 
 watchParser :: Parser (ReplAction ann)
 watchParser = do
-  _ <- thenSpace (literal ":watch")
+  _ <- thenSpace (string ":watch")
   Watch <$> nameParser
 
 tuiParser :: Parser (ReplAction ann)
-tuiParser = Tui <$ literal ":tui"
+tuiParser = Tui <$ string ":tui"
 
 versionsParser :: Parser (ReplAction ann)
 versionsParser = do
-  _ <- thenSpace (literal ":versions")
+  _ <- thenSpace (string ":versions")
   Versions <$> nameParser
 
 outputJSParser :: (Monoid ann) => Parser (ReplAction ann)
 outputJSParser = do
-  _ <- thenSpace (literal ":outputJS")
+  _ <- thenSpace (string ":outputJS")
   OutputJS <$> expressionParser

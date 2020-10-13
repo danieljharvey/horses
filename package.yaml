@@ -40,6 +40,7 @@ dependencies:
 - modern-uri # store fetching
 - prettyprinter # formatting
 - file-embed # js compiling
+- megaparsec # parsing
 
 library:
   source-dirs: src

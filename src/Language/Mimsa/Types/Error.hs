@@ -25,9 +25,9 @@ data Error ann
   deriving (Eq, Ord, Show)
 
 instance (Show ann, Printer ann) => Printer (Error ann) where
-  prettyPrint (TypeErr t) = "TypeError: " <> prettyPrint t
-  prettyPrint (ResolverErr a) = "ResolverError: " <> prettyPrint a
-  prettyPrint (InterpreterErr a) = "InterpreterError: " <> prettyPrint a
-  prettyPrint (UsageErr a) = "UsageError: " <> prettyPrint a
-  prettyPrint (ParseErr a) = "ParseError: " <> a
-  prettyPrint (OtherError a) = "OtherError: " <> a
+  prettyPrint (TypeErr t) = "TypeError:\n" <> prettyPrint t
+  prettyPrint (ResolverErr a) = "ResolverError:\n" <> prettyPrint a
+  prettyPrint (InterpreterErr a) = "InterpreterError:\n" <> prettyPrint a
+  prettyPrint (UsageErr a) = "UsageError:\n" <> prettyPrint a
+  prettyPrint (ParseErr a) = "ParseError:\n" <> a
+  prettyPrint (OtherError a) = "OtherError:\n" <> a

@@ -12,7 +12,7 @@ import qualified Data.Aeson as JSON
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import qualified Language.Mimsa.Parser as P
+import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
   ( defaultProject,
@@ -58,7 +58,7 @@ parseCommand ::
   Text ->
   IO (Project ann)
 parseCommand env input =
-  case P.runParserComplete replParser input of
+  case parseAndFormat replParser input of
     Left e -> do
       T.putStrLn e
       pure env
