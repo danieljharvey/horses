@@ -180,7 +180,7 @@ spec = do
       testParse "123 == 123" `shouldBe` Right (MyInfix mempty Equals (int 123) (int 123))
     it "Parsers two constructor applications with infix operator" $
       let mkSome = MyConsApp mempty (MyConstructor mempty (mkTyCon "Some"))
-       in testParse "Some 1 == Some 2"
+       in testParse "(Some 1) == Some 2"
             `shouldBe` Right (MyInfix mempty Equals (mkSome (int 1)) (mkSome (int 2)))
     it "Parses an empty record literal" $
       testParse "{}" `shouldBe` Right (MyRecord mempty mempty)

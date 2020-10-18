@@ -513,9 +513,19 @@ constructorAppParser = do
   cons <- tyConParser
   exprs <-
     sepBy
-      (withOptionalSpace (orInBrackets expressionParser))
+      (withOptionalSpace (orInBrackets consAppArgParser))
       space
   pure (foldl (MyConsApp mempty) (MyConstructor mempty cons) exprs)
+
+-- we don't want to include infix stuff here
+consAppArgParser :: Monoid ann => Parser (ParserExpr ann)
+consAppArgParser =
+  let parsers =
+        try literalParser
+          <|> try complexParser
+          <|> try varParser
+          <|> constructorParser
+   in orInBrackets parsers
 
 ----------
 caseExprOfParser :: Monoid ann => Parser (ParserExpr ann)
@@ -558,23 +568,11 @@ matchParser = (,) <$> thenSpace tyConParser <*> expressionParser
 opParser :: Parser Operator
 opParser = string "==" $> Equals
 
--- basically, it's everything except infixParser
-infixExpr :: Monoid ann => Parser (ParserExpr ann)
-infixExpr =
-  try literalParser
-    <|> try recordParser
-    <|> try appParser
-    <|> try pairParser
-    <|> try recordAccessParser
-    <|> try lambdaParser
-    <|> try constructorAppParser
-    <|> try varParser
-    <|> try constructorParser
-
 infixParser :: Monoid ann => Parser (ParserExpr ann)
 infixParser = do
-  a <- infixExpr
+  let exprP = orInBrackets consAppArgParser
+  a <- exprP
   _ <- space1
   op <- opParser
   _ <- space1
-  MyInfix mempty op a <$> infixExpr
+  MyInfix mempty op a <$> exprP

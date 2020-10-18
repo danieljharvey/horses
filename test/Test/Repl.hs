@@ -426,6 +426,6 @@ spec =
       it "True == True" $ do
         result <- eval' stdLib "True == True"
         result `shouldBe` Right (MTBool, bool True)
-      it "Just 1 == Just 2" $ do
+      it "Some 1 == Some 2" $ do
         result <- eval' stdLib "Some 1 == Some 2"
         result `shouldBe` Right (MTBool, bool False)
