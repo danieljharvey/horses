@@ -50,16 +50,6 @@ type ParseErrorType = ParseErrorBundle Text Void
 
 type ParserExpr ann = Expr Name ann
 
-sc :: Parser ()
-sc =
-  L.space
-    space1 -- (2)
-    (L.skipLineComment "//") -- (3)
-    (L.skipBlockComment "/*" "*/") -- (4)
-
-lexeme :: Parser a -> Parser a
-lexeme = L.lexeme sc
-
 thenSpace :: Parser a -> Parser a
 thenSpace parser = do
   _ <- space
@@ -140,11 +130,8 @@ protectedNames =
 
 ----
 
-integer' :: Parser Int
-integer' = lexeme L.decimal
-
 integerParser :: Parser Int
-integerParser = L.signed sc integer'
+integerParser = L.signed space L.decimal
 
 ---
 
@@ -571,8 +558,18 @@ matchParser = (,) <$> thenSpace tyConParser <*> expressionParser
 opParser :: Parser Operator
 opParser = string "==" $> Equals
 
+-- basically, it's everything except infixParser
 infixExpr :: Monoid ann => Parser (ParserExpr ann)
-infixExpr = try literalParser
+infixExpr =
+  try literalParser
+    <|> try recordParser
+    <|> try appParser
+    <|> try pairParser
+    <|> try recordAccessParser
+    <|> try lambdaParser
+    <|> try constructorAppParser
+    <|> try varParser
+    <|> try constructorParser
 
 infixParser :: Monoid ann => Parser (ParserExpr ann)
 infixParser = do

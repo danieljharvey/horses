@@ -66,7 +66,12 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
       <+> printSubExpr expr1
       <+> "in"
       <+> printSubExpr body
-  prettyDoc (MyInfix _ op a b) = prettyDoc a <> " <> " <> prettyDoc op <> " " <> prettyDoc b
+  prettyDoc (MyInfix _ op a b) =
+    sep
+      [ prettyDoc a,
+        prettyDoc op,
+        prettyDoc b
+      ]
   prettyDoc (MyLambda _ binder expr) =
     vsep
       [ "\\"

@@ -393,7 +393,11 @@ inferOperator ::
   Expr Variable ann ->
   Expr Variable ann ->
   TcMonad ann (Substitutions, MonoType)
-inferOperator _env Equals _a _b = undefined
+inferOperator env Equals a b = do
+  (s1, tyA) <- infer env a
+  (s2, tyB) <- infer env b
+  s3 <- unify tyA tyB -- Equals wants them to be the same
+  pure (s3 <> s2 <> s1, MTBool)
 
 infer ::
   (Eq ann, Monoid ann) =>
