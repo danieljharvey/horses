@@ -21,6 +21,8 @@ swapName from to (MyLet ann name a b) =
     <*> swapName from to b
 swapName from to (MyLambda ann name a) =
   MyLambda ann name <$> swapName from to a
+swapName from to (MyInfix ann op a b) =
+  MyInfix ann op <$> swapName from to a <*> swapName from to b
 swapName from to (MyRecordAccess ann a name) =
   MyRecordAccess ann <$> swapName from to a <*> pure name
 swapName from to (MyApp ann a b) =

@@ -172,6 +172,8 @@ mapVar p (MyVar ann a) =
 mapVar p (MyLet ann name a b) =
   MyLet ann <$> nameToVar name <*> mapVar p a
     <*> mapVar (p <> [name]) b
+mapVar p (MyInfix ann op a b) =
+  MyInfix ann op <$> mapVar p a <*> mapVar p b
 mapVar p (MyLambda ann name a) =
   MyLambda ann <$> nameToVar name <*> mapVar (p <> [name]) a
 mapVar p (MyRecordAccess ann a name) =

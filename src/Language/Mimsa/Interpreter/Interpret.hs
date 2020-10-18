@@ -97,6 +97,14 @@ newLambdaCopy name expr = do
   newExpr <- swapName name newName' expr
   pure (newName', newExpr)
 
+interpretOperator ::
+  (Eq ann, Monoid ann) =>
+  Operator ->
+  Expr Variable ann ->
+  Expr Variable ann ->
+  App ann (Expr Variable ann)
+interpretOperator Equals _a _b = undefined
+
 interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 interpretWithScope interpretExpr =
   case interpretExpr of
@@ -117,6 +125,7 @@ interpretWithScope interpretExpr =
       interpretWithScope (MyLetPair ann binderA binderB expr body)
     (MyLetPair _ _ _ a _) ->
       throwError $ CannotDestructureAsPair a
+    (MyInfix _ op a b) -> interpretOperator op a b
     (MyVar _ var) ->
       useVar var >>= interpretWithScope
     (MyApp ann (MyVar ann' f) value) -> do

@@ -386,6 +386,15 @@ applyList vars tyFun = case vars of
     (s2, tyFun') <- applyList vars' (applySubst s1 tyRes)
     pure (s2 <> s1, applySubst (s2 <> s1) tyFun')
 
+inferOperator ::
+  (Eq ann, Monoid ann) =>
+  Environment ->
+  Operator ->
+  Expr Variable ann ->
+  Expr Variable ann ->
+  TcMonad ann (Substitutions, MonoType)
+inferOperator _env Equals _a _b = undefined
+
 infer ::
   (Eq ann, Monoid ann) =>
   Environment ->
@@ -405,6 +414,7 @@ infer env inferExpr =
         ( s2 <> s1,
           applySubst (s2 <> s1) tyRecord
         )
+    (MyInfix _ op a b) -> inferOperator env op a b
     (MyLet _ binder expr body) ->
       inferLetBinding env binder expr body
     (MyRecordAccess _ (MyRecord _ items') name) ->

@@ -168,6 +168,8 @@ spec = do
     it "Parses a complex let expression" $
       testParse "let const2 = (\\a -> (\\b -> a)) in (let reuse = ({first: const2(True), second: const2(2)}) in reuse.second(100))"
         `shouldSatisfy` isRight
+    it "Parses an infix equals expression" $
+      testParse "True == True" `shouldBe` Right (MyInfix mempty Equals (bool True) (bool True))
     it "Parses an empty record literal" $
       testParse "{}" `shouldBe` Right (MyRecord mempty mempty)
     it "Parses a record literal with a single item inside" $

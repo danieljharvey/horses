@@ -23,6 +23,7 @@ extractVars_ :: (Eq ann, Monoid ann) => Expr Name ann -> Set Name
 extractVars_ (MyVar _ a) = S.singleton a
 extractVars_ (MyIf _ a b c) = extractVars_ a <> extractVars_ b <> extractVars_ c
 extractVars_ (MyLet _ newVar a b) = S.delete newVar (extractVars_ a <> extractVars_ b)
+extractVars_ (MyInfix _ _ a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MyLambda _ newVar a) = S.delete newVar (extractVars_ a)
 extractVars_ (MyApp _ a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MyLiteral _ _) = mempty

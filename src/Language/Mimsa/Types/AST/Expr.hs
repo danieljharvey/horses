@@ -20,6 +20,7 @@ import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType (DataType)
 import Language.Mimsa.Types.AST.Literal (Literal)
+import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
 
 -------
@@ -29,6 +30,7 @@ data Expr var ann
   | MyVar ann var
   | MyLet ann var (Expr var ann) (Expr var ann) -- binder, expr, body
   | MyLetPair ann var var (Expr var ann) (Expr var ann) -- binderA, binderB, expr, body
+  | MyInfix ann Operator (Expr var ann) (Expr var ann) -- a `f` b
   | MyLambda ann var (Expr var ann) -- binder, body
   | MyApp ann (Expr var ann) (Expr var ann) -- function, argument
   | MyIf ann (Expr var ann) (Expr var ann) (Expr var ann) -- expr, thencase, elsecase
@@ -64,6 +66,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
       <+> printSubExpr expr1
       <+> "in"
       <+> printSubExpr body
+  prettyDoc (MyInfix _ op a b) = prettyDoc a <> " <> " <> prettyDoc op <> " " <> prettyDoc b
   prettyDoc (MyLambda _ binder expr) =
     vsep
       [ "\\"

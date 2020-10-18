@@ -25,6 +25,7 @@ extractTypes_ :: Expr Name ann -> Set TyCon
 extractTypes_ (MyVar _ _) = mempty
 extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
 extractTypes_ (MyLet _ _ a b) = extractTypes_ a <> extractTypes_ b
+extractTypes_ (MyInfix _ _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyLambda _ _ a) = extractTypes_ a
 extractTypes_ (MyApp _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyLiteral _ _) = mempty
@@ -74,6 +75,7 @@ withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
 withDataTypes _ (MyVar _ _) = mempty
 withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
 withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyInfix _ _ a b) = withDataTypes f a <> withDataTypes f b
 withDataTypes f (MyLambda _ _ a) = withDataTypes f a
 withDataTypes f (MyApp _ a b) = withDataTypes f a <> withDataTypes f b
 withDataTypes _ (MyLiteral _ _) = mempty
