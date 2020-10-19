@@ -38,6 +38,7 @@ data TypeError ann
   | MissingRecordMember Name (Set Name)
   | MissingRecordTypeMember Name (Map Name MonoType)
   | MissingBuiltIn Variable
+  | NoFunctionEquality MonoType MonoType
   | CannotUnifyBoundVariable Variable MonoType
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedPair MonoType
@@ -150,6 +151,8 @@ renderTypeError (MixedUpPatterns names) =
     "Constructors:"
   ]
     <> (prettyDoc <$> names)
+renderTypeError (NoFunctionEquality a b) =
+  ["Cannot use == on functions", prettyDoc a, prettyDoc b]
 
 printDataTypes :: Environment -> [Doc ann]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

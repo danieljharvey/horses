@@ -126,5 +126,5 @@ outputCommonJS =
         renderExport = \be name -> Javascript $ outputExport be name,
         renderStdLib = \be ->
           let filename = stdLibFilename be
-           in Javascript $ "const { __app, __match } = require(\"./" <> filename <> "\");\n"
+           in Javascript $ "const { __app, __match, __eq } = require(\"./" <> filename <> "\");\n"
       }

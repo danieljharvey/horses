@@ -413,3 +413,22 @@ spec =
       it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")" $ do
         result <- eval' stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")"
         result `shouldBe` Right (MTString, str' "Dog")
+      it "True == \"dog\"" $ do
+        result <- eval' stdLib "True == \"dog\""
+        result `shouldSatisfy` isLeft
+      it "(\\a -> a) == (\\b -> b)" $ do
+        -- no function equality
+        result <- eval' stdLib "(\\a -> a) == (\\b -> b)"
+        result `shouldSatisfy` isLeft
+      it "True == False" $ do
+        result <- eval' stdLib "True == False"
+        result `shouldBe` Right (MTBool, bool False)
+      it "True == True" $ do
+        result <- eval' stdLib "True == True"
+        result `shouldBe` Right (MTBool, bool True)
+      it "(Some 1) == Some 2" $ do
+        result <- eval' stdLib "(Some 1) == Some 2"
+        result `shouldBe` Right (MTBool, bool False)
+      it "let eq1 = \\a -> a == 1 in eq1(1)" $ do
+        result <- eval' stdLib "let eq1 = \\a -> a == 1 in eq1(1)"
+        result `shouldBe` Right (MTBool, bool True)

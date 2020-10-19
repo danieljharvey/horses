@@ -92,6 +92,7 @@ containsLet = getAny . foundLet
 foundLet :: Expr Name ann -> Any
 foundLet (MyVar _ _) = mempty
 foundLet (MyIf _ a b c) = foundLet a <> foundLet b <> foundLet c
+foundLet (MyInfix _ _ a b) = foundLet a <> foundLet b
 foundLet MyLet {} = Any True
 foundLet (MyLambda _ _ a) = foundLet a
 foundLet (MyApp _ a b) = foundLet a <> foundLet b
@@ -117,15 +118,27 @@ addReturn expr js = if not $ containsLet expr then "return " <> js else js
 withCurlyBoys :: Expr Name ann -> Javascript -> Javascript
 withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else js
 
+outputOperator ::
+  Operator ->
+  Expr Name ann ->
+  Expr Name ann ->
+  Javascript
+outputOperator Equals a b =
+  "__eq(" <> outputJS a <> ", " <> outputJS b <> ")"
+
 outputJS :: Expr Name ann -> Javascript
 outputJS expr =
   case expr of
     MyLiteral _ a ->
       outputLiteral a
     MyVar _ a -> coerce a
-    MyLambda _ arg func -> coerce arg <> " => " <> withCurlyBoys func (outputJS func)
-    MyApp _ f a -> outputJS f <> "(" <> outputJS a <> ")"
-    MyIf _ p a b -> outputJS p <> " ? " <> outputJS a <> " : " <> outputJS b
+    MyInfix _ op a b -> outputOperator op a b
+    MyLambda _ arg func ->
+      coerce arg <> " => " <> withCurlyBoys func (outputJS func)
+    MyApp _ f a ->
+      outputJS f <> "(" <> outputJS a <> ")"
+    MyIf _ p a b ->
+      outputJS p <> " ? " <> outputJS a <> " : " <> outputJS b
     MyLet _ n a b ->
       "const " <> coerce n <> " = "
         <> outputJS a

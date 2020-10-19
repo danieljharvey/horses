@@ -33,6 +33,7 @@ import Language.Mimsa.Types
     Expr (..),
     Literal (MyBool, MyInt, MyString, MyUnit),
     Name,
+    Operator (..),
     StringType (StringType),
     TyCon,
     TypeName (..),
@@ -49,16 +50,6 @@ type ParseErrorType = ParseErrorBundle Text Void
 
 type ParserExpr ann = Expr Name ann
 
-sc :: Parser ()
-sc =
-  L.space
-    space1 -- (2)
-    (L.skipLineComment "//") -- (3)
-    (L.skipBlockComment "/*" "*/") -- (4)
-
-lexeme :: Parser a -> Parser a
-lexeme = L.lexeme sc
-
 thenSpace :: Parser a -> Parser a
 thenSpace parser = do
   _ <- space
@@ -68,7 +59,7 @@ thenSpace parser = do
 
 -- parse expr, using it all up
 parseExpr :: Monoid ann => Text -> Either ParseErrorType (ParserExpr ann)
-parseExpr = parse (expressionParser <* eof) "file.mimsa"
+parseExpr = parse (expressionParser <* eof) "repl"
 
 parseExprAndFormatError :: Monoid ann => Text -> Either Text (ParserExpr ann)
 parseExprAndFormatError = parseAndFormat (expressionParser <* eof)
@@ -79,7 +70,8 @@ parseAndFormat p = first (T.pack . errorBundlePretty) . parse p "repl"
 expressionParser :: Monoid ann => Parser (ParserExpr ann)
 expressionParser =
   let parsers =
-        try literalParser
+        try infixParser
+          <|> try literalParser
           <|> try complexParser
           <|> try varParser
           <|> try constructorParser
@@ -138,11 +130,8 @@ protectedNames =
 
 ----
 
-integer' :: Parser Int
-integer' = lexeme L.decimal
-
 integerParser :: Parser Int
-integerParser = L.signed sc integer'
+integerParser = L.signed space L.decimal
 
 ---
 
@@ -524,9 +513,19 @@ constructorAppParser = do
   cons <- tyConParser
   exprs <-
     sepBy
-      (withOptionalSpace (orInBrackets expressionParser))
+      (withOptionalSpace (orInBrackets consAppArgParser))
       space
   pure (foldl (MyConsApp mempty) (MyConstructor mempty cons) exprs)
+
+-- we don't want to include infix stuff here
+consAppArgParser :: Monoid ann => Parser (ParserExpr ann)
+consAppArgParser =
+  let parsers =
+        try literalParser
+          <|> try complexParser
+          <|> try varParser
+          <|> constructorParser
+   in orInBrackets parsers
 
 ----------
 caseExprOfParser :: Monoid ann => Parser (ParserExpr ann)
@@ -563,3 +562,31 @@ matchesParser =
 
 matchParser :: Monoid ann => Parser (TyCon, ParserExpr ann)
 matchParser = (,) <$> thenSpace tyConParser <*> expressionParser
+
+----------
+
+-- we don't allow super complicate exprs to be used around infix
+-- just because it makes awful code and it's slow to parse
+infixExpr :: (Monoid ann) => Parser (ParserExpr ann)
+infixExpr =
+  let parsers =
+        try literalParser
+          <|> try recordParser
+          <|> try appParser
+          <|> try pairParser
+          <|> try recordAccessParser
+          <|> try constructorAppParser
+          <|> try varParser
+          <|> constructorParser
+   in orInBrackets parsers
+
+opParser :: Parser Operator
+opParser = string "==" $> Equals
+
+infixParser :: Monoid ann => Parser (ParserExpr ann)
+infixParser = do
+  a <- infixExpr
+  _ <- space1
+  op <- opParser
+  _ <- space1
+  MyInfix mempty op a <$> infixExpr

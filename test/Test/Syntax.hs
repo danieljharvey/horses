@@ -46,6 +46,12 @@ spec = do
       testParse "6" `shouldBe` Right (int 6)
     it "Parses 1234567" $
       testParse "1234567" `shouldBe` Right (int 1234567)
+    it "Does not parse 123.0" $
+      testParse "123.0" `shouldSatisfy` isLeft
+    it "Does not parse 123 with a space at the end" $
+      testParse "123 " `shouldSatisfy` isLeft
+    it "Does not parse literal with a space at the end" $
+      testParse "True " `shouldSatisfy` isLeft
     it "Parses -6" $
       testParse "-6" `shouldBe` Right (int (-6))
     it "Parses +6" $
@@ -168,6 +174,14 @@ spec = do
     it "Parses a complex let expression" $
       testParse "let const2 = (\\a -> (\\b -> a)) in (let reuse = ({first: const2(True), second: const2(2)}) in reuse.second(100))"
         `shouldSatisfy` isRight
+    it "Parses an infix equals expression" $
+      testParse "True == True" `shouldBe` Right (MyInfix mempty Equals (bool True) (bool True))
+    it "Parses two integers with infix operator" $
+      testParse "123 == 123" `shouldBe` Right (MyInfix mempty Equals (int 123) (int 123))
+    it "Parsers two constructor applications with infix operator" $
+      let mkSome = MyConsApp mempty (MyConstructor mempty (mkTyCon "Some"))
+       in testParse "(Some 1) == Some 2"
+            `shouldBe` Right (MyInfix mempty Equals (mkSome (int 1)) (mkSome (int 2)))
     it "Parses an empty record literal" $
       testParse "{}" `shouldBe` Right (MyRecord mempty mempty)
     it "Parses a record literal with a single item inside" $

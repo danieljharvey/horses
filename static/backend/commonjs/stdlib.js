@@ -11,7 +11,10 @@ const __match = (val, matches, catchAll) => {
   return val.vars.reduce((f, a) => f(a), branch);
 };
 
+const __eq = (a,b) => JSON.stringify(a) === JSON.stringify(b)
+
 module.exports = {
   __app: __app,
-  __match: __match
+  __match: __match,
+  __eq: __eq
 }

@@ -386,6 +386,22 @@ applyList vars tyFun = case vars of
     (s2, tyFun') <- applyList vars' (applySubst s1 tyRes)
     pure (s2 <> s1, applySubst (s2 <> s1) tyFun')
 
+inferOperator ::
+  (Eq ann, Monoid ann) =>
+  Environment ->
+  Operator ->
+  Expr Variable ann ->
+  Expr Variable ann ->
+  TcMonad ann (Substitutions, MonoType)
+inferOperator env Equals a b = do
+  (s1, tyA) <- infer env a
+  (s2, tyB) <- infer env b
+  case tyA of
+    MTFunction _ _ -> throwError $ NoFunctionEquality tyA tyB
+    _ -> do
+      s3 <- unify tyA tyB -- Equals wants them to be the same
+      pure (s3 <> s2 <> s1, MTBool)
+
 infer ::
   (Eq ann, Monoid ann) =>
   Environment ->
@@ -405,6 +421,7 @@ infer env inferExpr =
         ( s2 <> s1,
           applySubst (s2 <> s1) tyRecord
         )
+    (MyInfix _ op a b) -> inferOperator env op a b
     (MyLet _ binder expr body) ->
       inferLetBinding env binder expr body
     (MyRecordAccess _ (MyRecord _ items') name) ->
