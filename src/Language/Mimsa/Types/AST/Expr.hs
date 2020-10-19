@@ -68,9 +68,9 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
       <+> printSubExpr body
   prettyDoc (MyInfix _ op a b) =
     sep
-      [ prettyDoc a,
+      [ printSubExpr a,
         prettyDoc op,
-        prettyDoc b
+        printSubExpr b
       ]
   prettyDoc (MyLambda _ binder expr) =
     vsep

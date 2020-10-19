@@ -565,14 +565,28 @@ matchParser = (,) <$> thenSpace tyConParser <*> expressionParser
 
 ----------
 
+-- we don't allow super complicate exprs to be used around infix
+-- just because it makes awful code and it's slow to parse
+infixExpr :: (Monoid ann) => Parser (ParserExpr ann)
+infixExpr =
+  let parsers =
+        try literalParser
+          <|> try recordParser
+          <|> try appParser
+          <|> try pairParser
+          <|> try recordAccessParser
+          <|> try constructorAppParser
+          <|> try varParser
+          <|> constructorParser
+   in orInBrackets parsers
+
 opParser :: Parser Operator
 opParser = string "==" $> Equals
 
 infixParser :: Monoid ann => Parser (ParserExpr ann)
 infixParser = do
-  let exprP = orInBrackets consAppArgParser
-  a <- exprP
+  a <- infixExpr
   _ <- space1
   op <- opParser
   _ <- space1
-  MyInfix mempty op a <$> exprP
+  MyInfix mempty op a <$> infixExpr

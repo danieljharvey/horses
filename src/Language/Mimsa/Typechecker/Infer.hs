@@ -396,8 +396,11 @@ inferOperator ::
 inferOperator env Equals a b = do
   (s1, tyA) <- infer env a
   (s2, tyB) <- infer env b
-  s3 <- unify tyA tyB -- Equals wants them to be the same
-  pure (s3 <> s2 <> s1, MTBool)
+  case tyA of
+    MTFunction _ _ -> throwError $ NoFunctionEquality tyA tyB
+    _ -> do
+      s3 <- unify tyA tyB -- Equals wants them to be the same
+      pure (s3 <> s2 <> s1, MTBool)
 
 infer ::
   (Eq ann, Monoid ann) =>

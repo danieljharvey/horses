@@ -78,7 +78,7 @@ onFileChange env name = do
     "+ Using the following from scope: "
       <> prettyPrint (storeBindings storeExpr)
   replPrint $
-    "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
-      <> " :: "
+    "Bound " <> prettyPrint name <> ".\n::\n" <> prettyPrint expr
+      <> "\n\n"
       <> prettyPrint type'
   bindStoreExpression env storeExpr name

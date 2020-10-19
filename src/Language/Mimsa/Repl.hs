@@ -24,6 +24,7 @@ import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types
 import System.Console.Haskeline
+import Text.Megaparsec
 
 repl :: IO ()
 repl = do
@@ -58,7 +59,7 @@ parseCommand ::
   Text ->
   IO (Project ann)
 parseCommand env input =
-  case parseAndFormat replParser input of
+  case parseAndFormat (replParser <* eof) input of
     Left e -> do
       T.putStrLn e
       pure env

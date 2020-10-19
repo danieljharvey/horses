@@ -118,8 +118,13 @@ addReturn expr js = if not $ containsLet expr then "return " <> js else js
 withCurlyBoys :: Expr Name ann -> Javascript -> Javascript
 withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else js
 
-outputOperator :: Operator -> Javascript
-outputOperator Equals = "==="
+outputOperator ::
+  Operator ->
+  Expr Name ann ->
+  Expr Name ann ->
+  Javascript
+outputOperator Equals a b =
+  "__eq(" <> outputJS a <> ", " <> outputJS b <> ")"
 
 outputJS :: Expr Name ann -> Javascript
 outputJS expr =
@@ -127,8 +132,7 @@ outputJS expr =
     MyLiteral _ a ->
       outputLiteral a
     MyVar _ a -> coerce a
-    MyInfix _ op a b ->
-      outputJS a <> " " <> outputOperator op <> " " <> outputJS b
+    MyInfix _ op a b -> outputOperator op a b
     MyLambda _ arg func ->
       coerce arg <> " => " <> withCurlyBoys func (outputJS func)
     MyApp _ f a ->

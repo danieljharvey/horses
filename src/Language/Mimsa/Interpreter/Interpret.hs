@@ -8,7 +8,6 @@ where
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
 import Control.Monad.Except
-import Data.Functor (($>))
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
@@ -104,13 +103,13 @@ interpretOperator ::
   Expr Variable ann ->
   Expr Variable ann ->
   App ann (Expr Variable ann)
-interpretOperator Equals a b =
-  let plainA = a $> ()
-      plainB = b $> ()
-      respondWith = pure . MyLiteral mempty . MyBool
-   in if plainA == plainB
-        then respondWith True
-        else respondWith False
+interpretOperator Equals a b = do
+  plainA <- interpretWithScope a
+  plainB <- interpretWithScope b
+  let respondWith = pure . MyLiteral mempty . MyBool
+  if plainA == plainB
+    then respondWith True
+    else respondWith False
 
 interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 interpretWithScope interpretExpr =

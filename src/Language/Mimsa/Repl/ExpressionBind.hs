@@ -24,8 +24,8 @@ doBind ::
 doBind env name expr = do
   (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
-    "Bound " <> prettyPrint name <> " to " <> prettyPrint expr
-      <> " :: "
+    "Bound " <> prettyPrint name <> ".\n\n" <> prettyPrint expr
+      <> "\n::\n"
       <> prettyPrint type'
   bindStoreExpression env storeExpr name
 

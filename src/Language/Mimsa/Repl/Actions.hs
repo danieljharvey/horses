@@ -108,7 +108,7 @@ doInfo env expr = do
   (ResolvedExpression type' _ _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
     prettyPrint expr
-      <> " :: "
+      <> "/n:: "
       <> prettyPrint type'
 
 ----------
@@ -181,7 +181,7 @@ doEvaluate env expr = do
   simplified' <- liftRepl (first InterpreterErr simplified)
   replPrint $
     prettyPrint simplified'
-      <> " :: "
+      <> "\n::\n"
       <> prettyPrint type'
 
 ---------
