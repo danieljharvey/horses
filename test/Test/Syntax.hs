@@ -18,25 +18,11 @@ import Text.Megaparsec
 -- specialisation of parseExpr
 testParse :: Text -> Either String (Expr Name ())
 testParse t = case parseExpr t of
-  Right a -> pure a
+  Right expr -> pure (toEmptyAnnotation expr)
   Left e -> Left $ errorBundlePretty e
-
-testParseName :: Text -> Either ParseErrorType Name
-testParseName = parse nameParser "file.mimsa"
-
-testParseVar :: Text -> Either ParseErrorType (Expr Name ())
-testParseVar = parse varParser "file.mimsa"
 
 spec :: Spec
 spec = do
-  describe "Name"
-    $ it "dog"
-    $ testParseName "dog" `shouldBe` Right (mkName "dog")
-  describe "Var" $ do
-    it "dog" $
-      testParseVar "dog" `shouldBe` Right (MyVar mempty (mkName "dog"))
-    it "2dog" $
-      testParseVar "2dog" `shouldSatisfy` isLeft
   describe "Language" $ do
     it "Parses True" $
       testParse "True" `shouldBe` Right (bool True)

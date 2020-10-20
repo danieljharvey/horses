@@ -111,10 +111,9 @@ resolveStoreExpression store' storeExpr = do
   pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
 
 getTypecheckedStoreExpression ::
-  (Monoid ann, Eq ann) =>
-  Project ann ->
-  Expr Name ann ->
-  Either (Error ann) (ResolvedExpression ann)
+  Project Annotation ->
+  Expr Name Annotation ->
+  Either (Error Annotation) (ResolvedExpression Annotation)
 getTypecheckedStoreExpression env expr = do
   storeExpr <-
     first ResolverErr $
@@ -125,10 +124,9 @@ getTypecheckedStoreExpression env expr = do
   resolveStoreExpression (store env) storeExpr
 
 evaluateText ::
-  (Eq ann, Monoid ann) =>
-  Project ann ->
+  Project Annotation ->
   Text ->
-  Either (Error ann) (ResolvedExpression ann)
+  Either (Error Annotation) (ResolvedExpression Annotation)
 evaluateText env input = do
   expr <- first OtherError $ parseExprAndFormatError input
   getTypecheckedStoreExpression env expr

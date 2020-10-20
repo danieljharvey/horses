@@ -36,15 +36,9 @@ writeExpression env name =
     Nothing -> pure ()
 
 doWatch ::
-  ( Eq ann,
-    Monoid ann,
-    Show ann,
-    Printer ann,
-    JSON.ToJSON ann
-  ) =>
-  Project ann ->
+  Project Annotation ->
   Name ->
-  ReplM ann (Project ann)
+  ReplM Annotation (Project Annotation)
 doWatch env name = do
   writeExpression env name
   ioEnv <- liftIO $ newIORef env
@@ -62,10 +56,9 @@ doWatch env name = do
   liftIO $ readIORef ioEnv
 
 onFileChange ::
-  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
-  Project ann ->
+  Project Annotation ->
   Name ->
-  ReplM ann (Project ann)
+  ReplM Annotation (Project Annotation)
 onFileChange env name = do
   text <-
     liftIO $ T.readFile $ "./" <> scratchFilename

@@ -34,16 +34,9 @@ import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
 
 doReplAction ::
-  ( JSON.ToJSON ann,
-    Eq ann,
-    Ord ann,
-    Monoid ann,
-    Printer ann,
-    Show ann
-  ) =>
-  Project ann ->
-  ReplAction ann ->
-  IO (Project ann)
+  Project Annotation ->
+  ReplAction Annotation ->
+  IO (Project Annotation)
 doReplAction env Help = do
   doHelp
   pure env
@@ -100,10 +93,9 @@ doHelp = do
 ----------
 
 doInfo ::
-  (Eq ann, Monoid ann) =>
-  Project ann ->
-  Expr Name ann ->
-  ReplM ann ()
+  Project Annotation ->
+  Expr Name Annotation ->
+  ReplM Annotation ()
 doInfo env expr = do
   (ResolvedExpression type' _ _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
@@ -114,10 +106,9 @@ doInfo env expr = do
 ----------
 
 doTree ::
-  (JSON.ToJSON ann, Eq ann, Monoid ann) =>
-  Project ann ->
-  Expr Name ann ->
-  ReplM ann ()
+  Project Annotation ->
+  Expr Name Annotation ->
+  ReplM Annotation ()
 doTree env expr = do
   (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   let graph = createDepGraph (mkName "expression") (store env) storeExpr
@@ -146,7 +137,7 @@ doVersions env name = do
 
 ------
 
-doListBindings :: (Eq ann, Monoid ann) => Project ann -> ReplM ann ()
+doListBindings :: Project Annotation -> ReplM Annotation ()
 doListBindings env = do
   let showBind (name, StoreExpression expr _ _) =
         case getTypecheckedStoreExpression env expr of
@@ -170,10 +161,9 @@ doListBindings env = do
 ----------
 
 doEvaluate ::
-  (Eq ann, Monoid ann) =>
-  Project ann ->
-  Expr Name ann ->
-  ReplM ann ()
+  Project Annotation ->
+  Expr Name Annotation ->
+  ReplM Annotation ()
 doEvaluate env expr = do
   (ResolvedExpression type' _ expr' scope' swaps) <-
     liftRepl $ getTypecheckedStoreExpression env expr
@@ -187,10 +177,9 @@ doEvaluate env expr = do
 ---------
 
 doOutputJS ::
-  (Eq ann, Ord ann, Monoid ann, JSON.ToJSON ann) =>
-  Project ann ->
-  Expr Name ann ->
-  ReplM ann ()
+  Project Annotation ->
+  Expr Name Annotation ->
+  ReplM Annotation ()
 doOutputJS env expr = do
   (ResolvedExpression _ storeExpr' _ _ _) <-
     liftRepl $ getTypecheckedStoreExpression env expr

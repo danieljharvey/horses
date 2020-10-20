@@ -16,11 +16,10 @@ import Language.Mimsa.Store (saveExpr)
 import Language.Mimsa.Types
 
 doBind ::
-  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
-  Project ann ->
+  Project Annotation ->
   Name ->
-  Expr Name ann ->
-  ReplM ann (Project ann)
+  Expr Name Annotation ->
+  ReplM Annotation (Project Annotation)
 doBind env name expr = do
   (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
   replPrint $
@@ -30,10 +29,9 @@ doBind env name expr = do
   bindStoreExpression env storeExpr name
 
 doBindType ::
-  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
-  Project ann ->
+  Project Annotation ->
   DataType ->
-  ReplM ann (Project ann)
+  ReplM Annotation (Project Annotation)
 doBindType env dt = do
   let expr = MyData mempty dt (MyRecord mempty mempty)
   (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
@@ -53,11 +51,11 @@ bindTypeExpression env storeExpr = do
 
 -- save an expression in the store and bind it to name
 bindStoreExpression ::
-  (MonadIO m, JSON.ToJSON ann) =>
-  Project ann ->
-  StoreExpression ann ->
+  (MonadIO m) =>
+  Project Annotation ->
+  StoreExpression Annotation ->
   Name ->
-  m (Project ann)
+  m (Project Annotation)
 bindStoreExpression env storeExpr name = do
   hash <- liftIO (saveExpr storeExpr)
   let newEnv = fromItem name storeExpr hash
