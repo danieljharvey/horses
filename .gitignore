@@ -1,3 +1,5 @@
 .stack-work/
 *~
 store/*.json
+result
+result/
