@@ -57,5 +57,5 @@ parseCommand env input =
       pure env
     Right replAction -> do
       newExprs <- doReplAction env replAction
-      _ <- runExceptT $ saveProject newExprs
+      _ <- runExceptT $ saveProject (newExprs $> ())
       pure newExprs

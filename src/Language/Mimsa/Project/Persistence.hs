@@ -48,7 +48,7 @@ loadProject = do
       pure $ projectFromSaved (store' <> typeStore') sp
     _ -> throwError $ "Could not decode file at " <> T.pack envPath
 
-saveProject :: Project ann -> PersistApp ()
+saveProject :: Project () -> PersistApp ()
 saveProject env = do
   let jsonStr = JSON.encode (projectToSaved env)
   liftIO $ BS.writeFile envPath jsonStr
@@ -56,10 +56,9 @@ saveProject env = do
 --
 
 loadBoundExpressions ::
-  (JSON.ToJSON ann, JSON.FromJSON ann) =>
   [ServerUrl] ->
   Set ExprHash ->
-  PersistApp (Store ann)
+  PersistApp (Store ())
 loadBoundExpressions urls hashes = do
   items' <-
     traverse
@@ -72,10 +71,9 @@ loadBoundExpressions urls hashes = do
     (Store (M.fromList items'))
 
 recursiveLoadBoundExpressions ::
-  (JSON.ToJSON ann, JSON.FromJSON ann) =>
   [ServerUrl] ->
   Set ExprHash ->
-  PersistApp (Store ann)
+  PersistApp (Store ())
 recursiveLoadBoundExpressions urls hashes = do
   store' <- loadBoundExpressions urls hashes
   let newHashes =

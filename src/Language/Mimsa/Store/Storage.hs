@@ -13,6 +13,7 @@ import Control.Exception
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
+import Data.Functor
 import qualified Data.Hashable as Hash
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -47,14 +48,16 @@ getHash = ExprHash . Hash.hash
 
 -- the store is where we save all the fucking bullshit
 
-getStoreExpressionHash :: (JSON.ToJSON a) => StoreExpression a -> ExprHash
-getStoreExpressionHash = getHash . JSON.encode
+getStoreExpressionHash :: StoreExpression ann -> ExprHash
+getStoreExpressionHash se = getStoreExpressionHash' (se $> ())
+
+getStoreExpressionHash' :: StoreExpression () -> ExprHash
+getStoreExpressionHash' = getHash . JSON.encode
 
 validateStoreExpression ::
-  JSON.ToJSON a =>
-  StoreExpression a ->
+  StoreExpression () ->
   ExprHash ->
-  Either Text (StoreExpression a)
+  Either Text (StoreExpression ())
 validateStoreExpression storeExpr exprHash =
   if getStoreExpressionHash storeExpr == exprHash
     then pure storeExpr
@@ -65,19 +68,22 @@ validateStoreExpression storeExpr exprHash =
           <> " but instead received "
           <> prettyPrint (getStoreExpressionHash storeExpr)
 
+saveExpr :: StoreExpression ann -> IO ExprHash
+saveExpr se = saveExpr' (se $> ())
+
 -- take an expression, save it, return ExprHash
-saveExpr :: (JSON.ToJSON a) => StoreExpression a -> IO ExprHash
-saveExpr expr = do
+saveExpr' :: StoreExpression () -> IO ExprHash
+saveExpr' expr = do
   storePath <- getStoreFolder
   let json = JSON.encode expr
   let exprHash = getHash json
   BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
-findExpr :: (JSON.ToJSON a, JSON.FromJSON a) => [ServerUrl] -> ExprHash -> ExceptT Text IO (StoreExpression a)
+findExpr :: [ServerUrl] -> ExprHash -> ExceptT Text IO (StoreExpression ())
 findExpr urls hash = findExprInLocalStore hash <|> tryServers hash urls
 
-tryServers :: (JSON.ToJSON a, JSON.FromJSON a) => ExprHash -> [ServerUrl] -> ExceptT Text IO (StoreExpression a)
+tryServers :: ExprHash -> [ServerUrl] -> ExceptT Text IO (StoreExpression ())
 tryServers _ [] = throwError "Could not find expression on any server"
 tryServers hash (url : urls) = findExprFromServer url hash <|> tryServers hash urls
 
@@ -90,7 +96,7 @@ getPath hash serverUrl = do
     _ -> throwError "oh no"
 
 -- find in the store
-findExprFromServer :: (JSON.ToJSON a, JSON.FromJSON a) => ServerUrl -> ExprHash -> ExceptT Text IO (StoreExpression a)
+findExprFromServer :: ServerUrl -> ExprHash -> ExceptT Text IO (StoreExpression ())
 findExprFromServer serverUrl hash = do
   path <- getPath hash serverUrl
   body <-
@@ -101,7 +107,10 @@ findExprFromServer serverUrl hash = do
         NoReqBody
         jsonResponse -- specify how to interpret response
         mempty -- query params, headers, explicit port number, etc.
-  liftIO $ T.putStrLn $ "Downloading expression for " <> prettyPrint hash <> " from " <> getServerUrl serverUrl
+  liftIO $ T.putStrLn $
+    "Downloading expression for " <> prettyPrint hash
+      <> " from "
+      <> getServerUrl serverUrl
   let storeExpr = responseBody body
   case validateStoreExpression storeExpr hash of
     Right storeExpr' -> do
@@ -111,7 +120,7 @@ findExprFromServer serverUrl hash = do
       throwError e
 
 -- find in the store
-findExprInLocalStore :: (JSON.FromJSON a) => ExprHash -> ExceptT Text IO (StoreExpression a)
+findExprInLocalStore :: ExprHash -> ExceptT Text IO (StoreExpression ())
 findExprInLocalStore hash = do
   storePath <- liftIO getStoreFolder
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
@@ -119,9 +128,12 @@ findExprInLocalStore hash = do
     Left _ -> throwError $ "Could not read file " <> T.pack (filePath storePath hash)
     Right json' ->
       case JSON.decode json' of
-        Just a -> do
-          liftIO $ T.putStrLn $ "Found expression for " <> prettyPrint hash
-          pure a
+        Just storeExpr ->
+          case validateStoreExpression storeExpr hash of
+            Right se -> do
+              liftIO $ T.putStrLn $ "Found expression for " <> prettyPrint hash
+              pure se
+            Left e -> throwError e
         _ -> do
           liftIO $ T.putStrLn $ "Could not find expression for " <> prettyPrint hash
           throwError "Could not find!"
