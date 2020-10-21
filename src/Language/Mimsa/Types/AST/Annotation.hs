@@ -1,21 +1,20 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.Annotation where
 
-import qualified Data.Aeson as JSON
+import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 
 data Annotation
   = None
-  | Location Int Int
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON)
+  | Location Int
+  deriving (Eq, Ord, Show, Generic)
 
 instance Semigroup Annotation where
-  Location a b <> Location a' b' = Location (min a a') (max b b')
-  Location a b <> None = Location a b
+  Location a <> Location a' = Location (min a a')
+  Location a <> None = Location a
   None <> a = a
 
 instance Monoid Annotation where
@@ -23,4 +22,4 @@ instance Monoid Annotation where
 
 instance Printer Annotation where
   prettyDoc None = "-"
-  prettyDoc (Location a b) = prettyDoc a <> " - " <> prettyDoc b
+  prettyDoc (Location a) = pretty a

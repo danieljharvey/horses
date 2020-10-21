@@ -8,7 +8,6 @@ module Language.Mimsa.Repl.ExpressionBind
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.Aeson as JSON
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Types
@@ -40,7 +39,7 @@ doBindType env dt = do
   bindTypeExpression env storeExpr
 
 bindTypeExpression ::
-  (MonadIO m, JSON.ToJSON ann) =>
+  (MonadIO m) =>
   Project ann ->
   StoreExpression ann ->
   m (Project ann)

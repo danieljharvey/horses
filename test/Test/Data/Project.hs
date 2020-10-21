@@ -25,6 +25,10 @@ import Language.Mimsa.Types.AST
 
 type StoreExpressionA = StoreExpression Annotation
 
+-- polymorphic export for use in other tests
+idExpr :: (Monoid ann) => StoreExpression ann
+idExpr = idExpr' $> mempty
+
 fstExpr :: StoreExpressionA
 fstExpr =
   unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
@@ -42,8 +46,8 @@ compose :: StoreExpressionA
 compose =
   unsafeGetExpr "\\f -> \\g -> \\aValue -> f(g(aValue))"
 
-idExpr :: StoreExpressionA
-idExpr = unsafeGetExpr "\\i -> i"
+idExpr' :: StoreExpressionA
+idExpr' = unsafeGetExpr "\\i -> i"
 
 incrementInt :: StoreExpressionA
 incrementInt =

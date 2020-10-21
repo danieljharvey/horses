@@ -25,7 +25,10 @@ import Text.Megaparsec
 ----
 
 varParser :: Parser ParserExpr
-varParser = MyVar mempty <$> nameParser
+varParser =
+  MyVar
+    <$> getParserLocation
+    <*> nameParser
 
 ---
 

@@ -25,7 +25,7 @@ import Test.Hspec
 eval ::
   Project Annotation ->
   Text ->
-  IO (Either Text (MonoType, Expr Variable Annotation))
+  IO (Either Text (MonoType, Expr Variable ()))
 eval env input =
   case prettyPrintingParses input of
     Left e -> pure (Left $ prettyPrint e)
@@ -35,9 +35,13 @@ eval env input =
         Right (ResolvedExpression mt se expr' scope' swaps) -> do
           T.putStrLn $ coerce (output (storeExpression se))
           endExpr <- interpret scope' swaps expr'
-          case endExpr of
+          case toEmptyAnn <$> endExpr of
             Right a -> pure (Right (mt, a))
             Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+
+-- remove annotations for comparison
+toEmptyAnn :: Expr a b -> Expr a ()
+toEmptyAnn = toEmptyAnnotation
 
 -- does the output of our prettyprinting still make sense to the parser?
 prettyPrintingParses :: Text -> Either Text ()
@@ -46,7 +50,7 @@ prettyPrintingParses input = do
   case parseExprAndFormatError (prettyPrint expr1) of
     Left e -> Left e
     Right expr2 ->
-      if expr1 /= expr2
+      if toEmptyAnn expr1 /= toEmptyAnn expr2
         then
           Left
             ( ">>>" <> T.pack (show expr1)
