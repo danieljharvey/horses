@@ -15,43 +15,21 @@ module Language.Mimsa.Parser.Language
   )
 where
 
-import Control.Monad ((>=>))
-import Data.Bifunctor (first)
-import Data.Char as Char
 import Data.Functor (($>))
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Set (Set)
-import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Void
-import Language.Mimsa.Types
-  ( Name,
-    TyCon,
-    TypeName (..),
-    safeMkName,
-    safeMkTyCon,
-  )
+import Language.Mimsa.Parser.Helpers
+import Language.Mimsa.Parser.Identifiers
+import Language.Mimsa.Parser.Literal
+import Language.Mimsa.Parser.RecordAccess
+import Language.Mimsa.Parser.TypeDecl
+import Language.Mimsa.Parser.Types
+import Language.Mimsa.Types (Name, TyCon)
 import Language.Mimsa.Types.AST
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
-
-type Parser = Parsec Void Text
-
-type ParseErrorType = ParseErrorBundle Text Void
-
-type ParserExpr = Expr Name Annotation
-
-thenSpace :: Parser a -> Parser a
-thenSpace parser = do
-  _ <- space
-  val <- parser
-  _ <- space1
-  pure val
 
 -- parse expr, using it all up
 parseExpr :: Text -> Either ParseErrorType ParserExpr
@@ -59,9 +37,6 @@ parseExpr = parse (expressionParser <* eof) "repl"
 
 parseExprAndFormatError :: Text -> Either Text ParserExpr
 parseExprAndFormatError = parseAndFormat (expressionParser <* eof)
-
-parseAndFormat :: Parser a -> Text -> Either Text a
-parseAndFormat p = first (T.pack . errorBundlePretty) . parse p "repl"
 
 expressionParser :: Parser ParserExpr
 expressionParser =
@@ -72,26 +47,6 @@ expressionParser =
           <|> try varParser
           <|> try constructorParser
    in orInBrackets parsers
-
-between2 :: Char -> Char -> Parser a -> Parser a
-between2 a b parser = do
-  _ <- char a
-  val <- parser
-  _ <- char b
-  pure val
-
-inBrackets :: Parser a -> Parser a
-inBrackets = between2 '(' ')'
-
-orInBrackets :: Parser a -> Parser a
-orInBrackets parser = try parser <|> try (inBrackets parser)
-
-literalParser :: Parser ParserExpr
-literalParser =
-  try boolParser
-    <|> try unitParser
-    <|> try intParser
-    <|> try stringParser
 
 complexParser :: Parser ParserExpr
 complexParser =
@@ -107,102 +62,7 @@ complexParser =
     <|> try constructorAppParser
     <|> try caseMatchParser
 
-protectedNames :: Set Text
-protectedNames =
-  S.fromList
-    [ "let",
-      "in",
-      "if",
-      "then",
-      "else",
-      "case",
-      "of",
-      "type",
-      "otherwise",
-      "True",
-      "False",
-      "Unit"
-    ]
-
 ----
-
-integerParser :: Parser Int
-integerParser = L.signed space L.decimal
-
----
-
-boolParser :: Parser ParserExpr
-boolParser = trueParser <|> falseParser
-
-trueParser :: Parser ParserExpr
-trueParser = string "True" $> MyLiteral mempty (MyBool True)
-
-falseParser :: Parser ParserExpr
-falseParser = string "False" $> MyLiteral mempty (MyBool False)
-
------
-
-unitParser :: Parser ParserExpr
-unitParser = string "Unit" $> MyLiteral mempty MyUnit
-
------
-
-intParser :: Parser ParserExpr
-intParser = MyLiteral mempty . MyInt <$> integerParser
-
------
-
-stringLiteral :: Parser String
-stringLiteral = char '\"' *> manyTill L.charLiteral (char '\"')
-
-stringParser :: Parser ParserExpr
-stringParser =
-  MyLiteral mempty . MyString
-    . StringType
-    . T.pack
-    <$> stringLiteral
-
------
-
-varParser :: Parser ParserExpr
-varParser = MyVar mempty <$> nameParser
-
----
-
-identifier :: Parser Text
-identifier = takeWhile1P (Just "variable name") Char.isAlphaNum
-
-maybePred :: (Show a) => Parser a -> (a -> Maybe b) -> Parser b
-maybePred parser predicate' = try $ do
-  a <- parser
-  case predicate' a of
-    Just b -> pure b
-    _ -> fail $ T.unpack $ "Predicate did not hold for " <> T.pack (show a)
-
-nameParser :: Parser Name
-nameParser =
-  maybePred
-    identifier
-    (inProtected >=> safeMkName)
-
-inProtected :: Text -> Maybe Text
-inProtected tx =
-  if S.member tx protectedNames
-    then Nothing
-    else Just tx
-
----
-
-constructorParser :: Parser ParserExpr
-constructorParser = MyConstructor mempty <$> tyConParser
-
-tyConParser :: Parser TyCon
-tyConParser =
-  maybePred
-    identifier
-    (inProtected >=> safeMkTyCon)
-
------
 
 letParser :: Parser ParserExpr
 letParser = try letInParser <|> letNewlineParser
@@ -230,15 +90,6 @@ letNewlineParser = do
 
 -----
 
-spacedName :: Parser Name
-spacedName = do
-  _ <- space
-  name <- nameParser
-  _ <- space
-  pure name
-
------
-
 letPairParser :: Parser ParserExpr
 letPairParser =
   MyLetPair mempty <$> binder1 <*> binder2
@@ -248,10 +99,10 @@ letPairParser =
     binder1 = do
       _ <- thenSpace (string "let")
       _ <- string "("
-      spacedName
+      withOptionalSpace nameParser
     binder2 = do
       _ <- string ","
-      name <- spacedName
+      name <- withOptionalSpace nameParser
       _ <- thenSpace (string ")")
       pure name
 
@@ -297,16 +148,6 @@ appParser = do
   exprs <- some (withOptionalSpace exprInBrackets)
   pure (foldl (MyApp mempty) func exprs)
 
-literalWithSpace :: Text -> Parser ()
-literalWithSpace tx = () <$ withOptionalSpace (string tx)
-
-withOptionalSpace :: Parser a -> Parser a
-withOptionalSpace p = do
-  _ <- space
-  a <- p
-  _ <- space
-  pure a
-
 exprInBrackets :: Parser ParserExpr
 exprInBrackets = do
   literalWithSpace "("
@@ -330,46 +171,6 @@ recordItemParser = do
   literalWithSpace ":"
   expr <- withOptionalSpace expressionParser
   pure (name, expr)
-
------
-
-recordAccessParser :: Parser ParserExpr
-recordAccessParser =
-  try recordAccessParser3
-    <|> try recordAccessParser2
-    <|> try recordAccessParser1
-
-recordAccessParser1 :: Parser ParserExpr
-recordAccessParser1 = do
-  expr <- varParser
-  name <- dotName
-  _ <- space
-  pure (MyRecordAccess mempty expr name)
-
-dotName :: Parser Name
-dotName = do
-  _ <- string "."
-  nameParser
-
-recordAccessParser2 :: Parser ParserExpr
-recordAccessParser2 = do
-  expr <- varParser
-  name <- dotName
-  name2 <- dotName
-  _ <- space
-  pure (MyRecordAccess mempty (MyRecordAccess mempty expr name) name2)
-
-recordAccessParser3 :: Parser ParserExpr
-recordAccessParser3 = do
-  expr <- varParser
-  _ <- string "."
-  name <- nameParser
-  _ <- string "."
-  name2 <- nameParser
-  _ <- string "."
-  name3 <- nameParser
-  _ <- space
-  pure (MyRecordAccess mempty (MyRecordAccess mempty (MyRecordAccess mempty expr name) name2) name3)
 
 -----
 
@@ -412,9 +213,7 @@ pairParser = do
 typeParser :: Parser ParserExpr
 typeParser =
   MyData mempty
-    <$> ( try typeDeclParserWithCons
-            <|> try typeDeclParserEmpty
-        )
+    <$> typeDeclParser
     <*> ( try inExpr
             <|> try inNewLineExpr
         )
@@ -432,78 +231,6 @@ inExpr = do
 
 -----
 
-typeDeclParser :: Parser DataType
-typeDeclParser =
-  try typeDeclParserWithCons
-    <|> try typeDeclParserEmpty
-
--- it's your "type Void in ..."
-typeDeclParserEmpty :: Parser DataType
-typeDeclParserEmpty = do
-  _ <- thenSpace (string "type")
-  tyName <- tyConParser
-  pure (DataType tyName mempty mempty)
-
--- it's your more complex cases
-typeDeclParserWithCons :: Parser DataType
-typeDeclParserWithCons = do
-  _ <- thenSpace (string "type")
-  tyName <- thenSpace tyConParser
-  tyArgs <- try $ many (thenSpace nameParser)
-  _ <- thenSpace (string "=")
-  constructors <-
-    try manyTypeConstructors
-      <|> try oneTypeConstructor
-  pure $ DataType tyName tyArgs constructors
-
---------
-
-----
-
-manyTypeConstructors :: Parser (Map TyCon [TypeName])
-manyTypeConstructors = do
-  tyCons <-
-    sepBy
-      (withOptionalSpace oneTypeConstructor)
-      (literalWithSpace "|")
-  pure (mconcat tyCons)
-
-oneTypeConstructor :: Parser (Map TyCon [TypeName])
-oneTypeConstructor = do
-  name <- tyConParser
-  args <-
-    try
-      ( do
-          _ <- space1
-          sepBy (withOptionalSpace typeNameParser) space
-      )
-      <|> pure mempty
-  pure (M.singleton name args)
-
------
-
-typeNameParser :: Parser TypeName
-typeNameParser =
-  try emptyConsParser
-    <|> try varNameParser
-    <|> try (inBrackets parameterisedConsParser)
-
--- Simple type like String
-emptyConsParser :: Parser TypeName
-emptyConsParser = ConsName <$> tyConParser <*> pure mempty
-
---
-parameterisedConsParser :: Parser TypeName
-parameterisedConsParser = do
-  c <- thenSpace tyConParser
-  params <- try (sepBy (withOptionalSpace typeNameParser) space1) <|> pure mempty
-  pure $ ConsName c params
-
-varNameParser :: Parser TypeName
-varNameParser = VarName <$> nameParser
-
----
---
 constructorAppParser :: Parser ParserExpr
 constructorAppParser = do
   cons <- tyConParser

@@ -8,7 +8,6 @@ where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Except
-import Data.Functor (($>))
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -28,9 +27,14 @@ import Text.Megaparsec
 repl :: IO ()
 repl = do
   loadedEnv <- runExceptT loadProject
-  let env = case loadedEnv $> mempty of
-        Right env' -> env'
-        _ -> defaultProject
+  env <- case loadedEnv of
+    Right env' -> do
+      let items = length . getStore . store $ env'
+      T.putStrLn $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
+      pure env'
+    _ -> do
+      T.putStrLn "Failed to load project, loading default project"
+      pure defaultProject
   _ <- doReplAction env Help
   runInputT defaultSettings (loop env)
   where
@@ -57,5 +61,5 @@ parseCommand env input =
       pure env
     Right replAction -> do
       newExprs <- doReplAction env replAction
-      _ <- runExceptT $ saveProject (newExprs $> ())
+      _ <- runExceptT $ saveProject newExprs
       pure newExprs

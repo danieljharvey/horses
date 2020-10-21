@@ -14,6 +14,7 @@ import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.Coerce
+import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -31,9 +32,14 @@ hush _ = Nothing
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
-loadProject ::
-  PersistApp (Project ())
+loadProject :: (Monoid ann) => PersistApp (Project ann)
 loadProject = do
+  proj <- loadProject'
+  pure $ proj $> mempty
+
+loadProject' ::
+  PersistApp (Project ())
+loadProject' = do
   project' <- liftIO $ try $ BS.readFile envPath
   case hush project' >>= JSON.decode of
     Just sp -> do
@@ -48,8 +54,11 @@ loadProject = do
       pure $ projectFromSaved (store' <> typeStore') sp
     _ -> throwError $ "Could not decode file at " <> T.pack envPath
 
-saveProject :: Project () -> PersistApp ()
-saveProject env = do
+saveProject :: Project ann -> PersistApp ()
+saveProject p = saveProject' (p $> ())
+
+saveProject' :: Project () -> PersistApp ()
+saveProject' env = do
   let jsonStr = JSON.encode (projectToSaved env)
   liftIO $ BS.writeFile envPath jsonStr
 

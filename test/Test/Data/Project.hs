@@ -1,7 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Data.Project where
+module Test.Data.Project
+  ( stdLib,
+    idExpr,
+  )
+where
 
+import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -61,8 +66,12 @@ aPairExpr = unsafeGetExpr "(1,2)"
 aRecordExpr :: StoreExpressionA
 aRecordExpr = unsafeGetExpr "{ a: 1, b: \"dog\" }"
 
+-- check removing annotation doesn't break stuff
 stdLib :: Project Annotation
-stdLib = Project store' bindings' typeBindings' mempty
+stdLib = (stdLib' $> ()) $> mempty
+
+stdLib' :: Project Annotation
+stdLib' = Project store' bindings' typeBindings' mempty
   where
     store' =
       Store $
