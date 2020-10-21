@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
@@ -8,5 +9,6 @@ import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.StoreExpression
 
 -- store is where we keep the big map of hashes to expresions
-newtype Store a = Store {getStore :: Map ExprHash (StoreExpression a)}
+newtype Store ann = Store {getStore :: Map ExprHash (StoreExpression ann)}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
+  deriving (Functor)

@@ -6,7 +6,6 @@ module Language.Mimsa.Repl.ExpressionWatch
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.Aeson as JSON
 import Data.Bifunctor (first)
 import Data.IORef
 import qualified Data.Text as T

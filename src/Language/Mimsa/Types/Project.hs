@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -23,14 +24,14 @@ newtype ServerUrl = ServerUrl {getServerUrl :: Text}
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces
-data Project a
+data Project ann
   = Project
-      { store :: Store a,
+      { store :: Store ann,
         bindings :: VersionedBindings,
         typeBindings :: VersionedTypeBindings,
         serverUrl :: [ServerUrl]
       }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Functor)
 
 instance Semigroup (Project a) where
   Project a a1 a2 a3 <> Project b b1 b2 b3 =

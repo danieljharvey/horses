@@ -8,7 +8,6 @@ module Language.Mimsa.Repl.Actions
 where
 
 import Control.Monad.IO.Class (liftIO)
-import qualified Data.Aeson as JSON
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE

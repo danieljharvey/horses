@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module Language.Mimsa.Types.StoreExpression where
@@ -19,4 +20,4 @@ data StoreExpression ann
         storeBindings :: Bindings,
         storeTypeBindings :: TypeBindings
       }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON, Functor)

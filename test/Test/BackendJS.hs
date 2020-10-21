@@ -19,7 +19,7 @@ import Language.Mimsa.Types
 import Test.Data.Project
 import Test.Hspec
 
-eval :: Project () -> Text -> Either Text Javascript
+eval :: Project Annotation -> Text -> Either Text Javascript
 eval env input =
   case evaluateText env input of
     Left e -> Left $ prettyPrint e
@@ -27,7 +27,7 @@ eval env input =
       pure $
         output (storeExpression storeExpr)
 
-evalModule :: Project () -> Text -> IO (Either Text Javascript)
+evalModule :: Project Annotation -> Text -> IO (Either Text Javascript)
 evalModule env input =
   case evaluateText env input of
     Left e -> pure $ Left $ prettyPrint e
