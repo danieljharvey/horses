@@ -24,7 +24,6 @@ libraryFunctions =
     M.fromList
       [ (FuncName "randomInt", randomInt),
         (FuncName "randomIntFrom", randomIntFrom),
-        (FuncName "eqPair", eqPair),
         (FuncName "log", logFn),
         (FuncName "addIntPair", addIntPair)
       ]
@@ -71,17 +70,6 @@ randomIntFrom =
         val <- randomIO
         pure (MyLiteral mempty (MyInt (max val i)))
     )
-
-eqPair :: (Eq ann, Monoid ann) => ForeignFunc ann
-eqPair =
-  let tyA = MTVar (NamedVar (Name "a"))
-   in OneArg
-        (MTPair tyA tyA, MTBool)
-        equality
-  where
-    equality pair' =
-      let (MyPair _ x y) = pair'
-       in pure $ MyLiteral mempty (MyBool (x == y))
 
 addIntPair :: Monoid ann => ForeignFunc ann
 addIntPair =

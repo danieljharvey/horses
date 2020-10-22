@@ -9,12 +9,12 @@ import Language.Mimsa.Printer
 
 data Annotation
   = None
-  | Location Int
+  | Location Int Int
   deriving (Eq, Ord, Show, Generic)
 
 instance Semigroup Annotation where
-  Location a <> Location a' = Location (min a a')
-  Location a <> None = Location a
+  Location a b <> Location a' b' = Location (min a a') (max b b')
+  Location a b <> None = Location a b
   None <> a = a
 
 instance Monoid Annotation where
@@ -22,4 +22,4 @@ instance Monoid Annotation where
 
 instance Printer Annotation where
   prettyDoc None = "-"
-  prettyDoc (Location a) = pretty a
+  prettyDoc (Location a b) = pretty a <> " - " <> pretty b

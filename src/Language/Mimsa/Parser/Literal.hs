@@ -7,6 +7,7 @@ where
 
 import Data.Functor (($>))
 import qualified Data.Text as T
+import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Text.Megaparsec
@@ -28,23 +29,23 @@ integerParser = L.signed space L.decimal
 ---
 
 boolParser :: Parser ParserExpr
-boolParser = trueParser <|> falseParser
+boolParser = withLocation MyLiteral (trueParser <|> falseParser)
 
-trueParser :: Parser ParserExpr
-trueParser = string "True" $> MyLiteral mempty (MyBool True)
+trueParser :: Parser Literal
+trueParser = string "True" $> MyBool True
 
-falseParser :: Parser ParserExpr
-falseParser = string "False" $> MyLiteral mempty (MyBool False)
+falseParser :: Parser Literal
+falseParser = string "False" $> MyBool False
 
 -----
 
 unitParser :: Parser ParserExpr
-unitParser = string "Unit" $> MyLiteral mempty MyUnit
+unitParser = withLocation MyLiteral (string "Unit" $> MyUnit)
 
 -----
 
 intParser :: Parser ParserExpr
-intParser = MyLiteral mempty . MyInt <$> integerParser
+intParser = withLocation MyLiteral (MyInt <$> integerParser)
 
 -----
 
@@ -53,8 +54,11 @@ stringLiteral = char '\"' *> manyTill L.charLiteral (char '\"')
 
 stringParser :: Parser ParserExpr
 stringParser =
-  MyLiteral mempty . MyString
-    . StringType
-    . T.pack
-    <$> stringLiteral
+  withLocation
+    MyLiteral
+    ( MyString
+        . StringType
+        . T.pack
+        <$> stringLiteral
+    )
 -----

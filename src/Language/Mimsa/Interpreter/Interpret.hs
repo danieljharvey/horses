@@ -8,6 +8,7 @@ where
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
 import Control.Monad.Except
+import Data.Functor
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
@@ -107,7 +108,8 @@ interpretOperator Equals a b = do
   plainA <- interpretWithScope a
   plainB <- interpretWithScope b
   let respondWith = pure . MyLiteral mempty . MyBool
-  if plainA == plainB
+      removeAnn expr = expr $> ()
+  if removeAnn plainA == removeAnn plainB
     then respondWith True
     else respondWith False
 

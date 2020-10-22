@@ -59,7 +59,7 @@ addInt :: StoreExpressionA
 addInt = unsafeGetExpr "\\a -> \\b -> addIntPair((a,b))"
 
 eqExpr :: StoreExpressionA
-eqExpr = unsafeGetExpr "\\a -> \\b -> eqPair((a,b))"
+eqExpr = unsafeGetExpr "\\a -> \\b -> a == b"
 
 optionExpr :: StoreExpressionA
 optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"

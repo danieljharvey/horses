@@ -16,6 +16,7 @@ import qualified Test.Repl as Repl
 import qualified Test.Resolver as Resolver
 import qualified Test.Substitutor as Substitutor
 import qualified Test.Syntax as Syntax
+import qualified Test.TypeError as TypeError
 import qualified Test.Typechecker as Typechecker
 import qualified Test.Unify as Unify
 import qualified Test.Usages as Usages
@@ -32,3 +33,4 @@ main = hspec $ do
   Unify.spec
   Usages.spec
   JS.spec
+  TypeError.spec

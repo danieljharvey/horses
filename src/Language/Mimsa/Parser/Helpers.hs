@@ -7,17 +7,13 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser.Types
-import Language.Mimsa.Types.AST.Annotation
+import Language.Mimsa.Types.AST
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
 -- run a parser and then run Megaparsec pretty printer on the error
 parseAndFormat :: Parser a -> Text -> Either Text a
 parseAndFormat p = first (T.pack . errorBundlePretty) . parse p "repl"
-
-getParserLocation :: Parser Annotation
-getParserLocation =
-  Location <$> getOffset
 
 -- looks for Parser a followed by 1 or more spaces
 thenSpace :: Parser a -> Parser a
@@ -34,6 +30,16 @@ between2 a b parser = do
   val <- parser
   _ <- char b
   pure val
+
+-----
+
+-- helper for adding location to a parser
+withLocation :: (Annotation -> a -> b) -> Parser a -> Parser b
+withLocation withP p = do
+  start <- getOffset
+  value <- p
+  end <- getOffset
+  pure (withP (Location start end) value)
 
 -----
 

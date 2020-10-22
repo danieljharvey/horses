@@ -25,10 +25,7 @@ import Text.Megaparsec
 ----
 
 varParser :: Parser ParserExpr
-varParser =
-  MyVar
-    <$> getParserLocation
-    <*> nameParser
+varParser = withLocation MyVar nameParser
 
 ---
 
@@ -44,7 +41,7 @@ nameParser =
 ---
 
 constructorParser :: Parser ParserExpr
-constructorParser = MyConstructor mempty <$> tyConParser
+constructorParser = withLocation MyConstructor tyConParser
 
 tyConParser :: Parser TyCon
 tyConParser =

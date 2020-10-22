@@ -21,6 +21,11 @@ testParse t = case parseExpr t of
   Right expr -> pure (toEmptyAnnotation expr)
   Left e -> Left $ errorBundlePretty e
 
+testParseWithAnn :: Text -> Either String (Expr Name Annotation)
+testParseWithAnn t = case parseExpr t of
+  Right expr -> pure expr
+  Left e -> Left $ errorBundlePretty e
+
 spec :: Spec
 spec = do
   describe "Language" $ do
@@ -438,3 +443,19 @@ spec = do
               )
               (int 5)
           )
+  describe "Test annotations" $ do
+    it "Parses a var with location information" $
+      testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) (mkName "dog"))
+    xit "Parses a tyCon with location information" $
+      -- what the hell is going on here?
+      testParseWithAnn "Log" `shouldBe` Right (MyConstructor (Location 0 3) (mkTyCon "Log"))
+    it "Parses a true bool with location information" $
+      testParseWithAnn "True" `shouldBe` Right (MyLiteral (Location 0 4) (MyBool True))
+    it "Parses a false bool with location information" $
+      testParseWithAnn "False" `shouldBe` Right (MyLiteral (Location 0 5) (MyBool False))
+    it "Parses a unit with location information" $
+      testParseWithAnn "Unit" `shouldBe` Right (MyLiteral (Location 0 4) MyUnit)
+    it "Parses an integer with location information" $
+      testParseWithAnn "100" `shouldBe` Right (MyLiteral (Location 0 3) (MyInt 100))
+    it "Parses a string literal with location information" $
+      testParseWithAnn "\"horse\"" `shouldBe` Right (MyLiteral (Location 0 7) (MyString $ StringType "horse"))
