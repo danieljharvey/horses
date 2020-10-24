@@ -13,6 +13,7 @@ import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DisplayError
 import Language.Mimsa.Types
+import Test.Data.Project
 import Test.Hspec
 
 textContains :: Text -> Text -> Bool
@@ -21,7 +22,7 @@ textContains needle haystack =
 
 getTypeError :: Text -> Maybe Text
 getTypeError input =
-  case evaluateText mempty input of
+  case evaluateText stdLib input of
     Left e -> Just (prettyPrint e)
     _ -> Nothing
 
@@ -43,3 +44,9 @@ spec = do
     it "Shows the location with CaseMatchExpectedPair" $
       getTypeError "let (a,b) = True in a"
         `shouldSatisfy` maybePred (textContains "^^^^")
+    it "Shows the location with CannotMatchRecord" $
+      getTypeError "let dog = True in dog.tail"
+        `shouldSatisfy` maybePred (textContains "^^^^^^^^")
+    it "Shows the location with IncompletePatternMatch" $
+      getTypeError "case 1 of Some \\a -> a"
+        `shouldSatisfy` maybePred (textContains "^^^^^^^^^^^^^^^^^^^^^^")

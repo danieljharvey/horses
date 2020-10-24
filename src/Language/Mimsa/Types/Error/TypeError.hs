@@ -37,13 +37,12 @@ data TypeError
   = UnknownTypeError
   | FailsOccursCheck Swaps Variable MonoType
   | UnificationError MonoType MonoType
-  | VariableNotInEnv Swaps Variable (Set Variable)
+  | VariableNotInEnv Swaps Annotation Variable (Set Variable)
   | MissingRecordMember Name (Set Name)
   | MissingRecordTypeMember Name (Map Name MonoType)
-  | MissingBuiltIn Variable
+  | MissingBuiltIn Annotation Variable
   | NoFunctionEquality MonoType MonoType
-  | CannotUnifyBoundVariable Variable MonoType
-  | CannotMatchRecord Environment MonoType
+  | CannotMatchRecord Environment Annotation MonoType
   | CaseMatchExpectedPair Annotation MonoType
   | CannotCaseMatchOnType (Expr Variable Annotation)
   | TypeConstructorNotInScope Environment TyCon
@@ -79,10 +78,13 @@ fromAnnotation (Location a b) = (a, b - a)
 fromAnnotation _ = (0, 0)
 
 getErrorPos :: TypeError -> (Start, Length)
+getErrorPos (VariableNotInEnv _ ann _ _) = fromAnnotation ann
+getErrorPos (MissingBuiltIn ann _) = fromAnnotation ann
 getErrorPos (CaseMatchExpectedPair ann _) =
   fromAnnotation ann
 getErrorPos (CannotCaseMatchOnType expr) =
   fromAnnotation (getAnnotation expr)
+getErrorPos (CannotMatchRecord _ ann _) = fromAnnotation ann
 getErrorPos _ = (0, 0)
 
 ------
@@ -123,11 +125,9 @@ renderTypeError (UnificationError a b) =
   [ "Unification error",
     "Cannot match" <+> prettyDoc a <+> "and" <+> prettyDoc b
   ]
-renderTypeError (CannotUnifyBoundVariable tv mt) =
-  ["Cannot unify type", prettyDoc mt, "with bound variable" <+> prettyDoc tv]
 renderTypeError (CannotCaseMatchOnType ty) =
   ["Cannot case match on type", prettyDoc ty]
-renderTypeError (VariableNotInEnv swaps name members) =
+renderTypeError (VariableNotInEnv swaps _ name members) =
   ["Variable" <+> renderName (withSwap swaps name) <+> " not in scope."]
     <> showSet prettyDoc members
 renderTypeError (MissingRecordMember name members) =
@@ -140,9 +140,9 @@ renderTypeError (MissingRecordTypeMember name types) =
     "The following types are available:"
   ]
     <> showKeys renderName types
-renderTypeError (MissingBuiltIn var) =
+renderTypeError (MissingBuiltIn _ var) =
   ["Cannot find built-in function" <+> prettyDoc var]
-renderTypeError (CannotMatchRecord env mt) =
+renderTypeError (CannotMatchRecord env _ mt) =
   [ "Cannot match type" <+> prettyDoc mt <+> "to record.",
     "The following are available:",
     pretty (show env)

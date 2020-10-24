@@ -87,17 +87,19 @@ inferLiteral (MyString _) = pure (mempty, MTString)
 inferLiteral MyUnit = pure (mempty, MTUnit)
 
 inferBuiltIn ::
+  Annotation ->
   Variable ->
   TcMonad (Substitutions, MonoType)
-inferBuiltIn name = case getLibraryFunction @Annotation name of
+inferBuiltIn ann name = case getLibraryFunction @Annotation name of
   Just ff -> instantiate (generalise mempty (getFFType ff))
-  _ -> throwError $ MissingBuiltIn name
+  _ -> throwError $ MissingBuiltIn ann name
 
 inferVarFromScope ::
   Environment ->
+  Annotation ->
   Variable ->
   TcMonad (Substitutions, MonoType)
-inferVarFromScope env name =
+inferVarFromScope env ann name =
   let lookup' name' (Environment env' _) = M.lookup name' env'
    in case lookup' name env of
         Just mt ->
@@ -107,6 +109,7 @@ inferVarFromScope env name =
           throwError $
             VariableNotInEnv
               swaps
+              ann
               name
               (S.fromList (M.keys (getSchemes env)))
 
@@ -389,6 +392,29 @@ inferOperator env Equals a b = do
       s3 <- unify tyA tyB -- Equals wants them to be the same
       pure (s3 <> s2 <> s1, MTBool)
 
+inferRecordAccess ::
+  Environment ->
+  Annotation ->
+  Expr Variable Annotation ->
+  Name ->
+  TcMonad (Substitutions, MonoType)
+inferRecordAccess env ann a name = do
+  (s1, tyItems) <- infer env a
+  tyResult <- case tyItems of
+    (MTRecord bits) ->
+      case M.lookup name bits of
+        Just mt -> pure mt
+        _ ->
+          throwError $ MissingRecordTypeMember name bits
+    (MTVar _) -> getUnknown
+    _ -> throwError $ CannotMatchRecord env ann tyItems
+  s2 <-
+    unify
+      (MTRecord $ M.singleton name tyResult)
+      tyItems
+  let subs = s2 <> s1
+  pure (subs, applySubst subs tyResult)
+
 infer ::
   Environment ->
   Expr Variable Annotation ->
@@ -396,9 +422,9 @@ infer ::
 infer env inferExpr =
   case inferExpr of
     (MyLiteral _ a) -> inferLiteral a
-    (MyVar _ name) ->
-      inferVarFromScope env name
-        <|> inferBuiltIn name
+    (MyVar ann name) ->
+      inferVarFromScope env ann name
+        <|> inferBuiltIn ann name
     (MyRecord _ map') -> do
       tyRecord <- getUnknown
       (s1, tyResult) <- splitRecordTypes <$> traverse (infer env) map'
@@ -416,22 +442,8 @@ infer env inferExpr =
           infer env item
         Nothing ->
           throwError $ MissingRecordMember name (S.fromList (M.keys items'))
-    (MyRecordAccess _ a name) -> do
-      (s1, tyItems) <- infer env a
-      tyResult <- case tyItems of
-        (MTRecord bits) ->
-          case M.lookup name bits of
-            Just mt -> pure mt
-            _ ->
-              throwError $ MissingRecordTypeMember name bits
-        (MTVar _) -> getUnknown
-        _ -> throwError $ CannotMatchRecord env tyItems
-      s2 <-
-        unify
-          (MTRecord $ M.singleton name tyResult)
-          tyItems
-      let subs = s2 <> s1
-      pure (subs, applySubst subs tyResult)
+    (MyRecordAccess ann a name) ->
+      inferRecordAccess env ann a name
     (MyLetPair _ binder1 binder2 expr body) ->
       inferLetPairBinding env binder1 binder2 expr body
     (MyLambda _ binder body) -> do
