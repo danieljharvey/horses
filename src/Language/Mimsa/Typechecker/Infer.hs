@@ -180,7 +180,7 @@ inferLetPairBinding env binder1 binder2 expr body = do
       tyB <- getUnknown
       pure (tyA, tyB)
     (MTPair a b) -> pure (a, b)
-    a -> throwError $ CaseMatchExpectedPair a
+    a -> throwError $ CaseMatchExpectedPair (getAnnotation expr) a
   let schemeA = Scheme mempty (applySubst s1 tyA)
       schemeB = Scheme mempty (applySubst s1 tyB)
       newEnv = createEnv binder1 schemeA <> createEnv binder2 schemeB <> env

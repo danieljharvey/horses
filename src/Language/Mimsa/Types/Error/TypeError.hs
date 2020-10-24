@@ -44,7 +44,7 @@ data TypeError
   | NoFunctionEquality MonoType MonoType
   | CannotUnifyBoundVariable Variable MonoType
   | CannotMatchRecord Environment MonoType
-  | CaseMatchExpectedPair MonoType
+  | CaseMatchExpectedPair Annotation MonoType
   | CannotCaseMatchOnType (Expr Variable Annotation)
   | TypeConstructorNotInScope Environment TyCon
   | TypeVariableNotInDataType TyCon Name [Name]
@@ -74,11 +74,15 @@ type Start = Int
 
 type Length = Int
 
+fromAnnotation :: Annotation -> (Start, Length)
+fromAnnotation (Location a b) = (a, b - a)
+fromAnnotation _ = (0, 0)
+
 getErrorPos :: TypeError -> (Start, Length)
+getErrorPos (CaseMatchExpectedPair ann _) =
+  fromAnnotation ann
 getErrorPos (CannotCaseMatchOnType expr) =
-  case getAnnotation expr of
-    Location a b -> (a, b - a)
-    _ -> (0, 0)
+  fromAnnotation (getAnnotation expr)
 getErrorPos _ = (0, 0)
 
 ------
@@ -143,7 +147,7 @@ renderTypeError (CannotMatchRecord env mt) =
     "The following are available:",
     pretty (show env)
   ]
-renderTypeError (CaseMatchExpectedPair mt) =
+renderTypeError (CaseMatchExpectedPair _ mt) =
   ["Expected pair but got" <+> prettyDoc mt]
 renderTypeError (TypeConstructorNotInScope env constructor) =
   [ "Type constructor for" <+> prettyDoc constructor
