@@ -8,6 +8,7 @@ module Language.Mimsa.Repl.ExpressionBind
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Text (Text)
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Types
@@ -16,11 +17,12 @@ import Language.Mimsa.Types
 
 doBind ::
   Project Annotation ->
+  Text ->
   Name ->
   Expr Name Annotation ->
   ReplM Annotation (Project Annotation)
-doBind env name expr = do
-  (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
+doBind env input name expr = do
+  (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
   replPrint $
     "Bound " <> prettyPrint name <> ".\n\n" <> prettyPrint expr
       <> "\n::\n"
@@ -29,11 +31,12 @@ doBind env name expr = do
 
 doBindType ::
   Project Annotation ->
+  Text ->
   DataType ->
   ReplM Annotation (Project Annotation)
-doBindType env dt = do
+doBindType env input dt = do
   let expr = MyData mempty dt (MyRecord mempty mempty)
-  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
   replPrint $
     "Bound type " <> prettyPrint dt
   bindTypeExpression env storeExpr

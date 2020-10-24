@@ -15,7 +15,7 @@ import Language.Mimsa.Types
 import Test.Helpers
 import Test.Hspec
 
-runUnifier :: (MonoType, MonoType) -> Either (TypeError ()) Substitutions
+runUnifier :: (MonoType, MonoType) -> Either TypeError Substitutions
 runUnifier (a, b) =
   fst either'
   where

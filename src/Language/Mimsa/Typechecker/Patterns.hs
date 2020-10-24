@@ -21,7 +21,7 @@ checkCompleteness ::
   Environment ->
   NonEmpty (TyCon, Expr Variable ann) ->
   Maybe (Expr Variable ann) ->
-  TcMonad ann DataType
+  TcMonad DataType
 checkCompleteness env opts catchAll = do
   -- find data type for each match
   items <- traverse (\(name, _) -> lookupConstructor env name) opts
@@ -35,7 +35,7 @@ checkCompleteness env opts catchAll = do
     _ -> allPatternsExist optionNames dataType
   pure dataType
 
-allPatternsExist :: [TyCon] -> DataType -> TcMonad ann ()
+allPatternsExist :: [TyCon] -> DataType -> TcMonad ()
 allPatternsExist optNames' (DataType _ _ dataTypes) = do
   -- check each one of optNames exists in dataTypes
   let dtNames = S.fromList (M.keys dataTypes)

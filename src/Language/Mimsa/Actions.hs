@@ -34,13 +34,13 @@ import Language.Mimsa.Types
 ----------
 
 getType ::
-  (Eq ann, Monoid ann) =>
   Swaps ->
-  Scope ann ->
-  Expr Variable ann ->
+  Scope Annotation ->
+  Text ->
+  Expr Variable Annotation ->
   Either (Error ann) MonoType
-getType swaps scope' expr =
-  first TypeErr $ startInference swaps (chainExprs expr scope')
+getType swaps scope' source expr =
+  first (TypeErr source) $ startInference swaps (chainExprs expr scope')
 
 getExprPairs :: Store ann -> Bindings -> [(Name, StoreExpression ann)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -101,27 +101,28 @@ fromType expr hash =
       (,pure hash) <$> S.toList typeConsUsed
 
 resolveStoreExpression ::
-  (Monoid ann, Eq ann) =>
-  Store ann ->
-  StoreExpression ann ->
-  Either (Error ann) (ResolvedExpression ann)
-resolveStoreExpression store' storeExpr = do
+  Store Annotation ->
+  Text ->
+  StoreExpression Annotation ->
+  Either (Error Annotation) (ResolvedExpression Annotation)
+resolveStoreExpression store' input storeExpr = do
   let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
-  exprType <- getType swaps scope newExpr
+  exprType <- getType swaps scope input newExpr
   pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
 
 getTypecheckedStoreExpression ::
+  Text ->
   Project Annotation ->
   Expr Name Annotation ->
   Either (Error Annotation) (ResolvedExpression Annotation)
-getTypecheckedStoreExpression env expr = do
+getTypecheckedStoreExpression input env expr = do
   storeExpr <-
     first ResolverErr $
       createStoreExpression
         (getCurrentBindings $ bindings env)
         (getCurrentTypeBindings $ typeBindings env)
         expr
-  resolveStoreExpression (store env) storeExpr
+  resolveStoreExpression (store env) input storeExpr
 
 evaluateText ::
   Project Annotation ->
@@ -129,4 +130,4 @@ evaluateText ::
   Either (Error Annotation) (ResolvedExpression Annotation)
 evaluateText env input = do
   expr <- first OtherError $ parseExprAndFormatError input
-  getTypecheckedStoreExpression env expr
+  getTypecheckedStoreExpression input env expr

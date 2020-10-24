@@ -33,33 +33,30 @@ import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
 
 startInference ::
-  (Eq ann, Monoid ann) =>
   Swaps ->
-  Expr Variable ann ->
-  Either (TypeError ann) MonoType
+  Expr Variable Annotation ->
+  Either TypeError MonoType
 startInference swaps expr = snd <$> doInference swaps mempty expr
 
 doInference ::
-  (Eq ann, Monoid ann) =>
   Swaps ->
   Environment ->
-  Expr Variable ann ->
-  Either (TypeError ann) (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  Either TypeError (Substitutions, MonoType)
 doInference swaps env expr = runTcMonad swaps (inferAndSubst (defaultEnv <> env) expr)
 
 doDataTypeInference ::
   Environment ->
   DataType ->
-  Either (TypeError ann) (Map TyCon TypeConstructor)
+  Either TypeError (Map TyCon TypeConstructor)
 doDataTypeInference env dt =
   runTcMonad mempty (snd <$> inferConstructorTypes (defaultEnv <> env) dt)
 
 -- run inference, and substitute everything possible
 inferAndSubst ::
-  (Eq ann, Monoid ann) =>
   Environment ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 inferAndSubst env expr = do
   (s, tyExpr) <- infer env expr
   pure (s, applySubst s tyExpr)
@@ -75,7 +72,7 @@ applySubstScheme (Substitutions subst) (Scheme vars t) =
   where
     newSubst = Substitutions $ foldr M.delete subst vars
 
-instantiate :: Scheme -> TcMonad ann (Substitutions, MonoType)
+instantiate :: Scheme -> TcMonad (Substitutions, MonoType)
 instantiate (Scheme vars ty) = do
   newVars <- traverse (const getUnknown) vars
   let subst = Substitutions $ M.fromList (zip vars newVars)
@@ -83,25 +80,23 @@ instantiate (Scheme vars ty) = do
 
 --------------
 
-inferLiteral :: Literal -> TcMonad ann (Substitutions, MonoType)
+inferLiteral :: Literal -> TcMonad (Substitutions, MonoType)
 inferLiteral (MyInt _) = pure (mempty, MTInt)
 inferLiteral (MyBool _) = pure (mempty, MTBool)
 inferLiteral (MyString _) = pure (mempty, MTString)
 inferLiteral MyUnit = pure (mempty, MTUnit)
 
 inferBuiltIn ::
-  forall ann.
-  (Eq ann, Monoid ann) =>
   Variable ->
-  TcMonad ann (Substitutions, MonoType)
-inferBuiltIn name = case getLibraryFunction @ann name of
+  TcMonad (Substitutions, MonoType)
+inferBuiltIn name = case getLibraryFunction @Annotation name of
   Just ff -> instantiate (generalise mempty (getFFType ff))
   _ -> throwError $ MissingBuiltIn name
 
 inferVarFromScope ::
   Environment ->
   Variable ->
-  TcMonad ann (Substitutions, MonoType)
+  TcMonad (Substitutions, MonoType)
 inferVarFromScope env name =
   let lookup' name' (Environment env' _) = M.lookup name' env'
    in case lookup' name env of
@@ -130,11 +125,10 @@ splitRecordTypes map' = (subs, MTRecord types)
 
 -- let's pattern match on exactly what's inside more clearly
 inferApplication ::
-  (Eq ann, Monoid ann) =>
   Environment ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 inferApplication env function argument = do
   tyRes <- getUnknown
   (s1, tyFun) <- infer env function
@@ -145,7 +139,7 @@ inferApplication env function argument = do
 -- when we come to do let recursive the name of our binder
 -- may already be turned into a number in the expr
 -- so we look it up to make sure we bind the right thing
-findActualBindingInSwaps :: Variable -> TcMonad ann Variable
+findActualBindingInSwaps :: Variable -> TcMonad Variable
 findActualBindingInSwaps (NamedVar var) = do
   swaps <- ask
   case listToMaybe $ M.keys $ M.filter (== var) swaps of
@@ -156,12 +150,11 @@ findActualBindingInSwaps a = pure a
 -- to allow recursion we make a type for the let binding in it's own expression
 -- we may need to unify tyUnknown and tyExpr if it struggles with complex stuff
 inferLetBinding ::
-  (Eq ann, Monoid ann) =>
   Environment ->
   Variable ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 inferLetBinding env binder expr body = do
   tyUnknown <- getUnknown
   binderInExpr <- findActualBindingInSwaps binder
@@ -173,13 +166,12 @@ inferLetBinding env binder expr body = do
   pure (s3 <> s2 <> s1, applySubst s3 tyBody)
 
 inferLetPairBinding ::
-  (Eq ann, Monoid ann) =>
   Environment ->
   Variable ->
   Variable ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 inferLetPairBinding env binder1 binder2 expr body = do
   (s1, tyExpr) <- infer env expr
   (tyA, tyB) <- case tyExpr of
@@ -199,11 +191,10 @@ inferLetPairBinding env binder1 binder2 expr body = do
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
 storeDataDeclaration ::
-  (Eq ann, Monoid ann) =>
   Environment ->
   DataType ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 storeDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
@@ -214,7 +205,7 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
 -- infer the type of a data constructor
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
-inferDataConstructor :: Environment -> TyCon -> TcMonad ann (Substitutions, MonoType)
+inferDataConstructor :: Environment -> TyCon -> TcMonad (Substitutions, MonoType)
 inferDataConstructor env name = do
   dataType <- lookupConstructor env name
   (_, allArgs) <- inferConstructorTypes env dataType
@@ -227,7 +218,7 @@ inferDataConstructor env name = do
 inferConstructorTypes ::
   Environment ->
   DataType ->
-  TcMonad ann (MonoType, Map TyCon TypeConstructor)
+  TcMonad (MonoType, Map TyCon TypeConstructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) a <$> getUnknown) tyNames
   let findType ty = case ty of
@@ -248,7 +239,7 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
-inferType :: Environment -> TyCon -> [MonoType] -> TcMonad ann MonoType
+inferType :: Environment -> TyCon -> [MonoType] -> TcMonad MonoType
 inferType env tyName tyVars =
   case M.lookup tyName (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
@@ -262,7 +253,7 @@ lookupBuiltIn name = M.lookup name builtInTypes
 -----
 
 -- check a list of types are all the same
-matchList :: [MonoType] -> TcMonad ann (Substitutions, MonoType)
+matchList :: [MonoType] -> TcMonad (Substitutions, MonoType)
 matchList =
   foldl
     ( \ty' tyB' -> do
@@ -281,11 +272,10 @@ constructorToType (TypeConstructor typeName tyVars constructTypes) =
   foldr MTFunction (MTData typeName tyVars) constructTypes
 
 inferSumExpressionType ::
-  (Eq ann, Monoid ann) =>
   Environment ->
   Map TyCon TypeConstructor ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 inferSumExpressionType env consTypes sumExpr =
   let fromName name =
         case M.lookup name consTypes of
@@ -310,12 +300,11 @@ inferSumExpressionType env consTypes sumExpr =
 -------------
 
 inferCaseMatch ::
-  (Eq ann, Monoid ann) =>
   Environment ->
-  Expr Variable ann ->
-  NonEmpty (TyCon, Expr Variable ann) ->
-  Maybe (Expr Variable ann) ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  NonEmpty (TyCon, Expr Variable Annotation) ->
+  Maybe (Expr Variable Annotation) ->
+  TcMonad (Substitutions, MonoType)
 inferCaseMatch env sumExpr matches catchAll = do
   dataType <- checkCompleteness env matches catchAll
   (tyData, constructTypes) <- inferConstructorTypes env dataType
@@ -356,12 +345,11 @@ applySubstToConstructor subs (TypeConstructor name ty b) =
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
 inferMatch ::
-  (Eq ann, Monoid ann) =>
   Environment ->
   Map TyCon TypeConstructor ->
   TyCon ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 inferMatch env constructTypes name expr' =
   case M.lookup name constructTypes of
     Nothing -> throwError UnknownTypeError
@@ -374,7 +362,7 @@ inferMatch env constructTypes name expr' =
           let subs = s2 <> s1
           pure (subs, applySubst subs tyRes)
 
-applyList :: [MonoType] -> MonoType -> TcMonad ann (Substitutions, MonoType)
+applyList :: [MonoType] -> MonoType -> TcMonad (Substitutions, MonoType)
 applyList vars tyFun = case vars of
   [] -> pure (mempty, tyFun)
   (var : vars') -> do
@@ -387,12 +375,11 @@ applyList vars tyFun = case vars of
     pure (s2 <> s1, applySubst (s2 <> s1) tyFun')
 
 inferOperator ::
-  (Eq ann, Monoid ann) =>
   Environment ->
   Operator ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 inferOperator env Equals a b = do
   (s1, tyA) <- infer env a
   (s2, tyB) <- infer env b
@@ -403,10 +390,9 @@ inferOperator env Equals a b = do
       pure (s3 <> s2 <> s1, MTBool)
 
 infer ::
-  (Eq ann, Monoid ann) =>
   Environment ->
-  Expr Variable ann ->
-  TcMonad ann (Substitutions, MonoType)
+  Expr Variable Annotation ->
+  TcMonad (Substitutions, MonoType)
 infer env inferExpr =
   case inferExpr of
     (MyLiteral _ a) -> inferLiteral a

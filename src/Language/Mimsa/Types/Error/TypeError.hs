@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Types.Error.TypeError
   ( TypeError (..),
+    getErrorPos,
   )
 where
 
@@ -11,14 +12,15 @@ import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
   ( (<+>),
     Doc,
     Pretty (pretty),
     vsep,
   )
-import Language.Mimsa.Printer (Printer (prettyDoc))
-import Language.Mimsa.Types.AST (DataType (DataType), Expr)
+import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Identifiers
   ( Name,
@@ -29,8 +31,9 @@ import Language.Mimsa.Types.Identifiers
   )
 import Language.Mimsa.Types.MonoType (MonoType)
 import Language.Mimsa.Types.Swaps (Swaps)
+import Text.Megaparsec
 
-data TypeError ann
+data TypeError
   = UnknownTypeError
   | FailsOccursCheck Swaps Variable MonoType
   | UnificationError MonoType MonoType
@@ -42,9 +45,8 @@ data TypeError ann
   | CannotUnifyBoundVariable Variable MonoType
   | CannotMatchRecord Environment MonoType
   | CaseMatchExpectedPair MonoType
-  | CannotCaseMatchOnType (Expr Variable ann)
+  | CannotCaseMatchOnType (Expr Variable Annotation)
   | TypeConstructorNotInScope Environment TyCon
-  | TypeIsNotConstructor (Expr Variable ann)
   | TypeVariableNotInDataType TyCon Name [Name]
   | ConflictingConstructors TyCon
   | CannotApplyToType TyCon
@@ -53,14 +55,33 @@ data TypeError ann
   | MixedUpPatterns [TyCon]
   deriving (Eq, Ord, Show)
 
-instance Semigroup (TypeError a) where
+------
+
+instance Semigroup TypeError where
   a <> _ = a
 
-instance Monoid (TypeError a) where
+instance Monoid TypeError where
   mempty = UnknownTypeError
 
-instance (Show a) => Printer (TypeError a) where
+instance Printer TypeError where
   prettyDoc = vsep . renderTypeError
+
+instance ShowErrorComponent TypeError where
+  showErrorComponent = T.unpack . prettyPrint
+  errorComponentLen typeErr = let (_, len) = getErrorPos typeErr in len
+
+type Start = Int
+
+type Length = Int
+
+getErrorPos :: TypeError -> (Start, Length)
+getErrorPos (CannotCaseMatchOnType expr) =
+  case getAnnotation expr of
+    Location a b -> (a, b - a)
+    _ -> (0, 0)
+getErrorPos _ = (0, 0)
+
+------
 
 showKeys :: (p -> Doc ann) -> Map p a -> [Doc ann]
 showKeys renderP record = renderP <$> M.keys record
@@ -73,6 +94,8 @@ showMap renderK renderA map' =
   (\(k, a) -> renderK k <+> ":" <+> renderA a)
     <$> M.toList map'
 
+------
+
 withSwap :: Swaps -> Variable -> Name
 withSwap _ (BuiltIn n) = n
 withSwap _ (BuiltInActual n _) = n
@@ -82,7 +105,9 @@ withSwap swaps (NumberedVar i) =
     (mkName "unknownvar")
     (M.lookup (NumberedVar i) swaps)
 
-renderTypeError :: (Show a) => TypeError a -> [Doc ann]
+-----
+
+renderTypeError :: TypeError -> [Doc ann]
 renderTypeError UnknownTypeError =
   ["Unknown type error"]
 renderTypeError (FailsOccursCheck swaps var mt) =
@@ -97,7 +122,7 @@ renderTypeError (UnificationError a b) =
 renderTypeError (CannotUnifyBoundVariable tv mt) =
   ["Cannot unify type", prettyDoc mt, "with bound variable" <+> prettyDoc tv]
 renderTypeError (CannotCaseMatchOnType ty) =
-  ["Cannot case match on type", pretty (show ty)]
+  ["Cannot case match on type", prettyDoc ty]
 renderTypeError (VariableNotInEnv swaps name members) =
   ["Variable" <+> renderName (withSwap swaps name) <+> " not in scope."]
     <> showSet prettyDoc members
@@ -126,8 +151,6 @@ renderTypeError (TypeConstructorNotInScope env constructor) =
     "The following are available:"
   ]
     <> printDataTypes env
-renderTypeError (TypeIsNotConstructor expr) =
-  ["Type" <+> pretty (show expr) <+> "is not a constructor."]
 renderTypeError (ConflictingConstructors constructor) =
   ["Multiple constructors found matching" <+> prettyDoc constructor]
 renderTypeError (CannotApplyToType constructor) =

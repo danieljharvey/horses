@@ -62,10 +62,11 @@ onFileChange env name = do
   text <-
     liftIO $ T.readFile $ "./" <> scratchFilename
   replPrint (T.pack scratchFilename <> " updated!")
+  let input = T.strip text
   expr <-
-    liftRepl $ first ParseErr (parseExprAndFormatError (T.strip text))
+    liftRepl $ first ParseErr (parseExprAndFormatError input)
   (ResolvedExpression type' storeExpr _ _ _) <-
-    liftRepl $ getTypecheckedStoreExpression env expr
+    liftRepl $ getTypecheckedStoreExpression input env expr
   replPrint $
     "+ Using the following from scope: "
       <> prettyPrint (storeBindings storeExpr)

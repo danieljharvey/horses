@@ -14,13 +14,7 @@ import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck.Instances ()
 
-startInference' ::
-  Swaps ->
-  Expr Variable () ->
-  Either (TypeError ()) MonoType
-startInference' = startInference
-
-exprs :: (Monoid ann) => [(Expr Variable ann, Either (TypeError ann) MonoType)]
+exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]
 exprs =
   [ (int 1, Right MTInt),
     (bool True, Right MTBool),
@@ -206,7 +200,7 @@ spec =
       traverse_
         ( \(code, expected) ->
             --T.putStrLn (prettyPrint code)
-            startInference' mempty code `shouldBe` expected
+            startInference mempty code `shouldBe` expected
         )
         exprs
     it "Uses a polymorphic function twice with conflicting types" $ do
@@ -221,7 +215,7 @@ spec =
                   (MyApp mempty (MyVar mempty (named "id")) (bool True))
               )
       let expected = Right (MTPair MTInt MTBool)
-      startInference' mempty expr `shouldBe` expected
+      startInference mempty expr `shouldBe` expected
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             MyLambda
@@ -234,8 +228,8 @@ spec =
                   (MyApp mempty identity (int 2))
               )
       let expr = MyApp mempty lambda (bool True)
-      startInference' mempty lambda `shouldBe` Right (MTFunction MTBool MTInt)
-      startInference' mempty expr `shouldBe` Right MTInt
+      startInference mempty lambda `shouldBe` Right (MTFunction MTBool MTInt)
+      startInference mempty expr `shouldBe` Right MTInt
 {-  describe "Serialisation" $ do
 it "Round trip" $ do
   property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)

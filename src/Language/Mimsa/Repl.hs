@@ -35,7 +35,7 @@ repl = do
     _ -> do
       T.putStrLn "Failed to load project, loading default project"
       pure defaultProject
-  _ <- doReplAction env Help
+  _ <- doReplAction env "" Help
   runInputT defaultSettings (loop env)
   where
     loop ::
@@ -60,6 +60,6 @@ parseCommand env input =
       T.putStrLn e
       pure env
     Right replAction -> do
-      newExprs <- doReplAction env replAction
+      newExprs <- doReplAction env input replAction
       _ <- runExceptT $ saveProject newExprs
       pure newExprs
