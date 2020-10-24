@@ -75,36 +75,56 @@ letNameIn = do
   pure name
 
 letInParser :: Parser ParserExpr
-letInParser = do
-  name <- letNameIn
-  expr <- withOptionalSpace expressionParser
-  _ <- thenSpace (string "in")
-  MyLet mempty name expr <$> expressionParser
+letInParser =
+  let parser = do
+        name <- letNameIn
+        boundExpr <- withOptionalSpace expressionParser
+        _ <- thenSpace (string "in")
+        letInExpr <- expressionParser
+        pure (name, boundExpr, letInExpr)
+   in withLocation
+        (\loc (a, b, c) -> MyLet loc a b c)
+        parser
 
 letNewlineParser :: Parser ParserExpr
-letNewlineParser = do
-  name <- letNameIn
-  expr <- expressionParser
-  _ <- literalWithSpace ";"
-  MyLet mempty name expr <$> expressionParser
+letNewlineParser =
+  let parser = do
+        name <- letNameIn
+        expr <- expressionParser
+        _ <- literalWithSpace ";"
+        restExpr <- expressionParser
+        pure (name, expr, restExpr)
+   in withLocation
+        (\loc (a, b, c) -> MyLet loc a b c)
+        parser
 
 -----
 
 letPairParser :: Parser ParserExpr
 letPairParser =
-  MyLetPair mempty <$> binder1 <*> binder2
-    <*> equalsParser
-    <*> inParser
-  where
-    binder1 = do
-      _ <- thenSpace (string "let")
-      _ <- string "("
-      withOptionalSpace nameParser
-    binder2 = do
-      _ <- string ","
-      name <- withOptionalSpace nameParser
-      _ <- thenSpace (string ")")
-      pure name
+  let binder1 = do
+        _ <- thenSpace (string "let")
+        _ <- string "("
+        withOptionalSpace nameParser
+      binder2 = do
+        _ <- string ","
+        name <- withOptionalSpace nameParser
+        _ <- thenSpace (string ")")
+        pure name
+      parser =
+        (,,,) <$> binder1 <*> binder2
+          <*> equalsParser
+          <*> inParser
+   in withLocation
+        ( \loc (a, b, c, d) ->
+            MyLetPair
+              loc
+              a
+              b
+              c
+              d
+        )
+        parser
 
 -----
 
@@ -121,19 +141,20 @@ inParser = do
 -----
 
 lambdaParser :: Parser ParserExpr
-lambdaParser = MyLambda mempty <$> slashNameBinder <*> arrowExprBinder
-
--- matches \varName
-slashNameBinder :: Parser Name
-slashNameBinder = do
-  _ <- string "\\"
-  _ <- space
-  thenSpace nameParser
-
-arrowExprBinder :: Parser ParserExpr
-arrowExprBinder = do
-  _ <- thenSpace (string "->")
-  expressionParser
+lambdaParser =
+  let slashNameBinder = do
+        _ <- string "\\"
+        _ <- space
+        thenSpace nameParser
+      arrowExprBinder = do
+        _ <- thenSpace (string "->")
+        expressionParser
+      parser = (,) <$> slashNameBinder <*> arrowExprBinder
+   in withLocation
+        ( \loc (slash, arrow) ->
+            MyLambda loc slash arrow
+        )
+        parser
 
 -----
 
@@ -143,10 +164,15 @@ appFunc =
     <|> varParser
 
 appParser :: Parser ParserExpr
-appParser = do
-  func <- appFunc
-  exprs <- some (withOptionalSpace exprInBrackets)
-  pure (foldl (MyApp mempty) func exprs)
+appParser =
+  let parser = do
+        func <- appFunc
+        (,) func <$> some (withOptionalSpace exprInBrackets)
+   in withLocation
+        ( \loc (func, exprs) ->
+            foldl (MyApp loc) func exprs
+        )
+        parser
 
 exprInBrackets :: Parser ParserExpr
 exprInBrackets = do
@@ -159,11 +185,11 @@ exprInBrackets = do
 -----
 
 recordParser :: Parser ParserExpr
-recordParser = do
+recordParser = withLocation MyRecord $ do
   literalWithSpace "{"
   args <- sepBy (withOptionalSpace recordItemParser) (literalWithSpace ",")
   literalWithSpace "}"
-  pure (MyRecord mempty (M.fromList args))
+  pure (M.fromList args)
 
 recordItemParser :: Parser (Name, ParserExpr)
 recordItemParser = do
@@ -175,48 +201,59 @@ recordItemParser = do
 -----
 
 ifParser :: Parser ParserExpr
-ifParser = MyIf mempty <$> predParser <*> thenParser <*> elseParser
-
-predParser :: Parser ParserExpr
-predParser = do
-  _ <- thenSpace (string "if")
-  expressionParser
-
-thenParser :: Parser ParserExpr
-thenParser = do
-  _ <- thenSpace (string "then")
-  expressionParser
-
-elseParser :: Parser ParserExpr
-elseParser = do
-  _ <- thenSpace (string "else")
-  expressionParser
+ifParser =
+  let predParser = do
+        _ <- thenSpace (string "if")
+        expressionParser
+      thenParser = do
+        _ <- thenSpace (string "then")
+        expressionParser
+      elseParser = do
+        _ <- thenSpace (string "else")
+        expressionParser
+      parser =
+        (,,) <$> predParser
+          <*> thenParser
+          <*> elseParser
+   in withLocation
+        ( \loc (predP, thenP, elseP) ->
+            MyIf loc predP thenP elseP
+        )
+        parser
 
 -----
 
 pairParser :: Parser ParserExpr
-pairParser = do
-  _ <- string "("
-  _ <- space
-  exprA <- expressionParser
-  _ <- space
-  _ <- string ","
-  _ <- space
-  exprB <- expressionParser
-  _ <- space
-  _ <- string ")"
-  _ <- space
-  pure $ MyPair mempty exprA exprB
+pairParser =
+  let parser = do
+        _ <- string "("
+        _ <- space
+        exprA <- expressionParser
+        _ <- space
+        _ <- string ","
+        _ <- space
+        exprB <- expressionParser
+        _ <- space
+        _ <- string ")"
+        _ <- space
+        pure (exprA, exprB)
+   in withLocation (\loc (a, b) -> MyPair loc a b) parser
 
 -----
 
 typeParser :: Parser ParserExpr
 typeParser =
-  MyData mempty
-    <$> typeDeclParser
-    <*> ( try inExpr
-            <|> try inNewLineExpr
+  let parser =
+        (,)
+          <$> typeDeclParser
+          <*> ( try inExpr
+                  <|> try inNewLineExpr
+              )
+   in withLocation
+        ( \loc (type', expr') ->
+            MyData loc type' expr'
         )
+        parser
 
 inNewLineExpr :: Parser ParserExpr
 inNewLineExpr = do
@@ -232,13 +269,19 @@ inExpr = do
 -----
 
 constructorAppParser :: Parser ParserExpr
-constructorAppParser = do
-  cons <- tyConParser
-  exprs <-
-    sepBy
-      (withOptionalSpace (orInBrackets consAppArgParser))
-      space
-  pure (foldl (MyConsApp mempty) (MyConstructor mempty cons) exprs)
+constructorAppParser =
+  let parser = do
+        cons <- constructorParser
+        exprs <-
+          sepBy
+            (withOptionalSpace (orInBrackets consAppArgParser))
+            space
+        pure (cons, exprs)
+   in withLocation
+        ( \loc (cons, exprs) ->
+            foldl (MyConsApp loc) cons exprs
+        )
+        parser
 
 -- we don't want to include infix stuff here
 consAppArgParser :: Parser ParserExpr
@@ -251,6 +294,7 @@ consAppArgParser =
    in orInBrackets parsers
 
 ----------
+
 caseExprOfParser :: Parser ParserExpr
 caseExprOfParser = do
   _ <- thenSpace (string "case")
@@ -259,14 +303,20 @@ caseExprOfParser = do
   pure sumExpr
 
 caseMatchParser :: Parser ParserExpr
-caseMatchParser = do
-  sumExpr <- caseExprOfParser
-  matches <-
-    try matchesParser
-      <|> pure <$> matchParser
-  catchAll <-
-    optional (otherwiseParser (not . null $ matches))
-  pure $ MyCaseMatch mempty sumExpr matches catchAll
+caseMatchParser =
+  let parser = do
+        sumExpr <- caseExprOfParser
+        matches <-
+          try matchesParser
+            <|> pure <$> matchParser
+        catchAll <-
+          optional (otherwiseParser (not . null $ matches))
+        pure (sumExpr, matches, catchAll)
+   in withLocation
+        ( \loc (sumExpr, matches, catchAll) ->
+            MyCaseMatch loc sumExpr matches catchAll
+        )
+        parser
 
 otherwiseParser :: Bool -> Parser ParserExpr
 otherwiseParser needsBar = do
@@ -307,9 +357,16 @@ opParser :: Parser Operator
 opParser = string "==" $> Equals
 
 infixParser :: Parser ParserExpr
-infixParser = do
-  a <- infixExpr
-  _ <- space1
-  op <- opParser
-  _ <- space1
-  MyInfix mempty op a <$> infixExpr
+infixParser =
+  let parser = do
+        a <- infixExpr
+        _ <- space1
+        op <- opParser
+        _ <- space1
+        b <- infixExpr
+        pure (op, a, b)
+   in withLocation
+        ( \loc (op, a, b) ->
+            MyInfix loc op a b
+        )
+        parser
