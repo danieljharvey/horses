@@ -72,10 +72,10 @@ spec =
         result <- eval stdLib "let x = ((1,2)) in fst(x)"
         result
           `shouldBe` Right
-            (MTInt, int 1)
+            ((MTPrim MTInt), int 1)
       it "let good = { dog: True } in good.dog" $ do
         result <- eval stdLib "let good = ({ dog: True }) in good.dog"
-        result `shouldBe` Right (MTBool, bool True)
+        result `shouldBe` Right ((MTPrim MTBool), bool True)
       it "let prelude = { id: (\\i -> i) } in prelude.id" $ do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
@@ -87,49 +87,49 @@ spec =
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"
         result
           `shouldBe` Right
-            ( MTInt,
+            ( (MTPrim MTInt),
               int 1
             )
       it "let bigPrelude = ({ prelude: { id: (\\i -> i) } }) in bigPrelude.prelude.id(1)" $ do
         result <- eval stdLib "let bigPrelude = ({ prelude: { id: (\\i -> i) } }) in bigPrelude.prelude.id(1)"
         result
           `shouldBe` Right
-            ( MTInt,
+            ( (MTPrim MTInt),
               int 1
             )
       it "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)" $ do
         result <- eval stdLib "let compose = (\\f -> \\g -> \\a -> f(g(a))) in compose(incrementInt)(incrementInt)(67)"
-        result `shouldBe` Right (MTInt, int 69)
+        result `shouldBe` Right ((MTPrim MTInt), int 69)
       it "let reuse = ({ first: id(1), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(1), second: id(2) }) in reuse.first"
-        result `shouldBe` Right (MTInt, int 1)
+        result `shouldBe` Right ((MTPrim MTInt), int 1)
       it "let id = \\a -> a in id(1)" $ do
         result <- eval mempty "let id = \\a -> a in id(1)"
-        result `shouldBe` Right (MTInt, int 1)
+        result `shouldBe` Right ((MTPrim MTInt), int 1)
       it "let reuse = ({ first: id(True), second: id(2) }) in reuse.first" $ do
         result <- eval stdLib "let reuse = ({ first: id(True), second: id(2) }) in reuse.first"
-        result `shouldBe` Right (MTBool, bool True)
+        result `shouldBe` Right ((MTPrim MTBool), bool True)
       it "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)" $ do
         result <- eval stdLib "let reuse = ({ first: id, second: id(2) }) in reuse.first(True)"
-        result `shouldBe` Right (MTBool, bool True)
+        result `shouldBe` Right ((MTPrim MTBool), bool True)
       it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))" $ do
         result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(1), second: const2(True) }) in reuse.first(100))"
-        result `shouldBe` Right (MTInt, int 1)
+        result `shouldBe` Right ((MTPrim MTInt), int 1)
       it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))" $ do
         result <- eval stdLib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2(True), second: const2(2) }) in reuse.second(100))"
-        result `shouldBe` Right (MTInt, int 2)
+        result `shouldBe` Right ((MTPrim MTInt), int 2)
       it "addInt(1)(2)" $ do
         result <- eval stdLib "addInt(1)(2)"
-        result `shouldBe` Right (MTInt, int 3)
+        result `shouldBe` Right ((MTPrim MTInt), int 3)
       it "(\\a -> a)(1)" $ do
         result <- eval stdLib "(\\a -> a)(1)"
-        result `shouldBe` Right (MTInt, int 1)
+        result `shouldBe` Right ((MTPrim MTInt), int 1)
       it "(\\b -> (\\a -> b))(0)(1)" $ do
         result <- eval stdLib "(\\b -> (\\a -> b))(0)(1)"
-        result `shouldBe` Right (MTInt, int 0)
+        result `shouldBe` Right ((MTPrim MTInt), int 0)
       it "addInt(1)(addInt(addInt(2)(4))(5))" $ do
         result <- eval stdLib "addInt(1)(addInt(addInt(2)(4))(5))"
-        result `shouldBe` Right (MTInt, int 12)
+        result `shouldBe` Right ((MTPrim MTInt), int 12)
       it "type LeBool = Vrai | Faux in Vrai" $ do
         result <- eval stdLib "type LeBool = Vrai | Faux in Vrai"
         result
@@ -185,7 +185,7 @@ spec =
             ( MTFunction
                 (MTData (mkTyCon "OhNat") [])
                 ( MTFunction
-                    MTString
+                    (MTPrim MTString)
                     (MTData (mkTyCon "OhNat") [])
                 ),
               MyConstructor mempty (mkTyCon "Suc")
@@ -202,7 +202,7 @@ spec =
             )
       it "type Void in 1" $ do
         result <- eval stdLib "type Void in 1"
-        result `shouldBe` Right (MTInt, int 1)
+        result `shouldBe` Right ((MTPrim MTInt), int 1)
       it "type String = Should | Error in Error" $ do
         result <- eval stdLib "type String = Should | Error in Error"
         result `shouldSatisfy` isLeft
@@ -211,9 +211,9 @@ spec =
         result
           `shouldBe` Right
             ( MTFunction
-                MTInt
+                (MTPrim MTInt)
                 ( MTFunction
-                    MTString
+                    (MTPrim MTString)
                     (MTData (mkTyCon "LongBoy") [])
                 ),
               MyConsApp
@@ -255,7 +255,7 @@ spec =
         result <- eval stdLib "type Maybe a = Just a | Nothing in Just 1"
         result
           `shouldBe` Right
-            ( MTData (mkTyCon "Maybe") [MTInt],
+            ( MTData (mkTyCon "Maybe") [(MTPrim MTInt)],
               MyConsApp
                 mempty
                 (MyConstructor mempty $ mkTyCon "Just")
@@ -265,7 +265,7 @@ spec =
         result <- eval stdLib "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> eq(100)(a) | Nothing False"
         result
           `shouldBe` Right
-            (MTBool, bool False)
+            ((MTPrim MTBool), bool False)
       it "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> True | Nothing 1" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> True | Nothing 1"
         result `shouldSatisfy` isLeft
@@ -273,26 +273,26 @@ spec =
         result <- eval stdLib "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> eq(100)(a) | otherwise False"
         result
           `shouldBe` Right
-            (MTBool, bool False)
+            ((MTPrim MTBool), bool False)
       it "type Stuff = Thing String Int in case Thing \"Hello\" 1 of Thing \\name -> \\num -> name" $ do
         result <- eval stdLib "type Stuff = Thing String Int in case Thing \"Hello\" 1 of Thing \\name -> \\num -> name"
         result
           `shouldBe` Right
-            (MTString, str' "Hello")
+            ((MTPrim MTString), str' "Hello")
       it "type Result e a = Failure e | Success a in case Failure \"oh no\" of Success \\a -> \"oh yes\" | Failure \\e -> e" $ do
         result <- eval stdLib "type Result e a = Failure e | Success a in case Failure \"oh no\" of Success \\a -> \"oh yes\" | Failure \\e -> e"
         result
           `shouldBe` Right
-            (MTString, str' "oh no")
+            ((MTPrim MTString), str' "oh no")
       it "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a" $ do
         result <- eval stdLib "type Blap a = Boop a Int in case Boop True 100 of Boop \\a -> \\b -> a"
-        result `shouldBe` Right (MTBool, bool True)
+        result `shouldBe` Right ((MTPrim MTBool), bool True)
       it "type Maybe a = Just a | Nothing in case Nothing of Nothing False" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in case Nothing of Nothing False"
         result `shouldSatisfy` isLeft
       it "type Thing = Thing String in let a = Thing \"string\" in case a of Thing \\s -> s" $ do
         result <- eval stdLib "type Thing = Thing String in let a = Thing \"string\" in case a of Thing \\s -> s"
-        result `shouldBe` Right (MTString, str' "string")
+        result `shouldBe` Right ((MTPrim MTString), str' "string")
       it "type Pair a b = Pair a b in case Pair \"dog\" 1 of Pair \a -> a" $ do
         result <- eval stdLib "type Pair a b = Pair a b in case Pair \"dog\" 1 of Pair \a -> a"
         result `shouldSatisfy` isLeft
@@ -300,7 +300,7 @@ spec =
         result <- eval stdLib "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1"
         result
           `shouldBe` Right
-            ( MTData (mkTyCon "Tree") [MTInt],
+            ( MTData (mkTyCon "Tree") [(MTPrim MTInt)],
               MyConsApp
                 mempty
                 (MyConstructor mempty $ mkTyCon "Leaf")
@@ -318,7 +318,7 @@ spec =
         result <- eval stdLib "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
         result
           `shouldBe` Right
-            ( MTData (mkTyCon "Tree") [MTInt],
+            ( MTData (mkTyCon "Tree") [(MTPrim MTInt)],
               MyConsApp
                 mempty
                 ( MyConsApp
@@ -343,7 +343,7 @@ spec =
               result <- eval stdLib "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\""
               fst <$> result
                 `shouldBe` Right
-                  ( MTFunction (MTData (mkTyCon "Maybe") []) MTString
+                  ( MTFunction (MTData (mkTyCon "Maybe") []) (MTPrim MTString)
                   )
       
       -}
@@ -351,7 +351,7 @@ spec =
         result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
         result
           `shouldBe` Right
-            ( MTData (mkTyCon "Arr") [MTInt],
+            ( MTData (mkTyCon "Arr") [(MTPrim MTInt)],
               MyConsApp
                 mempty
                 ( MyConsApp
@@ -366,29 +366,29 @@ spec =
             )
       it "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)" $ do
         result <- eval stdLib "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)"
-        result `shouldBe` Right (MTInt, int 10)
+        result `shouldBe` Right ((MTPrim MTInt), int 10)
       it "type Nat = Zero | Suc Nat in let loop = (\\as -> case as of Zero 0 | Suc \\as2 -> incrementInt(loop(as2))) in loop(Suc Suc Suc Zero)" $ do
         result <- eval stdLib "type Nat = Zero | Suc Nat in let loop = (\\as -> case as of Zero 0 | Suc \\as2 -> incrementInt(loop(as2))) in loop(Suc Suc Suc Zero)"
-        result `shouldBe` Right (MTInt, int 3)
+        result `shouldBe` Right ((MTPrim MTInt), int 3)
       it "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> incrementInt(loop(as2)(b))) in loop(Suc Suc Suc Zero)(10)" $ do
         result <- eval stdLib "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> case as of Zero b | Suc \\as2 -> incrementInt(loop(as2)(b))) in loop(Suc Suc Suc Zero)(10)"
-        result `shouldBe` Right (MTInt, int 13)
+        result `shouldBe` Right ((MTPrim MTInt), int 13)
       {-
             it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)" $ do
               result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)"
-              result `shouldBe` Right (MTInt, int 3)
+              result `shouldBe` Right ((MTPrim MTInt), int 3)
       -}
       it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)" $ do
         result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)"
-        result `shouldBe` Right (MTInt, int 0)
+        result `shouldBe` Right ((MTPrim MTInt), int 0)
       it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
         result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
-        result `shouldBe` Right (MTInt, int 3)
+        result `shouldBe` Right ((MTPrim MTInt), int 3)
       it "let some = \\a -> Some a in if True then some(1) else Nowt" $ do
         result <- eval stdLib "let some = \\a -> Some a in if True then some(1) else Nowt"
         result
           `shouldBe` Right
-            ( MTData (mkTyCon "Option") [MTInt],
+            ( MTData (mkTyCon "Option") [(MTPrim MTInt)],
               MyConsApp
                 mempty
                 (MyConstructor mempty (mkTyCon "Some"))
@@ -402,13 +402,13 @@ spec =
         result <- eval stdLib "\\a -> case a of Some \\as -> as | Nowt 100"
         fst <$> result
           `shouldBe` Right
-            (MTFunction (MTData (mkTyCon "Option") [MTInt]) MTInt)
+            (MTFunction (MTData (mkTyCon "Option") [(MTPrim MTInt)]) (MTPrim MTInt))
       it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)" $ do
         result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)"
         result `shouldSatisfy` isLeft
       it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")" $ do
         result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")"
-        result `shouldBe` Right (MTString, str' "Dog")
+        result `shouldBe` Right ((MTPrim MTString), str' "Dog")
       it "True == \"dog\"" $ do
         result <- eval stdLib "True == \"dog\""
         result `shouldSatisfy` isLeft
@@ -418,13 +418,13 @@ spec =
         result `shouldSatisfy` isLeft
       it "True == False" $ do
         result <- eval stdLib "True == False"
-        result `shouldBe` Right (MTBool, bool False)
+        result `shouldBe` Right ((MTPrim MTBool), bool False)
       it "True == True" $ do
         result <- eval stdLib "True == True"
-        result `shouldBe` Right (MTBool, bool True)
+        result `shouldBe` Right ((MTPrim MTBool), bool True)
       it "(Some 1) == Some 2" $ do
         result <- eval stdLib "(Some 1) == Some 2"
-        result `shouldBe` Right (MTBool, bool False)
+        result `shouldBe` Right ((MTPrim MTBool), bool False)
       it "let eq1 = \\a -> a == 1 in eq1(1)" $ do
         result <- eval stdLib "let eq1 = \\a -> a == 1 in eq1(1)"
-        result `shouldBe` Right (MTBool, bool True)
+        result `shouldBe` Right ((MTPrim MTBool), bool True)

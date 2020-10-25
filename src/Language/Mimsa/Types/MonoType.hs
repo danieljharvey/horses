@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Types.MonoType
   ( MonoType (..),
+    Primitive (..),
   )
 where
 
@@ -11,15 +12,25 @@ import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 
-data MonoType
+data Primitive
   = MTInt
   | MTString
   | MTBool
   | MTUnit
+  deriving (Eq, Ord, Show)
+
+instance Printer Primitive where
+  prettyDoc MTUnit = "Unit"
+  prettyDoc MTInt = "Int"
+  prettyDoc MTString = "String"
+  prettyDoc MTBool = "Boolean"
+
+data MonoType
+  = MTPrim Primitive
+  | MTVar Variable
   | MTFunction MonoType MonoType -- argument, result
   | MTPair MonoType MonoType -- (a,b)
   | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
-  | MTVar Variable
   | MTData TyCon [MonoType] -- name, typeVars
   deriving (Eq, Ord, Show)
 
@@ -27,10 +38,7 @@ instance Printer MonoType where
   prettyDoc = renderMonoType
 
 renderMonoType :: MonoType -> Doc ann
-renderMonoType MTUnit = "Unit"
-renderMonoType MTInt = "Int"
-renderMonoType MTString = "String"
-renderMonoType MTBool = "Boolean"
+renderMonoType (MTPrim a) = prettyDoc a
 renderMonoType (MTFunction a b) =
   parens (renderMonoType a <+> "->" <+> renderMonoType b)
 renderMonoType (MTPair a b) =

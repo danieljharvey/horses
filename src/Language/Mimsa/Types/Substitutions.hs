@@ -46,7 +46,4 @@ applySubst subst ty = case ty of
       (applySubst subst b)
   MTRecord a -> MTRecord (applySubst subst <$> a)
   MTData a ty' -> MTData a (applySubst subst <$> ty')
-  MTInt -> MTInt
-  MTString -> MTString
-  MTBool -> MTBool
-  MTUnit -> MTUnit
+  MTPrim a -> MTPrim a

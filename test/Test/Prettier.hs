@@ -13,25 +13,43 @@ import Test.Hspec
 
 spec :: Spec
 spec =
-  describe "Prettier" $
-    describe "MonoType" $
-      do
-        it "String" $
-          T.putStrLn (prettyPrint MTString)
-        it "Function" $
-          T.putStrLn (prettyPrint $ MTFunction (MTFunction MTInt MTString) MTBool)
-        it "Record" $
-          T.putStrLn
-            ( prettyPrint
-                ( MTRecord $
-                    M.fromList
-                      [ (mkName "dog", MTUnit),
-                        (mkName "horse", MTString),
-                        (mkName "maybeDog", MTData (mkTyCon "Maybe") [MTString])
-                      ]
+  describe "Prettier"
+    $ describe "MonoType"
+    $ do
+      it "String" $
+        T.putStrLn (prettyPrint MTString)
+      it "Function" $
+        T.putStrLn
+          ( prettyPrint $
+              MTFunction
+                (MTFunction (MTPrim MTInt) (MTPrim MTString))
+                (MTPrim MTBool)
+          )
+      it "Record" $
+        T.putStrLn
+          ( prettyPrint
+              ( MTRecord $
+                  M.fromList
+                    [ (mkName "dog", MTPrim MTUnit),
+                      (mkName "horse", MTPrim MTString),
+                      (mkName "maybeDog", MTData (mkTyCon "Maybe") [MTPrim MTString])
+                    ]
+              )
+          )
+      it "Pair" $
+        T.putStrLn
+          ( prettyPrint $
+              MTPair
+                (MTFunction (MTPrim MTInt) (MTPrim MTInt))
+                (MTPrim MTString)
+          )
+      it "Variables" $
+        T.putStrLn
+          ( prettyPrint $
+              MTFunction
+                ( MTVar
+                    $ NamedVar
+                    $ Name "catch"
                 )
-            )
-        it "Pair" $
-          T.putStrLn (prettyPrint $ MTPair (MTFunction MTInt MTInt) MTString)
-        it "Variables" $
-          T.putStrLn (prettyPrint $ MTFunction (MTVar $ NamedVar $ Name "catch") (MTVar $ NumberedVar 22))
+                (MTVar $ NumberedVar 22)
+          )

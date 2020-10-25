@@ -81,10 +81,10 @@ instantiate (Scheme vars ty) = do
 --------------
 
 inferLiteral :: Literal -> TcMonad (Substitutions, MonoType)
-inferLiteral (MyInt _) = pure (mempty, MTInt)
-inferLiteral (MyBool _) = pure (mempty, MTBool)
-inferLiteral (MyString _) = pure (mempty, MTString)
-inferLiteral MyUnit = pure (mempty, MTUnit)
+inferLiteral (MyInt _) = pure (mempty, MTPrim MTInt)
+inferLiteral (MyBool _) = pure (mempty, MTPrim MTBool)
+inferLiteral (MyString _) = pure (mempty, MTPrim MTString)
+inferLiteral MyUnit = pure (mempty, MTPrim MTUnit)
 
 inferBuiltIn ::
   Annotation ->
@@ -390,7 +390,7 @@ inferOperator env Equals a b = do
     MTFunction _ _ -> throwError $ NoFunctionEquality tyA tyB
     _ -> do
       s3 <- unify tyA tyB -- Equals wants them to be the same
-      pure (s3 <> s2 <> s1, MTBool)
+      pure (s3 <> s2 <> s1, MTPrim MTBool)
 
 inferRecordAccess ::
   Environment ->
@@ -459,7 +459,7 @@ infer env inferExpr =
       (s2, tyThen) <- infer (applySubstCtx s1 env) thenCase
       (s3, tyElse) <- infer (applySubstCtx (s2 <> s1) env) elseCase
       s4 <- unify tyThen tyElse
-      s5 <- unify tyCond MTBool
+      s5 <- unify tyCond (MTPrim MTBool)
       let subs = s5 <> s4 <> s3 <> s2 <> s1
       pure
         ( subs,

@@ -25,57 +25,57 @@ spec :: Spec
 spec =
   describe "Unify" $ do
     it "Two same things teach us nothing" $
-      runUnifier (MTUnit, MTUnit) `shouldBe` Right mempty
+      runUnifier (MTPrim MTUnit, MTPrim MTUnit) `shouldBe` Right mempty
     it "Combines a known with an unknown" $
-      runUnifier (MTVar (tvFree 1), MTInt)
-        `shouldBe` Right (Substitutions $ M.singleton (NumberedVar 1) MTInt)
+      runUnifier (MTVar (tvFree 1), MTPrim MTInt)
+        `shouldBe` Right (Substitutions $ M.singleton (NumberedVar 1) (MTPrim MTInt))
     it "Combines two half pairs" $
       runUnifier
-        ( MTPair (MTVar (tvFree 1)) MTInt,
-          MTPair MTBool (MTVar (tvFree 2))
+        ( MTPair (MTVar (tvFree 1)) (MTPrim MTInt),
+          MTPair (MTPrim MTBool) (MTVar (tvFree 2))
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (NumberedVar 1, MTBool),
-                  (NumberedVar 2, MTInt)
+                [ (NumberedVar 1, (MTPrim MTBool)),
+                  (NumberedVar 2, (MTPrim MTInt))
                 ]
           )
     it "Combines two half records" $
       runUnifier
         ( MTRecord $
             M.fromList
-              [ (mkName "one", MTInt),
+              [ (mkName "one", (MTPrim MTInt)),
                 (mkName "two", MTVar (tvFree 1))
               ],
           MTRecord $
             M.fromList
               [ (mkName "one", MTVar (tvFree 2)),
-                (mkName "two", MTBool)
+                (mkName "two", (MTPrim MTBool))
               ]
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (NumberedVar 1, MTBool),
-                  (NumberedVar 2, MTInt)
+                [ (NumberedVar 1, (MTPrim MTBool)),
+                  (NumberedVar 2, (MTPrim MTInt))
                 ]
           )
     it "Combines two records" $
       runUnifier
         ( MTRecord $
             M.fromList
-              [ (mkName "one", MTInt)
+              [ (mkName "one", (MTPrim MTInt))
               ],
           MTRecord $
             M.fromList
-              [ (mkName "two", MTBool)
+              [ (mkName "two", (MTPrim MTBool))
               ]
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (NumberedVar 1, MTInt),
-                  (NumberedVar 2, MTBool)
+                [ (NumberedVar 1, (MTPrim MTInt)),
+                  (NumberedVar 2, (MTPrim MTBool))
                 ]
           )

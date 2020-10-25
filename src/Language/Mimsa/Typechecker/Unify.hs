@@ -23,11 +23,7 @@ freeTypeVars ty = case ty of
   MTPair t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
   MTRecord as -> foldr S.union mempty (freeTypeVars <$> as)
   MTData _ as -> foldr S.union mempty (freeTypeVars <$> as)
-  MTString -> S.empty
-  MTInt -> S.empty
-  MTBool -> S.empty
-  MTUnit ->
-    S.empty
+  MTPrim _ -> S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind :: Variable -> MonoType -> TcMonad Substitutions

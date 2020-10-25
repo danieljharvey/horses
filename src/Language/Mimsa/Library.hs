@@ -51,21 +51,21 @@ getLibraryFunction _ = Nothing
 logFn :: (Monoid ann) => ForeignFunc ann
 logFn =
   let tyA = MTVar (NamedVar (Name "a"))
-   in OneArg (tyA, MTUnit) logExpr
+   in OneArg (tyA, MTPrim MTUnit) logExpr
   where
     logExpr i = do
       T.putStrLn (prettyPrint i)
       pure (MyLiteral mempty MyUnit)
 
 randomInt :: Monoid ann => ForeignFunc ann
-randomInt = NoArgs MTInt action
+randomInt = NoArgs (MTPrim MTInt) action
   where
     action = MyLiteral mempty . MyInt <$> randomIO
 
 randomIntFrom :: Monoid ann => ForeignFunc ann
 randomIntFrom =
   OneArg
-    (MTInt, MTInt)
+    (MTPrim MTInt, MTPrim MTInt)
     ( \(MyLiteral _ (MyInt i)) -> do
         val <- randomIO
         pure (MyLiteral mempty (MyInt (max val i)))
@@ -74,7 +74,7 @@ randomIntFrom =
 addIntPair :: Monoid ann => ForeignFunc ann
 addIntPair =
   OneArg
-    (MTPair MTInt MTInt, MTInt)
+    (MTPair (MTPrim MTInt) (MTPrim MTInt), MTPrim MTInt)
     ( \( MyPair
            _
            (MyLiteral _ (MyInt a))
