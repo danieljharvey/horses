@@ -141,8 +141,8 @@ exprs =
       Right $
         MTRecord
           ( M.fromList
-              [ (mkName "dog", (MTPrim MTInt)),
-                (mkName "cat", (MTPrim MTInt))
+              [ (mkName "dog", MTPrim MTInt),
+                (mkName "cat", MTPrim MTInt)
               ]
           )
     ),

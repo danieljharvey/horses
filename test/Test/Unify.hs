@@ -37,45 +37,45 @@ spec =
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (NumberedVar 1, (MTPrim MTBool)),
-                  (NumberedVar 2, (MTPrim MTInt))
+                [ (NumberedVar 1, MTPrim MTBool),
+                  (NumberedVar 2, MTPrim MTInt)
                 ]
           )
     it "Combines two half records" $
       runUnifier
         ( MTRecord $
             M.fromList
-              [ (mkName "one", (MTPrim MTInt)),
+              [ (mkName "one", MTPrim MTInt),
                 (mkName "two", MTVar (tvFree 1))
               ],
           MTRecord $
             M.fromList
               [ (mkName "one", MTVar (tvFree 2)),
-                (mkName "two", (MTPrim MTBool))
+                (mkName "two", MTPrim MTBool)
               ]
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (NumberedVar 1, (MTPrim MTBool)),
-                  (NumberedVar 2, (MTPrim MTInt))
+                [ (NumberedVar 1, MTPrim MTBool),
+                  (NumberedVar 2, MTPrim MTInt)
                 ]
           )
     it "Combines two records" $
       runUnifier
         ( MTRecord $
             M.fromList
-              [ (mkName "one", (MTPrim MTInt))
+              [ (mkName "one", MTPrim MTInt)
               ],
           MTRecord $
             M.fromList
-              [ (mkName "two", (MTPrim MTBool))
+              [ (mkName "two", MTPrim MTBool)
               ]
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (NumberedVar 1, (MTPrim MTInt)),
-                  (NumberedVar 2, (MTPrim MTBool))
+                [ (NumberedVar 1, MTPrim MTInt),
+                  (NumberedVar 2, MTPrim MTBool)
                 ]
           )
