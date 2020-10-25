@@ -50,7 +50,7 @@ data TypeError
   | ConflictingConstructors TyCon
   | CannotApplyToType TyCon
   | DuplicateTypeDeclaration TyCon
-  | IncompletePatternMatch [TyCon]
+  | IncompletePatternMatch Annotation [TyCon]
   | MixedUpPatterns [TyCon]
   deriving (Eq, Ord, Show)
 
@@ -80,6 +80,7 @@ fromAnnotation _ = (0, 0)
 getErrorPos :: TypeError -> (Start, Length)
 getErrorPos (VariableNotInEnv _ ann _ _) = fromAnnotation ann
 getErrorPos (MissingBuiltIn ann _) = fromAnnotation ann
+getErrorPos (IncompletePatternMatch ann _) = fromAnnotation ann
 getErrorPos (CaseMatchExpectedPair ann _) =
   fromAnnotation ann
 getErrorPos (CannotCaseMatchOnType expr) =
@@ -168,7 +169,7 @@ renderTypeError (TypeVariableNotInDataType constructor name as) =
     "The following type variables were found:"
   ]
     <> (renderName <$> as)
-renderTypeError (IncompletePatternMatch names) =
+renderTypeError (IncompletePatternMatch _ names) =
   [ "Incomplete pattern match.",
     "Missing constructors:"
   ]

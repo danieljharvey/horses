@@ -9,20 +9,14 @@ import qualified Data.Set as S
 import Language.Mimsa.Typechecker.Environment (lookupConstructor)
 import Language.Mimsa.Typechecker.TcMonad (TcMonad)
 import Language.Mimsa.Types
-  ( DataType (DataType),
-    Environment,
-    Expr,
-    TyCon,
-    TypeError (IncompletePatternMatch, MixedUpPatterns),
-    Variable,
-  )
 
 checkCompleteness ::
   Environment ->
+  Annotation ->
   NonEmpty (TyCon, Expr Variable ann) ->
   Maybe (Expr Variable ann) ->
   TcMonad DataType
-checkCompleteness env opts catchAll = do
+checkCompleteness env ann opts catchAll = do
   -- find data type for each match
   items <- traverse (\(name, _) -> lookupConstructor env name) opts
   let optionNames = fst <$> NE.toList opts
@@ -32,15 +26,15 @@ checkCompleteness env opts catchAll = do
     _ -> throwError (MixedUpPatterns optionNames)
   case catchAll of
     Just _ -> pure ()
-    _ -> allPatternsExist optionNames dataType
+    _ -> allPatternsExist ann optionNames dataType
   pure dataType
 
-allPatternsExist :: [TyCon] -> DataType -> TcMonad ()
-allPatternsExist optNames' (DataType _ _ dataTypes) = do
+allPatternsExist :: Annotation -> [TyCon] -> DataType -> TcMonad ()
+allPatternsExist ann optNames' (DataType _ _ dataTypes) = do
   -- check each one of optNames exists in dataTypes
   let dtNames = S.fromList (M.keys dataTypes)
       optNames = S.fromList optNames'
   let (_matched, unmatched) = S.partition (`S.member` optNames) dtNames
   if S.size unmatched > 0
-    then throwError (IncompletePatternMatch (S.toList unmatched))
+    then throwError (IncompletePatternMatch ann (S.toList unmatched))
     else pure ()

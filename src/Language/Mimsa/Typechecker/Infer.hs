@@ -304,12 +304,13 @@ inferSumExpressionType env consTypes sumExpr =
 
 inferCaseMatch ::
   Environment ->
+  Annotation ->
   Expr Variable Annotation ->
   NonEmpty (TyCon, Expr Variable Annotation) ->
   Maybe (Expr Variable Annotation) ->
   TcMonad (Substitutions, MonoType)
-inferCaseMatch env sumExpr matches catchAll = do
-  dataType <- checkCompleteness env matches catchAll
+inferCaseMatch env ann sumExpr matches catchAll = do
+  dataType <- checkCompleteness env ann matches catchAll
   (tyData, constructTypes) <- inferConstructorTypes env dataType
   (s1, tySum) <-
     inferSumExpressionType
@@ -476,5 +477,5 @@ infer env inferExpr =
       inferDataConstructor env name
     (MyConsApp _ cons val) ->
       inferApplication env cons val
-    (MyCaseMatch _ expr' matches catchAll) ->
-      inferCaseMatch env expr' matches catchAll
+    (MyCaseMatch ann expr' matches catchAll) ->
+      inferCaseMatch env ann expr' matches catchAll
