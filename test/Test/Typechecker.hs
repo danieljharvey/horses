@@ -16,40 +16,41 @@ import Test.QuickCheck.Instances ()
 
 exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]
 exprs =
-  [ (int 1, Right (MTPrim MTInt)),
-    (bool True, Right (MTPrim MTBool)),
+  [ (int 1, Right (MTPrim mempty MTInt)),
+    (bool True, Right (MTPrim mempty MTBool)),
     ( str
         (StringType "hello"),
-      Right (MTPrim MTString)
+      Right (MTPrim mempty MTString)
     ),
     -- (MyVar (named "x"), Left "Unknown variable \"x\""),
-    (MyLet mempty (named "x") (int 42) (bool True), Right (MTPrim MTBool)),
-    (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x")), Right (MTPrim MTInt)),
+    (MyLet mempty (named "x") (int 42) (bool True), Right (MTPrim mempty MTBool)),
+    (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x")), Right (MTPrim mempty MTInt)),
     ( MyLet
         mempty
         (named "x")
         (bool True)
         (MyLet mempty (named "y") (int 42) (MyVar mempty (named "x"))),
-      Right (MTPrim MTBool)
+      Right (MTPrim mempty MTBool)
     ),
     ( MyLet
         mempty
         (named "x")
         (bool True)
         (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))),
-      Right (MTPrim MTInt)
+      Right (MTPrim mempty MTInt)
     ),
     ( MyLambda mempty (named "x") (bool True),
-      Right $ MTFunction (unknown 1) (MTPrim MTBool)
+      Right $ MTFunction mempty (unknown 1) (MTPrim mempty MTBool)
     ),
     ( identity,
-      Right $ MTFunction (unknown 1) (unknown 1)
+      Right $ MTFunction mempty (unknown 1) (unknown 1)
     ),
     ( MyLambda mempty (named "x") (MyLambda mempty (named "y") (MyVar mempty (named "x"))),
       Right $
         MTFunction
+          mempty
           (unknown 1)
-          (MTFunction (unknown 2) (unknown 1))
+          (MTFunction mempty (unknown 2) (unknown 1))
     ),
     ( MyApp
         mempty
@@ -59,13 +60,13 @@ exprs =
             (bool True)
         )
         (int 1),
-      Right (MTPrim MTBool)
+      Right (MTPrim mempty MTBool)
     ),
     ( MyApp
         mempty
         identity
         (int 1),
-      Right (MTPrim MTInt)
+      Right (MTPrim mempty MTInt)
     ),
     ( MyApp
         mempty
@@ -75,7 +76,7 @@ exprs =
             (MyIf mempty (MyVar mempty (named "x")) (int 10) (int 10))
         )
         (int 100),
-      Left $ UnificationError (MTPrim MTBool) (MTPrim MTInt)
+      Left $ UnificationError (MTPrim mempty MTBool) (MTPrim mempty MTInt)
     ),
     ( MyLambda mempty (named "x") (MyApp mempty (MyVar mempty (named "x")) (MyVar mempty (named "x"))),
       Left $
@@ -83,13 +84,14 @@ exprs =
           mempty
           (tvFree 1)
           ( MTFunction
-              (MTVar (tvFree 1))
-              (MTVar (tvFree 2))
+              mempty
+              (MTVar mempty (tvFree 1))
+              (MTVar mempty (tvFree 2))
           )
     ),
-    (MyPair mempty (int 1) (bool True), Right (MTPair (MTPrim MTInt) (MTPrim MTBool))),
+    (MyPair mempty (int 1) (bool True), Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))),
     ( MyLetPair mempty (named "a") (named "b") (MyPair mempty (int 1) (bool True)) (MyVar mempty (named "a")),
-      Right (MTPrim MTInt)
+      Right (MTPrim mempty MTInt)
     ),
     ( MyLambda
         mempty
@@ -101,7 +103,7 @@ exprs =
             (MyVar mempty (named "x"))
             (MyVar mempty (named "a"))
         ),
-      Right (MTFunction (MTPair (unknown 2) (unknown 3)) (unknown 2))
+      Right (MTFunction mempty (MTPair mempty (unknown 2) (unknown 3)) (unknown 2))
     ),
     ( MyLet
         mempty
@@ -123,13 +125,13 @@ exprs =
             (MyPair mempty (int 1) (int 2))
             (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "x")))
         ),
-      Right (MTPrim MTInt)
+      Right (MTPrim mempty MTInt)
     ),
     ( MyRecord
         mempty
         mempty,
       Right $
-        MTRecord mempty
+        MTRecord mempty mempty
     ),
     ( MyRecord
         mempty
@@ -140,9 +142,10 @@ exprs =
         ),
       Right $
         MTRecord
+          mempty
           ( M.fromList
-              [ (mkName "dog", MTPrim MTInt),
-                (mkName "cat", MTPrim MTInt)
+              [ (mkName "dog", MTPrim mempty MTInt),
+                (mkName "cat", MTPrim mempty MTInt)
               ]
           )
     ),
@@ -159,7 +162,15 @@ exprs =
             (int 1)
             (int 2)
         ),
-      Right $ MTFunction (MTRecord $ M.singleton (mkName "dog") (MTPrim MTBool)) (MTPrim MTInt)
+      Right $
+        MTFunction
+          mempty
+          ( MTRecord mempty $
+              M.singleton
+                (mkName "dog")
+                (MTPrim mempty MTBool)
+          )
+          (MTPrim mempty MTInt)
     ),
     ( MyLambda
         mempty
@@ -214,7 +225,7 @@ spec =
                   (MyApp mempty (MyVar mempty (named "id")) (int 1))
                   (MyApp mempty (MyVar mempty (named "id")) (bool True))
               )
-      let expected = Right (MTPair (MTPrim MTInt) (MTPrim MTBool))
+      let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
       startInference mempty expr `shouldBe` expected
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
@@ -228,8 +239,14 @@ spec =
                   (MyApp mempty identity (int 2))
               )
       let expr = MyApp mempty lambda (bool True)
-      startInference mempty lambda `shouldBe` Right (MTFunction (MTPrim MTBool) (MTPrim MTInt))
-      startInference mempty expr `shouldBe` Right (MTPrim MTInt)
+      startInference mempty lambda
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTPrim mempty MTBool)
+              (MTPrim mempty MTInt)
+          )
+      startInference mempty expr `shouldBe` Right (MTPrim mempty MTInt)
 {-  describe "Serialisation" $ do
 it "Round trip" $ do
   property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)

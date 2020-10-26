@@ -16,8 +16,8 @@ str' :: (Monoid ann) => Text -> Expr a ann
 str' = str . StringType
 
 --
-unknown :: Int -> MonoType
-unknown = MTVar . NumberedVar
+unknown :: (Monoid ann) => Int -> Type ann
+unknown = MTVar mempty . NumberedVar
 
 ---
 

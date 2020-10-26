@@ -34,16 +34,19 @@ substLookup subst i = M.lookup i (getSubstitutions subst)
 
 applySubst :: Substitutions -> MonoType -> MonoType
 applySubst subst ty = case ty of
-  MTVar var ->
+  MTVar ann var ->
     fromMaybe
-      (MTVar var)
+      (MTVar ann var)
       (substLookup subst var)
-  MTFunction arg res ->
-    MTFunction (applySubst subst arg) (applySubst subst res)
-  MTPair a b ->
+  MTFunction ann arg res ->
+    MTFunction ann (applySubst subst arg) (applySubst subst res)
+  MTPair ann a b ->
     MTPair
+      ann
       (applySubst subst a)
       (applySubst subst b)
-  MTRecord a -> MTRecord (applySubst subst <$> a)
-  MTData a ty' -> MTData a (applySubst subst <$> ty')
-  MTPrim a -> MTPrim a
+  MTRecord ann a ->
+    MTRecord ann (applySubst subst <$> a)
+  MTData ann a ty' ->
+    MTData ann a (applySubst subst <$> ty')
+  MTPrim ann a -> MTPrim ann a

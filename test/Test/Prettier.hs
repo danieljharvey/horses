@@ -19,37 +19,51 @@ spec =
       it "String" $
         T.putStrLn (prettyPrint MTString)
       it "Function" $
-        T.putStrLn
-          ( prettyPrint $
+        let mt :: MonoType
+            mt =
               MTFunction
-                (MTFunction (MTPrim MTInt) (MTPrim MTString))
-                (MTPrim MTBool)
-          )
-      it "Record" $
-        T.putStrLn
-          ( prettyPrint
-              ( MTRecord $
-                  M.fromList
-                    [ (mkName "dog", MTPrim MTUnit),
-                      (mkName "horse", MTPrim MTString),
-                      (mkName "maybeDog", MTData (mkTyCon "Maybe") [MTPrim MTString])
-                    ]
+                mempty
+                (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
+                (MTPrim mempty MTBool)
+         in T.putStrLn
+              ( prettyPrint mt
               )
-          )
+      it "Record" $
+        let mt :: MonoType
+            mt =
+              MTRecord mempty $
+                M.fromList
+                  [ (mkName "dog", MTPrim mempty MTUnit),
+                    (mkName "horse", MTPrim mempty MTString),
+                    ( mkName "maybeDog",
+                      MTData
+                        mempty
+                        (mkTyCon "Maybe")
+                        [MTPrim mempty MTString]
+                    )
+                  ]
+         in T.putStrLn
+              ( prettyPrint mt
+              )
       it "Pair" $
-        T.putStrLn
-          ( prettyPrint $
+        let mt :: MonoType
+            mt =
               MTPair
-                (MTFunction (MTPrim MTInt) (MTPrim MTInt))
-                (MTPrim MTString)
-          )
+                mempty
+                (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTInt))
+                (MTPrim mempty MTString)
+         in T.putStrLn
+              (prettyPrint mt)
       it "Variables" $
-        T.putStrLn
-          ( prettyPrint $
+        let mt :: MonoType
+            mt =
               MTFunction
-                ( MTVar
+                mempty
+                ( MTVar mempty
                     $ NamedVar
                     $ Name "catch"
                 )
-                (MTVar $ NumberedVar 22)
-          )
+                (MTVar mempty $ NumberedVar 22)
+         in T.putStrLn
+              ( prettyPrint mt
+              )

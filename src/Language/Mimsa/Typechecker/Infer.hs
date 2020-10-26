@@ -81,10 +81,10 @@ instantiate (Scheme vars ty) = do
 --------------
 
 inferLiteral :: Literal -> TcMonad (Substitutions, MonoType)
-inferLiteral (MyInt _) = pure (mempty, MTPrim MTInt)
-inferLiteral (MyBool _) = pure (mempty, MTPrim MTBool)
-inferLiteral (MyString _) = pure (mempty, MTPrim MTString)
-inferLiteral MyUnit = pure (mempty, MTPrim MTUnit)
+inferLiteral (MyInt _) = pure (mempty, MTPrim mempty MTInt)
+inferLiteral (MyBool _) = pure (mempty, MTPrim mempty MTBool)
+inferLiteral (MyString _) = pure (mempty, MTPrim mempty MTString)
+inferLiteral MyUnit = pure (mempty, MTPrim mempty MTUnit)
 
 inferBuiltIn ::
   Annotation ->
@@ -120,7 +120,7 @@ createEnv binder scheme =
 splitRecordTypes ::
   Map Name (Substitutions, MonoType) ->
   (Substitutions, MonoType)
-splitRecordTypes map' = (subs, MTRecord types)
+splitRecordTypes map' = (subs, MTRecord mempty types)
   where
     subs =
       mconcat (fst . snd <$> M.toList map')
@@ -136,7 +136,7 @@ inferApplication env function argument = do
   tyRes <- getUnknown
   (s1, tyFun) <- infer env function
   (s2, tyArg) <- infer (applySubstCtx s1 env) argument
-  s3 <- unify (applySubst s2 tyFun) (MTFunction tyArg tyRes)
+  s3 <- unify (applySubst s2 tyFun) (MTFunction mempty tyArg tyRes)
   pure (s3 <> s2 <> s1, applySubst s3 tyRes)
 
 -- when we come to do let recursive the name of our binder
@@ -178,16 +178,16 @@ inferLetPairBinding ::
 inferLetPairBinding env binder1 binder2 expr body = do
   (s1, tyExpr) <- infer env expr
   (tyA, tyB) <- case tyExpr of
-    (MTVar _a) -> do
+    (MTVar _ _a) -> do
       tyA <- getUnknown
       tyB <- getUnknown
       pure (tyA, tyB)
-    (MTPair a b) -> pure (a, b)
+    (MTPair _ a b) -> pure (a, b)
     a -> throwError $ CaseMatchExpectedPair (getAnnotation expr) a
   let schemeA = Scheme mempty (applySubst s1 tyA)
       schemeB = Scheme mempty (applySubst s1 tyB)
       newEnv = createEnv binder1 schemeA <> createEnv binder2 schemeB <> env
-  s2 <- unify tyExpr (MTPair tyA tyB)
+  s2 <- unify tyExpr (MTPair mempty tyA tyB)
   (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
   pure (s3 <> s2 <> s1, tyBody)
 
@@ -237,7 +237,7 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
         let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
         pure $ M.singleton consName constructor
   cons' <- traverse inferConstructor (M.toList constructors)
-  let dt = MTData typeName (snd <$> tyVars)
+  let dt = MTData mempty typeName (snd <$> tyVars)
   pure (dt, mconcat cons')
 
 -- parse a type from it's name
@@ -247,7 +247,7 @@ inferType env tyName tyVars =
   case M.lookup tyName (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
-      _ -> pure (MTData tyName tyVars)
+      _ -> pure (MTData mempty tyName tyVars)
     _ -> throwError (TypeConstructorNotInScope env tyName)
 
 lookupBuiltIn :: TyCon -> Maybe MonoType
@@ -272,7 +272,7 @@ matchList =
 
 constructorToType :: TypeConstructor -> MonoType
 constructorToType (TypeConstructor typeName tyVars constructTypes) =
-  foldr MTFunction (MTData typeName tyVars) constructTypes
+  foldr (MTFunction mempty) (MTData mempty typeName tyVars) constructTypes
 
 inferSumExpressionType ::
   Environment ->
@@ -291,7 +291,7 @@ inferSumExpressionType env consTypes sumExpr =
               )
           Nothing -> throwError $ CannotCaseMatchOnType sumExpr
       unwind tyExpr = case tyExpr of
-        MTFunction _ b -> unwind b
+        MTFunction _ _ b -> unwind b
         a -> a
       findConstructor expr = case expr of
         (MyConsApp _ a _) -> findConstructor a
@@ -373,7 +373,7 @@ applyList vars tyFun = case vars of
     tyRes <- getUnknown
     s1 <-
       unify
-        (MTFunction var tyRes)
+        (MTFunction mempty var tyRes)
         tyFun
     (s2, tyFun') <- applyList vars' (applySubst s1 tyRes)
     pure (s2 <> s1, applySubst (s2 <> s1) tyFun')
@@ -388,10 +388,10 @@ inferOperator env Equals a b = do
   (s1, tyA) <- infer env a
   (s2, tyB) <- infer env b
   case tyA of
-    MTFunction _ _ -> throwError $ NoFunctionEquality tyA tyB
+    MTFunction {} -> throwError $ NoFunctionEquality tyA tyB
     _ -> do
       s3 <- unify tyA tyB -- Equals wants them to be the same
-      pure (s3 <> s2 <> s1, MTPrim MTBool)
+      pure (s3 <> s2 <> s1, MTPrim mempty MTBool)
 
 inferRecordAccess ::
   Environment ->
@@ -402,16 +402,16 @@ inferRecordAccess ::
 inferRecordAccess env ann a name = do
   (s1, tyItems) <- infer env a
   tyResult <- case tyItems of
-    (MTRecord bits) ->
+    (MTRecord _ bits) ->
       case M.lookup name bits of
         Just mt -> pure mt
         _ ->
           throwError $ MissingRecordTypeMember name bits
-    (MTVar _) -> getUnknown
+    (MTVar _ _) -> getUnknown
     _ -> throwError $ CannotMatchRecord env ann tyItems
   s2 <-
     unify
-      (MTRecord $ M.singleton name tyResult)
+      (MTRecord mempty $ M.singleton name tyResult)
       tyItems
   let subs = s2 <> s1
   pure (subs, applySubst subs tyResult)
@@ -453,14 +453,14 @@ infer env inferExpr =
             createEnv binder (Scheme [] tyBinder)
               <> env
       (s1, tyBody) <- infer tmpCtx body
-      pure (s1, MTFunction (applySubst s1 tyBinder) tyBody)
+      pure (s1, MTFunction mempty (applySubst s1 tyBinder) tyBody)
     (MyApp _ function argument) -> inferApplication env function argument
     (MyIf _ condition thenCase elseCase) -> do
       (s1, tyCond) <- infer env condition
       (s2, tyThen) <- infer (applySubstCtx s1 env) thenCase
       (s3, tyElse) <- infer (applySubstCtx (s2 <> s1) env) elseCase
       s4 <- unify tyThen tyElse
-      s5 <- unify tyCond (MTPrim MTBool)
+      s5 <- unify tyCond (MTPrim mempty MTBool)
       let subs = s5 <> s4 <> s3 <> s2 <> s1
       pure
         ( subs,
@@ -470,7 +470,7 @@ infer env inferExpr =
       (s1, tyA) <- infer env a
       (s2, tyB) <- infer env b
       let subs = s2 <> s1
-      pure (subs, MTPair tyA tyB)
+      pure (subs, MTPair mempty tyA tyB)
     (MyData _ dataType expr) ->
       storeDataDeclaration env dataType expr
     (MyConstructor _ name) ->

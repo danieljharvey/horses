@@ -1,7 +1,9 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.MonoType
-  ( MonoType (..),
+  ( MonoType,
+    Type (..),
     Primitive (..),
   )
 where
@@ -10,6 +12,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 
 data Primitive
@@ -25,25 +28,27 @@ instance Printer Primitive where
   prettyDoc MTString = "String"
   prettyDoc MTBool = "Boolean"
 
-data MonoType
-  = MTPrim Primitive
-  | MTVar Variable
-  | MTFunction MonoType MonoType -- argument, result
-  | MTPair MonoType MonoType -- (a,b)
-  | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
-  | MTData TyCon [MonoType] -- name, typeVars
-  deriving (Eq, Ord, Show)
+type MonoType = Type Annotation
 
-instance Printer MonoType where
+data Type ann
+  = MTPrim ann Primitive
+  | MTVar ann Variable
+  | MTFunction ann (Type ann) (Type ann) -- argument, result
+  | MTPair ann (Type ann) (Type ann) -- (a,b)
+  | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
+  | MTData ann TyCon [Type ann] -- name, typeVars
+  deriving (Eq, Ord, Show, Functor)
+
+instance Printer (Type ann) where
   prettyDoc = renderMonoType
 
-renderMonoType :: MonoType -> Doc ann
-renderMonoType (MTPrim a) = prettyDoc a
-renderMonoType (MTFunction a b) =
+renderMonoType :: Type ann -> Doc a
+renderMonoType (MTPrim _ a) = prettyDoc a
+renderMonoType (MTFunction _ a b) =
   parens (renderMonoType a <+> "->" <+> renderMonoType b)
-renderMonoType (MTPair a b) =
+renderMonoType (MTPair _ a b) =
   tupled [renderMonoType a, renderMonoType b]
-renderMonoType (MTRecord as) =
+renderMonoType (MTRecord _ as) =
   enclose
     lbrace
     rbrace
@@ -56,9 +61,9 @@ renderMonoType (MTRecord as) =
     )
   where
     renderItem (Name k, v) = pretty k <+> ":" <+> renderMonoType v
-renderMonoType (MTVar a) = case a of
+renderMonoType (MTVar _ a) = case a of
   (NamedVar (Name n)) -> pretty n
   (NumberedVar i) -> pretty i
   (BuiltIn (Name n)) -> pretty n
   (BuiltInActual (Name n) _) -> pretty n
-renderMonoType (MTData (TyCon n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))
+renderMonoType (MTData _ (TyCon n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))

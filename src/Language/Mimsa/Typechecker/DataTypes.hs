@@ -22,8 +22,8 @@ defaultEnv = Environment mempty dts
 builtInTypes :: Map TyCon MonoType
 builtInTypes =
   M.fromList
-    [ (mkTyCon "String", MTPrim MTString),
-      (mkTyCon "Int", MTPrim MTInt),
-      (mkTyCon "Boolean", MTPrim MTBool),
-      (mkTyCon "Unit", MTPrim MTUnit)
+    [ (mkTyCon "String", MTPrim mempty MTString),
+      (mkTyCon "Int", MTPrim mempty MTInt),
+      (mkTyCon "Boolean", MTPrim mempty MTBool),
+      (mkTyCon "Unit", MTPrim mempty MTUnit)
     ]

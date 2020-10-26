@@ -23,4 +23,4 @@ getNextUniVar = do
   pure nextUniVar
 
 getUnknown :: TcMonad MonoType
-getUnknown = MTVar . NumberedVar <$> getNextUniVar
+getUnknown = MTVar mempty . NumberedVar <$> getNextUniVar
