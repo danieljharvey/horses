@@ -56,11 +56,11 @@ unify tyA tyB =
     (MTFunction _ l r, MTFunction _ l' r') ->
       unifyPairs (l, r) (l', r')
     (MTPair _ a b, MTPair _ a' b') -> unifyPairs (a, b) (a', b')
-    (MTRecord _ as, MTRecord _ bs) -> do
+    (MTRecord ann as, MTRecord ann' bs) -> do
       let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
       let getRecordTypes k = do
-            tyLeft <- getTypeOrFresh k as
-            tyRight <- getTypeOrFresh k bs
+            tyLeft <- getTypeOrFresh ann k as
+            tyRight <- getTypeOrFresh ann' k bs
             unify tyLeft tyRight
       s <- traverse getRecordTypes allKeys
       pure (mconcat s)
@@ -74,8 +74,8 @@ unify tyA tyB =
     (a, b) ->
       throwError $ UnificationError a b
 
-getTypeOrFresh :: Name -> Map Name MonoType -> TcMonad MonoType
-getTypeOrFresh name map' =
+getTypeOrFresh :: Annotation -> Name -> Map Name MonoType -> TcMonad MonoType
+getTypeOrFresh ann name map' =
   case M.lookup name map' of
     Just found -> pure found
-    _ -> getUnknown
+    _ -> getUnknown ann

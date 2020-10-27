@@ -74,17 +74,17 @@ applySubstScheme (Substitutions subst) (Scheme vars t) =
 
 instantiate :: Scheme -> TcMonad (Substitutions, MonoType)
 instantiate (Scheme vars ty) = do
-  newVars <- traverse (const getUnknown) vars
+  newVars <- traverse (const $ getUnknown mempty) vars
   let subst = Substitutions $ M.fromList (zip vars newVars)
   pure (subst, applySubst subst ty)
 
 --------------
 
-inferLiteral :: Literal -> TcMonad (Substitutions, MonoType)
-inferLiteral (MyInt _) = pure (mempty, MTPrim mempty MTInt)
-inferLiteral (MyBool _) = pure (mempty, MTPrim mempty MTBool)
-inferLiteral (MyString _) = pure (mempty, MTPrim mempty MTString)
-inferLiteral MyUnit = pure (mempty, MTPrim mempty MTUnit)
+inferLiteral :: Annotation -> Literal -> TcMonad (Substitutions, MonoType)
+inferLiteral ann (MyInt _) = pure (mempty, MTPrim ann MTInt)
+inferLiteral ann (MyBool _) = pure (mempty, MTPrim ann MTBool)
+inferLiteral ann (MyString _) = pure (mempty, MTPrim ann MTString)
+inferLiteral ann MyUnit = pure (mempty, MTPrim ann MTUnit)
 
 inferBuiltIn ::
   Annotation ->
@@ -129,11 +129,12 @@ splitRecordTypes map' = (subs, MTRecord mempty types)
 -- let's pattern match on exactly what's inside more clearly
 inferApplication ::
   Environment ->
+  Annotation ->
   Expr Variable Annotation ->
   Expr Variable Annotation ->
   TcMonad (Substitutions, MonoType)
-inferApplication env function argument = do
-  tyRes <- getUnknown
+inferApplication env ann function argument = do
+  tyRes <- getUnknown ann
   (s1, tyFun) <- infer env function
   (s2, tyArg) <- infer (applySubstCtx s1 env) argument
   s3 <- unify (applySubst s2 tyFun) (MTFunction mempty tyArg tyRes)
@@ -154,12 +155,13 @@ findActualBindingInSwaps a = pure a
 -- we may need to unify tyUnknown and tyExpr if it struggles with complex stuff
 inferLetBinding ::
   Environment ->
+  Annotation ->
   Variable ->
   Expr Variable Annotation ->
   Expr Variable Annotation ->
   TcMonad (Substitutions, MonoType)
-inferLetBinding env binder expr body = do
-  tyUnknown <- getUnknown
+inferLetBinding env ann binder expr body = do
+  tyUnknown <- getUnknown ann
   binderInExpr <- findActualBindingInSwaps binder
   let newEnv1 = createEnv binderInExpr (Scheme mempty tyUnknown) <> env
   (s1, tyExpr) <- infer newEnv1 expr
@@ -178,9 +180,9 @@ inferLetPairBinding ::
 inferLetPairBinding env binder1 binder2 expr body = do
   (s1, tyExpr) <- infer env expr
   (tyA, tyB) <- case tyExpr of
-    (MTVar _ _a) -> do
-      tyA <- getUnknown
-      tyB <- getUnknown
+    (MTVar ann _a) -> do
+      tyA <- getUnknown ann
+      tyB <- getUnknown ann
       pure (tyA, tyB)
     (MTPair _ a b) -> pure (a, b)
     a -> throwError $ CaseMatchExpectedPair (getAnnotation expr) a
@@ -223,7 +225,7 @@ inferConstructorTypes ::
   DataType ->
   TcMonad (MonoType, Map TyCon TypeConstructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
-  tyVars <- traverse (\a -> (,) a <$> getUnknown) tyNames
+  tyVars <- traverse (\a -> (,) a <$> getUnknown mempty) tyNames
   let findType ty = case ty of
         ConsName cn vs -> do
           vs' <- traverse findType vs
@@ -265,7 +267,7 @@ matchList =
         pure (sA <> sB, applySubst (sA <> sB) tyB')
     )
     ( (,) mempty
-        <$> getUnknown
+        <$> getUnknown mempty
     )
 
 -----
@@ -370,7 +372,7 @@ applyList :: [MonoType] -> MonoType -> TcMonad (Substitutions, MonoType)
 applyList vars tyFun = case vars of
   [] -> pure (mempty, tyFun)
   (var : vars') -> do
-    tyRes <- getUnknown
+    tyRes <- getUnknown mempty
     s1 <-
       unify
         (MTFunction mempty var tyRes)
@@ -407,7 +409,7 @@ inferRecordAccess env ann a name = do
         Just mt -> pure mt
         _ ->
           throwError $ MissingRecordTypeMember name bits
-    (MTVar _ _) -> getUnknown
+    (MTVar ann _) -> getUnknown ann
     _ -> throwError $ CannotMatchRecord env ann tyItems
   s2 <-
     unify
@@ -422,12 +424,12 @@ infer ::
   TcMonad (Substitutions, MonoType)
 infer env inferExpr =
   case inferExpr of
-    (MyLiteral _ a) -> inferLiteral a
+    (MyLiteral ann a) -> inferLiteral ann a
     (MyVar ann name) ->
       inferVarFromScope env ann name
         <|> inferBuiltIn ann name
-    (MyRecord _ map') -> do
-      tyRecord <- getUnknown
+    (MyRecord ann map') -> do
+      tyRecord <- getUnknown ann
       (s1, tyResult) <- splitRecordTypes <$> traverse (infer env) map'
       s2 <- unify tyResult tyRecord
       pure
@@ -435,8 +437,8 @@ infer env inferExpr =
           applySubst (s2 <> s1) tyRecord
         )
     (MyInfix _ op a b) -> inferOperator env op a b
-    (MyLet _ binder expr body) ->
-      inferLetBinding env binder expr body
+    (MyLet ann binder expr body) ->
+      inferLetBinding env ann binder expr body
     (MyRecordAccess _ (MyRecord _ items') name) ->
       case M.lookup name items' of
         Just item ->
@@ -454,7 +456,7 @@ infer env inferExpr =
               <> env
       (s1, tyBody) <- infer tmpCtx body
       pure (s1, MTFunction mempty (applySubst s1 tyBinder) tyBody)
-    (MyApp _ function argument) -> inferApplication env function argument
+    (MyApp ann function argument) -> inferApplication env ann function argument
     (MyIf _ condition thenCase elseCase) -> do
       (s1, tyCond) <- infer env condition
       (s2, tyThen) <- infer (applySubstCtx s1 env) thenCase
