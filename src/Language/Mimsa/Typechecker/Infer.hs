@@ -137,7 +137,7 @@ inferApplication env ann function argument = do
   tyRes <- getUnknown ann
   (s1, tyFun) <- infer env function
   (s2, tyArg) <- infer (applySubstCtx s1 env) argument
-  s3 <- unify (applySubst s2 tyFun) (MTFunction mempty tyArg tyRes)
+  s3 <- unify (applySubst s2 tyFun) (MTFunction ann tyArg tyRes)
   pure (s3 <> s2 <> s1, applySubst s3 tyRes)
 
 -- when we come to do let recursive the name of our binder
@@ -210,9 +210,9 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
 -- infer the type of a data constructor
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
-inferDataConstructor :: Environment -> TyCon -> TcMonad (Substitutions, MonoType)
-inferDataConstructor env name = do
-  dataType <- lookupConstructor env name
+inferDataConstructor :: Environment -> Annotation -> TyCon -> TcMonad (Substitutions, MonoType)
+inferDataConstructor env ann name = do
+  dataType <- lookupConstructor env ann name
   (_, allArgs) <- inferConstructorTypes env dataType
   case M.lookup name allArgs of
     Just tyArg ->
@@ -229,7 +229,7 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
   let findType ty = case ty of
         ConsName cn vs -> do
           vs' <- traverse findType vs
-          inferType env cn vs'
+          inferType env mempty cn vs'
         VarName var ->
           case filter (\(tyName, _) -> tyName == var) tyVars of
             [(_, tyFound)] -> pure tyFound
@@ -244,13 +244,13 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
 
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
-inferType :: Environment -> TyCon -> [MonoType] -> TcMonad MonoType
-inferType env tyName tyVars =
+inferType :: Environment -> Annotation -> TyCon -> [MonoType] -> TcMonad MonoType
+inferType env ann tyName tyVars =
   case M.lookup tyName (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
       _ -> pure (MTData mempty tyName tyVars)
-    _ -> throwError (TypeConstructorNotInScope env tyName)
+    _ -> throwError (TypeConstructorNotInScope env ann tyName)
 
 lookupBuiltIn :: TyCon -> Maybe MonoType
 lookupBuiltIn name = M.lookup name builtInTypes
@@ -382,18 +382,19 @@ applyList vars tyFun = case vars of
 
 inferOperator ::
   Environment ->
+  Annotation ->
   Operator ->
   Expr Variable Annotation ->
   Expr Variable Annotation ->
   TcMonad (Substitutions, MonoType)
-inferOperator env Equals a b = do
+inferOperator env ann Equals a b = do
   (s1, tyA) <- infer env a
   (s2, tyB) <- infer env b
   case tyA of
     MTFunction {} -> throwError $ NoFunctionEquality tyA tyB
     _ -> do
       s3 <- unify tyA tyB -- Equals wants them to be the same
-      pure (s3 <> s2 <> s1, MTPrim mempty MTBool)
+      pure (s3 <> s2 <> s1, MTPrim ann MTBool)
 
 inferRecordAccess ::
   Environment ->
@@ -408,8 +409,8 @@ inferRecordAccess env ann a name = do
       case M.lookup name bits of
         Just mt -> pure mt
         _ ->
-          throwError $ MissingRecordTypeMember name bits
-    (MTVar ann _) -> getUnknown ann
+          throwError $ MissingRecordTypeMember ann name bits
+    (MTVar ann' _) -> getUnknown ann'
     _ -> throwError $ CannotMatchRecord env ann tyItems
   s2 <-
     unify
@@ -436,15 +437,15 @@ infer env inferExpr =
         ( s2 <> s1,
           applySubst (s2 <> s1) tyRecord
         )
-    (MyInfix _ op a b) -> inferOperator env op a b
+    (MyInfix ann op a b) -> inferOperator env ann op a b
     (MyLet ann binder expr body) ->
       inferLetBinding env ann binder expr body
-    (MyRecordAccess _ (MyRecord _ items') name) ->
+    (MyRecordAccess ann (MyRecord _ items') name) ->
       case M.lookup name items' of
         Just item ->
           infer env item
         Nothing ->
-          throwError $ MissingRecordMember name (S.fromList (M.keys items'))
+          throwError $ MissingRecordMember ann name (S.fromList (M.keys items'))
     (MyRecordAccess ann a name) ->
       inferRecordAccess env ann a name
     (MyLetPair _ binder1 binder2 expr body) ->
@@ -455,28 +456,28 @@ infer env inferExpr =
             createEnv binder (Scheme [] tyBinder)
               <> env
       (s1, tyBody) <- infer tmpCtx body
-      pure (s1, MTFunction mempty (applySubst s1 tyBinder) tyBody)
+      pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
     (MyApp ann function argument) -> inferApplication env ann function argument
     (MyIf _ condition thenCase elseCase) -> do
       (s1, tyCond) <- infer env condition
       (s2, tyThen) <- infer (applySubstCtx s1 env) thenCase
       (s3, tyElse) <- infer (applySubstCtx (s2 <> s1) env) elseCase
       s4 <- unify tyThen tyElse
-      s5 <- unify tyCond (MTPrim mempty MTBool)
+      s5 <- unify tyCond (MTPrim (getAnnotation condition) MTBool)
       let subs = s5 <> s4 <> s3 <> s2 <> s1
       pure
         ( subs,
           applySubst subs tyElse
         )
-    (MyPair _ a b) -> do
+    (MyPair ann a b) -> do
       (s1, tyA) <- infer env a
       (s2, tyB) <- infer env b
       let subs = s2 <> s1
-      pure (subs, MTPair mempty tyA tyB)
+      pure (subs, MTPair ann tyA tyB)
     (MyData _ dataType expr) ->
       storeDataDeclaration env dataType expr
-    (MyConstructor _ name) ->
-      inferDataConstructor env name
+    (MyConstructor ann name) ->
+      inferDataConstructor env ann name
     (MyConsApp ann cons val) ->
       inferApplication env ann cons val
     (MyCaseMatch ann expr' matches catchAll) ->

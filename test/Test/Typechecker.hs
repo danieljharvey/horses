@@ -192,6 +192,7 @@ exprs =
         ),
       Left $
         MissingRecordTypeMember
+          mempty
           (mkName "cat")
           ( M.singleton
               (mkName "dog")

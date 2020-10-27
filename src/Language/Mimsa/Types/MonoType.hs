@@ -5,6 +5,7 @@ module Language.Mimsa.Types.MonoType
   ( MonoType,
     Type (..),
     Primitive (..),
+    getAnnotationForType,
   )
 where
 
@@ -38,6 +39,14 @@ data Type ann
   | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
   | MTData ann TyCon [Type ann] -- name, typeVars
   deriving (Eq, Ord, Show, Functor)
+
+getAnnotationForType :: Type ann -> ann
+getAnnotationForType (MTPrim ann _) = ann
+getAnnotationForType (MTVar ann _) = ann
+getAnnotationForType (MTFunction ann _ _) = ann
+getAnnotationForType (MTPair ann _ _) = ann
+getAnnotationForType (MTRecord ann _) = ann
+getAnnotationForType (MTData ann _ _) = ann
 
 instance Printer (Type ann) where
   prettyDoc = renderMonoType

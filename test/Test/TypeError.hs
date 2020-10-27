@@ -50,3 +50,9 @@ spec = do
     it "Shows the location with IncompletePatternMatch" $
       getTypeError "case 1 of Some \\a -> a"
         `shouldSatisfy` maybePred (textContains "^^^^^^^^^^^^^^^^^^^^^^")
+    it "Shows the location with UnificationError" $
+      getTypeError "if 100 then 1 else 2"
+        `shouldSatisfy` maybePred (textContains "^^^")
+    it "Shows the location with MissingRecordMember" $
+      getTypeError "let a = {} in a.dog"
+        `shouldSatisfy` maybePred (textContains "^^^^^")

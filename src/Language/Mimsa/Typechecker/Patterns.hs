@@ -18,7 +18,7 @@ checkCompleteness ::
   TcMonad DataType
 checkCompleteness env ann opts catchAll = do
   -- find data type for each match
-  items <- traverse (\(name, _) -> lookupConstructor env name) opts
+  items <- traverse (\(name, _) -> lookupConstructor env ann name) opts
   let optionNames = fst <$> NE.toList opts
   -- check they are all the same one
   dataType <- case nub (NE.toList items) of

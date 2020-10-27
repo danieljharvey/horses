@@ -29,7 +29,7 @@ import Language.Mimsa.Types.Identifiers
     mkName,
     renderName,
   )
-import Language.Mimsa.Types.MonoType (MonoType)
+import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Swaps (Swaps)
 import Text.Megaparsec
 
@@ -38,16 +38,16 @@ data TypeError
   | FailsOccursCheck Swaps Variable MonoType
   | UnificationError MonoType MonoType
   | VariableNotInEnv Swaps Annotation Variable (Set Variable)
-  | MissingRecordMember Name (Set Name)
-  | MissingRecordTypeMember Name (Map Name MonoType)
+  | MissingRecordMember Annotation Name (Set Name)
+  | MissingRecordTypeMember Annotation Name (Map Name MonoType)
   | MissingBuiltIn Annotation Variable
   | NoFunctionEquality MonoType MonoType
   | CannotMatchRecord Environment Annotation MonoType
   | CaseMatchExpectedPair Annotation MonoType
   | CannotCaseMatchOnType (Expr Variable Annotation)
-  | TypeConstructorNotInScope Environment TyCon
+  | TypeConstructorNotInScope Environment Annotation TyCon
   | TypeVariableNotInDataType TyCon Name [Name]
-  | ConflictingConstructors TyCon
+  | ConflictingConstructors Annotation TyCon
   | CannotApplyToType TyCon
   | DuplicateTypeDeclaration TyCon
   | IncompletePatternMatch Annotation [TyCon]
@@ -78,7 +78,13 @@ fromAnnotation (Location a b) = (a, b - a)
 fromAnnotation _ = (0, 0)
 
 getErrorPos :: TypeError -> (Start, Length)
+getErrorPos (UnificationError a b) =
+  fromAnnotation (getAnnotationForType a <> getAnnotationForType b)
+getErrorPos (MissingRecordMember ann _ _) = fromAnnotation ann
+getErrorPos (MissingRecordTypeMember ann _ _) = fromAnnotation ann
 getErrorPos (VariableNotInEnv _ ann _ _) = fromAnnotation ann
+getErrorPos (TypeConstructorNotInScope _ ann _) = fromAnnotation ann
+getErrorPos (ConflictingConstructors ann _) = fromAnnotation ann
 getErrorPos (MissingBuiltIn ann _) = fromAnnotation ann
 getErrorPos (IncompletePatternMatch ann _) = fromAnnotation ann
 getErrorPos (CaseMatchExpectedPair ann _) =
@@ -131,13 +137,13 @@ renderTypeError (CannotCaseMatchOnType ty) =
 renderTypeError (VariableNotInEnv swaps _ name members) =
   ["Variable" <+> renderName (withSwap swaps name) <+> " not in scope."]
     <> showSet prettyDoc members
-renderTypeError (MissingRecordMember name members) =
-  [ "Cannot find" <+> prettyDoc name <+> ".",
+renderTypeError (MissingRecordMember _ name members) =
+  [ "Cannot find" <+> prettyDoc name <> ".",
     "The following are available:"
   ]
     <> showSet renderName members
-renderTypeError (MissingRecordTypeMember name types) =
-  [ "Cannot find" <+> renderName name <+> ".",
+renderTypeError (MissingRecordTypeMember _ name types) =
+  [ "Cannot find" <+> renderName name <> ".",
     "The following types are available:"
   ]
     <> showKeys renderName types
@@ -150,13 +156,13 @@ renderTypeError (CannotMatchRecord env _ mt) =
   ]
 renderTypeError (CaseMatchExpectedPair _ mt) =
   ["Expected pair but got" <+> prettyDoc mt]
-renderTypeError (TypeConstructorNotInScope env constructor) =
+renderTypeError (TypeConstructorNotInScope env _ constructor) =
   [ "Type constructor for" <+> prettyDoc constructor
       <+> "not found in scope.",
     "The following are available:"
   ]
     <> printDataTypes env
-renderTypeError (ConflictingConstructors constructor) =
+renderTypeError (ConflictingConstructors _ constructor) =
   ["Multiple constructors found matching" <+> prettyDoc constructor]
 renderTypeError (CannotApplyToType constructor) =
   ["Cannot apply value to" <+> prettyDoc constructor]
