@@ -19,7 +19,7 @@ import Language.Mimsa.Tui.State
 import Language.Mimsa.Tui.Styles
 import Language.Mimsa.Types
 
-drawUI :: (Eq ann, Monoid ann) => TuiState ann -> [Widget ()]
+drawUI :: TuiState Annotation -> [Widget ()]
 drawUI tuiState =
   case uiState tuiState of
     TuiError err -> [drawError err]
@@ -29,10 +29,9 @@ drawUI tuiState =
       pure (drawBindingsList store' name deps l)
 
 drawBindingsList ::
-  (Eq ann, Monoid ann) =>
-  Store ann ->
+  Store Annotation ->
   Name ->
-  ResolvedDeps ann ->
+  ResolvedDeps Annotation ->
   L.List () Name ->
   Widget ()
 drawBindingsList store' name deps l = twoColumnLayout "Current scope" left right
@@ -56,7 +55,7 @@ drawError (MissingStoreItems missing) =
            )
     )
 
-drawExpressionInfo :: ExpressionInfo ann -> Widget ()
+drawExpressionInfo :: ExpressionInfo Annotation -> Widget ()
 drawExpressionInfo exprInfo = ui
   where
     label = withAttr "title" . str . T.unpack . prettyPrint . eiName $ exprInfo
@@ -78,7 +77,7 @@ drawExpressionInfo exprInfo = ui
           drawPretty (eiDeps exprInfo)
         ]
 
-theApp :: (Eq ann, Monoid ann) => M.App (TuiState ann) e ()
+theApp :: M.App (TuiState Annotation) e ()
 theApp =
   M.App
     { M.appDraw = drawUI,
@@ -88,7 +87,7 @@ theApp =
       M.appAttrMap = const stylesAttrMap
     }
 
-goTui :: (Eq ann, Monoid ann) => Project ann -> IO (Project ann)
+goTui :: Project Annotation -> IO (Project Annotation)
 goTui project' =
   do
     _ <- M.defaultMain theApp (initialState project')

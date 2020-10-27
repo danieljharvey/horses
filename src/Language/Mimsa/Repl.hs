@@ -8,12 +8,10 @@ where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Except
-import qualified Data.Aeson as JSON
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Parser
-import Language.Mimsa.Printer
 import Language.Mimsa.Project
   ( defaultProject,
     loadProject,
@@ -29,20 +27,19 @@ import Text.Megaparsec
 repl :: IO ()
 repl = do
   loadedEnv <- runExceptT loadProject
-  let env = case loadedEnv of
-        Right env' -> env'
-        _ -> defaultProject
-  _ <- doReplAction env Help
+  env <- case loadedEnv of
+    Right env' -> do
+      let items = length . getStore . store $ env'
+      T.putStrLn $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
+      pure env'
+    _ -> do
+      T.putStrLn "Failed to load project, loading default project"
+      pure defaultProject
+  _ <- doReplAction env "" Help
   runInputT defaultSettings (loop env)
   where
     loop ::
-      ( Ord ann,
-        Printer ann,
-        Monoid ann,
-        Show ann,
-        JSON.ToJSON ann
-      ) =>
-      Project ann ->
+      Project Annotation ->
       InputT IO ()
     loop exprs' = do
       minput <- getInputLine ":> "
@@ -54,16 +51,15 @@ repl = do
           loop newEnv
 
 parseCommand ::
-  (Ord ann, Monoid ann, Show ann, JSON.ToJSON ann, Printer ann) =>
-  Project ann ->
+  Project Annotation ->
   Text ->
-  IO (Project ann)
+  IO (Project Annotation)
 parseCommand env input =
   case parseAndFormat (replParser <* eof) input of
     Left e -> do
       T.putStrLn e
       pure env
     Right replAction -> do
-      newExprs <- doReplAction env replAction
+      newExprs <- doReplAction env input replAction
       _ <- runExceptT $ saveProject newExprs
       pure newExprs

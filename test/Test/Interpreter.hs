@@ -182,33 +182,6 @@ spec =
                 )
         result <- interpret' mempty mempty f
         result `shouldBe` Right (int 1)
-      it "Uses var names in lambdas that conflict with the ones inside our built-in function without breaking" $ do
-        let ifFunc =
-              MyLambda
-                mempty
-                (named "x")
-                ( MyLambda
-                    mempty
-                    (named "y")
-                    ( MyIf
-                        mempty
-                        ( MyApp
-                            mempty
-                            (MyVar mempty (builtIn "eqPair"))
-                            ( MyPair
-                                mempty
-                                (MyVar mempty (named "x"))
-                                (MyVar mempty (named "y"))
-                            )
-                        )
-                        (int 1)
-                        (int 0)
-                    )
-                )
-            f = MyApp mempty (MyApp mempty ifFunc (int 1)) (int 2)
-            scope' = mempty
-        result <- interpret' scope' mempty f
-        result `shouldBe` Right (int 0)
       it "Runs the internals of reduce function" $ do
         let reduceFunc =
               MyLet

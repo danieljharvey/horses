@@ -8,7 +8,6 @@ module Language.Mimsa.Repl.Actions
 where
 
 import Control.Monad.IO.Class (liftIO)
-import qualified Data.Aeson as JSON
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
@@ -34,49 +33,43 @@ import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
 
 doReplAction ::
-  ( JSON.ToJSON ann,
-    Eq ann,
-    Ord ann,
-    Monoid ann,
-    Printer ann,
-    Show ann
-  ) =>
-  Project ann ->
-  ReplAction ann ->
-  IO (Project ann)
-doReplAction env Help = do
+  Project Annotation ->
+  Text ->
+  ReplAction Annotation ->
+  IO (Project Annotation)
+doReplAction env _ Help = do
   doHelp
   pure env
-doReplAction env ListBindings = do
-  _ <- runReplM $ doListBindings env
+doReplAction env input ListBindings = do
+  _ <- runReplM $ doListBindings env input
   pure env
-doReplAction env Tui =
+doReplAction env _ Tui =
   goTui env
-doReplAction env (Versions name) = do
+doReplAction env _ (Versions name) = do
   _ <- runReplM $ doVersions env name
   pure env
-doReplAction env (Watch name) = do
+doReplAction env _ (Watch name) = do
   newEnv' <- runReplM $ doWatch env name
   case newEnv' of
     Just env' -> pure env'
     _ -> pure env
-doReplAction env (Evaluate expr) = do
-  _ <- runReplM $ doEvaluate env expr
+doReplAction env input (Evaluate expr) = do
+  _ <- runReplM $ doEvaluate env input expr
   pure env
-doReplAction env (Tree expr) = do
-  _ <- runReplM $ doTree env expr
+doReplAction env input (Tree expr) = do
+  _ <- runReplM $ doTree env input expr
   pure env
-doReplAction env (Info expr) = do
-  _ <- runReplM $ doInfo env expr
+doReplAction env input (Info expr) = do
+  _ <- runReplM $ doInfo env input expr
   pure env
-doReplAction env (Bind name expr) = do
-  newEnv <- runReplM $ doBind env name expr
+doReplAction env input (Bind name expr) = do
+  newEnv <- runReplM $ doBind env input name expr
   pure (fromMaybe env newEnv)
-doReplAction env (BindType dt) = do
-  newEnv <- runReplM $ doBindType env dt
+doReplAction env input (BindType dt) = do
+  newEnv <- runReplM $ doBindType env input dt
   pure (fromMaybe env newEnv)
-doReplAction env (OutputJS expr) = do
-  _ <- runReplM (doOutputJS env expr)
+doReplAction env input (OutputJS expr) = do
+  _ <- runReplM (doOutputJS env input expr)
   pure env
 
 ----------
@@ -100,12 +93,12 @@ doHelp = do
 ----------
 
 doInfo ::
-  (Eq ann, Monoid ann) =>
-  Project ann ->
-  Expr Name ann ->
-  ReplM ann ()
-doInfo env expr = do
-  (ResolvedExpression type' _ _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  Project Annotation ->
+  Text ->
+  Expr Name Annotation ->
+  ReplM Annotation ()
+doInfo env input expr = do
+  (ResolvedExpression type' _ _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
   replPrint $
     prettyPrint expr
       <> "/n:: "
@@ -114,18 +107,18 @@ doInfo env expr = do
 ----------
 
 doTree ::
-  (JSON.ToJSON ann, Eq ann, Monoid ann) =>
-  Project ann ->
-  Expr Name ann ->
-  ReplM ann ()
-doTree env expr = do
-  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  Project Annotation ->
+  Text ->
+  Expr Name Annotation ->
+  ReplM Annotation ()
+doTree env input expr = do
+  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
   let graph = createDepGraph (mkName "expression") (store env) storeExpr
   replPrint graph
 
 -------
 
-doVersions :: (Eq ann, Monoid ann) => Project ann -> Name -> ReplM ann ()
+doVersions :: Project Annotation -> Name -> ReplM Annotation ()
 doVersions env name = do
   versions <- liftRepl $ findVersions env name
   let showIt (i, mt, expr', usages) = do
@@ -146,10 +139,10 @@ doVersions env name = do
 
 ------
 
-doListBindings :: (Eq ann, Monoid ann) => Project ann -> ReplM ann ()
-doListBindings env = do
+doListBindings :: Project Annotation -> Text -> ReplM Annotation ()
+doListBindings env input = do
   let showBind (name, StoreExpression expr _ _) =
-        case getTypecheckedStoreExpression env expr of
+        case getTypecheckedStoreExpression input env expr of
           Right (ResolvedExpression type' _ _ _ _) ->
             replPrint (prettyPrint name <> " :: " <> prettyPrint type')
           _ -> pure ()
@@ -170,13 +163,13 @@ doListBindings env = do
 ----------
 
 doEvaluate ::
-  (Eq ann, Monoid ann) =>
-  Project ann ->
-  Expr Name ann ->
-  ReplM ann ()
-doEvaluate env expr = do
+  Project Annotation ->
+  Text ->
+  Expr Name Annotation ->
+  ReplM Annotation ()
+doEvaluate env input expr = do
   (ResolvedExpression type' _ expr' scope' swaps) <-
-    liftRepl $ getTypecheckedStoreExpression env expr
+    liftRepl $ getTypecheckedStoreExpression input env expr
   simplified <- liftIO $ interpret scope' swaps expr'
   simplified' <- liftRepl (first InterpreterErr simplified)
   replPrint $
@@ -187,12 +180,12 @@ doEvaluate env expr = do
 ---------
 
 doOutputJS ::
-  (Eq ann, Ord ann, Monoid ann, JSON.ToJSON ann) =>
-  Project ann ->
-  Expr Name ann ->
-  ReplM ann ()
-doOutputJS env expr = do
+  Project Annotation ->
+  Text ->
+  Expr Name Annotation ->
+  ReplM Annotation ()
+doOutputJS env input expr = do
   (ResolvedExpression _ storeExpr' _ _ _) <-
-    liftRepl $ getTypecheckedStoreExpression env expr
+    liftRepl $ getTypecheckedStoreExpression input env expr
   liftIO $ goCompile CommonJS (store env) storeExpr'
   replPrint ("Output to output/index.js" :: Text)

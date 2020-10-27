@@ -2,7 +2,6 @@
 
 module Language.Mimsa.Store.DepGraph where
 
-import qualified Data.Aeson as JSON
 import Data.Map ((!))
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -47,7 +46,7 @@ showFuncLine i info children = spaces <> prettyPrint info <> children'
                 <$> (a : as)
             )
 
-createDepGraph :: (JSON.ToJSON ann) => Name -> Store ann -> StoreExpression ann -> DepGraph
+createDepGraph :: Name -> Store ann -> StoreExpression ann -> DepGraph
 createDepGraph name (Store store') storeExpr' = Func depInfo leaves
   where
     depInfo = DepInfo (name, getStoreExpressionHash storeExpr')

@@ -1,7 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Data.Project where
+module Test.Data.Project
+  ( stdLib,
+    idExpr,
+  )
+where
 
+import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -16,50 +21,61 @@ import Language.Mimsa.Types
     mkName,
     mkTyCon,
   )
+import Language.Mimsa.Types.AST
 
-fstExpr :: (Monoid ann, Show ann) => StoreExpression ann
+type StoreExpressionA = StoreExpression Annotation
+
+-- polymorphic export for use in other tests
+idExpr :: (Monoid ann) => StoreExpression ann
+idExpr = idExpr' $> mempty
+
+fstExpr :: StoreExpressionA
 fstExpr =
   unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
 
-sndExpr :: (Monoid ann, Show ann) => StoreExpression ann
+sndExpr :: StoreExpressionA
 sndExpr = unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
 
-eqTenExpr :: (Monoid ann, Show ann) => StoreExpression ann
+eqTenExpr :: StoreExpressionA
 eqTenExpr =
   unsafeGetExpr'
     "\\i -> eq(10)(i)"
     (Bindings $ M.singleton (mkName "eq") (ExprHash 2))
 
-compose :: (Monoid ann, Show ann) => StoreExpression ann
+compose :: StoreExpressionA
 compose =
   unsafeGetExpr "\\f -> \\g -> \\aValue -> f(g(aValue))"
 
-idExpr :: (Monoid ann, Show ann) => StoreExpression ann
-idExpr = unsafeGetExpr "\\i -> i"
+idExpr' :: StoreExpressionA
+idExpr' = unsafeGetExpr "\\i -> i"
 
-incrementInt :: (Monoid ann, Show ann) => StoreExpression ann
+incrementInt :: StoreExpressionA
 incrementInt =
   unsafeGetExpr'
     "\\a -> addInt(1)(a)"
     (Bindings $ M.singleton (mkName "addInt") (ExprHash 18))
 
-addInt :: (Monoid ann, Show ann) => StoreExpression ann
+addInt :: StoreExpressionA
 addInt = unsafeGetExpr "\\a -> \\b -> addIntPair((a,b))"
 
-eqExpr :: (Monoid ann, Show ann) => StoreExpression ann
-eqExpr = unsafeGetExpr "\\a -> \\b -> eqPair((a,b))"
+eqExpr :: StoreExpressionA
+eqExpr = unsafeGetExpr "\\a -> \\b -> a == b"
 
-optionExpr :: (Monoid ann, Show ann) => StoreExpression ann
+optionExpr :: StoreExpressionA
 optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
 
-aPairExpr :: (Monoid ann, Show ann) => StoreExpression ann
+aPairExpr :: StoreExpressionA
 aPairExpr = unsafeGetExpr "(1,2)"
 
-aRecordExpr :: (Monoid ann, Show ann) => StoreExpression ann
+aRecordExpr :: StoreExpressionA
 aRecordExpr = unsafeGetExpr "{ a: 1, b: \"dog\" }"
 
-stdLib :: (Monoid ann, Show ann) => Project ann
-stdLib = Project store' bindings' typeBindings' mempty
+-- check removing annotation doesn't break stuff
+stdLib :: Project Annotation
+stdLib = (stdLib' $> ()) $> mempty
+
+stdLib' :: Project Annotation
+stdLib' = Project store' bindings' typeBindings' mempty
   where
     store' =
       Store $
@@ -97,11 +113,11 @@ stdLib = Project store' bindings' typeBindings' mempty
             (mkTyCon "Nowt", pure $ ExprHash 4)
           ]
 
-unsafeGetExpr' :: (Monoid ann, Show ann) => Text -> Bindings -> StoreExpression ann
+unsafeGetExpr' :: Text -> Bindings -> StoreExpression Annotation
 unsafeGetExpr' input bindings' =
   case parseExpr input of
     Right expr' -> StoreExpression expr' bindings' mempty
     a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
 
-unsafeGetExpr :: (Monoid ann, Show ann) => Text -> StoreExpression ann
+unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input = unsafeGetExpr' input mempty

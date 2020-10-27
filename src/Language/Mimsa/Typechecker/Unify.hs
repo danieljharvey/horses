@@ -8,6 +8,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -16,23 +17,19 @@ import Language.Mimsa.Types
 
 freeTypeVars :: MonoType -> S.Set Variable
 freeTypeVars ty = case ty of
-  MTVar var ->
+  MTVar _ var ->
     S.singleton var
-  MTFunction t1 t2 ->
+  MTFunction _ t1 t2 ->
     S.union (freeTypeVars t1) (freeTypeVars t2)
-  MTPair t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
-  MTRecord as -> foldr S.union mempty (freeTypeVars <$> as)
-  MTData _ as -> foldr S.union mempty (freeTypeVars <$> as)
-  MTString -> S.empty
-  MTInt -> S.empty
-  MTBool -> S.empty
-  MTUnit ->
-    S.empty
+  MTPair _ t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
+  MTRecord _ as -> foldr S.union mempty (freeTypeVars <$> as)
+  MTData _ _ as -> foldr S.union mempty (freeTypeVars <$> as)
+  MTPrim _ _ -> S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
-varBind :: Variable -> MonoType -> TcMonad ann Substitutions
+varBind :: Variable -> MonoType -> TcMonad Substitutions
 varBind var ty
-  | ty == MTVar var = pure mempty
+  | typeEquals ty (MTVar mempty var) = pure mempty
   | S.member var (freeTypeVars ty) = do
     swaps <- ask
     throwError $
@@ -43,39 +40,42 @@ varBind var ty
 unifyPairs ::
   (MonoType, MonoType) ->
   (MonoType, MonoType) ->
-  TcMonad ann Substitutions
+  TcMonad Substitutions
 unifyPairs (a, b) (a', b') = do
   s1 <- unify a a'
   s2 <- unify (applySubst s1 b) (applySubst s1 b')
   pure (s2 <> s1)
 
-unify :: MonoType -> MonoType -> TcMonad ann Substitutions
+typeEquals :: MonoType -> MonoType -> Bool
+typeEquals mtA mtB = (mtA $> ()) == (mtB $> ())
+
+unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify tyA tyB =
   case (tyA, tyB) of
-    (a, b) | a == b -> pure mempty
-    (MTFunction l r, MTFunction l' r') ->
+    (a, b) | typeEquals a b -> pure mempty
+    (MTFunction _ l r, MTFunction _ l' r') ->
       unifyPairs (l, r) (l', r')
-    (MTPair a b, MTPair a' b') -> unifyPairs (a, b) (a', b')
-    (MTRecord as, MTRecord bs) -> do
+    (MTPair _ a b, MTPair _ a' b') -> unifyPairs (a, b) (a', b')
+    (MTRecord ann as, MTRecord ann' bs) -> do
       let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
       let getRecordTypes k = do
-            tyLeft <- getTypeOrFresh k as
-            tyRight <- getTypeOrFresh k bs
+            tyLeft <- getTypeOrFresh ann k as
+            tyRight <- getTypeOrFresh ann' k bs
             unify tyLeft tyRight
       s <- traverse getRecordTypes allKeys
       pure (mconcat s)
-    (MTData a tyAs, MTData b tyBs)
+    (MTData _ a tyAs, MTData _ b tyBs)
       | a == b -> do
         let pairs = zip tyAs tyBs
         s <- traverse (uncurry unify) pairs
         pure (mconcat s)
-    (MTVar u, t) -> varBind u t
-    (t, MTVar u) -> varBind u t
+    (MTVar _ u, t) -> varBind u t
+    (t, MTVar _ u) -> varBind u t
     (a, b) ->
       throwError $ UnificationError a b
 
-getTypeOrFresh :: Name -> Map Name MonoType -> TcMonad ann MonoType
-getTypeOrFresh name map' =
+getTypeOrFresh :: Annotation -> Name -> Map Name MonoType -> TcMonad MonoType
+getTypeOrFresh ann name map' =
   case M.lookup name map' of
     Just found -> pure found
-    _ -> getUnknown
+    _ -> getUnknown ann

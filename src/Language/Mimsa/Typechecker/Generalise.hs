@@ -8,15 +8,12 @@ import Language.Mimsa.Types.Scheme
 import Language.Mimsa.Types.Substitutions
 
 freeVars :: MonoType -> [Variable]
-freeVars (MTVar b) = [b]
-freeVars (MTFunction t1 t2) = freeVars t1 <> freeVars t2
-freeVars (MTPair a b) = freeVars a <> freeVars b
-freeVars (MTRecord as) = mconcat (freeVars . snd <$> M.toList as)
-freeVars MTInt = mempty
-freeVars MTString = mempty
-freeVars MTBool = mempty
-freeVars MTUnit = mempty
-freeVars (MTData _ _) = mempty
+freeVars (MTVar _ b) = [b]
+freeVars (MTFunction _ t1 t2) = freeVars t1 <> freeVars t2
+freeVars (MTPair _ a b) = freeVars a <> freeVars b
+freeVars (MTRecord _ as) = mconcat (freeVars . snd <$> M.toList as)
+freeVars (MTPrim _ _) = mempty
+freeVars MTData {} = mempty
 
 generalise :: Substitutions -> MonoType -> Scheme
 generalise (Substitutions subst) ty = Scheme free ty

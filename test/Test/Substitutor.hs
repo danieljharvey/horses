@@ -61,7 +61,7 @@ maybeExpr =
     mempty
     mempty
 
-storeWithBothIn :: (Monoid ann, Show ann) => Store ann
+storeWithBothIn :: Store Annotation
 storeWithBothIn =
   Store
     ( M.fromList
@@ -74,9 +74,9 @@ storeWithBothIn =
     )
 
 testSubstitute ::
-  Store () ->
-  StoreExpression () ->
-  SubstitutedExpression ()
+  Store Annotation ->
+  StoreExpression Annotation ->
+  SubstitutedExpression Annotation
 testSubstitute = substitute
 
 spec :: Spec

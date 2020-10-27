@@ -22,10 +22,9 @@ import Language.Mimsa.Types
 -- we don't want this to do much so binning it in exchange for an Elm style
 -- reducer pattern
 appEvent ::
-  (Eq ann, Monoid ann) =>
-  TuiState ann ->
+  TuiState Annotation ->
   BT.BrickEvent () e ->
-  BT.EventM () (BT.Next (TuiState ann))
+  BT.EventM () (BT.Next (TuiState Annotation))
 appEvent tuiState (BT.VtyEvent e) = do
   let tuiAction = case e of
         V.EvKey V.KEsc [] -> Exit
@@ -52,7 +51,7 @@ data TuiAction
   | GoDown
   | Unknown
 
-reducer :: (Eq ann, Monoid ann) => Project ann -> TuiAction -> UIState ann -> Maybe (UIState ann)
+reducer :: Project Annotation -> TuiAction -> UIState Annotation -> Maybe (UIState Annotation)
 reducer _ Exit _ = Nothing
 reducer _ GoUp (ViewBindings items) =
   let mapF (BindingsList n deps l) = BindingsList n deps (L.listMoveUp l)

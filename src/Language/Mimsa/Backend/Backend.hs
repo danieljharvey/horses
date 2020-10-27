@@ -7,7 +7,6 @@ module Language.Mimsa.Backend.Backend
   )
 where
 
-import qualified Data.Aeson as JSON
 import Data.Coerce
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
@@ -47,7 +46,7 @@ createOutputFolder = do
   createDirectoryIfMissing True path
   pure (path <> "/")
 
-transpileStoreExpression :: (JSON.ToJSON ann) => Backend -> StoreExpression ann -> IO FilePath
+transpileStoreExpression :: Backend -> StoreExpression ann -> IO FilePath
 transpileStoreExpression be se = do
   _ <- createOutputFolder
   let filename = outputFilename be (getStoreExpressionHash se)
@@ -78,7 +77,7 @@ getOutputList store' se = case recursiveResolve store' se of
   Right as -> S.fromList as
   Left _ -> mempty
 
-goCompile :: (Ord ann, JSON.ToJSON ann) => Backend -> Store ann -> StoreExpression ann -> IO ()
+goCompile :: (Ord ann) => Backend -> Store ann -> StoreExpression ann -> IO ()
 goCompile be store' se = do
   let list = getOutputList store' se
   traverse_ (transpileStoreExpression be) list

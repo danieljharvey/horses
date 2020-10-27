@@ -18,25 +18,16 @@ import Text.Megaparsec
 -- specialisation of parseExpr
 testParse :: Text -> Either String (Expr Name ())
 testParse t = case parseExpr t of
-  Right a -> pure a
+  Right expr -> pure (toEmptyAnnotation expr)
   Left e -> Left $ errorBundlePretty e
 
-testParseName :: Text -> Either ParseErrorType Name
-testParseName = parse nameParser "file.mimsa"
-
-testParseVar :: Text -> Either ParseErrorType (Expr Name ())
-testParseVar = parse varParser "file.mimsa"
+testParseWithAnn :: Text -> Either String (Expr Name Annotation)
+testParseWithAnn t = case parseExpr t of
+  Right expr -> pure expr
+  Left e -> Left $ errorBundlePretty e
 
 spec :: Spec
 spec = do
-  describe "Name"
-    $ it "dog"
-    $ testParseName "dog" `shouldBe` Right (mkName "dog")
-  describe "Var" $ do
-    it "dog" $
-      testParseVar "dog" `shouldBe` Right (MyVar mempty (mkName "dog"))
-    it "2dog" $
-      testParseVar "2dog" `shouldSatisfy` isLeft
   describe "Language" $ do
     it "Parses True" $
       testParse "True" `shouldBe` Right (bool True)
@@ -451,4 +442,141 @@ spec = do
                   (int 4)
               )
               (int 5)
+          )
+  describe "Test annotations" $ do
+    it "Parses a var with location information" $
+      testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) (mkName "dog"))
+    it "Parses a tyCon with location information" $
+      testParseWithAnn "Log" `shouldBe` Right (MyConstructor (Location 0 3) (mkTyCon "Log"))
+    it "Parses a true bool with location information" $
+      testParseWithAnn "True" `shouldBe` Right (MyLiteral (Location 0 4) (MyBool True))
+    it "Parses a false bool with location information" $
+      testParseWithAnn "False" `shouldBe` Right (MyLiteral (Location 0 5) (MyBool False))
+    it "Parses a unit with location information" $
+      testParseWithAnn "Unit" `shouldBe` Right (MyLiteral (Location 0 4) MyUnit)
+    it "Parses an integer with location information" $
+      testParseWithAnn "100" `shouldBe` Right (MyLiteral (Location 0 3) (MyInt 100))
+    it "Parses a string literal with location information" $
+      testParseWithAnn "\"horse\"" `shouldBe` Right (MyLiteral (Location 0 7) (MyString $ StringType "horse"))
+    it "Parses record access with location information" $
+      testParseWithAnn "dog.tail"
+        `shouldBe` Right
+          ( MyRecordAccess
+              (Location 0 8)
+              (MyVar (Location 0 3) (mkName "dog"))
+              (mkName "tail")
+          )
+    it "Parses let-in with location information" $
+      testParseWithAnn "let a = 1 in a"
+        `shouldBe` Right
+          ( MyLet
+              (Location 0 14)
+              (mkName "a")
+              (MyLiteral (Location 8 9) (MyInt 1))
+              (MyVar (Location 13 14) (mkName "a"))
+          )
+    it "Parses let-newline with location information" $
+      testParseWithAnn "let a = 1; a"
+        `shouldBe` Right
+          ( MyLet
+              (Location 0 12)
+              (mkName "a")
+              (MyLiteral (Location 8 9) (MyInt 1))
+              (MyVar (Location 11 12) (mkName "a"))
+          )
+    it "Parses let pair with location information" $
+      testParseWithAnn "let (a,b) = dog in a"
+        `shouldBe` Right
+          ( MyLetPair
+              (Location 0 20)
+              (mkName "a")
+              (mkName "b")
+              (MyVar (Location 12 15) (mkName "dog"))
+              (MyVar (Location 19 20) (mkName "a"))
+          )
+    it "Parsers lambda with location information" $
+      testParseWithAnn "\\a -> a"
+        `shouldBe` Right
+          (MyLambda (Location 0 7) (mkName "a") (MyVar (Location 6 7) (mkName "a")))
+    it "Parses application with location information" $
+      testParseWithAnn "a(1)"
+        `shouldBe` Right
+          ( MyApp
+              (Location 0 4)
+              (MyVar (Location 0 1) (mkName "a"))
+              (MyLiteral (Location 2 3) (MyInt 1))
+          )
+    it "Parses record with location information" $
+      testParseWithAnn "{ a: True }"
+        `shouldBe` Right
+          ( MyRecord
+              (Location 0 11)
+              ( M.singleton
+                  (mkName "a")
+                  (MyLiteral (Location 5 9) (MyBool True))
+              )
+          )
+    it "Parsers if with location information" $
+      testParseWithAnn "if True then 1 else 2"
+        `shouldBe` Right
+          ( MyIf
+              (Location 0 21)
+              (MyLiteral (Location 3 7) (MyBool True))
+              (MyLiteral (Location 13 14) (MyInt 1))
+              (MyLiteral (Location 20 21) (MyInt 2))
+          )
+    it "Parsers pair with location information" $
+      testParseWithAnn "(1,2)"
+        `shouldBe` Right
+          ( MyPair
+              (Location 0 5)
+              (MyLiteral (Location 1 2) (MyInt 1))
+              (MyLiteral (Location 3 4) (MyInt 2))
+          )
+    it "Parses data declaration with location information" $
+      testParseWithAnn "type MyUnit = MyUnit in 1"
+        `shouldBe` Right
+          ( MyData
+              (Location 0 25)
+              ( DataType
+                  (mkTyCon "MyUnit")
+                  mempty
+                  (M.singleton (mkTyCon "MyUnit") mempty)
+              )
+              (MyLiteral (Location 24 25) (MyInt 1))
+          )
+    it "Parses constructor application with location information" $
+      testParseWithAnn "Just 1"
+        `shouldBe` Right
+          ( MyConsApp
+              (Location 0 6)
+              (MyConstructor (Location 0 4) (mkTyCon "Just"))
+              (MyLiteral (Location 5 6) (MyInt 1))
+          )
+    it "Parses case match with location information" $
+      testParseWithAnn "case a of Just \\as -> 1 | Nothing 0"
+        `shouldBe` Right
+          ( MyCaseMatch
+              (Location 0 35)
+              (MyVar (Location 5 6) (mkName "a"))
+              ( NE.fromList
+                  [ ( mkTyCon "Just",
+                      MyLambda
+                        (Location 15 23)
+                        (mkName "as")
+                        (MyLiteral (Location 22 23) (MyInt 1))
+                    ),
+                    (mkTyCon "Nothing", MyLiteral (Location 34 35) (MyInt 0))
+                  ]
+              )
+              Nothing
+          )
+    it "Parses infix equals with location information" $
+      testParseWithAnn "1 == 2"
+        `shouldBe` Right
+          ( MyInfix
+              (Location 0 6)
+              Equals
+              (MyLiteral (Location 0 1) (MyInt 1))
+              (MyLiteral (Location 5 6) (MyInt 2))
           )

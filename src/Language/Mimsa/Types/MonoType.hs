@@ -1,7 +1,11 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.MonoType
-  ( MonoType (..),
+  ( MonoType,
+    Type (..),
+    Primitive (..),
+    getAnnotationForType,
   )
 where
 
@@ -9,33 +13,51 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 
-data MonoType
+data Primitive
   = MTInt
   | MTString
   | MTBool
   | MTUnit
-  | MTFunction MonoType MonoType -- argument, result
-  | MTPair MonoType MonoType -- (a,b)
-  | MTRecord (Map Name MonoType) -- { foo: a, bar: b }
-  | MTVar Variable
-  | MTData TyCon [MonoType] -- name, typeVars
   deriving (Eq, Ord, Show)
 
-instance Printer MonoType where
+instance Printer Primitive where
+  prettyDoc MTUnit = "Unit"
+  prettyDoc MTInt = "Int"
+  prettyDoc MTString = "String"
+  prettyDoc MTBool = "Boolean"
+
+type MonoType = Type Annotation
+
+data Type ann
+  = MTPrim ann Primitive
+  | MTVar ann Variable
+  | MTFunction ann (Type ann) (Type ann) -- argument, result
+  | MTPair ann (Type ann) (Type ann) -- (a,b)
+  | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
+  | MTData ann TyCon [Type ann] -- name, typeVars
+  deriving (Eq, Ord, Show, Functor)
+
+getAnnotationForType :: Type ann -> ann
+getAnnotationForType (MTPrim ann _) = ann
+getAnnotationForType (MTVar ann _) = ann
+getAnnotationForType (MTFunction ann _ _) = ann
+getAnnotationForType (MTPair ann _ _) = ann
+getAnnotationForType (MTRecord ann _) = ann
+getAnnotationForType (MTData ann _ _) = ann
+
+instance Printer (Type ann) where
   prettyDoc = renderMonoType
 
-renderMonoType :: MonoType -> Doc ann
-renderMonoType MTUnit = "Unit"
-renderMonoType MTInt = "Int"
-renderMonoType MTString = "String"
-renderMonoType MTBool = "Boolean"
-renderMonoType (MTFunction a b) =
+renderMonoType :: Type ann -> Doc a
+renderMonoType (MTPrim _ a) = prettyDoc a
+renderMonoType (MTFunction _ a b) =
   parens (renderMonoType a <+> "->" <+> renderMonoType b)
-renderMonoType (MTPair a b) =
+renderMonoType (MTPair _ a b) =
   tupled [renderMonoType a, renderMonoType b]
-renderMonoType (MTRecord as) =
+renderMonoType (MTRecord _ as) =
   enclose
     lbrace
     rbrace
@@ -48,9 +70,9 @@ renderMonoType (MTRecord as) =
     )
   where
     renderItem (Name k, v) = pretty k <+> ":" <+> renderMonoType v
-renderMonoType (MTVar a) = case a of
+renderMonoType (MTVar _ a) = case a of
   (NamedVar (Name n)) -> pretty n
   (NumberedVar i) -> pretty i
   (BuiltIn (Name n)) -> pretty n
   (BuiltInActual (Name n) _) -> pretty n
-renderMonoType (MTData (TyCon n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))
+renderMonoType (MTData _ (TyCon n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))

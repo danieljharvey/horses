@@ -8,7 +8,7 @@ module Language.Mimsa.Repl.ExpressionBind
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.Aeson as JSON
+import Data.Text (Text)
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Types
@@ -16,13 +16,13 @@ import Language.Mimsa.Store (saveExpr)
 import Language.Mimsa.Types
 
 doBind ::
-  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
-  Project ann ->
+  Project Annotation ->
+  Text ->
   Name ->
-  Expr Name ann ->
-  ReplM ann (Project ann)
-doBind env name expr = do
-  (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  Expr Name Annotation ->
+  ReplM Annotation (Project Annotation)
+doBind env input name expr = do
+  (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
   replPrint $
     "Bound " <> prettyPrint name <> ".\n\n" <> prettyPrint expr
       <> "\n::\n"
@@ -30,19 +30,19 @@ doBind env name expr = do
   bindStoreExpression env storeExpr name
 
 doBindType ::
-  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
-  Project ann ->
+  Project Annotation ->
+  Text ->
   DataType ->
-  ReplM ann (Project ann)
-doBindType env dt = do
+  ReplM Annotation (Project Annotation)
+doBindType env input dt = do
   let expr = MyData mempty dt (MyRecord mempty mempty)
-  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression env expr
+  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
   replPrint $
     "Bound type " <> prettyPrint dt
   bindTypeExpression env storeExpr
 
 bindTypeExpression ::
-  (MonadIO m, JSON.ToJSON ann) =>
+  (MonadIO m) =>
   Project ann ->
   StoreExpression ann ->
   m (Project ann)
@@ -53,11 +53,11 @@ bindTypeExpression env storeExpr = do
 
 -- save an expression in the store and bind it to name
 bindStoreExpression ::
-  (MonadIO m, JSON.ToJSON ann) =>
-  Project ann ->
-  StoreExpression ann ->
+  (MonadIO m) =>
+  Project Annotation ->
+  StoreExpression Annotation ->
   Name ->
-  m (Project ann)
+  m (Project Annotation)
 bindStoreExpression env storeExpr name = do
   hash <- liftIO (saveExpr storeExpr)
   let newEnv = fromItem name storeExpr hash

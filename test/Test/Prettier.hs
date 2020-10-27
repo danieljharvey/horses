@@ -13,25 +13,57 @@ import Test.Hspec
 
 spec :: Spec
 spec =
-  describe "Prettier" $
-    describe "MonoType" $
-      do
-        it "String" $
-          T.putStrLn (prettyPrint MTString)
-        it "Function" $
-          T.putStrLn (prettyPrint $ MTFunction (MTFunction MTInt MTString) MTBool)
-        it "Record" $
-          T.putStrLn
-            ( prettyPrint
-                ( MTRecord $
-                    M.fromList
-                      [ (mkName "dog", MTUnit),
-                        (mkName "horse", MTString),
-                        (mkName "maybeDog", MTData (mkTyCon "Maybe") [MTString])
-                      ]
+  describe "Prettier"
+    $ describe "MonoType"
+    $ do
+      it "String" $
+        T.putStrLn (prettyPrint MTString)
+      it "Function" $
+        let mt :: MonoType
+            mt =
+              MTFunction
+                mempty
+                (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
+                (MTPrim mempty MTBool)
+         in T.putStrLn
+              ( prettyPrint mt
+              )
+      it "Record" $
+        let mt :: MonoType
+            mt =
+              MTRecord mempty $
+                M.fromList
+                  [ (mkName "dog", MTPrim mempty MTUnit),
+                    (mkName "horse", MTPrim mempty MTString),
+                    ( mkName "maybeDog",
+                      MTData
+                        mempty
+                        (mkTyCon "Maybe")
+                        [MTPrim mempty MTString]
+                    )
+                  ]
+         in T.putStrLn
+              ( prettyPrint mt
+              )
+      it "Pair" $
+        let mt :: MonoType
+            mt =
+              MTPair
+                mempty
+                (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTInt))
+                (MTPrim mempty MTString)
+         in T.putStrLn
+              (prettyPrint mt)
+      it "Variables" $
+        let mt :: MonoType
+            mt =
+              MTFunction
+                mempty
+                ( MTVar mempty
+                    $ NamedVar
+                    $ Name "catch"
                 )
-            )
-        it "Pair" $
-          T.putStrLn (prettyPrint $ MTPair (MTFunction MTInt MTInt) MTString)
-        it "Variables" $
-          T.putStrLn (prettyPrint $ MTFunction (MTVar $ NamedVar $ Name "catch") (MTVar $ NumberedVar 22))
+                (MTVar mempty $ NumberedVar 22)
+         in T.putStrLn
+              ( prettyPrint mt
+              )

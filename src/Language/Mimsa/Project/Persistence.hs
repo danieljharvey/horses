@@ -14,6 +14,7 @@ import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.Coerce
+import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -29,12 +30,16 @@ hush :: Either IOError a -> Maybe a
 hush (Right a) = pure a
 hush _ = Nothing
 
-type LoadProject = Project ()
-
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
-loadProject :: PersistApp LoadProject
+loadProject :: (Monoid ann) => PersistApp (Project ann)
 loadProject = do
+  proj <- loadProject'
+  pure $ proj $> mempty
+
+loadProject' ::
+  PersistApp (Project ())
+loadProject' = do
   project' <- liftIO $ try $ BS.readFile envPath
   case hush project' >>= JSON.decode of
     Just sp -> do
@@ -50,17 +55,19 @@ loadProject = do
     _ -> throwError $ "Could not decode file at " <> T.pack envPath
 
 saveProject :: Project ann -> PersistApp ()
-saveProject env = do
+saveProject p = saveProject' (p $> ())
+
+saveProject' :: Project () -> PersistApp ()
+saveProject' env = do
   let jsonStr = JSON.encode (projectToSaved env)
   liftIO $ BS.writeFile envPath jsonStr
 
 --
 
 loadBoundExpressions ::
-  (JSON.ToJSON ann, JSON.FromJSON ann) =>
   [ServerUrl] ->
   Set ExprHash ->
-  PersistApp (Store ann)
+  PersistApp (Store ())
 loadBoundExpressions urls hashes = do
   items' <-
     traverse
@@ -73,10 +80,9 @@ loadBoundExpressions urls hashes = do
     (Store (M.fromList items'))
 
 recursiveLoadBoundExpressions ::
-  (JSON.ToJSON ann, JSON.FromJSON ann) =>
   [ServerUrl] ->
   Set ExprHash ->
-  PersistApp (Store ann)
+  PersistApp (Store ())
 recursiveLoadBoundExpressions urls hashes = do
   store' <- loadBoundExpressions urls hashes
   let newHashes =

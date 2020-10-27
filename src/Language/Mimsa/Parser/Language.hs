@@ -15,59 +15,30 @@ module Language.Mimsa.Parser.Language
   )
 where
 
-import Control.Monad ((>=>))
-import Data.Bifunctor (first)
-import Data.Char as Char
 import Data.Functor (($>))
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Set (Set)
-import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Void
-import Language.Mimsa.Types
-  ( DataType (DataType),
-    Expr (..),
-    Literal (MyBool, MyInt, MyString, MyUnit),
-    Name,
-    Operator (..),
-    StringType (StringType),
-    TyCon,
-    TypeName (..),
-    safeMkName,
-    safeMkTyCon,
-  )
+import Language.Mimsa.Parser.Helpers
+import Language.Mimsa.Parser.Identifiers
+import Language.Mimsa.Parser.Literal
+import Language.Mimsa.Parser.RecordAccess
+import Language.Mimsa.Parser.TypeDecl
+import Language.Mimsa.Parser.Types
+import Language.Mimsa.Types (Name, TyCon)
+import Language.Mimsa.Types.AST
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
-
-type Parser = Parsec Void Text
-
-type ParseErrorType = ParseErrorBundle Text Void
-
-type ParserExpr ann = Expr Name ann
-
-thenSpace :: Parser a -> Parser a
-thenSpace parser = do
-  _ <- space
-  val <- parser
-  _ <- space1
-  pure val
 
 -- parse expr, using it all up
-parseExpr :: Monoid ann => Text -> Either ParseErrorType (ParserExpr ann)
+parseExpr :: Text -> Either ParseErrorType ParserExpr
 parseExpr = parse (expressionParser <* eof) "repl"
 
-parseExprAndFormatError :: Monoid ann => Text -> Either Text (ParserExpr ann)
+parseExprAndFormatError :: Text -> Either Text ParserExpr
 parseExprAndFormatError = parseAndFormat (expressionParser <* eof)
 
-parseAndFormat :: Parser a -> Text -> Either Text a
-parseAndFormat p = first (T.pack . errorBundlePretty) . parse p "repl"
-
-expressionParser :: Monoid ann => Parser (ParserExpr ann)
+expressionParser :: Parser ParserExpr
 expressionParser =
   let parsers =
         try infixParser
@@ -77,27 +48,7 @@ expressionParser =
           <|> try constructorParser
    in orInBrackets parsers
 
-between2 :: Char -> Char -> Parser a -> Parser a
-between2 a b parser = do
-  _ <- char a
-  val <- parser
-  _ <- char b
-  pure val
-
-inBrackets :: Parser a -> Parser a
-inBrackets = between2 '(' ')'
-
-orInBrackets :: Parser a -> Parser a
-orInBrackets parser = try parser <|> try (inBrackets parser)
-
-literalParser :: Monoid ann => Parser (ParserExpr ann)
-literalParser =
-  try boolParser
-    <|> try unitParser
-    <|> try intParser
-    <|> try stringParser
-
-complexParser :: Monoid ann => Parser (ParserExpr ann)
+complexParser :: Parser ParserExpr
 complexParser =
   try letPairParser
     <|> try recordParser
@@ -111,104 +62,9 @@ complexParser =
     <|> try constructorAppParser
     <|> try caseMatchParser
 
-protectedNames :: Set Text
-protectedNames =
-  S.fromList
-    [ "let",
-      "in",
-      "if",
-      "then",
-      "else",
-      "case",
-      "of",
-      "type",
-      "otherwise",
-      "True",
-      "False",
-      "Unit"
-    ]
-
 ----
 
-integerParser :: Parser Int
-integerParser = L.signed space L.decimal
-
----
-
-boolParser :: Monoid ann => Parser (ParserExpr ann)
-boolParser = trueParser <|> falseParser
-
-trueParser :: Monoid ann => Parser (ParserExpr ann)
-trueParser = string "True" $> MyLiteral mempty (MyBool True)
-
-falseParser :: Monoid ann => Parser (ParserExpr ann)
-falseParser = string "False" $> MyLiteral mempty (MyBool False)
-
------
-
-unitParser :: Monoid ann => Parser (ParserExpr ann)
-unitParser = string "Unit" $> MyLiteral mempty MyUnit
-
------
-
-intParser :: Monoid ann => Parser (ParserExpr ann)
-intParser = MyLiteral mempty . MyInt <$> integerParser
-
------
-
-stringLiteral :: Parser String
-stringLiteral = char '\"' *> manyTill L.charLiteral (char '\"')
-
-stringParser :: Monoid ann => Parser (ParserExpr ann)
-stringParser =
-  MyLiteral mempty . MyString
-    . StringType
-    . T.pack
-    <$> stringLiteral
-
------
-
-varParser :: Monoid ann => Parser (ParserExpr ann)
-varParser = MyVar mempty <$> nameParser
-
----
-
-identifier :: Parser Text
-identifier = takeWhile1P (Just "variable name") Char.isAlphaNum
-
-maybePred :: (Show a) => Parser a -> (a -> Maybe b) -> Parser b
-maybePred parser predicate' = try $ do
-  a <- parser
-  case predicate' a of
-    Just b -> pure b
-    _ -> fail $ T.unpack $ "Predicate did not hold for " <> T.pack (show a)
-
-nameParser :: Parser Name
-nameParser =
-  maybePred
-    identifier
-    (inProtected >=> safeMkName)
-
-inProtected :: Text -> Maybe Text
-inProtected tx =
-  if S.member tx protectedNames
-    then Nothing
-    else Just tx
-
----
-
-constructorParser :: Monoid ann => Parser (ParserExpr ann)
-constructorParser = MyConstructor mempty <$> tyConParser
-
-tyConParser :: Parser TyCon
-tyConParser =
-  maybePred
-    identifier
-    (inProtected >=> safeMkTyCon)
-
------
-
-letParser :: Monoid ann => Parser (ParserExpr ann)
+letParser :: Parser ParserExpr
 letParser = try letInParser <|> letNewlineParser
 
 letNameIn :: Parser Name
@@ -218,100 +74,107 @@ letNameIn = do
   _ <- thenSpace (string "=")
   pure name
 
-letInParser :: Monoid ann => Parser (ParserExpr ann)
-letInParser = do
-  name <- letNameIn
-  expr <- withOptionalSpace expressionParser
-  _ <- thenSpace (string "in")
-  MyLet mempty name expr <$> expressionParser
+letInParser :: Parser ParserExpr
+letInParser =
+  let parser = do
+        name <- letNameIn
+        boundExpr <- withOptionalSpace expressionParser
+        _ <- thenSpace (string "in")
+        letInExpr <- expressionParser
+        pure (name, boundExpr, letInExpr)
+   in withLocation
+        (\loc (a, b, c) -> MyLet loc a b c)
+        parser
 
-letNewlineParser :: Monoid ann => Parser (ParserExpr ann)
-letNewlineParser = do
-  name <- letNameIn
-  expr <- expressionParser
-  _ <- literalWithSpace ";"
-  MyLet mempty name expr <$> expressionParser
+letNewlineParser :: Parser ParserExpr
+letNewlineParser =
+  let parser = do
+        name <- letNameIn
+        expr <- expressionParser
+        _ <- literalWithSpace ";"
+        restExpr <- expressionParser
+        pure (name, expr, restExpr)
+   in withLocation
+        (\loc (a, b, c) -> MyLet loc a b c)
+        parser
 
 -----
 
-spacedName :: Parser Name
-spacedName = do
-  _ <- space
-  name <- nameParser
-  _ <- space
-  pure name
-
------
-
-letPairParser :: Monoid ann => Parser (ParserExpr ann)
+letPairParser :: Parser ParserExpr
 letPairParser =
-  MyLetPair mempty <$> binder1 <*> binder2
-    <*> equalsParser
-    <*> inParser
-  where
-    binder1 = do
-      _ <- thenSpace (string "let")
-      _ <- string "("
-      spacedName
-    binder2 = do
-      _ <- string ","
-      name <- spacedName
-      _ <- thenSpace (string ")")
-      pure name
+  let binder1 = do
+        _ <- thenSpace (string "let")
+        _ <- string "("
+        withOptionalSpace nameParser
+      binder2 = do
+        _ <- string ","
+        name <- withOptionalSpace nameParser
+        _ <- thenSpace (string ")")
+        pure name
+      parser =
+        (,,,) <$> binder1 <*> binder2
+          <*> equalsParser
+          <*> inParser
+   in withLocation
+        ( \loc (a, b, c, d) ->
+            MyLetPair
+              loc
+              a
+              b
+              c
+              d
+        )
+        parser
 
 -----
 
-equalsParser :: Monoid ann => Parser (ParserExpr ann)
+equalsParser :: Parser ParserExpr
 equalsParser = do
   _ <- thenSpace (string "=")
   thenSpace expressionParser
 
-inParser :: Monoid ann => Parser (ParserExpr ann)
+inParser :: Parser ParserExpr
 inParser = do
   _ <- thenSpace (string "in")
   expressionParser
 
 -----
 
-lambdaParser :: Monoid ann => Parser (ParserExpr ann)
-lambdaParser = MyLambda mempty <$> slashNameBinder <*> arrowExprBinder
-
--- matches \varName
-slashNameBinder :: Parser Name
-slashNameBinder = do
-  _ <- string "\\"
-  _ <- space
-  thenSpace nameParser
-
-arrowExprBinder :: Monoid ann => Parser (ParserExpr ann)
-arrowExprBinder = do
-  _ <- thenSpace (string "->")
-  expressionParser
+lambdaParser :: Parser ParserExpr
+lambdaParser =
+  let slashNameBinder = do
+        _ <- string "\\"
+        _ <- space
+        thenSpace nameParser
+      arrowExprBinder = do
+        _ <- thenSpace (string "->")
+        expressionParser
+      parser = (,) <$> slashNameBinder <*> arrowExprBinder
+   in withLocation
+        ( \loc (slash, arrow) ->
+            MyLambda loc slash arrow
+        )
+        parser
 
 -----
 
-appFunc :: Monoid ann => Parser (ParserExpr ann)
+appFunc :: Parser ParserExpr
 appFunc =
   try recordAccessParser <|> try (inBrackets lambdaParser)
     <|> varParser
 
-appParser :: Monoid ann => Parser (ParserExpr ann)
-appParser = do
-  func <- appFunc
-  exprs <- some (withOptionalSpace exprInBrackets)
-  pure (foldl (MyApp mempty) func exprs)
+appParser :: Parser ParserExpr
+appParser =
+  let parser = do
+        func <- appFunc
+        (,) func <$> some (withOptionalSpace exprInBrackets)
+   in withLocation
+        ( \loc (func, exprs) ->
+            foldl (MyApp loc) func exprs
+        )
+        parser
 
-literalWithSpace :: Text -> Parser ()
-literalWithSpace tx = () <$ withOptionalSpace (string tx)
-
-withOptionalSpace :: Parser a -> Parser a
-withOptionalSpace p = do
-  _ <- space
-  a <- p
-  _ <- space
-  pure a
-
-exprInBrackets :: Monoid ann => Parser (ParserExpr ann)
+exprInBrackets :: Parser ParserExpr
 exprInBrackets = do
   literalWithSpace "("
   expr <- expressionParser
@@ -321,14 +184,14 @@ exprInBrackets = do
 
 -----
 
-recordParser :: Monoid ann => Parser (ParserExpr ann)
-recordParser = do
+recordParser :: Parser ParserExpr
+recordParser = withLocation MyRecord $ do
   literalWithSpace "{"
   args <- sepBy (withOptionalSpace recordItemParser) (literalWithSpace ",")
   literalWithSpace "}"
-  pure (MyRecord mempty (M.fromList args))
+  pure (M.fromList args)
 
-recordItemParser :: Monoid ann => Parser (Name, ParserExpr ann)
+recordItemParser :: Parser (Name, ParserExpr)
 recordItemParser = do
   name <- nameParser
   literalWithSpace ":"
@@ -337,98 +200,67 @@ recordItemParser = do
 
 -----
 
-recordAccessParser :: Monoid ann => Parser (ParserExpr ann)
-recordAccessParser =
-  try recordAccessParser3
-    <|> try recordAccessParser2
-    <|> try recordAccessParser1
-
-recordAccessParser1 :: Monoid ann => Parser (ParserExpr ann)
-recordAccessParser1 = do
-  expr <- varParser
-  name <- dotName
-  _ <- space
-  pure (MyRecordAccess mempty expr name)
-
-dotName :: Parser Name
-dotName = do
-  _ <- string "."
-  nameParser
-
-recordAccessParser2 :: Monoid ann => Parser (ParserExpr ann)
-recordAccessParser2 = do
-  expr <- varParser
-  name <- dotName
-  name2 <- dotName
-  _ <- space
-  pure (MyRecordAccess mempty (MyRecordAccess mempty expr name) name2)
-
-recordAccessParser3 :: Monoid ann => Parser (ParserExpr ann)
-recordAccessParser3 = do
-  expr <- varParser
-  _ <- string "."
-  name <- nameParser
-  _ <- string "."
-  name2 <- nameParser
-  _ <- string "."
-  name3 <- nameParser
-  _ <- space
-  pure (MyRecordAccess mempty (MyRecordAccess mempty (MyRecordAccess mempty expr name) name2) name3)
+ifParser :: Parser ParserExpr
+ifParser =
+  let predParser = do
+        _ <- thenSpace (string "if")
+        expressionParser
+      thenParser = do
+        _ <- thenSpace (string "then")
+        expressionParser
+      elseParser = do
+        _ <- thenSpace (string "else")
+        expressionParser
+      parser =
+        (,,) <$> predParser
+          <*> thenParser
+          <*> elseParser
+   in withLocation
+        ( \loc (predP, thenP, elseP) ->
+            MyIf loc predP thenP elseP
+        )
+        parser
 
 -----
 
-ifParser :: Monoid ann => Parser (ParserExpr ann)
-ifParser = MyIf mempty <$> predParser <*> thenParser <*> elseParser
-
-predParser :: Monoid ann => Parser (ParserExpr ann)
-predParser = do
-  _ <- thenSpace (string "if")
-  expressionParser
-
-thenParser :: Monoid ann => Parser (ParserExpr ann)
-thenParser = do
-  _ <- thenSpace (string "then")
-  expressionParser
-
-elseParser :: Monoid ann => Parser (ParserExpr ann)
-elseParser = do
-  _ <- thenSpace (string "else")
-  expressionParser
+pairParser :: Parser ParserExpr
+pairParser =
+  let parser = do
+        _ <- string "("
+        _ <- space
+        exprA <- expressionParser
+        _ <- space
+        _ <- string ","
+        _ <- space
+        exprB <- expressionParser
+        _ <- space
+        _ <- string ")"
+        _ <- space
+        pure (exprA, exprB)
+   in withLocation (\loc (a, b) -> MyPair loc a b) parser
 
 -----
 
-pairParser :: Monoid ann => Parser (ParserExpr ann)
-pairParser = do
-  _ <- string "("
-  _ <- space
-  exprA <- expressionParser
-  _ <- space
-  _ <- string ","
-  _ <- space
-  exprB <- expressionParser
-  _ <- space
-  _ <- string ")"
-  _ <- space
-  pure $ MyPair mempty exprA exprB
-
------
-
-typeParser :: Monoid ann => Parser (ParserExpr ann)
+typeParser :: Parser ParserExpr
 typeParser =
-  MyData mempty
-    <$> ( try typeDeclParserWithCons
-            <|> try typeDeclParserEmpty
+  let parser =
+        (,)
+          <$> typeDeclParser
+          <*> ( try inExpr
+                  <|> try inNewLineExpr
+              )
+   in withLocation
+        ( \loc (type', expr') ->
+            MyData loc type' expr'
         )
-    <*> ( try inExpr
-            <|> try inNewLineExpr
-        )
+        parser
 
-inNewLineExpr :: Monoid ann => Parser (ParserExpr ann)
+inNewLineExpr :: Parser ParserExpr
 inNewLineExpr = do
   _ <- literalWithSpace ";"
   expressionParser
 
-inExpr :: Monoid ann => Parser (ParserExpr ann)
+inExpr :: Parser ParserExpr
 inExpr = do
   _ <- space
   _ <- thenSpace (string "in")
@@ -436,89 +268,23 @@ inExpr = do
 
 -----
 
-typeDeclParser :: Parser DataType
-typeDeclParser =
-  try typeDeclParserWithCons
-    <|> try typeDeclParserEmpty
-
--- it's your "type Void in ..."
-typeDeclParserEmpty :: Parser DataType
-typeDeclParserEmpty = do
-  _ <- thenSpace (string "type")
-  tyName <- tyConParser
-  pure (DataType tyName mempty mempty)
-
--- it's your more complex cases
-typeDeclParserWithCons :: Parser DataType
-typeDeclParserWithCons = do
-  _ <- thenSpace (string "type")
-  tyName <- thenSpace tyConParser
-  tyArgs <- try $ many (thenSpace nameParser)
-  _ <- thenSpace (string "=")
-  constructors <-
-    try manyTypeConstructors
-      <|> try oneTypeConstructor
-  pure $ DataType tyName tyArgs constructors
-
---------
-
-----
-
-manyTypeConstructors :: Parser (Map TyCon [TypeName])
-manyTypeConstructors = do
-  tyCons <-
-    sepBy
-      (withOptionalSpace oneTypeConstructor)
-      (literalWithSpace "|")
-  pure (mconcat tyCons)
-
-oneTypeConstructor :: Parser (Map TyCon [TypeName])
-oneTypeConstructor = do
-  name <- tyConParser
-  args <-
-    try
-      ( do
-          _ <- space1
-          sepBy (withOptionalSpace typeNameParser) space
-      )
-      <|> pure mempty
-  pure (M.singleton name args)
-
------
-
-typeNameParser :: Parser TypeName
-typeNameParser =
-  try emptyConsParser
-    <|> try varNameParser
-    <|> try (inBrackets parameterisedConsParser)
-
--- Simple type like String
-emptyConsParser :: Parser TypeName
-emptyConsParser = ConsName <$> tyConParser <*> pure mempty
-
---
-parameterisedConsParser :: Parser TypeName
-parameterisedConsParser = do
-  c <- thenSpace tyConParser
-  params <- try (sepBy (withOptionalSpace typeNameParser) space1) <|> pure mempty
-  pure $ ConsName c params
-
-varNameParser :: Parser TypeName
-varNameParser = VarName <$> nameParser
-
----
---
-constructorAppParser :: Monoid ann => Parser (ParserExpr ann)
-constructorAppParser = do
-  cons <- tyConParser
-  exprs <-
-    sepBy
-      (withOptionalSpace (orInBrackets consAppArgParser))
-      space
-  pure (foldl (MyConsApp mempty) (MyConstructor mempty cons) exprs)
+constructorAppParser :: Parser ParserExpr
+constructorAppParser =
+  let parser = do
+        cons <- constructorParser
+        exprs <-
+          sepBy
+            (withOptionalSpace (orInBrackets consAppArgParser))
+            space
+        pure (cons, exprs)
+   in withLocation
+        ( \loc (cons, exprs) ->
+            foldl (MyConsApp loc) cons exprs
+        )
+        parser
 
 -- we don't want to include infix stuff here
-consAppArgParser :: Monoid ann => Parser (ParserExpr ann)
+consAppArgParser :: Parser ParserExpr
 consAppArgParser =
   let parsers =
         try literalParser
@@ -528,24 +294,31 @@ consAppArgParser =
    in orInBrackets parsers
 
 ----------
-caseExprOfParser :: Monoid ann => Parser (ParserExpr ann)
+
+caseExprOfParser :: Parser ParserExpr
 caseExprOfParser = do
   _ <- thenSpace (string "case")
   sumExpr <- expressionParser
   _ <- thenSpace (string "of")
   pure sumExpr
 
-caseMatchParser :: Monoid ann => Parser (ParserExpr ann)
-caseMatchParser = do
-  sumExpr <- caseExprOfParser
-  matches <-
-    try matchesParser
-      <|> pure <$> matchParser
-  catchAll <-
-    optional (otherwiseParser (not . null $ matches))
-  pure $ MyCaseMatch mempty sumExpr matches catchAll
+caseMatchParser :: Parser ParserExpr
+caseMatchParser =
+  let parser = do
+        sumExpr <- caseExprOfParser
+        matches <-
+          try matchesParser
+            <|> pure <$> matchParser
+        catchAll <-
+          optional (otherwiseParser (not . null $ matches))
+        pure (sumExpr, matches, catchAll)
+   in withLocation
+        ( \loc (sumExpr, matches, catchAll) ->
+            MyCaseMatch loc sumExpr matches catchAll
+        )
+        parser
 
-otherwiseParser :: Monoid ann => Bool -> Parser (ParserExpr ann)
+otherwiseParser :: Bool -> Parser ParserExpr
 otherwiseParser needsBar = do
   if needsBar
     then () <$ thenSpace (string "|")
@@ -553,21 +326,21 @@ otherwiseParser needsBar = do
   _ <- thenSpace (string "otherwise")
   expressionParser
 
-matchesParser :: Monoid ann => Parser (NonEmpty (TyCon, ParserExpr ann))
+matchesParser :: Parser (NonEmpty (TyCon, ParserExpr))
 matchesParser =
   NE.fromList
     <$> sepBy
       (withOptionalSpace matchParser)
       (literalWithSpace "|")
 
-matchParser :: Monoid ann => Parser (TyCon, ParserExpr ann)
+matchParser :: Parser (TyCon, ParserExpr)
 matchParser = (,) <$> thenSpace tyConParser <*> expressionParser
 
 ----------
 
 -- we don't allow super complicate exprs to be used around infix
 -- just because it makes awful code and it's slow to parse
-infixExpr :: (Monoid ann) => Parser (ParserExpr ann)
+infixExpr :: Parser ParserExpr
 infixExpr =
   let parsers =
         try literalParser
@@ -583,10 +356,17 @@ infixExpr =
 opParser :: Parser Operator
 opParser = string "==" $> Equals
 
-infixParser :: Monoid ann => Parser (ParserExpr ann)
-infixParser = do
-  a <- infixExpr
-  _ <- space1
-  op <- opParser
-  _ <- space1
-  MyInfix mempty op a <$> infixExpr
+infixParser :: Parser ParserExpr
+infixParser =
+  let parser = do
+        a <- infixExpr
+        _ <- space1
+        op <- opParser
+        _ <- space1
+        b <- infixExpr
+        pure (op, a, b)
+   in withLocation
+        ( \loc (op, a, b) ->
+            MyInfix loc op a b
+        )
+        parser

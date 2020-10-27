@@ -6,7 +6,6 @@ module Language.Mimsa.Repl.ExpressionWatch
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.Aeson as JSON
 import Data.Bifunctor (first)
 import Data.IORef
 import qualified Data.Text as T
@@ -36,15 +35,9 @@ writeExpression env name =
     Nothing -> pure ()
 
 doWatch ::
-  ( Eq ann,
-    Monoid ann,
-    Show ann,
-    Printer ann,
-    JSON.ToJSON ann
-  ) =>
-  Project ann ->
+  Project Annotation ->
   Name ->
-  ReplM ann (Project ann)
+  ReplM Annotation (Project Annotation)
 doWatch env name = do
   writeExpression env name
   ioEnv <- liftIO $ newIORef env
@@ -62,18 +55,18 @@ doWatch env name = do
   liftIO $ readIORef ioEnv
 
 onFileChange ::
-  (Eq ann, Monoid ann, JSON.ToJSON ann) =>
-  Project ann ->
+  Project Annotation ->
   Name ->
-  ReplM ann (Project ann)
+  ReplM Annotation (Project Annotation)
 onFileChange env name = do
   text <-
     liftIO $ T.readFile $ "./" <> scratchFilename
   replPrint (T.pack scratchFilename <> " updated!")
+  let input = T.strip text
   expr <-
-    liftRepl $ first ParseErr (parseExprAndFormatError (T.strip text))
+    liftRepl $ first ParseErr (parseExprAndFormatError input)
   (ResolvedExpression type' storeExpr _ _ _) <-
-    liftRepl $ getTypecheckedStoreExpression env expr
+    liftRepl $ getTypecheckedStoreExpression input env expr
   replPrint $
     "+ Using the following from scope: "
       <> prettyPrint (storeBindings storeExpr)

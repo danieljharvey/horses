@@ -7,6 +7,7 @@
 module Language.Mimsa.Types.AST.Expr
   ( Expr (..),
     toEmptyAnnotation,
+    getAnnotation,
   )
 where
 
@@ -48,6 +49,23 @@ toEmptyAnnotation ::
   Expr var a ->
   Expr var b
 toEmptyAnnotation = fmap (const mempty)
+
+getAnnotation :: Expr var ann -> ann
+getAnnotation (MyLiteral ann _) = ann
+getAnnotation (MyVar ann _) = ann
+getAnnotation (MyLet ann _ _ _) = ann
+getAnnotation (MyLetPair ann _ _ _ _) = ann
+getAnnotation (MyInfix ann _ _ _) = ann
+getAnnotation (MyLambda ann _ _) = ann
+getAnnotation (MyApp ann _ _) = ann
+getAnnotation (MyIf ann _ _ _) = ann
+getAnnotation (MyPair ann _ _) = ann
+getAnnotation (MyRecord ann _) = ann
+getAnnotation (MyRecordAccess ann _ _) = ann
+getAnnotation (MyData ann _ _) = ann
+getAnnotation (MyConstructor ann _) = ann
+getAnnotation (MyConsApp ann _ _) = ann
+getAnnotation (MyCaseMatch ann _ _ _) = ann
 
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) = prettyDoc l

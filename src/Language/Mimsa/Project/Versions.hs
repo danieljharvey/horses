@@ -1,4 +1,10 @@
-module Language.Mimsa.Project.Versions (findVersions, findStoreExpressionByName) where
+{-# LANGUAGE OverloadedStrings #-}
+
+module Language.Mimsa.Project.Versions
+  ( findVersions,
+    findStoreExpressionByName,
+  )
+where
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
@@ -23,10 +29,9 @@ import Language.Mimsa.Types.VersionedMap
 -- find which versions of a given binding are in use
 
 findVersions ::
-  (Eq ann, Monoid ann) =>
-  Project ann ->
+  Project Annotation ->
   Name ->
-  Either (Error ann) (NonEmpty (Int, Expr Variable ann, MonoType, Set Usage))
+  Either (Error Annotation) (NonEmpty (Int, Expr Variable Annotation, MonoType, Set Usage))
 findVersions project name = do
   versioned <- first UsageErr (findInProject project name)
   as <- traverse (getExprDetails project) versioned
@@ -59,12 +64,14 @@ findStoreExpressionByName env name =
     _ -> Nothing
 
 getExprDetails ::
-  (Eq ann, Monoid ann) =>
-  Project ann ->
+  Project Annotation ->
   ExprHash ->
-  Either (Error ann) (Expr Variable ann, MonoType, Set Usage)
+  Either (Error Annotation) (Expr Variable Annotation, MonoType, Set Usage)
 getExprDetails project exprHash = do
-  usages <- first UsageErr (findUsages project exprHash)
-  storeExpr <- first UsageErr (getStoreExpression project exprHash)
-  (ResolvedExpression mt _ expr' _ _) <- resolveStoreExpression (store project) storeExpr
+  usages <-
+    first UsageErr (findUsages project exprHash)
+  storeExpr <-
+    first UsageErr (getStoreExpression project exprHash)
+  (ResolvedExpression mt _ expr' _ _) <-
+    resolveStoreExpression (store project) "" storeExpr
   pure (expr', mt, usages)

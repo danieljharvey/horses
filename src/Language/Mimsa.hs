@@ -2,7 +2,7 @@ module Language.Mimsa
   ( startInference,
     doInference,
     Expr (..),
-    MonoType (..),
+    MonoType,
     Name,
     mkName,
     StringType (..),
