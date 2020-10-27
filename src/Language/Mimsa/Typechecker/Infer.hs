@@ -449,8 +449,8 @@ infer env inferExpr =
       inferRecordAccess env ann a name
     (MyLetPair _ binder1 binder2 expr body) ->
       inferLetPairBinding env binder1 binder2 expr body
-    (MyLambda _ binder body) -> do
-      tyBinder <- getUnknown
+    (MyLambda ann binder body) -> do
+      tyBinder <- getUnknown ann
       let tmpCtx =
             createEnv binder (Scheme [] tyBinder)
               <> env
@@ -477,7 +477,7 @@ infer env inferExpr =
       storeDataDeclaration env dataType expr
     (MyConstructor _ name) ->
       inferDataConstructor env name
-    (MyConsApp _ cons val) ->
-      inferApplication env cons val
+    (MyConsApp ann cons val) ->
+      inferApplication env ann cons val
     (MyCaseMatch ann expr' matches catchAll) ->
       inferCaseMatch env ann expr' matches catchAll
