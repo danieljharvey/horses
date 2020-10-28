@@ -356,7 +356,8 @@ infixExpr =
 opParser :: Parser Operator
 opParser =
   try (string "==" $> Equals)
-    <|> string "+" $> Add
+    <|> try (string "+" $> Add)
+    <|> string "-" $> Subtract
 
 infixParser :: Parser ParserExpr
 infixParser =

@@ -110,17 +110,25 @@ interpretOperator operator a b = do
   let removeAnn expr = expr $> ()
   case operator of
     Equals -> do
-      let respondWith = pure . MyLiteral mempty . MyBool
+      let withBool = pure . MyLiteral mempty . MyBool
       if removeAnn plainA == removeAnn plainB
-        then respondWith True
-        else respondWith False
+        then withBool True
+        else withBool False
     Add -> do
-      let respondWith = pure . MyLiteral mempty . MyInt
+      let withInt = pure . MyLiteral mempty . MyInt
       let getNum exp' = case exp' of
             (MyLiteral _ (MyInt i)) -> Right i
-            _ -> Left $ AdditionOnNonNumber a
+            _ -> Left $ AdditionWithNonNumber a
       case (,) <$> getNum plainA <*> getNum plainB of
-        Right (a', b') -> respondWith (a' + b')
+        Right (a', b') -> withInt (a' + b')
+        Left e -> throwError e
+    Subtract -> do
+      let withInt = pure . MyLiteral mempty . MyInt
+      let getNum exp' = case exp' of
+            (MyLiteral _ (MyInt i)) -> Right i
+            _ -> Left $ SubtractionWithNonNumber a
+      case (,) <$> getNum plainA <*> getNum plainB of
+        Right (a', b') -> withInt (a' - b')
         Left e -> throwError e
 
 interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)

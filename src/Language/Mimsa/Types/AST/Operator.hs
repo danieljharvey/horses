@@ -13,9 +13,10 @@ import Language.Mimsa.Printer
 
 -------
 
-data Operator = Equals | Add
+data Operator = Equals | Add | Subtract
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance Printer Operator where
   prettyDoc Equals = "=="
   prettyDoc Add = "+"
+  prettyDoc Subtract = "-"

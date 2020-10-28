@@ -25,7 +25,8 @@ data InterpreterError ann
   | CouldNotMatchBuiltInId BiIds
   | PatternMatchFailure (Expr Variable ann)
   | SelfReferencingBinding Variable
-  | AdditionOnNonNumber (Expr Variable ann)
+  | AdditionWithNonNumber (Expr Variable ann)
+  | SubtractionWithNonNumber (Expr Variable ann)
   deriving (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError a) where
@@ -50,5 +51,6 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
   prettyPrint (CouldNotMatchBuiltInId ids) = "Could not match built in ids " <> prettyPrint ids
   prettyPrint (PatternMatchFailure expr') = "Could not pattern match on value " <> prettyPrint expr'
   prettyPrint (SelfReferencingBinding b) = "Could not bind variable " <> prettyPrint b <> " to itself."
-  prettyPrint (AdditionOnNonNumber a) = "Addition expected number but got this: " <> prettyPrint a
+  prettyPrint (AdditionWithNonNumber a) = "Addition expected number but got this: " <> prettyPrint a
+  prettyPrint (SubtractionWithNonNumber a) = "Subtraction expected number but got this: " <> prettyPrint a
   prettyPrint UnknownInterpreterError = "Unknown interpreter error"

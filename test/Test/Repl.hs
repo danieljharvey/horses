@@ -448,3 +448,9 @@ spec =
       it "True + 1" $ do
         result <- eval stdLib "True + 1"
         result `shouldSatisfy` isLeft
+      it "10 - 1" $ do
+        result <- eval stdLib "10 - 1"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 9)
+      it "True - 1" $ do
+        result <- eval stdLib "True - 1"
+        result `shouldSatisfy` isLeft

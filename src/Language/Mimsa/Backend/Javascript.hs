@@ -126,6 +126,7 @@ outputOperator ::
 outputOperator Equals a b =
   "__eq(" <> outputJS a <> ", " <> outputJS b <> ")"
 outputOperator Add a b = outputJS a <> " + " <> outputJS b
+outputOperator Subtract a b = outputJS a <> " - " <> outputJS b
 
 outputJS :: Expr Name ann -> Javascript
 outputJS expr =
