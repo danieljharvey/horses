@@ -354,7 +354,10 @@ infixExpr =
    in orInBrackets parsers
 
 opParser :: Parser Operator
-opParser = string "==" $> Equals
+opParser =
+  try (string "==" $> Equals)
+    <|> try (string "+" $> Add)
+    <|> string "-" $> Subtract
 
 infixParser :: Parser ParserExpr
 infixParser =

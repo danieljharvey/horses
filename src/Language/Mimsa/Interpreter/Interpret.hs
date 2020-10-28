@@ -104,14 +104,32 @@ interpretOperator ::
   Expr Variable ann ->
   Expr Variable ann ->
   App ann (Expr Variable ann)
-interpretOperator Equals a b = do
+interpretOperator operator a b = do
   plainA <- interpretWithScope a
   plainB <- interpretWithScope b
-  let respondWith = pure . MyLiteral mempty . MyBool
-      removeAnn expr = expr $> ()
-  if removeAnn plainA == removeAnn plainB
-    then respondWith True
-    else respondWith False
+  let removeAnn expr = expr $> ()
+  case operator of
+    Equals -> do
+      let withBool = pure . MyLiteral mempty . MyBool
+      if removeAnn plainA == removeAnn plainB
+        then withBool True
+        else withBool False
+    Add -> do
+      let withInt = pure . MyLiteral mempty . MyInt
+      let getNum exp' = case exp' of
+            (MyLiteral _ (MyInt i)) -> Right i
+            _ -> Left $ AdditionWithNonNumber a
+      case (,) <$> getNum plainA <*> getNum plainB of
+        Right (a', b') -> withInt (a' + b')
+        Left e -> throwError e
+    Subtract -> do
+      let withInt = pure . MyLiteral mempty . MyInt
+      let getNum exp' = case exp' of
+            (MyLiteral _ (MyInt i)) -> Right i
+            _ -> Left $ SubtractionWithNonNumber a
+      case (,) <$> getNum plainA <*> getNum plainB of
+        Right (a', b') -> withInt (a' - b')
+        Left e -> throwError e
 
 interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 interpretWithScope interpretExpr =

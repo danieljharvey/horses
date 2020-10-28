@@ -58,7 +58,9 @@ successes =
     ("Some 1", "__app({ type: \"Some\", vars: [] }, 1)"),
     ("case Some 1 of Some \\a -> a | Nowt 0", "__match(__app({ type: \"Some\", vars: [] }, 1), { Some: a => a, Nowt: 0 }, null)"),
     ("case Some 1 of Some \\a -> a | otherwise 0", "__match(__app({ type: \"Some\", vars: [] }, 1), { Some: a => a }, 0)"),
-    ("True == False", "__eq(true, false)")
+    ("True == False", "__eq(true, false)"),
+    ("2 + 2", "2 + 2"),
+    ("10 - 2", "10 - 2")
   ]
 
 testIt :: (Text, Javascript) -> Spec

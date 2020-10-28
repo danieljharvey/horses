@@ -442,3 +442,15 @@ spec =
       it "let eq1 = \\a -> a == 1 in eq1(1)" $ do
         result <- eval stdLib "let eq1 = \\a -> a == 1 in eq1(1)"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "1 + 1" $ do
+        result <- eval stdLib "1 + 1"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 2)
+      it "True + 1" $ do
+        result <- eval stdLib "True + 1"
+        result `shouldSatisfy` isLeft
+      it "10 - 1" $ do
+        result <- eval stdLib "10 - 1"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 9)
+      it "True - 1" $ do
+        result <- eval stdLib "True - 1"
+        result `shouldSatisfy` isLeft
