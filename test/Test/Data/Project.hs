@@ -64,6 +64,9 @@ eqExpr = unsafeGetExpr "\\a -> \\b -> a == b"
 optionExpr :: StoreExpressionA
 optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
 
+theseExpr :: StoreExpressionA
+theseExpr = unsafeGetExpr "type These a b = This a | That b | These a b in {}"
+
 aPairExpr :: StoreExpressionA
 aPairExpr = unsafeGetExpr "(1,2)"
 
@@ -88,6 +91,7 @@ stdLib' = Project store' bindings' typeBindings' mempty
             (ExprHash 6, compose),
             (ExprHash 7, sndExpr),
             (ExprHash 8, aRecordExpr),
+            (ExprHash 9, theseExpr),
             (ExprHash 11, idExpr),
             (ExprHash 17, incrementInt),
             (ExprHash 18, addInt)
@@ -110,7 +114,10 @@ stdLib' = Project store' bindings' typeBindings' mempty
       VersionedMap $
         M.fromList
           [ (mkTyCon "Some", pure $ ExprHash 4),
-            (mkTyCon "Nowt", pure $ ExprHash 4)
+            (mkTyCon "Nowt", pure $ ExprHash 4),
+            (mkTyCon "This", pure $ ExprHash 9),
+            (mkTyCon "That", pure $ ExprHash 9),
+            (mkTyCon "These", pure $ ExprHash 9)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression Annotation

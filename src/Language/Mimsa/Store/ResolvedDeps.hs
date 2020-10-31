@@ -1,12 +1,23 @@
 module Language.Mimsa.Store.ResolvedDeps
   ( resolveDeps,
+    resolveTypeDeps,
     recursiveResolve,
   )
 where
 
 import Data.Either (partitionEithers)
 import qualified Data.Map as M
-import Language.Mimsa.Types
+import Data.Maybe
+import qualified Data.Set as S
+import Language.Mimsa.Store.ExtractTypes
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Bindings
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.ResolvedDeps
+import Language.Mimsa.Types.ResolvedTypeDeps
+import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.StoreExpression
+import Language.Mimsa.Types.TypeBindings
 
 -- we spend so much time passing the whole store around to match hashes
 -- lets create one way of resolving a pile of them and be done with it
@@ -21,6 +32,28 @@ resolveDeps (Store items) (Bindings bindings') =
       ( \(name, hash) -> case M.lookup hash items of
           Just storeExpr' -> Right (name, (hash, storeExpr'))
           Nothing -> Left name
+      )
+        <$> M.toList bindings'
+
+extractDataType :: StoreExpression a -> Maybe DataType
+extractDataType se =
+  let types :: S.Set DataType
+      types = extractDataTypes (storeExpression se)
+   in listToMaybe . S.toList $ types
+
+resolveTypeDeps :: Store a -> TypeBindings -> Either [TyCon] ResolvedTypeDeps
+resolveTypeDeps (Store items) (TypeBindings bindings') =
+  case partitionEithers foundItems of
+    ([], found) -> Right (ResolvedTypeDeps (M.fromList found))
+    (fails, _) -> Left fails
+  where
+    foundItems =
+      ( \(tyCon, hash) -> case M.lookup hash items of
+          Just storeExpr -> do
+            case extractDataType storeExpr of
+              Just dt -> Right (tyCon, (hash, dt))
+              _ -> Left tyCon
+          Nothing -> Left tyCon
       )
         <$> M.toList bindings'
 

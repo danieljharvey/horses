@@ -13,6 +13,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Javascript
+import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl
 import Language.Mimsa.Types
@@ -54,10 +55,11 @@ successes =
     ("\\a -> let b = 123 in a", "a => { const b = 123;\nreturn a }"),
     ("(1,2)", "[1,2]"),
     ("aRecord.a", "aRecord.a"),
-    ("Some", "{ type: \"Some\", vars: [] }"),
-    ("Some 1", "__app({ type: \"Some\", vars: [] }, 1)"),
-    ("case Some 1 of Some \\a -> a | Nowt 0", "__match(__app({ type: \"Some\", vars: [] }, 1), { Some: a => a, Nowt: 0 }, null)"),
-    ("case Some 1 of Some \\a -> a | otherwise 0", "__match(__app({ type: \"Some\", vars: [] }, 1), { Some: a => a }, 0)"),
+    ("Some", "a => ({ type: \"Some\", vars: [a] })"),
+    ("Some 1", "{ type: \"Some\", vars: [1] }"),
+    ("Nowt", "{ type: \"Nowt\", vars: [] }"),
+    ("case Some 1 of Some \\a -> a | Nowt 0", "__match({ type: \"Some\", vars: [1] }), { Some: a => a, Nowt: 0 }, null)"),
+    ("case Some 1 of Some \\a -> a | otherwise 0", "__match({ type: \"Some\", vars: [1] }), { Some: a => a }, 0)"),
     ("True == False", "__eq(true, false)"),
     ("2 + 2", "2 + 2"),
     ("10 - 2", "10 - 2")
@@ -69,9 +71,42 @@ testIt (q, a) =
     eval stdLib q `shouldBe` Right a
 
 spec :: Spec
-spec =
-  describe "JS" $ do
-    it "Outputs a module" $ do
-      result <- evalModule stdLib "\\a -> compose(id)(id)(a)"
-      result `shouldSatisfy` isRight
-    traverse_ testIt successes
+spec = do
+  describe "JS" $
+    do
+      traverse_ testIt successes
+      it "Outputs a module" $ do
+        result <- evalModule stdLib "\\a -> compose(id)(id)(a)"
+        result `shouldSatisfy` isRight
+  describe "Normalise constructors" $ do
+    it "is a no-op for nullary constructors" $ do
+      let a = MyConstructor () (mkTyCon "Nowt")
+      normaliseConstructors stdLib a `shouldBe` a
+    it "turns unary constructor into lambda function" $ do
+      let a = MyConstructor mempty (mkTyCon "Some")
+      let expected =
+            MyLambda
+              mempty
+              (mkName "a")
+              (MyConsApp mempty (MyConstructor mempty (mkTyCon "Some")) (MyVar mempty (mkName "a")))
+      normaliseConstructors stdLib a `shouldBe` expected
+    it "turns binary constructor into two lambda functions" $ do
+      let a = MyConstructor mempty (mkTyCon "These")
+      let expected =
+            MyLambda
+              mempty
+              (mkName "a")
+              ( MyLambda
+                  mempty
+                  (mkName "b")
+                  ( MyConsApp
+                      mempty
+                      ( MyConsApp
+                          mempty
+                          (MyConstructor mempty (mkTyCon "These"))
+                          (MyVar mempty (mkName "a"))
+                      )
+                      (MyVar mempty (mkName "b"))
+                  )
+              )
+      normaliseConstructors stdLib a `shouldBe` expected
