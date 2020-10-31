@@ -14,6 +14,7 @@ import qualified Test.Prettier as Prettier
 import Test.QuickCheck.Instances ()
 import qualified Test.Repl as Repl
 import qualified Test.Resolver as Resolver
+import qualified Test.Serialisation as Serialisation
 import qualified Test.Substitutor as Substitutor
 import qualified Test.Syntax as Syntax
 import qualified Test.TypeError as TypeError
@@ -34,3 +35,4 @@ main = hspec $ do
   Usages.spec
   JS.spec
   TypeError.spec
+  Serialisation.spec

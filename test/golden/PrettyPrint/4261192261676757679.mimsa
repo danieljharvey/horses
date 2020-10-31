@@ -1,0 +1,5 @@
+type LongBoy 
+  = Stuff String
+          Int
+          String;
+Stuff "yes"

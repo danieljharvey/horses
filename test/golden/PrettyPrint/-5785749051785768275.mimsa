@@ -1,0 +1,9 @@
+type Arr a 
+  = Empty
+  | Item a
+         (Arr a);
+case (Item 1 (Item 2 (Empty))) of 
+    Empty (Empty)
+  | Item (\a ->
+     \rest ->
+        rest)

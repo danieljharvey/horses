@@ -7,38 +7,47 @@ module Test.Repl
   )
 where
 
-import Data.Coerce
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
 import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Interpreter
-import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl
+import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Types
 import Test.Data.Project
 import Test.Helpers
 import Test.Hspec
+import Test.Utils.Serialisation
+  ( createOutputFolder,
+    saveJSON,
+    savePretty,
+  )
 
 eval ::
   Project Annotation ->
   Text ->
   IO (Either Text (Type (), Expr Variable ()))
 eval env input =
-  case prettyPrintingParses input of
+  case evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
-    Right _ ->
-      case evaluateText env input of
-        Left e -> pure (Left $ prettyPrint e)
-        Right (ResolvedExpression mt se expr' scope' swaps) -> do
-          T.putStrLn $ coerce (output (storeExpression se))
-          endExpr <- interpret scope' swaps expr'
-          case toEmptyAnn <$> endExpr of
-            Right a -> pure (Right (toEmptyType mt, a))
-            Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+    Right (ResolvedExpression mt se expr' scope' swaps) -> do
+      saveRegressionData (se $> ())
+      endExpr <- interpret scope' swaps expr'
+      case toEmptyAnn <$> endExpr of
+        Right a -> pure (Right (toEmptyType mt, a))
+        Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+
+-- These are saved and used in the deserialisation tests to make sure we avoid
+-- future regressions
+saveRegressionData :: StoreExpression () -> IO ()
+saveRegressionData se = do
+  jsonPath <- createOutputFolder "StoreExpr"
+  let jsonFilename = jsonPath <> show (getStoreExpressionHash se) <> ".json"
+  saveJSON jsonFilename se
+  prettyPath <- createOutputFolder "PrettyPrint"
+  let prettyFilename = prettyPath <> show (getStoreExpressionHash se) <> ".mimsa"
+  savePretty prettyFilename (storeExpression se)
 
 -- remove annotations for comparison
 toEmptyAnn :: Expr a b -> Expr a ()
@@ -46,26 +55,6 @@ toEmptyAnn = toEmptyAnnotation
 
 toEmptyType :: Type a -> Type ()
 toEmptyType a = a $> ()
-
--- does the output of our prettyprinting still make sense to the parser?
-prettyPrintingParses :: Text -> Either Text ()
-prettyPrintingParses input = do
-  expr1 <- parseExprAndFormatError input
-  case parseExprAndFormatError (prettyPrint expr1) of
-    Left e -> Left e
-    Right expr2 ->
-      if toEmptyAnn expr1 /= toEmptyAnn expr2
-        then
-          Left
-            ( ">>>" <> T.pack (show expr1)
-                <> "<<< does not match >>>"
-                <> T.pack (show expr2)
-                <> "<<< "
-                <> prettyPrint expr1
-                <> " vs "
-                <> prettyPrint expr2
-            )
-        else pure ()
 
 spec :: Spec
 spec =

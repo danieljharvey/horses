@@ -1,0 +1,4 @@
+type Pet 
+  = Cat String
+  | Dog String;
+Cat "mimsa"
