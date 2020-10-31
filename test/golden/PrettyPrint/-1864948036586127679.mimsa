@@ -1,0 +1,4 @@
+type Nat 
+  = Suc Nat
+  | Zero;
+Suc

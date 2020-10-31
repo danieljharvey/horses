@@ -1,0 +1,7 @@
+type Stuff 
+  = Thing String
+          Int;
+case (Thing "Hello" 1) of 
+    Thing (\name ->
+     \num ->
+        name)

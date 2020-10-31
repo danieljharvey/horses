@@ -8,8 +8,11 @@ import qualified Data.Text as T
 import Language.Mimsa.Printer
 
 newtype ExprHash = ExprHash Int
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord)
   deriving newtype (JSON.FromJSON, JSON.ToJSON)
+
+instance Show ExprHash where
+  show (ExprHash a) = show a
 
 instance Printer ExprHash where
   prettyPrint (ExprHash a) = T.pack . show $ a

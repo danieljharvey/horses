@@ -1,0 +1,7 @@
+type Blap a 
+  = Boop a
+         Int;
+case (Boop True 100) of 
+    Boop (\a ->
+     \b ->
+        a)
