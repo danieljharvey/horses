@@ -8,6 +8,7 @@ where
 
 import Data.Either (isRight)
 import Data.Foldable (traverse_)
+import Data.Maybe (fromJust)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -15,9 +16,13 @@ import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Repl
+import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Types
+import Language.Mimsa.Types.ResolvedTypeDeps
 import Test.Data.Project
+import Test.Helpers
 import Test.Hspec
 
 eval :: Project Annotation -> Text -> Either Text Javascript
@@ -33,7 +38,7 @@ evalModule env input =
   case evaluateText env input of
     Left e -> pure $ Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
-      let a = outputCommonJS storeExpr
+      let a = outputCommonJS dataTypes storeExpr
        in do
             T.putStrLn (prettyPrint a)
             pure (Right a)
@@ -70,6 +75,13 @@ testIt (q, a) =
   it (T.unpack q) $
     eval stdLib q `shouldBe` Right a
 
+dataTypes :: ResolvedTypeDeps
+dataTypes = fromJust $ case resolveTypeDeps
+  (store stdLib)
+  (getCurrentTypeBindings $ typeBindings stdLib) of
+  Right a -> Just a
+  _ -> Nothing
+
 spec :: Spec
 spec = do
   describe "JS" $
@@ -81,17 +93,17 @@ spec = do
   describe "Normalise constructors" $ do
     it "is a no-op for nullary constructors" $ do
       let a = MyConstructor () (mkTyCon "Nowt")
-      normaliseConstructors stdLib a `shouldBe` a
+      normaliseConstructors dataTypes a `shouldBe` a
     it "turns unary constructor into lambda function" $ do
-      let a = MyConstructor mempty (mkTyCon "Some")
+      let a = MyConstructor () (mkTyCon "Some")
       let expected =
             MyLambda
               mempty
               (mkName "a")
               (MyConsApp mempty (MyConstructor mempty (mkTyCon "Some")) (MyVar mempty (mkName "a")))
-      normaliseConstructors stdLib a `shouldBe` expected
+      normaliseConstructors dataTypes a `shouldBe` expected
     it "turns binary constructor into two lambda functions" $ do
-      let a = MyConstructor mempty (mkTyCon "These")
+      let a = MyConstructor () (mkTyCon "These")
       let expected =
             MyLambda
               mempty
@@ -109,4 +121,31 @@ spec = do
                       (MyVar mempty (mkName "b"))
                   )
               )
-      normaliseConstructors stdLib a `shouldBe` expected
+      normaliseConstructors dataTypes a `shouldBe` expected
+    it "partially applies when wrapped in ConsApp" $ do
+      let a = MyConsApp () (MyConstructor mempty (mkTyCon "These")) (int 1)
+      let expected =
+            MyLambda
+              mempty
+              (mkName "b")
+              ( MyConsApp
+                  mempty
+                  ( MyConsApp
+                      mempty
+                      (MyConstructor mempty (mkTyCon "These"))
+                      (int 1)
+                  )
+                  (MyVar mempty (mkName "b"))
+              )
+      normaliseConstructors dataTypes a `shouldBe` expected
+    it "completely applies when wrapped in ConsApp" $ do
+      let a =
+            MyConsApp
+              ()
+              ( MyConsApp
+                  mempty
+                  (MyConstructor mempty (mkTyCon "These"))
+                  (int 1)
+              )
+              (int 2)
+      normaliseConstructors dataTypes a `shouldBe` a

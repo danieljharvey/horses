@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Types.ResolvedTypeDeps where
 
 import Data.Map (Map)

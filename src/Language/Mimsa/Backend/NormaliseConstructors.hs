@@ -5,25 +5,55 @@ module Language.Mimsa.Backend.NormaliseConstructors where
 import Data.Foldable (foldl')
 import qualified Data.Map as M
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.Persistence
-import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedTypeDeps
 
 -- turns Constructors into functions
-normaliseConstructors :: Project Annotation -> Expr Name () -> Expr Name ()
-normaliseConstructors project (MyConstructor _ tyCon) = constructorToFunction project tyCon
+normaliseConstructors ::
+  (Monoid ann) =>
+  ResolvedTypeDeps ->
+  Expr Name ann ->
+  Expr Name ann
+normaliseConstructors dataTypes (MyConstructor _ tyCon) =
+  constructorToFunctionWithApplication dataTypes [] tyCon
+normaliseConstructors dataTypes (MyConsApp _ a b) =
+  constructorToFunctionWithApplication
+    dataTypes
+    (getConsArgList (MyConsApp mempty a b))
+    (getNestedTyCons a)
 normaliseConstructors _ a = a
+
+getNestedTyCons :: Expr Name ann -> TyCon
+getNestedTyCons (MyConsApp _ a _) = getNestedTyCons a
+getNestedTyCons (MyConstructor _ tyCon) = tyCon
+getNestedTyCons _ = error "This is bad news" -- forgive me padre
+
+getConsArgList :: Expr Name ann -> [Expr Name ann]
+getConsArgList (MyConsApp _ (MyConstructor _ _tyCon) a) = [a]
+getConsArgList (MyConsApp _ next a) = [a] <> getConsArgList next
+getConsArgList a = [a]
 
 typeNameToName :: Int -> TypeName -> Name
 typeNameToName _ (VarName name) = name
 typeNameToName i _ = mkName $ "U" <> prettyPrint i
 
-constructorToFunction :: Project Annotation -> TyCon -> Expr Name ()
-constructorToFunction project tyCon =
-  let tyVars = extractTypeConstructor tyCon <$> findDataTypeInProject project tyCon
+-- ffs
+safeGetItem :: Int -> [a] -> Maybe a
+safeGetItem i as =
+  if length as <= i
+    then Nothing
+    else Just (as !! i)
+
+-- turn Just constructor into a function like  \a -> Just a
+constructorToFunctionWithApplication ::
+  (Monoid ann) =>
+  ResolvedTypeDeps ->
+  [Expr Name ann] ->
+  TyCon ->
+  Expr Name ann
+constructorToFunctionWithApplication dataTypes args tyCon =
+  let tyVars = extractTypeConstructor tyCon <$> findDataTypeInProject dataTypes tyCon
    in case tyVars of
         Just [] -> MyConstructor mempty tyCon
         Just as ->
@@ -31,8 +61,10 @@ constructorToFunction project tyCon =
               withConsApp =
                 foldl'
                   ( \expr' (i, tn) ->
-                      let variable = typeNameToName i tn
-                       in MyConsApp mempty expr' (MyVar mempty variable)
+                      let variable = case safeGetItem (i - 1) (reverse args) of
+                            Just expression -> expression
+                            Nothing -> MyVar mempty (typeNameToName i tn)
+                       in MyConsApp mempty expr' variable
                   )
                   (MyConstructor mempty tyCon)
                   numberList
@@ -42,15 +74,15 @@ constructorToFunction project tyCon =
                      in MyLambda mempty variable expr'
                 )
                 withConsApp
-                numberList
+                ( drop
+                    (length args)
+                    numberList
+                )
         _ -> MyConstructor mempty tyCon
 
-findDataTypeInProject :: Project Annotation -> TyCon -> Maybe DataType
-findDataTypeInProject project tyCon =
-  case resolveTypeDeps (store project) (getCurrentTypeBindings $ typeBindings project) of
-    Right (ResolvedTypeDeps dataTypes) ->
-      snd <$> M.lookup tyCon dataTypes
-    Left _ -> Nothing
+findDataTypeInProject :: ResolvedTypeDeps -> TyCon -> Maybe DataType
+findDataTypeInProject (ResolvedTypeDeps dataTypes) tyCon =
+  snd <$> M.lookup tyCon dataTypes
 
 extractTypeConstructor :: TyCon -> DataType -> [TypeName]
 extractTypeConstructor tc dt =
