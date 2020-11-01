@@ -31,7 +31,7 @@ eval env input =
     Left e -> Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
       pure $
-        output (storeExpression storeExpr)
+        output dataTypes (storeExpression storeExpr)
 
 evalModule :: Project Annotation -> Text -> IO (Either Text Javascript)
 evalModule env input =
@@ -63,8 +63,8 @@ successes =
     ("Some", "a => ({ type: \"Some\", vars: [a] })"),
     ("Some 1", "{ type: \"Some\", vars: [1] }"),
     ("Nowt", "{ type: \"Nowt\", vars: [] }"),
-    ("case Some 1 of Some \\a -> a | Nowt 0", "__match({ type: \"Some\", vars: [1] }), { Some: a => a, Nowt: 0 }, null)"),
-    ("case Some 1 of Some \\a -> a | otherwise 0", "__match({ type: \"Some\", vars: [1] }), { Some: a => a }, 0)"),
+    ("case Some 1 of Some \\a -> a | Nowt 0", "__match({ type: \"Some\", vars: [1] }, { Some: a => a, Nowt: 0 }, null)"),
+    ("case Some 1 of Some \\a -> a | otherwise 0", "__match({ type: \"Some\", vars: [1] }, { Some: a => a }, 0)"),
     ("True == False", "__eq(true, false)"),
     ("2 + 2", "2 + 2"),
     ("10 - 2", "10 - 2")

@@ -16,7 +16,6 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Javascript
-import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
@@ -121,7 +120,7 @@ outputCommonJS dataTypes =
     Renderer
       { renderFunc = \name expr ->
           "const " <> coerce name <> " = "
-            <> output (normaliseConstructors dataTypes expr)
+            <> output dataTypes expr
             <> ";\n",
         renderImport = \be (name, hash') ->
           Javascript $
