@@ -82,7 +82,7 @@ getNestedTyCons _ = error "This is bad news" -- forgive me padre
 
 getConsArgList :: Expr Name ann -> [Expr Name ann]
 getConsArgList (MyConsApp _ (MyConstructor _ _tyCon) a) = [a]
-getConsArgList (MyConsApp _ next a) = [a] <> getConsArgList next
+getConsArgList (MyConsApp _ next a) = getConsArgList next <> [a]
 getConsArgList a = [a]
 
 typeNameToName :: Int -> TypeName -> Name
@@ -112,7 +112,7 @@ constructorToFunctionWithApplication dt args tyCon =
               withConsApp =
                 foldl'
                   ( \expr' (i, tn) ->
-                      let variable = case safeGetItem (i - 1) (reverse args) of
+                      let variable = case safeGetItem (i - 1) args of
                             Just expression -> expression
                             Nothing -> MyVar mempty (typeNameToName i tn)
                        in MyConsApp mempty expr' variable
