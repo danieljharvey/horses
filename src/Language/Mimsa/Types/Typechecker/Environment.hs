@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Environment where
+module Language.Mimsa.Types.Typechecker.Environment where
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -8,13 +8,14 @@ import qualified Data.Text as T
 import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.AST (DataType)
 import Language.Mimsa.Types.Identifiers (TyCon, Variable)
-import Language.Mimsa.Types.Scheme (Scheme)
+import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 
 -- everything we need in typechecking environment
-data Environment = Environment
-  { getSchemes :: Map Variable Scheme,
-    getDataTypes :: Map TyCon DataType
-  }
+data Environment
+  = Environment
+      { getSchemes :: Map Variable Scheme,
+        getDataTypes :: Map TyCon DataType
+      }
   deriving (Eq, Ord, Show)
 
 instance Semigroup Environment where

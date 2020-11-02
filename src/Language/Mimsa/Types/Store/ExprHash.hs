@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Types.ExprHash where
+module Language.Mimsa.Types.Store.ExprHash where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Text as T

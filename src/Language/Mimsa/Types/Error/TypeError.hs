@@ -16,7 +16,6 @@ import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Identifiers
   ( Name,
     TyCon,
@@ -24,8 +23,9 @@ import Language.Mimsa.Types.Identifiers
     mkName,
     renderName,
   )
-import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Swaps (Swaps)
+import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
+import Language.Mimsa.Types.Typechecker.MonoType
 import Text.Megaparsec
 
 data TypeError

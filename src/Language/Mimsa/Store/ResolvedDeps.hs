@@ -11,13 +11,8 @@ import Data.Maybe
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Bindings
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.ResolvedDeps
-import Language.Mimsa.Types.ResolvedTypeDeps
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.StoreExpression
-import Language.Mimsa.Types.TypeBindings
 
 -- we spend so much time passing the whole store around to match hashes
 -- lets create one way of resolving a pile of them and be done with it

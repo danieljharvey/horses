@@ -1,24 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Usage where
+module Language.Mimsa.Types.Error.UsageError where
 
 import qualified Data.Text as T
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Identifiers
-
-data Usage
-  = Transient Name ExprHash
-  | Direct Name ExprHash
-  deriving (Eq, Ord, Show)
-
-instance Printer Usage where
-  prettyPrint (Transient name _) =
-    "Transient dependency of "
-      <> prettyPrint name
-  prettyPrint (Direct name _) =
-    "Direct dependency of "
-      <> prettyPrint name
+import Language.Mimsa.Types.Store.ExprHash
 
 ----------
 

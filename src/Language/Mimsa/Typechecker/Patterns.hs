@@ -8,7 +8,10 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.Environment (lookupConstructor)
 import Language.Mimsa.Typechecker.TcMonad (TcMonad)
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 
 checkCompleteness ::
   Environment ->

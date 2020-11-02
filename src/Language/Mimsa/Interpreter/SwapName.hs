@@ -6,7 +6,8 @@ module Language.Mimsa.Interpreter.SwapName
 where
 
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
 
 -- step through Expr, replacing vars with numbered variables
 swapName :: Variable -> Variable -> Expr Variable ann -> App ann (Expr Variable ann)

@@ -4,9 +4,9 @@ import Control.Monad.Except
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.TcMonad (TcMonad)
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Environment
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker.Environment
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::

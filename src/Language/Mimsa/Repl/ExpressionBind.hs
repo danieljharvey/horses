@@ -13,7 +13,11 @@ import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (saveExpr)
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Store
 
 doBind ::
   Project Annotation ->

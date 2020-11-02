@@ -9,7 +9,11 @@ import Control.Monad.Reader
 import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter.Interpret
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Scope
+import Language.Mimsa.Types.Swaps
 
 interpret ::
   (Eq ann, Monoid ann) =>

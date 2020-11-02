@@ -13,7 +13,10 @@ import qualified Data.Map as M
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Scope
 
 -- when we come to do let recursive the name of our binder
 -- may already be turned into a number in the expr

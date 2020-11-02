@@ -11,7 +11,9 @@ import Control.Monad.Reader
 import Control.Monad.State (runState)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Unify
-import Language.Mimsa.Types
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 import Test.Helpers
 import Test.Hspec
 

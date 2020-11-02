@@ -3,9 +3,7 @@ module Language.Mimsa.Typechecker.Generalise where
 import Data.List
 import qualified Data.Map as M
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.MonoType
-import Language.Mimsa.Types.Scheme
-import Language.Mimsa.Types.Substitutions
+import Language.Mimsa.Types.Typechecker
 
 freeVars :: MonoType -> [Variable]
 freeVars (MTVar _ b) = [b]

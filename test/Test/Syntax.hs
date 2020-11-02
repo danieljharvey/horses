@@ -10,7 +10,8 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Parser
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
 import Test.Helpers
 import Test.Hspec
 import Text.Megaparsec

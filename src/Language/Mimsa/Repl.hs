@@ -20,7 +20,9 @@ import Language.Mimsa.Project
 import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Store
 import System.Console.Haskeline
 import Text.Megaparsec
 

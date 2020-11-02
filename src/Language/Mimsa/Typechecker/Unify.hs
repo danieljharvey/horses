@@ -13,7 +13,10 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.TcMonad
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 
 freeTypeVars :: MonoType -> S.Set Variable
 freeTypeVars ty = case ty of

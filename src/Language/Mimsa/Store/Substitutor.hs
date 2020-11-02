@@ -6,7 +6,12 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Scope
+import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.SubstitutedExpression
+import Language.Mimsa.Types.Swaps
 
 -- this turns StoreExpressions back into expressions by substituting their
 -- variables for the deps passed in

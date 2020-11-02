@@ -8,7 +8,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.Storage
-import Language.Mimsa.Types
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Store
 
 -----
 

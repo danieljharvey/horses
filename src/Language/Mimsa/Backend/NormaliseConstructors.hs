@@ -13,7 +13,7 @@ import qualified Data.Map as M
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.ResolvedTypeDeps
+import Language.Mimsa.Types.Store.ResolvedTypeDeps
 
 -- turns Constructors into functions
 normaliseConstructors ::

@@ -8,8 +8,11 @@ where
 
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
-import Language.Mimsa
-import Language.Mimsa.Types
+import Language.Mimsa.Typechecker
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck.Instances ()

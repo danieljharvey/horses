@@ -7,7 +7,7 @@ module Test.Usages
 where
 
 import Language.Mimsa.Project.Usages
-import Language.Mimsa.Types
+import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
 

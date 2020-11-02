@@ -19,11 +19,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
-import Language.Mimsa.Types
-  ( ExprHash (..),
-    ServerUrl (..),
-    StoreExpression (..),
-  )
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Store
 import Network.HTTP.Req
 import System.Directory
 import Text.URI
@@ -88,8 +85,8 @@ tryServers _ [] = throwError "Could not find expression on any server"
 tryServers hash (url : urls) = findExprFromServer url hash <|> tryServers hash urls
 
 getPath :: ExprHash -> ServerUrl -> ExceptT Text IO (Url Https)
-getPath hash serverUrl = do
-  let path = downloadPath serverUrl hash
+getPath hash serverUrl' = do
+  let path = downloadPath serverUrl' hash
   uri <- mkURI path
   case useHttpsURI uri of
     Just (url, _) -> pure url
@@ -97,8 +94,8 @@ getPath hash serverUrl = do
 
 -- find in the store
 findExprFromServer :: ServerUrl -> ExprHash -> ExceptT Text IO (StoreExpression ())
-findExprFromServer serverUrl hash = do
-  path <- getPath hash serverUrl
+findExprFromServer serverUrl' hash = do
+  path <- getPath hash serverUrl'
   body <-
     runReq defaultHttpConfig $
       req
@@ -110,7 +107,7 @@ findExprFromServer serverUrl hash = do
   liftIO $ T.putStrLn $
     "Downloading expression for " <> prettyPrint hash
       <> " from "
-      <> getServerUrl serverUrl
+      <> getServerUrl serverUrl'
   let storeExpr = responseBody body
   case validateStoreExpression storeExpr hash of
     Right storeExpr' -> do

@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Types.VersionedMap where
+module Language.Mimsa.Types.Project.VersionedMap where
 
 import qualified Data.Aeson as JSON
 import Data.List (nub)
