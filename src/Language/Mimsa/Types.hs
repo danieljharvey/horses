@@ -1,6 +1,5 @@
 module Language.Mimsa.Types
-  ( module Language.Mimsa.Types.TypeConstructor,
-    module Language.Mimsa.Types.AST,
+  ( module Language.Mimsa.Types.AST,
     module Language.Mimsa.Types.Identifiers,
     module Language.Mimsa.Types.Usage,
     module Language.Mimsa.Types.Store,
@@ -32,7 +31,6 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.SubstitutedExpression
 import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Swaps
-import Language.Mimsa.Types.TypeConstructor
 import Language.Mimsa.Types.UniVar
 import Language.Mimsa.Types.Usage
 import Language.Mimsa.Types.VersionedMap

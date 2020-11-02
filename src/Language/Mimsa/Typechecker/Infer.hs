@@ -25,6 +25,7 @@ import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
 import Language.Mimsa.Typechecker.TcMonad
+import Language.Mimsa.Typechecker.TypeConstructor
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types
 

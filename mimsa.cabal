@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a25071f5d4a1e99dadfa8b3b7f5813fe91a572a13409d4723bf6567d62e83a34
+-- hash: 8fc82ebf93cf04e4afd52a1585ee418702bfbbd5efea4f5a144ee13367605b84
 
 name:           mimsa
 version:        0.1.0.0
@@ -75,6 +75,7 @@ library
       Language.Mimsa.Typechecker.Infer
       Language.Mimsa.Typechecker.Patterns
       Language.Mimsa.Typechecker.TcMonad
+      Language.Mimsa.Typechecker.TypeConstructor
       Language.Mimsa.Typechecker.Unify
       Language.Mimsa.Types
       Language.Mimsa.Types.AST
@@ -111,7 +112,6 @@ library
       Language.Mimsa.Types.SubstitutedExpression
       Language.Mimsa.Types.Substitutions
       Language.Mimsa.Types.Swaps
-      Language.Mimsa.Types.TypeConstructor
       Language.Mimsa.Types.UniVar
       Language.Mimsa.Types.Usage
       Language.Mimsa.Types.VersionedMap
