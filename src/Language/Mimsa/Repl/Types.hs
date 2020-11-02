@@ -38,4 +38,3 @@ data ReplAction ann
   | Versions Name
   | ListBindings
   | Watch Name
-  | Tui

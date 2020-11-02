@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4fca52ab49770db96c930386c9e77ad2f5ac7a7cc1ea3caca52a8beabb37e325
+-- hash: e6ec0bcfeaad2587bfe51ea217ce219a0c12f66eb0d08ff82bc50f8fd6580fae
 
 name:           mimsa
 version:        0.1.0.0
@@ -67,11 +67,6 @@ library
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
       Language.Mimsa.Store.Substitutor
-      Language.Mimsa.Tui
-      Language.Mimsa.Tui.Elements
-      Language.Mimsa.Tui.Evaluate
-      Language.Mimsa.Tui.State
-      Language.Mimsa.Tui.Styles
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.DataTypes
       Language.Mimsa.Typechecker.DisplayError
@@ -114,7 +109,6 @@ library
       Language.Mimsa.Types.SubstitutedExpression
       Language.Mimsa.Types.Substitutions
       Language.Mimsa.Types.Swaps
-      Language.Mimsa.Types.Tui
       Language.Mimsa.Types.TypeBindings
       Language.Mimsa.Types.TypeConstructor
       Language.Mimsa.Types.UniVar
@@ -127,7 +121,6 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
-    , brick
     , bytestring
     , containers
     , directory
@@ -136,15 +129,12 @@ library
     , hashable
     , haskeline
     , megaparsec
-    , microlens
     , modern-uri
     , mtl
     , prettyprinter
     , req
     , text
     , transformers
-    , vector
-    , vty
   default-language: Haskell2010
 
 executable mimsa
@@ -157,7 +147,6 @@ executable mimsa
   build-depends:
       aeson
     , base >=4.7 && <5
-    , brick
     , bytestring
     , containers
     , directory
@@ -166,7 +155,6 @@ executable mimsa
     , hashable
     , haskeline
     , megaparsec
-    , microlens
     , mimsa
     , modern-uri
     , mtl
@@ -174,8 +162,6 @@ executable mimsa
     , req
     , text
     , transformers
-    , vector
-    , vty
   default-language: Haskell2010
 
 test-suite mimsa-test
@@ -205,7 +191,6 @@ test-suite mimsa-test
       QuickCheck
     , aeson
     , base >=4.7 && <5
-    , brick
     , bytestring
     , containers
     , directory
@@ -216,7 +201,6 @@ test-suite mimsa-test
     , haskeline
     , hspec
     , megaparsec
-    , microlens
     , mimsa
     , modern-uri
     , mtl
@@ -225,6 +209,4 @@ test-suite mimsa-test
     , req
     , text
     , transformers
-    , vector
-    , vty
   default-language: Haskell2010

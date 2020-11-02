@@ -21,7 +21,6 @@ replParser =
     <|> try treeParser
     <|> try watchParser
     <|> try evalParser
-    <|> try tuiParser
     <|> try versionsParser
     <|> outputJSParser
 
@@ -62,9 +61,6 @@ watchParser :: Parser (ReplAction Annotation)
 watchParser = do
   _ <- thenSpace (string ":watch")
   Watch <$> nameParser
-
-tuiParser :: Parser (ReplAction Annotation)
-tuiParser = Tui <$ string ":tui"
 
 versionsParser :: Parser (ReplAction Annotation)
 versionsParser = do
