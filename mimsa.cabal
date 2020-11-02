@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 571daa2ec4c8cef3b2d10bd94137ad16901a466caac2ef5b89b5366f60dfd107
+-- hash: 4fca52ab49770db96c930386c9e77ad2f5ac7a7cc1ea3caca52a8beabb37e325
 
 name:           mimsa
 version:        0.1.0.0
@@ -96,7 +96,6 @@ library
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.TypeError
       Language.Mimsa.Types.ExprHash
-      Language.Mimsa.Types.ForeignFunc
       Language.Mimsa.Types.Identifiers
       Language.Mimsa.Types.Identifiers.FuncName
       Language.Mimsa.Types.Identifiers.Name
@@ -141,7 +140,6 @@ library
     , modern-uri
     , mtl
     , prettyprinter
-    , random
     , req
     , text
     , transformers
@@ -173,7 +171,6 @@ executable mimsa
     , modern-uri
     , mtl
     , prettyprinter
-    , random
     , req
     , text
     , transformers
@@ -225,7 +222,6 @@ test-suite mimsa-test
     , mtl
     , prettyprinter
     , quickcheck-instances
-    , random
     , req
     , text
     , transformers

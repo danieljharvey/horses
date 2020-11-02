@@ -7,7 +7,6 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Store,
     module Language.Mimsa.Types.MonoType,
     module Language.Mimsa.Types.Scheme,
-    module Language.Mimsa.Types.ForeignFunc,
     module Language.Mimsa.Types.Substitutions,
     module Language.Mimsa.Types.ResolvedDeps,
     module Language.Mimsa.Types.Environment,
@@ -31,7 +30,6 @@ import Language.Mimsa.Types.Bindings
 import Language.Mimsa.Types.Environment
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.ExprHash
-import Language.Mimsa.Types.ForeignFunc
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Project

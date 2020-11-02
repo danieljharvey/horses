@@ -18,7 +18,7 @@ testInterpret ::
   Expr Variable () ->
   Expectation
 testInterpret scope' expr' expected = do
-  result <- interpret scope' mempty expr'
+  let result = interpret scope' mempty expr'
   result `shouldBe` Right expected
 
 testInterpretFail ::
@@ -27,14 +27,14 @@ testInterpretFail ::
   InterpreterError () ->
   Expectation
 testInterpretFail scope' expr' expected = do
-  result <- interpret scope' mempty expr'
+  let result = interpret scope' mempty expr'
   result `shouldBe` Left expected
 
 interpret' ::
   Scope () ->
   Swaps ->
   Expr Variable () ->
-  IO (Either (InterpreterError ()) (Expr Variable ()))
+  Either (InterpreterError ()) (Expr Variable ())
 interpret' = interpret
 
 spec :: Spec
@@ -127,7 +127,7 @@ spec =
                     (MyPair mempty (int 1) (int 2))
                     (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "x")))
                 )
-        result <- interpret' mempty mempty f
+        let result = interpret' mempty mempty f
         result `shouldBe` Right (int 1)
       it "Uses a higher order function twice without screwing the pooch" $ do
         let f =
@@ -162,7 +162,7 @@ spec =
                         (MyLiteral mempty (MyInt 100))
                     )
                 )
-        result <- interpret' mempty mempty f
+        let result = interpret' mempty mempty f
         result `shouldBe` Right (int 1)
       it "Runs the internals of reduce function" $ do
         let reduceFunc =
@@ -180,5 +180,5 @@ spec =
                     (MyLiteral mempty (MyInt 1))
                 )
             scope' = mempty
-        result <- interpret' scope' mempty reduceFunc
+        let result = interpret' scope' mempty reduceFunc
         result `shouldBe` Right (str' "Horse")

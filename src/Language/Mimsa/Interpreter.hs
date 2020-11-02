@@ -5,7 +5,6 @@ where
 
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
-import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.Trans.State.Lazy
 import qualified Data.Map as M
@@ -17,15 +16,14 @@ interpret ::
   Scope ann ->
   Swaps ->
   Expr Variable ann ->
-  IO (Either (InterpreterError ann) (Expr Variable ann))
-interpret scope' swaps expr = fmap fst <$> either'
+  Either (InterpreterError ann) (Expr Variable ann)
+interpret scope' swaps expr = fst <$> either'
   where
     scopeSize = M.size . getScope
     either' =
-      runExceptT $
-        runReaderT
-          ( runStateT
-              (interpretWithScope expr)
-              (scopeSize scope', scope')
-          )
-          swaps
+      runReaderT
+        ( runStateT
+            (interpretWithScope expr)
+            (scopeSize scope', scope')
+        )
+        swaps

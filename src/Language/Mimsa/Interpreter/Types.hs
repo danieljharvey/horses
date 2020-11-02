@@ -10,7 +10,7 @@ import Language.Mimsa.Types
 
 type App ann =
   StateT (Int, Scope ann)
-    (ReaderT Swaps (ExceptT (InterpreterError ann) IO))
+    (ReaderT Swaps (Either (InterpreterError ann)))
 
 readScope :: App ann (Scope ann)
 readScope = gets snd
