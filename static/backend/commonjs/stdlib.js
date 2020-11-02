@@ -1,5 +1,3 @@
-const __app = (tyCon, val) => ({ ...tyCon, vars: [...tyCon.vars, val] });
-
 const __match = (val, matches, catchAll) => {
   const branch = matches[val.type];
   if (!branch) {
@@ -14,7 +12,6 @@ const __match = (val, matches, catchAll) => {
 const __eq = (a,b) => JSON.stringify(a) === JSON.stringify(b)
 
 module.exports = {
-  __app: __app,
   __match: __match,
   __eq: __eq
 }

@@ -132,5 +132,5 @@ outputCommonJS dataTypes =
         renderExport = \be name -> Javascript $ outputExport be name,
         renderStdLib = \be ->
           let filename = stdLibFilename be
-           in Javascript $ "const { __app, __match, __eq } = require(\"./" <> filename <> "\");\n"
+           in Javascript $ "const { __match, __eq } = require(\"./" <> filename <> "\");\n"
       }

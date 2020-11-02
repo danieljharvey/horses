@@ -14,11 +14,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
-  ( (<+>),
-    Doc,
-    Pretty (pretty),
-    vsep,
-  )
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Environment (Environment (getDataTypes))
@@ -143,12 +138,12 @@ renderTypeError (MissingRecordMember _ name members) =
   ]
     <> showSet renderName members
 renderTypeError (MissingRecordTypeMember _ name types) =
-  [ "Cannot find" <+> renderName name <> ".",
-    "The following types are available:"
+  [ "Cannot find" <+> dquotes (renderName name) <> ".",
+    "The following record items are available:"
   ]
     <> showKeys renderName types
 renderTypeError (MissingBuiltIn _ var) =
-  ["Cannot find built-in function" <+> prettyDoc var]
+  ["Cannot find built-in function" <+> dquotes (prettyDoc var)]
 renderTypeError (CannotMatchRecord env _ mt) =
   [ "Cannot match type" <+> prettyDoc mt <+> "to record.",
     "The following are available:",

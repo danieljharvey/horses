@@ -10,7 +10,6 @@ where
 import Data.Bifunctor
 import Data.Foldable (foldl')
 import qualified Data.Map as M
-import Language.Mimsa.Logging
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -105,7 +104,7 @@ constructorToFunctionWithApplication ::
   Expr Name ann
 constructorToFunctionWithApplication dt args tyCon =
   let tyVars = extractTypeConstructor tyCon <$> findDataTypeInProject dt tyCon
-   in debugPretty "cons normal" $ case tyVars of
+   in case tyVars of
         Just [] -> MyConstructor mempty tyCon
         Just as ->
           let numberList = zip [1 ..] as

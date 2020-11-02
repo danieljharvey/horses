@@ -23,7 +23,6 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.NormaliseConstructors
-import Language.Mimsa.Logging
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -163,7 +162,7 @@ outputJS ::
   Expr Name ann ->
   Javascript
 outputJS expr =
-  case debugPretty "Expr for JS" expr of
+  case expr of
     MyLiteral _ a ->
       outputLiteral a
     MyVar _ a -> coerce a
