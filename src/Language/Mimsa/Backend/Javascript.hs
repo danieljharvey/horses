@@ -1,6 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Language.Mimsa.Backend.Javascript
   ( output,
@@ -20,9 +22,11 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.ResolvedTypeDeps
 
 ----
 newtype Javascript = Javascript Text
@@ -50,7 +54,7 @@ outputLiteral (MyInt i) = fromString $ show i
 intercal :: Javascript -> [Javascript] -> Javascript
 intercal sep as = Javascript $ T.intercalate (coerce sep) (coerce as)
 
-outputRecord :: Map Name (Expr Name ann) -> Javascript
+outputRecord :: (Monoid ann) => Map Name (Expr Name ann) -> Javascript
 outputRecord as =
   "{ "
     <> intercal
@@ -63,10 +67,8 @@ outputRecord as =
     outputRecordItem (name, val) =
       Javascript (prettyPrint name) <> ": " <> outputJS val
 
-outputConsApp :: Expr Name ann -> Expr Name ann -> Javascript
-outputConsApp c a = "__app(" <> outputJS c <> ", " <> outputJS a <> ")"
-
 outputCaseMatch ::
+  (Monoid ann) =>
   Expr Name ann ->
   NonEmpty (TyCon, Expr Name ann) ->
   Maybe (Expr Name ann) ->
@@ -81,8 +83,8 @@ outputCaseMatch value matches catchAll =
     catcher =
       maybe "null" outputJS catchAll
 
-output :: Expr Name ann -> Javascript
-output = outputJS
+output :: (Monoid ann) => ResolvedTypeDeps -> Expr Name ann -> Javascript
+output dataTypes = outputJS . normaliseConstructors dataTypes
 
 -- are there any more bindings in this expression?
 containsLet :: Expr Name ann -> Bool
@@ -116,9 +118,16 @@ addReturn expr js = if not $ containsLet expr then "return " <> js else js
 
 -- if a return contains let expresssions, it needs to be wrapped in curly lads
 withCurlyBoys :: Expr Name ann -> Javascript -> Javascript
-withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else js
+withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else withBrackies js
+
+withBrackies :: Javascript -> Javascript
+withBrackies js =
+  if T.take 1 (coerce js) == "{"
+    then "(" <> js <> ")"
+    else js
 
 outputOperator ::
+  (Monoid ann) =>
   Operator ->
   Expr Name ann ->
   Expr Name ann ->
@@ -128,7 +137,30 @@ outputOperator Equals a b =
 outputOperator Add a b = outputJS a <> " + " <> outputJS b
 outputOperator Subtract a b = outputJS a <> " - " <> outputJS b
 
-outputJS :: Expr Name ann -> Javascript
+intercalate :: Javascript -> [Javascript] -> Javascript
+intercalate split as = coerce $ T.intercalate (coerce split) (coerce as)
+
+outputConstructor :: (Monoid ann) => TyCon -> [Expr Name ann] -> Javascript
+outputConstructor tc args =
+  let vars = intercalate "," (outputJS <$> args)
+   in "{ type: \"" <> coerce tc <> "\", vars: [" <> vars <> "] }"
+
+outputConsApp ::
+  (Monoid ann) =>
+  Expr Name ann ->
+  Expr Name ann ->
+  Javascript
+outputConsApp a b =
+  let expr' = MyConsApp mempty a b
+      tyCon = getNestedTyCons expr'
+      args = getConsArgList expr'
+   in outputConstructor tyCon args
+
+outputJS ::
+  forall ann.
+  (Monoid ann) =>
+  Expr Name ann ->
+  Javascript
 outputJS expr =
   case expr of
     MyLiteral _ a ->
@@ -155,6 +187,6 @@ outputJS expr =
     MyPair _ a b -> "[" <> outputJS a <> "," <> outputJS b <> "]"
     MyRecordAccess _ r a -> outputJS r <> "." <> coerce a
     MyData _ _ a -> outputJS a -- don't output types
-    MyConstructor _ a -> "{ type: \"" <> coerce a <> "\", vars: [] }"
+    MyConstructor _ a -> outputConstructor @ann a []
     MyConsApp _ c a -> outputConsApp c a
     MyCaseMatch _ a matches catch -> outputCaseMatch a matches catch
