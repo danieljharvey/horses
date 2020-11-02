@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e6ec0bcfeaad2587bfe51ea217ce219a0c12f66eb0d08ff82bc50f8fd6580fae
+-- hash: a25071f5d4a1e99dadfa8b3b7f5813fe91a572a13409d4723bf6567d62e83a34
 
 name:           mimsa
 version:        0.1.0.0
@@ -84,13 +84,11 @@ library
       Language.Mimsa.Types.AST.Literal
       Language.Mimsa.Types.AST.Operator
       Language.Mimsa.Types.AST.StringType
-      Language.Mimsa.Types.Bindings
       Language.Mimsa.Types.Environment
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.InterpreterError
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.TypeError
-      Language.Mimsa.Types.ExprHash
       Language.Mimsa.Types.Identifiers
       Language.Mimsa.Types.Identifiers.FuncName
       Language.Mimsa.Types.Identifiers.Name
@@ -99,17 +97,20 @@ library
       Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.MonoType
       Language.Mimsa.Types.Project
-      Language.Mimsa.Types.ResolvedDeps
       Language.Mimsa.Types.ResolvedExpression
-      Language.Mimsa.Types.ResolvedTypeDeps
       Language.Mimsa.Types.Scheme
       Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
-      Language.Mimsa.Types.StoreExpression
+      Language.Mimsa.Types.Store.Bindings
+      Language.Mimsa.Types.Store.ExprHash
+      Language.Mimsa.Types.Store.ResolvedDeps
+      Language.Mimsa.Types.Store.ResolvedTypeDeps
+      Language.Mimsa.Types.Store.Store
+      Language.Mimsa.Types.Store.StoreExpression
+      Language.Mimsa.Types.Store.TypeBindings
       Language.Mimsa.Types.SubstitutedExpression
       Language.Mimsa.Types.Substitutions
       Language.Mimsa.Types.Swaps
-      Language.Mimsa.Types.TypeBindings
       Language.Mimsa.Types.TypeConstructor
       Language.Mimsa.Types.UniVar
       Language.Mimsa.Types.Usage

@@ -20,12 +20,8 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Bindings
-import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.ResolvedTypeDeps
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.StoreExpression
 import System.Directory
 
 data Backend

@@ -9,9 +9,8 @@ module Language.Mimsa.Types.Project where
 import qualified Data.Aeson as JSON
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Language.Mimsa.Types.ExprHash (ExprHash)
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
-import Language.Mimsa.Types.Store (Store)
+import Language.Mimsa.Types.Store (ExprHash, Store)
 import Language.Mimsa.Types.VersionedMap (VersionedMap)
 
 ------

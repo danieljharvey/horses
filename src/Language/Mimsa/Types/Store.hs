@@ -1,14 +1,18 @@
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+module Language.Mimsa.Types.Store
+  ( module Language.Mimsa.Types.Store.Store,
+    module Language.Mimsa.Types.Store.ExprHash,
+    module Language.Mimsa.Types.Store.StoreExpression,
+    module Language.Mimsa.Types.Store.Bindings,
+    module Language.Mimsa.Types.Store.TypeBindings,
+    module Language.Mimsa.Types.Store.ResolvedDeps,
+    module Language.Mimsa.Types.Store.ResolvedTypeDeps,
+  )
+where
 
-module Language.Mimsa.Types.Store where
-
-import Data.Map (Map)
-import Language.Mimsa.Types.ExprHash
-import Language.Mimsa.Types.StoreExpression
-
--- store is where we keep the big map of hashes to expresions
-newtype Store ann = Store {getStore :: Map ExprHash (StoreExpression ann)}
-  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
-  deriving (Functor)
+import Language.Mimsa.Types.Store.Bindings
+import Language.Mimsa.Types.Store.ExprHash
+import Language.Mimsa.Types.Store.ResolvedDeps
+import Language.Mimsa.Types.Store.ResolvedTypeDeps
+import Language.Mimsa.Types.Store.Store
+import Language.Mimsa.Types.Store.StoreExpression
+import Language.Mimsa.Types.Store.TypeBindings

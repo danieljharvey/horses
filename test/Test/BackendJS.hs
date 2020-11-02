@@ -20,7 +20,6 @@ import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Repl
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Types
-import Language.Mimsa.Types.ResolvedTypeDeps
 import Test.Data.Project
 import Test.Helpers
 import Test.Hspec
