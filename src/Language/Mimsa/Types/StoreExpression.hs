@@ -13,7 +13,6 @@ import Language.Mimsa.Types.TypeBindings
 
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside
--- not sure whether to store the builtins we need here too?
 data StoreExpression ann
   = StoreExpression
       { storeExpression :: Expr Name ann,

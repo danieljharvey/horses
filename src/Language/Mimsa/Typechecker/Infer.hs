@@ -1,8 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Language.Mimsa.Typechecker.Infer
   ( startInference,
@@ -11,7 +9,6 @@ module Language.Mimsa.Typechecker.Infer
   )
 where
 
-import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.List.NonEmpty (NonEmpty)
@@ -20,7 +17,6 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
-import Language.Mimsa.Library
 import Language.Mimsa.Typechecker.DataTypes
   ( builtInTypes,
     defaultEnv,
@@ -85,14 +81,6 @@ inferLiteral ann (MyInt _) = pure (mempty, MTPrim ann MTInt)
 inferLiteral ann (MyBool _) = pure (mempty, MTPrim ann MTBool)
 inferLiteral ann (MyString _) = pure (mempty, MTPrim ann MTString)
 inferLiteral ann MyUnit = pure (mempty, MTPrim ann MTUnit)
-
-inferBuiltIn ::
-  Annotation ->
-  Variable ->
-  TcMonad (Substitutions, MonoType)
-inferBuiltIn ann name = case getLibraryFunction @Annotation name of
-  Just ff -> instantiate (generalise mempty (getFFType ff))
-  _ -> throwError $ MissingBuiltIn ann name
 
 inferVarFromScope ::
   Environment ->
@@ -443,7 +431,6 @@ infer env inferExpr =
     (MyLiteral ann a) -> inferLiteral ann a
     (MyVar ann name) ->
       inferVarFromScope env ann name
-        <|> inferBuiltIn ann name
     (MyRecord ann map') -> do
       tyRecord <- getUnknown ann
       (s1, tyResult) <- splitRecordTypes <$> traverse (infer env) map'

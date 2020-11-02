@@ -30,7 +30,6 @@ dependencies:
 - bytestring
 - directory # store
 - haskeline # repl
-- random # stdlib
 - fsnotify # watch
 - brick # tui
 - vector # tui

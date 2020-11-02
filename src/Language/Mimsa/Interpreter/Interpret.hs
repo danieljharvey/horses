@@ -13,7 +13,6 @@ import qualified Data.Map as M
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Library
 import Language.Mimsa.Types
 
 -- when we come to do let recursive the name of our binder
@@ -41,18 +40,6 @@ useVar var' = case var' of
     case M.lookup (NamedVar n) (getScope scope') of
       Just expr -> instantiateVar expr
       Nothing -> throwError $ CouldNotFindVar scope' (NamedVar n)
-  (BuiltIn n) ->
-    case getLibraryFunction (BuiltIn n) of
-      Just ff -> unwrapBuiltIn n ff
-      Nothing -> do
-        scope' <- readScope
-        throwError $ CouldNotFindBuiltIn scope' (BuiltIn n)
-  var@(BuiltInActual n ids) ->
-    case getLibraryFunction (BuiltIn n) of
-      Just ff -> runBuiltIn ids ff
-      Nothing -> do
-        scope' <- readScope
-        throwError $ CouldNotFindBuiltIn scope' var
 
 -- make a fresh copy for us to use
 -- is this necessary?
@@ -62,34 +49,6 @@ instantiateVar expr = case expr of
     (freshBinder, freshExpr) <- newLambdaCopy binder expr'
     interpretWithScope (MyLambda ann freshBinder freshExpr)
   other -> interpretWithScope other
-
-runBuiltIn ::
-  (Eq ann, Monoid ann) =>
-  BiIds ->
-  ForeignFunc ann ->
-  App ann (Expr Variable ann)
-runBuiltIn _ (NoArgs _ io) = liftIO io
-runBuiltIn (OneId v1) (OneArg _ io) = do
-  expr1 <- useVar v1
-  liftIO (io expr1)
-runBuiltIn ids _ = throwError $ CouldNotMatchBuiltInId ids
-
-unwrapBuiltIn ::
-  (Eq ann, Monoid ann) =>
-  Name ->
-  ForeignFunc ann ->
-  App ann (Expr Variable ann)
-unwrapBuiltIn name (NoArgs _ _) = do
-  let actual = BuiltInActual name NoId
-  addToScope (Scope $ M.singleton actual (MyVar mempty (BuiltIn name)))
-  pure (MyVar mempty actual)
-unwrapBuiltIn name (OneArg _ _) = do
-  v1 <- nextVariable
-  let actual = BuiltInActual name (OneId v1)
-  addToScope (Scope $ M.singleton actual (MyVar mempty (BuiltIn name))) -- add new name to scope
-  pure
-    ( MyLambda mempty v1 (MyVar mempty actual)
-    )
 
 -- get new var
 newLambdaCopy :: Variable -> Expr Variable ann -> App ann (Variable, Expr Variable ann)

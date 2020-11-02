@@ -170,10 +170,9 @@ doEvaluate ::
 doEvaluate env input expr = do
   (ResolvedExpression type' _ expr' scope' swaps) <-
     liftRepl $ getTypecheckedStoreExpression input env expr
-  simplified <- liftIO $ interpret scope' swaps expr'
-  simplified' <- liftRepl (first InterpreterErr simplified)
+  simplified <- liftRepl (first InterpreterErr (interpret scope' swaps expr'))
   replPrint $
-    prettyPrint simplified'
+    prettyPrint simplified
       <> "\n::\n"
       <> prettyPrint type'
 

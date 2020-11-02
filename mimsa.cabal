@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 341acbe92caaca778f91a941a2aa809301663d75093be3781a811c6a22267990
+-- hash: 4fca52ab49770db96c930386c9e77ad2f5ac7a7cc1ea3caca52a8beabb37e325
 
 name:           mimsa
 version:        0.1.0.0
@@ -37,7 +37,6 @@ library
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
-      Language.Mimsa.Library
       Language.Mimsa.Logging
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers
@@ -97,14 +96,12 @@ library
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.TypeError
       Language.Mimsa.Types.ExprHash
-      Language.Mimsa.Types.ForeignFunc
       Language.Mimsa.Types.Identifiers
       Language.Mimsa.Types.Identifiers.FuncName
       Language.Mimsa.Types.Identifiers.Name
       Language.Mimsa.Types.Identifiers.TyCon
       Language.Mimsa.Types.Identifiers.TypeName
       Language.Mimsa.Types.Identifiers.Variable
-      Language.Mimsa.Types.Library
       Language.Mimsa.Types.MonoType
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.ResolvedDeps
@@ -143,7 +140,6 @@ library
     , modern-uri
     , mtl
     , prettyprinter
-    , random
     , req
     , text
     , transformers
@@ -175,7 +171,6 @@ executable mimsa
     , modern-uri
     , mtl
     , prettyprinter
-    , random
     , req
     , text
     , transformers
@@ -227,7 +222,6 @@ test-suite mimsa-test
     , mtl
     , prettyprinter
     , quickcheck-instances
-    , random
     , req
     , text
     , transformers

@@ -33,7 +33,7 @@ eval env input =
     Left e -> pure (Left $ prettyPrint e)
     Right (ResolvedExpression mt se expr' scope' swaps) -> do
       saveRegressionData (se $> ())
-      endExpr <- interpret scope' swaps expr'
+      let endExpr = interpret scope' swaps expr'
       case toEmptyAnn <$> endExpr of
         Right a -> pure (Right (toEmptyType mt, a))
         Left e -> pure (Left (prettyPrint $ InterpreterErr e))

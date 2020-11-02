@@ -1,6 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
-
 module Language.Mimsa.Store.Substitutor where
 
 import Control.Monad (join)
@@ -8,7 +5,6 @@ import Control.Monad.Trans.State.Lazy
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Language.Mimsa.Library (isLibraryName)
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types
 
@@ -132,17 +128,15 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 
 -- get a new name for a var, changing it's reference in Scope and adding it to
 -- Swaps list
--- we don't do this for built-ins (ie, randomInt) or variables introduced by
+-- we don't do this for variables introduced by
 -- lambdas
 getNextVar ::
-  forall ann.
   (Eq ann, Monoid ann) =>
   [Name] ->
   Name ->
   App ann Variable
 getNextVar protected name
   | name `elem` protected = pure (NamedVar name)
-  | isLibraryName @ann name = pure (BuiltIn name)
   | otherwise = do
     stuff <- findInSwaps name
     case stuff of

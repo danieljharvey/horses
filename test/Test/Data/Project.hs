@@ -56,7 +56,7 @@ incrementInt =
     (Bindings $ M.singleton (mkName "addInt") (ExprHash 18))
 
 addInt :: StoreExpressionA
-addInt = unsafeGetExpr "\\a -> \\b -> addIntPair((a,b))"
+addInt = unsafeGetExpr "\\a -> \\b -> a + b"
 
 eqExpr :: StoreExpressionA
 eqExpr = unsafeGetExpr "\\a -> \\b -> a == b"
