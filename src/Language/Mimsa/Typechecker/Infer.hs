@@ -476,7 +476,7 @@ infer env inferExpr =
     (MyIf _ condition thenCase elseCase) -> do
       (s1, tyCond) <- infer env condition
       (s2, tyThen) <- infer (applySubstCtx s1 env) thenCase
-      (s3, tyElse) <- infer (applySubstCtx (s2 <> s1) env) elseCase
+      (s3, tyElse) <- infer (applySubstCtx s1 env) elseCase
       s4 <- unify tyThen tyElse
       s5 <- unify tyCond (MTPrim (getAnnotation condition) MTBool)
       let subs = s5 <> s4 <> s3 <> s2 <> s1
