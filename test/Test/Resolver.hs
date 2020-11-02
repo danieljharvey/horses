@@ -70,9 +70,6 @@ spec =
               )
           )
           `shouldBe` S.singleton (Name "keep")
-      it "Does not introduce built-ins" $
-        extractVars' (MyVar mempty (Name "randomInt"))
-          `shouldBe` S.empty
     describe "createStoreExpression'" $ do
       it "Creates expressions from literals with empty Project" $ do
         createStoreExpression' mempty mempty (int 1)
@@ -103,15 +100,6 @@ spec =
         createStoreExpression' mempty mempty (MyVar mempty (Name "missing"))
           `shouldBe` Left
             (MissingBinding (mkName "missing") mempty)
-      it "Looks for vars and finds a built-in" $
-        createStoreExpression' mempty mempty (MyVar mempty (Name "randomInt"))
-          `shouldBe` Right
-            ( StoreExpression
-                { storeBindings = mempty,
-                  storeExpression = MyVar mempty (Name "randomInt"),
-                  storeTypeBindings = mempty
-                }
-            )
       it "Looks for vars and finds them" $ do
         let hash = ExprHash 1234
             expr = MyVar mempty (Name "missing")

@@ -24,9 +24,6 @@ unknown = MTVar mempty . NumberedVar
 named :: Text -> Variable
 named = NamedVar . Name
 
-builtIn :: Text -> Variable
-builtIn = BuiltIn . Name
-
 ---
 
 tvBound :: Int -> Variable

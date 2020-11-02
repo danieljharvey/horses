@@ -21,8 +21,6 @@ data InterpreterError ann
   | CannotApplyToNonFunction (Expr Variable ann)
   | CannotFindMemberInRecord (Map Name (Expr Variable ann)) Name
   | PredicateForIfMustBeABoolean (Expr Variable ann)
-  | CouldNotUnwrapBuiltIn Variable
-  | CouldNotMatchBuiltInId BiIds
   | PatternMatchFailure (Expr Variable ann)
   | SelfReferencingBinding Variable
   | AdditionWithNonNumber (Expr Variable ann)
@@ -47,8 +45,6 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
     where
       itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
   prettyPrint (PredicateForIfMustBeABoolean expr) = "Expected a boolean as a predicate. Cannot use: " <> prettyPrint expr
-  prettyPrint (CouldNotUnwrapBuiltIn name) = "Could unwrap built-in " <> prettyPrint name
-  prettyPrint (CouldNotMatchBuiltInId ids) = "Could not match built in ids " <> prettyPrint ids
   prettyPrint (PatternMatchFailure expr') = "Could not pattern match on value " <> prettyPrint expr'
   prettyPrint (SelfReferencingBinding b) = "Could not bind variable " <> prettyPrint b <> " to itself."
   prettyPrint (AdditionWithNonNumber a) = "Addition expected number but got this: " <> prettyPrint a

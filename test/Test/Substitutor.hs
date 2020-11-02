@@ -104,13 +104,6 @@ spec = do
                 (MyVar mempty (named "x"))
             ans = testSubstitute mempty (StoreExpression expr mempty mempty)
         ans `shouldBe` SubstitutedExpression mempty expected mempty
-    describe "Leaves built-ins alone"
-      $ it "Leaves randomInt unchanged"
-      $ do
-        let expr = MyVar mempty (mkName "randomInt")
-            expected = MyVar mempty (BuiltIn (mkName "randomInt"))
-            ans = testSubstitute mempty (StoreExpression expr mempty mempty)
-        ans `shouldBe` SubstitutedExpression mempty expected mempty
     describe "One level of dep"
       $ it "Renames the dep to var0"
       $ do

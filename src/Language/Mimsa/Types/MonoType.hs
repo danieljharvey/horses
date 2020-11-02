@@ -73,6 +73,4 @@ renderMonoType (MTRecord _ as) =
 renderMonoType (MTVar _ a) = case a of
   (NamedVar (Name n)) -> pretty n
   (NumberedVar i) -> pretty i
-  (BuiltIn (Name n)) -> pretty n
-  (BuiltInActual (Name n) _) -> pretty n
 renderMonoType (MTData _ (TyCon n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))

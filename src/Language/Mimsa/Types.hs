@@ -16,7 +16,6 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Swaps,
     module Language.Mimsa.Types.UniVar,
     module Language.Mimsa.Types.Tui,
-    module Language.Mimsa.Types.Library,
     module Language.Mimsa.Types.Bindings,
     module Language.Mimsa.Types.StoreExpression,
     module Language.Mimsa.Types.Project,
@@ -34,7 +33,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.ExprHash
 import Language.Mimsa.Types.ForeignFunc
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Library
 import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedDeps

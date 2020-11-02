@@ -6,7 +6,6 @@ module Test.Interpreter
   )
 where
 
-import Data.Either (isLeft)
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Types
@@ -106,23 +105,6 @@ spec =
       it "if True then 1 else 2" $ do
         let f = MyIf mempty (bool True) (int 1) (int 2)
         testInterpret mempty f (int 1)
-    describe "BuiltIns" $ do
-      it "Can't find stupidMadeUpFunction" $ do
-        let f = MyVar mempty (named "stupidMadeUpFunction")
-        result <- interpret' mempty mempty f
-        result `shouldSatisfy` isLeft
-      it "Finds and uses randomInt" $ do
-        let f = MyVar mempty (builtIn "randomInt")
-            scope' = mempty
-        result <- interpret' scope' mempty f
-        print result
-        result `shouldSatisfy` \(Right (MyLiteral _ (MyInt _))) -> True
-      it "Finds and uses randomIntFrom" $ do
-        let f = MyApp mempty (MyVar mempty (builtIn "randomIntFrom")) (int 10)
-            scope' = mempty
-        result <- interpret' scope' mempty f
-        print result
-        result `shouldSatisfy` (\(Right (MyLiteral _ (MyInt i))) -> i > 9)
       it "Destructures a pair" $ do
         let f =
               MyLet
