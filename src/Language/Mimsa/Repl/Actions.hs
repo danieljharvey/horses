@@ -29,7 +29,6 @@ import Language.Mimsa.Repl.ExpressionBind
 import Language.Mimsa.Repl.ExpressionWatch
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (createDepGraph)
-import Language.Mimsa.Tui (goTui)
 import Language.Mimsa.Types
 
 doReplAction ::
@@ -43,8 +42,6 @@ doReplAction env _ Help = do
 doReplAction env input ListBindings = do
   _ <- runReplM $ doListBindings env input
   pure env
-doReplAction env _ Tui =
-  goTui env
 doReplAction env _ (Versions name) = do
   _ <- runReplM $ doVersions env name
   pure env
@@ -86,7 +83,6 @@ doHelp = do
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":versions <name> - list all versions of a binding"
   T.putStrLn ":watch <name> - put <name> into 'scratch.mimsa' and bind any changes"
-  T.putStrLn ":tui - launch terminal user interface for exploring project"
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
   T.putStrLn ":quit - give up and leave"
 

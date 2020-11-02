@@ -14,7 +14,6 @@ module Language.Mimsa.Types
     module Language.Mimsa.Types.Scope,
     module Language.Mimsa.Types.Swaps,
     module Language.Mimsa.Types.UniVar,
-    module Language.Mimsa.Types.Tui,
     module Language.Mimsa.Types.Bindings,
     module Language.Mimsa.Types.StoreExpression,
     module Language.Mimsa.Types.Project,
@@ -42,7 +41,6 @@ import Language.Mimsa.Types.StoreExpression
 import Language.Mimsa.Types.SubstitutedExpression
 import Language.Mimsa.Types.Substitutions
 import Language.Mimsa.Types.Swaps
-import Language.Mimsa.Types.Tui
 import Language.Mimsa.Types.TypeBindings
 import Language.Mimsa.Types.TypeConstructor
 import Language.Mimsa.Types.UniVar

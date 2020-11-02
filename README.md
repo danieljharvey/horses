@@ -31,7 +31,6 @@ you should then see:
 :tree <expr> - draw a dependency tree for <expr>
 :versions <name> - list all versions of a binding
 :watch <name> - put <name> into 'scratch.mimsa' and bind any changes
-:tui - launch terminal user interface for exploring project
 <expr> - Evaluate <expr>, returning it's simplified form and type
 :quit - give up and leave
 ```
