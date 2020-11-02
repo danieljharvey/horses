@@ -6,7 +6,11 @@ import Control.Monad.Trans.State.Lazy
 import Data.Bifunctor (bimap, first)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Scope
+import Language.Mimsa.Types.Swaps
 
 type App ann =
   StateT (Int, Scope ann)

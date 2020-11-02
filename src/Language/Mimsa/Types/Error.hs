@@ -5,6 +5,7 @@ module Language.Mimsa.Types.Error
     InterpreterError (..),
     ResolverError (..),
     TypeError (..),
+    UsageError (..),
   )
 where
 
@@ -14,7 +15,7 @@ import Language.Mimsa.Typechecker.DisplayError
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Error.ResolverError
 import Language.Mimsa.Types.Error.TypeError
-import Language.Mimsa.Types.Usage
+import Language.Mimsa.Types.Error.UsageError
 
 data Error ann
   = TypeErr Text TypeError -- input, error

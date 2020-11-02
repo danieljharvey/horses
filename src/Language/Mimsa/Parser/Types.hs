@@ -12,8 +12,8 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Data.Void
-import Language.Mimsa.Types (Name)
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers (Name)
 import Text.Megaparsec
 
 type Parser = Parsec Void Text

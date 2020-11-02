@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.TypeConstructor where
+module Language.Mimsa.Types.Typechecker.TypeConstructor where
 
 import qualified Data.Text as T
 import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.Identifiers (TyCon)
-import Language.Mimsa.Types.MonoType (MonoType)
+import Language.Mimsa.Types.Typechecker.MonoType (MonoType)
 
 data TypeConstructor
   = TypeConstructor

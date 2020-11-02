@@ -9,7 +9,9 @@ import Control.Monad.Except
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
 
 patternMatch ::
   (Monoid ann) =>

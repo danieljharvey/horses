@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Actions
   ( evaluateText,
@@ -20,16 +19,21 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Project
-  ( getCurrentBindings,
-    getCurrentTypeBindings,
-  )
 import Language.Mimsa.Store
   ( createStoreExpression,
     substitute,
   )
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Scope
+import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.SubstitutedExpression
+import Language.Mimsa.Types.Swaps
+import Language.Mimsa.Types.Typechecker
 
 ----------
 
@@ -71,34 +75,6 @@ chainExprs expr scope =
     (\(name, expr') a -> MyLet mempty name expr' a)
     expr
     (M.toList . getScope $ scope)
-
-fromItem :: Name -> StoreExpression ann -> ExprHash -> Project ann
-fromItem name expr hash =
-  Project
-    { store = Store $ M.singleton hash expr,
-      bindings = VersionedMap $ M.singleton name (pure hash),
-      serverUrl = mempty,
-      typeBindings = VersionedMap $ M.fromList typeList
-    }
-  where
-    typeConsUsed =
-      extractTypeDecl (storeExpression expr)
-    typeList =
-      (,pure hash) <$> S.toList typeConsUsed
-
-fromType :: StoreExpression ann -> ExprHash -> Project ann
-fromType expr hash =
-  Project
-    { store = Store $ M.singleton hash expr,
-      bindings = mempty,
-      serverUrl = mempty,
-      typeBindings = VersionedMap $ M.fromList typeList
-    }
-  where
-    typeConsUsed =
-      extractTypeDecl (storeExpression expr)
-    typeList =
-      (,pure hash) <$> S.toList typeConsUsed
 
 resolveStoreExpression ::
   Store Annotation ->

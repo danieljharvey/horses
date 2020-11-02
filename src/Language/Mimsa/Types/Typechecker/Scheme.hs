@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Scheme where
+module Language.Mimsa.Types.Typechecker.Scheme where
 
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.MonoType
+import Language.Mimsa.Types.Typechecker.MonoType
 
 data Scheme = Scheme [Variable] MonoType
   deriving (Eq, Ord, Show)

@@ -19,7 +19,11 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Repl
 import Language.Mimsa.Store.ResolvedDeps
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Helpers
 import Test.Hspec

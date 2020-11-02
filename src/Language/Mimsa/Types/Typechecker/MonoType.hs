@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.MonoType
+module Language.Mimsa.Types.Typechecker.MonoType
   ( MonoType,
     Type (..),
     Primitive (..),

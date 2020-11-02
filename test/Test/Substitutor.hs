@@ -9,7 +9,11 @@ where
 
 import qualified Data.Map as M
 import Language.Mimsa.Store.Substitutor (substitute)
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Scope
+import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.SubstitutedExpression
 import Test.Data.Project
 import Test.Helpers
 import Test.Hspec

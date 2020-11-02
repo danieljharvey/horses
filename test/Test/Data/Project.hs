@@ -11,17 +11,10 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser (parseExpr)
-import Language.Mimsa.Types
-  ( Bindings (Bindings),
-    ExprHash (ExprHash),
-    Project (Project),
-    Store (Store),
-    StoreExpression (StoreExpression),
-    VersionedMap (VersionedMap),
-    mkName,
-    mkTyCon,
-  )
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Store
 
 type StoreExpressionA = StoreExpression Annotation
 

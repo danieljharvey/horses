@@ -6,10 +6,10 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Project.Persistence (getCurrentBindings)
 import Language.Mimsa.Store.ResolvedDeps (resolveDeps)
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Usage
 
 findUsages :: Project ann -> ExprHash -> Either UsageError (Set Usage)
 findUsages (Project store' bindings' _ _) =

@@ -6,7 +6,8 @@ where
 import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
 
 -- important - we must not count variables brought in via lambdas, as those
 -- aren't external deps

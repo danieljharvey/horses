@@ -12,7 +12,7 @@ import qualified Data.Text as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DisplayError
-import Language.Mimsa.Types
+import Language.Mimsa.Types.Error
 import Test.Data.Project
 import Test.Hspec
 

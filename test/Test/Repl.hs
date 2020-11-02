@@ -14,7 +14,13 @@ import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Helpers
 import Test.Hspec

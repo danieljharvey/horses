@@ -8,7 +8,11 @@ where
 
 import qualified Data.Map as M
 import Language.Mimsa.Interpreter (interpret)
-import Language.Mimsa.Types
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Scope
+import Language.Mimsa.Types.Swaps
 import Test.Helpers
 import Test.Hspec
 

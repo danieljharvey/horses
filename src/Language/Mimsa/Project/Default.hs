@@ -5,7 +5,7 @@ module Language.Mimsa.Project.Default
   )
 where
 
-import Language.Mimsa.Types
+import Language.Mimsa.Types.Project
 
 servers :: [ServerUrl]
 servers = pure (ServerUrl "https://raw.githubusercontent.com/danieljharvey/mimsa-store/master/")

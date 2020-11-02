@@ -10,8 +10,8 @@ import qualified Data.Map as M
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Types
-import Language.Mimsa.Types (TyCon, TypeName (..))
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers (TyCon, TypeName (..))
 import Text.Megaparsec
 import Text.Megaparsec.Char
 

@@ -8,7 +8,8 @@ where
 import qualified Data.Map as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
-import Language.Mimsa.Types
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 
 spec :: Spec

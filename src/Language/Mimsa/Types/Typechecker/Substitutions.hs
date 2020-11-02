@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Substitutions where
+module Language.Mimsa.Types.Typechecker.Substitutions where
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -8,7 +8,7 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.MonoType
+import Language.Mimsa.Types.Typechecker.MonoType
 
 ---
 

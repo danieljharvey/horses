@@ -11,17 +11,10 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes (extractTypes)
 import Language.Mimsa.Store.ExtractVars (extractVars)
-import Language.Mimsa.Types
-  ( Bindings (Bindings),
-    DataType,
-    Expr (MyData, MyRecord),
-    ExprHash,
-    Name,
-    ResolverError (..),
-    StoreExpression (StoreExpression),
-    TyCon,
-    TypeBindings (TypeBindings),
-  )
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Store
 
 --
 --

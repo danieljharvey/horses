@@ -22,7 +22,8 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Store.Storage
-import Language.Mimsa.Types
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Store
 
 type PersistApp a = ExceptT Text IO a
 

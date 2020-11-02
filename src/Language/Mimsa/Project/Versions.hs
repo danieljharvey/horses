@@ -17,12 +17,10 @@ import Language.Mimsa.Project.Usages
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.MonoType
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Usage
-import Language.Mimsa.Types.VersionedMap
+import Language.Mimsa.Types.Typechecker
 
 -- find which versions of a given binding are in use
 

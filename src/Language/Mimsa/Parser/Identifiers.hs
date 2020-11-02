@@ -13,13 +13,8 @@ import Data.Char as Char
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Types
-import Language.Mimsa.Types
-  ( Name,
-    TyCon,
-    safeMkName,
-    safeMkTyCon,
-  )
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
 import Text.Megaparsec
 
 ----

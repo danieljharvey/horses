@@ -26,8 +26,8 @@ import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Parser.RecordAccess
 import Language.Mimsa.Parser.TypeDecl
 import Language.Mimsa.Parser.Types
-import Language.Mimsa.Types (Name, TyCon)
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers (Name, TyCon)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
