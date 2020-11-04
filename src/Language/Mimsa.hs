@@ -1,6 +1,6 @@
 module Language.Mimsa
-  ( repl,
+  ( cli,
   )
 where
 
-import Language.Mimsa.Repl (repl)
+import Language.Mimsa.CLI (cli)

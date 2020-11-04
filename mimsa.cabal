@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 20f5be257d2c01403cb5b15ecd158d5aa2d90f0cd955dcb545db25042ebf12e1
+-- hash: 89808baec4bb2db07dd62f3f2032491bdc44883c5e050494440f5460492ded2f
 
 name:           mimsa
 version:        0.1.0.0
@@ -32,6 +32,7 @@ library
       Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript
       Language.Mimsa.Backend.NormaliseConstructors
+      Language.Mimsa.CLI
       Language.Mimsa.Interpreter
       Language.Mimsa.Interpreter.Interpret
       Language.Mimsa.Interpreter.PatternMatch
@@ -60,6 +61,7 @@ library
       Language.Mimsa.Repl.Parser
       Language.Mimsa.Repl.Types
       Language.Mimsa.Repl.Watcher
+      Language.Mimsa.Server.Type
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
       Language.Mimsa.Store.ExtractTypes
@@ -87,6 +89,7 @@ library
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.InterpreterError
       Language.Mimsa.Types.Error.ResolverError
+      Language.Mimsa.Types.Error.StoreError
       Language.Mimsa.Types.Error.TypeError
       Language.Mimsa.Types.Error.UsageError
       Language.Mimsa.Types.Identifiers
@@ -135,10 +138,15 @@ library
     , megaparsec
     , modern-uri
     , mtl
+    , optparse-applicative
     , prettyprinter
     , req
+    , servant
+    , servant-server
     , text
     , transformers
+    , wai
+    , warp
   default-language: Haskell2010
 
 executable mimsa
@@ -162,10 +170,15 @@ executable mimsa
     , mimsa
     , modern-uri
     , mtl
+    , optparse-applicative
     , prettyprinter
     , req
+    , servant
+    , servant-server
     , text
     , transformers
+    , wai
+    , warp
   default-language: Haskell2010
 
 test-suite mimsa-test
@@ -208,9 +221,14 @@ test-suite mimsa-test
     , mimsa
     , modern-uri
     , mtl
+    , optparse-applicative
     , prettyprinter
     , quickcheck-instances
     , req
+    , servant
+    , servant-server
     , text
     , transformers
+    , wai
+    , warp
   default-language: Haskell2010

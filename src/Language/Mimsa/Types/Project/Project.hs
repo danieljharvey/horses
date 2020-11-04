@@ -9,6 +9,7 @@ module Language.Mimsa.Types.Project.Project where
 import qualified Data.Aeson as JSON
 import Data.Text (Text)
 import GHC.Generics (Generic)
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
 import Language.Mimsa.Types.Project.VersionedMap (VersionedMap)
 import Language.Mimsa.Types.Store (ExprHash, Store)
@@ -18,6 +19,9 @@ import Language.Mimsa.Types.Store (ExprHash, Store)
 newtype ServerUrl = ServerUrl {getServerUrl :: Text}
   deriving (Eq, Ord, Show)
   deriving newtype (JSON.ToJSON, JSON.FromJSON)
+
+instance Printer ServerUrl where
+  prettyPrint (ServerUrl t) = t
 
 -------
 

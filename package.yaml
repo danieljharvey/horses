@@ -36,6 +36,11 @@ dependencies:
 - prettyprinter # formatting
 - file-embed # js compiling
 - megaparsec # parsing
+- servant # server
+- servant-server # server
+- wai # server
+- warp # server
+- optparse-applicative # cli
 
 library:
   source-dirs: src

@@ -19,11 +19,14 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Network.HTTP.Req
 import System.Directory
 import Text.URI
+
+type StoreM = ExceptT StoreError IO
 
 -- get store folder, creating if it does not exist
 -- the store folder usually lives in ~/.local/share
@@ -54,46 +57,57 @@ getStoreExpressionHash' = getHash . JSON.encode
 validateStoreExpression ::
   StoreExpression () ->
   ExprHash ->
-  Either Text (StoreExpression ())
+  Either StoreError (StoreExpression ())
 validateStoreExpression storeExpr exprHash =
   if getStoreExpressionHash storeExpr == exprHash
     then pure storeExpr
     else
       Left $
-        "Expected hash of "
-          <> prettyPrint exprHash
-          <> " but instead received "
-          <> prettyPrint (getStoreExpressionHash storeExpr)
+        ExpressionDoesNotMatchHash
+          exprHash
+          (getStoreExpressionHash storeExpr)
 
-saveExpr :: StoreExpression ann -> IO ExprHash
+saveExpr :: StoreExpression ann -> StoreM ExprHash
 saveExpr se = saveExpr' (se $> ())
 
 -- take an expression, save it, return ExprHash
-saveExpr' :: StoreExpression () -> IO ExprHash
+saveExpr' :: StoreExpression () -> StoreM ExprHash
 saveExpr' expr = do
-  storePath <- getStoreFolder
+  storePath <- liftIO getStoreFolder
   let json = JSON.encode expr
   let exprHash = getHash json
-  BS.writeFile (filePath storePath exprHash) json
+  liftIO $ BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
-findExpr :: [ServerUrl] -> ExprHash -> ExceptT Text IO (StoreExpression ())
+findExpr ::
+  [ServerUrl] ->
+  ExprHash ->
+  StoreM (StoreExpression ())
 findExpr urls hash = findExprInLocalStore hash <|> tryServers hash urls
 
-tryServers :: ExprHash -> [ServerUrl] -> ExceptT Text IO (StoreExpression ())
-tryServers _ [] = throwError "Could not find expression on any server"
+tryServers ::
+  ExprHash ->
+  [ServerUrl] ->
+  StoreM (StoreExpression ())
+tryServers _ [] = throwError NoRemoteServersToTry
 tryServers hash (url : urls) = findExprFromServer url hash <|> tryServers hash urls
 
-getPath :: ExprHash -> ServerUrl -> ExceptT Text IO (Url Https)
+getPath ::
+  ExprHash ->
+  ServerUrl ->
+  StoreM (Url Https)
 getPath hash serverUrl' = do
   let path = downloadPath serverUrl' hash
   uri <- mkURI path
   case useHttpsURI uri of
     Just (url, _) -> pure url
-    _ -> throwError "oh no"
+    _ -> throwError $ CouldNotConstructRemoteURI hash serverUrl'
 
 -- find in the store
-findExprFromServer :: ServerUrl -> ExprHash -> ExceptT Text IO (StoreExpression ())
+findExprFromServer ::
+  ServerUrl ->
+  ExprHash ->
+  StoreM (StoreExpression ())
 findExprFromServer serverUrl' hash = do
   path <- getPath hash serverUrl'
   body <-
@@ -111,18 +125,18 @@ findExprFromServer serverUrl' hash = do
   let storeExpr = responseBody body
   case validateStoreExpression storeExpr hash of
     Right storeExpr' -> do
-      _ <- liftIO $ saveExpr storeExpr' -- keep it in our local store
+      _ <- saveExpr storeExpr' -- keep it in our local store
       pure storeExpr'
     Left e ->
       throwError e
 
 -- find in the store
-findExprInLocalStore :: ExprHash -> ExceptT Text IO (StoreExpression ())
+findExprInLocalStore :: ExprHash -> StoreM (StoreExpression ())
 findExprInLocalStore hash = do
   storePath <- liftIO getStoreFolder
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
   case (json :: Either IOError BS.ByteString) of
-    Left _ -> throwError $ "Could not read file " <> T.pack (filePath storePath hash)
+    Left _ -> throwError $ CouldNotReadFilePath (filePath storePath hash)
     Right json' ->
       case JSON.decode json' of
         Just storeExpr ->
@@ -132,5 +146,5 @@ findExprInLocalStore hash = do
               pure se
             Left e -> throwError e
         _ -> do
-          liftIO $ T.putStrLn $ "Could not find expression for " <> prettyPrint hash
-          throwError "Could not find!"
+          -- liftIO $ T.putStrLn $ "Could not find expression for " <> prettyPrint hash
+          throwError (CouldNotDecodeJson hash)

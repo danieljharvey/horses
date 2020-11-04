@@ -6,6 +6,7 @@ module Language.Mimsa.Types.Error
     ResolverError (..),
     TypeError (..),
     UsageError (..),
+    StoreError (..),
   )
 where
 
@@ -14,6 +15,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DisplayError
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Error.ResolverError
+import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Error.UsageError
 
@@ -23,6 +25,7 @@ data Error ann
   | InterpreterErr (InterpreterError ann)
   | UsageErr UsageError
   | ParseErr Text
+  | StoreErr StoreError
   | OtherError Text
   deriving (Eq, Ord, Show)
 
@@ -32,4 +35,5 @@ instance (Show ann, Printer ann) => Printer (Error ann) where
   prettyPrint (InterpreterErr a) = "InterpreterError:\n" <> prettyPrint a
   prettyPrint (UsageErr a) = "UsageError:\n" <> prettyPrint a
   prettyPrint (ParseErr a) = "ParseError:\n" <> a
+  prettyPrint (StoreErr a) = "StoreError:\n" <> prettyPrint a
   prettyPrint (OtherError a) = "OtherError:\n" <> a
