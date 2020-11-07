@@ -1,4 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Typechecker.MonoType
@@ -9,9 +11,11 @@ module Language.Mimsa.Types.Typechecker.MonoType
   )
 where
 
+import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
+import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -21,7 +25,7 @@ data Primitive
   | MTString
   | MTBool
   | MTUnit
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
 
 instance Printer Primitive where
   prettyDoc MTUnit = "Unit"
@@ -38,7 +42,7 @@ data Type ann
   | MTPair ann (Type ann) (Type ann) -- (a,b)
   | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
   | MTData ann TyCon [Type ann] -- name, typeVars
-  deriving (Eq, Ord, Show, Functor)
+  deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON)
 
 getAnnotationForType :: Type ann -> ann
 getAnnotationForType (MTPrim ann _) = ann

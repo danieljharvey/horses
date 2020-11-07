@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 89808baec4bb2db07dd62f3f2032491bdc44883c5e050494440f5460492ded2f
+-- hash: 47192e936011760d39d2d5485b63401af06a943ad389d2e843c24a2746577b34
 
 name:           mimsa
 version:        0.1.0.0
@@ -61,6 +61,8 @@ library
       Language.Mimsa.Repl.Parser
       Language.Mimsa.Repl.Types
       Language.Mimsa.Repl.Watcher
+      Language.Mimsa.Server.Project
+      Language.Mimsa.Server.Store
       Language.Mimsa.Server.Type
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
@@ -135,6 +137,7 @@ library
     , fsnotify
     , hashable
     , haskeline
+    , http-types
     , megaparsec
     , modern-uri
     , mtl
@@ -146,6 +149,7 @@ library
     , text
     , transformers
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010
 
@@ -166,6 +170,7 @@ executable mimsa
     , fsnotify
     , hashable
     , haskeline
+    , http-types
     , megaparsec
     , mimsa
     , modern-uri
@@ -178,6 +183,7 @@ executable mimsa
     , text
     , transformers
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010
 
@@ -217,6 +223,7 @@ test-suite mimsa-test
     , hashable
     , haskeline
     , hspec
+    , http-types
     , megaparsec
     , mimsa
     , modern-uri
@@ -230,5 +237,6 @@ test-suite mimsa-test
     , text
     , transformers
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010

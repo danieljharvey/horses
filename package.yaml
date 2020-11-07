@@ -40,6 +40,8 @@ dependencies:
 - servant-server # server
 - wai # server
 - warp # server
+- wai-cors # server
+- http-types # server
 - optparse-applicative # cli
 
 library:

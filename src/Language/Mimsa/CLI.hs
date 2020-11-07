@@ -9,14 +9,14 @@ data CLICommand = Repl | Server
 
 cli :: IO ()
 cli = do
-  command' <- Opt.execParser (Opt.info command Opt.fullDesc) <|> pure Repl
+  command' <- Opt.execParser (Opt.info (command <**> Opt.helper) Opt.fullDesc) <|> pure Repl
   case command' of
     Repl -> repl
     Server -> server
 
 command :: Opt.Parser CLICommand
 command =
-  Opt.subparser
+  Opt.hsubparser
     ( Opt.command
         "repl"
         ( Opt.info
