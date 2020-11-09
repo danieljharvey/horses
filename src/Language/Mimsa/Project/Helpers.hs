@@ -3,6 +3,7 @@
 module Language.Mimsa.Project.Helpers
   ( fromItem,
     fromType,
+    lookupExprHash,
   )
 where
 
@@ -42,3 +43,7 @@ fromType expr hash =
       extractTypeDecl (storeExpression expr)
     typeList =
       (,pure hash) <$> S.toList typeConsUsed
+
+lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
+lookupExprHash project exprHash' =
+  M.lookup exprHash' (getStore . store $ project)

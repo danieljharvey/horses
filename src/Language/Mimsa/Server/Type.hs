@@ -7,8 +7,11 @@ module Language.Mimsa.Server.Type
   )
 where
 
+import Control.Monad.Except
 import Data.Proxy
 import qualified Data.Text.IO as T
+import Language.Mimsa.Printer
+import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Server.Project
 import Language.Mimsa.Server.Store
 import Language.Mimsa.Types.AST
@@ -50,6 +53,9 @@ mimsaApp prj =
 
 server :: IO ()
 server = do
-  let prj = mempty
-  T.putStrLn "Starting server on port 8081..."
-  run 8081 (mimsaApp prj)
+  loadedEnv <- runExceptT loadProject
+  case loadedEnv of
+    Left e -> error (show . prettyPrint $ e)
+    Right prj -> do
+      T.putStrLn "Starting server on port 8081..."
+      run 8081 (mimsaApp prj)

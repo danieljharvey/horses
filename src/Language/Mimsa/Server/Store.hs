@@ -15,6 +15,9 @@ import Language.Mimsa.Store.Storage (findExpr, saveExpr)
 import Language.Mimsa.Types.Store
 import Servant
 
+-- the store API is used to communicate between instances of Mimsa
+-- the data it outputs should be enough for another Repl or Server to use
+
 type StoreAPI =
   "store" :> ("expression" :> Capture "exprHash" ExprHash :> Get '[JSON] (StoreExpression ()))
     :<|> ("expression" :> ReqBody '[JSON] (StoreExpression ()) :> Post '[JSON] ExprHash)
