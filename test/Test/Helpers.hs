@@ -1,8 +1,10 @@
 module Test.Helpers where
 
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 bool :: (Monoid ann) => Bool -> Expr a ann
@@ -33,3 +35,6 @@ tvBound = NumberedVar
 
 tvFree :: Int -> Variable
 tvFree = NumberedVar
+
+exprHash :: Int -> ExprHash
+exprHash = ExprHash . T.pack . show

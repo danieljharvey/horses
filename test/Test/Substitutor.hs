@@ -26,7 +26,7 @@ falseStoreExpr :: Monoid ann => StoreExpression ann
 falseStoreExpr =
   StoreExpression
     (MyVar mempty (mkName "true"))
-    (Bindings $ M.singleton (mkName "true") (ExprHash 1))
+    (Bindings $ M.singleton (mkName "true") (exprHash 1))
     mempty
 
 constExpr :: Monoid ann => StoreExpression ann
@@ -69,11 +69,11 @@ storeWithBothIn :: Store Annotation
 storeWithBothIn =
   Store
     ( M.fromList
-        [ (ExprHash 1, trueStoreExpr),
-          (ExprHash 2, falseStoreExpr),
-          (ExprHash 3, idExpr),
-          (ExprHash 4, constExpr),
-          (ExprHash 5, maybeExpr)
+        [ (exprHash 1, trueStoreExpr),
+          (exprHash 2, falseStoreExpr),
+          (exprHash 3, idExpr),
+          (exprHash 4, constExpr),
+          (exprHash 5, maybeExpr)
         ]
     )
 
@@ -111,7 +111,7 @@ spec = do
     describe "One level of dep"
       $ it "Renames the dep to var0"
       $ do
-        let hash = ExprHash 1
+        let hash = exprHash 1
             expr = MyVar mempty (Name "exciting")
             bindings' = Bindings $ M.singleton (Name "exciting") hash
             storeExpr = StoreExpression expr bindings' mempty
@@ -126,7 +126,7 @@ spec = do
     describe "Only creates one new var if a function is used twice"
       $ it "let id = \\x -> x in { first: id(1), second: id(2) }"
       $ do
-        let hash = ExprHash 3
+        let hash = exprHash 3
             expr =
               MyRecord mempty $
                 M.fromList
@@ -159,7 +159,7 @@ spec = do
   describe "Combine two levels"
     $ it "Combines trueStoreExpr and falseStoreExpr"
     $ do
-      let hash = ExprHash 2
+      let hash = exprHash 2
           expr = MyVar mempty (mkName "true")
           bindings' = Bindings (M.singleton (mkName "true") hash)
           storeExpr = StoreExpression expr bindings' mempty
@@ -179,7 +179,7 @@ spec = do
   describe "Extracts types"
     $ it "Good job"
     $ do
-      let hash = ExprHash 5
+      let hash = exprHash 5
           expr = MyLiteral mempty MyUnit
           storeExpr =
             StoreExpression

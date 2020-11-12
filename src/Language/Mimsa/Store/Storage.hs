@@ -41,7 +41,7 @@ downloadPath :: ServerUrl -> ExprHash -> Text
 downloadPath (ServerUrl url) (ExprHash hash) = url <> T.pack (show hash) <> ".json"
 
 getHash :: BS.ByteString -> ExprHash
-getHash = ExprHash . Hash.hash
+getHash = ExprHash . T.pack . show . Hash.hash
 
 -- the store is where we save all the fucking bullshit
 
