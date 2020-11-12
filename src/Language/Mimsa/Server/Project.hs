@@ -10,16 +10,15 @@ module Language.Mimsa.Server.Project
   )
 where
 
-import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import Data.Text (Text)
-import Data.Text.Lazy (fromStrict)
-import Data.Text.Lazy.Encoding (encodeUtf8)
 import GHC.Generics
 import Language.Mimsa.Actions (evaluateText, resolveStoreExpression)
+import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
+import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -34,13 +33,17 @@ import Servant
 -- exprHashes should be strings to stop JS getting lost
 
 type ProjectAPI =
-  "project" :> (EvaluateAPI :<|> ListBindings :<|> GetExpression)
+  "project"
+    :> ( EvaluateAPI :<|> ListBindings :<|> GetExpression
+           :<|> CreateProject
+       )
 
 projectEndpoints :: Project Annotation -> Server ProjectAPI
 projectEndpoints prj =
-  evaluateExpression prj
+  evaluateExpression
     :<|> listBindings prj
     :<|> getExpression prj
+    :<|> createProject prj
 
 -- /project/evaluate/
 
@@ -48,26 +51,37 @@ type EvaluateAPI =
   "evaluate" :> ReqBody '[JSON] EvaluateRequest
     :> Post '[JSON] EvaluateResponse
 
-newtype EvaluateRequest
-  = EvaluateRequest {code :: Text}
+data EvaluateRequest
+  = EvaluateRequest
+      { erCode :: Text,
+        erProject :: Project Annotation
+      }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON)
 
 data EvaluateResponse
-  = EvaluateResponse {prettyExpr :: Text, prettyType :: Text, prettyHash :: Text}
+  = EvaluateResponse
+      { prettyExpr :: Text,
+        prettyType :: Text,
+        prettyHash :: Text,
+        prettyResult :: Text
+      }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
 
 evaluateExpression ::
-  Project Annotation ->
   EvaluateRequest ->
   Handler EvaluateResponse
-evaluateExpression project body = do
-  case evaluateText project (code body) of
-    Left e -> throwError (to400Error e)
-    Right (ResolvedExpression mt se _ _ _) -> do
-      let prettyExpr' = prettyPrint (storeExpression se)
-          prettyType' = prettyPrint mt
-          prettyHash' = prettyPrint (getStoreExpressionHash se)
-      pure (EvaluateResponse prettyExpr' prettyType' prettyHash')
+evaluateExpression body = do
+  (ResolvedExpression mt se expr' scope' swaps) <-
+    handleEither UserError (evaluateText (erProject body) (erCode body))
+  simpleExpr <-
+    handleEither InternalError (interpret scope' swaps expr')
+  exprHash' <-
+    handleExceptT InternalError (saveExpr se)
+  let prettyExpr' = prettyPrint (storeExpression se)
+      prettyType' = prettyPrint mt
+      prettyHash' = prettyPrint exprHash'
+      prettyResult' = prettyPrint simpleExpr
+  pure (EvaluateResponse prettyExpr' prettyType' prettyHash' prettyResult')
 
 -- /project/bindings/
 
@@ -100,6 +114,8 @@ listBindings project = pure $ BindingsResponse values types
 
 -- /project/expression/
 
+-- TODO: should this be in Store and have nothing to do with projects?
+-- it could findExpr to get everything we need and then typecheck from there
 type GetExpression =
   "expression" :> Capture "exprHash" ExprHash
     :> Get '[JSON] ExpressionResponse
@@ -114,25 +130,45 @@ data ExpressionResponse
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
 
 getExpression :: Project Annotation -> ExprHash -> Handler ExpressionResponse
-getExpression project exprHash' = case lookupExprHash project exprHash' of
-  Nothing -> throwError $ err500 {errBody = "Could not find exprhash!"}
-  Just se -> do
-    case resolveStoreExpression (store project) "" se of
-      Left e -> throwError $ to400Error e
-      Right (ResolvedExpression mt _ _ _ _) -> do
-        let prettyExpr' = prettyPrint (storeExpression se)
-            prettyType' = prettyPrint mt
-            prettyBindings = prettyPrint <$> getBindings (storeBindings se)
-            prettyTypeBindings = prettyPrint <$> getTypeBindings (storeTypeBindings se)
-        pure
-          ( ExpressionResponse
-              prettyExpr'
-              prettyType'
-              prettyBindings
-              prettyTypeBindings
-          )
+getExpression project exprHash' = do
+  se <- handleEither InternalError $
+    case lookupExprHash project exprHash' of
+      Nothing -> Left ("Could not find exprhash!" :: Text)
+      Just a -> Right a
+  (ResolvedExpression mt _ _ _ _) <- handleEither UserError $ resolveStoreExpression (store project) "" se
+  pure
+    ( ExpressionResponse
+        (prettyPrint (storeExpression se))
+        (prettyPrint mt)
+        (prettyPrint <$> getBindings (storeBindings se))
+        (prettyPrint <$> getTypeBindings (storeTypeBindings se))
+    )
 
-to400Error :: (Printer a) => a -> ServerError
-to400Error a = err400 {errBody = buildMsg a}
-  where
-    buildMsg = encodeUtf8 . fromStrict . prettyPrint
+------
+
+type CreateProject =
+  "create"
+    :> Get '[JSON] CreateProjectResponse
+
+data CreateProjectResponse
+  = CreateProjectResponse
+      { cpData :: Project Annotation,
+        cpBindings :: Map Name Text,
+        cpTypeBindings :: Map TyCon Text
+      }
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+
+-- creating a project in this case means copying the default one
+createProject :: Project Annotation -> Handler CreateProjectResponse
+createProject project = do
+  let values =
+        prettyPrint
+          <$> getBindings
+            ( getCurrentBindings
+                (bindings project)
+            )
+      types =
+        prettyPrint
+          <$> getTypeBindings
+            (getCurrentTypeBindings (typeBindings project))
+  pure $ CreateProjectResponse project values types

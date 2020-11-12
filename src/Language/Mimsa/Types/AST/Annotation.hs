@@ -12,7 +12,7 @@ import Language.Mimsa.Printer
 data Annotation
   = None
   | Location Int Int
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON)
 
 instance Semigroup Annotation where
   Location a b <> Location a' b' = Location (min a a') (max b b')

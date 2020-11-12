@@ -34,7 +34,7 @@ data Project ann
         typeBindings :: VersionedTypeBindings,
         serverUrl :: [ServerUrl]
       }
-  deriving (Eq, Ord, Show, Functor)
+  deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON, JSON.FromJSON)
 
 instance Semigroup (Project a) where
   Project a a1 a2 a3 <> Project b b1 b2 b3 =
