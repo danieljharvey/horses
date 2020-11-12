@@ -7,14 +7,14 @@ module Test.Usages
 where
 
 import Language.Mimsa.Project.Usages
-import Language.Mimsa.Types.Store
 import Test.Data.Project
+import Test.Helpers
 import Test.Hspec
 
 spec :: Spec
 spec =
   describe "Usages" $ do
     it "Returns empty when passed nothing" $
-      findUsages mempty (ExprHash 6) `shouldBe` Right mempty
+      findUsages mempty (exprHash 6) `shouldBe` Right mempty
     it "Finds all uses of Compose in Stdlib" $
-      findUsages stdLib (ExprHash 6) `shouldBe` Right mempty
+      findUsages stdLib (exprHash 6) `shouldBe` Right mempty

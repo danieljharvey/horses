@@ -104,7 +104,7 @@ spec =
           `shouldBe` Left
             (MissingBinding (mkName "missing") mempty)
       it "Looks for vars and finds them" $ do
-        let hash = ExprHash 1234
+        let hash = exprHash 1234
             expr = MyVar mempty (Name "missing")
             bindings' = Bindings $ M.singleton (Name "missing") hash
             storeExpr = createStoreExpression' bindings' mempty expr
@@ -146,7 +146,7 @@ spec =
                 (mkTyCon "VoidBox")
                 mempty
                 (M.singleton (mkTyCon "Box") [cons'])
-            hash = ExprHash 123
+            hash = exprHash 123
             tBindings' = TypeBindings $ M.singleton (TyCon "MyUnit") hash
             storeExpr = createTypeStoreExpression' tBindings' dt
             expr = MyData mempty dt (MyRecord mempty mempty)
