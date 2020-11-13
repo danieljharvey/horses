@@ -11,6 +11,7 @@ where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Swagger
 import Data.Text.Prettyprint.Doc
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer (Printer (prettyDoc))
@@ -29,7 +30,7 @@ data DataType
         dtVars :: [Name],
         dtConstructors :: Map TyCon [TypeName]
       }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON, ToSchema)
 
 instance Printer DataType where
   prettyDoc = renderDataType

@@ -7,6 +7,7 @@ module Language.Mimsa.Types.Identifiers.Name where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
+import Data.Swagger
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
@@ -17,6 +18,7 @@ renderName :: Name -> Doc ann
 renderName = pretty . getName
 
 newtype Name = Name {getName' :: Text}
+  deriving (ToSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,

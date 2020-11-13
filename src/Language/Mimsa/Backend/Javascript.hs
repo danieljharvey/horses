@@ -45,7 +45,7 @@ commonJSStandardLibrary =
 ---
 
 outputLiteral :: Literal -> Javascript
-outputLiteral MyUnit = "{}"
+outputLiteral (MyUnit _) = "{}"
 outputLiteral (MyString s) = "\"" <> coerce s <> "\""
 outputLiteral (MyBool True) = "true"
 outputLiteral (MyBool False) = "false"

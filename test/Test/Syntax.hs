@@ -454,7 +454,7 @@ spec = do
     it "Parses a false bool with location information" $
       testParseWithAnn "False" `shouldBe` Right (MyLiteral (Location 0 5) (MyBool False))
     it "Parses a unit with location information" $
-      testParseWithAnn "Unit" `shouldBe` Right (MyLiteral (Location 0 4) MyUnit)
+      testParseWithAnn "Unit" `shouldBe` Right (MyLiteral (Location 0 4) $ MyUnit ())
     it "Parses an integer with location information" $
       testParseWithAnn "100" `shouldBe` Right (MyLiteral (Location 0 3) (MyInt 100))
     it "Parses a string literal with location information" $

@@ -9,6 +9,7 @@ module Language.Mimsa.Types.AST.Literal
 where
 
 import qualified Data.Aeson as JSON
+import Data.Swagger
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
@@ -20,14 +21,15 @@ data Literal
   = MyInt Int
   | MyBool Bool
   | MyString StringType
-  | MyUnit
+  | MyUnit ()
   deriving
     ( Eq,
       Ord,
       Show,
       Generic,
       JSON.FromJSON,
-      JSON.ToJSON
+      JSON.ToJSON,
+      ToSchema
     )
 
 instance Printer Literal where
@@ -38,4 +40,4 @@ renderLiteral (MyInt i) = pretty i
 renderLiteral (MyBool True) = "True"
 renderLiteral (MyBool False) = "False"
 renderLiteral (MyString str) = dquotes $ prettyDoc str
-renderLiteral MyUnit = "Unit"
+renderLiteral (MyUnit _) = "Unit"

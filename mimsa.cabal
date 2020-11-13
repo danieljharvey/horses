@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 31a2847f444b15f71bec273e119c260b53d8299e334d2ccf99b7cc4b0e6e0ae5
+-- hash: 5f76eeedb10e4d57f110e3f06d7907fa239a40c557e1673c623524bc56c4d71e
 
 name:           mimsa
 version:        0.1.0.0
@@ -64,6 +64,7 @@ library
       Language.Mimsa.Server.Helpers
       Language.Mimsa.Server.Project
       Language.Mimsa.Server.Store
+      Language.Mimsa.Server.Swagger
       Language.Mimsa.Server.Type
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
@@ -147,6 +148,8 @@ library
     , req
     , servant
     , servant-server
+    , servant-swagger
+    , swagger2
     , text
     , transformers
     , wai
@@ -181,6 +184,44 @@ executable mimsa
     , req
     , servant
     , servant-server
+    , servant-swagger
+    , swagger2
+    , text
+    , transformers
+    , wai
+    , wai-cors
+    , warp
+  default-language: Haskell2010
+
+executable swagger
+  main-is: Main.hs
+  other-modules:
+      Paths_mimsa
+  hs-source-dirs:
+      swagger
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , directory
+    , file-embed
+    , fsnotify
+    , hashable
+    , haskeline
+    , http-types
+    , megaparsec
+    , mimsa
+    , modern-uri
+    , mtl
+    , optparse-applicative
+    , prettyprinter
+    , req
+    , servant
+    , servant-server
+    , servant-swagger
+    , swagger2
     , text
     , transformers
     , wai
@@ -235,6 +276,8 @@ test-suite mimsa-test
     , req
     , servant
     , servant-server
+    , servant-swagger
+    , swagger2
     , text
     , transformers
     , wai

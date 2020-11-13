@@ -12,6 +12,7 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
+import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Actions (evaluateText, resolveStoreExpression)
@@ -76,7 +77,7 @@ data EvaluateRequest
       { erCode :: Text,
         erProject :: Project Annotation
       }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
 data EvaluateResponse
   = EvaluateResponse
@@ -85,7 +86,7 @@ data EvaluateResponse
         prettyHash :: Text,
         prettyResult :: Text
       }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 evaluateExpression ::
   EvaluateRequest ->
@@ -114,7 +115,7 @@ data BindingsResponse
       { projectBindings :: Map Name Text,
         projectTypeBindings :: Map TyCon Text
       }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 listBindings ::
   Project Annotation ->
@@ -140,7 +141,7 @@ data ExpressionResponse
         exprBindings :: Map Name Text,
         exprTypeBindings :: Map TyCon Text
       }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 getExpression ::
   Project Annotation ->
@@ -172,7 +173,7 @@ data CreateProjectResponse
         cpBindings :: Map Name Text,
         cpTypeBindings :: Map TyCon Text
       }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 -- creating a project in this case means copying the default one
 createProject ::
@@ -198,7 +199,7 @@ data BindExpressionRequest
         beBindingName :: Name,
         beExpression :: Text
       }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
 data BindExpressionResponse
   = BindExpressionResponse
@@ -209,7 +210,7 @@ data BindExpressionResponse
         bePrettyType :: Text,
         bePrettyHash :: Text
       }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 bindExpression ::
   BindExpressionRequest ->

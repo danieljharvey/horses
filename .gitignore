@@ -3,3 +3,5 @@
 store/*.json
 result
 result/
+
+swagger.json
