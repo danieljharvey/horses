@@ -9,6 +9,7 @@ module Language.Mimsa.Types.Project.Project where
 import qualified Data.Aeson as JSON
 import Data.Text (Text)
 import GHC.Generics (Generic)
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
 import Language.Mimsa.Types.Project.VersionedMap (VersionedMap)
 import Language.Mimsa.Types.Store (ExprHash, Store)
@@ -18,6 +19,9 @@ import Language.Mimsa.Types.Store (ExprHash, Store)
 newtype ServerUrl = ServerUrl {getServerUrl :: Text}
   deriving (Eq, Ord, Show)
   deriving newtype (JSON.ToJSON, JSON.FromJSON)
+
+instance Printer ServerUrl where
+  prettyPrint (ServerUrl t) = t
 
 -------
 
@@ -30,7 +34,7 @@ data Project ann
         typeBindings :: VersionedTypeBindings,
         serverUrl :: [ServerUrl]
       }
-  deriving (Eq, Ord, Show, Functor)
+  deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON, JSON.FromJSON)
 
 instance Semigroup (Project a) where
   Project a a1 a2 a3 <> Project b b1 b2 b3 =

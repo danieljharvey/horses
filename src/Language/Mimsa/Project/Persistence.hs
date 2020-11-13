@@ -19,13 +19,12 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Text (Text)
-import qualified Data.Text as T
 import Language.Mimsa.Store.Storage
+import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
-type PersistApp a = ExceptT Text IO a
+type PersistApp a = ExceptT StoreError IO a
 
 hush :: Either IOError a -> Maybe a
 hush (Right a) = pure a
@@ -53,7 +52,7 @@ loadProject' = do
           (projectServers sp)
           (getItemsForAllVersions . projectTypes $ sp)
       pure $ projectFromSaved (store' <> typeStore') sp
-    _ -> throwError $ "Could not decode file at " <> T.pack envPath
+    _ -> throwError $ CouldNotDecodeFile envPath
 
 saveProject :: Project ann -> PersistApp ()
 saveProject p = saveProject' (p $> ())

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 20f5be257d2c01403cb5b15ecd158d5aa2d90f0cd955dcb545db25042ebf12e1
+-- hash: 31a2847f444b15f71bec273e119c260b53d8299e334d2ccf99b7cc4b0e6e0ae5
 
 name:           mimsa
 version:        0.1.0.0
@@ -32,6 +32,7 @@ library
       Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript
       Language.Mimsa.Backend.NormaliseConstructors
+      Language.Mimsa.CLI
       Language.Mimsa.Interpreter
       Language.Mimsa.Interpreter.Interpret
       Language.Mimsa.Interpreter.PatternMatch
@@ -60,6 +61,10 @@ library
       Language.Mimsa.Repl.Parser
       Language.Mimsa.Repl.Types
       Language.Mimsa.Repl.Watcher
+      Language.Mimsa.Server.Helpers
+      Language.Mimsa.Server.Project
+      Language.Mimsa.Server.Store
+      Language.Mimsa.Server.Type
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
       Language.Mimsa.Store.ExtractTypes
@@ -87,6 +92,7 @@ library
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.InterpreterError
       Language.Mimsa.Types.Error.ResolverError
+      Language.Mimsa.Types.Error.StoreError
       Language.Mimsa.Types.Error.TypeError
       Language.Mimsa.Types.Error.UsageError
       Language.Mimsa.Types.Identifiers
@@ -132,13 +138,20 @@ library
     , fsnotify
     , hashable
     , haskeline
+    , http-types
     , megaparsec
     , modern-uri
     , mtl
+    , optparse-applicative
     , prettyprinter
     , req
+    , servant
+    , servant-server
     , text
     , transformers
+    , wai
+    , wai-cors
+    , warp
   default-language: Haskell2010
 
 executable mimsa
@@ -158,14 +171,21 @@ executable mimsa
     , fsnotify
     , hashable
     , haskeline
+    , http-types
     , megaparsec
     , mimsa
     , modern-uri
     , mtl
+    , optparse-applicative
     , prettyprinter
     , req
+    , servant
+    , servant-server
     , text
     , transformers
+    , wai
+    , wai-cors
+    , warp
   default-language: Haskell2010
 
 test-suite mimsa-test
@@ -204,13 +224,20 @@ test-suite mimsa-test
     , hashable
     , haskeline
     , hspec
+    , http-types
     , megaparsec
     , mimsa
     , modern-uri
     , mtl
+    , optparse-applicative
     , prettyprinter
     , quickcheck-instances
     , req
+    , servant
+    , servant-server
     , text
     , transformers
+    , wai
+    , wai-cors
+    , warp
   default-language: Haskell2010

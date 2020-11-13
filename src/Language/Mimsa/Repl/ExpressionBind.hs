@@ -7,13 +7,14 @@ module Language.Mimsa.Repl.ExpressionBind
   )
 where
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Except
 import Data.Text (Text)
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (saveExpr)
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -46,23 +47,21 @@ doBindType env input dt = do
   bindTypeExpression env storeExpr
 
 bindTypeExpression ::
-  (MonadIO m) =>
   Project ann ->
   StoreExpression ann ->
-  m (Project ann)
+  ReplM ann (Project ann)
 bindTypeExpression env storeExpr = do
-  hash <- liftIO (saveExpr storeExpr)
+  hash <- withExceptT StoreErr $ saveExpr storeExpr
   let newEnv = fromType storeExpr hash
   pure (env <> newEnv)
 
 -- save an expression in the store and bind it to name
 bindStoreExpression ::
-  (MonadIO m) =>
   Project Annotation ->
   StoreExpression Annotation ->
   Name ->
-  m (Project Annotation)
+  ReplM Annotation (Project Annotation)
 bindStoreExpression env storeExpr name = do
-  hash <- liftIO (saveExpr storeExpr)
+  hash <- withExceptT StoreErr $ saveExpr storeExpr
   let newEnv = fromItem name storeExpr hash
   pure (env <> newEnv)

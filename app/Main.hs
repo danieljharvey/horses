@@ -3,4 +3,4 @@ module Main where
 import Language.Mimsa
 
 main :: IO ()
-main = repl
+main = cli

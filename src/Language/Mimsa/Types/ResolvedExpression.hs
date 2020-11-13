@@ -1,5 +1,11 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module Language.Mimsa.Types.ResolvedExpression where
 
+import qualified Data.Aeson as JSON
+import GHC.Generics
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
@@ -15,3 +21,4 @@ data ResolvedExpression ann
         reScope :: Scope ann,
         reSwaps :: Swaps
       }
+  deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON)

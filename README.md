@@ -15,7 +15,8 @@ copying example project...
 ```bash
 git clone https://github.com/danieljharvey/mimsa-test
 cd mimsa-test
-mimsa
+# start repl
+mimsa repl  
 ```
 
 you should then see:
