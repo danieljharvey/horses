@@ -4,6 +4,7 @@
 
 module Language.Mimsa.Server.Type
   ( server,
+    MimsaAPI,
   )
 where
 

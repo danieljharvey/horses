@@ -40,7 +40,7 @@ falseParser = string "False" $> MyBool False
 -----
 
 unitParser :: Parser ParserExpr
-unitParser = withLocation MyLiteral (string "Unit" $> MyUnit)
+unitParser = withLocation MyLiteral (string "Unit" $> MyUnit ())
 
 -----
 

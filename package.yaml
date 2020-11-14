@@ -43,6 +43,8 @@ dependencies:
 - wai-cors # server
 - http-types # server
 - optparse-applicative # cli
+- servant-swagger # server
+- swagger2 # server
 
 library:
   source-dirs: src
@@ -51,6 +53,16 @@ executables:
   mimsa:
     main:                Main.hs
     source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - mimsa
+
+  swagger:
+    main:                Main.hs
+    source-dirs:         swagger
     ghc-options:
     - -threaded
     - -rtsopts

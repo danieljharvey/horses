@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Language.Mimsa.Types.AST.Expr
   ( Expr (..),
@@ -16,6 +17,7 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Swagger (ToSchema)
 import Data.Text.Prettyprint.Doc
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
@@ -43,6 +45,8 @@ data Expr var ann
   | MyConsApp ann (Expr var ann) (Expr var ann) -- constructor, value
   | MyCaseMatch ann (Expr var ann) (NonEmpty (TyCon, Expr var ann)) (Maybe (Expr var ann)) -- expr, matches, catchAll
   deriving (Eq, Ord, Show, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
+
+deriving instance (ToSchema var, ToSchema ann) => ToSchema (Expr var ann)
 
 toEmptyAnnotation ::
   (Monoid b) =>

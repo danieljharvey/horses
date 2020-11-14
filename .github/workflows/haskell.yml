@@ -50,3 +50,6 @@ jobs:
 
     - name: Run stack test
       run: stack test
+    
+    - name: Generate swagger json
+      run: stack exec swagger

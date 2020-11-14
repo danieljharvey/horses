@@ -5,6 +5,7 @@
 module Language.Mimsa.Types.Store.StoreExpression where
 
 import qualified Data.Aeson as JSON
+import Data.Swagger
 import GHC.Generics
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -19,4 +20,4 @@ data StoreExpression ann
         storeBindings :: Bindings,
         storeTypeBindings :: TypeBindings
       }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON, Functor)
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON, Functor, ToSchema)

@@ -1,11 +1,15 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Language.Mimsa.Types.Store.ExprHash where
 
 import qualified Data.Aeson as JSON
+import Data.Swagger
 import qualified Data.Text as T
 import Data.Text (Text)
+import GHC.Generics
 import Language.Mimsa.Printer
 import Servant.API
 
@@ -13,7 +17,7 @@ import Servant.API
 -- and JS's limitations in the browser
 -- we JSON encode these as strings
 newtype ExprHash = ExprHash Text
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Generic, ToParamSchema, ToSchema)
   deriving newtype
     ( JSON.FromJSON,
       JSON.FromJSONKey,

@@ -6,6 +6,7 @@ module Language.Mimsa.Types.Store.Store where
 
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
+import Data.Swagger
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Store.StoreExpression
 
@@ -18,6 +19,7 @@ newtype Store ann = Store {getStore :: Map ExprHash (StoreExpression ann)}
       Semigroup,
       Monoid,
       JSON.ToJSON,
-      JSON.FromJSON
+      JSON.FromJSON,
+      ToSchema
     )
   deriving (Functor)

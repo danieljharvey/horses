@@ -7,6 +7,7 @@ module Language.Mimsa.Types.Identifiers.TyCon where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
+import Data.Swagger
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
@@ -14,6 +15,7 @@ import GHC.Generics
 import Language.Mimsa.Printer
 
 newtype TyCon = TyCon Text
+  deriving (ToSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,

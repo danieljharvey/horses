@@ -180,7 +180,7 @@ spec = do
     $ it "Good job"
     $ do
       let hash = exprHash 5
-          expr = MyLiteral mempty MyUnit
+          expr = MyLiteral mempty (MyUnit ())
           storeExpr =
             StoreExpression
               expr
@@ -189,5 +189,5 @@ spec = do
           store' = storeWithBothIn
           ans = testSubstitute store' storeExpr
       seSwaps ans `shouldBe` mempty
-      seExpr ans `shouldBe` MyData mempty maybeDecl (MyLiteral mempty MyUnit)
+      seExpr ans `shouldBe` MyData mempty maybeDecl (MyLiteral mempty (MyUnit ()))
       seScope ans `shouldBe` mempty

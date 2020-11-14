@@ -7,6 +7,7 @@ module Language.Mimsa.Types.Store.Bindings where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Swagger
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
@@ -21,7 +22,8 @@ newtype Bindings = Bindings {getBindings :: Map Name ExprHash}
       Semigroup,
       Monoid,
       JSON.FromJSON,
-      JSON.ToJSON
+      JSON.ToJSON,
+      ToSchema
     )
 
 instance Printer Bindings where
