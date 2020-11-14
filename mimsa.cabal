@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5f76eeedb10e4d57f110e3f06d7907fa239a40c557e1673c623524bc56c4d71e
+-- hash: 1aa1904050fd6fef23f97199c2a5c0a7cd5431195894aec920343e03e8062766
 
 name:           mimsa
 version:        0.1.0.0
@@ -62,9 +62,9 @@ library
       Language.Mimsa.Repl.Types
       Language.Mimsa.Repl.Watcher
       Language.Mimsa.Server.Helpers
+      Language.Mimsa.Server.OpenApi
       Language.Mimsa.Server.Project
       Language.Mimsa.Server.Store
-      Language.Mimsa.Server.Swagger
       Language.Mimsa.Server.Type
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
@@ -143,13 +143,13 @@ library
     , megaparsec
     , modern-uri
     , mtl
+    , openapi3
     , optparse-applicative
     , prettyprinter
     , req
     , servant
+    , servant-openapi3
     , servant-server
-    , servant-swagger
-    , swagger2
     , text
     , transformers
     , wai
@@ -179,13 +179,13 @@ executable mimsa
     , mimsa
     , modern-uri
     , mtl
+    , openapi3
     , optparse-applicative
     , prettyprinter
     , req
     , servant
+    , servant-openapi3
     , servant-server
-    , servant-swagger
-    , swagger2
     , text
     , transformers
     , wai
@@ -215,13 +215,13 @@ executable swagger
     , mimsa
     , modern-uri
     , mtl
+    , openapi3
     , optparse-applicative
     , prettyprinter
     , req
     , servant
+    , servant-openapi3
     , servant-server
-    , servant-swagger
-    , swagger2
     , text
     , transformers
     , wai
@@ -270,14 +270,14 @@ test-suite mimsa-test
     , mimsa
     , modern-uri
     , mtl
+    , openapi3
     , optparse-applicative
     , prettyprinter
     , quickcheck-instances
     , req
     , servant
+    , servant-openapi3
     , servant-server
-    , servant-swagger
-    , swagger2
     , text
     , transformers
     , wai

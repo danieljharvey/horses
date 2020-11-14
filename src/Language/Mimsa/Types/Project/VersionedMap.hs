@@ -9,7 +9,7 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Swagger
+import Data.OpenApi
 
 ------
 -- A versioned Map is a Map whose contents are a unique nonempty list

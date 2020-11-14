@@ -11,7 +11,7 @@ where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Swagger
+import Data.OpenApi
 import Data.Text.Prettyprint.Doc
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer (Printer (prettyDoc))

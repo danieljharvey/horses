@@ -6,7 +6,7 @@ module Language.Mimsa.Types.Store.Store where
 
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
-import Data.Swagger
+import Data.OpenApi
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Store.StoreExpression
 

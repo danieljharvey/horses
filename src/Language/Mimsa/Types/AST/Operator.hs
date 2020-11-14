@@ -8,7 +8,7 @@ module Language.Mimsa.Types.AST.Operator
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 

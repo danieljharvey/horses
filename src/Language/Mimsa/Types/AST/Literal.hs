@@ -9,7 +9,7 @@ module Language.Mimsa.Types.AST.Literal
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer

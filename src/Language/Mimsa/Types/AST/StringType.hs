@@ -8,7 +8,7 @@ module Language.Mimsa.Types.AST.StringType
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc
 import GHC.Generics

@@ -7,7 +7,7 @@
 module Language.Mimsa.Types.Project.Project where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer

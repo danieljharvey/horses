@@ -6,7 +6,7 @@
 module Language.Mimsa.Types.Store.ExprHash where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import qualified Data.Text as T
 import Data.Text (Text)
 import GHC.Generics

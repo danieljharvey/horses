@@ -3,7 +3,35 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: openapi3-3.0.0.1@sha256:205669d14c5b48d2275e0bac41d78c9bfdb925ef9a8e3265662ce51a9e6d8139,4641
+    pantry-tree:
+      size: 2191
+      sha256: 45c999ff60b30b9287e7b075e744c53dc0fc476eaddcc81e5c2d672ef92ec51c
+  original:
+    hackage: openapi3-3.0.0.1@sha256:205669d14c5b48d2275e0bac41d78c9bfdb925ef9a8e3265662ce51a9e6d8139,4641
+- completed:
+    hackage: servant-openapi3-2.0.1.0@sha256:bd234cfef9830823523fe29b091abd0a88f427a6debb7f15ee2730a01a0ebfba,4624
+    pantry-tree:
+      size: 1637
+      sha256: 7e3e1403dc34b851e73c9a1278399a519df5e9af4d0e867efe425d9293c7bc96
+  original:
+    hackage: servant-openapi3-2.0.1.0@sha256:bd234cfef9830823523fe29b091abd0a88f427a6debb7f15ee2730a01a0ebfba,4624
+- completed:
+    hackage: servant-0.18.1@sha256:d322da8a5033203b3da510fdd41c949f61d25b7a2e3ab707035aef5484bbeb13,5273
+    pantry-tree:
+      size: 2594
+      sha256: 59fe629e1b6e92571e1b54a7028c09abfff655077361bedc0689bcaca30c7240
+  original:
+    hackage: servant-0.18.1@sha256:d322da8a5033203b3da510fdd41c949f61d25b7a2e3ab707035aef5484bbeb13,5273
+- completed:
+    hackage: servant-server-0.18.1@sha256:f0824cfa57b23b6b698dbd93e11598c4c5355aaa26121f48c091f6e5f03623fc,5665
+    pantry-tree:
+      size: 2614
+      sha256: afba7a901c86dfe0c65d18470bca144b371cbff13d4fb516247b200fbd62597b
+  original:
+    hackage: servant-server-0.18.1
 snapshots:
 - completed:
     size: 532172
