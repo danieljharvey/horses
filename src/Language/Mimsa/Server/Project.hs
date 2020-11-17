@@ -109,7 +109,7 @@ evaluateExpression body = do
 type ListBindings =
   "bindings"
     :> ReqBody '[JSON] ListBindingsRequest
-    :> Get '[JSON] ListBindingsResponse
+    :> Post '[JSON] ListBindingsResponse
 
 newtype ListBindingsRequest
   = ListBindingsRequest
@@ -138,7 +138,7 @@ listBindings (ListBindingsRequest project) =
 -- it could findExpr to get everything we need and then typecheck from there
 type GetExpression =
   "expression" :> ReqBody '[JSON] GetExpressionRequest
-    :> Get '[JSON] GetExpressionResponse
+    :> Post '[JSON] GetExpressionResponse
 
 data GetExpressionRequest
   = GetExpressionRequest
@@ -215,12 +215,14 @@ data BindExpressionRequest
 
 data BindExpressionResponse
   = BindExpressionResponse
-      { beData :: Project Annotation,
-        beBindings :: Map Name Text,
-        beTypeBindings :: Map TyCon Text,
-        bePrettyExpr :: Text,
-        bePrettyType :: Text,
-        bePrettyHash :: Text
+      { beProjectData :: Project Annotation,
+        beProjectBindings :: Map Name Text,
+        beProjectTypeBindings :: Map TyCon Text,
+        beExprValue :: Text,
+        beExprType :: Text,
+        beExprHash :: Text,
+        beExprBindings :: Map Name Text,
+        beExprTypeBindings :: Map TyCon Text
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
@@ -240,3 +242,5 @@ bindExpression (BindExpressionRequest project name' input) = do
       (prettyPrint (storeExpression se))
       (prettyPrint mt)
       (prettyPrint hash)
+      (prettyPrint <$> getBindings (storeBindings se))
+      (prettyPrint <$> getTypeBindings (storeTypeBindings se))
