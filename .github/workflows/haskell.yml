@@ -36,14 +36,16 @@ jobs:
         restore-keys: |
              ${{ runner.os }}-stack-work-${{ matrix.plan.ghc }}
 
-    - name: Install hlint
-      run: stack install hlint
+    - name: 'Set up HLint'
+      uses: rwe/actions-hlint-setup@v1
+      with:
+        version: '3.1.6'
 
-    - name: Add Hlint to PATH
-      run: echo "::add-path::/home/runner/.local/bin"
-
-    - name: Hlint files
-      run: hlint .
+    - name: 'Run HLint'
+      uses: rwe/actions-hlint-run@v2
+      with:
+        path: src/
+        fail-on: warning
 
     - name: Run stack build
       run: stack build
