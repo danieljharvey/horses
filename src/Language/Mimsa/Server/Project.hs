@@ -61,8 +61,8 @@ projectEndpoints ::
   Server ProjectAPI
 projectEndpoints prj =
   evaluateExpression
-    :<|> listBindings prj
-    :<|> getExpression prj
+    :<|> listBindings
+    :<|> getExpression
     :<|> createProject prj
     :<|> bindExpression
 
@@ -108,21 +108,27 @@ evaluateExpression body = do
 
 type ListBindings =
   "bindings"
-    :> Get '[JSON] BindingsResponse
+    :> ReqBody '[JSON] ListBindingsRequest
+    :> Post '[JSON] ListBindingsResponse
 
-data BindingsResponse
-  = BindingsResponse
+newtype ListBindingsRequest
+  = ListBindingsRequest
+      {lbProject :: Project Annotation}
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
+
+data ListBindingsResponse
+  = ListBindingsResponse
       { projectBindings :: Map Name Text,
         projectTypeBindings :: Map TyCon Text
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 listBindings ::
-  Project Annotation ->
-  Handler BindingsResponse
-listBindings project =
+  ListBindingsRequest ->
+  Handler ListBindingsResponse
+listBindings (ListBindingsRequest project) =
   pure $
-    BindingsResponse
+    ListBindingsResponse
       (outputBindings project)
       (outputTypeBindings project)
 
@@ -131,11 +137,18 @@ listBindings project =
 -- TODO: should this be in Store and have nothing to do with projects?
 -- it could findExpr to get everything we need and then typecheck from there
 type GetExpression =
-  "expression" :> Capture "exprHash" ExprHash
-    :> Get '[JSON] ExpressionResponse
+  "expression" :> ReqBody '[JSON] GetExpressionRequest
+    :> Post '[JSON] GetExpressionResponse
 
-data ExpressionResponse
-  = ExpressionResponse
+data GetExpressionRequest
+  = GetExpressionRequest
+      { geProject :: Project Annotation,
+        geExprHash :: ExprHash
+      }
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
+
+data GetExpressionResponse
+  = GetExpressionResponse
       { exprValue :: Text,
         exprType :: Text,
         exprBindings :: Map Name Text,
@@ -144,17 +157,16 @@ data ExpressionResponse
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 getExpression ::
-  Project Annotation ->
-  ExprHash ->
-  Handler ExpressionResponse
-getExpression project exprHash' = do
+  GetExpressionRequest ->
+  Handler GetExpressionResponse
+getExpression (GetExpressionRequest project exprHash') = do
   se <- handleEither InternalError $
     case lookupExprHash project exprHash' of
       Nothing -> Left ("Could not find exprhash!" :: Text)
       Just a -> Right a
   (ResolvedExpression mt _ _ _ _) <- handleEither UserError $ resolveStoreExpression (store project) "" se
   pure
-    ( ExpressionResponse
+    ( GetExpressionResponse
         (prettyPrint (storeExpression se))
         (prettyPrint mt)
         (prettyPrint <$> getBindings (storeBindings se))
@@ -203,12 +215,14 @@ data BindExpressionRequest
 
 data BindExpressionResponse
   = BindExpressionResponse
-      { beData :: Project Annotation,
-        beBindings :: Map Name Text,
-        beTypeBindings :: Map TyCon Text,
-        bePrettyExpr :: Text,
-        bePrettyType :: Text,
-        bePrettyHash :: Text
+      { beProjectData :: Project Annotation,
+        beProjectBindings :: Map Name Text,
+        beProjectTypeBindings :: Map TyCon Text,
+        beExprValue :: Text,
+        beExprType :: Text,
+        beExprHash :: Text,
+        beExprBindings :: Map Name Text,
+        beExprTypeBindings :: Map TyCon Text
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
@@ -228,3 +242,5 @@ bindExpression (BindExpressionRequest project name' input) = do
       (prettyPrint (storeExpression se))
       (prettyPrint mt)
       (prettyPrint hash)
+      (prettyPrint <$> getBindings (storeBindings se))
+      (prettyPrint <$> getTypeBindings (storeTypeBindings se))

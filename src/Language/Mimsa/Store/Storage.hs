@@ -38,10 +38,10 @@ getStoreFolder = do
   pure (path <> "/")
 
 filePath :: FilePath -> ExprHash -> String
-filePath storePath (ExprHash hash) = storePath <> show hash <> ".json"
+filePath storePath hash = storePath <> show hash <> ".json"
 
 downloadPath :: ServerUrl -> ExprHash -> Text
-downloadPath (ServerUrl url) (ExprHash hash) = url <> T.pack (show hash) <> ".json"
+downloadPath (ServerUrl url) (ExprHash hash) = url <> hash <> ".json"
 
 getHash :: BS.ByteString -> ExprHash
 getHash = ExprHash . T.pack . show . Hash.hash
