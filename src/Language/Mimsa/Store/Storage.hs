@@ -5,6 +5,8 @@ module Language.Mimsa.Store.Storage
   ( saveExpr,
     findExpr,
     getStoreExpressionHash,
+    getStoreFolder,
+    trySymlink,
   )
 where
 
@@ -31,11 +33,23 @@ type StoreM = ExceptT StoreError IO
 -- get store folder, creating if it does not exist
 -- the store folder usually lives in ~/.local/share
 -- see https://hackage.haskell.org/package/directory-1.3.6.1/docs/System-Directory.html#t:XdgDirectory
-getStoreFolder :: IO FilePath
-getStoreFolder = do
-  path <- getXdgDirectory XdgData "mimsa"
+getStoreFolder :: String -> IO FilePath
+getStoreFolder subFolder = do
+  path <- getXdgDirectory XdgData ("mimsa/" <> subFolder)
   createDirectoryIfMissing True path
   pure (path <> "/")
+
+-- when transpiling we write to the store then symlink it in place
+-- this tries that, and failing that, copies the file (for Windows etc)
+trySymlink :: String -> String -> StoreM ()
+trySymlink from to = do
+  symLinkCreated <- liftIO $ try (createFileLink from to)
+  case (symLinkCreated :: Either IOError ()) of
+    Right _ -> pure ()
+    Left _ -> liftIO $ copyFile from to
+
+getExpressionFolder :: IO FilePath
+getExpressionFolder = getStoreFolder "expressions"
 
 filePath :: FilePath -> ExprHash -> String
 filePath storePath hash = storePath <> show hash <> ".json"
@@ -73,7 +87,7 @@ saveExpr se = saveExpr' (se $> ())
 -- take an expression, save it, return ExprHash
 saveExpr' :: StoreExpression () -> StoreM ExprHash
 saveExpr' expr = do
-  storePath <- liftIO getStoreFolder
+  storePath <- liftIO getExpressionFolder
   let json = JSON.encode expr
   let exprHash = getHash json
   liftIO $ BS.writeFile (filePath storePath exprHash) json
@@ -133,7 +147,7 @@ findExprFromServer serverUrl' hash = do
 -- find in the store
 findExprInLocalStore :: ExprHash -> StoreM (StoreExpression ())
 findExprInLocalStore hash = do
-  storePath <- liftIO getStoreFolder
+  storePath <- liftIO getExpressionFolder
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
   case (json :: Either IOError BS.ByteString) of
     Left _ -> throwError $ CouldNotReadFilePath (filePath storePath hash)
