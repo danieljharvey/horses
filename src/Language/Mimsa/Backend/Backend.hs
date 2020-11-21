@@ -7,6 +7,7 @@ module Language.Mimsa.Backend.Backend
   )
 where
 
+import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
@@ -18,7 +19,7 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.ResolvedDeps
-import Language.Mimsa.Store.Storage (getStoreExpressionHash)
+import Language.Mimsa.Store.Storage (getStoreExpressionHash, getStoreFolder, trySymlink)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
@@ -37,17 +38,28 @@ data Renderer ann a
 
 ------
 
-createOutputFolder :: IO FilePath
-createOutputFolder = do
-  let path = "./output"
+-- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
+createOutputFolder :: Backend -> ExprHash -> IO FilePath
+createOutputFolder CommonJS exprHash = do
+  let path = "./output/cjs" <> show exprHash
   createDirectoryIfMissing True path
   pure (path <> "/")
 
-transpileStoreExpression :: (Monoid ann) => Backend -> Store ann -> StoreExpression ann -> IO FilePath
+-- all files are created in the store and then symlinked into output folders
+-- this creates the folder in the store
+createStoreOutputPath :: Backend -> IO FilePath
+createStoreOutputPath CommonJS = getStoreFolder "transpiled/common-js"
+
+transpileStoreExpression ::
+  (Monoid ann) =>
+  Backend ->
+  Store ann ->
+  StoreExpression ann ->
+  IO FilePath
 transpileStoreExpression be store' se = do
-  _ <- createOutputFolder
+  outputFolderPath <- createStoreOutputPath be
   let filename = outputFilename be (getStoreExpressionHash se)
-  let path = "./output/" <> filename
+  let path = T.pack outputFolderPath <> filename
   exists <-
     doesFileExist
       (T.unpack path)
@@ -63,16 +75,24 @@ transpileStoreExpression be store' se = do
   pure
     (T.unpack path)
 
-createIndexFile :: Backend -> ExprHash -> IO ()
-createIndexFile CommonJS hash' = do
-  let file = "const main = require('./" <> outputFilename CommonJS hash' <> "').main;\nconsole.log(main)"
-      path = "./output/index.js"
+createIndexFile :: Backend -> ExprHash -> IO Text
+createIndexFile CommonJS rootExprHash = do
+  outputPath <- createOutputFolder CommonJS rootExprHash
+  let file = "const main = require('./" <> outputFilename CommonJS rootExprHash <> "').main;\nconsole.log(main)"
+      path = outputPath <> "index.js"
   T.writeFile path file
+  pure (T.pack path)
 
-writeStdLib :: Backend -> IO ()
-writeStdLib CommonJS = do
-  let path = "./output/" <> stdLibFilename CommonJS
-  T.writeFile (T.unpack path) (coerce commonJSStandardLibrary)
+-- we write the stdlib to the store and then symlink it
+writeStdLib :: Backend -> ExprHash -> IO ()
+writeStdLib CommonJS rootExprHash = do
+  storePath <- createStoreOutputPath CommonJS
+  outputPath <- createOutputFolder CommonJS rootExprHash
+  let fromPath = T.pack storePath <> stdLibFilename CommonJS
+  T.writeFile (T.unpack fromPath) (coerce commonJSStandardLibrary)
+  let toPath = T.pack outputPath <> stdLibFilename CommonJS
+  _ <- runExceptT $ trySymlink (T.unpack fromPath) (T.unpack toPath)
+  pure ()
 
 -- recursively get all the StoreExpressions we need to output
 getOutputList :: (Ord ann) => Store ann -> StoreExpression ann -> Set (StoreExpression ann)
@@ -80,14 +100,39 @@ getOutputList store' se = case recursiveResolve store' se of
   Right as -> S.fromList as
   Left _ -> mempty
 
-goCompile :: (Ord ann, Monoid ann) => Backend -> Store ann -> StoreExpression ann -> IO ()
+-- this recreates the folders which i dislike, however, yolo
+symlinkOutput :: Set (StoreExpression ann) -> Backend -> ExprHash -> IO ()
+symlinkOutput list CommonJS rootExprHash =
+  do
+    storePath <- createStoreOutputPath CommonJS
+    outputPath <- createOutputFolder CommonJS rootExprHash
+    let doLink se = do
+          let filename = outputFilename CommonJS (getStoreExpressionHash se)
+              fromPath = storePath <> T.unpack filename
+              toPath = outputPath <> T.unpack filename
+          runExceptT $ trySymlink fromPath toPath
+    traverse_ doLink list
+
+goCompile ::
+  (Ord ann, Monoid ann) =>
+  Backend ->
+  Store ann ->
+  StoreExpression ann ->
+  IO Text
 goCompile be store' se = do
   let list = getOutputList store' se
+  let rootExprHash = getStoreExpressionHash se
+  -- create output files in store if they don't exist
   traverse_ (transpileStoreExpression be store') list
   _ <- transpileStoreExpression be store' se
-  createIndexFile be (getStoreExpressionHash se)
-  writeStdLib be
-  pure ()
+  -- create index file in output folder
+  outputPath <- createIndexFile be rootExprHash
+  -- write stdlib file in output folder
+  writeStdLib be rootExprHash
+  -- symlink all the files
+  symlinkOutput (list <> S.singleton se) be rootExprHash
+  -- return path of main filename
+  pure outputPath
 
 ----
 

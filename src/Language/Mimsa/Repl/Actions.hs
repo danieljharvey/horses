@@ -187,5 +187,5 @@ doOutputJS ::
 doOutputJS env input expr = do
   (ResolvedExpression _ storeExpr' _ _ _) <-
     liftRepl $ getTypecheckedStoreExpression input env expr
-  liftIO $ goCompile CommonJS (store env) storeExpr'
-  replPrint ("Output to output/index.js" :: Text)
+  outputPath <- liftIO $ goCompile CommonJS (store env) storeExpr'
+  replPrint ("Output to " <> outputPath)
