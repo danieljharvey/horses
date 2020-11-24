@@ -1,13 +1,16 @@
-FROM nixos/nix
-
-RUN echo "trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" >> /etc/nix/nix.conf
-RUN echo "substituters = https://hydra.iohk.io" >> /etc/nix/nix.conf
-
-RUN cat /etc/nix/nix.conf
-
-COPY . /
-RUN nix-build
-
-RUN cd result/bin && ls
-
-CMD ["result/bin/mimsa","server"]
+FROM fpco/stack-build:lts-16.22 as build
+RUN mkdir /opt/build
+COPY . /opt/build
+RUN cd /opt/build && stack build --system-ghc
+FROM ubuntu:16.04
+RUN mkdir -p /opt/myapp
+ARG BINARY_PATH
+WORKDIR /opt/myapp
+RUN apt-get update && apt-get install -y \
+  ca-certificates \
+  libgmp-dev
+# NOTICE THIS LINE
+COPY --from=build /opt/build/.stack-work/install/x86_64-linux/lts-16.22/8.8.4/bin .
+COPY static /opt/myapp
+COPY config /opt/myapp/config
+CMD ["/opt/myapp/mimsa", "server"]
