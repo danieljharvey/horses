@@ -5,8 +5,9 @@ RUN echo "substituters = https://hydra.iohk.io" >> /etc/nix/nix.conf
 
 RUN cat /etc/nix/nix.conf
 
-
 COPY . /
 RUN nix-build
 
-CMD ["/result/bin/mimsa","server"]
+RUN cd result/bin && ls
+
+CMD ["result/bin/mimsa","server"]
