@@ -11,6 +11,6 @@ RUN apt-get update && apt-get install -y \
   libgmp-dev
 # NOTICE THIS LINE
 COPY --from=build /opt/build/.stack-work/install/x86_64-linux/lts-16.22/8.8.4/bin .
-COPY static /opt/myapp
-COPY config /opt/myapp/config
+# COPY static /opt/myapp
+# COPY config /opt/myapp/config
 CMD ["/opt/myapp/mimsa", "server"]
