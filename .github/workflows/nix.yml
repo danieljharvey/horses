@@ -1,0 +1,17 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Cache install Nix packages
+      uses: nix-actions/cache-install@v1.0.6
+      with:
+        key: nix-${{ hashFiles('docker/default.nix') }}
+        nix_file: 'docker/default.nix'

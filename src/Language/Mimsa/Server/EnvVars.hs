@@ -12,7 +12,7 @@ import System.Envy
 
 newtype MimsaConfig
   = MimsaConfig
-      { mimsaPort :: Int -- "MIMSA_PORT"
+      { port :: Int -- "PORT"
       }
   deriving (Generic, Show)
 

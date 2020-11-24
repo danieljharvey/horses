@@ -63,6 +63,6 @@ server = do
       case loadedEnv of
         Left e -> error (show . prettyPrint $ e)
         Right prj -> do
-          let port = mimsaPort cfg
-          T.putStrLn $ "Starting server on port " <> prettyPrint port <> "..."
-          run port (mimsaApp prj)
+          let port' = port cfg
+          T.putStrLn $ "Starting server on port " <> prettyPrint port' <> "..."
+          run port' (mimsaApp prj)
