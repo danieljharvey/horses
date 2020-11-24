@@ -45,6 +45,7 @@ dependencies:
 - optparse-applicative # cli
 - servant-swagger # server
 - swagger2 # server
+- envy # server
 
 library:
   source-dirs: src

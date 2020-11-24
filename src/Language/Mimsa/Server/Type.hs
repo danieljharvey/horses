@@ -13,6 +13,7 @@ import Data.Proxy
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Persistence
+import Language.Mimsa.Server.EnvVars (MimsaConfig (..), getMimsaEnv)
 import Language.Mimsa.Server.Project
 import Language.Mimsa.Server.Store
 import Language.Mimsa.Types.AST
@@ -54,9 +55,14 @@ mimsaApp prj =
 
 server :: IO ()
 server = do
-  loadedEnv <- runExceptT loadProject
-  case loadedEnv of
-    Left e -> error (show . prettyPrint $ e)
-    Right prj -> do
-      T.putStrLn "Starting server on port 8081..."
-      run 8081 (mimsaApp prj)
+  mimsaConfig <- runExceptT getMimsaEnv
+  case mimsaConfig of
+    Left e -> error e
+    Right cfg -> do
+      loadedEnv <- runExceptT loadProject
+      case loadedEnv of
+        Left e -> error (show . prettyPrint $ e)
+        Right prj -> do
+          let port = mimsaPort cfg
+          T.putStrLn $ "Starting server on port " <> prettyPrint port <> "..."
+          run port (mimsaApp prj)
