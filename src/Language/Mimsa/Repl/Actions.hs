@@ -26,7 +26,6 @@ import Language.Mimsa.Project
   )
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Repl.ExpressionBind
-import Language.Mimsa.Repl.ExpressionWatch
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (createDepGraph)
 import Language.Mimsa.Types.AST
@@ -50,11 +49,6 @@ doReplAction env input ListBindings = do
 doReplAction env _ (Versions name) = do
   _ <- runReplM $ doVersions env name
   pure env
-doReplAction env _ (Watch name) = do
-  newEnv' <- runReplM $ doWatch env name
-  case newEnv' of
-    Just env' -> pure env'
-    _ -> pure env
 doReplAction env input (Evaluate expr) = do
   _ <- runReplM $ doEvaluate env input expr
   pure env
@@ -87,7 +81,6 @@ doHelp = do
   T.putStrLn ":outputJS <expr> - show JS code for <expr>"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":versions <name> - list all versions of a binding"
-  T.putStrLn ":watch <name> - put <name> into 'scratch.mimsa' and bind any changes"
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
   T.putStrLn ":quit - give up and leave"
 
