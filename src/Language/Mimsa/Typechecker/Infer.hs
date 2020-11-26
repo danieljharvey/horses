@@ -387,21 +387,23 @@ inferOperator env ann Equals a b = do
     _ -> do
       s3 <- unify tyA tyB -- Equals wants them to be the same
       pure (s3 <> s2 <> s1, MTPrim ann MTBool)
-inferOperator env ann Add a b = inferNumericInfix env ann a b
-inferOperator env ann Subtract a b = inferNumericInfix env ann a b
+inferOperator env ann Add a b = inferInfix env MTInt ann a b
+inferOperator env ann Subtract a b = inferInfix env MTInt ann a b
+inferOperator env ann StringConcat a b = inferInfix env MTString ann a b
 
-inferNumericInfix ::
+inferInfix ::
   Environment ->
+  Primitive ->
   Annotation ->
   Expr Variable Annotation ->
   Expr Variable Annotation ->
   TcMonad (Substitutions, MonoType)
-inferNumericInfix env ann a b = do
+inferInfix env prim ann a b = do
   (s1, tyA) <- infer env a
   (s2, tyB) <- infer env b
-  s3 <- unify tyB (MTPrim mempty MTInt)
-  s4 <- unify tyA (MTPrim mempty MTInt)
-  pure (s4 <> s3 <> s2 <> s1, MTPrim ann MTInt)
+  s3 <- unify tyB (MTPrim mempty prim)
+  s4 <- unify tyA (MTPrim mempty prim)
+  pure (s4 <> s3 <> s2 <> s1, MTPrim ann prim)
 
 inferRecordAccess ::
   Environment ->
