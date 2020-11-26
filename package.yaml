@@ -30,7 +30,6 @@ dependencies:
 - bytestring
 - directory # store
 - haskeline # repl
-- fsnotify # watch
 - req # store fetching
 - modern-uri # store fetching
 - prettyprinter # formatting

@@ -31,7 +31,6 @@ you should then see:
 :outputJS <expr> - show JS code for <expr>
 :tree <expr> - draw a dependency tree for <expr>
 :versions <name> - list all versions of a binding
-:watch <name> - put <name> into 'scratch.mimsa' and bind any changes
 <expr> - Evaluate <expr>, returning it's simplified form and type
 :quit - give up and leave
 ```

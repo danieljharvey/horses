@@ -19,7 +19,6 @@ replParser =
     <|> try bindTypeParser
     <|> try listBindingsParser
     <|> try treeParser
-    <|> try watchParser
     <|> try evalParser
     <|> try versionsParser
     <|> outputJSParser
@@ -56,11 +55,6 @@ bindTypeParser = do
 
 listBindingsParser :: Parser (ReplAction Annotation)
 listBindingsParser = ListBindings <$ string ":list"
-
-watchParser :: Parser (ReplAction Annotation)
-watchParser = do
-  _ <- thenSpace (string ":watch")
-  Watch <$> nameParser
 
 versionsParser :: Parser (ReplAction Annotation)
 versionsParser = do

@@ -37,4 +37,3 @@ data ReplAction ann
   | BindType DataType
   | Versions Name
   | ListBindings
-  | Watch Name

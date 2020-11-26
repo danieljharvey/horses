@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0dc5f0266841fa79d2e81393a3fdfa9477cdec056b3625afe63878242c49d03b
+-- hash: 16e27cba338dc789e213c00fbdfe4cac7848f37710c5bc9b50985af3b0800435
 
 name:           mimsa
 version:        0.1.0.0
@@ -57,10 +57,8 @@ library
       Language.Mimsa.Repl
       Language.Mimsa.Repl.Actions
       Language.Mimsa.Repl.ExpressionBind
-      Language.Mimsa.Repl.ExpressionWatch
       Language.Mimsa.Repl.Parser
       Language.Mimsa.Repl.Types
-      Language.Mimsa.Repl.Watcher
       Language.Mimsa.Server.EnvVars
       Language.Mimsa.Server.Helpers
       Language.Mimsa.Server.Project
@@ -138,7 +136,6 @@ library
     , directory
     , envy
     , file-embed
-    , fsnotify
     , hashable
     , haskeline
     , http-types
@@ -174,7 +171,6 @@ executable mimsa
     , directory
     , envy
     , file-embed
-    , fsnotify
     , hashable
     , haskeline
     , http-types
@@ -211,7 +207,6 @@ executable swagger
     , directory
     , envy
     , file-embed
-    , fsnotify
     , hashable
     , haskeline
     , http-types
@@ -265,7 +260,6 @@ test-suite mimsa-test
     , directory
     , envy
     , file-embed
-    , fsnotify
     , generic-arbitrary
     , hashable
     , haskeline
