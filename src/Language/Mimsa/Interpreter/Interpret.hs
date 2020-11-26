@@ -92,6 +92,14 @@ interpretOperator operator a b = do
       case (,) <$> getNum plainA <*> getNum plainB of
         Right (a', b') -> withInt (a' - b')
         Left e -> throwError e
+    StringConcat -> do
+      let withStr = pure . MyLiteral mempty . MyString . StringType
+      let getStr exp' = case exp' of
+            (MyLiteral _ (MyString (StringType i))) -> Right i
+            _ -> Left $ ConcatentationWithNonString a
+      case (,) <$> getStr plainA <*> getStr plainB of
+        Right (a', b') -> withStr (a' <> b')
+        Left e -> throwError e
 
 interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 interpretWithScope interpretExpr =

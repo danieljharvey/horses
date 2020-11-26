@@ -136,6 +136,7 @@ outputOperator Equals a b =
   "__eq(" <> outputJS a <> ", " <> outputJS b <> ")"
 outputOperator Add a b = outputJS a <> " + " <> outputJS b
 outputOperator Subtract a b = outputJS a <> " - " <> outputJS b
+outputOperator StringConcat a b = outputJS a <> " + " <> outputJS b
 
 intercalate :: Javascript -> [Javascript] -> Javascript
 intercalate split as = coerce $ T.intercalate (coerce split) (coerce as)

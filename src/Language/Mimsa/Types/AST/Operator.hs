@@ -14,7 +14,7 @@ import Language.Mimsa.Printer
 
 -------
 
-data Operator = Equals | Add | Subtract
+data Operator = Equals | Add | Subtract | StringConcat
   deriving
     ( Eq,
       Ord,
@@ -29,3 +29,4 @@ instance Printer Operator where
   prettyDoc Equals = "=="
   prettyDoc Add = "+"
   prettyDoc Subtract = "-"
+  prettyDoc StringConcat = "<>"

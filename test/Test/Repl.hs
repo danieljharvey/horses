@@ -449,6 +449,12 @@ spec =
       it "True - 1" $ do
         result <- eval stdLib "True - 1"
         result `shouldSatisfy` isLeft
+      it "\"dog\" <> \"log\"" $ do
+        result <- eval stdLib "\"dog\" <> \"log\""
+        result `shouldBe` Right (MTPrim mempty MTString, str' "doglog")
+      it "\"dog\" <> 123" $ do
+        result <- eval stdLib "\"dog\" <> 123"
+        result `shouldSatisfy` isLeft
       it "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})" $ do
         result <- eval stdLib "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)

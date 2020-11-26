@@ -65,6 +65,25 @@ Unit :: Unit
 "horse" :: String
 ```
 
+infix operators
+
+```haskell
+:> 1 == 1
+True :: Boolean
+
+:> 1 == 2
+False :: Boolean
+
+:> 1 + 1
+2 :: Int
+
+:> 100 - 1
+99 :: Int
+
+:> "dog" <> "log"
+"doglog" :: String
+```
+
 if statements:
 
 ```haskell

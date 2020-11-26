@@ -25,6 +25,7 @@ data InterpreterError ann
   | SelfReferencingBinding Variable
   | AdditionWithNonNumber (Expr Variable ann)
   | SubtractionWithNonNumber (Expr Variable ann)
+  | ConcatentationWithNonString (Expr Variable ann)
   deriving (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError a) where
@@ -49,4 +50,5 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
   prettyPrint (SelfReferencingBinding b) = "Could not bind variable " <> prettyPrint b <> " to itself."
   prettyPrint (AdditionWithNonNumber a) = "Addition expected number but got this: " <> prettyPrint a
   prettyPrint (SubtractionWithNonNumber a) = "Subtraction expected number but got this: " <> prettyPrint a
+  prettyPrint (ConcatentationWithNonString a) = "Concatenation expected string but got this: " <> prettyPrint a
   prettyPrint UnknownInterpreterError = "Unknown interpreter error"
