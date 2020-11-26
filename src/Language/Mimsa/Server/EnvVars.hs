@@ -23,4 +23,4 @@ getMimsaEnv =
     $ runEnv
     $ gFromEnvCustom
       defOption
-      (Just (MimsaConfig 6000))
+      (Just (MimsaConfig 8999))
