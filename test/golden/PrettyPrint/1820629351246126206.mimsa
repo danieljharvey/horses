@@ -1,2 +1,0 @@
-let good = {dog: True};
-good.dog

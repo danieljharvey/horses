@@ -1,4 +1,0 @@
-type LeBool 
-  = Faux
-  | Vrai;
-Vrai

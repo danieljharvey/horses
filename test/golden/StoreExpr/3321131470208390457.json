@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyData","contents":[[],{"dtConstructors":{"Just":[{"tag":"VarName","contents":"a"}],"Nothing":[]},"dtName":"Maybe","dtVars":["a"]},{"tag":"MyConstructor","contents":[[],"Nothing"]}]},"storeBindings":{},"storeTypeBindings":{}}

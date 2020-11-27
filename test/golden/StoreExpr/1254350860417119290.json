@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyApp","contents":[[],{"tag":"MyApp","contents":[[],{"tag":"MyVar","contents":[[],"addInt"]},{"tag":"MyLiteral","contents":[[],{"tag":"MyInt","contents":1}]}]},{"tag":"MyLiteral","contents":[[],{"tag":"MyInt","contents":2}]}]},"storeBindings":{"addInt":"18"},"storeTypeBindings":{}}
