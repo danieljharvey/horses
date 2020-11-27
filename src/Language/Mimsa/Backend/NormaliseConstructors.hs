@@ -7,12 +7,12 @@ module Language.Mimsa.Backend.NormaliseConstructors
   )
 where
 
-import Data.Bifunctor
 import Data.Foldable (foldl')
 import qualified Data.Map as M
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+    ( TyCon, Name, mkName, TypeName(VarName) )
 import Language.Mimsa.Types.Store.ResolvedTypeDeps
 
 -- turns Constructors into functions
@@ -24,55 +24,12 @@ normaliseConstructors ::
 normaliseConstructors dt (MyConstructor _ tyCon) =
   constructorToFunctionWithApplication dt [] tyCon
 normaliseConstructors dt (MyConsApp _ a val) =
-  let normalVal = normaliseConstructors dt val
+  let restOfExpr = mapExpr (normaliseConstructors dt) val
    in constructorToFunctionWithApplication
         dt
-        (getConsArgList (MyConsApp mempty a normalVal))
+        (getConsArgList (MyConsApp mempty a restOfExpr))
         (getNestedTyCons a)
-normaliseConstructors _ (MyLiteral a b) = MyLiteral a b
-normaliseConstructors _ (MyVar a b) = MyVar a b
-normaliseConstructors dt (MyLet ann binder bindExpr inExpr) =
-  MyLet
-    ann
-    binder
-    (normaliseConstructors dt bindExpr)
-    (normaliseConstructors dt inExpr)
-normaliseConstructors dt (MyLetPair ann binderA binderB bindExpr inExpr) =
-  MyLetPair
-    ann
-    binderA
-    binderB
-    (normaliseConstructors dt bindExpr)
-    (normaliseConstructors dt inExpr)
-normaliseConstructors dt (MyInfix ann op a b) =
-  MyInfix ann op (normaliseConstructors dt a) (normaliseConstructors dt b)
-normaliseConstructors dt (MyLambda ann binder expr) =
-  MyLambda ann binder (normaliseConstructors dt expr)
-normaliseConstructors dt (MyApp ann f a) =
-  MyApp ann (normaliseConstructors dt f) (normaliseConstructors dt a)
-normaliseConstructors dt (MyIf ann predExpr thenExpr elseExpr) =
-  MyIf
-    ann
-    (normaliseConstructors dt predExpr)
-    (normaliseConstructors dt thenExpr)
-    (normaliseConstructors dt elseExpr)
-normaliseConstructors dt (MyPair ann a b) =
-  MyPair
-    ann
-    (normaliseConstructors dt a)
-    (normaliseConstructors dt b)
-normaliseConstructors dt (MyRecord ann items) =
-  MyRecord ann (normaliseConstructors dt <$> items)
-normaliseConstructors dt (MyRecordAccess ann recordExpr name) =
-  MyRecordAccess ann (normaliseConstructors dt recordExpr) name
-normaliseConstructors dt (MyData ann dt' a) =
-  MyData ann dt' (normaliseConstructors dt a)
-normaliseConstructors dt (MyCaseMatch ann matchExpr matches catchAll) =
-  MyCaseMatch
-    ann
-    (normaliseConstructors dt matchExpr)
-    ((fmap . second) (normaliseConstructors dt) matches)
-    (normaliseConstructors dt <$> catchAll)
+normaliseConstructors dt expr' = mapExpr (normaliseConstructors dt) expr'
 
 getNestedTyCons :: Expr Name ann -> TyCon
 getNestedTyCons (MyConsApp _ a _) = getNestedTyCons a
