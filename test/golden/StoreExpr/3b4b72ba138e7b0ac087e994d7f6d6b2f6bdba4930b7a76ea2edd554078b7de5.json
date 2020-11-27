@@ -1,0 +1,1 @@
+{"storeExpression":{"tag":"MyInfix","contents":[[],"StringConcat",{"tag":"MyLiteral","contents":[[],{"tag":"MyString","contents":"dog"}]},{"tag":"MyLiteral","contents":[[],{"tag":"MyString","contents":"log"}]}]},"storeBindings":{},"storeTypeBindings":{}}

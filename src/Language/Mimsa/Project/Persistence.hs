@@ -3,22 +3,24 @@
 module Language.Mimsa.Project.Persistence
   ( loadProject,
     saveProject,
+    saveProjectInStore,
     getCurrentBindings,
     getCurrentTypeBindings,
   )
 where
 
 -- functions for Projects as opposed to the larger Store
+
 import Control.Exception
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
-import qualified Data.ByteString.Lazy as BS
-import Data.Coerce
+import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
@@ -26,9 +28,23 @@ import Language.Mimsa.Types.Store
 
 type PersistApp a = ExceptT StoreError IO a
 
+storePath :: String
+storePath = "./"
+
+envPath :: String
+envPath = storePath <> "environment.json"
+
 hush :: Either IOError a -> Maybe a
 hush (Right a) = pure a
 hush _ = Nothing
+
+getProjectFolder :: IO FilePath
+getProjectFolder = getStoreFolder "projects"
+
+getProjectPath :: ProjectHash -> IO FilePath
+getProjectPath hash' = do
+  folder <- getProjectFolder
+  pure (folder <> show hash' <> ".json")
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
@@ -40,39 +56,49 @@ loadProject = do
 loadProject' ::
   PersistApp (Project ())
 loadProject' = do
-  project' <- liftIO $ try $ BS.readFile envPath
+  project' <- liftIO $ try $ LBS.readFile envPath
   case hush project' >>= JSON.decode of
     Just sp -> do
       store' <-
         recursiveLoadBoundExpressions
-          (projectServers sp)
           (getItemsForAllVersions . projectBindings $ sp)
       typeStore' <-
         recursiveLoadBoundExpressions
-          (projectServers sp)
           (getItemsForAllVersions . projectTypes $ sp)
       pure $ projectFromSaved (store' <> typeStore') sp
     _ -> throwError $ CouldNotDecodeFile envPath
 
-saveProject :: Project ann -> PersistApp ()
+-- save project in local folder
+saveProject :: Project ann -> PersistApp ProjectHash
 saveProject p = saveProject' (p $> ())
 
-saveProject' :: Project () -> PersistApp ()
+saveProject' :: Project () -> PersistApp ProjectHash
 saveProject' env = do
-  let jsonStr = JSON.encode (projectToSaved env)
-  liftIO $ BS.writeFile envPath jsonStr
+  let (jsonStr, _) = contentAndHash (projectToSaved env)
+  liftIO $ LBS.writeFile envPath jsonStr
+  saveProjectInStore' env
+
+-- save project in store
+saveProjectInStore :: Project ann -> PersistApp ProjectHash
+saveProjectInStore p = saveProjectInStore' (p $> ())
+
+saveProjectInStore' :: Project () -> PersistApp ProjectHash
+saveProjectInStore' env = do
+  let (jsonStr, hash) = contentAndHash (projectToSaved env)
+  path <- liftIO $ getProjectPath hash
+  liftIO $ LBS.writeFile path jsonStr
+  pure hash
 
 --
 
 loadBoundExpressions ::
-  [ServerUrl] ->
   Set ExprHash ->
   PersistApp (Store ())
-loadBoundExpressions urls hashes = do
+loadBoundExpressions hashes = do
   items' <-
     traverse
       ( \hash -> do
-          item <- findExpr urls hash
+          item <- findExpr hash
           pure (hash, item)
       )
       (S.toList hashes)
@@ -80,11 +106,10 @@ loadBoundExpressions urls hashes = do
     (Store (M.fromList items'))
 
 recursiveLoadBoundExpressions ::
-  [ServerUrl] ->
   Set ExprHash ->
   PersistApp (Store ())
-recursiveLoadBoundExpressions urls hashes = do
-  store' <- loadBoundExpressions urls hashes
+recursiveLoadBoundExpressions hashes = do
+  store' <- loadBoundExpressions hashes
   let newHashes =
         S.difference
           ( S.unions $
@@ -94,28 +119,6 @@ recursiveLoadBoundExpressions urls hashes = do
   if S.null newHashes
     then pure store'
     else do
-      moreStore <- recursiveLoadBoundExpressions urls newHashes
+      moreStore <- recursiveLoadBoundExpressions newHashes
       pure (store' <> moreStore)
-
 --
-storePath :: String
-storePath = "./"
-
-envPath :: String
-envPath = storePath <> "environment.json"
-
-getCurrentBindings :: VersionedBindings -> Bindings
-getCurrentBindings versioned =
-  Bindings (NE.last <$> getVersionedMap versioned)
-
-getCurrentTypeBindings :: VersionedTypeBindings -> TypeBindings
-getCurrentTypeBindings versioned =
-  TypeBindings (NE.last <$> getVersionedMap versioned)
-
-getItemsForAllVersions :: (Ord a) => VersionedMap k a -> Set a
-getItemsForAllVersions versioned =
-  mconcat $ M.elems (S.fromList . NE.toList <$> coerce versioned)
-
-getDependencyHashes :: StoreExpression ann -> Set ExprHash
-getDependencyHashes =
-  S.fromList . M.elems . getBindings . storeBindings

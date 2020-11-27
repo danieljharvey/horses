@@ -72,7 +72,7 @@ stdLib :: Project Annotation
 stdLib = (stdLib' $> ()) $> mempty
 
 stdLib' :: Project Annotation
-stdLib' = Project store' bindings' typeBindings' mempty
+stdLib' = Project store' bindings' typeBindings'
   where
     store' =
       Store $

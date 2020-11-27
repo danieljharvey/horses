@@ -26,12 +26,11 @@ dependencies:
 - mtl
 - aeson
 - text
-- hashable
+- cryptonite # hashing
+- memory # hashing
 - bytestring
 - directory # store
 - haskeline # repl
-- req # store fetching
-- modern-uri # store fetching
 - prettyprinter # formatting
 - file-embed # js compiling
 - megaparsec # parsing

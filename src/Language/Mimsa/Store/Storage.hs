@@ -10,23 +10,19 @@ module Language.Mimsa.Store.Storage
   )
 where
 
-import Control.Applicative
 import Control.Exception
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
+import Data.Coerce
 import Data.Functor
-import qualified Data.Hashable as Hash
-import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Error.StoreError
-import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Project.ProjectHash
 import Language.Mimsa.Types.Store
-import Network.HTTP.Req
 import System.Directory
-import Text.URI
 
 type StoreM = ExceptT StoreError IO
 
@@ -54,19 +50,13 @@ getExpressionFolder = getStoreFolder "expressions"
 filePath :: FilePath -> ExprHash -> String
 filePath storePath hash = storePath <> show hash <> ".json"
 
-downloadPath :: ServerUrl -> ExprHash -> Text
-downloadPath (ServerUrl url) (ExprHash hash) = url <> hash <> ".json"
-
-getHash :: BS.ByteString -> ExprHash
-getHash = ExprHash . T.pack . show . Hash.hash
-
 -- the store is where we save all the fucking bullshit
 
 getStoreExpressionHash :: StoreExpression ann -> ExprHash
 getStoreExpressionHash se = getStoreExpressionHash' (se $> ())
 
 getStoreExpressionHash' :: StoreExpression () -> ExprHash
-getStoreExpressionHash' = getHash . JSON.encode
+getStoreExpressionHash' = coerce . snd . contentAndHash
 
 validateStoreExpression ::
   StoreExpression () ->
@@ -88,61 +78,14 @@ saveExpr se = saveExpr' (se $> ())
 saveExpr' :: StoreExpression () -> StoreM ExprHash
 saveExpr' expr = do
   storePath <- liftIO getExpressionFolder
-  let json = JSON.encode expr
-  let exprHash = getHash json
+  let (json, exprHash) = coerce $ contentAndHash expr
   liftIO $ BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
 findExpr ::
-  [ServerUrl] ->
   ExprHash ->
   StoreM (StoreExpression ())
-findExpr urls hash = findExprInLocalStore hash <|> tryServers hash urls
-
-tryServers ::
-  ExprHash ->
-  [ServerUrl] ->
-  StoreM (StoreExpression ())
-tryServers _ [] = throwError NoRemoteServersToTry
-tryServers hash (url : urls) = findExprFromServer url hash <|> tryServers hash urls
-
-getPath ::
-  ExprHash ->
-  ServerUrl ->
-  StoreM (Url Https)
-getPath hash serverUrl' = do
-  let path = downloadPath serverUrl' hash
-  uri <- mkURI path
-  case useHttpsURI uri of
-    Just (url, _) -> pure url
-    _ -> throwError $ CouldNotConstructRemoteURI hash serverUrl'
-
--- find in the store
-findExprFromServer ::
-  ServerUrl ->
-  ExprHash ->
-  StoreM (StoreExpression ())
-findExprFromServer serverUrl' hash = do
-  path <- getPath hash serverUrl'
-  body <-
-    runReq defaultHttpConfig $
-      req
-        GET -- method
-        path -- safe by construction URL
-        NoReqBody
-        jsonResponse -- specify how to interpret response
-        mempty -- query params, headers, explicit port number, etc.
-  liftIO $ T.putStrLn $
-    "Downloading expression for " <> prettyPrint hash
-      <> " from "
-      <> getServerUrl serverUrl'
-  let storeExpr = responseBody body
-  case validateStoreExpression storeExpr hash of
-    Right storeExpr' -> do
-      _ <- saveExpr storeExpr' -- keep it in our local store
-      pure storeExpr'
-    Left e ->
-      throwError e
+findExpr = findExprInLocalStore
 
 -- find in the store
 findExprInLocalStore :: ExprHash -> StoreM (StoreExpression ())
@@ -159,6 +102,5 @@ findExprInLocalStore hash = do
               liftIO $ T.putStrLn $ "Found expression for " <> prettyPrint hash
               pure se
             Left e -> throwError e
-        _ -> do
-          -- liftIO $ T.putStrLn $ "Could not find expression for " <> prettyPrint hash
+        _ ->
           throwError (CouldNotDecodeJson hash)

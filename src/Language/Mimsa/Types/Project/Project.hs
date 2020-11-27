@@ -2,29 +2,14 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Language.Mimsa.Types.Project.Project where
 
 import qualified Data.Aeson as JSON
 import Data.Swagger
-import Data.Text (Text)
 import GHC.Generics (Generic)
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers (Name, TyCon)
-import Language.Mimsa.Types.Project.VersionedMap (VersionedMap)
-import Language.Mimsa.Types.Store (ExprHash, Store)
-
-------
-
-newtype ServerUrl = ServerUrl {getServerUrl :: Text}
-  deriving (Eq, Ord, Show)
-  deriving newtype (JSON.ToJSON, JSON.FromJSON, ToSchema)
-
-instance Printer ServerUrl where
-  prettyPrint (ServerUrl t) = t
-
--------
+import Language.Mimsa.Types.Project.Versioned
+import Language.Mimsa.Types.Store (Store)
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces
@@ -32,51 +17,23 @@ data Project ann
   = Project
       { store :: Store ann,
         bindings :: VersionedBindings,
-        typeBindings :: VersionedTypeBindings,
-        serverUrl :: [ServerUrl]
+        typeBindings :: VersionedTypeBindings
       }
-  deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving
+    ( Eq,
+      Ord,
+      Show,
+      Functor,
+      Generic,
+      JSON.ToJSON,
+      JSON.FromJSON,
+      ToSchema
+    )
 
 instance Semigroup (Project a) where
-  Project a a1 a2 a3 <> Project b b1 b2 b3 =
-    Project (a <> b) (a1 <> b1) (a2 <> b2) (a3 <> b3)
+  Project a a1 a2 <> Project b b1 b2 =
+    Project (a <> b) (a1 <> b1) (a2 <> b2)
 
 instance Monoid (Project a) where
-  mempty = Project mempty mempty mempty mempty
-
+  mempty = Project mempty mempty mempty
 -------------
-
-type VersionedBindings = VersionedMap Name ExprHash
-
-type VersionedTypeBindings = VersionedMap TyCon ExprHash
-
---------
-
-data SaveProject
-  = SaveProject
-      { projectVersion :: Int,
-        projectBindings :: VersionedBindings,
-        projectTypes :: VersionedTypeBindings,
-        projectServers :: [ServerUrl]
-      }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
-
------
-
-projectFromSaved :: Store a -> SaveProject -> Project a
-projectFromSaved store' sp =
-  Project
-    { store = store',
-      bindings = projectBindings sp,
-      typeBindings = projectTypes sp,
-      serverUrl = projectServers sp
-    }
-
-projectToSaved :: Project a -> SaveProject
-projectToSaved proj =
-  SaveProject
-    { projectVersion = 1,
-      projectServers = serverUrl proj,
-      projectBindings = bindings proj,
-      projectTypes = typeBindings proj
-    }

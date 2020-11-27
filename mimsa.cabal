@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 16e27cba338dc789e213c00fbdfe4cac7848f37710c5bc9b50985af3b0800435
+-- hash: a6ec2b9058d93ed1935be0f877afa91586922af33dd1d28d28a407cb377937e2
 
 name:           mimsa
 version:        0.1.0.0
@@ -69,6 +69,7 @@ library
       Language.Mimsa.Store.DepGraph
       Language.Mimsa.Store.ExtractTypes
       Language.Mimsa.Store.ExtractVars
+      Language.Mimsa.Store.Hashing
       Language.Mimsa.Store.ResolvedDeps
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
@@ -103,7 +104,10 @@ library
       Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project
+      Language.Mimsa.Types.Project.ProjectHash
+      Language.Mimsa.Types.Project.SaveProject
       Language.Mimsa.Types.Project.Usage
+      Language.Mimsa.Types.Project.Versioned
       Language.Mimsa.Types.Project.VersionedMap
       Language.Mimsa.Types.ResolvedExpression
       Language.Mimsa.Types.Scope
@@ -133,18 +137,17 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , cryptonite
     , directory
     , envy
     , file-embed
-    , hashable
     , haskeline
     , http-types
     , megaparsec
-    , modern-uri
+    , memory
     , mtl
     , optparse-applicative
     , prettyprinter
-    , req
     , servant
     , servant-server
     , servant-swagger
@@ -168,19 +171,18 @@ executable mimsa
     , base >=4.7 && <5
     , bytestring
     , containers
+    , cryptonite
     , directory
     , envy
     , file-embed
-    , hashable
     , haskeline
     , http-types
     , megaparsec
+    , memory
     , mimsa
-    , modern-uri
     , mtl
     , optparse-applicative
     , prettyprinter
-    , req
     , servant
     , servant-server
     , servant-swagger
@@ -204,19 +206,18 @@ executable swagger
     , base >=4.7 && <5
     , bytestring
     , containers
+    , cryptonite
     , directory
     , envy
     , file-embed
-    , hashable
     , haskeline
     , http-types
     , megaparsec
+    , memory
     , mimsa
-    , modern-uri
     , mtl
     , optparse-applicative
     , prettyprinter
-    , req
     , servant
     , servant-server
     , servant-swagger
@@ -257,22 +258,21 @@ test-suite mimsa-test
     , base >=4.7 && <5
     , bytestring
     , containers
+    , cryptonite
     , directory
     , envy
     , file-embed
     , generic-arbitrary
-    , hashable
     , haskeline
     , hspec
     , http-types
     , megaparsec
+    , memory
     , mimsa
-    , modern-uri
     , mtl
     , optparse-applicative
     , prettyprinter
     , quickcheck-instances
-    , req
     , servant
     , servant-server
     , servant-swagger
