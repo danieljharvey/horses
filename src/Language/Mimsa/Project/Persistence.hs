@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Project.Persistence
   ( loadProject,
+    loadProjectFromHash,
     saveProject,
     saveProjectInStore,
     getCurrentBindings,
@@ -58,15 +59,27 @@ loadProject' ::
 loadProject' = do
   project' <- liftIO $ try $ LBS.readFile envPath
   case hush project' >>= JSON.decode of
-    Just sp -> do
-      store' <-
-        recursiveLoadBoundExpressions
-          (getItemsForAllVersions . projectBindings $ sp)
-      typeStore' <-
-        recursiveLoadBoundExpressions
-          (getItemsForAllVersions . projectTypes $ sp)
-      pure $ projectFromSaved (store' <> typeStore') sp
+    Just sp -> fetchProjectItems sp
     _ -> throwError $ CouldNotDecodeFile envPath
+
+loadProjectFromHash :: ProjectHash -> PersistApp (Project ())
+loadProjectFromHash hash = do
+  path <- liftIO $ getProjectPath hash
+  json <- liftIO $ try $ LBS.readFile path
+  case hush json >>= JSON.decode of
+    Just sp -> fetchProjectItems sp
+    _ -> throwError $ CouldNotDecodeFile envPath
+
+-- TODO allow Store to be passed so we don't reload things over and over
+fetchProjectItems :: SaveProject -> PersistApp (Project ())
+fetchProjectItems sp = do
+  store' <-
+    recursiveLoadBoundExpressions
+      (getItemsForAllVersions . projectBindings $ sp)
+  typeStore' <-
+    recursiveLoadBoundExpressions
+      (getItemsForAllVersions . projectTypes $ sp)
+  pure $ projectFromSaved (store' <> typeStore') sp
 
 -- save project in local folder
 saveProject :: Project ann -> PersistApp ProjectHash
