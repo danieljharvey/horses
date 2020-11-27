@@ -101,14 +101,10 @@ interpretOperator operator a b = do
         Right (a', b') -> withStr (a' <> b')
         Left e -> throwError e
 
+-- warning, ordering is very important here to stop things looping forever
 interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
 interpretWithScope interpretExpr =
   case interpretExpr of
-    (MyLiteral ann a) -> pure (MyLiteral ann a)
-    (MyPair ann a b) -> do
-      exprA <- interpretWithScope a
-      exprB <- interpretWithScope b
-      pure (MyPair ann exprA exprB)
     (MyLet _ binder expr body) -> do
       addToScope (Scope $ M.singleton binder expr)
       interpretWithScope body
@@ -165,9 +161,7 @@ interpretWithScope interpretExpr =
       predExpr <- interpretWithScope pred'
       interpretWithScope (MyIf ann predExpr true false)
     (MyData _ _ expr) -> interpretWithScope expr
-    (MyConstructor ann a) -> pure (MyConstructor ann a)
-    (MyConsApp ann fn val) ->
-      MyConsApp ann fn <$> interpretWithScope val
     (MyCaseMatch _ expr' matches catchAll) -> do
       expr'' <- interpretWithScope expr'
       patternMatch expr'' matches catchAll >>= interpretWithScope
+    expr -> bindExpr interpretWithScope expr
