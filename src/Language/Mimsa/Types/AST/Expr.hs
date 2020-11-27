@@ -9,10 +9,12 @@ module Language.Mimsa.Types.AST.Expr
   ( Expr (..),
     toEmptyAnnotation,
     getAnnotation,
+    mapExpr,
   )
 where
 
 import qualified Data.Aeson as JSON
+import Data.Bifunctor
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -70,6 +72,59 @@ getAnnotation (MyData ann _ _) = ann
 getAnnotation (MyConstructor ann _) = ann
 getAnnotation (MyConsApp ann _ _) = ann
 getAnnotation (MyCaseMatch ann _ _ _) = ann
+
+mapExpr :: (Expr a b -> Expr a b) -> Expr a b -> Expr a b
+mapExpr _ (MyLiteral ann a) = MyLiteral ann a
+mapExpr _ (MyVar ann a) = MyVar ann a
+mapExpr f (MyLet ann binder bindExpr inExpr) =
+  MyLet ann binder (f bindExpr) (f inExpr)
+mapExpr f (MyLetPair ann binderA binderB bindExpr inExpr) =
+  MyLetPair ann binderA binderB (f bindExpr) (f inExpr)
+mapExpr f (MyInfix ann op a b) = MyInfix ann op (f a) (f b)
+mapExpr f (MyLambda ann binder expr) = MyLambda ann binder (f expr)
+mapExpr f (MyApp ann func arg) = MyApp ann (f func) (f arg)
+mapExpr f (MyIf ann matchExpr thenExpr elseExpr) =
+  MyIf ann (f matchExpr) (f thenExpr) (f elseExpr)
+mapExpr f (MyPair ann a b) = MyPair ann (f a) (f b)
+mapExpr f (MyRecord ann items) = MyRecord ann (f <$> items)
+mapExpr f (MyRecordAccess ann expr name) =
+  MyRecordAccess ann (f expr) name
+mapExpr f (MyData ann dt expr) = MyData ann dt (f expr)
+mapExpr _ (MyConstructor ann cons) = MyConstructor ann cons
+mapExpr f (MyConsApp ann func arg) =
+  MyConsApp ann (f func) (f arg)
+mapExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
+  MyCaseMatch ann (f matchExpr) (second f <$> caseExprs) (f <$> catchExpr)
+
+{-
+-- step through Expr, replacing vars with numbered variables
+bindExpr ::
+  (Applicative m) =>
+  (Expr a b -> m (Expr a b)) ->
+  Expr a b ->
+  m (Expr a b)
+bindExpr _ (MyLiteral ann a) = pure $ MyLiteral ann a
+bindExpr _ (MyVar ann a) = pure $ MyVar ann a
+bindExpr f (MyLet ann binder bindExpr' inExpr) =
+  MyLet ann binder <$> (f bindExpr') <$> (f inExpr)
+bindExpr f (MyLetPair ann binderA binderB bindExpr' inExpr) =
+  MyLetPair ann binderA binderB (f bindExpr') (f inExpr)
+bindExpr f (MyInfix ann op a b) = MyInfix ann op (f a) (f b)
+bindExpr f (MyLambda ann binder expr) = MyLambda ann binder (f expr)
+bindExpr f (MyApp ann func arg) = MyApp ann (f func) (f arg)
+bindExpr f (MyIf ann matchExpr thenExpr elseExpr) =
+  MyIf ann (f matchExpr) (f thenExpr) (f elseExpr)
+bindExpr f (MyPair ann a b) = MyPair ann (f a) (f b)
+bindExpr f (MyRecord ann items) = MyRecord ann (f <$> items)
+bindExpr f (MyRecordAccess ann expr name) =
+  MyRecordAccess ann (f expr) name
+bindExpr f (MyData ann dt expr) = MyData ann dt (f expr)
+bindExpr _ (MyConstructor ann cons) = MyConstructor ann cons
+bindExpr f (MyConsApp ann func arg) =
+  MyConsApp ann (f func) (f arg)
+bindExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
+  MyCaseMatch ann (f matchExpr) (second f <$> caseExprs) (f <$> catchExpr)
+-}
 
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) = prettyDoc l
