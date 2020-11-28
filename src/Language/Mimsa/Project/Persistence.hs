@@ -63,7 +63,9 @@ loadProject' = do
     _ -> throwError $ CouldNotDecodeFile envPath
 
 loadProjectFromHash :: (Monoid ann) => ProjectHash -> PersistApp (Project ann)
-loadProjectFromHash hash = loadProjectFromHash' hash $> mempty
+loadProjectFromHash hash = do
+  proj <- loadProjectFromHash' hash
+  pure $ proj $> mempty
 
 loadProjectFromHash' :: ProjectHash -> PersistApp (Project ())
 loadProjectFromHash' hash = do
