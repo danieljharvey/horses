@@ -11,17 +11,13 @@ module Language.Mimsa.Server.Project
 where
 
 import qualified Data.Aeson as JSON
-import Data.Map (Map)
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Actions (evaluateText, resolveStoreExpression)
-import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Server.Helpers
-import Language.Mimsa.Store
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -29,20 +25,6 @@ import Language.Mimsa.Types.Store
 import Servant
 
 -----
-
-outputBindings :: Project a -> Map Name Text
-outputBindings project =
-  prettyPrint
-    <$> getBindings
-      ( getCurrentBindings
-          (bindings project)
-      )
-
-outputTypeBindings :: Project a -> Map TyCon Text
-outputTypeBindings project =
-  prettyPrint
-    <$> getTypeBindings
-      (getCurrentTypeBindings (typeBindings project))
 
 -- the Project endpoints output data in a way that front ends would be
 -- interested
@@ -57,14 +39,14 @@ type ProjectAPI =
        )
 
 projectEndpoints ::
-  Project Annotation ->
+  MimsaEnvironment ->
   Server ProjectAPI
-projectEndpoints prj =
-  evaluateExpression
-    :<|> listBindings
-    :<|> getExpression
-    :<|> createProject prj
-    :<|> bindExpression
+projectEndpoints mimsaEnv =
+  evaluateExpression mimsaEnv
+    :<|> listBindings mimsaEnv
+    :<|> getExpression mimsaEnv
+    :<|> createProject
+    :<|> bindExpression mimsaEnv
 
 -- /project/evaluate/
 
@@ -75,34 +57,30 @@ type EvaluateAPI =
 data EvaluateRequest
   = EvaluateRequest
       { erCode :: Text,
-        erProject :: Project Annotation
+        erProjectHash :: ProjectHash
       }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
 data EvaluateResponse
   = EvaluateResponse
-      { prettyExpr :: Text,
-        prettyType :: Text,
-        prettyHash :: Text,
-        prettyResult :: Text
+      { erResult :: Text,
+        erExpressionData :: ExpressionData
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 evaluateExpression ::
+  MimsaEnvironment ->
   EvaluateRequest ->
   Handler EvaluateResponse
-evaluateExpression body = do
+evaluateExpression mimsaEnv (EvaluateRequest code hash) = do
+  store' <- readStoreHandler mimsaEnv
+  project <- loadProjectHandler store' hash
   (ResolvedExpression mt se expr' scope' swaps) <-
-    handleEither UserError (evaluateText (erProject body) (erCode body))
+    evaluateTextHandler project code
   simpleExpr <-
-    handleEither InternalError (interpret scope' swaps expr')
-  exprHash' <-
-    handleExceptT InternalError (saveExpr se)
-  let prettyExpr' = prettyPrint (storeExpression se)
-      prettyType' = prettyPrint mt
-      prettyHash' = prettyPrint exprHash'
-      prettyResult' = prettyPrint simpleExpr
-  pure (EvaluateResponse prettyExpr' prettyType' prettyHash' prettyResult')
+    interpretHandler scope' swaps expr'
+  writeStoreHandler mimsaEnv (store project)
+  EvaluateResponse (prettyPrint simpleExpr) <$> expressionDataHandler se mt
 
 -- /project/bindings/
 
@@ -113,24 +91,24 @@ type ListBindings =
 
 newtype ListBindingsRequest
   = ListBindingsRequest
-      {lbProject :: Project Annotation}
+      {lbProjectHash :: ProjectHash}
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
-data ListBindingsResponse
+newtype ListBindingsResponse
   = ListBindingsResponse
-      { projectBindings :: Map Name Text,
-        projectTypeBindings :: Map TyCon Text
+      { lbProjectData :: ProjectData
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 listBindings ::
+  MimsaEnvironment ->
   ListBindingsRequest ->
   Handler ListBindingsResponse
-listBindings (ListBindingsRequest project) =
-  pure $
-    ListBindingsResponse
-      (outputBindings project)
-      (outputTypeBindings project)
+listBindings mimsaEnv (ListBindingsRequest projectHash) = do
+  store' <- readStoreHandler mimsaEnv
+  project <- loadProjectHandler store' projectHash
+  writeStoreHandler mimsaEnv (store project)
+  ListBindingsResponse <$> projectDataHandler project
 
 -- /project/expression/
 
@@ -142,36 +120,29 @@ type GetExpression =
 
 data GetExpressionRequest
   = GetExpressionRequest
-      { geProject :: Project Annotation,
+      { geProjectHash :: ProjectHash,
         geExprHash :: ExprHash
       }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
-data GetExpressionResponse
+newtype GetExpressionResponse
   = GetExpressionResponse
-      { exprValue :: Text,
-        exprType :: Text,
-        exprBindings :: Map Name Text,
-        exprTypeBindings :: Map TyCon Text
+      { geExpressionData :: ExpressionData
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 getExpression ::
+  MimsaEnvironment ->
   GetExpressionRequest ->
   Handler GetExpressionResponse
-getExpression (GetExpressionRequest project exprHash') = do
-  se <- handleEither InternalError $
-    case lookupExprHash project exprHash' of
-      Nothing -> Left ("Could not find exprhash!" :: Text)
-      Just a -> Right a
-  (ResolvedExpression mt _ _ _ _) <- handleEither UserError $ resolveStoreExpression (store project) "" se
-  pure
-    ( GetExpressionResponse
-        (prettyPrint (storeExpression se))
-        (prettyPrint mt)
-        (prettyPrint <$> getBindings (storeBindings se))
-        (prettyPrint <$> getTypeBindings (storeTypeBindings se))
-    )
+getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
+  store' <- readStoreHandler mimsaEnv
+  project <- loadProjectHandler store' projectHash
+  se <- findExprHandler project exprHash'
+  (ResolvedExpression mt _ _ _ _) <-
+    resolveStoreExpressionHandler (store project) se
+  writeStoreHandler mimsaEnv (store project)
+  GetExpressionResponse <$> expressionDataHandler se mt
 
 ------
 
@@ -179,24 +150,16 @@ type CreateProject =
   "create"
     :> Get '[JSON] CreateProjectResponse
 
-data CreateProjectResponse
+newtype CreateProjectResponse
   = CreateProjectResponse
-      { cpData :: Project Annotation,
-        cpBindings :: Map Name Text,
-        cpTypeBindings :: Map TyCon Text
-      }
+      {cpProjectData :: ProjectData}
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
--- creating a project in this case means copying the default one
+-- create an empty project
 createProject ::
-  Project Annotation ->
   Handler CreateProjectResponse
-createProject project =
-  pure $
-    CreateProjectResponse
-      project
-      (outputBindings project)
-      (outputTypeBindings project)
+createProject =
+  CreateProjectResponse <$> projectDataHandler mempty
 
 ------
 
@@ -207,7 +170,7 @@ type BindExpression =
 
 data BindExpressionRequest
   = BindExpressionRequest
-      { beProject :: Project Annotation,
+      { beProjectHash :: ProjectHash,
         beBindingName :: Name,
         beExpression :: Text
       }
@@ -215,32 +178,26 @@ data BindExpressionRequest
 
 data BindExpressionResponse
   = BindExpressionResponse
-      { beProjectData :: Project Annotation,
-        beProjectBindings :: Map Name Text,
-        beProjectTypeBindings :: Map TyCon Text,
-        beExprValue :: Text,
-        beExprType :: Text,
-        beExprHash :: Text,
-        beExprBindings :: Map Name Text,
-        beExprTypeBindings :: Map TyCon Text
+      { beProjectData :: ProjectData,
+        beExpressionData :: ExpressionData
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 bindExpression ::
+  MimsaEnvironment ->
   BindExpressionRequest ->
   Handler BindExpressionResponse
-bindExpression (BindExpressionRequest project name' input) = do
+bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
+  store' <- readStoreHandler mimsaEnv
+  project <- loadProjectHandler store' hash
   (ResolvedExpression mt se _ _ _) <-
-    handleEither UserError (evaluateText project input)
-  hash <- handleExceptT InternalError (saveExpr se)
-  let newEnv = project <> fromItem name' se hash
+    evaluateTextHandler project input
+  exprHash <- saveExprHandler se
+  let newEnv = project <> fromItem name' se exprHash
+  writeStoreHandler mimsaEnv (store newEnv)
+  pd <- projectDataHandler newEnv
+  ed <- expressionDataHandler se mt
   pure $
     BindExpressionResponse
-      newEnv
-      (outputBindings newEnv)
-      (outputTypeBindings newEnv)
-      (prettyPrint (storeExpression se))
-      (prettyPrint mt)
-      (prettyPrint hash)
-      (prettyPrint <$> getBindings (storeBindings se))
-      (prettyPrint <$> getTypeBindings (storeTypeBindings se))
+      pd
+      ed

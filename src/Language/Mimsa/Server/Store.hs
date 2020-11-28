@@ -29,7 +29,7 @@ getExpression ::
   ExprHash ->
   Handler (StoreExpression ())
 getExpression exprHash' =
-  Handler $ withExceptT to500Error (findExpr [] exprHash')
+  Handler $ withExceptT to500Error (findExpr exprHash')
 
 postExpression ::
   StoreExpression () ->

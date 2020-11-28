@@ -2,7 +2,7 @@ module Language.Mimsa.CLI (cli) where
 
 import Control.Applicative
 import Language.Mimsa.Repl (repl)
-import Language.Mimsa.Server.Type (server)
+import Language.Mimsa.Server (server)
 import qualified Options.Applicative as Opt
 
 data CLICommand = Repl | Server

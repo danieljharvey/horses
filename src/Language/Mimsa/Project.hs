@@ -8,8 +8,3 @@ where
 import Language.Mimsa.Project.Default (defaultProject)
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Persistence
-  ( getCurrentBindings,
-    getCurrentTypeBindings,
-    loadProject,
-    saveProject,
-  )

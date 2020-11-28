@@ -1,22 +1,20 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Type
+module Language.Mimsa.Server.Main
   ( server,
-    MimsaAPI,
   )
 where
 
 import Control.Monad.Except
-import Data.Proxy
+import Data.IORef
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Server.EnvVars (MimsaConfig (..), getMimsaEnv)
-import Language.Mimsa.Server.Project
-import Language.Mimsa.Server.Store
+import Language.Mimsa.Server.Servant
+import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
@@ -26,14 +24,6 @@ import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
 import Servant
-
-type MimsaAPI = ProjectAPI :<|> StoreAPI
-
-mimsaAPI :: Proxy MimsaAPI
-mimsaAPI = Proxy
-
-mimsaServer :: Project Annotation -> Server MimsaAPI
-mimsaServer prj = projectEndpoints prj :<|> storeEndpoints
 
 -- allow GET and POST with JSON
 corsMiddleware :: Middleware
@@ -51,9 +41,14 @@ corsMiddleware = cors (const $ Just policy)
 -- 'serve' comes from servant and hands you a WAI Application,
 -- which you can think of as an "abstract" web application,
 -- not yet a webserver.
-mimsaApp :: Project Annotation -> Application
-mimsaApp prj =
-  corsMiddleware $ serve mimsaAPI (mimsaServer prj)
+mimsaApp :: MimsaEnvironment -> Application
+mimsaApp mimsaEnv =
+  corsMiddleware $ serve mimsaAPI (mimsaServer mimsaEnv)
+
+createMimsaEnvironment :: IO MimsaEnvironment
+createMimsaEnvironment = do
+  env <- getDefaultProject
+  MimsaEnvironment <$> newIORef (store env)
 
 getDefaultProject :: IO (Project Annotation)
 getDefaultProject = do
@@ -73,7 +68,7 @@ server = do
   case mimsaConfig of
     Left e -> error e
     Right cfg -> do
-      prj <- getDefaultProject
+      mimsaEnv <- createMimsaEnvironment
       let port' = port cfg
       T.putStrLn $ "Starting server on port " <> prettyPrint port' <> "..."
-      run port' (mimsaApp prj)
+      run port' (mimsaApp mimsaEnv)
