@@ -36,6 +36,7 @@ import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Swaps
+import Language.Mimsa.Types.Typechecker
 import Servant
 
 -----
@@ -84,10 +85,9 @@ data ExpressionData
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
-expressionDataHandler :: Store Annotation -> StoreExpression Annotation -> Handler ExpressionData
-expressionDataHandler store' se = do
-  (ResolvedExpression mt _ _ _ _) <-
-    resolveStoreExpressionHandler store' se
+expressionDataHandler :: StoreExpression Annotation -> MonoType -> Handler ExpressionData
+expressionDataHandler se mt = do
+  _ <- saveExprHandler se
   pure $
     ExpressionData
       (prettyPrint (getStoreExpressionHash se))

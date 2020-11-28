@@ -63,10 +63,8 @@ data EvaluateRequest
 
 data EvaluateResponse
   = EvaluateResponse
-      { prettyExpr :: Text,
-        prettyType :: Text,
-        prettyHash :: Text,
-        prettyResult :: Text
+      { erResult :: Text,
+        erExpressionData :: ExpressionData
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
@@ -79,13 +77,7 @@ evaluateExpression (EvaluateRequest code hash) = do
     evaluateTextHandler project code
   simpleExpr <-
     interpretHandler scope' swaps expr'
-  exprHash' <-
-    saveExprHandler se
-  let prettyExpr' = prettyPrint (storeExpression se)
-      prettyType' = prettyPrint mt
-      prettyHash' = prettyPrint exprHash'
-      prettyResult' = prettyPrint simpleExpr
-  pure (EvaluateResponse prettyExpr' prettyType' prettyHash' prettyResult')
+  EvaluateResponse (prettyPrint simpleExpr) <$> expressionDataHandler se mt
 
 -- /project/bindings/
 
@@ -139,7 +131,9 @@ getExpression ::
 getExpression (GetExpressionRequest projectHash exprHash') = do
   project <- loadProjectHandler projectHash
   se <- findExprHandler project exprHash'
-  GetExpressionResponse <$> expressionDataHandler (store project) se
+  (ResolvedExpression mt _ _ _ _) <-
+    resolveStoreExpressionHandler (store project) se
+  GetExpressionResponse <$> expressionDataHandler se mt
 
 ------
 
@@ -186,12 +180,12 @@ bindExpression ::
   Handler BindExpressionResponse
 bindExpression (BindExpressionRequest hash name' input) = do
   project <- loadProjectHandler hash
-  (ResolvedExpression _ se _ _ _) <-
+  (ResolvedExpression mt se _ _ _) <-
     evaluateTextHandler project input
   exprHash <- saveExprHandler se
   let newEnv = project <> fromItem name' se exprHash
   pd <- projectDataHandler newEnv
-  ed <- expressionDataHandler (store project) se
+  ed <- expressionDataHandler se mt
   pure $
     BindExpressionResponse
       pd
