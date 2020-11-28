@@ -5,7 +5,7 @@ import Data.ByteString.Lazy
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Proxy
 import Data.Swagger
-import Language.Mimsa.Server.Type
+import Language.Mimsa.Server.Servant
 import Servant.Swagger
 
 mimsaSwagger :: Swagger

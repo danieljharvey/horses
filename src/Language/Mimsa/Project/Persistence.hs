@@ -59,32 +59,34 @@ loadProject' ::
 loadProject' = do
   project' <- liftIO $ try $ LBS.readFile envPath
   case hush project' >>= JSON.decode of
-    Just sp -> fetchProjectItems sp
+    Just sp -> fetchProjectItems mempty sp -- we're starting from scratch with this one
     _ -> throwError $ CouldNotDecodeFile envPath
 
-loadProjectFromHash :: (Monoid ann) => ProjectHash -> PersistApp (Project ann)
-loadProjectFromHash hash = do
-  proj <- loadProjectFromHash' hash
+loadProjectFromHash :: (Monoid ann) => Store ann -> ProjectHash -> PersistApp (Project ann)
+loadProjectFromHash store' hash = do
+  let unitStore = store' $> ()
+  proj <- loadProjectFromHash' unitStore hash
   pure $ proj $> mempty
 
-loadProjectFromHash' :: ProjectHash -> PersistApp (Project ())
-loadProjectFromHash' hash = do
+loadProjectFromHash' :: Store () -> ProjectHash -> PersistApp (Project ())
+loadProjectFromHash' store' hash = do
   path <- liftIO $ getProjectPath hash
   json <- liftIO $ try $ LBS.readFile path
   case hush json >>= JSON.decode of
-    Just sp -> fetchProjectItems sp
+    Just sp -> fetchProjectItems store' sp
     _ -> throwError $ CouldNotDecodeFile envPath
 
--- TODO allow Store to be passed so we don't reload things over and over
-fetchProjectItems :: SaveProject -> PersistApp (Project ())
-fetchProjectItems sp = do
+fetchProjectItems :: Store () -> SaveProject -> PersistApp (Project ())
+fetchProjectItems existingStore sp = do
   store' <-
     recursiveLoadBoundExpressions
+      existingStore
       (getItemsForAllVersions . projectBindings $ sp)
   typeStore' <-
     recursiveLoadBoundExpressions
+      existingStore
       (getItemsForAllVersions . projectTypes $ sp)
-  pure $ projectFromSaved (store' <> typeStore') sp
+  pure $ projectFromSaved (existingStore <> store' <> typeStore') sp
 
 -- save project in local folder
 saveProject :: Project ann -> PersistApp ProjectHash
@@ -109,6 +111,9 @@ saveProjectInStore' env = do
 
 --
 
+storeItems :: Store a -> Set ExprHash
+storeItems (Store s) = S.fromList (M.keys s)
+
 loadBoundExpressions ::
   Set ExprHash ->
   PersistApp (Store ())
@@ -124,19 +129,20 @@ loadBoundExpressions hashes = do
     (Store (M.fromList items'))
 
 recursiveLoadBoundExpressions ::
+  Store () ->
   Set ExprHash ->
   PersistApp (Store ())
-recursiveLoadBoundExpressions hashes = do
-  store' <- loadBoundExpressions hashes
+recursiveLoadBoundExpressions existingStore hashes = do
+  newStore <- loadBoundExpressions (S.difference hashes (storeItems existingStore))
   let newHashes =
         S.difference
           ( S.unions $
-              getDependencyHashes <$> M.elems (getStore store')
+              getDependencyHashes <$> M.elems (getStore newStore)
           )
           hashes
   if S.null newHashes
-    then pure store'
+    then pure (existingStore <> newStore)
     else do
-      moreStore <- recursiveLoadBoundExpressions newHashes
-      pure (store' <> moreStore)
+      moreStore <- recursiveLoadBoundExpressions (existingStore <> newStore) newHashes
+      pure (existingStore <> newStore <> moreStore)
 --

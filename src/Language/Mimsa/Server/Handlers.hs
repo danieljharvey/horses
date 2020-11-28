@@ -15,10 +15,14 @@ module Language.Mimsa.Server.Handlers
     interpretHandler,
     findExprHandler,
     resolveStoreExpressionHandler,
+    readStoreHandler,
+    writeStoreHandler,
   )
 where
 
+import Control.Monad.Except
 import qualified Data.Aeson as JSON
+import Data.IORef
 import Data.Map (Map)
 import Data.Swagger
 import Data.Text (Text)
@@ -28,6 +32,7 @@ import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Server.Helpers
+import Language.Mimsa.Server.Types
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -65,6 +70,18 @@ data ProjectData
       }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
+-- read the store from mutable var to stop repeated loading of exprs
+readStoreHandler :: MimsaEnvironment -> Handler (Store Annotation)
+readStoreHandler mimsaEnv = do
+  liftIO $ readIORef (mutableStore mimsaEnv)
+
+writeStoreHandler :: MimsaEnvironment -> Store Annotation -> Handler ()
+writeStoreHandler mimsaEnv store' = do
+  liftIO $
+    modifyIORef'
+      (mutableStore mimsaEnv)
+      (<> store')
+
 -- given a new Project, save it and return the hash and bindings
 projectDataHandler :: Project ann -> Handler ProjectData
 projectDataHandler env = do
@@ -97,10 +114,17 @@ expressionDataHandler se mt = do
       (prettyPrint <$> getTypeBindings (storeTypeBindings se))
 
 -- given a project hash, find the project
-loadProjectHandler :: ProjectHash -> Handler (Project Annotation)
-loadProjectHandler hash = handleExceptT UserError $ loadProjectFromHash hash
+loadProjectHandler ::
+  Store Annotation ->
+  ProjectHash ->
+  Handler (Project Annotation)
+loadProjectHandler store' hash =
+  handleExceptT UserError $ loadProjectFromHash store' hash
 
-evaluateTextHandler :: Project Annotation -> Text -> Handler (ResolvedExpression Annotation)
+evaluateTextHandler ::
+  Project Annotation ->
+  Text ->
+  Handler (ResolvedExpression Annotation)
 evaluateTextHandler project code = handleEither UserError (evaluateText project code)
 
 saveExprHandler :: StoreExpression ann -> Handler ExprHash
@@ -115,11 +139,17 @@ interpretHandler ::
 interpretHandler scope' swaps' expr' =
   handleEither InternalError (interpret scope' swaps' expr')
 
-resolveStoreExpressionHandler :: Store Annotation -> StoreExpression Annotation -> Handler (ResolvedExpression Annotation)
+resolveStoreExpressionHandler ::
+  Store Annotation ->
+  StoreExpression Annotation ->
+  Handler (ResolvedExpression Annotation)
 resolveStoreExpressionHandler store' se =
   handleEither UserError $ resolveStoreExpression store' "" se
 
-findExprHandler :: Project Annotation -> ExprHash -> Handler (StoreExpression Annotation)
+findExprHandler ::
+  Project Annotation ->
+  ExprHash ->
+  Handler (StoreExpression Annotation)
 findExprHandler project exprHash' =
   handleEither InternalError $
     case lookupExprHash project exprHash' of

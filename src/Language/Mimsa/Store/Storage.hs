@@ -7,6 +7,7 @@ module Language.Mimsa.Store.Storage
     getStoreExpressionHash,
     getStoreFolder,
     trySymlink,
+    storeSize,
   )
 where
 
@@ -16,6 +17,7 @@ import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.Coerce
 import Data.Functor
+import qualified Data.Map as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.Hashing
@@ -49,6 +51,9 @@ getExpressionFolder = getStoreFolder "expressions"
 
 filePath :: FilePath -> ExprHash -> String
 filePath storePath hash = storePath <> show hash <> ".json"
+
+storeSize :: Store a -> Int
+storeSize (Store s) = M.size s
 
 -- the store is where we save all the fucking bullshit
 
