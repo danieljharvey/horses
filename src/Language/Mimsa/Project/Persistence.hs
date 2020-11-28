@@ -62,8 +62,11 @@ loadProject' = do
     Just sp -> fetchProjectItems sp
     _ -> throwError $ CouldNotDecodeFile envPath
 
-loadProjectFromHash :: ProjectHash -> PersistApp (Project ())
-loadProjectFromHash hash = do
+loadProjectFromHash :: (Monoid ann) => ProjectHash -> PersistApp (Project ann)
+loadProjectFromHash hash = loadProjectFromHash' hash $> mempty
+
+loadProjectFromHash' :: ProjectHash -> PersistApp (Project ())
+loadProjectFromHash' hash = do
   path <- liftIO $ getProjectPath hash
   json <- liftIO $ try $ LBS.readFile path
   case hush json >>= JSON.decode of
