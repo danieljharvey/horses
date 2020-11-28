@@ -84,6 +84,7 @@ saveExpr' :: StoreExpression () -> StoreM ExprHash
 saveExpr' expr = do
   storePath <- liftIO getExpressionFolder
   let (json, exprHash) = coerce $ contentAndHash expr
+  liftIO $ T.putStrLn $ "Saved expression for " <> prettyPrint exprHash
   liftIO $ BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
