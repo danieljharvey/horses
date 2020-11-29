@@ -3,6 +3,7 @@
 
 module Language.Mimsa.Typechecker.Unify
   ( unify,
+    unifyStrict,
   )
 where
 
@@ -76,6 +77,18 @@ unify tyA tyB =
     (t, MTVar _ u) -> varBind u t
     (a, b) ->
       throwError $ UnificationError a b
+
+-- when combining records in branches of an If we need to check they are
+-- actually the same rather than combine them
+unifyStrict :: MonoType -> MonoType -> TcMonad Substitutions
+unifyStrict tyA tyB =
+  case (tyA, tyB) of
+    (MTRecord _ as, MTRecord _ bs) -> do
+      let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
+      if not $ S.null diffKeys
+        then throwError (RecordKeyMismatch diffKeys)
+        else unify tyA tyB
+    (a, b) -> unify a b
 
 getTypeOrFresh :: Annotation -> Name -> Map Name MonoType -> TcMonad MonoType
 getTypeOrFresh ann name map' =

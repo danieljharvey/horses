@@ -9,6 +9,7 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
+import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
@@ -458,3 +459,25 @@ spec =
       it "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})" $ do
         result <- eval stdLib "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+      it "if True then { one: 1 } else { two: 2 }" $ do
+        result <- eval stdLib "if True then { one: 1 } else { two: 2 }"
+        result `shouldSatisfy` isLeft
+      it "if True then { one: 1 } else { one: 2 }" $ do
+        result <- eval stdLib "if True then { one: 1 } else { one: 2 }"
+        result `shouldSatisfy` isRight
+      it "let a = { one: 1 }; let one = a.one; let two = a.two; a" $ do
+        result <- eval stdLib "let a = { one: 1 }; let one = a.one; let two = a.two; a"
+        result `shouldSatisfy` isLeft
+      it "\\a -> let one = a.one; let two = a.two; a" $ do
+        result <- eval stdLib "\\a -> let one = a.one; let two = a.two; a"
+        let mtVar = MTVar mempty (NumberedVar 3)
+        fst <$> result
+          `shouldBe` Right
+            ( MTRecord
+                mempty
+                ( M.fromList
+                    [ (mkName "one", mtVar),
+                      (mkName "two", mtVar)
+                    ]
+                )
+            )
