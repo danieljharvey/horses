@@ -32,16 +32,18 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
+type TcExpr = Expr Variable Annotation
+
 startInference ::
   Swaps ->
-  Expr Variable Annotation ->
+  TcExpr ->
   Either TypeError MonoType
 startInference swaps expr = snd <$> doInference swaps mempty expr
 
 doInference ::
   Swaps ->
   Environment ->
-  Expr Variable Annotation ->
+  TcExpr ->
   Either TypeError (Substitutions, MonoType)
 doInference swaps env expr = runTcMonad swaps (inferAndSubst (defaultEnv <> env) expr)
 
@@ -55,7 +57,7 @@ doDataTypeInference env dt =
 -- run inference, and substitute everything possible
 inferAndSubst ::
   Environment ->
-  Expr Variable Annotation ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferAndSubst env expr = do
   (s, tyExpr) <- infer env expr
@@ -122,8 +124,8 @@ splitRecordTypes map' = (subs, MTRecord mempty types)
 inferApplication ::
   Environment ->
   Annotation ->
-  Expr Variable Annotation ->
-  Expr Variable Annotation ->
+  TcExpr ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferApplication env ann function argument = do
   tyRes <- getUnknown ann
@@ -149,8 +151,8 @@ inferLetBinding ::
   Environment ->
   Annotation ->
   Variable ->
-  Expr Variable Annotation ->
-  Expr Variable Annotation ->
+  TcExpr ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferLetBinding env ann binder expr body = do
   tyUnknown <- getUnknown ann
@@ -166,8 +168,8 @@ inferLetPairBinding ::
   Environment ->
   Variable ->
   Variable ->
-  Expr Variable Annotation ->
-  Expr Variable Annotation ->
+  TcExpr ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferLetPairBinding env binder1 binder2 expr body = do
   (s1, tyExpr) <- infer env expr
@@ -190,7 +192,7 @@ inferLetPairBinding env binder1 binder2 expr body = do
 storeDataDeclaration ::
   Environment ->
   DataType ->
-  Expr Variable Annotation ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 storeDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
@@ -247,6 +249,22 @@ inferType env ann tyName tyVars =
 lookupBuiltIn :: TyCon -> Maybe MonoType
 lookupBuiltIn name = M.lookup name builtInTypes
 
+inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> TcMonad (Substitutions, MonoType)
+inferIf env condition thenExpr elseExpr = do
+  (s1, tyCond) <- infer env condition
+  (s2, tyThen) <- infer (applySubstCtx s1 env) thenExpr
+  (s3, tyElse) <- infer (applySubstCtx s1 env) elseExpr
+  s4 <-
+    unifyStrict
+      tyThen
+      tyElse
+  s5 <- unify tyCond (MTPrim (getAnnotation condition) MTBool)
+  let subs = s5 <> s4 <> s3 <> s2 <> s1
+  pure
+    ( subs,
+      applySubst subs tyElse
+    )
+
 -----
 
 -- check a list of types are all the same
@@ -271,7 +289,7 @@ constructorToType (TypeConstructor typeName tyVars constructTypes) =
 inferSumExpressionType ::
   Environment ->
   Map TyCon TypeConstructor ->
-  Expr Variable Annotation ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferSumExpressionType env consTypes sumExpr =
   let fromName name =
@@ -299,9 +317,9 @@ inferSumExpressionType env consTypes sumExpr =
 inferCaseMatch ::
   Environment ->
   Annotation ->
-  Expr Variable Annotation ->
-  NonEmpty (TyCon, Expr Variable Annotation) ->
-  Maybe (Expr Variable Annotation) ->
+  TcExpr ->
+  NonEmpty (TyCon, TcExpr) ->
+  Maybe TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferCaseMatch env ann sumExpr matches catchAll = do
   dataType <- checkCompleteness env ann matches catchAll
@@ -346,7 +364,7 @@ inferMatch ::
   Environment ->
   Map TyCon TypeConstructor ->
   TyCon ->
-  Expr Variable Annotation ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferMatch env constructTypes name expr' =
   case M.lookup name constructTypes of
@@ -376,8 +394,8 @@ inferOperator ::
   Environment ->
   Annotation ->
   Operator ->
-  Expr Variable Annotation ->
-  Expr Variable Annotation ->
+  TcExpr ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferOperator env ann Equals a b = do
   (s1, tyA) <- infer env a
@@ -395,8 +413,8 @@ inferInfix ::
   Environment ->
   Primitive ->
   Annotation ->
-  Expr Variable Annotation ->
-  Expr Variable Annotation ->
+  TcExpr ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferInfix env prim ann a b = do
   (s1, tyA) <- infer env a
@@ -408,7 +426,7 @@ inferInfix env prim ann a b = do
 inferRecordAccess ::
   Environment ->
   Annotation ->
-  Expr Variable Annotation ->
+  TcExpr ->
   Name ->
   TcMonad (Substitutions, MonoType)
 inferRecordAccess env ann a name = do
@@ -430,7 +448,7 @@ inferRecordAccess env ann a name = do
 
 infer ::
   Environment ->
-  Expr Variable Annotation ->
+  TcExpr ->
   TcMonad (Substitutions, MonoType)
 infer env inferExpr =
   case inferExpr of
@@ -465,18 +483,10 @@ infer env inferExpr =
               <> env
       (s1, tyBody) <- infer tmpCtx body
       pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
-    (MyApp ann function argument) -> inferApplication env ann function argument
-    (MyIf _ condition thenCase elseCase) -> do
-      (s1, tyCond) <- infer env condition
-      (s2, tyThen) <- infer (applySubstCtx s1 env) thenCase
-      (s3, tyElse) <- infer (applySubstCtx s1 env) elseCase
-      s4 <- unify tyThen tyElse
-      s5 <- unify tyCond (MTPrim (getAnnotation condition) MTBool)
-      let subs = s5 <> s4 <> s3 <> s2 <> s1
-      pure
-        ( subs,
-          applySubst subs tyElse
-        )
+    (MyApp ann function argument) ->
+      inferApplication env ann function argument
+    (MyIf _ condition thenCase elseCase) ->
+      inferIf env condition thenCase elseCase
     (MyPair ann a b) -> do
       (s1, tyA) <- infer env a
       (s2, tyB) <- infer env b

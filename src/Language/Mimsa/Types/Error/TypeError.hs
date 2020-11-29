@@ -44,6 +44,7 @@ data TypeError
   | TypeVariableNotInDataType TyCon Name [Name]
   | ConflictingConstructors Annotation TyCon
   | CannotApplyToType TyCon
+  | RecordKeyMismatch (Set Name)
   | DuplicateTypeDeclaration TyCon
   | IncompletePatternMatch Annotation [TyCon]
   | MixedUpPatterns [TyCon]
@@ -161,6 +162,11 @@ renderTypeError (CannotApplyToType constructor) =
   ["Cannot apply value to" <+> prettyDoc constructor]
 renderTypeError (DuplicateTypeDeclaration constructor) =
   ["Cannot redeclare existing type name" <+> prettyDoc constructor]
+renderTypeError (RecordKeyMismatch keys) =
+  [ "Record key mismatch",
+    "The following keys were expected to be in both records and were not:"
+  ]
+    <> showSet renderName keys
 renderTypeError (TypeVariableNotInDataType constructor name as) =
   [ "Type variable" <+> renderName name
       <+> "could not be in found in type vars for"

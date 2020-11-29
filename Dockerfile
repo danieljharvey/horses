@@ -1,5 +1,5 @@
 # Loosely based on https://www.fpcomplete.com/blog/2017/12/building-haskell-apps-with-docker
-FROM fpco/stack-build:lts-16.22 as dependencies
+FROM fpco/stack-build:lts-16.23 as dependencies
 RUN mkdir /opt/build
 WORKDIR /opt/build
 
@@ -13,7 +13,7 @@ COPY stack.yaml package.yaml stack.yaml.lock /opt/build/
 RUN stack build --system-ghc --dependencies-only
 
 # -------------------------------------------------------------------------------------------
-FROM fpco/stack-build:lts-16.22 as build
+FROM fpco/stack-build:lts-16.23 as build
 
 # Copy compiled dependencies from previous stage
 COPY --from=dependencies /root/.stack /root/.stack

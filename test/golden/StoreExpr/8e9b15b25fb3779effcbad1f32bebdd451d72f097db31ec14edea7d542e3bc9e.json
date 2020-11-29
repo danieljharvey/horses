@@ -1,0 +1,1 @@
+{"storeExpression":{"tag":"MyIf","contents":[[],{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":true}]},{"tag":"MyRecord","contents":[[],{"one":{"tag":"MyLiteral","contents":[[],{"tag":"MyInt","contents":1}]}}]},{"tag":"MyRecord","contents":[[],{"one":{"tag":"MyLiteral","contents":[[],{"tag":"MyInt","contents":2}]}}]}]},"storeBindings":{},"storeTypeBindings":{}}
