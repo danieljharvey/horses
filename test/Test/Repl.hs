@@ -9,7 +9,6 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
-import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
@@ -470,14 +469,5 @@ spec =
         result `shouldSatisfy` isLeft
       it "\\a -> let one = a.one; let two = a.two; a" $ do
         result <- eval stdLib "\\a -> let one = a.one; let two = a.two; a"
-        let mtVar = MTVar mempty (NumberedVar 3)
-        fst <$> result
-          `shouldBe` Right
-            ( MTRecord
-                mempty
-                ( M.fromList
-                    [ (mkName "one", mtVar),
-                      (mkName "two", mtVar)
-                    ]
-                )
-            )
+        result
+          `shouldSatisfy` isLeft
