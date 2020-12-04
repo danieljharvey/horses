@@ -199,7 +199,7 @@ exprs =
           (mkName "cat")
           ( M.singleton
               (mkName "dog")
-              (unknown 2)
+              (unknown 4)
           )
     )
     -- combining multiple facts about an unknown record is for later

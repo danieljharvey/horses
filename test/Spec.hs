@@ -12,6 +12,7 @@ import Test.Hspec
 import qualified Test.Interpreter as Interpreter
 import qualified Test.Prettier as Prettier
 import Test.QuickCheck.Instances ()
+import qualified Test.RecordUsage as RecordUsage
 import qualified Test.Repl as Repl
 import qualified Test.Resolver as Resolver
 import qualified Test.Serialisation as Serialisation
@@ -36,3 +37,4 @@ main = hspec $ do
   JS.spec
   TypeError.spec
   Serialisation.spec
+  RecordUsage.spec

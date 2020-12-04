@@ -79,7 +79,7 @@ spec =
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction mempty (unknown 4) (unknown 4),
+            ( MTFunction mempty (unknown 5) (unknown 5),
               MyLambda mempty (named "i") (MyVar mempty (named "i"))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
@@ -470,4 +470,4 @@ spec =
       it "\\a -> let one = a.one; let two = a.two; a" $ do
         result <- eval stdLib "\\a -> let one = a.one; let two = a.two; a"
         result
-          `shouldSatisfy` isLeft
+          `shouldSatisfy` isRight

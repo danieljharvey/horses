@@ -12,7 +12,7 @@ import Language.Mimsa.Types.AST (DataType (DataType))
 import Language.Mimsa.Types.Identifiers (TyCon, mkTyCon)
 import Language.Mimsa.Types.Typechecker
 
-defaultEnv :: Environment
+defaultEnv :: Substitutions -> Environment
 defaultEnv = Environment mempty dts
   where
     makeDT (name, _) = M.singleton name (DataType name mempty mempty)

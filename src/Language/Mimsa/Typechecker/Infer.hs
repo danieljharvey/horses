@@ -24,6 +24,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
+import Language.Mimsa.Typechecker.RecordUsages
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
@@ -45,14 +46,16 @@ doInference ::
   Environment ->
   TcExpr ->
   Either TypeError (Substitutions, MonoType)
-doInference swaps env expr = runTcMonad swaps (inferAndSubst (defaultEnv <> env) expr)
+doInference swaps env expr = runTcMonad swaps $ do
+  recSubst <- getSubstitutionsForRecordUsages expr
+  inferAndSubst (defaultEnv recSubst <> env) expr
 
 doDataTypeInference ::
   Environment ->
   DataType ->
   Either TypeError (Map TyCon TypeConstructor)
 doDataTypeInference env dt =
-  runTcMonad mempty (snd <$> inferConstructorTypes (defaultEnv <> env) dt)
+  runTcMonad mempty (snd <$> inferConstructorTypes (defaultEnv mempty <> env) dt)
 
 -- run inference, and substitute everything possible
 inferAndSubst ::
@@ -64,8 +67,8 @@ inferAndSubst env expr = do
   pure (s, applySubst s tyExpr)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
-applySubstCtx subst (Environment schemes dt) =
-  Environment (M.map (applySubstScheme subst) schemes) dt
+applySubstCtx subst (Environment schemes dt recSubst) =
+  Environment (M.map (applySubstScheme (subst <> recSubst)) schemes) dt recSubst
 
 applySubstScheme :: Substitutions -> Scheme -> Scheme
 applySubstScheme (Substitutions subst) (Scheme vars t) =
@@ -94,7 +97,7 @@ inferVarFromScope ::
   Variable ->
   TcMonad (Substitutions, MonoType)
 inferVarFromScope env ann name =
-  let lookup' name' (Environment env' _) = M.lookup name' env'
+  let lookup' name' (Environment env' _ _) = M.lookup name' env'
    in case lookup' name env of
         Just mt ->
           instantiate mt
@@ -109,7 +112,7 @@ inferVarFromScope env ann name =
 
 createEnv :: Variable -> Scheme -> Environment
 createEnv binder scheme =
-  Environment (M.singleton binder scheme) mempty
+  Environment (M.singleton binder scheme) mempty mempty
 
 splitRecordTypes ::
   Map Name (Substitutions, MonoType) ->
@@ -198,7 +201,7 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName dt)
+      let newEnv = Environment mempty (M.singleton tyName dt) mempty
        in infer (newEnv <> env) expr'
 
 -- infer the type of a data constructor
