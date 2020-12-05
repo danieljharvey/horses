@@ -58,12 +58,11 @@ getRecordUsages ::
   CombineMap Variable (Set Name)
 getRecordUsages (MyLiteral _ _) = mempty
 getRecordUsages (MyVar _ _) = mempty
-getRecordUsages (MyLet _ binder bindExpr' inExpr) =
-  CombineMap (M.singleton binder mempty) <> getRecordUsages bindExpr'
+getRecordUsages (MyLet _ _binder bindExpr' inExpr) =
+  getRecordUsages bindExpr'
     <> getRecordUsages inExpr
-getRecordUsages (MyLetPair _ binderA binderB bindExpr' inExpr) =
-  CombineMap (M.fromList [(binderA, mempty), (binderB, mempty)])
-    <> getRecordUsages bindExpr'
+getRecordUsages (MyLetPair _ _binderA _binderB bindExpr' inExpr) =
+  getRecordUsages bindExpr'
     <> getRecordUsages inExpr
 getRecordUsages (MyInfix _ _ a b) =
   getRecordUsages a <> getRecordUsages b

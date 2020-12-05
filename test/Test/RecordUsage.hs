@@ -40,18 +40,6 @@ spec = do
           (M.fromList [(named "a", mempty)])
       subs <- getSubsForRec expr'
       M.size subs `shouldBe` 0
-    it "Captures let binder" $ do
-      let expr' =
-            MyLet
-              ()
-              (named "b")
-              (MyLiteral () (MyBool True))
-              (MyLiteral () (MyBool True))
-      getRecordUsages expr'
-        `shouldBe` CombineMap
-          (M.fromList [(named "b", mempty)])
-      subs <- getSubsForRec expr'
-      M.size subs `shouldBe` 0
     it "Captures two record usages" $ do
       let expr' =
             MyLambda

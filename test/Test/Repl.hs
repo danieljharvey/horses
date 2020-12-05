@@ -467,7 +467,12 @@ spec =
       it "let a = { one: 1 }; let one = a.one; let two = a.two; a" $ do
         result <- eval stdLib "let a = { one: 1 }; let one = a.one; let two = a.two; a"
         result `shouldSatisfy` isLeft
-      fit "\\a -> let one = a.one; let two = a.two; a" $ do
+      it "\\a -> let one = a.one; let two = a.two; a" $ do
         result <- eval stdLib "\\a -> let one = a.one; let two = a.two; a"
         result
           `shouldSatisfy` isRight
+      it "\\a -> let one = a.one in \\a -> let two = a.two in a" $ do
+        result <- eval stdLib "\\a -> let one = a.one in \\a -> let two = a.two in a.one"
+        -- here the two a's should be different types due to shadowing
+        result
+          `shouldSatisfy` isLeft

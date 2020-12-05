@@ -98,7 +98,7 @@ inferVarFromScope ::
   Variable ->
   TcMonad (Substitutions, MonoType)
 inferVarFromScope env@(Environment env' _) ann name =
-  case M.lookup (debugPretty "var lookup name" name) (debugPretty "var lookup env" env') of
+  case M.lookup name env' of
     Just mt ->
       instantiate mt
     _ -> do
@@ -449,6 +449,21 @@ inferRecordAccess env ann a name = do
   let subs = s2 <> s1
   pure (subs, applySubst subs tyResult)
 
+inferLambda ::
+  Environment ->
+  Annotation ->
+  Variable ->
+  TcExpr ->
+  TcMonad (Substitutions, MonoType)
+inferLambda env@(Environment env' _) ann binder body = do
+  tyBinder <- case M.lookup binder env' of
+    Just (Scheme _ found) -> pure (debugPretty "lambda type from env" found)
+    _ -> getUnknown ann
+  let tmpCtx =
+        createEnv (debugPretty "newbinder" binder) (Scheme [] tyBinder) <> env
+  (s1, tyBody) <- infer tmpCtx body
+  pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
+
 infer ::
   Environment ->
   TcExpr ->
@@ -479,13 +494,8 @@ infer env inferExpr =
       inferRecordAccess env ann a name
     (MyLetPair _ binder1 binder2 expr body) ->
       inferLetPairBinding env binder1 binder2 expr body
-    (MyLambda ann binder body) -> do
-      tyBinder <- getUnknown ann
-      let tmpCtx =
-            createEnv (debugPretty "newbinder" binder) (Scheme [] tyBinder)
-              <> (debugPretty "env at lambda" env)
-      (s1, tyBody) <- infer tmpCtx body
-      pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
+    (MyLambda ann binder body) ->
+      inferLambda env ann binder body
     (MyApp ann function argument) ->
       inferApplication env ann function argument
     (MyIf _ condition thenCase elseCase) ->

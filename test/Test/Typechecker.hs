@@ -174,35 +174,7 @@ exprs =
                 (MTPrim mempty MTBool)
           )
           (MTPrim mempty MTInt)
-    ),
-    ( MyLambda
-        mempty
-        (named "i")
-        ( MyIf
-            mempty
-            ( MyRecordAccess
-                mempty
-                (MyVar mempty (named "i"))
-                (mkName "dog")
-            )
-            ( MyIf
-                mempty
-                (MyRecordAccess mempty (MyVar mempty (named "i")) (mkName "cat"))
-                (int 1)
-                (int 2)
-            )
-            (int 3)
-        ),
-      Left $
-        MissingRecordTypeMember
-          mempty
-          (mkName "cat")
-          ( M.singleton
-              (mkName "dog")
-              (unknown 4)
-          )
     )
-    -- combining multiple facts about an unknown record is for later
   ]
 
 identity :: Monoid ann => Expr Variable ann
@@ -231,14 +203,14 @@ spec =
               )
       let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
       startInference mempty expr `shouldBe` expected
-    it "We can use identity with two different datatypes in one expression" $ do
+    fit "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             MyLambda
               mempty
-              (named "x")
+              (tvFree 100)
               ( MyIf
                   mempty
-                  (MyApp mempty identity (MyVar mempty (named "x")))
+                  (MyApp mempty identity (MyVar mempty (tvFree 100)))
                   (MyApp mempty identity (int 1))
                   (MyApp mempty identity (int 2))
               )
