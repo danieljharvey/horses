@@ -9,26 +9,24 @@ import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.AST (DataType)
 import Language.Mimsa.Types.Identifiers (TyCon, Variable)
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
-import Language.Mimsa.Types.Typechecker.Substitutions
 
 -- everything we need in typechecking environment
 data Environment
   = Environment
       { getSchemes :: Map Variable Scheme,
-        getDataTypes :: Map TyCon DataType,
-        getRecordSubs :: Substitutions
+        getDataTypes :: Map TyCon DataType
       }
   deriving (Eq, Ord, Show)
 
 instance Semigroup Environment where
-  (Environment a b c) <> (Environment a' b' c') =
-    Environment (a <> a') (b <> b') (c <> c')
+  (Environment a b) <> (Environment a' b') =
+    Environment (a <> a') (b <> b')
 
 instance Monoid Environment where
-  mempty = Environment mempty mempty mempty
+  mempty = Environment mempty mempty
 
 instance Printer Environment where
-  prettyPrint (Environment typeSchemes _dataTypes _recordSubs) =
+  prettyPrint (Environment typeSchemes _dataTypes) =
     "[\n"
       <> T.intercalate ", \n" (printRow <$> M.toList typeSchemes)
       <> "\n]"

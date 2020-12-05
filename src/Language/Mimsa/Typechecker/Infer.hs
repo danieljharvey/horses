@@ -17,6 +17,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
   ( builtInTypes,
     defaultEnv,
@@ -48,7 +49,7 @@ doInference ::
   Either TypeError (Substitutions, MonoType)
 doInference swaps env expr = runTcMonad swaps $ do
   recSubst <- getSubstitutionsForRecordUsages expr
-  inferAndSubst (defaultEnv recSubst <> env) expr
+  inferAndSubst (debugPretty "defaultEnv" (defaultEnv recSubst <> env)) expr
 
 doDataTypeInference ::
   Environment ->
@@ -67,8 +68,8 @@ inferAndSubst env expr = do
   pure (s, applySubst s tyExpr)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
-applySubstCtx subst (Environment schemes dt recSubst) =
-  Environment (M.map (applySubstScheme (subst <> recSubst)) schemes) dt recSubst
+applySubstCtx subst (Environment schemes dt) =
+  Environment (M.map (applySubstScheme subst) schemes) dt
 
 applySubstScheme :: Substitutions -> Scheme -> Scheme
 applySubstScheme (Substitutions subst) (Scheme vars t) =
@@ -96,23 +97,22 @@ inferVarFromScope ::
   Annotation ->
   Variable ->
   TcMonad (Substitutions, MonoType)
-inferVarFromScope env ann name =
-  let lookup' name' (Environment env' _ _) = M.lookup name' env'
-   in case lookup' name env of
-        Just mt ->
-          instantiate mt
-        _ -> do
-          swaps <- ask
-          throwError $
-            VariableNotInEnv
-              swaps
-              ann
-              name
-              (S.fromList (M.keys (getSchemes env)))
+inferVarFromScope env@(Environment env' _) ann name =
+  case M.lookup (debugPretty "var lookup name" name) (debugPretty "var lookup env" env') of
+    Just mt ->
+      instantiate mt
+    _ -> do
+      swaps <- ask
+      throwError $
+        VariableNotInEnv
+          swaps
+          ann
+          name
+          (S.fromList (M.keys (getSchemes env)))
 
 createEnv :: Variable -> Scheme -> Environment
 createEnv binder scheme =
-  Environment (M.singleton binder scheme) mempty mempty
+  Environment (M.singleton binder scheme) mempty
 
 splitRecordTypes ::
   Map Name (Substitutions, MonoType) ->
@@ -201,7 +201,7 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName dt) mempty
+      let newEnv = Environment mempty (M.singleton tyName dt)
        in infer (newEnv <> env) expr'
 
 -- infer the type of a data constructor
@@ -436,7 +436,7 @@ inferRecordAccess env ann a name = do
   (s1, tyItems) <- infer env a
   tyResult <- case tyItems of
     (MTRecord _ bits) ->
-      case M.lookup name bits of
+      case M.lookup name (debugPretty "bits" bits) of
         Just mt -> pure mt
         _ ->
           throwError $ MissingRecordTypeMember ann name bits
@@ -482,8 +482,8 @@ infer env inferExpr =
     (MyLambda ann binder body) -> do
       tyBinder <- getUnknown ann
       let tmpCtx =
-            createEnv binder (Scheme [] tyBinder)
-              <> env
+            createEnv (debugPretty "newbinder" binder) (Scheme [] tyBinder)
+              <> (debugPretty "env at lambda" env)
       (s1, tyBody) <- infer tmpCtx body
       pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
     (MyApp ann function argument) ->
