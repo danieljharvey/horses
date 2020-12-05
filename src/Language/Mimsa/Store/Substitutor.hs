@@ -1,3 +1,6 @@
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Language.Mimsa.Store.Substitutor where
 
 import Control.Monad (join)
@@ -16,7 +19,7 @@ import Language.Mimsa.Types.Swaps
 -- this turns StoreExpressions back into expressions by substituting their
 -- variables for the deps passed in
 --
--- like the typechecker, as we go though, we replace the varibable names with
+-- like the typechecker, as we go though, we replace the names of variables with
 -- var0, var1, var2 etc so we don't have to care about scoping or collisions
 --
 -- we'll also store what our substitutions were for errors sake
@@ -37,7 +40,7 @@ substitute ::
   SubstitutedExpression ann
 substitute store' storeExpr =
   let startingState = SubsState mempty mempty 0
-      (expr', SubsState swaps' scope' _) =
+      ((_, expr'), SubsState swaps' scope' _) =
         runState
           (doSubstitutions store' storeExpr)
           startingState
@@ -51,13 +54,15 @@ doSubstitutions ::
   (Monoid ann, Eq ann) =>
   Store ann ->
   StoreExpression ann ->
-  App ann (Expr Variable ann)
+  App ann (Changed, Expr Variable ann)
 doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
-  newScopes <- traverse (substituteWithKey store') (getExprPairs store' bindings')
-  addScope $ mconcat newScopes
-  expr' <- mapVar [] expr
+  newScopes <- traverse (addDepToScope store') (getExprPairs store' bindings')
+  addScope $ mconcat (fst <$> newScopes)
+  let changed = mconcat (snd <$> newScopes)
+  expr' <- mapVar changed expr
   dtList <- toDataTypeList <$> resolveTypes store' tBindings
-  pure $ addDataTypesToExpr expr' dtList
+  let dtExpr = addDataTypesToExpr expr' dtList
+  pure (changed, dtExpr)
 
 ------------ type stuff
 
@@ -85,18 +90,19 @@ addDataTypesToExpr =
 
 --------------
 
-substituteWithKey ::
+addDepToScope ::
   (Eq ann, Monoid ann) =>
   Store ann ->
   (Name, StoreExpression ann) ->
-  App ann (Scope ann)
-substituteWithKey store' (key, storeExpr') = do
-  expr' <- doSubstitutions store' storeExpr'
+  App ann (Scope ann, Changed)
+addDepToScope store' (name, storeExpr') = do
+  (chg, expr') <- doSubstitutions store' storeExpr'
   maybeKey <- scopeExists expr'
-  key' <- case maybeKey of
+  var <- case maybeKey of
     Just existingKey -> pure existingKey
-    Nothing -> getNextVar [] key
-  pure $ Scope (M.singleton key' expr')
+    Nothing -> getNextVarName name
+  let changed = addChange name var chg
+  pure (Scope (M.singleton var expr'), changed)
 
 -- if the expression we're already saving is in the scope
 -- that's the name we want to use
@@ -135,21 +141,15 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 -- Swaps list
 -- we don't do this for variables introduced by
 -- lambdas
-getNextVar ::
+getNextVarName ::
   (Eq ann, Monoid ann) =>
-  [Name] ->
   Name ->
   App ann Variable
-getNextVar protected name
-  | name `elem` protected = pure (NamedVar name)
-  | otherwise = do
-    stuff <- findInSwaps name
-    case stuff of
-      Just existingName -> pure existingName
-      Nothing -> do
-        nextName <- NumberedVar <$> nextNum
-        addSwap name nextName
-        pure nextName
+getNextVarName name =
+  do
+    nextName <- NumberedVar <$> nextNum
+    addSwap name nextName
+    pure nextName
 
 nextNum :: App ann Int
 nextNum = do
@@ -157,45 +157,72 @@ nextNum = do
   modify (\s -> s {subsCounter = p + 1})
   pure p
 
-nameToVar :: (Monad m) => Name -> m Variable
-nameToVar = pure . NamedVar
+-- convert name to variable
+nameToVar :: Changed -> Name -> Variable
+nameToVar chg n = case fromChange chg n of
+  Just var -> var -- we've allocated this already
+  _ -> NamedVar n -- this is what we did before, not sure about it
+
+-- this is opposite to Swaps, and allows the meaning of a variable to be
+-- changed by scoping, hence unique key is name
+-- we pass these around manually rather than putting them in state
+-- so that the scoping dies when we're no longer down the relevant sub-tree
+newtype Changed = Changed {getChanged :: Map Name Variable}
+  deriving newtype (Semigroup, Monoid)
+
+addChange :: Name -> Variable -> Changed -> Changed
+addChange k v (Changed changes) = Changed (M.singleton k v <> changes)
+
+fromChange :: Changed -> Name -> Maybe Variable
+fromChange (Changed changes) n = M.lookup n changes
 
 -- step through Expr, replacing vars with numbered variables
 mapVar ::
   (Eq ann, Monoid ann) =>
-  [Name] ->
+  Changed ->
   Expr Name ann ->
   App ann (Expr Variable ann)
-mapVar p (MyVar ann a) =
-  MyVar ann <$> getNextVar p a
-mapVar p (MyLet ann name a b) =
-  MyLet ann <$> nameToVar name <*> mapVar p a
-    <*> mapVar (p <> [name]) b
-mapVar p (MyInfix ann op a b) =
-  MyInfix ann op <$> mapVar p a <*> mapVar p b
-mapVar p (MyLambda ann name a) =
-  MyLambda ann <$> nameToVar name <*> mapVar (p <> [name]) a
-mapVar p (MyRecordAccess ann a name) =
+mapVar chg (MyLambda ann name body) = do
+  -- here we introduce new vars so we give them nums to avoid collisions
+  var <- getNextVarName name
+  MyLambda ann var <$> mapVar (addChange name var chg) body
+mapVar chg (MyVar ann name) =
+  pure $ MyVar ann (nameToVar chg name)
+mapVar chg (MyLet ann name expr' body) = do
+  var <- getNextVarName name
+  let withChange = addChange name var chg
+  -- i *think* we need to substitute in the expr' as well as the body to allow
+  -- recursive lets to still work. we'll when this shitshow really goes down
+  -- though
+  MyLet ann var <$> mapVar withChange expr' <*> mapVar withChange body
+mapVar chg (MyLetPair ann nameA nameB a b) = do
+  varA <- getNextVarName nameA
+  varB <- getNextVarName nameB
+  let withChange = addChange nameA varA (addChange nameB varB chg)
+  MyLetPair
+    ann
+    varA
+    varB
+    <$> mapVar withChange a
+    <*> mapVar withChange b
+mapVar chg (MyInfix ann op a b) =
+  MyInfix ann op <$> mapVar chg a <*> mapVar chg b
+mapVar chg (MyRecordAccess ann a name) =
   MyRecordAccess ann
-    <$> mapVar p a <*> pure name
-mapVar p (MyApp ann a b) = MyApp ann <$> mapVar p a <*> mapVar p b
-mapVar p (MyIf ann a b c) = MyIf ann <$> mapVar p a <*> mapVar p b <*> mapVar p c
-mapVar p (MyPair ann a b) = MyPair ann <$> mapVar p a <*> mapVar p b
-mapVar p (MyLetPair ann nameA nameB a b) =
-  MyLetPair ann
-    <$> nameToVar nameA <*> nameToVar nameB
-      <*> mapVar (p <> [nameA, nameB]) a
-      <*> mapVar (p <> [nameA, nameB]) b
-mapVar p (MyRecord ann map') = do
-  map2 <- traverse (mapVar p) map'
+    <$> mapVar chg a <*> pure name
+mapVar chg (MyApp ann a b) = MyApp ann <$> mapVar chg a <*> mapVar chg b
+mapVar chg (MyIf ann a b c) = MyIf ann <$> mapVar chg a <*> mapVar chg b <*> mapVar chg c
+mapVar chg (MyPair ann a b) = MyPair ann <$> mapVar chg a <*> mapVar chg b
+mapVar chg (MyRecord ann map') = do
+  map2 <- traverse (mapVar chg) map'
   pure (MyRecord ann map2)
 mapVar _ (MyLiteral ann a) = pure (MyLiteral ann a)
-mapVar p (MyData ann dt b) =
-  MyData ann dt <$> mapVar p b
+mapVar chg (MyData ann dt b) =
+  MyData ann dt <$> mapVar chg b
 mapVar _ (MyConstructor ann name) = pure (MyConstructor ann name)
-mapVar p (MyConsApp ann fn var) = MyConsApp ann <$> mapVar p fn <*> mapVar p var
-mapVar p (MyCaseMatch ann expr' matches catchAll) = do
-  let mapVarPair (name, expr'') = (,) name <$> mapVar p expr''
+mapVar chg (MyConsApp ann fn var) = MyConsApp ann <$> mapVar chg fn <*> mapVar chg var
+mapVar chg (MyCaseMatch ann expr' matches catchAll) = do
+  let mapVarPair (name, expr'') = (,) name <$> mapVar chg expr''
   matches' <- traverse mapVarPair matches
-  catchAll' <- traverse (mapVar p) catchAll
-  MyCaseMatch ann <$> mapVar p expr' <*> pure matches' <*> pure catchAll'
+  catchAll' <- traverse (mapVar chg) catchAll
+  MyCaseMatch ann <$> mapVar chg expr' <*> pure matches' <*> pure catchAll'

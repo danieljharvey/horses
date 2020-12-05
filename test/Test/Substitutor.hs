@@ -9,7 +9,7 @@ where
 
 import qualified Data.Map as M
 import Language.Mimsa.Logging
-import Language.Mimsa.Store.SubstitutorV2 (substitute)
+import Language.Mimsa.Store.Substitutor (substitute)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope

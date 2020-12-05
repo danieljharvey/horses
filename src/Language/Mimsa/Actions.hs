@@ -17,6 +17,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import Language.Mimsa.Logging
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Project
 import Language.Mimsa.Store
@@ -83,7 +84,7 @@ resolveStoreExpression ::
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' input storeExpr = do
   let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
-  exprType <- getType swaps scope input newExpr
+  exprType <- getType swaps scope input (debugPretty "substituted expr" newExpr)
   pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
 
 getTypecheckedStoreExpression ::
