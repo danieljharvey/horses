@@ -203,7 +203,7 @@ spec =
               )
       let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
       startInference mempty expr `shouldBe` expected
-    fit "We can use identity with two different datatypes in one expression" $ do
+    it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             MyLambda
               mempty

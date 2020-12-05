@@ -24,6 +24,8 @@ import Language.Mimsa.Types.Store
 -- by replacing all variables internally with a1, a2 etc, we'll get less
 -- repetition, ie \x -> x and \y -> y will be the same function and thus hash
 
+-- basically, (global Bindings, Expression) -> StoreExpression
+
 findHashInBindings :: Bindings -> Name -> Either ResolverError ExprHash
 findHashInBindings (Bindings bindings') name =
   case M.lookup name bindings' of

@@ -471,7 +471,7 @@ spec =
         result <- eval stdLib "\\a -> let one = a.one; let two = a.two; a"
         result
           `shouldSatisfy` isRight
-      it "\\a -> let one = a.one in \\a -> let two = a.two in a" $ do
+      xit "\\a -> let one = a.one in \\a -> let two = a.two in a" $ do
         result <- eval stdLib "\\a -> let one = a.one in \\a -> let two = a.two in a.one"
         -- here the two a's should be different types due to shadowing
         result
