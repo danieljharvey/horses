@@ -99,7 +99,7 @@ spec =
               MyLet
                 mempty
                 (named "const")
-                (MyLambda mempty (named "a") (MyLambda mempty (named "b") (MyVar mempty (named "a"))))
+                (MyLambda mempty (tvFree 0) (MyLambda mempty (tvFree 1) (MyVar mempty (tvFree 0))))
                 (MyApp mempty (MyApp mempty (MyVar mempty (named "const")) (int 1)) (int 2))
         testInterpret mempty f (int 1)
     describe "If" $ do
