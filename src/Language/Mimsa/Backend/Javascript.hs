@@ -92,25 +92,11 @@ containsLet = getAny . foundLet
 
 -- check for let expressions
 foundLet :: Expr Name ann -> Any
-foundLet (MyVar _ _) = mempty
-foundLet (MyIf _ a b c) = foundLet a <> foundLet b <> foundLet c
-foundLet (MyInfix _ _ a b) = foundLet a <> foundLet b
-foundLet MyLet {} = Any True
-foundLet (MyLambda _ _ a) = foundLet a
-foundLet (MyApp _ a b) = foundLet a <> foundLet b
-foundLet (MyLiteral _ _) = mempty
-foundLet MyLetPair {} = Any True
-foundLet (MyPair _ a b) = foundLet a <> foundLet b
-foundLet (MyRecord _ map') = foldMap foundLet map'
-foundLet (MyRecordAccess _ a _) = foundLet a
-foundLet (MyData _ _ a) =
-  foundLet a
-foundLet (MyConstructor _ _) = mempty
-foundLet (MyConsApp _ a b) = foundLet a <> foundLet b
-foundLet (MyCaseMatch _ sum' matches catchAll) =
-  foundLet sum'
-    <> mconcat (foundLet . snd <$> NE.toList matches)
-    <> maybe mempty foundLet catchAll
+foundLet = withMonoid findLet
+  where
+    findLet MyLet {} = Any True
+    findLet MyLetPair {} = Any True
+    findLet _ = mempty
 
 -- if this is the last binding, then we should 'return' the statement
 addReturn :: Expr Name ann -> Javascript -> Javascript
