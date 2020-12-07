@@ -191,10 +191,8 @@ mapVar chg (MyVar ann name) =
 mapVar chg (MyLet ann name expr' body) = do
   var <- getNextVarName name
   let withChange = addChange name var chg
-  -- i *think* we need to substitute in the expr' as well as the body to allow
-  -- recursive lets to still work. we'll when this shitshow really goes down
-  -- though
-  MyLet ann var <$> mapVar withChange expr' <*> mapVar withChange body
+  MyLet ann var
+    <$> mapVar withChange expr' <*> mapVar withChange body
 mapVar chg (MyLetPair ann nameA nameB a b) = do
   varA <- getNextVarName nameA
   varB <- getNextVarName nameB
