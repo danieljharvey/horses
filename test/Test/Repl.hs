@@ -81,7 +81,7 @@ spec =
         result
           `shouldBe` Right
             ( MTFunction mempty (unknown 5) (unknown 5),
-              MyLambda mempty (named "i") (MyVar mempty (tvFree 1))
+              MyLambda mempty (tvFree 1) (MyVar mempty (tvFree 1))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"

@@ -93,7 +93,7 @@ spec =
                 (named "const")
                 (MyLambda mempty (named "a") (MyLambda mempty (named "b") (MyVar mempty (named "a"))))
                 (MyApp mempty (MyVar mempty (named "const")) (int 1))
-        testInterpret mempty f $ MyLambda mempty (named "b") (MyVar mempty (NumberedVar 1))
+        testInterpret mempty f $ MyLambda mempty (named "b") (MyVar mempty (NumberedVar 2))
       it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
               MyLet

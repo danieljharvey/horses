@@ -17,7 +17,6 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
   ( builtInTypes,
     defaultEnv,
@@ -49,7 +48,7 @@ doInference ::
   Either TypeError (Substitutions, MonoType)
 doInference swaps env expr = runTcMonad swaps $ do
   recSubst <- getSubstitutionsForRecordUsages expr
-  inferAndSubst (debugPretty "defaultEnv" (defaultEnv recSubst <> env)) expr
+  inferAndSubst (defaultEnv recSubst <> env) expr
 
 doDataTypeInference ::
   Environment ->
@@ -436,7 +435,7 @@ inferRecordAccess env ann a name = do
   (s1, tyItems) <- infer env a
   tyResult <- case tyItems of
     (MTRecord _ bits) ->
-      case M.lookup name (debugPretty "bits" bits) of
+      case M.lookup name bits of
         Just mt -> pure mt
         _ ->
           throwError $ MissingRecordTypeMember ann name bits
@@ -457,10 +456,10 @@ inferLambda ::
   TcMonad (Substitutions, MonoType)
 inferLambda env@(Environment env' _) ann binder body = do
   tyBinder <- case M.lookup binder env' of
-    Just (Scheme _ found) -> pure (debugPretty "lambda type from env" found)
+    Just (Scheme _ found) -> pure found
     _ -> getUnknown ann
   let tmpCtx =
-        createEnv (debugPretty "newbinder" binder) (Scheme [] tyBinder) <> env
+        createEnv binder (Scheme [] tyBinder) <> env
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
 

@@ -8,7 +8,6 @@ module Test.Substitutor
 where
 
 import qualified Data.Map as M
-import Language.Mimsa.Logging
 import Language.Mimsa.Store.Substitutor (substitute)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -82,7 +81,7 @@ testSubstitute ::
   Store Annotation ->
   StoreExpression Annotation ->
   SubstitutedExpression Annotation
-testSubstitute a b = debugLog "substitute result" $ substitute a b
+testSubstitute = substitute
 
 spec :: Spec
 spec = do
