@@ -12,6 +12,7 @@ module Language.Mimsa.Types.AST.Expr
     getAnnotation,
     mapExpr,
     bindExpr,
+    withMonoid,
   )
 where
 
@@ -139,6 +140,65 @@ bindExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
     <*> traverse f catchExpr
   where
     traverseSecond (a, b) = (a,) <$> f b
+
+-- is this just shitty foldable?
+withMonoid ::
+  (Monoid m) =>
+  (Expr var ann -> m) ->
+  Expr var ann ->
+  m
+withMonoid f whole@(MyLiteral _ _) = f whole
+withMonoid f whole@(MyVar _ _) = f whole
+withMonoid f whole@(MyLet _ _ bindExpr' inExpr) =
+  f whole
+    <> withMonoid f bindExpr'
+    <> withMonoid f inExpr
+withMonoid f whole@(MyLetPair _ _binderA _binderB bindExpr' inExpr) =
+  f whole
+    <> withMonoid f bindExpr'
+    <> withMonoid f inExpr
+withMonoid f whole@(MyInfix _ _ a b) =
+  f whole
+    <> withMonoid f a
+    <> withMonoid f b
+withMonoid f whole@(MyLambda _ _binder expr) =
+  f whole
+    <> withMonoid f expr
+withMonoid f whole@(MyApp _ func arg) =
+  f whole
+    <> withMonoid f func
+    <> withMonoid f arg
+withMonoid f whole@(MyIf _ matchExpr thenExpr elseExpr) =
+  f whole
+    <> withMonoid f matchExpr
+    <> withMonoid f thenExpr
+    <> withMonoid f elseExpr
+withMonoid f whole@(MyPair _ a b) =
+  f whole
+    <> withMonoid f a
+    <> withMonoid f b
+withMonoid f whole@(MyRecord _ items) =
+  f whole
+    <> mconcat
+      ( snd <$> M.toList (withMonoid f <$> items)
+      )
+withMonoid f whole@(MyRecordAccess _ expr _name) =
+  f whole <> withMonoid f expr
+withMonoid f whole@(MyData _ _ expr) =
+  f whole <> withMonoid f expr
+withMonoid f whole@(MyConstructor _ _) = f whole
+withMonoid f whole@(MyConsApp _ func arg) =
+  f whole
+    <> withMonoid f func
+    <> withMonoid f arg
+withMonoid f whole@(MyCaseMatch _ matchExpr caseExprs catchExpr) =
+  f whole
+    <> withMonoid f matchExpr
+    <> mconcat
+      ( NE.toList
+          (withMonoid f <$> (snd <$> caseExprs))
+      )
+    <> maybe mempty (withMonoid f) catchExpr
 
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) = prettyDoc l

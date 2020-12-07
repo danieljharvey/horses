@@ -24,6 +24,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
+import Language.Mimsa.Typechecker.RecordUsages
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
@@ -45,14 +46,16 @@ doInference ::
   Environment ->
   TcExpr ->
   Either TypeError (Substitutions, MonoType)
-doInference swaps env expr = runTcMonad swaps (inferAndSubst (defaultEnv <> env) expr)
+doInference swaps env expr = runTcMonad swaps $ do
+  recSubst <- getSubstitutionsForRecordUsages expr
+  inferAndSubst (defaultEnv recSubst <> env) expr
 
 doDataTypeInference ::
   Environment ->
   DataType ->
   Either TypeError (Map TyCon TypeConstructor)
 doDataTypeInference env dt =
-  runTcMonad mempty (snd <$> inferConstructorTypes (defaultEnv <> env) dt)
+  runTcMonad mempty (snd <$> inferConstructorTypes (defaultEnv mempty <> env) dt)
 
 -- run inference, and substitute everything possible
 inferAndSubst ::
@@ -93,19 +96,18 @@ inferVarFromScope ::
   Annotation ->
   Variable ->
   TcMonad (Substitutions, MonoType)
-inferVarFromScope env ann name =
-  let lookup' name' (Environment env' _) = M.lookup name' env'
-   in case lookup' name env of
-        Just mt ->
-          instantiate mt
-        _ -> do
-          swaps <- ask
-          throwError $
-            VariableNotInEnv
-              swaps
-              ann
-              name
-              (S.fromList (M.keys (getSchemes env)))
+inferVarFromScope env@(Environment env' _) ann name =
+  case M.lookup name env' of
+    Just mt ->
+      instantiate mt
+    _ -> do
+      swaps <- ask
+      throwError $
+        VariableNotInEnv
+          swaps
+          ann
+          name
+          (S.fromList (M.keys (getSchemes env)))
 
 createEnv :: Variable -> Scheme -> Environment
 createEnv binder scheme =
@@ -446,6 +448,21 @@ inferRecordAccess env ann a name = do
   let subs = s2 <> s1
   pure (subs, applySubst subs tyResult)
 
+inferLambda ::
+  Environment ->
+  Annotation ->
+  Variable ->
+  TcExpr ->
+  TcMonad (Substitutions, MonoType)
+inferLambda env@(Environment env' _) ann binder body = do
+  tyBinder <- case M.lookup binder env' of
+    Just (Scheme _ found) -> pure found
+    _ -> getUnknown ann
+  let tmpCtx =
+        createEnv binder (Scheme [] tyBinder) <> env
+  (s1, tyBody) <- infer tmpCtx body
+  pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
+
 infer ::
   Environment ->
   TcExpr ->
@@ -476,13 +493,8 @@ infer env inferExpr =
       inferRecordAccess env ann a name
     (MyLetPair _ binder1 binder2 expr body) ->
       inferLetPairBinding env binder1 binder2 expr body
-    (MyLambda ann binder body) -> do
-      tyBinder <- getUnknown ann
-      let tmpCtx =
-            createEnv binder (Scheme [] tyBinder)
-              <> env
-      (s1, tyBody) <- infer tmpCtx body
-      pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
+    (MyLambda ann binder body) ->
+      inferLambda env ann binder body
     (MyApp ann function argument) ->
       inferApplication env ann function argument
     (MyIf _ condition thenCase elseCase) ->

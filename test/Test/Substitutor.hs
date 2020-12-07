@@ -86,30 +86,41 @@ testSubstitute = substitute
 spec :: Spec
 spec = do
   describe "Substitutor" $ do
-    describe "No deps, no problem"
-      $ it "Just unwraps everything"
-      $ do
+    it "No deps, no problem" $
+      do
         let ans = testSubstitute mempty trueStoreExpr
         seSwaps ans `shouldBe` mempty
         seExpr ans `shouldBe` bool True
         seScope ans `shouldBe` mempty
-    describe "Leaves lambda variable alone"
-      $ it "Leaves x unchanged"
-      $ do
+    it "Lambda vars are turned into numbers" $
+      do
         let expr =
               MyLambda
                 mempty
                 (mkName "x")
-                (MyVar mempty (mkName "x"))
+                ( MyPair
+                    mempty
+                    (MyVar mempty (mkName "x"))
+                    (MyLambda mempty (mkName "x") (MyVar mempty (mkName "x")))
+                )
             expected =
               MyLambda
                 mempty
-                (named "x")
-                (MyVar mempty (named "x"))
+                (tvFree 0)
+                ( MyPair
+                    mempty
+                    (MyVar mempty (tvFree 0))
+                    (MyLambda mempty (tvFree 1) (MyVar mempty (tvFree 1)))
+                )
+            expectSwaps =
+              M.fromList
+                [ (tvFree 0, mkName "x"),
+                  (tvFree 1, mkName "x")
+                ]
             ans = testSubstitute mempty (StoreExpression expr mempty mempty)
-        ans `shouldBe` SubstitutedExpression mempty expected mempty
+        ans `shouldBe` SubstitutedExpression expectSwaps expected mempty
     describe "One level of dep"
-      $ it "Renames the dep to var0"
+      $ it "Vars introduced by deps are given numbers"
       $ do
         let hash = exprHash 1
             expr = MyVar mempty (Name "exciting")
@@ -120,7 +131,7 @@ spec = do
         seSwaps ans
           `shouldBe` M.singleton (NumberedVar 0) (Name "exciting")
         seExpr ans
-          `shouldBe` MyVar mempty (NumberedVar 0)
+          `shouldBe` MyVar mempty (tvFree 0)
         seScope ans
           `shouldBe` Scope (M.singleton (NumberedVar 0) (bool True))
     describe "Only creates one new var if a function is used twice"
@@ -136,28 +147,29 @@ spec = do
             bindings' = Bindings $ M.singleton (mkName "id") hash
             storeExpr = StoreExpression expr bindings' mempty
             store' = Store (M.singleton hash idExpr)
-            expectedId = MyLambda mempty (named "i") (MyVar mempty (named "i"))
+            expectedId = MyLambda mempty (tvFree 0) (MyVar mempty (tvFree 0))
         let ans = testSubstitute store' storeExpr
         seSwaps ans
           `shouldBe` M.fromList
-            [ (NumberedVar 0, Name "id")
+            [ (NumberedVar 0, Name "i"),
+              (NumberedVar 1, Name "id")
             ]
         seExpr ans
           `shouldBe` MyRecord
             mempty
             ( M.fromList
-                [ (mkName "first", MyApp mempty (MyVar mempty (NumberedVar 0)) (int 1)),
-                  (mkName "second", MyApp mempty (MyVar mempty (NumberedVar 0)) (int 2))
+                [ (mkName "first", MyApp mempty (MyVar mempty (tvFree 1)) (int 1)),
+                  (mkName "second", MyApp mempty (MyVar mempty (tvFree 1)) (int 2))
                 ]
             )
         seScope ans
           `shouldBe` Scope
             ( M.fromList
-                [ (NumberedVar 0, expectedId)
+                [ (NumberedVar 1, expectedId)
                 ]
             )
   describe "Combine two levels"
-    $ it "Combines trueStoreExpr and falseStoreExpr"
+    $ it "'true' is introduced as a numbered variable"
     $ do
       let hash = exprHash 2
           expr = MyVar mempty (mkName "true")
@@ -167,13 +179,15 @@ spec = do
       let ans = testSubstitute store' storeExpr
       seSwaps ans
         `shouldBe` M.fromList
-          [ (NumberedVar 0, Name "true")
+          [ (NumberedVar 0, Name "true"),
+            (NumberedVar 1, Name "true")
           ]
-      seExpr ans `shouldBe` MyVar mempty (NumberedVar 0)
+      seExpr ans `shouldBe` MyVar mempty (tvFree 1)
       seScope ans
         `shouldBe` Scope
           ( M.fromList
-              [ (NumberedVar 0, bool True)
+              [ (NumberedVar 0, bool True),
+                (NumberedVar 1, MyVar mempty (tvFree 0))
               ]
           )
   describe "Extracts types"

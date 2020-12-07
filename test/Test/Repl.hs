@@ -9,6 +9,7 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
+import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
@@ -79,8 +80,8 @@ spec =
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction mempty (unknown 4) (unknown 4),
-              MyLambda mempty (named "i") (MyVar mempty (named "i"))
+            ( MTFunction mempty (unknown 5) (unknown 5),
+              MyLambda mempty (tvFree 1) (MyVar mempty (tvFree 1))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"
@@ -470,4 +471,29 @@ spec =
       it "\\a -> let one = a.one; let two = a.two; a" $ do
         result <- eval stdLib "\\a -> let one = a.one; let two = a.two; a"
         result
-          `shouldSatisfy` isLeft
+          `shouldSatisfy` isRight
+      it "\\a -> let one = a.one; \\a -> let two = a.two in a.one" $ do
+        result <- eval stdLib "\\a -> let one = a.one; \\a -> let two = a.two in a.one"
+        -- here the two a's should be different types due to shadowing
+        -- but even knowing the second a is different it can infer stuff
+        fst <$> result
+          `shouldBe` Right
+            ( MTFunction
+                mempty
+                ( MTRecord
+                    mempty
+                    (M.singleton (mkName "one") (MTVar mempty (tvFree 1)))
+                )
+                ( MTFunction
+                    mempty
+                    ( MTRecord
+                        mempty
+                        ( M.fromList
+                            [ (mkName "one", MTVar mempty (tvFree 2)),
+                              (mkName "two", MTVar mempty (tvFree 3))
+                            ]
+                        )
+                    )
+                    (MTVar mempty (tvFree 2))
+                )
+            )

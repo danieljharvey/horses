@@ -12,9 +12,10 @@ import Language.Mimsa.Types.AST (DataType (DataType))
 import Language.Mimsa.Types.Identifiers (TyCon, mkTyCon)
 import Language.Mimsa.Types.Typechecker
 
-defaultEnv :: Environment
-defaultEnv = Environment mempty dts
+defaultEnv :: Substitutions -> Environment
+defaultEnv (Substitutions subst) = Environment schemes dts
   where
+    schemes = Scheme mempty <$> subst
     makeDT (name, _) = M.singleton name (DataType name mempty mempty)
     dts = mconcat $ makeDT <$> M.toList builtInTypes
 
