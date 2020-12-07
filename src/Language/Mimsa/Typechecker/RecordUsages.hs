@@ -7,7 +7,6 @@ module Language.Mimsa.Typechecker.RecordUsages
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Map (Map)
 import Data.Maybe (catMaybes)
@@ -56,41 +55,15 @@ toEmptyType vars =
 getRecordUsages ::
   Expr Variable ann ->
   CombineMap Variable (Set Name)
-getRecordUsages (MyLiteral _ _) = mempty
-getRecordUsages (MyVar _ _) = mempty
-getRecordUsages (MyLet _ _binder bindExpr' inExpr) =
-  getRecordUsages bindExpr'
-    <> getRecordUsages inExpr
-getRecordUsages (MyLetPair _ _binderA _binderB bindExpr' inExpr) =
-  getRecordUsages bindExpr'
-    <> getRecordUsages inExpr
-getRecordUsages (MyInfix _ _ a b) =
-  getRecordUsages a <> getRecordUsages b
-getRecordUsages (MyLambda _ binder expr) =
-  CombineMap (M.singleton binder mempty) <> getRecordUsages expr
-getRecordUsages (MyApp _ func arg) = getRecordUsages func <> getRecordUsages arg
-getRecordUsages (MyIf _ matchExpr thenExpr elseExpr) =
-  getRecordUsages matchExpr
-    <> getRecordUsages thenExpr
-    <> getRecordUsages elseExpr
-getRecordUsages (MyPair _ a b) =
-  getRecordUsages a <> getRecordUsages b
-getRecordUsages (MyRecord _ items) = mconcat $ snd <$> M.toList (getRecordUsages <$> items)
-getRecordUsages (MyRecordAccess _ expr name) =
-  case getVariable expr of
-    Just var -> CombineMap $ M.singleton var (S.singleton name)
-    Nothing -> mempty
-getRecordUsages (MyData _ _ expr) = getRecordUsages expr
-getRecordUsages (MyConstructor _ _) = mempty
-getRecordUsages (MyConsApp _ func arg) =
-  getRecordUsages func <> getRecordUsages arg
-getRecordUsages (MyCaseMatch _ matchExpr caseExprs catchExpr) =
-  getRecordUsages matchExpr
-    <> mconcat
-      ( NE.toList
-          (getRecordUsages <$> (snd <$> caseExprs))
-      )
-    <> maybe mempty getRecordUsages catchExpr
+getRecordUsages = withMonoid getRecordUsages'
+  where
+    getRecordUsages' (MyLambda _ binder expr) =
+      CombineMap (M.singleton binder mempty) <> getRecordUsages' expr
+    getRecordUsages' (MyRecordAccess _ expr name) =
+      case getVariable expr of
+        Just var -> CombineMap $ M.singleton var (S.singleton name)
+        Nothing -> mempty
+    getRecordUsages' _ = mempty
 
 getVariable :: Expr Variable ann -> Maybe Variable
 getVariable (MyVar _ a) = Just a
