@@ -6,8 +6,8 @@ module Language.Mimsa.Server.Main
   )
 where
 
+import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
-import Data.IORef
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
@@ -48,7 +48,7 @@ mimsaApp mimsaEnv =
 createMimsaEnvironment :: IO MimsaEnvironment
 createMimsaEnvironment = do
   env <- getDefaultProject
-  MimsaEnvironment <$> newIORef (store env)
+  MimsaEnvironment <$> STM.newTVarIO (store env)
 
 getDefaultProject :: IO (Project Annotation)
 getDefaultProject = do
