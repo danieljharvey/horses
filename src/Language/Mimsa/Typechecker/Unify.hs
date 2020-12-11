@@ -41,6 +41,19 @@ varBind var ty
   | otherwise =
     pure $ Substitutions (M.singleton var ty)
 
+unifyRecords ::
+  (Annotation, Map Name MonoType) ->
+  (Annotation, Map Name MonoType) ->
+  TcMonad Substitutions
+unifyRecords (ann, as) (ann', bs) = do
+  let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
+  let getRecordTypes k = do
+        tyLeft <- getRecordItemType ann k as
+        tyRight <- getRecordItemType ann' k bs
+        unify tyLeft tyRight
+  s <- traverse getRecordTypes allKeys
+  pure (mconcat s)
+
 unifyPairs ::
   (MonoType, MonoType) ->
   (MonoType, MonoType) ->
@@ -60,14 +73,8 @@ unify tyA tyB =
     (MTFunction _ l r, MTFunction _ l' r') ->
       unifyPairs (l, r) (l', r')
     (MTPair _ a b, MTPair _ a' b') -> unifyPairs (a, b) (a', b')
-    (MTRecord ann as, MTRecord ann' bs) -> do
-      let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
-      let getRecordTypes k = do
-            tyLeft <- getTypeOrFresh ann k as
-            tyRight <- getTypeOrFresh ann' k bs
-            unify tyLeft tyRight
-      s <- traverse getRecordTypes allKeys
-      pure (mconcat s)
+    (MTRecord ann as, MTRecord ann' bs) ->
+      unifyRecords (ann, as) (ann', bs)
     (MTData _ a tyAs, MTData _ b tyBs)
       | a == b -> do
         let pairs = zip tyAs tyBs
@@ -90,8 +97,12 @@ unifyStrict tyA tyB =
         else unify tyA tyB
     (a, b) -> unify a b
 
-getTypeOrFresh :: Annotation -> Name -> Map Name MonoType -> TcMonad MonoType
-getTypeOrFresh ann name map' =
+getRecordItemType ::
+  Annotation ->
+  Name ->
+  Map Name MonoType ->
+  TcMonad MonoType
+getRecordItemType ann name map' =
   case M.lookup name map' of
     Just found -> pure found
-    _ -> getUnknown ann
+    _ -> throwError (MissingRecordTypeMember ann name map')

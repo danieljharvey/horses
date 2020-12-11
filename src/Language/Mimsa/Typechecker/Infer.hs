@@ -441,12 +441,7 @@ inferRecordAccess env ann a name = do
           throwError $ MissingRecordTypeMember ann name bits
     (MTVar ann' _) -> getUnknown ann'
     _ -> throwError $ CannotMatchRecord env ann tyItems
-  s2 <-
-    unify
-      (MTRecord mempty $ M.singleton name tyResult)
-      tyItems
-  let subs = s2 <> s1
-  pure (subs, applySubst subs tyResult)
+  pure (s1, applySubst s1 tyResult)
 
 inferLambda ::
   Environment ->
@@ -483,12 +478,8 @@ infer env inferExpr =
     (MyInfix ann op a b) -> inferOperator env ann op a b
     (MyLet ann binder expr body) ->
       inferLetBinding env ann binder expr body
-    (MyRecordAccess ann (MyRecord _ items') name) ->
-      case M.lookup name items' of
-        Just item ->
-          infer env item
-        Nothing ->
-          throwError $ MissingRecordMember ann name (S.fromList (M.keys items'))
+    (MyRecordAccess ann (MyRecord ann' items') name) ->
+      inferRecordAccess env ann (MyRecord ann' items') name
     (MyRecordAccess ann a name) ->
       inferRecordAccess env ann a name
     (MyLetPair _ binder1 binder2 expr body) ->

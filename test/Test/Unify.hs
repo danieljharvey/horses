@@ -63,21 +63,3 @@ spec =
                   (NumberedVar 2, MTPrim mempty MTInt)
                 ]
           )
-    it "Combines two records" $
-      runUnifier
-        ( MTRecord mempty $
-            M.fromList
-              [ (mkName "one", MTPrim mempty MTInt)
-              ],
-          MTRecord mempty $
-            M.fromList
-              [ (mkName "two", MTPrim mempty MTBool)
-              ]
-        )
-        `shouldBe` Right
-          ( Substitutions $
-              M.fromList
-                [ (NumberedVar 1, MTPrim mempty MTInt),
-                  (NumberedVar 2, MTPrim mempty MTBool)
-                ]
-          )
