@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a8592369ce1eef1b8c5ac4028983993fa094fb62c012b1292807e3d22f5a5f37
+-- hash: 79077c236de10c44a63ce41d6508e8187df69e212c704bfdc71a00760537a32e
 
 name:           mimsa
 version:        0.1.0.0
@@ -157,6 +157,7 @@ library
     , servant
     , servant-server
     , servant-swagger
+    , stm
     , swagger2
     , text
     , transformers
@@ -192,6 +193,7 @@ executable mimsa
     , servant
     , servant-server
     , servant-swagger
+    , stm
     , swagger2
     , text
     , transformers
@@ -227,6 +229,7 @@ executable swagger
     , servant
     , servant-server
     , servant-swagger
+    , stm
     , swagger2
     , text
     , transformers
@@ -283,6 +286,7 @@ test-suite mimsa-test
     , servant
     , servant-server
     , servant-swagger
+    , stm
     , swagger2
     , text
     , transformers

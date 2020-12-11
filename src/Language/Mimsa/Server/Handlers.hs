@@ -20,9 +20,9 @@ module Language.Mimsa.Server.Handlers
   )
 where
 
+import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
-import Data.IORef
 import Data.Map (Map)
 import Data.Swagger
 import Data.Text (Text)
@@ -73,12 +73,12 @@ data ProjectData
 -- read the store from mutable var to stop repeated loading of exprs
 readStoreHandler :: MimsaEnvironment -> Handler (Store Annotation)
 readStoreHandler mimsaEnv = do
-  liftIO $ readIORef (mutableStore mimsaEnv)
+  liftIO $ STM.atomically $ STM.readTVar (mutableStore mimsaEnv)
 
 writeStoreHandler :: MimsaEnvironment -> Store Annotation -> Handler ()
 writeStoreHandler mimsaEnv store' = do
-  liftIO $
-    modifyIORef'
+  liftIO $ STM.atomically $
+    STM.modifyTVar
       (mutableStore mimsaEnv)
       (<> store')
 
