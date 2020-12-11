@@ -10,6 +10,7 @@ where
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
 import qualified Data.Map as M
+import qualified Data.Text as T
 import Data.Text (Text)
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
@@ -472,6 +473,15 @@ spec =
         result <- eval stdLib "\\a -> let one = a.one; let two = a.two; a"
         result
           `shouldSatisfy` isRight
+      it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1})" $ do
+        result <- eval stdLib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1})"
+        result `shouldSatisfy` \(Left err) -> not $ T.isInfixOf "InterpreterError" err
+      it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({two: 2})" $ do
+        result <- eval stdLib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({two: 2})"
+        result `shouldSatisfy` \(Left err) -> not $ T.isInfixOf "InterpreterError" err
+      it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1, two: 2})" $ do
+        result <- eval stdLib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1, two: 2})"
+        result `shouldSatisfy` isRight
       it "\\a -> let one = a.one; \\a -> let two = a.two in a.one" $ do
         result <- eval stdLib "\\a -> let one = a.one; \\a -> let two = a.two in a.one"
         -- here the two a's should be different types due to shadowing
