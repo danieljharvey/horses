@@ -17,11 +17,16 @@ import Language.Mimsa.Types.AST.StringType
 
 -------
 
+-- | A literal value in the source code
 data Literal
-  = MyInt Int
-  | MyBool Bool
-  | MyString StringType
-  | MyUnit ()
+  = -- | an integer
+    MyInt Int
+  | -- | a boolean
+    MyBool Bool
+  | -- | a string
+    MyString StringType
+  | -- | unit, the empty type
+    MyUnit ()
   deriving
     ( Eq,
       Ord,

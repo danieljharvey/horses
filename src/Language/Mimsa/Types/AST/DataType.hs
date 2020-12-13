@@ -24,10 +24,14 @@ import Language.Mimsa.Types.Identifiers
 
 -------
 
+-- | This describes a custom data type, such as `Either e a = Left e | Right a`
 data DataType
   = DataType
-      { dtName :: TyCon,
+      { -- | The name of this type, ie `Either`
+        dtName :: TyCon,
+        -- | The type variables for the data type, ie `e`, `a`
         dtVars :: [Name],
+        -- | map from constructor name to it's arguments, ie "`Left` -> [`e`]" or "`Right` -> [`a`]"
         dtConstructors :: Map TyCon [TypeName]
       }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON, ToSchema)
