@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -475,10 +476,14 @@ spec =
           `shouldSatisfy` isRight
       it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1})" $ do
         result <- eval stdLib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1})"
-        result `shouldSatisfy` \(Left err) -> not $ T.isInfixOf "InterpreterError" err
+        result `shouldSatisfy` \case
+          (Left err) -> not $ T.isInfixOf "InterpreterError" err
+          _ -> False
       it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({two: 2})" $ do
         result <- eval stdLib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({two: 2})"
-        result `shouldSatisfy` \(Left err) -> not $ T.isInfixOf "InterpreterError" err
+        result `shouldSatisfy` \case
+          (Left err) -> not $ T.isInfixOf "InterpreterError" err
+          _ -> False
       it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1, two: 2})" $ do
         result <- eval stdLib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1, two: 2})"
         result `shouldSatisfy` isRight
