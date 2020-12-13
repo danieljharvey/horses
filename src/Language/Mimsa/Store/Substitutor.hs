@@ -142,7 +142,6 @@ getExprPairs (Store items') (Bindings bindings') = join $ do
 -- we don't do this for variables introduced by
 -- lambdas
 getNextVarName ::
-  (Eq ann, Monoid ann) =>
   Name ->
   App ann Variable
 getNextVarName name =
