@@ -10,9 +10,13 @@ import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 
+-- | Source code annotations - this is stored in parsing and used to improve
+-- errors. Discarded when we store the expressions
 data Annotation
-  = None ()
-  | Location Int Int
+  = -- | No annotation
+    None ()
+  | -- | Start and end of this item in the original source
+    Location Int Int
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON, ToSchema)
 
 instance Semigroup Annotation where

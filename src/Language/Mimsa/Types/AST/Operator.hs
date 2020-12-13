@@ -14,7 +14,16 @@ import Language.Mimsa.Printer
 
 -------
 
-data Operator = Equals | Add | Subtract | StringConcat
+-- | Infix operators
+data Operator
+  = -- | `==` - equality between two items
+    Equals
+  | -- | `+` - integer addition
+    Add
+  | -- | `-` - integer subtraction
+    Subtract
+  | -- | `<>` - string concatenation
+    StringConcat
   deriving
     ( Eq,
       Ord,

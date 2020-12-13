@@ -11,3 +11,11 @@ build-test:
 unit-test:
 	make build-test
 	./result/bin/mimsa-test
+
+hoogle:
+	stack hoogle -- generate --local
+	stack hoogle -- server --local --port=8090
+
+haddock:
+	stack build --fast --haddock-deps
+	stack haddock --open

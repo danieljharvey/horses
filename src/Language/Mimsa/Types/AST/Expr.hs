@@ -33,32 +33,59 @@ import Language.Mimsa.Types.Identifiers (Name, TyCon)
 
 -------
 
+-- |
+-- The main expression type that we parse from syntax
+-- `var` is the type of variables. When we parse them they are
+-- string-based `Name`, but after substitution they become a `Variable`
+-- which is either a string or a numbered variable
 data Expr var ann
-  = MyLiteral ann Literal
-  | MyVar ann var
-  | MyLet ann var (Expr var ann) (Expr var ann) -- binder, expr, body
-  | MyLetPair ann var var (Expr var ann) (Expr var ann) -- binderA, binderB, expr, body
-  | MyInfix ann Operator (Expr var ann) (Expr var ann) -- a `f` b
-  | MyLambda ann var (Expr var ann) -- binder, body
-  | MyApp ann (Expr var ann) (Expr var ann) -- function, argument
-  | MyIf ann (Expr var ann) (Expr var ann) (Expr var ann) -- expr, thencase, elsecase
-  | MyPair ann (Expr var ann) (Expr var ann) -- (a,b)
-  | MyRecord ann (Map Name (Expr var ann)) -- { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
-  | MyRecordAccess ann (Expr var ann) Name -- a.foo
-  | MyData ann DataType (Expr var ann) -- tyName, tyArgs, Map constructor args, body
-  | MyConstructor ann TyCon -- use a constructor by name
-  | MyConsApp ann (Expr var ann) (Expr var ann) -- constructor, value
-  | MyCaseMatch ann (Expr var ann) (NonEmpty (TyCon, Expr var ann)) (Maybe (Expr var ann)) -- expr, matches, catchAll
+  = -- | a literal, such as String, Int, Boolean
+    MyLiteral ann Literal
+  | -- | a named variable
+    MyVar ann var
+  | -- | binder, expr, body
+    MyLet ann var (Expr var ann) (Expr var ann)
+  | -- | binderA, binderB, expr, body
+    MyLetPair ann var var (Expr var ann) (Expr var ann)
+  | -- | a `f` b
+    MyInfix ann Operator (Expr var ann) (Expr var ann)
+  | -- | binder, body
+    MyLambda ann var (Expr var ann)
+  | -- | function, argument
+    MyApp ann (Expr var ann) (Expr var ann)
+  | -- | expr, thencase, elsecase
+    MyIf ann (Expr var ann) (Expr var ann) (Expr var ann)
+  | -- | (a,b)
+    MyPair ann (Expr var ann) (Expr var ann)
+  | -- | { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
+    MyRecord ann (Map Name (Expr var ann))
+  | -- | a.foo
+    MyRecordAccess ann (Expr var ann) Name
+  | -- | tyName, tyArgs, Map constructor args, body
+    MyData ann DataType (Expr var ann)
+  | -- | use a constructor by name
+    MyConstructor ann TyCon
+  | -- | constructor, value
+    MyConsApp ann (Expr var ann) (Expr var ann)
+  | -- | expr, matches, catchAll
+    MyCaseMatch
+      ann
+      (Expr var ann)
+      (NonEmpty (TyCon, Expr var ann))
+      (Maybe (Expr var ann))
   deriving (Eq, Ord, Show, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 
 deriving instance (ToSchema var, ToSchema ann) => ToSchema (Expr var ann)
 
+-- | Removes any annotations in the expression, useful when serialising
+-- expressions
 toEmptyAnnotation ::
   (Monoid b) =>
   Expr var a ->
   Expr var b
 toEmptyAnnotation = fmap (const mempty)
 
+-- | Retrieve the annotation for any given Expression
 getAnnotation :: Expr var ann -> ann
 getAnnotation (MyLiteral ann _) = ann
 getAnnotation (MyVar ann _) = ann
@@ -76,6 +103,8 @@ getAnnotation (MyConstructor ann _) = ann
 getAnnotation (MyConsApp ann _ _) = ann
 getAnnotation (MyCaseMatch ann _ _ _) = ann
 
+-- | Map a function `f` over the expression. This function takes care of
+-- recursing through the Expression
 mapExpr :: (Expr a b -> Expr a b) -> Expr a b -> Expr a b
 mapExpr _ (MyLiteral ann a) = MyLiteral ann a
 mapExpr _ (MyVar ann a) = MyVar ann a
@@ -99,6 +128,8 @@ mapExpr f (MyConsApp ann func arg) =
 mapExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
   MyCaseMatch ann (f matchExpr) (second f <$> caseExprs) (f <$> catchExpr)
 
+-- | Bind a function `f` over the expression. This function takes care of
+-- recursing through the expression.
 bindExpr ::
   (Applicative m) =>
   (Expr a b -> m (Expr a b)) ->
@@ -141,7 +172,8 @@ bindExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
   where
     traverseSecond (a, b) = (a,) <$> f b
 
--- is this just shitty foldable?
+-- | Given a function `f` that turns any piece of the expression in a Monoid
+-- `m`, flatten the entire expression into `m`
 withMonoid ::
   (Monoid m) =>
   (Expr var ann -> m) ->
