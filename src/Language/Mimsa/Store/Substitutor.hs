@@ -223,3 +223,4 @@ mapVar chg (MyCaseMatch ann expr' matches catchAll) = do
   matches' <- traverse mapVarPair matches
   catchAll' <- traverse (mapVar chg) catchAll
   MyCaseMatch ann <$> mapVar chg expr' <*> pure matches' <*> pure catchAll'
+mapVar _ (MyTypedHole ann a) = pure $ MyTypedHole ann a

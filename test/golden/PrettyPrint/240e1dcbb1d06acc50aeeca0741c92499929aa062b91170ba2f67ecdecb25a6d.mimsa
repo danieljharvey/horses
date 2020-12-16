@@ -1,0 +1,3 @@
+if ?missingFn
+  then 1
+  else 2

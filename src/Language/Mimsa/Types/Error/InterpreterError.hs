@@ -26,6 +26,7 @@ data InterpreterError ann
   | AdditionWithNonNumber (Expr Variable ann)
   | SubtractionWithNonNumber (Expr Variable ann)
   | ConcatentationWithNonString (Expr Variable ann)
+  | TypedHoleFound (Expr Variable ann)
   deriving (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError a) where
@@ -51,4 +52,5 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
   prettyPrint (AdditionWithNonNumber a) = "Addition expected number but got this: " <> prettyPrint a
   prettyPrint (SubtractionWithNonNumber a) = "Subtraction expected number but got this: " <> prettyPrint a
   prettyPrint (ConcatentationWithNonString a) = "Concatenation expected string but got this: " <> prettyPrint a
+  prettyPrint (TypedHoleFound a) = "Typed hole found " <> prettyPrint a
   prettyPrint UnknownInterpreterError = "Unknown interpreter error"

@@ -61,6 +61,7 @@ complexParser =
     <|> try typeParser
     <|> try constructorAppParser
     <|> try caseMatchParser
+    <|> try typedHoleParser
 
 ----
 

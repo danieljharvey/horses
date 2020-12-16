@@ -48,7 +48,11 @@ doInference ::
   Either TypeError (Substitutions, MonoType)
 doInference swaps env expr = runTcMonad swaps $ do
   recSubst <- getSubstitutionsForRecordUsages expr
-  inferAndSubst (defaultEnv recSubst <> env) expr
+  (subs, mt) <- inferAndSubst (defaultEnv recSubst <> env) expr
+  holes <- getTypedHoles subs
+  if M.null holes
+    then pure (subs, mt)
+    else throwError (TypedHoles holes)
 
 doDataTypeInference ::
   Environment ->
@@ -476,6 +480,9 @@ infer env inferExpr =
           applySubst (s2 <> s1) tyRecord
         )
     (MyInfix ann op a b) -> inferOperator env ann op a b
+    (MyTypedHole ann name) -> do
+      tyRecord <- addTypedHole ann name
+      pure (mempty, tyRecord)
     (MyLet ann binder expr body) ->
       inferLetBinding env ann binder expr body
     (MyRecordAccess ann (MyRecord ann' items') name) ->

@@ -48,6 +48,7 @@ data TypeError
   | DuplicateTypeDeclaration TyCon
   | IncompletePatternMatch Annotation [TyCon]
   | MixedUpPatterns [TyCon]
+  | TypedHoles (Map Name MonoType)
   deriving (Eq, Ord, Show)
 
 ------
@@ -88,6 +89,9 @@ getErrorPos (CaseMatchExpectedPair ann _) =
 getErrorPos (CannotCaseMatchOnType expr) =
   fromAnnotation (getAnnotation expr)
 getErrorPos (CannotMatchRecord _ ann _) = fromAnnotation ann
+getErrorPos (TypedHoles holes) = case M.toList holes of
+  ((_, mt) : _) -> fromAnnotation (getAnnotationForType mt)
+  _ -> fromAnnotation mempty
 getErrorPos _ = (0, 0)
 
 ------
@@ -186,6 +190,10 @@ renderTypeError (MixedUpPatterns names) =
     <> (prettyDoc <$> names)
 renderTypeError (NoFunctionEquality a b) =
   ["Cannot use == on functions", prettyDoc a, prettyDoc b]
+renderTypeError (TypedHoles map') =
+  ["Typed holes found:"] <> showMap renderHoleName prettyDoc map'
+  where
+    renderHoleName n = "?" <> prettyDoc n
 
 printDataTypes :: Environment -> [Doc ann]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
