@@ -165,10 +165,10 @@ case matching:
 Bound eitherMap to \f -> (\either -> case either of Left (\e -> (Left e)) | Right (\a -> (Right f(a)))) :: ((11 -> 15) -> (2 -> Either 13 15))
 
 :> eitherMap(\a -> "dog")(Left "what")
-Left "poo" :: Either 14 String -- you may notice this is wrong, see issues
+Left "poo" :: Either String String
 
 :> eitherMap(\a -> "dog")(Right "poo")
-Right "dog" :: Either 14 String -- this is OK though
+Right "dog" :: Either 14 String
 ```
 
 typed holes:
