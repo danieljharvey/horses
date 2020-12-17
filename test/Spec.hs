@@ -10,6 +10,7 @@ where
 import qualified Test.BackendJS as JS
 import Test.Hspec
 import qualified Test.Interpreter as Interpreter
+import qualified Test.NormaliseType as NormaliseType
 import qualified Test.Prettier as Prettier
 import Test.QuickCheck.Instances ()
 import qualified Test.RecordUsage as RecordUsage
@@ -38,3 +39,4 @@ main = hspec $ do
   TypeError.spec
   Serialisation.spec
   RecordUsage.spec
+  NormaliseType.spec

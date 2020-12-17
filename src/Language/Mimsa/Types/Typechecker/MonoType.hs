@@ -55,6 +55,15 @@ getAnnotationForType (MTData ann _ _) = ann
 instance Printer (Type ann) where
   prettyDoc = renderMonoType
 
+printTypeNum :: Int -> String
+printTypeNum i = [toEnum (index + start)] <> suffix
+  where
+    index = (i - 1) `mod` 26
+    start = fromEnum 'A'
+    suffix =
+      let diff = (i - 1) `div` 26
+       in if diff < 1 then "" else show diff
+
 renderMonoType :: Type ann -> Doc a
 renderMonoType (MTPrim _ a) = prettyDoc a
 renderMonoType (MTFunction _ a b) =
@@ -76,5 +85,5 @@ renderMonoType (MTRecord _ as) =
     renderItem (Name k, v) = pretty k <+> ":" <+> renderMonoType v
 renderMonoType (MTVar _ a) = case a of
   (NamedVar (Name n)) -> pretty n
-  (NumberedVar i) -> pretty i
+  (NumberedVar i) -> pretty (printTypeNum i)
 renderMonoType (MTData _ (TyCon n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))

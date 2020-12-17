@@ -23,6 +23,7 @@ import Language.Mimsa.Typechecker.DataTypes
   )
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Generalise
+import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
 import Language.Mimsa.Typechecker.RecordUsages
 import Language.Mimsa.Typechecker.TcMonad
@@ -51,8 +52,8 @@ doInference swaps env expr = runTcMonad swaps $ do
   (subs, mt) <- inferAndSubst (defaultEnv recSubst <> env) expr
   holes <- getTypedHoles subs
   if M.null holes
-    then pure (subs, mt)
-    else throwError (TypedHoles holes)
+    then pure (subs, normaliseType mt)
+    else throwError (TypedHoles (normaliseType <$> holes))
 
 doDataTypeInference ::
   Environment ->
