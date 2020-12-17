@@ -106,7 +106,7 @@ exprs =
             (MyVar mempty (named "x"))
             (MyVar mempty (named "a"))
         ),
-      Right (MTFunction mempty (MTPair mempty (unknown 2) (unknown 3)) (unknown 2))
+      Right (MTFunction mempty (MTPair mempty (unknown 1) (unknown 2)) (unknown 1))
     ),
     ( MyLet
         mempty

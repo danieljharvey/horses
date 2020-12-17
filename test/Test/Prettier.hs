@@ -68,3 +68,12 @@ spec =
          in T.putStrLn
               ( prettyPrint mt
               )
+      it "Names type vars" $ do
+        let mt = MTVar () (NumberedVar 1)
+        prettyPrint mt `shouldBe` "A"
+      it "Names type vars 2" $ do
+        let mt = MTVar () (NumberedVar 26)
+        prettyPrint mt `shouldBe` "Z"
+      it "Names type vars 3" $ do
+        let mt = MTVar () (NumberedVar 27)
+        prettyPrint mt `shouldBe` "A1"
