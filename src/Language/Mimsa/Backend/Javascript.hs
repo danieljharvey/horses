@@ -177,3 +177,4 @@ outputJS expr =
     MyConstructor _ a -> outputConstructor @ann a []
     MyConsApp _ c a -> outputConsApp c a
     MyCaseMatch _ a matches catch -> outputCaseMatch a matches catch
+    MyTypedHole _ a -> coerce a -- TODO: this should fail, but dont want to introduce failure into this whole area yet

@@ -10,6 +10,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State (runState)
 import qualified Data.Map as M
+import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -21,7 +22,12 @@ runUnifier :: (MonoType, MonoType) -> Either TypeError Substitutions
 runUnifier (a, b) =
   fst either'
   where
-    either' = runState (runReaderT (runExceptT (unify a b)) mempty) 1
+    defaultState =
+      TypecheckState 1 mempty
+    either' =
+      runState
+        (runReaderT (runExceptT (unify a b)) mempty)
+        defaultState
 
 spec :: Spec
 spec =

@@ -512,3 +512,18 @@ spec =
                     (MTVar mempty (tvFree 2))
                 )
             )
+      it "if ?missingFn then 1 else 2" $ do
+        result <- eval stdLib "if ?missingFn then 1 else 2"
+        result `shouldSatisfy` \case
+          (Left msg) ->
+            T.isInfixOf "Typed holes found" msg
+              && T.isInfixOf "?missingFn" msg
+              && T.isInfixOf "Boolean" msg
+          (Right _) -> False
+      it "let map = \\f -> \\a -> f(a) in map(?flappy)(1)" $ do
+        result <- eval stdLib "let map = \\f -> \\a -> f(a) in map(?flappy)(1)"
+        result `shouldSatisfy` \case
+          (Left msg) ->
+            T.isInfixOf "Typed holes found" msg
+              && T.isInfixOf "^^^^^^^" msg
+          (Right _) -> False

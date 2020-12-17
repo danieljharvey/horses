@@ -73,6 +73,8 @@ data Expr var ann
       (Expr var ann)
       (NonEmpty (TyCon, Expr var ann))
       (Maybe (Expr var ann))
+  | -- | name
+    MyTypedHole ann Name
   deriving (Eq, Ord, Show, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 
 deriving instance (ToSchema var, ToSchema ann) => ToSchema (Expr var ann)
@@ -102,6 +104,7 @@ getAnnotation (MyData ann _ _) = ann
 getAnnotation (MyConstructor ann _) = ann
 getAnnotation (MyConsApp ann _ _) = ann
 getAnnotation (MyCaseMatch ann _ _ _) = ann
+getAnnotation (MyTypedHole ann _) = ann
 
 -- | Map a function `f` over the expression. This function takes care of
 -- recursing through the Expression
@@ -127,6 +130,7 @@ mapExpr f (MyConsApp ann func arg) =
   MyConsApp ann (f func) (f arg)
 mapExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
   MyCaseMatch ann (f matchExpr) (second f <$> caseExprs) (f <$> catchExpr)
+mapExpr _ (MyTypedHole ann a) = MyTypedHole ann a
 
 -- | Bind a function `f` over the expression. This function takes care of
 -- recursing through the expression.
@@ -171,6 +175,7 @@ bindExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
     <*> traverse f catchExpr
   where
     traverseSecond (a, b) = (a,) <$> f b
+bindExpr _ (MyTypedHole ann a) = pure (MyTypedHole ann a)
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`
@@ -231,6 +236,7 @@ withMonoid f whole@(MyCaseMatch _ matchExpr caseExprs catchExpr) =
           (withMonoid f <$> (snd <$> caseExprs))
       )
     <> maybe mempty (withMonoid f) catchExpr
+withMonoid f whole@MyTypedHole {} = f whole
 
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) = prettyDoc l
@@ -326,6 +332,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
         (printMatch <$> NE.toList matches) <> catchAll'
       printMatch (construct, expr') =
         prettyDoc construct <+> printSubExpr expr'
+  prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
 
 inParens :: (Show var, Printer var) => Expr var ann -> Doc style
 inParens = parens . prettyDoc

@@ -164,4 +164,5 @@ interpretWithScope interpretExpr =
     (MyCaseMatch _ expr' matches catchAll) -> do
       expr'' <- interpretWithScope expr'
       patternMatch expr'' matches catchAll >>= interpretWithScope
+    typedHole@MyTypedHole {} -> throwError (TypedHoleFound typedHole)
     expr -> bindExpr interpretWithScope expr

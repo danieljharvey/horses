@@ -163,6 +163,8 @@ spec = do
               )
               (MyVar mempty (mkName "const2"))
           )
+    it "Parses typed hole" $ do
+      testParse "?dog" `shouldBe` Right (MyTypedHole mempty (mkName "dog"))
     it "Parses a complex let expression" $
       testParse "let const2 = (\\a -> (\\b -> a)) in (let reuse = ({first: const2(True), second: const2(2)}) in reuse.second(100))"
         `shouldSatisfy` isRight

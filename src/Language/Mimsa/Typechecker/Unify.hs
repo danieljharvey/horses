@@ -31,15 +31,16 @@ freeTypeVars ty = case ty of
   MTPrim _ _ -> S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
-varBind :: Variable -> MonoType -> TcMonad Substitutions
-varBind var ty
+varBind :: Annotation -> Variable -> MonoType -> TcMonad Substitutions
+varBind ann var ty
   | typeEquals ty (MTVar mempty var) = pure mempty
   | S.member var (freeTypeVars ty) = do
     swaps <- ask
     throwError $
       FailsOccursCheck swaps var ty
-  | otherwise =
-    pure $ Substitutions (M.singleton var ty)
+  | otherwise = do
+    let ty' = ty $> ann
+    pure $ Substitutions (M.singleton var ty')
 
 unifyRecords ::
   (Annotation, Map Name MonoType) ->
@@ -80,8 +81,8 @@ unify tyA tyB =
         let pairs = zip tyAs tyBs
         s <- traverse (uncurry unify) pairs
         pure (mconcat s)
-    (MTVar _ u, t) -> varBind u t
-    (t, MTVar _ u) -> varBind u t
+    (MTVar ann u, t) -> varBind ann u t
+    (t, MTVar ann u) -> varBind ann u t
     (a, b) ->
       throwError $ UnificationError a b
 

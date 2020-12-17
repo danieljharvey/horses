@@ -4,6 +4,7 @@ module Language.Mimsa.Parser.Identifiers
   ( varParser,
     nameParser,
     tyConParser,
+    typedHoleParser,
     constructorParser,
   )
 where
@@ -16,6 +17,7 @@ import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Text.Megaparsec
+import Text.Megaparsec.Char
 
 ----
 
@@ -43,4 +45,14 @@ tyConParser =
   maybePred
     identifier
     (inProtected >=> safeMkTyCon)
+
 -----
+
+typedHoleParser :: Parser ParserExpr
+typedHoleParser =
+  withLocation
+    MyTypedHole
+    ( do
+        _ <- string "?"
+        nameParser
+    )
