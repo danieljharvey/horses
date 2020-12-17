@@ -102,19 +102,19 @@ lambdas and function application:
 
 ```haskell
 :> :bind id = \x -> x
-Bound id to \x -> x :: U1 -> U1
+Bound id to \x -> x :: A -> A
 
 :> id(1)
 1 :: Int
 
 :> :bind const = \x -> \y -> x
-Bound const to \x -> (\y -> x) :: U1 -> (U2 -> U1)
+Bound const to \x -> (\y -> x) :: A -> (B -> A)
 
 :> const(2)("horse")
 2 :: Int
 
 :> :bind compose = \f -> \g -> \a -> f(g(a))
-Bound compose to \f -> (\g -> (\a -> (f(g(a))))) :: (U5 -> U4) -> ((U3 -> U5) -> (U3 -> U4))
+Bound compose to \f -> (\g -> (\a -> (f(g(a))))) :: (A -> B) -> ((C -> A) -> (C -> B))
 ```
 
 pairs:
@@ -124,7 +124,7 @@ pairs:
 (1, "horse") :: (Int, String)
 
 :> :bind fst = \x -> let (a, b) = x in a
-Bound fst to \x -> let (a, b) = x in a :: (U2, U3) -> U2
+Bound fst to \x -> let (a, b) = x in a :: (A, B) -> A
 
 :> fst((1,"horse"))
 1 :: Int
@@ -155,20 +155,20 @@ type declarations:
 :bindType type Either e a = Left e | Right a
 
 :> \a -> if a then Right a else Left "Oh no"
-\a -> (if a then (Right a) else (Left "Oh no")) :: (7 -> Either String 7)
+\a -> (if a then (Right a) else (Left "Oh no")) :: (A -> Either String A)
 ```
 
 case matching:
 
 ```haskell
 :> :bind eitherMap = \f -> \either -> case either of Left \e -> Left e | Right \a -> Right f(a)
-Bound eitherMap to \f -> (\either -> case either of Left (\e -> (Left e)) | Right (\a -> (Right f(a)))) :: ((11 -> 15) -> (2 -> Either 13 15))
+Bound eitherMap to \f -> (\either -> case either of Left (\e -> (Left e)) | Right (\a -> (Right f(a)))) :: ((A -> B) -> (Either C A -> Either C B))
 
 :> eitherMap(\a -> "dog")(Left "what")
 Left "poo" :: Either String String
 
 :> eitherMap(\a -> "dog")(Right "poo")
-Right "dog" :: Either 14 String
+Right "dog" :: Either A String
 ```
 
 typed holes:
@@ -181,5 +181,5 @@ repl:1:35:
 1 | let map = \f -> \a -> f(a) in map(?dunno)(1)
   |                                   ^^^^^^
 Typed holes found:
-?dunno : (Int -> 5)
+?dunno : (Int -> A)
 ```
