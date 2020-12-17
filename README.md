@@ -171,3 +171,15 @@ Left "poo" :: Either 14 String -- you may notice this is wrong, see issues
 Right "dog" :: Either 14 String -- this is OK though
 ```
 
+typed holes:
+
+```haskell
+:> let map = \f -> \a -> f(a) in map(?dunno)(1)
+
+repl:1:35:
+  |
+1 | let map = \f -> \a -> f(a) in map(?dunno)(1)
+  |                                   ^^^^^^
+Typed holes found:
+?dunno : (Int -> 5)
+```
