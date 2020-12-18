@@ -39,3 +39,19 @@ spec =
             Left _ -> error "could not resolve deps"
       result
         `shouldBe` M.singleton (mkName "id") idType
+    it "Finds the addInt function in test project" $ do
+      let addIntType =
+            MTFunction
+              mempty
+              (MTPrim mempty MTInt)
+              ( MTFunction
+                  mempty
+                  (MTPrim mempty MTInt)
+                  (MTPrim mempty MTInt)
+              )
+      let deps = resolveDeps (store stdLib) (getCurrentBindings $ bindings stdLib)
+      let result = case deps of
+            Right deps' -> typeSearch deps' addIntType
+            Left _ -> error "could not resolve deps"
+      result
+        `shouldBe` M.singleton (mkName "addInt") addIntType
