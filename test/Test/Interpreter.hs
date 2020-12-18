@@ -13,8 +13,8 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Swaps
-import Test.Helpers
 import Test.Hspec
+import Test.Utils.Helpers
 
 testInterpret ::
   Scope () ->

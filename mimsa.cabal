@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c34088d8394a0476a06459d3ed045215f34d66d2d5e5bf5b4a8669d712797671
+-- hash: 9167c858211495d1b8be16ea3ad388c2823ea57e8d777bd60ab71f11d3c51bdc
 
 name:           mimsa
 version:        0.1.0.0
@@ -53,6 +53,7 @@ library
       Language.Mimsa.Project.Default
       Language.Mimsa.Project.Helpers
       Language.Mimsa.Project.Persistence
+      Language.Mimsa.Project.TypeSearch
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
       Language.Mimsa.Repl
@@ -245,7 +246,6 @@ test-suite mimsa-test
   other-modules:
       Test.BackendJS
       Test.Data.Project
-      Test.Helpers
       Test.Interpreter
       Test.NormaliseType
       Test.Prettier
@@ -257,8 +257,10 @@ test-suite mimsa-test
       Test.Syntax
       Test.Typechecker
       Test.TypeError
+      Test.TypeSearch
       Test.Unify
       Test.Usages
+      Test.Utils.Helpers
       Test.Utils.Serialisation
       Paths_mimsa
   hs-source-dirs:

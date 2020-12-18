@@ -15,8 +15,8 @@ import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.SubstitutedExpression
 import Test.Data.Project
-import Test.Helpers
 import Test.Hspec
+import Test.Utils.Helpers
 
 trueStoreExpr :: Monoid ann => StoreExpression ann
 trueStoreExpr =

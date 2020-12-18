@@ -1,4 +1,4 @@
-module Test.Helpers where
+module Test.Utils.Helpers where
 
 import Data.Text (Text)
 import qualified Data.Text as T

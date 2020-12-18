@@ -25,8 +25,8 @@ import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
-import Test.Helpers
 import Test.Hspec
+import Test.Utils.Helpers
 import Test.Utils.Serialisation
   ( createOutputFolder,
     saveJSON,

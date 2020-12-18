@@ -13,8 +13,8 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Test.Helpers
 import Test.Hspec
+import Test.Utils.Helpers
 
 getSubsForRec :: Expr Variable ann -> IO (Map Variable MonoType)
 getSubsForRec expr' = case runTcMonad mempty (getSubstitutionsForRecordUsages expr') of

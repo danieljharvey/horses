@@ -8,8 +8,8 @@ where
 
 import Language.Mimsa.Project.Usages
 import Test.Data.Project
-import Test.Helpers
 import Test.Hspec
+import Test.Utils.Helpers
 
 spec :: Spec
 spec =

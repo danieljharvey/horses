@@ -15,8 +15,8 @@ import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Test.Helpers
 import Test.Hspec
+import Test.Utils.Helpers
 
 runUnifier :: (MonoType, MonoType) -> Either TypeError Substitutions
 runUnifier (a, b) =
