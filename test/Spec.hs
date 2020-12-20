@@ -10,6 +10,7 @@ where
 import qualified Test.BackendJS as JS
 import Test.Hspec
 import qualified Test.Interpreter as Interpreter
+import qualified Test.MonoTypeParser as MonoTypeParser
 import qualified Test.NormaliseType as NormaliseType
 import qualified Test.Prettier as Prettier
 import Test.QuickCheck.Instances ()
@@ -42,3 +43,4 @@ main = hspec $ do
   RecordUsage.spec
   NormaliseType.spec
   TypeSearch.spec
+  MonoTypeParser.spec

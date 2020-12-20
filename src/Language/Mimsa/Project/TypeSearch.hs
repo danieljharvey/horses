@@ -4,12 +4,14 @@
 module Language.Mimsa.Project.TypeSearch
   ( NormalisedMonoType (..),
     typeSearch,
+    typeSearchFromInput,
   )
 where
 
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Text (Text)
 import Language.Mimsa.Actions (resolveStoreExpression)
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST.Annotation
@@ -60,3 +62,6 @@ typeSearch deps mt = case runTsApp $
   resolvedDepsToTypeMap deps of
   Right items -> filterTypes items mt
   Left _ -> mempty
+
+typeSearchFromInput :: ResolvedDeps Annotation -> Text -> Either Text (Map Name MonoType)
+typeSearchFromInput _deps _input = undefined
