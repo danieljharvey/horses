@@ -17,12 +17,6 @@ import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-  ( Name,
-    TyCon,
-    Variable (..),
-    mkName,
-    renderName,
-  )
 import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -30,12 +24,11 @@ import Text.Megaparsec
 
 data TypeError
   = UnknownTypeError
-  | FailsOccursCheck Swaps Variable MonoType
+  | FailsOccursCheck Swaps TypeIdentifier MonoType
   | UnificationError MonoType MonoType
-  | VariableNotInEnv Swaps Annotation Variable (Set Variable)
+  | VariableNotInEnv Swaps Annotation Variable (Set TypeIdentifier)
   | MissingRecordMember Annotation Name (Set Name)
   | MissingRecordTypeMember Annotation Name (Map Name MonoType)
-  | MissingBuiltIn Annotation Variable
   | NoFunctionEquality MonoType MonoType
   | CannotMatchRecord Environment Annotation MonoType
   | CaseMatchExpectedPair Annotation MonoType
@@ -82,7 +75,6 @@ getErrorPos (MissingRecordTypeMember ann _ _) = fromAnnotation ann
 getErrorPos (VariableNotInEnv _ ann _ _) = fromAnnotation ann
 getErrorPos (TypeConstructorNotInScope _ ann _) = fromAnnotation ann
 getErrorPos (ConflictingConstructors ann _) = fromAnnotation ann
-getErrorPos (MissingBuiltIn ann _) = fromAnnotation ann
 getErrorPos (IncompletePatternMatch ann _) = fromAnnotation ann
 getErrorPos (CaseMatchExpectedPair ann _) =
   fromAnnotation ann
@@ -145,8 +137,6 @@ renderTypeError (MissingRecordTypeMember _ name types) =
     "The following record items are available:"
   ]
     <> showKeys renderName types
-renderTypeError (MissingBuiltIn _ var) =
-  ["Cannot find built-in function" <+> dquotes (prettyDoc var)]
 renderTypeError (CannotMatchRecord env _ mt) =
   [ "Cannot match type" <+> prettyDoc mt <+> "to record.",
     "The following are available:",

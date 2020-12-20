@@ -21,20 +21,26 @@ str' = str . StringType
 
 --
 unknown :: (Monoid ann) => Int -> Type ann
-unknown = MTVar mempty . NumberedVar
+unknown = MTVar mempty . TVNum
 
 ---
 
 named :: Text -> Variable
 named = NamedVar . Name
 
+numbered :: Int -> Variable
+numbered = NumberedVar
+
 ---
 
-tvBound :: Int -> Variable
-tvBound = NumberedVar
+tvFree :: Int -> TypeIdentifier
+tvFree = TVNum
 
-tvFree :: Int -> Variable
-tvFree = NumberedVar
+tvNumbered :: Int -> TypeIdentifier
+tvNumbered = TVNum
+
+tvNamed :: Text -> TypeIdentifier
+tvNamed t = TVName $ mkTyVar t
 
 exprHash :: Int -> ExprHash
 exprHash = ExprHash . T.pack . show

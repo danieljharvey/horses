@@ -47,7 +47,7 @@ spec =
           (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
     it "Variable" $
       testParser "A"
-        `shouldBe` Right (MTVar mempty (named "A"))
+        `shouldBe` Right (MTVar mempty (tvNamed "A"))
     it "Function with pair" $
       testParser "(Int, String) -> Int"
         `shouldBe` Right

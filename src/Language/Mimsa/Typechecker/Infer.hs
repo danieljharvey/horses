@@ -101,8 +101,8 @@ inferVarFromScope ::
   Annotation ->
   Variable ->
   TcMonad (Substitutions, MonoType)
-inferVarFromScope env@(Environment env' _) ann name =
-  case M.lookup name env' of
+inferVarFromScope env@(Environment env' _) ann var' =
+  case M.lookup (variableToTypeIdentifier var') env' of
     Just mt ->
       instantiate mt
     _ -> do
@@ -111,12 +111,12 @@ inferVarFromScope env@(Environment env' _) ann name =
         VariableNotInEnv
           swaps
           ann
-          name
+          var'
           (S.fromList (M.keys (getSchemes env)))
 
 createEnv :: Variable -> Scheme -> Environment
 createEnv binder scheme =
-  Environment (M.singleton binder scheme) mempty
+  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty
 
 splitRecordTypes ::
   Map Name (Substitutions, MonoType) ->
@@ -455,7 +455,7 @@ inferLambda ::
   TcExpr ->
   TcMonad (Substitutions, MonoType)
 inferLambda env@(Environment env' _) ann binder body = do
-  tyBinder <- case M.lookup binder env' of
+  tyBinder <- case M.lookup (variableToTypeIdentifier binder) env' of
     Just (Scheme _ found) -> pure found
     _ -> getUnknown ann
   let tmpCtx =

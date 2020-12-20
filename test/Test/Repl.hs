@@ -83,7 +83,7 @@ spec =
         result
           `shouldBe` Right
             ( MTFunction mempty (unknown 1) (unknown 1),
-              MyLambda mempty (tvFree 1) (MyVar mempty (tvFree 1))
+              MyLambda mempty (numbered 1) (MyVar mempty (numbered 1))
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
         result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"
@@ -248,15 +248,15 @@ spec =
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (MTVar mempty (NumberedVar 1))
-                (MTData mempty (mkTyCon "Maybe") [MTVar mempty (NumberedVar 1)]),
+                (MTVar mempty (tvNumbered 1))
+                (MTData mempty (mkTyCon "Maybe") [MTVar mempty (tvNumbered 1)]),
               MyConstructor mempty $ mkTyCon "Just"
             )
       it "type Maybe a = Just a | Nothing in Nothing" $ do
         result <- eval stdLib "type Maybe a = Just a | Nothing in Nothing"
         result
           `shouldBe` Right
-            ( MTData mempty (mkTyCon "Maybe") [MTVar mempty (NumberedVar 1)],
+            ( MTData mempty (mkTyCon "Maybe") [MTVar mempty (tvNumbered 1)],
               MyConstructor mempty $ mkTyCon "Nothing"
             )
       it "type Maybe a = Just a | Nothing in Just 1" $ do

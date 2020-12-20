@@ -11,7 +11,7 @@ import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 
 mkVar :: Int -> MonoType
-mkVar i = MTVar mempty (NumberedVar i)
+mkVar i = MTVar mempty (TVNum i)
 
 spec :: Spec
 spec =

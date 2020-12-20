@@ -207,10 +207,10 @@ spec =
       let lambda =
             MyLambda
               mempty
-              (tvFree 100)
+              (numbered 100)
               ( MyIf
                   mempty
-                  (MyApp mempty identity (MyVar mempty (tvFree 100)))
+                  (MyApp mempty identity (MyVar mempty (numbered 100)))
                   (MyApp mempty identity (int 1))
                   (MyApp mempty identity (int 2))
               )

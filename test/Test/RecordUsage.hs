@@ -16,7 +16,9 @@ import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 
-getSubsForRec :: Expr Variable ann -> IO (Map Variable MonoType)
+getSubsForRec ::
+  Expr Variable ann ->
+  IO (Map TypeIdentifier MonoType)
 getSubsForRec expr' = case runTcMonad mempty (getSubstitutionsForRecordUsages expr') of
   Right a -> pure (getSubstitutions a)
   Left _e -> error "oh no"

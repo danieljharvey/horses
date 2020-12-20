@@ -29,10 +29,10 @@ findVar i = do
 
 normaliseType' :: MonoType -> State NormaliseState MonoType
 normaliseType' mt = case mt of
-  MTVar ann (NumberedVar i) -> do
+  MTVar ann (TVNum i) -> do
     index <- findVar i
-    pure $ MTVar ann (NumberedVar index)
-  MTVar ann (NamedVar n) -> pure (MTVar ann (NamedVar n))
+    pure $ MTVar ann (TVNum index)
+  MTVar ann (TVName n) -> pure (MTVar ann (TVName n))
   MTPrim ann a -> pure (MTPrim ann a)
   MTFunction ann arg fun ->
     MTFunction ann

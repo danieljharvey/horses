@@ -106,16 +106,16 @@ spec = do
             expected =
               MyLambda
                 mempty
-                (tvFree 0)
+                (numbered 0)
                 ( MyPair
                     mempty
-                    (MyVar mempty (tvFree 0))
-                    (MyLambda mempty (tvFree 1) (MyVar mempty (tvFree 1)))
+                    (MyVar mempty (numbered 0))
+                    (MyLambda mempty (numbered 1) (MyVar mempty (numbered 1)))
                 )
             expectSwaps =
               M.fromList
-                [ (tvFree 0, mkName "x"),
-                  (tvFree 1, mkName "x")
+                [ (numbered 0, mkName "x"),
+                  (numbered 1, mkName "x")
                 ]
             ans = testSubstitute mempty (StoreExpression expr mempty mempty)
         ans `shouldBe` SubstitutedExpression expectSwaps expected mempty
@@ -131,7 +131,7 @@ spec = do
         seSwaps ans
           `shouldBe` M.singleton (NumberedVar 0) (Name "exciting")
         seExpr ans
-          `shouldBe` MyVar mempty (tvFree 0)
+          `shouldBe` MyVar mempty (numbered 0)
         seScope ans
           `shouldBe` Scope (M.singleton (NumberedVar 0) (bool True))
     describe "Only creates one new var if a function is used twice"
@@ -147,7 +147,7 @@ spec = do
             bindings' = Bindings $ M.singleton (mkName "id") hash
             storeExpr = StoreExpression expr bindings' mempty
             store' = Store (M.singleton hash idExpr)
-            expectedId = MyLambda mempty (tvFree 0) (MyVar mempty (tvFree 0))
+            expectedId = MyLambda mempty (numbered 0) (MyVar mempty (numbered 0))
         let ans = testSubstitute store' storeExpr
         seSwaps ans
           `shouldBe` M.fromList
@@ -158,8 +158,8 @@ spec = do
           `shouldBe` MyRecord
             mempty
             ( M.fromList
-                [ (mkName "first", MyApp mempty (MyVar mempty (tvFree 1)) (int 1)),
-                  (mkName "second", MyApp mempty (MyVar mempty (tvFree 1)) (int 2))
+                [ (mkName "first", MyApp mempty (MyVar mempty (numbered 1)) (int 1)),
+                  (mkName "second", MyApp mempty (MyVar mempty (numbered 1)) (int 2))
                 ]
             )
         seScope ans
@@ -182,12 +182,12 @@ spec = do
           [ (NumberedVar 0, Name "true"),
             (NumberedVar 1, Name "true")
           ]
-      seExpr ans `shouldBe` MyVar mempty (tvFree 1)
+      seExpr ans `shouldBe` MyVar mempty (numbered 1)
       seScope ans
         `shouldBe` Scope
           ( M.fromList
               [ (NumberedVar 0, bool True),
-                (NumberedVar 1, MyVar mempty (tvFree 0))
+                (NumberedVar 1, MyVar mempty (numbered 0))
               ]
           )
   describe "Extracts types"

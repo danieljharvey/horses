@@ -2,11 +2,13 @@
 
 module Language.Mimsa.Parser.MonoType where
 
+import Control.Monad ((>=>))
 import qualified Data.Char as Char
 import Data.Functor (($>))
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
-import Language.Mimsa.Parser.Identifiers (nameParser)
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
@@ -52,8 +54,29 @@ pairParser = do
   pure (MTPair mempty one two)
 
 identifier :: Parser Text
-identifier = takeWhile1P (Just "variable name") Char.isAlphaNum
+identifier = takeWhile1P (Just "type variable name") Char.isAlphaNum
+
+inProtectedTypes :: Text -> Maybe Text
+inProtectedTypes tx =
+  if S.member tx protectedTypeNames
+    then Nothing
+    else Just tx
+
+protectedTypeNames :: Set Text
+protectedTypeNames =
+  S.fromList
+    [ "String",
+      "Int",
+      "Boolean",
+      "Unit"
+    ]
+
+tyVarParser :: Parser TyVar
+tyVarParser =
+  maybePred
+    identifier
+    (inProtectedTypes >=> safeMkTyVar)
 
 varParser :: Parser MonoType
 varParser = do
-  MTVar mempty <$> (NamedVar <$> nameParser)
+  MTVar mempty <$> (TVName <$> tyVarParser)

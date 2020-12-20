@@ -4,6 +4,7 @@
 
 module Language.Mimsa.Types.Identifiers.TypeIdentifier
   ( TypeIdentifier (..),
+    renderTypeIdentifier,
   )
 where
 
@@ -13,15 +14,15 @@ import qualified Data.Aeson as JSON
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers.Name
+import Language.Mimsa.Types.Identifiers.TyVar
 
 data TypeIdentifier
-  = TVName Name
+  = TVName TyVar
   | TVNum Int
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.ToJSONKey)
 
 instance Printer TypeIdentifier where
-  prettyDoc = renderVariable
+  prettyDoc = renderTypeIdentifier
 
 printTypeNum :: Int -> String
 printTypeNum i = [toEnum (index + start)] <> suffix
@@ -32,6 +33,6 @@ printTypeNum i = [toEnum (index + start)] <> suffix
       let diff = (i - 1) `div` 26
        in if diff < 1 then "" else show diff
 
-renderVariable :: TypeIdentifier -> Doc ann
-renderVariable (TVName n) = renderName n
-renderVariable (TVNum i) = pretty (printTypeNum i)
+renderTypeIdentifier :: TypeIdentifier -> Doc ann
+renderTypeIdentifier (TVName n) = renderTyVar n
+renderTypeIdentifier (TVNum i) = pretty (printTypeNum i)
