@@ -58,22 +58,31 @@ instance Printer (Type ann) where
 renderMonoType :: Type ann -> Doc a
 renderMonoType (MTPrim _ a) = prettyDoc a
 renderMonoType (MTFunction _ a b) =
-  parens (renderMonoType a <+> "->" <+> renderMonoType b)
+  renderMonoType a <+> "->" <+> renderMonoType b
 renderMonoType (MTPair _ a b) =
-  tupled [renderMonoType a, renderMonoType b]
+  "(" <> renderMonoType a <> "," <+> renderMonoType b <> ")"
 renderMonoType (MTRecord _ as) =
-  enclose
-    lbrace
-    rbrace
-    ( mconcat $
-        punctuate
-          comma
-          ( indent 1 . renderItem
-              <$> M.toList as
-          )
-    )
+  group $
+    "{"
+      <> nest
+        2
+        ( line
+            <> mconcat
+              ( punctuate
+                  ("," <> line)
+                  ( renderItem
+                      <$> M.toList as
+                  )
+              )
+        )
+      <> line
+      <> "}"
   where
-    renderItem (Name k, v) = pretty k <+> ":" <+> renderMonoType v
+    renderItem (Name k, v) = pretty k <> ":" <+> withParens v
 renderMonoType (MTVar _ a) = renderTypeIdentifier a
 renderMonoType (MTData _ (TyCon n) vars) =
-  align $ sep ([pretty n] <> (renderMonoType <$> vars))
+  align $ sep ([pretty n] <> (withParens <$> vars))
+
+withParens :: Type ann -> Doc a
+withParens mt@MTData {} = parens (renderMonoType mt)
+withParens other = renderMonoType other

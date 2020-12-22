@@ -46,6 +46,7 @@ validTyVar a =
   T.length a > 0
     && T.filter Ch.isAlphaNum a == a
     && not (Ch.isDigit (T.head a))
+    && Ch.isLower (T.head a)
 
 mkTyVar :: Text -> TyVar
 mkTyVar a =

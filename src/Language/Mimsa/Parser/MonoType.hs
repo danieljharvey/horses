@@ -1,14 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Parser.MonoType where
+module Language.Mimsa.Parser.MonoType
+  ( monoTypeParser,
+  )
+where
 
 import Control.Monad ((>=>))
 import qualified Data.Char as Char
 import Data.Functor (($>))
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
+import Language.Mimsa.Parser.Identifiers (nameParser)
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
@@ -17,7 +22,7 @@ import Text.Megaparsec.Char
 
 monoTypeParser :: Parser MonoType
 monoTypeParser =
-  try functionParser
+  try (orInBrackets functionParser)
     <|> try simpleTypeParser
 
 -- all the types except functions
@@ -26,7 +31,9 @@ simpleTypeParser =
   let parsers =
         try pairParser
           <|> try varParser
-          <|> primitiveParser
+          <|> try primitiveParser
+          <|> try dataTypeParser
+          <|> try recordParser
    in orInBrackets parsers
 
 primitiveParser :: Parser MonoType
@@ -77,6 +84,42 @@ tyVarParser =
     identifier
     (inProtectedTypes >=> safeMkTyVar)
 
+tyConParser :: Parser TyCon
+tyConParser =
+  maybePred
+    identifier
+    (inProtectedTypes >=> safeMkTyCon)
+
 varParser :: Parser MonoType
 varParser = do
   MTVar mempty <$> (TVName <$> tyVarParser)
+
+recordParser :: Parser MonoType
+recordParser = withLocation MTRecord $ do
+  literalWithSpace "{"
+  args <- sepBy (withOptionalSpace recordItemParser) (literalWithSpace ",")
+  literalWithSpace "}"
+  pure (M.fromList args)
+
+recordItemParser :: Parser (Name, MonoType)
+recordItemParser = do
+  name <- nameParser
+  literalWithSpace ":"
+  expr <- withOptionalSpace monoTypeParser
+  pure (name, expr)
+
+dataTypeParser :: Parser MonoType
+dataTypeParser =
+  try multiDataTypeParser
+    <|> try monoDataTypeParser
+
+multiDataTypeParser :: Parser MonoType
+multiDataTypeParser = do
+  tyName <- thenSpace tyConParser
+  tyArgs <- sepBy1 monoTypeParser space1
+  pure (MTData mempty tyName tyArgs)
+
+monoDataTypeParser :: Parser MonoType
+monoDataTypeParser = do
+  tyName <- tyConParser
+  pure (MTData mempty tyName mempty)
