@@ -55,7 +55,7 @@ pairParser :: Parser MonoType
 pairParser = do
   _ <- string "("
   one <- monoTypeParser
-  _ <- thenSpace ","
+  _ <- literalWithSpace ","
   two <- monoTypeParser
   _ <- string ")"
   pure (MTPair mempty one two)

@@ -40,9 +40,9 @@ spec =
           == Normalised (MTPrim (Location 1 2) MTInt)
           `shouldBe` False
       it "Finds nothing in an empty project" $ do
-        typeSearch mempty (MTPrim mempty MTBool) `shouldBe` Right mempty
+        typeSearch mempty mempty (MTPrim mempty MTBool) `shouldBe` Right mempty
       it "Finds the id function in test project" $ do
-        let result = typeSearch stdLibDeps idType
+        let result = typeSearch (store stdLib) stdLibDeps idType
         result
           `shouldBe` Right (M.singleton (mkName "id") idType)
       it "Finds the addInt function in test project" $ do
@@ -55,10 +55,11 @@ spec =
                     (MTPrim mempty MTInt)
                     (MTPrim mempty MTInt)
                 )
-        let result = typeSearch stdLibDeps addIntType
+        let result = typeSearch (store stdLib) stdLibDeps addIntType
         result
           `shouldBe` Right
             (M.singleton (mkName "addInt") addIntType)
     describe "from text input" $ do
       it "Finds id function" $ do
-        typeSearchFromText stdLibDeps "a -> a" `shouldBe` Right (M.singleton (mkName "id") idType)
+        typeSearchFromText (store stdLib) stdLibDeps "a -> a"
+          `shouldBe` Right (M.singleton (mkName "id") idType)

@@ -43,9 +43,11 @@ filterTypes items mt = M.filter (\mt' -> Normalised mt' == Normalised mt) items
 -- | Typecheck everything in store and put in a map with binding name
 -- | Ideally we should move this out and cache type sigs of each store
 -- expression
-resolvedDepsToTypeMap :: ResolvedDeps Annotation -> TsApp Annotation (Map Name MonoType)
-resolvedDepsToTypeMap deps = do
-  let store' = storeFromResolvedDeps deps
+resolvedDepsToTypeMap ::
+  Store Annotation ->
+  ResolvedDeps Annotation ->
+  TsApp Annotation (Map Name MonoType)
+resolvedDepsToTypeMap store' deps = do
   let getType se =
         TsApp $
           resolveStoreExpression store' mempty se
@@ -56,16 +58,16 @@ resolvedDepsToTypeMap deps = do
       (M.toList $ getResolvedDeps deps)
   pure (M.fromList listItems)
 
--- | this is stupid, we should be using ResolvedDeps throughout the app
-storeFromResolvedDeps :: ResolvedDeps ann -> Store ann
-storeFromResolvedDeps (ResolvedDeps deps) = Store $ M.fromList (M.elems deps)
-
-typeSearch :: ResolvedDeps Annotation -> MonoType -> Either (Error Annotation) (Map Name MonoType)
-typeSearch deps mt = do
-  items <- runTsApp $ resolvedDepsToTypeMap deps
+typeSearch ::
+  Store Annotation ->
+  ResolvedDeps Annotation ->
+  MonoType ->
+  Either (Error Annotation) (Map Name MonoType)
+typeSearch store' bindings' mt = do
+  items <- runTsApp $ resolvedDepsToTypeMap store' bindings'
   pure (filterTypes items mt)
 
-typeSearchFromText :: ResolvedDeps Annotation -> Text -> Either (Error Annotation) (Map Name MonoType)
-typeSearchFromText deps input = do
+typeSearchFromText :: Store Annotation -> ResolvedDeps Annotation -> Text -> Either (Error Annotation) (Map Name MonoType)
+typeSearchFromText store' deps input = do
   mt <- first OtherError (parseAndFormat monoTypeParser input)
-  typeSearch deps mt
+  typeSearch store' deps mt

@@ -51,6 +51,14 @@ spec =
       testParser "(Int,     String)"
         `shouldBe` Right
           (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
+    it "Pair with less spacing" $
+      testParser "(a,b) ->   a"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTPair mempty (MTVar mempty (tvNamed "a")) (MTVar mempty (tvNamed "b")))
+              (MTVar mempty (tvNamed "a"))
+          )
     it "Function with pair" $
       testParser "(Int, String) -> Int"
         `shouldBe` Right

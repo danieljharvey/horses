@@ -17,6 +17,7 @@ import Language.Mimsa.Project
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store (resolveDeps)
+import Language.Mimsa.Typechecker.NormaliseTypes (normaliseType)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
@@ -37,9 +38,15 @@ doTypeSearch env mt = do
               (getCurrentBindings $ bindings env)
           )
       )
-  matches <- liftRepl (typeSearch (debugPretty "deps" deps) (debugPretty "mt" mt))
-  traverse_
-    ( \(name, mt') ->
-        replPrint (prettyPrint name <> ":" <> prettyPrint mt')
-    )
-    (M.toList matches)
+  matches <- liftRepl (typeSearch (store env) (debugPretty "deps" deps) (debugPretty "mt" mt))
+  let simplified = normaliseType mt
+  case M.toList matches of
+    [] ->
+      replPrint $ "Could not find a type match for " <> prettyPrint simplified
+    as -> do
+      replPrint $ (T.pack . show . length) as <> " matches for " <> prettyPrint simplified
+      traverse_
+        ( \(name, mt') ->
+            replPrint (prettyPrint name <> ": " <> prettyPrint mt')
+        )
+        as
