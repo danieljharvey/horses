@@ -16,13 +16,12 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
-import Text.Megaparsec
 
 testParser :: Text -> Either Text MonoType
 testParser input = do
   let removeAnn mt = mt $> mempty
       doParser i =
-        removeAnn <$> parseAndFormat (monoTypeParser <* eof) i
+        removeAnn <$> parseAndFormat monoTypeParser i
   original <- doParser input
   newOne <- doParser (prettyPrint original)
   if newOne == original
