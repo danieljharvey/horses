@@ -28,7 +28,7 @@ printTypeNum :: Int -> String
 printTypeNum i = [toEnum (index + start)] <> suffix
   where
     index = (i - 1) `mod` 26
-    start = fromEnum 'A'
+    start = fromEnum 'a'
     suffix =
       let diff = (i - 1) `div` 26
        in if diff < 1 then "" else show diff

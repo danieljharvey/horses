@@ -70,10 +70,10 @@ spec =
               )
       it "Names type vars" $ do
         let mt = MTVar () (tvNumbered 1)
-        prettyPrint mt `shouldBe` "A"
+        prettyPrint mt `shouldBe` "a"
       it "Names type vars 2" $ do
         let mt = MTVar () (tvNumbered 26)
-        prettyPrint mt `shouldBe` "Z"
+        prettyPrint mt `shouldBe` "z"
       it "Names type vars 3" $ do
         let mt = MTVar () (tvNumbered 27)
-        prettyPrint mt `shouldBe` "A1"
+        prettyPrint mt `shouldBe` "a1"

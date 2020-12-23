@@ -4,7 +4,6 @@
 
 module Language.Mimsa.Typechecker.Infer
   ( startInference,
-    doInference,
     doDataTypeInference,
   )
 where
@@ -23,10 +22,10 @@ import Language.Mimsa.Typechecker.DataTypes
   )
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Generalise
-import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
 import Language.Mimsa.Typechecker.RecordUsages
 import Language.Mimsa.Typechecker.TcMonad
+import Language.Mimsa.Typechecker.TypedHoles
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -37,23 +36,22 @@ import Language.Mimsa.Types.Typechecker
 type TcExpr = Expr Variable Annotation
 
 startInference ::
+  Map Name MonoType ->
   Swaps ->
   TcExpr ->
   Either TypeError MonoType
-startInference swaps expr = snd <$> doInference swaps mempty expr
+startInference typeMap swaps expr = snd <$> doInference typeMap swaps mempty expr
 
 doInference ::
+  Map Name MonoType ->
   Swaps ->
   Environment ->
   TcExpr ->
   Either TypeError (Substitutions, MonoType)
-doInference swaps env expr = runTcMonad swaps $ do
+doInference typeMap swaps env expr = runTcMonad swaps $ do
   recSubst <- getSubstitutionsForRecordUsages expr
   (subs, mt) <- inferAndSubst (defaultEnv recSubst <> env) expr
-  holes <- getTypedHoles subs
-  if M.null holes
-    then pure (subs, normaliseType mt)
-    else throwError (TypedHoles (normaliseType <$> holes))
+  typedHolesCheck typeMap subs mt
 
 doDataTypeInference ::
   Environment ->

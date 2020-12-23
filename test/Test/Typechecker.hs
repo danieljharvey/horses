@@ -187,7 +187,7 @@ spec =
       traverse_
         ( \(code, expected) ->
             --T.putStrLn (prettyPrint code)
-            startInference mempty code `shouldBe` expected
+            startInference mempty mempty code `shouldBe` expected
         )
         exprs
     it "Uses a polymorphic function twice with conflicting types" $ do
@@ -202,7 +202,7 @@ spec =
                   (MyApp mempty (MyVar mempty (named "id")) (bool True))
               )
       let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
-      startInference mempty expr `shouldBe` expected
+      startInference mempty mempty expr `shouldBe` expected
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             MyLambda
@@ -215,14 +215,14 @@ spec =
                   (MyApp mempty identity (int 2))
               )
       let expr = MyApp mempty lambda (bool True)
-      startInference mempty lambda
+      startInference mempty mempty lambda
         `shouldBe` Right
           ( MTFunction
               mempty
               (MTPrim mempty MTBool)
               (MTPrim mempty MTInt)
           )
-      startInference mempty expr `shouldBe` Right (MTPrim mempty MTInt)
+      startInference mempty mempty expr `shouldBe` Right (MTPrim mempty MTInt)
 {-  describe "Serialisation" $ do
 it "Round trip" $ do
   property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)
