@@ -61,3 +61,15 @@ spec =
       it "Finds id function" $ do
         typeSearchFromText typeMap "a -> a"
           `shouldBe` Right (M.singleton (mkName "id") idType)
+      it "Finds fmapOption" $ do
+        let fmapOption =
+              MTFunction
+                mempty
+                (MTFunction mempty (typeName "a") (typeName "b"))
+                ( MTFunction
+                    mempty
+                    (MTData mempty (mkTyCon "Option") [typeName "a"])
+                    (MTData mempty (mkTyCon "Option") [typeName "b"])
+                )
+        typeSearchFromText typeMap "(a -> b) -> Option a -> Option B"
+          `shouldBe` Right (M.singleton (mkName "fmapOption") fmapOption)

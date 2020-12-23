@@ -58,7 +58,7 @@ instance Printer (Type ann) where
 renderMonoType :: Type ann -> Doc a
 renderMonoType (MTPrim _ a) = prettyDoc a
 renderMonoType (MTFunction _ a b) =
-  renderMonoType a <+> "->" <+> renderMonoType b
+  withParens a <+> "->" <+> renderMonoType b
 renderMonoType (MTPair _ a b) =
   "(" <> renderMonoType a <> "," <+> renderMonoType b <> ")"
 renderMonoType (MTRecord _ as) =
@@ -85,4 +85,5 @@ renderMonoType (MTData _ (TyCon n) vars) =
 
 withParens :: Type ann -> Doc a
 withParens mt@MTData {} = parens (renderMonoType mt)
+withParens ma@MTFunction {} = parens (renderMonoType ma)
 withParens other = renderMonoType other

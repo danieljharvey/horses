@@ -23,6 +23,9 @@ str' = str . StringType
 unknown :: (Monoid ann) => Int -> Type ann
 unknown = MTVar mempty . TVNum
 
+typeName :: (Monoid ann) => Text -> Type ann
+typeName = MTVar mempty . TVName . mkTyVar
+
 ---
 
 named :: Text -> Variable

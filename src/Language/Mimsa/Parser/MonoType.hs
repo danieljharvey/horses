@@ -47,7 +47,10 @@ primitiveParser = MTPrim mempty <$> primParser
 
 functionParser :: Parser MonoType
 functionParser = do
-  one <- thenSpace simpleTypeParser -- let's not have more functions here for now to stop looping
+  let fromParser =
+        try (inBrackets functionParser)
+          <|> try simpleTypeParser
+  one <- thenSpace fromParser
   _ <- thenSpace (string "->")
   MTFunction mempty one <$> monoTypeParser
 

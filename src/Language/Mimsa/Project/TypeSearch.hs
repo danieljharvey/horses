@@ -10,6 +10,7 @@ import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
+import Language.Mimsa.Logging
 import Language.Mimsa.Parser.Helpers (parseAndFormat)
 import Language.Mimsa.Parser.MonoType
 import Language.Mimsa.Typechecker.NormaliseTypes
@@ -37,4 +38,4 @@ typeSearchFromText ::
   Either (Error Annotation) (Map Name MonoType)
 typeSearchFromText items input = do
   mt <- first OtherError (parseAndFormat monoTypeParser input)
-  pure $ typeSearch items mt
+  pure $ typeSearch (debugPretty "typeMap" items) mt

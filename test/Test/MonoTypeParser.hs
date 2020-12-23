@@ -174,3 +174,35 @@ spec =
                   [MTPrim mempty MTInt]
               ]
           )
+    it "Functions with datatypes" $
+      testParser "Maybe String -> Maybe Int"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTData mempty (mkTyCon "Maybe") [MTPrim mempty MTString])
+              (MTData mempty (mkTyCon "Maybe") [MTPrim mempty MTInt])
+          )
+    it "Parses higher order function" $
+      testParser "(a -> b) -> a -> b"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTFunction mempty (typeName "a") (typeName "b"))
+              ( MTFunction
+                  mempty
+                  (typeName "a")
+                  (typeName "b")
+              )
+          )
+    it "Parses fmap" $
+      testParser "(a -> b) -> Option a -> Option b"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTFunction mempty (typeName "a") (typeName "b"))
+              ( MTFunction
+                  mempty
+                  (MTData mempty (mkTyCon "Option") [typeName "a"])
+                  (MTData mempty (mkTyCon "Option") [typeName "b"])
+              )
+          )
