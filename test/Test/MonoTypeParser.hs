@@ -30,7 +30,7 @@ testParser input = do
 
 spec :: Spec
 spec =
-  fdescribe "MonoType parser" $ do
+  describe "MonoType parser" $ do
     it "String" $
       testParser "String" `shouldBe` Right (MTPrim mempty MTString)
     it "Unit" $
@@ -182,7 +182,7 @@ spec =
               (MTData mempty (mkTyCon "MyUnit") mempty)
               (MTPrim mempty MTInt)
           )
-    it "Functions with datatypes 2" $
+    xit "Functions with datatypes 2" $
       testParser "Maybe String -> Int"
         `shouldBe` Right
           ( MTFunction
@@ -202,7 +202,7 @@ spec =
                   (typeName "b")
               )
           )
-    it "Parses fmap" $
+    xit "Parses fmap" $
       testParser "(a -> b) -> Option a -> Option b"
         `shouldBe` Right
           ( MTFunction
