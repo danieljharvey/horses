@@ -12,6 +12,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import Language.Mimsa.Logging
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers (nameParser)
 import Language.Mimsa.Parser.Types
@@ -48,11 +49,11 @@ primitiveParser = MTPrim mempty <$> primParser
 functionParser :: Parser MonoType
 functionParser = do
   let fromParser =
-        try (inBrackets functionParser)
-          <|> try simpleTypeParser
-  one <- thenSpace fromParser
+        try simpleTypeParser
+          <|> try (inBrackets functionParser)
+  one <- fromParser
   _ <- thenSpace (string "->")
-  MTFunction mempty one <$> monoTypeParser
+  MTFunction mempty (debugPretty "function left" one) <$> monoTypeParser
 
 pairParser :: Parser MonoType
 pairParser = do
@@ -114,15 +115,19 @@ recordItemParser = do
 dataTypeParser :: Parser MonoType
 dataTypeParser =
   try multiDataTypeParser
-    <|> try monoDataTypeParser
+
+--    <|> monoDataTypeParser
 
 multiDataTypeParser :: Parser MonoType
 multiDataTypeParser = do
+  let fromParser =
+        try simpleTypeParser
+          <|> inBrackets functionParser
   tyName <- thenSpace tyConParser
-  tyArgs <- sepBy1 monoTypeParser space1
-  pure (MTData mempty tyName tyArgs)
+  tyArgs <- try (sepBy1 fromParser space1)
+  pure $ debugPretty "multi data" (MTData mempty tyName tyArgs)
 
-monoDataTypeParser :: Parser MonoType
-monoDataTypeParser = do
+_monoDataTypeParser :: Parser MonoType
+_monoDataTypeParser = do
   tyName <- tyConParser
-  pure (MTData mempty tyName mempty)
+  pure $ debugPretty "mono data" (MTData mempty tyName mempty)
