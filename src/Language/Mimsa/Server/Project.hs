@@ -134,7 +134,7 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   project <- loadProjectHandler mimsaEnv store' projectHash
   se <- findExprHandler project exprHash'
   (ResolvedExpression mt _ _ _ _) <-
-    resolveStoreExpressionHandler (store project) se
+    resolveStoreExpressionHandler project se
   writeStoreHandler mimsaEnv (store project)
   GetExpressionResponse <$> expressionDataHandler mimsaEnv se mt
 

@@ -24,7 +24,6 @@ data Error ann
   | ResolverErr ResolverError
   | InterpreterErr (InterpreterError ann)
   | UsageErr UsageError
-  | ParseErr Text
   | StoreErr StoreError
   | OtherError Text
   deriving (Eq, Ord, Show)
@@ -34,6 +33,5 @@ instance (Show ann, Printer ann) => Printer (Error ann) where
   prettyPrint (ResolverErr a) = "ResolverError:\n" <> prettyPrint a
   prettyPrint (InterpreterErr a) = "InterpreterError:\n" <> prettyPrint a
   prettyPrint (UsageErr a) = "UsageError:\n" <> prettyPrint a
-  prettyPrint (ParseErr a) = "ParseError:\n" <> a
   prettyPrint (StoreErr a) = "StoreError:\n" <> prettyPrint a
   prettyPrint (OtherError a) = "OtherError:\n" <> a

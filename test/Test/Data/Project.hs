@@ -15,7 +15,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Test.Helpers
+import Test.Utils.Helpers
 
 type StoreExpressionA = StoreExpression Annotation
 
@@ -58,6 +58,19 @@ eqExpr = unsafeGetExpr "\\a -> \\b -> a == b"
 optionExpr :: StoreExpressionA
 optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
 
+optionMapExpr :: StoreExpressionA
+optionMapExpr =
+  unsafeGetExprWithType
+    "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise Nowt"
+    mempty
+    ( TypeBindings
+        ( M.fromList
+            [ (mkTyCon "Some", exprHash 4),
+              (mkTyCon "Nowt", exprHash 4)
+            ]
+        )
+    )
+
 theseExpr :: StoreExpressionA
 theseExpr = unsafeGetExpr "type These a b = This a | That b | These a b in {}"
 
@@ -88,7 +101,8 @@ stdLib' = Project store' bindings' typeBindings'
             (exprHash 9, theseExpr),
             (exprHash 11, idExpr),
             (exprHash 17, incrementInt),
-            (exprHash 18, addInt)
+            (exprHash 18, addInt),
+            (exprHash 19, optionMapExpr)
           ]
     bindings' =
       VersionedMap $
@@ -102,7 +116,8 @@ stdLib' = Project store' bindings' typeBindings'
             (mkName "aRecord", pure $ exprHash 8),
             (mkName "id", pure $ exprHash 11),
             (mkName "incrementInt", pure $ exprHash 17),
-            (mkName "addInt", pure $ exprHash 18)
+            (mkName "addInt", pure $ exprHash 18),
+            (mkName "fmapOption", pure $ exprHash 19)
           ]
     typeBindings' =
       VersionedMap $
@@ -115,9 +130,12 @@ stdLib' = Project store' bindings' typeBindings'
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression Annotation
-unsafeGetExpr' input bindings' =
+unsafeGetExpr' input bindings' = unsafeGetExprWithType input bindings' mempty
+
+unsafeGetExprWithType :: Text -> Bindings -> TypeBindings -> StoreExpression Annotation
+unsafeGetExprWithType input bindings' typeBindings' =
   case parseExpr input of
-    Right expr' -> StoreExpression expr' bindings' mempty
+    Right expr' -> StoreExpression expr' bindings' typeBindings'
     a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
 
 unsafeGetExpr :: Text -> StoreExpression Annotation

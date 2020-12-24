@@ -1,4 +1,4 @@
-module Test.Helpers where
+module Test.Utils.Helpers where
 
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -21,20 +21,29 @@ str' = str . StringType
 
 --
 unknown :: (Monoid ann) => Int -> Type ann
-unknown = MTVar mempty . NumberedVar
+unknown = MTVar mempty . TVNum
+
+typeName :: (Monoid ann) => Text -> Type ann
+typeName = MTVar mempty . TVName . mkTyVar
 
 ---
 
 named :: Text -> Variable
 named = NamedVar . Name
 
+numbered :: Int -> Variable
+numbered = NumberedVar
+
 ---
 
-tvBound :: Int -> Variable
-tvBound = NumberedVar
+tvFree :: Int -> TypeIdentifier
+tvFree = TVNum
 
-tvFree :: Int -> Variable
-tvFree = NumberedVar
+tvNumbered :: Int -> TypeIdentifier
+tvNumbered = TVNum
+
+tvNamed :: Text -> TypeIdentifier
+tvNamed t = TVName $ mkTyVar t
 
 exprHash :: Int -> ExprHash
 exprHash = ExprHash . T.pack . show

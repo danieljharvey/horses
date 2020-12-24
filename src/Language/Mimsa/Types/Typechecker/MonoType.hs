@@ -37,7 +37,7 @@ type MonoType = Type Annotation
 
 data Type ann
   = MTPrim ann Primitive
-  | MTVar ann Variable
+  | MTVar ann TypeIdentifier
   | MTFunction ann (Type ann) (Type ann) -- argument, result
   | MTPair ann (Type ann) (Type ann) -- (a,b)
   | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
@@ -55,35 +55,35 @@ getAnnotationForType (MTData ann _ _) = ann
 instance Printer (Type ann) where
   prettyDoc = renderMonoType
 
-printTypeNum :: Int -> String
-printTypeNum i = [toEnum (index + start)] <> suffix
-  where
-    index = (i - 1) `mod` 26
-    start = fromEnum 'A'
-    suffix =
-      let diff = (i - 1) `div` 26
-       in if diff < 1 then "" else show diff
-
 renderMonoType :: Type ann -> Doc a
 renderMonoType (MTPrim _ a) = prettyDoc a
 renderMonoType (MTFunction _ a b) =
-  parens (renderMonoType a <+> "->" <+> renderMonoType b)
+  withParens a <+> "->" <+> renderMonoType b
 renderMonoType (MTPair _ a b) =
-  tupled [renderMonoType a, renderMonoType b]
+  "(" <> renderMonoType a <> "," <+> renderMonoType b <> ")"
 renderMonoType (MTRecord _ as) =
-  enclose
-    lbrace
-    rbrace
-    ( mconcat $
-        punctuate
-          comma
-          ( indent 1 . renderItem
-              <$> M.toList as
-          )
-    )
+  group $
+    "{"
+      <> nest
+        2
+        ( line
+            <> mconcat
+              ( punctuate
+                  ("," <> line)
+                  ( renderItem
+                      <$> M.toList as
+                  )
+              )
+        )
+      <> line
+      <> "}"
   where
-    renderItem (Name k, v) = pretty k <+> ":" <+> renderMonoType v
-renderMonoType (MTVar _ a) = case a of
-  (NamedVar (Name n)) -> pretty n
-  (NumberedVar i) -> pretty (printTypeNum i)
-renderMonoType (MTData _ (TyCon n) vars) = align $ sep ([pretty n] <> (renderMonoType <$> vars))
+    renderItem (Name k, v) = pretty k <> ":" <+> withParens v
+renderMonoType (MTVar _ a) = renderTypeIdentifier a
+renderMonoType (MTData _ (TyCon n) vars) =
+  align $ sep ([pretty n] <> (withParens <$> vars))
+
+withParens :: Type ann -> Doc a
+withParens mt@MTData {} = parens (renderMonoType mt)
+withParens ma@MTFunction {} = parens (renderMonoType ma)
+withParens other = renderMonoType other

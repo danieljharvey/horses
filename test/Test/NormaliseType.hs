@@ -5,13 +5,18 @@ module Test.NormaliseType
   )
 where
 
+import Data.Coerce
+import Data.Text (Text)
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 
 mkVar :: Int -> MonoType
-mkVar i = MTVar mempty (NumberedVar i)
+mkVar i = MTVar mempty (TVNum i)
+
+mkNameVar :: Text -> MonoType
+mkNameVar n = MTVar mempty (TVName (coerce n))
 
 spec :: Spec
 spec =
@@ -39,6 +44,21 @@ spec =
           mempty
           (mkVar 1)
           ( MTPair
+              mempty
+              (mkVar 2)
+              (mkVar 1)
+          )
+    it "Normalises named variables too" $
+      normaliseType
+        ( MTFunction
+            mempty
+            (mkNameVar "a")
+            (MTFunction mempty (mkNameVar "b") (mkNameVar "a"))
+        )
+        `shouldBe` MTFunction
+          mempty
+          (mkVar 1)
+          ( MTFunction
               mempty
               (mkVar 2)
               (mkVar 1)
