@@ -30,6 +30,7 @@ you should then see:
 :list - show a list of current bindings in the environment
 :outputJS <expr> - show JS code for <expr>
 :tree <expr> - draw a dependency tree for <expr>
+:search <mt> - search for exprs that match type
 :versions <name> - list all versions of a binding
 <expr> - Evaluate <expr>, returning it's simplified form and type
 :quit - give up and leave

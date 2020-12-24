@@ -13,8 +13,8 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Swaps
-import Test.Helpers
 import Test.Hspec
+import Test.Utils.Helpers
 
 testInterpret ::
   Scope () ->
@@ -99,7 +99,7 @@ spec =
               MyLet
                 mempty
                 (named "const")
-                (MyLambda mempty (tvFree 0) (MyLambda mempty (tvFree 1) (MyVar mempty (tvFree 0))))
+                (MyLambda mempty (numbered 0) (MyLambda mempty (numbered 1) (MyVar mempty (numbered 0))))
                 (MyApp mempty (MyApp mempty (MyVar mempty (named "const")) (int 1)) (int 2))
         testInterpret mempty f (int 1)
     describe "If" $ do
