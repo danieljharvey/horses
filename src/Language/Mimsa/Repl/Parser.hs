@@ -11,9 +11,7 @@ import Language.Mimsa.Types.AST
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
-type ReplActionAnn = ReplAction Annotation
-
-replParser :: Parser ReplActionAnn
+replParser :: Parser (ReplAction Annotation)
 replParser =
   try helpParser
     <|> try infoParser
@@ -23,53 +21,47 @@ replParser =
     <|> try treeParser
     <|> try evalParser
     <|> try versionsParser
-    <|> try outputJSParser
-    <|> try typeSearchParser
+    <|> outputJSParser
 
-helpParser :: Parser ReplActionAnn
+helpParser :: Parser (ReplAction Annotation)
 helpParser = Help <$ string ":help"
 
-infoParser :: Parser ReplActionAnn
+infoParser :: Parser (ReplAction Annotation)
 infoParser = do
   _ <- thenSpace (string ":info")
   Info <$> expressionParser
 
-evalParser :: Parser ReplActionAnn
+evalParser :: Parser (ReplAction Annotation)
 evalParser =
   Evaluate
     <$> expressionParser
 
-treeParser :: Parser ReplActionAnn
+treeParser :: Parser (ReplAction Annotation)
 treeParser = do
   _ <- thenSpace (string ":tree")
   Tree <$> expressionParser
 
-bindParser :: Parser ReplActionAnn
+bindParser :: Parser (ReplAction Annotation)
 bindParser = do
   _ <- thenSpace (string ":bind")
   name <- thenSpace nameParser
   _ <- thenSpace (string "=")
   Bind name <$> expressionParser
 
-bindTypeParser :: Parser ReplActionAnn
+bindTypeParser :: Parser (ReplAction Annotation)
 bindTypeParser = do
   _ <- thenSpace (string ":bindType")
   BindType <$> typeDeclParser
 
-listBindingsParser :: Parser ReplActionAnn
+listBindingsParser :: Parser (ReplAction Annotation)
 listBindingsParser = ListBindings <$ string ":list"
 
-versionsParser :: Parser ReplActionAnn
+versionsParser :: Parser (ReplAction Annotation)
 versionsParser = do
   _ <- thenSpace (string ":versions")
   Versions <$> nameParser
 
-outputJSParser :: Parser ReplActionAnn
+outputJSParser :: Parser (ReplAction Annotation)
 outputJSParser = do
   _ <- thenSpace (string ":outputJS")
   OutputJS <$> expressionParser
-
-typeSearchParser :: Parser ReplActionAnn
-typeSearchParser = do
-  _ <- thenSpace (string ":search")
-  TypeSearch <$> monoTypeParser

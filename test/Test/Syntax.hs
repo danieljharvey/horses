@@ -12,8 +12,8 @@ import Data.Text (Text)
 import Language.Mimsa.Parser
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Test.Helpers
 import Test.Hspec
-import Test.Utils.Helpers
 import Text.Megaparsec
 
 -- specialisation of parseExpr

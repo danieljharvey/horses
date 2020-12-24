@@ -27,7 +27,7 @@ import Data.Map (Map)
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Actions (evaluateText, getTypeMap, resolveStoreExpression)
+import Language.Mimsa.Actions (evaluateText, resolveStoreExpression)
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -140,12 +140,11 @@ interpretHandler scope' swaps' expr' =
   handleEither InternalError (interpret scope' swaps' expr')
 
 resolveStoreExpressionHandler ::
-  Project Annotation ->
+  Store Annotation ->
   StoreExpression Annotation ->
   Handler (ResolvedExpression Annotation)
-resolveStoreExpressionHandler prj se = do
-  typeMap <- handleEither InternalError (getTypeMap prj)
-  handleEither UserError $ resolveStoreExpression (store prj) typeMap "" se
+resolveStoreExpressionHandler store' se =
+  handleEither UserError $ resolveStoreExpression store' "" se
 
 findExprHandler ::
   Project Annotation ->

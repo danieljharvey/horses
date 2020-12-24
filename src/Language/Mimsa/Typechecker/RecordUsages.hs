@@ -34,7 +34,7 @@ seqTuple (a, mB) = case mB of
 getSubstitutionsForRecordUsages :: Expr Variable ann -> TcMonad Substitutions
 getSubstitutionsForRecordUsages expr = do
   let records = M.toList $ getCombineMap $ getRecordUsages expr
-      toSubst (k, v) = (,) (variableToTypeIdentifier k) <$> toEmptyType v
+      toSubst (k, v) = (,) k <$> toEmptyType v
   maybeSubst <- (fmap . fmap) seqTuple (traverse toSubst records)
   let mappy = M.fromList $ catMaybes maybeSubst
   pure (Substitutions mappy)

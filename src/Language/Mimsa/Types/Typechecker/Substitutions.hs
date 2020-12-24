@@ -12,7 +12,7 @@ import Language.Mimsa.Types.Typechecker.MonoType
 
 ---
 
-newtype Substitutions = Substitutions {getSubstitutions :: Map TypeIdentifier MonoType}
+newtype Substitutions = Substitutions {getSubstitutions :: Map Variable MonoType}
   deriving (Eq, Ord, Show)
 
 instance Semigroup Substitutions where
@@ -29,7 +29,7 @@ instance Printer Substitutions where
 
 ---
 
-substLookup :: Substitutions -> TypeIdentifier -> Maybe MonoType
+substLookup :: Substitutions -> Variable -> Maybe MonoType
 substLookup subst i = M.lookup i (getSubstitutions subst)
 
 applySubst :: Substitutions -> MonoType -> MonoType

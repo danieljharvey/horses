@@ -19,7 +19,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-freeTypeVars :: MonoType -> S.Set TypeIdentifier
+freeTypeVars :: MonoType -> S.Set Variable
 freeTypeVars ty = case ty of
   MTVar _ var ->
     S.singleton var
@@ -31,7 +31,7 @@ freeTypeVars ty = case ty of
   MTPrim _ _ -> S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
-varBind :: Annotation -> TypeIdentifier -> MonoType -> TcMonad Substitutions
+varBind :: Annotation -> Variable -> MonoType -> TcMonad Substitutions
 varBind ann var ty
   | typeEquals ty (MTVar mempty var) = pure mempty
   | S.member var (freeTypeVars ty) = do

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 392668d85b2adf9ec893071ba1f58b9dec210adaf4e5aaaca4a07721538db1a5
+-- hash: c34088d8394a0476a06459d3ed045215f34d66d2d5e5bf5b4a8669d712797671
 
 name:           mimsa
 version:        0.1.0.0
@@ -45,7 +45,6 @@ library
       Language.Mimsa.Parser.Identifiers
       Language.Mimsa.Parser.Language
       Language.Mimsa.Parser.Literal
-      Language.Mimsa.Parser.MonoType
       Language.Mimsa.Parser.RecordAccess
       Language.Mimsa.Parser.TypeDecl
       Language.Mimsa.Parser.Types
@@ -54,21 +53,13 @@ library
       Language.Mimsa.Project.Default
       Language.Mimsa.Project.Helpers
       Language.Mimsa.Project.Persistence
-      Language.Mimsa.Project.TypeSearch
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
       Language.Mimsa.Repl
       Language.Mimsa.Repl.Actions
-      Language.Mimsa.Repl.Compile
-      Language.Mimsa.Repl.Evaluate
       Language.Mimsa.Repl.ExpressionBind
-      Language.Mimsa.Repl.Info
-      Language.Mimsa.Repl.ListBindings
       Language.Mimsa.Repl.Parser
-      Language.Mimsa.Repl.Tree
       Language.Mimsa.Repl.Types
-      Language.Mimsa.Repl.TypeSearch
-      Language.Mimsa.Repl.Versions
       Language.Mimsa.Server
       Language.Mimsa.Server.EnvVars
       Language.Mimsa.Server.Handlers
@@ -98,7 +89,6 @@ library
       Language.Mimsa.Typechecker.Patterns
       Language.Mimsa.Typechecker.RecordUsages
       Language.Mimsa.Typechecker.TcMonad
-      Language.Mimsa.Typechecker.TypedHoles
       Language.Mimsa.Typechecker.Unify
       Language.Mimsa.Types.AST
       Language.Mimsa.Types.AST.Annotation
@@ -114,11 +104,10 @@ library
       Language.Mimsa.Types.Error.TypeError
       Language.Mimsa.Types.Error.UsageError
       Language.Mimsa.Types.Identifiers
+      Language.Mimsa.Types.Identifiers.FuncName
       Language.Mimsa.Types.Identifiers.Name
       Language.Mimsa.Types.Identifiers.TyCon
-      Language.Mimsa.Types.Identifiers.TypeIdentifier
       Language.Mimsa.Types.Identifiers.TypeName
-      Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project
@@ -256,8 +245,8 @@ test-suite mimsa-test
   other-modules:
       Test.BackendJS
       Test.Data.Project
+      Test.Helpers
       Test.Interpreter
-      Test.MonoTypeParser
       Test.NormaliseType
       Test.Prettier
       Test.RecordUsage
@@ -268,10 +257,8 @@ test-suite mimsa-test
       Test.Syntax
       Test.Typechecker
       Test.TypeError
-      Test.TypeSearch
       Test.Unify
       Test.Usages
-      Test.Utils.Helpers
       Test.Utils.Serialisation
       Paths_mimsa
   hs-source-dirs:

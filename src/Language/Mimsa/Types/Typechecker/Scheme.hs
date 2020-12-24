@@ -7,7 +7,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.MonoType
 
-data Scheme = Scheme [TypeIdentifier] MonoType
+data Scheme = Scheme [Variable] MonoType
   deriving (Eq, Ord, Show)
 
 instance Printer Scheme where

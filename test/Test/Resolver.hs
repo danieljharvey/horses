@@ -14,8 +14,8 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Test.Helpers
 import Test.Hspec
-import Test.Utils.Helpers
 
 extractVars' :: Expr Name () -> Set Name
 extractVars' = extractVars

@@ -1,5 +1,3 @@
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Store.ResolvedDeps where
@@ -18,7 +16,6 @@ newtype ResolvedDeps a
           Map Name
             (ExprHash, StoreExpression a)
       }
-  deriving newtype (Semigroup, Monoid)
 
 hasNoDeps :: ResolvedDeps a -> Bool
 hasNoDeps (ResolvedDeps m) = M.size m == 0

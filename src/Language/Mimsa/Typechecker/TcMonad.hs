@@ -3,7 +3,6 @@ module Language.Mimsa.Typechecker.TcMonad where
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State (State, gets, modify, runState)
-import Data.Coerce
 import qualified Data.Map as M
 import Data.Map (Map)
 import Language.Mimsa.Types.AST
@@ -45,20 +44,16 @@ addTypedHole :: Annotation -> Name -> TcMonad MonoType
 addTypedHole ann name = do
   i <- getNextUniVar
   modify (\s -> s {tcsTypedHoles = tcsTypedHoles s <> M.singleton name (ann, i)})
-  pure $ MTVar ann (TVNum i)
+  pure $ MTVar ann (NumberedVar i)
 
 -- todo - look up index in substitutions to get type
 getTypedHoles :: Substitutions -> TcMonad (Map Name MonoType)
 getTypedHoles (Substitutions subs) = do
   holes <- gets tcsTypedHoles
-  let getMonoType = \(ann, i) -> case M.lookup (TVNum i) subs of
+  let getMonoType = \(ann, i) -> case M.lookup (NumberedVar i) subs of
         Just a -> a
-        Nothing -> MTVar ann (TVNum i)
+        Nothing -> MTVar ann (NumberedVar i)
   pure $ fmap getMonoType holes
 
 getUnknown :: Annotation -> TcMonad MonoType
-getUnknown ann = MTVar ann . TVNum <$> getNextUniVar
-
-variableToTypeIdentifier :: Variable -> TypeIdentifier
-variableToTypeIdentifier (NamedVar n) = TVName (coerce n)
-variableToTypeIdentifier (NumberedVar i) = TVNum i
+getUnknown ann = MTVar ann . NumberedVar <$> getNextUniVar

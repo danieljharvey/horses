@@ -13,7 +13,7 @@ import Text.Megaparsec.Char
 
 -- run a parser and then run Megaparsec pretty printer on the error
 parseAndFormat :: Parser a -> Text -> Either Text a
-parseAndFormat p = first (T.pack . errorBundlePretty) . parse (p <* eof) "repl"
+parseAndFormat p = first (T.pack . errorBundlePretty) . parse p "repl"
 
 -- looks for Parser a followed by 1 or more spaces
 thenSpace :: Parser a -> Parser a

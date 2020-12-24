@@ -17,6 +17,12 @@ import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+  ( Name,
+    TyCon,
+    Variable (..),
+    mkName,
+    renderName,
+  )
 import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -24,11 +30,12 @@ import Text.Megaparsec
 
 data TypeError
   = UnknownTypeError
-  | FailsOccursCheck Swaps TypeIdentifier MonoType
+  | FailsOccursCheck Swaps Variable MonoType
   | UnificationError MonoType MonoType
-  | VariableNotInEnv Swaps Annotation Variable (Set TypeIdentifier)
+  | VariableNotInEnv Swaps Annotation Variable (Set Variable)
   | MissingRecordMember Annotation Name (Set Name)
   | MissingRecordTypeMember Annotation Name (Map Name MonoType)
+  | MissingBuiltIn Annotation Variable
   | NoFunctionEquality MonoType MonoType
   | CannotMatchRecord Environment Annotation MonoType
   | CaseMatchExpectedPair Annotation MonoType
@@ -41,7 +48,7 @@ data TypeError
   | DuplicateTypeDeclaration TyCon
   | IncompletePatternMatch Annotation [TyCon]
   | MixedUpPatterns [TyCon]
-  | TypedHoles (Map Name (MonoType, Set Name))
+  | TypedHoles (Map Name MonoType)
   deriving (Eq, Ord, Show)
 
 ------
@@ -75,6 +82,7 @@ getErrorPos (MissingRecordTypeMember ann _ _) = fromAnnotation ann
 getErrorPos (VariableNotInEnv _ ann _ _) = fromAnnotation ann
 getErrorPos (TypeConstructorNotInScope _ ann _) = fromAnnotation ann
 getErrorPos (ConflictingConstructors ann _) = fromAnnotation ann
+getErrorPos (MissingBuiltIn ann _) = fromAnnotation ann
 getErrorPos (IncompletePatternMatch ann _) = fromAnnotation ann
 getErrorPos (CaseMatchExpectedPair ann _) =
   fromAnnotation ann
@@ -82,7 +90,7 @@ getErrorPos (CannotCaseMatchOnType expr) =
   fromAnnotation (getAnnotation expr)
 getErrorPos (CannotMatchRecord _ ann _) = fromAnnotation ann
 getErrorPos (TypedHoles holes) = case M.toList holes of
-  ((_, (mt, _)) : _) -> fromAnnotation (getAnnotationForType mt)
+  ((_, mt) : _) -> fromAnnotation (getAnnotationForType mt)
   _ -> fromAnnotation mempty
 getErrorPos _ = (0, 0)
 
@@ -137,6 +145,8 @@ renderTypeError (MissingRecordTypeMember _ name types) =
     "The following record items are available:"
   ]
     <> showKeys renderName types
+renderTypeError (MissingBuiltIn _ var) =
+  ["Cannot find built-in function" <+> dquotes (prettyDoc var)]
 renderTypeError (CannotMatchRecord env _ mt) =
   [ "Cannot match type" <+> prettyDoc mt <+> "to record.",
     "The following are available:",
@@ -181,15 +191,9 @@ renderTypeError (MixedUpPatterns names) =
 renderTypeError (NoFunctionEquality a b) =
   ["Cannot use == on functions", prettyDoc a, prettyDoc b]
 renderTypeError (TypedHoles map') =
-  ["Typed holes found:"] <> showMap renderHoleName renderSuggestion map'
+  ["Typed holes found:"] <> showMap renderHoleName prettyDoc map'
   where
     renderHoleName n = "?" <> prettyDoc n
-    renderSuggestion (mt, suggestions) =
-      prettyDoc mt <+> renderMatches suggestions
-    renderMatches s =
-      if S.null s
-        then ""
-        else line <> indent 2 ("Suggestions:" <+> list (prettyDoc <$> S.toList s))
 
 printDataTypes :: Environment -> [Doc ann]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

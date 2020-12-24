@@ -5,7 +5,7 @@ import qualified Data.Map as M
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-freeVars :: MonoType -> [TypeIdentifier]
+freeVars :: MonoType -> [Variable]
 freeVars (MTVar _ b) = [b]
 freeVars (MTFunction _ t1 t2) = freeVars t1 <> freeVars t2
 freeVars (MTPair _ a b) = freeVars a <> freeVars b

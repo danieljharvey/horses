@@ -24,6 +24,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import System.Console.Haskeline
+import Text.Megaparsec
 
 repl :: IO ()
 repl = do
@@ -56,7 +57,7 @@ parseCommand ::
   Text ->
   IO (Project Annotation)
 parseCommand env input =
-  case parseAndFormat replParser input of
+  case parseAndFormat (replParser <* eof) input of
     Left e -> do
       T.putStrLn e
       pure env

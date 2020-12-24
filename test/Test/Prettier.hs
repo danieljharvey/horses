@@ -11,7 +11,6 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
-import Test.Utils.Helpers
 
 spec :: Spec
 spec =
@@ -61,19 +60,20 @@ spec =
             mt =
               MTFunction
                 mempty
-                ( MTVar mempty $
-                    tvNamed "catch"
+                ( MTVar mempty
+                    $ NamedVar
+                    $ Name "catch"
                 )
-                (MTVar mempty $ tvNumbered 22)
+                (MTVar mempty $ NumberedVar 22)
          in T.putStrLn
               ( prettyPrint mt
               )
       it "Names type vars" $ do
-        let mt = MTVar () (tvNumbered 1)
-        prettyPrint mt `shouldBe` "a"
+        let mt = MTVar () (NumberedVar 1)
+        prettyPrint mt `shouldBe` "A"
       it "Names type vars 2" $ do
-        let mt = MTVar () (tvNumbered 26)
-        prettyPrint mt `shouldBe` "z"
+        let mt = MTVar () (NumberedVar 26)
+        prettyPrint mt `shouldBe` "Z"
       it "Names type vars 3" $ do
-        let mt = MTVar () (tvNumbered 27)
-        prettyPrint mt `shouldBe` "a1"
+        let mt = MTVar () (NumberedVar 27)
+        prettyPrint mt `shouldBe` "A1"

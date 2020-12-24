@@ -9,7 +9,7 @@ import Language.Mimsa.Types.Typechecker
 data NormaliseState
   = NormaliseState
       { _nsNext :: Int,
-        _nsAllocated :: Map TypeIdentifier Int
+        _nsAllocated :: Map Int Int
       }
 
 normaliseType :: MonoType -> MonoType
@@ -18,7 +18,7 @@ normaliseType mt =
     (normaliseType' mt)
     (NormaliseState 1 mempty)
 
-findVar :: TypeIdentifier -> State NormaliseState Int
+findVar :: Int -> State NormaliseState Int
 findVar i = do
   (NormaliseState next alloc) <- get
   case M.lookup i alloc of
@@ -29,9 +29,10 @@ findVar i = do
 
 normaliseType' :: MonoType -> State NormaliseState MonoType
 normaliseType' mt = case mt of
-  MTVar ann tyIdent -> do
-    index <- findVar tyIdent
-    pure $ MTVar ann (TVNum index)
+  MTVar ann (NumberedVar i) -> do
+    index <- findVar i
+    pure $ MTVar ann (NumberedVar index)
+  MTVar ann (NamedVar n) -> pure (MTVar ann (NamedVar n))
   MTPrim ann a -> pure (MTPrim ann a)
   MTFunction ann arg fun ->
     MTFunction ann
