@@ -46,7 +46,10 @@ getProjectFolder cfg = getStoreFolder cfg "projects"
 getProjectPath :: MimsaConfig -> ProjectHash -> IO FilePath
 getProjectPath cfg hash' = do
   folder <- getProjectFolder cfg
-  pure (folder <> show hash' <> ".json")
+  pure (folder <> getProjectFilename hash')
+
+getProjectFilename :: ProjectHash -> FilePath
+getProjectFilename hash' = show hash' <> ".json"
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
@@ -74,9 +77,11 @@ loadProjectFromHash' :: MimsaConfig -> Store () -> ProjectHash -> PersistApp (Pr
 loadProjectFromHash' cfg store' hash = do
   path <- liftIO $ getProjectPath cfg hash
   json <- liftIO $ try $ LBS.readFile path
+  liftIO $ print json
+  liftIO $ print path
   case hush json >>= JSON.decode of
     Just sp -> fetchProjectItems cfg store' sp
-    _ -> throwError $ CouldNotDecodeFile envPath
+    _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
 
 fetchProjectItems :: MimsaConfig -> Store () -> SaveProject -> PersistApp (Project ())
 fetchProjectItems cfg existingStore sp = do
