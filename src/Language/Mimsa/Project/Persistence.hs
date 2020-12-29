@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Language.Mimsa.Project.Persistence
   ( loadProject,
@@ -36,10 +37,6 @@ storePath = "./"
 envPath :: String
 envPath = storePath <> "environment.json"
 
-hush :: Either IOError a -> Maybe a
-hush (Right a) = pure a
-hush _ = Nothing
-
 getProjectFolder :: MimsaConfig -> IO FilePath
 getProjectFolder cfg = getStoreFolder cfg "projects"
 
@@ -63,9 +60,12 @@ loadProject' ::
   PersistApp (Project ())
 loadProject' cfg = do
   project' <- liftIO $ try $ LBS.readFile envPath
-  case hush project' >>= JSON.decode of
-    Just sp -> fetchProjectItems cfg mempty sp -- we're starting from scratch with this one
-    _ -> throwError $ CouldNotDecodeFile envPath
+  case project' of
+    Left (_ :: IOError) -> throwError (CouldNotReadFilePath envPath)
+    Right json' ->
+      case JSON.decode json' of
+        Just sp -> fetchProjectItems cfg mempty sp -- we're starting from scratch with this one
+        _ -> throwError $ CouldNotDecodeFile envPath
 
 loadProjectFromHash :: (Monoid ann) => MimsaConfig -> Store ann -> ProjectHash -> PersistApp (Project ann)
 loadProjectFromHash cfg store' hash = do
@@ -73,15 +73,19 @@ loadProjectFromHash cfg store' hash = do
   proj <- loadProjectFromHash' cfg unitStore hash
   pure $ proj $> mempty
 
-loadProjectFromHash' :: MimsaConfig -> Store () -> ProjectHash -> PersistApp (Project ())
+loadProjectFromHash' ::
+  MimsaConfig ->
+  Store () ->
+  ProjectHash ->
+  PersistApp (Project ())
 loadProjectFromHash' cfg store' hash = do
   path <- liftIO $ getProjectPath cfg hash
   json <- liftIO $ try $ LBS.readFile path
-  liftIO $ print json
-  liftIO $ print path
-  case hush json >>= JSON.decode of
-    Just sp -> fetchProjectItems cfg store' sp
-    _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
+  case json of
+    Left (_ :: IOError) -> throwError $ CouldNotReadFilePath (getProjectFilename hash)
+    Right json' -> case JSON.decode json' of
+      Just sp -> fetchProjectItems cfg store' sp
+      _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
 
 fetchProjectItems :: MimsaConfig -> Store () -> SaveProject -> PersistApp (Project ())
 fetchProjectItems cfg existingStore sp = do
@@ -98,25 +102,43 @@ fetchProjectItems cfg existingStore sp = do
   pure $ projectFromSaved (existingStore <> store' <> typeStore') sp
 
 -- save project in local folder
-saveProject :: MimsaConfig -> Project ann -> PersistApp ProjectHash
+saveProject ::
+  MimsaConfig ->
+  Project ann ->
+  PersistApp ProjectHash
 saveProject cfg p = saveProject' cfg (p $> ())
 
-saveProject' :: MimsaConfig -> Project () -> PersistApp ProjectHash
+saveProject' ::
+  MimsaConfig ->
+  Project () ->
+  PersistApp ProjectHash
 saveProject' cfg env = do
   let (jsonStr, _) = contentAndHash (projectToSaved env)
-  liftIO $ LBS.writeFile envPath jsonStr
-  saveProjectInStore' cfg env
+  success <- liftIO $ try $ LBS.writeFile envPath jsonStr
+  case success of
+    Left (_ :: IOError) ->
+      throwError (CouldNotWriteFilePath envPath)
+    Right _ -> saveProjectInStore' cfg env
 
 -- save project in store
-saveProjectInStore :: MimsaConfig -> Project ann -> PersistApp ProjectHash
+saveProjectInStore ::
+  MimsaConfig ->
+  Project ann ->
+  PersistApp ProjectHash
 saveProjectInStore cfg p = saveProjectInStore' cfg (p $> ())
 
-saveProjectInStore' :: MimsaConfig -> Project () -> PersistApp ProjectHash
+saveProjectInStore' ::
+  MimsaConfig ->
+  Project () ->
+  PersistApp ProjectHash
 saveProjectInStore' cfg env = do
   let (jsonStr, hash) = contentAndHash (projectToSaved env)
   path <- liftIO $ getProjectPath cfg hash
-  liftIO $ LBS.writeFile path jsonStr
-  pure hash
+  success <- liftIO $ try $ LBS.writeFile path jsonStr
+  case success of
+    Left (_ :: IOError) ->
+      throwError (CouldNotWriteFilePath (getProjectFilename hash))
+    Right _ -> pure hash
 
 --
 

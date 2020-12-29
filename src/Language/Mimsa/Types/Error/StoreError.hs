@@ -9,6 +9,7 @@ import Language.Mimsa.Types.Store
 data StoreError
   = ExpressionDoesNotMatchHash ExprHash ExprHash
   | CouldNotReadFilePath FilePath
+  | CouldNotWriteFilePath FilePath
   | CouldNotDecodeJson ExprHash
   | CouldNotDecodeFile FilePath
   | NoRemoteServersToTry
@@ -19,6 +20,7 @@ instance Printer StoreError where
   prettyPrint (ExpressionDoesNotMatchHash a b) =
     "Expression hashes does not match expected: " <> prettyPrint a <> " !== " <> prettyPrint b
   prettyPrint (CouldNotReadFilePath path) = "Could not read file at path " <> T.pack path
+  prettyPrint (CouldNotWriteFilePath path) = "Could not write file at path " <> T.pack path
   prettyPrint (CouldNotDecodeJson hash') = "Could not decode JSON for hash " <> prettyPrint hash'
   prettyPrint (CouldNotDecodeFile path) = "Could not decode JSON for file " <> T.pack path
   prettyPrint NoRemoteServersToTry = "No remote servers to fetch from"
