@@ -8,6 +8,7 @@ module Language.Mimsa.Repl.ExpressionBind
 where
 
 import Control.Monad.Except
+import Control.Monad.Reader
 import Data.Text (Text)
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
@@ -51,7 +52,8 @@ bindTypeExpression ::
   StoreExpression ann ->
   ReplM ann (Project ann)
 bindTypeExpression env storeExpr = do
-  hash <- withExceptT StoreErr $ saveExpr storeExpr
+  mimsaConfig <- ask
+  hash <- lift $ withExceptT StoreErr $ saveExpr mimsaConfig storeExpr
   let newEnv = fromType storeExpr hash
   pure (env <> newEnv)
 
@@ -62,6 +64,7 @@ bindStoreExpression ::
   Name ->
   ReplM Annotation (Project Annotation)
 bindStoreExpression env storeExpr name = do
-  hash <- withExceptT StoreErr $ saveExpr storeExpr
+  mimsaConfig <- ask
+  hash <- lift $ withExceptT StoreErr $ saveExpr mimsaConfig storeExpr
   let newEnv = fromItem name storeExpr hash
   pure (env <> newEnv)

@@ -62,12 +62,11 @@ outputTypeBindings project =
     <$> getTypeBindings
       (getCurrentTypeBindings (typeBindings project))
 
-data ProjectData
-  = ProjectData
-      { pdHash :: ProjectHash,
-        pdBindings :: Map Name Text,
-        pdTypeBindings :: Map TyCon Text
-      }
+data ProjectData = ProjectData
+  { pdHash :: ProjectHash,
+    pdBindings :: Map Name Text,
+    pdTypeBindings :: Map TyCon Text
+  }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 -- read the store from mutable var to stop repeated loading of exprs
@@ -77,34 +76,34 @@ readStoreHandler mimsaEnv = do
 
 writeStoreHandler :: MimsaEnvironment -> Store Annotation -> Handler ()
 writeStoreHandler mimsaEnv store' = do
-  liftIO $ STM.atomically $
-    STM.modifyTVar
-      (mutableStore mimsaEnv)
-      (<> store')
+  liftIO $
+    STM.atomically $
+      STM.modifyTVar
+        (mutableStore mimsaEnv)
+        (<> store')
 
 -- given a new Project, save it and return the hash and bindings
-projectDataHandler :: Project ann -> Handler ProjectData
-projectDataHandler env = do
-  projHash <- handleExceptT InternalError (saveProjectInStore env)
+projectDataHandler :: MimsaEnvironment -> Project ann -> Handler ProjectData
+projectDataHandler mimsaEnv env = do
+  projHash <- handleExceptT InternalError (saveProjectInStore (mimsaConfig mimsaEnv) env)
   pure $
     ProjectData
       projHash
       (outputBindings env)
       (outputTypeBindings env)
 
-data ExpressionData
-  = ExpressionData
-      { edHash :: Text,
-        edPretty :: Text,
-        edType :: Text,
-        edBindings :: Map Name Text,
-        edTypeBindings :: Map TyCon Text
-      }
+data ExpressionData = ExpressionData
+  { edHash :: Text,
+    edPretty :: Text,
+    edType :: Text,
+    edBindings :: Map Name Text,
+    edTypeBindings :: Map TyCon Text
+  }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
-expressionDataHandler :: StoreExpression Annotation -> MonoType -> Handler ExpressionData
-expressionDataHandler se mt = do
-  _ <- saveExprHandler se
+expressionDataHandler :: MimsaEnvironment -> StoreExpression Annotation -> MonoType -> Handler ExpressionData
+expressionDataHandler mimsaEnv se mt = do
+  _ <- saveExprHandler mimsaEnv se
   pure $
     ExpressionData
       (prettyPrint (getStoreExpressionHash se))
@@ -115,11 +114,12 @@ expressionDataHandler se mt = do
 
 -- given a project hash, find the project
 loadProjectHandler ::
+  MimsaEnvironment ->
   Store Annotation ->
   ProjectHash ->
   Handler (Project Annotation)
-loadProjectHandler store' hash =
-  handleExceptT UserError $ loadProjectFromHash store' hash
+loadProjectHandler mimsaEnv store' hash =
+  handleExceptT UserError $ loadProjectFromHash (mimsaConfig mimsaEnv) store' hash
 
 evaluateTextHandler ::
   Project Annotation ->
@@ -127,9 +127,9 @@ evaluateTextHandler ::
   Handler (ResolvedExpression Annotation)
 evaluateTextHandler project code = handleEither UserError (evaluateText project code)
 
-saveExprHandler :: StoreExpression ann -> Handler ExprHash
-saveExprHandler se =
-  handleExceptT InternalError (saveExpr se)
+saveExprHandler :: MimsaEnvironment -> StoreExpression ann -> Handler ExprHash
+saveExprHandler mimsaEnv se =
+  handleExceptT InternalError (saveExpr (mimsaConfig mimsaEnv) se)
 
 interpretHandler ::
   Scope Annotation ->

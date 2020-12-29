@@ -22,4 +22,4 @@ mimsaAPI = Proxy
 mimsaServer :: MimsaEnvironment -> Server MimsaAPI
 mimsaServer mimsaEnv =
   projectEndpoints mimsaEnv
-    :<|> storeEndpoints
+    :<|> storeEndpoints mimsaEnv

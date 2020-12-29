@@ -20,15 +20,24 @@ import Language.Mimsa.Project
 import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Repl.Types
+import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import System.Console.Haskeline
+import System.Directory
 import Text.Megaparsec
+
+-- | Repl uses store in ~/.local/share/mimsa
+createMimsaConfig :: IO MimsaConfig
+createMimsaConfig = do
+  path <- getXdgDirectory XdgData "mimsa"
+  pure $ MimsaConfig 0 path
 
 repl :: IO ()
 repl = do
-  loadedEnv <- runExceptT loadProject
+  mimsaConfig <- createMimsaConfig
+  loadedEnv <- runExceptT (loadProject mimsaConfig)
   env <- case loadedEnv of
     Right env' -> do
       let items = length . getStore . store $ env'
@@ -37,31 +46,33 @@ repl = do
     _ -> do
       T.putStrLn "Failed to load project, loading default project"
       pure defaultProject
-  _ <- doReplAction env "" Help
-  runInputT defaultSettings (loop env)
+  _ <- doReplAction mimsaConfig env "" Help
+  runInputT defaultSettings (loop mimsaConfig env)
   where
     loop ::
+      MimsaConfig ->
       Project Annotation ->
       InputT IO ()
-    loop exprs' = do
+    loop mimsaConfig exprs' = do
       minput <- getInputLine ":> "
       case minput of
         Nothing -> return ()
         Just ":quit" -> return ()
         Just input -> do
-          newEnv <- liftIO $ parseCommand exprs' (T.pack input)
-          loop newEnv
+          newEnv <- liftIO $ parseCommand mimsaConfig exprs' (T.pack input)
+          loop mimsaConfig newEnv
 
 parseCommand ::
+  MimsaConfig ->
   Project Annotation ->
   Text ->
   IO (Project Annotation)
-parseCommand env input =
+parseCommand mimsaConfig env input =
   case parseAndFormat (replParser <* eof) input of
     Left e -> do
       T.putStrLn e
       pure env
     Right replAction -> do
-      newExprs <- doReplAction env input replAction
-      _ <- runExceptT $ saveProject newExprs
+      newExprs <- doReplAction mimsaConfig env input replAction
+      _ <- runExceptT $ saveProject mimsaConfig newExprs
       pure newExprs

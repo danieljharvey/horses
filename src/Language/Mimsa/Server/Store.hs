@@ -11,6 +11,7 @@ import Control.Monad.Except
 import Data.Text.Lazy (fromStrict)
 import Data.Text.Lazy.Encoding (encodeUtf8)
 import Language.Mimsa.Printer
+import Language.Mimsa.Server.Types
 import Language.Mimsa.Store.Storage (findExpr, saveExpr)
 import Language.Mimsa.Types.Store
 import Servant
@@ -22,20 +23,24 @@ type StoreAPI =
   "store" :> ("expression" :> Capture "exprHash" ExprHash :> Get '[JSON] (StoreExpression ()))
     :<|> ("expression" :> ReqBody '[JSON] (StoreExpression ()) :> Post '[JSON] ExprHash)
 
-storeEndpoints :: Server StoreAPI
-storeEndpoints = getExpression :<|> postExpression
+storeEndpoints :: MimsaEnvironment -> Server StoreAPI
+storeEndpoints mimsaEnv =
+  getExpression mimsaEnv
+    :<|> postExpression mimsaEnv
 
 getExpression ::
+  MimsaEnvironment ->
   ExprHash ->
   Handler (StoreExpression ())
-getExpression exprHash' =
-  Handler $ withExceptT to500Error (findExpr exprHash')
+getExpression mimsaEnv exprHash' =
+  Handler $ withExceptT to500Error (findExpr (mimsaConfig mimsaEnv) exprHash')
 
 postExpression ::
+  MimsaEnvironment ->
   StoreExpression () ->
   Handler ExprHash
-postExpression se =
-  Handler $ withExceptT to500Error (saveExpr se)
+postExpression mimsaEnv se =
+  Handler $ withExceptT to500Error (saveExpr (mimsaConfig mimsaEnv) se)
 
 to500Error :: (Printer a) => a -> ServerError
 to500Error a = err500 {errBody = buildMsg a}

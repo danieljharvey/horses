@@ -20,6 +20,7 @@ import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project.ProjectHash
@@ -31,9 +32,9 @@ type StoreM = ExceptT StoreError IO
 -- get store folder, creating if it does not exist
 -- the store folder usually lives in ~/.local/share
 -- see https://hackage.haskell.org/package/directory-1.3.6.1/docs/System-Directory.html#t:XdgDirectory
-getStoreFolder :: String -> IO FilePath
-getStoreFolder subFolder = do
-  path <- getXdgDirectory XdgData ("mimsa/" <> subFolder)
+getStoreFolder :: MimsaConfig -> String -> IO FilePath
+getStoreFolder cfg subFolder = do
+  let path = storeRootPath cfg <> "/" <> subFolder
   createDirectoryIfMissing True path
   pure (path <> "/")
 
@@ -46,8 +47,8 @@ trySymlink from to = do
     Right _ -> pure ()
     Left _ -> liftIO $ copyFile from to
 
-getExpressionFolder :: IO FilePath
-getExpressionFolder = getStoreFolder "expressions"
+getExpressionFolder :: MimsaConfig -> IO FilePath
+getExpressionFolder cfg = getStoreFolder cfg "expressions"
 
 filePath :: FilePath -> ExprHash -> String
 filePath storePath hash = storePath <> show hash <> ".json"
@@ -76,27 +77,28 @@ validateStoreExpression storeExpr exprHash =
           exprHash
           (getStoreExpressionHash storeExpr)
 
-saveExpr :: StoreExpression ann -> StoreM ExprHash
-saveExpr se = saveExpr' (se $> ())
+saveExpr :: MimsaConfig -> StoreExpression ann -> StoreM ExprHash
+saveExpr cfg se = saveExpr' cfg (se $> ())
 
 -- take an expression, save it, return ExprHash
-saveExpr' :: StoreExpression () -> StoreM ExprHash
-saveExpr' expr = do
-  storePath <- liftIO getExpressionFolder
+saveExpr' :: MimsaConfig -> StoreExpression () -> StoreM ExprHash
+saveExpr' cfg expr = do
+  storePath <- liftIO $ getExpressionFolder cfg
   let (json, exprHash) = coerce $ contentAndHash expr
   liftIO $ T.putStrLn $ "Saved expression for " <> prettyPrint exprHash
   liftIO $ BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
 findExpr ::
+  MimsaConfig ->
   ExprHash ->
   StoreM (StoreExpression ())
 findExpr = findExprInLocalStore
 
 -- find in the store
-findExprInLocalStore :: ExprHash -> StoreM (StoreExpression ())
-findExprInLocalStore hash = do
-  storePath <- liftIO getExpressionFolder
+findExprInLocalStore :: MimsaConfig -> ExprHash -> StoreM (StoreExpression ())
+findExprInLocalStore cfg hash = do
+  storePath <- liftIO (getExpressionFolder cfg)
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
   case (json :: Either IOError BS.ByteString) of
     Left _ -> throwError $ CouldNotReadFilePath (filePath storePath hash)
