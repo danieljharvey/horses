@@ -45,14 +45,14 @@ mimsaApp :: MimsaEnvironment -> Application
 mimsaApp mimsaEnv =
   corsMiddleware $ serve mimsaAPI (mimsaServer mimsaEnv)
 
-createMimsaEnvironment :: IO MimsaEnvironment
-createMimsaEnvironment = do
-  env <- getDefaultProject
-  MimsaEnvironment <$> STM.newTVarIO (store env)
+createMimsaEnvironment :: MimsaConfig -> IO MimsaEnvironment
+createMimsaEnvironment cfg = do
+  env <- getDefaultProject cfg
+  MimsaEnvironment <$> STM.newTVarIO (store env) <*> pure cfg
 
-getDefaultProject :: IO (Project Annotation)
-getDefaultProject = do
-  loadedEnv <- runExceptT loadProject
+getDefaultProject :: MimsaConfig -> IO (Project Annotation)
+getDefaultProject cfg = do
+  loadedEnv <- runExceptT (loadProject cfg)
   case loadedEnv of
     Right env' -> do
       let items = length . getStore . store $ env'
@@ -64,11 +64,11 @@ getDefaultProject = do
 
 server :: IO ()
 server = do
-  mimsaConfig <- runExceptT getMimsaEnv
-  case mimsaConfig of
+  mimsaConfig' <- runExceptT getMimsaEnv
+  case mimsaConfig' of
     Left e -> error e
     Right cfg -> do
-      mimsaEnv <- createMimsaEnvironment
+      mimsaEnv <- createMimsaEnvironment cfg
       let port' = port cfg
       T.putStrLn $ "Starting server on port " <> prettyPrint port' <> "..."
       run port' (mimsaApp mimsaEnv)

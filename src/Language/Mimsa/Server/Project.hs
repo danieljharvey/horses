@@ -45,7 +45,7 @@ projectEndpoints mimsaEnv =
   evaluateExpression mimsaEnv
     :<|> listBindings mimsaEnv
     :<|> getExpression mimsaEnv
-    :<|> createProject
+    :<|> createProject mimsaEnv
     :<|> bindExpression mimsaEnv
 
 -- /project/evaluate/
@@ -54,18 +54,16 @@ type EvaluateAPI =
   "evaluate" :> ReqBody '[JSON] EvaluateRequest
     :> Post '[JSON] EvaluateResponse
 
-data EvaluateRequest
-  = EvaluateRequest
-      { erCode :: Text,
-        erProjectHash :: ProjectHash
-      }
+data EvaluateRequest = EvaluateRequest
+  { erCode :: Text,
+    erProjectHash :: ProjectHash
+  }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
-data EvaluateResponse
-  = EvaluateResponse
-      { erResult :: Text,
-        erExpressionData :: ExpressionData
-      }
+data EvaluateResponse = EvaluateResponse
+  { erResult :: Text,
+    erExpressionData :: ExpressionData
+  }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 evaluateExpression ::
@@ -74,13 +72,13 @@ evaluateExpression ::
   Handler EvaluateResponse
 evaluateExpression mimsaEnv (EvaluateRequest code hash) = do
   store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler store' hash
+  project <- loadProjectHandler mimsaEnv store' hash
   (ResolvedExpression mt se expr' scope' swaps) <-
     evaluateTextHandler project code
   simpleExpr <-
     interpretHandler scope' swaps expr'
   writeStoreHandler mimsaEnv (store project)
-  EvaluateResponse (prettyPrint simpleExpr) <$> expressionDataHandler se mt
+  EvaluateResponse (prettyPrint simpleExpr) <$> expressionDataHandler mimsaEnv se mt
 
 -- /project/bindings/
 
@@ -89,15 +87,13 @@ type ListBindings =
     :> ReqBody '[JSON] ListBindingsRequest
     :> Post '[JSON] ListBindingsResponse
 
-newtype ListBindingsRequest
-  = ListBindingsRequest
-      {lbProjectHash :: ProjectHash}
+newtype ListBindingsRequest = ListBindingsRequest
+  {lbProjectHash :: ProjectHash}
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
-newtype ListBindingsResponse
-  = ListBindingsResponse
-      { lbProjectData :: ProjectData
-      }
+newtype ListBindingsResponse = ListBindingsResponse
+  { lbProjectData :: ProjectData
+  }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 listBindings ::
@@ -106,9 +102,9 @@ listBindings ::
   Handler ListBindingsResponse
 listBindings mimsaEnv (ListBindingsRequest projectHash) = do
   store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler store' projectHash
+  project <- loadProjectHandler mimsaEnv store' projectHash
   writeStoreHandler mimsaEnv (store project)
-  ListBindingsResponse <$> projectDataHandler project
+  ListBindingsResponse <$> projectDataHandler mimsaEnv project
 
 -- /project/expression/
 
@@ -118,17 +114,15 @@ type GetExpression =
   "expression" :> ReqBody '[JSON] GetExpressionRequest
     :> Post '[JSON] GetExpressionResponse
 
-data GetExpressionRequest
-  = GetExpressionRequest
-      { geProjectHash :: ProjectHash,
-        geExprHash :: ExprHash
-      }
+data GetExpressionRequest = GetExpressionRequest
+  { geProjectHash :: ProjectHash,
+    geExprHash :: ExprHash
+  }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
-newtype GetExpressionResponse
-  = GetExpressionResponse
-      { geExpressionData :: ExpressionData
-      }
+newtype GetExpressionResponse = GetExpressionResponse
+  { geExpressionData :: ExpressionData
+  }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 getExpression ::
@@ -137,12 +131,12 @@ getExpression ::
   Handler GetExpressionResponse
 getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler store' projectHash
+  project <- loadProjectHandler mimsaEnv store' projectHash
   se <- findExprHandler project exprHash'
   (ResolvedExpression mt _ _ _ _) <-
     resolveStoreExpressionHandler (store project) se
   writeStoreHandler mimsaEnv (store project)
-  GetExpressionResponse <$> expressionDataHandler se mt
+  GetExpressionResponse <$> expressionDataHandler mimsaEnv se mt
 
 ------
 
@@ -150,16 +144,16 @@ type CreateProject =
   "create"
     :> Get '[JSON] CreateProjectResponse
 
-newtype CreateProjectResponse
-  = CreateProjectResponse
-      {cpProjectData :: ProjectData}
+newtype CreateProjectResponse = CreateProjectResponse
+  {cpProjectData :: ProjectData}
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 -- create an empty project
 createProject ::
+  MimsaEnvironment ->
   Handler CreateProjectResponse
-createProject =
-  CreateProjectResponse <$> projectDataHandler mempty
+createProject mimsaEnv =
+  CreateProjectResponse <$> projectDataHandler mimsaEnv mempty
 
 ------
 
@@ -168,19 +162,17 @@ type BindExpression =
     :> ReqBody '[JSON] BindExpressionRequest
     :> Post '[JSON] BindExpressionResponse
 
-data BindExpressionRequest
-  = BindExpressionRequest
-      { beProjectHash :: ProjectHash,
-        beBindingName :: Name,
-        beExpression :: Text
-      }
+data BindExpressionRequest = BindExpressionRequest
+  { beProjectHash :: ProjectHash,
+    beBindingName :: Name,
+    beExpression :: Text
+  }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
-data BindExpressionResponse
-  = BindExpressionResponse
-      { beProjectData :: ProjectData,
-        beExpressionData :: ExpressionData
-      }
+data BindExpressionResponse = BindExpressionResponse
+  { beProjectData :: ProjectData,
+    beExpressionData :: ExpressionData
+  }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
 bindExpression ::
@@ -189,14 +181,14 @@ bindExpression ::
   Handler BindExpressionResponse
 bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
   store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler store' hash
+  project <- loadProjectHandler mimsaEnv store' hash
   (ResolvedExpression mt se _ _ _) <-
     evaluateTextHandler project input
-  exprHash <- saveExprHandler se
+  exprHash <- saveExprHandler mimsaEnv se
   let newEnv = project <> fromItem name' se exprHash
   writeStoreHandler mimsaEnv (store newEnv)
-  pd <- projectDataHandler newEnv
-  ed <- expressionDataHandler se mt
+  pd <- projectDataHandler mimsaEnv newEnv
+  ed <- expressionDataHandler mimsaEnv se mt
   pure $
     BindExpressionResponse
       pd

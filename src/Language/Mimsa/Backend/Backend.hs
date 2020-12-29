@@ -18,6 +18,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Printer
+import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreExpressionHash, getStoreFolder, trySymlink)
 import Language.Mimsa.Types.AST
@@ -28,13 +29,12 @@ import System.Directory
 data Backend
   = CommonJS
 
-data Renderer ann a
-  = Renderer
-      { renderFunc :: Name -> Expr Name ann -> a,
-        renderImport :: Backend -> (Name, ExprHash) -> a,
-        renderStdLib :: Backend -> a,
-        renderExport :: Backend -> Name -> a
-      }
+data Renderer ann a = Renderer
+  { renderFunc :: Name -> Expr Name ann -> a,
+    renderImport :: Backend -> (Name, ExprHash) -> a,
+    renderStdLib :: Backend -> a,
+    renderExport :: Backend -> Name -> a
+  }
 
 ------
 
@@ -47,17 +47,19 @@ createOutputFolder CommonJS exprHash = do
 
 -- all files are created in the store and then symlinked into output folders
 -- this creates the folder in the store
-createStoreOutputPath :: Backend -> IO FilePath
-createStoreOutputPath CommonJS = getStoreFolder "transpiled/common-js"
+createStoreOutputPath :: MimsaConfig -> Backend -> IO FilePath
+createStoreOutputPath mimsaConfig CommonJS =
+  getStoreFolder mimsaConfig "transpiled/common-js"
 
 transpileStoreExpression ::
   (Monoid ann) =>
+  MimsaConfig ->
   Backend ->
   Store ann ->
   StoreExpression ann ->
   IO FilePath
-transpileStoreExpression be store' se = do
-  outputFolderPath <- createStoreOutputPath be
+transpileStoreExpression mimsaConfig be store' se = do
+  outputFolderPath <- createStoreOutputPath mimsaConfig be
   let filename = outputFilename be (getStoreExpressionHash se)
   let path = T.pack outputFolderPath <> filename
   exists <-
@@ -84,9 +86,9 @@ createIndexFile CommonJS rootExprHash = do
   pure (T.pack path)
 
 -- we write the stdlib to the store and then symlink it
-writeStdLib :: Backend -> ExprHash -> IO ()
-writeStdLib CommonJS rootExprHash = do
-  storePath <- createStoreOutputPath CommonJS
+writeStdLib :: MimsaConfig -> Backend -> ExprHash -> IO ()
+writeStdLib mimsaConfig CommonJS rootExprHash = do
+  storePath <- createStoreOutputPath mimsaConfig CommonJS
   outputPath <- createOutputFolder CommonJS rootExprHash
   let fromPath = T.pack storePath <> stdLibFilename CommonJS
   T.writeFile (T.unpack fromPath) (coerce commonJSStandardLibrary)
@@ -101,10 +103,10 @@ getOutputList store' se = case recursiveResolve store' se of
   Left _ -> mempty
 
 -- this recreates the folders which i dislike, however, yolo
-symlinkOutput :: Set (StoreExpression ann) -> Backend -> ExprHash -> IO ()
-symlinkOutput list CommonJS rootExprHash =
+symlinkOutput :: MimsaConfig -> Set (StoreExpression ann) -> Backend -> ExprHash -> IO ()
+symlinkOutput mimsaConfig list CommonJS rootExprHash =
   do
-    storePath <- createStoreOutputPath CommonJS
+    storePath <- createStoreOutputPath mimsaConfig CommonJS
     outputPath <- createOutputFolder CommonJS rootExprHash
     let doLink se = do
           let filename = outputFilename CommonJS (getStoreExpressionHash se)
@@ -115,22 +117,23 @@ symlinkOutput list CommonJS rootExprHash =
 
 goCompile ::
   (Ord ann, Monoid ann) =>
+  MimsaConfig ->
   Backend ->
   Store ann ->
   StoreExpression ann ->
   IO Text
-goCompile be store' se = do
+goCompile mimsaConfig be store' se = do
   let list = getOutputList store' se
   let rootExprHash = getStoreExpressionHash se
   -- create output files in store if they don't exist
-  traverse_ (transpileStoreExpression be store') list
-  _ <- transpileStoreExpression be store' se
+  traverse_ (transpileStoreExpression mimsaConfig be store') list
+  _ <- transpileStoreExpression mimsaConfig be store' se
   -- create index file in output folder
   outputPath <- createIndexFile be rootExprHash
   -- write stdlib file in output folder
-  writeStdLib be rootExprHash
+  writeStdLib mimsaConfig be rootExprHash
   -- symlink all the files
-  symlinkOutput (list <> S.singleton se) be rootExprHash
+  symlinkOutput mimsaConfig (list <> S.singleton se) be rootExprHash
   -- return path of main filename
   pure outputPath
 
