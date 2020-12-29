@@ -13,9 +13,9 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Test.Helpers
 import Test.Hspec
 import Test.QuickCheck.Instances ()
+import Test.Utils.Helpers
 
 exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]
 exprs =
@@ -187,7 +187,7 @@ spec =
       traverse_
         ( \(code, expected) ->
             --T.putStrLn (prettyPrint code)
-            startInference mempty code `shouldBe` expected
+            startInference mempty mempty code `shouldBe` expected
         )
         exprs
     it "Uses a polymorphic function twice with conflicting types" $ do
@@ -202,27 +202,27 @@ spec =
                   (MyApp mempty (MyVar mempty (named "id")) (bool True))
               )
       let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
-      startInference mempty expr `shouldBe` expected
+      startInference mempty mempty expr `shouldBe` expected
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             MyLambda
               mempty
-              (tvFree 100)
+              (numbered 100)
               ( MyIf
                   mempty
-                  (MyApp mempty identity (MyVar mempty (tvFree 100)))
+                  (MyApp mempty identity (MyVar mempty (numbered 100)))
                   (MyApp mempty identity (int 1))
                   (MyApp mempty identity (int 2))
               )
       let expr = MyApp mempty lambda (bool True)
-      startInference mempty lambda
+      startInference mempty mempty lambda
         `shouldBe` Right
           ( MTFunction
               mempty
               (MTPrim mempty MTBool)
               (MTPrim mempty MTInt)
           )
-      startInference mempty expr `shouldBe` Right (MTPrim mempty MTInt)
+      startInference mempty mempty expr `shouldBe` Right (MTPrim mempty MTInt)
 {-  describe "Serialisation" $ do
 it "Round trip" $ do
   property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)

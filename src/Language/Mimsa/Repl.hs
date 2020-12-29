@@ -26,7 +26,6 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import System.Console.Haskeline
 import System.Directory
-import Text.Megaparsec
 
 -- | Repl uses store in ~/.local/share/mimsa
 createMimsaConfig :: IO MimsaConfig
@@ -68,7 +67,7 @@ parseCommand ::
   Text ->
   IO (Project Annotation)
 parseCommand mimsaConfig env input =
-  case parseAndFormat (replParser <* eof) input of
+  case parseAndFormat replParser input of
     Left e -> do
       T.putStrLn e
       pure env

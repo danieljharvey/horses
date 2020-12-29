@@ -68,6 +68,7 @@ getExprDetails project exprHash = do
     first UsageErr (findUsages project exprHash)
   storeExpr <-
     first UsageErr (getStoreExpression project exprHash)
+  typeMap <- getTypeMap project
   (ResolvedExpression mt _ expr' _ _) <-
-    resolveStoreExpression (store project) "" storeExpr
+    resolveStoreExpression (store project) typeMap "" storeExpr
   pure (expr', mt, usages)

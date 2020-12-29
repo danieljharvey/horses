@@ -10,6 +10,7 @@ import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 
 type ReplM ann = ReaderT MimsaConfig (ExceptT (Error ann) IO)
 
@@ -40,6 +41,7 @@ data ReplAction ann
   | Tree (Expr Name ann)
   | Bind Name (Expr Name ann)
   | OutputJS (Expr Name ann)
+  | TypeSearch MonoType
   | BindType DataType
   | Versions Name
   | ListBindings
