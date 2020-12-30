@@ -24,4 +24,4 @@ getMimsaEnv =
     runEnv $
       gFromEnvCustom
         defOption
-        (Just (MimsaConfig 8999 "~/.mimsa"))
+        (Just (MimsaConfig 8999 "./.mimsa"))
