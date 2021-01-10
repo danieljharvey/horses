@@ -172,6 +172,8 @@ spec = do
       testParse "True == True" `shouldBe` Right (MyInfix mempty Equals (bool True) (bool True))
     it "Parses two integers with infix operator" $
       testParse "123 == 123" `shouldBe` Right (MyInfix mempty Equals (int 123) (int 123))
+    it "Parses var and number equality" $
+      testParse "a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty (mkName "a")) (int 1))
     it "Parsers two constructor applications with infix operator" $
       let mkSome = MyConsApp mempty (MyConstructor mempty (mkTyCon "Some"))
        in testParse "(Some 1) == Some 2"

@@ -1,6 +1,6 @@
 module Language.Mimsa.Typechecker.Generalise where
 
-import Data.List
+import Data.List (nub, (\\))
 import qualified Data.Map as M
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
