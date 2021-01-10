@@ -546,3 +546,26 @@ spec =
         it "\\a -> if (a.one == a.two) then 100 else 0" $ do
           result <- eval stdLib "\\a -> if (a.one == a.two) then 100 else 0"
           result `shouldSatisfy` isRight
+
+        it "type Reader r a = Reader (r -> a) in Reader \\r -> r + 100" $ do
+          result <- eval stdLib "type Reader r a = Reader (r -> a) in Reader \\r -> r + 100"
+          result
+            `shouldBe` Right
+              ( MTData
+                  mempty
+                  (mkTyCon "Reader")
+                  [MTPrim mempty MTInt, MTPrim mempty MTInt],
+                MyConsApp
+                  mempty
+                  (MyConstructor mempty (mkTyCon "Reader"))
+                  ( MyLambda
+                      mempty
+                      (numbered 0)
+                      ( MyInfix
+                          mempty
+                          Add
+                          (MyVar mempty (numbered 0))
+                          (int 100)
+                      )
+                  )
+              )

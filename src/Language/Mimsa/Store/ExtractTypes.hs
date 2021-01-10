@@ -14,7 +14,7 @@ import Language.Mimsa.Types.AST
   ( DataType (DataType),
     Expr (..),
   )
-import Language.Mimsa.Types.Identifiers (Name, TyCon, TypeName (ConsName, VarName))
+import Language.Mimsa.Types.Identifiers (Name, TyCon, TypeName (..))
 
 -- this works out which external types have been used in a given expression
 -- therefore, we must remove any which are declared in the expression itself
@@ -57,6 +57,7 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
     extractFromCons as = mconcat (extractFromCon <$> as)
     extractFromCon (VarName _) = mempty
     extractFromCon (ConsName name as) = S.singleton name <> mconcat (extractFromCon <$> as)
+    extractFromCon (TNFunc a b) = extractFromCon a <> extractFromCon b
 
 -- get all the names of constructors (type and data) declared in the datatype
 extractLocalTypeDeclarations :: DataType -> Set TyCon

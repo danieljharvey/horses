@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Identifiers.TypeName where
 
@@ -11,7 +12,10 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Identifiers.TyCon
 
-data TypeName = ConsName TyCon [TypeName] | VarName Name
+data TypeName
+  = ConsName TyCon [TypeName]
+  | VarName Name
+  | TNFunc TypeName TypeName
   deriving
     ( Eq,
       Ord,
@@ -34,3 +38,8 @@ renderTypeName (ConsName c tys) =
     space
     ([prettyDoc c] <> (prettyDoc <$> tys))
 renderTypeName (VarName v) = prettyDoc v
+renderTypeName (TNFunc a b) =
+  parens
+    ( prettyDoc a <+> "->"
+        <+> prettyDoc b
+    )
