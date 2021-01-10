@@ -6,6 +6,7 @@ module Test.MonoTypeParser
 where
 
 import Control.Monad.Except
+import Data.Either (isRight)
 import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -75,6 +76,18 @@ spec =
               (MTVar mempty (tvNamed "a"))
               (MTVar mempty (tvNamed "a"))
           )
+    it "Function with 3 variables" $
+      testParser "a -> a -> a"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (typeName "a")
+              ( MTFunction
+                  mempty
+                  (typeName "a")
+                  (typeName "a")
+              )
+          )
     it "Empty record" $
       testParser "{}"
         `shouldBe` Right (MTRecord mempty mempty)
@@ -88,7 +101,7 @@ spec =
                 ]
           )
     it "Record with functions as items" $
-      testParser "{ one: Int -> Int, two: String -> b }"
+      testParser "{ one: (Int -> Int), two: (String -> b) }"
         `shouldBe` Right
           ( MTRecord mempty $
               M.fromList
@@ -106,8 +119,10 @@ spec =
                   )
                 ]
           )
+    it "Record with one function inside" $
+      testParser "{ one: (Int -> Maybe Int) }" `shouldSatisfy` isRight
     it "Record with all sorts of stuff in it" $
-      testParser "{ one: Int -> Maybe Int, two: String -> (b, Either String Int) }"
+      testParser "{ one: (Int -> Maybe Int), two: (String -> (b, Either String Int)) }"
         `shouldBe` Right
           ( MTRecord mempty $
               M.fromList
@@ -182,14 +197,23 @@ spec =
               (MTData mempty (mkTyCon "MyUnit") mempty)
               (MTPrim mempty MTInt)
           )
-    xit "Functions with datatypes 2" $
-      testParser "Maybe String -> Int"
+    it "Functions with datatypes with brackets" $
+      testParser "(Maybe String) -> Int"
         `shouldBe` Right
           ( MTFunction
               mempty
               (MTData mempty (mkTyCon "Maybe") [MTPrim mempty MTString])
               (MTPrim mempty MTInt)
           )
+    it "Functions with datatypes with no brackets" $
+      testParser "(Maybe a) -> b"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTData mempty (mkTyCon "Maybe") [typeName "a"])
+              (typeName "b")
+          )
+
     it "Parses higher order function" $
       testParser "(a -> b) -> a -> b"
         `shouldBe` Right
@@ -202,8 +226,32 @@ spec =
                   (typeName "b")
               )
           )
-    xit "Parses fmap" $
-      testParser "(a -> b) -> Option a -> Option b"
+    it "Parses part of fmap" $
+      testParser "(a -> b) -> Option a"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTFunction mempty (typeName "a") (typeName "b"))
+              (MTData mempty (mkTyCon "Option") [typeName "a"])
+          )
+    it "Parses weird variation on fmap" $
+      testParser "(a -> b) -> Option (a -> Option b)"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTFunction mempty (typeName "a") (typeName "b"))
+              ( MTData
+                  mempty
+                  (mkTyCon "Option")
+                  [ MTFunction
+                      mempty
+                      (typeName "a")
+                      (MTData mempty (mkTyCon "Option") [typeName "b"])
+                  ]
+              )
+          )
+    it "Parses fmap with brackets" $
+      testParser "(a -> b) -> (Option a) -> (Option b)"
         `shouldBe` Right
           ( MTFunction
               mempty

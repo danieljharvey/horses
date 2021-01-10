@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b6f611b7ede9a17eb6c0fbaff000eecd0c4593f999d51f3ffe4c9fbd31698d08
+-- hash: fea408ca534340508c929cd27ad4b6915d4ff4ef6ded419810b126ae449697c4
 
 name:           mimsa
 version:        0.1.0.0
@@ -171,6 +171,7 @@ library
     , memory
     , mtl
     , optparse-applicative
+    , parser-combinators
     , prettyprinter
     , servant
     , servant-server
@@ -207,6 +208,7 @@ executable mimsa
     , mimsa
     , mtl
     , optparse-applicative
+    , parser-combinators
     , prettyprinter
     , servant
     , servant-server
@@ -243,6 +245,7 @@ executable swagger
     , mimsa
     , mtl
     , optparse-applicative
+    , parser-combinators
     , prettyprinter
     , servant
     , servant-server
@@ -302,6 +305,7 @@ test-suite mimsa-test
     , mimsa
     , mtl
     , optparse-applicative
+    , parser-combinators
     , prettyprinter
     , quickcheck-instances
     , servant

@@ -1,0 +1,1 @@
+{"storeExpression":{"tag":"MyConsApp","contents":[[],{"tag":"MyConstructor","contents":[[],"Some"]},{"tag":"MyInfix","contents":[[],"Equals",{"tag":"MyLiteral","contents":[[],{"tag":"MyInt","contents":1}]},{"tag":"MyLiteral","contents":[[],{"tag":"MyInt","contents":1}]}]}]},"storeBindings":{},"storeTypeBindings":{"Some":"4"}}

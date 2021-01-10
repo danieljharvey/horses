@@ -34,6 +34,7 @@ dependencies:
 - prettyprinter # formatting
 - file-embed # js compiling
 - megaparsec # parsing
+- parser-combinators # parsing
 - servant # server
 - servant-server # server
 - wai # server
