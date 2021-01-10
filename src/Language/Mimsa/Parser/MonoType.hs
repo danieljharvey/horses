@@ -20,12 +20,13 @@ import Language.Mimsa.Types.Typechecker
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
+-- | top-level parser for type signatures
 monoTypeParser :: Parser MonoType
 monoTypeParser =
   try (orInBrackets functionParser)
     <|> try simpleTypeParser
 
--- all the types except functions
+-- | all the types except functions
 simpleTypeParser :: Parser MonoType
 simpleTypeParser =
   let parsers =
@@ -35,6 +36,11 @@ simpleTypeParser =
           <|> try dataTypeParser
           <|> try recordParser
    in orInBrackets parsers
+
+-- | used where a function must be inside brackets for clarity
+subParser :: Parser MonoType
+subParser =
+  try (inBrackets functionParser) <|> simpleTypeParser
 
 primitiveParser :: Parser MonoType
 primitiveParser = MTPrim mempty <$> primParser
@@ -47,10 +53,7 @@ primitiveParser = MTPrim mempty <$> primParser
 
 functionParser :: Parser MonoType
 functionParser = do
-  let fromParser =
-        try simpleTypeParser
-          <|> try (inBrackets functionParser)
-  one <- fromParser
+  one <- subParser
   _ <- thenSpace (string "->")
   MTFunction mempty one <$> monoTypeParser
 
@@ -118,11 +121,8 @@ dataTypeParser =
 
 multiDataTypeParser :: Parser MonoType
 multiDataTypeParser = do
-  let fromParser =
-        try simpleTypeParser
-          <|> inBrackets functionParser
   tyName <- thenSpace tyConParser
-  tyArgs <- try (sepBy1 fromParser space1)
+  tyArgs <- try (sepBy1 subParser space1)
   pure (MTData mempty tyName tyArgs)
 
 monoDataTypeParser :: Parser MonoType

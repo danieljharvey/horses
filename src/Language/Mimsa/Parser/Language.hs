@@ -291,16 +291,6 @@ matchParser = (,) <$> thenSpace tyConParser <*> expressionParser
 
 ----------
 
-chainl1 :: Parser a -> Parser (a -> a -> a) -> Parser a
-chainl1 p op = do x <- p; rest x
-  where
-    rest x =
-      do
-        f <- op
-        y <- p
-        rest (f x y)
-        <|> return x
-
 -- we don't allow super complicate exprs to be used around infix
 -- just because it makes awful code and it's slow to parse
 infixExpr :: Parser ParserExpr

@@ -452,9 +452,9 @@ spec =
         it "True - 1" $ do
           result <- eval stdLib "True - 1"
           result `shouldSatisfy` isLeft
-        it "1 + 1 + 1" $ do
-          result <- eval stdLib "1 + 1 + 1"
-          result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+        it "1 + 1 + 1 + 1" $ do
+          result <- eval stdLib "1 + 1 + 1 + 1"
+          result `shouldBe` Right (MTPrim mempty MTInt, int 4)
         it "\"dog\" <> \"log\"" $ do
           result <- eval stdLib "\"dog\" <> \"log\""
           result `shouldBe` Right (MTPrim mempty MTString, str' "doglog")

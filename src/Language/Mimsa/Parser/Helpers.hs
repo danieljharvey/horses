@@ -12,6 +12,7 @@ module Language.Mimsa.Parser.Helpers
     orInBrackets,
     literalWithSpace,
     withOptionalSpace,
+    chainl1,
   )
 where
 
@@ -56,12 +57,12 @@ withLocation withP p = do
 
 -- | wraps any parser of Exprs and adds location information
 addLocation :: Parser ParserExpr -> Parser ParserExpr
-addLocation = withLocation (mapOuterAnnotation . const)
+addLocation = withLocation (mapOuterExprAnnotation . const)
 
 -- | modify the outer annotation of an expression
 -- useful for adding line numbers during parsing
-mapOuterAnnotation :: (ann -> ann) -> Expr a ann -> Expr a ann
-mapOuterAnnotation f expr' =
+mapOuterExprAnnotation :: (ann -> ann) -> Expr a ann -> Expr a ann
+mapOuterExprAnnotation f expr' =
   case expr' of
     MyInfix ann a op b -> MyInfix (f ann) a op b
     MyLiteral ann a -> MyLiteral (f ann) a
@@ -120,3 +121,15 @@ withOptionalSpace p = do
   pure a
 
 -----
+
+-- | stolen from Parsec, allows parsing infix expressions without recursion
+-- death
+chainl1 :: Parser a -> Parser (a -> a -> a) -> Parser a
+chainl1 p op = do x <- p; rest x
+  where
+    rest x =
+      do
+        f <- op
+        y <- p
+        rest (f x y)
+        <|> return x

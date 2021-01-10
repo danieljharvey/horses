@@ -30,7 +30,7 @@ testParser input = do
 
 spec :: Spec
 spec =
-  describe "MonoType parser" $ do
+  fdescribe "MonoType parser" $ do
     it "String" $
       testParser "String" `shouldBe` Right (MTPrim mempty MTString)
     it "Unit" $
@@ -182,8 +182,8 @@ spec =
               (MTData mempty (mkTyCon "MyUnit") mempty)
               (MTPrim mempty MTInt)
           )
-    xit "Functions with datatypes 2" $
-      testParser "Maybe String -> Int"
+    it "Functions with datatypes with brackets" $
+      testParser "(Maybe String) -> Int"
         `shouldBe` Right
           ( MTFunction
               mempty
@@ -202,8 +202,45 @@ spec =
                   (typeName "b")
               )
           )
+    it "Parses part of fmap" $
+      testParser "(a -> b) -> Option a"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTFunction mempty (typeName "a") (typeName "b"))
+              (MTData mempty (mkTyCon "Option") [typeName "a"])
+          )
+    it "Parses weird variation on fmap" $
+      testParser "(a -> b) -> Option (a -> Option b)"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTFunction mempty (typeName "a") (typeName "b"))
+              ( MTData
+                  mempty
+                  (mkTyCon "Option")
+                  [ ( MTFunction
+                        mempty
+                        (typeName "a")
+                        (MTData mempty (mkTyCon "Option") [typeName "b"])
+                    )
+                  ]
+              )
+          )
+    it "Parses fmap with brackets" $
+      testParser "(a -> b) -> (Option a) -> (Option b)"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTFunction mempty (typeName "a") (typeName "b"))
+              ( MTFunction
+                  mempty
+                  (MTData mempty (mkTyCon "Option") [typeName "a"])
+                  (MTData mempty (mkTyCon "Option") [typeName "b"])
+              )
+          )
     xit "Parses fmap" $
-      testParser "(a -> b) -> Option a -> Option b"
+      testParser "(a -> b) -> Option a -> (Option b)"
         `shouldBe` Right
           ( MTFunction
               mempty
