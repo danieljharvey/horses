@@ -6,6 +6,7 @@ module Language.Mimsa.Parser.MonoType
 where
 
 import Control.Monad ((>=>))
+import Control.Monad.Combinators.Expr
 import qualified Data.Char as Char
 import Data.Functor (($>))
 import qualified Data.Map as M
@@ -24,7 +25,7 @@ import Text.Megaparsec.Char
 monoTypeParser :: Parser MonoType
 monoTypeParser =
   try (orInBrackets functionParser)
-    <|> try simpleTypeParser
+    <|> simpleTypeParser
 
 -- | all the types except functions
 simpleTypeParser :: Parser MonoType
@@ -33,14 +34,17 @@ simpleTypeParser =
         try pairParser
           <|> try varParser
           <|> try primitiveParser
-          <|> try dataTypeParser
           <|> try recordParser
+          <|> try dataTypeParser
    in orInBrackets parsers
 
 -- | used where a function must be inside brackets for clarity
 subParser :: Parser MonoType
 subParser =
-  try (inBrackets functionParser) <|> simpleTypeParser
+  try simpleTypeParser
+    <|> try (inBrackets functionParser)
+
+--  <|> try functionParser
 
 primitiveParser :: Parser MonoType
 primitiveParser = MTPrim mempty <$> primParser
@@ -51,11 +55,14 @@ primitiveParser = MTPrim mempty <$> primParser
         <|> try (string "Int" $> MTInt)
         <|> try (string "Unit" $> MTUnit)
 
-functionParser :: Parser MonoType
-functionParser = do
-  one <- subParser
+arrParse :: Operator Parser MonoType
+arrParse = InfixR $ do
+  _ <- space1
   _ <- thenSpace (string "->")
-  MTFunction mempty one <$> monoTypeParser
+  pure (MTFunction mempty)
+
+functionParser :: Parser MonoType
+functionParser = makeExprParser subParser [[arrParse]]
 
 pairParser :: Parser MonoType
 pairParser = do

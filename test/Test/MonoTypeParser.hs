@@ -30,7 +30,7 @@ testParser input = do
 
 spec :: Spec
 spec =
-  fdescribe "MonoType parser" $ do
+  describe "MonoType parser" $ do
     it "String" $
       testParser "String" `shouldBe` Right (MTPrim mempty MTString)
     it "Unit" $
@@ -75,6 +75,18 @@ spec =
               (MTVar mempty (tvNamed "a"))
               (MTVar mempty (tvNamed "a"))
           )
+    it "Function with 3 variables" $
+      testParser "a -> a -> a"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (typeName "a")
+              ( MTFunction
+                  mempty
+                  (typeName "a")
+                  (typeName "a")
+              )
+          )
     it "Empty record" $
       testParser "{}"
         `shouldBe` Right (MTRecord mempty mempty)
@@ -88,7 +100,7 @@ spec =
                 ]
           )
     it "Record with functions as items" $
-      testParser "{ one: Int -> Int, two: String -> b }"
+      testParser "{ one: (Int -> Int), two: (String -> b) }"
         `shouldBe` Right
           ( MTRecord mempty $
               M.fromList
@@ -107,7 +119,7 @@ spec =
                 ]
           )
     it "Record with all sorts of stuff in it" $
-      testParser "{ one: Int -> Maybe Int, two: String -> (b, Either String Int) }"
+      testParser "{ one: (Int -> Maybe Int), two: (String -> (b, Either String Int)) }"
         `shouldBe` Right
           ( MTRecord mempty $
               M.fromList
@@ -190,6 +202,15 @@ spec =
               (MTData mempty (mkTyCon "Maybe") [MTPrim mempty MTString])
               (MTPrim mempty MTInt)
           )
+    it "Functions with datatypes with no brackets" $
+      testParser "(Maybe a) -> b"
+        `shouldBe` Right
+          ( MTFunction
+              mempty
+              (MTData mempty (mkTyCon "Maybe") [typeName "a"])
+              (typeName "b")
+          )
+
     it "Parses higher order function" $
       testParser "(a -> b) -> a -> b"
         `shouldBe` Right
@@ -219,28 +240,15 @@ spec =
               ( MTData
                   mempty
                   (mkTyCon "Option")
-                  [ ( MTFunction
-                        mempty
-                        (typeName "a")
-                        (MTData mempty (mkTyCon "Option") [typeName "b"])
-                    )
+                  [ MTFunction
+                      mempty
+                      (typeName "a")
+                      (MTData mempty (mkTyCon "Option") [typeName "b"])
                   ]
               )
           )
     it "Parses fmap with brackets" $
       testParser "(a -> b) -> (Option a) -> (Option b)"
-        `shouldBe` Right
-          ( MTFunction
-              mempty
-              (MTFunction mempty (typeName "a") (typeName "b"))
-              ( MTFunction
-                  mempty
-                  (MTData mempty (mkTyCon "Option") [typeName "a"])
-                  (MTData mempty (mkTyCon "Option") [typeName "b"])
-              )
-          )
-    xit "Parses fmap" $
-      testParser "(a -> b) -> Option a -> (Option b)"
         `shouldBe` Right
           ( MTFunction
               mempty

@@ -10,6 +10,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Actions
 import Language.Mimsa.Project.TypeSearch
+import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
@@ -62,7 +63,7 @@ spec =
         typeSearchFromText typeMap "a -> a"
           `shouldBe` Right (M.singleton (mkName "id") idType)
       -- parsing MTData inside a MTFunction is broken, skipping for now
-      xit "Finds fmapOption" $ do
+      it "Finds fmapOption" $ do
         let fmapOption =
               MTFunction
                 mempty
@@ -72,5 +73,9 @@ spec =
                     (MTData mempty (mkTyCon "Option") [typeName "a"])
                     (MTData mempty (mkTyCon "Option") [typeName "b"])
                 )
-        typeSearchFromText typeMap "(a -> b) -> Option a -> Option B"
-          `shouldBe` Right (M.singleton (mkName "fmapOption") fmapOption)
+        typeSearchFromText typeMap "(a -> b) -> (Option a) -> (Option b)"
+          `shouldBe` Right
+            ( M.singleton
+                (mkName "fmapOption")
+                (normaliseType fmapOption)
+            )
