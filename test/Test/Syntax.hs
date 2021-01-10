@@ -585,3 +585,6 @@ spec = do
               (MyLiteral (Location 0 1) (MyInt 1))
               (MyLiteral (Location 5 6) (MyInt 2))
           )
+    it "Allows typed holes as function" $
+      testParseWithAnn "\\a -> if ?tobool(a) then 1 else 2"
+        `shouldSatisfy` isRight
