@@ -538,3 +538,11 @@ spec =
         it "Some (1 == 1)" $ do
           result <- eval stdLib "Some (1 == 1)"
           result `shouldSatisfy` isRight
+
+        it "\\a -> if (100 == a.int) then 100 else 0" $ do
+          result <- eval stdLib "\\a -> if (100 == a.int) then 100 else 0"
+          result `shouldSatisfy` isRight
+
+        it "\\a -> if (a.one == a.two) then 100 else 0" $ do
+          result <- eval stdLib "\\a -> if (a.one == a.two) then 100 else 0"
+          result `shouldSatisfy` isRight

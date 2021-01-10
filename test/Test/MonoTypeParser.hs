@@ -6,6 +6,7 @@ module Test.MonoTypeParser
 where
 
 import Control.Monad.Except
+import Data.Either (isRight)
 import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -118,6 +119,8 @@ spec =
                   )
                 ]
           )
+    it "Record with one function inside" $
+      testParser "{ one: (Int -> Maybe Int) }" `shouldSatisfy` isRight
     it "Record with all sorts of stuff in it" $
       testParser "{ one: (Int -> Maybe Int), two: (String -> (b, Either String Int)) }"
         `shouldBe` Right

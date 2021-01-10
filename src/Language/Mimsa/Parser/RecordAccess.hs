@@ -19,7 +19,7 @@ recordAccessParser =
         foldl (MyRecordAccess location) record names
    in withLocation combine $ do
         record <- varParser
-        names <- some (withOptionalSpace dotName)
+        names <- some dotName
         pure (record, names)
 
 dotName :: Parser Name

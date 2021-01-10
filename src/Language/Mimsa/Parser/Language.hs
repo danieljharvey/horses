@@ -140,8 +140,9 @@ lambdaParser =
 
 appFunc :: Parser ParserExpr
 appFunc =
-  try recordAccessParser <|> try (inBrackets lambdaParser)
-    <|> varParser
+  try recordAccessParser
+    <|> try (inBrackets lambdaParser)
+    <|> try varParser
     <|> typedHoleParser
 
 appParser :: Parser ParserExpr
