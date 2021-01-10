@@ -251,7 +251,8 @@ consAppArgParser =
           <|> try complexParser
           <|> try varParser
           <|> constructorParser
-   in orInBrackets parsers
+   in try (inBrackets infixParser)
+        <|> orInBrackets parsers
 
 ----------
 

@@ -530,3 +530,11 @@ spec =
               T.isInfixOf "Typed holes found" msg
                 && T.isInfixOf "^^^^^^^" msg
             (Right _) -> False
+
+        it "let compose = \\f -> \\g -> \\a -> f(g(a)); compose" $ do
+          result <- eval stdLib "let compose = \\f -> \\g -> \\a -> f(g(a)); compose"
+          result `shouldSatisfy` isRight
+
+        it "Some (1 == 1)" $ do
+          result <- eval stdLib "Some (1 == 1)"
+          result `shouldSatisfy` isRight
