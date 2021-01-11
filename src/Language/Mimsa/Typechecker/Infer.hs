@@ -233,6 +233,10 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
           case filter (\(tyName, _) -> tyName == var) tyVars of
             [(_, tyFound)] -> pure tyFound
             _ -> throwError $ TypeVariableNotInDataType typeName var (fst <$> tyVars)
+        TNFunc a b -> do
+          tyA <- findType a
+          tyB <- findType b
+          pure (MTFunction mempty tyA tyB)
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
         let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
