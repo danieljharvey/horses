@@ -364,6 +364,33 @@ spec = do
               )
               (MyRecord mempty mempty)
           )
+
+    it "Parses a type declaration with a function and data type as arg" $
+      testParse "type Reader r a = Reader (r -> (Pair a b)) in {}"
+        `shouldBe` Right
+          ( MyData
+              mempty
+              ( DataType
+                  (mkTyCon "Reader")
+                  [mkName "r", mkName "a"]
+                  ( M.fromList
+                      [ ( mkTyCon "Reader",
+                          [ TNFunc
+                              (VarName $ mkName "r")
+                              ( ConsName
+                                  (mkTyCon "Pair")
+                                  [ VarName $mkName "a",
+                                    VarName $ mkName "b"
+                                  ]
+                              )
+                          ]
+                        )
+                      ]
+                  )
+              )
+              (MyRecord mempty mempty)
+          )
+
     it "Uses a constructor" $
       testParse "Vrai" `shouldBe` Right (MyConstructor mempty (mkTyCon "Vrai"))
     it "Parses a custom case match" $

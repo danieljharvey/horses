@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Identifiers.TypeName where
+module Language.Mimsa.Types.AST.Field where
 
 import qualified Data.Aeson as JSON
 import Data.Swagger
@@ -12,10 +12,10 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Identifiers.TyCon
 
-data TypeName
-  = ConsName TyCon [TypeName]
+data Field
+  = ConsName TyCon [Field]
   | VarName Name
-  | TNFunc TypeName TypeName
+  | TNFunc Field Field
   deriving
     ( Eq,
       Ord,
@@ -26,19 +26,19 @@ data TypeName
       ToSchema
     )
 
-instance Printer TypeName where
-  prettyDoc = renderTypeName
+instance Printer Field where
+  prettyDoc = renderField
 
-renderTypeName :: TypeName -> Doc ann
-renderTypeName (ConsName c []) = prettyDoc c
-renderTypeName (ConsName c tys) =
+renderField :: Field -> Doc ann
+renderField (ConsName c []) = prettyDoc c
+renderField (ConsName c tys) =
   encloseSep
     lparen
     rparen
     space
     ([prettyDoc c] <> (prettyDoc <$> tys))
-renderTypeName (VarName v) = prettyDoc v
-renderTypeName (TNFunc a b) =
+renderField (VarName v) = prettyDoc v
+renderField (TNFunc a b) =
   parens
     ( prettyDoc a <+> "->"
         <+> prettyDoc b

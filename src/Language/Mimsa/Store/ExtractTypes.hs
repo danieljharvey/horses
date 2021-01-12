@@ -13,8 +13,9 @@ import Language.Mimsa.Typechecker.DataTypes (builtInTypes)
 import Language.Mimsa.Types.AST
   ( DataType (DataType),
     Expr (..),
+    Field (..),
   )
-import Language.Mimsa.Types.Identifiers (Name, TyCon, TypeName (..))
+import Language.Mimsa.Types.Identifiers (Name, TyCon)
 
 -- this works out which external types have been used in a given expression
 -- therefore, we must remove any which are declared in the expression itself

@@ -1,0 +1,5 @@
+\state ->
+   \s ->
+      case state of 
+          State (\sas ->
+           sas(s))

@@ -12,7 +12,7 @@ import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers (TyCon, TypeName (..))
+import Language.Mimsa.Types.Identifiers (TyCon)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
@@ -42,7 +42,7 @@ typeDeclParserWithCons = do
 
 --------
 
-manyTypeConstructors :: Parser (Map TyCon [TypeName])
+manyTypeConstructors :: Parser (Map TyCon [Field])
 manyTypeConstructors = do
   tyCons <-
     sepBy
@@ -52,7 +52,7 @@ manyTypeConstructors = do
 
 -----
 
-oneTypeConstructor :: Parser (Map TyCon [TypeName])
+oneTypeConstructor :: Parser (Map TyCon [Field])
 oneTypeConstructor = do
   name <- tyConParser
   args <-
@@ -66,7 +66,7 @@ oneTypeConstructor = do
 
 -----
 
-typeNameParser :: Parser TypeName
+typeNameParser :: Parser Field
 typeNameParser =
   try emptyConsParser
     <|> try (inBrackets functionParser)
@@ -74,27 +74,30 @@ typeNameParser =
     <|> try (inBrackets parameterisedConsParser)
 
 -- Simple type like String
-emptyConsParser :: Parser TypeName
+emptyConsParser :: Parser Field
 emptyConsParser = ConsName <$> tyConParser <*> pure mempty
 
 --
-parameterisedConsParser :: Parser TypeName
+parameterisedConsParser :: Parser Field
 parameterisedConsParser = do
-  c <- thenSpace tyConParser
-  params <- try (sepBy (withOptionalSpace typeNameParser) space1) <|> pure mempty
+  c <- tyConParser
+  let itemParser = do
+        _ <- space1
+        typeNameParser
+  params <- some itemParser
   pure $ ConsName c params
 
-varNameParser :: Parser TypeName
+varNameParser :: Parser Field
 varNameParser = VarName <$> nameParser
 
 --------
 
-arrParse :: PC.Operator Parser TypeName
+arrParse :: PC.Operator Parser Field
 arrParse = PC.InfixR $ do
   _ <- space1
   _ <- thenSpace (string "->")
   pure TNFunc
 
-functionParser :: Parser TypeName
+functionParser :: Parser Field
 functionParser =
   PC.makeExprParser typeNameParser [[arrParse]]
