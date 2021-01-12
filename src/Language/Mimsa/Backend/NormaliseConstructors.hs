@@ -12,7 +12,10 @@ import qualified Data.Map as M
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-    ( TyCon, Name, mkName, TypeName(VarName) )
+  ( Name,
+    TyCon,
+    mkName,
+  )
 import Language.Mimsa.Types.Store.ResolvedTypeDeps
 
 -- turns Constructors into functions
@@ -41,7 +44,7 @@ getConsArgList (MyConsApp _ (MyConstructor _ _tyCon) a) = [a]
 getConsArgList (MyConsApp _ next a) = getConsArgList next <> [a]
 getConsArgList a = [a]
 
-typeNameToName :: Int -> TypeName -> Name
+typeNameToName :: Int -> Field -> Name
 typeNameToName _ (VarName name) = name
 typeNameToName i _ = mkName $ "U" <> prettyPrint i
 
@@ -91,7 +94,7 @@ findDataTypeInProject :: ResolvedTypeDeps -> TyCon -> Maybe DataType
 findDataTypeInProject (ResolvedTypeDeps dt) tyCon =
   snd <$> M.lookup tyCon dt
 
-extractTypeConstructor :: TyCon -> DataType -> [TypeName]
+extractTypeConstructor :: TyCon -> DataType -> [Field]
 extractTypeConstructor tc dt =
   case M.lookup tc (dtConstructors dt) of
     Just names -> names

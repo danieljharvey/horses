@@ -71,6 +71,16 @@ optionMapExpr =
         )
     )
 
+pairExpr :: StoreExpressionA
+pairExpr = unsafeGetExpr "type Pair a b = Pair a b in {}"
+
+stateExpr :: StoreExpressionA
+stateExpr =
+  unsafeGetExprWithType
+    "type State s a = State (s -> (Pair a s)) in {}"
+    mempty
+    (TypeBindings $ M.singleton (mkTyCon "Pair") (exprHash 10))
+
 theseExpr :: StoreExpressionA
 theseExpr = unsafeGetExpr "type These a b = This a | That b | These a b in {}"
 
@@ -99,7 +109,9 @@ stdLib' = Project store' bindings' typeBindings'
             (exprHash 7, sndExpr),
             (exprHash 8, aRecordExpr),
             (exprHash 9, theseExpr),
+            (exprHash 10, pairExpr),
             (exprHash 11, idExpr),
+            (exprHash 12, stateExpr),
             (exprHash 17, incrementInt),
             (exprHash 18, addInt),
             (exprHash 19, optionMapExpr)
@@ -126,7 +138,9 @@ stdLib' = Project store' bindings' typeBindings'
             (mkTyCon "Nowt", pure $ exprHash 4),
             (mkTyCon "This", pure $ exprHash 9),
             (mkTyCon "That", pure $ exprHash 9),
-            (mkTyCon "These", pure $ exprHash 9)
+            (mkTyCon "These", pure $ exprHash 9),
+            (mkTyCon "Pair", pure $ exprHash 10),
+            (mkTyCon "State", pure $ exprHash 12)
           ]
 
 unsafeGetExpr' :: Text -> Bindings -> StoreExpression Annotation

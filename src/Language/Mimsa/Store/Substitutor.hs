@@ -7,6 +7,7 @@ import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.AST
@@ -24,17 +25,16 @@ import Language.Mimsa.Types.Swaps
 --
 -- we'll also store what our substitutions were for errors sake
 
-data SubsState ann
-  = SubsState
-      { subsSwaps :: Swaps,
-        subsScope :: Scope ann,
-        subsCounter :: Int
-      }
+data SubsState ann = SubsState
+  { subsSwaps :: Swaps,
+    subsScope :: Scope ann,
+    subsCounter :: Int
+  }
 
 type App ann = State (SubsState ann)
 
 substitute ::
-  (Eq ann, Monoid ann) =>
+  (Monoid ann, Ord ann) =>
   Store ann ->
   StoreExpression ann ->
   SubstitutedExpression ann
@@ -51,7 +51,7 @@ substitute store' storeExpr =
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
 doSubstitutions ::
-  (Monoid ann, Eq ann) =>
+  (Monoid ann, Ord ann) =>
   Store ann ->
   StoreExpression ann ->
   App ann (Changed, Expr Variable ann)
@@ -60,7 +60,7 @@ doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
   addScope $ mconcat (fst <$> newScopes)
   let changed = mconcat (snd <$> newScopes)
   expr' <- mapVar changed expr
-  dtList <- toDataTypeList <$> resolveTypes store' tBindings
+  dtList <- toDataTypeList <$> resolveTypesRecursive store' tBindings
   let dtExpr = addDataTypesToExpr expr' dtList
   pure (changed, dtExpr)
 
@@ -70,18 +70,35 @@ doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
 lookupStoreItem :: Store ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupStoreItem (Store s') hash' = M.lookup hash' s'
 
+-- | recursively fetch types mentioned by type expressions
+resolveTypesRecursive ::
+  (Ord ann) =>
+  Store ann ->
+  TypeBindings ->
+  App ann [StoreExpression ann]
+resolveTypesRecursive store' typeBindings = do
+  let storeExprs' = resolveTypes store' typeBindings
+  let newTypeBindings =
+        mconcat $ S.toList (S.map storeTypeBindings storeExprs')
+  nextGen <-
+    if S.null storeExprs'
+      then pure mempty
+      else resolveTypesRecursive store' newTypeBindings
+  pure $ S.toList storeExprs' <> nextGen
+
 -- find all types needed by our expression in the store
-resolveTypes :: Store ann -> TypeBindings -> App ann [StoreExpression ann]
+resolveTypes :: (Ord ann) => Store ann -> TypeBindings -> Set (StoreExpression ann)
 resolveTypes store' (TypeBindings tBindings) =
   let typeLookup (_, hash) = case lookupStoreItem store' hash of
-        Just sExpr -> pure [sExpr]
-        _ -> pure mempty
-   in mconcat <$> traverse typeLookup (M.toList tBindings)
+        Just sExpr -> S.singleton sExpr
+        _ -> mempty -- TODO: are we swallowing the error here and should this all operate in ExceptT?
+      manySets = fmap typeLookup (M.toList tBindings)
+   in mconcat manySets
 
 toDataTypeList :: [StoreExpression ann] -> [DataType]
 toDataTypeList sExprs =
   let getDts sExpr = extractDataTypes (storeExpression sExpr)
-   in S.toList . mconcat $ (getDts <$> sExprs)
+   in S.toList $ mconcat (getDts <$> sExprs)
 
 -- add required type declarations into our Expr
 addDataTypesToExpr :: (Monoid ann) => Expr var ann -> [DataType] -> Expr var ann
@@ -91,7 +108,7 @@ addDataTypesToExpr =
 --------------
 
 addDepToScope ::
-  (Eq ann, Monoid ann) =>
+  (Monoid ann, Ord ann) =>
   Store ann ->
   (Name, StoreExpression ann) ->
   App ann (Scope ann, Changed)

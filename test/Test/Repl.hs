@@ -569,3 +569,6 @@ spec =
                       )
                   )
               )
+        it "\\state -> \\s -> case state of State \\sas -> sas(s)" $ do
+          result <- eval stdLib "\\state -> \\s -> case state of State \\sas -> sas(s)"
+          result `shouldSatisfy` isRight
