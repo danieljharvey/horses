@@ -572,3 +572,11 @@ spec =
         it "\\state -> \\s -> case state of State \\sas -> sas(s)" $ do
           result <- eval stdLib "\\state -> \\s -> case state of State \\sas -> sas(s)"
           result `shouldSatisfy` isRight
+
+        it "let a = pureState(\"dog\"); let b = bindState(storeName)(a); runState(b)(nil)" $ do
+          result <- eval stdLib "let a = pureState(\"dog\"); let b = bindState(storeName)(a); runState(b)(nil)"
+          result `shouldSatisfy` isRight
+
+        xit "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)" $ do
+          result <- eval stdLib "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)"
+          result `shouldSatisfy` isRight

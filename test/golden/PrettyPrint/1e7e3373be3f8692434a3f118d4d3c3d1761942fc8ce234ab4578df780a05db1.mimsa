@@ -1,0 +1,3 @@
+let a = pureState("dog");
+let b = bindState(storeName)(a);
+runState(b)(nil)
