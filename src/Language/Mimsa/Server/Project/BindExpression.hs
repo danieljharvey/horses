@@ -55,7 +55,8 @@ bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
   let newEnv = project <> fromItem name' se exprHash
   writeStoreHandler mimsaEnv (store newEnv)
   pd <- projectDataHandler mimsaEnv newEnv
-  ed <- expressionDataHandler mimsaEnv se mt
+  _ <- saveExprHandler mimsaEnv se
+  ed <- expressionDataHandler se mt
   pure $
     BindExpressionResponse
       pd

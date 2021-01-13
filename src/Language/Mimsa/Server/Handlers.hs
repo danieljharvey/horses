@@ -101,9 +101,8 @@ data ExpressionData = ExpressionData
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
-expressionDataHandler :: MimsaEnvironment -> StoreExpression Annotation -> MonoType -> Handler ExpressionData
-expressionDataHandler mimsaEnv se mt = do
-  _ <- saveExprHandler mimsaEnv se
+expressionDataHandler :: StoreExpression Annotation -> MonoType -> Handler ExpressionData
+expressionDataHandler se mt =
   pure $
     ExpressionData
       (prettyPrint (getStoreExpressionHash se))
