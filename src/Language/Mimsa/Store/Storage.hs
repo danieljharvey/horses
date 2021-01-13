@@ -84,9 +84,14 @@ saveExpr cfg se = saveExpr' cfg (se $> ())
 saveExpr' :: MimsaConfig -> StoreExpression () -> StoreM ExprHash
 saveExpr' cfg expr = do
   storePath <- liftIO $ getExpressionFolder cfg
-  let (json, exprHash) = coerce $ contentAndHash expr
-  liftIO $ T.putStrLn $ "Saved expression for " <> prettyPrint exprHash
-  liftIO $ BS.writeFile (filePath storePath exprHash) json
+  let path = filePath storePath exprHash
+      (json, exprHash) = coerce $ contentAndHash expr
+  exists <- liftIO $ doesFileExist path
+  if exists
+    then liftIO $ T.putStrLn $ "Expression for " <> prettyPrint exprHash <> " already exists"
+    else do
+      liftIO $ T.putStrLn $ "Saved expression for " <> prettyPrint exprHash
+      liftIO $ BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
 findExpr ::
