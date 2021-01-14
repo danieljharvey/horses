@@ -83,7 +83,7 @@ spec =
           result
             `shouldBe` Right
               ( MTFunction mempty (unknown 1) (unknown 1),
-                MyLambda mempty (numbered 1) (MyVar mempty (numbered 1))
+                MyLambda mempty (numbered 3) (MyVar mempty (numbered 3))
               )
         it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
           result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"
@@ -577,6 +577,6 @@ spec =
           result <- eval stdLib "let a = pureState(\"dog\"); let b = bindState(storeName)(a); runState(b)(nil)"
           result `shouldSatisfy` isRight
 
-        xit "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)" $ do
+        it "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)" $ do
           result <- eval stdLib "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)"
           result `shouldSatisfy` isRight

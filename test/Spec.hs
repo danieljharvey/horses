@@ -9,6 +9,7 @@ where
 -- import qualified Data.Aeson as JSON
 import qualified Test.BackendJS as JS
 import Test.Hspec
+import qualified Test.InstantiateVar as InstantiateVar
 import qualified Test.Interpreter as Interpreter
 import qualified Test.MonoTypeParser as MonoTypeParser
 import qualified Test.NormaliseType as NormaliseType
@@ -44,3 +45,4 @@ main = hspec $ do
   NormaliseType.spec
   TypeSearch.spec
   MonoTypeParser.spec
+  InstantiateVar.spec

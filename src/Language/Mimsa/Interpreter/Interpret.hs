@@ -10,8 +10,8 @@ where
 import Control.Monad.Except
 import Data.Functor
 import qualified Data.Map as M
+import Language.Mimsa.Interpreter.InstantiateVar
 import Language.Mimsa.Interpreter.PatternMatch
-import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -34,31 +34,19 @@ useVar var' = case var' of
   (NumberedVar i) -> do
     scope' <- readScope
     case M.lookup (NumberedVar i) (getScope scope') of
-      Just expr -> instantiateVar expr
+      Just expr ->
+        instantiateVar expr
+          >>= interpretWithScope
       Nothing -> do
         var <- findActualBindingInSwaps i -- try it by it's pre-substituted name before failing
         useVar var
   (NamedVar n) -> do
     scope' <- readScope
     case M.lookup (NamedVar n) (getScope scope') of
-      Just expr -> instantiateVar expr
+      Just expr -> do
+        instantiateVar expr
+          >>= interpretWithScope
       Nothing -> throwError $ CouldNotFindVar scope' (NamedVar n)
-
--- make a fresh copy for us to use
--- is this necessary?
-instantiateVar :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
-instantiateVar expr = case expr of
-  (MyLambda ann binder expr') -> do
-    (freshBinder, freshExpr) <- newLambdaCopy binder expr'
-    interpretWithScope (MyLambda ann freshBinder freshExpr)
-  other -> interpretWithScope other
-
--- get new var
-newLambdaCopy :: Variable -> Expr Variable ann -> App ann (Variable, Expr Variable ann)
-newLambdaCopy name expr = do
-  newName' <- nextVariable
-  newExpr <- swapName name newName' expr
-  pure (newName', newExpr)
 
 interpretOperator ::
   (Eq ann, Monoid ann) =>
