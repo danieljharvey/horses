@@ -3,154 +3,167 @@
 module Test.Data.Project
   ( stdLib,
     idExpr,
+    addBinding,
   )
 where
 
+import Data.Coerce
 import Data.Functor
-import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Actions
 import Language.Mimsa.Parser (parseExpr)
+import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-import Test.Utils.Helpers
-
-type StoreExpressionA = StoreExpression Annotation
 
 -- polymorphic export for use in other tests
 idExpr :: (Monoid ann) => StoreExpression ann
 idExpr = idExpr' $> mempty
-
-fstExpr :: StoreExpressionA
-fstExpr =
-  unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
-
-sndExpr :: StoreExpressionA
-sndExpr = unsafeGetExpr "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
-
-eqTenExpr :: StoreExpressionA
-eqTenExpr =
-  unsafeGetExpr'
-    "\\i -> eq(10)(i)"
-    (Bindings $ M.singleton (mkName "eq") (exprHash 2))
-
-compose :: StoreExpressionA
-compose =
-  unsafeGetExpr "\\f -> \\g -> \\aValue -> f(g(aValue))"
-
-idExpr' :: StoreExpressionA
-idExpr' = unsafeGetExpr "\\i -> i"
-
-incrementInt :: StoreExpressionA
-incrementInt =
-  unsafeGetExpr'
-    "\\a -> addInt(1)(a)"
-    (Bindings $ M.singleton (mkName "addInt") (exprHash 18))
-
-addInt :: StoreExpressionA
-addInt = unsafeGetExpr "\\a -> \\b -> a + b"
-
-eqExpr :: StoreExpressionA
-eqExpr = unsafeGetExpr "\\a -> \\b -> a == b"
-
-optionExpr :: StoreExpressionA
-optionExpr = unsafeGetExpr "type Option a = Some a | Nowt in {}"
-
-optionMapExpr :: StoreExpressionA
-optionMapExpr =
-  unsafeGetExprWithType
-    "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise Nowt"
-    mempty
-    ( TypeBindings
-        ( M.fromList
-            [ (mkTyCon "Some", exprHash 4),
-              (mkTyCon "Nowt", exprHash 4)
-            ]
-        )
-    )
-
-pairExpr :: StoreExpressionA
-pairExpr = unsafeGetExpr "type Pair a b = Pair a b in {}"
-
-stateExpr :: StoreExpressionA
-stateExpr =
-  unsafeGetExprWithType
-    "type State s a = State (s -> (Pair a s)) in {}"
-    mempty
-    (TypeBindings $ M.singleton (mkTyCon "Pair") (exprHash 10))
-
-theseExpr :: StoreExpressionA
-theseExpr = unsafeGetExpr "type These a b = This a | That b | These a b in {}"
-
-aPairExpr :: StoreExpressionA
-aPairExpr = unsafeGetExpr "(1,2)"
-
-aRecordExpr :: StoreExpressionA
-aRecordExpr = unsafeGetExpr "{ a: 1, b: \"dog\" }"
+  where
+    idExpr' =
+      unsafeGetExpr "\\i -> i"
 
 -- check removing annotation doesn't break stuff
 stdLib :: Project Annotation
-stdLib = (stdLib' $> ()) $> mempty
+stdLib = case stdLibE of
+  Right stdLib' -> (stdLib' $> ()) $> mempty
+  Left e -> error (show e)
 
-stdLib' :: Project Annotation
-stdLib' = Project store' bindings' typeBindings'
-  where
-    store' =
-      Store $
-        M.fromList
-          [ (exprHash 1, fstExpr),
-            (exprHash 2, eqExpr),
-            (exprHash 3, eqTenExpr),
-            (exprHash 4, optionExpr),
-            (exprHash 5, aPairExpr),
-            (exprHash 6, compose),
-            (exprHash 7, sndExpr),
-            (exprHash 8, aRecordExpr),
-            (exprHash 9, theseExpr),
-            (exprHash 10, pairExpr),
-            (exprHash 11, idExpr),
-            (exprHash 12, stateExpr),
-            (exprHash 17, incrementInt),
-            (exprHash 18, addInt),
-            (exprHash 19, optionMapExpr)
-          ]
-    bindings' =
-      VersionedMap $
-        M.fromList
-          [ (mkName "fst", pure $ exprHash 1),
-            (mkName "eq", pure $ exprHash 2),
-            (mkName "eqTen", pure $ exprHash 3),
-            (mkName "aPair", pure $ exprHash 5),
-            (mkName "compose", pure $ exprHash 6),
-            (mkName "snd", pure $ exprHash 7),
-            (mkName "aRecord", pure $ exprHash 8),
-            (mkName "id", pure $ exprHash 11),
-            (mkName "incrementInt", pure $ exprHash 17),
-            (mkName "addInt", pure $ exprHash 18),
-            (mkName "fmapOption", pure $ exprHash 19)
-          ]
-    typeBindings' =
-      VersionedMap $
-        M.fromList
-          [ (mkTyCon "Some", pure $ exprHash 4),
-            (mkTyCon "Nowt", pure $ exprHash 4),
-            (mkTyCon "This", pure $ exprHash 9),
-            (mkTyCon "That", pure $ exprHash 9),
-            (mkTyCon "These", pure $ exprHash 9),
-            (mkTyCon "Pair", pure $ exprHash 10),
-            (mkTyCon "State", pure $ exprHash 12)
-          ]
+type ProjectPart = Either (Error Annotation) (Project Annotation)
 
-unsafeGetExpr' :: Text -> Bindings -> StoreExpression Annotation
-unsafeGetExpr' input bindings' = unsafeGetExprWithType input bindings' mempty
+stdLibE :: ProjectPart
+stdLibE =
+  pure mempty
+    >>= addBinding
+      "\\a -> a"
+      (mkName "id")
+    >>= addBinding
+      "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
+      (mkName "fst")
+    >>= addBinding
+      "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
+      (mkName "snd")
+    >>= addBinding
+      "\\a -> \\b -> a == b"
+      (mkName "eq")
+    >>= addBinding
+      "\\i -> eq(10)(i)"
+      (mkName "eqTen")
+    >>= addBinding
+      "\\a -> \\b -> a + b"
+      (mkName "addInt")
+    >>= addBinding
+      "\\f -> \\g -> \\aValue -> f(g(aValue))"
+      (mkName "compose")
+    >>= addBinding
+      "\\a -> addInt(1)(a)"
+      (mkName "incrementInt")
+    >>= addBinding
+      "type Option a = Some a | Nowt in {}"
+      (mkName "typeState")
+    >>= addBinding
+      "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise Nowt"
+      (mkName "fmapOption")
+    >>= addBinding
+      "type These a b = This a | That b | These a b in {}"
+      (mkName "typeThese")
+    >>= addBinding
+      "(1,2)"
+      (mkName "aPair")
+    >>= addBinding
+      "{ a: 1, b: \"dog\" }"
+      (mkName "aRecord")
+    >>= addListMonad
+    >>= addPair
+    >>= addStateMonad
 
-unsafeGetExprWithType :: Text -> Bindings -> TypeBindings -> StoreExpression Annotation
-unsafeGetExprWithType input bindings' typeBindings' =
-  case parseExpr input of
-    Right expr' -> StoreExpression expr' bindings' typeBindings'
-    a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
+addListMonad :: Project Annotation -> ProjectPart
+addListMonad prj =
+  pure prj
+    >>= addBinding
+      "type List a = Cons a (List a) | Nil in {}"
+      (mkName "typeList")
+    >>= addBinding
+      "\\a -> \\list -> Cons a list"
+      (mkName "cons")
+    >>= addBinding "Nil" (mkName "nil")
+
+addPair :: Project Annotation -> ProjectPart
+addPair prj =
+  pure prj
+    >>= addBinding
+      "type Pair a b = Pair a b in {}"
+      (mkName "typePair")
+    >>= addBinding
+      "\\pair -> case pair of Pair (\\a -> \\b -> a)"
+      (mkName "fstPair")
+    >>= addBinding
+      "\\pair -> case pair of Pair (\\a -> \\b -> b)"
+      (mkName "sndPair")
+
+addStateMonad :: Project Annotation -> ProjectPart
+addStateMonad prj =
+  pure prj
+    >>= addBinding
+      "type State s a = State (s -> (Pair a s)) in {}"
+      (mkName "typeState")
+    >>= addBinding
+      "\\a -> State (\\s -> Pair a s)"
+      (mkName "pureState")
+    >>= addBinding
+      "\\f -> \\state -> case state of State (\\sas -> State (\\s -> let as = sas(s); case as of Pair (\\a -> \\s -> Pair f(a) s)))"
+      (mkName "fmapState")
+    >>= addBinding
+      "\\stateF -> \\stateA -> State (\\s -> case stateF of State (\\sfs -> let fs = sfs(s); case fs of  Pair (\\f -> \\ss -> case stateA of State (\\sas -> let as = sas(ss); case as of Pair (\\a -> \\sss -> Pair f(a) sss)))))"
+      (mkName "apState")
+    >>= addBinding
+      "\\f -> \\state -> State (\\s -> case state of State (\\sas -> let as = sas(s); case as of Pair (\\a -> \\ss -> case f(a) of State (\\sbs -> sbs(ss)))))"
+      (mkName "bindState")
+    >>= addBinding
+      "\\state -> \\s -> case state of State (\\sas -> sas(s))"
+      (mkName "runState")
+    >>= addBinding
+      "\\state -> compose(sndPair)(runState(state))"
+      (mkName "execState")
+    >>= addBinding
+      "\\state -> compose(fstPair)(runState(state))"
+      (mkName "evalState")
+    >>= addBinding
+      "\\s -> State (\\ignore -> Pair Unit s)"
+      (mkName "putState")
+    >>= addBinding
+      "State (\\s -> Pair s s)"
+      (mkName "getState")
+    >>= addBinding
+      "\\f -> State (\\s -> Pair Unit f(s))"
+      (mkName "modifyState")
+    >>= addBinding
+      "\\f -> \\stateA -> \\stateB -> apState(fmapState(f)(stateA))(stateB)"
+      (mkName "liftA2State")
+    >>= addBinding
+      "\\newName -> let sas = \\s -> let return = newName <> \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
+      (mkName "storeName")
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
-unsafeGetExpr input = unsafeGetExpr' input mempty
+unsafeGetExpr input =
+  case parseExpr input of
+    Right expr' -> StoreExpression expr' mempty mempty
+    a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
+
+addBinding ::
+  Text ->
+  Name ->
+  Project Annotation ->
+  Either (Error Annotation) (Project Annotation)
+addBinding input name env = do
+  (ResolvedExpression _ se _ _ _) <-
+    evaluateText env input
+  let seUnit = se $> ()
+  let hash = coerce $ snd $ contentAndHash (storeExpression seUnit)
+  let newEnv = fromItem name se hash
+  pure (env <> newEnv)

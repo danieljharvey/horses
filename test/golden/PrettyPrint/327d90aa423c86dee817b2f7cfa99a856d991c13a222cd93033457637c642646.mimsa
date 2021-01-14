@@ -1,0 +1,4 @@
+let a = pureState("dog");
+let b = bindState(storeName)(a);
+let c = fmapState(id)(b);
+runState(c)(nil)
