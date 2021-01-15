@@ -7,28 +7,25 @@ module Test.Serialisation
   )
 where
 
-import Data.Maybe (catMaybes)
+import Data.Either (partitionEithers)
 import Data.Text (Text)
 import Data.Text.Lazy (toStrict)
 import Data.Text.Lazy.Encoding
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Test.Hspec
 import Test.Utils.Serialisation
 
 type StoreExpr = StoreExpression ()
 
-parseExprFromPretty :: String -> IO (Maybe Text)
+parseExprFromPretty :: String -> IO (Either Text Text)
 parseExprFromPretty filename =
   loadRegression
     filename
-    (hush . prettyPrintingParses . toStrict . decodeUtf8)
-
-hush :: Either e a -> Maybe a
-hush (Right a) = Just a
-hush _ = Nothing
+    (prettyPrintingParses . toStrict . decodeUtf8)
 
 -- remove annotations for comparison
 toEmptyAnn :: Expr a b -> Expr a ()
@@ -42,17 +39,26 @@ prettyPrintingParses input = do
     Left e -> Left e
     Right expr2 ->
       if toEmptyAnn expr1 /= toEmptyAnn expr2
-        then Left "Does not match"
+        then Left $ prettyPrint expr1 <> " does not match " <> prettyPrint expr2
         else pure input
+
+catEithers :: [Either e a] -> [a]
+catEithers as = snd $ partitionEithers as
 
 spec :: Spec
 spec =
   describe "Serialisation" $ do
-    it "JSON" $ do
-      files <- getAllFilesInDir "StoreExpression"
+    it "StoreExpression JSON" $ do
+      files <- getAllFilesInDir "StoreExpr" "json"
       loaded <- traverse (loadJSON @StoreExpr) files
-      length loaded `shouldBe` length (catMaybes loaded)
+      length (catEithers loaded) `shouldBe` length loaded
+
+    it "Project JSON" $ do
+      files <- getAllFilesInDir "SaveProject" "json"
+      loaded <- traverse (loadJSON @SaveProject) files
+      length (catEithers loaded) `shouldBe` length loaded
+
     it "Pretty printing" $ do
-      files <- getAllFilesInDir "PrettyPrinting"
+      files <- getAllFilesInDir "PrettyPrint" "mimsa"
       loaded <- traverse parseExprFromPretty files
-      length loaded `shouldBe` length (catMaybes loaded)
+      length (catEithers loaded) `shouldBe` length loaded

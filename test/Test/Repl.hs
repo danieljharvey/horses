@@ -15,7 +15,9 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Repl
+import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -58,6 +60,14 @@ saveRegressionData se = do
   let prettyFilename = prettyPath <> show (getStoreExpressionHash se) <> ".mimsa"
   savePretty prettyFilename (storeExpression se)
 
+saveProject :: Project ann -> IO ()
+saveProject prj = do
+  let saveProject' = projectToSaved prj
+  let (_, projectHash) = contentAndHash saveProject'
+  jsonPath <- createOutputFolder "SaveProject"
+  let jsonFilename = jsonPath <> show projectHash <> ".json"
+  saveJSON jsonFilename saveProject'
+
 -- remove annotations for comparison
 toEmptyAnn :: Expr a b -> Expr a ()
 toEmptyAnn = toEmptyAnnotation
@@ -67,9 +77,13 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  describe "Repl" $
-    describe "End to end parsing to evaluation" $
-      do
+  describe "Repl" $ do
+    it "Save stdLib" $
+      saveProject stdLib
+        >> (True `shouldBe` True)
+    describe
+      "End to end parsing to evaluation"
+      $ do
         it "let x = ((1,2)) in fst(x)" $ do
           result <- eval stdLib "let x = ((1,2)) in fst(x)"
           result
@@ -537,7 +551,13 @@ spec =
 
         it "Some (1 == 1)" $ do
           result <- eval stdLib "Some (1 == 1)"
-          result `shouldSatisfy` isRight
+          snd <$> result
+            `shouldBe` Right
+              ( MyConsApp
+                  mempty
+                  (MyConstructor mempty (mkTyCon "Some"))
+                  (bool True)
+              )
 
         it "\\a -> if (100 == a.int) then 100 else 0" $ do
           result <- eval stdLib "\\a -> if (100 == a.int) then 100 else 0"

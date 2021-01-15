@@ -276,7 +276,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyIf _ if' then' else') =
     vsep
       [ "if"
-          <+> printSubExpr if',
+          <+> wrapInfix if',
         indent
           2
           ( "then"
@@ -308,7 +308,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
       <> line
       <> prettyDoc expr
   prettyDoc (MyConstructor _ name) = prettyDoc name
-  prettyDoc (MyConsApp _ fn val) = prettyDoc fn <+> printSubExpr val
+  prettyDoc (MyConsApp _ fn val) = prettyDoc fn <+> wrapInfix val
   prettyDoc (MyCaseMatch _ sumExpr matches catchAll) =
     "case"
       <+> printSubExpr sumExpr
@@ -333,6 +333,11 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
       printMatch (construct, expr') =
         prettyDoc construct <+> printSubExpr expr'
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
+
+wrapInfix :: (Show var, Printer var) => Expr var ann -> Doc style
+wrapInfix val = case val of
+  val'@MyInfix {} -> inParens val'
+  other -> printSubExpr other
 
 inParens :: (Show var, Printer var) => Expr var ann -> Doc style
 inParens = parens . prettyDoc
