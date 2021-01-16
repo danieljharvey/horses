@@ -10,6 +10,7 @@ module Language.Mimsa.Project.Helpers
     getCurrentTypeBindings,
     getItemsForAllVersions,
     getDependencyHashes,
+    lookupBindingName,
   )
 where
 
@@ -70,6 +71,11 @@ fromType expr hash =
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHash project exprHash' =
   M.lookup exprHash' (getStore . store $ project)
+
+lookupBindingName :: Project ann -> Name -> Maybe ExprHash
+lookupBindingName project name =
+  let b = getBindings . getCurrentBindings . bindings $ project
+   in M.lookup name b
 
 getCurrentBindings :: VersionedBindings -> Bindings
 getCurrentBindings versioned =

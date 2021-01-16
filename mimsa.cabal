@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.3.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5945f8b91f5288c1dba70e7421d217f2ab2a8fd5bfe409d00c19a5d6b06b2d8d
+-- hash: d3cd6b1e3affa9d7c79d231197fe0df1a75346bac93b08cc7f91e6f4b45760a6
 
 name:           mimsa
 version:        0.1.0.0
@@ -56,6 +56,7 @@ library
       Language.Mimsa.Project.Helpers
       Language.Mimsa.Project.Persistence
       Language.Mimsa.Project.TypeSearch
+      Language.Mimsa.Project.UnitTest
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
       Language.Mimsa.Repl
@@ -282,6 +283,7 @@ test-suite mimsa-test
       Test.TypeError
       Test.TypeSearch
       Test.Unify
+      Test.UnitTest
       Test.Usages
       Test.Utils.Helpers
       Test.Utils.Serialisation

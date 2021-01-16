@@ -25,6 +25,7 @@ import qualified Test.TypeError as TypeError
 import qualified Test.TypeSearch as TypeSearch
 import qualified Test.Typechecker as Typechecker
 import qualified Test.Unify as Unify
+import qualified Test.UnitTest as UnitTest
 import qualified Test.Usages as Usages
 
 main :: IO ()
@@ -46,3 +47,4 @@ main = hspec $ do
   TypeSearch.spec
   MonoTypeParser.spec
   InstantiateVar.spec
+  UnitTest.spec
