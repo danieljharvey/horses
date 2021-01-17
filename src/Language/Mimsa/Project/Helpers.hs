@@ -16,7 +16,6 @@ module Language.Mimsa.Project.Helpers
 where
 
 import Data.Coerce
-import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -28,17 +27,13 @@ import Language.Mimsa.Types.Store
 
 ----------
 
--- | UnitTests are saved with `ann` of ()
-generaliseUnitTests :: (Monoid b) => [UnitTest a] -> [UnitTest b]
-generaliseUnitTests as = ($> mempty) <$> as
-
-projectFromSaved :: (Monoid a) => Store a -> SaveProject -> Project a
+projectFromSaved :: Store a -> SaveProject -> Project a
 projectFromSaved store' sp =
   Project
     { store = store',
       bindings = projectBindings sp,
       typeBindings = projectTypes sp,
-      prjUnitTests = generaliseUnitTests (projectUnitTests sp)
+      prjUnitTests = projectUnitTests sp
     }
 
 projectToSaved :: Project a -> SaveProject
@@ -47,7 +42,7 @@ projectToSaved proj =
     { projectVersion = 1,
       projectBindings = bindings proj,
       projectTypes = typeBindings proj,
-      projectUnitTests = generaliseUnitTests (prjUnitTests proj)
+      projectUnitTests = prjUnitTests proj
     }
 
 fromItem :: Name -> StoreExpression ann -> ExprHash -> Project ann
@@ -75,7 +70,7 @@ fromType expr hash =
     typeList =
       (,pure hash) <$> S.toList typeConsUsed
 
-fromUnitTest :: UnitTest ann -> Project ann
+fromUnitTest :: UnitTest -> Project ann
 fromUnitTest test =
   mempty {prjUnitTests = [test]}
 

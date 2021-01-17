@@ -18,7 +18,7 @@ data SaveProject = SaveProject
   { projectVersion :: Int,
     projectBindings :: VersionedBindings,
     projectTypes :: VersionedTypeBindings,
-    projectUnitTests :: [UnitTest ()]
+    projectUnitTests :: [UnitTest]
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
 

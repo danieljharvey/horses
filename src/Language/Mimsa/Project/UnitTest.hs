@@ -4,54 +4,40 @@ module Language.Mimsa.Project.UnitTest (createUnitTest, getTestsForExprHash) whe
 
 import Data.Bifunctor (first)
 import qualified Data.Map as M
-import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Text (Text)
 import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Swaps
 
 -- | a unit test must have type Boolean
 createUnitTest ::
   Project Annotation ->
-  Text ->
-  Expr Name Annotation ->
+  StoreExpression Annotation ->
   TestName ->
-  Either (Error Annotation) (UnitTest Annotation)
-createUnitTest project input expr' testName = do
-  let testExpr = createUnitTestExpr expr'
+  Either (Error Annotation) UnitTest
+createUnitTest project storeExpr testName = do
+  let testExpr = createUnitTestExpr (storeExpression storeExpr)
   (ResolvedExpression _ _ rExpr rScope rSwaps) <-
-    getTypecheckedStoreExpression input project testExpr
+    getTypecheckedStoreExpression (prettyPrint testExpr) project testExpr
   result <- first InterpreterErr (interpret rScope rSwaps rExpr)
-  deps <- first OtherError (swapsToExprHash project (filterSwaps rScope rSwaps))
+  let deps =
+        S.fromList $
+          M.elems (getBindings $ storeBindings storeExpr)
+            <> M.elems (getTypeBindings $ storeTypeBindings storeExpr)
   pure $
     UnitTest
       { utName = testName,
         utSuccess = testIsSuccess result,
-        utExpr = expr',
+        utExprHash = getStoreExpressionHash storeExpr,
         utDeps = deps
       }
-
-filterSwaps :: Scope a -> Swaps -> Swaps
-filterSwaps (Scope scope) = M.filterWithKey (\k _ -> M.member k scope)
-
--- | get the hashes of functions that have been used
-swapsToExprHash :: Project Annotation -> Swaps -> Either Text (Set ExprHash)
-swapsToExprHash project swaps' =
-  let names = M.elems swaps'
-      lookupName = \name -> case lookupBindingName project name of
-        Just expr -> Right expr
-        _ -> Left ("Could not find expr for " <> prettyPrint name)
-   in S.fromList <$> traverse lookupName names
 
 testIsSuccess :: Expr var ann -> TestSuccess
 testIsSuccess (MyLiteral _ (MyBool True)) = TestSuccess True
@@ -67,5 +53,5 @@ createUnitTestExpr =
     Equals
     (MyLiteral mempty (MyBool True))
 
-getTestsForExprHash :: Project ann -> ExprHash -> [UnitTest ann]
+getTestsForExprHash :: Project ann -> ExprHash -> [UnitTest]
 getTestsForExprHash _ _ = mempty

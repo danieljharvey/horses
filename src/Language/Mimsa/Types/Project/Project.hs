@@ -18,7 +18,7 @@ data Project ann = Project
   { store :: Store ann,
     bindings :: VersionedBindings,
     typeBindings :: VersionedTypeBindings,
-    prjUnitTests :: [UnitTest ann]
+    prjUnitTests :: [UnitTest]
   }
   deriving
     ( Eq,
