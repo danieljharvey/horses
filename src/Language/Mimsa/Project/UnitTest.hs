@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Project.UnitTest (createUnitTest) where
+module Language.Mimsa.Project.UnitTest (createUnitTest, getTestsForExprHash) where
 
 import Data.Bifunctor (first)
 import qualified Data.Map as M
@@ -15,7 +15,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Project.UnitTest
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
@@ -68,8 +67,5 @@ createUnitTestExpr =
     Equals
     (MyLiteral mempty (MyBool True))
 
-{-
-runUnitTest :: UnitTest -> Either
-    Right (ResolvedExpression mt se expr' scope' swaps) -> do
-      let endExpr = interpret scope' swaps expr'
--}
+getTestsForExprHash :: Project ann -> ExprHash -> [UnitTest ann]
+getTestsForExprHash _ _ = mempty

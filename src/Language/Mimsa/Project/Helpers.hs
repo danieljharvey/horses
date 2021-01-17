@@ -3,6 +3,7 @@
 module Language.Mimsa.Project.Helpers
   ( fromItem,
     fromType,
+    fromUnitTest,
     lookupExprHash,
     projectFromSaved,
     projectToSaved,
@@ -15,6 +16,7 @@ module Language.Mimsa.Project.Helpers
 where
 
 import Data.Coerce
+import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -26,12 +28,17 @@ import Language.Mimsa.Types.Store
 
 ----------
 
-projectFromSaved :: Store a -> SaveProject -> Project a
+-- | UnitTests are saved with `ann` of ()
+generaliseUnitTests :: (Monoid b) => [UnitTest a] -> [UnitTest b]
+generaliseUnitTests as = ($> mempty) <$> as
+
+projectFromSaved :: (Monoid a) => Store a -> SaveProject -> Project a
 projectFromSaved store' sp =
   Project
     { store = store',
       bindings = projectBindings sp,
-      typeBindings = projectTypes sp
+      typeBindings = projectTypes sp,
+      prjUnitTests = generaliseUnitTests (projectUnitTests sp)
     }
 
 projectToSaved :: Project a -> SaveProject
@@ -39,12 +46,13 @@ projectToSaved proj =
   SaveProject
     { projectVersion = 1,
       projectBindings = bindings proj,
-      projectTypes = typeBindings proj
+      projectTypes = typeBindings proj,
+      projectUnitTests = generaliseUnitTests (prjUnitTests proj)
     }
 
 fromItem :: Name -> StoreExpression ann -> ExprHash -> Project ann
 fromItem name expr hash =
-  Project
+  mempty
     { store = Store $ M.singleton hash expr,
       bindings = VersionedMap $ M.singleton name (pure hash),
       typeBindings = VersionedMap $ M.fromList typeList
@@ -57,9 +65,8 @@ fromItem name expr hash =
 
 fromType :: StoreExpression ann -> ExprHash -> Project ann
 fromType expr hash =
-  Project
+  mempty
     { store = Store $ M.singleton hash expr,
-      bindings = mempty,
       typeBindings = VersionedMap $ M.fromList typeList
     }
   where
@@ -67,6 +74,10 @@ fromType expr hash =
       extractTypeDecl (storeExpression expr)
     typeList =
       (,pure hash) <$> S.toList typeConsUsed
+
+fromUnitTest :: UnitTest ann -> Project ann
+fromUnitTest test =
+  mempty {prjUnitTests = [test]}
 
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHash project exprHash' =
