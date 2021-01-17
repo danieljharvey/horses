@@ -25,13 +25,39 @@ getHashOfName prj name =
     Just a -> a
     _ -> error "could not getHashOfName"
 
+createTestOrExplode ::
+  Project Annotation ->
+  StoreExpression Annotation ->
+  TestName ->
+  UnitTest
+createTestOrExplode prj sExpr name = case createUnitTest prj sExpr name of
+  Right a -> a
+  _ -> error "EXPLODE"
+
+testExpr :: Expr Name Annotation
+testExpr =
+  MyInfix
+    mempty
+    Equals
+    (int 1)
+    (MyApp mempty (MyVar mempty (mkName "incrementInt")) (int 1))
+
+incrementIntH :: ExprHash
+incrementIntH = getHashOfName stdLib (mkName "incrementInt")
+
+testStoreExpr :: StoreExpression Annotation
+testStoreExpr = StoreExpression testExpr (Bindings $ M.singleton (mkName "incrementInt") incrementIntH) mempty
+
 spec :: Spec
 spec =
   describe "UnitTest" $ do
     describe "getTestsForExprHash" $ do
       it "Returns none when there are no tests" $ do
         getTestsForExprHash stdLib (ExprHash "123") `shouldBe` mempty
-
+      it "Returns incrementInt test when passed its hash" $ do
+        let unitTest = createTestOrExplode stdLib testStoreExpr (TestName "incrementInt is a no-op")
+        let stdLib' = fromUnitTest unitTest <> stdLib
+        getTestsForExprHash stdLib' incrementIntH `shouldBe` [unitTest]
     describe "createUnitTest" $ do
       it "True is a valid test" $ do
         let storeExpr = StoreExpression (bool True) mempty mempty
@@ -59,20 +85,12 @@ spec =
           `shouldSatisfy` isLeft
 
       it "Finds incrementInt and addInt" $ do
-        let expr =
-              MyInfix
-                mempty
-                Equals
-                (int 1)
-                (MyApp mempty (MyVar mempty (mkName "incrementInt")) (int 1))
-        let incrementIntH = getHashOfName stdLib (mkName "incrementInt")
-        let storeExpr = StoreExpression expr (Bindings $ M.singleton (mkName "incrementInt") incrementIntH) mempty
-        createUnitTest stdLib storeExpr (TestName "incrementInt is a no-op")
+        createUnitTest stdLib testStoreExpr (TestName "incrementInt is a no-op")
           `shouldBe` Right
             ( UnitTest
                 (TestName "incrementInt is a no-op")
                 (TestSuccess False)
-                (getStoreExpressionHash storeExpr)
+                (getStoreExpressionHash testStoreExpr)
                 ( S.fromList
                     [ incrementIntH
                     ]

@@ -54,4 +54,5 @@ createUnitTestExpr =
     (MyLiteral mempty (MyBool True))
 
 getTestsForExprHash :: Project ann -> ExprHash -> [UnitTest]
-getTestsForExprHash _ _ = mempty
+getTestsForExprHash prj exprHash =
+  filter (S.member exprHash . utDeps) (prjUnitTests prj)
