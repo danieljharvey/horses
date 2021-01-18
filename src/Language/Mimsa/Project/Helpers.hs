@@ -73,7 +73,7 @@ fromType expr hash =
 
 fromUnitTest :: UnitTest -> Project ann
 fromUnitTest test =
-  mempty {prjUnitTests = [test]}
+  mempty {prjUnitTests = M.singleton (utExprHash test) test}
 
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHash project exprHash' =

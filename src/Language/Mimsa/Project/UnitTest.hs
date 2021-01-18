@@ -3,6 +3,7 @@
 module Language.Mimsa.Project.UnitTest (createUnitTest, getTestsForExprHash) where
 
 import Data.Bifunctor (first)
+import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Actions
@@ -53,6 +54,6 @@ createUnitTestExpr =
     Equals
     (MyLiteral mempty (MyBool True))
 
-getTestsForExprHash :: Project ann -> ExprHash -> [UnitTest]
+getTestsForExprHash :: Project ann -> ExprHash -> Map ExprHash UnitTest
 getTestsForExprHash prj exprHash =
-  filter (S.member exprHash . utDeps) (prjUnitTests prj)
+  M.filter (S.member exprHash . utDeps) (prjUnitTests prj)

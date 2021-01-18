@@ -55,9 +55,14 @@ spec =
       it "Returns none when there are no tests" $ do
         getTestsForExprHash stdLib (ExprHash "123") `shouldBe` mempty
       it "Returns incrementInt test when passed its hash" $ do
-        let unitTest = createTestOrExplode stdLib testStoreExpr (TestName "incrementInt is a no-op")
+        let unitTest =
+              createTestOrExplode
+                stdLib
+                testStoreExpr
+                (TestName "incrementInt is a no-op")
         let stdLib' = fromUnitTest unitTest <> stdLib
-        getTestsForExprHash stdLib' incrementIntH `shouldBe` [unitTest]
+        getTestsForExprHash stdLib' incrementIntH
+          `shouldBe` M.singleton (utExprHash unitTest) unitTest
     describe "createUnitTest" $ do
       it "True is a valid test" $ do
         let storeExpr = StoreExpression (bool True) mempty mempty
