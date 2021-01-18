@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.TypeSearch
+module Language.Mimsa.Repl.Actions.TypeSearch
   ( doTypeSearch,
   )
 where

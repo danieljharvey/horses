@@ -10,6 +10,7 @@ import Data.Set (Set)
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Store
 
 newtype TestName = TestName Text
@@ -21,6 +22,9 @@ newtype TestName = TestName Text
       JSON.FromJSON,
       ToSchema
     )
+
+instance Printer TestName where
+  prettyPrint (TestName n) = n
 
 newtype TestSuccess = TestSuccess Bool
   deriving newtype

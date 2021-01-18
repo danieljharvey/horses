@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Parser.Literal
   ( literalParser,
+    stringLiteral,
   )
 where
 
@@ -61,4 +62,5 @@ stringParser =
         . T.pack
         <$> stringLiteral
     )
+
 -----

@@ -5,9 +5,12 @@ module Language.Mimsa.Repl.Parser
   )
 where
 
+import qualified Data.Text as T
 import Language.Mimsa.Parser
+import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Project
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
@@ -25,6 +28,7 @@ replParser =
     <|> try versionsParser
     <|> try outputJSParser
     <|> try typeSearchParser
+    <|> try addUnitTestParser
 
 helpParser :: Parser ReplActionAnn
 helpParser = Help <$ string ":help"
@@ -73,3 +77,9 @@ typeSearchParser :: Parser ReplActionAnn
 typeSearchParser = do
   _ <- thenSpace (string ":search")
   TypeSearch <$> monoTypeParser
+
+addUnitTestParser :: Parser ReplActionAnn
+addUnitTestParser = do
+  _ <- thenSpace (string ":addUnitTest")
+  str <- thenSpace stringLiteral
+  AddUnitTest (TestName $ T.pack str) <$> expressionParser

@@ -11,15 +11,16 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
-import Language.Mimsa.Repl.Compile
-import Language.Mimsa.Repl.Evaluate
-import Language.Mimsa.Repl.ExpressionBind
-import Language.Mimsa.Repl.Info
-import Language.Mimsa.Repl.ListBindings
-import Language.Mimsa.Repl.Tree
-import Language.Mimsa.Repl.TypeSearch
+import Language.Mimsa.Repl.Actions.AddUnitTest
+import Language.Mimsa.Repl.Actions.Compile
+import Language.Mimsa.Repl.Actions.Evaluate
+import Language.Mimsa.Repl.Actions.ExpressionBind
+import Language.Mimsa.Repl.Actions.Info
+import Language.Mimsa.Repl.Actions.ListBindings
+import Language.Mimsa.Repl.Actions.Tree
+import Language.Mimsa.Repl.Actions.TypeSearch
+import Language.Mimsa.Repl.Actions.Versions (doVersions)
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Repl.Versions (doVersions)
 import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project
@@ -61,6 +62,9 @@ doReplAction mimsaConfig env input action =
       pure env
     (TypeSearch mt) ->
       runReplM mimsaConfig (doTypeSearch env mt) >> pure env
+    (AddUnitTest testName testExpr) -> do
+      newEnv <- runReplM mimsaConfig (doAddUnitTest env input testName testExpr)
+      pure (fromMaybe env newEnv)
 
 ----------
 
@@ -75,6 +79,7 @@ doHelp = do
   T.putStrLn ":outputJS <expr> - show JS code for <expr>"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":search <mt> - search for exprs that match type"
+  T.putStrLn ":addUnitTest \"<test name>\" <expr> - add a unit test"
   T.putStrLn ":versions <name> - list all versions of a binding"
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
   T.putStrLn ":quit - give up and leave"

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.ExpressionBind
+module Language.Mimsa.Repl.Actions.ExpressionBind
   ( doBind,
     doBindType,
     bindStoreExpression,

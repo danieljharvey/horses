@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Compile
+module Language.Mimsa.Repl.Actions.Compile
   ( doOutputJS,
   )
 where
