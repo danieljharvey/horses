@@ -9,11 +9,13 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Data.Foldable
 import Data.Text (Text)
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Store (saveExpr)
+import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -27,35 +29,39 @@ doBind ::
   Name ->
   Expr Name Annotation ->
   ReplM Annotation (Project Annotation)
-doBind env input name expr = do
-  (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
+doBind project input name expr = do
+  (ResolvedExpression type' storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input project expr
   replPrint $
     "Bound " <> prettyPrint name <> ".\n\n" <> prettyPrint expr
       <> "\n::\n"
       <> prettyPrint type'
-  bindStoreExpression env storeExpr name
+  newProject <- bindStoreExpression project storeExpr name
+  traverse_
+    (replPrint . prettyPrint)
+    (getTestsForExprHash project (getStoreExpressionHash storeExpr))
+  pure newProject
 
 doBindType ::
   Project Annotation ->
   Text ->
   DataType ->
   ReplM Annotation (Project Annotation)
-doBindType env input dt = do
+doBindType project input dt = do
   let expr = MyData mempty dt (MyRecord mempty mempty)
-  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
+  (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input project expr
   replPrint $
     "Bound type " <> prettyPrint dt
-  bindTypeExpression env storeExpr
+  bindTypeExpression project storeExpr
 
 bindTypeExpression ::
   Project ann ->
   StoreExpression ann ->
   ReplM ann (Project ann)
-bindTypeExpression env storeExpr = do
+bindTypeExpression project storeExpr = do
   mimsaConfig <- ask
   hash <- lift $ withExceptT StoreErr $ saveExpr mimsaConfig storeExpr
-  let newEnv = fromType storeExpr hash
-  pure (env <> newEnv)
+  let newProject = fromType storeExpr hash
+  pure (project <> newProject)
 
 -- save an expression in the store and bind it to name
 bindStoreExpression ::
@@ -63,8 +69,8 @@ bindStoreExpression ::
   StoreExpression Annotation ->
   Name ->
   ReplM Annotation (Project Annotation)
-bindStoreExpression env storeExpr name = do
+bindStoreExpression project storeExpr name = do
   mimsaConfig <- ask
   hash <- lift $ withExceptT StoreErr $ saveExpr mimsaConfig storeExpr
-  let newEnv = fromItem name storeExpr hash
-  pure (env <> newEnv)
+  let newProject = fromItem name storeExpr hash
+  pure (project <> newProject)

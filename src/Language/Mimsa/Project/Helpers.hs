@@ -5,6 +5,7 @@ module Language.Mimsa.Project.Helpers
     fromType,
     fromUnitTest,
     lookupExprHash,
+    bindingsToVersioned,
     projectFromSaved,
     projectToSaved,
     getCurrentBindings,
@@ -86,6 +87,9 @@ lookupBindingName :: Project ann -> Name -> Maybe ExprHash
 lookupBindingName project name =
   let b = getBindings . getCurrentBindings . bindings $ project
    in M.lookup name b
+
+bindingsToVersioned :: Bindings -> VersionedBindings
+bindingsToVersioned (Bindings b) = VersionedMap (pure <$> b)
 
 getCurrentBindings :: VersionedBindings -> Bindings
 getCurrentBindings versioned =

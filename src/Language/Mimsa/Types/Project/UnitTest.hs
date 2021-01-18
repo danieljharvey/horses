@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Project.UnitTest where
 
@@ -44,3 +45,10 @@ data UnitTest = UnitTest
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+
+instance Printer UnitTest where
+  prettyPrint test =
+    let tickOrCross = case utSuccess test of
+          (TestSuccess True) -> "+++ PASS +++"
+          _ -> "--- FAIL ---"
+     in tickOrCross <> " " <> prettyPrint (utName test)

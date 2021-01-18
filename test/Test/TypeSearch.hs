@@ -45,7 +45,7 @@ spec =
         let result = typeSearch typeMap idType
         result
           `shouldBe` M.singleton (mkName "id") idType
-      it "Finds the addInt function in test project" $ do
+      it "Finds the addInt and subtractInt functions in test project" $ do
         let addIntType =
               MTFunction
                 mempty
@@ -57,7 +57,11 @@ spec =
                 )
         let result = typeSearch typeMap addIntType
         result
-          `shouldBe` M.singleton (mkName "addInt") addIntType
+          `shouldBe` M.fromList
+            [ (mkName "addInt", addIntType),
+              (mkName "subtractInt", addIntType)
+            ]
+
     describe "from text input" $ do
       it "Finds id function" $ do
         typeSearchFromText typeMap "a -> a"

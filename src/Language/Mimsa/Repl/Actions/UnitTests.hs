@@ -28,15 +28,8 @@ doAddUnitTest project input testName expr = do
   (ResolvedExpression _ storeExpr _ _ _) <-
     liftRepl $ getTypecheckedStoreExpression input project expr
   test <- liftRepl $ createUnitTest project storeExpr testName
-  replPrint (prettyTest test)
+  replPrint (prettyPrint test)
   pure $ fromUnitTest test <> project
-
-prettyTest :: UnitTest -> Text
-prettyTest test =
-  let tickOrCross = case utSuccess test of
-        (TestSuccess True) -> "+++ PASS +++"
-        _ -> "--- FAIL ---"
-   in tickOrCross <> " " <> prettyPrint (utName test)
 
 doListTests ::
   Project Annotation -> Maybe Name -> ReplM Annotation ()
@@ -48,4 +41,4 @@ doListTests project maybeName = do
   let tests = case maybeName of
         Just name -> fetchTestsForName name
         Nothing -> prjUnitTests project
-  traverse_ (replPrint . prettyTest) tests
+  traverse_ (replPrint . prettyPrint) tests
