@@ -42,8 +42,9 @@ data ReplAction ann
   | Tree (Expr Name ann)
   | Bind Name (Expr Name ann)
   | OutputJS (Expr Name ann)
-  | AddUnitTest TestName (Expr Name ann)
   | TypeSearch MonoType
   | BindType DataType
   | Versions Name
   | ListBindings
+  | AddUnitTest TestName (Expr Name ann)
+  | ListTests (Maybe Name)

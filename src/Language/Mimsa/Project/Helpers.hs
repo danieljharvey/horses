@@ -12,6 +12,7 @@ module Language.Mimsa.Project.Helpers
     getItemsForAllVersions,
     getDependencyHashes,
     lookupBindingName,
+    getBindingNames,
   )
 where
 
@@ -77,6 +78,9 @@ fromUnitTest test =
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHash project exprHash' =
   M.lookup exprHash' (getStore . store $ project)
+
+getBindingNames :: Project ann -> Set Name
+getBindingNames = S.fromList . M.keys . getBindings . getCurrentBindings . bindings
 
 lookupBindingName :: Project ann -> Name -> Maybe ExprHash
 lookupBindingName project name =

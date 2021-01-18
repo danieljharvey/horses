@@ -29,6 +29,7 @@ replParser =
     <|> try outputJSParser
     <|> try typeSearchParser
     <|> try addUnitTestParser
+    <|> listTestsParser
 
 helpParser :: Parser ReplActionAnn
 helpParser = Help <$ string ":help"
@@ -83,3 +84,15 @@ addUnitTestParser = do
   _ <- thenSpace (string ":addUnitTest")
   str <- thenSpace stringLiteral
   AddUnitTest (TestName $ T.pack str) <$> expressionParser
+
+listTestsParser :: Parser ReplActionAnn
+listTestsParser = do
+  _ <- string ":tests"
+  maybeName <-
+    optional
+      ( do
+          _ <-
+            space1
+          nameParser
+      )
+  pure $ ListTests maybeName
