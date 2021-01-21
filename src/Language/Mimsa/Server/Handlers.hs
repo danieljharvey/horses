@@ -18,6 +18,7 @@ module Language.Mimsa.Server.Handlers
     resolveStoreExpressionHandler,
     readStoreHandler,
     writeStoreHandler,
+    createUnitTestHandler,
   )
 where
 
@@ -168,3 +169,11 @@ createNewUnitTestsHandler ::
     )
 createNewUnitTestsHandler project oldExprHash newExprHash =
   handleEither UserError (createNewUnitTests project oldExprHash newExprHash)
+
+createUnitTestHandler ::
+  Project Annotation ->
+  StoreExpression Annotation ->
+  TestName ->
+  Handler UnitTest
+createUnitTestHandler project storeExpr testName =
+  handleEither UserError $ createUnitTest project storeExpr testName
