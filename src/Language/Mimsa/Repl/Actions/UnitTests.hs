@@ -12,6 +12,7 @@ import Language.Mimsa.Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.UnitTest
+import Language.Mimsa.Repl.Actions.Shared
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -27,9 +28,12 @@ doAddUnitTest ::
 doAddUnitTest project input testName expr = do
   (ResolvedExpression _ storeExpr _ _ _) <-
     liftRepl $ getTypecheckedStoreExpression input project expr
+  _ <- saveExpression storeExpr
   test <- liftRepl $ createUnitTest project storeExpr testName
   replPrint (prettyPrint test)
-  pure $ fromUnitTest test <> project
+  pure $
+    fromUnitTest test storeExpr
+      <> project
 
 doListTests ::
   Project Annotation -> Maybe Name -> ReplM Annotation ()

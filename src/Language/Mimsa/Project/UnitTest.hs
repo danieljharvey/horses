@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Project.UnitTest (createUnitTest, getTestsForExprHash) where
+module Language.Mimsa.Project.UnitTest (createUnitTest, getTestsForExprHash, createNewUnitTests) where
 
+import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -9,7 +10,9 @@ import qualified Data.Set as S
 import Language.Mimsa.Actions
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
+import Language.Mimsa.Store.UpdateDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -57,3 +60,39 @@ createUnitTestExpr =
 getTestsForExprHash :: Project ann -> ExprHash -> Map ExprHash UnitTest
 getTestsForExprHash prj exprHash =
   M.filter (S.member exprHash . utDeps) (prjUnitTests prj)
+
+updateUnitTest ::
+  Project Annotation ->
+  ExprHash ->
+  ExprHash ->
+  UnitTest ->
+  Either (Error Annotation) (StoreExpression Annotation, UnitTest)
+updateUnitTest project oldHash newHash unitTest = do
+  case lookupExprHash project (utExprHash unitTest) of
+    Nothing ->
+      throwError
+        ( OtherError $
+            "Test error - could not find store expression in project for hash "
+              <> prettyPrint (utExprHash unitTest)
+        )
+    Just testStoreExpr -> do
+      let newBindings =
+            updateExprHash testStoreExpr oldHash newHash
+      newTestStoreExpr <-
+        updateStoreExpressionBindings project newBindings testStoreExpr
+      (,) newTestStoreExpr <$> createUnitTest project newTestStoreExpr (utName unitTest)
+
+createNewUnitTests ::
+  Project Annotation ->
+  ExprHash ->
+  ExprHash ->
+  Either (Error Annotation) (Project Annotation, [StoreExpression Annotation])
+createNewUnitTests project oldHash newHash = do
+  let tests = getTestsForExprHash project oldHash
+  newTests <-
+    traverse
+      (updateUnitTest project oldHash newHash)
+      (M.elems tests)
+  let newProject = project <> mconcat ((\(se, ut) -> fromUnitTest ut se) <$> newTests)
+  let exprs = fst <$> newTests
+  pure (newProject, exprs)

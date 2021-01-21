@@ -1,4 +1,8 @@
-module Language.Mimsa.Store.UpdateDeps where
+module Language.Mimsa.Store.UpdateDeps
+  ( updateStoreExpressionBindings,
+    updateExprHash,
+  )
+where
 
 import Language.Mimsa.Actions
 import Language.Mimsa.Printer
@@ -9,13 +13,33 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
+updateExprHash ::
+  StoreExpression Annotation ->
+  ExprHash ->
+  ExprHash ->
+  Bindings
+updateExprHash se oldHash newHash =
+  Bindings $
+    (\hash -> if hash == oldHash then newHash else hash)
+      <$> getBindings (storeBindings se)
+
 updateStoreExpressionBindings ::
   Project Annotation ->
   Bindings ->
   StoreExpression Annotation ->
   Either (Error Annotation) (StoreExpression Annotation)
 updateStoreExpressionBindings project newBindings se = do
-  let newProject = project {bindings = bindingsToVersioned $ combine newBindings (getCurrentBindings $ bindings project)}
+  let newProject =
+        project
+          { bindings =
+              bindingsToVersioned $
+                combine
+                  newBindings
+                  (storeBindings se),
+            typeBindings =
+              typeBindingsToVersioned
+                (storeTypeBindings se)
+          }
   let expr = storeExpression se
   (ResolvedExpression _ rStoreExpr _ _ _) <-
     getTypecheckedStoreExpression (prettyPrint expr) newProject expr

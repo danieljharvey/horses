@@ -66,7 +66,6 @@ spec =
       it "Finds id function" $ do
         typeSearchFromText typeMap "a -> a"
           `shouldBe` Right (M.singleton (mkName "id") idType)
-      -- parsing MTData inside a MTFunction is broken, skipping for now
       it "Finds fmapOption" $ do
         let fmapOption =
               MTFunction

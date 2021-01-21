@@ -18,8 +18,8 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Project
 import Language.Mimsa.Store
@@ -77,15 +77,16 @@ resolvedDepsToTypeMap store' deps = do
 
 getTypesFromStore :: Store ann -> TypeBindings -> Set DataType
 getTypesFromStore (Store items') (TypeBindings tBindings) =
-  S.fromList $ join $ do
-    (_, hash) <- M.toList tBindings
-    let getDt (StoreExpression expr' _ _) =
-          case expr' of
-            (MyData _ dt _) -> Just dt
-            _ -> Nothing
-    case M.lookup hash items' >>= getDt of
-      Just item -> pure [item]
-      _ -> pure []
+  S.fromList $
+    join $ do
+      (_, hash) <- M.toList tBindings
+      let getDt (StoreExpression expr' _ _) =
+            case expr' of
+              (MyData _ dt _) -> Just dt
+              _ -> Nothing
+      case M.lookup hash items' >>= getDt of
+        Just item -> pure [item]
+        _ -> pure []
 
 chainExprs ::
   Monoid ann =>
