@@ -7,11 +7,13 @@ module Language.Mimsa.Server.Project
   )
 where
 
+import Language.Mimsa.Server.Project.AddUnitTest
 import Language.Mimsa.Server.Project.BindExpression
 import Language.Mimsa.Server.Project.CreateProject
 import Language.Mimsa.Server.Project.Evaluate
 import Language.Mimsa.Server.Project.GetExpression
 import Language.Mimsa.Server.Project.ListBindings
+import Language.Mimsa.Server.Project.ListTests
 import Language.Mimsa.Server.Types
 import Servant
 
@@ -27,6 +29,9 @@ type ProjectAPI =
     :> ( EvaluateAPI :<|> ListBindings :<|> GetExpression
            :<|> CreateProject
            :<|> BindExpression
+           :<|> AddUnitTest
+           :<|> ListTests
+           :<|> ListTestsByName
        )
 
 projectEndpoints ::
@@ -38,5 +43,8 @@ projectEndpoints mimsaEnv =
     :<|> getExpression mimsaEnv
     :<|> createProject mimsaEnv
     :<|> bindExpression mimsaEnv
+    :<|> addUnitTestHandler mimsaEnv
+    :<|> listTestsHandler mimsaEnv
+    :<|> listTestsByNameHandler mimsaEnv
 
 ------

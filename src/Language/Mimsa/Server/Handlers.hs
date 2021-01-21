@@ -11,12 +11,14 @@ module Language.Mimsa.Server.Handlers
     expressionDataHandler,
     loadProjectHandler,
     evaluateTextHandler,
+    createNewUnitTestsHandler,
     saveExprHandler,
     interpretHandler,
     findExprHandler,
     resolveStoreExpressionHandler,
     readStoreHandler,
     writeStoreHandler,
+    createUnitTestHandler,
   )
 where
 
@@ -31,6 +33,7 @@ import Language.Mimsa.Actions (evaluateText, getTypeMap, resolveStoreExpression)
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
+import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Store
@@ -53,14 +56,14 @@ outputBindings project =
   prettyPrint
     <$> getBindings
       ( getCurrentBindings
-          (bindings project)
+          (prjBindings project)
       )
 
 outputTypeBindings :: Project a -> Map TyCon Text
 outputTypeBindings project =
   prettyPrint
     <$> getTypeBindings
-      (getCurrentTypeBindings (typeBindings project))
+      (getCurrentTypeBindings (prjTypeBindings project))
 
 data ProjectData = ProjectData
   { pdHash :: ProjectHash,
@@ -144,7 +147,7 @@ resolveStoreExpressionHandler ::
   Handler (ResolvedExpression Annotation)
 resolveStoreExpressionHandler prj se = do
   typeMap <- handleEither InternalError (getTypeMap prj)
-  handleEither UserError $ resolveStoreExpression (store prj) typeMap "" se
+  handleEither UserError $ resolveStoreExpression (prjStore prj) typeMap "" se
 
 findExprHandler ::
   Project Annotation ->
@@ -155,3 +158,22 @@ findExprHandler project exprHash' =
     case lookupExprHash project exprHash' of
       Nothing -> Left ("Could not find exprhash!" :: Text)
       Just a -> Right a
+
+createNewUnitTestsHandler ::
+  Project Annotation ->
+  ExprHash ->
+  ExprHash ->
+  Handler
+    ( Project Annotation,
+      [StoreExpression Annotation]
+    )
+createNewUnitTestsHandler project oldExprHash newExprHash =
+  handleEither UserError (createNewUnitTests project oldExprHash newExprHash)
+
+createUnitTestHandler ::
+  Project Annotation ->
+  StoreExpression Annotation ->
+  TestName ->
+  Handler UnitTest
+createUnitTestHandler project storeExpr testName =
+  handleEither UserError $ createUnitTest project storeExpr testName

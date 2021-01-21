@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Evaluate
+module Language.Mimsa.Repl.Actions.Evaluate
   ( doEvaluate,
   )
 where
@@ -30,4 +30,5 @@ doEvaluate env input expr = do
     prettyPrint simplified
       <> "\n::\n"
       <> prettyPrint type'
+
 ---------

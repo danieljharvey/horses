@@ -11,15 +11,18 @@ module Language.Mimsa.Server.Project.BindExpression
 where
 
 import qualified Data.Aeson as JSON
+import Data.Foldable (traverse_)
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Project
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Store
 import Servant
 
 ------
@@ -53,11 +56,27 @@ bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
     evaluateTextHandler project input
   exprHash <- saveExprHandler mimsaEnv se
   let newEnv = project <> fromItem name' se exprHash
-  writeStoreHandler mimsaEnv (store newEnv)
-  pd <- projectDataHandler mimsaEnv newEnv
+  envWithTests <- updateUnitTestsHandler mimsaEnv newEnv exprHash name'
+  writeStoreHandler mimsaEnv (prjStore envWithTests)
+  pd <- projectDataHandler mimsaEnv envWithTests
   _ <- saveExprHandler mimsaEnv se
   ed <- expressionDataHandler se mt
   pure $
     BindExpressionResponse
       pd
       ed
+
+updateUnitTestsHandler ::
+  MimsaEnvironment ->
+  Project Annotation ->
+  ExprHash ->
+  Name ->
+  Handler (Project Annotation)
+updateUnitTestsHandler mimsaEnv project newExprHash name' = do
+  case lookupBindingName project name' of
+    Nothing -> pure project
+    Just oldExprHash -> do
+      (projectWithNewTests, newExprs) <-
+        createNewUnitTestsHandler project oldExprHash newExprHash
+      traverse_ (saveExprHandler mimsaEnv) newExprs
+      pure projectWithNewTests

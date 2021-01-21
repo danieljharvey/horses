@@ -49,5 +49,5 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   se <- findExprHandler project exprHash'
   (ResolvedExpression mt _ _ _ _) <-
     resolveStoreExpressionHandler project se
-  writeStoreHandler mimsaEnv (store project)
+  writeStoreHandler mimsaEnv (prjStore project)
   GetExpressionResponse <$> expressionDataHandler se mt

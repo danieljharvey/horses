@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Compile
+module Language.Mimsa.Repl.Actions.Compile
   ( doOutputJS,
   )
 where
@@ -26,5 +26,5 @@ doOutputJS env input expr = do
     liftRepl $ getTypecheckedStoreExpression input env expr
   outputPath <-
     liftIO $
-      goCompile mimsaConfig CommonJS (store env) storeExpr'
+      goCompile mimsaConfig CommonJS (prjStore env) storeExpr'
   replPrint ("Output to " <> outputPath)

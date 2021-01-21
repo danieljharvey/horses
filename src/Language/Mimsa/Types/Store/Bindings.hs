@@ -27,4 +27,5 @@ newtype Bindings = Bindings {getBindings :: Map Name ExprHash}
     )
 
 instance Printer Bindings where
-  prettyPrint (Bindings b) = "{ " <> T.intercalate ", " (prettyPrint <$> M.keys b) <> " }"
+  prettyPrint (Bindings b) =
+    "{ " <> T.intercalate ", " (prettyPrint <$> M.keys b) <> " }"

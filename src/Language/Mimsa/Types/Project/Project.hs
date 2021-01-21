@@ -6,19 +6,21 @@
 module Language.Mimsa.Types.Project.Project where
 
 import qualified Data.Aeson as JSON
+import Data.Map (Map)
 import Data.Swagger
 import GHC.Generics (Generic)
+import Language.Mimsa.Types.Project.UnitTest
 import Language.Mimsa.Types.Project.Versioned
-import Language.Mimsa.Types.Store (Store)
+import Language.Mimsa.Types.Store (ExprHash, Store)
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces
-data Project ann
-  = Project
-      { store :: Store ann,
-        bindings :: VersionedBindings,
-        typeBindings :: VersionedTypeBindings
-      }
+data Project ann = Project
+  { prjStore :: Store ann,
+    prjBindings :: VersionedBindings,
+    prjTypeBindings :: VersionedTypeBindings,
+    prjUnitTests :: Map ExprHash UnitTest
+  }
   deriving
     ( Eq,
       Ord,
@@ -31,9 +33,10 @@ data Project ann
     )
 
 instance Semigroup (Project a) where
-  Project a a1 a2 <> Project b b1 b2 =
-    Project (a <> b) (a1 <> b1) (a2 <> b2)
+  Project a a1 a2 a3 <> Project b b1 b2 b3 =
+    Project (a <> b) (a1 <> b1) (a2 <> b2) (a3 <> b3)
 
 instance Monoid (Project a) where
-  mempty = Project mempty mempty mempty
+  mempty = Project mempty mempty mempty mempty
+
 -------------

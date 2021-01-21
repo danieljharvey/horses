@@ -39,7 +39,7 @@ repl = do
   loadedEnv <- runExceptT (loadProject mimsaConfig)
   env <- case loadedEnv of
     Right env' -> do
-      let items = length . getStore . store $ env'
+      let items = length . getStore . prjStore $ env'
       T.putStrLn $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
       pure env'
     _ -> do

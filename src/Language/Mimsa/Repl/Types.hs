@@ -10,6 +10,7 @@ import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Typechecker
 
 type ReplM ann = ReaderT MimsaConfig (ExceptT (Error ann) IO)
@@ -45,3 +46,5 @@ data ReplAction ann
   | BindType DataType
   | Versions Name
   | ListBindings
+  | AddUnitTest TestName (Expr Name ann)
+  | ListTests (Maybe Name)

@@ -41,5 +41,5 @@ listBindings ::
 listBindings mimsaEnv (ListBindingsRequest projectHash) = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' projectHash
-  writeStoreHandler mimsaEnv (store project)
+  writeStoreHandler mimsaEnv (prjStore project)
   ListBindingsResponse <$> projectDataHandler mimsaEnv project

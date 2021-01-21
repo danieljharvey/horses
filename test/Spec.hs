@@ -6,7 +6,6 @@ module Main
   )
 where
 
--- import qualified Data.Aeson as JSON
 import qualified Test.BackendJS as JS
 import Test.Hspec
 import qualified Test.InstantiateVar as InstantiateVar
@@ -25,6 +24,8 @@ import qualified Test.TypeError as TypeError
 import qualified Test.TypeSearch as TypeSearch
 import qualified Test.Typechecker as Typechecker
 import qualified Test.Unify as Unify
+import qualified Test.UnitTest as UnitTest
+import qualified Test.UpdateDeps as UpdateDeps
 import qualified Test.Usages as Usages
 
 main :: IO ()
@@ -46,3 +47,5 @@ main = hspec $ do
   TypeSearch.spec
   MonoTypeParser.spec
   InstantiateVar.spec
+  UnitTest.spec
+  UpdateDeps.spec

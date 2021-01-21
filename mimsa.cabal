@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a28f608b128b2bf63ef875f864a9238cd82f678c4732ad22618aa0793f29a93c
+-- hash: fbbe39b41900fb908dcad0ffb1bf5e13cad909e8979e06dca987d66a7b77f131
 
 name:           mimsa
 version:        0.1.0.0
@@ -56,31 +56,36 @@ library
       Language.Mimsa.Project.Helpers
       Language.Mimsa.Project.Persistence
       Language.Mimsa.Project.TypeSearch
+      Language.Mimsa.Project.UnitTest
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
       Language.Mimsa.Repl
       Language.Mimsa.Repl.Actions
-      Language.Mimsa.Repl.Compile
-      Language.Mimsa.Repl.Evaluate
-      Language.Mimsa.Repl.ExpressionBind
-      Language.Mimsa.Repl.Info
-      Language.Mimsa.Repl.ListBindings
+      Language.Mimsa.Repl.Actions.Compile
+      Language.Mimsa.Repl.Actions.Evaluate
+      Language.Mimsa.Repl.Actions.ExpressionBind
+      Language.Mimsa.Repl.Actions.Info
+      Language.Mimsa.Repl.Actions.ListBindings
+      Language.Mimsa.Repl.Actions.Shared
+      Language.Mimsa.Repl.Actions.Tree
+      Language.Mimsa.Repl.Actions.TypeSearch
+      Language.Mimsa.Repl.Actions.UnitTests
+      Language.Mimsa.Repl.Actions.Versions
       Language.Mimsa.Repl.Parser
-      Language.Mimsa.Repl.Tree
       Language.Mimsa.Repl.Types
-      Language.Mimsa.Repl.TypeSearch
-      Language.Mimsa.Repl.Versions
       Language.Mimsa.Server
       Language.Mimsa.Server.EnvVars
       Language.Mimsa.Server.Handlers
       Language.Mimsa.Server.Helpers
       Language.Mimsa.Server.Main
       Language.Mimsa.Server.Project
+      Language.Mimsa.Server.Project.AddUnitTest
       Language.Mimsa.Server.Project.BindExpression
       Language.Mimsa.Server.Project.CreateProject
       Language.Mimsa.Server.Project.Evaluate
       Language.Mimsa.Server.Project.GetExpression
       Language.Mimsa.Server.Project.ListBindings
+      Language.Mimsa.Server.Project.ListTests
       Language.Mimsa.Server.Search
       Language.Mimsa.Server.Servant
       Language.Mimsa.Server.Store
@@ -95,6 +100,7 @@ library
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
       Language.Mimsa.Store.Substitutor
+      Language.Mimsa.Store.UpdateDeps
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.DataTypes
       Language.Mimsa.Typechecker.DisplayError
@@ -131,6 +137,7 @@ library
       Language.Mimsa.Types.Project.Project
       Language.Mimsa.Types.Project.ProjectHash
       Language.Mimsa.Types.Project.SaveProject
+      Language.Mimsa.Types.Project.UnitTest
       Language.Mimsa.Types.Project.Usage
       Language.Mimsa.Types.Project.Versioned
       Language.Mimsa.Types.Project.VersionedMap
@@ -281,6 +288,8 @@ test-suite mimsa-test
       Test.TypeError
       Test.TypeSearch
       Test.Unify
+      Test.UnitTest
+      Test.UpdateDeps
       Test.Usages
       Test.Utils.Helpers
       Test.Utils.Serialisation

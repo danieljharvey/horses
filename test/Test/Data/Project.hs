@@ -58,6 +58,9 @@ stdLibE =
       "\\a -> \\b -> a + b"
       (mkName "addInt")
     >>= addBinding
+      "\\a -> \\b -> a - b"
+      (mkName "subtractInt")
+    >>= addBinding
       "\\f -> \\g -> \\aValue -> f(g(aValue))"
       (mkName "compose")
     >>= addBinding
