@@ -16,9 +16,9 @@ import Language.Mimsa.Types.Store (ExprHash, Store)
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces
 data Project ann = Project
-  { store :: Store ann,
-    bindings :: VersionedBindings,
-    typeBindings :: VersionedTypeBindings,
+  { prjStore :: Store ann,
+    prjBindings :: VersionedBindings,
+    prjTypeBindings :: VersionedTypeBindings,
     prjUnitTests :: Map ExprHash UnitTest
   }
   deriving

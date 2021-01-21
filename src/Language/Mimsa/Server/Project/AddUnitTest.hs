@@ -53,7 +53,7 @@ addUnitTestHandler mimsaEnv (AddUnitTestRequest hash testName testInput) = do
   _ <- saveExprHandler mimsaEnv storeExpr
   test <- createUnitTestHandler project storeExpr testName
   let projectWithTest = fromUnitTest test storeExpr <> project
-  writeStoreHandler mimsaEnv (store projectWithTest)
+  writeStoreHandler mimsaEnv (prjStore projectWithTest)
   pd <- projectDataHandler mimsaEnv projectWithTest
   pure $
     AddUnitTestResponse

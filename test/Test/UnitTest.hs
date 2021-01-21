@@ -85,7 +85,7 @@ altIdHash :: ExprHash
 altIdHash = getStoreExpressionHash altIdStoreExpr
 
 projectStoreSize :: Project ann -> Int
-projectStoreSize = length . getStore . store
+projectStoreSize = length . getStore . prjStore
 
 unitTestCount :: Project ann -> Int
 unitTestCount = length . prjUnitTests

@@ -82,8 +82,8 @@ testIt (q, a) =
 
 dataTypes :: ResolvedTypeDeps
 dataTypes = fromJust $ case resolveTypeDeps
-  (store stdLib)
-  (getCurrentTypeBindings $ typeBindings stdLib) of
+  (prjStore stdLib)
+  (getCurrentTypeBindings $ prjTypeBindings stdLib) of
   Right a -> Just a
   _ -> Nothing
 

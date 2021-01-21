@@ -48,14 +48,14 @@ mimsaApp mimsaEnv =
 createMimsaEnvironment :: MimsaConfig -> IO MimsaEnvironment
 createMimsaEnvironment cfg = do
   env <- getDefaultProject cfg
-  MimsaEnvironment <$> STM.newTVarIO (store env) <*> pure cfg
+  MimsaEnvironment <$> STM.newTVarIO (prjStore env) <*> pure cfg
 
 getDefaultProject :: MimsaConfig -> IO (Project Annotation)
 getDefaultProject cfg = do
   loadedEnv <- runExceptT (loadProject cfg)
   case loadedEnv of
     Right env' -> do
-      let items = length . getStore . store $ env'
+      let items = length . getStore . prjStore $ env'
       T.putStrLn $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
       pure env'
     _ -> do

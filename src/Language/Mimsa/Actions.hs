@@ -113,8 +113,8 @@ resolveStoreExpression store' typeMap input storeExpr = do
 getTypeMap :: Project Annotation -> Either (Error Annotation) (Map Name MonoType)
 getTypeMap prj =
   let toError = OtherError . T.pack . show
-   in first toError (resolveDeps (store prj) (getCurrentBindings $ bindings prj))
-        >>= resolvedDepsToTypeMap (store prj)
+   in first toError (resolveDeps (prjStore prj) (getCurrentBindings $ prjBindings prj))
+        >>= resolvedDepsToTypeMap (prjStore prj)
 
 getTypecheckedStoreExpression ::
   Text ->
@@ -125,11 +125,11 @@ getTypecheckedStoreExpression input env expr = do
   storeExpr <-
     first ResolverErr $
       createStoreExpression
-        (getCurrentBindings $ bindings env)
-        (getCurrentTypeBindings $ typeBindings env)
+        (getCurrentBindings $ prjBindings env)
+        (getCurrentTypeBindings $ prjTypeBindings env)
         expr
   typeMap <- getTypeMap env
-  resolveStoreExpression (store env) typeMap input storeExpr
+  resolveStoreExpression (prjStore env) typeMap input storeExpr
 
 evaluateText ::
   Project Annotation ->

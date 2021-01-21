@@ -26,5 +26,5 @@ doOutputJS env input expr = do
     liftRepl $ getTypecheckedStoreExpression input env expr
   outputPath <-
     liftIO $
-      goCompile mimsaConfig CommonJS (store env) storeExpr'
+      goCompile mimsaConfig CommonJS (prjStore env) storeExpr'
   replPrint ("Output to " <> outputPath)

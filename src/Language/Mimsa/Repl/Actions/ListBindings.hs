@@ -29,13 +29,13 @@ doListBindings env input = do
   traverse_
     showBind
     ( getExprPairs
-        (store env)
-        (getCurrentBindings $ bindings env)
+        (prjStore env)
+        (getCurrentBindings $ prjBindings env)
     )
   let showType dt = replPrint (prettyPrint dt)
   traverse_
     showType
     ( getTypesFromStore
-        (store env)
-        (getCurrentTypeBindings $ typeBindings env)
+        (prjStore env)
+        (getCurrentTypeBindings $ prjTypeBindings env)
     )

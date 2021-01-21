@@ -31,12 +31,12 @@ updateStoreExpressionBindings ::
 updateStoreExpressionBindings project newBindings se = do
   let newProject =
         project
-          { bindings =
+          { prjBindings =
               bindingsToVersioned $
                 combine
                   newBindings
                   (storeBindings se),
-            typeBindings =
+            prjTypeBindings =
               typeBindingsToVersioned
                 (storeTypeBindings se)
           }

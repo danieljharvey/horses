@@ -81,7 +81,7 @@ typeSearchParser = do
 
 addUnitTestParser :: Parser ReplActionAnn
 addUnitTestParser = do
-  _ <- thenSpace (string ":addUnitTest")
+  _ <- thenSpace (string ":addTest")
   str <- thenSpace stringLiteral
   AddUnitTest (TestName $ T.pack str) <$> expressionParser
 

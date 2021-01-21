@@ -82,7 +82,7 @@ doHelp = do
   T.putStrLn ":outputJS <expr> - show JS code for <expr>"
   T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
   T.putStrLn ":search <mt> - search for exprs that match type"
-  T.putStrLn ":addUnitTest \"<test name>\" <expr> - add a unit test"
+  T.putStrLn ":addTest \"<test name>\" <expr> - add a unit test"
   T.putStrLn ":listTests <optional name> - list tests for <name>"
   T.putStrLn ":versions <name> - list all versions of a binding"
   T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"

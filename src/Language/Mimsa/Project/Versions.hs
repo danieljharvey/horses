@@ -36,7 +36,7 @@ findVersions project name = do
 
 findInProject :: Project ann -> Name -> Either UsageError (NonEmpty ExprHash)
 findInProject project name =
-  case M.lookup name (getVersionedMap $ bindings project) of
+  case M.lookup name (getVersionedMap $ prjBindings project) of
     Just versioned -> Right versioned
     _ -> throwError $ CouldNotFindBinding name
 
@@ -70,5 +70,5 @@ getExprDetails project exprHash = do
     first UsageErr (getStoreExpression project exprHash)
   typeMap <- getTypeMap project
   (ResolvedExpression mt _ expr' _ _) <-
-    resolveStoreExpression (store project) typeMap "" storeExpr
+    resolveStoreExpression (prjStore project) typeMap "" storeExpr
   pure (expr', mt, usages)

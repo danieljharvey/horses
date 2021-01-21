@@ -35,9 +35,9 @@ import Language.Mimsa.Types.Store
 projectFromSaved :: Store a -> SaveProject -> Project a
 projectFromSaved store' sp =
   Project
-    { store = store',
-      bindings = projectBindings sp,
-      typeBindings = projectTypes sp,
+    { prjStore = store',
+      prjBindings = projectBindings sp,
+      prjTypeBindings = projectTypes sp,
       prjUnitTests = projectUnitTests sp
     }
 
@@ -45,21 +45,21 @@ projectToSaved :: Project a -> SaveProject
 projectToSaved proj =
   SaveProject
     { projectVersion = 1,
-      projectBindings = bindings proj,
-      projectTypes = typeBindings proj,
+      projectBindings = prjBindings proj,
+      projectTypes = prjTypeBindings proj,
       projectUnitTests = prjUnitTests proj
     }
 
 fromStoreExpression :: StoreExpression ann -> ExprHash -> Project ann
 fromStoreExpression storeExpr exprHash =
-  mempty {store = Store $ M.singleton exprHash storeExpr}
+  mempty {prjStore = Store $ M.singleton exprHash storeExpr}
 
 fromItem :: Name -> StoreExpression ann -> ExprHash -> Project ann
 fromItem name expr hash =
   mempty
-    { store = Store $ M.singleton hash expr,
-      bindings = VersionedMap $ M.singleton name (pure hash),
-      typeBindings = VersionedMap $ M.fromList typeList
+    { prjStore = Store $ M.singleton hash expr,
+      prjBindings = VersionedMap $ M.singleton name (pure hash),
+      prjTypeBindings = VersionedMap $ M.fromList typeList
     }
   where
     typeConsUsed =
@@ -70,8 +70,8 @@ fromItem name expr hash =
 fromType :: StoreExpression ann -> ExprHash -> Project ann
 fromType expr hash =
   mempty
-    { store = Store $ M.singleton hash expr,
-      typeBindings = VersionedMap $ M.fromList typeList
+    { prjStore = Store $ M.singleton hash expr,
+      prjTypeBindings = VersionedMap $ M.fromList typeList
     }
   where
     typeConsUsed =
@@ -83,19 +83,20 @@ fromUnitTest :: UnitTest -> StoreExpression ann -> Project ann
 fromUnitTest test storeExpr =
   mempty
     { prjUnitTests = M.singleton (utExprHash test) test,
-      store = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
+      prjStore = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
     }
 
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHash project exprHash' =
-  M.lookup exprHash' (getStore . store $ project)
+  M.lookup exprHash' (getStore . prjStore $ project)
 
 getBindingNames :: Project ann -> Set Name
-getBindingNames = S.fromList . M.keys . getBindings . getCurrentBindings . bindings
+getBindingNames =
+  S.fromList . M.keys . getBindings . getCurrentBindings . prjBindings
 
 lookupBindingName :: Project ann -> Name -> Maybe ExprHash
 lookupBindingName project name =
-  let b = getBindings . getCurrentBindings . bindings $ project
+  let b = getBindings . getCurrentBindings . prjBindings $ project
    in M.lookup name b
 
 bindingsToVersioned :: Bindings -> VersionedBindings

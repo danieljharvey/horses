@@ -56,14 +56,14 @@ outputBindings project =
   prettyPrint
     <$> getBindings
       ( getCurrentBindings
-          (bindings project)
+          (prjBindings project)
       )
 
 outputTypeBindings :: Project a -> Map TyCon Text
 outputTypeBindings project =
   prettyPrint
     <$> getTypeBindings
-      (getCurrentTypeBindings (typeBindings project))
+      (getCurrentTypeBindings (prjTypeBindings project))
 
 data ProjectData = ProjectData
   { pdHash :: ProjectHash,
@@ -147,7 +147,7 @@ resolveStoreExpressionHandler ::
   Handler (ResolvedExpression Annotation)
 resolveStoreExpressionHandler prj se = do
   typeMap <- handleEither InternalError (getTypeMap prj)
-  handleEither UserError $ resolveStoreExpression (store prj) typeMap "" se
+  handleEither UserError $ resolveStoreExpression (prjStore prj) typeMap "" se
 
 findExprHandler ::
   Project Annotation ->
