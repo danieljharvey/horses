@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -13,19 +14,21 @@ import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
+import Servant
 
 renderName :: Name -> Doc ann
 renderName = pretty . getName
 
 newtype Name = Name {getName' :: Text}
-  deriving (ToSchema)
+  deriving (ToSchema, ToParamSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,
       JSON.FromJSON,
       JSON.FromJSONKey,
       JSON.ToJSON,
-      JSON.ToJSONKey
+      JSON.ToJSONKey,
+      FromHttpApiData
     )
 
 getName :: Name -> Text
