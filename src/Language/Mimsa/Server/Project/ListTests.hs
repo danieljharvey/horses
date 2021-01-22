@@ -27,14 +27,10 @@ import Servant
 ------
 
 type ListTests =
-  "tests" :> "list"
-    :> ReqBody '[JSON] ListTestsRequest
+  Capture "projectHash" ProjectHash
+    :> "tests"
+    :> "list"
     :> Get '[JSON] ListTestsResponse
-
-newtype ListTestsRequest = ListTestsRequest
-  { ltProjectHash :: ProjectHash
-  }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
 newtype ListTestsResponse = ListTestsResponse
   { ltUnitTests :: [UnitTest]
@@ -43,9 +39,9 @@ newtype ListTestsResponse = ListTestsResponse
 
 listTestsHandler ::
   MimsaEnvironment ->
-  ListTestsRequest ->
+  ProjectHash ->
   Handler ListTestsResponse
-listTestsHandler mimsaEnv (ListTestsRequest hash) = do
+listTestsHandler mimsaEnv hash = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' hash
   pure $ ListTestsResponse (M.elems $ prjUnitTests project)
@@ -53,16 +49,11 @@ listTestsHandler mimsaEnv (ListTestsRequest hash) = do
 ----
 
 type ListTestsByName =
-  "tests"
+  Capture "projectHash" ProjectHash
+    :> "tests"
     :> "list"
     :> Capture "name" Name
-    :> ReqBody '[JSON] ListTestsByNameRequest
     :> Get '[JSON] ListTestsByNameResponse
-
-newtype ListTestsByNameRequest = ListTestsByNameRequest
-  { ltbnProjectHash :: ProjectHash
-  }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
 newtype ListTestsByNameResponse = ListTestsByNameResponse
   { ltbnUnitTests :: [UnitTest]
@@ -71,10 +62,10 @@ newtype ListTestsByNameResponse = ListTestsByNameResponse
 
 listTestsByNameHandler ::
   MimsaEnvironment ->
+  ProjectHash ->
   Name ->
-  ListTestsByNameRequest ->
   Handler ListTestsByNameResponse
-listTestsByNameHandler mimsaEnv name' (ListTestsByNameRequest hash) = do
+listTestsByNameHandler mimsaEnv hash name' = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' hash
   let tests = case lookupBindingName project name' of

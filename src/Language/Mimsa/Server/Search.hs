@@ -47,7 +47,7 @@ newtype TypeSearchResponse = TypeSearchResponse
 type TypeSearch =
   "type"
     :> ReqBody '[JSON] TypeSearchRequest
-    :> Get '[JSON] TypeSearchResponse
+    :> Post '[JSON] TypeSearchResponse
 
 typeSearchEndpoint ::
   MimsaEnvironment ->

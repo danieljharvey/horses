@@ -20,8 +20,15 @@ import Servant
 -- the data it outputs should be enough for another Repl or Server to use
 
 type StoreAPI =
-  "store" :> ("expression" :> Capture "exprHash" ExprHash :> Get '[JSON] (StoreExpression ()))
-    :<|> ("expression" :> ReqBody '[JSON] (StoreExpression ()) :> Post '[JSON] ExprHash)
+  "store"
+    :> ( "expression"
+           :> Capture "exprHash" ExprHash
+           :> Get '[JSON] (StoreExpression ())
+       )
+    :<|> ( "expression"
+             :> ReqBody '[JSON] (StoreExpression ())
+             :> Post '[JSON] ExprHash
+         )
 
 storeEndpoints :: MimsaEnvironment -> Server StoreAPI
 storeEndpoints mimsaEnv =
