@@ -6,8 +6,9 @@
 
 module Language.Mimsa.Server.Handlers
   ( ProjectData (..),
-    projectDataHandler,
+    UnitTestData (..),
     ExpressionData (..),
+    projectDataHandler,
     expressionDataHandler,
     loadProjectHandler,
     evaluateTextHandler,
@@ -19,13 +20,17 @@ module Language.Mimsa.Server.Handlers
     readStoreHandler,
     writeStoreHandler,
     createUnitTestHandler,
+    mkUnitTestData,
   )
 where
 
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
+import Data.Coerce
 import Data.Map (Map)
+import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
@@ -72,6 +77,22 @@ data ProjectData = ProjectData
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
+data UnitTestData = UnitTestData
+  { utdTestName :: Text,
+    utdTestSuccess :: Bool,
+    utdBindings :: Map Name Text
+  }
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+
+mkUnitTestData :: Project ann -> UnitTest -> UnitTestData
+mkUnitTestData project unitTest = do
+  let getDep = (`findBindingNameForExprHash` project)
+  let depMap = mconcat (getDep <$> S.toList (utDeps unitTest))
+  UnitTestData
+    (coerce $ utName unitTest)
+    (coerce $ utSuccess unitTest)
+    (coerce <$> depMap)
+
 -- read the store from mutable var to stop repeated loading of exprs
 readStoreHandler :: MimsaEnvironment -> Handler (Store Annotation)
 readStoreHandler mimsaEnv = do
@@ -100,19 +121,30 @@ data ExpressionData = ExpressionData
     edPretty :: Text,
     edType :: Text,
     edBindings :: Map Name Text,
-    edTypeBindings :: Map TyCon Text
+    edTypeBindings :: Map TyCon Text,
+    edUnitTests :: [UnitTestData]
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
-expressionDataHandler :: StoreExpression Annotation -> MonoType -> Handler ExpressionData
-expressionDataHandler se mt =
+expressionDataHandler ::
+  Project Annotation ->
+  StoreExpression Annotation ->
+  MonoType ->
+  Handler ExpressionData
+expressionDataHandler project se mt = do
+  let exprHash = getStoreExpressionHash se
+      tests =
+        mkUnitTestData project
+          <$> M.elems
+            (getTestsForExprHash project exprHash)
   pure $
     ExpressionData
-      (prettyPrint (getStoreExpressionHash se))
+      (prettyPrint exprHash)
       (prettyPrint (storeExpression se))
       (prettyPrint mt)
       (prettyPrint <$> getBindings (storeBindings se))
       (prettyPrint <$> getTypeBindings (storeTypeBindings se))
+      tests
 
 -- given a project hash, find the project
 loadProjectHandler ::

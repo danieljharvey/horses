@@ -60,7 +60,7 @@ bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
   writeStoreHandler mimsaEnv (prjStore envWithTests)
   pd <- projectDataHandler mimsaEnv envWithTests
   _ <- saveExprHandler mimsaEnv se
-  ed <- expressionDataHandler se mt
+  ed <- expressionDataHandler project se mt
   pure $
     BindExpressionResponse
       pd

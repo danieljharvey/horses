@@ -37,7 +37,7 @@ data AddUnitTestRequest = AddUnitTestRequest
 
 data AddUnitTestResponse = AddUnitTestResponse
   { autProjectData :: ProjectData,
-    autUnitTest :: UnitTest
+    autUnitTest :: UnitTestData
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
@@ -58,4 +58,4 @@ addUnitTestHandler mimsaEnv (AddUnitTestRequest hash testName testInput) = do
   pure $
     AddUnitTestResponse
       pd
-      test
+      (mkUnitTestData project test)

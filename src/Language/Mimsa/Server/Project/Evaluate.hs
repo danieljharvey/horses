@@ -52,4 +52,5 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) = do
     interpretHandler scope' swaps expr'
   writeStoreHandler mimsaEnv (prjStore project)
   _ <- saveExprHandler mimsaEnv se
-  EvaluateResponse (prettyPrint simpleExpr) <$> expressionDataHandler se mt
+  EvaluateResponse (prettyPrint simpleExpr)
+    <$> expressionDataHandler project se mt
