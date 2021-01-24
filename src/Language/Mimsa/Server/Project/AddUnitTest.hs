@@ -14,11 +14,10 @@ import qualified Data.Aeson as JSON
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Project
+import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
 import Servant
 
 ------
@@ -46,16 +45,14 @@ addUnitTestHandler ::
   AddUnitTestRequest ->
   Handler AddUnitTestResponse
 addUnitTestHandler mimsaEnv (AddUnitTestRequest hash testName testInput) = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' hash
-  (ResolvedExpression _ storeExpr _ _ _) <-
-    evaluateTextHandler project testInput
-  _ <- saveExprHandler mimsaEnv storeExpr
-  test <- createUnitTestHandler project storeExpr testName
-  let projectWithTest = fromUnitTest test storeExpr <> project
-  writeStoreHandler mimsaEnv (prjStore projectWithTest)
-  pd <- projectDataHandler mimsaEnv projectWithTest
+  expr <- parseHandler testInput
+  (newProject, unitTest) <-
+    fromActionM
+      mimsaEnv
+      hash
+      (Actions.addUnitTest expr testName testInput)
+  pd <- projectDataHandler mimsaEnv newProject
   pure $
     AddUnitTestResponse
       pd
-      (mkUnitTestData project test)
+      (mkUnitTestData newProject unitTest)
