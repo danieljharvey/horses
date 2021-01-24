@@ -41,10 +41,12 @@ data BindExpressionRequest = BindExpressionRequest
 
 data BindExpressionResponse = BindExpressionResponse
   { beProjectData :: ProjectData,
-    beExpressionData :: ExpressionData
+    beExpressionData :: ExpressionData,
+    beUpdatedTestsCount :: Int
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
+-- TODO - load unit test expressions
 bindExpression ::
   MimsaEnvironment ->
   BindExpressionRequest ->
@@ -55,28 +57,34 @@ bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
   (ResolvedExpression mt se _ _ _) <-
     evaluateTextHandler project input
   exprHash <- saveExprHandler mimsaEnv se
-  let newEnv = project <> fromItem name' se exprHash
-  envWithTests <- updateUnitTestsHandler mimsaEnv newEnv exprHash name'
-  writeStoreHandler mimsaEnv (prjStore envWithTests)
-  pd <- projectDataHandler mimsaEnv envWithTests
+  (numTests, projectWithTests) <-
+    updateUnitTestsHandler
+      mimsaEnv
+      (project <> fromStoreExpression se exprHash)
+      exprHash
+      name'
+  let newProject = projectWithTests <> fromItem name' se exprHash
+  writeStoreHandler mimsaEnv (prjStore newProject)
+  pd <- projectDataHandler mimsaEnv newProject
   _ <- saveExprHandler mimsaEnv se
-  ed <- expressionDataHandler project se mt
+  ed <- expressionDataHandler newProject se mt
   pure $
     BindExpressionResponse
       pd
       ed
+      numTests
 
 updateUnitTestsHandler ::
   MimsaEnvironment ->
   Project Annotation ->
   ExprHash ->
   Name ->
-  Handler (Project Annotation)
+  Handler (Int, Project Annotation)
 updateUnitTestsHandler mimsaEnv project newExprHash name' = do
   case lookupBindingName project name' of
-    Nothing -> pure project
+    Nothing -> pure (0, project)
     Just oldExprHash -> do
       (projectWithNewTests, newExprs) <-
         createNewUnitTestsHandler project oldExprHash newExprHash
       traverse_ (saveExprHandler mimsaEnv) newExprs
-      pure projectWithNewTests
+      pure (length newExprs, projectWithNewTests)

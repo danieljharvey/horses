@@ -19,7 +19,6 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Data.Text as T
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Project
 import Language.Mimsa.Store
@@ -112,9 +111,8 @@ resolveStoreExpression store' typeMap input storeExpr = do
 
 getTypeMap :: Project Annotation -> Either (Error Annotation) (Map Name MonoType)
 getTypeMap prj =
-  let toError = OtherError . T.pack . show
-   in first toError (resolveDeps (prjStore prj) (getCurrentBindings $ prjBindings prj))
-        >>= resolvedDepsToTypeMap (prjStore prj)
+  first StoreErr (resolveDeps (prjStore prj) (getCurrentBindings $ prjBindings prj))
+    >>= resolvedDepsToTypeMap (prjStore prj)
 
 getTypecheckedStoreExpression ::
   Text ->
@@ -136,5 +134,5 @@ evaluateText ::
   Text ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 evaluateText env input = do
-  expr <- first OtherError $ parseExprAndFormatError input
+  expr <- first ParseError $ parseExprAndFormatError input
   getTypecheckedStoreExpression input env expr
