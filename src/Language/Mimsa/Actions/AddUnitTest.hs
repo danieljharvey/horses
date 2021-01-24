@@ -17,7 +17,7 @@ addUnitTest ::
   Expr Name Annotation ->
   TestName ->
   Text ->
-  Actions.ActionM ()
+  Actions.ActionM UnitTest
 addUnitTest expr testName input = do
   project <- Actions.getProject
   (ResolvedExpression _ storeExpr _ _ _) <-
@@ -25,3 +25,4 @@ addUnitTest expr testName input = do
   Actions.addStoreExpression storeExpr
   test <- liftEither $ createUnitTest project storeExpr testName
   Actions.appendProject (fromUnitTest test storeExpr)
+  pure test

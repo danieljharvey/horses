@@ -109,7 +109,7 @@ spec = do
       it "Updating an existing binding updates tests" $ do
         let newIdExpr = MyLambda mempty (mkName "blob") (MyVar mempty (mkName "blob"))
         let action = do
-              addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
+              _ <- addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
               bindExpression newIdExpr (mkName "id") "\\blob -> blob"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
