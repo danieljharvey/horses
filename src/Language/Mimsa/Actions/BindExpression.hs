@@ -22,10 +22,10 @@ bindExpression ::
   Expr Name Annotation ->
   Name ->
   Text ->
-  Actions.ActionM (ExprHash, Int)
+  Actions.ActionM (ExprHash, Int, ResolvedExpression Annotation)
 bindExpression expr name input = do
   project <- Actions.getProject
-  (ResolvedExpression _type' storeExpr _ _ _) <-
+  re@(ResolvedExpression _type' storeExpr _ _ _) <-
     liftEither $ getTypecheckedStoreExpression input project expr
   Actions.bindStoreExpression storeExpr name
   case lookupBindingName project name of
@@ -33,13 +33,16 @@ bindExpression expr name input = do
       Actions.appendMessage
         ( "Bound " <> prettyPrint name <> "."
         )
-      pure (getStoreExpressionHash storeExpr, 0)
-    Just oldExprHash -> do
-      Actions.appendMessage
-        ( "Updated binding of " <> prettyPrint name <> "."
-        )
-      let newExprHash = getStoreExpressionHash storeExpr
-      (,) newExprHash <$> createUnitTests oldExprHash newExprHash
+      pure (getStoreExpressionHash storeExpr, 0, re)
+    Just oldExprHash ->
+      do
+        Actions.appendMessage
+          ( "Updated binding of " <> prettyPrint name <> "."
+          )
+        let newExprHash = getStoreExpressionHash storeExpr
+        (,,) newExprHash
+          <$> createUnitTests oldExprHash newExprHash
+            <*> pure re
 
 createUnitTests :: ExprHash -> ExprHash -> Actions.ActionM Int
 createUnitTests oldExprHash newExprHash = do

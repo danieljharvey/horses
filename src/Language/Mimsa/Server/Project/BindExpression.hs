@@ -11,18 +11,20 @@ module Language.Mimsa.Server.Project.BindExpression
 where
 
 import qualified Data.Aeson as JSON
-import Data.Foldable (traverse_)
+import Data.Bifunctor (first)
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Project
+import qualified Language.Mimsa.Actions.BindExpression as Actions
+import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Types.Store
 import Servant
 
 ------
@@ -46,46 +48,24 @@ data BindExpressionResponse = BindExpressionResponse
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
--- TODO - create a pure function that does most of this that
--- we can share with the repl - this is really ugly
+parseExpr :: Text -> Either (Error Annotation) (Expr Name Annotation)
+parseExpr input = first ParseError (parseExprAndFormatError input)
+
 bindExpression ::
   MimsaEnvironment ->
   BindExpressionRequest ->
   Handler BindExpressionResponse
 bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' hash
-  (ResolvedExpression mt se _ _ _) <-
-    evaluateTextHandler project input
-  exprHash <- saveExprHandler mimsaEnv se
-  (numTests, projectWithTests) <-
-    updateUnitTestsHandler
+  expr <- handleEither UserError (parseExpr input)
+  (newProject, (_, numTests, ResolvedExpression mt se _ _ _)) <-
+    fromActionM
       mimsaEnv
-      (project <> fromStoreExpression se exprHash)
-      exprHash
-      name'
-  let newProject = projectWithTests <> fromItem name' se exprHash
-  writeStoreHandler mimsaEnv (prjStore newProject)
+      hash
+      (Actions.bindExpression expr name' input)
   pd <- projectDataHandler mimsaEnv newProject
-  _ <- saveExprHandler mimsaEnv se
   ed <- expressionDataHandler newProject se mt
   pure $
     BindExpressionResponse
       pd
       ed
       numTests
-
-updateUnitTestsHandler ::
-  MimsaEnvironment ->
-  Project Annotation ->
-  ExprHash ->
-  Name ->
-  Handler (Int, Project Annotation)
-updateUnitTestsHandler mimsaEnv project newExprHash name' = do
-  case lookupBindingName project name' of
-    Nothing -> pure (0, project)
-    Just oldExprHash -> do
-      (projectWithNewTests, newExprs) <-
-        createNewUnitTestsHandler project oldExprHash newExprHash
-      traverse_ (saveExprHandler mimsaEnv) newExprs
-      pure (length newExprs, projectWithNewTests)

@@ -8,6 +8,7 @@ module Language.Mimsa.Server.Handlers
   ( ProjectData (..),
     UnitTestData (..),
     ExpressionData (..),
+    fromActionM,
     projectDataHandler,
     expressionDataHandler,
     loadProjectHandler,
@@ -28,6 +29,7 @@ import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import Data.Coerce
+import Data.Foldable (traverse_)
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -35,6 +37,7 @@ import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Actions (evaluateText, getTypeMap, resolveStoreExpression)
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -55,6 +58,17 @@ import Servant
 -----
 -- Commonly used functionality, lifted into Servant's Handler type
 -----
+
+fromActionM :: MimsaEnvironment -> ProjectHash -> Actions.ActionM a -> Handler (Project Annotation, a)
+fromActionM mimsaEnv projectHash action = do
+  store' <- readStoreHandler mimsaEnv
+  project <- loadProjectHandler mimsaEnv store' projectHash
+  case Actions.run project action of
+    Left e -> throwError (to400Error e)
+    Right (Actions.ActionState newProject storeExprs _, a) -> do
+      traverse_ (saveExprHandler mimsaEnv) storeExprs
+
+      pure (newProject, a)
 
 outputBindings :: Project a -> Map Name Text
 outputBindings project =
