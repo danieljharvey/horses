@@ -46,7 +46,8 @@ data BindExpressionResponse = BindExpressionResponse
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
--- TODO - load unit test expressions
+-- TODO - create a pure function that does most of this that
+-- we can share with the repl - this is really ugly
 bindExpression ::
   MimsaEnvironment ->
   BindExpressionRequest ->
