@@ -141,7 +141,7 @@ spec = do
       it "Should evaluate an expression" $ do
         case Actions.run stdLib (Actions.evaluate (prettyPrint onePlusOneExpr) onePlusOneExpr) of
           Left _ -> error "Should not have failed"
-          Right (Actions.ActionState newProject _ _, (mt, expr)) -> do
+          Right (Actions.ActionState newProject _ _, (mt, expr, _)) -> do
             mt $> () `shouldBe` MTPrim mempty MTInt
             expr $> () `shouldBe` int 2
             -- project should be untouched

@@ -16,15 +16,20 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 evaluate ::
   Text ->
   Expr Name Annotation ->
-  Actions.ActionM (MonoType, Expr Variable Annotation)
+  Actions.ActionM
+    ( MonoType,
+      Expr Variable Annotation,
+      StoreExpression Annotation
+    )
 evaluate input expr = do
   project <- Actions.getProject
-  (ResolvedExpression mt _ expr' scope' swaps) <-
+  (ResolvedExpression mt se expr' scope' swaps) <-
     liftEither $ getTypecheckedStoreExpression input project expr
   interpretedExpr <-
     liftEither (first InterpreterErr (interpret scope' swaps expr'))
@@ -33,6 +38,6 @@ evaluate input expr = do
         <> "\n::\n"
         <> prettyPrint mt
     )
-  pure (mt, interpretedExpr)
+  pure (mt, interpretedExpr, se)
 
 ---------
