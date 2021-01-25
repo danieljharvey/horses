@@ -7,26 +7,12 @@ where
 
 import Data.Either (isLeft, isRight)
 import qualified Data.Map as M
-import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.UpdateDeps
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
-
-getHashOfName :: Project ann -> Name -> ExprHash
-getHashOfName prj name =
-  case lookupBindingName prj name of
-    Just a -> a
-    _ -> error "could not getHashOfName"
-
-getStoreExpression :: Project ann -> ExprHash -> StoreExpression ann
-getStoreExpression project exprHash' =
-  case lookupExprHash project exprHash' of
-    Just a -> a
-    _ -> error "could not getStoreExpression"
 
 spec :: Spec
 spec = do

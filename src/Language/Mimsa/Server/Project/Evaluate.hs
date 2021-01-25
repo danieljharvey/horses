@@ -14,11 +14,11 @@ import qualified Data.Aeson as JSON
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
+import qualified Language.Mimsa.Actions.Evaluate as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
 import Servant
 
 -- /project/evaluate/
@@ -44,12 +44,11 @@ evaluateExpression ::
   EvaluateRequest ->
   Handler EvaluateResponse
 evaluateExpression mimsaEnv (EvaluateRequest code hash) = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' hash
-  (ResolvedExpression mt se expr' scope' swaps) <-
-    evaluateTextHandler project code
-  simpleExpr <-
-    interpretHandler scope' swaps expr'
-  writeStoreHandler mimsaEnv (prjStore project)
-  _ <- saveExprHandler mimsaEnv se
-  EvaluateResponse (prettyPrint simpleExpr) <$> expressionDataHandler se mt
+  expr <- parseHandler code
+  (newProject, (mt, simpleExpr, se)) <-
+    fromActionM
+      mimsaEnv
+      hash
+      (Actions.evaluate code expr)
+  EvaluateResponse (prettyPrint simpleExpr)
+    <$> expressionDataHandler newProject se mt

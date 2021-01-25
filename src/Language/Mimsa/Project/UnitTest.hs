@@ -71,9 +71,7 @@ updateUnitTest project oldHash newHash unitTest = do
   case lookupExprHash project (utExprHash unitTest) of
     Nothing ->
       throwError
-        ( OtherError $
-            "Test error - could not find store expression in project for hash "
-              <> prettyPrint (utExprHash unitTest)
+        ( StoreErr $ CouldNotFindStoreExpression (utExprHash unitTest)
         )
     Just testStoreExpr -> do
       let newBindings =
@@ -93,6 +91,11 @@ createNewUnitTests project oldHash newHash = do
     traverse
       (updateUnitTest project oldHash newHash)
       (M.elems tests)
-  let newProject = project <> mconcat ((\(se, ut) -> fromUnitTest ut se) <$> newTests)
+  let newProject =
+        project
+          <> mconcat
+            ( (\(se, ut) -> fromUnitTest ut se)
+                <$> newTests
+            )
   let exprs = fst <$> newTests
   pure (newProject, exprs)

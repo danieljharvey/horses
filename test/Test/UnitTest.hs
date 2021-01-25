@@ -19,21 +19,6 @@ import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
 
-getHashOfName :: Project ann -> Name -> ExprHash
-getHashOfName prj name =
-  case lookupBindingName prj name of
-    Just a -> a
-    _ -> error "could not getHashOfName"
-
-createTestOrExplode ::
-  Project Annotation ->
-  StoreExpression Annotation ->
-  TestName ->
-  UnitTest
-createTestOrExplode prj sExpr name = case createUnitTest prj sExpr name of
-  Right a -> a
-  _ -> error "EXPLODE"
-
 testExpr :: Expr Name Annotation
 testExpr =
   MyInfix

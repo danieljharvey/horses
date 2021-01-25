@@ -87,7 +87,11 @@ loadProjectFromHash' cfg store' hash = do
       Just sp -> fetchProjectItems cfg store' sp
       _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
 
-fetchProjectItems :: MimsaConfig -> Store () -> SaveProject -> PersistApp (Project ())
+fetchProjectItems ::
+  MimsaConfig ->
+  Store () ->
+  SaveProject ->
+  PersistApp (Project ())
 fetchProjectItems cfg existingStore sp = do
   store' <-
     recursiveLoadBoundExpressions
@@ -99,7 +103,17 @@ fetchProjectItems cfg existingStore sp = do
       cfg
       existingStore
       (getItemsForAllVersions . projectTypes $ sp)
-  pure $ projectFromSaved (existingStore <> store' <> typeStore') sp
+  testStore <-
+    recursiveLoadBoundExpressions
+      cfg
+      existingStore
+      (M.keysSet $ projectUnitTests sp)
+  pure $
+    projectFromSaved
+      ( existingStore <> store' <> typeStore'
+          <> testStore
+      )
+      sp
 
 -- save project in local folder
 saveProject ::

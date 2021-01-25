@@ -29,12 +29,12 @@ findVersions ::
   Name ->
   Either (Error Annotation) (NonEmpty (Int, Expr Variable Annotation, MonoType, Set Usage))
 findVersions project name = do
-  versioned <- first UsageErr (findInProject project name)
+  versioned <- first StoreErr (findInProject project name)
   as <- traverse (getExprDetails project) versioned
   let nice = NE.zip (NE.fromList [1 ..]) as
   pure $ NE.reverse $ (\(i, (a, b, c)) -> (i, a, b, c)) <$> nice
 
-findInProject :: Project ann -> Name -> Either UsageError (NonEmpty ExprHash)
+findInProject :: Project ann -> Name -> Either StoreError (NonEmpty ExprHash)
 findInProject project name =
   case M.lookup name (getVersionedMap $ prjBindings project) of
     Just versioned -> Right versioned
@@ -43,7 +43,7 @@ findInProject project name =
 getStoreExpression ::
   Project ann ->
   ExprHash ->
-  Either UsageError (StoreExpression ann)
+  Either StoreError (StoreExpression ann)
 getStoreExpression (Project store' _ _ _) exprHash =
   case M.lookup exprHash (getStore store') of
     Just storeExpression' -> Right storeExpression'
@@ -65,9 +65,9 @@ getExprDetails ::
   Either (Error Annotation) (Expr Variable Annotation, MonoType, Set Usage)
 getExprDetails project exprHash = do
   usages <-
-    first UsageErr (findUsages project exprHash)
+    first StoreErr (findUsages project exprHash)
   storeExpr <-
-    first UsageErr (getStoreExpression project exprHash)
+    first StoreErr (getStoreExpression project exprHash)
   typeMap <- getTypeMap project
   (ResolvedExpression mt _ expr' _ _) <-
     resolveStoreExpression (prjStore project) typeMap "" storeExpr

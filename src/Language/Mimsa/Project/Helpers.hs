@@ -5,6 +5,7 @@ module Language.Mimsa.Project.Helpers
     fromType,
     fromUnitTest,
     fromStoreExpression,
+    findBindingNameForExprHash,
     lookupExprHash,
     bindingsToVersioned,
     typeBindingsToVersioned,
@@ -21,6 +22,7 @@ where
 
 import Data.Coerce
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -98,6 +100,14 @@ lookupBindingName :: Project ann -> Name -> Maybe ExprHash
 lookupBindingName project name =
   let b = getBindings . getCurrentBindings . prjBindings $ project
    in M.lookup name b
+
+findBindingNameForExprHash ::
+  ExprHash ->
+  Project ann ->
+  Map Name ExprHash
+findBindingNameForExprHash exprHash project =
+  let b = getBindings . getCurrentBindings . prjBindings $ project
+   in M.filter (== exprHash) b
 
 bindingsToVersioned :: Bindings -> VersionedBindings
 bindingsToVersioned (Bindings b) = VersionedMap (pure <$> b)

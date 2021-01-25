@@ -2,10 +2,34 @@ module Test.Utils.Helpers where
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+
+getHashOfName :: Project ann -> Name -> ExprHash
+getHashOfName prj name =
+  case lookupBindingName prj name of
+    Just a -> a
+    _ -> error "could not getHashOfName"
+
+createTestOrExplode ::
+  Project Annotation ->
+  StoreExpression Annotation ->
+  TestName ->
+  UnitTest
+createTestOrExplode prj sExpr name = case createUnitTest prj sExpr name of
+  Right a -> a
+  _ -> error "EXPLODE"
+
+getStoreExpression :: Project ann -> ExprHash -> StoreExpression ann
+getStoreExpression project exprHash' =
+  case lookupExprHash project exprHash' of
+    Just a -> a
+    _ -> error "could not getStoreExpression"
 
 bool :: (Monoid ann) => Bool -> Expr a ann
 bool a = MyLiteral mempty (MyBool a)

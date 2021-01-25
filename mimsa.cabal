@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fbbe39b41900fb908dcad0ffb1bf5e13cad909e8979e06dca987d66a7b77f131
+-- hash: 6dc68fa11a96cb834a0dfe4a3cc939a7eda979e0b06887a8ced3a99a01338571
 
 name:           mimsa
 version:        0.1.0.0
@@ -29,6 +29,10 @@ library
   exposed-modules:
       Language.Mimsa
       Language.Mimsa.Actions
+      Language.Mimsa.Actions.AddUnitTest
+      Language.Mimsa.Actions.BindExpression
+      Language.Mimsa.Actions.Evaluate
+      Language.Mimsa.Actions.Monad
       Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript
       Language.Mimsa.Backend.NormaliseConstructors
@@ -66,11 +70,11 @@ library
       Language.Mimsa.Repl.Actions.ExpressionBind
       Language.Mimsa.Repl.Actions.Info
       Language.Mimsa.Repl.Actions.ListBindings
-      Language.Mimsa.Repl.Actions.Shared
       Language.Mimsa.Repl.Actions.Tree
       Language.Mimsa.Repl.Actions.TypeSearch
       Language.Mimsa.Repl.Actions.UnitTests
       Language.Mimsa.Repl.Actions.Versions
+      Language.Mimsa.Repl.Helpers
       Language.Mimsa.Repl.Parser
       Language.Mimsa.Repl.Types
       Language.Mimsa.Server
@@ -126,7 +130,6 @@ library
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.StoreError
       Language.Mimsa.Types.Error.TypeError
-      Language.Mimsa.Types.Error.UsageError
       Language.Mimsa.Types.Identifiers
       Language.Mimsa.Types.Identifiers.Name
       Language.Mimsa.Types.Identifiers.TyCon
@@ -271,6 +274,7 @@ test-suite mimsa-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Test.Actions
       Test.BackendJS
       Test.Data.Project
       Test.InstantiateVar

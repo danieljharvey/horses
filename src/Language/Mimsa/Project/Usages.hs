@@ -1,6 +1,5 @@
 module Language.Mimsa.Project.Usages where
 
-import Data.Bifunctor (first)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -11,17 +10,13 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
-findUsages :: Project ann -> ExprHash -> Either UsageError (Set Usage)
+findUsages :: Project ann -> ExprHash -> Either StoreError (Set Usage)
 findUsages (Project store' bindings' _ _) =
   findUsages_ store' (getCurrentBindings bindings')
 
-resolveDepsOrUsageError :: Store ann -> Bindings -> Either UsageError (ResolvedDeps ann)
-resolveDepsOrUsageError store' bindings' =
-  first CouldNotResolveDeps (resolveDeps store' bindings')
-
-findUsages_ :: Store ann -> Bindings -> ExprHash -> Either UsageError (Set Usage)
+findUsages_ :: Store ann -> Bindings -> ExprHash -> Either StoreError (Set Usage)
 findUsages_ store' bindings' exprHash = do
-  (ResolvedDeps resolvedDeps) <- resolveDepsOrUsageError store' bindings'
+  (ResolvedDeps resolvedDeps) <- resolveDeps store' bindings'
   let directDeps = mconcat $ addUsageIfMatching exprHash <$> M.toList resolvedDeps
   inDirectDeps <-
     traverse
@@ -34,7 +29,10 @@ findUsages_ store' bindings' exprHash = do
       (M.toList resolvedDeps)
   pure $ directDeps <> mconcat inDirectDeps
 
-addUsageIfMatching :: ExprHash -> (Name, (ExprHash, StoreExpression ann)) -> Set Usage
+addUsageIfMatching ::
+  ExprHash ->
+  (Name, (ExprHash, StoreExpression ann)) ->
+  Set Usage
 addUsageIfMatching exprHash (name, (hash, storeExpr')) =
   let matchingNames = getMatches exprHash (storeBindings storeExpr')
    in if S.null matchingNames
