@@ -7,17 +7,21 @@ module Test.Actions
 where
 
 import Data.Either (isLeft)
+import Data.Functor
 import qualified Data.Map as M
 import Data.Maybe (isJust)
 import qualified Data.Set as S
-import Language.Mimsa.Actions.AddUnitTest
-import Language.Mimsa.Actions.BindExpression
+import qualified Language.Mimsa.Actions.AddUnitTest as Actions
+import qualified Language.Mimsa.Actions.BindExpression as Actions
+import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -39,6 +43,9 @@ testWithIdInExpr =
     (MyApp mempty (MyVar mempty (mkName "id")) (int 1))
     (int 1)
 
+onePlusOneExpr :: Expr Name Annotation
+onePlusOneExpr = MyInfix mempty Add (int 1) (int 1)
+
 spec :: Spec
 spec = do
   describe "Actions" $ do
@@ -46,12 +53,12 @@ spec = do
       it "Fails with broken test" $ do
         Actions.run
           stdLib
-          (addUnitTest brokenExpr (TestName "Oh no") "1 == True")
+          (Actions.addUnitTest brokenExpr (TestName "Oh no") "1 == True")
           `shouldSatisfy` isLeft
       it "Adds a new test" $ do
         case Actions.run
           stdLib
-          (addUnitTest testWithIdInExpr (TestName "Id does nothing") "id(1) == 1") of
+          (Actions.addUnitTest testWithIdInExpr (TestName "Id does nothing") "id(1) == 1") of
           Left _ -> error "Should not have failed"
           Right (newState, _) -> do
             -- one more item in store
@@ -66,7 +73,7 @@ spec = do
       it "Fails on a syntax error" $ do
         Actions.run
           stdLib
-          ( bindExpression
+          ( Actions.bindExpression
               brokenExpr
               (mkName "broken")
               "1 == True"
@@ -74,7 +81,7 @@ spec = do
           `shouldSatisfy` isLeft
       it "Adds a fresh new function to Bindings and to Store" $ do
         let expr = int 1
-        case Actions.run stdLib (bindExpression expr (mkName "one") "1") of
+        case Actions.run stdLib (Actions.bindExpression expr (mkName "one") "1") of
           Left _ -> error "Should not have failed"
           Right (newState, _) -> do
             -- one more item in store
@@ -91,7 +98,7 @@ spec = do
       it "Updating an existing binding updates binding" $ do
         let newIdExpr = MyLambda mempty (mkName "b") (MyVar mempty (mkName "b"))
         let action =
-              bindExpression newIdExpr (mkName "id") "\\b -> b"
+              Actions.bindExpression newIdExpr (mkName "id") "\\b -> b"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
           Right (newState, _) -> do
@@ -109,8 +116,8 @@ spec = do
       it "Updating an existing binding updates tests" $ do
         let newIdExpr = MyLambda mempty (mkName "blob") (MyVar mempty (mkName "blob"))
         let action = do
-              _ <- addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
-              bindExpression newIdExpr (mkName "id") "\\blob -> blob"
+              _ <- Actions.addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
+              Actions.bindExpression newIdExpr (mkName "id") "\\blob -> blob"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
           Right (newState, _) -> do
@@ -128,3 +135,14 @@ spec = do
               (Actions.asProject newState)
               (mkName "id")
               `shouldNotBe` lookupBindingName stdLib (mkName "id")
+    describe "Evaluate" $ do
+      it "Should return an error for a broken expr" $ do
+        Actions.run stdLib (Actions.evaluate (prettyPrint brokenExpr) brokenExpr) `shouldSatisfy` isLeft
+      it "Should evaluate an expression" $ do
+        case Actions.run stdLib (Actions.evaluate (prettyPrint onePlusOneExpr) onePlusOneExpr) of
+          Left _ -> error "Should not have failed"
+          Right (Actions.ActionState newProject _ _, (mt, expr)) -> do
+            mt $> () `shouldBe` MTPrim mempty MTInt
+            expr $> () `shouldBe` int 2
+            -- project should be untouched
+            newProject `shouldBe` stdLib
