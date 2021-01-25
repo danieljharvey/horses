@@ -60,15 +60,15 @@ spec = do
           stdLib
           (Actions.addUnitTest testWithIdInExpr (TestName "Id does nothing") "id(1) == 1") of
           Left _ -> error "Should not have failed"
-          Right (newState, _) -> do
+          Right (newProject, outcomes, _) -> do
             -- one more item in store
-            projectStoreSize (Actions.asProject newState)
+            projectStoreSize newProject
               `shouldBe` projectStoreSize stdLib + 1
             -- one more unit test
-            unitTestsSize (Actions.asProject newState)
+            unitTestsSize newProject
               `shouldBe` unitTestsSize stdLib + 1
             -- new expression
-            S.size (Actions.asStoreExpressions newState) `shouldBe` 1
+            S.size (Actions.storeExpressionsFromOutcomes outcomes) `shouldBe` 1
     describe "BindExpression" $ do
       it "Fails on a syntax error" $ do
         Actions.run
@@ -83,17 +83,17 @@ spec = do
         let expr = int 1
         case Actions.run stdLib (Actions.bindExpression expr (mkName "one") "1") of
           Left _ -> error "Should not have failed"
-          Right (newState, _) -> do
+          Right (newProject, outcomes, _) -> do
             -- one more item in store
-            projectStoreSize (Actions.asProject newState)
+            projectStoreSize newProject
               `shouldBe` projectStoreSize stdLib + 1
             -- one more binding
             lookupBindingName
-              (Actions.asProject newState)
+              newProject
               (mkName "one")
               `shouldSatisfy` isJust
             -- one new store expression
-            S.size (Actions.asStoreExpressions newState)
+            S.size (Actions.storeExpressionsFromOutcomes outcomes)
               `shouldBe` 1
       it "Updating an existing binding updates binding" $ do
         let newIdExpr = MyLambda mempty (mkName "b") (MyVar mempty (mkName "b"))
@@ -101,16 +101,16 @@ spec = do
               Actions.bindExpression newIdExpr (mkName "id") "\\b -> b"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
-          Right (newState, _) -> do
+          Right (newProject, outcomes, _) -> do
             -- one more item
-            projectStoreSize (Actions.asProject newState)
+            projectStoreSize newProject
               `shouldBe` projectStoreSize stdLib + 1
             -- one new expression
-            S.size (Actions.asStoreExpressions newState)
+            S.size (Actions.storeExpressionsFromOutcomes outcomes)
               `shouldBe` 1
             -- binding hash has changed
             lookupBindingName
-              (Actions.asProject newState)
+              newProject
               (mkName "id")
               `shouldNotBe` lookupBindingName stdLib (mkName "id")
       it "Updating an existing binding updates tests" $ do
@@ -120,19 +120,19 @@ spec = do
               Actions.bindExpression newIdExpr (mkName "id") "\\blob -> blob"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
-          Right (newState, _) -> do
+          Right (newProject, outcomes, _) -> do
             -- three more items
-            projectStoreSize (Actions.asProject newState)
+            projectStoreSize newProject
               `shouldBe` projectStoreSize stdLib + 3
             -- one new expression, two new tests
-            S.size (Actions.asStoreExpressions newState)
+            S.size (Actions.storeExpressionsFromOutcomes outcomes)
               `shouldBe` 3
             -- two more unit tests
-            unitTestsSize (Actions.asProject newState)
+            unitTestsSize newProject
               `shouldBe` unitTestsSize stdLib + 2
             -- binding hash has changed
             lookupBindingName
-              (Actions.asProject newState)
+              newProject
               (mkName "id")
               `shouldNotBe` lookupBindingName stdLib (mkName "id")
     describe "Evaluate" $ do
@@ -141,7 +141,7 @@ spec = do
       it "Should evaluate an expression" $ do
         case Actions.run stdLib (Actions.evaluate (prettyPrint onePlusOneExpr) onePlusOneExpr) of
           Left _ -> error "Should not have failed"
-          Right (Actions.ActionState newProject _ _, (mt, expr, _)) -> do
+          Right (newProject, _, (mt, expr, _)) -> do
             mt $> () `shouldBe` MTPrim mempty MTInt
             expr $> () `shouldBe` int 2
             -- project should be untouched

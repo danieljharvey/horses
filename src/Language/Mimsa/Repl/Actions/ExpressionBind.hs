@@ -31,7 +31,7 @@ doBind ::
   Expr Name Annotation ->
   ReplM Annotation (Project Annotation)
 doBind project input name expr = do
-  (newProject, _, _, (newExprHash, _, _)) <-
+  (newProject, (newExprHash, _, _)) <-
     toReplM project (bindExpression expr name input)
   traverse_
     (replPrint . prettyPrint)

@@ -25,7 +25,7 @@ doAddUnitTest ::
   Expr Name Annotation ->
   ReplM Annotation (Project Annotation)
 doAddUnitTest project input testName expr = do
-  (newProject, _, _, unitTest) <-
+  (newProject, unitTest) <-
     toReplM project (addUnitTest expr testName input)
   replPrint (prettyPrint unitTest)
   pure newProject

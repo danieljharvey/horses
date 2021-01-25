@@ -69,7 +69,8 @@ fromActionM mimsaEnv projectHash action = do
   project <- loadProjectHandler mimsaEnv store' projectHash
   case Actions.run project action of
     Left e -> throwError (to400Error e)
-    Right (Actions.ActionState newProject storeExprs _, a) -> do
+    Right (newProject, outcomes, a) -> do
+      let storeExprs = Actions.storeExpressionsFromOutcomes outcomes
       traverse_ (saveExprHandler mimsaEnv) storeExprs
 
       pure (newProject, a)

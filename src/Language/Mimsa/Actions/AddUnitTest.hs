@@ -22,7 +22,7 @@ addUnitTest expr testName input = do
   project <- Actions.getProject
   (ResolvedExpression _ storeExpr _ _ _) <-
     liftEither $ getTypecheckedStoreExpression input project expr
-  Actions.addStoreExpression storeExpr
+  Actions.appendStoreExpression storeExpr
   test <- liftEither $ createUnitTest project storeExpr testName
   Actions.appendProject (fromUnitTest test storeExpr)
   pure test

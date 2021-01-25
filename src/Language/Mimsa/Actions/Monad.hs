@@ -1,11 +1,15 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Language.Mimsa.Actions.Monad
   ( run,
     getProject,
     appendProject,
     appendMessage,
     setProject,
-    addStoreExpression,
+    appendStoreExpression,
     bindStoreExpression,
+    messagesFromOutcomes,
+    storeExpressionsFromOutcomes,
     ActionState (..),
     ActionM,
   )
@@ -13,6 +17,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State
+import Control.Monad.Writer
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -31,39 +36,60 @@ data ActionState = ActionState
   }
   deriving (Eq, Ord, Show)
 
-type ActionM = ExceptT (Error Annotation) (State ActionState)
+data ActionOutcome
+  = NewMessage Text
+  | NewStoreExpression (StoreExpression Annotation)
+  deriving (Eq, Ord, Show)
 
-run :: Project Annotation -> ActionM a -> Either (Error Annotation) (ActionState, a)
+type ActionM =
+  ExceptT
+    (Error Annotation)
+    (WriterT [ActionOutcome] (State (Project Annotation)))
+
+run ::
+  Project Annotation ->
+  ActionM a ->
+  Either (Error Annotation) (Project Annotation, [ActionOutcome], a)
 run project action =
-  let startState =
-        ActionState project mempty mempty
-      (result, newState) = runState (runExceptT action) startState
-   in (,) newState <$> result
+  let ((result, outcomes), newState) =
+        runState (runWriterT (runExceptT action)) project
+   in (,,) newState outcomes <$> result
 
 getProject :: ActionM (Project Annotation)
-getProject = gets asProject
+getProject = get
 
 setProject :: Project Annotation -> ActionM ()
-setProject prj =
-  modify (\as -> as {asProject = prj})
+setProject =
+  put
 
 appendProject :: Project Annotation -> ActionM ()
 appendProject prj =
-  modify (\as -> as {asProject = asProject as <> prj})
+  modify (<> prj)
 
 appendMessage :: Text -> ActionM ()
-appendMessage txt =
-  modify (\as -> as {asMessages = asMessages as <> [txt]})
+appendMessage =
+  tell . pure . NewMessage
 
-addStoreExpression :: StoreExpression Annotation -> ActionM ()
-addStoreExpression se =
-  modify
-    ( \as ->
-        as
-          { asStoreExpressions =
-              S.singleton se <> asStoreExpressions as
-          }
+appendStoreExpression :: StoreExpression Annotation -> ActionM ()
+appendStoreExpression =
+  tell . pure . NewStoreExpression
+
+messagesFromOutcomes :: [ActionOutcome] -> [Text]
+messagesFromOutcomes =
+  foldMap
+    ( \case
+        NewMessage tx -> pure tx
+        _ -> mempty
     )
+
+storeExpressionsFromOutcomes :: [ActionOutcome] -> Set (StoreExpression Annotation)
+storeExpressionsFromOutcomes =
+  S.fromList
+    . foldMap
+      ( \case
+          NewStoreExpression se -> pure se
+          _ -> mempty
+      )
 
 -- add binding for expression and add it to store
 bindStoreExpression ::
@@ -73,5 +99,5 @@ bindStoreExpression ::
 bindStoreExpression storeExpr name = do
   let newProject =
         fromItem name storeExpr (getStoreExpressionHash storeExpr)
-  addStoreExpression storeExpr
+  appendStoreExpression storeExpr
   appendProject newProject

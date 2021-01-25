@@ -50,6 +50,6 @@ createUnitTests oldExprHash newExprHash = do
   (projectWithNewTests, newExprs) <-
     liftEither $
       createNewUnitTests project oldExprHash newExprHash
-  traverse_ Actions.addStoreExpression newExprs
+  traverse_ Actions.appendStoreExpression newExprs
   Actions.setProject projectWithNewTests
   pure (length newExprs)

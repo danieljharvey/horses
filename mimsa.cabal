@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6ad5ad9848ea7af84c6c6c9abc98fc71a77029053957028405fb750363a01940
+-- hash: 6dc68fa11a96cb834a0dfe4a3cc939a7eda979e0b06887a8ced3a99a01338571
 
 name:           mimsa
 version:        0.1.0.0
@@ -70,7 +70,6 @@ library
       Language.Mimsa.Repl.Actions.ExpressionBind
       Language.Mimsa.Repl.Actions.Info
       Language.Mimsa.Repl.Actions.ListBindings
-      Language.Mimsa.Repl.Actions.Shared
       Language.Mimsa.Repl.Actions.Tree
       Language.Mimsa.Repl.Actions.TypeSearch
       Language.Mimsa.Repl.Actions.UnitTests
