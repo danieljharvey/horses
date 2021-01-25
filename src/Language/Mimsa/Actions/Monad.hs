@@ -10,7 +10,6 @@ module Language.Mimsa.Actions.Monad
     bindStoreExpression,
     messagesFromOutcomes,
     storeExpressionsFromOutcomes,
-    ActionState (..),
     ActionM,
   )
 where
@@ -28,13 +27,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-
-data ActionState = ActionState
-  { asProject :: Project Annotation,
-    asStoreExpressions :: Set (StoreExpression Annotation),
-    asMessages :: [Text]
-  }
-  deriving (Eq, Ord, Show)
 
 data ActionOutcome
   = NewMessage Text
