@@ -8,13 +8,16 @@ where
 
 import Data.Either (isLeft)
 import Data.Functor
+import Data.List (nub)
 import qualified Data.Map as M
 import Data.Maybe (isJust)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
+import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
@@ -135,6 +138,42 @@ spec = do
               newProject
               (mkName "id")
               `shouldNotBe` lookupBindingName stdLib (mkName "id")
+    describe "Compile" $ do
+      it "Simplest compilation creates one file" $ do
+        let expr = MyVar mempty (mkName "id")
+        let action = Actions.compile CommonJS "id" expr
+        case Actions.run stdLib action of
+          Left _ -> error "Should not have failed"
+          Right (newProject, outcomes, _) -> do
+            -- creates three filew
+            length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 3
+            -- doesn't change project (for now)
+            newProject `shouldBe` stdLib
+            -- uses three different folders
+            let uniqueFolders =
+                  nub
+                    ( (\(path, _, _) -> path)
+                        <$> Actions.writeFilesFromOutcomes outcomes
+                    )
+            length uniqueFolders `shouldBe` 3
+      it "Complex compilation creates many files in 3 folders" $ do
+        let expr = MyVar mempty (mkName "evalStore")
+        let action = Actions.compile CommonJS "evalStore" expr
+        case Actions.run stdLib action of
+          Left _ -> error "Should not have failed"
+          Right (newProject, outcomes, _) -> do
+            -- creates six files
+            length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 6
+            -- doesn't change project (for now)
+            newProject `shouldBe` stdLib
+            -- uses three different folders
+            let uniqueFolders =
+                  nub
+                    ( (\(path, _, _) -> path)
+                        <$> Actions.writeFilesFromOutcomes outcomes
+                    )
+            length uniqueFolders `shouldBe` 3
+
     describe "Evaluate" $ do
       it "Should return an error for a broken expr" $ do
         Actions.run stdLib (Actions.evaluate (prettyPrint brokenExpr) brokenExpr) `shouldSatisfy` isLeft

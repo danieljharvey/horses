@@ -8,7 +8,9 @@ where
 import Control.Monad.Reader
 import Data.Text (Text)
 import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Backend (Backend (..), goCompile)
+import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -20,11 +22,11 @@ doOutputJS ::
   Text ->
   Expr Name Annotation ->
   ReplM Annotation ()
-doOutputJS env input expr = do
+doOutputJS project input expr = do
+  (newProject, (newExprHash, _, _)) <-
+    toReplM project (Actions.compile CommonJS input expr)
   mimsaConfig <- ask
-  (ResolvedExpression _ storeExpr' _ _ _) <-
-    liftRepl $ getTypecheckedStoreExpression input env expr
   outputPath <-
     liftIO $
-      goCompile mimsaConfig CommonJS (prjStore env) storeExpr'
+      goCompile mimsaConfig CommonJS (prjStore project) storeExpr'
   replPrint ("Output to " <> outputPath)

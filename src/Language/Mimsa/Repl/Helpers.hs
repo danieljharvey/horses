@@ -21,6 +21,10 @@ saveExpression storeExpr = do
   mimsaConfig <- ask
   lift $ withExceptT StoreErr $ saveExpr mimsaConfig storeExpr
 
+-- | given an expression to save, save it
+saveFile :: (Actions.SavePath, Actions.SaveFilename, Actions.SaveContents) -> ReplM Annotation ()
+saveFile (_path, _filename, _content) = undefined
+
 -- | Run an Action, printing any messages to the console and saving any
 -- expressions to disk
 toReplM ::
@@ -32,4 +36,5 @@ toReplM project action = case Actions.run project action of
   Right (newProject, outcomes, a) -> do
     traverse_ replPrint (Actions.messagesFromOutcomes outcomes)
     traverse_ saveExpression (Actions.storeExpressionsFromOutcomes outcomes)
+    traverse_ saveFile (Actions.writeFilesFromOutcomes outcomes)
     pure (newProject, a)
