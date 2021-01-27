@@ -27,6 +27,7 @@ import Control.Monad.Writer
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -36,13 +37,19 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
 newtype SavePath = SavePath Text
-  deriving newtype (Eq, Ord, Show)
+  deriving newtype (Eq, Ord)
+
+instance Show SavePath where
+  show (SavePath s) = T.unpack s
 
 newtype SaveContents = SaveContents Text
   deriving newtype (Eq, Ord, Show)
 
 newtype SaveFilename = SaveFilename Text
-  deriving newtype (Eq, Ord, Show)
+  deriving newtype (Eq, Ord)
+
+instance Show SaveFilename where
+  show (SaveFilename s) = T.unpack s
 
 data ActionOutcome
   = NewMessage Text

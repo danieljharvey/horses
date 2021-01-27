@@ -21,7 +21,11 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Store.ResolvedDeps
-import Language.Mimsa.Store.Storage (getStoreExpressionHash, getStoreFolder, trySymlink)
+import Language.Mimsa.Store.Storage
+  ( getStoreExpressionHash,
+    getStoreFolder,
+    trySymlink,
+  )
 import Language.Mimsa.Types.Store
 import System.Directory
 
@@ -30,7 +34,8 @@ import System.Directory
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
 createOutputFolder :: Backend -> ExprHash -> IO FilePath
 createOutputFolder CommonJS exprHash = do
-  let path = "./output/cjs" <> show exprHash
+  let outputPath = symlinkedOutputPath CommonJS
+  let path = outputPath <> show exprHash
   createDirectoryIfMissing True path
   pure (path <> "/")
 

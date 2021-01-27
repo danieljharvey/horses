@@ -5,6 +5,7 @@ module Language.Mimsa.Backend.Shared
   ( transpiledModuleOutputPath,
     transpiledIndexOutputPath,
     transpiledStdlibOutputPath,
+    symlinkedOutputPath,
     outputStoreExpression,
     outputExport,
     outputIndexFile,
@@ -40,6 +41,10 @@ stdLibFilename CommonJS = "cjs-stdlib.js"
 
 indexFilename :: Backend -> Text
 indexFilename CommonJS = "index.js"
+
+symlinkedOutputPath :: Backend -> FilePath
+symlinkedOutputPath CommonJS =
+  "./output/cjs"
 
 transpiledModuleOutputPath :: Backend -> FilePath
 transpiledModuleOutputPath CommonJS = "transpiled/module/common-js"
