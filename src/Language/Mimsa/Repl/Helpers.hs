@@ -1,10 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Helpers (saveExpression, toReplM) where
+module Language.Mimsa.Repl.Helpers
+  ( saveExpression,
+    toReplM,
+  )
+where
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Data.Coerce
 import Data.Foldable (traverse_)
+import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store
@@ -21,6 +27,17 @@ saveExpression storeExpr = do
   mimsaConfig <- ask
   lift $ withExceptT StoreErr $ saveExpr mimsaConfig storeExpr
 
+-- | given an expression to save, save it
+saveFile ::
+  (Actions.SavePath, Actions.SaveFilename, Actions.SaveContents) ->
+  ReplM Annotation ()
+saveFile (path, filename, content) = do
+  mimsaConfig <- ask
+  fullPath <- liftIO $ getStoreFolder mimsaConfig (show path)
+  let savePath = fullPath <> show filename
+  liftIO $ putStrLn $ "Saving to " <> savePath
+  liftIO $ T.writeFile savePath (coerce content)
+
 -- | Run an Action, printing any messages to the console and saving any
 -- expressions to disk
 toReplM ::
@@ -32,4 +49,5 @@ toReplM project action = case Actions.run project action of
   Right (newProject, outcomes, a) -> do
     traverse_ replPrint (Actions.messagesFromOutcomes outcomes)
     traverse_ saveExpression (Actions.storeExpressionsFromOutcomes outcomes)
+    traverse_ saveFile (Actions.writeFilesFromOutcomes outcomes)
     pure (newProject, a)

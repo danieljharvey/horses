@@ -6,7 +6,7 @@ module Language.Mimsa.Store.Storage
     findExpr,
     getStoreExpressionHash,
     getStoreFolder,
-    trySymlink,
+    tryCopy,
     storeSize,
   )
 where
@@ -38,14 +38,14 @@ getStoreFolder cfg subFolder = do
   createDirectoryIfMissing True path
   pure (path <> "/")
 
--- when transpiling we write to the store then symlink it in place
--- this tries that, and failing that, copies the file (for Windows etc)
-trySymlink :: String -> String -> StoreM ()
-trySymlink from to = do
-  symLinkCreated <- liftIO $ try (createFileLink from to)
-  case (symLinkCreated :: Either IOError ()) of
-    Right _ -> pure ()
-    Left _ -> liftIO $ copyFile from to
+-- try copying a file from a to b
+tryCopy :: String -> String -> StoreM ()
+tryCopy from to = do
+  fileCopied <- liftIO $ try (copyFile from to)
+  case (fileCopied :: Either IOError ()) of
+    Right _ -> do
+      liftIO $ putStrLn $ "File copied from " <> from <> " to " <> to
+    Left _ -> pure ()
 
 getExpressionFolder :: MimsaConfig -> IO FilePath
 getExpressionFolder cfg = getStoreFolder cfg "expressions"

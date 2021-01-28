@@ -8,13 +8,17 @@ where
 
 import Data.Either (isLeft)
 import Data.Functor
+import Data.List (nub)
 import qualified Data.Map as M
 import Data.Maybe (isJust)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
+import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
@@ -45,6 +49,11 @@ testWithIdInExpr =
 
 onePlusOneExpr :: Expr Name Annotation
 onePlusOneExpr = MyInfix mempty Add (int 1) (int 1)
+
+fromRight :: (Printer e) => Either e a -> a
+fromRight either' = case either' of
+  Left e -> error (T.unpack $ prettyPrint e)
+  Right a -> a
 
 spec :: Spec
 spec = do
@@ -135,6 +144,40 @@ spec = do
               newProject
               (mkName "id")
               `shouldNotBe` lookupBindingName stdLib (mkName "id")
+    describe "Compile" $ do
+      it "Simplest compilation creates four files" $ do
+        let expr = MyVar mempty (mkName "id")
+        let action = Actions.compile CommonJS "id" expr
+        let (newProject, outcomes, (_, hashes)) = fromRight (Actions.run stdLib action)
+        -- creates three files
+        length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 4
+        -- doesn't change project (for now)
+        newProject `shouldBe` stdLib
+        -- uses three different folders
+        let uniqueFolders =
+              nub
+                ( (\(path, _, _) -> path)
+                    <$> Actions.writeFilesFromOutcomes outcomes
+                )
+        length uniqueFolders `shouldBe` 3
+        -- should have returned two exprHashs (one for the main expr, one
+        -- for the `id` dependency
+        S.size hashes `shouldBe` 2
+      it "Complex compilation creates many files in 3 folders" $ do
+        let expr = MyVar mempty (mkName "evalState")
+        let action = Actions.compile CommonJS "evalState" expr
+        let (newProject, outcomes, _) = fromRight (Actions.run stdLib action)
+        -- creates six files
+        length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 7
+        -- doesn't change project (for now)
+        newProject `shouldBe` stdLib
+        -- uses three different folders
+        let uniqueFolders =
+              nub
+                ( (\(path, _, _) -> path)
+                    <$> Actions.writeFilesFromOutcomes outcomes
+                )
+        length uniqueFolders `shouldBe` 3
     describe "Evaluate" $ do
       it "Should return an error for a broken expr" $ do
         Actions.run stdLib (Actions.evaluate (prettyPrint brokenExpr) brokenExpr) `shouldSatisfy` isLeft

@@ -2,7 +2,8 @@
 
 module Language.Mimsa.Backend.Backend
   ( outputCommonJS,
-    goCompile,
+    getStdlib,
+    copyLocalOutput,
     Backend (..),
   )
 where
@@ -10,171 +11,89 @@ where
 import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable (traverse_)
-import qualified Data.Map as M
 import Data.Set (Set)
-import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Javascript
-import Language.Mimsa.Printer
+import Language.Mimsa.Backend.Shared
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Server.EnvVars
-import Language.Mimsa.Store.ResolvedDeps
-import Language.Mimsa.Store.Storage (getStoreExpressionHash, getStoreFolder, trySymlink)
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Store.Storage (getStoreFolder, tryCopy)
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
 import System.Directory
-
-data Backend
-  = CommonJS
-
-data Renderer ann a = Renderer
-  { renderFunc :: Name -> Expr Name ann -> a,
-    renderImport :: Backend -> (Name, ExprHash) -> a,
-    renderStdLib :: Backend -> a,
-    renderExport :: Backend -> Name -> a
-  }
 
 ------
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
 createOutputFolder :: Backend -> ExprHash -> IO FilePath
 createOutputFolder CommonJS exprHash = do
-  let path = "./output/cjs" <> show exprHash
+  let outputPath = symlinkedOutputPath CommonJS
+  let path = outputPath <> show exprHash
   createDirectoryIfMissing True path
   pure (path <> "/")
 
 -- all files are created in the store and then symlinked into output folders
 -- this creates the folder in the store
-createStoreOutputPath :: MimsaConfig -> Backend -> IO FilePath
-createStoreOutputPath mimsaConfig CommonJS =
-  getStoreFolder mimsaConfig "transpiled/common-js"
+createModuleOutputPath :: MimsaConfig -> Backend -> IO FilePath
+createModuleOutputPath mimsaConfig be =
+  getStoreFolder mimsaConfig (transpiledModuleOutputPath be)
 
-transpileStoreExpression ::
-  (Monoid ann) =>
+-- all files are created in the store and then symlinked into output folders
+-- this creates the folder in the store
+createIndexOutputPath :: MimsaConfig -> Backend -> IO FilePath
+createIndexOutputPath mimsaConfig be =
+  getStoreFolder mimsaConfig (transpiledIndexOutputPath be)
+
+-- all files are created in the store and then symlinked into output folders
+-- this creates the folder in the store
+createStdlibOutputPath :: MimsaConfig -> Backend -> IO FilePath
+createStdlibOutputPath mimsaConfig be =
+  getStoreFolder mimsaConfig (transpiledStdlibOutputPath be)
+
+getStdlib :: Backend -> Text
+getStdlib CommonJS = coerce commonJSStandardLibrary
+
+-- given output type and list of expressions, copy everything to local
+-- folder for output in repl
+copyLocalOutput ::
   MimsaConfig ->
   Backend ->
-  Store ann ->
-  StoreExpression ann ->
-  IO FilePath
-transpileStoreExpression mimsaConfig be store' se = do
-  outputFolderPath <- createStoreOutputPath mimsaConfig be
-  let filename = outputFilename be (getStoreExpressionHash se)
-  let path = T.pack outputFolderPath <> filename
-  exists <-
-    doesFileExist
-      (T.unpack path)
-  if exists
-    then T.putStrLn $ path <> " already exists"
-    else case resolveTypeDeps store' (storeTypeBindings se) of
-      Left _ -> error "could not resolve types for output"
-      Right dataTypes ->
-        do
-          let jsOutput = outputCommonJS dataTypes se
-          T.putStrLn $ "Writing " <> path <> "..."
-          T.writeFile (T.unpack path) (coerce jsOutput)
-  pure
-    (T.unpack path)
+  Set ExprHash ->
+  ExprHash ->
+  ExceptT StoreError IO Text
+copyLocalOutput mimsaConfig be exprHashes rootExprHash = do
+  modulePath <- liftIO $ createModuleOutputPath mimsaConfig be
+  stdlibPath <- liftIO $ createStdlibOutputPath mimsaConfig be
+  indexPath <- liftIO $ createIndexOutputPath mimsaConfig be
+  outputPath <- liftIO $ createOutputFolder be rootExprHash
+  -- link modules
+  traverse_ (copyModule modulePath outputPath be) exprHashes
+  -- link stdlib
+  _ <- copyStdlib stdlibPath outputPath be
+  -- link index
+  copyIndex indexPath outputPath be
 
-createIndexFile :: Backend -> ExprHash -> IO Text
-createIndexFile CommonJS rootExprHash = do
-  outputPath <- createOutputFolder CommonJS rootExprHash
-  let file = "const main = require('./" <> outputFilename CommonJS rootExprHash <> "').main;\nconsole.log(main)"
-      path = outputPath <> "index.js"
-  T.writeFile path file
-  pure (T.pack path)
+copyModule :: FilePath -> FilePath -> Backend -> ExprHash -> ExceptT StoreError IO ()
+copyModule modulePath outputPath be exprHash = do
+  let filename = moduleFilename be exprHash
+      fromPath = modulePath <> T.unpack filename
+      toPath = outputPath <> T.unpack filename
+  tryCopy fromPath toPath
 
--- we write the stdlib to the store and then symlink it
-writeStdLib :: MimsaConfig -> Backend -> ExprHash -> IO ()
-writeStdLib mimsaConfig CommonJS rootExprHash = do
-  storePath <- createStoreOutputPath mimsaConfig CommonJS
-  outputPath <- createOutputFolder CommonJS rootExprHash
-  let fromPath = T.pack storePath <> stdLibFilename CommonJS
-  T.writeFile (T.unpack fromPath) (coerce commonJSStandardLibrary)
-  let toPath = T.pack outputPath <> stdLibFilename CommonJS
-  _ <- runExceptT $ trySymlink (T.unpack fromPath) (T.unpack toPath)
-  pure ()
+-- the stdlib is already in the store so we copy it to the target folder
+copyStdlib :: FilePath -> FilePath -> Backend -> ExceptT StoreError IO Text
+copyStdlib stdlibPath outputPath be = do
+  let fromPath = T.pack stdlibPath <> stdLibFilename be
+  let toPath = T.pack outputPath <> stdLibFilename be
+  tryCopy (T.unpack fromPath) (T.unpack toPath)
+  pure toPath
 
--- recursively get all the StoreExpressions we need to output
-getOutputList :: (Ord ann) => Store ann -> StoreExpression ann -> Set (StoreExpression ann)
-getOutputList store' se = case recursiveResolve store' se of
-  Right as -> S.fromList as
-  Left _ -> mempty
-
--- this recreates the folders which i dislike, however, yolo
-symlinkOutput :: MimsaConfig -> Set (StoreExpression ann) -> Backend -> ExprHash -> IO ()
-symlinkOutput mimsaConfig list CommonJS rootExprHash =
-  do
-    storePath <- createStoreOutputPath mimsaConfig CommonJS
-    outputPath <- createOutputFolder CommonJS rootExprHash
-    let doLink se = do
-          let filename = outputFilename CommonJS (getStoreExpressionHash se)
-              fromPath = storePath <> T.unpack filename
-              toPath = outputPath <> T.unpack filename
-          runExceptT $ trySymlink fromPath toPath
-    traverse_ doLink list
-
-goCompile ::
-  (Ord ann, Monoid ann) =>
-  MimsaConfig ->
-  Backend ->
-  Store ann ->
-  StoreExpression ann ->
-  IO Text
-goCompile mimsaConfig be store' se = do
-  let list = getOutputList store' se
-  let rootExprHash = getStoreExpressionHash se
-  -- create output files in store if they don't exist
-  traverse_ (transpileStoreExpression mimsaConfig be store') list
-  _ <- transpileStoreExpression mimsaConfig be store' se
-  -- create index file in output folder
-  outputPath <- createIndexFile be rootExprHash
-  -- write stdlib file in output folder
-  writeStdLib mimsaConfig be rootExprHash
-  -- symlink all the files
-  symlinkOutput mimsaConfig (list <> S.singleton se) be rootExprHash
-  -- return path of main filename
-  pure outputPath
-
-----
-
-stdLibFilename :: Backend -> Text
-stdLibFilename CommonJS = "cjs-stdlib.js"
-
-outputFilename :: Backend -> ExprHash -> Text
-outputFilename CommonJS hash' = "cjs-" <> prettyPrint hash' <> ".js"
-
-outputExport :: Backend -> Name -> Text
-outputExport CommonJS name = "module.exports = { " <> coerce name <> ": " <> coerce name <> " }"
-
-outputStoreExpression :: (Monoid a) => Backend -> Renderer ann a -> StoreExpression ann -> a
-outputStoreExpression be renderer se =
-  let funcName = mkName "main"
-      deps = mconcat $ renderImport renderer be <$> M.toList (getBindings $ storeBindings se)
-      stdLib = renderStdLib renderer be
-      func = renderFunc renderer funcName (storeExpression se)
-      export = renderExport renderer be funcName
-   in deps <> stdLib <> func <> export
-
-outputCommonJS :: (Monoid ann) => ResolvedTypeDeps -> StoreExpression ann -> Javascript
-outputCommonJS dataTypes =
-  outputStoreExpression
-    CommonJS
-    Renderer
-      { renderFunc = \name expr ->
-          "const " <> coerce name <> " = "
-            <> output dataTypes expr
-            <> ";\n",
-        renderImport = \be (name, hash') ->
-          Javascript $
-            "const "
-              <> coerce name
-              <> " = require(\"./"
-              <> outputFilename be hash'
-              <> "\").main;\n",
-        renderExport = \be name -> Javascript $ outputExport be name,
-        renderStdLib = \be ->
-          let filename = stdLibFilename be
-           in Javascript $ "const { __match, __eq } = require(\"./" <> filename <> "\");\n"
-      }
+-- the index is already in ths store so we copy it to the target folder
+copyIndex :: FilePath -> FilePath -> Backend -> ExceptT StoreError IO Text
+copyIndex indexPath outputPath be = do
+  let filename = T.unpack $ indexFilename be
+      fromPath = indexPath <> filename
+      toPath = outputPath <> filename
+  tryCopy fromPath toPath
+  pure (T.pack toPath)

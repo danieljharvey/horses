@@ -1,3 +1,5 @@
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Language.Mimsa.Actions.Monad
@@ -5,12 +7,17 @@ module Language.Mimsa.Actions.Monad
     getProject,
     appendProject,
     appendMessage,
+    appendWriteFile,
     setProject,
     appendStoreExpression,
     bindStoreExpression,
     messagesFromOutcomes,
     storeExpressionsFromOutcomes,
+    writeFilesFromOutcomes,
     ActionM,
+    SavePath (..),
+    SaveContents (..),
+    SaveFilename (..),
   )
 where
 
@@ -20,6 +27,7 @@ import Control.Monad.Writer
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -28,9 +36,25 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
+newtype SavePath = SavePath Text
+  deriving newtype (Eq, Ord)
+
+instance Show SavePath where
+  show (SavePath s) = T.unpack s
+
+newtype SaveContents = SaveContents Text
+  deriving newtype (Eq, Ord, Show)
+
+newtype SaveFilename = SaveFilename Text
+  deriving newtype (Eq, Ord)
+
+instance Show SaveFilename where
+  show (SaveFilename s) = T.unpack s
+
 data ActionOutcome
   = NewMessage Text
   | NewStoreExpression (StoreExpression Annotation)
+  | NewWriteFile SavePath SaveFilename SaveContents
   deriving (Eq, Ord, Show)
 
 type ActionM =
@@ -62,6 +86,14 @@ appendMessage :: Text -> ActionM ()
 appendMessage =
   tell . pure . NewMessage
 
+appendWriteFile ::
+  SavePath ->
+  SaveFilename ->
+  SaveContents ->
+  ActionM ()
+appendWriteFile savePath filename content =
+  tell $ pure $ NewWriteFile savePath filename content
+
 appendStoreExpression :: StoreExpression Annotation -> ActionM ()
 appendStoreExpression =
   tell . pure . NewStoreExpression
@@ -82,6 +114,14 @@ storeExpressionsFromOutcomes =
           NewStoreExpression se -> pure se
           _ -> mempty
       )
+
+writeFilesFromOutcomes :: [ActionOutcome] -> [(SavePath, SaveFilename, SaveContents)]
+writeFilesFromOutcomes =
+  foldMap
+    ( \case
+        NewWriteFile sp sf sc -> pure (sp, sf, sc)
+        _ -> mempty
+    )
 
 -- add binding for expression and add it to store
 bindStoreExpression ::

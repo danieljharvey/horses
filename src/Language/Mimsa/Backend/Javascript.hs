@@ -1,18 +1,17 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Language.Mimsa.Backend.Javascript
   ( output,
-    commonJSStandardLibrary,
+    outputCommonJS,
+    renderWithFunction,
     Javascript (..),
   )
 where
 
 import Data.Coerce
-import Data.FileEmbed
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -21,12 +20,13 @@ import Data.Monoid
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.NormaliseConstructors
+import Language.Mimsa.Backend.Shared
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store.ResolvedTypeDeps
+import Language.Mimsa.Types.Store
 
 ----
 newtype Javascript = Javascript Text
@@ -36,13 +36,6 @@ instance IsString Javascript where
   fromString = Javascript . T.pack
 
 ----
-
--- these are saved in a file that is included in compilation
-commonJSStandardLibrary :: Javascript
-commonJSStandardLibrary =
-  Javascript $ T.decodeUtf8 $(embedFile "static/backend/commonjs/stdlib.js")
-
----
 
 outputLiteral :: Literal -> Javascript
 outputLiteral (MyUnit _) = "{}"
@@ -178,3 +171,38 @@ outputJS expr =
     MyConsApp _ c a -> outputConsApp c a
     MyCaseMatch _ a matches catch -> outputCaseMatch a matches catch
     MyTypedHole _ a -> coerce a -- TODO: this should fail, but dont want to introduce failure into this whole area yet
+
+renderWithFunction :: (Monoid ann) => ResolvedTypeDeps -> Name -> Expr Name ann -> Javascript
+renderWithFunction dataTypes name expr =
+  if containsLet expr && not (startsWithLambda expr)
+    then
+      "const " <> coerce name <> " = function() { "
+        <> output dataTypes expr
+        <> " }();\n"
+    else
+      "const " <> coerce name <> " = "
+        <> output dataTypes expr
+        <> ";\n"
+
+startsWithLambda :: Expr var ann -> Bool
+startsWithLambda (MyLambda _ _ _) = True
+startsWithLambda _ = False
+
+outputCommonJS :: (Monoid ann) => ResolvedTypeDeps -> StoreExpression ann -> Javascript
+outputCommonJS dataTypes =
+  outputStoreExpression
+    CommonJS
+    Renderer
+      { renderFunc = renderWithFunction dataTypes,
+        renderImport = \be (name, hash') ->
+          Javascript $
+            "const "
+              <> coerce name
+              <> " = require(\"./"
+              <> moduleFilename be hash'
+              <> "\").main;\n",
+        renderExport = \be name -> Javascript $ outputExport be name,
+        renderStdLib = \be ->
+          let filename = stdLibFilename be
+           in Javascript $ "const { __match, __eq } = require(\"./" <> filename <> "\");\n"
+      }
