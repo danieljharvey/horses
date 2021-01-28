@@ -171,6 +171,7 @@ outputJS expr =
     MyConsApp _ c a -> outputConsApp c a
     MyCaseMatch _ a matches catch -> outputCaseMatch a matches catch
     MyTypedHole _ a -> coerce a -- TODO: this should fail, but dont want to introduce failure into this whole area yet
+    MyDefineInfix _ _ _ a -> outputJS a -- don't output infix definitions
 
 renderWithFunction :: (Monoid ann) => ResolvedTypeDeps -> Name -> Expr Name ann -> Javascript
 renderWithFunction dataTypes name expr =

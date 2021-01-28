@@ -25,11 +25,12 @@ import Language.Mimsa.Types.Swaps
 --
 -- we'll also store what our substitutions were for errors sake
 
-data SubsState ann = SubsState
-  { subsSwaps :: Swaps,
-    subsScope :: Scope ann,
-    subsCounter :: Int
-  }
+data SubsState ann
+  = SubsState
+      { subsSwaps :: Swaps,
+        subsScope :: Scope ann,
+        subsCounter :: Int
+      }
 
 type App ann = State (SubsState ann)
 
@@ -241,3 +242,7 @@ mapVar chg (MyCaseMatch ann expr' matches catchAll) = do
   catchAll' <- traverse (mapVar chg) catchAll
   MyCaseMatch ann <$> mapVar chg expr' <*> pure matches' <*> pure catchAll'
 mapVar _ (MyTypedHole ann a) = pure $ MyTypedHole ann a
+mapVar chg (MyDefineInfix ann infixOp bindExpr' expr) =
+  MyDefineInfix ann infixOp
+    <$> mapVar chg bindExpr'
+    <*> mapVar chg expr

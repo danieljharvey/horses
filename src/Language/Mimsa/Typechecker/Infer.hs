@@ -465,6 +465,16 @@ inferLambda env@(Environment env' _) ann binder body = do
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
 
+inferDefineInfix ::
+  Environment ->
+  Annotation ->
+  InfixOp ->
+  TcExpr ->
+  TcExpr ->
+  TcMonad (Substitutions, MonoType)
+inferDefineInfix env _ann _infixOp _bindExpr expr =
+  infer env expr
+
 infer ::
   Environment ->
   TcExpr ->
@@ -513,3 +523,5 @@ infer env inferExpr =
       inferApplication env ann cons val
     (MyCaseMatch ann expr' matches catchAll) ->
       inferCaseMatch env ann expr' matches catchAll
+    (MyDefineInfix ann infixOp bindExpr' expr) ->
+      inferDefineInfix env ann infixOp bindExpr' expr

@@ -62,6 +62,7 @@ complexParser =
     <|> try constructorAppParser
     <|> try caseMatchParser
     <|> try typedHoleParser
+    <|> try defineInfixParser
 
 ----
 
@@ -324,3 +325,14 @@ infixParser =
             infixExpr
             (MyInfix mempty <$> opParser')
         )
+
+----------
+
+defineInfixParser :: Parser ParserExpr
+defineInfixParser = addLocation $ do
+  _ <- thenSpace (string "infix")
+  infixOp <- thenSpace infixOpParser
+  _ <- thenSpace (string "=")
+  boundExpr <- expressionParser
+  _ <- withOptionalSpace (string ";")
+  MyDefineInfix mempty infixOp boundExpr <$> expressionParser

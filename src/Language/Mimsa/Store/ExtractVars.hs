@@ -38,3 +38,4 @@ extractVars_ (MyCaseMatch _ sum' matches catchAll) =
     <> mconcat (extractVars . snd <$> NE.toList matches)
     <> maybe mempty extractVars catchAll
 extractVars_ (MyTypedHole _ _) = mempty
+extractVars_ (MyDefineInfix _ _ _ _) = mempty
