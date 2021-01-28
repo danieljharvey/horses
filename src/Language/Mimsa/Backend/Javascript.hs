@@ -6,6 +6,7 @@
 module Language.Mimsa.Backend.Javascript
   ( output,
     outputCommonJS,
+    renderWithFunction,
     Javascript (..),
   )
 where
@@ -171,15 +172,28 @@ outputJS expr =
     MyCaseMatch _ a matches catch -> outputCaseMatch a matches catch
     MyTypedHole _ a -> coerce a -- TODO: this should fail, but dont want to introduce failure into this whole area yet
 
+renderWithFunction :: (Monoid ann) => ResolvedTypeDeps -> Name -> Expr Name ann -> Javascript
+renderWithFunction dataTypes name expr =
+  if containsLet expr && not (startsWithLambda expr)
+    then
+      "const " <> coerce name <> " = function() { "
+        <> output dataTypes expr
+        <> " }();\n"
+    else
+      "const " <> coerce name <> " = "
+        <> output dataTypes expr
+        <> ";\n"
+
+startsWithLambda :: Expr var ann -> Bool
+startsWithLambda (MyLambda _ _ _) = True
+startsWithLambda _ = False
+
 outputCommonJS :: (Monoid ann) => ResolvedTypeDeps -> StoreExpression ann -> Javascript
 outputCommonJS dataTypes =
   outputStoreExpression
     CommonJS
     Renderer
-      { renderFunc = \name expr ->
-          "const " <> coerce name <> " = "
-            <> output dataTypes expr
-            <> ";\n",
+      { renderFunc = renderWithFunction dataTypes,
         renderImport = \be (name, hash') ->
           Javascript $
             "const "

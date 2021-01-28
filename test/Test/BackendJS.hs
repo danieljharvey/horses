@@ -34,7 +34,7 @@ eval env input =
     Left e -> Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
       pure $
-        output dataTypes (storeExpression storeExpr)
+        renderWithFunction dataTypes (mkName "main") (storeExpression storeExpr)
 
 evalModule :: Project Annotation -> Text -> IO (Either Text Javascript)
 evalModule env input =
@@ -48,31 +48,31 @@ evalModule env input =
 
 successes :: [(Text, Javascript)]
 successes =
-  [ ("True", "true"),
-    ("False", "false"),
-    ("123", "123"),
-    ("\"Poo\"", "\"Poo\""),
-    ("id", "id"),
-    ("\\a -> a", "a => a"),
-    ("id(1)", "id(1)"),
-    ("if True then 1 else 2", "true ? 1 : 2"),
-    ("let a = \"dog\" in 123", "const a = \"dog\";\nreturn 123"),
-    ("let a = \"dog\" in let b = \"horse\" in 123", "const a = \"dog\";\nconst b = \"horse\";\nreturn 123"),
-    ("{ a: 123, b: \"horse\" }", "{ a: 123, b: \"horse\" }"),
-    ("let (a,b) = aPair in a", "const [a,b] = aPair;\nreturn a"),
-    ("\\a -> let b = 123 in a", "a => { const b = 123;\nreturn a }"),
-    ("(1,2)", "[1,2]"),
-    ("aRecord.a", "aRecord.a"),
-    ("Some", "a => ({ type: \"Some\", vars: [a] })"),
-    ("Some 1", "{ type: \"Some\", vars: [1] }"),
-    ("Nowt", "{ type: \"Nowt\", vars: [] }"),
-    ("These", "a => b => ({ type: \"These\", vars: [a,b] })"),
-    ("case Some 1 of Some \\a -> a | Nowt 0", "__match({ type: \"Some\", vars: [1] }, { Some: a => a, Nowt: 0 }, null)"),
-    ("case Some 1 of Some \\a -> a | otherwise 0", "__match({ type: \"Some\", vars: [1] }, { Some: a => a }, 0)"),
-    ("True == False", "__eq(true, false)"),
-    ("2 + 2", "2 + 2"),
-    ("10 - 2", "10 - 2"),
-    ("\"dog\" <> \"log\"", "\"dog\" + \"log\"")
+  [ ("True", "const main = true;\n"),
+    ("False", "const main = false;\n"),
+    ("123", "const main = 123;\n"),
+    ("\"Poo\"", "const main = \"Poo\";\n"),
+    ("id", "const main = id;\n"),
+    ("\\a -> a", "const main = a => a;\n"),
+    ("id(1)", "const main = id(1);\n"),
+    ("if True then 1 else 2", "const main = true ? 1 : 2;\n"),
+    ("let a = \"dog\" in 123", "const main = function() { const a = \"dog\";\nreturn 123 }();\n"),
+    ("let a = \"dog\" in let b = \"horse\" in 123", "const main = function() { const a = \"dog\";\nconst b = \"horse\";\nreturn 123 }();\n"),
+    ("{ a: 123, b: \"horse\" }", "const main = { a: 123, b: \"horse\" };\n"),
+    ("let (a,b) = aPair in a", "const main = function() { const [a,b] = aPair;\nreturn a }();\n"),
+    ("\\a -> let b = 123 in a", "const main = a => { const b = 123;\nreturn a };\n"),
+    ("(1,2)", "const main = [1,2];\n"),
+    ("aRecord.a", "const main = aRecord.a;\n"),
+    ("Some", "const main = a => ({ type: \"Some\", vars: [a] });\n"),
+    ("Some 1", "const main = { type: \"Some\", vars: [1] };\n"),
+    ("Nowt", "const main = { type: \"Nowt\", vars: [] };\n"),
+    ("These", "const main = a => b => ({ type: \"These\", vars: [a,b] });\n"),
+    ("case Some 1 of Some \\a -> a | Nowt 0", "const main = __match({ type: \"Some\", vars: [1] }, { Some: a => a, Nowt: 0 }, null);\n"),
+    ("case Some 1 of Some \\a -> a | otherwise 0", "const main = __match({ type: \"Some\", vars: [1] }, { Some: a => a }, 0);\n"),
+    ("True == False", "const main = __eq(true, false);\n"),
+    ("2 + 2", "const main = 2 + 2;\n"),
+    ("10 - 2", "const main = 10 - 2;\n"),
+    ("\"dog\" <> \"log\"", "const main = \"dog\" + \"log\";\n")
   ]
 
 testIt :: (Text, Javascript) -> Spec
