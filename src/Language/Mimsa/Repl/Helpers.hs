@@ -35,9 +35,8 @@ saveFile (path, filename, content) = do
   mimsaConfig <- ask
   fullPath <- liftIO $ getStoreFolder mimsaConfig (show path)
   let savePath = fullPath <> show filename
-  liftIO $ print savePath
+  liftIO $ putStrLn $ "Saving to " <> savePath
   liftIO $ T.writeFile savePath (coerce content)
-  pure ()
 
 -- | Run an Action, printing any messages to the console and saving any
 -- expressions to disk

@@ -35,6 +35,13 @@ liftRepl :: Either (Error ann) a -> ReplM ann a
 liftRepl (Right a) = pure a
 liftRepl (Left e) = throwError e
 
+liftExceptTToRepl :: (e -> Error ann) -> ExceptT e IO a -> ReplM ann a
+liftExceptTToRepl errorF comp = do
+  value <- liftIO $ runExceptT comp
+  case value of
+    Right a -> pure a
+    Left e -> throwError (errorF e)
+
 data ReplAction ann
   = Help
   | Info (Expr Name ann)

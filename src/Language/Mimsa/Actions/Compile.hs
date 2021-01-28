@@ -14,6 +14,7 @@ import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Coerce
 import Data.Foldable (traverse_)
+import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -34,7 +35,7 @@ compile ::
   Backend ->
   Text ->
   Expr Name Annotation ->
-  Actions.ActionM ()
+  Actions.ActionM (ExprHash, Set ExprHash)
 compile be input expr = do
   project <- Actions.getProject
   (ResolvedExpression _ se _ _ _) <-
@@ -48,6 +49,11 @@ compile be input expr = do
   createIndex be (getStoreExpressionHash se)
   -- create the stdlib
   createStdlib be
+  -- return useful info
+  let rootExprHash = getStoreExpressionHash se
+  -- return all ExprHashes created
+  let allHashes = S.map getStoreExpressionHash list <> S.singleton rootExprHash
+  pure (rootExprHash, allHashes)
 
 -- | Each module comes from a StoreExpression
 -- | and is transpiled into a folder in the store

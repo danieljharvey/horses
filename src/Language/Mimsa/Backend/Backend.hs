@@ -4,6 +4,7 @@ module Language.Mimsa.Backend.Backend
   ( outputCommonJS,
     goCompile,
     getStdlib,
+    copyLocalOutput,
     Backend (..),
   )
 where
@@ -24,8 +25,9 @@ import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage
   ( getStoreExpressionHash,
     getStoreFolder,
-    trySymlink,
+    tryCopy,
   )
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
 import System.Directory
 
@@ -83,23 +85,23 @@ transpileStoreExpression mimsaConfig be store' se = do
   pure
     (T.unpack path)
 
--- we write the index to the store and then symlink it
+-- we write the index to the store and then copy it
 createIndexFile :: MimsaConfig -> Backend -> ExprHash -> IO Text
 createIndexFile mimsaConfig CommonJS rootExprHash = do
   storePath <- createIndexOutputPath mimsaConfig CommonJS
   outputPath <- createOutputFolder CommonJS rootExprHash
   let outputContent = outputIndexFile CommonJS rootExprHash
-      filename = "index.js"
+      filename = T.unpack $ indexFilename CommonJS
       fromPath = storePath <> filename
       toPath = outputPath <> filename
   T.writeFile fromPath outputContent
-  _ <- runExceptT $ trySymlink fromPath toPath
+  _ <- runExceptT $ tryCopy fromPath toPath
   pure (T.pack toPath)
 
 getStdlib :: Backend -> Text
 getStdlib CommonJS = coerce commonJSStandardLibrary
 
--- we write the stdlib to the store and then symlink it
+-- we write the stdlib to the store and then copy it
 writeStdlib :: MimsaConfig -> Backend -> ExprHash -> IO ()
 writeStdlib mimsaConfig CommonJS rootExprHash = do
   storePath <- createStdlibOutputPath mimsaConfig CommonJS
@@ -107,12 +109,12 @@ writeStdlib mimsaConfig CommonJS rootExprHash = do
   let fromPath = T.pack storePath <> stdLibFilename CommonJS
   T.writeFile (T.unpack fromPath) (getStdlib CommonJS)
   let toPath = T.pack outputPath <> stdLibFilename CommonJS
-  _ <- runExceptT $ trySymlink (T.unpack fromPath) (T.unpack toPath)
+  _ <- runExceptT $ tryCopy (T.unpack fromPath) (T.unpack toPath)
   pure ()
 
 -- this recreates the folders which i dislike, however, yolo
-symlinkOutput :: MimsaConfig -> Set (StoreExpression ann) -> Backend -> ExprHash -> IO ()
-symlinkOutput mimsaConfig list CommonJS rootExprHash =
+copyOutput :: MimsaConfig -> Set (StoreExpression ann) -> Backend -> ExprHash -> IO ()
+copyOutput mimsaConfig list CommonJS rootExprHash =
   do
     storePath <- createModuleOutputPath mimsaConfig CommonJS
     outputPath <- createOutputFolder CommonJS rootExprHash
@@ -120,8 +122,52 @@ symlinkOutput mimsaConfig list CommonJS rootExprHash =
           let filename = moduleFilename CommonJS (getStoreExpressionHash se)
               fromPath = storePath <> T.unpack filename
               toPath = outputPath <> T.unpack filename
-          runExceptT $ trySymlink fromPath toPath
+          runExceptT $ tryCopy fromPath toPath
     traverse_ doLink list
+
+-- given output type and list of expressions, copy everything to local
+-- folder for output in repl
+copyLocalOutput ::
+  MimsaConfig ->
+  Backend ->
+  Set ExprHash ->
+  ExprHash ->
+  ExceptT StoreError IO Text
+copyLocalOutput mimsaConfig be exprHashes rootExprHash = do
+  modulePath <- liftIO $ createModuleOutputPath mimsaConfig be
+  stdlibPath <- liftIO $ createStdlibOutputPath mimsaConfig be
+  indexPath <- liftIO $ createIndexOutputPath mimsaConfig be
+  outputPath <- liftIO $ createOutputFolder be rootExprHash
+  -- link modules
+  traverse_ (copyModule modulePath outputPath be) exprHashes
+  -- link stdlib
+  _ <- copyStdlib stdlibPath outputPath be
+  -- link index
+  copyIndex indexPath outputPath be
+
+copyModule :: FilePath -> FilePath -> Backend -> ExprHash -> ExceptT StoreError IO ()
+copyModule modulePath outputPath be exprHash = do
+  let filename = moduleFilename be exprHash
+      fromPath = modulePath <> T.unpack filename
+      toPath = outputPath <> T.unpack filename
+  tryCopy fromPath toPath
+
+-- the stdlib is already in the store so we copy it to the target folder
+copyStdlib :: FilePath -> FilePath -> Backend -> ExceptT StoreError IO Text
+copyStdlib stdlibPath outputPath be = do
+  let fromPath = T.pack stdlibPath <> stdLibFilename be
+  let toPath = T.pack outputPath <> stdLibFilename be
+  tryCopy (T.unpack fromPath) (T.unpack toPath)
+  pure toPath
+
+-- the index is already in ths store so we copy it to the target folder
+copyIndex :: FilePath -> FilePath -> Backend -> ExceptT StoreError IO Text
+copyIndex indexPath outputPath be = do
+  let filename = T.unpack $ indexFilename be
+      fromPath = indexPath <> filename
+      toPath = outputPath <> filename
+  tryCopy fromPath toPath
+  pure (T.pack toPath)
 
 goCompile ::
   (Ord ann, Monoid ann) =>
@@ -140,7 +186,7 @@ goCompile mimsaConfig be store' se = do
   outputPath <- createIndexFile mimsaConfig be rootExprHash
   -- write stdlib file in output folder
   writeStdlib mimsaConfig be rootExprHash
-  -- symlink all the files
-  symlinkOutput mimsaConfig (list <> S.singleton se) be rootExprHash
+  -- copy all the files
+  copyOutput mimsaConfig (list <> S.singleton se) be rootExprHash
   -- return path of main filename
   pure outputPath
