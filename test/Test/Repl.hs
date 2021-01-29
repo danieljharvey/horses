@@ -595,4 +595,16 @@ spec =
           result `shouldSatisfy` isRight
         it "infix <<< = compose; True" $ do
           result <- eval stdLib "infix <<< = compose; True"
+          -- binding to a two arity function is A++
           result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+        it "infix <<< = incrementInt; True" $ do
+          result <- eval stdLib "infix <<< = incrementInt; True"
+          -- we can only bind to a two arity function
+          result `shouldSatisfy` isLeft
+        it "infix <<< = id; True" $ do
+          result <- eval stdLib "infix <<< = id; True"
+          -- we check polymorphic functions
+          result `shouldSatisfy` isLeft
+        it "infix +++ = addInt; 1 +++ 2" $ do
+          result <- eval stdLib "infix +++ = addInt; 1 +++ 2"
+          result `shouldBe` Right (MTPrim mempty MTInt, int 3)

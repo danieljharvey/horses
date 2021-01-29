@@ -11,31 +11,25 @@ import qualified Data.Aeson as JSON
 import Data.Swagger
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST.InfixOp
 
 -------
 
 -- | Infix operators
 data Operator
-  = -- | `==` - equality between two items
-    Equals
-  | -- | `+` - integer addition
-    Add
-  | -- | `-` - integer subtraction
-    Subtract
-  | -- | `<>` - string concatenation
-    StringConcat
-  deriving
-    ( Eq,
-      Ord,
-      Show,
-      Generic,
-      JSON.FromJSON,
-      JSON.ToJSON,
-      ToSchema
-    )
+  = Equals
+  | Add
+  | Subtract
+  | StringConcat
+  | Custom InfixOp
+  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON)
+
+instance ToSchema Operator where
+  declareNamedSchema = genericDeclareNamedSchemaUnrestricted defaultSchemaOptions
 
 instance Printer Operator where
   prettyDoc Equals = "=="
   prettyDoc Add = "+"
   prettyDoc Subtract = "-"
   prettyDoc StringConcat = "<>"
+  prettyDoc (Custom infixOp) = prettyDoc infixOp

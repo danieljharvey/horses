@@ -8,6 +8,7 @@ module Language.Mimsa.Typechecker.Infer
   )
 where
 
+import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.List.NonEmpty (NonEmpty)
@@ -417,6 +418,7 @@ inferOperator env ann Equals a b = do
 inferOperator env ann Add a b = inferInfix env MTInt ann a b
 inferOperator env ann Subtract a b = inferInfix env MTInt ann a b
 inferOperator env ann StringConcat a b = inferInfix env MTString ann a b
+inferOperator _ _ (Custom _) _ _ = undefined
 
 inferInfix ::
   Environment ->
@@ -465,6 +467,10 @@ inferLambda env@(Environment env' _) ann binder body = do
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
 
+isTwoArityFunction :: MonoType -> Bool
+isTwoArityFunction (MTFunction _ _ (MTFunction _ _ _)) = True
+isTwoArityFunction _ = False
+
 inferDefineInfix ::
   Environment ->
   Annotation ->
@@ -472,8 +478,18 @@ inferDefineInfix ::
   TcExpr ->
   TcExpr ->
   TcMonad (Substitutions, MonoType)
-inferDefineInfix env _ann _infixOp _bindExpr expr =
-  infer env expr
+inferDefineInfix env _ann _infixOp bindExpr' expr = do
+  u1 <- getUnknown mempty
+  u2 <- getUnknown mempty
+  u3 <- getUnknown mempty
+  (_, tyBind) <- infer env bindExpr'
+  let arityError = FunctionArityMismatch (getAnnotationForType tyBind) 2 tyBind
+  _ <-
+    unify tyBind (MTFunction mempty u1 (MTFunction mempty u2 u3))
+      <|> throwError arityError
+  if (isTwoArityFunction tyBind)
+    then infer env expr
+    else throwError arityError
 
 infer ::
   Environment ->

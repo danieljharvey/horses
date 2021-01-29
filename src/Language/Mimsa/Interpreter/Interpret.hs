@@ -88,6 +88,7 @@ interpretOperator operator a b = do
       case (,) <$> getStr plainA <*> getStr plainB of
         Right (a', b') -> withStr (a' <> b')
         Left e -> throwError e
+    (Custom _) -> undefined
 
 -- warning, ordering is very important here to stop things looping forever
 interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
@@ -152,5 +153,6 @@ interpretWithScope interpretExpr =
     (MyCaseMatch _ expr' matches catchAll) -> do
       expr'' <- interpretWithScope expr'
       patternMatch expr'' matches catchAll >>= interpretWithScope
+    (MyDefineInfix _ _ _ expr) -> pure expr
     typedHole@MyTypedHole {} -> throwError (TypedHoleFound typedHole)
     expr -> bindExpr interpretWithScope expr

@@ -308,23 +308,41 @@ infixExpr =
 
 opParser :: Parser Operator
 opParser =
-  try (string "==" $> Equals)
-    <|> try (string "+" $> Add)
-    <|> try (string "-" $> Subtract)
-    <|> string "<>" $> StringConcat
+  try
+    ( inSpaces (string "==")
+        $> Equals
+    )
+    <|> try
+      ( inSpaces (string "+")
+          $> Add
+      )
+    <|> try
+      ( inSpaces (string "-")
+          $> Subtract
+      )
+    <|> try
+      ( inSpaces (string "<>")
+          $> StringConcat
+      )
+    <|> try
+      ( inSpaces
+          (Custom <$> infixOpParser)
+      )
+
+inSpaces :: Parser a -> Parser a
+inSpaces p = do
+  _ <- space1
+  p' <- p
+  _ <- space1
+  pure p'
 
 infixParser :: Parser ParserExpr
 infixParser =
-  let opParser' = do
-        _ <- space1
-        op <- opParser
-        _ <- space1
-        pure op
-   in addLocation
-        ( chainl1
-            infixExpr
-            (MyInfix mempty <$> opParser')
-        )
+  addLocation
+    ( chainl1
+        infixExpr
+        (MyInfix mempty <$> opParser)
+    )
 
 ----------
 

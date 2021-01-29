@@ -116,6 +116,7 @@ outputOperator Equals a b =
 outputOperator Add a b = outputJS a <> " + " <> outputJS b
 outputOperator Subtract a b = outputJS a <> " - " <> outputJS b
 outputOperator StringConcat a b = outputJS a <> " + " <> outputJS b
+outputOperator (Custom _op) _a _b = undefined
 
 intercalate :: Javascript -> [Javascript] -> Javascript
 intercalate split as = coerce $ T.intercalate (coerce split) (coerce as)
