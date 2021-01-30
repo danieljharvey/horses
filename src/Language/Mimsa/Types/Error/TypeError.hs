@@ -43,6 +43,7 @@ data TypeError
   | MixedUpPatterns [TyCon]
   | TypedHoles (Map Name (MonoType, Set Name))
   | FunctionArityMismatch Annotation Int MonoType
+  | CouldNotFindInfixOperator Annotation InfixOp (Set InfixOp)
   deriving (Eq, Ord, Show)
 
 ------
@@ -124,6 +125,11 @@ renderTypeError (UnificationError a b) =
   [ "Unification error",
     "Cannot match" <+> prettyDoc a <+> "and" <+> prettyDoc b
   ]
+renderTypeError (CouldNotFindInfixOperator _ op allOps) =
+  [ "Could not find infix operator " <> prettyDoc op,
+    "The following are available:"
+  ]
+    <> showSet prettyDoc allOps
 renderTypeError (CannotCaseMatchOnType ty) =
   ["Cannot case match on type", prettyDoc ty]
 renderTypeError (VariableNotInEnv swaps _ name members) =
