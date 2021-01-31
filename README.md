@@ -186,3 +186,20 @@ repl:1:35:
 Typed holes found:
 ?dunno : (Int -> A)
 ```
+
+infix operators:
+
+```haskell
+:> :bind concatWithSpace = \a -> \b -> a <> " " <> b
+Bound concatWithSpace.
+
+:> infix <+> = concatWithSpace; "dog" <+> "cat"
+"dog cat" :: String
+
+:> infix <|> = id; "dog" <|> "cat"
+repl:1:1:
+  |
+1 | infix <|> = id; "dog" <|> "cat"
+  | ^
+Function arity mismatch. Expected 2 but got f -> f
+```
