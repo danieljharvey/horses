@@ -150,7 +150,10 @@ appParser :: Parser ParserExpr
 appParser =
   let parser = do
         func <- appFunc
-        (,) func <$> some (withOptionalSpace exprInBrackets)
+        _ <- space
+        (,) func
+          <$> some
+            exprInBrackets
    in withLocation
         ( \loc (func, exprs) ->
             foldl (MyApp loc) func exprs
@@ -159,19 +162,22 @@ appParser =
 
 exprInBrackets :: Parser ParserExpr
 exprInBrackets = do
-  literalWithSpace "("
-  expr <- expressionParser
-  literalWithSpace ")"
+  _ <- string "("
   _ <- space
+  expr <- expressionParser
+  _ <- space
+  _ <- string ")"
   pure expr
 
 -----
 
 recordParser :: Parser ParserExpr
 recordParser = withLocation MyRecord $ do
-  literalWithSpace "{"
+  _ <- string "{"
+  _ <- space
   args <- sepBy (withOptionalSpace recordItemParser) (literalWithSpace ",")
-  literalWithSpace "}"
+  _ <- space
+  _ <- string "}"
   pure (M.fromList args)
 
 recordItemParser :: Parser (Name, ParserExpr)

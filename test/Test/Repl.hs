@@ -611,6 +611,10 @@ spec =
         it "addInt(1)(2)" $ do
           result <- eval stdLib "addInt(1)(2)"
           result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+        it "infix == = addInt; True" $ do
+          result <- eval stdLib "infix == = addInt; True"
+          -- can't overwrite built in infix operators
+          result `shouldSatisfy` isLeft
         it "infix +++ = addInt; 1 +++ True" $ do
           result <- eval stdLib "infix +++ = addInt; 1 +++ True"
           -- function typechecking should still work

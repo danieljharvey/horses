@@ -34,7 +34,7 @@ nameParser :: Parser Name
 nameParser =
   maybePred
     identifier
-    (inProtected >=> safeMkName)
+    (filterProjectedNames >=> safeMkName)
 
 ---
 
@@ -45,7 +45,7 @@ tyConParser :: Parser TyCon
 tyConParser =
   maybePred
     identifier
-    (inProtected >=> safeMkTyCon)
+    (filterProjectedNames >=> safeMkTyCon)
 
 -----
 
@@ -67,4 +67,4 @@ infixOpParser :: Parser InfixOp
 infixOpParser =
   maybePred
     infixIdentifier
-    safeMkInfixOp
+    (filterProtectedOperators >=> safeMkInfixOp)
