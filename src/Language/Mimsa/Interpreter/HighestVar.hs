@@ -10,4 +10,5 @@ highestVar :: Expr Variable ann -> Int
 highestVar expr' = max 0 $ getMax $ withMonoid getHighest expr'
   where
     getHighest (MyVar _ (NumberedVar i)) = Max i
+    getHighest (MyDefineInfix _ _ (NumberedVar i) _) = Max i
     getHighest _ = mempty

@@ -30,16 +30,16 @@ data InterpretState ann
   = InterpretState
       { isVarNum :: Int,
         isScope :: Scope ann,
-        isInfix :: Map InfixOp (Expr Variable ann)
+        isInfix :: Map InfixOp Variable
       }
 
 -- infix operators
 
-addOperator :: InfixOp -> Expr Variable ann -> App ann ()
+addOperator :: InfixOp -> Variable -> App ann ()
 addOperator infixOp expr = do
   modify (\is -> is {isInfix = isInfix is <> M.singleton infixOp expr})
 
-findOperator :: InfixOp -> App ann (Maybe (Expr Variable ann))
+findOperator :: InfixOp -> App ann (Maybe Variable)
 findOperator infixOp = do
   ops <- gets isInfix
   pure (M.lookup infixOp ops)

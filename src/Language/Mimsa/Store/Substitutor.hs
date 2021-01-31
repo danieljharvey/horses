@@ -242,7 +242,9 @@ mapVar chg (MyCaseMatch ann expr' matches catchAll) = do
   catchAll' <- traverse (mapVar chg) catchAll
   MyCaseMatch ann <$> mapVar chg expr' <*> pure matches' <*> pure catchAll'
 mapVar _ (MyTypedHole ann a) = pure $ MyTypedHole ann a
-mapVar chg (MyDefineInfix ann infixOp bindExpr' expr) =
-  MyDefineInfix ann infixOp
-    <$> mapVar chg bindExpr'
-    <*> mapVar chg expr
+mapVar chg (MyDefineInfix ann infixOp bindName expr) =
+  MyDefineInfix
+    ann
+    infixOp
+    (nameToVar chg bindName)
+    <$> mapVar chg expr

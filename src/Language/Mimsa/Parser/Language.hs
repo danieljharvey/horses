@@ -351,6 +351,6 @@ defineInfixParser = addLocation $ do
   _ <- thenSpace (string "infix")
   infixOp <- thenSpace infixOpParser
   _ <- thenSpace (string "=")
-  boundExpr <- expressionParser
+  boundName <- nameParser
   _ <- withOptionalSpace (string ";")
-  MyDefineInfix mempty infixOp boundExpr <$> expressionParser
+  MyDefineInfix mempty infixOp boundName <$> expressionParser

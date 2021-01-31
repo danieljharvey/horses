@@ -62,8 +62,8 @@ data Expr var ann
     MyRecord ann (Map Name (Expr var ann))
   | -- | a.foo
     MyRecordAccess ann (Expr var ann) Name
-  | -- | infix, expr, expr
-    MyDefineInfix ann InfixOp (Expr var ann) (Expr var ann)
+  | -- | infix, name, expr
+    MyDefineInfix ann InfixOp var (Expr var ann)
   | -- | tyName, tyArgs, Map constructor args, body
     MyData ann DataType (Expr var ann)
   | -- | use a constructor by name
@@ -135,8 +135,8 @@ mapExpr f (MyConsApp ann func arg) =
 mapExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
   MyCaseMatch ann (f matchExpr) (second f <$> caseExprs) (f <$> catchExpr)
 mapExpr _ (MyTypedHole ann a) = MyTypedHole ann a
-mapExpr f (MyDefineInfix ann op bindExpr' inExpr) =
-  MyDefineInfix ann op (f bindExpr') (f inExpr)
+mapExpr f (MyDefineInfix ann op bindName inExpr) =
+  MyDefineInfix ann op bindName (f inExpr)
 
 -- | Bind a function `f` over the expression. This function takes care of
 -- recursing through the expression.
@@ -182,8 +182,8 @@ bindExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
   where
     traverseSecond (a, b) = (a,) <$> f b
 bindExpr _ (MyTypedHole ann a) = pure (MyTypedHole ann a)
-bindExpr f (MyDefineInfix ann op bindExpr' expr) =
-  MyDefineInfix ann op <$> f bindExpr' <*> f expr
+bindExpr f (MyDefineInfix ann op bindName expr) =
+  MyDefineInfix ann op bindName <$> f expr
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`
@@ -245,9 +245,8 @@ withMonoid f whole@(MyCaseMatch _ matchExpr caseExprs catchExpr) =
       )
     <> maybe mempty (withMonoid f) catchExpr
 withMonoid f whole@MyTypedHole {} = f whole
-withMonoid f whole@(MyDefineInfix _ _ bindExpr' inExpr) =
+withMonoid f whole@(MyDefineInfix _ _ _ inExpr) =
   f whole
-    <> withMonoid f bindExpr'
     <> withMonoid f inExpr
 
 instance (Show var, Printer var) => Printer (Expr var ann) where
@@ -314,9 +313,9 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
               <> printSubExpr val
         )
           <$> M.toList map'
-  prettyDoc (MyDefineInfix _ infixOp bindExpr' expr) =
+  prettyDoc (MyDefineInfix _ infixOp bindName expr) =
     "infix" <+> prettyDoc infixOp <+> "="
-      <+> printSubExpr bindExpr'
+      <+> prettyDoc bindName
       <> ";"
       <> line
       <> prettyDoc expr

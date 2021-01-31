@@ -91,7 +91,9 @@ interpretOperator operator a b = do
     (Custom infixOp) -> do
       opFn <- findOperator infixOp
       case opFn of
-        Just fn -> interpretWithScope (MyApp mempty (MyApp mempty fn plainA) plainB)
+        Just fnVar -> do
+          fn <- useVar fnVar
+          interpretWithScope (MyApp mempty (MyApp mempty fn plainA) plainB)
         Nothing ->
           throwError (CouldNotFindInfixOp infixOp)
 

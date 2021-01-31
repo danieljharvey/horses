@@ -47,8 +47,8 @@ extractTypes_ (MyCaseMatch _ sum' matches catchAll) =
     <> mconcat (S.singleton . fst <$> NE.toList matches)
     <> maybe mempty extractTypes catchAll
 extractTypes_ (MyTypedHole _ _) = mempty
-extractTypes_ (MyDefineInfix _ _ a b) =
-  extractTypes_ a <> extractTypes_ b
+extractTypes_ (MyDefineInfix _ _ _ b) =
+  extractTypes_ b
 
 filterBuiltIns :: Set TyCon -> Set TyCon
 filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)
@@ -99,4 +99,4 @@ withDataTypes f (MyCaseMatch _ sum' matches catchAll) =
     <> mconcat (withDataTypes f . snd <$> NE.toList matches)
     <> maybe mempty (withDataTypes f) catchAll
 withDataTypes _ (MyTypedHole _ _) = mempty
-withDataTypes f (MyDefineInfix _ _ a b) = withDataTypes f a <> withDataTypes f b
+withDataTypes f (MyDefineInfix _ _ _ a) = withDataTypes f a

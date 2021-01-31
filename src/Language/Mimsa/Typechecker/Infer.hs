@@ -500,14 +500,14 @@ inferDefineInfix ::
   Environment ->
   Annotation ->
   InfixOp ->
-  TcExpr ->
+  Variable ->
   TcExpr ->
   TcMonad (Substitutions, MonoType)
-inferDefineInfix env ann infixOp bindExpr' expr = do
+inferDefineInfix env ann infixOp bindName expr = do
   u1 <- getUnknown ann
   u2 <- getUnknown ann
   u3 <- getUnknown ann
-  (_, tyBind) <- infer env bindExpr'
+  (_, tyBind) <- inferVarFromScope env ann bindName
   let arityError = FunctionArityMismatch (getAnnotationForType tyBind) 2 tyBind
   _ <-
     unify tyBind (MTFunction mempty u1 (MTFunction mempty u2 u3))
@@ -565,5 +565,5 @@ infer env inferExpr =
       inferApplication env ann cons val
     (MyCaseMatch ann expr' matches catchAll) ->
       inferCaseMatch env ann expr' matches catchAll
-    (MyDefineInfix ann infixOp bindExpr' expr) ->
-      inferDefineInfix env ann infixOp bindExpr' expr
+    (MyDefineInfix ann infixOp bindName expr) ->
+      inferDefineInfix env ann infixOp bindName expr
