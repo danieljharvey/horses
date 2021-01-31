@@ -108,7 +108,7 @@ withSwap :: Swaps -> Variable -> Name
 withSwap _ (NamedVar n) = n
 withSwap swaps (NumberedVar i) =
   fromMaybe
-    (mkName "unknownvar")
+    "unknownvar"
     (M.lookup (NumberedVar i) swaps)
 
 -----

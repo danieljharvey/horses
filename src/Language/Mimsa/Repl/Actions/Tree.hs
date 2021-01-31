@@ -21,5 +21,5 @@ doTree ::
   ReplM Annotation ()
 doTree env input expr = do
   (ResolvedExpression _ storeExpr _ _ _) <- liftRepl $ getTypecheckedStoreExpression input env expr
-  let graph = createDepGraph (mkName "expression") (prjStore env) storeExpr
+  let graph = createDepGraph "expression" (prjStore env) storeExpr
   replPrint graph

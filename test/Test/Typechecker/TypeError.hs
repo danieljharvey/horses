@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.TypeError
+module Test.Typechecker.TypeError
   ( spec,
   )
 where

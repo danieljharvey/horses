@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.MonoTypeParser
+module Test.Parser.MonoTypeParser
   ( spec,
   )
 where
@@ -96,8 +96,8 @@ spec =
         `shouldBe` Right
           ( MTRecord mempty $
               M.fromList
-                [ (mkName "one", MTPrim mempty MTInt),
-                  (mkName "two", MTPrim mempty MTString)
+                [ ("one", MTPrim mempty MTInt),
+                  ("two", MTPrim mempty MTString)
                 ]
           )
     it "Record with functions as items" $
@@ -105,13 +105,13 @@ spec =
         `shouldBe` Right
           ( MTRecord mempty $
               M.fromList
-                [ ( mkName "one",
+                [ ( "one",
                     MTFunction
                       mempty
                       (MTPrim mempty MTInt)
                       (MTPrim mempty MTInt)
                   ),
-                  ( mkName "two",
+                  ( "two",
                     MTFunction
                       mempty
                       (MTPrim mempty MTString)
@@ -126,7 +126,7 @@ spec =
         `shouldBe` Right
           ( MTRecord mempty $
               M.fromList
-                [ ( mkName "one",
+                [ ( "one",
                     MTFunction
                       mempty
                       (MTPrim mempty MTInt)
@@ -136,7 +136,7 @@ spec =
                           [MTPrim mempty MTInt]
                       )
                   ),
-                  ( mkName "two",
+                  ( "two",
                     MTFunction
                       mempty
                       (MTPrim mempty MTString)

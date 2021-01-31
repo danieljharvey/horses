@@ -34,7 +34,7 @@ eval env input =
     Left e -> Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
       pure $
-        renderWithFunction dataTypes (mkName "main") (storeExpression storeExpr)
+        renderWithFunction dataTypes "main" (storeExpression storeExpr)
 
 evalModule :: Project Annotation -> Text -> IO (Either Text Javascript)
 evalModule env input =
@@ -104,26 +104,26 @@ spec = do
       let expected =
             MyLambda
               mempty
-              (mkName "a")
-              (MyConsApp mempty (MyConstructor mempty (mkTyCon "Some")) (MyVar mempty (mkName "a")))
+              "a"
+              (MyConsApp mempty (MyConstructor mempty (mkTyCon "Some")) (MyVar mempty "a"))
       normaliseConstructors dataTypes a `shouldBe` expected
     it "turns binary constructor into two lambda functions" $ do
       let a = MyConstructor () (mkTyCon "These")
       let expected =
             MyLambda
               mempty
-              (mkName "a")
+              "a"
               ( MyLambda
                   mempty
-                  (mkName "b")
+                  "b"
                   ( MyConsApp
                       mempty
                       ( MyConsApp
                           mempty
                           (MyConstructor mempty (mkTyCon "These"))
-                          (MyVar mempty (mkName "a"))
+                          (MyVar mempty "a")
                       )
-                      (MyVar mempty (mkName "b"))
+                      (MyVar mempty "b")
                   )
               )
       normaliseConstructors dataTypes a `shouldBe` expected
@@ -132,7 +132,7 @@ spec = do
       let expected =
             MyLambda
               mempty
-              (mkName "b")
+              "b"
               ( MyConsApp
                   mempty
                   ( MyConsApp
@@ -140,7 +140,7 @@ spec = do
                       (MyConstructor mempty (mkTyCon "These"))
                       (int 1)
                   )
-                  (MyVar mempty (mkName "b"))
+                  (MyVar mempty "b")
               )
       normaliseConstructors dataTypes a `shouldBe` expected
     it "completely applies when wrapped in ConsApp" $ do

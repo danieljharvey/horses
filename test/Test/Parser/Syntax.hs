@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Syntax
+module Test.Parser.Syntax
   ( spec,
   )
 where
@@ -52,7 +52,7 @@ spec = do
       testParse "\"dog\"" `shouldBe` Right (str (StringType "dog"))
     it "Parses a variable name" $
       testParse "log"
-        `shouldBe` Right (MyVar mempty (mkName "log"))
+        `shouldBe` Right (MyVar mempty "log")
     it "Does not accept 'let' as a variable name" $
       isLeft (testParse "let")
         `shouldBe` True
@@ -65,40 +65,40 @@ spec = do
       testParse "log!dog"
         `shouldSatisfy` isLeft
     it "Does a basic let binding" $ do
-      let expected = MyLet mempty (mkName "xa") (bool True) (MyVar mempty (mkName "xa"))
+      let expected = MyLet mempty "xa" (bool True) (MyVar mempty "xa")
       testParse "let xa = True in xa"
         `shouldBe` Right expected
     it "Does a basic let binding with excessive whitespace" $ do
-      let expected = MyLet mempty (mkName "x") (bool True) (MyVar mempty (mkName "x"))
+      let expected = MyLet mempty "x" (bool True) (MyVar mempty "x")
       testParse "let       x       =       True       in        x"
         `shouldBe` Right expected
     it "Does a let binding inside parens" $ do
-      let expected = MyLet mempty (mkName "x") (bool True) (MyVar mempty (mkName "x"))
+      let expected = MyLet mempty "x" (bool True) (MyVar mempty "x")
       testParse "(let x = True in x)"
         `shouldBe` Right expected
     it "Recognises a basic lambda" $
       testParse "\\x -> x"
-        `shouldBe` Right (MyLambda mempty (mkName "x") (MyVar mempty (mkName "x")))
+        `shouldBe` Right (MyLambda mempty "x" (MyVar mempty "x"))
     it "Recognises a lambda with too much whitespace everywhere" $
       testParse "\\        x          ->             x"
-        `shouldBe` Right (MyLambda mempty (mkName "x") (MyVar mempty (mkName "x")))
+        `shouldBe` Right (MyLambda mempty "x" (MyVar mempty "x"))
     it "Recognises a lambda in parens" $
       testParse "(\\x -> x)"
-        `shouldBe` Right (MyLambda mempty (mkName "x") (MyVar mempty (mkName "x")))
+        `shouldBe` Right (MyLambda mempty "x" (MyVar mempty "x"))
     it "Recognises nested lambdas in parens" $
       testParse "(\\a -> (\\b -> a))"
         `shouldBe` Right
           ( MyLambda
               mempty
-              (mkName "a")
-              (MyLambda mempty (mkName "b") (MyVar mempty (mkName "a")))
+              "a"
+              (MyLambda mempty "b" (MyVar mempty "a"))
           )
     it "Recognises function application in parens" $
       testParse "add (1)"
         `shouldBe` Right
           ( MyApp
               mempty
-              ( MyVar mempty (mkName "add")
+              ( MyVar mempty "add"
               )
               (int 1)
           )
@@ -109,7 +109,7 @@ spec = do
               mempty
               ( MyApp
                   mempty
-                  ( MyVar mempty (mkName "add")
+                  ( MyVar mempty "add"
                   )
                   (int 1)
               )
@@ -137,34 +137,34 @@ spec = do
         `shouldBe` Right
           ( MyLet
               mempty
-              (mkName "x")
+              "x"
               (MyPair mempty (int 1) (int 2))
-              (MyVar mempty (mkName "x"))
+              (MyVar mempty "x")
           )
     it "Allows a let to use a pair and apply to it" $
       testParse "let x = ((1,2)) in fst(x)"
         `shouldBe` Right
           ( MyLet
               mempty
-              (mkName "x")
+              "x"
               (MyPair mempty (int 1) (int 2))
-              (MyApp mempty (MyVar mempty (mkName "fst")) (MyVar mempty (mkName "x")))
+              (MyApp mempty (MyVar mempty "fst") (MyVar mempty "x"))
           )
     it "Allows a let to use a nested lambda" $
       testParse "let const2 = (\\a -> (\\b -> a)) in (const2)"
         `shouldBe` Right
           ( MyLet
               mempty
-              (mkName "const2")
+              "const2"
               ( MyLambda
                   mempty
-                  (mkName "a")
-                  (MyLambda mempty (mkName "b") (MyVar mempty (mkName "a")))
+                  "a"
+                  (MyLambda mempty "b" (MyVar mempty "a"))
               )
-              (MyVar mempty (mkName "const2"))
+              (MyVar mempty "const2")
           )
     it "Parses typed hole" $ do
-      testParse "?dog" `shouldBe` Right (MyTypedHole mempty (mkName "dog"))
+      testParse "?dog" `shouldBe` Right (MyTypedHole mempty "dog")
     it "Parses a complex let expression" $
       testParse "let const2 = (\\a -> (\\b -> a)) in (let reuse = ({first: const2(True), second: const2(2)}) in reuse.second(100))"
         `shouldSatisfy` isRight
@@ -173,7 +173,7 @@ spec = do
     it "Parses two integers with infix operator" $
       testParse "123 == 123" `shouldBe` Right (MyInfix mempty Equals (int 123) (int 123))
     it "Parses var and number equality" $
-      testParse "a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty (mkName "a")) (int 1))
+      testParse "a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty "a") (int 1))
     it "Parsers two constructor applications with infix operator" $
       let mkSome = MyConsApp mempty (MyConstructor mempty (mkTyCon "Some"))
        in testParse "(Some 1) == Some 2"
@@ -183,15 +183,15 @@ spec = do
     it "Parses a record literal with a single item inside" $
       testParse "{ dog: 1 }"
         `shouldBe` Right
-          (MyRecord mempty (M.singleton (mkName "dog") (int 1)))
+          (MyRecord mempty (M.singleton "dog" (int 1)))
     it "Parses a record literal with multiple items inside" $
       testParse "{ dog:1, cat:True, horse:\"of course\" }"
         `shouldBe` Right
           ( MyRecord mempty $
               M.fromList
-                [ (mkName "dog", int 1),
-                  (mkName "cat", bool True),
-                  (mkName "horse", str' "of course")
+                [ ("dog", int 1),
+                  ("cat", bool True),
+                  ("horse", str' "of course")
                 ]
           )
     it "Parses a record literal with multiple items inside and less spacing" $
@@ -199,9 +199,9 @@ spec = do
         `shouldBe` Right
           ( MyRecord mempty $
               M.fromList
-                [ (mkName "dog", int 1),
-                  (mkName "cat", bool True),
-                  (mkName "horse", str' "of course")
+                [ ("dog", int 1),
+                  ("cat", bool True),
+                  ("horse", str' "of course")
                 ]
           )
     it "Parses a destructuring of pairs" $
@@ -209,20 +209,20 @@ spec = do
         `shouldBe` Right
           ( MyLetPair
               mempty
-              (mkName "a")
-              (mkName "b")
+              "a"
+              "b"
               (MyPair mempty (bool True) (int 1))
-              (MyVar mempty (mkName "a"))
+              (MyVar mempty "a")
           )
     it "Parses a destructuring of pairs with silly whitespace" $
       testParse "let   (    a ,      b ) =    ((       True, 1) ) in a"
         `shouldBe` Right
           ( MyLetPair
               mempty
-              (mkName "a")
-              (mkName "b")
+              "a"
+              "b"
               (MyPair mempty (bool True) (int 1))
-              (MyVar mempty (mkName "a"))
+              (MyVar mempty "a")
           )
     it "Parses Void" $
       testParse "type Void in 1"
@@ -255,11 +255,11 @@ spec = do
               mempty
               ( DataType
                   (mkTyCon "Arr")
-                  [mkName "a"]
+                  ["a"]
                   ( M.fromList
                       [ (mkTyCon "Empty", mempty),
                         ( mkTyCon "Item",
-                          [VarName $mkName "a"]
+                          [VarName "a"]
                         )
                       ]
                   )
@@ -335,9 +335,9 @@ spec = do
               mempty
               ( DataType
                   (mkTyCon "Maybe")
-                  [mkName "a"]
+                  ["a"]
                   ( M.fromList
-                      [ (mkTyCon "Just", [VarName $ mkName "a"]),
+                      [ (mkTyCon "Just", [VarName "a"]),
                         (mkTyCon "Nothing", [])
                       ]
                   )
@@ -351,12 +351,12 @@ spec = do
               mempty
               ( DataType
                   (mkTyCon "Reader")
-                  [mkName "r", mkName "a"]
+                  ["r", "a"]
                   ( M.fromList
                       [ ( mkTyCon "Reader",
                           [ TNFunc
-                              (VarName $ mkName "r")
-                              (VarName $ mkName "a")
+                              (VarName "r")
+                              (VarName "a")
                           ]
                         )
                       ]
@@ -371,15 +371,15 @@ spec = do
               mempty
               ( DataType
                   (mkTyCon "Reader")
-                  [mkName "r", mkName "a"]
+                  ["r", "a"]
                   ( M.fromList
                       [ ( mkTyCon "Reader",
                           [ TNFunc
-                              (VarName $ mkName "r")
+                              (VarName "r")
                               ( ConsName
                                   (mkTyCon "Pair")
-                                  [ VarName $mkName "a",
-                                    VarName $ mkName "b"
+                                  [ VarName "a",
+                                    VarName "b"
                                   ]
                               )
                           ]
@@ -398,7 +398,7 @@ spec = do
               mempty
               (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Just") (int 1))
               ( NE.fromList
-                  [ (mkTyCon "Just", MyLambda mempty (mkName "a") (MyVar mempty (mkName "a"))),
+                  [ (mkTyCon "Just", MyLambda mempty "a" (MyVar mempty "a")),
                     (mkTyCon "Nothing", int 0)
                   ]
               )
@@ -411,7 +411,7 @@ spec = do
               mempty
               (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Just") (int 1))
               ( NE.fromList
-                  [ (mkTyCon "Just", MyLambda mempty (mkName "a") (MyVar mempty (mkName "a")))
+                  [ (mkTyCon "Just", MyLambda mempty "a" (MyVar mempty "a"))
                   ]
               )
               (Just $ int 0)
@@ -423,12 +423,12 @@ spec = do
               mempty
               ( DataType
                   (mkTyCon "Tree")
-                  [mkName "a"]
+                  ["a"]
                   ( M.fromList
-                      [ (mkTyCon "Leaf", [VarName $ mkName "a"]),
+                      [ (mkTyCon "Leaf", [VarName "a"]),
                         ( mkTyCon "Branch",
-                          [ ConsName (mkTyCon "Tree") [VarName $ mkName "a"],
-                            ConsName (mkTyCon "Tree") [VarName $ mkName "b"]
+                          [ ConsName (mkTyCon "Tree") [VarName "a"],
+                            ConsName (mkTyCon "Tree") [VarName "b"]
                           ]
                         )
                       ]
@@ -443,13 +443,13 @@ spec = do
               mempty
               ( DataType
                   (mkTyCon "Tree")
-                  [mkName "a"]
+                  ["a"]
                   ( M.fromList
                       [ (mkTyCon "Empty", mempty),
                         ( mkTyCon "Branch",
-                          [ ConsName (mkTyCon "Tree") [VarName $ mkName "a"],
-                            VarName $ mkName "a",
-                            ConsName (mkTyCon "Tree") [VarName $ mkName "a"]
+                          [ ConsName (mkTyCon "Tree") [VarName "a"],
+                            VarName "a",
+                            ConsName (mkTyCon "Tree") [VarName "a"]
                           ]
                         )
                       ]
@@ -482,7 +482,7 @@ spec = do
                           mempty
                           ( MyApp
                               mempty
-                              (MyVar mempty (mkName "thing"))
+                              (MyVar mempty "thing")
                               (int 1)
                           )
                           (int 2)
@@ -499,7 +499,7 @@ spec = do
       testParse "if id(True) then id(1) else id(2)" `shouldSatisfy` isRight
   describe "Test annotations" $ do
     it "Parses a var with location information" $
-      testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) (mkName "dog"))
+      testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")
     it "Parses a tyCon with location information" $
       testParseWithAnn "Log" `shouldBe` Right (MyConstructor (Location 0 3) (mkTyCon "Log"))
     it "Parses a true bool with location information" $
@@ -517,47 +517,47 @@ spec = do
         `shouldBe` Right
           ( MyRecordAccess
               (Location 0 8)
-              (MyVar (Location 0 3) (mkName "dog"))
-              (mkName "tail")
+              (MyVar (Location 0 3) "dog")
+              "tail"
           )
     it "Parses let-in with location information" $
       testParseWithAnn "let a = 1 in a"
         `shouldBe` Right
           ( MyLet
               (Location 0 14)
-              (mkName "a")
+              "a"
               (MyLiteral (Location 8 9) (MyInt 1))
-              (MyVar (Location 13 14) (mkName "a"))
+              (MyVar (Location 13 14) "a")
           )
     it "Parses let-newline with location information" $
       testParseWithAnn "let a = 1; a"
         `shouldBe` Right
           ( MyLet
               (Location 0 12)
-              (mkName "a")
+              "a"
               (MyLiteral (Location 8 9) (MyInt 1))
-              (MyVar (Location 11 12) (mkName "a"))
+              (MyVar (Location 11 12) "a")
           )
     it "Parses let pair with location information" $
       testParseWithAnn "let (a,b) = dog in a"
         `shouldBe` Right
           ( MyLetPair
               (Location 0 20)
-              (mkName "a")
-              (mkName "b")
-              (MyVar (Location 12 15) (mkName "dog"))
-              (MyVar (Location 19 20) (mkName "a"))
+              "a"
+              "b"
+              (MyVar (Location 12 15) "dog")
+              (MyVar (Location 19 20) "a")
           )
     it "Parsers lambda with location information" $
       testParseWithAnn "\\a -> a"
         `shouldBe` Right
-          (MyLambda (Location 0 7) (mkName "a") (MyVar (Location 6 7) (mkName "a")))
+          (MyLambda (Location 0 7) "a" (MyVar (Location 6 7) "a"))
     it "Parses application with location information" $
       testParseWithAnn "a(1)"
         `shouldBe` Right
           ( MyApp
               (Location 0 4)
-              (MyVar (Location 0 1) (mkName "a"))
+              (MyVar (Location 0 1) "a")
               (MyLiteral (Location 2 3) (MyInt 1))
           )
     it "Parses record with location information" $
@@ -566,7 +566,7 @@ spec = do
           ( MyRecord
               (Location 0 11)
               ( M.singleton
-                  (mkName "a")
+                  "a"
                   (MyLiteral (Location 5 9) (MyBool True))
               )
           )
@@ -612,12 +612,12 @@ spec = do
         `shouldBe` Right
           ( MyCaseMatch
               (Location 0 35)
-              (MyVar (Location 5 6) (mkName "a"))
+              (MyVar (Location 5 6) "a")
               ( NE.fromList
                   [ ( mkTyCon "Just",
                       MyLambda
                         (Location 15 23)
-                        (mkName "as")
+                        "as"
                         (MyLiteral (Location 22 23) (MyInt 1))
                     ),
                     (mkTyCon "Nothing", MyLiteral (Location 34 35) (MyInt 0))

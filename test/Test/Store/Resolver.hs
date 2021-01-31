@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Resolver
+module Test.Store.Resolver
   ( spec,
   )
 where
@@ -102,7 +102,7 @@ spec =
       it "Looks for vars and can't find them" $
         createStoreExpression' mempty mempty (MyVar mempty (Name "missing"))
           `shouldBe` Left
-            (MissingBinding (mkName "missing") mempty)
+            (MissingBinding "missing" mempty)
       it "Looks for vars and finds them" $ do
         let hash = exprHash 1234
             expr = MyVar mempty (Name "missing")

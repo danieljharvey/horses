@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.RecordUsage
+module Test.Typechecker.RecordUsage
   ( spec,
   )
 where
@@ -52,19 +52,19 @@ spec = do
                   ( MyRecordAccess
                       ()
                       (MyVar () (named "a"))
-                      (mkName "one")
+                      "one"
                   )
                   ( MyRecordAccess
                       ()
                       (MyVar () (named "a"))
-                      (mkName "two")
+                      "two"
                   )
               )
       getRecordUsages expr'
         `shouldBe` CombineMap
           ( M.fromList
               [ ( named "a",
-                  S.fromList [mkName "one", mkName "two"]
+                  S.fromList ["one", "two"]
                 )
               ]
           )

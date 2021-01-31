@@ -3,7 +3,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Repl
+module Test.Interpreter.Repl
   ( spec,
   )
 where
@@ -514,15 +514,15 @@ spec =
                   mempty
                   ( MTRecord
                       mempty
-                      (M.singleton (mkName "one") (MTVar mempty (tvFree 1)))
+                      (M.singleton "one" (MTVar mempty (tvFree 1)))
                   )
                   ( MTFunction
                       mempty
                       ( MTRecord
                           mempty
                           ( M.fromList
-                              [ (mkName "one", MTVar mempty (tvFree 2)),
-                                (mkName "two", MTVar mempty (tvFree 3))
+                              [ ("one", MTVar mempty (tvFree 2)),
+                                ("two", MTVar mempty (tvFree 3))
                               ]
                           )
                       )

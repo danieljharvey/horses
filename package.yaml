@@ -82,6 +82,3 @@ tests:
     dependencies:
     - mimsa
     - hspec
-    - QuickCheck
-    - generic-arbitrary
-    - quickcheck-instances

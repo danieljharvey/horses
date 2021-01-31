@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Interpreter
+module Test.Interpreter.Interpreter
   ( spec,
   )
 where
@@ -72,11 +72,11 @@ spec =
           mempty
           (str (StringType "poo"))
           (str (StringType "poo"))
-    describe "Let and Var" $
-      it "let x = 1 in 1" $
-        do
-          let f = MyLet mempty (named "x") (int 1) (MyVar mempty (named "x"))
-          testInterpret mempty f (int 1)
+    describe "Let and Var"
+      $ it "let x = 1 in 1"
+      $ do
+        let f = MyLet mempty (named "x") (int 1) (MyVar mempty (named "x"))
+        testInterpret mempty f (int 1)
     describe "Lambda and App" $ do
       it "let id = \\x -> x in (id 1)" $ do
         let f =
@@ -145,13 +145,13 @@ spec =
                     ( MyRecord
                         mempty
                         ( M.fromList
-                            [ ( mkName "first",
+                            [ ( "first",
                                 MyApp
                                   mempty
                                   (MyVar mempty (named "const2"))
                                   (MyLiteral mempty (MyInt 1))
                               ),
-                              ( mkName "second",
+                              ( "second",
                                 MyApp
                                   mempty
                                   (MyVar mempty (named "const2"))
@@ -162,7 +162,7 @@ spec =
                     )
                     ( MyApp
                         mempty
-                        (MyRecordAccess mempty (MyVar mempty (named "reuse")) (mkName "first"))
+                        (MyRecordAccess mempty (MyVar mempty (named "reuse")) "first")
                         (MyLiteral mempty (MyInt 100))
                     )
                 )

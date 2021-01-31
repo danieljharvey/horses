@@ -7,6 +7,7 @@ module Language.Mimsa.Types.Identifiers.TyCon where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
+import Data.String
 import Data.Swagger
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -24,6 +25,9 @@ newtype TyCon = TyCon Text
       JSON.ToJSON,
       JSON.ToJSONKey
     )
+
+instance IsString TyCon where
+  fromString = mkTyCon . T.pack
 
 getTyCon :: TyCon -> Text
 getTyCon (TyCon t) = t

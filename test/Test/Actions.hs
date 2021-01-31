@@ -44,7 +44,7 @@ testWithIdInExpr =
   MyInfix
     mempty
     Equals
-    (MyApp mempty (MyVar mempty (mkName "id")) (int 1))
+    (MyApp mempty (MyVar mempty "id") (int 1))
     (int 1)
 
 onePlusOneExpr :: Expr Name Annotation
@@ -84,13 +84,13 @@ spec = do
           stdLib
           ( Actions.bindExpression
               brokenExpr
-              (mkName "broken")
+              "broken"
               "1 == True"
           )
           `shouldSatisfy` isLeft
       it "Adds a fresh new function to Bindings and to Store" $ do
         let expr = int 1
-        case Actions.run stdLib (Actions.bindExpression expr (mkName "one") "1") of
+        case Actions.run stdLib (Actions.bindExpression expr "one" "1") of
           Left _ -> error "Should not have failed"
           Right (newProject, outcomes, _) -> do
             -- one more item in store
@@ -99,15 +99,15 @@ spec = do
             -- one more binding
             lookupBindingName
               newProject
-              (mkName "one")
+              "one"
               `shouldSatisfy` isJust
             -- one new store expression
             S.size (Actions.storeExpressionsFromOutcomes outcomes)
               `shouldBe` 1
       it "Updating an existing binding updates binding" $ do
-        let newIdExpr = MyLambda mempty (mkName "b") (MyVar mempty (mkName "b"))
+        let newIdExpr = MyLambda mempty "b" (MyVar mempty "b")
         let action =
-              Actions.bindExpression newIdExpr (mkName "id") "\\b -> b"
+              Actions.bindExpression newIdExpr "id" "\\b -> b"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
           Right (newProject, outcomes, _) -> do
@@ -120,13 +120,13 @@ spec = do
             -- binding hash has changed
             lookupBindingName
               newProject
-              (mkName "id")
-              `shouldNotBe` lookupBindingName stdLib (mkName "id")
+              "id"
+              `shouldNotBe` lookupBindingName stdLib "id"
       it "Updating an existing binding updates tests" $ do
-        let newIdExpr = MyLambda mempty (mkName "blob") (MyVar mempty (mkName "blob"))
+        let newIdExpr = MyLambda mempty "blob" (MyVar mempty "blob")
         let action = do
               _ <- Actions.addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
-              Actions.bindExpression newIdExpr (mkName "id") "\\blob -> blob"
+              Actions.bindExpression newIdExpr "id" "\\blob -> blob"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
           Right (newProject, outcomes, _) -> do
@@ -142,11 +142,11 @@ spec = do
             -- binding hash has changed
             lookupBindingName
               newProject
-              (mkName "id")
-              `shouldNotBe` lookupBindingName stdLib (mkName "id")
+              "id"
+              `shouldNotBe` lookupBindingName stdLib "id"
     describe "Compile" $ do
       it "Simplest compilation creates four files" $ do
-        let expr = MyVar mempty (mkName "id")
+        let expr = MyVar mempty "id"
         let action = Actions.compile CommonJS "id" expr
         let (newProject, outcomes, (_, hashes)) = fromRight (Actions.run stdLib action)
         -- creates three files
@@ -164,7 +164,7 @@ spec = do
         -- for the `id` dependency
         S.size hashes `shouldBe` 2
       it "Complex compilation creates many files in 3 folders" $ do
-        let expr = MyVar mempty (mkName "evalState")
+        let expr = MyVar mempty "evalState"
         let action = Actions.compile CommonJS "evalState" expr
         let (newProject, outcomes, _) = fromRight (Actions.run stdLib action)
         -- creates six files
