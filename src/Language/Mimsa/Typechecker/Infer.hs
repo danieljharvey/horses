@@ -493,7 +493,7 @@ inferLambda env@(Environment env' _ _) ann binder body = do
   pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
 
 isTwoArityFunction :: MonoType -> Bool
-isTwoArityFunction (MTFunction _ _ (MTFunction _ _ _)) = True
+isTwoArityFunction (MTFunction _ _ MTFunction {}) = True
 isTwoArityFunction _ = False
 
 inferDefineInfix ::
@@ -513,7 +513,7 @@ inferDefineInfix env ann infixOp bindExpr' expr = do
     unify tyBind (MTFunction mempty u1 (MTFunction mempty u2 u3))
       <|> throwError arityError
   let newEnv = envFromInfixOp infixOp tyBind <> env
-  if (isTwoArityFunction tyBind)
+  if isTwoArityFunction tyBind
     then infer newEnv expr
     else throwError arityError
 

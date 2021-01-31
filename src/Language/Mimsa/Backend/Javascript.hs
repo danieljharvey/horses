@@ -187,7 +187,7 @@ renderWithFunction dataTypes name expr =
         <> ";\n"
 
 startsWithLambda :: Expr var ann -> Bool
-startsWithLambda (MyLambda _ _ _) = True
+startsWithLambda MyLambda {} = True
 startsWithLambda _ = False
 
 outputCommonJS :: (Monoid ann) => ResolvedTypeDeps -> StoreExpression ann -> Javascript

@@ -67,4 +67,4 @@ infixOpParser :: Parser InfixOp
 infixOpParser =
   maybePred
     infixIdentifier
-    (safeMkInfixOp)
+    safeMkInfixOp

@@ -1,5 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.InfixOp where
@@ -24,7 +24,7 @@ validChars = "<!@£$%^&*~|-_+=>"
 validInfixOp :: Text -> Bool
 validInfixOp a =
   T.length a > 1
-    && T.filter (\ch -> ch `elem` validChars) a == a
+    && T.filter (`elem` validChars) a == a
 
 mkInfixOp :: Text -> InfixOp
 mkInfixOp a =
