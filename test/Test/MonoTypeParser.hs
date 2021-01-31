@@ -213,7 +213,6 @@ spec =
               (MTData mempty (mkTyCon "Maybe") [typeName "a"])
               (typeName "b")
           )
-
     it "Parses higher order function" $
       testParser "(a -> b) -> a -> b"
         `shouldBe` Right
