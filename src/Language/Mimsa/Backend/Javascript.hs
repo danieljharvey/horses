@@ -116,6 +116,7 @@ outputOperator Equals a b =
 outputOperator Add a b = outputJS a <> " + " <> outputJS b
 outputOperator Subtract a b = outputJS a <> " - " <> outputJS b
 outputOperator StringConcat a b = outputJS a <> " + " <> outputJS b
+outputOperator (Custom _op) _a _b = undefined
 
 intercalate :: Javascript -> [Javascript] -> Javascript
 intercalate split as = coerce $ T.intercalate (coerce split) (coerce as)
@@ -171,6 +172,7 @@ outputJS expr =
     MyConsApp _ c a -> outputConsApp c a
     MyCaseMatch _ a matches catch -> outputCaseMatch a matches catch
     MyTypedHole _ a -> coerce a -- TODO: this should fail, but dont want to introduce failure into this whole area yet
+    MyDefineInfix _ _ _ a -> outputJS a -- don't output infix definitions
 
 renderWithFunction :: (Monoid ann) => ResolvedTypeDeps -> Name -> Expr Name ann -> Javascript
 renderWithFunction dataTypes name expr =
@@ -185,7 +187,7 @@ renderWithFunction dataTypes name expr =
         <> ";\n"
 
 startsWithLambda :: Expr var ann -> Bool
-startsWithLambda (MyLambda _ _ _) = True
+startsWithLambda MyLambda {} = True
 startsWithLambda _ = False
 
 outputCommonJS :: (Monoid ann) => ResolvedTypeDeps -> StoreExpression ann -> Javascript

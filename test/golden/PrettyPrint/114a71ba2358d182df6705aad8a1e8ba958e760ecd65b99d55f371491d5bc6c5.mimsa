@@ -1,0 +1,13 @@
+type Arr a 
+  = Empty
+  | Item a
+         (Arr a);
+let reduceA = \f ->
+   \b ->
+      \as ->
+         case as of 
+             Empty b
+           | Item (\a ->
+              \rest ->
+                 reduceA(f)(f(b)(a))(rest));
+reduceA(addInt)(0)((Empty))

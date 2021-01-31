@@ -7,26 +7,32 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.AST (DataType)
-import Language.Mimsa.Types.Identifiers (TyCon, TypeIdentifier)
+import Language.Mimsa.Types.AST.InfixOp
+import Language.Mimsa.Types.Identifiers
+  ( TyCon,
+    TypeIdentifier,
+  )
+import Language.Mimsa.Types.Typechecker.MonoType
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 
 -- everything we need in typechecking environment
 data Environment
   = Environment
       { getSchemes :: Map TypeIdentifier Scheme,
-        getDataTypes :: Map TyCon DataType
+        getDataTypes :: Map TyCon DataType,
+        getInfix :: Map InfixOp MonoType
       }
   deriving (Eq, Ord, Show)
 
 instance Semigroup Environment where
-  (Environment a b) <> (Environment a' b') =
-    Environment (a <> a') (b <> b')
+  (Environment a b c) <> (Environment a' b' c') =
+    Environment (a <> a') (b <> b') (c <> c')
 
 instance Monoid Environment where
-  mempty = Environment mempty mempty
+  mempty = Environment mempty mempty mempty
 
 instance Printer Environment where
-  prettyPrint (Environment typeSchemes _dataTypes) =
+  prettyPrint (Environment typeSchemes _dataTypes _infix) =
     "[\n"
       <> T.intercalate ", \n" (printRow <$> M.toList typeSchemes)
       <> "\n]"

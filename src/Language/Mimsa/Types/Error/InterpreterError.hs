@@ -13,7 +13,7 @@ import Language.Mimsa.Types.Scope
 data InterpreterError ann
   = UnknownInterpreterError
   | CouldNotFindVar (Scope ann) Variable
-  | CouldNotFindBuiltIn (Scope ann) Variable
+  | CouldNotFindInfixOp InfixOp
   | CannotDestructureAsPair (Expr Variable ann)
   | CannotDestructureAsSum (Expr Variable ann)
   | CannotDestructureAsRecord (Expr Variable ann) Name
@@ -37,7 +37,7 @@ instance Monoid (InterpreterError a) where
 
 instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
   prettyPrint (CouldNotFindVar _ name) = "Could not find var " <> prettyPrint name
-  prettyPrint (CouldNotFindBuiltIn _ name) = "Could not find built-in " <> prettyPrint name
+  prettyPrint (CouldNotFindInfixOp op) = "Could not find infixOp " <> prettyPrint op
   prettyPrint (CannotDestructureAsPair expr) = "Expected a pair. Cannot destructure: " <> prettyPrint expr
   prettyPrint (CannotDestructureAsSum expr) = "Expected a sum type. Cannot destructure: " <> prettyPrint expr
   prettyPrint (CannotDestructureAsRecord expr name) = "Expected a record with a member " <> prettyPrint name <> ". Cannot destructure: " <> prettyPrint expr

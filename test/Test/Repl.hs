@@ -367,7 +367,7 @@ spec =
                   `shouldBe` Right
                     ( MTFunction (MTData (mkTyCon "Maybe") []) (MTPrim MTString)
                     )
-
+        
         -}
         it "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest" $ do
           result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
@@ -544,11 +544,9 @@ spec =
               T.isInfixOf "Typed holes found" msg
                 && T.isInfixOf "^^^^^^^" msg
             (Right _) -> False
-
         it "let compose = \\f -> \\g -> \\a -> f(g(a)); compose" $ do
           result <- eval stdLib "let compose = \\f -> \\g -> \\a -> f(g(a)); compose"
           result `shouldSatisfy` isRight
-
         it "Some (1 == 1)" $ do
           result <- eval stdLib "Some (1 == 1)"
           snd <$> result
@@ -558,15 +556,12 @@ spec =
                   (MyConstructor mempty (mkTyCon "Some"))
                   (bool True)
               )
-
         it "\\a -> if (100 == a.int) then 100 else 0" $ do
           result <- eval stdLib "\\a -> if (100 == a.int) then 100 else 0"
           result `shouldSatisfy` isRight
-
         it "\\a -> if (a.one == a.two) then 100 else 0" $ do
           result <- eval stdLib "\\a -> if (a.one == a.two) then 100 else 0"
           result `shouldSatisfy` isRight
-
         it "type Reader r a = Reader (r -> a) in Reader \\r -> r + 100" $ do
           result <- eval stdLib "type Reader r a = Reader (r -> a) in Reader \\r -> r + 100"
           result
@@ -592,11 +587,35 @@ spec =
         it "\\state -> \\s -> case state of State \\sas -> sas(s)" $ do
           result <- eval stdLib "\\state -> \\s -> case state of State \\sas -> sas(s)"
           result `shouldSatisfy` isRight
-
         it "let a = pureState(\"dog\"); let b = bindState(storeName)(a); runState(b)(nil)" $ do
           result <- eval stdLib "let a = pureState(\"dog\"); let b = bindState(storeName)(a); runState(b)(nil)"
           result `shouldSatisfy` isRight
-
         it "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)" $ do
           result <- eval stdLib "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)"
           result `shouldSatisfy` isRight
+        it "infix <<< = compose; True" $ do
+          result <- eval stdLib "infix <<< = compose; True"
+          -- binding to a two arity function is A++
+          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+        it "infix <<< = incrementInt; True" $ do
+          result <- eval stdLib "infix <<< = incrementInt; True"
+          -- we can only bind to a two arity function
+          result `shouldSatisfy` isLeft
+        it "infix <<< = id; True" $ do
+          result <- eval stdLib "infix <<< = id; True"
+          -- we check polymorphic functions
+          result `shouldSatisfy` isLeft
+        it "infix +++ = addInt; 1 +++ 2" $ do
+          result <- eval stdLib "infix +++ = addInt; 1 +++ 2"
+          result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+        it "addInt(1)(2)" $ do
+          result <- eval stdLib "addInt(1)(2)"
+          result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+        it "infix == = addInt; True" $ do
+          result <- eval stdLib "infix == = addInt; True"
+          -- can't overwrite built in infix operators
+          result `shouldSatisfy` isLeft
+        it "infix +++ = addInt; 1 +++ True" $ do
+          result <- eval stdLib "infix +++ = addInt; 1 +++ True"
+          -- function typechecking should still work
+          result `shouldSatisfy` isLeft

@@ -62,6 +62,7 @@ complexParser =
     <|> try constructorAppParser
     <|> try caseMatchParser
     <|> try typedHoleParser
+    <|> try defineInfixParser
 
 ----
 
@@ -149,7 +150,10 @@ appParser :: Parser ParserExpr
 appParser =
   let parser = do
         func <- appFunc
-        (,) func <$> some (withOptionalSpace exprInBrackets)
+        _ <- space
+        (,) func
+          <$> some
+            exprInBrackets
    in withLocation
         ( \loc (func, exprs) ->
             foldl (MyApp loc) func exprs
@@ -158,19 +162,22 @@ appParser =
 
 exprInBrackets :: Parser ParserExpr
 exprInBrackets = do
-  literalWithSpace "("
-  expr <- expressionParser
-  literalWithSpace ")"
+  _ <- string "("
   _ <- space
+  expr <- expressionParser
+  _ <- space
+  _ <- string ")"
   pure expr
 
 -----
 
 recordParser :: Parser ParserExpr
 recordParser = withLocation MyRecord $ do
-  literalWithSpace "{"
+  _ <- string "{"
+  _ <- space
   args <- sepBy (withOptionalSpace recordItemParser) (literalWithSpace ",")
-  literalWithSpace "}"
+  _ <- space
+  _ <- string "}"
   pure (M.fromList args)
 
 recordItemParser :: Parser (Name, ParserExpr)
@@ -307,20 +314,49 @@ infixExpr =
 
 opParser :: Parser Operator
 opParser =
-  try (string "==" $> Equals)
-    <|> try (string "+" $> Add)
-    <|> try (string "-" $> Subtract)
-    <|> string "<>" $> StringConcat
+  try
+    ( inSpaces (string "==")
+        $> Equals
+    )
+    <|> try
+      ( inSpaces (string "+")
+          $> Add
+      )
+    <|> try
+      ( inSpaces (string "-")
+          $> Subtract
+      )
+    <|> try
+      ( inSpaces (string "<>")
+          $> StringConcat
+      )
+    <|> try
+      ( inSpaces
+          (Custom <$> infixOpParser)
+      )
+
+inSpaces :: Parser a -> Parser a
+inSpaces p = do
+  _ <- space1
+  p' <- p
+  _ <- space1
+  pure p'
 
 infixParser :: Parser ParserExpr
 infixParser =
-  let opParser' = do
-        _ <- space1
-        op <- opParser
-        _ <- space1
-        pure op
-   in addLocation
-        ( chainl1
-            infixExpr
-            (MyInfix mempty <$> opParser')
-        )
+  addLocation
+    ( chainl1
+        infixExpr
+        (MyInfix mempty <$> opParser)
+    )
+
+----------
+
+defineInfixParser :: Parser ParserExpr
+defineInfixParser = addLocation $ do
+  _ <- thenSpace (string "infix")
+  infixOp <- thenSpace infixOpParser
+  _ <- thenSpace (string "=")
+  boundName <- nameParser
+  _ <- withOptionalSpace (string ";")
+  MyDefineInfix mempty infixOp boundName <$> expressionParser

@@ -9,6 +9,7 @@ import Control.Monad.Reader
 import Control.Monad.Trans.State.Lazy
 import Language.Mimsa.Interpreter.HighestVar
 import Language.Mimsa.Interpreter.Interpret
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -27,6 +28,10 @@ interpret scope' swaps expr = fst <$> either'
       runReaderT
         ( runStateT
             (interpretWithScope expr)
-            (highestVar expr + 1, scope')
+            InterpretState
+              { isVarNum = highestVar expr + 1,
+                isScope = scope',
+                isInfix = mempty
+              }
         )
         swaps

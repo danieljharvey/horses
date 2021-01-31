@@ -3,6 +3,7 @@
 module Language.Mimsa.Parser.Identifiers
   ( varParser,
     nameParser,
+    infixOpParser,
     tyConParser,
     typedHoleParser,
     constructorParser,
@@ -33,7 +34,7 @@ nameParser :: Parser Name
 nameParser =
   maybePred
     identifier
-    (inProtected >=> safeMkName)
+    (filterProjectedNames >=> safeMkName)
 
 ---
 
@@ -44,7 +45,7 @@ tyConParser :: Parser TyCon
 tyConParser =
   maybePred
     identifier
-    (inProtected >=> safeMkTyCon)
+    (filterProjectedNames >=> safeMkTyCon)
 
 -----
 
@@ -56,3 +57,14 @@ typedHoleParser =
         _ <- string "?"
         nameParser
     )
+
+-----
+
+infixIdentifier :: Parser Text
+infixIdentifier = takeWhile1P (Just "infix operator") (not . Char.isSpace)
+
+infixOpParser :: Parser InfixOp
+infixOpParser =
+  maybePred
+    infixIdentifier
+    (filterProtectedOperators >=> safeMkInfixOp)

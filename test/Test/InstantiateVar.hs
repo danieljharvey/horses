@@ -9,6 +9,7 @@ where
 import Control.Monad.Reader
 import Control.Monad.State
 import Language.Mimsa.Interpreter.InstantiateVar
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -26,7 +27,11 @@ testInstantiate expr = fst <$> either'
             ( instantiateVar
                 expr
             )
-            (1, mempty)
+            InterpretState
+              { isVarNum = 1,
+                isScope = mempty,
+                isInfix = mempty
+              }
         )
         mempty
 

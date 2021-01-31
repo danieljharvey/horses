@@ -1,0 +1,1 @@
+{"storeExpression":{"tag":"MyInfix","contents":[[],{"tag":"Equals"},{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":true}]},{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":true}]}]},"storeBindings":{},"storeTypeBindings":{}}

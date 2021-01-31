@@ -42,6 +42,8 @@ data TypeError
   | IncompletePatternMatch Annotation [TyCon]
   | MixedUpPatterns [TyCon]
   | TypedHoles (Map Name (MonoType, Set Name))
+  | FunctionArityMismatch Annotation Int MonoType
+  | CouldNotFindInfixOperator Annotation InfixOp (Set InfixOp)
   deriving (Eq, Ord, Show)
 
 ------
@@ -84,6 +86,7 @@ getErrorPos (CannotMatchRecord _ ann _) = fromAnnotation ann
 getErrorPos (TypedHoles holes) = case M.toList holes of
   ((_, (mt, _)) : _) -> fromAnnotation (getAnnotationForType mt)
   _ -> fromAnnotation mempty
+getErrorPos (FunctionArityMismatch ann _ _) = fromAnnotation ann
 getErrorPos _ = (0, 0)
 
 ------
@@ -122,6 +125,11 @@ renderTypeError (UnificationError a b) =
   [ "Unification error",
     "Cannot match" <+> prettyDoc a <+> "and" <+> prettyDoc b
   ]
+renderTypeError (CouldNotFindInfixOperator _ op allOps) =
+  [ "Could not find infix operator " <> prettyDoc op,
+    "The following are available:"
+  ]
+    <> showSet prettyDoc allOps
 renderTypeError (CannotCaseMatchOnType ty) =
   ["Cannot case match on type", prettyDoc ty]
 renderTypeError (VariableNotInEnv swaps _ name members) =
@@ -190,6 +198,8 @@ renderTypeError (TypedHoles map') =
       if S.null s
         then ""
         else line <> indent 2 ("Suggestions:" <+> list (prettyDoc <$> S.toList s))
+renderTypeError (FunctionArityMismatch _ i mt) =
+  ["Function arity mismatch. Expected " <> pretty i <> " but got " <> prettyDoc mt]
 
 printDataTypes :: Environment -> [Doc ann]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

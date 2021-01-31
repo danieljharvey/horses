@@ -88,9 +88,20 @@ interpretOperator operator a b = do
       case (,) <$> getStr plainA <*> getStr plainB of
         Right (a', b') -> withStr (a' <> b')
         Left e -> throwError e
+    (Custom infixOp) -> do
+      opFn <- findOperator infixOp
+      case opFn of
+        Just fnVar -> do
+          fn <- useVar fnVar
+          interpretWithScope (MyApp mempty (MyApp mempty fn plainA) plainB)
+        Nothing ->
+          throwError (CouldNotFindInfixOp infixOp)
 
 -- warning, ordering is very important here to stop things looping forever
-interpretWithScope :: (Eq ann, Monoid ann) => Expr Variable ann -> App ann (Expr Variable ann)
+interpretWithScope ::
+  (Eq ann, Monoid ann) =>
+  Expr Variable ann ->
+  App ann (Expr Variable ann)
 interpretWithScope interpretExpr =
   case interpretExpr of
     (MyLet _ binder expr body) -> do
@@ -152,5 +163,8 @@ interpretWithScope interpretExpr =
     (MyCaseMatch _ expr' matches catchAll) -> do
       expr'' <- interpretWithScope expr'
       patternMatch expr'' matches catchAll >>= interpretWithScope
+    (MyDefineInfix _ op fn expr) -> do
+      addOperator op fn
+      interpretWithScope expr
     typedHole@MyTypedHole {} -> throwError (TypedHoleFound typedHole)
     expr -> bindExpr interpretWithScope expr

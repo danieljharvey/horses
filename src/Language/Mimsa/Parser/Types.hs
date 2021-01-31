@@ -5,6 +5,7 @@ module Language.Mimsa.Parser.Types
     ParseErrorType,
     ParserExpr,
     protectedNames,
+    protectedOperators,
   )
 where
 
@@ -34,7 +35,11 @@ protectedNames =
       "of",
       "type",
       "otherwise",
+      "infix",
       "True",
       "False",
       "Unit"
     ]
+
+protectedOperators :: Set Text
+protectedOperators = S.fromList ["=", "==", "+", "<>", "-", "|"]

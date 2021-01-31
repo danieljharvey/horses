@@ -43,6 +43,9 @@ stdLibE =
       "\\a -> a"
       (mkName "id")
     >>= addBinding
+      "\\f -> \\g -> \\a -> f(g(a))"
+      (mkName "compose")
+    >>= addBinding
       "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
       (mkName "fst")
     >>= addBinding

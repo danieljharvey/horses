@@ -109,9 +109,11 @@ varParser = do
 
 recordParser :: Parser MonoType
 recordParser = withLocation MTRecord $ do
-  literalWithSpace "{"
+  _ <- string "{"
+  _ <- space
   args <- sepBy (try $ withOptionalSpace recordItemParser) (literalWithSpace ",")
-  literalWithSpace "}"
+  _ <- space
+  _ <- string "}"
   pure (M.fromList args)
 
 recordItemParser :: Parser (Name, MonoType)
@@ -124,7 +126,7 @@ recordItemParser = do
 dataTypeParser :: Parser MonoType
 dataTypeParser =
   try multiDataTypeParser
-    <|> monoDataTypeParser
+    <|> try monoDataTypeParser
 
 spaceThen :: Parser a -> Parser a
 spaceThen p = do

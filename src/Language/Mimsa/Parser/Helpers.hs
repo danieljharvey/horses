@@ -7,7 +7,8 @@ module Language.Mimsa.Parser.Helpers
     addLocation,
     withLocation,
     maybePred,
-    inProtected,
+    filterProjectedNames,
+    filterProtectedOperators,
     inBrackets,
     orInBrackets,
     literalWithSpace,
@@ -80,6 +81,7 @@ mapOuterExprAnnotation f expr' =
     MyConsApp ann a b -> MyConsApp (f ann) a b
     MyCaseMatch ann a b c -> MyCaseMatch (f ann) a b c
     MyTypedHole ann a -> MyTypedHole (f ann) a
+    MyDefineInfix ann a b c -> MyDefineInfix (f ann) a b c
 
 -----
 
@@ -102,9 +104,15 @@ maybePred parser predicate' = try $ do
 
 -----
 
-inProtected :: Text -> Maybe Text
-inProtected tx =
+filterProjectedNames :: Text -> Maybe Text
+filterProjectedNames tx =
   if S.member tx protectedNames
+    then Nothing
+    else Just tx
+
+filterProtectedOperators :: Text -> Maybe Text
+filterProtectedOperators tx =
+  if S.member tx protectedOperators
     then Nothing
     else Just tx
 

@@ -1,0 +1,7 @@
+type Maybe a 
+  = Just a
+  | Nothing;
+case (Just 1) of 
+    Just (\a ->
+     eq(100)(a))
+  | otherwise False

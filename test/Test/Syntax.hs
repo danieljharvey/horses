@@ -364,7 +364,6 @@ spec = do
               )
               (MyRecord mempty mempty)
           )
-
     it "Parses a type declaration with a function and data type as arg" $
       testParse "type Reader r a = Reader (r -> (Pair a b)) in {}"
         `shouldBe` Right
@@ -390,7 +389,6 @@ spec = do
               )
               (MyRecord mempty mempty)
           )
-
     it "Uses a constructor" $
       testParse "Vrai" `shouldBe` Right (MyConstructor mempty (mkTyCon "Vrai"))
     it "Parses a custom case match" $
@@ -495,6 +493,10 @@ spec = do
               )
               (int 5)
           )
+    it "Parses big infix fest" $
+      testParse "id(1) + id(2) + id(3)" `shouldSatisfy` isRight
+    it "Parses big app in If" $
+      testParse "if id(True) then id(1) else id(2)" `shouldSatisfy` isRight
   describe "Test annotations" $ do
     it "Parses a var with location information" $
       testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) (mkName "dog"))
@@ -634,4 +636,13 @@ spec = do
           )
     it "Allows typed holes as function" $
       testParseWithAnn "\\a -> if ?tobool(a) then 1 else 2"
+        `shouldSatisfy` isRight
+    it "Parser function application in infix" $
+      testParseWithAnn "id(1) + 1" `shouldSatisfy` isRight
+    it "Accepts no whitespace after application" $
+      testParseWithAnn "id(1) " `shouldSatisfy` isLeft
+    it "Accepts no whitespace after record" $
+      testParseWithAnn "{ name: 1 } " `shouldSatisfy` isLeft
+    it "Parses the troublesome function" $
+      testParseWithAnn "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise Nowt"
         `shouldSatisfy` isRight

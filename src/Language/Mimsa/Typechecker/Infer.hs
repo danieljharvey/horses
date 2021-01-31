@@ -8,6 +8,7 @@ module Language.Mimsa.Typechecker.Infer
   )
 where
 
+import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.List.NonEmpty (NonEmpty)
@@ -70,8 +71,8 @@ inferAndSubst env expr = do
   pure (s, applySubst s tyExpr)
 
 applySubstCtx :: Substitutions -> Environment -> Environment
-applySubstCtx subst (Environment schemes dt) =
-  Environment (M.map (applySubstScheme subst) schemes) dt
+applySubstCtx subst (Environment schemes dt inf) =
+  Environment (M.map (applySubstScheme subst) schemes) dt inf
 
 applySubstScheme :: Substitutions -> Scheme -> Scheme
 applySubstScheme (Substitutions subst) (Scheme vars t) =
@@ -99,7 +100,7 @@ inferVarFromScope ::
   Annotation ->
   Variable ->
   TcMonad (Substitutions, MonoType)
-inferVarFromScope env@(Environment env' _) ann var' =
+inferVarFromScope env@(Environment env' _ _) ann var' =
   case M.lookup (variableToTypeIdentifier var') env' of
     Just mt ->
       instantiate mt
@@ -112,9 +113,28 @@ inferVarFromScope env@(Environment env' _) ann var' =
           var'
           (S.fromList (M.keys (getSchemes env)))
 
-createEnv :: Variable -> Scheme -> Environment
-createEnv binder scheme =
-  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty
+envFromVar :: Variable -> Scheme -> Environment
+envFromVar binder scheme =
+  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty
+
+envFromInfixOp :: InfixOp -> MonoType -> Environment
+envFromInfixOp infixOp mt =
+  Environment
+    mempty
+    mempty
+    (M.singleton infixOp mt)
+
+lookupInfixOp :: Environment -> Annotation -> InfixOp -> TcMonad MonoType
+lookupInfixOp env ann infixOp = do
+  case M.lookup infixOp (getInfix env) of
+    Just mt' -> pure mt'
+    Nothing ->
+      throwError
+        ( CouldNotFindInfixOperator
+            ann
+            infixOp
+            (M.keysSet (getInfix env))
+        )
 
 splitRecordTypes ::
   Map Name (Substitutions, MonoType) ->
@@ -162,9 +182,9 @@ inferLetBinding ::
 inferLetBinding env ann binder expr body = do
   tyUnknown <- getUnknown ann
   binderInExpr <- findActualBindingInSwaps binder
-  let newEnv1 = createEnv binderInExpr (Scheme mempty tyUnknown) <> env
+  let newEnv1 = envFromVar binderInExpr (Scheme mempty tyUnknown) <> env
   (s1, tyExpr) <- infer newEnv1 expr
-  let newEnv2 = createEnv binder (generalise s1 tyExpr) <> newEnv1
+  let newEnv2 = envFromVar binder (generalise s1 tyExpr) <> newEnv1
   (s2, tyBody) <- infer (applySubstCtx s1 newEnv2) body
   s3 <- unify tyUnknown tyExpr
   pure (s3 <> s2 <> s1, applySubst s3 tyBody)
@@ -187,7 +207,7 @@ inferLetPairBinding env binder1 binder2 expr body = do
     a -> throwError $ CaseMatchExpectedPair (getAnnotation expr) a
   let schemeA = Scheme mempty (applySubst s1 tyA)
       schemeB = Scheme mempty (applySubst s1 tyB)
-      newEnv = createEnv binder1 schemeA <> createEnv binder2 schemeB <> env
+      newEnv = envFromVar binder1 schemeA <> envFromVar binder2 schemeB <> env
   s2 <- unify tyExpr (MTPair mempty tyA tyB)
   (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
   pure (s3 <> s2 <> s1, tyBody)
@@ -203,7 +223,7 @@ storeDataDeclaration env dt@(DataType tyName _ _) expr' =
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName dt)
+      let newEnv = Environment mempty (M.singleton tyName dt) mempty
        in infer (newEnv <> env) expr'
 
 -- infer the type of a data constructor
@@ -417,6 +437,13 @@ inferOperator env ann Equals a b = do
 inferOperator env ann Add a b = inferInfix env MTInt ann a b
 inferOperator env ann Subtract a b = inferInfix env MTInt ann a b
 inferOperator env ann StringConcat a b = inferInfix env MTString ann a b
+inferOperator env ann (Custom infixOp) a b = do
+  tyRes <- getUnknown ann
+  tyFun <- lookupInfixOp env ann infixOp
+  (s1, tyArgA) <- infer env a
+  (s2, tyArgB) <- infer (applySubstCtx s1 env) b
+  s3 <- unify (applySubst s2 tyFun) (MTFunction ann tyArgA (MTFunction ann tyArgB tyRes))
+  pure (s3, tyRes)
 
 inferInfix ::
   Environment ->
@@ -456,14 +483,39 @@ inferLambda ::
   Variable ->
   TcExpr ->
   TcMonad (Substitutions, MonoType)
-inferLambda env@(Environment env' _) ann binder body = do
+inferLambda env@(Environment env' _ _) ann binder body = do
   tyBinder <- case M.lookup (variableToTypeIdentifier binder) env' of
     Just (Scheme _ found) -> pure found
     _ -> getUnknown ann
   let tmpCtx =
-        createEnv binder (Scheme [] tyBinder) <> env
+        envFromVar binder (Scheme [] tyBinder) <> env
   (s1, tyBody) <- infer tmpCtx body
   pure (s1, MTFunction ann (applySubst s1 tyBinder) tyBody)
+
+isTwoArityFunction :: MonoType -> Bool
+isTwoArityFunction (MTFunction _ _ MTFunction {}) = True
+isTwoArityFunction _ = False
+
+inferDefineInfix ::
+  Environment ->
+  Annotation ->
+  InfixOp ->
+  Variable ->
+  TcExpr ->
+  TcMonad (Substitutions, MonoType)
+inferDefineInfix env ann infixOp bindName expr = do
+  u1 <- getUnknown ann
+  u2 <- getUnknown ann
+  u3 <- getUnknown ann
+  (_, tyBind) <- inferVarFromScope env ann bindName
+  let arityError = FunctionArityMismatch (getAnnotationForType tyBind) 2 tyBind
+  _ <-
+    unify tyBind (MTFunction mempty u1 (MTFunction mempty u2 u3))
+      <|> throwError arityError
+  let newEnv = envFromInfixOp infixOp tyBind <> env
+  if isTwoArityFunction tyBind
+    then infer newEnv expr
+    else throwError arityError
 
 infer ::
   Environment ->
@@ -513,3 +565,5 @@ infer env inferExpr =
       inferApplication env ann cons val
     (MyCaseMatch ann expr' matches catchAll) ->
       inferCaseMatch env ann expr' matches catchAll
+    (MyDefineInfix ann infixOp bindName expr) ->
+      inferDefineInfix env ann infixOp bindName expr

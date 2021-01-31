@@ -27,6 +27,7 @@ import Data.Text.Prettyprint.Doc
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType (DataType)
+import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
@@ -61,6 +62,8 @@ data Expr var ann
     MyRecord ann (Map Name (Expr var ann))
   | -- | a.foo
     MyRecordAccess ann (Expr var ann) Name
+  | -- | infix, name, expr
+    MyDefineInfix ann InfixOp var (Expr var ann)
   | -- | tyName, tyArgs, Map constructor args, body
     MyData ann DataType (Expr var ann)
   | -- | use a constructor by name
@@ -105,6 +108,7 @@ getAnnotation (MyConstructor ann _) = ann
 getAnnotation (MyConsApp ann _ _) = ann
 getAnnotation (MyCaseMatch ann _ _ _) = ann
 getAnnotation (MyTypedHole ann _) = ann
+getAnnotation (MyDefineInfix ann _ _ _) = ann
 
 -- | Map a function `f` over the expression. This function takes care of
 -- recursing through the Expression
@@ -131,6 +135,8 @@ mapExpr f (MyConsApp ann func arg) =
 mapExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
   MyCaseMatch ann (f matchExpr) (second f <$> caseExprs) (f <$> catchExpr)
 mapExpr _ (MyTypedHole ann a) = MyTypedHole ann a
+mapExpr f (MyDefineInfix ann op bindName inExpr) =
+  MyDefineInfix ann op bindName (f inExpr)
 
 -- | Bind a function `f` over the expression. This function takes care of
 -- recursing through the expression.
@@ -176,6 +182,8 @@ bindExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
   where
     traverseSecond (a, b) = (a,) <$> f b
 bindExpr _ (MyTypedHole ann a) = pure (MyTypedHole ann a)
+bindExpr f (MyDefineInfix ann op bindName expr) =
+  MyDefineInfix ann op bindName <$> f expr
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`
@@ -237,6 +245,9 @@ withMonoid f whole@(MyCaseMatch _ matchExpr caseExprs catchExpr) =
       )
     <> maybe mempty (withMonoid f) catchExpr
 withMonoid f whole@MyTypedHole {} = f whole
+withMonoid f whole@(MyDefineInfix _ _ _ inExpr) =
+  f whole
+    <> withMonoid f inExpr
 
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) = prettyDoc l
@@ -302,6 +313,12 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
               <> printSubExpr val
         )
           <$> M.toList map'
+  prettyDoc (MyDefineInfix _ infixOp bindName expr) =
+    "infix" <+> prettyDoc infixOp <+> "="
+      <+> prettyDoc bindName
+      <> ";"
+      <> line
+      <> prettyDoc expr
   prettyDoc (MyData _ dataType expr) =
     prettyDoc dataType
       <> ";"
