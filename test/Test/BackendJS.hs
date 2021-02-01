@@ -20,7 +20,7 @@ import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Repl
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers ()
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
@@ -97,18 +97,18 @@ spec = do
         result `shouldSatisfy` isRight
   describe "Normalise constructors" $ do
     it "is a no-op for nullary constructors" $ do
-      let a = MyConstructor () (mkTyCon "Nowt")
+      let a = MyConstructor () "Nowt"
       normaliseConstructors dataTypes a `shouldBe` a
     it "turns unary constructor into lambda function" $ do
-      let a = MyConstructor () (mkTyCon "Some")
+      let a = MyConstructor () "Some"
       let expected =
             MyLambda
               mempty
               "a"
-              (MyConsApp mempty (MyConstructor mempty (mkTyCon "Some")) (MyVar mempty "a"))
+              (MyConsApp mempty (MyConstructor mempty "Some") (MyVar mempty "a"))
       normaliseConstructors dataTypes a `shouldBe` expected
     it "turns binary constructor into two lambda functions" $ do
-      let a = MyConstructor () (mkTyCon "These")
+      let a = MyConstructor () "These"
       let expected =
             MyLambda
               mempty
@@ -120,7 +120,7 @@ spec = do
                       mempty
                       ( MyConsApp
                           mempty
-                          (MyConstructor mempty (mkTyCon "These"))
+                          (MyConstructor mempty "These")
                           (MyVar mempty "a")
                       )
                       (MyVar mempty "b")
@@ -128,7 +128,7 @@ spec = do
               )
       normaliseConstructors dataTypes a `shouldBe` expected
     it "partially applies when wrapped in ConsApp" $ do
-      let a = MyConsApp () (MyConstructor mempty (mkTyCon "These")) (int 1)
+      let a = MyConsApp () (MyConstructor mempty "These") (int 1)
       let expected =
             MyLambda
               mempty
@@ -137,7 +137,7 @@ spec = do
                   mempty
                   ( MyConsApp
                       mempty
-                      (MyConstructor mempty (mkTyCon "These"))
+                      (MyConstructor mempty "These")
                       (int 1)
                   )
                   (MyVar mempty "b")
@@ -149,7 +149,7 @@ spec = do
               ()
               ( MyConsApp
                   mempty
-                  (MyConstructor mempty (mkTyCon "These"))
+                  (MyConstructor mempty "These")
                   (int 1)
               )
               (int 2)

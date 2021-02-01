@@ -175,7 +175,7 @@ spec = do
     it "Parses var and number equality" $
       testParse "a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty "a") (int 1))
     it "Parsers two constructor applications with infix operator" $
-      let mkSome = MyConsApp mempty (MyConstructor mempty (mkTyCon "Some"))
+      let mkSome = MyConsApp mempty (MyConstructor mempty "Some")
        in testParse "(Some 1) == Some 2"
             `shouldBe` Right (MyInfix mempty Equals (mkSome (int 1)) (mkSome (int 2)))
     it "Parses an empty record literal" $
@@ -230,7 +230,7 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Void")
+                  "Void"
                   mempty
                   mempty
               )
@@ -242,9 +242,9 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "AbsoluteUnit")
+                  "AbsoluteUnit"
                   mempty
-                  (M.singleton (mkTyCon "AbsoluteUnit") mempty)
+                  (M.singleton "AbsoluteUnit" mempty)
               )
               (int 1)
           )
@@ -254,11 +254,11 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Arr")
+                  "Arr"
                   ["a"]
                   ( M.fromList
-                      [ (mkTyCon "Empty", mempty),
-                        ( mkTyCon "Item",
+                      [ ("Empty", mempty),
+                        ( "Item",
                           [VarName "a"]
                         )
                       ]
@@ -275,11 +275,11 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Dog")
+                  "Dog"
                   mempty
                   ( M.singleton
-                      (mkTyCon "Dog")
-                      [ConsName (mkTyCon "String") mempty]
+                      "Dog"
+                      [ConsName "String" mempty]
                   )
               )
               (int 1)
@@ -290,11 +290,11 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "LeBool")
+                  "LeBool"
                   mempty
                   ( M.fromList
-                      [ (mkTyCon "Vrai", []),
-                        (mkTyCon "Faux", [])
+                      [ ("Vrai", []),
+                        ("Faux", [])
                       ]
                   )
               )
@@ -306,11 +306,11 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Nat")
+                  "Nat"
                   mempty
                   ( M.fromList
-                      [ (mkTyCon "Zero", []),
-                        (mkTyCon "Succ", [ConsName (mkTyCon "Nat") mempty])
+                      [ ("Zero", []),
+                        ("Succ", [ConsName "Nat" mempty])
                       ]
                   )
               )
@@ -323,7 +323,7 @@ spec = do
               mempty
               ( MyConsApp
                   mempty
-                  (MyConstructor mempty $ mkTyCon "Dog")
+                  (MyConstructor mempty "Dog")
                   (str' "hi")
               )
               (str' "dog")
@@ -334,15 +334,15 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Maybe")
+                  "Maybe"
                   ["a"]
                   ( M.fromList
-                      [ (mkTyCon "Just", [VarName "a"]),
-                        (mkTyCon "Nothing", [])
+                      [ ("Just", [VarName "a"]),
+                        ("Nothing", [])
                       ]
                   )
               )
-              (MyConstructor mempty $ mkTyCon "Nothing")
+              (MyConstructor mempty "Nothing")
           )
     it "Parses a type declaration with a function as arg" $
       testParse "type Reader r a = Reader (r -> a) in {}"
@@ -350,10 +350,10 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Reader")
+                  "Reader"
                   ["r", "a"]
                   ( M.fromList
-                      [ ( mkTyCon "Reader",
+                      [ ( "Reader",
                           [ TNFunc
                               (VarName "r")
                               (VarName "a")
@@ -370,14 +370,14 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Reader")
+                  "Reader"
                   ["r", "a"]
                   ( M.fromList
-                      [ ( mkTyCon "Reader",
+                      [ ( "Reader",
                           [ TNFunc
                               (VarName "r")
                               ( ConsName
-                                  (mkTyCon "Pair")
+                                  "Pair"
                                   [ VarName "a",
                                     VarName "b"
                                   ]
@@ -390,16 +390,16 @@ spec = do
               (MyRecord mempty mempty)
           )
     it "Uses a constructor" $
-      testParse "Vrai" `shouldBe` Right (MyConstructor mempty (mkTyCon "Vrai"))
+      testParse "Vrai" `shouldBe` Right (MyConstructor mempty "Vrai")
     it "Parses a custom case match" $
       testParse "case Just 1 of Just \\a -> a | Nothing 0"
         `shouldBe` Right
           ( MyCaseMatch
               mempty
-              (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Just") (int 1))
+              (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
               ( NE.fromList
-                  [ (mkTyCon "Just", MyLambda mempty "a" (MyVar mempty "a")),
-                    (mkTyCon "Nothing", int 0)
+                  [ ("Just", MyLambda mempty "a" (MyVar mempty "a")),
+                    ("Nothing", int 0)
                   ]
               )
               Nothing
@@ -409,9 +409,9 @@ spec = do
         `shouldBe` Right
           ( MyCaseMatch
               mempty
-              (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Just") (int 1))
+              (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
               ( NE.fromList
-                  [ (mkTyCon "Just", MyLambda mempty "a" (MyVar mempty "a"))
+                  [ ("Just", MyLambda mempty "a" (MyVar mempty "a"))
                   ]
               )
               (Just $ int 0)
@@ -422,19 +422,19 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Tree")
+                  "Tree"
                   ["a"]
                   ( M.fromList
-                      [ (mkTyCon "Leaf", [VarName "a"]),
-                        ( mkTyCon "Branch",
-                          [ ConsName (mkTyCon "Tree") [VarName "a"],
-                            ConsName (mkTyCon "Tree") [VarName "b"]
+                      [ ("Leaf", [VarName "a"]),
+                        ( "Branch",
+                          [ ConsName "Tree" [VarName "a"],
+                            ConsName "Tree" [VarName "b"]
                           ]
                         )
                       ]
                   )
               )
-              (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Leaf") (int 1))
+              (MyConsApp mempty (MyConstructor mempty "Leaf") (int 1))
           )
     it "Parses even more complex type constructors" $
       testParse "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
@@ -442,14 +442,14 @@ spec = do
           ( MyData
               mempty
               ( DataType
-                  (mkTyCon "Tree")
+                  "Tree"
                   ["a"]
                   ( M.fromList
-                      [ (mkTyCon "Empty", mempty),
-                        ( mkTyCon "Branch",
-                          [ ConsName (mkTyCon "Tree") [VarName "a"],
+                      [ ("Empty", mempty),
+                        ( "Branch",
+                          [ ConsName "Tree" [VarName "a"],
                             VarName "a",
-                            ConsName (mkTyCon "Tree") [VarName "a"]
+                            ConsName "Tree" [VarName "a"]
                           ]
                         )
                       ]
@@ -461,12 +461,12 @@ spec = do
                       mempty
                       ( MyConsApp
                           mempty
-                          (MyConstructor mempty $ mkTyCon "Branch")
-                          (MyConstructor mempty $ mkTyCon "Empty")
+                          (MyConstructor mempty "Branch")
+                          (MyConstructor mempty "Empty")
                       )
                       (int 1)
                   )
-                  (MyConstructor mempty $ mkTyCon "Empty")
+                  (MyConstructor mempty "Empty")
               )
           )
     it "Parses big function application" $
@@ -501,7 +501,7 @@ spec = do
     it "Parses a var with location information" $
       testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")
     it "Parses a tyCon with location information" $
-      testParseWithAnn "Log" `shouldBe` Right (MyConstructor (Location 0 3) (mkTyCon "Log"))
+      testParseWithAnn "Log" `shouldBe` Right (MyConstructor (Location 0 3) "Log")
     it "Parses a true bool with location information" $
       testParseWithAnn "True" `shouldBe` Right (MyLiteral (Location 0 4) (MyBool True))
     it "Parses a false bool with location information" $
@@ -593,9 +593,9 @@ spec = do
           ( MyData
               (Location 0 25)
               ( DataType
-                  (mkTyCon "MyUnit")
+                  "MyUnit"
                   mempty
-                  (M.singleton (mkTyCon "MyUnit") mempty)
+                  (M.singleton "MyUnit" mempty)
               )
               (MyLiteral (Location 24 25) (MyInt 1))
           )
@@ -604,7 +604,7 @@ spec = do
         `shouldBe` Right
           ( MyConsApp
               (Location 0 6)
-              (MyConstructor (Location 0 4) (mkTyCon "Just"))
+              (MyConstructor (Location 0 4) "Just")
               (MyLiteral (Location 5 6) (MyInt 1))
           )
     it "Parses case match with location information" $
@@ -614,13 +614,13 @@ spec = do
               (Location 0 35)
               (MyVar (Location 5 6) "a")
               ( NE.fromList
-                  [ ( mkTyCon "Just",
+                  [ ( "Just",
                       MyLambda
                         (Location 15 23)
                         "as"
                         (MyLiteral (Location 22 23) (MyInt 1))
                     ),
-                    (mkTyCon "Nothing", MyLiteral (Location 34 35) (MyInt 0))
+                    ("Nothing", MyLiteral (Location 34 35) (MyInt 0))
                   ]
               )
               Nothing

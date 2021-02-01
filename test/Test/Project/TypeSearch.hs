@@ -72,8 +72,8 @@ spec =
                 (MTFunction mempty (typeName "a") (typeName "b"))
                 ( MTFunction
                     mempty
-                    (MTData mempty (mkTyCon "Option") [typeName "a"])
-                    (MTData mempty (mkTyCon "Option") [typeName "b"])
+                    (MTData mempty "Option" [typeName "a"])
+                    (MTData mempty "Option" [typeName "b"])
                 )
         typeSearchFromText typeMap "(a -> b) -> (Option a) -> (Option b)"
           `shouldBe` Right

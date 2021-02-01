@@ -46,12 +46,12 @@ constExpr =
 
 maybeDecl :: DataType
 maybeDecl =
-  DataType (mkTyCon "Maybe") ["a"] cons'
+  DataType "Maybe" ["a"] cons'
   where
     cons' =
       M.fromList
-        [ (mkTyCon "Just", [VarName "a"]),
-          (mkTyCon "Nothing", [])
+        [ ("Just", [VarName "a"]),
+          ("Nothing", [])
         ]
 
 maybeExpr :: Monoid ann => StoreExpression ann
@@ -199,7 +199,7 @@ spec = do
             StoreExpression
               expr
               mempty
-              (TypeBindings $ M.singleton (mkTyCon "Maybe") hash)
+              (TypeBindings $ M.singleton "Maybe" hash)
           store' = storeWithBothIn
           ans = testSubstitute store' storeExpr
       seSwaps ans `shouldBe` mempty

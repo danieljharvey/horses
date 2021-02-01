@@ -118,7 +118,7 @@ spec =
             )
     describe "createTypeStoreExpression" $ do
       it "Creates the most basic StoreExpression for a type" $ do
-        let dt = DataType (mkTyCon "Void") mempty mempty
+        let dt = DataType "Void" mempty mempty
             expr = MyData mempty dt (MyRecord mempty mempty)
             storeExpr = createStoreExpression' mempty mempty expr
         storeExpr
@@ -130,22 +130,22 @@ spec =
                 }
             )
       it "Throws when trying to use an unavailable type" $ do
-        let cons' = ConsName (mkTyCon "MyUnit") []
+        let cons' = ConsName "MyUnit" []
             dt =
               DataType
-                (mkTyCon "VoidBox")
+                "VoidBox"
                 mempty
-                (M.singleton (mkTyCon "Box") [cons'])
+                (M.singleton "Box" [cons'])
             storeExpr = createTypeStoreExpression' mempty dt
         storeExpr
-          `shouldBe` Left (MissingType (mkTyCon "MyUnit") mempty)
+          `shouldBe` Left (MissingType "MyUnit" mempty)
       it "Creates a StoreExpression that uses a type from the type bindings" $ do
-        let cons' = ConsName (mkTyCon "MyUnit") []
+        let cons' = ConsName "MyUnit" []
             dt =
               DataType
-                (mkTyCon "VoidBox")
+                "VoidBox"
                 mempty
-                (M.singleton (mkTyCon "Box") [cons'])
+                (M.singleton "Box" [cons'])
             hash = exprHash 123
             tBindings' = TypeBindings $ M.singleton (TyCon "MyUnit") hash
             storeExpr = createTypeStoreExpression' tBindings' dt

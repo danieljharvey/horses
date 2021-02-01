@@ -13,7 +13,7 @@ import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.MonoType
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers ()
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
@@ -132,7 +132,7 @@ spec =
                       (MTPrim mempty MTInt)
                       ( MTData
                           mempty
-                          (mkTyCon "Maybe")
+                          "Maybe"
                           [MTPrim mempty MTInt]
                       )
                   ),
@@ -145,7 +145,7 @@ spec =
                           (MTVar mempty (tvNamed "b"))
                           ( MTData
                               mempty
-                              (mkTyCon "Either")
+                              "Either"
                               [ MTPrim mempty MTString,
                                 MTPrim mempty MTInt
                               ]
@@ -157,13 +157,13 @@ spec =
     it "Nullary data type" $
       testParser "MyUnit"
         `shouldBe` Right
-          (MTData mempty (mkTyCon "MyUnit") mempty)
+          (MTData mempty "MyUnit" mempty)
     it "Unary data type" $
       testParser "Maybe String"
         `shouldBe` Right
           ( MTData
               mempty
-              (mkTyCon "Maybe")
+              "Maybe"
               [MTPrim mempty MTString]
           )
     it "Binary data type" $
@@ -171,7 +171,7 @@ spec =
         `shouldBe` Right
           ( MTData
               mempty
-              (mkTyCon "Either")
+              "Either"
               [ MTPrim mempty MTString,
                 MTPrim mempty MTInt
               ]
@@ -181,11 +181,11 @@ spec =
         `shouldBe` Right
           ( MTData
               mempty
-              (mkTyCon "Either")
+              "Either"
               [ MTPrim mempty MTString,
                 MTData
                   mempty
-                  (mkTyCon "Maybe")
+                  "Maybe"
                   [MTPrim mempty MTInt]
               ]
           )
@@ -194,7 +194,7 @@ spec =
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTData mempty (mkTyCon "MyUnit") mempty)
+              (MTData mempty "MyUnit" mempty)
               (MTPrim mempty MTInt)
           )
     it "Functions with datatypes with brackets" $
@@ -202,7 +202,7 @@ spec =
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTData mempty (mkTyCon "Maybe") [MTPrim mempty MTString])
+              (MTData mempty "Maybe" [MTPrim mempty MTString])
               (MTPrim mempty MTInt)
           )
     it "Functions with datatypes with no brackets" $
@@ -210,7 +210,7 @@ spec =
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTData mempty (mkTyCon "Maybe") [typeName "a"])
+              (MTData mempty "Maybe" [typeName "a"])
               (typeName "b")
           )
     it "Parses higher order function" $
@@ -231,7 +231,7 @@ spec =
           ( MTFunction
               mempty
               (MTFunction mempty (typeName "a") (typeName "b"))
-              (MTData mempty (mkTyCon "Option") [typeName "a"])
+              (MTData mempty "Option" [typeName "a"])
           )
     it "Parses weird variation on fmap" $
       testParser "(a -> b) -> Option (a -> Option b)"
@@ -241,11 +241,11 @@ spec =
               (MTFunction mempty (typeName "a") (typeName "b"))
               ( MTData
                   mempty
-                  (mkTyCon "Option")
+                  "Option"
                   [ MTFunction
                       mempty
                       (typeName "a")
-                      (MTData mempty (mkTyCon "Option") [typeName "b"])
+                      (MTData mempty "Option" [typeName "b"])
                   ]
               )
           )
@@ -257,7 +257,7 @@ spec =
               (MTFunction mempty (typeName "a") (typeName "b"))
               ( MTFunction
                   mempty
-                  (MTData mempty (mkTyCon "Option") [typeName "a"])
-                  (MTData mempty (mkTyCon "Option") [typeName "b"])
+                  (MTData mempty "Option" [typeName "a"])
+                  (MTData mempty "Option" [typeName "b"])
               )
           )

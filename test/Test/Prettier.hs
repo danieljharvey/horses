@@ -24,7 +24,7 @@ spec =
             expr' =
               MyConsApp
                 ()
-                (MyConstructor mempty (mkTyCon "Some"))
+                (MyConstructor mempty "Some")
                 (MyInfix mempty Equals (int 1) (int 1))
         prettyPrint expr'
           `shouldBe` "Some (1 == 1)"
@@ -53,7 +53,7 @@ spec =
                       ( "maybeDog",
                         MTData
                           mempty
-                          (mkTyCon "Maybe")
+                          "Maybe"
                           [MTPrim mempty MTString]
                       )
                     ]
