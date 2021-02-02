@@ -14,6 +14,7 @@ import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.Identifiers.Name
 
 newtype TyCon = TyCon Text
   deriving (ToSchema)
@@ -53,3 +54,8 @@ safeMkTyCon a =
 
 instance Printer TyCon where
   prettyDoc = pretty . getTyCon
+
+tyConToName :: TyCon -> Name
+tyConToName (TyCon tc) = Name (tHead <> T.tail tc)
+  where
+    tHead = T.pack . pure . Ch.toLower . T.head $ tc

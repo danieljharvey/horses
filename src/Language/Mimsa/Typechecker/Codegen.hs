@@ -1,23 +1,29 @@
-module Language.Mimsa.Typechecker.Codegen (Typeclass (..), typeclassMatches) where
+module Language.Mimsa.Typechecker.Codegen
+  ( Typeclass (..),
+    typeclassMatches,
+    module Language.Mimsa.Typechecker.Codegen.Newtype,
+    module Language.Mimsa.Typechecker.Codegen.Enum,
+    module Language.Mimsa.Typechecker.Codegen.Functor,
+  )
+where
 
-import qualified Data.Map as M
-import Data.Monoid
+import Data.Either (isRight)
+import Language.Mimsa.Typechecker.Codegen.Enum
+import Language.Mimsa.Typechecker.Codegen.Functor
+import Language.Mimsa.Typechecker.Codegen.Newtype
 import Language.Mimsa.Types.AST
 
-data Typeclass = Enum
+data Typeclass
+  = Enum
+  | Newtype
+  | Functor
   deriving (Eq, Ord, Show)
 
--- if we can constructors with no args, it's an enum which we can show
-isEnum :: DataType -> Bool
-isEnum (DataType _ _ items) = M.size items > 0 && noConsArgs
-  where
-    noConsArgs :: Bool
-    noConsArgs = getAll (foldMap (All . null) (M.elems items))
-
-{-
-isNewtype :: DataType -> Bool
-isNewtype (DataType _ _ items) = M.size items == 1 &&
--}
+tcPred :: (DataType -> Bool) -> [a] -> DataType -> [a]
+tcPred predicate as dt = if predicate dt then as else mempty
 
 typeclassMatches :: DataType -> [Typeclass]
-typeclassMatches dt = if isEnum dt then [Enum] else mempty
+typeclassMatches dt =
+  tcPred (isRight . toString) [Enum] dt
+    <> tcPred (\a -> isRight (wrap a) && isRight (unwrap a)) [Newtype] dt
+    <> tcPred (isRight . functorMap) [Functor] dt
