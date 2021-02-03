@@ -56,6 +56,6 @@ instance Printer TyCon where
   prettyDoc = pretty . getTyCon
 
 tyConToName :: TyCon -> Name
-tyConToName (TyCon tc) = Name (tHead <> T.tail tc)
+tyConToName (TyCon tc) = mkName (tHead <> T.tail tc)
   where
     tHead = T.pack . pure . Ch.toLower . T.head $ tc

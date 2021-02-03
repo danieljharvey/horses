@@ -46,7 +46,7 @@ dtWrappedString =
   DataType
     "WrappedString"
     mempty
-    (M.singleton "Wrapped" [VarName "String"])
+    (M.singleton "Wrapped" [ConsName "String" mempty])
 
 -- | Identity monad
 dtIdentity :: DataType
@@ -82,9 +82,12 @@ typecheckInstance ::
   DataType ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 typecheckInstance mkInstance dt =
-  inst'
-    >>= (\expr -> getTypecheckedStoreExpression (prettyPrint expr) stdLib expr)
+  (,) <$> newStdLib <*> inst'
+    >>= ( \(stdLib', expr) ->
+            getTypecheckedStoreExpression (prettyPrint expr) stdLib' expr
+        )
   where
+    newStdLib = addBinding (prettyPrint dt <> " in {}") "temporaryAddType" stdLib
     inst' =
       first ParseError (fmap ($> mempty) (mkInstance dt))
 
