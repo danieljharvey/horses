@@ -15,12 +15,14 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
+import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Typechecker.Codegen
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
@@ -49,6 +51,18 @@ testWithIdInExpr =
 
 onePlusOneExpr :: Expr Name Annotation
 onePlusOneExpr = MyInfix mempty Add (int 1) (int 1)
+
+-- | has no constructors, we can do nothing with this
+dtVoid :: DataType
+dtVoid = DataType "Void" mempty mempty
+
+-- | Identity monad
+dtIdentity :: DataType
+dtIdentity =
+  DataType
+    "Identity"
+    ["a"]
+    (M.singleton "Identity" [VarName "a"])
 
 fromRight :: (Printer e) => Either e a -> a
 fromRight either' = case either' of
@@ -182,10 +196,54 @@ spec = do
       it "Should return an error for a broken expr" $ do
         Actions.run stdLib (Actions.evaluate (prettyPrint brokenExpr) brokenExpr) `shouldSatisfy` isLeft
       it "Should evaluate an expression" $ do
-        case Actions.run stdLib (Actions.evaluate (prettyPrint onePlusOneExpr) onePlusOneExpr) of
-          Left _ -> error "Should not have failed"
-          Right (newProject, _, (mt, expr, _)) -> do
-            mt $> () `shouldBe` MTPrim mempty MTInt
-            expr $> () `shouldBe` int 2
-            -- project should be untouched
-            newProject `shouldBe` stdLib
+        let action = Actions.evaluate (prettyPrint onePlusOneExpr) onePlusOneExpr
+        let (newProject, _, (mt, expr, _)) = fromRight (Actions.run stdLib action)
+        mt $> () `shouldBe` MTPrim mempty MTInt
+        expr $> () `shouldBe` int 2
+        -- project should be untouched
+        newProject `shouldBe` stdLib
+    describe "BindType" $ do
+      it "Should bind Void but create no functions" $ do
+        let action = Actions.bindType (prettyPrint dtVoid) dtVoid "void"
+        let (newProject, outcomes, outputs) = fromRight (Actions.run stdLib action)
+        -- no codegen matches this datatype
+        outputs `shouldBe` mempty
+        -- one more item in store
+        projectStoreSize newProject
+          `shouldBe` projectStoreSize stdLib + 1
+        -- one more binding
+        lookupBindingName
+          newProject
+          "void"
+          `shouldSatisfy` isJust
+        -- one more type binding
+        lookupTypeBindingName
+          newProject
+          "Void"
+          `shouldSatisfy` isJust
+        -- one new store expression
+        S.size
+          (Actions.storeExpressionsFromOutcomes outcomes)
+          `shouldBe` 1
+      it "Should bind Identity and create newtype and functor functions" $ do
+        let action = Actions.bindType (prettyPrint dtIdentity) dtIdentity "identity"
+        let (newProject, outcomes, outputs) = fromRight (Actions.run stdLib action)
+        -- no codegen matches this datatype
+        outputs `shouldBe` [Newtype, Functor]
+        -- four more item in store
+        projectStoreSize newProject
+          `shouldBe` projectStoreSize stdLib + 4
+        -- one more binding
+        lookupBindingName
+          newProject
+          "identity"
+          `shouldSatisfy` isJust
+        -- one more type binding
+        lookupTypeBindingName
+          newProject
+          "Identity"
+          `shouldSatisfy` isJust
+        -- four new store expression
+        S.size
+          (Actions.storeExpressionsFromOutcomes outcomes)
+          `shouldBe` 4
