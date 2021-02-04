@@ -19,7 +19,7 @@ wrap :: DataType -> Either Text (Expr Name ())
 wrap (DataType _tyCon _vars items) =
   case getOnlyMapItem items of
     Nothing -> Left "Type should have one constructor"
-    Just (consName, [VarName _a]) ->
+    Just (consName, [_a]) ->
       Right
         ( MyLambda
             mempty
@@ -39,7 +39,7 @@ unwrap (DataType tyCon _vars items) = do
   let tyName = tyConToName tyCon
   case getOnlyMapItem items of
     Nothing -> Left "Type should have one constructor"
-    Just (consName, [VarName _a]) ->
+    Just (consName, [_a]) ->
       Right
         ( MyLambda
             mempty
