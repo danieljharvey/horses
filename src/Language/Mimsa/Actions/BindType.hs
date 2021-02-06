@@ -16,6 +16,7 @@ import Language.Mimsa.Store
 import Language.Mimsa.Typechecker.Codegen
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
@@ -23,77 +24,86 @@ import Language.Mimsa.Types.Store
 bindType ::
   Text ->
   DataType ->
-  Name ->
-  Actions.ActionM [Typeclass]
-bindType input dt name = do
+  Actions.ActionM ([Typeclass], Name)
+bindType input dt = do
+  addTypeToProject input dt
+  let name = tyConToName (dtName dt)
   project <- Actions.getProject
-  storeExpr <- createStoreExpressions input dt
-  let typeclasses = typeclassMatches dt
-  Actions.bindStoreExpression storeExpr name
-  case lookupBindingName project name of
+  codegenExpr <- createCodegenFunction project dt
+  Actions.appendMessage
+    ( "Bound type " <> prettyPrint (dtName dt) <> "."
+    )
+  case codegenExpr of
     Nothing -> do
-      Actions.appendMessage
-        ( "Bound type " <> prettyPrint name <> "."
-        )
-      pure typeclasses
-    Just _oldExprHash ->
+      pure (mempty, name)
+    Just codegenFunc ->
       do
+        Actions.bindStoreExpression codegenFunc name
         Actions.appendMessage
-          ( "Updated type binding of " <> prettyPrint name <> "."
+          ( "Generated functions bound to " <> prettyPrint name <> "."
           )
-        pure typeclasses
+        pure (typeclassMatches dt, name)
 
-createStoreExpressions :: Text -> DataType -> Actions.ActionM (StoreExpression Annotation)
-createStoreExpressions input dt = do
+addTypeToProject :: Text -> DataType -> Actions.ActionM ()
+addTypeToProject input dt = do
   project <- Actions.getProject
-  let funcMap = doCodegen dt
+  -- create storeExpr for new datatype
   resolvedTypeExpr <-
     liftEither $
-      getTypecheckedStoreExpression input project (MyData mempty dt (MyLiteral mempty (MyUnit mempty)))
-  let projectWithType =
+      getTypecheckedStoreExpression
+        input
         project
-          <> fromType
-            (reStoreExpression resolvedTypeExpr)
-            (getStoreExpressionHash (reStoreExpression resolvedTypeExpr))
-  storeExprs <-
-    traverse
-      ( \(name, expr) -> do
-          resolvedExpr <-
-            liftEither $
-              getTypecheckedStoreExpression
-                (prettyPrint expr)
-                projectWithType
-                expr
-          Actions.appendStoreExpression (reStoreExpression resolvedExpr)
-          pure
-            (name, reStoreExpression resolvedExpr)
-      )
-      (M.toList funcMap)
-  -- create project items for use in our record type
-  let newProjectItems =
-        mconcat
-          ( ( \(name, expr) ->
-                fromItem
-                  name
-                  expr
-                  (getStoreExpressionHash expr)
-            )
-              <$> storeExprs
-          )
-  -- add these new expressions (but not their bindings) to the project Store
-  Actions.appendProject
-    ( mconcat
-        ( ( \se ->
-              fromStoreExpression
-                se
-                (getStoreExpressionHash se)
-          )
-            . snd
-            <$> storeExprs
+        ( MyData
+            mempty
+            dt
+            (MyLiteral mempty (MyUnit mempty))
         )
-    )
-  let realFunctionMap = M.mapWithKey (\k _ -> MyVar mempty k) funcMap
-  let recordExpr = MyData mempty dt (MyRecord mempty realFunctionMap)
-  (ResolvedExpression _ storeExpr _ _ _) <-
-    liftEither $ getTypecheckedStoreExpression input (projectWithType <> newProjectItems) recordExpr
-  pure storeExpr
+  Actions.bindTypeExpression (reStoreExpression resolvedTypeExpr)
+
+createCodegenFunction :: Project Annotation -> DataType -> Actions.ActionM (Maybe (StoreExpression Annotation))
+createCodegenFunction project dt =
+  case doCodegen dt of
+    items | M.null items -> pure Nothing
+    funcMap -> do
+      storeExprs <-
+        traverse
+          ( \(name, expr) -> do
+              resolvedExpr <-
+                liftEither $
+                  getTypecheckedStoreExpression
+                    (prettyPrint expr)
+                    project
+                    expr
+              Actions.appendStoreExpression (reStoreExpression resolvedExpr)
+              pure
+                (name, reStoreExpression resolvedExpr)
+          )
+          (M.toList funcMap)
+      -- create project items for use in our record type
+      let newProjectItems =
+            mconcat
+              ( ( \(name, expr) ->
+                    fromItem
+                      name
+                      expr
+                      (getStoreExpressionHash expr)
+                )
+                  <$> storeExprs
+              )
+      -- add these new expressions (but not their bindings) to the project Store
+      Actions.appendProject
+        ( mconcat
+            ( ( \se ->
+                  fromStoreExpression
+                    se
+                    (getStoreExpressionHash se)
+              )
+                . snd
+                <$> storeExprs
+            )
+        )
+      let realFunctionMap = M.mapWithKey (\k _ -> MyVar mempty k) funcMap
+      let recordExpr = MyRecord mempty realFunctionMap
+      (ResolvedExpression _ storeExpr _ _ _) <-
+        liftEither $ getTypecheckedStoreExpression (prettyPrint recordExpr) (project <> newProjectItems) recordExpr
+      pure (Just storeExpr)

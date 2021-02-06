@@ -10,7 +10,7 @@ import Data.Either (isLeft)
 import Data.Functor
 import Data.List (nub)
 import qualified Data.Map as M
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, isNothing)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
@@ -63,6 +63,19 @@ dtIdentity =
     "Identity"
     ["a"]
     (M.singleton "Identity" [VarName "a"])
+
+-- | an enum, we can go to and from a string
+dtTrafficLights :: DataType
+dtTrafficLights =
+  DataType
+    "TrafficLights"
+    mempty
+    ( M.fromList
+        [ ("Red", mempty),
+          ("Yellow", mempty),
+          ("Green", mempty)
+        ]
+    )
 
 fromRight :: (Printer e) => Either e a -> a
 fromRight either' = case either' of
@@ -204,8 +217,8 @@ spec = do
         newProject `shouldBe` stdLib
     describe "BindType" $ do
       it "Should bind Void but create no functions" $ do
-        let action = Actions.bindType (prettyPrint dtVoid) dtVoid "void"
-        let (newProject, outcomes, outputs) = fromRight (Actions.run stdLib action)
+        let action = Actions.bindType (prettyPrint dtVoid) dtVoid
+        let (newProject, outcomes, (outputs, _)) = fromRight (Actions.run stdLib action)
         -- no codegen matches this datatype
         outputs `shouldBe` mempty
         -- one more item in store
@@ -215,7 +228,7 @@ spec = do
         lookupBindingName
           newProject
           "void"
-          `shouldSatisfy` isJust
+          `shouldSatisfy` isNothing
         -- one more type binding
         lookupTypeBindingName
           newProject
@@ -226,13 +239,13 @@ spec = do
           (Actions.storeExpressionsFromOutcomes outcomes)
           `shouldBe` 1
       it "Should bind Identity and create newtype and functor functions" $ do
-        let action = Actions.bindType (prettyPrint dtIdentity) dtIdentity "identity"
-        let (newProject, outcomes, outputs) = fromRight (Actions.run stdLib action)
+        let action = Actions.bindType (prettyPrint dtIdentity) dtIdentity
+        let (newProject, outcomes, (outputs, _)) = fromRight (Actions.run stdLib action)
         -- no codegen matches this datatype
         outputs `shouldBe` [Newtype, Functor]
-        -- four more item in store
+        -- five more items in store
         projectStoreSize newProject
-          `shouldBe` projectStoreSize stdLib + 4
+          `shouldBe` projectStoreSize stdLib + 5
         -- one more binding
         lookupBindingName
           newProject
@@ -246,4 +259,37 @@ spec = do
         -- four new store expression
         S.size
           (Actions.storeExpressionsFromOutcomes outcomes)
-          `shouldBe` 4
+          `shouldBe` 5
+      it "Should bind TrafficLights and create type bindings for constructors" $ do
+        let action = Actions.bindType (prettyPrint dtTrafficLights) dtTrafficLights
+        let (newProject, outcomes, (outputs, _)) =
+              fromRight (Actions.run stdLib action)
+        -- no codegen matches this datatype
+        outputs `shouldBe` [Enum]
+        -- three more items in store
+        projectStoreSize newProject
+          `shouldBe` projectStoreSize stdLib + 3
+        -- one more binding
+        lookupBindingName
+          newProject
+          "trafficLights"
+          `shouldSatisfy` isJust
+        -- four more type bindings
+        lookupTypeBindingName
+          newProject
+          "Red"
+          `shouldSatisfy` isJust
+        -- four more type bindings
+        lookupTypeBindingName
+          newProject
+          "Yellow"
+          `shouldSatisfy` isJust
+        -- four more type bindings
+        lookupTypeBindingName
+          newProject
+          "Green"
+          `shouldSatisfy` isJust
+        -- three new store expressions
+        S.size
+          (Actions.storeExpressionsFromOutcomes outcomes)
+          `shouldBe` 3

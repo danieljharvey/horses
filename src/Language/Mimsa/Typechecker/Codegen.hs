@@ -14,6 +14,8 @@ import Data.Either (isRight)
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Text.Prettyprint.Doc
+import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Codegen.Enum
 import Language.Mimsa.Typechecker.Codegen.Functor
 import Language.Mimsa.Typechecker.Codegen.Newtype
@@ -25,6 +27,9 @@ data Typeclass
   | Newtype
   | Functor
   deriving (Eq, Ord, Show)
+
+instance Printer Typeclass where
+  prettyDoc tc = pretty (show tc)
 
 tcPred :: (DataType -> Bool) -> [a] -> DataType -> [a]
 tcPred predicate as dt =
