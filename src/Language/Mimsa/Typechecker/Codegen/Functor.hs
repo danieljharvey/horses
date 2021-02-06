@@ -17,7 +17,9 @@ import Prelude hiding (fmap)
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
-functorMap :: DataType -> Either Text (Expr Name ())
+functorMap ::
+  DataType ->
+  Either Text (Expr Name ())
 functorMap (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon
   fVar <- getFunctorVar vars
@@ -51,7 +53,11 @@ getFunctorVar names = case NE.nonEmpty names of
   Just neNames -> Right $ NE.last neNames
   _ -> Left "Type should have at least one type variable"
 
-createMatch :: Name -> TyCon -> [Field] -> Either Text (Expr Name ())
+createMatch ::
+  Name ->
+  TyCon ->
+  [Field] ->
+  Either Text (Expr Name ())
 createMatch matchVar tyCon fields = do
   regFields <-
     traverse

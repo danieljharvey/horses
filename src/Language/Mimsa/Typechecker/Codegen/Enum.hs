@@ -16,13 +16,19 @@ import Language.Mimsa.Types.Identifiers
 -- | each have no arguments
 -- | TODO: create fromString once we have decided how to include
 -- | datatypes in the stdLib
-toString :: DataType -> Either Text (Expr Name ())
+toString ::
+  DataType ->
+  Either Text (Expr Name ())
 toString (DataType tyCon [] items) = do
   let tyName = tyConToName tyCon
   let createMatch (consName, vars) =
         case vars of
           [] -> Right (consName, str (showTyCon consName))
-          _ -> Left $ "Constructor " <> prettyPrint consName <> " is expected to have no arguments"
+          _ ->
+            Left $
+              "Constructor "
+                <> prettyPrint consName
+                <> " is expected to have no arguments"
   matches <- traverse createMatch (M.toList items)
   case NE.nonEmpty matches of
     Nothing -> Left "Type has no constructors"
