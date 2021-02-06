@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.UnitTest
+module Test.Project.UnitTest
   ( spec,
   )
 where
@@ -25,34 +25,34 @@ testExpr =
     mempty
     Equals
     (int 1)
-    (MyApp mempty (MyVar mempty (mkName "incrementInt")) (int 1))
+    (MyApp mempty (MyVar mempty "incrementInt") (int 1))
 
 incrementIntH :: ExprHash
-incrementIntH = getHashOfName stdLib (mkName "incrementInt")
+incrementIntH = getHashOfName stdLib "incrementInt"
 
 testStoreExpr :: StoreExpression Annotation
 testStoreExpr =
   StoreExpression
     testExpr
-    (Bindings $ M.singleton (mkName "incrementInt") incrementIntH)
+    (Bindings $ M.singleton "incrementInt" incrementIntH)
     mempty
 
 idHash :: ExprHash
-idHash = getHashOfName stdLib (mkName "id")
+idHash = getHashOfName stdLib "id"
 
 testingIdExpr :: Expr Name Annotation
 testingIdExpr =
   MyInfix
     mempty
     Equals
-    (MyApp mempty (MyVar mempty (mkName "id")) (int 100))
+    (MyApp mempty (MyVar mempty "id") (int 100))
     (int 100)
 
 testingStoreExpr :: StoreExpression Annotation
 testingStoreExpr =
   StoreExpression
     testingIdExpr
-    (Bindings $ M.singleton (mkName "id") idHash)
+    (Bindings $ M.singleton "id" idHash)
     mempty
 
 altIdStoreExpr :: StoreExpression Annotation
@@ -60,8 +60,8 @@ altIdStoreExpr =
   StoreExpression
     ( MyLambda
         mempty
-        (mkName "b")
-        (MyVar mempty (mkName "b"))
+        "b"
+        (MyVar mempty "b")
     )
     mempty
     mempty
@@ -99,7 +99,7 @@ spec =
         let stdLibWithTest =
               stdLib
                 <> fromUnitTest firstTest testingStoreExpr
-                <> fromItem (mkName "id") altIdStoreExpr altIdHash
+                <> fromItem "id" altIdStoreExpr altIdHash
         let (prj, exprs) = case createNewUnitTests stdLibWithTest idHash altIdHash of
               Right (a, b) -> (a, b)
               Left _ -> (undefined, undefined)
@@ -148,7 +148,6 @@ spec =
         let storeExpr = StoreExpression (int 100) mempty mempty
         createUnitTest stdLib storeExpr (TestName "100 is not a valid test")
           `shouldSatisfy` isLeft
-
       it "Finds incrementInt and addInt" $ do
         createUnitTest stdLib testStoreExpr (TestName "incrementInt is a no-op")
           `shouldBe` Right

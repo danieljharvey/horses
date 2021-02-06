@@ -2,7 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Substitutor
+module Test.Store.Substitutor
   ( spec,
   )
 where
@@ -25,8 +25,8 @@ trueStoreExpr =
 falseStoreExpr :: Monoid ann => StoreExpression ann
 falseStoreExpr =
   StoreExpression
-    (MyVar mempty (mkName "true"))
-    (Bindings $ M.singleton (mkName "true") (exprHash 1))
+    (MyVar mempty "true")
+    (Bindings $ M.singleton "true" (exprHash 1))
     mempty
 
 constExpr :: Monoid ann => StoreExpression ann
@@ -34,11 +34,11 @@ constExpr =
   StoreExpression
     ( MyLambda
         mempty
-        (mkName "a")
+        "a"
         ( MyLambda
             mempty
-            (mkName "b")
-            (MyVar mempty (mkName "a"))
+            "b"
+            (MyVar mempty "a")
         )
     )
     mempty
@@ -46,12 +46,12 @@ constExpr =
 
 maybeDecl :: DataType
 maybeDecl =
-  DataType (mkTyCon "Maybe") [mkName "a"] cons'
+  DataType "Maybe" ["a"] cons'
   where
     cons' =
       M.fromList
-        [ (mkTyCon "Just", [VarName (mkName "a")]),
-          (mkTyCon "Nothing", [])
+        [ ("Just", [VarName "a"]),
+          ("Nothing", [])
         ]
 
 maybeExpr :: Monoid ann => StoreExpression ann
@@ -97,11 +97,11 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (mkName "x")
+                "x"
                 ( MyPair
                     mempty
-                    (MyVar mempty (mkName "x"))
-                    (MyLambda mempty (mkName "x") (MyVar mempty (mkName "x")))
+                    (MyVar mempty "x")
+                    (MyLambda mempty "x" (MyVar mempty "x"))
                 )
             expected =
               MyLambda
@@ -114,8 +114,8 @@ spec = do
                 )
             expectSwaps =
               M.fromList
-                [ (numbered 0, mkName "x"),
-                  (numbered 1, mkName "x")
+                [ (numbered 0, "x"),
+                  (numbered 1, "x")
                 ]
             ans = testSubstitute mempty (StoreExpression expr mempty mempty)
         ans `shouldBe` SubstitutedExpression expectSwaps expected mempty
@@ -141,10 +141,10 @@ spec = do
             expr =
               MyRecord mempty $
                 M.fromList
-                  [ (mkName "first", MyApp mempty (MyVar mempty (mkName "id")) (int 1)),
-                    (mkName "second", MyApp mempty (MyVar mempty (mkName "id")) (int 2))
+                  [ ("first", MyApp mempty (MyVar mempty "id") (int 1)),
+                    ("second", MyApp mempty (MyVar mempty "id") (int 2))
                   ]
-            bindings' = Bindings $ M.singleton (mkName "id") hash
+            bindings' = Bindings $ M.singleton "id" hash
             storeExpr = StoreExpression expr bindings' mempty
             store' = Store (M.singleton hash idExpr)
             expectedId = MyLambda mempty (numbered 0) (MyVar mempty (numbered 0))
@@ -158,8 +158,8 @@ spec = do
           `shouldBe` MyRecord
             mempty
             ( M.fromList
-                [ (mkName "first", MyApp mempty (MyVar mempty (numbered 1)) (int 1)),
-                  (mkName "second", MyApp mempty (MyVar mempty (numbered 1)) (int 2))
+                [ ("first", MyApp mempty (MyVar mempty (numbered 1)) (int 1)),
+                  ("second", MyApp mempty (MyVar mempty (numbered 1)) (int 2))
                 ]
             )
         seScope ans
@@ -172,8 +172,8 @@ spec = do
     $ it "'true' is introduced as a numbered variable"
     $ do
       let hash = exprHash 2
-          expr = MyVar mempty (mkName "true")
-          bindings' = Bindings (M.singleton (mkName "true") hash)
+          expr = MyVar mempty "true"
+          bindings' = Bindings (M.singleton "true" hash)
           storeExpr = StoreExpression expr bindings' mempty
           store' = storeWithBothIn
       let ans = testSubstitute store' storeExpr
@@ -199,7 +199,7 @@ spec = do
             StoreExpression
               expr
               mempty
-              (TypeBindings $ M.singleton (mkTyCon "Maybe") hash)
+              (TypeBindings $ M.singleton "Maybe" hash)
           store' = storeWithBothIn
           ans = testSubstitute store' storeExpr
       seSwaps ans `shouldBe` mempty

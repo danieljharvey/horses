@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.InstantiateVar
+module Test.Interpreter.InstantiateVar
   ( spec,
   )
 where

@@ -41,49 +41,49 @@ stdLibE =
   pure mempty
     >>= addBinding
       "\\a -> a"
-      (mkName "id")
+      "id"
     >>= addBinding
       "\\f -> \\g -> \\a -> f(g(a))"
-      (mkName "compose")
+      "compose"
     >>= addBinding
       "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
-      (mkName "fst")
+      "fst"
     >>= addBinding
       "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
-      (mkName "snd")
+      "snd"
     >>= addBinding
       "\\a -> \\b -> a == b"
-      (mkName "eq")
+      "eq"
     >>= addBinding
       "\\i -> eq(10)(i)"
-      (mkName "eqTen")
+      "eqTen"
     >>= addBinding
       "\\a -> \\b -> a + b"
-      (mkName "addInt")
+      "addInt"
     >>= addBinding
       "\\a -> \\b -> a - b"
-      (mkName "subtractInt")
+      "subtractInt"
     >>= addBinding
       "\\f -> \\g -> \\aValue -> f(g(aValue))"
-      (mkName "compose")
+      "compose"
     >>= addBinding
       "\\a -> addInt(1)(a)"
-      (mkName "incrementInt")
+      "incrementInt"
     >>= addBinding
       "type Option a = Some a | Nowt in {}"
-      (mkName "typeState")
+      "typeState"
     >>= addBinding
       "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise Nowt"
-      (mkName "fmapOption")
+      "fmapOption"
     >>= addBinding
       "type These a b = This a | That b | These a b in {}"
-      (mkName "typeThese")
+      "typeThese"
     >>= addBinding
       "(1,2)"
-      (mkName "aPair")
+      "aPair"
     >>= addBinding
       "{ a: 1, b: \"dog\" }"
-      (mkName "aRecord")
+      "aRecord"
     >>= addListMonad
     >>= addPair
     >>= addStateMonad
@@ -93,67 +93,67 @@ addListMonad prj =
   pure prj
     >>= addBinding
       "type List a = Cons a (List a) | Nil in {}"
-      (mkName "typeList")
+      "typeList"
     >>= addBinding
       "\\a -> \\list -> Cons a list"
-      (mkName "cons")
-    >>= addBinding "Nil" (mkName "nil")
+      "cons"
+    >>= addBinding "Nil" "nil"
 
 addPair :: Project Annotation -> ProjectPart
 addPair prj =
   pure prj
     >>= addBinding
       "type Pair a b = Pair a b in {}"
-      (mkName "typePair")
+      "typePair"
     >>= addBinding
       "\\pair -> case pair of Pair (\\a -> \\b -> a)"
-      (mkName "fstPair")
+      "fstPair"
     >>= addBinding
       "\\pair -> case pair of Pair (\\a -> \\b -> b)"
-      (mkName "sndPair")
+      "sndPair"
 
 addStateMonad :: Project Annotation -> ProjectPart
 addStateMonad prj =
   pure prj
     >>= addBinding
       "type State s a = State (s -> (Pair a s)) in {}"
-      (mkName "typeState")
+      "typeState"
     >>= addBinding
       "\\a -> State (\\s -> Pair a s)"
-      (mkName "pureState")
+      "pureState"
     >>= addBinding
       "\\f -> \\state -> case state of State (\\sas -> State (\\s -> let as = sas(s); case as of Pair (\\a -> \\s -> Pair f(a) s)))"
-      (mkName "fmapState")
+      "fmapState"
     >>= addBinding
       "\\stateF -> \\stateA -> State (\\s -> case stateF of State (\\sfs -> let fs = sfs(s); case fs of  Pair (\\f -> \\ss -> case stateA of State (\\sas -> let as = sas(ss); case as of Pair (\\a -> \\sss -> Pair f(a) sss)))))"
-      (mkName "apState")
+      "apState"
     >>= addBinding
       "\\f -> \\state -> State (\\s -> case state of State (\\sas -> let as = sas(s); case as of Pair (\\a -> \\ss -> case f(a) of State (\\sbs -> sbs(ss)))))"
-      (mkName "bindState")
+      "bindState"
     >>= addBinding
       "\\state -> \\s -> case state of State (\\sas -> sas(s))"
-      (mkName "runState")
+      "runState"
     >>= addBinding
       "\\state -> compose(sndPair)(runState(state))"
-      (mkName "execState")
+      "execState"
     >>= addBinding
       "\\state -> compose(fstPair)(runState(state))"
-      (mkName "evalState")
+      "evalState"
     >>= addBinding
       "\\s -> State (\\ignore -> Pair Unit s)"
-      (mkName "putState")
+      "putState"
     >>= addBinding
       "State (\\s -> Pair s s)"
-      (mkName "getState")
+      "getState"
     >>= addBinding
       "\\f -> State (\\s -> Pair Unit f(s))"
-      (mkName "modifyState")
+      "modifyState"
     >>= addBinding
       "\\f -> \\stateA -> \\stateB -> apState(fmapState(f)(stateA))(stateB)"
-      (mkName "liftA2State")
+      "liftA2State"
     >>= addBinding
       "\\newName -> let sas = \\s -> let return = newName <> \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
-      (mkName "storeName")
+      "storeName"
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input =

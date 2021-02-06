@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.TypeSearch
+module Test.Project.TypeSearch
   ( spec,
   )
 where
@@ -44,7 +44,7 @@ spec =
       it "Finds the id function in test project" $ do
         let result = typeSearch typeMap idType
         result
-          `shouldBe` M.singleton (mkName "id") idType
+          `shouldBe` M.singleton "id" idType
       it "Finds the addInt and subtractInt functions in test project" $ do
         let addIntType =
               MTFunction
@@ -58,14 +58,13 @@ spec =
         let result = typeSearch typeMap addIntType
         result
           `shouldBe` M.fromList
-            [ (mkName "addInt", addIntType),
-              (mkName "subtractInt", addIntType)
+            [ ("addInt", addIntType),
+              ("subtractInt", addIntType)
             ]
-
     describe "from text input" $ do
       it "Finds id function" $ do
         typeSearchFromText typeMap "a -> a"
-          `shouldBe` Right (M.singleton (mkName "id") idType)
+          `shouldBe` Right (M.singleton "id" idType)
       it "Finds fmapOption" $ do
         let fmapOption =
               MTFunction
@@ -73,12 +72,12 @@ spec =
                 (MTFunction mempty (typeName "a") (typeName "b"))
                 ( MTFunction
                     mempty
-                    (MTData mempty (mkTyCon "Option") [typeName "a"])
-                    (MTData mempty (mkTyCon "Option") [typeName "b"])
+                    (MTData mempty "Option" [typeName "a"])
+                    (MTData mempty "Option" [typeName "b"])
                 )
         typeSearchFromText typeMap "(a -> b) -> (Option a) -> (Option b)"
           `shouldBe` Right
             ( M.singleton
-                (mkName "fmapOption")
+                "fmapOption"
                 (normaliseType fmapOption)
             )

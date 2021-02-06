@@ -70,7 +70,7 @@ outputExport CommonJS name = "module.exports = { " <> coerce name <> ": " <> coe
 
 outputStoreExpression :: (Monoid a) => Backend -> Renderer ann a -> StoreExpression ann -> a
 outputStoreExpression be renderer se =
-  let funcName = mkName "main"
+  let funcName = "main"
       deps = mconcat $ renderImport renderer be <$> M.toList (getBindings $ storeBindings se)
       stdLib = renderStdLib renderer be
       func = renderFunc renderer funcName (storeExpression se)

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Typechecker
+module Test.Typechecker.Typechecker
   ( spec,
   )
 where
@@ -14,7 +14,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
-import Test.QuickCheck.Instances ()
 import Test.Utils.Helpers
 
 exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]
@@ -139,16 +138,16 @@ exprs =
     ( MyRecord
         mempty
         ( M.fromList
-            [ (mkName "dog", int 1),
-              (mkName "cat", int 2)
+            [ ("dog", int 1),
+              ("cat", int 2)
             ]
         ),
       Right $
         MTRecord
           mempty
           ( M.fromList
-              [ (mkName "dog", MTPrim mempty MTInt),
-                (mkName "cat", MTPrim mempty MTInt)
+              [ ("dog", MTPrim mempty MTInt),
+                ("cat", MTPrim mempty MTInt)
               ]
           )
     ),
@@ -160,7 +159,7 @@ exprs =
             ( MyRecordAccess
                 mempty
                 (MyVar mempty (named "i"))
-                (mkName "dog")
+                "dog"
             )
             (int 1)
             (int 2)
@@ -170,7 +169,7 @@ exprs =
           mempty
           ( MTRecord mempty $
               M.singleton
-                (mkName "dog")
+                "dog"
                 (MTPrim mempty MTBool)
           )
           (MTPrim mempty MTInt)
@@ -223,7 +222,3 @@ spec =
               (MTPrim mempty MTInt)
           )
       startInference mempty mempty expr `shouldBe` Right (MTPrim mempty MTInt)
-{-  describe "Serialisation" $ do
-it "Round trip" $ do
-  property $ \x -> JSON.decode (JSON.encode x) == (Just x :: Maybe Expr)
--}

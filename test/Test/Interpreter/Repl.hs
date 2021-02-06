@@ -3,7 +3,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Repl
+module Test.Interpreter.Repl
   ( spec,
   )
 where
@@ -150,31 +150,31 @@ spec =
           result <- eval stdLib "type LeBool = Vrai | Faux in Vrai"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "LeBool") [],
-                MyConstructor mempty (mkTyCon "Vrai")
+              ( MTData mempty "LeBool" [],
+                MyConstructor mempty "Vrai"
               )
         it "type Nat = Zero | Suc Nat in Suc Zero" $ do
           result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Zero"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Nat") [],
+              ( MTData mempty "Nat" [],
                 MyConsApp
                   mempty
-                  (MyConstructor mempty (mkTyCon "Suc"))
-                  (MyConstructor mempty (mkTyCon "Zero"))
+                  (MyConstructor mempty "Suc")
+                  (MyConstructor mempty "Zero")
               )
         it "type Nat = Zero | Suc Nat in Suc Suc Zero" $ do
           result <- eval stdLib "type Nat = Zero | Suc Nat in Suc Suc Zero"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Nat") [],
+              ( MTData mempty "Nat" [],
                 MyConsApp
                   mempty
-                  (MyConstructor mempty (mkTyCon "Suc"))
+                  (MyConstructor mempty "Suc")
                   ( MyConsApp
                       mempty
-                      (MyConstructor mempty (mkTyCon "Suc"))
-                      (MyConstructor mempty (mkTyCon "Zero"))
+                      (MyConstructor mempty "Suc")
+                      (MyConstructor mempty "Zero")
                   )
               )
         it "type Nat = Zero | Suc Nat in Suc 1" $ do
@@ -191,9 +191,9 @@ spec =
             `shouldBe` Right
               ( MTFunction
                   mempty
-                  (MTData mempty (mkTyCon "Nat") [])
-                  (MTData mempty (mkTyCon "Nat") []),
-                MyConstructor mempty (mkTyCon "Suc")
+                  (MTData mempty "Nat" [])
+                  (MTData mempty "Nat" []),
+                MyConstructor mempty "Suc"
               )
         it "type OhNat = Zero | Suc OhNat String in Suc" $ do
           result <- eval stdLib "type OhNat = Zero | Suc OhNat String in Suc"
@@ -201,22 +201,22 @@ spec =
             `shouldBe` Right
               ( MTFunction
                   mempty
-                  (MTData mempty (mkTyCon "OhNat") [])
+                  (MTData mempty "OhNat" [])
                   ( MTFunction
                       mempty
                       (MTPrim mempty MTString)
-                      (MTData mempty (mkTyCon "OhNat") [])
+                      (MTData mempty "OhNat" [])
                   ),
-                MyConstructor mempty (mkTyCon "Suc")
+                MyConstructor mempty "Suc"
               )
         it "type Pet = Cat String | Dog String in Cat \"mimsa\"" $ do
           result <- eval stdLib "type Pet = Cat String | Dog String in Cat \"mimsa\""
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Pet") [],
+              ( MTData mempty "Pet" [],
                 MyConsApp
                   mempty
-                  (MyConstructor mempty (mkTyCon "Cat"))
+                  (MyConstructor mempty "Cat")
                   (str' "mimsa")
               )
         it "type Void in 1" $ do
@@ -235,26 +235,26 @@ spec =
                   ( MTFunction
                       mempty
                       (MTPrim mempty MTString)
-                      (MTData mempty (mkTyCon "LongBoy") [])
+                      (MTData mempty "LongBoy" [])
                   ),
                 MyConsApp
                   mempty
-                  (MyConstructor mempty (mkTyCon "Stuff"))
+                  (MyConstructor mempty "Stuff")
                   (str' "yes")
               )
         it "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)" $ do
           result <- eval stdLib "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Tree") [],
+              ( MTData mempty "Tree" [],
                 MyConsApp
                   mempty
                   ( MyConsApp
                       mempty
-                      (MyConstructor mempty $ mkTyCon "Branch")
-                      (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Leaf") (int 1))
+                      (MyConstructor mempty "Branch")
+                      (MyConsApp mempty (MyConstructor mempty "Leaf") (int 1))
                   )
-                  (MyConsApp mempty (MyConstructor mempty $ mkTyCon "Leaf") (int 2))
+                  (MyConsApp mempty (MyConstructor mempty "Leaf") (int 2))
               )
         it "type Maybe a = Just a | Nothing in Just" $ do
           result <- eval stdLib "type Maybe a = Just a | Nothing in Just"
@@ -263,24 +263,24 @@ spec =
               ( MTFunction
                   mempty
                   (MTVar mempty (tvNumbered 1))
-                  (MTData mempty (mkTyCon "Maybe") [MTVar mempty (tvNumbered 1)]),
-                MyConstructor mempty $ mkTyCon "Just"
+                  (MTData mempty "Maybe" [MTVar mempty (tvNumbered 1)]),
+                MyConstructor mempty "Just"
               )
         it "type Maybe a = Just a | Nothing in Nothing" $ do
           result <- eval stdLib "type Maybe a = Just a | Nothing in Nothing"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Maybe") [MTVar mempty (tvNumbered 1)],
-                MyConstructor mempty $ mkTyCon "Nothing"
+              ( MTData mempty "Maybe" [MTVar mempty (tvNumbered 1)],
+                MyConstructor mempty "Nothing"
               )
         it "type Maybe a = Just a | Nothing in Just 1" $ do
           result <- eval stdLib "type Maybe a = Just a | Nothing in Just 1"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Maybe") [MTPrim mempty MTInt],
+              ( MTData mempty "Maybe" [MTPrim mempty MTInt],
                 MyConsApp
                   mempty
-                  (MyConstructor mempty $ mkTyCon "Just")
+                  (MyConstructor mempty "Just")
                   (int 1)
               )
         it "type Maybe a = Just a | Nothing in case Just 1 of Just \\a -> eq(100)(a) | Nothing False" $ do
@@ -322,10 +322,10 @@ spec =
           result <- eval stdLib "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Tree") [MTPrim mempty MTInt],
+              ( MTData mempty "Tree" [MTPrim mempty MTInt],
                 MyConsApp
                   mempty
-                  (MyConstructor mempty $ mkTyCon "Leaf")
+                  (MyConstructor mempty "Leaf")
                   (int 1)
               )
         it "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1" $ do
@@ -340,19 +340,19 @@ spec =
           result <- eval stdLib "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Tree") [MTPrim mempty MTInt],
+              ( MTData mempty "Tree" [MTPrim mempty MTInt],
                 MyConsApp
                   mempty
                   ( MyConsApp
                       mempty
                       ( MyConsApp
                           mempty
-                          (MyConstructor mempty $ mkTyCon "Branch")
-                          (MyConstructor mempty $ mkTyCon "Empty")
+                          (MyConstructor mempty "Branch")
+                          (MyConstructor mempty "Empty")
                       )
                       (int 1)
                   )
-                  (MyConstructor mempty $ mkTyCon "Empty")
+                  (MyConstructor mempty "Empty")
               )
         it "type Maybe a = Just a | Nothing in case Just True of Just \\a -> a | Nothing \"what\"" $ do
           result <- eval stdLib "type Maybe a = Just a | Nothing in case Just True of Just \\a -> a | Nothing \"what\""
@@ -365,7 +365,7 @@ spec =
                 result <- eval stdLib "type Maybe a = Just a | Nothing in \\maybe -> case maybe of Just \\a -> a | Nothing \"poo\""
                 fst <$> result
                   `shouldBe` Right
-                    ( MTFunction (MTData (mkTyCon "Maybe") []) (MTPrim MTString)
+                    ( MTFunction (MTData ( "Maybe") []) (MTPrim MTString)
                     )
         
         -}
@@ -373,18 +373,18 @@ spec =
           result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Arr") [MTPrim mempty MTInt],
+              ( MTData mempty "Arr" [MTPrim mempty MTInt],
                 MyConsApp
                   mempty
                   ( MyConsApp
                       mempty
                       ( MyConstructor
                           mempty
-                          (mkTyCon "Item")
+                          "Item"
                       )
                       (int 2)
                   )
-                  (MyConstructor mempty $ mkTyCon "Empty")
+                  (MyConstructor mempty "Empty")
               )
         it "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)" $ do
           result <- eval stdLib "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)"
@@ -410,10 +410,10 @@ spec =
           result <- eval stdLib "let some = \\a -> Some a in if True then some(1) else Nowt"
           result
             `shouldBe` Right
-              ( MTData mempty (mkTyCon "Option") [MTPrim mempty MTInt],
+              ( MTData mempty "Option" [MTPrim mempty MTInt],
                 MyConsApp
                   mempty
-                  (MyConstructor mempty (mkTyCon "Some"))
+                  (MyConstructor mempty "Some")
                   (int 1)
               )
         it "\\a -> case a of Some \\as -> True | Nowt 100" $ do
@@ -426,7 +426,7 @@ spec =
             `shouldBe` Right
               ( MTFunction
                   mempty
-                  (MTData mempty (mkTyCon "Option") [MTPrim mempty MTInt])
+                  (MTData mempty "Option" [MTPrim mempty MTInt])
                   (MTPrim mempty MTInt)
               )
         it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)" $ do
@@ -514,15 +514,15 @@ spec =
                   mempty
                   ( MTRecord
                       mempty
-                      (M.singleton (mkName "one") (MTVar mempty (tvFree 1)))
+                      (M.singleton "one" (MTVar mempty (tvFree 1)))
                   )
                   ( MTFunction
                       mempty
                       ( MTRecord
                           mempty
                           ( M.fromList
-                              [ (mkName "one", MTVar mempty (tvFree 2)),
-                                (mkName "two", MTVar mempty (tvFree 3))
+                              [ ("one", MTVar mempty (tvFree 2)),
+                                ("two", MTVar mempty (tvFree 3))
                               ]
                           )
                       )
@@ -553,7 +553,7 @@ spec =
             `shouldBe` Right
               ( MyConsApp
                   mempty
-                  (MyConstructor mempty (mkTyCon "Some"))
+                  (MyConstructor mempty "Some")
                   (bool True)
               )
         it "\\a -> if (100 == a.int) then 100 else 0" $ do
@@ -568,11 +568,11 @@ spec =
             `shouldBe` Right
               ( MTData
                   mempty
-                  (mkTyCon "Reader")
+                  "Reader"
                   [MTPrim mempty MTInt, MTPrim mempty MTInt],
                 MyConsApp
                   mempty
-                  (MyConstructor mempty (mkTyCon "Reader"))
+                  (MyConstructor mempty "Reader")
                   ( MyLambda
                       mempty
                       (numbered 0)

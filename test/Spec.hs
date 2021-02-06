@@ -9,25 +9,25 @@ where
 import qualified Test.Actions as Actions
 import qualified Test.BackendJS as JS
 import Test.Hspec
-import qualified Test.InstantiateVar as InstantiateVar
-import qualified Test.Interpreter as Interpreter
-import qualified Test.MonoTypeParser as MonoTypeParser
-import qualified Test.NormaliseType as NormaliseType
+import qualified Test.Interpreter.InstantiateVar as InstantiateVar
+import qualified Test.Interpreter.Interpreter as Interpreter
+import qualified Test.Interpreter.Repl as Repl
+import qualified Test.Parser.MonoTypeParser as MonoTypeParser
+import qualified Test.Parser.Syntax as Syntax
 import qualified Test.Prettier as Prettier
-import Test.QuickCheck.Instances ()
-import qualified Test.RecordUsage as RecordUsage
-import qualified Test.Repl as Repl
-import qualified Test.Resolver as Resolver
+import qualified Test.Project.NormaliseType as NormaliseType
+import qualified Test.Project.TypeSearch as TypeSearch
+import qualified Test.Project.UnitTest as UnitTest
+import qualified Test.Project.Usages as Usages
 import qualified Test.Serialisation as Serialisation
-import qualified Test.Substitutor as Substitutor
-import qualified Test.Syntax as Syntax
-import qualified Test.TypeError as TypeError
-import qualified Test.TypeSearch as TypeSearch
-import qualified Test.Typechecker as Typechecker
-import qualified Test.Unify as Unify
-import qualified Test.UnitTest as UnitTest
-import qualified Test.UpdateDeps as UpdateDeps
-import qualified Test.Usages as Usages
+import qualified Test.Store.Resolver as Resolver
+import qualified Test.Store.Substitutor as Substitutor
+import qualified Test.Store.UpdateDeps as UpdateDeps
+import qualified Test.Typechecker.Codegen as Codegen
+import qualified Test.Typechecker.RecordUsage as RecordUsage
+import qualified Test.Typechecker.TypeError as TypeError
+import qualified Test.Typechecker.Typechecker as Typechecker
+import qualified Test.Typechecker.Unify as Unify
 
 main :: IO ()
 main =
@@ -52,3 +52,4 @@ main =
     UnitTest.spec
     UpdateDeps.spec
     Actions.spec
+    Codegen.spec

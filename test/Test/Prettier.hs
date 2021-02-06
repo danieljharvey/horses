@@ -17,17 +17,17 @@ import Test.Utils.Helpers
 spec :: Spec
 spec =
   describe "Prettier" $ do
-    describe "Expr" $
-      it "Cons with infix" $
-        do
-          let expr' :: Expr Name ()
-              expr' =
-                MyConsApp
-                  ()
-                  (MyConstructor mempty (mkTyCon "Some"))
-                  (MyInfix mempty Equals (int 1) (int 1))
-          prettyPrint expr'
-            `shouldBe` "Some (1 == 1)"
+    describe "Expr"
+      $ it "Cons with infix"
+      $ do
+        let expr' :: Expr Name ()
+            expr' =
+              MyConsApp
+                ()
+                (MyConstructor mempty "Some")
+                (MyInfix mempty Equals (int 1) (int 1))
+        prettyPrint expr'
+          `shouldBe` "Some (1 == 1)"
     describe
       "MonoType"
       $ do
@@ -48,12 +48,12 @@ spec =
               mt =
                 MTRecord mempty $
                   M.fromList
-                    [ (mkName "dog", MTPrim mempty MTUnit),
-                      (mkName "horse", MTPrim mempty MTString),
-                      ( mkName "maybeDog",
+                    [ ("dog", MTPrim mempty MTUnit),
+                      ("horse", MTPrim mempty MTString),
+                      ( "maybeDog",
                         MTData
                           mempty
-                          (mkTyCon "Maybe")
+                          "Maybe"
                           [MTPrim mempty MTString]
                       )
                     ]
@@ -81,7 +81,6 @@ spec =
            in T.putStrLn
                 ( prettyPrint mt
                 )
-
         it "Names type vars" $ do
           let mt = MTVar () (tvNumbered 1)
           prettyPrint mt `shouldBe` "a"

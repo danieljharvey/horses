@@ -16,6 +16,7 @@ module Language.Mimsa.Project.Helpers
     getItemsForAllVersions,
     getDependencyHashes,
     lookupBindingName,
+    lookupTypeBindingName,
     getBindingNames,
   )
 where
@@ -100,6 +101,11 @@ lookupBindingName :: Project ann -> Name -> Maybe ExprHash
 lookupBindingName project name =
   let b = getBindings . getCurrentBindings . prjBindings $ project
    in M.lookup name b
+
+lookupTypeBindingName :: Project ann -> TyCon -> Maybe ExprHash
+lookupTypeBindingName project tyCon =
+  let b = getTypeBindings . getCurrentTypeBindings . prjTypeBindings $ project
+   in M.lookup tyCon b
 
 findBindingNameForExprHash ::
   ExprHash ->

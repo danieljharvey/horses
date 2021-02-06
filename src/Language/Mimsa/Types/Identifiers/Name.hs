@@ -8,6 +8,7 @@ module Language.Mimsa.Types.Identifiers.Name where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
+import Data.String
 import Data.Swagger
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -30,6 +31,9 @@ newtype Name = Name {getName' :: Text}
       JSON.ToJSONKey,
       FromHttpApiData
     )
+
+instance IsString Name where
+  fromString = mkName . T.pack
 
 getName :: Name -> Text
 getName (Name t) = t

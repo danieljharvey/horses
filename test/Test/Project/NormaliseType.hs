@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.NormaliseType
+module Test.Project.NormaliseType
   ( spec,
   )
 where

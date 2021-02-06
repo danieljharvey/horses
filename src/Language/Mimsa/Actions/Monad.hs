@@ -11,6 +11,7 @@ module Language.Mimsa.Actions.Monad
     setProject,
     appendStoreExpression,
     bindStoreExpression,
+    bindTypeExpression,
     messagesFromOutcomes,
     storeExpressionsFromOutcomes,
     writeFilesFromOutcomes,
@@ -133,3 +134,14 @@ bindStoreExpression storeExpr name = do
         fromItem name storeExpr (getStoreExpressionHash storeExpr)
   appendStoreExpression storeExpr
   appendProject newProject
+
+bindTypeExpression ::
+  StoreExpression Annotation -> ActionM ()
+bindTypeExpression storeExpr = do
+  -- add the expression to the store
+  appendStoreExpression storeExpr
+  -- add the type to the project
+  appendProject $
+    fromType
+      storeExpr
+      (getStoreExpressionHash storeExpr)

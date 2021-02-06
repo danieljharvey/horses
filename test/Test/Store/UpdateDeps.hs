@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.UpdateDeps
+module Test.Store.UpdateDeps
   ( spec,
   )
 where
@@ -8,7 +8,7 @@ where
 import Data.Either (isLeft, isRight)
 import qualified Data.Map as M
 import Language.Mimsa.Store.UpdateDeps
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers ()
 import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
@@ -24,13 +24,12 @@ spec = do
       let storeExpr =
             StoreExpression
               (bool True)
-              (Bindings $ M.singleton (mkName "dog") (ExprHash "1"))
+              (Bindings $ M.singleton "dog" (ExprHash "1"))
               mempty
       updateExprHash storeExpr (ExprHash "1") (ExprHash "2")
         `shouldBe` Bindings
-          ( M.singleton (mkName "dog") (ExprHash "2")
+          ( M.singleton "dog" (ExprHash "2")
           )
-
   describe
     "UpdateDeps"
     $ do
@@ -39,14 +38,14 @@ spec = do
         updateStoreExpressionBindings stdLib mempty storeExpr
           `shouldBe` Right storeExpr
       it "Replacing function with one that doesn't typecheck fails" $ do
-        let storeExpr = getStoreExpression stdLib (getHashOfName stdLib (mkName "incrementInt"))
-        let newHash = getHashOfName stdLib (mkName "id")
-        let newBindings = Bindings (M.singleton (mkName "addInt") newHash)
+        let storeExpr = getStoreExpression stdLib (getHashOfName stdLib "incrementInt")
+        let newHash = getHashOfName stdLib "id"
+        let newBindings = Bindings (M.singleton "addInt" newHash)
         updateStoreExpressionBindings stdLib newBindings storeExpr
           `shouldSatisfy` isLeft
       it "Replacing function with an equivalent one succeeds" $ do
-        let storeExpr = getStoreExpression stdLib (getHashOfName stdLib (mkName "incrementInt"))
-        let newHash = getHashOfName stdLib (mkName "subtractInt")
-        let newBindings = Bindings (M.singleton (mkName "addInt") newHash)
+        let storeExpr = getStoreExpression stdLib (getHashOfName stdLib "incrementInt")
+        let newHash = getHashOfName stdLib "subtractInt"
+        let newBindings = Bindings (M.singleton "addInt" newHash)
         updateStoreExpressionBindings stdLib newBindings storeExpr
           `shouldSatisfy` isRight

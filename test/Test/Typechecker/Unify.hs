@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Unify
+module Test.Typechecker.Unify
   ( spec,
   )
 where
@@ -13,7 +13,7 @@ import qualified Data.Map as M
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers ()
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
@@ -53,13 +53,13 @@ spec =
       runUnifier
         ( MTRecord mempty $
             M.fromList
-              [ (mkName "one", MTPrim mempty MTInt),
-                (mkName "two", MTVar mempty (tvFree 1))
+              [ ("one", MTPrim mempty MTInt),
+                ("two", MTVar mempty (tvFree 1))
               ],
           MTRecord mempty $
             M.fromList
-              [ (mkName "one", MTVar mempty (tvFree 2)),
-                (mkName "two", MTPrim mempty MTBool)
+              [ ("one", MTVar mempty (tvFree 2)),
+                ("two", MTPrim mempty MTBool)
               ]
         )
         `shouldBe` Right

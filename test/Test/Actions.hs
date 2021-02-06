@@ -10,17 +10,19 @@ import Data.Either (isLeft)
 import Data.Functor
 import Data.List (nub)
 import qualified Data.Map as M
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, isNothing)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
+import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Typechecker.Codegen
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
@@ -44,11 +46,36 @@ testWithIdInExpr =
   MyInfix
     mempty
     Equals
-    (MyApp mempty (MyVar mempty (mkName "id")) (int 1))
+    (MyApp mempty (MyVar mempty "id") (int 1))
     (int 1)
 
 onePlusOneExpr :: Expr Name Annotation
 onePlusOneExpr = MyInfix mempty Add (int 1) (int 1)
+
+-- | has no constructors, we can do nothing with this
+dtVoid :: DataType
+dtVoid = DataType "Void" mempty mempty
+
+-- | Identity monad
+dtIdentity :: DataType
+dtIdentity =
+  DataType
+    "Identity"
+    ["a"]
+    (M.singleton "Identity" [VarName "a"])
+
+-- | an enum, we can go to and from a string
+dtTrafficLights :: DataType
+dtTrafficLights =
+  DataType
+    "TrafficLights"
+    mempty
+    ( M.fromList
+        [ ("Red", mempty),
+          ("Yellow", mempty),
+          ("Green", mempty)
+        ]
+    )
 
 fromRight :: (Printer e) => Either e a -> a
 fromRight either' = case either' of
@@ -84,13 +111,13 @@ spec = do
           stdLib
           ( Actions.bindExpression
               brokenExpr
-              (mkName "broken")
+              "broken"
               "1 == True"
           )
           `shouldSatisfy` isLeft
       it "Adds a fresh new function to Bindings and to Store" $ do
         let expr = int 1
-        case Actions.run stdLib (Actions.bindExpression expr (mkName "one") "1") of
+        case Actions.run stdLib (Actions.bindExpression expr "one" "1") of
           Left _ -> error "Should not have failed"
           Right (newProject, outcomes, _) -> do
             -- one more item in store
@@ -99,15 +126,15 @@ spec = do
             -- one more binding
             lookupBindingName
               newProject
-              (mkName "one")
+              "one"
               `shouldSatisfy` isJust
             -- one new store expression
             S.size (Actions.storeExpressionsFromOutcomes outcomes)
               `shouldBe` 1
       it "Updating an existing binding updates binding" $ do
-        let newIdExpr = MyLambda mempty (mkName "b") (MyVar mempty (mkName "b"))
+        let newIdExpr = MyLambda mempty "b" (MyVar mempty "b")
         let action =
-              Actions.bindExpression newIdExpr (mkName "id") "\\b -> b"
+              Actions.bindExpression newIdExpr "id" "\\b -> b"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
           Right (newProject, outcomes, _) -> do
@@ -120,13 +147,13 @@ spec = do
             -- binding hash has changed
             lookupBindingName
               newProject
-              (mkName "id")
-              `shouldNotBe` lookupBindingName stdLib (mkName "id")
+              "id"
+              `shouldNotBe` lookupBindingName stdLib "id"
       it "Updating an existing binding updates tests" $ do
-        let newIdExpr = MyLambda mempty (mkName "blob") (MyVar mempty (mkName "blob"))
+        let newIdExpr = MyLambda mempty "blob" (MyVar mempty "blob")
         let action = do
               _ <- Actions.addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
-              Actions.bindExpression newIdExpr (mkName "id") "\\blob -> blob"
+              Actions.bindExpression newIdExpr "id" "\\blob -> blob"
         case Actions.run stdLib action of
           Left _ -> error "Should not have failed"
           Right (newProject, outcomes, _) -> do
@@ -142,11 +169,11 @@ spec = do
             -- binding hash has changed
             lookupBindingName
               newProject
-              (mkName "id")
-              `shouldNotBe` lookupBindingName stdLib (mkName "id")
+              "id"
+              `shouldNotBe` lookupBindingName stdLib "id"
     describe "Compile" $ do
       it "Simplest compilation creates four files" $ do
-        let expr = MyVar mempty (mkName "id")
+        let expr = MyVar mempty "id"
         let action = Actions.compile CommonJS "id" expr
         let (newProject, outcomes, (_, hashes)) = fromRight (Actions.run stdLib action)
         -- creates three files
@@ -164,7 +191,7 @@ spec = do
         -- for the `id` dependency
         S.size hashes `shouldBe` 2
       it "Complex compilation creates many files in 3 folders" $ do
-        let expr = MyVar mempty (mkName "evalState")
+        let expr = MyVar mempty "evalState"
         let action = Actions.compile CommonJS "evalState" expr
         let (newProject, outcomes, _) = fromRight (Actions.run stdLib action)
         -- creates six files
@@ -182,10 +209,87 @@ spec = do
       it "Should return an error for a broken expr" $ do
         Actions.run stdLib (Actions.evaluate (prettyPrint brokenExpr) brokenExpr) `shouldSatisfy` isLeft
       it "Should evaluate an expression" $ do
-        case Actions.run stdLib (Actions.evaluate (prettyPrint onePlusOneExpr) onePlusOneExpr) of
-          Left _ -> error "Should not have failed"
-          Right (newProject, _, (mt, expr, _)) -> do
-            mt $> () `shouldBe` MTPrim mempty MTInt
-            expr $> () `shouldBe` int 2
-            -- project should be untouched
-            newProject `shouldBe` stdLib
+        let action = Actions.evaluate (prettyPrint onePlusOneExpr) onePlusOneExpr
+        let (newProject, _, (mt, expr, _)) = fromRight (Actions.run stdLib action)
+        mt $> () `shouldBe` MTPrim mempty MTInt
+        expr $> () `shouldBe` int 2
+        -- project should be untouched
+        newProject `shouldBe` stdLib
+    describe "BindType" $ do
+      it "Should bind Void but create no functions" $ do
+        let action = Actions.bindType (prettyPrint dtVoid) dtVoid
+        let (newProject, outcomes, (outputs, _)) = fromRight (Actions.run stdLib action)
+        -- no codegen matches this datatype
+        outputs `shouldBe` mempty
+        -- one more item in store
+        projectStoreSize newProject
+          `shouldBe` projectStoreSize stdLib + 1
+        -- one more binding
+        lookupBindingName
+          newProject
+          "void"
+          `shouldSatisfy` isNothing
+        -- one more type binding
+        lookupTypeBindingName
+          newProject
+          "Void"
+          `shouldSatisfy` isJust
+        -- one new store expression
+        S.size
+          (Actions.storeExpressionsFromOutcomes outcomes)
+          `shouldBe` 1
+      it "Should bind Identity and create newtype and functor functions" $ do
+        let action = Actions.bindType (prettyPrint dtIdentity) dtIdentity
+        let (newProject, outcomes, (outputs, _)) = fromRight (Actions.run stdLib action)
+        -- no codegen matches this datatype
+        outputs `shouldBe` [Newtype, Functor]
+        -- five more items in store
+        projectStoreSize newProject
+          `shouldBe` projectStoreSize stdLib + 5
+        -- one more binding
+        lookupBindingName
+          newProject
+          "identity"
+          `shouldSatisfy` isJust
+        -- one more type binding
+        lookupTypeBindingName
+          newProject
+          "Identity"
+          `shouldSatisfy` isJust
+        -- four new store expression
+        S.size
+          (Actions.storeExpressionsFromOutcomes outcomes)
+          `shouldBe` 5
+      it "Should bind TrafficLights and create type bindings for constructors" $ do
+        let action = Actions.bindType (prettyPrint dtTrafficLights) dtTrafficLights
+        let (newProject, outcomes, (outputs, _)) =
+              fromRight (Actions.run stdLib action)
+        -- no codegen matches this datatype
+        outputs `shouldBe` [Enum]
+        -- three more items in store
+        projectStoreSize newProject
+          `shouldBe` projectStoreSize stdLib + 3
+        -- one more binding
+        lookupBindingName
+          newProject
+          "trafficLights"
+          `shouldSatisfy` isJust
+        -- four more type bindings
+        lookupTypeBindingName
+          newProject
+          "Red"
+          `shouldSatisfy` isJust
+        -- four more type bindings
+        lookupTypeBindingName
+          newProject
+          "Yellow"
+          `shouldSatisfy` isJust
+        -- four more type bindings
+        lookupTypeBindingName
+          newProject
+          "Green"
+          `shouldSatisfy` isJust
+        -- three new store expressions
+        S.size
+          (Actions.storeExpressionsFromOutcomes outcomes)
+          `shouldBe` 3
