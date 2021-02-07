@@ -34,7 +34,7 @@ data TypeError
   | CaseMatchExpectedPair Annotation MonoType
   | CannotCaseMatchOnType (Expr Variable Annotation)
   | TypeConstructorNotInScope Environment Annotation TyCon
-  | TypeVariableNotInDataType TyCon Name [Name]
+  | TypeVariablesNotInDataType TyCon (Set Name) (Set Name)
   | ConflictingConstructors Annotation TyCon
   | CannotApplyToType TyCon
   | RecordKeyMismatch (Set Name)
@@ -169,13 +169,13 @@ renderTypeError (RecordKeyMismatch keys) =
     "The following keys were expected to be in both records and were not:"
   ]
     <> showSet renderName keys
-renderTypeError (TypeVariableNotInDataType constructor name as) =
-  [ "Type variable" <+> renderName name
+renderTypeError (TypeVariablesNotInDataType constructor names as) =
+  [ "Type variables" <+> mconcat (showSet prettyDoc names)
       <+> "could not be in found in type vars for"
       <+> prettyDoc constructor,
     "The following type variables were found:"
   ]
-    <> (renderName <$> as)
+    <> (showSet renderName as)
 renderTypeError (IncompletePatternMatch _ names) =
   [ "Incomplete pattern match.",
     "Missing constructors:"

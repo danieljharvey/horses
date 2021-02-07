@@ -406,6 +406,9 @@ spec =
         it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
           result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
           result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+        it "type Tlee a = Non | Tlee (Option b) in {}" $ do
+          result <- eval stdLib "type Tlee a = Non | Tlee (Option b) in {}"
+          result `shouldSatisfy` isLeft
         it "let some = \\a -> Some a in if True then some(1) else Nowt" $ do
           result <- eval stdLib "let some = \\a -> Some a in if True then some(1) else Nowt"
           result

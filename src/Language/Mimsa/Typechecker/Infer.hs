@@ -16,6 +16,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
+import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.DataTypes
   ( builtInTypes,
@@ -219,7 +220,8 @@ storeDataDeclaration ::
   DataType ->
   TcExpr ->
   TcMonad (Substitutions, MonoType)
-storeDataDeclaration env dt@(DataType tyName _ _) expr' =
+storeDataDeclaration env dt@(DataType tyName _ _) expr' = do
+  validateDataTypeVariables dt
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
@@ -238,6 +240,25 @@ inferDataConstructor env ann name = do
       pure (mempty, constructorToType tyArg)
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
+getVariablesForField :: Field -> Set Name
+getVariablesForField (VarName n) = S.singleton n
+getVariablesForField (ConsName _ fields) =
+  mconcat (getVariablesForField <$> fields)
+getVariablesForField (TNFunc a b) =
+  getVariablesForField a <> getVariablesForField b
+
+validateDataTypeVariables :: DataType -> TcMonad ()
+validateDataTypeVariables (DataType typeName vars constructors) =
+  let requiredForCons = foldMap getVariablesForField
+      requiredVars = foldMap requiredForCons constructors
+      availableVars = S.fromList vars
+      unavailableVars = S.filter (`S.notMember` availableVars) requiredVars
+   in if S.null unavailableVars
+        then pure ()
+        else
+          throwError $
+            TypeVariablesNotInDataType typeName unavailableVars availableVars
+
 -- infer types for data type and it's constructor in one big go
 inferConstructorTypes ::
   Environment ->
@@ -252,7 +273,12 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
         VarName var ->
           case filter (\(tyName, _) -> tyName == var) tyVars of
             [(_, tyFound)] -> pure tyFound
-            _ -> throwError $ TypeVariableNotInDataType typeName var (fst <$> tyVars)
+            _ ->
+              throwError $
+                TypeVariablesNotInDataType
+                  typeName
+                  (S.singleton var)
+                  (S.fromList (fst <$> tyVars))
         TNFunc a b -> do
           tyA <- findType a
           tyB <- findType b

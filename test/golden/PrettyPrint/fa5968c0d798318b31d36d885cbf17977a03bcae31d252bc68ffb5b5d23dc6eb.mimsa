@@ -1,0 +1,4 @@
+type Tlee a 
+  = Non
+  | Tlee (Option b);
+{}
