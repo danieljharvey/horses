@@ -7,8 +7,8 @@ module Language.Mimsa.Types.Store.ExprHash where
 
 import qualified Data.Aeson as JSON
 import Data.Swagger
-import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Printer
 import Servant.API

@@ -7,11 +7,11 @@ module Language.Mimsa.Typechecker.RecordUsages
   )
 where
 
-import qualified Data.Map as M
 import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Maybe (catMaybes)
-import qualified Data.Set as S
 import Data.Set (Set)
+import qualified Data.Set as S
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers

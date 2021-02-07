@@ -6,11 +6,10 @@ import qualified Data.Map as M
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-data NormaliseState
-  = NormaliseState
-      { _nsNext :: Int,
-        _nsAllocated :: Map TypeIdentifier Int
-      }
+data NormaliseState = NormaliseState
+  { _nsNext :: Int,
+    _nsAllocated :: Map TypeIdentifier Int
+  }
 
 normaliseType :: MonoType -> MonoType
 normaliseType mt =

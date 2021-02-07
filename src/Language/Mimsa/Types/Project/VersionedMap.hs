@@ -16,8 +16,7 @@ import Data.Swagger
 -- When adding a new item, it goes at the end, removing previous occurances
 ------
 
-newtype VersionedMap k a
-  = VersionedMap {getVersionedMap :: Map k (NonEmpty a)}
+newtype VersionedMap k a = VersionedMap {getVersionedMap :: Map k (NonEmpty a)}
   deriving newtype (Eq, Ord, Show, Monoid)
   deriving (JSON.ToJSON, JSON.FromJSON, ToSchema)
 

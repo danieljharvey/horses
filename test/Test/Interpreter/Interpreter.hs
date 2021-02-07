@@ -72,11 +72,11 @@ spec =
           mempty
           (str (StringType "poo"))
           (str (StringType "poo"))
-    describe "Let and Var"
-      $ it "let x = 1 in 1"
-      $ do
-        let f = MyLet mempty (named "x") (int 1) (MyVar mempty (named "x"))
-        testInterpret mempty f (int 1)
+    describe "Let and Var" $
+      it "let x = 1 in 1" $
+        do
+          let f = MyLet mempty (named "x") (int 1) (MyVar mempty (named "x"))
+          testInterpret mempty f (int 1)
     describe "Lambda and App" $ do
       it "let id = \\x -> x in (id 1)" $ do
         let f =

@@ -17,17 +17,17 @@ import Test.Utils.Helpers
 spec :: Spec
 spec =
   describe "Prettier" $ do
-    describe "Expr"
-      $ it "Cons with infix"
-      $ do
-        let expr' :: Expr Name ()
-            expr' =
-              MyConsApp
-                ()
-                (MyConstructor mempty "Some")
-                (MyInfix mempty Equals (int 1) (int 1))
-        prettyPrint expr'
-          `shouldBe` "Some (1 == 1)"
+    describe "Expr" $
+      it "Cons with infix" $
+        do
+          let expr' :: Expr Name ()
+              expr' =
+                MyConsApp
+                  ()
+                  (MyConstructor mempty "Some")
+                  (MyInfix mempty Equals (int 1) (int 1))
+          prettyPrint expr'
+            `shouldBe` "Some (1 == 1)"
     describe
       "MonoType"
       $ do

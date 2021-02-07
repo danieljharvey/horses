@@ -23,15 +23,15 @@ import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Swaps
 
 type App ann =
-  StateT (InterpretState ann)
+  StateT
+    (InterpretState ann)
     (ReaderT Swaps (Either (InterpreterError ann)))
 
-data InterpretState ann
-  = InterpretState
-      { isVarNum :: Int,
-        isScope :: Scope ann,
-        isInfix :: Map InfixOp Variable
-      }
+data InterpretState ann = InterpretState
+  { isVarNum :: Int,
+    isScope :: Scope ann,
+    isInfix :: Map InfixOp Variable
+  }
 
 -- infix operators
 

@@ -18,4 +18,5 @@ instance Printer Usage where
   prettyPrint (Direct name _) =
     "Direct dependency of "
       <> prettyPrint name
+
 ----------

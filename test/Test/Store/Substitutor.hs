@@ -119,89 +119,89 @@ spec = do
                 ]
             ans = testSubstitute mempty (StoreExpression expr mempty mempty)
         ans `shouldBe` SubstitutedExpression expectSwaps expected mempty
-    describe "One level of dep"
-      $ it "Vars introduced by deps are given numbers"
-      $ do
-        let hash = exprHash 1
-            expr = MyVar mempty (Name "exciting")
-            bindings' = Bindings $ M.singleton (Name "exciting") hash
-            storeExpr = StoreExpression expr bindings' mempty
-            store' = Store (M.singleton hash trueStoreExpr)
-            ans = testSubstitute store' storeExpr
-        seSwaps ans
-          `shouldBe` M.singleton (NumberedVar 0) (Name "exciting")
-        seExpr ans
-          `shouldBe` MyVar mempty (numbered 0)
-        seScope ans
-          `shouldBe` Scope (M.singleton (NumberedVar 0) (bool True))
-    describe "Only creates one new var if a function is used twice"
-      $ it "let id = \\x -> x in { first: id(1), second: id(2) }"
-      $ do
-        let hash = exprHash 3
-            expr =
-              MyRecord mempty $
-                M.fromList
-                  [ ("first", MyApp mempty (MyVar mempty "id") (int 1)),
-                    ("second", MyApp mempty (MyVar mempty "id") (int 2))
+    describe "One level of dep" $
+      it "Vars introduced by deps are given numbers" $
+        do
+          let hash = exprHash 1
+              expr = MyVar mempty (Name "exciting")
+              bindings' = Bindings $ M.singleton (Name "exciting") hash
+              storeExpr = StoreExpression expr bindings' mempty
+              store' = Store (M.singleton hash trueStoreExpr)
+              ans = testSubstitute store' storeExpr
+          seSwaps ans
+            `shouldBe` M.singleton (NumberedVar 0) (Name "exciting")
+          seExpr ans
+            `shouldBe` MyVar mempty (numbered 0)
+          seScope ans
+            `shouldBe` Scope (M.singleton (NumberedVar 0) (bool True))
+    describe "Only creates one new var if a function is used twice" $
+      it "let id = \\x -> x in { first: id(1), second: id(2) }" $
+        do
+          let hash = exprHash 3
+              expr =
+                MyRecord mempty $
+                  M.fromList
+                    [ ("first", MyApp mempty (MyVar mempty "id") (int 1)),
+                      ("second", MyApp mempty (MyVar mempty "id") (int 2))
+                    ]
+              bindings' = Bindings $ M.singleton "id" hash
+              storeExpr = StoreExpression expr bindings' mempty
+              store' = Store (M.singleton hash idExpr)
+              expectedId = MyLambda mempty (numbered 0) (MyVar mempty (numbered 0))
+          let ans = testSubstitute store' storeExpr
+          seSwaps ans
+            `shouldBe` M.fromList
+              [ (NumberedVar 0, Name "i"),
+                (NumberedVar 1, Name "id")
+              ]
+          seExpr ans
+            `shouldBe` MyRecord
+              mempty
+              ( M.fromList
+                  [ ("first", MyApp mempty (MyVar mempty (numbered 1)) (int 1)),
+                    ("second", MyApp mempty (MyVar mempty (numbered 1)) (int 2))
                   ]
-            bindings' = Bindings $ M.singleton "id" hash
+              )
+          seScope ans
+            `shouldBe` Scope
+              ( M.fromList
+                  [ (NumberedVar 1, expectedId)
+                  ]
+              )
+  describe "Combine two levels" $
+    it "'true' is introduced as a numbered variable" $
+      do
+        let hash = exprHash 2
+            expr = MyVar mempty "true"
+            bindings' = Bindings (M.singleton "true" hash)
             storeExpr = StoreExpression expr bindings' mempty
-            store' = Store (M.singleton hash idExpr)
-            expectedId = MyLambda mempty (numbered 0) (MyVar mempty (numbered 0))
+            store' = storeWithBothIn
         let ans = testSubstitute store' storeExpr
         seSwaps ans
           `shouldBe` M.fromList
-            [ (NumberedVar 0, Name "i"),
-              (NumberedVar 1, Name "id")
+            [ (NumberedVar 0, Name "true"),
+              (NumberedVar 1, Name "true")
             ]
-        seExpr ans
-          `shouldBe` MyRecord
-            mempty
-            ( M.fromList
-                [ ("first", MyApp mempty (MyVar mempty (numbered 1)) (int 1)),
-                  ("second", MyApp mempty (MyVar mempty (numbered 1)) (int 2))
-                ]
-            )
+        seExpr ans `shouldBe` MyVar mempty (numbered 1)
         seScope ans
           `shouldBe` Scope
             ( M.fromList
-                [ (NumberedVar 1, expectedId)
+                [ (NumberedVar 0, bool True),
+                  (NumberedVar 1, MyVar mempty (numbered 0))
                 ]
             )
-  describe "Combine two levels"
-    $ it "'true' is introduced as a numbered variable"
-    $ do
-      let hash = exprHash 2
-          expr = MyVar mempty "true"
-          bindings' = Bindings (M.singleton "true" hash)
-          storeExpr = StoreExpression expr bindings' mempty
-          store' = storeWithBothIn
-      let ans = testSubstitute store' storeExpr
-      seSwaps ans
-        `shouldBe` M.fromList
-          [ (NumberedVar 0, Name "true"),
-            (NumberedVar 1, Name "true")
-          ]
-      seExpr ans `shouldBe` MyVar mempty (numbered 1)
-      seScope ans
-        `shouldBe` Scope
-          ( M.fromList
-              [ (NumberedVar 0, bool True),
-                (NumberedVar 1, MyVar mempty (numbered 0))
-              ]
-          )
-  describe "Extracts types"
-    $ it "Good job"
-    $ do
-      let hash = exprHash 5
-          expr = MyLiteral mempty (MyUnit ())
-          storeExpr =
-            StoreExpression
-              expr
-              mempty
-              (TypeBindings $ M.singleton "Maybe" hash)
-          store' = storeWithBothIn
-          ans = testSubstitute store' storeExpr
-      seSwaps ans `shouldBe` mempty
-      seExpr ans `shouldBe` MyData mempty maybeDecl (MyLiteral mempty (MyUnit ()))
-      seScope ans `shouldBe` mempty
+  describe "Extracts types" $
+    it "Good job" $
+      do
+        let hash = exprHash 5
+            expr = MyLiteral mempty (MyUnit ())
+            storeExpr =
+              StoreExpression
+                expr
+                mempty
+                (TypeBindings $ M.singleton "Maybe" hash)
+            store' = storeWithBothIn
+            ans = testSubstitute store' storeExpr
+        seSwaps ans `shouldBe` mempty
+        seExpr ans `shouldBe` MyData mempty maybeDecl (MyLiteral mempty (MyUnit ()))
+        seScope ans `shouldBe` mempty

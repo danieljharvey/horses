@@ -367,7 +367,7 @@ spec =
                   `shouldBe` Right
                     ( MTFunction (MTData ( "Maybe") []) (MTPrim MTString)
                     )
-        
+
         -}
         it "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest" $ do
           result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"

@@ -7,12 +7,11 @@ import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.Identifiers (TyCon)
 import Language.Mimsa.Types.Typechecker.MonoType (MonoType)
 
-data TypeConstructor
-  = TypeConstructor
-      { tcConsName :: TyCon,
-        tcTypeVars :: [MonoType],
-        tcConsTypes :: [MonoType]
-      }
+data TypeConstructor = TypeConstructor
+  { tcConsName :: TyCon,
+    tcTypeVars :: [MonoType],
+    tcConsTypes :: [MonoType]
+  }
   deriving (Show)
 
 instance Printer TypeConstructor where
