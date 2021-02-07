@@ -175,7 +175,7 @@ renderTypeError (TypeVariablesNotInDataType constructor names as) =
       <+> prettyDoc constructor,
     "The following type variables were found:"
   ]
-    <> (showSet renderName as)
+    <> showSet renderName as
 renderTypeError (IncompletePatternMatch _ names) =
   [ "Incomplete pattern match.",
     "Missing constructors:"
