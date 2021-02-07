@@ -1,31 +1,46 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Language.Mimsa.Typechecker.Codegen.Functor
   ( functorMap,
   )
 where
 
-import Data.Coerce
+import Control.Monad.Except
+import Control.Monad.State
 import Data.Foldable (foldl')
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Semigroup
 import Data.Text (Text)
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Prelude hiding (fmap)
 
+type FunctorM = StateT (Map Name Int) (Either Text)
+
+runFunctorM :: FunctorM a -> Either Text a
+runFunctorM fn = case runStateT fn mempty of
+  Right (a, _) -> pure a
+  Left e -> Left e
+
+functorMap :: DataType -> Either Text (Expr Name ())
+functorMap = runFunctorM . functorMap_
+
 -- | A newtype is a datatype with one constructor
 -- | with one argument
-functorMap ::
+functorMap_ ::
   DataType ->
-  Either Text (Expr Name ())
-functorMap (DataType tyCon vars items) = do
+  FunctorM (Expr Name ())
+functorMap_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon
   fVar <- getFunctorVar vars
   case getMapItems items of
-    Nothing -> Left "Type should have at least one constructor"
+    Nothing -> throwError "Type should have at least one constructor"
     Just constructors -> do
       matches <-
         traverse
@@ -54,32 +69,46 @@ functorMap (DataType tyCon vars items) = do
             (MyVar mempty "fmap")
         )
 
-getFunctorVar :: [Name] -> Either Text Name
+getFunctorVar :: (MonadError Text m) => [Name] -> m Name
 getFunctorVar names = case NE.nonEmpty names of
-  Just neNames -> Right $ NE.last neNames
-  _ -> Left "Type should have at least one type variable"
+  Just neNames -> pure $ NE.last neNames
+  _ -> throwError "Type should have at least one type variable"
 
 data FieldItemType
   = VariableField Name
   | RecurseField Name
 
-toFieldItemType :: TyCon -> Field -> Either Text FieldItemType
+toFieldItemType :: TyCon -> Field -> FunctorM FieldItemType
 toFieldItemType typeName = \case
-  VarName a -> Right (VariableField a)
+  VarName a -> pure (VariableField a)
   ConsName fieldConsName _fields
     | fieldConsName == typeName ->
-      Right (RecurseField (restName typeName))
-  _ -> Left "Expected VarName"
+      RecurseField <$> nextName typeName
+  _ -> throwError "Expected VarName"
 
-restName :: TyCon -> Name
-restName tyCon = "rest" <> coerce tyCon
+-- | given a type constructor, give me a new unique name for it
+nextName :: TyCon -> FunctorM Name
+nextName tyCon = do
+  let base = tyConToName tyCon
+  vars <- get
+  case M.lookup base vars of
+    Nothing -> do
+      modify (M.singleton base 1 <>)
+      pure $ base <> Name "1"
+    Just as -> do
+      modify (M.adjust (+ 1) base)
+      pure $ base <> Name (prettyPrint (as + 1))
 
+-- | A match is one item in a case match, that will deconstruct and then
+-- rebuild whatever is inside, mapping over `f` as it does.
+-- TODO: allow the `f` to be configurable and to allow multiple ones so we can
+-- implement bifunctor with the same code
 createMatch ::
   TyCon ->
   Name ->
   TyCon ->
   [Field] ->
-  Either Text (Expr Name ())
+  FunctorM (Expr Name ())
 createMatch typeName matchVar tyCon fields = do
   regFields <-
     traverse (toFieldItemType typeName) fields

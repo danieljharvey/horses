@@ -111,6 +111,21 @@ dtDoubleList =
         ]
     )
 
+dtTree :: DataType
+dtTree =
+  DataType
+    "Tree"
+    ["a"]
+    ( M.fromList
+        [ ("Leaf", [VarName "a"]),
+          ( "Branch",
+            [ ConsName "Tree" [VarName "a"],
+              ConsName "Tree" [VarName "a"]
+            ]
+          )
+        ]
+    )
+
 typecheckInstance ::
   (DataType -> Either Text (Expr Name ())) ->
   DataType ->
@@ -350,7 +365,7 @@ spec = do
                                       "a"
                                       ( MyLambda
                                           mempty
-                                          "restList"
+                                          "list1"
                                           ( MyConsApp
                                               mempty
                                               ( MyConsApp
@@ -369,7 +384,7 @@ spec = do
                                                       (MyVar mempty "fmap")
                                                       (MyVar mempty "f")
                                                   )
-                                                  (MyVar mempty "restList")
+                                                  (MyVar mempty "list1")
                                               )
                                           )
                                       )
@@ -411,7 +426,7 @@ spec = do
                                           "b"
                                           ( MyLambda
                                               mempty
-                                              "restDoubleList"
+                                              "doubleList1"
                                               ( MyConsApp
                                                   mempty
                                                   ( MyConsApp
@@ -430,7 +445,7 @@ spec = do
                                                           (MyVar mempty "fmap")
                                                           (MyVar mempty "f")
                                                       )
-                                                      (MyVar mempty "restDoubleList")
+                                                      (MyVar mempty "doubleList1")
                                                   )
                                               )
                                           )
@@ -438,6 +453,79 @@ spec = do
                                   ),
                                   ( "DoubleNil",
                                     MyConstructor mempty "DoubleNil"
+                                  )
+                                ]
+                            )
+                            Nothing
+                        )
+                    )
+                )
+                (MyVar mempty "fmap")
+            )
+      it "Generates functorMap for dtTree" $ do
+        typecheckInstance functorMap dtTree `shouldSatisfy` isRight
+        functorMap dtTree
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                "fmap"
+                ( MyLambda
+                    mempty
+                    "f"
+                    ( MyLambda
+                        mempty
+                        "tree"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "tree")
+                            ( NE.fromList
+                                [ ( "Branch",
+                                    MyLambda
+                                      mempty
+                                      "tree1"
+                                      ( MyLambda
+                                          mempty
+                                          "tree2"
+                                          ( MyConsApp
+                                              mempty
+                                              ( MyConsApp
+                                                  mempty
+                                                  (MyConstructor mempty "Branch")
+                                                  ( MyApp
+                                                      mempty
+                                                      ( MyApp
+                                                          mempty
+                                                          (MyVar mempty "fmap")
+                                                          (MyVar mempty "f")
+                                                      )
+                                                      (MyVar mempty "tree1")
+                                                  )
+                                              )
+                                              ( MyApp
+                                                  mempty
+                                                  ( MyApp
+                                                      mempty
+                                                      (MyVar mempty "fmap")
+                                                      (MyVar mempty "f")
+                                                  )
+                                                  (MyVar mempty "tree2")
+                                              )
+                                          )
+                                      )
+                                  ),
+                                  ( "Leaf",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      ( MyConsApp
+                                          mempty
+                                          (MyConstructor mempty "Leaf")
+                                          ( MyApp
+                                              mempty
+                                              (MyVar mempty "f")
+                                              (MyVar mempty "a")
+                                          )
+                                      )
                                   )
                                 ]
                             )
