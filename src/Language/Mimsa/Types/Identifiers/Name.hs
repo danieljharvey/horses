@@ -29,7 +29,9 @@ newtype Name = Name {getName' :: Text}
       JSON.FromJSONKey,
       JSON.ToJSON,
       JSON.ToJSONKey,
-      FromHttpApiData
+      FromHttpApiData,
+      Semigroup,
+      Monoid
     )
 
 instance IsString Name where

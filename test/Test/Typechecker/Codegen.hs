@@ -77,6 +77,55 @@ dtThese =
         ]
     )
 
+-- | List monad
+dtList :: DataType
+dtList =
+  DataType
+    "List"
+    ["a"]
+    ( M.fromList
+        [ ( "Cons",
+            [ VarName "a",
+              ConsName "List" [VarName "a"]
+            ]
+          ),
+          ("Nil", [])
+        ]
+    )
+
+-- | List but with more type params so we can recurse around more complicated
+-- types
+dtDoubleList :: DataType
+dtDoubleList =
+  DataType
+    "DoubleList"
+    ["a", "b"]
+    ( M.fromList
+        [ ( "DoubleCons",
+            [ VarName "a",
+              VarName "b",
+              ConsName "DoubleList" [VarName "a", VarName "b"]
+            ]
+          ),
+          ("DoubleNil", [])
+        ]
+    )
+
+dtTree :: DataType
+dtTree =
+  DataType
+    "Tree"
+    ["a"]
+    ( M.fromList
+        [ ("Leaf", [VarName "a"]),
+          ( "Branch",
+            [ ConsName "Tree" [VarName "a"],
+              ConsName "Tree" [VarName "a"]
+            ]
+          )
+        ]
+    )
+
 typecheckInstance ::
   (DataType -> Either Text (Expr Name ())) ->
   DataType ->
@@ -148,135 +197,343 @@ spec = do
         typecheckInstance functorMap dtIdentity `shouldSatisfy` isRight
         functorMap dtIdentity
           `shouldBe` Right
-            ( MyLambda
+            ( MyLet
                 mempty
-                "f"
+                "fmap"
                 ( MyLambda
                     mempty
-                    "identity"
-                    ( MyCaseMatch
+                    "f"
+                    ( MyLambda
                         mempty
-                        (MyVar mempty "identity")
-                        ( pure
-                            ( "Identity",
-                              MyLambda
-                                mempty
-                                "a"
-                                ( MyConsApp
+                        "identity"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "identity")
+                            ( pure
+                                ( "Identity",
+                                  MyLambda
                                     mempty
-                                    (MyConstructor mempty "Identity")
-                                    ( MyApp
+                                    "a"
+                                    ( MyConsApp
                                         mempty
-                                        (MyVar mempty "f")
-                                        (MyVar mempty "a")
+                                        (MyConstructor mempty "Identity")
+                                        ( MyApp
+                                            mempty
+                                            (MyVar mempty "f")
+                                            (MyVar mempty "a")
+                                        )
                                     )
                                 )
                             )
+                            Nothing
                         )
-                        Nothing
                     )
                 )
+                (MyVar mempty "fmap")
             )
       it "Generates functorMap for dtMaybe" $ do
         typecheckInstance functorMap dtMaybe `shouldSatisfy` isRight
         functorMap dtMaybe
           `shouldBe` Right
-            ( MyLambda
+            ( MyLet
                 mempty
-                "f"
+                "fmap"
                 ( MyLambda
                     mempty
-                    "maybe"
-                    ( MyCaseMatch
+                    "f"
+                    ( MyLambda
                         mempty
-                        (MyVar mempty "maybe")
-                        ( NE.fromList
-                            [ ( "Just",
-                                MyLambda
-                                  mempty
-                                  "a"
-                                  ( MyConsApp
+                        "maybe"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "maybe")
+                            ( NE.fromList
+                                [ ( "Just",
+                                    MyLambda
                                       mempty
-                                      (MyConstructor mempty "Just")
-                                      ( MyApp
+                                      "a"
+                                      ( MyConsApp
                                           mempty
-                                          (MyVar mempty "f")
-                                          (MyVar mempty "a")
+                                          (MyConstructor mempty "Just")
+                                          ( MyApp
+                                              mempty
+                                              (MyVar mempty "f")
+                                              (MyVar mempty "a")
+                                          )
                                       )
-                                  )
-                              ),
-                              ("Nothing", MyConstructor mempty "Nothing")
-                            ]
+                                  ),
+                                  ("Nothing", MyConstructor mempty "Nothing")
+                                ]
+                            )
+                            Nothing
                         )
-                        Nothing
                     )
                 )
+                (MyVar mempty "fmap")
             )
       it "Generates functorMap for dtThese" $ do
         typecheckInstance functorMap dtThese `shouldSatisfy` isRight
         functorMap dtThese
           `shouldBe` Right
-            ( MyLambda
+            ( MyLet
                 mempty
-                "f"
+                "fmap"
                 ( MyLambda
                     mempty
-                    "these"
-                    ( MyCaseMatch
+                    "f"
+                    ( MyLambda
                         mempty
-                        (MyVar mempty "these")
-                        ( NE.fromList
-                            [ ( "That",
-                                MyLambda
-                                  mempty
-                                  "b"
-                                  ( MyConsApp
-                                      mempty
-                                      (MyConstructor mempty "That")
-                                      ( MyApp
-                                          mempty
-                                          (MyVar mempty "f")
-                                          (MyVar mempty "b")
-                                      )
-                                  )
-                              ),
-                              ( "These",
-                                MyLambda
-                                  mempty
-                                  "a"
-                                  ( MyLambda
+                        "these"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "these")
+                            ( NE.fromList
+                                [ ( "That",
+                                    MyLambda
                                       mempty
                                       "b"
                                       ( MyConsApp
                                           mempty
-                                          ( MyConsApp
-                                              mempty
-                                              (MyConstructor mempty "These")
-                                              (MyVar mempty "a")
-                                          )
+                                          (MyConstructor mempty "That")
                                           ( MyApp
                                               mempty
                                               (MyVar mempty "f")
                                               (MyVar mempty "b")
                                           )
                                       )
-                                  )
-                              ),
-                              ( "This",
-                                MyLambda
-                                  mempty
-                                  "a"
-                                  ( MyConsApp
+                                  ),
+                                  ( "These",
+                                    MyLambda
                                       mempty
-                                      (MyConstructor mempty "This")
-                                      (MyVar mempty "a")
+                                      "a"
+                                      ( MyLambda
+                                          mempty
+                                          "b"
+                                          ( MyConsApp
+                                              mempty
+                                              ( MyConsApp
+                                                  mempty
+                                                  (MyConstructor mempty "These")
+                                                  (MyVar mempty "a")
+                                              )
+                                              ( MyApp
+                                                  mempty
+                                                  (MyVar mempty "f")
+                                                  (MyVar mempty "b")
+                                              )
+                                          )
+                                      )
+                                  ),
+                                  ( "This",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      ( MyConsApp
+                                          mempty
+                                          (MyConstructor mempty "This")
+                                          (MyVar mempty "a")
+                                      )
                                   )
-                              )
-                            ]
+                                ]
+                            )
+                            Nothing
                         )
-                        Nothing
                     )
                 )
+                (MyVar mempty "fmap")
+            )
+      it "Generates functorMap for dtList" $ do
+        typecheckInstance functorMap dtList `shouldSatisfy` isRight
+        functorMap dtList
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                "fmap"
+                ( MyLambda
+                    mempty
+                    "f"
+                    ( MyLambda
+                        mempty
+                        "list"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "list")
+                            ( NE.fromList
+                                [ ( "Cons",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      ( MyLambda
+                                          mempty
+                                          "list1"
+                                          ( MyConsApp
+                                              mempty
+                                              ( MyConsApp
+                                                  mempty
+                                                  (MyConstructor mempty "Cons")
+                                                  ( MyApp
+                                                      mempty
+                                                      (MyVar mempty "f")
+                                                      (MyVar mempty "a")
+                                                  )
+                                              )
+                                              ( MyApp
+                                                  mempty
+                                                  ( MyApp
+                                                      mempty
+                                                      (MyVar mempty "fmap")
+                                                      (MyVar mempty "f")
+                                                  )
+                                                  (MyVar mempty "list1")
+                                              )
+                                          )
+                                      )
+                                  ),
+                                  ( "Nil",
+                                    MyConstructor mempty "Nil"
+                                  )
+                                ]
+                            )
+                            Nothing
+                        )
+                    )
+                )
+                (MyVar mempty "fmap")
+            )
+      it "Generates functorMap for dtDoubleList" $ do
+        typecheckInstance functorMap dtDoubleList `shouldSatisfy` isRight
+        functorMap dtDoubleList
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                "fmap"
+                ( MyLambda
+                    mempty
+                    "f"
+                    ( MyLambda
+                        mempty
+                        "doubleList"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "doubleList")
+                            ( NE.fromList
+                                [ ( "DoubleCons",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      ( MyLambda
+                                          mempty
+                                          "b"
+                                          ( MyLambda
+                                              mempty
+                                              "doubleList1"
+                                              ( MyConsApp
+                                                  mempty
+                                                  ( MyConsApp
+                                                      mempty
+                                                      ( MyConsApp
+                                                          mempty
+                                                          (MyConstructor mempty "DoubleCons")
+                                                          (MyVar mempty "a")
+                                                      )
+                                                      (MyApp mempty (MyVar mempty "f") (MyVar mempty "b"))
+                                                  )
+                                                  ( MyApp
+                                                      mempty
+                                                      ( MyApp
+                                                          mempty
+                                                          (MyVar mempty "fmap")
+                                                          (MyVar mempty "f")
+                                                      )
+                                                      (MyVar mempty "doubleList1")
+                                                  )
+                                              )
+                                          )
+                                      )
+                                  ),
+                                  ( "DoubleNil",
+                                    MyConstructor mempty "DoubleNil"
+                                  )
+                                ]
+                            )
+                            Nothing
+                        )
+                    )
+                )
+                (MyVar mempty "fmap")
+            )
+      it "Generates functorMap for dtTree" $ do
+        typecheckInstance functorMap dtTree `shouldSatisfy` isRight
+        functorMap dtTree
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                "fmap"
+                ( MyLambda
+                    mempty
+                    "f"
+                    ( MyLambda
+                        mempty
+                        "tree"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "tree")
+                            ( NE.fromList
+                                [ ( "Branch",
+                                    MyLambda
+                                      mempty
+                                      "tree1"
+                                      ( MyLambda
+                                          mempty
+                                          "tree2"
+                                          ( MyConsApp
+                                              mempty
+                                              ( MyConsApp
+                                                  mempty
+                                                  (MyConstructor mempty "Branch")
+                                                  ( MyApp
+                                                      mempty
+                                                      ( MyApp
+                                                          mempty
+                                                          (MyVar mempty "fmap")
+                                                          (MyVar mempty "f")
+                                                      )
+                                                      (MyVar mempty "tree1")
+                                                  )
+                                              )
+                                              ( MyApp
+                                                  mempty
+                                                  ( MyApp
+                                                      mempty
+                                                      (MyVar mempty "fmap")
+                                                      (MyVar mempty "f")
+                                                  )
+                                                  (MyVar mempty "tree2")
+                                              )
+                                          )
+                                      )
+                                  ),
+                                  ( "Leaf",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      ( MyConsApp
+                                          mempty
+                                          (MyConstructor mempty "Leaf")
+                                          ( MyApp
+                                              mempty
+                                              (MyVar mempty "f")
+                                              (MyVar mempty "a")
+                                          )
+                                      )
+                                  )
+                                ]
+                            )
+                            Nothing
+                        )
+                    )
+                )
+                (MyVar mempty "fmap")
             )
     describe "typeclassMatches" $ do
       it "No instances for Void" $ do
