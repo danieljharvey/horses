@@ -25,12 +25,11 @@ import Language.Mimsa.Types.Swaps
 --
 -- we'll also store what our substitutions were for errors sake
 
-data SubsState ann
-  = SubsState
-      { subsSwaps :: Swaps,
-        subsScope :: Scope ann,
-        subsCounter :: Int
-      }
+data SubsState ann = SubsState
+  { subsSwaps :: Swaps,
+    subsScope :: Scope ann,
+    subsCounter :: Int
+  }
 
 type App ann = State (SubsState ann)
 

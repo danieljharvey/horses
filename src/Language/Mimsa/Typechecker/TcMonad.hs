@@ -4,8 +4,8 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State (State, gets, modify, runState)
 import Data.Coerce
-import qualified Data.Map as M
 import Data.Map (Map)
+import qualified Data.Map as M
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -14,11 +14,10 @@ import Language.Mimsa.Types.Typechecker
 
 type TcMonad = ExceptT TypeError (ReaderT Swaps (State TypecheckState))
 
-data TypecheckState
-  = TypecheckState
-      { tcsNum :: Int,
-        tcsTypedHoles :: Map Name (Annotation, Int)
-      }
+data TypecheckState = TypecheckState
+  { tcsNum :: Int,
+    tcsTypedHoles :: Map Name (Annotation, Int)
+  }
 
 runTcMonad ::
   Swaps ->

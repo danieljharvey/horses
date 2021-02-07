@@ -14,10 +14,9 @@ import Language.Mimsa.Types.Store.TypeBindings
 
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside
-data StoreExpression ann
-  = StoreExpression
-      { storeExpression :: Expr Name ann,
-        storeBindings :: Bindings,
-        storeTypeBindings :: TypeBindings
-      }
+data StoreExpression ann = StoreExpression
+  { storeExpression :: Expr Name ann,
+    storeBindings :: Bindings,
+    storeTypeBindings :: TypeBindings
+  }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON, Functor, ToSchema)

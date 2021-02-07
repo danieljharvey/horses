@@ -13,12 +13,11 @@ import Language.Mimsa.Types.Store.StoreExpression
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker.MonoType
 
-data ResolvedExpression ann
-  = ResolvedExpression
-      { reMonoType :: MonoType,
-        reStoreExpression :: StoreExpression ann,
-        reExpression :: Expr Variable ann,
-        reScope :: Scope ann,
-        reSwaps :: Swaps
-      }
+data ResolvedExpression ann = ResolvedExpression
+  { reMonoType :: MonoType,
+    reStoreExpression :: StoreExpression ann,
+    reExpression :: Expr Variable ann,
+    reScope :: Scope ann,
+    reSwaps :: Swaps
+  }
   deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON)

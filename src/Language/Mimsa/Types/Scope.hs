@@ -17,10 +17,9 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 
 -- dependencies resolved into actual expressions
-newtype Scope ann
-  = Scope
-      { getScope :: Map Variable (Expr Variable ann)
-      }
+newtype Scope ann = Scope
+  { getScope :: Map Variable (Expr Variable ann)
+  }
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
   deriving stock (Functor, Generic)
   deriving anyclass (JSON.ToJSON)

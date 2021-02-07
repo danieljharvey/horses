@@ -16,12 +16,11 @@ import Language.Mimsa.Types.Typechecker.MonoType
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 
 -- everything we need in typechecking environment
-data Environment
-  = Environment
-      { getSchemes :: Map TypeIdentifier Scheme,
-        getDataTypes :: Map TyCon DataType,
-        getInfix :: Map InfixOp MonoType
-      }
+data Environment = Environment
+  { getSchemes :: Map TypeIdentifier Scheme,
+    getDataTypes :: Map TyCon DataType,
+    getInfix :: Map InfixOp MonoType
+  }
   deriving (Eq, Ord, Show)
 
 instance Semigroup Environment where
