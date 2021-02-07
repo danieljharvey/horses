@@ -549,7 +549,7 @@ spec = do
                 (MyVar mempty "fmap")
             )
       it "Generates functorMap for dtReader" $ do
-        -- typecheckInstance functorMap dtReader `shouldSatisfy` isRight
+        typecheckInstance functorMap dtReader `shouldSatisfy` isRight
         functorMap dtReader
           `shouldBe` Right
             ( MyLet
