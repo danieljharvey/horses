@@ -75,6 +75,7 @@ getFunctorVar names = case NE.nonEmpty names of
 data FieldItemType
   = VariableField Name
   | RecurseField Name
+  | Func2 Name Name Name
 
 toFieldItemType :: TyCon -> Field -> FunctorM FieldItemType
 toFieldItemType typeName = \case
@@ -82,6 +83,8 @@ toFieldItemType typeName = \case
   ConsName fieldConsName _fields
     | fieldConsName == typeName ->
       RecurseField <$> nextName typeName
+  TNFunc (VarName a) (VarName b) ->
+    pure $ Func2 (a <> "to" <> b) a b
   _ -> throwError "Expected VarName"
 
 -- | given a type constructor, give me a new unique name for it
@@ -96,6 +99,47 @@ nextName tyCon = do
     Just as -> do
       modify (M.adjust (+ 1) base)
       pure $ base <> Name (prettyPrint (as + 1))
+
+reconstructField :: Name -> FieldItemType -> Expr Name ()
+reconstructField matchVar fieldItem =
+  case fieldItem of
+    VariableField varName ->
+      if varName == matchVar
+        then MyApp mempty (MyVar mempty "f") (MyVar mempty varName)
+        else MyVar mempty varName
+    RecurseField restVar ->
+      MyApp
+        mempty
+        ( MyApp
+            mempty
+            (MyVar mempty "fmap")
+            (MyVar mempty "f")
+        )
+        (MyVar mempty restVar)
+    Func2 fromF from to ->
+      if to == matchVar
+        then
+          MyLambda
+            mempty
+            from
+            ( MyApp
+                mempty
+                (MyVar mempty "f")
+                ( MyApp
+                    mempty
+                    (MyVar mempty fromF)
+                    (MyVar mempty from)
+                )
+            )
+        else
+          MyLambda
+            mempty
+            from
+            ( MyApp
+                mempty
+                (MyVar mempty fromF)
+                (MyVar mempty from)
+            )
 
 -- | A match is one item in a case match, that will deconstruct and then
 -- rebuild whatever is inside, mapping over `f` as it does.
@@ -112,32 +156,18 @@ createMatch typeName matchVar tyCon fields = do
     traverse (toFieldItemType typeName) fields
   let withConsApp =
         foldl'
-          ( \expr' field -> case field of
-              VariableField varName ->
-                let var =
-                      if varName == matchVar
-                        then MyApp mempty (MyVar mempty "f") (MyVar mempty varName)
-                        else MyVar mempty varName
-                 in MyConsApp mempty expr' var
-              RecurseField restVar ->
-                let var =
-                      MyApp
-                        mempty
-                        ( MyApp
-                            mempty
-                            (MyVar mempty "fmap")
-                            (MyVar mempty "f")
-                        )
-                        (MyVar mempty restVar)
-                 in MyConsApp mempty expr' var
+          ( \expr' fieldItem ->
+              let reconstruct = reconstructField matchVar fieldItem
+               in MyConsApp mempty expr' reconstruct
           )
           (MyConstructor mempty tyCon)
           regFields
   pure $
     foldr
-      ( \field expr' -> case field of
-          VariableField n -> MyLambda mempty n expr'
-          RecurseField restVar -> MyLambda mempty restVar expr'
+      ( \case
+          VariableField n -> MyLambda mempty n
+          RecurseField restVar -> MyLambda mempty restVar
+          Func2 fromF _ _ -> MyLambda mempty fromF
       )
       withConsApp
       regFields

@@ -126,6 +126,19 @@ dtTree =
         ]
     )
 
+dtReader :: DataType
+dtReader =
+  DataType
+    "Reader"
+    ["r", "a"]
+    ( M.singleton
+        "Reader"
+        [ TNFunc
+            (VarName "r")
+            (VarName "a")
+        ]
+    )
+
 typecheckInstance ::
   (DataType -> Either Text (Expr Name ())) ->
   DataType ->
@@ -535,6 +548,53 @@ spec = do
                 )
                 (MyVar mempty "fmap")
             )
+      it "Generates functorMap for dtReader" $ do
+        typecheckInstance functorMap dtReader `shouldSatisfy` isRight
+        functorMap dtReader
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                "fmap"
+                ( MyLambda
+                    mempty
+                    "f"
+                    ( MyLambda
+                        mempty
+                        "reader"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "reader")
+                            ( pure
+                                ( "Reader",
+                                  MyLambda
+                                    mempty
+                                    "rtoa"
+                                    ( MyConsApp
+                                        mempty
+                                        (MyConstructor mempty "Reader")
+                                        ( MyLambda
+                                            mempty
+                                            "r"
+                                            ( MyApp
+                                                mempty
+                                                (MyVar mempty "f")
+                                                ( MyApp
+                                                    mempty
+                                                    (MyVar mempty "rtoa")
+                                                    (MyVar mempty "r")
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                            Nothing
+                        )
+                    )
+                )
+                (MyVar mempty "fmap")
+            )
+
     describe "typeclassMatches" $ do
       it "No instances for Void" $ do
         typeclassMatches dtVoid `shouldBe` mempty
