@@ -3,8 +3,14 @@ name: CI
 on: [push, pull_request]
 
 jobs:
+  ormolu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: mrkkrp/ormolu-action@v1
+      
   build:
-
+    needs: ormolu
     runs-on: ubuntu-latest
 
     steps:
