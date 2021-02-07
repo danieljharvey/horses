@@ -1,7 +1,5 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Language.Mimsa.Typechecker.Codegen.Functor
   ( functorMap,
@@ -69,7 +67,7 @@ functorMap_ (DataType tyCon vars items) = do
             (MyVar mempty "fmap")
         )
 
-getFunctorVar :: (MonadError Text m) => [Name] -> m Name
+getFunctorVar :: [Name] -> FunctorM Name
 getFunctorVar names = case NE.nonEmpty names of
   Just neNames -> pure $ NE.last neNames
   _ -> throwError "Type should have at least one type variable"
