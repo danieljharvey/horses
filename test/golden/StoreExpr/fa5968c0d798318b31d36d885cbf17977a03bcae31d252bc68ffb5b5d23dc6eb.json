@@ -1,0 +1,1 @@
+{"storeExpression":{"tag":"MyData","contents":[[],{"dtConstructors":{"Non":[],"Tlee":[{"tag":"ConsName","contents":["Option",[{"tag":"VarName","contents":"b"}]]}]},"dtName":"Tlee","dtVars":["a"]},{"tag":"MyRecord","contents":[[],{}]}]},"storeBindings":{},"storeTypeBindings":{"Option":"6c378eebd443d9e2a4c14f69596d50da19086f4952aeac4bac3c72474c8c24c3"}}
