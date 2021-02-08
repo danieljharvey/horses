@@ -7,6 +7,7 @@ module Language.Mimsa.Typechecker.Codegen
     module Language.Mimsa.Typechecker.Codegen.Newtype,
     module Language.Mimsa.Typechecker.Codegen.Enum,
     module Language.Mimsa.Typechecker.Codegen.Functor,
+    module Language.Mimsa.Typechecker.Codegen.Foldable,
   )
 where
 
@@ -17,6 +18,7 @@ import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Codegen.Enum
+import Language.Mimsa.Typechecker.Codegen.Foldable
 import Language.Mimsa.Typechecker.Codegen.Functor
 import Language.Mimsa.Typechecker.Codegen.Newtype
 import Language.Mimsa.Types.AST

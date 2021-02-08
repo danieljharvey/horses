@@ -594,6 +594,41 @@ spec = do
                 )
                 (MyVar mempty "fmap")
             )
+    describe "Foldable instances" $ do
+      it "Generates fold for dtIdentity" $ do
+        typecheckInstance fold dtIdentity `shouldSatisfy` isRight
+        fold dtIdentity
+          `shouldBe` Right
+            ( MyLambda
+                mempty
+                "f"
+                ( MyLambda
+                    mempty
+                    "total"
+                    ( MyLambda
+                        mempty
+                        "identity"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "identity")
+                            ( NE.fromList
+                                [ ( "Identity",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      ( MyApp
+                                          mempty
+                                          (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
+                                          (MyVar mempty "a")
+                                      )
+                                  )
+                                ]
+                            )
+                            Nothing
+                        )
+                    )
+                )
+            )
 
     describe "typeclassMatches" $ do
       it "No instances for Void" $ do
