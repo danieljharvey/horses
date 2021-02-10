@@ -45,23 +45,28 @@ fold_ (DataType tyCon vars items) = do
           )
           constructors
       pure
-        ( MyLambda
+        ( MyLet
             mempty
-            "f"
+            "fold"
             ( MyLambda
                 mempty
-                "total"
+                "f"
                 ( MyLambda
                     mempty
-                    tyName
-                    ( MyCaseMatch
+                    "total"
+                    ( MyLambda
                         mempty
-                        (MyVar mempty tyName)
-                        matches
-                        Nothing
+                        tyName
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty tyName)
+                            matches
+                            Nothing
+                        )
                     )
                 )
             )
+            (MyVar mempty "fold")
         )
 
 getFoldableVar :: [Name] -> FoldableM Name
@@ -102,7 +107,8 @@ createMatch ::
   FoldableM (Expr Name ())
 createMatch _typeName matchVar fields = do
   fieldItems <- traverse (toFieldItemType matchVar) fields
-  let expr' = reconstructFields (snd <$> fieldItems)
+  let expr' =
+        reconstructFields (snd <$> fieldItems)
   pure $
     foldr
       ( MyLambda mempty

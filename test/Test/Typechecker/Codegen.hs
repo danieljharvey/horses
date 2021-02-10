@@ -599,103 +599,103 @@ spec = do
         typecheckInstance fold dtIdentity `shouldSatisfy` isRight
         fold dtIdentity
           `shouldBe` Right
-            ( MyLambda
+            ( MyLet
                 mempty
-                "f"
+                "fold"
                 ( MyLambda
                     mempty
-                    "total"
+                    "f"
                     ( MyLambda
                         mempty
-                        "identity"
-                        ( MyCaseMatch
+                        "total"
+                        ( MyLambda
                             mempty
-                            (MyVar mempty "identity")
-                            ( NE.fromList
-                                [ ( "Identity",
-                                    MyLambda
-                                      mempty
-                                      "a"
-                                      ( MyApp
+                            "identity"
+                            ( MyCaseMatch
+                                mempty
+                                (MyVar mempty "identity")
+                                ( NE.fromList
+                                    [ ( "Identity",
+                                        MyLambda
                                           mempty
-                                          (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
-                                          (MyVar mempty "a")
+                                          "a"
+                                          ( MyApp
+                                              mempty
+                                              (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
+                                              (MyVar mempty "a")
+                                          )
                                       )
-                                  )
-                                ]
+                                    ]
+                                )
+                                Nothing
                             )
-                            Nothing
                         )
                     )
                 )
+                (MyVar mempty "fold")
             )
       it "Generates fold for dtMaybe" $ do
         typecheckInstance fold dtMaybe `shouldSatisfy` isRight
         fold dtMaybe
           `shouldBe` Right
-            ( MyLambda
+            ( MyLet
                 mempty
-                "f"
+                "fold"
                 ( MyLambda
                     mempty
-                    "total"
+                    "f"
                     ( MyLambda
                         mempty
-                        "maybe"
-                        ( MyCaseMatch
+                        "total"
+                        ( MyLambda
                             mempty
-                            (MyVar mempty "maybe")
-                            ( NE.fromList
-                                [ ( "Just",
-                                    MyLambda
-                                      mempty
-                                      "a"
-                                      ( MyApp
+                            "maybe"
+                            ( MyCaseMatch
+                                mempty
+                                (MyVar mempty "maybe")
+                                ( NE.fromList
+                                    [ ( "Just",
+                                        MyLambda
                                           mempty
-                                          (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
-                                          (MyVar mempty "a")
-                                      )
-                                  ),
-                                  ("Nothing", MyVar mempty "total")
-                                ]
+                                          "a"
+                                          ( MyApp
+                                              mempty
+                                              (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
+                                              (MyVar mempty "a")
+                                          )
+                                      ),
+                                      ("Nothing", MyVar mempty "total")
+                                    ]
+                                )
+                                Nothing
                             )
-                            Nothing
                         )
                     )
                 )
+                (MyVar mempty "fold")
             )
       it "Generates fold for dtThese" $ do
         typecheckInstance fold dtThese `shouldSatisfy` isRight
         fold dtThese
           `shouldBe` Right
-            ( MyLambda
+            ( MyLet
                 mempty
-                "f"
+                "fold"
                 ( MyLambda
                     mempty
-                    "total"
+                    "f"
                     ( MyLambda
                         mempty
-                        "these"
-                        ( MyCaseMatch
+                        "total"
+                        ( MyLambda
                             mempty
-                            (MyVar mempty "these")
-                            ( NE.fromList
-                                [ ( "That",
-                                    MyLambda
-                                      mempty
-                                      "b"
-                                      ( MyApp
-                                          mempty
-                                          (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
-                                          (MyVar mempty "b")
-                                      )
-                                  ),
-                                  ( "These",
-                                    MyLambda
-                                      mempty
-                                      "a"
-                                      ( MyLambda
+                            "these"
+                            ( MyCaseMatch
+                                mempty
+                                (MyVar mempty "these")
+                                ( NE.fromList
+                                    [ ( "That",
+                                        MyLambda
                                           mempty
                                           "b"
                                           ( MyApp
@@ -703,22 +703,97 @@ spec = do
                                               (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
                                               (MyVar mempty "b")
                                           )
+                                      ),
+                                      ( "These",
+                                        MyLambda
+                                          mempty
+                                          "a"
+                                          ( MyLambda
+                                              mempty
+                                              "b"
+                                              ( MyApp
+                                                  mempty
+                                                  (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
+                                                  (MyVar mempty "b")
+                                              )
+                                          )
+                                      ),
+                                      ( "This",
+                                        MyLambda
+                                          mempty
+                                          "a"
+                                          (MyVar mempty "total")
                                       )
-                                  ),
-                                  ( "This",
-                                    MyLambda
-                                      mempty
-                                      "a"
-                                      (MyVar mempty "total")
-                                  )
-                                ]
+                                    ]
+                                )
+                                Nothing
                             )
-                            Nothing
                         )
                     )
                 )
+                (MyVar mempty "fold")
             )
-
+      it "Generates fold for dtList" $ do
+        typecheckInstance fold dtList `shouldSatisfy` isRight
+        fold dtList
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                "fold"
+                ( MyLambda
+                    mempty
+                    "f"
+                    ( MyLambda
+                        mempty
+                        "total"
+                        ( MyLambda
+                            mempty
+                            "list"
+                            ( MyCaseMatch
+                                mempty
+                                (MyVar mempty "list")
+                                ( NE.fromList
+                                    [ ( "Cons",
+                                        MyLambda
+                                          mempty
+                                          "a"
+                                          ( MyLambda
+                                              mempty
+                                              "list1"
+                                              ( MyApp
+                                                  mempty
+                                                  ( MyVar
+                                                      mempty
+                                                      "fold"
+                                                  )
+                                                  ( MyApp
+                                                      mempty
+                                                      (MyVar mempty "f")
+                                                      ( MyApp
+                                                          mempty
+                                                          ( MyApp
+                                                              mempty
+                                                              (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
+                                                              (MyVar mempty "a")
+                                                          )
+                                                          (MyVar mempty "list1")
+                                                      )
+                                                  )
+                                              )
+                                          )
+                                      ),
+                                      ( "Nil",
+                                        MyVar mempty "total"
+                                      )
+                                    ]
+                                )
+                                Nothing
+                            )
+                        )
+                    )
+                )
+                (MyVar mempty "fold")
+            )
     describe "typeclassMatches" $ do
       it "No instances for Void" $ do
         typeclassMatches dtVoid `shouldBe` mempty
