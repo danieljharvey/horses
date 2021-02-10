@@ -8,6 +8,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State
+import Data.Foldable (foldl')
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -68,37 +69,46 @@ getFoldableVar names = case NE.nonEmpty names of
   Just neNames -> pure $ NE.last neNames
   _ -> throwError "Type should have at least one type variable"
 
-newtype FieldItemType = VariableField Name
+data FieldItemType
+  = VariableField Name
+  | NoVariable
 
-toFieldItemType :: TyCon -> Field -> FoldableM FieldItemType
-toFieldItemType _typeName = \case
-  VarName a -> pure (VariableField a)
+toFieldItemType :: Name -> Field -> FoldableM (Name, FieldItemType)
+toFieldItemType matchVar = \case
+  VarName a ->
+    if a == matchVar
+      then pure (a, VariableField a)
+      else pure (a, NoVariable)
   _ -> throwError "Expected VarName"
 
-reconstructField :: Name -> FieldItemType -> Expr Name ()
-reconstructField matchVar fieldItem =
-  case fieldItem of
-    VariableField varName ->
-      if varName == matchVar
-        then
-          MyApp
-            mempty
-            (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
-            (MyVar mempty varName)
-        else MyVar mempty "total"
+reconstructFields :: [FieldItemType] -> Expr Name ()
+reconstructFields =
+  foldl'
+    ( \expr' -> \case
+        NoVariable -> expr'
+        VariableField a ->
+          ( MyApp
+              mempty
+              (MyApp mempty (MyVar mempty "f") expr')
+              (MyVar mempty a)
+          )
+    )
+    (MyVar mempty "total")
 
 createMatch ::
   TyCon ->
   Name ->
   [Field] ->
   FoldableM (Expr Name ())
-createMatch typeName matchVar fields = do
-  fieldItem <- case fields of
-    [field] -> toFieldItemType typeName field
-    _ -> throwError "Expected constructor with a single type variable"
-  let expr' = reconstructField matchVar fieldItem
-  case fieldItem of
-    VariableField n -> pure $ MyLambda mempty n expr'
+createMatch _typeName matchVar fields = do
+  fieldItems <- traverse (toFieldItemType matchVar) fields
+  let expr' = reconstructFields (snd <$> fieldItems)
+  pure $
+    foldr
+      ( MyLambda mempty
+      )
+      expr'
+      (fst <$> fieldItems)
 
 getMapItems :: Map k a -> Maybe (NE.NonEmpty (k, a))
 getMapItems = NE.nonEmpty . M.toList

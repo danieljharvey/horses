@@ -629,6 +629,95 @@ spec = do
                     )
                 )
             )
+      it "Generates fold for dtMaybe" $ do
+        typecheckInstance fold dtMaybe `shouldSatisfy` isRight
+        fold dtMaybe
+          `shouldBe` Right
+            ( MyLambda
+                mempty
+                "f"
+                ( MyLambda
+                    mempty
+                    "total"
+                    ( MyLambda
+                        mempty
+                        "maybe"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "maybe")
+                            ( NE.fromList
+                                [ ( "Just",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      ( MyApp
+                                          mempty
+                                          (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
+                                          (MyVar mempty "a")
+                                      )
+                                  ),
+                                  ("Nothing", MyVar mempty "total")
+                                ]
+                            )
+                            Nothing
+                        )
+                    )
+                )
+            )
+      it "Generates fold for dtThese" $ do
+        typecheckInstance fold dtThese `shouldSatisfy` isRight
+        fold dtThese
+          `shouldBe` Right
+            ( MyLambda
+                mempty
+                "f"
+                ( MyLambda
+                    mempty
+                    "total"
+                    ( MyLambda
+                        mempty
+                        "these"
+                        ( MyCaseMatch
+                            mempty
+                            (MyVar mempty "these")
+                            ( NE.fromList
+                                [ ( "That",
+                                    MyLambda
+                                      mempty
+                                      "b"
+                                      ( MyApp
+                                          mempty
+                                          (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
+                                          (MyVar mempty "b")
+                                      )
+                                  ),
+                                  ( "These",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      ( MyLambda
+                                          mempty
+                                          "b"
+                                          ( MyApp
+                                              mempty
+                                              (MyApp mempty (MyVar mempty "f") (MyVar mempty "total"))
+                                              (MyVar mempty "b")
+                                          )
+                                      )
+                                  ),
+                                  ( "This",
+                                    MyLambda
+                                      mempty
+                                      "a"
+                                      (MyVar mempty "total")
+                                  )
+                                ]
+                            )
+                            Nothing
+                        )
+                    )
+                )
+            )
 
     describe "typeclassMatches" $ do
       it "No instances for Void" $ do
