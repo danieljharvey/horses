@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6d7b9f7321aeeb3bbe56485e26de124afa2de4fbfb949d59e066efcbe627912a
+-- hash: 053e57aa2474d8f22ab4185cd7db53c276137784c8e3103e809dadd72bb5e178
 
 name:           mimsa
 version:        0.1.0.0
@@ -115,6 +115,7 @@ library
       Language.Mimsa.Typechecker.Codegen.Foldable
       Language.Mimsa.Typechecker.Codegen.Functor
       Language.Mimsa.Typechecker.Codegen.Newtype
+      Language.Mimsa.Typechecker.Codegen.Utils
       Language.Mimsa.Typechecker.DataTypes
       Language.Mimsa.Typechecker.DisplayError
       Language.Mimsa.Typechecker.Environment
@@ -302,6 +303,11 @@ test-suite mimsa-test
       Test.Store.Substitutor
       Test.Store.UpdateDeps
       Test.Typechecker.Codegen
+      Test.Typechecker.Codegen.Enum
+      Test.Typechecker.Codegen.Foldable
+      Test.Typechecker.Codegen.Functor
+      Test.Typechecker.Codegen.Newtype
+      Test.Typechecker.Codegen.Shared
       Test.Typechecker.RecordUsage
       Test.Typechecker.Typechecker
       Test.Typechecker.TypeError

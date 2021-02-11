@@ -7,34 +7,24 @@ module Language.Mimsa.Typechecker.Codegen.Foldable
 where
 
 import Control.Monad.Except
-import Control.Monad.State
 import Data.Foldable (foldl')
-import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
-import qualified Data.Map as M
 import Data.Text (Text)
+import Language.Mimsa.Typechecker.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Prelude hiding (fmap)
 
-type FoldableM = StateT (Map Name Int) (Either Text)
-
-runFoldableM :: FoldableM a -> Either Text a
-runFoldableM fn = case runStateT fn mempty of
-  Right (a, _) -> pure a
-  Left e -> Left e
-
 fold :: DataType -> Either Text (Expr Name ())
-fold = runFoldableM . fold_
+fold = runCodegenM . fold_
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
 fold_ ::
   DataType ->
-  FoldableM (Expr Name ())
+  CodegenM (Expr Name ())
 fold_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon
-  fVar <- getFoldableVar vars
+  fVar <- getFunctorVar vars
   case getMapItems items of
     Nothing -> throwError "Type should have at least one constructor"
     Just constructors -> do
@@ -69,21 +59,22 @@ fold_ (DataType tyCon vars items) = do
             (MyVar mempty "fold")
         )
 
-getFoldableVar :: [Name] -> FoldableM Name
-getFoldableVar names = case NE.nonEmpty names of
-  Just neNames -> pure $ NE.last neNames
-  _ -> throwError "Type should have at least one type variable"
-
 data FieldItemType
   = VariableField Name
+  | Recurse Name
   | NoVariable
 
-toFieldItemType :: Name -> Field -> FoldableM (Name, FieldItemType)
-toFieldItemType matchVar = \case
+toFieldItemType :: TyCon -> Name -> Field -> CodegenM (Name, FieldItemType)
+toFieldItemType tyName matchVar = \case
   VarName a ->
     if a == matchVar
       then pure (a, VariableField a)
       else pure (a, NoVariable)
+  ConsName tyCon [VarName var] -> do
+    varName <- nextName tyName
+    if tyCon == tyName && var == matchVar
+      then pure (varName, Recurse varName)
+      else throwError "Can only recurse over self"
   _ -> throwError "Expected VarName"
 
 reconstructFields :: [FieldItemType] -> Expr Name ()
@@ -91,6 +82,23 @@ reconstructFields =
   foldl'
     ( \expr' -> \case
         NoVariable -> expr'
+        Recurse tyName ->
+          ( MyApp
+              mempty
+              ( MyApp
+                  mempty
+                  ( MyApp
+                      mempty
+                      ( MyVar
+                          mempty
+                          "fold"
+                      )
+                      (MyVar mempty "f")
+                  )
+                  expr'
+              )
+              (MyVar mempty tyName)
+          )
         VariableField a ->
           ( MyApp
               mempty
@@ -104,9 +112,9 @@ createMatch ::
   TyCon ->
   Name ->
   [Field] ->
-  FoldableM (Expr Name ())
-createMatch _typeName matchVar fields = do
-  fieldItems <- traverse (toFieldItemType matchVar) fields
+  CodegenM (Expr Name ())
+createMatch typeName matchVar fields = do
+  fieldItems <- traverse (toFieldItemType typeName matchVar) fields
   let expr' =
         reconstructFields (snd <$> fieldItems)
   pure $
@@ -115,6 +123,3 @@ createMatch _typeName matchVar fields = do
       )
       expr'
       (fst <$> fieldItems)
-
-getMapItems :: Map k a -> Maybe (NE.NonEmpty (k, a))
-getMapItems = NE.nonEmpty . M.toList

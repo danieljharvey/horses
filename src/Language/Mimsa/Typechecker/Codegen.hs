@@ -67,3 +67,4 @@ doCodegen dt =
     <> codegenToRow wrap "wrap" dt
     <> codegenToRow unwrap "unwrap" dt
     <> codegenToRow functorMap "fmap" dt
+    <> codegenToRow fold "fold" dt
