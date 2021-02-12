@@ -20,6 +20,7 @@ import Data.Bifunctor (first)
 import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
@@ -163,4 +164,4 @@ typecheckInstance mkInstance dt =
 unsafeParse :: Text -> Expr Name ()
 unsafeParse t = case parseExprAndFormatError t of
   Right a -> a $> mempty
-  Left _ -> error "Yolo"
+  Left e -> error (T.unpack e)
