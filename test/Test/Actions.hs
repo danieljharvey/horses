@@ -243,9 +243,9 @@ spec = do
         let (newProject, outcomes, (outputs, _)) = fromRight (Actions.run stdLib action)
         -- no codegen matches this datatype
         outputs `shouldBe` [Newtype, Functor]
-        -- five more items in store
+        -- six more items in store
         projectStoreSize newProject
-          `shouldBe` projectStoreSize stdLib + 5
+          `shouldBe` projectStoreSize stdLib + 6
         -- one more binding
         lookupBindingName
           newProject
@@ -256,10 +256,10 @@ spec = do
           newProject
           "Identity"
           `shouldSatisfy` isJust
-        -- four new store expression
+        -- six new store expression
         S.size
           (Actions.storeExpressionsFromOutcomes outcomes)
-          `shouldBe` 5
+          `shouldBe` 6
       it "Should bind TrafficLights and create type bindings for constructors" $ do
         let action = Actions.bindType (prettyPrint dtTrafficLights) dtTrafficLights
         let (newProject, outcomes, (outputs, _)) =

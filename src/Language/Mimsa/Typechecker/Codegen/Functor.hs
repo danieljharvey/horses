@@ -7,33 +7,22 @@ module Language.Mimsa.Typechecker.Codegen.Functor
 where
 
 import Control.Monad.Except
-import Control.Monad.State
 import Data.Foldable (foldl')
-import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
-import qualified Data.Map as M
 import Data.Semigroup
 import Data.Text (Text)
-import Language.Mimsa.Printer
+import Language.Mimsa.Typechecker.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Prelude hiding (fmap)
 
-type FunctorM = StateT (Map Name Int) (Either Text)
-
-runFunctorM :: FunctorM a -> Either Text a
-runFunctorM fn = case runStateT fn mempty of
-  Right (a, _) -> pure a
-  Left e -> Left e
-
 functorMap :: DataType -> Either Text (Expr Name ())
-functorMap = runFunctorM . functorMap_
+functorMap = runCodegenM . functorMap_
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
 functorMap_ ::
   DataType ->
-  FunctorM (Expr Name ())
+  CodegenM (Expr Name ())
 functorMap_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon
   fVar <- getFunctorVar vars
@@ -67,17 +56,12 @@ functorMap_ (DataType tyCon vars items) = do
             (MyVar mempty "fmap")
         )
 
-getFunctorVar :: [Name] -> FunctorM Name
-getFunctorVar names = case NE.nonEmpty names of
-  Just neNames -> pure $ NE.last neNames
-  _ -> throwError "Type should have at least one type variable"
-
 data FieldItemType
   = VariableField Name
   | RecurseField Name
   | Func2 Name Name Name
 
-toFieldItemType :: TyCon -> Field -> FunctorM FieldItemType
+toFieldItemType :: TyCon -> Field -> CodegenM FieldItemType
 toFieldItemType typeName = \case
   VarName a -> pure (VariableField a)
   ConsName fieldConsName _fields
@@ -86,19 +70,6 @@ toFieldItemType typeName = \case
   TNFunc (VarName a) (VarName b) ->
     pure $ Func2 (a <> "to" <> b) a b
   _ -> throwError "Expected VarName"
-
--- | given a type constructor, give me a new unique name for it
-nextName :: TyCon -> FunctorM Name
-nextName tyCon = do
-  let base = tyConToName tyCon
-  vars <- get
-  case M.lookup base vars of
-    Nothing -> do
-      modify (M.singleton base 1 <>)
-      pure $ base <> Name "1"
-    Just as -> do
-      modify (M.adjust (+ 1) base)
-      pure $ base <> Name (prettyPrint (as + 1))
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()
 reconstructField matchVar fieldItem =
@@ -150,7 +121,7 @@ createMatch ::
   Name ->
   TyCon ->
   [Field] ->
-  FunctorM (Expr Name ())
+  CodegenM (Expr Name ())
 createMatch typeName matchVar tyCon fields = do
   regFields <-
     traverse (toFieldItemType typeName) fields
@@ -171,6 +142,3 @@ createMatch typeName matchVar tyCon fields = do
       )
       withConsApp
       regFields
-
-getMapItems :: Map k a -> Maybe (NE.NonEmpty (k, a))
-getMapItems = NE.nonEmpty . M.toList
