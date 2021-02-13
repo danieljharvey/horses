@@ -13,6 +13,7 @@ module Test.Typechecker.Codegen.Shared
     dtDoubleList,
     dtTree,
     dtReader,
+    dtMatchedPair,
   )
 where
 
@@ -146,6 +147,13 @@ dtReader =
             (VarName "a")
         ]
     )
+
+dtMatchedPair :: DataType
+dtMatchedPair =
+  DataType
+    "MatchedPair"
+    ["a"]
+    (M.singleton "MatchedPair" [VarName "a", VarName "a"])
 
 typecheckInstance ::
   (DataType -> Either Text (Expr Name ())) ->

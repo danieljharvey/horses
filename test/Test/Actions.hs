@@ -242,7 +242,7 @@ spec = do
         let action = Actions.bindType (prettyPrint dtIdentity) dtIdentity
         let (newProject, outcomes, (outputs, _)) = fromRight (Actions.run stdLib action)
         -- no codegen matches this datatype
-        outputs `shouldBe` [Newtype, Functor]
+        outputs `shouldBe` [Newtype, Functor, Foldable, Applicative]
         -- six more items in store
         projectStoreSize newProject
           `shouldBe` projectStoreSize stdLib + 6
