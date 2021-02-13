@@ -1,12 +1,12 @@
 build: 
-	nix-build pkgs.nix -A hsPkgs.mimsa.components.exes.mimsa --quiet
+	nix-build pkgs.nix -A hsPkgs.mimsa.components.exes.mimsa --quiet | cachix push mimsa
 
 run:
 	make build
 	./result/bin/mimsa
 
 build-test:
-	nix-build pkgs.nix -A hsPkgs.mimsa.components.tests.mimsa-test --quiet
+	nix-build pkgs.nix -A hsPkgs.mimsa.components.tests.mimsa-test --quiet | cachix push mimsa
 
 unit-test:
 	make build-test
