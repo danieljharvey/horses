@@ -43,22 +43,9 @@ applicativePure_ (DataType tyCon vars items) = do
           (MyVar mempty fVar)
     WithEmpties tc parts -> do
       foldl'
-        ( \exprA part -> case part of
-            VPart n -> do
-              exprA' <- exprA
-              pure $
-                MyConsApp
-                  mempty
-                  exprA'
-                  (MyVar mempty n)
-            TPart _tc -> do
-              exprA' <- exprA
-              emptyTyCon <- emptyConstructor items
-              pure $
-                MyConsApp
-                  mempty
-                  exprA'
-                  (MyConstructor mempty emptyTyCon)
+        ( \mExprA part -> do
+            exprA <- mExprA
+            partToExpr items exprA part
         )
         (pure (MyConstructor mempty tc))
         parts
@@ -70,9 +57,29 @@ applicativePure_ (DataType tyCon vars items) = do
         expr'
     )
 
+partToExpr :: Map TyCon [Field] -> Expr Name () -> Part -> CodegenM (Expr Name ())
+partToExpr items innerExpr part =
+  case part of
+    VPart n -> do
+      pure $
+        MyConsApp
+          mempty
+          innerExpr
+          (MyVar mempty n)
+    TPart -> do
+      emptyTyCon <- emptyConstructor items
+      pure $
+        MyConsApp
+          mempty
+          innerExpr
+          (MyConstructor mempty emptyTyCon)
+    FPart n a ->
+      pure $ MyConsApp mempty innerExpr (MyLambda mempty n (MyVar mempty a))
+
 data Part
   = VPart Name
-  | TPart TyCon
+  | TPart
+  | FPart Name Name
 
 data PureType
   = PureVar TyCon
@@ -112,9 +119,11 @@ multiVarConstructor tyCon vars items = do
             <$> traverse
               ( \case
                   VarName a -> Just (VPart a)
+                  TNFunc (VarName a) (VarName b) ->
+                    Just $ FPart a b
                   other ->
                     if fieldIsRecursion tyCon vars other
-                      then Just (TPart tc)
+                      then Just TPart
                       else Nothing
               )
               neFields
