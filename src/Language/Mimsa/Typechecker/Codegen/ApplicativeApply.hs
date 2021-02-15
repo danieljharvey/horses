@@ -6,13 +6,14 @@ module Language.Mimsa.Typechecker.Codegen.ApplicativeApply
 where
 
 import Control.Applicative
-import Control.Monad.Except
 import Data.Coerce
+import Data.Foldable (foldl')
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Printer
+import qualified Data.Text as T
 import Language.Mimsa.Typechecker.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -46,18 +47,10 @@ applicativeApply_ (DataType tyCon vars items) = do
                 mempty
                 (MyVar mempty (fName tyCon))
                 matches
-                (getFallback (fName tyCon) matches items)
+                Nothing
             )
         )
     )
-
--- if we have more constructors than matches, make a fallback that returns
--- fName
-getFallback :: Name -> NonEmpty a -> Map b c -> Maybe (Expr Name ())
-getFallback varName matches constructors =
-  if length matches < length constructors
-    then Just (MyVar mempty varName)
-    else Nothing
 
 -- Do we care about this constructor?
 containsVar :: Name -> [Field] -> Bool
@@ -78,36 +71,51 @@ createMatches ::
 createMatches typeName vars items = do
   funcVar <- getFunctorVar vars
   constructors <- getMapItemsM items
-  case NE.nonEmpty $ NE.filter (\(_, as) -> containsVar funcVar as) constructors of
-    Nothing -> throwError $ "No constructors contain " <> prettyPrint funcVar
-    Just consts ->
-      pure $
-        createMatch
-          typeName
-          funcVar
-          (getFallback (aName typeName) consts items)
-          <$> consts
+  pure $
+    ( \(k, as) ->
+        if containsVar funcVar as
+          then createMatch typeName funcVar items (k, as)
+          else (k, noOpMatch k as)
+    )
+      <$> constructors
+
+-- | a case match that reconstructs the given expr untouched
+noOpMatch :: TyCon -> [Field] -> Expr Name ()
+noOpMatch tyCon fields =
+  foldl'
+    ( \expr' (i, _field) ->
+        let fieldName = Name ("a" <> T.pack (show i))
+         in MyLambda mempty fieldName (MyConsApp mempty expr' (MyVar mempty fieldName))
+    )
+    (MyConstructor mempty tyCon)
+    (zip ([1 ..] :: [Integer]) fields)
 
 createMatch ::
   TyCon ->
   Name ->
-  Maybe (Expr Name ()) ->
+  Map
+    TyCon
+    [Field] ->
   (TyCon, [Field]) ->
   (TyCon, Expr Name ())
-createMatch typeName funcVar fallback (tyCon, _) =
-  ( tyCon,
-    MyLambda
-      mempty
-      "f"
-      ( MyCaseMatch
+createMatch typeName funcVar items (tyCon, _) =
+  let mismatches =
+        (\(k, v) -> (k, noOpMatch k v))
+          <$> M.toList (M.filterWithKey (\k _ -> k /= tyCon) items)
+   in ( tyCon,
+        MyLambda
           mempty
-          (MyVar mempty (aName typeName))
-          ( NE.fromList
-              [ ( tyCon,
-                  MyLambda mempty funcVar (MyConsApp mempty (MyConstructor mempty tyCon) (MyApp mempty (MyVar mempty "f") (MyVar mempty "a")))
-                )
-              ]
+          "f"
+          ( MyCaseMatch
+              mempty
+              (MyVar mempty (aName typeName))
+              ( NE.fromList $
+                  [ ( tyCon,
+                      MyLambda mempty funcVar (MyConsApp mempty (MyConstructor mempty tyCon) (MyApp mempty (MyVar mempty "f") (MyVar mempty "a")))
+                    )
+                  ]
+                    <> mismatches
+              )
+              Nothing
           )
-          fallback
       )
-  )
