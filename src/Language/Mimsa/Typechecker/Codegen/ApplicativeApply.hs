@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Codegen.ApplicativeApply
@@ -6,12 +7,12 @@ module Language.Mimsa.Typechecker.Codegen.ApplicativeApply
 where
 
 import Control.Applicative
+import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable (foldl')
 import Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
-import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Typechecker.Codegen.Utils
@@ -71,13 +72,13 @@ createMatches ::
 createMatches typeName vars items = do
   funcVar <- getFunctorVar vars
   constructors <- getMapItemsM items
-  pure $
+  traverse
     ( \(k, as) ->
         if containsVar funcVar as
           then createMatch typeName funcVar items (k, as)
-          else (k, noOpMatch k as)
+          else pure (k, noOpMatch k as)
     )
-      <$> constructors
+    constructors
 
 -- | a case match that reconstructs the given expr untouched
 noOpMatch :: TyCon -> [Field] -> Expr Name ()
@@ -88,7 +89,59 @@ noOpMatch tyCon fields =
          in MyLambda mempty fieldName (MyConsApp mempty expr' (MyVar mempty fieldName))
     )
     (MyConstructor mempty tyCon)
-    (zip ([1 ..] :: [Integer]) fields)
+    (reverse $ zip ([1 ..] :: [Integer]) (reverse fields))
+
+newtype FieldItemType = VariableField Name
+  deriving (Eq, Ord)
+
+toFieldItemType :: Field -> CodegenM FieldItemType
+toFieldItemType = \case
+  VarName a -> pure (VariableField a)
+  _ -> throwError "Expected VarName"
+
+toFieldItemTypeF :: Name -> Field -> CodegenM FieldItemType
+toFieldItemTypeF funcVar = \case
+  VarName a -> if a == funcVar then pure (VariableField "f") else pure (VariableField a)
+  _ -> throwError "Expected VarName"
+
+reconstructField :: Name -> FieldItemType -> Expr Name ()
+reconstructField matchVar fieldItem =
+  case fieldItem of
+    VariableField varName ->
+      if varName == matchVar
+        then MyApp mempty (MyVar mempty "f") (MyVar mempty varName)
+        else MyVar mempty varName
+
+createInnerMatch ::
+  Name ->
+  TyCon ->
+  [Field] ->
+  CodegenM (Expr Name ())
+createInnerMatch matchVar tyCon fields = do
+  regFields <-
+    traverse toFieldItemType fields
+  let withConsApp =
+        foldl'
+          ( \expr' fieldItem ->
+              let reconstruct = reconstructField matchVar fieldItem
+               in MyConsApp mempty expr' reconstruct
+          )
+          (MyConstructor mempty tyCon)
+          regFields
+  pure $
+    foldr
+      ( \case
+          VariableField n -> MyLambda mempty n
+      )
+      withConsApp
+      regFields
+
+-- we can't cope with two functor F values right now
+multiFunctorCheck :: [FieldItemType] -> CodegenM ()
+multiFunctorCheck items =
+  if length items == S.size (S.fromList items)
+    then pure ()
+    else throwError "Multiple functor variables in first applicative argument"
 
 createMatch ::
   TyCon ->
@@ -97,25 +150,36 @@ createMatch ::
     TyCon
     [Field] ->
   (TyCon, [Field]) ->
-  (TyCon, Expr Name ())
-createMatch typeName funcVar items (tyCon, _) =
-  let mismatches =
-        (\(k, v) -> (k, noOpMatch k v))
-          <$> M.toList (M.filterWithKey (\k _ -> k /= tyCon) items)
-   in ( tyCon,
-        MyLambda
-          mempty
-          "f"
-          ( MyCaseMatch
-              mempty
-              (MyVar mempty (aName typeName))
-              ( NE.fromList $
-                  [ ( tyCon,
-                      MyLambda mempty funcVar (MyConsApp mempty (MyConstructor mempty tyCon) (MyApp mempty (MyVar mempty "f") (MyVar mempty "a")))
-                    )
-                  ]
-                    <> mismatches
-              )
-              Nothing
+  CodegenM (TyCon, Expr Name ())
+createMatch typeName funcVar items (tyCon, fields) = do
+  regFields <- traverse (toFieldItemTypeF funcVar) fields
+  multiFunctorCheck regFields
+  let lambdas expr' =
+        foldr
+          ( \case
+              VariableField n -> MyLambda mempty n
           )
+          expr'
+          regFields
+  constructors <- getMapItemsM items
+  matches <-
+    traverse
+      ( \(k, as) ->
+          if containsVar funcVar as
+            then do
+              innerMatch <- createInnerMatch funcVar k as
+              pure (k, innerMatch)
+            else pure (k, noOpMatch k as)
       )
+      constructors
+
+  pure
+    ( tyCon,
+      lambdas
+        ( MyCaseMatch
+            mempty
+            (MyVar mempty (aName typeName))
+            matches
+            Nothing
+        )
+    )

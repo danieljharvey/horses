@@ -5,7 +5,7 @@ module Test.Typechecker.Codegen.Applicative
   )
 where
 
-import Data.Either (isRight)
+import Data.Either (isLeft, isRight)
 import Language.Mimsa.Typechecker.Codegen
 import Test.Hspec
 import Test.Typechecker.Codegen.Shared
@@ -75,41 +75,54 @@ spec = do
         typecheckInstance applicativeApply dtMaybe `shouldSatisfy` isRight
         applicativeApply dtMaybe
           `shouldBe` Right
-            ( unsafeParse
-                "\\maybeF -> \\maybeA -> case maybeF of Just \\f -> (case maybeA of Just \\a -> Just f(a) | Nothing Nothing ) | Nothing Nothing"
+            ( unsafeParse $
+                "\\maybeF -> \\maybeA -> case maybeF of "
+                  <> "Just \\f -> (case maybeA of Just \\a -> Just f(a) "
+                  <> "| Nothing Nothing ) "
+                  <> "| Nothing Nothing"
             )
-      xit "Generates apply for dtTree" $ do
-        typecheckInstance applicativeApply dtTree `shouldSatisfy` isRight
-        applicativeApply dtTree
+      it "Generates apply for dtEither" $ do
+        typecheckInstance applicativeApply dtEither `shouldSatisfy` isRight
+        applicativeApply dtEither
           `shouldBe` Right
-            ( unsafeParse
-                "\\a -> Leaf a"
+            ( unsafeParse $
+                "\\eitherF -> \\eitherA -> case eitherF of "
+                  <> "Left \\a1 -> Left a1 | "
+                  <> "Right \\f -> (case eitherA of Left \\a1 -> Left a1 | Right \\a -> Right f(a))"
             )
-      xit "Generates apply for dtThese" $ do
+      it "Generates apply for dtPair" $ do
+        typecheckInstance applicativeApply dtPair `shouldSatisfy` isRight
+        applicativeApply dtPair
+          `shouldBe` Right
+            ( unsafeParse $
+                "\\pairF -> \\pairA -> case pairF of "
+                  <> "Pair \\a -> \\f -> (case pairA of Pair \\a -> \\b -> Pair a f(b))"
+            )
+
+      it "Generates apply for dtThese" $ do
         typecheckInstance applicativeApply dtThese `shouldSatisfy` isRight
         applicativeApply dtThese
           `shouldBe` Right
-            ( unsafeParse
-                "\\b -> That b"
+            ( unsafeParse $
+                "\\theseF -> \\theseA -> "
+                  <> "case theseF of "
+                  <> "That \\f -> (case theseA of "
+                  <> "That \\b -> That f(b) | "
+                  <> "These \\a -> \\b -> These a f(b) | "
+                  <> "This \\a1 -> This a1) | "
+                  <> "These \\a -> \\f -> (case theseA of "
+                  <> "That \\b -> That f(b) | "
+                  <> "These \\a -> \\b -> These a f(b) | "
+                  <> "This \\a1 -> This a1) | "
+                  <> "This \\a1 -> This a1"
             )
-      xit "Generates apply for dtList" $ do
-        typecheckInstance applicativeApply dtList `shouldSatisfy` isRight
-        applicativeApply dtList
-          `shouldBe` Right
-            ( unsafeParse
-                "\\a -> Cons a Nil"
-            )
-      xit "Generates apply for dtMatchedPair" $ do
-        typecheckInstance applicativeApply dtMatchedPair `shouldSatisfy` isRight
-        applicativeApply dtMatchedPair
-          `shouldBe` Right
-            ( unsafeParse
-                "\\a -> MatchedPair a a"
-            )
-      xit "Generates apply for dtReader" $ do
-        typecheckInstance applicativeApply dtReader `shouldSatisfy` isRight
-        applicativeApply dtReader
-          `shouldBe` Right
-            ( unsafeParse
-                "\\a -> Reader \\r -> a"
-            )
+      it "Does not make apply for dtConsoleF" $ do
+        applicativeApply dtConsoleF `shouldSatisfy` isLeft
+      it "Does not make apply for dtReader" $ do
+        applicativeApply dtReader `shouldSatisfy` isLeft
+      it "Does not make apply for dtMatchedPair" $ do
+        applicativeApply dtMatchedPair `shouldSatisfy` isLeft
+      it "Does not make apply for dtList" $ do
+        applicativeApply dtList `shouldSatisfy` isLeft
+      it "Does not make apply for dtTree" $ do
+        applicativeApply dtTree `shouldSatisfy` isLeft

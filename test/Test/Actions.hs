@@ -6,7 +6,7 @@ module Test.Actions
   )
 where
 
-import Data.Either (isLeft)
+import Data.Either (isLeft, isRight)
 import Data.Functor
 import Data.List (nub)
 import qualified Data.Map as M
@@ -30,6 +30,7 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Hspec
+import Test.Typechecker.Codegen.Shared
 import Test.Utils.Helpers
 
 brokenExpr :: Expr Name Annotation
@@ -51,31 +52,6 @@ testWithIdInExpr =
 
 onePlusOneExpr :: Expr Name Annotation
 onePlusOneExpr = MyInfix mempty Add (int 1) (int 1)
-
--- | has no constructors, we can do nothing with this
-dtVoid :: DataType
-dtVoid = DataType "Void" mempty mempty
-
--- | Identity monad
-dtIdentity :: DataType
-dtIdentity =
-  DataType
-    "Identity"
-    ["a"]
-    (M.singleton "Identity" [VarName "a"])
-
--- | an enum, we can go to and from a string
-dtTrafficLights :: DataType
-dtTrafficLights =
-  DataType
-    "TrafficLights"
-    mempty
-    ( M.fromList
-        [ ("Red", mempty),
-          ("Yellow", mempty),
-          ("Green", mempty)
-        ]
-    )
 
 fromRight :: (Printer e) => Either e a -> a
 fromRight either' = case either' of
@@ -293,3 +269,7 @@ spec = do
         S.size
           (Actions.storeExpressionsFromOutcomes outcomes)
           `shouldBe` 3
+
+      it "Should bind ConsoleF without breaking" $ do
+        let action = Actions.bindType (prettyPrint dtConsoleF) dtConsoleF
+        Actions.run stdLib action `shouldSatisfy` isRight
