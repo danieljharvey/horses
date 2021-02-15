@@ -72,7 +72,7 @@ spec = do
                 "\\identityF -> \\identityA -> case identityF of Identity \\f -> case identityA of Identity \\a -> Identity f(a)"
             )
       it "Generates apply for dtMaybe" $ do
-        -- typecheckInstance applicativeApply dtMaybe `shouldSatisfy` isRight
+        typecheckInstance applicativeApply dtMaybe `shouldSatisfy` isRight
         applicativeApply dtMaybe
           `shouldBe` Right
             ( unsafeParse
