@@ -6,6 +6,7 @@ module Language.Mimsa.Typechecker.Codegen.Utils
     runCodegenM,
     getFunctorVar,
     getMapItems,
+    getMapItemsM,
     matchConstructor,
   )
 where
@@ -47,6 +48,11 @@ nextName tyCon = do
 
 getMapItems :: Map k a -> Maybe (NE.NonEmpty (k, a))
 getMapItems = NE.nonEmpty . M.toList
+
+getMapItemsM :: Map k a -> CodegenM (NE.NonEmpty (k, a))
+getMapItemsM map' = case getMapItems map' of
+  Just as -> pure as
+  _ -> throwError "Expected non-empty map"
 
 matchConstructor :: ((k, a) -> Bool) -> Map k a -> CodegenM (k, a)
 matchConstructor f items = case filter f (M.toList items) of
