@@ -8,11 +8,15 @@ module Test.Typechecker.Codegen.Shared
     dtWrappedString,
     dtIdentity,
     dtMaybe,
+    dtEither,
+    dtPair,
     dtThese,
     dtList,
     dtDoubleList,
     dtTree,
     dtReader,
+    dtMatchedPair,
+    dtConsoleF,
   )
 where
 
@@ -71,6 +75,14 @@ dtMaybe =
     "Maybe"
     ["a"]
     (M.fromList [("Just", [VarName "a"]), ("Nothing", [])])
+
+-- | Either monad
+dtEither :: DataType
+dtEither =
+  DataType
+    "Either"
+    ["e", "a"]
+    (M.fromList [("Right", [VarName "a"]), ("Left", [VarName "e"])])
 
 -- | These monad
 dtThese :: DataType
@@ -146,6 +158,27 @@ dtReader =
             (VarName "a")
         ]
     )
+
+dtMatchedPair :: DataType
+dtMatchedPair =
+  DataType
+    "MatchedPair"
+    ["a"]
+    (M.singleton "MatchedPair" [VarName "a", VarName "a"])
+
+dtConsoleF :: DataType
+dtConsoleF =
+  DataType
+    "ConsoleF"
+    ["next"]
+    ( M.fromList
+        [ ("Write", [ConsName "String" [], VarName "next"]),
+          ("Read", [TNFunc (ConsName "String" []) (VarName "next")])
+        ]
+    )
+
+dtPair :: DataType
+dtPair = DataType "Pair" ["a", "b"] (M.singleton "Pair" [VarName "a", VarName "b"])
 
 typecheckInstance ::
   (DataType -> Either Text (Expr Name ())) ->

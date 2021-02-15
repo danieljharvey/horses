@@ -6,6 +6,8 @@ module Language.Mimsa.Typechecker.Codegen.Utils
     runCodegenM,
     getFunctorVar,
     getMapItems,
+    getMapItemsM,
+    matchConstructor,
   )
 where
 
@@ -20,12 +22,10 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 import Prelude hiding (fmap)
 
-type CodegenM = StateT (Map Name Int) (Either Text)
+type CodegenM = ExceptT Text (State (Map Name Int))
 
 runCodegenM :: CodegenM a -> Either Text a
-runCodegenM fn = case runStateT fn mempty of
-  Right (a, _) -> pure a
-  Left e -> Left e
+runCodegenM fn = evalState (runExceptT fn) mempty
 
 -- get last type variable
 getFunctorVar :: [Name] -> CodegenM Name
@@ -48,3 +48,14 @@ nextName tyCon = do
 
 getMapItems :: Map k a -> Maybe (NE.NonEmpty (k, a))
 getMapItems = NE.nonEmpty . M.toList
+
+getMapItemsM :: Map k a -> CodegenM (NE.NonEmpty (k, a))
+getMapItemsM map' = case getMapItems map' of
+  Just as -> pure as
+  _ -> throwError "Expected non-empty map"
+
+matchConstructor :: ((k, a) -> Bool) -> Map k a -> CodegenM (k, a)
+matchConstructor f items = case filter f (M.toList items) of
+  [a] -> pure a
+  [] -> throwError "No matches"
+  _ -> throwError "Too many matches"

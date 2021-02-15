@@ -8,6 +8,8 @@ module Language.Mimsa.Typechecker.Codegen
     module Language.Mimsa.Typechecker.Codegen.Enum,
     module Language.Mimsa.Typechecker.Codegen.Functor,
     module Language.Mimsa.Typechecker.Codegen.Foldable,
+    module Language.Mimsa.Typechecker.Codegen.ApplicativePure,
+    module Language.Mimsa.Typechecker.Codegen.ApplicativeApply,
   )
 where
 
@@ -17,6 +19,8 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
+import Language.Mimsa.Typechecker.Codegen.ApplicativeApply
+import Language.Mimsa.Typechecker.Codegen.ApplicativePure
 import Language.Mimsa.Typechecker.Codegen.Enum
 import Language.Mimsa.Typechecker.Codegen.Foldable
 import Language.Mimsa.Typechecker.Codegen.Functor
@@ -28,6 +32,8 @@ data Typeclass
   = Enum
   | Newtype
   | Functor
+  | Foldable
+  | Applicative
   deriving (Eq, Ord, Show)
 
 instance Printer Typeclass where
@@ -50,6 +56,14 @@ typeclassMatches dt =
       [Newtype]
       dt
     <> tcPred (isRight . functorMap) [Functor] dt
+    <> tcPred (isRight . fold) [Foldable] dt
+    <> tcPred
+      ( \a ->
+          isRight (applicativePure a)
+            && isRight (applicativeApply a)
+      )
+      [Applicative]
+      dt
 
 codegenToRow ::
   (DataType -> Either e (Expr Name ())) ->
@@ -68,3 +82,5 @@ doCodegen dt =
     <> codegenToRow unwrap "unwrap" dt
     <> codegenToRow functorMap "fmap" dt
     <> codegenToRow fold "fold" dt
+    <> codegenToRow applicativePure "pure" dt
+    <> codegenToRow applicativeApply "ap" dt

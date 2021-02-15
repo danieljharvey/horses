@@ -7,6 +7,7 @@ where
 
 import Language.Mimsa.Typechecker.Codegen
 import Test.Hspec
+import qualified Test.Typechecker.Codegen.Applicative as Applicative
 import qualified Test.Typechecker.Codegen.Enum as Enum
 import qualified Test.Typechecker.Codegen.Foldable as Foldable
 import qualified Test.Typechecker.Codegen.Functor as Functor
@@ -20,7 +21,7 @@ spec = do
     Enum.spec
     Newtype.spec
     Functor.spec
-
+    Applicative.spec
   describe "typeclassMatches" $ do
     it "No instances for Void" $ do
       typeclassMatches dtVoid `shouldBe` mempty
