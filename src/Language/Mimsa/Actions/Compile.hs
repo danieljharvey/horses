@@ -66,7 +66,8 @@ transpileModule be se = do
   dataTypes <- liftEither $ first StoreErr (resolveTypeDeps (prjStore project) (storeTypeBindings se))
   let path = Actions.SavePath (T.pack $ transpiledModuleOutputPath be)
   let filename = Actions.SaveFilename (moduleFilename be (getStoreExpressionHash se))
-  let jsOutput = Actions.SaveContents (coerce $ outputCommonJS dataTypes se)
+  js <- liftEither $ first BackendErr (outputCommonJS dataTypes se)
+  let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendMessage ("Writing " <> coerce path <> "...")
   Actions.appendWriteFile path filename jsOutput
 

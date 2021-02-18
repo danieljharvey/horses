@@ -6,6 +6,7 @@ module Test.BackendJS
   )
 where
 
+import Data.Bifunctor (first)
 import Data.Either (isRight)
 import Data.Foldable (traverse_)
 import Data.Maybe (fromJust)
@@ -33,18 +34,23 @@ eval env input =
   case evaluateText env input of
     Left e -> Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
-      pure $
-        renderWithFunction dataTypes "main" (storeExpression storeExpr)
+      first
+        prettyPrint
+        ( renderWithFunction
+            dataTypes
+            "main"
+            (storeExpression storeExpr)
+        )
 
 evalModule :: Project Annotation -> Text -> IO (Either Text Javascript)
 evalModule env input =
   case evaluateText env input of
     Left e -> pure $ Left $ prettyPrint e
-    Right (ResolvedExpression _ storeExpr _ _ _) ->
-      let a = outputCommonJS dataTypes storeExpr
+    Right (ResolvedExpression _ storeExpr _ _ _) -> do
+      let a = first prettyPrint (outputCommonJS dataTypes storeExpr)
        in do
             T.putStrLn (prettyPrint a)
-            pure (Right a)
+            pure a
 
 successes :: [(Text, Javascript)]
 successes =
@@ -98,7 +104,7 @@ spec = do
   describe "Normalise constructors" $ do
     it "is a no-op for nullary constructors" $ do
       let a = MyConstructor () "Nowt"
-      normaliseConstructors dataTypes a `shouldBe` a
+      normaliseConstructors dataTypes a `shouldBe` Right a
     it "turns unary constructor into lambda function" $ do
       let a = MyConstructor () "Some"
       let expected =
@@ -106,7 +112,7 @@ spec = do
               mempty
               "a"
               (MyConsApp mempty (MyConstructor mempty "Some") (MyVar mempty "a"))
-      normaliseConstructors dataTypes a `shouldBe` expected
+      normaliseConstructors dataTypes a `shouldBe` Right expected
     it "turns binary constructor into two lambda functions" $ do
       let a = MyConstructor () "These"
       let expected =
@@ -126,7 +132,7 @@ spec = do
                       (MyVar mempty "b")
                   )
               )
-      normaliseConstructors dataTypes a `shouldBe` expected
+      normaliseConstructors dataTypes a `shouldBe` Right expected
     it "partially applies when wrapped in ConsApp" $ do
       let a = MyConsApp () (MyConstructor mempty "These") (int 1)
       let expected =
@@ -142,7 +148,7 @@ spec = do
                   )
                   (MyVar mempty "b")
               )
-      normaliseConstructors dataTypes a `shouldBe` expected
+      normaliseConstructors dataTypes a `shouldBe` Right expected
     it "completely applies when wrapped in ConsApp" $ do
       let a =
             MyConsApp
@@ -153,4 +159,4 @@ spec = do
                   (int 1)
               )
               (int 2)
-      normaliseConstructors dataTypes a `shouldBe` a
+      normaliseConstructors dataTypes a `shouldBe` Right a

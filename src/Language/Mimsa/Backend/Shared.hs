@@ -68,14 +68,22 @@ outputStdlib CommonJS = coerce commonJSStandardLibrary
 outputExport :: Backend -> Name -> Text
 outputExport CommonJS name = "module.exports = { " <> coerce name <> ": " <> coerce name <> " }"
 
-outputStoreExpression :: (Monoid a) => Backend -> Renderer ann a -> StoreExpression ann -> a
-outputStoreExpression be renderer se =
+outputStoreExpression ::
+  (Monoid a) =>
+  Backend ->
+  Renderer ann a ->
+  StoreExpression ann ->
+  BackendM ann a
+outputStoreExpression be renderer se = do
   let funcName = "main"
-      deps = mconcat $ renderImport renderer be <$> M.toList (getBindings $ storeBindings se)
-      stdLib = renderStdLib renderer be
-      func = renderFunc renderer funcName (storeExpression se)
-      export = renderExport renderer be funcName
-   in deps <> stdLib <> func <> export
+  deps <-
+    traverse
+      (renderImport renderer be)
+      (M.toList (getBindings $ storeBindings se))
+  stdLib <- renderStdLib renderer be
+  func <- renderFunc renderer funcName (storeExpression se)
+  export <- renderExport renderer be funcName
+  pure $ mconcat deps <> stdLib <> func <> export
 
 -- recursively get all the StoreExpressions we need to output
 getTranspileList :: (Ord ann) => Store ann -> StoreExpression ann -> Set (StoreExpression ann)

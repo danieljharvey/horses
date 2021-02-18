@@ -7,10 +7,13 @@ module Language.Mimsa.Backend.NormaliseConstructors
   )
 where
 
+import Control.Monad.Except
 import Data.Foldable (foldl')
 import qualified Data.Map as M
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
   ( Name,
     TyCon,
@@ -23,21 +26,22 @@ normaliseConstructors ::
   (Monoid ann) =>
   ResolvedTypeDeps ->
   Expr Name ann ->
-  Expr Name ann
+  BackendM ann (Expr Name ann)
 normaliseConstructors dt (MyConstructor _ tyCon) =
-  constructorToFunctionWithApplication dt [] tyCon
-normaliseConstructors dt (MyConsApp _ a val) =
-  let restOfExpr = mapExpr (normaliseConstructors dt) val
-   in constructorToFunctionWithApplication
-        dt
-        (getConsArgList (MyConsApp mempty a restOfExpr))
-        (getNestedTyCons a)
-normaliseConstructors dt expr' = mapExpr (normaliseConstructors dt) expr'
+  pure $ constructorToFunctionWithApplication dt [] tyCon
+normaliseConstructors dt (MyConsApp _ a val) = do
+  restOfExpr <- bindExpr (normaliseConstructors dt) val
+  constructorToFunctionWithApplication
+    dt
+    (getConsArgList (MyConsApp mempty a restOfExpr))
+    <$> (getNestedTyCons a)
+normaliseConstructors dt expr' =
+  bindExpr (normaliseConstructors dt) expr'
 
-getNestedTyCons :: Expr Name ann -> TyCon
+getNestedTyCons :: Expr Name ann -> BackendM ann TyCon
 getNestedTyCons (MyConsApp _ a _) = getNestedTyCons a
-getNestedTyCons (MyConstructor _ tyCon) = tyCon
-getNestedTyCons _ = error "This is bad news" -- forgive me padre
+getNestedTyCons (MyConstructor _ tyCon) = pure tyCon
+getNestedTyCons other = throwError (TyConFindError other)
 
 getConsArgList :: Expr Name ann -> [Expr Name ann]
 getConsArgList (MyConsApp _ (MyConstructor _ _tyCon) a) = [a]
