@@ -41,6 +41,7 @@ normaliseConstructors dt expr' =
 getNestedTyCons :: Expr Name ann -> BackendM ann TyCon
 getNestedTyCons (MyConsApp _ a _) = getNestedTyCons a
 getNestedTyCons (MyConstructor _ tyCon) = pure tyCon
+getNestedTyCons (MyLambda _ _ a) = getNestedTyCons a
 getNestedTyCons other = throwError (TyConFindError other)
 
 getConsArgList :: Expr Name ann -> [Expr Name ann]
@@ -50,7 +51,7 @@ getConsArgList a = [a]
 
 typeNameToName :: Int -> Field -> Name
 typeNameToName _ (VarName name) = name
-typeNameToName i _ = mkName $ "U" <> prettyPrint i
+typeNameToName i _ = mkName $ "u" <> prettyPrint i
 
 -- ffs
 safeGetItem :: Int -> [a] -> Maybe a
