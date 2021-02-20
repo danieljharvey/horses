@@ -11,6 +11,7 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
+import Language.Mimsa.Monad
 import Language.Mimsa.Repl.Actions.Compile
 import Language.Mimsa.Repl.Actions.Evaluate
 import Language.Mimsa.Repl.Actions.ExpressionBind
@@ -23,6 +24,7 @@ import Language.Mimsa.Repl.Actions.Versions (doVersions)
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 
 doReplAction ::
@@ -30,7 +32,7 @@ doReplAction ::
   Project Annotation ->
   Text ->
   ReplAction Annotation ->
-  IO (Project Annotation)
+  MimsaM (Error Annotation) (Project Annotation)
 doReplAction mimsaConfig env input action =
   case action of
     Help -> do
@@ -71,21 +73,21 @@ doReplAction mimsaConfig env input action =
 
 ----------
 
-doHelp :: IO ()
+doHelp :: MimsaM e ()
 doHelp = do
-  T.putStrLn "~~~ MIMSA ~~~"
-  T.putStrLn ":help - this help screen"
-  T.putStrLn ":info <expr> - get the type of <expr>"
-  T.putStrLn ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
-  T.putStrLn ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
-  T.putStrLn ":list - show a list of current bindings in the environment"
-  T.putStrLn ":outputJS <expr> - show JS code for <expr>"
-  T.putStrLn ":tree <expr> - draw a dependency tree for <expr>"
-  T.putStrLn ":search <mt> - search for exprs that match type"
-  T.putStrLn ":addTest \"<test name>\" <expr> - add a unit test"
-  T.putStrLn ":listTests <optional name> - list tests for <name>"
-  T.putStrLn ":versions <name> - list all versions of a binding"
-  T.putStrLn "<expr> - Evaluate <expr>, returning it's simplified form and type"
-  T.putStrLn ":quit - give up and leave"
+  logInfo "~~~ MIMSA ~~~"
+  logInfo ":help - this help screen"
+  logInfo ":info <expr> - get the type of <expr>"
+  logInfo ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
+  logInfo ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
+  logInfo ":list - show a list of current bindings in the environment"
+  logInfo ":outputJS <expr> - show JS code for <expr>"
+  logInfo ":tree <expr> - draw a dependency tree for <expr>"
+  logInfo ":search <mt> - search for exprs that match type"
+  logInfo ":addTest \"<test name>\" <expr> - add a unit test"
+  logInfo ":listTests <optional name> - list tests for <name>"
+  logInfo ":versions <name> - list all versions of a binding"
+  logInfo "<expr> - Evaluate <expr>, returning it's simplified form and type"
+  logInfo ":quit - give up and leave"
 
 ----------

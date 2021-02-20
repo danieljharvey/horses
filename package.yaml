@@ -46,6 +46,7 @@ dependencies:
 - swagger2 # server
 - envy # server
 - stm # concurrency for server
+- monad-logger # logging
 
 library:
   source-dirs: src

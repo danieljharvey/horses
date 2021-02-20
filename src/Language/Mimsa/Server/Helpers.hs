@@ -4,16 +4,33 @@ module Language.Mimsa.Server.Helpers
     ErrorType (..),
     handleExceptT,
     handleEither,
+    handleMimsaM,
   )
 where
 
 import Control.Monad.Except
+import Data.Bifunctor
 import Data.Text.Lazy (fromStrict)
 import Data.Text.Lazy.Encoding (encodeUtf8)
+import Language.Mimsa.Monad
 import Language.Mimsa.Printer
+import Language.Mimsa.Server.EnvVars
 import Servant
 
-data ErrorType = UserError | InternalError
+data ErrorType
+  = UserError
+  | InternalError
+
+handleMimsaM :: (Printer e) => MimsaConfig -> ErrorType -> MimsaM e a -> Handler a
+handleMimsaM cfg et computation = do
+  let ioEither = runMimsaM cfg computation
+  let f =
+        first
+          ( \e -> case et of
+              UserError -> to400Error e
+              InternalError -> to500Error e
+          )
+  Handler $ ExceptT $ f <$> ioEither
 
 handleExceptT :: Printer e => ErrorType -> ExceptT e IO a -> Handler a
 handleExceptT et computation =
