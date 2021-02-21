@@ -68,7 +68,6 @@ transpileModule be se = do
   let filename = Actions.SaveFilename (moduleFilename be (getStoreExpressionHash se))
   js <- liftEither $ first BackendErr (outputCommonJS dataTypes se)
   let jsOutput = Actions.SaveContents (coerce js)
-  Actions.appendMessage ("Writing " <> coerce path <> "...")
   Actions.appendWriteFile path filename jsOutput
 
 -- | The index file for a given exprHash is the 'entrypoint' file

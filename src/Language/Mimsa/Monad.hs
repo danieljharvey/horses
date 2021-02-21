@@ -1,10 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 module Language.Mimsa.Monad
   ( MimsaM (..),
@@ -15,6 +10,7 @@ module Language.Mimsa.Monad
     logError,
     mapError,
     mimsaFromEither,
+    replOutput,
   )
 where
 
@@ -29,11 +25,10 @@ import Control.Monad.Logger
     runStdoutLoggingT,
   )
 import Control.Monad.Reader
-import Data.Bifunctor
-import Data.Coerce (coerce)
 import Data.Text (Text)
+import qualified Data.Text.IO as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Server.EnvVars
-import Language.Mimsa.Types.Error
 
 -- | Although we are lucky and can keep much of our work
 -- outside of IO, we do need to do some Serious Business sometimes
@@ -77,6 +72,10 @@ runMimsaM config app =
 -- | lift Either into MimsaM
 mimsaFromEither :: Either e a -> MimsaM e a
 mimsaFromEither = MimsaM . liftEither
+
+-- | Output stuff for use in repl
+replOutput :: (Printer a) => a -> MimsaM e ()
+replOutput = liftIO . T.putStrLn . prettyPrint
 
 -- | Logging
 logDebug :: Text -> MimsaM e ()

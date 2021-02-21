@@ -8,7 +8,6 @@ module Language.Mimsa.Repl.Helpers
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Coerce
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
@@ -16,7 +15,6 @@ import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -46,10 +44,9 @@ saveFile ::
   (Actions.SavePath, Actions.SaveFilename, Actions.SaveContents) ->
   MimsaM (Error Annotation) ()
 saveFile (path, filename, content) = do
-  mimsaConfig <- getMimsaConfig
   fullPath <- getStoreFolder (show path)
   let savePath = fullPath <> show filename
-  logInfo $ "Saving to " <> T.pack savePath
+  logDebug $ "Saving to " <> T.pack savePath
   liftIO $ T.writeFile savePath (coerce content)
 
 -- | Run an Action, printing any messages to the console and saving any
@@ -61,7 +58,7 @@ toReplM ::
 toReplM project action = case Actions.run project action of
   Left e -> throwError e
   Right (newProject, outcomes, a) -> do
-    traverse_ logInfo (Actions.messagesFromOutcomes outcomes)
+    traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
     traverse_ saveExpression (Actions.storeExpressionsFromOutcomes outcomes)
     traverse_ saveFile (Actions.writeFilesFromOutcomes outcomes)
     pure (newProject, a)

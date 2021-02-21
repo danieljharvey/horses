@@ -5,13 +5,7 @@ module Language.Mimsa.Repl.Types
   )
 where
 
-import Control.Monad.Except
-import qualified Data.Text.IO as T
-import Language.Mimsa.Monad
-import Language.Mimsa.Printer
-import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Typechecker

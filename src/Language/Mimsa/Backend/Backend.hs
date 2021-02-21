@@ -18,7 +18,6 @@ import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
-import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Store.Storage (getStoreFolder, tryCopy)
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store

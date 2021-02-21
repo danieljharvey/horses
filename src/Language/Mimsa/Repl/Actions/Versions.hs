@@ -13,7 +13,6 @@ import qualified Data.Text as T
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Versions
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers

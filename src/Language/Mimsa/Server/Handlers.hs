@@ -45,7 +45,6 @@ import Language.Mimsa.Actions
   )
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter (interpret)
-import Language.Mimsa.Monad
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project

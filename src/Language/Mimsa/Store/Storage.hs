@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Language.Mimsa.Store.Storage
   ( saveExpr,
@@ -14,13 +13,12 @@ where
 
 import Control.Exception
 import Control.Monad.Except
-import Control.Monad.Reader
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.Coerce
 import Data.Functor
 import qualified Data.Map as M
-import qualified Data.Text.IO as T
+import qualified Data.Text as T
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Server.EnvVars
@@ -46,7 +44,7 @@ tryCopy from to = do
   fileCopied <- liftIO $ try (copyFile from to)
   case (fileCopied :: Either IOError ()) of
     Right _ -> do
-      liftIO $ putStrLn $ "File copied from " <> from <> " to " <> to
+      logDebug $ T.pack $ "File copied from " <> from <> " to " <> to
     Left _ -> pure ()
 
 getExpressionFolder :: MimsaM e FilePath
@@ -91,9 +89,9 @@ saveExpr' expr = do
       (json, exprHash) = coerce $ contentAndHash expr
   exists <- liftIO $ doesFileExist path
   if exists
-    then liftIO $ T.putStrLn $ "Expression for " <> prettyPrint exprHash <> " already exists"
+    then logDebug $ "Expression for " <> prettyPrint exprHash <> " already exists"
     else do
-      liftIO $ T.putStrLn $ "Saved expression for " <> prettyPrint exprHash
+      logDebug $ "Saved expression for " <> prettyPrint exprHash
       liftIO $ BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
@@ -114,7 +112,7 @@ findExprInLocalStore hash = do
         Just storeExpr ->
           case validateStoreExpression storeExpr hash of
             Right se -> do
-              liftIO $ T.putStrLn $ "Found expression for " <> prettyPrint hash
+              logDebug $ "Found expression for " <> prettyPrint hash
               pure se
             Left e -> throwError e
         _ ->

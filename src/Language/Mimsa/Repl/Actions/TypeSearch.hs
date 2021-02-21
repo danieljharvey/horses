@@ -12,7 +12,6 @@ import Language.Mimsa.Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.TypeSearch
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Typechecker.NormaliseTypes (normaliseType)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error

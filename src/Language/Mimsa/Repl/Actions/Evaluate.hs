@@ -9,7 +9,6 @@ import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Repl.Helpers
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers

@@ -7,11 +7,6 @@ module Language.Mimsa.Server.Store
   )
 where
 
-import Control.Monad.Except
-import Data.Text.Lazy (fromStrict)
-import Data.Text.Lazy.Encoding (encodeUtf8)
-import Language.Mimsa.Monad
-import Language.Mimsa.Printer
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Store.Storage (findExpr, saveExpr)

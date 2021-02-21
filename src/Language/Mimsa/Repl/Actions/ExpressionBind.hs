@@ -14,7 +14,6 @@ import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Repl.Helpers
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers

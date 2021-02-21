@@ -8,9 +8,7 @@ module Language.Mimsa.Repl.Actions
 where
 
 import Data.Functor
-import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import qualified Data.Text.IO as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Repl.Actions.Compile
@@ -24,18 +22,16 @@ import Language.Mimsa.Repl.Actions.UnitTests
 import Language.Mimsa.Repl.Actions.Versions (doVersions)
 import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Repl.Types
-import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 
 doReplAction ::
-  MimsaConfig ->
   Project Annotation ->
   Text ->
   ReplAction Annotation ->
   MimsaM (Error Annotation) (Project Annotation)
-doReplAction mimsaConfig env input action =
+doReplAction env input action =
   case action of
     Help -> do
       doHelp

@@ -7,12 +7,8 @@ module Language.Mimsa.Repl
 where
 
 import Control.Monad.Except
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Except
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import Data.Void
 import Language.Mimsa.Monad
 import Language.Mimsa.Parser
 import Language.Mimsa.Project
@@ -22,7 +18,6 @@ import Language.Mimsa.Project
   )
 import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -37,15 +32,15 @@ createMimsaConfig = do
   path <- getXdgDirectory XdgData "mimsa"
   pure $ MimsaConfig 0 path
 
-getProject :: (Monoid ann) => MimsaConfig -> MimsaM (Error ann) (Project ann)
-getProject mimsaConfig =
+getProject :: (Monoid ann) => MimsaM (Error ann) (Project ann)
+getProject =
   do
     env <- mapError StoreErr loadProject
     let items = length . getStore . prjStore $ env
-    logDebug $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
+    logInfo $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
     pure env
     `catchError` \_ -> do
-      logDebug "Failed to load project, loading default project"
+      logInfo "Failed to load project, loading default project"
       pure defaultProject
 
 repl :: IO ()
@@ -56,34 +51,31 @@ repl = do
 
 replM :: MimsaM (Error Annotation) ()
 replM = do
-  mimsaConfig <- getMimsaConfig
-  env <- getProject mimsaConfig
-  runInputT defaultSettings (loop mimsaConfig env)
+  env <- getProject
+  runInputT defaultSettings (loop env)
   where
     loop ::
-      MimsaConfig ->
       Project Annotation ->
       InputT (MimsaM (Error Annotation)) ()
-    loop mimsaConfig exprs' = do
+    loop exprs' = do
       minput <- getInputLine ":> "
       case minput of
         Nothing -> return ()
         Just ":quit" -> return ()
         Just input -> do
-          newEnv <- lift $ parseCommand mimsaConfig exprs' (T.pack input)
-          loop mimsaConfig newEnv
+          newEnv <- lift $ parseCommand exprs' (T.pack input)
+          loop newEnv
 
 parseCommand ::
-  MimsaConfig ->
   Project Annotation ->
   Text ->
   MimsaM (Error Annotation) (Project Annotation)
-parseCommand mimsaConfig env input =
+parseCommand env input =
   case parseAndFormat replParser input of
     Left e -> do
       logError e
       pure env
     Right replAction -> do
-      newExprs <- doReplAction mimsaConfig env input replAction
+      newExprs <- doReplAction env input replAction
       _ <- mapError StoreErr (saveProject newExprs)
       pure newExprs

@@ -5,8 +5,6 @@ module Language.Mimsa.Repl.Actions.Compile
   )
 where
 
-import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Set (Set)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Compile as Actions
@@ -16,7 +14,6 @@ import Language.Mimsa.Backend.Backend
   )
 import Language.Mimsa.Monad
 import Language.Mimsa.Repl.Helpers
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers

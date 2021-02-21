@@ -15,7 +15,6 @@ where
 
 import Control.Exception
 import Control.Monad.Except
-import Control.Monad.Reader
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
@@ -24,7 +23,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Monad
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
@@ -52,14 +50,12 @@ getProjectFilename hash' = show hash' <> ".json"
 -- should probably consider loading the exprs lazily as required in future
 loadProject :: (Monoid ann) => MimsaM StoreError (Project ann)
 loadProject = do
-  cfg <- getMimsaConfig
-  proj <- loadProject' cfg
+  proj <- loadProject'
   pure $ proj $> mempty
 
 loadProject' ::
-  MimsaConfig ->
   MimsaM StoreError (Project ())
-loadProject' cfg = do
+loadProject' = do
   project' <- liftIO $ try $ LBS.readFile envPath
   case project' of
     Left (_ :: IOError) -> throwError (CouldNotReadFilePath envPath)
