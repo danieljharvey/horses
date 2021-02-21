@@ -32,15 +32,15 @@ import System.Console.Haskeline
 import System.Directory
 
 -- | Repl uses store in ~/.local/share/mimsa
-createMimsaConfig :: MimsaM e MimsaConfig
+createMimsaConfig :: IO MimsaConfig
 createMimsaConfig = do
-  path <- liftIO $ getXdgDirectory XdgData "mimsa"
+  path <- getXdgDirectory XdgData "mimsa"
   pure $ MimsaConfig 0 path
 
-getProject :: MimsaConfig -> MimsaM (Error ann) (Project ann)
+getProject :: (Monoid ann) => MimsaConfig -> MimsaM (Error ann) (Project ann)
 getProject mimsaConfig =
   do
-    env <- withExceptT StoreErr loadProject
+    env <- mapError StoreErr loadProject
     let items = length . getStore . prjStore $ env
     logDebug $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
     pure env
@@ -48,9 +48,15 @@ getProject mimsaConfig =
       logDebug "Failed to load project, loading default project"
       pure defaultProject
 
-repl :: MimsaM (Error Annotation) ()
+repl :: IO ()
 repl = do
   mimsaConfig <- createMimsaConfig
+  _ <- runMimsaM mimsaConfig replM
+  pure ()
+
+replM :: MimsaM (Error Annotation) ()
+replM = do
+  mimsaConfig <- getMimsaConfig
   env <- getProject mimsaConfig
   runInputT defaultSettings (loop mimsaConfig env)
   where
@@ -79,5 +85,5 @@ parseCommand mimsaConfig env input =
       pure env
     Right replAction -> do
       newExprs <- doReplAction mimsaConfig env input replAction
-      _ <- runExceptT $ saveProject mimsaConfig newExprs
+      _ <- mapError StoreErr (saveProject newExprs)
       pure newExprs

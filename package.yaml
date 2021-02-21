@@ -31,6 +31,7 @@ dependencies:
 - bytestring
 - directory # store
 - haskeline # repl
+- exceptions # repl
 - prettyprinter # formatting
 - file-embed # js compiling
 - megaparsec # parsing

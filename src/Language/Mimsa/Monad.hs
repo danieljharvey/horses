@@ -18,6 +18,7 @@ module Language.Mimsa.Monad
   )
 where
 
+import Control.Monad.Catch
 import Control.Monad.Except
 import Control.Monad.Logger
   ( LoggingT,
@@ -54,7 +55,10 @@ newtype MimsaM e a = MimsaM
       MonadIO,
       MonadReader MimsaConfig,
       MonadError e,
-      MonadLogger
+      MonadLogger,
+      MonadThrow,
+      MonadCatch,
+      MonadMask
     )
 
 -- | get env

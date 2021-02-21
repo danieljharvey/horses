@@ -3,6 +3,7 @@
 module Language.Mimsa.Repl.Helpers
   ( saveExpression,
     toReplM,
+    catchMimsaError,
   )
 where
 
@@ -25,10 +26,10 @@ import Language.Mimsa.Types.Store
 -- | if an error has been thrown, log it and return default value
 catchMimsaError ::
   (Printer e) =>
-  MimsaM e a ->
   a ->
+  MimsaM e a ->
   MimsaM e a
-catchMimsaError computation def =
+catchMimsaError def computation =
   computation `catchError` \e -> do
     logDebug (prettyPrint e)
     pure def

@@ -10,6 +10,7 @@ import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Server.EnvVars (MimsaConfig (..), getMimsaEnv)
@@ -52,7 +53,7 @@ createMimsaEnvironment cfg = do
 
 getDefaultProject :: MimsaConfig -> IO (Project Annotation)
 getDefaultProject cfg = do
-  loadedEnv <- runExceptT (loadProject cfg)
+  loadedEnv <- runMimsaM cfg loadProject
   case loadedEnv of
     Right env' -> do
       let items = length . getStore . prjStore $ env'

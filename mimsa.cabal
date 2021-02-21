@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cb7cf497840499d95b5041da964dd253b12c556f2aed50a1e45521ad26db178a
+-- hash: e6604de441e4b9fa0a4dafa44a2c1df16b0a7f0e546e1a6845c2f8e49aa29370
 
 name:           mimsa
 version:        0.1.0.0
@@ -190,6 +190,7 @@ library
     , cryptonite
     , directory
     , envy
+    , exceptions
     , file-embed
     , haskeline
     , http-types
@@ -227,6 +228,7 @@ executable mimsa
     , cryptonite
     , directory
     , envy
+    , exceptions
     , file-embed
     , haskeline
     , http-types
@@ -265,6 +267,7 @@ executable swagger
     , cryptonite
     , directory
     , envy
+    , exceptions
     , file-embed
     , haskeline
     , http-types
@@ -334,6 +337,7 @@ test-suite mimsa-test
     , cryptonite
     , directory
     , envy
+    , exceptions
     , file-embed
     , haskeline
     , hspec

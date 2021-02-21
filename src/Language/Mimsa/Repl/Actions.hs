@@ -7,6 +7,7 @@ module Language.Mimsa.Repl.Actions
   )
 where
 
+import Data.Functor
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text.IO as T
@@ -21,6 +22,7 @@ import Language.Mimsa.Repl.Actions.Tree
 import Language.Mimsa.Repl.Actions.TypeSearch
 import Language.Mimsa.Repl.Actions.UnitTests
 import Language.Mimsa.Repl.Actions.Versions (doVersions)
+import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
@@ -38,38 +40,28 @@ doReplAction mimsaConfig env input action =
     Help -> do
       doHelp
       pure env
-    ListBindings -> do
-      _ <- runReplM mimsaConfig $ doListBindings env input
-      pure env
-    (Versions name) -> do
-      _ <- runReplM mimsaConfig $ doVersions env name
-      pure env
-    (Evaluate expr) -> do
-      _ <- runReplM mimsaConfig $ doEvaluate env input expr
-      pure env
-    (Tree expr) -> do
-      _ <- runReplM mimsaConfig $ doTree env input expr
-      pure env
-    (Info expr) -> do
-      _ <- runReplM mimsaConfig $ doInfo env input expr
-      pure env
-    (Bind name expr) -> do
-      newEnv <- runReplM mimsaConfig $ doBind env input name expr
-      pure (fromMaybe env newEnv)
-    (BindType dt) -> do
-      newEnv <- runReplM mimsaConfig $ doBindType env input dt
-      pure (fromMaybe env newEnv)
-    (OutputJS expr) -> do
-      _ <- runReplM mimsaConfig (doOutputJS env input expr)
-      pure env
+    ListBindings ->
+      catchMimsaError env (doListBindings env input $> env)
+    (Versions name) ->
+      catchMimsaError env (doVersions env name $> env)
+    (Evaluate expr) ->
+      catchMimsaError env (doEvaluate env input expr $> env)
+    (Tree expr) ->
+      catchMimsaError env (doTree env input expr $> env)
+    (Info expr) ->
+      catchMimsaError env (doInfo env input expr $> env)
+    (Bind name expr) ->
+      catchMimsaError env (doBind env input name expr)
+    (BindType dt) ->
+      catchMimsaError env (doBindType env input dt)
+    (OutputJS expr) ->
+      catchMimsaError env (doOutputJS env input expr $> env)
     (TypeSearch mt) ->
-      runReplM mimsaConfig (doTypeSearch env mt) >> pure env
-    (AddUnitTest testName testExpr) -> do
-      newEnv <- runReplM mimsaConfig (doAddUnitTest env input testName testExpr)
-      pure (fromMaybe env newEnv)
+      catchMimsaError env (doTypeSearch env mt $> env)
+    (AddUnitTest testName testExpr) ->
+      catchMimsaError env (doAddUnitTest env input testName testExpr)
     (ListTests maybeName) ->
-      runReplM mimsaConfig (doListTests env maybeName)
-        >> pure env
+      catchMimsaError env (doListTests env maybeName $> env)
 
 ----------
 
