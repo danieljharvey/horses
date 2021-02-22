@@ -1,6 +1,4 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.MimsaConfig
   ( MimsaConfig (..),

@@ -34,7 +34,7 @@ normaliseConstructors dt (MyConsApp _ a val) = do
   constructorToFunctionWithApplication
     dt
     (getConsArgList (MyConsApp mempty a restOfExpr))
-    <$> (getNestedTyCons a)
+    <$> getNestedTyCons a
 normaliseConstructors dt expr' =
   bindExpr (normaliseConstructors dt) expr'
 
