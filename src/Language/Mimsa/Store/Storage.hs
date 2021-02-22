@@ -18,37 +18,37 @@ import qualified Data.ByteString.Lazy as BS
 import Data.Coerce
 import Data.Functor
 import qualified Data.Map as M
-import qualified Data.Text.IO as T
+import qualified Data.Text as T
+import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Error.StoreError
+import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project.ProjectHash
 import Language.Mimsa.Types.Store
 import System.Directory
 
-type StoreM = ExceptT StoreError IO
-
 -- get store folder, creating if it does not exist
 -- the store folder usually lives in ~/.local/share
 -- see https://hackage.haskell.org/package/directory-1.3.6.1/docs/System-Directory.html#t:XdgDirectory
-getStoreFolder :: MimsaConfig -> String -> IO FilePath
-getStoreFolder cfg subFolder = do
+getStoreFolder :: String -> MimsaM e FilePath
+getStoreFolder subFolder = do
+  cfg <- getMimsaConfig
   let path = storeRootPath cfg <> "/" <> subFolder
-  createDirectoryIfMissing True path
+  liftIO $ createDirectoryIfMissing True path
   pure (path <> "/")
 
 -- try copying a file from a to b
-tryCopy :: String -> String -> StoreM ()
+tryCopy :: String -> String -> MimsaM StoreError ()
 tryCopy from to = do
   fileCopied <- liftIO $ try (copyFile from to)
   case (fileCopied :: Either IOError ()) of
     Right _ -> do
-      liftIO $ putStrLn $ "File copied from " <> from <> " to " <> to
+      logDebug $ T.pack $ "File copied from " <> from <> " to " <> to
     Left _ -> pure ()
 
-getExpressionFolder :: MimsaConfig -> IO FilePath
-getExpressionFolder cfg = getStoreFolder cfg "expressions"
+getExpressionFolder :: MimsaM e FilePath
+getExpressionFolder = getStoreFolder "expressions"
 
 filePath :: FilePath -> ExprHash -> String
 filePath storePath hash = storePath <> show hash <> ".json"
@@ -77,33 +77,33 @@ validateStoreExpression storeExpr exprHash =
           exprHash
           (getStoreExpressionHash storeExpr)
 
-saveExpr :: MimsaConfig -> StoreExpression ann -> StoreM ExprHash
-saveExpr cfg se = saveExpr' cfg (se $> ())
+saveExpr :: StoreExpression ann -> MimsaM StoreError ExprHash
+saveExpr se =
+  saveExpr' (se $> ())
 
 -- take an expression, save it, return ExprHash
-saveExpr' :: MimsaConfig -> StoreExpression () -> StoreM ExprHash
-saveExpr' cfg expr = do
-  storePath <- liftIO $ getExpressionFolder cfg
+saveExpr' :: StoreExpression () -> MimsaM StoreError ExprHash
+saveExpr' expr = do
+  storePath <- getExpressionFolder
   let path = filePath storePath exprHash
       (json, exprHash) = coerce $ contentAndHash expr
   exists <- liftIO $ doesFileExist path
   if exists
-    then liftIO $ T.putStrLn $ "Expression for " <> prettyPrint exprHash <> " already exists"
+    then logDebug $ "Expression for " <> prettyPrint exprHash <> " already exists"
     else do
-      liftIO $ T.putStrLn $ "Saved expression for " <> prettyPrint exprHash
+      logDebug $ "Saved expression for " <> prettyPrint exprHash
       liftIO $ BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
 findExpr ::
-  MimsaConfig ->
   ExprHash ->
-  StoreM (StoreExpression ())
+  MimsaM StoreError (StoreExpression ())
 findExpr = findExprInLocalStore
 
 -- find in the store
-findExprInLocalStore :: MimsaConfig -> ExprHash -> StoreM (StoreExpression ())
-findExprInLocalStore cfg hash = do
-  storePath <- liftIO (getExpressionFolder cfg)
+findExprInLocalStore :: ExprHash -> MimsaM StoreError (StoreExpression ())
+findExprInLocalStore hash = do
+  storePath <- getExpressionFolder
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
   case (json :: Either IOError BS.ByteString) of
     Left _ -> throwError $ CouldNotReadFilePath (filePath storePath hash)
@@ -112,7 +112,7 @@ findExprInLocalStore cfg hash = do
         Just storeExpr ->
           case validateStoreExpression storeExpr hash of
             Right se -> do
-              liftIO $ T.putStrLn $ "Found expression for " <> prettyPrint hash
+              logDebug $ "Found expression for " <> prettyPrint hash
               pure se
             Left e -> throwError e
         _ ->

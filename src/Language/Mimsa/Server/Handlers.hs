@@ -38,7 +38,11 @@ import qualified Data.Set as S
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Actions (evaluateText, getTypeMap, resolveStoreExpression)
+import Language.Mimsa.Actions
+  ( evaluateText,
+    getTypeMap,
+    resolveStoreExpression,
+  )
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Parser (parseExprAndFormatError)
@@ -63,7 +67,11 @@ import Servant
 -- Commonly used functionality, lifted into Servant's Handler type
 -----
 
-fromActionM :: MimsaEnvironment -> ProjectHash -> Actions.ActionM a -> Handler (Project Annotation, a)
+fromActionM ::
+  MimsaEnvironment ->
+  ProjectHash ->
+  Actions.ActionM a ->
+  Handler (Project Annotation, a)
 fromActionM mimsaEnv projectHash action = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' projectHash
@@ -128,7 +136,7 @@ writeStoreHandler mimsaEnv store' = do
 -- given a new Project, save it and return the hash and bindings
 projectDataHandler :: MimsaEnvironment -> Project ann -> Handler ProjectData
 projectDataHandler mimsaEnv env = do
-  projHash <- handleExceptT InternalError (saveProjectInStore (mimsaConfig mimsaEnv) env)
+  projHash <- handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveProjectInStore env)
   pure $
     ProjectData
       projHash
@@ -172,7 +180,7 @@ loadProjectHandler ::
   ProjectHash ->
   Handler (Project Annotation)
 loadProjectHandler mimsaEnv store' hash =
-  handleExceptT UserError $ loadProjectFromHash (mimsaConfig mimsaEnv) store' hash
+  handleMimsaM (mimsaConfig mimsaEnv) UserError (loadProjectFromHash store' hash)
 
 evaluateTextHandler ::
   Project Annotation ->
@@ -190,7 +198,7 @@ parseHandler input =
 
 saveExprHandler :: MimsaEnvironment -> StoreExpression ann -> Handler ExprHash
 saveExprHandler mimsaEnv se =
-  handleExceptT InternalError (saveExpr (mimsaConfig mimsaEnv) se)
+  handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveExpr se)
 
 interpretHandler ::
   Scope Annotation ->

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d9b9e4b6752ede01fb5f78e46970dca8b4995adb15a55531db06e1a071a9f4f5
+-- hash: 7c299f46fecfef4bfe3c68679ff451bf82a755ebc05de6bcaee26a73aa5f1972
 
 name:           mimsa
 version:        0.1.0.0
@@ -49,6 +49,7 @@ library
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
+      Language.Mimsa.Monad
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers
       Language.Mimsa.Parser.Identifiers
@@ -150,6 +151,7 @@ library
       Language.Mimsa.Types.Identifiers.TypeIdentifier
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Identifiers.Variable
+      Language.Mimsa.Types.MimsaConfig
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project
       Language.Mimsa.Types.Project.ProjectHash
@@ -189,11 +191,13 @@ library
     , cryptonite
     , directory
     , envy
+    , exceptions
     , file-embed
     , haskeline
     , http-types
     , megaparsec
     , memory
+    , monad-logger
     , mtl
     , optparse-applicative
     , parser-combinators
@@ -225,12 +229,14 @@ executable mimsa
     , cryptonite
     , directory
     , envy
+    , exceptions
     , file-embed
     , haskeline
     , http-types
     , megaparsec
     , memory
     , mimsa
+    , monad-logger
     , mtl
     , optparse-applicative
     , parser-combinators
@@ -262,12 +268,14 @@ executable swagger
     , cryptonite
     , directory
     , envy
+    , exceptions
     , file-embed
     , haskeline
     , http-types
     , megaparsec
     , memory
     , mimsa
+    , monad-logger
     , mtl
     , optparse-applicative
     , parser-combinators
@@ -330,6 +338,7 @@ test-suite mimsa-test
     , cryptonite
     , directory
     , envy
+    , exceptions
     , file-embed
     , haskeline
     , hspec
@@ -337,6 +346,7 @@ test-suite mimsa-test
     , megaparsec
     , memory
     , mimsa
+    , monad-logger
     , mtl
     , optparse-applicative
     , parser-combinators

@@ -31,6 +31,7 @@ dependencies:
 - bytestring
 - directory # store
 - haskeline # repl
+- exceptions # repl
 - prettyprinter # formatting
 - file-embed # js compiling
 - megaparsec # parsing
@@ -46,6 +47,7 @@ dependencies:
 - swagger2 # server
 - envy # server
 - stm # concurrency for server
+- monad-logger # logging
 
 library:
   source-dirs: src
