@@ -21,9 +21,9 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Error.StoreError
+import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project.ProjectHash
 import Language.Mimsa.Types.Store
 import System.Directory

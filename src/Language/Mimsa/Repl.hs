@@ -18,19 +18,19 @@ import Language.Mimsa.Project
   )
 import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
-import Language.Mimsa.Server.EnvVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import System.Console.Haskeline
 import System.Directory
 
 -- | Repl uses store in ~/.local/share/mimsa
-createMimsaConfig :: IO MimsaConfig
-createMimsaConfig = do
+createMimsaConfig :: Bool -> IO MimsaConfig
+createMimsaConfig showLogs' = do
   path <- getXdgDirectory XdgData "mimsa"
-  pure $ MimsaConfig 0 path
+  pure $ MimsaConfig 0 path showLogs'
 
 getProject :: (Monoid ann) => MimsaM (Error ann) (Project ann)
 getProject =
@@ -43,9 +43,9 @@ getProject =
       logInfo "Failed to load project, loading default project"
       pure defaultProject
 
-repl :: IO ()
-repl = do
-  mimsaConfig <- createMimsaConfig
+repl :: Bool -> IO ()
+repl showLogs' = do
+  mimsaConfig <- createMimsaConfig showLogs'
   _ <- runMimsaM mimsaConfig replM
   pure ()
 

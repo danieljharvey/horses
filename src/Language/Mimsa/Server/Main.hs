@@ -9,14 +9,16 @@ where
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Server.EnvVars (MimsaConfig (..), getMimsaEnv)
+import Language.Mimsa.Server.EnvVars (getMimsaEnv)
 import Language.Mimsa.Server.Servant
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Network.HTTP.Types.Header
@@ -54,11 +56,13 @@ createMimsaEnvironment = do
   pure (MimsaEnvironment stm cfg)
 
 getDefaultProject :: MimsaM (Error Annotation) (Project Annotation)
-getDefaultProject = do
-  env <- mapError StoreErr loadProject
-  let items = length . getStore . prjStore $ env
-  logInfo $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
-  pure env
+getDefaultProject =
+  ( do
+      env <- mapError StoreErr loadProject
+      let items = length . getStore . prjStore $ env
+      logInfo $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
+      pure env
+  )
     `catchError` \_ -> do
       logInfo "Failed to load project, loading default project"
       pure defaultProject
@@ -67,15 +71,18 @@ server :: IO ()
 server = do
   mimsaConfig' <- runExceptT getMimsaEnv
   case mimsaConfig' of
-    Left e -> error e
+    Left e -> putStrLn e >> pure ()
     Right cfg -> do
-      _ <- runMimsaM cfg serverM
-      pure ()
+      rtn <- runMimsaM cfg serverM
+      case rtn of
+        -- error in initialisation
+        Left e -> T.putStrLn (prettyPrint e)
+        _ -> pure ()
 
 serverM :: MimsaM (Error Annotation) ()
 serverM = do
   cfg <- getMimsaConfig
   mimsaEnv <- createMimsaEnvironment
   let port' = port cfg
-  logInfo $ "Starting server on port " <> prettyPrint port' <> "..."
+  replOutput $ "Starting server on port " <> prettyPrint port' <> "..."
   liftIO $ run port' (mimsaApp mimsaEnv) -- TODO - hoist Servant to use MimsaM?

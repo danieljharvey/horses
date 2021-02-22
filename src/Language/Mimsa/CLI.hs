@@ -5,14 +5,23 @@ import Language.Mimsa.Repl (repl)
 import Language.Mimsa.Server (server)
 import qualified Options.Applicative as Opt
 
-data CLICommand = Repl | Server
+data CLICommand
+  = Repl Bool
+  | Server
 
 cli :: IO ()
 cli = do
-  command' <- Opt.execParser (Opt.info (command <**> Opt.helper) Opt.fullDesc) <|> pure Repl
+  command' <-
+    Opt.execParser (Opt.info (command <**> Opt.helper) Opt.fullDesc)
+      <|> pure (Repl False)
   case command' of
-    Repl -> repl
+    Repl showLogs -> repl showLogs
     Server -> server
+
+showLogsParser :: Opt.Parser Bool
+showLogsParser =
+  Opt.flag' True (Opt.short 'v' <> Opt.long "verbose")
+    <|> pure False
 
 command :: Opt.Parser CLICommand
 command =
@@ -20,7 +29,7 @@ command =
     ( Opt.command
         "repl"
         ( Opt.info
-            (pure Repl)
+            (Repl <$> showLogsParser)
             (Opt.progDesc "Start the Mimsa repl")
         )
         <> Opt.command

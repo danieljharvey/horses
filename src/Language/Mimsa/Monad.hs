@@ -19,6 +19,7 @@ import Control.Monad.Except
 import Control.Monad.Logger
   ( LoggingT,
     MonadLogger,
+    filterLogger,
     logDebugN,
     logErrorN,
     logInfoN,
@@ -28,7 +29,7 @@ import Control.Monad.Reader
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
-import Language.Mimsa.Server.EnvVars
+import Language.Mimsa.Types.MimsaConfig
 
 -- | Although we are lucky and can keep much of our work
 -- outside of IO, we do need to do some Serious Business sometimes
@@ -67,7 +68,11 @@ mapError f = MimsaM . withExceptT f . getMimsaM
 -- | run this big brave boy
 runMimsaM :: MimsaConfig -> MimsaM e a -> IO (Either e a)
 runMimsaM config app =
-  runReaderT (runStdoutLoggingT (runExceptT (getMimsaM app))) config
+  let innerApp = runExceptT (getMimsaM app)
+   in runReaderT (runStdoutLoggingT (logFilter config innerApp)) config
+
+logFilter :: MimsaConfig -> LoggingT m a -> LoggingT m a
+logFilter mc app = if showLogs mc then app else filterLogger (\_ _ -> False) app
 
 -- | lift Either into MimsaM
 mimsaFromEither :: Either e a -> MimsaM e a
