@@ -57,10 +57,9 @@ outputRecord as = do
   items <- traverse outputRecordItem (M.toList as)
   pure $
     "{ "
-      <> ( intercal
-             ", "
-             items
-         )
+      <> intercal
+        ", "
+        items
       <> " }"
   where
     outputRecordItem (name, val) = do
@@ -76,7 +75,7 @@ outputCaseMatch ::
 outputCaseMatch value matches catchAll = do
   jsValue <- outputJS value
   let outputMatch (tyCon, val) =
-        (outputJS val)
+        outputJS val
           >>= ( \matchVal ->
                   pure $ Javascript (prettyPrint tyCon) <> ": " <> matchVal
               )
@@ -180,7 +179,7 @@ outputLambda arg func = do
   jsFunc <- outputJS func
   pure $
     coerce arg <> " => "
-      <> (withCurlyBoys func jsFunc)
+      <> withCurlyBoys func jsFunc
 
 outputLet ::
   (Monoid ann) =>
