@@ -15,6 +15,7 @@ module Language.Mimsa.Server.Handlers
     evaluateTextHandler,
     createNewUnitTestsHandler,
     parseHandler,
+    parseDataTypeHandler,
     saveExprHandler,
     interpretHandler,
     findExprHandler,
@@ -45,7 +46,7 @@ import Language.Mimsa.Actions
   )
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter (interpret)
-import Language.Mimsa.Parser (parseExprAndFormatError)
+import Language.Mimsa.Parser (parseExprAndFormatError, parseTypeDeclAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Project.UnitTest
@@ -195,6 +196,14 @@ parseHandler input =
    in handleEither
         UserError
         (first wrapError (parseExprAndFormatError input))
+
+parseDataTypeHandler :: Text -> Handler DataType
+parseDataTypeHandler input =
+  let wrapError :: Text -> Error Annotation
+      wrapError = ParseError
+   in handleEither
+        UserError
+        (first wrapError (parseTypeDeclAndFormatError input))
 
 saveExprHandler :: MimsaEnvironment -> StoreExpression ann -> Handler ExprHash
 saveExprHandler mimsaEnv se =

@@ -2,12 +2,14 @@
 
 module Language.Mimsa.Parser.TypeDecl
   ( typeDeclParser,
+    parseTypeDeclAndFormatError,
   )
 where
 
 import qualified Control.Monad.Combinators.Expr as PC
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Types
@@ -15,6 +17,10 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers (TyCon)
 import Text.Megaparsec
 import Text.Megaparsec.Char
+
+parseTypeDeclAndFormatError :: Text -> Either Text DataType
+parseTypeDeclAndFormatError =
+  parseAndFormat (typeDeclParser <* eof)
 
 typeDeclParser :: Parser DataType
 typeDeclParser =
