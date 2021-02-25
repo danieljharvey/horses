@@ -17,9 +17,9 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
+import Language.Mimsa.Typechecker.Codegen
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
 import Servant
 
 ------
@@ -30,16 +30,15 @@ type BindType =
     :> Post '[JSON] BindTypeResponse
 
 data BindTypeRequest = BindTypeRequest
-  { beProjectHash :: ProjectHash,
-    beBindingName :: Name,
-    beExpression :: Text
+  { btProjectHash :: ProjectHash,
+    btExpression :: Text
   }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
 data BindTypeResponse = BindTypeResponse
-  { beProjectData :: ProjectData,
-    beExpressionData :: ExpressionData,
-    beUpdatedTestsCount :: Int
+  { btProjectData :: ProjectData,
+    btCodegenExprName :: Maybe Name,
+    btTypeclasses :: [Typeclass]
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
@@ -47,17 +46,13 @@ bindType ::
   MimsaEnvironment ->
   BindTypeRequest ->
   Handler BindTypeResponse
-bindType mimsaEnv (BindTypeRequest hash name' input) = do
+bindType mimsaEnv (BindTypeRequest hash input) = do
   expr <- parseDataTypeHandler input
-  (newProject, (_typeclasses, _name)) <-
+  (newProject, (typeClasses, codegenName)) <-
     fromActionM
       mimsaEnv
       hash
       (Actions.bindType input expr)
   pd <- projectDataHandler mimsaEnv newProject
-  ed <- expressionDataHandler newProject se mt
   pure $
-    BindTypeResponse
-      pd
-      ed
-      numTests
+    BindTypeResponse pd codegenName typeClasses

@@ -24,7 +24,7 @@ import Language.Mimsa.Types.Store
 bindType ::
   Text ->
   DataType ->
-  Actions.ActionM ([Typeclass], Name)
+  Actions.ActionM ([Typeclass], Maybe Name)
 bindType input dt = do
   addTypeToProject input dt
   let name = tyConToName (dtName dt)
@@ -35,14 +35,14 @@ bindType input dt = do
     )
   case codegenExpr of
     Nothing -> do
-      pure (mempty, name)
+      pure (mempty, Nothing)
     Just codegenFunc ->
       do
         Actions.bindStoreExpression codegenFunc name
         Actions.appendMessage
           ( "Generated functions bound to " <> prettyPrint name <> "."
           )
-        pure (typeclassMatches dt, name)
+        pure (typeclassMatches dt, Just name)
 
 addTypeToProject :: Text -> DataType -> Actions.ActionM ()
 addTypeToProject input dt = do
