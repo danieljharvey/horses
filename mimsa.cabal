@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7c299f46fecfef4bfe3c68679ff451bf82a755ebc05de6bcaee26a73aa5f1972
+-- hash: 5f567f3a433514c649bc1a52176f88b05065b95b2e471a4631ab643efb1b99a7
 
 name:           mimsa
 version:        0.1.0.0
@@ -90,6 +90,7 @@ library
       Language.Mimsa.Server.Project
       Language.Mimsa.Server.Project.AddUnitTest
       Language.Mimsa.Server.Project.BindExpression
+      Language.Mimsa.Server.Project.BindType
       Language.Mimsa.Server.Project.CreateProject
       Language.Mimsa.Server.Project.Evaluate
       Language.Mimsa.Server.Project.GetExpression

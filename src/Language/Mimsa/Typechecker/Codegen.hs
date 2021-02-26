@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Codegen
@@ -13,11 +15,14 @@ module Language.Mimsa.Typechecker.Codegen
   )
 where
 
+import qualified Data.Aeson as JSON
 import Data.Either (isRight)
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Swagger (ToSchema)
 import Data.Text.Prettyprint.Doc
+import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Codegen.ApplicativeApply
 import Language.Mimsa.Typechecker.Codegen.ApplicativePure
@@ -34,7 +39,15 @@ data Typeclass
   | Functor
   | Foldable
   | Applicative
-  deriving (Eq, Ord, Show)
+  deriving
+    ( Eq,
+      Ord,
+      Show,
+      Generic,
+      JSON.ToJSON,
+      JSON.FromJSON,
+      ToSchema
+    )
 
 instance Printer Typeclass where
   prettyDoc tc = pretty (show tc)
