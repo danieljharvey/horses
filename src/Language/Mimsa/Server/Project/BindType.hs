@@ -25,7 +25,7 @@ import Servant
 ------
 
 type BindType =
-  "bind"
+  "type"
     :> ReqBody '[JSON] BindTypeRequest
     :> Post '[JSON] BindTypeResponse
 
