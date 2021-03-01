@@ -24,7 +24,7 @@ import Language.Mimsa.Types.Store
 bindType ::
   Text ->
   DataType ->
-  Actions.ActionM ([Typeclass], Maybe Name)
+  Actions.ActionM ([Typeclass], Maybe (ResolvedExpression Annotation), DataType)
 bindType input dt = do
   addTypeToProject input dt
   let name = tyConToName (dtName dt)
@@ -35,14 +35,21 @@ bindType input dt = do
     )
   case codegenExpr of
     Nothing -> do
-      pure (mempty, Nothing)
+      pure (mempty, Nothing, dt)
     Just codegenFunc ->
       do
-        Actions.bindStoreExpression codegenFunc name
+        Actions.bindStoreExpression (storeExprFromResolved codegenFunc) name
         Actions.appendMessage
           ( "Generated functions bound to " <> prettyPrint name <> "."
           )
-        pure (typeclassMatches dt, Just name)
+        pure
+          ( typeclassMatches dt,
+            Just codegenFunc,
+            dt
+          )
+
+storeExprFromResolved :: ResolvedExpression ann -> StoreExpression ann
+storeExprFromResolved (ResolvedExpression _ se _ _ _) = se
 
 addTypeToProject :: Text -> DataType -> Actions.ActionM ()
 addTypeToProject input dt = do
@@ -60,7 +67,10 @@ addTypeToProject input dt = do
         )
   Actions.bindTypeExpression (reStoreExpression resolvedTypeExpr)
 
-createCodegenFunction :: Project Annotation -> DataType -> Actions.ActionM (Maybe (StoreExpression Annotation))
+createCodegenFunction ::
+  Project Annotation ->
+  DataType ->
+  Actions.ActionM (Maybe (ResolvedExpression Annotation))
 createCodegenFunction project dt =
   case doCodegen dt of
     items | M.null items -> pure Nothing
@@ -104,6 +114,6 @@ createCodegenFunction project dt =
         )
       let realFunctionMap = M.mapWithKey (\k _ -> MyVar mempty k) funcMap
       let recordExpr = MyRecord mempty realFunctionMap
-      (ResolvedExpression _ storeExpr _ _ _) <-
+      re <-
         liftEither $ getTypecheckedStoreExpression (prettyPrint recordExpr) (project <> newProjectItems) recordExpr
-      pure (Just storeExpr)
+      pure (Just re)

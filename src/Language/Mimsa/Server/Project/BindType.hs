@@ -15,11 +15,15 @@ import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions
+import Language.Mimsa.Printer
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Typechecker.Codegen
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Store
 import Servant
 
 ------
@@ -35,9 +39,14 @@ data BindTypeRequest = BindTypeRequest
   }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
+data CodegenInfo = CodegenInfo {ciExprName :: Name, ciHash :: ExprHash}
+  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+
 data BindTypeResponse = BindTypeResponse
   { btProjectData :: ProjectData,
-    btCodegenExprName :: Maybe Name,
+    btDataType :: DataType,
+    btPrettyType :: Text,
+    btCodegen :: Maybe ExpressionData,
     btTypeclasses :: [Typeclass]
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
@@ -46,13 +55,19 @@ bindType ::
   MimsaEnvironment ->
   BindTypeRequest ->
   Handler BindTypeResponse
-bindType mimsaEnv (BindTypeRequest hash input) = do
-  expr <- parseDataTypeHandler input
-  (newProject, (typeClasses, codegenName)) <-
-    fromActionM
-      mimsaEnv
-      hash
-      (Actions.bindType input expr)
-  pd <- projectDataHandler mimsaEnv newProject
-  pure $
-    BindTypeResponse pd codegenName typeClasses
+bindType mimsaEnv (BindTypeRequest projectHash input) =
+  do
+    expr <- parseDataTypeHandler input
+    (newProject, (typeClasses, codegenInfo, dt)) <-
+      fromActionM
+        mimsaEnv
+        projectHash
+        (Actions.bindType input expr)
+    pd <- projectDataHandler mimsaEnv newProject
+    ed <- case codegenInfo of
+      Just (ResolvedExpression mt se _ _ _) -> do
+        ed' <- expressionDataHandler newProject se mt
+        pure (Just ed')
+      Nothing -> pure Nothing
+    pure $
+      BindTypeResponse pd dt (prettyPrint dt) ed typeClasses
