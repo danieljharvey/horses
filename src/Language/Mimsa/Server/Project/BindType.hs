@@ -22,6 +22,7 @@ import Language.Mimsa.Typechecker.Codegen
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Servant
 
@@ -45,7 +46,7 @@ data BindTypeResponse = BindTypeResponse
   { btProjectData :: ProjectData,
     btDataType :: DataType,
     btPrettyType :: Text,
-    btCodegen :: Maybe CodegenInfo,
+    btCodegen :: Maybe ExpressionData,
     btTypeclasses :: [Typeclass]
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
@@ -63,8 +64,10 @@ bindType mimsaEnv (BindTypeRequest projectHash input) =
         projectHash
         (Actions.bindType input expr)
     pd <- projectDataHandler mimsaEnv newProject
-    let codegen =
-          (\(name', hash) -> CodegenInfo name' hash)
-            <$> codegenInfo
+    ed <- case codegenInfo of
+      Just (ResolvedExpression mt se _ _ _) -> do
+        ed' <- expressionDataHandler newProject se mt
+        pure (Just ed')
+      Nothing -> pure Nothing
     pure $
-      BindTypeResponse pd dt (prettyPrint dt) codegen typeClasses
+      BindTypeResponse pd dt (prettyPrint dt) ed typeClasses
