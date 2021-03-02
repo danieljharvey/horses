@@ -80,3 +80,12 @@ spec = do
                 <> "Reader \\rtoa -> Reader \\r -> f(rtoa(r)); "
                 <> "fmap"
           )
+    it "Generates functorMap for dtEnv" $ do
+      typecheckInstance functorMap dtEnv `shouldSatisfy` isRight
+      functorMap dtEnv
+        `shouldBe` Right
+          ( unsafeParse $
+              "let fmap = \\f -> \\env -> case env of "
+                <> "Env \\w -> \\a -> Env w f(a); "
+                <> "fmap"
+          )

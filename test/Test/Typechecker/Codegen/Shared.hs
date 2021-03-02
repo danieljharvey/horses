@@ -17,6 +17,7 @@ module Test.Typechecker.Codegen.Shared
     dtReader,
     dtMatchedPair,
     dtConsoleF,
+    dtEnv,
   )
 where
 
@@ -179,6 +180,13 @@ dtConsoleF =
 
 dtPair :: DataType
 dtPair = DataType "Pair" ["a", "b"] (M.singleton "Pair" [VarName "a", VarName "b"])
+
+dtEnv :: DataType
+dtEnv =
+  DataType
+    "Env"
+    ["w", "a"]
+    (M.singleton "Env" [VarName "w", VarName "a"])
 
 typecheckInstance ::
   (DataType -> Either Text (Expr Name ())) ->

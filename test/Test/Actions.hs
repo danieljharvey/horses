@@ -274,3 +274,7 @@ spec = do
       it "Should bind ConsoleF without breaking" $ do
         let action = Actions.bindType (prettyPrint dtConsoleF) dtConsoleF
         Actions.run stdLib action `shouldSatisfy` isRight
+
+      it "Should bind Env without breaking" $ do
+        let action = Actions.bindType (prettyPrint dtEnv) dtEnv
+        Actions.run stdLib action `shouldSatisfy` isRight

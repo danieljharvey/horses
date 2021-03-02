@@ -45,7 +45,7 @@ applicativePure_ (DataType tyCon vars items) = do
       foldl'
         ( \mExprA part -> do
             exprA <- mExprA
-            partToExpr items exprA part
+            partToExpr fVar items exprA part
         )
         (pure (MyConstructor mempty tc))
         parts
@@ -57,15 +57,23 @@ applicativePure_ (DataType tyCon vars items) = do
         expr'
     )
 
-partToExpr :: Map TyCon [Field] -> Expr Name () -> Part -> CodegenM (Expr Name ())
-partToExpr items innerExpr part =
+partToExpr ::
+  Name ->
+  Map TyCon [Field] ->
+  Expr Name () ->
+  Part ->
+  CodegenM (Expr Name ())
+partToExpr fVar items innerExpr part =
   case part of
-    VPart n -> do
-      pure $
-        MyConsApp
-          mempty
-          innerExpr
-          (MyVar mempty n)
+    VPart n ->
+      if n == fVar
+        then
+          pure $
+            MyConsApp
+              mempty
+              innerExpr
+              (MyVar mempty n)
+        else throwError "Cannot use non-functor value"
     TPart -> do
       emptyTyCon <- emptyConstructor items
       pure $

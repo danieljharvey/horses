@@ -48,3 +48,12 @@ spec = do
                 <> "Nil total; "
                 <> "fold"
           )
+    it "Generates fold for dtEnv" $ do
+      typecheckInstance fold dtEnv `shouldSatisfy` isRight
+      fold dtEnv
+        `shouldBe` Right
+          ( unsafeParse $
+              "let fold = \\f -> \\total -> \\env -> "
+                <> " case env of Env \\w -> \\a -> f(total)(a); "
+                <> "fold"
+          )

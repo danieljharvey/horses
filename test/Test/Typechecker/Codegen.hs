@@ -39,3 +39,5 @@ spec = do
       typeclassMatches dtMaybe `shouldSatisfy` elem Functor
     it "No newtype instance for Maybe" $ do
       typeclassMatches dtMaybe `shouldNotSatisfy` elem Newtype
+    it "Instances for Env" $ do
+      typeclassMatches dtEnv `shouldBe` [Functor, Foldable]
