@@ -63,6 +63,9 @@ spec = do
             ( unsafeParse
                 "\\a -> Reader \\r -> a"
             )
+      it "Does not generate pure for dtEnv" $ do
+        applicativePure dtEnv `shouldSatisfy` isLeft
+
     describe "apply instances" $ do
       it "Generates apply for dtIdentity" $ do
         typecheckInstance applicativeApply dtIdentity `shouldSatisfy` isRight
@@ -116,6 +119,16 @@ spec = do
                   <> "This \\a1 -> This a1) | "
                   <> "This \\a1 -> This a1"
             )
+      it "Generates apply for dtEnv" $ do
+        typecheckInstance applicativeApply dtEnv `shouldSatisfy` isRight
+        applicativeApply dtEnv
+          `shouldBe` Right
+            ( unsafeParse $
+                "\\envF -> \\envA -> "
+                  <> "case envF of Env \\w -> \\f -> "
+                  <> "case envA of Env \\w -> \\a -> Env w f(a)"
+            )
+
       it "Does not make apply for dtConsoleF" $ do
         applicativeApply dtConsoleF `shouldSatisfy` isLeft
       it "Does not make apply for dtReader" $ do
