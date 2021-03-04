@@ -281,7 +281,8 @@ prettyLet var expr1 expr2 =
   group
     ( "let" <+> prettyDoc var
         <+> "="
-        <+> prettyDoc expr1
+        <> line
+        <> indentMulti 2 (prettyDoc expr1)
         <> newlineOrIn
         <> prettyDoc expr2
     )
@@ -298,7 +299,8 @@ prettyLetPair var1 var2 expr1 body =
     ( "let" <+> "(" <> prettyDoc var1 <> "," <+> prettyDoc var2
         <> ")"
         <+> "="
-        <+> printSubExpr expr1
+        <> line
+        <> indentMulti 2 (printSubExpr expr1)
         <> newlineOrIn
         <> printSubExpr body
     )
@@ -320,6 +322,18 @@ prettyDefineInfix infixOp bindName expr =
         <+> prettyDoc bindName
         <> newlineOrIn
         <> prettyDoc expr
+    )
+
+prettyPair :: (Printer var, Show var) => Expr var ann -> Expr var ann -> Doc style
+prettyPair a b =
+  group
+    ( "("
+        <> align
+          ( vsep
+              [ printSubExpr a <> ",",
+                printSubExpr b <> ")"
+              ]
+          )
     )
 
 instance (Show var, Printer var) => Printer (Expr var ann) where
@@ -363,11 +377,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
           )
       ]
   prettyDoc (MyPair _ a b) =
-    "("
-      <> printSubExpr a
-      <> ","
-      <+> printSubExpr b
-      <> ")"
+    prettyPair a b
   prettyDoc (MyRecord _ map') = encloseSep lbrace rbrace comma exprs'
     where
       exprs' =

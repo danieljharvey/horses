@@ -51,13 +51,13 @@ spec =
         let expr' = unsafeParseExpr "let a = 1; a"
             doc = prettyDoc expr'
         renderWithWidth 50 doc `shouldBe` "let a = 1 in a"
-        renderWithWidth 5 doc `shouldBe` "let a = 1;\n\na"
+        renderWithWidth 5 doc `shouldBe` "let a =\n  1;\n\na"
 
       it "Line between let pair bindings" $ do
         let expr' = unsafeParseExpr "let (a,b) = ((1,2)); a"
             doc = prettyDoc expr'
         renderWithWidth 50 doc `shouldBe` "let (a, b) = ((1, 2)) in a"
-        renderWithWidth 5 doc `shouldBe` "let (a, b) = ((1, 2));\n\na"
+        renderWithWidth 5 doc `shouldBe` "let (a, b) =\n  ((1,\n    2));\n\na"
 
       it "Line between infix bindings" $ do
         let expr' = unsafeParseExpr "infix >> = compose in a"
