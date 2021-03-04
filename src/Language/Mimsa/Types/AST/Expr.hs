@@ -18,7 +18,7 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.Bifunctor
-import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -31,6 +31,10 @@ import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
+
+mapWithIndex :: (Int -> a -> b) -> [a] -> [b]
+mapWithIndex f as =
+  uncurry f <$> zip [1 ..] as
 
 -------
 
@@ -249,106 +253,224 @@ withMonoid f whole@(MyDefineInfix _ _ _ inExpr) =
   f whole
     <> withMonoid f inExpr
 
+data InfixBit var ann
+  = IfStart (Expr var ann)
+  | IfMore Operator (Expr var ann)
+  deriving (Show)
+
+getInfixList :: Expr var ann -> NE.NonEmpty (InfixBit var ann)
+getInfixList expr = case expr of
+  (MyInfix _ op a b) ->
+    let start = getInfixList a
+     in start <> NE.fromList [IfMore op b]
+  other -> NE.fromList [IfStart other]
+
+prettyInfixList :: (Show var, Printer var) => NE.NonEmpty (InfixBit var ann) -> Doc style
+prettyInfixList (ifHead :| ifRest) =
+  let printInfixBit (IfMore op expr') = prettyDoc op <+> printSubExpr expr'
+      printInfixBit (IfStart expr') = printSubExpr expr'
+   in printInfixBit ifHead <+> align (vsep (printInfixBit <$> ifRest))
+
+-- when on multilines, indent by `i`, if not then nothing
+indentMulti :: Int -> Doc style -> Doc style
+indentMulti i doc = flatAlt (indent i doc) doc
+
+prettyLet ::
+  (Show var, Printer var) =>
+  var ->
+  Expr var ann ->
+  Expr var ann ->
+  Doc style
+prettyLet var expr1 expr2 =
+  group
+    ( "let" <+> prettyDoc var
+        <+> "="
+        <> line
+        <> indentMulti 2 (prettyDoc expr1)
+        <> newlineOrIn
+        <> prettyDoc expr2
+    )
+
+prettyLetPair ::
+  (Show var, Printer var) =>
+  var ->
+  var ->
+  Expr var ann ->
+  Expr var ann ->
+  Doc style
+prettyLetPair var1 var2 expr1 body =
+  group
+    ( "let" <+> "(" <> prettyDoc var1 <> "," <+> prettyDoc var2
+        <> ")"
+        <+> "="
+        <> line
+        <> indentMulti 2 (printSubExpr expr1)
+        <> newlineOrIn
+        <> printSubExpr body
+    )
+
+newlineOrIn :: Doc style
+newlineOrIn = flatAlt (";" <> line <> line) " in "
+
+prettyDefineInfix ::
+  (Printer var, Show var) =>
+  InfixOp ->
+  var ->
+  Expr var ann ->
+  Doc style
+prettyDefineInfix infixOp bindName expr =
+  group
+    ( "infix"
+        <+> prettyDoc infixOp
+        <+> "="
+        <+> prettyDoc bindName
+        <> newlineOrIn
+        <> prettyDoc expr
+    )
+
+prettyPair :: (Printer var, Show var) => Expr var ann -> Expr var ann -> Doc style
+prettyPair a b =
+  group
+    ( "("
+        <> align
+          ( vsep
+              [ printSubExpr a <> ",",
+                printSubExpr b <> ")"
+              ]
+          )
+    )
+
+prettyLambda ::
+  (Printer var, Show var) =>
+  var ->
+  Expr var ann ->
+  Doc style
+prettyLambda binder expr =
+  group
+    ( vsep
+        [ "\\"
+            <> prettyDoc binder
+            <+> "->",
+          indentMulti 2 $
+            prettyDoc expr
+        ]
+    )
+
+prettyRecord ::
+  (Printer var, Show var) =>
+  Map Name (Expr var ann) ->
+  Doc style
+prettyRecord map' =
+  let items = M.toList map'
+      printRow = \i (name, val) ->
+        prettyDoc name
+          <> ":"
+          <+> printSubExpr val
+          <> if i < length items then "," else ""
+   in case items of
+        [] -> "{}"
+        rows ->
+          let prettyRows = mapWithIndex printRow rows
+           in group
+                ( "{"
+                    <+> align
+                      ( vsep
+                          prettyRows
+                      )
+                    <+> "}"
+                )
+
+prettyIf ::
+  (Show var, Printer var) =>
+  Expr var ann ->
+  Expr var ann ->
+  Expr var ann ->
+  Doc style
+prettyIf if' then' else' =
+  group
+    ( vsep
+        [ "if"
+            <+> wrapInfix if',
+          "then",
+          indentMulti 2 (printSubExpr then'),
+          "else",
+          indentMulti 2 (printSubExpr else')
+        ]
+    )
+
+prettyCaseMatch ::
+  (Printer var, Show var) =>
+  Expr var ann ->
+  NE.NonEmpty (TyCon, Expr var ann) ->
+  Maybe (Expr var ann) ->
+  Doc style
+prettyCaseMatch sumExpr matches catchAll =
+  "case"
+    <+> printSubExpr sumExpr
+    <+> "of"
+    <+> line
+      <> indent
+        2
+        ( align $
+            vsep
+              ( zipWith
+                  (<+>)
+                  (" " : repeat "|")
+                  options
+              )
+        )
+  where
+    catchAll' = case catchAll of
+      Just catchExpr -> pure ("otherwise" <+> printSubExpr catchExpr)
+      _ -> mempty
+    options =
+      (printMatch <$> NE.toList matches) <> catchAll'
+    printMatch (construct, expr') =
+      prettyDoc construct <+> printSubExpr expr'
+
+prettyDataType ::
+  (Printer var, Show var) =>
+  DataType ->
+  Expr var ann ->
+  Doc style
+prettyDataType dt expr =
+  group
+    ( prettyDoc dt
+        <> newlineOrIn
+        <> prettyDoc expr
+    )
+
 instance (Show var, Printer var) => Printer (Expr var ann) where
-  prettyDoc (MyLiteral _ l) = prettyDoc l
-  prettyDoc (MyVar _ var) = prettyDoc var
+  prettyDoc (MyLiteral _ l) =
+    prettyDoc l
+  prettyDoc (MyVar _ var) =
+    prettyDoc var
   prettyDoc (MyLet _ var expr1 expr2) =
-    "let" <+> prettyDoc var
-      <+> "="
-      <+> prettyDoc expr1
-      <> ";"
-      <> line
-      <> prettyDoc expr2
+    prettyLet var expr1 expr2
   prettyDoc (MyLetPair _ var1 var2 expr1 body) =
-    "let" <+> "(" <+> prettyDoc var1 <+> "," <+> prettyDoc var2
-      <+> ")"
-      <+> "="
-      <+> printSubExpr expr1
-      <+> "in"
-      <+> printSubExpr body
-  prettyDoc (MyInfix _ op a b) =
-    sep
-      [ printSubExpr a,
-        prettyDoc op,
-        printSubExpr b
-      ]
+    prettyLetPair var1 var2 expr1 body
+  prettyDoc wholeExpr@MyInfix {} =
+    group (prettyInfixList (getInfixList wholeExpr))
   prettyDoc (MyLambda _ binder expr) =
-    vsep
-      [ "\\"
-          <> prettyDoc binder
-          <+> "->",
-        indent 3 $
-          prettyDoc expr
-      ]
+    prettyLambda binder expr
   prettyDoc (MyApp _ func arg) =
     printSubExpr func <> parens (printSubExpr arg)
   prettyDoc (MyRecordAccess _ expr name) =
     printSubExpr expr <> "." <> prettyDoc name
   prettyDoc (MyIf _ if' then' else') =
-    vsep
-      [ "if"
-          <+> wrapInfix if',
-        indent
-          2
-          ( "then"
-              <+> printSubExpr then'
-          ),
-        indent
-          2
-          ( "else"
-              <+> printSubExpr else'
-          )
-      ]
+    prettyIf if' then' else'
   prettyDoc (MyPair _ a b) =
-    tupled
-      [ printSubExpr a,
-        printSubExpr b
-      ]
-  prettyDoc (MyRecord _ map') = encloseSep lbrace rbrace comma exprs'
-    where
-      exprs' =
-        ( \(name, val) ->
-            prettyDoc name
-              <> ": "
-              <> printSubExpr val
-        )
-          <$> M.toList map'
+    prettyPair a b
+  prettyDoc (MyRecord _ map') =
+    prettyRecord map'
   prettyDoc (MyDefineInfix _ infixOp bindName expr) =
-    "infix" <+> prettyDoc infixOp <+> "="
-      <+> prettyDoc bindName
-      <> ";"
-      <> line
-      <> prettyDoc expr
+    prettyDefineInfix infixOp bindName expr
   prettyDoc (MyData _ dataType expr) =
-    prettyDoc dataType
-      <> ";"
-      <> line
-      <> prettyDoc expr
+    prettyDataType dataType expr
   prettyDoc (MyConstructor _ name) = prettyDoc name
   prettyDoc (MyConsApp _ fn val) = prettyDoc fn <+> wrapInfix val
   prettyDoc (MyCaseMatch _ sumExpr matches catchAll) =
-    "case"
-      <+> printSubExpr sumExpr
-      <+> "of"
-      <+> line
-        <> indent
-          2
-          ( align $
-              vsep
-                ( zipWith
-                    (<+>)
-                    (" " : repeat "|")
-                    options
-                )
-          )
-    where
-      catchAll' = case catchAll of
-        Just catchExpr -> pure ("otherwise" <+> printSubExpr catchExpr)
-        _ -> mempty
-      options =
-        (printMatch <$> NE.toList matches) <> catchAll'
-      printMatch (construct, expr') =
-        prettyDoc construct <+> printSubExpr expr'
+    prettyCaseMatch sumExpr matches catchAll
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
 
 wrapInfix :: (Show var, Printer var) => Expr var ann -> Doc style
