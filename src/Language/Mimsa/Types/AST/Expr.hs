@@ -267,33 +267,82 @@ prettyInfixList (ifHead :| ifRest) =
       printInfixBit (IfStart expr') = printSubExpr expr'
    in printInfixBit ifHead <+> align (vsep (printInfixBit <$> ifRest))
 
+-- when on multilines, indent by `i`, if not then nothing
+indentMulti :: Int -> Doc style -> Doc style
+indentMulti i doc = flatAlt (indent i doc) doc
+
+prettyLet ::
+  (Show var, Printer var) =>
+  var ->
+  Expr var ann ->
+  Expr var ann ->
+  Doc style
+prettyLet var expr1 expr2 =
+  group
+    ( "let" <+> prettyDoc var
+        <+> "="
+        <+> prettyDoc expr1
+        <> newlineOrIn
+        <> prettyDoc expr2
+    )
+
+prettyLetPair ::
+  (Show var, Printer var) =>
+  var ->
+  var ->
+  Expr var ann ->
+  Expr var ann ->
+  Doc style
+prettyLetPair var1 var2 expr1 body =
+  group
+    ( "let" <+> "(" <> prettyDoc var1 <> "," <+> prettyDoc var2
+        <> ")"
+        <+> "="
+        <+> printSubExpr expr1
+        <> newlineOrIn
+        <> printSubExpr body
+    )
+
+newlineOrIn :: Doc style
+newlineOrIn = flatAlt (";" <> line <> line) " in "
+
+prettyDefineInfix ::
+  (Printer var, Show var) =>
+  InfixOp ->
+  var ->
+  Expr var ann ->
+  Doc style
+prettyDefineInfix infixOp bindName expr =
+  group
+    ( "infix"
+        <+> prettyDoc infixOp
+        <+> "="
+        <+> prettyDoc bindName
+        <> newlineOrIn
+        <> prettyDoc expr
+    )
+
 instance (Show var, Printer var) => Printer (Expr var ann) where
-  prettyDoc (MyLiteral _ l) = prettyDoc l
-  prettyDoc (MyVar _ var) = prettyDoc var
+  prettyDoc (MyLiteral _ l) =
+    prettyDoc l
+  prettyDoc (MyVar _ var) =
+    prettyDoc var
   prettyDoc (MyLet _ var expr1 expr2) =
-    "let" <+> prettyDoc var
-      <+> "="
-      <+> prettyDoc expr1
-      <> ";"
-      <> line
-      <> prettyDoc expr2
+    prettyLet var expr1 expr2
   prettyDoc (MyLetPair _ var1 var2 expr1 body) =
-    "let" <+> "(" <+> prettyDoc var1 <+> "," <+> prettyDoc var2
-      <+> ")"
-      <+> "="
-      <+> printSubExpr expr1
-      <+> "in"
-      <+> printSubExpr body
+    prettyLetPair var1 var2 expr1 body
   prettyDoc wholeExpr@MyInfix {} =
     group (prettyInfixList (getInfixList wholeExpr))
   prettyDoc (MyLambda _ binder expr) =
-    vsep
-      [ "\\"
-          <> prettyDoc binder
-          <+> "->",
-        indent 3 $
-          prettyDoc expr
-      ]
+    group
+      ( vsep
+          [ "\\"
+              <> prettyDoc binder
+              <+> "->",
+            indentMulti 2 $
+              prettyDoc expr
+          ]
+      )
   prettyDoc (MyApp _ func arg) =
     printSubExpr func <> parens (printSubExpr arg)
   prettyDoc (MyRecordAccess _ expr name) =
@@ -314,10 +363,11 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
           )
       ]
   prettyDoc (MyPair _ a b) =
-    tupled
-      [ printSubExpr a,
-        printSubExpr b
-      ]
+    "("
+      <> printSubExpr a
+      <> ","
+      <+> printSubExpr b
+      <> ")"
   prettyDoc (MyRecord _ map') = encloseSep lbrace rbrace comma exprs'
     where
       exprs' =
@@ -328,11 +378,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
         )
           <$> M.toList map'
   prettyDoc (MyDefineInfix _ infixOp bindName expr) =
-    "infix" <+> prettyDoc infixOp <+> "="
-      <+> prettyDoc bindName
-      <> ";"
-      <> line
-      <> prettyDoc expr
+    prettyDefineInfix infixOp bindName expr
   prettyDoc (MyData _ dataType expr) =
     prettyDoc dataType
       <> ";"

@@ -8,6 +8,7 @@ where
 import Data.Functor (($>))
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
@@ -20,28 +21,56 @@ import Test.Utils.Helpers
 unsafeParseExpr :: Text -> Expr Name ()
 unsafeParseExpr t = case parseExpr t of
   Right a -> a $> ()
-  Left _ -> error "Error parsing expr for Prettier tests"
+  Left _ ->
+    error $
+      "Error parsing expr for Prettier tests:"
+        <> T.unpack t
 
 spec :: Spec
 spec =
   describe "Prettier" $ do
     describe "Expr" $ do
-      it "Cons with infix" $
-        do
-          let expr' :: Expr Name ()
-              expr' =
-                MyConsApp
-                  ()
-                  (MyConstructor mempty "Some")
-                  (MyInfix mempty Equals (int 1) (int 1))
-          prettyPrint expr'
-            `shouldBe` "Some (1 == 1)"
+      it "Cons with infix" $ do
+        let expr' = unsafeParseExpr "Some (1 == 1)"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "Some (1 == 1)"
+
       it "Many + operators" $ do
-        let expr' :: Expr Name ()
-            expr' = unsafeParseExpr "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10"
-        let doc = prettyDoc expr'
+        let expr' = unsafeParseExpr "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10"
+            doc = prettyDoc expr'
         renderWithWidth 50 doc `shouldBe` "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10"
         renderWithWidth 5 doc `shouldBe` "1 + 2\n  + 3\n  + 4\n  + 5\n  + 6\n  + 7\n  + 8\n  + 9\n  + 10"
+
+      it "Nested lambdas" $ do
+        let expr' = unsafeParseExpr "\\f -> \\g -> \\a -> f(g(a))"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "\\f -> \\g -> \\a -> f(g(a))"
+        renderWithWidth 5 doc `shouldBe` "\\f ->\n  \\g ->\n    \\a ->\n      f(g(a))"
+
+      it "Line between let bindings" $ do
+        let expr' = unsafeParseExpr "let a = 1; a"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "let a = 1 in a"
+        renderWithWidth 5 doc `shouldBe` "let a = 1;\n\na"
+
+      it "Line between let pair bindings" $ do
+        let expr' = unsafeParseExpr "let (a,b) = ((1,2)); a"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "let (a, b) = ((1, 2)) in a"
+        renderWithWidth 5 doc `shouldBe` "let (a, b) = ((1, 2));\n\na"
+
+      it "Line between infix bindings" $ do
+        let expr' = unsafeParseExpr "infix >> = compose in a"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "infix >> = compose in a"
+        renderWithWidth 5 doc `shouldBe` "infix >> = compose;\n\na"
+
+      it "Spreads long pairs across two lines" $ do
+        let expr' = unsafeParseExpr "(\"horseshorseshorses1\",\"horseshorseshorses2\")"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "(\"horseshorseshorses1\", \"horseshorseshorses2\")"
+        renderWithWidth 5 doc `shouldBe` "(\"horseshorseshorses1\",\n \"horseshorseshorses2\")"
+
     describe
       "MonoType"
       $ do

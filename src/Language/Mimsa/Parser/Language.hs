@@ -104,24 +104,13 @@ letPairParser =
           name <- withOptionalSpace nameParser
           _ <- thenSpace (string ")")
           pure name
-     in MyLetPair
-          mempty
-          <$> binder1
-          <*> binder2
-          <*> equalsParser
-          <*> inParser
-
------
-
-equalsParser :: Parser ParserExpr
-equalsParser = do
-  _ <- thenSpace (string "=")
-  thenSpace expressionParser
-
-inParser :: Parser ParserExpr
-inParser = do
-  _ <- thenSpace (string "in")
-  expressionParser
+     in do
+          bindA <- binder1
+          bindB <- binder2
+          _ <- thenSpace (string "=")
+          expr <- expressionParser
+          _ <- withOptionalSpace (string ";" <|> string "in ")
+          MyLetPair mempty bindA bindB expr <$> expressionParser
 
 -----
 
@@ -358,5 +347,5 @@ defineInfixParser = addLocation $ do
   infixOp <- thenSpace infixOpParser
   _ <- thenSpace (string "=")
   boundName <- nameParser
-  _ <- withOptionalSpace (string ";")
+  _ <- withOptionalSpace (string ";" <|> string "in ")
   MyDefineInfix mempty infixOp boundName <$> expressionParser
