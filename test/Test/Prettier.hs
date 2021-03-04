@@ -71,6 +71,24 @@ spec =
         renderWithWidth 50 doc `shouldBe` "(\"horseshorseshorses1\", \"horseshorseshorses2\")"
         renderWithWidth 5 doc `shouldBe` "(\"horseshorseshorses1\",\n \"horseshorseshorses2\")"
 
+      it "Renders empty record nicely" $ do
+        let expr' = unsafeParseExpr "{}"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "{}"
+        renderWithWidth 5 doc `shouldBe` "{}"
+
+      it "Renders records nicely" $ do
+        let expr' = unsafeParseExpr "{a:1,b:2,c:3,d:4,e:5}"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "{ a: 1, b: 2, c: 3, d: 4, e: 5 }"
+        renderWithWidth 5 doc `shouldBe` "{ a: 1,\n  b: 2,\n  c: 3,\n  d: 4,\n  e: 5 }"
+
+      it "Renders if nicely" $ do
+        let expr' = unsafeParseExpr "if True then 1 else 2"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "if True then 1 else 2"
+        renderWithWidth 4 doc `shouldBe` "if True\nthen\n  1\nelse\n  2"
+
     describe
       "MonoType"
       $ do

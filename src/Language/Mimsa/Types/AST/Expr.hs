@@ -32,6 +32,10 @@ import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
 
+mapWithIndex :: (Int -> a -> b) -> [a] -> [b]
+mapWithIndex f as =
+  uncurry f <$> zip [1 ..] as
+
 -------
 
 -- |
@@ -336,6 +340,64 @@ prettyPair a b =
           )
     )
 
+prettyLambda ::
+  (Printer var, Show var) =>
+  var ->
+  Expr var ann ->
+  Doc style
+prettyLambda binder expr =
+  group
+    ( vsep
+        [ "\\"
+            <> prettyDoc binder
+            <+> "->",
+          indentMulti 2 $
+            prettyDoc expr
+        ]
+    )
+
+prettyRecord ::
+  (Printer var, Show var) =>
+  Map Name (Expr var ann) ->
+  Doc style
+prettyRecord map' =
+  let items = M.toList map'
+      printRow = \i (name, val) ->
+        prettyDoc name
+          <> ":"
+          <+> printSubExpr val
+          <> if i < length items then "," else ""
+   in case items of
+        [] -> "{}"
+        rows ->
+          let prettyRows = mapWithIndex printRow rows
+           in group
+                ( "{"
+                    <+> align
+                      ( vsep
+                          prettyRows
+                      )
+                    <+> "}"
+                )
+
+prettyIf ::
+  (Show var, Printer var) =>
+  Expr var ann ->
+  Expr var ann ->
+  Expr var ann ->
+  Doc style
+prettyIf if' then' else' =
+  group
+    ( vsep
+        [ "if"
+            <+> wrapInfix if',
+          "then",
+          indentMulti 2 (printSubExpr then'),
+          "else",
+          indentMulti 2 (printSubExpr else')
+        ]
+    )
+
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) =
     prettyDoc l
@@ -348,45 +410,17 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc wholeExpr@MyInfix {} =
     group (prettyInfixList (getInfixList wholeExpr))
   prettyDoc (MyLambda _ binder expr) =
-    group
-      ( vsep
-          [ "\\"
-              <> prettyDoc binder
-              <+> "->",
-            indentMulti 2 $
-              prettyDoc expr
-          ]
-      )
+    prettyLambda binder expr
   prettyDoc (MyApp _ func arg) =
     printSubExpr func <> parens (printSubExpr arg)
   prettyDoc (MyRecordAccess _ expr name) =
     printSubExpr expr <> "." <> prettyDoc name
   prettyDoc (MyIf _ if' then' else') =
-    vsep
-      [ "if"
-          <+> wrapInfix if',
-        indent
-          2
-          ( "then"
-              <+> printSubExpr then'
-          ),
-        indent
-          2
-          ( "else"
-              <+> printSubExpr else'
-          )
-      ]
+    prettyIf if' then' else'
   prettyDoc (MyPair _ a b) =
     prettyPair a b
-  prettyDoc (MyRecord _ map') = encloseSep lbrace rbrace comma exprs'
-    where
-      exprs' =
-        ( \(name, val) ->
-            prettyDoc name
-              <> ": "
-              <> printSubExpr val
-        )
-          <$> M.toList map'
+  prettyDoc (MyRecord _ map') =
+    prettyRecord map'
   prettyDoc (MyDefineInfix _ infixOp bindName expr) =
     prettyDefineInfix infixOp bindName expr
   prettyDoc (MyData _ dataType expr) =
