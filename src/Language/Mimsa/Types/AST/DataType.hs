@@ -45,16 +45,17 @@ renderDataType (DataType tyCon vars' constructors') =
     <+> if M.null constructors'
       then mempty
       else
-        line
-          <> indent
-            2
-            ( align $
-                vsep $
-                  zipWith
-                    (<+>)
-                    ("=" : repeat "|")
-                    (printCons <$> M.toList constructors')
-            )
+        group $
+          line
+            <> indent
+              2
+              ( align $
+                  vsep $
+                    zipWith
+                      (<+>)
+                      ("=" : repeat "|")
+                      (printCons <$> M.toList constructors')
+              )
   where
     printVars [] = mempty
     printVars as = space <> sep (renderName <$> as)

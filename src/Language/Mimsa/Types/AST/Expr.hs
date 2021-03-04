@@ -398,6 +398,48 @@ prettyIf if' then' else' =
         ]
     )
 
+prettyCaseMatch ::
+  (Printer var, Show var) =>
+  Expr var ann ->
+  NE.NonEmpty (TyCon, Expr var ann) ->
+  Maybe (Expr var ann) ->
+  Doc style
+prettyCaseMatch sumExpr matches catchAll =
+  "case"
+    <+> printSubExpr sumExpr
+    <+> "of"
+    <+> line
+      <> indent
+        2
+        ( align $
+            vsep
+              ( zipWith
+                  (<+>)
+                  (" " : repeat "|")
+                  options
+              )
+        )
+  where
+    catchAll' = case catchAll of
+      Just catchExpr -> pure ("otherwise" <+> printSubExpr catchExpr)
+      _ -> mempty
+    options =
+      (printMatch <$> NE.toList matches) <> catchAll'
+    printMatch (construct, expr') =
+      prettyDoc construct <+> printSubExpr expr'
+
+prettyDataType ::
+  (Printer var, Show var) =>
+  DataType ->
+  Expr var ann ->
+  Doc style
+prettyDataType dt expr =
+  group
+    ( prettyDoc dt
+        <> newlineOrIn
+        <> prettyDoc expr
+    )
+
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) =
     prettyDoc l
@@ -424,35 +466,11 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyDefineInfix _ infixOp bindName expr) =
     prettyDefineInfix infixOp bindName expr
   prettyDoc (MyData _ dataType expr) =
-    prettyDoc dataType
-      <> ";"
-      <> line
-      <> prettyDoc expr
+    prettyDataType dataType expr
   prettyDoc (MyConstructor _ name) = prettyDoc name
   prettyDoc (MyConsApp _ fn val) = prettyDoc fn <+> wrapInfix val
   prettyDoc (MyCaseMatch _ sumExpr matches catchAll) =
-    "case"
-      <+> printSubExpr sumExpr
-      <+> "of"
-      <+> line
-        <> indent
-          2
-          ( align $
-              vsep
-                ( zipWith
-                    (<+>)
-                    (" " : repeat "|")
-                    options
-                )
-          )
-    where
-      catchAll' = case catchAll of
-        Just catchExpr -> pure ("otherwise" <+> printSubExpr catchExpr)
-        _ -> mempty
-      options =
-        (printMatch <$> NE.toList matches) <> catchAll'
-      printMatch (construct, expr') =
-        prettyDoc construct <+> printSubExpr expr'
+    prettyCaseMatch sumExpr matches catchAll
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
 
 wrapInfix :: (Show var, Printer var) => Expr var ann -> Doc style
