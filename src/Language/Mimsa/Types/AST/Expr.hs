@@ -18,7 +18,7 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.Bifunctor
-import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -249,6 +249,24 @@ withMonoid f whole@(MyDefineInfix _ _ _ inExpr) =
   f whole
     <> withMonoid f inExpr
 
+data InfixBit var ann
+  = IfStart (Expr var ann)
+  | IfMore Operator (Expr var ann)
+  deriving (Show)
+
+getInfixList :: Expr var ann -> NE.NonEmpty (InfixBit var ann)
+getInfixList expr = case expr of
+  (MyInfix _ op a b) ->
+    let start = getInfixList a
+     in start <> NE.fromList [IfMore op b]
+  other -> NE.fromList [IfStart other]
+
+prettyInfixList :: (Show var, Printer var) => NE.NonEmpty (InfixBit var ann) -> Doc style
+prettyInfixList (ifHead :| ifRest) =
+  let printInfixBit (IfMore op expr') = prettyDoc op <+> printSubExpr expr'
+      printInfixBit (IfStart expr') = printSubExpr expr'
+   in printInfixBit ifHead <+> align (vsep (printInfixBit <$> ifRest))
+
 instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLiteral _ l) = prettyDoc l
   prettyDoc (MyVar _ var) = prettyDoc var
@@ -266,12 +284,8 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
       <+> printSubExpr expr1
       <+> "in"
       <+> printSubExpr body
-  prettyDoc (MyInfix _ op a b) =
-    sep
-      [ printSubExpr a,
-        prettyDoc op,
-        printSubExpr b
-      ]
+  prettyDoc wholeExpr@MyInfix {} =
+    group (prettyInfixList (getInfixList wholeExpr))
   prettyDoc (MyLambda _ binder expr) =
     vsep
       [ "\\"
