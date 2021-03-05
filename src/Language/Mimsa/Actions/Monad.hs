@@ -25,6 +25,8 @@ where
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Writer
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -43,14 +45,14 @@ newtype SavePath = SavePath Text
 instance Show SavePath where
   show (SavePath s) = T.unpack s
 
-newtype SaveContents = SaveContents Text
+newtype SaveContents = SaveContents LBS.ByteString
   deriving newtype (Eq, Ord, Show)
 
-newtype SaveFilename = SaveFilename Text
+newtype SaveFilename = SaveFilename LBS.ByteString
   deriving newtype (Eq, Ord)
 
 instance Show SaveFilename where
-  show (SaveFilename s) = T.unpack s
+  show (SaveFilename s) = LB.unpack s
 
 data ActionOutcome
   = NewMessage Text

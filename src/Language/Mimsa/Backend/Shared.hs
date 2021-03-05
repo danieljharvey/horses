@@ -18,6 +18,8 @@ module Language.Mimsa.Backend.Shared
   )
 where
 
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
 import Data.FileEmbed
 import qualified Data.Map as M
@@ -31,15 +33,18 @@ import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 
--- these are saved in a file that is included in compilation
-commonJSStandardLibrary :: Text
-commonJSStandardLibrary =
-  T.decodeUtf8 $(embedFile "static/backend/commonjs/stdlib.js")
+bsFromText :: Text -> LBS.ByteString
+bsFromText = LB.fromChunks . return . T.encodeUtf8
 
-stdLibFilename :: Backend -> Text
+-- these are saved in a file that is included in compilation
+commonJSStandardLibrary :: LBS.ByteString
+commonJSStandardLibrary =
+  LBS.fromStrict $(embedFile "static/backend/commonjs/stdlib.js")
+
+stdLibFilename :: Backend -> LBS.ByteString
 stdLibFilename CommonJS = "cjs-stdlib.js"
 
-indexFilename :: Backend -> Text
+indexFilename :: Backend -> LBS.ByteString
 indexFilename CommonJS = "index.js"
 
 symlinkedOutputPath :: Backend -> FilePath
@@ -55,18 +60,22 @@ transpiledIndexOutputPath CommonJS = "transpiled/index/common-js"
 transpiledStdlibOutputPath :: Backend -> FilePath
 transpiledStdlibOutputPath CommonJS = "transpiled/stdlib/common-js"
 
-outputIndexFile :: Backend -> ExprHash -> Text
+outputIndexFile :: Backend -> ExprHash -> LBS.ByteString
 outputIndexFile CommonJS exprHash =
   "const main = require('./" <> moduleFilename CommonJS exprHash <> "').main;\nconsole.log(main)"
 
-moduleFilename :: Backend -> ExprHash -> Text
-moduleFilename CommonJS hash' = "cjs-" <> prettyPrint hash' <> ".js"
+moduleFilename :: Backend -> ExprHash -> LBS.ByteString
+moduleFilename CommonJS hash' = "cjs-" <> bsFromText (prettyPrint hash') <> ".js"
 
-outputStdlib :: Backend -> Text
+outputStdlib :: Backend -> LBS.ByteString
 outputStdlib CommonJS = coerce commonJSStandardLibrary
 
-outputExport :: Backend -> Name -> Text
-outputExport CommonJS name = "module.exports = { " <> coerce name <> ": " <> coerce name <> " }"
+outputExport :: Backend -> Name -> LBS.ByteString
+outputExport CommonJS name =
+  "module.exports = { " <> bsFromText (coerce name)
+    <> ": "
+    <> bsFromText (coerce name)
+    <> " }"
 
 outputStoreExpression ::
   (Monoid a) =>

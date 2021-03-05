@@ -12,6 +12,9 @@ module Language.Mimsa.Backend.Javascript
 where
 
 import Control.Monad.Except
+import qualified Data.ByteString.Char8 as B
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
@@ -20,7 +23,7 @@ import qualified Data.Map as M
 import Data.Monoid
 import Data.String
 import Data.Text (Text)
-import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
@@ -31,23 +34,29 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 
 ----
-newtype Javascript = Javascript Text
-  deriving (Eq, Ord, Show, Semigroup, Monoid, Printer)
+newtype Javascript = Javascript LBS.ByteString
+  deriving (Eq, Ord, Show, Semigroup, Monoid)
+
+instance Printer Javascript where
+  prettyPrint (Javascript bs) = (T.decodeUtf8 . B.concat . LBS.toChunks) bs
 
 instance IsString Javascript where
-  fromString = Javascript . T.pack
+  fromString = Javascript . LB.pack
 
 ----
 
+textToJS :: Text -> Javascript
+textToJS = Javascript . LB.fromChunks . return . T.encodeUtf8
+
 outputLiteral :: Literal -> Javascript
 outputLiteral (MyUnit _) = "{}"
-outputLiteral (MyString s) = "\"" <> coerce s <> "\""
+outputLiteral (MyString s) = "\"" <> textToJS (coerce s) <> "\""
 outputLiteral (MyBool True) = "true"
 outputLiteral (MyBool False) = "false"
 outputLiteral (MyInt i) = fromString $ show i
 
 intercal :: Javascript -> [Javascript] -> Javascript
-intercal sep as = Javascript $ T.intercalate (coerce sep) (coerce as)
+intercal sep as = Javascript $ LB.intercalate (coerce sep) (coerce as)
 
 outputRecord ::
   (Monoid ann) =>
@@ -64,7 +73,7 @@ outputRecord as = do
   where
     outputRecordItem (name, val) = do
       js <- outputJS val
-      pure (Javascript (prettyPrint name) <> ": " <> js)
+      pure (textToJS (prettyPrint name) <> ": " <> js)
 
 outputCaseMatch ::
   (Monoid ann) =>
@@ -77,7 +86,7 @@ outputCaseMatch value matches catchAll = do
   let outputMatch (tyCon, val) =
         outputJS val
           >>= ( \matchVal ->
-                  pure $ Javascript (prettyPrint tyCon) <> ": " <> matchVal
+                  pure $ textToJS (prettyPrint tyCon) <> ": " <> matchVal
               )
   jsMatches <- traverse outputMatch (NE.toList matches)
   let matchList =
@@ -122,7 +131,7 @@ withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else withBra
 
 withBrackies :: Javascript -> Javascript
 withBrackies js =
-  if T.take 1 (coerce js) == "{"
+  if LB.take 1 (coerce js) == "{"
     then "(" <> js <> ")"
     else js
 
@@ -147,7 +156,7 @@ outputOperator operator a b = do
     (Custom op) -> throwError (OutputtingCustomOperator op)
 
 intercalate :: Javascript -> [Javascript] -> Javascript
-intercalate split as = coerce $ T.intercalate (coerce split) (coerce as)
+intercalate split as = coerce $ LB.intercalate (coerce split) (coerce as)
 
 outputConstructor ::
   (Monoid ann) =>
@@ -157,7 +166,7 @@ outputConstructor ::
 outputConstructor tc args = do
   jsArgs <- traverse outputJS args
   let vars = intercalate "," jsArgs
-  pure $ "{ type: \"" <> coerce tc <> "\", vars: [" <> vars <> "] }"
+  pure $ "{ type: \"" <> textToJS (coerce tc) <> "\", vars: [" <> vars <> "] }"
 
 outputConsApp ::
   (Monoid ann) =>
@@ -178,7 +187,7 @@ outputLambda ::
 outputLambda arg func = do
   jsFunc <- outputJS func
   pure $
-    coerce arg <> " => "
+    textToJS (coerce arg) <> " => "
       <> withCurlyBoys func jsFunc
 
 outputLet ::
@@ -191,7 +200,7 @@ outputLet n a b = do
   jsA <- outputJS a
   jsB <- outputJS b
   pure $
-    "const " <> coerce n <> " = "
+    "const " <> textToJS (coerce n) <> " = "
       <> jsA
       <> ";\n"
       <> addReturn b jsB
@@ -207,7 +216,7 @@ outputLetPair m n a b = do
   jsA <- outputJS a
   jsB <- outputJS b
   pure $
-    "const [" <> coerce m <> "," <> coerce n <> "] = "
+    "const [" <> textToJS (coerce m) <> "," <> textToJS (coerce n) <> "] = "
       <> jsA
       <> ";\n"
       <> addReturn b jsB
@@ -253,7 +262,7 @@ outputJS expr =
   case expr of
     MyLiteral _ a ->
       pure $ outputLiteral a
-    MyVar _ a -> pure $ coerce a
+    MyVar _ a -> pure $ textToJS (coerce a)
     MyInfix _ op a b -> outputOperator op a b
     MyLambda _ arg func -> outputLambda arg func
     MyApp _ f a -> outputApp f a
@@ -264,7 +273,7 @@ outputJS expr =
     MyPair _ a b -> outputPair a b
     MyRecordAccess _ r a -> do
       jsR <- outputJS r
-      pure $ jsR <> "." <> coerce a
+      pure $ jsR <> "." <> textToJS (coerce a)
     MyData _ _ a -> outputJS a -- don't output types
     MyConstructor _ a -> outputConstructor @ann a []
     MyConsApp _ c a -> outputConsApp c a
@@ -284,13 +293,13 @@ renderWithFunction dataTypes name expr =
     then do
       dt <- output dataTypes expr
       pure $
-        "const " <> coerce name <> " = function() { "
+        "const " <> textToJS (coerce name) <> " = function() { "
           <> dt
           <> " }();\n"
     else do
       dt <- output dataTypes expr
       pure $
-        "const " <> coerce name <> " = "
+        "const " <> textToJS (coerce name) <> " = "
           <> dt
           <> ";\n"
 
@@ -310,14 +319,13 @@ outputCommonJS dataTypes =
       { renderFunc = renderWithFunction dataTypes,
         renderImport = \be (name, hash') ->
           pure $
-            Javascript $
-              "const "
-                <> coerce name
-                <> " = require(\"./"
-                <> moduleFilename be hash'
-                <> "\").main;\n",
-        renderExport = \be name -> pure $ Javascript $ outputExport be name,
+            "const "
+              <> textToJS (coerce name)
+              <> " = require(\"./"
+              <> Javascript (moduleFilename be hash')
+              <> "\").main;\n",
+        renderExport = \be name -> pure $ Javascript (outputExport be name),
         renderStdLib = \be ->
-          let filename = stdLibFilename be
-           in pure $ Javascript $ "const { __match, __eq } = require(\"./" <> filename <> "\");\n"
+          let filename = Javascript (stdLibFilename be)
+           in pure $ "const { __match, __eq } = require(\"./" <> filename <> "\");\n"
       }

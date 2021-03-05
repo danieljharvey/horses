@@ -8,10 +8,10 @@ module Language.Mimsa.Repl.Helpers
 where
 
 import Control.Monad.Except
+import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
@@ -47,7 +47,7 @@ saveFile (path, filename, content) = do
   fullPath <- getStoreFolder (show path)
   let savePath = fullPath <> show filename
   logDebug $ "Saving to " <> T.pack savePath
-  liftIO $ T.writeFile savePath (coerce content)
+  liftIO $ LBS.writeFile savePath (coerce content)
 
 -- | Run an Action, printing any messages to the console and saving any
 -- expressions to disk

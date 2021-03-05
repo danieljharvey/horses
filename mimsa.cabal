@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5f567f3a433514c649bc1a52176f88b05065b95b2e471a4631ab643efb1b99a7
+-- hash: a625c240d27f57ef0c38ba91dbab51e9a2fbde7742581a8ca36abd01eaa384e4
 
 name:           mimsa
 version:        0.1.0.0
@@ -213,6 +213,7 @@ library
     , wai
     , wai-cors
     , warp
+    , zip-archive
   default-language: Haskell2010
 
 executable mimsa
@@ -252,6 +253,7 @@ executable mimsa
     , wai
     , wai-cors
     , warp
+    , zip-archive
   default-language: Haskell2010
 
 executable swagger
@@ -291,6 +293,7 @@ executable swagger
     , wai
     , wai-cors
     , warp
+    , zip-archive
   default-language: Haskell2010
 
 test-suite mimsa-test
@@ -362,4 +365,5 @@ test-suite mimsa-test
     , wai
     , wai-cors
     , warp
+    , zip-archive
   default-language: Haskell2010
