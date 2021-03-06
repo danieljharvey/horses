@@ -29,7 +29,7 @@ doBind project input name expr = do
   (newProject, (newExprHash, _, _)) <-
     toReplM project (Actions.bindExpression expr name input)
   traverse_
-    (logInfo . prettyPrint)
+    (replOutput . prettyPrint)
     (getTestsForExprHash newProject newExprHash)
   pure newProject
 

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a625c240d27f57ef0c38ba91dbab51e9a2fbde7742581a8ca36abd01eaa384e4
+-- hash: dd749c8478f2c0bcfa8ec5be0fa50e0cfe754b3fcfae3add117b35b3019f9d39
 
 name:           mimsa
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
       Language.Mimsa.Backend.NormaliseConstructors
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
+      Language.Mimsa.Backend.ZipFile
       Language.Mimsa.CLI
       Language.Mimsa.Interpreter
       Language.Mimsa.Interpreter.HighestVar
@@ -187,6 +188,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , binary
     , bytestring
     , containers
     , cryptonite
@@ -226,6 +228,7 @@ executable mimsa
   build-depends:
       aeson
     , base >=4.7 && <5
+    , binary
     , bytestring
     , containers
     , cryptonite
@@ -266,6 +269,7 @@ executable swagger
   build-depends:
       aeson
     , base >=4.7 && <5
+    , binary
     , bytestring
     , containers
     , cryptonite
@@ -337,6 +341,7 @@ test-suite mimsa-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , binary
     , bytestring
     , containers
     , cryptonite

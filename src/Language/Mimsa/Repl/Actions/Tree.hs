@@ -26,4 +26,4 @@ doTree env input expr = do
     mimsaFromEither $
       getTypecheckedStoreExpression input env expr
   let graph = createDepGraph "expression" (prjStore env) storeExpr
-  logInfo (prettyPrint graph)
+  replOutput (prettyPrint graph)

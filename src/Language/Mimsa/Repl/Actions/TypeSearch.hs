@@ -28,11 +28,11 @@ doTypeSearch env mt = do
   let simplified = normaliseType mt
   case M.toList matches of
     [] ->
-      logInfo $ "Could not find a type match for " <> prettyPrint simplified
+      replOutput $ "Could not find a type match for " <> prettyPrint simplified
     as -> do
-      logInfo $ (T.pack . show . length) as <> " matches for " <> prettyPrint simplified
+      replOutput $ (T.pack . show . length) as <> " matches for " <> prettyPrint simplified
       traverse_
         ( \(name, mt') ->
-            logInfo (prettyPrint name <> ": " <> prettyPrint mt')
+            replOutput (prettyPrint name <> ": " <> prettyPrint mt')
         )
         as

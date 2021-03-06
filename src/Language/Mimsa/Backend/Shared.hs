@@ -6,11 +6,13 @@ module Language.Mimsa.Backend.Shared
     transpiledIndexOutputPath,
     transpiledStdlibOutputPath,
     symlinkedOutputPath,
+    zipFileOutputPath,
     outputStoreExpression,
     outputExport,
     outputIndexFile,
     outputStdlib,
     indexFilename,
+    indexOutputFilename,
     moduleFilename,
     stdLibFilename,
     getTranspileList,
@@ -44,8 +46,12 @@ commonJSStandardLibrary =
 stdLibFilename :: Backend -> LBS.ByteString
 stdLibFilename CommonJS = "cjs-stdlib.js"
 
-indexFilename :: Backend -> LBS.ByteString
-indexFilename CommonJS = "index.js"
+indexFilename :: Backend -> ExprHash -> LBS.ByteString
+indexFilename CommonJS hash' =
+  "index-" <> bsFromText (prettyPrint hash') <> ".js"
+
+indexOutputFilename :: Backend -> LBS.ByteString
+indexOutputFilename CommonJS = "index.js"
 
 symlinkedOutputPath :: Backend -> FilePath
 symlinkedOutputPath CommonJS =
@@ -59,6 +65,9 @@ transpiledIndexOutputPath CommonJS = "transpiled/index/common-js"
 
 transpiledStdlibOutputPath :: Backend -> FilePath
 transpiledStdlibOutputPath CommonJS = "transpiled/stdlib/common-js"
+
+zipFileOutputPath :: Backend -> FilePath
+zipFileOutputPath CommonJS = "./output/zip"
 
 outputIndexFile :: Backend -> ExprHash -> LBS.ByteString
 outputIndexFile CommonJS exprHash =

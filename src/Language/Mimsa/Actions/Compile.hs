@@ -78,7 +78,7 @@ createIndex ::
 createIndex be exprHash = do
   let path = Actions.SavePath (T.pack $ transpiledIndexOutputPath be)
       outputContent = Actions.SaveContents (outputIndexFile be exprHash)
-      filename = Actions.SaveFilename (indexFilename be)
+      filename = Actions.SaveFilename (indexFilename be exprHash)
   Actions.appendWriteFile path filename outputContent
 
 -- | The stdlib is a set of functions needed to stuff like pattern matching

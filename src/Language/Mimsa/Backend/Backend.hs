@@ -71,7 +71,7 @@ copyLocalOutput be exprHashes rootExprHash = do
   -- link stdlib
   _ <- copyStdlib stdlibPath outputPath be
   -- link index
-  copyIndex indexPath outputPath be
+  copyIndex indexPath outputPath be rootExprHash
 
 copyModule :: FilePath -> FilePath -> Backend -> ExprHash -> MimsaM StoreError ()
 copyModule modulePath outputPath be exprHash = do
@@ -89,9 +89,14 @@ copyStdlib stdlibPath outputPath be = do
   pure toPath
 
 -- the index is already in ths store so we copy it to the target folder
-copyIndex :: FilePath -> FilePath -> Backend -> MimsaM StoreError LBS.ByteString
-copyIndex indexPath outputPath be = do
-  let filename = LB.unpack $ indexFilename be
+copyIndex ::
+  FilePath ->
+  FilePath ->
+  Backend ->
+  ExprHash ->
+  MimsaM StoreError LBS.ByteString
+copyIndex indexPath outputPath be rootExprHash = do
+  let filename = LB.unpack $ indexFilename be rootExprHash
       fromPath = indexPath <> filename
       toPath = outputPath <> filename
   tryCopy fromPath toPath

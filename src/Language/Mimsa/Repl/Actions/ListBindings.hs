@@ -25,7 +25,7 @@ doListBindings env input = do
   let showBind (name, StoreExpression expr _ _) =
         case getTypecheckedStoreExpression input env expr of
           Right (ResolvedExpression type' _ _ _ _) ->
-            logInfo (prettyPrint name <> " :: " <> prettyPrint type')
+            replOutput (prettyPrint name <> " :: " <> prettyPrint type')
           _ -> pure ()
   traverse_
     showBind
@@ -33,7 +33,7 @@ doListBindings env input = do
         (prjStore env)
         (getCurrentBindings $ prjBindings env)
     )
-  let showType dt = logInfo (prettyPrint dt)
+  let showType dt = replOutput (prettyPrint dt)
   traverse_
     showType
     ( getTypesFromStore
