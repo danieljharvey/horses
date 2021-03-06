@@ -8,7 +8,6 @@ module Language.Mimsa.Backend.Backend
   )
 where
 
-import Control.Monad.Except
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
@@ -18,38 +17,11 @@ import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
-import Language.Mimsa.Store.Storage (getStoreFolder, tryCopy)
+import Language.Mimsa.Store.Storage (tryCopy)
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
-import System.Directory
 
 ------
-
--- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
-createOutputFolder :: Backend -> ExprHash -> MimsaM e FilePath
-createOutputFolder CommonJS exprHash = do
-  let outputPath = symlinkedOutputPath CommonJS
-  let path = outputPath <> show exprHash
-  liftIO $ createDirectoryIfMissing True path
-  pure (path <> "/")
-
--- all files are created in the store and then symlinked into output folders
--- this creates the folder in the store
-createModuleOutputPath :: Backend -> MimsaM e FilePath
-createModuleOutputPath be =
-  getStoreFolder (transpiledModuleOutputPath be)
-
--- all files are created in the store and then symlinked into output folders
--- this creates the folder in the store
-createIndexOutputPath :: Backend -> MimsaM e FilePath
-createIndexOutputPath be =
-  getStoreFolder (transpiledIndexOutputPath be)
-
--- all files are created in the store and then symlinked into output folders
--- this creates the folder in the store
-createStdlibOutputPath :: Backend -> MimsaM e FilePath
-createStdlibOutputPath be =
-  getStoreFolder (transpiledStdlibOutputPath be)
 
 getStdlib :: Backend -> LBS.ByteString
 getStdlib CommonJS = coerce commonJSStandardLibrary

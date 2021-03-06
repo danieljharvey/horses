@@ -17,9 +17,14 @@ module Language.Mimsa.Backend.Shared
     stdLibFilename,
     getTranspileList,
     commonJSStandardLibrary,
+    createOutputFolder,
+    createModuleOutputPath,
+    createStdlibOutputPath,
+    createIndexOutputPath,
   )
 where
 
+import Control.Monad.IO.Class
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
@@ -30,10 +35,39 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
+import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.ResolvedDeps
+import Language.Mimsa.Store.Storage (getStoreFolder)
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import System.Directory
+
+-- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
+createOutputFolder :: Backend -> ExprHash -> MimsaM e FilePath
+createOutputFolder CommonJS exprHash = do
+  let outputPath = symlinkedOutputPath CommonJS
+  let path = outputPath <> show exprHash
+  liftIO $ createDirectoryIfMissing True path
+  pure (path <> "/")
+
+-- all files are created in the store and then symlinked into output folders
+-- this creates the folder in the store
+createModuleOutputPath :: Backend -> MimsaM e FilePath
+createModuleOutputPath be =
+  getStoreFolder (transpiledModuleOutputPath be)
+
+-- all files are created in the store and then symlinked into output folders
+-- this creates the folder in the store
+createIndexOutputPath :: Backend -> MimsaM e FilePath
+createIndexOutputPath be =
+  getStoreFolder (transpiledIndexOutputPath be)
+
+-- all files are created in the store and then symlinked into output folders
+-- this creates the folder in the store
+createStdlibOutputPath :: Backend -> MimsaM e FilePath
+createStdlibOutputPath be =
+  getStoreFolder (transpiledStdlibOutputPath be)
 
 bsFromText :: Text -> LBS.ByteString
 bsFromText = LB.fromChunks . return . T.encodeUtf8

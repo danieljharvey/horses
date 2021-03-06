@@ -15,30 +15,11 @@ import qualified Data.Set as S
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
-import Language.Mimsa.Store.Storage (getStoreFolder)
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
 import System.Directory
 
 ------
-
--- all files are created in the store and then symlinked into output folders
--- this creates the folder in the store
-createModuleOutputPath :: Backend -> MimsaM e FilePath
-createModuleOutputPath be =
-  getStoreFolder (transpiledModuleOutputPath be)
-
--- all files are created in the store and then symlinked into output folders
--- this creates the folder in the store
-createIndexOutputPath :: Backend -> MimsaM e FilePath
-createIndexOutputPath be =
-  getStoreFolder (transpiledIndexOutputPath be)
-
--- all files are created in the store and then symlinked into output folders
--- this creates the folder in the store
-createStdlibOutputPath :: Backend -> MimsaM e FilePath
-createStdlibOutputPath be =
-  getStoreFolder (transpiledStdlibOutputPath be)
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
 createZipFolder :: Backend -> ExprHash -> MimsaM e FilePath
@@ -79,6 +60,7 @@ stdlibEntry stdlibPath be = do
   input <- liftIO (LB.readFile fromPath)
   pure (Zip.toEntry ("./" <> filename) 0 input)
 
+-- create zip archive that can be saved as a file or returned through server
 createZipFile ::
   Backend ->
   Set ExprHash ->
@@ -94,6 +76,7 @@ createZipFile be exprHashes rootExprHash = do
   stdlib <- stdlibEntry stdlibPath be
   pure (createArchive $ modules <> [index] <> [stdlib])
 
+-- write zip file to a given file path
 storeZipFile :: Backend -> ExprHash -> Zip.Archive -> MimsaM StoreError FilePath
 storeZipFile be rootExprHash archive = do
   zipPath <- createZipFolder be rootExprHash
