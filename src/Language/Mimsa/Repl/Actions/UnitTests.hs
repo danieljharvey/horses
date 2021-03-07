@@ -28,7 +28,7 @@ doAddUnitTest ::
 doAddUnitTest project input testName expr = do
   (newProject, unitTest) <-
     toReplM project (addUnitTest expr testName input)
-  logInfo (prettyPrint unitTest)
+  replOutput (prettyPrint unitTest)
   pure newProject
 
 doListTests ::
@@ -41,4 +41,4 @@ doListTests project maybeName = do
   let tests = case maybeName of
         Just name -> fetchTestsForName name
         Nothing -> prjUnitTests project
-  traverse_ (logInfo . prettyPrint) tests
+  traverse_ (replOutput . prettyPrint) tests

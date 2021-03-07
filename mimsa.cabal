@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5f567f3a433514c649bc1a52176f88b05065b95b2e471a4631ab643efb1b99a7
+-- hash: a920fdf96de4f2a48ac0858c3e6ec456aaaa38893bbe53979b32d66960f19815
 
 name:           mimsa
 version:        0.1.0.0
@@ -35,11 +35,13 @@ library
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Evaluate
       Language.Mimsa.Actions.Monad
+      Language.Mimsa.Actions.Types
       Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript
       Language.Mimsa.Backend.NormaliseConstructors
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
+      Language.Mimsa.Backend.ZipFile
       Language.Mimsa.CLI
       Language.Mimsa.Interpreter
       Language.Mimsa.Interpreter.HighestVar
@@ -83,6 +85,7 @@ library
       Language.Mimsa.Repl.Parser
       Language.Mimsa.Repl.Types
       Language.Mimsa.Server
+      Language.Mimsa.Server.Compile
       Language.Mimsa.Server.EnvVars
       Language.Mimsa.Server.Handlers
       Language.Mimsa.Server.Helpers
@@ -187,6 +190,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , binary
     , bytestring
     , containers
     , cryptonite
@@ -213,6 +217,7 @@ library
     , wai
     , wai-cors
     , warp
+    , zip-archive
   default-language: Haskell2010
 
 executable mimsa
@@ -225,6 +230,7 @@ executable mimsa
   build-depends:
       aeson
     , base >=4.7 && <5
+    , binary
     , bytestring
     , containers
     , cryptonite
@@ -252,6 +258,7 @@ executable mimsa
     , wai
     , wai-cors
     , warp
+    , zip-archive
   default-language: Haskell2010
 
 executable swagger
@@ -264,6 +271,7 @@ executable swagger
   build-depends:
       aeson
     , base >=4.7 && <5
+    , binary
     , bytestring
     , containers
     , cryptonite
@@ -291,6 +299,7 @@ executable swagger
     , wai
     , wai-cors
     , warp
+    , zip-archive
   default-language: Haskell2010
 
 test-suite mimsa-test
@@ -334,6 +343,7 @@ test-suite mimsa-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , binary
     , bytestring
     , containers
     , cryptonite
@@ -362,4 +372,5 @@ test-suite mimsa-test
     , wai
     , wai-cors
     , warp
+    , zip-archive
   default-language: Haskell2010

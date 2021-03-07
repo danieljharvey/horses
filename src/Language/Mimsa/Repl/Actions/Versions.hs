@@ -22,17 +22,17 @@ doVersions :: Project Annotation -> Name -> MimsaM (Error Annotation) ()
 doVersions env name = do
   versions <- mimsaFromEither $ findVersions env name
   let showIt (i, mt, expr', usages) = do
-        logInfo $
+        replOutput $
           "#" <> T.pack (show i)
             <> ( if NE.length versions == i
                    then " (current)"
                    else ""
                )
-        logInfo $ prettyPrint (expr', mt)
+        replOutput $ prettyPrint (expr', mt)
         if S.null usages
-          then logInfo ("Dependency of 0 functions" :: Text)
+          then replOutput ("Dependency of 0 functions" :: Text)
           else
-            logInfo $
+            replOutput $
               "Dependency of " <> (T.pack . show . S.size) usages
                 <> " functions"
    in traverse_ showIt versions

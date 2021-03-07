@@ -8,10 +8,7 @@ module Language.Mimsa.Repl.Helpers
 where
 
 import Control.Monad.Except
-import Data.Coerce
 import Data.Foldable (traverse_)
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
@@ -39,15 +36,12 @@ saveExpression ::
 saveExpression =
   mapError StoreErr . saveExpr
 
--- | given an expression to save, save it
-saveFile ::
+-- | Actually save a file to disk
+saveFile' ::
   (Actions.SavePath, Actions.SaveFilename, Actions.SaveContents) ->
   MimsaM (Error Annotation) ()
-saveFile (path, filename, content) = do
-  fullPath <- getStoreFolder (show path)
-  let savePath = fullPath <> show filename
-  logDebug $ "Saving to " <> T.pack savePath
-  liftIO $ T.writeFile savePath (coerce content)
+saveFile' =
+  mapError StoreErr . saveFile
 
 -- | Run an Action, printing any messages to the console and saving any
 -- expressions to disk
@@ -60,5 +54,5 @@ toReplM project action = case Actions.run project action of
   Right (newProject, outcomes, a) -> do
     traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
     traverse_ saveExpression (Actions.storeExpressionsFromOutcomes outcomes)
-    traverse_ saveFile (Actions.writeFilesFromOutcomes outcomes)
+    traverse_ saveFile' (Actions.writeFilesFromOutcomes outcomes)
     pure (newProject, a)

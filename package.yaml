@@ -48,6 +48,8 @@ dependencies:
 - envy # server
 - stm # concurrency for server
 - monad-logger # logging
+- zip-archive # downloads
+- binary # downloads
 
 library:
   source-dirs: src

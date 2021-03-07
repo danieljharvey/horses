@@ -26,7 +26,7 @@ doInfo env input expr = do
   (ResolvedExpression type' _ _ _ _) <-
     mimsaFromEither $
       getTypecheckedStoreExpression input env expr
-  logInfo $
+  replOutput $
     prettyPrint expr
       <> "/n:: "
       <> prettyPrint type'

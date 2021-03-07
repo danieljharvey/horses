@@ -37,10 +37,10 @@ getProject =
   do
     env <- mapError StoreErr loadProject
     let items = length . getStore . prjStore $ env
-    logInfo $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
+    replOutput $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
     pure env
     `catchError` \_ -> do
-      logInfo "Failed to load project, loading default project"
+      logError "Failed to load project, loading default project"
       pure defaultProject
 
 repl :: Bool -> IO ()
