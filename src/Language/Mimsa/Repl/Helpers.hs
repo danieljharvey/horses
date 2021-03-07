@@ -50,7 +50,9 @@ toReplM ::
   Actions.ActionM a ->
   MimsaM (Error Annotation) (Project Annotation, a)
 toReplM project action = case Actions.run project action of
-  Left e -> throwError e
+  Left e -> do
+    replOutput e
+    throwError e
   Right (newProject, outcomes, a) -> do
     traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
     traverse_ saveExpression (Actions.storeExpressionsFromOutcomes outcomes)
