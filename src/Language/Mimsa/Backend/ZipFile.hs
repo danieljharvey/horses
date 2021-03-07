@@ -3,6 +3,7 @@
 module Language.Mimsa.Backend.ZipFile
   ( createZipFile,
     storeZipFile,
+    encodeZipFile,
   )
 where
 
@@ -82,9 +83,11 @@ storeZipFile be rootExprHash archive = do
   zipPath <- createZipFolder be rootExprHash
   let filename = "output.zip"
   let path = zipPath <> filename
-  let bs = encode archive
-  liftIO $ LB.writeFile path bs
+  liftIO $ LB.writeFile path (encodeZipFile archive)
   pure path
+
+encodeZipFile :: Zip.Archive -> LB.ByteString
+encodeZipFile = encode
 
 createArchive :: [Zip.Entry] -> Zip.Archive
 createArchive = foldr Zip.addEntryToArchive Zip.emptyArchive
