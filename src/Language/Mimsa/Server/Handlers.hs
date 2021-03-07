@@ -17,6 +17,7 @@ module Language.Mimsa.Server.Handlers
     parseHandler,
     parseDataTypeHandler,
     saveExprHandler,
+    saveFileHandler,
     interpretHandler,
     findExprHandler,
     resolveStoreExpressionHandler,
@@ -79,8 +80,10 @@ fromActionM mimsaEnv projectHash action = do
   case Actions.run project action of
     Left e -> throwError (to400Error e)
     Right (newProject, outcomes, a) -> do
-      let storeExprs = Actions.storeExpressionsFromOutcomes outcomes
-      traverse_ (saveExprHandler mimsaEnv) storeExprs
+      traverse_ (saveExprHandler mimsaEnv) (Actions.storeExpressionsFromOutcomes outcomes)
+      -- TODO: return these as a list of Text to show up in a toast in app
+      -- traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
+      traverse_ (saveFileHandler mimsaEnv) (Actions.writeFilesFromOutcomes outcomes)
 
       pure (newProject, a)
 
@@ -208,6 +211,13 @@ parseDataTypeHandler input =
 saveExprHandler :: MimsaEnvironment -> StoreExpression ann -> Handler ExprHash
 saveExprHandler mimsaEnv se =
   handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveExpr se)
+
+saveFileHandler ::
+  MimsaEnvironment ->
+  (Actions.SavePath, Actions.SaveFilename, Actions.SaveContents) ->
+  Handler ()
+saveFileHandler mimsaEnv saveInfo =
+  handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveFile saveInfo)
 
 interpretHandler ::
   Scope Annotation ->

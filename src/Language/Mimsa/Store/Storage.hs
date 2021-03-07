@@ -8,6 +8,7 @@ module Language.Mimsa.Store.Storage
     getStoreFolder,
     tryCopy,
     storeSize,
+    saveFile,
   )
 where
 
@@ -15,14 +16,16 @@ import Control.Exception
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
+import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
 import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Types as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.Hashing
-import Language.Mimsa.Types.Error.StoreError
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project.ProjectHash
 import Language.Mimsa.Types.Store
@@ -117,3 +120,14 @@ findExprInLocalStore hash = do
             Left e -> throwError e
         _ ->
           throwError (CouldNotDecodeJson hash)
+
+-- | given an expression to save, save it
+-- | some sort of catch / error?
+saveFile ::
+  (Actions.SavePath, Actions.SaveFilename, Actions.SaveContents) ->
+  MimsaM StoreError ()
+saveFile (path, filename, content) = do
+  fullPath <- getStoreFolder (show path)
+  let savePath = fullPath <> show filename
+  logDebug $ "Saving to " <> T.pack savePath
+  liftIO $ LBS.writeFile savePath (coerce content)

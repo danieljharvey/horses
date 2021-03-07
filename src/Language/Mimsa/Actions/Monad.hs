@@ -1,5 +1,4 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Language.Mimsa.Actions.Monad
@@ -25,12 +24,10 @@ where
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Writer
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Data.Text as T
+import Language.Mimsa.Actions.Types
 import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -38,32 +35,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-
-newtype SavePath = SavePath Text
-  deriving newtype (Eq, Ord)
-
-instance Show SavePath where
-  show (SavePath s) = T.unpack s
-
-newtype SaveContents = SaveContents LBS.ByteString
-  deriving newtype (Eq, Ord, Show)
-
-newtype SaveFilename = SaveFilename LBS.ByteString
-  deriving newtype (Eq, Ord)
-
-instance Show SaveFilename where
-  show (SaveFilename s) = LB.unpack s
-
-data ActionOutcome
-  = NewMessage Text
-  | NewStoreExpression (StoreExpression Annotation)
-  | NewWriteFile SavePath SaveFilename SaveContents
-  deriving (Eq, Ord, Show)
-
-type ActionM =
-  ExceptT
-    (Error Annotation)
-    (WriterT [ActionOutcome] (State (Project Annotation)))
 
 run ::
   Project Annotation ->
