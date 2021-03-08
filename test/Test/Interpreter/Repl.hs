@@ -622,3 +622,6 @@ spec =
           result <- eval stdLib "infix +++ = addInt; 1 +++ True"
           -- function typechecking should still work
           result `shouldSatisfy` isLeft
+        it "\\some -> case some of Some \\a -> Some (a == 1) | otherwise some" $ do
+          result <- eval stdLib "\\some -> case some of Some \\a -> Some (a == 1) | otherwise some"
+          result `shouldSatisfy` isLeft
