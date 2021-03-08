@@ -403,8 +403,9 @@ inferCaseMatch env ann sumExpr matches catchAll = do
         mconcat
           (fst <$> NE.toList tyMatches)
           <> sCatch
+
       actuals = (snd <$> NE.toList tyMatches) <> tyCatches
-  (s, mt) <- matchList actuals
+  (s, mt) <- matchList (applySubst matchSubs <$> actuals)
   let allSubs = s2 <> s1 <> s <> matchSubs
   pure (allSubs, applySubst allSubs mt)
 
