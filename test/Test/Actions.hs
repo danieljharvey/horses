@@ -19,7 +19,7 @@ import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Backend.Types
+import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Typechecker.Codegen
@@ -150,7 +150,7 @@ spec = do
     describe "Compile" $ do
       it "Simplest compilation creates four files" $ do
         let expr = MyVar mempty "id"
-        let action = Actions.compile CommonJS "id" expr
+        let action = Actions.compile exportRuntime "id" expr
         let (newProject, outcomes, (_, hashes)) = fromRight (Actions.run stdLib action)
         -- creates three files
         length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 4
@@ -168,7 +168,7 @@ spec = do
         S.size hashes `shouldBe` 2
       it "Complex compilation creates many files in 3 folders" $ do
         let expr = MyVar mempty "evalState"
-        let action = Actions.compile CommonJS "evalState" expr
+        let action = Actions.compile exportRuntime "evalState" expr
         let (newProject, outcomes, _) = fromRight (Actions.run stdLib action)
         -- creates six files
         length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 7

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.BackendJS
+module Test.Backend.BackendJS
   ( spec,
   )
 where

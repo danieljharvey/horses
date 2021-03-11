@@ -15,6 +15,7 @@ import Data.Swagger (NamedSchema (..), ToSchema, binarySchema, declareNamedSchem
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Compile as Actions
+import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.ZipFile
 import Language.Mimsa.Server.Handlers
@@ -73,7 +74,7 @@ compileExpressionEndpoint
   (CompileExpressionRequest projectHash input) = do
     expr <- parseHandler input
     (_, (rootExprHash, exprHashes)) <-
-      fromActionM mimsaEnv projectHash (Actions.compile CommonJS input expr)
+      fromActionM mimsaEnv projectHash (Actions.compile exportRuntime input expr)
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
     bs <- doCreateZipFile mimsaEnv CommonJS exprHashes rootExprHash

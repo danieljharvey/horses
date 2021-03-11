@@ -16,6 +16,7 @@ import Language.Mimsa.Backend.Backend
   ( Backend (..),
     copyLocalOutput,
   )
+import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Monad
 import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Types.AST
@@ -34,7 +35,7 @@ doOutputJS ::
   MimsaM (Error Annotation) ()
 doOutputJS project input expr = do
   (_, (rootExprHash, exprHashes)) <-
-    toReplM project (Actions.compile CommonJS input expr)
+    toReplM project (Actions.compile exportRuntime input expr)
   outputPath <- doCopying CommonJS exprHashes rootExprHash
   replOutput ("Output to " <> bsToText outputPath)
 
