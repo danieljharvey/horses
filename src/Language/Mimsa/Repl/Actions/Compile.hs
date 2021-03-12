@@ -13,8 +13,7 @@ import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Backend
-  ( Backend (..),
-    copyLocalOutput,
+  ( copyLocalOutput,
   )
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Monad
@@ -34,15 +33,16 @@ doOutputJS ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doOutputJS project input expr = do
+  let runtime = exportRuntime
   (_, (rootExprHash, exprHashes)) <-
-    toReplM project (Actions.compile exportRuntime input expr)
-  outputPath <- doCopying CommonJS exprHashes rootExprHash
+    toReplM project (Actions.compile runtime input expr)
+  outputPath <- doCopying runtime exprHashes rootExprHash
   replOutput ("Output to " <> bsToText outputPath)
 
 doCopying ::
-  Backend ->
+  Runtime code ->
   Set ExprHash ->
   ExprHash ->
   MimsaM (Error Annotation) LBS.ByteString
-doCopying be exprHashes rootExprHash =
-  mapError StoreErr (copyLocalOutput be exprHashes rootExprHash)
+doCopying runtime exprHashes rootExprHash =
+  mapError StoreErr (copyLocalOutput runtime exprHashes rootExprHash)

@@ -10,7 +10,6 @@ module Language.Mimsa.Backend.Shared
     outputStoreExpression,
     outputExport,
     outputStdlib,
-    indexFilename,
     indexOutputFilename,
     moduleFilename,
     stdLibFilename,
@@ -78,10 +77,6 @@ commonJSStandardLibrary =
 
 stdLibFilename :: Backend -> LBS.ByteString
 stdLibFilename CommonJS = "cjs-stdlib.js"
-
-indexFilename :: Backend -> ExprHash -> LBS.ByteString
-indexFilename CommonJS hash' =
-  "index-" <> bsFromText (prettyPrint hash') <> ".js"
 
 indexOutputFilename :: Backend -> LBS.ByteString
 indexOutputFilename CommonJS = "index.js"

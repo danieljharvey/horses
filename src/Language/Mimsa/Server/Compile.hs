@@ -16,7 +16,6 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Runtimes
-import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.ZipFile
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Helpers
@@ -72,21 +71,27 @@ compileExpressionEndpoint ::
 compileExpressionEndpoint
   mimsaEnv
   (CompileExpressionRequest projectHash input) = do
+    let runtime = exportRuntime
     expr <- parseHandler input
     (_, (rootExprHash, exprHashes)) <-
-      fromActionM mimsaEnv projectHash (Actions.compile exportRuntime input expr)
+      fromActionM mimsaEnv projectHash (Actions.compile runtime input expr)
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
-    bs <- doCreateZipFile mimsaEnv CommonJS exprHashes rootExprHash
+    bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
     pure (addHeader contentDisposition (CompileExpressionResponse bs))
 
 doCreateZipFile ::
   MimsaEnvironment ->
-  Backend ->
+  Runtime code ->
   Set ExprHash ->
   ExprHash ->
   Handler LBS.ByteString
-doCreateZipFile mimsaEnv be exprHashes rootExprHash = do
+doCreateZipFile mimsaEnv runtime exprHashes rootExprHash = do
   let mimsaCfg = mimsaConfig mimsaEnv
-  archive <- handleMimsaM mimsaCfg InternalError (createZipFile be exprHashes rootExprHash)
+  archive <-
+    handleMimsaM
+      mimsaCfg
+      InternalError
+      ( createZipFile runtime exprHashes rootExprHash
+      )
   pure (encodeZipFile archive)

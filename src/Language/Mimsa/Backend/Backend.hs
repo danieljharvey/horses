@@ -14,6 +14,7 @@ import Data.Coerce
 import Data.Foldable (traverse_)
 import Data.Set (Set)
 import Language.Mimsa.Backend.Javascript
+import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
@@ -29,21 +30,21 @@ getStdlib CommonJS = coerce commonJSStandardLibrary
 -- given output type and list of expressions, copy everything to local
 -- folder for output in repl
 copyLocalOutput ::
-  Backend ->
+  Runtime code ->
   Set ExprHash ->
   ExprHash ->
   MimsaM StoreError LBS.ByteString
-copyLocalOutput be exprHashes rootExprHash = do
-  modulePath <- createModuleOutputPath be
-  stdlibPath <- createStdlibOutputPath be
-  indexPath <- createIndexOutputPath be
-  outputPath <- createOutputFolder be rootExprHash
+copyLocalOutput runtime exprHashes rootExprHash = do
+  modulePath <- createModuleOutputPath (rtBackend runtime)
+  stdlibPath <- createStdlibOutputPath (rtBackend runtime)
+  indexPath <- createIndexOutputPath (rtBackend runtime)
+  outputPath <- createOutputFolder (rtBackend runtime) rootExprHash
   -- link modules
-  traverse_ (copyModule modulePath outputPath be) exprHashes
+  traverse_ (copyModule modulePath outputPath (rtBackend runtime)) exprHashes
   -- link stdlib
-  _ <- copyStdlib stdlibPath outputPath be
+  _ <- copyStdlib stdlibPath outputPath (rtBackend runtime)
   -- link index
-  copyIndex indexPath outputPath be rootExprHash
+  copyIndex indexPath outputPath runtime rootExprHash
 
 copyModule :: FilePath -> FilePath -> Backend -> ExprHash -> MimsaM StoreError ()
 copyModule modulePath outputPath be exprHash = do
@@ -64,11 +65,11 @@ copyStdlib stdlibPath outputPath be = do
 copyIndex ::
   FilePath ->
   FilePath ->
-  Backend ->
+  Runtime code ->
   ExprHash ->
   MimsaM StoreError LBS.ByteString
-copyIndex indexPath outputPath be rootExprHash = do
-  let filename = LB.unpack $ indexFilename be rootExprHash
+copyIndex indexPath outputPath runtime rootExprHash = do
+  let filename = LB.unpack $ indexFilename runtime rootExprHash
       fromPath = indexPath <> filename
       toPath = outputPath <> filename
   tryCopy fromPath toPath

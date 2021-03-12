@@ -148,6 +148,11 @@ spec = do
               "id"
               `shouldNotBe` lookupBindingName stdLib "id"
     describe "Compile" $ do
+      it "Does not compile when expression does not match runtime" $ do
+        let expr = MyLiteral mempty (MyInt 1)
+        let action = Actions.compile consoleRuntime "1" expr
+        let result = Actions.run stdLib action
+        result `shouldSatisfy` isLeft
       it "Simplest compilation creates four files" $ do
         let expr = MyVar mempty "id"
         let action = Actions.compile exportRuntime "id" expr

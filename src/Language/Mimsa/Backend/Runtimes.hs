@@ -6,13 +6,18 @@ module Language.Mimsa.Backend.Runtimes
     consoleRuntime,
     runtimeIsValid,
     outputIndexFile,
+    indexFilename,
   )
 where
 
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Text (Text)
+import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
+import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
@@ -31,7 +36,7 @@ data Runtime code = Runtime
 exportRuntime :: Runtime Javascript
 exportRuntime =
   Runtime
-    { rtName = "Export",
+    { rtName = "export",
       rtDescription = "Exports the expression",
       rtMonoType = MTVar mempty (TVName (TyVar "any")),
       rtBackend = CommonJS,
@@ -41,8 +46,8 @@ exportRuntime =
 consoleRuntime :: Runtime Javascript
 consoleRuntime =
   Runtime
-    { rtName = "Console.log",
-      rtDescription = "Logs the expression to console",
+    { rtName = "console",
+      rtDescription = "Logs a string expression to console",
       rtMonoType = MTPrim mempty MTString,
       rtBackend = CommonJS,
       rtCode = "console.log(main);"
@@ -54,7 +59,22 @@ runtimeIsValid runtime mt =
     mempty
     $ unify (rtMonoType runtime) mt >> pure ()
 
+--------
+
+bsFromText :: Text -> LBS.ByteString
+bsFromText = LB.fromChunks . return . T.encodeUtf8
+
 outputIndexFile :: Runtime Javascript -> ExprHash -> Javascript
 outputIndexFile runtime exprHash =
   Javascript ("const main = require('./" <> moduleFilename CommonJS exprHash <> "').main;\n")
     <> rtCode runtime
+
+indexFilename :: Runtime code -> ExprHash -> LBS.ByteString
+indexFilename runtime hash' =
+  case rtBackend runtime of
+    CommonJS ->
+      bsFromText
+        ( "index-" <> rtName runtime <> "-"
+            <> prettyPrint hash'
+            <> ".js"
+        )

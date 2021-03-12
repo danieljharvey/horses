@@ -13,6 +13,7 @@ import Data.Binary (encode)
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
@@ -43,13 +44,13 @@ moduleEntry modulePath be exprHash = do
 
 indexEntry ::
   FilePath ->
-  Backend ->
+  Runtime code ->
   ExprHash ->
   MimsaM StoreError Zip.Entry
-indexEntry indexPath be rootExprHash = do
-  let filename = LB.unpack $ indexFilename be rootExprHash
+indexEntry indexPath runtime rootExprHash = do
+  let filename = LB.unpack $ indexFilename runtime rootExprHash
       fromPath = indexPath <> filename
-      outputFilename = LB.unpack (indexOutputFilename be)
+      outputFilename = LB.unpack (indexOutputFilename (rtBackend runtime))
   input <- liftIO (LB.readFile fromPath)
   pure (Zip.toEntry ("./" <> outputFilename) 0 input)
 
@@ -63,18 +64,21 @@ stdlibEntry stdlibPath be = do
 
 -- create zip archive that can be saved as a file or returned through server
 createZipFile ::
-  Backend ->
+  Runtime code ->
   Set ExprHash ->
   ExprHash ->
   MimsaM StoreError Zip.Archive
-createZipFile be exprHashes rootExprHash = do
-  modulePath <- createModuleOutputPath be
-  stdlibPath <- createStdlibOutputPath be
-  indexPath <- createIndexOutputPath be
+createZipFile runtime exprHashes rootExprHash = do
+  modulePath <- createModuleOutputPath (rtBackend runtime)
+  stdlibPath <- createStdlibOutputPath (rtBackend runtime)
+  indexPath <- createIndexOutputPath (rtBackend runtime)
   -- create entries
-  modules <- traverse (moduleEntry modulePath be) (S.toList exprHashes)
-  index <- indexEntry indexPath be rootExprHash
-  stdlib <- stdlibEntry stdlibPath be
+  modules <-
+    traverse
+      (moduleEntry modulePath (rtBackend runtime))
+      (S.toList exprHashes)
+  index <- indexEntry indexPath runtime rootExprHash
+  stdlib <- stdlibEntry stdlibPath (rtBackend runtime)
   pure (createArchive $ modules <> [index] <> [stdlib])
 
 -- write zip file to a given file path

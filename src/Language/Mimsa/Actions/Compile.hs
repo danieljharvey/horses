@@ -39,19 +39,30 @@ compile ::
   Actions.ActionM (ExprHash, Set ExprHash)
 compile runtime input expr = do
   project <- Actions.getProject
-  (ResolvedExpression _ se _ _ _) <-
+
+  -- does expression typecheck?
+  (ResolvedExpression mt se _ _ _) <-
     liftEither $ getTypecheckedStoreExpression input project expr
+
+  -- does runtime typecheck with expression
+  liftEither (first (TypeErr input) (runtimeIsValid runtime mt))
+
   -- this will eventually check for things we have already transpiled to save
   -- on work
   let list = getTranspileList (prjStore project) se
+
   -- transpile each required file and add to outputs
   traverse_ (transpileModule (rtBackend runtime)) (list <> S.singleton se)
+
   -- create the index
   createIndex runtime (getStoreExpressionHash se)
+
   -- create the stdlib
   createStdlib (rtBackend runtime)
+
   -- return useful info
   let rootExprHash = getStoreExpressionHash se
+
   -- return all ExprHashes created
   let allHashes = S.map getStoreExpressionHash list <> S.singleton rootExprHash
   pure (rootExprHash, allHashes)
@@ -79,7 +90,7 @@ createIndex ::
 createIndex runtime exprHash = do
   let path = Actions.SavePath (T.pack $ transpiledIndexOutputPath (rtBackend runtime))
       outputContent = Actions.SaveContents (coerce $ outputIndexFile runtime exprHash)
-      filename = Actions.SaveFilename (indexFilename (rtBackend runtime) exprHash)
+      filename = Actions.SaveFilename (indexFilename runtime exprHash)
   Actions.appendWriteFile path filename outputContent
 
 -- | The stdlib is a set of functions needed to stuff like pattern matching
