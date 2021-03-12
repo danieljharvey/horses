@@ -7,11 +7,15 @@ module Language.Mimsa.Backend.Runtimes
     runtimeIsValid,
     outputIndexFile,
     indexFilename,
+    getValidRuntimes,
   )
 where
 
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
+import Data.Either (isRight)
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Javascript
@@ -58,6 +62,22 @@ runtimeIsValid runtime mt =
   runTcMonad
     mempty
     $ unify (rtMonoType runtime) mt >> pure ()
+
+--------
+
+runtimes :: Map Text (Runtime Javascript)
+runtimes =
+  M.fromList $
+    foldr
+      ( \rt as ->
+          as <> [(rtName rt, rt)]
+      )
+      mempty
+      [consoleRuntime, exportRuntime]
+
+getValidRuntimes :: MonoType -> Map Text (Runtime Javascript)
+getValidRuntimes mt =
+  M.filter (\rt -> isRight $ runtimeIsValid rt mt) runtimes
 
 --------
 

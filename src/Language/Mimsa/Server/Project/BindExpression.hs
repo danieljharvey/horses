@@ -15,6 +15,7 @@ import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindExpression as Actions
+import Language.Mimsa.Server.ExpressionData
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Identifiers

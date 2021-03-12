@@ -16,6 +16,7 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Server.ExpressionData
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
