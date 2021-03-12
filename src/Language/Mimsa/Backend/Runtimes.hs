@@ -1,21 +1,28 @@
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Runtimes
   ( Runtime (..),
+    RuntimeName (..),
     exportRuntime,
     consoleRuntime,
     runtimeIsValid,
     outputIndexFile,
     indexFilename,
     getValidRuntimes,
+    runtimes,
   )
 where
 
+import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
+import Data.Coerce (coerce)
 import Data.Either (isRight)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Swagger
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Javascript
@@ -29,8 +36,19 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
+newtype RuntimeName
+  = RuntimeName Text
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      JSON.ToJSONKey,
+      JSON.FromJSON,
+      ToSchema
+    )
+
 data Runtime code = Runtime
-  { rtName :: Text,
+  { rtName :: RuntimeName,
     rtDescription :: Text,
     rtMonoType :: MonoType,
     rtBackend :: Backend,
@@ -40,7 +58,7 @@ data Runtime code = Runtime
 exportRuntime :: Runtime Javascript
 exportRuntime =
   Runtime
-    { rtName = "export",
+    { rtName = RuntimeName "export",
       rtDescription = "Exports the expression",
       rtMonoType = MTVar mempty (TVName (TyVar "any")),
       rtBackend = CommonJS,
@@ -50,7 +68,7 @@ exportRuntime =
 consoleRuntime :: Runtime Javascript
 consoleRuntime =
   Runtime
-    { rtName = "console",
+    { rtName = RuntimeName "console",
       rtDescription = "Logs a string expression to console",
       rtMonoType = MTPrim mempty MTString,
       rtBackend = CommonJS,
@@ -65,7 +83,7 @@ runtimeIsValid runtime mt =
 
 --------
 
-runtimes :: Map Text (Runtime Javascript)
+runtimes :: Map RuntimeName (Runtime Javascript)
 runtimes =
   M.fromList $
     foldr
@@ -75,7 +93,7 @@ runtimes =
       mempty
       [consoleRuntime, exportRuntime]
 
-getValidRuntimes :: MonoType -> Map Text (Runtime Javascript)
+getValidRuntimes :: MonoType -> Map RuntimeName (Runtime Javascript)
 getValidRuntimes mt =
   M.filter (\rt -> isRight $ runtimeIsValid rt mt) runtimes
 
@@ -94,7 +112,7 @@ indexFilename runtime hash' =
   case rtBackend runtime of
     CommonJS ->
       bsFromText
-        ( "index-" <> rtName runtime <> "-"
+        ( "index-" <> coerce (rtName runtime) <> "-"
             <> prettyPrint hash'
             <> ".js"
         )

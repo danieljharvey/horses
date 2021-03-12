@@ -58,7 +58,7 @@ data RuntimeData = RuntimeData
 toRuntimeData :: Runtime code -> RuntimeData
 toRuntimeData rt =
   RuntimeData
-    { rtdName = rtName rt,
+    { rtdName = coerce (rtName rt),
       rtdDescription = rtDescription rt,
       rtdMonoType = prettyPrint (rtMonoType rt)
     }
@@ -70,7 +70,7 @@ data ExpressionData = ExpressionData
     edBindings :: Map Name Text,
     edTypeBindings :: Map TyCon Text,
     edUnitTests :: [UnitTestData],
-    edRuntimes :: Map Text RuntimeData
+    edRuntimes :: Map RuntimeName RuntimeData
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
@@ -85,7 +85,7 @@ expressionDataHandler project se mt = do
         mkUnitTestData project
           <$> M.elems
             (getTestsForExprHash project exprHash)
-      runtimes =
+      matchingRuntimes =
         toRuntimeData
           <$> getValidRuntimes mt
   pure $
@@ -96,4 +96,4 @@ expressionDataHandler project se mt = do
       (prettyPrint <$> getBindings (storeBindings se))
       (prettyPrint <$> getTypeBindings (storeTypeBindings se))
       tests
-      runtimes
+      matchingRuntimes
