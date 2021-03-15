@@ -11,6 +11,7 @@ import Control.Monad.Except
 import Data.Foldable (foldl')
 import qualified Data.Map as M
 import Language.Mimsa.Backend.Types
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error

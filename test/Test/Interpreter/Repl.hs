@@ -13,6 +13,7 @@ import Data.Functor (($>))
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers

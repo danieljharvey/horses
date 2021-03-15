@@ -9,9 +9,7 @@ module Language.Mimsa.Backend.Shared
     zipFileOutputPath,
     outputStoreExpression,
     outputExport,
-    outputIndexFile,
     outputStdlib,
-    indexFilename,
     indexOutputFilename,
     moduleFilename,
     stdLibFilename,
@@ -80,10 +78,6 @@ commonJSStandardLibrary =
 stdLibFilename :: Backend -> LBS.ByteString
 stdLibFilename CommonJS = "cjs-stdlib.js"
 
-indexFilename :: Backend -> ExprHash -> LBS.ByteString
-indexFilename CommonJS hash' =
-  "index-" <> bsFromText (prettyPrint hash') <> ".js"
-
 indexOutputFilename :: Backend -> LBS.ByteString
 indexOutputFilename CommonJS = "index.js"
 
@@ -102,10 +96,6 @@ transpiledStdlibOutputPath CommonJS = "transpiled/stdlib/common-js"
 
 zipFileOutputPath :: Backend -> FilePath
 zipFileOutputPath CommonJS = "./output/zip"
-
-outputIndexFile :: Backend -> ExprHash -> LBS.ByteString
-outputIndexFile CommonJS exprHash =
-  "const main = require('./" <> moduleFilename CommonJS exprHash <> "').main;\nconsole.log(main)"
 
 moduleFilename :: Backend -> ExprHash -> LBS.ByteString
 moduleFilename CommonJS hash' = "cjs-" <> bsFromText (prettyPrint hash') <> ".js"

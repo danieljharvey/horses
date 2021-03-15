@@ -7,7 +7,8 @@ module Main
 where
 
 import qualified Test.Actions as Actions
-import qualified Test.BackendJS as JS
+import qualified Test.Backend.BackendJS as JS
+import qualified Test.Backend.Runtimes as Runtimes
 import Test.Hspec
 import qualified Test.Interpreter.InstantiateVar as InstantiateVar
 import qualified Test.Interpreter.Interpreter as Interpreter
@@ -53,3 +54,4 @@ main =
     UpdateDeps.spec
     Actions.spec
     Codegen.spec
+    Runtimes.spec

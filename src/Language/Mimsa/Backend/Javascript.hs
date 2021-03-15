@@ -27,8 +27,9 @@ import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.AST (Expr (..), Literal (..), Operator (..), StringType (..))
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
@@ -117,9 +118,10 @@ containsLet = getAny . foundLet
 foundLet :: Expr Name ann -> Any
 foundLet = withMonoid findLet
   where
-    findLet MyLet {} = Any True
-    findLet MyLetPair {} = Any True
-    findLet _ = mempty
+    findLet MyLet {} = (False, Any True) -- found one, stop looking
+    findLet MyLetPair {} = (False, Any True) -- found one, stop looking
+    findLet MyLambda {} = (False, mempty) -- did not find one, but stop looking
+    findLet _ = (True, mempty) -- did not find one, keep recursing
 
 -- if this is the last binding, then we should 'return' the statement
 addReturn :: Expr Name ann -> Javascript -> Javascript

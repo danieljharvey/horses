@@ -13,6 +13,7 @@ where
 import qualified Data.Aeson as JSON
 import Data.Swagger
 import GHC.Generics
+import Language.Mimsa.Server.ExpressionData
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project

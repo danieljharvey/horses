@@ -10,6 +10,7 @@ where
 import Control.Monad.Except
 import Data.Functor
 import qualified Data.Map as M
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter.InstantiateVar
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.Types

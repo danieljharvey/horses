@@ -18,6 +18,7 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
   ( builtInTypes,
     defaultEnv,
