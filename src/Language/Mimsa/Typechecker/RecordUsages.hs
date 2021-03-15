@@ -12,6 +12,7 @@ import qualified Data.Map as M
 import Data.Maybe (catMaybes)
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -58,12 +59,12 @@ getRecordUsages ::
 getRecordUsages = withMonoid getRecordUsages'
   where
     getRecordUsages' (MyLambda _ binder expr) =
-      CombineMap (M.singleton binder mempty) <> getRecordUsages' expr
+      (True, CombineMap (M.singleton binder mempty) <> snd (getRecordUsages' expr))
     getRecordUsages' (MyRecordAccess _ expr name) =
       case getVariable expr of
-        Just var -> CombineMap $ M.singleton var (S.singleton name)
-        Nothing -> mempty
-    getRecordUsages' _ = mempty
+        Just var -> (True, CombineMap $ M.singleton var (S.singleton name))
+        Nothing -> (True, mempty)
+    getRecordUsages' _ = (True, mempty)
 
 getVariable :: Expr Variable ann -> Maybe Variable
 getVariable (MyVar _ a) = Just a

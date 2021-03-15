@@ -11,6 +11,7 @@ import Data.Either (partitionEithers)
 import Data.Text (Text)
 import Data.Text.Lazy (toStrict)
 import Data.Text.Lazy.Encoding
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST

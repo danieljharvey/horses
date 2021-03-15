@@ -1,5 +1,6 @@
 module Language.Mimsa.Interpreter.InstantiateVar (instantiateVar) where
 
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter.SwapName
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
