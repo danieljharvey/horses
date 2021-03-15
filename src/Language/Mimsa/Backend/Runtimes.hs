@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Language.Mimsa.Backend.Runtimes
   ( Runtime (..),
@@ -20,6 +21,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce (coerce)
 import Data.Either (isRight)
+import Data.FileEmbed
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Swagger
@@ -35,6 +37,11 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+
+-- these are saved in a file that is included in compilation
+replCode :: LBS.ByteString
+replCode =
+  LBS.fromStrict $(embedFile "static/runtimes/commonjs/repl.js")
 
 newtype RuntimeName
   = RuntimeName Text
@@ -55,12 +62,18 @@ data Runtime code = Runtime
     rtCode :: code
   }
 
+mtVar :: Text -> MonoType
+mtVar t = MTVar mempty (TVName (TyVar t))
+
+mtString :: MonoType
+mtString = MTPrim mempty MTString
+
 exportRuntime :: Runtime Javascript
 exportRuntime =
   Runtime
     { rtName = RuntimeName "export",
       rtDescription = "Exports the expression",
-      rtMonoType = MTVar mempty (TVName (TyVar "any")),
+      rtMonoType = mtVar "any",
       rtBackend = CommonJS,
       rtCode = "module.exports = { main };"
     }
@@ -70,9 +83,41 @@ consoleRuntime =
   Runtime
     { rtName = RuntimeName "console",
       rtDescription = "Logs a string expression to console",
-      rtMonoType = MTPrim mempty MTString,
+      rtMonoType = mtString,
       rtBackend = CommonJS,
       rtCode = "console.log(main);"
+    }
+
+replRuntime :: Runtime Javascript
+replRuntime =
+  Runtime
+    { rtName = RuntimeName "repl",
+      rtDescription = "Runs a stateful repl session",
+      rtMonoType =
+        MTRecord
+          mempty
+          ( M.fromList
+              [ ("prompt", mtString),
+                ("intro", mtString),
+                ("init", mtVar "A"),
+                ( "next",
+                  MTFunction
+                    mempty
+                    (mtVar "A")
+                    ( MTFunction
+                        mempty
+                        mtString
+                        ( MTPair
+                            mempty
+                            (mtVar "A")
+                            mtString
+                        )
+                    )
+                )
+              ]
+          ),
+      rtBackend = CommonJS,
+      rtCode = Javascript replCode
     }
 
 runtimeIsValid :: Runtime a -> MonoType -> Either TypeError ()
@@ -91,7 +136,7 @@ runtimes =
           as <> [(rtName rt, rt)]
       )
       mempty
-      [consoleRuntime, exportRuntime]
+      [consoleRuntime, exportRuntime, replRuntime]
 
 getValidRuntimes :: MonoType -> Map RuntimeName (Runtime Javascript)
 getValidRuntimes mt =

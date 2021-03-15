@@ -78,7 +78,8 @@ successes =
     ("True == False", "const main = __eq(true, false);\n"),
     ("2 + 2", "const main = 2 + 2;\n"),
     ("10 - 2", "const main = 10 - 2;\n"),
-    ("\"dog\" <> \"log\"", "const main = \"dog\" + \"log\";\n")
+    ("\"dog\" <> \"log\"", "const main = \"dog\" + \"log\";\n"),
+    ("{ fn: (\\a -> let d = 1 in a) }", "const main = { fn: a => { const d = 1;\nreturn a } }")
   ]
 
 testIt :: (Text, Javascript) -> Spec
