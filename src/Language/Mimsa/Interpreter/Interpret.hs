@@ -98,6 +98,70 @@ interpretOperator operator a b = do
         Nothing ->
           throwError (CouldNotFindInfixOp infixOp)
 
+interpretApplication ::
+  (Eq ann, Monoid ann) =>
+  ann ->
+  Expr Variable ann ->
+  Expr Variable ann ->
+  App ann (Expr Variable ann)
+interpretApplication ann fn value = do
+  incrementApplyCount
+  case fn of
+    (MyVar ann' f) -> do
+      expr <- interpretWithScope (MyVar ann' f)
+      interpretWithScope (MyApp ann expr value)
+    (MyLambda _ binder expr) -> do
+      value' <- interpretWithScope value
+      addToScope (Scope $ M.singleton binder value')
+      interpretWithScope expr
+    (MyLiteral ann' a) ->
+      throwError $ CannotApplyToNonFunction (MyLiteral ann' a)
+    other -> do
+      expr <- interpretWithScope other
+      interpretWithScope (MyApp ann expr value)
+
+interpretRecordAccess ::
+  (Eq ann, Monoid ann) =>
+  ann ->
+  Expr Variable ann ->
+  Name ->
+  App ann (Expr Variable ann)
+interpretRecordAccess ann recordExpr name =
+  case recordExpr of
+    (MyRecord _ record) ->
+      case M.lookup name record of
+        Just item -> interpretWithScope item
+        _ -> throwError $ CannotFindMemberInRecord record name
+    (MyVar ann' a) -> do
+      expr <- interpretWithScope (MyVar ann' a)
+      interpretWithScope (MyRecordAccess ann expr name)
+    (MyRecordAccess ann' a name') -> do
+      expr <- interpretWithScope (MyRecordAccess ann' a name')
+      interpretWithScope (MyRecordAccess ann expr name)
+    a ->
+      throwError $ CannotDestructureAsRecord a name
+
+interpretIf ::
+  (Eq ann, Monoid ann) =>
+  ann ->
+  Expr Variable ann ->
+  Expr Variable ann ->
+  Expr Variable ann ->
+  App ann (Expr Variable ann)
+interpretIf ann predicate true false =
+  case predicate of
+    (MyLiteral _ (MyBool pred')) ->
+      if pred'
+        then interpretWithScope true
+        else interpretWithScope false
+    all'@MyLiteral {} ->
+      throwError $ PredicateForIfMustBeABoolean all'
+    all'@MyLambda {} ->
+      throwError $ PredicateForIfMustBeABoolean all'
+    pred' -> do
+      predExpr <- interpretWithScope pred'
+      interpretWithScope (MyIf ann predExpr true false)
+
 -- warning, ordering is very important here to stop things looping forever
 interpretWithScope ::
   (Eq ann, Monoid ann) =>
@@ -120,46 +184,16 @@ interpretWithScope interpretExpr =
     (MyInfix _ op a b) -> interpretOperator op a b
     (MyVar _ var) ->
       useVar var >>= interpretWithScope
-    (MyApp ann (MyVar ann' f) value) -> do
-      expr <- interpretWithScope (MyVar ann' f)
-      interpretWithScope (MyApp ann expr value)
-    (MyApp _ (MyLambda _ binder expr) value) -> do
-      value' <- interpretWithScope value
-      addToScope (Scope $ M.singleton binder value')
-      interpretWithScope expr
-    (MyApp _ (MyLiteral ann a) _) ->
-      throwError $ CannotApplyToNonFunction (MyLiteral ann a)
-    (MyApp ann other value) -> do
-      expr <- interpretWithScope other
-      interpretWithScope (MyApp ann expr value)
-    (MyRecordAccess _ (MyRecord _ record) name) ->
-      case M.lookup name record of
-        Just item -> interpretWithScope item
-        _ -> throwError $ CannotFindMemberInRecord record name
-    (MyRecordAccess ann (MyVar ann' a) name) -> do
-      expr <- interpretWithScope (MyVar ann' a)
-      interpretWithScope (MyRecordAccess ann expr name)
-    (MyRecordAccess ann (MyRecordAccess ann' a name') name) -> do
-      expr <- interpretWithScope (MyRecordAccess ann' a name')
-      interpretWithScope (MyRecordAccess ann expr name)
-    (MyRecordAccess _ a name) ->
-      throwError $ CannotDestructureAsRecord a name
+    (MyApp ann fn value) -> interpretApplication ann fn value
+    (MyRecordAccess ann recordExpr name) ->
+      interpretRecordAccess ann recordExpr name
     (MyRecord ann as) -> do
       exprs <- traverse interpretWithScope as
       pure (MyRecord ann exprs)
     (MyLambda ann a b) ->
       pure (MyLambda ann a b)
-    (MyIf _ (MyLiteral _ (MyBool pred')) true false) ->
-      if pred'
-        then interpretWithScope true
-        else interpretWithScope false
-    (MyIf _ all'@(MyLiteral _ _) _ _) ->
-      throwError $ PredicateForIfMustBeABoolean all'
-    (MyIf _ all'@MyLambda {} _ _) ->
-      throwError $ PredicateForIfMustBeABoolean all'
-    (MyIf ann pred' true false) -> do
-      predExpr <- interpretWithScope pred'
-      interpretWithScope (MyIf ann predExpr true false)
+    (MyIf ann predicate true false) ->
+      interpretIf ann predicate true false
     (MyData _ _ expr) -> interpretWithScope expr
     (MyCaseMatch _ expr' matches catchAll) -> do
       expr'' <- interpretWithScope expr'

@@ -626,3 +626,9 @@ spec =
         it "\\some -> case some of Some \\a -> Some (a == 1) | otherwise some" $ do
           result <- eval stdLib "\\some -> case some of Some \\a -> Some (a == 1) | otherwise some"
           result `shouldSatisfy` isLeft
+        -- this should be thrown out by the interpreter
+        it "let forever = \\a -> forever(a) in forever(True)" $ do
+          result <- eval stdLib "let forever = \\a -> forever(a) in forever(True)"
+          result `shouldSatisfy` \case
+            Left msg -> "interpreter aborted" `T.isInfixOf` msg
+            _ -> False

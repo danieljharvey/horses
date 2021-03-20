@@ -27,6 +27,7 @@ data InterpreterError ann
   | SubtractionWithNonNumber (Expr Variable ann)
   | ConcatentationWithNonString (Expr Variable ann)
   | TypedHoleFound (Expr Variable ann)
+  | MaximumCallSizeReached
   deriving (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError a) where
@@ -53,4 +54,5 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
   prettyPrint (SubtractionWithNonNumber a) = "Subtraction expected number but got this: " <> prettyPrint a
   prettyPrint (ConcatentationWithNonString a) = "Concatenation expected string but got this: " <> prettyPrint a
   prettyPrint (TypedHoleFound a) = "Typed hole found " <> prettyPrint a
+  prettyPrint MaximumCallSizeReached = "Maximum size reached, interpreter aborted. Perhaps you have infinite recursion?"
   prettyPrint UnknownInterpreterError = "Unknown interpreter error"

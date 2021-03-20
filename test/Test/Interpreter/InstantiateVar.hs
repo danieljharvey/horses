@@ -30,7 +30,8 @@ testInstantiate expr = fst <$> either'
             InterpretState
               { isVarNum = 1,
                 isScope = mempty,
-                isInfix = mempty
+                isInfix = mempty,
+                isApplyCount = 0
               }
         )
         mempty
