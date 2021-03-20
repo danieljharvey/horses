@@ -31,7 +31,8 @@ interpret scope' swaps expr = fst <$> either'
             InterpretState
               { isVarNum = highestVar expr + 1,
                 isScope = scope',
-                isInfix = mempty
+                isInfix = mempty,
+                isApplyCount = 0
               }
         )
         swaps

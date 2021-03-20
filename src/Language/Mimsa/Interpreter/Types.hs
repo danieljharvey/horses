@@ -7,6 +7,7 @@ module Language.Mimsa.Interpreter.Types
     askForSwaps,
     addOperator,
     findOperator,
+    incrementApplyCount,
   )
 where
 
@@ -30,7 +31,9 @@ type App ann =
 data InterpretState ann = InterpretState
   { isVarNum :: Int,
     isScope :: Scope ann,
-    isInfix :: Map InfixOp Variable
+    isInfix :: Map InfixOp Variable,
+    -- number of applications we have done for timeout
+    isApplyCount :: Int
   }
 
 -- infix operators
@@ -75,6 +78,19 @@ addToScope scope' =
   where
     foundALoop (Scope newScope) =
       fmap fst . listToMaybe . M.toList . M.filterWithKey (\k a -> MyVar mempty k == a) $ newScope
+
+-- infinity protection
+
+-- number of function applications before we fail
+maxCount :: Int
+maxCount = 100000
+
+incrementApplyCount :: App ann ()
+incrementApplyCount = do
+  appCount <- gets isApplyCount
+  if appCount < maxCount
+    then modify (\is -> is {isApplyCount = appCount + 1})
+    else throwError MaximumCallSizeReached
 
 -- reader env
 
