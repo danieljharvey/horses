@@ -632,3 +632,7 @@ spec =
           result `shouldSatisfy` \case
             Left msg -> "interpreter aborted" `T.isInfixOf` msg
             _ -> False
+        -- built-ins should not be used as type constructors
+        it "type Something = String in True" $ do
+          result <- eval stdLib "type Something = String in True"
+          result `shouldSatisfy` isLeft

@@ -16,14 +16,9 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
-import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
-  ( builtInTypes,
-    defaultEnv,
-  )
-import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
 import Language.Mimsa.Typechecker.RecordUsages
@@ -213,97 +208,6 @@ inferLetPairBinding env binder1 binder2 expr body = do
   s2 <- unify tyExpr (MTPair mempty tyA tyB)
   (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
   pure (s3 <> s2 <> s1, tyBody)
-
--- given a datatype declaration, checks it makes sense and if so,
--- add it to the Environment
-storeDataDeclaration ::
-  Environment ->
-  DataType ->
-  TcExpr ->
-  TcMonad (Substitutions, MonoType)
-storeDataDeclaration env dt@(DataType tyName _ _) expr' = do
-  validateDataTypeVariables dt
-  if M.member tyName (getDataTypes env)
-    then throwError (DuplicateTypeDeclaration tyName)
-    else
-      let newEnv = Environment mempty (M.singleton tyName dt) mempty
-       in infer (newEnv <> env) expr'
-
--- infer the type of a data constructor
--- if it has no args, it's a simple MTData
--- however if it has args it becomes a MTFun from args to the MTData
-inferDataConstructor :: Environment -> Annotation -> TyCon -> TcMonad (Substitutions, MonoType)
-inferDataConstructor env ann name = do
-  dataType <- lookupConstructor env ann name
-  (_, allArgs) <- inferConstructorTypes env dataType
-  case M.lookup name allArgs of
-    Just tyArg ->
-      pure (mempty, constructorToType tyArg)
-    Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
-
-getVariablesForField :: Field -> Set Name
-getVariablesForField (VarName n) = S.singleton n
-getVariablesForField (ConsName _ fields) =
-  mconcat (getVariablesForField <$> fields)
-getVariablesForField (TNFunc a b) =
-  getVariablesForField a <> getVariablesForField b
-
-validateDataTypeVariables :: DataType -> TcMonad ()
-validateDataTypeVariables (DataType typeName vars constructors) =
-  let requiredForCons = foldMap getVariablesForField
-      requiredVars = foldMap requiredForCons constructors
-      availableVars = S.fromList vars
-      unavailableVars = S.filter (`S.notMember` availableVars) requiredVars
-   in if S.null unavailableVars
-        then pure ()
-        else
-          throwError $
-            TypeVariablesNotInDataType typeName unavailableVars availableVars
-
--- infer types for data type and it's constructor in one big go
-inferConstructorTypes ::
-  Environment ->
-  DataType ->
-  TcMonad (MonoType, Map TyCon TypeConstructor)
-inferConstructorTypes env (DataType typeName tyNames constructors) = do
-  tyVars <- traverse (\a -> (,) a <$> getUnknown mempty) tyNames
-  let findType ty = case ty of
-        ConsName cn vs -> do
-          vs' <- traverse findType vs
-          inferType env mempty cn vs'
-        VarName var ->
-          case filter (\(tyName, _) -> tyName == var) tyVars of
-            [(_, tyFound)] -> pure tyFound
-            _ ->
-              throwError $
-                TypeVariablesNotInDataType
-                  typeName
-                  (S.singleton var)
-                  (S.fromList (fst <$> tyVars))
-        TNFunc a b -> do
-          tyA <- findType a
-          tyB <- findType b
-          pure (MTFunction mempty tyA tyB)
-  let inferConstructor (consName, tyArgs) = do
-        tyCons <- traverse findType tyArgs
-        let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
-        pure $ M.singleton consName constructor
-  cons' <- traverse inferConstructor (M.toList constructors)
-  let dt = MTData mempty typeName (snd <$> tyVars)
-  pure (dt, mconcat cons')
-
--- parse a type from it's name
--- this will soon become insufficient for more complex types
-inferType :: Environment -> Annotation -> TyCon -> [MonoType] -> TcMonad MonoType
-inferType env ann tyName tyVars =
-  case M.lookup tyName (getDataTypes env) of
-    (Just _) -> case lookupBuiltIn tyName of
-      Just mt -> pure mt
-      _ -> pure (MTData mempty tyName tyVars)
-    _ -> throwError (TypeConstructorNotInScope env ann tyName)
-
-lookupBuiltIn :: TyCon -> Maybe MonoType
-lookupBuiltIn name = M.lookup name builtInTypes
 
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> TcMonad (Substitutions, MonoType)
 inferIf env condition thenExpr elseExpr = do
@@ -585,8 +489,9 @@ infer env inferExpr =
       (s2, tyB) <- infer env b
       let subs = s2 <> s1
       pure (subs, MTPair ann tyA tyB)
-    (MyData _ dataType expr) ->
-      storeDataDeclaration env dataType expr
+    (MyData _ dataType expr) -> do
+      newEnv <- storeDataDeclaration env dataType
+      infer newEnv expr
     (MyConstructor ann name) ->
       inferDataConstructor env ann name
     (MyConsApp ann cons val) ->
