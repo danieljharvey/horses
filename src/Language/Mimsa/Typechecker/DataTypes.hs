@@ -10,6 +10,7 @@ module Language.Mimsa.Typechecker.DataTypes
 where
 
 import Control.Monad.Except
+import Data.Foldable (traverse_)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -41,10 +42,12 @@ builtInTypes =
 -- add it to the Environment
 storeDataDeclaration ::
   Environment ->
+  Annotation ->
   DataType ->
   TcMonad Environment
-storeDataDeclaration env dt@(DataType tyName _ _) = do
+storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   validateDataTypeVariables dt
+  validateConstructors env ann dt
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
@@ -69,6 +72,16 @@ getVariablesForField (ConsName _ fields) =
   mconcat (getVariablesForField <$> fields)
 getVariablesForField (TNFunc a b) =
   getVariablesForField a <> getVariablesForField b
+
+validateConstructors :: Environment -> Annotation -> DataType -> TcMonad ()
+validateConstructors env ann (DataType _ _ constructors) = do
+  traverse_
+    ( \(tyCon, _) ->
+        if M.member tyCon (getDataTypes env)
+          then throwError (CannotUseBuiltInTypeAsConstructor ann tyCon)
+          else pure ()
+    )
+    (M.toList constructors)
 
 validateDataTypeVariables :: DataType -> TcMonad ()
 validateDataTypeVariables (DataType typeName vars constructors) =

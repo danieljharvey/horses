@@ -489,8 +489,8 @@ infer env inferExpr =
       (s2, tyB) <- infer env b
       let subs = s2 <> s1
       pure (subs, MTPair ann tyA tyB)
-    (MyData _ dataType expr) -> do
-      newEnv <- storeDataDeclaration env dataType
+    (MyData ann dataType expr) -> do
+      newEnv <- storeDataDeclaration env ann dataType
       infer newEnv expr
     (MyConstructor ann name) ->
       inferDataConstructor env ann name

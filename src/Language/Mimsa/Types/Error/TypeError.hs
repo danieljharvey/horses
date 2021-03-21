@@ -45,6 +45,7 @@ data TypeError
   | TypedHoles (Map Name (MonoType, Set Name))
   | FunctionArityMismatch Annotation Int MonoType
   | CouldNotFindInfixOperator Annotation InfixOp (Set InfixOp)
+  | CannotUseBuiltInTypeAsConstructor Annotation TyCon
   deriving (Eq, Ord, Show)
 
 ------
@@ -88,6 +89,7 @@ getErrorPos (TypedHoles holes) = case M.toList holes of
   ((_, (mt, _)) : _) -> fromAnnotation (getAnnotationForType mt)
   _ -> fromAnnotation mempty
 getErrorPos (FunctionArityMismatch ann _ _) = fromAnnotation ann
+getErrorPos (CannotUseBuiltInTypeAsConstructor ann _) = fromAnnotation ann
 getErrorPos _ = (0, 0)
 
 ------
@@ -201,6 +203,8 @@ renderTypeError (TypedHoles map') =
         else line <> indent 2 ("Suggestions:" <+> list (prettyDoc <$> S.toList s))
 renderTypeError (FunctionArityMismatch _ i mt) =
   ["Function arity mismatch. Expected " <> pretty i <> " but got " <> prettyDoc mt]
+renderTypeError (CannotUseBuiltInTypeAsConstructor _ name) =
+  ["Cannot use built-in type as constructor name:" <+> prettyDoc name]
 
 printDataTypes :: Environment -> [Doc ann]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
