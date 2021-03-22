@@ -37,11 +37,11 @@ import Language.Mimsa.Types.Typechecker.MonoType
 import Test.Data.Project
 
 -- | has no constructors, we can do nothing with this
-dtVoid :: (Monoid ann) => DataType ann
+dtVoid :: DataType ann
 dtVoid = DataType "Void" mempty mempty
 
 -- | an enum, we can go to and from a string
-dtTrafficLights :: (Monoid ann) => DataType ann
+dtTrafficLights :: DataType ann
 dtTrafficLights =
   DataType
     "TrafficLights"

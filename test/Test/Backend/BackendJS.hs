@@ -9,7 +9,6 @@ where
 import Data.Bifunctor (first)
 import Data.Either (isRight)
 import Data.Foldable (traverse_)
-import Data.Functor (($>))
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import qualified Data.Text as T

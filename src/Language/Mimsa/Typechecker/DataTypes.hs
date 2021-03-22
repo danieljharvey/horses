@@ -73,6 +73,11 @@ getVariablesForField (MTData _ _ fields) =
   mconcat (getVariablesForField <$> fields)
 getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
+getVariablesForField (MTPair _ a b) = getVariablesForField a <> getVariablesForField b
+getVariablesForField (MTRecord _ items) =
+  mconcat $
+    getVariablesForField <$> M.elems items
+getVariablesForField _ = S.empty
 
 validateConstructors ::
   Environment ->
@@ -124,6 +129,15 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
           tyA <- findType a
           tyB <- findType b
           pure (MTFunction mempty tyA tyB)
+        MTPair _ a b -> do
+          tyA <- findType a
+          tyB <- findType b
+          pure (MTPair mempty tyA tyB)
+        tyPrim@(MTPrim {}) -> pure tyPrim
+        MTRecord _ items -> do
+          tyItems <- traverse findType items
+          pure (MTRecord mempty tyItems)
+        _ -> throwError UnknownTypeError -- TODO: see what this messes up, not 100% on how to deal with these
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
         let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
