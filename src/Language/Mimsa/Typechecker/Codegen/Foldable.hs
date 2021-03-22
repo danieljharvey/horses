@@ -7,20 +7,22 @@ module Language.Mimsa.Typechecker.Codegen.Foldable
 where
 
 import Control.Monad.Except
+import Data.Coerce
 import Data.Foldable (foldl')
 import Data.Text (Text)
 import Language.Mimsa.Typechecker.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-fold :: DataType -> Either Text (Expr Name ())
+fold :: DataType () -> Either Text (Expr Name ())
 fold = runCodegenM . fold_
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
 fold_ ::
-  DataType ->
+  DataType () ->
   CodegenM (Expr Name ())
 fold_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon
@@ -64,15 +66,19 @@ data FieldItemType
   | Recurse Name
   | NoVariable
 
-toFieldItemType :: TyCon -> Name -> Field -> CodegenM (Name, FieldItemType)
+toFieldItemType ::
+  TyCon ->
+  Name ->
+  Type () ->
+  CodegenM (Name, FieldItemType)
 toFieldItemType tyName matchVar = \case
-  VarName a ->
-    if a == matchVar
-      then pure (a, VariableField a)
-      else pure (a, NoVariable)
-  ConsName tyCon [VarName var] -> do
+  MTVar _ (TVName a) ->
+    if coerce a == matchVar
+      then pure (coerce a, VariableField (coerce a))
+      else pure (coerce a, NoVariable)
+  MTData _ tyCon [MTVar _ (TVName var)] -> do
     varName <- nextName tyName
-    if tyCon == tyName && var == matchVar
+    if tyCon == tyName && coerce var == matchVar
       then pure (varName, Recurse varName)
       else throwError "Can only recurse over self"
   _ -> throwError "Expected VarName"
@@ -111,7 +117,7 @@ reconstructFields =
 createMatch ::
   TyCon ->
   Name ->
-  [Field] ->
+  [Type ()] ->
   CodegenM (Expr Name ())
 createMatch typeName matchVar fields = do
   fieldItems <- traverse (toFieldItemType typeName matchVar) fields

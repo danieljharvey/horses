@@ -14,6 +14,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.SubstitutedExpression
+import Language.Mimsa.Types.Typechecker.MonoType
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -44,13 +45,13 @@ constExpr =
     mempty
     mempty
 
-maybeDecl :: DataType
+maybeDecl :: (Monoid ann) => DataType ann
 maybeDecl =
   DataType "Maybe" ["a"] cons'
   where
     cons' =
       M.fromList
-        [ ("Just", [VarName "a"]),
+        [ ("Just", [MTVar mempty (TVName "a")]),
           ("Nothing", [])
         ]
 

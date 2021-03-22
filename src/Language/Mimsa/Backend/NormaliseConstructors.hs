@@ -8,6 +8,7 @@ module Language.Mimsa.Backend.NormaliseConstructors
 where
 
 import Control.Monad.Except
+import Data.Coerce
 import Data.Foldable (foldl')
 import qualified Data.Map as M
 import Language.Mimsa.Backend.Types
@@ -16,16 +17,13 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-  ( Name,
-    TyCon,
-    mkName,
-  )
 import Language.Mimsa.Types.Store.ResolvedTypeDeps
+import Language.Mimsa.Types.Typechecker
 
 -- turns Constructors into functions
 normaliseConstructors ::
   (Monoid ann) =>
-  ResolvedTypeDeps ->
+  (ResolvedTypeDeps ann) ->
   Expr Name ann ->
   BackendM ann (Expr Name ann)
 normaliseConstructors dt (MyConstructor _ tyCon) =
@@ -50,8 +48,8 @@ getConsArgList (MyConsApp _ (MyConstructor _ _tyCon) a) = [a]
 getConsArgList (MyConsApp _ next a) = getConsArgList next <> [a]
 getConsArgList a = [a]
 
-typeNameToName :: Int -> Field -> Name
-typeNameToName _ (VarName name) = name
+typeNameToName :: Int -> Type ann -> Name
+typeNameToName _ (MTVar _ (TVName name)) = coerce name
 typeNameToName i _ = mkName $ "u" <> prettyPrint i
 
 -- ffs
@@ -64,7 +62,7 @@ safeGetItem i as =
 -- turn Just constructor into a function like  \a -> Just a
 constructorToFunctionWithApplication ::
   (Monoid ann) =>
-  ResolvedTypeDeps ->
+  (ResolvedTypeDeps ann) ->
   [Expr Name ann] ->
   TyCon ->
   Expr Name ann
@@ -96,11 +94,11 @@ constructorToFunctionWithApplication dt args tyCon =
                 )
         _ -> MyConstructor mempty tyCon
 
-findDataTypeInProject :: ResolvedTypeDeps -> TyCon -> Maybe DataType
+findDataTypeInProject :: (ResolvedTypeDeps ann) -> TyCon -> Maybe (DataType ann)
 findDataTypeInProject (ResolvedTypeDeps dt) tyCon =
   snd <$> M.lookup tyCon dt
 
-extractTypeConstructor :: TyCon -> DataType -> [Field]
+extractTypeConstructor :: TyCon -> (DataType ann) -> [Type ann]
 extractTypeConstructor tc dt =
   case M.lookup tc (dtConstructors dt) of
     Just names -> names

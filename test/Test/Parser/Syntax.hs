@@ -13,6 +13,7 @@ import Language.Mimsa.ExprUtils
 import Language.Mimsa.Parser
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker.MonoType
 import Test.Hspec
 import Test.Utils.Helpers
 import Text.Megaparsec
@@ -260,7 +261,7 @@ spec = do
                   ( M.fromList
                       [ ("Empty", mempty),
                         ( "Item",
-                          [VarName "a"]
+                          [MTVar () (TVName "a")]
                         )
                       ]
                   )
@@ -280,7 +281,7 @@ spec = do
                   mempty
                   ( M.singleton
                       "Dog"
-                      [ConsName "String" mempty]
+                      [MTData () "String" mempty]
                   )
               )
               (int 1)
@@ -311,7 +312,7 @@ spec = do
                   mempty
                   ( M.fromList
                       [ ("Zero", []),
-                        ("Succ", [ConsName "Nat" mempty])
+                        ("Succ", [MTData () "Nat" mempty])
                       ]
                   )
               )
@@ -338,7 +339,7 @@ spec = do
                   "Maybe"
                   ["a"]
                   ( M.fromList
-                      [ ("Just", [VarName "a"]),
+                      [ ("Just", [MTVar () (TVName "a")]),
                         ("Nothing", [])
                       ]
                   )
@@ -355,9 +356,10 @@ spec = do
                   ["r", "a"]
                   ( M.fromList
                       [ ( "Reader",
-                          [ TNFunc
-                              (VarName "r")
-                              (VarName "a")
+                          [ MTFunction
+                              ()
+                              (MTVar () (TVName "r"))
+                              (MTVar () (TVName "a"))
                           ]
                         )
                       ]
@@ -375,12 +377,14 @@ spec = do
                   ["r", "a"]
                   ( M.fromList
                       [ ( "Reader",
-                          [ TNFunc
-                              (VarName "r")
-                              ( ConsName
+                          [ MTFunction
+                              ()
+                              (MTVar () (TVName "r"))
+                              ( MTData
+                                  ()
                                   "Pair"
-                                  [ VarName "a",
-                                    VarName "b"
+                                  [ MTVar () (TVName "a"),
+                                    MTVar () (TVName "b")
                                   ]
                               )
                           ]
@@ -426,10 +430,10 @@ spec = do
                   "Tree"
                   ["a"]
                   ( M.fromList
-                      [ ("Leaf", [VarName "a"]),
+                      [ ("Leaf", [MTVar () (TVName "a")]),
                         ( "Branch",
-                          [ ConsName "Tree" [VarName "a"],
-                            ConsName "Tree" [VarName "b"]
+                          [ MTData () "Tree" [MTVar () (TVName "a")],
+                            MTData () "Tree" [MTVar () (TVName "b")]
                           ]
                         )
                       ]
@@ -448,9 +452,9 @@ spec = do
                   ( M.fromList
                       [ ("Empty", mempty),
                         ( "Branch",
-                          [ ConsName "Tree" [VarName "a"],
-                            VarName "a",
-                            ConsName "Tree" [VarName "a"]
+                          [ MTData () "Tree" [MTVar () (TVName "a")],
+                            MTVar () (TVName "a"),
+                            MTData () "Tree" [MTVar () (TVName "a")]
                           ]
                         )
                       ]

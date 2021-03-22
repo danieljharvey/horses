@@ -33,14 +33,15 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Typechecker.MonoType
 import Test.Data.Project
 
 -- | has no constructors, we can do nothing with this
-dtVoid :: DataType
+dtVoid :: (Monoid ann) => DataType ann
 dtVoid = DataType "Void" mempty mempty
 
 -- | an enum, we can go to and from a string
-dtTrafficLights :: DataType
+dtTrafficLights :: (Monoid ann) => DataType ann
 dtTrafficLights =
   DataType
     "TrafficLights"
@@ -54,60 +55,74 @@ dtTrafficLights =
 
 -- | A newtype around a string
 -- | we can wrap and unwrap maybe?
-dtWrappedString :: DataType
+dtWrappedString :: (Monoid ann) => DataType ann
 dtWrappedString =
   DataType
     "WrappedString"
     mempty
-    (M.singleton "Wrapped" [ConsName "String" mempty])
+    (M.singleton "Wrapped" [MTData mempty "String" mempty])
 
 -- | Identity monad
-dtIdentity :: DataType
+dtIdentity :: (Monoid ann) => DataType ann
 dtIdentity =
   DataType
     "Identity"
     ["a"]
-    (M.singleton "Identity" [VarName "a"])
+    (M.singleton "Identity" [MTVar mempty (TVName "a")])
 
 -- | Maybe monad
-dtMaybe :: DataType
+dtMaybe :: (Monoid ann) => DataType ann
 dtMaybe =
   DataType
     "Maybe"
     ["a"]
-    (M.fromList [("Just", [VarName "a"]), ("Nothing", [])])
+    ( M.fromList
+        [ ("Just", [MTVar mempty (TVName "a")]),
+          ("Nothing", [])
+        ]
+    )
 
 -- | Either monad
-dtEither :: DataType
+dtEither :: (Monoid ann) => DataType ann
 dtEither =
   DataType
     "Either"
     ["e", "a"]
-    (M.fromList [("Right", [VarName "a"]), ("Left", [VarName "e"])])
+    ( M.fromList
+        [ ("Right", [MTVar mempty (TVName "a")]),
+          ("Left", [MTVar mempty (TVName "e")])
+        ]
+    )
 
 -- | These monad
-dtThese :: DataType
+dtThese :: (Monoid ann) => DataType ann
 dtThese =
   DataType
     "These"
     ["a", "b"]
     ( M.fromList
-        [ ("This", [VarName "a"]),
-          ("That", [VarName "b"]),
-          ("These", [VarName "a", VarName "b"])
+        [ ("This", [MTVar mempty (TVName "a")]),
+          ("That", [MTVar mempty (TVName "b")]),
+          ( "These",
+            [ MTVar mempty (TVName "a"),
+              MTVar
+                mempty
+                (TVName "b")
+            ]
+          )
         ]
     )
 
 -- | List monad
-dtList :: DataType
+dtList :: (Monoid ann) => DataType ann
 dtList =
   DataType
     "List"
     ["a"]
     ( M.fromList
         [ ( "Cons",
-            [ VarName "a",
-              ConsName "List" [VarName "a"]
+            [ MTVar mempty (TVName "a"),
+              MTData mempty "List" [MTVar mempty (TVName "a")]
             ]
           ),
           ("Nil", [])
@@ -116,81 +131,116 @@ dtList =
 
 -- | List but with more type params so we can recurse around more complicated
 -- types
-dtDoubleList :: DataType
+dtDoubleList :: (Monoid ann) => DataType ann
 dtDoubleList =
   DataType
     "DoubleList"
     ["a", "b"]
     ( M.fromList
         [ ( "DoubleCons",
-            [ VarName "a",
-              VarName "b",
-              ConsName "DoubleList" [VarName "a", VarName "b"]
+            [ MTVar mempty (TVName "a"),
+              MTVar mempty (TVName "b"),
+              MTData
+                mempty
+                "DoubleList"
+                [ MTVar mempty (TVName "a"),
+                  MTVar mempty (TVName "b")
+                ]
             ]
           ),
           ("DoubleNil", [])
         ]
     )
 
-dtTree :: DataType
+dtTree :: (Monoid ann) => DataType ann
 dtTree =
   DataType
     "Tree"
     ["a"]
     ( M.fromList
-        [ ("Leaf", [VarName "a"]),
+        [ ("Leaf", [MTVar mempty (TVName "a")]),
           ( "Branch",
-            [ ConsName "Tree" [VarName "a"],
-              ConsName "Tree" [VarName "a"]
+            [ MTData mempty "Tree" [MTVar mempty (TVName "a")],
+              MTData mempty "Tree" [MTVar mempty (TVName "a")]
             ]
           )
         ]
     )
 
-dtReader :: DataType
+dtReader :: (Monoid ann) => DataType ann
 dtReader =
   DataType
     "Reader"
     ["r", "a"]
     ( M.singleton
         "Reader"
-        [ TNFunc
-            (VarName "r")
-            (VarName "a")
+        [ MTFunction
+            mempty
+            (MTVar mempty (TVName "r"))
+            (MTVar mempty (TVName "a"))
         ]
     )
 
-dtMatchedPair :: DataType
+dtMatchedPair :: (Monoid ann) => DataType ann
 dtMatchedPair =
   DataType
     "MatchedPair"
     ["a"]
-    (M.singleton "MatchedPair" [VarName "a", VarName "a"])
+    ( M.singleton
+        "MatchedPair"
+        [ MTVar mempty (TVName "a"),
+          MTVar mempty (TVName "a")
+        ]
+    )
 
-dtConsoleF :: DataType
+dtConsoleF :: (Monoid ann) => DataType ann
 dtConsoleF =
   DataType
     "ConsoleF"
     ["next"]
     ( M.fromList
-        [ ("Write", [ConsName "String" [], VarName "next"]),
-          ("Read", [TNFunc (ConsName "String" []) (VarName "next")])
+        [ ( "Write",
+            [ MTData mempty "String" [],
+              MTVar mempty (TVName "next")
+            ]
+          ),
+          ( "Read",
+            [ MTFunction
+                mempty
+                (MTData mempty "String" [])
+                (MTVar mempty (TVName "next"))
+            ]
+          )
         ]
     )
 
-dtPair :: DataType
-dtPair = DataType "Pair" ["a", "b"] (M.singleton "Pair" [VarName "a", VarName "b"])
+dtPair :: (Monoid ann) => DataType ann
+dtPair =
+  DataType
+    "Pair"
+    ["a", "b"]
+    ( M.singleton
+        "Pair"
+        [ MTVar mempty (TVName "a"),
+          MTVar mempty (TVName "b")
+        ]
+    )
 
-dtEnv :: DataType
+dtEnv :: (Monoid ann) => DataType ann
 dtEnv =
   DataType
     "Env"
     ["w", "a"]
-    (M.singleton "Env" [VarName "w", VarName "a"])
+    ( M.singleton
+        "Env"
+        [ MTVar mempty (TVName "w"),
+          MTVar mempty (TVName "a")
+        ]
+    )
 
 typecheckInstance ::
-  (DataType -> Either Text (Expr Name ())) ->
-  DataType ->
+  (DataType () -> Either Text (Expr Name ())) ->
+  DataType () ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 typecheckInstance mkInstance dt =
   (,) <$> newStdLib <*> inst'

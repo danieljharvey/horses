@@ -7,6 +7,7 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.AST (DataType)
+import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
   ( TyCon,
@@ -18,7 +19,7 @@ import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 -- everything we need in typechecking environment
 data Environment = Environment
   { getSchemes :: Map TypeIdentifier Scheme,
-    getDataTypes :: Map TyCon DataType,
+    getDataTypes :: Map TyCon (DataType Annotation),
     getInfix :: Map InfixOp MonoType
   }
   deriving (Eq, Ord, Show)

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -15,30 +16,39 @@ import Data.Swagger
 import Data.Text.Prettyprint.Doc
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer (Printer (prettyDoc))
-import Language.Mimsa.Types.AST.Field
 import Language.Mimsa.Types.Identifiers
   ( Name,
     TyCon,
     renderName,
   )
+import Language.Mimsa.Types.Typechecker.MonoType
 
 -------
 
 -- | This describes a custom data type, such as `Either e a = Left e | Right a`
-data DataType = DataType
+data DataType ann = DataType
   { -- | The name of this type, ie `Either`
     dtName :: TyCon,
     -- | The type variables for the data type, ie `e`, `a`
     dtVars :: [Name],
     -- | map from constructor name to it's arguments, ie "`Left` -> [`e`]" or "`Right` -> [`a`]"
-    dtConstructors :: Map TyCon [Field]
+    dtConstructors :: Map TyCon [Type ann]
   }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, JSON.ToJSON, ToSchema)
+  deriving
+    ( Eq,
+      Ord,
+      Show,
+      Functor,
+      Generic,
+      JSON.FromJSON,
+      JSON.ToJSON,
+      ToSchema
+    )
 
-instance Printer DataType where
+instance Printer (DataType ann) where
   prettyDoc = renderDataType
 
-renderDataType :: DataType -> Doc ann
+renderDataType :: (DataType ann) -> Doc style
 renderDataType (DataType tyCon vars' constructors') =
   "type" <+> prettyDoc tyCon
     <> printVars vars'

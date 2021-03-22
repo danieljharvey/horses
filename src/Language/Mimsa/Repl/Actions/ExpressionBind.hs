@@ -36,7 +36,7 @@ doBind project input name expr = do
 doBindType ::
   Project Annotation ->
   Text ->
-  DataType ->
+  DataType Annotation ->
   MimsaM (Error Annotation) (Project Annotation)
 doBindType project input dt = do
   (newProject, _) <-

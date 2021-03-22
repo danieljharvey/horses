@@ -7,21 +7,23 @@ module Language.Mimsa.Typechecker.Codegen.Functor
 where
 
 import Control.Monad.Except
+import Data.Coerce
 import Data.Foldable (foldl')
 import Data.Semigroup
 import Data.Text (Text)
 import Language.Mimsa.Typechecker.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-functorMap :: DataType -> Either Text (Expr Name ())
+functorMap :: DataType () -> Either Text (Expr Name ())
 functorMap = runCodegenM . functorMap_
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
 functorMap_ ::
-  DataType ->
+  DataType () ->
   CodegenM (Expr Name ())
 functorMap_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon
@@ -61,14 +63,14 @@ data FieldItemType
   | RecurseField Name
   | Func2 Name Name Name
 
-toFieldItemType :: TyCon -> Field -> CodegenM FieldItemType
+toFieldItemType :: TyCon -> Type () -> CodegenM FieldItemType
 toFieldItemType typeName = \case
-  VarName a -> pure (VariableField a)
-  ConsName fieldConsName _fields
+  MTVar _ (TVName a) -> pure (VariableField (coerce a))
+  MTData _ fieldConsName _fields
     | fieldConsName == typeName ->
       RecurseField <$> nextName typeName
-  TNFunc (VarName a) (VarName b) ->
-    pure $ Func2 (a <> "to" <> b) a b
+  MTFunction _ (MTVar _ (TVName a)) (MTVar _ (TVName b)) ->
+    pure $ Func2 (coerce a <> "to" <> coerce b) (coerce a) (coerce b)
   _ -> throwError "Expected VarName"
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()
@@ -120,7 +122,7 @@ createMatch ::
   TyCon ->
   Name ->
   TyCon ->
-  [Field] ->
+  [Type ()] ->
   CodegenM (Expr Name ())
 createMatch typeName matchVar tyCon fields = do
   regFields <-

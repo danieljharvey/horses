@@ -11,6 +11,7 @@ module Language.Mimsa.Server.Project.BindType
 where
 
 import qualified Data.Aeson as JSON
+import Data.Functor (($>))
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
@@ -45,7 +46,7 @@ data CodegenInfo = CodegenInfo {ciExprName :: Name, ciHash :: ExprHash}
 
 data BindTypeResponse = BindTypeResponse
   { btProjectData :: ProjectData,
-    btDataType :: DataType,
+    btDataType :: DataType (),
     btPrettyType :: Text,
     btCodegen :: Maybe ExpressionData,
     btTypeclasses :: [Typeclass]
@@ -71,4 +72,4 @@ bindType mimsaEnv (BindTypeRequest projectHash input) =
         pure (Just ed')
       Nothing -> pure Nothing
     pure $
-      BindTypeResponse pd dt (prettyPrint dt) ed typeClasses
+      BindTypeResponse pd (dt $> ()) (prettyPrint dt) ed typeClasses

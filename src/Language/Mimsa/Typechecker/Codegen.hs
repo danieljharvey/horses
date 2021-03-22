@@ -52,13 +52,13 @@ data Typeclass
 instance Printer Typeclass where
   prettyDoc tc = pretty (show tc)
 
-tcPred :: (DataType -> Bool) -> [a] -> DataType -> [a]
+tcPred :: (DataType () -> Bool) -> [a] -> DataType () -> [a]
 tcPred predicate as dt =
   if predicate dt
     then as
     else mempty
 
-typeclassMatches :: DataType -> [Typeclass]
+typeclassMatches :: DataType () -> [Typeclass]
 typeclassMatches dt =
   tcPred (isRight . toString) [Enum] dt
     <> tcPred
@@ -79,16 +79,16 @@ typeclassMatches dt =
       dt
 
 codegenToRow ::
-  (DataType -> Either e (Expr Name ())) ->
+  (DataType () -> Either e (Expr Name ())) ->
   Name ->
-  DataType ->
+  DataType () ->
   Map Name (Expr Name Annotation)
 codegenToRow toDt name dt =
   case toDt dt of
     Right a -> M.singleton name (a $> mempty)
     _ -> mempty
 
-doCodegen :: DataType -> Map Name (Expr Name Annotation)
+doCodegen :: DataType () -> Map Name (Expr Name Annotation)
 doCodegen dt =
   codegenToRow toString "toString" dt
     <> codegenToRow wrap "wrap" dt

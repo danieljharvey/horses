@@ -80,7 +80,7 @@ findTypeBindings tBindings expr = do
 createTypeStoreExpression ::
   (Eq ann, Monoid ann) =>
   TypeBindings ->
-  DataType ->
+  DataType ann ->
   Either ResolverError (StoreExpression ann)
 createTypeStoreExpression tBindings dt =
   let expr = MyData mempty dt (MyRecord mempty mempty)

@@ -62,7 +62,7 @@ data Expr var ann
   | -- | infix, name, expr
     MyDefineInfix ann InfixOp var (Expr var ann)
   | -- | tyName, tyArgs, Map constructor args, body
-    MyData ann DataType (Expr var ann)
+    MyData ann (DataType ann) (Expr var ann)
   | -- | use a constructor by name
     MyConstructor ann TyCon
   | -- | constructor, value
@@ -256,7 +256,7 @@ prettyCaseMatch sumExpr matches catchAll =
 
 prettyDataType ::
   (Printer var, Show var) =>
-  DataType ->
+  DataType ann ->
   Expr var ann ->
   Doc style
 prettyDataType dt expr =
