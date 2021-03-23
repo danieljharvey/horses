@@ -76,5 +76,8 @@ renderDataType (DataType tyCon vars' constructors') =
         <> hang
           0
           ( align $
-              vsep (prettyDoc <$> args)
+              vsep (prettyMt <$> args)
           )
+    prettyMt mt = case mt of
+      mtFunc@MTFunction {} -> "(" <> prettyDoc mtFunc <> ")"
+      other -> prettyDoc other

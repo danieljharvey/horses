@@ -219,7 +219,6 @@ inNewLineExpr = do
 
 inExpr :: Parser ParserExpr
 inExpr = do
-  _ <- space
   _ <- thenSpace (string "in")
   expressionParser
 

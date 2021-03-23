@@ -82,13 +82,15 @@ inProtectedTypes tx =
     then Nothing
     else Just tx
 
+-- these names cannot be used as type variables
 protectedTypeNames :: Set Text
 protectedTypeNames =
   S.fromList
     [ "String",
       "Int",
       "Boolean",
-      "Unit"
+      "Unit",
+      "in"
     ]
 
 tyVarParser :: Parser TyVar

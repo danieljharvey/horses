@@ -281,7 +281,7 @@ spec = do
                   mempty
                   ( M.singleton
                       "Dog"
-                      [MTData () "String" mempty]
+                      [MTPrim () MTString]
                   )
               )
               (int 1)
@@ -650,4 +650,12 @@ spec = do
       testParseWithAnn "{ name: 1 } " `shouldSatisfy` isLeft
     it "Parses the troublesome function" $
       testParseWithAnn "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise Nowt"
+        `shouldSatisfy` isRight
+    it "Parses Reader type declaration with 'in'" $
+      testParseWithAnn
+        "type Reader r a = Reader (r -> a) in True"
+        `shouldSatisfy` isRight
+    it "Parses Reader type declaration with semicolon" $
+      testParseWithAnn
+        "type Reader r a = Reader r -> a; True"
         `shouldSatisfy` isRight
