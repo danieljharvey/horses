@@ -636,3 +636,12 @@ spec =
         it "type Something = String in True" $ do
           result <- eval stdLib "type Something = String in True"
           result `shouldSatisfy` isLeft
+        it "type Pair a b = Pair (a,b)" $ do
+          result <- eval stdLib "type Pair a b = Pair (a,b) in True"
+          result `shouldSatisfy` isRight
+        it "type Record a = Record { name: String, other: a } in True" $ do
+          result <- eval stdLib "type Record a = Record { name: String, other: a } in True"
+          result `shouldSatisfy` isRight
+        it "type State s a = State (s -> (a,s)) in True" $ do
+          result <- eval stdLib "type State s a = State (s -> (a,s)) in True"
+          result `shouldSatisfy` isRight

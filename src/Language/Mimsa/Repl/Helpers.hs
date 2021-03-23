@@ -26,7 +26,7 @@ catchMimsaError ::
   MimsaM e a
 catchMimsaError def computation =
   computation `catchError` \e -> do
-    logDebug (prettyPrint e)
+    replOutput (prettyPrint e)
     pure def
 
 -- | Actually save a StoreExpression to disk

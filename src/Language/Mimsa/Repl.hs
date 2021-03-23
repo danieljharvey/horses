@@ -73,7 +73,7 @@ parseCommand ::
 parseCommand env input =
   case parseAndFormat replParser input of
     Left e -> do
-      logError e
+      replOutput e
       pure env
     Right replAction -> do
       newExprs <- doReplAction env input replAction
