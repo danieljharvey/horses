@@ -6,7 +6,6 @@ module Language.Mimsa.Parser.TypeDecl
   )
 where
 
-import qualified Control.Monad.Combinators.Expr as PC
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -73,39 +72,3 @@ oneTypeConstructor = do
   pure (M.singleton name args)
 
 -----
-
-typeNameParser :: Parser Field
-typeNameParser =
-  try emptyConsParser
-    <|> try (inBrackets functionParser)
-    <|> try varNameParser
-    <|> try (inBrackets parameterisedConsParser)
-
--- Simple type like String
-emptyConsParser :: Parser Field
-emptyConsParser = ConsName <$> tyConParser <*> pure mempty
-
---
-parameterisedConsParser :: Parser Field
-parameterisedConsParser = do
-  c <- tyConParser
-  let itemParser = do
-        _ <- space1
-        typeNameParser
-  params <- some itemParser
-  pure $ ConsName c params
-
-varNameParser :: Parser Field
-varNameParser = VarName <$> nameParser
-
---------
-
-arrParse :: PC.Operator Parser Field
-arrParse = PC.InfixR $ do
-  _ <- space1
-  _ <- thenSpace (string "->")
-  pure TNFunc
-
-functionParser :: Parser Field
-functionParser =
-  PC.makeExprParser typeNameParser [[arrParse]]
