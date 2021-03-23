@@ -48,7 +48,7 @@ data DataType ann = DataType
 instance Printer (DataType ann) where
   prettyDoc = renderDataType
 
-renderDataType :: (DataType ann) -> Doc style
+renderDataType :: DataType ann -> Doc style
 renderDataType (DataType tyCon vars' constructors') =
   "type" <+> prettyDoc tyCon
     <> printVars vars'

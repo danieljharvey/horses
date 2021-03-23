@@ -62,7 +62,7 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
     extractFromCon (MTData _ name as) = S.singleton name <> mconcat (extractFromCon <$> as)
     extractFromCon (MTFunction _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon (MTPair _ a b) = extractFromCon a <> extractFromCon b
-    extractFromCon (MTPrim {}) = mempty
+    extractFromCon MTPrim {} = mempty
     extractFromCon (MTRecord _ items) = mconcat (extractFromCon <$> M.elems items)
 
 -- get all the names of constructors (type and data) declared in the datatype

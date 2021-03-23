@@ -133,7 +133,7 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
           tyA <- findType a
           tyB <- findType b
           pure (MTPair mempty tyA tyB)
-        tyPrim@(MTPrim {}) -> pure tyPrim
+        tyPrim@MTPrim {} -> pure tyPrim
         MTRecord _ items -> do
           tyItems <- traverse findType items
           pure (MTRecord mempty tyItems)

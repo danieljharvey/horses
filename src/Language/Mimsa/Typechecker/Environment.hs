@@ -21,6 +21,6 @@ lookupConstructor env ann name =
     _ -> throwError (TypeConstructorNotInScope env ann name)
 
 -- does this data type contain the given constructor?
-containsConstructor :: TyCon -> (DataType ann) -> Bool
+containsConstructor :: TyCon -> DataType ann -> Bool
 containsConstructor name (DataType _tyName _tyVars constructors) =
   M.member name constructors

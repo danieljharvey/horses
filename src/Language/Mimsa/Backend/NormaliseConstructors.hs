@@ -23,7 +23,7 @@ import Language.Mimsa.Types.Typechecker
 -- turns Constructors into functions
 normaliseConstructors ::
   (Monoid ann) =>
-  (ResolvedTypeDeps ann) ->
+  ResolvedTypeDeps ann ->
   Expr Name ann ->
   BackendM ann (Expr Name ann)
 normaliseConstructors dt (MyConstructor _ tyCon) =
@@ -62,7 +62,7 @@ safeGetItem i as =
 -- turn Just constructor into a function like  \a -> Just a
 constructorToFunctionWithApplication ::
   (Monoid ann) =>
-  (ResolvedTypeDeps ann) ->
+  ResolvedTypeDeps ann ->
   [Expr Name ann] ->
   TyCon ->
   Expr Name ann
@@ -94,11 +94,11 @@ constructorToFunctionWithApplication dt args tyCon =
                 )
         _ -> MyConstructor mempty tyCon
 
-findDataTypeInProject :: (ResolvedTypeDeps ann) -> TyCon -> Maybe (DataType ann)
+findDataTypeInProject :: ResolvedTypeDeps ann -> TyCon -> Maybe (DataType ann)
 findDataTypeInProject (ResolvedTypeDeps dt) tyCon =
   snd <$> M.lookup tyCon dt
 
-extractTypeConstructor :: TyCon -> (DataType ann) -> [Type ann]
+extractTypeConstructor :: TyCon -> DataType ann -> [Type ann]
 extractTypeConstructor tc dt =
   case M.lookup tc (dtConstructors dt) of
     Just names -> names
