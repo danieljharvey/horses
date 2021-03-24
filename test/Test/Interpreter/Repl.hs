@@ -645,3 +645,7 @@ spec =
         it "type State s a = State (s -> (a,s)) in True" $ do
           result <- eval stdLib "type State s a = State (s -> (a,s)) in True"
           result `shouldSatisfy` isRight
+        -- to fix with open/closed records
+        xit "\\person -> case person of Person \\p -> p.age" $ do
+          result <- eval stdLib "\\person -> case person of Person \\p -> p.age"
+          result `shouldSatisfy` isRight

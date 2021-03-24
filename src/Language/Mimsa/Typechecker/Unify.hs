@@ -13,6 +13,7 @@ import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -104,6 +105,6 @@ getRecordItemType ::
   Map Name MonoType ->
   TcMonad MonoType
 getRecordItemType ann name map' =
-  case M.lookup name map' of
+  case M.lookup (debugPretty "recordItem name" name) (debugPretty "recordItemType" map') of
     Just found -> pure found
     _ -> throwError (MissingRecordTypeMember ann name map')

@@ -84,6 +84,9 @@ stdLibE =
     >>= addBinding
       "{ a: 1, b: \"dog\" }"
       "aRecord"
+    >>= addBinding
+      "type Person = Person { name: String, age: Int } in {}"
+      "typePerson"
     >>= addListMonad
     >>= addPair
     >>= addStateMonad

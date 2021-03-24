@@ -11,7 +11,6 @@ import Control.Monad.Except
 import Data.Foldable (traverse_)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Monad
-import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -20,13 +19,11 @@ import Language.Mimsa.Types.Store
 
 -- | if an error has been thrown, log it and return default value
 catchMimsaError ::
-  (Printer e) =>
   a ->
   MimsaM e a ->
   MimsaM e a
 catchMimsaError def computation =
-  computation `catchError` \e -> do
-    replOutput (prettyPrint e)
+  computation `catchError` \_e -> do
     pure def
 
 -- | Actually save a StoreExpression to disk
