@@ -14,6 +14,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -29,7 +30,7 @@ createStoreExpression' = createStoreExpression
 
 createTypeStoreExpression' ::
   TypeBindings ->
-  DataType ->
+  DataType () ->
   Either ResolverError (StoreExpression ())
 createTypeStoreExpression' = createTypeStoreExpression
 
@@ -130,7 +131,7 @@ spec =
                 }
             )
       it "Throws when trying to use an unavailable type" $ do
-        let cons' = ConsName "MyUnit" []
+        let cons' = MTData mempty "MyUnit" []
             dt =
               DataType
                 "VoidBox"
@@ -140,7 +141,7 @@ spec =
         storeExpr
           `shouldBe` Left (MissingType "MyUnit" mempty)
       it "Creates a StoreExpression that uses a type from the type bindings" $ do
-        let cons' = ConsName "MyUnit" []
+        let cons' = MTData mempty "MyUnit" []
             dt =
               DataType
                 "VoidBox"

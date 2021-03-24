@@ -15,6 +15,7 @@ where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
+import Data.String
 import Data.Swagger
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -35,6 +36,9 @@ newtype TyVar = TyVar {getTyVar' :: Text}
       JSON.ToJSON,
       JSON.ToJSONKey
     )
+
+instance IsString TyVar where
+  fromString = mkTyVar . T.pack
 
 getTyVar :: TyVar -> Text
 getTyVar (TyVar t) = t

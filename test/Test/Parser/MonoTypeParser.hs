@@ -261,3 +261,5 @@ spec =
                   (MTData mempty "Option" [typeName "b"])
               )
           )
+    it "Parses function without brackets" $
+      testParser "r -> a" `shouldSatisfy` isRight

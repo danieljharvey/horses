@@ -5,7 +5,6 @@ module Language.Mimsa.Types.AST
     module Language.Mimsa.Types.AST.StringType,
     module Language.Mimsa.Types.AST.Annotation,
     module Language.Mimsa.Types.AST.Operator,
-    module Language.Mimsa.Types.AST.Field,
     module Language.Mimsa.Types.AST.InfixOp,
   )
 where
@@ -13,7 +12,6 @@ where
 import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.AST.DataType
 import Language.Mimsa.Types.AST.Expr
-import Language.Mimsa.Types.AST.Field
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal
 import Language.Mimsa.Types.AST.Operator

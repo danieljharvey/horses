@@ -17,7 +17,7 @@ import Language.Mimsa.Types.Store
 -- we spend so much time passing the whole store around to match hashes
 -- lets create one way of resolving a pile of them and be done with it
 
-resolveDeps :: Store a -> Bindings -> Either StoreError (ResolvedDeps a)
+resolveDeps :: Store ann -> Bindings -> Either StoreError (ResolvedDeps ann)
 resolveDeps (Store items) (Bindings bindings') =
   case partitionEithers foundItems of
     ([], found) -> Right (ResolvedDeps (M.fromList found))
@@ -30,13 +30,19 @@ resolveDeps (Store items) (Bindings bindings') =
       )
         <$> M.toList bindings'
 
-extractDataType :: StoreExpression a -> Maybe DataType
+extractDataType ::
+  (Ord ann) =>
+  StoreExpression ann ->
+  Maybe (DataType ann)
 extractDataType se =
-  let types :: S.Set DataType
-      types = extractDataTypes (storeExpression se)
+  let types = extractDataTypes (storeExpression se)
    in listToMaybe . S.toList $ types
 
-resolveTypeDeps :: Store a -> TypeBindings -> Either StoreError ResolvedTypeDeps
+resolveTypeDeps ::
+  (Ord ann) =>
+  Store ann ->
+  TypeBindings ->
+  Either StoreError (ResolvedTypeDeps ann)
 resolveTypeDeps (Store items) (TypeBindings bindings') =
   case partitionEithers foundItems of
     ([], found) -> Right (ResolvedTypeDeps (M.fromList found))
@@ -52,7 +58,10 @@ resolveTypeDeps (Store items) (TypeBindings bindings') =
       )
         <$> M.toList bindings'
 
-recursiveResolve :: Store a -> StoreExpression a -> Either StoreError [StoreExpression a]
+recursiveResolve ::
+  Store ann ->
+  StoreExpression ann ->
+  Either StoreError [StoreExpression ann]
 recursiveResolve store' storeExpr = do
   (ResolvedDeps deps) <- resolveDeps store' (storeBindings storeExpr)
   let storeExprs = (\(name, (_, se)) -> (name, se)) <$> M.toList deps

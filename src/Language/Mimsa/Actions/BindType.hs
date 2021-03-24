@@ -6,6 +6,7 @@ module Language.Mimsa.Actions.BindType
 where
 
 import Control.Monad.Except (liftEither)
+import Data.Functor (($>))
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Actions
@@ -23,8 +24,12 @@ import Language.Mimsa.Types.Store
 -- add a new type to the project, creating any functions for it as we go
 bindType ::
   Text ->
-  DataType ->
-  Actions.ActionM ([Typeclass], Maybe (ResolvedExpression Annotation), DataType)
+  DataType Annotation ->
+  Actions.ActionM
+    ( [Typeclass],
+      Maybe (ResolvedExpression Annotation),
+      DataType Annotation
+    )
 bindType input dt = do
   addTypeToProject input dt
   let name = tyConToName (dtName dt)
@@ -43,7 +48,7 @@ bindType input dt = do
           ( "Generated functions bound to " <> prettyPrint name <> "."
           )
         pure
-          ( typeclassMatches dt,
+          ( typeclassMatches (dt $> ()),
             Just codegenFunc,
             dt
           )
@@ -51,7 +56,7 @@ bindType input dt = do
 storeExprFromResolved :: ResolvedExpression ann -> StoreExpression ann
 storeExprFromResolved (ResolvedExpression _ se _ _ _) = se
 
-addTypeToProject :: Text -> DataType -> Actions.ActionM ()
+addTypeToProject :: Text -> DataType Annotation -> Actions.ActionM ()
 addTypeToProject input dt = do
   project <- Actions.getProject
   -- create storeExpr for new datatype
@@ -69,10 +74,10 @@ addTypeToProject input dt = do
 
 createCodegenFunction ::
   Project Annotation ->
-  DataType ->
+  DataType Annotation ->
   Actions.ActionM (Maybe (ResolvedExpression Annotation))
 createCodegenFunction project dt =
-  case doCodegen dt of
+  case doCodegen (dt $> ()) of
     items | M.null items -> pure Nothing
     funcMap -> do
       storeExprs <-

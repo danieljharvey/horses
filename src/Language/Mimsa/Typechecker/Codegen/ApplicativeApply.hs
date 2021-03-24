@@ -18,9 +18,10 @@ import qualified Data.Text as T
 import Language.Mimsa.Typechecker.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-applicativeApply :: DataType -> Either Text (Expr Name ())
+applicativeApply :: DataType () -> Either Text (Expr Name ())
 applicativeApply = runCodegenM . applicativeApply_
 
 fName :: TyCon -> Name
@@ -33,7 +34,7 @@ aName tyCon = Name (coerce (tyConToName tyCon) <> "A")
 -- | ie A -> m A
 -- | If there are multiple constructors that match this it will fail
 applicativeApply_ ::
-  DataType ->
+  DataType () ->
   CodegenM (Expr Name ())
 applicativeApply_ (DataType tyCon vars items) = do
   matches <- createMatches tyCon vars items
@@ -54,20 +55,23 @@ applicativeApply_ (DataType tyCon vars items) = do
     )
 
 -- Do we care about this constructor?
-containsVar :: Name -> [Field] -> Bool
+containsVar :: Name -> [Type ()] -> Bool
 containsVar n fields =
   or (fieldContains <$> fields)
   where
     fieldContains field =
       case field of
-        (VarName a) -> a == n
-        (ConsName _ as') -> or (fieldContains <$> as')
-        (TNFunc a b) -> fieldContains a || fieldContains b
+        (MTVar _ (TVName a)) -> coerce a == n
+        (MTData _ _ as') -> or (fieldContains <$> as')
+        (MTFunction _ a b) -> fieldContains a || fieldContains b
+        (MTPair _ a b) -> fieldContains a || fieldContains b
+        (MTRecord _ items) -> or (fieldContains <$> items)
+        _ -> False
 
 createMatches ::
   TyCon ->
   [Name] ->
-  Map TyCon [Field] ->
+  Map TyCon [Type ()] ->
   CodegenM (NonEmpty (TyCon, Expr Name ()))
 createMatches typeName vars items = do
   funcVar <- getFunctorVar vars
@@ -81,7 +85,7 @@ createMatches typeName vars items = do
     constructors
 
 -- | a case match that reconstructs the given expr untouched
-noOpMatch :: TyCon -> [Field] -> Expr Name ()
+noOpMatch :: TyCon -> [Type ()] -> Expr Name ()
 noOpMatch tyCon fields =
   foldl'
     ( \expr' (i, _field) ->
@@ -94,14 +98,20 @@ noOpMatch tyCon fields =
 newtype FieldItemType = VariableField Name
   deriving (Eq, Ord)
 
-toFieldItemType :: Field -> CodegenM FieldItemType
+toFieldItemType :: Type () -> CodegenM FieldItemType
 toFieldItemType = \case
-  VarName a -> pure (VariableField a)
+  MTVar _ (TVName a) -> pure (VariableField $ coerce a)
   _ -> throwError "Expected VarName"
 
-toFieldItemTypeF :: Name -> Field -> CodegenM FieldItemType
+toFieldItemTypeF ::
+  Name ->
+  Type () ->
+  CodegenM FieldItemType
 toFieldItemTypeF funcVar = \case
-  VarName a -> if a == funcVar then pure (VariableField "f") else pure (VariableField a)
+  MTVar _ (TVName a) ->
+    if coerce a == funcVar
+      then pure (VariableField "f")
+      else pure (VariableField (coerce a))
   _ -> throwError "Expected VarName"
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()
@@ -115,7 +125,7 @@ reconstructField matchVar fieldItem =
 createInnerMatch ::
   Name ->
   TyCon ->
-  [Field] ->
+  [Type ()] ->
   CodegenM (Expr Name ())
 createInnerMatch matchVar tyCon fields = do
   regFields <-
@@ -141,15 +151,17 @@ multiFunctorCheck :: [FieldItemType] -> CodegenM ()
 multiFunctorCheck items =
   if length items == S.size (S.fromList items)
     then pure ()
-    else throwError "Multiple functor variables in first applicative argument"
+    else
+      throwError
+        "Multiple functor variables in first applicative argument"
 
 createMatch ::
   TyCon ->
   Name ->
   Map
     TyCon
-    [Field] ->
-  (TyCon, [Field]) ->
+    [Type ()] ->
+  (TyCon, [Type ()]) ->
   CodegenM (TyCon, Expr Name ())
 createMatch typeName funcVar items (tyCon, fields) = do
   regFields <- traverse (toFieldItemTypeF funcVar) fields

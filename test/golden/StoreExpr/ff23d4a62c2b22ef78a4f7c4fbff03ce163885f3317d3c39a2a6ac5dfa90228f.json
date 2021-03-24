@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyData","contents":[[],{"dtConstructors":{"Env":[{"tag":"VarName","contents":"w"},{"tag":"VarName","contents":"a"}]},"dtName":"Env","dtVars":["w","a"]},{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":true}]}]},"storeBindings":{},"storeTypeBindings":{}}

@@ -53,7 +53,7 @@ doInference typeMap swaps env expr = runTcMonad swaps $ do
 
 doDataTypeInference ::
   Environment ->
-  DataType ->
+  DataType Annotation ->
   Either TypeError (Map TyCon TypeConstructor)
 doDataTypeInference env dt =
   runTcMonad mempty (snd <$> inferConstructorTypes (defaultEnv mempty <> env) dt)

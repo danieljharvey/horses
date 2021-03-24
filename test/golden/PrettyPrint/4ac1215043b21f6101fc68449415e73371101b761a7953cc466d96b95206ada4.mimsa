@@ -1,5 +1,0 @@
-type Tree a 
-  = Branch (Tree a)
-           (Tree a)
-  | Leaf a;
-Leaf 1

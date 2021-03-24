@@ -87,7 +87,7 @@ testIt (q, a) =
   it (T.unpack q) $
     eval stdLib q `shouldBe` Right a
 
-dataTypes :: ResolvedTypeDeps
+dataTypes :: ResolvedTypeDeps Annotation
 dataTypes = fromJust $ case resolveTypeDeps
   (prjStore stdLib)
   (getCurrentTypeBindings $ prjTypeBindings stdLib) of
@@ -104,10 +104,10 @@ spec = do
         result `shouldSatisfy` isRight
   describe "Normalise constructors" $ do
     it "is a no-op for nullary constructors" $ do
-      let a = MyConstructor () "Nowt"
+      let a = MyConstructor mempty "Nowt"
       normaliseConstructors dataTypes a `shouldBe` Right a
     it "turns unary constructor into lambda function" $ do
-      let a = MyConstructor () "Some"
+      let a = MyConstructor mempty "Some"
       let expected =
             MyLambda
               mempty
@@ -115,7 +115,7 @@ spec = do
               (MyConsApp mempty (MyConstructor mempty "Some") (MyVar mempty "a"))
       normaliseConstructors dataTypes a `shouldBe` Right expected
     it "turns binary constructor into two lambda functions" $ do
-      let a = MyConstructor () "These"
+      let a = MyConstructor mempty "These"
       let expected =
             MyLambda
               mempty
@@ -135,7 +135,7 @@ spec = do
               )
       normaliseConstructors dataTypes a `shouldBe` Right expected
     it "partially applies when wrapped in ConsApp" $ do
-      let a = MyConsApp () (MyConstructor mempty "These") (int 1)
+      let a = MyConsApp mempty (MyConstructor mempty "These") (int 1)
       let expected =
             MyLambda
               mempty
@@ -153,7 +153,7 @@ spec = do
     it "completely applies when wrapped in ConsApp" $ do
       let a =
             MyConsApp
-              ()
+              mempty
               ( MyConsApp
                   mempty
                   (MyConstructor mempty "These")

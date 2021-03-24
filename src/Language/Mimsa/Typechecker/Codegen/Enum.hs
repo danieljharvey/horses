@@ -17,7 +17,7 @@ import Language.Mimsa.Types.Identifiers
 -- | TODO: create fromString once we have decided how to include
 -- | datatypes in the stdLib
 toString ::
-  DataType ->
+  DataType () ->
   Either Text (Expr Name ())
 toString (DataType tyCon [] items) = do
   let tyName = tyConToName tyCon

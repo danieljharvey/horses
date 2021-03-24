@@ -146,7 +146,7 @@ parseHandler input =
         UserError
         (first wrapError (parseExprAndFormatError input))
 
-parseDataTypeHandler :: Text -> Handler DataType
+parseDataTypeHandler :: Text -> Handler (DataType Annotation)
 parseDataTypeHandler input =
   let wrapError :: Text -> Error Annotation
       wrapError = ParseError

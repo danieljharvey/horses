@@ -206,10 +206,10 @@ renderTypeError (FunctionArityMismatch _ i mt) =
 renderTypeError (CannotUseBuiltInTypeAsConstructor _ name) =
   ["Cannot use built-in type as constructor name:" <+> prettyDoc name]
 
-printDataTypes :: Environment -> [Doc ann]
+printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
   where
-    printDt :: DataType -> [Doc ann]
+    printDt :: DataType ann -> [Doc style]
     printDt (DataType tyName tyVars constructors) =
       [prettyDoc tyName] <> printTyVars tyVars
         <> zipWith (<>) (":" : repeat "|") (printCons <$> M.toList constructors)

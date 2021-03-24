@@ -10,6 +10,7 @@ module Language.Mimsa.Typechecker.DataTypes
 where
 
 import Control.Monad.Except
+import Data.Coerce
 import Data.Foldable (traverse_)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -43,7 +44,7 @@ builtInTypes =
 storeDataDeclaration ::
   Environment ->
   Annotation ->
-  DataType ->
+  DataType Annotation ->
   TcMonad Environment
 storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   validateDataTypeVariables dt
@@ -66,14 +67,23 @@ inferDataConstructor env ann name = do
       pure (mempty, constructorToType tyArg)
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
-getVariablesForField :: Field -> Set Name
-getVariablesForField (VarName n) = S.singleton n
-getVariablesForField (ConsName _ fields) =
+getVariablesForField :: MonoType -> Set Name
+getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
+getVariablesForField (MTData _ _ fields) =
   mconcat (getVariablesForField <$> fields)
-getVariablesForField (TNFunc a b) =
+getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
+getVariablesForField (MTPair _ a b) = getVariablesForField a <> getVariablesForField b
+getVariablesForField (MTRecord _ items) =
+  mconcat $
+    getVariablesForField <$> M.elems items
+getVariablesForField _ = S.empty
 
-validateConstructors :: Environment -> Annotation -> DataType -> TcMonad ()
+validateConstructors ::
+  Environment ->
+  Annotation ->
+  DataType Annotation ->
+  TcMonad ()
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
@@ -83,7 +93,7 @@ validateConstructors env ann (DataType _ _ constructors) = do
     )
     (M.toList constructors)
 
-validateDataTypeVariables :: DataType -> TcMonad ()
+validateDataTypeVariables :: DataType Annotation -> TcMonad ()
 validateDataTypeVariables (DataType typeName vars constructors) =
   let requiredForCons = foldMap getVariablesForField
       requiredVars = foldMap requiredForCons constructors
@@ -98,27 +108,36 @@ validateDataTypeVariables (DataType typeName vars constructors) =
 -- infer types for data type and it's constructor in one big go
 inferConstructorTypes ::
   Environment ->
-  DataType ->
+  DataType Annotation ->
   TcMonad (MonoType, Map TyCon TypeConstructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) a <$> getUnknown mempty) tyNames
   let findType ty = case ty of
-        ConsName cn vs -> do
+        MTData _ cn vs -> do
           vs' <- traverse findType vs
           inferType env mempty cn vs'
-        VarName var ->
-          case filter (\(tyName, _) -> tyName == var) tyVars of
+        MTVar _ (TVName var) ->
+          case filter (\(tyName, _) -> tyName == coerce var) tyVars of
             [(_, tyFound)] -> pure tyFound
             _ ->
               throwError $
                 TypeVariablesNotInDataType
                   typeName
-                  (S.singleton var)
+                  (S.singleton (coerce var))
                   (S.fromList (fst <$> tyVars))
-        TNFunc a b -> do
+        MTFunction _ a b -> do
           tyA <- findType a
           tyB <- findType b
           pure (MTFunction mempty tyA tyB)
+        MTPair _ a b -> do
+          tyA <- findType a
+          tyB <- findType b
+          pure (MTPair mempty tyA tyB)
+        tyPrim@MTPrim {} -> pure tyPrim
+        MTRecord _ items -> do
+          tyItems <- traverse findType items
+          pure (MTRecord mempty tyItems)
+        _ -> throwError UnknownTypeError -- TODO: see what this messes up, not 100% on how to deal with these
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
         let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons

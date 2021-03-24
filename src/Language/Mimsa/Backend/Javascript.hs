@@ -104,7 +104,7 @@ outputCaseMatch value matches catchAll = do
 
 output ::
   (Monoid ann) =>
-  ResolvedTypeDeps ->
+  ResolvedTypeDeps ann ->
   Expr Name ann ->
   BackendM ann Javascript
 output dataTypes expr' =
@@ -286,7 +286,7 @@ outputJS expr =
 
 renderWithFunction ::
   (Monoid ann) =>
-  ResolvedTypeDeps ->
+  ResolvedTypeDeps ann ->
   Name ->
   Expr Name ann ->
   BackendM ann Javascript
@@ -311,7 +311,7 @@ startsWithLambda _ = False
 
 outputCommonJS ::
   (Monoid ann) =>
-  ResolvedTypeDeps ->
+  ResolvedTypeDeps ann ->
   StoreExpression ann ->
   BackendM ann Javascript
 outputCommonJS dataTypes =
