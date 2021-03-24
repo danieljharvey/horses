@@ -13,6 +13,7 @@ import Test.Hspec
 import qualified Test.Interpreter.InstantiateVar as InstantiateVar
 import qualified Test.Interpreter.Interpreter as Interpreter
 import qualified Test.Interpreter.Repl as Repl
+import qualified Test.Interpreter.UseSwaps as UseSwaps
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
 import qualified Test.Parser.Syntax as Syntax
 import qualified Test.Prettier as Prettier
@@ -55,3 +56,4 @@ main =
     Actions.spec
     Codegen.spec
     Runtimes.spec
+    UseSwaps.spec

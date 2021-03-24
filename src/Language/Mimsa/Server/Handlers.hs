@@ -169,7 +169,7 @@ interpretHandler ::
   Scope Annotation ->
   Swaps ->
   Expr Variable Annotation ->
-  Handler (Expr Variable Annotation)
+  Handler (Expr Name Annotation)
 interpretHandler scope' swaps' expr' =
   handleEither InternalError (interpret scope' swaps' expr')
 
