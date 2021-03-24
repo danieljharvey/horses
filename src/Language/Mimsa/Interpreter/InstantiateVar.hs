@@ -24,4 +24,5 @@ newLambdaCopy ::
 newLambdaCopy name expr = do
   newName' <- nextVariable
   newExpr <- swapName name newName' expr
+  copySwap name newName'
   pure (newName', newExpr)

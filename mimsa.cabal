@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4c332b152877d4cf1de7cbfb2cee8e3ef6aa3a44489075ecd4b3ed687570c6a3
+-- hash: 543a9b866e448881f51fa4e7cef4414bfd98364d8b7460b21c23cf83dc403636
 
 name:           mimsa
 version:        0.1.0.0
@@ -52,6 +52,7 @@ library
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
+      Language.Mimsa.Interpreter.UseSwaps
       Language.Mimsa.Logging
       Language.Mimsa.Monad
       Language.Mimsa.Parser
@@ -315,6 +316,7 @@ test-suite mimsa-test
       Test.Interpreter.InstantiateVar
       Test.Interpreter.Interpreter
       Test.Interpreter.Repl
+      Test.Interpreter.UseSwaps
       Test.Parser.MonoTypeParser
       Test.Parser.Syntax
       Test.Prettier

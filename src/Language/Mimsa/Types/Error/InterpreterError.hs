@@ -27,6 +27,7 @@ data InterpreterError ann
   | SubtractionWithNonNumber (Expr Variable ann)
   | ConcatentationWithNonString (Expr Variable ann)
   | TypedHoleFound (Expr Variable ann)
+  | CouldNotFindSwapForVariable Variable (Map Variable Name)
   | MaximumCallSizeReached
   deriving (Eq, Ord, Show)
 
@@ -54,5 +55,8 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
   prettyPrint (SubtractionWithNonNumber a) = "Subtraction expected number but got this: " <> prettyPrint a
   prettyPrint (ConcatentationWithNonString a) = "Concatenation expected string but got this: " <> prettyPrint a
   prettyPrint (TypedHoleFound a) = "Typed hole found " <> prettyPrint a
+  prettyPrint (CouldNotFindSwapForVariable var swaps) = "Could not find swap for variable " <> prettyPrint var <> " in " <> itemList
+    where
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys swaps) <> " ]"
   prettyPrint MaximumCallSizeReached = "Maximum size reached, interpreter aborted. Perhaps you have infinite recursion?"
   prettyPrint UnknownInterpreterError = "Unknown interpreter error"

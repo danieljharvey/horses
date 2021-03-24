@@ -18,11 +18,12 @@ import Test.Utils.Helpers
 
 testInterpret ::
   Scope () ->
+  Swaps ->
   Expr Variable () ->
-  Expr Variable () ->
+  Expr Name () ->
   Expectation
-testInterpret scope' expr' expected = do
-  let result = interpret scope' mempty expr'
+testInterpret scope' swaps expr' expected = do
+  let result = interpret scope' swaps expr'
   result `shouldBe` Right expected
 
 testInterpretFail ::
@@ -38,7 +39,7 @@ interpret' ::
   Scope () ->
   Swaps ->
   Expr Variable () ->
-  Either (InterpreterError ()) (Expr Variable ())
+  Either (InterpreterError ()) (Expr Name ())
 interpret' = interpret
 
 spec :: Spec
@@ -48,27 +49,33 @@ spec =
       it "Booleans" $ do
         testInterpret
           mempty
+          mempty
           (bool True)
           (bool True)
         testInterpret
+          mempty
           mempty
           (bool False)
           (bool False)
       it "Integers" $ do
         testInterpret
           mempty
+          mempty
           (int (-100))
           (int (-100))
         testInterpret
+          mempty
           mempty
           (int 100)
           (int 100)
       it "Strings" $ do
         testInterpret
           mempty
+          mempty
           (str (StringType ""))
           (str (StringType ""))
         testInterpret
+          mempty
           mempty
           (str (StringType "poo"))
           (str (StringType "poo"))
@@ -76,7 +83,7 @@ spec =
       it "let x = 1 in 1" $
         do
           let f = MyLet mempty (named "x") (int 1) (MyVar mempty (named "x"))
-          testInterpret mempty f (int 1)
+          testInterpret mempty mempty f (int 1)
     describe "Lambda and App" $ do
       it "let id = \\x -> x in (id 1)" $ do
         let f =
@@ -85,7 +92,7 @@ spec =
                 (named "id")
                 (MyLambda mempty (named "x") (MyVar mempty (named "x")))
                 (MyApp mempty (MyVar mempty (named "id")) (int 1))
-        testInterpret mempty f (int 1)
+        testInterpret mempty mempty f (int 1)
       it "let const = \\a -> \\b -> a in const(1)" $ do
         let f =
               MyLet
@@ -93,7 +100,12 @@ spec =
                 (named "const")
                 (MyLambda mempty (named "a") (MyLambda mempty (named "b") (MyVar mempty (named "a"))))
                 (MyApp mempty (MyVar mempty (named "const")) (int 1))
-        testInterpret mempty f $ MyLambda mempty (NumberedVar 3) (MyVar mempty (NumberedVar 2))
+            swaps =
+              M.fromList
+                [ (NumberedVar 3, "b"),
+                  (NumberedVar 2, "a")
+                ]
+        testInterpret mempty swaps f $ MyLambda mempty "b" (MyVar mempty "a")
       it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
               MyLet
@@ -101,14 +113,14 @@ spec =
                 (named "const")
                 (MyLambda mempty (numbered 0) (MyLambda mempty (numbered 1) (MyVar mempty (numbered 0))))
                 (MyApp mempty (MyApp mempty (MyVar mempty (named "const")) (int 1)) (int 2))
-        testInterpret mempty f (int 1)
+        testInterpret mempty mempty f (int 1)
     describe "If" $ do
       it "Blows up when passed a non-bool" $ do
         let f = MyIf mempty (int 1) (bool True) (bool False)
         testInterpretFail mempty f (PredicateForIfMustBeABoolean (int 1))
       it "if True then 1 else 2" $ do
         let f = MyIf mempty (bool True) (int 1) (int 2)
-        testInterpret mempty f (int 1)
+        testInterpret mempty mempty f (int 1)
       it "Destructures a pair" $ do
         let f =
               MyLet

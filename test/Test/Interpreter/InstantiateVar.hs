@@ -6,7 +6,6 @@ module Test.Interpreter.InstantiateVar
   )
 where
 
-import Control.Monad.Reader
 import Control.Monad.State
 import Language.Mimsa.Interpreter.InstantiateVar
 import Language.Mimsa.Interpreter.Types
@@ -22,19 +21,17 @@ testInstantiate ::
 testInstantiate expr = fst <$> either'
   where
     either' =
-      runReaderT
-        ( runStateT
-            ( instantiateVar
-                expr
-            )
-            InterpretState
-              { isVarNum = 1,
-                isScope = mempty,
-                isInfix = mempty,
-                isApplyCount = 0
-              }
+      runStateT
+        ( instantiateVar
+            expr
         )
-        mempty
+        InterpretState
+          { isVarNum = 1,
+            isScope = mempty,
+            isInfix = mempty,
+            isApplyCount = 0,
+            isSwaps = mempty
+          }
 
 spec :: Spec
 spec =

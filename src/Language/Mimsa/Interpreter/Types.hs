@@ -6,13 +6,13 @@ module Language.Mimsa.Interpreter.Types
     addToScope,
     askForSwaps,
     addOperator,
+    copySwap,
     findOperator,
     incrementApplyCount,
   )
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.Trans.State.Lazy
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -26,15 +26,17 @@ import Language.Mimsa.Types.Swaps
 type App ann =
   StateT
     (InterpretState ann)
-    (ReaderT Swaps (Either (InterpreterError ann)))
+    (Either (InterpreterError ann))
 
 data InterpretState ann = InterpretState
   { isVarNum :: Int,
     isScope :: Scope ann,
     isInfix :: Map InfixOp Variable,
     -- number of applications we have done for timeout
-    isApplyCount :: Int
+    isApplyCount :: Int,
+    isSwaps :: Swaps
   }
+  deriving (Eq, Ord, Show)
 
 -- infix operators
 
@@ -92,7 +94,22 @@ incrementApplyCount = do
     then modify (\is -> is {isApplyCount = appCount + 1})
     else throwError MaximumCallSizeReached
 
--- reader env
+-- track original names of numbered vars for pretty printing later
 
 askForSwaps :: App ann Swaps
-askForSwaps = ask
+askForSwaps = gets isSwaps
+
+addSwap :: Variable -> Name -> App ann ()
+addSwap v n = modify (\is -> is {isSwaps = isSwaps is <> M.singleton v n})
+
+findSwap :: Variable -> App ann (Maybe Name)
+findSwap v =
+  M.lookup v <$> askForSwaps
+
+copySwap :: Variable -> Variable -> App ann ()
+copySwap old new = do
+  name <- findSwap old
+  case name of
+    Nothing -> pure ()
+    Just foundSwap -> do
+      addSwap new foundSwap

@@ -24,7 +24,7 @@ evaluate ::
   Expr Name Annotation ->
   Actions.ActionM
     ( MonoType,
-      Expr Variable Annotation,
+      Expr Name Annotation,
       StoreExpression Annotation
     )
 evaluate input expr = do

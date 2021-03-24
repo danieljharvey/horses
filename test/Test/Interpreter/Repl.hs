@@ -39,7 +39,7 @@ import Test.Utils.Serialisation
 eval ::
   Project Annotation ->
   Text ->
-  IO (Either Text (Type (), Expr Variable ()))
+  IO (Either Text (Type (), Expr Name ()))
 eval env input =
   case evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
@@ -98,7 +98,7 @@ spec =
           result
             `shouldBe` Right
               ( MTFunction mempty (unknown 1) (unknown 1),
-                MyLambda mempty (numbered 3) (MyVar mempty (numbered 3))
+                MyLambda mempty "i" (MyVar mempty "i")
               )
         it "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)" $ do
           result <- eval stdLib "let prelude = ({ id: (\\i -> i) }) in prelude.id(1)"
@@ -579,11 +579,11 @@ spec =
                   (MyConstructor mempty "Reader")
                   ( MyLambda
                       mempty
-                      (numbered 0)
+                      "r"
                       ( MyInfix
                           mempty
                           Add
-                          (MyVar mempty (numbered 0))
+                          (MyVar mempty "r")
                           (int 100)
                       )
                   )
@@ -649,3 +649,9 @@ spec =
         xit "\\person -> case person of Person \\p -> p.age" $ do
           result <- eval stdLib "\\person -> case person of Person \\p -> p.age"
           result `shouldSatisfy` isRight
+        -- simplest swaps test
+        it "\\a -> 1" $ do
+          result <- eval mempty "\\a -> 1"
+          case result of
+            Left _ -> error "Was not supposed to fail"
+            Right (_, expr') -> T.unpack (prettyPrint expr') `shouldContain` "a"
