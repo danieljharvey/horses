@@ -71,9 +71,9 @@ successes =
     ("aRecord.a", "const main = aRecord.a;\n"),
     ("Some", "const main = a => ({ type: \"Some\", vars: [a] });\n"),
     ("Some 1", "const main = { type: \"Some\", vars: [1] };\n"),
-    ("Nowt", "const main = { type: \"Nowt\", vars: [] };\n"),
+    ("None", "const main = { type: \"None\", vars: [] };\n"),
     ("These", "const main = a => b => ({ type: \"These\", vars: [a,b] });\n"),
-    ("case Some 1 of Some \\a -> a | Nowt 0", "const main = __match({ type: \"Some\", vars: [1] }, { Some: a => a, Nowt: 0 }, null);\n"),
+    ("case Some 1 of Some \\a -> a | None 0", "const main = __match({ type: \"Some\", vars: [1] }, { Some: a => a, None: 0 }, null);\n"),
     ("case Some 1 of Some \\a -> a | otherwise 0", "const main = __match({ type: \"Some\", vars: [1] }, { Some: a => a }, 0);\n"),
     ("True == False", "const main = __eq(true, false);\n"),
     ("2 + 2", "const main = 2 + 2;\n"),
@@ -104,7 +104,7 @@ spec = do
         result `shouldSatisfy` isRight
   describe "Normalise constructors" $ do
     it "is a no-op for nullary constructors" $ do
-      let a = MyConstructor mempty "Nowt"
+      let a = MyConstructor mempty "None"
       normaliseConstructors dataTypes a `shouldBe` Right a
     it "turns unary constructor into lambda function" $ do
       let a = MyConstructor mempty "Some"

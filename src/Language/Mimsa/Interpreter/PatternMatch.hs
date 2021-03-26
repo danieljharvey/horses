@@ -32,6 +32,10 @@ patternMatch expr' options catchAll = do
 findConstructor :: Expr Variable ann -> App ann TyCon
 findConstructor (MyConstructor _ c) = pure c
 findConstructor (MyConsApp _ c _) = findConstructor c
+findConstructor (MyLiteral _ (MyString s)) =
+  if stringLength s == 0
+    then pure "StrEmpty"
+    else pure "StrHead"
 findConstructor e = throwError $ PatternMatchFailure e
 
 -- apply each part of the constructor to the output function
@@ -40,5 +44,18 @@ createMatchExpression ::
   Expr Variable ann ->
   Expr Variable ann ->
   Expr Variable ann
-createMatchExpression f (MyConsApp _ c a) = MyApp mempty (createMatchExpression f c) a
+createMatchExpression f (MyConsApp _ c a) =
+  MyApp mempty (createMatchExpression f c) a
+createMatchExpression f (MyLiteral _ (MyString s)) =
+  case stringSplit s of
+    Just (sHead, sTail) ->
+      MyApp
+        mempty
+        ( MyApp
+            mempty
+            f
+            (MyLiteral mempty (MyString sHead))
+        )
+        (MyLiteral mempty (MyString sTail))
+    Nothing -> f
 createMatchExpression f _ = f

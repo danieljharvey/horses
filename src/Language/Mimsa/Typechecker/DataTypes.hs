@@ -39,6 +39,9 @@ builtInTypes =
       ("Unit", MTPrim mempty MTUnit)
     ]
 
+lookupBuiltIn :: TyCon -> Maybe MonoType
+lookupBuiltIn name = M.lookup name builtInTypes
+
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
 storeDataDeclaration ::
@@ -58,7 +61,11 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
 -- infer the type of a data constructor
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
-inferDataConstructor :: Environment -> Annotation -> TyCon -> TcMonad (Substitutions, MonoType)
+inferDataConstructor ::
+  Environment ->
+  Annotation ->
+  TyCon ->
+  TcMonad (Substitutions, MonoType)
 inferDataConstructor env ann name = do
   dataType <- lookupConstructor env ann name
   (_, allArgs) <- inferConstructorTypes env dataType
@@ -159,10 +166,9 @@ inferType env ann tyName tyVars =
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
       _ -> pure (MTData mempty tyName tyVars)
-    _ -> throwError (TypeConstructorNotInScope env ann tyName)
-
-lookupBuiltIn :: TyCon -> Maybe MonoType
-lookupBuiltIn name = M.lookup name builtInTypes
+    _ -> case getNativeConstructors tyName of
+      Just mt -> pure mt
+      _ -> throwError (TypeConstructorNotInScope env ann tyName)
 
 -----
 

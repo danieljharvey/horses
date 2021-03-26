@@ -4,6 +4,8 @@
 
 module Language.Mimsa.Types.AST.StringType
   ( StringType (..),
+    stringLength,
+    stringSplit,
   )
 where
 
@@ -32,3 +34,17 @@ instance Printer StringType where
 
 renderStringType :: StringType -> Doc ann
 renderStringType (StringType s) = pretty s
+
+stringLength :: StringType -> Int
+stringLength (StringType s) = T.length s
+
+-- if there is string, return (head, tail)
+stringSplit :: StringType -> Maybe (StringType, StringType)
+stringSplit st@(StringType s) =
+  if stringLength st == 0
+    then Nothing
+    else
+      Just
+        ( StringType (T.singleton (T.head s)),
+          StringType (T.tail s)
+        )

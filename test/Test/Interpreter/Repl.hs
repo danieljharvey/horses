@@ -410,8 +410,8 @@ spec =
         it "type Tlee a = Non | Tlee (Option b) in {}" $ do
           result <- eval stdLib "type Tlee a = Non | Tlee (Option b) in {}"
           result `shouldSatisfy` isLeft
-        it "let some = \\a -> Some a in if True then some(1) else Nowt" $ do
-          result <- eval stdLib "let some = \\a -> Some a in if True then some(1) else Nowt"
+        it "let some = \\a -> Some a in if True then some(1) else None" $ do
+          result <- eval stdLib "let some = \\a -> Some a in if True then some(1) else None"
           result
             `shouldBe` Right
               ( MTData mempty "Option" [MTPrim mempty MTInt],
@@ -420,12 +420,12 @@ spec =
                   (MyConstructor mempty "Some")
                   (int 1)
               )
-        it "\\a -> case a of Some \\as -> True | Nowt 100" $ do
-          result <- eval stdLib "\\a -> case a of Some \\as -> True | Nowt 100"
+        it "\\a -> case a of Some \\as -> True | None 100" $ do
+          result <- eval stdLib "\\a -> case a of Some \\as -> True | None 100"
           fst <$> result
             `shouldSatisfy` isLeft
-        it "\\a -> case a of Some \\as -> as | Nowt 100" $ do
-          result <- eval stdLib "\\a -> case a of Some \\as -> as | Nowt 100"
+        it "\\a -> case a of Some \\as -> as | None 100" $ do
+          result <- eval stdLib "\\a -> case a of Some \\as -> as | None 100"
           fst <$> result
             `shouldBe` Right
               ( MTFunction
@@ -433,11 +433,11 @@ spec =
                   (MTData mempty "Option" [MTPrim mempty MTInt])
                   (MTPrim mempty MTInt)
               )
-        it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)" $ do
-          result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some 1)"
+        it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | None def) in fromMaybe(\"Horse\")(Some 1)" $ do
+          result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | None def) in fromMaybe(\"Horse\")(Some 1)"
           result `shouldSatisfy` isLeft
-        it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")" $ do
-          result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | Nowt def) in fromMaybe(\"Horse\")(Some \"Dog\")"
+        it "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | None def) in fromMaybe(\"Horse\")(Some \"Dog\")" $ do
+          result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> case maybe of Some (\\a -> a) | None def) in fromMaybe(\"Horse\")(Some \"Dog\")"
           result `shouldBe` Right (MTPrim mempty MTString, str' "Dog")
         it "True == \"dog\"" $ do
           result <- eval stdLib "True == \"dog\""
@@ -655,3 +655,47 @@ spec =
           case result of
             Left _ -> error "Was not supposed to fail"
             Right (_, expr') -> T.unpack (prettyPrint expr') `shouldContain` "a"
+        it "case \"ad\" of StrHead \\c -> \\rest -> c | StrEmpty \"\"" $ do
+          result <- eval stdLib "case \"ad\" of StrHead \\c -> \\rest -> c | StrEmpty \"\""
+          result `shouldBe` Right (MTPrim mempty MTString, str "a")
+        -- incomplete
+        it "case \"ad\" of StrHead \\c -> \\rest -> c" $ do
+          result <- eval stdLib "case \"ad\" of StrHead \\c -> \\rest -> c"
+          result `shouldSatisfy` isLeft
+        -- wrong input type
+        it "case 123 of StrHead \\c -> \\rest -> c | StrEmpty \"\"" $ do
+          result <- eval stdLib "case 123 of StrHead \\c -> \\rest -> c | StrEmpty \"\""
+          result `shouldSatisfy` isLeft
+        -- should not infer internal Str type
+        it "\\s -> let a = case s of StrEmpty 2 | otherwise 1 in s" $ do
+          result <- eval stdLib "\\s -> let a = case s of StrEmpty 2 | otherwise 1 in s"
+          fst <$> result
+            `shouldBe` Right
+              ( MTFunction
+                  mempty
+                  (MTPrim mempty MTString)
+                  (MTPrim mempty MTString)
+              )
+        it "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")" $ do
+          result <- eval stdLib "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")"
+          snd <$> result
+            `shouldBe` Right
+              ( MyConsApp
+                  mempty
+                  (MyConstructor mempty "Some")
+                  (MyLiteral mempty (MyString "dd"))
+              )
+        it "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"dog\")" $ do
+          result <- eval stdLib "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"dog\")"
+          snd <$> result
+            `shouldBe` Right
+              ( MyConsApp
+                  mempty
+                  (MyConstructor mempty "Some")
+                  (MyLiteral mempty (MyString "o"))
+              )
+        it "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")" $ do
+          result <- eval stdLib "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")"
+          snd <$> result
+            `shouldBe` Right
+              (MyConstructor mempty "None")
