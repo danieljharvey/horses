@@ -79,7 +79,8 @@ successes =
     ("2 + 2", "const main = 2 + 2;\n"),
     ("10 - 2", "const main = 10 - 2;\n"),
     ("\"dog\" <> \"log\"", "const main = \"dog\" + \"log\";\n"),
-    ("{ fn: (\\a -> let d = 1 in a) }", "const main = { fn: a => { const d = 1;\nreturn a } };\n")
+    ("{ fn: (\\a -> let d = 1 in a) }", "const main = { fn: a => { const d = 1;\nreturn a } };\n"),
+    ("case \"dog\" of StrHead \\c -> \\r -> 1 | StrEmpty 0", "const main = __match(\"dog\", { StrHead: c => r => 1, StrEmpty: 0 }, null);\n")
   ]
 
 testIt :: (Text, Javascript) -> Spec
