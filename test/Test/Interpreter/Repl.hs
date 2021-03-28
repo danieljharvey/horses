@@ -684,6 +684,11 @@ spec =
         it "let a = StrHead \"1\" \"\" in a" $ do
           result <- eval stdLib "let a = StrHead \"1\" \"\" in a"
           result `shouldSatisfy` isLeft
+        -- filter function for strings
+        it "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a <> rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")" $ do
+          result <- eval stdLib "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a <> rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")"
+          result `shouldBe` Right (MTPrim mempty MTString, MyLiteral mempty (MyString "oo"))
+
         it "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")" $ do
           result <- eval stdLib "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")"
           snd <$> result

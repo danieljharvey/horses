@@ -1,0 +1,21 @@
+let filter =
+  \pred ->
+    \str ->
+      let fn =
+        \s ->
+          case s of 
+              StrHead (\a ->
+              \as ->
+                let rest =
+                  fn(as);
+
+                if pred(a)
+                then
+                  a <> rest
+                else
+                  rest)
+            | StrEmpty "";
+
+      fn(str);
+
+filter((\a -> a == "o"))("woo")
