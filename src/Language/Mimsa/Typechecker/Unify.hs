@@ -38,6 +38,8 @@ varBind ann var ty
     swaps <- ask
     throwError $
       FailsOccursCheck swaps var ty
+  | matchPatternMatchLiteral (MTPrim mempty MTString) ty =
+    pure (Substitutions (M.singleton var (MTPrim ann MTString)))
   | otherwise = do
     let ty' = ty $> ann
     pure $ Substitutions (M.singleton var ty')
@@ -67,10 +69,18 @@ unifyPairs (a, b) (a', b') = do
 typeEquals :: MonoType -> MonoType -> Bool
 typeEquals mtA mtB = (mtA $> ()) == (mtB $> ())
 
+matchPatternMatchLiteral :: MonoType -> MonoType -> Bool
+matchPatternMatchLiteral (MTPrim _ MTString) (MTData _ tyCon _) =
+  tyCon == "Str"
+matchPatternMatchLiteral _ _ = False
+
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify tyA tyB =
   case (tyA, tyB) of
-    (a, b) | typeEquals a b -> pure mempty
+    (a, b)
+      | typeEquals a b || matchPatternMatchLiteral a b
+          || matchPatternMatchLiteral b a ->
+        pure mempty
     (MTFunction _ l r, MTFunction _ l' r') ->
       unifyPairs (l, r) (l', r')
     (MTPair _ a b, MTPair _ a' b') -> unifyPairs (a, b) (a', b')

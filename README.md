@@ -174,6 +174,19 @@ Left "poo" :: Either String String
 Right "dog" :: Either A String
 ```
 
+string matching:
+
+```haskell
+:> :bind stringHead = \str -> case str of StrHead \c -> \rest -> Just c |
+StrEmpty None
+
+:> stringHead "dog"
+Some "d" :: Option String
+
+:> stringHead ""
+None :: Option String
+```
+
 typed holes:
 
 ```haskell

@@ -649,7 +649,7 @@ spec = do
     it "Accepts no whitespace after record" $
       testParseWithAnn "{ name: 1 } " `shouldSatisfy` isLeft
     it "Parses the troublesome function" $
-      testParseWithAnn "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise Nowt"
+      testParseWithAnn "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise None"
         `shouldSatisfy` isRight
     it "Parses Reader type declaration with 'in'" $
       testParseWithAnn

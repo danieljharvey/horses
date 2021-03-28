@@ -8,16 +8,16 @@ module Language.Mimsa.Store.Resolver
 where
 
 import qualified Data.Map as M
+import Data.Maybe (catMaybes, isJust)
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes (extractTypes)
 import Language.Mimsa.Store.ExtractVars (extractVars)
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 
---
---
 -- this takes the expression, works out what it needs from it's environment
 -- and wraps that up
 -- this would be a good place for a simplifying step in future
@@ -58,23 +58,28 @@ findBindings bindings' expr = do
   pure (Bindings (M.fromList valueHashes))
 
 -----------
---
-findHashInTypeBindings :: TypeBindings -> TyCon -> Either ResolverError ExprHash
+
+isBuiltIn :: TyCon -> Bool
+isBuiltIn = isJust . lookupBuiltIn
+
+findHashInTypeBindings :: TypeBindings -> TyCon -> Either ResolverError (Maybe ExprHash)
 findHashInTypeBindings (TypeBindings bindings') cName =
-  case M.lookup cName bindings' of
-    Just a -> Right a
-    _ -> Left $ MissingType cName (TypeBindings bindings')
+  if isBuiltIn cName
+    then Right Nothing
+    else case M.lookup cName bindings' of
+      Just a -> Right (Just a)
+      _ -> Left $ MissingType cName (TypeBindings bindings')
 
 findTypeBindings ::
   TypeBindings ->
   Expr Name ann ->
   Either ResolverError TypeBindings
 findTypeBindings tBindings expr = do
-  let findTypeHash cName =
-        (,) cName
-          <$> findHashInTypeBindings tBindings cName
+  let findTypeHash cName = do
+        maybeHash <- findHashInTypeBindings tBindings cName
+        pure $ (,) cName <$> maybeHash
   hashes <- traverse findTypeHash (S.toList . extractTypes $ expr)
-  pure (TypeBindings $ M.fromList hashes)
+  pure (TypeBindings $ M.fromList (catMaybes hashes))
 
 -- given a data type declaration, create a StoreExpression for it
 createTypeStoreExpression ::

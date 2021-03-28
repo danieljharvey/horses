@@ -46,6 +46,7 @@ data TypeError
   | FunctionArityMismatch Annotation Int MonoType
   | CouldNotFindInfixOperator Annotation InfixOp (Set InfixOp)
   | CannotUseBuiltInTypeAsConstructor Annotation TyCon
+  | InternalConstructorUsedOutsidePatternMatch Annotation TyCon
   deriving (Eq, Ord, Show)
 
 ------
@@ -90,6 +91,7 @@ getErrorPos (TypedHoles holes) = case M.toList holes of
   _ -> fromAnnotation mempty
 getErrorPos (FunctionArityMismatch ann _ _) = fromAnnotation ann
 getErrorPos (CannotUseBuiltInTypeAsConstructor ann _) = fromAnnotation ann
+getErrorPos (InternalConstructorUsedOutsidePatternMatch ann _) = fromAnnotation ann
 getErrorPos _ = (0, 0)
 
 ------
@@ -205,6 +207,13 @@ renderTypeError (FunctionArityMismatch _ i mt) =
   ["Function arity mismatch. Expected " <> pretty i <> " but got " <> prettyDoc mt]
 renderTypeError (CannotUseBuiltInTypeAsConstructor _ name) =
   ["Cannot use built-in type as constructor name:" <+> prettyDoc name]
+renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
+  ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used outside of a pattern match"] <> specificError
+  where
+    specificError =
+      if tyCon == "StrHead" || tyCon == "StrEmpty"
+        then ["To construct values, please use string literal syntax, ie \"string\" or \"\"."]
+        else mempty
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

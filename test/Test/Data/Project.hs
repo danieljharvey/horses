@@ -70,10 +70,10 @@ stdLibE =
       "\\a -> addInt(1)(a)"
       "incrementInt"
     >>= addBinding
-      "type Option a = Some a | Nowt in {}"
+      "type Option a = Some a | None in {}"
       "typeState"
     >>= addBinding
-      "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise Nowt"
+      "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise None"
       "fmapOption"
     >>= addBinding
       "type These a b = This a | That b | These a b in {}"
@@ -90,6 +90,7 @@ stdLibE =
     >>= addListMonad
     >>= addPair
     >>= addStateMonad
+    >>= addParser
 
 addListMonad :: Project Annotation -> ProjectPart
 addListMonad prj =
@@ -157,6 +158,28 @@ addStateMonad prj =
     >>= addBinding
       "\\newName -> let sas = \\s -> let return = newName <> \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
       "storeName"
+
+addParser :: Project Annotation -> ProjectPart
+addParser prj =
+  pure prj
+    >>= addBinding
+      "type Parser a = Parser (String -> Option (String,a)) in {}"
+      "typeParser"
+    >>= addBinding
+      "let p = \\str -> case str of StrHead \\c -> \\rest -> Some (rest, c) | StrEmpty None in Parser p"
+      "anyChar"
+    >>= addBinding
+      "\\p -> \\str -> case p of Parser \\parser -> case parser(str) of Some \\pair -> let (rest, a) = pair in Some a | otherwise None"
+      "runParser"
+    >>= addBinding
+      "\\f -> \\p -> case p of Parser \\parser -> let newParser = \\s -> case parser(s) of Some \\res -> let (rest,a) = res in Some (rest, f(a)) | otherwise None in Parser newParser"
+      "fmapParser"
+    >>= addBinding
+      "\\f -> \\p -> case p of Parser \\parser -> let newParser = \\s -> case parser(s) of None None | Some \\resA -> let (restA, a) = resA; let nextParser = case f(a) of Parser \\parserB -> parserB; nextParser(restA); Parser newParser"
+      "bindParser"
+    >>= addBinding
+      "Parser \\s -> None"
+      "failParser"
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input =

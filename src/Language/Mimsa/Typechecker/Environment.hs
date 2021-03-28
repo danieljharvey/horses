@@ -1,12 +1,41 @@
-module Language.Mimsa.Typechecker.Environment where
+{-# LANGUAGE OverloadedStrings #-}
+
+module Language.Mimsa.Typechecker.Environment (getNativeConstructors, lookupConstructor, strType) where
 
 import Control.Monad.Except
+import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.TcMonad (TcMonad)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker.Environment
+import Language.Mimsa.Types.Typechecker
+
+builtInString :: MonoType
+builtInString = MTData mempty "String" mempty
+
+getNativeConstructors :: TyCon -> Maybe MonoType
+getNativeConstructors tyCon =
+  if tyCon == "StrHead" || tyCon == "StrEmpty"
+    then Just builtInString
+    else Nothing
+
+getAllDataTypes :: Environment -> Map TyCon (DataType Annotation)
+getAllDataTypes env =
+  M.singleton "Str" strType
+    <> getDataTypes env
+
+-- Str is the datatype for case matches
+strType :: DataType Annotation
+strType =
+  DataType
+    "Str"
+    mempty
+    ( M.fromList
+        [ ("StrHead", [MTPrim mempty MTString, MTPrim mempty MTString]),
+          ("StrEmpty", mempty)
+        ]
+    )
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
@@ -15,7 +44,7 @@ lookupConstructor ::
   TyCon ->
   TcMonad (DataType Annotation)
 lookupConstructor env ann name =
-  case M.toList $ M.filter (containsConstructor name) (getDataTypes env) of
+  case M.toList $ M.filter (containsConstructor name) (getAllDataTypes env) of
     [(_, a)] -> pure a -- we only want a single match
     (_ : _) -> throwError (ConflictingConstructors ann name)
     _ -> throwError (TypeConstructorNotInScope env ann name)
