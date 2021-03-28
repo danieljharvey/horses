@@ -712,3 +712,14 @@ spec =
           snd <$> result
             `shouldBe` Right
               (MyConstructor mempty "None")
+        it "[1,2,3]" $ do
+          result <- eval stdLib "[1,2,3]"
+          result
+            `shouldBe` Right
+              ( MTArray mempty (MTPrim mempty MTInt),
+                MyArray mempty [int 1, int 2, int 3]
+              )
+        it "[1,True,3]" $ do
+          result <- eval stdLib "[1,True,3]"
+          result
+            `shouldSatisfy` isLeft

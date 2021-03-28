@@ -449,6 +449,25 @@ inferDefineInfix env ann infixOp bindName expr = do
     then infer newEnv expr
     else throwError arityError
 
+inferArray ::
+  Environment ->
+  Annotation ->
+  [TcExpr] ->
+  TcMonad (Substitutions, MonoType)
+inferArray env ann items = do
+  tyItem <- getUnknown ann
+  let foldFn = \as' a' -> do
+        (s', ty') <- as'
+        (sA, tyB) <- infer env a'
+        sB <- unify ty' tyB
+        pure (sB <> sA <> s', applySubst sB tyB)
+  (subs, tyItems) <-
+    foldl
+      foldFn
+      (pure (mempty, tyItem))
+      items
+  pure (subs, MTArray ann tyItems)
+
 infer ::
   Environment ->
   TcExpr ->
@@ -492,7 +511,8 @@ infer env inferExpr =
     (MyData ann dataType expr) -> do
       newEnv <- storeDataDeclaration env ann dataType
       infer newEnv expr
-    (MyArray _ _) -> throwError UnknownTypeError
+    (MyArray ann items) -> do
+      inferArray env ann items
     (MyConstructor ann name) ->
       inferDataConstructor env ann name
     (MyConsApp ann cons val) ->
