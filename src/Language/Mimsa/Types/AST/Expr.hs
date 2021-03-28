@@ -59,6 +59,7 @@ data Expr var ann
     MyRecord ann (Map Name (Expr var ann))
   | -- | a.foo
     MyRecordAccess ann (Expr var ann) Name
+  | MyArray ann [Expr var ann]
   | -- | infix, name, expr
     MyDefineInfix ann InfixOp var (Expr var ann)
   | -- | tyName, tyArgs, Map constructor args, body
@@ -206,6 +207,24 @@ prettyRecord map' =
                     <+> "}"
                 )
 
+prettyArray :: (Show var, Printer var) => [Expr var ann] -> Doc style
+prettyArray items =
+  let printRow = \i val ->
+        printSubExpr val
+          <> if i < length items then "," else ""
+   in case items of
+        [] -> "[]"
+        rows ->
+          let prettyRows = mapWithIndex printRow rows
+           in group
+                ( "["
+                    <+> align
+                      ( vsep
+                          prettyRows
+                      )
+                    <+> "]"
+                )
+
 prettyIf ::
   (Show var, Printer var) =>
   Expr var ann ->
@@ -289,6 +308,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
     prettyPair a b
   prettyDoc (MyRecord _ map') =
     prettyRecord map'
+  prettyDoc (MyArray _ items) = prettyArray items
   prettyDoc (MyDefineInfix _ infixOp bindName expr) =
     prettyDefineInfix infixOp bindName expr
   prettyDoc (MyData _ dataType expr) =

@@ -52,6 +52,7 @@ complexParser :: Parser ParserExpr
 complexParser =
   try letPairParser
     <|> try recordParser
+    <|> try arrayParser
     <|> try letParser
     <|> try ifParser
     <|> try appParser
@@ -348,3 +349,14 @@ defineInfixParser = addLocation $ do
   boundName <- nameParser
   _ <- withOptionalSpace (string ";" <|> string "in ")
   MyDefineInfix mempty infixOp boundName <$> expressionParser
+
+----------
+
+arrayParser :: Parser ParserExpr
+arrayParser = withLocation MyArray $ do
+  _ <- string "["
+  _ <- space
+  args <- sepBy (withOptionalSpace expressionParser) (literalWithSpace ",")
+  _ <- space
+  _ <- string "]"
+  pure args

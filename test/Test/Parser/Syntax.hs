@@ -659,3 +659,18 @@ spec = do
       testParseWithAnn
         "type Reader r a = Reader r -> a; True"
         `shouldSatisfy` isRight
+    it "Parses array of numbers" $
+      testParseWithAnn "[1,2,3]"
+        `shouldBe` Right
+          ( MyArray
+              (Location 0 7)
+              [ MyLiteral (Location 1 2) (MyInt 1),
+                MyLiteral (Location 3 4) (MyInt 2),
+                MyLiteral (Location 5 6) (MyInt 3)
+              ]
+          )
+    it "Parses empty array" $
+      testParseWithAnn "[]"
+        `shouldBe` Right
+          ( MyArray (Location 0 2) mempty
+          )

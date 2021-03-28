@@ -271,6 +271,7 @@ outputJS expr =
     MyIf _ p a b -> outputIf p a b
     MyLet _ n a b -> outputLet n a b
     MyRecord _ as -> outputRecord as
+    MyArray _ _ -> error "ah no"
     MyLetPair _ m n a b -> outputLetPair m n a b
     MyPair _ a b -> outputPair a b
     MyRecordAccess _ r a -> do

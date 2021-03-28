@@ -27,6 +27,7 @@ freeTypeVars ty = case ty of
     S.union (freeTypeVars t1) (freeTypeVars t2)
   MTPair _ t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
   MTRecord _ as -> foldr S.union mempty (freeTypeVars <$> as)
+  MTArray _ a -> freeTypeVars a
   MTData _ _ as -> foldr S.union mempty (freeTypeVars <$> as)
   MTPrim _ _ -> S.empty
 

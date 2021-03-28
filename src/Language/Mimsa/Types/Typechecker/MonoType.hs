@@ -51,6 +51,7 @@ data Type ann
   | MTFunction ann (Type ann) (Type ann) -- argument, result
   | MTPair ann (Type ann) (Type ann) -- (a,b)
   | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
+  | MTArray ann (Type ann) -- [a]
   | MTData ann TyCon [Type ann] -- name, typeVars
   deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON, JSON.FromJSON)
 
@@ -63,6 +64,7 @@ getAnnotationForType (MTFunction ann _ _) = ann
 getAnnotationForType (MTPair ann _ _) = ann
 getAnnotationForType (MTRecord ann _) = ann
 getAnnotationForType (MTData ann _ _) = ann
+getAnnotationForType (MTArray ann _) = ann
 
 instance Printer (Type ann) where
   prettyDoc = renderMonoType
@@ -91,6 +93,7 @@ renderMonoType (MTRecord _ as) =
       <> "}"
   where
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v
+renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
 renderMonoType (MTVar _ a) = renderTypeIdentifier a
 renderMonoType (MTData _ (TyCon n) vars) =
   align $ sep ([pretty n] <> (withParens <$> vars))

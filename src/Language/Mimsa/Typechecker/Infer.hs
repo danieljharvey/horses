@@ -492,6 +492,7 @@ infer env inferExpr =
     (MyData ann dataType expr) -> do
       newEnv <- storeDataDeclaration env ann dataType
       infer newEnv expr
+    (MyArray _ _) -> throwError UnknownTypeError
     (MyConstructor ann name) ->
       inferDataConstructor env ann name
     (MyConsApp ann cons val) ->

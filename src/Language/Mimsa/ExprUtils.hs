@@ -45,6 +45,7 @@ getAnnotation (MyConsApp ann _ _) = ann
 getAnnotation (MyCaseMatch ann _ _ _) = ann
 getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyDefineInfix ann _ _ _) = ann
+getAnnotation (MyArray ann _) = ann
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`
@@ -117,6 +118,14 @@ withMonoid f whole@(MyRecord _ items) =
             <> mconcat
               ( snd <$> M.toList (withMonoid f <$> items)
               )
+withMonoid f whole@(MyArray _ items) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> mconcat
+              (withMonoid f <$> items)
 withMonoid f whole@(MyRecordAccess _ expr _name) =
   let (go, m) = f whole
    in if not go then m else m <> withMonoid f expr
@@ -165,6 +174,7 @@ mapExpr f (MyPair ann a b) = MyPair ann (f a) (f b)
 mapExpr f (MyRecord ann items) = MyRecord ann (f <$> items)
 mapExpr f (MyRecordAccess ann expr name) =
   MyRecordAccess ann (f expr) name
+mapExpr f (MyArray ann items) = MyArray ann (f <$> items)
 mapExpr f (MyData ann dt expr) = MyData ann dt (f expr)
 mapExpr _ (MyConstructor ann cons) = MyConstructor ann cons
 mapExpr f (MyConsApp ann func arg) =
@@ -204,6 +214,8 @@ bindExpr f (MyRecord ann items) =
   MyRecord ann <$> traverse f items
 bindExpr f (MyRecordAccess ann expr name) =
   MyRecordAccess ann <$> f expr <*> pure name
+bindExpr f (MyArray ann items) =
+  MyArray ann <$> traverse f items
 bindExpr f (MyData ann dt expr) =
   MyData ann dt <$> f expr
 bindExpr _ (MyConstructor ann cons) =

@@ -47,6 +47,8 @@ applySubst subst ty = case ty of
       (applySubst subst b)
   MTRecord ann a ->
     MTRecord ann (applySubst subst <$> a)
+  MTArray ann a ->
+    MTArray ann (applySubst subst a)
   MTData ann a ty' ->
     MTData ann a (applySubst subst <$> ty')
   MTPrim ann a -> MTPrim ann a
