@@ -4,16 +4,16 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 543a9b866e448881f51fa4e7cef4414bfd98364d8b7460b21c23cf83dc403636
+-- hash: 45bf9edde858be8f1566ec19cdda68fb0eccd04bc7f950160f0708719ade31f6
 
 name:           mimsa
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
 homepage:       https://github.com/danieljharvey/mimsa#readme
 bug-reports:    https://github.com/danieljharvey/mimsa/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2020 Author name here
+author:         Daniel J Harvey
+maintainer:     danieljamesharvey@gmail.com
+copyright:      2021 Daniel J Harvey
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple

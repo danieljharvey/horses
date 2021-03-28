@@ -2,9 +2,9 @@ name:                mimsa
 version:             0.1.0.0
 github:              "danieljharvey/mimsa"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2020 Author name here"
+author:              "Daniel J Harvey"
+maintainer:          "danieljamesharvey@gmail.com"
+copyright:           "2021 Daniel J Harvey"
 
 extra-source-files:
 - README.md
