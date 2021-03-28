@@ -180,9 +180,10 @@ inferType env ann tyName tyVars =
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
       _ -> pure (MTData mempty tyName tyVars)
-    _ -> case getNativeConstructors tyName of
-      Just mt -> pure mt
-      _ -> throwError (TypeConstructorNotInScope env ann tyName)
+    _ ->
+      case getNativeConstructors tyName of
+        Just mt -> pure mt
+        _ -> throwError (TypeConstructorNotInScope env ann tyName)
 
 -----
 

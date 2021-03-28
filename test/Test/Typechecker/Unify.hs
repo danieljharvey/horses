@@ -69,3 +69,9 @@ spec =
                   (tvNumbered 2, MTPrim mempty MTInt)
                 ]
           )
+    it "Turns Str into String" $
+      runUnifier (MTData mempty "Str" mempty, MTVar mempty (tvNumbered 1))
+        `shouldBe` Right (Substitutions $ M.singleton (tvNumbered 1) (MTPrim mempty MTString))
+    it "Turns Arr into Array" $
+      runUnifier (MTData mempty "Arr" [MTPrim mempty MTInt], MTVar mempty (tvNumbered 1))
+        `shouldBe` Right (Substitutions $ M.singleton (tvNumbered 1) (MTArray mempty (MTPrim mempty MTInt)))

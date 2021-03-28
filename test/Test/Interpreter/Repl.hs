@@ -723,8 +723,8 @@ spec =
           result <- eval stdLib "[1,True,3]"
           result
             `shouldSatisfy` isLeft
-        it "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty []" $ do
-          result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty []"
+        it "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty [0]" $ do
+          result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty [0]"
           result
             `shouldBe` Right
               ( MTArray mempty (MTPrim mempty MTInt),
@@ -745,8 +745,8 @@ spec =
             `shouldBe` Right
               ( MTFunction
                   mempty
-                  (MTArray mempty (MTPrim mempty MTString))
-                  (MTArray mempty (MTPrim mempty MTString))
+                  (MTArray mempty (unknown 1))
+                  (MTArray mempty (unknown 1))
               )
         -- cannot use ArrEmpty directly
         it "let a = ArrEmpty in a" $ do

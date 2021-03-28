@@ -41,6 +41,10 @@ varBind ann var ty
       FailsOccursCheck swaps var ty
   | matchPatternMatchLiteral (MTPrim mempty MTString) ty =
     pure (Substitutions (M.singleton var (MTPrim ann MTString)))
+  | matchPatternMatchLiteral (MTArray mempty (MTPrim mempty MTUnit)) ty = do
+    case ty of
+      MTData _ "Arr" [a] -> pure (Substitutions (M.singleton var (MTArray ann a)))
+      _ -> throwError UnknownTypeError
   | otherwise = do
     let ty' = ty $> ann
     pure $ Substitutions (M.singleton var ty')
@@ -73,8 +77,8 @@ typeEquals mtA mtB = (mtA $> ()) == (mtB $> ())
 matchPatternMatchLiteral :: MonoType -> MonoType -> Bool
 matchPatternMatchLiteral (MTPrim _ MTString) (MTData _ tyCon _) =
   tyCon == "Str"
-matchPatternMatchLiteral (MTArray _ a) (MTData _ tyCon [b]) =
-  tyCon == "Arr" && typeEquals a b
+matchPatternMatchLiteral (MTArray _ _) (MTData _ tyCon _) =
+  tyCon == "Arr"
 matchPatternMatchLiteral _ _ = False
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
