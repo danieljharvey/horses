@@ -370,11 +370,11 @@ spec =
                     )
 
         -}
-        it "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest" $ do
-          result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
+        it "type Array a = Empty | Item a (Array a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest" $ do
+          result <- eval stdLib "type Array a = Empty | Item a (Array a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
           result
             `shouldBe` Right
-              ( MTData mempty "Arr" [MTPrim mempty MTInt],
+              ( MTData mempty "Array" [MTPrim mempty MTInt],
                 MyConsApp
                   mempty
                   ( MyConsApp
@@ -401,11 +401,11 @@ spec =
                 result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)"
                 result `shouldBe` Right (MTPrim mempty MTInt, int 3)
         -}
-        it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)" $ do
-          result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)"
+        it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)" $ do
+          result <- eval stdLib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)"
           result `shouldBe` Right (MTPrim mempty MTInt, int 0)
-        it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
-          result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
+        it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
+          result <- eval stdLib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
           result `shouldBe` Right (MTPrim mempty MTInt, int 3)
         it "type Tlee a = Non | Tlee (Option b) in {}" $ do
           result <- eval stdLib "type Tlee a = Non | Tlee (Option b) in {}"
@@ -723,3 +723,36 @@ spec =
           result <- eval stdLib "[1,True,3]"
           result
             `shouldSatisfy` isLeft
+        it "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty []" $ do
+          result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty []"
+          result
+            `shouldBe` Right
+              ( MTArray mempty (MTPrim mempty MTInt),
+                MyArray mempty [int 1]
+              )
+        -- incomplete
+        it "case [1,2] of ArrHead \\c -> \\rest -> c" $ do
+          result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> c"
+          result `shouldSatisfy` isLeft
+        -- wrong input type
+        it "case 123 of ArrHead \\c -> \\rest -> c | ArrEmpty 1" $ do
+          result <- eval stdLib "case 123 of ArrHead \\c -> \\rest -> c | ArrEmpty 1"
+          result `shouldSatisfy` isLeft
+        -- should not infer internal Str type
+        it "\\s -> let a = case s of ArrEmpty 2 | otherwise 1 in s" $ do
+          result <- eval stdLib "\\s -> let a = case s of ArrEmpty 2 | otherwise 1 in s"
+          fst <$> result
+            `shouldBe` Right
+              ( MTFunction
+                  mempty
+                  (MTArray mempty (MTPrim mempty MTString))
+                  (MTArray mempty (MTPrim mempty MTString))
+              )
+        -- cannot use ArrEmpty directly
+        it "let a = ArrEmpty in a" $ do
+          result <- eval stdLib "let a = ArrEmpty in a"
+          result `shouldSatisfy` isLeft
+        -- cannot use ArrHead directly
+        it "let a = ArrHead \"1\" \"\" in a" $ do
+          result <- eval stdLib "let a = ArrHead \"1\" \"\" in a"
+          result `shouldSatisfy` isLeft

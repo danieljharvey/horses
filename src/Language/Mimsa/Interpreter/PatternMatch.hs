@@ -36,6 +36,10 @@ findConstructor (MyLiteral _ (MyString s)) =
   if stringLength s == 0
     then pure "StrEmpty"
     else pure "StrHead"
+findConstructor (MyArray _ items) =
+  if null items
+    then pure "ArrEmpty"
+    else pure "ArrHead"
 findConstructor e = throwError $ PatternMatchFailure e
 
 -- apply each part of the constructor to the output function

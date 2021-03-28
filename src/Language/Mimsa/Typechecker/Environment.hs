@@ -12,17 +12,28 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
 builtInString :: MonoType
-builtInString = MTData mempty "String" mempty
+builtInString = MTData mempty "Str" mempty
+
+builtInArray :: MonoType
+builtInArray = MTData mempty "Arr" mempty
 
 getNativeConstructors :: TyCon -> Maybe MonoType
-getNativeConstructors tyCon =
-  if tyCon == "StrHead" || tyCon == "StrEmpty"
-    then Just builtInString
-    else Nothing
+getNativeConstructors "StrHead" = Just builtInString
+getNativeConstructors "StrEmpty" = Just builtInString
+getNativeConstructors "ArrHead" = Just builtInArray
+getNativeConstructors "ArrEmpty" = Just builtInArray
+getNativeConstructors _ = Nothing
 
 getAllDataTypes :: Environment -> Map TyCon (DataType Annotation)
 getAllDataTypes env =
-  M.singleton "Str" strType
+  M.fromList
+    [ ( "Str",
+        strType
+      ),
+      ( "Arr",
+        arrType
+      )
+    ]
     <> getDataTypes env
 
 -- Str is the datatype for case matches
@@ -34,6 +45,22 @@ strType =
     ( M.fromList
         [ ("StrHead", [MTPrim mempty MTString, MTPrim mempty MTString]),
           ("StrEmpty", mempty)
+        ]
+    )
+
+-- Arr is the datatype for case matches
+arrType :: DataType Annotation
+arrType =
+  DataType
+    "Arr"
+    mempty
+    ( M.fromList
+        [ ( "ArrHead",
+            [ MTArray mempty (MTPrim mempty MTString),
+              MTArray mempty (MTPrim mempty MTString)
+            ]
+          ),
+          ("ArrEmpty", mempty)
         ]
     )
 

@@ -73,6 +73,8 @@ typeEquals mtA mtB = (mtA $> ()) == (mtB $> ())
 matchPatternMatchLiteral :: MonoType -> MonoType -> Bool
 matchPatternMatchLiteral (MTPrim _ MTString) (MTData _ tyCon _) =
   tyCon == "Str"
+matchPatternMatchLiteral (MTArray _ a) (MTData _ tyCon [b]) =
+  tyCon == "Arr" && typeEquals a b
 matchPatternMatchLiteral _ _ = False
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
