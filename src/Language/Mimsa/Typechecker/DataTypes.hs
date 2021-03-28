@@ -3,6 +3,7 @@
 module Language.Mimsa.Typechecker.DataTypes
   ( defaultEnv,
     builtInTypes,
+    lookupBuiltIn,
     storeDataDeclaration,
     inferDataConstructor,
     inferConstructorTypes,
@@ -36,7 +37,9 @@ builtInTypes =
     [ ("String", MTPrim mempty MTString),
       ("Int", MTPrim mempty MTInt),
       ("Boolean", MTPrim mempty MTBool),
-      ("Unit", MTPrim mempty MTUnit)
+      ("Unit", MTPrim mempty MTUnit),
+      ("StrEmpty", MTPrim mempty MTString),
+      ("StrHead", MTPrim mempty MTString)
     ]
 
 lookupBuiltIn :: TyCon -> Maybe MonoType
@@ -58,6 +61,11 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
       let newEnv = Environment mempty (M.singleton tyName dt) mempty
        in pure (newEnv <> env)
 
+errorOnBuiltIn :: Annotation -> TyCon -> TcMonad ()
+errorOnBuiltIn ann tc = case lookupBuiltIn tc of
+  Just _ -> throwError (InternalConstructorUsedOutsidePatternMatch ann tc)
+  _ -> pure ()
+
 -- infer the type of a data constructor
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
@@ -66,10 +74,11 @@ inferDataConstructor ::
   Annotation ->
   TyCon ->
   TcMonad (Substitutions, MonoType)
-inferDataConstructor env ann name = do
-  dataType <- lookupConstructor env ann name
+inferDataConstructor env ann tyCon = do
+  errorOnBuiltIn ann tyCon
+  dataType <- lookupConstructor env ann tyCon
   (_, allArgs) <- inferConstructorTypes env dataType
-  case M.lookup name allArgs of
+  case M.lookup tyCon allArgs of
     Just tyArg ->
       pure (mempty, constructorToType tyArg)
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)

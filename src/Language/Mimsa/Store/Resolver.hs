@@ -8,10 +8,11 @@ module Language.Mimsa.Store.Resolver
 where
 
 import qualified Data.Map as M
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, isJust)
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes (extractTypes)
 import Language.Mimsa.Store.ExtractVars (extractVars)
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -58,13 +59,12 @@ findBindings bindings' expr = do
 
 -----------
 
--- built in constructors
-builtIns :: [TyCon]
-builtIns = ["StrEmpty", "StrHead"]
+isBuiltIn :: TyCon -> Bool
+isBuiltIn = isJust . lookupBuiltIn
 
 findHashInTypeBindings :: TypeBindings -> TyCon -> Either ResolverError (Maybe ExprHash)
 findHashInTypeBindings (TypeBindings bindings') cName =
-  if cName `elem` builtIns
+  if isBuiltIn cName
     then Right Nothing
     else case M.lookup cName bindings' of
       Just a -> Right (Just a)

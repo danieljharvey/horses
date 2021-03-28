@@ -676,6 +676,14 @@ spec =
                   (MTPrim mempty MTString)
                   (MTPrim mempty MTString)
               )
+        -- cannot use StrEmpty directly
+        it "let a = StrEmpty in a" $ do
+          result <- eval stdLib "let a = StrEmpty in a"
+          result `shouldSatisfy` isLeft
+        -- cannot use StrHead directly
+        it "let a = StrHead \"1\" \"\" in a" $ do
+          result <- eval stdLib "let a = StrHead \"1\" \"\" in a"
+          result `shouldSatisfy` isLeft
         it "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")" $ do
           result <- eval stdLib "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")"
           snd <$> result
