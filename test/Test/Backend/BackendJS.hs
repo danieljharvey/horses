@@ -80,7 +80,8 @@ successes =
     ("10 - 2", "const main = 10 - 2;\n"),
     ("\"dog\" <> \"log\"", "const main = \"dog\" + \"log\";\n"),
     ("{ fn: (\\a -> let d = 1 in a) }", "const main = { fn: a => { const d = 1;\nreturn a } };\n"),
-    ("case \"dog\" of StrHead \\c -> \\r -> 1 | StrEmpty 0", "const main = __match(\"dog\", { StrHead: c => r => 1, StrEmpty: 0 }, null);\n")
+    ("case \"dog\" of StrHead \\c -> \\r -> 1 | StrEmpty 0", "const main = __match(\"dog\", { StrHead: c => r => 1, StrEmpty: 0 }, null);\n"),
+    ("case [1,2,3] of ArrHead \\c -> \\r -> 1 | ArrEmpty 0", "const main = __match([1, 2, 3], { ArrHead: c => r => 1, ArrEmpty: 0 }, null);\n")
   ]
 
 testIt :: (Text, Javascript) -> Spec

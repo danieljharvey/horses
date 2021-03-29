@@ -76,6 +76,19 @@ outputRecord as = do
       js <- outputJS val
       pure (textToJS (prettyPrint name) <> ": " <> js)
 
+outputArray ::
+  (Monoid ann) =>
+  [Expr Name ann] ->
+  BackendM ann Javascript
+outputArray as = do
+  items <- traverse outputJS as
+  pure $
+    "["
+      <> intercal
+        ", "
+        items
+      <> "]"
+
 outputCaseMatch ::
   (Monoid ann) =>
   Expr Name ann ->
@@ -271,7 +284,7 @@ outputJS expr =
     MyIf _ p a b -> outputIf p a b
     MyLet _ n a b -> outputLet n a b
     MyRecord _ as -> outputRecord as
-    MyArray _ _ -> error "ah no"
+    MyArray _ as -> outputArray as
     MyLetPair _ m n a b -> outputLetPair m n a b
     MyPair _ a b -> outputPair a b
     MyRecordAccess _ r a -> do
