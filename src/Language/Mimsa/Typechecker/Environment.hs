@@ -14,14 +14,14 @@ import Language.Mimsa.Types.Typechecker
 builtInString :: MonoType
 builtInString = MTData mempty "Str" mempty
 
-builtInArray :: MonoType -> MonoType
-builtInArray a = MTData mempty "Arr" [a]
+builtInArray :: MonoType
+builtInArray = MTData mempty "Arr" [MTVar mempty (TVName "a")]
 
 getNativeConstructors :: TyCon -> Maybe MonoType
 getNativeConstructors "StrHead" = Just builtInString
 getNativeConstructors "StrEmpty" = Just builtInString
-getNativeConstructors "ArrHead" = Just (builtInArray (MTPrim mempty MTUnit))
-getNativeConstructors "ArrEmpty" = Just (builtInArray (MTPrim mempty MTUnit))
+getNativeConstructors "ArrHead" = Just builtInArray
+getNativeConstructors "ArrEmpty" = Just builtInArray
 getNativeConstructors _ = Nothing
 
 getAllDataTypes :: Environment -> Map TyCon (DataType Annotation)
@@ -31,7 +31,7 @@ getAllDataTypes env =
         strType
       ),
       ( "Arr",
-        arrType (MTPrim mempty MTUnit)
+        arrType
       )
     ]
     <> getDataTypes env
@@ -49,20 +49,21 @@ strType =
     )
 
 -- Arr is the datatype for case matches
-arrType :: MonoType -> DataType Annotation
-arrType mt =
-  DataType
-    "Arr"
-    mempty
-    ( M.fromList
-        [ ( "ArrHead",
-            [ mt,
-              MTArray mempty mt
+arrType :: DataType Annotation
+arrType =
+  let mt = MTVar mempty (TVName "a")
+   in DataType
+        "Arr"
+        ["a"]
+        ( M.fromList
+            [ ( "ArrHead",
+                [ mt,
+                  MTArray mempty mt
+                ]
+              ),
+              ("ArrEmpty", mempty)
             ]
-          ),
-          ("ArrEmpty", mempty)
-        ]
-    )
+        )
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::

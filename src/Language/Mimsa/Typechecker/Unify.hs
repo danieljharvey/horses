@@ -98,6 +98,7 @@ unify tyA tyB =
         let pairs = zip tyAs tyBs
         s <- traverse (uncurry unify) pairs
         pure (mconcat s)
+    (MTArray _ a, MTArray _ b) -> unify a b
     (MTVar ann u, t) -> varBind ann u t
     (t, MTVar ann u) -> varBind ann u t
     (a, b) ->

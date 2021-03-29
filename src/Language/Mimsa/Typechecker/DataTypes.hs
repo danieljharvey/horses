@@ -40,8 +40,8 @@ builtInTypes =
       ("Unit", MTPrim mempty MTUnit),
       ("StrEmpty", MTPrim mempty MTString),
       ("StrHead", MTPrim mempty MTString),
-      ("ArrEmpty", MTArray mempty (MTPrim mempty MTUnit)),
-      ("ArrHead", MTArray mempty (MTPrim mempty MTUnit))
+      ("ArrEmpty", MTArray mempty (MTVar mempty (TVName "a"))),
+      ("ArrHead", MTArray mempty (MTVar mempty (TVName "a")))
     ]
 
 lookupBuiltIn :: TyCon -> Maybe MonoType

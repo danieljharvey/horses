@@ -723,36 +723,37 @@ spec =
           result <- eval stdLib "[1,True,3]"
           result
             `shouldSatisfy` isLeft
-        it "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty [0]" $ do
-          result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty [0]"
-          result
-            `shouldBe` Right
-              ( MTArray mempty (MTPrim mempty MTInt),
-                MyArray mempty [int 1]
-              )
-        -- incomplete
-        it "case [1,2] of ArrHead \\c -> \\rest -> c" $ do
-          result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> c"
-          result `shouldSatisfy` isLeft
-        -- wrong input type
-        it "case 123 of ArrHead \\c -> \\rest -> c | ArrEmpty 1" $ do
-          result <- eval stdLib "case 123 of ArrHead \\c -> \\rest -> c | ArrEmpty 1"
-          result `shouldSatisfy` isLeft
-        -- should not infer internal Str type
-        it "\\s -> let a = case s of ArrEmpty 2 | otherwise 1 in s" $ do
-          result <- eval stdLib "\\s -> let a = case s of ArrEmpty 2 | otherwise 1 in s"
-          fst <$> result
-            `shouldBe` Right
-              ( MTFunction
-                  mempty
-                  (MTArray mempty (unknown 1))
-                  (MTArray mempty (unknown 1))
-              )
-        -- cannot use ArrEmpty directly
-        it "let a = ArrEmpty in a" $ do
-          result <- eval stdLib "let a = ArrEmpty in a"
-          result `shouldSatisfy` isLeft
-        -- cannot use ArrHead directly
-        it "let a = ArrHead \"1\" \"\" in a" $ do
-          result <- eval stdLib "let a = ArrHead \"1\" \"\" in a"
-          result `shouldSatisfy` isLeft
+        describe "Native array" $ do
+          it "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty [0]" $ do
+            result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty [0]"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty [int 1]
+                )
+          -- incomplete
+          it "case [1,2] of ArrHead \\c -> \\rest -> c" $ do
+            result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> c"
+            result `shouldSatisfy` isLeft
+          -- wrong input type
+          it "case 123 of ArrHead \\c -> \\rest -> c | ArrEmpty 1" $ do
+            result <- eval stdLib "case 123 of ArrHead \\c -> \\rest -> c | ArrEmpty 1"
+            result `shouldSatisfy` isLeft
+          -- should not infer internal Str type
+          it "\\s -> let a = case s of ArrEmpty 2 | otherwise 1 in s" $ do
+            result <- eval stdLib "\\s -> let a = case s of ArrEmpty 2 | otherwise 1 in s"
+            fst <$> result
+              `shouldBe` Right
+                ( MTFunction
+                    mempty
+                    (MTArray mempty (unknown 1))
+                    (MTArray mempty (unknown 1))
+                )
+          -- cannot use ArrEmpty directly
+          it "let a = ArrEmpty in a" $ do
+            result <- eval stdLib "let a = ArrEmpty in a"
+            result `shouldSatisfy` isLeft
+          -- cannot use ArrHead directly
+          it "let a = ArrHead \"1\" \"\" in a" $ do
+            result <- eval stdLib "let a = ArrHead \"1\" \"\" in a"
+            result `shouldSatisfy` isLeft
