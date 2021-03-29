@@ -62,4 +62,16 @@ createMatchExpression f (MyLiteral _ (MyString s)) =
         )
         (MyLiteral mempty (MyString sTail))
     Nothing -> f
+createMatchExpression f (MyArray _ as) =
+  if (not . null) as
+    then
+      MyApp
+        mempty
+        ( MyApp
+            mempty
+            f
+            (head as)
+        )
+        (MyArray mempty (tail as))
+    else f
 createMatchExpression f _ = f
