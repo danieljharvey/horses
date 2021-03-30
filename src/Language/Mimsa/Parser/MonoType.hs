@@ -35,6 +35,7 @@ simpleTypeParser =
           <|> try varParser
           <|> try primitiveParser
           <|> try recordParser
+          <|> try arrayParser
           <|> try dataTypeParser
    in orInBrackets parsers
 
@@ -145,3 +146,12 @@ monoDataTypeParser :: Parser MonoType
 monoDataTypeParser = do
   tyName <- tyConParser
   pure (MTData mempty tyName mempty)
+
+arrayParser :: Parser MonoType
+arrayParser = do
+  _ <- string "["
+  _ <- space
+  arg <- monoTypeParser
+  _ <- space
+  _ <- string "]"
+  pure (MTArray mempty arg)

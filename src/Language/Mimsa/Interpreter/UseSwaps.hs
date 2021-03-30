@@ -55,6 +55,9 @@ useSwaps' (MyPair ann a b) =
 useSwaps' (MyRecord ann map') = do
   map2 <- traverse useSwaps' map'
   pure (MyRecord ann map2)
+useSwaps' (MyArray ann map') = do
+  map2 <- traverse useSwaps' map'
+  pure (MyArray ann map2)
 useSwaps' (MyLiteral ann a) = pure (MyLiteral ann a)
 useSwaps' (MyData ann dt b) =
   MyData ann dt <$> useSwaps' b

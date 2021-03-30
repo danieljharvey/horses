@@ -20,10 +20,24 @@ const stringMatch = (val, matches, catchAll) => {
   return catchAll;
 };
 
+// built in pattern matching to split head and tail of array
+const arrayMatch = (val, matches, catchAll) => {
+  if (val.length > 0 && "ArrHead" in matches) {
+    return matches["ArrHead"](val[0])(val.slice(1));
+  } else if (val.length === 0 && "ArrEmpty" in matches) {
+    return matches["ArrEmpty"];
+  }
+  return catchAll;
+};
+
 const __match = (val, matches, catchAll) =>
   typeof val === "string"
     ? stringMatch(val, matches, catchAll)
+    : Array.isArray(val)
+    ? arrayMatch(val, matches, catchAll)
     : objectMatch(val, matches, catchAll);
+
+const __concat = (a,b) => [...a,...b]
 
 // very cheap eq function, forgive me padre
 const __eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -31,4 +45,5 @@ const __eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 module.exports = {
   __match,
   __eq,
+  __concat,
 };

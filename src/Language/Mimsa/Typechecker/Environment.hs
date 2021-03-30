@@ -12,17 +12,28 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
 builtInString :: MonoType
-builtInString = MTData mempty "String" mempty
+builtInString = MTData mempty "Str" mempty
+
+builtInArray :: MonoType
+builtInArray = MTData mempty "Arr" [MTVar mempty (TVName "a")]
 
 getNativeConstructors :: TyCon -> Maybe MonoType
-getNativeConstructors tyCon =
-  if tyCon == "StrHead" || tyCon == "StrEmpty"
-    then Just builtInString
-    else Nothing
+getNativeConstructors "StrHead" = Just builtInString
+getNativeConstructors "StrEmpty" = Just builtInString
+getNativeConstructors "ArrHead" = Just builtInArray
+getNativeConstructors "ArrEmpty" = Just builtInArray
+getNativeConstructors _ = Nothing
 
 getAllDataTypes :: Environment -> Map TyCon (DataType Annotation)
 getAllDataTypes env =
-  M.singleton "Str" strType
+  M.fromList
+    [ ( "Str",
+        strType
+      ),
+      ( "Arr",
+        arrType
+      )
+    ]
     <> getDataTypes env
 
 -- Str is the datatype for case matches
@@ -37,13 +48,30 @@ strType =
         ]
     )
 
+-- Arr is the datatype for case matches
+arrType :: DataType Annotation
+arrType =
+  let mt = MTVar mempty (TVName "a")
+   in DataType
+        "Arr"
+        ["a"]
+        ( M.fromList
+            [ ( "ArrHead",
+                [ mt,
+                  MTArray mempty mt
+                ]
+              ),
+              ("ArrEmpty", mempty)
+            ]
+        )
+
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
   Environment ->
   Annotation ->
   TyCon ->
   TcMonad (DataType Annotation)
-lookupConstructor env ann name =
+lookupConstructor env ann name = do
   case M.toList $ M.filter (containsConstructor name) (getAllDataTypes env) of
     [(_, a)] -> pure a -- we only want a single match
     (_ : _) -> throwError (ConflictingConstructors ann name)

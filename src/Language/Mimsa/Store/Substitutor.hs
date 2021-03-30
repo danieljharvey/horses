@@ -234,6 +234,9 @@ mapVar chg (MyPair ann a b) = MyPair ann <$> mapVar chg a <*> mapVar chg b
 mapVar chg (MyRecord ann map') = do
   map2 <- traverse (mapVar chg) map'
   pure (MyRecord ann map2)
+mapVar chg (MyArray ann map') = do
+  map2 <- traverse (mapVar chg) map'
+  pure (MyArray ann map2)
 mapVar _ (MyLiteral ann a) = pure (MyLiteral ann a)
 mapVar chg (MyData ann dt b) =
   MyData ann dt <$> mapVar chg b

@@ -263,3 +263,5 @@ spec =
           )
     it "Parses function without brackets" $
       testParser "r -> a" `shouldSatisfy` isRight
+    it "Parses array of numbers" $
+      testParser "[Int]" `shouldBe` Right (MTArray mempty (MTPrim mempty MTInt))

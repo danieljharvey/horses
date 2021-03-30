@@ -27,6 +27,7 @@ freeTypeVars ty = case ty of
     S.union (freeTypeVars t1) (freeTypeVars t2)
   MTPair _ t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
   MTRecord _ as -> foldr S.union mempty (freeTypeVars <$> as)
+  MTArray _ a -> freeTypeVars a
   MTData _ _ as -> foldr S.union mempty (freeTypeVars <$> as)
   MTPrim _ _ -> S.empty
 
@@ -40,6 +41,10 @@ varBind ann var ty
       FailsOccursCheck swaps var ty
   | matchPatternMatchLiteral (MTPrim mempty MTString) ty =
     pure (Substitutions (M.singleton var (MTPrim ann MTString)))
+  | matchPatternMatchLiteral (MTArray mempty (MTPrim mempty MTUnit)) ty = do
+    case ty of
+      MTData _ "Arr" [a] -> pure (Substitutions (M.singleton var (MTArray ann a)))
+      _ -> throwError UnknownTypeError
   | otherwise = do
     let ty' = ty $> ann
     pure $ Substitutions (M.singleton var ty')
@@ -72,6 +77,8 @@ typeEquals mtA mtB = (mtA $> ()) == (mtB $> ())
 matchPatternMatchLiteral :: MonoType -> MonoType -> Bool
 matchPatternMatchLiteral (MTPrim _ MTString) (MTData _ tyCon _) =
   tyCon == "Str"
+matchPatternMatchLiteral (MTArray _ _) (MTData _ tyCon _) =
+  tyCon == "Arr"
 matchPatternMatchLiteral _ _ = False
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
@@ -91,6 +98,7 @@ unify tyA tyB =
         let pairs = zip tyAs tyBs
         s <- traverse (uncurry unify) pairs
         pure (mconcat s)
+    (MTArray _ a, MTArray _ b) -> unify a b
     (MTVar ann u, t) -> varBind ann u t
     (t, MTVar ann u) -> varBind ann u t
     (a, b) ->

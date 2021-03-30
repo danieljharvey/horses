@@ -22,6 +22,7 @@ data Operator
   | Add
   | Subtract
   | StringConcat
+  | ArrayConcat
   | Custom InfixOp
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
 
@@ -45,5 +46,6 @@ instance Printer Operator where
   prettyDoc Equals = "=="
   prettyDoc Add = "+"
   prettyDoc Subtract = "-"
-  prettyDoc StringConcat = "<>"
+  prettyDoc StringConcat = "++"
+  prettyDoc ArrayConcat = "<>"
   prettyDoc (Custom infixOp) = prettyDoc infixOp

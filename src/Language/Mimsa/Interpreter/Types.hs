@@ -1,5 +1,8 @@
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
+
 module Language.Mimsa.Interpreter.Types
-  ( App,
+  ( App (..),
     InterpretState (..),
     readScope,
     nextVariable,
@@ -12,8 +15,9 @@ module Language.Mimsa.Interpreter.Types
   )
 where
 
+import Control.Applicative
 import Control.Monad.Except
-import Control.Monad.Trans.State.Lazy
+import Control.Monad.State.Lazy
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
@@ -23,10 +27,21 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Swaps
 
-type App ann =
-  StateT
-    (InterpretState ann)
-    (Either (InterpreterError ann))
+newtype App ann a = App
+  { getApp ::
+      ExceptT
+        (InterpreterError ann)
+        (State (InterpretState ann))
+        a
+  }
+  deriving
+    ( Functor,
+      Applicative,
+      Monad,
+      Alternative,
+      MonadState (InterpretState ann),
+      MonadError (InterpreterError ann)
+    )
 
 data InterpretState ann = InterpretState
   { isVarNum :: Int,

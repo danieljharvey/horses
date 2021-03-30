@@ -76,6 +76,19 @@ outputRecord as = do
       js <- outputJS val
       pure (textToJS (prettyPrint name) <> ": " <> js)
 
+outputArray ::
+  (Monoid ann) =>
+  [Expr Name ann] ->
+  BackendM ann Javascript
+outputArray as = do
+  items <- traverse outputJS as
+  pure $
+    "["
+      <> intercal
+        ", "
+        items
+      <> "]"
+
 outputCaseMatch ::
   (Monoid ann) =>
   Expr Name ann ->
@@ -155,6 +168,8 @@ outputOperator operator a b = do
       pure $ jsA <> " - " <> jsB
     StringConcat ->
       pure $ jsA <> " + " <> jsB
+    ArrayConcat ->
+      pure $ "__concat(" <> jsA <> ", " <> jsB <> ")"
     (Custom op) -> throwError (OutputtingCustomOperator op)
 
 intercalate :: Javascript -> [Javascript] -> Javascript
@@ -271,6 +286,7 @@ outputJS expr =
     MyIf _ p a b -> outputIf p a b
     MyLet _ n a b -> outputLet n a b
     MyRecord _ as -> outputRecord as
+    MyArray _ as -> outputArray as
     MyLetPair _ m n a b -> outputLetPair m n a b
     MyPair _ a b -> outputPair a b
     MyRecordAccess _ r a -> do
@@ -329,5 +345,5 @@ outputCommonJS dataTypes =
         renderExport = \be name -> pure $ Javascript (outputExport be name),
         renderStdLib = \be ->
           let filename = Javascript (stdLibFilename be)
-           in pure $ "const { __match, __eq } = require(\"./" <> filename <> "\");\n"
+           in pure $ "const { __match, __eq, __concat } = require(\"./" <> filename <> "\");\n"
       }

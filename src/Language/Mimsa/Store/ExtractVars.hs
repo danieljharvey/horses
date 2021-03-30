@@ -30,6 +30,7 @@ extractVars_ (MyLetPair _ newVarA newVarB a b) =
 extractVars_ (MyPair _ a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MyRecord _ map') = foldMap extractVars_ map'
 extractVars_ (MyRecordAccess _ a _) = extractVars_ a
+extractVars_ (MyArray _ map') = foldMap extractVars_ map'
 extractVars_ (MyData _ _ a) = extractVars_ a
 extractVars_ (MyConstructor _ _) = mempty
 extractVars_ (MyConsApp _ a b) = extractVars_ a <> extractVars_ b

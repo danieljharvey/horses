@@ -39,7 +39,9 @@ builtInTypes =
       ("Boolean", MTPrim mempty MTBool),
       ("Unit", MTPrim mempty MTUnit),
       ("StrEmpty", MTPrim mempty MTString),
-      ("StrHead", MTPrim mempty MTString)
+      ("StrHead", MTPrim mempty MTString),
+      ("ArrEmpty", MTArray mempty (MTVar mempty (TVName "a"))),
+      ("ArrHead", MTArray mempty (MTVar mempty (TVName "a")))
     ]
 
 lookupBuiltIn :: TyCon -> Maybe MonoType
@@ -153,6 +155,9 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
         MTRecord _ items -> do
           tyItems <- traverse findType items
           pure (MTRecord mempty tyItems)
+        MTArray _ item -> do
+          tyItems <- findType item
+          pure (MTArray mempty tyItems)
         _ -> throwError UnknownTypeError -- TODO: see what this messes up, not 100% on how to deal with these
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
@@ -175,9 +180,10 @@ inferType env ann tyName tyVars =
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
       _ -> pure (MTData mempty tyName tyVars)
-    _ -> case getNativeConstructors tyName of
-      Just mt -> pure mt
-      _ -> throwError (TypeConstructorNotInScope env ann tyName)
+    _ ->
+      case getNativeConstructors tyName of
+        Just mt -> pure mt
+        _ -> throwError (TypeConstructorNotInScope env ann tyName)
 
 -----
 

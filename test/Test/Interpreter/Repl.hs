@@ -370,11 +370,11 @@ spec =
                     )
 
         -}
-        it "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest" $ do
-          result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
+        it "type Array a = Empty | Item a (Array a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest" $ do
+          result <- eval stdLib "type Array a = Empty | Item a (Array a) in case (Item 1 (Item 2 Empty)) of Empty Empty | Item \\a -> \\rest -> rest"
           result
             `shouldBe` Right
-              ( MTData mempty "Arr" [MTPrim mempty MTInt],
+              ( MTData mempty "Array" [MTPrim mempty MTInt],
                 MyConsApp
                   mempty
                   ( MyConsApp
@@ -401,11 +401,11 @@ spec =
                 result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)"
                 result `shouldBe` Right (MTPrim mempty MTInt, int 3)
         -}
-        it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)" $ do
-          result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)"
+        it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)" $ do
+          result <- eval stdLib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)"
           result `shouldBe` Right (MTPrim mempty MTInt, int 0)
-        it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
-          result <- eval stdLib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
+        it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
+          result <- eval stdLib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> case as of Empty b | Item \\a -> \\rest -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
           result `shouldBe` Right (MTPrim mempty MTInt, int 3)
         it "type Tlee a = Non | Tlee (Option b) in {}" $ do
           result <- eval stdLib "type Tlee a = Non | Tlee (Option b) in {}"
@@ -473,11 +473,11 @@ spec =
         it "1 + 1 + 1 + 1" $ do
           result <- eval stdLib "1 + 1 + 1 + 1"
           result `shouldBe` Right (MTPrim mempty MTInt, int 4)
-        it "\"dog\" <> \"log\"" $ do
-          result <- eval stdLib "\"dog\" <> \"log\""
+        it "\"dog\" ++ \"log\"" $ do
+          result <- eval stdLib "\"dog\" ++ \"log\""
           result `shouldBe` Right (MTPrim mempty MTString, str' "doglog")
-        it "\"dog\" <> 123" $ do
-          result <- eval stdLib "\"dog\" <> 123"
+        it "\"dog\" ++ 123" $ do
+          result <- eval stdLib "\"dog\" ++ 123"
           result `shouldSatisfy` isLeft
         it "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})" $ do
           result <- eval stdLib "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})"
@@ -685,12 +685,12 @@ spec =
           result <- eval stdLib "let a = StrHead \"1\" \"\" in a"
           result `shouldSatisfy` isLeft
         -- filter function for strings
-        it "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a <> rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")" $ do
-          result <- eval stdLib "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a <> rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")"
+        it "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a ++ rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")" $ do
+          result <- eval stdLib "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a ++ rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")"
           result `shouldBe` Right (MTPrim mempty MTString, MyLiteral mempty (MyString "oo"))
 
-        it "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")" $ do
-          result <- eval stdLib "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")"
+        it "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")" $ do
+          result <- eval stdLib "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")"
           snd <$> result
             `shouldBe` Right
               ( MyConsApp
@@ -712,3 +712,73 @@ spec =
           snd <$> result
             `shouldBe` Right
               (MyConstructor mempty "None")
+        it "[1,2,3]" $ do
+          result <- eval stdLib "[1,2,3]"
+          result
+            `shouldBe` Right
+              ( MTArray mempty (MTPrim mempty MTInt),
+                MyArray mempty [int 1, int 2, int 3]
+              )
+        it "[1,True,3]" $ do
+          result <- eval stdLib "[1,True,3]"
+          result
+            `shouldSatisfy` isLeft
+        describe "Native array" $ do
+          it "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty [0]" $ do
+            result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> [c] | ArrEmpty [0]"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty [int 1]
+                )
+          -- incomplete
+          it "case [1,2] of ArrHead \\c -> \\rest -> c" $ do
+            result <- eval stdLib "case [1,2] of ArrHead \\c -> \\rest -> c"
+            result `shouldSatisfy` isLeft
+          -- wrong input type
+          it "case 123 of ArrHead \\c -> \\rest -> c | ArrEmpty 1" $ do
+            result <- eval stdLib "case 123 of ArrHead \\c -> \\rest -> c | ArrEmpty 1"
+            result `shouldSatisfy` isLeft
+          -- should not infer internal Str type
+          it "\\s -> let a = case s of ArrEmpty 2 | otherwise 1 in s" $ do
+            result <- eval stdLib "\\s -> let a = case s of ArrEmpty 2 | otherwise 1 in s"
+            fst <$> result
+              `shouldBe` Right
+                ( MTFunction
+                    mempty
+                    (MTArray mempty (unknown 1))
+                    (MTArray mempty (unknown 1))
+                )
+          -- cannot use ArrEmpty directly
+          it "let a = ArrEmpty in a" $ do
+            result <- eval stdLib "let a = ArrEmpty in a"
+            result `shouldSatisfy` isLeft
+          -- cannot use ArrHead directly
+          it "let a = ArrHead \"1\" \"\" in a" $ do
+            result <- eval stdLib "let a = ArrHead \"1\" \"\" in a"
+            result `shouldSatisfy` isLeft
+          it "[1] <> [2]" $ do
+            result <- eval stdLib "[1] <> [2]"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty [int 1, int 2]
+                )
+          it "[1] <> [True]" $ do
+            result <- eval stdLib "[1] <> [True]"
+            result `shouldSatisfy` isLeft
+          it "[1] <> \"2\"" $ do
+            result <- eval stdLib "[1] <> \"2\""
+            result
+              `shouldSatisfy` isLeft
+          it "\"1\" <> [2]" $ do
+            result <- eval stdLib "\"1\" <> [2]"
+            result
+              `shouldSatisfy` isLeft
+          it "mapArray(\\a -> a + 1)([1,2,3])" $ do
+            result <- eval stdLib "mapArray(\\a -> a + 1)([1,2,3])"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty [int 2, int 3, int 4]
+                )

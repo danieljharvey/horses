@@ -35,6 +35,7 @@ extractTypes_ (MyLetPair _ _ _ a b) =
 extractTypes_ (MyPair _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyRecord _ map') = foldMap extractTypes_ map'
 extractTypes_ (MyRecordAccess _ a _) = extractTypes_ a
+extractTypes_ (MyArray _ items) = foldMap extractTypes_ items
 extractTypes_ (MyData _ dt a) =
   S.difference
     (extractConstructors dt <> extractTypes_ a)
@@ -62,6 +63,7 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
     extractFromCon (MTData _ name as) = S.singleton name <> mconcat (extractFromCon <$> as)
     extractFromCon (MTFunction _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon (MTPair _ a b) = extractFromCon a <> extractFromCon b
+    extractFromCon (MTArray _ a) = extractFromCon a
     extractFromCon MTPrim {} = mempty
     extractFromCon (MTRecord _ items) = mconcat (extractFromCon <$> M.elems items)
 
@@ -92,6 +94,7 @@ withDataTypes f (MyLetPair _ _ _ a b) =
 withDataTypes f (MyPair _ a b) = withDataTypes f a <> withDataTypes f b
 withDataTypes f (MyRecord _ map') = foldMap (withDataTypes f) map'
 withDataTypes f (MyRecordAccess _ a _) = withDataTypes f a
+withDataTypes f (MyArray _ map') = foldMap (withDataTypes f) map'
 withDataTypes f (MyData _ dt a) =
   withDataTypes f a
     <> f dt
