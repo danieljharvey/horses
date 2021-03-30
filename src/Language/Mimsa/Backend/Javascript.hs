@@ -167,7 +167,7 @@ outputOperator operator a b = do
     Subtract ->
       pure $ jsA <> " - " <> jsB
     StringConcat ->
-      pure $ jsA <> " + " <> jsB
+      pure $ "__concat(" <> jsA <> ", " <> jsB <> ")"
     (Custom op) -> throwError (OutputtingCustomOperator op)
 
 intercalate :: Javascript -> [Javascript] -> Javascript
@@ -343,5 +343,5 @@ outputCommonJS dataTypes =
         renderExport = \be name -> pure $ Javascript (outputExport be name),
         renderStdLib = \be ->
           let filename = Javascript (stdLibFilename be)
-           in pure $ "const { __match, __eq } = require(\"./" <> filename <> "\");\n"
+           in pure $ "const { __match, __eq, __concat } = require(\"./" <> filename <> "\");\n"
       }

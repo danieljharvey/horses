@@ -91,6 +91,7 @@ stdLibE =
     >>= addPair
     >>= addStateMonad
     >>= addParser
+    >>= addArray
 
 addListMonad :: Project Annotation -> ProjectPart
 addListMonad prj =
@@ -180,6 +181,13 @@ addParser prj =
     >>= addBinding
       "Parser \\s -> None"
       "failParser"
+
+addArray :: Project Annotation -> ProjectPart
+addArray prj =
+  pure prj
+    >>= addBinding
+      "\\f -> \\arr -> let map = \\as -> case as of ArrHead \\a -> \\rest -> [f(a)] <> map(rest) | ArrEmpty []; map(arr)"
+      "mapArray"
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input =

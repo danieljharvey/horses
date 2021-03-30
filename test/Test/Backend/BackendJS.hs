@@ -78,10 +78,11 @@ successes =
     ("True == False", "const main = __eq(true, false);\n"),
     ("2 + 2", "const main = 2 + 2;\n"),
     ("10 - 2", "const main = 10 - 2;\n"),
-    ("\"dog\" <> \"log\"", "const main = \"dog\" + \"log\";\n"),
+    ("\"dog\" <> \"log\"", "const main = __concat(\"dog\", \"log\");\n"),
     ("{ fn: (\\a -> let d = 1 in a) }", "const main = { fn: a => { const d = 1;\nreturn a } };\n"),
     ("case \"dog\" of StrHead \\c -> \\r -> 1 | StrEmpty 0", "const main = __match(\"dog\", { StrHead: c => r => 1, StrEmpty: 0 }, null);\n"),
-    ("case [1,2,3] of ArrHead \\c -> \\r -> 1 | ArrEmpty 0", "const main = __match([1, 2, 3], { ArrHead: c => r => 1, ArrEmpty: 0 }, null);\n")
+    ("case [1,2,3] of ArrHead \\c -> \\r -> 1 | ArrEmpty 0", "const main = __match([1, 2, 3], { ArrHead: c => r => 1, ArrEmpty: 0 }, null);\n"),
+    ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n")
   ]
 
 testIt :: (Text, Javascript) -> Spec

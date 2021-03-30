@@ -775,3 +775,10 @@ spec =
             result <- eval stdLib "\"1\" <> [2]"
             result
               `shouldSatisfy` isLeft
+          it "mapArray(\\a -> a + 1)([1,2,3])" $ do
+            result <- eval stdLib "mapArray(\\a -> a + 1)([1,2,3])"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty [int 2, int 3, int 4]
+                )
