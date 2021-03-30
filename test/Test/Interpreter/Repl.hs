@@ -473,11 +473,11 @@ spec =
         it "1 + 1 + 1 + 1" $ do
           result <- eval stdLib "1 + 1 + 1 + 1"
           result `shouldBe` Right (MTPrim mempty MTInt, int 4)
-        it "\"dog\" <> \"log\"" $ do
-          result <- eval stdLib "\"dog\" <> \"log\""
+        it "\"dog\" ++ \"log\"" $ do
+          result <- eval stdLib "\"dog\" ++ \"log\""
           result `shouldBe` Right (MTPrim mempty MTString, str' "doglog")
-        it "\"dog\" <> 123" $ do
-          result <- eval stdLib "\"dog\" <> 123"
+        it "\"dog\" ++ 123" $ do
+          result <- eval stdLib "\"dog\" ++ 123"
           result `shouldSatisfy` isLeft
         it "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})" $ do
           result <- eval stdLib "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})"
@@ -685,12 +685,12 @@ spec =
           result <- eval stdLib "let a = StrHead \"1\" \"\" in a"
           result `shouldSatisfy` isLeft
         -- filter function for strings
-        it "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a <> rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")" $ do
-          result <- eval stdLib "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a <> rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")"
+        it "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a ++ rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")" $ do
+          result <- eval stdLib "let filter = \\pred -> \\str -> let fn = \\s -> case s of StrHead \\a -> \\as -> let rest = fn(as); if pred(a) then a ++ rest else rest | StrEmpty \"\" in fn(str); filter(\\a -> a == \"o\")(\"woo\")"
           result `shouldBe` Right (MTPrim mempty MTString, MyLiteral mempty (MyString "oo"))
 
-        it "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")" $ do
-          result <- eval stdLib "let repeat = fmapParser(\\a -> a <> a)(anyChar) in runParser(repeat)(\"dog\")"
+        it "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")" $ do
+          result <- eval stdLib "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")"
           snd <$> result
             `shouldBe` Right
               ( MyConsApp

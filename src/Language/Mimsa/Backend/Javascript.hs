@@ -167,6 +167,8 @@ outputOperator operator a b = do
     Subtract ->
       pure $ jsA <> " - " <> jsB
     StringConcat ->
+      pure $ jsA <> " + " <> jsB
+    ArrayConcat ->
       pure $ "__concat(" <> jsA <> ", " <> jsB <> ")"
     (Custom op) -> throwError (OutputtingCustomOperator op)
 

@@ -372,7 +372,8 @@ inferOperator env ann Subtract a b =
   inferInfix env (MTPrim ann MTInt) a b
 inferOperator env ann StringConcat a b =
   inferInfix env (MTPrim ann MTString) a b
-    <|> inferInfix env (MTArray ann (MTVar mempty (TVName "a"))) a b
+inferOperator env ann ArrayConcat a b =
+  inferInfix env (MTArray ann (MTVar mempty (TVName "a"))) a b
 inferOperator env ann (Custom infixOp) a b = do
   tyRes <- getUnknown ann
   tyFun <- lookupInfixOp env ann infixOp

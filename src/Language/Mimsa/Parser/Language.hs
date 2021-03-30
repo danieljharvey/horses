@@ -316,8 +316,12 @@ opParser =
           $> Subtract
       )
     <|> try
-      ( inSpaces (string "<>")
+      ( inSpaces (string "++")
           $> StringConcat
+      )
+    <|> try
+      ( inSpaces (string "<>")
+          $> ArrayConcat
       )
     <|> try
       ( inSpaces

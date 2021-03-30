@@ -157,7 +157,7 @@ addStateMonad prj =
       "\\f -> \\stateA -> \\stateB -> apState(fmapState(f)(stateA))(stateB)"
       "liftA2State"
     >>= addBinding
-      "\\newName -> let sas = \\s -> let return = newName <> \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
+      "\\newName -> let sas = \\s -> let return = newName ++ \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
       "storeName"
 
 addParser :: Project Annotation -> ProjectPart

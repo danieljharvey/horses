@@ -37,7 +37,7 @@ const __match = (val, matches, catchAll) =>
     ? arrayMatch(val, matches, catchAll)
     : objectMatch(val, matches, catchAll);
 
-const __concat = (a,b) => typeof a === 'string' ? a + b : [...a,...b]
+const __concat = (a,b) => [...a,...b]
 
 // very cheap eq function, forgive me padre
 const __eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
