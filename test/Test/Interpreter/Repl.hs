@@ -757,3 +757,21 @@ spec =
           it "let a = ArrHead \"1\" \"\" in a" $ do
             result <- eval stdLib "let a = ArrHead \"1\" \"\" in a"
             result `shouldSatisfy` isLeft
+          it "[1] <> [2]" $ do
+            result <- eval stdLib "[1] <> [2]"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty [int 1, int 2]
+                )
+          it "[1] <> [True]" $ do
+            result <- eval stdLib "[1] <> [True]"
+            result `shouldSatisfy` isLeft
+          it "[1] <> \"2\"" $ do
+            result <- eval stdLib "[1] <> \"2\""
+            result
+              `shouldSatisfy` isLeft
+          it "\"1\" <> [2]" $ do
+            result <- eval stdLib "\"1\" <> [2]"
+            result
+              `shouldSatisfy` isLeft

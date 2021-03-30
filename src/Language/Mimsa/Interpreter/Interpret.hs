@@ -7,6 +7,7 @@ where
 
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
+import Control.Applicative
 import Control.Monad.Except
 import Data.Functor
 import qualified Data.Map as M
@@ -49,6 +50,34 @@ useVar var' = case var' of
           >>= interpretWithScope
       Nothing -> throwError $ CouldNotFindVar scope' (NamedVar n)
 
+interpretStringConcat ::
+  (Monoid ann) =>
+  Expr Variable ann ->
+  Expr Variable ann ->
+  App ann (Expr Variable ann)
+interpretStringConcat plainA plainB = do
+  let withStr = pure . MyLiteral mempty . MyString . StringType
+      getStr exp' = case exp' of
+        (MyLiteral _ (MyString (StringType i))) -> Right i
+        _ -> Left $ ConcatentationWithWrongVariables plainA plainB
+  case (,) <$> getStr plainA <*> getStr plainB of
+    Right (a', b') -> withStr (a' <> b')
+    Left e -> throwError e
+
+interpretArrayConcat ::
+  (Monoid ann) =>
+  Expr Variable ann ->
+  Expr Variable ann ->
+  App ann (Expr Variable ann)
+interpretArrayConcat plainA plainB = do
+  let withArr = pure . MyArray mempty
+      getArr exp' = case exp' of
+        (MyArray _ i) -> Right i
+        _ -> Left $ ConcatentationWithWrongVariables plainA plainB
+  case (,) <$> getArr plainA <*> getArr plainB of
+    Right (a', b') -> withArr (a' <> b')
+    Left e -> throwError e
+
 interpretOperator ::
   (Eq ann, Monoid ann) =>
   Operator ->
@@ -81,14 +110,9 @@ interpretOperator operator a b = do
       case (,) <$> getNum plainA <*> getNum plainB of
         Right (a', b') -> withInt (a' - b')
         Left e -> throwError e
-    StringConcat -> do
-      let withStr = pure . MyLiteral mempty . MyString . StringType
-      let getStr exp' = case exp' of
-            (MyLiteral _ (MyString (StringType i))) -> Right i
-            _ -> Left $ ConcatentationWithNonString a
-      case (,) <$> getStr plainA <*> getStr plainB of
-        Right (a', b') -> withStr (a' <> b')
-        Left e -> throwError e
+    StringConcat ->
+      interpretStringConcat plainA plainB
+        <|> interpretArrayConcat plainA plainB
     (Custom infixOp) -> do
       opFn <- findOperator infixOp
       case opFn of

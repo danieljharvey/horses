@@ -366,30 +366,37 @@ inferOperator env ann Equals a b = do
     _ -> do
       s3 <- unify tyA tyB -- Equals wants them to be the same
       pure (s3 <> s2 <> s1, MTPrim ann MTBool)
-inferOperator env ann Add a b = inferInfix env MTInt ann a b
-inferOperator env ann Subtract a b = inferInfix env MTInt ann a b
-inferOperator env ann StringConcat a b = inferInfix env MTString ann a b
+inferOperator env ann Add a b =
+  inferInfix env (MTPrim ann MTInt) a b
+inferOperator env ann Subtract a b =
+  inferInfix env (MTPrim ann MTInt) a b
+inferOperator env ann StringConcat a b =
+  inferInfix env (MTPrim ann MTString) a b
+    <|> inferInfix env (MTArray ann (MTVar mempty (TVName "a"))) a b
 inferOperator env ann (Custom infixOp) a b = do
   tyRes <- getUnknown ann
   tyFun <- lookupInfixOp env ann infixOp
   (s1, tyArgA) <- infer env a
   (s2, tyArgB) <- infer (applySubstCtx s1 env) b
-  s3 <- unify (applySubst s2 tyFun) (MTFunction ann tyArgA (MTFunction ann tyArgB tyRes))
+  s3 <-
+    unify
+      (applySubst s2 tyFun)
+      (MTFunction ann tyArgA (MTFunction ann tyArgB tyRes))
   pure (s3, tyRes)
 
 inferInfix ::
   Environment ->
-  Primitive ->
-  Annotation ->
+  MonoType ->
   TcExpr ->
   TcExpr ->
   TcMonad (Substitutions, MonoType)
-inferInfix env prim ann a b = do
+inferInfix env mt a b = do
   (s1, tyA) <- infer env a
   (s2, tyB) <- infer env b
-  s3 <- unify tyB (MTPrim mempty prim)
-  s4 <- unify tyA (MTPrim mempty prim)
-  pure (s4 <> s3 <> s2 <> s1, MTPrim ann prim)
+  s3 <- unify tyB mt
+  s4 <- unify tyA mt
+  s5 <- unify tyA tyB -- types match, useful for Array
+  pure (s5 <> s4 <> s3 <> s2 <> s1, mt)
 
 inferRecordAccess ::
   Environment ->

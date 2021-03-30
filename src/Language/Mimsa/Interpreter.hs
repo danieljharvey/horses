@@ -5,6 +5,8 @@ where
 
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
+
+import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import Language.Mimsa.Interpreter.HighestVar
 import Language.Mimsa.Interpreter.Interpret
@@ -23,15 +25,18 @@ interpret ::
   Expr Variable ann ->
   Either (InterpreterError ann) (Expr Name ann)
 interpret scope' swaps expr =
-  either' >>= \(expr', isState) -> useSwaps (isSwaps isState) expr'
+  case fst interpretOutput of
+    Left e -> throwError e
+    Right expr' -> useSwaps (isSwaps (snd interpretOutput)) expr'
   where
-    either' =
-      runStateT
-        (interpretWithScope expr)
-        InterpretState
-          { isVarNum = highestVar expr + 1,
-            isScope = scope',
-            isInfix = mempty,
-            isApplyCount = 0,
-            isSwaps = swaps
-          }
+    initialState =
+      InterpretState
+        { isVarNum = highestVar expr + 1,
+          isScope = scope',
+          isInfix = mempty,
+          isApplyCount = 0,
+          isSwaps = swaps
+        }
+    fn = interpretWithScope expr
+    interpretOutput =
+      runState (runExceptT (getApp fn)) initialState

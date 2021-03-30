@@ -6,6 +6,7 @@ module Test.Interpreter.InstantiateVar
   )
 where
 
+import Control.Monad.Except
 import Control.Monad.State
 import Language.Mimsa.Interpreter.InstantiateVar
 import Language.Mimsa.Interpreter.Types
@@ -18,20 +19,19 @@ import Test.Utils.Helpers
 testInstantiate ::
   Expr Variable () ->
   Either (InterpreterError ()) (Expr Variable ())
-testInstantiate expr = fst <$> either'
+testInstantiate expr = fst either'
   where
+    initialState =
+      InterpretState
+        { isVarNum = 1,
+          isScope = mempty,
+          isInfix = mempty,
+          isApplyCount = 0,
+          isSwaps = mempty
+        }
+    fn = instantiateVar expr
     either' =
-      runStateT
-        ( instantiateVar
-            expr
-        )
-        InterpretState
-          { isVarNum = 1,
-            isScope = mempty,
-            isInfix = mempty,
-            isApplyCount = 0,
-            isSwaps = mempty
-          }
+      runState (runExceptT (getApp fn)) initialState
 
 spec :: Spec
 spec =
