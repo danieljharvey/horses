@@ -1,0 +1,1 @@
+{"storeExpression":{"tag":"MyRecord","contents":[[],{"unwrap":{"tag":"MyVar","contents":[[],"unwrap"]},"wrap":{"tag":"MyVar","contents":[[],"wrap"]}}]},"storeBindings":{"unwrap":"7269740dea1e214143f4abcc1f0d02dd4008ceab9b53aa5131c68465865d132a","wrap":"09ce6fa3a3b749c5d2748beb8c770685bed2c0498b579dba5edd75ee905abdb1"},"storeTypeBindings":{}}

@@ -22,6 +22,7 @@ import qualified Test.Parser.MonoTypeParser as MonoTypeParser
 import qualified Test.Parser.Syntax as Syntax
 import qualified Test.Prettier as Prettier
 import qualified Test.Project.NormaliseType as NormaliseType
+import qualified Test.Project.Stdlib as Stdlib
 import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.UnitTest as UnitTest
 import qualified Test.Project.Usages as Usages
@@ -65,3 +66,4 @@ main =
     BindExpression.spec
     Compile.spec
     Evaluate.spec
+    Stdlib.spec

@@ -13,6 +13,7 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Server.EnvVars (getMimsaEnv)
 import Language.Mimsa.Server.Servant
 import Language.Mimsa.Server.Types
@@ -65,7 +66,7 @@ getDefaultProject =
   )
     `catchError` \_ -> do
       logInfo "Failed to load project, loading default project"
-      pure defaultProject
+      pure stdlib
 
 server :: IO ()
 server = do

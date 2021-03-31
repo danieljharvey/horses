@@ -12,10 +12,10 @@ import qualified Data.Text as T
 import Language.Mimsa.Monad
 import Language.Mimsa.Parser
 import Language.Mimsa.Project
-  ( defaultProject,
-    loadProject,
+  ( loadProject,
     saveProject,
   )
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
 import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Types.AST
@@ -32,7 +32,7 @@ createMimsaConfig showLogs' = do
   path <- getXdgDirectory XdgData "mimsa"
   pure $ MimsaConfig 0 path showLogs'
 
-getProject :: (Monoid ann) => MimsaM (Error ann) (Project ann)
+getProject :: MimsaM (Error Annotation) (Project Annotation)
 getProject =
   do
     env <- mapError StoreErr loadProject
@@ -41,7 +41,7 @@ getProject =
     pure env
     `catchError` \_ -> do
       logError "Failed to load project, loading default project"
-      pure defaultProject
+      pure stdlib
 
 repl :: Bool -> IO ()
 repl showLogs' = do
