@@ -51,17 +51,17 @@ data CompileExpressionRequest = CompileExpressionRequest
   }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
-newtype CompileExpressionResponse = CompileExpressionResponse LBS.ByteString
+newtype ZipFileResponse = ZipFileResponse LBS.ByteString
   deriving newtype (MimeRender OctetStream)
 
-instance ToSchema CompileExpressionResponse where
+instance ToSchema ZipFileResponse where
   declareNamedSchema _cer = pure (NamedSchema Nothing binarySchema)
 
 -- return type of a ZIP file download with a filename in it's header
 type CompileResponse =
   ( Headers
       '[Header "Content-Disposition" String]
-      CompileExpressionResponse
+      ZipFileResponse
   )
 
 type CompileExpression =
@@ -85,7 +85,7 @@ compileExpressionEndpoint
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
     bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
-    pure (addHeader contentDisposition (CompileExpressionResponse bs))
+    pure (addHeader contentDisposition (ZipFileResponse bs))
 
 -----
 
@@ -99,7 +99,7 @@ newtype CompileHashRequest = CompileHashRequest
 type CompileHashResponse =
   ( Headers
       '[Header "Content-Disposition" String]
-      CompileExpressionResponse
+      ZipFileResponse
   )
 
 type CompileHash =
@@ -127,7 +127,7 @@ compileHashEndpoint
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
     bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
-    pure (addHeader contentDisposition (CompileExpressionResponse bs))
+    pure (addHeader contentDisposition (ZipFileResponse bs))
 
 -----
 
