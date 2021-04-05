@@ -17,6 +17,7 @@ module Language.Mimsa.Server.Handlers
     saveFileHandler,
     interpretHandler,
     findExprHandler,
+    storeFromExprHashHandler,
     resolveStoreExpressionHandler,
     readStoreHandler,
     writeStoreHandler,
@@ -30,6 +31,7 @@ import qualified Data.Aeson as JSON
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import Data.Map (Map)
+import qualified Data.Set as S
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
@@ -42,7 +44,8 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Parser (parseExprAndFormatError, parseTypeDeclAndFormatError)
 import Language.Mimsa.Printer
-import Language.Mimsa.Project
+import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
@@ -190,6 +193,13 @@ findExprHandler project exprHash' =
     case lookupExprHash project exprHash' of
       Nothing -> Left ("Could not find exprhash!" :: Text)
       Just a -> Right a
+
+storeFromExprHashHandler ::
+  MimsaEnvironment ->
+  ExprHash ->
+  Handler (Store ())
+storeFromExprHashHandler mimsaEnv exprHash =
+  handleMimsaM (mimsaConfig mimsaEnv) UserError (recursiveLoadBoundExpressions mempty (S.singleton exprHash))
 
 createNewUnitTestsHandler ::
   Project Annotation ->

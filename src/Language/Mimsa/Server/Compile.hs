@@ -10,6 +10,7 @@ module Language.Mimsa.Server.Compile (CompileAPI, compileEndpoints) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
+import Data.Functor
 import qualified Data.Map as M
 import Data.Set (Set)
 import Data.Swagger (NamedSchema (..), ToSchema, binarySchema, declareNamedSchema)
@@ -19,6 +20,8 @@ import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.ZipFile
+import Language.Mimsa.Printer
+import Language.Mimsa.Project
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
@@ -30,21 +33,16 @@ import Servant
 
 type CompileAPI =
   "compile"
-    :> CompileExpression
+    :> (CompileExpression :<|> CompileHash)
 
 compileEndpoints ::
   MimsaEnvironment ->
   Server CompileAPI
-compileEndpoints =
-  compileExpressionEndpoint
+compileEndpoints mimsaEnv =
+  compileExpressionEndpoint mimsaEnv
+    :<|> compileHashEndpoint mimsaEnv
 
-newtype CompileExpressionResponse = CompileExpressionResponse LBS.ByteString
-  deriving newtype (MimeRender OctetStream)
-
-instance ToSchema CompileExpressionResponse where
-  declareNamedSchema _cer = pure (NamedSchema Nothing binarySchema)
-
-------
+-----
 
 data CompileExpressionRequest = CompileExpressionRequest
   { ceProjectHash :: ProjectHash,
@@ -53,11 +51,17 @@ data CompileExpressionRequest = CompileExpressionRequest
   }
   deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
 
+newtype ZipFileResponse = ZipFileResponse LBS.ByteString
+  deriving newtype (MimeRender OctetStream)
+
+instance ToSchema ZipFileResponse where
+  declareNamedSchema _cer = pure (NamedSchema Nothing binarySchema)
+
 -- return type of a ZIP file download with a filename in it's header
 type CompileResponse =
   ( Headers
       '[Header "Content-Disposition" String]
-      CompileExpressionResponse
+      ZipFileResponse
   )
 
 type CompileExpression =
@@ -81,7 +85,51 @@ compileExpressionEndpoint
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
     bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
-    pure (addHeader contentDisposition (CompileExpressionResponse bs))
+    pure (addHeader contentDisposition (ZipFileResponse bs))
+
+-----
+
+newtype CompileHashRequest = CompileHashRequest
+  { chExprHash :: ExprHash
+  }
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, ToSchema)
+
+-- return type of a ZIP file download with a filename in it's header
+type CompileHashResponse =
+  ( Headers
+      '[Header "Content-Disposition" String]
+      ZipFileResponse
+  )
+
+type CompileHash =
+  "hash"
+    :> ReqBody '[JSON] CompileHashRequest
+    :> Post
+         '[OctetStream]
+         CompileHashResponse
+
+compileHashEndpoint ::
+  MimsaEnvironment ->
+  CompileHashRequest ->
+  Handler CompileHashResponse
+compileHashEndpoint
+  mimsaEnv
+  (CompileHashRequest exprHash) = do
+    store <- storeFromExprHashHandler mimsaEnv exprHash
+    let project = fromStore store $> mempty
+    pd <- projectDataHandler mimsaEnv project
+    expr <- findExprHandler project exprHash
+    let input = prettyPrint (storeExpression expr)
+    runtime <- getRuntime (RuntimeName "export")
+    (_, (rootExprHash, exprHashes)) <-
+      fromActionM mimsaEnv (pdHash pd) (Actions.compile runtime input (storeExpression expr))
+    let filename = "mimsa-" <> show rootExprHash <> ".zip"
+        contentDisposition = "attachment; filename=\"" <> filename <> "\""
+    bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
+    pure (addHeader contentDisposition (ZipFileResponse bs))
+
+-----
 
 getRuntime :: RuntimeName -> Handler (Runtime Javascript)
 getRuntime runtimeName =

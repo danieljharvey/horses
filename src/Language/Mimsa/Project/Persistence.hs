@@ -8,6 +8,7 @@ module Language.Mimsa.Project.Persistence
     saveProjectInStore,
     getCurrentBindings,
     getCurrentTypeBindings,
+    recursiveLoadBoundExpressions,
   )
 where
 
