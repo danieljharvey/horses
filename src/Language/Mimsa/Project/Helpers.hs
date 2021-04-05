@@ -5,6 +5,7 @@ module Language.Mimsa.Project.Helpers
     fromType,
     fromUnitTest,
     fromStoreExpression,
+    fromStore,
     findBindingNameForExprHash,
     lookupExprHash,
     bindingsToVersioned,
@@ -88,6 +89,9 @@ fromUnitTest test storeExpr =
     { prjUnitTests = M.singleton (utExprHash test) test,
       prjStore = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
     }
+
+fromStore :: Store ann -> Project ann
+fromStore store' = mempty {prjStore = store'}
 
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHash project exprHash' =
