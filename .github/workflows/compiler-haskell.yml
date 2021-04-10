@@ -1,4 +1,4 @@
-name: CI
+name: Compiler - build
 
 on:
   push:
