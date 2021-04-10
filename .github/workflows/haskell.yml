@@ -65,7 +65,7 @@ jobs:
     - name: 'Run HLint'
       uses: rwe/actions-hlint-run@v2
       with:
-        path: src/
+        path: .
         fail-on: warning
 
     - name: Run stack build
