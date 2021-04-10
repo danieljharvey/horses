@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     env:
-      working-directory: ./compiler
+      working-directory: compiler
       
     runs-on: ubuntu-latest
 

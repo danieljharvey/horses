@@ -16,7 +16,7 @@ on:
 jobs:
   ormolu:
     env:
-      working-directory: ./compiler
+      working-directory: compiler
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -25,7 +25,7 @@ jobs:
   build:
     needs: ormolu
     env:
-      working-directory: ./compiler
+      working-directory: compiler
     runs-on: ubuntu-latest
 
     steps:
