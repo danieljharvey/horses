@@ -2,11 +2,16 @@ name: Docker build
 
 on:
   push:
-    branches: [ trunk ]
+    branches:
+      - trunk
+    paths:
+      - ./compiler/**
 
 jobs:
   build:
-
+    env:
+      working-directory: ./compiler
+      
     runs-on: ubuntu-latest
 
     steps:

@@ -1,8 +1,0 @@
-let fromMaybe =
-  \def ->
-    \maybe ->
-      case maybe of 
-          Some (\a -> a)
-        | Nowt def;
-
-fromMaybe("Horse")((Some "Dog"))

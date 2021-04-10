@@ -1,4 +1,0 @@
-type Env w a 
-  = Env w
-        a;
-True

@@ -1,4 +1,0 @@
-let a = {one: 1};
-let one = a.one;
-let two = a.two;
-a

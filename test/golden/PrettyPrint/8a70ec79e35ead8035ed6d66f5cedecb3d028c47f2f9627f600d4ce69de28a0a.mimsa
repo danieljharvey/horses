@@ -1,4 +1,0 @@
-\a ->
-  case a of 
-      Some (\as -> as)
-    | Nowt 100

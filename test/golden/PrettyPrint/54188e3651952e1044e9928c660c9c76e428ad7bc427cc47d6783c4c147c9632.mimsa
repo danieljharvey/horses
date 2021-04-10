@@ -1,6 +1,0 @@
-type Thing 
-  = Thing String;
-let a = Thing "string";
-case a of 
-    Thing (\s ->
-     s)

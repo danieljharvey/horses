@@ -1,9 +1,22 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - trunk
+    paths:
+      - ./compiler/**
+
+  pull_request:
+    branches:
+      - trunk
+    paths:
+      - ./compiler/**
 
 jobs:
   ormolu:
+    env:
+      working-directory: ./compiler
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -11,6 +24,8 @@ jobs:
       
   build:
     needs: ormolu
+    env:
+      working-directory: ./compiler
     runs-on: ubuntu-latest
 
     steps:

@@ -1,2 +1,0 @@
-case "ad" of 
-    StrHead (\c -> \rest -> c)
