@@ -45,6 +45,12 @@ export interface Operator {
     StringConcat?: Array<object>;
     /**
      * 
+     * @type {Array<object>}
+     * @memberof Operator
+     */
+    ArrayConcat?: Array<object>;
+    /**
+     * 
      * @type {string}
      * @memberof Operator
      */

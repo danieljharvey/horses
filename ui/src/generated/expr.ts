@@ -90,6 +90,12 @@ export interface Expr {
      * @type {Array<object>}
      * @memberof Expr
      */
+    MyArray?: Array<object>;
+    /**
+     * 
+     * @type {Array<object>}
+     * @memberof Expr
+     */
     MyDefineInfix?: Array<object>;
     /**
      * 
