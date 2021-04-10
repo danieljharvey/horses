@@ -54,6 +54,12 @@ export interface Type {
      * @type {Array<object>}
      * @memberof Type
      */
+    MTArray?: Array<object>;
+    /**
+     * 
+     * @type {Array<object>}
+     * @memberof Type
+     */
     MTData?: Array<object>;
 }
 
