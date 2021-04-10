@@ -5,13 +5,13 @@ on:
     branches:
       - trunk
     paths:
-      - ./compiler/**
+      - "compiler/**"
 
   pull_request:
     branches:
       - trunk
     paths:
-      - ./compiler/**
+      - "compiler/**"
 
 jobs:
   ormolu:
