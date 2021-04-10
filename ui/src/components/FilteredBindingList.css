@@ -1,0 +1,5 @@
+section.filtered-binding-list {
+  /*border-top: 1px black solid;*/
+  background-color: var(--background-lighter);
+  overflow-y: scroll;
+}

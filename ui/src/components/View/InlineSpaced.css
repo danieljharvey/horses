@@ -1,0 +1,11 @@
+section.inline-spaced {
+  display: inline-flex;
+  flex-direction: row;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+div.spaced-container {
+  margin-right: var(--spaceSmall);
+  margin-bottom: var(--spaceSmall);
+}

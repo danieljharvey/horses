@@ -1,0 +1,19 @@
+code.code {
+  white-space: pre-wrap;
+  margin-bottom: var(--spaceMedium);
+  font-weight: 600;
+  overflow-wrap: break-word;
+  font-size: var(--fontMedium);
+}
+
+pre {
+  padding: var(--spaceSmall);
+  margin: 0;
+  background-color: var(--background-lighter);
+  color: var(--greyScale0);
+}
+
+pre.type-signature {
+  background-color: var(--negative);
+  color: var(--greyScale100);
+}
