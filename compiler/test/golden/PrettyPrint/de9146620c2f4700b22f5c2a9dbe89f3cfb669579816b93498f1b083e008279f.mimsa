@@ -1,0 +1,8 @@
+let fromMaybe =
+  \def ->
+    \maybe ->
+      case maybe of 
+          Some (\a -> a)
+        | None def;
+
+fromMaybe("Horse")((Some "Dog"))

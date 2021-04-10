@@ -1,0 +1,7 @@
+\s ->
+  let a =
+    case s of 
+        ArrEmpty 2
+      | otherwise 1;
+
+  s

@@ -1,0 +1,381 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 45bf9edde858be8f1566ec19cdda68fb0eccd04bc7f950160f0708719ade31f6
+
+name:           mimsa
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
+homepage:       https://github.com/danieljharvey/mimsa#readme
+bug-reports:    https://github.com/danieljharvey/mimsa/issues
+author:         Daniel J Harvey
+maintainer:     danieljamesharvey@gmail.com
+copyright:      2021 Daniel J Harvey
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/danieljharvey/mimsa
+
+library
+  exposed-modules:
+      Language.Mimsa
+      Language.Mimsa.Actions
+      Language.Mimsa.Actions.AddUnitTest
+      Language.Mimsa.Actions.BindExpression
+      Language.Mimsa.Actions.BindType
+      Language.Mimsa.Actions.Compile
+      Language.Mimsa.Actions.Evaluate
+      Language.Mimsa.Actions.Monad
+      Language.Mimsa.Actions.Types
+      Language.Mimsa.Backend.Backend
+      Language.Mimsa.Backend.Javascript
+      Language.Mimsa.Backend.NormaliseConstructors
+      Language.Mimsa.Backend.Runtimes
+      Language.Mimsa.Backend.Shared
+      Language.Mimsa.Backend.Types
+      Language.Mimsa.Backend.ZipFile
+      Language.Mimsa.CLI
+      Language.Mimsa.ExprUtils
+      Language.Mimsa.Interpreter
+      Language.Mimsa.Interpreter.HighestVar
+      Language.Mimsa.Interpreter.InstantiateVar
+      Language.Mimsa.Interpreter.Interpret
+      Language.Mimsa.Interpreter.PatternMatch
+      Language.Mimsa.Interpreter.SwapName
+      Language.Mimsa.Interpreter.Types
+      Language.Mimsa.Interpreter.UseSwaps
+      Language.Mimsa.Logging
+      Language.Mimsa.Monad
+      Language.Mimsa.Parser
+      Language.Mimsa.Parser.Helpers
+      Language.Mimsa.Parser.Identifiers
+      Language.Mimsa.Parser.Language
+      Language.Mimsa.Parser.Literal
+      Language.Mimsa.Parser.MonoType
+      Language.Mimsa.Parser.RecordAccess
+      Language.Mimsa.Parser.TypeDecl
+      Language.Mimsa.Parser.Types
+      Language.Mimsa.Printer
+      Language.Mimsa.Project
+      Language.Mimsa.Project.Default
+      Language.Mimsa.Project.Helpers
+      Language.Mimsa.Project.Persistence
+      Language.Mimsa.Project.TypeSearch
+      Language.Mimsa.Project.UnitTest
+      Language.Mimsa.Project.Usages
+      Language.Mimsa.Project.Versions
+      Language.Mimsa.Repl
+      Language.Mimsa.Repl.Actions
+      Language.Mimsa.Repl.Actions.Compile
+      Language.Mimsa.Repl.Actions.Evaluate
+      Language.Mimsa.Repl.Actions.ExpressionBind
+      Language.Mimsa.Repl.Actions.Info
+      Language.Mimsa.Repl.Actions.ListBindings
+      Language.Mimsa.Repl.Actions.Tree
+      Language.Mimsa.Repl.Actions.TypeSearch
+      Language.Mimsa.Repl.Actions.UnitTests
+      Language.Mimsa.Repl.Actions.Versions
+      Language.Mimsa.Repl.Helpers
+      Language.Mimsa.Repl.Parser
+      Language.Mimsa.Repl.Types
+      Language.Mimsa.Server
+      Language.Mimsa.Server.Compile
+      Language.Mimsa.Server.EnvVars
+      Language.Mimsa.Server.ExpressionData
+      Language.Mimsa.Server.Handlers
+      Language.Mimsa.Server.Helpers
+      Language.Mimsa.Server.Main
+      Language.Mimsa.Server.Project
+      Language.Mimsa.Server.Project.AddUnitTest
+      Language.Mimsa.Server.Project.BindExpression
+      Language.Mimsa.Server.Project.BindType
+      Language.Mimsa.Server.Project.CreateProject
+      Language.Mimsa.Server.Project.Evaluate
+      Language.Mimsa.Server.Project.GetExpression
+      Language.Mimsa.Server.Project.ListBindings
+      Language.Mimsa.Server.Project.ListTests
+      Language.Mimsa.Server.Search
+      Language.Mimsa.Server.Servant
+      Language.Mimsa.Server.Store
+      Language.Mimsa.Server.Swagger
+      Language.Mimsa.Server.Types
+      Language.Mimsa.Store
+      Language.Mimsa.Store.DepGraph
+      Language.Mimsa.Store.ExtractTypes
+      Language.Mimsa.Store.ExtractVars
+      Language.Mimsa.Store.Hashing
+      Language.Mimsa.Store.ResolvedDeps
+      Language.Mimsa.Store.Resolver
+      Language.Mimsa.Store.Storage
+      Language.Mimsa.Store.Substitutor
+      Language.Mimsa.Store.UpdateDeps
+      Language.Mimsa.Typechecker
+      Language.Mimsa.Typechecker.Codegen
+      Language.Mimsa.Typechecker.Codegen.ApplicativeApply
+      Language.Mimsa.Typechecker.Codegen.ApplicativePure
+      Language.Mimsa.Typechecker.Codegen.Enum
+      Language.Mimsa.Typechecker.Codegen.Foldable
+      Language.Mimsa.Typechecker.Codegen.Functor
+      Language.Mimsa.Typechecker.Codegen.Newtype
+      Language.Mimsa.Typechecker.Codegen.Utils
+      Language.Mimsa.Typechecker.DataTypes
+      Language.Mimsa.Typechecker.DisplayError
+      Language.Mimsa.Typechecker.Environment
+      Language.Mimsa.Typechecker.Generalise
+      Language.Mimsa.Typechecker.Infer
+      Language.Mimsa.Typechecker.NormaliseTypes
+      Language.Mimsa.Typechecker.Patterns
+      Language.Mimsa.Typechecker.RecordUsages
+      Language.Mimsa.Typechecker.TcMonad
+      Language.Mimsa.Typechecker.TypedHoles
+      Language.Mimsa.Typechecker.Unify
+      Language.Mimsa.Types.AST
+      Language.Mimsa.Types.AST.Annotation
+      Language.Mimsa.Types.AST.DataType
+      Language.Mimsa.Types.AST.Expr
+      Language.Mimsa.Types.AST.InfixOp
+      Language.Mimsa.Types.AST.Literal
+      Language.Mimsa.Types.AST.Operator
+      Language.Mimsa.Types.AST.StringType
+      Language.Mimsa.Types.Error
+      Language.Mimsa.Types.Error.BackendError
+      Language.Mimsa.Types.Error.InterpreterError
+      Language.Mimsa.Types.Error.ResolverError
+      Language.Mimsa.Types.Error.StoreError
+      Language.Mimsa.Types.Error.TypeError
+      Language.Mimsa.Types.Identifiers
+      Language.Mimsa.Types.Identifiers.Name
+      Language.Mimsa.Types.Identifiers.TyCon
+      Language.Mimsa.Types.Identifiers.TypeIdentifier
+      Language.Mimsa.Types.Identifiers.TyVar
+      Language.Mimsa.Types.Identifiers.Variable
+      Language.Mimsa.Types.MimsaConfig
+      Language.Mimsa.Types.Project
+      Language.Mimsa.Types.Project.Project
+      Language.Mimsa.Types.Project.ProjectHash
+      Language.Mimsa.Types.Project.SaveProject
+      Language.Mimsa.Types.Project.UnitTest
+      Language.Mimsa.Types.Project.Usage
+      Language.Mimsa.Types.Project.Versioned
+      Language.Mimsa.Types.Project.VersionedMap
+      Language.Mimsa.Types.ResolvedExpression
+      Language.Mimsa.Types.Scope
+      Language.Mimsa.Types.Store
+      Language.Mimsa.Types.Store.Bindings
+      Language.Mimsa.Types.Store.ExprHash
+      Language.Mimsa.Types.Store.ResolvedDeps
+      Language.Mimsa.Types.Store.ResolvedTypeDeps
+      Language.Mimsa.Types.Store.Store
+      Language.Mimsa.Types.Store.StoreExpression
+      Language.Mimsa.Types.Store.TypeBindings
+      Language.Mimsa.Types.SubstitutedExpression
+      Language.Mimsa.Types.Swaps
+      Language.Mimsa.Types.Typechecker
+      Language.Mimsa.Types.Typechecker.Environment
+      Language.Mimsa.Types.Typechecker.MonoType
+      Language.Mimsa.Types.Typechecker.Scheme
+      Language.Mimsa.Types.Typechecker.Substitutions
+      Language.Mimsa.Types.Typechecker.TypeConstructor
+      Language.Mimsa.Types.Typechecker.UniVar
+  other-modules:
+      Paths_mimsa
+  hs-source-dirs:
+      src
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , directory
+    , envy
+    , exceptions
+    , file-embed
+    , haskeline
+    , http-types
+    , megaparsec
+    , memory
+    , monad-logger
+    , mtl
+    , optparse-applicative
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-server
+    , servant-swagger
+    , stm
+    , swagger2
+    , text
+    , transformers
+    , wai
+    , wai-cors
+    , warp
+    , zip-archive
+  default-language: Haskell2010
+
+executable mimsa
+  main-is: Main.hs
+  other-modules:
+      Paths_mimsa
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , directory
+    , envy
+    , exceptions
+    , file-embed
+    , haskeline
+    , http-types
+    , megaparsec
+    , memory
+    , mimsa
+    , monad-logger
+    , mtl
+    , optparse-applicative
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-server
+    , servant-swagger
+    , stm
+    , swagger2
+    , text
+    , transformers
+    , wai
+    , wai-cors
+    , warp
+    , zip-archive
+  default-language: Haskell2010
+
+executable swagger
+  main-is: Main.hs
+  other-modules:
+      Paths_mimsa
+  hs-source-dirs:
+      swagger
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , directory
+    , envy
+    , exceptions
+    , file-embed
+    , haskeline
+    , http-types
+    , megaparsec
+    , memory
+    , mimsa
+    , monad-logger
+    , mtl
+    , optparse-applicative
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-server
+    , servant-swagger
+    , stm
+    , swagger2
+    , text
+    , transformers
+    , wai
+    , wai-cors
+    , warp
+    , zip-archive
+  default-language: Haskell2010
+
+test-suite mimsa-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Test.Actions
+      Test.Backend.BackendJS
+      Test.Backend.Runtimes
+      Test.Data.Project
+      Test.Interpreter.InstantiateVar
+      Test.Interpreter.Interpreter
+      Test.Interpreter.Repl
+      Test.Interpreter.UseSwaps
+      Test.Parser.MonoTypeParser
+      Test.Parser.Syntax
+      Test.Prettier
+      Test.Project.NormaliseType
+      Test.Project.TypeSearch
+      Test.Project.UnitTest
+      Test.Project.Usages
+      Test.Serialisation
+      Test.Store.Resolver
+      Test.Store.Substitutor
+      Test.Store.UpdateDeps
+      Test.Typechecker.Codegen
+      Test.Typechecker.Codegen.Applicative
+      Test.Typechecker.Codegen.Enum
+      Test.Typechecker.Codegen.Foldable
+      Test.Typechecker.Codegen.Functor
+      Test.Typechecker.Codegen.Newtype
+      Test.Typechecker.Codegen.Shared
+      Test.Typechecker.RecordUsage
+      Test.Typechecker.Typechecker
+      Test.Typechecker.TypeError
+      Test.Typechecker.Unify
+      Test.Utils.Helpers
+      Test.Utils.Serialisation
+      Paths_mimsa
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , directory
+    , envy
+    , exceptions
+    , file-embed
+    , haskeline
+    , hspec
+    , http-types
+    , megaparsec
+    , memory
+    , mimsa
+    , monad-logger
+    , mtl
+    , optparse-applicative
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-server
+    , servant-swagger
+    , stm
+    , swagger2
+    , text
+    , transformers
+    , wai
+    , wai-cors
+    , warp
+    , zip-archive
+  default-language: Haskell2010

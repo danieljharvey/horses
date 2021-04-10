@@ -1,0 +1,2 @@
+infix +++ = addInt;
+1 +++ 2

@@ -1,0 +1,4 @@
+\rec ->
+   if True
+     then rec.one
+     else rec.two
