@@ -6,3 +6,5 @@ result/
 
 .mimsa/
 swagger.json
+
+store_data/

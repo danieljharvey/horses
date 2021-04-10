@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  web:
+    container_name: mimsa-ui
+    build: ./ui/.
+    ports:
+      - '6000:80'
+    depends_on:
+      - api
+
+  api:
+    container_name: mimsa-api
+    build: ./compiler/.
+    ports:
+      - '6001:6001'
+    environment:
+      PORT: 6001
+      STORE_ROOT_PATH: /mimsadata
+    volumes:
+      - './store-data:/mimsadata'
+
+volumes:
+  mimsadata:
