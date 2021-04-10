@@ -1,0 +1,5 @@
+section.panel-row {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: var(--panel-row-flex-direction);
+}

@@ -1,0 +1,11 @@
+p.link {
+  white-space: pre-wrap;
+  margin: 0;
+  background-color: var(--greyScale100);
+  padding: var(--spaceSmall);
+  font-weight: bold;
+  border-radius: var(--spaceMedium);
+  color: var(--greyScale0);
+  cursor: pointer;
+  font-size: var(--fontMedium);
+}

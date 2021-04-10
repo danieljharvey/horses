@@ -1,0 +1,20 @@
+a.button-link {
+  background-color: var(--contrast);
+  border: none;
+  border-radius: var(--spaceSmall);
+  padding: var(--spaceSmall);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  font-size: var(--fontMedium);
+}
+
+a.button-link:focus {
+  outline: none;
+}
+
+a.button-link:hover {
+  background-color: var(--contrast-dark);
+}

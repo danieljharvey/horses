@@ -1,0 +1,40 @@
+section.loading {
+  background-color: var(--background-lighter);
+  height: 100%;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+div.loading-message {
+  flex: 1 1;
+  font-size: 50px;
+  text-align: center;
+  flex-direction: row;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+div.loading-error-message {
+  flex: 1 1;
+  font-size: 50px;
+  text-align: center;
+  flex-direction: column;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+section.loading button {
+  font-size: 25px;
+  padding: var(--spaceMedium) 40px;
+}
+
+div.rotating-horse {
+  display: inline-block;
+  padding: 1em;
+  font-size: 50px;
+}

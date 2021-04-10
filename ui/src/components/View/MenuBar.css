@@ -1,0 +1,18 @@
+section.menu-bar {
+  background-color: var(--greyScale100);
+  padding: 0 var(--spaceSmall) 0 var(--spaceMedium);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  filter: drop-shadow(
+    0 0.2rem 0.3em var(--background-dark)
+  );
+  box-shadow: inset 5em 1em 3em rgb(243, 240, 240);
+  height: var(--spaceLarge);
+}
+
+div.menu-section {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}

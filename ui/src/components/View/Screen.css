@@ -1,0 +1,8 @@
+section.screen {
+  display: flex;
+  flex: 1 1;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--background);
+  padding: 0 var(--spaceMedium) var(--spaceMedium) 0;
+}

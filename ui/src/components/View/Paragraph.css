@@ -1,0 +1,6 @@
+p.paragraph {
+  white-space: pre-wrap;
+  margin: 0;
+  font-weight: 400;
+  font-size: var(--fontMedium);
+}

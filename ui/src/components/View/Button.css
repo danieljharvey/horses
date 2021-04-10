@@ -1,0 +1,18 @@
+button.button {
+  background-color: var(--contrast);
+  border: none;
+  border-radius: var(--spaceSmall);
+  padding: var(--spaceSmall);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: var(--fontMedium);
+}
+
+button.button:focus {
+  outline: none;
+}
+
+button.button:hover {
+  background-color: var(--contrast-dark);
+}

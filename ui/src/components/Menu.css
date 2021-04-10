@@ -1,0 +1,20 @@
+p.menu-back {
+  padding-right: var(--spaceMedium);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--greyScale0);
+  cursor: pointer;
+}
+
+p.menu-title {
+  font-style: normal;
+  color: var(--greyScale0);
+}
+
+div.menu-button {
+  font-size: 32px;
+  cursor: pointer;
+  margin-left: var(--spaceSmall);
+  display: flex;
+  flex: 1;
+}
