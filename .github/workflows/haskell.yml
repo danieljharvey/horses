@@ -69,10 +69,10 @@ jobs:
           fail-on: warning
 
       - name: Run stack build
-        run: stack build
+        run: cd compiler && stack build
 
       - name: Run stack test
-        run: stack test
+        run: cd compiler && stack test
 
       - name: Generate swagger json
-        run: stack exec swagger
+        run: cd compiler && stack exec swagger
