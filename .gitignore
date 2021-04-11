@@ -8,3 +8,7 @@ result/
 swagger.json
 
 store_data/
+file_volume/
+
+./file-volume/
+./git/

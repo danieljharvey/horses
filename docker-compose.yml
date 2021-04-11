@@ -5,20 +5,46 @@ services:
     container_name: mimsa-ui
     build: ./ui/.
     ports:
-      - '6000:80'
+      - '80:80'
     depends_on:
       - api
+    environment:
+      REACT_APP_MIMSA_API_URL: http://localhost:6001 
 
   api:
     container_name: mimsa-api
     build: ./compiler/.
     ports:
-      - '6001:6001'
+      - '8999:8999'
     environment:
-      PORT: 6001
+      PORT: 8999
       STORE_ROOT_PATH: /mimsadata
     volumes:
-      - './store-data:/mimsadata'
+      - './store_data:/mimsadata'
+
+  runner:
+    build: ./runner/.
+    ports:
+      - "8777:8777"
+    restart: always
+    volumes:
+      - ./file_volume:/file_volume
+    environment:
+      VOLUME_PATH: /file_volume
+      PORT: 8777
+
+  router:
+    build: ./router/.
+    ports:
+      - "8666:8666"
+    restart: always
+    volumes:
+      - ./file_volume:/file_volume
+    environment:
+      VOLUME_PATH: /file_volume
+      PORT: 8666
+      MIMSA_BASE_URL: api 
+      MIMSA_PORT: 8999
 
 volumes:
   mimsadata:
