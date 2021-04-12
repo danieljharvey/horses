@@ -29,5 +29,5 @@ readConfig = do
         (fromMaybe "file_volume" volumePath)
         (fromMaybe "mimsa-api.isverymuchmybusiness.com" apiBaseUrl)
         (fromMaybe 80 (apiPort >>= readMaybe))
-        (fromMaybe False (useHttps $> True))
+        (Just True == (useHttps $> True))
     )
