@@ -13,10 +13,10 @@ const createResponder = serverId => {
 
     let mutableState = mimsaServer.init;
 
-    function respond(cleanUrl) {
+    function respond(cleanUrl, callback) {
       const [state, response] = mimsaServer.next(mutableState)(cleanUrl);
       mutableState = state;
-      return response;
+      callback(response)
     }
 
     return {
@@ -28,6 +28,13 @@ const createResponder = serverId => {
     return undefined;
   }
 };
+
+const writeResponse = (res) => ({status,data}) => {
+  // write response
+  res.writeHead(status, { "Content-Type": "text/html" });
+  res.write(data);
+  res.end();
+}
 
 const createServer = () => {
   let servers = {};
@@ -41,19 +48,18 @@ const createServer = () => {
       const responder = createResponder(serverId);
       servers[serverId] = responder;
     }
+
     const server = servers[serverId];
-    const { status, data } = server
-      ? server.respond(cleanUrl)
-      : { status: 500, data: `Server ${serverId} not found` };
-    // write response
-    res.writeHead(status, { "Content-Type": "text/html" });
-    res.write(data);
-    res.end();
+    if (server) {
+      server.respond(cleanUrl, writeResponse(res))
+    } else {
+      writeResponse(res)(  { status: 500, data: `Server ${serverId} not found` })
+    }
   }
 
   //create a server object:
   const app = http.createServer(masterRespond).listen(port); //the server object listens on port 8080
-  console.log(`Listening on ${port}`);
+  console.log(`Javascript runner listening on ${port}`);
 
   process.on("SIGTERM", () => {
     console.info("SIGTERM signal received.");
