@@ -23,5 +23,5 @@ curl -f -XPOST -H "Content-type: application/json" -d '{ "feExprHash": "7c64f7d2
 
 echo -e "Call API\n"
 
-curl 'localhost:8666/2/up' | grep "Up" && echo -e "Success" || echo "Failure!"
+curl 'localhost:8666/1/up' | grep "Up" && echo -e "Success" || echo "Failure!"
 

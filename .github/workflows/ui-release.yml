@@ -18,6 +18,7 @@ jobs:
     # working folder
     env:
       working-directory: ui
+      REACT_APP_MIMSA_API_URL: https://mimsa-api.isverymuchmybusiness.com/
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest

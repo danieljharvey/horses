@@ -48,7 +48,7 @@ ghc-options:
     # All packages
     "$locals": -Wall -Wno-unticked-promoted-constructors -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
     "$targets": -Werror
-    "$everything": -O2
+    "$everything": -O2 
 
 # Extra package databases containing global packages
 # extra-package-dbs: []

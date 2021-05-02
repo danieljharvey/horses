@@ -10,7 +10,7 @@ RUN mv libgmp*.deb libgmp.deb
 
 # Docker build should not use cached layer if any of these is modified
 COPY stack.yaml package.yaml stack.yaml.lock /opt/build/
-RUN stack build --system-ghc --dependencies-only
+RUN stack build --system-ghc --dependencies-only --fast
 
 # -------------------------------------------------------------------------------------------
 FROM fpco/stack-build-small:lts-17.10 as build
@@ -21,7 +21,7 @@ COPY . /opt/build/
 
 WORKDIR /opt/build
 
-RUN stack build --system-ghc
+RUN stack build --system-ghc --fast
 
 RUN mv "$(stack path --local-install-root --system-ghc)/bin" /opt/build/bin
 
