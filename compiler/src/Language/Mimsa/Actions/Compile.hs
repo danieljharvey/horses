@@ -27,22 +27,27 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
+-- | this now accepts StoreExpression instead of expression
+-- | so typechecking is merely a formality
 compile ::
   Runtime Javascript ->
   Text ->
-  Expr Name Annotation ->
+  StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
-compile runtime input expr = do
+compile runtime input se = do
   project <- Actions.getProject
 
-  -- does expression typecheck?
-  (ResolvedExpression mt se _ _ _) <-
-    liftEither $ getTypecheckedStoreExpression input project expr
+  -- TODO: this still discards deps and typeDeps of the StoreExpression,
+  -- these should be added to the project maybe? Or a top-level "get type of
+  -- StoreExpression" function should be created?
+
+  -- should typecheck - re-calc monotype for checking runtime is ok
+  (ResolvedExpression mt _ _ _ _) <-
+    liftEither $ getTypecheckedStoreExpression input project (storeExpression se)
 
   -- does runtime typecheck with expression
   liftEither (first (TypeErr input) (runtimeIsValid runtime mt))

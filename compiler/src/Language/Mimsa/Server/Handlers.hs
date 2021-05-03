@@ -199,7 +199,10 @@ storeFromExprHashHandler ::
   ExprHash ->
   Handler (Store ())
 storeFromExprHashHandler mimsaEnv exprHash =
-  handleMimsaM (mimsaConfig mimsaEnv) UserError (recursiveLoadBoundExpressions mempty (S.singleton exprHash))
+  handleMimsaM
+    (mimsaConfig mimsaEnv)
+    UserError
+    (recursiveLoadBoundExpressions mempty (S.singleton exprHash))
 
 createNewUnitTestsHandler ::
   Project Annotation ->
