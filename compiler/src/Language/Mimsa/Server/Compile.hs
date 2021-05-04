@@ -16,7 +16,6 @@ import Data.Set (Set)
 import Data.Swagger (NamedSchema (..), ToSchema, binarySchema, declareNamedSchema)
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Runtimes
@@ -26,10 +25,8 @@ import Language.Mimsa.Project
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import Servant
 
 -----
@@ -92,28 +89,14 @@ compileHashEndpoint
     let project = fromStore store $> mempty
     storeExpr <- findExprHandler project exprHash
     pd <- projectDataHandler mimsaEnv project
-    mt <- typecheckStoreExpressionHandler project storeExpr
     let input = prettyPrint (storeExpression storeExpr)
     runtime <- getRuntime (RuntimeName "export")
     (_, (rootExprHash, exprHashes)) <-
-      fromActionM mimsaEnv (pdHash pd) (Actions.compile runtime input storeExpr mt)
+      fromActionM mimsaEnv (pdHash pd) (Actions.compile runtime input storeExpr)
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
     bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
     pure (addHeader contentDisposition (ZipFileResponse bs))
-
--- | TODO: include StoreExpression deps in Project before computation
-typecheckStoreExpressionHandler ::
-  Project Annotation ->
-  StoreExpression Annotation ->
-  Handler MonoType
-typecheckStoreExpressionHandler project storeExpr = do
-  handleEither
-    InternalError
-    ( typecheckStoreExpression
-        (prjStore project)
-        storeExpr
-    )
 
 -----
 

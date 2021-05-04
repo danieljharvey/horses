@@ -18,6 +18,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Javascript
@@ -28,17 +29,18 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 
 -- | this now accepts StoreExpression instead of expression
 compile ::
   Runtime Javascript ->
   Text ->
   StoreExpression Annotation ->
-  MonoType ->
   Actions.ActionM (ExprHash, Set ExprHash)
-compile runtime input se mt = do
+compile runtime input se = do
   project <- Actions.getProject
+
+  -- get type of StoreExpression
+  mt <- liftEither $ typecheckStoreExpression (prjStore project) se
 
   -- does runtime typecheck with expression
   liftEither (first (TypeErr input) (runtimeIsValid runtime mt))
