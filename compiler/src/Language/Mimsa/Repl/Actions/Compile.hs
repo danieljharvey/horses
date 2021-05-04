@@ -36,10 +36,10 @@ doOutputJS ::
   MimsaM (Error Annotation) ()
 doOutputJS project input expr = do
   let runtime = exportRuntime
-  (ResolvedExpression _ storeExpr _ _ _) <-
+  (ResolvedExpression mt storeExpr _ _ _) <-
     mimsaFromEither $ getTypecheckedStoreExpression input project expr
   (_, (rootExprHash, exprHashes)) <-
-    toReplM project (Actions.compile runtime input storeExpr)
+    toReplM project (Actions.compile runtime input storeExpr mt)
   outputPath <- doCopying runtime exprHashes rootExprHash
   replOutput ("Output to " <> bsToText outputPath)
 
