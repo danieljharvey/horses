@@ -4,4 +4,5 @@ store/*.json
 result
 result/
 
+.mimsa/
 swagger.json
