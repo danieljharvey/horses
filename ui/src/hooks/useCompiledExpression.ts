@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { compileExpression } from '../service/compile'
+import { compileStoreExpression } from '../service/compile'
 import * as E from 'fp-ts/Either'
 import { ExprHash } from '../types'
 
@@ -12,29 +12,22 @@ type CompiledState =
 
 type State = {
   compiled: CompiledState
-  ceProjectHash: ExprHash
-  ceExpression: string
+  chExprHash: ExprHash
 }
 
 export const useCompiledExpression = (
-  ceProjectHash: ExprHash,
-  ceExpression: string,
-  ceRuntime: string
+  chExprHash: ExprHash
 ) => {
   const def: State = {
     compiled: {
       type: 'Empty',
     },
-    ceExpression,
-    ceProjectHash,
+    chExprHash,
   }
 
   const [state, setState] = React.useState<State>(def)
 
-  if (
-    state.ceExpression !== ceExpression ||
-    state.ceProjectHash !== ceProjectHash
-  ) {
+  if (state.chExprHash !== chExprHash) {
     setState(def)
   }
 
@@ -47,13 +40,10 @@ export const useCompiledExpression = (
     }
 
     setState({ ...state, compiled: { type: 'Fetching' } })
-    compileExpression({
-      ceExpression,
-      ceProjectHash,
-      ceRuntime,
+    compileStoreExpression({
+      chExprHash,
     })
-      .then((response) => {
-        console.log('compile response', response)
+      .then(response => {
         if (E.isLeft(response)) {
           setState({
             ...state,

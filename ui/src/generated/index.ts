@@ -4,7 +4,6 @@ export * from './bind-expression-request';
 export * from './bind-expression-response';
 export * from './bind-type-request';
 export * from './bind-type-response';
-export * from './compile-expression-request';
 export * from './compile-hash-request';
 export * from './create-project-response';
 export * from './data-type';

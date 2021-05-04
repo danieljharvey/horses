@@ -27,22 +27,20 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
+-- | this now accepts StoreExpression instead of expression
 compile ::
   Runtime Javascript ->
   Text ->
-  Expr Name Annotation ->
+  StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
-compile runtime input expr = do
+compile runtime input se = do
   project <- Actions.getProject
 
-  -- does expression typecheck?
-  (ResolvedExpression mt se _ _ _) <-
-    liftEither $ getTypecheckedStoreExpression input project expr
+  -- get type of StoreExpression
+  mt <- liftEither $ typecheckStoreExpression (prjStore project) se
 
   -- does runtime typecheck with expression
   liftEither (first (TypeErr input) (runtimeIsValid runtime mt))

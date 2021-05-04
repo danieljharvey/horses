@@ -6,7 +6,11 @@ module Main
   )
 where
 
-import qualified Test.Actions as Actions
+import qualified Test.Actions.AddUnitTest as AddUnitTest
+import qualified Test.Actions.BindExpression as BindExpression
+import qualified Test.Actions.BindType as BindType
+import qualified Test.Actions.Compile as Compile
+import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Backend.BackendJS as JS
 import qualified Test.Backend.Runtimes as Runtimes
 import Test.Hspec
@@ -53,7 +57,11 @@ main =
     InstantiateVar.spec
     UnitTest.spec
     UpdateDeps.spec
-    Actions.spec
+    BindType.spec
     Codegen.spec
     Runtimes.spec
     UseSwaps.spec
+    AddUnitTest.spec
+    BindExpression.spec
+    Compile.spec
+    Evaluate.spec

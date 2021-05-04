@@ -4,6 +4,7 @@ module Language.Mimsa.Actions
   ( evaluateText,
     resolveStoreExpression,
     getTypecheckedStoreExpression,
+    typecheckStoreExpression,
     getExprPairs,
     getTypesFromStore,
     fromItem,
@@ -20,6 +21,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser (parseExprAndFormatError)
+import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store
   ( createStoreExpression,
@@ -140,3 +142,18 @@ evaluateText ::
 evaluateText env input = do
   expr <- first ParseError $ parseExprAndFormatError input
   getTypecheckedStoreExpression input env expr
+
+typecheckStoreExpression ::
+  Store Annotation ->
+  StoreExpression Annotation ->
+  Either (Error Annotation) MonoType
+typecheckStoreExpression store storeExpr = do
+  let project =
+        Project
+          store
+          (bindingsToVersioned (storeBindings storeExpr))
+          (typeBindingsToVersioned (storeTypeBindings storeExpr))
+          mempty
+  let expr = storeExpression storeExpr
+  (ResolvedExpression mt _ _ _ _) <- getTypecheckedStoreExpression (prettyPrint expr) project expr
+  pure mt

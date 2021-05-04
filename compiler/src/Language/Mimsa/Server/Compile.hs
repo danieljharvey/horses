@@ -33,14 +33,13 @@ import Servant
 
 type CompileAPI =
   "compile"
-    :> (CompileExpression :<|> CompileHash)
+    :> CompileHash
 
 compileEndpoints ::
   MimsaEnvironment ->
   Server CompileAPI
-compileEndpoints mimsaEnv =
-  compileExpressionEndpoint mimsaEnv
-    :<|> compileHashEndpoint mimsaEnv
+compileEndpoints =
+  compileHashEndpoint
 
 -----
 
@@ -56,36 +55,6 @@ newtype ZipFileResponse = ZipFileResponse LBS.ByteString
 
 instance ToSchema ZipFileResponse where
   declareNamedSchema _cer = pure (NamedSchema Nothing binarySchema)
-
--- return type of a ZIP file download with a filename in it's header
-type CompileResponse =
-  ( Headers
-      '[Header "Content-Disposition" String]
-      ZipFileResponse
-  )
-
-type CompileExpression =
-  "expression"
-    :> ReqBody '[JSON] CompileExpressionRequest
-    :> Post
-         '[OctetStream]
-         CompileResponse
-
-compileExpressionEndpoint ::
-  MimsaEnvironment ->
-  CompileExpressionRequest ->
-  Handler CompileResponse
-compileExpressionEndpoint
-  mimsaEnv
-  (CompileExpressionRequest projectHash input runtimeName) = do
-    runtime <- getRuntime runtimeName
-    expr <- parseHandler input
-    (_, (rootExprHash, exprHashes)) <-
-      fromActionM mimsaEnv projectHash (Actions.compile runtime input expr)
-    let filename = "mimsa-" <> show rootExprHash <> ".zip"
-        contentDisposition = "attachment; filename=\"" <> filename <> "\""
-    bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
-    pure (addHeader contentDisposition (ZipFileResponse bs))
 
 -----
 
@@ -118,12 +87,12 @@ compileHashEndpoint
   (CompileHashRequest exprHash) = do
     store <- storeFromExprHashHandler mimsaEnv exprHash
     let project = fromStore store $> mempty
+    storeExpr <- findExprHandler project exprHash
     pd <- projectDataHandler mimsaEnv project
-    expr <- findExprHandler project exprHash
-    let input = prettyPrint (storeExpression expr)
+    let input = prettyPrint (storeExpression storeExpr)
     runtime <- getRuntime (RuntimeName "export")
     (_, (rootExprHash, exprHashes)) <-
-      fromActionM mimsaEnv (pdHash pd) (Actions.compile runtime input (storeExpression expr))
+      fromActionM mimsaEnv (pdHash pd) (Actions.compile runtime input storeExpr)
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
     bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
