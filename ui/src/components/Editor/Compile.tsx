@@ -6,35 +6,21 @@ import { ButtonLink } from '../View/ButtonLink'
 import { Paragraph } from '../View/Paragraph'
 
 type Props = {
-  projectHash: ExprHash
-  code: string
-  runtimeName: string
-  description: string
+  exprHash: ExprHash
 }
 
-export const Compile: React.FC<Props> = ({
-  projectHash,
-  code,
-  runtimeName,
-  description,
-}) => {
+export const Compile: React.FC<Props> = ({ exprHash }) => {
   const [compileState, compile] = useCompiledExpression(
-    projectHash,
-    code,
-    runtimeName
+    exprHash
   )
-
-  if (code.length < 1) {
-    return null
-  }
 
   switch (compileState.type) {
     case 'Empty':
       return (
         <Button
-          title={description}
+          title="Compile"
           onClick={compile}
-        >{`Compile '${runtimeName}' runtime`}</Button>
+        >{`Compile`}</Button>
       )
     case 'Fetching':
     case 'CreatingBlob':
@@ -54,7 +40,7 @@ export const Compile: React.FC<Props> = ({
           href={compileState.url}
           download="mimsa.zip"
         >
-          {`Download '${runtimeName}' output`}
+          {`Download output`}
         </ButtonLink>
       )
   }

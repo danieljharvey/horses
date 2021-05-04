@@ -37,17 +37,6 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
-          {Object.entries(result.expression.edRuntimes).map(
-            ([rtName, rtValue]) => (
-              <Compile
-                code={result.expression.edPretty}
-                projectHash={projectHash}
-                runtimeName={rtName}
-                description={rtValue.rtdDescription}
-              />
-            )
-          )}
-
           <ListTests
             unitTests={result.expression.edUnitTests}
           />
@@ -79,6 +68,8 @@ export const Feedback: React.FC<Props> = ({
           <ListTests
             unitTests={result.expression.edUnitTests}
           />
+          <Compile exprHash={result.expression.edHash} />
+
           <ListBindings
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
@@ -102,6 +93,7 @@ export const Feedback: React.FC<Props> = ({
           <ListTests
             unitTests={result.expression.edUnitTests}
           />
+          <Compile exprHash={result.expression.edHash} />
 
           <ListBindings
             values={result.expression.edBindings}
