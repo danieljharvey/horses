@@ -23,5 +23,5 @@ curl -f -XPOST -H "Content-type: application/json" -d '{ "feExprHash": "b9615731
 
 echo -e "Call API\n"
 
-curl 'localhost:8666/1/pug' | grep "jpg" && echo -e "Success" || echo "Failure!"
+curl 'localhost:8666/1/pug' | grep "OK" && echo -e "Success" || echo "Failure!"
 
