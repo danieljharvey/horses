@@ -6,17 +6,13 @@ const volumePath = process.env["VOLUME_PATH"] || "";
 
 // serverId is the hash of the js file in question
 const createResponder = serverId => {
-  const srcPath = `${volumePath}/cjs-${serverId}.js`;
+  const srcPath = `${volumePath}/index-${serverId}.js`;
 
   try {
     const mimsaServer = require(srcPath).main;
 
-    let mutableState = mimsaServer.init;
-
     function respond(cleanUrl, callback) {
-      const [state, response] = mimsaServer.next(mutableState)(cleanUrl);
-      mutableState = state;
-      callback(response)
+      mimsaServer(cleanUrl)(callback);
     }
 
     return {

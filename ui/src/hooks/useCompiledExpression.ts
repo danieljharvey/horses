@@ -13,21 +13,27 @@ type CompiledState =
 type State = {
   compiled: CompiledState
   chExprHash: ExprHash
+  chRuntime: string
 }
 
 export const useCompiledExpression = (
-  chExprHash: ExprHash
+  chExprHash: ExprHash,
+  chRuntime: string
 ) => {
   const def: State = {
     compiled: {
       type: 'Empty',
     },
     chExprHash,
+    chRuntime,
   }
 
   const [state, setState] = React.useState<State>(def)
 
-  if (state.chExprHash !== chExprHash) {
+  if (
+    state.chExprHash !== chExprHash ||
+    state.chRuntime !== chRuntime
+  ) {
     setState(def)
   }
 
@@ -42,6 +48,7 @@ export const useCompiledExpression = (
     setState({ ...state, compiled: { type: 'Fetching' } })
     compileStoreExpression({
       chExprHash,
+      chRuntime,
     })
       .then(response => {
         if (E.isLeft(response)) {

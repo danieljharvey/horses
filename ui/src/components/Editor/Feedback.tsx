@@ -21,7 +21,6 @@ type Props = {
 }
 
 export const Feedback: React.FC<Props> = ({
-  projectHash,
   result,
   onBindingSelect,
   onFetchExpressionsForHashes,
@@ -68,7 +67,15 @@ export const Feedback: React.FC<Props> = ({
           <ListTests
             unitTests={result.expression.edUnitTests}
           />
-          <Compile exprHash={result.expression.edHash} />
+          {Object.values(result.expression.edRuntimes).map(
+            rt => (
+              <Compile
+                exprHash={result.expression.edHash}
+                runtime={rt.rtdName}
+                title={rt.rtdName}
+              />
+            )
+          )}
 
           <ListBindings
             values={result.expression.edBindings}
@@ -93,7 +100,15 @@ export const Feedback: React.FC<Props> = ({
           <ListTests
             unitTests={result.expression.edUnitTests}
           />
-          <Compile exprHash={result.expression.edHash} />
+          {Object.values(result.expression.edRuntimes).map(
+            rt => (
+              <Compile
+                exprHash={result.expression.edHash}
+                runtime={rt.rtdName}
+                title={rt.rtdName}
+              />
+            )
+          )}
 
           <ListBindings
             values={result.expression.edBindings}

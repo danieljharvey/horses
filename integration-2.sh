@@ -17,7 +17,7 @@
 
 echo -e "Create server\n"
 
-curl -f -XPOST -H "Content-type: application/json" -d '{ "feExprHash": "665748a135c18ac8e5ce6c80eb86d15c5cd762501d0936f3aaea6bf6a6ad39e8" }' 'http://127.0.0.1:8666/fetch/expr'
+curl -f -XPOST -H "Content-type: application/json" -d '{ "feExprHash": "b961573105148986af6e132aeacbed24c996a7209c41759965c8ac24b923f351" }' 'http://127.0.0.1:8666/fetch/expr'
 
 # run api
 

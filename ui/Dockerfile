@@ -4,8 +4,9 @@ FROM node:14 as build-deps
 ARG REACT_APP_MIMSA_API_URL
 
 WORKDIR /usr/src/app
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock ./ 
 RUN yarn
+
 COPY . ./
 RUN REACT_APP_MIMSA_API_URL=${REACT_APP_MIMSA_API_URL} yarn build
 

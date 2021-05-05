@@ -25,6 +25,12 @@ export interface CompileHashRequest {
      * @memberof CompileHashRequest
      */
     chExprHash: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CompileHashRequest
+     */
+    chRuntime: string;
 }
 
 

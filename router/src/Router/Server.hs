@@ -40,7 +40,9 @@ fetchExprHandler :: Config -> Environment -> Server FetchExprAPI
 fetchExprHandler cfg env (FetchExprRequest exprHash) = do
   let compilePayload =
         JSON.object
-          ["chExprHash" .= exprHash]
+          [ "chExprHash" .= exprHash,
+            "chRuntime" .= ("task-server" :: String)
+          ]
   bs <-
     if cfgUseHttps cfg
       then fetch (https (T.pack $ cfgMimsaBaseUrl cfg) /: "compile" /: "hash") (cfgMimsaPort cfg) compilePayload
