@@ -78,8 +78,8 @@ commonJSStandardLibrary =
 stdLibFilename :: Backend -> LBS.ByteString
 stdLibFilename CommonJS = "cjs-stdlib.js"
 
-indexOutputFilename :: Backend -> LBS.ByteString
-indexOutputFilename CommonJS = "index.js"
+indexOutputFilename :: Backend -> ExprHash -> LBS.ByteString
+indexOutputFilename CommonJS exprHash = "index-" <> bsFromText (prettyPrint exprHash) <> ".js"
 
 symlinkedOutputPath :: Backend -> FilePath
 symlinkedOutputPath CommonJS =
