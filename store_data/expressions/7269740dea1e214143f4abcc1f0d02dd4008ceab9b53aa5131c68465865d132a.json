@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyLambda","contents":[[],"task",{"tag":"MyCaseMatch","contents":[[],{"tag":"MyVar","contents":[[],"task"]},[["Task",{"tag":"MyLambda","contents":[[],"a",{"tag":"MyVar","contents":[[],"a"]}]}]],null]}]},"storeBindings":{},"storeTypeBindings":{"Task":"10c8370aaeb550451542add7579a9ae0cf1848be4e5b4407a1899c84e864cf58"}}
