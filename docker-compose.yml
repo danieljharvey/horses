@@ -8,7 +8,7 @@ services:
       dockerfile: ./Dockerfile
       args:
         REACT_APP_MIMSA_API_URL: http://localhost:8999 
-    image: danieljamesharvey/mimsa-ui-local:latest
+    image: danieljamesharvey/mimsa-ui:local
     ports:
       - '80:80'
     depends_on:
@@ -17,7 +17,7 @@ services:
   api:
     container_name: mimsa-api
     build: ./compiler/.
-    image: danieljamesharvey/mimsa-api:latest
+    image: danieljamesharvey/mimsa-api:local
     ports:
       - '8999:8999'
     environment:
@@ -29,7 +29,7 @@ services:
   runner:
     container_name: mimsa-runner
     build: ./runner/.
-    image: danieljamesharvey/mimsa-runner:latest
+    image: danieljamesharvey/mimsa-runner:local
     ports:
       - "8777:8777"
     restart: always
@@ -42,7 +42,7 @@ services:
   router:
     container_name: mimsa-router
     build: ./router/.
-    image: danieljamesharvey/mimsa-router:latest
+    image: danieljamesharvey/mimsa-router:local
     ports:
       - "8666:8666"
     restart: always
