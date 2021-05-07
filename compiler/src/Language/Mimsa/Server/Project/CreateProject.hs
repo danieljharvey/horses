@@ -12,6 +12,7 @@ where
 import qualified Data.Aeson as JSON
 import Data.Swagger
 import GHC.Generics
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Servant
@@ -29,4 +30,4 @@ createProject ::
   MimsaEnvironment ->
   Handler CreateProjectResponse
 createProject mimsaEnv =
-  CreateProjectResponse <$> projectDataHandler mimsaEnv mempty
+  CreateProjectResponse <$> projectDataHandler mimsaEnv stdlib
