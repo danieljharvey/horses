@@ -140,3 +140,4 @@ getItemsForAllVersions versioned =
 getDependencyHashes :: StoreExpression ann -> Set ExprHash
 getDependencyHashes =
   S.fromList . M.elems . getBindings . storeBindings
+    <> S.fromList . M.elems . getTypeBindings . storeTypeBindings
