@@ -19,6 +19,7 @@ import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
+import Data.Foldable
 import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -62,10 +63,9 @@ storeSize (Store s) = M.size s
 
 -- the store is where we save all the fucking bullshit
 
-saveAllInStore :: Store ann -> MimsaM StoreError Int
+saveAllInStore :: Store ann -> MimsaM StoreError ()
 saveAllInStore store = do
-  _ <- traverse saveExpr (getStore store)
-  pure (length (getStore store))
+  traverse_ saveExpr (getStore store)
 
 getStoreExpressionHash :: StoreExpression ann -> ExprHash
 getStoreExpressionHash se = getStoreExpressionHash' (se $> ())
