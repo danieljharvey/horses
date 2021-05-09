@@ -9,6 +9,7 @@ module Language.Mimsa.Store.Storage
     tryCopy,
     storeSize,
     saveFile,
+    saveAllInStore,
   )
 where
 
@@ -18,6 +19,7 @@ import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
+import Data.Foldable
 import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -60,6 +62,10 @@ storeSize :: Store a -> Int
 storeSize (Store s) = M.size s
 
 -- the store is where we save all the fucking bullshit
+
+saveAllInStore :: Store ann -> MimsaM StoreError ()
+saveAllInStore store = do
+  traverse_ saveExpr (getStore store)
 
 getStoreExpressionHash :: StoreExpression ann -> ExprHash
 getStoreExpressionHash se = getStoreExpressionHash' (se $> ())

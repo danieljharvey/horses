@@ -57,6 +57,18 @@ flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
   flattenRow (MTRecordRow ann (as <> bs) rest)
 flattenRow other = other
 
+checkMatching ::
+  Annotation ->
+  Annotation ->
+  Map Name MonoType ->
+  Map Name MonoType ->
+  Name ->
+  TcMonad Substitutions
+checkMatching ann ann' as bs k = do
+  tyLeft <- getRecordItemType ann k as
+  tyRight <- getRecordItemType ann' k bs
+  unify tyLeft tyRight
+
 unifyRecords ::
   (Annotation, Map Name MonoType) ->
   (Annotation, Map Name MonoType) ->
@@ -67,11 +79,7 @@ unifyRecords (ann, as) (ann', bs) = do
     then throwError (RecordKeyMismatch diffKeys)
     else do
       let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
-      let checkMatching k = do
-            tyLeft <- getRecordItemType ann k as
-            tyRight <- getRecordItemType ann' k bs
-            unify tyLeft tyRight
-      s <- traverse checkMatching allKeys
+      s <- traverse (checkMatching ann ann' as bs) allKeys
       pure (mconcat s)
 
 unifyRecordRows ::
@@ -80,11 +88,7 @@ unifyRecordRows ::
   TcMonad Substitutions
 unifyRecordRows (ann, as, restA) (ann', bs, restB) = do
   let matchingKeys = S.intersection (M.keysSet as) (M.keysSet bs)
-  let checkMatching k = do
-        tyLeft <- getRecordItemType ann k as
-        tyRight <- getRecordItemType ann' k bs
-        unify tyLeft tyRight
-  s1 <- traverse checkMatching (S.toList matchingKeys)
+  s1 <- traverse (checkMatching ann ann' as bs) (S.toList matchingKeys)
   let leftKeys = S.difference (M.keysSet as) matchingKeys
       rightKeys = S.difference (M.keysSet bs) matchingKeys
   let filterMap keys =
@@ -100,11 +104,7 @@ unifyRecordWithRow ::
   TcMonad Substitutions
 unifyRecordWithRow (ann, as) (ann', bs, rest) = do
   let rowKeys = M.keysSet bs
-  let checkMatching k = do
-        tyLeft <- getRecordItemType ann k as
-        tyRight <- getRecordItemType ann' k bs
-        unify tyLeft tyRight
-  s1 <- traverse checkMatching (S.toList rowKeys)
+  s1 <- traverse (checkMatching ann ann' as bs) (S.toList rowKeys)
   let extraRecordKeys = S.difference (M.keysSet as) rowKeys
       extraRecordMap = M.filterWithKey (\k _ -> S.member k extraRecordKeys) as
   newUnknown <- getUnknown ann'

@@ -9,6 +9,7 @@ import Control.Monad ((>=>))
 import Control.Monad.Combinators.Expr
 import qualified Data.Char as Char
 import Data.Functor (($>))
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -111,11 +112,16 @@ varParser = do
 
 recordParser :: Parser MonoType
 recordParser = withLocation MTRecord $ do
+  args <- recordArgs
+  _ <- string "}"
+  pure args
+
+recordArgs :: Parser (Map Name MonoType)
+recordArgs = do
   _ <- string "{"
   _ <- space
   args <- sepBy (try $ withOptionalSpace recordItemParser) (literalWithSpace ",")
   _ <- space
-  _ <- string "}"
   pure (M.fromList args)
 
 recordItemParser :: Parser (Name, MonoType)
@@ -130,16 +136,13 @@ recordRowParser =
   withLocation
     (\loc (args, rest) -> MTRecordRow loc args rest)
     ( do
-        _ <- string "{"
-        _ <- space
-        args <- sepBy (try $ withOptionalSpace recordItemParser) (literalWithSpace ",")
-        _ <- space
+        args <- recordArgs
         _ <- string "|"
         _ <- space
         rest <- monoTypeParser
         _ <- space
         _ <- string "}"
-        pure (M.fromList args, rest)
+        pure (args, rest)
     )
 
 dataTypeParser :: Parser MonoType
