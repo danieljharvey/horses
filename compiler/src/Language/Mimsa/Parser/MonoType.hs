@@ -113,10 +113,13 @@ recordParser :: Parser MonoType
 recordParser = withLocation MTRecord $ do
   _ <- string "{"
   _ <- space
-  args <- sepBy (try $ withOptionalSpace recordItemParser) (literalWithSpace ",")
+  args <- recordArgs
   _ <- space
   _ <- string "}"
   pure (M.fromList args)
+
+recordArgs :: Parser [(Name, MonoType)]
+recordArgs = sepBy (try $ withOptionalSpace recordItemParser) (literalWithSpace ",")
 
 recordItemParser :: Parser (Name, MonoType)
 recordItemParser = do
@@ -132,7 +135,7 @@ recordRowParser =
     ( do
         _ <- string "{"
         _ <- space
-        args <- sepBy (try $ withOptionalSpace recordItemParser) (literalWithSpace ",")
+        args <- recordArgs
         _ <- space
         _ <- string "|"
         _ <- space
