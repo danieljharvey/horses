@@ -6,6 +6,7 @@ module Test.Typechecker.Typechecker
   )
 where
 
+import Data.Either (isLeft)
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker
@@ -167,10 +168,36 @@ exprs =
       Right $
         MTFunction
           mempty
-          ( MTRecord mempty $
-              M.singleton
-                "dog"
-                (MTPrim mempty MTBool)
+          ( MTRecordRow
+              mempty
+              ( M.singleton
+                  "dog"
+                  (MTPrim mempty MTBool)
+              )
+              (unknown 1)
+          )
+          (MTPrim mempty MTInt)
+    ),
+    ( MyLambda
+        mempty
+        (named "a")
+        ( MyInfix
+            mempty
+            Add
+            ( MyRecordAccess
+                mempty
+                (MyVar mempty (named "a"))
+                "int"
+            )
+            (int 1)
+        ),
+      Right $
+        MTFunction
+          mempty
+          ( MTRecordRow
+              mempty
+              (M.singleton "int" (MTPrim mempty MTInt))
+              (unknown 1)
           )
           (MTPrim mempty MTInt)
     )
@@ -202,6 +229,7 @@ spec =
               )
       let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
       startInference mempty mempty expr `shouldBe` expected
+
     it "We can use identity with two different datatypes in one expression" $ do
       let lambda =
             MyLambda
@@ -222,3 +250,24 @@ spec =
               (MTPrim mempty MTInt)
           )
       startInference mempty mempty expr `shouldBe` Right (MTPrim mempty MTInt)
+    it "Conflict RecordRows throw an error" $ do
+      let expr =
+            MyLambda
+              mempty
+              (named "a")
+              ( MyPair
+                  mempty
+                  ( MyInfix
+                      mempty
+                      Add
+                      (int 1)
+                      (MyRecordAccess mempty (MyVar mempty (named "a")) "prop")
+                  )
+                  ( MyInfix
+                      mempty
+                      StringConcat
+                      (str "!")
+                      (MyRecordAccess mempty (MyVar mempty (named "a")) "prop")
+                  )
+              )
+      startInference mempty mempty expr `shouldSatisfy` isLeft

@@ -265,3 +265,11 @@ spec =
       testParser "r -> a" `shouldSatisfy` isRight
     it "Parses array of numbers" $
       testParser "[Int]" `shouldBe` Right (MTArray mempty (MTPrim mempty MTInt))
+    it "Parses RecordRow" $
+      testParser "{ a: String | b }"
+        `shouldBe` Right
+          ( MTRecordRow
+              mempty
+              (M.singleton "a" (MTPrim mempty MTString))
+              (MTVar mempty (tvNamed "b"))
+          )

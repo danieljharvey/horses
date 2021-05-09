@@ -66,6 +66,8 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
     extractFromCon (MTArray _ a) = extractFromCon a
     extractFromCon MTPrim {} = mempty
     extractFromCon (MTRecord _ items) = mconcat (extractFromCon <$> M.elems items)
+    extractFromCon (MTRecordRow _ items rest) =
+      mconcat (extractFromCon <$> M.elems items) <> extractFromCon rest
 
 -- get all the names of constructors (type and data) declared in the datatype
 extractLocalTypeDeclarations :: DataType ann -> Set TyCon

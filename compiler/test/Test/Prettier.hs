@@ -5,26 +5,12 @@ module Test.Prettier
   )
 where
 
-import Data.Functor (($>))
 import qualified Data.Map as M
-import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Language.Mimsa.Parser
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
-
-unsafeParseExpr :: Text -> Expr Name ()
-unsafeParseExpr t = case parseExpr t of
-  Right a -> a $> ()
-  Left _ ->
-    error $
-      "Error parsing expr for Prettier tests:"
-        <> T.unpack t
 
 spec :: Spec
 spec =

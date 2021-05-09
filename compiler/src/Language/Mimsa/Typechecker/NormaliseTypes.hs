@@ -39,7 +39,11 @@ normaliseType' mt = case mt of
   MTPair ann a b ->
     MTPair ann
       <$> normaliseType' a <*> normaliseType' b
-  MTRecord ann as -> MTRecord ann <$> traverse normaliseType' as
+  MTRecord ann as ->
+    MTRecord ann <$> traverse normaliseType' as
+  MTRecordRow ann as rest ->
+    MTRecordRow ann <$> traverse normaliseType' as
+      <*> normaliseType' rest
   MTArray ann a -> MTArray ann <$> normaliseType' a
   MTData ann name mts ->
     MTData ann name <$> traverse normaliseType' mts

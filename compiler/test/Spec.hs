@@ -31,7 +31,6 @@ import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Typechecker.Codegen as Codegen
-import qualified Test.Typechecker.RecordUsage as RecordUsage
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typechecker as Typechecker
 import qualified Test.Typechecker.Unify as Unify
@@ -51,7 +50,6 @@ main =
     JS.spec
     TypeError.spec
     Serialisation.spec
-    RecordUsage.spec
     NormaliseType.spec
     TypeSearch.spec
     MonoTypeParser.spec
