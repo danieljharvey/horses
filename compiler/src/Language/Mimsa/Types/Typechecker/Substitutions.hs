@@ -1,6 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Typechecker.Substitutions where
+module Language.Mimsa.Types.Typechecker.Substitutions
+  ( Substitutions (..),
+    applySubst,
+  )
+where
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -29,11 +33,17 @@ instance Printer Substitutions where
 
 ---
 
+-- these are tricky to deal with, so flatten them on the way in
+flattenRow :: MonoType -> MonoType
+flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
+  flattenRow (MTRecordRow ann (as <> bs) rest)
+flattenRow other = other
+
 substLookup :: Substitutions -> TypeIdentifier -> Maybe MonoType
 substLookup subst i = M.lookup i (getSubstitutions subst)
 
 applySubst :: Substitutions -> MonoType -> MonoType
-applySubst subst ty = case ty of
+applySubst subst ty = case flattenRow ty of
   MTVar ann var ->
     fromMaybe
       (MTVar ann var)
@@ -47,6 +57,8 @@ applySubst subst ty = case ty of
       (applySubst subst b)
   MTRecord ann a ->
     MTRecord ann (applySubst subst <$> a)
+  MTRecordRow ann a rest ->
+    MTRecordRow ann (applySubst subst <$> a) (applySubst subst rest)
   MTArray ann a ->
     MTArray ann (applySubst subst a)
   MTData ann a ty' ->

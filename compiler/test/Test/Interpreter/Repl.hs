@@ -516,21 +516,25 @@ spec =
             `shouldBe` Right
               ( MTFunction
                   mempty
-                  ( MTRecord
+                  ( MTRecordRow
                       mempty
                       (M.singleton "one" (MTVar mempty (tvFree 1)))
+                      (unknown 2)
                   )
                   ( MTFunction
                       mempty
-                      ( MTRecord
+                      ( MTRecordRow
                           mempty
                           ( M.fromList
-                              [ ("one", MTVar mempty (tvFree 2)),
-                                ("two", MTVar mempty (tvFree 3))
+                              [ ("one", MTVar mempty (tvFree 3)),
+                                ( "two",
+                                  MTVar mempty (tvFree 4)
+                                )
                               ]
                           )
+                          (unknown 5)
                       )
-                      (MTVar mempty (tvFree 2))
+                      (MTVar mempty (tvFree 3))
                   )
               )
         it "if ?missingFn then 1 else 2" $ do

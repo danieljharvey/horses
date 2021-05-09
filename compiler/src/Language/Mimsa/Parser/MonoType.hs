@@ -34,6 +34,7 @@ simpleTypeParser =
         try pairParser
           <|> try varParser
           <|> try primitiveParser
+          <|> try recordRowParser
           <|> try recordParser
           <|> try arrayParser
           <|> try dataTypeParser
@@ -44,8 +45,6 @@ subParser :: Parser MonoType
 subParser =
   try simpleTypeParser
     <|> try (inBrackets functionParser)
-
---  <|> try functionParser
 
 primitiveParser :: Parser MonoType
 primitiveParser = MTPrim mempty <$> primParser
@@ -125,6 +124,23 @@ recordItemParser = do
   literalWithSpace ":"
   expr <- monoTypeParser
   pure (name, expr)
+
+recordRowParser :: Parser MonoType
+recordRowParser =
+  withLocation
+    (\loc (args, rest) -> MTRecordRow loc args rest)
+    ( do
+        _ <- string "{"
+        _ <- space
+        args <- sepBy (try $ withOptionalSpace recordItemParser) (literalWithSpace ",")
+        _ <- space
+        _ <- string "|"
+        _ <- space
+        rest <- monoTypeParser
+        _ <- space
+        _ <- string "}"
+        pure (M.fromList args, rest)
+    )
 
 dataTypeParser :: Parser MonoType
 dataTypeParser =

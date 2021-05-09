@@ -10,6 +10,9 @@ freeVars (MTVar _ b) = [b]
 freeVars (MTFunction _ t1 t2) = freeVars t1 <> freeVars t2
 freeVars (MTPair _ a b) = freeVars a <> freeVars b
 freeVars (MTRecord _ as) = mconcat (freeVars . snd <$> M.toList as)
+freeVars (MTRecordRow _ as rest) =
+  mconcat (freeVars . snd <$> M.toList as)
+    <> freeVars rest
 freeVars (MTArray _ a) = freeVars a
 freeVars (MTPrim _ _) = mempty
 freeVars MTData {} = mempty

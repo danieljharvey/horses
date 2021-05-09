@@ -1,5 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Infer
@@ -21,7 +22,6 @@ import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
-import Language.Mimsa.Typechecker.RecordUsages
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.TypedHoles
 import Language.Mimsa.Typechecker.Unify
@@ -47,8 +47,7 @@ doInference ::
   TcExpr ->
   Either TypeError (Substitutions, MonoType)
 doInference typeMap swaps env expr = runTcMonad swaps $ do
-  recSubst <- getSubstitutionsForRecordUsages expr
-  (subs, mt) <- inferAndSubst (defaultEnv recSubst <> env) expr
+  (subs, mt) <- inferAndSubst (defaultEnv mempty <> env) expr
   typedHolesCheck typeMap subs mt
 
 doDataTypeInference ::
@@ -214,10 +213,7 @@ inferIf env condition thenExpr elseExpr = do
   (s1, tyCond) <- infer env condition
   (s2, tyThen) <- infer (applySubstCtx s1 env) thenExpr
   (s3, tyElse) <- infer (applySubstCtx s1 env) elseExpr
-  s4 <-
-    unifyStrict
-      tyThen
-      tyElse
+  s4 <- unify tyThen tyElse
   s5 <- unify tyCond (MTPrim (getAnnotation condition) MTBool)
   let subs = s5 <> s4 <> s3 <> s2 <> s1
   pure
@@ -407,15 +403,31 @@ inferRecordAccess ::
   TcMonad (Substitutions, MonoType)
 inferRecordAccess env ann a name = do
   (s1, tyItems) <- infer env a
-  tyResult <- case tyItems of
-    (MTRecord _ bits) ->
-      case M.lookup name bits of
-        Just mt -> pure mt
-        _ ->
-          throwError $ MissingRecordTypeMember ann name bits
-    (MTVar ann' _) -> getUnknown ann'
-    _ -> throwError $ CannotMatchRecord env ann tyItems
-  pure (s1, applySubst s1 tyResult)
+  let inferRow = \case
+        (MTRecord _ bits) ->
+          case M.lookup name bits of
+            Just mt -> pure (mempty, mt)
+            _ ->
+              throwError $ MissingRecordTypeMember ann name bits
+        (MTRecordRow _ as rest) ->
+          case M.lookup name as of
+            Just mt -> pure (mempty, mt)
+            _ -> inferRow rest
+        (MTVar ann' _) -> do
+          tyRest <- getUnknown ann'
+          tyItem <- getUnknown ann'
+          s <-
+            unify
+              tyItems
+              ( MTRecordRow
+                  ann'
+                  (M.singleton name (applySubst s1 tyItem))
+                  (applySubst s1 tyRest)
+              )
+          pure (s, applySubst (s1 <> s) tyItem)
+        _ -> throwError $ CannotMatchRecord env ann tyItems
+  (s2, tyResult) <- inferRow tyItems
+  pure (s2 <> s1, applySubst (s2 <> s1) tyResult)
 
 inferLambda ::
   Environment ->
@@ -513,7 +525,7 @@ infer env inferExpr =
       inferIf env condition thenCase elseCase
     (MyPair ann a b) -> do
       (s1, tyA) <- infer env a
-      (s2, tyB) <- infer env b
+      (s2, tyB) <- infer (applySubstCtx s1 env) b
       let subs = s2 <> s1
       pure (subs, MTPair ann tyA tyB)
     (MyData ann dataType expr) -> do

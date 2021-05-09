@@ -51,6 +51,7 @@ data Type ann
   | MTFunction ann (Type ann) (Type ann) -- argument, result
   | MTPair ann (Type ann) (Type ann) -- (a,b)
   | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
+  | MTRecordRow ann (Map Name (Type ann)) (Type ann) -- { foo:a, bar:b | rest }
   | MTArray ann (Type ann) -- [a]
   | MTData ann TyCon [Type ann] -- name, typeVars
   deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON, JSON.FromJSON)
@@ -63,6 +64,7 @@ getAnnotationForType (MTVar ann _) = ann
 getAnnotationForType (MTFunction ann _ _) = ann
 getAnnotationForType (MTPair ann _ _) = ann
 getAnnotationForType (MTRecord ann _) = ann
+getAnnotationForType (MTRecordRow ann _ _) = ann
 getAnnotationForType (MTData ann _ _) = ann
 getAnnotationForType (MTArray ann _) = ann
 
@@ -90,6 +92,28 @@ renderMonoType (MTRecord _ as) =
               )
         )
       <> line
+      <> "}"
+  where
+    renderItem (Name k, v) = pretty k <> ":" <+> withParens v
+renderMonoType (MTRecordRow _ as rest) =
+  group $
+    "{"
+      <> nest
+        2
+        ( line
+            <> mconcat
+              ( punctuate
+                  ("," <> line)
+                  ( renderItem
+                      <$> M.toList as
+                  )
+              )
+        )
+      <> line
+      <> "|"
+      <> space
+      <> renderMonoType rest
+      <> space
       <> "}"
   where
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v

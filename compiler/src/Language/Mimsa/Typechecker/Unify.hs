@@ -3,7 +3,6 @@
 
 module Language.Mimsa.Typechecker.Unify
   ( unify,
-    unifyStrict,
   )
 where
 
@@ -27,6 +26,9 @@ freeTypeVars ty = case ty of
     S.union (freeTypeVars t1) (freeTypeVars t2)
   MTPair _ t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
   MTRecord _ as -> foldr S.union mempty (freeTypeVars <$> as)
+  MTRecordRow _ as rest ->
+    foldr S.union mempty (freeTypeVars <$> as)
+      <> freeTypeVars rest
   MTArray _ a -> freeTypeVars a
   MTData _ _ as -> foldr S.union mempty (freeTypeVars <$> as)
   MTPrim _ _ -> S.empty
@@ -49,18 +51,68 @@ varBind ann var ty
     let ty' = ty $> ann
     pure $ Substitutions (M.singleton var ty')
 
+-- these are tricky to deal with, so flatten them on the way in
+flattenRow :: MonoType -> MonoType
+flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
+  flattenRow (MTRecordRow ann (as <> bs) rest)
+flattenRow other = other
+
 unifyRecords ::
   (Annotation, Map Name MonoType) ->
   (Annotation, Map Name MonoType) ->
   TcMonad Substitutions
 unifyRecords (ann, as) (ann', bs) = do
-  let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
-  let getRecordTypes k = do
+  let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
+  if not $ S.null diffKeys
+    then throwError (RecordKeyMismatch diffKeys)
+    else do
+      let allKeys = S.toList $ M.keysSet as <> M.keysSet bs
+      let checkMatching k = do
+            tyLeft <- getRecordItemType ann k as
+            tyRight <- getRecordItemType ann' k bs
+            unify tyLeft tyRight
+      s <- traverse checkMatching allKeys
+      pure (mconcat s)
+
+unifyRecordRows ::
+  (Annotation, Map Name MonoType, MonoType) ->
+  (Annotation, Map Name MonoType, MonoType) ->
+  TcMonad Substitutions
+unifyRecordRows (ann, as, restA) (ann', bs, restB) = do
+  let matchingKeys = S.intersection (M.keysSet as) (M.keysSet bs)
+  let checkMatching k = do
         tyLeft <- getRecordItemType ann k as
         tyRight <- getRecordItemType ann' k bs
         unify tyLeft tyRight
-  s <- traverse getRecordTypes allKeys
-  pure (mconcat s)
+  s1 <- traverse checkMatching (S.toList matchingKeys)
+  let leftKeys = S.difference (M.keysSet as) matchingKeys
+      rightKeys = S.difference (M.keysSet bs) matchingKeys
+  let filterMap keys =
+        M.filterWithKey (\k _ -> S.member k keys)
+  newUnknown <- getUnknown ann
+  s2 <- unify (MTRecordRow ann (filterMap leftKeys as) newUnknown) restB
+  s3 <- unify (MTRecordRow ann' (filterMap rightKeys bs) newUnknown) restA
+  pure (mconcat s1 <> s2 <> s3)
+
+unifyRecordWithRow ::
+  (Annotation, Map Name MonoType) ->
+  (Annotation, Map Name MonoType, MonoType) ->
+  TcMonad Substitutions
+unifyRecordWithRow (ann, as) (ann', bs, rest) = do
+  let rowKeys = M.keysSet bs
+  let checkMatching k = do
+        tyLeft <- getRecordItemType ann k as
+        tyRight <- getRecordItemType ann' k bs
+        unify tyLeft tyRight
+  s1 <- traverse checkMatching (S.toList rowKeys)
+  let extraRecordKeys = S.difference (M.keysSet as) rowKeys
+      extraRecordMap = M.filterWithKey (\k _ -> S.member k extraRecordKeys) as
+  newUnknown <- getUnknown ann'
+  s2 <-
+    if M.null extraRecordMap
+      then pure mempty
+      else unify (MTRecordRow ann' extraRecordMap newUnknown) rest
+  pure (mconcat s1 <> s2)
 
 unifyPairs ::
   (MonoType, MonoType) ->
@@ -83,7 +135,7 @@ matchPatternMatchLiteral _ _ = False
 
 unify :: MonoType -> MonoType -> TcMonad Substitutions
 unify tyA tyB =
-  case (tyA, tyB) of
+  case (flattenRow tyA, flattenRow tyB) of
     (a, b)
       | typeEquals a b || matchPatternMatchLiteral a b
           || matchPatternMatchLiteral b a ->
@@ -93,6 +145,12 @@ unify tyA tyB =
     (MTPair _ a b, MTPair _ a' b') -> unifyPairs (a, b) (a', b')
     (MTRecord ann as, MTRecord ann' bs) ->
       unifyRecords (ann, as) (ann', bs)
+    (MTRecordRow ann as restA, MTRecordRow ann' bs restB) ->
+      unifyRecordRows (ann, as, restA) (ann', bs, restB)
+    (MTRecord ann as, MTRecordRow ann' bs rest) ->
+      unifyRecordWithRow (ann, as) (ann', bs, rest)
+    (MTRecordRow ann as rest, MTRecord ann' bs) ->
+      unifyRecordWithRow (ann', bs) (ann, as, rest)
     (MTData _ a tyAs, MTData _ b tyBs)
       | a == b -> do
         let pairs = zip tyAs tyBs
@@ -103,18 +161,6 @@ unify tyA tyB =
     (t, MTVar ann u) -> varBind ann u t
     (a, b) ->
       throwError $ UnificationError a b
-
--- when combining records in branches of an If we need to check they are
--- actually the same rather than combine them
-unifyStrict :: MonoType -> MonoType -> TcMonad Substitutions
-unifyStrict tyA tyB =
-  case (tyA, tyB) of
-    (MTRecord _ as, MTRecord _ bs) -> do
-      let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
-      if not $ S.null diffKeys
-        then throwError (RecordKeyMismatch diffKeys)
-        else unify tyA tyB
-    (a, b) -> unify a b
 
 getRecordItemType ::
   Annotation ->
