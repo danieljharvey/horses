@@ -9,6 +9,7 @@ module Language.Mimsa.Store.Storage
     tryCopy,
     storeSize,
     saveFile,
+    saveAllInStore,
   )
 where
 
@@ -60,6 +61,11 @@ storeSize :: Store a -> Int
 storeSize (Store s) = M.size s
 
 -- the store is where we save all the fucking bullshit
+
+saveAllInStore :: Store ann -> MimsaM StoreError Int
+saveAllInStore store = do
+  _ <- traverse saveExpr (getStore store)
+  pure (length (getStore store))
 
 getStoreExpressionHash :: StoreExpression ann -> ExprHash
 getStoreExpressionHash se = getStoreExpressionHash' (se $> ())

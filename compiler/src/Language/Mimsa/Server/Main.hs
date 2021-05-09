@@ -17,6 +17,7 @@ import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Server.EnvVars (getMimsaEnv)
 import Language.Mimsa.Server.Servant
 import Language.Mimsa.Server.Types
+import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.MimsaConfig
@@ -53,6 +54,7 @@ createMimsaEnvironment :: MimsaM (Error Annotation) MimsaEnvironment
 createMimsaEnvironment = do
   cfg <- getMimsaConfig
   env <- getDefaultProject
+  _ <- mapError StoreErr (saveAllInStore (prjStore env))
   stm <- liftIO (STM.newTVarIO (prjStore env))
   pure (MimsaEnvironment stm cfg)
 
