@@ -45,15 +45,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
  
-      - name: Install everything
-        run: cd ui && yarn
-
-      - name: Typecheck everything
-        run: cd ui && yarn tsc
-
-      - name: Build shit
-        run: cd ui && yarn build
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       
