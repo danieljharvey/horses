@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-17.10
+resolver: lts-17.10 
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -46,9 +46,9 @@ packages:
 
 ghc-options:
     # All packages
-    "$locals": -Wall -Wno-unticked-promoted-constructors -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+    "$locals": -Wall -Wno-unticked-promoted-constructors -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -optP-Wno-nonportable-include-path
     "$targets": -Werror
-    "$everything": -O2 
+    "$everything": -O2
 
 # Extra package databases containing global packages
 # extra-package-dbs: []
@@ -58,7 +58,7 @@ ghc-options:
 #
 # Require a specific version of stack, using version ranges
 # require-stack-version: -any # Default
-# require-stack-version: ">=2.1"
+# require-stack-version: ">=2.5"
 #
 # Override the architecture used by stack, especially useful on Windows
 # arch: i386

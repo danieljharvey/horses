@@ -32,6 +32,8 @@ FROM ubuntu:20.04 as app
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
 
+ENV PORT=8666
+
 RUN apt-get update && apt-get install -y libncurses5
 
 # Install lib gmp
@@ -39,5 +41,8 @@ COPY --from=dependencies /opt/build/libgmp.deb /tmp
 RUN dpkg -i /tmp/libgmp.deb && rm /tmp/libgmp.deb
 
 COPY --from=build /opt/build/bin .
-EXPOSE 8999
-CMD ["/opt/app/mimsa", "server"]
+EXPOSE ${PORT}
+
+RUN echo ${PORT}
+
+CMD ["/opt/app/router" ]

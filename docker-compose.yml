@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  ui:
+    container_name: mimsa-ui
+    build:
+      context: ./ui/.
+      dockerfile: ./Dockerfile
+      args:
+        REACT_APP_MIMSA_API_URL: http://localhost:8999 
+    image: danieljamesharvey/mimsa-ui:local
+    ports:
+      - '80:80'
+    depends_on:
+      - api
+
+  api:
+    container_name: mimsa-api
+    build: ./compiler/.
+    image: danieljamesharvey/mimsa-api:local
+    ports:
+      - '8999:8999'
+    environment:
+      PORT: 8999
+      STORE_ROOT_PATH: /mimsadata
+    volumes:
+      - ./store_data:/mimsadata
+
+  runner:
+    container_name: mimsa-runner
+    build: ./runner/.
+    image: danieljamesharvey/mimsa-runner:local
+    ports:
+      - "8777:8777"
+    restart: always
+    volumes:
+      - ./file_volume:/file_volume
+    environment:
+      VOLUME_PATH: /file_volume
+      PORT: 8777
+
+  router:
+    container_name: mimsa-router
+    build: ./router/.
+    image: danieljamesharvey/mimsa-router:local
+    ports:
+      - "8666:8666"
+    restart: always
+    volumes:
+      - ./file_volume:/file_volume
+    environment:
+      VOLUME_PATH: /file_volume
+      PORT: 8666
+      MIMSA_BASE_URL: mimsa-api 
+      MIMSA_PORT: 8999
+
+volumes:
+  mimsadata:

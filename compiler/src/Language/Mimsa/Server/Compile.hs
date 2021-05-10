@@ -43,13 +43,6 @@ compileEndpoints =
 
 -----
 
-data CompileExpressionRequest = CompileExpressionRequest
-  { ceProjectHash :: ProjectHash,
-    ceExpression :: Text,
-    ceRuntime :: RuntimeName
-  }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
-
 newtype ZipFileResponse = ZipFileResponse LBS.ByteString
   deriving newtype (MimeRender OctetStream)
 
@@ -58,8 +51,9 @@ instance ToSchema ZipFileResponse where
 
 -----
 
-newtype CompileHashRequest = CompileHashRequest
-  { chExprHash :: ExprHash
+data CompileHashRequest = CompileHashRequest
+  { chExprHash :: ExprHash,
+    chRuntime :: RuntimeName
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.FromJSON, ToSchema)
@@ -84,13 +78,14 @@ compileHashEndpoint ::
   Handler CompileHashResponse
 compileHashEndpoint
   mimsaEnv
-  (CompileHashRequest exprHash) = do
+  (CompileHashRequest exprHash runtimeName) = do
     store <- storeFromExprHashHandler mimsaEnv exprHash
     let project = fromStore store $> mempty
     storeExpr <- findExprHandler project exprHash
     pd <- projectDataHandler mimsaEnv project
     let input = prettyPrint (storeExpression storeExpr)
-    runtime <- getRuntime (RuntimeName "export")
+    runtime <- getRuntime runtimeName
+    writeStoreHandler mimsaEnv (prjStore project)
     (_, (rootExprHash, exprHashes)) <-
       fromActionM mimsaEnv (pdHash pd) (Actions.compile runtime input storeExpr)
     let filename = "mimsa-" <> show rootExprHash <> ".zip"

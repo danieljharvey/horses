@@ -7,11 +7,18 @@ import { Paragraph } from '../View/Paragraph'
 
 type Props = {
   exprHash: ExprHash
+  runtime: string
+  title: string
 }
 
-export const Compile: React.FC<Props> = ({ exprHash }) => {
+export const Compile: React.FC<Props> = ({
+  exprHash,
+  runtime,
+  title,
+}) => {
   const [compileState, compile] = useCompiledExpression(
-    exprHash
+    exprHash,
+    runtime
   )
 
   switch (compileState.type) {
@@ -20,7 +27,7 @@ export const Compile: React.FC<Props> = ({ exprHash }) => {
         <Button
           title="Compile"
           onClick={compile}
-        >{`Compile`}</Button>
+        >{`Compile ${title}`}</Button>
       )
     case 'Fetching':
     case 'CreatingBlob':
@@ -40,7 +47,7 @@ export const Compile: React.FC<Props> = ({ exprHash }) => {
           href={compileState.url}
           download="mimsa.zip"
         >
-          {`Download output`}
+          {`Download ${title} output`}
         </ButtonLink>
       )
   }

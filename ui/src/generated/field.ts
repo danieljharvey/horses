@@ -16,21 +16,27 @@
 /**
  * 
  * @export
- * @interface CompileHashRequest
+ * @interface Field
  */
-export interface CompileHashRequest {
+export interface Field {
+    /**
+     * 
+     * @type {Array<object>}
+     * @memberof Field
+     */
+    ConsName?: Array<object>;
     /**
      * 
      * @type {string}
-     * @memberof CompileHashRequest
+     * @memberof Field
      */
-    chExprHash: string;
+    VarName?: string;
     /**
      * 
-     * @type {string}
-     * @memberof CompileHashRequest
+     * @type {Array<object>}
+     * @memberof Field
      */
-    chRuntime: string;
+    TNFunc?: Array<object>;
 }
 
 

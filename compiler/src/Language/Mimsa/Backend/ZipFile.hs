@@ -50,7 +50,7 @@ indexEntry ::
 indexEntry indexPath runtime rootExprHash = do
   let filename = LB.unpack $ indexFilename runtime rootExprHash
       fromPath = indexPath <> filename
-      outputFilename = LB.unpack (indexOutputFilename (rtBackend runtime))
+      outputFilename = LB.unpack (indexOutputFilename (rtBackend runtime) rootExprHash)
   input <- liftIO (LB.readFile fromPath)
   pure (Zip.toEntry ("./" <> outputFilename) 0 input)
 
