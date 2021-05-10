@@ -8,10 +8,10 @@ Installation:
 
 ```bash
 # copy the code
-git clone https://github.com/danieljharvey/mimsa-ui
+git clone https://github.com/danieljharvey/mimsa
 
 # crack open that new folder
-cd mimsa-ui
+cd mimsa/ui
 
 # install the mountain of JS (if you don't have yarn install, run npm install -g yarn)
 yarn install
