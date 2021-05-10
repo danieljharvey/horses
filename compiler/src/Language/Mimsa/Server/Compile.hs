@@ -25,6 +25,7 @@ import Language.Mimsa.Project
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant
 
@@ -84,6 +85,7 @@ compileHashEndpoint
     pd <- projectDataHandler mimsaEnv project
     let input = prettyPrint (storeExpression storeExpr)
     runtime <- getRuntime runtimeName
+    writeStoreHandler mimsaEnv (prjStore project)
     (_, (rootExprHash, exprHashes)) <-
       fromActionM mimsaEnv (pdHash pd) (Actions.compile runtime input storeExpr)
     let filename = "mimsa-" <> show rootExprHash <> ".zip"

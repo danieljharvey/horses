@@ -1,12 +1,14 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Store.StoreExpression where
 
 import qualified Data.Aeson as JSON
 import Data.Swagger
 import GHC.Generics
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store.Bindings
@@ -19,4 +21,16 @@ data StoreExpression ann = StoreExpression
     storeBindings :: Bindings,
     storeTypeBindings :: TypeBindings
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON, Functor, ToSchema)
+  deriving
+    ( Eq,
+      Ord,
+      Show,
+      Generic,
+      JSON.ToJSON,
+      JSON.FromJSON,
+      Functor,
+      ToSchema
+    )
+
+instance Printer (StoreExpression ann) where
+  prettyPrint (StoreExpression expr _ _) = "{ expr: " <> prettyPrint expr <> " }"

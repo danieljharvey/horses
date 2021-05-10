@@ -119,7 +119,11 @@ writeStoreHandler mimsaEnv store' = do
 -- given a new Project, save it and return the hash and bindings
 projectDataHandler :: MimsaEnvironment -> Project ann -> Handler ProjectData
 projectDataHandler mimsaEnv env = do
-  projHash <- handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveProjectInStore env)
+  projHash <-
+    handleMimsaM
+      (mimsaConfig mimsaEnv)
+      InternalError
+      (saveProjectInStore env)
   pure $
     ProjectData
       projHash
