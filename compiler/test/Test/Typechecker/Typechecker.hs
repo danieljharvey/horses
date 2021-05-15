@@ -207,67 +207,142 @@ identity :: Monoid ann => Expr Variable ann
 identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
 
 spec :: Spec
-spec =
-  describe "Typechecker" $ do
-    it "Our expressions typecheck as expected" $
-      traverse_
-        ( \(code, expected) ->
-            --T.putStrLn (prettyPrint code)
-            startInference mempty mempty code `shouldBe` expected
-        )
-        exprs
-    it "Uses a polymorphic function twice with conflicting types" $ do
-      let expr =
-            MyLet
-              mempty
-              (named "id")
-              (MyLambda mempty (named "a") (MyVar mempty (named "a")))
-              ( MyPair
-                  mempty
-                  (MyApp mempty (MyVar mempty (named "id")) (int 1))
-                  (MyApp mempty (MyVar mempty (named "id")) (bool True))
-              )
-      let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
-      startInference mempty mempty expr `shouldBe` expected
-
-    it "We can use identity with two different datatypes in one expression" $ do
-      let lambda =
-            MyLambda
-              mempty
-              (numbered 100)
-              ( MyIf
-                  mempty
-                  (MyApp mempty identity (MyVar mempty (numbered 100)))
-                  (MyApp mempty identity (int 1))
-                  (MyApp mempty identity (int 2))
-              )
-      let expr = MyApp mempty lambda (bool True)
-      startInference mempty mempty lambda
-        `shouldBe` Right
-          ( MTFunction
-              mempty
-              (MTPrim mempty MTBool)
-              (MTPrim mempty MTInt)
+spec = do
+  describe "Typechecker" $
+    do
+      it "Our expressions typecheck as expected" $
+        traverse_
+          ( \(code, expected) ->
+              --T.putStrLn (prettyPrint code)
+              startInference mempty mempty code `shouldBe` expected
           )
-      startInference mempty mempty expr `shouldBe` Right (MTPrim mempty MTInt)
-    it "Conflict RecordRows throw an error" $ do
+          exprs
+      it "Uses a polymorphic function twice with conflicting types" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "id")
+                (MyLambda mempty (named "a") (MyVar mempty (named "a")))
+                ( MyPair
+                    mempty
+                    (MyApp mempty (MyVar mempty (named "id")) (int 1))
+                    (MyApp mempty (MyVar mempty (named "id")) (bool True))
+                )
+        let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+        startInference mempty mempty expr `shouldBe` expected
+
+      it "We can use identity with two different datatypes in one expression" $ do
+        let lambda =
+              MyLambda
+                mempty
+                (numbered 100)
+                ( MyIf
+                    mempty
+                    (MyApp mempty identity (MyVar mempty (numbered 100)))
+                    (MyApp mempty identity (int 1))
+                    (MyApp mempty identity (int 2))
+                )
+        let expr = MyApp mempty lambda (bool True)
+        startInference mempty mempty lambda
+          `shouldBe` Right
+            ( MTFunction
+                mempty
+                (MTPrim mempty MTBool)
+                (MTPrim mempty MTInt)
+            )
+        startInference mempty mempty expr `shouldBe` Right (MTPrim mempty MTInt)
+      it "Conflict RecordRows throw an error" $ do
+        let expr =
+              MyLambda
+                mempty
+                (named "a")
+                ( MyPair
+                    mempty
+                    ( MyInfix
+                        mempty
+                        Add
+                        (int 1)
+                        (MyRecordAccess mempty (MyVar mempty (named "a")) "prop")
+                    )
+                    ( MyInfix
+                        mempty
+                        StringConcat
+                        (str "!")
+                        (MyRecordAccess mempty (MyVar mempty (named "a")) "prop")
+                    )
+                )
+        startInference mempty mempty expr `shouldSatisfy` isLeft
+  describe "Pattern matching" $ do
+    it "Returns an EmptyPatternMatch error when no patterns supplied" $ do
+      let expr = MyPatternMatch mempty (int 1) mempty
+      startInference mempty mempty expr `shouldBe` Left (EmptyPatternMatch mempty)
+    it "Detects an integer does not match a boolean literal" $ do
       let expr =
-            MyLambda
+            MyPatternMatch
               mempty
-              (named "a")
-              ( MyPair
-                  mempty
-                  ( MyInfix
-                      mempty
-                      Add
-                      (int 1)
-                      (MyRecordAccess mempty (MyVar mempty (named "a")) "prop")
-                  )
-                  ( MyInfix
-                      mempty
-                      StringConcat
-                      (str "!")
-                      (MyRecordAccess mempty (MyVar mempty (named "a")) "prop")
-                  )
-              )
-      startInference mempty mempty expr `shouldSatisfy` isLeft
+              (int 1)
+              [ (PLit mempty (MyBool True), int 1),
+                (PLit mempty (MyBool False), int 2)
+              ]
+      startInference mempty mempty expr
+        `shouldSatisfy` isLeft
+    it "Matches a boolean literal" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (bool True)
+              [ (PLit mempty (MyBool True), int 1),
+                (PLit mempty (MyBool False), int 2)
+              ]
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTInt)
+    it "Detects patterns don't unify" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (bool True)
+              [ (PLit mempty (MyBool True), int 1),
+                (PLit mempty (MyInt 1), int 2)
+              ]
+      startInference mempty mempty expr
+        `shouldSatisfy` isLeft
+    it "Detects output exprs don't unify" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (bool True)
+              [ (PLit mempty (MyBool True), int 1),
+                (PLit mempty (MyBool False), bool True)
+              ]
+      startInference mempty mempty expr
+        `shouldSatisfy` isLeft
+    it "Matches a boolean with a variable" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (int 1)
+              [(PVar mempty (named "dog"), bool True)]
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTBool)
+    it "Matches with a variable and uses that variable" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (int 1)
+              [ ( PVar mempty (named "dog"),
+                  MyVar mempty (named "dog")
+                )
+              ]
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTInt)
+    it "Matches with a wildcard expression" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (int 1)
+              [ ( PWildcard mempty,
+                  bool True
+                )
+              ]
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTBool)

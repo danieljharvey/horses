@@ -40,3 +40,4 @@ extractVars_ (MyCaseMatch _ sum' matches catchAll) =
     <> maybe mempty extractVars catchAll
 extractVars_ (MyTypedHole _ _) = mempty
 extractVars_ (MyDefineInfix _ _ v b) = S.singleton v <> extractVars_ b
+extractVars_ _ = error "woof"

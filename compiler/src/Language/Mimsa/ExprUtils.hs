@@ -46,6 +46,7 @@ getAnnotation (MyCaseMatch ann _ _ _) = ann
 getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyDefineInfix ann _ _ _) = ann
 getAnnotation (MyArray ann _) = ann
+getAnnotation (MyPatternMatch ann _ _) = ann
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`
@@ -155,6 +156,14 @@ withMonoid f whole@MyTypedHole {} = snd (f whole)
 withMonoid f whole@(MyDefineInfix _ _ _ inExpr) =
   let (go, m) = f whole
    in if not go then m else m <> withMonoid f inExpr
+withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m <> withMonoid f matchExpr
+            <> mconcat
+              (withMonoid f <$> (snd <$> matches))
 
 -- | Map a function `f` over the expression. This function takes care of
 -- recursing through the Expression
@@ -181,6 +190,8 @@ mapExpr f (MyConsApp ann func arg) =
   MyConsApp ann (f func) (f arg)
 mapExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
   MyCaseMatch ann (f matchExpr) (second f <$> caseExprs) (f <$> catchExpr)
+mapExpr f (MyPatternMatch ann matchExpr patterns) =
+  MyPatternMatch ann (f matchExpr) (second f <$> patterns)
 mapExpr _ (MyTypedHole ann a) = MyTypedHole ann a
 mapExpr f (MyDefineInfix ann op bindName inExpr) =
   MyDefineInfix ann op bindName (f inExpr)
@@ -233,3 +244,10 @@ bindExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
 bindExpr _ (MyTypedHole ann a) = pure (MyTypedHole ann a)
 bindExpr f (MyDefineInfix ann op bindName expr) =
   MyDefineInfix ann op bindName <$> f expr
+bindExpr f (MyPatternMatch ann matchExpr patterns) =
+  MyPatternMatch
+    ann
+    <$> f matchExpr
+    <*> traverse traverseSecond patterns
+  where
+    traverseSecond (a, b) = (a,) <$> f b

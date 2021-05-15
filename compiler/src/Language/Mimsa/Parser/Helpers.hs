@@ -83,6 +83,7 @@ mapOuterExprAnnotation f expr' =
     MyCaseMatch ann a b c -> MyCaseMatch (f ann) a b c
     MyTypedHole ann a -> MyTypedHole (f ann) a
     MyDefineInfix ann a b c -> MyDefineInfix (f ann) a b c
+    MyPatternMatch ann a b -> MyPatternMatch (f ann) a b
 
 -----
 

@@ -247,6 +247,10 @@ mapVar chg (MyCaseMatch ann expr' matches catchAll) = do
   matches' <- traverse mapVarPair matches
   catchAll' <- traverse (mapVar chg) catchAll
   MyCaseMatch ann <$> mapVar chg expr' <*> pure matches' <*> pure catchAll'
+mapVar chg (MyPatternMatch ann expr' patterns) = do
+  let mapVarPair (pat, expr'') = (,) <$> mapPatternVar chg pat <*> mapVar chg expr''
+  patterns' <- traverse mapVarPair patterns
+  MyPatternMatch ann <$> mapVar chg expr' <*> pure patterns'
 mapVar _ (MyTypedHole ann a) = pure $ MyTypedHole ann a
 mapVar chg (MyDefineInfix ann infixOp bindName expr) =
   MyDefineInfix
@@ -254,3 +258,14 @@ mapVar chg (MyDefineInfix ann infixOp bindName expr) =
     infixOp
     (nameToVar chg bindName)
     <$> mapVar chg expr
+
+mapPatternVar ::
+  Changed ->
+  Pattern Name ann ->
+  App ann (Pattern Variable ann)
+mapPatternVar chg (PVar ann name) =
+  pure $ PVar ann (nameToVar chg name)
+mapPatternVar chg (PConstructor ann name more) =
+  PConstructor ann name <$> traverse (mapPatternVar chg) more
+mapPatternVar _ (PWildcard ann) = pure (PWildcard ann)
+mapPatternVar _ (PLit ann a) = pure (PLit ann a)

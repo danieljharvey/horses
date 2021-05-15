@@ -299,6 +299,7 @@ outputJS expr =
       outputCaseMatch a matches catch
     MyTypedHole _ a -> throwError (OutputingTypedHole a)
     MyDefineInfix _ _ _ a -> outputJS a -- don't output infix definitions
+    MyPatternMatch _ _ _ -> error "need to implement JS pattern match"
 
 renderWithFunction ::
   (Monoid ann) =>

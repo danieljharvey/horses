@@ -314,6 +314,68 @@ applySubstToConstructor :: Substitutions -> TypeConstructor -> TypeConstructor
 applySubstToConstructor subs (TypeConstructor name ty b) =
   TypeConstructor name (applySubst subs <$> ty) (applySubst subs <$> b)
 
+getA :: (a, b, c) -> a
+getA (a, _, _) = a
+
+getB :: (a, b, c) -> b
+getB (_, b, _) = b
+
+getC :: (a, b, c) -> c
+getC (_, _, c) = c
+
+-- check type of input expr
+-- check input against patterns
+-- check patterns are complete
+-- check output types are the same
+inferPatternMatch ::
+  Environment ->
+  Annotation ->
+  TcExpr ->
+  [(Pattern Variable Annotation, TcExpr)] ->
+  TcMonad (Substitutions, MonoType)
+inferPatternMatch env ann expr patterns = do
+  (s1, tyExpr) <- infer env expr
+  _ <- checkEmptyPatterns ann patterns
+  -- infer types of all patterns
+  tyPatterns <-
+    traverse
+      ( \(pat, patternExpr) -> do
+          (ps1, tyPattern, newEnv) <- inferPattern (applySubstCtx s1 env) pat
+          (ps2, tyPatternExpr) <- infer newEnv patternExpr
+          pure (ps2 <> ps1, tyPattern, tyPatternExpr)
+      )
+      patterns
+  -- combine all subs we've created in the above
+  let subs = mconcat (getA <$> tyPatterns)
+  -- combine all patterns to check their types match
+  (s2, tyMatchedPattern) <- matchList (getB <$> tyPatterns)
+  -- match patterns with match expr
+  s3 <- unify tyMatchedPattern tyExpr
+  -- combine all output expr types
+  (s4, tyMatchedExprs) <- matchList (getC <$> tyPatterns)
+  -- get all the subs we've learned about
+  let allSubs = subs <> s4 <> s3 <> s2 <> s1
+  pure (allSubs, applySubst allSubs tyMatchedExprs)
+
+checkEmptyPatterns :: Annotation -> [a] -> TcMonad (NE.NonEmpty a)
+checkEmptyPatterns ann as = case as of
+  [] -> throwError (EmptyPatternMatch ann)
+  other -> pure (NE.fromList other)
+
+inferPattern :: Environment -> Pattern Variable Annotation -> TcMonad (Substitutions, MonoType, Environment)
+inferPattern env (PLit ann lit) = do
+  (s, mt) <- infer env (MyLiteral ann lit)
+  pure (s, mt, env)
+inferPattern env (PVar ann binder) = do
+  tyBinder <- getUnknown ann
+  let tmpCtx =
+        envFromVar binder (Scheme [] tyBinder) <> env
+  pure (mempty, tyBinder, tmpCtx)
+inferPattern env (PWildcard ann) = do
+  tyUnknown <- getUnknown ann
+  pure (mempty, tyUnknown, env)
+inferPattern _ _ = error "cant infer this fucking shit"
+
 -- infer the type of a case match function
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
@@ -541,3 +603,5 @@ infer env inferExpr =
       inferCaseMatch env ann expr' matches catchAll
     (MyDefineInfix ann infixOp bindName expr) ->
       inferDefineInfix env ann infixOp bindName expr
+    (MyPatternMatch ann expr patterns) ->
+      inferPatternMatch env ann expr patterns
