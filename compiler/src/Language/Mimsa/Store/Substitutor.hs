@@ -267,5 +267,8 @@ mapPatternVar chg (PVar ann name) =
   pure $ PVar ann (nameToVar chg name)
 mapPatternVar chg (PConstructor ann name more) =
   PConstructor ann name <$> traverse (mapPatternVar chg) more
+mapPatternVar chg (PPair ann a b) =
+  PPair ann <$> mapPatternVar chg a
+    <*> mapPatternVar chg b
 mapPatternVar _ (PWildcard ann) = pure (PWildcard ann)
 mapPatternVar _ (PLit ann a) = pure (PLit ann a)

@@ -18,6 +18,7 @@ data Pattern var ann
   | PVar ann var
   | PLit ann Literal
   | PConstructor ann TyCon [Pattern var ann]
+  | PPair ann (Pattern var ann) (Pattern var ann)
   --    | PRecord (Map Pattern) -- ^ A record pattern
   deriving (Show, Eq, Ord, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 

@@ -20,6 +20,7 @@ import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
 import Language.Mimsa.Typechecker.TcMonad
@@ -362,7 +363,10 @@ checkEmptyPatterns ann as = case as of
   [] -> throwError (EmptyPatternMatch ann)
   other -> pure (NE.fromList other)
 
-inferPattern :: Environment -> Pattern Variable Annotation -> TcMonad (Substitutions, MonoType, Environment)
+inferPattern ::
+  Environment ->
+  Pattern Variable Annotation ->
+  TcMonad (Substitutions, MonoType, Environment)
 inferPattern env (PLit ann lit) = do
   (s, mt) <- infer env (MyLiteral ann lit)
   pure (s, mt, env)
@@ -374,7 +378,33 @@ inferPattern env (PVar ann binder) = do
 inferPattern env (PWildcard ann) = do
   tyUnknown <- getUnknown ann
   pure (mempty, tyUnknown, env)
-inferPattern _ _ = error "cant infer this fucking shit"
+inferPattern env (PConstructor ann tyCon args) = do
+  tyEverything <- traverse (inferPattern env) args
+  let allSubs = mconcat (getA <$> tyEverything)
+  let tyArgs = getB <$> tyEverything
+  let newEnv = mconcat (getC <$> tyEverything) <> env
+  dt@(DataType ty _ _) <- lookupConstructor newEnv ann tyCon
+  checkArgsLength ann dt tyCon tyArgs
+  pure (allSubs, MTData ann ty tyArgs, newEnv)
+inferPattern env (PPair ann a b) = do
+  (s1, tyA, envA) <- inferPattern env a
+  (s2, tyB, envB) <- inferPattern envA b
+  pure (s2 <> s1, applySubst (s2 <> s1) (MTPair ann tyA tyB), envB)
+
+checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> TcMonad ()
+checkArgsLength ann (DataType _ _ cons) tyCon args = do
+  case M.lookup tyCon cons of
+    Just consArgs ->
+      if length consArgs == length args
+        then pure ()
+        else
+          throwError $
+            ConstructorArgumentLengthMismatch
+              ann
+              tyCon
+              (length consArgs)
+              (length args)
+    Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 -- infer the type of a case match function
 -- if it has no args, it's a simple MTData

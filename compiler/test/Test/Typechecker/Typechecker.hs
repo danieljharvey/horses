@@ -15,6 +15,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
+import Test.Typechecker.Codegen.Shared (dtMaybe, dtThese)
 import Test.Utils.Helpers
 
 exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]
@@ -346,3 +347,133 @@ spec = do
               ]
       startInference mempty mempty expr
         `shouldBe` Right (MTPrim mempty MTBool)
+    it "An integer does not match with a Maybe" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyPatternMatch
+                  mempty
+                  (int 1)
+                  [ ( PConstructor mempty "Nothing" [],
+                      bool True
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldSatisfy` isLeft
+    it "Errors when number of args does not match for Just" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyPatternMatch
+                  mempty
+                  (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
+                  [ ( PConstructor mempty "Just" [],
+                      bool True
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Left (ConstructorArgumentLengthMismatch mempty "Just" 1 0)
+    it "Matches wildcard inside datatype" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyPatternMatch
+                  mempty
+                  (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
+                  [ ( PConstructor mempty "Just" [PWildcard mempty],
+                      bool True
+                    ),
+                    ( PConstructor mempty "Nothing" [],
+                      bool False
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTBool)
+    it "Matches value inside datatype" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyPatternMatch
+                  mempty
+                  (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
+                  [ ( PConstructor mempty "Just" [PVar mempty (named "a")],
+                      MyVar mempty (named "a")
+                    ),
+                    ( PConstructor mempty "Nothing" [],
+                      int 0
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTInt)
+    it "Matches value inside more complex datatype" $ do
+      let expr =
+            MyData
+              mempty
+              dtThese
+              ( MyPatternMatch
+                  mempty
+                  (MyConsApp mempty (MyConstructor mempty "That") (int 1))
+                  [ ( PConstructor mempty "This" [PWildcard mempty],
+                      int 0
+                    ),
+                    ( PConstructor mempty "That" [PVar mempty (named "b")],
+                      MyVar mempty (named "b")
+                    ),
+                    ( PConstructor mempty "These" [PWildcard mempty, PVar mempty (named "b")],
+                      MyVar mempty (named "b")
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTInt)
+    it "Matches nested datatype" $ do
+      let val =
+            MyConsApp
+              mempty
+              (MyConstructor mempty "Just")
+              ( MyConsApp mempty (MyConstructor mempty "Just") (bool True)
+              )
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyPatternMatch
+                  mempty
+                  val
+                  [ ( PConstructor
+                        mempty
+                        "Just"
+                        [ PConstructor
+                            mempty
+                            "Just"
+                            [PVar mempty (named "bool")]
+                        ],
+                      MyVar mempty (named "bool")
+                    ),
+                    (PWildcard mempty, bool False)
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTBool)
+    it "Matches pair" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (MyPair mempty (int 1) (int 2))
+              [ ( PPair
+                    mempty
+                    (PVar mempty (named "a"))
+                    (PVar mempty (named "b")),
+                  MyInfix mempty Add (MyVar mempty (named "a")) (MyVar mempty (named "b"))
+                )
+              ]
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTInt)

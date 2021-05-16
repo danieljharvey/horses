@@ -7,6 +7,7 @@ module Language.Mimsa.Typechecker.DataTypes
     storeDataDeclaration,
     inferDataConstructor,
     inferConstructorTypes,
+    inferType,
   )
 where
 
