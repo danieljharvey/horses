@@ -390,6 +390,20 @@ inferPattern env (PPair ann a b) = do
   (s1, tyA, envA) <- inferPattern env a
   (s2, tyB, envB) <- inferPattern envA b
   pure (s2 <> s1, applySubst (s2 <> s1) (MTPair ann tyA tyB), envB)
+inferPattern env (PRecord ann items) = do
+  let inferRow (k, v) = do
+        (s, tyValue, envNew) <- inferPattern env v
+        pure (s, M.singleton k tyValue, envNew)
+  tyEverything <- traverse inferRow (M.toList items)
+  let allSubs = mconcat (getA <$> tyEverything)
+  let tyItems = mconcat (getB <$> tyEverything)
+  let newEnv = mconcat (getC <$> tyEverything) <> env
+  tyRest <- getUnknown ann
+  pure
+    ( allSubs,
+      applySubst allSubs (MTRecordRow ann tyItems tyRest),
+      newEnv
+    )
 
 checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> TcMonad ()
 checkArgsLength ann (DataType _ _ cons) tyCon args = do

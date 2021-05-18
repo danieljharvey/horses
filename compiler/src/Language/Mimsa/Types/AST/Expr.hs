@@ -84,7 +84,9 @@ data Expr var ann
     MyTypedHole ann Name
   deriving (Eq, Ord, Show, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 
-deriving instance (ToSchema var, ToSchema ann) => ToSchema (Expr var ann)
+deriving instance
+  (ToSchema var, ToSchema ann, JSON.ToJSONKey var) =>
+  ToSchema (Expr var ann)
 
 data InfixBit var ann
   = IfStart (Expr var ann)

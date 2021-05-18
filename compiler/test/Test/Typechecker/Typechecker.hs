@@ -357,6 +357,9 @@ spec = do
                   (int 1)
                   [ ( PConstructor mempty "Nothing" [],
                       bool True
+                    ),
+                    ( PConstructor mempty "Just" [PWildcard mempty],
+                      bool False
                     )
                   ]
               )
@@ -372,6 +375,9 @@ spec = do
                   (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
                   [ ( PConstructor mempty "Just" [],
                       bool True
+                    ),
+                    ( PConstructor mempty "Nothing" [],
+                      bool False
                     )
                   ]
               )
@@ -473,6 +479,63 @@ spec = do
                     (PVar mempty (named "a"))
                     (PVar mempty (named "b")),
                   MyInfix mempty Add (MyVar mempty (named "a")) (MyVar mempty (named "b"))
+                )
+              ]
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTInt)
+    it "Fails when record does not match pattern" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (MyRecord mempty (M.singleton "dog" (int 1)))
+              [ ( PRecord
+                    mempty
+                    ( M.singleton
+                        "log"
+                        (PWildcard mempty)
+                    ),
+                  bool True
+                )
+              ]
+      startInference mempty mempty expr
+        `shouldSatisfy` isLeft
+    it "Succeeds when record partially matches pattern" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (MyRecord mempty (M.fromList [("dog", int 1), ("cat", bool True)]))
+              [ ( PRecord
+                    mempty
+                    ( M.singleton
+                        "dog"
+                        (PVar mempty (named "a"))
+                    ),
+                  MyVar mempty (named "a")
+                )
+              ]
+      startInference mempty mempty expr
+        `shouldBe` Right (MTPrim mempty MTInt)
+    it "Succeeds when record entirely matches pattern" $ do
+      let expr =
+            MyPatternMatch
+              mempty
+              (MyRecord mempty (M.fromList [("dog", int 1), ("cat", int 2)]))
+              [ ( PRecord
+                    mempty
+                    ( M.fromList
+                        [ ( "dog",
+                            PVar
+                              mempty
+                              (named "a")
+                          ),
+                          ("cat", PVar mempty (named "b"))
+                        ]
+                    ),
+                  MyInfix
+                    mempty
+                    Add
+                    (MyVar mempty (named "a"))
+                    (MyVar mempty (named "b"))
                 )
               ]
       startInference mempty mempty expr

@@ -270,5 +270,8 @@ mapPatternVar chg (PConstructor ann name more) =
 mapPatternVar chg (PPair ann a b) =
   PPair ann <$> mapPatternVar chg a
     <*> mapPatternVar chg b
+mapPatternVar chg (PRecord ann items) = do
+  newMap <- traverse (mapPatternVar chg) items
+  pure $ PRecord ann newMap
 mapPatternVar _ (PWildcard ann) = pure (PWildcard ann)
 mapPatternVar _ (PLit ann a) = pure (PLit ann a)
