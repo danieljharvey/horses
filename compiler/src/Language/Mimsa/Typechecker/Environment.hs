@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Environment (getNativeConstructors, lookupConstructor, strType) where
@@ -5,7 +6,6 @@ module Language.Mimsa.Typechecker.Environment (getNativeConstructors, lookupCons
 import Control.Monad.Except
 import Data.Map (Map)
 import qualified Data.Map as M
-import Language.Mimsa.Typechecker.TcMonad (TcMonad)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -67,10 +67,11 @@ arrType =
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
+  (MonadError TypeError m) =>
   Environment ->
   Annotation ->
   TyCon ->
-  TcMonad (DataType Annotation)
+  m (DataType Annotation)
 lookupConstructor env ann name = do
   case M.toList $ M.filter (containsConstructor name) (getAllDataTypes env) of
     [(_, a)] -> pure a -- we only want a single match
