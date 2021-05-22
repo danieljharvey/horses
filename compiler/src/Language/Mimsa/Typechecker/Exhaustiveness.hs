@@ -1,15 +1,18 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleContexts #-}
 
-module Language.Mimsa.Typechecker.Exhaustiveness where
+module Language.Mimsa.Typechecker.Exhaustiveness
+  ( isExhaustive,
+    redundantCases,
+    validatePatterns,
+  )
+where
 
 import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Monad.State
+import Data.Foldable
 import Data.Functor
 import Data.List (nub)
 import qualified Data.Map as M
-import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Types.AST
@@ -17,77 +20,66 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.Environment
 
-type PatternM = ExceptT TypeError (ReaderT Environment (State PatternState))
-
-newtype PatternState = PatternState
-  { psSeen :: Set TyCon
-  }
-  deriving newtype (Semigroup, Monoid)
-
-addSeen :: TyCon -> PatternM ()
-addSeen tyCon = modify (\st -> st {psSeen = psSeen st <> S.singleton tyCon})
-
-runPatternM ::
-  Environment ->
-  PatternM a ->
-  Either TypeError a
-runPatternM env value =
-  fst either'
-  where
-    either' =
-      runState
-        (runReaderT (runExceptT value) env)
-        mempty
+validatePatterns :: (MonadError TypeError m) => Environment -> Annotation -> [Pattern Variable Annotation] -> m ()
+validatePatterns env ann patterns = do
+  missing <- isExhaustive env patterns
+  _ <- case missing of
+    [] -> pure ()
+    _ -> throwError (PatternMatchErr (MissingPatterns ann missing))
+  redundant <- redundantCases env patterns
+  case redundant of
+    [] -> pure ()
+    _ -> throwError (PatternMatchErr (RedundantPatterns ann redundant))
 
 -- | given a list of patterns, return a list of missing patterns
 isExhaustive ::
-  (Eq var) =>
+  (Eq var, MonadError TypeError m) =>
+  Environment ->
   [Pattern var Annotation] ->
-  PatternM [Pattern var Annotation]
-isExhaustive patterns = do
+  m [Pattern var Annotation]
+isExhaustive env patterns = do
   generated <-
     mconcat
-      <$> traverse generateRequired patterns
+      <$> traverse (generateRequired env) patterns
   pure $ filterMissing patterns generated
 
 -- | Given a pattern, generate others required for it
 generateRequired ::
+  (MonadError TypeError m) =>
+  Environment ->
   Pattern var Annotation ->
-  PatternM [Pattern var Annotation]
-generateRequired (PLit _ (MyBool True)) = pure [PLit mempty (MyBool False)]
-generateRequired (PLit _ (MyBool False)) = pure [PLit mempty (MyBool True)]
-generateRequired (PLit _ (MyInt _)) = pure [PWildcard mempty]
-generateRequired (PLit _ (MyString _)) = pure [PWildcard mempty]
-generateRequired (PPair _ l r) = do
-  ls <- generateRequired l
-  rs <- generateRequired r
+  m [Pattern var Annotation]
+generateRequired _ (PLit _ (MyBool True)) = pure [PLit mempty (MyBool False)]
+generateRequired _ (PLit _ (MyBool False)) = pure [PLit mempty (MyBool True)]
+generateRequired _ (PLit _ (MyInt _)) = pure [PWildcard mempty]
+generateRequired _ (PLit _ (MyString _)) = pure [PWildcard mempty]
+generateRequired env (PPair _ l r) = do
+  ls <- generateRequired env l
+  rs <- generateRequired env r
   let allPairs = PPair mempty <$> ls <*> rs
   pure allPairs
-generateRequired (PRecord _ items) = do
-  items' <- traverse generateRequired items
+generateRequired env (PRecord _ items) = do
+  items' <- traverse (generateRequired env) items
   pure (PRecord mempty <$> sequence items')
-generateRequired (PConstructor ann tyCon args) = do
-  env <- ask
+generateRequired env (PConstructor ann tyCon args) = do
   dt <- lookupConstructor env ann tyCon
-  newFromArgs <- traverse generateRequired args
+  newFromArgs <- traverse (generateRequired env) args
   newDataTypes <- requiredFromDataType dt
   let newCons = PConstructor mempty tyCon <$> sequence newFromArgs
   pure (newCons <> newDataTypes)
-generateRequired _ = pure mempty
+generateRequired _ _ = pure mempty
 
 requiredFromDataType ::
+  (MonadError TypeError m) =>
   DataType Annotation ->
-  PatternM [Pattern var Annotation]
+  m [Pattern var Annotation]
 requiredFromDataType (DataType _ _ cons) = do
-  seen <- gets psSeen
   let new (n, as) =
-        ( [ PConstructor
-              mempty
-              n
-              (PWildcard mempty <$ as)
-            | n `notElem` seen
-          ]
-        )
+        [ PConstructor
+            mempty
+            n
+            (PWildcard mempty <$ as)
+        ]
   pure $ mconcat (new <$> M.toList cons)
 
 -- filter outstanding items
@@ -125,5 +117,45 @@ annihilate (PRecord _ as) (PRecord _ bs) =
    in S.null diffKeys
         && do
           let allPairs = zip (M.elems as) (M.elems bs)
-          foldr (\(a, b) keep -> keep && annihilate a b) True allPairs
+          foldr
+            (\(a, b) keep -> keep && annihilate a b)
+            True
+            allPairs
+annihilate (PConstructor _ tyConA argsA) (PConstructor _ tyConB argsB) =
+  (tyConA == tyConB)
+    && foldr
+      (\(a, b) keep -> keep && annihilate a b)
+      True
+      (zip argsA argsB)
 annihilate _ _as = False
+
+redundantCases ::
+  (MonadError TypeError m, Eq var) =>
+  Environment ->
+  [Pattern var Annotation] ->
+  m [Pattern var Annotation]
+redundantCases env patterns = do
+  generated <-
+    mconcat
+      <$> traverse (generateRequired env) patterns
+  let annihiliatePattern pat remaining =
+        filter
+          ( not
+              . annihilate
+                (removeAnn pat)
+              . removeAnn
+          )
+          remaining
+  -- add index, the first pattern is never redundant
+  let patternsWithIndex = zip patterns ([0 ..] :: [Int])
+  pure $
+    snd $
+      foldl'
+        ( \(remaining, redundant) (pat, i) ->
+            let rest = annihiliatePattern pat remaining
+             in if length rest == length remaining && i > 0
+                  then (rest, redundant <> [pat])
+                  else (rest, redundant)
+        )
+        (generated, mempty)
+        patternsWithIndex

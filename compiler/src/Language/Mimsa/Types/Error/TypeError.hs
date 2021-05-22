@@ -17,6 +17,7 @@ import Data.Text.Prettyprint.Doc
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error.PatternMatchError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
@@ -47,9 +48,7 @@ data TypeError
   | CouldNotFindInfixOperator Annotation InfixOp (Set InfixOp)
   | CannotUseBuiltInTypeAsConstructor Annotation TyCon
   | InternalConstructorUsedOutsidePatternMatch Annotation TyCon
-  | EmptyPatternMatch Annotation
-  | -- | tyCon, expected, actual
-    ConstructorArgumentLengthMismatch Annotation TyCon Int Int
+  | PatternMatchErr PatternMatchError
   deriving (Eq, Ord, Show)
 
 ------
@@ -95,8 +94,6 @@ getErrorPos (TypedHoles holes) = case M.toList holes of
 getErrorPos (FunctionArityMismatch ann _ _) = fromAnnotation ann
 getErrorPos (CannotUseBuiltInTypeAsConstructor ann _) = fromAnnotation ann
 getErrorPos (InternalConstructorUsedOutsidePatternMatch ann _) = fromAnnotation ann
-getErrorPos (EmptyPatternMatch ann) = fromAnnotation ann
-getErrorPos (ConstructorArgumentLengthMismatch ann _ _ _) = fromAnnotation ann
 getErrorPos _ = (0, 0)
 
 ------
@@ -219,9 +216,7 @@ renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
       if tyCon == "StrHead" || tyCon == "StrEmpty"
         then ["To construct values, please use string literal syntax, ie \"string\" or \"\"."]
         else mempty
-renderTypeError (EmptyPatternMatch _) = ["Pattern match needs at least one pattern to match"]
-renderTypeError (ConstructorArgumentLengthMismatch _ tyCon expected actual) =
-  ["Constructor argument length mismatch. " <> prettyDoc tyCon <> " expected " <> prettyDoc expected <> " but got " <> prettyDoc actual]
+renderTypeError (PatternMatchErr pmErr) = [prettyDoc pmErr]
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

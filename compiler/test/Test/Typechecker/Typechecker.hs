@@ -276,7 +276,7 @@ spec = do
   describe "Pattern matching" $ do
     it "Returns an EmptyPatternMatch error when no patterns supplied" $ do
       let expr = MyPatternMatch mempty (int 1) mempty
-      startInference mempty mempty expr `shouldBe` Left (EmptyPatternMatch mempty)
+      startInference mempty mempty expr `shouldBe` Left (PatternMatchErr $ EmptyPatternMatch mempty)
     it "Detects an integer does not match a boolean literal" $ do
       let expr =
             MyPatternMatch
@@ -378,11 +378,12 @@ spec = do
                     ),
                     ( PConstructor mempty "Nothing" [],
                       bool False
-                    )
+                    ),
+                    (PConstructor mempty "Just" [PWildcard mempty], bool False)
                   ]
               )
       startInference mempty mempty expr
-        `shouldBe` Left (ConstructorArgumentLengthMismatch mempty "Just" 1 0)
+        `shouldBe` Left (PatternMatchErr $ ConstructorArgumentLengthMismatch mempty "Just" 1 0)
     it "Matches wildcard inside datatype" $ do
       let expr =
             MyData

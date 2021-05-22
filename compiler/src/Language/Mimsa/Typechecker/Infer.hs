@@ -21,6 +21,7 @@ import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
+import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
 import Language.Mimsa.Typechecker.TcMonad
@@ -335,8 +336,9 @@ inferPatternMatch ::
   [(Pattern Variable Annotation, TcExpr)] ->
   TcMonad (Substitutions, MonoType)
 inferPatternMatch env ann expr patterns = do
-  (s1, tyExpr) <- infer env expr
+  -- ensure we even have any patterns to match on
   _ <- checkEmptyPatterns ann patterns
+  (s1, tyExpr) <- infer env expr
   -- infer types of all patterns
   tyPatterns <-
     traverse
@@ -356,11 +358,13 @@ inferPatternMatch env ann expr patterns = do
   (s4, tyMatchedExprs) <- matchList (getC <$> tyPatterns)
   -- get all the subs we've learned about
   let allSubs = subs <> s4 <> s3 <> s2 <> s1
+  -- perform exhaustiveness checking at end so it doesn't mask more basic errors
+  validatePatterns env ann (fst <$> patterns)
   pure (allSubs, applySubst allSubs tyMatchedExprs)
 
 checkEmptyPatterns :: Annotation -> [a] -> TcMonad (NE.NonEmpty a)
 checkEmptyPatterns ann as = case as of
-  [] -> throwError (EmptyPatternMatch ann)
+  [] -> throwError (PatternMatchErr $ EmptyPatternMatch ann)
   other -> pure (NE.fromList other)
 
 inferPattern ::
@@ -413,11 +417,13 @@ checkArgsLength ann (DataType _ _ cons) tyCon args = do
         then pure ()
         else
           throwError $
-            ConstructorArgumentLengthMismatch
-              ann
-              tyCon
-              (length consArgs)
-              (length args)
+            PatternMatchErr
+              ( ConstructorArgumentLengthMismatch
+                  ann
+                  tyCon
+                  (length consArgs)
+                  (length args)
+              )
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 -- infer the type of a case match function
