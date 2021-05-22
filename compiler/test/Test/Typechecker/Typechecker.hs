@@ -541,3 +541,41 @@ spec = do
               ]
       startInference mempty mempty expr
         `shouldBe` Right (MTPrim mempty MTInt)
+    it "Spots a missing pattern" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyPatternMatch
+                  mempty
+                  (MyConstructor mempty "Nothing")
+                  [ ( PConstructor mempty "Just" [PWildcard mempty],
+                      bool False
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Left
+          ( PatternMatchErr
+              (MissingPatterns mempty [PConstructor mempty "Nothing" mempty])
+          )
+    it "Spots a redundant pattern" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyPatternMatch
+                  mempty
+                  (MyConstructor mempty "Nothing")
+                  [ ( PConstructor mempty "Just" [PWildcard mempty],
+                      bool False
+                    ),
+                    (PConstructor mempty "Nothing" mempty, bool True),
+                    (PConstructor mempty "Nothing" mempty, bool True)
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Left
+          ( PatternMatchErr
+              (RedundantPatterns mempty [PConstructor mempty "Nothing" mempty])
+          )
