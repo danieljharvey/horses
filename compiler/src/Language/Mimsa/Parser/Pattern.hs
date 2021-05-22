@@ -6,6 +6,7 @@ module Language.Mimsa.Parser.Pattern
   )
 where
 
+import qualified Data.Map as M
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Literal
@@ -23,6 +24,7 @@ patternParser =
     <|> try wildcardParser
     <|> try variableParser
     <|> try litParser
+    <|> try recordParser
 
 ----
 
@@ -59,3 +61,21 @@ litParser = withLocation PLit lit
         <|> try stringLiteral
         <|> trueParser
         <|> falseParser
+
+---
+
+recordParser :: Parser ParserPattern
+recordParser = withLocation PRecord $ do
+  _ <- string "{"
+  _ <- space
+  args <- sepBy (withOptionalSpace recordItemParser) (literalWithSpace ",")
+  _ <- space
+  _ <- string "}"
+  pure (M.fromList args)
+
+recordItemParser :: Parser (Name, ParserPattern)
+recordItemParser = do
+  name <- nameParser
+  literalWithSpace ":"
+  expr <- withOptionalSpace patternParser
+  pure (name, expr)

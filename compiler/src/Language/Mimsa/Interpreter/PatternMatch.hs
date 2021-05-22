@@ -7,7 +7,9 @@ where
 
 import Control.Monad.Except
 import Data.Foldable
+import qualified Data.Map as M
 import Data.Monoid
+import qualified Data.Set as S
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -38,6 +40,11 @@ patternMatches (PPair _ pA pB) (MyPair _ a b) = do
   as <- patternMatches pA a
   bs <- patternMatches pB b
   pure $ as <> bs
+patternMatches (PRecord _ pAs) (MyRecord _ as)
+  | S.null (S.difference (M.keysSet pAs) (M.keysSet as)) = do
+    let allPairs = zip (M.elems pAs) (M.elems as)
+    nice <- traverse (uncurry patternMatches) allPairs
+    pure (mconcat nice)
 patternMatches _ _ = Nothing
 
 -- apply each part of the constructor to the output function

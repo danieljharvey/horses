@@ -796,6 +796,12 @@ spec =
           it "Deconstructs a pair" $ do
             result <- eval stdLib "match (1,True) with (a,b) -> b"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-          it "Matches a literal " $ do
+          it "Matches an int literal" $ do
             result <- eval stdLib "match (1, True) with (2, a) -> a | _ -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Matches a string literal" $ do
+            result <- eval stdLib "match \"dog\" with \"cat\" -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Matches a record" $ do
+            result <- eval stdLib "match { dog: 1 } with { dog: a } -> a"
+            result `shouldBe` Right (MTPrim mempty MTInt, int 1)
