@@ -25,10 +25,7 @@ import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
-
-mapWithIndex :: (Int -> a -> b) -> [a] -> [b]
-mapWithIndex f as =
-  uncurry f <$> zip [1 ..] as
+import Language.Mimsa.Utils
 
 -------
 
