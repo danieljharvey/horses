@@ -796,3 +796,6 @@ spec =
           it "Deconstructs a pair" $ do
             result <- eval stdLib "match (1,True) with (a,b) -> b"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a literal " $ do
+            result <- eval stdLib "match (1, True) with (2, a) -> a | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)

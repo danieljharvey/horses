@@ -20,7 +20,12 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.Environment
 
-validatePatterns :: (MonadError TypeError m) => Environment -> Annotation -> [Pattern Variable Annotation] -> m ()
+validatePatterns ::
+  (MonadError TypeError m) =>
+  Environment ->
+  Annotation ->
+  [Pattern Variable Annotation] ->
+  m ()
 validatePatterns env ann patterns = do
   missing <- isExhaustive env patterns
   _ <- case missing of
@@ -40,8 +45,15 @@ isExhaustive ::
 isExhaustive env patterns = do
   generated <-
     mconcat
-      <$> traverse (generateRequired env) patterns
+      <$> traverse (generate env) patterns
   pure $ filterMissing patterns generated
+
+generate ::
+  (MonadError TypeError m) =>
+  Environment ->
+  Pattern var Annotation ->
+  m [Pattern var Annotation]
+generate env pat = (<>) [pat] <$> generateRequired env pat
 
 -- | Given a pattern, generate others required for it
 generateRequired ::
@@ -137,7 +149,7 @@ redundantCases ::
 redundantCases env patterns = do
   generated <-
     mconcat
-      <$> traverse (generateRequired env) patterns
+      <$> traverse (generate env) patterns
   let annihiliatePattern pat remaining =
         filter
           ( not

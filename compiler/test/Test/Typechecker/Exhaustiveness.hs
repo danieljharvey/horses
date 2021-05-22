@@ -169,6 +169,9 @@ spec = do
             PConstructor mempty "Nothing" mempty
           ]
           `shouldBe` Right []
+      it "Multiple int literals" $ do
+        exhaustiveCheck [PLit mempty (MyInt 1), PLit mempty (MyInt 2)]
+          `shouldBe` Right [PWildcard mempty]
   describe "Redundant cases" $ do
     it "Returns none" $ do
       redundantCasesCheck [PWildcard mempty] `shouldBe` Right mempty
@@ -202,3 +205,7 @@ spec = do
               "Just"
               [PLit mempty (MyInt 1)]
           ]
+    it "Multiple ints make wildcard necessary" $ do
+      redundantCasesCheck
+        [PLit mempty (MyInt 1), PLit mempty (MyInt 2), PWildcard mempty]
+        `shouldBe` Right []

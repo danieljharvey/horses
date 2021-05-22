@@ -33,7 +33,11 @@ patternMatches ::
   Expr Variable ann ->
   Maybe [(Variable, Expr Variable ann)]
 patternMatches (PWildcard _) _ = pure []
-patternMatches (PVar _ name) a = pure [(name, a)]
+patternMatches (PVar _ name) expr = pure [(name, expr)]
+patternMatches (PPair _ pA pB) (MyPair _ a b) = do
+  as <- patternMatches pA a
+  bs <- patternMatches pB b
+  pure $ as <> bs
 patternMatches _ _ = Nothing
 
 -- apply each part of the constructor to the output function
