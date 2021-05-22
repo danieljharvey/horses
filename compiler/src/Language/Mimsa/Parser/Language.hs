@@ -23,6 +23,7 @@ import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Literal
+import Language.Mimsa.Parser.Pattern
 import Language.Mimsa.Parser.RecordAccess
 import Language.Mimsa.Parser.TypeDecl
 import Language.Mimsa.Parser.Types
@@ -62,6 +63,7 @@ complexParser =
     <|> try typeParser
     <|> try constructorAppParser
     <|> try caseMatchParser
+    <|> try patternMatchParser
     <|> try typedHoleParser
     <|> try defineInfixParser
 
@@ -364,3 +366,45 @@ arrayParser = withLocation MyArray $ do
   _ <- space
   _ <- string "]"
   pure args
+
+{-
+
+PATTERN MATCHING
+
+pattern matches are of form
+
+match a with
+  (Just b) -> b
+  _        -> False
+
+-}
+
+patternMatchParser :: Parser ParserExpr
+patternMatchParser = addLocation $ do
+  matchExpr <- matchExprWithParser
+  patterns <-
+    try patternMatchesParser
+      <|> pure <$> patternCaseParser
+  pure $ MyPatternMatch mempty matchExpr patterns
+
+matchExprWithParser :: Parser ParserExpr
+matchExprWithParser = do
+  _ <- thenSpace (string "match")
+  sumExpr <- expressionParser
+  _ <- thenSpace (string "with")
+  pure sumExpr
+
+patternMatchesParser :: Parser [(ParserPattern, ParserExpr)]
+patternMatchesParser =
+  sepBy
+    (withOptionalSpace patternCaseParser)
+    (literalWithSpace "|")
+
+patternCaseParser :: Parser (ParserPattern, ParserExpr)
+patternCaseParser = do
+  pat <- thenSpace patternParser
+  _ <- thenSpace (string "->")
+  patExpr <- expressionParser
+  pure (pat, patExpr)
+
+----------

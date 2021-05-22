@@ -286,7 +286,7 @@ prettyPatternMatch ::
 prettyPatternMatch sumExpr matches =
   "match"
     <+> printSubExpr sumExpr
-    <+> "of"
+    <+> "with"
     <+> line
       <> indent
         2

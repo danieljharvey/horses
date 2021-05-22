@@ -6,8 +6,8 @@ module Language.Mimsa.Interpreter.PatternMatch
 where
 
 import Control.Monad.Except
-import Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NE
+import Data.Foldable
+import Data.Monoid
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -16,62 +16,31 @@ import Language.Mimsa.Types.Identifiers
 patternMatch ::
   (Monoid ann) =>
   Expr Variable ann ->
-  NonEmpty (TyCon, Expr Variable ann) ->
-  Maybe (Expr Variable ann) ->
+  [(Pattern Variable ann, Expr Variable ann)] ->
   App ann (Expr Variable ann)
-patternMatch expr' options catchAll = do
-  const' <- findConstructor expr'
-  case NE.filter (\(c, _) -> c == const') options of
-    [(_, found)] -> pure $ createMatchExpression found expr'
+patternMatch expr' patterns = do
+  let foldF (pat, patExpr) = case patternMatches pat expr' of
+        Just bindings -> First (Just (patExpr, bindings))
+        _ -> First Nothing
+  case getFirst (foldMap foldF patterns) of
+    Just (patExpr, bindings) -> pure $ createMatchExpression bindings patExpr
     _ ->
-      case catchAll of
-        Just catchAll' -> pure catchAll'
-        _ -> throwError $ PatternMatchFailure expr'
+      throwError $ PatternMatchFailure expr'
 
--- when given an applied constructor, find the name for matching
-findConstructor :: Expr Variable ann -> App ann TyCon
-findConstructor (MyConstructor _ c) = pure c
-findConstructor (MyConsApp _ c _) = findConstructor c
-findConstructor (MyLiteral _ (MyString s)) =
-  if stringLength s == 0
-    then pure "StrEmpty"
-    else pure "StrHead"
-findConstructor (MyArray _ items) =
-  if null items
-    then pure "ArrEmpty"
-    else pure "ArrHead"
-findConstructor e = throwError $ PatternMatchFailure e
+-- pull vars out of expr to match patterns
+patternMatches ::
+  Pattern Variable ann ->
+  Expr Variable ann ->
+  Maybe [(Variable, Expr Variable ann)]
+patternMatches (PWildcard _) _ = pure []
+patternMatches (PVar _ name) a = pure [(name, a)]
+patternMatches _ _ = Nothing
 
 -- apply each part of the constructor to the output function
 createMatchExpression ::
   (Monoid ann) =>
-  Expr Variable ann ->
+  [(Variable, Expr Variable ann)] ->
   Expr Variable ann ->
   Expr Variable ann
-createMatchExpression f (MyConsApp _ c a) =
-  MyApp mempty (createMatchExpression f c) a
-createMatchExpression f (MyLiteral _ (MyString s)) =
-  case stringSplit s of
-    Just (sHead, sTail) ->
-      MyApp
-        mempty
-        ( MyApp
-            mempty
-            f
-            (MyLiteral mempty (MyString sHead))
-        )
-        (MyLiteral mempty (MyString sTail))
-    Nothing -> f
-createMatchExpression f (MyArray _ as) =
-  if (not . null) as
-    then
-      MyApp
-        mempty
-        ( MyApp
-            mempty
-            f
-            (head as)
-        )
-        (MyArray mempty (tail as))
-    else f
-createMatchExpression f _ = f
+createMatchExpression bindings a =
+  foldl' (\rest (binder, var) -> MyLet mempty binder var rest) a bindings

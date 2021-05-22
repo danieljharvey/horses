@@ -786,3 +786,13 @@ spec =
                 ( MTArray mempty (MTPrim mempty MTInt),
                   MyArray mempty [int 2, int 3, int 4]
                 )
+        describe "Pattern matching" $ do
+          it "Matches a wildcard" $ do
+            result <- eval stdLib "match 1 with _ -> True"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a variable" $ do
+            result <- eval stdLib "match 1 with a -> a"
+            result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+          it "Deconstructs a pair" $ do
+            result <- eval stdLib "match (1,True) with (a,b) -> b"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)

@@ -81,4 +81,15 @@ useSwaps' (MyDefineInfix ann infixOp bindName expr) =
     <*> useSwaps' expr
 
 useSwapsInPattern :: Pattern Variable ann -> App ann (Pattern Name ann)
-useSwapsInPattern _ = error "oh shit"
+useSwapsInPattern (PWildcard ann) = pure (PWildcard ann)
+useSwapsInPattern (PVar ann var) = PVar ann <$> lookupSwap var
+useSwapsInPattern (PLit ann lit) = pure (PLit ann lit)
+useSwapsInPattern (PConstructor ann tyCon args) =
+  PConstructor ann tyCon
+    <$> traverse useSwapsInPattern args
+useSwapsInPattern (PPair ann a b) =
+  PPair ann <$> useSwapsInPattern a
+    <*> useSwapsInPattern b
+useSwapsInPattern (PRecord ann as) =
+  PRecord ann
+    <$> traverse useSwapsInPattern as
