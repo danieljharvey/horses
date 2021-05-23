@@ -45,6 +45,7 @@ patternMatches (PRecord _ pAs) (MyRecord _ as)
     let allPairs = zip (M.elems pAs) (M.elems as)
     nice <- traverse (uncurry patternMatches) allPairs
     pure (mconcat nice)
+patternMatches (PLit _ pB) (MyLiteral _ b) | pB == b = pure mempty
 patternMatches _ _ = Nothing
 
 -- apply each part of the constructor to the output function
