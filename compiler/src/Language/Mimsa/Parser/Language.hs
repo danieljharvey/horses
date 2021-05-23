@@ -5,6 +5,7 @@ module Language.Mimsa.Parser.Language
     parseExprAndFormatError,
     parseAndFormat,
     expressionParser,
+    patternMatchParser,
     varParser,
     nameParser,
     tyConParser,
@@ -62,8 +63,8 @@ complexParser =
     <|> try lambdaParser
     <|> try typeParser
     <|> try constructorAppParser
-    <|> try caseMatchParser
     <|> try patternMatchParser
+    <|> try caseMatchParser
     <|> try typedHoleParser
     <|> try defineInfixParser
 
@@ -397,13 +398,20 @@ matchExprWithParser = do
 patternMatchesParser :: Parser [(ParserPattern, ParserExpr)]
 patternMatchesParser =
   sepBy
-    (withOptionalSpace patternCaseParser)
-    (literalWithSpace "|")
+    patternCaseParser
+    (withSpaces "|")
+
+withSpaces :: Parser a -> Parser a
+withSpaces p = do
+  _ <- space1
+  p1 <- p
+  _ <- space1
+  pure p1
 
 patternCaseParser :: Parser (ParserPattern, ParserExpr)
 patternCaseParser = do
-  pat <- thenSpace patternParser
-  _ <- thenSpace (string "->")
+  pat <- orInBrackets patternParser
+  _ <- withSpaces "->"
   patExpr <- expressionParser
   pure (pat, patExpr)
 

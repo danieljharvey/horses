@@ -47,6 +47,8 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
   prettyDoc (PWildcard _) = "_"
   prettyDoc (PVar _ a) = prettyDoc a
   prettyDoc (PLit _ lit) = prettyDoc lit
+  prettyDoc (PConstructor _ tyCon []) =
+    prettyDoc tyCon
   prettyDoc (PConstructor _ tyCon args) =
     prettyDoc tyCon <+> foldr (<+>) mempty (printSubPattern <$> args)
   prettyDoc (PPair _ a b) = "(" <> printSubPattern a <> ", " <> printSubPattern b <> ")"

@@ -797,11 +797,20 @@ spec =
             result <- eval stdLib "match (1,True) with (a,b) -> b"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
           it "Matches an int literal" $ do
-            result <- eval stdLib "match (1, True) with (2, a) -> a | _ -> False"
-            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+            result <- eval stdLib "match (1, True) with (1, a) -> a | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
           it "Matches a string literal" $ do
-            result <- eval stdLib "match \"dog\" with \"cat\" -> True | _ -> False"
-            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+            result <- eval stdLib "match \"dog\" with \"dog\" -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches two string literals" $ do
+            result <- eval stdLib "match \"dog\" with \"dog\" -> True | \"log\" -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
           it "Matches a record" $ do
             result <- eval stdLib "match { dog: 1 } with { dog: a } -> a"
             result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+          it "Matches a constructor with no args" $ do
+            result <- eval stdLib "match None with None -> False | _ -> True"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Matches a constructor with args" $ do
+            result <- eval stdLib "match Some 1 with (Some _) -> True | None -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)

@@ -711,3 +711,25 @@ spec = do
                   )
                 ]
             )
+      it "Parses constructor pattern match" $
+        testParseWithAnn "match None with None -> False"
+          `shouldBe` Right
+            ( MyPatternMatch
+                (Location 0 29)
+                (MyConstructor (Location 6 10) "None")
+                [ ( PConstructor (Location 16 20) "None" mempty,
+                    MyLiteral (Location 24 29) (MyBool False)
+                  )
+                ]
+            )
+      it "Parses constructor with arg pattern match" $
+        testParseWithAnn "match Some 1 with (Some _) -> True"
+          `shouldBe` Right
+            ( MyPatternMatch
+                (Location 0 34)
+                (MyConsApp (Location 6 13) (MyConstructor (Location 6 10) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
+                [ ( PConstructor (Location 19 25) "Some" [PWildcard (Location 24 25)],
+                    MyLiteral (Location 30 34) (MyBool True)
+                  )
+                ]
+            )

@@ -8,7 +8,7 @@ where
 
 import qualified Data.Map as M
 import Language.Mimsa.Parser.Helpers
-import Language.Mimsa.Parser.Identifiers
+import Language.Mimsa.Parser.Identifiers (nameParser, tyConParser)
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
@@ -25,6 +25,7 @@ patternParser =
     <|> try variableParser
     <|> try litParser
     <|> try recordParser
+    <|> try constructorParser
 
 ----
 
@@ -79,3 +80,26 @@ recordItemParser = do
   literalWithSpace ":"
   expr <- withOptionalSpace patternParser
   pure (name, expr)
+
+---
+
+argsParser :: Parser [ParserPattern]
+argsParser = try someP <|> pure []
+  where
+    someP = do
+      _ <- space1
+      sepBy1
+        patternParser
+        space1
+
+constructorParser :: Parser ParserPattern
+constructorParser =
+  let parser = do
+        cons <- tyConParser
+        args <- try argsParser
+        pure (cons, args)
+   in withLocation
+        ( \loc (cons, args) ->
+            PConstructor loc cons args
+        )
+        parser
