@@ -1,3 +1,3 @@
 match (Some 1) with 
-    Some _  -> True
+    (Some _) -> True
   | None -> False

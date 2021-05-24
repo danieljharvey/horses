@@ -50,7 +50,7 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
   prettyDoc (PConstructor _ tyCon []) =
     prettyDoc tyCon
   prettyDoc (PConstructor _ tyCon args) =
-    prettyDoc tyCon <+> foldr (<+>) mempty (printSubPattern <$> args)
+    "(" <> prettyDoc tyCon <> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args) <> ")"
   prettyDoc (PPair _ a b) = "(" <> printSubPattern a <> ", " <> printSubPattern b <> ")"
   prettyDoc (PRecord _ map') =
     let items = M.toList map'

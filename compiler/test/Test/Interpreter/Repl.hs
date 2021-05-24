@@ -814,3 +814,9 @@ spec =
           it "Matches a constructor with args" $ do
             result <- eval stdLib "match Some 1 with (Some _) -> True | None -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches These correctly" $ do
+            result <- eval stdLib "match This 1 with (These _ _) -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Typechecks Either correctly" $ do
+            result <- eval stdLib "match Right 100 with (Left \"log\") -> False | (Right 100) -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)

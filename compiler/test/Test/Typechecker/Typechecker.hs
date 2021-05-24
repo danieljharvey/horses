@@ -15,7 +15,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
-import Test.Typechecker.Codegen.Shared (dtMaybe, dtThese)
+import Test.Typechecker.Codegen.Shared (dtEither, dtMaybe, dtThese)
 import Test.Utils.Helpers
 
 exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]
@@ -484,6 +484,63 @@ spec = do
               ]
       startInference mempty mempty expr
         `shouldBe` Right (MTPrim mempty MTInt)
+    it "Infers Left type variable in Either from pattern" $ do
+      let expr =
+            MyData
+              mempty
+              dtEither
+              ( MyPatternMatch
+                  mempty
+                  (MyConsApp mempty (MyConstructor mempty "Left") (int 1))
+                  [ ( PConstructor mempty "Left" [PVar mempty (named "e")],
+                      MyVar mempty (named "e")
+                    ),
+                    ( PConstructor mempty "Right" [PLit mempty (MyInt 1)],
+                      MyConsApp mempty (MyConstructor mempty "Right") (int 1)
+                    ),
+                    ( PConstructor mempty "Right" [PVar mempty (named "a")],
+                      MyConsApp mempty (MyConstructor mempty "Right") (MyVar mempty (named "a"))
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right
+          ( MTData
+              mempty
+              "Either"
+              [ MTPrim mempty MTInt,
+                MTPrim mempty MTInt
+              ]
+          )
+    it "Infers Right type variable in Either from pattern" $ do
+      let expr =
+            MyData
+              mempty
+              dtEither
+              ( MyPatternMatch
+                  mempty
+                  (MyConsApp mempty (MyConstructor mempty "Right") (bool True))
+                  [ ( PConstructor mempty "Left" [PLit mempty (MyInt 1)],
+                      MyConsApp mempty (MyConstructor mempty "Left") (int 1)
+                    ),
+                    ( PConstructor mempty "Left" [PVar mempty (named "e")],
+                      MyConsApp mempty (MyConstructor mempty "Left") (MyVar mempty (named "e"))
+                    ),
+                    ( PConstructor mempty "Right" [PVar mempty (named "a")],
+                      MyConsApp mempty (MyConstructor mempty "Right") (MyVar mempty (named "a"))
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right
+          ( MTData
+              mempty
+              "Either"
+              [ MTPrim mempty MTInt,
+                MTPrim mempty MTBool
+              ]
+          )
+
     it "Fails when record does not match pattern" $ do
       let expr =
             MyPatternMatch
