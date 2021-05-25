@@ -19,6 +19,7 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -388,7 +389,10 @@ inferPattern env (PConstructor ann tyCon args) = do
   let tyArgs = getB <$> tyEverything
   let newEnv = mconcat (getC <$> tyEverything) <> env
   dt@(DataType ty _ _) <- lookupConstructor newEnv ann tyCon
-  checkArgsLength ann dt tyCon tyArgs
+  consType <- inferConstructorTypes env dt
+  -- need to get the types of the args for each constructor
+  -- to unify them with `tyArgs` from the Pattern
+  checkArgsLength ann (debugPretty "datatype" dt) tyCon tyArgs
   pure (allSubs, MTData ann ty tyArgs, newEnv)
 inferPattern env (PPair ann a b) = do
   (s1, tyA, envA) <- inferPattern env a
