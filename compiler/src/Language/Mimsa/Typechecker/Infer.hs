@@ -19,7 +19,6 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -346,7 +345,8 @@ inferPatternMatch env ann expr patterns = do
       ( \(pat, patternExpr) -> do
           (ps1, tyPattern, newEnv) <- inferPattern (applySubstCtx s1 env) pat
           (ps2, tyPatternExpr) <- infer newEnv patternExpr
-          pure (ps2 <> ps1, tyPattern, tyPatternExpr)
+          let pSubs = ps2 <> ps1
+          pure (pSubs, applySubst pSubs tyPattern, tyPatternExpr)
       )
       patterns
   -- combine all subs we've created in the above
@@ -389,11 +389,18 @@ inferPattern env (PConstructor ann tyCon args) = do
   let tyArgs = getB <$> tyEverything
   let newEnv = mconcat (getC <$> tyEverything) <> env
   dt@(DataType ty _ _) <- lookupConstructor newEnv ann tyCon
+  -- we get the types for the constructor in question
+  -- and unify them with the tests in the pattern
   consType <- inferConstructorTypes env dt
-  -- need to get the types of the args for each constructor
-  -- to unify them with `tyArgs` from the Pattern
-  checkArgsLength ann (debugPretty "datatype" dt) tyCon tyArgs
-  pure (allSubs, MTData ann ty tyArgs, newEnv)
+  (s, tyTypeVars) <- case M.lookup tyCon (snd consType) of
+    Just (TypeConstructor _ dtTypeVars tyDtArgs) -> do
+      let tyPairs = zip tyArgs tyDtArgs
+      subs <- traverse (uncurry unify) tyPairs
+      let tySubs = mconcat subs <> allSubs
+      pure (tySubs, applySubst tySubs <$> dtTypeVars)
+    _ -> throwError UnknownTypeError
+  checkArgsLength ann dt tyCon tyArgs
+  pure (s <> allSubs, MTData ann ty tyTypeVars, newEnv)
 inferPattern env (PPair ann a b) = do
   (s1, tyA, envA) <- inferPattern env a
   (s2, tyB, envB) <- inferPattern envA b

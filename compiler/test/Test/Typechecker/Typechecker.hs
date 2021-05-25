@@ -209,7 +209,7 @@ identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
 
 spec :: Spec
 spec = do
-  fdescribe "Typechecker" $
+  describe "Typechecker" $
     do
       it "Our expressions typecheck as expected" $
         traverse_
