@@ -820,3 +820,6 @@ spec =
           it "Typechecks Either correctly" $ do
             result <- eval stdLib "match Right 100 with (Left \"log\") -> False | (Right 100) -> True | _ -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Does not have a swap error" $ do
+            result <- eval stdLib "\\a -> match (Left a) with (Left e) -> e | _ -> False"
+            result `shouldSatisfy` isRight
