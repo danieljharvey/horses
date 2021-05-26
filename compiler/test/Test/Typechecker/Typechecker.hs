@@ -15,7 +15,12 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
-import Test.Typechecker.Codegen.Shared (dtEither, dtMaybe, dtThese)
+import Test.Typechecker.Codegen.Shared
+  ( dtEither,
+    dtMaybe,
+    dtPair,
+    dtThese,
+  )
 import Test.Utils.Helpers
 
 exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]
@@ -493,7 +498,7 @@ spec = do
                   mempty
                   (MyConsApp mempty (MyConstructor mempty "Left") (int 1))
                   [ ( PConstructor mempty "Left" [PVar mempty (named "e")],
-                      MyVar mempty (named "e")
+                      MyConsApp mempty (MyConstructor mempty "Left") (MyVar mempty (named "e"))
                     ),
                     ( PConstructor mempty "Right" [PLit mempty (MyInt 1)],
                       MyConsApp mempty (MyConstructor mempty "Right") (int 1)
@@ -540,6 +545,115 @@ spec = do
                 MTPrim mempty MTBool
               ]
           )
+    it "Simpler Either example" $ do
+      let expr =
+            MyData
+              mempty
+              dtEither
+              ( MyPatternMatch
+                  mempty
+                  (MyConsApp mempty (MyConstructor mempty "Right") (bool True))
+                  [ ( PConstructor mempty "Left" [PWildcard mempty],
+                      MyConsApp mempty (MyConstructor mempty "Left") (int 1)
+                    ),
+                    ( PVar mempty (named "all"),
+                      MyVar mempty (named "all")
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right
+          ( MTData
+              mempty
+              "Either"
+              [ MTPrim mempty MTInt,
+                MTPrim mempty MTBool
+              ]
+          )
+    it "Simpler Either example 2" $ do
+      let expr =
+            MyData
+              mempty
+              dtEither
+              ( MyPatternMatch
+                  mempty
+                  (MyConsApp mempty (MyConstructor mempty "Left") (bool True))
+                  [ ( PConstructor mempty "Right" [PWildcard mempty],
+                      MyConsApp mempty (MyConstructor mempty "Right") (int 1)
+                    ),
+                    ( PVar mempty (named "all"),
+                      MyVar mempty (named "all")
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right
+          ( MTData
+              mempty
+              "Either"
+              [ MTPrim mempty MTBool,
+                MTPrim mempty MTInt
+              ]
+          )
+    it "Getting types from pair" $ do
+      let matchExpr =
+            MyConsApp
+              mempty
+              ( MyConsApp
+                  mempty
+                  (MyConstructor mempty "Pair")
+                  (bool True)
+              )
+              (int 1)
+
+      let expr =
+            MyData
+              mempty
+              dtPair
+              ( MyPatternMatch
+                  mempty
+                  matchExpr
+                  [ ( PConstructor mempty "Pair" [PVar mempty (named "a"), PVar mempty (named "b")],
+                      MyPair mempty (MyVar mempty (named "a")) (MyVar mempty (named "b"))
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right
+          ( MTPair
+              mempty
+              (MTPrim mempty MTBool)
+              ( MTPrim mempty MTInt
+              )
+          )
+    it "Conflicting types in pair and patterns" $ do
+      let matchExpr =
+            MyConsApp
+              mempty
+              ( MyConsApp
+                  mempty
+                  (MyConstructor mempty "Pair")
+                  (bool True)
+              )
+              (int 1)
+
+      let expr =
+            MyData
+              mempty
+              dtPair
+              ( MyPatternMatch
+                  mempty
+                  matchExpr
+                  [ ( PConstructor mempty "Pair" [PLit mempty (MyInt 1), PLit mempty (MyBool True)],
+                      MyPair mempty (MyLiteral mempty (MyBool True)) (MyLiteral mempty (MyInt 1))
+                    ),
+                    ( PConstructor mempty "Pair" [PVar mempty (named "a"), PVar mempty (named "b")],
+                      MyPair mempty (MyVar mempty (named "a")) (MyVar mempty (named "b"))
+                    )
+                  ]
+              )
+      startInference mempty mempty expr
+        `shouldSatisfy` isLeft
 
     it "Fails when record does not match pattern" $ do
       let expr =

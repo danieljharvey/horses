@@ -344,8 +344,9 @@ inferPatternMatch env ann expr patterns = do
     traverse
       ( \(pat, patternExpr) -> do
           (ps1, tyPattern, newEnv) <- inferPattern (applySubstCtx s1 env) pat
-          (ps2, tyPatternExpr) <- infer newEnv patternExpr
-          let pSubs = ps2 <> ps1
+          ps2 <- unify tyPattern tyExpr
+          (ps3, tyPatternExpr) <- infer (applySubstCtx ps2 newEnv) patternExpr
+          let pSubs = ps3 <> ps2 <> ps1
           pure (pSubs, applySubst pSubs tyPattern, tyPatternExpr)
       )
       patterns
@@ -354,11 +355,11 @@ inferPatternMatch env ann expr patterns = do
   -- combine all patterns to check their types match
   (s2, tyMatchedPattern) <- matchList (getB <$> tyPatterns)
   -- match patterns with match expr
-  s3 <- unify tyMatchedPattern tyExpr
+  s3 <- unify tyMatchedPattern (applySubst (s2 <> subs) tyExpr)
   -- combine all output expr types
-  (s4, tyMatchedExprs) <- matchList (getC <$> tyPatterns)
+  (s4, tyMatchedExprs) <- matchList (applySubst s3 <$> (getC <$> tyPatterns))
   -- get all the subs we've learned about
-  let allSubs = subs <> s4 <> s3 <> s2 <> s1
+  let allSubs = s4 <> s3 <> s2 <> subs <> s1
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
   validatePatterns env ann (fst <$> patterns)
   pure (allSubs, applySubst allSubs tyMatchedExprs)
@@ -400,7 +401,7 @@ inferPattern env (PConstructor ann tyCon args) = do
       pure (tySubs, applySubst tySubs <$> dtTypeVars)
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon tyArgs
-  pure (s <> allSubs, MTData ann ty tyTypeVars, newEnv)
+  pure (s <> allSubs, MTData ann ty (applySubst (s <> allSubs) <$> tyTypeVars), applySubstCtx (s <> allSubs) newEnv)
 inferPattern env (PPair ann a b) = do
   (s1, tyA, envA) <- inferPattern env a
   (s2, tyB, envB) <- inferPattern envA b

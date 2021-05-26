@@ -29,7 +29,12 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST (Expr (..), Literal (..), Operator (..), StringType (..))
+import Language.Mimsa.Types.AST
+  ( Expr (..),
+    Literal (..),
+    Operator (..),
+    StringType (..),
+  )
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
@@ -299,7 +304,7 @@ outputJS expr =
       outputCaseMatch a matches catch
     MyTypedHole _ a -> throwError (OutputingTypedHole a)
     MyDefineInfix _ _ _ a -> outputJS a -- don't output infix definitions
-    MyPatternMatch _ _ _ -> error "need to implement JS pattern match"
+    MyPatternMatch {} -> error "need to implement JS pattern match"
 
 renderWithFunction ::
   (Monoid ann) =>
