@@ -823,3 +823,6 @@ spec =
           it "Does not have a swap error" $ do
             result <- eval stdLib "\\a -> match (Left a) with (Left e) -> e | _ -> False"
             result `shouldSatisfy` isRight
+          it "Pulls Left into scope from Project" $ do
+            result <- eval stdLib "\\a -> match a with (Left e) -> e | _ -> False"
+            result `shouldSatisfy` isRight

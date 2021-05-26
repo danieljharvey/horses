@@ -259,6 +259,7 @@ mapVar chg (MyDefineInfix ann infixOp bindName expr) =
     (nameToVar chg bindName)
     <$> mapVar chg expr
 
+-- TODO: this is what we need to fix for swap error
 mapPatternVar ::
   Changed ->
   Pattern Name ann ->
