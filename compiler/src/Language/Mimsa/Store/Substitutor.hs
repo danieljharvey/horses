@@ -248,7 +248,7 @@ mapVar chg (MyCaseMatch ann expr' matches catchAll) = do
   catchAll' <- traverse (mapVar chg) catchAll
   MyCaseMatch ann <$> mapVar chg expr' <*> pure matches' <*> pure catchAll'
 mapVar chg (MyPatternMatch ann expr' patterns) = do
-  let mapVarPair (pat, expr'') = (,) <$> mapPatternVar chg pat <*> mapVar chg expr''
+  let mapVarPair (pat, expr'') = mapPatternVar chg pat expr''
   patterns' <- traverse mapVarPair patterns
   MyPatternMatch ann <$> mapVar chg expr' <*> pure patterns'
 mapVar _ (MyTypedHole ann a) = pure $ MyTypedHole ann a
@@ -261,18 +261,32 @@ mapVar chg (MyDefineInfix ann infixOp bindName expr) =
 
 -- TODO: this is what we need to fix for swap error
 mapPatternVar ::
+  (Eq ann, Monoid ann) =>
   Changed ->
   Pattern Name ann ->
-  App ann (Pattern Variable ann)
-mapPatternVar chg (PVar ann name) =
-  pure $ PVar ann (nameToVar chg name)
-mapPatternVar chg (PConstructor ann name more) =
-  PConstructor ann name <$> traverse (mapPatternVar chg) more
-mapPatternVar chg (PPair ann a b) =
-  PPair ann <$> mapPatternVar chg a
-    <*> mapPatternVar chg b
-mapPatternVar chg (PRecord ann items) = do
-  newMap <- traverse (mapPatternVar chg) items
-  pure $ PRecord ann newMap
-mapPatternVar _ (PWildcard ann) = pure (PWildcard ann)
-mapPatternVar _ (PLit ann a) = pure (PLit ann a)
+  Expr Name ann ->
+  App ann (Pattern Variable ann, Expr Variable ann)
+mapPatternVar chg (PVar ann name) expr = do
+  -- here we introduce new vars so we give them nums to avoid collisions
+  var <- getNextVarName name
+  let pat = PVar ann var
+  expr' <- mapVar (addChange name var chg) expr
+  pure (pat, expr')
+mapPatternVar chg (PConstructor ann name more) expr = do
+  subPatterns <- traverse (\p -> mapPatternVar chg p expr) more
+  let pat = PConstructor ann name (fst <$> subPatterns)
+  expr' <- mapVar chg expr
+  pure (pat, expr')
+mapPatternVar chg (PPair ann a b) expr = do
+  pat <-
+    PPair ann <$> (fst <$> mapPatternVar chg a expr)
+      <*> (fst <$> mapPatternVar chg b expr)
+  expr' <- mapVar chg expr
+  pure (pat, expr')
+mapPatternVar chg (PRecord ann items) expr = do
+  newMap <- traverse (\p -> mapPatternVar chg p expr) items
+  let pat = PRecord ann (fst <$> newMap)
+  expr' <- mapVar chg expr
+  pure (pat, expr')
+mapPatternVar chg (PWildcard ann) expr = (,) (PWildcard ann) <$> mapVar chg expr
+mapPatternVar chg (PLit ann a) expr = (,) (PLit ann a) <$> mapVar chg expr
