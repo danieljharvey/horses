@@ -99,7 +99,9 @@ inferVarFromScope ::
   Variable ->
   TcMonad (Substitutions, MonoType)
 inferVarFromScope env@(Environment env' _ _) ann var' =
-  case M.lookup (variableToTypeIdentifier var') env' of
+  case M.lookup
+    (variableToTypeIdentifier var')
+    env' of
     Just mt ->
       instantiate mt
     _ -> do
@@ -345,7 +347,7 @@ inferPatternMatch env ann expr patterns = do
       ( \(pat, patternExpr) -> do
           (ps1, tyPattern, newEnv) <- inferPattern (applySubstCtx s1 env) pat
           ps2 <- unify tyPattern tyExpr
-          (ps3, tyPatternExpr) <- infer (applySubstCtx ps2 newEnv) patternExpr
+          (ps3, tyPatternExpr) <- infer (applySubstCtx (ps2 <> ps1) newEnv) patternExpr
           let pSubs = ps3 <> ps2 <> ps1
           pure (pSubs, applySubst pSubs tyPattern, tyPatternExpr)
       )
