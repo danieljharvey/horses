@@ -403,7 +403,7 @@ patternMatchesParser =
 
 withSpaces :: Parser a -> Parser a
 withSpaces p = do
-  _ <- space1
+  _ <- space
   p1 <- p
   _ <- space1
   pure p1

@@ -3,7 +3,11 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.AST.Pattern (Pattern (..)) where
+module Language.Mimsa.Types.AST.Pattern
+  ( Pattern (..),
+    printSubPattern,
+  )
+where
 
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
@@ -50,8 +54,8 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
   prettyDoc (PConstructor _ tyCon []) =
     prettyDoc tyCon
   prettyDoc (PConstructor _ tyCon args) =
-    "(" <> prettyDoc tyCon <> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args) <> ")"
-  prettyDoc (PPair _ a b) = "(" <> printSubPattern a <> ", " <> printSubPattern b <> ")"
+    prettyDoc tyCon <> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
+  prettyDoc (PPair _ a b) = "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
   prettyDoc (PRecord _ map') =
     let items = M.toList map'
         printRow = \i (name, val) ->

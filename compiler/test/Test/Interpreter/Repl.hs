@@ -826,3 +826,9 @@ spec =
           it "Pulls Left into scope from Project" $ do
             result <- eval stdLib "\\a -> match a with (Left e) -> e | _ -> False"
             result `shouldSatisfy` isRight
+          it "Parses constructor application in expr" $ do
+            result <- eval stdLib "match Some 1 with (Some a) -> Some a | _ -> None"
+            result `shouldSatisfy` isRight
+          it "Parses and pretty prints more complex matches" $ do
+            result <- eval stdLib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right f(a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
+            result `shouldSatisfy` isRight

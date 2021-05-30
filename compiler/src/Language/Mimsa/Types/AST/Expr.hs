@@ -300,7 +300,7 @@ prettyPatternMatch sumExpr matches =
         )
   where
     printMatch (construct, expr') =
-      prettyDoc construct <+> "->" <+> printSubExpr expr'
+      printSubPattern construct <+> "->" <+> printSubExpr expr'
 
 prettyDataType ::
   (Printer var, Show var) =>
