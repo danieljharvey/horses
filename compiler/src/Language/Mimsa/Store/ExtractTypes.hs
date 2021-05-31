@@ -125,4 +125,4 @@ withDataTypes f (MyPatternMatch _ expr patterns) =
     <> mconcat (withDataTypes f . snd <$> patterns)
     <> mconcat (extractFrom f . fst <$> patterns)
   where
-    extractFrom _pat = error "implement me"
+    extractFrom _pat = mempty
