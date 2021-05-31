@@ -37,6 +37,15 @@ const __match = (val, matches, catchAll) =>
     ? arrayMatch(val, matches, catchAll)
     : objectMatch(val, matches, catchAll);
 
+const __patternMatch = (val, patterns) => {
+  const checked = patterns.map(([pat,expr]) => [pat(val),expr])
+  const match = checked.find(([a,_])=>a)
+  if (match === undefined) {
+    throw new Error("pattern matching broken")
+  }
+  return match[1](match[0])
+}
+
 const __concat = (a,b) => [...a,...b]
 
 // very cheap eq function, forgive me padre
@@ -46,4 +55,5 @@ module.exports = {
   __match,
   __eq,
   __concat,
+  __patternMatch
 };
