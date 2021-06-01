@@ -20,6 +20,8 @@ import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.Environment
+import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
 import Language.Mimsa.Typechecker.TcMonad
@@ -97,7 +99,9 @@ inferVarFromScope ::
   Variable ->
   TcMonad (Substitutions, MonoType)
 inferVarFromScope env@(Environment env' _ _) ann var' =
-  case M.lookup (variableToTypeIdentifier var') env' of
+  case M.lookup
+    (variableToTypeIdentifier var')
+    env' of
     Just mt ->
       instantiate mt
     _ -> do
@@ -313,6 +317,128 @@ inferCaseMatch env ann sumExpr matches catchAll = do
 applySubstToConstructor :: Substitutions -> TypeConstructor -> TypeConstructor
 applySubstToConstructor subs (TypeConstructor name ty b) =
   TypeConstructor name (applySubst subs <$> ty) (applySubst subs <$> b)
+
+getA :: (a, b, c) -> a
+getA (a, _, _) = a
+
+getB :: (a, b, c) -> b
+getB (_, b, _) = b
+
+getC :: (a, b, c) -> c
+getC (_, _, c) = c
+
+-- check type of input expr
+-- check input against patterns
+-- check patterns are complete
+-- check output types are the same
+inferPatternMatch ::
+  Environment ->
+  Annotation ->
+  TcExpr ->
+  [(Pattern Variable Annotation, TcExpr)] ->
+  TcMonad (Substitutions, MonoType)
+inferPatternMatch env ann expr patterns = do
+  -- ensure we even have any patterns to match on
+  _ <- checkEmptyPatterns ann patterns
+  (s1, tyExpr) <- infer env expr
+  -- infer types of all patterns
+  tyPatterns <-
+    traverse
+      ( \(pat, patternExpr) -> do
+          (ps1, tyPattern, newEnv) <- inferPattern (applySubstCtx s1 env) pat
+          ps2 <- unify tyPattern tyExpr
+          (ps3, tyPatternExpr) <- infer (applySubstCtx (ps2 <> ps1) newEnv) patternExpr
+          let pSubs = ps3 <> ps2 <> ps1
+          pure (pSubs, applySubst pSubs tyPattern, tyPatternExpr)
+      )
+      patterns
+  -- combine all subs we've created in the above
+  let subs = mconcat (getA <$> tyPatterns)
+  -- combine all patterns to check their types match
+  (s2, tyMatchedPattern) <- matchList (getB <$> tyPatterns)
+  -- match patterns with match expr
+  s3 <- unify tyMatchedPattern (applySubst (s2 <> subs) tyExpr)
+  -- combine all output expr types
+  (s4, tyMatchedExprs) <- matchList (applySubst s3 <$> (getC <$> tyPatterns))
+  -- get all the subs we've learned about
+  let allSubs = s4 <> s3 <> s2 <> subs <> s1
+  -- perform exhaustiveness checking at end so it doesn't mask more basic errors
+  validatePatterns env ann (fst <$> patterns)
+  pure (allSubs, applySubst allSubs tyMatchedExprs)
+
+checkEmptyPatterns :: Annotation -> [a] -> TcMonad (NE.NonEmpty a)
+checkEmptyPatterns ann as = case as of
+  [] -> throwError (PatternMatchErr $ EmptyPatternMatch ann)
+  other -> pure (NE.fromList other)
+
+inferPattern ::
+  Environment ->
+  Pattern Variable Annotation ->
+  TcMonad (Substitutions, MonoType, Environment)
+inferPattern env (PLit ann lit) = do
+  (s, mt) <- infer env (MyLiteral ann lit)
+  pure (s, mt, env)
+inferPattern env (PVar ann binder) = do
+  tyBinder <- getUnknown ann
+  let tmpCtx =
+        envFromVar binder (Scheme [] tyBinder) <> env
+  pure (mempty, tyBinder, tmpCtx)
+inferPattern env (PWildcard ann) = do
+  tyUnknown <- getUnknown ann
+  pure (mempty, tyUnknown, env)
+inferPattern env (PConstructor ann tyCon args) = do
+  tyEverything <- traverse (inferPattern env) args
+  let allSubs = mconcat (getA <$> tyEverything)
+  let tyArgs = getB <$> tyEverything
+  let newEnv = mconcat (getC <$> tyEverything) <> env
+  dt@(DataType ty _ _) <- lookupConstructor newEnv ann tyCon
+  -- we get the types for the constructor in question
+  -- and unify them with the tests in the pattern
+  consType <- inferConstructorTypes env dt
+  (s, tyTypeVars) <- case M.lookup tyCon (snd consType) of
+    Just (TypeConstructor _ dtTypeVars tyDtArgs) -> do
+      let tyPairs = zip tyArgs tyDtArgs
+      subs <- traverse (uncurry unify) tyPairs
+      let tySubs = mconcat subs <> allSubs
+      pure (tySubs, applySubst tySubs <$> dtTypeVars)
+    _ -> throwError UnknownTypeError
+  checkArgsLength ann dt tyCon tyArgs
+  pure (s <> allSubs, MTData ann ty (applySubst (s <> allSubs) <$> tyTypeVars), applySubstCtx (s <> allSubs) newEnv)
+inferPattern env (PPair ann a b) = do
+  (s1, tyA, envA) <- inferPattern env a
+  (s2, tyB, envB) <- inferPattern envA b
+  pure (s2 <> s1, applySubst (s2 <> s1) (MTPair ann tyA tyB), envB)
+inferPattern env (PRecord ann items) = do
+  let inferRow (k, v) = do
+        (s, tyValue, envNew) <- inferPattern env v
+        pure (s, M.singleton k tyValue, envNew)
+  tyEverything <- traverse inferRow (M.toList items)
+  let allSubs = mconcat (getA <$> tyEverything)
+  let tyItems = mconcat (getB <$> tyEverything)
+  let newEnv = mconcat (getC <$> tyEverything) <> env
+  tyRest <- getUnknown ann
+  pure
+    ( allSubs,
+      applySubst allSubs (MTRecordRow ann tyItems tyRest),
+      newEnv
+    )
+
+checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> TcMonad ()
+checkArgsLength ann (DataType _ _ cons) tyCon args = do
+  case M.lookup tyCon cons of
+    Just consArgs ->
+      if length consArgs == length args
+        then pure ()
+        else
+          throwError $
+            PatternMatchErr
+              ( ConstructorArgumentLengthMismatch
+                  ann
+                  tyCon
+                  (length consArgs)
+                  (length args)
+              )
+    Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 -- infer the type of a case match function
 -- if it has no args, it's a simple MTData
@@ -541,3 +667,5 @@ infer env inferExpr =
       inferCaseMatch env ann expr' matches catchAll
     (MyDefineInfix ann infixOp bindName expr) ->
       inferDefineInfix env ann infixOp bindName expr
+    (MyPatternMatch ann expr patterns) ->
+      inferPatternMatch env ann expr patterns

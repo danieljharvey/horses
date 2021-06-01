@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b3a2e4bdcbe9cfbd6a2fdec30b9217528d15c324c6e33bce9f0db0d45652a183
+-- hash: 74ff97d8c1a299a14cdbd90d2a72c12a00e416d1cba7a376931623682edc9110
 
 name:           mimsa
 version:        0.1.0.0
@@ -46,6 +46,7 @@ library
       Language.Mimsa.CLI
       Language.Mimsa.ExprUtils
       Language.Mimsa.Interpreter
+      Language.Mimsa.Interpreter.CaseMatch
       Language.Mimsa.Interpreter.HighestVar
       Language.Mimsa.Interpreter.InstantiateVar
       Language.Mimsa.Interpreter.Interpret
@@ -61,6 +62,7 @@ library
       Language.Mimsa.Parser.Language
       Language.Mimsa.Parser.Literal
       Language.Mimsa.Parser.MonoType
+      Language.Mimsa.Parser.Pattern
       Language.Mimsa.Parser.RecordAccess
       Language.Mimsa.Parser.TypeDecl
       Language.Mimsa.Parser.Types
@@ -131,6 +133,7 @@ library
       Language.Mimsa.Typechecker.DataTypes
       Language.Mimsa.Typechecker.DisplayError
       Language.Mimsa.Typechecker.Environment
+      Language.Mimsa.Typechecker.Exhaustiveness
       Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.Infer
       Language.Mimsa.Typechecker.NormaliseTypes
@@ -145,10 +148,12 @@ library
       Language.Mimsa.Types.AST.InfixOp
       Language.Mimsa.Types.AST.Literal
       Language.Mimsa.Types.AST.Operator
+      Language.Mimsa.Types.AST.Pattern
       Language.Mimsa.Types.AST.StringType
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.BackendError
       Language.Mimsa.Types.Error.InterpreterError
+      Language.Mimsa.Types.Error.PatternMatchError
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.StoreError
       Language.Mimsa.Types.Error.TypeError
@@ -186,6 +191,7 @@ library
       Language.Mimsa.Types.Typechecker.Substitutions
       Language.Mimsa.Types.Typechecker.TypeConstructor
       Language.Mimsa.Types.Typechecker.UniVar
+      Language.Mimsa.Utils
   other-modules:
       Paths_mimsa
   hs-source-dirs:
@@ -322,6 +328,7 @@ test-suite mimsa-test
       Test.Interpreter.Repl
       Test.Interpreter.UseSwaps
       Test.Parser.MonoTypeParser
+      Test.Parser.Pattern
       Test.Parser.Syntax
       Test.Prettier
       Test.Project.NormaliseType
@@ -340,6 +347,7 @@ test-suite mimsa-test
       Test.Typechecker.Codegen.Functor
       Test.Typechecker.Codegen.Newtype
       Test.Typechecker.Codegen.Shared
+      Test.Typechecker.Exhaustiveness
       Test.Typechecker.Typechecker
       Test.Typechecker.TypeError
       Test.Typechecker.Unify

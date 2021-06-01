@@ -35,6 +35,8 @@ protectedNames =
       "of",
       "type",
       "otherwise",
+      "match",
+      "with",
       "infix",
       "True",
       "False",

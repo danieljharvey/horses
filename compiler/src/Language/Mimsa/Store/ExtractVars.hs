@@ -4,6 +4,7 @@ module Language.Mimsa.Store.ExtractVars
 where
 
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Types.AST
@@ -40,3 +41,21 @@ extractVars_ (MyCaseMatch _ sum' matches catchAll) =
     <> maybe mempty extractVars catchAll
 extractVars_ (MyTypedHole _ _) = mempty
 extractVars_ (MyDefineInfix _ _ v b) = S.singleton v <> extractVars_ b
+extractVars_ (MyPatternMatch _ match patterns) =
+  extractVars match <> mconcat patternVars
+  where
+    patternVars :: [Set Name]
+    patternVars =
+      ( \(pat, expr) ->
+          let patVars = extractPatternVars pat
+           in S.filter (`S.notMember` patVars) (extractVars expr)
+      )
+        <$> patterns
+
+extractPatternVars :: (Eq ann, Monoid ann) => Pattern Name ann -> Set Name
+extractPatternVars (PWildcard _) = mempty
+extractPatternVars (PLit _ _) = mempty
+extractPatternVars (PVar _ a) = S.singleton a
+extractPatternVars (PRecord _ as) = mconcat (extractPatternVars <$> M.elems as)
+extractPatternVars (PPair _ a b) = extractPatternVars a <> extractPatternVars b
+extractPatternVars (PConstructor _ _ args) = mconcat (extractPatternVars <$> args)

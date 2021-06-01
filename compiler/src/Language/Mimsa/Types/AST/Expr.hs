@@ -23,11 +23,9 @@ import Language.Mimsa.Types.AST.DataType (DataType)
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
+import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
-
-mapWithIndex :: (Int -> a -> b) -> [a] -> [b]
-mapWithIndex f as =
-  uncurry f <$> zip [1 ..] as
+import Language.Mimsa.Utils
 
 -------
 
@@ -74,11 +72,18 @@ data Expr var ann
       (Expr var ann)
       (NonEmpty (TyCon, Expr var ann))
       (Maybe (Expr var ann))
+  | -- | expr, [(pattern, expr)]
+    MyPatternMatch
+      ann
+      (Expr var ann)
+      [(Pattern var ann, Expr var ann)]
   | -- | name
     MyTypedHole ann Name
   deriving (Eq, Ord, Show, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 
-deriving instance (ToSchema var, ToSchema ann) => ToSchema (Expr var ann)
+deriving instance
+  (ToSchema var, ToSchema ann, JSON.ToJSONKey var) =>
+  ToSchema (Expr var ann)
 
 data InfixBit var ann
   = IfStart (Expr var ann)
@@ -273,6 +278,30 @@ prettyCaseMatch sumExpr matches catchAll =
     printMatch (construct, expr') =
       prettyDoc construct <+> printSubExpr expr'
 
+prettyPatternMatch ::
+  (Printer var, Show var) =>
+  Expr var ann ->
+  [(Pattern var ann, Expr var ann)] ->
+  Doc style
+prettyPatternMatch sumExpr matches =
+  "match"
+    <+> printSubExpr sumExpr
+    <+> "with"
+    <+> line
+      <> indent
+        2
+        ( align $
+            vsep
+              ( zipWith
+                  (<+>)
+                  (" " : repeat "|")
+                  (printMatch <$> matches)
+              )
+        )
+  where
+    printMatch (construct, expr') =
+      printSubPattern construct <+> "->" <+> printSubExpr expr'
+
 prettyDataType ::
   (Printer var, Show var) =>
   DataType ann ->
@@ -318,6 +347,8 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyCaseMatch _ sumExpr matches catchAll) =
     prettyCaseMatch sumExpr matches catchAll
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
+  prettyDoc (MyPatternMatch _ expr matches) =
+    prettyPatternMatch expr matches
 
 wrapInfix :: (Show var, Printer var) => Expr var ann -> Doc style
 wrapInfix val = case val of

@@ -88,6 +88,7 @@ stdLibE =
       "type Person = Person { name: String, age: Int } in {}"
       "typePerson"
     >>= addListMonad
+    >>= addEither
     >>= addPair
     >>= addStateMonad
     >>= addParser
@@ -116,6 +117,13 @@ addPair prj =
     >>= addBinding
       "\\pair -> case pair of Pair (\\a -> \\b -> b)"
       "sndPair"
+
+addEither :: Project Annotation -> ProjectPart
+addEither prj =
+  pure prj
+    >>= addBinding
+      "type Either e a = Left e | Right a in {}"
+      "typeEither"
 
 addStateMonad :: Project Annotation -> ProjectPart
 addStateMonad prj =

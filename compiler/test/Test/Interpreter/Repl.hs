@@ -786,3 +786,49 @@ spec =
                 ( MTArray mempty (MTPrim mempty MTInt),
                   MyArray mempty [int 2, int 3, int 4]
                 )
+        describe "Pattern matching" $ do
+          it "Matches a wildcard" $ do
+            result <- eval stdLib "match 1 with _ -> True"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a variable" $ do
+            result <- eval stdLib "match 1 with a -> a"
+            result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+          it "Deconstructs a pair" $ do
+            result <- eval stdLib "match (1,True) with (a,b) -> b"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches an int literal" $ do
+            result <- eval stdLib "match (1, True) with (1, a) -> a | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a string literal" $ do
+            result <- eval stdLib "match \"dog\" with \"dog\" -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches two string literals" $ do
+            result <- eval stdLib "match \"dog\" with \"dog\" -> True | \"log\" -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a record" $ do
+            result <- eval stdLib "match { dog: 1 } with { dog: a } -> a"
+            result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+          it "Matches a constructor with no args" $ do
+            result <- eval stdLib "match None with None -> False | _ -> True"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Matches a constructor with args" $ do
+            result <- eval stdLib "match Some 1 with (Some _) -> True | None -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches These correctly" $ do
+            result <- eval stdLib "match This 1 with (These _ _) -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Typechecks Either correctly" $ do
+            result <- eval stdLib "match Right 100 with (Left \"log\") -> False | (Right 100) -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Does not have a swap error" $ do
+            result <- eval stdLib "\\a -> match (Left a) with (Left e) -> e | _ -> False"
+            result `shouldSatisfy` isRight
+          it "Pulls Left into scope from Project" $ do
+            result <- eval stdLib "\\a -> match a with (Left e) -> e | _ -> False"
+            result `shouldSatisfy` isRight
+          it "Parses constructor application in expr" $ do
+            result <- eval stdLib "match Some 1 with (Some a) -> Some a | _ -> None"
+            result `shouldSatisfy` isRight
+          it "Parses and pretty prints more complex matches" $ do
+            result <- eval stdLib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right f(a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
+            result `shouldSatisfy` isRight

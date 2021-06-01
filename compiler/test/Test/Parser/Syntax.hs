@@ -674,3 +674,62 @@ spec = do
         `shouldBe` Right
           ( MyArray (Location 0 2) mempty
           )
+    describe "Pattern matching" $ do
+      it "Parses wildcard pattern match" $
+        testParseWithAnn "match 1 with _ -> True"
+          `shouldBe` Right
+            ( MyPatternMatch
+                (Location 0 22)
+                (MyLiteral (Location 6 7) (MyInt 1))
+                [ ( PWildcard (Location 13 14),
+                    MyLiteral (Location 18 22) (MyBool True)
+                  )
+                ]
+            )
+      it "Parses wildcard pattern match with multiple cases" $
+        testParseWithAnn "match 1 with _ -> True | _ -> False"
+          `shouldBe` Right
+            ( MyPatternMatch
+                (Location 0 35)
+                (MyLiteral (Location 6 7) (MyInt 1))
+                [ ( PWildcard (Location 13 14),
+                    MyLiteral (Location 18 22) (MyBool True)
+                  ),
+                  ( PWildcard (Location 25 26),
+                    MyLiteral (Location 30 35) (MyBool False)
+                  )
+                ]
+            )
+      it "Parses variable pattern match" $
+        testParseWithAnn "match 1 with a -> a"
+          `shouldBe` Right
+            ( MyPatternMatch
+                (Location 0 19)
+                (MyLiteral (Location 6 7) (MyInt 1))
+                [ ( PVar (Location 13 14) "a",
+                    MyVar (Location 18 19) "a"
+                  )
+                ]
+            )
+      it "Parses constructor pattern match" $
+        testParseWithAnn "match None with None -> False"
+          `shouldBe` Right
+            ( MyPatternMatch
+                (Location 0 29)
+                (MyConstructor (Location 6 10) "None")
+                [ ( PConstructor (Location 16 20) "None" mempty,
+                    MyLiteral (Location 24 29) (MyBool False)
+                  )
+                ]
+            )
+      it "Parses constructor with arg pattern match" $
+        testParseWithAnn "match Some 1 with (Some _) -> True"
+          `shouldBe` Right
+            ( MyPatternMatch
+                (Location 0 34)
+                (MyConsApp (Location 6 13) (MyConstructor (Location 6 10) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
+                [ ( PConstructor (Location 19 25) "Some" [PWildcard (Location 24 25)],
+                    MyLiteral (Location 30 34) (MyBool True)
+                  )
+                ]
+            )

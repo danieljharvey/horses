@@ -68,6 +68,10 @@ useSwaps' (MyCaseMatch ann expr' matches catchAll) = do
   matches' <- traverse useSwapsPair matches
   catchAll' <- traverse useSwaps' catchAll
   MyCaseMatch ann <$> useSwaps' expr' <*> pure matches' <*> pure catchAll'
+useSwaps' (MyPatternMatch ann expr' patterns) = do
+  let useSwapsPair (pat, expr'') = (,) <$> useSwapsInPattern pat <*> useSwaps' expr''
+  patterns' <- traverse useSwapsPair patterns
+  MyPatternMatch ann <$> useSwaps' expr' <*> pure patterns'
 useSwaps' (MyTypedHole ann a) = pure $ MyTypedHole ann a
 useSwaps' (MyDefineInfix ann infixOp bindName expr) =
   MyDefineInfix
@@ -75,3 +79,17 @@ useSwaps' (MyDefineInfix ann infixOp bindName expr) =
     infixOp
     <$> lookupSwap bindName
     <*> useSwaps' expr
+
+useSwapsInPattern :: Pattern Variable ann -> App ann (Pattern Name ann)
+useSwapsInPattern (PWildcard ann) = pure (PWildcard ann)
+useSwapsInPattern (PVar ann var) = PVar ann <$> lookupSwap var
+useSwapsInPattern (PLit ann lit) = pure (PLit ann lit)
+useSwapsInPattern (PConstructor ann tyCon args) =
+  PConstructor ann tyCon
+    <$> traverse useSwapsInPattern args
+useSwapsInPattern (PPair ann a b) =
+  PPair ann <$> useSwapsInPattern a
+    <*> useSwapsInPattern b
+useSwapsInPattern (PRecord ann as) =
+  PRecord ann
+    <$> traverse useSwapsInPattern as

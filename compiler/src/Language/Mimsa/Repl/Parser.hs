@@ -5,7 +5,6 @@ module Language.Mimsa.Repl.Parser
   )
 where
 
-import qualified Data.Text as T
 import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Repl.Types
@@ -82,8 +81,8 @@ typeSearchParser = do
 addUnitTestParser :: Parser ReplActionAnn
 addUnitTestParser = do
   _ <- thenSpace (string ":addTest")
-  str <- thenSpace stringLiteral
-  AddUnitTest (TestName $ T.pack str) <$> expressionParser
+  (MyString (StringType str)) <- thenSpace stringLiteral
+  AddUnitTest (TestName str) <$> expressionParser
 
 listTestsParser :: Parser ReplActionAnn
 listTestsParser = do

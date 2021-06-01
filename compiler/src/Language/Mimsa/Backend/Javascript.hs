@@ -6,6 +6,7 @@
 module Language.Mimsa.Backend.Javascript
   ( output,
     outputCommonJS,
+    outputPattern,
     renderWithFunction,
     Javascript (..),
   )
@@ -29,10 +30,17 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST (Expr (..), Literal (..), Operator (..), StringType (..))
+import Language.Mimsa.Types.AST
+  ( Expr (..),
+    Literal (..),
+    Operator (..),
+    Pattern (..),
+    StringType (..),
+  )
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Utils
 
 ----
 newtype Javascript = Javascript LBS.ByteString
@@ -55,6 +63,70 @@ outputLiteral (MyString s) = "\"" <> textToJS (coerce s) <> "\""
 outputLiteral (MyBool True) = "true"
 outputLiteral (MyBool False) = "false"
 outputLiteral (MyInt i) = fromString $ show i
+
+toPatternMap :: Javascript -> Pattern Name ann -> ([Guard], Map Name Javascript)
+toPatternMap _ (PWildcard _) =
+  (mempty, mempty)
+toPatternMap name (PVar _ var) =
+  (mempty, M.singleton var name)
+toPatternMap name (PPair _ a b) =
+  toPatternMap (name <> "[0]") a
+    <> toPatternMap (name <> "[1]") b
+toPatternMap name (PLit _ lit) =
+  ([GuardEQ name (outputLiteral lit)], mempty)
+toPatternMap name (PRecord _ items) =
+  let subPattern (k, v) = toPatternMap (name <> "." <> textToJS (prettyPrint k)) v
+   in mconcat (subPattern <$> M.toList items)
+toPatternMap name (PConstructor _ tyCon args) =
+  let tyConGuard = GuardEQ (name <> ".type") ("\"" <> textToJS (prettyPrint tyCon) <> "\"")
+      subPattern i a = toPatternMap (name <> ".vars[" <> textToJS (prettyPrint (i - 1)) <> "]") a
+   in ([tyConGuard], mempty) <> mconcat (mapWithIndex subPattern args)
+
+outputPattern :: Pattern Name ann -> Javascript
+outputPattern pat =
+  let (guards, vars) = toPatternMap "pat" pat
+   in outputPatternMap vars guards
+
+-- a pattern row is {...vars} => expr
+outputPatternRow ::
+  (Monoid ann) =>
+  Pattern Name ann ->
+  Expr Name ann ->
+  BackendM ann Javascript
+outputPatternRow pat expr = do
+  js <- outputJS expr
+  let (_, vars) = toPatternMap "" pat
+  if null vars
+    then pure ("() => " <> js)
+    else
+      pure
+        ( "({ "
+            <> intercal
+              ", "
+              (textToJS . prettyPrint <$> M.keys vars)
+            <> " }) => "
+            <> js
+        )
+
+data Guard = GuardEQ Javascript Javascript
+
+outputPatternMap :: Map Name Javascript -> [Guard] -> Javascript
+outputPatternMap vars guards =
+  "pat => "
+    <> if null guards
+      then "(" <> varJS <> ")"
+      else guardsJS <> " ? " <> varJS <> " : null"
+  where
+    guardsJS =
+      intercal " && " (showGuard <$> guards)
+    showGuard (GuardEQ a b) =
+      "__eq(" <> a <> ", " <> b <> ")"
+    varJS =
+      if M.null vars
+        then "{}"
+        else "{ " <> intercal ", " (showItem <$> M.toList vars) <> " }"
+
+    showItem (k, v) = textToJS (prettyPrint k) <> ": " <> v
 
 intercal :: Javascript -> [Javascript] -> Javascript
 intercal sep as = Javascript $ LB.intercalate (coerce sep) (coerce as)
@@ -88,6 +160,20 @@ outputArray as = do
         ", "
         items
       <> "]"
+
+outputPatternMatch ::
+  (Monoid ann) =>
+  Expr Name ann ->
+  [(Pattern Name ann, Expr Name ann)] ->
+  BackendM ann Javascript
+outputPatternMatch expr patterns = do
+  exprJS <- outputJS expr
+  let outputPat (pat, patExpr) = do
+        patRow <- outputPatternRow pat patExpr
+        pure $ "[ " <> outputPattern pat <> ", " <> patRow <> " ]"
+  pats <- traverse outputPat patterns
+  let patternsJS = "[ " <> intercal ", " pats <> " ]"
+  pure $ "__patternMatch(" <> exprJS <> ", " <> patternsJS <> ")"
 
 outputCaseMatch ::
   (Monoid ann) =>
@@ -299,6 +385,8 @@ outputJS expr =
       outputCaseMatch a matches catch
     MyTypedHole _ a -> throwError (OutputingTypedHole a)
     MyDefineInfix _ _ _ a -> outputJS a -- don't output infix definitions
+    MyPatternMatch _ tyCon args ->
+      outputPatternMatch tyCon args
 
 renderWithFunction ::
   (Monoid ann) =>
@@ -345,5 +433,5 @@ outputCommonJS dataTypes =
         renderExport = \be name -> pure $ Javascript (outputExport be name),
         renderStdLib = \be ->
           let filename = Javascript (stdLibFilename be)
-           in pure $ "const { __match, __eq, __concat } = require(\"./" <> filename <> "\");\n"
+           in pure $ "const { __match, __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
       }

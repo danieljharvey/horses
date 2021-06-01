@@ -6,6 +6,7 @@ module Language.Mimsa.Types.Error
     ResolverError (..),
     TypeError (..),
     StoreError (..),
+    PatternMatchError (..),
     BackendError (..),
   )
 where
@@ -15,6 +16,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DisplayError
 import Language.Mimsa.Types.Error.BackendError
 import Language.Mimsa.Types.Error.InterpreterError
+import Language.Mimsa.Types.Error.PatternMatchError
 import Language.Mimsa.Types.Error.ResolverError
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Error.TypeError

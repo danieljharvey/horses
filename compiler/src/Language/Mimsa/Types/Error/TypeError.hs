@@ -17,6 +17,7 @@ import Data.Text.Prettyprint.Doc
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error.PatternMatchError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
@@ -47,6 +48,7 @@ data TypeError
   | CouldNotFindInfixOperator Annotation InfixOp (Set InfixOp)
   | CannotUseBuiltInTypeAsConstructor Annotation TyCon
   | InternalConstructorUsedOutsidePatternMatch Annotation TyCon
+  | PatternMatchErr PatternMatchError
   deriving (Eq, Ord, Show)
 
 ------
@@ -214,6 +216,7 @@ renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
       if tyCon == "StrHead" || tyCon == "StrEmpty"
         then ["To construct values, please use string literal syntax, ie \"string\" or \"\"."]
         else mempty
+renderTypeError (PatternMatchErr pmErr) = [prettyDoc pmErr]
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

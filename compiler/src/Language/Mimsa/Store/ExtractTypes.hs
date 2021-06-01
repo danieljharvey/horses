@@ -13,6 +13,7 @@ import Language.Mimsa.Typechecker.DataTypes (builtInTypes)
 import Language.Mimsa.Types.AST
   ( DataType (DataType),
     Expr (..),
+    Pattern (..),
   )
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -50,6 +51,17 @@ extractTypes_ (MyCaseMatch _ sum' matches catchAll) =
 extractTypes_ (MyTypedHole _ _) = mempty
 extractTypes_ (MyDefineInfix _ _ _ b) =
   extractTypes_ b
+extractTypes_ (MyPatternMatch _ expr patterns) =
+  extractTypes_ expr
+    <> mconcat (extractTypes_ . snd <$> patterns)
+    <> mconcat (extractFromPattern . fst <$> patterns)
+
+extractFromPattern :: Pattern var ann -> Set TyCon
+extractFromPattern (PConstructor _ tyCon args) =
+  S.singleton tyCon <> mconcat (extractFromPattern <$> args)
+extractFromPattern (PPair _ a b) = extractFromPattern a <> extractFromPattern b
+extractFromPattern (PRecord _ items) = mconcat $ extractFromPattern <$> M.elems items
+extractFromPattern _ = mempty
 
 filterBuiltIns :: Set TyCon -> Set TyCon
 filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)
@@ -108,3 +120,9 @@ withDataTypes f (MyCaseMatch _ sum' matches catchAll) =
     <> maybe mempty (withDataTypes f) catchAll
 withDataTypes _ (MyTypedHole _ _) = mempty
 withDataTypes f (MyDefineInfix _ _ _ a) = withDataTypes f a
+withDataTypes f (MyPatternMatch _ expr patterns) =
+  withDataTypes f expr
+    <> mconcat (withDataTypes f . snd <$> patterns)
+    <> mconcat (extractFrom f . fst <$> patterns)
+  where
+    extractFrom _pat = mempty

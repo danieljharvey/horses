@@ -9,6 +9,7 @@ where
 import Data.Bifunctor (first)
 import Data.Either (isRight)
 import Data.Foldable (traverse_)
+import qualified Data.Map as M
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -21,7 +22,7 @@ import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Repl
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers ()
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
@@ -82,7 +83,41 @@ successes =
     ("{ fn: (\\a -> let d = 1 in a) }", "const main = { fn: a => { const d = 1;\nreturn a } };\n"),
     ("case \"dog\" of StrHead \\c -> \\r -> 1 | StrEmpty 0", "const main = __match(\"dog\", { StrHead: c => r => 1, StrEmpty: 0 }, null);\n"),
     ("case [1,2,3] of ArrHead \\c -> \\r -> 1 | ArrEmpty 0", "const main = __match([1, 2, 3], { ArrHead: c => r => 1, ArrEmpty: 0 }, null);\n"),
-    ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n")
+    ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n"),
+    ( "match Some True with (Some a) -> a | _ -> False",
+      "const main = __patternMatch({ type: \"Some\", vars: [true] }, [ [ pat => __eq(pat.type, \"Some\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n"
+    )
+  ]
+
+patterns :: [(Pattern Name (), Javascript)]
+patterns =
+  [ (PWildcard mempty, "pat => ({})"),
+    (PVar mempty "a", "pat => ({ a: pat })"),
+    (PVar mempty "b", "pat => ({ b: pat })"),
+    ( PPair mempty (PVar mempty "a") (PVar mempty "b"),
+      "pat => ({ a: pat[0], b: pat[1] })"
+    ),
+    ( PLit mempty (MyBool True),
+      "pat => __eq(pat, true) ? {} : null"
+    ),
+    ( PPair
+        mempty
+        (PLit mempty (MyBool True))
+        (PLit mempty (MyBool False)),
+      "pat => __eq(pat[0], true) && __eq(pat[1], false) ? {} : null"
+    ),
+    ( PRecord
+        mempty
+        ( M.fromList
+            [ ("dog", PVar mempty "a"),
+              ("cat", PLit mempty (MyInt 100))
+            ]
+        ),
+      "pat => __eq(pat.cat, 100) ? { a: pat.dog } : null"
+    ),
+    ( PConstructor mempty "Just" [PVar mempty "a"],
+      "pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null"
+    )
   ]
 
 testIt :: (Text, Javascript) -> Spec
@@ -105,6 +140,11 @@ spec = do
       it "Outputs a module" $ do
         result <- evalModule stdLib "\\a -> compose(id)(id)(a)"
         result `shouldSatisfy` isRight
+  describe "Patterns JS" $ do
+    let testPattern (q, a) =
+          it (T.unpack (prettyPrint q)) $
+            outputPattern q `shouldBe` a
+    traverse_ testPattern patterns
   describe "Normalise constructors" $ do
     it "is a no-op for nullary constructors" $ do
       let a = MyConstructor mempty "None"

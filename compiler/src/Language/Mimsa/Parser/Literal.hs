@@ -3,6 +3,9 @@
 module Language.Mimsa.Parser.Literal
   ( literalParser,
     stringLiteral,
+    trueParser,
+    falseParser,
+    integerLiteral,
   )
 where
 
@@ -24,8 +27,11 @@ literalParser =
 
 ----
 
-integerParser :: Parser Int
-integerParser = L.signed space L.decimal
+integerLiteral :: Parser Literal
+integerLiteral = MyInt <$> L.signed space L.decimal
+
+intParser :: Parser ParserExpr
+intParser = withLocation MyLiteral integerLiteral
 
 ---
 
@@ -45,22 +51,15 @@ unitParser = withLocation MyLiteral (string "Unit" $> MyUnit ())
 
 -----
 
-intParser :: Parser ParserExpr
-intParser = withLocation MyLiteral (MyInt <$> integerParser)
-
------
-
-stringLiteral :: Parser String
-stringLiteral = char '\"' *> manyTill L.charLiteral (char '\"')
+stringLiteral :: Parser Literal
+stringLiteral = do
+  chr <- char '\"' *> manyTill L.charLiteral (char '\"')
+  pure (MyString $ StringType $ T.pack chr)
 
 stringParser :: Parser ParserExpr
 stringParser =
   withLocation
     MyLiteral
-    ( MyString
-        . StringType
-        . T.pack
-        <$> stringLiteral
-    )
+    stringLiteral
 
 -----

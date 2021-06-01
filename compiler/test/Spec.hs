@@ -19,6 +19,7 @@ import qualified Test.Interpreter.Interpreter as Interpreter
 import qualified Test.Interpreter.Repl as Repl
 import qualified Test.Interpreter.UseSwaps as UseSwaps
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
+import qualified Test.Parser.Pattern as Pattern
 import qualified Test.Parser.Syntax as Syntax
 import qualified Test.Prettier as Prettier
 import qualified Test.Project.NormaliseType as NormaliseType
@@ -31,6 +32,7 @@ import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Typechecker.Codegen as Codegen
+import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typechecker as Typechecker
 import qualified Test.Typechecker.Unify as Unify
@@ -65,3 +67,5 @@ main =
     Compile.spec
     Evaluate.spec
     Stdlib.spec
+    Exhaustiveness.spec
+    Pattern.spec
