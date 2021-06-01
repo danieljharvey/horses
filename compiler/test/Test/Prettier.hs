@@ -101,7 +101,7 @@ spec =
               mt =
                 MTRecord mempty $
                   M.fromList
-                    [ ("dog", MTPrim mempty MTUnit),
+                    [ ("dog", MTPrim mempty MTBool),
                       ("horse", MTPrim mempty MTString),
                       ( "maybeDog",
                         MTData

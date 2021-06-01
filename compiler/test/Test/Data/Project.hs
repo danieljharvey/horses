@@ -153,15 +153,6 @@ addStateMonad prj =
       "\\state -> compose(fstPair)(runState(state))"
       "evalState"
     >>= addBinding
-      "\\s -> State (\\ignore -> Pair Unit s)"
-      "putState"
-    >>= addBinding
-      "State (\\s -> Pair s s)"
-      "getState"
-    >>= addBinding
-      "\\f -> State (\\s -> Pair Unit f(s))"
-      "modifyState"
-    >>= addBinding
       "\\f -> \\stateA -> \\stateB -> apState(fmapState(f)(stateA))(stateB)"
       "liftA2State"
     >>= addBinding

@@ -34,7 +34,7 @@ spec :: Spec
 spec =
   describe "Unify" $ do
     it "Two same things teach us nothing" $
-      runUnifier (MTPrim mempty MTUnit, MTPrim mempty MTUnit) `shouldBe` Right mempty
+      runUnifier (MTPrim mempty MTInt, MTPrim mempty MTInt) `shouldBe` Right mempty
     it "Combines a known with an unknown" $
       runUnifier (MTVar mempty (tvFree 1), MTPrim mempty MTInt)
         `shouldBe` Right (Substitutions $ M.singleton (tvNumbered 1) (MTPrim mempty MTInt))

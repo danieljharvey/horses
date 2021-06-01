@@ -34,8 +34,6 @@ spec =
   describe "MonoType parser" $ do
     it "String" $
       testParser "String" `shouldBe` Right (MTPrim mempty MTString)
-    it "Unit" $
-      testParser "Unit" `shouldBe` Right (MTPrim mempty MTUnit)
     it "Boolean" $
       testParser "Boolean" `shouldBe` Right (MTPrim mempty MTBool)
     it "Int" $

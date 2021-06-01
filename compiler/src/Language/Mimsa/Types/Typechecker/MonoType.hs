@@ -26,7 +26,6 @@ data Primitive
   = MTInt
   | MTString
   | MTBool
-  | MTUnit
   deriving
     ( Eq,
       Ord,
@@ -38,7 +37,6 @@ data Primitive
     )
 
 instance Printer Primitive where
-  prettyDoc MTUnit = "Unit"
   prettyDoc MTInt = "Int"
   prettyDoc MTString = "String"
   prettyDoc MTBool = "Boolean"
