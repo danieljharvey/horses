@@ -161,6 +161,31 @@ type declarations:
 \a -> (if a then (Right a) else (Left "Oh no")) :: (A -> Either String A)
 ```
 
+pattern matching:
+
+```haskell
+\a ->
+  match a with
+      1 -> True
+    | 2 -> False
+    | 3 -> True
+    | 4 -> False
+    | _ -> False
+:: Int -> Boolean
+
+\maybe ->
+  match maybe with
+      (Just _) -> True
+    | _ -> False
+:: (Maybe a) -> Boolean
+
+\maybe ->
+  match maybe with
+      (Just { age: b, name: a }) -> (a, b)
+    | _ -> ("", 0)
+:: (Maybe { age: Int, name: String  | a }) -> (String, Int)
+```
+
 case matching:
 
 ```haskell
