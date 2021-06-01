@@ -38,7 +38,6 @@ builtInTypes =
     [ ("String", MTPrim mempty MTString),
       ("Int", MTPrim mempty MTInt),
       ("Boolean", MTPrim mempty MTBool),
-      ("Unit", MTPrim mempty MTUnit),
       ("StrEmpty", MTPrim mempty MTString),
       ("StrHead", MTPrim mempty MTString),
       ("ArrEmpty", MTArray mempty (MTVar mempty (TVName "a"))),

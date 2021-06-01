@@ -58,7 +58,6 @@ textToJS :: Text -> Javascript
 textToJS = Javascript . LB.fromChunks . return . T.encodeUtf8
 
 outputLiteral :: Literal -> Javascript
-outputLiteral (MyUnit _) = "{}"
 outputLiteral (MyString s) = "\"" <> textToJS (coerce s) <> "\""
 outputLiteral (MyBool True) = "true"
 outputLiteral (MyBool False) = "false"

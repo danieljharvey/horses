@@ -49,9 +49,6 @@ True :: Boolean
 :> False
 False :: Boolean
 
-:> Unit
-Unit :: Unit
-
 :> 1
 1 :: Int
 

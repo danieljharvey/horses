@@ -68,7 +68,7 @@ addTypeToProject input dt = do
         ( MyData
             mempty
             dt
-            (MyLiteral mempty (MyUnit mempty))
+            (MyRecord mempty mempty)
         )
   Actions.bindTypeExpression (reStoreExpression resolvedTypeExpr)
 

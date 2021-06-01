@@ -25,8 +25,6 @@ data Literal
     MyBool Bool
   | -- | a string
     MyString StringType
-  | -- | unit, the empty type
-    MyUnit ()
   deriving
     ( Eq,
       Ord,
@@ -45,4 +43,3 @@ renderLiteral (MyInt i) = pretty i
 renderLiteral (MyBool True) = "True"
 renderLiteral (MyBool False) = "False"
 renderLiteral (MyString str) = dquotes $ prettyDoc str
-renderLiteral (MyUnit _) = "Unit"

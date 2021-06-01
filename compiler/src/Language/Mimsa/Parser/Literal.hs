@@ -21,7 +21,6 @@ import qualified Text.Megaparsec.Char.Lexer as L
 literalParser :: Parser ParserExpr
 literalParser =
   try boolParser
-    <|> try unitParser
     <|> try intParser
     <|> try stringParser
 
@@ -43,11 +42,6 @@ trueParser = string "True" $> MyBool True
 
 falseParser :: Parser Literal
 falseParser = string "False" $> MyBool False
-
------
-
-unitParser :: Parser ParserExpr
-unitParser = withLocation MyLiteral (string "Unit" $> MyUnit ())
 
 -----
 

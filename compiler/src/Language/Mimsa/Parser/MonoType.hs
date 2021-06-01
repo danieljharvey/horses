@@ -54,7 +54,6 @@ primitiveParser = MTPrim mempty <$> primParser
       try (string "String" $> MTString)
         <|> try (string "Boolean" $> MTBool)
         <|> try (string "Int" $> MTInt)
-        <|> try (string "Unit" $> MTUnit)
 
 arrParse :: Operator Parser MonoType
 arrParse = InfixR $ do
