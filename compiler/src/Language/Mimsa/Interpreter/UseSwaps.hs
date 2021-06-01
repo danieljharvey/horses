@@ -93,3 +93,5 @@ useSwapsInPattern (PPair ann a b) =
 useSwapsInPattern (PRecord ann as) =
   PRecord ann
     <$> traverse useSwapsInPattern as
+useSwapsInPattern (PArray ann as) =
+  PArray ann <$> traverse useSwapsInPattern as

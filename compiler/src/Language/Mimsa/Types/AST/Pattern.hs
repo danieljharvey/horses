@@ -32,6 +32,7 @@ data Pattern var ann
   | PRecord
       ann
       (Map Name (Pattern var ann))
+  | PArray ann [Pattern var ann]
   deriving (Show, Eq, Ord, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
@@ -55,7 +56,10 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
     prettyDoc tyCon
   prettyDoc (PConstructor _ tyCon args) =
     prettyDoc tyCon <> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
-  prettyDoc (PPair _ a b) = "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
+  prettyDoc (PPair _ a b) =
+    "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
+  prettyDoc (PArray _ as) =
+    "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> "]"
   prettyDoc (PRecord _ map') =
     let items = M.toList map'
         printRow = \i (name, val) ->

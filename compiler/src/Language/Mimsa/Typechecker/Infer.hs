@@ -421,6 +421,19 @@ inferPattern env (PRecord ann items) = do
       applySubst allSubs (MTRecordRow ann tyItems tyRest),
       newEnv
     )
+inferPattern env (PArray ann items) = do
+  let inferRow v = do
+        (s, tyValue, envNew) <- inferPattern env v
+        pure (s, tyValue, envNew)
+  tyEverything <- traverse inferRow items
+  let allSubs = mconcat (getA <$> tyEverything)
+  (s, tyItems) <- matchList (getB <$> tyEverything)
+  let newEnv = mconcat (getC <$> tyEverything) <> env
+  pure
+    ( s <> allSubs,
+      applySubst (s <> allSubs) (MTArray ann tyItems),
+      newEnv
+    )
 
 checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> TcMonad ()
 checkArgsLength ann (DataType _ _ cons) tyCon args = do

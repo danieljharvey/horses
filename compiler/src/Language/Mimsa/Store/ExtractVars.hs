@@ -56,6 +56,11 @@ extractPatternVars :: (Eq ann, Monoid ann) => Pattern Name ann -> Set Name
 extractPatternVars (PWildcard _) = mempty
 extractPatternVars (PLit _ _) = mempty
 extractPatternVars (PVar _ a) = S.singleton a
-extractPatternVars (PRecord _ as) = mconcat (extractPatternVars <$> M.elems as)
-extractPatternVars (PPair _ a b) = extractPatternVars a <> extractPatternVars b
-extractPatternVars (PConstructor _ _ args) = mconcat (extractPatternVars <$> args)
+extractPatternVars (PRecord _ as) =
+  mconcat (extractPatternVars <$> M.elems as)
+extractPatternVars (PPair _ a b) =
+  extractPatternVars a <> extractPatternVars b
+extractPatternVars (PConstructor _ _ args) =
+  mconcat (extractPatternVars <$> args)
+extractPatternVars (PArray _ as) =
+  mconcat (extractPatternVars <$> as)
