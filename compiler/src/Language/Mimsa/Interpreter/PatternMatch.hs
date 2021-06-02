@@ -57,7 +57,7 @@ patternMatches (PConstructor _ pTyCon pArgs) (MyConsApp ann fn val) = do
       let allPairs = zip pArgs args
       nice <- traverse (uncurry patternMatches) allPairs
       pure (mconcat nice)
-patternMatches (PArray _ pAs) (MyArray _ as) | length pAs == length as = do
+patternMatches (PArray _ pAs NoSpread) (MyArray _ as) | length pAs == length as = do
   let allPairs = zip pAs as
   nice <- traverse (uncurry patternMatches) allPairs
   pure (mconcat nice)

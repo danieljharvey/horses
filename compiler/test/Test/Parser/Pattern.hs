@@ -42,4 +42,12 @@ spec =
               ]
           )
     it "Parses array with two items" $
-      testParse "[1,a]" `shouldBe` Right (PArray mempty [PLit mempty (MyInt 1), PVar mempty "a"])
+      testParse "[1,a]"
+        `shouldBe` Right
+          ( PArray
+              mempty
+              [ PLit mempty (MyInt 1),
+                PVar mempty "a"
+              ]
+              NoSpread
+          )

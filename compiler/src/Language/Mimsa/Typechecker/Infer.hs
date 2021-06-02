@@ -421,7 +421,7 @@ inferPattern env (PRecord ann items) = do
       applySubst allSubs (MTRecordRow ann tyItems tyRest),
       newEnv
     )
-inferPattern env (PArray ann items) = do
+inferPattern env (PArray ann items NoSpread) = do
   let inferRow v = do
         (s, tyValue, envNew) <- inferPattern env v
         pure (s, tyValue, envNew)

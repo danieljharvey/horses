@@ -6,6 +6,7 @@
 module Language.Mimsa.Types.AST.Pattern
   ( Pattern (..),
     printSubPattern,
+    Spread (..),
   )
 where
 
@@ -20,6 +21,18 @@ import Language.Mimsa.Types.AST.Literal
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Utils
 
+data Spread var ann = NoSpread
+  deriving
+    ( Show,
+      Eq,
+      Ord,
+      Functor,
+      Generic,
+      JSON.FromJSON,
+      JSON.ToJSON,
+      ToSchema
+    )
+
 data Pattern var ann
   = PWildcard ann
   | PVar ann var
@@ -32,7 +45,7 @@ data Pattern var ann
   | PRecord
       ann
       (Map Name (Pattern var ann))
-  | PArray ann [Pattern var ann]
+  | PArray ann [Pattern var ann] (Spread var ann)
   deriving (Show, Eq, Ord, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
@@ -58,7 +71,7 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
     prettyDoc tyCon <> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
   prettyDoc (PPair _ a b) =
     "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
-  prettyDoc (PArray _ as) =
+  prettyDoc (PArray _ as NoSpread) =
     "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> "]"
   prettyDoc (PRecord _ map') =
     let items = M.toList map'

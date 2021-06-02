@@ -287,9 +287,9 @@ mapPatternVar chg (PRecord ann items) = do
   let pat = PRecord ann (fst <$> newMap)
   let newChg = mconcat $ M.elems (snd <$> newMap)
   pure (pat, newChg)
-mapPatternVar chg (PArray ann as) = do
+mapPatternVar chg (PArray ann as NoSpread) = do
   newMap <- traverse (mapPatternVar chg) as
-  let pat = PArray ann (fst <$> newMap)
+  let pat = PArray ann (fst <$> newMap) NoSpread
   let newChg = mconcat (snd <$> newMap)
   pure (pat, newChg)
 mapPatternVar chg (PWildcard ann) = pure (PWildcard ann, chg)

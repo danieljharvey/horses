@@ -80,8 +80,10 @@ toPatternMap name (PConstructor _ tyCon args) =
   let tyConGuard = GuardEQ (name <> ".type") ("\"" <> textToJS (prettyPrint tyCon) <> "\"")
       subPattern i a = toPatternMap (name <> ".vars[" <> textToJS (prettyPrint (i - 1)) <> "]") a
    in ([tyConGuard], mempty) <> mconcat (mapWithIndex subPattern args)
-toPatternMap _name (PArray _ _as) =
-  error "yolo"
+toPatternMap name (PArray _ as _) =
+  let lengthGuard = GuardEQ (name <> ".length") (textToJS . prettyPrint . length $ as)
+      subPattern i a = toPatternMap (name <> "[" <> textToJS (prettyPrint (i - 1)) <> "]") a
+   in ([lengthGuard], mempty) <> mconcat (mapWithIndex subPattern as)
 
 outputPattern :: Pattern Name ann -> Javascript
 outputPattern pat =

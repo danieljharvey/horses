@@ -116,4 +116,4 @@ arrayParser =
         _ <- space
         _ <- string "]"
         pure args
-   in withLocation PArray parser
+   in withLocation (\loc as -> PArray loc as NoSpread) parser

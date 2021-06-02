@@ -117,6 +117,10 @@ patterns =
     ),
     ( PConstructor mempty "Just" [PVar mempty "a"],
       "pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null"
+    ),
+    (PArray mempty [] NoSpread, "pat => __eq(pat.length, 0) ? {} : null"),
+    ( PArray mempty [PVar mempty "a", PLit mempty (MyBool True)] NoSpread,
+      "pat => __eq(pat.length, 2) && __eq(pat[1], true) ? { a: pat[0] } : null"
     )
   ]
 

@@ -62,5 +62,5 @@ extractPatternVars (PPair _ a b) =
   extractPatternVars a <> extractPatternVars b
 extractPatternVars (PConstructor _ _ args) =
   mconcat (extractPatternVars <$> args)
-extractPatternVars (PArray _ as) =
+extractPatternVars (PArray _ as NoSpread) =
   mconcat (extractPatternVars <$> as)
