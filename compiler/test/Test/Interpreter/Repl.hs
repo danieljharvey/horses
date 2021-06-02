@@ -835,3 +835,9 @@ spec =
           it "Matches array with non-empty case" $ do
             result <- eval stdLib "match [1] with [_] -> True | [] -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches empty array with empty case" $ do
+            result <- eval stdLib "match [] with [_] -> True | [] -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Should not match when input array is longer than pattern" $ do
+            result <- eval stdLib "match [1,2] with [_] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
