@@ -41,3 +41,5 @@ spec =
                 PLit mempty (MyInt 1)
               ]
           )
+    it "Parses array with two items" $
+      testParse "[1,a]" `shouldBe` Right (PArray mempty [PLit mempty (MyInt 1), PVar mempty "a"])

@@ -832,3 +832,6 @@ spec =
           it "Parses and pretty prints more complex matches" $ do
             result <- eval stdLib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right f(a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
             result `shouldSatisfy` isRight
+          it "Matches array with non-empty case" $ do
+            result <- eval stdLib "match [1] with [_] -> True | [] -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)

@@ -26,6 +26,7 @@ patternParser =
     <|> try litParser
     <|> try recordParser
     <|> try constructorParser
+    <|> try arrayParser
 
 ----
 
@@ -103,3 +104,16 @@ constructorParser =
             PConstructor loc cons args
         )
         parser
+
+---
+
+arrayParser :: Parser ParserPattern
+arrayParser =
+  let parser = do
+        _ <- string "["
+        _ <- space
+        args <- sepBy (withOptionalSpace patternParser) (literalWithSpace ",")
+        _ <- space
+        _ <- string "]"
+        pure args
+   in withLocation PArray parser
