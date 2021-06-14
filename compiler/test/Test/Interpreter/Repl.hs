@@ -841,3 +841,23 @@ spec =
           it "Should not match when input array is longer than pattern" $ do
             result <- eval stdLib "match [1,2] with [_] -> True | _ -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Should match when input is long but we have a SpreadWildcard at the end" $ do
+            result <- eval stdLib "match [1,2,3] with [1,2,...] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Shouldn't match when input is too short with SpreadWildcard at the end" $ do
+            result <- eval stdLib "match [1] with [1,2,...] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Binds empty remainder of array to SpreadValue" $ do
+            result <- eval stdLib "match [1] with [1,...a] -> a | _ -> [0]"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty mempty
+                )
+          it "Binds remainder of array to SpreadValue" $ do
+            result <- eval stdLib "match [1,2,3] with [1,...a] -> a | _ -> []"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty [int 2, int 3]
+                )

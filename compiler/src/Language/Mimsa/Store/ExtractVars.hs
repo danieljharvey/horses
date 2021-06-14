@@ -62,5 +62,10 @@ extractPatternVars (PPair _ a b) =
   extractPatternVars a <> extractPatternVars b
 extractPatternVars (PConstructor _ _ args) =
   mconcat (extractPatternVars <$> args)
-extractPatternVars (PArray _ as NoSpread) =
-  mconcat (extractPatternVars <$> as)
+extractPatternVars (PArray _ as spread) =
+  mconcat (extractPatternVars <$> as) <> extractSpreadVars spread
+
+extractSpreadVars :: Spread Name ann -> Set Name
+extractSpreadVars NoSpread = mempty
+extractSpreadVars (SpreadWildcard _) = mempty
+extractSpreadVars (SpreadValue _ a) = S.singleton a

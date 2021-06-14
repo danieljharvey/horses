@@ -6,7 +6,6 @@
 module Language.Mimsa.Types.AST.Pattern
   ( Pattern (..),
     printSubPattern,
-    Spread (..),
   )
 where
 
@@ -18,20 +17,9 @@ import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Literal
+import Language.Mimsa.Types.AST.Spread
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Utils
-
-data Spread var ann = NoSpread
-  deriving
-    ( Show,
-      Eq,
-      Ord,
-      Functor,
-      Generic,
-      JSON.FromJSON,
-      JSON.ToJSON,
-      ToSchema
-    )
 
 data Pattern var ann
   = PWildcard ann
@@ -71,8 +59,8 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
     prettyDoc tyCon <> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
   prettyDoc (PPair _ a b) =
     "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
-  prettyDoc (PArray _ as NoSpread) =
-    "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> "]"
+  prettyDoc (PArray _ as spread) =
+    "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> prettyDoc spread <> "]"
   prettyDoc (PRecord _ map') =
     let items = M.toList map'
         printRow = \i (name, val) ->

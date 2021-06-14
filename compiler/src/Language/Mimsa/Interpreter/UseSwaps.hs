@@ -93,5 +93,14 @@ useSwapsInPattern (PPair ann a b) =
 useSwapsInPattern (PRecord ann as) =
   PRecord ann
     <$> traverse useSwapsInPattern as
-useSwapsInPattern (PArray ann as NoSpread) =
-  PArray ann <$> traverse useSwapsInPattern as <*> pure NoSpread
+useSwapsInPattern (PArray ann as spread) =
+  PArray ann <$> traverse useSwapsInPattern as
+    <*> useSwapsInSpread spread
+
+useSwapsInSpread :: Spread Variable ann -> App ann (Spread Name ann)
+useSwapsInSpread NoSpread =
+  pure NoSpread
+useSwapsInSpread (SpreadWildcard ann) =
+  pure (SpreadWildcard ann)
+useSwapsInSpread (SpreadValue ann var) =
+  SpreadValue ann <$> lookupSwap var

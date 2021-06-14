@@ -262,7 +262,6 @@ mapVar chg (MyDefineInfix ann infixOp bindName expr) =
     (nameToVar chg bindName)
     <$> mapVar chg expr
 
--- TODO: this is what we need to fix for swap error
 mapPatternVar ::
   (Eq ann, Monoid ann) =>
   Changed ->
@@ -287,10 +286,23 @@ mapPatternVar chg (PRecord ann items) = do
   let pat = PRecord ann (fst <$> newMap)
   let newChg = mconcat $ M.elems (snd <$> newMap)
   pure (pat, newChg)
-mapPatternVar chg (PArray ann as NoSpread) = do
+mapPatternVar chg (PArray ann as spread) = do
   newMap <- traverse (mapPatternVar chg) as
-  let pat = PArray ann (fst <$> newMap) NoSpread
-  let newChg = mconcat (snd <$> newMap)
-  pure (pat, newChg)
+  (newSpread, chg1) <- mapSpreadVar chg spread
+  let pat = PArray ann (fst <$> newMap) newSpread
+  let chg2 = mconcat (snd <$> newMap) <> chg1
+  pure (pat, chg2)
 mapPatternVar chg (PWildcard ann) = pure (PWildcard ann, chg)
 mapPatternVar chg (PLit ann a) = pure (PLit ann a, chg)
+
+mapSpreadVar ::
+  Changed ->
+  Spread Name ann ->
+  App ann (Spread Variable ann, Changed)
+mapSpreadVar chg NoSpread =
+  pure (NoSpread, chg)
+mapSpreadVar chg (SpreadWildcard ann) =
+  pure (SpreadWildcard ann, chg)
+mapSpreadVar chg (SpreadValue ann name) = do
+  var <- getNextVarName name
+  pure (SpreadValue ann var, addChange name var chg)

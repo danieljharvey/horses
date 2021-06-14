@@ -172,6 +172,9 @@ spec = do
       it "Multiple int literals" $ do
         exhaustiveCheck [PLit mempty (MyInt 1), PLit mempty (MyInt 2)]
           `shouldBe` Right [PWildcard mempty]
+      it "Array produces wildcard" $ do
+        exhaustiveCheck [PArray mempty [PLit mempty (MyInt 1)] NoSpread]
+          `shouldBe` Right [PWildcard mempty]
   describe "Redundant cases" $ do
     it "Returns none" $ do
       redundantCasesCheck [PWildcard mempty] `shouldBe` Right mempty

@@ -6,6 +6,7 @@ module Language.Mimsa.Parser.Pattern
   )
 where
 
+import Data.Either (partitionEithers)
 import qualified Data.Map as M
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers (nameParser, tyConParser)
@@ -20,13 +21,17 @@ type ParserPattern = Pattern Name Annotation
 
 patternParser :: Parser ParserPattern
 patternParser =
-  try pairParser
-    <|> try wildcardParser
-    <|> try variableParser
-    <|> try litParser
-    <|> try recordParser
-    <|> try constructorParser
-    <|> try arrayParser
+  label
+    "pattern match"
+    ( try
+        pairParser
+        <|> try wildcardParser
+        <|> try variableParser
+        <|> try litParser
+        <|> try recordParser
+        <|> try constructorParser
+        <|> try arrayParser
+    )
 
 ----
 
@@ -109,11 +114,50 @@ constructorParser =
 
 arrayParser :: Parser ParserPattern
 arrayParser =
-  let parser = do
+  let itemParser =
+        try (Right <$> patternParser)
+          <|> try (Left <$> spreadParser)
+          <|> fail "Expected pattern or a spread operator"
+      parser = do
         _ <- string "["
         _ <- space
-        args <- sepBy (withOptionalSpace patternParser) (literalWithSpace ",")
+        args <- sepBy (withOptionalSpace itemParser) (literalWithSpace ",")
         _ <- space
         _ <- string "]"
-        pure args
-   in withLocation (\loc as -> PArray loc as NoSpread) parser
+        case getParts args of
+          Right parts -> pure parts
+          Left e -> fail e
+   in withLocation (\loc (as, spread) -> PArray loc as spread) parser
+
+getParts ::
+  [Either (Spread Name Annotation) (Pattern Name Annotation)] ->
+  Either String ([Pattern Name Annotation], Spread Name Annotation)
+getParts as = case reverse as of
+  ((Left spr) : rest) ->
+    case partitionEithers rest of
+      ([], pats) | not (null pats) -> pure (reverse pats, spr)
+      ([], _) -> Left "There must be at least one pattern to use a spread"
+      _ -> Left "Cannot have more than one spread in an array pattern"
+  es -> case partitionEithers es of
+    ([], pats) -> pure (reverse pats, NoSpread)
+    _ -> Left "Cannot have more than one spread in an array pattern"
+
+---
+
+spreadParser :: Parser (Spread Name Annotation)
+spreadParser =
+  try spreadValueParser
+    <|> try spreadWildcardParser
+
+spreadWildcardParser :: Parser (Spread Name Annotation)
+spreadWildcardParser =
+  let parser =
+        literalWithSpace "..."
+   in withLocation (\loc _ -> SpreadWildcard loc) parser
+
+spreadValueParser :: Parser (Spread Name Annotation)
+spreadValueParser =
+  let parser = do
+        _ <- literalWithSpace "..."
+        nameParser
+   in withLocation SpreadValue parser
