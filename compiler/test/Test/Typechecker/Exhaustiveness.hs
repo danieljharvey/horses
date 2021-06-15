@@ -174,7 +174,10 @@ spec = do
           `shouldBe` Right [PWildcard mempty]
       it "Array produces wildcard" $ do
         exhaustiveCheck [PArray mempty [PLit mempty (MyInt 1)] NoSpread]
-          `shouldBe` Right [PWildcard mempty]
+          `shouldBe` Right
+            [ PArray mempty [PWildcard mempty] NoSpread,
+              PWildcard mempty
+            ]
   describe "Redundant cases" $ do
     it "Returns none" $ do
       redundantCasesCheck [PWildcard mempty] `shouldBe` Right mempty

@@ -79,6 +79,9 @@ generateRequired env (PConstructor ann tyCon args) = do
   newDataTypes <- requiredFromDataType dt
   let newCons = PConstructor mempty tyCon <$> sequence newFromArgs
   pure (newCons <> newDataTypes)
+generateRequired env (PArray _ items spread) = do
+  items' <- traverse (generateRequired env) items
+  pure $ (PArray mempty <$> sequence items' <*> pure spread) <> [PWildcard mempty]
 generateRequired _ _ = pure mempty
 
 requiredFromDataType ::

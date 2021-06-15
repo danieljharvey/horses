@@ -833,10 +833,10 @@ spec =
             result <- eval stdLib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right f(a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
             result `shouldSatisfy` isRight
           it "Matches array with non-empty case" $ do
-            result <- eval stdLib "match [1] with [_] -> True | [] -> False"
+            result <- eval stdLib "match [1] with [_] -> True | _ -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
           it "Matches empty array with empty case" $ do
-            result <- eval stdLib "match [] with [_] -> True | [] -> False"
+            result <- eval stdLib "match [] with [_] -> True | _ -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool False)
           it "Should not match when input array is longer than pattern" $ do
             result <- eval stdLib "match [1,2] with [_] -> True | _ -> False"
@@ -861,3 +861,6 @@ spec =
                 ( MTArray mempty (MTPrim mempty MTInt),
                   MyArray mempty [int 2, int 3]
                 )
+          it "Errors if we bind the same variable twice" $ do
+            result <- eval stdLib "match (1,2) with (a,a) -> a"
+            result `shouldSatisfy` isLeft
