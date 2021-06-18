@@ -171,6 +171,13 @@ getNextVarName name =
     addSwap name nextName
     pure nextName
 
+keepName ::
+  Name -> App ann Variable
+keepName name = do
+  let nextName = NamedVar name
+  addSwap name nextName
+  pure nextName
+
 nextNum :: App ann Int
 nextNum = do
   p <- gets subsCounter
@@ -268,8 +275,8 @@ mapPatternVar ::
   Pattern Name ann ->
   App ann (Pattern Variable ann, Changed)
 mapPatternVar chg (PVar ann name) = do
-  -- here we introduce new vars so we give them nums to avoid collisions
-  var <- getNextVarName name
+  -- we don't change the name so we can still detect duplicate patterns
+  var <- keepName name
   let pat = PVar ann var
   pure (pat, addChange name var chg)
 mapPatternVar chg (PConstructor ann name more) = do
@@ -304,5 +311,5 @@ mapSpreadVar chg NoSpread =
 mapSpreadVar chg (SpreadWildcard ann) =
   pure (SpreadWildcard ann, chg)
 mapSpreadVar chg (SpreadValue ann name) = do
-  var <- getNextVarName name
+  var <- keepName name
   pure (SpreadValue ann var, addChange name var chg)

@@ -7,6 +7,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Identity
+import Data.Either
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Types.AST
@@ -15,6 +16,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Typechecker.Codegen.Shared
+import Test.Utils.Helpers
 
 type PatternM = ExceptT TypeError Identity
 
@@ -33,6 +35,11 @@ redundantCasesCheck ::
   [Pattern Name Annotation] ->
   Either TypeError [Pattern Name Annotation]
 redundantCasesCheck = runPatternM . redundantCases testEnv
+
+noDuplicatesCheck ::
+  Pattern Variable Annotation ->
+  Either TypeError ()
+noDuplicatesCheck = runPatternM . noDuplicateVariables
 
 testEnv :: Environment
 testEnv = Environment mempty dts mempty
@@ -215,3 +222,104 @@ spec = do
       redundantCasesCheck
         [PLit mempty (MyInt 1), PLit mempty (MyInt 2), PWildcard mempty]
         `shouldBe` Right []
+  describe "noDuplicateVariables" $ do
+    it "Is fine with wildcard" $ do
+      noDuplicatesCheck (PWildcard mempty) `shouldSatisfy` isRight
+    it "Is fine with lit" $ do
+      noDuplicatesCheck (PLit mempty (MyBool True)) `shouldSatisfy` isRight
+    it "Is fine with single var" $ do
+      noDuplicatesCheck (PVar mempty (named "a")) `shouldSatisfy` isRight
+    it "Is fine with a pair of different vars" $ do
+      noDuplicatesCheck
+        ( PPair
+            mempty
+            (PVar mempty (named "a"))
+            (PVar mempty (named "b"))
+        )
+        `shouldSatisfy` isRight
+    it "Hates a pair of the same var" $ do
+      noDuplicatesCheck
+        ( PPair
+            mempty
+            (PVar mempty (named "a"))
+            (PVar mempty (named "a"))
+        )
+        `shouldSatisfy` isLeft
+    it "Is fine with a record of uniques" $ do
+      noDuplicatesCheck
+        ( PRecord
+            mempty
+            ( M.fromList
+                [ ("dog", PVar mempty (named "a")),
+                  ("log", PVar mempty (named "b"))
+                ]
+            )
+        )
+        `shouldSatisfy` isRight
+    it "Is not fine with a record with dupes" $ do
+      noDuplicatesCheck
+        ( PRecord
+            mempty
+            ( M.fromList
+                [ ("dog", PVar mempty (named "a")),
+                  ("log", PVar mempty (named "a"))
+                ]
+            )
+        )
+        `shouldSatisfy` isLeft
+    it "Is fine with an array with no dupes" $ do
+      noDuplicatesCheck
+        ( PArray
+            mempty
+            [ PVar mempty (named "a"),
+              PVar mempty (named "b")
+            ]
+            NoSpread
+        )
+        `shouldSatisfy` isRight
+    it "Is not fine with an array with dupes" $ do
+      noDuplicatesCheck
+        ( PArray
+            mempty
+            [ PVar mempty (named "a"),
+              PVar mempty (named "a")
+            ]
+            NoSpread
+        )
+        `shouldSatisfy` isLeft
+    it "Is not fine with an array with dupes with the spread" $ do
+      noDuplicatesCheck
+        ( PArray
+            mempty
+            [ PVar mempty (named "a"),
+              PVar mempty (named "b")
+            ]
+            (SpreadValue mempty (named "a"))
+        )
+        `shouldSatisfy` isLeft
+    it "Is fine with a constructor with no dupes" $ do
+      noDuplicatesCheck
+        ( PConstructor
+            mempty
+            "dog"
+            [ PVar mempty (named "a"),
+              PVar mempty (named "b")
+            ]
+        )
+        `shouldSatisfy` isRight
+    it "Is not fine with a constructor with dupes" $ do
+      noDuplicatesCheck
+        ( PConstructor
+            mempty
+            "dog"
+            [ PVar mempty (named "a"),
+              PVar mempty (named "b"),
+              PConstructor
+                mempty
+                "dog"
+                [ PVar mempty (named "c"),
+                  PVar mempty (named "a")
+                ]
+            ]
+        )
+        `shouldSatisfy` isLeft

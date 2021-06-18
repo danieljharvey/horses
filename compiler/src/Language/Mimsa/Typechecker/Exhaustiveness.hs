@@ -5,6 +5,7 @@ module Language.Mimsa.Typechecker.Exhaustiveness
   ( isExhaustive,
     redundantCases,
     validatePatterns,
+    noDuplicateVariables,
   )
 where
 
@@ -12,6 +13,7 @@ import Control.Monad.Except
 import Data.Foldable
 import Data.Functor
 import Data.List (nub)
+import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.Environment
@@ -27,6 +29,7 @@ validatePatterns ::
   [Pattern Variable Annotation] ->
   m ()
 validatePatterns env ann patterns = do
+  traverse_ noDuplicateVariables patterns
   missing <- isExhaustive env patterns
   _ <- case missing of
     [] -> pure ()
@@ -35,6 +38,36 @@ validatePatterns env ann patterns = do
   case redundant of
     [] -> pure ()
     _ -> throwError (PatternMatchErr (RedundantPatterns ann redundant))
+
+noDuplicateVariables ::
+  MonadError TypeError m =>
+  Pattern Variable Annotation ->
+  m ()
+noDuplicateVariables pat =
+  let dupes = M.keysSet $ M.filter (> 1) (getVariables pat)
+   in if S.null dupes
+        then pure ()
+        else throwError (PatternMatchErr (DuplicateVariableUse mempty dupes))
+
+getVariables ::
+  Pattern Variable Annotation ->
+  Map Variable Int
+getVariables (PWildcard _) = mempty
+getVariables (PLit _ _) = mempty
+getVariables (PVar _ a) = M.singleton a 1
+getVariables (PPair _ a b) =
+  M.unionWith (+) (getVariables a) (getVariables b)
+getVariables (PRecord _ as) =
+  foldr (M.unionWith (+)) mempty (getVariables <$> as)
+getVariables (PArray _ as spread) =
+  let vars = [getSpreadVariables spread] <> (getVariables <$> as)
+   in foldr (M.unionWith (+)) mempty vars
+getVariables (PConstructor _ _ args) =
+  foldr (M.unionWith (+)) mempty (getVariables <$> args)
+
+getSpreadVariables :: Spread Variable Annotation -> Map Variable Int
+getSpreadVariables (SpreadValue _ a) = M.singleton a 1
+getSpreadVariables _ = mempty
 
 -- | given a list of patterns, return a list of missing patterns
 isExhaustive ::
