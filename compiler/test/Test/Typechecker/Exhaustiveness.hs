@@ -48,6 +48,16 @@ testEnv = Environment mempty dts mempty
 
 spec :: Spec
 spec = do
+  describe "Smaller list versions" $ do
+    it "Empty is empty" $ do
+      smallerListVersions [] `shouldBe` ([] :: [[Int]])
+    it "1 list is the same" $ do
+      smallerListVersions [[1]] `shouldBe` ([[1]] :: [[Int]])
+    it "2 list adds a 1 list" $ do
+      smallerListVersions [[1, 2]] `shouldBe` ([[2], [1, 2]] :: [[Int]])
+    it "3 list adds a 2 and a 1 list" $ do
+      smallerListVersions [[1, 2, 3]] `shouldBe` ([[3], [2, 3], [1, 2, 3]] :: [[Int]])
+
   describe "Exhaustiveness" $
     do
       it "Wildcard is fine" $ do
@@ -179,12 +189,26 @@ spec = do
       it "Multiple int literals" $ do
         exhaustiveCheck [PLit mempty (MyInt 1), PLit mempty (MyInt 2)]
           `shouldBe` Right [PWildcard mempty]
-      it "Array produces wildcard" $ do
+      it "NoSpread Array produces wildcard" $ do
         exhaustiveCheck [PArray mempty [PLit mempty (MyInt 1)] NoSpread]
           `shouldBe` Right
-            [ PArray mempty [PWildcard mempty] NoSpread,
-              PWildcard mempty
+            [ PArray mempty [PWildcard mempty] (SpreadWildcard mempty), -- one or more
+              PArray mempty [] NoSpread -- empty
             ]
+      it "Spread Array produces all other sized spread cases" $ do
+        exhaustiveCheck [PArray mempty [PLit mempty (MyInt 1)] (SpreadValue mempty "a")]
+          `shouldBe` Right
+            [ PArray mempty [PWildcard mempty] (SpreadWildcard mempty), -- one or more
+              PArray mempty [] NoSpread -- empty
+            ]
+      it "Larger Spread Array produces all other sized spread cases" $ do
+        exhaustiveCheck [PArray mempty [PLit mempty (MyInt 1), PLit mempty (MyInt 2)] (SpreadValue mempty "a")]
+          `shouldBe` Right
+            [ PArray mempty [PWildcard mempty] (SpreadWildcard mempty), -- one or more
+              PArray mempty [PWildcard mempty, PWildcard mempty] (SpreadWildcard mempty), -- two or more
+              PArray mempty [] NoSpread -- empty
+            ]
+
   describe "Redundant cases" $ do
     it "Returns none" $ do
       redundantCasesCheck [PWildcard mempty] `shouldBe` Right mempty

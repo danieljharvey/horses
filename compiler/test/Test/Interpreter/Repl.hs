@@ -863,3 +863,11 @@ spec =
           it "Errors if we bind the same variable twice" $ do
             result <- eval stdLib "match (1,2) with (a,a) -> a"
             result `shouldSatisfy` isLeft
+          it "Uses a constructor inside an array" $ do
+            result <- eval stdLib "match [] with [Some 1] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Generates more nuanced exhaustiveness checks when using spread operatpr" $ do
+            result <- eval stdLib "match [] with [] -> True | [_] -> False | [_,...] -> False"
+            result
+              `shouldBe` Right
+                (MTPrim mempty MTBool, bool True)

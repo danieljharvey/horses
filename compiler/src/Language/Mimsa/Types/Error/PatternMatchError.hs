@@ -3,6 +3,7 @@
 module Language.Mimsa.Types.Error.PatternMatchError
   ( PatternMatchError (..),
     renderPatternMatchError,
+    getErrorPos,
   )
 where
 
@@ -33,10 +34,6 @@ data PatternMatchError
 
 instance Semigroup PatternMatchError where
   a <> _ = a
-
-{-instance Monoid TypeError where
-  mempty = UnknownTypeError
--}
 
 instance Printer PatternMatchError where
   prettyDoc = vsep . renderPatternMatchError

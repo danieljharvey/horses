@@ -93,7 +93,11 @@ toPatternMap name (PArray _ as spread) =
         (SpreadValue _ _) ->
           GreaterThanOrEQ (name <> ".length") (intToJS . length $ as)
       subPattern i a = toPatternMap (name <> "[" <> textToJS (prettyPrint (i - 1)) <> "]") a
-   in ([lengthGuard], mempty) <> mconcat (mapWithIndex subPattern as)
+      spreadValue = case spread of
+        SpreadValue _ a ->
+          M.singleton a (name <> ".slice(" <> intToJS (length as) <> ")")
+        _ -> mempty
+   in ([lengthGuard], spreadValue) <> mconcat (mapWithIndex subPattern as)
 
 outputPattern :: Pattern Name ann -> Javascript
 outputPattern pat =

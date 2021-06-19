@@ -61,7 +61,10 @@ extractFromPattern (PConstructor _ tyCon args) =
   S.singleton tyCon <> mconcat (extractFromPattern <$> args)
 extractFromPattern (PPair _ a b) = extractFromPattern a <> extractFromPattern b
 extractFromPattern (PRecord _ items) = mconcat $ extractFromPattern <$> M.elems items
-extractFromPattern _ = mempty
+extractFromPattern (PWildcard _) = mempty
+extractFromPattern (PVar _ _) = mempty
+extractFromPattern (PLit _ _) = mempty
+extractFromPattern (PArray _ as _) = mconcat $ extractFromPattern <$> as
 
 filterBuiltIns :: Set TyCon -> Set TyCon
 filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)

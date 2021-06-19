@@ -6,6 +6,7 @@
 module Language.Mimsa.Types.AST.Pattern
   ( Pattern (..),
     printSubPattern,
+    getPatternAnnotation,
   )
 where
 
@@ -39,6 +40,15 @@ data Pattern var ann
 instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
   declareNamedSchema =
     genericDeclareNamedSchemaUnrestricted defaultSchemaOptions
+
+getPatternAnnotation :: Pattern var ann -> ann
+getPatternAnnotation (PWildcard ann) = ann
+getPatternAnnotation (PVar ann _) = ann
+getPatternAnnotation (PLit ann _) = ann
+getPatternAnnotation (PConstructor ann _ _) = ann
+getPatternAnnotation (PPair ann _ _) = ann
+getPatternAnnotation (PRecord ann _) = ann
+getPatternAnnotation (PArray ann _ _) = ann
 
 inParens :: (Printer a) => a -> Doc style
 inParens = parens . prettyDoc
