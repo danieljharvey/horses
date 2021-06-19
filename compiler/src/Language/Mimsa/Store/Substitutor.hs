@@ -171,6 +171,13 @@ getNextVarName name =
     addSwap name nextName
     pure nextName
 
+keepName ::
+  Name -> App ann Variable
+keepName name = do
+  let nextName = NamedVar name
+  addSwap name nextName
+  pure nextName
+
 nextNum :: App ann Int
 nextNum = do
   p <- gets subsCounter
@@ -262,15 +269,14 @@ mapVar chg (MyDefineInfix ann infixOp bindName expr) =
     (nameToVar chg bindName)
     <$> mapVar chg expr
 
--- TODO: this is what we need to fix for swap error
 mapPatternVar ::
   (Eq ann, Monoid ann) =>
   Changed ->
   Pattern Name ann ->
   App ann (Pattern Variable ann, Changed)
 mapPatternVar chg (PVar ann name) = do
-  -- here we introduce new vars so we give them nums to avoid collisions
-  var <- getNextVarName name
+  -- we don't change the name so we can still detect duplicate patterns
+  var <- keepName name
   let pat = PVar ann var
   pure (pat, addChange name var chg)
 mapPatternVar chg (PConstructor ann name more) = do
@@ -287,5 +293,23 @@ mapPatternVar chg (PRecord ann items) = do
   let pat = PRecord ann (fst <$> newMap)
   let newChg = mconcat $ M.elems (snd <$> newMap)
   pure (pat, newChg)
+mapPatternVar chg (PArray ann as spread) = do
+  newMap <- traverse (mapPatternVar chg) as
+  (newSpread, chg1) <- mapSpreadVar chg spread
+  let pat = PArray ann (fst <$> newMap) newSpread
+  let chg2 = mconcat (snd <$> newMap) <> chg1
+  pure (pat, chg2)
 mapPatternVar chg (PWildcard ann) = pure (PWildcard ann, chg)
 mapPatternVar chg (PLit ann a) = pure (PLit ann a, chg)
+
+mapSpreadVar ::
+  Changed ->
+  Spread Name ann ->
+  App ann (Spread Variable ann, Changed)
+mapSpreadVar chg NoSpread =
+  pure (NoSpread, chg)
+mapSpreadVar chg (SpreadWildcard ann) =
+  pure (SpreadWildcard ann, chg)
+mapSpreadVar chg (SpreadValue ann name) = do
+  var <- keepName name
+  pure (SpreadValue ann var, addChange name var chg)

@@ -5,6 +5,8 @@ module Language.Mimsa.Typechecker.Exhaustiveness
   ( isExhaustive,
     redundantCases,
     validatePatterns,
+    noDuplicateVariables,
+    smallerListVersions,
   )
 where
 
@@ -12,8 +14,10 @@ import Control.Monad.Except
 import Data.Foldable
 import Data.Functor
 import Data.List (nub)
+import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -27,6 +31,7 @@ validatePatterns ::
   [Pattern Variable Annotation] ->
   m ()
 validatePatterns env ann patterns = do
+  traverse_ noDuplicateVariables patterns
   missing <- isExhaustive env patterns
   _ <- case missing of
     [] -> pure ()
@@ -36,9 +41,46 @@ validatePatterns env ann patterns = do
     [] -> pure ()
     _ -> throwError (PatternMatchErr (RedundantPatterns ann redundant))
 
+noDuplicateVariables ::
+  MonadError TypeError m =>
+  Pattern Variable Annotation ->
+  m ()
+noDuplicateVariables pat =
+  let dupes = M.keysSet $ M.filter (> 1) (getVariables pat)
+   in if S.null dupes
+        then pure ()
+        else
+          throwError
+            ( PatternMatchErr
+                ( DuplicateVariableUse
+                    (getPatternAnnotation pat)
+                    dupes
+                )
+            )
+
+getVariables ::
+  Pattern Variable Annotation ->
+  Map Variable Int
+getVariables (PWildcard _) = mempty
+getVariables (PLit _ _) = mempty
+getVariables (PVar _ a) = M.singleton a 1
+getVariables (PPair _ a b) =
+  M.unionWith (+) (getVariables a) (getVariables b)
+getVariables (PRecord _ as) =
+  foldr (M.unionWith (+)) mempty (getVariables <$> as)
+getVariables (PArray _ as spread) =
+  let vars = [getSpreadVariables spread] <> (getVariables <$> as)
+   in foldr (M.unionWith (+)) mempty vars
+getVariables (PConstructor _ _ args) =
+  foldr (M.unionWith (+)) mempty (getVariables <$> args)
+
+getSpreadVariables :: Spread Variable Annotation -> Map Variable Int
+getSpreadVariables (SpreadValue _ a) = M.singleton a 1
+getSpreadVariables _ = mempty
+
 -- | given a list of patterns, return a list of missing patterns
 isExhaustive ::
-  (Eq var, MonadError TypeError m) =>
+  (Eq var, MonadError TypeError m, Printer var, Show var) =>
   Environment ->
   [Pattern var Annotation] ->
   m [Pattern var Annotation]
@@ -49,7 +91,7 @@ isExhaustive env patterns = do
   pure $ filterMissing patterns generated
 
 generate ::
-  (MonadError TypeError m) =>
+  (MonadError TypeError m, Printer var, Show var) =>
   Environment ->
   Pattern var Annotation ->
   m [Pattern var Annotation]
@@ -57,7 +99,7 @@ generate env pat = (<>) [pat] <$> generateRequired env pat
 
 -- | Given a pattern, generate others required for it
 generateRequired ::
-  (MonadError TypeError m) =>
+  (MonadError TypeError m, Printer var, Show var) =>
   Environment ->
   Pattern var Annotation ->
   m [Pattern var Annotation]
@@ -79,7 +121,19 @@ generateRequired env (PConstructor ann tyCon args) = do
   newDataTypes <- requiredFromDataType dt
   let newCons = PConstructor mempty tyCon <$> sequence newFromArgs
   pure (newCons <> newDataTypes)
+generateRequired env (PArray _ items _) = do
+  items' <- traverse (generateRequired env) items
+  let allItems = smallerListVersions (sequence items')
+  pure $ (PArray mempty <$> allItems <*> pure (SpreadWildcard mempty)) <> [PArray mempty mempty NoSpread]
 generateRequired _ _ = pure mempty
+
+-- given a list [[1,2,3]], return [[1,2,3], [1,2], [1]]
+smallerListVersions :: [[a]] -> [[a]]
+smallerListVersions aas =
+  let get x = case x of
+        [] -> []
+        (_ : as) -> get as <> [x]
+   in get =<< aas
 
 requiredFromDataType ::
   (MonadError TypeError m) =>
@@ -142,7 +196,7 @@ annihilate (PConstructor _ tyConA argsA) (PConstructor _ tyConB argsB) =
 annihilate _ _as = False
 
 redundantCases ::
-  (MonadError TypeError m, Eq var) =>
+  (MonadError TypeError m, Eq var, Printer var, Show var) =>
   Environment ->
   [Pattern var Annotation] ->
   m [Pattern var Annotation]

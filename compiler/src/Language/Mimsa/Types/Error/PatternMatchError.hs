@@ -3,9 +3,11 @@
 module Language.Mimsa.Types.Error.PatternMatchError
   ( PatternMatchError (..),
     renderPatternMatchError,
+    getErrorPos,
   )
 where
 
+import Data.Set (Set)
 import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
@@ -24,16 +26,14 @@ data PatternMatchError
     MissingPatterns Annotation [Pattern Variable Annotation]
   | -- | Unnecessary cases covered by previous matches
     RedundantPatterns Annotation [Pattern Variable Annotation]
+  | -- | Multiple instances of the same variable
+    DuplicateVariableUse Annotation (Set Variable)
   deriving (Eq, Ord, Show)
 
 ------
 
 instance Semigroup PatternMatchError where
   a <> _ = a
-
-{-instance Monoid TypeError where
-  mempty = UnknownTypeError
--}
 
 instance Printer PatternMatchError where
   prettyDoc = vsep . renderPatternMatchError
@@ -55,6 +55,7 @@ getErrorPos (EmptyPatternMatch ann) = fromAnnotation ann
 getErrorPos (ConstructorArgumentLengthMismatch ann _ _ _) = fromAnnotation ann
 getErrorPos (MissingPatterns ann _) = fromAnnotation ann
 getErrorPos (RedundantPatterns ann _) = fromAnnotation ann
+getErrorPos (DuplicateVariableUse ann _) = fromAnnotation ann
 
 -----
 
@@ -80,3 +81,7 @@ renderPatternMatchError (MissingPatterns _ missing) =
     <> (prettyDoc <$> missing)
 renderPatternMatchError (RedundantPatterns _ redundant) =
   ["Pattern match has unreachable patterns, you should remove them"] <> (prettyDoc <$> redundant)
+renderPatternMatchError (DuplicateVariableUse _ vars) =
+  [ "Pattern match variables must be unique.",
+    "Variables " <> prettyDoc vars <> " are used multiple times"
+  ]

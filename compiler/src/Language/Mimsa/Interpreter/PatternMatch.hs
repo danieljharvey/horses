@@ -57,6 +57,22 @@ patternMatches (PConstructor _ pTyCon pArgs) (MyConsApp ann fn val) = do
       let allPairs = zip pArgs args
       nice <- traverse (uncurry patternMatches) allPairs
       pure (mconcat nice)
+patternMatches (PArray _ pAs NoSpread) (MyArray _ as)
+  | length pAs == length as = do
+    let allPairs = zip pAs as
+    nice <- traverse (uncurry patternMatches) allPairs
+    pure (mconcat nice)
+patternMatches (PArray _ pAs (SpreadWildcard _)) (MyArray _ as)
+  | length pAs <= length as = do
+    let allPairs = zip pAs as
+    nice <- traverse (uncurry patternMatches) allPairs
+    pure (mconcat nice)
+patternMatches (PArray _ pAs (SpreadValue _ a)) (MyArray ann as)
+  | length pAs <= length as = do
+    let binding = (a, MyArray ann (drop (length pAs) as))
+    let allPairs = zip pAs as
+    nice <- traverse (uncurry patternMatches) allPairs
+    pure (mconcat nice <> [binding])
 patternMatches _ _ = Nothing
 
 consAppToPattern :: Expr Variable ann -> Maybe (TyCon, [Expr Variable ann])

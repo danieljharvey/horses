@@ -1,0 +1,3 @@
+match [ 1 ] with 
+    [_] -> True
+  | [] -> False

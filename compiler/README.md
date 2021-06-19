@@ -161,7 +161,7 @@ type declarations:
 pattern matching:
 
 ```haskell
-\a ->
+:> \a ->
   match a with
       1 -> True
     | 2 -> False
@@ -170,17 +170,22 @@ pattern matching:
     | _ -> False
 :: Int -> Boolean
 
-\maybe ->
+:> \maybe ->
   match maybe with
       (Just _) -> True
     | _ -> False
 :: (Maybe a) -> Boolean
 
-\maybe ->
+:> \maybe ->
   match maybe with
       (Just { age: b, name: a }) -> (a, b)
     | _ -> ("", 0)
 :: (Maybe { age: Int, name: String  | a }) -> (String, Int)
+
+:> match [1,2,3] with 
+    [_, ...rest] -> rest 
+  | _ -> []
+[ 2, 3 ] :: [ Int ]
 ```
 
 case matching:

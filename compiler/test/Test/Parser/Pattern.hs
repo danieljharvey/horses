@@ -6,6 +6,7 @@ module Test.Parser.Pattern
 where
 
 import Data.Functor
+import Data.List (isInfixOf)
 import Data.Text (Text)
 import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Pattern
@@ -24,6 +25,11 @@ testParse t = case parsePat t of
   Right expr -> pure (expr $> ())
   Left e -> Left $ errorBundlePretty e
 
+errorContains :: String -> Either String a -> Bool
+errorContains s res = case res of
+  Left e -> s `isInfixOf` e
+  _ -> False
+
 spec :: Spec
 spec =
   describe "Pattern" $ do
@@ -41,3 +47,48 @@ spec =
                 PLit mempty (MyInt 1)
               ]
           )
+    it "Parses array with two items" $
+      testParse "[1,a]"
+        `shouldBe` Right
+          ( PArray
+              mempty
+              [ PLit mempty (MyInt 1),
+                PVar mempty "a"
+              ]
+              NoSpread
+          )
+    it "Parses array with wildcard spread" $
+      testParse "[1, a, ...]"
+        `shouldBe` Right
+          ( PArray
+              mempty
+              [ PLit mempty (MyInt 1),
+                PVar mempty "a"
+              ]
+              ( SpreadWildcard
+                  mempty
+              )
+          )
+    it "Parses array with value spread" $
+      testParse "[1, a, ...b]"
+        `shouldBe` Right
+          ( PArray
+              mempty
+              [ PLit mempty (MyInt 1),
+                PVar mempty "a"
+              ]
+              ( SpreadValue
+                  mempty
+                  "b"
+              )
+          )
+    it "Spread needs at least one value" $
+      testParse "[...b]"
+        `shouldSatisfy` errorContains "There must be at least one pattern"
+
+    it "Cannot have more than one spread" $
+      testParse "[1, ...a,...b]"
+        `shouldSatisfy` errorContains "Cannot have more than one spread"
+    it "Trailing comma in pattern" $
+      testParse "[1,2,]"
+        `shouldSatisfy` errorContains "Expected pattern or a spread operator"

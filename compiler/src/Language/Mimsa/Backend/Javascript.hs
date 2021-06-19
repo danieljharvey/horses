@@ -35,6 +35,7 @@ import Language.Mimsa.Types.AST
     Literal (..),
     Operator (..),
     Pattern (..),
+    Spread (..),
     StringType (..),
   )
 import Language.Mimsa.Types.Error
@@ -63,6 +64,9 @@ outputLiteral (MyBool True) = "true"
 outputLiteral (MyBool False) = "false"
 outputLiteral (MyInt i) = fromString $ show i
 
+intToJS :: Int -> Javascript
+intToJS = textToJS . prettyPrint
+
 toPatternMap :: Javascript -> Pattern Name ann -> ([Guard], Map Name Javascript)
 toPatternMap _ (PWildcard _) =
   (mempty, mempty)
@@ -80,6 +84,20 @@ toPatternMap name (PConstructor _ tyCon args) =
   let tyConGuard = GuardEQ (name <> ".type") ("\"" <> textToJS (prettyPrint tyCon) <> "\"")
       subPattern i a = toPatternMap (name <> ".vars[" <> textToJS (prettyPrint (i - 1)) <> "]") a
    in ([tyConGuard], mempty) <> mconcat (mapWithIndex subPattern args)
+toPatternMap name (PArray _ as spread) =
+  let lengthGuard = case spread of
+        NoSpread ->
+          PrimEQ (name <> ".length") (intToJS . length $ as)
+        (SpreadWildcard _) ->
+          GreaterThanOrEQ (name <> ".length") (intToJS . length $ as)
+        (SpreadValue _ _) ->
+          GreaterThanOrEQ (name <> ".length") (intToJS . length $ as)
+      subPattern i a = toPatternMap (name <> "[" <> textToJS (prettyPrint (i - 1)) <> "]") a
+      spreadValue = case spread of
+        SpreadValue _ a ->
+          M.singleton a (name <> ".slice(" <> intToJS (length as) <> ")")
+        _ -> mempty
+   in ([lengthGuard], spreadValue) <> mconcat (mapWithIndex subPattern as)
 
 outputPattern :: Pattern Name ann -> Javascript
 outputPattern pat =
@@ -107,7 +125,10 @@ outputPatternRow pat expr = do
             <> js
         )
 
-data Guard = GuardEQ Javascript Javascript
+data Guard
+  = GuardEQ Javascript Javascript
+  | PrimEQ Javascript Javascript
+  | GreaterThanOrEQ Javascript Javascript
 
 outputPatternMap :: Map Name Javascript -> [Guard] -> Javascript
 outputPatternMap vars guards =
@@ -120,6 +141,10 @@ outputPatternMap vars guards =
       intercal " && " (showGuard <$> guards)
     showGuard (GuardEQ a b) =
       "__eq(" <> a <> ", " <> b <> ")"
+    showGuard (PrimEQ a b) =
+      a <> " === " <> b
+    showGuard (GreaterThanOrEQ a b) =
+      a <> " >= " <> b
     varJS =
       if M.null vars
         then "{}"
@@ -128,7 +153,8 @@ outputPatternMap vars guards =
     showItem (k, v) = textToJS (prettyPrint k) <> ": " <> v
 
 intercal :: Javascript -> [Javascript] -> Javascript
-intercal sep as = Javascript $ LB.intercalate (coerce sep) (coerce as)
+intercal sep as =
+  Javascript $ LB.intercalate (coerce sep) (coerce as)
 
 outputRecord ::
   (Monoid ann) =>

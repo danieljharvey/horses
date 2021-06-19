@@ -649,8 +649,7 @@ spec =
         it "type State s a = State (s -> (a,s)) in True" $ do
           result <- eval stdLib "type State s a = State (s -> (a,s)) in True"
           result `shouldSatisfy` isRight
-        -- to fix with open/closed records
-        xit "\\person -> case person of Person \\p -> p.age" $ do
+        it "\\person -> case person of Person \\p -> p.age" $ do
           result <- eval stdLib "\\person -> case person of Person \\p -> p.age"
           result `shouldSatisfy` isRight
         -- simplest swaps test
@@ -832,3 +831,43 @@ spec =
           it "Parses and pretty prints more complex matches" $ do
             result <- eval stdLib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right f(a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
             result `shouldSatisfy` isRight
+          it "Matches array with non-empty case" $ do
+            result <- eval stdLib "match [1] with [_] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches empty array with empty case" $ do
+            result <- eval stdLib "match [] with [_] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Should not match when input array is longer than pattern" $ do
+            result <- eval stdLib "match [1,2] with [_] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Should match when input is long but we have a SpreadWildcard at the end" $ do
+            result <- eval stdLib "match [1,2,3] with [1,2,...] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Shouldn't match when input is too short with SpreadWildcard at the end" $ do
+            result <- eval stdLib "match [1] with [1,2,...] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Binds empty remainder of array to SpreadValue" $ do
+            result <- eval stdLib "match [1] with [1,...a] -> a | _ -> [0]"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty mempty
+                )
+          it "Binds remainder of array to SpreadValue" $ do
+            result <- eval stdLib "match [1,2,3] with [1,...a] -> a | _ -> []"
+            result
+              `shouldBe` Right
+                ( MTArray mempty (MTPrim mempty MTInt),
+                  MyArray mempty [int 2, int 3]
+                )
+          it "Errors if we bind the same variable twice" $ do
+            result <- eval stdLib "match (1,2) with (a,a) -> a"
+            result `shouldSatisfy` isLeft
+          it "Uses a constructor inside an array" $ do
+            result <- eval stdLib "match [] with [Some 1] -> True | _ -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Generates more nuanced exhaustiveness checks when using spread operatpr" $ do
+            result <- eval stdLib "match [] with [] -> True | [_] -> False | [_,...] -> False"
+            result
+              `shouldBe` Right
+                (MTPrim mempty MTBool, bool True)

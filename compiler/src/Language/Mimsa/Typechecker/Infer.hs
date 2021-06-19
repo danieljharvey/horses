@@ -421,6 +421,26 @@ inferPattern env (PRecord ann items) = do
       applySubst allSubs (MTRecordRow ann tyItems tyRest),
       newEnv
     )
+inferPattern env (PArray ann items spread) = do
+  let inferRow v = do
+        (s, tyValue, envNew) <- inferPattern env v
+        pure (s, tyValue, envNew)
+  tyEverything <- traverse inferRow items
+  let allSubs = mconcat (getA <$> tyEverything)
+  (s1, tyBinder, env2) <- case spread of
+    SpreadValue ann2 binder -> do
+      tyBinder <- getUnknown ann2
+      let tmpCtx =
+            envFromVar binder (Scheme [] (MTArray ann2 tyBinder)) <> env
+      pure (mempty, Just tyBinder, tmpCtx)
+    _ -> pure (mempty, Nothing, env)
+  (s2, tyItems) <- matchList ((getB <$> tyEverything) <> maybe mempty pure tyBinder)
+  let newEnv = mconcat (getC <$> tyEverything) <> env2
+  pure
+    ( s2 <> s1 <> allSubs,
+      applySubst (s2 <> s1 <> allSubs) (MTArray ann tyItems),
+      newEnv
+    )
 
 checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> TcMonad ()
 checkArgsLength ann (DataType _ _ cons) tyCon args = do

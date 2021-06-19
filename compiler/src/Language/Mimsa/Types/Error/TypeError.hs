@@ -17,7 +17,8 @@ import Data.Text.Prettyprint.Doc
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error.PatternMatchError
+import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchError (..))
+import qualified Language.Mimsa.Types.Error.PatternMatchError as Pat
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
@@ -94,6 +95,7 @@ getErrorPos (TypedHoles holes) = case M.toList holes of
 getErrorPos (FunctionArityMismatch ann _ _) = fromAnnotation ann
 getErrorPos (CannotUseBuiltInTypeAsConstructor ann _) = fromAnnotation ann
 getErrorPos (InternalConstructorUsedOutsidePatternMatch ann _) = fromAnnotation ann
+getErrorPos (PatternMatchErr pat) = Pat.getErrorPos pat
 getErrorPos _ = (0, 0)
 
 ------

@@ -6,6 +6,7 @@
 module Language.Mimsa.Types.AST.Pattern
   ( Pattern (..),
     printSubPattern,
+    getPatternAnnotation,
   )
 where
 
@@ -17,6 +18,7 @@ import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Literal
+import Language.Mimsa.Types.AST.Spread
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Utils
 
@@ -32,11 +34,21 @@ data Pattern var ann
   | PRecord
       ann
       (Map Name (Pattern var ann))
+  | PArray ann [Pattern var ann] (Spread var ann)
   deriving (Show, Eq, Ord, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
   declareNamedSchema =
     genericDeclareNamedSchemaUnrestricted defaultSchemaOptions
+
+getPatternAnnotation :: Pattern var ann -> ann
+getPatternAnnotation (PWildcard ann) = ann
+getPatternAnnotation (PVar ann _) = ann
+getPatternAnnotation (PLit ann _) = ann
+getPatternAnnotation (PConstructor ann _ _) = ann
+getPatternAnnotation (PPair ann _ _) = ann
+getPatternAnnotation (PRecord ann _) = ann
+getPatternAnnotation (PArray ann _ _) = ann
 
 inParens :: (Printer a) => a -> Doc style
 inParens = parens . prettyDoc
@@ -55,7 +67,10 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
     prettyDoc tyCon
   prettyDoc (PConstructor _ tyCon args) =
     prettyDoc tyCon <> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
-  prettyDoc (PPair _ a b) = "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
+  prettyDoc (PPair _ a b) =
+    "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
+  prettyDoc (PArray _ as spread) =
+    "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> prettyDoc spread <> "]"
   prettyDoc (PRecord _ map') =
     let items = M.toList map'
         printRow = \i (name, val) ->

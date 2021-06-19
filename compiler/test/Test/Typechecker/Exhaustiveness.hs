@@ -7,6 +7,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Identity
+import Data.Either
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Types.AST
@@ -15,6 +16,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Typechecker.Codegen.Shared
+import Test.Utils.Helpers
 
 type PatternM = ExceptT TypeError Identity
 
@@ -34,6 +36,11 @@ redundantCasesCheck ::
   Either TypeError [Pattern Name Annotation]
 redundantCasesCheck = runPatternM . redundantCases testEnv
 
+noDuplicatesCheck ::
+  Pattern Variable Annotation ->
+  Either TypeError ()
+noDuplicatesCheck = runPatternM . noDuplicateVariables
+
 testEnv :: Environment
 testEnv = Environment mempty dts mempty
   where
@@ -41,6 +48,16 @@ testEnv = Environment mempty dts mempty
 
 spec :: Spec
 spec = do
+  describe "Smaller list versions" $ do
+    it "Empty is empty" $ do
+      smallerListVersions [] `shouldBe` ([] :: [[Int]])
+    it "1 list is the same" $ do
+      smallerListVersions [[1]] `shouldBe` ([[1]] :: [[Int]])
+    it "2 list adds a 1 list" $ do
+      smallerListVersions [[1, 2]] `shouldBe` ([[2], [1, 2]] :: [[Int]])
+    it "3 list adds a 2 and a 1 list" $ do
+      smallerListVersions [[1, 2, 3]] `shouldBe` ([[3], [2, 3], [1, 2, 3]] :: [[Int]])
+
   describe "Exhaustiveness" $
     do
       it "Wildcard is fine" $ do
@@ -172,6 +189,26 @@ spec = do
       it "Multiple int literals" $ do
         exhaustiveCheck [PLit mempty (MyInt 1), PLit mempty (MyInt 2)]
           `shouldBe` Right [PWildcard mempty]
+      it "NoSpread Array produces wildcard" $ do
+        exhaustiveCheck [PArray mempty [PLit mempty (MyInt 1)] NoSpread]
+          `shouldBe` Right
+            [ PArray mempty [PWildcard mempty] (SpreadWildcard mempty), -- one or more
+              PArray mempty [] NoSpread -- empty
+            ]
+      it "Spread Array produces all other sized spread cases" $ do
+        exhaustiveCheck [PArray mempty [PLit mempty (MyInt 1)] (SpreadValue mempty "a")]
+          `shouldBe` Right
+            [ PArray mempty [PWildcard mempty] (SpreadWildcard mempty), -- one or more
+              PArray mempty [] NoSpread -- empty
+            ]
+      it "Larger Spread Array produces all other sized spread cases" $ do
+        exhaustiveCheck [PArray mempty [PLit mempty (MyInt 1), PLit mempty (MyInt 2)] (SpreadValue mempty "a")]
+          `shouldBe` Right
+            [ PArray mempty [PWildcard mempty] (SpreadWildcard mempty), -- one or more
+              PArray mempty [PWildcard mempty, PWildcard mempty] (SpreadWildcard mempty), -- two or more
+              PArray mempty [] NoSpread -- empty
+            ]
+
   describe "Redundant cases" $ do
     it "Returns none" $ do
       redundantCasesCheck [PWildcard mempty] `shouldBe` Right mempty
@@ -209,3 +246,104 @@ spec = do
       redundantCasesCheck
         [PLit mempty (MyInt 1), PLit mempty (MyInt 2), PWildcard mempty]
         `shouldBe` Right []
+  describe "noDuplicateVariables" $ do
+    it "Is fine with wildcard" $ do
+      noDuplicatesCheck (PWildcard mempty) `shouldSatisfy` isRight
+    it "Is fine with lit" $ do
+      noDuplicatesCheck (PLit mempty (MyBool True)) `shouldSatisfy` isRight
+    it "Is fine with single var" $ do
+      noDuplicatesCheck (PVar mempty (named "a")) `shouldSatisfy` isRight
+    it "Is fine with a pair of different vars" $ do
+      noDuplicatesCheck
+        ( PPair
+            mempty
+            (PVar mempty (named "a"))
+            (PVar mempty (named "b"))
+        )
+        `shouldSatisfy` isRight
+    it "Hates a pair of the same var" $ do
+      noDuplicatesCheck
+        ( PPair
+            mempty
+            (PVar mempty (named "a"))
+            (PVar mempty (named "a"))
+        )
+        `shouldSatisfy` isLeft
+    it "Is fine with a record of uniques" $ do
+      noDuplicatesCheck
+        ( PRecord
+            mempty
+            ( M.fromList
+                [ ("dog", PVar mempty (named "a")),
+                  ("log", PVar mempty (named "b"))
+                ]
+            )
+        )
+        `shouldSatisfy` isRight
+    it "Is not fine with a record with dupes" $ do
+      noDuplicatesCheck
+        ( PRecord
+            mempty
+            ( M.fromList
+                [ ("dog", PVar mempty (named "a")),
+                  ("log", PVar mempty (named "a"))
+                ]
+            )
+        )
+        `shouldSatisfy` isLeft
+    it "Is fine with an array with no dupes" $ do
+      noDuplicatesCheck
+        ( PArray
+            mempty
+            [ PVar mempty (named "a"),
+              PVar mempty (named "b")
+            ]
+            NoSpread
+        )
+        `shouldSatisfy` isRight
+    it "Is not fine with an array with dupes" $ do
+      noDuplicatesCheck
+        ( PArray
+            mempty
+            [ PVar mempty (named "a"),
+              PVar mempty (named "a")
+            ]
+            NoSpread
+        )
+        `shouldSatisfy` isLeft
+    it "Is not fine with an array with dupes with the spread" $ do
+      noDuplicatesCheck
+        ( PArray
+            mempty
+            [ PVar mempty (named "a"),
+              PVar mempty (named "b")
+            ]
+            (SpreadValue mempty (named "a"))
+        )
+        `shouldSatisfy` isLeft
+    it "Is fine with a constructor with no dupes" $ do
+      noDuplicatesCheck
+        ( PConstructor
+            mempty
+            "dog"
+            [ PVar mempty (named "a"),
+              PVar mempty (named "b")
+            ]
+        )
+        `shouldSatisfy` isRight
+    it "Is not fine with a constructor with dupes" $ do
+      noDuplicatesCheck
+        ( PConstructor
+            mempty
+            "dog"
+            [ PVar mempty (named "a"),
+              PVar mempty (named "b"),
+              PConstructor
+                mempty
+                "dog"
+                [ PVar mempty (named "c"),
+                  PVar mempty (named "a")
+                ]
+            ]
+        )
+        `shouldSatisfy` isLeft
