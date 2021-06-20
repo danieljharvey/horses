@@ -235,3 +235,4 @@ repl:1:1:
   | ^
 Function arity mismatch. Expected 2 but got f -> f
 ```
+

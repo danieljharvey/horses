@@ -69,7 +69,7 @@ jobs:
           fail-on: warning
 
       - name: Run stack build
-        run: cd router && stack build
+        run: cd router && stack build --test --no-run-tests
 
       - name: Run stack test
         run: cd router && stack test
