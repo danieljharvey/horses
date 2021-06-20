@@ -186,6 +186,11 @@ pattern matching:
     [_, ...rest] -> rest 
   | _ -> []
 [ 2, 3 ] :: [ Int ]
+
+:> match "dog" with 
+    head ++ tail -> [head, tail] 
+  | _ -> []
+[ "d", "og" ] :: [ String ]
 ```
 
 case matching:
@@ -199,19 +204,6 @@ Left "poo" :: Either String String
 
 :> eitherMap(\a -> "dog")(Right "poo")
 Right "dog" :: Either A String
-```
-
-string matching:
-
-```haskell
-:> :bind stringHead = \str -> case str of StrHead \c -> \rest -> Just c |
-StrEmpty None
-
-:> stringHead "dog"
-Some "d" :: Option String
-
-:> stringHead ""
-None :: Option String
 ```
 
 typed holes:
