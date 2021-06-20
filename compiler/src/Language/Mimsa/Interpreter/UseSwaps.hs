@@ -96,6 +96,9 @@ useSwapsInPattern (PRecord ann as) =
 useSwapsInPattern (PArray ann as spread) =
   PArray ann <$> traverse useSwapsInPattern as
     <*> useSwapsInSpread spread
+useSwapsInPattern (PString ann a as) =
+  PString ann <$> useSwapsInStringPart a
+    <*> useSwapsInStringPart as
 
 useSwapsInSpread :: Spread Variable ann -> App ann (Spread Name ann)
 useSwapsInSpread NoSpread =
@@ -104,3 +107,7 @@ useSwapsInSpread (SpreadWildcard ann) =
   pure (SpreadWildcard ann)
 useSwapsInSpread (SpreadValue ann var) =
   SpreadValue ann <$> lookupSwap var
+
+useSwapsInStringPart :: StringPart Variable ann -> App ann (StringPart Name ann)
+useSwapsInStringPart (StrWildcard ann) = pure (StrWildcard ann)
+useSwapsInStringPart (StrValue ann var) = StrValue ann <$> lookupSwap var

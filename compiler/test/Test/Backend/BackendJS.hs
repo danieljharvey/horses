@@ -127,6 +127,12 @@ patterns =
     ),
     ( PArray mempty [PVar mempty "a", PLit mempty (MyBool True)] (SpreadValue mempty "b"),
       "pat => pat.length >= 2 && __eq(pat[1], true) ? { a: pat[0], b: pat.slice(2) } : null"
+    ),
+    ( PString mempty (StrWildcard mempty) (StrWildcard mempty),
+      "pat => pat.length >= 1 ? {} : null"
+    ),
+    ( PString mempty (StrValue mempty "a") (StrValue mempty "as"),
+      "pat => pat.length >= 1 ? { a: pat.charAt(0), as: pat.slice(1) } : null"
     )
   ]
 

@@ -92,3 +92,11 @@ spec =
     it "Trailing comma in pattern" $
       testParse "[1,2,]"
         `shouldSatisfy` errorContains "Expected pattern or a spread operator"
+    it "Parses pattern for non-empty string" $
+      testParse "_ ++ _"
+        `shouldBe` Right
+          ( PString
+              mempty
+              (StrWildcard mempty)
+              (StrWildcard mempty)
+          )

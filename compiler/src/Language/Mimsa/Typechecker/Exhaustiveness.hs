@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Exhaustiveness
   ( isExhaustive,
@@ -73,10 +74,16 @@ getVariables (PArray _ as spread) =
    in foldr (M.unionWith (+)) mempty vars
 getVariables (PConstructor _ _ args) =
   foldr (M.unionWith (+)) mempty (getVariables <$> args)
+getVariables (PString _ a as) =
+  M.unionWith (+) (getStringPartVariables a) (getStringPartVariables as)
 
 getSpreadVariables :: Spread Variable Annotation -> Map Variable Int
 getSpreadVariables (SpreadValue _ a) = M.singleton a 1
 getSpreadVariables _ = mempty
+
+getStringPartVariables :: StringPart Variable Annotation -> Map Variable Int
+getStringPartVariables (StrWildcard _) = mempty
+getStringPartVariables (StrValue _ a) = M.singleton a 1
 
 -- | given a list of patterns, return a list of missing patterns
 isExhaustive ::
@@ -106,6 +113,7 @@ generateRequired ::
 generateRequired _ (PLit _ (MyBool True)) = pure [PLit mempty (MyBool False)]
 generateRequired _ (PLit _ (MyBool False)) = pure [PLit mempty (MyBool True)]
 generateRequired _ (PLit _ (MyInt _)) = pure [PWildcard mempty]
+generateRequired _ (PLit _ (MyString "")) = pure [PString mempty (StrWildcard mempty) (StrWildcard mempty)]
 generateRequired _ (PLit _ (MyString _)) = pure [PWildcard mempty]
 generateRequired env (PPair _ l r) = do
   ls <- generateRequired env l
@@ -125,6 +133,7 @@ generateRequired env (PArray _ items _) = do
   items' <- traverse (generateRequired env) items
   let allItems = smallerListVersions (sequence items')
   pure $ (PArray mempty <$> allItems <*> pure (SpreadWildcard mempty)) <> [PArray mempty mempty NoSpread]
+generateRequired _ PString {} = pure [PLit mempty (MyString "")]
 generateRequired _ _ = pure mempty
 
 -- given a list [[1,2,3]], return [[1,2,3], [1,2], [1]]
@@ -193,6 +202,7 @@ annihilate (PConstructor _ tyConA argsA) (PConstructor _ tyConB argsB) =
       (\(a, b) keep -> keep && annihilate a b)
       True
       (zip argsA argsB)
+annihilate PString {} PString {} = True
 annihilate _ _as = False
 
 redundantCases ::

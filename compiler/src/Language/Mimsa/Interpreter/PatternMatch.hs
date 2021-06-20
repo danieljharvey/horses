@@ -10,6 +10,7 @@ import Data.Foldable
 import qualified Data.Map as M
 import Data.Monoid
 import qualified Data.Set as S
+import qualified Data.Text as T
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -73,6 +74,31 @@ patternMatches (PArray _ pAs (SpreadValue _ a)) (MyArray ann as)
     let allPairs = zip pAs as
     nice <- traverse (uncurry patternMatches) allPairs
     pure (mconcat nice <> [binding])
+patternMatches (PString _ pA pAs) (MyLiteral _ (MyString (StringType str))) | not (T.null str) =
+  do
+    let bindingA = case pA of
+          (StrValue ann a) ->
+            [ ( a,
+                MyLiteral
+                  ann
+                  ( MyString
+                      ( StringType (T.singleton (T.head str))
+                      )
+                  )
+              )
+            ]
+          _ -> []
+        bindingAs = case pAs of
+          (StrValue ann as) ->
+            [ ( as,
+                MyLiteral
+                  ann
+                  ( MyString (StringType (T.drop 1 str))
+                  )
+              )
+            ]
+          _ -> []
+    pure (bindingA <> bindingAs)
 patternMatches _ _ = Nothing
 
 consAppToPattern :: Expr Variable ann -> Maybe (TyCon, [Expr Variable ann])

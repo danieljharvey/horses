@@ -36,6 +36,7 @@ import Language.Mimsa.Types.AST
     Operator (..),
     Pattern (..),
     Spread (..),
+    StringPart (..),
     StringType (..),
   )
 import Language.Mimsa.Types.Error
@@ -98,6 +99,15 @@ toPatternMap name (PArray _ as spread) =
           M.singleton a (name <> ".slice(" <> intToJS (length as) <> ")")
         _ -> mempty
    in ([lengthGuard], spreadValue) <> mconcat (mapWithIndex subPattern as)
+toPatternMap name (PString _ a as) =
+  let lengthGuard = GreaterThanOrEQ (name <> ".length") "1"
+      aValue = case a of
+        StrValue _ vA -> M.singleton vA (name <> ".charAt(0)")
+        _ -> mempty
+      asValue = case as of
+        StrValue _ vAs -> M.singleton vAs (name <> ".slice(1)")
+        _ -> mempty
+   in ([lengthGuard], aValue <> asValue)
 
 outputPattern :: Pattern Name ann -> Javascript
 outputPattern pat =
