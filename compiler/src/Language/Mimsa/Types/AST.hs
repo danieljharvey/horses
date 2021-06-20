@@ -8,6 +8,7 @@ module Language.Mimsa.Types.AST
     module Language.Mimsa.Types.AST.InfixOp,
     module Language.Mimsa.Types.AST.Pattern,
     module Language.Mimsa.Types.AST.Spread,
+    module Language.Mimsa.Types.AST.StringPart,
   )
 where
 
@@ -19,4 +20,5 @@ import Language.Mimsa.Types.AST.Literal
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.AST.Spread
+import Language.Mimsa.Types.AST.StringPart
 import Language.Mimsa.Types.AST.StringType

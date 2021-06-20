@@ -19,6 +19,7 @@ import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Literal
 import Language.Mimsa.Types.AST.Spread
+import Language.Mimsa.Types.AST.StringPart
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Utils
 
@@ -35,6 +36,7 @@ data Pattern var ann
       ann
       (Map Name (Pattern var ann))
   | PArray ann [Pattern var ann] (Spread var ann)
+  | PString ann (StringPart var ann) (StringPart var ann)
   deriving (Show, Eq, Ord, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
 
 instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
@@ -49,6 +51,7 @@ getPatternAnnotation (PConstructor ann _ _) = ann
 getPatternAnnotation (PPair ann _ _) = ann
 getPatternAnnotation (PRecord ann _) = ann
 getPatternAnnotation (PArray ann _ _) = ann
+getPatternAnnotation (PString ann _ _) = ann
 
 inParens :: (Printer a) => a -> Doc style
 inParens = parens . prettyDoc
@@ -90,3 +93,5 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
                         )
                       <+> "}"
                   )
+  prettyDoc (PString _ a as) =
+    prettyDoc a <> " ++ " <> prettyDoc as

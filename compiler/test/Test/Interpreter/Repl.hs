@@ -871,3 +871,13 @@ spec =
             result
               `shouldBe` Right
                 (MTPrim mempty MTBool, bool True)
+          it "Matches an empty string" $ do
+            result <- eval stdLib "match \"\" with _ ++ _ -> True | \"\" -> False"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+          it "Matches an non-empty string" $ do
+            result <- eval stdLib "match \"dog\" with a ++ b -> (a,b) | \"\" -> (\"\", \"\")"
+            result
+              `shouldBe` Right
+                ( MTPair mempty (MTPrim mempty MTString) (MTPrim mempty MTString),
+                  MyPair mempty (MyLiteral mempty (MyString "d")) (MyLiteral mempty (MyString "og"))
+                )

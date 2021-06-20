@@ -23,8 +23,8 @@ patternParser :: Parser ParserPattern
 patternParser =
   label
     "pattern match"
-    ( try
-        pairParser
+    ( try stringParser
+        <|> try pairParser
         <|> try wildcardParser
         <|> try variableParser
         <|> try litParser
@@ -161,3 +161,27 @@ spreadValueParser =
         _ <- literalWithSpace "..."
         nameParser
    in withLocation SpreadValue parser
+
+---
+
+stringParser :: Parser (Pattern Name Annotation)
+stringParser =
+  let parser = do
+        a <- stringPartParser
+        _ <- literalWithSpace "++"
+        as <- stringPartParser
+        pure (a, as)
+   in withLocation (\loc (a, as) -> PString loc a as) parser
+
+stringPartParser :: Parser (StringPart Name Annotation)
+stringPartParser =
+  try stringWildcard <|> try stringValue
+
+stringWildcard :: Parser (StringPart Name Annotation)
+stringWildcard =
+  let parser = string "_"
+   in withLocation (\loc _ -> StrWildcard loc) parser
+
+stringValue :: Parser (StringPart Name Annotation)
+stringValue =
+  withLocation StrValue nameParser

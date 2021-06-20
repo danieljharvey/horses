@@ -301,6 +301,10 @@ mapPatternVar chg (PArray ann as spread) = do
   pure (pat, chg2)
 mapPatternVar chg (PWildcard ann) = pure (PWildcard ann, chg)
 mapPatternVar chg (PLit ann a) = pure (PLit ann a, chg)
+mapPatternVar chg (PString ann a as) = do
+  (pA, ch1) <- mapStringPart chg a
+  (pAs, ch2) <- mapStringPart chg as
+  pure (PString ann pA pAs, ch1 <> ch2)
 
 mapSpreadVar ::
   Changed ->
@@ -313,3 +317,10 @@ mapSpreadVar chg (SpreadWildcard ann) =
 mapSpreadVar chg (SpreadValue ann name) = do
   var <- keepName name
   pure (SpreadValue ann var, addChange name var chg)
+
+mapStringPart :: Changed -> StringPart Name ann -> App ann (StringPart Variable ann, Changed)
+mapStringPart chg (StrWildcard ann) =
+  pure (StrWildcard ann, chg)
+mapStringPart chg (StrValue ann name) = do
+  var <- keepName name
+  pure (StrValue ann var, addChange name var chg)

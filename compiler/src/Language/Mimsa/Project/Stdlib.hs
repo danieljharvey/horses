@@ -23,8 +23,12 @@ buildStdlib =
       addType "type Maybe a = Just a | Nothing"
       addType "type Either e a = Left e | Right a"
       addType "type Task r a = Task ((a -> r) -> r)"
+      addType "type Parser a  = Parser (String -> Maybe (a, String))"
       addBinding "id" "\\a -> a"
       addBinding "compose" "\\f -> \\g -> \\a -> f(g(a))"
+      addBinding "runParser" "\\parser -> \\str -> match parser with (Parser p) -> match p(str) with  (Just (\"\", a)) -> (Just a) | _ -> (Nothing)"
+      addBinding "fmapParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> (let outcome = p(str); match outcome with (Just (a, rest)) -> (Just ((f(a),rest))) | _ -> (Nothing)))"
+      addBinding "bindParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> match p(str) with (Just (a, rest)) -> (let nextParser = f(a); match nextParser with (Parser b) -> b(rest)) | _ -> (Nothing))"
 
 addType :: Text -> Actions.ActionM ()
 addType t =

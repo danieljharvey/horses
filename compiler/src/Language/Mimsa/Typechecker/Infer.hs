@@ -441,6 +441,13 @@ inferPattern env (PArray ann items spread) = do
       applySubst (s2 <> s1 <> allSubs) (MTArray ann tyItems),
       newEnv
     )
+inferPattern env (PString ann a as) = do
+  let envFromStrPart x = case x of
+        (StrValue ann' name) ->
+          envFromVar name (Scheme [] (MTPrim ann' MTString))
+        _ -> mempty
+  let newEnv = envFromStrPart a <> envFromStrPart as <> env
+  pure (mempty, MTPrim ann MTString, newEnv)
 
 checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> TcMonad ()
 checkArgsLength ann (DataType _ _ cons) tyCon args = do

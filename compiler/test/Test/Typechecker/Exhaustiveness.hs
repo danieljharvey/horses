@@ -208,7 +208,9 @@ spec = do
               PArray mempty [PWildcard mempty, PWildcard mempty] (SpreadWildcard mempty), -- two or more
               PArray mempty [] NoSpread -- empty
             ]
-
+      it "A string match produces empty string" $ do
+        exhaustiveCheck [PString mempty (StrWildcard mempty) (StrWildcard mempty)]
+          `shouldBe` Right [PLit mempty (MyString "")]
   describe "Redundant cases" $ do
     it "Returns none" $ do
       redundantCasesCheck [PWildcard mempty] `shouldBe` Right mempty
