@@ -450,10 +450,11 @@ inferPattern env (PString ann a as) = do
   pure (mempty, MTPrim ann MTString, newEnv)
 
 checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> TcMonad ()
-checkArgsLength ann (DataType _ _ cons) tyCon args = do
-  case M.lookup tyCon cons of
+checkArgsLength ann dt tyCon args = do
+  case M.lookup tyCon (dtConstructors dt) of
     Just consArgs ->
-      if length consArgs == length args
+      if length consArgs
+        == length args
         then pure ()
         else
           throwError $

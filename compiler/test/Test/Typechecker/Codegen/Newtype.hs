@@ -22,4 +22,4 @@ spec = do
       typecheckInstance unwrap dtWrappedString `shouldSatisfy` isRight
       unwrap dtWrappedString
         `shouldBe` Right
-          (unsafeParse "\\wrappedString -> case wrappedString of Wrapped \\a -> a")
+          (unsafeParse "\\wrappedString -> match wrappedString with (Wrapped a) -> a")

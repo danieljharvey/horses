@@ -4,6 +4,7 @@ module Test.Data.Project
   ( stdLib,
     idExpr,
     addBinding,
+    addExprBinding,
   )
 where
 
@@ -13,6 +14,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Actions
 import Language.Mimsa.Parser (parseExpr)
+import Language.Mimsa.Printer
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -202,6 +204,19 @@ addBinding ::
 addBinding input name env = do
   (ResolvedExpression _ se _ _ _) <-
     evaluateText env input
+  let seUnit = se $> ()
+  let hash = coerce $ snd $ contentAndHash (storeExpression seUnit)
+  let newEnv = fromItem name se hash
+  pure (env <> newEnv)
+
+addExprBinding ::
+  Expr Name Annotation ->
+  Name ->
+  Project Annotation ->
+  Either (Error Annotation) (Project Annotation)
+addExprBinding expr name env = do
+  (ResolvedExpression _ se _ _ _) <-
+    getTypecheckedStoreExpression (prettyPrint expr) env expr
   let seUnit = se $> ()
   let hash = coerce $ snd $ contentAndHash (storeExpression seUnit)
   let newEnv = fromItem name se hash

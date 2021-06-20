@@ -9,6 +9,7 @@ where
 import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable (foldl')
+import qualified Data.List.NonEmpty as NE
 import Data.Semigroup
 import Data.Text (Text)
 import Language.Mimsa.Typechecker.Codegen.Utils
@@ -33,8 +34,9 @@ functorMap_ (DataType tyCon vars items) = do
     Just constructors -> do
       matches <-
         traverse
-          ( \(consName, fields) ->
-              (,) consName <$> createMatch tyCon fVar consName fields
+          ( uncurry
+              ( createMatch tyCon fVar
+              )
           )
           constructors
       pure
@@ -47,11 +49,10 @@ functorMap_ (DataType tyCon vars items) = do
                 ( MyLambda
                     mempty
                     tyName
-                    ( MyCaseMatch
+                    ( MyPatternMatch
                         mempty
                         (MyVar mempty tyName)
-                        matches
-                        Nothing
+                        (NE.toList matches)
                     )
                 )
             )
@@ -114,6 +115,14 @@ reconstructField matchVar fieldItem =
                 (MyVar mempty from)
             )
 
+createPattern :: TyCon -> [FieldItemType] -> Pattern Name ()
+createPattern tyCon fields =
+  PConstructor mempty tyCon (toPattern <$> fields)
+  where
+    toPattern (VariableField a) = PVar mempty a
+    toPattern (RecurseField a) = PVar mempty a
+    toPattern (Func2 a _ _) = PVar mempty a
+
 -- | A match is one item in a case match, that will deconstruct and then
 -- rebuild whatever is inside, mapping over `f` as it does.
 -- TODO: allow the `f` to be configurable and to allow multiple ones so we can
@@ -123,7 +132,7 @@ createMatch ::
   Name ->
   TyCon ->
   [Type ()] ->
-  CodegenM (Expr Name ())
+  CodegenM (Pattern Name (), Expr Name ())
 createMatch typeName matchVar tyCon fields = do
   regFields <-
     traverse (toFieldItemType typeName) fields
@@ -135,12 +144,4 @@ createMatch typeName matchVar tyCon fields = do
           )
           (MyConstructor mempty tyCon)
           regFields
-  pure $
-    foldr
-      ( \case
-          VariableField n -> MyLambda mempty n
-          RecurseField restVar -> MyLambda mempty restVar
-          Func2 fromF _ _ -> MyLambda mempty fromF
-      )
-      withConsApp
-      regFields
+  pure (createPattern tyCon regFields, withConsApp)

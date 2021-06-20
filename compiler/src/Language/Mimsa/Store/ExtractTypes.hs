@@ -65,7 +65,7 @@ extractFromPattern (PWildcard _) = mempty
 extractFromPattern (PVar _ _) = mempty
 extractFromPattern (PLit _ _) = mempty
 extractFromPattern (PArray _ as _) = mconcat $ extractFromPattern <$> as
-extractFromPattern (PString _ _ _) = mempty
+extractFromPattern PString {} = mempty
 
 filterBuiltIns :: Set TyCon -> Set TyCon
 filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)

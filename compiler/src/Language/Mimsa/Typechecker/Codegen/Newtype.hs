@@ -44,12 +44,13 @@ unwrap (DataType tyCon _vars items) = do
         ( MyLambda
             mempty
             tyName
-            ( MyCaseMatch
+            ( MyPatternMatch
                 mempty
                 (MyVar mempty tyName)
-                ( pure (consName, MyLambda mempty "a" (MyVar mempty "a"))
-                )
-                Nothing
+                [ ( PConstructor mempty consName [PVar mempty "a"],
+                    MyVar mempty "a"
+                  )
+                ]
             )
         )
     Just (_, _) -> Left "Constructor should only have one argument"

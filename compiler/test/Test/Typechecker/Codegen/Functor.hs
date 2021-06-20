@@ -13,79 +13,101 @@ import Test.Typechecker.Codegen.Shared
 spec :: Spec
 spec = do
   describe "Functor instances" $ do
-    it "Generates functorMap for dtIdentity" $ do
+    it "dtIdentity functor typechecks" $ do
       typecheckInstance functorMap dtIdentity `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtIdentity" $ do
       functorMap dtIdentity
         `shouldBe` Right
           ( unsafeParse $
-              "let fmap = \\f -> \\identity -> case identity of "
-                <> " Identity \\a -> Identity f(a); "
+              "let fmap = \\f -> \\identity -> match identity with "
+                <> " (Identity a) -> Identity f(a); "
                 <> "fmap"
           )
-    it "Generates functorMap for dtMaybe" $ do
+    it "dtMaybe functor typechecks" $ do
       typecheckInstance functorMap dtMaybe `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtMaybe" $ do
       functorMap dtMaybe
         `shouldBe` Right
           ( unsafeParse $
-              "let fmap = \\f -> \\maybe -> case maybe of "
-                <> "Just \\a -> Just f(a) | Nothing Nothing; fmap"
+              "let fmap = \\f -> \\maybe -> match maybe with "
+                <> "(Just a) -> Just f(a) | Nothing -> Nothing; fmap"
           )
-    it "Generates functorMap for dtThese" $ do
+
+    it "dtThese functor typechecks" $ do
       typecheckInstance functorMap dtThese `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtThese" $ do
       functorMap dtThese
         `shouldBe` Right
           ( unsafeParse $
-              "let fmap = \\f -> \\these -> case these of "
-                <> "That \\b -> That f(b) |"
-                <> "These \\a -> \\b -> These a f(b) | "
-                <> "This \\a -> This a; "
+              "let fmap = \\f -> \\these -> match these with "
+                <> "(That b) -> That f(b) | "
+                <> "(These a b) -> These a f(b) | "
+                <> "(This a) -> This a; "
                 <> "fmap"
           )
-    it "Generates functorMap for dtList" $ do
+
+    it "dtList functor typechecks" $ do
       typecheckInstance functorMap dtList `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtList" $ do
       functorMap dtList
         `shouldBe` Right
           ( unsafeParse $
-              "let fmap = \\f -> \\list -> case list of "
-                <> "Cons \\a -> \\list1 -> Cons f(a) fmap(f)(list1) |"
-                <> "Nil Nil; "
+              "let fmap = \\f -> \\list -> match list with "
+                <> "(Cons a list1) -> Cons f(a) fmap(f)(list1) | "
+                <> "Nil -> Nil; "
                 <> "fmap"
           )
-    it "Generates functorMap for dtDoubleList" $ do
+
+    it "dtDoubleList functor typechecks" $ do
       typecheckInstance functorMap dtDoubleList `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtDoubleList" $ do
       functorMap dtDoubleList
         `shouldBe` Right
           ( unsafeParse $
-              "let fmap = \\f -> \\doubleList -> case doubleList of "
-                <> "DoubleCons \\a -> \\b -> \\doubleList1 -> DoubleCons a f(b) fmap(f)(doubleList1) | "
-                <> "DoubleNil DoubleNil; "
+              "let fmap = \\f -> \\doubleList -> match doubleList with "
+                <> "(DoubleCons a b doubleList1) -> DoubleCons a f(b) fmap(f)(doubleList1) | "
+                <> "DoubleNil -> DoubleNil; "
                 <> "fmap"
           )
-    it "Generates functorMap for dtTree" $ do
+
+    it "dtTree functor typechecks" $ do
       typecheckInstance functorMap dtTree `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtTree" $ do
       functorMap dtTree
         `shouldBe` Right
           ( unsafeParse $
-              "let fmap = \\f -> \\tree -> case tree of "
-                <> "Branch \\tree1 -> \\tree2 -> Branch fmap(f)(tree1) fmap(f)(tree2) | "
-                <> "Leaf \\a -> Leaf f(a); "
+              "let fmap = \\f -> \\tree -> match tree with "
+                <> "(Branch tree1 tree2) -> Branch fmap(f)(tree1) fmap(f)(tree2) | "
+                <> "(Leaf a) -> Leaf f(a); "
                 <> "fmap"
           )
-    it "Generates functorMap for dtReader" $ do
+
+    it "dtReader functor typechecks" $ do
       typecheckInstance functorMap dtReader `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtReader" $ do
       functorMap dtReader
         `shouldBe` Right
           ( unsafeParse $
-              "let fmap = \\f -> \\reader -> case reader of "
-                <> "Reader \\rtoa -> Reader \\r -> f(rtoa(r)); "
+              "let fmap = \\f -> \\reader -> match reader with "
+                <> "(Reader rtoa) -> Reader \\r -> f(rtoa(r)); "
                 <> "fmap"
           )
-    it "Generates functorMap for dtEnv" $ do
+
+    it "dtEnv functor typechecks" $ do
       typecheckInstance functorMap dtEnv `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtEnv" $ do
       functorMap dtEnv
         `shouldBe` Right
           ( unsafeParse $
-              "let fmap = \\f -> \\env -> case env of "
-                <> "Env \\w -> \\a -> Env w f(a); "
+              "let fmap = \\f -> \\env -> match env with "
+                <> "(Env w a) -> Env w f(a); "
                 <> "fmap"
           )

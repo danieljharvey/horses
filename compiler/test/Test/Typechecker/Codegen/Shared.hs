@@ -248,7 +248,15 @@ typecheckInstance mkInstance dt =
             getTypecheckedStoreExpression (prettyPrint expr) stdLib' expr
         )
   where
-    newStdLib = addBinding (prettyPrint dt <> " in {}") "temporaryAddType" stdLib
+    newStdLib =
+      addExprBinding
+        ( MyData
+            mempty
+            (dt $> mempty)
+            (MyRecord mempty mempty)
+        )
+        "temporaryAddType"
+        stdLib
     inst' =
       first ParseError (fmap ($> mempty) (mkInstance dt))
 

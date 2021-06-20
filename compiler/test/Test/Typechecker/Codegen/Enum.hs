@@ -17,7 +17,7 @@ spec = do
       typecheckInstance toString dtTrafficLights `shouldSatisfy` isRight
       let expected =
             unsafeParse
-              "\\trafficLights -> case trafficLights of Green \"Green\" | Red \"Red\" | Yellow \"Yellow\""
+              "\\trafficLights -> match trafficLights with Green -> \"Green\" | Red -> \"Red\" | Yellow -> \"Yellow\""
 
       toString dtTrafficLights
         `shouldBe` Right expected
