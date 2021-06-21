@@ -63,11 +63,6 @@ useSwaps' (MyData ann dt b) =
   MyData ann dt <$> useSwaps' b
 useSwaps' (MyConstructor ann name) = pure (MyConstructor ann name)
 useSwaps' (MyConsApp ann fn var) = MyConsApp ann <$> useSwaps' fn <*> useSwaps' var
-useSwaps' (MyCaseMatch ann expr' matches catchAll) = do
-  let useSwapsPair (name, expr'') = (,) name <$> useSwaps' expr''
-  matches' <- traverse useSwapsPair matches
-  catchAll' <- traverse useSwaps' catchAll
-  MyCaseMatch ann <$> useSwaps' expr' <*> pure matches' <*> pure catchAll'
 useSwaps' (MyPatternMatch ann expr' patterns) = do
   let useSwapsPair (pat, expr'') = (,) <$> useSwapsInPattern pat <*> useSwaps' expr''
   patterns' <- traverse useSwapsPair patterns

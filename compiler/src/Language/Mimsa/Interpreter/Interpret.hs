@@ -11,7 +11,6 @@ import Control.Monad.Except
 import Data.Functor
 import qualified Data.Map as M
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Interpreter.CaseMatch
 import Language.Mimsa.Interpreter.InstantiateVar
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.Types
@@ -220,9 +219,6 @@ interpretWithScope interpretExpr =
     (MyIf ann predicate true false) ->
       interpretIf ann predicate true false
     (MyData _ _ expr) -> interpretWithScope expr
-    (MyCaseMatch _ expr' matches catchAll) -> do
-      expr'' <- interpretWithScope expr'
-      caseMatch expr'' matches catchAll >>= interpretWithScope
     (MyPatternMatch _ expr' patterns) -> do
       expr'' <- interpretWithScope expr'
       patternMatch expr'' patterns >>= interpretWithScope

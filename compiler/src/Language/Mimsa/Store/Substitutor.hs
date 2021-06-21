@@ -249,11 +249,6 @@ mapVar chg (MyData ann dt b) =
   MyData ann dt <$> mapVar chg b
 mapVar _ (MyConstructor ann name) = pure (MyConstructor ann name)
 mapVar chg (MyConsApp ann fn var) = MyConsApp ann <$> mapVar chg fn <*> mapVar chg var
-mapVar chg (MyCaseMatch ann expr' matches catchAll) = do
-  let mapVarPair (name, expr'') = (,) name <$> mapVar chg expr''
-  matches' <- traverse mapVarPair matches
-  catchAll' <- traverse (mapVar chg) catchAll
-  MyCaseMatch ann <$> mapVar chg expr' <*> pure matches' <*> pure catchAll'
 mapVar chg (MyPatternMatch ann expr' patterns) = do
   let mapVarPair (pat, expr'') = do
         (newPat, newChg) <- mapPatternVar chg pat

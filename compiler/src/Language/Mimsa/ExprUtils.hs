@@ -10,7 +10,6 @@ module Language.Mimsa.ExprUtils
 where
 
 import Data.Bifunctor (second)
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
 
@@ -42,7 +41,6 @@ getAnnotation (MyRecordAccess ann _ _) = ann
 getAnnotation (MyData ann _ _) = ann
 getAnnotation (MyConstructor ann _) = ann
 getAnnotation (MyConsApp ann _ _) = ann
-getAnnotation (MyCaseMatch ann _ _ _) = ann
 getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyDefineInfix ann _ _ _) = ann
 getAnnotation (MyArray ann _) = ann
@@ -141,17 +139,6 @@ withMonoid f whole@(MyConsApp _ func arg) =
         else
           m <> withMonoid f func
             <> withMonoid f arg
-withMonoid f whole@(MyCaseMatch _ matchExpr caseExprs catchExpr) =
-  let (go, m) = f whole
-   in if not go
-        then m
-        else
-          m <> withMonoid f matchExpr
-            <> mconcat
-              ( NE.toList
-                  (withMonoid f <$> (snd <$> caseExprs))
-              )
-            <> maybe mempty (withMonoid f) catchExpr
 withMonoid f whole@MyTypedHole {} = snd (f whole)
 withMonoid f whole@(MyDefineInfix _ _ _ inExpr) =
   let (go, m) = f whole
@@ -188,8 +175,6 @@ mapExpr f (MyData ann dt expr) = MyData ann dt (f expr)
 mapExpr _ (MyConstructor ann cons) = MyConstructor ann cons
 mapExpr f (MyConsApp ann func arg) =
   MyConsApp ann (f func) (f arg)
-mapExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
-  MyCaseMatch ann (f matchExpr) (second f <$> caseExprs) (f <$> catchExpr)
 mapExpr f (MyPatternMatch ann matchExpr patterns) =
   MyPatternMatch ann (f matchExpr) (second f <$> patterns)
 mapExpr _ (MyTypedHole ann a) = MyTypedHole ann a
@@ -233,14 +218,6 @@ bindExpr _ (MyConstructor ann cons) =
   pure $ MyConstructor ann cons
 bindExpr f (MyConsApp ann func arg) =
   MyConsApp ann <$> f func <*> f arg
-bindExpr f (MyCaseMatch ann matchExpr caseExprs catchExpr) =
-  MyCaseMatch
-    ann
-    <$> f matchExpr
-    <*> traverse traverseSecond caseExprs
-    <*> traverse f catchExpr
-  where
-    traverseSecond (a, b) = (a,) <$> f b
 bindExpr _ (MyTypedHole ann a) = pure (MyTypedHole ann a)
 bindExpr f (MyDefineInfix ann op bindName expr) =
   MyDefineInfix ann op bindName <$> f expr
