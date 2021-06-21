@@ -16,11 +16,11 @@ import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions
+import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Server.ExpressionData
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
-import Language.Mimsa.Typechecker.Codegen
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project

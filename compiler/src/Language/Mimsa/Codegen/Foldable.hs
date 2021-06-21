@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen.Foldable
+module Language.Mimsa.Codegen.Foldable
   ( fold,
   )
 where
@@ -9,8 +9,9 @@ where
 import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable (foldl')
+import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
-import Language.Mimsa.Typechecker.Codegen.Utils
+import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
@@ -32,8 +33,9 @@ fold_ (DataType tyCon vars items) = do
     Just constructors -> do
       matches <-
         traverse
-          ( \(consName, fields) ->
-              (,) consName <$> createMatch tyCon fVar fields
+          ( uncurry
+              ( createMatch tyCon fVar
+              )
           )
           constructors
       pure
@@ -49,11 +51,10 @@ fold_ (DataType tyCon vars items) = do
                     ( MyLambda
                         mempty
                         tyName
-                        ( MyCaseMatch
+                        ( MyPatternMatch
                             mempty
                             (MyVar mempty tyName)
-                            matches
-                            Nothing
+                            (NE.toList matches)
                         )
                     )
                 )
@@ -82,6 +83,12 @@ toFieldItemType tyName matchVar = \case
       then pure (varName, Recurse varName)
       else throwError "Can only recurse over self"
   _ -> throwError "Expected VarName"
+
+patternFromFieldItemType :: TyCon -> [Name] -> Pattern Name ()
+patternFromFieldItemType tyCon names =
+  PConstructor mempty tyCon (patForField <$> names)
+  where
+    patForField a = PVar mempty a
 
 reconstructFields :: [FieldItemType] -> Expr Name ()
 reconstructFields =
@@ -117,15 +124,14 @@ reconstructFields =
 createMatch ::
   TyCon ->
   Name ->
+  TyCon ->
   [Type ()] ->
-  CodegenM (Expr Name ())
-createMatch typeName matchVar fields = do
+  CodegenM (Pattern Name (), Expr Name ())
+createMatch typeName matchVar tyCon fields = do
   fieldItems <- traverse (toFieldItemType typeName matchVar) fields
   let expr' =
         reconstructFields (snd <$> fieldItems)
-  pure $
-    foldr
-      ( MyLambda mempty
-      )
+  pure
+    ( patternFromFieldItemType tyCon (fst <$> fieldItems),
       expr'
-      (fst <$> fieldItems)
+    )

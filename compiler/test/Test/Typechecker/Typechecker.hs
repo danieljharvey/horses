@@ -14,13 +14,13 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Test.Hspec
-import Test.Typechecker.Codegen.Shared
+import Test.Codegen.Shared
   ( dtEither,
     dtMaybe,
     dtPair,
     dtThese,
   )
+import Test.Hspec
 import Test.Utils.Helpers
 
 exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]

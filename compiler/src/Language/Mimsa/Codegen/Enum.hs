@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen.Enum
+module Language.Mimsa.Codegen.Enum
   ( toString,
   )
 where
@@ -23,7 +23,11 @@ toString (DataType tyCon [] items) = do
   let tyName = tyConToName tyCon
   let createMatch (consName, vars) =
         case vars of
-          [] -> Right (consName, str (showTyCon consName))
+          [] ->
+            Right
+              ( PConstructor mempty consName mempty,
+                str (showTyCon consName)
+              )
           _ ->
             Left $
               "Constructor "
@@ -32,16 +36,15 @@ toString (DataType tyCon [] items) = do
   matches <- traverse createMatch (M.toList items)
   case NE.nonEmpty matches of
     Nothing -> Left "Type has no constructors"
-    Just neMatches ->
+    Just _ ->
       Right
         ( MyLambda
             mempty
             tyName
-            ( MyCaseMatch
+            ( MyPatternMatch
                 mempty
                 (MyVar mempty tyName)
-                neMatches
-                Nothing
+                matches
             )
         )
 toString _ = Left "Datatype is expected to have no parameters"

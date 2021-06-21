@@ -1,18 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Typechecker.Codegen
+module Test.Codegen
   ( spec,
   )
 where
 
-import Language.Mimsa.Typechecker.Codegen
+import Language.Mimsa.Codegen
+import qualified Test.Codegen.Applicative as Applicative
+import qualified Test.Codegen.Enum as Enum
+import qualified Test.Codegen.Foldable as Foldable
+import qualified Test.Codegen.Functor as Functor
+import qualified Test.Codegen.Newtype as Newtype
+import Test.Codegen.Shared
 import Test.Hspec
-import qualified Test.Typechecker.Codegen.Applicative as Applicative
-import qualified Test.Typechecker.Codegen.Enum as Enum
-import qualified Test.Typechecker.Codegen.Foldable as Foldable
-import qualified Test.Typechecker.Codegen.Functor as Functor
-import qualified Test.Typechecker.Codegen.Newtype as Newtype
-import Test.Typechecker.Codegen.Shared
 
 spec :: Spec
 spec = do

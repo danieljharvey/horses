@@ -881,3 +881,6 @@ spec =
                 ( MTPair mempty (MTPrim mempty MTString) (MTPrim mempty MTString),
                   MyPair mempty (MyLiteral mempty (MyString "d")) (MyLiteral mempty (MyString "og"))
                 )
+          it "Fix empty pattern match obscuring bindings" $ do
+            result <- eval stdLib "\\a -> match None with (None) -> a | _ -> a"
+            result `shouldSatisfy` isRight

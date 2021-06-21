@@ -14,8 +14,8 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Test.Codegen.Shared
 import Test.Hspec
-import Test.Typechecker.Codegen.Shared
 import Test.Utils.Helpers
 
 type PatternM = ExceptT TypeError Identity

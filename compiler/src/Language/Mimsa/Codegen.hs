@@ -2,16 +2,16 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen
+module Language.Mimsa.Codegen
   ( Typeclass (..),
     typeclassMatches,
     doCodegen,
-    module Language.Mimsa.Typechecker.Codegen.Newtype,
-    module Language.Mimsa.Typechecker.Codegen.Enum,
-    module Language.Mimsa.Typechecker.Codegen.Functor,
-    module Language.Mimsa.Typechecker.Codegen.Foldable,
-    module Language.Mimsa.Typechecker.Codegen.ApplicativePure,
-    module Language.Mimsa.Typechecker.Codegen.ApplicativeApply,
+    module Language.Mimsa.Codegen.Newtype,
+    module Language.Mimsa.Codegen.Enum,
+    module Language.Mimsa.Codegen.Functor,
+    module Language.Mimsa.Codegen.Foldable,
+    module Language.Mimsa.Codegen.ApplicativePure,
+    module Language.Mimsa.Codegen.ApplicativeApply,
   )
 where
 
@@ -23,13 +23,13 @@ import qualified Data.Map as M
 import Data.Swagger (ToSchema)
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
+import Language.Mimsa.Codegen.ApplicativeApply
+import Language.Mimsa.Codegen.ApplicativePure
+import Language.Mimsa.Codegen.Enum
+import Language.Mimsa.Codegen.Foldable
+import Language.Mimsa.Codegen.Functor
+import Language.Mimsa.Codegen.Newtype
 import Language.Mimsa.Printer
-import Language.Mimsa.Typechecker.Codegen.ApplicativeApply
-import Language.Mimsa.Typechecker.Codegen.ApplicativePure
-import Language.Mimsa.Typechecker.Codegen.Enum
-import Language.Mimsa.Typechecker.Codegen.Foldable
-import Language.Mimsa.Typechecker.Codegen.Functor
-import Language.Mimsa.Typechecker.Codegen.Newtype
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 
