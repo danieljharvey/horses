@@ -11,6 +11,7 @@ import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable (foldl')
 import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -45,11 +46,10 @@ applicativeApply_ (DataType tyCon vars items) = do
         ( MyLambda
             mempty
             (aName tyCon)
-            ( MyCaseMatch
+            ( MyPatternMatch
                 mempty
                 (MyVar mempty (fName tyCon))
-                matches
-                Nothing
+                (NE.toList matches)
             )
         )
     )
@@ -72,7 +72,7 @@ createMatches ::
   TyCon ->
   [Name] ->
   Map TyCon [Type ()] ->
-  CodegenM (NonEmpty (TyCon, Expr Name ()))
+  CodegenM (NonEmpty (Pattern Name (), Expr Name ()))
 createMatches typeName vars items = do
   funcVar <- getFunctorVar vars
   constructors <- getMapItemsM items
@@ -80,20 +80,25 @@ createMatches typeName vars items = do
     ( \(k, as) ->
         if containsVar funcVar as
           then createMatch typeName funcVar items (k, as)
-          else pure (k, noOpMatch k as)
+          else pure (noOpMatch k as)
     )
     constructors
 
 -- | a case match that reconstructs the given expr untouched
-noOpMatch :: TyCon -> [Type ()] -> Expr Name ()
+noOpMatch :: TyCon -> [Type ()] -> (Pattern Name (), Expr Name ())
 noOpMatch tyCon fields =
-  foldl'
-    ( \expr' (i, _field) ->
-        let fieldName = Name ("a" <> T.pack (show i))
-         in MyLambda mempty fieldName (MyConsApp mempty expr' (MyVar mempty fieldName))
-    )
-    (MyConstructor mempty tyCon)
-    (reverse $ zip ([1 ..] :: [Integer]) (reverse fields))
+  let numberedFields = (reverse $ zip ([1 ..] :: [Integer]) (reverse fields))
+      mkFieldName i = Name ("a" <> T.pack (show i))
+      patternExpr =
+        foldl'
+          ( \expr' (i, _field) ->
+              let fieldName = mkFieldName i
+               in MyConsApp mempty expr' (MyVar mempty fieldName)
+          )
+          (MyConstructor mempty tyCon)
+          numberedFields
+      pat = PConstructor mempty tyCon (PVar mempty . mkFieldName . fst <$> numberedFields)
+   in (pat, patternExpr)
 
 newtype FieldItemType = VariableField Name
   deriving (Eq, Ord)
@@ -126,7 +131,7 @@ createInnerMatch ::
   Name ->
   TyCon ->
   [Type ()] ->
-  CodegenM (Expr Name ())
+  CodegenM (Pattern Name (), Expr Name ())
 createInnerMatch matchVar tyCon fields = do
   regFields <-
     traverse toFieldItemType fields
@@ -138,13 +143,11 @@ createInnerMatch matchVar tyCon fields = do
           )
           (MyConstructor mempty tyCon)
           regFields
-  pure $
-    foldr
-      ( \case
-          VariableField n -> MyLambda mempty n
-      )
+  let pat = patternFromFieldItemType tyCon regFields
+  pure
+    ( pat,
       withConsApp
-      regFields
+    )
 
 -- we can't cope with two functor F values right now
 multiFunctorCheck :: [FieldItemType] -> CodegenM ()
@@ -155,43 +158,35 @@ multiFunctorCheck items =
       throwError
         "Multiple functor variables in first applicative argument"
 
+patternFromFieldItemType :: TyCon -> [FieldItemType] -> Pattern Name ()
+patternFromFieldItemType tyCon fields =
+  PConstructor mempty tyCon (toPat <$> fields)
+  where
+    toPat (VariableField a) = PVar mempty a
+
 createMatch ::
   TyCon ->
   Name ->
-  Map
-    TyCon
-    [Type ()] ->
+  Map TyCon [Type ()] ->
   (TyCon, [Type ()]) ->
-  CodegenM (TyCon, Expr Name ())
+  CodegenM (Pattern Name (), Expr Name ())
 createMatch typeName funcVar items (tyCon, fields) = do
   regFields <- traverse (toFieldItemTypeF funcVar) fields
   multiFunctorCheck regFields
-  let lambdas expr' =
-        foldr
-          ( \case
-              VariableField n -> MyLambda mempty n
-          )
-          expr'
-          regFields
   constructors <- getMapItemsM items
   matches <-
     traverse
       ( \(k, as) ->
           if containsVar funcVar as
-            then do
-              innerMatch <- createInnerMatch funcVar k as
-              pure (k, innerMatch)
-            else pure (k, noOpMatch k as)
+            then createInnerMatch funcVar k as
+            else pure (noOpMatch k as)
       )
       constructors
 
   pure
-    ( tyCon,
-      lambdas
-        ( MyCaseMatch
-            mempty
-            (MyVar mempty (aName typeName))
-            matches
-            Nothing
-        )
+    ( patternFromFieldItemType tyCon regFields,
+      MyPatternMatch
+        mempty
+        (MyVar mempty (aName typeName))
+        (NE.toList matches)
     )
