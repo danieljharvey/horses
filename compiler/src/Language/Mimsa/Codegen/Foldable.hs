@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen.Foldable
+module Language.Mimsa.Codegen.Foldable
   ( fold,
   )
 where
@@ -11,7 +11,7 @@ import Data.Coerce
 import Data.Foldable (foldl')
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
-import Language.Mimsa.Typechecker.Codegen.Utils
+import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker

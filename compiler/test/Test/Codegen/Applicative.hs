@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Typechecker.Codegen.Applicative
+module Test.Codegen.Applicative
   ( spec,
   )
 where
 
 import Data.Either (isLeft, isRight)
-import Language.Mimsa.Typechecker.Codegen
+import Language.Mimsa.Codegen
+import Test.Codegen.Shared
 import Test.Hspec
-import Test.Typechecker.Codegen.Shared
 
 spec :: Spec
 spec = do

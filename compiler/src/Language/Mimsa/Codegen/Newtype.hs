@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen.Newtype
+module Language.Mimsa.Codegen.Newtype
   ( wrap,
     unwrap,
   )

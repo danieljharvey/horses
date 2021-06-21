@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen.Functor
+module Language.Mimsa.Codegen.Functor
   ( functorMap,
   )
 where
@@ -12,7 +12,7 @@ import Data.Foldable (foldl')
 import qualified Data.List.NonEmpty as NE
 import Data.Semigroup
 import Data.Text (Text)
-import Language.Mimsa.Typechecker.Codegen.Utils
+import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker

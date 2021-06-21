@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 45756329b8ec8ba4691d863b37c8a014572ce866fdb3d582a699343e6bdac765
+-- hash: 5469edd3ee2060796a3352f2c2472f9530a5bcd39ff691fefb2a3f768e3b3fa9
 
 name:           mimsa
 version:        0.1.0.0
@@ -44,6 +44,14 @@ library
       Language.Mimsa.Backend.Types
       Language.Mimsa.Backend.ZipFile
       Language.Mimsa.CLI
+      Language.Mimsa.Codegen
+      Language.Mimsa.Codegen.ApplicativeApply
+      Language.Mimsa.Codegen.ApplicativePure
+      Language.Mimsa.Codegen.Enum
+      Language.Mimsa.Codegen.Foldable
+      Language.Mimsa.Codegen.Functor
+      Language.Mimsa.Codegen.Newtype
+      Language.Mimsa.Codegen.Utils
       Language.Mimsa.ExprUtils
       Language.Mimsa.Interpreter
       Language.Mimsa.Interpreter.CaseMatch
@@ -122,14 +130,6 @@ library
       Language.Mimsa.Store.Substitutor
       Language.Mimsa.Store.UpdateDeps
       Language.Mimsa.Typechecker
-      Language.Mimsa.Typechecker.Codegen
-      Language.Mimsa.Typechecker.Codegen.ApplicativeApply
-      Language.Mimsa.Typechecker.Codegen.ApplicativePure
-      Language.Mimsa.Typechecker.Codegen.Enum
-      Language.Mimsa.Typechecker.Codegen.Foldable
-      Language.Mimsa.Typechecker.Codegen.Functor
-      Language.Mimsa.Typechecker.Codegen.Newtype
-      Language.Mimsa.Typechecker.Codegen.Utils
       Language.Mimsa.Typechecker.DataTypes
       Language.Mimsa.Typechecker.DisplayError
       Language.Mimsa.Typechecker.Environment
@@ -324,6 +324,13 @@ test-suite mimsa-test
       Test.Actions.Evaluate
       Test.Backend.BackendJS
       Test.Backend.Runtimes
+      Test.Codegen
+      Test.Codegen.Applicative
+      Test.Codegen.Enum
+      Test.Codegen.Foldable
+      Test.Codegen.Functor
+      Test.Codegen.Newtype
+      Test.Codegen.Shared
       Test.Data.Project
       Test.Interpreter.InstantiateVar
       Test.Interpreter.Interpreter
@@ -342,13 +349,6 @@ test-suite mimsa-test
       Test.Store.Resolver
       Test.Store.Substitutor
       Test.Store.UpdateDeps
-      Test.Typechecker.Codegen
-      Test.Typechecker.Codegen.Applicative
-      Test.Typechecker.Codegen.Enum
-      Test.Typechecker.Codegen.Foldable
-      Test.Typechecker.Codegen.Functor
-      Test.Typechecker.Codegen.Newtype
-      Test.Typechecker.Codegen.Shared
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.Typechecker
       Test.Typechecker.TypeError

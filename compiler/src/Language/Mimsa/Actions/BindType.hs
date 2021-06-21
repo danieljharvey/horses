@@ -11,10 +11,10 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
-import Language.Mimsa.Typechecker.Codegen
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project

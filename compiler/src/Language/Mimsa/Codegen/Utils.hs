@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen.Utils
+module Language.Mimsa.Codegen.Utils
   ( nextName,
     CodegenM,
     runCodegenM,

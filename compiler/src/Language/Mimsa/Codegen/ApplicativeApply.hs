@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen.ApplicativeApply
+module Language.Mimsa.Codegen.ApplicativeApply
   ( applicativeApply,
   )
 where
@@ -15,7 +15,7 @@ import Data.Map (Map)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Typechecker.Codegen.Utils
+import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker

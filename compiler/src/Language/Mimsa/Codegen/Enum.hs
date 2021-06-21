@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Codegen.Enum
+module Language.Mimsa.Codegen.Enum
   ( toString,
   )
 where

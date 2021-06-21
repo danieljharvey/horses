@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Typechecker.Codegen.Shared
+module Test.Codegen.Shared
   ( typecheckInstance,
     unsafeParse,
     dtVoid,

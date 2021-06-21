@@ -13,6 +13,7 @@ import qualified Test.Actions.Compile as Compile
 import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Backend.BackendJS as JS
 import qualified Test.Backend.Runtimes as Runtimes
+import qualified Test.Codegen as Codegen
 import Test.Hspec
 import qualified Test.Interpreter.InstantiateVar as InstantiateVar
 import qualified Test.Interpreter.Interpreter as Interpreter
@@ -31,7 +32,6 @@ import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
-import qualified Test.Typechecker.Codegen as Codegen
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typechecker as Typechecker

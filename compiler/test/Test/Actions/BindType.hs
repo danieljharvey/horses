@@ -12,15 +12,15 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Typechecker.Codegen
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Test.Codegen.Shared
 import Test.Data.Project
 import Test.Hspec
-import Test.Typechecker.Codegen.Shared
 
 projectStoreSize :: Project ann -> Int
 projectStoreSize = length . getStore . prjStore
