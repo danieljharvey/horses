@@ -289,8 +289,8 @@ spec =
           result
             `shouldBe` Right
               (MTPrim mempty MTBool, bool False)
-        it "type Maybe a = Just a | Nothing in match Just 1 with Just \\a -> True | Nothing 1" $ do
-          result <- eval stdLib "type Maybe a = Just a | Nothing in match Just 1 with Just \\a -> True | Nothing 1"
+        it "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> True | Nothing -> 1" $ do
+          result <- eval stdLib "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> True | Nothing -> 1"
           result `shouldSatisfy` isLeft
         it "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq(100)(a) | _ -> False" $ do
           result <- eval stdLib "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq(100)(a) | _ -> False"
