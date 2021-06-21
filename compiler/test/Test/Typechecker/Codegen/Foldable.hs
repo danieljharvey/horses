@@ -13,47 +13,62 @@ import Test.Typechecker.Codegen.Shared
 spec :: Spec
 spec = do
   describe "Foldable instances" $ do
-    it "Generates fold for dtIdentity" $ do
+    it "Foldable dtIdentity typechecks" $ do
       typecheckInstance fold dtIdentity `shouldSatisfy` isRight
+
+    it "Generates fold for dtIdentity" $ do
       fold dtIdentity
         `shouldBe` Right
           ( unsafeParse
-              "let fold = \\f -> \\total -> \\identity -> case identity of Identity \\a -> f(total)(a); fold"
+              "let fold = \\f -> \\total -> \\identity -> match identity with (Identity a) -> f(total)(a); fold"
           )
-    it "Generates fold for dtMaybe" $ do
+
+    it "Foldable dtMaybe typechecks" $ do
       typecheckInstance fold dtMaybe `shouldSatisfy` isRight
+
+    it "Generates fold for dtMaybe" $ do
       fold dtMaybe
         `shouldBe` Right
-          ( unsafeParse
-              "let fold = \\f -> \\total -> \\maybe -> case maybe of Just \\a -> f(total)(a) | Nothing total; fold"
+          ( unsafeParse $
+              "let fold = \\f -> \\total -> \\maybe -> match maybe with "
+                <> "(Just a) -> f(total)(a) "
+                <> "| Nothing -> total; fold"
           )
-    it "Generates fold for dtThese" $ do
+
+    it "Foldable dtThese typechecks" $ do
       typecheckInstance fold dtThese `shouldSatisfy` isRight
+
+    it "Generates fold for dtThese" $ do
       fold dtThese
         `shouldBe` Right
           ( unsafeParse $
-              "let fold = \\f -> \\total -> \\these -> case these of "
-                <> "That \\b -> f(total)(b) | "
-                <> "These \\a -> \\b -> f(total)(b) | "
-                <> "This \\a -> total; "
+              "let fold = \\f -> \\total -> \\these -> match these with "
+                <> "(That b) -> f(total)(b) | "
+                <> "(These a b) -> f(total)(b) | "
+                <> "(This a) -> total; "
                 <> "fold"
           )
-    it "Generates fold for dtList" $ do
+    it "Foldable dtList typechecks" $ do
       typecheckInstance fold dtList `shouldSatisfy` isRight
+
+    it "Generates fold for dtList" $ do
       fold dtList
         `shouldBe` Right
           ( unsafeParse $
-              "let fold = \\f -> \\total -> \\list -> case list of "
-                <> "Cons \\a -> \\list1 -> fold(f)(f(total)(a))(list1) | "
-                <> "Nil total; "
+              "let fold = \\f -> \\total -> \\list -> match list with "
+                <> "(Cons a list1) -> fold(f)(f(total)(a))(list1) | "
+                <> "Nil -> total; "
                 <> "fold"
           )
-    it "Generates fold for dtEnv" $ do
+
+    it "Foldable dtEnv typechecks" $ do
       typecheckInstance fold dtEnv `shouldSatisfy` isRight
+
+    it "Generates fold for dtEnv" $ do
       fold dtEnv
         `shouldBe` Right
           ( unsafeParse $
               "let fold = \\f -> \\total -> \\env -> "
-                <> " case env of Env \\w -> \\a -> f(total)(a); "
+                <> " match env with (Env w a) -> f(total)(a); "
                 <> "fold"
           )

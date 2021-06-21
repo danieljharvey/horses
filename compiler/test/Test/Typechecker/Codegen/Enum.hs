@@ -13,8 +13,10 @@ import Test.Typechecker.Codegen.Shared
 spec :: Spec
 spec = do
   describe "Enum instances" $ do
-    it "Generates toString for dtTrafficLights" $ do
+    it "Enum dtTrafficLights typechecks" $ do
       typecheckInstance toString dtTrafficLights `shouldSatisfy` isRight
+
+    it "Generates toString for dtTrafficLights" $ do
       let expected =
             unsafeParse
               "\\trafficLights -> match trafficLights with Green -> \"Green\" | Red -> \"Red\" | Yellow -> \"Yellow\""

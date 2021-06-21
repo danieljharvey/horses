@@ -120,6 +120,34 @@ spec = do
                 ]
             ans = testSubstitute mempty (StoreExpression expr mempty mempty)
         ans `shouldBe` SubstitutedExpression expectSwaps expected mempty
+    it "Pattern match entries work" $ do
+      let expr =
+            MyLambda
+              mempty
+              "a"
+              ( MyPatternMatch
+                  mempty
+                  (int 1)
+                  [ (PLit mempty (MyInt 1), MyVar mempty "a"),
+                    (PWildcard mempty, MyVar mempty "a")
+                  ]
+              )
+          expected =
+            MyLambda
+              mempty
+              (numbered 0)
+              ( MyPatternMatch
+                  mempty
+                  (int 1)
+                  [ (PLit mempty (MyInt 1), MyVar mempty (numbered 0)),
+                    ( PWildcard mempty,
+                      MyVar mempty (numbered 0)
+                    )
+                  ]
+              )
+          expectSwaps = M.singleton (numbered 0) "a"
+          ans = testSubstitute mempty (StoreExpression expr mempty mempty)
+      ans `shouldBe` SubstitutedExpression expectSwaps expected mempty
     describe "One level of dep" $
       it "Vars introduced by deps are given numbers" $
         do

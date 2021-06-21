@@ -17,7 +17,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
-import qualified Data.Set as S
+-- import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
@@ -98,19 +98,22 @@ inferVarFromScope ::
   Variable ->
   TcMonad (Substitutions, MonoType)
 inferVarFromScope env@(Environment env' _ _) ann var' =
-  case M.lookup
-    (variableToTypeIdentifier var')
-    env' of
+  case M.lookup (variableToTypeIdentifier var') env' of
     Just mt ->
       instantiate mt
     _ -> do
-      swaps <- ask
-      throwError $
-        VariableNotInEnv
-          swaps
-          ann
-          var'
-          (S.fromList (M.keys (getSchemes env)))
+      bind <- findActualBindingInSwaps var'
+      inferVarFromScope env ann bind
+
+{-Nothing -> do
+          swaps <- ask
+          throwError $
+            VariableNotInEnv
+              swaps
+              ann
+              var'
+              (S.fromList (M.keys (getSchemes env)))
+-}
 
 envFromVar :: Variable -> Scheme -> Environment
 envFromVar binder scheme =

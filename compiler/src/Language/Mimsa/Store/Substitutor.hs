@@ -282,29 +282,29 @@ mapPatternVar chg (PVar ann name) = do
 mapPatternVar chg (PConstructor ann name more) = do
   subPatterns <- traverse (mapPatternVar chg) more
   let pat = PConstructor ann name (fst <$> subPatterns)
-  let newChg = mconcat (snd <$> subPatterns)
+  let newChg = mconcat (snd <$> subPatterns) <> chg
   pure (pat, newChg)
 mapPatternVar chg (PPair ann a b) = do
   (pA, ch1) <- mapPatternVar chg a
   (pB, ch2) <- mapPatternVar chg b
-  pure (PPair ann pA pB, ch1 <> ch2)
+  pure (PPair ann pA pB, ch1 <> ch2 <> chg)
 mapPatternVar chg (PRecord ann items) = do
   newMap <- traverse (mapPatternVar chg) items
   let pat = PRecord ann (fst <$> newMap)
-  let newChg = mconcat $ M.elems (snd <$> newMap)
+  let newChg = mconcat (M.elems (snd <$> newMap)) <> chg
   pure (pat, newChg)
 mapPatternVar chg (PArray ann as spread) = do
   newMap <- traverse (mapPatternVar chg) as
   (newSpread, chg1) <- mapSpreadVar chg spread
   let pat = PArray ann (fst <$> newMap) newSpread
-  let chg2 = mconcat (snd <$> newMap) <> chg1
+  let chg2 = mconcat (snd <$> newMap) <> chg1 <> chg
   pure (pat, chg2)
 mapPatternVar chg (PWildcard ann) = pure (PWildcard ann, chg)
 mapPatternVar chg (PLit ann a) = pure (PLit ann a, chg)
 mapPatternVar chg (PString ann a as) = do
   (pA, ch1) <- mapStringPart chg a
   (pAs, ch2) <- mapStringPart chg as
-  pure (PString ann pA pAs, ch1 <> ch2)
+  pure (PString ann pA pAs, ch1 <> ch2 <> chg)
 
 mapSpreadVar ::
   Changed ->
