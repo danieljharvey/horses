@@ -1,0 +1,5 @@
+type Maybe a    = Just a | Nothing;
+
+match (Just 1) with 
+    (Just a) -> eq(100)(a)
+  | (Nothing) -> False

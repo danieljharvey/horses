@@ -1,0 +1,8 @@
+let fromMaybe =
+  \def ->
+    \maybe ->
+      match maybe with 
+          (Some a) -> a
+        | (None) -> def;
+
+fromMaybe("Horse")((Some "Dog"))

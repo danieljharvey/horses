@@ -354,7 +354,7 @@ inferPatternMatch env ann expr patterns = do
   -- combine all subs we've created in the above
   let subs = mconcat (getA <$> tyPatterns)
   -- combine all patterns to check their types match
-  (s2, tyMatchedPattern) <- matchList (getB <$> tyPatterns)
+  (s2, tyMatchedPattern) <- matchList (applySubst subs . getB <$> tyPatterns)
   -- match patterns with match expr
   s3 <- unify tyMatchedPattern (applySubst (s2 <> subs) tyExpr)
   -- combine all output expr types
