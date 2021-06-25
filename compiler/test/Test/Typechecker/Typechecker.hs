@@ -545,6 +545,29 @@ spec = do
                 MTPrim mempty MTBool
               ]
           )
+    it "Typechecking pattern matching after lambda" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyLambda
+                  mempty
+                  (named "maybe")
+                  ( MyPatternMatch
+                      mempty
+                      (MyVar mempty (named "maybe"))
+                      [ ( PConstructor mempty "Just" [PVar mempty (named "a")],
+                          MyVar mempty (named "a")
+                        ),
+                        ( PWildcard mempty,
+                          MyVar mempty (named "maybe")
+                        )
+                      ]
+                  )
+              )
+      startInference mempty mempty expr
+        `shouldSatisfy` isLeft
+
     it "Simpler Either example" $ do
       let expr =
             MyData
