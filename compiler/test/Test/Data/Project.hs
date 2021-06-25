@@ -75,7 +75,7 @@ stdLibE =
       "type Option a = Some a | None in {}"
       "typeState"
     >>= addBinding
-      "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise None"
+      "\\f -> \\opt -> match opt with (Some a) -> Some f(a) | _ -> None"
       "fmapOption"
     >>= addBinding
       "type These a b = This a | That b | These a b in {}"
@@ -114,10 +114,10 @@ addPair prj =
       "type Pair a b = Pair a b in {}"
       "typePair"
     >>= addBinding
-      "\\pair -> case pair of Pair (\\a -> \\b -> a)"
+      "\\pair -> match pair with (Pair a _) -> a"
       "fstPair"
     >>= addBinding
-      "\\pair -> case pair of Pair (\\a -> \\b -> b)"
+      "\\pair -> match pair with (Pair _ b) -> b"
       "sndPair"
 
 addEither :: Project Annotation -> ProjectPart
@@ -137,16 +137,16 @@ addStateMonad prj =
       "\\a -> State (\\s -> Pair a s)"
       "pureState"
     >>= addBinding
-      "\\f -> \\state -> case state of State (\\sas -> State (\\s -> let as = sas(s); case as of Pair (\\a -> \\s -> Pair f(a) s)))"
+      "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas(s); match as with (Pair a s) -> Pair f(a) s)"
       "fmapState"
     >>= addBinding
-      "\\stateF -> \\stateA -> State (\\s -> case stateF of State (\\sfs -> let fs = sfs(s); case fs of  Pair (\\f -> \\ss -> case stateA of State (\\sas -> let as = sas(ss); case as of Pair (\\a -> \\sss -> Pair f(a) sss)))))"
+      "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs(s); match fs with (Pair f ss) -> match stateA with (State sas) -> let as = sas(ss); match as with (Pair a sss) -> Pair f(a) sss)"
       "apState"
     >>= addBinding
-      "\\f -> \\state -> State (\\s -> case state of State (\\sas -> let as = sas(s); case as of Pair (\\a -> \\ss -> case f(a) of State (\\sbs -> sbs(ss)))))"
+      "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas(s); match as with (Pair a ss) -> match f(a) with (State sbs) -> sbs(ss))"
       "bindState"
     >>= addBinding
-      "\\state -> \\s -> case state of State (\\sas -> sas(s))"
+      "\\state -> \\s -> match state with (State sas) -> sas(s)"
       "runState"
     >>= addBinding
       "\\state -> compose(sndPair)(runState(state))"
@@ -168,16 +168,16 @@ addParser prj =
       "type Parser a = Parser (String -> Option (String,a)) in {}"
       "typeParser"
     >>= addBinding
-      "let p = \\str -> case str of StrHead \\c -> \\rest -> Some (rest, c) | StrEmpty None in Parser p"
+      "let p = (\\str -> match str with (c ++ rest) -> (Some (rest, c)) | _ -> None) in Parser p"
       "anyChar"
     >>= addBinding
-      "\\p -> \\str -> case p of Parser \\parser -> case parser(str) of Some \\pair -> let (rest, a) = pair in Some a | otherwise None"
+      "\\p -> \\str -> match p with (Parser parser) -> match parser(str) with (Some (rest, a)) -> Some a | _ -> None"
       "runParser"
     >>= addBinding
-      "\\f -> \\p -> case p of Parser \\parser -> let newParser = \\s -> case parser(s) of Some \\res -> let (rest,a) = res in Some (rest, f(a)) | otherwise None in Parser newParser"
+      "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Some (rest, a)) -> Some (rest, f(a)) | _ -> None)"
       "fmapParser"
     >>= addBinding
-      "\\f -> \\p -> case p of Parser \\parser -> let newParser = \\s -> case parser(s) of None None | Some \\resA -> let (restA, a) = resA; let nextParser = case f(a) of Parser \\parserB -> parserB; nextParser(restA); Parser newParser"
+      "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Some (restA, a)) -> (let nextParser = match f(a) with (Parser parserB) -> parserB; nextParser(restA)) | _ -> None)"
       "bindParser"
     >>= addBinding
       "Parser \\s -> None"
@@ -187,7 +187,7 @@ addArray :: Project Annotation -> ProjectPart
 addArray prj =
   pure prj
     >>= addBinding
-      "\\f -> \\arr -> let map = \\as -> case as of ArrHead \\a -> \\rest -> [f(a)] <> map(rest) | ArrEmpty []; map(arr)"
+      "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f(a)] <> map(rest) | _ -> []; map(arr)"
       "mapArray"
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
