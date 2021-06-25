@@ -370,6 +370,30 @@ spec = do
               )
       startInference mempty mempty expr
         `shouldSatisfy` isLeft
+    it "Matches pattern match values to branch return types" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyLambda
+                  mempty
+                  (named "a")
+                  ( MyPatternMatch
+                      mempty
+                      (MyVar mempty (named "a"))
+                      [ ( PConstructor mempty "Just" [PVar mempty (named "as")],
+                          MyVar mempty (named "as")
+                        ),
+                        ( PWildcard mempty,
+                          int 100
+                        )
+                      ]
+                  )
+              )
+      startInference mempty mempty expr
+        `shouldBe` Right
+          (MTFunction mempty (MTData mempty "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
+
     it "Errors when number of args does not match for Just" $ do
       let expr =
             MyData
