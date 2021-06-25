@@ -358,7 +358,7 @@ inferPatternMatch env ann expr patterns = do
   -- match patterns with match expr
   s3 <- unify tyMatchedPattern (applySubst (s2 <> subs) tyExpr)
   -- combine all output expr types
-  (s4, tyMatchedExprs) <- matchList (applySubst s3 <$> (getC <$> tyPatterns))
+  (s4, tyMatchedExprs) <- matchList (applySubst (subs <> s3) <$> (getC <$> tyPatterns))
   -- get all the subs we've learned about
   let allSubs = s4 <> s3 <> s2 <> subs <> s1
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
