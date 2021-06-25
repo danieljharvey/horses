@@ -402,7 +402,11 @@ inferPattern env (PConstructor ann tyCon args) = do
       pure (tySubs, applySubst tySubs <$> dtTypeVars)
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon tyArgs
-  pure (s <> allSubs, MTData ann ty (applySubst (s <> allSubs) <$> tyTypeVars), applySubstCtx (s <> allSubs) newEnv)
+  pure
+    ( s <> allSubs,
+      MTData ann ty (applySubst (s <> allSubs) <$> tyTypeVars),
+      applySubstCtx (s <> allSubs) newEnv
+    )
 inferPattern env (PPair ann a b) = do
   (s1, tyA, envA) <- inferPattern env a
   (s2, tyB, envB) <- inferPattern envA b

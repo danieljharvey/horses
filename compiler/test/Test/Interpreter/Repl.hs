@@ -420,8 +420,8 @@ spec =
                   (MyConstructor mempty "Some")
                   (int 1)
               )
-        it "\\a -> match a with (Some as) -> True | None 100" $ do
-          result <- eval stdLib "\\a -> match a with (Some as) -> True | None 100"
+        it "\\a -> match a with (Some as) -> True | None -> 100" $ do
+          result <- eval stdLib "\\a -> match a with (Some as) -> True | None -> 100"
           fst <$> result
             `shouldSatisfy` isLeft
         it "\\a -> match a with (Some as) -> as | None -> 100" $ do
