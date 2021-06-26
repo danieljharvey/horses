@@ -37,18 +37,12 @@ spec = do
           err = UnknownTypeError
       let result = displayError input err
       result `shouldSatisfy` textContains (prettyPrint err)
-    it "Shows the location with CannotCaseMatchOnType" $
-      getTypeError "case blah of Just \a -> a | Nothing False"
-        `shouldSatisfy` maybePred (textContains "^^^^")
     it "Shows the location with CaseMatchExpectedPair" $
       getTypeError "let (a,b) = True in a"
         `shouldSatisfy` maybePred (textContains "^^^^")
     it "Shows the location with CannotMatchRecord" $
       getTypeError "let dog = True in dog.tail"
         `shouldSatisfy` maybePred (textContains "^^^^^^^^")
-    it "Shows the location with IncompletePatternMatch" $
-      getTypeError "case 1 of Some \\a -> a"
-        `shouldSatisfy` maybePred (textContains "^^^^^^^^^^^^^^^^^^^^^^")
     it "Shows the location with UnificationError" $
       getTypeError "if 100 then 1 else 2"
         `shouldSatisfy` maybePred (textContains "^^^")

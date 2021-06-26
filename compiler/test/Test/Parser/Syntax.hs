@@ -268,9 +268,6 @@ spec = do
               )
               (int 1)
           )
-    it "case (Just 1) of Just (\\ a -> eq(100)(a)) | \nNothing False" $
-      testParse "case (Just 1) of Just (\\ a -> eq(100)(a)) | \nNothing False"
-        `shouldSatisfy` isRight
     it "Parses a single constructor with one arg" $
       testParse "type Dog = Dog String in 1"
         `shouldBe` Right
