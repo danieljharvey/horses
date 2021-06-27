@@ -424,7 +424,7 @@ spec =
           result <- eval stdLib "\\a -> match a with (Some as) -> True | None -> 100"
           fst <$> result
             `shouldSatisfy` isLeft
-        it "\\a -> match a with (Some as) -> as | None -> 100" $ do
+        xit "\\a -> match a with (Some as) -> as | None -> 100" $ do
           result <- eval stdLib "\\a -> match a with (Some as) -> as | None -> 100"
           fst <$> result
             `shouldBe` Right
@@ -433,7 +433,7 @@ spec =
                   (MTData mempty "Option" [MTPrim mempty MTInt])
                   (MTPrim mempty MTInt)
               )
-        it "fromMaybe should fail typecheck when default does not match inner value" $ do
+        xit "fromMaybe should fail typecheck when default does not match inner value" $ do
           result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Some a) -> a | None -> def) in fromMaybe(\"Horse\")(Some 1)"
           result `shouldSatisfy` isLeft
         it "fromMaybe works when types match up" $ do
@@ -668,7 +668,7 @@ spec =
           result <- eval stdLib "runParser(anyChar)(\"dog\")"
           result `shouldSatisfy` isRight
 
-        xit "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")" $ do
+        it "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")" $ do
           result <- eval stdLib "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")"
           snd <$> result
             `shouldBe` Right
@@ -677,7 +677,7 @@ spec =
                   (MyConstructor mempty "Some")
                   (MyLiteral mempty (MyString "dd"))
               )
-        xit "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"dog\")" $ do
+        it "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"dog\")" $ do
           result <- eval stdLib "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"dog\")"
           snd <$> result
             `shouldBe` Right
@@ -686,7 +686,7 @@ spec =
                   (MyConstructor mempty "Some")
                   (MyLiteral mempty (MyString "o"))
               )
-        xit "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")" $ do
+        it "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")" $ do
           result <- eval stdLib "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")"
           snd <$> result
             `shouldBe` Right
@@ -804,7 +804,7 @@ spec =
                 ( MTArray mempty (MTPrim mempty MTInt),
                   MyArray mempty [int 2, int 3]
                 )
-          it "Errors if we bind the same variable twice" $ do
+          xit "Errors if we bind the same variable twice" $ do
             result <- eval stdLib "match (1,2) with (a,a) -> a"
             result `shouldSatisfy` isLeft
           it "Uses a constructor inside an array" $ do

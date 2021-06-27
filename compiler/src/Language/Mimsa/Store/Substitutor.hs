@@ -276,7 +276,7 @@ mapPatternVar ::
   App ann (Pattern Variable ann, Changed)
 mapPatternVar chg (PVar ann name) = do
   -- we don't change the name so we can still detect duplicate patterns
-  var <- keepName name
+  var <- getNextVarName name
   let pat = PVar ann var
   pure (pat, addChange name var chg)
 mapPatternVar chg (PConstructor ann name more) = do
@@ -286,7 +286,7 @@ mapPatternVar chg (PConstructor ann name more) = do
   pure (pat, newChg)
 mapPatternVar chg (PPair ann a b) = do
   (pA, ch1) <- mapPatternVar chg a
-  (pB, ch2) <- mapPatternVar chg b
+  (pB, ch2) <- mapPatternVar (ch1 <> chg) b
   pure (PPair ann pA pB, ch1 <> ch2 <> chg)
 mapPatternVar chg (PRecord ann items) = do
   newMap <- traverse (mapPatternVar chg) items
@@ -315,12 +315,12 @@ mapSpreadVar chg NoSpread =
 mapSpreadVar chg (SpreadWildcard ann) =
   pure (SpreadWildcard ann, chg)
 mapSpreadVar chg (SpreadValue ann name) = do
-  var <- keepName name
+  var <- getNextVarName name
   pure (SpreadValue ann var, addChange name var chg)
 
 mapStringPart :: Changed -> StringPart Name ann -> App ann (StringPart Variable ann, Changed)
 mapStringPart chg (StrWildcard ann) =
   pure (StrWildcard ann, chg)
 mapStringPart chg (StrValue ann name) = do
-  var <- keepName name
+  var <- getNextVarName name
   pure (StrValue ann var, addChange name var chg)

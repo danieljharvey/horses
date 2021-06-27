@@ -197,6 +197,7 @@ spec = do
                   [ (NumberedVar 1, expectedId)
                   ]
               )
+
   describe "Combine two levels" $
     it "'true' is introduced as a numbered variable" $
       do
