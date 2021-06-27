@@ -1,0 +1,4 @@
+\some ->
+  match some with 
+      (Some a) -> (Some (a == 1))
+    | _ -> some

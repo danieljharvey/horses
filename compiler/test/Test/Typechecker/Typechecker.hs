@@ -779,23 +779,25 @@ spec = do
           )
     it "Does substitutions correctly when pattern matching on a variable from a lambda" $ do
       let expr =
-            MyLambda
+            MyData
               mempty
-              (named "a")
+              dtMaybe
               ( MyLambda
                   mempty
-                  (named "b")
+                  (named "a")
                   ( MyPatternMatch
                       mempty
-                      (bool True)
-                      [ (PLit mempty (MyBool True), MyVar mempty (named "a")),
-                        (PWildcard mempty, MyVar mempty (named "b"))
+                      (MyVar mempty (named "a"))
+                      [ (PConstructor mempty "Just" [PVar mempty (named "as")], MyVar mempty (named "as")),
+                        (PWildcard mempty, MyLiteral mempty (MyInt 100))
                       ]
                   )
               )
-          one = MTVar mempty (tvNumbered 1)
+
+          mtInt = MTPrim mempty MTInt
+          mtMaybeInt = MTData mempty "Maybe" [mtInt]
       startInference mempty mempty expr
-        `shouldBe` Right (MTFunction mempty one (MTFunction mempty one one))
+        `shouldBe` Right (MTFunction mempty mtMaybeInt mtInt)
     it "Does substitutions correctly when pattern matching on a variable from a lambda with application" $ do
       let fn =
             MyLambda

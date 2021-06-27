@@ -11,6 +11,7 @@ import qualified Data.Map as M
 import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Language.Mimsa.Interpreter.InstantiateVar
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -26,7 +27,7 @@ patternMatch expr' patterns = do
         Just bindings -> First (Just (patExpr, bindings))
         _ -> First Nothing
   case getFirst (foldMap foldF patterns) of
-    Just (patExpr, bindings) -> pure $ createMatchExpression bindings patExpr
+    Just (patExpr, bindings) -> createMatchExpression bindings patExpr
     _ ->
       throwError $ PatternMatchFailure expr'
 
@@ -113,6 +114,12 @@ createMatchExpression ::
   (Monoid ann) =>
   [(Variable, Expr Variable ann)] ->
   Expr Variable ann ->
-  Expr Variable ann
+  App ann (Expr Variable ann)
 createMatchExpression bindings a =
-  foldl' (\rest (binder, var) -> MyLet mempty binder var rest) a bindings
+  foldl'
+    ( \rest (binder, var) -> do
+        comp <- rest
+        MyLet mempty binder <$> instantiateVar var <*> pure comp
+    )
+    (pure a)
+    bindings

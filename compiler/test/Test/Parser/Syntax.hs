@@ -6,7 +6,6 @@ module Test.Parser.Syntax
 where
 
 import Data.Either (isLeft, isRight)
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.ExprUtils
@@ -268,9 +267,6 @@ spec = do
               )
               (int 1)
           )
-    it "case (Just 1) of Just (\\ a -> eq(100)(a)) | \nNothing False" $
-      testParse "case (Just 1) of Just (\\ a -> eq(100)(a)) | \nNothing False"
-        `shouldSatisfy` isRight
     it "Parses a single constructor with one arg" $
       testParse "type Dog = Dog String in 1"
         `shouldBe` Right
@@ -396,31 +392,6 @@ spec = do
           )
     it "Uses a constructor" $
       testParse "Vrai" `shouldBe` Right (MyConstructor mempty "Vrai")
-    it "Parses a custom case match" $
-      testParse "case Just 1 of Just \\a -> a | Nothing 0"
-        `shouldBe` Right
-          ( MyCaseMatch
-              mempty
-              (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
-              ( NE.fromList
-                  [ ("Just", MyLambda mempty "a" (MyVar mempty "a")),
-                    ("Nothing", int 0)
-                  ]
-              )
-              Nothing
-          )
-    it "Parses a custom case match with fall through case" $
-      testParse "case Just 1 of Just \\a -> a | otherwise 0"
-        `shouldBe` Right
-          ( MyCaseMatch
-              mempty
-              (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
-              ( NE.fromList
-                  [ ("Just", MyLambda mempty "a" (MyVar mempty "a"))
-                  ]
-              )
-              (Just $ int 0)
-          )
     it "Parses complex type constructors" $
       testParse "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
         `shouldBe` Right
@@ -610,24 +581,6 @@ spec = do
               (MyConstructor (Location 0 4) "Just")
               (MyLiteral (Location 5 6) (MyInt 1))
           )
-    it "Parses case match with location information" $
-      testParseWithAnn "case a of Just \\as -> 1 | Nothing 0"
-        `shouldBe` Right
-          ( MyCaseMatch
-              (Location 0 35)
-              (MyVar (Location 5 6) "a")
-              ( NE.fromList
-                  [ ( "Just",
-                      MyLambda
-                        (Location 15 23)
-                        "as"
-                        (MyLiteral (Location 22 23) (MyInt 1))
-                    ),
-                    ("Nothing", MyLiteral (Location 34 35) (MyInt 0))
-                  ]
-              )
-              Nothing
-          )
     it "Parses infix equals with location information" $
       testParseWithAnn "1 == 2"
         `shouldBe` Right
@@ -646,9 +599,6 @@ spec = do
       testParseWithAnn "id(1) " `shouldSatisfy` isLeft
     it "Accepts no whitespace after record" $
       testParseWithAnn "{ name: 1 } " `shouldSatisfy` isLeft
-    it "Parses the troublesome function" $
-      testParseWithAnn "\\f -> \\opt -> case opt of Some \\a -> Some f(a) | otherwise None"
-        `shouldSatisfy` isRight
     it "Parses Reader type declaration with 'in'" $
       testParseWithAnn
         "type Reader r a = Reader (r -> a) in True"
