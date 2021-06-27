@@ -31,10 +31,7 @@ protectedNames =
       "if",
       "then",
       "else",
-      "case",
-      "of",
       "type",
-      "otherwise",
       "match",
       "with",
       "infix",
@@ -43,4 +40,4 @@ protectedNames =
     ]
 
 protectedOperators :: Set Text
-protectedOperators = S.fromList ["=", "==", "+", "<>", "-", "|"]
+protectedOperators = S.fromList ["=", "==", "+", "<>", "-", "|", "++"]

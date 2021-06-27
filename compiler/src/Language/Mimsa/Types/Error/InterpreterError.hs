@@ -15,9 +15,7 @@ data InterpreterError ann
   | CouldNotFindVar (Scope ann) Variable
   | CouldNotFindInfixOp InfixOp
   | CannotDestructureAsPair (Expr Variable ann)
-  | CannotDestructureAsSum (Expr Variable ann)
   | CannotDestructureAsRecord (Expr Variable ann) Name
-  | CannotDestructureAsList (Expr Variable ann)
   | CannotApplyToNonFunction (Expr Variable ann)
   | CannotFindMemberInRecord (Map Name (Expr Variable ann)) Name
   | PredicateForIfMustBeABoolean (Expr Variable ann)
@@ -45,12 +43,8 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
     "Could not find infixOp " <> prettyPrint op
   prettyPrint (CannotDestructureAsPair expr) =
     "Expected a pair. Cannot destructure: " <> prettyPrint expr
-  prettyPrint (CannotDestructureAsSum expr) =
-    "Expected a sum type. Cannot destructure: " <> prettyPrint expr
   prettyPrint (CannotDestructureAsRecord expr name) =
     "Expected a record with a member " <> prettyPrint name <> ". Cannot destructure: " <> prettyPrint expr
-  prettyPrint (CannotDestructureAsList expr) =
-    "Expected a list. Cannot destructure: " <> prettyPrint expr
   prettyPrint (CannotApplyToNonFunction expr) =
     "Expected a function. Cannot apply a value to " <> prettyPrint expr
   prettyPrint (CannotFindMemberInRecord items name) =

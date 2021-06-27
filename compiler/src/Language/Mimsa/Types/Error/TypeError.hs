@@ -14,7 +14,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc
-import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchError (..))
@@ -35,11 +34,9 @@ data TypeError
   | NoFunctionEquality MonoType MonoType
   | CannotMatchRecord Environment Annotation MonoType
   | CaseMatchExpectedPair Annotation MonoType
-  | CannotCaseMatchOnType (Expr Variable Annotation)
   | TypeConstructorNotInScope Environment Annotation TyCon
   | TypeVariablesNotInDataType TyCon (Set Name) (Set Name)
   | ConflictingConstructors Annotation TyCon
-  | CannotApplyToType TyCon
   | RecordKeyMismatch (Set Name)
   | DuplicateTypeDeclaration TyCon
   | IncompletePatternMatch Annotation [TyCon]
@@ -86,8 +83,6 @@ getErrorPos (ConflictingConstructors ann _) = fromAnnotation ann
 getErrorPos (IncompletePatternMatch ann _) = fromAnnotation ann
 getErrorPos (CaseMatchExpectedPair ann _) =
   fromAnnotation ann
-getErrorPos (CannotCaseMatchOnType expr) =
-  fromAnnotation (getAnnotation expr)
 getErrorPos (CannotMatchRecord _ ann _) = fromAnnotation ann
 getErrorPos (TypedHoles holes) = case M.toList holes of
   ((_, (mt, _)) : _) -> fromAnnotation (getAnnotationForType mt)
@@ -139,8 +134,6 @@ renderTypeError (CouldNotFindInfixOperator _ op allOps) =
     "The following are available:"
   ]
     <> showSet prettyDoc allOps
-renderTypeError (CannotCaseMatchOnType ty) =
-  ["Cannot case match on type", prettyDoc ty]
 renderTypeError (VariableNotInEnv swaps _ name members) =
   ["Variable" <+> renderName (withSwap swaps name) <+> " not in scope."]
     <> showSet prettyDoc members
@@ -169,8 +162,6 @@ renderTypeError (TypeConstructorNotInScope env _ constructor) =
     <> printDataTypes env
 renderTypeError (ConflictingConstructors _ constructor) =
   ["Multiple constructors found matching" <+> prettyDoc constructor]
-renderTypeError (CannotApplyToType constructor) =
-  ["Cannot apply value to" <+> prettyDoc constructor]
 renderTypeError (DuplicateTypeDeclaration constructor) =
   ["Cannot redeclare existing type name" <+> prettyDoc constructor]
 renderTypeError (RecordKeyMismatch keys) =
