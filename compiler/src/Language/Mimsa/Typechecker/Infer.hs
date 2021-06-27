@@ -12,7 +12,6 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
-import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -23,7 +22,6 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
-import Language.Mimsa.Typechecker.Patterns (checkCompleteness)
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.TypedHoles
 import Language.Mimsa.Typechecker.Unify
@@ -241,82 +239,6 @@ matchList =
 
 -----
 
-constructorToType :: TypeConstructor -> MonoType
-constructorToType (TypeConstructor typeName tyVars constructTypes) =
-  foldr (MTFunction mempty) (MTData mempty typeName tyVars) constructTypes
-
-inferSumExpressionType ::
-  Environment ->
-  Map TyCon TypeConstructor ->
-  TcExpr ->
-  TcMonad (Substitutions, MonoType)
-inferSumExpressionType env consTypes sumExpr =
-  let fromName name =
-        case M.lookup name consTypes of
-          Just tyCons -> do
-            (s1, tySum) <- infer env sumExpr
-            s2 <- unify (unwind (constructorToType tyCons)) tySum
-            pure
-              ( s2 <> s1,
-                applySubst s2 tySum
-              )
-          Nothing -> throwError $ CannotCaseMatchOnType sumExpr
-      unwind tyExpr = case tyExpr of
-        MTFunction _ _ b -> unwind b
-        a -> a
-      findConstructor expr = case expr of
-        (MyConsApp _ a _) -> findConstructor a
-        (MyConstructor _ a) -> fromName a
-        somethingElse ->
-          infer env somethingElse
-   in findConstructor sumExpr
-
--------------
-
-inferCaseMatch ::
-  Environment ->
-  Annotation ->
-  TcExpr ->
-  NonEmpty (TyCon, TcExpr) ->
-  Maybe TcExpr ->
-  TcMonad (Substitutions, MonoType)
-inferCaseMatch env ann sumExpr matches catchAll = do
-  dataType <- checkCompleteness env ann matches catchAll
-  (tyData, constructTypes) <- inferConstructorTypes env dataType
-  (s1, tySum) <-
-    inferSumExpressionType
-      env
-      constructTypes
-      sumExpr
-  s2 <- unify tySum tyData
-  tyMatches <-
-    traverse
-      ( uncurry
-          ( inferMatch
-              (applySubstCtx (s2 <> s1) env)
-              (applySubstToConstructor (s2 <> s1) <$> constructTypes)
-          )
-      )
-      matches
-  (sCatch, tyCatches) <- case catchAll of
-    Just catchAll' -> do
-      (s, tyCatchAll) <- infer (applySubstCtx (s2 <> s1) env) catchAll'
-      pure (s, [tyCatchAll])
-    _ -> pure (mempty, mempty)
-  let matchSubs =
-        mconcat
-          (fst <$> NE.toList tyMatches)
-          <> sCatch
-
-      actuals = (snd <$> NE.toList tyMatches) <> tyCatches
-  (s, mt) <- matchList (applySubst matchSubs <$> actuals)
-  let allSubs = s2 <> s1 <> s <> matchSubs
-  pure (allSubs, applySubst allSubs mt)
-
-applySubstToConstructor :: Substitutions -> TypeConstructor -> TypeConstructor
-applySubstToConstructor subs (TypeConstructor name ty b) =
-  TypeConstructor name (applySubst subs <$> ty) (applySubst subs <$> b)
-
 getA :: (a, b, c) -> a
 getA (a, _, _) = a
 
@@ -469,39 +391,6 @@ checkArgsLength ann (DataType _ _ cons) tyCon args = do
                   (length args)
               )
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
-
--- infer the type of a case match function
--- if it has no args, it's a simple MTData
--- however if it has args it becomes a MTFun from args to the MTData
-inferMatch ::
-  Environment ->
-  Map TyCon TypeConstructor ->
-  TyCon ->
-  TcExpr ->
-  TcMonad (Substitutions, MonoType)
-inferMatch env constructTypes name expr' =
-  case M.lookup name constructTypes of
-    Nothing -> throwError UnknownTypeError
-    Just (TypeConstructor _ _ tyArgs) ->
-      case tyArgs of
-        [] -> infer env expr' -- no arguments to pass to expr'
-        _ -> do
-          (s1, tyExpr) <- infer env expr' -- expression return
-          (s2, tyRes) <- applyList tyArgs tyExpr
-          let subs = s2 <> s1
-          pure (subs, applySubst subs tyRes)
-
-applyList :: [MonoType] -> MonoType -> TcMonad (Substitutions, MonoType)
-applyList vars tyFun = case vars of
-  [] -> pure (mempty, tyFun)
-  (var : vars') -> do
-    tyRes <- getUnknown mempty
-    s1 <-
-      unify
-        (MTFunction mempty var tyRes)
-        tyFun
-    (s2, tyFun') <- applyList vars' (applySubst s1 tyRes)
-    pure (s2 <> s1, applySubst (s2 <> s1) tyFun')
 
 inferOperator ::
   Environment ->
@@ -693,8 +582,6 @@ infer env inferExpr =
       inferDataConstructor env ann name
     (MyConsApp ann cons val) ->
       inferApplication env ann cons val
-    (MyCaseMatch ann expr' matches catchAll) ->
-      inferCaseMatch env ann expr' matches catchAll
     (MyDefineInfix ann infixOp bindName expr) ->
       inferDefineInfix env ann infixOp bindName expr
     (MyPatternMatch ann expr patterns) ->

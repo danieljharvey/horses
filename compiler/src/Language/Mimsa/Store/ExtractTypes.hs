@@ -5,7 +5,6 @@ module Language.Mimsa.Store.ExtractTypes
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -43,11 +42,6 @@ extractTypes_ (MyData _ dt a) =
     (extractLocalTypeDeclarations dt)
 extractTypes_ (MyConstructor _ t) = S.singleton t
 extractTypes_ (MyConsApp _ a b) = extractTypes_ a <> extractTypes_ b
-extractTypes_ (MyCaseMatch _ sum' matches catchAll) =
-  extractTypes_ sum'
-    <> mconcat (extractTypes_ . snd <$> NE.toList matches)
-    <> mconcat (S.singleton . fst <$> NE.toList matches)
-    <> maybe mempty extractTypes catchAll
 extractTypes_ (MyTypedHole _ _) = mempty
 extractTypes_ (MyDefineInfix _ _ _ b) =
   extractTypes_ b
@@ -118,10 +112,6 @@ withDataTypes f (MyData _ dt a) =
     <> f dt
 withDataTypes _ (MyConstructor _ _) = mempty
 withDataTypes f (MyConsApp _ a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyCaseMatch _ sum' matches catchAll) =
-  withDataTypes f sum'
-    <> mconcat (withDataTypes f . snd <$> NE.toList matches)
-    <> maybe mempty (withDataTypes f) catchAll
 withDataTypes _ (MyTypedHole _ _) = mempty
 withDataTypes f (MyDefineInfix _ _ _ a) = withDataTypes f a
 withDataTypes f (MyPatternMatch _ expr patterns) =

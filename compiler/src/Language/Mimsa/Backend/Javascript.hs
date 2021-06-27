@@ -17,8 +17,6 @@ import qualified Data.ByteString.Char8 as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
-import Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Monoid
@@ -210,32 +208,6 @@ outputPatternMatch expr patterns = do
   let patternsJS = "[ " <> intercal ", " pats <> " ]"
   pure $ "__patternMatch(" <> exprJS <> ", " <> patternsJS <> ")"
 
-outputCaseMatch ::
-  (Monoid ann) =>
-  Expr Name ann ->
-  NonEmpty (TyCon, Expr Name ann) ->
-  Maybe (Expr Name ann) ->
-  BackendM ann Javascript
-outputCaseMatch value matches catchAll = do
-  jsValue <- outputJS value
-  let outputMatch (tyCon, val) =
-        outputJS val
-          >>= ( \matchVal ->
-                  pure $ textToJS (prettyPrint tyCon) <> ": " <> matchVal
-              )
-  jsMatches <- traverse outputMatch (NE.toList matches)
-  let matchList =
-        "{ " <> intercal ", " jsMatches <> " }"
-  catcher <- case catchAll of
-    Just catch' -> outputJS catch'
-    Nothing -> pure "null"
-  pure $
-    "__match(" <> jsValue <> ", "
-      <> matchList
-      <> ", "
-      <> catcher
-      <> ")"
-
 output ::
   (Monoid ann) =>
   ResolvedTypeDeps ann ->
@@ -416,8 +388,6 @@ outputJS expr =
     MyData _ _ a -> outputJS a -- don't output types
     MyConstructor _ a -> outputConstructor @ann a []
     MyConsApp _ c a -> outputConsApp c a
-    MyCaseMatch _ a matches catch ->
-      outputCaseMatch a matches catch
     MyTypedHole _ a -> throwError (OutputingTypedHole a)
     MyDefineInfix _ _ _ a -> outputJS a -- don't output infix definitions
     MyPatternMatch _ tyCon args ->
@@ -468,5 +438,5 @@ outputCommonJS dataTypes =
         renderExport = \be name -> pure $ Javascript (outputExport be name),
         renderStdLib = \be ->
           let filename = Javascript (stdLibFilename be)
-           in pure $ "const { __match, __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
+           in pure $ "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
       }

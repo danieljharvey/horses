@@ -66,12 +66,6 @@ data Expr var ann
     MyConstructor ann TyCon
   | -- | constructor, value
     MyConsApp ann (Expr var ann) (Expr var ann)
-  | -- | expr, matches, catchAll
-    MyCaseMatch
-      ann
-      (Expr var ann)
-      (NonEmpty (TyCon, Expr var ann))
-      (Maybe (Expr var ann))
   | -- | expr, [(pattern, expr)]
     MyPatternMatch
       ann
@@ -248,36 +242,6 @@ prettyIf if' then' else' =
         ]
     )
 
-prettyCaseMatch ::
-  (Printer var, Show var) =>
-  Expr var ann ->
-  NE.NonEmpty (TyCon, Expr var ann) ->
-  Maybe (Expr var ann) ->
-  Doc style
-prettyCaseMatch sumExpr matches catchAll =
-  "case"
-    <+> printSubExpr sumExpr
-    <+> "of"
-    <+> line
-      <> indent
-        2
-        ( align $
-            vsep
-              ( zipWith
-                  (<+>)
-                  (" " : repeat "|")
-                  options
-              )
-        )
-  where
-    catchAll' = case catchAll of
-      Just catchExpr -> pure ("otherwise" <+> printSubExpr catchExpr)
-      _ -> mempty
-    options =
-      (printMatch <$> NE.toList matches) <> catchAll'
-    printMatch (construct, expr') =
-      prettyDoc construct <+> printSubExpr expr'
-
 prettyPatternMatch ::
   (Printer var, Show var) =>
   Expr var ann ->
@@ -344,8 +308,6 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
     prettyDataType dataType expr
   prettyDoc (MyConstructor _ name) = prettyDoc name
   prettyDoc (MyConsApp _ fn val) = prettyDoc fn <+> wrapInfix val
-  prettyDoc (MyCaseMatch _ sumExpr matches catchAll) =
-    prettyCaseMatch sumExpr matches catchAll
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
   prettyDoc (MyPatternMatch _ expr matches) =
     prettyPatternMatch expr matches

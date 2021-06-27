@@ -3,7 +3,6 @@ module Language.Mimsa.Store.ExtractVars
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -35,10 +34,6 @@ extractVars_ (MyArray _ map') = foldMap extractVars_ map'
 extractVars_ (MyData _ _ a) = extractVars_ a
 extractVars_ (MyConstructor _ _) = mempty
 extractVars_ (MyConsApp _ a b) = extractVars_ a <> extractVars_ b
-extractVars_ (MyCaseMatch _ sum' matches catchAll) =
-  extractVars sum'
-    <> mconcat (extractVars . snd <$> NE.toList matches)
-    <> maybe mempty extractVars catchAll
 extractVars_ (MyTypedHole _ _) = mempty
 extractVars_ (MyDefineInfix _ _ v b) = S.singleton v <> extractVars_ b
 extractVars_ (MyPatternMatch _ match patterns) =

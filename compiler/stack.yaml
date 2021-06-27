@@ -46,7 +46,7 @@ packages:
 
 ghc-options:
     # All packages
-    "$locals": -Wall -Wno-unticked-promoted-constructors -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+    "$locals": -Wall -Wno-unticked-promoted-constructors -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -fwrite-ide-info
     "$targets": -Werror
     "$everything": -O2 
 

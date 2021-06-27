@@ -9,8 +9,8 @@ export const mimsaLanguage = {
     'if',
     'then',
     'else',
-    'case',
-    'of',
+    'match',
+    'with',
   ],
 
   typeKeywords: [],

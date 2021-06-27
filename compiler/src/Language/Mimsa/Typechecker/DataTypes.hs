@@ -37,11 +37,7 @@ builtInTypes =
   M.fromList
     [ ("String", MTPrim mempty MTString),
       ("Int", MTPrim mempty MTInt),
-      ("Boolean", MTPrim mempty MTBool),
-      ("StrEmpty", MTPrim mempty MTString),
-      ("StrHead", MTPrim mempty MTString),
-      ("ArrEmpty", MTArray mempty (MTVar mempty (TVName "a"))),
-      ("ArrHead", MTArray mempty (MTVar mempty (TVName "a")))
+      ("Boolean", MTPrim mempty MTBool)
     ]
 
 lookupBuiltIn :: TyCon -> Maybe MonoType
@@ -181,14 +177,13 @@ inferType env ann tyName tyVars =
       Just mt -> pure mt
       _ -> pure (MTData mempty tyName tyVars)
     _ ->
-      case getNativeConstructors tyName of
-        Just mt -> pure mt
-        _ -> throwError (TypeConstructorNotInScope env ann tyName)
+      throwError (TypeConstructorNotInScope env ann tyName)
 
 -----
 
 constructorToType :: TypeConstructor -> MonoType
 constructorToType (TypeConstructor typeName tyVars constructTypes) =
-  foldr (MTFunction mempty) (MTData mempty typeName tyVars) constructTypes
-
--------------
+  foldr
+    (MTFunction mempty)
+    (MTData mempty typeName tyVars)
+    constructTypes

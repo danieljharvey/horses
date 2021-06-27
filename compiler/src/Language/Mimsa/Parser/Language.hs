@@ -17,8 +17,6 @@ module Language.Mimsa.Parser.Language
 where
 
 import Data.Functor (($>))
-import Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
@@ -29,7 +27,7 @@ import Language.Mimsa.Parser.RecordAccess
 import Language.Mimsa.Parser.TypeDecl
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers (Name, TyCon)
+import Language.Mimsa.Types.Identifiers (Name)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
@@ -64,7 +62,6 @@ complexParser =
     <|> try typeParser
     <|> try constructorAppParser
     <|> try patternMatchParser
-    <|> try caseMatchParser
     <|> try typedHoleParser
     <|> try defineInfixParser
 
@@ -253,43 +250,6 @@ consAppArgParser =
           <|> constructorParser
    in try (inBrackets infixParser)
         <|> orInBrackets parsers
-
-----------
-
-caseExprOfParser :: Parser ParserExpr
-caseExprOfParser = do
-  _ <- thenSpace (string "case")
-  sumExpr <- expressionParser
-  _ <- thenSpace (string "of")
-  pure sumExpr
-
-caseMatchParser :: Parser ParserExpr
-caseMatchParser = addLocation $ do
-  sumExpr <- caseExprOfParser
-  matches <-
-    try matchesParser
-      <|> pure <$> matchParser
-  catchAll <-
-    optional (otherwiseParser (not . null $ matches))
-  pure $ MyCaseMatch mempty sumExpr matches catchAll
-
-otherwiseParser :: Bool -> Parser ParserExpr
-otherwiseParser needsBar = do
-  if needsBar
-    then () <$ thenSpace (string "|")
-    else pure ()
-  _ <- thenSpace (string "otherwise")
-  expressionParser
-
-matchesParser :: Parser (NonEmpty (TyCon, ParserExpr))
-matchesParser =
-  NE.fromList
-    <$> sepBy
-      (withOptionalSpace matchParser)
-      (literalWithSpace "|")
-
-matchParser :: Parser (TyCon, ParserExpr)
-matchParser = (,) <$> thenSpace tyConParser <*> expressionParser
 
 ----------
 

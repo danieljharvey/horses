@@ -193,19 +193,6 @@ pattern matching:
 [ "d", "og" ] :: [ String ]
 ```
 
-case matching:
-
-```haskell
-:> :bind eitherMap = \f -> \either -> case either of Left \e -> Left e | Right \a -> Right f(a)
-Bound eitherMap to \f -> (\either -> case either of Left (\e -> (Left e)) | Right (\a -> (Right f(a)))) :: ((A -> B) -> (Either C A -> Either C B))
-
-:> eitherMap(\a -> "dog")(Left "what")
-Left "poo" :: Either String String
-
-:> eitherMap(\a -> "dog")(Right "poo")
-Right "dog" :: Either A String
-```
-
 typed holes:
 
 ```haskell
