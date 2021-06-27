@@ -777,6 +777,74 @@ spec = do
           ( PatternMatchErr
               (MissingPatterns mempty [PConstructor mempty "Nothing" mempty])
           )
+    it "Does substitutions correctly when pattern matching on a variable from a lambda" $ do
+      let expr =
+            MyLambda
+              mempty
+              (named "a")
+              ( MyLambda
+                  mempty
+                  (named "b")
+                  ( MyPatternMatch
+                      mempty
+                      (bool True)
+                      [ (PLit mempty (MyBool True), MyVar mempty (named "a")),
+                        (PWildcard mempty, MyVar mempty (named "b"))
+                      ]
+                  )
+              )
+          one = MTVar mempty (tvNumbered 1)
+      startInference mempty mempty expr
+        `shouldBe` Right (MTFunction mempty one (MTFunction mempty one one))
+    it "Does substitutions correctly when pattern matching on a variable from a lambda with application" $ do
+      let fn =
+            MyLambda
+              mempty
+              (named "a")
+              ( MyLambda
+                  mempty
+                  (named "b")
+                  ( MyPatternMatch
+                      mempty
+                      (bool True)
+                      [ (PLit mempty (MyBool True), MyVar mempty (named "a")),
+                        (PWildcard mempty, MyVar mempty (named "b"))
+                      ]
+                  )
+              )
+          expr = MyApp mempty (MyApp mempty fn (MyLiteral mempty (MyInt 1))) (MyLiteral mempty (MyBool True))
+      startInference mempty mempty expr
+        `shouldBe` Left (UnificationError (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+    it "Does substitutions correctly when pattern matching on a variable inside a constructor from a lambda with application" $ do
+      let fn =
+            MyLambda
+              mempty
+              (named "maybeA")
+              ( MyLambda
+                  mempty
+                  (named "b")
+                  ( MyPatternMatch
+                      mempty
+                      (MyVar mempty (named "maybeA"))
+                      [ (PConstructor mempty "Just" [PVar mempty (named "a")], MyVar mempty (named "a")),
+                        (PWildcard mempty, MyVar mempty (named "b"))
+                      ]
+                  )
+              )
+          maybeExpr = MyConsApp mempty (MyConstructor mempty "Just") (MyLiteral mempty (MyInt 1))
+          expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyApp
+                  mempty
+                  (MyApp mempty fn maybeExpr)
+                  ( MyLiteral mempty (MyBool True)
+                  )
+              )
+      startInference mempty mempty expr
+        `shouldBe` Left (UnificationError (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+
     it "Spots a redundant pattern" $ do
       let expr =
             MyData
