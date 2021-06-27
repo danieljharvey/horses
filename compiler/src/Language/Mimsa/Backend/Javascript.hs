@@ -438,5 +438,5 @@ outputCommonJS dataTypes =
         renderExport = \be name -> pure $ Javascript (outputExport be name),
         renderStdLib = \be ->
           let filename = Javascript (stdLibFilename be)
-           in pure $ "const { __match, __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
+           in pure $ "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
       }

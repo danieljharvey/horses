@@ -212,12 +212,7 @@ renderTypeError (FunctionArityMismatch _ i mt) =
 renderTypeError (CannotUseBuiltInTypeAsConstructor _ name) =
   ["Cannot use built-in type as constructor name:" <+> prettyDoc name]
 renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
-  ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used outside of a pattern match"] <> specificError
-  where
-    specificError =
-      if tyCon == "StrHead" || tyCon == "StrEmpty"
-        then ["To construct values, please use string literal syntax, ie \"string\" or \"\"."]
-        else mempty
+  ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used outside of a pattern match"]
 renderTypeError (PatternMatchErr pmErr) = [prettyDoc pmErr]
 
 printDataTypes :: Environment -> [Doc style]
