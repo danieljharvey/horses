@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyCaseMatch","contents":[[],{"tag":"MyLiteral","contents":[[],{"tag":"MyString","contents":"ad"}]},[["StrHead",{"tag":"MyLambda","contents":[[],"c",{"tag":"MyLambda","contents":[[],"rest",{"tag":"MyVar","contents":[[],"c"]}]}]}]],null]},"storeBindings":{},"storeTypeBindings":{}}

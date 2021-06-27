@@ -1,3 +1,0 @@
-case [ 1, 2 ] of 
-    ArrHead (\c -> \rest -> [ c ])
-  | ArrEmpty [ 0 ]

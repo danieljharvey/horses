@@ -1,7 +1,0 @@
-\s ->
-  let a =
-    case s of 
-        StrEmpty 2
-      | otherwise 1;
-
-  s

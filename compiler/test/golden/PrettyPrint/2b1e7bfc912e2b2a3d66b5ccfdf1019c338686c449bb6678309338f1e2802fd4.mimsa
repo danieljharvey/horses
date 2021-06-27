@@ -1,3 +1,0 @@
-\person ->
-  case person of 
-      Person (\p -> p.age)

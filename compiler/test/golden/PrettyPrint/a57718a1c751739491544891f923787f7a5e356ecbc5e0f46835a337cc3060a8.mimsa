@@ -1,4 +1,0 @@
-\some ->
-  case some of 
-      Some (\a -> Some (a == 1))
-    | otherwise some

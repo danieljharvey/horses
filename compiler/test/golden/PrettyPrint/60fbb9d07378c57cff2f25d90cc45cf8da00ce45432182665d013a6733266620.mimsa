@@ -1,8 +1,0 @@
-type Result e a 
-  = Failure e
-  | Success a;
-case (Failure "oh no") of 
-    Success (\a ->
-     "oh yes")
-  | Failure (\e ->
-     e)
