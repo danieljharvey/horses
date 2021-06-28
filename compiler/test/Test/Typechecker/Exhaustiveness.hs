@@ -141,6 +141,18 @@ spec = do
             PRecord mempty (M.fromList [("a", true), ("b", false)])
           ]
           `shouldBe` Right [PRecord mempty (M.fromList [("a", false), ("b", false)])]
+      it "A pair annihilates empty" $ do
+        exhaustiveCheck
+          [ PConstructor mempty "Just" [PPair mempty (PWildcard mempty) (PWildcard mempty)],
+            PConstructor mempty "Nothing" mempty
+          ]
+          `shouldBe` Right mempty
+      it "A record annihilates empty" $ do
+        exhaustiveCheck
+          [ PConstructor mempty "Just" [PRecord mempty mempty],
+            PConstructor mempty "Nothing" mempty
+          ]
+          `shouldBe` Right mempty
       it "Constructor returns unused constructor" $ do
         exhaustiveCheck
           [PConstructor mempty "Just" [PWildcard mempty]]
