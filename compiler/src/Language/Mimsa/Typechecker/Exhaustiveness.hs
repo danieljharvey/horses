@@ -203,7 +203,18 @@ annihilate (PConstructor _ tyConA argsA) (PConstructor _ tyConB argsB) =
       True
       (zip argsA argsB)
 annihilate PString {} PString {} = True
+annihilate (PPair _ a b) _ =
+  isComplete a && isComplete b
+annihilate (PRecord _ as) _ =
+  foldr (\a total -> total && isComplete a) True as
 annihilate _ _as = False
+
+-- is this item total, as such, ie, is it always true?
+isComplete :: Pattern var ann -> Bool
+isComplete (PWildcard _) = True
+isComplete (PVar _ _) = True
+isComplete (PPair _ a b) = isComplete a && isComplete b
+isComplete _ = False
 
 redundantCases ::
   (MonadError TypeError m, Eq var, Printer var, Show var) =>
