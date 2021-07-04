@@ -9,7 +9,6 @@ import {
   addUnitTest,
 } from '../service/project'
 import { ExprHash } from '../types/'
-import * as E from 'fp-ts/Either'
 import { setScreen } from './view/reducer'
 import { projectSet } from './project/helpers'
 import { log } from './console/reducer'

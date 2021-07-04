@@ -7,12 +7,10 @@ module Router.Fetch where
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
-import Network.HTTP.Client (HttpException (..), HttpExceptionContent (..))
 import Network.HTTP.Req
 
-data HTTPError
-  = FourXX LBS.ByteString
-  | OtherError
+newtype HTTPError
+  = FourXX HttpException
 
 newtype FetchM a = FetchM {getFetchM :: ExceptT HTTPError IO a}
   deriving newtype
@@ -24,11 +22,10 @@ newtype FetchM a = FetchM {getFetchM :: ExceptT HTTPError IO a}
     )
 
 instance MonadHttp FetchM where
-  handleHttpException (VanillaHttpException (HttpExceptionRequest _ (StatusCodeException _resp msg))) = throwError (FourXX (LBS.fromStrict msg))
-  handleHttpException _ = throwError OtherError
+  handleHttpException a = throwError (FourXX a)
 
 fetch :: Url scheme -> Int -> JSON.Value -> FetchM LBS.ByteString
-fetch url apiPort postData = runReq defaultHttpConfig $ do
+fetch url apiPort postData = do
   r <-
     req
       POST -- method
@@ -40,7 +37,12 @@ fetch url apiPort postData = runReq defaultHttpConfig $ do
       )
   pure (responseBody r)
 
-fetchIO :: (MonadIO m) => Url scheme -> Int -> JSON.Value -> m (Either HTTPError LBS.ByteString)
+fetchIO ::
+  (MonadIO m) =>
+  Url scheme ->
+  Int ->
+  JSON.Value ->
+  m (Either HTTPError LBS.ByteString)
 fetchIO url apiPort postData = liftIO $ runExceptT (getFetchM comp)
   where
     comp = fetch url apiPort postData

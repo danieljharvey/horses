@@ -8,8 +8,10 @@ module Router.Server (runServer) where
 
 import Data.Aeson ((.=))
 import qualified Data.Aeson as JSON
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
 import GHC.Generics
+import Network.HTTP.Client hiding (Proxy)
 import qualified Network.HTTP.Client as HTTP
 import Network.HTTP.Req
 import Network.HTTP.Types.Header
@@ -56,7 +58,13 @@ fetchExprHandler cfg env (FetchExprRequest exprHash) = do
     Right bs -> do
       _ <- unzipFiles cfg bs
       addRoute env exprHash
-    Left (FourXX msg) -> throwError (err400 {errBody = msg})
+    Left
+      ( FourXX
+          ( VanillaHttpException
+              (HttpExceptionRequest _ (StatusCodeException _ msg))
+            )
+        ) ->
+        throwError (err400 {errBody = LBS.fromStrict msg})
     Left _ -> throwError err500
 
 type Router =

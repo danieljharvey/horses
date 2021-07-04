@@ -5,21 +5,24 @@ import * as E from 'fp-ts/Either'
 import { projectGet } from '../../reducer/project/helpers'
 import * as TE from 'fp-ts/TaskEither'
 
-const createNewProject: TE.TaskEither<string, ExprHash> = pipe(
-    TE.tryCatch(
-        () => createProject(),
-        _ => 'Could not create new project'
-    ),
-    TE.map(res => res.cpProjectData.pdHash)
+const createNewProject: TE.TaskEither<
+  string,
+  ExprHash
+> = pipe(
+  createProject(),
+  TE.map(res => res.cpProjectData.pdHash)
 )
 
-const findInSessionStorage: TE.TaskEither<string, ExprHash> = pipe(
-    TE.fromEither(
-        E.fromOption(
-            () => 'Could not find project hash in session storage'
-        )(projectGet())
-    ),
-    TE.map(prj => prj.hash)
+const findInSessionStorage: TE.TaskEither<
+  string,
+  ExprHash
+> = pipe(
+  TE.fromEither(
+    E.fromOption(
+      () => 'Could not find project hash in session storage'
+    )(projectGet())
+  ),
+  TE.map(prj => prj.hash)
 )
 
 // if we have no project, we either:
@@ -28,6 +31,6 @@ const findInSessionStorage: TE.TaskEither<string, ExprHash> = pipe(
 // c) if either fails, we return an error that lets us show a retry button
 
 export const findProject = pipe(
-    findInSessionStorage,
-    TE.alt(() => createNewProject)
+  findInSessionStorage,
+  TE.alt(() => createNewProject)
 )

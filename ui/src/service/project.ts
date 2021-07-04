@@ -1,5 +1,3 @@
-import axios from 'axios'
-import { Either, left, right } from 'fp-ts/lib/Either'
 import {
   EvaluateRequest,
   EvaluateResponse,

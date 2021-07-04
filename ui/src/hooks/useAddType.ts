@@ -13,7 +13,7 @@ import {
   ProjectData,
   DataType,
 } from '../generated'
-import { flow } from 'fp-ts/function'
+import { pipe } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
 import { ExprHash } from '../types/'
 
@@ -42,33 +42,33 @@ export const useAddType = (
     initial
   )
 
-  const addNewType = () => {
+  const addNewType = async () => {
     setTypeState(pending)
-    bindType({
+    const result = await bindType({
       btProjectHash: projectHash,
       btExpression: code,
-    }).then(
-      flow(
-        E.fold<string, BindTypeResponse, State>(
-          (e) => failure(e),
-          (a) => {
-            updateProject(
-              a.btProjectData,
-              Object.values(a.btCodegen?.edBindings || {})
-            )
-            return success({
-              bindings: a.btCodegen?.edBindings || {},
-              typeBindings:
-                a.btCodegen?.edTypeBindings || {},
-              typeclasses: a.btTypeclasses,
-              dataType: a.btDataType,
-              typeName: a.btDataType.dtName,
-              dataTypePretty: a.btPrettyType,
-            })
-          }
-        ),
-        setTypeState
-      )
+    })()
+
+    pipe(
+      result,
+      E.fold<string, BindTypeResponse, State>(
+        e => failure(e),
+        a => {
+          updateProject(
+            a.btProjectData,
+            Object.values(a.btCodegen?.edBindings || {})
+          )
+          return success({
+            bindings: a.btCodegen?.edBindings || {},
+            typeBindings: a.btCodegen?.edTypeBindings || {},
+            typeclasses: a.btTypeclasses,
+            dataType: a.btDataType,
+            typeName: a.btDataType.dtName,
+            dataTypePretty: a.btPrettyType,
+          })
+        }
+      ),
+      setTypeState
     )
   }
   return [addNewType, typeState] as const
