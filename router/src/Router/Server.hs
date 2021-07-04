@@ -12,7 +12,11 @@ import qualified Data.Text as T
 import GHC.Generics
 import qualified Network.HTTP.Client as HTTP
 import Network.HTTP.Req
+import Network.HTTP.Types.Header
+import Network.HTTP.Types.Method
+import Network.Wai
 import Network.Wai.Handler.Warp
+import Network.Wai.Middleware.Cors
 import Router.Config
 import Router.Environment
 import Router.Fetch
@@ -43,12 +47,17 @@ fetchExprHandler cfg env (FetchExprRequest exprHash) = do
           [ "chExprHash" .= exprHash,
             "chRuntime" .= ("task-server" :: String)
           ]
-  bs <-
-    if cfgUseHttps cfg
-      then fetch (https (T.pack $ cfgMimsaBaseUrl cfg) /: "compile" /: "hash") (cfgMimsaPort cfg) compilePayload
-      else fetch (http (T.pack $ cfgMimsaBaseUrl cfg) /: "compile" /: "hash") (cfgMimsaPort cfg) compilePayload
-  _ <- unzipFiles cfg bs
-  addRoute env exprHash
+  eitherBS <-
+    ( if cfgUseHttps cfg
+        then fetchIO (https (T.pack $ cfgMimsaBaseUrl cfg) /: "compile" /: "hash") (cfgMimsaPort cfg) compilePayload
+        else fetchIO (http (T.pack $ cfgMimsaBaseUrl cfg) /: "compile" /: "hash") (cfgMimsaPort cfg) compilePayload
+      )
+  case eitherBS of
+    Right bs -> do
+      _ <- unzipFiles cfg bs
+      addRoute env exprHash
+    Left (FourXX msg) -> throwError (err400 {errBody = msg})
+    Left _ -> throwError err500
 
 type Router =
   HealthzAPI
@@ -64,11 +73,24 @@ router manager cfg env =
 server :: Proxy Router
 server = Proxy
 
+-- allow GET and POST with JSON
+corsMiddleware :: Middleware
+corsMiddleware = cors (const $ Just policy)
+  where
+    sc = simpleCorsResourcePolicy
+    policy =
+      sc
+        { corsMethods =
+            corsMethods sc <> [methodGet, methodPost, methodOptions],
+          corsRequestHeaders =
+            corsRequestHeaders sc <> [hContentType]
+        }
+
 runServer :: Config -> IO ()
 runServer cfg = do
   env <- newEnvironment
   manager <- HTTP.newManager HTTP.defaultManagerSettings
   putStrLn $ "Router running at port " <> show (cfgPort cfg)
-  runSettings appSettings $ serve server (router manager cfg env)
+  runSettings appSettings $ corsMiddleware $ serve server (router manager cfg env)
   where
     appSettings = setPort (cfgPort cfg) $ setHost "0.0.0.0" defaultSettings
