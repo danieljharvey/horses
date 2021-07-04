@@ -1,6 +1,6 @@
-import axios from 'axios'
-import { Either, left, right } from 'fp-ts/lib/Either'
 import { CompileHashRequest } from '../types/'
+import { axiosPost } from '../utils/axios-taskeither'
+import * as TE from 'fp-ts/TaskEither'
 
 // project-based API calls
 
@@ -10,11 +10,11 @@ type Binary = any
 
 export const compileStoreExpression = (
   compileHashRequest: CompileHashRequest
-): Promise<Either<string, Binary>> =>
-  axios
-    .post(`${baseUrl}/compile/hash/`, compileHashRequest, {
+): TE.TaskEither<string, Binary> =>
+  axiosPost(
+    `${baseUrl}/compile/hash/`,
+    compileHashRequest,
+    {
       responseType: 'blob',
-    })
-    .then(a => a.data)
-    .then(right)
-    .catch(e => Promise.resolve(left(e.response.data)))
+    }
+  )

@@ -1,66 +1,59 @@
 {
-    "name": "mimsa-ui",
-    "version": "0.1.0",
-    "private": true,
-    "dependencies": {
-        "@devexperts/remote-data-ts": "^2.0.5",
-        "@testing-library/jest-dom": "^5.11.4",
-        "@testing-library/react": "^11.1.0",
-        "@testing-library/user-event": "^12.1.10",
-        "@types/jest": "^26.0.15",
-        "@types/lodash.throttle": "^4.1.6",
-        "@types/node": "^12.0.0",
-        "@types/react": "^17.0.0",
-        "@types/react-dom": "^16.9.8",
-        "@types/react-monaco-editor": "^0.16.0",
-        "@types/react-router": "^5.1.8",
-        "@types/react-router-dom": "^5.1.6",
-        "axios": "^0.21.0",
-        "fp-ts": "^2.8.5",
-        "lodash.throttle": "^4.1.1",
-        "monaco-editor-webpack-plugin": "^2.0.0",
-        "monocle-ts": "^2.3.3",
-        "prettier": "^2.2.1",
-        "react": "^17.0.1",
-        "react-app-rewired": "^2.1.6",
-        "react-dom": "^17.0.1",
-        "react-monaco-editor": "^0.40.0",
-        "react-router-dom": "^5.2.0",
-        "react-scripts": "^4.0.1",
-        "typescript": "^4.1.2",
-        "use-effect-reducer": "^0.7.0",
-        "web-vitals": "^0.2.4"
-    },
-    "scripts": {
-        "start": "react-app-rewired start",
-        "build": "react-app-rewired build",
-        "test": "react-app-rewired test",
-        "eject": "react-app-rewired eject",
-        "typescript:watch": "tsc --noEmit --watch"
-    },
-    "eslintConfig": {
-        "extends": [
-            "react-app",
-            "react-app/jest"
-        ]
-    },
-    "prettier": {
-        "trailingComma": "es5",
-        "tabWidth": 2,
-        "semi": false,
-        "singleQuote": true,
-        "printWidth": 60
-    },
-    "browserslist": {
-        "production": [
-            ">0.2%",
-            "not dead",
-            "not op_mini all"
-        ],
-        "development": [
-            "last 1 chrome version",
-            "last 1 firefox version",
-            "last 1 safari version"
-        ]
-    }
+  "name": "mimsa-ui",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@devexperts/remote-data-ts": "^2.0.5",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "@types/jest": "^26.0.15",
+    "@types/lodash.throttle": "^4.1.6",
+    "@types/node": "^12.0.0",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^16.9.8",
+    "@types/react-monaco-editor": "^0.16.0",
+    "@types/react-router": "^5.1.8",
+    "@types/react-router-dom": "^5.1.6",
+    "axios": "^0.21.0",
+    "fp-ts": "^2.10.0",
+    "lodash.throttle": "^4.1.1",
+    "monaco-editor-webpack-plugin": "^2.0.0",
+    "monocle-ts": "^2.3.3",
+    "prettier": "^2.2.1",
+    "react": "^17.0.1",
+    "react-app-rewired": "^2.1.6",
+    "react-dom": "^17.0.1",
+    "react-monaco-editor": "^0.40.0",
+    "react-router-dom": "^5.2.0",
+    "react-scripts": "^4.0.1",
+    "typescript": "^4.1.2",
+    "use-effect-reducer": "^0.7.0",
+    "web-vitals": "^0.2.4"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject",
+    "typescript:watch": "tsc --noEmit --watch"
+  },
+  "eslintConfig": {
+    "extends": ["react-app", "react-app/jest"]
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 60
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
 }

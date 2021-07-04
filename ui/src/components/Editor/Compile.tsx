@@ -30,7 +30,6 @@ export const Compile: React.FC<Props> = ({
         >{`Compile ${title}`}</Button>
       )
     case 'Fetching':
-    case 'CreatingBlob':
       return (
         <Button onClick={() => {}}>Compiling...</Button>
       )
