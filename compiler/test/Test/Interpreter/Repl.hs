@@ -424,7 +424,7 @@ spec =
           result <- eval stdLib "\\a -> match a with (Some as) -> True | None -> 100"
           fst <$> result
             `shouldSatisfy` isLeft
-        xit "\\a -> match a with (Some as) -> as | None -> 100" $ do
+        it "\\a -> match a with (Some as) -> as | None -> 100" $ do
           result <- eval stdLib "\\a -> match a with (Some as) -> as | None -> 100"
           fst <$> result
             `shouldBe` Right
@@ -433,7 +433,7 @@ spec =
                   (MTData mempty "Option" [MTPrim mempty MTInt])
                   (MTPrim mempty MTInt)
               )
-        xit "fromMaybe should fail typecheck when default does not match inner value" $ do
+        it "fromMaybe should fail typecheck when default does not match inner value" $ do
           result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Some a) -> a | None -> def) in fromMaybe(\"Horse\")(Some 1)"
           result `shouldSatisfy` isLeft
         it "fromMaybe works when types match up" $ do

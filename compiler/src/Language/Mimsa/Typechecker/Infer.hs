@@ -268,8 +268,8 @@ inferPatternMatch env ann expr patterns = do
       ( \(pat, patternExpr) -> do
           (ps1, tyPattern, newEnv) <- inferPattern (applySubstCtx s1 env) pat
           ps2 <- unify tyPattern tyExpr
-          (ps3, tyPatternExpr) <- infer (applySubstCtx (ps2 <> ps1) newEnv) patternExpr
-          let pSubs = ps3 <> ps2 <> ps1
+          (ps3, tyPatternExpr) <- infer (applySubstCtx (ps1 <> ps2) newEnv) patternExpr
+          let pSubs = ps1 <> ps2 <> ps3
           pure (pSubs, applySubst pSubs tyPattern, tyPatternExpr)
       )
       patterns
@@ -278,9 +278,9 @@ inferPatternMatch env ann expr patterns = do
   -- combine all patterns to check their types match
   (s2, tyMatchedPattern) <- matchList (getB <$> tyPatterns)
   -- match patterns with match expr
-  s3 <- unify tyMatchedPattern (applySubst (s2 <> subs) tyExpr)
+  s3 <- unify (applySubst (subs <> s2) tyMatchedPattern) (applySubst (subs <> s2) tyExpr)
   -- combine all output expr types
-  (s4, tyMatchedExprs) <- matchList (applySubst (subs <> s3) <$> (getC <$> tyPatterns))
+  (s4, tyMatchedExprs) <- matchList (applySubst (subs <> s2 <> s3) <$> (getC <$> tyPatterns))
   -- get all the subs we've learned about
   let allSubs = s4 <> s3 <> s2 <> subs <> s1
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
