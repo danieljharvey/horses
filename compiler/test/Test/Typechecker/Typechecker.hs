@@ -789,7 +789,7 @@ spec = do
                       mempty
                       (MyVar mempty (named "a"))
                       [ (PConstructor mempty "Just" [PVar mempty (named "as")], MyVar mempty (named "as")),
-                        (PWildcard mempty, MyLiteral mempty (MyInt 100))
+                        (PConstructor mempty "Nothing" [], MyLiteral mempty (MyInt 100))
                       ]
                   )
               )
@@ -828,12 +828,18 @@ spec = do
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty (named "maybeA"))
-                      [ (PConstructor mempty "Just" [PVar mempty (named "a")], MyVar mempty (named "a")),
+                      [ ( PConstructor mempty "Just" [PVar mempty (named "a")],
+                          MyVar mempty (named "a")
+                        ),
                         (PWildcard mempty, MyVar mempty (named "b"))
                       ]
                   )
               )
-          maybeExpr = MyConsApp mempty (MyConstructor mempty "Just") (MyLiteral mempty (MyInt 1))
+          maybeExpr =
+            MyConsApp
+              mempty
+              (MyConstructor mempty "Just")
+              (MyLiteral mempty (MyInt 1))
           expr =
             MyData
               mempty
