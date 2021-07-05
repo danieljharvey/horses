@@ -9,6 +9,7 @@ import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { ExprHash } from '../../types'
 import { Compile } from './Compile'
+import { Deploy } from './Deploy'
 
 type Props = {
   projectHash: ExprHash
@@ -69,14 +70,21 @@ export const Feedback: React.FC<Props> = ({
           />
           {Object.values(result.expression.edRuntimes).map(
             rt => (
-              <Compile
-                exprHash={result.expression.edHash}
-                runtime={rt.rtdName}
-                title={rt.rtdName}
-              />
+              <>
+                <Compile
+                  exprHash={result.expression.edHash}
+                  runtime={rt.rtdName}
+                  title={rt.rtdName}
+                />
+                {rt.rtdName === 'task-server' && (
+                  <Deploy
+                    exprHash={result.expression.edHash}
+                    title={result.bindingName}
+                  />
+                )}
+              </>
             )
           )}
-
           <ListBindings
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
@@ -102,11 +110,19 @@ export const Feedback: React.FC<Props> = ({
           />
           {Object.values(result.expression.edRuntimes).map(
             rt => (
-              <Compile
-                exprHash={result.expression.edHash}
-                runtime={rt.rtdName}
-                title={rt.rtdName}
-              />
+              <FlexColumnSpaced>
+                <Compile
+                  exprHash={result.expression.edHash}
+                  runtime={rt.rtdName}
+                  title={rt.rtdName}
+                />
+                {rt.rtdName === 'task-server' && (
+                  <Deploy
+                    exprHash={result.expression.edHash}
+                    title={'task-server'}
+                  />
+                )}
+              </FlexColumnSpaced>
             )
           )}
 

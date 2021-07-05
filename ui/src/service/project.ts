@@ -1,74 +1,71 @@
-import axios from 'axios'
-import { Either, left, right } from 'fp-ts/lib/Either'
 import {
-    EvaluateRequest,
-    EvaluateResponse,
-    ListBindingsRequest,
-    ListBindingsResponse,
-    CreateProjectResponse,
-    BindExpressionRequest,
-    BindExpressionResponse,
-    GetExpressionResponse,
-    GetExpressionRequest,
-    AddUnitTestRequest,
-    AddUnitTestResponse,
-    BindTypeRequest,
-    BindTypeResponse,
+  EvaluateRequest,
+  EvaluateResponse,
+  ListBindingsRequest,
+  ListBindingsResponse,
+  CreateProjectResponse,
+  BindExpressionRequest,
+  BindExpressionResponse,
+  GetExpressionResponse,
+  GetExpressionRequest,
+  AddUnitTestRequest,
+  AddUnitTestResponse,
+  BindTypeRequest,
+  BindTypeResponse,
 } from '../types/'
+import {
+  axiosPost,
+  axiosGet,
+} from '../utils/axios-taskeither'
+import * as TE from 'fp-ts/TaskEither'
 
 // project-based API calls
 
 const baseUrl = process.env.REACT_APP_MIMSA_API_URL
 
 export const evaluate = (
-    evaluateRequest: EvaluateRequest
-): Promise<Either<string, EvaluateResponse>> =>
-    axios
-        .post(`${baseUrl}/project/evaluate/`, evaluateRequest)
-        .then(a => a.data)
-        .then(right)
-        .catch(e => Promise.resolve(left(e.response.data)))
+  evaluateRequest: EvaluateRequest
+): TE.TaskEither<string, EvaluateResponse> =>
+  axiosPost(`${baseUrl}/project/evaluate/`, evaluateRequest)
 
 export const bindExpression = (
-    bindExpressionRequest: BindExpressionRequest
-): Promise<Either<string, BindExpressionResponse>> =>
-    axios
-        .post(`${baseUrl}/project/bind/`, bindExpressionRequest)
-        .then(a => a.data)
-        .then(right)
-        .catch(e => Promise.resolve(left(e.response.data)))
+  bindExpressionRequest: BindExpressionRequest
+): TE.TaskEither<string, BindExpressionResponse> =>
+  axiosPost(
+    `${baseUrl}/project/bind/`,
+    bindExpressionRequest
+  )
 
 export const bindType = (
-    bindTypeRequest: BindTypeRequest
-): Promise<Either<string, BindTypeResponse>> =>
-    axios
-        .post(`${baseUrl}/project/type/`, bindTypeRequest)
-        .then(a => a.data)
-        .then(right)
-        .catch(e => Promise.resolve(left(e.response.data)))
+  bindTypeRequest: BindTypeRequest
+): TE.TaskEither<string, BindTypeResponse> =>
+  axiosPost(`${baseUrl}/project/type/`, bindTypeRequest)
 
 export const addUnitTest = (
-    addUnitTestRequest: AddUnitTestRequest
-): Promise<Either<string, AddUnitTestResponse>> =>
-    axios
-        .post(`${baseUrl}/project/tests/add/`, addUnitTestRequest)
-        .then(a => a.data)
-        .then(right)
-        .catch(e => Promise.resolve(left(e.response.data)))
+  addUnitTestRequest: AddUnitTestRequest
+): TE.TaskEither<string, AddUnitTestResponse> =>
+  axiosPost(
+    `${baseUrl}/project/tests/add/`,
+    addUnitTestRequest
+  )
 
 export const listBindings = (
-    listBindingsRequest: ListBindingsRequest
-): Promise<ListBindingsResponse> =>
-    axios
-        .post(`${baseUrl}/project/bindings/`, listBindingsRequest)
-        .then(a => a.data)
+  listBindingsRequest: ListBindingsRequest
+): TE.TaskEither<string, ListBindingsResponse> =>
+  axiosPost(
+    `${baseUrl}/project/bindings/`,
+    listBindingsRequest
+  )
 
-export const createProject = (): Promise<CreateProjectResponse> =>
-    axios.get(`${baseUrl}/project/create`).then(a => a.data)
+export const createProject = (): TE.TaskEither<
+  string,
+  CreateProjectResponse
+> => axiosGet(`${baseUrl}/project/create`)
 
 export const getExpression = (
-    getExpressionRequest: GetExpressionRequest
-): Promise<GetExpressionResponse> =>
-    axios
-        .post(`${baseUrl}/project/expression/`, getExpressionRequest)
-        .then(a => a.data)
+  getExpressionRequest: GetExpressionRequest
+): TE.TaskEither<string, GetExpressionResponse> =>
+  axiosPost(
+    `${baseUrl}/project/expression/`,
+    getExpressionRequest
+  )

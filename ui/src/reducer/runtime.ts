@@ -9,18 +9,31 @@ import {
   addUnitTest,
 } from '../service/project'
 import { ExprHash } from '../types/'
-import * as E from 'fp-ts/Either'
 import { setScreen } from './view/reducer'
 import { projectSet } from './project/helpers'
 import { log } from './console/reducer'
 import { emptyEditor } from './editor/helpers'
 import * as H from 'history'
 import { storeProjectData } from './project/reducer'
+import * as T from 'fp-ts/Task'
+import { pipe } from 'fp-ts/function'
+import * as TE from 'fp-ts/TaskEither'
+
+const orEmpty = <A>() =>
+  TE.fold(
+    () => T.of([]),
+    (a: A[]) => T.of(a)
+  )
+
+const flatten = <E, A>() =>
+  TE.fold(
+    (e: E) => T.of<E | A>(e),
+    (a: A) => T.of<E | A>(a)
+  )
 
 export const runtime = (
   history: H.History
 ): EventReducerRuntime<State, Action, Event> => (
-  dispatch,
   state,
   event
 ) => {
@@ -28,45 +41,47 @@ export const runtime = (
     case 'SaveToSessionStorage':
       projectSet({ hash: event.projectHash })
       history.push(`/project/${event.projectHash}`)
-      dispatch(
+      return T.of([
         log(
           `Saved ${event.projectHash} to session storage`,
           Date.now()
-        )
-      )
+        ),
+      ])
 
-      return
     case 'ListBindings':
-      dispatch(log('Saving to session storage', Date.now()))
-      listBindings({
-        lbProjectHash: event.projectHash,
-      }).then(data => {
-        dispatch(storeProjectData(data.lbProjectData))
-      })
-      return
+      return pipe(
+        listBindings({
+          lbProjectHash: event.projectHash,
+        }),
+        TE.map(data => [
+          storeProjectData(data.lbProjectData),
+        ]),
+        orEmpty()
+      )
     case 'CreateProject':
-      createProject().then(data => {
-        dispatch(storeProjectData(data.cpProjectData))
-
-        dispatch(
+      return pipe(
+        createProject(),
+        TE.map(data => [
+          storeProjectData(data.cpProjectData),
           setScreen({
-            type: 'scratch',
+            type: 'scratch' as const,
             editor: emptyEditor,
-          })
-        )
-      })
-      return
+          }),
+        ]),
+        orEmpty()
+      )
     case 'FetchExpressions':
       const fetchAndDispatch = (exprHash: ExprHash) =>
-        getExpression({
-          geExprHash: exprHash,
-          geProjectHash: event.projectHash,
-        }).then(a =>
-          dispatch({
-            type: 'FetchExpressionSuccess',
+        pipe(
+          getExpression({
+            geExprHash: exprHash,
+            geProjectHash: event.projectHash,
+          }),
+          TE.map(a => ({
+            type: 'FetchExpressionSuccess' as const,
             exprHash,
             storeExpression: a.geExpressionData,
-          })
+          }))
         )
       const hashes = event.hashes.filter(
         exprHash =>
@@ -74,91 +89,85 @@ export const runtime = (
             exprHash
           )
       )
-      hashes.forEach(fetchAndDispatch)
-      return
+      const x = pipe(
+        TE.sequenceArray(hashes.map(fetchAndDispatch)),
+        TE.fold(
+          _ => T.of([]),
+          actions => T.of(actions as Action[])
+        )
+      )
+      return x
     case 'EvaluateExpression':
-      evaluate({
-        erCode: event.code,
-        erProjectHash: state.project.projectHash,
-      })
-        .then(a => {
-          if (E.isRight(a)) {
-            dispatch({
-              type: 'EvaluateExpressionSuccess',
-              expression: a.right,
-            })
-          } else {
-            dispatch({
-              type: 'EvaluateExpressionFailure',
-              typeError: a.left,
-            })
-          }
-        })
-        .catch(_ =>
-          dispatch({
-            type: 'EvaluateExpressionError',
-          })
-        )
-      return
+      return pipe(
+        evaluate({
+          erCode: event.code,
+          erProjectHash: state.project.projectHash,
+        }),
+        TE.bimap(
+          e => [
+            {
+              type: 'EvaluateExpressionFailure' as const,
+              typeError: e,
+            },
+          ],
+          a => [
+            {
+              type: 'EvaluateExpressionSuccess' as const,
+              expression: a,
+            },
+          ]
+        ),
+        flatten()
+      )
     case 'BindExpression':
-      bindExpression({
-        beProjectHash: state.project.projectHash,
-        beExpression: event.code,
-        beBindingName: event.bindingName,
-      })
-        .then(res => {
-          if (E.isRight(res)) {
-            dispatch({
-              type: 'BindExpressionSuccess',
-              expression: res.right.beExpressionData,
+      return pipe(
+        bindExpression({
+          beProjectHash: state.project.projectHash,
+          beExpression: event.code,
+          beBindingName: event.bindingName,
+        }),
+        TE.bimap(
+          e => [
+            {
+              type: 'BindExpressionFailure' as const,
+              error: e,
+            },
+          ],
+          a => [
+            {
+              type: 'BindExpressionSuccess' as const,
+              expression: a.beExpressionData,
               bindingName: event.bindingName,
-              updatedTestsCount:
-                res.right.beUpdatedTestsCount,
-            })
-            dispatch(
-              storeProjectData(res.right.beProjectData)
-            )
-          } else {
-            dispatch({
-              type: 'BindExpressionFailure',
-              error: res.left,
-            })
-          }
-        })
-        .catch(_ =>
-          dispatch({
-            type: 'BindExpressionFailure',
-            error: 'Could not bind expression',
-          })
-        )
-      return
+              updatedTestsCount: a.beUpdatedTestsCount,
+            },
+            storeProjectData(a.beProjectData),
+          ]
+        ),
+        flatten()
+      )
     case 'AddUnitTest':
-      addUnitTest({
-        autProjectHash: state.project.projectHash,
-        autExpression: event.code,
-        autTestName: event.testName,
-      })
-        .then(res => {
-          if (E.isRight(res)) {
-            dispatch({
-              type: 'AddUnitTestSuccess',
-              unitTest: res.right.autUnitTest,
-            })
-            dispatch(
-              storeProjectData(res.right.autProjectData)
-            )
-          } else {
-            dispatch({
-              type: 'AddUnitTestFailure',
-              error: res.left,
-            })
-          }
-        })
-        .catch(_ =>
-          dispatch({
-            type: 'BindExpressionFailure',
-            error: 'Could not bind expression',
-          })
-        )
+      return pipe(
+        addUnitTest({
+          autProjectHash: state.project.projectHash,
+          autExpression: event.code,
+          autTestName: event.testName,
+        }),
+        TE.bimap(
+          e => [
+            {
+              type: 'AddUnitTestFailure' as const,
+              error: e,
+            },
+          ],
+          a => [
+            {
+              type: 'AddUnitTestSuccess' as const,
+              unitTest: a.autUnitTest,
+            },
+            storeProjectData(a.autProjectData),
+          ]
+        ),
+        flatten()
+      )
   }
 }

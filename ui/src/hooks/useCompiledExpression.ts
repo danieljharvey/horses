@@ -7,7 +7,6 @@ type CompiledState =
   | { type: 'Empty' }
   | { type: 'Fetching' }
   | { type: 'Failed' }
-  | { type: 'CreatingBlob' }
   | { type: 'HasBlob'; url: string }
 
 type State = {
@@ -37,41 +36,26 @@ export const useCompiledExpression = (
     setState(def)
   }
 
-  const compile = () => {
-    if (
-      state.compiled.type === 'Fetching' ||
-      state.compiled.type === 'CreatingBlob'
-    ) {
+  const compile = async () => {
+    if (state.compiled.type === 'Fetching') {
       return
     }
 
     setState({ ...state, compiled: { type: 'Fetching' } })
-    compileStoreExpression({
+    const resp = await compileStoreExpression({
       chExprHash,
       chRuntime,
-    })
-      .then(response => {
-        if (E.isLeft(response)) {
-          setState({
-            ...state,
-            compiled: { type: 'Failed' },
-          })
-          throw new Error('nah')
-        } else {
-          setState({
-            ...state,
-            compiled: { type: 'CreatingBlob' },
-          })
-          return response.right
-        }
+    })()
+
+    if (E.isLeft(resp)) {
+      setState({ ...state, compiled: { type: 'Failed' } })
+    } else {
+      let url = window.URL.createObjectURL(resp.right)
+      setState({
+        ...state,
+        compiled: { type: 'HasBlob', url },
       })
-      .then((blob: any) => {
-        let url = window.URL.createObjectURL(blob)
-        setState({
-          ...state,
-          compiled: { type: 'HasBlob', url },
-        })
-      })
+    }
   }
 
   return [state.compiled, compile] as const

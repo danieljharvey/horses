@@ -34,6 +34,8 @@ dependencies:
 - http-client
 - wai
 - wai-extra
+- wai-cors # server
+- http-types
 
 library:
   source-dirs: src
