@@ -27,10 +27,23 @@ buildStdlib =
       addType "type Unit = Unit"
       addBinding "id" "\\a -> a"
       addBinding "compose" "\\f -> \\g -> \\a -> f(g(a))"
+      addBinding "not" "\\a -> if a then False else True"
       addBinding "runParser" "\\parser -> \\str -> match parser with (Parser p) -> match p(str) with  (Just (\"\", a)) -> (Just a) | _ -> (Nothing)"
       addBinding "fmapParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> (let outcome = p(str); match outcome with (Just (a, rest)) -> (Just ((f(a),rest))) | _ -> (Nothing)))"
       addBinding "bindParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> match p(str) with (Just (a, rest)) -> (let nextParser = f(a); match nextParser with (Parser b) -> b(rest)) | _ -> (Nothing))"
       addBinding "charParser" "Parser (\\s -> match s with ch ++ rest -> (Just ((rest, ch))) | _ -> (Nothing))"
+      addBinding "predParser" "\\pred -> \\p -> Parser (\\s -> match parser.unwrap(p)(s) with (Just (rest, a)) -> (if pred(a) then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
+      addBinding "pureTask" "\\a -> Task \\r -> r(a)"
+      addBinding "arrayReduce" "let arrayReduce = \\f -> \\def -> \\as -> match as with [] -> def | [a, ...rest] -> (let val = f(a)(def); arrayReduce(f)(val)(rest)); arrayReduce"
+      addBinding "arrayReverse" "arrayReduce((\\all -> \\a -> [ all ] <> a))([])"
+      addBinding "arrayMap" "\\f -> arrayReduce((\\a -> \\all -> all <> [ f(a) ]))([])"
+      addBinding "arrayFilter" "\\pred -> arrayReduce((\\a -> \\all -> if pred(a) then all <> [ a ] else all))([])"
+      addBinding "array" "{ reduce: arrayReduce, reverse: arrayReverse, map: arrayMap, filter: arrayFilter }"
+      addBinding "stringReduce" "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> (let nextVal = f(def)(head); stringReduce(f)(nextVal)(tail)); stringReduce"
+      addBinding "stringMap" "\\f -> stringReduce((\\total -> \\a -> total ++ f(a)))(\"\")"
+      addBinding "stringFilter" "\\pred -> stringReduce((\\all -> \\a -> if pred(a) then all ++ a else all))(\"\")"
+      addBinding "stringSplit" "\\char -> \\str -> arrayReverse(stringReduce((\\as -> \\a -> if (a == char) then [ \"\" ] <> as else match as with [] -> [] | [current, ...rest] -> [ current ++ a ] <> rest))([\"\"])(str))"
+      addBinding "string" "{ reduce: stringReduce, map: stringMap, filter: stringFilter, split: stringSplit }"
 
 addType :: Text -> Actions.ActionM ()
 addType t =
