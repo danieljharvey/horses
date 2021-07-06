@@ -43,6 +43,8 @@ data Expr var ann
     MyLet ann var (Expr var ann) (Expr var ann)
   | -- | binderA, binderB, expr, body
     MyLetPair ann var var (Expr var ann) (Expr var ann)
+  | -- | pat, expr, body
+    MyLetPattern ann (Pattern var ann) (Expr var ann) (Expr var ann)
   | -- | a `f` b
     MyInfix ann Operator (Expr var ann) (Expr var ann)
   | -- | binder, body
@@ -131,6 +133,22 @@ prettyLetPair var1 var2 expr1 body =
         <+> "="
         <> line
         <> indentMulti 2 (printSubExpr expr1)
+        <> newlineOrIn
+        <> printSubExpr body
+    )
+
+prettyLetPattern ::
+  (Show var, Printer var) =>
+  Pattern var ann ->
+  Expr var ann ->
+  Expr var ann ->
+  Doc style
+prettyLetPattern pat expr body =
+  group
+    ( "let" <+> printSubPattern pat
+        <+> "="
+        <> line
+        <> indentMulti 2 (printSubExpr expr)
         <> newlineOrIn
         <> printSubExpr body
     )
@@ -287,6 +305,8 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
     prettyLet var expr1 expr2
   prettyDoc (MyLetPair _ var1 var2 expr1 body) =
     prettyLetPair var1 var2 expr1 body
+  prettyDoc (MyLetPattern _ pat expr body) =
+    prettyLetPattern pat expr body
   prettyDoc wholeExpr@MyInfix {} =
     group (prettyInfixList (getInfixList wholeExpr))
   prettyDoc (MyLambda _ binder expr) =

@@ -729,6 +729,29 @@ spec =
                 ( MTArray mempty (MTPrim mempty MTInt),
                   MyArray mempty [int 2, int 3, int 4]
                 )
+        describe "Let pattern" $ do
+          it "Matches a wildcard" $ do
+            result <- eval stdLib "let _ = False in True"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a value" $ do
+            result <- eval stdLib "let a = True in a"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a pair" $ do
+            result <- eval stdLib "let (a,b) = (True,False) in a"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a record" $ do
+            result <- eval stdLib "let { dog: a } = { dog: True } in a"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Does not match a constructor with other cases" $ do
+            result <- eval stdLib "let (Just a) = Just True in a"
+            result `shouldSatisfy` isLeft
+          it "Matches a one case constructor" $ do
+            result <- eval stdLib "let (Identity a) = Identity True in a"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Does not matches a pair that is not complete" $ do
+            result <- eval stdLib "let (a,True) = (True,False) in a"
+            result `shouldSatisfy` isLeft
+
         describe "Pattern matching" $ do
           it "Matches a wildcard" $ do
             result <- eval stdLib "match 1 with _ -> True"

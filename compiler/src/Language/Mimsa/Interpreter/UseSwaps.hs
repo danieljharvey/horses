@@ -41,6 +41,9 @@ useSwaps' (MyLetPair ann varA varB a b) =
     <*> lookupSwap varB
     <*> useSwaps' a
     <*> useSwaps' b
+useSwaps' (MyLetPattern ann pat expr body) = do
+  newPat <- useSwapsInPattern pat
+  MyLetPattern ann newPat <$> useSwaps' expr <*> useSwaps' body
 useSwaps' (MyInfix ann op a b) =
   MyInfix ann op <$> useSwaps' a <*> useSwaps' b
 useSwaps' (MyRecordAccess ann a name) =
@@ -62,12 +65,16 @@ useSwaps' (MyLiteral ann a) = pure (MyLiteral ann a)
 useSwaps' (MyData ann dt b) =
   MyData ann dt <$> useSwaps' b
 useSwaps' (MyConstructor ann name) = pure (MyConstructor ann name)
-useSwaps' (MyConsApp ann fn var) = MyConsApp ann <$> useSwaps' fn <*> useSwaps' var
+useSwaps' (MyConsApp ann fn var) =
+  MyConsApp ann <$> useSwaps' fn <*> useSwaps' var
 useSwaps' (MyPatternMatch ann expr' patterns) = do
-  let useSwapsPair (pat, expr'') = (,) <$> useSwapsInPattern pat <*> useSwaps' expr''
+  let useSwapsPair (pat, expr'') =
+        (,)
+          <$> useSwapsInPattern pat <*> useSwaps' expr''
   patterns' <- traverse useSwapsPair patterns
   MyPatternMatch ann <$> useSwaps' expr' <*> pure patterns'
-useSwaps' (MyTypedHole ann a) = pure $ MyTypedHole ann a
+useSwaps' (MyTypedHole ann a) =
+  pure $ MyTypedHole ann a
 useSwaps' (MyDefineInfix ann infixOp bindName expr) =
   MyDefineInfix
     ann

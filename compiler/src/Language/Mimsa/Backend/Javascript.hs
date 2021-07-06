@@ -378,6 +378,7 @@ outputJS expr =
     MyApp _ f a -> outputApp f a
     MyIf _ p a b -> outputIf p a b
     MyLet _ n a b -> outputLet n a b
+    MyLetPattern {} -> error "let pattern not implemented in js backend"
     MyRecord _ as -> outputRecord as
     MyArray _ as -> outputArray as
     MyLetPair _ m n a b -> outputLetPair m n a b

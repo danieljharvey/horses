@@ -95,6 +95,7 @@ stdLibE =
     >>= addStateMonad
     >>= addParser
     >>= addArray
+    >>= addIdentity
 
 addListMonad :: Project Annotation -> ProjectPart
 addListMonad prj =
@@ -189,6 +190,9 @@ addArray prj =
     >>= addBinding
       "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f(a)] <> map(rest) | _ -> []; map(arr)"
       "mapArray"
+
+addIdentity :: Project Annotation -> ProjectPart
+addIdentity prj = pure prj >>= addBinding "type Identity a = Identity a in {}" "typeIdentity"
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input =

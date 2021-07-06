@@ -474,6 +474,15 @@ inferRecordAccess env ann a name = do
   (s2, tyResult) <- inferRow tyItems
   pure (s2 <> s1, applySubst (s2 <> s1) tyResult)
 
+inferLetPattern ::
+  Environment ->
+  Annotation ->
+  Pattern Variable ann ->
+  TcExpr ->
+  TcExpr ->
+  TcMonad (Substitutions, MonoType)
+inferLetPattern = undefined
+
 inferLambda ::
   Environment ->
   Annotation ->
@@ -556,12 +565,14 @@ infer env inferExpr =
       pure (mempty, tyRecord)
     (MyLet ann binder expr body) ->
       inferLetBinding env ann binder expr body
+    (MyLetPair _ binder1 binder2 expr body) ->
+      inferLetPairBinding env binder1 binder2 expr body
+    (MyLetPattern ann pat expr body) ->
+      inferLetPattern env ann pat expr body
     (MyRecordAccess ann (MyRecord ann' items') name) ->
       inferRecordAccess env ann (MyRecord ann' items') name
     (MyRecordAccess ann a name) ->
       inferRecordAccess env ann a name
-    (MyLetPair _ binder1 binder2 expr body) ->
-      inferLetPairBinding env binder1 binder2 expr body
     (MyLambda ann binder body) ->
       inferLambda env ann binder body
     (MyApp ann function argument) ->
