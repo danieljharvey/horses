@@ -477,11 +477,19 @@ inferRecordAccess env ann a name = do
 inferLetPattern ::
   Environment ->
   Annotation ->
-  Pattern Variable ann ->
+  Pattern Variable Annotation ->
   TcExpr ->
   TcExpr ->
   TcMonad (Substitutions, MonoType)
-inferLetPattern = undefined
+inferLetPattern env ann pat expr body = do
+  (s1, tyPattern, newEnv) <- inferPattern env pat
+  (s2, tyExpr) <- infer env expr
+  s3 <- unify tyPattern tyExpr
+  (s4, tyBody) <- infer (applySubstCtx (s3 <> s2 <> s1) newEnv) body
+  -- perform exhaustiveness checking at end so it doesn't mask more basic errors
+  validatePatterns env ann [pat]
+
+  pure (s4 <> s3 <> s2 <> s1, tyBody)
 
 inferLambda ::
   Environment ->

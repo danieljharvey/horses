@@ -743,7 +743,7 @@ spec =
             result <- eval stdLib "let { dog: a } = { dog: True } in a"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
           it "Does not match a constructor with other cases" $ do
-            result <- eval stdLib "let (Just a) = Just True in a"
+            result <- eval stdLib "let (Some a) = Some True in a"
             result `shouldSatisfy` isLeft
           it "Matches a one case constructor" $ do
             result <- eval stdLib "let (Identity a) = Identity True in a"

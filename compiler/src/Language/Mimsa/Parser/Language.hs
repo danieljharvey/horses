@@ -54,6 +54,7 @@ complexParser =
     <|> try recordParser
     <|> try arrayParser
     <|> try letParser
+    <|> try letPatternParser
     <|> try ifParser
     <|> try appParser
     <|> try pairParser
@@ -112,6 +113,19 @@ letPairParser =
           expr <- expressionParser
           _ <- withOptionalSpace (string ";" <|> string "in ")
           MyLetPair mempty bindA bindB expr <$> expressionParser
+
+-----
+
+letPatternParser :: Parser ParserExpr
+letPatternParser =
+  addLocation $
+    do
+      _ <- thenSpace (string "let")
+      pat <- orInBrackets patternParser
+      _ <- thenSpace (string "=")
+      expr <- expressionParser
+      _ <- withOptionalSpace (string ";" <|> string "in ")
+      MyLetPattern mempty pat expr <$> expressionParser
 
 -----
 

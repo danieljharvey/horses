@@ -7,9 +7,11 @@ where
 
 -- let's run our code, at least for the repl
 -- run == simplify, essentially
+
 import Control.Monad.Except
 import Data.Functor
 import qualified Data.Map as M
+import Data.Maybe
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter.InstantiateVar
 import Language.Mimsa.Interpreter.PatternMatch
@@ -186,6 +188,18 @@ interpretIf ann predicate true false =
       predExpr <- interpretWithScope pred'
       interpretWithScope (MyIf ann predExpr true false)
 
+interpretLetPattern ::
+  (Eq ann, Monoid ann) =>
+  Pattern Variable ann ->
+  Expr Variable ann ->
+  Expr Variable ann ->
+  App ann (Expr Variable ann)
+interpretLetPattern pat expr body = do
+  let matches = fromMaybe [] (patternMatches pat expr)
+  let newScopes = Scope $ M.fromList matches
+  addToScope newScopes
+  interpretWithScope body
+
 -- warning, ordering is very important here to stop things looping forever
 interpretWithScope ::
   (Eq ann, Monoid ann) =>
@@ -203,6 +217,9 @@ interpretWithScope interpretExpr =
     (MyLetPair ann binderA binderB (MyVar ann' v) body) -> do
       expr <- interpretWithScope (MyVar ann' v)
       interpretWithScope (MyLetPair ann binderA binderB expr body)
+    (MyLetPattern _ pat expr body) -> do
+      expr' <- interpretWithScope expr
+      interpretLetPattern pat expr' body
     (MyLetPair _ _ _ a _) ->
       throwError $ CannotDestructureAsPair a
     (MyInfix _ op a b) -> interpretOperator op a b

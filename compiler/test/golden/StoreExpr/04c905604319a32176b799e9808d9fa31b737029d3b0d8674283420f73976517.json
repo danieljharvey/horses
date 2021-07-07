@@ -1,0 +1,1 @@
+{"storeExpression":{"tag":"MyLetPattern","contents":[[],{"tag":"PWildcard","contents":[]},{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":false}]},{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":true}]}]},"storeBindings":{},"storeTypeBindings":{}}
