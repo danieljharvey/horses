@@ -34,13 +34,6 @@ useSwaps' (MyLet ann var expr' body) = do
   MyLet ann <$> lookupSwap var
     <*> useSwaps' expr'
     <*> useSwaps' body
-useSwaps' (MyLetPair ann varA varB a b) =
-  MyLetPair
-    ann
-    <$> lookupSwap varA
-    <*> lookupSwap varB
-    <*> useSwaps' a
-    <*> useSwaps' b
 useSwaps' (MyLetPattern ann pat expr body) = do
   newPat <- useSwapsInPattern pat
   MyLetPattern ann newPat <$> useSwaps' expr <*> useSwaps' body

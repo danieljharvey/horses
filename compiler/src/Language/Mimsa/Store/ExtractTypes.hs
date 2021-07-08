@@ -30,8 +30,6 @@ extractTypes_ (MyInfix _ _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyLambda _ _ a) = extractTypes_ a
 extractTypes_ (MyApp _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyLiteral _ _) = mempty
-extractTypes_ (MyLetPair _ _ _ a b) =
-  extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyLetPattern _ pat expr body) =
   extractFromPattern pat <> extractTypes_ expr <> extractTypes_ body
 extractTypes_ (MyPair _ a b) = extractTypes_ a <> extractTypes_ b
@@ -103,8 +101,6 @@ withDataTypes f (MyInfix _ _ a b) = withDataTypes f a <> withDataTypes f b
 withDataTypes f (MyLambda _ _ a) = withDataTypes f a
 withDataTypes f (MyApp _ a b) = withDataTypes f a <> withDataTypes f b
 withDataTypes _ (MyLiteral _ _) = mempty
-withDataTypes f (MyLetPair _ _ _ a b) =
-  withDataTypes f a <> withDataTypes f b
 withDataTypes f (MyLetPattern _ _ a b) =
   withDataTypes f a <> withDataTypes f b
 withDataTypes f (MyPair _ a b) = withDataTypes f a <> withDataTypes f b

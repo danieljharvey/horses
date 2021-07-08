@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyLetPair","contents":[[],"a","b",{"tag":"MyPair","contents":[[],{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":true}]},{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":false}]}]},{"tag":"MyVar","contents":[[],"a"]}]},"storeBindings":{},"storeTypeBindings":{}}

@@ -186,29 +186,6 @@ inferLetBinding env ann binder expr body = do
   s3 <- unify tyUnknown tyExpr
   pure (s3 <> s2 <> s1, applySubst s3 tyBody)
 
-inferLetPairBinding ::
-  Environment ->
-  Variable ->
-  Variable ->
-  TcExpr ->
-  TcExpr ->
-  TcMonad (Substitutions, MonoType)
-inferLetPairBinding env binder1 binder2 expr body = do
-  (s1, tyExpr) <- infer env expr
-  (tyA, tyB) <- case tyExpr of
-    (MTVar ann _a) -> do
-      tyA <- getUnknown ann
-      tyB <- getUnknown ann
-      pure (tyA, tyB)
-    (MTPair _ a b) -> pure (a, b)
-    a -> throwError $ CaseMatchExpectedPair (getAnnotation expr) a
-  let schemeA = Scheme mempty (applySubst s1 tyA)
-      schemeB = Scheme mempty (applySubst s1 tyB)
-      newEnv = envFromVar binder1 schemeA <> envFromVar binder2 schemeB <> env
-  s2 <- unify tyExpr (MTPair mempty tyA tyB)
-  (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
-  pure (s3 <> s2 <> s1, tyBody)
-
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> TcMonad (Substitutions, MonoType)
 inferIf env condition thenExpr elseExpr = do
   (s1, tyCond) <- infer env condition
@@ -573,8 +550,6 @@ infer env inferExpr =
       pure (mempty, tyRecord)
     (MyLet ann binder expr body) ->
       inferLetBinding env ann binder expr body
-    (MyLetPair _ binder1 binder2 expr body) ->
-      inferLetPairBinding env binder1 binder2 expr body
     (MyLetPattern ann pat expr body) ->
       inferLetPattern env ann pat expr body
     (MyRecordAccess ann (MyRecord ann' items') name) ->

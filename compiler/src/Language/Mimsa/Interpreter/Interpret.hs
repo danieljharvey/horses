@@ -210,18 +210,9 @@ interpretWithScope interpretExpr =
     (MyLet _ binder expr body) -> do
       addToScope (Scope $ M.singleton binder expr)
       interpretWithScope body
-    (MyLetPair _ binderA binderB (MyPair _ a b) body) -> do
-      let newScopes = Scope $ M.fromList [(binderA, a), (binderB, b)]
-      addToScope newScopes
-      interpretWithScope body
-    (MyLetPair ann binderA binderB (MyVar ann' v) body) -> do
-      expr <- interpretWithScope (MyVar ann' v)
-      interpretWithScope (MyLetPair ann binderA binderB expr body)
     (MyLetPattern _ pat expr body) -> do
       expr' <- interpretWithScope expr
       interpretLetPattern pat expr' body
-    (MyLetPair _ _ _ a _) ->
-      throwError $ CannotDestructureAsPair a
     (MyInfix _ op a b) -> interpretOperator op a b
     (MyVar _ var) ->
       useVar var >>= interpretWithScope

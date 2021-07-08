@@ -121,30 +121,6 @@ spec =
       it "if True then 1 else 2" $ do
         let f = MyIf mempty (bool True) (int 1) (int 2)
         testInterpret mempty mempty f (int 1)
-      it "Destructures a pair" $ do
-        let f =
-              MyLet
-                mempty
-                (named "fst")
-                ( MyLambda
-                    mempty
-                    (named "tuple")
-                    ( MyLetPair
-                        mempty
-                        (named "a")
-                        (named "b")
-                        (MyVar mempty (named "tuple"))
-                        (MyVar mempty (named "a"))
-                    )
-                )
-                ( MyLet
-                    mempty
-                    (named "x")
-                    (MyPair mempty (int 1) (int 2))
-                    (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "x")))
-                )
-        let result = interpret' mempty mempty f
-        result `shouldBe` Right (int 1)
       it "Uses a higher order function twice without screwing the pooch" $ do
         let f =
               MyLet

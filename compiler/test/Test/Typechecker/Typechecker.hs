@@ -99,16 +99,19 @@ exprs =
           )
     ),
     (MyPair mempty (int 1) (bool True), Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))),
-    ( MyLetPair mempty (named "a") (named "b") (MyPair mempty (int 1) (bool True)) (MyVar mempty (named "a")),
+    ( MyLetPattern mempty (PPair mempty (PVar mempty (named "a")) (PVar mempty (named "b"))) (MyPair mempty (int 1) (bool True)) (MyVar mempty (named "a")),
       Right (MTPrim mempty MTInt)
     ),
     ( MyLambda
         mempty
         (named "x")
-        ( MyLetPair
+        ( MyLetPattern
             mempty
-            (named "a")
-            (named "b")
+            ( PPair
+                mempty
+                (PVar mempty (named "a"))
+                (PVar mempty (named "b"))
+            )
             (MyVar mempty (named "x"))
             (MyVar mempty (named "a"))
         ),
@@ -120,10 +123,13 @@ exprs =
         ( MyLambda
             mempty
             (named "tuple")
-            ( MyLetPair
+            ( MyLetPattern
                 mempty
-                (named "a")
-                (named "b")
+                ( PPair
+                    mempty
+                    (PVar mempty (named "a"))
+                    (PVar mempty (named "b"))
+                )
                 (MyVar mempty (named "tuple"))
                 (MyVar mempty (named "a"))
             )

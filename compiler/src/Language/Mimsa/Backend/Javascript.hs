@@ -225,7 +225,6 @@ foundLet :: Expr Name ann -> Any
 foundLet = withMonoid findLet
   where
     findLet MyLet {} = (False, Any True) -- found one, stop looking
-    findLet MyLetPair {} = (False, Any True) -- found one, stop looking
     findLet MyLetPattern {} = (False, Any True) -- found one, stop looking
     findLet MyLambda {} = (False, mempty) -- did not find one, but stop looking
     findLet _ = (True, mempty) -- did not find one, keep recursing
@@ -316,22 +315,6 @@ outputLet n a b = do
       <> ";\n"
       <> addReturn b jsB
 
-outputLetPair ::
-  (Monoid ann) =>
-  Name ->
-  Name ->
-  Expr Name ann ->
-  Expr Name ann ->
-  BackendM ann Javascript
-outputLetPair m n a b = do
-  jsA <- outputJS a
-  jsB <- outputJS b
-  pure $
-    "const [" <> textToJS (coerce m) <> "," <> textToJS (coerce n) <> "] = "
-      <> jsA
-      <> ";\n"
-      <> addReturn b jsB
-
 outputLetPattern ::
   (Monoid ann) =>
   Pattern Name ann ->
@@ -410,7 +393,6 @@ outputJS expr =
     MyLetPattern _ p e body -> outputLetPattern p e body
     MyRecord _ as -> outputRecord as
     MyArray _ as -> outputArray as
-    MyLetPair _ m n a b -> outputLetPair m n a b
     MyPair _ a b -> outputPair a b
     MyRecordAccess _ r a -> do
       jsR <- outputJS r
