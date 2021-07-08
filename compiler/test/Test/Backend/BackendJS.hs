@@ -83,6 +83,9 @@ successes =
     ( "match Some True with (Some a) -> a | _ -> False",
       "const main = __patternMatch({ type: \"Some\", vars: [true] }, [ [ pat => __eq(pat.type, \"Some\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n"
     ),
+    ( "match Some True with (Some a) -> Some a | _ -> None",
+      "const main = __patternMatch({ type: \"Some\", vars: [true] }, [ [ pat => __eq(pat.type, \"Some\") ? { a: pat.vars[0] } : null, ({ a }) => ({ type: \"Some\", vars: [a] }) ], [ pat => ({}), () => ({ type: \"None\", vars: [] }) ] ]);\n"
+    ),
     ( "let (a, b) = (1,2) in a",
       "const main = function() { const [a,b] = [1,2];\nreturn a }();\n"
     ),

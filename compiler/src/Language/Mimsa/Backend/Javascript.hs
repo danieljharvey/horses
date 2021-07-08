@@ -122,7 +122,7 @@ outputPatternRow pat expr = do
   js <- outputJS expr
   let (_, vars) = toPatternMap "" pat
   if null vars
-    then pure ("() => " <> js)
+    then pure ("() => " <> withBrackies js)
     else
       pure
         ( "({ "
@@ -130,7 +130,7 @@ outputPatternRow pat expr = do
               ", "
               (textToJS . prettyPrint <$> M.keys vars)
             <> " }) => "
-            <> js
+            <> withBrackies js
         )
 
 data Guard
