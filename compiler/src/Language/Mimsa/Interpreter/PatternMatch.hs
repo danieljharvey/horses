@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Interpreter.PatternMatch
   ( patternMatch,
+    patternMatches,
   )
 where
 

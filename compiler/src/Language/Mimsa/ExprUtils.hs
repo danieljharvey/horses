@@ -30,7 +30,7 @@ getAnnotation :: Expr var ann -> ann
 getAnnotation (MyLiteral ann _) = ann
 getAnnotation (MyVar ann _) = ann
 getAnnotation (MyLet ann _ _ _) = ann
-getAnnotation (MyLetPair ann _ _ _ _) = ann
+getAnnotation (MyLetPattern ann _ _ _) = ann
 getAnnotation (MyInfix ann _ _ _) = ann
 getAnnotation (MyLambda ann _ _) = ann
 getAnnotation (MyApp ann _ _) = ann
@@ -63,14 +63,13 @@ withMonoid f whole@(MyLet _ _ bindExpr' inExpr) =
           m
             <> withMonoid f bindExpr'
             <> withMonoid f inExpr
-withMonoid f whole@(MyLetPair _ _binderA _binderB bindExpr' inExpr) =
+withMonoid f whole@(MyLetPattern _ _ expr body) =
   let (go, m) = f whole
    in if not go
         then m
         else
-          m
-            <> withMonoid f bindExpr'
-            <> withMonoid f inExpr
+          m <> withMonoid f expr
+            <> withMonoid f body
 withMonoid f whole@(MyInfix _ _ a b) =
   let (go, m) = f whole
    in if not go
@@ -159,8 +158,8 @@ mapExpr _ (MyLiteral ann a) = MyLiteral ann a
 mapExpr _ (MyVar ann a) = MyVar ann a
 mapExpr f (MyLet ann binder bindExpr' inExpr) =
   MyLet ann binder (f bindExpr') (f inExpr)
-mapExpr f (MyLetPair ann binderA binderB bindExpr' inExpr) =
-  MyLetPair ann binderA binderB (f bindExpr') (f inExpr)
+mapExpr f (MyLetPattern ann pat expr body) =
+  MyLetPattern ann pat (f expr) (f body)
 mapExpr f (MyInfix ann op a b) = MyInfix ann op (f a) (f b)
 mapExpr f (MyLambda ann binder expr) = MyLambda ann binder (f expr)
 mapExpr f (MyApp ann func arg) = MyApp ann (f func) (f arg)
@@ -194,8 +193,8 @@ bindExpr _ (MyVar ann a) =
   pure $ MyVar ann a
 bindExpr f (MyLet ann binder bindExpr' inExpr) =
   MyLet ann binder <$> f bindExpr' <*> f inExpr
-bindExpr f (MyLetPair ann binderA binderB bindExpr' inExpr) =
-  MyLetPair ann binderA binderB <$> f bindExpr' <*> f inExpr
+bindExpr f (MyLetPattern ann pat expr body) =
+  MyLetPattern ann pat <$> f expr <*> f body
 bindExpr f (MyInfix ann op a b) =
   MyInfix ann op <$> f a <*> f b
 bindExpr f (MyLambda ann binder expr) =

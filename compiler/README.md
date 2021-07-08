@@ -193,6 +193,23 @@ pattern matching:
 [ "d", "og" ] :: [ String ]
 ```
 
+destructuring:
+
+```haskell
+:> let { dog: a, cat: b } = { dog: "Dog", cat: True } in (a,b)
+("Dog", True) :: (String, Boolean)
+
+:> let (a, (b,c)) = (1,(2,3)) in b
+2 :: Int
+
+:> let (Parser p) = charParser in p
+\s ->
+  match s with
+      ch ++ rest -> (Just ((rest, ch)))
+    | _ -> (Nothing)
+:: String -> Maybe (String, String)
+```
+
 typed holes:
 
 ```haskell

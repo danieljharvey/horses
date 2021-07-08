@@ -186,29 +186,6 @@ inferLetBinding env ann binder expr body = do
   s3 <- unify tyUnknown tyExpr
   pure (s3 <> s2 <> s1, applySubst s3 tyBody)
 
-inferLetPairBinding ::
-  Environment ->
-  Variable ->
-  Variable ->
-  TcExpr ->
-  TcExpr ->
-  TcMonad (Substitutions, MonoType)
-inferLetPairBinding env binder1 binder2 expr body = do
-  (s1, tyExpr) <- infer env expr
-  (tyA, tyB) <- case tyExpr of
-    (MTVar ann _a) -> do
-      tyA <- getUnknown ann
-      tyB <- getUnknown ann
-      pure (tyA, tyB)
-    (MTPair _ a b) -> pure (a, b)
-    a -> throwError $ CaseMatchExpectedPair (getAnnotation expr) a
-  let schemeA = Scheme mempty (applySubst s1 tyA)
-      schemeB = Scheme mempty (applySubst s1 tyB)
-      newEnv = envFromVar binder1 schemeA <> envFromVar binder2 schemeB <> env
-  s2 <- unify tyExpr (MTPair mempty tyA tyB)
-  (s3, tyBody) <- infer (applySubstCtx (s2 <> s1) newEnv) body
-  pure (s3 <> s2 <> s1, tyBody)
-
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> TcMonad (Substitutions, MonoType)
 inferIf env condition thenExpr elseExpr = do
   (s1, tyCond) <- infer env condition
@@ -474,6 +451,23 @@ inferRecordAccess env ann a name = do
   (s2, tyResult) <- inferRow tyItems
   pure (s2 <> s1, applySubst (s2 <> s1) tyResult)
 
+inferLetPattern ::
+  Environment ->
+  Annotation ->
+  Pattern Variable Annotation ->
+  TcExpr ->
+  TcExpr ->
+  TcMonad (Substitutions, MonoType)
+inferLetPattern env ann pat expr body = do
+  (s1, tyPattern, newEnv) <- inferPattern env pat
+  (s2, tyExpr) <- infer env expr
+  s3 <- unify tyPattern tyExpr
+  (s4, tyBody) <- infer (applySubstCtx (s3 <> s2 <> s1) newEnv) body
+  -- perform exhaustiveness checking at end so it doesn't mask more basic errors
+  validatePatterns env ann [pat]
+
+  pure (s4 <> s3 <> s2 <> s1, tyBody)
+
 inferLambda ::
   Environment ->
   Annotation ->
@@ -556,12 +550,12 @@ infer env inferExpr =
       pure (mempty, tyRecord)
     (MyLet ann binder expr body) ->
       inferLetBinding env ann binder expr body
+    (MyLetPattern ann pat expr body) ->
+      inferLetPattern env ann pat expr body
     (MyRecordAccess ann (MyRecord ann' items') name) ->
       inferRecordAccess env ann (MyRecord ann' items') name
     (MyRecordAccess ann a name) ->
       inferRecordAccess env ann a name
-    (MyLetPair _ binder1 binder2 expr body) ->
-      inferLetPairBinding env binder1 binder2 expr body
     (MyLambda ann binder body) ->
       inferLambda env ann binder body
     (MyApp ann function argument) ->

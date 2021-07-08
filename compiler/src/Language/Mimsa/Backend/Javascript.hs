@@ -122,7 +122,7 @@ outputPatternRow pat expr = do
   js <- outputJS expr
   let (_, vars) = toPatternMap "" pat
   if null vars
-    then pure ("() => " <> js)
+    then pure ("() => " <> withBrackies js)
     else
       pure
         ( "({ "
@@ -130,7 +130,7 @@ outputPatternRow pat expr = do
               ", "
               (textToJS . prettyPrint <$> M.keys vars)
             <> " }) => "
-            <> js
+            <> withBrackies js
         )
 
 data Guard
@@ -225,7 +225,7 @@ foundLet :: Expr Name ann -> Any
 foundLet = withMonoid findLet
   where
     findLet MyLet {} = (False, Any True) -- found one, stop looking
-    findLet MyLetPair {} = (False, Any True) -- found one, stop looking
+    findLet MyLetPattern {} = (False, Any True) -- found one, stop looking
     findLet MyLambda {} = (False, mempty) -- did not find one, but stop looking
     findLet _ = (True, mempty) -- did not find one, keep recursing
 
@@ -315,21 +315,33 @@ outputLet n a b = do
       <> ";\n"
       <> addReturn b jsB
 
-outputLetPair ::
+outputLetPattern ::
   (Monoid ann) =>
-  Name ->
-  Name ->
+  Pattern Name ann ->
   Expr Name ann ->
   Expr Name ann ->
   BackendM ann Javascript
-outputLetPair m n a b = do
-  jsA <- outputJS a
-  jsB <- outputJS b
-  pure $
-    "const [" <> textToJS (coerce m) <> "," <> textToJS (coerce n) <> "] = "
-      <> jsA
-      <> ";\n"
-      <> addReturn b jsB
+outputLetPattern pat expr body = do
+  patJS <- letPattern pat
+  exprJS <- outputJS expr
+  bodyJS <- outputJS body
+  pure $ "const " <> patJS <> " = " <> exprJS <> ";\n" <> addReturn body bodyJS
+
+letPattern :: Pattern Name ann -> BackendM ann Javascript
+letPattern (PVar _ a) = pure $ textToJS (coerce a)
+letPattern (PPair _ a b) = do
+  pA <- letPattern a
+  pB <- letPattern b
+  pure ("[" <> pA <> ", " <> pB <> "]")
+letPattern (PRecord _ as) = do
+  pAs <- traverse letPattern as
+  let items = (\(k, v) -> textToJS (coerce k) <> ": " <> v) <$> M.toList pAs
+  pure $ "{ " <> intercal ", " items <> " }"
+letPattern (PConstructor _ _ as) = do
+  pAs <- traverse letPattern as
+  pure $ "{ vars: [" <> intercal ", " pAs <> "] }"
+letPattern (PWildcard _) = pure "_"
+letPattern pat = throwError (OutputtingBadLetPattern pat)
 
 outputApp ::
   (Monoid ann) =>
@@ -378,9 +390,9 @@ outputJS expr =
     MyApp _ f a -> outputApp f a
     MyIf _ p a b -> outputIf p a b
     MyLet _ n a b -> outputLet n a b
+    MyLetPattern _ p e body -> outputLetPattern p e body
     MyRecord _ as -> outputRecord as
     MyArray _ as -> outputArray as
-    MyLetPair _ m n a b -> outputLetPair m n a b
     MyPair _ a b -> outputPair a b
     MyRecordAccess _ r a -> do
       jsR <- outputJS r

@@ -208,20 +208,13 @@ spec = do
     it "Parses a destructuring of pairs" $
       testParse "let (a,b) = ((True,1)) in a"
         `shouldBe` Right
-          ( MyLetPair
+          ( MyLetPattern
               mempty
-              "a"
-              "b"
-              (MyPair mempty (bool True) (int 1))
-              (MyVar mempty "a")
-          )
-    it "Parses a destructuring of pairs with silly whitespace" $
-      testParse "let   (    a ,      b ) =    ((       True, 1) ) in a"
-        `shouldBe` Right
-          ( MyLetPair
-              mempty
-              "a"
-              "b"
+              ( PPair
+                  mempty
+                  (PVar mempty "a")
+                  (PVar mempty "b")
+              )
               (MyPair mempty (bool True) (int 1))
               (MyVar mempty "a")
           )
@@ -511,16 +504,6 @@ spec = do
               "a"
               (MyLiteral (Location 8 9) (MyInt 1))
               (MyVar (Location 11 12) "a")
-          )
-    it "Parses let pair with location information" $
-      testParseWithAnn "let (a,b) = dog in a"
-        `shouldBe` Right
-          ( MyLetPair
-              (Location 0 20)
-              "a"
-              "b"
-              (MyVar (Location 12 15) "dog")
-              (MyVar (Location 19 20) "a")
           )
     it "Parsers lambda with location information" $
       testParseWithAnn "\\a -> a"

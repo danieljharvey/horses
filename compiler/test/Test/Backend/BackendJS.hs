@@ -66,7 +66,7 @@ successes =
     ("let a = \"dog\" in 123", "const main = function() { const a = \"dog\";\nreturn 123 }();\n"),
     ("let a = \"dog\" in let b = \"horse\" in 123", "const main = function() { const a = \"dog\";\nconst b = \"horse\";\nreturn 123 }();\n"),
     ("{ a: 123, b: \"horse\" }", "const main = { a: 123, b: \"horse\" };\n"),
-    ("let (a,b) = aPair in a", "const main = function() { const [a,b] = aPair;\nreturn a }();\n"),
+    ("let (a,b) = aPair in a", "const main = function() { const [a, b] = aPair;\nreturn a }();\n"),
     ("\\a -> let b = 123 in a", "const main = a => { const b = 123;\nreturn a };\n"),
     ("(1,2)", "const main = [1,2];\n"),
     ("aRecord.a", "const main = aRecord.a;\n"),
@@ -82,6 +82,21 @@ successes =
     ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n"),
     ( "match Some True with (Some a) -> a | _ -> False",
       "const main = __patternMatch({ type: \"Some\", vars: [true] }, [ [ pat => __eq(pat.type, \"Some\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n"
+    ),
+    ( "match Some True with (Some a) -> Some a | _ -> None",
+      "const main = __patternMatch({ type: \"Some\", vars: [true] }, [ [ pat => __eq(pat.type, \"Some\") ? { a: pat.vars[0] } : null, ({ a }) => ({ type: \"Some\", vars: [a] }) ], [ pat => ({}), () => ({ type: \"None\", vars: [] }) ] ]);\n"
+    ),
+    ( "let (a, b) = (1,2) in a",
+      "const main = function() { const [a, b] = [1,2];\nreturn a }();\n"
+    ),
+    ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
+      "const main = function() { const { cat: b, dog: a } = { cat: 2, dog: 1 };\nreturn [a,b] }();\n"
+    ),
+    ( "let (Identity a) = Identity 1 in a",
+      "const main = function() { const { vars: [a] } = { type: \"Identity\", vars: [1] };\nreturn a }();\n"
+    ),
+    ( "let (Pair a b) = Pair 1 2 in (a,b)",
+      "const main = function() { const { vars: [a, b] } = { type: \"Pair\", vars: [1,2] };\nreturn [a,b] }();\n"
     )
   ]
 

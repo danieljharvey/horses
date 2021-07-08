@@ -10,6 +10,7 @@ data BackendError ann
   = TyConFindError (Expr Name ann)
   | OutputtingCustomOperator InfixOp
   | OutputingTypedHole Name
+  | OutputtingBadLetPattern (Pattern Name ann)
   deriving (Eq, Ord, Show)
 
 instance Printer (BackendError ann) where
@@ -19,3 +20,5 @@ instance Printer (BackendError ann) where
     "Trying to output a custom operator, which should have been substituted for a function by now. " <> prettyDoc op
   prettyDoc (OutputingTypedHole n) =
     "Trying to output a typed hold, which should not pass typechecking: " <> prettyDoc n
+  prettyDoc (OutputtingBadLetPattern p) =
+    "Cannot output this let pattern: " <> prettyDoc p

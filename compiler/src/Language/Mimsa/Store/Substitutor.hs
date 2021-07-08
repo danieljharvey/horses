@@ -220,16 +220,9 @@ mapVar chg (MyLet ann name expr' body) = do
   let withChange = addChange name var chg
   MyLet ann var
     <$> mapVar withChange expr' <*> mapVar withChange body
-mapVar chg (MyLetPair ann nameA nameB a b) = do
-  varA <- getNextVarName nameA
-  varB <- getNextVarName nameB
-  let withChange = addChange nameA varA (addChange nameB varB chg)
-  MyLetPair
-    ann
-    varA
-    varB
-    <$> mapVar withChange a
-    <*> mapVar withChange b
+mapVar chg (MyLetPattern ann pat body expr) = do
+  (newPat, newChg) <- mapPatternVar chg pat
+  MyLetPattern ann newPat <$> mapVar newChg body <*> mapVar newChg expr
 mapVar chg (MyInfix ann op a b) =
   MyInfix ann op <$> mapVar chg a <*> mapVar chg b
 mapVar chg (MyRecordAccess ann a name) =

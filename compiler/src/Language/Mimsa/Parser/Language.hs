@@ -50,10 +50,10 @@ expressionParser =
 
 complexParser :: Parser ParserExpr
 complexParser =
-  try letPairParser
-    <|> try recordParser
+  try recordParser
     <|> try arrayParser
     <|> try letParser
+    <|> try letPatternParser
     <|> try ifParser
     <|> try appParser
     <|> try pairParser
@@ -93,25 +93,16 @@ letNewlineParser = addLocation $ do
 
 -----
 
-letPairParser :: Parser ParserExpr
-letPairParser =
+letPatternParser :: Parser ParserExpr
+letPatternParser =
   addLocation $
-    let binder1 = do
-          _ <- thenSpace (string "let")
-          _ <- string "("
-          withOptionalSpace nameParser
-        binder2 = do
-          _ <- string ","
-          name <- withOptionalSpace nameParser
-          _ <- thenSpace (string ")")
-          pure name
-     in do
-          bindA <- binder1
-          bindB <- binder2
-          _ <- thenSpace (string "=")
-          expr <- expressionParser
-          _ <- withOptionalSpace (string ";" <|> string "in ")
-          MyLetPair mempty bindA bindB expr <$> expressionParser
+    do
+      _ <- thenSpace (string "let")
+      pat <- orInBrackets patternParser
+      _ <- thenSpace (string "=")
+      expr <- expressionParser
+      _ <- withOptionalSpace (string ";" <|> string "in ")
+      MyLetPattern mempty pat expr <$> expressionParser
 
 -----
 

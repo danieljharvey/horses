@@ -95,6 +95,7 @@ stdLibE =
     >>= addStateMonad
     >>= addParser
     >>= addArray
+    >>= addIdentity
 
 addListMonad :: Project Annotation -> ProjectPart
 addListMonad prj =
@@ -180,6 +181,9 @@ addParser prj =
       "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Some (restA, a)) -> (let nextParser = match f(a) with (Parser parserB) -> parserB; nextParser(restA)) | _ -> None)"
       "bindParser"
     >>= addBinding
+      "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr(s) with (Some (rest, a)) -> (if pred(a) then (Some ((rest, a))) else (None)) | _ -> (None))"
+      "predParser"
+    >>= addBinding
       "Parser \\s -> None"
       "failParser"
 
@@ -189,6 +193,9 @@ addArray prj =
     >>= addBinding
       "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f(a)] <> map(rest) | _ -> []; map(arr)"
       "mapArray"
+
+addIdentity :: Project Annotation -> ProjectPart
+addIdentity prj = pure prj >>= addBinding "type Identity a = Identity a in {}" "typeIdentity"
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input =
