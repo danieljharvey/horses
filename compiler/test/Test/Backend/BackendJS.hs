@@ -82,6 +82,18 @@ successes =
     ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n"),
     ( "match Some True with (Some a) -> a | _ -> False",
       "const main = __patternMatch({ type: \"Some\", vars: [true] }, [ [ pat => __eq(pat.type, \"Some\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n"
+    ),
+    ( "let (a, b) = (1,2) in a",
+      "const main = function() { const [a,b] = [1,2];\nreturn a }();\n"
+    ),
+    ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
+      "const main = function() { const { cat: b, dog: a } = { cat: 2, dog: 1 };\nreturn [a,b] }();\n"
+    ),
+    ( "let (Identity a) = Identity 1 in a",
+      "const main = function() { const { vars: [a] } = { type: \"Identity\", vars: [1] };\nreturn a }();\n"
+    ),
+    ( "let (Pair a b) = Pair 1 2 in (a,b)",
+      "const main = function() { const { vars: [a, b] } = { type: \"Pair\", vars: [1,2] };\nreturn [a,b] }();\n"
     )
   ]
 

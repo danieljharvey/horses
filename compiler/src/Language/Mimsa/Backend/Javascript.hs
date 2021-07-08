@@ -226,6 +226,7 @@ foundLet = withMonoid findLet
   where
     findLet MyLet {} = (False, Any True) -- found one, stop looking
     findLet MyLetPair {} = (False, Any True) -- found one, stop looking
+    findLet MyLetPattern {} = (False, Any True) -- found one, stop looking
     findLet MyLambda {} = (False, mempty) -- did not find one, but stop looking
     findLet _ = (True, mempty) -- did not find one, keep recursing
 
@@ -331,6 +332,34 @@ outputLetPair m n a b = do
       <> ";\n"
       <> addReturn b jsB
 
+outputLetPattern ::
+  (Monoid ann) =>
+  Pattern Name ann ->
+  Expr Name ann ->
+  Expr Name ann ->
+  BackendM ann Javascript
+outputLetPattern pat expr body = do
+  patJS <- letPattern pat
+  exprJS <- outputJS expr
+  bodyJS <- outputJS body
+  pure $ "const " <> patJS <> " = " <> exprJS <> ";\n" <> addReturn body bodyJS
+
+letPattern :: Pattern Name ann -> BackendM ann Javascript
+letPattern (PVar _ a) = pure $ textToJS (coerce a)
+letPattern (PPair _ a b) = do
+  pA <- letPattern a
+  pB <- letPattern b
+  pure ("[" <> pA <> ", " <> pB <> "]")
+letPattern (PRecord _ as) = do
+  pAs <- traverse letPattern as
+  let items = (\(k, v) -> textToJS (coerce k) <> ": " <> v) <$> M.toList pAs
+  pure $ "{ " <> intercal ", " items <> " }"
+letPattern (PConstructor _ _ as) = do
+  pAs <- traverse letPattern as
+  pure $ "{ vars: [" <> intercal ", " pAs <> "] }"
+letPattern (PWildcard _) = pure "_"
+letPattern pat = throwError (OutputtingBadLetPattern pat)
+
 outputApp ::
   (Monoid ann) =>
   Expr Name ann ->
@@ -378,7 +407,7 @@ outputJS expr =
     MyApp _ f a -> outputApp f a
     MyIf _ p a b -> outputIf p a b
     MyLet _ n a b -> outputLet n a b
-    MyLetPattern {} -> error "let pattern not implemented in js backend"
+    MyLetPattern _ p e body -> outputLetPattern p e body
     MyRecord _ as -> outputRecord as
     MyArray _ as -> outputArray as
     MyLetPair _ m n a b -> outputLetPair m n a b
