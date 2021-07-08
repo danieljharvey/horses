@@ -32,8 +32,8 @@ extractTypes_ (MyApp _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyLiteral _ _) = mempty
 extractTypes_ (MyLetPair _ _ _ a b) =
   extractTypes_ a <> extractTypes_ b
-extractTypes_ (MyLetPattern _ _ expr body) =
-  extractTypes_ expr <> extractTypes_ body
+extractTypes_ (MyLetPattern _ pat expr body) =
+  extractFromPattern pat <> extractTypes_ expr <> extractTypes_ body
 extractTypes_ (MyPair _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyRecord _ map') = foldMap extractTypes_ map'
 extractTypes_ (MyRecordAccess _ a _) = extractTypes_ a

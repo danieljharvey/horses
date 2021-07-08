@@ -181,6 +181,9 @@ addParser prj =
       "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Some (restA, a)) -> (let nextParser = match f(a) with (Parser parserB) -> parserB; nextParser(restA)) | _ -> None)"
       "bindParser"
     >>= addBinding
+      "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr(s) with (Some (rest, a)) -> (if pred(a) then (Some ((rest, a))) else (None)) | _ -> (None))"
+      "predParser"
+    >>= addBinding
       "Parser \\s -> None"
       "failParser"
 

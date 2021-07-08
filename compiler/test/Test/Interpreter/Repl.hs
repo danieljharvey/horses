@@ -751,6 +751,9 @@ spec =
           it "Does not matches a pair that is not complete" $ do
             result <- eval stdLib "let (a,True) = (True,False) in a"
             result `shouldSatisfy` isLeft
+          it "Adds constructors to required types for StoreExpression" $ do
+            result <- eval stdLib "let (Parser parser) = predParser(\\d -> d == \"d\")(anyChar) in parser(\"dog\")"
+            result `shouldSatisfy` isRight
         describe "Pattern matching" $ do
           it "Matches a wildcard" $ do
             result <- eval stdLib "match 1 with _ -> True"
