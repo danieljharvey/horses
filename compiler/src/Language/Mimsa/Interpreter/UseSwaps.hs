@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Interpreter.UseSwaps (useSwaps) where
@@ -12,7 +13,12 @@ import Language.Mimsa.Types.Swaps
 
 type App ann = ReaderT Swaps (Either (InterpreterError ann))
 
-lookupSwap :: Variable -> App ann Name
+lookupSwap ::
+  ( MonadReader Swaps m,
+    MonadError (InterpreterError ann) m
+  ) =>
+  Variable ->
+  m Name
 lookupSwap var = do
   swaps <- ask
   case M.lookup var swaps of

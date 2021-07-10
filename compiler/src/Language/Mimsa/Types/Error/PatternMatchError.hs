@@ -27,7 +27,7 @@ data PatternMatchError
   | -- | Unnecessary cases covered by previous matches
     RedundantPatterns Annotation [Pattern Variable Annotation]
   | -- | Multiple instances of the same variable
-    DuplicateVariableUse Annotation (Set Variable)
+    DuplicateVariableUse Annotation (Set Name)
   deriving (Eq, Ord, Show)
 
 ------
