@@ -72,11 +72,11 @@ stdLibE =
       "\\a -> addInt(1)(a)"
       "incrementInt"
     >>= addBinding
-      "type Option a = Some a | None in {}"
+      "type Maybe a = Just a | Nothing in {}"
       "typeState"
     >>= addBinding
-      "\\f -> \\opt -> match opt with (Some a) -> Some f(a) | _ -> None"
-      "fmapOption"
+      "\\f -> \\opt -> match opt with (Just a) -> Just f(a) | _ -> Nothing"
+      "fmapMaybe"
     >>= addBinding
       "type These a b = This a | That b | These a b in {}"
       "typeThese"
@@ -166,25 +166,25 @@ addParser :: Project Annotation -> ProjectPart
 addParser prj =
   pure prj
     >>= addBinding
-      "type Parser a = Parser (String -> Option (String,a)) in {}"
+      "type Parser a = Parser (String -> Maybe (String,a)) in {}"
       "typeParser"
     >>= addBinding
-      "let p = (\\str -> match str with (c ++ rest) -> (Some (rest, c)) | _ -> None) in Parser p"
+      "let p = (\\str -> match str with (c ++ rest) -> (Just (rest, c)) | _ -> Nothing) in Parser p"
       "anyChar"
     >>= addBinding
-      "\\p -> \\str -> match p with (Parser parser) -> match parser(str) with (Some (rest, a)) -> Some a | _ -> None"
+      "\\p -> \\str -> match p with (Parser parser) -> match parser(str) with (Just (rest, a)) -> Just a | _ -> Nothing"
       "runParser"
     >>= addBinding
-      "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Some (rest, a)) -> Some (rest, f(a)) | _ -> None)"
+      "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Just (rest, a)) -> Just (rest, f(a)) | _ -> Nothing)"
       "fmapParser"
     >>= addBinding
-      "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Some (restA, a)) -> (let nextParser = match f(a) with (Parser parserB) -> parserB; nextParser(restA)) | _ -> None)"
+      "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Just (restA, a)) -> (let nextParser = match f(a) with (Parser parserB) -> parserB; nextParser(restA)) | _ -> Nothing)"
       "bindParser"
     >>= addBinding
-      "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr(s) with (Some (rest, a)) -> (if pred(a) then (Some ((rest, a))) else (None)) | _ -> (None))"
+      "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr(s) with (Just (rest, a)) -> (if pred(a) then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
       "predParser"
     >>= addBinding
-      "Parser \\s -> None"
+      "Parser \\s -> Nothing"
       "failParser"
 
 addArray :: Project Annotation -> ProjectPart

@@ -84,9 +84,9 @@ spec = do
             fromRight (Actions.run stdLib action)
       -- no codegen matches this datatype
       outputs `shouldBe` [Enum]
-      -- three more items in store
+      -- four more items in store
       projectStoreSize newProject
-        `shouldBe` projectStoreSize stdLib + 3
+        `shouldBe` projectStoreSize stdLib + 4
       -- one more binding
       lookupBindingName
         newProject
@@ -107,10 +107,10 @@ spec = do
         newProject
         "Green"
         `shouldSatisfy` isJust
-      -- three new store expressions
+      -- four new store expressions
       S.size
         (Actions.storeExpressionsFromOutcomes outcomes)
-        `shouldBe` 3
+        `shouldBe` 4
 
     it "Should bind ConsoleF without breaking" $ do
       let action = Actions.bindType (prettyPrint (dtConsoleF :: DataType ())) dtConsoleF

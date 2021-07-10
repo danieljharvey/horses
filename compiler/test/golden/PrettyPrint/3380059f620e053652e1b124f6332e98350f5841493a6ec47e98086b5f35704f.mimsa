@@ -1,0 +1,3 @@
+match (Just 1) with 
+    (Just a) -> (Just a)
+  | _ -> (Nothing)
