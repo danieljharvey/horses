@@ -748,6 +748,9 @@ spec =
           it "Matches a one case constructor" $ do
             result <- eval stdLib "let (Identity a) = Identity True in a"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+          it "Matches a nested one case constructor" $ do
+            result <- eval stdLib "let (Identity (Identity a)) = Identity (Identity True) in a"
+            result `shouldBe` Right (MTPrim mempty MTBool, bool True)
           it "Does not matches a pair that is not complete" $ do
             result <- eval stdLib "let (a,True) = (True,False) in a"
             result `shouldSatisfy` isLeft

@@ -23,14 +23,16 @@ patternParser :: Parser ParserPattern
 patternParser =
   label
     "pattern match"
-    ( try stringParser
-        <|> try pairParser
-        <|> try wildcardParser
-        <|> try variableParser
-        <|> try litParser
-        <|> try recordParser
-        <|> try constructorParser
-        <|> try arrayParser
+    ( orInBrackets
+        ( try stringParser
+            <|> try pairParser
+            <|> try wildcardParser
+            <|> try variableParser
+            <|> try litParser
+            <|> try recordParser
+            <|> try constructorParser
+            <|> try arrayParser
+        )
     )
 
 ----

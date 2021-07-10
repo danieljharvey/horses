@@ -148,14 +148,17 @@ requiredFromDataType ::
   (MonadError TypeError m) =>
   DataType Annotation ->
   m [Pattern var Annotation]
-requiredFromDataType (DataType _ _ cons) = do
-  let new (n, as) =
-        [ PConstructor
-            mempty
-            n
-            (PWildcard mempty <$ as)
-        ]
-  pure $ mconcat (new <$> M.toList cons)
+requiredFromDataType (DataType _ _ cons) =
+  if length cons < 2 -- if there is only one constructor don't generate more
+    then pure mempty
+    else do
+      let new (n, as) =
+            [ PConstructor
+                mempty
+                n
+                (PWildcard mempty <$ as)
+            ]
+      pure $ mconcat (new <$> M.toList cons)
 
 -- filter outstanding items
 filterMissing ::
