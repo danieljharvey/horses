@@ -60,7 +60,13 @@ tcPred predicate as dt =
 
 typeclassMatches :: DataType () -> [Typeclass]
 typeclassMatches dt =
-  tcPred (isRight . toString) [Enum] dt
+  tcPred
+    ( \a ->
+        isRight (toString a)
+          && isRight (fromString a)
+    )
+    [Enum]
+    dt
     <> tcPred
       ( \a ->
           isRight (wrap a)
@@ -91,6 +97,7 @@ codegenToRow toDt name dt =
 doCodegen :: DataType () -> Map Name (Expr Name Annotation)
 doCodegen dt =
   codegenToRow toString "toString" dt
+    <> codegenToRow fromString "fromString" dt
     <> codegenToRow wrap "wrap" dt
     <> codegenToRow unwrap "unwrap" dt
     <> codegenToRow functorMap "fmap" dt

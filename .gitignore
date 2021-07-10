@@ -6,6 +6,7 @@ result/
 
 .mimsa/
 swagger.json
+environment.json
 
 store_data/
 file_volume/
