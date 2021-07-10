@@ -12,21 +12,24 @@ module Language.Mimsa.Typechecker.Exhaustiveness
 where
 
 import Control.Monad.Except
+import Control.Monad.Reader
 import Data.Foldable
 import Data.Functor
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker.Environment
 
 validatePatterns ::
-  (MonadError TypeError m) =>
+  (MonadError TypeError m, MonadReader Swaps m) =>
   Environment ->
   Annotation ->
   [Pattern Variable Annotation] ->
@@ -42,12 +45,20 @@ validatePatterns env ann patterns = do
     [] -> pure ()
     _ -> throwError (PatternMatchErr (RedundantPatterns ann redundant))
 
+withSwap :: Swaps -> Variable -> Name
+withSwap _ (NamedVar n) = n
+withSwap swaps (NumberedVar i) =
+  fromMaybe
+    "unknownvar"
+    (M.lookup (NumberedVar i) swaps)
+
 noDuplicateVariables ::
-  MonadError TypeError m =>
+  (MonadError TypeError m, MonadReader Swaps m) =>
   Pattern Variable Annotation ->
   m ()
-noDuplicateVariables pat =
-  let dupes = M.keysSet $ M.filter (> 1) (getVariables pat)
+noDuplicateVariables pat = do
+  swaps <- ask
+  let dupes = M.keysSet . M.filter (> 1) . M.mapKeysWith (+) (withSwap swaps) . getVariables $ pat
    in if S.null dupes
         then pure ()
         else

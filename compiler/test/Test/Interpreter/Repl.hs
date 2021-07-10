@@ -832,7 +832,7 @@ spec =
                 ( MTArray mempty (MTPrim mempty MTInt),
                   MyArray mempty [int 2, int 3]
                 )
-          xit "Errors if we bind the same variable twice" $ do
+          it "Errors if we bind the same variable twice" $ do
             result <- eval stdLib "match (1,2) with (a,a) -> a"
             result `shouldSatisfy` isLeft
           it "Uses a constructor inside an array" $ do

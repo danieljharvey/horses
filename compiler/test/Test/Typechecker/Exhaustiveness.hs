@@ -7,24 +7,26 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Identity
+import Control.Monad.Reader
 import Data.Either
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Test.Codegen.Shared
 import Test.Hspec
 import Test.Utils.Helpers
 
-type PatternM = ExceptT TypeError Identity
+type PatternM = ReaderT Swaps (ExceptT TypeError Identity)
 
 runPatternM ::
   PatternM a ->
   Either TypeError a
 runPatternM value =
-  runIdentity (runExceptT value)
+  runIdentity (runExceptT (runReaderT value mempty))
 
 exhaustiveCheck ::
   [Pattern Name Annotation] ->
