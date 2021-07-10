@@ -407,37 +407,37 @@ spec =
         it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
           result <- eval stdLib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
           result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-        it "type Tlee a = Non | Tlee (Option b) in {}" $ do
-          result <- eval stdLib "type Tlee a = Non | Tlee (Option b) in {}"
+        it "type Tlee a = Non | Tlee (Maybe b) in {}" $ do
+          result <- eval stdLib "type Tlee a = Non | Tlee (Maybe b) in {}"
           result `shouldSatisfy` isLeft
-        it "let some = \\a -> Some a in if True then some(1) else None" $ do
-          result <- eval stdLib "let some = \\a -> Some a in if True then some(1) else None"
+        it "let some = \\a -> Just a in if True then some(1) else Nothing" $ do
+          result <- eval stdLib "let some = \\a -> Just a in if True then some(1) else Nothing"
           result
             `shouldBe` Right
-              ( MTData mempty "Option" [MTPrim mempty MTInt],
+              ( MTData mempty "Maybe" [MTPrim mempty MTInt],
                 MyConsApp
                   mempty
-                  (MyConstructor mempty "Some")
+                  (MyConstructor mempty "Just")
                   (int 1)
               )
-        it "\\a -> match a with (Some as) -> True | None -> 100" $ do
-          result <- eval stdLib "\\a -> match a with (Some as) -> True | None -> 100"
+        it "\\a -> match a with (Just as) -> True | Nothing -> 100" $ do
+          result <- eval stdLib "\\a -> match a with (Just as) -> True | Nothing -> 100"
           fst <$> result
             `shouldSatisfy` isLeft
-        it "\\a -> match a with (Some as) -> as | None -> 100" $ do
-          result <- eval stdLib "\\a -> match a with (Some as) -> as | None -> 100"
+        it "\\a -> match a with (Just as) -> as | Nothing -> 100" $ do
+          result <- eval stdLib "\\a -> match a with (Just as) -> as | Nothing -> 100"
           fst <$> result
             `shouldBe` Right
               ( MTFunction
                   mempty
-                  (MTData mempty "Option" [MTPrim mempty MTInt])
+                  (MTData mempty "Maybe" [MTPrim mempty MTInt])
                   (MTPrim mempty MTInt)
               )
         it "fromMaybe should fail typecheck when default does not match inner value" $ do
-          result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Some a) -> a | None -> def) in fromMaybe(\"Horse\")(Some 1)"
+          result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe(\"Horse\")(Just 1)"
           result `shouldSatisfy` isLeft
         it "fromMaybe works when types match up" $ do
-          result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Some a) -> a | None -> def) in fromMaybe(\"Horse\")(Some \"Dog\")"
+          result <- eval stdLib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe(\"Horse\")(Just \"Dog\")"
           result `shouldBe` Right (MTPrim mempty MTString, str' "Dog")
         it "True == \"dog\"" $ do
           result <- eval stdLib "True == \"dog\""
@@ -452,8 +452,8 @@ spec =
         it "True == True" $ do
           result <- eval stdLib "True == True"
           result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "(Some 1) == Some 2" $ do
-          result <- eval stdLib "(Some 1) == Some 2"
+        it "(Just 1) == Just 2" $ do
+          result <- eval stdLib "(Just 1) == Just 2"
           result `shouldBe` Right (MTPrim mempty MTBool, bool False)
         it "let eq1 = (\\a -> a == 1) in eq1(1)" $ do
           result <- eval stdLib "let eq1 = (\\a -> a == 1) in eq1(1)"
@@ -555,13 +555,13 @@ spec =
         it "let compose = \\f -> \\g -> \\a -> f(g(a)); compose" $ do
           result <- eval stdLib "let compose = \\f -> \\g -> \\a -> f(g(a)); compose"
           result `shouldSatisfy` isRight
-        it "Some (1 == 1)" $ do
-          result <- eval stdLib "Some (1 == 1)"
+        it "Just (1 == 1)" $ do
+          result <- eval stdLib "Just (1 == 1)"
           snd <$> result
             `shouldBe` Right
               ( MyConsApp
                   mempty
-                  (MyConstructor mempty "Some")
+                  (MyConstructor mempty "Just")
                   (bool True)
               )
         it "\\a -> if (100 == a.int) then 100 else 0" $ do
@@ -627,8 +627,8 @@ spec =
           result <- eval stdLib "infix +++ = addInt; 1 +++ True"
           -- function typechecking should still work
           result `shouldSatisfy` isLeft
-        it "Stops boolean and Option<A> being used together" $ do
-          result <- eval stdLib "\\some -> match some with (Some a) -> Some (a == 1) | _ -> some"
+        it "Stops boolean and Maybe<A> being used together" $ do
+          result <- eval stdLib "\\some -> match some with (Just a) -> Just (a == 1) | _ -> some"
           result `shouldSatisfy` isLeft
         -- this should be thrown out by the interpreter
         it "Interpreter is stopped before it loops infinitely" $ do
@@ -637,8 +637,8 @@ spec =
             Left msg -> "interpreter aborted" `T.isInfixOf` msg
             _ -> False
         -- built-ins should not be used as type constructors
-        it "type Something = String in True" $ do
-          result <- eval stdLib "type Something = String in True"
+        it "type Justthing = String in True" $ do
+          result <- eval stdLib "type Justthing = String in True"
           result `shouldSatisfy` isLeft
         it "type Pair a b = Pair (a,b)" $ do
           result <- eval stdLib "type Pair a b = Pair (a,b) in True"
@@ -674,7 +674,7 @@ spec =
             `shouldBe` Right
               ( MyConsApp
                   mempty
-                  (MyConstructor mempty "Some")
+                  (MyConstructor mempty "Just")
                   (MyLiteral mempty (MyString "dd"))
               )
         it "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"dog\")" $ do
@@ -683,14 +683,14 @@ spec =
             `shouldBe` Right
               ( MyConsApp
                   mempty
-                  (MyConstructor mempty "Some")
+                  (MyConstructor mempty "Just")
                   (MyLiteral mempty (MyString "o"))
               )
         it "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")" $ do
           result <- eval stdLib "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")"
           snd <$> result
             `shouldBe` Right
-              (MyConstructor mempty "None")
+              (MyConstructor mempty "Nothing")
         it "[1,2,3]" $ do
           result <- eval stdLib "[1,2,3]"
           result
@@ -743,7 +743,7 @@ spec =
             result <- eval stdLib "let { dog: a } = { dog: True } in a"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
           it "Does not match a constructor with other cases" $ do
-            result <- eval stdLib "let (Some a) = Some True in a"
+            result <- eval stdLib "let (Just a) = Just True in a"
             result `shouldSatisfy` isLeft
           it "Matches a one case constructor" $ do
             result <- eval stdLib "let (Identity a) = Identity True in a"
@@ -777,10 +777,10 @@ spec =
             result <- eval stdLib "match { dog: 1 } with { dog: a } -> a"
             result `shouldBe` Right (MTPrim mempty MTInt, int 1)
           it "Matches a constructor with no args" $ do
-            result <- eval stdLib "match None with None -> False | _ -> True"
+            result <- eval stdLib "match Nothing with Nothing -> False | _ -> True"
             result `shouldBe` Right (MTPrim mempty MTBool, bool False)
           it "Matches a constructor with args" $ do
-            result <- eval stdLib "match Some 1 with (Some _) -> True | None -> False"
+            result <- eval stdLib "match Just 1 with (Just _) -> True | Nothing -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool True)
           it "Matches These correctly" $ do
             result <- eval stdLib "match This 1 with (These _ _) -> True | _ -> False"
@@ -795,7 +795,7 @@ spec =
             result <- eval stdLib "\\a -> match a with (Left e) -> e | _ -> False"
             result `shouldSatisfy` isRight
           it "Parses constructor application in expr" $ do
-            result <- eval stdLib "match Some 1 with (Some a) -> Some a | _ -> None"
+            result <- eval stdLib "match Just 1 with (Just a) -> Just a | _ -> Nothing"
             result `shouldSatisfy` isRight
           it "Parses and pretty prints more complex matches" $ do
             result <- eval stdLib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right f(a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
@@ -833,7 +833,7 @@ spec =
             result <- eval stdLib "match (1,2) with (a,a) -> a"
             result `shouldSatisfy` isLeft
           it "Uses a constructor inside an array" $ do
-            result <- eval stdLib "match [] with [Some 1] -> True | _ -> False"
+            result <- eval stdLib "match [] with [Just 1] -> True | _ -> False"
             result `shouldBe` Right (MTPrim mempty MTBool, bool False)
           it "Generates more nuanced exhaustiveness checks when using spread operatpr" $ do
             result <- eval stdLib "match [] with [] -> True | [_] -> False | [_,...] -> False"
@@ -851,5 +851,5 @@ spec =
                   MyPair mempty (MyLiteral mempty (MyString "d")) (MyLiteral mempty (MyString "og"))
                 )
           it "Fix empty pattern match obscuring bindings" $ do
-            result <- eval stdLib "\\a -> match None with (None) -> a | _ -> a"
+            result <- eval stdLib "\\a -> match Nothing with (Nothing) -> a | _ -> a"
             result `shouldSatisfy` isRight

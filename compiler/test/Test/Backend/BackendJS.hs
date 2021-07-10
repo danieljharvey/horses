@@ -70,9 +70,9 @@ successes =
     ("\\a -> let b = 123 in a", "const main = a => { const b = 123;\nreturn a };\n"),
     ("(1,2)", "const main = [1,2];\n"),
     ("aRecord.a", "const main = aRecord.a;\n"),
-    ("Some", "const main = a => ({ type: \"Some\", vars: [a] });\n"),
-    ("Some 1", "const main = { type: \"Some\", vars: [1] };\n"),
-    ("None", "const main = { type: \"None\", vars: [] };\n"),
+    ("Just", "const main = a => ({ type: \"Just\", vars: [a] });\n"),
+    ("Just 1", "const main = { type: \"Just\", vars: [1] };\n"),
+    ("Nothing", "const main = { type: \"Nothing\", vars: [] };\n"),
     ("These", "const main = a => b => ({ type: \"These\", vars: [a,b] });\n"),
     ("True == False", "const main = __eq(true, false);\n"),
     ("2 + 2", "const main = 2 + 2;\n"),
@@ -80,11 +80,11 @@ successes =
     ("\"dog\" ++ \"log\"", "const main = \"dog\" + \"log\";\n"),
     ("{ fn: (\\a -> let d = 1 in a) }", "const main = { fn: a => { const d = 1;\nreturn a } };\n"),
     ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n"),
-    ( "match Some True with (Some a) -> a | _ -> False",
-      "const main = __patternMatch({ type: \"Some\", vars: [true] }, [ [ pat => __eq(pat.type, \"Some\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n"
+    ( "match Just True with (Just a) -> a | _ -> False",
+      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n"
     ),
-    ( "match Some True with (Some a) -> Some a | _ -> None",
-      "const main = __patternMatch({ type: \"Some\", vars: [true] }, [ [ pat => __eq(pat.type, \"Some\") ? { a: pat.vars[0] } : null, ({ a }) => ({ type: \"Some\", vars: [a] }) ], [ pat => ({}), () => ({ type: \"None\", vars: [] }) ] ]);\n"
+    ( "match Just True with (Just a) -> Just a | _ -> Nothing",
+      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => ({ type: \"Just\", vars: [a] }) ], [ pat => ({}), () => ({ type: \"Nothing\", vars: [] }) ] ]);\n"
     ),
     ( "let (a, b) = (1,2) in a",
       "const main = function() { const [a, b] = [1,2];\nreturn a }();\n"
@@ -174,15 +174,15 @@ spec = do
     traverse_ testPattern patterns
   describe "Normalise constructors" $ do
     it "is a no-op for nullary constructors" $ do
-      let a = MyConstructor mempty "None"
+      let a = MyConstructor mempty "Nothing"
       normaliseConstructors dataTypes a `shouldBe` Right a
     it "turns unary constructor into lambda function" $ do
-      let a = MyConstructor mempty "Some"
+      let a = MyConstructor mempty "Just"
       let expected =
             MyLambda
               mempty
               "a"
-              (MyConsApp mempty (MyConstructor mempty "Some") (MyVar mempty "a"))
+              (MyConsApp mempty (MyConstructor mempty "Just") (MyVar mempty "a"))
       normaliseConstructors dataTypes a `shouldBe` Right expected
     it "turns binary constructor into two lambda functions" $ do
       let a = MyConstructor mempty "These"

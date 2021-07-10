@@ -23,3 +23,9 @@ spec = do
 
       toString dtTrafficLights
         `shouldBe` Right expected
+
+    it "Generates fromString for dtTrafficLights" $ do
+      let expected = unsafeParse "\\str -> match str with \"Green\" -> Just Green | \"Red\" -> Just Red | \"Yellow\" -> Just Yellow | _ -> Nothing"
+
+      fromString dtTrafficLights
+        `shouldBe` Right expected
