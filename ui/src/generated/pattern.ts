@@ -16,57 +16,57 @@
 /**
  * 
  * @export
- * @interface Type
+ * @interface Pattern
  */
-export interface Type {
+export interface Pattern {
     /**
      * 
      * @type {Array<object>}
-     * @memberof Type
+     * @memberof Pattern
      */
-    MTPrim?: Array<object>;
+    PWildcard?: Array<object>;
     /**
      * 
      * @type {Array<object>}
-     * @memberof Type
+     * @memberof Pattern
      */
-    MTVar?: Array<object>;
+    PVar?: Array<object>;
     /**
      * 
      * @type {Array<object>}
-     * @memberof Type
+     * @memberof Pattern
      */
-    MTFunction?: Array<object>;
+    PLit?: Array<object>;
     /**
      * 
      * @type {Array<object>}
-     * @memberof Type
+     * @memberof Pattern
      */
-    MTPair?: Array<object>;
+    PConstructor?: Array<object>;
     /**
      * 
      * @type {Array<object>}
-     * @memberof Type
+     * @memberof Pattern
      */
-    MTRecord?: Array<object>;
+    PPair?: Array<object>;
     /**
      * 
      * @type {Array<object>}
-     * @memberof Type
+     * @memberof Pattern
      */
-    MTRecordRow?: Array<object>;
+    PRecord?: Array<object>;
     /**
      * 
      * @type {Array<object>}
-     * @memberof Type
+     * @memberof Pattern
      */
-    MTArray?: Array<object>;
+    PArray?: Array<object>;
     /**
      * 
      * @type {Array<object>}
-     * @memberof Type
+     * @memberof Pattern
      */
-    MTData?: Array<object>;
+    PString?: Array<object>;
 }
 
 

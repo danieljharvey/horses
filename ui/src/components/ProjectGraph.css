@@ -1,0 +1,24 @@
+.graphviz {
+  background: var(--background-lighter);
+  padding: var(--spaceSmall);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.graphviz svg polygon {
+  fill: var(--background-lighter);
+}
+
+.graphviz svg .node {
+  cursor: pointer;
+}
+
+.graphviz svg ellipse {
+  fill: var(--greyScale100);
+  stroke: none;
+}
+
+.graphviz svg text {
+  color: var(--greyScale0);
+  font-family: var(--font-family);
+}

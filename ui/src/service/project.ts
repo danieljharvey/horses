@@ -12,6 +12,8 @@ import {
   AddUnitTestResponse,
   BindTypeRequest,
   BindTypeResponse,
+  GraphProjectResponse,
+  ExprHash,
 } from '../types/'
 import {
   axiosPost,
@@ -69,3 +71,8 @@ export const getExpression = (
     `${baseUrl}/project/expression/`,
     getExpressionRequest
   )
+
+export const getProjectGraph = (
+  projectHash: ExprHash
+): TE.TaskEither<string, GraphProjectResponse> =>
+  axiosGet(`${baseUrl}/project/graph/${projectHash}/`)

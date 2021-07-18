@@ -42,7 +42,7 @@ export interface Expr {
      * @type {Array<object>}
      * @memberof Expr
      */
-    MyLetPair?: Array<object>;
+    MyLetPattern?: Array<object>;
     /**
      * 
      * @type {Array<object>}
@@ -120,7 +120,7 @@ export interface Expr {
      * @type {Array<object>}
      * @memberof Expr
      */
-    MyCaseMatch?: Array<object>;
+    MyPatternMatch?: Array<object>;
     /**
      * 
      * @type {Array<object>}

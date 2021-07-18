@@ -16,27 +16,27 @@
 /**
  * 
  * @export
- * @interface Literal
+ * @interface Spread
  */
-export interface Literal {
+export interface Spread {
     /**
      * 
-     * @type {number}
-     * @memberof Literal
+     * @type {Array<object>}
+     * @memberof Spread
      */
-    MyInt?: number;
+    NoSpread?: Array<object>;
     /**
      * 
-     * @type {boolean}
-     * @memberof Literal
+     * @type {Array<object>}
+     * @memberof Spread
      */
-    MyBool?: boolean;
+    SpreadWildcard?: Array<object>;
     /**
      * 
-     * @type {string}
-     * @memberof Literal
+     * @type {Array<object>}
+     * @memberof Spread
      */
-    MyString?: string;
+    SpreadValue?: Array<object>;
 }
 
 
