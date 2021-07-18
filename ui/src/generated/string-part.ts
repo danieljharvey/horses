@@ -16,27 +16,21 @@
 /**
  * 
  * @export
- * @interface Literal
+ * @interface StringPart
  */
-export interface Literal {
+export interface StringPart {
     /**
      * 
-     * @type {number}
-     * @memberof Literal
+     * @type {Array<object>}
+     * @memberof StringPart
      */
-    MyInt?: number;
+    StrWildcard?: Array<object>;
     /**
      * 
-     * @type {boolean}
-     * @memberof Literal
+     * @type {Array<object>}
+     * @memberof StringPart
      */
-    MyBool?: boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof Literal
-     */
-    MyString?: string;
+    StrValue?: Array<object>;
 }
 
 

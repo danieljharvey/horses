@@ -35,7 +35,7 @@ spec = do
   describe "BindType" $ do
     it "Should bind Void but create no functions" $ do
       let action = Actions.bindType (prettyPrint (dtVoid :: DataType ())) dtVoid
-      let (newProject, outcomes, (outputs, _, _)) =
+      let (newProject, outcomes, (outputs, _, _, _)) =
             fromRight (Actions.run stdLib action)
       -- no codegen matches this datatype
       outputs `shouldBe` mempty
@@ -58,7 +58,7 @@ spec = do
         `shouldBe` 1
     it "Should bind Identity and create newtype and functor functions" $ do
       let action = Actions.bindType (prettyPrint (dtIdentity :: DataType ())) dtIdentity
-      let (newProject, outcomes, (outputs, _, _)) = fromRight (Actions.run stdLib action)
+      let (newProject, outcomes, (outputs, _, _, _)) = fromRight (Actions.run stdLib action)
       -- no codegen matches this datatype
       outputs `shouldBe` [Newtype, Functor, Foldable, Applicative]
       -- seven more items in store
@@ -80,7 +80,7 @@ spec = do
         `shouldBe` 7
     it "Should bind TrafficLights and create type bindings for constructors" $ do
       let action = Actions.bindType (prettyPrint (dtTrafficLights :: DataType ())) dtTrafficLights
-      let (newProject, outcomes, (outputs, _, _)) =
+      let (newProject, outcomes, (outputs, _, _, _)) =
             fromRight (Actions.run stdLib action)
       -- no codegen matches this datatype
       outputs `shouldBe` [Enum]

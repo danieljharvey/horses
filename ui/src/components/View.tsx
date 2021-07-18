@@ -6,6 +6,8 @@ import { EditBinding } from './Editor/EditBinding'
 import { NewBinding } from './Editor/NewBinding'
 import { NewTest } from './Editor/NewTest'
 import { NewType } from './Editor/NewType'
+import { ProjectGraph } from './ProjectGraph'
+import { ExpressionGraph } from './ExpressionGraph'
 import { flow } from 'fp-ts/function'
 import { TypeSearch } from './TypeSearch/TypeSearch'
 import { FilteredBindingList } from './FilteredBindingList'
@@ -167,6 +169,23 @@ const getScreenInner = (
           onBindingSelect={onBindingSelect}
         />,
         true,
+      ]
+
+    case 'project-graph':
+      return [
+        <ProjectGraph dispatch={dispatch} state={state} />,
+        false,
+      ]
+
+    case 'expression-graph':
+      return [
+        <ExpressionGraph
+          state={state}
+          exprHash={screen.exprHash}
+          dispatch={dispatch}
+          bindingName={screen.bindingName}
+        />,
+        false,
       ]
   }
 }

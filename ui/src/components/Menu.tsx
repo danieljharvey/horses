@@ -26,6 +26,9 @@ export const Menu: React.FC<Props> = ({
 }) => {
   const onPopScreen = () => dispatch(popScreen())
 
+  const onProjectGraph = () =>
+    dispatch(pushScreen({ type: 'project-graph' }))
+
   const onNewBinding = () =>
     dispatch(
       pushScreen({
@@ -72,6 +75,12 @@ export const Menu: React.FC<Props> = ({
         </>
 
         <>
+          <div
+            className="menu-button"
+            onClick={onProjectGraph}
+          >
+            📊
+          </div>
           <div
             className="menu-button"
             onClick={onTypeSearch}

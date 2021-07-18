@@ -63,6 +63,12 @@ export interface ExpressionData {
      * @memberof ExpressionData
      */
     edRuntimes: { [key: string]: RuntimeData; };
+    /**
+     * 
+     * @type {string}
+     * @memberof ExpressionData
+     */
+    edGraphviz: string;
 }
 
 

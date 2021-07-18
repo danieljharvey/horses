@@ -21,8 +21,7 @@
 export enum Primitive {
     MTInt = 'MTInt',
     MTString = 'MTString',
-    MTBool = 'MTBool',
-    MTUnit = 'MTUnit'
+    MTBool = 'MTBool'
 }
 
 

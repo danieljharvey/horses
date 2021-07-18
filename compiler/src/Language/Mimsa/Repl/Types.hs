@@ -13,6 +13,8 @@ data ReplAction ann
   | Info (Expr Name ann)
   | Evaluate (Expr Name ann)
   | Tree (Expr Name ann)
+  | Graph (Expr Name ann)
+  | ProjectGraph
   | Bind Name (Expr Name ann)
   | OutputJS (Expr Name ann)
   | TypeSearch MonoType

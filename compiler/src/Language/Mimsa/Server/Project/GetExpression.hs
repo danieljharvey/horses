@@ -13,6 +13,7 @@ where
 import qualified Data.Aeson as JSON
 import Data.Swagger
 import GHC.Generics
+import qualified Language.Mimsa.Actions.Graph as Actions
 import Language.Mimsa.Server.ExpressionData
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
@@ -48,7 +49,8 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' projectHash
   se <- findExprHandler project exprHash'
+  (_, graphviz) <- fromActionM mimsaEnv projectHash (Actions.graphExpression se)
   (ResolvedExpression mt _ _ _ _) <-
     resolveStoreExpressionHandler project se
   writeStoreHandler mimsaEnv (prjStore project)
-  GetExpressionResponse <$> expressionDataHandler project se mt
+  GetExpressionResponse <$> expressionDataHandler project se mt graphviz

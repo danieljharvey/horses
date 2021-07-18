@@ -60,7 +60,7 @@ bindType ::
 bindType mimsaEnv (BindTypeRequest projectHash input) =
   do
     expr <- parseDataTypeHandler input
-    (newProject, (typeClasses, codegenInfo, dt)) <-
+    (newProject, (typeClasses, codegenInfo, dt, gv)) <-
       fromActionM
         mimsaEnv
         projectHash
@@ -68,7 +68,7 @@ bindType mimsaEnv (BindTypeRequest projectHash input) =
     pd <- projectDataHandler mimsaEnv newProject
     ed <- case codegenInfo of
       Just (ResolvedExpression mt se _ _ _) -> do
-        ed' <- expressionDataHandler newProject se mt
+        ed' <- expressionDataHandler newProject se mt gv
         pure (Just ed')
       Nothing -> pure Nothing
     pure $

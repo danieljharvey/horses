@@ -16,27 +16,15 @@
 /**
  * 
  * @export
- * @interface Literal
+ * @interface GraphProjectResponse
  */
-export interface Literal {
-    /**
-     * 
-     * @type {number}
-     * @memberof Literal
-     */
-    MyInt?: number;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Literal
-     */
-    MyBool?: boolean;
+export interface GraphProjectResponse {
     /**
      * 
      * @type {string}
-     * @memberof Literal
+     * @memberof GraphProjectResponse
      */
-    MyString?: string;
+    gpGraphviz: string;
 }
 
 

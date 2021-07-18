@@ -23,6 +23,8 @@ replParser =
     <|> try bindTypeParser
     <|> try listBindingsParser
     <|> try treeParser
+    <|> try graphParser
+    <|> try projectGraphParser
     <|> try evalParser
     <|> try versionsParser
     <|> try outputJSParser
@@ -47,6 +49,14 @@ treeParser :: Parser ReplActionAnn
 treeParser = do
   _ <- thenSpace (string ":tree")
   Tree <$> expressionParser
+
+graphParser :: Parser ReplActionAnn
+graphParser = do
+  _ <- thenSpace (string ":graph")
+  Graph <$> expressionParser
+
+projectGraphParser :: Parser ReplActionAnn
+projectGraphParser = ProjectGraph <$ string ":projectGraph"
 
 bindParser :: Parser ReplActionAnn
 bindParser = do

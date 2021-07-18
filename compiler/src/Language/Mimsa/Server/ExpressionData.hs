@@ -70,7 +70,8 @@ data ExpressionData = ExpressionData
     edBindings :: Map Name Text,
     edTypeBindings :: Map TyCon Text,
     edUnitTests :: [UnitTestData],
-    edRuntimes :: Map RuntimeName RuntimeData
+    edRuntimes :: Map RuntimeName RuntimeData,
+    edGraphviz :: Text
   }
   deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
 
@@ -78,8 +79,9 @@ expressionDataHandler ::
   Project Annotation ->
   StoreExpression Annotation ->
   MonoType ->
+  [Graphviz] ->
   Handler ExpressionData
-expressionDataHandler project se mt = do
+expressionDataHandler project se mt gv = do
   let exprHash = getStoreExpressionHash se
       tests =
         mkUnitTestData project
@@ -97,3 +99,4 @@ expressionDataHandler project se mt = do
       (prettyPrint <$> getTypeBindings (storeTypeBindings se))
       tests
       matchingRuntimes
+      (prettyGraphviz gv)
