@@ -47,7 +47,7 @@ doReplAction env input action =
       catchMimsaError env (doTree env input expr $> env)
     (Graph expr) ->
       catchMimsaError env (doGraph env input expr $> env)
-    (ProjectGraph) ->
+    ProjectGraph ->
       catchMimsaError env (doProjectGraph env $> env)
     (Info expr) ->
       catchMimsaError env (doInfo env input expr $> env)
