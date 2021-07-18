@@ -13,6 +13,7 @@ import Language.Mimsa.Server.Project.BindType
 import Language.Mimsa.Server.Project.CreateProject
 import Language.Mimsa.Server.Project.Evaluate
 import Language.Mimsa.Server.Project.GetExpression
+import Language.Mimsa.Server.Project.Graph
 import Language.Mimsa.Server.Project.ListBindings
 import Language.Mimsa.Server.Project.ListTests
 import Language.Mimsa.Server.Types
@@ -34,6 +35,7 @@ type ProjectAPI =
            :<|> AddUnitTest
            :<|> ListTests
            :<|> ListTestsByName
+           :<|> GraphAPI
        )
 
 projectEndpoints ::
@@ -49,5 +51,6 @@ projectEndpoints mimsaEnv =
     :<|> addUnitTestHandler mimsaEnv
     :<|> listTestsHandler mimsaEnv
     :<|> listTestsByNameHandler mimsaEnv
+    :<|> graphProject mimsaEnv
 
 ------

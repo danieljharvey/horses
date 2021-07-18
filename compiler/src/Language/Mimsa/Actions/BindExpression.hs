@@ -6,6 +6,7 @@ import Control.Monad.Except (liftEither)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -22,27 +23,29 @@ bindExpression ::
   Expr Name Annotation ->
   Name ->
   Text ->
-  Actions.ActionM (ExprHash, Int, ResolvedExpression Annotation)
+  Actions.ActionM (ExprHash, Int, ResolvedExpression Annotation, [Graphviz])
 bindExpression expr name input = do
   project <- Actions.getProject
   re@(ResolvedExpression _type' storeExpr _ _ _) <-
     liftEither $ getTypecheckedStoreExpression input project expr
   Actions.bindStoreExpression storeExpr name
+  graphviz <- Actions.graphExpression storeExpr
   case lookupBindingName project name of
     Nothing -> do
       Actions.appendMessage
         ( "Bound " <> prettyPrint name <> "."
         )
-      pure (getStoreExpressionHash storeExpr, 0, re)
+      pure (getStoreExpressionHash storeExpr, 0, re, graphviz)
     Just oldExprHash ->
       do
         Actions.appendMessage
           ( "Updated binding of " <> prettyPrint name <> "."
           )
         let newExprHash = getStoreExpressionHash storeExpr
-        (,,) newExprHash
+        (,,,) newExprHash
           <$> createUnitTests oldExprHash newExprHash
             <*> pure re
+            <*> pure graphviz
 
 createUnitTests :: ExprHash -> ExprHash -> Actions.ActionM Int
 createUnitTests oldExprHash newExprHash = do

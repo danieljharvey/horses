@@ -10,6 +10,7 @@ import Data.Functor (($>))
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
@@ -28,10 +29,12 @@ bindType ::
   Actions.ActionM
     ( [Typeclass],
       Maybe (ResolvedExpression Annotation),
-      DataType Annotation
+      DataType Annotation,
+      [Graphviz]
     )
 bindType input dt = do
-  addTypeToProject input dt
+  storeExpr <- addTypeToProject input dt
+  graphviz <- Actions.graphExpression storeExpr
   let name = tyConToName (dtName dt)
   project <- Actions.getProject
   codegenExpr <- createCodegenFunction project dt
@@ -40,7 +43,7 @@ bindType input dt = do
     )
   case codegenExpr of
     Nothing -> do
-      pure (mempty, Nothing, dt)
+      pure (mempty, Nothing, dt, graphviz)
     Just codegenFunc ->
       do
         Actions.bindStoreExpression (storeExprFromResolved codegenFunc) name
@@ -50,13 +53,14 @@ bindType input dt = do
         pure
           ( typeclassMatches (dt $> ()),
             Just codegenFunc,
-            dt
+            dt,
+            graphviz
           )
 
 storeExprFromResolved :: ResolvedExpression ann -> StoreExpression ann
 storeExprFromResolved (ResolvedExpression _ se _ _ _) = se
 
-addTypeToProject :: Text -> DataType Annotation -> Actions.ActionM ()
+addTypeToProject :: Text -> DataType Annotation -> Actions.ActionM (StoreExpression Annotation)
 addTypeToProject input dt = do
   project <- Actions.getProject
   -- create storeExpr for new datatype
@@ -71,6 +75,7 @@ addTypeToProject input dt = do
             (MyRecord mempty mempty)
         )
   Actions.bindTypeExpression (reStoreExpression resolvedTypeExpr)
+  pure (storeExprFromResolved resolvedTypeExpr)
 
 createCodegenFunction ::
   Project Annotation ->
