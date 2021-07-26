@@ -10,6 +10,7 @@ where
 
 import Data.Map ((!))
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
@@ -84,5 +85,5 @@ createGraphviz (Func (DepInfo (rootName, exprHash)) deps) =
 
 prettyGraphviz :: [Graphviz] -> Text
 prettyGraphviz gv =
-  let parts = (\a -> "  " <> a <> "\n") . prettyPrint <$> gv
-   in "digraph {\n" <> mconcat parts <> "}"
+  let parts = (\a -> "  " <> a <> "\n") . prettyPrint <$> (S.toList $ S.fromList gv)
+   in "strict digraph {\n" <> mconcat parts <> "}"
