@@ -161,6 +161,9 @@ addStateMonad prj =
     >>= addBinding
       "\\newName -> let sas = \\s -> let return = newName ++ \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
       "storeName"
+    >>= addBinding
+      "(evalState, execState)"
+      "testStateUsages"
 
 addParser :: Project Annotation -> ProjectPart
 addParser prj =
