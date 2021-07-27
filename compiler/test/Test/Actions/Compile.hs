@@ -37,7 +37,7 @@ spec = do
       let action = do
             (_, _, storeExpr, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile consoleRuntime "1" storeExpr
-      let result = Actions.run stdLib action
+      let result = Actions.run testStdlib action
       result `shouldSatisfy` isLeft
     it "Simplest compilation creates four files" $ do
       let expr = MyVar mempty "id"
@@ -45,11 +45,11 @@ spec = do
             (_, _, storeExpr, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile exportRuntime "id" storeExpr
       let (newProject, outcomes, (_, hashes)) =
-            fromRight (Actions.run stdLib action)
+            fromRight (Actions.run testStdlib action)
       -- creates three files
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 4
       -- doesn't change project (for now)
-      newProject `shouldBe` stdLib
+      newProject `shouldBe` testStdlib
       -- uses three different folders
       let uniqueFolders =
             nub
@@ -65,11 +65,11 @@ spec = do
       let action = do
             (_, _, storeExpr, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile exportRuntime "evalState" storeExpr
-      let (newProject, outcomes, _) = fromRight (Actions.run stdLib action)
+      let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
       -- creates six files
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 7
       -- doesn't change project (for now)
-      newProject `shouldBe` stdLib
+      newProject `shouldBe` testStdlib
       -- uses three different folders
       let uniqueFolders =
             nub
@@ -79,9 +79,9 @@ spec = do
       length uniqueFolders `shouldBe` 3
     it "Doesn't break when using bindings that aren't in the store" $ do
       let expr = MyVar mempty "id2"
-      let exprHashForId = getHashOfName stdLib "id"
+      let exprHashForId = getHashOfName testStdlib "id"
       let bindings = Bindings (M.singleton "id2" exprHashForId)
       let storeExpr = StoreExpression expr bindings mempty
       let action = do
             Actions.compile exportRuntime "id2" storeExpr
-      Actions.run stdLib action `shouldSatisfy` isRight
+      Actions.run testStdlib action `shouldSatisfy` isRight

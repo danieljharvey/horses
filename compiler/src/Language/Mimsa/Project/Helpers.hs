@@ -19,6 +19,7 @@ module Language.Mimsa.Project.Helpers
     lookupBindingName,
     lookupTypeBindingName,
     getBindingNames,
+    removeBinding,
   )
 where
 
@@ -141,3 +142,8 @@ getDependencyHashes :: StoreExpression ann -> Set ExprHash
 getDependencyHashes =
   S.fromList . M.elems . getBindings . storeBindings
     <> S.fromList . M.elems . getTypeBindings . storeTypeBindings
+
+removeBinding :: Project ann -> Name -> Project ann
+removeBinding prj name =
+  let newBindings = delete name (prjBindings prj)
+   in prj {prjBindings = newBindings}

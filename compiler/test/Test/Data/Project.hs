@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Data.Project
-  ( stdLib,
+  ( testStdlib,
     idExpr,
     addBinding,
     addExprBinding,
@@ -13,8 +13,10 @@ import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Parser (parseExpr)
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -31,193 +33,171 @@ idExpr = idExpr' $> mempty
       unsafeGetExpr "\\i -> i"
 
 -- check removing annotation doesn't break stuff
-stdLib :: Project Annotation
-stdLib = case stdLibE of
+testStdlib :: Project Annotation
+testStdlib = case buildTestStdlib of
   Right stdLib' -> (stdLib' $> ()) $> mempty
   Left e -> error (show e)
 
-type ProjectPart = Either (Error Annotation) (Project Annotation)
+buildTestStdlib :: Either (Error Annotation) (Project Annotation)
+buildTestStdlib =
+  Actions.run mempty action >>= \(proj, _, _) -> pure proj
+  where
+    action = do
+      addBinding
+        "id"
+        "\\a -> a"
+      addBinding
+        "compose"
+        "\\f -> \\g -> \\a -> f(g(a))"
+      addBinding
+        "fst"
+        "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
+      addBinding
+        "snd"
+        "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
+      addBinding
+        "eq"
+        "\\a -> \\b -> a == b"
+      addBinding
+        "eqTen"
+        "\\i -> eq(10)(i)"
+      addBinding
+        "addInt"
+        "\\a -> \\b -> a + b"
+      addBinding
+        "subtractInt"
+        "\\a -> \\b -> a - b"
+      addBinding
+        "compose"
+        "\\f -> \\g -> \\aValue -> f(g(aValue))"
+      addBinding
+        "incrementInt"
+        "\\a -> addInt(1)(a)"
+      addBinding
+        "typeState"
+        "type Maybe a = Just a | Nothing in {}"
+      addBinding
+        "fmapMaybe"
+        "\\f -> \\opt -> match opt with (Just a) -> Just f(a) | _ -> Nothing"
+      addBinding
+        "typeThese"
+        "type These a b = This a | That b | These a b in {}"
+      addBinding
+        "aPair"
+        "(1,2)"
+      addBinding
+        "aRecord"
+        "{ a: 1, b: \"dog\" }"
+      addBinding
+        "typePerson"
+        "type Person = Person { name: String, age: Int } in {}"
+      addListMonad
+      addEither
+      addPair
+      addStateMonad
+      addParser
+      addArray
+      addIdentity
 
-stdLibE :: ProjectPart
-stdLibE =
-  pure mempty
-    >>= addBinding
-      "\\a -> a"
-      "id"
-    >>= addBinding
-      "\\f -> \\g -> \\a -> f(g(a))"
-      "compose"
-    >>= addBinding
-      "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
-      "fst"
-    >>= addBinding
-      "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
-      "snd"
-    >>= addBinding
-      "\\a -> \\b -> a == b"
-      "eq"
-    >>= addBinding
-      "\\i -> eq(10)(i)"
-      "eqTen"
-    >>= addBinding
-      "\\a -> \\b -> a + b"
-      "addInt"
-    >>= addBinding
-      "\\a -> \\b -> a - b"
-      "subtractInt"
-    >>= addBinding
-      "\\f -> \\g -> \\aValue -> f(g(aValue))"
-      "compose"
-    >>= addBinding
-      "\\a -> addInt(1)(a)"
-      "incrementInt"
-    >>= addBinding
-      "type Maybe a = Just a | Nothing in {}"
-      "typeState"
-    >>= addBinding
-      "\\f -> \\opt -> match opt with (Just a) -> Just f(a) | _ -> Nothing"
-      "fmapMaybe"
-    >>= addBinding
-      "type These a b = This a | That b | These a b in {}"
-      "typeThese"
-    >>= addBinding
-      "(1,2)"
-      "aPair"
-    >>= addBinding
-      "{ a: 1, b: \"dog\" }"
-      "aRecord"
-    >>= addBinding
-      "type Person = Person { name: String, age: Int } in {}"
-      "typePerson"
-    >>= addListMonad
-    >>= addEither
-    >>= addPair
-    >>= addStateMonad
-    >>= addParser
-    >>= addArray
-    >>= addIdentity
+addListMonad :: Actions.ActionM ()
+addListMonad = do
+  addType
+    "type List a = Cons a (List a) | Nil"
+  addBinding
+    "cons"
+    "\\a -> \\list -> Cons a list"
+  addBinding
+    "nil"
+    "Nil"
 
-addListMonad :: Project Annotation -> ProjectPart
-addListMonad prj =
-  pure prj
-    >>= addBinding
-      "type List a = Cons a (List a) | Nil in {}"
-      "typeList"
-    >>= addBinding
-      "\\a -> \\list -> Cons a list"
-      "cons"
-    >>= addBinding "Nil" "nil"
+addPair :: Actions.ActionM ()
+addPair = do
+  addType
+    "type Pair a b = Pair a b"
+  addBinding
+    "fstPair"
+    "\\pair -> match pair with (Pair a _) -> a"
+  addBinding
+    "sndPair"
+    "\\pair -> match pair with (Pair _ b) -> b"
 
-addPair :: Project Annotation -> ProjectPart
-addPair prj =
-  pure prj
-    >>= addBinding
-      "type Pair a b = Pair a b in {}"
-      "typePair"
-    >>= addBinding
-      "\\pair -> match pair with (Pair a _) -> a"
-      "fstPair"
-    >>= addBinding
-      "\\pair -> match pair with (Pair _ b) -> b"
-      "sndPair"
+addEither :: Actions.ActionM ()
+addEither =
+  addType
+    "type Either e a = Left e | Right a"
 
-addEither :: Project Annotation -> ProjectPart
-addEither prj =
-  pure prj
-    >>= addBinding
-      "type Either e a = Left e | Right a in {}"
-      "typeEither"
+addStateMonad :: Actions.ActionM ()
+addStateMonad = do
+  addType
+    "type State s a = State (s -> (Pair a s))"
+  addBinding
+    "pureState"
+    "\\a -> State (\\s -> Pair a s)"
+  addBinding
+    "fmapState"
+    "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas(s); match as with (Pair a s) -> Pair f(a) s)"
+  addBinding
+    "apState"
+    "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs(s); match fs with (Pair f ss) -> match stateA with (State sas) -> let as = sas(ss); match as with (Pair a sss) -> Pair f(a) sss)"
+  addBinding
+    "bindState"
+    "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas(s); match as with (Pair a ss) -> match f(a) with (State sbs) -> sbs(ss))"
+  addBinding
+    "runState"
+    "\\state -> \\s -> match state with (State sas) -> sas(s)"
+  addBinding
+    "execState"
+    "\\state -> compose(sndPair)(runState(state))"
+  addBinding
+    "evalState"
+    "\\state -> compose(fstPair)(runState(state))"
+  addBinding
+    "liftA2State"
+    "\\f -> \\stateA -> \\stateB -> apState(fmapState(f)(stateA))(stateB)"
+  addBinding
+    "storeName"
+    "\\newName -> let sas = \\s -> let return = newName ++ \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
+  addBinding
+    "testStateUsages"
+    "(evalState, execState)"
 
-addStateMonad :: Project Annotation -> ProjectPart
-addStateMonad prj =
-  pure prj
-    >>= addBinding
-      "type State s a = State (s -> (Pair a s)) in {}"
-      "typeState"
-    >>= addBinding
-      "\\a -> State (\\s -> Pair a s)"
-      "pureState"
-    >>= addBinding
-      "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas(s); match as with (Pair a s) -> Pair f(a) s)"
-      "fmapState"
-    >>= addBinding
-      "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs(s); match fs with (Pair f ss) -> match stateA with (State sas) -> let as = sas(ss); match as with (Pair a sss) -> Pair f(a) sss)"
-      "apState"
-    >>= addBinding
-      "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas(s); match as with (Pair a ss) -> match f(a) with (State sbs) -> sbs(ss))"
-      "bindState"
-    >>= addBinding
-      "\\state -> \\s -> match state with (State sas) -> sas(s)"
-      "runState"
-    >>= addBinding
-      "\\state -> compose(sndPair)(runState(state))"
-      "execState"
-    >>= addBinding
-      "\\state -> compose(fstPair)(runState(state))"
-      "evalState"
-    >>= addBinding
-      "\\f -> \\stateA -> \\stateB -> apState(fmapState(f)(stateA))(stateB)"
-      "liftA2State"
-    >>= addBinding
-      "\\newName -> let sas = \\s -> let return = newName ++ \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
-      "storeName"
-    >>= addBinding
-      "(evalState, execState)"
-      "testStateUsages"
+addParser :: Actions.ActionM ()
+addParser = do
+  addType
+    "type Parser a = Parser (String -> Maybe (String,a))"
+  addBinding
+    "anyChar"
+    "let p = (\\str -> match str with (c ++ rest) -> (Just (rest, c)) | _ -> Nothing) in Parser p"
+  addBinding
+    "runParser"
+    "\\p -> \\str -> match p with (Parser parser) -> match parser(str) with (Just (rest, a)) -> Just a | _ -> Nothing"
+  addBinding
+    "fmapParser"
+    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Just (rest, a)) -> Just (rest, f(a)) | _ -> Nothing)"
+  addBinding
+    "bindParser"
+    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Just (restA, a)) -> (let nextParser = match f(a) with (Parser parserB) -> parserB; nextParser(restA)) | _ -> Nothing)"
+  addBinding
+    "predParser"
+    "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr(s) with (Just (rest, a)) -> (if pred(a) then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
+  addBinding
+    "failParser"
+    "Parser \\s -> Nothing"
 
-addParser :: Project Annotation -> ProjectPart
-addParser prj =
-  pure prj
-    >>= addBinding
-      "type Parser a = Parser (String -> Maybe (String,a)) in {}"
-      "typeParser"
-    >>= addBinding
-      "let p = (\\str -> match str with (c ++ rest) -> (Just (rest, c)) | _ -> Nothing) in Parser p"
-      "anyChar"
-    >>= addBinding
-      "\\p -> \\str -> match p with (Parser parser) -> match parser(str) with (Just (rest, a)) -> Just a | _ -> Nothing"
-      "runParser"
-    >>= addBinding
-      "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Just (rest, a)) -> Just (rest, f(a)) | _ -> Nothing)"
-      "fmapParser"
-    >>= addBinding
-      "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Just (restA, a)) -> (let nextParser = match f(a) with (Parser parserB) -> parserB; nextParser(restA)) | _ -> Nothing)"
-      "bindParser"
-    >>= addBinding
-      "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr(s) with (Just (rest, a)) -> (if pred(a) then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
-      "predParser"
-    >>= addBinding
-      "Parser \\s -> Nothing"
-      "failParser"
+addArray :: Actions.ActionM ()
+addArray =
+  addBinding
+    "mapArray"
+    "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f(a)] <> map(rest) | _ -> []; map(arr)"
 
-addArray :: Project Annotation -> ProjectPart
-addArray prj =
-  pure prj
-    >>= addBinding
-      "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f(a)] <> map(rest) | _ -> []; map(arr)"
-      "mapArray"
-
-addIdentity :: Project Annotation -> ProjectPart
-addIdentity prj = pure prj >>= addBinding "type Identity a = Identity a in {}" "typeIdentity"
+addIdentity :: Actions.ActionM ()
+addIdentity = addType "type Ident a = Ident a"
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input =
   case parseExpr input of
     Right expr' -> StoreExpression expr' mempty mempty
     a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
-
-addBinding ::
-  Text ->
-  Name ->
-  Project Annotation ->
-  Either (Error Annotation) (Project Annotation)
-addBinding input name env = do
-  (ResolvedExpression _ se _ _ _) <-
-    evaluateText env input
-  let seUnit = se $> ()
-  let hash = coerce $ snd $ contentAndHash (storeExpression seUnit)
-  let newEnv = fromItem name se hash
-  pure (env <> newEnv)
 
 addExprBinding ::
   Expr Name Annotation ->

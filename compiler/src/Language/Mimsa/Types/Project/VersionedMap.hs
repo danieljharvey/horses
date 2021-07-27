@@ -31,3 +31,7 @@ combineUnique as bs =
   let as' = NE.toList as
       bs' = NE.toList bs
    in NE.fromList . reverse . nub . reverse $ as' <> bs'
+
+-- remove an item from a versioned map
+delete :: (Ord k) => k -> VersionedMap k a -> VersionedMap k a
+delete key = VersionedMap . M.delete key . getVersionedMap

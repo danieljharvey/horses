@@ -14,13 +14,13 @@ import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Test.Data.Project (stdLib)
+import Test.Data.Project (testStdlib)
 import Test.Hspec
 import Test.Utils.Helpers
 
 typeMap :: Map Name MonoType
 typeMap =
-  case getTypeMap stdLib of
+  case getTypeMap testStdlib of
     Right a -> a
     _ -> error "Error resolving test project"
 
