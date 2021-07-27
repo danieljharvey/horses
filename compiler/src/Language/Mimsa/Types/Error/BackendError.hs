@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.BackendError where
@@ -11,7 +12,7 @@ data BackendError ann
   | OutputtingCustomOperator InfixOp
   | OutputingTypedHole Name
   | OutputtingBadLetPattern (Pattern Name ann)
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Printer (BackendError ann) where
   prettyDoc (TyConFindError expr) =

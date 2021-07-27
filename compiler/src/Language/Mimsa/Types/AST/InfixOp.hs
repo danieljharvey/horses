@@ -13,8 +13,14 @@ import Language.Mimsa.Printer
 ------------
 
 newtype InfixOp = InfixOp Text
-  deriving newtype (Eq, Ord, Show)
-  deriving (JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      JSON.ToJSON,
+      JSON.FromJSON,
+      ToSchema
+    )
 
 -------------
 

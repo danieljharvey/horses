@@ -1,3 +1,5 @@
+{-# LANGUAGE DerivingStrategies #-}
+
 module Language.Mimsa.Backend.Types
   ( BackendM,
     Backend (..),
@@ -13,7 +15,7 @@ import Language.Mimsa.Types.Store
 type BackendM ann = Either (BackendError ann)
 
 data Backend = CommonJS
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 data Renderer ann a = Renderer
   { renderFunc :: Name -> Expr Name ann -> BackendM ann a,

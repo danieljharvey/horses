@@ -17,7 +17,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
 
 newtype TyCon = TyCon Text
-  deriving (ToSchema)
+  deriving newtype (ToSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,

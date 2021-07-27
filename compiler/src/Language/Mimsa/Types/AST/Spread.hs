@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.Spread
@@ -17,13 +18,15 @@ data Spread var ann
   = NoSpread
   | SpreadWildcard ann
   | SpreadValue ann var
-  deriving
+  deriving stock
     ( Show,
       Eq,
       Ord,
       Functor,
-      Generic,
-      JSON.FromJSON,
+      Generic
+    )
+  deriving anyclass
+    ( JSON.FromJSON,
       JSON.ToJSON
     )
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Typechecker.TypeConstructor where
@@ -12,7 +13,7 @@ data TypeConstructor = TypeConstructor
     tcTypeVars :: [MonoType],
     tcConsTypes :: [MonoType]
   }
-  deriving (Show)
+  deriving stock (Show)
 
 instance Printer TypeConstructor where
   prettyPrint (TypeConstructor consName _tyTypeVars consTypes) =

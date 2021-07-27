@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -101,7 +102,7 @@ noOpMatch tyCon fields =
    in (pat, patternExpr)
 
 newtype FieldItemType = VariableField Name
-  deriving (Eq, Ord)
+  deriving stock (Eq, Ord)
 
 toFieldItemType :: Type () -> CodegenM FieldItemType
 toFieldItemType = \case

@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -33,13 +34,15 @@ data AddUnitTestRequest = AddUnitTestRequest
     autTestName :: TestName,
     autExpression :: Text
   }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, ToSchema)
 
 data AddUnitTestResponse = AddUnitTestResponse
   { autProjectData :: ProjectData,
     autUnitTest :: UnitTestData
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 addUnitTestHandler ::
   MimsaEnvironment ->

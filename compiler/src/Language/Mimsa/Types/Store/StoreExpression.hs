@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Store.StoreExpression where
@@ -21,14 +22,16 @@ data StoreExpression ann = StoreExpression
     storeBindings :: Bindings,
     storeTypeBindings :: TypeBindings
   }
-  deriving
+  deriving stock
     ( Eq,
       Ord,
       Show,
       Generic,
-      JSON.ToJSON,
+      Functor
+    )
+  deriving anyclass
+    ( JSON.ToJSON,
       JSON.FromJSON,
-      Functor,
       ToSchema
     )
 

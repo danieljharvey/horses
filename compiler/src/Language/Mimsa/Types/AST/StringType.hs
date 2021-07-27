@@ -23,8 +23,8 @@ import Language.Mimsa.Printer
 -- parsing complicated.
 -- This should probably be revisited at some point
 newtype StringType = StringType Text
-  deriving newtype (Eq, Ord, Show, JSON.FromJSON, JSON.ToJSON)
-  deriving (Generic, ToSchema)
+  deriving newtype (Eq, Ord, Show, JSON.FromJSON, JSON.ToJSON, ToSchema)
+  deriving stock (Generic)
 
 instance IsString StringType where
   fromString = StringType . T.pack

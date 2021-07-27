@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -35,14 +36,16 @@ data BindExpressionRequest = BindExpressionRequest
     beBindingName :: Name,
     beExpression :: Text
   }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, ToSchema)
 
 data BindExpressionResponse = BindExpressionResponse
   { beProjectData :: ProjectData,
     beExpressionData :: ExpressionData,
     beUpdatedTestsCount :: Int
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 bindExpression ::
   MimsaEnvironment ->

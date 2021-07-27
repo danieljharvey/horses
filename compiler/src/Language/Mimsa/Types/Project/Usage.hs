@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Project.Usage where
@@ -9,7 +10,7 @@ import Language.Mimsa.Types.Store.ExprHash
 data Usage
   = Transient Name ExprHash
   | Direct Name ExprHash
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Printer Usage where
   prettyPrint (Transient name _) =

@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.Annotation where
@@ -17,7 +18,8 @@ data Annotation
     None ()
   | -- | Start and end of this item in the original source
     Location Int Int
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
 
 instance Semigroup Annotation where
   Location a b <> Location a' b' = Location (min a a') (max b b')

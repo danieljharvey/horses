@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.Operator
@@ -24,7 +25,8 @@ data Operator
   | StringConcat
   | ArrayConcat
   | Custom InfixOp
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON)
 
 -- | Before custom operators were added the JSON representation was just a
 -- string, so we need to fallback to a manual decoder for these older operators

@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -39,10 +40,12 @@ data BindTypeRequest = BindTypeRequest
   { btProjectHash :: ProjectHash,
     btExpression :: Text
   }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, ToSchema)
 
 data CodegenInfo = CodegenInfo {ciExprName :: Name, ciHash :: ExprHash}
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 data BindTypeResponse = BindTypeResponse
   { btProjectData :: ProjectData,
@@ -51,7 +54,8 @@ data BindTypeResponse = BindTypeResponse
     btCodegen :: Maybe ExpressionData,
     btTypeclasses :: [Typeclass]
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 bindType ::
   MimsaEnvironment ->

@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Identifiers.TypeIdentifier
@@ -20,12 +21,14 @@ import Language.Mimsa.Types.Identifiers.TyVar
 data TypeIdentifier
   = TVName TyVar
   | TVNum Int
-  deriving
+  deriving stock
     ( Eq,
       Ord,
       Show,
-      Generic,
-      JSON.ToJSON,
+      Generic
+    )
+  deriving anyclass
+    ( JSON.ToJSON,
       JSON.ToJSONKey,
       JSON.FromJSON,
       ToSchema

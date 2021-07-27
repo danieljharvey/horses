@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.Pattern
@@ -37,7 +38,8 @@ data Pattern var ann
       (Map Name (Pattern var ann))
   | PArray ann [Pattern var ann] (Spread var ann)
   | PString ann (StringPart var ann) (StringPart var ann)
-  deriving (Show, Eq, Ord, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
+  deriving stock (Show, Eq, Ord, Functor, Generic)
+  deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
 instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
   declareNamedSchema =

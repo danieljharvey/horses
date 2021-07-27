@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Identifiers.Variable
@@ -16,7 +17,8 @@ import Language.Mimsa.Types.Identifiers.Name
 data Variable
   = NamedVar Name
   | NumberedVar Int
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, JSON.ToJSONKey)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, JSON.ToJSONKey)
 
 instance Printer Variable where
   prettyDoc = renderVariable

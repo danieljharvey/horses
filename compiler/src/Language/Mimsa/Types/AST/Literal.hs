@@ -25,12 +25,14 @@ data Literal
     MyBool Bool
   | -- | a string
     MyString StringType
-  deriving
+  deriving stock
     ( Eq,
       Ord,
       Show,
-      Generic,
-      JSON.FromJSON,
+      Generic
+    )
+  deriving anyclass
+    ( JSON.FromJSON,
       JSON.ToJSON,
       ToSchema
     )

@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.InterpreterError where
@@ -28,7 +29,7 @@ data InterpreterError ann
   | TypedHoleFound (Expr Variable ann)
   | CouldNotFindSwapForVariable Variable (Map Variable Name)
   | MaximumCallSizeReached
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError a) where
   a <> _ = a

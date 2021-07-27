@@ -1,3 +1,5 @@
+{-# LANGUAGE DerivingStrategies #-}
+
 module Language.Mimsa.Types.SubstitutedExpression where
 
 import Language.Mimsa.Types.AST
@@ -10,4 +12,4 @@ data SubstitutedExpression ann = SubstitutedExpression
     seExpr :: Expr Variable ann,
     seScope :: Scope ann
   }
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)

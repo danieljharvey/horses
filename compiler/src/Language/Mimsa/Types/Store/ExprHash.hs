@@ -17,7 +17,8 @@ import Servant.API
 -- and JS's limitations in the browser
 -- we JSON encode these as strings
 newtype ExprHash = ExprHash Text
-  deriving (Eq, Ord, Generic, ToParamSchema, ToSchema)
+  deriving stock (Eq, Ord, Generic)
+  deriving newtype (ToParamSchema, ToSchema)
   deriving newtype
     ( JSON.FromJSON,
       JSON.FromJSONKey,

@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -32,13 +33,15 @@ data EvaluateRequest = EvaluateRequest
   { erCode :: Text,
     erProjectHash :: ProjectHash
   }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, ToSchema)
 
 data EvaluateResponse = EvaluateResponse
   { erResult :: Text,
     erExpressionData :: ExpressionData
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 evaluateExpression ::
   MimsaEnvironment ->

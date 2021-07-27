@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Store.DepGraph
@@ -20,7 +21,7 @@ import Language.Mimsa.Types.Store
 ----
 
 data Graphviz = Edge ExprHash ExprHash | Node ExprHash Name
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Printer Graphviz where
   prettyPrint (Edge from to) =
@@ -32,7 +33,7 @@ instance Printer Graphviz where
 -----
 
 newtype DepInfo = DepInfo (Name, ExprHash)
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Printer DepInfo where
   prettyPrint (DepInfo (name, exprHash)) =
@@ -42,7 +43,7 @@ instance Printer DepInfo where
 
 data DepGraph
   = Func DepInfo [DepGraph]
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Printer DepGraph where
   prettyPrint (Func info children) = showFuncLine 0 info children

@@ -34,13 +34,15 @@ data DataType ann = DataType
     -- | map from constructor name to it's arguments, ie "`Left` -> [`e`]" or "`Right` -> [`a`]"
     dtConstructors :: Map TyCon [Type ann]
   }
-  deriving
+  deriving stock
     ( Eq,
       Ord,
       Show,
       Functor,
-      Generic,
-      JSON.FromJSON,
+      Generic
+    )
+  deriving anyclass
+    ( JSON.FromJSON,
       JSON.ToJSON,
       ToSchema
     )
