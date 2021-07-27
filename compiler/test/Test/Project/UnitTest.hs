@@ -28,7 +28,7 @@ testExpr =
     (MyApp mempty (MyVar mempty "incrementInt") (int 1))
 
 incrementIntH :: ExprHash
-incrementIntH = getHashOfName stdLib "incrementInt"
+incrementIntH = getHashOfName testStdlib "incrementInt"
 
 testStoreExpr :: StoreExpression Annotation
 testStoreExpr =
@@ -38,7 +38,7 @@ testStoreExpr =
     mempty
 
 idHash :: ExprHash
-idHash = getHashOfName stdLib "id"
+idHash = getHashOfName testStdlib "id"
 
 testingIdExpr :: Expr Name Annotation
 testingIdExpr =
@@ -80,53 +80,53 @@ spec =
   describe "UnitTest" $ do
     describe "createNewUnitTests" $ do
       it "Returns empty when no previous unit tests match" $ do
-        createNewUnitTests stdLib idHash idHash `shouldBe` Right (stdLib, mempty)
+        createNewUnitTests testStdlib idHash idHash `shouldBe` Right (testStdlib, mempty)
       it "Replacing a test with itself is a no-op" $ do
         let firstTest =
               createTestOrExplode
-                stdLib
+                testStdlib
                 testingStoreExpr
                 (TestName "id does nothing")
-        let stdLibWithTest = stdLib <> fromUnitTest firstTest testingStoreExpr
-        createNewUnitTests stdLibWithTest idHash idHash
-          `shouldBe` Right (stdLibWithTest, [testingStoreExpr])
+        let testStdlibWithTest = testStdlib <> fromUnitTest firstTest testingStoreExpr
+        createNewUnitTests testStdlibWithTest idHash idHash
+          `shouldBe` Right (testStdlibWithTest, [testingStoreExpr])
       it "Updating a test adds new unit tests and items to the Store" $ do
         let firstTest =
               createTestOrExplode
-                stdLib
+                testStdlib
                 testingStoreExpr
                 (TestName "id does nothing")
-        let stdLibWithTest =
-              stdLib
+        let testStdlibWithTest =
+              testStdlib
                 <> fromUnitTest firstTest testingStoreExpr
                 <> fromItem "id" altIdStoreExpr altIdHash
-        let (prj, exprs) = case createNewUnitTests stdLibWithTest idHash altIdHash of
+        let (prj, exprs) = case createNewUnitTests testStdlibWithTest idHash altIdHash of
               Right (a, b) -> (a, b)
               Left _ -> (undefined, undefined)
         -- we've added one item to the store
-        projectStoreSize prj `shouldSatisfy` \a -> a == projectStoreSize stdLibWithTest + 1
+        projectStoreSize prj `shouldSatisfy` \a -> a == projectStoreSize testStdlibWithTest + 1
         -- we've added another unit tests
-        unitTestCount prj `shouldSatisfy` \i -> i == unitTestCount stdLibWithTest + 1
+        unitTestCount prj `shouldSatisfy` \i -> i == unitTestCount testStdlibWithTest + 1
         -- there is one store expression returned
         exprs `shouldSatisfy` \a -> length a == 1
         -- and it's different to the original one
         exprs `shouldSatisfy` \a -> a /= [testingStoreExpr]
     describe "getTestsForExprHash" $ do
       it "Returns none when there are no tests" $ do
-        getTestsForExprHash stdLib (ExprHash "123") `shouldBe` mempty
+        getTestsForExprHash testStdlib (ExprHash "123") `shouldBe` mempty
       it "Returns incrementInt test when passed its hash" $ do
         let unitTest =
               createTestOrExplode
-                stdLib
+                testStdlib
                 testStoreExpr
                 (TestName "incrementInt is a no-op")
-        let stdLib' = fromUnitTest unitTest testStoreExpr <> stdLib
-        getTestsForExprHash stdLib' incrementIntH
+        let testStdlib' = fromUnitTest unitTest testStoreExpr <> testStdlib
+        getTestsForExprHash testStdlib' incrementIntH
           `shouldBe` M.singleton (utExprHash unitTest) unitTest
     describe "createUnitTest" $ do
       it "True is a valid test" $ do
         let storeExpr = StoreExpression (bool True) mempty mempty
-        createUnitTest stdLib storeExpr (TestName "True is true")
+        createUnitTest testStdlib storeExpr (TestName "True is true")
           `shouldBe` Right
             ( UnitTest
                 (TestName "True is true")
@@ -136,7 +136,7 @@ spec =
             )
       it "False is a valid (but failing) test" $ do
         let storeExpr = StoreExpression (bool False) mempty mempty
-        createUnitTest stdLib storeExpr (TestName "False is not true")
+        createUnitTest testStdlib storeExpr (TestName "False is not true")
           `shouldBe` Right
             ( UnitTest
                 (TestName "False is not true")
@@ -146,10 +146,10 @@ spec =
             )
       it "100 is not a valid test" $ do
         let storeExpr = StoreExpression (int 100) mempty mempty
-        createUnitTest stdLib storeExpr (TestName "100 is not a valid test")
+        createUnitTest testStdlib storeExpr (TestName "100 is not a valid test")
           `shouldSatisfy` isLeft
       it "Finds incrementInt and addInt" $ do
-        createUnitTest stdLib testStoreExpr (TestName "incrementInt is a no-op")
+        createUnitTest testStdlib testStoreExpr (TestName "incrementInt is a no-op")
           `shouldBe` Right
             ( UnitTest
                 (TestName "incrementInt is a no-op")

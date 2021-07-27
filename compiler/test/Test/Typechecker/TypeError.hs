@@ -21,7 +21,7 @@ textContains needle haystack =
 
 getTypeError :: Text -> Maybe Text
 getTypeError input =
-  case evaluateText stdLib input of
+  case evaluateText testStdlib input of
     Left e -> Just (prettyPrint e)
     _ -> Nothing
 

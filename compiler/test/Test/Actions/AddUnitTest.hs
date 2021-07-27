@@ -41,20 +41,20 @@ spec = do
   describe "AddUnitTest" $ do
     it "Fails with broken test" $ do
       Actions.run
-        stdLib
+        testStdlib
         (Actions.addUnitTest brokenExpr (TestName "Oh no") "1 == True")
         `shouldSatisfy` isLeft
     it "Adds a new test" $ do
       case Actions.run
-        stdLib
+        testStdlib
         (Actions.addUnitTest testWithIdInExpr (TestName "Id does nothing") "id(1) == 1") of
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
           -- one more item in store
           projectStoreSize newProject
-            `shouldBe` projectStoreSize stdLib + 1
+            `shouldBe` projectStoreSize testStdlib + 1
           -- one more unit test
           unitTestsSize newProject
-            `shouldBe` unitTestsSize stdLib + 1
+            `shouldBe` unitTestsSize testStdlib + 1
           -- new expression
           S.size (Actions.storeExpressionsFromOutcomes outcomes) `shouldBe` 1

@@ -44,7 +44,7 @@ spec = do
   describe "BindExpression" $ do
     it "Fails on a syntax error" $ do
       Actions.run
-        stdLib
+        testStdlib
         ( Actions.bindExpression
             brokenExpr
             "broken"
@@ -53,12 +53,12 @@ spec = do
         `shouldSatisfy` isLeft
     it "Adds a fresh new function to Bindings and to Store" $ do
       let expr = int 1
-      case Actions.run stdLib (Actions.bindExpression expr "one" "1") of
+      case Actions.run testStdlib (Actions.bindExpression expr "one" "1") of
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
           -- one more item in store
           projectStoreSize newProject
-            `shouldBe` projectStoreSize stdLib + 1
+            `shouldBe` projectStoreSize testStdlib + 1
           -- one more binding
           lookupBindingName
             newProject
@@ -71,12 +71,12 @@ spec = do
       let newIdExpr = MyLambda mempty "b" (MyVar mempty "b")
       let action =
             Actions.bindExpression newIdExpr "id" "\\b -> b"
-      case Actions.run stdLib action of
+      case Actions.run testStdlib action of
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
           -- one more item
           projectStoreSize newProject
-            `shouldBe` projectStoreSize stdLib + 1
+            `shouldBe` projectStoreSize testStdlib + 1
           -- one new expression
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
             `shouldBe` 1
@@ -84,26 +84,26 @@ spec = do
           lookupBindingName
             newProject
             "id"
-            `shouldNotBe` lookupBindingName stdLib "id"
+            `shouldNotBe` lookupBindingName testStdlib "id"
     it "Updating an existing binding updates tests" $ do
       let newIdExpr = MyLambda mempty "blob" (MyVar mempty "blob")
       let action = do
             _ <- Actions.addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
             Actions.bindExpression newIdExpr "id" "\\blob -> blob"
-      case Actions.run stdLib action of
+      case Actions.run testStdlib action of
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
           -- three more items
           projectStoreSize newProject
-            `shouldBe` projectStoreSize stdLib + 3
+            `shouldBe` projectStoreSize testStdlib + 3
           -- one new expression, two new tests
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
             `shouldBe` 3
           -- two more unit tests
           unitTestsSize newProject
-            `shouldBe` unitTestsSize stdLib + 2
+            `shouldBe` unitTestsSize testStdlib + 2
           -- binding hash has changed
           lookupBindingName
             newProject
             "id"
-            `shouldNotBe` lookupBindingName stdLib "id"
+            `shouldNotBe` lookupBindingName testStdlib "id"

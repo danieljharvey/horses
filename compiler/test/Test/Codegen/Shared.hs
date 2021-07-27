@@ -244,8 +244,8 @@ typecheckInstance ::
   Either (Error Annotation) (ResolvedExpression Annotation)
 typecheckInstance mkInstance dt =
   (,) <$> newStdLib <*> inst'
-    >>= ( \(stdLib', expr) ->
-            getTypecheckedStoreExpression (prettyPrint expr) stdLib' expr
+    >>= ( \(testStdlib', expr) ->
+            getTypecheckedStoreExpression (prettyPrint expr) testStdlib' expr
         )
   where
     newStdLib =
@@ -256,7 +256,7 @@ typecheckInstance mkInstance dt =
             (MyRecord mempty mempty)
         )
         "temporaryAddType"
-        stdLib
+        testStdlib
     inst' =
       first ParseError (fmap ($> mempty) (mkInstance dt))
 

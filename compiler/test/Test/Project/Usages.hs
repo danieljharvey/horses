@@ -19,13 +19,13 @@ spec =
     it "Returns empty when passed nothing" $
       findUsages mempty (exprHash 6) `shouldBe` Right mempty
     it "Finds all uses of Compose in Stdlib" $
-      findUsages stdLib (exprHash 6) `shouldBe` Right mempty
+      findUsages testStdlib (exprHash 6) `shouldBe` Right mempty
     it "Finds direct and transient uses of runState" $ do
-      let runStateHash = getHashOfName stdLib "runState"
-          evalStateHash = getHashOfName stdLib "evalState"
-          execStateHash = getHashOfName stdLib "execState"
-          testUsageHash = getHashOfName stdLib "testStateUsages"
-      findUsages stdLib runStateHash
+      let runStateHash = getHashOfName testStdlib "runState"
+          evalStateHash = getHashOfName testStdlib "evalState"
+          execStateHash = getHashOfName testStdlib "execState"
+          testUsageHash = getHashOfName testStdlib "testStateUsages"
+      findUsages testStdlib runStateHash
         `shouldBe` Right
           ( S.fromList
               [ Direct "evalState" evalStateHash,

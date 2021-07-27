@@ -36,12 +36,12 @@ spec = do
     it "Should bind Void but create no functions" $ do
       let action = Actions.bindType (prettyPrint (dtVoid :: DataType ())) dtVoid
       let (newProject, outcomes, (outputs, _, _, _)) =
-            fromRight (Actions.run stdLib action)
+            fromRight (Actions.run testStdlib action)
       -- no codegen matches this datatype
       outputs `shouldBe` mempty
       -- one more item in store
       projectStoreSize newProject
-        `shouldBe` projectStoreSize stdLib + 1
+        `shouldBe` projectStoreSize testStdlib + 1
       -- one more binding
       lookupBindingName
         newProject
@@ -58,12 +58,12 @@ spec = do
         `shouldBe` 1
     it "Should bind Identity and create newtype and functor functions" $ do
       let action = Actions.bindType (prettyPrint (dtIdentity :: DataType ())) dtIdentity
-      let (newProject, outcomes, (outputs, _, _, _)) = fromRight (Actions.run stdLib action)
+      let (newProject, outcomes, (outputs, _, _, _)) = fromRight (Actions.run testStdlib action)
       -- no codegen matches this datatype
       outputs `shouldBe` [Newtype, Functor, Foldable, Applicative]
       -- seven more items in store
       projectStoreSize newProject
-        `shouldBe` projectStoreSize stdLib + 7
+        `shouldBe` projectStoreSize testStdlib + 7
       -- one more binding
       lookupBindingName
         newProject
@@ -81,12 +81,12 @@ spec = do
     it "Should bind TrafficLights and create type bindings for constructors" $ do
       let action = Actions.bindType (prettyPrint (dtTrafficLights :: DataType ())) dtTrafficLights
       let (newProject, outcomes, (outputs, _, _, _)) =
-            fromRight (Actions.run stdLib action)
+            fromRight (Actions.run testStdlib action)
       -- no codegen matches this datatype
       outputs `shouldBe` [Enum]
       -- four more items in store
       projectStoreSize newProject
-        `shouldBe` projectStoreSize stdLib + 4
+        `shouldBe` projectStoreSize testStdlib + 4
       -- one more binding
       lookupBindingName
         newProject
@@ -114,8 +114,8 @@ spec = do
 
     it "Should bind ConsoleF without breaking" $ do
       let action = Actions.bindType (prettyPrint (dtConsoleF :: DataType ())) dtConsoleF
-      Actions.run stdLib action `shouldSatisfy` isRight
+      Actions.run testStdlib action `shouldSatisfy` isRight
 
     it "Should bind Env without breaking" $ do
       let action = Actions.bindType (prettyPrint (dtEnv :: DataType ())) dtEnv
-      Actions.run stdLib action `shouldSatisfy` isRight
+      Actions.run testStdlib action `shouldSatisfy` isRight

@@ -35,17 +35,17 @@ spec = do
     $ do
       it "Update with empty bindings is no-op" $ do
         let storeExpr = StoreExpression (bool True) mempty mempty
-        updateStoreExpressionBindings stdLib mempty storeExpr
+        updateStoreExpressionBindings testStdlib mempty storeExpr
           `shouldBe` Right storeExpr
       it "Replacing function with one that doesn't typecheck fails" $ do
-        let storeExpr = getStoreExpression stdLib (getHashOfName stdLib "incrementInt")
-        let newHash = getHashOfName stdLib "id"
+        let storeExpr = getStoreExpression testStdlib (getHashOfName testStdlib "incrementInt")
+        let newHash = getHashOfName testStdlib "id"
         let newBindings = Bindings (M.singleton "addInt" newHash)
-        updateStoreExpressionBindings stdLib newBindings storeExpr
+        updateStoreExpressionBindings testStdlib newBindings storeExpr
           `shouldSatisfy` isLeft
       it "Replacing function with an equivalent one succeeds" $ do
-        let storeExpr = getStoreExpression stdLib (getHashOfName stdLib "incrementInt")
-        let newHash = getHashOfName stdLib "subtractInt"
+        let storeExpr = getStoreExpression testStdlib (getHashOfName testStdlib "incrementInt")
+        let newHash = getHashOfName testStdlib "subtractInt"
         let newBindings = Bindings (M.singleton "addInt" newHash)
-        updateStoreExpressionBindings stdLib newBindings storeExpr
+        updateStoreExpressionBindings testStdlib newBindings storeExpr
           `shouldSatisfy` isRight

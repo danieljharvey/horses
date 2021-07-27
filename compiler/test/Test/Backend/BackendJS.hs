@@ -92,8 +92,8 @@ successes =
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
       "const main = function() { const { cat: b, dog: a } = { cat: 2, dog: 1 };\nreturn [a,b] }();\n"
     ),
-    ( "let (Identity a) = Identity 1 in a",
-      "const main = function() { const { vars: [a] } = { type: \"Identity\", vars: [1] };\nreturn a }();\n"
+    ( "let (Ident a) = Ident 1 in a",
+      "const main = function() { const { vars: [a] } = { type: \"Ident\", vars: [1] };\nreturn a }();\n"
     ),
     ( "let (Pair a b) = Pair 1 2 in (a,b)",
       "const main = function() { const { vars: [a, b] } = { type: \"Pair\", vars: [1,2] };\nreturn [a,b] }();\n"
@@ -150,12 +150,12 @@ patterns =
 testIt :: (Text, Javascript) -> Spec
 testIt (q, a) =
   it (T.unpack q) $
-    eval stdLib q `shouldBe` Right a
+    eval testStdlib q `shouldBe` Right a
 
 dataTypes :: ResolvedTypeDeps Annotation
 dataTypes = fromJust $ case resolveTypeDeps
-  (prjStore stdLib)
-  (getCurrentTypeBindings $ prjTypeBindings stdLib) of
+  (prjStore testStdlib)
+  (getCurrentTypeBindings $ prjTypeBindings testStdlib) of
   Right a -> Just a
   _ -> Nothing
 
@@ -165,7 +165,7 @@ spec = do
     do
       traverse_ testIt successes
       it "Outputs a module" $ do
-        result <- evalModule stdLib "\\a -> compose(id)(id)(a)"
+        result <- evalModule testStdlib "\\a -> compose(id)(id)(a)"
         result `shouldSatisfy` isRight
   describe "Patterns JS" $ do
     let testPattern (q, a) =
