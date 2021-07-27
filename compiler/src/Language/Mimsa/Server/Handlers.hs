@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -101,7 +102,8 @@ data ProjectData = ProjectData
     pdBindings :: Map Name Text,
     pdTypeBindings :: Map TyCon Text
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 -- read the store from mutable var to stop repeated loading of exprs
 readStoreHandler :: MimsaEnvironment -> Handler (Store Annotation)

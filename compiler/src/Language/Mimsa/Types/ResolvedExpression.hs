@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 
 module Language.Mimsa.Types.ResolvedExpression where
 
@@ -20,4 +21,5 @@ data ResolvedExpression ann = ResolvedExpression
     reScope :: Scope ann,
     reSwaps :: Swaps
   }
-  deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON)
+  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving anyclass (JSON.ToJSON)

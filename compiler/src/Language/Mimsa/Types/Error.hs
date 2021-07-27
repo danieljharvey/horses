@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error
@@ -28,7 +29,7 @@ data Error ann
   | StoreErr StoreError
   | BackendErr (BackendError ann)
   | ParseError Text
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance (Show ann, Printer ann) => Printer (Error ann) where
   prettyPrint (TypeErr input typeErr) = displayError input typeErr

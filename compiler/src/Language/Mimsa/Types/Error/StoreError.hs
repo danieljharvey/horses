@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.StoreError where
@@ -18,7 +19,7 @@ data StoreError
   | CouldNotFindBinding Name
   | CouldNotFindStoreExpression ExprHash
   | UnknownStoreError
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Printer StoreError where
   prettyPrint (ExpressionDoesNotMatchHash a b) =

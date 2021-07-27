@@ -41,7 +41,7 @@ data ActionOutcome
   = NewMessage Text
   | NewStoreExpression (StoreExpression Annotation)
   | NewWriteFile SavePath SaveFilename SaveContents
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 type ActionM =
   ExceptT

@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -27,12 +28,14 @@ type ListBindings =
 
 newtype ListBindingsRequest = ListBindingsRequest
   {lbProjectHash :: ProjectHash}
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, ToSchema)
 
 newtype ListBindingsResponse = ListBindingsResponse
   { lbProjectData :: ProjectData
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 listBindings ::
   MimsaEnvironment ->

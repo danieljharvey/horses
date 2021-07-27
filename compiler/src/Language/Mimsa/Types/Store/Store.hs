@@ -26,7 +26,7 @@ newtype Store ann = Store {getStore :: Map ExprHash (StoreExpression ann)}
       JSON.FromJSON,
       ToSchema
     )
-  deriving (Functor)
+  deriving stock (Functor)
 
 instance Printer (Store ann) where
   prettyPrint (Store store) = T.intercalate ", " (prettyPrint <$> M.keys store)

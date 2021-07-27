@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.PatternMatchError
@@ -28,7 +29,7 @@ data PatternMatchError
     RedundantPatterns Annotation [Pattern Variable Annotation]
   | -- | Multiple instances of the same variable
     DuplicateVariableUse Annotation (Set Name)
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 ------
 

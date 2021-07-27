@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -44,7 +45,7 @@ import Language.Mimsa.Utils
 
 ----
 newtype Javascript = Javascript LBS.ByteString
-  deriving (Eq, Ord, Show, Semigroup, Monoid)
+  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
 instance Printer Javascript where
   prettyPrint (Javascript bs) = (T.decodeUtf8 . B.concat . LBS.toChunks) bs

@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -37,7 +38,8 @@ data UnitTestData = UnitTestData
     utdTestSuccess :: Bool,
     utdBindings :: Map Name Text
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 mkUnitTestData :: Project ann -> UnitTest -> UnitTestData
 mkUnitTestData project unitTest = do
@@ -53,7 +55,8 @@ data RuntimeData = RuntimeData
     rtdDescription :: Text,
     rtdMonoType :: Text
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 toRuntimeData :: Runtime code -> RuntimeData
 toRuntimeData rt =
@@ -73,7 +76,8 @@ data ExpressionData = ExpressionData
     edRuntimes :: Map RuntimeName RuntimeData,
     edGraphviz :: Text
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 expressionDataHandler ::
   Project Annotation ->

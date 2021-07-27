@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Codegen
@@ -39,12 +40,14 @@ data Typeclass
   | Functor
   | Foldable
   | Applicative
-  deriving
+  deriving stock
     ( Eq,
       Ord,
       Show,
-      Generic,
-      JSON.ToJSON,
+      Generic
+    )
+  deriving anyclass
+    ( JSON.ToJSON,
       JSON.FromJSON,
       ToSchema
     )

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
 module Language.Mimsa.Interpreter.Types
@@ -34,7 +34,7 @@ newtype App ann a = App
         (State (InterpretState ann))
         a
   }
-  deriving
+  deriving newtype
     ( Functor,
       Applicative,
       Monad,
@@ -51,7 +51,7 @@ data InterpretState ann = InterpretState
     isApplyCount :: Int,
     isSwaps :: Swaps
   }
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 -- infix operators
 

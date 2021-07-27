@@ -18,7 +18,7 @@ import Data.Swagger
 
 newtype VersionedMap k a = VersionedMap {getVersionedMap :: Map k (NonEmpty a)}
   deriving newtype (Eq, Ord, Show, Monoid)
-  deriving (JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving newtype (JSON.ToJSON, JSON.FromJSON, ToSchema)
 
 instance (Ord k, Eq a) => Semigroup (VersionedMap k a) where
   (VersionedMap a) <> (VersionedMap b) =

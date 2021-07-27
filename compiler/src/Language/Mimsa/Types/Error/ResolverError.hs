@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.ResolverError where
@@ -14,7 +15,7 @@ import Language.Mimsa.Types.Store.TypeBindings
 data ResolverError
   = MissingBinding Name Bindings
   | MissingType TyCon TypeBindings
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Printer ResolverError where
   prettyPrint (MissingBinding name (Bindings bindings')) = "A binding for " <> prettyPrint name <> " could not be found in " <> bindingsList

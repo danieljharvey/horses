@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.StringPart
@@ -16,7 +17,8 @@ import Language.Mimsa.Printer
 data StringPart var ann
   = StrWildcard ann
   | StrValue ann var
-  deriving (Show, Eq, Ord, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
+  deriving stock (Show, Eq, Ord, Functor, Generic)
+  deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
 instance
   (ToSchema var, ToSchema ann) =>

@@ -22,7 +22,8 @@ data SaveProject = SaveProject
     projectTypes :: VersionedTypeBindings,
     projectUnitTests :: Map ExprHash UnitTest
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON)
 
 instance JSON.FromJSON SaveProject where
   parseJSON (JSON.Object o) = do

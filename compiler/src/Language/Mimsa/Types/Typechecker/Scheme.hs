@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Typechecker.Scheme where
@@ -8,7 +9,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.MonoType
 
 data Scheme = Scheme [TypeIdentifier] MonoType
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Printer Scheme where
   prettyPrint (Scheme vars mt) = varText <> prettyPrint mt

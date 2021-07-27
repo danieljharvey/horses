@@ -27,7 +27,7 @@ renderTyVar :: TyVar -> Doc ann
 renderTyVar = pretty . getTyVar
 
 newtype TyVar = TyVar {getTyVar' :: Text}
-  deriving (ToSchema)
+  deriving newtype (ToSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,

@@ -6,7 +6,9 @@ module Test.Project.Usages
   )
 where
 
+import qualified Data.Set as S
 import Language.Mimsa.Project.Usages
+import Language.Mimsa.Types.Project
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -18,3 +20,16 @@ spec =
       findUsages mempty (exprHash 6) `shouldBe` Right mempty
     it "Finds all uses of Compose in Stdlib" $
       findUsages stdLib (exprHash 6) `shouldBe` Right mempty
+    it "Finds direct and transient uses of runState" $ do
+      let runStateHash = getHashOfName stdLib "runState"
+          evalStateHash = getHashOfName stdLib "evalState"
+          execStateHash = getHashOfName stdLib "execState"
+          testUsageHash = getHashOfName stdLib "testStateUsages"
+      findUsages stdLib runStateHash
+        `shouldBe` Right
+          ( S.fromList
+              [ Direct "evalState" evalStateHash,
+                Direct "execState" execStateHash,
+                Transient "testStateUsages" testUsageHash
+              ]
+          )

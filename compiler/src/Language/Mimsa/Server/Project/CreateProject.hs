@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Language.Mimsa.Server.Project.CreateProject
@@ -23,7 +24,8 @@ type CreateProject =
 
 newtype CreateProjectResponse = CreateProjectResponse
   {cpProjectData :: ProjectData}
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 -- create an empty project
 createProject ::

@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Typechecker.Environment where
@@ -22,7 +23,7 @@ data Environment = Environment
     getDataTypes :: Map TyCon (DataType Annotation),
     getInfix :: Map InfixOp MonoType
   }
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Semigroup Environment where
   (Environment a b c) <> (Environment a' b' c') =

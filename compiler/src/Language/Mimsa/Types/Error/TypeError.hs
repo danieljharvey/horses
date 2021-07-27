@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.TypeError
@@ -47,7 +48,7 @@ data TypeError
   | CannotUseBuiltInTypeAsConstructor Annotation TyCon
   | InternalConstructorUsedOutsidePatternMatch Annotation TyCon
   | PatternMatchErr PatternMatchError
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 ------
 

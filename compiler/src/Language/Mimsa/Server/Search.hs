@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Language.Mimsa.Server.Search (SearchAPI, searchEndpoints) where
@@ -37,12 +38,14 @@ data TypeSearchRequest = TypeSearchRequest
   { tsProjectHash :: ProjectHash,
     tsInput :: Text
   }
-  deriving (Eq, Ord, Show, Generic, JSON.FromJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, ToSchema)
 
 newtype TypeSearchResponse = TypeSearchResponse
   { tsProjectMatches :: [Text]
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 type TypeSearch =
   "type"

@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -35,7 +36,8 @@ type ListTests =
 newtype ListTestsResponse = ListTestsResponse
   { ltUnitTests :: [UnitTest]
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 listTestsHandler ::
   MimsaEnvironment ->
@@ -58,7 +60,8 @@ type ListTestsByName =
 newtype ListTestsByNameResponse = ListTestsByNameResponse
   { ltbnUnitTests :: [UnitTest]
   }
-  deriving (Eq, Ord, Show, Generic, JSON.ToJSON, ToSchema)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 listTestsByNameHandler ::
   MimsaEnvironment ->

@@ -73,16 +73,17 @@ data Expr var ann
       [(Pattern var ann, Expr var ann)]
   | -- | name
     MyTypedHole ann Name
-  deriving (Eq, Ord, Show, Functor, Generic, JSON.FromJSON, JSON.ToJSON)
+  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
-deriving instance
+deriving anyclass instance
   (ToSchema var, ToSchema ann, JSON.ToJSONKey var) =>
   ToSchema (Expr var ann)
 
 data InfixBit var ann
   = IfStart (Expr var ann)
   | IfMore Operator (Expr var ann)
-  deriving (Show)
+  deriving stock (Show)
 
 getInfixList :: Expr var ann -> NE.NonEmpty (InfixBit var ann)
 getInfixList expr = case expr of

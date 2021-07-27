@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
@@ -26,12 +27,14 @@ data Primitive
   = MTInt
   | MTString
   | MTBool
-  deriving
+  deriving stock
     ( Eq,
       Ord,
       Show,
-      Generic,
-      JSON.ToJSON,
+      Generic
+    )
+  deriving anyclass
+    ( JSON.ToJSON,
       JSON.FromJSON,
       ToSchema
     )
@@ -52,9 +55,10 @@ data Type ann
   | MTRecordRow ann (Map Name (Type ann)) (Type ann) -- { foo:a, bar:b | rest }
   | MTArray ann (Type ann) -- [a]
   | MTData ann TyCon [Type ann] -- name, typeVars
-  deriving (Eq, Ord, Show, Functor, Generic, JSON.ToJSON, JSON.FromJSON)
+  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
-deriving instance (ToSchema ann) => ToSchema (Type ann)
+deriving anyclass instance (ToSchema ann) => ToSchema (Type ann)
 
 getAnnotationForType :: Type ann -> ann
 getAnnotationForType (MTPrim ann _) = ann

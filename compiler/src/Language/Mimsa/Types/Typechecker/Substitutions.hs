@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Typechecker.Substitutions
@@ -17,7 +18,7 @@ import Language.Mimsa.Types.Typechecker.MonoType
 ---
 
 newtype Substitutions = Substitutions {getSubstitutions :: Map TypeIdentifier MonoType}
-  deriving (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Semigroup Substitutions where
   (Substitutions s1) <> (Substitutions s2) =

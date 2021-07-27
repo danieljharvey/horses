@@ -21,13 +21,15 @@ data Project ann = Project
     prjTypeBindings :: VersionedTypeBindings,
     prjUnitTests :: Map ExprHash UnitTest
   }
-  deriving
+  deriving stock
     ( Eq,
       Ord,
       Show,
       Functor,
-      Generic,
-      JSON.ToJSON,
+      Generic
+    )
+  deriving anyclass
+    ( JSON.ToJSON,
       JSON.FromJSON,
       ToSchema
     )

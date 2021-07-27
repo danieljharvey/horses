@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 
 module Language.Mimsa.Types.MimsaConfig
   ( MimsaConfig (..),
@@ -12,4 +13,4 @@ data MimsaConfig = MimsaConfig
     storeRootPath :: String,
     showLogs :: Bool
   }
-  deriving (Generic, Eq, Ord, Show)
+  deriving stock (Generic, Eq, Ord, Show)

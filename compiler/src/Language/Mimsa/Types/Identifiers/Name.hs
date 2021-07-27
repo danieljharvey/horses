@@ -21,7 +21,7 @@ renderName :: Name -> Doc ann
 renderName = pretty . getName
 
 newtype Name = Name {getName' :: Text}
-  deriving (ToSchema, ToParamSchema)
+  deriving newtype (ToSchema, ToParamSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,
