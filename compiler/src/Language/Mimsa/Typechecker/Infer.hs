@@ -38,7 +38,8 @@ startInference ::
   Swaps ->
   TcExpr ->
   Either TypeError MonoType
-startInference typeMap swaps expr = snd <$> doInference typeMap swaps mempty expr
+startInference typeMap swaps expr =
+  snd <$> doInference typeMap swaps mempty expr
 
 doInference ::
   Map Name MonoType ->
