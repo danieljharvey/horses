@@ -6,6 +6,7 @@
 module Language.Mimsa.Typechecker.Infer
   ( startInference,
     doDataTypeInference,
+    doInference,
   )
 where
 
@@ -87,9 +88,12 @@ instantiate (Scheme vars ty) = do
 --------------
 
 inferLiteral :: Annotation -> Literal -> TcMonad (Substitutions, MonoType)
-inferLiteral ann (MyInt _) = pure (mempty, MTPrim ann MTInt)
-inferLiteral ann (MyBool _) = pure (mempty, MTPrim ann MTBool)
-inferLiteral ann (MyString _) = pure (mempty, MTPrim ann MTString)
+inferLiteral ann (MyInt _) =
+  pure (mempty, MTPrim ann MTInt)
+inferLiteral ann (MyBool _) =
+  pure (mempty, MTPrim ann MTBool)
+inferLiteral ann (MyString _) =
+  pure (mempty, MTPrim ann MTString)
 
 inferVarFromScope ::
   Environment ->

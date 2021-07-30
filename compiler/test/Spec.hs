@@ -33,6 +33,7 @@ import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
+import qualified Test.Typechecker.AnnotateExpression as AnnotateExpression
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typechecker as Typechecker
@@ -71,3 +72,4 @@ main =
     Exhaustiveness.spec
     Pattern.spec
     RemoveBinding.spec
+    AnnotateExpression.spec

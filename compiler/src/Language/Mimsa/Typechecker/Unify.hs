@@ -128,7 +128,8 @@ unify tyA tyB =
         pure mempty
     (MTFunction _ l r, MTFunction _ l' r') ->
       unifyPairs (l, r) (l', r')
-    (MTPair _ a b, MTPair _ a' b') -> unifyPairs (a, b) (a', b')
+    (MTPair _ a b, MTPair _ a' b') ->
+      unifyPairs (a, b) (a', b')
     (MTRecord ann as, MTRecord ann' bs) ->
       unifyRecords (ann, as) (ann', bs)
     (MTRecordRow ann as restA, MTRecordRow ann' bs restB) ->

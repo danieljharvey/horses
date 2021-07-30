@@ -91,11 +91,11 @@ exprs =
       Left $
         FailsOccursCheck
           mempty
-          (tvFree 1)
+          (tvFree 0)
           ( MTFunction
               mempty
+              (MTVar mempty (tvFree 0))
               (MTVar mempty (tvFree 1))
-              (MTVar mempty (tvFree 2))
           )
     ),
     (MyPair mempty (int 1) (bool True), Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))),

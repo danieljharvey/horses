@@ -27,7 +27,7 @@ runTcMonad swaps value =
   fst either'
   where
     defaultState =
-      TypecheckState 1 mempty
+      TypecheckState 0 mempty
     either' =
       runState
         (runReaderT (runExceptT value) swaps)
