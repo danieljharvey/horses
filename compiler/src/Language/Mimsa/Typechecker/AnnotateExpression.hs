@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Language.Mimsa.Typechecker.AnnotateExpression where
+module Language.Mimsa.Typechecker.AnnotateExpression (getTypesList, TypedVariable) where
 
 import Data.Functor (($>))
 import qualified Data.Map as M
@@ -15,7 +15,9 @@ import Language.Mimsa.Types.Typechecker
 -- however, perhaps we can use the substitutions generated on the way
 -- to get a list of types of other expressions
 
-getTypesList :: Swaps -> Substitutions -> [(Name, Type (), Annotation)]
+type TypedVariable = (Name, Type (), Annotation)
+
+getTypesList :: Swaps -> Substitutions -> [TypedVariable]
 getTypesList swaps (Substitutions subs) =
   let findType (v, n) = case M.lookup (variableToTypeIdentifier v) subs of
         Just mt -> [(n, mt $> (), getAnnotationForType mt)]

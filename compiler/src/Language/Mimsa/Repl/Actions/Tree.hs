@@ -8,8 +8,8 @@ module Language.Mimsa.Repl.Actions.Tree
 where
 
 import Data.Text (Text)
-import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Helpers
@@ -27,9 +27,9 @@ doTree ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doTree env input expr = do
-  (ResolvedExpression _ storeExpr _ _ _) <-
+  (ResolvedExpression _ storeExpr _ _ _ _) <-
     mimsaFromEither $
-      getTypecheckedStoreExpression input env expr
+      Actions.getTypecheckedStoreExpression input env expr
   let graph = createDepGraph "root" (prjStore env) storeExpr
   replOutput (prettyPrint graph)
 
@@ -40,9 +40,9 @@ doGraph ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doGraph project input expr = do
-  (ResolvedExpression _ storeExpr _ _ _) <-
+  (ResolvedExpression _ storeExpr _ _ _ _) <-
     mimsaFromEither $
-      getTypecheckedStoreExpression input project expr
+      Actions.getTypecheckedStoreExpression input project expr
   (_, graphviz) <-
     toReplM project (Actions.graphExpression storeExpr)
   replOutput . prettyGraphviz $ graphviz

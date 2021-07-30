@@ -36,12 +36,12 @@ import qualified Data.Set as S
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
   ( evaluateText,
     getTypeMap,
     resolveStoreExpression,
   )
-import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Parser (parseExprAndFormatError, parseTypeDeclAndFormatError)
 import Language.Mimsa.Printer
@@ -145,7 +145,8 @@ evaluateTextHandler ::
   Project Annotation ->
   Text ->
   Handler (ResolvedExpression Annotation)
-evaluateTextHandler project code = handleEither UserError (evaluateText project code)
+evaluateTextHandler project code =
+  handleEither UserError (Actions.evaluateText project code)
 
 parseHandler :: Text -> Handler (Expr Name Annotation)
 parseHandler input =
@@ -187,8 +188,8 @@ resolveStoreExpressionHandler ::
   StoreExpression Annotation ->
   Handler (ResolvedExpression Annotation)
 resolveStoreExpressionHandler prj se = do
-  typeMap <- handleEither InternalError (getTypeMap prj)
-  handleEither UserError $ resolveStoreExpression (prjStore prj) typeMap "" se
+  typeMap <- handleEither InternalError (Actions.getTypeMap prj)
+  handleEither UserError $ Actions.resolveStoreExpression (prjStore prj) typeMap "" se
 
 findExprHandler ::
   Project Annotation ->

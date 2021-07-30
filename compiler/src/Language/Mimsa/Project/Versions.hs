@@ -12,7 +12,7 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Set (Set)
-import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Project.Usages
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -68,7 +68,7 @@ getExprDetails project exprHash = do
     first StoreErr (findUsages project exprHash)
   storeExpr <-
     first StoreErr (getStoreExpression project exprHash)
-  typeMap <- getTypeMap project
-  (ResolvedExpression mt _ expr' _ _) <-
-    resolveStoreExpression (prjStore project) typeMap "" storeExpr
+  typeMap <- Actions.getTypeMap project
+  (ResolvedExpression mt _ expr' _ _ _) <-
+    Actions.resolveStoreExpression (prjStore project) typeMap "" storeExpr
   pure (expr', mt, usages)

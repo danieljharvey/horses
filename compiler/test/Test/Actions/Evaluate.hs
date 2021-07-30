@@ -37,7 +37,7 @@ spec = do
       Actions.run testStdlib (Actions.evaluate (prettyPrint brokenExpr) brokenExpr) `shouldSatisfy` isLeft
     it "Should evaluate an expression" $ do
       let action = Actions.evaluate (prettyPrint onePlusOneExpr) onePlusOneExpr
-      let (newProject, _, (mt, expr, _, _)) = fromRight (Actions.run testStdlib action)
+      let (newProject, _, (mt, expr, _, _, _)) = fromRight (Actions.run testStdlib action)
       mt $> () `shouldBe` MTPrim mempty MTInt
       expr $> () `shouldBe` int 2
       -- project should be untouched

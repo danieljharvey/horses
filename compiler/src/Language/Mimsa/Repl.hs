@@ -2,7 +2,6 @@
 
 module Language.Mimsa.Repl
   ( repl,
-    evaluateText,
   )
 where
 
@@ -16,7 +15,7 @@ import Language.Mimsa.Project
     saveProject,
   )
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Repl.Actions (doReplAction, evaluateText)
+import Language.Mimsa.Repl.Actions (doReplAction)
 import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error

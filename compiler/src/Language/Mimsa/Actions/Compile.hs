@@ -18,8 +18,8 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Runtimes
@@ -40,7 +40,7 @@ compile runtime input se = do
   project <- Actions.getProject
 
   -- get type of StoreExpression
-  mt <- liftEither $ typecheckStoreExpression (prjStore project) se
+  mt <- liftEither $ Actions.typecheckStoreExpression (prjStore project) se
 
   -- does runtime typecheck with expression
   liftEither (first (TypeErr input) (runtimeIsValid runtime mt))

@@ -7,7 +7,7 @@ import Data.Bifunctor (first)
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -28,8 +28,8 @@ createUnitTest ::
   Either (Error Annotation) UnitTest
 createUnitTest project storeExpr testName = do
   let testExpr = createUnitTestExpr (storeExpression storeExpr)
-  (ResolvedExpression _ _ rExpr rScope rSwaps) <-
-    getTypecheckedStoreExpression (prettyPrint testExpr) project testExpr
+  (ResolvedExpression _ _ rExpr rScope rSwaps _) <-
+    Actions.getTypecheckedStoreExpression (prettyPrint testExpr) project testExpr
   result <- first InterpreterErr (interpret rScope rSwaps rExpr)
   let deps =
         S.fromList $

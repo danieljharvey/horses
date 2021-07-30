@@ -7,7 +7,7 @@ where
 
 import Data.Bifunctor (first)
 import Data.Text (Text)
-import Language.Mimsa.Actions (evaluateText)
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.AnnotateExpression
 import Language.Mimsa.Typechecker.Infer
@@ -17,10 +17,14 @@ import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 
-getTypesList' :: Text -> Either Text [(Name, Type (), Annotation)]
+getTypesList' :: Text -> Either Text [TypedVariable]
 getTypesList' input = do
-  (ResolvedExpression _ _ expr _ swaps) <- first prettyPrint (evaluateText mempty input)
-  (subs, _mt) <- first prettyPrint (doInference mempty mempty mempty expr)
+  (ResolvedExpression _ _ expr _ swaps _) <-
+    first prettyPrint (Actions.evaluateText mempty input)
+  (subs, _mt) <-
+    first
+      prettyPrint
+      (doInference mempty mempty mempty expr)
   pure (getTypesList swaps subs)
 
 spec :: Spec
@@ -41,4 +45,10 @@ spec = do
           `shouldBe` Right
             [ ("a", MTPrim mempty MTInt, Location 0 34),
               ("a", MTPrim mempty MTBool, Location 13 34)
+            ]
+      it "Finds type of variable introduced by lambda" $ do
+        getTypesList' "let good = \\a -> True; good(1)"
+          `shouldBe` Right
+            [ ("good", MTFunction mempty (MTVar mempty (TVNum 1)) (MTPrim mempty MTBool), Location 0 30),
+              ("a", MTPrim mempty MTInt, mempty)
             ]

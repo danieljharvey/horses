@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions
+module Language.Mimsa.Actions.Shared
   ( evaluateText,
     resolveStoreExpression,
     getTypecheckedStoreExpression,
@@ -29,6 +29,7 @@ import Language.Mimsa.Store
   )
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Typechecker
+import Language.Mimsa.Typechecker.AnnotateExpression
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -48,9 +49,16 @@ getType ::
   Scope Annotation ->
   Text ->
   Expr Variable Annotation ->
-  Either (Error ann) MonoType
+  Either (Error ann) (Substitutions, MonoType)
 getType typeMap swaps scope' source expr =
-  first (TypeErr source) $ startInference typeMap swaps (chainExprs expr scope')
+  first
+    (TypeErr source)
+    ( doInference
+        typeMap
+        swaps
+        mempty
+        (chainExprs expr scope')
+    )
 
 getExprPairs :: Store ann -> Bindings -> [(Name, StoreExpression ann)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -69,7 +77,7 @@ resolvedDepsToTypeMap ::
 resolvedDepsToTypeMap store' deps = do
   let resolveType se =
         resolveStoreExpression store' mempty mempty se
-          >>= \(ResolvedExpression mt _ _ _ _) -> pure mt
+          >>= \(ResolvedExpression mt _ _ _ _ _) -> pure mt
   listItems <-
     traverse
       (\(name, (_, se)) -> (,) name <$> resolveType se)
@@ -112,8 +120,9 @@ resolveStoreExpression ::
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' typeMap input storeExpr = do
   let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
-  exprType <- getType typeMap swaps scope input newExpr
-  pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
+  (subs, exprType) <- getType typeMap swaps scope input newExpr
+  let resolvedTypes = getTypesList swaps subs
+  pure (ResolvedExpression exprType storeExpr newExpr scope swaps resolvedTypes)
 
 getTypeMap :: Project Annotation -> Either (Error Annotation) (Map Name MonoType)
 getTypeMap prj =
@@ -155,5 +164,6 @@ typecheckStoreExpression store storeExpr = do
           (typeBindingsToVersioned (storeTypeBindings storeExpr))
           mempty
   let expr = storeExpression storeExpr
-  (ResolvedExpression mt _ _ _ _) <- getTypecheckedStoreExpression (prettyPrint expr) project expr
+  (ResolvedExpression mt _ _ _ _ _) <-
+    getTypecheckedStoreExpression (prettyPrint expr) project expr
   pure mt

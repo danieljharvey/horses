@@ -4,8 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Infer
-  ( startInference,
-    doDataTypeInference,
+  ( doDataTypeInference,
     doInference,
   )
 where
@@ -33,14 +32,6 @@ import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
 type TcExpr = Expr Variable Annotation
-
-startInference ::
-  Map Name MonoType ->
-  Swaps ->
-  TcExpr ->
-  Either TypeError MonoType
-startInference typeMap swaps expr =
-  snd <$> doInference typeMap swaps mempty expr
 
 doInference ::
   Map Name MonoType ->

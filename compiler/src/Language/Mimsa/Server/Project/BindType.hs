@@ -71,8 +71,8 @@ bindType mimsaEnv (BindTypeRequest projectHash input) =
         (Actions.bindType input expr)
     pd <- projectDataHandler mimsaEnv newProject
     ed <- case codegenInfo of
-      Just (ResolvedExpression mt se _ _ _) -> do
-        ed' <- expressionDataHandler newProject se mt gv
+      Just (ResolvedExpression mt se _ _ _ ets) -> do
+        ed' <- expressionDataHandler newProject se mt gv ets
         pure (Just ed')
       Nothing -> pure Nothing
     pure $

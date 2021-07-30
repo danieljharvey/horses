@@ -13,11 +13,11 @@ import Data.Functor (($>))
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Repl
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Types.AST
@@ -41,9 +41,9 @@ eval ::
   Text ->
   IO (Either Text (Type (), Expr Name ()))
 eval env input =
-  case evaluateText env input of
+  case Actions.evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
-    Right (ResolvedExpression mt se expr' scope' swaps) -> do
+    Right (ResolvedExpression mt se expr' scope' swaps _) -> do
       saveRegressionData (se $> ())
       let endExpr = interpret scope' swaps expr'
       case toEmptyAnn <$> endExpr of
