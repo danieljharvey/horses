@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Language.Mimsa.Typechecker.KindChecker (kindCheck, Kind (..)) where
 
@@ -22,10 +23,26 @@ kindCheck _ (MTVar _ _a) = undefined
 kindCheck _ MTFunction {} = KindType
 kindCheck _ MTPair {} = KindType
 kindCheck _ (MTRecord _ _) = KindType
-kindCheck env (MTData _ name _) =
-  case findDataType name env of
-    Just (DataType _ typeArgs _) -> foldr (\_ a -> KindArrow a KindType) KindType typeArgs
-    _ -> error "oh no"
+kindCheck env (MTData _ name vars) =
+  let countVars =
+        length
+          ( filter
+              ( \case
+                  MTVar {} -> False
+                  _ -> True
+              )
+              vars
+          )
+   in case findDataType name env of
+        Just (DataType _ typeArgs _) ->
+          let complexity = length typeArgs - countVars
+           in foldr
+                ( \_ a ->
+                    KindArrow a KindType
+                )
+                KindType
+                [1 .. complexity]
+        _ -> error "oh no"
 kindCheck _ _ = KindType
 
 findDataType :: TyCon -> Environment -> Maybe (DataType Annotation)
