@@ -1,4 +1,9 @@
-module Language.Mimsa.Typechecker.Generalise where
+module Language.Mimsa.Typechecker.Generalise
+  ( generalise,
+    freeVars,
+    generaliseNoSubs,
+  )
+where
 
 import Data.List (nub, (\\))
 import qualified Data.Map as M
@@ -21,3 +26,8 @@ generalise :: Substitutions -> MonoType -> Scheme
 generalise (Substitutions subst) ty = Scheme free ty
   where
     free = nub $ freeVars ty \\ map fst (M.toList subst)
+
+generaliseNoSubs :: Environment -> MonoType -> Scheme
+generaliseNoSubs (Environment schemes _ _) ty = Scheme free ty
+  where
+    free = nub $ freeVars ty \\ map fst (M.toList schemes)

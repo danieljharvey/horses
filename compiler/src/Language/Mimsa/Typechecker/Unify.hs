@@ -1,4 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Unify
@@ -8,6 +9,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Monad.State
 import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -16,6 +18,7 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
 freeTypeVars :: MonoType -> S.Set TypeIdentifier
@@ -34,7 +37,12 @@ freeTypeVars ty = case ty of
   MTPrim _ _ -> S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
-varBind :: Annotation -> TypeIdentifier -> MonoType -> TcMonad Substitutions
+varBind ::
+  (MonadReader Swaps m, MonadError TypeError m) =>
+  Annotation ->
+  TypeIdentifier ->
+  MonoType ->
+  m Substitutions
 varBind ann var ty
   | typeEquals ty (MTVar mempty var) = pure mempty
   | S.member var (freeTypeVars ty) = do
@@ -52,21 +60,23 @@ flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
 flattenRow other = other
 
 checkMatching ::
+  (MonadReader Swaps m, MonadState TypecheckState m, MonadError TypeError m) =>
   Annotation ->
   Annotation ->
   Map Name MonoType ->
   Map Name MonoType ->
   Name ->
-  TcMonad Substitutions
+  m Substitutions
 checkMatching ann ann' as bs k = do
   tyLeft <- getRecordItemType ann k as
   tyRight <- getRecordItemType ann' k bs
   unify tyLeft tyRight
 
 unifyRecords ::
+  (MonadReader Swaps m, MonadError TypeError m, MonadState TypecheckState m) =>
   (Annotation, Map Name MonoType) ->
   (Annotation, Map Name MonoType) ->
-  TcMonad Substitutions
+  m Substitutions
 unifyRecords (ann, as) (ann', bs) = do
   let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
   if not $ S.null diffKeys
@@ -77,9 +87,10 @@ unifyRecords (ann, as) (ann', bs) = do
       pure (mconcat s)
 
 unifyRecordRows ::
+  (MonadReader Swaps m, MonadError TypeError m, MonadState TypecheckState m) =>
   (Annotation, Map Name MonoType, MonoType) ->
   (Annotation, Map Name MonoType, MonoType) ->
-  TcMonad Substitutions
+  m Substitutions
 unifyRecordRows (ann, as, restA) (ann', bs, restB) = do
   let matchingKeys = S.intersection (M.keysSet as) (M.keysSet bs)
   s1 <- traverse (checkMatching ann ann' as bs) (S.toList matchingKeys)
@@ -93,9 +104,10 @@ unifyRecordRows (ann, as, restA) (ann', bs, restB) = do
   pure (mconcat s1 <> s2 <> s3)
 
 unifyRecordWithRow ::
+  (MonadReader Swaps m, MonadError TypeError m, MonadState TypecheckState m) =>
   (Annotation, Map Name MonoType) ->
   (Annotation, Map Name MonoType, MonoType) ->
-  TcMonad Substitutions
+  m Substitutions
 unifyRecordWithRow (ann, as) (ann', bs, rest) = do
   let rowKeys = M.keysSet bs
   s1 <- traverse (checkMatching ann ann' as bs) (S.toList rowKeys)
@@ -109,9 +121,10 @@ unifyRecordWithRow (ann, as) (ann', bs, rest) = do
   pure (mconcat s1 <> s2)
 
 unifyPairs ::
+  (MonadReader Swaps m, MonadError TypeError m, MonadState TypecheckState m) =>
   (MonoType, MonoType) ->
   (MonoType, MonoType) ->
-  TcMonad Substitutions
+  m Substitutions
 unifyPairs (a, b) (a', b') = do
   s1 <- unify a a'
   s2 <- unify (applySubst s1 b) (applySubst s1 b')
@@ -120,7 +133,11 @@ unifyPairs (a, b) (a', b') = do
 typeEquals :: MonoType -> MonoType -> Bool
 typeEquals mtA mtB = (mtA $> ()) == (mtB $> ())
 
-unify :: MonoType -> MonoType -> TcMonad Substitutions
+unify ::
+  (MonadReader Swaps m, MonadError TypeError m, MonadState TypecheckState m) =>
+  MonoType ->
+  MonoType ->
+  m Substitutions
 unify tyA tyB =
   case (flattenRow tyA, flattenRow tyB) of
     (a, b)
@@ -150,10 +167,11 @@ unify tyA tyB =
       throwError $ UnificationError a b
 
 getRecordItemType ::
+  (MonadError TypeError m) =>
   Annotation ->
   Name ->
   Map Name MonoType ->
-  TcMonad MonoType
+  m MonoType
 getRecordItemType ann name map' =
   case M.lookup name map' of
     Just found -> pure found

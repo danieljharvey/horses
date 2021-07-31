@@ -1,8 +1,10 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Language.Mimsa.Typechecker.TcMonad where
 
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State (State, gets, modify, runState)
+import Control.Monad.State (MonadState, State, gets, modify, runState)
 import Data.Coerce
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -33,7 +35,7 @@ runTcMonad swaps value =
         (runReaderT (runExceptT value) swaps)
         defaultState
 
-getNextUniVar :: TcMonad Int
+getNextUniVar :: (MonadState TypecheckState m) => m Int
 getNextUniVar = do
   nextUniVar <- gets tcsNum
   modify (\s -> s {tcsNum = nextUniVar + 1})
@@ -47,7 +49,7 @@ addTypedHole ann name = do
   pure $ MTVar ann (TVNum i)
 
 -- todo - look up index in substitutions to get type
-getTypedHoles :: Substitutions -> TcMonad (Map Name MonoType)
+getTypedHoles :: (MonadState TypecheckState m) => Substitutions -> m (Map Name MonoType)
 getTypedHoles (Substitutions subs) = do
   holes <- gets tcsTypedHoles
   let getMonoType = \(ann, i) -> case M.lookup (TVNum i) subs of
@@ -55,7 +57,7 @@ getTypedHoles (Substitutions subs) = do
         Nothing -> MTVar ann (TVNum i)
   pure $ fmap getMonoType holes
 
-getUnknown :: Annotation -> TcMonad MonoType
+getUnknown :: (MonadState TypecheckState m) => Annotation -> m MonoType
 getUnknown ann = MTVar ann . TVNum <$> getNextUniVar
 
 variableToTypeIdentifier :: Variable -> TypeIdentifier

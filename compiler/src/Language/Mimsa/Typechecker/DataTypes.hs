@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.DataTypes
@@ -12,6 +13,7 @@ module Language.Mimsa.Typechecker.DataTypes
 where
 
 import Control.Monad.Except
+import Control.Monad.State
 import Data.Coerce
 import Data.Foldable (traverse_)
 import Data.Map (Map)
@@ -46,10 +48,11 @@ lookupBuiltIn name = M.lookup name builtInTypes
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
 storeDataDeclaration ::
+  (MonadError TypeError m) =>
   Environment ->
   Annotation ->
   DataType Annotation ->
-  TcMonad Environment
+  m Environment
 storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   validateDataTypeVariables dt
   validateConstructors env ann dt
@@ -59,7 +62,7 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
       let newEnv = Environment mempty (M.singleton tyName dt) mempty
        in pure (newEnv <> env)
 
-errorOnBuiltIn :: Annotation -> TyCon -> TcMonad ()
+errorOnBuiltIn :: (MonadError TypeError m) => Annotation -> TyCon -> m ()
 errorOnBuiltIn ann tc = case lookupBuiltIn tc of
   Just _ -> throwError (InternalConstructorUsedOutsidePatternMatch ann tc)
   _ -> pure ()
@@ -68,10 +71,11 @@ errorOnBuiltIn ann tc = case lookupBuiltIn tc of
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
 inferDataConstructor ::
+  (MonadState TypecheckState m, MonadError TypeError m) =>
   Environment ->
   Annotation ->
   TyCon ->
-  TcMonad (Substitutions, MonoType)
+  m (Substitutions, MonoType)
 inferDataConstructor env ann tyCon = do
   errorOnBuiltIn ann tyCon
   dataType <- lookupConstructor env ann tyCon
@@ -94,10 +98,11 @@ getVariablesForField (MTRecord _ items) =
 getVariablesForField _ = S.empty
 
 validateConstructors ::
+  (MonadError TypeError m) =>
   Environment ->
   Annotation ->
   DataType Annotation ->
-  TcMonad ()
+  m ()
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
@@ -107,7 +112,7 @@ validateConstructors env ann (DataType _ _ constructors) = do
     )
     (M.toList constructors)
 
-validateDataTypeVariables :: DataType Annotation -> TcMonad ()
+validateDataTypeVariables :: (MonadError TypeError m) => DataType Annotation -> m ()
 validateDataTypeVariables (DataType typeName vars constructors) =
   let requiredForCons = foldMap getVariablesForField
       requiredVars = foldMap requiredForCons constructors
@@ -121,9 +126,10 @@ validateDataTypeVariables (DataType typeName vars constructors) =
 
 -- infer types for data type and it's constructor in one big go
 inferConstructorTypes ::
+  (MonadError TypeError m, MonadState TypecheckState m) =>
   Environment ->
   DataType Annotation ->
-  TcMonad (MonoType, Map TyCon TypeConstructor)
+  m (MonoType, Map TyCon TypeConstructor)
 inferConstructorTypes env (DataType typeName tyNames constructors) = do
   tyVars <- traverse (\a -> (,) a <$> getUnknown mempty) tyNames
   let findType ty = case ty of
@@ -166,11 +172,12 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
 -- parse a type from it's name
 -- this will soon become insufficient for more complex types
 inferType ::
+  (MonadError TypeError m) =>
   Environment ->
   Annotation ->
   TyCon ->
   [MonoType] ->
-  TcMonad MonoType
+  m MonoType
 inferType env ann tyName tyVars =
   case M.lookup tyName (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
