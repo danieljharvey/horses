@@ -20,6 +20,12 @@ type TypedVariable = (Name, Type (), Annotation)
 getTypesList :: Swaps -> Substitutions -> [TypedVariable]
 getTypesList swaps (Substitutions subs) =
   let findType (v, n) = case M.lookup (variableToTypeIdentifier v) subs of
-        Just mt -> [(n, mt $> (), getAnnotationForType mt)]
+        Just mt ->
+          let substitutedType = applySubst (Substitutions subs) mt
+           in [ ( n,
+                  substitutedType $> (),
+                  getAnnotationForType substitutedType
+                )
+              ]
         _ -> []
    in M.toList swaps >>= findType
