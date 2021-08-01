@@ -17,8 +17,8 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Printer
-import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Logging
+import Language.Mimsa.Typechecker.DataTypesNew
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
@@ -30,13 +30,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
-
-data Constraint = ShouldEqual MonoType MonoType
-  deriving stock (Eq, Ord, Show)
-
-instance Printer Constraint where
-  prettyPrint (ShouldEqual a b) =
-    prettyPrint a <> " == " <> prettyPrint b
 
 type InferM = ExceptT TypeError (WriterT [Constraint] (ReaderT Swaps (State TypecheckState)))
 
@@ -50,7 +43,7 @@ runInferM swaps value =
     (Left e, _) -> Left e
   where
     defaultState =
-      TypecheckState 0 mempty
+      TypecheckState 1 mempty
     either' =
       runState
         (runReaderT (runWriterT (runExceptT value)) swaps)
@@ -89,10 +82,10 @@ inferAndSubst typeMap swaps env expr = do
   (constraints, tyExpr) <-
     runInferM swaps (infer env expr)
   subs <-
-    snd <$> runInferM swaps (solve constraints)
+    snd <$> runInferM swaps (solve (debugPretty "constraints" constraints))
   tyExpr' <-
     snd <$> runInferM swaps (typedHolesCheck typeMap subs tyExpr)
-  pure (subs, applySubst subs tyExpr')
+  pure (subs, applySubst (debugPretty "subs" subs) tyExpr')
 
 {-
 applySubstCtx :: Substitutions -> Environment -> Environment
@@ -128,7 +121,8 @@ applyToConstraint subs (ShouldEqual a b) =
 instantiate :: Scheme -> InferM MonoType
 instantiate (Scheme vars ty) = do
   newVars <- traverse (const $ getUnknown mempty) vars
-  let subst = Substitutions $ M.fromList (zip vars newVars)
+  let pairs = zip vars newVars
+  let subst = debugPretty "instantiate" (Substitutions $ M.fromList pairs)
   pure (applySubst subst ty)
 
 --------------
@@ -579,7 +573,7 @@ infer env inferExpr =
     (MyArray ann items) -> do
       inferArray env ann items
     (MyConstructor ann name) ->
-      snd <$> inferDataConstructor env ann name
+      inferDataConstructor env ann name
     (MyConsApp ann cons val) ->
       inferApplication env ann cons val
     (MyDefineInfix ann infixOp bindName expr) ->

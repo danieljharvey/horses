@@ -9,6 +9,8 @@ where
 import Data.Either (isLeft)
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
+import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.InferNew
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -52,17 +54,17 @@ exprs =
       Right (MTPrim mempty MTInt)
     ),
     ( MyLambda mempty (named "x") (bool True),
-      Right $ MTFunction mempty (unknown 0) (MTPrim mempty MTBool)
+      Right $ MTFunction mempty (unknown 1) (MTPrim mempty MTBool)
     ),
     ( identity,
-      Right $ MTFunction mempty (unknown 0) (unknown 0)
+      Right $ MTFunction mempty (unknown 1) (unknown 1)
     ),
     ( MyLambda mempty (named "x") (MyLambda mempty (named "y") (MyVar mempty (named "x"))),
       Right $
         MTFunction
           mempty
-          (unknown 0)
-          (MTFunction mempty (unknown 1) (unknown 0))
+          (unknown 1)
+          (MTFunction mempty (unknown 2) (unknown 1))
     ),
     ( MyApp
         mempty
@@ -94,11 +96,11 @@ exprs =
       Left $
         FailsOccursCheck
           mempty
-          (tvFree 0)
+          (tvFree 1)
           ( MTFunction
               mempty
-              (MTVar mempty (tvFree 0))
               (MTVar mempty (tvFree 1))
+              (MTVar mempty (tvFree 2))
           )
     ),
     ( MyPair mempty (int 1) (bool True),
@@ -129,7 +131,7 @@ exprs =
             (MyVar mempty (named "x"))
             (MyVar mempty (named "a"))
         ),
-      Right (MTFunction mempty (MTPair mempty (unknown 1) (unknown 2)) (unknown 1))
+      Right (MTFunction mempty (MTPair mempty (unknown 2) (unknown 3)) (unknown 2))
     ),
     ( MyRecord
         mempty
@@ -175,7 +177,7 @@ exprs =
                   "dog"
                   (MTPrim mempty MTBool)
               )
-              (unknown 1)
+              (unknown 2)
           )
           (MTPrim mempty MTInt)
     ),
@@ -198,7 +200,7 @@ exprs =
           ( MTRecordRow
               mempty
               (M.singleton "int" (MTPrim mempty MTInt))
-              (unknown 1)
+              (unknown 2)
           )
           (MTPrim mempty MTInt)
     )
@@ -214,14 +216,14 @@ spec :: Spec
 spec = do
   describe "Typechecker part 2" $
     do
-      it "Our expressions typecheck as expected" $
-        traverse_
-          ( \(code, expected) ->
-              --T.putStrLn (prettyPrint code)
+      traverse_
+        ( \(code, expected) ->
+            --T.putStrLn (prettyPrint code)
+            it (T.unpack $ prettyPrint code) $
               startInference code `shouldBe` expected
-          )
-          exprs
-      it "Uses a polymorphic function twice with conflicting types" $ do
+        )
+        exprs
+      fit "Uses a polymorphic function twice with conflicting types" $ do
         let expr =
               MyLet
                 mempty
