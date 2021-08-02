@@ -33,21 +33,23 @@ import Language.Mimsa.Types.Typechecker
 
 type InferM = ExceptT TypeError (WriterT [Constraint] (ReaderT Swaps (State TypecheckState)))
 
+defaultTcState :: TypecheckState
+defaultTcState = TypecheckState 1 mempty
+
 runInferM ::
   Swaps ->
+  TypecheckState ->
   InferM a ->
-  Either TypeError ([Constraint], a)
-runInferM swaps value =
-  case fst either' of
-    (Right a, constraints) -> Right (constraints, a)
-    (Left e, _) -> Left e
+  Either TypeError ([Constraint], TypecheckState, a)
+runInferM swaps tcState value =
+  case either' of
+    ((Right a, constraints), newTcState) -> Right (constraints, newTcState, a)
+    ((Left e, _), _) -> Left e
   where
-    defaultState =
-      TypecheckState 1 mempty
     either' =
       runState
         (runReaderT (runWriterT (runExceptT value)) swaps)
-        defaultState
+        tcState
 
 getUnknown :: Annotation -> InferM MonoType
 getUnknown ann = MTVar ann . TVNum <$> getNextUniVar
@@ -79,18 +81,20 @@ inferAndSubst ::
   TcExpr ->
   Either TypeError (Substitutions, MonoType)
 inferAndSubst typeMap swaps env expr = do
-  (constraints, tyExpr) <-
-    runInferM swaps (infer env expr)
-  subs <-
-    snd <$> runInferM swaps (solve (debugPretty "constraints" constraints))
-  tyExpr' <-
-    snd <$> runInferM swaps (typedHolesCheck typeMap subs tyExpr)
-  pure (subs, applySubst (debugPretty "subs" subs) tyExpr')
+  (constraints, tcState, tyExpr) <-
+    runInferM swaps defaultTcState (infer env expr)
+  (_, tcState2, subs) <-
+    runInferM swaps tcState (solve (debugPretty "constraints" constraints))
+  (_, _, tyExpr') <-
+    runInferM swaps tcState2 (typedHolesCheck typeMap subs tyExpr)
+  pure (subs, applySubst (debugPretty "subs" subs) (debugPretty "tyExpr" tyExpr'))
 
 {-
 applySubstCtx :: Substitutions -> Environment -> Environment
 applySubstCtx subst (Environment schemes dt inf) =
   Environment (M.map (applySubstScheme subst) schemes) dt inf
+
+-}
 
 applySubstScheme :: Substitutions -> Scheme -> Scheme
 applySubstScheme (Substitutions subst) (Scheme vars t) =
@@ -98,7 +102,6 @@ applySubstScheme (Substitutions subst) (Scheme vars t) =
   Scheme vars (applySubst newSubst t)
   where
     newSubst = Substitutions $ foldr M.delete subst vars
--}
 
 solve ::
   [Constraint] ->
@@ -112,18 +115,31 @@ solve = go mempty
         ShouldEqual a b -> do
           s2 <- unify a b
           go (s2 <> s1) (applyToConstraint s2 <$> rest)
+        InstanceOf a scheme -> do
+          (s2, tyA) <- instantiate scheme
+          s3 <- unify a tyA
+          go (s3 <> s2 <> s1) (applyToConstraint (s3 <> s2) <$> rest)
 
 applyToConstraint :: Substitutions -> Constraint -> Constraint
 applyToConstraint subs (ShouldEqual a b) =
   ShouldEqual (applySubst subs a) (applySubst subs b)
+applyToConstraint subs (InstanceOf a b) =
+  InstanceOf (applySubst subs a) (applySubstScheme subs b)
 
 -- | TODO: surely this should wait till solver
-instantiate :: Scheme -> InferM MonoType
+instantiate :: Scheme -> InferM (Substitutions, MonoType)
 instantiate (Scheme vars ty) = do
   newVars <- traverse (const $ getUnknown mempty) vars
   let pairs = zip vars newVars
   let subst = debugPretty "instantiate" (Substitutions $ M.fromList pairs)
-  pure (applySubst subst ty)
+  pure (subst, applySubst subst ty)
+
+polymorphicVersionOf :: Scheme -> InferM MonoType
+polymorphicVersionOf (Scheme [] ty) = pure ty
+polymorphicVersionOf scheme = do
+  tyVal <- getUnknown mempty
+  tell [InstanceOf tyVal scheme]
+  pure tyVal
 
 --------------
 
@@ -145,7 +161,7 @@ inferVarFromScope env@(Environment env' _ _) ann var' =
     (variableToTypeIdentifier var')
     env' of
     Just mt ->
-      instantiate mt
+      polymorphicVersionOf mt
     _ -> do
       swaps <- ask
       throwError $
