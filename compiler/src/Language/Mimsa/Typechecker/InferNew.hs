@@ -7,9 +7,8 @@ module Language.Mimsa.Typechecker.InferNew (inferAndSubst) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State (State, gets, modify, runState)
+import Control.Monad.State (State, runState)
 import Control.Monad.Writer
-import Data.Coerce
 import Data.Foldable
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -22,9 +21,9 @@ import Language.Mimsa.Typechecker.DataTypesNew
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
-import Language.Mimsa.Typechecker.TcMonad (TypecheckState (..))
+import Language.Mimsa.Typechecker.Solve
+import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.TypedHoles
-import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -34,7 +33,7 @@ import Language.Mimsa.Types.Typechecker
 type InferM = ExceptT TypeError (WriterT [Constraint] (ReaderT Swaps (State TypecheckState)))
 
 defaultTcState :: TypecheckState
-defaultTcState = TypecheckState 1 mempty
+defaultTcState = TypecheckState 0 mempty
 
 runInferM ::
   Swaps ->
@@ -51,26 +50,6 @@ runInferM swaps tcState value =
         (runReaderT (runWriterT (runExceptT value)) swaps)
         tcState
 
-getUnknown :: Annotation -> InferM MonoType
-getUnknown ann = MTVar ann . TVNum <$> getNextUniVar
-
-variableToTypeIdentifier :: Variable -> TypeIdentifier
-variableToTypeIdentifier (NamedVar n) = TVName (coerce n)
-variableToTypeIdentifier (NumberedVar i) = TVNum i
-
-getNextUniVar :: InferM Int
-getNextUniVar = do
-  nextUniVar <- gets tcsNum
-  modify (\s -> s {tcsNum = nextUniVar + 1})
-  pure nextUniVar
-
--- | Get a new unknown for a typed hole and return it's monotype
-addTypedHole :: Annotation -> Name -> InferM MonoType
-addTypedHole ann name = do
-  i <- getNextUniVar
-  modify (\s -> s {tcsTypedHoles = tcsTypedHoles s <> M.singleton name (ann, i)})
-  pure $ MTVar ann (TVNum i)
-
 type TcExpr = Expr Variable Annotation
 
 -- run inference, and substitute everything possible
@@ -83,56 +62,11 @@ inferAndSubst ::
 inferAndSubst typeMap swaps env expr = do
   (constraints, tcState, tyExpr) <-
     runInferM swaps defaultTcState (infer env expr)
-  (_, tcState2, subs) <-
-    runInferM swaps tcState (solve (debugPretty "constraints" constraints))
+  (tcState2, subs) <-
+    runSolveM swaps tcState (solve (debugPretty "constraints" constraints))
   (_, _, tyExpr') <-
     runInferM swaps tcState2 (typedHolesCheck typeMap subs tyExpr)
-  pure (subs, applySubst (debugPretty "subs" subs) (debugPretty "tyExpr" tyExpr'))
-
-{-
-applySubstCtx :: Substitutions -> Environment -> Environment
-applySubstCtx subst (Environment schemes dt inf) =
-  Environment (M.map (applySubstScheme subst) schemes) dt inf
-
--}
-
-applySubstScheme :: Substitutions -> Scheme -> Scheme
-applySubstScheme (Substitutions subst) (Scheme vars t) =
-  -- The fold takes care of name shadowing
-  Scheme vars (applySubst newSubst t)
-  where
-    newSubst = Substitutions $ foldr M.delete subst vars
-
-solve ::
-  [Constraint] ->
-  InferM Substitutions
-solve = go mempty
-  where
-    go :: Substitutions -> [Constraint] -> InferM Substitutions
-    go s [] = pure s
-    go s1 (lc : rest) =
-      case lc of
-        ShouldEqual a b -> do
-          s2 <- unify a b
-          go (s2 <> s1) (applyToConstraint s2 <$> rest)
-        InstanceOf a scheme -> do
-          (s2, tyA) <- instantiate scheme
-          s3 <- unify a tyA
-          go (s3 <> s2 <> s1) (applyToConstraint (s3 <> s2) <$> rest)
-
-applyToConstraint :: Substitutions -> Constraint -> Constraint
-applyToConstraint subs (ShouldEqual a b) =
-  ShouldEqual (applySubst subs a) (applySubst subs b)
-applyToConstraint subs (InstanceOf a b) =
-  InstanceOf (applySubst subs a) (applySubstScheme subs b)
-
--- | TODO: surely this should wait till solver
-instantiate :: Scheme -> InferM (Substitutions, MonoType)
-instantiate (Scheme vars ty) = do
-  newVars <- traverse (const $ getUnknown mempty) vars
-  let pairs = zip vars newVars
-  let subst = debugPretty "instantiate" (Substitutions $ M.fromList pairs)
-  pure (subst, applySubst subst ty)
+  pure (subs, debugPretty "tyExpr" (applySubst (debugPretty "subs" subs) (debugPretty "original" tyExpr')))
 
 polymorphicVersionOf :: Scheme -> InferM MonoType
 polymorphicVersionOf (Scheme [] ty) = pure ty
@@ -157,9 +91,7 @@ inferVarFromScope ::
   Variable ->
   InferM MonoType
 inferVarFromScope env@(Environment env' _ _) ann var' =
-  case M.lookup
-    (variableToTypeIdentifier var')
-    env' of
+  case M.lookup (variableToTypeIdentifier var') env' of
     Just mt ->
       polymorphicVersionOf mt
     _ -> do
@@ -230,13 +162,14 @@ inferLetBinding ::
   InferM MonoType
 inferLetBinding env ann binder expr body = do
   tyUnknown <- getUnknown ann
+  tyReturn <- getUnknown ann
   binderInExpr <- findActualBindingInSwaps binder
   let newEnv1 = envFromVar binderInExpr (Scheme mempty tyUnknown) <> env
   tyExpr <- infer newEnv1 expr
   let newEnv2 = envFromVar binder (generaliseNoSubs newEnv1 tyExpr) <> newEnv1
   tyBody <- infer newEnv2 body
-  tell [ShouldEqual tyUnknown tyExpr]
-  pure tyBody
+  tell [ShouldEqual tyUnknown tyExpr, ShouldEqual tyReturn tyBody]
+  pure tyReturn
 
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> InferM MonoType
 inferIf env condition thenExpr elseExpr = do
@@ -497,13 +430,15 @@ inferLambda ::
   TcExpr ->
   InferM MonoType
 inferLambda env@(Environment env' _ _) ann binder body = do
+  tyReturn <- getUnknown ann
   tyBinder <- case M.lookup (variableToTypeIdentifier binder) env' of
     Just (Scheme _ found) -> pure found
     _ -> getUnknown ann
   let tmpCtx =
         envFromVar binder (Scheme [] tyBinder) <> env
   tyBody <- infer tmpCtx body
-  pure (MTFunction ann tyBinder tyBody)
+  tell [ShouldEqual tyReturn (MTFunction ann tyBinder tyBody)]
+  pure tyReturn
 
 isTwoArityFunction :: MonoType -> Bool
 isTwoArityFunction (MTFunction _ _ MTFunction {}) = True
@@ -580,9 +515,11 @@ infer env inferExpr =
     (MyIf _ condition thenCase elseCase) ->
       inferIf env condition thenCase elseCase
     (MyPair ann a b) -> do
+      tyPair <- getUnknown ann
       tyA <- infer env a
       tyB <- infer env b
-      pure (MTPair ann tyA tyB)
+      tell [ShouldEqual tyPair (MTPair ann tyA tyB)]
+      pure tyPair
     (MyData ann dataType expr) -> do
       newEnv <- storeDataDeclaration env ann dataType
       infer newEnv expr

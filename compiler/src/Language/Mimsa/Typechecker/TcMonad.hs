@@ -42,7 +42,11 @@ getNextUniVar = do
   pure nextUniVar
 
 -- | Get a new unknown for a typed hole and return it's monotype
-addTypedHole :: Annotation -> Name -> TcMonad MonoType
+addTypedHole ::
+  (MonadState TypecheckState m) =>
+  Annotation ->
+  Name ->
+  m MonoType
 addTypedHole ann name = do
   i <- getNextUniVar
   modify (\s -> s {tcsTypedHoles = tcsTypedHoles s <> M.singleton name (ann, i)})

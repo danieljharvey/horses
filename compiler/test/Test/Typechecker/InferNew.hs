@@ -223,12 +223,12 @@ spec = do
               startInference code `shouldBe` expected
         )
         exprs
-      fit "Uses a polymorphic function twice with conflicting types" $ do
+      it "Uses a polymorphic function twice with conflicting types" $ do
         let expr =
               MyLet
                 mempty
                 (named "id")
-                (MyLambda mempty (named "a") (MyVar mempty (named "a")))
+                (MyLambda mempty (named "var") (MyVar mempty (named "var")))
                 ( MyPair
                     mempty
                     (MyApp mempty (MyVar mempty (named "id")) (int 1))
@@ -236,7 +236,7 @@ spec = do
                 )
         let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
         startInference expr `shouldBe` expected
-      it "Tuple destructuring" $ do
+      fit "Tuple destructuring" $ do
         let expr =
               MyLet
                 mempty
