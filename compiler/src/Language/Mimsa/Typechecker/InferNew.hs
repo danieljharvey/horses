@@ -21,6 +21,7 @@ import Language.Mimsa.Typechecker.DataTypesNew
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
+import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.TypedHoles
@@ -66,7 +67,7 @@ inferAndSubst typeMap swaps env expr = do
     runSolveM swaps tcState (solve (debugPretty "constraints" constraints))
   (_, _, tyExpr') <-
     runInferM swaps tcState2 (typedHolesCheck typeMap subs tyExpr)
-  pure (subs, debugPretty "tyExpr" (applySubst (debugPretty "subs" subs) (debugPretty "original" tyExpr')))
+  pure (subs, normaliseType (applySubst (debugPretty "subs" subs) (debugPretty "original" tyExpr')))
 
 polymorphicVersionOf :: Scheme -> InferM MonoType
 polymorphicVersionOf (Scheme [] ty) = pure ty
@@ -137,7 +138,9 @@ inferApplication env ann function argument = do
   tyRes <- getUnknown ann
   tyFun <- infer env function
   tyArg <- infer env argument
-  tell [ShouldEqual tyFun (MTFunction ann tyArg tyRes)]
+  tell
+    [ ShouldEqual tyFun (MTFunction ann tyArg tyRes)
+    ]
   pure tyRes
 
 -- when we come to do let recursive the name of our binder
@@ -162,14 +165,13 @@ inferLetBinding ::
   InferM MonoType
 inferLetBinding env ann binder expr body = do
   tyUnknown <- getUnknown ann
-  tyReturn <- getUnknown ann
   binderInExpr <- findActualBindingInSwaps binder
   let newEnv1 = envFromVar binderInExpr (Scheme mempty tyUnknown) <> env
   tyExpr <- infer newEnv1 expr
   let newEnv2 = envFromVar binder (generaliseNoSubs newEnv1 tyExpr) <> newEnv1
   tyBody <- infer newEnv2 body
-  tell [ShouldEqual tyUnknown tyExpr, ShouldEqual tyReturn tyBody]
-  pure tyReturn
+  tell [ShouldEqual tyUnknown tyExpr]
+  pure tyBody
 
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> InferM MonoType
 inferIf env condition thenExpr elseExpr = do
@@ -416,11 +418,12 @@ inferLetPattern ::
 inferLetPattern env ann pat expr body = do
   (tyPattern, newEnv) <- inferPattern env pat
   tyExpr <- infer env expr
-  tell [ShouldEqual tyPattern tyExpr]
+  tell
+    [ ShouldEqual tyPattern tyExpr
+    ]
   tyBody <- infer newEnv body
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
   validatePatterns env ann [pat]
-
   pure tyBody
 
 inferLambda ::
@@ -430,15 +433,13 @@ inferLambda ::
   TcExpr ->
   InferM MonoType
 inferLambda env@(Environment env' _ _) ann binder body = do
-  tyReturn <- getUnknown ann
   tyBinder <- case M.lookup (variableToTypeIdentifier binder) env' of
     Just (Scheme _ found) -> pure found
     _ -> getUnknown ann
   let tmpCtx =
         envFromVar binder (Scheme [] tyBinder) <> env
   tyBody <- infer tmpCtx body
-  tell [ShouldEqual tyReturn (MTFunction ann tyBinder tyBody)]
-  pure tyReturn
+  pure (MTFunction ann tyBinder tyBody)
 
 isTwoArityFunction :: MonoType -> Bool
 isTwoArityFunction (MTFunction _ _ MTFunction {}) = True
@@ -515,11 +516,9 @@ infer env inferExpr =
     (MyIf _ condition thenCase elseCase) ->
       inferIf env condition thenCase elseCase
     (MyPair ann a b) -> do
-      tyPair <- getUnknown ann
       tyA <- infer env a
       tyB <- infer env b
-      tell [ShouldEqual tyPair (MTPair ann tyA tyB)]
-      pure tyPair
+      pure (MTPair ann tyA tyB)
     (MyData ann dataType expr) -> do
       newEnv <- storeDataDeclaration env ann dataType
       infer newEnv expr

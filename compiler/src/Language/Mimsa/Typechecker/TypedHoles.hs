@@ -31,7 +31,7 @@ typedHolesCheck ::
 typedHolesCheck typeMap subs mt = do
   holes <- getTypedHoles subs
   if M.null holes
-    then pure (normaliseType mt)
+    then pure mt
     else throwError (TypedHoles (getTypedHoleSuggestions typeMap <$> holes))
 
 getTypedHoleSuggestions :: Map Name MonoType -> MonoType -> (MonoType, Set Name)

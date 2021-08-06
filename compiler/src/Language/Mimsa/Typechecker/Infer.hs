@@ -22,6 +22,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
+import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.TypedHoles
 import Language.Mimsa.Typechecker.Unify
@@ -42,7 +43,7 @@ doInference ::
 doInference typeMap swaps env expr = runTcMonad swaps $ do
   (subs, mt) <- inferAndSubst (defaultEnv mempty <> env) expr
   mt2 <- typedHolesCheck typeMap subs mt
-  pure (subs, mt2)
+  pure (subs, normaliseType mt2)
 
 doDataTypeInference ::
   Environment ->
