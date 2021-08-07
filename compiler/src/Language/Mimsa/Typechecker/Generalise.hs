@@ -1,33 +1,24 @@
 module Language.Mimsa.Typechecker.Generalise
   ( generalise,
-    freeVars,
-    generaliseNoSubs,
   )
 where
 
-import Data.List (nub, (\\))
 import qualified Data.Map as M
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-freeVars :: MonoType -> [TypeIdentifier]
-freeVars (MTVar _ b) = [b]
-freeVars (MTFunction _ t1 t2) = freeVars t1 <> freeVars t2
-freeVars (MTPair _ a b) = freeVars a <> freeVars b
-freeVars (MTRecord _ as) = mconcat (freeVars . snd <$> M.toList as)
-freeVars (MTRecordRow _ as rest) =
-  mconcat (freeVars . snd <$> M.toList as)
-    <> freeVars rest
-freeVars (MTArray _ a) = freeVars a
-freeVars (MTPrim _ _) = mempty
-freeVars (MTData _ _ as) = mconcat (freeVars <$> as)
+removeLambdas :: MonoType -> [TypeIdentifier]
+removeLambdas (MTVar _ b) = [b]
+removeLambdas (MTFunction _ _t1 t2) = removeLambdas t2
+removeLambdas (MTPair _ a b) = removeLambdas a <> removeLambdas b
+removeLambdas (MTRecord _ as) = mconcat (removeLambdas . snd <$> M.toList as)
+removeLambdas (MTRecordRow _ as rest) =
+  mconcat (removeLambdas . snd <$> M.toList as)
+    <> removeLambdas rest
+removeLambdas (MTArray _ a) = removeLambdas a
+removeLambdas (MTPrim _ _) = mempty
+removeLambdas MTData {} = mempty
 
-generalise :: Substitutions -> MonoType -> Scheme
-generalise (Substitutions subst) ty = Scheme free ty
-  where
-    free = nub $ freeVars ty \\ map fst (M.toList subst)
-
-generaliseNoSubs :: Environment -> MonoType -> Scheme
-generaliseNoSubs (Environment schemes _ _) ty = Scheme free ty
-  where
-    free = nub $ freeVars ty \\ map fst (M.toList schemes)
+generalise :: MonoType -> Scheme
+generalise ty =
+  Scheme (removeLambdas ty) ty

@@ -35,9 +35,8 @@ import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Typechecker.AnnotateExpression as AnnotateExpression
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
-import qualified Test.Typechecker.InferNew as InferNew
+import qualified Test.Typechecker.Infer as Infer
 import qualified Test.Typechecker.TypeError as TypeError
-import qualified Test.Typechecker.Typechecker as Typechecker
 import qualified Test.Typechecker.Unify as Unify
 
 main :: IO ()
@@ -48,7 +47,6 @@ main =
     Prettier.spec
     Resolver.spec
     Substitutor.spec
-    Typechecker.spec
     Repl.spec
     Unify.spec
     Usages.spec
@@ -74,4 +72,4 @@ main =
     Pattern.spec
     RemoveBinding.spec
     AnnotateExpression.spec
-    InferNew.spec
+    Infer.spec

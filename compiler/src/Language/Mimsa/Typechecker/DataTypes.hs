@@ -71,18 +71,20 @@ errorOnBuiltIn ann tc = case lookupBuiltIn tc of
 -- if it has no args, it's a simple MTData
 -- however if it has args it becomes a MTFun from args to the MTData
 inferDataConstructor ::
-  (MonadState TypecheckState m, MonadError TypeError m) =>
+  ( MonadState TypecheckState m,
+    MonadError TypeError m
+  ) =>
   Environment ->
   Annotation ->
   TyCon ->
-  m (Substitutions, MonoType)
+  m MonoType
 inferDataConstructor env ann tyCon = do
   errorOnBuiltIn ann tyCon
   dataType <- lookupConstructor env ann tyCon
   (_, allArgs) <- inferConstructorTypes env dataType
   case M.lookup tyCon allArgs of
     Just tyArg ->
-      pure (mempty, constructorToType tyArg)
+      pure (constructorToType tyArg)
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 getVariablesForField :: MonoType -> Set Name
@@ -112,7 +114,10 @@ validateConstructors env ann (DataType _ _ constructors) = do
     )
     (M.toList constructors)
 
-validateDataTypeVariables :: (MonadError TypeError m) => DataType Annotation -> m ()
+validateDataTypeVariables ::
+  (MonadError TypeError m) =>
+  DataType Annotation ->
+  m ()
 validateDataTypeVariables (DataType typeName vars constructors) =
   let requiredForCons = foldMap getVariablesForField
       requiredVars = foldMap requiredForCons constructors

@@ -12,7 +12,6 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.AnnotateExpression
 import Language.Mimsa.Typechecker.Infer
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
@@ -24,7 +23,7 @@ getTypesList' input = do
   (subs, _mt) <-
     first
       prettyPrint
-      (doInference mempty mempty mempty expr)
+      (inferAndSubst mempty mempty mempty expr)
   pure (getTypesList swaps subs)
 
 spec :: Spec
@@ -46,9 +45,9 @@ spec = do
             [ ("a", MTPrim mempty MTInt, Location 0 34),
               ("a", MTPrim mempty MTBool, Location 13 34)
             ]
-      xit "Finds type of variable introduced by lambda" $ do
+      it "Finds type of variable introduced by lambda" $ do
         getTypesList' "let good = \\a -> True; good(1)"
           `shouldBe` Right
-            [ ("good", MTFunction mempty (MTVar mempty (TVNum 1)) (MTPrim mempty MTBool), Location 0 30),
-              ("a", MTPrim mempty MTInt, mempty)
+            [ ("good", MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool), Location 0 30),
+              ("a", MTPrim mempty MTInt, Location 11 21)
             ]

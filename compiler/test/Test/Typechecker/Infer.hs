@@ -1,15 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Typechecker.Typechecker
+module Test.Typechecker.Infer
   ( spec,
   )
 where
 
 import Data.Either (isLeft)
-import Data.Foldable (traverse_)
 import qualified Data.Map as M
-import Language.Mimsa.Typechecker (doInference)
+import Language.Mimsa.Typechecker.Infer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -23,227 +22,316 @@ import Test.Codegen.Shared
 import Test.Hspec
 import Test.Utils.Helpers
 
-exprs :: (Monoid ann) => [(Expr Variable ann, Either TypeError MonoType)]
-exprs =
-  [ (int 1, Right (MTPrim mempty MTInt)),
-    (bool True, Right (MTPrim mempty MTBool)),
-    ( str
-        (StringType "hello"),
-      Right (MTPrim mempty MTString)
-    ),
-    -- (MyVar (named "x"), Left "Unknown variable \"x\""),
-    (MyLet mempty (named "x") (int 42) (bool True), Right (MTPrim mempty MTBool)),
-    (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x")), Right (MTPrim mempty MTInt)),
-    ( MyLet
-        mempty
-        (named "x")
-        (bool True)
-        (MyLet mempty (named "y") (int 42) (MyVar mempty (named "x"))),
-      Right (MTPrim mempty MTBool)
-    ),
-    ( MyLet
-        mempty
-        (named "x")
-        (bool True)
-        (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))),
-      Right (MTPrim mempty MTInt)
-    ),
-    ( MyLambda mempty (named "x") (bool True),
-      Right $ MTFunction mempty (unknown 1) (MTPrim mempty MTBool)
-    ),
-    ( identity,
-      Right $ MTFunction mempty (unknown 1) (unknown 1)
-    ),
-    ( MyLambda mempty (named "x") (MyLambda mempty (named "y") (MyVar mempty (named "x"))),
-      Right $
-        MTFunction
-          mempty
-          (unknown 1)
-          (MTFunction mempty (unknown 2) (unknown 1))
-    ),
-    ( MyApp
-        mempty
-        ( MyLambda
-            mempty
-            (named "x")
-            (bool True)
-        )
-        (int 1),
-      Right (MTPrim mempty MTBool)
-    ),
-    ( MyApp
-        mempty
-        identity
-        (int 1),
-      Right (MTPrim mempty MTInt)
-    ),
-    ( MyApp
-        mempty
-        ( MyLambda
-            mempty
-            (named "x")
-            (MyIf mempty (MyVar mempty (named "x")) (int 10) (int 10))
-        )
-        (int 100),
-      Left $ UnificationError (MTPrim mempty MTBool) (MTPrim mempty MTInt)
-    ),
-    ( MyLambda mempty (named "x") (MyApp mempty (MyVar mempty (named "x")) (MyVar mempty (named "x"))),
-      Left $
-        FailsOccursCheck
-          mempty
-          (tvFree 0)
-          ( MTFunction
-              mempty
-              (MTVar mempty (tvFree 0))
-              (MTVar mempty (tvFree 1))
-          )
-    ),
-    (MyPair mempty (int 1) (bool True), Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))),
-    ( MyLetPattern mempty (PPair mempty (PVar mempty (named "a")) (PVar mempty (named "b"))) (MyPair mempty (int 1) (bool True)) (MyVar mempty (named "a")),
-      Right (MTPrim mempty MTInt)
-    ),
-    ( MyLambda
-        mempty
-        (named "x")
-        ( MyLetPattern
-            mempty
-            ( PPair
+identity :: Monoid ann => Expr Variable ann
+identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
+
+startInference :: Expr Variable Annotation -> Either TypeError MonoType
+startInference = fmap snd . inferAndSubst mempty mempty mempty
+
+spec :: Spec
+spec = do
+  describe "Typechecker part 2" $ do
+    describe "basic cases" $ do
+      it "infers int" $ do
+        let expr = int 1
+        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+      it "infers bool" $ do
+        let expr = bool True
+        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+      it "infers string" $ do
+        let expr = str (StringType "hello")
+        startInference expr `shouldBe` Right (MTPrim mempty MTString)
+      it "infers let binding" $ do
+        let expr = MyLet mempty (named "x") (int 42) (bool True)
+        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+      it "infers let binding with usage" $ do
+        let expr = MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))
+        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+      it "infers multiple let bindings" $ do
+        let expr =
+              MyLet
                 mempty
-                (PVar mempty (named "a"))
-                (PVar mempty (named "b"))
+                (named "x")
+                (bool True)
+                (MyLet mempty (named "y") (int 42) (MyVar mempty (named "x")))
+        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+      it "infers shadowed let bindings" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "x")
+                (bool True)
+                (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x")))
+        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+      it "infers const lambda" $ do
+        let expr = MyLambda mempty (named "x") (bool True)
+        startInference expr
+          `shouldBe` Right (MTFunction mempty (unknown 1) (MTPrim mempty MTBool))
+      it "infers identity" $ do
+        let expr = identity
+        startInference expr `shouldBe` Right (MTFunction mempty (unknown 1) (unknown 1))
+      it "infers const function" $ do
+        let expr = MyLambda mempty (named "x") (MyLambda mempty (named "y") (MyVar mempty (named "x")))
+        startInference expr
+          `shouldBe` Right
+            ( MTFunction
+                mempty
+                (unknown 1)
+                (MTFunction mempty (unknown 2) (unknown 1))
             )
-            (MyVar mempty (named "x"))
-            (MyVar mempty (named "a"))
-        ),
-      Right (MTFunction mempty (MTPair mempty (unknown 1) (unknown 2)) (unknown 1))
-    ),
-    ( MyLet
-        mempty
-        (named "fst")
-        ( MyLambda
-            mempty
-            (named "tuple")
-            ( MyLetPattern
+      it "infers const applied with boolean" $ do
+        let expr =
+              MyApp
+                mempty
+                ( MyLambda
+                    mempty
+                    (named "x")
+                    (bool True)
+                )
+                (int 1)
+        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+      it "infers identity with int passed to it" $ do
+        let expr =
+              MyApp
+                mempty
+                identity
+                (int 1)
+        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+      it "passing int to an if statement in a lambda fails" $ do
+        let expr =
+              MyApp
+                mempty
+                ( MyLambda
+                    mempty
+                    (named "x")
+                    (MyIf mempty (MyVar mempty (named "x")) (int 10) (int 10))
+                )
+                (int 100)
+        startInference expr
+          `shouldBe` Left
+            ( UnificationError (MTPrim mempty MTBool) (MTPrim mempty MTInt)
+            )
+      it "fails occurs check" $ do
+        let expr = MyLambda mempty (named "x") (MyApp mempty (MyVar mempty (named "x")) (MyVar mempty (named "x")))
+        startInference expr
+          `shouldBe` Left
+            ( FailsOccursCheck
+                mempty
+                (tvFree 0)
+                ( MTFunction
+                    mempty
+                    (MTVar mempty (tvFree 0))
+                    (MTVar mempty (tvFree 1))
+                )
+            )
+      it "infers pair" $ do
+        let expr = MyPair mempty (int 1) (bool True)
+        startInference expr
+          `shouldBe` Right
+            (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+      it "infers and destructures pair" $ do
+        let expr =
+              MyLetPattern
                 mempty
                 ( PPair
                     mempty
                     (PVar mempty (named "a"))
                     (PVar mempty (named "b"))
                 )
-                (MyVar mempty (named "tuple"))
+                (MyPair mempty (int 1) (bool True))
                 (MyVar mempty (named "a"))
-            )
-        )
-        ( MyLet
-            mempty
-            (named "x")
-            (MyPair mempty (int 1) (int 2))
-            (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "x")))
-        ),
-      Right (MTPrim mempty MTInt)
-    ),
-    ( MyRecord
-        mempty
-        mempty,
-      Right $
-        MTRecord mempty mempty
-    ),
-    ( MyRecord
-        mempty
-        ( M.fromList
-            [ ("dog", int 1),
-              ("cat", int 2)
-            ]
-        ),
-      Right $
-        MTRecord
-          mempty
-          ( M.fromList
-              [ ("dog", MTPrim mempty MTInt),
-                ("cat", MTPrim mempty MTInt)
-              ]
-          )
-    ),
-    ( MyLambda
-        mempty
-        (named "i")
-        ( MyIf
-            mempty
-            ( MyRecordAccess
+        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+      it "infers destructured pair in a lambda" $ do
+        let expr =
+              MyLambda
                 mempty
-                (MyVar mempty (named "i"))
-                "dog"
-            )
-            (int 1)
-            (int 2)
-        ),
-      Right $
-        MTFunction
-          mempty
-          ( MTRecordRow
-              mempty
-              ( M.singleton
-                  "dog"
-                  (MTPrim mempty MTBool)
-              )
-              (unknown 1)
-          )
-          (MTPrim mempty MTInt)
-    ),
-    ( MyLambda
-        mempty
-        (named "a")
-        ( MyInfix
-            mempty
-            Add
-            ( MyRecordAccess
+                (named "x")
+                ( MyLetPattern
+                    mempty
+                    ( PPair
+                        mempty
+                        (PVar mempty (named "a"))
+                        (PVar mempty (named "b"))
+                    )
+                    (MyVar mempty (named "x"))
+                    (MyVar mempty (named "a"))
+                )
+        startInference expr
+          `shouldBe` Right
+            (MTFunction mempty (MTPair mempty (unknown 1) (unknown 2)) (unknown 1))
+      it "infers empty record" $ do
+        let expr =
+              MyRecord
                 mempty
-                (MyVar mempty (named "a"))
-                "int"
+                mempty
+        startInference expr
+          `shouldBe` Right
+            ( MTRecord mempty mempty
             )
-            (int 1)
-        ),
-      Right $
-        MTFunction
-          mempty
-          ( MTRecordRow
-              mempty
-              (M.singleton "int" (MTPrim mempty MTInt))
-              (unknown 1)
-          )
-          (MTPrim mempty MTInt)
-    )
-  ]
+      it "infers record with two ints in it" $ do
+        let expr =
+              MyRecord
+                mempty
+                ( M.fromList
+                    [ ("dog", int 1),
+                      ("cat", int 2)
+                    ]
+                )
+        startInference expr
+          `shouldBe` Right
+            ( MTRecord
+                mempty
+                ( M.fromList
+                    [ ("dog", MTPrim mempty MTInt),
+                      ("cat", MTPrim mempty MTInt)
+                    ]
+                )
+            )
+      it "Infers a record literal from a lambda" $ do
+        let expr =
+              MyLambda
+                mempty
+                (named "i")
+                ( MyIf
+                    mempty
+                    ( MyRecordAccess
+                        mempty
+                        (MyVar mempty (named "i"))
+                        "dog"
+                    )
+                    (int 1)
+                    (int 2)
+                )
+        startInference expr
+          `shouldBe` Right
+            ( MTFunction
+                mempty
+                ( MTRecordRow
+                    mempty
+                    ( M.singleton
+                        "dog"
+                        (MTPrim mempty MTBool)
+                    )
+                    (unknown 1)
+                )
+                (MTPrim mempty MTInt)
+            )
+      it "Infers partial record from lambda" $ do
+        let expr =
+              MyLambda
+                mempty
+                (named "a")
+                ( MyInfix
+                    mempty
+                    Add
+                    ( MyRecordAccess
+                        mempty
+                        (MyVar mempty (named "a"))
+                        "int"
+                    )
+                    (int 1)
+                )
+        startInference expr
+          `shouldBe` Right
+            ( MTFunction
+                mempty
+                ( MTRecordRow
+                    mempty
+                    (M.singleton "int" (MTPrim mempty MTInt))
+                    (unknown 1)
+                )
+                (MTPrim mempty MTInt)
+            )
 
-identity :: Monoid ann => Expr Variable ann
-identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
-
-startInference :: Expr Variable Annotation -> Either TypeError MonoType
-startInference = fmap snd . doInference mempty mempty mempty
-
-spec :: Spec
-spec = do
-  describe "Typechecker" $
-    do
-      it "Our expressions typecheck as expected" $
-        traverse_
-          ( \(code, expected) ->
-              --T.putStrLn (prettyPrint code)
-              startInference code `shouldBe` expected
-          )
-          exprs
       it "Uses a polymorphic function twice with conflicting types" $ do
         let expr =
               MyLet
                 mempty
                 (named "id")
-                (MyLambda mempty (named "a") (MyVar mempty (named "a")))
+                (MyLambda mempty (named "var") (MyVar mempty (named "var")))
                 ( MyPair
                     mempty
                     (MyApp mempty (MyVar mempty (named "id")) (int 1))
                     (MyApp mempty (MyVar mempty (named "id")) (bool True))
                 )
         let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+        startInference expr `shouldBe` expected
+      it "Simple let pattern with tuple" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "pair")
+                (MyPair mempty (int 1) (bool True))
+                ( MyLetPattern
+                    mempty
+                    ( PPair
+                        mempty
+                        (PVar mempty (named "a"))
+                        (PVar mempty (named "b"))
+                    )
+                    (MyVar mempty (named "pair"))
+                    (MyVar mempty (named "a"))
+                )
+
+        let expected = Right (MTPrim mempty MTInt)
+        startInference expr `shouldBe` expected
+
+      it "Simplified Tuple destructuring" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "fst")
+                ( MyLambda
+                    mempty
+                    (named "tuple")
+                    ( MyLetPattern
+                        mempty
+                        ( PPair
+                            mempty
+                            (PVar mempty (named "a"))
+                            (PVar mempty (named "b"))
+                        )
+                        (MyVar mempty (named "tuple"))
+                        (MyVar mempty (named "a"))
+                    )
+                )
+                (MyVar mempty (named "fst"))
+
+        let expected =
+              Right
+                ( MTFunction
+                    mempty
+                    (MTPair mempty (unknown 1) (unknown 2))
+                    (unknown 1)
+                )
+        startInference expr `shouldBe` expected
+
+      it "Tuple destructuring" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "fst")
+                ( MyLambda
+                    mempty
+                    (named "tuple")
+                    ( MyLetPattern
+                        mempty
+                        ( PPair
+                            mempty
+                            (PVar mempty (named "a"))
+                            (PVar mempty (named "b"))
+                        )
+                        (MyVar mempty (named "tuple"))
+                        (MyVar mempty (named "a"))
+                    )
+                )
+                ( MyLet
+                    mempty
+                    (named "pair")
+                    (MyPair mempty (int 1) (bool True))
+                    (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "pair")))
+                )
+        let expected = Right (MTPrim mempty MTInt)
         startInference expr `shouldBe` expected
 
       it "We can use identity with two different datatypes in one expression" $ do

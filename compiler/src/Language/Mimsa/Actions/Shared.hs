@@ -53,7 +53,7 @@ getType ::
 getType typeMap swaps scope' source expr =
   first
     (TypeErr source)
-    ( doInference
+    ( inferAndSubst
         typeMap
         swaps
         mempty

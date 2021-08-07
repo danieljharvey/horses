@@ -9,7 +9,6 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Data.Map as M
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
@@ -72,5 +71,5 @@ instantiate ::
 instantiate (Scheme vars ty) = do
   newVars <- traverse (const $ getUnknown mempty) vars
   let pairs = zip vars newVars
-  let subst = debugPretty "instantiate" (Substitutions $ M.fromList pairs)
-  pure (subst, debugPretty "instantiated" (applySubst subst ty))
+  let subst = Substitutions $ M.fromList pairs
+  pure (subst, applySubst subst ty)
