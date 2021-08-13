@@ -45,6 +45,9 @@ instance Printer Text where
   prettyPrint a = a
   prettyDoc = pretty
 
+instance Printer Bool where
+  prettyPrint = T.pack . show
+
 instance Printer Int where
   prettyPrint = T.pack . show
 

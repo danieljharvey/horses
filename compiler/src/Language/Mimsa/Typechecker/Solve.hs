@@ -9,6 +9,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Data.Map as M
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
@@ -50,7 +51,7 @@ solve = go mempty
   where
     go s [] = pure s
     go s1 (lc : rest) =
-      case lc of
+      case debugPretty "constraint" lc of
         ShouldEqual a b -> do
           s2 <- unify a b
           go (s2 <> s1) (applyToConstraint s2 <$> rest)

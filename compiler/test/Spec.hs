@@ -37,6 +37,7 @@ import qualified Test.Typechecker.AnnotateExpression as AnnotateExpression
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.Infer as Infer
 import qualified Test.Typechecker.TypeError as TypeError
+import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
 
 main :: IO ()
@@ -72,4 +73,5 @@ main =
     Pattern.spec
     RemoveBinding.spec
     AnnotateExpression.spec
+    Typecheck.spec
     Infer.spec

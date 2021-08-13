@@ -1,45 +1,44 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Language.Mimsa.Typechecker.TcMonad where
+module Language.Mimsa.Typechecker.TcMonad
+  ( defaultTcState,
+    getUnknown,
+    getNextUniVar,
+    addTypedHole,
+    typeFromUniVar,
+    getTypedHoles,
+    TypecheckState (..),
+    variableToTypeIdentifier,
+  )
+where
 
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Monad.State (MonadState, State, gets, modify, runState)
+import Control.Monad.State (MonadState, gets, modify)
 import Data.Coerce
 import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
-
-type TcMonad = ExceptT TypeError (ReaderT Swaps (State TypecheckState))
 
 data TypecheckState = TypecheckState
   { tcsNum :: Int,
     tcsTypedHoles :: Map Name (Annotation, Int)
   }
 
-runTcMonad ::
-  Swaps ->
-  TcMonad a ->
-  Either TypeError a
-runTcMonad swaps value =
-  fst either'
-  where
-    defaultState =
-      TypecheckState 0 mempty
-    either' =
-      runState
-        (runReaderT (runExceptT value) swaps)
-        defaultState
+defaultTcState :: TypecheckState
+defaultTcState = TypecheckState 0 mempty
 
 getNextUniVar :: (MonadState TypecheckState m) => m Int
 getNextUniVar = do
   nextUniVar <- gets tcsNum
   modify (\s -> s {tcsNum = nextUniVar + 1})
   pure nextUniVar
+
+typeFromUniVar :: Annotation -> Int -> MonoType
+typeFromUniVar ann = MTVar ann . TVNum
+
+getUnknown :: (MonadState TypecheckState m) => Annotation -> m MonoType
+getUnknown ann = typeFromUniVar ann <$> getNextUniVar
 
 -- | Get a new unknown for a typed hole and return it's monotype
 addTypedHole ::
@@ -60,9 +59,6 @@ getTypedHoles (Substitutions subs) = do
         Just a -> a
         Nothing -> MTVar ann (TVNum i)
   pure $ fmap getMonoType holes
-
-getUnknown :: (MonadState TypecheckState m) => Annotation -> m MonoType
-getUnknown ann = MTVar ann . TVNum <$> getNextUniVar
 
 variableToTypeIdentifier :: Variable -> TypeIdentifier
 variableToTypeIdentifier (NamedVar n) = TVName (coerce n)

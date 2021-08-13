@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Infer (inferAndSubst) where
+module Language.Mimsa.Typechecker.Infer (inferAndSubst, runInferM, infer) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -16,6 +16,7 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -31,9 +32,6 @@ import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
 type InferM = ExceptT TypeError (WriterT [Constraint] (ReaderT Swaps (State TypecheckState)))
-
-defaultTcState :: TypecheckState
-defaultTcState = TypecheckState 0 mempty
 
 runInferM ::
   Swaps ->
@@ -65,8 +63,8 @@ inferAndSubst typeMap swaps env expr = do
   (tcState2, subs) <-
     runSolveM swaps tcState (solve constraints)
   (_, _, tyExpr') <-
-    runInferM swaps tcState2 (typedHolesCheck typeMap subs tyExpr)
-  pure (subs, normaliseType (applySubst subs tyExpr'))
+    runInferM (debugPretty "swaps" swaps) tcState2 (typedHolesCheck typeMap subs tyExpr)
+  pure (subs, normaliseType $ applySubst (debugPretty "subs" subs) (debugPretty "tyExpr" tyExpr'))
 
 polymorphicVersionOf :: Scheme -> InferM MonoType
 polymorphicVersionOf (Scheme [] ty) = pure ty
@@ -153,8 +151,16 @@ findActualBindingInSwaps (NamedVar var) = do
     _ -> pure (NamedVar var)
 findActualBindingInSwaps a = pure a
 
--- to allow recursion we make a type for the let binding in it's own expression
--- we may need to unify tyUnknown and tyExpr if it struggles with complex stuff
+{-
+bindingIsRecursive :: Variable -> TcExpr -> Bool
+bindingIsRecursive var = getAny . withMonoid findBinding
+  where
+    findBinding (MyVar _ binding) | binding == var = (False, Any True)
+    findBinding _ = (True, mempty)
+-}
+
+-- if type is recursive we make it monomorphic
+-- if not, we make it polymorphic
 inferLetBinding ::
   Environment ->
   Annotation ->
@@ -163,14 +169,18 @@ inferLetBinding ::
   TcExpr ->
   InferM MonoType
 inferLetBinding env ann binder expr body = do
-  tyUnknown <- getUnknown ann
+  tyUniVar <- getNextUniVar
+  let tyUnknown = typeFromUniVar ann tyUniVar
   binderInExpr <- findActualBindingInSwaps binder
-  let newEnv1 = envFromVar binderInExpr (Scheme mempty tyUnknown) <> env
+  let newEnv1 = envFromVar binderInExpr (Scheme [] tyUnknown) <> env
   tyExpr <- infer newEnv1 expr
-  let newEnv2 = envFromVar binder (generalise tyExpr) <> newEnv1
-  tyBody <- infer newEnv2 body
-  tell [ShouldEqual tyUnknown tyExpr]
-  pure tyBody
+  tell
+    [ ShouldEqual tyUnknown (debugPretty "let expr" tyExpr)
+    ]
+  let newEnv2 =
+        envFromVar binder (generalise newEnv1 tyExpr)
+          <> newEnv1
+  infer newEnv2 body
 
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> InferM MonoType
 inferIf env condition thenExpr elseExpr = do
@@ -181,7 +191,7 @@ inferIf env condition thenExpr elseExpr = do
     [ ShouldEqual tyThen tyElse,
       ShouldEqual tyCond (MTPrim (getAnnotation condition) MTBool)
     ]
-  pure tyElse
+  pure tyThen
 
 -----
 
