@@ -12,7 +12,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store.StoreExpression
 import Language.Mimsa.Types.Swaps
-import Language.Mimsa.Types.Typechecker.MonoType
+import Language.Mimsa.Types.Typechecker
 
 data ResolvedExpression ann = ResolvedExpression
   { reMonoType :: MonoType,

@@ -9,9 +9,9 @@ import Control.Monad.Except (liftEither)
 import Data.Functor (($>))
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -66,7 +66,7 @@ addTypeToProject input dt = do
   -- create storeExpr for new datatype
   resolvedTypeExpr <-
     liftEither $
-      getTypecheckedStoreExpression
+      Actions.getTypecheckedStoreExpression
         input
         project
         ( MyData
@@ -90,7 +90,7 @@ createCodegenFunction project dt =
           ( \(name, expr) -> do
               resolvedExpr <-
                 liftEither $
-                  getTypecheckedStoreExpression
+                  Actions.getTypecheckedStoreExpression
                     (prettyPrint expr)
                     project
                     expr
@@ -125,5 +125,5 @@ createCodegenFunction project dt =
       let realFunctionMap = M.mapWithKey (\k _ -> MyVar mempty k) funcMap
       let recordExpr = MyRecord mempty realFunctionMap
       re <-
-        liftEither $ getTypecheckedStoreExpression (prettyPrint recordExpr) (project <> newProjectItems) recordExpr
+        liftEither $ Actions.getTypecheckedStoreExpression (prettyPrint recordExpr) (project <> newProjectItems) recordExpr
       pure (Just re)

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c221b74a77f716adf82b9889092e213b3fef73696d4d35c489730058b10a8953
+-- hash: 5c6eb9e2573e69dad18239c4aaaa9c296b1279d2304a7d40c07ede419be132be
 
 name:           mimsa
 version:        0.1.0.0
@@ -28,7 +28,6 @@ source-repository head
 library
   exposed-modules:
       Language.Mimsa
-      Language.Mimsa.Actions
       Language.Mimsa.Actions.AddUnitTest
       Language.Mimsa.Actions.BindExpression
       Language.Mimsa.Actions.BindType
@@ -37,6 +36,7 @@ library
       Language.Mimsa.Actions.Graph
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.RemoveBinding
+      Language.Mimsa.Actions.Shared
       Language.Mimsa.Actions.Types
       Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript
@@ -139,6 +139,7 @@ library
       Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.Infer
       Language.Mimsa.Typechecker.NormaliseTypes
+      Language.Mimsa.Typechecker.Solve
       Language.Mimsa.Typechecker.TcMonad
       Language.Mimsa.Typechecker.TypedHoles
       Language.Mimsa.Typechecker.Unify
@@ -188,6 +189,7 @@ library
       Language.Mimsa.Types.SubstitutedExpression
       Language.Mimsa.Types.Swaps
       Language.Mimsa.Types.Typechecker
+      Language.Mimsa.Types.Typechecker.Constraint
       Language.Mimsa.Types.Typechecker.Environment
       Language.Mimsa.Types.Typechecker.MonoType
       Language.Mimsa.Types.Typechecker.Scheme
@@ -352,7 +354,7 @@ test-suite mimsa-test
       Test.Store.Substitutor
       Test.Store.UpdateDeps
       Test.Typechecker.Exhaustiveness
-      Test.Typechecker.Typechecker
+      Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
       Test.Utils.Helpers

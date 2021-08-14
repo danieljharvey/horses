@@ -11,8 +11,8 @@ import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Set (Set)
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
-import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Compile as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Backend
   ( copyLocalOutput,
   )
@@ -37,7 +37,7 @@ doOutputJS ::
 doOutputJS project input expr = do
   let runtime = exportRuntime
   (ResolvedExpression _ storeExpr _ _ _) <-
-    mimsaFromEither $ getTypecheckedStoreExpression input project expr
+    mimsaFromEither $ Actions.getTypecheckedStoreExpression input project expr
   (_, (rootExprHash, exprHashes)) <-
     toReplM project (Actions.compile runtime input storeExpr)
   outputPath <- doCopying runtime exprHashes rootExprHash

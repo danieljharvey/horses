@@ -3,14 +3,11 @@
 
 module Language.Mimsa.Repl.Actions
   ( doReplAction,
-    evaluateText,
-    resolveStoreExpression,
   )
 where
 
 import Data.Functor
 import Data.Text (Text)
-import Language.Mimsa.Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Repl.Actions.Compile
 import Language.Mimsa.Repl.Actions.Evaluate

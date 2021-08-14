@@ -1,23 +1,37 @@
-module Language.Mimsa.Typechecker.Generalise where
+module Language.Mimsa.Typechecker.Generalise
+  ( generalise,
+  )
+where
 
-import Data.List (nub, (\\))
+import Data.List ((\\))
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-freeVars :: MonoType -> [TypeIdentifier]
-freeVars (MTVar _ b) = [b]
-freeVars (MTFunction _ t1 t2) = freeVars t1 <> freeVars t2
-freeVars (MTPair _ a b) = freeVars a <> freeVars b
-freeVars (MTRecord _ as) = mconcat (freeVars . snd <$> M.toList as)
-freeVars (MTRecordRow _ as rest) =
-  mconcat (freeVars . snd <$> M.toList as)
-    <> freeVars rest
-freeVars (MTArray _ a) = freeVars a
-freeVars (MTPrim _ _) = mempty
-freeVars (MTData _ _ as) = mconcat (freeVars <$> as)
+freeTypeVars :: MonoType -> [TypeIdentifier]
+freeTypeVars (MTVar _ b) = [b]
+freeTypeVars (MTFunction _ t1 t2) = freeTypeVars t1 <> freeTypeVars t2
+freeTypeVars (MTPair _ a b) = freeTypeVars a <> freeTypeVars b
+freeTypeVars (MTRecord _ as) = mconcat (freeTypeVars . snd <$> M.toList as)
+freeTypeVars (MTRecordRow _ as rest) =
+  mconcat (freeTypeVars . snd <$> M.toList as)
+    <> freeTypeVars rest
+freeTypeVars (MTArray _ a) = freeTypeVars a
+freeTypeVars (MTPrim _ _) = mempty
+freeTypeVars (MTData _ _ as) = foldMap freeTypeVars as
 
-generalise :: Substitutions -> MonoType -> Scheme
-generalise (Substitutions subst) ty = Scheme free ty
+freeTypeVarsScheme :: Scheme -> [TypeIdentifier]
+freeTypeVarsScheme (Scheme vars t) =
+  freeTypeVars t \\ vars
+
+freeTypeVarsCtx :: Environment -> [TypeIdentifier]
+freeTypeVarsCtx (Environment env _ _) =
+  foldMap freeTypeVarsScheme (M.elems env)
+
+generalise :: Environment -> MonoType -> Scheme
+generalise env ty =
+  Scheme (S.toList $ S.fromList vars) ty
   where
-    free = nub $ freeVars ty \\ map fst (M.toList subst)
+    vars =
+      freeTypeVars ty \\ freeTypeVarsCtx env

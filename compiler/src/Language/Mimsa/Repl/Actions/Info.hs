@@ -6,7 +6,7 @@ module Language.Mimsa.Repl.Actions.Info
 where
 
 import Data.Text (Text)
-import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -25,7 +25,7 @@ doInfo ::
 doInfo env input expr = do
   (ResolvedExpression type' _ _ _ _) <-
     mimsaFromEither $
-      getTypecheckedStoreExpression input env expr
+      Actions.getTypecheckedStoreExpression input env expr
   replOutput $
     prettyPrint expr
       <> "/n:: "

@@ -14,12 +14,12 @@ import Data.Maybe (fromJust)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Persistence
-import Language.Mimsa.Repl
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -32,7 +32,7 @@ import Test.Utils.Helpers
 
 eval :: Project Annotation -> Text -> Either Text Javascript
 eval env input =
-  case evaluateText env input of
+  case Actions.evaluateText env input of
     Left e -> Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
       first
@@ -45,7 +45,7 @@ eval env input =
 
 evalModule :: Project Annotation -> Text -> IO (Either Text Javascript)
 evalModule env input =
-  case evaluateText env input of
+  case Actions.evaluateText env input of
     Left e -> pure $ Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) -> do
       let a = first prettyPrint (outputCommonJS dataTypes storeExpr)

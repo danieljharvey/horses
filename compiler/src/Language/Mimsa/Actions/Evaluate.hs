@@ -8,9 +8,9 @@ where
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Text (Text)
-import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.DepGraph
@@ -33,7 +33,7 @@ evaluate ::
 evaluate input expr = do
   project <- Actions.getProject
   (ResolvedExpression mt se expr' scope' swaps) <-
-    liftEither $ getTypecheckedStoreExpression input project expr
+    liftEither $ Actions.getTypecheckedStoreExpression input project expr
   interpretedExpr <-
     liftEither (first InterpreterErr (interpret scope' swaps expr'))
   graphviz <- Actions.graphExpression se

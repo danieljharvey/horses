@@ -8,7 +8,7 @@ where
 
 import Data.Map (Map)
 import qualified Data.Map as M
-import Language.Mimsa.Actions
+import Language.Mimsa.Actions.Shared
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST

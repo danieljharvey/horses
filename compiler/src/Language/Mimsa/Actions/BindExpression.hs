@@ -5,9 +5,9 @@ module Language.Mimsa.Actions.BindExpression (bindExpression) where
 import Control.Monad.Except (liftEither)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
-import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.UnitTest
@@ -27,7 +27,7 @@ bindExpression ::
 bindExpression expr name input = do
   project <- Actions.getProject
   re@(ResolvedExpression _type' storeExpr _ _ _) <-
-    liftEither $ getTypecheckedStoreExpression input project expr
+    liftEither $ Actions.getTypecheckedStoreExpression input project expr
   Actions.bindStoreExpression storeExpr name
   graphviz <- Actions.graphExpression storeExpr
   case lookupBindingName project name of

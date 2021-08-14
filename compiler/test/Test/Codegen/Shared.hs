@@ -26,7 +26,7 @@ import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Actions
+import Language.Mimsa.Actions.Shared
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST

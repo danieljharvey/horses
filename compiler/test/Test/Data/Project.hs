@@ -12,8 +12,8 @@ import Data.Coerce
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Parser (parseExpr)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
@@ -206,8 +206,8 @@ addExprBinding ::
   Either (Error Annotation) (Project Annotation)
 addExprBinding expr name env = do
   (ResolvedExpression _ se _ _ _) <-
-    getTypecheckedStoreExpression (prettyPrint expr) env expr
+    Actions.getTypecheckedStoreExpression (prettyPrint expr) env expr
   let seUnit = se $> ()
   let hash = coerce $ snd $ contentAndHash (storeExpression seUnit)
-  let newEnv = fromItem name se hash
+  let newEnv = Actions.fromItem name se hash
   pure (env <> newEnv)

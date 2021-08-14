@@ -13,11 +13,11 @@ import Data.Functor (($>))
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Repl
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Types.AST
@@ -41,7 +41,7 @@ eval ::
   Text ->
   IO (Either Text (Type (), Expr Name ()))
 eval env input =
-  case evaluateText env input of
+  case Actions.evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
     Right (ResolvedExpression mt se expr' scope' swaps) -> do
       saveRegressionData (se $> ())
@@ -525,16 +525,21 @@ spec =
                       mempty
                       ( MTRecordRow
                           mempty
-                          ( M.fromList
-                              [ ("one", MTVar mempty (tvFree 3)),
-                                ( "two",
-                                  MTVar mempty (tvFree 4)
-                                )
-                              ]
+                          ( M.singleton
+                              "two"
+                              (MTVar mempty (tvFree 3))
                           )
-                          (unknown 5)
+                          ( MTRecordRow
+                              mempty
+                              ( M.singleton
+                                  "one"
+                                  ( MTVar mempty (tvFree 4)
+                                  )
+                              )
+                              (unknown 5)
+                          )
                       )
-                      (MTVar mempty (tvFree 3))
+                      (MTVar mempty (tvFree 4))
                   )
               )
         it "if ?missingFn then 1 else 2" $ do

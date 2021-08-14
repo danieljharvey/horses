@@ -4,7 +4,7 @@ module Language.Mimsa.Store.UpdateDeps
   )
 where
 
-import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Types.AST
@@ -42,7 +42,7 @@ updateStoreExpressionBindings project newBindings se = do
           }
   let expr = storeExpression se
   (ResolvedExpression _ rStoreExpr _ _ _) <-
-    getTypecheckedStoreExpression (prettyPrint expr) newProject expr
+    Actions.getTypecheckedStoreExpression (prettyPrint expr) newProject expr
   pure rStoreExpr
 
 combine :: Bindings -> Bindings -> Bindings

@@ -22,6 +22,7 @@ import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce (coerce)
 import Data.Either (isRight)
 import Data.FileEmbed
+import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Swagger
@@ -33,6 +34,7 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
+import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
@@ -145,9 +147,11 @@ taskServerRuntime =
 
 runtimeIsValid :: Runtime a -> MonoType -> Either TypeError ()
 runtimeIsValid runtime mt =
-  runTcMonad
+  runSolveM
     mempty
-    $ unify (rtMonoType runtime) mt >> pure ()
+    defaultTcState
+    (unify (rtMonoType runtime) mt >> pure ())
+    $> ()
 
 --------
 

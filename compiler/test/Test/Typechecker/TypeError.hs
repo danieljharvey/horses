@@ -8,7 +8,7 @@ where
 import Data.List (isInfixOf)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DisplayError
 import Language.Mimsa.Types.Error
@@ -21,7 +21,7 @@ textContains needle haystack =
 
 getTypeError :: Text -> Maybe Text
 getTypeError input =
-  case evaluateText testStdlib input of
+  case Actions.evaluateText testStdlib input of
     Left e -> Just (prettyPrint e)
     _ -> Nothing
 

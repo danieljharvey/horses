@@ -11,7 +11,7 @@ import qualified Data.Map as M
 import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Server.Handlers
@@ -59,6 +59,6 @@ typeSearchEndpoint ::
 typeSearchEndpoint mimsaEnv (TypeSearchRequest projectHash input) = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' projectHash
-  typeMap <- handleEither InternalError (getTypeMap project)
+  typeMap <- handleEither InternalError (Actions.getTypeMap project)
   result <- handleEither UserError (typeSearchFromText typeMap input)
   pure (TypeSearchResponse (prettyPrint <$> M.keys result))
