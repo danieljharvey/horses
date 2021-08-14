@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.DataTypes
-  ( defaultEnv,
+  ( envWithBuiltInTypes,
     builtInTypes,
     lookupBuiltIn,
     storeDataDeclaration,
@@ -27,10 +27,9 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-defaultEnv :: Substitutions -> Environment
-defaultEnv (Substitutions subst) = Environment schemes dts mempty
+envWithBuiltInTypes :: Environment
+envWithBuiltInTypes = Environment mempty dts mempty
   where
-    schemes = Scheme mempty <$> subst
     makeDT (name, _) = M.singleton name (DataType name mempty mempty)
     dts = mconcat $ makeDT <$> M.toList builtInTypes
 

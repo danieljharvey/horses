@@ -3,9 +3,7 @@
 module Language.Mimsa.Typechecker.TcMonad
   ( defaultTcState,
     getUnknown,
-    getNextUniVar,
     addTypedHole,
-    typeFromUniVar,
     getTypedHoles,
     TypecheckState (..),
     variableToTypeIdentifier,
@@ -52,7 +50,10 @@ addTypedHole ann name = do
   pure $ MTVar ann (TVNum i)
 
 -- todo - look up index in substitutions to get type
-getTypedHoles :: (MonadState TypecheckState m) => Substitutions -> m (Map Name MonoType)
+getTypedHoles ::
+  (MonadState TypecheckState m) =>
+  Substitutions ->
+  m (Map Name MonoType)
 getTypedHoles (Substitutions subs) = do
   holes <- gets tcsTypedHoles
   let getMonoType = \(ann, i) -> case M.lookup (TVNum i) subs of

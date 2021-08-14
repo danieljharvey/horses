@@ -34,7 +34,6 @@ import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
-import qualified Test.Typechecker.Infer as Infer
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
@@ -72,4 +71,3 @@ main =
     Pattern.spec
     RemoveBinding.spec
     Typecheck.spec
-    Infer.spec

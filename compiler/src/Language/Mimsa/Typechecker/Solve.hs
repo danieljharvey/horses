@@ -8,7 +8,6 @@ module Language.Mimsa.Typechecker.Solve (solve, runSolveM, SolveM) where
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
@@ -42,8 +41,8 @@ solve ::
 solve = go mempty
   where
     go s [] = pure s
-    go s1 (lc : rest) =
-      case debugPretty "constraint" lc of
+    go s1 (constraint : rest) =
+      case constraint of
         ShouldEqual a b -> do
           s2 <- unify a b
           go (s2 <> s1) (applyToConstraint (s1 <> s2) <$> rest)

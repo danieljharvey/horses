@@ -6,7 +6,6 @@ where
 import Data.List ((\\))
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Language.Mimsa.Logging
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
@@ -32,7 +31,7 @@ freeTypeVarsCtx (Environment env _ _) =
 
 generalise :: Environment -> MonoType -> Scheme
 generalise env ty =
-  debugPretty "generalised" $ Scheme (S.toList $ S.fromList vars) ty
+  Scheme (S.toList $ S.fromList vars) ty
   where
     vars =
       freeTypeVars ty \\ freeTypeVarsCtx env

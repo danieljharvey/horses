@@ -16,7 +16,6 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -58,13 +57,13 @@ inferAndSubst ::
   TcExpr ->
   Either TypeError (Substitutions, MonoType)
 inferAndSubst typeMap swaps env expr = do
-  (constraints, tcState, tyExpr) <-
-    runInferM swaps defaultTcState (infer env expr)
-  (tcState2, subs) <-
-    runSolveM swaps tcState (solve (debugPretty "original constraints" constraints))
-  (_, _, tyExpr') <-
-    runInferM (debugPretty "swaps" swaps) tcState2 (typedHolesCheck typeMap subs tyExpr)
-  pure (subs, normaliseType $ applySubst (debugPretty "subs" subs) (debugPretty "tyExpr" tyExpr'))
+  let tcAction = do
+        (tyExpr, constraints) <- listen (infer (envWithBuiltInTypes <> env) expr)
+        subs <- solve constraints
+        tyExpr' <- typedHolesCheck typeMap subs tyExpr
+        pure (subs, tyExpr')
+  (_, _, (subs, tyExpr)) <- runInferM swaps defaultTcState tcAction
+  pure (subs, normaliseType $ applySubst subs tyExpr)
 
 instantiate ::
   Scheme ->
@@ -169,8 +168,7 @@ inferLetBinding ::
   TcExpr ->
   InferM MonoType
 inferLetBinding env ann binder expr body = do
-  let exprIsRecursive = debugPretty "isRecursive" (bindingIsRecursive binder expr)
-  if exprIsRecursive
+  if bindingIsRecursive binder expr
     then inferRecursiveLetBinding env ann binder expr body
     else do
       -- we have to run substitutions on this before "saving" it
@@ -194,7 +192,6 @@ inferRecursiveLetBinding env ann binder expr body = do
   tyExprAsFix <- infer env (MyLambda mempty binderInExpr expr)
   tyRec <- getUnknown ann
   tyExpr <- getUnknown ann
-
   tell
     [ ShouldEqual tyExprAsFix (MTFunction mempty tyRec tyRec),
       ShouldEqual tyExprAsFix (MTFunction ann tyRec tyExpr)
@@ -202,14 +199,6 @@ inferRecursiveLetBinding env ann binder expr body = do
   let newEnv2 =
         envFromVar binder (Scheme [] tyRec)
           <> env
-  {-
-  binderInExpr <- findActualBindingInSwaps binder
-  tyUnknown <- getUnknown ann
-  let newEnv1 = envFromVar binderInExpr (Scheme [] tyUnknown) <> env
-  tyExpr <- infer newEnv1 expr
-  let newEnv2 =
-        envFromVar binder (generalise env tyExpr)
-          <> newEnv1-}
   infer newEnv2 body
 
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> InferM MonoType
@@ -457,7 +446,7 @@ inferLetPattern ::
 inferLetPattern env ann pat expr body = do
   (tyPattern, newEnv) <- inferPattern env pat
   tyExpr <- infer env expr
-  tyBody <- infer (debugPretty "letpattern newenv" newEnv) body
+  tyBody <- infer newEnv body
   tell
     [ ShouldEqual tyPattern tyExpr
     ]
