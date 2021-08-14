@@ -474,10 +474,8 @@ inferLambda ::
   Variable ->
   TcExpr ->
   TcMonad (Substitutions, MonoType)
-inferLambda env@(Environment env' _ _) ann binder body = do
-  tyBinder <- case M.lookup (variableToTypeIdentifier binder) env' of
-    Just (Scheme _ found) -> pure found
-    _ -> getUnknown ann
+inferLambda env ann binder body = do
+  tyBinder <- getUnknown ann
   let tmpCtx =
         envFromVar binder (Scheme [] tyBinder) <> env
   (s1, tyBody) <- infer tmpCtx body
