@@ -23,7 +23,7 @@ doInfo ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doInfo env input expr = do
-  (ResolvedExpression type' _ _ _ _ _) <-
+  (ResolvedExpression type' _ _ _ _) <-
     mimsaFromEither $
       Actions.getTypecheckedStoreExpression input env expr
   replOutput $

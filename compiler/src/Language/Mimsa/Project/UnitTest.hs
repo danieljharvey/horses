@@ -28,7 +28,7 @@ createUnitTest ::
   Either (Error Annotation) UnitTest
 createUnitTest project storeExpr testName = do
   let testExpr = createUnitTestExpr (storeExpression storeExpr)
-  (ResolvedExpression _ _ rExpr rScope rSwaps _) <-
+  (ResolvedExpression _ _ rExpr rScope rSwaps) <-
     Actions.getTypecheckedStoreExpression (prettyPrint testExpr) project testExpr
   result <- first InterpreterErr (interpret rScope rSwaps rExpr)
   let deps =

@@ -27,7 +27,7 @@ doTree ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doTree env input expr = do
-  (ResolvedExpression _ storeExpr _ _ _ _) <-
+  (ResolvedExpression _ storeExpr _ _ _) <-
     mimsaFromEither $
       Actions.getTypecheckedStoreExpression input env expr
   let graph = createDepGraph "root" (prjStore env) storeExpr
@@ -40,7 +40,7 @@ doGraph ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doGraph project input expr = do
-  (ResolvedExpression _ storeExpr _ _ _ _) <-
+  (ResolvedExpression _ storeExpr _ _ _) <-
     mimsaFromEither $
       Actions.getTypecheckedStoreExpression input project expr
   (_, graphviz) <-

@@ -30,7 +30,7 @@ startInference = fmap snd . inferAndSubst mempty mempty mempty
 
 spec :: Spec
 spec = do
-  fdescribe "Typecheck" $ do
+  describe "Typecheck" $ do
     describe "basic cases" $ do
       it "infers int" $ do
         let expr = int 1

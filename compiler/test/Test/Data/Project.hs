@@ -205,7 +205,7 @@ addExprBinding ::
   Project Annotation ->
   Either (Error Annotation) (Project Annotation)
 addExprBinding expr name env = do
-  (ResolvedExpression _ se _ _ _ _) <-
+  (ResolvedExpression _ se _ _ _) <-
     Actions.getTypecheckedStoreExpression (prettyPrint expr) env expr
   let seUnit = se $> ()
   let hash = coerce $ snd $ contentAndHash (storeExpression seUnit)

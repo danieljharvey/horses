@@ -26,7 +26,7 @@ bindExpression ::
   Actions.ActionM (ExprHash, Int, ResolvedExpression Annotation, [Graphviz])
 bindExpression expr name input = do
   project <- Actions.getProject
-  re@(ResolvedExpression _type' storeExpr _ _ _ _) <-
+  re@(ResolvedExpression _type' storeExpr _ _ _) <-
     liftEither $ Actions.getTypecheckedStoreExpression input project expr
   Actions.bindStoreExpression storeExpr name
   graphviz <- Actions.graphExpression storeExpr

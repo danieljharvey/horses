@@ -7,7 +7,6 @@ module Language.Mimsa.Types.ResolvedExpression where
 
 import qualified Data.Aeson as JSON
 import GHC.Generics
-import Language.Mimsa.Typechecker.AnnotateExpression
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
@@ -20,8 +19,7 @@ data ResolvedExpression ann = ResolvedExpression
     reStoreExpression :: StoreExpression ann,
     reExpression :: Expr Variable ann,
     reScope :: Scope ann,
-    reSwaps :: Swaps,
-    reTypes :: [TypedVariable]
+    reSwaps :: Swaps
   }
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.ToJSON)

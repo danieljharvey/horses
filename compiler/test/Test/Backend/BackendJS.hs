@@ -34,7 +34,7 @@ eval :: Project Annotation -> Text -> Either Text Javascript
 eval env input =
   case Actions.evaluateText env input of
     Left e -> Left $ prettyPrint e
-    Right (ResolvedExpression _ storeExpr _ _ _ _) ->
+    Right (ResolvedExpression _ storeExpr _ _ _) ->
       first
         prettyPrint
         ( renderWithFunction
@@ -47,7 +47,7 @@ evalModule :: Project Annotation -> Text -> IO (Either Text Javascript)
 evalModule env input =
   case Actions.evaluateText env input of
     Left e -> pure $ Left $ prettyPrint e
-    Right (ResolvedExpression _ storeExpr _ _ _ _) -> do
+    Right (ResolvedExpression _ storeExpr _ _ _) -> do
       let a = first prettyPrint (outputCommonJS dataTypes storeExpr)
        in do
             T.putStrLn (prettyPrint a)
