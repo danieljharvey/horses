@@ -86,5 +86,5 @@ createGraphviz (Func (DepInfo (rootName, exprHash)) deps) =
 
 prettyGraphviz :: [Graphviz] -> Text
 prettyGraphviz gv =
-  let parts = (\a -> "  " <> a <> "\n") . prettyPrint <$> (S.toList $ S.fromList gv)
+  let parts = (\a -> "  " <> a <> "\n") . prettyPrint <$> S.toList (S.fromList gv)
    in "strict digraph {\n" <> mconcat parts <> "}"

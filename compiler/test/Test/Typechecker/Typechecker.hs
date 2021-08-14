@@ -243,6 +243,63 @@ spec = do
         let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
         startInference mempty mempty expr `shouldBe` expected
 
+      it "Tuple destructuring (pattern match)" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "fst")
+                ( MyLambda
+                    mempty
+                    (named "tuple")
+                    ( MyPatternMatch
+                        mempty
+                        (MyVar mempty (named "tuple"))
+                        [ ( PPair
+                              mempty
+                              (PVar mempty (named "a"))
+                              (PVar mempty (named "b")),
+                            MyVar mempty (named "a")
+                          )
+                        ]
+                    )
+                )
+                ( MyLet
+                    mempty
+                    (named "pair")
+                    (MyPair mempty (int 1) (bool True))
+                    (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "pair")))
+                )
+        let expected = Right (MTPrim mempty MTInt)
+        startInference mempty mempty expr `shouldBe` expected
+
+      it "Tuple destructuring" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "fst")
+                ( MyLambda
+                    mempty
+                    (named "tuple")
+                    ( MyLetPattern
+                        mempty
+                        ( PPair
+                            mempty
+                            (PVar mempty (named "a"))
+                            (PVar mempty (named "b"))
+                        )
+                        (MyVar mempty (named "tuple"))
+                        (MyVar mempty (named "a"))
+                    )
+                )
+                ( MyLet
+                    mempty
+                    (named "pair")
+                    (MyPair mempty (int 1) (bool True))
+                    (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "pair")))
+                )
+        let expected = Right (MTPrim mempty MTInt)
+        startInference mempty mempty expr `shouldBe` expected
+
       it "We can use identity with two different datatypes in one expression" $ do
         let lambda =
               MyLambda
