@@ -15,7 +15,7 @@ freeVars (MTRecordRow _ as rest) =
     <> freeVars rest
 freeVars (MTArray _ a) = freeVars a
 freeVars (MTPrim _ _) = mempty
-freeVars MTData {} = mempty
+freeVars (MTData _ _ as) = mconcat (freeVars <$> as)
 
 generalise :: Substitutions -> MonoType -> Scheme
 generalise (Substitutions subst) ty = Scheme free ty
