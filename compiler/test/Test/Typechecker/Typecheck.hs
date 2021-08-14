@@ -287,7 +287,7 @@ spec = do
                 (MTPrim mempty MTInt)
             )
 
-      it "Uses a polymorphic function twice with conflicting types" $ do
+      fit "Uses a polymorphic function twice with conflicting types" $ do
         let expr =
               MyLet
                 mempty

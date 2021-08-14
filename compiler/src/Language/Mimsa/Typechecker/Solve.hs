@@ -54,7 +54,7 @@ solve = go mempty
       case debugPretty "constraint" lc of
         ShouldEqual a b -> do
           s2 <- unify a b
-          go (s2 <> s1) (applyToConstraint s2 <$> rest)
+          go (s1 <> s2) (applyToConstraint s2 <$> rest)
         InstanceOf a scheme -> do
           (_, tyA) <- instantiate scheme
           go s1 $ [ShouldEqual a tyA] <> rest
