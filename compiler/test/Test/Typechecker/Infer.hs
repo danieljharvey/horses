@@ -23,7 +23,7 @@ infer' expr = do
 
 spec :: Spec
 spec = do
-  fdescribe "Infer" $ do
+  xdescribe "Infer" $ do
     it "infers int" $ do
       let expr = int 1
       infer' expr `shouldBe` Right ([], MTPrim mempty MTInt)

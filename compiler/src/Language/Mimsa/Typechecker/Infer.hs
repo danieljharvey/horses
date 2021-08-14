@@ -151,13 +151,11 @@ findActualBindingInSwaps (NamedVar var) = do
     _ -> pure (NamedVar var)
 findActualBindingInSwaps a = pure a
 
-{-
 bindingIsRecursive :: Variable -> TcExpr -> Bool
 bindingIsRecursive var = getAny . withMonoid findBinding
   where
     findBinding (MyVar _ binding) | binding == var = (False, Any True)
     findBinding _ = (True, mempty)
--}
 
 -- if type is recursive we make it monomorphic
 -- if not, we make it polymorphic
@@ -169,18 +167,50 @@ inferLetBinding ::
   TcExpr ->
   InferM MonoType
 inferLetBinding env ann binder expr body = do
-  tyUniVar <- getNextUniVar
-  let tyUnknown = typeFromUniVar ann tyUniVar
+  let exprIsRecursive = debugPretty "isRecursive" (bindingIsRecursive binder expr)
+  if exprIsRecursive
+    then inferRecursiveLetBinding env ann binder expr body
+    else do
+      tyExpr <- infer env expr
+      let newEnv =
+            envFromVar binder (generalise env tyExpr)
+              <> env
+      infer newEnv body
+
+inferRecursiveLetBinding ::
+  Environment ->
+  Annotation ->
+  Variable ->
+  TcExpr ->
+  TcExpr ->
+  InferM MonoType
+inferRecursiveLetBinding env ann binder expr body = do
+  {-
   binderInExpr <- findActualBindingInSwaps binder
+  tyExprAsFix <- infer env (MyLambda mempty binderInExpr expr)
+  tyRec <- getUnknown ann
+  tyExpr <- getUnknown ann
+
+  tell $
+    debugPretty
+      "new constraint"
+      [ ShouldEqual tyExprAsFix (MTFunction mempty tyRec tyRec),
+        ShouldEqual tyExprAsFix (MTFunction ann tyRec tyExpr)
+      ]
+  let newEnv2 =
+        envFromVar binder (Scheme [] tyExpr)
+          <> env-}
+  binderInExpr <- findActualBindingInSwaps binder
+  tyUnknown <- getUnknown ann
   let newEnv1 = envFromVar binderInExpr (Scheme [] tyUnknown) <> env
   tyExpr <- infer newEnv1 expr
-  tell
-    [ ShouldEqual tyUnknown (debugPretty "let expr" tyExpr)
-    ]
   let newEnv2 =
-        envFromVar binder (generalise newEnv1 tyExpr)
+        envFromVar binder (generalise env tyUnknown)
           <> newEnv1
-  infer newEnv2 body
+
+  tyBody <- infer newEnv2 body
+  tell [ShouldEqual tyUnknown tyExpr]
+  pure tyBody
 
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> InferM MonoType
 inferIf env condition thenExpr elseExpr = do

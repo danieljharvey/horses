@@ -47,7 +47,7 @@ spec = do
       it "infers let binding with usage" $ do
         let expr = MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))
         startInference expr `shouldBe` Right (MTPrim mempty MTInt)
-      fit "infers let binding with recursion 1" $ do
+      it "infers let binding with recursion 1" $ do
         let expr =
               MyLet
                 mempty
@@ -69,7 +69,7 @@ spec = do
                 (MyApp mempty (MyVar mempty (named "dec")) (bool False))
         startInference expr `shouldBe` Right (MTPrim mempty MTBool)
 
-      fit "infers let binding with recursion 2 (flipped if cases)" $ do
+      it "infers let binding with recursion 2 (flipped if cases)" $ do
         let expr =
               MyLet
                 mempty
@@ -287,7 +287,7 @@ spec = do
                 (MTPrim mempty MTInt)
             )
 
-      fit "Uses a polymorphic function twice with conflicting types" $ do
+      it "Uses a polymorphic function twice with conflicting types" $ do
         let expr =
               MyLet
                 mempty
