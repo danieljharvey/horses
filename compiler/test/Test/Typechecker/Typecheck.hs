@@ -30,8 +30,8 @@ startInference = fmap snd . inferAndSubst mempty mempty mempty
 
 spec :: Spec
 spec = do
-  describe "Typecheck" $ do
-    fdescribe "basic cases" $ do
+  fdescribe "Typecheck" $ do
+    describe "basic cases" $ do
       it "infers int" $ do
         let expr = int 1
         startInference expr `shouldBe` Right (MTPrim mempty MTInt)
@@ -47,6 +47,28 @@ spec = do
       it "infers let binding with usage" $ do
         let expr = MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))
         startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+      it "infers let binding with recursion 0" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "dec")
+                ( MyLambda
+                    mempty
+                    (named "bool")
+                    ( MyIf
+                        mempty
+                        (MyVar mempty (named "bool"))
+                        (bool True)
+                        ( MyApp
+                            mempty
+                            (MyVar mempty (named "dec"))
+                            (bool False)
+                        )
+                    )
+                )
+                (MyVar mempty (named "dec"))
+        startInference expr `shouldBe` Right (MTFunction mempty (MTPrim mempty MTBool) (MTPrim mempty MTBool))
+
       it "infers let binding with recursion 1" $ do
         let expr =
               MyLet
@@ -322,24 +344,19 @@ spec = do
 
       it "Simplified Tuple destructuring" $ do
         let expr =
-              MyLet
+              MyLambda
                 mempty
-                (named "fst")
-                ( MyLambda
+                (named "tuple")
+                ( MyLetPattern
                     mempty
-                    (named "tuple")
-                    ( MyLetPattern
+                    ( PPair
                         mempty
-                        ( PPair
-                            mempty
-                            (PVar mempty (named "a"))
-                            (PVar mempty (named "b"))
-                        )
-                        (MyVar mempty (named "tuple"))
-                        (MyVar mempty (named "a"))
+                        (PVar mempty (named "a"))
+                        (PVar mempty (named "b"))
                     )
+                    (MyVar mempty (named "tuple"))
+                    (MyVar mempty (named "a"))
                 )
-                (MyVar mempty (named "fst"))
 
         let expected =
               Right
@@ -348,6 +365,35 @@ spec = do
                     (MTPair mempty (unknown 1) (unknown 2))
                     (unknown 1)
                 )
+        startInference expr `shouldBe` expected
+
+      it "Tuple destructuring (pattern match)" $ do
+        let expr =
+              MyLet
+                mempty
+                (named "fst")
+                ( MyLambda
+                    mempty
+                    (named "tuple")
+                    ( MyPatternMatch
+                        mempty
+                        (MyVar mempty (named "tuple"))
+                        [ ( PPair
+                              mempty
+                              (PVar mempty (named "a"))
+                              (PVar mempty (named "b")),
+                            MyVar mempty (named "a")
+                          )
+                        ]
+                    )
+                )
+                ( MyLet
+                    mempty
+                    (named "pair")
+                    (MyPair mempty (int 1) (bool True))
+                    (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "pair")))
+                )
+        let expected = Right (MTPrim mempty MTInt)
         startInference expr `shouldBe` expected
 
       it "Tuple destructuring" $ do

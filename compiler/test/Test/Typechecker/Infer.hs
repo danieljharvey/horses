@@ -71,12 +71,9 @@ spec = do
               (MyVar mempty (named "id"))
       infer' expr
         `shouldBe` Right
-          ( [ InstanceOf
+          ( [ ShouldEqual
                 (unknown 2)
-                ( Scheme
-                    [TVNum 1]
-                    (MTFunction mempty (unknown 1) (unknown 1))
-                ),
+                (MTFunction mempty (unknown 1) (unknown 1)),
               ShouldEqual (unknown 0) (MTFunction mempty (unknown 1) (unknown 1))
             ],
             unknown 2
@@ -95,12 +92,9 @@ spec = do
               (MyApp mempty (MyVar mempty (named "id")) (int 1))
       infer' expr
         `shouldBe` Right
-          ( [ InstanceOf
+          ( [ ShouldEqual
                 (unknown 3)
-                ( Scheme
-                    [TVNum 1]
-                    (MTFunction mempty (unknown 1) (unknown 1))
-                ),
+                (MTFunction mempty (unknown 1) (unknown 1)),
               ShouldEqual
                 (unknown 3)
                 (MTFunction mempty (MTPrim mempty MTInt) (unknown 2)),
@@ -142,12 +136,9 @@ spec = do
               ShouldEqual
                 (unknown 1)
                 (MTPrim mempty MTBool),
-              InstanceOf
+              ShouldEqual
                 (unknown 4)
-                ( Scheme
-                    [TVNum 2]
-                    (MTFunction mempty (unknown 1) (unknown 2))
-                ),
+                (MTFunction mempty (unknown 1) (unknown 2)),
               ShouldEqual
                 (unknown 4)
                 (MTFunction mempty (MTPrim mempty MTBool) (unknown 3)),

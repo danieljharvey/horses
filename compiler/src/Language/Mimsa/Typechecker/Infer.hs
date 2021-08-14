@@ -66,12 +66,14 @@ inferAndSubst typeMap swaps env expr = do
     runInferM (debugPretty "swaps" swaps) tcState2 (typedHolesCheck typeMap subs tyExpr)
   pure (subs, normaliseType $ applySubst (debugPretty "subs" subs) (debugPretty "tyExpr" tyExpr'))
 
-polymorphicVersionOf :: Scheme -> InferM MonoType
-polymorphicVersionOf (Scheme [] ty) = pure ty
-polymorphicVersionOf scheme = do
-  tyVal <- getUnknown mempty
-  tell [InstanceOf tyVal scheme]
-  pure tyVal
+instantiate ::
+  Scheme ->
+  InferM MonoType
+instantiate (Scheme vars ty) = do
+  newVars <- traverse (const $ getUnknown mempty) vars
+  let pairs = zip vars newVars
+  let subst = Substitutions $ M.fromList pairs
+  pure (applySubst subst ty)
 
 --------------
 
@@ -91,7 +93,7 @@ inferVarFromScope ::
 inferVarFromScope env@(Environment env' _ _) ann var' =
   case M.lookup (variableToTypeIdentifier var') env' of
     Just mt ->
-      polymorphicVersionOf mt
+      instantiate mt
     _ -> do
       swaps <- ask
       throwError $
@@ -185,32 +187,27 @@ inferRecursiveLetBinding ::
   TcExpr ->
   InferM MonoType
 inferRecursiveLetBinding env ann binder expr body = do
-  {-
   binderInExpr <- findActualBindingInSwaps binder
   tyExprAsFix <- infer env (MyLambda mempty binderInExpr expr)
   tyRec <- getUnknown ann
   tyExpr <- getUnknown ann
 
-  tell $
-    debugPretty
-      "new constraint"
-      [ ShouldEqual tyExprAsFix (MTFunction mempty tyRec tyRec),
-        ShouldEqual tyExprAsFix (MTFunction ann tyRec tyExpr)
-      ]
+  tell
+    [ ShouldEqual tyExprAsFix (MTFunction mempty tyRec tyRec),
+      ShouldEqual tyExprAsFix (MTFunction ann tyRec tyExpr)
+    ]
   let newEnv2 =
-        envFromVar binder (Scheme [] tyExpr)
-          <> env-}
+        envFromVar binder (Scheme [] tyRec)
+          <> env
+  {-
   binderInExpr <- findActualBindingInSwaps binder
   tyUnknown <- getUnknown ann
   let newEnv1 = envFromVar binderInExpr (Scheme [] tyUnknown) <> env
   tyExpr <- infer newEnv1 expr
   let newEnv2 =
-        envFromVar binder (generalise env tyUnknown)
-          <> newEnv1
-
-  tyBody <- infer newEnv2 body
-  tell [ShouldEqual tyUnknown tyExpr]
-  pure tyBody
+        envFromVar binder (generalise env tyExpr)
+          <> newEnv1-}
+  infer newEnv2 body
 
 inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> InferM MonoType
 inferIf env condition thenExpr elseExpr = do
@@ -457,10 +454,11 @@ inferLetPattern ::
 inferLetPattern env ann pat expr body = do
   (tyPattern, newEnv) <- inferPattern env pat
   tyExpr <- infer env expr
+  tyBody <- infer (debugPretty "letpattern newenv" newEnv) body
   tell
     [ ShouldEqual tyPattern tyExpr
     ]
-  tyBody <- infer newEnv body
+
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
   validatePatterns env ann [pat]
   pure tyBody
