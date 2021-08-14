@@ -61,7 +61,7 @@ inferAndSubst typeMap swaps env expr = do
   (constraints, tcState, tyExpr) <-
     runInferM swaps defaultTcState (infer env expr)
   (tcState2, subs) <-
-    runSolveM swaps tcState (solve constraints)
+    runSolveM swaps tcState (solve (debugPretty "original constraints" constraints))
   (_, _, tyExpr') <-
     runInferM (debugPretty "swaps" swaps) tcState2 (typedHolesCheck typeMap subs tyExpr)
   pure (subs, normaliseType $ applySubst (debugPretty "subs" subs) (debugPretty "tyExpr" tyExpr'))
@@ -173,9 +173,12 @@ inferLetBinding env ann binder expr body = do
   if exprIsRecursive
     then inferRecursiveLetBinding env ann binder expr body
     else do
-      tyExpr <- infer env expr
+      -- we have to run substitutions on this before "saving" it
+      (tyExpr, constraints) <- listen (infer env expr)
+      subst <- solve constraints
+      let tySubstExpr = applySubst subst tyExpr
       let newEnv =
-            envFromVar binder (generalise env tyExpr)
+            envFromVar binder (generalise env tySubstExpr)
               <> env
       infer newEnv body
 

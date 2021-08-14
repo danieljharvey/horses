@@ -46,7 +46,7 @@ solve = go mempty
       case debugPretty "constraint" lc of
         ShouldEqual a b -> do
           s2 <- unify a b
-          go (s2 <> s1) (applyToConstraint s2 <$> rest)
+          go (s2 <> s1) (applyToConstraint (s1 <> s2) <$> rest)
 
 applyToConstraint :: Substitutions -> Constraint -> Constraint
 applyToConstraint subs (ShouldEqual a b) =
