@@ -36,14 +36,14 @@ spec = do
           expr = MyLiteral mempty (MyInt 1)
       let action = do
             (_, _, storeExpr, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile consoleRuntime "1" storeExpr
+            Actions.compile cjsConsoleRuntime "1" storeExpr
       let result = Actions.run testStdlib action
       result `shouldSatisfy` isLeft
     it "Simplest compilation creates four files" $ do
       let expr = MyVar mempty "id"
       let action = do
             (_, _, storeExpr, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile exportRuntime "id" storeExpr
+            Actions.compile cjsExportRuntime "id" storeExpr
       let (newProject, outcomes, (_, hashes)) =
             fromRight (Actions.run testStdlib action)
       -- creates three files
@@ -64,7 +64,7 @@ spec = do
       let expr = MyVar mempty "evalState"
       let action = do
             (_, _, storeExpr, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile exportRuntime "evalState" storeExpr
+            Actions.compile cjsExportRuntime "evalState" storeExpr
       let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
       -- creates six files
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 7
@@ -83,5 +83,5 @@ spec = do
       let bindings = Bindings (M.singleton "id2" exprHashForId)
       let storeExpr = StoreExpression expr bindings mempty
       let action = do
-            Actions.compile exportRuntime "id2" storeExpr
+            Actions.compile cjsExportRuntime "id2" storeExpr
       Actions.run testStdlib action `shouldSatisfy` isRight

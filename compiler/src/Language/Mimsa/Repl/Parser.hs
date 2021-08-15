@@ -5,6 +5,8 @@ module Language.Mimsa.Repl.Parser
   )
 where
 
+import Data.Functor (($>))
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Repl.Types
@@ -78,10 +80,17 @@ versionsParser = do
   _ <- thenSpace (string ":versions")
   Versions <$> nameParser
 
+backendParser :: Parser (Maybe Backend)
+backendParser =
+  thenSpace (string "commonjs") $> Just CommonJS
+    <|> thenSpace (string "es-modules") $> Just ESModulesJS
+    <|> pure Nothing
+
 outputJSParser :: Parser ReplActionAnn
 outputJSParser = do
   _ <- thenSpace (string ":outputJS")
-  OutputJS <$> expressionParser
+  be <- backendParser
+  OutputJS be <$> expressionParser
 
 typeSearchParser :: Parser ReplActionAnn
 typeSearchParser = do

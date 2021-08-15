@@ -6,8 +6,9 @@
 module Language.Mimsa.Backend.Runtimes
   ( Runtime (..),
     RuntimeName (..),
-    exportRuntime,
-    consoleRuntime,
+    cjsExportRuntime,
+    ejsExportRuntime,
+    cjsConsoleRuntime,
     runtimeIsValid,
     outputIndexFile,
     indexFilename,
@@ -77,8 +78,8 @@ mtVar t = MTVar mempty (TVName (TyVar t))
 mtString :: MonoType
 mtString = MTPrim mempty MTString
 
-exportRuntime :: Runtime Javascript
-exportRuntime =
+cjsExportRuntime :: Runtime Javascript
+cjsExportRuntime =
   Runtime
     { rtName = RuntimeName "export",
       rtDescription = "Exports the expression",
@@ -87,14 +88,29 @@ exportRuntime =
       rtCode = "module.exports = { main };"
     }
 
-consoleRuntime :: Runtime Javascript
-consoleRuntime =
+ejsExportRuntime :: Runtime Javascript
+ejsExportRuntime =
+  cjsExportRuntime
+    { rtBackend = ESModulesJS,
+      rtName = RuntimeName "export-ejs",
+      rtCode = "export { main }"
+    }
+
+cjsConsoleRuntime :: Runtime Javascript
+cjsConsoleRuntime =
   Runtime
     { rtName = RuntimeName "console",
       rtDescription = "Logs a string expression to console",
       rtMonoType = mtString,
       rtBackend = CommonJS,
       rtCode = "console.log(main);"
+    }
+
+ejsConsoleRuntime :: Runtime Javascript
+ejsConsoleRuntime =
+  cjsConsoleRuntime
+    { rtBackend = ESModulesJS,
+      rtName = RuntimeName "console-ejs"
     }
 
 replRuntime :: Runtime Javascript
@@ -163,8 +179,10 @@ runtimes =
           as <> [(rtName rt, rt)]
       )
       mempty
-      [ consoleRuntime,
-        exportRuntime,
+      [ cjsConsoleRuntime,
+        ejsConsoleRuntime,
+        cjsExportRuntime,
+        ejsExportRuntime,
         replRuntime,
         taskServerRuntime
       ]
@@ -178,10 +196,14 @@ getValidRuntimes mt =
 bsFromText :: Text -> LBS.ByteString
 bsFromText = LB.fromChunks . return . T.encodeUtf8
 
-outputIndexFile :: Runtime Javascript -> ExprHash -> Javascript
-outputIndexFile runtime exprHash =
-  Javascript ("const main = require('./" <> moduleFilename CommonJS exprHash <> "').main;\n")
-    <> rtCode runtime
+outputIndexFile :: Backend -> Runtime Javascript -> ExprHash -> Javascript
+outputIndexFile be runtime exprHash =
+  let link = case be of
+        CommonJS ->
+          Javascript ("const main = require('./" <> moduleFilename be exprHash <> "').main;\n")
+        ESModulesJS ->
+          Javascript ("import { main } from './" <> moduleFilename be exprHash <> "';\n")
+   in link <> rtCode runtime
 
 indexFilename :: Runtime code -> ExprHash -> LBS.ByteString
 indexFilename runtime hash' =
@@ -191,4 +213,10 @@ indexFilename runtime hash' =
         ( "index-" <> coerce (rtName runtime) <> "-"
             <> prettyPrint hash'
             <> ".js"
+        )
+    ESModulesJS ->
+      bsFromText
+        ( "index-" <> coerce (rtName runtime) <> "-"
+            <> prettyPrint hash'
+            <> ".mjs"
         )

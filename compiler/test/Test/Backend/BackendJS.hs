@@ -38,6 +38,7 @@ eval env input =
       first
         prettyPrint
         ( renderWithFunction
+            CommonJS
             dataTypes
             "main"
             (storeExpression storeExpr)
@@ -48,7 +49,7 @@ evalModule env input =
   case Actions.evaluateText env input of
     Left e -> pure $ Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) -> do
-      let a = first prettyPrint (outputCommonJS dataTypes storeExpr)
+      let a = first prettyPrint (outputJavascript CommonJS dataTypes storeExpr)
        in do
             T.putStrLn (prettyPrint a)
             pure a

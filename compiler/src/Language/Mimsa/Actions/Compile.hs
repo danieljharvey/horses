@@ -76,7 +76,7 @@ transpileModule be se = do
   dataTypes <- liftEither $ first StoreErr (resolveTypeDeps (prjStore project) (storeTypeBindings se))
   let path = Actions.SavePath (T.pack $ transpiledModuleOutputPath be)
   let filename = Actions.SaveFilename (moduleFilename be (getStoreExpressionHash se))
-  js <- liftEither $ first BackendErr (outputCommonJS dataTypes se)
+  js <- liftEither $ first BackendErr (outputJavascript be dataTypes se)
   let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendWriteFile path filename jsOutput
 
@@ -86,8 +86,9 @@ transpileModule be se = do
 createIndex ::
   Runtime Javascript -> ExprHash -> Actions.ActionM ()
 createIndex runtime exprHash = do
-  let path = Actions.SavePath (T.pack $ transpiledIndexOutputPath (rtBackend runtime))
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile runtime exprHash)
+  let be = rtBackend runtime
+      path = Actions.SavePath (T.pack $ transpiledIndexOutputPath be)
+      outputContent = Actions.SaveContents (coerce $ outputIndexFile be runtime exprHash)
       filename = Actions.SaveFilename (indexFilename runtime exprHash)
   Actions.appendWriteFile path filename outputContent
 
