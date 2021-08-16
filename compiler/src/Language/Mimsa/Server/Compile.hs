@@ -12,8 +12,8 @@ import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
 import qualified Data.Map as M
+import Data.OpenApi (NamedSchema (..), ToSchema, binarySchema, declareNamedSchema)
 import Data.Set (Set)
-import Data.Swagger (NamedSchema (..), ToSchema, binarySchema, declareNamedSchema)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Compile as Actions

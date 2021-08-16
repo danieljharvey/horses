@@ -12,7 +12,7 @@ module Language.Mimsa.Server.Project.ListBindings
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types

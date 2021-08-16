@@ -7,7 +7,7 @@ module Language.Mimsa.Types.Project.Project where
 
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
-import Data.Swagger
+import Data.OpenApi
 import GHC.Generics (Generic)
 import Language.Mimsa.Types.Project.UnitTest
 import Language.Mimsa.Types.Project.Versioned

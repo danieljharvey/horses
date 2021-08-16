@@ -12,7 +12,7 @@ module Language.Mimsa.Server.Project.AddUnitTest
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions

@@ -1,0 +1,1 @@
+let id = \a -> a in id(1)

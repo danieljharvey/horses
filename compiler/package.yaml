@@ -43,8 +43,8 @@ dependencies:
 - wai-cors # server
 - http-types # server
 - optparse-applicative # cli
-- servant-swagger # server
-- swagger2 # server
+- servant-openapi3 # server
+- openapi3 # server
 - envy # server
 - stm # concurrency for server
 - monad-logger # logging

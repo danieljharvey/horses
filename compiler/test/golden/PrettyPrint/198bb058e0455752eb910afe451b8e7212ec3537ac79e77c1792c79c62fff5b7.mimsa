@@ -1,0 +1,4 @@
+let compose =
+  \f -> \g -> \a -> f(g(a));
+
+compose(incrementInt)(incrementInt)(67)

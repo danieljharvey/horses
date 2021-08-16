@@ -14,7 +14,7 @@ where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Swagger hiding (Pattern, items, name)
+import Data.OpenApi hiding (Pattern, items, name)
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
@@ -43,7 +43,7 @@ data Pattern var ann
 
 instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
   declareNamedSchema =
-    genericDeclareNamedSchemaUnrestricted defaultSchemaOptions
+    genericDeclareNamedSchema defaultSchemaOptions
 
 getPatternAnnotation :: Pattern var ann -> ann
 getPatternAnnotation (PWildcard ann) = ann

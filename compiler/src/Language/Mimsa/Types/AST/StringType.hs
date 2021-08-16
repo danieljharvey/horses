@@ -10,8 +10,8 @@ module Language.Mimsa.Types.AST.StringType
 where
 
 import qualified Data.Aeson as JSON
+import Data.OpenApi
 import Data.String
-import Data.Swagger
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc

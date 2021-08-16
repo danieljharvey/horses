@@ -12,7 +12,7 @@ where
 -- the two types of id a type var can have - a named or numbered one
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer

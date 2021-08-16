@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5c6eb9e2573e69dad18239c4aaaa9c296b1279d2304a7d40c07ede419be132be
+-- hash: 382c31d4da6ae02fcf7998c5efc0ea2c7ea6bf0674e267d58e16cbc1453f963f
 
 name:           mimsa
 version:        0.1.0.0
@@ -218,14 +218,14 @@ library
     , memory
     , monad-logger
     , mtl
+    , openapi3
     , optparse-applicative
     , parser-combinators
     , prettyprinter
     , servant
+    , servant-openapi3
     , servant-server
-    , servant-swagger
     , stm
-    , swagger2
     , text
     , transformers
     , wai
@@ -259,14 +259,14 @@ executable mimsa
     , mimsa
     , monad-logger
     , mtl
+    , openapi3
     , optparse-applicative
     , parser-combinators
     , prettyprinter
     , servant
+    , servant-openapi3
     , servant-server
-    , servant-swagger
     , stm
-    , swagger2
     , text
     , transformers
     , wai
@@ -300,14 +300,14 @@ executable swagger
     , mimsa
     , monad-logger
     , mtl
+    , openapi3
     , optparse-applicative
     , parser-combinators
     , prettyprinter
     , servant
+    , servant-openapi3
     , servant-server
-    , servant-swagger
     , stm
-    , swagger2
     , text
     , transformers
     , wai
@@ -382,14 +382,14 @@ test-suite mimsa-test
     , mimsa
     , monad-logger
     , mtl
+    , openapi3
     , optparse-applicative
     , parser-combinators
     , prettyprinter
     , servant
+    , servant-openapi3
     , servant-server
-    , servant-swagger
     , stm
-    , swagger2
     , text
     , transformers
     , wai

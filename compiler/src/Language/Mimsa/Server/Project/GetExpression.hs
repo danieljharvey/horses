@@ -12,7 +12,7 @@ module Language.Mimsa.Server.Project.GetExpression
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
 import Language.Mimsa.Server.ExpressionData

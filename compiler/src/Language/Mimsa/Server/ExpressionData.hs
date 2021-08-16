@@ -17,8 +17,8 @@ import qualified Data.Aeson as JSON
 import Data.Coerce
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.OpenApi
 import qualified Data.Set as S
-import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Backend.Runtimes

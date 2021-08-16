@@ -13,7 +13,7 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.Functor (($>))
-import Data.Swagger
+import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions

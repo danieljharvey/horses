@@ -7,8 +7,8 @@
 module Language.Mimsa.Types.Project.UnitTest where
 
 import qualified Data.Aeson as JSON
+import Data.OpenApi
 import Data.Set (Set)
-import Data.Swagger
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Printer
