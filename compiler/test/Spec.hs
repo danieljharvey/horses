@@ -13,6 +13,7 @@ import qualified Test.Actions.Compile as Compile
 import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Actions.RemoveBinding as RemoveBinding
 import qualified Test.Backend.BackendJS as JS
+import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Runtimes as Runtimes
 import qualified Test.Codegen as Codegen
 import Test.Hspec
@@ -71,3 +72,4 @@ main =
     Pattern.spec
     RemoveBinding.spec
     Typecheck.spec
+    RunNode.spec
