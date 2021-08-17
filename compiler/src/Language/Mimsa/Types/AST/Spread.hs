@@ -10,7 +10,7 @@ module Language.Mimsa.Types.AST.Spread
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger hiding (Pattern, items, name)
+import Data.OpenApi hiding (Pattern, items, name)
 import GHC.Generics
 import Language.Mimsa.Printer
 
@@ -35,7 +35,7 @@ instance
   ToSchema (Spread var ann)
   where
   declareNamedSchema =
-    genericDeclareNamedSchemaUnrestricted defaultSchemaOptions
+    genericDeclareNamedSchema defaultSchemaOptions
 
 instance (Printer var, Show var) => Printer (Spread var ann) where
   prettyDoc NoSpread = ""

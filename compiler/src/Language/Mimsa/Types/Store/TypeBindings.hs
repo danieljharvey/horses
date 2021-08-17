@@ -7,7 +7,7 @@ module Language.Mimsa.Types.Store.TypeBindings where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Swagger
+import Data.OpenApi
 import qualified Data.Text as T
 import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.Identifiers (TyCon)

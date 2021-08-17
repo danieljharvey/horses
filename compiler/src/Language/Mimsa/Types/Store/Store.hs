@@ -8,7 +8,7 @@ module Language.Mimsa.Types.Store.Store where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Swagger
+import Data.OpenApi
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Store.ExprHash

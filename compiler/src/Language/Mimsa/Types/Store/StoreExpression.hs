@@ -7,7 +7,7 @@
 module Language.Mimsa.Types.Store.StoreExpression where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST

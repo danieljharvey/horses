@@ -21,7 +21,7 @@ import Data.Either (isRight)
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Swagger (ToSchema)
+import Data.OpenApi (ToSchema)
 import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Codegen.ApplicativeApply

@@ -10,7 +10,7 @@ module Language.Mimsa.Types.AST.StringPart
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger hiding (Pattern, items, name)
+import Data.OpenApi hiding (Pattern, items, name)
 import GHC.Generics
 import Language.Mimsa.Printer
 
@@ -25,7 +25,7 @@ instance
   ToSchema (StringPart var ann)
   where
   declareNamedSchema =
-    genericDeclareNamedSchemaUnrestricted defaultSchemaOptions
+    genericDeclareNamedSchema defaultSchemaOptions
 
 instance (Printer var) => Printer (StringPart var ann) where
   prettyDoc (StrWildcard _) = "_"

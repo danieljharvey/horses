@@ -15,8 +15,8 @@ where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
+import Data.OpenApi
 import Data.String
-import Data.Swagger
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Prettyprint.Doc

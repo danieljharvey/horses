@@ -1,0 +1,4 @@
+let forever =
+  \a -> forever(a);
+
+forever(True)

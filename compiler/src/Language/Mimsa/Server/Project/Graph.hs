@@ -12,7 +12,7 @@ module Language.Mimsa.Server.Project.Graph
 where
 
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi hiding (Server)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions

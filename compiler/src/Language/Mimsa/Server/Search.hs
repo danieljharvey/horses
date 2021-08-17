@@ -8,7 +8,7 @@ module Language.Mimsa.Server.Search (SearchAPI, searchEndpoints) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Map as M
-import Data.Swagger
+import Data.OpenApi hiding (Server)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Shared as Actions

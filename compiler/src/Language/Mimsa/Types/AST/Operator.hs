@@ -10,7 +10,7 @@ where
 
 import Control.Applicative
 import qualified Data.Aeson as JSON
-import Data.Swagger
+import Data.OpenApi
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.InfixOp
@@ -42,7 +42,7 @@ instance JSON.FromJSON Operator where
         _ -> fail "Could not decode Operator"
 
 instance ToSchema Operator where
-  declareNamedSchema = genericDeclareNamedSchemaUnrestricted defaultSchemaOptions
+  declareNamedSchema = genericDeclareNamedSchema defaultSchemaOptions
 
 instance Printer Operator where
   prettyDoc Equals = "=="

@@ -1,0 +1,1 @@
+{"storeExpression":{"contents":[[],"prelude",{"contents":[[],{"id":{"contents":[[],"i",{"contents":[[],"i"],"tag":"MyVar"}],"tag":"MyLambda"}}],"tag":"MyRecord"},{"contents":[[],{"contents":[[],"prelude"],"tag":"MyVar"},"id"],"tag":"MyRecordAccess"}],"tag":"MyLet"},"storeBindings":{},"storeTypeBindings":{}}

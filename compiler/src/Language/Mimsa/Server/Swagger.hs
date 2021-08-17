@@ -3,13 +3,13 @@ module Language.Mimsa.Server.Swagger (outputJSON) where
 import qualified Data.Aeson as JSON
 import Data.ByteString.Lazy
 import qualified Data.ByteString.Lazy.Char8 as BS
+import Data.OpenApi
 import Data.Proxy
-import Data.Swagger
 import Language.Mimsa.Server.Servant
-import Servant.Swagger
+import Servant.OpenApi
 
-mimsaSwagger :: Swagger
-mimsaSwagger = toSwagger (Proxy :: Proxy MimsaAPI)
+mimsaSwagger :: OpenApi
+mimsaSwagger = toOpenApi (Proxy :: Proxy MimsaAPI)
 
 outputSwaggerJSON :: ByteString
 outputSwaggerJSON = JSON.encode mimsaSwagger
