@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 339a9f244c3164089cb6447c0e9047778bd252b927c915d63b582871790e14bf
+-- hash: a1cdc718ee9820a1322f5046e2939e3535b551547adc224a927c0d4c97cd5765
 
 name:           mimsa
 version:        0.1.0.0
@@ -375,6 +375,7 @@ test-suite mimsa-test
     , envy
     , exceptions
     , file-embed
+    , hashable
     , haskeline
     , hspec
     , http-types

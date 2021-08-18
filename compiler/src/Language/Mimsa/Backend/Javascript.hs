@@ -123,7 +123,7 @@ outputPatternRow pat expr = do
   js <- outputJS expr
   let (_, vars) = toPatternMap "" pat
   if null vars
-    then pure ("() => " <> withBrackies js)
+    then pure ("() => " <> withCurlyBoys expr js)
     else
       pure
         ( "({ "
@@ -131,7 +131,7 @@ outputPatternRow pat expr = do
               ", "
               (textToJS . prettyPrint <$> M.keys vars)
             <> " }) => "
-            <> withBrackies js
+            <> withCurlyBoys expr js
         )
 
 data Guard
@@ -227,6 +227,7 @@ foundLet = withMonoid findLet
   where
     findLet MyLet {} = (False, Any True) -- found one, stop looking
     findLet MyLetPattern {} = (False, Any True) -- found one, stop looking
+    findLet MyPatternMatch {} = (False, mempty) -- did not find one, stop looking
     findLet MyLambda {} = (False, mempty) -- did not find one, but stop looking
     findLet _ = (True, mempty) -- did not find one, keep recursing
 
@@ -236,13 +237,12 @@ addReturn expr js = if not $ containsLet expr then "return " <> js else js
 
 -- if a return contains let expresssions, it needs to be wrapped in curly lads
 withCurlyBoys :: Expr Name ann -> Javascript -> Javascript
-withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else withBrackies js
-
-withBrackies :: Javascript -> Javascript
-withBrackies js =
-  if LB.take 1 (coerce js) == "{"
-    then "(" <> js <> ")"
-    else js
+withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else withBrackies
+  where
+    withBrackies =
+      if LB.take 1 (coerce js) == "{"
+        then "(" <> js <> ")"
+        else js
 
 outputOperator ::
   (Monoid ann) =>

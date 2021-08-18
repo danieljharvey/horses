@@ -86,4 +86,5 @@ tests:
     dependencies:
     - mimsa
     - hspec
+    - hashable
     - typed-process

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Backend.RunNode (spec) where
+module Test.Backend.RunNode (spec, runScriptInline, runScriptFromFile, lbsToString) where
 
 import Control.Monad.IO.Class
 import qualified Data.ByteString.Lazy as LBS
