@@ -43,8 +43,8 @@ import System.Directory
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
 createOutputFolder :: Backend -> ExprHash -> MimsaM e FilePath
-createOutputFolder CommonJS exprHash = do
-  let outputPath = symlinkedOutputPath CommonJS
+createOutputFolder be exprHash = do
+  let outputPath = symlinkedOutputPath be
   let path = outputPath <> show exprHash
   liftIO $ createDirectoryIfMissing True path
   pure (path <> "/")
@@ -75,33 +75,48 @@ commonJSStandardLibrary :: LBS.ByteString
 commonJSStandardLibrary =
   LBS.fromStrict $(embedFile "static/backend/commonjs/stdlib.js")
 
+-- these are saved in a file that is included in compilation
+esModulesJSStandardLibrary :: LBS.ByteString
+esModulesJSStandardLibrary =
+  LBS.fromStrict $(embedFile "static/backend/es-modules-js/stdlib.mjs")
+
 stdLibFilename :: Backend -> LBS.ByteString
 stdLibFilename CommonJS = "cjs-stdlib.js"
+stdLibFilename ESModulesJS = "ejs-stdlib.mjs"
 
 indexOutputFilename :: Backend -> ExprHash -> LBS.ByteString
 indexOutputFilename CommonJS exprHash = "index-" <> bsFromText (prettyPrint exprHash) <> ".js"
+indexOutputFilename ESModulesJS exprHash = "index-" <> bsFromText (prettyPrint exprHash) <> ".mjs"
 
 symlinkedOutputPath :: Backend -> FilePath
 symlinkedOutputPath CommonJS =
   "./output/cjs"
+symlinkedOutputPath ESModulesJS =
+  "./output/ejs"
 
 transpiledModuleOutputPath :: Backend -> FilePath
 transpiledModuleOutputPath CommonJS = "transpiled/module/common-js"
+transpiledModuleOutputPath ESModulesJS = "transpiled/module/es-modules-js"
 
 transpiledIndexOutputPath :: Backend -> FilePath
 transpiledIndexOutputPath CommonJS = "transpiled/index/common-js"
+transpiledIndexOutputPath ESModulesJS = "transpiled/index/es-modules-js"
 
 transpiledStdlibOutputPath :: Backend -> FilePath
 transpiledStdlibOutputPath CommonJS = "transpiled/stdlib/common-js"
+transpiledStdlibOutputPath ESModulesJS = "transpiled/stdlib/es-modules-js"
 
 zipFileOutputPath :: Backend -> FilePath
 zipFileOutputPath CommonJS = "./output/zip"
+zipFileOutputPath ESModulesJS = "./output/zip"
 
 moduleFilename :: Backend -> ExprHash -> LBS.ByteString
 moduleFilename CommonJS hash' = "cjs-" <> bsFromText (prettyPrint hash') <> ".js"
+moduleFilename ESModulesJS hash' = "ejs-" <> bsFromText (prettyPrint hash') <> ".mjs"
 
 outputStdlib :: Backend -> LBS.ByteString
 outputStdlib CommonJS = coerce commonJSStandardLibrary
+outputStdlib ESModulesJS = coerce esModulesJSStandardLibrary
 
 outputExport :: Backend -> Name -> LBS.ByteString
 outputExport CommonJS name =
@@ -109,6 +124,7 @@ outputExport CommonJS name =
     <> ": "
     <> bsFromText (coerce name)
     <> " }"
+outputExport ESModulesJS _ = mempty -- we export each one value directly
 
 outputStoreExpression ::
   (Monoid a) =>

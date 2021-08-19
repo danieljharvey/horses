@@ -1,4 +1,7 @@
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Test.Backend.BackendJS
@@ -7,8 +10,11 @@ module Test.Backend.BackendJS
 where
 
 import Data.Bifunctor (first)
+import Data.Coerce
 import Data.Either (isRight)
 import Data.Foldable (traverse_)
+import Data.Hashable
+import Data.List (intersperse)
 import qualified Data.Map as M
 import Data.Maybe (fromJust)
 import Data.Text (Text)
@@ -26,18 +32,26 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import System.Exit
+import Test.Backend.RunNode (lbsToString, runScriptFromFile, runScriptInline)
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
+import Test.Utils.Serialisation
+  ( createOutputFolder,
+  )
 
-eval :: Project Annotation -> Text -> Either Text Javascript
-eval env input =
+deriving newtype instance Hashable Javascript
+
+eval :: Backend -> Project Annotation -> Text -> Either Text Javascript
+eval be env input =
   case Actions.evaluateText env input of
     Left e -> Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) ->
       first
         prettyPrint
         ( renderWithFunction
+            be
             dataTypes
             "main"
             (storeExpression storeExpr)
@@ -48,55 +62,107 @@ evalModule env input =
   case Actions.evaluateText env input of
     Left e -> pure $ Left $ prettyPrint e
     Right (ResolvedExpression _ storeExpr _ _ _) -> do
-      let a = first prettyPrint (outputCommonJS dataTypes storeExpr)
+      let a = first prettyPrint (outputJavascript CommonJS dataTypes storeExpr)
        in do
             T.putStrLn (prettyPrint a)
             pure a
 
-successes :: [(Text, Javascript)]
+successes :: [(Text, Javascript, String)]
 successes =
-  [ ("True", "const main = true;\n"),
-    ("False", "const main = false;\n"),
-    ("123", "const main = 123;\n"),
-    ("\"Poo\"", "const main = \"Poo\";\n"),
-    ("id", "const main = id;\n"),
-    ("\\a -> a", "const main = a => a;\n"),
-    ("id(1)", "const main = id(1);\n"),
-    ("if True then 1 else 2", "const main = true ? 1 : 2;\n"),
-    ("let a = \"dog\" in 123", "const main = function() { const a = \"dog\";\nreturn 123 }();\n"),
-    ("let a = \"dog\" in let b = \"horse\" in 123", "const main = function() { const a = \"dog\";\nconst b = \"horse\";\nreturn 123 }();\n"),
-    ("{ a: 123, b: \"horse\" }", "const main = { a: 123, b: \"horse\" };\n"),
-    ("let (a,b) = aPair in a", "const main = function() { const [a, b] = aPair;\nreturn a }();\n"),
-    ("\\a -> let b = 123 in a", "const main = a => { const b = 123;\nreturn a };\n"),
-    ("(1,2)", "const main = [1,2];\n"),
-    ("aRecord.a", "const main = aRecord.a;\n"),
-    ("Just", "const main = a => ({ type: \"Just\", vars: [a] });\n"),
-    ("Just 1", "const main = { type: \"Just\", vars: [1] };\n"),
-    ("Nothing", "const main = { type: \"Nothing\", vars: [] };\n"),
-    ("These", "const main = a => b => ({ type: \"These\", vars: [a,b] });\n"),
-    ("True == False", "const main = __eq(true, false);\n"),
-    ("2 + 2", "const main = 2 + 2;\n"),
-    ("10 - 2", "const main = 10 - 2;\n"),
-    ("\"dog\" ++ \"log\"", "const main = \"dog\" + \"log\";\n"),
-    ("{ fn: (\\a -> let d = 1 in a) }", "const main = { fn: a => { const d = 1;\nreturn a } };\n"),
-    ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n"),
+  [ ("True", "const main = true;\n", "true"),
+    ("False", "const main = false;\n", "false"),
+    ("123", "const main = 123;\n", "123"),
+    ("\"Poo\"", "const main = \"Poo\";\n", "Poo"),
+    ("id", "const main = id;\n", "[Function: id]"),
+    ( "\\a -> a",
+      "const main = a => a;\n",
+      "[Function: main]"
+    ),
+    ( "id(1)",
+      "const main = id(1);\n",
+      "1"
+    ),
+    ( "if True then 1 else 2",
+      "const main = true ? 1 : 2;\n",
+      "1"
+    ),
+    ( "let a = \"dog\" in 123",
+      "const main = function() { const a = \"dog\";\nreturn 123 }();\n",
+      "123"
+    ),
+    ( "let a = \"dog\" in let b = \"horse\" in 123",
+      "const main = function() { const a = \"dog\";\nconst b = \"horse\";\nreturn 123 }();\n",
+      "123"
+    ),
+    ( "{ a: 123, b: \"horse\" }",
+      "const main = { a: 123, b: \"horse\" };\n",
+      "{ a: 123, b: 'horse' }"
+    ),
+    ( "let (a,b) = aPair in a",
+      "const main = function() { const [a, b] = aPair;\nreturn a }();\n",
+      "1"
+    ),
+    ( "\\a -> let b = 123 in a",
+      "const main = a => { const b = 123;\nreturn a };\n",
+      "[Function: main]"
+    ),
+    ("(1,2)", "const main = [1,2];\n", "[ 1, 2 ]"),
+    ("aRecord.a", "const main = aRecord.a;\n", "100"),
+    ( "Just",
+      "const main = a => ({ type: \"Just\", vars: [a] });\n",
+      "[Function: main]"
+    ),
+    ( "Just 1",
+      "const main = { type: \"Just\", vars: [1] };\n",
+      "{ type: 'Just', vars: [ 1 ] }"
+    ),
+    ( "Nothing",
+      "const main = { type: \"Nothing\", vars: [] };\n",
+      "{ type: 'Nothing', vars: [] }"
+    ),
+    ( "These",
+      "const main = a => b => ({ type: \"These\", vars: [a,b] });\n",
+      "[Function: main]"
+    ),
+    ("True == False", "const main = __eq(true, false);\n", "false"),
+    ("2 + 2", "const main = 2 + 2;\n", "4"),
+    ("10 - 2", "const main = 10 - 2;\n", "8"),
+    ( "\"dog\" ++ \"log\"",
+      "const main = \"dog\" + \"log\";\n",
+      "doglog"
+    ),
+    ( "{ fn: (\\a -> let d = 1 in a) }",
+      "const main = { fn: a => { const d = 1;\nreturn a } };\n",
+      "{ fn: [Function: fn] }"
+    ),
+    ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n", "[ 1, 2, 3, 4 ]"),
     ( "match Just True with (Just a) -> a | _ -> False",
-      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n"
+      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n",
+      "true"
     ),
     ( "match Just True with (Just a) -> Just a | _ -> Nothing",
-      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => ({ type: \"Just\", vars: [a] }) ], [ pat => ({}), () => ({ type: \"Nothing\", vars: [] }) ] ]);\n"
+      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => ({ type: \"Just\", vars: [a] }) ], [ pat => ({}), () => ({ type: \"Nothing\", vars: [] }) ] ]);\n",
+      "{ type: 'Just', vars: [ true ] }"
+    ),
+    ( "match Just True with (Just a) -> let b = 1; Just a | _ -> Nothing",
+      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => { const b = 1;\nreturn { type: \"Just\", vars: [a] } } ], [ pat => ({}), () => ({ type: \"Nothing\", vars: [] }) ] ]);\n",
+      "{ type: 'Just', vars: [ true ] }"
     ),
     ( "let (a, b) = (1,2) in a",
-      "const main = function() { const [a, b] = [1,2];\nreturn a }();\n"
+      "const main = function() { const [a, b] = [1,2];\nreturn a }();\n",
+      "1"
     ),
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
-      "const main = function() { const { cat: b, dog: a } = { cat: 2, dog: 1 };\nreturn [a,b] }();\n"
+      "const main = function() { const { cat: b, dog: a } = { cat: 2, dog: 1 };\nreturn [a,b] }();\n",
+      "[ 1, 2 ]"
     ),
     ( "let (Ident a) = Ident 1 in a",
-      "const main = function() { const { vars: [a] } = { type: \"Ident\", vars: [1] };\nreturn a }();\n"
+      "const main = function() { const { vars: [a] } = { type: \"Ident\", vars: [1] };\nreturn a }();\n",
+      "1"
     ),
     ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      "const main = function() { const { vars: [a, b] } = { type: \"Pair\", vars: [1,2] };\nreturn [a,b] }();\n"
+      "const main = function() { const { vars: [a, b] } = { type: \"Pair\", vars: [1,2] };\nreturn [a,b] }();\n",
+      "[ 1, 2 ]"
     )
   ]
 
@@ -147,10 +213,78 @@ patterns =
     )
   ]
 
-testIt :: (Text, Javascript) -> Spec
-testIt (q, a) =
-  it (T.unpack q) $
-    eval testStdlib q `shouldBe` Right a
+commonJSImports :: String
+commonJSImports =
+  "const { __eq, __concat, __patternMatch } = require('./static/backend/commonjs/stdlib.js')"
+
+esModulesImports :: String
+esModulesImports =
+  "import { __eq, __concat, __patternMatch } from '../../../static/backend/es-modules-js/stdlib.mjs'"
+
+testJSCode :: [String]
+testJSCode =
+  [ "const id = a => a",
+    "const aRecord = {a:100}",
+    "const aPair = [1,2]"
+  ]
+
+createCommonJSOutput :: String -> String
+createCommonJSOutput js =
+  mconcat $
+    intersperse
+      "\n"
+      ( [commonJSImports]
+          <> testJSCode
+          <> [js, "console.log(main)"]
+      )
+
+createESModulesOutput :: String -> String
+createESModulesOutput js =
+  mconcat $
+    intersperse
+      "\n"
+      ( [esModulesImports]
+          <> testJSCode
+          <> [ js,
+               "console.log(main)"
+             ]
+      )
+
+-- test that we have a valid ESModule by saving it and running it
+testESModulesInNode :: Javascript -> IO String
+testESModulesInNode js = do
+  -- write file
+  esPath <- createOutputFolder "ESModules"
+  let esFilename = esPath <> show (hash js) <> ".mjs"
+  let jsString = createESModulesOutput (lbsToString $ coerce js)
+  writeFile esFilename jsString
+  (ec, err) <- runScriptFromFile esFilename
+  case ec of
+    ExitFailure _ -> fail err
+    _ -> pure err
+
+testCommonJSInNode :: Javascript -> IO String
+testCommonJSInNode js = do
+  (ec, err) <- runScriptInline (createCommonJSOutput (lbsToString $ coerce js))
+  case ec of
+    ExitFailure _ -> fail err
+    _ -> pure err
+
+testIt :: (Text, Javascript, String) -> Spec
+testIt (expr, expectedJS, expectedValue) =
+  it (T.unpack expr) $ do
+    case eval CommonJS testStdlib expr of
+      Left e -> fail (T.unpack e)
+      Right js -> do
+        js `shouldBe` expectedJS
+        val <- testCommonJSInNode js
+        val `shouldBe` expectedValue
+
+    case eval ESModulesJS testStdlib expr of
+      Left e -> fail (T.unpack e)
+      Right js -> do
+        val <- testESModulesInNode js
+        val `shouldBe` expectedValue
 
 dataTypes :: ResolvedTypeDeps Annotation
 dataTypes = fromJust $ case resolveTypeDeps

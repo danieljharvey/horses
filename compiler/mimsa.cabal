@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 382c31d4da6ae02fcf7998c5efc0ea2c7ea6bf0674e267d58e16cbc1453f963f
+-- hash: a1cdc718ee9820a1322f5046e2939e3535b551547adc224a927c0d4c97cd5765
 
 name:           mimsa
 version:        0.1.0.0
@@ -327,6 +327,7 @@ test-suite mimsa-test
       Test.Actions.Evaluate
       Test.Actions.RemoveBinding
       Test.Backend.BackendJS
+      Test.Backend.RunNode
       Test.Backend.Runtimes
       Test.Codegen
       Test.Codegen.Applicative
@@ -374,6 +375,7 @@ test-suite mimsa-test
     , envy
     , exceptions
     , file-embed
+    , hashable
     , haskeline
     , hspec
     , http-types
@@ -392,6 +394,7 @@ test-suite mimsa-test
     , stm
     , text
     , transformers
+    , typed-process
     , wai
     , wai-cors
     , warp

@@ -25,8 +25,8 @@ import System.Directory
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
 createZipFolder :: Backend -> ExprHash -> MimsaM e FilePath
-createZipFolder CommonJS exprHash = do
-  let outputPath = zipFileOutputPath CommonJS
+createZipFolder be exprHash = do
+  let outputPath = zipFileOutputPath be
   let path = outputPath <> "/" <> show exprHash
   liftIO $ createDirectoryIfMissing True path
   pure (path <> "/")

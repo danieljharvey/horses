@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Backend
-  ( outputCommonJS,
-    getStdlib,
+  ( outputJavascript,
     copyLocalOutput,
     Backend (..),
   )
@@ -10,7 +9,6 @@ where
 
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
-import Data.Coerce
 import Data.Foldable (traverse_)
 import Data.Set (Set)
 import Language.Mimsa.Backend.Javascript
@@ -23,9 +21,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
 
 ------
-
-getStdlib :: Backend -> LBS.ByteString
-getStdlib CommonJS = coerce commonJSStandardLibrary
 
 -- given output type and list of expressions, copy everything to local
 -- folder for output in repl

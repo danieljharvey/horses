@@ -14,7 +14,7 @@ import Language.Mimsa.Types.Store
 
 type BackendM ann = Either (BackendError ann)
 
-data Backend = CommonJS
+data Backend = CommonJS | ESModulesJS
   deriving stock (Eq, Ord, Show)
 
 data Renderer ann a = Renderer

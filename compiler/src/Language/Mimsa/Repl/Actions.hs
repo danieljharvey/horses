@@ -52,8 +52,8 @@ doReplAction env input action =
       catchMimsaError env (doBind env input name expr)
     (BindType dt) ->
       catchMimsaError env (doBindType env input dt)
-    (OutputJS expr) ->
-      catchMimsaError env (doOutputJS env input expr $> env)
+    (OutputJS be expr) ->
+      catchMimsaError env (doOutputJS env input be expr $> env)
     (TypeSearch mt) ->
       catchMimsaError env (doTypeSearch env mt $> env)
     (AddUnitTest testName testExpr) ->
@@ -71,7 +71,7 @@ doHelp = do
   replOutput @Text ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
   replOutput @Text ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
   replOutput @Text ":list - show a list of current bindings in the environment"
-  replOutput @Text ":outputJS <expr> - show JS code for <expr>"
+  replOutput @Text ":outputJS <commonjs|es-modules> <expr> - show JS code for <expr>"
   replOutput @Text ":tree <expr> - draw a dependency tree for <expr>"
   replOutput @Text ":graph <expr> - output graphviz dependency tree for <expr>"
   replOutput @Text ":search <mt> - search for exprs that match type"

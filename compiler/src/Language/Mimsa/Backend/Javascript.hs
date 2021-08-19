@@ -6,7 +6,7 @@
 
 module Language.Mimsa.Backend.Javascript
   ( output,
-    outputCommonJS,
+    outputJavascript,
     outputPattern,
     renderWithFunction,
     Javascript (..),
@@ -123,7 +123,7 @@ outputPatternRow pat expr = do
   js <- outputJS expr
   let (_, vars) = toPatternMap "" pat
   if null vars
-    then pure ("() => " <> withBrackies js)
+    then pure ("() => " <> withCurlyBoys expr js)
     else
       pure
         ( "({ "
@@ -131,7 +131,7 @@ outputPatternRow pat expr = do
               ", "
               (textToJS . prettyPrint <$> M.keys vars)
             <> " }) => "
-            <> withBrackies js
+            <> withCurlyBoys expr js
         )
 
 data Guard
@@ -227,6 +227,7 @@ foundLet = withMonoid findLet
   where
     findLet MyLet {} = (False, Any True) -- found one, stop looking
     findLet MyLetPattern {} = (False, Any True) -- found one, stop looking
+    findLet MyPatternMatch {} = (False, mempty) -- did not find one, stop looking
     findLet MyLambda {} = (False, mempty) -- did not find one, but stop looking
     findLet _ = (True, mempty) -- did not find one, keep recursing
 
@@ -236,13 +237,12 @@ addReturn expr js = if not $ containsLet expr then "return " <> js else js
 
 -- if a return contains let expresssions, it needs to be wrapped in curly lads
 withCurlyBoys :: Expr Name ann -> Javascript -> Javascript
-withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else withBrackies js
-
-withBrackies :: Javascript -> Javascript
-withBrackies js =
-  if LB.take 1 (coerce js) == "{"
-    then "(" <> js <> ")"
-    else js
+withCurlyBoys expr js = if containsLet expr then "{ " <> js <> " }" else withBrackies
+  where
+    withBrackies =
+      if LB.take 1 (coerce js) == "{"
+        then "(" <> js <> ")"
+        else js
 
 outputOperator ::
   (Monoid ann) =>
@@ -408,48 +408,88 @@ outputJS expr =
 
 renderWithFunction ::
   (Monoid ann) =>
+  Backend ->
   ResolvedTypeDeps ann ->
   Name ->
   Expr Name ann ->
   BackendM ann Javascript
-renderWithFunction dataTypes name expr =
+renderWithFunction be dataTypes name expr =
   if containsLet expr && not (startsWithLambda expr)
     then do
       dt <- output dataTypes expr
-      pure $
-        "const " <> textToJS (coerce name) <> " = function() { "
-          <> dt
-          <> " }();\n"
+      case be of
+        CommonJS ->
+          pure $
+            "const " <> textToJS (coerce name) <> " = function() { "
+              <> dt
+              <> " }();\n"
+        ESModulesJS ->
+          pure $
+            "export const " <> textToJS (coerce name) <> " = function() { "
+              <> dt
+              <> " }();\n"
     else do
       dt <- output dataTypes expr
-      pure $
-        "const " <> textToJS (coerce name) <> " = "
-          <> dt
-          <> ";\n"
+      case be of
+        CommonJS ->
+          pure $
+            "const " <> textToJS (coerce name) <> " = "
+              <> dt
+              <> ";\n"
+        ESModulesJS ->
+          pure $
+            "export const " <> textToJS (coerce name) <> " = "
+              <> dt
+              <> ";\n"
 
 startsWithLambda :: Expr var ann -> Bool
 startsWithLambda MyLambda {} = True
 startsWithLambda _ = False
 
-outputCommonJS ::
+outputJavascript ::
   (Monoid ann) =>
+  Backend ->
   ResolvedTypeDeps ann ->
   StoreExpression ann ->
   BackendM ann Javascript
-outputCommonJS dataTypes =
+outputJavascript be dataTypes =
   outputStoreExpression
-    CommonJS
-    Renderer
-      { renderFunc = renderWithFunction dataTypes,
-        renderImport = \be (name, hash') ->
-          pure $
-            "const "
-              <> textToJS (coerce name)
-              <> " = require(\"./"
-              <> Javascript (moduleFilename be hash')
-              <> "\").main;\n",
-        renderExport = \be name -> pure $ Javascript (outputExport be name),
-        renderStdLib = \be ->
-          let filename = Javascript (stdLibFilename be)
-           in pure $ "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
-      }
+    be
+    ( case be of
+        CommonJS -> commonJSRenderer dataTypes
+        ESModulesJS -> esModulesRenderer dataTypes
+    )
+
+commonJSRenderer :: (Monoid ann) => ResolvedTypeDeps ann -> Renderer ann Javascript
+commonJSRenderer dts =
+  Renderer
+    { renderFunc = renderWithFunction CommonJS dts,
+      renderImport = \be (name, hash') ->
+        pure $
+          "const "
+            <> textToJS (coerce name)
+            <> " = require(\"./"
+            <> Javascript (moduleFilename be hash')
+            <> "\").main;\n",
+      renderExport = \be name -> pure $ Javascript (outputExport be name),
+      renderStdLib = \be ->
+        let filename = Javascript (stdLibFilename be)
+         in pure $ "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
+    }
+
+esModulesRenderer :: (Monoid ann) => ResolvedTypeDeps ann -> Renderer ann Javascript
+esModulesRenderer dts =
+  Renderer
+    { renderFunc = renderWithFunction ESModulesJS dts,
+      renderImport = \be (name, hash') ->
+        pure $
+          "import { "
+            <> textToJS (coerce name)
+            <> " } from \"./"
+            <> Javascript (moduleFilename be hash')
+            <> "\";\n",
+      renderExport = \be name -> pure $ Javascript (outputExport be name),
+      renderStdLib = \be ->
+        let filename = Javascript (stdLibFilename be)
+         in pure $ "import { __eq, __concat, __patternMatch } from \"./" <> filename <> "\";\n"
+    }

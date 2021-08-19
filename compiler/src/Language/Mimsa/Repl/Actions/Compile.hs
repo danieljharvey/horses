@@ -8,6 +8,7 @@ where
 import qualified Data.ByteString.Char8 as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
+import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
@@ -17,6 +18,7 @@ import Language.Mimsa.Backend.Backend
   ( copyLocalOutput,
   )
 import Language.Mimsa.Backend.Runtimes
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
 import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Types.AST
@@ -32,10 +34,13 @@ bsToText = T.decodeUtf8 . B.concat . LB.toChunks
 doOutputJS ::
   Project Annotation ->
   Text ->
+  Maybe Backend ->
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
-doOutputJS project input expr = do
-  let runtime = exportRuntime
+doOutputJS project input be expr = do
+  let runtime = case fromMaybe CommonJS be of
+        CommonJS -> cjsExportRuntime
+        ESModulesJS -> ejsExportRuntime
   (ResolvedExpression _ storeExpr _ _ _) <-
     mimsaFromEither $ Actions.getTypecheckedStoreExpression input project expr
   (_, (rootExprHash, exprHashes)) <-
