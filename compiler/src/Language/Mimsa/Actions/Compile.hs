@@ -73,10 +73,22 @@ transpileModule ::
   Actions.ActionM ()
 transpileModule be se = do
   project <- Actions.getProject
-  dataTypes <- liftEither $ first StoreErr (resolveTypeDeps (prjStore project) (storeTypeBindings se))
+  dataTypes <-
+    liftEither $
+      first
+        StoreErr
+        (resolveTypeDeps (prjStore project) (storeTypeBindings se))
+  monoType <-
+    liftEither $
+      Actions.typecheckStoreExpression (prjStore project) se
   let path = Actions.SavePath (T.pack $ transpiledModuleOutputPath be)
-  let filename = Actions.SaveFilename (moduleFilename be (getStoreExpressionHash se))
-  js <- liftEither $ first BackendErr (outputJavascript be dataTypes se)
+  let filename =
+        Actions.SaveFilename
+          ( moduleFilename
+              be
+              (getStoreExpressionHash se)
+          )
+  js <- liftEither $ first BackendErr (outputJavascript be dataTypes monoType se)
   let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendWriteFile path filename jsOutput
 

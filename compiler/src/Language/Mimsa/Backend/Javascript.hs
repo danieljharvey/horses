@@ -41,6 +41,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Utils
 
 ----
@@ -450,46 +451,56 @@ outputJavascript ::
   (Monoid ann) =>
   Backend ->
   ResolvedTypeDeps ann ->
+  MonoType ->
   StoreExpression ann ->
   BackendM ann Javascript
 outputJavascript be dataTypes =
   outputStoreExpression
-    be
     ( case be of
         CommonJS -> commonJSRenderer dataTypes
         ESModulesJS -> esModulesRenderer dataTypes
     )
 
-commonJSRenderer :: (Monoid ann) => ResolvedTypeDeps ann -> Renderer ann Javascript
+commonJSRenderer ::
+  (Monoid ann) =>
+  ResolvedTypeDeps ann ->
+  Renderer ann Javascript
 commonJSRenderer dts =
   Renderer
     { renderFunc = renderWithFunction CommonJS dts,
-      renderImport = \be (name, hash') ->
+      renderImport = \(name, hash') ->
         pure $
           "const "
             <> textToJS (coerce name)
             <> " = require(\"./"
-            <> Javascript (moduleFilename be hash')
+            <> Javascript (moduleFilename CommonJS hash')
             <> "\").main;\n",
-      renderExport = \be name -> pure $ Javascript (outputExport be name),
-      renderStdLib = \be ->
-        let filename = Javascript (stdLibFilename be)
-         in pure $ "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
+      renderExport = pure . Javascript . outputExport CommonJS,
+      renderStdLib =
+        let filename = Javascript (stdLibFilename CommonJS)
+         in pure $ "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n",
+      renderTypeSignature = \mt -> pure ("/* \n" <> textToJS (prettyPrint mt) <> "\n */"),
+      renderNewline = textToJS "\n"
     }
 
-esModulesRenderer :: (Monoid ann) => ResolvedTypeDeps ann -> Renderer ann Javascript
+esModulesRenderer ::
+  (Monoid ann) =>
+  ResolvedTypeDeps ann ->
+  Renderer ann Javascript
 esModulesRenderer dts =
   Renderer
     { renderFunc = renderWithFunction ESModulesJS dts,
-      renderImport = \be (name, hash') ->
+      renderImport = \(name, hash') ->
         pure $
           "import { "
             <> textToJS (coerce name)
             <> " } from \"./"
-            <> Javascript (moduleFilename be hash')
+            <> Javascript (moduleFilename ESModulesJS hash')
             <> "\";\n",
-      renderExport = \be name -> pure $ Javascript (outputExport be name),
-      renderStdLib = \be ->
-        let filename = Javascript (stdLibFilename be)
-         in pure $ "import { __eq, __concat, __patternMatch } from \"./" <> filename <> "\";\n"
+      renderExport = pure . Javascript . outputExport ESModulesJS,
+      renderStdLib =
+        let filename = Javascript (stdLibFilename ESModulesJS)
+         in pure $ "import { __eq, __concat, __patternMatch } from \"./" <> filename <> "\";\n",
+      renderTypeSignature = \mt -> pure ("/* \n" <> textToJS (prettyPrint mt) <> "\n */"),
+      renderNewline = textToJS "\n"
     }
