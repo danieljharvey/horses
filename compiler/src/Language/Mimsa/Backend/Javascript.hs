@@ -492,7 +492,7 @@ esModulesRenderer dts =
     { renderFunc = renderWithFunction ESModulesJS dts,
       renderImport = \(name, hash') ->
         pure $
-          "import { "
+          "import { main as "
             <> textToJS (coerce name)
             <> " } from \"./"
             <> Javascript (moduleFilename ESModulesJS hash')
