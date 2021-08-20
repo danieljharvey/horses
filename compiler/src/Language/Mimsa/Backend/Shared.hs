@@ -27,6 +27,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
 import Data.FileEmbed
+import Data.List (intersperse)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -39,6 +40,7 @@ import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreFolder)
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import System.Directory
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
@@ -128,23 +130,39 @@ outputExport ESModulesJS _ = mempty -- we export each one value directly
 
 outputStoreExpression ::
   (Monoid a) =>
-  Backend ->
   Renderer ann a ->
+  MonoType ->
   StoreExpression ann ->
   BackendM ann a
-outputStoreExpression be renderer se = do
+outputStoreExpression renderer mt se = do
   let funcName = "main"
   deps <-
     traverse
-      (renderImport renderer be)
+      (renderImport renderer)
       (M.toList (getBindings $ storeBindings se))
-  stdLib <- renderStdLib renderer be
+  stdLib <- renderStdLib renderer
   func <- renderFunc renderer funcName (storeExpression se)
-  export <- renderExport renderer be funcName
-  pure $ mconcat deps <> stdLib <> func <> export
+  typeComment <- renderTypeSignature renderer mt
+  export <- renderExport renderer funcName
+  pure $
+    mconcat
+      ( intersperse
+          (renderNewline renderer)
+          [ mconcat deps,
+            stdLib,
+            typeComment,
+            func,
+            export
+          ]
+      )
 
 -- recursively get all the StoreExpressions we need to output
-getTranspileList :: (Ord ann) => Store ann -> StoreExpression ann -> Set (StoreExpression ann)
-getTranspileList store' se = case recursiveResolve store' se of
-  Right as -> S.fromList as
-  Left _ -> mempty
+getTranspileList ::
+  (Ord ann) =>
+  Store ann ->
+  StoreExpression ann ->
+  Set (StoreExpression ann)
+getTranspileList store' se =
+  case recursiveResolve store' se of
+    Right as -> S.fromList as
+    Left _ -> mempty

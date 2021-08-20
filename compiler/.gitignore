@@ -4,5 +4,7 @@ store/*.json
 result
 result/
 
+output/
+
 *.hie
 swagger.json
