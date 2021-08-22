@@ -55,15 +55,15 @@ inferAndSubst ::
   Swaps ->
   Environment ->
   TcExpr ->
-  Either TypeError (Substitutions, MonoType)
+  Either TypeError (Substitutions, [Constraint], MonoType)
 inferAndSubst typeMap swaps env expr = do
   let tcAction = do
         (tyExpr, constraints) <- listen (infer (envWithBuiltInTypes <> env) expr)
         subs <- solve constraints
         tyExpr' <- typedHolesCheck typeMap subs tyExpr
-        pure (subs, tyExpr')
-  (_, _, (subs, tyExpr)) <- runInferM swaps defaultTcState tcAction
-  pure (subs, normaliseType $ applySubst subs tyExpr)
+        pure (subs, constraints, tyExpr')
+  (_, _, (subs, constraints, tyExpr)) <- runInferM swaps defaultTcState tcAction
+  pure (subs, constraints, normaliseType $ applySubst subs tyExpr)
 
 instantiate ::
   Scheme ->
@@ -215,16 +215,17 @@ inferIf env condition thenExpr elseExpr = do
 -----
 
 -- check a list of types are all the same
-matchList :: [MonoType] -> InferM MonoType
-matchList =
+matchList :: NE.NonEmpty MonoType -> InferM MonoType
+matchList mts = do
   foldl
     ( \ty' tyB' -> do
         tyA <- ty'
         tell [ShouldEqual tyA tyB']
         pure tyB'
     )
-    ( getUnknown mempty
+    ( pure (NE.head mts)
     )
+    (NE.tail mts)
 
 -- check type of input expr
 -- check input against patterns
@@ -238,7 +239,7 @@ inferPatternMatch ::
   InferM MonoType
 inferPatternMatch env ann expr patterns = do
   -- ensure we even have any patterns to match on
-  _ <- checkEmptyPatterns ann patterns
+  nePatterns <- checkEmptyPatterns ann patterns
   tyExpr <- infer env expr
   -- infer types of all patterns
   tyPatterns <-
@@ -249,7 +250,7 @@ inferPatternMatch env ann expr patterns = do
           tyPatternExpr <- infer newEnv patternExpr
           pure (tyPattern, tyPatternExpr)
       )
-      patterns
+      nePatterns
   -- combine all patterns to check their types match
   tyMatchedPattern <- matchList (fst <$> tyPatterns)
   -- match patterns with match expr
@@ -260,6 +261,7 @@ inferPatternMatch env ann expr patterns = do
   validatePatterns env ann (fst <$> patterns)
   pure tyMatchedExprs
 
+-- get non-empty list from list and error if not
 checkEmptyPatterns :: Annotation -> [a] -> InferM (NE.NonEmpty a)
 checkEmptyPatterns ann as = case as of
   [] -> throwError (PatternMatchErr $ EmptyPatternMatch ann)
@@ -324,7 +326,9 @@ inferPattern env (PArray ann items spread) = do
             envFromVar binder (Scheme [] (MTArray ann2 tyBinder)) <> env
       pure (Just tyBinder, tmpCtx)
     _ -> pure (Nothing, env)
-  tyItems <- matchList ((fst <$> tyEverything) <> maybe mempty pure tyBinder)
+  tyItems <- case NE.nonEmpty ((fst <$> tyEverything) <> maybe mempty pure tyBinder) of
+    Just neItems -> matchList neItems
+    _ -> getUnknown ann
   let newEnv = mconcat (snd <$> tyEverything) <> env2
   pure
     ( MTArray ann tyItems,
@@ -399,7 +403,7 @@ inferInfix ::
 inferInfix env mt a b = do
   tyA <- infer env a
   tyB <- infer env b
-  tell [ShouldEqual tyB mt, ShouldEqual tyA mt, ShouldEqual tyA tyB]
+  tell [ShouldEqual tyA tyB, ShouldEqual tyB mt, ShouldEqual tyA mt]
   pure mt
 
 inferRecordAccess ::

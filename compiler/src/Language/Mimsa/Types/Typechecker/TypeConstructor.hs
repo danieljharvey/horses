@@ -16,5 +16,8 @@ data TypeConstructor = TypeConstructor
   deriving stock (Show)
 
 instance Printer TypeConstructor where
-  prettyPrint (TypeConstructor consName _tyTypeVars consTypes) =
-    prettyPrint consName <> " " <> T.intercalate " " (prettyPrint <$> consTypes)
+  prettyPrint (TypeConstructor consName tyTypeVars consTypes) =
+    prettyPrint consName <> " [" <> vars <> "] " <> cons
+    where
+      vars = T.intercalate ", " (prettyPrint <$> tyTypeVars)
+      cons = T.intercalate " " (prettyPrint <$> consTypes)

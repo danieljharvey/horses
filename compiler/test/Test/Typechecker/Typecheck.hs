@@ -26,7 +26,7 @@ identity :: Monoid ann => Expr Variable ann
 identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
 
 startInference :: Expr Variable Annotation -> Either TypeError MonoType
-startInference = fmap snd . inferAndSubst mempty mempty mempty
+startInference = fmap (\(_, _, a) -> a) . inferAndSubst mempty mempty mempty
 
 spec :: Spec
 spec = do

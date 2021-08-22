@@ -96,7 +96,14 @@ getVariablesForField (MTPair _ a b) = getVariablesForField a <> getVariablesForF
 getVariablesForField (MTRecord _ items) =
   mconcat $
     getVariablesForField <$> M.elems items
-getVariablesForField _ = S.empty
+getVariablesForField (MTRecordRow _ items rest) =
+  mconcat
+    ( getVariablesForField <$> M.elems items
+    )
+    <> getVariablesForField rest
+getVariablesForField (MTArray _ as) = getVariablesForField as
+getVariablesForField (MTVar _ (TVNum _)) = S.empty
+getVariablesForField MTPrim {} = S.empty
 
 validateConstructors ::
   (MonadError TypeError m) =>
@@ -134,8 +141,8 @@ inferConstructorTypes ::
   Environment ->
   DataType Annotation ->
   m (MonoType, Map TyCon TypeConstructor)
-inferConstructorTypes env (DataType typeName tyNames constructors) = do
-  tyVars <- traverse (\a -> (,) a <$> getUnknown mempty) tyNames
+inferConstructorTypes env (DataType typeName tyVarNames constructors) = do
+  tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
   let findType ty = case ty of
         MTData _ cn vs -> do
           vs' <- traverse findType vs
@@ -161,10 +168,15 @@ inferConstructorTypes env (DataType typeName tyNames constructors) = do
         MTRecord _ items -> do
           tyItems <- traverse findType items
           pure (MTRecord mempty tyItems)
+        MTRecordRow _ items rest -> do
+          tyItems <- traverse findType items
+          MTRecordRow mempty tyItems
+            <$> findType rest
         MTArray _ item -> do
           tyItems <- findType item
           pure (MTArray mempty tyItems)
-        _ -> throwError UnknownTypeError -- TODO: see what this messes up, not 100% on how to deal with these
+        MTVar _ (TVNum _) ->
+          throwError UnknownTypeError -- should not happen but yolo
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
         let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
