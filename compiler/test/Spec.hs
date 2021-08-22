@@ -34,6 +34,7 @@ import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
+import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
@@ -73,3 +74,4 @@ main =
     RemoveBinding.spec
     Typecheck.spec
     RunNode.spec
+    DataTypes.spec

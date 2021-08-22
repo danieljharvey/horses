@@ -98,6 +98,7 @@ buildTestStdlib =
       addParser
       addArray
       addIdentity
+      addMonoid
 
 addListMonad :: Actions.ActionM ()
 addListMonad = do
@@ -192,6 +193,27 @@ addArray =
 
 addIdentity :: Actions.ActionM ()
 addIdentity = addType "type Ident a = Ident a"
+
+addMonoid :: Actions.ActionM ()
+addMonoid = do
+  addType
+    "type Monoid a = Monoid { mappend: (a -> a -> a), mempty: a }"
+  addBinding
+    "stringMonoid"
+    "Monoid ({ mappend: (\\a -> \\b -> a ++ b), mempty: \"\" })"
+  addBinding
+    "sumMonoid"
+    "Monoid ({ mappend: (\\a -> \\b -> a + b), mempty: 0 })"
+  addBinding
+    "maybeMonoid"
+    ( mconcat
+        [ "\\innerM -> let (Monoid { mappend: innerMappend }) = innerM; (let mappend = \\a -> \\b -> match ((a, b)) with (Just iA, Just iB) -> (Just innerMappend(iA)(iB))",
+          " | (Just iA, Nothing) -> (Just iA)",
+          " | (Nothing, Just iB) -> (Just iB)",
+          " | _ -> (Nothing);",
+          " Monoid ({ mappend: mappend, mempty: (Nothing) }))"
+        ]
+    )
 
 unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input =

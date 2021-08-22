@@ -861,3 +861,25 @@ spec =
           it "Fix empty pattern match obscuring bindings" $ do
             result <- eval testStdlib "\\a -> match Nothing with (Nothing) -> a | _ -> a"
             result `shouldSatisfy` isRight
+        describe "Monoid losing types" $ do
+          -- skipping because not sure what the hell is going on here
+          xit "maybeMonoid(stringMonoid)" $ do
+            result <- eval testStdlib "maybeMonoid(stringMonoid)"
+            fst <$> result
+              `shouldBe` Right
+                ( MTData
+                    mempty
+                    "Monoid"
+                    [ MTData mempty "Maybe" [MTPrim mempty MTString]
+                    ]
+                )
+          xit "maybeMonoid(sumMonoid)" $ do
+            result <- eval testStdlib "maybeMonoid(sumMonoid)"
+            fst <$> result
+              `shouldBe` Right
+                ( MTData
+                    mempty
+                    "Monoid"
+                    [ MTData mempty "Maybe" [MTPrim mempty MTInt]
+                    ]
+                )
