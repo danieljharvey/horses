@@ -220,7 +220,14 @@ elabLetBinding env ann binder expr body = do
       let newEnv =
             envFromVar binder (generalise env tySubstExpr)
               <> env
-      elab newEnv body
+      elabBody <- elab newEnv body
+      pure
+        ( MyLet
+            (fromAnn ann (getTypeFromAnn elabBody))
+            binder
+            elabExpr
+            elabBody
+        )
 
 elabRecursiveLetBinding ::
   Environment ->
@@ -242,7 +249,10 @@ elabRecursiveLetBinding env ann binder expr body = do
   let newEnv2 =
         envFromVar binder (Scheme [] tyRec)
           <> env
-  elab newEnv2 body
+  -- TODO: is this bad
+  elabExpr <- elab newEnv2 expr
+  elabBody <- elab newEnv2 body
+  pure (MyLet (fromAnn ann (getTypeFromAnn elabBody)) binder elabExpr elabBody)
 
 elabIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
 elabIf env condition thenExpr elseExpr = do

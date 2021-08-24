@@ -1,7 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 module Language.Mimsa.Types.Typechecker.Substitutions
   ( Substitutions (..),
@@ -9,6 +8,7 @@ module Language.Mimsa.Types.Typechecker.Substitutions
   )
 where
 
+import Data.Bifunctor (first)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
@@ -73,4 +73,5 @@ instance Substitutable MonoType where
     MTPrim ann a -> MTPrim ann a
 
 instance Substitutable (Expr Variable (MonoType, Annotation)) where
-  applySubst _subst elabExpr = elabExpr
+  applySubst subst elabExpr =
+    first (applySubst subst) <$> elabExpr
