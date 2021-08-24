@@ -3,7 +3,14 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Typechecker.Elaborate (runElabM, elab) where
+module Language.Mimsa.Typechecker.Elaborate
+  ( runElabM,
+    elab,
+    elabAndSubst,
+    recoverAnn,
+    TypedAnnotation,
+  )
+where
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -11,6 +18,7 @@ import Control.Monad.State (State, runState)
 import Control.Monad.Writer
 import Data.Foldable
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
@@ -44,9 +52,28 @@ runElabM swaps tcState value =
         (runReaderT (runWriterT (runExceptT value)) swaps)
         tcState
 
+-- run inference, and substitute everything possible
+elabAndSubst ::
+  Map Name MonoType ->
+  Swaps ->
+  Environment ->
+  TcExpr ->
+  Either TypeError (Substitutions, [Constraint], ElabExpr)
+elabAndSubst _typeMap swaps env expr = do
+  let tcAction = do
+        (elabExpr, constraints) <- listen (elab (envWithBuiltInTypes <> env) expr)
+        subs <- solve constraints
+        --        tyExpr' <- typedHolesCheck typeMap subs tyExpr
+        pure (subs, constraints, elabExpr)
+  (_, _, (subs, constraints, tyExpr)) <- runElabM swaps defaultTcState tcAction
+  pure (subs, constraints, applySubst subs tyExpr)
+
 type TcExpr = Expr Variable Annotation
 
 type TypedAnnotation = (MonoType, Annotation)
+
+recoverAnn :: TypedAnnotation -> Annotation
+recoverAnn (mt, _) = getAnnotationForType mt
 
 fromAnn :: Annotation -> MonoType -> TypedAnnotation
 fromAnn ann mt = (mt, ann)

@@ -1,5 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Language.Mimsa.Types.Typechecker.Substitutions
   ( Substitutions (..),
@@ -12,6 +14,7 @@ import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.MonoType
 
@@ -34,6 +37,9 @@ instance Printer Substitutions where
 
 ---
 
+class Substitutable a where
+  applySubst :: Substitutions -> a -> a
+
 -- these are tricky to deal with, so flatten them on the way in
 flattenRow :: MonoType -> MonoType
 flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
@@ -43,25 +49,28 @@ flattenRow other = other
 substLookup :: Substitutions -> TypeIdentifier -> Maybe MonoType
 substLookup subst i = M.lookup i (getSubstitutions subst)
 
-applySubst :: Substitutions -> MonoType -> MonoType
-applySubst subst ty = case flattenRow ty of
-  MTVar ann var ->
-    fromMaybe
-      (MTVar ann var)
-      (substLookup subst var)
-  MTFunction ann arg res ->
-    MTFunction ann (applySubst subst arg) (applySubst subst res)
-  MTPair ann a b ->
-    MTPair
-      ann
-      (applySubst subst a)
-      (applySubst subst b)
-  MTRecord ann a ->
-    MTRecord ann (applySubst subst <$> a)
-  MTRecordRow ann a rest ->
-    MTRecordRow ann (applySubst subst <$> a) (applySubst subst rest)
-  MTArray ann a ->
-    MTArray ann (applySubst subst a)
-  MTData ann a ty' ->
-    MTData ann a (applySubst subst <$> ty')
-  MTPrim ann a -> MTPrim ann a
+instance Substitutable MonoType where
+  applySubst subst ty = case flattenRow ty of
+    MTVar ann var ->
+      fromMaybe
+        (MTVar ann var)
+        (substLookup subst var)
+    MTFunction ann arg res ->
+      MTFunction ann (applySubst subst arg) (applySubst subst res)
+    MTPair ann a b ->
+      MTPair
+        ann
+        (applySubst subst a)
+        (applySubst subst b)
+    MTRecord ann a ->
+      MTRecord ann (applySubst subst <$> a)
+    MTRecordRow ann a rest ->
+      MTRecordRow ann (applySubst subst <$> a) (applySubst subst rest)
+    MTArray ann a ->
+      MTArray ann (applySubst subst a)
+    MTData ann a ty' ->
+      MTData ann a (applySubst subst <$> ty')
+    MTPrim ann a -> MTPrim ann a
+
+instance Substitutable (Expr Variable (MonoType, Annotation)) where
+  applySubst _subst elabExpr = elabExpr
