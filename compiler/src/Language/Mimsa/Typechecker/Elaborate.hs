@@ -9,6 +9,7 @@ module Language.Mimsa.Typechecker.Elaborate
     elabAndSubst,
     recoverAnn,
     TypedAnnotation,
+    getTypeFromAnn,
   )
 where
 

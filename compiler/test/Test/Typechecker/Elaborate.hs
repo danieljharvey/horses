@@ -109,7 +109,6 @@ spec = do
                 (MyVar (MTFunction mempty mtBool mtBool, mempty) (named "dec"))
         startElaborate expr expected
 
-{-
       it "infers let binding with recursion 1" $ do
         let expr =
               MyLet
@@ -130,5 +129,30 @@ spec = do
                     )
                 )
                 (MyApp mempty (MyVar mempty (named "dec")) (bool False))
-        startElaborate expr `shouldBe` Right (MTPrim mempty MTBool)
--}
+            expected =
+              MyLet
+                (mtBool, mempty)
+                (named "dec")
+                ( MyLambda
+                    (MTFunction mempty mtBool mtBool, mempty)
+                    (named "bool")
+                    ( MyIf
+                        (mtBool, mempty)
+                        (MyVar (mtBool, mempty) (named "bool"))
+                        (MyLiteral (mtBool, mempty) (MyBool True))
+                        ( MyApp
+                            (mtBool, mempty)
+                            (MyVar (MTFunction mempty mtBool mtBool, mempty) (named "dec"))
+                            (MyLiteral (mtBool, mempty) (MyBool False))
+                        )
+                    )
+                )
+                ( MyApp
+                    (mtBool, mempty)
+                    ( MyVar
+                        (MTFunction mempty mtBool mtBool, mempty)
+                        (named "dec")
+                    )
+                    (MyLiteral (mtBool, mempty) (MyBool False))
+                )
+        startElaborate expr expected

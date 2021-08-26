@@ -8,7 +8,7 @@ where
 
 import Data.Either (isLeft)
 import qualified Data.Map as M
-import Language.Mimsa.Typechecker.Infer
+import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -26,7 +26,9 @@ identity :: Monoid ann => Expr Variable ann
 identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
 
 startInference :: Expr Variable Annotation -> Either TypeError MonoType
-startInference = fmap (\(_, _, a) -> a) . inferAndSubst mempty mempty mempty
+startInference expr =
+  let elabbed = fmap (\(_, _, a) -> a) . elabAndSubst mempty mempty mempty $ expr
+   in getTypeFromAnn <$> elabbed
 
 spec :: Spec
 spec = do
@@ -132,18 +134,18 @@ spec = do
       it "infers const lambda" $ do
         let expr = MyLambda mempty (named "x") (bool True)
         startInference expr
-          `shouldBe` Right (MTFunction mempty (unknown 1) (MTPrim mempty MTBool))
+          `shouldBe` Right (MTFunction mempty (unknown 0) (MTPrim mempty MTBool))
       it "infers identity" $ do
         let expr = identity
-        startInference expr `shouldBe` Right (MTFunction mempty (unknown 1) (unknown 1))
+        startInference expr `shouldBe` Right (MTFunction mempty (unknown 0) (unknown 0))
       it "infers const function" $ do
         let expr = MyLambda mempty (named "x") (MyLambda mempty (named "y") (MyVar mempty (named "x")))
         startInference expr
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (unknown 1)
-                (MTFunction mempty (unknown 2) (unknown 1))
+                (unknown 0)
+                (MTFunction mempty (unknown 1) (unknown 0))
             )
       it "infers const applied with boolean" $ do
         let expr =
