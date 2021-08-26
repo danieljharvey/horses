@@ -729,10 +729,8 @@ elab env elabExpr =
       pure (MyPair (fromAnn ann (MTPair ann tyA tyB)) elabA elabB)
     (MyData ann dataType expr) -> do
       newEnv <- storeDataDeclaration env ann dataType
-      elab newEnv expr
-    -- TODO: data type could probably lose annotation
-    -- let tyExpr = getTypeFromAnn innerExpr
-    -- pure (MyData (fromAnn ann (getTypeFromAnn innerExpr)) dataType innerExpr)
+      innerExpr <- elab newEnv expr
+      pure (MyData (fromAnn ann (getTypeFromAnn innerExpr)) dataType innerExpr)
     (MyArray ann items) -> do
       elabArray env ann items
     (MyConstructor ann name) -> do
