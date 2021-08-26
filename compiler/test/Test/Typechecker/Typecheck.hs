@@ -8,6 +8,7 @@ where
 import Data.Either (isLeft)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -26,7 +27,7 @@ identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
 
 startInference :: Expr Variable Annotation -> Either TypeError MonoType -> IO ()
 startInference expr expected = do
-  let elabbed = fmap (\(_, _, a) -> a) . elabAndSubst mempty mempty mempty $ expr
+  let elabbed = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ expr
   getTypeFromAnn <$> elabbed `shouldBe` expected
   case elabbed of
     Right elabExpr -> recoverAnn <$> elabExpr `shouldBe` expr
@@ -34,7 +35,7 @@ startInference expr expected = do
 
 testInfer :: Expr Variable Annotation -> Either TypeError MonoType
 testInfer expr = do
-  let elabbed = fmap (\(_, _, a) -> a) . elabAndSubst mempty mempty mempty $ expr
+  let elabbed = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ expr
   getTypeFromAnn <$> elabbed
 
 spec :: Spec

@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Test.Typechecker.Elaborate
   ( spec,
@@ -7,6 +6,7 @@ module Test.Typechecker.Elaborate
 where
 
 import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
@@ -18,7 +18,7 @@ startElaborate ::
   Expr Variable (MonoType, Annotation) ->
   IO ()
 startElaborate input expected = do
-  let result = fmap (\(_, _, a) -> a) . elabAndSubst mempty mempty mempty $ input
+  let result = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ input
   (fmap . fmap) recoverAnn result `shouldBe` Right input
   result `shouldBe` Right expected
 

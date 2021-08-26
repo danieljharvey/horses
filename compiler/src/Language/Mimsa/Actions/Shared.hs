@@ -48,11 +48,11 @@ getType ::
   Scope Annotation ->
   Text ->
   Expr Variable Annotation ->
-  Either (Error ann) (Substitutions, [Constraint], MonoType)
+  Either (Error ann) (Substitutions, [Constraint], Expr Variable (MonoType, Annotation), MonoType)
 getType typeMap swaps scope' source expr =
   first
     (TypeErr source)
-    ( inferAndSubst
+    ( typecheck
         typeMap
         swaps
         mempty
@@ -118,7 +118,7 @@ resolveStoreExpression ::
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' typeMap input storeExpr = do
   let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
-  (_, _, exprType) <- getType typeMap swaps scope input newExpr
+  (_, _, _, exprType) <- getType typeMap swaps scope input newExpr
   pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
 
 getTypeMap :: Project Annotation -> Either (Error Annotation) (Map Name MonoType)
