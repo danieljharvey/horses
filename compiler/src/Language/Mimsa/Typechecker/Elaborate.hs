@@ -492,7 +492,7 @@ elabPattern env (PString ann a as) = do
       newEnv
     )
 
-checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> ElabM ()
+checkArgsLength :: Annotation -> DataType -> TyCon -> [a] -> ElabM ()
 checkArgsLength ann (DataType _ _ cons) tyCon args = do
   case M.lookup tyCon cons of
     Just consArgs ->

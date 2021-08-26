@@ -342,7 +342,7 @@ inferPattern env (PString ann a as) = do
   let newEnv = envFromStrPart a <> envFromStrPart as <> env
   pure (MTPrim ann MTString, newEnv)
 
-checkArgsLength :: Annotation -> DataType ann -> TyCon -> [a] -> InferM ()
+checkArgsLength :: Annotation -> DataType -> TyCon -> [a] -> InferM ()
 checkArgsLength ann (DataType _ _ cons) tyCon args = do
   case M.lookup tyCon cons of
     Just consArgs ->

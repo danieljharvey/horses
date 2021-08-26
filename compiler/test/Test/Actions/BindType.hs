@@ -15,7 +15,6 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Test.Codegen.Shared
@@ -34,7 +33,7 @@ spec :: Spec
 spec = do
   describe "BindType" $ do
     it "Should bind Void but create no functions" $ do
-      let action = Actions.bindType (prettyPrint (dtVoid :: DataType ())) dtVoid
+      let action = Actions.bindType (prettyPrint dtVoid) dtVoid
       let (newProject, outcomes, (outputs, _, _, _)) =
             fromRight (Actions.run testStdlib action)
       -- no codegen matches this datatype
@@ -57,7 +56,7 @@ spec = do
         (Actions.storeExpressionsFromOutcomes outcomes)
         `shouldBe` 1
     it "Should bind Identity and create newtype and functor functions" $ do
-      let action = Actions.bindType (prettyPrint (dtIdentity :: DataType ())) dtIdentity
+      let action = Actions.bindType (prettyPrint dtIdentity) dtIdentity
       let (newProject, outcomes, (outputs, _, _, _)) = fromRight (Actions.run testStdlib action)
       -- no codegen matches this datatype
       outputs `shouldBe` [Newtype, Functor, Foldable, Applicative]
@@ -79,7 +78,7 @@ spec = do
         (Actions.storeExpressionsFromOutcomes outcomes)
         `shouldBe` 7
     it "Should bind TrafficLights and create type bindings for constructors" $ do
-      let action = Actions.bindType (prettyPrint (dtTrafficLights :: DataType ())) dtTrafficLights
+      let action = Actions.bindType (prettyPrint dtTrafficLights) dtTrafficLights
       let (newProject, outcomes, (outputs, _, _, _)) =
             fromRight (Actions.run testStdlib action)
       -- no codegen matches this datatype
@@ -113,9 +112,9 @@ spec = do
         `shouldBe` 4
 
     it "Should bind ConsoleF without breaking" $ do
-      let action = Actions.bindType (prettyPrint (dtConsoleF :: DataType ())) dtConsoleF
+      let action = Actions.bindType (prettyPrint dtConsoleF) dtConsoleF
       Actions.run testStdlib action `shouldSatisfy` isRight
 
     it "Should bind Env without breaking" $ do
-      let action = Actions.bindType (prettyPrint (dtEnv :: DataType ())) dtEnv
+      let action = Actions.bindType (prettyPrint dtEnv) dtEnv
       Actions.run testStdlib action `shouldSatisfy` isRight

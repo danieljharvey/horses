@@ -23,7 +23,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-applicativeApply :: DataType () -> Either Text (Expr Name ())
+applicativeApply :: DataType -> Either Text (Expr Name ())
 applicativeApply = runCodegenM . applicativeApply_
 
 fName :: TyCon -> Name
@@ -36,7 +36,7 @@ aName tyCon = Name (coerce (tyConToName tyCon) <> "A")
 -- | ie A -> m A
 -- | If there are multiple constructors that match this it will fail
 applicativeApply_ ::
-  DataType () ->
+  DataType ->
   CodegenM (Expr Name ())
 applicativeApply_ (DataType tyCon vars items) = do
   matches <- createMatches tyCon vars items

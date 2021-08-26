@@ -84,10 +84,9 @@ resolvedDepsToTypeMap store' deps = do
   pure (M.fromList listItems)
 
 getTypesFromStore ::
-  (Ord ann) =>
   Store ann ->
   TypeBindings ->
-  Set (DataType ann)
+  Set DataType
 getTypesFromStore (Store items') (TypeBindings tBindings) =
   S.fromList $
     join $ do

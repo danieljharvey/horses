@@ -6,6 +6,7 @@ module Language.Mimsa.Parser.TypeDecl
   )
 where
 
+import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -19,24 +20,24 @@ import Language.Mimsa.Types.Typechecker
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
-parseTypeDeclAndFormatError :: Text -> Either Text (DataType Annotation)
+parseTypeDeclAndFormatError :: Text -> Either Text DataType
 parseTypeDeclAndFormatError =
   parseAndFormat (typeDeclParser <* eof)
 
-typeDeclParser :: Parser (DataType Annotation)
+typeDeclParser :: Parser DataType
 typeDeclParser =
   try typeDeclParserWithCons
     <|> try typeDeclParserEmpty
 
 -- it's your "type Void in ..."
-typeDeclParserEmpty :: Parser (DataType Annotation)
+typeDeclParserEmpty :: Parser DataType
 typeDeclParserEmpty = do
   _ <- thenSpace (string "type")
   tyName <- tyConParser
   pure (DataType tyName mempty mempty)
 
 -- it's your more complex cases
-typeDeclParserWithCons :: Parser (DataType Annotation)
+typeDeclParserWithCons :: Parser DataType
 typeDeclParserWithCons = do
   _ <- thenSpace (string "type")
   tyName <- thenSpace tyConParser
@@ -49,7 +50,7 @@ typeDeclParserWithCons = do
 
 --------
 
-manyTypeConstructors :: Parser (Map TyCon [MonoType])
+manyTypeConstructors :: Parser (Map TyCon [Type ()])
 manyTypeConstructors = do
   tyCons <-
     sepBy
@@ -59,7 +60,7 @@ manyTypeConstructors = do
 
 -----
 
-oneTypeConstructor :: Parser (Map TyCon [MonoType])
+oneTypeConstructor :: Parser (Map TyCon [Type ()])
 oneTypeConstructor = do
   name <- tyConParser
   args <-
@@ -69,6 +70,7 @@ oneTypeConstructor = do
           sepBy (withOptionalSpace monoTypeParser) space
       )
       <|> pure mempty
-  pure (M.singleton name args)
+  let argsWithNoType = (\a -> a $> ()) <$> args
+  pure (M.singleton name argsWithNoType)
 
 -----

@@ -8,14 +8,14 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store.ExprHash
 
-newtype ResolvedTypeDeps ann = ResolvedTypeDeps
+newtype ResolvedTypeDeps = ResolvedTypeDeps
   { getResolvedTypeDeps ::
       Map
         TyCon
-        (ExprHash, DataType ann)
+        (ExprHash, DataType)
   }
 
-instance Printer (ResolvedTypeDeps ann) where
+instance Printer ResolvedTypeDeps where
   prettyDoc (ResolvedTypeDeps deps) =
     encloseSep
       lbrace

@@ -22,14 +22,14 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-applicativePure :: DataType () -> Either Text (Expr Name ())
+applicativePure :: DataType -> Either Text (Expr Name ())
 applicativePure = runCodegenM . applicativePure_
 
 -- | `pure` takes the rightmost var and places it in the functor context
 -- | ie A -> m A
 -- | If there are multiple constructors that match this it will fail
 applicativePure_ ::
-  DataType () ->
+  DataType ->
   CodegenM (Expr Name ())
 applicativePure_ (DataType tyCon vars items) = do
   fVar <- getFunctorVar vars

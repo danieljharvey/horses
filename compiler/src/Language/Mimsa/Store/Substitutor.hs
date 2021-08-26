@@ -95,7 +95,7 @@ resolveTypes store' (TypeBindings tBindings) =
       manySets = fmap typeLookup (M.toList tBindings)
    in mconcat manySets
 
-toDataTypeList :: (Ord ann) => [StoreExpression ann] -> [DataType ann]
+toDataTypeList :: [StoreExpression ann] -> [DataType]
 toDataTypeList sExprs =
   let getDts sExpr = extractDataTypes (storeExpression sExpr)
    in S.toList $ mconcat (getDts <$> sExprs)
@@ -104,7 +104,7 @@ toDataTypeList sExprs =
 addDataTypesToExpr ::
   (Monoid ann) =>
   Expr var ann ->
-  [DataType ann] ->
+  [DataType] ->
   Expr var ann
 addDataTypesToExpr =
   foldr (MyData mempty)

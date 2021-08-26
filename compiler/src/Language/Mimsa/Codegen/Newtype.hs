@@ -15,7 +15,7 @@ import Language.Mimsa.Types.Identifiers
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
-wrap :: DataType () -> Either Text (Expr Name ())
+wrap :: DataType -> Either Text (Expr Name ())
 wrap (DataType _tyCon _vars items) =
   case getOnlyMapItem items of
     Nothing -> Left "Type should have one constructor"
@@ -34,7 +34,7 @@ wrap (DataType _tyCon _vars items) =
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
-unwrap :: DataType () -> Either Text (Expr Name ())
+unwrap :: DataType -> Either Text (Expr Name ())
 unwrap (DataType tyCon _vars items) = do
   let tyName = tyConToName tyCon
   case getOnlyMapItem items of

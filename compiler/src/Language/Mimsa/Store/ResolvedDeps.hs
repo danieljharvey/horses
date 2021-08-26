@@ -31,18 +31,16 @@ resolveDeps (Store items) (Bindings bindings') =
         <$> M.toList bindings'
 
 extractDataType ::
-  (Ord ann) =>
   StoreExpression ann ->
-  Maybe (DataType ann)
+  Maybe DataType
 extractDataType se =
   let types = extractDataTypes (storeExpression se)
    in listToMaybe . S.toList $ types
 
 resolveTypeDeps ::
-  (Ord ann) =>
   Store ann ->
   TypeBindings ->
-  Either StoreError (ResolvedTypeDeps ann)
+  Either StoreError ResolvedTypeDeps
 resolveTypeDeps (Store items) (TypeBindings bindings') =
   case partitionEithers foundItems of
     ([], found) -> Right (ResolvedTypeDeps (M.fromList found))

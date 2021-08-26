@@ -37,11 +37,11 @@ import Language.Mimsa.Types.Typechecker.MonoType
 import Test.Data.Project
 
 -- | has no constructors, we can do nothing with this
-dtVoid :: DataType ann
+dtVoid :: DataType
 dtVoid = DataType "Void" mempty mempty
 
 -- | an enum, we can go to and from a string
-dtTrafficLights :: DataType ann
+dtTrafficLights :: DataType
 dtTrafficLights =
   DataType
     "TrafficLights"
@@ -55,7 +55,7 @@ dtTrafficLights =
 
 -- | A newtype around a string
 -- | we can wrap and unwrap maybe?
-dtWrappedString :: (Monoid ann) => DataType ann
+dtWrappedString :: DataType
 dtWrappedString =
   DataType
     "WrappedString"
@@ -63,7 +63,7 @@ dtWrappedString =
     (M.singleton "Wrapped" [MTData mempty "String" mempty])
 
 -- | Identity monad
-dtIdentity :: (Monoid ann) => DataType ann
+dtIdentity :: DataType
 dtIdentity =
   DataType
     "Identity"
@@ -71,7 +71,7 @@ dtIdentity =
     (M.singleton "Identity" [MTVar mempty (TVName "a")])
 
 -- | Maybe monad
-dtMaybe :: (Monoid ann) => DataType ann
+dtMaybe :: DataType
 dtMaybe =
   DataType
     "Maybe"
@@ -83,7 +83,7 @@ dtMaybe =
     )
 
 -- | Either monad
-dtEither :: (Monoid ann) => DataType ann
+dtEither :: DataType
 dtEither =
   DataType
     "Either"
@@ -95,7 +95,7 @@ dtEither =
     )
 
 -- | These monad
-dtThese :: (Monoid ann) => DataType ann
+dtThese :: DataType
 dtThese =
   DataType
     "These"
@@ -114,7 +114,7 @@ dtThese =
     )
 
 -- | List monad
-dtList :: (Monoid ann) => DataType ann
+dtList :: DataType
 dtList =
   DataType
     "List"
@@ -131,7 +131,7 @@ dtList =
 
 -- | List but with more type params so we can recurse around more complicated
 -- types
-dtDoubleList :: (Monoid ann) => DataType ann
+dtDoubleList :: DataType
 dtDoubleList =
   DataType
     "DoubleList"
@@ -152,7 +152,7 @@ dtDoubleList =
         ]
     )
 
-dtTree :: (Monoid ann) => DataType ann
+dtTree :: DataType
 dtTree =
   DataType
     "Tree"
@@ -167,7 +167,7 @@ dtTree =
         ]
     )
 
-dtReader :: (Monoid ann) => DataType ann
+dtReader :: DataType
 dtReader =
   DataType
     "Reader"
@@ -181,7 +181,7 @@ dtReader =
         ]
     )
 
-dtMatchedPair :: (Monoid ann) => DataType ann
+dtMatchedPair :: DataType
 dtMatchedPair =
   DataType
     "MatchedPair"
@@ -193,7 +193,7 @@ dtMatchedPair =
         ]
     )
 
-dtConsoleF :: (Monoid ann) => DataType ann
+dtConsoleF :: DataType
 dtConsoleF =
   DataType
     "ConsoleF"
@@ -214,7 +214,7 @@ dtConsoleF =
         ]
     )
 
-dtPair :: (Monoid ann) => DataType ann
+dtPair :: DataType
 dtPair =
   DataType
     "Pair"
@@ -226,7 +226,7 @@ dtPair =
         ]
     )
 
-dtEnv :: (Monoid ann) => DataType ann
+dtEnv :: DataType
 dtEnv =
   DataType
     "Env"
@@ -239,8 +239,8 @@ dtEnv =
     )
 
 typecheckInstance ::
-  (DataType () -> Either Text (Expr Name ())) ->
-  DataType () ->
+  (DataType -> Either Text (Expr Name ())) ->
+  DataType ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 typecheckInstance mkInstance dt =
   (,) <$> newStdLib <*> inst'
@@ -252,7 +252,7 @@ typecheckInstance mkInstance dt =
       addExprBinding
         ( MyData
             mempty
-            (dt $> mempty)
+            dt
             (MyRecord mempty mempty)
         )
         "temporaryAddType"

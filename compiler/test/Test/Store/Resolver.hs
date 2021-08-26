@@ -30,7 +30,7 @@ createStoreExpression' = createStoreExpression
 
 createTypeStoreExpression' ::
   TypeBindings ->
-  DataType () ->
+  DataType ->
   Either ResolverError (StoreExpression ())
 createTypeStoreExpression' = createTypeStoreExpression
 

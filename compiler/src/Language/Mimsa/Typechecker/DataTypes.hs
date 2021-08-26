@@ -14,8 +14,10 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State
+import Data.Bifunctor (second)
 import Data.Coerce
 import Data.Foldable (traverse_)
+import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -50,7 +52,7 @@ storeDataDeclaration ::
   (MonadError TypeError m) =>
   Environment ->
   Annotation ->
-  DataType Annotation ->
+  DataType ->
   m Environment
 storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   validateDataTypeVariables dt
@@ -86,7 +88,7 @@ inferDataConstructor env ann tyCon = do
       pure (constructorToType tyArg)
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
-getVariablesForField :: MonoType -> Set Name
+getVariablesForField :: Type ann -> Set Name
 getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
 getVariablesForField (MTData _ _ fields) =
   mconcat (getVariablesForField <$> fields)
@@ -109,7 +111,7 @@ validateConstructors ::
   (MonadError TypeError m) =>
   Environment ->
   Annotation ->
-  DataType Annotation ->
+  DataType ->
   m ()
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
@@ -122,7 +124,7 @@ validateConstructors env ann (DataType _ _ constructors) = do
 
 validateDataTypeVariables ::
   (MonadError TypeError m) =>
-  DataType Annotation ->
+  DataType ->
   m ()
 validateDataTypeVariables (DataType typeName vars constructors) =
   let requiredForCons = foldMap getVariablesForField
@@ -139,7 +141,7 @@ validateDataTypeVariables (DataType typeName vars constructors) =
 inferConstructorTypes ::
   (MonadError TypeError m, MonadState TypecheckState m) =>
   Environment ->
-  DataType Annotation ->
+  DataType ->
   m (MonoType, Map TyCon TypeConstructor)
 inferConstructorTypes env (DataType typeName tyVarNames constructors) = do
   tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
@@ -181,7 +183,9 @@ inferConstructorTypes env (DataType typeName tyVarNames constructors) = do
         tyCons <- traverse findType tyArgs
         let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
         pure $ M.singleton consName constructor
-  cons' <- traverse inferConstructor (M.toList constructors)
+  let mtConstructors :: [(TyCon, [MonoType])]
+      mtConstructors = second (($> mempty) <$>) <$> M.toList constructors
+  cons' <- traverse inferConstructor mtConstructors
   let dt = MTData mempty typeName (snd <$> tyVars)
   pure (dt, mconcat cons')
 

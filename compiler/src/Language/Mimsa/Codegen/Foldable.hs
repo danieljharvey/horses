@@ -17,13 +17,13 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-fold :: DataType () -> Either Text (Expr Name ())
+fold :: DataType -> Either Text (Expr Name ())
 fold = runCodegenM . fold_
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
 fold_ ::
-  DataType () ->
+  DataType ->
   CodegenM (Expr Name ())
 fold_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon

@@ -210,7 +210,7 @@ renderTypeError (PatternMatchErr pmErr) = [prettyDoc pmErr]
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
   where
-    printDt :: DataType ann -> [Doc style]
+    printDt :: DataType -> [Doc style]
     printDt (DataType tyName tyVars constructors) =
       [prettyDoc tyName] <> printTyVars tyVars
         <> zipWith (<>) (":" : repeat "|") (printCons <$> M.toList constructors)
