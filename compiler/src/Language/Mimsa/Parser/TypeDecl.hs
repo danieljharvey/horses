@@ -70,7 +70,7 @@ oneTypeConstructor = do
           sepBy (withOptionalSpace monoTypeParser) space
       )
       <|> pure mempty
-  let argsWithNoType = (\a -> a $> ()) <$> args
+  let argsWithNoType = ($> ()) <$> args
   pure (M.singleton name argsWithNoType)
 
 -----

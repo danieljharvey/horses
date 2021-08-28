@@ -1,5 +1,4 @@
 {-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -46,7 +45,7 @@ data DataType = DataType
       ToSchema
     )
 
-instance Printer (DataType) where
+instance Printer DataType where
   prettyDoc = renderDataType
 
 renderDataType :: DataType -> Doc style
