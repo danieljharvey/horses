@@ -62,7 +62,10 @@ findBindings bindings' expr = do
 isBuiltIn :: TyCon -> Bool
 isBuiltIn = isJust . lookupBuiltIn
 
-findHashInTypeBindings :: TypeBindings -> TyCon -> Either ResolverError (Maybe ExprHash)
+findHashInTypeBindings ::
+  TypeBindings ->
+  TyCon ->
+  Either ResolverError (Maybe ExprHash)
 findHashInTypeBindings (TypeBindings bindings') cName =
   if isBuiltIn cName
     then Right Nothing
@@ -85,7 +88,7 @@ findTypeBindings tBindings expr = do
 createTypeStoreExpression ::
   (Eq ann, Monoid ann) =>
   TypeBindings ->
-  DataType ann ->
+  DataType ->
   Either ResolverError (StoreExpression ann)
 createTypeStoreExpression tBindings dt =
   let expr = MyData mempty dt (MyRecord mempty mempty)

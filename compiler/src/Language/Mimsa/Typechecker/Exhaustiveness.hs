@@ -157,7 +157,7 @@ smallerListVersions aas =
 
 requiredFromDataType ::
   (MonadError TypeError m) =>
-  DataType Annotation ->
+  DataType ->
   m [Pattern var Annotation]
 requiredFromDataType (DataType _ _ cons) =
   if length cons < 2 -- if there is only one constructor don't generate more

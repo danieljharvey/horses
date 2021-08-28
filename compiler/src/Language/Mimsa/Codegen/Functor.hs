@@ -18,13 +18,13 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-functorMap :: DataType () -> Either Text (Expr Name ())
+functorMap :: DataType -> Either Text (Expr Name ())
 functorMap = runCodegenM . functorMap_
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
 functorMap_ ::
-  DataType () ->
+  DataType ->
   CodegenM (Expr Name ())
 functorMap_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon

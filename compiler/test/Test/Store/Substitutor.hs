@@ -45,7 +45,7 @@ constExpr =
     mempty
     mempty
 
-maybeDecl :: (Monoid ann) => DataType ann
+maybeDecl :: DataType
 maybeDecl =
   DataType "Maybe" ["a"] cons'
   where

@@ -16,7 +16,7 @@ lookupConstructor ::
   Environment ->
   Annotation ->
   TyCon ->
-  m (DataType Annotation)
+  m DataType
 lookupConstructor env ann name = do
   case M.toList $ M.filter (containsConstructor name) (getDataTypes env) of
     [(_, a)] -> pure a -- we only want a single match
@@ -24,6 +24,6 @@ lookupConstructor env ann name = do
     _ -> throwError (TypeConstructorNotInScope env ann name)
 
 -- does this data type contain the given constructor?
-containsConstructor :: TyCon -> DataType ann -> Bool
+containsConstructor :: TyCon -> DataType -> Bool
 containsConstructor name (DataType _tyName _tyVars constructors) =
   M.member name constructors

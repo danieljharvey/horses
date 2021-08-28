@@ -1,5 +1,4 @@
 {-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -26,19 +25,18 @@ import Language.Mimsa.Types.Typechecker.MonoType
 -------
 
 -- | This describes a custom data type, such as `Either e a = Left e | Right a`
-data DataType ann = DataType
+data DataType = DataType
   { -- | The name of this type, ie `Either`
     dtName :: TyCon,
     -- | The type variables for the data type, ie `e`, `a`
     dtVars :: [Name],
     -- | map from constructor name to it's arguments, ie "`Left` -> [`e`]" or "`Right` -> [`a`]"
-    dtConstructors :: Map TyCon [Type ann]
+    dtConstructors :: Map TyCon [Type ()]
   }
   deriving stock
     ( Eq,
       Ord,
       Show,
-      Functor,
       Generic
     )
   deriving anyclass
@@ -47,10 +45,10 @@ data DataType ann = DataType
       ToSchema
     )
 
-instance Printer (DataType ann) where
+instance Printer DataType where
   prettyDoc = renderDataType
 
-renderDataType :: DataType ann -> Doc style
+renderDataType :: DataType -> Doc style
 renderDataType (DataType tyCon vars' constructors') =
   "type" <+> prettyDoc tyCon
     <> printVars vars'

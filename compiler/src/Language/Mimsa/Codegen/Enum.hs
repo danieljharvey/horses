@@ -17,7 +17,7 @@ import Language.Mimsa.Types.Identifiers
 -- | An enum is a datatype with at least one constructor
 -- | each have no arguments
 toString ::
-  DataType () ->
+  DataType ->
   Either Text (Expr Name ())
 toString (DataType tyCon [] items) = do
   let tyName = tyConToName tyCon
@@ -50,7 +50,7 @@ toString (DataType tyCon [] items) = do
 toString _ = Left "Datatype is expected to have no parameters"
 
 fromString ::
-  DataType () ->
+  DataType ->
   Either Text (Expr Name ())
 fromString (DataType _ [] items) = do
   let tyName = "str"

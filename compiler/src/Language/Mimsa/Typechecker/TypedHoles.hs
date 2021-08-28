@@ -26,12 +26,11 @@ typedHolesCheck ::
   (MonadReader Swaps m, MonadError TypeError m, MonadState TypecheckState m) =>
   Map Name MonoType ->
   Substitutions ->
-  MonoType ->
-  m MonoType
-typedHolesCheck typeMap subs mt = do
+  m ()
+typedHolesCheck typeMap subs = do
   holes <- getTypedHoles subs
   if M.null holes
-    then pure mt
+    then pure ()
     else throwError (TypedHoles (getTypedHoleSuggestions typeMap <$> holes))
 
 getTypedHoleSuggestions :: Map Name MonoType -> MonoType -> (MonoType, Set Name)

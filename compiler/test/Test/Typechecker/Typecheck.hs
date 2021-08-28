@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Test.Typechecker.Typecheck
   ( spec,
@@ -8,7 +7,8 @@ where
 
 import Data.Either (isLeft)
 import qualified Data.Map as M
-import Language.Mimsa.Typechecker.Infer
+import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -25,8 +25,18 @@ import Test.Utils.Helpers
 identity :: Monoid ann => Expr Variable ann
 identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
 
-startInference :: Expr Variable Annotation -> Either TypeError MonoType
-startInference = fmap (\(_, _, a) -> a) . inferAndSubst mempty mempty mempty
+startInference :: Expr Variable Annotation -> Either TypeError MonoType -> IO ()
+startInference expr expected = do
+  let elabbed = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ expr
+  getTypeFromAnn <$> elabbed `shouldBe` expected
+  case elabbed of
+    Right elabExpr -> recoverAnn <$> elabExpr `shouldBe` expr
+    _ -> pure () -- can't compare
+
+testInfer :: Expr Variable Annotation -> Either TypeError MonoType
+testInfer expr = do
+  let elabbed = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ expr
+  getTypeFromAnn <$> elabbed
 
 spec :: Spec
 spec = do
@@ -34,19 +44,19 @@ spec = do
     describe "basic cases" $ do
       it "infers int" $ do
         let expr = int 1
-        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+        startInference expr (Right (MTPrim mempty MTInt))
       it "infers bool" $ do
         let expr = bool True
-        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+        startInference expr (Right (MTPrim mempty MTBool))
       it "infers string" $ do
         let expr = str (StringType "hello")
-        startInference expr `shouldBe` Right (MTPrim mempty MTString)
+        startInference expr $ Right (MTPrim mempty MTString)
       it "infers let binding" $ do
         let expr = MyLet mempty (named "x") (int 42) (bool True)
-        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+        startInference expr $ Right (MTPrim mempty MTBool)
       it "infers let binding with usage" $ do
         let expr = MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))
-        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+        startInference expr $ Right (MTPrim mempty MTInt)
       it "infers let binding with recursion 0" $ do
         let expr =
               MyLet
@@ -67,7 +77,7 @@ spec = do
                     )
                 )
                 (MyVar mempty (named "dec"))
-        startInference expr `shouldBe` Right (MTFunction mempty (MTPrim mempty MTBool) (MTPrim mempty MTBool))
+        startInference expr $ Right (MTFunction mempty (MTPrim mempty MTBool) (MTPrim mempty MTBool))
 
       it "infers let binding with recursion 1" $ do
         let expr =
@@ -89,7 +99,7 @@ spec = do
                     )
                 )
                 (MyApp mempty (MyVar mempty (named "dec")) (bool False))
-        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+        startInference expr $ Right (MTPrim mempty MTBool)
 
       it "infers let binding with recursion 2 (flipped if cases)" $ do
         let expr =
@@ -111,7 +121,7 @@ spec = do
                     )
                 )
                 (MyApp mempty (MyVar mempty (named "dec")) (bool False))
-        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+        startInference expr $ Right (MTPrim mempty MTBool)
 
       it "infers multiple let bindings" $ do
         let expr =
@@ -120,7 +130,7 @@ spec = do
                 (named "x")
                 (bool True)
                 (MyLet mempty (named "y") (int 42) (MyVar mempty (named "x")))
-        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+        startInference expr $ Right (MTPrim mempty MTBool)
       it "infers shadowed let bindings" $ do
         let expr =
               MyLet
@@ -128,22 +138,22 @@ spec = do
                 (named "x")
                 (bool True)
                 (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x")))
-        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+        startInference expr $ Right (MTPrim mempty MTInt)
       it "infers const lambda" $ do
         let expr = MyLambda mempty (named "x") (bool True)
-        startInference expr
-          `shouldBe` Right (MTFunction mempty (unknown 1) (MTPrim mempty MTBool))
+        startInference expr $
+          Right (MTFunction mempty (unknown 0) (MTPrim mempty MTBool))
       it "infers identity" $ do
         let expr = identity
-        startInference expr `shouldBe` Right (MTFunction mempty (unknown 1) (unknown 1))
+        startInference expr $ Right (MTFunction mempty (unknown 0) (unknown 0))
       it "infers const function" $ do
         let expr = MyLambda mempty (named "x") (MyLambda mempty (named "y") (MyVar mempty (named "x")))
-        startInference expr
-          `shouldBe` Right
+        startInference expr $
+          Right
             ( MTFunction
                 mempty
-                (unknown 1)
-                (MTFunction mempty (unknown 2) (unknown 1))
+                (unknown 0)
+                (MTFunction mempty (unknown 1) (unknown 0))
             )
       it "infers const applied with boolean" $ do
         let expr =
@@ -155,14 +165,14 @@ spec = do
                     (bool True)
                 )
                 (int 1)
-        startInference expr `shouldBe` Right (MTPrim mempty MTBool)
+        startInference expr $ Right (MTPrim mempty MTBool)
       it "infers identity with int passed to it" $ do
         let expr =
               MyApp
                 mempty
                 identity
                 (int 1)
-        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+        startInference expr $ Right (MTPrim mempty MTInt)
       it "passing int to an if statement in a lambda fails" $ do
         let expr =
               MyApp
@@ -173,14 +183,14 @@ spec = do
                     (MyIf mempty (MyVar mempty (named "x")) (int 10) (int 10))
                 )
                 (int 100)
-        startInference expr
-          `shouldBe` Left
+        startInference expr $
+          Left
             ( UnificationError (MTPrim mempty MTBool) (MTPrim mempty MTInt)
             )
       it "fails occurs check" $ do
         let expr = MyLambda mempty (named "x") (MyApp mempty (MyVar mempty (named "x")) (MyVar mempty (named "x")))
-        startInference expr
-          `shouldBe` Left
+        startInference expr $
+          Left
             ( FailsOccursCheck
                 mempty
                 (tvFree 0)
@@ -192,8 +202,8 @@ spec = do
             )
       it "infers pair" $ do
         let expr = MyPair mempty (int 1) (bool True)
-        startInference expr
-          `shouldBe` Right
+        startInference expr $
+          Right
             (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
       it "infers and destructures pair" $ do
         let expr =
@@ -206,7 +216,7 @@ spec = do
                 )
                 (MyPair mempty (int 1) (bool True))
                 (MyVar mempty (named "a"))
-        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+        startInference expr $ Right (MTPrim mempty MTInt)
       it "infers destructured pair in a lambda" $ do
         let expr =
               MyLambda
@@ -222,16 +232,16 @@ spec = do
                     (MyVar mempty (named "x"))
                     (MyVar mempty (named "a"))
                 )
-        startInference expr
-          `shouldBe` Right
+        startInference expr $
+          Right
             (MTFunction mempty (MTPair mempty (unknown 1) (unknown 2)) (unknown 1))
       it "infers empty record" $ do
         let expr =
               MyRecord
                 mempty
                 mempty
-        startInference expr
-          `shouldBe` Right
+        startInference expr $
+          Right
             ( MTRecord mempty mempty
             )
       it "infers record with two ints in it" $ do
@@ -243,8 +253,8 @@ spec = do
                       ("cat", int 2)
                     ]
                 )
-        startInference expr
-          `shouldBe` Right
+        startInference expr $
+          Right
             ( MTRecord
                 mempty
                 ( M.fromList
@@ -268,8 +278,8 @@ spec = do
                     (int 1)
                     (int 2)
                 )
-        startInference expr
-          `shouldBe` Right
+        startInference expr $
+          Right
             ( MTFunction
                 mempty
                 ( MTRecordRow
@@ -297,8 +307,8 @@ spec = do
                     )
                     (int 1)
                 )
-        startInference expr
-          `shouldBe` Right
+        startInference expr $
+          Right
             ( MTFunction
                 mempty
                 ( MTRecordRow
@@ -321,7 +331,7 @@ spec = do
                     (MyApp mempty (MyVar mempty (named "id")) (bool True))
                 )
         let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
-        startInference expr `shouldBe` expected
+        startInference expr expected
       it "Simple let pattern with tuple" $ do
         let expr =
               MyLet
@@ -340,7 +350,7 @@ spec = do
                 )
 
         let expected = Right (MTPrim mempty MTInt)
-        startInference expr `shouldBe` expected
+        startInference expr expected
 
       it "Simplified Tuple destructuring" $ do
         let expr =
@@ -365,7 +375,7 @@ spec = do
                     (MTPair mempty (unknown 1) (unknown 2))
                     (unknown 1)
                 )
-        startInference expr `shouldBe` expected
+        startInference expr expected
 
       it "Tuple destructuring (pattern match)" $ do
         let expr =
@@ -394,7 +404,7 @@ spec = do
                     (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "pair")))
                 )
         let expected = Right (MTPrim mempty MTInt)
-        startInference expr `shouldBe` expected
+        startInference expr expected
 
       it "Tuple destructuring" $ do
         let expr =
@@ -422,7 +432,7 @@ spec = do
                     (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "pair")))
                 )
         let expected = Right (MTPrim mempty MTInt)
-        startInference expr `shouldBe` expected
+        startInference expr expected
 
       it "We can use identity with two different datatypes in one expression" $ do
         let lambda =
@@ -436,14 +446,14 @@ spec = do
                     (MyApp mempty identity (int 2))
                 )
         let expr = MyApp mempty lambda (bool True)
-        startInference lambda
-          `shouldBe` Right
+        startInference lambda $
+          Right
             ( MTFunction
                 mempty
                 (MTPrim mempty MTBool)
                 (MTPrim mempty MTInt)
             )
-        startInference expr `shouldBe` Right (MTPrim mempty MTInt)
+        startInference expr $ Right (MTPrim mempty MTInt)
       it "Conflict RecordRows throw an error" $ do
         let expr =
               MyLambda
@@ -464,11 +474,11 @@ spec = do
                         (MyRecordAccess mempty (MyVar mempty (named "a")) "prop")
                     )
                 )
-        startInference expr `shouldSatisfy` isLeft
+        testInfer expr `shouldSatisfy` isLeft
   describe "Pattern matching" $ do
     it "Returns an EmptyPatternMatch error when no patterns supplied" $ do
       let expr = MyPatternMatch mempty (int 1) mempty
-      startInference expr `shouldBe` Left (PatternMatchErr $ EmptyPatternMatch mempty)
+      startInference expr $ Left (PatternMatchErr $ EmptyPatternMatch mempty)
     it "Detects an integer does not match a boolean literal" $ do
       let expr =
             MyPatternMatch
@@ -477,8 +487,7 @@ spec = do
               [ (PLit mempty (MyBool True), int 1),
                 (PLit mempty (MyBool False), int 2)
               ]
-      startInference expr
-        `shouldSatisfy` isLeft
+      testInfer expr `shouldSatisfy` isLeft
     it "Matches a boolean literal" $ do
       let expr =
             MyPatternMatch
@@ -487,8 +496,8 @@ spec = do
               [ (PLit mempty (MyBool True), int 1),
                 (PLit mempty (MyBool False), int 2)
               ]
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTInt)
+      startInference expr $
+        Right (MTPrim mempty MTInt)
     it "Detects patterns don't unify" $ do
       let expr =
             MyPatternMatch
@@ -497,7 +506,7 @@ spec = do
               [ (PLit mempty (MyBool True), int 1),
                 (PLit mempty (MyInt 1), int 2)
               ]
-      startInference expr
+      testInfer expr
         `shouldSatisfy` isLeft
     it "Detects output exprs don't unify" $ do
       let expr =
@@ -507,7 +516,7 @@ spec = do
               [ (PLit mempty (MyBool True), int 1),
                 (PLit mempty (MyBool False), bool True)
               ]
-      startInference expr
+      testInfer expr
         `shouldSatisfy` isLeft
     it "Matches a boolean with a variable" $ do
       let expr =
@@ -515,8 +524,8 @@ spec = do
               mempty
               (int 1)
               [(PVar mempty (named "dog"), bool True)]
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTBool)
+      startInference expr $
+        Right (MTPrim mempty MTBool)
     it "Matches with a variable and uses that variable" $ do
       let expr =
             MyPatternMatch
@@ -526,8 +535,8 @@ spec = do
                   MyVar mempty (named "dog")
                 )
               ]
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTInt)
+      startInference expr $
+        Right (MTPrim mempty MTInt)
     it "Matches with a wildcard expression" $ do
       let expr =
             MyPatternMatch
@@ -537,8 +546,8 @@ spec = do
                   bool True
                 )
               ]
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTBool)
+      startInference expr $
+        Right (MTPrim mempty MTBool)
     it "An integer does not match with a Maybe" $ do
       let expr =
             MyData
@@ -555,7 +564,7 @@ spec = do
                     )
                   ]
               )
-      startInference expr
+      testInfer expr
         `shouldSatisfy` isLeft
     it "Matches pattern match values to branch return types" $ do
       let expr =
@@ -577,8 +586,8 @@ spec = do
                       ]
                   )
               )
-      startInference expr
-        `shouldBe` Right
+      startInference expr $
+        Right
           (MTFunction mempty (MTData mempty "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
 
     it "Errors when number of args does not match for Just" $ do
@@ -598,8 +607,8 @@ spec = do
                     (PConstructor mempty "Just" [PWildcard mempty], bool False)
                   ]
               )
-      startInference expr
-        `shouldBe` Left (PatternMatchErr $ ConstructorArgumentLengthMismatch mempty "Just" 1 0)
+      startInference expr $
+        Left (PatternMatchErr $ ConstructorArgumentLengthMismatch mempty "Just" 1 0)
     it "Matches wildcard inside datatype" $ do
       let expr =
             MyData
@@ -616,8 +625,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTBool)
+      startInference expr $
+        Right (MTPrim mempty MTBool)
     it "Matches value inside datatype" $ do
       let expr =
             MyData
@@ -634,8 +643,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTInt)
+      startInference expr $
+        Right (MTPrim mempty MTInt)
     it "Matches value inside more complex datatype" $ do
       let expr =
             MyData
@@ -655,8 +664,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTInt)
+      startInference expr $
+        Right (MTPrim mempty MTInt)
     it "Matches nested datatype" $ do
       let val =
             MyConsApp
@@ -684,8 +693,8 @@ spec = do
                     (PWildcard mempty, bool False)
                   ]
               )
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTBool)
+      startInference expr $
+        Right (MTPrim mempty MTBool)
     it "Matches pair" $ do
       let expr =
             MyPatternMatch
@@ -698,8 +707,8 @@ spec = do
                   MyInfix mempty Add (MyVar mempty (named "a")) (MyVar mempty (named "b"))
                 )
               ]
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTInt)
+      startInference expr $
+        Right (MTPrim mempty MTInt)
     it "Infers Left type variable in Either from pattern" $ do
       let expr =
             MyData
@@ -719,8 +728,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Right
+      startInference expr $
+        Right
           ( MTData
               mempty
               "Either"
@@ -747,8 +756,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Right
+      startInference expr $
+        Right
           ( MTData
               mempty
               "Either"
@@ -776,7 +785,7 @@ spec = do
                       ]
                   )
               )
-      startInference expr
+      testInfer expr
         `shouldSatisfy` isLeft
 
     it "Simpler Either example" $ do
@@ -795,8 +804,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Right
+      startInference expr $
+        Right
           ( MTData
               mempty
               "Either"
@@ -820,8 +829,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Right
+      startInference expr $
+        Right
           ( MTData
               mempty
               "Either"
@@ -852,8 +861,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Right
+      startInference expr $
+        Right
           ( MTPair
               mempty
               (MTPrim mempty MTBool)
@@ -886,7 +895,7 @@ spec = do
                     )
                   ]
               )
-      startInference expr
+      testInfer expr
         `shouldSatisfy` isLeft
 
     it "Fails when record does not match pattern" $ do
@@ -903,7 +912,7 @@ spec = do
                   bool True
                 )
               ]
-      startInference expr
+      testInfer expr
         `shouldSatisfy` isLeft
     it "Succeeds when record partially matches pattern" $ do
       let expr =
@@ -919,8 +928,8 @@ spec = do
                   MyVar mempty (named "a")
                 )
               ]
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTInt)
+      startInference expr $
+        Right (MTPrim mempty MTInt)
     it "Succeeds when record entirely matches pattern" $ do
       let expr =
             MyPatternMatch
@@ -944,8 +953,8 @@ spec = do
                     (MyVar mempty (named "b"))
                 )
               ]
-      startInference expr
-        `shouldBe` Right (MTPrim mempty MTInt)
+      startInference expr $
+        Right (MTPrim mempty MTInt)
     it "Spots a missing pattern" $ do
       let expr =
             MyData
@@ -959,8 +968,8 @@ spec = do
                     )
                   ]
               )
-      startInference expr
-        `shouldBe` Left
+      startInference expr $
+        Left
           ( PatternMatchErr
               (MissingPatterns mempty [PConstructor mempty "Nothing" mempty])
           )
@@ -983,8 +992,8 @@ spec = do
 
           mtInt = MTPrim mempty MTInt
           mtMaybeInt = MTData mempty "Maybe" [mtInt]
-      startInference expr
-        `shouldBe` Right (MTFunction mempty mtMaybeInt mtInt)
+      startInference expr $
+        Right (MTFunction mempty mtMaybeInt mtInt)
     it "Does substitutions correctly when pattern matching on a variable from a lambda with application" $ do
       let fn =
             MyLambda
@@ -1002,8 +1011,8 @@ spec = do
                   )
               )
           expr = MyApp mempty (MyApp mempty fn (MyLiteral mempty (MyInt 1))) (MyLiteral mempty (MyBool True))
-      startInference expr
-        `shouldBe` Left (UnificationError (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+      startInference expr $
+        Left (UnificationError (MTPrim mempty MTInt) (MTPrim mempty MTBool))
     it "Does substitutions correctly when pattern matching on a variable inside a constructor from a lambda with application" $ do
       let fn =
             MyLambda
@@ -1037,8 +1046,8 @@ spec = do
                   ( MyLiteral mempty (MyBool True)
                   )
               )
-      startInference expr
-        `shouldBe` Left (UnificationError (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+      startInference expr $
+        Left (UnificationError (MTPrim mempty MTInt) (MTPrim mempty MTBool))
 
     it "Spots a redundant pattern" $ do
       let expr =
@@ -1055,8 +1064,8 @@ spec = do
                     (PConstructor mempty "Nothing" mempty, bool True)
                   ]
               )
-      startInference expr
-        `shouldBe` Left
+      startInference expr $
+        Left
           ( PatternMatchErr
               (RedundantPatterns mempty [PConstructor mempty "Nothing" mempty])
           )

@@ -1,6 +1,6 @@
 module Language.Mimsa.Typechecker
-  ( module Language.Mimsa.Typechecker.Infer,
+  ( module Language.Mimsa.Typechecker.Typecheck,
   )
 where
 
-import Language.Mimsa.Typechecker.Infer
+import Language.Mimsa.Typechecker.Typecheck

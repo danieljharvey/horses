@@ -286,7 +286,7 @@ testIt (expr, expectedJS, expectedValue) =
         val <- testESModulesInNode js
         val `shouldBe` expectedValue
 
-dataTypes :: ResolvedTypeDeps Annotation
+dataTypes :: ResolvedTypeDeps
 dataTypes = fromJust $ case resolveTypeDeps
   (prjStore testStdlib)
   (getCurrentTypeBindings $ prjTypeBindings testStdlib) of
@@ -308,10 +308,10 @@ spec = do
     traverse_ testPattern patterns
   describe "Normalise constructors" $ do
     it "is a no-op for nullary constructors" $ do
-      let a = MyConstructor mempty "Nothing"
+      let a = MyConstructor () "Nothing"
       normaliseConstructors dataTypes a `shouldBe` Right a
     it "turns unary constructor into lambda function" $ do
-      let a = MyConstructor mempty "Just"
+      let a = MyConstructor () "Just"
       let expected =
             MyLambda
               mempty
@@ -319,7 +319,7 @@ spec = do
               (MyConsApp mempty (MyConstructor mempty "Just") (MyVar mempty "a"))
       normaliseConstructors dataTypes a `shouldBe` Right expected
     it "turns binary constructor into two lambda functions" $ do
-      let a = MyConstructor mempty "These"
+      let a = MyConstructor () "These"
       let expected =
             MyLambda
               mempty
@@ -339,7 +339,7 @@ spec = do
               )
       normaliseConstructors dataTypes a `shouldBe` Right expected
     it "partially applies when wrapped in ConsApp" $ do
-      let a = MyConsApp mempty (MyConstructor mempty "These") (int 1)
+      let a = MyConsApp () (MyConstructor () "These") (int 1)
       let expected =
             MyLambda
               mempty
@@ -357,10 +357,10 @@ spec = do
     it "completely applies when wrapped in ConsApp" $ do
       let a =
             MyConsApp
-              mempty
+              ()
               ( MyConsApp
-                  mempty
-                  (MyConstructor mempty "These")
+                  ()
+                  (MyConstructor () "These")
                   (int 1)
               )
               (int 2)

@@ -65,7 +65,7 @@ filterBuiltIns :: Set TyCon -> Set TyCon
 filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)
 
 -- get all the constructors mentioned in the datatype
-extractConstructors :: DataType ann -> Set TyCon
+extractConstructors :: DataType -> Set TyCon
 extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.toList cons)
   where
     extractFromCons as = mconcat (extractFromCon <$> as)
@@ -80,7 +80,7 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
       mconcat (extractFromCon <$> M.elems items) <> extractFromCon rest
 
 -- get all the names of constructors (type and data) declared in the datatype
-extractLocalTypeDeclarations :: DataType ann -> Set TyCon
+extractLocalTypeDeclarations :: DataType -> Set TyCon
 extractLocalTypeDeclarations (DataType cName _ cons) =
   S.singleton cName
     <> mconcat (S.singleton . fst <$> M.toList cons)
@@ -90,10 +90,10 @@ extractLocalTypeDeclarations (DataType cName _ cons) =
 extractTypeDecl :: Expr var ann -> Set TyCon
 extractTypeDecl = withDataTypes extractLocalTypeDeclarations
 
-extractDataTypes :: (Ord ann) => Expr var ann -> Set (DataType ann)
+extractDataTypes :: Expr var ann -> Set DataType
 extractDataTypes = withDataTypes S.singleton
 
-withDataTypes :: (Monoid b) => (DataType ann -> b) -> Expr var ann -> b
+withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
 withDataTypes _ (MyVar _ _) = mempty
 withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
 withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b

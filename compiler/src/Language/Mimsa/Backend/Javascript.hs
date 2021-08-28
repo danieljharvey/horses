@@ -212,7 +212,7 @@ outputPatternMatch expr patterns = do
 
 output ::
   (Monoid ann) =>
-  ResolvedTypeDeps ann ->
+  ResolvedTypeDeps ->
   Expr Name ann ->
   BackendM ann Javascript
 output dataTypes expr' =
@@ -410,7 +410,7 @@ outputJS expr =
 renderWithFunction ::
   (Monoid ann) =>
   Backend ->
-  ResolvedTypeDeps ann ->
+  ResolvedTypeDeps ->
   Name ->
   Expr Name ann ->
   BackendM ann Javascript
@@ -450,7 +450,7 @@ startsWithLambda _ = False
 outputJavascript ::
   (Monoid ann) =>
   Backend ->
-  ResolvedTypeDeps ann ->
+  ResolvedTypeDeps ->
   MonoType ->
   StoreExpression ann ->
   BackendM ann Javascript
@@ -463,7 +463,7 @@ outputJavascript be dataTypes =
 
 commonJSRenderer ::
   (Monoid ann) =>
-  ResolvedTypeDeps ann ->
+  ResolvedTypeDeps ->
   Renderer ann Javascript
 commonJSRenderer dts =
   Renderer
@@ -485,7 +485,7 @@ commonJSRenderer dts =
 
 esModulesRenderer ::
   (Monoid ann) =>
-  ResolvedTypeDeps ann ->
+  ResolvedTypeDeps ->
   Renderer ann Javascript
 esModulesRenderer dts =
   Renderer
