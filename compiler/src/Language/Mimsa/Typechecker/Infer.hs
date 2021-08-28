@@ -60,8 +60,8 @@ inferAndSubst typeMap swaps env expr = do
   let tcAction = do
         (tyExpr, constraints) <- listen (infer (envWithBuiltInTypes <> env) expr)
         subs <- solve constraints
-        tyExpr' <- typedHolesCheck typeMap subs tyExpr
-        pure (subs, constraints, tyExpr')
+        typedHolesCheck typeMap subs
+        pure (subs, constraints, tyExpr)
   (_, _, (subs, constraints, tyExpr)) <- runInferM swaps defaultTcState tcAction
   pure (subs, constraints, normaliseType $ applySubst subs tyExpr)
 

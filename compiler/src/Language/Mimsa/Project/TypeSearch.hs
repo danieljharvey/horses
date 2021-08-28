@@ -37,4 +37,5 @@ typeSearchFromText ::
   Either (Error Annotation) (Map Name MonoType)
 typeSearchFromText typeMap input = do
   mt <- first ParseError (parseAndFormat monoTypeParser input)
-  pure $ typeSearch typeMap mt
+  let found = typeSearch typeMap mt
+  pure (normaliseType <$> found)

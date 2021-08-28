@@ -25,7 +25,7 @@ typeMap =
     _ -> error "Error resolving test project"
 
 idType :: MonoType
-idType = MTFunction mempty (unknown 1) (unknown 1)
+idType = MTFunction mempty (unknown 0) (unknown 0)
 
 spec :: Spec
 spec =
@@ -64,7 +64,7 @@ spec =
     describe "from text input" $ do
       it "Finds id function" $ do
         typeSearchFromText typeMap "a -> a"
-          `shouldBe` Right (M.singleton "id" idType)
+          `shouldBe` Right (M.singleton "id" (normaliseType idType))
       it "Finds fmapMaybe" $ do
         let fmapMaybe =
               MTFunction

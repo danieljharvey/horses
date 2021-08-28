@@ -16,6 +16,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
+import Language.Mimsa.Typechecker.TypedHoles
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -46,11 +47,11 @@ typecheck ::
   Environment ->
   Expr Variable Annotation ->
   Either TypeError (Substitutions, [Constraint], Expr Variable (MonoType, Annotation), MonoType)
-typecheck _typeMap swaps env expr = do
+typecheck typeMap swaps env expr = do
   let tcAction = do
         (elabExpr, constraints) <- listen (elab (envWithBuiltInTypes <> env) expr)
         subs <- solve constraints
-        --        tyExpr' <- typedHolesCheck typeMap subs tyExpr
+        typedHolesCheck typeMap subs
         pure (subs, constraints, elabExpr)
   (_, _, (subs, constraints, tyExpr)) <- runElabM swaps defaultTcState tcAction
   let typedExpr = applySubst subs tyExpr

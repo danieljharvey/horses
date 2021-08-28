@@ -263,15 +263,15 @@ spec =
             `shouldBe` Right
               ( MTFunction
                   mempty
-                  (MTVar mempty (tvNumbered 1))
-                  (MTData mempty "Maybe" [MTVar mempty (tvNumbered 1)]),
+                  (MTVar mempty (tvNumbered 0))
+                  (MTData mempty "Maybe" [MTVar mempty (tvNumbered 0)]),
                 MyConstructor mempty "Just"
               )
         it "type Maybe a = Just a | Nothing in Nothing" $ do
           result <- eval testStdlib "type Maybe a = Just a | Nothing in Nothing"
           result
             `shouldBe` Right
-              ( MTData mempty "Maybe" [MTVar mempty (tvNumbered 1)],
+              ( MTData mempty "Maybe" [MTVar mempty (tvNumbered 0)],
                 MyConstructor mempty "Nothing"
               )
         it "type Maybe a = Just a | Nothing in Just 1" $ do
@@ -518,8 +518,8 @@ spec =
                   mempty
                   ( MTRecordRow
                       mempty
-                      (M.singleton "one" (MTVar mempty (tvFree 1)))
-                      (unknown 2)
+                      (M.singleton "one" (MTVar mempty (tvFree 2)))
+                      (unknown 1)
                   )
                   ( MTFunction
                       mempty
@@ -527,19 +527,19 @@ spec =
                           mempty
                           ( M.singleton
                               "two"
-                              (MTVar mempty (tvFree 3))
+                              (MTVar mempty (tvFree 5))
                           )
                           ( MTRecordRow
                               mempty
                               ( M.singleton
                                   "one"
-                                  ( MTVar mempty (tvFree 4)
+                                  ( MTVar mempty (tvFree 7)
                                   )
                               )
-                              (unknown 5)
+                              (unknown 8)
                           )
                       )
-                      (MTVar mempty (tvFree 4))
+                      (MTVar mempty (tvFree 7))
                   )
               )
         it "if ?missingFn then 1 else 2" $ do
