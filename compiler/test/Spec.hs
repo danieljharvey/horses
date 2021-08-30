@@ -15,6 +15,7 @@ import qualified Test.Actions.RemoveBinding as RemoveBinding
 import qualified Test.Backend.BackendJS as JS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Runtimes as Runtimes
+import qualified Test.Backend.Typescript as Typescript
 import qualified Test.Codegen as Codegen
 import Test.Hspec
 import qualified Test.Interpreter.InstantiateVar as InstantiateVar
@@ -83,3 +84,4 @@ main =
     KindChecker.spec
     SourceSpan.spec
     OutputTypes.spec
+    Typescript.spec

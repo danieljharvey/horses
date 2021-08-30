@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 7205878034db48cd99f977f9d710bab1f7782acf7058338a0a99c30002a974e3
 
 name:           mimsa
 version:        0.1.0.0
@@ -45,6 +43,8 @@ library
       Language.Mimsa.Backend.Runtimes
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
+      Language.Mimsa.Backend.Typescript.FromExpr
+      Language.Mimsa.Backend.Typescript.Types
       Language.Mimsa.Backend.ZipFile
       Language.Mimsa.CLI
       Language.Mimsa.Codegen
@@ -339,6 +339,7 @@ test-suite mimsa-test
       Test.Backend.BackendJS
       Test.Backend.RunNode
       Test.Backend.Runtimes
+      Test.Backend.Typescript
       Test.Codegen
       Test.Codegen.Applicative
       Test.Codegen.Enum
