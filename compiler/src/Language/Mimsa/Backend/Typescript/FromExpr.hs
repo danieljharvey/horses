@@ -14,6 +14,8 @@ toLiteral lit = case lit of
 toPattern :: Pattern Name ann -> TSPattern
 toPattern (PVar _ a) = TSPatternVar a
 toPattern (PPair _ a b) = TSPatternPair (toPattern a) (toPattern b)
+toPattern (PWildcard _) = TSPatternWildcard
+toPattern (PConstructor _ name vars) = TSPatternConstructor name (toPattern <$> vars)
 toPattern _ = undefined
 
 fromExpr :: Expr Name TypedAnnotation -> TSModule
