@@ -122,20 +122,41 @@ spec = do
       it "const bool" $ do
         fromExpr (MyLiteral (mtBool, mempty) (MyBool True))
           `shouldBe` TSModule (TSBody [] (TSLit (TSBool True)))
-      it "let a = true in a" $ do
+      it "let a = true in a" $
+        do
+          fromExpr
+            ( MyLet
+                (mtBool, mempty)
+                "a"
+                ( MyLiteral (mtBool, mempty) (MyBool True)
+                )
+                (MyVar (mtBool, mempty) "a")
+            )
+            `shouldBe` TSModule
+              ( TSBody
+                  [ TSAssignment
+                      (TSPatternVar "a")
+                      (TSLetBody (TSBody mempty (TSLit (TSBool True))))
+                  ]
+                  (TSVar "a")
+              )
+      it "let (a,b) = (true,false) in a" $ do
         fromExpr
-          ( MyLet
-              (mtBool, mempty)
-              "a"
-              ( MyLiteral (mtBool, mempty) (MyBool True)
+          ( MyLetPattern
+              (MTPair mempty mtBool mtBool, mempty)
+              (PPair (MTPair mempty mtBool mtBool, mempty) (PVar (mtBool, mempty) "a") (PVar (mtBool, mempty) "b"))
+              ( MyPair
+                  (MTPair mempty mtBool mtBool, mempty)
+                  (MyLiteral (mtBool, mempty) (MyBool True))
+                  (MyLiteral (mtBool, mempty) (MyBool False))
               )
               (MyVar (mtBool, mempty) "a")
           )
           `shouldBe` TSModule
             ( TSBody
                 [ TSAssignment
-                    (TSPatternVar "a")
-                    (TSLetBody (TSBody mempty (TSLit (TSBool True))))
+                    (TSPatternPair (TSPatternVar "a") (TSPatternVar "b"))
+                    (TSLetBody (TSBody mempty (TSArray [TSLit (TSBool True), TSLit (TSBool False)])))
                 ]
                 (TSVar "a")
             )

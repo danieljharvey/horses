@@ -11,6 +11,11 @@ toLiteral lit = case lit of
   (MyBool b) -> TSBool b
   (MyString (StringType s)) -> TSString s
 
+toPattern :: Pattern Name ann -> TSPattern
+toPattern (PVar _ a) = TSPatternVar a
+toPattern (PPair _ a b) = TSPatternPair (toPattern a) (toPattern b)
+toPattern _ = undefined
+
 fromExpr :: Expr Name TypedAnnotation -> TSModule
 fromExpr expr =
   TSModule (makeTSExpr expr)
@@ -27,4 +32,17 @@ fromExpr expr =
                   (TSLetBody newLetExpr)
               (TSBody bindings' newExpr) = makeTSExpr letBody
            in TSBody ([newBinding] <> bindings') newExpr
+        (MyLetPattern _ pat letExpr letBody) ->
+          let newLetExpr = makeTSExpr letExpr
+              newBinding =
+                TSAssignment
+                  (toPattern pat)
+                  (TSLetBody newLetExpr)
+              (TSBody bindings' newExpr) = makeTSExpr letBody
+           in TSBody ([newBinding] <> bindings') newExpr
+        (MyPair _ a b) ->
+          let (TSBody _ tsA) = makeTSExpr a
+              (TSBody _ tsB) = makeTSExpr b
+           in TSBody mempty (TSArray [tsA, tsB])
+        (MyVar _ a) -> TSBody mempty (TSVar a)
         _ -> undefined
