@@ -56,6 +56,7 @@ data Type ann
   | MTArray ann (Type ann) -- [a]
   | MTData ann TyCon [Type ann] -- name, typeVars
   | MTConstructor ann TyCon -- name
+  | MTTypeApp ann (Type ann) (Type ann) -- func arg, apply arg to func
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
@@ -71,6 +72,7 @@ getAnnotationForType (MTRecordRow ann _ _) = ann
 getAnnotationForType (MTData ann _ _) = ann
 getAnnotationForType (MTConstructor ann _) = ann
 getAnnotationForType (MTArray ann _) = ann
+getAnnotationForType (MTTypeApp ann _ _) = ann
 
 instance Printer (Type ann) where
   prettyDoc = renderMonoType
@@ -127,6 +129,8 @@ renderMonoType (MTData _ (TyCon n) vars) =
   align $ sep ([pretty n] <> (withParens <$> vars))
 renderMonoType (MTConstructor _ (TyCon n)) =
   align $ sep [pretty n]
+renderMonoType (MTTypeApp _ func arg) =
+  align $ sep [renderMonoType func, renderMonoType arg]
 
 withParens :: Type ann -> Doc a
 withParens mt@MTData {} = parens (renderMonoType mt)

@@ -13,6 +13,7 @@ import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.MonoType
 import Language.Mimsa.Printer
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers ()
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
@@ -128,7 +129,7 @@ spec =
                     MTFunction
                       mempty
                       (MTPrim mempty MTInt)
-                      ( MTData
+                      ( dataTypeWithVars
                           mempty
                           "Maybe"
                           [MTPrim mempty MTInt]
@@ -141,7 +142,7 @@ spec =
                       ( MTPair
                           mempty
                           (MTVar mempty (tvNamed "b"))
-                          ( MTData
+                          ( dataTypeWithVars
                               mempty
                               "Either"
                               [ MTPrim mempty MTString,
@@ -155,11 +156,11 @@ spec =
     it "Nullary data type" $
       testParser "MyUnit"
         `shouldBe` Right
-          (MTData mempty "MyUnit" mempty)
+          (dataTypeWithVars mempty "MyUnit" mempty)
     it "Unary data type" $
       testParser "Maybe String"
         `shouldBe` Right
-          ( MTData
+          ( dataTypeWithVars
               mempty
               "Maybe"
               [MTPrim mempty MTString]
@@ -167,7 +168,7 @@ spec =
     it "Binary data type" $
       testParser "Either String Int"
         `shouldBe` Right
-          ( MTData
+          ( dataTypeWithVars
               mempty
               "Either"
               [ MTPrim mempty MTString,
@@ -177,11 +178,11 @@ spec =
     it "Binary data type with sub type" $
       testParser "Either String (Maybe Int)"
         `shouldBe` Right
-          ( MTData
+          ( dataTypeWithVars
               mempty
               "Either"
               [ MTPrim mempty MTString,
-                MTData
+                dataTypeWithVars
                   mempty
                   "Maybe"
                   [MTPrim mempty MTInt]
@@ -192,7 +193,7 @@ spec =
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTData mempty "MyUnit" mempty)
+              (dataTypeWithVars mempty "MyUnit" mempty)
               (MTPrim mempty MTInt)
           )
     it "Functions with datatypes with brackets" $
@@ -200,7 +201,7 @@ spec =
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTData mempty "Maybe" [MTPrim mempty MTString])
+              (dataTypeWithVars mempty "Maybe" [MTPrim mempty MTString])
               (MTPrim mempty MTInt)
           )
     it "Functions with datatypes with no brackets" $
@@ -208,7 +209,7 @@ spec =
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTData mempty "Maybe" [typeName "a"])
+              (dataTypeWithVars mempty "Maybe" [typeName "a"])
               (typeName "b")
           )
     it "Parses higher order function" $
@@ -229,7 +230,7 @@ spec =
           ( MTFunction
               mempty
               (MTFunction mempty (typeName "a") (typeName "b"))
-              (MTData mempty "Option" [typeName "a"])
+              (dataTypeWithVars mempty "Option" [typeName "a"])
           )
     it "Parses weird variation on fmap" $
       testParser "(a -> b) -> Option (a -> Option b)"
@@ -237,13 +238,13 @@ spec =
           ( MTFunction
               mempty
               (MTFunction mempty (typeName "a") (typeName "b"))
-              ( MTData
+              ( dataTypeWithVars
                   mempty
                   "Option"
                   [ MTFunction
                       mempty
                       (typeName "a")
-                      (MTData mempty "Option" [typeName "b"])
+                      (dataTypeWithVars mempty "Option" [typeName "b"])
                   ]
               )
           )
@@ -255,8 +256,8 @@ spec =
               (MTFunction mempty (typeName "a") (typeName "b"))
               ( MTFunction
                   mempty
-                  (MTData mempty "Option" [typeName "a"])
-                  (MTData mempty "Option" [typeName "b"])
+                  (dataTypeWithVars mempty "Option" [typeName "a"])
+                  (dataTypeWithVars mempty "Option" [typeName "b"])
               )
           )
     it "Parses function without brackets" $

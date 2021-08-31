@@ -7,6 +7,7 @@ where
 
 import Data.Either (isLeft)
 import qualified Data.Map as M
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
@@ -588,7 +589,7 @@ spec = do
               )
       startInference expr $
         Right
-          (MTFunction mempty (MTData mempty "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
+          (MTFunction mempty (dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
 
     it "Errors when number of args does not match for Just" $ do
       let expr =
@@ -730,7 +731,7 @@ spec = do
               )
       startInference expr $
         Right
-          ( MTData
+          ( dataTypeWithVars
               mempty
               "Either"
               [ MTPrim mempty MTInt,
@@ -758,7 +759,7 @@ spec = do
               )
       startInference expr $
         Right
-          ( MTData
+          ( dataTypeWithVars
               mempty
               "Either"
               [ MTPrim mempty MTInt,
@@ -806,7 +807,7 @@ spec = do
               )
       startInference expr $
         Right
-          ( MTData
+          ( dataTypeWithVars
               mempty
               "Either"
               [ MTPrim mempty MTInt,
@@ -831,7 +832,7 @@ spec = do
               )
       startInference expr $
         Right
-          ( MTData
+          ( dataTypeWithVars
               mempty
               "Either"
               [ MTPrim mempty MTBool,
@@ -991,7 +992,7 @@ spec = do
               )
 
           mtInt = MTPrim mempty MTInt
-          mtMaybeInt = MTData mempty "Maybe" [mtInt]
+          mtMaybeInt = dataTypeWithVars mempty "Maybe" [mtInt]
       startInference expr $
         Right (MTFunction mempty mtMaybeInt mtInt)
     it "Does substitutions correctly when pattern matching on a variable from a lambda with application" $ do

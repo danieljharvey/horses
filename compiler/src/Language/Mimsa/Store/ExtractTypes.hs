@@ -74,6 +74,7 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
     extractFromCon (MTFunction _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon (MTPair _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon (MTArray _ a) = extractFromCon a
+    extractFromCon (MTTypeApp _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon MTPrim {} = mempty
     extractFromCon MTConstructor {} = mempty
     extractFromCon (MTRecord _ items) = mconcat (extractFromCon <$> M.elems items)

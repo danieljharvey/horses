@@ -42,13 +42,13 @@ spec = do
   describe "Datatypes" $ do
     it "Instantiates Maybe" $ do
       testInferDataConstructor "Nothing"
-        `shouldBe` Right (MTData mempty "Maybe" [unknown 1])
+        `shouldBe` Right (MTTypeApp mempty (MTConstructor mempty "Maybe") (unknown 1))
       testInferDataConstructor "Just"
         `shouldBe` Right
           ( MTFunction
               mempty
               (unknown 1)
-              ( MTData mempty "Maybe" [unknown 1]
+              ( MTTypeApp mempty (MTConstructor mempty "Maybe") (unknown 1)
               )
           )
 
@@ -58,7 +58,14 @@ spec = do
           ( MTFunction
               mempty
               (unknown 1)
-              ( MTData mempty "Either" [unknown 1, unknown 2]
+              ( MTTypeApp
+                  mempty
+                  ( MTTypeApp
+                      mempty
+                      (MTConstructor mempty "Either")
+                      (unknown 1)
+                  )
+                  (unknown 2)
               )
           )
       testInferDataConstructor "Right"
@@ -66,6 +73,13 @@ spec = do
           ( MTFunction
               mempty
               (unknown 2)
-              ( MTData mempty "Either" [unknown 1, unknown 2]
+              ( MTTypeApp
+                  mempty
+                  ( MTTypeApp
+                      mempty
+                      (MTConstructor mempty "Either")
+                      (unknown 1)
+                  )
+                  (unknown 2)
               )
           )

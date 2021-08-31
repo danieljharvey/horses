@@ -36,6 +36,7 @@ freeTypeVars ty = case ty of
   MTData _ _ as -> foldr S.union mempty (freeTypeVars <$> as)
   MTPrim _ _ -> S.empty
   MTConstructor _ _ -> S.empty
+  MTTypeApp _ a b -> freeTypeVars a <> freeTypeVars b
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind ::
@@ -156,6 +157,8 @@ unify tyA tyB =
       unifyRecordWithRow (ann, as) (ann', bs, rest)
     (MTRecordRow ann as rest, MTRecord ann' bs) ->
       unifyRecordWithRow (ann', bs) (ann, as, rest)
+    (MTTypeApp _ a b, MTTypeApp _ a' b') ->
+      unifyPairs (a, a') (b, b')
     (MTData _ a tyAs, MTData _ b tyBs)
       | a == b -> do
         let pairs = zip tyAs tyBs

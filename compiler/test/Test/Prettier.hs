@@ -8,6 +8,7 @@ where
 import qualified Data.Map as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
@@ -104,7 +105,7 @@ spec =
                     [ ("dog", MTPrim mempty MTBool),
                       ("horse", MTPrim mempty MTString),
                       ( "maybeDog",
-                        MTData
+                        dataTypeWithVars
                           mempty
                           "Maybe"
                           [MTPrim mempty MTString]

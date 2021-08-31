@@ -364,7 +364,7 @@ elabPattern env (PConstructor ann tyCon args) = do
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon elabArgs
   pure
-    ( PConstructor (fromAnn ann (MTData ann ty tyTypeVars)) tyCon elabArgs,
+    ( PConstructor (fromAnn ann (dataTypeWithVars ann ty tyTypeVars)) tyCon elabArgs,
       newEnv
     )
 elabPattern env (PPair ann a b) = do

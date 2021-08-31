@@ -70,6 +70,8 @@ instance Substitutable MonoType where
       MTArray ann (applySubst subst a)
     MTData ann a ty' ->
       MTData ann a (applySubst subst <$> ty')
+    MTTypeApp ann func arg ->
+      MTTypeApp ann (applySubst subst func) (applySubst subst arg)
     MTConstructor ann cn -> MTConstructor ann cn
     MTPrim ann a -> MTPrim ann a
 

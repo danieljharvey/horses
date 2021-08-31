@@ -29,6 +29,7 @@ import qualified Data.Text as T
 import Language.Mimsa.Actions.Shared
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -60,7 +61,7 @@ dtWrappedString =
   DataType
     "WrappedString"
     mempty
-    (M.singleton "Wrapped" [MTData mempty "String" mempty])
+    (M.singleton "Wrapped" [dataTypeWithVars mempty "String" mempty])
 
 -- | Identity monad
 dtIdentity :: DataType
@@ -122,7 +123,7 @@ dtList =
     ( M.fromList
         [ ( "Cons",
             [ MTVar mempty (TVName "a"),
-              MTData mempty "List" [MTVar mempty (TVName "a")]
+              dataTypeWithVars mempty "List" [MTVar mempty (TVName "a")]
             ]
           ),
           ("Nil", [])
@@ -140,7 +141,7 @@ dtDoubleList =
         [ ( "DoubleCons",
             [ MTVar mempty (TVName "a"),
               MTVar mempty (TVName "b"),
-              MTData
+              dataTypeWithVars
                 mempty
                 "DoubleList"
                 [ MTVar mempty (TVName "a"),
@@ -160,8 +161,8 @@ dtTree =
     ( M.fromList
         [ ("Leaf", [MTVar mempty (TVName "a")]),
           ( "Branch",
-            [ MTData mempty "Tree" [MTVar mempty (TVName "a")],
-              MTData mempty "Tree" [MTVar mempty (TVName "a")]
+            [ dataTypeWithVars mempty "Tree" [MTVar mempty (TVName "a")],
+              dataTypeWithVars mempty "Tree" [MTVar mempty (TVName "a")]
             ]
           )
         ]
@@ -200,14 +201,14 @@ dtConsoleF =
     ["next"]
     ( M.fromList
         [ ( "Write",
-            [ MTData mempty "String" [],
+            [ dataTypeWithVars mempty "String" [],
               MTVar mempty (TVName "next")
             ]
           ),
           ( "Read",
             [ MTFunction
                 mempty
-                (MTData mempty "String" [])
+                (dataTypeWithVars mempty "String" [])
                 (MTVar mempty (TVName "next"))
             ]
           )

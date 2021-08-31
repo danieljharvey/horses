@@ -9,6 +9,7 @@ module Language.Mimsa.Typechecker.DataTypes
     inferDataConstructor,
     inferConstructorTypes,
     inferType,
+    dataTypeWithVars,
   )
 where
 
@@ -16,7 +17,7 @@ import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor (second)
 import Data.Coerce
-import Data.Foldable (traverse_)
+import Data.Foldable (foldl', traverse_)
 import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -107,6 +108,7 @@ getVariablesForField (MTArray _ as) = getVariablesForField as
 getVariablesForField (MTVar _ (TVNum _)) = S.empty
 getVariablesForField MTPrim {} = S.empty
 getVariablesForField MTConstructor {} = S.empty
+getVariablesForField (MTTypeApp _ a b) = getVariablesForField a <> getVariablesForField b
 
 validateConstructors ::
   (MonadError TypeError m) =>
@@ -179,6 +181,8 @@ inferConstructorTypes env (DataType typeName tyVarNames constructors) = do
         MTArray _ item -> do
           tyItems <- findType item
           pure (MTArray mempty tyItems)
+        MTTypeApp _ func arg ->
+          MTTypeApp mempty <$> findType func <*> findType arg
         MTVar _ (TVNum _) ->
           throwError UnknownTypeError -- should not happen but yolo
   let inferConstructor (consName, tyArgs) = do
@@ -188,7 +192,7 @@ inferConstructorTypes env (DataType typeName tyVarNames constructors) = do
   let mtConstructors :: [(TyCon, [MonoType])]
       mtConstructors = second (($> mempty) <$>) <$> M.toList constructors
   cons' <- traverse inferConstructor mtConstructors
-  let dt = MTData mempty typeName (snd <$> tyVars)
+  let dt = dataTypeWithVars mempty typeName (snd <$> tyVars)
   pure (dt, mconcat cons')
 
 -- parse a type from it's name
@@ -204,9 +208,15 @@ inferType env ann tyName tyVars =
   case M.lookup tyName (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
-      _ -> pure (MTData mempty tyName tyVars)
+      _ -> pure (dataTypeWithVars mempty tyName tyVars)
     _ ->
       throwError (TypeConstructorNotInScope env ann tyName)
+
+dataTypeWithVars :: (Monoid ann) => ann -> TyCon -> [Type ann] -> Type ann
+dataTypeWithVars ann tyName =
+  foldl'
+    (MTTypeApp mempty)
+    (MTConstructor ann tyName)
 
 -----
 
@@ -214,5 +224,5 @@ constructorToType :: TypeConstructor -> MonoType
 constructorToType (TypeConstructor typeName tyVars constructTypes) =
   foldr
     (MTFunction mempty)
-    (MTData mempty typeName tyVars)
+    (dataTypeWithVars mempty typeName tyVars)
     constructTypes
