@@ -47,3 +47,5 @@ normaliseType' mt = case mt of
   MTArray ann a -> MTArray ann <$> normaliseType' a
   MTData ann name mts ->
     MTData ann name <$> traverse normaliseType' mts
+  MTConstructor ann name ->
+    pure (MTConstructor ann name)

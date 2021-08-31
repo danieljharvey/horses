@@ -70,6 +70,7 @@ instance Substitutable MonoType where
       MTArray ann (applySubst subst a)
     MTData ann a ty' ->
       MTData ann a (applySubst subst <$> ty')
+    MTConstructor ann cn -> MTConstructor ann cn
     MTPrim ann a -> MTPrim ann a
 
 instance Substitutable (Expr Variable (MonoType, Annotation)) where

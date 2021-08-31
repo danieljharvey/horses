@@ -35,6 +35,7 @@ freeTypeVars ty = case ty of
   MTArray _ a -> freeTypeVars a
   MTData _ _ as -> foldr S.union mempty (freeTypeVars <$> as)
   MTPrim _ _ -> S.empty
+  MTConstructor _ _ -> S.empty
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind ::

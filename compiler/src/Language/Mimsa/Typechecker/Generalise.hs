@@ -20,6 +20,7 @@ freeTypeVars (MTRecordRow _ as rest) =
 freeTypeVars (MTArray _ a) = freeTypeVars a
 freeTypeVars (MTPrim _ _) = mempty
 freeTypeVars (MTData _ _ as) = foldMap freeTypeVars as
+freeTypeVars (MTConstructor _ _) = mempty
 
 freeTypeVarsScheme :: Scheme -> [TypeIdentifier]
 freeTypeVarsScheme (Scheme vars t) =

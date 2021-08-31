@@ -106,6 +106,7 @@ getVariablesForField (MTRecordRow _ items rest) =
 getVariablesForField (MTArray _ as) = getVariablesForField as
 getVariablesForField (MTVar _ (TVNum _)) = S.empty
 getVariablesForField MTPrim {} = S.empty
+getVariablesForField MTConstructor {} = S.empty
 
 validateConstructors ::
   (MonadError TypeError m) =>
@@ -167,6 +168,7 @@ inferConstructorTypes env (DataType typeName tyVarNames constructors) = do
           tyB <- findType b
           pure (MTPair mempty tyA tyB)
         tyPrim@MTPrim {} -> pure tyPrim
+        tyCon@MTConstructor {} -> pure tyCon
         MTRecord _ items -> do
           tyItems <- traverse findType items
           pure (MTRecord mempty tyItems)

@@ -55,6 +55,7 @@ data Type ann
   | MTRecordRow ann (Map Name (Type ann)) (Type ann) -- { foo:a, bar:b | rest }
   | MTArray ann (Type ann) -- [a]
   | MTData ann TyCon [Type ann] -- name, typeVars
+  | MTConstructor ann TyCon -- name
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
@@ -68,6 +69,7 @@ getAnnotationForType (MTPair ann _ _) = ann
 getAnnotationForType (MTRecord ann _) = ann
 getAnnotationForType (MTRecordRow ann _ _) = ann
 getAnnotationForType (MTData ann _ _) = ann
+getAnnotationForType (MTConstructor ann _) = ann
 getAnnotationForType (MTArray ann _) = ann
 
 instance Printer (Type ann) where
@@ -123,6 +125,8 @@ renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
 renderMonoType (MTVar _ a) = renderTypeIdentifier a
 renderMonoType (MTData _ (TyCon n) vars) =
   align $ sep ([pretty n] <> (withParens <$> vars))
+renderMonoType (MTConstructor _ (TyCon n)) =
+  align $ sep [pretty n]
 
 withParens :: Type ann -> Doc a
 withParens mt@MTData {} = parens (renderMonoType mt)
