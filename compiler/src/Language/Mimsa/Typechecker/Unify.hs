@@ -158,7 +158,7 @@ unify tyA tyB =
     (MTRecordRow ann as rest, MTRecord ann' bs) ->
       unifyRecordWithRow (ann', bs) (ann, as, rest)
     (MTTypeApp _ a b, MTTypeApp _ a' b') ->
-      unifyPairs (a, a') (b, b')
+      unifyPairs (a, b) (a', b')
     (MTData _ a tyAs, MTData _ b tyBs)
       | a == b -> do
         let pairs = zip tyAs tyBs
