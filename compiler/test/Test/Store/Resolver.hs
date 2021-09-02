@@ -10,11 +10,11 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Store.Resolver
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -131,7 +131,7 @@ spec =
                 }
             )
       it "Throws when trying to use an unavailable type" $ do
-        let cons' = MTData mempty "MyUnit" []
+        let cons' = dataTypeWithVars mempty "MyUnit" []
             dt =
               DataType
                 "VoidBox"
@@ -141,7 +141,7 @@ spec =
         storeExpr
           `shouldBe` Left (MissingType "MyUnit" mempty)
       it "Creates a StoreExpression that uses a type from the type bindings" $ do
-        let cons' = MTData mempty "MyUnit" []
+        let cons' = dataTypeWithVars mempty "MyUnit" []
             dt =
               DataType
                 "VoidBox"

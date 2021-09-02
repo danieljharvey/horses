@@ -10,6 +10,7 @@ module Language.Mimsa.Types.Typechecker.MonoType
     Type (..),
     Primitive (..),
     getAnnotationForType,
+    varsFromDataType,
   )
 where
 
@@ -54,7 +55,8 @@ data Type ann
   | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
   | MTRecordRow ann (Map Name (Type ann)) (Type ann) -- { foo:a, bar:b | rest }
   | MTArray ann (Type ann) -- [a]
-  | MTData ann TyCon [Type ann] -- name, typeVars
+  | MTConstructor ann TyCon -- name
+  | MTTypeApp ann (Type ann) (Type ann) -- func arg, apply arg to func
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
@@ -67,8 +69,9 @@ getAnnotationForType (MTFunction ann _ _) = ann
 getAnnotationForType (MTPair ann _ _) = ann
 getAnnotationForType (MTRecord ann _) = ann
 getAnnotationForType (MTRecordRow ann _ _) = ann
-getAnnotationForType (MTData ann _ _) = ann
+getAnnotationForType (MTConstructor ann _) = ann
 getAnnotationForType (MTArray ann _) = ann
+getAnnotationForType (MTTypeApp ann _ _) = ann
 
 instance Printer (Type ann) where
   prettyDoc = renderMonoType
@@ -121,10 +124,26 @@ renderMonoType (MTRecordRow _ as rest) =
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v
 renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
 renderMonoType (MTVar _ a) = renderTypeIdentifier a
-renderMonoType (MTData _ (TyCon n) vars) =
-  align $ sep ([pretty n] <> (withParens <$> vars))
+renderMonoType (MTConstructor _ (TyCon n)) =
+  pretty n
+renderMonoType mt@(MTTypeApp _ func arg) =
+  case varsFromDataType mt of
+    Just (TyCon n, vars) -> align $ sep ([pretty n] <> (withParens <$> vars))
+    Nothing ->
+      align $ sep [renderMonoType func, renderMonoType arg]
+
+-- turn nested shit back into something easy to pretty print (ie, easy to
+-- bracket)
+varsFromDataType :: Type ann -> Maybe (TyCon, [Type ann])
+varsFromDataType mt =
+  let getInner mt' =
+        case mt' of
+          (MTConstructor _ tyCon) -> Just (tyCon, mempty)
+          (MTTypeApp _ f a) -> (\(tyCon, vars) -> (tyCon, vars <> [a])) <$> getInner f
+          _ -> Nothing
+   in getInner mt
 
 withParens :: Type ann -> Doc a
-withParens mt@MTData {} = parens (renderMonoType mt)
 withParens ma@MTFunction {} = parens (renderMonoType ma)
+withParens mta@MTTypeApp {} = parens (renderMonoType mta)
 withParens other = renderMonoType other

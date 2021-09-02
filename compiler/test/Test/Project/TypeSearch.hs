@@ -10,6 +10,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Actions.Shared
 import Language.Mimsa.Project.TypeSearch
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -72,8 +73,8 @@ spec =
                 (MTFunction mempty (typeName "a") (typeName "b"))
                 ( MTFunction
                     mempty
-                    (MTData mempty "Maybe" [typeName "a"])
-                    (MTData mempty "Maybe" [typeName "b"])
+                    (dataTypeWithVars mempty "Maybe" [typeName "a"])
+                    (dataTypeWithVars mempty "Maybe" [typeName "b"])
                 )
         typeSearchFromText typeMap "(a -> b) -> (Maybe a) -> (Maybe b)"
           `shouldBe` Right

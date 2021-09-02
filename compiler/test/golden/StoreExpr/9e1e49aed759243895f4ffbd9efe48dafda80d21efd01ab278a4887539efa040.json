@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyInfix","contents":[[],{"tag":"ArrayConcat"},{"tag":"MyArray","contents":[[],[{"tag":"MyLiteral","contents":[[],{"tag":"MyInt","contents":1}]}]]},{"tag":"MyArray","contents":[[],[{"tag":"MyLiteral","contents":[[],{"tag":"MyInt","contents":2}]}]]}]},"storeBindings":{},"storeTypeBindings":{}}

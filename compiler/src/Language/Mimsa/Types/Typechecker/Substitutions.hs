@@ -68,8 +68,9 @@ instance Substitutable MonoType where
       MTRecordRow ann (applySubst subst <$> a) (applySubst subst rest)
     MTArray ann a ->
       MTArray ann (applySubst subst a)
-    MTData ann a ty' ->
-      MTData ann a (applySubst subst <$> ty')
+    MTTypeApp ann func arg ->
+      MTTypeApp ann (applySubst subst func) (applySubst subst arg)
+    MTConstructor ann cn -> MTConstructor ann cn
     MTPrim ann a -> MTPrim ann a
 
 instance Substitutable (Expr Variable (MonoType, Annotation)) where

@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Parser
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -301,7 +302,7 @@ spec = do
                   mempty
                   ( M.fromList
                       [ ("Zero", []),
-                        ("Succ", [MTData () "Nat" mempty])
+                        ("Succ", [dataTypeWithVars () "Nat" mempty])
                       ]
                   )
               )
@@ -369,7 +370,7 @@ spec = do
                           [ MTFunction
                               ()
                               (MTVar () (TVName "r"))
-                              ( MTData
+                              ( dataTypeWithVars
                                   ()
                                   "Pair"
                                   [ MTVar () (TVName "a"),
@@ -396,8 +397,8 @@ spec = do
                   ( M.fromList
                       [ ("Leaf", [MTVar () (TVName "a")]),
                         ( "Branch",
-                          [ MTData () "Tree" [MTVar () (TVName "a")],
-                            MTData () "Tree" [MTVar () (TVName "b")]
+                          [ dataTypeWithVars () "Tree" [MTVar () (TVName "a")],
+                            dataTypeWithVars () "Tree" [MTVar () (TVName "b")]
                           ]
                         )
                       ]
@@ -416,9 +417,9 @@ spec = do
                   ( M.fromList
                       [ ("Empty", mempty),
                         ( "Branch",
-                          [ MTData () "Tree" [MTVar () (TVName "a")],
+                          [ dataTypeWithVars () "Tree" [MTVar () (TVName "a")],
                             MTVar () (TVName "a"),
-                            MTData () "Tree" [MTVar () (TVName "a")]
+                            dataTypeWithVars () "Tree" [MTVar () (TVName "a")]
                           ]
                         )
                       ]

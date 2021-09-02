@@ -63,11 +63,12 @@ containsVar n fields =
     fieldContains field =
       case field of
         (MTVar _ (TVName a)) -> coerce a == n
-        (MTData _ _ as') -> or (fieldContains <$> as')
         (MTFunction _ a b) -> fieldContains a || fieldContains b
         (MTPair _ a b) -> fieldContains a || fieldContains b
         (MTRecord _ items) -> or (fieldContains <$> items)
-        _ -> False
+        mt -> case varsFromDataType mt of
+          Just (_, as') -> or (fieldContains <$> as')
+          _ -> False
 
 createMatches ::
   TyCon ->

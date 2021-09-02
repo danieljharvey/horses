@@ -67,12 +67,13 @@ data FieldItemType
 toFieldItemType :: TyCon -> Type () -> CodegenM FieldItemType
 toFieldItemType typeName = \case
   MTVar _ (TVName a) -> pure (VariableField (coerce a))
-  MTData _ fieldConsName _fields
-    | fieldConsName == typeName ->
-      RecurseField <$> nextName typeName
   MTFunction _ (MTVar _ (TVName a)) (MTVar _ (TVName b)) ->
     pure $ Func2 (coerce a <> "to" <> coerce b) (coerce a) (coerce b)
-  _ -> throwError "Expected VarName"
+  mt -> case varsFromDataType mt of
+    Just (fieldConsName, _)
+      | fieldConsName == typeName ->
+        RecurseField <$> nextName typeName
+    _ -> throwError "Expected VarName"
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()
 reconstructField matchVar fieldItem =

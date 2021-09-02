@@ -355,7 +355,7 @@ elabPattern env (PConstructor ann tyCon args) = do
   dt@(DataType ty _ _) <- lookupConstructor newEnv ann tyCon
   -- we get the types for the constructor in question
   -- and unify them with the tests in the pattern
-  consType <- inferConstructorTypes env dt
+  consType <- inferConstructorTypes dt
   tyTypeVars <- case M.lookup tyCon (snd consType) of
     Just (TypeConstructor _ dtTypeVars tyDtArgs) -> do
       let tyPairs = zip (getPatternTypeFromAnn <$> elabArgs) tyDtArgs
@@ -364,7 +364,7 @@ elabPattern env (PConstructor ann tyCon args) = do
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon elabArgs
   pure
-    ( PConstructor (fromAnn ann (MTData ann ty tyTypeVars)) tyCon elabArgs,
+    ( PConstructor (fromAnn ann (dataTypeWithVars ann ty tyTypeVars)) tyCon elabArgs,
       newEnv
     )
 elabPattern env (PPair ann a b) = do

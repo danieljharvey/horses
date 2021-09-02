@@ -50,6 +50,32 @@ spec =
                   (tvNumbered 2, MTPrim mempty MTInt)
                 ]
           )
+    describe "Constructors" $ do
+      it "Combines a Maybe" $ do
+        runUnifier
+          ( MTTypeApp mempty (MTConstructor mempty "Maybe") (unknown 1),
+            MTTypeApp mempty (MTConstructor mempty "Maybe") (MTPrim mempty MTInt)
+          )
+          `shouldBe` Right
+            ( Substitutions $
+                M.fromList
+                  [ (tvNumbered 1, MTPrim mempty MTInt)
+                  ]
+            )
+
+      it "Combines an Either" $ do
+        runUnifier
+          ( MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty "Either") (unknown 1)) (MTPrim mempty MTBool),
+            MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty "Either") (MTPrim mempty MTInt)) (unknown 2)
+          )
+          `shouldBe` Right
+            ( Substitutions $
+                M.fromList
+                  [ (tvNumbered 1, MTPrim mempty MTInt),
+                    (tvNumbered 2, MTPrim mempty MTBool)
+                  ]
+            )
+
     describe "Records" $ do
       it "Combines two half records" $
         runUnifier
