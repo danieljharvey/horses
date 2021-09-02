@@ -112,9 +112,11 @@ emptyConstructor items = do
   pure k
 
 fieldIsRecursion :: TyCon -> [Name] -> Type () -> Bool
-fieldIsRecursion tyCon vars (MTData _ tyCon' vars') =
-  tyCon == tyCon' && and (zipWith fieldIsName vars vars')
-fieldIsRecursion _ _ _ = False
+fieldIsRecursion tyCon vars mt =
+  case varsFromDataType mt of
+    Just (tyCon', vars') ->
+      tyCon == tyCon' && and (zipWith fieldIsName vars vars')
+    _ -> False
 
 fieldIsName :: Name -> Type () -> Bool
 fieldIsName name (MTVar _ (TVName a)) = name == coerce a

@@ -40,6 +40,19 @@ testInferDataConstructor tyCon = runTC $ do
 spec :: Spec
 spec = do
   describe "Datatypes" $ do
+    it "varsFromDataType" $ do
+      varsFromDataType (MTPrim () MTInt) `shouldBe` Nothing
+      varsFromDataType (MTConstructor () "Dog") `shouldBe` Just ("Dog", mempty)
+      varsFromDataType (MTTypeApp () (MTConstructor () "Dog") (MTPrim () MTInt))
+        `shouldBe` Just ("Dog", [MTPrim () MTInt])
+      varsFromDataType
+        ( MTTypeApp
+            ()
+            (MTTypeApp () (MTConstructor () "Dog") (MTPrim () MTInt))
+            (MTPrim () MTBool)
+        )
+        `shouldBe` Just ("Dog", [MTPrim () MTInt, MTPrim () MTBool])
+
     it "Instantiates Maybe" $ do
       testInferDataConstructor "Nothing"
         `shouldBe` Right (MTTypeApp mempty (MTConstructor mempty "Maybe") (unknown 1))

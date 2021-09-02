@@ -10,6 +10,7 @@ module Language.Mimsa.Types.Typechecker.MonoType
     Type (..),
     Primitive (..),
     getAnnotationForType,
+    varsFromDataType,
   )
 where
 
@@ -128,11 +129,26 @@ renderMonoType (MTVar _ a) = renderTypeIdentifier a
 renderMonoType (MTData _ (TyCon n) vars) =
   align $ sep ([pretty n] <> (withParens <$> vars))
 renderMonoType (MTConstructor _ (TyCon n)) =
-  align $ sep [pretty n]
-renderMonoType (MTTypeApp _ func arg) =
-  align $ sep [renderMonoType func, renderMonoType arg]
+  pretty n
+renderMonoType mt@(MTTypeApp _ func arg) =
+  case varsFromDataType mt of
+    Just (TyCon n, vars) -> align $ sep ([pretty n] <> (withParens <$> vars))
+    Nothing ->
+      align $ sep [renderMonoType func, renderMonoType arg]
+
+-- turn nested shit back into something easy to pretty print (ie, easy to
+-- bracket)
+varsFromDataType :: Type ann -> Maybe (TyCon, [Type ann])
+varsFromDataType mt =
+  let getInner mt' =
+        case mt' of
+          (MTConstructor _ tyCon) -> Just (tyCon, mempty)
+          (MTTypeApp _ f a) -> (\(tyCon, vars) -> (tyCon, vars <> [a])) <$> getInner f
+          _ -> Nothing
+   in getInner mt
 
 withParens :: Type ann -> Doc a
 withParens mt@MTData {} = parens (renderMonoType mt)
 withParens ma@MTFunction {} = parens (renderMonoType ma)
+withParens mta@MTTypeApp {} = parens (renderMonoType mta)
 withParens other = renderMonoType other

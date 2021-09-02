@@ -25,10 +25,12 @@ testParser input = do
       doParser i =
         removeAnn <$> parseAndFormat monoTypeParser i
   original <- doParser input
-  newOne <- doParser (prettyPrint original)
-  if newOne == original
-    then pure newOne
-    else throwError $ "Error! " <> prettyPrint newOne <> " does not equal " <> prettyPrint original
+  case doParser (prettyPrint original) of
+    Right newOne ->
+      if newOne == original
+        then pure newOne
+        else throwError $ "Error! " <> prettyPrint newOne <> " does not equal " <> prettyPrint original
+    Left e -> throwError e
 
 spec :: Spec
 spec =

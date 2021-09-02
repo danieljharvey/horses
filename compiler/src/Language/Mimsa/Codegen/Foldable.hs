@@ -77,12 +77,13 @@ toFieldItemType tyName matchVar = \case
     if coerce a == matchVar
       then pure (coerce a, VariableField (coerce a))
       else pure (coerce a, NoVariable)
-  MTData _ tyCon [MTVar _ (TVName var)] -> do
-    varName <- nextName tyName
-    if tyCon == tyName && coerce var == matchVar
-      then pure (varName, Recurse varName)
-      else throwError "Can only recurse over self"
-  _ -> throwError "Expected VarName"
+  mt -> case varsFromDataType mt of
+    Just (tyCon, [MTVar _ (TVName var)]) -> do
+      varName <- nextName tyName
+      if tyCon == tyName && coerce var == matchVar
+        then pure (varName, Recurse varName)
+        else throwError "Can only recurse over self"
+    _ -> throwError "Expected VarName"
 
 patternFromFieldItemType :: TyCon -> [Name] -> Pattern Name ()
 patternFromFieldItemType tyCon names =
