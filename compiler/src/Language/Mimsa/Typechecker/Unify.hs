@@ -33,7 +33,6 @@ freeTypeVars ty = case ty of
     foldr S.union mempty (freeTypeVars <$> as)
       <> freeTypeVars rest
   MTArray _ a -> freeTypeVars a
-  MTData _ _ as -> foldr S.union mempty (freeTypeVars <$> as)
   MTPrim _ _ -> S.empty
   MTConstructor _ _ -> S.empty
   MTTypeApp _ a b -> freeTypeVars a <> freeTypeVars b
@@ -159,11 +158,6 @@ unify tyA tyB =
       unifyRecordWithRow (ann', bs) (ann, as, rest)
     (MTTypeApp _ a b, MTTypeApp _ a' b') ->
       unifyPairs (a, b) (a', b')
-    (MTData _ a tyAs, MTData _ b tyBs)
-      | a == b -> do
-        let pairs = zip tyAs tyBs
-        s <- traverse (uncurry unify) pairs
-        pure (mconcat s)
     (MTArray _ a, MTArray _ b) -> unify a b
     (MTVar ann u, t) -> varBind ann u t
     (t, MTVar ann u) -> varBind ann u t

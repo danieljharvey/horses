@@ -19,7 +19,6 @@ freeTypeVars (MTRecordRow _ as rest) =
     <> freeTypeVars rest
 freeTypeVars (MTArray _ a) = freeTypeVars a
 freeTypeVars (MTPrim _ _) = mempty
-freeTypeVars (MTData _ _ as) = foldMap freeTypeVars as
 freeTypeVars (MTConstructor _ _) = mempty
 freeTypeVars (MTTypeApp _ a b) = freeTypeVars a <> freeTypeVars b
 

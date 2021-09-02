@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyLetPattern","contents":[[],{"tag":"PRecord","contents":[[],{"dog":{"tag":"PVar","contents":[[],"a"]}}]},{"tag":"MyRecord","contents":[[],{"dog":{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":true}]}}]},{"tag":"MyVar","contents":[[],"a"]}]},"storeBindings":{},"storeTypeBindings":{}}

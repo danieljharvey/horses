@@ -70,8 +70,9 @@ errorOnBuiltIn ann tc = case lookupBuiltIn tc of
   _ -> pure ()
 
 -- infer the type of a data constructor
--- if it has no args, it's a simple MTData
--- however if it has args it becomes a MTFun from args to the MTData
+-- if it has no args, it's a simple MTConstructor
+-- however if it has args it becomes a MTFun from args to the MTConstructor &&
+-- MTTypeApp
 inferDataConstructor ::
   ( MonadState TypecheckState m,
     MonadError TypeError m
@@ -83,7 +84,7 @@ inferDataConstructor ::
 inferDataConstructor env ann tyCon = do
   errorOnBuiltIn ann tyCon
   dataType <- lookupConstructor env ann tyCon
-  (_, allArgs) <- inferConstructorTypes env dataType
+  (_, allArgs) <- inferConstructorTypes dataType
   case M.lookup tyCon allArgs of
     Just tyArg ->
       pure (constructorToType tyArg)
@@ -91,8 +92,6 @@ inferDataConstructor env ann tyCon = do
 
 getVariablesForField :: Type ann -> Set Name
 getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
-getVariablesForField (MTData _ _ fields) =
-  mconcat (getVariablesForField <$> fields)
 getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
 getVariablesForField (MTPair _ a b) = getVariablesForField a <> getVariablesForField b
@@ -143,15 +142,11 @@ validateDataTypeVariables (DataType typeName vars constructors) =
 -- infer types for data type and it's constructor in one big go
 inferConstructorTypes ::
   (MonadError TypeError m, MonadState TypecheckState m) =>
-  Environment ->
   DataType ->
   m (MonoType, Map TyCon TypeConstructor)
-inferConstructorTypes env (DataType typeName tyVarNames constructors) = do
+inferConstructorTypes (DataType typeName tyVarNames constructors) = do
   tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
   let findType ty = case ty of
-        MTData _ cn vs -> do
-          vs' <- traverse findType vs
-          inferType env mempty cn vs'
         MTVar _ (TVName var) ->
           case filter (\(tyName, _) -> tyName == coerce var) tyVars of
             [(_, tyFound)] -> pure tyFound

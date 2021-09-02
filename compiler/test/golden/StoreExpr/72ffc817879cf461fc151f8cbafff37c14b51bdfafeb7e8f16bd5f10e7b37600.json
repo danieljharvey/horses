@@ -1,1 +1,0 @@
-{"storeExpression":{"tag":"MyLet","contents":[[],"good",{"tag":"MyRecord","contents":[[],{"dog":{"tag":"MyLiteral","contents":[[],{"tag":"MyBool","contents":true}]}}]},{"tag":"MyRecordAccess","contents":[[],{"tag":"MyVar","contents":[[],"good"]},"dog"]}]},"storeBindings":{},"storeTypeBindings":{}}

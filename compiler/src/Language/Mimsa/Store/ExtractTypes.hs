@@ -70,7 +70,6 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
   where
     extractFromCons as = mconcat (extractFromCon <$> as)
     extractFromCon (MTVar _ _) = mempty
-    extractFromCon (MTData _ name as) = S.singleton name <> mconcat (extractFromCon <$> as)
     extractFromCon (MTFunction _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon (MTPair _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon (MTArray _ a) = extractFromCon a
