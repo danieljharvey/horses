@@ -1070,3 +1070,86 @@ spec = do
           ( PatternMatchErr
               (RedundantPatterns mempty [PConstructor mempty "Nothing" mempty])
           )
+  describe "Variables as constructors" $ do
+    it "Let variable as constructor" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyLet
+                  mempty
+                  (named "f")
+                  (MyConstructor mempty "Just")
+                  (MyConsApp mempty (MyVar mempty (named "f")) (int 1))
+              )
+      startInference expr $
+        Right
+          ( MTTypeApp
+              mempty
+              (MTConstructor mempty "Maybe")
+              (MTPrim mempty MTInt)
+          )
+    -- needs type annotations to make this make sense
+    xit "Lambda variable as constructor" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyLambda
+                  mempty
+                  (named "f")
+                  (MyConsApp mempty (MyVar mempty (named "f")) (int 1))
+              )
+      startInference expr $
+        Right
+          ( MTFunction
+              mempty
+              ( MTFunction
+                  mempty
+                  (MTPrim mempty MTInt)
+                  (MTTypeApp mempty (unknown 2) (MTPrim mempty MTInt))
+              )
+              (MTTypeApp mempty (unknown 2) (MTPrim mempty MTInt))
+          )
+    -- needs type annotations
+    xit "Lambda variable as constructor (multiple application)" $ do
+      let expr =
+            MyData
+              mempty
+              dtMaybe
+              ( MyLambda
+                  mempty
+                  (named "f")
+                  (MyConsApp mempty (MyConsApp mempty (MyVar mempty (named "f")) (int 1)) (bool True))
+              )
+      startInference expr $
+        Right
+          ( MTFunction
+              mempty
+              ( MTFunction
+                  mempty
+                  (MTPrim mempty MTInt)
+                  ( MTFunction
+                      mempty
+                      (MTPrim mempty MTBool)
+                      ( MTTypeApp
+                          mempty
+                          ( MTTypeApp
+                              mempty
+                              (unknown 2)
+                              (MTPrim mempty MTInt)
+                          )
+                          (MTPrim mempty MTBool)
+                      )
+                  )
+              )
+              ( MTTypeApp
+                  mempty
+                  ( MTTypeApp
+                      mempty
+                      (unknown 2)
+                      (MTPrim mempty MTInt)
+                  )
+                  (MTPrim mempty MTBool)
+              )
+          )
