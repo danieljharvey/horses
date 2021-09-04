@@ -146,7 +146,9 @@ elabApplication env ann function argument = do
   function' <- elab env function
   argument' <- elab env argument
   tell
-    [ ShouldEqual (getTypeFromAnn function') (MTFunction ann (getTypeFromAnn argument') tyRes)
+    [ ShouldEqual
+        (getTypeFromAnn function')
+        (MTFunction ann (getTypeFromAnn argument') tyRes)
     ]
   pure (MyApp (fromAnn ann tyRes) function' argument')
 
@@ -162,7 +164,9 @@ elabConsApplication env ann function argument = do
   function' <- elab env function
   argument' <- elab env argument
   tell
-    [ ShouldEqual (getTypeFromAnn function') (MTFunction ann (getTypeFromAnn argument') tyRes)
+    [ ShouldEqual
+        (getTypeFromAnn function')
+        (MTFunction ann (getTypeFromAnn argument') tyRes)
     ]
   pure (MyConsApp (fromAnn ann tyRes) function' argument')
 

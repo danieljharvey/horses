@@ -37,6 +37,7 @@ import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
+import qualified Test.Typechecker.KindChecker as KindChecker
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
@@ -77,3 +78,4 @@ main =
     RunNode.spec
     DataTypes.spec
     Elaborate.spec
+    KindChecker.spec
