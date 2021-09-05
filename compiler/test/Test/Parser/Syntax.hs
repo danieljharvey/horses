@@ -31,7 +31,7 @@ testParseWithAnn t = case parseExpr t of
 
 spec :: Spec
 spec = do
-  fdescribe "Language" $ do
+  describe "Language" $ do
     it "Parses True" $
       testParse "True" `shouldBe` Right (bool True)
     it "Parses False" $
@@ -177,7 +177,7 @@ spec = do
     it "Parses var and number equality" $
       testParse "a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty "a") (int 1))
     it "Parsers two constructor applications with infix operator" $
-      let mkSome = MyConsApp mempty (MyConstructor mempty "Some")
+      let mkSome = MyApp mempty (MyConstructor mempty "Some")
        in testParse "(Some 1) == Some 2"
             `shouldBe` Right (MyInfix mempty Equals (mkSome (int 1)) (mkSome (int 2)))
     it "Parses an empty record literal" $
@@ -311,9 +311,9 @@ spec = do
     it "Parses a multiple argument constructor" $
       testParse "Dog \"hi\" \"dog\""
         `shouldBe` Right
-          ( MyConsApp
+          ( MyApp
               mempty
-              ( MyConsApp
+              ( MyApp
                   mempty
                   (MyConstructor mempty "Dog")
                   (str' "hi")
@@ -404,7 +404,7 @@ spec = do
                       ]
                   )
               )
-              (MyConsApp mempty (MyConstructor mempty "Leaf") (int 1))
+              (MyApp mempty (MyConstructor mempty "Leaf") (int 1))
           )
     it "Parses even more complex type constructors" $
       testParse "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
@@ -425,11 +425,11 @@ spec = do
                       ]
                   )
               )
-              ( MyConsApp
+              ( MyApp
                   mempty
-                  ( MyConsApp
+                  ( MyApp
                       mempty
-                      ( MyConsApp
+                      ( MyApp
                           mempty
                           (MyConstructor mempty "Branch")
                           (MyConstructor mempty "Empty")
@@ -467,6 +467,18 @@ spec = do
       testParse "(id 1) + (id 2) + (id 3)" `shouldSatisfy` isRight
     it "Parses big app in If" $
       testParse "if id True then id 1 else id 2" `shouldSatisfy` isRight
+    it "Parser pureState" $
+      testParse "\\a -> State (\\s -> Pair a s)"
+        `shouldBe` Right
+          ( MyLambda
+              mempty
+              "a"
+              ( MyApp
+                  mempty
+                  (MyConstructor mempty "State")
+                  (MyLambda mempty "s" (MyApp mempty (MyApp mempty (MyConstructor mempty "Pair") (MyVar mempty "a")) (MyVar mempty "s")))
+              )
+          )
   describe "Test annotations" $ do
     it "Parses a var with location information" $
       testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")
@@ -560,7 +572,7 @@ spec = do
     it "Parses constructor application with location information" $
       testParseWithAnn "Just 1"
         `shouldBe` Right
-          ( MyConsApp
+          ( MyApp
               (Location 0 6)
               (MyConstructor (Location 0 4) "Just")
               (MyLiteral (Location 5 6) (MyInt 1))
@@ -659,7 +671,7 @@ spec = do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 34)
-                (MyConsApp (Location 6 13) (MyConstructor (Location 6 10) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
+                (MyApp (Location 6 13) (MyConstructor (Location 6 10) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
                 [ ( PConstructor (Location 19 25) "Some" [PWildcard (Location 24 25)],
                     MyLiteral (Location 30 34) (MyBool True)
                   )

@@ -142,6 +142,9 @@ interpretApplication ann fn value = do
       interpretWithScope expr
     (MyLiteral ann' a) ->
       throwError $ CannotApplyToNonFunction (MyLiteral ann' a)
+    (MyConstructor ann' const') -> do
+      expr <- interpretWithScope value
+      pure (MyApp ann (MyConstructor ann' const') expr)
     other -> do
       expr <- interpretWithScope other
       interpretWithScope (MyApp ann expr value)

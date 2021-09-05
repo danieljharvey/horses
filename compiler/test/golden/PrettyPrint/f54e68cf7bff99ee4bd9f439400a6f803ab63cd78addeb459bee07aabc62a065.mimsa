@@ -1,0 +1,4 @@
+let (Ident (Ident a)) =
+  (Ident)((Ident)(True));
+
+a

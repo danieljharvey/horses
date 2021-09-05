@@ -62,7 +62,6 @@ complexParser =
     <|> try recordAccessParser
     <|> try lambdaParser
     <|> try typeParser
-    <|> try constructorAppParser
     <|> try patternMatchParser
     <|> try typedHoleParser
     <|> try defineInfixParser
@@ -124,7 +123,8 @@ lambdaParser =
 
 appFunc :: Parser ParserExpr
 appFunc =
-  try recordAccessParser
+  try constructorParser
+    <|> try recordAccessParser
     <|> try (inBrackets lambdaParser)
     <|> try varParser
     <|> typedHoleParser
@@ -135,9 +135,9 @@ expected tx = failure Nothing (S.singleton (Label $ NE.fromList tx))
 appParser :: Parser ParserExpr
 appParser =
   let parser = do
-        cons <- appFunc <|> expected "function"
+        cons <- orInBrackets appFunc <|> expected "function"
         exprs <-
-          sepBy
+          sepBy1
             (withOptionalSpace (orInBrackets consAppArgParser))
             space
             <|> expected "Function argument"
@@ -240,8 +240,8 @@ inExpr = do
 
 -----
 
-constructorAppParser :: Parser ParserExpr
-constructorAppParser =
+_constructorAppParser :: Parser ParserExpr
+_constructorAppParser =
   let parser = do
         cons <- constructorParser
         exprs <-
@@ -260,10 +260,19 @@ consAppArgParser :: Parser ParserExpr
 consAppArgParser =
   let parsers =
         try literalParser
-          <|> try complexParser
+          <|> try recordParser
+          <|> try arrayParser
+          <|> try letParser
+          <|> try letPatternParser
+          <|> try ifParser
+          <|> try pairParser
+          <|> try recordAccessParser
+          <|> try lambdaParser
+          <|> try typeParser
+          <|> try typedHoleParser
           <|> try varParser
           <|> constructorParser
-   in try (inBrackets infixParser)
+   in try (inBrackets infixParser <|> inBrackets appParser)
         <|> orInBrackets parsers
 
 ----------

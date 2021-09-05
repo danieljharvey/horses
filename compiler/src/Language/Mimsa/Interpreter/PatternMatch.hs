@@ -52,8 +52,8 @@ patternMatches (PLit _ pB) (MyLiteral _ b)
   | pB == b = pure mempty
 patternMatches (PConstructor _ _pTyCon []) (MyConstructor _ _tyCon) =
   pure mempty
-patternMatches (PConstructor _ pTyCon pArgs) (MyConsApp ann fn val) = do
-  (tyCon, args) <- consAppToPattern (MyConsApp ann fn val)
+patternMatches (PConstructor _ pTyCon pArgs) (MyApp ann fn val) = do
+  (tyCon, args) <- consAppToPattern (MyApp ann fn val)
   if tyCon /= pTyCon
     then Nothing
     else do
@@ -104,7 +104,7 @@ patternMatches (PString _ pA pAs) (MyLiteral _ (MyString (StringType str))) | no
 patternMatches _ _ = Nothing
 
 consAppToPattern :: Expr Variable ann -> Maybe (TyCon, [Expr Variable ann])
-consAppToPattern (MyConsApp _ fn val) = do
+consAppToPattern (MyApp _ fn val) = do
   (tyCon, more) <- consAppToPattern fn
   pure (tyCon, more <> [val])
 consAppToPattern (MyConstructor _ tyCon) = pure (tyCon, mempty)
