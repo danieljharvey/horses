@@ -60,7 +60,7 @@ fromString (DataType _ [] items) = do
           [] ->
             Right
               ( PLit mempty (MyString (coerce consName)),
-                MyConsApp
+                MyApp
                   mempty
                   (MyConstructor mempty "Just")
                   (MyConstructor mempty consName)

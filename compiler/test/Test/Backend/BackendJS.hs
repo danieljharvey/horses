@@ -316,7 +316,7 @@ spec = do
             MyLambda
               mempty
               "a"
-              (MyConsApp mempty (MyConstructor mempty "Just") (MyVar mempty "a"))
+              (MyApp mempty (MyConstructor mempty "Just") (MyVar mempty "a"))
       normaliseConstructors dataTypes a `shouldBe` Right expected
     it "turns binary constructor into two lambda functions" $ do
       let a = MyConstructor () "These"
@@ -327,9 +327,9 @@ spec = do
               ( MyLambda
                   mempty
                   "b"
-                  ( MyConsApp
+                  ( MyApp
                       mempty
-                      ( MyConsApp
+                      ( MyApp
                           mempty
                           (MyConstructor mempty "These")
                           (MyVar mempty "a")
@@ -339,14 +339,14 @@ spec = do
               )
       normaliseConstructors dataTypes a `shouldBe` Right expected
     it "partially applies when wrapped in ConsApp" $ do
-      let a = MyConsApp () (MyConstructor () "These") (int 1)
+      let a = MyApp () (MyConstructor () "These") (int 1)
       let expected =
             MyLambda
               mempty
               "b"
-              ( MyConsApp
+              ( MyApp
                   mempty
-                  ( MyConsApp
+                  ( MyApp
                       mempty
                       (MyConstructor mempty "These")
                       (int 1)
@@ -356,9 +356,9 @@ spec = do
       normaliseConstructors dataTypes a `shouldBe` Right expected
     it "completely applies when wrapped in ConsApp" $ do
       let a =
-            MyConsApp
+            MyApp
               ()
-              ( MyConsApp
+              ( MyApp
                   ()
                   (MyConstructor () "These")
                   (int 1)

@@ -241,7 +241,6 @@ mapVar _ (MyLiteral ann a) = pure (MyLiteral ann a)
 mapVar chg (MyData ann dt b) =
   MyData ann dt <$> mapVar chg b
 mapVar _ (MyConstructor ann name) = pure (MyConstructor ann name)
-mapVar chg (MyConsApp ann fn var) = MyConsApp ann <$> mapVar chg fn <*> mapVar chg var
 mapVar chg (MyPatternMatch ann expr' patterns) = do
   let mapVarPair (pat, expr'') = do
         (newPat, newChg) <- mapPatternVar chg pat

@@ -598,7 +598,7 @@ spec = do
               dtMaybe
               ( MyPatternMatch
                   mempty
-                  (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
+                  (MyApp mempty (MyConstructor mempty "Just") (int 1))
                   [ ( PConstructor mempty "Just" [],
                       bool True
                     ),
@@ -617,7 +617,7 @@ spec = do
               dtMaybe
               ( MyPatternMatch
                   mempty
-                  (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
+                  (MyApp mempty (MyConstructor mempty "Just") (int 1))
                   [ ( PConstructor mempty "Just" [PWildcard mempty],
                       bool True
                     ),
@@ -635,7 +635,7 @@ spec = do
               dtMaybe
               ( MyPatternMatch
                   mempty
-                  (MyConsApp mempty (MyConstructor mempty "Just") (int 1))
+                  (MyApp mempty (MyConstructor mempty "Just") (int 1))
                   [ ( PConstructor mempty "Just" [PVar mempty (named "a")],
                       MyVar mempty (named "a")
                     ),
@@ -653,7 +653,7 @@ spec = do
               dtThese
               ( MyPatternMatch
                   mempty
-                  (MyConsApp mempty (MyConstructor mempty "That") (int 1))
+                  (MyApp mempty (MyConstructor mempty "That") (int 1))
                   [ ( PConstructor mempty "This" [PWildcard mempty],
                       int 0
                     ),
@@ -669,10 +669,10 @@ spec = do
         Right (MTPrim mempty MTInt)
     it "Matches nested datatype" $ do
       let val =
-            MyConsApp
+            MyApp
               mempty
               (MyConstructor mempty "Just")
-              ( MyConsApp mempty (MyConstructor mempty "Just") (bool True)
+              ( MyApp mempty (MyConstructor mempty "Just") (bool True)
               )
       let expr =
             MyData
@@ -717,15 +717,15 @@ spec = do
               dtEither
               ( MyPatternMatch
                   mempty
-                  (MyConsApp mempty (MyConstructor mempty "Left") (int 1))
+                  (MyApp mempty (MyConstructor mempty "Left") (int 1))
                   [ ( PConstructor mempty "Left" [PVar mempty (named "e")],
-                      MyConsApp mempty (MyConstructor mempty "Left") (MyVar mempty (named "e"))
+                      MyApp mempty (MyConstructor mempty "Left") (MyVar mempty (named "e"))
                     ),
                     ( PConstructor mempty "Right" [PLit mempty (MyInt 1)],
-                      MyConsApp mempty (MyConstructor mempty "Right") (int 1)
+                      MyApp mempty (MyConstructor mempty "Right") (int 1)
                     ),
                     ( PConstructor mempty "Right" [PVar mempty (named "a")],
-                      MyConsApp mempty (MyConstructor mempty "Right") (MyVar mempty (named "a"))
+                      MyApp mempty (MyConstructor mempty "Right") (MyVar mempty (named "a"))
                     )
                   ]
               )
@@ -745,15 +745,15 @@ spec = do
               dtEither
               ( MyPatternMatch
                   mempty
-                  (MyConsApp mempty (MyConstructor mempty "Right") (bool True))
+                  (MyApp mempty (MyConstructor mempty "Right") (bool True))
                   [ ( PConstructor mempty "Left" [PLit mempty (MyInt 1)],
-                      MyConsApp mempty (MyConstructor mempty "Left") (int 1)
+                      MyApp mempty (MyConstructor mempty "Left") (int 1)
                     ),
                     ( PConstructor mempty "Left" [PVar mempty (named "e")],
-                      MyConsApp mempty (MyConstructor mempty "Left") (MyVar mempty (named "e"))
+                      MyApp mempty (MyConstructor mempty "Left") (MyVar mempty (named "e"))
                     ),
                     ( PConstructor mempty "Right" [PVar mempty (named "a")],
-                      MyConsApp mempty (MyConstructor mempty "Right") (MyVar mempty (named "a"))
+                      MyApp mempty (MyConstructor mempty "Right") (MyVar mempty (named "a"))
                     )
                   ]
               )
@@ -796,9 +796,9 @@ spec = do
               dtEither
               ( MyPatternMatch
                   mempty
-                  (MyConsApp mempty (MyConstructor mempty "Right") (bool True))
+                  (MyApp mempty (MyConstructor mempty "Right") (bool True))
                   [ ( PConstructor mempty "Left" [PWildcard mempty],
-                      MyConsApp mempty (MyConstructor mempty "Left") (int 1)
+                      MyApp mempty (MyConstructor mempty "Left") (int 1)
                     ),
                     ( PVar mempty (named "all"),
                       MyVar mempty (named "all")
@@ -821,9 +821,9 @@ spec = do
               dtEither
               ( MyPatternMatch
                   mempty
-                  (MyConsApp mempty (MyConstructor mempty "Left") (bool True))
+                  (MyApp mempty (MyConstructor mempty "Left") (bool True))
                   [ ( PConstructor mempty "Right" [PWildcard mempty],
-                      MyConsApp mempty (MyConstructor mempty "Right") (int 1)
+                      MyApp mempty (MyConstructor mempty "Right") (int 1)
                     ),
                     ( PVar mempty (named "all"),
                       MyVar mempty (named "all")
@@ -841,9 +841,9 @@ spec = do
           )
     it "Getting types from pair" $ do
       let matchExpr =
-            MyConsApp
+            MyApp
               mempty
-              ( MyConsApp
+              ( MyApp
                   mempty
                   (MyConstructor mempty "Pair")
                   (bool True)
@@ -872,9 +872,9 @@ spec = do
           )
     it "Conflicting types in pair and patterns" $ do
       let matchExpr =
-            MyConsApp
+            MyApp
               mempty
-              ( MyConsApp
+              ( MyApp
                   mempty
                   (MyConstructor mempty "Pair")
                   (bool True)
@@ -1033,7 +1033,7 @@ spec = do
                   )
               )
           maybeExpr =
-            MyConsApp
+            MyApp
               mempty
               (MyConstructor mempty "Just")
               (MyLiteral mempty (MyInt 1))
@@ -1080,7 +1080,7 @@ spec = do
                   mempty
                   (named "f")
                   (MyConstructor mempty "Just")
-                  (MyConsApp mempty (MyVar mempty (named "f")) (int 1))
+                  (MyApp mempty (MyVar mempty (named "f")) (int 1))
               )
       startInference expr $
         Right
@@ -1098,7 +1098,7 @@ spec = do
               ( MyLambda
                   mempty
                   (named "f")
-                  (MyConsApp mempty (MyVar mempty (named "f")) (int 1))
+                  (MyApp mempty (MyVar mempty (named "f")) (int 1))
               )
       startInference expr $
         Right
@@ -1120,7 +1120,7 @@ spec = do
               ( MyLambda
                   mempty
                   (named "f")
-                  (MyConsApp mempty (MyConsApp mempty (MyVar mempty (named "f")) (int 1)) (bool True))
+                  (MyApp mempty (MyApp mempty (MyVar mempty (named "f")) (int 1)) (bool True))
               )
       startInference expr $
         Right

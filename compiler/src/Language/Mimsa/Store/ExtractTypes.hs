@@ -41,7 +41,6 @@ extractTypes_ (MyData _ dt a) =
     (extractConstructors dt <> extractTypes_ a)
     (extractLocalTypeDeclarations dt)
 extractTypes_ (MyConstructor _ t) = S.singleton t
-extractTypes_ (MyConsApp _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyTypedHole _ _) = mempty
 extractTypes_ (MyDefineInfix _ _ _ b) =
   extractTypes_ b
@@ -112,7 +111,6 @@ withDataTypes f (MyData _ dt a) =
   withDataTypes f a
     <> f dt
 withDataTypes _ (MyConstructor _ _) = mempty
-withDataTypes f (MyConsApp _ a b) = withDataTypes f a <> withDataTypes f b
 withDataTypes _ (MyTypedHole _ _) = mempty
 withDataTypes f (MyDefineInfix _ _ _ a) = withDataTypes f a
 withDataTypes f (MyPatternMatch _ expr patterns) =

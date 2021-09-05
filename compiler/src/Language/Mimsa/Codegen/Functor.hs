@@ -141,7 +141,7 @@ createMatch typeName matchVar tyCon fields = do
         foldl'
           ( \expr' fieldItem ->
               let reconstruct = reconstructField matchVar fieldItem
-               in MyConsApp mempty expr' reconstruct
+               in MyApp mempty expr' reconstruct
           )
           (MyConstructor mempty tyCon)
           regFields

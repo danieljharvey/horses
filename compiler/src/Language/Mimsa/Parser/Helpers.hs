@@ -79,7 +79,6 @@ mapOuterExprAnnotation f expr' =
     MyArray ann as -> MyArray (f ann) as
     MyData ann a b -> MyData (f ann) a b
     MyConstructor ann a -> MyConstructor (f ann) a
-    MyConsApp ann a b -> MyConsApp (f ann) a b
     MyTypedHole ann a -> MyTypedHole (f ann) a
     MyDefineInfix ann a b c -> MyDefineInfix (f ann) a b c
     MyPatternMatch ann a b -> MyPatternMatch (f ann) a b

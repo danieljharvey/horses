@@ -163,8 +163,8 @@ spec =
                 (MyConstructor mempty "Suc")
                 (MyConstructor mempty "Zero")
             )
-      it "type Nat = Zero | Suc Nat in Suc Suc Zero" $ do
-        result <- eval testStdlib "type Nat = Zero | Suc Nat in Suc Suc Zero"
+      it "type Nat = Zero | Suc Nat in Suc (Suc Zero)" $ do
+        result <- eval testStdlib "type Nat = Zero | Suc Nat in Suc (Suc Zero)"
         result
           `shouldBe` Right
             ( dataTypeWithVars mempty "Nat" [],
@@ -386,31 +386,31 @@ spec =
                 )
                 (MyConstructor mempty "Empty")
             )
-      it "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)" $ do
-        result <- eval testStdlib "let loop = (\\a -> if eq(10)(a) then a else loop(addInt(a)(1))) in loop(1)"
+      it "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1" $ do
+        result <- eval testStdlib "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
-      it "type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt(loop(as2))) in loop(Suc Suc Suc Zero)" $ do
-        result <- eval testStdlib "type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt(loop(as2))) in loop(Suc Suc Suc Zero)"
+      it "type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))" $ do
+        result <- eval testStdlib "type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-      it "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt(loop(as2)(b))) in loop(Suc Suc Suc Zero)(10)" $ do
-        result <- eval testStdlib "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt(loop(as2)(b))) in loop(Suc Suc Suc Zero)(10)"
+      it "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10" $ do
+        result <- eval testStdlib "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10"
         result `shouldBe` Right (MTPrim mempty MTInt, int 13)
       {-
             it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)" $ do
               result <- eval testStdlib "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)"
               result `shouldBe` Right (MTPrim mempty MTInt, int 3)
       -}
-      it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)" $ do
-        result <- eval testStdlib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Empty)"
+      it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty" $ do
+        result <- eval testStdlib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty"
         result `shouldBe` Right (MTPrim mempty MTInt, int 0)
-      it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)" $ do
-        result <- eval testStdlib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(f)(f(b)(a))(rest)) in reduceA(addInt)(0)(Item 3 Empty)"
+      it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 (Item 3 Empty)" $ do
+        result <- eval testStdlib "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 (Item 3 Empty)"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
       it "type Tlee a = Non | Tlee (Maybe b) in {}" $ do
         result <- eval testStdlib "type Tlee a = Non | Tlee (Maybe b) in {}"
         result `shouldSatisfy` isLeft
-      it "let some = \\a -> Just a in if True then some(1) else Nothing" $ do
-        result <- eval testStdlib "let some = \\a -> Just a in if True then some(1) else Nothing"
+      it "let some = \\a -> Just a in if True then some 1 else Nothing" $ do
+        result <- eval testStdlib "let some = \\a -> Just a in if True then some 1 else Nothing"
         result
           `shouldBe` Right
             ( dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt],
@@ -433,10 +433,10 @@ spec =
                 (MTPrim mempty MTInt)
             )
       it "fromMaybe should fail typecheck when default does not match inner value" $ do
-        result <- eval testStdlib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe(\"Horse\")(Just 1)"
+        result <- eval testStdlib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe \"Horse\" (Just 1)"
         result `shouldSatisfy` isLeft
       it "fromMaybe works when types match up" $ do
-        result <- eval testStdlib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe(\"Horse\")(Just \"Dog\")"
+        result <- eval testStdlib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe \"Horse\" (Just \"Dog\")"
         result `shouldBe` Right (MTPrim mempty MTString, str' "Dog")
       it "True == \"dog\"" $ do
         result <- eval testStdlib "True == \"dog\""
@@ -454,8 +454,8 @@ spec =
       it "(Just 1) == Just 2" $ do
         result <- eval testStdlib "(Just 1) == Just 2"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-      it "let eq1 = (\\a -> a == 1) in eq1(1)" $ do
-        result <- eval testStdlib "let eq1 = (\\a -> a == 1) in eq1(1)"
+      it "let eq1 = (\\a -> a == 1) in eq1 1" $ do
+        result <- eval testStdlib "let eq1 = (\\a -> a == 1) in eq1 1"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
       it "1 + 1" $ do
         result <- eval testStdlib "1 + 1"
@@ -574,8 +574,8 @@ spec =
       it "\\a -> if (a.one == a.two) then 100 else 0" $ do
         result <- eval testStdlib "\\a -> if (a.one == a.two) then 100 else 0"
         result `shouldSatisfy` isRight
-      it "type Reader r a = Reader (r -> a) in Reader \\r -> r + 100" $ do
-        result <- eval testStdlib "type Reader r a = Reader (r -> a) in Reader \\r -> r + 100"
+      it "type Reader r a = Reader (r -> a) in Reader (\\r -> r + 100)" $ do
+        result <- eval testStdlib "type Reader r a = Reader (r -> a) in Reader (\\r -> r + 100)"
         result
           `shouldBe` Right
             ( dataTypeWithVars
@@ -596,14 +596,14 @@ spec =
                     )
                 )
             )
-      it "\\state -> \\s -> match state with (State sas) -> sas(s)" $ do
-        result <- eval testStdlib "\\state -> \\s -> match state with (State sas) -> sas(s)"
+      it "\\state -> \\s -> match state with (State sas) -> sas s" $ do
+        result <- eval testStdlib "\\state -> \\s -> match state with (State sas) -> sas s"
         result `shouldSatisfy` isRight
-      it "let a = pureState(\"dog\"); let b = bindState(storeName)(a); runState(b)(nil)" $ do
-        result <- eval testStdlib "let a = pureState(\"dog\"); let b = bindState(storeName)(a); runState(b)(nil)"
+      it "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil" $ do
+        result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil"
         result `shouldSatisfy` isRight
-      it "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)" $ do
-        result <- eval testStdlib "let a = pureState(\"dog\"); let b = bindState(storeName)(a); let c = bindState(storeName)(b); runState(c)(nil)"
+      it "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil" $ do
+        result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil"
         result `shouldSatisfy` isRight
       it "infix <<< = compose; True" $ do
         result <- eval testStdlib "infix <<< = compose; True"
@@ -620,8 +620,8 @@ spec =
       it "infix +++ = addInt; 1 +++ 2" $ do
         result <- eval testStdlib "infix +++ = addInt; 1 +++ 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-      it "addInt(1)(2)" $ do
-        result <- eval testStdlib "addInt(1)(2)"
+      it "addInt 1 2" $ do
+        result <- eval testStdlib "addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
       it "infix == = addInt; True" $ do
         result <- eval testStdlib "infix == = addInt; True"
@@ -726,8 +726,8 @@ spec =
           result <- eval testStdlib "\"1\" <> [2]"
           result
             `shouldSatisfy` isLeft
-        it "mapArray(\\a -> a + 1)([1,2,3])" $ do
-          result <- eval testStdlib "mapArray(\\a -> a + 1)([1,2,3])"
+        it "mapArray (\\a -> a + 1) [1,2,3]" $ do
+          result <- eval testStdlib "mapArray (\\a -> a + 1) [1,2,3]"
           result
             `shouldBe` Right
               ( MTArray mempty (MTPrim mempty MTInt),
@@ -805,7 +805,7 @@ spec =
           result <- eval testStdlib "match Just 1 with (Just a) -> Just a | _ -> Nothing"
           result `shouldSatisfy` isRight
         it "Parses and pretty prints more complex matches" $ do
-          result <- eval testStdlib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right f(a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
+          result <- eval testStdlib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right (f a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
           result `shouldSatisfy` isRight
         it "Matches array with non-empty match" $ do
           result <- eval testStdlib "match [1] with [_] -> True | _ -> False"
@@ -862,8 +862,8 @@ spec =
           result `shouldSatisfy` isRight
       describe "Monoid losing types" $ do
         -- skipping because not sure what the hell is going on here
-        xit "maybeMonoid(stringMonoid)" $ do
-          result <- eval testStdlib "maybeMonoid(stringMonoid)"
+        xit "maybeMonoid stringMonoid" $ do
+          result <- eval testStdlib "maybeMonoid stringMonoid"
           fst <$> result
             `shouldBe` Right
               ( dataTypeWithVars
@@ -872,8 +872,8 @@ spec =
                   [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTString]
                   ]
               )
-        xit "maybeMonoid(sumMonoid)" $ do
-          result <- eval testStdlib "maybeMonoid(sumMonoid)"
+        xit "maybeMonoid sumMonoid" $ do
+          result <- eval testStdlib "maybeMonoid sumMonoid"
           fst <$> result
             `shouldBe` Right
               ( dataTypeWithVars

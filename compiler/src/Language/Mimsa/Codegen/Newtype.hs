@@ -24,7 +24,7 @@ wrap (DataType _tyCon _vars items) =
         ( MyLambda
             mempty
             "a"
-            ( MyConsApp
+            ( MyApp
                 mempty
                 (MyConstructor mempty consName)
                 (MyVar mempty "a")

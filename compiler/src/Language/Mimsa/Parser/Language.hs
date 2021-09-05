@@ -238,23 +238,6 @@ inExpr = do
   _ <- thenSpace (string "in")
   expressionParser
 
------
-
-_constructorAppParser :: Parser ParserExpr
-_constructorAppParser =
-  let parser = do
-        cons <- constructorParser
-        exprs <-
-          sepBy
-            (withOptionalSpace (orInBrackets consAppArgParser))
-            space
-        pure (cons, exprs)
-   in withLocation
-        ( \loc (cons, exprs) ->
-            foldl (MyConsApp loc) cons exprs
-        )
-        parser
-
 -- we don't want to include infix stuff here
 consAppArgParser :: Parser ParserExpr
 consAppArgParser =

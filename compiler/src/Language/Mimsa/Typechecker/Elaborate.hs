@@ -152,24 +152,6 @@ elabApplication env ann function argument = do
     ]
   pure (MyApp (fromAnn ann tyRes) function' argument')
 
--- let's pattern match on exactly what's inside more clearly
-elabConsApplication ::
-  Environment ->
-  Annotation ->
-  TcExpr ->
-  TcExpr ->
-  ElabM ElabExpr
-elabConsApplication env ann function argument = do
-  tyRes <- getUnknown ann
-  function' <- elab env function
-  argument' <- elab env argument
-  tell
-    [ ShouldEqual
-        (getTypeFromAnn function')
-        (MTFunction ann (getTypeFromAnn argument') tyRes)
-    ]
-  pure (MyConsApp (fromAnn ann tyRes) function' argument')
-
 -- when we come to do let recursive the name of our binder
 -- may already be turned into a number in the expr
 -- so we look it up to make sure we bind the right thing
@@ -706,8 +688,6 @@ elab env elabExpr =
     (MyConstructor ann name) -> do
       tyData <- inferDataConstructor env ann name
       pure (MyConstructor (fromAnn ann tyData) name)
-    (MyConsApp ann cons val) ->
-      elabConsApplication env ann cons val
     (MyDefineInfix ann infixOp bindName expr) ->
       elabDefineInfix env ann infixOp bindName expr
     (MyPatternMatch ann expr patterns) ->

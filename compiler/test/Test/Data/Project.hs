@@ -190,7 +190,7 @@ addArray :: Actions.ActionM ()
 addArray =
   addBinding
     "mapArray"
-    "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f a] <> map(rest) | _ -> []; map arr"
+    "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f a] <> map rest | _ -> []; map arr"
 
 addIdentity :: Actions.ActionM ()
 addIdentity = addType "type Ident a = Ident a"
