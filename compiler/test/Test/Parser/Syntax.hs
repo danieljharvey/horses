@@ -31,7 +31,7 @@ testParseWithAnn t = case parseExpr t of
 
 spec :: Spec
 spec = do
-  describe "Language" $ do
+  fdescribe "Language" $ do
     it "Parses True" $
       testParse "True" `shouldBe` Right (bool True)
     it "Parses False" $
@@ -96,7 +96,7 @@ spec = do
               (MyLambda mempty "b" (MyVar mempty "a"))
           )
     it "Recognises function application in parens" $
-      testParse "add (1)"
+      testParse "add 1"
         `shouldBe` Right
           ( MyApp
               mempty
@@ -105,7 +105,7 @@ spec = do
               (int 1)
           )
     it "Recognises double function application onto a var" $
-      testParse "add (1)(2)"
+      testParse "add 1 2"
         `shouldBe` Right
           ( MyApp
               mempty
@@ -144,7 +144,7 @@ spec = do
               (MyVar mempty "x")
           )
     it "Allows a let to use a pair and apply to it" $
-      testParse "let x = ((1,2)) in fst(x)"
+      testParse "let x = ((1,2)) in fst x"
         `shouldBe` Right
           ( MyLet
               mempty
@@ -168,7 +168,7 @@ spec = do
     it "Parses typed hole" $ do
       testParse "?dog" `shouldBe` Right (MyTypedHole mempty "dog")
     it "Parses a complex let expression" $
-      testParse "let const2 = (\\a -> (\\b -> a)) in (let reuse = ({first: const2(True), second: const2(2)}) in reuse.second(100))"
+      testParse "let const2 = (\\a -> (\\b -> a)) in (let reuse = ({first: const2 True, second: const2 2}) in reuse.second 100)"
         `shouldSatisfy` isRight
     it "Parses an infix equals expression" $
       testParse "True == True" `shouldBe` Right (MyInfix mempty Equals (bool True) (bool True))
@@ -440,7 +440,7 @@ spec = do
               )
           )
     it "Parses big function application" $
-      testParse "thing(1)(2)(3)(4)(5)"
+      testParse "thing 1 2 3 4 5"
         `shouldBe` Right
           ( MyApp
               mempty
@@ -464,9 +464,9 @@ spec = do
               (int 5)
           )
     it "Parses big infix fest" $
-      testParse "id(1) + id(2) + id(3)" `shouldSatisfy` isRight
+      testParse "(id 1) + (id 2) + (id 3)" `shouldSatisfy` isRight
     it "Parses big app in If" $
-      testParse "if id(True) then id(1) else id(2)" `shouldSatisfy` isRight
+      testParse "if id True then id 1 else id 2" `shouldSatisfy` isRight
   describe "Test annotations" $ do
     it "Parses a var with location information" $
       testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")
@@ -511,7 +511,7 @@ spec = do
         `shouldBe` Right
           (MyLambda (Location 0 7) "a" (MyVar (Location 6 7) "a"))
     it "Parses application with location information" $
-      testParseWithAnn "a(1)"
+      testParseWithAnn "a 1"
         `shouldBe` Right
           ( MyApp
               (Location 0 4)

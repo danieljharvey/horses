@@ -17,7 +17,9 @@ module Language.Mimsa.Parser.Language
 where
 
 import Data.Functor (($>))
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
@@ -54,8 +56,8 @@ complexParser =
     <|> try arrayParser
     <|> try letParser
     <|> try letPatternParser
-    <|> try ifParser
     <|> try appParser
+    <|> try ifParser
     <|> try pairParser
     <|> try recordAccessParser
     <|> try lambdaParser
@@ -127,6 +129,26 @@ appFunc =
     <|> try varParser
     <|> typedHoleParser
 
+expected :: String -> Parser a
+expected tx = failure Nothing (S.singleton (Label $ NE.fromList tx))
+
+appParser :: Parser ParserExpr
+appParser =
+  let parser = do
+        cons <- appFunc <|> expected "function"
+        exprs <-
+          sepBy
+            (withOptionalSpace (orInBrackets consAppArgParser))
+            space
+            <|> expected "Function argument"
+        pure (cons, exprs)
+   in withLocation
+        ( \loc (cons, exprs) ->
+            foldl (MyApp loc) cons exprs
+        )
+        parser
+
+{-
 appParser :: Parser ParserExpr
 appParser =
   let parser = do
@@ -149,6 +171,8 @@ exprInBrackets = do
   _ <- space
   _ <- string ")"
   pure expr
+
+-}
 
 -----
 
