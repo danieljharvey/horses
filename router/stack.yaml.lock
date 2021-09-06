@@ -3,10 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-snapshots:
-- original: nightly-2021-08-16
-  completed:
-    sha256: 26b9d5a72daee3077f4b92d81139c43afb724010c155c6d3a2a1620135b8e66d
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2021/8/16.yaml
-    size: 575895
 packages: []
+snapshots:
+- completed:
+    size: 579985
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2021/9/2.yaml
+    sha256: 830e575eb26318c1caa3d144193f0554188f85085a6e2debbcd31eb98c0c0df5
+  original: nightly-2021-09-02
