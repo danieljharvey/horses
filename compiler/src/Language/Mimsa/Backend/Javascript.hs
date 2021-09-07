@@ -389,8 +389,10 @@ outputJS expr =
     MyVar _ a -> pure $ textToJS (coerce a)
     MyInfix _ op a b -> outputOperator op a b
     MyLambda _ arg func -> outputLambda arg func
-    MyApp _ (c@MyConstructor {}) a -> outputConsApp c a
-    MyApp _ f a -> outputApp f a
+    MyApp _ f a ->
+      if containsConst f
+        then outputConsApp f a
+        else outputApp f a
     MyIf _ p a b -> outputIf p a b
     MyLet _ n a b -> outputLet n a b
     MyLetPattern _ p e body -> outputLetPattern p e body

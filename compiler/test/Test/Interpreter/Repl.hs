@@ -79,7 +79,7 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  fdescribe "Repl" $ do
+  describe "Repl" $ do
     it "Save testStdlib" $
       saveProject testStdlib
         >> (True `shouldBe` True)

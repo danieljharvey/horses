@@ -5,6 +5,7 @@ module Language.Mimsa.Backend.NormaliseConstructors
   ( normaliseConstructors,
     getConsArgList,
     getNestedTyCons,
+    containsConst,
   )
 where
 
@@ -31,12 +32,20 @@ normaliseConstructors dt (MyConstructor _ tyCon) =
   pure $ constructorToFunctionWithApplication dt [] tyCon
 normaliseConstructors dt (MyApp _ a val) = do
   restOfExpr <- bindExpr (normaliseConstructors dt) val
-  constructorToFunctionWithApplication
-    dt
-    (getConsArgList (MyApp mempty a restOfExpr))
-    <$> getNestedTyCons a
+  if containsConst a
+    then
+      constructorToFunctionWithApplication
+        dt
+        (getConsArgList (MyApp mempty a restOfExpr))
+        <$> getNestedTyCons a
+    else pure (MyApp mempty a restOfExpr)
 normaliseConstructors dt expr' =
   bindExpr (normaliseConstructors dt) expr'
+
+containsConst :: Expr Name ann -> Bool
+containsConst (MyConstructor _ _) = True
+containsConst (MyApp _ f _) = containsConst f
+containsConst _ = False
 
 getNestedTyCons :: Expr Name ann -> BackendM ann TyCon
 getNestedTyCons (MyApp _ a _) = getNestedTyCons a

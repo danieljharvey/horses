@@ -127,7 +127,8 @@ appFunc =
     <|> try recordAccessParser
     <|> try (inBrackets lambdaParser)
     <|> try varParser
-    <|> typedHoleParser
+    <|> try (inBrackets appParser)
+    <|> try typedHoleParser
 
 expected :: String -> Parser a
 expected tx = failure Nothing (S.singleton (Label $ NE.fromList tx))
