@@ -130,16 +130,37 @@ appFunc =
     <|> try (inBrackets appParser)
     <|> try typedHoleParser
 
+-- we don't want to include infix stuff here
+argParser :: Parser ParserExpr
+argParser =
+  let parsers =
+        try literalParser
+          <|> try recordParser
+          <|> try arrayParser
+          <|> try letParser
+          <|> try letPatternParser
+          <|> try ifParser
+          <|> try pairParser
+          <|> try recordAccessParser
+          <|> try lambdaParser
+          <|> try typeParser
+          <|> try typedHoleParser
+          <|> try varParser
+          <|> constructorParser
+   in try (inBrackets infixParser)
+        <|> try (inBrackets appParser)
+        <|> orInBrackets parsers
+
 expected :: String -> Parser a
 expected tx = failure Nothing (S.singleton (Label $ NE.fromList tx))
 
-appParser :: Parser ParserExpr
-appParser =
+_appParser :: Parser ParserExpr
+_appParser =
   let parser = do
         cons <- orInBrackets appFunc <|> expected "function"
         exprs <-
-          sepBy1
-            (withOptionalSpace (orInBrackets consAppArgParser))
+          sepBy
+            (withOptionalSpace argParser)
             space
             <|> expected "Function argument"
         pure (cons, exprs)
@@ -149,31 +170,13 @@ appParser =
         )
         parser
 
-{-
 appParser :: Parser ParserExpr
-appParser =
-  let parser = do
-        func <- appFunc
-        _ <- space
-        (,) func
-          <$> some
-            exprInBrackets
-   in withLocation
-        ( \loc (func, exprs) ->
-            foldl (MyApp loc) func exprs
-        )
-        parser
-
-exprInBrackets :: Parser ParserExpr
-exprInBrackets = do
-  _ <- string "("
-  _ <- space
-  expr <- expressionParser
-  _ <- space
-  _ <- string ")"
-  pure expr
-
--}
+appParser = addLocation $ do
+  func <- orInBrackets appFunc
+  let argParser' :: Parser [ParserExpr]
+      argParser' = (: []) <$> spaceThen argParser
+  args <- chainl1 argParser' (pure (<>))
+  pure $ foldl (MyApp mempty) func args
 
 -----
 
@@ -238,26 +241,6 @@ inExpr :: Parser ParserExpr
 inExpr = do
   _ <- thenSpace (string "in")
   expressionParser
-
--- we don't want to include infix stuff here
-consAppArgParser :: Parser ParserExpr
-consAppArgParser =
-  let parsers =
-        try literalParser
-          <|> try recordParser
-          <|> try arrayParser
-          <|> try letParser
-          <|> try letPatternParser
-          <|> try ifParser
-          <|> try pairParser
-          <|> try recordAccessParser
-          <|> try lambdaParser
-          <|> try typeParser
-          <|> try typedHoleParser
-          <|> try varParser
-          <|> constructorParser
-   in try (inBrackets infixParser <|> inBrackets appParser)
-        <|> orInBrackets parsers
 
 ----------
 

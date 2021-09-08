@@ -668,12 +668,12 @@ spec =
         result <- eval testStdlib "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn(as); if pred(a) then a ++ rest else rest | _ -> \"\") in fn(str); filter(\\a -> a == \"o\")(\"woo\")"
         result `shouldBe` Right (MTPrim mempty MTString, MyLiteral mempty (MyString "oo"))
 
-      it "runParser(anyChar)(\"dog\")" $ do
-        result <- eval testStdlib "runParser(anyChar)(\"dog\")"
+      it "runParser anyChar \"dog\"" $ do
+        result <- eval testStdlib "runParser anyChar \"dog\""
         result `shouldSatisfy` isRight
 
-      it "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")" $ do
-        result <- eval testStdlib "let repeat = fmapParser(\\a -> a ++ a)(anyChar) in runParser(repeat)(\"dog\")"
+      it "let repeat = fmapParser (\\a -> a ++ a) anyChar in runParser repeat \"dog\"" $ do
+        result <- eval testStdlib "let repeat = fmapParser (\\a -> a ++ a) anyChar in runParser repeat \"dog\""
         snd <$> result
           `shouldBe` Right
             ( MyApp

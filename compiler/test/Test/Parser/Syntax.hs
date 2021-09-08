@@ -31,7 +31,7 @@ testParseWithAnn t = case parseExpr t of
 
 spec :: Spec
 spec = do
-  describe "Syntax" $ do
+  fdescribe "Syntax" $ do
     describe "Language" $ do
       it "Parses True" $
         testParse "True" `shouldBe` Right (bool True)
@@ -552,6 +552,51 @@ spec = do
                     )
                     (MyVar mempty "a")
                 )
+            )
+      it "Tree type with value" $
+        testParse "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)"
+          `shouldBe` Right
+            ( MyData
+                mempty
+                ( DataType
+                    "Tree"
+                    []
+                    ( M.fromList
+                        [ ("Leaf", [MTPrim () MTInt]),
+                          ( "Branch",
+                            [ dataTypeWithVars () "Tree" [],
+                              dataTypeWithVars () "Tree" []
+                            ]
+                          )
+                        ]
+                    )
+                )
+                ( MyApp
+                    mempty
+                    ( MyApp
+                        mempty
+                        (MyConstructor mempty "Branch")
+                        (MyApp mempty (MyConstructor mempty "Leaf") (int 1))
+                    )
+                    (MyApp mempty (MyConstructor mempty "Leaf") (int 2))
+                )
+            )
+      it "a + 1" $
+        testParse "a + 1"
+          `shouldBe` Right
+            (MyInfix mempty Add (MyVar mempty "a") (int 1))
+
+      it "Applies a lambda to a function" $
+        testParse "map (\\a -> a + 1) [1,2,3]"
+          `shouldBe` Right
+            ( MyApp
+                mempty
+                ( MyApp
+                    mempty
+                    (MyVar mempty "map")
+                    (MyLambda mempty "a" (MyInfix mempty Add (MyVar mempty "a") (int 1)))
+                )
+                (MyArray mempty [int 1, int 2, int 3])
             )
 
     describe "Test annotations" $ do

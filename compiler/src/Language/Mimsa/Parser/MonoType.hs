@@ -150,11 +150,6 @@ dataTypeParser =
   try multiDataTypeParser
     <|> try monoDataTypeParser
 
-spaceThen :: Parser a -> Parser a
-spaceThen p = do
-  _ <- space1
-  p
-
 multiDataTypeParser :: Parser MonoType
 multiDataTypeParser = do
   tyName <- tyConParser

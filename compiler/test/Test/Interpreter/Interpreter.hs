@@ -156,6 +156,18 @@ spec =
                 )
         let result = interpret' mempty mempty f
         result `shouldBe` Right (int 1)
+      it "Leaves a constructor expression alone" $ do
+        let expr =
+              MyApp
+                mempty
+                ( MyApp
+                    mempty
+                    (MyConstructor mempty "Branch")
+                    (MyApp mempty (MyConstructor mempty "Leaf") (int 1))
+                )
+                (MyApp mempty (MyConstructor mempty "Leaf") (int 2))
+        let result = interpret' mempty mempty expr
+        result `shouldBe` Right expr
       it "Runs the internals of reduce function" $ do
         let reduceFunc =
               MyLet

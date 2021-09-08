@@ -14,6 +14,7 @@ module Language.Mimsa.Parser.Helpers
     literalWithSpace,
     withOptionalSpace,
     chainl1,
+    spaceThen,
   )
 where
 
@@ -29,14 +30,6 @@ import Text.Megaparsec.Char
 -- run a parser and then run Megaparsec pretty printer on the error
 parseAndFormat :: Parser a -> Text -> Either Text a
 parseAndFormat p = first (T.pack . errorBundlePretty) . parse (p <* eof) "repl"
-
--- looks for Parser a followed by 1 or more spaces
-thenSpace :: Parser a -> Parser a
-thenSpace parser = do
-  _ <- space
-  val <- parser
-  _ <- space1
-  pure val
 
 -- parses between two chars
 between2 :: Char -> Char -> Parser a -> Parser a
@@ -127,6 +120,20 @@ withOptionalSpace p = do
   a <- p
   _ <- space
   pure a
+
+-- looks for Parser a followed by 1 or more spaces
+thenSpace :: Parser a -> Parser a
+thenSpace parser = do
+  _ <- space
+  val <- parser
+  _ <- space1
+  pure val
+
+-- at least one space then Parser a
+spaceThen :: Parser a -> Parser a
+spaceThen p = do
+  _ <- space1
+  p
 
 -----
 
