@@ -255,6 +255,24 @@ spec = do
                 (int 1)
             )
       it "Parses an absolute unit with type var" $
+        testParse "type Arr a = Item a in 1"
+          `shouldBe` Right
+            ( MyData
+                mempty
+                ( DataType
+                    "Arr"
+                    ["a"]
+                    ( M.fromList
+                        [ ( "Item",
+                            [MTVar () (TVName "a")]
+                          )
+                        ]
+                    )
+                )
+                (int 1)
+            )
+
+      it "Parses an absolute unit with type var" $
         testParse "type Arr a = Empty\n | Item a\nin 1"
           `shouldBe` Right
             ( MyData
@@ -842,7 +860,7 @@ spec = do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 34)
-                (MyApp (Location 6 13) (MyConstructor (Location 6 10) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
+                (MyApp (Location 6 12) (MyConstructor (Location 6 10) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
                 [ ( PConstructor (Location 19 25) "Some" [PWildcard (Location 24 25)],
                     MyLiteral (Location 30 34) (MyBool True)
                   )
