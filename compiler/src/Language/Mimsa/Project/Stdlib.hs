@@ -34,7 +34,7 @@ buildStdlib =
       addType "type Task r a = Task ((a -> r) -> r)"
       addType "type Unit = Unit"
       parserFns
-      addBinding "pureTask" "\\a -> Task \\r -> r(a)"
+      addBinding "pureTask" "\\a -> Task \\r -> r a"
       arrayFns
       stringFns
       stateFns
@@ -42,7 +42,7 @@ buildStdlib =
 baseFns :: Actions.ActionM ()
 baseFns = do
   addBinding "id" "\\a -> a"
-  addBinding "compose" "\\f -> \\g -> \\a -> f(g(a))"
+  addBinding "compose" "\\f -> \\g -> \\a -> f (g a)"
   addBinding "not" "\\a -> if a then False else True"
   addBinding "and" "\\a -> \\b -> if a then b else False"
   addBinding "or" "\\a -> \\b -> if a then True else b"
@@ -68,9 +68,9 @@ stateFns :: Actions.ActionM ()
 stateFns = do
   addType "type State s a = State (s -> (a, s))"
   addBinding "pureState" "\\a -> State (\\s -> (a, s))"
-  addBinding "fmapState" "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas(s); match as with (a, s) -> (f(a), s))"
-  addBinding "apState" "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs(s); match fs with (f, ss) -> match stateA with (State sas) -> let as = sas(ss); match as with (a, sss) -> (f(a), sss))"
-  addBinding "bindState" "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas(s); match as with (a, ss) -> match f(a) with (State sbs) -> sbs(ss))"
+  addBinding "fmapState" "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas s; match as with (a, s) -> (f(a), s))"
+  addBinding "apState" "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs s; match fs with (f, ss) -> match stateA with (State sas) -> let as = sas(ss); match as with (a, sss) -> (f(a), sss))"
+  addBinding "bindState" "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas s; match as with (a, ss) -> match f(a) with (State sbs) -> sbs(ss))"
   addBinding "runState" "\\state -> \\s -> match state with (State sas) -> sas(s)"
   addBinding "execState" "\\state -> compose(snd)(runState(state))"
   addBinding "evalState" "\\state -> compose(fst)(runState(state))"

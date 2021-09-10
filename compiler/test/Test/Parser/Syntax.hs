@@ -31,7 +31,7 @@ testParseWithAnn t = case parseExpr t of
 
 spec :: Spec
 spec = do
-  fdescribe "Syntax" $ do
+  describe "Syntax" $ do
     describe "Language" $ do
       it "Parses True" $
         testParse "True" `shouldBe` Right (bool True)
