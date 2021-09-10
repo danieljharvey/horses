@@ -96,7 +96,7 @@ spec = do
                 "a"
                 (MyLambda mempty "b" (MyVar mempty "a"))
             )
-      it "Recognises function application in parens" $
+      it "Recognises function application" $
         testParse "add 1"
           `shouldBe` Right
             ( MyApp
@@ -105,6 +105,16 @@ spec = do
                 )
                 (int 1)
             )
+      it "Recognises function application 2" $
+        testParse "add True"
+          `shouldBe` Right
+            ( MyApp
+                mempty
+                ( MyVar mempty "add"
+                )
+                (bool True)
+            )
+
       it "Recognises double function application onto a var" $
         testParse "add 1 2"
           `shouldBe` Right
@@ -466,8 +476,12 @@ spec = do
             )
       it "Parses big infix fest" $
         testParse "(id 1) + (id 2) + (id 3)" `shouldSatisfy` isRight
+      it "Parses smaller app in If" $
+        testParse "if id True then 1 else 2" `shouldSatisfy` isRight
       it "Parses big app in If" $
         testParse "if id True then id 1 else id 2" `shouldSatisfy` isRight
+      it "Parses big app with brackets in If" $
+        testParse "if (id True) then (id 1) else (id 2)" `shouldSatisfy` isRight
       it "Parser pureState" $
         testParse "\\a -> State (\\s -> Pair a s)"
           `shouldBe` Right
@@ -581,10 +595,48 @@ spec = do
                     (MyApp mempty (MyConstructor mempty "Leaf") (int 2))
                 )
             )
+      it "Trailing spaces should fail" $ do
+        testParse "a "
+          `shouldSatisfy` isLeft
+        testParse "a 1 "
+          `shouldSatisfy` isLeft
+      it "dog + log" $
+        testParse "dog + log"
+          `shouldBe` Right (MyInfix mempty Add (MyVar mempty "dog") (MyVar mempty "log"))
+      it "a+" $
+        testParse "a+" `shouldSatisfy` isLeft
+      it "a == 1" $
+        testParse "a == 1"
+          `shouldBe` Right
+            (MyInfix mempty Equals (MyVar mempty "a") (int 1))
       it "a + 1" $
         testParse "a + 1"
           `shouldBe` Right
             (MyInfix mempty Add (MyVar mempty "a") (int 1))
+      it "a - 1" $
+        testParse "a - 1"
+          `shouldBe` Right
+            (MyInfix mempty Subtract (MyVar mempty "a") (int 1))
+
+      it "a+ 1" $
+        testParse "a+ 1"
+          `shouldBe` Right
+            (MyInfix mempty Add (MyVar mempty "a") (int 1))
+
+      it "a+1" $
+        testParse "a+1"
+          `shouldBe` Right
+            (MyInfix mempty Add (MyVar mempty "a") (int 1))
+
+      it "a  +  b" $
+        testParse "a  +  b"
+          `shouldBe` Right
+            (MyInfix mempty Add (MyVar mempty "a") (MyVar mempty "b"))
+
+      it "1 + a" $
+        testParse "1 + a"
+          `shouldBe` Right
+            (MyInfix mempty Add (int 1) (MyVar mempty "a"))
 
       it "Applies a lambda to a function" $
         testParse "map (\\a -> a + 1) [1,2,3]"
@@ -707,7 +759,7 @@ spec = do
                 (MyLiteral (Location 5 6) (MyInt 2))
             )
       it "Allows typed holes as function" $
-        testParseWithAnn "\\a -> if ?tobool(a) then 1 else 2"
+        testParseWithAnn "\\a -> if ?tobool a then 1 else 2"
           `shouldSatisfy` isRight
       it "Parser function application in infix" $
         testParseWithAnn "id 1 + 1" `shouldSatisfy` isRight

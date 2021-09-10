@@ -15,6 +15,7 @@ module Language.Mimsa.Parser.Helpers
     withOptionalSpace,
     chainl1,
     spaceThen,
+    optionalSpaceThen,
   )
 where
 
@@ -133,6 +134,12 @@ thenSpace parser = do
 spaceThen :: Parser a -> Parser a
 spaceThen p = do
   _ <- space1
+  p
+
+-- at least one space then Parser a
+optionalSpaceThen :: Parser a -> Parser a
+optionalSpaceThen p = do
+  _ <- space
   p
 
 -----

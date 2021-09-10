@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Parser.Language
@@ -17,10 +18,9 @@ module Language.Mimsa.Parser.Language
 where
 
 import Data.Functor (($>))
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import qualified Data.Set as S
 import Data.Text (Text)
+import Language.Mimsa.Logging
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Literal
@@ -126,9 +126,9 @@ appFunc =
   try constructorParser
     <|> try recordAccessParser
     <|> try (inBrackets lambdaParser)
+    <|> try typedHoleParser
     <|> try varParser
     <|> try (inBrackets appParser)
-    <|> try typedHoleParser
 
 -- we don't want to include infix stuff here
 argParser :: Parser ParserExpr
@@ -146,29 +146,10 @@ argParser =
           <|> try typeParser
           <|> try typedHoleParser
           <|> try varParser
-          <|> constructorParser
+          <|> try constructorParser
    in try (inBrackets infixParser)
         <|> try (inBrackets appParser)
-        <|> orInBrackets parsers
-
-expected :: String -> Parser a
-expected tx = failure Nothing (S.singleton (Label $ NE.fromList tx))
-
-_appParser :: Parser ParserExpr
-_appParser =
-  let parser = do
-        cons <- orInBrackets appFunc <|> expected "function"
-        exprs <-
-          sepBy
-            (withOptionalSpace argParser)
-            space
-            <|> expected "Function argument"
-        pure (cons, exprs)
-   in withLocation
-        ( \loc (cons, exprs) ->
-            foldl (MyApp loc) cons exprs
-        )
-        parser
+        <|> try (orInBrackets parsers)
 
 appParser :: Parser ParserExpr
 appParser = addLocation $ do
@@ -176,7 +157,7 @@ appParser = addLocation $ do
   let argParser' :: Parser [ParserExpr]
       argParser' = (: []) <$> spaceThen argParser
   args <- chainl1 argParser' (pure (<>))
-  pure $ foldl (MyApp mempty) func args
+  pure $ foldl (MyApp mempty) func (debugPretty "app args" args)
 
 -----
 
@@ -253,48 +234,42 @@ infixExpr =
           <|> try complexParser
           <|> try varParser
           <|> try constructorParser
-   in orInBrackets parsers
+   in (orInBrackets parsers)
 
 opParser :: Parser Operator
 opParser =
   try
-    ( inSpaces (string "==")
+    ( optionalSpaceThen (string "==")
         $> Equals
     )
     <|> try
-      ( inSpaces (string "+")
+      ( optionalSpaceThen (string "+")
           $> Add
       )
     <|> try
-      ( inSpaces (string "-")
+      ( optionalSpaceThen (string "-")
           $> Subtract
       )
     <|> try
-      ( inSpaces (string "++")
+      ( optionalSpaceThen (string "++")
           $> StringConcat
       )
     <|> try
-      ( inSpaces (string "<>")
+      ( optionalSpaceThen (string "<>")
           $> ArrayConcat
       )
     <|> try
-      ( inSpaces
+      ( optionalSpaceThen
           (Custom <$> infixOpParser)
       )
-
-inSpaces :: Parser a -> Parser a
-inSpaces p = do
-  _ <- space1
-  p' <- p
-  _ <- space1
-  pure p'
 
 infixParser :: Parser ParserExpr
 infixParser =
   addLocation
     ( chainl1
-        infixExpr
-        (MyInfix mempty <$> opParser)
+        (optionalSpaceThen infixExpr)
+        ( MyInfix mempty <$> opParser
+        )
     )
 
 ----------
