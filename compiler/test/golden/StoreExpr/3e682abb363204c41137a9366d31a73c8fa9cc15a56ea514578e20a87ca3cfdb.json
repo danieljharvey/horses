@@ -1,1 +1,0 @@
-{"storeExpression":{"contents":[[],{"contents":[[],{"contents":1,"tag":"MyInt"}],"tag":"MyLiteral"},[[{"contents":[],"tag":"PWildcard"},{"contents":[[],{"contents":true,"tag":"MyBool"}],"tag":"MyLiteral"}]]],"tag":"MyPatternMatch"},"storeBindings":{},"storeTypeBindings":{}}

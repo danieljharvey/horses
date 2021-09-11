@@ -58,8 +58,8 @@ data Expr var ann
   | -- | a.foo
     MyRecordAccess ann (Expr var ann) Name
   | MyArray ann [Expr var ann]
-  | -- | infix, name, expr
-    MyDefineInfix ann InfixOp var (Expr var ann)
+  | -- | infix, func expr, expr
+    MyDefineInfix ann InfixOp (Expr var ann) (Expr var ann)
   | -- | tyName, tyArgs, Map constructor args, body
     MyData ann DataType (Expr var ann)
   | -- | use a constructor by name
@@ -138,15 +138,15 @@ newlineOrIn = flatAlt (";" <> line <> line) " in "
 prettyDefineInfix ::
   (Printer var, Show var) =>
   InfixOp ->
-  var ->
+  Expr var ann ->
   Expr var ann ->
   Doc style
-prettyDefineInfix infixOp bindName expr =
+prettyDefineInfix infixOp bindExpr expr =
   group
     ( "infix"
         <+> prettyDoc infixOp
         <+> "="
-        <+> prettyDoc bindName
+        <+> prettyDoc bindExpr
         <> newlineOrIn
         <> prettyDoc expr
     )
@@ -299,8 +299,8 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyRecord _ map') =
     prettyRecord map'
   prettyDoc (MyArray _ items) = prettyArray items
-  prettyDoc (MyDefineInfix _ infixOp bindName expr) =
-    prettyDefineInfix infixOp bindName expr
+  prettyDoc (MyDefineInfix _ infixOp bindExpr expr) =
+    prettyDefineInfix infixOp bindExpr expr
   prettyDoc (MyData _ dataType expr) =
     prettyDataType dataType expr
   prettyDoc (MyConstructor _ name) = prettyDoc name

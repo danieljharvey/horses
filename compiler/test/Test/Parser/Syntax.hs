@@ -696,7 +696,7 @@ spec = do
             ( MyDefineInfix
                 mempty
                 (InfixOp "+++")
-                "addInt"
+                (MyVar mempty "addInt")
                 (MyInfix mempty (Custom (InfixOp "+++")) (int 1) (int 2))
             )
       it "parses destructuring a tuple" $

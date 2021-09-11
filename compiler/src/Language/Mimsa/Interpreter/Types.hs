@@ -46,7 +46,7 @@ newtype App ann a = App
 data InterpretState ann = InterpretState
   { isVarNum :: Int,
     isScope :: Scope ann,
-    isInfix :: Map InfixOp Variable,
+    isInfix :: Map InfixOp (Expr Variable ann),
     -- number of applications we have done for timeout
     isApplyCount :: Int,
     isSwaps :: Swaps
@@ -55,11 +55,11 @@ data InterpretState ann = InterpretState
 
 -- infix operators
 
-addOperator :: InfixOp -> Variable -> App ann ()
+addOperator :: InfixOp -> Expr Variable ann -> App ann ()
 addOperator infixOp expr = do
   modify (\is -> is {isInfix = isInfix is <> M.singleton infixOp expr})
 
-findOperator :: InfixOp -> App ann (Maybe Variable)
+findOperator :: InfixOp -> App ann (Maybe (Expr Variable ann))
 findOperator infixOp = do
   ops <- gets isInfix
   pure (M.lookup infixOp ops)

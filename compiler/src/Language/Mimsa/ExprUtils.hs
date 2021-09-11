@@ -131,9 +131,11 @@ withMonoid f whole@(MyData _ _ expr) =
    in if not go then m else m <> withMonoid f expr
 withMonoid f whole@(MyConstructor _ _) = snd (f whole)
 withMonoid f whole@MyTypedHole {} = snd (f whole)
-withMonoid f whole@(MyDefineInfix _ _ _ inExpr) =
+withMonoid f whole@(MyDefineInfix _ _ infixExpr inExpr) =
   let (go, m) = f whole
-   in if not go then m else m <> withMonoid f inExpr
+   in if not go
+        then m
+        else m <> withMonoid f infixExpr <> withMonoid f inExpr
 withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
   let (go, m) = f whole
    in if not go
@@ -167,8 +169,8 @@ mapExpr _ (MyConstructor ann cons) = MyConstructor ann cons
 mapExpr f (MyPatternMatch ann matchExpr patterns) =
   MyPatternMatch ann (f matchExpr) (second f <$> patterns)
 mapExpr _ (MyTypedHole ann a) = MyTypedHole ann a
-mapExpr f (MyDefineInfix ann op bindName inExpr) =
-  MyDefineInfix ann op bindName (f inExpr)
+mapExpr f (MyDefineInfix ann op infixExpr inExpr) =
+  MyDefineInfix ann op (f infixExpr) (f inExpr)
 
 -- | Bind a function `f` over the expression. This function takes care of
 -- recursing through the expression.
@@ -206,8 +208,8 @@ bindExpr f (MyData ann dt expr) =
 bindExpr _ (MyConstructor ann cons) =
   pure $ MyConstructor ann cons
 bindExpr _ (MyTypedHole ann a) = pure (MyTypedHole ann a)
-bindExpr f (MyDefineInfix ann op bindName expr) =
-  MyDefineInfix ann op bindName <$> f expr
+bindExpr f (MyDefineInfix ann op infixExpr expr) =
+  MyDefineInfix ann op <$> f infixExpr <*> f expr
 bindExpr f (MyPatternMatch ann matchExpr patterns) =
   MyPatternMatch
     ann
