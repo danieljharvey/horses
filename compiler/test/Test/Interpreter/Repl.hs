@@ -648,6 +648,7 @@ spec =
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
       it "infix == = addInt; True" $ do
         result <- eval testStdlib "infix == = addInt; True"
         -- can't overwrite built in infix operators

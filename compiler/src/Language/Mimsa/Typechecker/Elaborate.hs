@@ -606,16 +606,20 @@ elabDefineInfix ::
   Environment ->
   Annotation ->
   InfixOp ->
-  Variable ->
+  TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabDefineInfix env ann infixOp bindName expr = do
+elabDefineInfix env ann infixOp infixExpr expr = do
   u1 <- getUnknown ann
   u2 <- getUnknown ann
   u3 <- getUnknown ann
-  elabBind <- elabVarFromScope env ann bindName
-  let arityError = FunctionArityMismatch (snd . getAnnotation $ elabBind) 2 (getTypeFromAnn elabBind)
-  let tyBind = getTypeFromAnn elabBind
+  elabBindExpr <- elab env infixExpr
+  let tyBind = getTypeFromAnn elabBindExpr
+  let arityError =
+        FunctionArityMismatch
+          (snd . getAnnotation $ elabBindExpr)
+          2
+          tyBind
   tell
     [ ShouldEqual
         tyBind
@@ -688,7 +692,7 @@ elab env elabExpr =
     (MyConstructor ann name) -> do
       tyData <- inferDataConstructor env ann name
       pure (MyConstructor (fromAnn ann tyData) name)
-    (MyDefineInfix ann infixOp bindName expr) ->
-      elabDefineInfix env ann infixOp bindName expr
+    (MyDefineInfix ann infixOp infixExpr expr) ->
+      elabDefineInfix env ann infixOp infixExpr expr
     (MyPatternMatch ann expr patterns) ->
       elabPatternMatch env ann expr patterns

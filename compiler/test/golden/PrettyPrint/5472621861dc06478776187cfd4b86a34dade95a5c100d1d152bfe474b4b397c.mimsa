@@ -1,0 +1,5 @@
+\a ->
+  let one =
+    a.one;
+
+  let two = a.two in a

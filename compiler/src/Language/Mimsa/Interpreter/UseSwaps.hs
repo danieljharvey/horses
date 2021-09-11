@@ -72,11 +72,11 @@ useSwaps' (MyPatternMatch ann expr' patterns) = do
   MyPatternMatch ann <$> useSwaps' expr' <*> pure patterns'
 useSwaps' (MyTypedHole ann a) =
   pure $ MyTypedHole ann a
-useSwaps' (MyDefineInfix ann infixOp bindName expr) =
+useSwaps' (MyDefineInfix ann infixOp bindExpr expr) =
   MyDefineInfix
     ann
     infixOp
-    <$> lookupSwap bindName
+    <$> useSwaps' bindExpr
     <*> useSwaps' expr
 
 useSwapsInPattern :: Pattern Variable ann -> App ann (Pattern Name ann)

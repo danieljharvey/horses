@@ -1,0 +1,1 @@
+let good = { dog: True } in good.dog
