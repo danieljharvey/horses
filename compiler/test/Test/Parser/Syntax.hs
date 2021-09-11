@@ -638,13 +638,11 @@ spec = do
 
       it "a+ 1" $
         testParse "a+ 1"
-          `shouldBe` Right
-            (MyInfix mempty Add (MyVar mempty "a") (int 1))
+          `shouldSatisfy` isLeft
 
       it "a+1" $
         testParse "a+1"
-          `shouldBe` Right
-            (MyInfix mempty Add (MyVar mempty "a") (int 1))
+          `shouldSatisfy` isLeft
 
       it "a  +  b" $
         testParse "a  +  b"
@@ -655,6 +653,10 @@ spec = do
         testParse "1 + a"
           `shouldBe` Right
             (MyInfix mempty Add (int 1) (MyVar mempty "a"))
+
+      it "newName ++ \"!!!\"" $
+        testParse "newName ++ \"!!!\""
+          `shouldBe` Right (MyInfix mempty StringConcat (MyVar mempty "newName") (str "!!!"))
 
       it "Applies a lambda to a function" $
         testParse "map (\\a -> a + 1) [1,2,3]"
@@ -668,7 +670,48 @@ spec = do
                 )
                 (MyArray mempty [int 1, int 2, int 3])
             )
-
+      it "Parses passing a lambda to a function" $
+        testParse "arrayReduce (\\all -> \\a -> [ all ] <> a) []"
+          `shouldSatisfy` isRight
+      it "Parses big nested thing without boo boos" $
+        testParse "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"dog\""
+          `shouldBe` Right
+            ( MyLet
+                ()
+                "parser"
+                ( MyApp
+                    ()
+                    ( MyApp
+                        ()
+                        (MyVar () "bindParser")
+                        (MyLambda () "a" (MyIf () (MyInfix () Equals (MyVar () "a") (MyLiteral () (MyString "d"))) (MyVar () "anyChar") (MyVar () "failParser")))
+                    )
+                    (MyVar () "anyChar")
+                )
+                (MyApp () (MyApp () (MyVar () "runParser") (MyVar () "parser")) (MyLiteral () (MyString "dog")))
+            )
+      it "parses an infix definition" $
+        testParse "infix +++ = addInt; 1 +++ 2"
+          `shouldBe` Right
+            ( MyDefineInfix
+                mempty
+                (InfixOp "+++")
+                "addInt"
+                (MyInfix mempty (Custom (InfixOp "+++")) (int 1) (int 2))
+            )
+      it "parses destructuring a tuple" $
+        testParse "let (a,b) = (1,2); a"
+          `shouldBe` Right
+            ( MyLetPattern
+                mempty
+                ( PPair
+                    mempty
+                    (PVar mempty "a")
+                    (PVar mempty "b")
+                )
+                (MyPair mempty (int 1) (int 2))
+                (MyVar mempty "a")
+            )
     describe "Test annotations" $ do
       it "Parses a var with location information" $
         testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")
@@ -806,7 +849,6 @@ spec = do
           `shouldBe` Right
             ( MyArray (Location 0 2) mempty
             )
-
     describe "Pattern matching" $ do
       it "Parses wildcard pattern match" $
         testParseWithAnn "match 1 with _ -> True"

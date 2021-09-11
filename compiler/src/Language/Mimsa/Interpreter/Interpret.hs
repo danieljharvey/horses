@@ -146,10 +146,11 @@ interpretApplication ann fn value = do
       inner <- interpretApplication ann' f a
       value' <- interpretWithScope value
       if inner == MyApp ann' f a && value == value'
-        then pure (MyApp ann inner value)
+        then pure (MyApp ann inner value')
         else interpretWithScope (MyApp ann inner value')
     (MyConstructor ann' const') ->
-      pure (MyApp ann (MyConstructor ann' const') value)
+      MyApp ann (MyConstructor ann' const')
+        <$> interpretWithScope value
     other -> do
       expr <- interpretWithScope other
       interpretWithScope (MyApp ann expr value)

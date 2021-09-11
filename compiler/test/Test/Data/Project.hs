@@ -143,7 +143,7 @@ addStateMonad = do
     "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs s; match fs with (Pair f ss) -> match stateA with (State sas) -> let as = sas ss; match as with (Pair a sss) -> Pair (f a) sss)"
   addBinding
     "bindState"
-    "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas(s); match as with (Pair a ss) -> match f a with (State sbs) -> sbs ss)"
+    "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas s; match as with (Pair a ss) -> match f a with (State sbs) -> sbs ss)"
   addBinding
     "runState"
     "\\state -> \\input -> match state with (State sas) -> sas input"
@@ -158,7 +158,7 @@ addStateMonad = do
     "\\f -> \\stateA -> \\stateB -> apState (fmapState f stateA) stateB"
   addBinding
     "storeName"
-    "\\newName -> let sas = \\s -> let return = newName ++ \"!!!\"; let list = cons newName s; Pair return list; State sas"
+    "\\newName -> let sas = (\\s -> let return = newName ++ \"!!!\"; let list = cons newName s; Pair return list) in State sas"
   addBinding
     "testStateUsages"
     "(evalState, execState)"
@@ -208,11 +208,11 @@ addMonoid = do
   addBinding
     "maybeMonoid"
     ( mconcat
-        [ "\\innerM -> let (Monoid { mappend: innerMappend }) = innerM; (let mappend = \\a -> \\b -> match ((a, b)) with (Just iA, Just iB) -> (Just (innerMappend iA iB))",
+        [ "\\innerM -> let (Monoid { mappend: innerMappend }) = innerM; let mappend = \\a -> \\b -> match (a, b) with (Just iA, Just iB) -> (Just (innerMappend iA iB))",
           " | (Just iA, Nothing) -> (Just iA)",
           " | (Nothing, Just iB) -> (Just iB)",
-          " | _ -> (Nothing);",
-          " Monoid ({ mappend: mappend, mempty: (Nothing) }))"
+          " | _ -> Nothing;",
+          " Monoid ({ mappend: mappend, mempty: Nothing })"
         ]
     )
 

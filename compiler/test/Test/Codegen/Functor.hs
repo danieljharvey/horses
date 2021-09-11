@@ -21,7 +21,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\identity -> match identity with "
-                <> " (Identity a) -> Identity f(a); "
+                <> " (Identity a) -> Identity (f a); "
                 <> "fmap"
           )
     it "dtMaybe functor typechecks" $ do
@@ -32,7 +32,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\maybe -> match maybe with "
-                <> "(Just a) -> Just f(a) | Nothing -> Nothing; fmap"
+                <> "(Just a) -> Just (f a) | Nothing -> Nothing; fmap"
           )
 
     it "dtThese functor typechecks" $ do
@@ -43,8 +43,8 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\these -> match these with "
-                <> "(That b) -> That f(b) | "
-                <> "(These a b) -> These a f(b) | "
+                <> "(That b) -> That (f b) | "
+                <> "(These a b) -> These a (f b) | "
                 <> "(This a) -> This a; "
                 <> "fmap"
           )
@@ -57,7 +57,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\list -> match list with "
-                <> "(Cons a list1) -> Cons f(a) fmap(f)(list1) | "
+                <> "(Cons a list1) -> Cons (f a) (fmap f list1) | "
                 <> "Nil -> Nil; "
                 <> "fmap"
           )
@@ -70,7 +70,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\doubleList -> match doubleList with "
-                <> "(DoubleCons a b doubleList1) -> DoubleCons a f(b) fmap(f)(doubleList1) | "
+                <> "(DoubleCons a b doubleList1) -> DoubleCons a (f b) (fmap f doubleList1) | "
                 <> "DoubleNil -> DoubleNil; "
                 <> "fmap"
           )
@@ -83,8 +83,8 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\tree -> match tree with "
-                <> "(Branch tree1 tree2) -> Branch fmap(f)(tree1) fmap(f)(tree2) | "
-                <> "(Leaf a) -> Leaf f(a); "
+                <> "(Branch tree1 tree2) -> Branch (fmap f tree1) (fmap f tree2) | "
+                <> "(Leaf a) -> Leaf (f a); "
                 <> "fmap"
           )
 
@@ -96,7 +96,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\reader -> match reader with "
-                <> "(Reader rtoa) -> Reader \\r -> f(rtoa(r)); "
+                <> "(Reader rtoa) -> Reader \\r -> f (rtoa r); "
                 <> "fmap"
           )
 
@@ -108,6 +108,6 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\env -> match env with "
-                <> "(Env w a) -> Env w f(a); "
+                <> "(Env w a) -> Env w (f a); "
                 <> "fmap"
           )

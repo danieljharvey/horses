@@ -113,9 +113,10 @@ spec =
             ( MTPrim mempty MTInt,
               int 1
             )
-      it "let compose = (\\f -> \\g -> \\a -> f (g a)) in let f = compose incrementInt incrementInt in f 67" $ do
+      it "compose incrementInt" $ do
         result <- eval testStdlib "let compose = (\\f -> \\g -> \\a -> f (g a)) in let f = compose incrementInt incrementInt in f 67"
         result `shouldBe` Right (MTPrim mempty MTInt, int 69)
+
       it "let reuse = ({ first: id 1, second: id 2 }) in reuse.first" $ do
         result <- eval testStdlib "let reuse = ({ first: id 1, second: id 2 }) in reuse.first"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
@@ -283,19 +284,23 @@ spec =
                 (MyConstructor mempty "Just")
                 (int 1)
             )
-      it "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq(100)(a) | Nothing -> False" $ do
-        result <- eval testStdlib "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq(100)(a) | Nothing -> False"
+
+      it "use Maybe with eq" $ do
+        result <- eval testStdlib "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq 100 a | Nothing -> False"
         result
           `shouldBe` Right
             (MTPrim mempty MTBool, bool False)
+
       it "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> True | Nothing -> 1" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> True | Nothing -> 1"
         result `shouldSatisfy` isLeft
-      it "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq(100)(a) | _ -> False" $ do
-        result <- eval testStdlib "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq(100)(a) | _ -> False"
+
+      it "unfolding Maybe more" $ do
+        result <- eval testStdlib "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq 100 a | _ -> False"
         result
           `shouldBe` Right
             (MTPrim mempty MTBool, bool False)
+
       it "type Stuff = Thing String Int in match Thing \"Hello\" 1 with (Thing name num) -> name" $ do
         result <- eval testStdlib "type Stuff = Thing String Int in match Thing \"Hello\" 1 with (Thing name num) -> name"
         result
@@ -354,11 +359,13 @@ spec =
                 )
                 (MyConstructor mempty "Empty")
             )
-      it "type Maybe a = Just a | Nothing in match Just True with Just \\a -> a | Nothing \"what\"" $ do
+
+      it "unwrapping Maybe" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in match Just True with Just \\a -> a | Nothing \"what\""
         result `shouldSatisfy` isLeft
-      it "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> match either with (Left e) -> g(e) | (Right a) -> f(a)" $ do
-        result <- eval testStdlib "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> match either with (Left e) -> g(e) | (Right a) -> f(a)"
+
+      it "unwrap for Either" $ do
+        result <- eval testStdlib "type Either e a = Left e | Right a in \\f -> \\g -> \\either -> match either with (Left e) -> g e | (Right a) -> (f a)"
         result `shouldSatisfy` isRight
       {-
             it "type Maybe a = Just a | Nothing in \\maybe -> match maybe with Just \\a -> a | Nothing \"poo\"" $ do
@@ -466,47 +473,60 @@ spec =
       it "10 - 1" $ do
         result <- eval testStdlib "10 - 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 9)
+
       it "True - 1" $ do
         result <- eval testStdlib "True - 1"
         result `shouldSatisfy` isLeft
+
       it "1 + 1 + 1 + 1" $ do
         result <- eval testStdlib "1 + 1 + 1 + 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 4)
+
       it "\"dog\" ++ \"log\"" $ do
         result <- eval testStdlib "\"dog\" ++ \"log\""
         result `shouldBe` Right (MTPrim mempty MTString, str' "doglog")
+
       it "\"dog\" ++ 123" $ do
         result <- eval testStdlib "\"dog\" ++ 123"
         result `shouldSatisfy` isLeft
-      it "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})" $ do
-        result <- eval testStdlib "let f = (\\a -> if True then a.num else a.num2) in f({num: 1, num2: 2})"
+
+      it "passes record to function" $ do
+        result <- eval testStdlib "let f = (\\a -> if True then a.num else a.num2) in f {num: 1, num2: 2}"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+
       it "if True then { one: 1 } else { two: 2 }" $ do
         result <- eval testStdlib "if True then { one: 1 } else { two: 2 }"
         result `shouldSatisfy` isLeft
+
       it "if True then { one: 1 } else { one: 2 }" $ do
         result <- eval testStdlib "if True then { one: 1 } else { one: 2 }"
         result `shouldSatisfy` isRight
+
       it "let a = { one: 1 }; let one = a.one; let two = a.two; a" $ do
         result <- eval testStdlib "let a = { one: 1 }; let one = a.one; let two = a.two; a"
         result `shouldSatisfy` isLeft
+
       it "\\a -> let one = a.one; let two = a.two; a" $ do
         result <- eval testStdlib "\\a -> let one = a.one; let two = a.two; a"
         result
           `shouldSatisfy` isRight
-      it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1})" $ do
-        result <- eval testStdlib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1})"
+
+      it "passes inferred record value to a function" $ do
+        result <- eval testStdlib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord {one: 1}"
         result `shouldSatisfy` \case
           (Left err) -> not $ T.isInfixOf "InterpreterError" err
           _ -> False
-      it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({two: 2})" $ do
-        result <- eval testStdlib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({two: 2})"
+
+      it "passes inferred value to another function" $ do
+        result <- eval testStdlib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord {two: 2}"
         result `shouldSatisfy` \case
           (Left err) -> not $ T.isInfixOf "InterpreterError" err
           _ -> False
-      it "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1, two: 2})" $ do
-        result <- eval testStdlib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord({one: 1, two: 2})"
+
+      it "passes complete record value to function" $ do
+        result <- eval testStdlib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord {one: 1, two: 2}"
         result `shouldSatisfy` isRight
+
       it "\\a -> let one = a.one; \\a -> let two = a.two in a.one" $ do
         result <- eval testStdlib "\\a -> let one = a.one; \\a -> let two = a.two in a.one"
         -- here the two a's should be different types due to shadowing
@@ -549,16 +569,19 @@ spec =
               && T.isInfixOf "?missingFn" msg
               && T.isInfixOf "Boolean" msg
           (Right _) -> False
-      it "let map = \\f -> \\a -> f(a) in map(?flappy)(1)" $ do
-        result <- eval testStdlib "let map = \\f -> \\a -> f(a) in map(?flappy)(1)"
+
+      it "typed holes found in map function" $ do
+        result <- eval testStdlib "let map = \\f -> \\a -> f a in map ?flappy 1"
         result `shouldSatisfy` \case
           (Left msg) ->
             T.isInfixOf "Typed holes found" msg
               && T.isInfixOf "^^^^^^^" msg
           (Right _) -> False
-      it "let compose = \\f -> \\g -> \\a -> f(g(a)); compose" $ do
-        result <- eval testStdlib "let compose = \\f -> \\g -> \\a -> f(g(a)); compose"
+
+      it "compose function" $ do
+        result <- eval testStdlib "let compose = \\f -> \\g -> \\a -> f (g a); compose"
         result `shouldSatisfy` isRight
+
       it "Just (1 == 1)" $ do
         result <- eval testStdlib "Just (1 == 1)"
         snd <$> result
@@ -617,9 +640,11 @@ spec =
         result <- eval testStdlib "infix <<< = id; True"
         -- we check polymorphic functions
         result `shouldSatisfy` isLeft
-      it "infix +++ = addInt; 1 +++ 2" $ do
+
+      it "define +++ as infix and use it" $ do
         result <- eval testStdlib "infix +++ = addInt; 1 +++ 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
@@ -636,7 +661,7 @@ spec =
         result `shouldSatisfy` isLeft
       -- this should be thrown out by the interpreter
       it "Interpreter is stopped before it loops infinitely" $ do
-        result <- eval testStdlib "let forever = \\a -> forever(a) in forever(True)"
+        result <- eval testStdlib "let forever = \\a -> forever a in forever True"
         result `shouldSatisfy` \case
           Left msg -> "interpreter aborted" `T.isInfixOf` msg
           _ -> False
@@ -663,16 +688,19 @@ spec =
           Left _ -> error "Was not supposed to fail"
           Right (_, expr') -> T.unpack (prettyPrint expr') `shouldContain` "a"
 
-      -- filter function for strings
-      it "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn(as); if pred(a) then a ++ rest else rest | _ -> \"\") in fn(str); filter(\\a -> a == \"o\")(\"woo\")" $ do
-        result <- eval testStdlib "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn(as); if pred(a) then a ++ rest else rest | _ -> \"\") in fn(str); filter(\\a -> a == \"o\")(\"woo\")"
-        result `shouldBe` Right (MTPrim mempty MTString, MyLiteral mempty (MyString "oo"))
+      it "filter function for strings" $ do
+        result <- eval testStdlib "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\a -> a == \"o\") \"woo\""
+        result
+          `shouldBe` Right
+            ( MTPrim mempty MTString,
+              MyLiteral mempty (MyString "oo")
+            )
 
       it "runParser anyChar \"dog\"" $ do
         result <- eval testStdlib "runParser anyChar \"dog\""
         result `shouldSatisfy` isRight
 
-      it "let repeat = fmapParser (\\a -> a ++ a) anyChar in runParser repeat \"dog\"" $ do
+      it "fmapParser works correctly" $ do
         result <- eval testStdlib "let repeat = fmapParser (\\a -> a ++ a) anyChar in runParser repeat \"dog\""
         snd <$> result
           `shouldBe` Right
@@ -681,8 +709,8 @@ spec =
                 (MyConstructor mempty "Just")
                 (MyLiteral mempty (MyString "dd"))
             )
-      it "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"dog\")" $ do
-        result <- eval testStdlib "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"dog\")"
+      it "bindParser works correctly" $ do
+        result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"dog\""
         snd <$> result
           `shouldBe` Right
             ( MyApp
@@ -690,12 +718,13 @@ spec =
                 (MyConstructor mempty "Just")
                 (MyLiteral mempty (MyString "o"))
             )
-      it "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")" $ do
-        result <- eval testStdlib "let parser = bindParser(\\a -> if a == \"d\" then anyChar else failParser)(anyChar); runParser(parser)(\"log\")"
+      it "bindParser fails correctly" $ do
+        result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"log\""
         snd <$> result
           `shouldBe` Right
             (MyConstructor mempty "Nothing")
-      it "[1,2,3]" $ do
+
+      it "Array literal" $ do
         result <- eval testStdlib "[1,2,3]"
         result
           `shouldBe` Right
@@ -759,7 +788,7 @@ spec =
           result <- eval testStdlib "let (a,True) = (True,False) in a"
           result `shouldSatisfy` isLeft
         it "Adds constructors to required types for StoreExpression" $ do
-          result <- eval testStdlib "let (Parser parser) = predParser(\\d -> d == \"d\")(anyChar) in parser(\"dog\")"
+          result <- eval testStdlib "let (Parser parser) = predParser (\\d -> d == \"d\") anyChar in parser \"dog\""
           result `shouldSatisfy` isRight
       describe "Pattern matching" $ do
         it "Matches a wildcard" $ do

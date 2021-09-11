@@ -20,7 +20,7 @@ spec = do
       fold dtIdentity
         `shouldBe` Right
           ( unsafeParse
-              "let fold = \\f -> \\total -> \\identity -> match identity with (Identity a) -> f(total)(a); fold"
+              "let fold = \\f -> \\total -> \\identity -> match identity with (Identity a) -> f total a; fold"
           )
 
     it "Foldable dtMaybe typechecks" $ do
@@ -31,7 +31,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fold = \\f -> \\total -> \\maybe -> match maybe with "
-                <> "(Just a) -> f(total)(a) "
+                <> "(Just a) -> f total a "
                 <> "| Nothing -> total; fold"
           )
 
@@ -43,8 +43,8 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fold = \\f -> \\total -> \\these -> match these with "
-                <> "(That b) -> f(total)(b) | "
-                <> "(These a b) -> f(total)(b) | "
+                <> "(That b) -> f total b | "
+                <> "(These a b) -> f total b | "
                 <> "(This a) -> total; "
                 <> "fold"
           )
@@ -56,7 +56,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fold = \\f -> \\total -> \\list -> match list with "
-                <> "(Cons a list1) -> fold(f)(f(total)(a))(list1) | "
+                <> "(Cons a list1) -> fold f (f total a) list1 | "
                 <> "Nil -> total; "
                 <> "fold"
           )
@@ -69,6 +69,6 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fold = \\f -> \\total -> \\env -> "
-                <> " match env with (Env w a) -> f(total)(a); "
+                <> " match env with (Env w a) -> f total a; "
                 <> "fold"
           )

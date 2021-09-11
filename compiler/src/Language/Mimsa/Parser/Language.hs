@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Parser.Language
@@ -82,14 +81,16 @@ letInParser = addLocation $ do
   name <- letNameIn
   boundExpr <- optionalSpaceThen expressionParser
   _ <- thenSpace (string "in")
-  MyLet mempty name boundExpr <$> expressionParser
+  MyLet mempty name boundExpr
+    <$> optionalSpaceThen expressionParser
 
 letNewlineParser :: Parser ParserExpr
 letNewlineParser = addLocation $ do
   name <- letNameIn
   expr <- expressionParser
   _ <- literalWithSpace ";"
-  MyLet mempty name expr <$> expressionParser
+  MyLet mempty name expr
+    <$> optionalSpaceThen expressionParser
 
 -----
 
@@ -102,7 +103,8 @@ letPatternParser =
       _ <- thenSpace (string "=")
       expr <- expressionParser
       _ <- optionalSpaceThen (string ";" <|> string "in ")
-      MyLetPattern mempty pat expr <$> expressionParser
+      MyLetPattern mempty pat expr
+        <$> optionalSpaceThen expressionParser
 
 -----
 
@@ -232,40 +234,47 @@ infixExpr =
           <|> try complexParser
           <|> try varParser
           <|> try constructorParser
-   in (orInBrackets parsers)
+   in orInBrackets parsers
 
 opParser :: Parser Operator
 opParser =
   try
-    ( optionalSpaceThen (string "==")
+    ( inSpaces (string "==")
         $> Equals
     )
     <|> try
-      ( optionalSpaceThen (string "+")
+      ( inSpaces (string "+")
           $> Add
       )
     <|> try
-      ( optionalSpaceThen (string "-")
+      ( inSpaces (string "-")
           $> Subtract
       )
     <|> try
-      ( optionalSpaceThen (string "++")
+      ( inSpaces (string "++")
           $> StringConcat
       )
     <|> try
-      ( optionalSpaceThen (string "<>")
+      ( inSpaces (string "<>")
           $> ArrayConcat
       )
     <|> try
-      ( optionalSpaceThen
+      ( inSpaces
           (Custom <$> infixOpParser)
       )
+
+inSpaces :: Parser a -> Parser a
+inSpaces p = do
+  _ <- space1
+  val <- p
+  _ <- space1
+  pure val
 
 infixParser :: Parser ParserExpr
 infixParser =
   addLocation
     ( chainl1
-        (optionalSpaceThen infixExpr)
+        infixExpr
         ( MyInfix mempty <$> opParser
         )
     )
@@ -279,7 +288,8 @@ defineInfixParser = addLocation $ do
   _ <- thenSpace (string "=")
   boundName <- nameParser
   _ <- optionalSpaceThen (string ";" <|> string "in ")
-  MyDefineInfix mempty infixOp boundName <$> expressionParser
+  MyDefineInfix mempty infixOp boundName
+    <$> optionalSpaceThen expressionParser
 
 ----------
 
@@ -287,7 +297,7 @@ arrayParser :: Parser ParserExpr
 arrayParser = withLocation MyArray $ do
   _ <- string "["
   _ <- space
-  args <- sepBy (optionalSpaceThen expressionParser) (literalWithSpace ",")
+  args <- sepBy (optionalSpaceThen expressionParser) (string ",")
   _ <- space
   _ <- string "]"
   pure args
