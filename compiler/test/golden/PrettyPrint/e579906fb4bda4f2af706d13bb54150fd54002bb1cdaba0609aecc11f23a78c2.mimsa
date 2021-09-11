@@ -1,4 +1,4 @@
 let bigPrelude =
   { prelude: ({ id: (\i -> i) }) };
 
-bigPrelude.prelude.id(1)
+bigPrelude.prelude.id 1

@@ -1,4 +1,4 @@
 let repeat =
-  fmapParser((\a -> a ++ a))(anyChar);
+  fmapParser (\a -> a ++ a) anyChar;
 
-runParser(repeat)("dog")
+runParser repeat "dog"

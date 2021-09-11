@@ -1,9 +1,9 @@
 let parser =
-  bindParser((\a ->
+  bindParser (\a ->
     if (a == "d")
     then
       anyChar
     else
-      failParser))(anyChar);
+      failParser) anyChar;
 
-runParser(parser)("dog")
+runParser parser "dog"

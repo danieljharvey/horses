@@ -1,4 +1,4 @@
 let (Parser parser) =
-  predParser((\d -> d == "d"))(anyChar);
+  (predParser (\d -> d == "d") anyChar);
 
-parser("dog")
+(parser "dog")

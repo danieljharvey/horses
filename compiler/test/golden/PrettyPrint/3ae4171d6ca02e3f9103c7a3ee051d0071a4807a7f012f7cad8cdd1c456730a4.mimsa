@@ -1,8 +1,0 @@
-let useRecord =
-  \a ->
-    let one =
-      a.one;
-
-    let two = a.two in one + two;
-
-useRecord(({ two: 2 }))

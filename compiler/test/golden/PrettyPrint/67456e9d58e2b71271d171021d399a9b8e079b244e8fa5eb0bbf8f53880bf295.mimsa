@@ -1,3 +1,0 @@
-match [ 1, 2 ] with 
-    (ArrHead c rest) -> [ c ]
-  | (ArrEmpty) -> [ 0 ]

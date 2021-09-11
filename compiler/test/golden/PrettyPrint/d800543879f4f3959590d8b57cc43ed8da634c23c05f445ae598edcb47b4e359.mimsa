@@ -1,3 +1,0 @@
-match "dog" with 
-    "cat" -> True
-  | _ -> False

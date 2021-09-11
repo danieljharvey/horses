@@ -1,6 +1,0 @@
-let a = pureState("dog");
-let b = bindState((\as ->
-   storeName(as)))(a);
-let c = bindState((\bs ->
-   storeName(bs)))(b);
-runState(c)(nil)

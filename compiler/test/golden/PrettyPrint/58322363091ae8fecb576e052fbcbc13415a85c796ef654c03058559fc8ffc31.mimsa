@@ -1,4 +1,0 @@
-\some ->
-  match some with 
-      (Some a) -> True
-    | _ -> some

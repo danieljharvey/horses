@@ -1,8 +1,0 @@
-let fromMaybe =
-  \def ->
-    \maybe ->
-      match maybe with 
-          (Just a) -> a
-        | (Nothing) -> def;
-
-fromMaybe("Horse")((Just 1))

@@ -3,4 +3,4 @@ type LongBoy
           Int
           String;
 
-(Stuff)("yes")
+Stuff "yes"

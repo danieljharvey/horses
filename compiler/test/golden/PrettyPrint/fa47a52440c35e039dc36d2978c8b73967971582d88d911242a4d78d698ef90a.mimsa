@@ -1,3 +1,0 @@
-let a = pureState("dog");
-let b = bindState(pureState)(a);
-runState(b)(1)

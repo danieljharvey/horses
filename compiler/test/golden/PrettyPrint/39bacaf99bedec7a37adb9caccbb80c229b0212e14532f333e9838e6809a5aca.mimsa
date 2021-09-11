@@ -9,6 +9,6 @@ let reduceA =
       \as ->
         match as with 
             (Empty) -> b
-          | (Item a rest) -> reduceA(f)(f(b)(a))(rest);
+          | (Item a rest) -> (reduceA f (f b a) rest);
 
-reduceA(addInt)(0)((Item)(3)((Empty)))
+reduceA addInt 0 (Item 3 (Empty))

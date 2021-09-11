@@ -1,4 +1,0 @@
-\a ->
-  match (Left a) with 
-      (Left e) -> e
-    | _ -> False

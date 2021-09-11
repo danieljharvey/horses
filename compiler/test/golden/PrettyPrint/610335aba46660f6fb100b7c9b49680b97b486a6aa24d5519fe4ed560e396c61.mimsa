@@ -1,3 +1,0 @@
-if True
-  then ({one: 1})
-  else ({two: 2})

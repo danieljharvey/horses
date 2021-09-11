@@ -1,4 +1,4 @@
 \a ->
-  match (Left)(a) with 
+  match (Left a) with 
       (Left e) -> e
     | _ -> False

@@ -1,7 +1,7 @@
 let a =
-  pureState("dog");
+  pureState "dog";
 
 let b =
-  bindState(storeName)(a);
+  bindState storeName a;
 
-runState(b)(nil)
+runState b nil

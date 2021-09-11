@@ -1,4 +1,0 @@
-let some =
-  \a -> Some a;
-
-if True then some(1) else (Nowt)

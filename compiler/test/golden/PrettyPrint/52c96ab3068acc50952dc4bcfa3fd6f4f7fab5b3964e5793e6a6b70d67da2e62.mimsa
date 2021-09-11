@@ -1,4 +1,0 @@
-let map =
-  \f -> \a -> f(a);
-
-map(?flappy)(1)

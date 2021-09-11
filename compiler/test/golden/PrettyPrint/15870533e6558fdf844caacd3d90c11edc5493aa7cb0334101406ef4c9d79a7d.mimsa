@@ -1,5 +1,0 @@
-let useRecord = \a ->
-   let one = a.one;
-   let two = a.two;
-   one + two;
-useRecord(({one: 1}))

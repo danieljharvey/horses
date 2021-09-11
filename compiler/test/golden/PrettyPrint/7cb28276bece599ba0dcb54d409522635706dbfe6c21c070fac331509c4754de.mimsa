@@ -3,4 +3,4 @@ type Tree a
            Tree a
   | Leaf a;
 
-(Leaf)(1)
+Leaf 1

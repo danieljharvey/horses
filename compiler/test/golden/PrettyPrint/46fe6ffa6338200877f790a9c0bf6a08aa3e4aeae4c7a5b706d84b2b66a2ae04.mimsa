@@ -1,3 +1,0 @@
-match (None) with 
-    None -> False
-  | _ -> True

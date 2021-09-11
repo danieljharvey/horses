@@ -1,3 +1,0 @@
-match [] with 
-    [Some 1] -> True
-  | _ -> False

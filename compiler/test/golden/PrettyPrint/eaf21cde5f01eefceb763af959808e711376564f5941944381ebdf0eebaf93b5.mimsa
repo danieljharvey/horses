@@ -3,4 +3,4 @@ type Tree
            Tree
   | Leaf Int;
 
-(Branch)((Leaf)(1))((Leaf)(2))
+Branch (Leaf 1) (Leaf 2)

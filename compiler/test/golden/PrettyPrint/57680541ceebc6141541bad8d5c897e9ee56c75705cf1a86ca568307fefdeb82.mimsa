@@ -1,10 +1,10 @@
 let a =
-  pureState("dog");
+  pureState "dog";
 
 let b =
-  bindState(storeName)(a);
+  bindState storeName a;
 
 let c =
-  bindState(storeName)(b);
+  bindState storeName b;
 
-runState(c)(nil)
+runState c nil

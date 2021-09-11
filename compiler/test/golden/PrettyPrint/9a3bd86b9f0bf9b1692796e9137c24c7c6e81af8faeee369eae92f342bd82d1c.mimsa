@@ -1,1 +1,1 @@
-runParser(anyChar)("dog")
+runParser anyChar "dog"

@@ -1,4 +1,4 @@
 let reuse =
-  { first: id(True), second: id(2) };
+  { first: (id True), second: (id 2) };
 
 reuse.first
