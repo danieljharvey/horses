@@ -1,1 +1,1 @@
-addInt(1)(addInt(addInt(2)(4))(5))
+addInt 1 (addInt (addInt 2 4) 5)

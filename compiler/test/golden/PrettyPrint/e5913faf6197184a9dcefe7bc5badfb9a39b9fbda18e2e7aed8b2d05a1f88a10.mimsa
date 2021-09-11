@@ -1,7 +1,0 @@
-type Result e a 
-  = Failure e
-  | Success a;
-
-match (Failure "oh no") with 
-    (Success a) -> "oh yes"
-  | (Failure e) -> e

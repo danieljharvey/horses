@@ -1,4 +1,0 @@
-let some =
-  \a -> Just a;
-
-if True then some(1) else (Nothing)

@@ -1,0 +1,1 @@
+{"storeExpression":{"contents":[[],{"dtVars":["a"],"dtConstructors":{"Just":[{"contents":[[],{"contents":"a","tag":"TVName"}],"tag":"MTVar"}],"Nothing":[]},"dtName":"Maybe"},{"contents":[[],{"contents":[[],"Just"],"tag":"MyConstructor"},{"contents":[[],{"contents":1,"tag":"MyInt"}],"tag":"MyLiteral"}],"tag":"MyApp"}],"tag":"MyData"},"storeBindings":{},"storeTypeBindings":{}}

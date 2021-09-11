@@ -5,15 +5,15 @@ let filter =
         \s ->
           match s with 
               a ++ as -> (let rest =
-              fn(as);
+              fn as;
 
-            if pred(a)
+            if (pred a)
             then
               a ++ rest
             else
               rest)
             | _ -> "";
 
-      fn(str);
+      fn str;
 
-filter((\a -> a == "o"))("woo")
+filter (\a -> a == "o") "woo"

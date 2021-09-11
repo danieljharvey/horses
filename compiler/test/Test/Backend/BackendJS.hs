@@ -78,7 +78,7 @@ successes =
       "const main = a => a;\n",
       "[Function: main]"
     ),
-    ( "id(1)",
+    ( "id 1",
       "const main = id(1);\n",
       "1"
     ),
@@ -295,73 +295,75 @@ dataTypes = fromJust $ case resolveTypeDeps
 
 spec :: Spec
 spec = do
-  describe "JS" $
-    do
-      traverse_ testIt successes
+  describe "Backend JS" $ do
+    describe "JS" $
+      do
+        traverse_ testIt successes
+    describe "stuff" $ do
       it "Outputs a module" $ do
-        result <- evalModule testStdlib "\\a -> compose(id)(id)(a)"
+        result <- evalModule testStdlib "\\a -> (compose id id) a"
         result `shouldSatisfy` isRight
-  describe "Patterns JS" $ do
-    let testPattern (q, a) =
-          it (T.unpack (prettyPrint q)) $
-            outputPattern q `shouldBe` a
-    traverse_ testPattern patterns
-  describe "Normalise constructors" $ do
-    it "is a no-op for nullary constructors" $ do
-      let a = MyConstructor () "Nothing"
-      normaliseConstructors dataTypes a `shouldBe` Right a
-    it "turns unary constructor into lambda function" $ do
-      let a = MyConstructor () "Just"
-      let expected =
-            MyLambda
-              mempty
-              "a"
-              (MyConsApp mempty (MyConstructor mempty "Just") (MyVar mempty "a"))
-      normaliseConstructors dataTypes a `shouldBe` Right expected
-    it "turns binary constructor into two lambda functions" $ do
-      let a = MyConstructor () "These"
-      let expected =
-            MyLambda
-              mempty
-              "a"
-              ( MyLambda
-                  mempty
-                  "b"
-                  ( MyConsApp
-                      mempty
-                      ( MyConsApp
-                          mempty
-                          (MyConstructor mempty "These")
-                          (MyVar mempty "a")
-                      )
-                      (MyVar mempty "b")
-                  )
-              )
-      normaliseConstructors dataTypes a `shouldBe` Right expected
-    it "partially applies when wrapped in ConsApp" $ do
-      let a = MyConsApp () (MyConstructor () "These") (int 1)
-      let expected =
-            MyLambda
-              mempty
-              "b"
-              ( MyConsApp
-                  mempty
-                  ( MyConsApp
-                      mempty
-                      (MyConstructor mempty "These")
-                      (int 1)
-                  )
-                  (MyVar mempty "b")
-              )
-      normaliseConstructors dataTypes a `shouldBe` Right expected
-    it "completely applies when wrapped in ConsApp" $ do
-      let a =
-            MyConsApp
-              ()
-              ( MyConsApp
-                  ()
-                  (MyConstructor () "These")
-                  (int 1)
-              )
-              (int 2)
-      normaliseConstructors dataTypes a `shouldBe` Right a
+    describe "Patterns JS" $ do
+      let testPattern (q, a) =
+            it (T.unpack (prettyPrint q)) $
+              outputPattern q `shouldBe` a
+      traverse_ testPattern patterns
+    describe "Normalise constructors" $ do
+      it "is a no-op for nullary constructors" $ do
+        let a = MyConstructor () "Nothing"
+        normaliseConstructors dataTypes a `shouldBe` Right a
+      it "turns unary constructor into lambda function" $ do
+        let a = MyConstructor () "Just"
+        let expected =
+              MyLambda
+                mempty
+                "a"
+                (MyApp mempty (MyConstructor mempty "Just") (MyVar mempty "a"))
+        normaliseConstructors dataTypes a `shouldBe` Right expected
+      it "turns binary constructor into two lambda functions" $ do
+        let a = MyConstructor () "These"
+        let expected =
+              MyLambda
+                mempty
+                "a"
+                ( MyLambda
+                    mempty
+                    "b"
+                    ( MyApp
+                        mempty
+                        ( MyApp
+                            mempty
+                            (MyConstructor mempty "These")
+                            (MyVar mempty "a")
+                        )
+                        (MyVar mempty "b")
+                    )
+                )
+        normaliseConstructors dataTypes a `shouldBe` Right expected
+      it "partially applies when wrapped in ConsApp" $ do
+        let a = MyApp () (MyConstructor () "These") (int 1)
+        let expected =
+              MyLambda
+                mempty
+                "b"
+                ( MyApp
+                    mempty
+                    ( MyApp
+                        mempty
+                        (MyConstructor mempty "These")
+                        (int 1)
+                    )
+                    (MyVar mempty "b")
+                )
+        normaliseConstructors dataTypes a `shouldBe` Right expected
+      it "completely applies when wrapped in ConsApp" $ do
+        let a =
+              MyApp
+                ()
+                ( MyApp
+                    ()
+                    (MyConstructor () "These")
+                    (int 1)
+                )
+                (int 2)
+        normaliseConstructors dataTypes a `shouldBe` Right a

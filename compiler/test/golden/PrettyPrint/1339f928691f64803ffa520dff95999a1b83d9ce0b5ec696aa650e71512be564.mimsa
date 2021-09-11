@@ -1,1 +1,0 @@
-let (Ident a) = (Ident True) in a

@@ -286,7 +286,7 @@ outputConsApp ::
   Expr Name ann ->
   BackendM ann Javascript
 outputConsApp a b = do
-  let expr' = MyConsApp mempty a b
+  let expr' = MyApp mempty a b
   tyCon <- getNestedTyCons expr'
   let args = getConsArgList expr'
   outputConstructor tyCon args
@@ -389,7 +389,10 @@ outputJS expr =
     MyVar _ a -> pure $ textToJS (coerce a)
     MyInfix _ op a b -> outputOperator op a b
     MyLambda _ arg func -> outputLambda arg func
-    MyApp _ f a -> outputApp f a
+    MyApp _ f a ->
+      if containsConst f
+        then outputConsApp f a
+        else outputApp f a
     MyIf _ p a b -> outputIf p a b
     MyLet _ n a b -> outputLet n a b
     MyLetPattern _ p e body -> outputLetPattern p e body
@@ -401,7 +404,6 @@ outputJS expr =
       pure $ jsR <> "." <> textToJS (coerce a)
     MyData _ _ a -> outputJS a -- don't output types
     MyConstructor _ a -> outputConstructor @ann a []
-    MyConsApp _ c a -> outputConsApp c a
     MyTypedHole _ a -> throwError (OutputingTypedHole a)
     MyDefineInfix _ _ _ a -> outputJS a -- don't output infix definitions
     MyPatternMatch _ tyCon args ->

@@ -5,6 +5,7 @@ module Language.Mimsa.Backend.NormaliseConstructors
   ( normaliseConstructors,
     getConsArgList,
     getNestedTyCons,
+    containsConst,
   )
 where
 
@@ -29,24 +30,32 @@ normaliseConstructors ::
   BackendM ann (Expr Name ann)
 normaliseConstructors dt (MyConstructor _ tyCon) =
   pure $ constructorToFunctionWithApplication dt [] tyCon
-normaliseConstructors dt (MyConsApp _ a val) = do
+normaliseConstructors dt (MyApp _ a val) = do
   restOfExpr <- bindExpr (normaliseConstructors dt) val
-  constructorToFunctionWithApplication
-    dt
-    (getConsArgList (MyConsApp mempty a restOfExpr))
-    <$> getNestedTyCons a
+  if containsConst a
+    then
+      constructorToFunctionWithApplication
+        dt
+        (getConsArgList (MyApp mempty a restOfExpr))
+        <$> getNestedTyCons a
+    else pure (MyApp mempty a restOfExpr)
 normaliseConstructors dt expr' =
   bindExpr (normaliseConstructors dt) expr'
 
+containsConst :: Expr Name ann -> Bool
+containsConst (MyConstructor _ _) = True
+containsConst (MyApp _ f _) = containsConst f
+containsConst _ = False
+
 getNestedTyCons :: Expr Name ann -> BackendM ann TyCon
-getNestedTyCons (MyConsApp _ a _) = getNestedTyCons a
+getNestedTyCons (MyApp _ a _) = getNestedTyCons a
 getNestedTyCons (MyConstructor _ tyCon) = pure tyCon
 getNestedTyCons (MyLambda _ _ a) = getNestedTyCons a
 getNestedTyCons other = throwError (TyConFindError other)
 
 getConsArgList :: Expr Name ann -> [Expr Name ann]
-getConsArgList (MyConsApp _ (MyConstructor _ _tyCon) a) = [a]
-getConsArgList (MyConsApp _ next a) = getConsArgList next <> [a]
+getConsArgList (MyApp _ (MyConstructor _ _tyCon) a) = [a]
+getConsArgList (MyApp _ next a) = getConsArgList next <> [a]
 getConsArgList a = [a]
 
 typeNameToName :: Int -> Type ann -> Name
@@ -82,7 +91,7 @@ constructorToFunctionWithApplication dt args tyCon =
                       let variable = case safeGetItem (i - 1) args of
                             Just expression -> expression
                             Nothing -> MyVar mempty (typeNameToName i tn)
-                       in MyConsApp mempty expr' variable
+                       in MyApp mempty expr' variable
                   )
                   (MyConstructor mempty tyCon)
                   numberList

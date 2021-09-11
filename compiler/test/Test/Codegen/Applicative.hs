@@ -96,7 +96,7 @@ spec = do
             ( unsafeParse $
                 "\\identityF -> \\identityA -> "
                   <> "match identityF with (Identity f) -> "
-                  <> "match identityA with (Identity a) -> Identity f(a)"
+                  <> "match identityA with (Identity a) -> Identity (f a)"
             )
 
       it "apply for dtMaybe typechecks" $ do
@@ -107,7 +107,7 @@ spec = do
           `shouldBe` Right
             ( unsafeParse $
                 "\\maybeF -> \\maybeA -> match maybeF with "
-                  <> "(Just f) -> (match maybeA with (Just a) -> Just f(a) "
+                  <> "(Just f) -> (match maybeA with (Just a) -> Just (f a) "
                   <> "| Nothing -> Nothing) "
                   <> "| Nothing -> Nothing"
             )
@@ -121,7 +121,7 @@ spec = do
             ( unsafeParse $
                 "\\eitherF -> \\eitherA -> match eitherF with "
                   <> "(Left a1) -> Left a1 | "
-                  <> "(Right f) -> (match eitherA with (Left a1) -> Left a1 | (Right a) -> Right f(a))"
+                  <> "(Right f) -> (match eitherA with (Left a1) -> Left a1 | (Right a) -> Right (f a))"
             )
 
       it "apply for dtPair typechecks" $ do
@@ -132,7 +132,7 @@ spec = do
           `shouldBe` Right
             ( unsafeParse $
                 "\\pairF -> \\pairA -> match pairF with "
-                  <> "(Pair a f) -> (match pairA with (Pair a b) -> Pair a f(b))"
+                  <> "(Pair a f) -> (match pairA with (Pair a b) -> Pair a (f b))"
             )
 
       it "apply for dtThese typechecks" $ do
@@ -145,12 +145,12 @@ spec = do
                 "\\theseF -> \\theseA -> "
                   <> "match theseF with "
                   <> "(That f) -> (match theseA with "
-                  <> "(That b) -> That f(b) | "
-                  <> "(These a b) -> These a f(b) | "
+                  <> "(That b) -> That (f b) | "
+                  <> "(These a b) -> These a (f b) | "
                   <> "(This a1) -> This a1) | "
                   <> "(These a f) -> (match theseA with "
-                  <> "(That b) -> That f(b) | "
-                  <> "(These a b) -> These a f(b) | "
+                  <> "(That b) -> That (f b) | "
+                  <> "(These a b) -> These a (f b) | "
                   <> "(This a1) -> This a1) | "
                   <> "(This a1) -> This a1"
             )
@@ -164,7 +164,7 @@ spec = do
             ( unsafeParse $
                 "\\envF -> \\envA -> "
                   <> "match envF with (Env w f) -> "
-                  <> "match envA with (Env w a) -> Env w f(a)"
+                  <> "match envA with (Env w a) -> Env w (f a)"
             )
 
       it "Does not make apply for dtConsoleF" $ do

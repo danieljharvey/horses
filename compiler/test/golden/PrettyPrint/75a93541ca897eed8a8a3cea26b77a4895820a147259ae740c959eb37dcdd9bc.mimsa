@@ -1,4 +1,0 @@
-let (Identity (Identity a)) =
-  (Identity (Identity True));
-
-a

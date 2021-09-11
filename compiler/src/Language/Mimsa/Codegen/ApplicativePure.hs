@@ -39,7 +39,7 @@ applicativePure_ (DataType tyCon vars items) = do
   expr' <- case pureType of
     PureVar tc ->
       pure $
-        MyConsApp
+        MyApp
           mempty
           (MyConstructor mempty tc)
           (MyVar mempty fVar)
@@ -71,7 +71,7 @@ partToExpr fVar items innerExpr part =
       if n == fVar
         then
           pure $
-            MyConsApp
+            MyApp
               mempty
               innerExpr
               (MyVar mempty n)
@@ -79,12 +79,12 @@ partToExpr fVar items innerExpr part =
     TPart -> do
       emptyTyCon <- emptyConstructor items
       pure $
-        MyConsApp
+        MyApp
           mempty
           innerExpr
           (MyConstructor mempty emptyTyCon)
     FPart n a ->
-      pure $ MyConsApp mempty innerExpr (MyLambda mempty n (MyVar mempty a))
+      pure $ MyApp mempty innerExpr (MyLambda mempty n (MyVar mempty a))
 
 data Part
   = VPart Name

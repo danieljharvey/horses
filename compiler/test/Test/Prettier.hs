@@ -29,10 +29,10 @@ spec =
         renderWithWidth 5 doc `shouldBe` "1 + 2\n  + 3\n  + 4\n  + 5\n  + 6\n  + 7\n  + 8\n  + 9\n  + 10"
 
       it "Nested lambdas" $ do
-        let expr' = unsafeParseExpr "\\f -> \\g -> \\a -> f(g(a))"
+        let expr' = unsafeParseExpr "\\f -> \\g -> \\a -> f (g a)"
             doc = prettyDoc expr'
-        renderWithWidth 50 doc `shouldBe` "\\f -> \\g -> \\a -> f(g(a))"
-        renderWithWidth 5 doc `shouldBe` "\\f ->\n  \\g ->\n    \\a ->\n      f(g(a))"
+        renderWithWidth 50 doc `shouldBe` "\\f -> \\g -> \\a -> f (g a)"
+        renderWithWidth 5 doc `shouldBe` "\\f ->\n  \\g ->\n    \\a ->\n      f (g a)"
 
       it "Line between let bindings" $ do
         let expr' = unsafeParseExpr "let a = 1; a"
@@ -41,7 +41,7 @@ spec =
         renderWithWidth 5 doc `shouldBe` "let a =\n  1;\n\na"
 
       it "Line between let pair bindings" $ do
-        let expr' = unsafeParseExpr "let (a,b) = ((1,2)); a"
+        let expr' = unsafeParseExpr "let (a,b) = (1,2); a"
             doc = prettyDoc expr'
         renderWithWidth 50 doc `shouldBe` "let (a, b) = ((1, 2)) in a"
         renderWithWidth 5 doc `shouldBe` "let (a, b) =\n  ((1,\n    2));\n\na"

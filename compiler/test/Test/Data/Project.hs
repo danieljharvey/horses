@@ -36,7 +36,8 @@ idExpr = idExpr' $> mempty
 testStdlib :: Project Annotation
 testStdlib = case buildTestStdlib of
   Right stdLib' -> (stdLib' $> ()) $> mempty
-  Left e -> error (show e)
+  Left e ->
+    error (T.unpack $ prettyPrint e)
 
 buildTestStdlib :: Either (Error Annotation) (Project Annotation)
 buildTestStdlib =
@@ -48,7 +49,7 @@ buildTestStdlib =
         "\\a -> a"
       addBinding
         "compose"
-        "\\f -> \\g -> \\a -> f(g(a))"
+        "\\f -> \\g -> \\a -> f g a"
       addBinding
         "fst"
         "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
@@ -60,7 +61,7 @@ buildTestStdlib =
         "\\a -> \\b -> a == b"
       addBinding
         "eqTen"
-        "\\i -> eq(10)(i)"
+        "\\i -> eq 10 i"
       addBinding
         "addInt"
         "\\a -> \\b -> a + b"
@@ -69,16 +70,16 @@ buildTestStdlib =
         "\\a -> \\b -> a - b"
       addBinding
         "compose"
-        "\\f -> \\g -> \\aValue -> f(g(aValue))"
+        "\\f -> \\g -> \\a -> f (g a)"
       addBinding
         "incrementInt"
-        "\\a -> addInt(1)(a)"
+        "\\a -> addInt 1 a"
       addBinding
         "typeState"
         "type Maybe a = Just a | Nothing in {}"
       addBinding
         "fmapMaybe"
-        "\\f -> \\opt -> match opt with (Just a) -> Just f(a) | _ -> Nothing"
+        "\\f -> \\opt -> match opt with (Just a) -> Just (f a) | _ -> Nothing"
       addBinding
         "typeThese"
         "type These a b = This a | That b | These a b in {}"
@@ -136,28 +137,28 @@ addStateMonad = do
     "\\a -> State (\\s -> Pair a s)"
   addBinding
     "fmapState"
-    "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas(s); match as with (Pair a s) -> Pair f(a) s)"
+    "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas s; match as with (Pair a s) -> Pair (f a) s)"
   addBinding
     "apState"
-    "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs(s); match fs with (Pair f ss) -> match stateA with (State sas) -> let as = sas(ss); match as with (Pair a sss) -> Pair f(a) sss)"
+    "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs s; match fs with (Pair f ss) -> match stateA with (State sas) -> let as = sas ss; match as with (Pair a sss) -> Pair (f a) sss)"
   addBinding
     "bindState"
-    "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas(s); match as with (Pair a ss) -> match f(a) with (State sbs) -> sbs(ss))"
+    "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas s; match as with (Pair a ss) -> match f a with (State sbs) -> sbs ss)"
   addBinding
     "runState"
-    "\\state -> \\s -> match state with (State sas) -> sas(s)"
+    "\\state -> \\input -> match state with (State sas) -> sas input"
   addBinding
     "execState"
-    "\\state -> compose(sndPair)(runState(state))"
+    "\\state -> compose sndPair (runState state)"
   addBinding
     "evalState"
-    "\\state -> compose(fstPair)(runState(state))"
+    "\\state -> compose fstPair (runState state)"
   addBinding
     "liftA2State"
-    "\\f -> \\stateA -> \\stateB -> apState(fmapState(f)(stateA))(stateB)"
+    "\\f -> \\stateA -> \\stateB -> apState (fmapState f stateA) stateB"
   addBinding
     "storeName"
-    "\\newName -> let sas = \\s -> let return = newName ++ \"!!!\"; let list = cons(newName)(s); Pair return list; State sas"
+    "\\newName -> let sas = (\\s -> let return = newName ++ \"!!!\"; let list = cons newName s; Pair return list) in State sas"
   addBinding
     "testStateUsages"
     "(evalState, execState)"
@@ -171,16 +172,16 @@ addParser = do
     "let p = (\\str -> match str with (c ++ rest) -> (Just (rest, c)) | _ -> Nothing) in Parser p"
   addBinding
     "runParser"
-    "\\p -> \\str -> match p with (Parser parser) -> match parser(str) with (Just (rest, a)) -> Just a | _ -> Nothing"
+    "\\p -> \\str -> match p with (Parser parser) -> match parser str with (Just (rest, a)) -> Just a | _ -> Nothing"
   addBinding
     "fmapParser"
-    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Just (rest, a)) -> Just (rest, f(a)) | _ -> Nothing)"
+    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (rest, a)) -> Just (rest, f a) | _ -> Nothing)"
   addBinding
     "bindParser"
-    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser(s) with (Just (restA, a)) -> (let nextParser = match f(a) with (Parser parserB) -> parserB; nextParser(restA)) | _ -> Nothing)"
+    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (restA, a)) -> (let nextParser = match f a with (Parser parserB) -> parserB; nextParser restA) | _ -> Nothing)"
   addBinding
     "predParser"
-    "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr(s) with (Just (rest, a)) -> (if pred(a) then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
+    "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr s with (Just (rest, a)) -> (if pred a then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
   addBinding
     "failParser"
     "Parser \\s -> Nothing"
@@ -189,7 +190,7 @@ addArray :: Actions.ActionM ()
 addArray =
   addBinding
     "mapArray"
-    "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f(a)] <> map(rest) | _ -> []; map(arr)"
+    "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f a] <> map rest | _ -> []; map arr"
 
 addIdentity :: Actions.ActionM ()
 addIdentity = addType "type Ident a = Ident a"
@@ -207,11 +208,11 @@ addMonoid = do
   addBinding
     "maybeMonoid"
     ( mconcat
-        [ "\\innerM -> let (Monoid { mappend: innerMappend }) = innerM; (let mappend = \\a -> \\b -> match ((a, b)) with (Just iA, Just iB) -> (Just innerMappend(iA)(iB))",
+        [ "\\innerM -> let (Monoid { mappend: innerMappend }) = innerM; let mappend = \\a -> \\b -> match (a, b) with (Just iA, Just iB) -> (Just (innerMappend iA iB))",
           " | (Just iA, Nothing) -> (Just iA)",
           " | (Nothing, Just iB) -> (Just iB)",
-          " | _ -> (Nothing);",
-          " Monoid ({ mappend: mappend, mempty: (Nothing) }))"
+          " | _ -> Nothing;",
+          " Monoid ({ mappend: mappend, mempty: Nothing })"
         ]
     )
 

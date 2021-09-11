@@ -64,8 +64,6 @@ data Expr var ann
     MyData ann DataType (Expr var ann)
   | -- | use a constructor by name
     MyConstructor ann TyCon
-  | -- | constructor, value
-    MyConsApp ann (Expr var ann) (Expr var ann)
   | -- | expr, [(pattern, expr)]
     MyPatternMatch
       ann
@@ -291,7 +289,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyLambda _ binder expr) =
     prettyLambda binder expr
   prettyDoc (MyApp _ func arg) =
-    printSubExpr func <> parens (printSubExpr arg)
+    prettyDoc func <+> wrapInfix arg
   prettyDoc (MyRecordAccess _ expr name) =
     printSubExpr expr <> "." <> prettyDoc name
   prettyDoc (MyIf _ if' then' else') =
@@ -306,7 +304,6 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyData _ dataType expr) =
     prettyDataType dataType expr
   prettyDoc (MyConstructor _ name) = prettyDoc name
-  prettyDoc (MyConsApp _ fn val) = prettyDoc fn <+> wrapInfix val
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
   prettyDoc (MyPatternMatch _ expr matches) =
     prettyPatternMatch expr matches
@@ -327,6 +324,6 @@ printSubExpr expr = case expr of
   all'@MyRecord {} -> inParens all'
   all'@MyIf {} -> inParens all'
   all'@MyConstructor {} -> inParens all'
-  all'@MyConsApp {} -> inParens all'
+  all'@MyApp {} -> inParens all'
   all'@MyPair {} -> inParens all'
   a -> prettyDoc a

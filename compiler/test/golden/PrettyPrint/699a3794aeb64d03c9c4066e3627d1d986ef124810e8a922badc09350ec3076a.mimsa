@@ -1,4 +1,0 @@
-\a ->
-  match a with 
-      (Some as) -> as
-    | (None) -> 100

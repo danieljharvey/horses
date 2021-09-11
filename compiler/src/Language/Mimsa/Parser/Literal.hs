@@ -26,8 +26,9 @@ literalParser =
 
 ----
 
+-- 2, -2, +2
 integerLiteral :: Parser Literal
-integerLiteral = MyInt <$> L.signed space L.decimal
+integerLiteral = MyInt <$> L.signed (string "" $> ()) L.decimal
 
 intParser :: Parser ParserExpr
 intParser = withLocation MyLiteral integerLiteral

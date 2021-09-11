@@ -2,7 +2,7 @@ let const2 =
   \a -> \b -> a;
 
 let reuse =
-  { first: const2(True),
-    second: const2(2) };
+  { first: (const2 True),
+    second: (const2 2) };
 
-reuse.second(100)
+reuse.second 100

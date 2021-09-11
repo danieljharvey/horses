@@ -1,3 +1,0 @@
-match (Some 1) with 
-    (Some a) -> (Some a)
-  | _ -> (None)

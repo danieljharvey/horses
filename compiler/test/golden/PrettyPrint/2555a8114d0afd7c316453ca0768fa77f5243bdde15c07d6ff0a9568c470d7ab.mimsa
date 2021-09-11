@@ -1,4 +1,0 @@
-\b ->
-  match b with 
-      (Some a) -> 1
-    | _ -> b

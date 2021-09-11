@@ -95,7 +95,7 @@ noOpMatch tyCon fields =
         foldl'
           ( \expr' (i, _field) ->
               let fieldName = mkFieldName i
-               in MyConsApp mempty expr' (MyVar mempty fieldName)
+               in MyApp mempty expr' (MyVar mempty fieldName)
           )
           (MyConstructor mempty tyCon)
           numberedFields
@@ -141,7 +141,7 @@ createInnerMatch matchVar tyCon fields = do
         foldl'
           ( \expr' fieldItem ->
               let reconstruct = reconstructField matchVar fieldItem
-               in MyConsApp mempty expr' reconstruct
+               in MyApp mempty expr' reconstruct
           )
           (MyConstructor mempty tyCon)
           regFields
