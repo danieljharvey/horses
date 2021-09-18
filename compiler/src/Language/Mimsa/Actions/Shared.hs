@@ -123,9 +123,20 @@ resolveStoreExpression ::
   StoreExpression Annotation ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' typeMap input storeExpr = do
-  let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
-  (_, _, typedExpr, exprType) <- getType typeMap swaps scope input newExpr
-  pure (ResolvedExpression exprType storeExpr newExpr scope swaps typedExpr input)
+  let (SubstitutedExpression swaps newExpr scope) =
+        substitute store' storeExpr
+  (_, _, typedExpr, exprType) <-
+    getType typeMap swaps scope input newExpr
+  pure
+    ( ResolvedExpression
+        exprType
+        storeExpr
+        newExpr
+        scope
+        swaps
+        typedExpr
+        input
+    )
 
 getTypeMap :: Project Annotation -> Either (Error Annotation) (Map Name MonoType)
 getTypeMap prj =
