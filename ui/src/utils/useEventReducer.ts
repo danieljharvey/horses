@@ -60,11 +60,11 @@ export const useEventReducer = <State, Action, Event>(
     (state: State, action: Action) => {
       const response = reducer(state, action)
       if (currentAction.current !== action) {
-        response.events.forEach(event =>
+        response.events.forEach((event) =>
           setTimeout(
             () =>
               runtime(response.state, event)().then(
-                actions => {
+                (actions) => {
                   actions.forEach(willBeDispatch)
                 }
               ),
@@ -107,7 +107,7 @@ export const emptyReducer = <
   State,
   Action,
   Event
->(): EventReducer<State, Action, Event> => state => ({
+>(): EventReducer<State, Action, Event> => (state) => ({
   type: 'StateAndEvents',
   state,
   events: [],
@@ -141,7 +141,7 @@ export const prismReducer = <StateS, StateA, Action, Event>(
     optional.getOption(stateS),
     O.fold(
       () => stateOnly(stateS),
-      stateA => {
+      (stateA) => {
         const response = reducer(stateA, action)
         return {
           ...response,

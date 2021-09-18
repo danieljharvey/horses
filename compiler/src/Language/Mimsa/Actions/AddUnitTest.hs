@@ -20,8 +20,9 @@ addUnitTest ::
   Actions.ActionM UnitTest
 addUnitTest expr testName input = do
   project <- Actions.getProject
-  (ResolvedExpression _ storeExpr _ _ _) <-
+  resolvedExpr <-
     liftEither $ Actions.getTypecheckedStoreExpression input project expr
+  let storeExpr = reStoreExpression resolvedExpr
   Actions.appendStoreExpression storeExpr
   test <- liftEither $ createUnitTest project storeExpr testName
   Actions.appendProject (fromUnitTest test storeExpr)

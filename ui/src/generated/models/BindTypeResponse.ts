@@ -2,15 +2,15 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { DataType__ } from './DataType__';
+import type { DataType } from './DataType';
 import type { ExpressionData } from './ExpressionData';
 import type { ProjectData } from './ProjectData';
 import type { Typeclass } from './Typeclass';
 
 export type BindTypeResponse = {
     btCodegen?: ExpressionData;
-    btDataType: DataType__;
     btTypeclasses: Array<Typeclass>;
+    btDataType: DataType;
     btProjectData: ProjectData;
     btPrettyType: string;
 }

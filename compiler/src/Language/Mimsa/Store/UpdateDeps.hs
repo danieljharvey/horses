@@ -41,9 +41,9 @@ updateStoreExpressionBindings project newBindings se = do
                 (storeTypeBindings se)
           }
   let expr = storeExpression se
-  (ResolvedExpression _ rStoreExpr _ _ _) <-
+  resolvedExpr <-
     Actions.getTypecheckedStoreExpression (prettyPrint expr) newProject expr
-  pure rStoreExpr
+  pure (reStoreExpression resolvedExpr)
 
 combine :: Bindings -> Bindings -> Bindings
 combine (Bindings a) (Bindings b) =

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1b234f2c01332fbd5c9f456100d766d79fba7ec8078f43b095b32636494dc3e2
+-- hash: 79b32c48146abf7a198f8706e912436efd79210b11953dac1838d1655ad6708f
 
 name:           mimsa
 version:        0.1.0.0
@@ -80,6 +80,7 @@ library
       Language.Mimsa.Project.Default
       Language.Mimsa.Project.Helpers
       Language.Mimsa.Project.Persistence
+      Language.Mimsa.Project.SourceSpan
       Language.Mimsa.Project.Stdlib
       Language.Mimsa.Project.TypeSearch
       Language.Mimsa.Project.UnitTest
@@ -140,6 +141,7 @@ library
       Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.KindChecker
       Language.Mimsa.Typechecker.NormaliseTypes
+      Language.Mimsa.Typechecker.OutputTypes
       Language.Mimsa.Typechecker.Solve
       Language.Mimsa.Typechecker.TcMonad
       Language.Mimsa.Typechecker.Typecheck
@@ -174,6 +176,8 @@ library
       Language.Mimsa.Types.Project.Project
       Language.Mimsa.Types.Project.ProjectHash
       Language.Mimsa.Types.Project.SaveProject
+      Language.Mimsa.Types.Project.SourceItem
+      Language.Mimsa.Types.Project.SourceSpan
       Language.Mimsa.Types.Project.UnitTest
       Language.Mimsa.Types.Project.Usage
       Language.Mimsa.Types.Project.Versioned
@@ -348,6 +352,7 @@ test-suite mimsa-test
       Test.Parser.Syntax
       Test.Prettier
       Test.Project.NormaliseType
+      Test.Project.SourceSpan
       Test.Project.Stdlib
       Test.Project.TypeSearch
       Test.Project.UnitTest
@@ -360,6 +365,7 @@ test-suite mimsa-test
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.KindChecker
+      Test.Typechecker.OutputTypes
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify

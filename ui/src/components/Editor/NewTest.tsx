@@ -9,7 +9,7 @@ import { Feedback } from './Feedback'
 
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
-
+import { getSourceItems } from '../../reducer/editor/selector'
 import { TextInput } from '../View/TextInput'
 import { ExprHash } from '../../types'
 import { fetchExpressionsForHashes } from '../../reducer/project/actions'
@@ -65,7 +65,11 @@ export const NewTest: React.FC<Props> = ({
             onChange={setTestName}
           />
         )}
-        <CodeEditor code={code} setCode={onCodeChange} />
+        <CodeEditor
+          code={code}
+          setCode={onCodeChange}
+          sourceItems={getSourceItems(state)}
+        />
       </Panel>
       <Panel>
         <FlexColumnSpaced>

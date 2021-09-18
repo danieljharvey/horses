@@ -23,12 +23,12 @@ doInfo ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doInfo env input expr = do
-  (ResolvedExpression type' _ _ _ _) <-
+  resolvedExpr <-
     mimsaFromEither $
       Actions.getTypecheckedStoreExpression input env expr
   replOutput $
     prettyPrint expr
       <> "/n:: "
-      <> prettyPrint type'
+      <> prettyPrint (reMonoType resolvedExpr)
 
 ----------

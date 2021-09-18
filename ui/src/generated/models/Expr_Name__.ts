@@ -49,9 +49,6 @@ export type Expr_Name__ = ({
     tag: 'MyConstructor',
 } | {
     contents: Array<any>,
-    tag: 'MyConsApp',
-} | {
-    contents: Array<any>,
     tag: 'MyPatternMatch',
 } | {
     contents: Array<any>,

@@ -53,7 +53,7 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   project <- loadProjectHandler mimsaEnv store' projectHash
   se <- findExprHandler project exprHash'
   (_, graphviz) <- fromActionM mimsaEnv projectHash (Actions.graphExpression se)
-  (ResolvedExpression mt _ _ _ _) <-
+  resolvedExpr <-
     resolveStoreExpressionHandler project se
   writeStoreHandler mimsaEnv (prjStore project)
-  GetExpressionResponse <$> expressionDataHandler project se mt graphviz
+  GetExpressionResponse <$> expressionDataHandler project se (reTypedExpression resolvedExpr) graphviz (reInput resolvedExpr)

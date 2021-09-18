@@ -53,13 +53,13 @@ bindExpression ::
   Handler BindExpressionResponse
 bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
   expr <- parseHandler input
-  (newProject, (_, numTests, ResolvedExpression mt se _ _ _, gv)) <-
+  (newProject, (_, numTests, ResolvedExpression _ se _ _ _ typedExpr input', gv)) <-
     fromActionM
       mimsaEnv
       hash
       (Actions.bindExpression expr name' input)
   pd <- projectDataHandler mimsaEnv newProject
-  ed <- expressionDataHandler newProject se mt gv
+  ed <- expressionDataHandler newProject se typedExpr gv input'
   pure $
     BindExpressionResponse
       pd

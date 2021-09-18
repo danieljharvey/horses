@@ -48,7 +48,13 @@ getType ::
   Scope Annotation ->
   Text ->
   Expr Variable Annotation ->
-  Either (Error ann) (Substitutions, [Constraint], Expr Variable (MonoType, Annotation), MonoType)
+  Either
+    (Error ann)
+    ( Substitutions,
+      [Constraint],
+      Expr Variable (MonoType, Annotation),
+      MonoType
+    )
 getType typeMap swaps scope' source expr =
   first
     (TypeErr source)
@@ -76,7 +82,7 @@ resolvedDepsToTypeMap ::
 resolvedDepsToTypeMap store' deps = do
   let resolveType se =
         resolveStoreExpression store' mempty mempty se
-          >>= \(ResolvedExpression mt _ _ _ _) -> pure mt
+          >>= \(ResolvedExpression mt _ _ _ _ _ _) -> pure mt
   listItems <-
     traverse
       (\(name, (_, se)) -> (,) name <$> resolveType se)
@@ -118,8 +124,8 @@ resolveStoreExpression ::
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' typeMap input storeExpr = do
   let (SubstitutedExpression swaps newExpr scope) = substitute store' storeExpr
-  (_, _, _, exprType) <- getType typeMap swaps scope input newExpr
-  pure (ResolvedExpression exprType storeExpr newExpr scope swaps)
+  (_, _, typedExpr, exprType) <- getType typeMap swaps scope input newExpr
+  pure (ResolvedExpression exprType storeExpr newExpr scope swaps typedExpr input)
 
 getTypeMap :: Project Annotation -> Either (Error Annotation) (Map Name MonoType)
 getTypeMap prj =
@@ -161,6 +167,6 @@ typecheckStoreExpression store storeExpr = do
           (typeBindingsToVersioned (storeTypeBindings storeExpr))
           mempty
   let expr = storeExpression storeExpr
-  (ResolvedExpression mt _ _ _ _) <-
+  resolvedExpr <-
     getTypecheckedStoreExpression (prettyPrint expr) project expr
-  pure mt
+  pure (reMonoType resolvedExpr)

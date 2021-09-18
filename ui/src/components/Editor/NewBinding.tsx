@@ -14,6 +14,7 @@ import {
   validateBinding,
   showError,
 } from './utils/validateBindingName'
+import { getSourceItems } from '../../reducer/editor/selector'
 
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
@@ -78,16 +79,18 @@ export const NewBinding: React.FC<Props> = ({
             onChange={setBindingName}
           />
         )}
-        <CodeEditor code={code} setCode={onCodeChange} />
+        <CodeEditor
+          code={code}
+          setCode={onCodeChange}
+          sourceItems={getSourceItems(state)}
+        />
       </Panel>
       <Panel>
         {pipe(
           validBinding,
           E.fold(
-            (err) => (
-              <Paragraph>{showError(err)}</Paragraph>
-            ),
-            (name) => (
+            err => <Paragraph>{showError(err)}</Paragraph>,
+            name => (
               <FlexColumnSpaced>
                 {editor.stale && (
                   <Button

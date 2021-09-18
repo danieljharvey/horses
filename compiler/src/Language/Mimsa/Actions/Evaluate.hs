@@ -14,6 +14,7 @@ import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.DepGraph
+import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -28,11 +29,13 @@ evaluate ::
     ( MonoType,
       Expr Name Annotation,
       StoreExpression Annotation,
-      [Graphviz]
+      [Graphviz],
+      Expr Variable TypedAnnotation,
+      Text
     )
 evaluate input expr = do
   project <- Actions.getProject
-  (ResolvedExpression mt se expr' scope' swaps) <-
+  (ResolvedExpression mt se expr' scope' swaps typedExpr input') <-
     liftEither $ Actions.getTypecheckedStoreExpression input project expr
   interpretedExpr <-
     liftEither (first InterpreterErr (interpret scope' swaps expr'))
@@ -42,6 +45,6 @@ evaluate input expr = do
         <> "\n::\n"
         <> prettyPrint mt
     )
-  pure (mt, interpretedExpr, se, graphviz)
+  pure (mt, interpretedExpr, se, graphviz, typedExpr, input')
 
 ---------
