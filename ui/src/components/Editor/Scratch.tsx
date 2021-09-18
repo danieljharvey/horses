@@ -32,7 +32,7 @@ export const Scratch: React.FC<Props> = ({
     dispatch({ type: 'EvaluateExpression' })
 
   const onCodeChange = (text: string) =>
-    dispatch({ type: 'UpdateCode', text })
+    dispatch({ type: 'UpdateCodeAndEvaluate', text })
 
   const onFetchExpressionsForHashes = flow(
     fetchExpressionsForHashes,
