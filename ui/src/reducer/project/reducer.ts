@@ -77,14 +77,25 @@ export const projectReducer: EventReducer<
       )
 
     case 'FetchExpressionSuccess':
-      return stateOnly(
+      return stateAndEvent(
         projectL.set({
           ...state.project,
           store: {
             ...state.project.store,
             [action.exprHash]: action.storeExpression,
           },
-        })(state)
+        })(state),
+        fetchExpressions(
+          [
+            ...Object.values(
+              action.storeExpression.edBindings
+            ),
+            ...Object.values(
+              action.storeExpression.edTypeBindings
+            ),
+          ],
+          state.project.projectHash
+        )
       )
 
     default:
