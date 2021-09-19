@@ -16,16 +16,23 @@ import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
 
+-- | A TyCon is a Type Constructor like `Just` or `Right`.
+-- It must start with a capital letter.
 newtype TyCon = TyCon Text
   deriving newtype (ToSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,
-      JSON.FromJSON,
       JSON.FromJSONKey,
       JSON.ToJSON,
       JSON.ToJSONKey
     )
+
+instance JSON.FromJSON TyCon where
+  parseJSON json =
+    JSON.parseJSON json >>= \txt -> case safeMkTyCon txt of
+      Just tyCon' -> pure tyCon'
+      _ -> fail "Text is not a valid TyCon"
 
 instance IsString TyCon where
   fromString = mkTyCon . T.pack

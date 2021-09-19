@@ -20,19 +20,27 @@ import Servant
 renderName :: Name -> Doc ann
 renderName = pretty . getName
 
+-- | A name is an identifier that starts with a lowercase
+-- letter used for functions and values. Examples are
+-- `dog`, `cat` but not `Bat`.
 newtype Name = Name {getName' :: Text}
   deriving newtype (ToSchema, ToParamSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,
-      JSON.FromJSON,
       JSON.FromJSONKey,
-      JSON.ToJSON,
       JSON.ToJSONKey,
+      JSON.ToJSON,
       FromHttpApiData,
       Semigroup,
       Monoid
     )
+
+instance JSON.FromJSON Name where
+  parseJSON json =
+    JSON.parseJSON json >>= \txt -> case safeMkName txt of
+      Just name' -> pure name'
+      _ -> fail "Text is not a valid name"
 
 instance IsString Name where
   fromString = mkName . T.pack
