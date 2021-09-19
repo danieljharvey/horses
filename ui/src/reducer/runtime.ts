@@ -114,7 +114,6 @@ export const runtime = (
             {
               type: 'EvaluateExpressionSuccess' as const,
               expression: a,
-              prettify: event.prettify,
             },
           ]
         ),

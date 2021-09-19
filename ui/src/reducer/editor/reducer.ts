@@ -13,6 +13,8 @@ import {
   EditorAction,
   EditorEvent,
 } from './types'
+import { pipe } from 'fp-ts/lib/function'
+import { getExpressionData } from './selector'
 export * from './types'
 
 export const editorNew = (): ExpressionResult => ({
@@ -76,7 +78,7 @@ export const editorReducer: EventReducer<
         code: action.text,
         stale: true,
       })
-    case 'UpdateCodeAndEvaluate':
+    case 'EvaluateExpression':
       return stateAndEvent(
         {
           ...state,
@@ -86,30 +88,38 @@ export const editorReducer: EventReducer<
         {
           type: 'EvaluateExpression',
           code: action.text,
-          prettify: false,
         }
       )
-    case 'EvaluateExpression':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'EvaluateExpression',
-        code: state.code,
-        prettify: true,
-      })
+    case 'FormatExpression':
+      return pipe(
+        getExpressionData(state),
+        O.fold(
+          () => stateOnly(state),
+          (expressionData) =>
+            stateAndEvent(
+              { ...state, code: expressionData.edPretty },
+              {
+                type: 'EvaluateExpression',
+                code: expressionData.edPretty,
+              }
+            )
+        )
+      )
+
     case 'EvaluateExpressionFailure':
       return stateOnly({
         ...state,
         expression: showError(action.typeError),
       })
+
     case 'EvaluateExpressionSuccess':
       return stateOnly({
         ...state,
-        code: action.prettify
-          ? action.expression.erExpressionData.edPretty
-          : action.expression.erExpressionData.edInput,
         expression: showEvaluate(
           action.expression.erExpressionData,
           action.expression.erResult
         ),
+        stale: false,
       })
     case 'EvaluateExpressionError':
       return stateOnly({

@@ -32,12 +32,11 @@ export type ExpressionResult =
 
 export type EditorAction =
   | { type: 'UpdateCode'; text: string }
-  | { type: 'UpdateCodeAndEvaluate'; text: string }
-  | { type: 'EvaluateExpression' }
+  | { type: 'EvaluateExpression'; text: string }
+  | { type: 'FormatExpression' }
   | {
       type: 'EvaluateExpressionSuccess'
       expression: EvaluateResponse
-      prettify: boolean
     }
   | { type: 'EvaluateExpressionFailure'; typeError: string }
   | { type: 'EvaluateExpressionError' }
@@ -57,7 +56,6 @@ export type EditorEvent =
   | {
       type: 'EvaluateExpression'
       code: string
-      prettify: boolean
     }
   | {
       type: 'BindExpression'

@@ -28,11 +28,11 @@ export const Scratch: React.FC<Props> = ({
   onBindingSelect,
   projectHash,
 }) => {
-  const onEvaluateExpression = () =>
-    dispatch({ type: 'EvaluateExpression' })
+  const onFormatExpression = () =>
+    dispatch({ type: 'FormatExpression' })
 
   const onCodeChange = (text: string) =>
-    dispatch({ type: 'UpdateCodeAndEvaluate', text })
+    dispatch({ type: 'EvaluateExpression', text })
 
   const onFetchExpressionsForHashes = flow(
     fetchExpressionsForHashes,
@@ -49,9 +49,9 @@ export const Scratch: React.FC<Props> = ({
       </Panel>
       <Panel>
         <FlexColumnSpaced>
-          {editor.stale && (
-            <Button onClick={() => onEvaluateExpression()}>
-              Evaluate
+          {!editor.stale && editor.code.length > 0 && (
+            <Button onClick={() => onFormatExpression()}>
+              Format
             </Button>
           )}
           <Feedback
