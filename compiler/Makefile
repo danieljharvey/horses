@@ -1,5 +1,5 @@
 build: 
-	nix-build pkgs.nix -A hsPkgs.mimsa.components.exes.mimsa --quiet | cachix push mimsa
+	nix-build -A hsPkgs.mimsa.components.exes.mimsa --quiet | cachix push mimsa
 
 run:
 	make build
