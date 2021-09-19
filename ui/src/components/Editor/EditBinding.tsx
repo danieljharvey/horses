@@ -9,6 +9,7 @@ import { Button } from '../View/Button'
 import { ExprHash } from '../../types'
 import { fetchExpressionsForHashes } from '../../reducer/project/actions'
 import { pipe } from 'fp-ts/lib/function'
+import { getSourceItems } from '../../reducer/editor/selector'
 
 type Props = {
   state: State
@@ -49,7 +50,11 @@ export const EditBinding: React.FC<Props> = ({
   return (
     <>
       <Panel flexGrow={2}>
-        <CodeEditor code={code} setCode={onCodeChange} />
+        <CodeEditor
+          code={code}
+          setCode={onCodeChange}
+          sourceItems={getSourceItems(state)}
+        />
       </Panel>
       <Panel>
         {stale && (

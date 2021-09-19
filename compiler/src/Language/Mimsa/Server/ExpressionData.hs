@@ -26,11 +26,13 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Store
+import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Typechecker.OutputTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import Servant
 
 data UnitTestData = UnitTestData
@@ -74,7 +76,9 @@ data ExpressionData = ExpressionData
     edTypeBindings :: Map TyCon Text,
     edUnitTests :: [UnitTestData],
     edRuntimes :: Map RuntimeName RuntimeData,
-    edGraphviz :: Text
+    edGraphviz :: Text,
+    edSourceItems :: [SourceItem],
+    edInput :: Text
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -82,11 +86,13 @@ data ExpressionData = ExpressionData
 expressionDataHandler ::
   Project Annotation ->
   StoreExpression Annotation ->
-  MonoType ->
+  Expr Variable TypedAnnotation ->
   [Graphviz] ->
+  Text ->
   Handler ExpressionData
-expressionDataHandler project se mt gv = do
-  let exprHash = getStoreExpressionHash se
+expressionDataHandler project se typedExpr gv input = do
+  let mt = getTypeFromAnn typedExpr
+      exprHash = getStoreExpressionHash se
       tests =
         mkUnitTestData project
           <$> M.elems
@@ -94,6 +100,7 @@ expressionDataHandler project se mt gv = do
       matchingRuntimes =
         toRuntimeData
           <$> getValidRuntimes mt
+
   pure $
     ExpressionData
       (prettyPrint exprHash)
@@ -104,3 +111,5 @@ expressionDataHandler project se mt gv = do
       tests
       matchingRuntimes
       (prettyGraphviz gv)
+      (getExpressionSourceItems input typedExpr)
+      input

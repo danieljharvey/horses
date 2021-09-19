@@ -11,7 +11,7 @@ import {
   BindTypeResponse,
   Typeclass,
   ProjectData,
-  DataType__,
+  DataType,
 } from '../generated'
 import { pipe } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
@@ -23,7 +23,7 @@ type AddType = {
   bindings: Record<string, string>
   typeBindings: Record<string, string>
   typeclasses: Typeclass[]
-  dataType: DataType__
+  dataType: DataType
   typeName: string
   dataTypePretty: string
 }

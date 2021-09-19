@@ -26,8 +26,9 @@ bindExpression ::
   Actions.ActionM (ExprHash, Int, ResolvedExpression Annotation, [Graphviz])
 bindExpression expr name input = do
   project <- Actions.getProject
-  re@(ResolvedExpression _type' storeExpr _ _ _) <-
+  resolvedExpr <-
     liftEither $ Actions.getTypecheckedStoreExpression input project expr
+  let storeExpr = reStoreExpression resolvedExpr
   Actions.bindStoreExpression storeExpr name
   graphviz <- Actions.graphExpression storeExpr
   case lookupBindingName project name of
@@ -35,7 +36,7 @@ bindExpression expr name input = do
       Actions.appendMessage
         ( "Bound " <> prettyPrint name <> "."
         )
-      pure (getStoreExpressionHash storeExpr, 0, re, graphviz)
+      pure (getStoreExpressionHash storeExpr, 0, resolvedExpr, graphviz)
     Just oldExprHash ->
       do
         Actions.appendMessage
@@ -44,7 +45,7 @@ bindExpression expr name input = do
         let newExprHash = getStoreExpressionHash storeExpr
         (,,,) newExprHash
           <$> createUnitTests oldExprHash newExprHash
-            <*> pure re
+            <*> pure resolvedExpr
             <*> pure graphviz
 
 createUnitTests :: ExprHash -> ExprHash -> Actions.ActionM Int

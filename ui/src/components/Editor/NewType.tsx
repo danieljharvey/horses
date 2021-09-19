@@ -5,7 +5,7 @@ import {
   EditorState,
 } from '../../reducer/types'
 import { storeProjectData } from '../../reducer/project/reducer'
-
+import { getSourceItems } from '../../reducer/editor/selector'
 import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
@@ -44,7 +44,7 @@ export const NewType: React.FC<Props> = ({
   const [addNewType, typeState] = useAddType(
     projectHash,
     editor.code,
-    (pd) => dispatch(storeProjectData(pd))
+    pd => dispatch(storeProjectData(pd))
   )
 
   const onCodeChange = (a: string) =>
@@ -67,6 +67,7 @@ export const NewType: React.FC<Props> = ({
                 <CodeEditor
                   code={code}
                   setCode={onCodeChange}
+                  sourceItems={getSourceItems(state)}
                 />
               </Panel>
               <Panel>
@@ -89,12 +90,13 @@ export const NewType: React.FC<Props> = ({
             </>
           ),
           () => <p>loading</p>,
-          (err) => (
+          err => (
             <>
               <Panel flexGrow={2}>
                 <CodeEditor
                   code={code}
                   setCode={onCodeChange}
+                  sourceItems={getSourceItems(state)}
                 />
               </Panel>
               <Panel>
@@ -107,14 +109,14 @@ export const NewType: React.FC<Props> = ({
               </Panel>
             </>
           ),
-          (addType) => (
+          addType => (
             <Panel>
               <FlexColumnSpaced>
                 <Paragraph>{`New type added: ${addType.typeName}`}</Paragraph>
                 <Code>{addType.dataTypePretty}</Code>
                 <Paragraph>Typeclasses:</Paragraph>
                 <InlineSpaced>
-                  {addType.typeclasses.map((a) => (
+                  {addType.typeclasses.map(a => (
                     <Link onClick={() => console.log(a)}>
                       {a}
                     </Link>

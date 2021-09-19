@@ -26,6 +26,7 @@ import qualified Test.Parser.Pattern as Pattern
 import qualified Test.Parser.Syntax as Syntax
 import qualified Test.Prettier as Prettier
 import qualified Test.Project.NormaliseType as NormaliseType
+import qualified Test.Project.SourceSpan as SourceSpan
 import qualified Test.Project.Stdlib as Stdlib
 import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.UnitTest as UnitTest
@@ -38,6 +39,7 @@ import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.KindChecker as KindChecker
+import qualified Test.Typechecker.OutputTypes as OutputTypes
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
@@ -79,3 +81,5 @@ main =
     DataTypes.spec
     Elaborate.spec
     KindChecker.spec
+    SourceSpan.spec
+    OutputTypes.spec

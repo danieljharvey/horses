@@ -49,10 +49,10 @@ evaluateExpression ::
   Handler EvaluateResponse
 evaluateExpression mimsaEnv (EvaluateRequest code hash) = do
   expr <- parseHandler code
-  (newProject, (mt, simpleExpr, se, gv)) <-
+  (newProject, (_, simpleExpr, se, gv, typedExpr, input)) <-
     fromActionM
       mimsaEnv
       hash
       (Actions.evaluate code expr)
   EvaluateResponse (prettyPrint simpleExpr)
-    <$> expressionDataHandler newProject se mt gv
+    <$> expressionDataHandler newProject se typedExpr gv input

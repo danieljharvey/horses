@@ -27,10 +27,10 @@ doTree ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doTree env input expr = do
-  (ResolvedExpression _ storeExpr _ _ _) <-
+  resolvedExpr <-
     mimsaFromEither $
       Actions.getTypecheckedStoreExpression input env expr
-  let graph = createDepGraph "root" (prjStore env) storeExpr
+  let graph = createDepGraph "root" (prjStore env) (reStoreExpression resolvedExpr)
   replOutput (prettyPrint graph)
 
 -- | output dependency graph for expr in Graphviz format
@@ -40,11 +40,11 @@ doGraph ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doGraph project input expr = do
-  (ResolvedExpression _ storeExpr _ _ _) <-
+  resolvedExpr <-
     mimsaFromEither $
       Actions.getTypecheckedStoreExpression input project expr
   (_, graphviz) <-
-    toReplM project (Actions.graphExpression storeExpr)
+    toReplM project (Actions.graphExpression (reStoreExpression resolvedExpr))
   replOutput . prettyGraphviz $ graphviz
 
 -- | create graphviz graph for all bindings in project

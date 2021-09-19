@@ -57,7 +57,7 @@ bindType input dt = do
           )
 
 storeExprFromResolved :: ResolvedExpression ann -> StoreExpression ann
-storeExprFromResolved (ResolvedExpression _ se _ _ _) = se
+storeExprFromResolved = reStoreExpression
 
 addTypeToProject ::
   Text ->

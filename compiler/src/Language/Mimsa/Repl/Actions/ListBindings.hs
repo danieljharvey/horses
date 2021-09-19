@@ -24,8 +24,8 @@ doListBindings :: Project Annotation -> Text -> MimsaM (Error Annotation) ()
 doListBindings env input = do
   let showBind (name, StoreExpression expr _ _) =
         case Actions.getTypecheckedStoreExpression input env expr of
-          Right (ResolvedExpression type' _ _ _ _) ->
-            replOutput (prettyPrint name <> " :: " <> prettyPrint type')
+          Right resolvedExpr ->
+            replOutput (prettyPrint name <> " :: " <> prettyPrint (reMonoType resolvedExpr))
           _ -> pure ()
   traverse_
     showBind

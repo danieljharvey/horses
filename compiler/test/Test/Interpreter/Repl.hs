@@ -44,7 +44,7 @@ eval ::
 eval env input =
   case Actions.evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
-    Right (ResolvedExpression mt se expr' scope' swaps) -> do
+    Right (ResolvedExpression mt se expr' scope' swaps _ _) -> do
       saveRegressionData (se $> ())
       let endExpr = interpret scope' swaps expr'
       case toEmptyAnn <$> endExpr of

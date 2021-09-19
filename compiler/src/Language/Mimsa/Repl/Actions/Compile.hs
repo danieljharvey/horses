@@ -41,10 +41,10 @@ doOutputJS project input be expr = do
   let runtime = case fromMaybe CommonJS be of
         CommonJS -> cjsExportRuntime
         ESModulesJS -> ejsExportRuntime
-  (ResolvedExpression _ storeExpr _ _ _) <-
+  resolvedExpr <-
     mimsaFromEither $ Actions.getTypecheckedStoreExpression input project expr
   (_, (rootExprHash, exprHashes)) <-
-    toReplM project (Actions.compile runtime input storeExpr)
+    toReplM project (Actions.compile runtime input (reStoreExpression resolvedExpr))
   outputPath <- doCopying runtime exprHashes rootExprHash
   replOutput ("Output to " <> bsToText outputPath)
 

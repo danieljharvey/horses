@@ -189,7 +189,12 @@ resolveStoreExpressionHandler ::
   Handler (ResolvedExpression Annotation)
 resolveStoreExpressionHandler prj se = do
   typeMap <- handleEither InternalError (Actions.getTypeMap prj)
-  handleEither UserError $ Actions.resolveStoreExpression (prjStore prj) typeMap "" se
+  handleEither UserError $
+    Actions.resolveStoreExpression
+      (prjStore prj)
+      typeMap
+      (prettyPrint (storeExpression se))
+      se
 
 findExprHandler ::
   Project Annotation ->

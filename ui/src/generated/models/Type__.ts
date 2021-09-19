@@ -25,5 +25,8 @@ export type Type__ = ({
     tag: 'MTArray',
 } | {
     contents: Array<any>,
-    tag: 'MTData',
+    tag: 'MTConstructor',
+} | {
+    contents: Array<any>,
+    tag: 'MTTypeApp',
 });
