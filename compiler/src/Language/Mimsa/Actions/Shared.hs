@@ -148,15 +148,15 @@ getTypecheckedStoreExpression ::
   Project Annotation ->
   Expr Name Annotation ->
   Either (Error Annotation) (ResolvedExpression Annotation)
-getTypecheckedStoreExpression input env expr = do
+getTypecheckedStoreExpression input prj expr = do
   storeExpr <-
     first ResolverErr $
       createStoreExpression
-        (getCurrentBindings $ prjBindings env)
-        (getCurrentTypeBindings $ prjTypeBindings env)
+        (getCurrentBindings $ prjBindings prj)
+        (getCurrentTypeBindings $ prjTypeBindings prj)
         expr
-  typeMap <- getTypeMap env
-  resolveStoreExpression (prjStore env) typeMap input storeExpr
+  typeMap <- getTypeMap prj
+  resolveStoreExpression (prjStore prj) typeMap input storeExpr
 
 evaluateText ::
   Project Annotation ->

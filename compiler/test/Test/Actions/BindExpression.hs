@@ -6,13 +6,15 @@ module Test.Actions.BindExpression
   )
 where
 
-import Data.Either (isLeft)
+import Data.Either (isLeft, isRight)
 import qualified Data.Map as M
 import Data.Maybe (isJust)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.RemoveBinding as Actions
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -107,3 +109,13 @@ spec = do
             newProject
             "id"
             `shouldNotBe` lookupBindingName testStdlib "id"
+    it "Re-binding an expression that uses a deleted binding does not break it" $ do
+      let newIdExpr = MyLambda mempty "b" (MyVar mempty "b")
+          useIdExpr = MyApp mempty (MyVar mempty "newId") (bool True)
+          useIdExpr2 = MyApp mempty (MyVar mempty "newId") (bool False)
+          action = do
+            _ <- Actions.bindExpression newIdExpr "newId" (prettyPrint newIdExpr)
+            _ <- Actions.bindExpression useIdExpr "useId" (prettyPrint useIdExpr)
+            Actions.removeBinding "newId"
+            Actions.bindExpression useIdExpr2 "useId" (prettyPrint useIdExpr2)
+      Actions.run testStdlib action `shouldSatisfy` isRight

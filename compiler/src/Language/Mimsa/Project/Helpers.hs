@@ -5,6 +5,7 @@ module Language.Mimsa.Project.Helpers
     fromType,
     fromUnitTest,
     fromStoreExpression,
+    fromStoreExpressionDeps,
     fromStore,
     findBindingNameForExprHash,
     lookupExprHash,
@@ -93,6 +94,15 @@ fromUnitTest test storeExpr =
 
 fromStore :: Store ann -> Project ann
 fromStore store' = mempty {prjStore = store'}
+
+-- | create a project where all the bindings of a store expression are
+-- available in global scope
+fromStoreExpressionDeps :: StoreExpression ann -> Project ann
+fromStoreExpressionDeps se =
+  mempty
+    { prjBindings = bindingsToVersioned (storeBindings se),
+      prjTypeBindings = typeBindingsToVersioned (storeTypeBindings se)
+    }
 
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHash project exprHash' =
