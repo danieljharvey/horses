@@ -4,8 +4,11 @@ module Language.Mimsa.Project.UnitTest (createUnitTest, getTestsForExprHash, cre
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Monoid (All (..), getAll)
+import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter
@@ -59,7 +62,32 @@ createUnitTestExpr =
 
 getTestsForExprHash :: Project ann -> ExprHash -> Map ExprHash UnitTest
 getTestsForExprHash prj exprHash =
-  M.filter (S.member exprHash . utDeps) (prjUnitTests prj)
+  M.filter includeUnitTest (prjUnitTests prj)
+  where
+    (currentHashes, oldHashes) =
+      splitProjectHashesByVersion prj
+    includeUnitTest ut =
+      S.member exprHash (utDeps ut) && getAll (foldMap (All . depIsValid) (S.toList (utDeps ut)))
+    depIsValid hash =
+      hash == exprHash
+        || S.member hash currentHashes
+        || not (S.member hash oldHashes)
+
+-- | get all hashes in project, split by current and old
+splitProjectHashesByVersion :: Project ann -> (Set ExprHash, Set ExprHash)
+splitProjectHashesByVersion prj =
+  valBindings <> typeBindings
+  where
+    getItems as =
+      mconcat $
+        (\items -> (S.singleton (NE.head items), S.fromList (NE.tail items)))
+          <$> as
+    valBindings =
+      let bindings = getVersionedMap $ prjBindings prj
+       in getItems (M.elems bindings)
+    typeBindings =
+      let bindings = getVersionedMap $ prjTypeBindings prj
+       in getItems (M.elems bindings)
 
 updateUnitTest ::
   Project Annotation ->

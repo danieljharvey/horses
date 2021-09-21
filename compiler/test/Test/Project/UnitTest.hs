@@ -123,6 +123,7 @@ spec =
         let testStdlib' = fromUnitTest unitTest testStoreExpr <> testStdlib
         getTestsForExprHash testStdlib' incrementIntH
           `shouldBe` M.singleton (utExprHash unitTest) unitTest
+
     describe "createUnitTest" $ do
       it "True is a valid test" $ do
         let storeExpr = StoreExpression (bool True) mempty mempty
