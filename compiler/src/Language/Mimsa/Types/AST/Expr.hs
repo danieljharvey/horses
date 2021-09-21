@@ -107,14 +107,25 @@ prettyLet ::
   Expr var ann ->
   Doc style
 prettyLet var expr1 expr2 =
-  group
-    ( "let" <+> prettyDoc var
-        <+> "="
-        <> line
-        <> indentMulti 2 (prettyDoc expr1)
-        <> newlineOrIn
-        <> prettyDoc expr2
-    )
+  let (args, letExpr) = splitExpr expr1
+   in group
+        ( "let" <+> prettyDoc var <> prettyArgs args
+            <+> "="
+            <> line
+            <> indentMulti 2 (prettyDoc letExpr)
+            <> newlineOrIn
+            <> prettyDoc expr2
+        )
+  where
+    prettyArgs [] = ""
+    prettyArgs as = space <> hsep (prettyDoc <$> as)
+
+    splitExpr expr =
+      case expr of
+        (MyLambda _ a rest) ->
+          let (as, expr') = splitExpr rest
+           in ([a] <> as, expr')
+        other -> ([], other)
 
 prettyLetPattern ::
   (Show var, Printer var) =>
