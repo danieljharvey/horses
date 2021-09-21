@@ -48,6 +48,9 @@ buildTestStdlib =
         "id"
         "\\a -> a"
       addBinding
+        "const"
+        "\\a -> \\b -> a"
+      addBinding
         "compose"
         "\\f -> \\g -> \\a -> f g a"
       addBinding
