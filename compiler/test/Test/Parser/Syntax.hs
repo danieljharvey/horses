@@ -96,6 +96,15 @@ spec = do
                 "a"
                 (MyLambda mempty "b" (MyVar mempty "a"))
             )
+      it "Recognises minimal function syntax in let" $
+        testParse "let const a b = a in True"
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                "const"
+                (MyLambda mempty "a" (MyLambda mempty "b" (MyVar mempty "a")))
+                (bool True)
+            )
       it "Recognises function application" $
         testParse "add 1"
           `shouldBe` Right
