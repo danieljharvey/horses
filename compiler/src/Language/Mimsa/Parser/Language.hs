@@ -67,7 +67,7 @@ complexParser =
 ----
 
 letParser :: Parser ParserExpr
-letParser = try letInParser <|> letNewlineParser
+letParser = try letInParser <|> letFuncParser
 
 letNameIn :: Parser Name
 letNameIn = do
@@ -80,17 +80,20 @@ letInParser :: Parser ParserExpr
 letInParser = addLocation $ do
   name <- letNameIn
   boundExpr <- optionalSpaceThen expressionParser
-  _ <- thenSpace (string "in")
+  _ <- try (literalWithSpace ";") <|> thenSpace (string "in" $> ())
   MyLet mempty name boundExpr
     <$> optionalSpaceThen expressionParser
 
-letNewlineParser :: Parser ParserExpr
-letNewlineParser = addLocation $ do
-  name <- letNameIn
+letFuncParser :: Parser ParserExpr
+letFuncParser = addLocation $ do
+  _ <- thenSpace (string "let")
+  name <- thenSpace nameParser
+  args <- chainl1 ((: []) <$> thenSpace nameParser) (pure (<>))
+  _ <- thenSpace (string "=")
   expr <- expressionParser
-  _ <- literalWithSpace ";"
-  MyLet mempty name expr
-    <$> optionalSpaceThen expressionParser
+  _ <- try (literalWithSpace ";") <|> thenSpace (string "in" $> ())
+  let expr' = foldr (MyLambda mempty) expr args
+  MyLet mempty name expr' <$> optionalSpaceThen expressionParser
 
 -----
 
