@@ -23,7 +23,13 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
-type ElabM = ExceptT TypeError (WriterT [Constraint] (ReaderT Swaps (State TypecheckState)))
+type ElabM =
+  ExceptT
+    TypeError
+    ( WriterT
+        [Constraint]
+        (ReaderT Swaps (State TypecheckState))
+    )
 
 runElabM ::
   Swaps ->
@@ -46,7 +52,13 @@ typecheck ::
   Swaps ->
   Environment ->
   Expr Variable Annotation ->
-  Either TypeError (Substitutions, [Constraint], Expr Variable (MonoType, Annotation), MonoType)
+  Either
+    TypeError
+    ( Substitutions,
+      [Constraint],
+      Expr Variable MonoType,
+      MonoType
+    )
 typecheck typeMap swaps env expr = do
   let tcAction = do
         (elabExpr, constraints) <- listen (elab (envWithBuiltInTypes <> env) expr)

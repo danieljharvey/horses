@@ -14,7 +14,6 @@ import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.DepGraph
-import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -30,7 +29,7 @@ evaluate ::
       Expr Name Annotation,
       StoreExpression Annotation,
       [Graphviz],
-      Expr Variable TypedAnnotation,
+      Expr Variable MonoType,
       Text
     )
 evaluate input expr = do

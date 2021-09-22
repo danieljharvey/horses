@@ -32,7 +32,7 @@ spec = do
       getExpressionSourceItems
         "True"
         ( MyLiteral
-            (MTPrim (Location 1 4) MTBool, Location 1 4)
+            (MTPrim (Location 1 4) MTBool)
             (MyBool True)
         )
         `shouldBe` [ SourceItem

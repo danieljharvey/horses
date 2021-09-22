@@ -52,7 +52,7 @@ getType ::
     (Error ann)
     ( Substitutions,
       [Constraint],
-      Expr Variable (MonoType, Annotation),
+      Expr Variable MonoType,
       MonoType
     )
 getType typeMap swaps scope' source expr =
