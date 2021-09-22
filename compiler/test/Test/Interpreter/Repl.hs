@@ -890,6 +890,28 @@ spec =
         it "Fix empty pattern match obscuring bindings" $ do
           result <- eval testStdlib "\\a -> match Nothing with (Nothing) -> a | _ -> a"
           result `shouldSatisfy` isRight
+      describe "Error with List type" $ do
+        it "Is fine with no shadowed variables" $ do
+          let input =
+                mconcat
+                  [ "\\a -> \\b -> match (a, b) with ",
+                    "(Cons aa restA, Nil) -> (Cons aa restA)",
+                    " | (Nil, Cons bb restB) -> (Cons bb restB)",
+                    " | _ -> (Nil)"
+                  ]
+          result <- eval testStdlib input
+          result `shouldSatisfy` isRight
+        it "Is fine with shadowed variables" $ do
+          let input =
+                mconcat
+                  [ "\\a -> \\b -> match (a, b) with ",
+                    "(Cons a restA, Nil) -> (Cons a restA)",
+                    " | (Nil, Cons b restB) -> (Cons b restB)",
+                    " | _ -> a"
+                  ]
+          result <- eval testStdlib input
+          result `shouldSatisfy` isRight
+
       describe "Monoid losing types" $ do
         -- skipping because not sure what the hell is going on here
         xit "maybeMonoid stringMonoid" $ do
