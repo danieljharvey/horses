@@ -3,19 +3,17 @@ module Language.Mimsa.Typechecker.OutputTypes (getExpressionSourceItems) where
 import Data.Text (Text)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.SourceSpan
-import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Typechecker
 
 -- return types inside spans for server
 
-getExpressionSourceItems :: Text -> Expr var TypedAnnotation -> [SourceItem]
+getExpressionSourceItems :: Text -> Expr var MonoType -> [SourceItem]
 getExpressionSourceItems input = foldExpr fn
   where
-    fn ann =
-      let monoType = fst ann
-          sSpan =
+    fn monoType =
+      let sSpan =
             sourceSpan
               input
               (getAnnotationForType monoType)
@@ -28,11 +26,16 @@ foldPattern :: (Monoid a) => (ann -> a) -> Pattern var ann -> a
 foldPattern f (PVar ann _) = f ann
 foldPattern f (PWildcard ann) = f ann
 foldPattern f (PLit ann _) = f ann
-foldPattern f (PConstructor ann _ as) = f ann <> foldMap (foldPattern f) as
-foldPattern f (PPair ann a b) = f ann <> foldPattern f a <> foldPattern f b
-foldPattern f (PRecord ann as) = f ann <> foldMap (foldPattern f) as
-foldPattern f (PArray ann as spread) = f ann <> foldMap (foldPattern f) as <> foldSpread f spread
-foldPattern f (PString ann _ _) = f ann
+foldPattern f (PConstructor ann _ as) =
+  f ann <> foldMap (foldPattern f) as
+foldPattern f (PPair ann a b) =
+  f ann <> foldPattern f a <> foldPattern f b
+foldPattern f (PRecord ann as) =
+  f ann <> foldMap (foldPattern f) as
+foldPattern f (PArray ann as spread) =
+  f ann <> foldMap (foldPattern f) as <> foldSpread f spread
+foldPattern f (PString ann _ _) =
+  f ann
 
 foldSpread :: (Monoid a) => (ann -> a) -> Spread var ann -> a
 foldSpread _ NoSpread = mempty

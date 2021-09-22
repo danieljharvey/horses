@@ -33,6 +33,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Servant
 
 data UnitTestData = UnitTestData
@@ -86,7 +87,7 @@ data ExpressionData = ExpressionData
 expressionDataHandler ::
   Project Annotation ->
   StoreExpression Annotation ->
-  Expr Variable TypedAnnotation ->
+  Expr Variable MonoType ->
   [Graphviz] ->
   Text ->
   Handler ExpressionData

@@ -6,7 +6,6 @@
 module Language.Mimsa.Typechecker.Elaborate
   ( elab,
     recoverAnn,
-    TypedAnnotation,
     getTypeFromAnn,
   )
 where
@@ -37,37 +36,29 @@ type ElabM = ExceptT TypeError (WriterT [Constraint] (ReaderT Swaps (State Typec
 
 type TcExpr = Expr Variable Annotation
 
-type TypedAnnotation = (MonoType, Annotation)
+recoverAnn :: MonoType -> Annotation
+recoverAnn = getAnnotationForType
 
-recoverAnn :: TypedAnnotation -> Annotation
-recoverAnn (mt, _) = getAnnotationForType mt
+getTypeFromAnn :: Expr var MonoType -> MonoType
+getTypeFromAnn = getAnnotation
 
-fromAnn :: Annotation -> MonoType -> TypedAnnotation
-fromAnn ann mt = (mt, ann)
-
-getTypeFromAnn :: Expr var TypedAnnotation -> MonoType
-getTypeFromAnn = fst . getAnnotation
-
-getPatternTypeFromAnn :: Pattern Variable TypedAnnotation -> MonoType
+getPatternTypeFromAnn :: Pattern Variable MonoType -> MonoType
 getPatternTypeFromAnn pat =
-  fst patternAnn
-  where
-    patternAnn =
-      case pat of
-        PLit ann _ -> ann
-        PWildcard ann -> ann
-        PVar ann _ -> ann
-        PConstructor ann _ _ -> ann
-        PPair ann _ _ -> ann
-        PRecord ann _ -> ann
-        PArray ann _ _ -> ann
-        PString ann _ _ -> ann
+  case pat of
+    PLit ann _ -> ann
+    PWildcard ann -> ann
+    PVar ann _ -> ann
+    PConstructor ann _ _ -> ann
+    PPair ann _ _ -> ann
+    PRecord ann _ -> ann
+    PArray ann _ _ -> ann
+    PString ann _ _ -> ann
 
-getSpreadTypeFromAnn :: Spread Variable TypedAnnotation -> Maybe MonoType
-getSpreadTypeFromAnn (SpreadValue ann _) = Just (fst ann)
+getSpreadTypeFromAnn :: Spread Variable MonoType -> Maybe MonoType
+getSpreadTypeFromAnn (SpreadValue ann _) = Just ann
 getSpreadTypeFromAnn _ = Nothing
 
-type ElabExpr = Expr Variable TypedAnnotation
+type ElabExpr = Expr Variable MonoType
 
 instantiate ::
   Scheme ->
@@ -86,7 +77,7 @@ elabLiteral ann lit =
         (MyInt _) -> MTInt
         (MyBool _) -> MTBool
         (MyString _) -> MTString
-   in pure (MyLiteral (fromAnn ann (MTPrim ann tyLit)) lit)
+   in pure (MyLiteral (MTPrim ann tyLit) lit)
 
 elabVarFromScope ::
   Environment ->
@@ -97,7 +88,7 @@ elabVarFromScope env@(Environment env' _ _) ann var' =
   case M.lookup (variableToTypeIdentifier var') env' of
     Just mt -> do
       freshMonoType <- instantiate mt
-      pure (MyVar (fromAnn ann freshMonoType) var')
+      pure (MyVar freshMonoType var')
     _ -> do
       swaps <- ask
       throwError $
@@ -150,7 +141,7 @@ elabApplication env ann function argument = do
         (getTypeFromAnn function')
         (MTFunction ann (getTypeFromAnn argument') tyRes)
     ]
-  pure (MyApp (fromAnn ann tyRes) function' argument')
+  pure (MyApp tyRes function' argument')
 
 -- when we come to do let recursive the name of our binder
 -- may already be turned into a number in the expr
@@ -192,7 +183,7 @@ elabLetBinding env ann binder expr body = do
       elabBody <- elab newEnv body
       pure
         ( MyLet
-            (fromAnn ann (getTypeFromAnn elabBody))
+            (getTypeFromAnn elabBody)
             binder
             elabExpr
             elabBody
@@ -221,7 +212,7 @@ elabRecursiveLetBinding env ann binder expr body = do
   -- TODO: is this bad
   elabExpr <- elab newEnv2 expr
   elabBody <- elab newEnv2 body
-  pure (MyLet (fromAnn ann (getTypeFromAnn elabBody)) binder elabExpr elabBody)
+  pure (MyLet (getTypeFromAnn elabBody) binder elabExpr elabBody)
 
 elabIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
 elabIf env condition thenExpr elseExpr = do
@@ -238,7 +229,7 @@ elabIf env condition thenExpr elseExpr = do
     ]
   pure
     ( MyIf
-        (fromAnn mempty (getTypeFromAnn thenExpr'))
+        (getTypeFromAnn thenExpr')
         condExpr
         thenExpr'
         elseExpr'
@@ -299,7 +290,7 @@ elabPatternMatch env ann expr patterns = do
   -- wrap up the pattern match again
   pure
     ( MyPatternMatch
-        (fromAnn ann tyMatchedExprs)
+        tyMatchedExprs
         elabExpr
         (NE.toList elabPatterns)
     )
@@ -313,11 +304,11 @@ checkEmptyPatterns ann as = case as of
 elabPattern ::
   Environment ->
   Pattern Variable Annotation ->
-  ElabM (Pattern Variable TypedAnnotation, Environment)
+  ElabM (Pattern Variable MonoType, Environment)
 elabPattern env (PLit ann lit) = do
   elabExpr <- elab env (MyLiteral ann lit)
   pure
-    ( PLit (fromAnn ann (getTypeFromAnn elabExpr)) lit,
+    ( PLit (getTypeFromAnn elabExpr) lit,
       env
     )
 elabPattern env (PVar ann binder) = do
@@ -325,13 +316,13 @@ elabPattern env (PVar ann binder) = do
   let tmpCtx =
         envFromVar binder (Scheme [] tyBinder) <> env
   pure
-    ( PVar (fromAnn ann tyBinder) binder,
+    ( PVar tyBinder binder,
       tmpCtx
     )
 elabPattern env (PWildcard ann) = do
   tyUnknown <- getUnknown ann
   pure
-    ( PWildcard (fromAnn ann tyUnknown),
+    ( PWildcard tyUnknown,
       env
     )
 elabPattern env (PConstructor ann tyCon args) = do
@@ -350,7 +341,7 @@ elabPattern env (PConstructor ann tyCon args) = do
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon elabArgs
   pure
-    ( PConstructor (fromAnn ann (dataTypeWithVars ann ty tyTypeVars)) tyCon elabArgs,
+    ( PConstructor (dataTypeWithVars ann ty tyTypeVars) tyCon elabArgs,
       newEnv
     )
 elabPattern env (PPair ann a b) = do
@@ -358,13 +349,10 @@ elabPattern env (PPair ann a b) = do
   (elabB, envB) <- elabPattern envA b
   pure
     ( PPair
-        ( fromAnn
+        ( MTPair
             ann
-            ( MTPair
-                ann
-                (getPatternTypeFromAnn elabA)
-                (getPatternTypeFromAnn elabB)
-            )
+            (getPatternTypeFromAnn elabA)
+            (getPatternTypeFromAnn elabB)
         )
         elabA
         elabB,
@@ -380,13 +368,10 @@ elabPattern env (PRecord ann items) = do
   tyRest <- getUnknown ann
   pure
     ( PRecord
-        ( fromAnn
+        ( MTRecordRow
             ann
-            ( MTRecordRow
-                ann
-                (getPatternTypeFromAnn <$> elabItems)
-                tyRest
-            )
+            (getPatternTypeFromAnn <$> elabItems)
+            tyRest
         )
         elabItems,
       newEnv
@@ -399,13 +384,13 @@ elabPattern env (PArray ann items spread) = do
       let tmpCtx =
             envFromVar binder (Scheme [] (MTArray ann2 tyBinder)) <> env
       pure
-        ( SpreadValue (fromAnn ann tyBinder) binder,
+        ( SpreadValue tyBinder binder,
           tmpCtx
         )
     NoSpread -> pure (NoSpread, env)
     SpreadWildcard ann2 -> do
       tyUnknown <- getUnknown ann2
-      pure (SpreadWildcard (fromAnn ann2 tyUnknown), env)
+      pure (SpreadWildcard tyUnknown, env)
   tyItems <- case NE.nonEmpty
     ( (getPatternTypeFromAnn . fst <$> elabEverything)
         <> maybe mempty pure (getSpreadTypeFromAnn elabSpread)
@@ -415,12 +400,9 @@ elabPattern env (PArray ann items spread) = do
   let newEnv = mconcat (snd <$> elabEverything) <> env2
   pure
     ( PArray
-        ( fromAnn
+        ( MTArray
             ann
-            ( MTArray
-                ann
-                tyItems
-            )
+            tyItems
         )
         (fst <$> elabEverything)
         elabSpread,
@@ -433,12 +415,12 @@ elabPattern env (PString ann a as) = do
         _ -> mempty
   let newEnv = envFromStrPart a <> envFromStrPart as <> env
   let elabStringPart (StrValue ann' name) =
-        StrValue (fromAnn ann' (MTPrim ann' MTString)) name
+        StrValue (MTPrim ann' MTString) name
       elabStringPart (StrWildcard ann') =
-        StrWildcard (fromAnn ann' (MTPrim ann' MTString))
+        StrWildcard (MTPrim ann' MTString)
   pure
     ( PString
-        (fromAnn ann (MTPrim ann MTString))
+        (MTPrim ann MTString)
         (elabStringPart a)
         (elabStringPart as),
       newEnv
@@ -483,23 +465,23 @@ elabOperator env ann Equals a b = do
         ]
       pure
         ( MyInfix
-            (fromAnn ann (MTPrim ann MTBool))
+            (MTPrim ann MTBool)
             Equals
             elabA
             elabB
         )
 elabOperator env ann Add a b = do
   (mt, elabA, elabB) <- elabInfix env (MTPrim ann MTInt) a b
-  pure (MyInfix (fromAnn ann mt) Add elabA elabB)
+  pure (MyInfix mt Add elabA elabB)
 elabOperator env ann Subtract a b = do
   (mt, elabA, elabB) <- elabInfix env (MTPrim ann MTInt) a b
-  pure (MyInfix (fromAnn ann mt) Subtract elabA elabB)
+  pure (MyInfix mt Subtract elabA elabB)
 elabOperator env ann StringConcat a b = do
   (mt, elabA, elabB) <- elabInfix env (MTPrim ann MTString) a b
-  pure (MyInfix (fromAnn ann mt) StringConcat elabA elabB)
+  pure (MyInfix mt StringConcat elabA elabB)
 elabOperator env ann ArrayConcat a b = do
   (mt, elabA, elabB) <- elabInfix env (MTArray ann (MTVar mempty (TVName "a"))) a b
-  pure (MyInfix (fromAnn ann mt) ArrayConcat elabA elabB)
+  pure (MyInfix mt ArrayConcat elabA elabB)
 elabOperator env ann (Custom infixOp) a b = do
   tyRes <- getUnknown ann
   tyFun <- lookupInfixOp env ann infixOp
@@ -514,7 +496,7 @@ elabOperator env ann (Custom infixOp) a b = do
             (MTFunction ann (getTypeFromAnn elabB) tyRes)
         )
     ]
-  pure (MyInfix (fromAnn ann tyRes) (Custom infixOp) elabA elabB)
+  pure (MyInfix tyRes (Custom infixOp) elabA elabB)
 
 elabInfix ::
   Environment ->
@@ -563,7 +545,7 @@ elabRecordAccess env ann a name = do
           pure tyItem
         _ -> throwError $ CannotMatchRecord env ann (getTypeFromAnn elabItems)
   mt <- elabRow (getTypeFromAnn elabItems)
-  pure (MyRecordAccess (fromAnn ann mt) elabItems name)
+  pure (MyRecordAccess mt elabItems name)
 
 elabLetPattern ::
   Environment ->
@@ -582,7 +564,7 @@ elabLetPattern env ann pat expr body = do
 
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
   validatePatterns env ann [pat]
-  pure (MyLetPattern (fromAnn ann (getTypeFromAnn elabBody)) elabPat elabExpr elabBody)
+  pure (MyLetPattern (getTypeFromAnn elabBody) elabPat elabExpr elabBody)
 
 elabLambda ::
   Environment ->
@@ -596,7 +578,7 @@ elabLambda env ann binder body = do
         envFromVar binder (Scheme [] tyBinder) <> env
   elabBody <- elab tmpCtx body
   let tyReturn = MTFunction ann tyBinder (getTypeFromAnn elabBody)
-  pure (MyLambda (fromAnn ann tyReturn) binder elabBody)
+  pure (MyLambda tyReturn binder elabBody)
 
 isTwoArityFunction :: MonoType -> Bool
 isTwoArityFunction (MTFunction _ _ MTFunction {}) = True
@@ -617,7 +599,7 @@ elabDefineInfix env ann infixOp infixExpr expr = do
   let tyBind = getTypeFromAnn elabBindExpr
   let arityError =
         FunctionArityMismatch
-          (snd . getAnnotation $ elabBindExpr)
+          (getAnnotationForType . getAnnotation $ elabBindExpr)
           2
           tyBind
   tell
@@ -644,7 +626,7 @@ elabArray env ann items = do
   tyItems <- case NE.nonEmpty elabItems of
     Just neElabItems -> matchList (getTypeFromAnn <$> neElabItems)
     Nothing -> getUnknown ann
-  pure (MyArray (fromAnn ann (MTArray ann tyItems)) elabItems)
+  pure (MyArray (MTArray ann tyItems) elabItems)
 
 elab ::
   Environment ->
@@ -658,11 +640,11 @@ elab env elabExpr =
     (MyRecord ann map') -> do
       elabItems <- traverse (elab env) map'
       let tyItems = getTypeFromAnn <$> elabItems
-      pure (MyRecord (fromAnn ann (MTRecord ann tyItems)) elabItems)
+      pure (MyRecord (MTRecord ann tyItems) elabItems)
     (MyInfix ann op a b) -> elabOperator env ann op a b
     (MyTypedHole ann name) -> do
       tyHole <- addTypedHole ann name
-      pure (MyVar (fromAnn ann tyHole) (NamedVar name))
+      pure (MyVar tyHole (NamedVar name))
     (MyLet ann binder expr body) ->
       elabLetBinding env ann binder expr body
     (MyLetPattern ann pat expr body) ->
@@ -682,16 +664,16 @@ elab env elabExpr =
       elabB <- elab env b
       let tyA = getTypeFromAnn elabA
           tyB = getTypeFromAnn elabB
-      pure (MyPair (fromAnn ann (MTPair ann tyA tyB)) elabA elabB)
+      pure (MyPair (MTPair ann tyA tyB) elabA elabB)
     (MyData ann dataType expr) -> do
       newEnv <- storeDataDeclaration env ann dataType
       innerExpr <- elab newEnv expr
-      pure (MyData (fromAnn ann (getTypeFromAnn innerExpr)) dataType innerExpr)
+      pure (MyData (getTypeFromAnn innerExpr) dataType innerExpr)
     (MyArray ann items) -> do
       elabArray env ann items
     (MyConstructor ann name) -> do
       tyData <- inferDataConstructor env ann name
-      pure (MyConstructor (fromAnn ann tyData) name)
+      pure (MyConstructor tyData name)
     (MyDefineInfix ann infixOp infixExpr expr) ->
       elabDefineInfix env ann infixOp infixExpr expr
     (MyPatternMatch ann expr patterns) ->

@@ -15,7 +15,7 @@ import Test.Utils.Helpers
 
 startElaborate ::
   Expr Variable Annotation ->
-  Expr Variable (MonoType, Annotation) ->
+  Expr Variable MonoType ->
   IO ()
 startElaborate input expected = do
   let result = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ input
@@ -31,37 +31,42 @@ spec = do
     describe "basic cases" $ do
       it "infers int" $ do
         let expr = int 1
-            expected = MyLiteral (MTPrim mempty MTInt, mempty) (MyInt 1)
+            expected = MyLiteral (MTPrim mempty MTInt) (MyInt 1)
         startElaborate expr expected
 
       it "infers bool" $ do
         let expr = bool True
-            expected = MyLiteral (MTPrim mempty MTBool, mempty) (MyBool True)
+            expected = MyLiteral (MTPrim mempty MTBool) (MyBool True)
         startElaborate expr expected
 
       it "infers string" $ do
         let expr = str (StringType "hello")
-            expected = MyLiteral (MTPrim mempty MTString, mempty) (MyString (StringType "hello"))
+            expected =
+              MyLiteral
+                (MTPrim mempty MTString)
+                ( MyString
+                    (StringType "hello")
+                )
         startElaborate expr expected
 
       it "infers let binding" $ do
         let expr = MyLet mempty (named "x") (int 42) (bool True)
             expected =
               MyLet
-                (MTPrim mempty MTBool, mempty)
+                (MTPrim mempty MTBool)
                 (named "x")
-                (MyLiteral (MTPrim mempty MTInt, mempty) (MyInt 42))
-                (MyLiteral (MTPrim mempty MTBool, mempty) (MyBool True))
+                (MyLiteral (MTPrim mempty MTInt) (MyInt 42))
+                (MyLiteral (MTPrim mempty MTBool) (MyBool True))
         startElaborate expr expected
 
       it "infers let binding with usage" $ do
         let expr = MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))
             expected =
               MyLet
-                (MTPrim mempty MTInt, mempty)
+                (MTPrim mempty MTInt)
                 (named "x")
-                (MyLiteral (MTPrim mempty MTInt, mempty) (MyInt 42))
-                ( MyVar (MTPrim mempty MTInt, mempty) (named "x")
+                (MyLiteral (MTPrim mempty MTInt) (MyInt 42))
+                ( MyVar (MTPrim mempty MTInt) (named "x")
                 )
         startElaborate expr expected
 
@@ -87,26 +92,26 @@ spec = do
                 (MyVar mempty (named "dec"))
             expected =
               MyLet
-                (MTFunction mempty mtBool mtBool, mempty)
+                (MTFunction mempty mtBool mtBool)
                 (named "dec")
                 ( MyLambda
-                    (MTFunction mempty mtBool mtBool, mempty)
+                    (MTFunction mempty mtBool mtBool)
                     (named "bool")
                     ( MyIf
-                        (mtBool, mempty)
-                        (MyVar (mtBool, mempty) (named "bool"))
-                        (MyLiteral (mtBool, mempty) (MyBool True))
+                        mtBool
+                        (MyVar mtBool (named "bool"))
+                        (MyLiteral mtBool (MyBool True))
                         ( MyApp
-                            (mtBool, mempty)
+                            mtBool
                             ( MyVar
-                                (MTFunction mempty mtBool mtBool, mempty)
+                                (MTFunction mempty mtBool mtBool)
                                 (named "dec")
                             )
-                            (MyLiteral (mtBool, mempty) (MyBool False))
+                            (MyLiteral mtBool (MyBool False))
                         )
                     )
                 )
-                (MyVar (MTFunction mempty mtBool mtBool, mempty) (named "dec"))
+                (MyVar (MTFunction mempty mtBool mtBool) (named "dec"))
         startElaborate expr expected
 
       it "infers let binding with recursion 1" $ do
@@ -131,28 +136,28 @@ spec = do
                 (MyApp mempty (MyVar mempty (named "dec")) (bool False))
             expected =
               MyLet
-                (mtBool, mempty)
+                mtBool
                 (named "dec")
                 ( MyLambda
-                    (MTFunction mempty mtBool mtBool, mempty)
+                    (MTFunction mempty mtBool mtBool)
                     (named "bool")
                     ( MyIf
-                        (mtBool, mempty)
-                        (MyVar (mtBool, mempty) (named "bool"))
-                        (MyLiteral (mtBool, mempty) (MyBool True))
+                        mtBool
+                        (MyVar mtBool (named "bool"))
+                        (MyLiteral mtBool (MyBool True))
                         ( MyApp
-                            (mtBool, mempty)
-                            (MyVar (MTFunction mempty mtBool mtBool, mempty) (named "dec"))
-                            (MyLiteral (mtBool, mempty) (MyBool False))
+                            mtBool
+                            (MyVar (MTFunction mempty mtBool mtBool) (named "dec"))
+                            (MyLiteral mtBool (MyBool False))
                         )
                     )
                 )
                 ( MyApp
-                    (mtBool, mempty)
+                    mtBool
                     ( MyVar
-                        (MTFunction mempty mtBool mtBool, mempty)
+                        (MTFunction mempty mtBool mtBool)
                         (named "dec")
                     )
-                    (MyLiteral (mtBool, mempty) (MyBool False))
+                    (MyLiteral mtBool (MyBool False))
                 )
         startElaborate expr expected

@@ -8,7 +8,6 @@ module Language.Mimsa.Types.Typechecker.Substitutions
   )
 where
 
-import Data.Bifunctor (first)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
@@ -73,6 +72,6 @@ instance Substitutable MonoType where
     MTConstructor ann cn -> MTConstructor ann cn
     MTPrim ann a -> MTPrim ann a
 
-instance Substitutable (Expr Variable (MonoType, Annotation)) where
+instance Substitutable (Expr Variable MonoType) where
   applySubst subst elabExpr =
-    first (applySubst subst) <$> elabExpr
+    applySubst subst <$> elabExpr
