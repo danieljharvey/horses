@@ -45,7 +45,7 @@ recoverAnn (mt, _) = getAnnotationForType mt
 fromAnn :: Annotation -> MonoType -> TypedAnnotation
 fromAnn ann mt = (mt, ann)
 
-getTypeFromAnn :: ElabExpr -> MonoType
+getTypeFromAnn :: Expr var TypedAnnotation -> MonoType
 getTypeFromAnn = fst . getAnnotation
 
 getPatternTypeFromAnn :: Pattern Variable TypedAnnotation -> MonoType
