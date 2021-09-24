@@ -12,7 +12,6 @@ import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi
-import Data.Text.Prettyprint.Doc
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer (Printer (prettyDoc))
 import Language.Mimsa.Types.Identifiers
@@ -21,6 +20,7 @@ import Language.Mimsa.Types.Identifiers
     renderName,
   )
 import Language.Mimsa.Types.Typechecker.MonoType
+import Prettyprinter
 
 -------
 

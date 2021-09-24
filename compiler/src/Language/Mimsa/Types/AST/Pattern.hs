@@ -15,7 +15,6 @@ import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi hiding (Pattern, items, name)
-import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Literal
@@ -23,6 +22,7 @@ import Language.Mimsa.Types.AST.Spread
 import Language.Mimsa.Types.AST.StringPart
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Utils
+import Prettyprinter
 
 data Pattern var ann
   = PWildcard ann

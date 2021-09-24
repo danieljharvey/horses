@@ -16,7 +16,6 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi (ToSchema)
-import Data.Text.Prettyprint.Doc
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType (DataType)
@@ -26,6 +25,7 @@ import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
 import Language.Mimsa.Utils
+import Prettyprinter
 
 -------
 

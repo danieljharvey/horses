@@ -10,10 +10,10 @@ where
 
 import Data.Set (Set)
 import qualified Data.Text as T
-import Data.Text.Prettyprint.Doc
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Prettyprinter
 import Text.Megaparsec
 
 data PatternMatchError

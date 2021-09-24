@@ -22,7 +22,6 @@ import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi (ToSchema)
-import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Codegen.ApplicativeApply
 import Language.Mimsa.Codegen.ApplicativePure
@@ -33,6 +32,7 @@ import Language.Mimsa.Codegen.Newtype
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Prettyprinter
 
 data Typeclass
   = Enum

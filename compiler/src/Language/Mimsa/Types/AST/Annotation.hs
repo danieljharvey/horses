@@ -7,9 +7,9 @@ module Language.Mimsa.Types.AST.Annotation where
 
 import qualified Data.Aeson as JSON
 import Data.OpenApi
-import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
+import Prettyprinter
 
 -- | Source code annotations - this is stored in parsing and used to improve
 -- errors. Discarded when we store the expressions
