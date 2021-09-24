@@ -33,7 +33,11 @@ typedHolesCheck typeMap subs = do
     then pure ()
     else throwError (TypedHoles (getTypedHoleSuggestions typeMap <$> holes))
 
-getTypedHoleSuggestions :: Map Name MonoType -> MonoType -> (MonoType, Set Name)
-getTypedHoleSuggestions typeMap mt = (normaliseType mt, suggest)
+getTypedHoleSuggestions ::
+  Map Name MonoType ->
+  (MonoType, Map Name MonoType) ->
+  (MonoType, Set Name)
+getTypedHoleSuggestions typeMap (mt, localTypeMap) = (normaliseType mt, suggestGlobal <> suggestLocal)
   where
-    suggest = M.keysSet $ typeSearch typeMap mt
+    suggestGlobal = M.keysSet $ typeSearch typeMap mt
+    suggestLocal = M.keysSet $ typeSearch localTypeMap mt

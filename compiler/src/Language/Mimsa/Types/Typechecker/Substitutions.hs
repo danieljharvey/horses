@@ -72,6 +72,9 @@ instance Substitutable MonoType where
     MTConstructor ann cn -> MTConstructor ann cn
     MTPrim ann a -> MTPrim ann a
 
+instance (Substitutable a) => Substitutable (Map k a) where
+  applySubst subst as = applySubst subst <$> as
+
 instance Substitutable (Expr Variable MonoType) where
   applySubst subst elabExpr =
     applySubst subst <$> elabExpr
