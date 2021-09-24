@@ -7,6 +7,7 @@ where
 
 import Data.Either (isLeft)
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Typecheck
@@ -1089,6 +1090,46 @@ spec = do
               (MTConstructor mempty "Maybe")
               (MTPrim mempty MTInt)
           )
+    it "Typed hole suggestions in scope item" $ do
+      let expr =
+            MyLet
+              mempty
+              (named "this")
+              (bool True)
+              (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
+      startInference expr $
+        Left
+          ( TypedHoles
+              ( M.singleton
+                  "what"
+                  (MTPrim mempty MTBool, S.singleton "this")
+              )
+          )
+
+    it "No typed hole suggestions in scope item" $ do
+      let expr =
+            MyLet
+              mempty
+              (named "this")
+              (int 1)
+              (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
+      startInference expr $
+        Left
+          ( TypedHoles
+              ( M.singleton
+                  "what"
+                  (MTPrim mempty MTBool, mempty)
+              )
+          )
+
+    it "Suggests a polymorphic value, specialised to fit" $ do
+      let expr =
+            MyLambda
+              mempty
+              (named "this")
+              (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
+      startInference expr $ Left (TypedHoles (M.singleton "what" (MTPrim mempty MTBool, S.singleton "this")))
+
     -- needs type annotations to make this make sense
     xit "Lambda variable as constructor" $ do
       let expr =

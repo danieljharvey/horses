@@ -60,15 +60,6 @@ getSpreadTypeFromAnn _ = Nothing
 
 type ElabExpr = Expr Variable MonoType
 
-instantiate ::
-  Scheme ->
-  ElabM MonoType
-instantiate (Scheme vars ty) = do
-  newVars <- traverse (const $ getUnknown mempty) vars
-  let pairs = zip vars newVars
-  let subst = Substitutions $ M.fromList pairs
-  pure (applySubst subst ty)
-
 --------------
 
 elabLiteral :: Annotation -> Literal -> ElabM ElabExpr
@@ -209,7 +200,6 @@ elabRecursiveLetBinding env ann binder expr body = do
   let newEnv2 =
         envFromVar binder (Scheme [] tyRec)
           <> env
-  -- TODO: is this bad
   elabExpr <- elab newEnv2 expr
   elabBody <- elab newEnv2 body
   pure (MyLet (getTypeFromAnn elabBody) binder elabExpr elabBody)
@@ -643,7 +633,7 @@ elab env elabExpr =
       pure (MyRecord (MTRecord ann tyItems) elabItems)
     (MyInfix ann op a b) -> elabOperator env ann op a b
     (MyTypedHole ann name) -> do
-      tyHole <- addTypedHole ann name
+      tyHole <- addTypedHole env ann name
       pure (MyVar tyHole (NamedVar name))
     (MyLet ann binder expr body) ->
       elabLetBinding env ann binder expr body
