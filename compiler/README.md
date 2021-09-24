@@ -105,17 +105,17 @@ lambdas and function application:
 :> :bind id = \x -> x
 Bound id to \x -> x :: A -> A
 
-:> id(1)
+:> id 1
 1 :: Int
 
 :> :bind const = \x -> \y -> x
 Bound const to \x -> (\y -> x) :: A -> (B -> A)
 
-:> const(2)("horse")
+:> const 2 "horse"
 2 :: Int
 
-:> :bind compose = \f -> \g -> \a -> f(g(a))
-Bound compose to \f -> (\g -> (\a -> (f(g(a))))) :: (A -> B) -> ((C -> A) -> (C -> B))
+:> :bind compose = \f -> \g -> \a -> f (g a)
+Bound compose to \f -> (\g -> (\a -> (f (g a)))) :: (A -> B) -> ((C -> A) -> (C -> B))
 ```
 
 pairs:
@@ -127,7 +127,7 @@ pairs:
 :> :bind fst = \x -> let (a, b) = x in a
 Bound fst to \x -> let (a, b) = x in a :: (A, B) -> A
 
-:> fst((1,"horse"))
+:> fst (1,"horse")
 1 :: Int
 ```
 
@@ -214,12 +214,12 @@ destructuring:
 typed holes:
 
 ```haskell
-:> let map = \f -> \a -> f(a) in map(?dunno)(1)
+:> let map f a = f a in map ?dunno 1
 
 repl:1:35:
   |
-1 | let map = \f -> \a -> f(a) in map(?dunno)(1)
-  |                                   ^^^^^^
+1 | let map f a = f a in map ?dunno 1
+  |                          ^^^^^^
 Typed holes found:
 ?dunno : (Int -> A)
 ```
