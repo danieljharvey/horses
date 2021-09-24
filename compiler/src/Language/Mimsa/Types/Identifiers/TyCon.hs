@@ -11,10 +11,10 @@ import Data.OpenApi
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
+import Prettyprinter
 
 -- | A TyCon is a Type Constructor like `Just` or `Right`.
 -- It must start with a capital letter.

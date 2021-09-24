@@ -9,10 +9,10 @@ module Language.Mimsa.Types.Identifiers.Variable
 where
 
 import qualified Data.Aeson as JSON
-import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
+import Prettyprinter
 
 data Variable
   = NamedVar Name

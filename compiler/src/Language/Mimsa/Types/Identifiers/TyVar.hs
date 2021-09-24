@@ -19,9 +19,9 @@ import Data.OpenApi
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
+import Prettyprinter
 
 renderTyVar :: TyVar -> Doc ann
 renderTyVar = pretty . getTyVar

@@ -17,8 +17,8 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Text.Prettyprint.Doc
-import Data.Text.Prettyprint.Doc.Render.Text
+import Prettyprinter
+import Prettyprinter.Render.Text
 
 renderWithWidth :: Int -> Doc ann -> Text
 renderWithWidth w doc = renderStrict (layoutPretty layoutOptions (unAnnotate doc))

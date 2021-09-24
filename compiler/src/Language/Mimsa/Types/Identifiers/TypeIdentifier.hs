@@ -13,10 +13,10 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.OpenApi
-import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.TyVar
+import Prettyprinter
 
 data TypeIdentifier
   = TVName TyVar

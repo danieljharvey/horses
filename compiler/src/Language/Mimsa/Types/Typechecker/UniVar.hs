@@ -4,9 +4,9 @@
 
 module Language.Mimsa.Types.Typechecker.UniVar where
 
-import Data.Text.Prettyprint.Doc
 import GHC.Generics
 import Language.Mimsa.Printer
+import Prettyprinter
 
 newtype UniVar = UniVar Int
   deriving stock (Eq, Ord, Generic)
