@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Language.Mimsa.Server.Project.Evaluate
@@ -23,11 +24,25 @@ import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Servant
 
+-- using https://github.com/haskell-servant/servant/blob/master/doc/cookbook/uverb/UVerb.lhs
+
 -- /project/evaluate/
 
 type EvaluateAPI =
   "evaluate" :> ReqBody '[JSON] EvaluateRequest
-    :> Post '[JSON] EvaluateResponse
+    :> UVerb
+         'POST
+         '[JSON]
+         '[ EvaluateResponse,
+            WithStatus 400 EvaluateError
+          ]
+
+data EvaluateError = EvaluateError
+  { eeText :: Text,
+    eeErrorSpans :: [Text]
+  }
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 data EvaluateRequest = EvaluateRequest
   { erCode :: Text,
@@ -43,10 +58,19 @@ data EvaluateResponse = EvaluateResponse
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
+-- set return type for regular response
+instance HasStatus EvaluateResponse where
+  type StatusOf EvaluateResponse = 200
+
 evaluateExpression ::
   MimsaEnvironment ->
   EvaluateRequest ->
-  Handler EvaluateResponse
+  Handler
+    ( Union
+        '[ EvaluateResponse,
+           WithStatus 400 EvaluateError
+         ]
+    )
 evaluateExpression mimsaEnv (EvaluateRequest code hash) = do
   expr <- parseHandler code
   (newProject, (_, simpleExpr, se, gv, typedExpr, input)) <-
@@ -54,5 +78,7 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) = do
       mimsaEnv
       hash
       (Actions.evaluate code expr)
-  EvaluateResponse (prettyPrint simpleExpr)
-    <$> expressionDataHandler newProject se typedExpr gv input
+  success <-
+    EvaluateResponse (prettyPrint simpleExpr)
+      <$> expressionDataHandler newProject se typedExpr gv input
+  respond success
