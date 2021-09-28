@@ -8,6 +8,7 @@
 module Language.Mimsa.Server.Handlers
   ( ProjectData (..),
     fromActionM,
+    eitherFromActionM,
     projectDataHandler,
     loadProjectHandler,
     evaluateTextHandler,
@@ -82,6 +83,24 @@ fromActionM mimsaEnv projectHash action = do
       traverse_ (saveFileHandler mimsaEnv) (Actions.writeFilesFromOutcomes outcomes)
 
       pure (newProject, a)
+
+eitherFromActionM ::
+  MimsaEnvironment ->
+  ProjectHash ->
+  Actions.ActionM a ->
+  Handler (Either (Error Annotation) (Project Annotation, a))
+eitherFromActionM mimsaEnv projectHash action = do
+  store' <- readStoreHandler mimsaEnv
+  project <- loadProjectHandler mimsaEnv store' projectHash
+  case Actions.run project action of
+    Left e -> pure (Left e)
+    Right (newProject, outcomes, a) -> do
+      traverse_ (saveExprHandler mimsaEnv) (Actions.storeExpressionsFromOutcomes outcomes)
+      -- TODO: return these as a list of Text to show up in a toast in app
+      -- traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
+      traverse_ (saveFileHandler mimsaEnv) (Actions.writeFilesFromOutcomes outcomes)
+
+      pure (Right (newProject, a))
 
 outputBindings :: Project a -> Map Name Text
 outputBindings project =
