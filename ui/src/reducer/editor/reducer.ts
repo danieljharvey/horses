@@ -109,7 +109,7 @@ export const editorReducer: EventReducer<
     case 'EvaluateExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.typeError),
+        expression: showError(action.typeError.ueText),
       })
 
     case 'EvaluateExpressionSuccess':

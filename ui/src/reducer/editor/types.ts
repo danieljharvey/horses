@@ -3,6 +3,7 @@ import {
   ExpressionData,
   EvaluateResponse,
   UnitTestData,
+  UserErrorResponse,
 } from '../../types/'
 
 export type EditorState = {
@@ -38,7 +39,10 @@ export type EditorAction =
       type: 'EvaluateExpressionSuccess'
       expression: EvaluateResponse
     }
-  | { type: 'EvaluateExpressionFailure'; typeError: string }
+  | {
+      type: 'EvaluateExpressionFailure'
+      typeError: UserErrorResponse
+    }
   | { type: 'EvaluateExpressionError' }
   | { type: 'AddUnitTest'; testName: string }
   | { type: 'AddUnitTestSuccess'; unitTest: UnitTestData }

@@ -11,8 +11,11 @@ export const routerFetchExpression = (
   feExprHash: ExprHash
 ): TE.TaskEither<string, string> =>
   pipe(
-    axiosPost(`${routerBaseUrl}/fetch/expr`, {
-      feExprHash,
-    }),
+    axiosPost<{ feExprHash: string }, string, string>(
+      `${routerBaseUrl}/fetch/expr`,
+      {
+        feExprHash,
+      }
+    ),
     TE.map((url) => `${routerBaseUrl}/${url}/`)
   )

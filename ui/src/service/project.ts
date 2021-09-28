@@ -14,6 +14,7 @@ import {
   BindTypeResponse,
   GraphProjectResponse,
   ExprHash,
+  UserErrorResponse,
 } from '../types/'
 import {
   axiosPost,
@@ -27,7 +28,7 @@ const baseUrl = process.env.REACT_APP_MIMSA_API_URL
 
 export const evaluate = (
   evaluateRequest: EvaluateRequest
-): TE.TaskEither<string, EvaluateResponse> =>
+): TE.TaskEither<UserErrorResponse, EvaluateResponse> =>
   axiosPost(`${baseUrl}/project/evaluate/`, evaluateRequest)
 
 export const bindExpression = (
