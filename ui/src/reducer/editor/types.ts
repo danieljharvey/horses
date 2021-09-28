@@ -28,7 +28,6 @@ export type ExpressionResult =
       type: 'ShowUpdatedBinding'
       bindingName: string
       expression: ExpressionData
-      updatedTestsCount: number
     }
 
 export type EditorAction =
@@ -46,15 +45,17 @@ export type EditorAction =
   | { type: 'EvaluateExpressionError' }
   | { type: 'AddUnitTest'; testName: string }
   | { type: 'AddUnitTestSuccess'; unitTest: UnitTestData }
-  | { type: 'AddUnitTestFailure'; error: string }
+  | { type: 'AddUnitTestFailure'; error: UserErrorResponse }
   | { type: 'BindExpression'; bindingName: string }
   | {
       type: 'BindExpressionSuccess'
       expression: ExpressionData
       bindingName: string
-      updatedTestsCount: number
     }
-  | { type: 'BindExpressionFailure'; error: string }
+  | {
+      type: 'BindExpressionFailure'
+      error: UserErrorResponse
+    }
 
 export type EditorEvent =
   | {

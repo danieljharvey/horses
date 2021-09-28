@@ -15,6 +15,7 @@ module Language.Mimsa.Server.MimsaHandler
     MimsaHandler,
     throwMimsaError,
     returnMimsa,
+    lift,
   )
 where
 

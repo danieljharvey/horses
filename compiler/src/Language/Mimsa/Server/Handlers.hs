@@ -13,8 +13,6 @@ module Language.Mimsa.Server.Handlers
     loadProjectHandler,
     evaluateTextHandler,
     createNewUnitTestsHandler,
-    parseHandler,
-    parseDataTypeHandler,
     saveExprHandler,
     saveFileHandler,
     interpretHandler,
@@ -30,7 +28,6 @@ where
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
-import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import Data.Map (Map)
 import Data.OpenApi
@@ -44,7 +41,6 @@ import qualified Language.Mimsa.Actions.Shared as Actions
     resolveStoreExpression,
   )
 import Language.Mimsa.Interpreter (interpret)
-import Language.Mimsa.Parser (parseExprAndFormatError, parseTypeDeclAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Persistence
@@ -166,22 +162,6 @@ evaluateTextHandler ::
   Handler (ResolvedExpression Annotation)
 evaluateTextHandler project code =
   handleEither UserError (Actions.evaluateText project code)
-
-parseHandler :: Text -> Handler (Expr Name Annotation)
-parseHandler input =
-  let wrapError :: Text -> Error Annotation
-      wrapError = ParseError
-   in handleEither
-        UserError
-        (first wrapError (parseExprAndFormatError input))
-
-parseDataTypeHandler :: Text -> Handler DataType
-parseDataTypeHandler input =
-  let wrapError :: Text -> Error Annotation
-      wrapError = ParseError
-   in handleEither
-        UserError
-        (first wrapError (parseTypeDeclAndFormatError input))
 
 saveExprHandler :: MimsaEnvironment -> StoreExpression ann -> Handler ExprHash
 saveExprHandler mimsaEnv se =

@@ -19,7 +19,7 @@ import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { Paragraph } from '../View/Paragraph'
 import { ListBindings } from '../ListBindings'
 import { InlineSpaced } from '../View/InlineSpaced'
-import { ExprHash } from '../../types'
+import { ExprHash, UserErrorResponse } from '../../types'
 import { flow } from 'fp-ts/function'
 import { fetchExpressionsForHashes } from '../../reducer/project/actions'
 
@@ -90,7 +90,11 @@ export const NewType: React.FC<Props> = ({
             </>
           ),
           () => <p>loading</p>,
+<<<<<<< HEAD
           (err) => (
+=======
+          (err: UserErrorResponse) => (
+>>>>>>> 9988900 (Fix UI)
             <>
               <Panel flexGrow={2}>
                 <CodeEditor
@@ -105,7 +109,7 @@ export const NewType: React.FC<Props> = ({
                     Create
                   </Button>
                 )}
-                <Code>{err}</Code>
+                <Code>{err.ueText}</Code>
               </Panel>
             </>
           ),

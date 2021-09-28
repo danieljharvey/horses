@@ -30,13 +30,11 @@ export const showBinding = (
 
 export const showUpdatedBinding = (
   expression: ExpressionData,
-  bindingName: string,
-  updatedTestsCount: number
+  bindingName: string
 ): ExpressionResult => ({
   type: 'ShowUpdatedBinding',
   expression,
   bindingName,
-  updatedTestsCount,
 })
 
 export const showUnitTest = (
@@ -95,7 +93,7 @@ export const editorReducer: EventReducer<
         getExpressionData(state),
         O.fold(
           () => stateOnly(state),
-          (expressionData) =>
+          expressionData =>
             stateAndEvent(
               { ...state, code: expressionData.edPretty },
               {
@@ -140,14 +138,13 @@ export const editorReducer: EventReducer<
         stale: false,
         expression: showUpdatedBinding(
           action.expression,
-          action.bindingName,
-          action.updatedTestsCount
+          action.bindingName
         ),
       })
     case 'BindExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.error),
+        expression: showError(action.error.ueText),
       })
     case 'AddUnitTest':
       return stateAndEvent(staleL.set(false)(state), {
@@ -164,7 +161,7 @@ export const editorReducer: EventReducer<
     case 'AddUnitTestFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.error),
+        expression: showError(action.error.ueText),
       })
     default:
       return stateOnly(state)

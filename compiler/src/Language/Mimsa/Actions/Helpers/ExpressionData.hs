@@ -9,6 +9,7 @@ module Language.Mimsa.Actions.Helpers.ExpressionData
   ( ExpressionData (..),
     UnitTestData (..),
     expressionData,
+    makeExpressionData,
     mkUnitTestData,
   )
 where
@@ -85,14 +86,14 @@ data ExpressionData = ExpressionData
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
-expressionData ::
+makeExpressionData ::
+  Project Annotation ->
   StoreExpression Annotation ->
   Expr Variable MonoType ->
   [Graphviz] ->
   Text ->
-  ActionM ExpressionData
-expressionData se typedExpr gv input = do
-  project <- get
+  ExpressionData
+makeExpressionData project se typedExpr gv input =
   let mt = getTypeFromAnn typedExpr
       exprHash = getStoreExpressionHash se
       tests =
@@ -102,16 +103,24 @@ expressionData se typedExpr gv input = do
       matchingRuntimes =
         toRuntimeData
           <$> getValidRuntimes mt
+   in ExpressionData
+        (prettyPrint exprHash)
+        (prettyPrint (storeExpression se))
+        (prettyPrint mt)
+        (prettyPrint <$> getBindings (storeBindings se))
+        (prettyPrint <$> getTypeBindings (storeTypeBindings se))
+        tests
+        matchingRuntimes
+        (prettyGraphviz gv)
+        (getExpressionSourceItems input typedExpr)
+        input
 
-  pure $
-    ExpressionData
-      (prettyPrint exprHash)
-      (prettyPrint (storeExpression se))
-      (prettyPrint mt)
-      (prettyPrint <$> getBindings (storeBindings se))
-      (prettyPrint <$> getTypeBindings (storeTypeBindings se))
-      tests
-      matchingRuntimes
-      (prettyGraphviz gv)
-      (getExpressionSourceItems input typedExpr)
-      input
+expressionData ::
+  StoreExpression Annotation ->
+  Expr Variable MonoType ->
+  [Graphviz] ->
+  Text ->
+  ActionM ExpressionData
+expressionData se typedExpr gv input = do
+  project <- get
+  pure $ makeExpressionData project se typedExpr gv input

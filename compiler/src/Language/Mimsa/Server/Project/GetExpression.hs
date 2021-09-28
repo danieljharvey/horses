@@ -15,7 +15,7 @@ import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
-import Language.Mimsa.Server.ExpressionData
+import Language.Mimsa.Actions.Helpers.ExpressionData
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
@@ -60,5 +60,6 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   resolvedExpr <-
     resolveStoreExpressionHandler project se
   writeStoreHandler mimsaEnv (prjStore project)
-  GetExpressionResponse
-    <$> expressionDataHandler project se (reTypedExpression resolvedExpr) graphviz (reInput resolvedExpr)
+  pure $
+    GetExpressionResponse $
+      makeExpressionData project se (reTypedExpression resolvedExpr) graphviz (reInput resolvedExpr)

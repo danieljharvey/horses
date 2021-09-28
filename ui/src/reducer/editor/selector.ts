@@ -17,8 +17,8 @@ import { viewL } from '../view/selectors'
 
 const neHeadL = <A>(): Lens<NE.NonEmptyArray<A>, A> =>
   new Lens(
-    (s) => NE.head(s),
-    (a) => (s) => NE.cons(a, NE.tail(s))
+    s => NE.head(s),
+    a => s => NE.cons(a, NE.tail(s))
   )
 
 type ScreenWithEditor =
@@ -49,8 +49,8 @@ const editorFromScreen: Lens<
   ScreenWithEditor,
   EditorState
 > = new Lens(
-  (s) => s.editor,
-  (a) => (s) => ({ ...s, editor: a })
+  s => s.editor,
+  a => s => ({ ...s, editor: a })
 )
 
 export const currentEditorO = stackL
@@ -69,7 +69,6 @@ type ExpressionDataResult =
       type: 'ShowUpdatedBinding'
       bindingName: string
       expression: ExpressionData
-      updatedTestsCount: number
     }
 
 const expressionDataPrism: Prism<
@@ -100,7 +99,7 @@ const expressionDataLens: Lens<
         return res.expression
     }
   },
-  (expr) => (s) => ({ ...s, expression: expr })
+  expr => s => ({ ...s, expression: expr })
 )
 
 const expressionO: Optional<

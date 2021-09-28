@@ -52,19 +52,12 @@ export const Feedback: React.FC<Props> = ({
       )
     case 'ShowUpdatedBinding':
       // need to return new bindings and typeBindings
-      const updatedMsg =
-        result.updatedTestsCount > 0
-          ? `${result.updatedTestsCount} tests updated`
-          : null
       return (
         <FlexColumnSpaced>
           <Paragraph>{`🐴 Updated ${result.bindingName}`}</Paragraph>
           <Code codeType="type">
             {result.expression.edType}
           </Code>
-          {updatedMsg && (
-            <Paragraph>{updatedMsg}</Paragraph>
-          )}
           <ListTests
             unitTests={result.expression.edUnitTests}
           />

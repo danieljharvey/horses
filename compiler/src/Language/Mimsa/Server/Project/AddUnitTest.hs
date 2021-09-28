@@ -16,8 +16,10 @@ import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
-import Language.Mimsa.Server.ExpressionData
+import qualified Language.Mimsa.Actions.Helpers.ExpressionData as Actions
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.MimsaHandler
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Servant
@@ -27,7 +29,7 @@ import Servant
 type AddUnitTest =
   "tests" :> "add"
     :> ReqBody '[JSON] AddUnitTestRequest
-    :> Post '[JSON] AddUnitTestResponse
+    :> JsonPost AddUnitTestResponse
 
 data AddUnitTestRequest = AddUnitTestRequest
   { autProjectHash :: ProjectHash,
@@ -39,7 +41,7 @@ data AddUnitTestRequest = AddUnitTestRequest
 
 data AddUnitTestResponse = AddUnitTestResponse
   { autProjectData :: ProjectData,
-    autUnitTest :: UnitTestData
+    autUnitTest :: Actions.UnitTestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -47,16 +49,18 @@ data AddUnitTestResponse = AddUnitTestResponse
 addUnitTestHandler ::
   MimsaEnvironment ->
   AddUnitTestRequest ->
-  Handler AddUnitTestResponse
-addUnitTestHandler mimsaEnv (AddUnitTestRequest hash testName testInput) = do
-  expr <- parseHandler testInput
-  (newProject, unitTest) <-
-    fromActionM
-      mimsaEnv
-      hash
-      (Actions.addUnitTest expr testName testInput)
-  pd <- projectDataHandler mimsaEnv newProject
-  pure $
-    AddUnitTestResponse
-      pd
-      (mkUnitTestData newProject unitTest)
+  MimsaHandler AddUnitTestResponse
+addUnitTestHandler mimsaEnv (AddUnitTestRequest hash testName testInput) = runMimsaHandlerT $ do
+  let action = do
+        expr <- Actions.parseExpr testInput
+        Actions.addUnitTest expr testName testInput
+  response <-
+    lift $ eitherFromActionM mimsaEnv hash action
+  case response of
+    Right (newProject, unitTest) -> do
+      pd <- lift $ projectDataHandler mimsaEnv newProject
+      returnMimsa $
+        AddUnitTestResponse
+          pd
+          (Actions.mkUnitTestData newProject unitTest)
+    Left e -> throwMimsaError e

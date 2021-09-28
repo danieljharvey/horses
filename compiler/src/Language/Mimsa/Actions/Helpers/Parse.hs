@@ -1,4 +1,4 @@
-module Language.Mimsa.Actions.Helpers.Parse (parseExpr) where
+module Language.Mimsa.Actions.Helpers.Parse (parseExpr, parseDataType) where
 
 import Control.Monad.Except
 import Data.Text (Text)
@@ -11,5 +11,11 @@ import Language.Mimsa.Types.Identifiers
 parseExpr :: Text -> ActionM (Expr Name Annotation)
 parseExpr
   input = case Parser.parseExprAndFormatError input of
+    Right a -> pure a
+    Left e -> throwError (ParseError e)
+
+parseDataType :: Text -> ActionM DataType
+parseDataType input =
+  case Parser.parseTypeDeclAndFormatError input of
     Right a -> pure a
     Left e -> throwError (ParseError e)

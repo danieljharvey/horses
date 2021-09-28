@@ -33,7 +33,10 @@ export const evaluate = (
 
 export const bindExpression = (
   bindExpressionRequest: BindExpressionRequest
-): TE.TaskEither<string, BindExpressionResponse> =>
+): TE.TaskEither<
+  UserErrorResponse,
+  BindExpressionResponse
+> =>
   axiosPost(
     `${baseUrl}/project/bind/`,
     bindExpressionRequest
@@ -41,12 +44,12 @@ export const bindExpression = (
 
 export const bindType = (
   bindTypeRequest: BindTypeRequest
-): TE.TaskEither<string, BindTypeResponse> =>
+): TE.TaskEither<UserErrorResponse, BindTypeResponse> =>
   axiosPost(`${baseUrl}/project/type/`, bindTypeRequest)
 
 export const addUnitTest = (
   addUnitTestRequest: AddUnitTestRequest
-): TE.TaskEither<string, AddUnitTestResponse> =>
+): TE.TaskEither<UserErrorResponse, AddUnitTestResponse> =>
   axiosPost(
     `${baseUrl}/project/tests/add/`,
     addUnitTestRequest
@@ -67,7 +70,10 @@ export const createProject = (): TE.TaskEither<
 
 export const getExpression = (
   getExpressionRequest: GetExpressionRequest
-): TE.TaskEither<string, GetExpressionResponse> =>
+): TE.TaskEither<
+  UserErrorResponse,
+  GetExpressionResponse
+> =>
   axiosPost(
     `${baseUrl}/project/expression/`,
     getExpressionRequest
