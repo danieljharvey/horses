@@ -27,8 +27,26 @@ export const Feedback: React.FC<Props> = ({
   onFetchExpressionsForHashes,
 }) => {
   switch (result.type) {
-    case 'ShowError':
-      return <Paragraph>{result.error}</Paragraph>
+    case 'ShowErrorResponse':
+      return (
+        <FlexColumnSpaced>
+          <Paragraph>
+            {result.errorResponse.ueText}
+          </Paragraph>
+          {result.errorResponse.ueTypedHoles.map(th => (
+            <FlexColumnSpaced>
+              <Paragraph>{`${th.thName}: ${th.thMonoType}`}</Paragraph>
+              {th.thSuggestions.length > 0 && (
+                <Paragraph>
+                  {`  Suggestions: ${th.thSuggestions.join(
+                    ', '
+                  )}`}
+                </Paragraph>
+              )}
+            </FlexColumnSpaced>
+          ))}
+        </FlexColumnSpaced>
+      )
     case 'ShowEvaluate':
       return (
         <FlexColumnSpaced>

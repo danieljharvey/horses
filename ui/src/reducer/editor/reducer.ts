@@ -1,6 +1,10 @@
 import { Lens } from 'monocle-ts'
 import * as O from 'fp-ts/Option'
-import { UnitTestData, ExpressionData } from '../../types'
+import {
+  UnitTestData,
+  ExpressionData,
+  UserErrorResponse,
+} from '../../types'
 import {
   EventReducer,
   stateOnly,
@@ -44,9 +48,11 @@ export const showUnitTest = (
   unitTest,
 })
 
-const showError = (error: string): ExpressionResult => ({
-  type: 'ShowError',
-  error,
+const showErrorResponse = (
+  errorResponse: UserErrorResponse
+): ExpressionResult => ({
+  type: 'ShowErrorResponse',
+  errorResponse,
 })
 
 const evaluationError = (): ExpressionResult => ({
@@ -107,7 +113,7 @@ export const editorReducer: EventReducer<
     case 'EvaluateExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.typeError.ueText),
+        expression: showErrorResponse(action.typeError),
       })
 
     case 'EvaluateExpressionSuccess':
@@ -144,7 +150,7 @@ export const editorReducer: EventReducer<
     case 'BindExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.error.ueText),
+        expression: showErrorResponse(action.error),
       })
     case 'AddUnitTest':
       return stateAndEvent(staleL.set(false)(state), {
@@ -161,7 +167,7 @@ export const editorReducer: EventReducer<
     case 'AddUnitTestFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.error.ueText),
+        expression: showErrorResponse(action.error),
       })
     default:
       return stateOnly(state)

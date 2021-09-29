@@ -69,6 +69,8 @@ export const NewTest: React.FC<Props> = ({
           code={code}
           setCode={onCodeChange}
           sourceItems={getSourceItems(state)}
+          highlightErrors={[]}
+          typedHoleSuggestions={[]}
         />
       </Panel>
       <Panel>

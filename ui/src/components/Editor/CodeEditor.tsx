@@ -5,7 +5,7 @@ import MonacoEditor, {
   EditorWillMount,
 } from 'react-monaco-editor'
 import './CodeEditor.css'
-import { SourceItem } from '../../types'
+import { SourceItem, SourceSpan } from '../../types'
 import * as Arr from 'fp-ts/Array'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
@@ -13,12 +13,25 @@ import { mimsaLanguage } from './mimsaLanguageMonaco'
 import {
   Position,
   languages,
+  editor,
 } from 'monaco-editor/esm/vs/editor/editor.api'
+
+type HighlightError = {
+  sourceSpan: SourceSpan
+}
+
+type TypedHoleSuggestion = {
+  sourceSpan: SourceSpan
+  monoType: string
+  suggestions: string[]
+}
 
 type Props = {
   code: string
   setCode: (s: string) => void
   sourceItems: SourceItem[]
+  highlightErrors: HighlightError[]
+  typedHoleSuggestions: TypedHoleSuggestion[]
 }
 
 const colours = {
@@ -77,6 +90,41 @@ const editorWillMount: EditorWillMount = (monaco) => {
     'mimsa',
     mimsaLanguage as any // for some reason this works but the types are totally different
   )
+
+  // show autofill for typed hole suggestions
+  monaco.languages.registerCodeActionProvider('mimsa', {
+    provideCodeActions: (
+      model,
+      _range,
+      context,
+      _token
+    ) => {
+      const actions = context.markers.map((error) => {
+        return {
+          title: `Example quick fix`,
+          diagnostics: [error],
+          kind: 'quickfix',
+          edit: {
+            edits: [
+              {
+                resource: model.uri,
+                edit: {
+                  range: error,
+                  text:
+                    'This text replaces the text with the error',
+                },
+              },
+            ],
+          },
+          isPreferred: true,
+        }
+      })
+      return {
+        actions: actions,
+        dispose: () => {},
+      }
+    },
+  })
 
   monaco.languages.registerHoverProvider('mimsa', {
     provideHover: (_model: unknown, position: Position) =>
@@ -162,15 +210,57 @@ const options = {
 }
 
 let mutableSourceItems: SourceItem[] = []
+let mutableTypedHoleSuggestions: TypedHoleSuggestion[] = []
+
+const createMarkerForTypedHoles = (
+  ths: TypedHoleSuggestion
+): editor.IMarkerData => ({
+  severity: 1, // hint,
+  message: ths.monoType,
+  startLineNumber: ths.sourceSpan.ssRowStart,
+  endLineNumber: ths.sourceSpan.ssRowEnd,
+  startColumn: ths.sourceSpan.ssColStart,
+  endColumn: ths.sourceSpan.ssColEnd,
+})
+
+const createMarkerForError = (
+  he: HighlightError
+): editor.IMarkerData => ({
+  severity: 2, // error,
+  message: 'Type hole!',
+  startLineNumber: he.sourceSpan.ssRowStart,
+  endLineNumber: he.sourceSpan.ssRowEnd,
+  startColumn: he.sourceSpan.ssColStart,
+  endColumn: he.sourceSpan.ssColEnd,
+})
 
 export const CodeEditor: React.FC<Props> = ({
   code,
   setCode,
   sourceItems,
+  highlightErrors,
+  typedHoleSuggestions,
 }) => {
+  const monacoRef = React.useRef<MonacoEditor>(null)
+
   React.useEffect(() => {
     mutableSourceItems = sourceItems
-  }, [sourceItems])
+    mutableTypedHoleSuggestions = typedHoleSuggestions
+  }, [sourceItems, typedHoleSuggestions])
+
+  React.useEffect(() => {
+    if (monacoRef.current && monacoRef.current.editor) {
+      const markers = [
+        ...typedHoleSuggestions.map(
+          createMarkerForTypedHoles
+        ),
+        ...highlightErrors.map(createMarkerForError),
+      ]
+      const model = monacoRef.current.editor.getModel()
+      model &&
+        editor.setModelMarkers(model, 'Mimsa', markers)
+    }
+  }, [highlightErrors, typedHoleSuggestions])
 
   const editorDidMount: EditorDidMount = (editor) => {
     editor.focus()
@@ -183,6 +273,7 @@ export const CodeEditor: React.FC<Props> = ({
   return (
     <section className="editor">
       <MonacoEditor
+        ref={monacoRef}
         language="mimsa"
         theme="mimsa"
         value={code}

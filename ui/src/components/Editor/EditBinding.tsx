@@ -54,6 +54,8 @@ export const EditBinding: React.FC<Props> = ({
           code={code}
           setCode={onCodeChange}
           sourceItems={getSourceItems(state)}
+          highlightErrors={[]}
+          typedHoleSuggestions={[]}
         />
       </Panel>
       <Panel>

@@ -16,7 +16,10 @@ export type EditorState = {
 export type ExpressionResult =
   | { type: 'EditorNew' }
   | { type: 'ShowBinding'; expression: ExpressionData }
-  | { type: 'ShowError'; error: string }
+  | {
+      type: 'ShowErrorResponse'
+      errorResponse: UserErrorResponse
+    }
   | { type: 'ShowUnitTest'; unitTest: UnitTestData }
   | { type: 'EvaluationError' }
   | {

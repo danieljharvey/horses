@@ -5,7 +5,10 @@ import {
   EditorState,
 } from '../../reducer/types'
 import { storeProjectData } from '../../reducer/project/reducer'
-import { getSourceItems } from '../../reducer/editor/selector'
+import {
+  getSourceItems,
+  getTypedHoles,
+} from '../../reducer/editor/selector'
 import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
@@ -68,6 +71,8 @@ export const NewType: React.FC<Props> = ({
                   code={code}
                   setCode={onCodeChange}
                   sourceItems={getSourceItems(state)}
+                  highlightErrors={[]}
+                  typedHoleSuggestions={[]}
                 />
               </Panel>
               <Panel>
@@ -90,29 +95,38 @@ export const NewType: React.FC<Props> = ({
             </>
           ),
           () => <p>loading</p>,
-<<<<<<< HEAD
-          (err) => (
-=======
-          (err: UserErrorResponse) => (
->>>>>>> 9988900 (Fix UI)
-            <>
-              <Panel flexGrow={2}>
-                <CodeEditor
-                  code={code}
-                  setCode={onCodeChange}
-                  sourceItems={getSourceItems(state)}
-                />
-              </Panel>
-              <Panel>
-                {editor.stale && (
-                  <Button onClick={addNewType}>
-                    Create
-                  </Button>
-                )}
-                <Code>{err.ueText}</Code>
-              </Panel>
-            </>
-          ),
+
+          (err: UserErrorResponse) => {
+            console.log('new type', { err })
+            return (
+              <>
+                <Panel flexGrow={2}>
+                  <CodeEditor
+                    code={code}
+                    setCode={onCodeChange}
+                    sourceItems={getSourceItems(state)}
+                    highlightErrors={[]}
+                    typedHoleSuggestions={getTypedHoles(
+                      state
+                    ).map((th) => ({
+                      sourceSpan: th.thSourceSpan,
+                      monoType: th.thMonoType,
+                      suggestions: th.thSuggestions,
+                    }))}
+                  />
+                </Panel>
+                <Panel>
+                  {editor.stale && (
+                    <Button onClick={addNewType}>
+                      Create
+                    </Button>
+                  )}
+                  <Code>{err.ueText}</Code>
+                </Panel>
+              </>
+            )
+          },
+
           (addType) => (
             <Panel>
               <FlexColumnSpaced>

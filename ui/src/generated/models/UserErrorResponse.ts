@@ -2,7 +2,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
+import type { TypedHoleResponse } from './TypedHoleResponse';
+
 export type UserErrorResponse = {
-    ueErrorSpans: Array<string>;
     ueText: string;
+    ueTypedHoles: Array<TypedHoleResponse>;
 }

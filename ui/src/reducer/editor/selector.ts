@@ -2,7 +2,12 @@ import { Lens, Optional, Prism } from 'monocle-ts'
 import { State } from '../types'
 import * as O from 'fp-ts/Option'
 import { ExpressionResult, EditorState } from './types'
-import { ExpressionData, SourceItem } from '../../types'
+import {
+  ExpressionData,
+  SourceItem,
+  UserErrorResponse,
+  TypedHoleResponse,
+} from '../../types'
 import { pipe } from 'fp-ts/function'
 import * as NE from 'fp-ts/NonEmptyArray'
 import {
@@ -102,6 +107,34 @@ const expressionDataLens: Lens<
   expr => s => ({ ...s, expression: expr })
 )
 
+type UserErrorResult = {
+  type: 'ShowErrorResponse'
+  errorResponse: UserErrorResponse
+}
+
+const userErrorResponsePrism: Prism<
+  ExpressionResult,
+  UserErrorResult
+> = new Prism(
+  (res: ExpressionResult) =>
+    res.type === 'ShowErrorResponse'
+      ? O.some(res as UserErrorResult)
+      : O.none,
+  (a: UserErrorResult) => a as ExpressionResult
+)
+
+const typedHolesO: Optional<
+  EditorState,
+  TypedHoleResponse[]
+> = Lens.fromProp<EditorState>()('expression')
+  .composePrism(userErrorResponsePrism)
+  .composeLens(
+    Lens.fromProp<UserErrorResult>()('errorResponse')
+  )
+  .composeLens(
+    Lens.fromProp<UserErrorResponse>()('ueTypedHoles')
+  )
+
 const expressionO: Optional<
   EditorState,
   ExpressionData
@@ -127,6 +160,24 @@ export const getSourceItems = (
   pipe(
     sourceItemsFromState.getOption(state),
     O.getOrElse<SourceItem[]>(() => [])
+  )
+
+export const getTypedHolesFromEditor = (
+  editorState: EditorState
+): TypedHoleResponse[] =>
+  pipe(
+    typedHolesO.getOption(editorState),
+    O.getOrElse<TypedHoleResponse[]>(() => [])
+  )
+
+export const getTypedHoles = (
+  state: State
+): TypedHoleResponse[] =>
+  pipe(
+    currentEditorO
+      .composeOptional(typedHolesO)
+      .getOption(state),
+    O.getOrElse<TypedHoleResponse[]>(() => [])
   )
 
 export const getSourceItemsFromEditor = (
