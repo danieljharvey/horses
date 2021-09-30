@@ -19,10 +19,10 @@ import Data.OpenApi hiding (get)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Evaluate as Actions
-import qualified Language.Mimsa.Actions.Helpers.ExpressionData as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Helpers.ExpressionData
 import Language.Mimsa.Server.MimsaHandler
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
@@ -45,7 +45,7 @@ data EvaluateRequest = EvaluateRequest
 
 data EvaluateResponse = EvaluateResponse
   { erResult :: Text,
-    erExpressionData :: Actions.ExpressionData
+    erExpressionData :: ExpressionData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -61,7 +61,7 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) =
           (_, simpleExpr, se, gv, typedExpr, input) <-
             Actions.evaluate code expr
           EvaluateResponse (prettyPrint simpleExpr)
-            <$> Actions.expressionData se typedExpr gv input
+            <$> expressionData se typedExpr gv input
     response <- lift $ eitherFromActionM mimsaEnv hash action
     case response of
       Left e -> throwMimsaError e

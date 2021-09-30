@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Language.Mimsa.Actions.Helpers.ExpressionData
+module Language.Mimsa.Server.Helpers.ExpressionData
   ( ExpressionData (..),
     UnitTestData (..),
     expressionData,

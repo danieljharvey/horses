@@ -48,6 +48,7 @@ export const Scratch: React.FC<Props> = ({
     sourceSpan: th.thSourceSpan,
     suggestions: th.thSuggestions,
     monoType: th.thMonoType,
+    originalName: th.thName,
   }))
 
   return (

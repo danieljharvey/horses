@@ -17,9 +17,9 @@ import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindExpression as Actions
-import qualified Language.Mimsa.Actions.Helpers.ExpressionData as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Helpers.ExpressionData
 import Language.Mimsa.Server.MimsaHandler
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Identifiers
@@ -44,7 +44,7 @@ data BindExpressionRequest = BindExpressionRequest
 
 data BindExpressionResponse = BindExpressionResponse
   { beProjectData :: ProjectData,
-    beExpressionData :: Actions.ExpressionData
+    beExpressionData :: ExpressionData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -58,7 +58,7 @@ bindExpression mimsaEnv (BindExpressionRequest hash name' input) = runMimsaHandl
         expr <- Actions.parseExpr input
         (_, _, ResolvedExpression _ se _ _ _ typedExpr input', gv) <-
           Actions.bindExpression expr name' input
-        Actions.expressionData se typedExpr gv input'
+        expressionData se typedExpr gv input'
   response <-
     lift $ eitherFromActionM mimsaEnv hash action
   case response of

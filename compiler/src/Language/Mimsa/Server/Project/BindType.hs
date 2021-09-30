@@ -16,11 +16,11 @@ import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions
-import qualified Language.Mimsa.Actions.Helpers.ExpressionData as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Helpers.ExpressionData
 import Language.Mimsa.Server.MimsaHandler
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.AST
@@ -52,7 +52,7 @@ data BindTypeResponse = BindTypeResponse
   { btProjectData :: ProjectData,
     btDataType :: DataType,
     btPrettyType :: Text,
-    btCodegen :: Maybe Actions.ExpressionData,
+    btCodegen :: Maybe ExpressionData,
     btTypeclasses :: [Typeclass]
   }
   deriving stock (Eq, Ord, Show, Generic)
@@ -70,7 +70,7 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
           Just resolvedExpr -> do
             let se = reStoreExpression resolvedExpr
                 typedExpr = reTypedExpression resolvedExpr
-            ed' <- Actions.expressionData se typedExpr gv input
+            ed' <- expressionData se typedExpr gv input
             pure (Just ed')
           Nothing -> pure Nothing
         pure (ed, typeClasses, dt)

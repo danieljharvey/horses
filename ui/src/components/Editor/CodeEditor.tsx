@@ -24,6 +24,7 @@ type TypedHoleSuggestion = {
   sourceSpan: SourceSpan
   monoType: string
   suggestions: string[]
+  originalName: string
 }
 
 type Props = {
@@ -99,28 +100,30 @@ const editorWillMount: EditorWillMount = (monaco) => {
       context,
       _token
     ) => {
-      const actions = context.markers.map((error) => {
-        return {
-          title: `Example quick fix`,
-          diagnostics: [error],
-          kind: 'quickfix',
-          edit: {
-            edits: [
-              {
-                resource: model.uri,
-                edit: {
-                  range: error,
-                  text:
-                    'This text replaces the text with the error',
+      const suggestions = mutableTypedHoleSuggestions.flatMap(
+        (ths) =>
+          ths.suggestions.map((sug) => ({
+            title: `Replace ?${ths.originalName} with ${sug}`,
+            diagnostics: [createMarkerForTypedHole(ths)],
+            kind: 'quickfix',
+            edit: {
+              edits: [
+                {
+                  resource: model.uri,
+                  edit: {
+                    range: createMarkerForTypedHole(ths),
+                    text: sug,
+                  },
                 },
-              },
-            ],
-          },
-          isPreferred: true,
-        }
-      })
+              ],
+            },
+            isPreferred: true,
+          }))
+      )
+
+      console.log({ suggestions })
       return {
-        actions: actions,
+        actions: suggestions,
         dispose: () => {},
       }
     },
@@ -212,26 +215,26 @@ const options = {
 let mutableSourceItems: SourceItem[] = []
 let mutableTypedHoleSuggestions: TypedHoleSuggestion[] = []
 
-const createMarkerForTypedHoles = (
+const createMarkerForTypedHole = (
   ths: TypedHoleSuggestion
 ): editor.IMarkerData => ({
   severity: 1, // hint,
   message: ths.monoType,
   startLineNumber: ths.sourceSpan.ssRowStart,
   endLineNumber: ths.sourceSpan.ssRowEnd,
-  startColumn: ths.sourceSpan.ssColStart,
-  endColumn: ths.sourceSpan.ssColEnd,
+  startColumn: ths.sourceSpan.ssColStart + 1,
+  endColumn: ths.sourceSpan.ssColEnd + 1,
 })
 
 const createMarkerForError = (
   he: HighlightError
 ): editor.IMarkerData => ({
-  severity: 2, // error,
-  message: 'Type hole!',
+  severity: 8, // error,
+  message: 'Error!',
   startLineNumber: he.sourceSpan.ssRowStart,
   endLineNumber: he.sourceSpan.ssRowEnd,
-  startColumn: he.sourceSpan.ssColStart,
-  endColumn: he.sourceSpan.ssColEnd,
+  startColumn: he.sourceSpan.ssColStart + 1,
+  endColumn: he.sourceSpan.ssColEnd + 1,
 })
 
 export const CodeEditor: React.FC<Props> = ({
@@ -252,7 +255,7 @@ export const CodeEditor: React.FC<Props> = ({
     if (monacoRef.current && monacoRef.current.editor) {
       const markers = [
         ...typedHoleSuggestions.map(
-          createMarkerForTypedHoles
+          createMarkerForTypedHole
         ),
         ...highlightErrors.map(createMarkerForError),
       ]

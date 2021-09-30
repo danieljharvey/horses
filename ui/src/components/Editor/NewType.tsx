@@ -112,6 +112,7 @@ export const NewType: React.FC<Props> = ({
                       sourceSpan: th.thSourceSpan,
                       monoType: th.thMonoType,
                       suggestions: th.thSuggestions,
+                      originalName: th.thName,
                     }))}
                   />
                 </Panel>

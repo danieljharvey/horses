@@ -15,8 +15,8 @@ import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
-import Language.Mimsa.Actions.Helpers.ExpressionData
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Helpers.ExpressionData
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
