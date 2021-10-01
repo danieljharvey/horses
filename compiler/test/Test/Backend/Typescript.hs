@@ -119,6 +119,7 @@ spec = do
           `shouldBe` "const a = true\nexport const main = a"
     describe "from typed expression" $ do
       let mtBool = MTPrim mempty MTBool
+          mtString = MTPrim mempty MTString
       it "const bool" $ do
         fromExpr (MyLiteral mtBool (MyBool True))
           `shouldBe` TSModule (TSBody [] (TSLit (TSBool True)))
@@ -159,4 +160,39 @@ spec = do
                     (TSLetBody (TSBody mempty (TSArray [TSLit (TSBool True), TSLit (TSBool False)])))
                 ]
                 (TSVar "a")
+            )
+      it "let (a,_) = (true,false) in a" $ do
+        fromExpr
+          ( MyLetPattern
+              (MTPair mempty mtBool mtBool)
+              (PPair (MTPair mempty mtBool mtBool) (PVar mtBool "a") (PWildcard mtBool))
+              ( MyPair
+                  (MTPair mempty mtBool mtBool)
+                  (MyLiteral mtBool (MyBool True))
+                  (MyLiteral mtBool (MyBool False))
+              )
+              (MyVar mtBool "a")
+          )
+          `shouldBe` TSModule
+            ( TSBody
+                [ TSAssignment
+                    (TSPatternPair (TSPatternVar "a") TSPatternWildcard)
+                    (TSLetBody (TSBody mempty (TSArray [TSLit (TSBool True), TSLit (TSBool False)])))
+                ]
+                (TSVar "a")
+            )
+      it "function with known type" $ do
+        fromExpr
+          (MyLambda mtString "str" (MyVar mtString "str"))
+          `shouldBe` TSModule
+            ( TSBody
+                []
+                ( TSFunction
+                    "str"
+                    (TSType "String" [])
+                    ( TSFunctionBody
+                        ( TSBody [] (TSVar "str")
+                        )
+                    )
+                )
             )
