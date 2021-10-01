@@ -30,7 +30,7 @@ export const projectSet = (project: Project) =>
 export const projectGet = (): O.Option<Project> =>
   pipe(
     safeSessionStorageGet(sessionStorageKey),
-    O.chain(str => safeDecode<Project>(str))
+    O.chain((str) => safeDecode<Project>(str))
   )
 
 export const findExpressionForBinding = (
@@ -39,7 +39,7 @@ export const findExpressionForBinding = (
 ): O.Option<ExpressionData> =>
   pipe(
     O.fromNullable(state.project.bindings[bindingName]),
-    O.chain(exprHash =>
+    O.chain((exprHash) =>
       O.fromNullable(state.project.store[exprHash])
     )
   )
@@ -50,7 +50,7 @@ export const findExpressionForTypeBinding = (
 ): O.Option<ExpressionData> =>
   pipe(
     O.fromNullable(state.project.typeBindings[bindingName]),
-    O.chain(exprHash =>
+    O.chain((exprHash) =>
       O.fromNullable(state.project.store[exprHash])
     )
   )
@@ -78,7 +78,7 @@ export const findNameForExprHash = (
 ): O.Option<string> =>
   O.fromNullable(
     Object.keys(state.project.bindings).find(
-      binding =>
+      (binding) =>
         state.project.bindings[binding] === exprHash
     )
   )

@@ -17,7 +17,7 @@ export const axiosPost = <Data, Response>(
         return 'Unknown error'
       }
     ),
-    TE.map(a => a.data)
+    TE.map((a) => a.data)
   )
 
 export const axiosGet = <Response>(
@@ -34,5 +34,5 @@ export const axiosGet = <Response>(
         return 'Unknown error'
       }
     ),
-    TE.map(a => a.data)
+    TE.map((a) => a.data)
   )

@@ -41,7 +41,9 @@
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",
     "typescript:watch": "tsc --noEmit --watch",
-    "typegen":"rm -rf src/generated && openapi --input ../compiler/swagger.json --output ./src/generated --exportModels=true --exportCore=false --exportServices=false --useUnionTypes"
+    "typegen": "rm -rf src/generated && openapi --input ../compiler/swagger.json --output ./src/generated --exportModels=true --exportCore=false --exportServices=false --useUnionTypes",
+    "format": "prettier --write .",
+    "prettier": "prettier --check ."
   },
   "eslintConfig": {
     "extends": ["react-app", "react-app/jest"]

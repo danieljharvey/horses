@@ -64,7 +64,7 @@ export const ExpressionGraph: React.FC<Props> = ({
             findNameForExprHash(hash.value, state),
             O.fold(
               () => 'expression',
-              name => name
+              (name) => name
             )
           ),
         })
@@ -86,11 +86,11 @@ export const ExpressionGraph: React.FC<Props> = ({
               <Paragraph>🐴 Loading 🐴</Paragraph>
             </Panel>
           ),
-          result => (
+          (result) => (
             <>
               <Panel
                 flexGrow={2}
-                onClick={e =>
+                onClick={(e) =>
                   setSelectedExprHash(findExpressionHash(e))
                 }
               >

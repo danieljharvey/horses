@@ -7,27 +7,29 @@ import '../App.css'
 import { useHistory } from 'react-router-dom'
 
 interface Props {
-    projectHash: string
+  projectHash: string
 }
 
 // this doesn't feel right but YOLO
-export const ProjectPage: React.FC<Props> = ({ projectHash }) => {
-    const history = useHistory()
+export const ProjectPage: React.FC<Props> = ({
+  projectHash,
+}) => {
+  const history = useHistory()
 
-    const [state, dispatch] = useEventReducer(
-        eventReducer,
-        initialState(projectHash),
-        runtime(history)
-    )
+  const [state, dispatch] = useEventReducer(
+    eventReducer,
+    initialState(projectHash),
+    runtime(history)
+  )
 
-    React.useEffect(() => {
-        dispatch({ type: 'Initialise' })
-        /* eslint-disable-next-line react-hooks/exhaustive-deps */
-    }, [])
+  React.useEffect(() => {
+    dispatch({ type: 'Initialise' })
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [])
 
-    return (
-        <div className="App">
-            <View state={state} dispatch={dispatch} />
-        </div>
-    )
+  return (
+    <div className="App">
+      <View state={state} dispatch={dispatch} />
+    </div>
+  )
 }

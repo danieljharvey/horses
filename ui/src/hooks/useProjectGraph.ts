@@ -27,7 +27,7 @@ export const useProjectGraph = (projectHash: ExprHash) => {
       flow(
         E.fold<string, GraphProjectResponse, State>(
           failure,
-          a => success(a)
+          (a) => success(a)
         ),
         setGraphData
       )

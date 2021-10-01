@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type BindTypeRequest = {
-    btExpression: string;
-    btProjectHash: string;
+  btExpression: string
+  btProjectHash: string
 }

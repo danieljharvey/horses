@@ -52,8 +52,8 @@ export const useAddType = (
     pipe(
       result,
       E.fold<string, BindTypeResponse, State>(
-        e => failure(e),
-        a => {
+        (e) => failure(e),
+        (a) => {
           updateProject(
             a.btProjectData,
             Object.values(a.btCodegen?.edBindings || {})

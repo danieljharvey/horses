@@ -69,7 +69,7 @@ export const Feedback: React.FC<Props> = ({
             unitTests={result.expression.edUnitTests}
           />
           {Object.values(result.expression.edRuntimes).map(
-            rt => (
+            (rt) => (
               <>
                 <Compile
                   exprHash={result.expression.edHash}
@@ -109,7 +109,7 @@ export const Feedback: React.FC<Props> = ({
             unitTests={result.expression.edUnitTests}
           />
           {Object.values(result.expression.edRuntimes).map(
-            rt => (
+            (rt) => (
               <FlexColumnSpaced>
                 <Compile
                   exprHash={result.expression.edHash}

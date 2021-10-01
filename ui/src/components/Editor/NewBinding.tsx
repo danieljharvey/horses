@@ -89,8 +89,10 @@ export const NewBinding: React.FC<Props> = ({
         {pipe(
           validBinding,
           E.fold(
-            err => <Paragraph>{showError(err)}</Paragraph>,
-            name => (
+            (err) => (
+              <Paragraph>{showError(err)}</Paragraph>
+            ),
+            (name) => (
               <FlexColumnSpaced>
                 {editor.stale && (
                   <Button

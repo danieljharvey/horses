@@ -10,7 +10,7 @@ const createNewProject: TE.TaskEither<
   ExprHash
 > = pipe(
   createProject(),
-  TE.map(res => res.cpProjectData.pdHash)
+  TE.map((res) => res.cpProjectData.pdHash)
 )
 
 const findInSessionStorage: TE.TaskEither<
@@ -22,7 +22,7 @@ const findInSessionStorage: TE.TaskEither<
       () => 'Could not find project hash in session storage'
     )(projectGet())
   ),
-  TE.map(prj => prj.hash)
+  TE.map((prj) => prj.hash)
 )
 
 // if we have no project, we either:
