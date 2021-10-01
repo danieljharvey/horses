@@ -5,7 +5,12 @@ import MonacoEditor, {
   EditorWillMount,
 } from 'react-monaco-editor'
 import './CodeEditor.css'
-import { SourceItem, SourceSpan } from '../../types'
+import {
+  ErrorLocation,
+  SourceItem,
+  SourceSpan,
+  TypedHoleResponse,
+} from '../../types'
 import * as Arr from 'fp-ts/Array'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
@@ -16,23 +21,12 @@ import {
   editor,
 } from 'monaco-editor/esm/vs/editor/editor.api'
 
-type HighlightError = {
-  sourceSpan: SourceSpan
-}
-
-type TypedHoleSuggestion = {
-  sourceSpan: SourceSpan
-  monoType: string
-  suggestions: string[]
-  originalName: string
-}
-
 type Props = {
   code: string
   setCode: (s: string) => void
   sourceItems: SourceItem[]
-  highlightErrors: HighlightError[]
-  typedHoleSuggestions: TypedHoleSuggestion[]
+  errorLocations: ErrorLocation[]
+  typedHoleResponses: TypedHoleResponse[]
 }
 
 const colours = {
@@ -100,10 +94,10 @@ const editorWillMount: EditorWillMount = (monaco) => {
       context,
       _token
     ) => {
-      const suggestions = mutableTypedHoleSuggestions.flatMap(
+      const suggestions = mutableTypedHoleResponses.flatMap(
         (ths) =>
-          ths.suggestions.map((sug) => ({
-            title: `Replace ?${ths.originalName} with ${sug}`,
+          ths.thSuggestions.map((sug) => ({
+            title: `Replace ?${ths.thName} with ${sug}`,
             diagnostics: [createMarkerForTypedHole(ths)],
             kind: 'quickfix',
             edit: {
@@ -121,7 +115,6 @@ const editorWillMount: EditorWillMount = (monaco) => {
           }))
       )
 
-      console.log({ suggestions })
       return {
         actions: suggestions,
         dispose: () => {},
@@ -213,57 +206,56 @@ const options = {
 }
 
 let mutableSourceItems: SourceItem[] = []
-let mutableTypedHoleSuggestions: TypedHoleSuggestion[] = []
+let mutableTypedHoleResponses: TypedHoleResponse[] = []
 
-const createMarkerForTypedHole = (
-  ths: TypedHoleSuggestion
-): editor.IMarkerData => ({
+const createMarkerForTypedHole = ({
+  thMonoType,
+  thSourceSpan,
+}: TypedHoleResponse): editor.IMarkerData => ({
   severity: 1, // hint,
-  message: ths.monoType,
-  startLineNumber: ths.sourceSpan.ssRowStart,
-  endLineNumber: ths.sourceSpan.ssRowEnd,
-  startColumn: ths.sourceSpan.ssColStart + 1,
-  endColumn: ths.sourceSpan.ssColEnd + 1,
+  message: `Inferred type: ${thMonoType}`,
+  startLineNumber: thSourceSpan.ssRowStart,
+  endLineNumber: thSourceSpan.ssRowEnd,
+  startColumn: thSourceSpan.ssColStart + 1,
+  endColumn: thSourceSpan.ssColEnd + 1,
 })
 
-const createMarkerForError = (
-  he: HighlightError
-): editor.IMarkerData => ({
+const createMarkerForError = ({
+  elSourceSpan,
+}: ErrorLocation): editor.IMarkerData => ({
   severity: 8, // error,
   message: 'Error!',
-  startLineNumber: he.sourceSpan.ssRowStart,
-  endLineNumber: he.sourceSpan.ssRowEnd,
-  startColumn: he.sourceSpan.ssColStart + 1,
-  endColumn: he.sourceSpan.ssColEnd + 1,
+  startLineNumber: elSourceSpan.ssRowStart,
+  endLineNumber: elSourceSpan.ssRowEnd,
+  startColumn: elSourceSpan.ssColStart + 1,
+  endColumn: elSourceSpan.ssColEnd + 1,
 })
 
 export const CodeEditor: React.FC<Props> = ({
   code,
   setCode,
   sourceItems,
-  highlightErrors,
-  typedHoleSuggestions,
+  errorLocations,
+  typedHoleResponses,
 }) => {
   const monacoRef = React.useRef<MonacoEditor>(null)
 
   React.useEffect(() => {
     mutableSourceItems = sourceItems
-    mutableTypedHoleSuggestions = typedHoleSuggestions
-  }, [sourceItems, typedHoleSuggestions])
+    mutableTypedHoleResponses = typedHoleResponses
+  }, [sourceItems, typedHoleResponses])
 
   React.useEffect(() => {
     if (monacoRef.current && monacoRef.current.editor) {
       const markers = [
-        ...typedHoleSuggestions.map(
-          createMarkerForTypedHole
-        ),
-        ...highlightErrors.map(createMarkerForError),
+        ...typedHoleResponses.map(createMarkerForTypedHole),
+        ...errorLocations.map(createMarkerForError),
       ]
       const model = monacoRef.current.editor.getModel()
       model &&
         editor.setModelMarkers(model, 'Mimsa', markers)
     }
-  }, [highlightErrors, typedHoleSuggestions])
+  }, [errorLocations, typedHoleResponses])
 
   const editorDidMount: EditorDidMount = (editor) => {
     editor.focus()

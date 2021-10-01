@@ -99,7 +99,7 @@ export const editorReducer: EventReducer<
         getExpressionData(state),
         O.fold(
           () => stateOnly(state),
-          expressionData =>
+          (expressionData) =>
             stateAndEvent(
               { ...state, code: expressionData.edPretty },
               {

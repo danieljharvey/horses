@@ -33,7 +33,7 @@ export const Feedback: React.FC<Props> = ({
           <Paragraph>
             {result.errorResponse.ueText}
           </Paragraph>
-          {result.errorResponse.ueTypedHoles.map(th => (
+          {result.errorResponse.ueTypedHoles.map((th) => (
             <FlexColumnSpaced>
               <Paragraph>{`${th.thName}: ${th.thMonoType}`}</Paragraph>
               {th.thSuggestions.length > 0 && (

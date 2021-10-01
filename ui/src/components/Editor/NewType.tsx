@@ -6,6 +6,7 @@ import {
 } from '../../reducer/types'
 import { storeProjectData } from '../../reducer/project/reducer'
 import {
+  getErrorLocations,
   getSourceItems,
   getTypedHoles,
 } from '../../reducer/editor/selector'
@@ -71,8 +72,8 @@ export const NewType: React.FC<Props> = ({
                   code={code}
                   setCode={onCodeChange}
                   sourceItems={getSourceItems(state)}
-                  highlightErrors={[]}
-                  typedHoleSuggestions={[]}
+                  errorLocations={[]}
+                  typedHoleResponses={[]}
                 />
               </Panel>
               <Panel>
@@ -105,15 +106,8 @@ export const NewType: React.FC<Props> = ({
                     code={code}
                     setCode={onCodeChange}
                     sourceItems={getSourceItems(state)}
-                    highlightErrors={[]}
-                    typedHoleSuggestions={getTypedHoles(
-                      state
-                    ).map((th) => ({
-                      sourceSpan: th.thSourceSpan,
-                      monoType: th.thMonoType,
-                      suggestions: th.thSuggestions,
-                      originalName: th.thName,
-                    }))}
+                    errorLocations={err.ueErrorLocations}
+                    typedHoleResponses={err.ueTypedHoles}
                   />
                 </Panel>
                 <Panel>

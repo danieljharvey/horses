@@ -13,6 +13,8 @@ import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import {
   getTypedHolesFromEditor,
   getSourceItemsFromEditor,
+  getErrorLocations,
+  getErrorLocationsFromEditor,
 } from '../../reducer/editor/selector'
 
 type Props = {
@@ -42,14 +44,8 @@ export const Scratch: React.FC<Props> = ({
     dispatch
   )
 
-  const typedHoleSuggestions = getTypedHolesFromEditor(
-    editor
-  ).map((th) => ({
-    sourceSpan: th.thSourceSpan,
-    suggestions: th.thSuggestions,
-    monoType: th.thMonoType,
-    originalName: th.thName,
-  }))
+  const typedHoleResponses = getTypedHolesFromEditor(editor)
+  const errorLocations = getErrorLocationsFromEditor(editor)
 
   return (
     <>
@@ -58,8 +54,8 @@ export const Scratch: React.FC<Props> = ({
           code={editor.code}
           sourceItems={getSourceItemsFromEditor(editor)}
           setCode={onCodeChange}
-          highlightErrors={[]}
-          typedHoleSuggestions={typedHoleSuggestions}
+          errorLocations={errorLocations}
+          typedHoleResponses={typedHoleResponses}
         />
       </Panel>
       <Panel>

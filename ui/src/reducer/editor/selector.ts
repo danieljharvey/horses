@@ -7,6 +7,7 @@ import {
   SourceItem,
   UserErrorResponse,
   TypedHoleResponse,
+  ErrorLocation,
 } from '../../types'
 import { pipe } from 'fp-ts/function'
 import * as NE from 'fp-ts/NonEmptyArray'
@@ -22,8 +23,8 @@ import { viewL } from '../view/selectors'
 
 const neHeadL = <A>(): Lens<NE.NonEmptyArray<A>, A> =>
   new Lens(
-    s => NE.head(s),
-    a => s => NE.cons(a, NE.tail(s))
+    (s) => NE.head(s),
+    (a) => (s) => NE.cons(a, NE.tail(s))
   )
 
 type ScreenWithEditor =
@@ -54,8 +55,8 @@ const editorFromScreen: Lens<
   ScreenWithEditor,
   EditorState
 > = new Lens(
-  s => s.editor,
-  a => s => ({ ...s, editor: a })
+  (s) => s.editor,
+  (a) => (s) => ({ ...s, editor: a })
 )
 
 export const currentEditorO = stackL
@@ -104,7 +105,7 @@ const expressionDataLens: Lens<
         return res.expression
     }
   },
-  expr => s => ({ ...s, expression: expr })
+  (expr) => (s) => ({ ...s, expression: expr })
 )
 
 type UserErrorResult = {
@@ -123,17 +124,28 @@ const userErrorResponsePrism: Prism<
   (a: UserErrorResult) => a as ExpressionResult
 )
 
-const typedHolesO: Optional<
+const errorResponseO: Optional<
   EditorState,
-  TypedHoleResponse[]
+  UserErrorResponse
 > = Lens.fromProp<EditorState>()('expression')
   .composePrism(userErrorResponsePrism)
   .composeLens(
     Lens.fromProp<UserErrorResult>()('errorResponse')
   )
-  .composeLens(
-    Lens.fromProp<UserErrorResponse>()('ueTypedHoles')
-  )
+
+const typedHolesO: Optional<
+  EditorState,
+  TypedHoleResponse[]
+> = errorResponseO.composeLens(
+  Lens.fromProp<UserErrorResponse>()('ueTypedHoles')
+)
+
+const errorLocationsO: Optional<
+  EditorState,
+  ErrorLocation[]
+> = errorResponseO.composeLens(
+  Lens.fromProp<UserErrorResponse>()('ueErrorLocations')
+)
 
 const expressionO: Optional<
   EditorState,
@@ -178,6 +190,24 @@ export const getTypedHoles = (
       .composeOptional(typedHolesO)
       .getOption(state),
     O.getOrElse<TypedHoleResponse[]>(() => [])
+  )
+
+export const getErrorLocationsFromEditor = (
+  editorState: EditorState
+): ErrorLocation[] =>
+  pipe(
+    errorLocationsO.getOption(editorState),
+    O.getOrElse<ErrorLocation[]>(() => [])
+  )
+
+export const getErrorLocations = (
+  state: State
+): ErrorLocation[] =>
+  pipe(
+    currentEditorO
+      .composeOptional(errorLocationsO)
+      .getOption(state),
+    O.getOrElse<ErrorLocation[]>(() => [])
   )
 
 export const getSourceItemsFromEditor = (

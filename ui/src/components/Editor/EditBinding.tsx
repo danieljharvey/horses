@@ -9,7 +9,11 @@ import { Button } from '../View/Button'
 import { ExprHash } from '../../types'
 import { fetchExpressionsForHashes } from '../../reducer/project/actions'
 import { pipe } from 'fp-ts/lib/function'
-import { getSourceItems } from '../../reducer/editor/selector'
+import {
+  getErrorLocations,
+  getSourceItems,
+  getTypedHoles,
+} from '../../reducer/editor/selector'
 
 type Props = {
   state: State
@@ -47,6 +51,9 @@ export const EditBinding: React.FC<Props> = ({
     hashes: ExprHash[]
   ) => pipe(hashes, fetchExpressionsForHashes, dispatch)
 
+  const typedHoleSuggestions = getTypedHoles(state)
+  const errorLocations = getErrorLocations(state)
+
   return (
     <>
       <Panel flexGrow={2}>
@@ -54,8 +61,8 @@ export const EditBinding: React.FC<Props> = ({
           code={code}
           setCode={onCodeChange}
           sourceItems={getSourceItems(state)}
-          highlightErrors={[]}
-          typedHoleSuggestions={[]}
+          errorLocations={errorLocations}
+          typedHoleResponses={typedHoleSuggestions}
         />
       </Panel>
       <Panel>

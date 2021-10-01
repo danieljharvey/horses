@@ -53,7 +53,7 @@ export const runtime = (
         listBindings({
           lbProjectHash: event.projectHash,
         }),
-        TE.map(data => [
+        TE.map((data) => [
           storeProjectData(data.lbProjectData),
         ]),
         orEmpty()
@@ -61,7 +61,7 @@ export const runtime = (
     case 'CreateProject':
       return pipe(
         createProject(),
-        TE.map(data => [
+        TE.map((data) => [
           storeProjectData(data.cpProjectData),
           setScreen({
             type: 'scratch' as const,
@@ -77,14 +77,14 @@ export const runtime = (
             geExprHash: exprHash,
             geProjectHash: event.projectHash,
           }),
-          TE.map(a => ({
+          TE.map((a) => ({
             type: 'FetchExpressionSuccess' as const,
             exprHash,
             storeExpression: a.geExpressionData,
           }))
         )
       const hashes = event.hashes.filter(
-        exprHash =>
+        (exprHash) =>
           !Object.keys(state.project.store).includes(
             exprHash
           )
@@ -92,8 +92,8 @@ export const runtime = (
       const x = pipe(
         TE.sequenceArray(hashes.map(fetchAndDispatch)),
         TE.fold(
-          _ => T.of([]),
-          actions => T.of(actions as Action[])
+          (_) => T.of([]),
+          (actions) => T.of(actions as Action[])
         )
       )
       return x
@@ -104,13 +104,13 @@ export const runtime = (
           erProjectHash: state.project.projectHash,
         }),
         TE.bimap(
-          e => [
+          (e) => [
             {
               type: 'EvaluateExpressionFailure' as const,
               typeError: e,
             },
           ],
-          a => [
+          (a) => [
             {
               type: 'EvaluateExpressionSuccess' as const,
               expression: a,
@@ -127,13 +127,13 @@ export const runtime = (
           beBindingName: event.bindingName,
         }),
         TE.bimap(
-          e => [
+          (e) => [
             {
               type: 'BindExpressionFailure' as const,
               error: e,
             },
           ],
-          a => [
+          (a) => [
             {
               type: 'BindExpressionSuccess' as const,
               expression: a.beExpressionData,
@@ -152,13 +152,13 @@ export const runtime = (
           autTestName: event.testName,
         }),
         TE.bimap(
-          e => [
+          (e) => [
             {
               type: 'AddUnitTestFailure' as const,
               error: e,
             },
           ],
-          a => [
+          (a) => [
             {
               type: 'AddUnitTestSuccess' as const,
               unitTest: a.autUnitTest,

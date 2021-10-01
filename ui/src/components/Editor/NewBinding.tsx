@@ -14,7 +14,11 @@ import {
   validateBinding,
   showError,
 } from './utils/validateBindingName'
-import { getSourceItems } from '../../reducer/editor/selector'
+import {
+  getErrorLocations,
+  getSourceItems,
+  getTypedHoles,
+} from '../../reducer/editor/selector'
 
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
@@ -69,6 +73,9 @@ export const NewBinding: React.FC<Props> = ({
         getProjectBindings(state)
       )
 
+  const typedHoleSuggestions = getTypedHoles(state)
+  const errorLocations = getErrorLocations(state)
+
   return (
     <>
       <Panel flexGrow={2}>
@@ -83,8 +90,8 @@ export const NewBinding: React.FC<Props> = ({
           code={code}
           setCode={onCodeChange}
           sourceItems={getSourceItems(state)}
-          highlightErrors={[]}
-          typedHoleSuggestions={[]}
+          errorLocations={errorLocations}
+          typedHoleResponses={typedHoleSuggestions}
         />
       </Panel>
       <Panel>

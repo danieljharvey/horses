@@ -9,7 +9,11 @@ import { Feedback } from './Feedback'
 
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
-import { getSourceItems } from '../../reducer/editor/selector'
+import {
+  getErrorLocations,
+  getSourceItems,
+  getTypedHoles,
+} from '../../reducer/editor/selector'
 import { TextInput } from '../View/TextInput'
 import { ExprHash } from '../../types'
 import { fetchExpressionsForHashes } from '../../reducer/project/actions'
@@ -55,6 +59,9 @@ export const NewTest: React.FC<Props> = ({
       testName,
     })
 
+  const typedHoleSuggestions = getTypedHoles(state)
+  const errorLocations = getErrorLocations(state)
+
   return (
     <>
       <Panel flexGrow={2}>
@@ -69,8 +76,8 @@ export const NewTest: React.FC<Props> = ({
           code={code}
           setCode={onCodeChange}
           sourceItems={getSourceItems(state)}
-          highlightErrors={[]}
-          typedHoleSuggestions={[]}
+          errorLocations={errorLocations}
+          typedHoleResponses={typedHoleSuggestions}
         />
       </Panel>
       <Panel>
