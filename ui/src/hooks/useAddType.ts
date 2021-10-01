@@ -12,6 +12,7 @@ import {
   Typeclass,
   ProjectData,
   DataType,
+  UserErrorResponse,
 } from '../generated'
 import { pipe } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
@@ -28,7 +29,7 @@ type AddType = {
   dataTypePretty: string
 }
 
-type State = RemoteData<string, AddType>
+type State = RemoteData<UserErrorResponse, AddType>
 
 export const useAddType = (
   projectHash: string,
@@ -51,7 +52,7 @@ export const useAddType = (
 
     pipe(
       result,
-      E.fold<string, BindTypeResponse, State>(
+      E.fold<UserErrorResponse, BindTypeResponse, State>(
         (e) => failure(e),
         (a) => {
           updateProject(

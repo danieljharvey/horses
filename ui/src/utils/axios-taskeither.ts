@@ -2,11 +2,11 @@ import axios, { AxiosRequestConfig } from 'axios'
 import * as TE from 'fp-ts/TaskEither'
 import { pipe } from 'fp-ts/function'
 
-export const axiosPost = <Data, Response>(
+export const axiosPost = <Data, Err, Response>(
   url: string,
   data: Data,
   config?: AxiosRequestConfig
-): TE.TaskEither<string, Response> =>
+): TE.TaskEither<Err, Response> =>
   pipe(
     TE.tryCatch(
       () => axios.post(url, data, config),
@@ -20,10 +20,10 @@ export const axiosPost = <Data, Response>(
     TE.map((a) => a.data)
   )
 
-export const axiosGet = <Response>(
+export const axiosGet = <Err, Response>(
   url: string,
   config?: AxiosRequestConfig
-): TE.TaskEither<string, Response> =>
+): TE.TaskEither<Err, Response> =>
   pipe(
     TE.tryCatch(
       () => axios.get(url, config),

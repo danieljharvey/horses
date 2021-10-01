@@ -19,7 +19,7 @@ import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { Paragraph } from '../View/Paragraph'
 import { ListBindings } from '../ListBindings'
 import { InlineSpaced } from '../View/InlineSpaced'
-import { ExprHash } from '../../types'
+import { ExprHash, UserErrorResponse } from '../../types'
 import { flow } from 'fp-ts/function'
 import { fetchExpressionsForHashes } from '../../reducer/project/actions'
 
@@ -68,6 +68,8 @@ export const NewType: React.FC<Props> = ({
                   code={code}
                   setCode={onCodeChange}
                   sourceItems={getSourceItems(state)}
+                  errorLocations={[]}
+                  typedHoleResponses={[]}
                 />
               </Panel>
               <Panel>
@@ -90,25 +92,32 @@ export const NewType: React.FC<Props> = ({
             </>
           ),
           () => <p>loading</p>,
-          (err) => (
-            <>
-              <Panel flexGrow={2}>
-                <CodeEditor
-                  code={code}
-                  setCode={onCodeChange}
-                  sourceItems={getSourceItems(state)}
-                />
-              </Panel>
-              <Panel>
-                {editor.stale && (
-                  <Button onClick={addNewType}>
-                    Create
-                  </Button>
-                )}
-                <Code>{err}</Code>
-              </Panel>
-            </>
-          ),
+
+          (err: UserErrorResponse) => {
+            console.log('new type', { err })
+            return (
+              <>
+                <Panel flexGrow={2}>
+                  <CodeEditor
+                    code={code}
+                    setCode={onCodeChange}
+                    sourceItems={getSourceItems(state)}
+                    errorLocations={err.ueErrorLocations}
+                    typedHoleResponses={err.ueTypedHoles}
+                  />
+                </Panel>
+                <Panel>
+                  {editor.stale && (
+                    <Button onClick={addNewType}>
+                      Create
+                    </Button>
+                  )}
+                  <Code>{err.ueText}</Code>
+                </Panel>
+              </>
+            )
+          },
+
           (addType) => (
             <Panel>
               <FlexColumnSpaced>

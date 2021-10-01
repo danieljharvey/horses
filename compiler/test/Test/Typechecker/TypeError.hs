@@ -36,7 +36,7 @@ spec = do
       let input = "if dog then 1 else 2"
           err = UnknownTypeError
       let result = displayError input err
-      result `shouldSatisfy` textContains (prettyPrint err)
+      result `shouldSatisfy` textContains (prettyPrint (err :: TypeError))
     it "Shows the location with CaseMatchExpectedPair" $
       getTypeError "let (a,b) = True in a"
         `shouldSatisfy` maybePred (textContains "^^^^")

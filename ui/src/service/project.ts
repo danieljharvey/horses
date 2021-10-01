@@ -14,6 +14,7 @@ import {
   BindTypeResponse,
   GraphProjectResponse,
   ExprHash,
+  UserErrorResponse,
 } from '../types/'
 import {
   axiosPost,
@@ -27,12 +28,15 @@ const baseUrl = process.env.REACT_APP_MIMSA_API_URL
 
 export const evaluate = (
   evaluateRequest: EvaluateRequest
-): TE.TaskEither<string, EvaluateResponse> =>
+): TE.TaskEither<UserErrorResponse, EvaluateResponse> =>
   axiosPost(`${baseUrl}/project/evaluate/`, evaluateRequest)
 
 export const bindExpression = (
   bindExpressionRequest: BindExpressionRequest
-): TE.TaskEither<string, BindExpressionResponse> =>
+): TE.TaskEither<
+  UserErrorResponse,
+  BindExpressionResponse
+> =>
   axiosPost(
     `${baseUrl}/project/bind/`,
     bindExpressionRequest
@@ -40,12 +44,12 @@ export const bindExpression = (
 
 export const bindType = (
   bindTypeRequest: BindTypeRequest
-): TE.TaskEither<string, BindTypeResponse> =>
+): TE.TaskEither<UserErrorResponse, BindTypeResponse> =>
   axiosPost(`${baseUrl}/project/type/`, bindTypeRequest)
 
 export const addUnitTest = (
   addUnitTestRequest: AddUnitTestRequest
-): TE.TaskEither<string, AddUnitTestResponse> =>
+): TE.TaskEither<UserErrorResponse, AddUnitTestResponse> =>
   axiosPost(
     `${baseUrl}/project/tests/add/`,
     addUnitTestRequest
@@ -66,7 +70,10 @@ export const createProject = (): TE.TaskEither<
 
 export const getExpression = (
   getExpressionRequest: GetExpressionRequest
-): TE.TaskEither<string, GetExpressionResponse> =>
+): TE.TaskEither<
+  UserErrorResponse,
+  GetExpressionResponse
+> =>
   axiosPost(
     `${baseUrl}/project/expression/`,
     getExpressionRequest

@@ -5,20 +5,31 @@ import MonacoEditor, {
   EditorWillMount,
 } from 'react-monaco-editor'
 import './CodeEditor.css'
-import { SourceItem } from '../../types'
-import * as Arr from 'fp-ts/Array'
+import {
+  ErrorLocation,
+  SourceItem,
+  TypedHoleResponse,
+} from '../../types'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import { mimsaLanguage } from './mimsaLanguageMonaco'
 import {
   Position,
   languages,
+  editor,
 } from 'monaco-editor/esm/vs/editor/editor.api'
+import {
+  createMarkerForTypedHole,
+  createMarkerForError,
+  chooseSourceSpan,
+} from './utils/sourceSpanHelpers'
 
 type Props = {
   code: string
   setCode: (s: string) => void
   sourceItems: SourceItem[]
+  errorLocations: ErrorLocation[]
+  typedHoleResponses: TypedHoleResponse[]
 }
 
 const colours = {
@@ -31,44 +42,6 @@ const colours = {
   darkBlue: '#26428b',
 }
 
-const sourceSize = ({
-  ssRowStart,
-  ssRowEnd,
-  ssColStart,
-  ssColEnd,
-}: SourceItem['siSourceSpan']): number => {
-  const width = Math.max(ssRowEnd - ssRowStart, 1)
-  const height = Math.max(ssColEnd - ssColStart, 1)
-  return width * height
-}
-
-const chooseSourceSpan = (
-  sourceItems: SourceItem[],
-  position: Position
-): O.Option<SourceItem> =>
-  Arr.head(
-    sourceItems
-      .filter(
-        ({
-          siSourceSpan: {
-            ssRowStart,
-            ssRowEnd,
-            ssColStart,
-            ssColEnd,
-          },
-        }) =>
-          position.lineNumber >= ssRowStart &&
-          position.lineNumber <= ssRowEnd &&
-          position.column >= ssColStart &&
-          position.column <= ssColEnd
-      )
-      .sort(
-        (a, b) =>
-          sourceSize(a.siSourceSpan) -
-          sourceSize(b.siSourceSpan)
-      )
-  )
-
 const editorWillMount: EditorWillMount = (monaco) => {
   monaco.languages.register({ id: 'mimsa' })
 
@@ -77,6 +50,42 @@ const editorWillMount: EditorWillMount = (monaco) => {
     'mimsa',
     mimsaLanguage as any // for some reason this works but the types are totally different
   )
+
+  // show autofill for typed hole suggestions
+  monaco.languages.registerCodeActionProvider('mimsa', {
+    provideCodeActions: (
+      model,
+      _range,
+      context,
+      _token
+    ) => {
+      const suggestions = mutableTypedHoleResponses.flatMap(
+        (ths) =>
+          ths.thSuggestions.map((sug) => ({
+            title: `Replace ?${ths.thName} with ${sug}`,
+            diagnostics: [createMarkerForTypedHole(ths)],
+            kind: 'quickfix',
+            edit: {
+              edits: [
+                {
+                  resource: model.uri,
+                  edit: {
+                    range: createMarkerForTypedHole(ths),
+                    text: sug,
+                  },
+                },
+              ],
+            },
+            isPreferred: true,
+          }))
+      )
+
+      return {
+        actions: suggestions,
+        dispose: () => {},
+      }
+    },
+  })
 
   monaco.languages.registerHoverProvider('mimsa', {
     provideHover: (_model: unknown, position: Position) =>
@@ -162,15 +171,33 @@ const options = {
 }
 
 let mutableSourceItems: SourceItem[] = []
+let mutableTypedHoleResponses: TypedHoleResponse[] = []
 
 export const CodeEditor: React.FC<Props> = ({
   code,
   setCode,
   sourceItems,
+  errorLocations,
+  typedHoleResponses,
 }) => {
+  const monacoRef = React.useRef<MonacoEditor>(null)
+
   React.useEffect(() => {
     mutableSourceItems = sourceItems
-  }, [sourceItems])
+    mutableTypedHoleResponses = typedHoleResponses
+  }, [sourceItems, typedHoleResponses])
+
+  React.useEffect(() => {
+    if (monacoRef.current && monacoRef.current.editor) {
+      const markers = [
+        ...typedHoleResponses.map(createMarkerForTypedHole),
+        ...errorLocations.map(createMarkerForError),
+      ]
+      const model = monacoRef.current.editor.getModel()
+      model &&
+        editor.setModelMarkers(model, 'Mimsa', markers)
+    }
+  }, [errorLocations, typedHoleResponses])
 
   const editorDidMount: EditorDidMount = (editor) => {
     editor.focus()
@@ -183,6 +210,7 @@ export const CodeEditor: React.FC<Props> = ({
   return (
     <section className="editor">
       <MonacoEditor
+        ref={monacoRef}
         language="mimsa"
         theme="mimsa"
         value={code}

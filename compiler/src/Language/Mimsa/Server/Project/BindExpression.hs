@@ -11,13 +11,16 @@ module Language.Mimsa.Server.Project.BindExpression
   )
 where
 
+import Control.Monad.Trans.Class
 import qualified Data.Aeson as JSON
 import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindExpression as Actions
-import Language.Mimsa.Server.ExpressionData
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Helpers.ExpressionData
+import Language.Mimsa.Server.MimsaHandler
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
@@ -29,7 +32,7 @@ import Servant
 type BindExpression =
   "bind"
     :> ReqBody '[JSON] BindExpressionRequest
-    :> Post '[JSON] BindExpressionResponse
+    :> JsonPost BindExpressionResponse
 
 data BindExpressionRequest = BindExpressionRequest
   { beProjectHash :: ProjectHash,
@@ -41,8 +44,7 @@ data BindExpressionRequest = BindExpressionRequest
 
 data BindExpressionResponse = BindExpressionResponse
   { beProjectData :: ProjectData,
-    beExpressionData :: ExpressionData,
-    beUpdatedTestsCount :: Int
+    beExpressionData :: ExpressionData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -50,18 +52,17 @@ data BindExpressionResponse = BindExpressionResponse
 bindExpression ::
   MimsaEnvironment ->
   BindExpressionRequest ->
-  Handler BindExpressionResponse
-bindExpression mimsaEnv (BindExpressionRequest hash name' input) = do
-  expr <- parseHandler input
-  (newProject, (_, numTests, ResolvedExpression _ se _ _ _ typedExpr input', gv)) <-
-    fromActionM
-      mimsaEnv
-      hash
-      (Actions.bindExpression expr name' input)
-  pd <- projectDataHandler mimsaEnv newProject
-  ed <- expressionDataHandler newProject se typedExpr gv input'
-  pure $
-    BindExpressionResponse
-      pd
-      ed
-      numTests
+  MimsaHandler BindExpressionResponse
+bindExpression mimsaEnv (BindExpressionRequest hash name' input) = runMimsaHandlerT $ do
+  let action = do
+        expr <- Actions.parseExpr input
+        (_, _, ResolvedExpression _ se _ _ _ typedExpr input', gv) <-
+          Actions.bindExpression expr name' input
+        expressionData se typedExpr gv input'
+  response <-
+    lift $ eitherFromActionM mimsaEnv hash action
+  case response of
+    Right (newProject, ed) -> do
+      pd <- lift $ projectDataHandler mimsaEnv newProject
+      returnMimsa $ BindExpressionResponse pd ed
+    Left e -> throwMimsaError e

@@ -138,7 +138,6 @@ export const runtime = (
               type: 'BindExpressionSuccess' as const,
               expression: a.beExpressionData,
               bindingName: event.bindingName,
-              updatedTestsCount: a.beUpdatedTestsCount,
             },
             storeProjectData(a.beProjectData),
           ]

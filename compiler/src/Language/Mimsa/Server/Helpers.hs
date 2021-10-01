@@ -1,3 +1,8 @@
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module Language.Mimsa.Server.Helpers
   ( to400Error,
     to500Error,

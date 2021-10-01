@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -17,7 +18,7 @@ import Language.Mimsa.Printer
 data StringPart var ann
   = StrWildcard ann
   | StrValue ann var
-  deriving stock (Show, Eq, Ord, Functor, Generic)
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
 instance

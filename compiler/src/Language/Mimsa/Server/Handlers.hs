@@ -8,28 +8,22 @@
 module Language.Mimsa.Server.Handlers
   ( ProjectData (..),
     fromActionM,
+    eitherFromActionM,
     projectDataHandler,
     loadProjectHandler,
-    evaluateTextHandler,
-    createNewUnitTestsHandler,
-    parseHandler,
-    parseDataTypeHandler,
     saveExprHandler,
     saveFileHandler,
-    interpretHandler,
     findExprHandler,
     storeFromExprHashHandler,
     resolveStoreExpressionHandler,
     readStoreHandler,
     writeStoreHandler,
-    createUnitTestHandler,
   )
 where
 
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
-import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import Data.Map (Map)
 import Data.OpenApi
@@ -38,16 +32,12 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
-  ( evaluateText,
-    getTypeMap,
+  ( getTypeMap,
     resolveStoreExpression,
   )
-import Language.Mimsa.Interpreter (interpret)
-import Language.Mimsa.Parser (parseExprAndFormatError, parseTypeDeclAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Persistence
-import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Store
@@ -56,9 +46,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Swaps
 import Servant
 
 -----
@@ -82,6 +70,24 @@ fromActionM mimsaEnv projectHash action = do
       traverse_ (saveFileHandler mimsaEnv) (Actions.writeFilesFromOutcomes outcomes)
 
       pure (newProject, a)
+
+eitherFromActionM ::
+  MimsaEnvironment ->
+  ProjectHash ->
+  Actions.ActionM a ->
+  Handler (Either (Error Annotation) (Project Annotation, a))
+eitherFromActionM mimsaEnv projectHash action = do
+  store' <- readStoreHandler mimsaEnv
+  project <- loadProjectHandler mimsaEnv store' projectHash
+  case Actions.run project action of
+    Left e -> pure (Left e)
+    Right (newProject, outcomes, a) -> do
+      traverse_ (saveExprHandler mimsaEnv) (Actions.storeExpressionsFromOutcomes outcomes)
+      -- TODO: return these as a list of Text to show up in a toast in app
+      -- traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
+      traverse_ (saveFileHandler mimsaEnv) (Actions.writeFilesFromOutcomes outcomes)
+
+      pure (Right (newProject, a))
 
 outputBindings :: Project a -> Map Name Text
 outputBindings project =
@@ -119,7 +125,10 @@ writeStoreHandler mimsaEnv store' = do
         (<> store')
 
 -- given a new Project, save it and return the hash and bindings
-projectDataHandler :: MimsaEnvironment -> Project ann -> Handler ProjectData
+projectDataHandler ::
+  MimsaEnvironment ->
+  Project ann ->
+  Handler ProjectData
 projectDataHandler mimsaEnv env = do
   projHash <-
     handleMimsaM
@@ -141,30 +150,10 @@ loadProjectHandler ::
 loadProjectHandler mimsaEnv store' hash =
   handleMimsaM (mimsaConfig mimsaEnv) UserError (loadProjectFromHash store' hash)
 
-evaluateTextHandler ::
-  Project Annotation ->
-  Text ->
-  Handler (ResolvedExpression Annotation)
-evaluateTextHandler project code =
-  handleEither UserError (Actions.evaluateText project code)
-
-parseHandler :: Text -> Handler (Expr Name Annotation)
-parseHandler input =
-  let wrapError :: Text -> Error Annotation
-      wrapError = ParseError
-   in handleEither
-        UserError
-        (first wrapError (parseExprAndFormatError input))
-
-parseDataTypeHandler :: Text -> Handler DataType
-parseDataTypeHandler input =
-  let wrapError :: Text -> Error Annotation
-      wrapError = ParseError
-   in handleEither
-        UserError
-        (first wrapError (parseTypeDeclAndFormatError input))
-
-saveExprHandler :: MimsaEnvironment -> StoreExpression ann -> Handler ExprHash
+saveExprHandler ::
+  MimsaEnvironment ->
+  StoreExpression ann ->
+  Handler ExprHash
 saveExprHandler mimsaEnv se =
   handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveExpr se)
 
@@ -174,14 +163,6 @@ saveFileHandler ::
   Handler ()
 saveFileHandler mimsaEnv saveInfo =
   handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveFile saveInfo)
-
-interpretHandler ::
-  Scope Annotation ->
-  Swaps ->
-  Expr Variable Annotation ->
-  Handler (Expr Name Annotation)
-interpretHandler scope' swaps' expr' =
-  handleEither InternalError (interpret scope' swaps' expr')
 
 resolveStoreExpressionHandler ::
   Project Annotation ->
@@ -215,22 +196,3 @@ storeFromExprHashHandler mimsaEnv exprHash =
     (mimsaConfig mimsaEnv)
     UserError
     (recursiveLoadBoundExpressions mempty (S.singleton exprHash))
-
-createNewUnitTestsHandler ::
-  Project Annotation ->
-  ExprHash ->
-  ExprHash ->
-  Handler
-    ( Project Annotation,
-      [StoreExpression Annotation]
-    )
-createNewUnitTestsHandler project oldExprHash newExprHash =
-  handleEither UserError (createNewUnitTests project oldExprHash newExprHash)
-
-createUnitTestHandler ::
-  Project Annotation ->
-  StoreExpression Annotation ->
-  TestName ->
-  Handler UnitTest
-createUnitTestHandler project storeExpr testName =
-  handleEither UserError $ createUnitTest project storeExpr testName

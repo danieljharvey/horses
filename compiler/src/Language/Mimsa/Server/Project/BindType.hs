@@ -16,10 +16,12 @@ import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
-import Language.Mimsa.Server.ExpressionData
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Helpers.ExpressionData
+import Language.Mimsa.Server.MimsaHandler
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -33,7 +35,7 @@ import Servant
 type BindType =
   "type"
     :> ReqBody '[JSON] BindTypeRequest
-    :> Post '[JSON] BindTypeResponse
+    :> JsonPost BindTypeResponse
 
 data BindTypeRequest = BindTypeRequest
   { btProjectHash :: ProjectHash,
@@ -59,22 +61,24 @@ data BindTypeResponse = BindTypeResponse
 bindType ::
   MimsaEnvironment ->
   BindTypeRequest ->
-  Handler BindTypeResponse
-bindType mimsaEnv (BindTypeRequest projectHash input) =
-  do
-    expr <- parseDataTypeHandler input
-    (newProject, (typeClasses, codegenInfo, dt, gv)) <-
-      fromActionM
-        mimsaEnv
-        projectHash
-        (Actions.bindType input expr)
-    pd <- projectDataHandler mimsaEnv newProject
-    ed <- case codegenInfo of
-      Just resolvedExpr -> do
-        let se = reStoreExpression resolvedExpr
-            typedExpr = reTypedExpression resolvedExpr
-        ed' <- expressionDataHandler newProject se typedExpr gv input
-        pure (Just ed')
-      Nothing -> pure Nothing
-    pure $
-      BindTypeResponse pd dt (prettyPrint dt) ed typeClasses
+  MimsaHandler BindTypeResponse
+bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
+  let action = do
+        expr <- Actions.parseDataType input
+        (typeClasses, codegenInfo, dt, gv) <- Actions.bindType input expr
+        ed <- case codegenInfo of
+          Just resolvedExpr -> do
+            let se = reStoreExpression resolvedExpr
+                typedExpr = reTypedExpression resolvedExpr
+            ed' <- expressionData se typedExpr gv input
+            pure (Just ed')
+          Nothing -> pure Nothing
+        pure (ed, typeClasses, dt)
+  response <-
+    lift $ eitherFromActionM mimsaEnv projectHash action
+  case response of
+    Right (newProject, (ed, typeClasses, dt)) -> do
+      pd <- lift $ projectDataHandler mimsaEnv newProject
+      returnMimsa $
+        BindTypeResponse pd dt (prettyPrint dt) ed typeClasses
+    Left e -> throwMimsaError e

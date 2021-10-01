@@ -1,6 +1,10 @@
 import { Lens } from 'monocle-ts'
 import * as O from 'fp-ts/Option'
-import { UnitTestData, ExpressionData } from '../../types'
+import {
+  UnitTestData,
+  ExpressionData,
+  UserErrorResponse,
+} from '../../types'
 import {
   EventReducer,
   stateOnly,
@@ -30,13 +34,11 @@ export const showBinding = (
 
 export const showUpdatedBinding = (
   expression: ExpressionData,
-  bindingName: string,
-  updatedTestsCount: number
+  bindingName: string
 ): ExpressionResult => ({
   type: 'ShowUpdatedBinding',
   expression,
   bindingName,
-  updatedTestsCount,
 })
 
 export const showUnitTest = (
@@ -46,9 +48,11 @@ export const showUnitTest = (
   unitTest,
 })
 
-const showError = (error: string): ExpressionResult => ({
-  type: 'ShowError',
-  error,
+const showErrorResponse = (
+  errorResponse: UserErrorResponse
+): ExpressionResult => ({
+  type: 'ShowErrorResponse',
+  errorResponse,
 })
 
 const evaluationError = (): ExpressionResult => ({
@@ -109,7 +113,7 @@ export const editorReducer: EventReducer<
     case 'EvaluateExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.typeError),
+        expression: showErrorResponse(action.typeError),
       })
 
     case 'EvaluateExpressionSuccess':
@@ -140,14 +144,13 @@ export const editorReducer: EventReducer<
         stale: false,
         expression: showUpdatedBinding(
           action.expression,
-          action.bindingName,
-          action.updatedTestsCount
+          action.bindingName
         ),
       })
     case 'BindExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.error),
+        expression: showErrorResponse(action.error),
       })
     case 'AddUnitTest':
       return stateAndEvent(staleL.set(false)(state), {
@@ -164,7 +167,7 @@ export const editorReducer: EventReducer<
     case 'AddUnitTestFailure':
       return stateOnly({
         ...state,
-        expression: showError(action.error),
+        expression: showErrorResponse(action.error),
       })
     default:
       return stateOnly(state)

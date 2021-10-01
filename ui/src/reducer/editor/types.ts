@@ -3,6 +3,7 @@ import {
   ExpressionData,
   EvaluateResponse,
   UnitTestData,
+  UserErrorResponse,
 } from '../../types/'
 
 export type EditorState = {
@@ -15,7 +16,10 @@ export type EditorState = {
 export type ExpressionResult =
   | { type: 'EditorNew' }
   | { type: 'ShowBinding'; expression: ExpressionData }
-  | { type: 'ShowError'; error: string }
+  | {
+      type: 'ShowErrorResponse'
+      errorResponse: UserErrorResponse
+    }
   | { type: 'ShowUnitTest'; unitTest: UnitTestData }
   | { type: 'EvaluationError' }
   | {
@@ -27,7 +31,6 @@ export type ExpressionResult =
       type: 'ShowUpdatedBinding'
       bindingName: string
       expression: ExpressionData
-      updatedTestsCount: number
     }
 
 export type EditorAction =
@@ -38,19 +41,24 @@ export type EditorAction =
       type: 'EvaluateExpressionSuccess'
       expression: EvaluateResponse
     }
-  | { type: 'EvaluateExpressionFailure'; typeError: string }
+  | {
+      type: 'EvaluateExpressionFailure'
+      typeError: UserErrorResponse
+    }
   | { type: 'EvaluateExpressionError' }
   | { type: 'AddUnitTest'; testName: string }
   | { type: 'AddUnitTestSuccess'; unitTest: UnitTestData }
-  | { type: 'AddUnitTestFailure'; error: string }
+  | { type: 'AddUnitTestFailure'; error: UserErrorResponse }
   | { type: 'BindExpression'; bindingName: string }
   | {
       type: 'BindExpressionSuccess'
       expression: ExpressionData
       bindingName: string
-      updatedTestsCount: number
     }
-  | { type: 'BindExpressionFailure'; error: string }
+  | {
+      type: 'BindExpressionFailure'
+      error: UserErrorResponse
+    }
 
 export type EditorEvent =
   | {

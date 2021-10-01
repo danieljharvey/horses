@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -38,7 +39,7 @@ data Pattern var ann
       (Map Name (Pattern var ann))
   | PArray ann [Pattern var ann] (Spread var ann)
   | PString ann (StringPart var ann) (StringPart var ann)
-  deriving stock (Show, Eq, Ord, Functor, Generic)
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
 instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where

@@ -5,22 +5,25 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Language.Mimsa.Server.ExpressionData
+module Language.Mimsa.Server.Helpers.ExpressionData
   ( ExpressionData (..),
     UnitTestData (..),
-    expressionDataHandler,
+    expressionData,
+    makeExpressionData,
     mkUnitTestData,
   )
 where
 
+import Control.Monad.State
 import qualified Data.Aeson as JSON
 import Data.Coerce
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.OpenApi
+import Data.OpenApi hiding (get)
 import qualified Data.Set as S
 import Data.Text (Text)
 import GHC.Generics
+import Language.Mimsa.Actions.Types
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -34,7 +37,6 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
-import Servant
 
 data UnitTestData = UnitTestData
   { utdTestName :: Text,
@@ -84,14 +86,14 @@ data ExpressionData = ExpressionData
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
-expressionDataHandler ::
+makeExpressionData ::
   Project Annotation ->
   StoreExpression Annotation ->
   Expr Variable MonoType ->
   [Graphviz] ->
   Text ->
-  Handler ExpressionData
-expressionDataHandler project se typedExpr gv input = do
+  ExpressionData
+makeExpressionData project se typedExpr gv input =
   let mt = getTypeFromAnn typedExpr
       exprHash = getStoreExpressionHash se
       tests =
@@ -101,16 +103,24 @@ expressionDataHandler project se typedExpr gv input = do
       matchingRuntimes =
         toRuntimeData
           <$> getValidRuntimes mt
+   in ExpressionData
+        (prettyPrint exprHash)
+        (prettyPrint (storeExpression se))
+        (prettyPrint mt)
+        (prettyPrint <$> getBindings (storeBindings se))
+        (prettyPrint <$> getTypeBindings (storeTypeBindings se))
+        tests
+        matchingRuntimes
+        (prettyGraphviz gv)
+        (getExpressionSourceItems input typedExpr)
+        input
 
-  pure $
-    ExpressionData
-      (prettyPrint exprHash)
-      (prettyPrint (storeExpression se))
-      (prettyPrint mt)
-      (prettyPrint <$> getBindings (storeBindings se))
-      (prettyPrint <$> getTypeBindings (storeTypeBindings se))
-      tests
-      matchingRuntimes
-      (prettyGraphviz gv)
-      (getExpressionSourceItems input typedExpr)
-      input
+expressionData ::
+  StoreExpression Annotation ->
+  Expr Variable MonoType ->
+  [Graphviz] ->
+  Text ->
+  ActionM ExpressionData
+expressionData se typedExpr gv input = do
+  project <- get
+  pure $ makeExpressionData project se typedExpr gv input

@@ -10,7 +10,11 @@ import { fetchExpressionsForHashes } from '../../reducer/project/actions'
 
 import { flow } from 'fp-ts/function'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
-import { getSourceItemsFromEditor } from '../../reducer/editor/selector'
+import {
+  getTypedHolesFromEditor,
+  getSourceItemsFromEditor,
+  getErrorLocationsFromEditor,
+} from '../../reducer/editor/selector'
 
 type Props = {
   projectHash: ExprHash
@@ -38,6 +42,10 @@ export const Scratch: React.FC<Props> = ({
     fetchExpressionsForHashes,
     dispatch
   )
+
+  const typedHoleResponses = getTypedHolesFromEditor(editor)
+  const errorLocations = getErrorLocationsFromEditor(editor)
+
   return (
     <>
       <Panel flexGrow={2}>
@@ -45,6 +53,8 @@ export const Scratch: React.FC<Props> = ({
           code={editor.code}
           sourceItems={getSourceItemsFromEditor(editor)}
           setCode={onCodeChange}
+          errorLocations={errorLocations}
+          typedHoleResponses={typedHoleResponses}
         />
       </Panel>
       <Panel>
