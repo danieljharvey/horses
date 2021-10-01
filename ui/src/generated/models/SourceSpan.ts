@@ -3,8 +3,8 @@
 /* eslint-disable */
 
 export type SourceSpan = {
-    ssColStart: number;
-    ssRowEnd: number;
-    ssRowStart: number;
-    ssColEnd: number;
+  ssColStart: number
+  ssRowEnd: number
+  ssRowStart: number
+  ssColEnd: number
 }

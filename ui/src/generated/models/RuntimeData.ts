@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export type RuntimeData = {
-    rtdName: string;
-    rtdDescription: string;
-    rtdMonoType: string;
+  rtdName: string
+  rtdDescription: string
+  rtdMonoType: string
 }

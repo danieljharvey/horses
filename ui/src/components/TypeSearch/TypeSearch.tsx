@@ -33,7 +33,7 @@ export const TypeSearch: React.FC<Props> = ({
     typeSearch({
       tsProjectHash: state.project.projectHash,
       tsInput: searchText,
-    })().then(res => {
+    })().then((res) => {
       if (E.isRight(res)) {
         setItems(res.right.tsProjectMatches)
         setErrorMessage('')

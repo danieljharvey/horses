@@ -2,9 +2,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { SourceSpan } from './SourceSpan';
+import type { SourceSpan } from './SourceSpan'
 
 export type SourceItem = {
-    siLabel: string;
-    siSourceSpan: SourceSpan;
+  siLabel: string
+  siSourceSpan: SourceSpan
 }

@@ -41,10 +41,14 @@
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",
     "typescript:watch": "tsc --noEmit --watch",
-    "typegen":"rm -rf src/generated && openapi --input ../compiler/swagger.json --output ./src/generated --exportModels=true --exportCore=false --exportServices=false --useUnionTypes"
+    "typegen": "rm -rf src/generated && openapi --input ../compiler/swagger.json --output ./src/generated --exportModels=true --exportCore=false --exportServices=false --useUnionTypes",
+    "format": "prettier --write ."
   },
   "eslintConfig": {
-    "extends": ["react-app", "react-app/jest"]
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "prettier": {
     "trailingComma": "es5",
@@ -54,7 +58,11 @@
     "printWidth": 60
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",

@@ -14,5 +14,5 @@ export const routerFetchExpression = (
     axiosPost(`${routerBaseUrl}/fetch/expr`, {
       feExprHash,
     }),
-    TE.map(url => `${routerBaseUrl}/${url}/`)
+    TE.map((url) => `${routerBaseUrl}/${url}/`)
   )

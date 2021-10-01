@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { ExpressionData } from './ExpressionData';
+import type { ExpressionData } from './ExpressionData'
 
 export type GetExpressionResponse = {
-    geExpressionData: ExpressionData;
+  geExpressionData: ExpressionData
 }

@@ -48,7 +48,7 @@ const getGraphData = (
 ): O.Option<string> =>
   pipe(
     toOption(projectGraphState),
-    O.map(gp => gp.gpGraphviz)
+    O.map((gp) => gp.gpGraphviz)
   )
 
 export const ProjectGraph: React.FC<Props> = ({
@@ -71,7 +71,7 @@ export const ProjectGraph: React.FC<Props> = ({
             findNameForExprHash(hash.value, state),
             O.fold(
               () => 'expression',
-              name => name
+              (name) => name
             )
           ),
         })
@@ -93,9 +93,9 @@ export const ProjectGraph: React.FC<Props> = ({
               <Paragraph>🐴 Loading 🐴</Paragraph>
             </Panel>
           ),
-          graphData => (
+          (graphData) => (
             <Panel
-              onClick={e =>
+              onClick={(e) =>
                 setSelectedExprHash(findExpressionHash(e))
               }
             >

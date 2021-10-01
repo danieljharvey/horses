@@ -2,10 +2,12 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type TypeIdentifier = ({
-    contents: string,
-    tag: 'TVName',
-} | {
-    contents: number,
-    tag: 'TVNum',
-});
+export type TypeIdentifier =
+  | {
+      contents: string
+      tag: 'TVName'
+    }
+  | {
+      contents: number
+      tag: 'TVNum'
+    }

@@ -3,5 +3,5 @@
 /* eslint-disable */
 
 export type TypeSearchResponse = {
-    tsProjectMatches: Array<string>;
+  tsProjectMatches: Array<string>
 }
