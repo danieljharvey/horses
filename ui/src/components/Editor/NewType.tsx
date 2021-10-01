@@ -5,11 +5,7 @@ import {
   EditorState,
 } from '../../reducer/types'
 import { storeProjectData } from '../../reducer/project/reducer'
-import {
-  getErrorLocations,
-  getSourceItems,
-  getTypedHoles,
-} from '../../reducer/editor/selector'
+import { getSourceItems } from '../../reducer/editor/selector'
 import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
@@ -48,7 +44,7 @@ export const NewType: React.FC<Props> = ({
   const [addNewType, typeState] = useAddType(
     projectHash,
     editor.code,
-    (pd) => dispatch(storeProjectData(pd))
+    pd => dispatch(storeProjectData(pd))
   )
 
   const onCodeChange = (a: string) =>
@@ -122,14 +118,14 @@ export const NewType: React.FC<Props> = ({
             )
           },
 
-          (addType) => (
+          addType => (
             <Panel>
               <FlexColumnSpaced>
                 <Paragraph>{`New type added: ${addType.typeName}`}</Paragraph>
                 <Code>{addType.dataTypePretty}</Code>
                 <Paragraph>Typeclasses:</Paragraph>
                 <InlineSpaced>
-                  {addType.typeclasses.map((a) => (
+                  {addType.typeclasses.map(a => (
                     <Link onClick={() => console.log(a)}>
                       {a}
                     </Link>
