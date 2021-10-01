@@ -43,7 +43,7 @@ jobs:
         run: cd ui && yarn
 
       - name: Check formatting
-        run: yarn prettier
+        run: cd ui && yarn prettier
 
       - name: Typecheck everything
         run: cd ui && yarn tsc
