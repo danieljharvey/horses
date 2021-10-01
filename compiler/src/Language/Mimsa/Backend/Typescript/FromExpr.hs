@@ -1,9 +1,9 @@
 module Language.Mimsa.Backend.Typescript.FromExpr where
 
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker
 
 toLiteral :: Literal -> TSLiteral
 toLiteral lit = case lit of
@@ -18,7 +18,7 @@ toPattern (PWildcard _) = TSPatternWildcard
 toPattern (PConstructor _ name vars) = TSPatternConstructor name (toPattern <$> vars)
 toPattern _ = undefined
 
-fromExpr :: Expr Name TypedAnnotation -> TSModule
+fromExpr :: Expr Name MonoType -> TSModule
 fromExpr expr =
   TSModule (makeTSExpr expr)
   where

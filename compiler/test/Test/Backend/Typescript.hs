@@ -120,17 +120,17 @@ spec = do
     describe "from typed expression" $ do
       let mtBool = MTPrim mempty MTBool
       it "const bool" $ do
-        fromExpr (MyLiteral (mtBool, mempty) (MyBool True))
+        fromExpr (MyLiteral mtBool (MyBool True))
           `shouldBe` TSModule (TSBody [] (TSLit (TSBool True)))
       it "let a = true in a" $
         do
           fromExpr
             ( MyLet
-                (mtBool, mempty)
+                mtBool
                 "a"
-                ( MyLiteral (mtBool, mempty) (MyBool True)
+                ( MyLiteral mtBool (MyBool True)
                 )
-                (MyVar (mtBool, mempty) "a")
+                (MyVar mtBool "a")
             )
             `shouldBe` TSModule
               ( TSBody
@@ -143,14 +143,14 @@ spec = do
       it "let (a,b) = (true,false) in a" $ do
         fromExpr
           ( MyLetPattern
-              (MTPair mempty mtBool mtBool, mempty)
-              (PPair (MTPair mempty mtBool mtBool, mempty) (PVar (mtBool, mempty) "a") (PVar (mtBool, mempty) "b"))
+              (MTPair mempty mtBool mtBool)
+              (PPair (MTPair mempty mtBool mtBool) (PVar mtBool "a") (PVar mtBool "b"))
               ( MyPair
-                  (MTPair mempty mtBool mtBool, mempty)
-                  (MyLiteral (mtBool, mempty) (MyBool True))
-                  (MyLiteral (mtBool, mempty) (MyBool False))
+                  (MTPair mempty mtBool mtBool)
+                  (MyLiteral mtBool (MyBool True))
+                  (MyLiteral mtBool (MyBool False))
               )
-              (MyVar (mtBool, mempty) "a")
+              (MyVar mtBool "a")
           )
           `shouldBe` TSModule
             ( TSBody
