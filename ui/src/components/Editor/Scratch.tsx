@@ -13,7 +13,6 @@ import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import {
   getTypedHolesFromEditor,
   getSourceItemsFromEditor,
-  getErrorLocations,
   getErrorLocationsFromEditor,
 } from '../../reducer/editor/selector'
 

@@ -8,10 +8,8 @@ import './CodeEditor.css'
 import {
   ErrorLocation,
   SourceItem,
-  SourceSpan,
   TypedHoleResponse,
 } from '../../types'
-import * as Arr from 'fp-ts/Array'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import { mimsaLanguage } from './mimsaLanguageMonaco'
@@ -20,6 +18,11 @@ import {
   languages,
   editor,
 } from 'monaco-editor/esm/vs/editor/editor.api'
+import {
+  createMarkerForTypedHole,
+  createMarkerForError,
+  chooseSourceSpan,
+} from './utils/sourceSpanHelpers'
 
 type Props = {
   code: string
@@ -38,44 +41,6 @@ const colours = {
   darkPink: '#DB7093',
   darkBlue: '#26428b',
 }
-
-const sourceSize = ({
-  ssRowStart,
-  ssRowEnd,
-  ssColStart,
-  ssColEnd,
-}: SourceItem['siSourceSpan']): number => {
-  const width = Math.max(ssRowEnd - ssRowStart, 1)
-  const height = Math.max(ssColEnd - ssColStart, 1)
-  return width * height
-}
-
-const chooseSourceSpan = (
-  sourceItems: SourceItem[],
-  position: Position
-): O.Option<SourceItem> =>
-  Arr.head(
-    sourceItems
-      .filter(
-        ({
-          siSourceSpan: {
-            ssRowStart,
-            ssRowEnd,
-            ssColStart,
-            ssColEnd,
-          },
-        }) =>
-          position.lineNumber >= ssRowStart &&
-          position.lineNumber <= ssRowEnd &&
-          position.column >= ssColStart &&
-          position.column <= ssColEnd
-      )
-      .sort(
-        (a, b) =>
-          sourceSize(a.siSourceSpan) -
-          sourceSize(b.siSourceSpan)
-      )
-  )
 
 const editorWillMount: EditorWillMount = (monaco) => {
   monaco.languages.register({ id: 'mimsa' })
@@ -207,29 +172,6 @@ const options = {
 
 let mutableSourceItems: SourceItem[] = []
 let mutableTypedHoleResponses: TypedHoleResponse[] = []
-
-const createMarkerForTypedHole = ({
-  thMonoType,
-  thSourceSpan,
-}: TypedHoleResponse): editor.IMarkerData => ({
-  severity: 1, // hint,
-  message: `Inferred type: ${thMonoType}`,
-  startLineNumber: thSourceSpan.ssRowStart,
-  endLineNumber: thSourceSpan.ssRowEnd,
-  startColumn: thSourceSpan.ssColStart + 1,
-  endColumn: thSourceSpan.ssColEnd + 1,
-})
-
-const createMarkerForError = ({
-  elSourceSpan,
-}: ErrorLocation): editor.IMarkerData => ({
-  severity: 8, // error,
-  message: 'Error!',
-  startLineNumber: elSourceSpan.ssRowStart,
-  endLineNumber: elSourceSpan.ssRowEnd,
-  startColumn: elSourceSpan.ssColStart + 1,
-  endColumn: elSourceSpan.ssColEnd + 1,
-})
 
 export const CodeEditor: React.FC<Props> = ({
   code,
