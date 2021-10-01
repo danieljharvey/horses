@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -57,7 +58,7 @@ data Type ann
   | MTArray ann (Type ann) -- [a]
   | MTConstructor ann TyCon -- name
   | MTTypeApp ann (Type ann) (Type ann) -- func arg, apply arg to func
-  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
 deriving anyclass instance (ToSchema ann) => ToSchema (Type ann)

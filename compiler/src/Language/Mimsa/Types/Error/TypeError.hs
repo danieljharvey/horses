@@ -1,9 +1,13 @@
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.TypeError
-  ( TypeError (..),
+  ( TypeErrorF (..),
+    TypeError,
     getErrorPos,
+    getAllAnnotations,
   )
 where
 
@@ -16,8 +20,7 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchError (..))
-import qualified Language.Mimsa.Types.Error.PatternMatchError as Pat
+import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
@@ -25,43 +28,45 @@ import Language.Mimsa.Types.Typechecker.MonoType
 import Prettyprinter
 import Text.Megaparsec
 
-data TypeError
+data TypeErrorF ann
   = UnknownTypeError
-  | FailsOccursCheck Swaps TypeIdentifier MonoType
-  | UnificationError MonoType MonoType
-  | VariableNotInEnv Swaps Annotation Variable (Set TypeIdentifier)
-  | MissingRecordMember Annotation Name (Set Name)
-  | MissingRecordTypeMember Annotation Name (Map Name MonoType)
-  | NoFunctionEquality MonoType MonoType
-  | CannotMatchRecord Environment Annotation MonoType
-  | CaseMatchExpectedPair Annotation MonoType
-  | TypeConstructorNotInScope Environment Annotation TyCon
+  | FailsOccursCheck Swaps TypeIdentifier (Type ann)
+  | UnificationError (Type ann) (Type ann)
+  | VariableNotInEnv Swaps ann Variable (Set TypeIdentifier)
+  | MissingRecordMember ann Name (Set Name)
+  | MissingRecordTypeMember ann Name (Map Name (Type ann))
+  | NoFunctionEquality (Type ann) (Type ann)
+  | CannotMatchRecord Environment ann (Type ann)
+  | CaseMatchExpectedPair ann (Type ann)
+  | TypeConstructorNotInScope Environment ann TyCon
   | TypeVariablesNotInDataType TyCon (Set Name) (Set Name)
-  | ConflictingConstructors Annotation TyCon
+  | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
   | DuplicateTypeDeclaration TyCon
-  | IncompletePatternMatch Annotation [TyCon]
+  | IncompletePatternMatch ann [TyCon]
   | MixedUpPatterns [TyCon]
-  | TypedHoles (Map Name (MonoType, Set Name))
-  | FunctionArityMismatch Annotation Int MonoType
-  | CouldNotFindInfixOperator Annotation InfixOp (Set InfixOp)
-  | CannotUseBuiltInTypeAsConstructor Annotation TyCon
-  | InternalConstructorUsedOutsidePatternMatch Annotation TyCon
-  | PatternMatchErr PatternMatchError
-  deriving stock (Eq, Ord, Show)
+  | TypedHoles (Map Name (Type ann, Set Name))
+  | FunctionArityMismatch ann Int (Type ann)
+  | CouldNotFindInfixOperator ann InfixOp (Set InfixOp)
+  | CannotUseBuiltInTypeAsConstructor ann TyCon
+  | InternalConstructorUsedOutsidePatternMatch ann TyCon
+  | PatternMatchErr (PatternMatchErrorF ann)
+  deriving stock (Eq, Ord, Show, Foldable)
+
+type TypeError = TypeErrorF Annotation
 
 ------
 
-instance Semigroup TypeError where
+instance Semigroup (TypeErrorF ann) where
   a <> _ = a
 
-instance Monoid TypeError where
+instance Monoid (TypeErrorF ann) where
   mempty = UnknownTypeError
 
-instance Printer TypeError where
+instance (Printer ann) => Printer (TypeErrorF ann) where
   prettyDoc = vsep . renderTypeError
 
-instance ShowErrorComponent TypeError where
+instance ShowErrorComponent (TypeErrorF Annotation) where
   showErrorComponent = T.unpack . prettyPrint
   errorComponentLen typeErr = let (_, len) = getErrorPos typeErr in len
 
@@ -69,30 +74,18 @@ type Start = Int
 
 type Length = Int
 
+-- megaparsec accepts one single error range
 fromAnnotation :: Annotation -> (Start, Length)
 fromAnnotation (Location a b) = (a, b - a)
 fromAnnotation _ = (0, 0)
 
+-- get overall error position for Megaparsec
 getErrorPos :: TypeError -> (Start, Length)
-getErrorPos (UnificationError a b) =
-  fromAnnotation (getAnnotationForType a <> getAnnotationForType b)
-getErrorPos (MissingRecordMember ann _ _) = fromAnnotation ann
-getErrorPos (MissingRecordTypeMember ann _ _) = fromAnnotation ann
-getErrorPos (VariableNotInEnv _ ann _ _) = fromAnnotation ann
-getErrorPos (TypeConstructorNotInScope _ ann _) = fromAnnotation ann
-getErrorPos (ConflictingConstructors ann _) = fromAnnotation ann
-getErrorPos (IncompletePatternMatch ann _) = fromAnnotation ann
-getErrorPos (CaseMatchExpectedPair ann _) =
-  fromAnnotation ann
-getErrorPos (CannotMatchRecord _ ann _) = fromAnnotation ann
-getErrorPos (TypedHoles holes) = case M.toList holes of
-  ((_, (mt, _)) : _) -> fromAnnotation (getAnnotationForType mt)
-  _ -> fromAnnotation mempty
-getErrorPos (FunctionArityMismatch ann _ _) = fromAnnotation ann
-getErrorPos (CannotUseBuiltInTypeAsConstructor ann _) = fromAnnotation ann
-getErrorPos (InternalConstructorUsedOutsidePatternMatch ann _) = fromAnnotation ann
-getErrorPos (PatternMatchErr pat) = Pat.getErrorPos pat
-getErrorPos _ = (0, 0)
+getErrorPos = fromAnnotation . mconcat . getAllAnnotations
+
+-- use the derived Foldable instance to get all annotations in an error
+getAllAnnotations :: TypeError -> [Annotation]
+getAllAnnotations = foldMap pure
 
 ------
 
@@ -118,7 +111,7 @@ withSwap swaps (NumberedVar i) =
 
 -----
 
-renderTypeError :: TypeError -> [Doc ann]
+renderTypeError :: (Printer ann) => TypeErrorF ann -> [Doc a]
 renderTypeError UnknownTypeError =
   ["Unknown type error"]
 renderTypeError (FailsOccursCheck swaps var mt) =

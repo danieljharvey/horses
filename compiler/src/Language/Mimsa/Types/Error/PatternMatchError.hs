@@ -1,10 +1,12 @@
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.PatternMatchError
-  ( PatternMatchError (..),
+  ( PatternMatchErrorF (..),
+    PatternMatchError,
     renderPatternMatchError,
-    getErrorPos,
   )
 where
 
@@ -16,27 +18,29 @@ import Language.Mimsa.Types.Identifiers
 import Prettyprinter
 import Text.Megaparsec
 
-data PatternMatchError
+data PatternMatchErrorF ann
   = -- | No patterns provided
-    EmptyPatternMatch Annotation
+    EmptyPatternMatch ann
   | -- | "Just 1 2" or "Nothing 3", for instance
     -- | ann, offending tyCon, expected, actual
-    ConstructorArgumentLengthMismatch Annotation TyCon Int Int
+    ConstructorArgumentLengthMismatch ann TyCon Int Int
   | -- | Cases not covered in pattern matches
     -- | ann, [missing patterns]
-    MissingPatterns Annotation [Pattern Variable Annotation]
+    MissingPatterns ann [Pattern Variable ann]
   | -- | Unnecessary cases covered by previous matches
-    RedundantPatterns Annotation [Pattern Variable Annotation]
+    RedundantPatterns ann [Pattern Variable ann]
   | -- | Multiple instances of the same variable
-    DuplicateVariableUse Annotation (Set Name)
-  deriving stock (Eq, Ord, Show)
+    DuplicateVariableUse ann (Set Name)
+  deriving stock (Eq, Ord, Show, Foldable)
+
+type PatternMatchError = PatternMatchErrorF Annotation
 
 ------
 
-instance Semigroup PatternMatchError where
+instance Semigroup (PatternMatchErrorF ann) where
   a <> _ = a
 
-instance Printer PatternMatchError where
+instance (Printer ann) => Printer (PatternMatchErrorF ann) where
   prettyDoc = vsep . renderPatternMatchError
 
 instance ShowErrorComponent PatternMatchError where
@@ -47,20 +51,22 @@ type Start = Int
 
 type Length = Int
 
+-- | Single combined error area for Megaparsec
 fromAnnotation :: Annotation -> (Start, Length)
 fromAnnotation (Location a b) = (a, b - a)
 fromAnnotation _ = (0, 0)
 
 getErrorPos :: PatternMatchError -> (Start, Length)
-getErrorPos (EmptyPatternMatch ann) = fromAnnotation ann
-getErrorPos (ConstructorArgumentLengthMismatch ann _ _ _) = fromAnnotation ann
-getErrorPos (MissingPatterns ann _) = fromAnnotation ann
-getErrorPos (RedundantPatterns ann _) = fromAnnotation ann
-getErrorPos (DuplicateVariableUse ann _) = fromAnnotation ann
+getErrorPos = fromAnnotation . mconcat . getAllAnnotations
+
+getAllAnnotations :: PatternMatchError -> [Annotation]
+getAllAnnotations = foldMap pure
 
 -----
 
-renderPatternMatchError :: PatternMatchError -> [Doc ann]
+renderPatternMatchError ::
+  PatternMatchErrorF ann ->
+  [Doc a]
 renderPatternMatchError (EmptyPatternMatch _) =
   ["Pattern match needs at least one pattern to match"]
 renderPatternMatchError

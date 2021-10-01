@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -23,6 +24,7 @@ data Spread var ann
       Eq,
       Ord,
       Functor,
+      Foldable,
       Generic
     )
   deriving anyclass

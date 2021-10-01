@@ -5,9 +5,11 @@ module Language.Mimsa.Types.Error
   ( Error (..),
     InterpreterError (..),
     ResolverError (..),
-    TypeError (..),
+    TypeErrorF (..),
+    TypeError,
     StoreError (..),
-    PatternMatchError (..),
+    PatternMatchErrorF (..),
+    PatternMatchError,
     BackendError (..),
   )
 where
