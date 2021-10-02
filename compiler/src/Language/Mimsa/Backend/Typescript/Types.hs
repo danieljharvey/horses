@@ -6,11 +6,20 @@ module Language.Mimsa.Backend.Typescript.Types where
 
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Identifiers.TyCon
+
+-- | which generics have been used already?
+newtype TSGeneric = TSGeneric Text
+  deriving newtype (Eq, Ord, Show)
+
+instance Printer TSGeneric where
+  prettyPrint (TSGeneric t) = t
 
 data TSType = TSType Text [TSType] | TSTypeVar Text
   deriving stock (Eq, Ord, Show)
@@ -41,43 +50,102 @@ data TSPattern
   | TSPatternWildcard
   deriving stock (Eq, Ord, Show)
 
-instance Printer TSPattern where
-  prettyPrint (TSPatternVar n) = prettyPrint n
-  prettyPrint TSPatternWildcard = "_"
-  prettyPrint (TSPatternPair a b) =
-    "[" <> prettyPrint a <> ","
-      <> prettyPrint b
-      <> "]"
-  prettyPrint (TSPatternRecord as) =
-    let outputRecordItem (name, val) =
-          prettyPrint name <> ": " <> prettyPrint val
-        items = outputRecordItem <$> M.toList as
-     in "{ "
-          <> T.intercalate
-            ", "
-            items
-          <> " }"
-  prettyPrint (TSPatternConstructor _ vars) =
-    "{ vars: [" <> T.intercalate ", " (prettyPrint <$> vars) <> "] }"
+destructure :: TSPattern -> Text
+destructure (TSPatternVar n) = prettyPrint n
+destructure TSPatternWildcard = "_"
+destructure (TSPatternPair a b) =
+  "[" <> destructure a <> ","
+    <> destructure b
+    <> "]"
+destructure (TSPatternRecord as) =
+  let outputRecordItem (name, val) =
+        prettyPrint name <> ": " <> destructure val
+      items = outputRecordItem <$> M.toList as
+   in "{ "
+        <> T.intercalate
+          ", "
+          items
+        <> " }"
+destructure (TSPatternConstructor _ vars) =
+  "{ vars: [" <> T.intercalate ", " (destructure <$> vars) <> "] }"
+
+conditions :: TSPattern -> TSExpr
+conditions pat =
+  let parts = toPatternMap (TSVar "value") pat
+   in case parts of
+        [] -> TSInfix TSEquals (TSLit (TSBool True)) (TSLit (TSBool True))
+        (a : as) -> foldr (TSInfix TSAnd) a as
+
+toPatternMap :: TSExpr -> TSPattern -> [TSExpr]
+toPatternMap _ TSPatternWildcard =
+  mempty
+toPatternMap _ (TSPatternVar _) =
+  mempty
+toPatternMap name (TSPatternPair a b) =
+  toPatternMap (TSArrayAccess 0 name) a
+    <> toPatternMap (TSArrayAccess 1 name) b
+toPatternMap _ _ = []
+
+--toPatternMap name (TSPatternLit lit) =
+--  [GuardEQ name (outputLiteral lit)]
+{-
+toPatternMap name (TSPatternRecord items) =
+  let subPattern (k, v) = toPatternMap (name <> "." <> textToJS (prettyPrint k)) v
+   in mconcat (subPattern <$> M.toList items)
+toPatternMap name (TSPatternConstructor tyCon args) =
+  let tyConGuard = GuardEQ (name <> ".type") ("\"" <> textToJS (prettyPrint tyCon) <> "\"")
+      subPattern i a = toPatternMap (name <> ".vars[" <> textToJS (prettyPrint (i - 1)) <> "]") a
+   in [tyConGuard] <> mconcat (mapWithIndex subPattern args)
+-}
+{-toPatternMap name (TSPatternArray as spread) =
+  let lengthGuard = case spread of
+        NoSpread ->
+          PrimEQ (name <> ".length") (intToJS . length $ as)
+        (SpreadWildcard _) ->
+          GreaterThanOrEQ (name <> ".length") (intToJS . length $ as)
+        (SpreadValue _ _) ->
+          GreaterThanOrEQ (name <> ".length") (intToJS . length $ as)
+      subPattern i a = toPatternMap (name <> "[" <> textToJS (prettyPrint (i - 1)) <> "]") a
+      spreadValue = case spread of
+        SpreadValue _ a ->
+          M.singleton a (name <> ".slice(" <> intToJS (length as) <> ")")
+        _ -> mempty
+   in [lengthGuard] <> mconcat (mapWithIndex subPattern as)
+toPatternMap name (TSString a as) =
+  let lengthGuard = GreaterThanOrEQ (name <> ".length") "1"
+      aValue = case a of
+        StrValue _ vA -> M.singleton vA (name <> ".charAt(0)")
+        _ -> mempty
+      asValue = case as of
+        StrValue _ vAs -> M.singleton vAs (name <> ".slice(1)")
+        _ -> mempty
+   in [lengthGuard]
+-}
 
 newtype TSLetBody = TSLetBody TSBody
   deriving newtype (Eq, Ord, Show)
 
 instance Printer TSLetBody where
   prettyPrint (TSLetBody (TSBody [] body)) = prettyPrint body
-  prettyPrint (TSLetBody (TSBody _ _)) = undefined
+  prettyPrint (TSLetBody (TSBody items body)) =
+    mconcat (prettyPrint <$> items)
+      <> prettyPrint body -- TODO: wrong
 
-data TSAssignment = TSAssignment TSPattern TSLetBody
+data TSStatement
+  = TSAssignment TSPattern TSLetBody
+  | TSConditional TSPattern TSLetBody
   deriving stock (Eq, Ord, Show)
 
-instance Printer TSAssignment where
-  prettyPrint (TSAssignment name expr) =
-    "const " <> prettyPrint name <> " = " <> prettyPrint expr
+instance Printer TSStatement where
+  prettyPrint (TSAssignment pat expr) =
+    "const " <> destructure pat <> " = " <> prettyPrint expr
+  prettyPrint (TSConditional predicate expr) =
+    "if (" <> prettyPrint (conditions predicate) <> ") {" <> prettyPrint expr
 
 -- this could be top level or in a function body, it's a list of
 -- assignments followed by either the return or an export
 -- won't be prettyprinted directly as it depends on context
-data TSBody = TSBody [TSAssignment] TSExpr
+data TSBody = TSBody [TSStatement] TSExpr
   deriving stock (Eq, Ord, Show)
 
 newtype TSFunctionBody = TSFunctionBody TSBody
@@ -97,6 +165,7 @@ data TSOp
   | TSAdd
   | TSMinus
   | TSGreaterThanOrEqualTo
+  | TSAnd
   deriving stock (Eq, Ord, Show)
 
 instance Printer TSOp where
@@ -104,27 +173,31 @@ instance Printer TSOp where
   prettyPrint TSAdd = "+"
   prettyPrint TSMinus = "-"
   prettyPrint TSGreaterThanOrEqualTo = ">="
+  prettyPrint TSAnd = "&&"
 
 data TSExpr
   = TSLit TSLiteral
-  | TSFunction Name TSType TSFunctionBody
-  | TSRecord
-      (Map Name TSExpr)
+  | TSFunction Name (Set TSGeneric) TSType TSFunctionBody
+  | TSRecord (Map Name TSExpr)
   | TSRecordAccess Name TSExpr
-  | TSArray
-      [TSExpr]
+  | TSArray [TSExpr]
   | TSArrayAccess Int TSExpr
   | TSVar Name
   | TSApp TSExpr TSExpr
   | TSInfix TSOp TSExpr TSExpr
   | TSTernary TSExpr TSExpr TSExpr
+  | TSData Text [TSExpr]
+  | TSError Text
   deriving stock (Eq, Ord, Show)
 
 instance Printer TSExpr where
   prettyPrint (TSLit lit) = prettyPrint lit
-  prettyPrint (TSFunction name mt expr) =
-    "(" <> prettyPrint name <> ": " <> prettyPrint mt <> ") => "
-      <> prettyPrint expr
+  prettyPrint (TSFunction name generics mt expr) =
+    let prettyGen = case prettyPrint <$> S.toList generics of
+          [] -> ""
+          as -> "<" <> T.intercalate "," as <> ">"
+     in prettyGen <> "(" <> prettyPrint name <> ": " <> prettyPrint mt <> ") => "
+          <> prettyPrint expr
   prettyPrint (TSVar var) = prettyPrint var
   prettyPrint (TSApp func val) =
     prettyPrint func <> "(" <> prettyPrint val <> ")"
@@ -155,6 +228,11 @@ instance Printer TSExpr where
   prettyPrint (TSTernary cond thenE elseE) =
     prettyPrint cond <> " ? " <> prettyPrint thenE <> " : "
       <> prettyPrint elseE
+  prettyPrint (TSData constructor args) =
+    let prettyArgs = T.intercalate "," (prettyPrint <$> args)
+     in "{ type: \"" <> prettyPrint constructor <> "\", args: [" <> prettyArgs <> "] }"
+  prettyPrint (TSError msg) =
+    "throw new Error(\"" <> msg <> "\")"
 
 newtype TSModule = TSModule TSBody
   deriving newtype (Eq, Ord, Show)
