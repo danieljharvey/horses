@@ -137,12 +137,28 @@ spec = do
       let mtBool = MTPrim mempty MTBool
           mtString = MTPrim mempty MTString
           mtVar a = MTVar mempty (tvNamed a)
-      it "const bool" $ do
+          mtMaybe = MTConstructor mempty "Maybe"
+          mtMaybeString = MTTypeApp mempty mtMaybe mtString
+
+      it "const bool" $
         testFromExpr (MyLiteral mtBool (MyBool True))
           `shouldBe` ( TSModule (TSBody [] (TSLit (TSBool True))),
                        "export const main = true"
                      )
-      it "let a = true in a" $ do
+      it "Maybe String" $
+        testFromExpr (MyApp mtMaybeString (MyConstructor mtMaybe "Just") (MyLiteral mtString (MyString "dog")))
+          `shouldBe` ( TSModule
+                         ( TSBody
+                             []
+                             ( TSData
+                                 "Just"
+                                 [ TSLit (TSString "dog")
+                                 ]
+                             )
+                         ),
+                       "export const main = { type: \"Just\", vars: [\"dog\"] }"
+                     )
+      it "let a = true in a" $
         testFromExpr
           ( MyLet
               mtBool
@@ -234,14 +250,12 @@ spec = do
                        "export const main = <A>(a: A) => (a2: A) => a"
                      )
       it "pattern match" $ do
-        let mtMaybe = MTConstructor mempty "Maybe"
-            mtMaybeString = MTTypeApp mempty mtMaybe mtString
         testFromExpr
           ( MyPatternMatch
               mtBool
               ( MyApp
                   mtMaybeString
-                  ( MyConstructor mtMaybe "Maybe"
+                  ( MyConstructor mtMaybe "Just"
                   )
                   (MyLiteral mtString (MyString "dog"))
               )
@@ -263,19 +277,43 @@ spec = do
                                  (TSPatternVar "match")
                                  ( TSLetBody
                                      ( TSBody
-                                         [ TSConditional
-                                             (TSPatternConstructor "Just" [TSPatternVar "aa"])
-                                             (TSLetBody (TSBody [] (TSVar "aa"))),
-                                           TSConditional
-                                             TSPatternWildcard
-                                             ( TSLetBody
+                                         []
+                                         ( TSFunction
+                                             "value"
+                                             mempty
+                                             (TSType "Maybe" [TSType "string" []])
+                                             ( TSFunctionBody
                                                  ( TSBody
-                                                     []
-                                                     (TSLit (TSString "nope"))
+                                                     [ TSConditional
+                                                         (TSPatternConstructor "Just" [TSPatternVar "aa"])
+                                                         ( TSLetBody
+                                                             ( TSBody
+                                                                 [ TSAssignment
+                                                                     (TSPatternConstructor "Just" [TSPatternVar "aa"])
+                                                                     ( TSLetBody
+                                                                         ( TSBody [] (TSVar "value")
+                                                                         )
+                                                                     )
+                                                                 ]
+                                                                 (TSVar "aa")
+                                                             )
+                                                         ),
+                                                       TSConditional
+                                                         TSPatternWildcard
+                                                         ( TSLetBody
+                                                             ( TSBody
+                                                                 [ TSAssignment
+                                                                     TSPatternWildcard
+                                                                     (TSLetBody (TSBody [] (TSVar "value")))
+                                                                 ]
+                                                                 (TSLit (TSString "nope"))
+                                                             )
+                                                         )
+                                                     ]
+                                                     (TSError "Pattern match error")
                                                  )
                                              )
-                                         ]
-                                         (TSError "Pattern match error")
+                                         )
                                      )
                                  )
                              ]
@@ -285,5 +323,21 @@ spec = do
                                  )
                              )
                          ),
-                       "export bum"
+                       unlines'
+                         [ "const match = (value: Maybe<string>) => {",
+                           "if (value.type === \"Just\") {",
+                           "const { vars: [aa] } = value",
+                           "",
+                           "return aa",
+                           "}",
+                           "if (true) {",
+                           "const _ = value",
+                           "",
+                           "return \"nope\"",
+                           "}",
+                           "throw new Error(\"Pattern match error\")",
+                           "}",
+                           "",
+                           "export const main = match({ type: \"Just\", vars: [\"dog\"] })"
+                         ]
                      )

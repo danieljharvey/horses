@@ -6,7 +6,9 @@ import Data.Coerce (coerce)
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Backend.Typescript.Types
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -22,18 +24,28 @@ toPattern :: Pattern Name ann -> TSPattern
 toPattern (PVar _ a) = TSPatternVar a
 toPattern (PPair _ a b) = TSPatternPair (toPattern a) (toPattern b)
 toPattern (PWildcard _) = TSPatternWildcard
-toPattern (PConstructor _ name vars) = TSPatternConstructor name (toPattern <$> vars)
+toPattern (PConstructor _ name vars) =
+  TSPatternConstructor name (toPattern <$> vars)
 toPattern _ = undefined
 
 -- | returns the type and any generics used in the expression
 toTSType :: Type ann -> (TSType, Set TSGeneric)
-toTSType (MTPrim _ MTString) = (TSType "String" [], mempty)
+toTSType (MTPrim _ MTString) = (TSType "string" [], mempty)
+toTSType (MTPrim _ MTInt) = (TSType "number" [], mempty)
+toTSType (MTPrim _ MTBool) = (TSType "boolean" [], mempty)
 toTSType (MTVar _ a) =
   let newVar = case a of
         TVNum i' -> T.toTitle (prettyPrint i')
         TVName a' -> T.toTitle (coerce a')
    in (TSTypeVar newVar, S.singleton (TSGeneric newVar))
-toTSType _ = undefined
+toTSType mt@MTTypeApp {} =
+  case varsFromDataType mt of
+    Just (TyCon n, vars) ->
+      let (types, generics) = unzip (toTSType <$> vars)
+       in (TSType n types, mconcat generics)
+    Nothing ->
+      (TSType "weird type app error" mempty, mempty)
+toTSType _ = (TSType "MadeUpNonsense" mempty, mempty)
 
 newGenerics :: Set TSGeneric -> Set TSGeneric -> Set TSGeneric
 newGenerics old new = S.difference new old
@@ -83,23 +95,42 @@ fromExpr expr =
         (MyPatternMatch _mtPatternMatch matchExpr patterns) ->
           let matches =
                 ( \(pat, patExpr) ->
-                    TSConditional
-                      (toPattern pat)
-                      (TSLetBody (makeTSExpr generics patExpr))
+                    let tsPat = toPattern pat
+                        (TSBody parts tsPatExpr) = makeTSExpr generics patExpr
+                        item = TSAssignment tsPat (TSLetBody (TSBody [] (TSVar "value")))
+                     in TSConditional
+                          (toPattern pat)
+                          (TSLetBody (TSBody (item : parts) tsPatExpr))
                 )
                   <$> patterns
               (TSBody _ tsA) = makeTSExpr generics matchExpr
+              (tyMatchExpr, matchGenerics) = toTSType (getAnnotation matchExpr)
            in TSBody
                 [ TSAssignment
                     (TSPatternVar "match")
                     ( TSLetBody
                         ( TSBody
-                            matches
-                            (TSError "Pattern match error")
+                            []
+                            ( TSFunction
+                                "value"
+                                (newGenerics generics matchGenerics)
+                                tyMatchExpr
+                                ( TSFunctionBody
+                                    ( TSBody
+                                        matches
+                                        (TSError "Pattern match error")
+                                    )
+                                )
+                            )
                         )
                     )
                 ]
-                tsA
+                (TSApp (TSVar "match") tsA)
+        (MyApp _mtApp (MyConstructor _ consName) vals) ->
+          let tsVals =
+                (\(TSBody _ inner) -> inner) . makeTSExpr generics
+                  <$> getConsArgList vals
+           in TSBody [] (TSData (prettyPrint consName) tsVals)
         (MyApp _mtApp func val) ->
           let (TSBody _ tsFunc) = makeTSExpr generics func
               (TSBody _ tsVal) = makeTSExpr generics val

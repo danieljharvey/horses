@@ -13,6 +13,7 @@ import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Identifiers.TyCon
+import Language.Mimsa.Utils (mapWithIndex)
 
 -- | which generics have been used already?
 newtype TSGeneric = TSGeneric Text
@@ -42,11 +43,19 @@ instance Printer TSLiteral where
   prettyPrint (TSInt i) = prettyPrint i
   prettyPrint (TSString str) = "\"" <> prettyPrint str <> "\""
 
+data TSSpread
+  = TSNoSpread
+  | TSSpreadWildcard
+  | TSSpreadValue Name
+  deriving stock (Eq, Ord, Show)
+
 data TSPattern
   = TSPatternVar Name
   | TSPatternPair TSPattern TSPattern
   | TSPatternRecord (Map Name TSPattern)
   | TSPatternConstructor TyCon [TSPattern]
+  | TSPatternLit TSLiteral
+  | TSPatternArray [TSPattern] TSSpread
   | TSPatternWildcard
   deriving stock (Eq, Ord, Show)
 
@@ -68,12 +77,18 @@ destructure (TSPatternRecord as) =
         <> " }"
 destructure (TSPatternConstructor _ vars) =
   "{ vars: [" <> T.intercalate ", " (destructure <$> vars) <> "] }"
+destructure (TSPatternArray as spread) =
+  let tsSpread = case spread of
+        TSSpreadValue a -> ", ..." <> prettyPrint a
+        _ -> ""
+   in "[" <> T.intercalate ", " (destructure <$> as) <> tsSpread <> "]"
+destructure (TSPatternLit _) = "_"
 
 conditions :: TSPattern -> TSExpr
 conditions pat =
   let parts = toPatternMap (TSVar "value") pat
    in case parts of
-        [] -> TSInfix TSEquals (TSLit (TSBool True)) (TSLit (TSBool True))
+        [] -> TSLit (TSBool True)
         (a : as) -> foldr (TSInfix TSAnd) a as
 
 toPatternMap :: TSExpr -> TSPattern -> [TSExpr]
@@ -84,33 +99,37 @@ toPatternMap _ (TSPatternVar _) =
 toPatternMap name (TSPatternPair a b) =
   toPatternMap (TSArrayAccess 0 name) a
     <> toPatternMap (TSArrayAccess 1 name) b
-toPatternMap _ _ = []
-
---toPatternMap name (TSPatternLit lit) =
---  [GuardEQ name (outputLiteral lit)]
-{-
+toPatternMap name (TSPatternLit lit) =
+  [TSInfix TSEquals name (TSLit lit)]
 toPatternMap name (TSPatternRecord items) =
-  let subPattern (k, v) = toPatternMap (name <> "." <> textToJS (prettyPrint k)) v
+  let subPattern (k, v) = toPatternMap (TSRecordAccess k name) v
    in mconcat (subPattern <$> M.toList items)
 toPatternMap name (TSPatternConstructor tyCon args) =
-  let tyConGuard = GuardEQ (name <> ".type") ("\"" <> textToJS (prettyPrint tyCon) <> "\"")
-      subPattern i a = toPatternMap (name <> ".vars[" <> textToJS (prettyPrint (i - 1)) <> "]") a
+  let tyConGuard = TSInfix TSEquals (TSRecordAccess "type" name) (TSLit (TSString (prettyPrint tyCon)))
+      subPattern i a = toPatternMap (TSArrayAccess (i - 1) (TSRecordAccess "vars" name)) a
    in [tyConGuard] <> mconcat (mapWithIndex subPattern args)
--}
-{-toPatternMap name (TSPatternArray as spread) =
+toPatternMap name (TSPatternArray as spread) =
   let lengthGuard = case spread of
-        NoSpread ->
-          PrimEQ (name <> ".length") (intToJS . length $ as)
-        (SpreadWildcard _) ->
-          GreaterThanOrEQ (name <> ".length") (intToJS . length $ as)
-        (SpreadValue _ _) ->
-          GreaterThanOrEQ (name <> ".length") (intToJS . length $ as)
-      subPattern i a = toPatternMap (name <> "[" <> textToJS (prettyPrint (i - 1)) <> "]") a
-      spreadValue = case spread of
-        SpreadValue _ a ->
-          M.singleton a (name <> ".slice(" <> intToJS (length as) <> ")")
-        _ -> mempty
+        TSNoSpread ->
+          TSInfix
+            TSEquals
+            (TSRecordAccess "length" name)
+            (TSLit (TSInt (length as)))
+        TSSpreadWildcard ->
+          TSInfix
+            TSGreaterThanOrEqualTo
+            (TSRecordAccess "length" name)
+            (TSLit (TSInt (length as)))
+        (TSSpreadValue _) ->
+          TSInfix
+            TSGreaterThanOrEqualTo
+            (TSRecordAccess "length" name)
+            (TSLit (TSInt (length as)))
+      subPattern i a =
+        toPatternMap (TSArrayAccess (i - 1) name) a
    in [lengthGuard] <> mconcat (mapWithIndex subPattern as)
+
+{-
 toPatternMap name (TSString a as) =
   let lengthGuard = GreaterThanOrEQ (name <> ".length") "1"
       aValue = case a of
@@ -127,9 +146,15 @@ newtype TSLetBody = TSLetBody TSBody
 
 instance Printer TSLetBody where
   prettyPrint (TSLetBody (TSBody [] body)) = prettyPrint body
-  prettyPrint (TSLetBody (TSBody items body)) =
-    mconcat (prettyPrint <$> items)
-      <> prettyPrint body -- TODO: wrong
+  prettyPrint (TSLetBody (TSBody bindings body)) =
+    "{\n"
+      <> mconcat ((<> "\n") . prettyPrint <$> bindings)
+      <> returnExpr body
+      <> "\n}"
+
+returnExpr :: TSExpr -> Text
+returnExpr tsExpr@TSError {} = prettyPrint tsExpr
+returnExpr other = "return " <> prettyPrint other
 
 data TSStatement
   = TSAssignment TSPattern TSLetBody
@@ -138,9 +163,14 @@ data TSStatement
 
 instance Printer TSStatement where
   prettyPrint (TSAssignment pat expr) =
-    "const " <> destructure pat <> " = " <> prettyPrint expr
-  prettyPrint (TSConditional predicate expr) =
-    "if (" <> prettyPrint (conditions predicate) <> ") {" <> prettyPrint expr
+    "const " <> destructure pat <> " = " <> prettyPrint expr <> "\n"
+  prettyPrint (TSConditional predicate allBody@(TSLetBody (TSBody [] _))) =
+    "if (" <> prettyPrint (conditions predicate) <> ") {\nreturn "
+      <> prettyPrint allBody
+      <> "\n}"
+  prettyPrint (TSConditional predicate body) =
+    "if (" <> prettyPrint (conditions predicate) <> ") "
+      <> prettyPrint body
 
 -- this could be top level or in a function body, it's a list of
 -- assignments followed by either the return or an export
@@ -154,11 +184,10 @@ newtype TSFunctionBody = TSFunctionBody TSBody
 instance Printer TSFunctionBody where
   prettyPrint (TSFunctionBody (TSBody [] body)) = prettyPrint body
   prettyPrint (TSFunctionBody (TSBody bindings body)) =
-    "{ "
-      <> mconcat ((<> "; ") . prettyPrint <$> bindings)
-      <> "return "
-      <> prettyPrint body
-      <> " }"
+    "{\n"
+      <> mconcat ((<> "\n") . prettyPrint <$> bindings)
+      <> returnExpr body
+      <> "\n}"
 
 data TSOp
   = TSEquals
@@ -230,7 +259,7 @@ instance Printer TSExpr where
       <> prettyPrint elseE
   prettyPrint (TSData constructor args) =
     let prettyArgs = T.intercalate "," (prettyPrint <$> args)
-     in "{ type: \"" <> prettyPrint constructor <> "\", args: [" <> prettyArgs <> "] }"
+     in "{ type: \"" <> prettyPrint constructor <> "\", vars: [" <> prettyArgs <> "] }"
   prettyPrint (TSError msg) =
     "throw new Error(\"" <> msg <> "\")"
 
