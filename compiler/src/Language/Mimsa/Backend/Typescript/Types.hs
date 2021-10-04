@@ -22,7 +22,10 @@ newtype TSGeneric = TSGeneric Text
 instance Printer TSGeneric where
   prettyPrint (TSGeneric t) = t
 
-data TSType = TSType Text [TSType] | TSTypeVar Text
+data TSType
+  = TSType Text [TSType]
+  | TSTypeVar Text
+  | TSTypeFun Text TSType TSType
   deriving stock (Eq, Ord, Show)
 
 instance Printer TSType where
@@ -33,6 +36,30 @@ instance Printer TSType where
         case as of
           [] -> ""
           typeVar -> "<" <> T.intercalate "," (prettyPrint <$> typeVar) <> ">"
+  prettyPrint (TSTypeFun argName arg resp) =
+    "(" <> prettyPrint argName <> ": " <> prettyPrint arg
+      <> ") => "
+      <> prettyPrint resp
+
+data TSConstructor = TSConstructor TyCon [TSType]
+  deriving stock (Eq, Ord, Show)
+
+instance Printer TSConstructor where
+  prettyPrint (TSConstructor name types) =
+    "{ type: \"" <> prettyPrint name <> "\", vars: [" <> T.intercalate ", " (prettyPrint <$> types) <> "] }"
+
+data TSDataType = TSDataType TyCon [Text] [TSConstructor]
+  deriving stock (Eq, Ord, Show)
+
+instance Printer TSDataType where
+  prettyPrint (TSDataType tyName generics constructors) =
+    let prettyGen = case generics of
+          [] -> ""
+          as -> "<" <> T.intercalate ", " (prettyPrint <$> as) <> ">"
+        prettyCons = case constructors of
+          [] -> "never"
+          as -> T.intercalate " | " (prettyPrint <$> as)
+     in "type " <> prettyPrint tyName <> prettyGen <> " = " <> prettyCons <> "; "
 
 data TSLiteral = TSBool Bool | TSString Text | TSInt Int
   deriving stock (Eq, Ord, Show)
@@ -147,14 +174,14 @@ newtype TSLetBody = TSLetBody TSBody
 instance Printer TSLetBody where
   prettyPrint (TSLetBody (TSBody [] body)) = prettyPrint body
   prettyPrint (TSLetBody (TSBody bindings body)) =
-    "{\n"
-      <> mconcat ((<> "\n") . prettyPrint <$> bindings)
+    "{ "
+      <> mconcat (prettyPrint <$> bindings)
       <> returnExpr body
-      <> "\n}"
+      <> " }; "
 
 returnExpr :: TSExpr -> Text
-returnExpr tsExpr@TSError {} = prettyPrint tsExpr
-returnExpr other = "return " <> prettyPrint other
+returnExpr tsExpr@TSError {} = prettyPrint tsExpr <> ";"
+returnExpr other = "return " <> prettyPrint other <> ";"
 
 data TSStatement
   = TSAssignment TSPattern TSLetBody
@@ -163,11 +190,11 @@ data TSStatement
 
 instance Printer TSStatement where
   prettyPrint (TSAssignment pat expr) =
-    "const " <> destructure pat <> " = " <> prettyPrint expr <> "\n"
+    "const " <> destructure pat <> " = " <> prettyPrint expr <> "; "
   prettyPrint (TSConditional predicate allBody@(TSLetBody (TSBody [] _))) =
-    "if (" <> prettyPrint (conditions predicate) <> ") {\nreturn "
+    "if (" <> prettyPrint (conditions predicate) <> ") { return "
       <> prettyPrint allBody
-      <> "\n}"
+      <> " }; "
   prettyPrint (TSConditional predicate body) =
     "if (" <> prettyPrint (conditions predicate) <> ") "
       <> prettyPrint body
@@ -184,10 +211,10 @@ newtype TSFunctionBody = TSFunctionBody TSBody
 instance Printer TSFunctionBody where
   prettyPrint (TSFunctionBody (TSBody [] body)) = prettyPrint body
   prettyPrint (TSFunctionBody (TSBody bindings body)) =
-    "{\n"
-      <> mconcat ((<> "\n") . prettyPrint <$> bindings)
+    "{ "
+      <> mconcat (prettyPrint <$> bindings)
       <> returnExpr body
-      <> "\n}"
+      <> " }"
 
 data TSOp
   = TSEquals
@@ -263,11 +290,12 @@ instance Printer TSExpr where
   prettyPrint (TSError msg) =
     "throw new Error(\"" <> msg <> "\")"
 
-newtype TSModule = TSModule TSBody
-  deriving newtype (Eq, Ord, Show)
+data TSModule = TSModule [TSDataType] TSBody
+  deriving stock (Eq, Ord, Show)
 
 instance Printer TSModule where
-  prettyPrint (TSModule (TSBody assignments export)) =
-    mconcat ((<> "\n") . prettyPrint <$> assignments)
+  prettyPrint (TSModule dataTypes (TSBody assignments export)) =
+    T.intercalate "\n" (prettyPrint <$> dataTypes)
+      <> T.intercalate "\n" (prettyPrint <$> assignments)
       <> "export const main = "
       <> prettyPrint export
