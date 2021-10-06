@@ -15,6 +15,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Typescript.FromExpr
+import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
@@ -35,7 +36,7 @@ import Test.Utils.Serialisation
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   case fromExpr expr of
-    Right tsModule -> (tsModule, prettyPrint tsModule)
+    Right tsModule -> (tsModule, printModule tsModule)
     Left e -> error (T.unpack (prettyPrint e))
 
 testFromInputText :: Text -> Either Text Text
@@ -47,7 +48,7 @@ testFromInputText input =
         first
           (prettyPrint . InterpreterErr)
           (useSwaps (reSwaps resolved) (reTypedExpression resolved))
-      Right . prettyPrint . fromExpr $ exprName
+      first prettyPrint (printModule <$> fromExpr exprName)
 
 -- test that we have a valid Typescript module by saving it and running it
 testTypescriptInNode :: Text -> IO String
@@ -116,23 +117,23 @@ testCases =
     ("aRecord.a", "const aRecord = { a: 1, b: \"dog\" }; export const main = aRecord.a", "1"),
     ( "Just",
       "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const main = <A>(a: A) => ({ type: \"Just\", vars: [a] })",
-      "[Function: main]"
+      "[Function (anonymous)]"
     ),
     ( "Just 1",
       "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const main = { type: \"Just\", vars: [1] }",
       "{ type: 'Just', vars: [ 1 ] }"
     ),
     ( "Nothing",
-      "const main = { type: \"Nothing\", vars: [] };\n",
+      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const main = { type: \"Nothing\", vars: [] }",
       "{ type: 'Nothing', vars: [] }"
     ),
     ( "These",
       "const main = a => b => ({ type: \"These\", vars: [a,b] });\n",
-      "[Function: main]"
+      "[Function (anonymous)]"
     ),
-    ("True == False", "const main = __eq(true, false);\n", "false"),
-    ("2 + 2", "const main = 2 + 2;\n", "4"),
-    ("10 - 2", "const main = 10 - 2;\n", "8"),
+    ("True == False", "export const main = __eq(true, false)", "false"),
+    ("2 + 2", "export const main = 2 + 2", "4"),
+    ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",
       "const main = \"dog\" + \"log\";\n",
       "doglog"
@@ -177,9 +178,9 @@ spec = do
   fdescribe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
-        prettyPrint (TSBool True) `shouldBe` "true"
-        prettyPrint (TSInt 100) `shouldBe` "100"
-        prettyPrint (TSString "egg") `shouldBe` "\"egg\""
+        printLiteral (TSBool True) `shouldBe` "true"
+        printLiteral (TSInt 100) `shouldBe` "100"
+        printLiteral (TSString "egg") `shouldBe` "\"egg\""
       it "function" $ do
         prettyPrint
           ( TSFunction
@@ -266,9 +267,9 @@ spec = do
         destructure (TSPatternConstructor "Just" [TSPatternVar "a"])
           `shouldBe` "{ vars: [a] }"
       it "top level module" $ do
-        prettyPrint (TSModule mempty (TSBody mempty (TSLit (TSBool True))))
+        printModule (TSModule mempty (TSBody mempty (TSLit (TSBool True))))
           `shouldBe` "export const main = true"
-        prettyPrint
+        printModule
           ( TSModule
               mempty
               ( TSBody
