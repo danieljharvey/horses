@@ -177,9 +177,10 @@ instance Printer TSFunctionBody where
 instance Printer TSOp where
   prettyPrint TSEquals = "==="
   prettyPrint TSAdd = "+"
-  prettyPrint TSMinus = "-"
+  prettyPrint TSSubtract = "-"
   prettyPrint TSGreaterThanOrEqualTo = ">="
   prettyPrint TSAnd = "&&"
+  prettyPrint _ = error "not sure how to do this one"
 
 instance Printer TSExpr where
   prettyPrint (TSLit lit) = printLiteral lit

@@ -3,6 +3,8 @@
 
 module Language.Mimsa.Types.Error.BackendError where
 
+import Language.Mimsa.Backend.Typescript.Printer ()
+import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -12,6 +14,7 @@ data BackendError ann
   | OutputtingCustomOperator InfixOp
   | OutputingTypedHole Name
   | OutputtingBadLetPattern (Pattern Name ann)
+  | ExpectedExprGotBody TSExpr [TSStatement]
   deriving stock (Eq, Ord, Show)
 
 instance Printer (BackendError ann) where
@@ -23,3 +26,6 @@ instance Printer (BackendError ann) where
     "Trying to output a typed hold, which should not pass typechecking: " <> prettyDoc n
   prettyDoc (OutputtingBadLetPattern p) =
     "Cannot output this let pattern: " <> prettyDoc p
+  prettyDoc (ExpectedExprGotBody exp' exps) =
+    "Expected no extra exprs for :" <> prettyDoc exp' <> ", but found: "
+      <> prettyDoc exps

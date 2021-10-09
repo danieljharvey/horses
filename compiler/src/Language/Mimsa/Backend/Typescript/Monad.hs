@@ -25,7 +25,10 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Typechecker
 
-type TypescriptM = ExceptT (BackendError MonoType) (WriterT [TSDataType] (State TSStateStack))
+type TypescriptM =
+  ExceptT
+    (BackendError MonoType)
+    (WriterT [TSDataType] (State TSStateStack))
 
 -- | we keep the datatypes in both the writer and the state
 -- because we want both a sum of all datatypes, and a stack where they are
@@ -39,7 +42,10 @@ data TSCodegenState = TSCodegenState
 type TSStateStack = NE.NonEmpty TSCodegenState
 
 -- | Modify the current stack entry (ie, head of NE list)
-modifyState :: (MonadState TSStateStack m) => (TSCodegenState -> TSCodegenState) -> m ()
+modifyState ::
+  (MonadState TSStateStack m) =>
+  (TSCodegenState -> TSCodegenState) ->
+  m ()
 modifyState f =
   modify
     ( \stack ->
@@ -48,11 +54,16 @@ modifyState f =
     )
 
 -- | get current state entry
-getState :: (MonadState TSStateStack m) => m TSCodegenState
+getState ::
+  (MonadState TSStateStack m) =>
+  m TSCodegenState
 getState = gets NE.head
 
 -- | add new generics to state
-addGenerics :: (MonadState TSStateStack m) => Set TSGeneric -> m ()
+addGenerics ::
+  (MonadState TSStateStack m) =>
+  Set TSGeneric ->
+  m ()
 addGenerics generics =
   modifyState
     ( \codegenState ->
@@ -64,7 +75,10 @@ addGenerics generics =
 
 -- given some generics, return the ones we haven't already seen, then add them
 -- to state
-unusedGenerics :: (MonadState TSStateStack m) => Set TSGeneric -> m (Set TSGeneric)
+unusedGenerics ::
+  (MonadState TSStateStack m) =>
+  Set TSGeneric ->
+  m (Set TSGeneric)
 unusedGenerics new = do
   old <- getState
   let unused = S.difference new (csGenerics old)
@@ -72,7 +86,13 @@ unusedGenerics new = do
   pure unused
 
 -- | add a datatype to both the Writer and current stack
-addDataType :: (MonadState TSStateStack m, MonadWriter [TSDataType] m) => DataType -> TSDataType -> m ()
+addDataType ::
+  ( MonadState TSStateStack m,
+    MonadWriter [TSDataType] m
+  ) =>
+  DataType ->
+  TSDataType ->
+  m ()
 addDataType dt tsDt = do
   tell [tsDt]
   modifyState
@@ -83,9 +103,14 @@ addDataType dt tsDt = do
     )
 
 initialStack :: TSStateStack
-initialStack = NE.singleton $ TSCodegenState mempty mempty
+initialStack =
+  NE.singleton $
+    TSCodegenState mempty mempty
 
-runTypescriptM :: TypescriptM a -> Either (BackendError MonoType) (a, [TSDataType])
-runTypescriptM computation = case evalState (runWriterT (runExceptT computation)) initialStack of
-  (Right a, dts) -> pure (a, dts)
-  (Left e, _) -> throwError e
+runTypescriptM ::
+  TypescriptM a ->
+  Either (BackendError MonoType) (a, [TSDataType])
+runTypescriptM computation =
+  case evalState (runWriterT (runExceptT computation)) initialStack of
+    (Right a, dts) -> pure (a, dts)
+    (Left e, _) -> throwError e

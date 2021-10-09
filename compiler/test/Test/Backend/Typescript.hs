@@ -116,20 +116,20 @@ testCases =
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
     ("aRecord.a", "const aRecord = { a: 1, b: \"dog\" }; export const main = aRecord.a", "1"),
     ( "Just",
-      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const main = <A>(a: A) => ({ type: \"Just\", vars: [a] })",
-      "[Function (anonymous)]"
+      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; const Just = <A>(a: A) => ({ type: \"Just\", vars: [a] }); export const main = Just",
+      "[Function: Just]"
     ),
     ( "Just 1",
-      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const main = { type: \"Just\", vars: [1] }",
+      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; const Just = <A>(a: A) => ({ type: \"Just\", vars: [a] }); export const main = Just(1)",
       "{ type: 'Just', vars: [ 1 ] }"
     ),
     ( "Nothing",
-      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const main = { type: \"Nothing\", vars: [] }",
+      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; const Nothing = { type: \"Nothing\", vars: [] }; export const main = Nothing",
       "{ type: 'Nothing', vars: [] }"
     ),
     ( "These",
-      "const main = a => b => ({ type: \"These\", vars: [a,b] });\n",
-      "[Function (anonymous)]"
+      "type These<A, B> = { type: \"That\", vars: [B] } | { type: \"These\", vars: [A, B] } | { type: \"This\", vars: [A] }; const These = <A>(a: A) => <B>(b: B) => ({ type: \"These\", vars: [a,b] }); export const main = These",
+      "[Function: These]"
     ),
     ("True == False", "export const main = __eq(true, false)", "false"),
     ("2 + 2", "export const main = 2 + 2", "4"),
@@ -164,11 +164,11 @@ testCases =
       "[ 1, 2 ]"
     ),
     ( "let (Ident a) = Ident 1 in a",
-      "const main = function() { const { vars: [a] } = { type: \"Ident\", vars: [1] };\nreturn a }();\n",
+      "type Ident<A> = { type: \"Ident\", vars: [A] }; const Ident = <A>(a: A) => ({ type: \"Ident\", vars: [a] }); const { vars: [a] } = Ident(1); export const main = a",
       "1"
     ),
     ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      "const main = function() { const { vars: [a, b] } = { type: \"Pair\", vars: [1,2] };\nreturn [a,b] }();\n",
+      "type Pair<A, B> = { type: \"Pair\", vars: [A, B] }; const Pair = <A>(a: A) => <B>(b: B) => ({ type: \"Pair\", vars: [a,b] }); const { vars: [a, b] } = Pair(1)(2); export const main = [a,b]",
       "[ 1, 2 ]"
     )
   ]
@@ -489,7 +489,8 @@ spec = do
       traverse_ testIt testCases
 
       it "simple expression" $ do
-        testFromInputText "\\a -> a + 100" `shouldBe` Right ""
+        testFromInputText "\\a -> a + 100"
+          `shouldBe` Right "export const main = (a: number) => a + 100"
       xit "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> Just as | [] -> Nothing"
           `shouldBe` Right ""

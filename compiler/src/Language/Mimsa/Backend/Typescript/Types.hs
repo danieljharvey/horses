@@ -80,9 +80,11 @@ newtype TSFunctionBody = TSFunctionBody TSBody
 data TSOp
   = TSEquals
   | TSAdd
-  | TSMinus
+  | TSSubtract
   | TSGreaterThanOrEqualTo
   | TSAnd
+  | TSStringConcat
+  | TSArrayConcat
   deriving stock (Eq, Ord, Show)
 
 data TSExpr

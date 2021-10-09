@@ -1,7 +1,9 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Typescript.FromExpr (fromExpr) where
 
+import Control.Monad.Except
 import Data.Coerce (coerce)
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
@@ -9,7 +11,6 @@ import Data.Monoid (First (..), getFirst)
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.ExprUtils
@@ -82,148 +83,186 @@ typeNameToName _ (MTVar _ (TVName name)) = coerce name
 typeNameToName i _ = mkName $ "u" <> prettyPrint i
 
 -- turn Just constructor into a function like  \a -> Just a
-constructorToFunctionWithApplication ::
+createConstructorFunction ::
   [DataType] ->
   TyCon ->
-  TSExpr
-constructorToFunctionWithApplication dt tyCon =
-  case findDataTypeInProject dt tyCon of
-    Just [] ->
-      TSData (prettyPrint tyCon) mempty
-    Just as ->
-      let numberList = zip [1 ..] as
-          args = (\(i, tn) -> TSVar (typeNameToName i tn)) <$> numberList
-          tsData = TSData (prettyPrint tyCon) args
-       in foldr
-            ( \(i, tn) expr' ->
-                let variable = typeNameToName i tn
-                    (tsType, generics) = toTSType tn
-                 in TSFunction variable generics tsType (TSFunctionBody (TSBody mempty expr'))
-            )
-            tsData
-            numberList
-    _ -> TSData (prettyPrint tyCon) mempty
+  TSBody
+createConstructorFunction dt tyCon =
+  let defaultEmpty =
+        TSBody
+          [ TSAssignment
+              (TSPatternVar (coerce tyCon))
+              (TSLetBody (TSBody [] (TSData (prettyPrint tyCon) mempty)))
+          ]
+          (TSVar (coerce tyCon))
+   in case findDataTypeInProject dt tyCon of
+        Just [] ->
+          defaultEmpty
+        Just as ->
+          let numberList = zip [1 ..] as
+              args = (\(i, tn) -> TSVar (typeNameToName i tn)) <$> numberList
+              tsData = TSData (prettyPrint tyCon) args
+              constructorFn =
+                foldr
+                  ( \(i, tn) expr' ->
+                      let variable = typeNameToName i tn
+                          (tsType, generics) = toTSType tn
+                       in TSFunction variable generics tsType (TSFunctionBody (TSBody mempty expr'))
+                  )
+                  tsData
+                  numberList
+           in TSBody
+                [ TSAssignment
+                    (TSPatternVar (coerce tyCon))
+                    (TSLetBody (TSBody [] constructorFn))
+                ]
+                (TSVar (coerce tyCon))
+        _ -> defaultEmpty
+
+toInfix ::
+  Operator ->
+  Expr Name MonoType ->
+  Expr Name MonoType ->
+  TypescriptM TSExpr
+toInfix operator a b = do
+  tsA <- toTSExpr a
+  tsB <- toTSExpr b
+  case operator of
+    Equals ->
+      pure $ TSInfix TSEquals tsA tsB
+    Add ->
+      pure $ TSInfix TSAdd tsA tsB
+    Subtract ->
+      pure $ TSInfix TSSubtract tsA tsB
+    StringConcat ->
+      pure $ TSInfix TSStringConcat tsA tsB
+    ArrayConcat ->
+      pure $ TSInfix TSArrayConcat tsA tsB
+    (Custom _op) -> undefined -- we need to save these when they are defined and pull the correct function from state
+
+-- | make TS body, but throw if we get any additional lines
+-- a temporary measure so we can see how often these happen (because they don't
+-- make sense often)
+toTSExpr :: Expr Name MonoType -> TypescriptM TSExpr
+toTSExpr expr' =
+  toTSBody expr' >>= \case
+    (TSBody [] expr) -> pure expr
+    (TSBody as a) -> throwError (ExpectedExprGotBody a as)
 
 fromExpr :: Expr Name MonoType -> Either (BackendError MonoType) TSModule
 fromExpr expr = do
-  (result, dataTypes) <- runTypescriptM (makeTSExpr expr)
+  (result, dataTypes) <- runTypescriptM (toTSBody expr)
   pure (TSModule dataTypes result)
-  where
-    makeTSExpr :: Expr Name MonoType -> TypescriptM TSBody
-    makeTSExpr expr' =
-      case expr' of
-        (MyLiteral _ lit) ->
-          pure $ TSBody mempty (TSLit (toLiteral lit))
-        (MyLet _ name letExpr letBody) -> do
-          newLetExpr <- makeTSExpr letExpr
-          let newBinding =
-                TSAssignment
-                  (TSPatternVar name)
-                  (TSLetBody newLetExpr)
-          (TSBody bindings' newExpr) <- makeTSExpr letBody
-          pure (TSBody ([newBinding] <> bindings') newExpr)
-        (MyLetPattern _ pat letExpr letBody) -> do
-          newLetExpr <- makeTSExpr letExpr
-          let newBinding =
-                TSAssignment
+
+toTSBody :: Expr Name MonoType -> TypescriptM TSBody
+toTSBody expr' =
+  case expr' of
+    (MyLiteral _ lit) ->
+      pure $ TSBody mempty (TSLit (toLiteral lit))
+    (MyLet _ name letExpr letBody) -> do
+      newLetExpr <- toTSBody letExpr
+      let newBinding =
+            TSAssignment
+              (TSPatternVar name)
+              (TSLetBody newLetExpr)
+      (TSBody bindings' newExpr) <- toTSBody letBody
+      pure (TSBody ([newBinding] <> bindings') newExpr)
+    (MyLetPattern _ pat letExpr letBody) -> do
+      newLetExpr <- toTSBody letExpr
+      let newBinding =
+            TSAssignment
+              (toPattern pat)
+              (TSLetBody newLetExpr)
+      (TSBody bindings' newExpr) <- toTSBody letBody
+      pure (TSBody ([newBinding] <> bindings') newExpr)
+    (MyPair _ a b) -> do
+      tsA <- toTSExpr a
+      tsB <- toTSExpr b
+      pure (TSBody mempty (TSArray [tsA, tsB]))
+    (MyVar _ a) -> pure (TSBody mempty (TSVar a))
+    (MyLambda fnType bind body) -> do
+      let (mtFn, generics') = toTSType fnType
+          mtArg = case mtFn of
+            (TSTypeFun _ a _) -> a
+            _ -> error "function does not have function type"
+      -- get diff between generics we've not used yet
+      newGenerics <- unusedGenerics generics'
+      -- continue....
+      tsBody <- toTSBody body
+      pure $
+        TSBody
+          []
+          ( TSFunction
+              bind
+              newGenerics
+              mtArg
+              ( TSFunctionBody tsBody
+              )
+          )
+    (MyPatternMatch _mtPatternMatch matchExpr patterns) -> do
+      matches <-
+        traverse
+          ( \(pat, patExpr) -> do
+              let tsPat = toPattern pat
+              (TSBody parts tsPatExpr) <- toTSBody patExpr
+              let item = TSAssignment tsPat (TSLetBody (TSBody [] (TSVar "value")))
+              pure $
+                TSConditional
                   (toPattern pat)
-                  (TSLetBody newLetExpr)
-          (TSBody bindings' newExpr) <- makeTSExpr letBody
-          pure (TSBody ([newBinding] <> bindings') newExpr)
-        (MyPair _ a b) -> do
-          (TSBody _ tsA) <- makeTSExpr a
-          (TSBody _ tsB) <- makeTSExpr b
-          pure (TSBody mempty (TSArray [tsA, tsB]))
-        (MyVar _ a) -> pure (TSBody mempty (TSVar a))
-        (MyLambda fnType bind body) -> do
-          let (mtFn, generics') = toTSType fnType
-              mtArg = case mtFn of
-                (TSTypeFun _ a _) -> a
-                _ -> error "function does not have function type"
-          -- get diff between generics we've not used yet
-          newGenerics <- unusedGenerics generics'
-          -- continue....
-          tsBody <- makeTSExpr body
-          pure $
-            TSBody
-              []
-              ( TSFunction
-                  bind
-                  newGenerics
-                  mtArg
-                  ( TSFunctionBody tsBody
-                  )
-              )
-        (MyPatternMatch _mtPatternMatch matchExpr patterns) -> do
-          matches <-
-            traverse
-              ( \(pat, patExpr) -> do
-                  let tsPat = toPattern pat
-                  (TSBody parts tsPatExpr) <- makeTSExpr patExpr
-                  let item = TSAssignment tsPat (TSLetBody (TSBody [] (TSVar "value")))
-                  pure $
-                    TSConditional
-                      (toPattern pat)
-                      (TSLetBody (TSBody (item : parts) tsPatExpr))
-              )
-              patterns
-          (TSBody _ tsA) <- makeTSExpr matchExpr
-          let (tyMatchExpr, matchGenerics) = toTSType (getAnnotation matchExpr)
-          newGenerics <- unusedGenerics matchGenerics
-          pure $
-            TSBody
-              [ TSAssignment
-                  (TSPatternVar "match")
-                  ( TSLetBody
-                      ( TSBody
-                          []
-                          ( TSFunction
-                              "value"
-                              newGenerics
-                              tyMatchExpr
-                              ( TSFunctionBody
-                                  ( TSBody
-                                      matches
-                                      (TSError "Pattern match error")
-                                  )
+                  (TSLetBody (TSBody (item : parts) tsPatExpr))
+          )
+          patterns
+      (TSBody _ tsA) <- toTSBody matchExpr
+      let (tyMatchExpr, matchGenerics) = toTSType (getAnnotation matchExpr)
+      newGenerics <- unusedGenerics matchGenerics
+      pure $
+        TSBody
+          [ TSAssignment
+              (TSPatternVar "match")
+              ( TSLetBody
+                  ( TSBody
+                      []
+                      ( TSFunction
+                          "value"
+                          newGenerics
+                          tyMatchExpr
+                          ( TSFunctionBody
+                              ( TSBody
+                                  matches
+                                  (TSError "Pattern match error")
                               )
                           )
                       )
                   )
-              ]
-              (TSApp (TSVar "match") tsA)
-        (MyApp _mtApp (MyConstructor _ consName) vals) -> do
-          tsVals <-
-            traverse
-              makeTSExpr
-              (getConsArgList vals)
-          let tsVals' = (\(TSBody _ inner) -> inner) <$> tsVals
-          pure $ TSBody [] (TSData (prettyPrint consName) tsVals')
-        (MyApp _mtApp func val) -> do
-          (TSBody _ tsFunc) <- makeTSExpr func
-          (TSBody _ tsVal) <- makeTSExpr val
-          pure $ TSBody [] (TSApp tsFunc tsVal)
-        (MyConstructor _ tyCon) -> do
-          -- this case should only happen when finding a lone constructor
-          -- which we should then transform into a function
-          state <- getState
-          pure $ TSBody [] $ constructorToFunctionWithApplication (csDataTypes state) tyCon
-        --          pure $ TSBody [] (TSData (debugPretty "lone constructor" (prettyPrint tyCon)) mempty)
-        (MyIf _mtIf predExpr thenExpr elseExpr) -> do
-          (TSBody as tsPred) <- makeTSExpr predExpr
-          (TSBody bs tsThen) <- makeTSExpr thenExpr
-          (TSBody cs tsElse) <- makeTSExpr elseExpr
-          pure $ TSBody (as <> bs <> cs) (TSTernary tsPred tsThen tsElse)
-        (MyRecord _ as) -> do
-          tsExprs <- traverse makeTSExpr as
-          let bodies = (\(TSBody a b) -> (a, b)) <$> tsExprs
-              statements = mconcat (fst <$> M.elems bodies)
-          pure $ TSBody statements (TSRecord (snd <$> bodies))
-        (MyRecordAccess _ recExpr name) -> do
-          (TSBody as tsExpr) <- makeTSExpr recExpr
-          pure $ TSBody as (TSRecordAccess name tsExpr)
-        (MyData _ dt rest) -> do
-          let tsDataType = toTSDataType dt
-          addDataType dt tsDataType
-          makeTSExpr rest
-        e -> error (show e)
+              )
+          ]
+          (TSApp (TSVar "match") tsA)
+    (MyApp _mtApp func val) -> do
+      (TSBody as tsFunc) <- toTSBody func
+      (TSBody bs tsVal) <- toTSBody val
+      pure $ TSBody (as <> bs) (TSApp tsFunc tsVal)
+    (MyConstructor _ tyCon) -> do
+      -- this case should only happen when finding a lone constructor
+      -- which we should then transform into a function
+      state <- getState
+      pure $ createConstructorFunction (csDataTypes state) tyCon
+    (MyIf _mtIf predExpr thenExpr elseExpr) -> do
+      (TSBody as tsPred) <- toTSBody predExpr
+      (TSBody bs tsThen) <- toTSBody thenExpr
+      (TSBody cs tsElse) <- toTSBody elseExpr
+      pure $ TSBody (as <> bs <> cs) (TSTernary tsPred tsThen tsElse)
+    (MyRecord _ as) -> do
+      tsExprs <- traverse toTSBody as
+      let bodies = (\(TSBody a b) -> (a, b)) <$> tsExprs
+          statements = mconcat (fst <$> M.elems bodies)
+      pure $ TSBody statements (TSRecord (snd <$> bodies))
+    (MyRecordAccess _ recExpr name) -> do
+      (TSBody as tsExpr) <- toTSBody recExpr
+      pure $ TSBody as (TSRecordAccess name tsExpr)
+    (MyData _ dt rest) -> do
+      let tsDataType = toTSDataType dt
+      addDataType dt tsDataType
+      toTSBody rest
+    (MyInfix _ op a b) -> do
+      TSBody [] <$> toInfix op a b
+    e -> error (show e)
