@@ -86,7 +86,7 @@ typeNameToName i _ = mkName $ "u" <> prettyPrint i
 createConstructorFunction ::
   [DataType] ->
   TyCon ->
-  TSBody
+  TypescriptM TSBody
 createConstructorFunction dt tyCon =
   let defaultEmpty =
         TSBody
@@ -97,7 +97,7 @@ createConstructorFunction dt tyCon =
           (TSVar (coerce tyCon))
    in case findDataTypeInProject dt tyCon of
         Just [] ->
-          defaultEmpty
+          pure defaultEmpty
         Just as ->
           let numberList = zip [1 ..] as
               args = (\(i, tn) -> TSVar (typeNameToName i tn)) <$> numberList
@@ -111,13 +111,14 @@ createConstructorFunction dt tyCon =
                   )
                   tsData
                   numberList
-           in TSBody
-                [ TSAssignment
-                    (TSPatternVar (coerce tyCon))
-                    (TSLetBody (TSBody [] constructorFn))
-                ]
-                (TSVar (coerce tyCon))
-        _ -> defaultEmpty
+           in pure $
+                TSBody
+                  [ TSAssignment
+                      (TSPatternVar (coerce tyCon))
+                      (TSLetBody (TSBody [] constructorFn))
+                  ]
+                  (TSVar (coerce tyCon))
+        _ -> throwError _ -- TODO: cannot find datatype error
 
 toInfix ::
   Operator ->
@@ -245,7 +246,7 @@ toTSBody expr' =
       -- this case should only happen when finding a lone constructor
       -- which we should then transform into a function
       state <- getState
-      pure $ createConstructorFunction (csDataTypes state) tyCon
+      createConstructorFunction (csDataTypes state) tyCon
     (MyIf _mtIf predExpr thenExpr elseExpr) -> do
       (TSBody as tsPred) <- toTSBody predExpr
       (TSBody bs tsThen) <- toTSBody thenExpr

@@ -293,197 +293,82 @@ spec = do
           `shouldBe` ( TSModule mempty (TSBody [] (TSLit (TSBool True))),
                        "export const main = true"
                      )
-      it "Maybe String" $
-        testFromExpr (MyApp mtMaybeString (MyConstructor mtMaybe "Just") (MyLiteral mtString (MyString "dog")))
-          `shouldBe` ( TSModule
-                         mempty
-                         ( TSBody
-                             []
-                             ( TSData
-                                 "Just"
-                                 [ TSLit (TSString "dog")
-                                 ]
-                             )
-                         ),
-                       "export const main = { type: \"Just\", vars: [\"dog\"] }"
-                     )
+
       it "let a = true in a" $
-        testFromExpr
-          ( MyLet
-              mtBool
-              "a"
-              ( MyLiteral mtBool (MyBool True)
+        snd
+          ( testFromExpr
+              ( MyLet
+                  mtBool
+                  "a"
+                  ( MyLiteral mtBool (MyBool True)
+                  )
+                  (MyVar mtBool "a")
               )
-              (MyVar mtBool "a")
           )
-          `shouldBe` ( TSModule
-                         mempty
-                         ( TSBody
-                             [ TSAssignment
-                                 (TSPatternVar "a")
-                                 (TSLetBody (TSBody mempty (TSLit (TSBool True))))
-                             ]
-                             (TSVar "a")
-                         ),
-                       "const a = true; export const main = a"
-                     )
+          `shouldBe` "const a = true; export const main = a"
+
       it "let (a,_) = (true,false) in a" $ do
-        testFromExpr
-          ( MyLetPattern
-              (MTPair mempty mtBool mtBool)
-              (PPair (MTPair mempty mtBool mtBool) (PVar mtBool "a") (PWildcard mtBool))
-              ( MyPair
+        snd
+          ( testFromExpr
+              ( MyLetPattern
                   (MTPair mempty mtBool mtBool)
-                  (MyLiteral mtBool (MyBool True))
-                  (MyLiteral mtBool (MyBool False))
+                  (PPair (MTPair mempty mtBool mtBool) (PVar mtBool "a") (PWildcard mtBool))
+                  ( MyPair
+                      (MTPair mempty mtBool mtBool)
+                      (MyLiteral mtBool (MyBool True))
+                      (MyLiteral mtBool (MyBool False))
+                  )
+                  (MyVar mtBool "a")
               )
-              (MyVar mtBool "a")
           )
-          `shouldBe` ( TSModule
-                         mempty
-                         ( TSBody
-                             [ TSAssignment
-                                 (TSPatternPair (TSPatternVar "a") TSPatternWildcard)
-                                 (TSLetBody (TSBody mempty (TSArray [TSLit (TSBool True), TSLit (TSBool False)])))
-                             ]
-                             (TSVar "a")
-                         ),
-                       "const [a,_] = [true,false]; export const main = a"
-                     )
-      it "function with known type" $
-        do
-          testFromExpr
-            (MyLambda (MTFunction mempty mtString mtString) "str" (MyVar mtString "str"))
-            `shouldBe` ( TSModule
-                           mempty
-                           ( TSBody
-                               []
-                               ( TSFunction
-                                   "str"
-                                   mempty
-                                   (TSType "string" [])
-                                   ( TSFunctionBody
-                                       ( TSBody [] (TSVar "str")
-                                       )
-                                   )
-                               )
-                           ),
-                         "export const main = (str: string) => str"
-                       )
+          `shouldBe` "const [a,_] = [true,false]; export const main = a"
+
+      it "function with known type" $ do
+        snd
+          ( testFromExpr
+              (MyLambda (MTFunction mempty mtString mtString) "str" (MyVar mtString "str"))
+          )
+          `shouldBe` "export const main = (str: string) => str"
       it "function with generic type used multiple times" $ do
-        testFromExpr
-          ( MyLambda
-              (MTFunction mempty (mtVar "a") (mtVar "a"))
-              "a"
+        snd
+          ( testFromExpr
               ( MyLambda
                   (MTFunction mempty (mtVar "a") (mtVar "a"))
-                  "a2"
-                  (MyVar (mtVar "a") "a")
-              )
-          )
-          `shouldBe` ( TSModule
-                         mempty
-                         ( TSBody
-                             []
-                             ( TSFunction
-                                 "a"
-                                 (S.singleton (TSGeneric "A"))
-                                 (TSTypeVar "A")
-                                 ( TSFunctionBody
-                                     ( TSBody
-                                         []
-                                         ( TSFunction
-                                             "a2"
-                                             mempty
-                                             (TSTypeVar "A")
-                                             ( TSFunctionBody
-                                                 ( TSBody [] (TSVar "a")
-                                                 )
-                                             )
-                                         )
-                                     )
-                                 )
-                             )
-                         ),
-                       "export const main = <A>(a: A) => (a2: A) => a"
-                     )
-      it "pattern match" $ do
-        testFromExpr
-          ( MyPatternMatch
-              mtBool
-              ( MyApp
-                  mtMaybeString
-                  ( MyConstructor mtMaybe "Just"
+                  "a"
+                  ( MyLambda
+                      (MTFunction mempty (mtVar "a") (mtVar "a"))
+                      "a2"
+                      (MyVar (mtVar "a") "a")
                   )
-                  (MyLiteral mtString (MyString "dog"))
               )
-              [ ( PConstructor
-                    mtMaybeString
-                    "Just"
-                    [ PVar mtString "aa"
-                    ],
-                  MyVar mtString "aa"
-                ),
-                ( PWildcard mtMaybeString,
-                  MyLiteral mtString (MyString "nope")
-                )
-              ]
           )
-          `shouldBe` ( TSModule
-                         mempty
-                         ( TSBody
-                             [ TSAssignment
-                                 (TSPatternVar "match")
-                                 ( TSLetBody
-                                     ( TSBody
-                                         []
-                                         ( TSFunction
-                                             "value"
-                                             mempty
-                                             (TSType "Maybe" [TSType "string" []])
-                                             ( TSFunctionBody
-                                                 ( TSBody
-                                                     [ TSConditional
-                                                         (TSPatternConstructor "Just" [TSPatternVar "aa"])
-                                                         ( TSLetBody
-                                                             ( TSBody
-                                                                 [ TSAssignment
-                                                                     (TSPatternConstructor "Just" [TSPatternVar "aa"])
-                                                                     ( TSLetBody
-                                                                         ( TSBody [] (TSVar "value")
-                                                                         )
-                                                                     )
-                                                                 ]
-                                                                 (TSVar "aa")
-                                                             )
-                                                         ),
-                                                       TSConditional
-                                                         TSPatternWildcard
-                                                         ( TSLetBody
-                                                             ( TSBody
-                                                                 [ TSAssignment
-                                                                     TSPatternWildcard
-                                                                     (TSLetBody (TSBody [] (TSVar "value")))
-                                                                 ]
-                                                                 (TSLit (TSString "nope"))
-                                                             )
-                                                         )
-                                                     ]
-                                                     (TSError "Pattern match error")
-                                                 )
-                                             )
-                                         )
-                                     )
-                                 )
-                             ]
-                             ( TSApp
-                                 (TSVar "match")
-                                 ( TSData "Just" [TSLit (TSString "dog")]
-                                 )
-                             )
-                         ),
-                       "const match = (value: Maybe<string>) => { if (value.type === \"Just\") { const { vars: [aa] } = value; return aa; }; if (true) { const _ = value; return \"nope\"; }; throw new Error(\"Pattern match error\"); }; export const main = match({ type: \"Just\", vars: [\"dog\"] })"
-                     )
+          `shouldBe` "export const main = <A>(a: A) => (a2: A) => a"
+
+      it "pattern match" $ do
+        snd
+          ( testFromExpr
+              ( MyPatternMatch
+                  mtBool
+                  ( MyApp
+                      mtMaybeString
+                      ( MyConstructor mtMaybe "Just"
+                      )
+                      (MyLiteral mtString (MyString "dog"))
+                  )
+                  [ ( PConstructor
+                        mtMaybeString
+                        "Just"
+                        [ PVar mtString "aa"
+                        ],
+                      MyVar mtString "aa"
+                    ),
+                    ( PWildcard mtMaybeString,
+                      MyLiteral mtString (MyString "nope")
+                    )
+                  ]
+              )
+          )
+          `shouldBe` "const match = (value: Maybe<string>) => { if (value.type === \"Just\") { const { vars: [aa] } = value; return aa; }; if (true) { const _ = value; return \"nope\"; }; throw new Error(\"Pattern match error\"); }; export const main = match({ type: \"Just\", vars: [\"dog\"] })"
 
     describe "from parsed input" $ do
       traverse_ testIt testCases
