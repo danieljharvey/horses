@@ -1,2 +1,0 @@
-type These<A, B> = { type: "That", vars: [B] } | { type: "These", vars: [A, B] } | { type: "This", vars: [A] }; const These = <A>(a: A) => <B>(b: B) => ({ type: "These", vars: [a,b] }); export const main = These
-console.log(main)
