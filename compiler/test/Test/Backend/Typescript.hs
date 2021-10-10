@@ -131,15 +131,15 @@ testCases =
       "type These<A, B> = { type: \"That\", vars: [B] } | { type: \"These\", vars: [A, B] } | { type: \"This\", vars: [A] }; const These = <A>(a: A) => <B>(b: B) => ({ type: \"These\", vars: [a,b] }); export const main = These",
       "[Function: These]"
     ),
-    ("True == False", "export const main = __eq(true, false)", "false"),
+    ("True == True", "export const main = true === true", "true"),
     ("2 + 2", "export const main = 2 + 2", "4"),
     ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",
-      "const main = \"dog\" + \"log\";\n",
+      "export const main = \"dog\" + \"log\"",
       "doglog"
     ),
     ( "{ fn: (\\a -> let d = 1 in a) }",
-      "const main = { fn: a => { const d = 1;\nreturn a } };\n",
+      "export const main = { fn: <A>(a: A) => { const d = 1; return a; } }",
       "{ fn: [Function: fn] }"
     ),
     ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n", "[ 1, 2, 3, 4 ]"),
@@ -285,8 +285,6 @@ spec = do
       let mtBool = MTPrim mempty MTBool
           mtString = MTPrim mempty MTString
           mtVar a = MTVar mempty (tvNamed a)
-          mtMaybe = MTConstructor mempty "Maybe"
-          mtMaybeString = MTTypeApp mempty mtMaybe mtString
 
       it "const bool" $
         testFromExpr (MyLiteral mtBool (MyBool True))
@@ -343,32 +341,6 @@ spec = do
               )
           )
           `shouldBe` "export const main = <A>(a: A) => (a2: A) => a"
-
-      it "pattern match" $ do
-        snd
-          ( testFromExpr
-              ( MyPatternMatch
-                  mtBool
-                  ( MyApp
-                      mtMaybeString
-                      ( MyConstructor mtMaybe "Just"
-                      )
-                      (MyLiteral mtString (MyString "dog"))
-                  )
-                  [ ( PConstructor
-                        mtMaybeString
-                        "Just"
-                        [ PVar mtString "aa"
-                        ],
-                      MyVar mtString "aa"
-                    ),
-                    ( PWildcard mtMaybeString,
-                      MyLiteral mtString (MyString "nope")
-                    )
-                  ]
-              )
-          )
-          `shouldBe` "const match = (value: Maybe<string>) => { if (value.type === \"Just\") { const { vars: [aa] } = value; return aa; }; if (true) { const _ = value; return \"nope\"; }; throw new Error(\"Pattern match error\"); }; export const main = match({ type: \"Just\", vars: [\"dog\"] })"
 
     describe "from parsed input" $ do
       traverse_ testIt testCases

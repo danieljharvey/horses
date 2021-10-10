@@ -180,6 +180,7 @@ instance Printer TSOp where
   prettyPrint TSSubtract = "-"
   prettyPrint TSGreaterThanOrEqualTo = ">="
   prettyPrint TSAnd = "&&"
+  prettyPrint TSStringConcat = "+"
   prettyPrint _ = error "not sure how to do this one"
 
 instance Printer TSExpr where

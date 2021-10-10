@@ -118,7 +118,7 @@ createConstructorFunction dt tyCon =
                       (TSLetBody (TSBody [] constructorFn))
                   ]
                   (TSVar (coerce tyCon))
-        _ -> throwError _ -- TODO: cannot find datatype error
+        _ -> throwError (ConstructorNotFound tyCon)
 
 toInfix ::
   Operator ->
@@ -139,7 +139,7 @@ toInfix operator a b = do
       pure $ TSInfix TSStringConcat tsA tsB
     ArrayConcat ->
       pure $ TSInfix TSArrayConcat tsA tsB
-    (Custom _op) -> undefined -- we need to save these when they are defined and pull the correct function from state
+    (Custom _op) -> error "custom infixes not implemented" -- we need to save these when they are defined and pull the correct function from state
 
 -- | make TS body, but throw if we get any additional lines
 -- a temporary measure so we can see how often these happen (because they don't
@@ -213,7 +213,7 @@ toTSBody expr' =
                   (TSLetBody (TSBody (item : parts) tsPatExpr))
           )
           patterns
-      (TSBody _ tsA) <- toTSBody matchExpr
+      tsA <- toTSExpr matchExpr
       let (tyMatchExpr, matchGenerics) = toTSType (getAnnotation matchExpr)
       newGenerics <- unusedGenerics matchGenerics
       pure $

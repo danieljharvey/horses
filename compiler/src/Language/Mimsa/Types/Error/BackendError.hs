@@ -8,6 +8,7 @@ import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Prettyprinter
 
 data BackendError ann
   = TyConFindError (Expr Name ann)
@@ -15,6 +16,7 @@ data BackendError ann
   | OutputingTypedHole Name
   | OutputtingBadLetPattern (Pattern Name ann)
   | ExpectedExprGotBody TSExpr [TSStatement]
+  | ConstructorNotFound TyCon
   deriving stock (Eq, Ord, Show)
 
 instance Printer (BackendError ann) where
@@ -29,3 +31,5 @@ instance Printer (BackendError ann) where
   prettyDoc (ExpectedExprGotBody exp' exps) =
     "Expected no extra exprs for :" <> prettyDoc exp' <> ", but found: "
       <> prettyDoc exps
+  prettyDoc (ConstructorNotFound tyCon) =
+    "Constructor" <+> prettyDoc tyCon <+> "not found"
