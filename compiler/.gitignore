@@ -8,3 +8,7 @@ output/
 
 *.hie
 swagger.json
+
+# files generated during tests
+test/golden/Typescript/*.ts
+test/golden/ESModules/*.mjs
