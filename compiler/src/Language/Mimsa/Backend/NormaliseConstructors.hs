@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -14,6 +13,7 @@ import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable (foldl')
 import qualified Data.Map as M
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -24,10 +24,10 @@ import Language.Mimsa.Types.Typechecker
 
 -- turns Constructors into functions
 normaliseConstructors ::
-  (Monoid ann, MonadError (BackendError ann) m) =>
+  (Monoid ann) =>
   ResolvedTypeDeps ->
   Expr Name ann ->
-  m (Expr Name ann)
+  BackendM ann (Expr Name ann)
 normaliseConstructors dt (MyConstructor _ tyCon) =
   pure $ constructorToFunctionWithApplication dt [] tyCon
 normaliseConstructors dt (MyApp _ a val) = do
@@ -47,10 +47,7 @@ containsConst (MyConstructor _ _) = True
 containsConst (MyApp _ f _) = containsConst f
 containsConst _ = False
 
-getNestedTyCons ::
-  (MonadError (BackendError ann) m) =>
-  Expr Name ann ->
-  m TyCon
+getNestedTyCons :: Expr Name ann -> BackendM ann TyCon
 getNestedTyCons (MyApp _ a _) = getNestedTyCons a
 getNestedTyCons (MyConstructor _ tyCon) = pure tyCon
 getNestedTyCons (MyLambda _ _ a) = getNestedTyCons a
