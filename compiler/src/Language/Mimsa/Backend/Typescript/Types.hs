@@ -11,6 +11,7 @@ module Language.Mimsa.Backend.Typescript.Types
     TSSpread (..),
     TSExpr (..),
     TSLetBody (..),
+    TSArrayPart (..),
     TSBody (..),
     TSStatement (..),
     TSFunctionBody (..),
@@ -64,8 +65,8 @@ newtype TSLetBody = TSLetBody TSBody
   deriving newtype (Eq, Ord, Show)
 
 data TSStatement
-  = TSAssignment TSPattern TSLetBody
-  | TSConditional TSPattern TSLetBody
+  = TSAssignment TSPattern (Maybe TSType) TSLetBody -- match pattern, type, body
+  | TSConditional TSPattern TSLetBody -- pattern to match, body
   deriving stock (Eq, Ord, Show)
 
 -- this could be top level or in a function body, it's a list of
@@ -84,15 +85,19 @@ data TSOp
   | TSGreaterThanOrEqualTo
   | TSAnd
   | TSStringConcat
-  | TSArrayConcat
+  deriving stock (Eq, Ord, Show)
+
+data TSArrayPart
+  = TSArrayItem TSExpr
+  | TSArraySpread TSExpr
   deriving stock (Eq, Ord, Show)
 
 data TSExpr
   = TSLit TSLiteral
-  | TSFunction Name (Set TSGeneric) TSType TSFunctionBody
+  | TSFunction Name (Set TSGeneric) TSType (Maybe TSType) TSFunctionBody -- argName, generics, argType, returnType, body
   | TSRecord (Map Name TSExpr)
   | TSRecordAccess Name TSExpr
-  | TSArray [TSExpr]
+  | TSArray [TSArrayPart]
   | TSArrayAccess Int TSExpr
   | TSVar Name
   | TSApp TSExpr TSExpr

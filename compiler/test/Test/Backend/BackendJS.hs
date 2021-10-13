@@ -32,8 +32,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-import System.Exit
-import Test.Backend.RunNode (lbsToString, runScriptFromFile, runScriptInline)
+import Test.Backend.RunNode (lbsToString, runScriptFromFile, withCache)
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -217,7 +216,7 @@ patterns =
 
 commonJSImports :: String
 commonJSImports =
-  "const { __eq, __concat, __patternMatch } = require('./static/backend/commonjs/stdlib.js')"
+  "const { __eq, __concat, __patternMatch } = require('../../../static/backend/commonjs/stdlib.js')"
 
 esModulesImports :: String
 esModulesImports =
@@ -258,19 +257,30 @@ testESModulesInNode js = do
   -- write file
   esPath <- createOutputFolder "ESModules"
   let esFilename = esPath <> show (hash js) <> ".mjs"
+
+  cachePath <- createOutputFolder "ESModules-result"
+  let cacheFilename = cachePath <> show (hash js) <> ".json"
+
   let jsString = createESModulesOutput (lbsToString $ coerce js)
   writeFile esFilename jsString
-  (ec, err) <- runScriptFromFile esFilename
-  case ec of
-    ExitFailure _ -> fail err
-    _ -> pure err
+  (ec, err) <- withCache cacheFilename (runScriptFromFile esFilename)
+  if ec then pure err else fail err
 
+-- test that we have a valid ESModule by saving it and running it
 testCommonJSInNode :: Javascript -> IO String
 testCommonJSInNode js = do
-  (ec, err) <- runScriptInline (createCommonJSOutput (lbsToString $ coerce js))
-  case ec of
-    ExitFailure _ -> fail err
-    _ -> pure err
+  -- write file
+  cjsPath <- createOutputFolder "CommonJS"
+  let cjsFilename = cjsPath <> show (hash js) <> ".js"
+
+  cachePath <- createOutputFolder "CommonJS-result"
+  let cacheFilename = cachePath <> show (hash js) <> ".json"
+
+  let jsString = createCommonJSOutput (lbsToString $ coerce js)
+  writeFile cjsFilename jsString
+
+  (ec, err) <- withCache cacheFilename (runScriptFromFile cjsFilename)
+  if ec then pure err else fail err
 
 testIt :: (Text, Javascript, String) -> Spec
 testIt (expr, expectedJS, expectedValue) =

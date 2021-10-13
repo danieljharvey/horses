@@ -43,8 +43,10 @@ library
       Language.Mimsa.Backend.Runtimes
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
+      Language.Mimsa.Backend.Typescript.DataType
       Language.Mimsa.Backend.Typescript.FromExpr
       Language.Mimsa.Backend.Typescript.Monad
+      Language.Mimsa.Backend.Typescript.Patterns
       Language.Mimsa.Backend.Typescript.Printer
       Language.Mimsa.Backend.Typescript.Types
       Language.Mimsa.Backend.ZipFile

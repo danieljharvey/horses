@@ -6,8 +6,6 @@ module Language.Mimsa.Backend.Typescript.FromExpr (fromExpr) where
 import Control.Monad.Except
 import Data.Coerce (coerce)
 import qualified Data.Map as M
-import Data.Maybe (listToMaybe)
-import Data.Monoid (First (..), getFirst)
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -27,12 +25,17 @@ toLiteral lit = case lit of
   (MyString (StringType s)) -> TSString s
 
 toPattern :: Pattern Name ann -> TSPattern
-toPattern (PVar _ a) = TSPatternVar a
-toPattern (PPair _ a b) = TSPatternPair (toPattern a) (toPattern b)
-toPattern (PWildcard _) = TSPatternWildcard
+toPattern (PVar _ a) =
+  TSPatternVar a
+toPattern (PPair _ a b) =
+  TSPatternPair (toPattern a) (toPattern b)
+toPattern (PWildcard _) =
+  TSPatternWildcard
 toPattern (PConstructor _ name vars) =
   TSPatternConstructor name (toPattern <$> vars)
-toPattern _ = undefined
+toPattern (PRecord _ pMap) =
+  TSPatternRecord (toPattern <$> pMap)
+toPattern other = error (show (prettyPrint other))
 
 -- | returns the type and any generics used in the expression
 toTSType :: Type ann -> (TSType, Set TSGeneric)
@@ -63,63 +66,6 @@ toTSDataType (DataType name gens cons) =
   where
     toTSCons (tyCon, con) = TSConstructor tyCon (fst . toTSType <$> con)
 
--- look for datatype containing constructor, return arguments if found
-findDataTypeInProject :: [DataType] -> TyCon -> Maybe [Type ()]
-findDataTypeInProject dts tyCon =
-  getFirst $ mconcat (First . extractTypeConstructor tyCon <$> dts)
-
-extractTypeConstructor ::
-  TyCon ->
-  DataType ->
-  Maybe [Type ()]
-extractTypeConstructor tc (DataType _ _ constructors) =
-  let isMatch tyCon _ = tc == tyCon
-   in case listToMaybe $ M.elems $ M.filterWithKey isMatch constructors of
-        Just names -> Just names
-        _ -> Nothing
-
-typeNameToName :: Int -> Type ann -> Name
-typeNameToName _ (MTVar _ (TVName name)) = coerce name
-typeNameToName i _ = mkName $ "u" <> prettyPrint i
-
--- turn Just constructor into a function like  \a -> Just a
-createConstructorFunction ::
-  [DataType] ->
-  TyCon ->
-  TypescriptM TSBody
-createConstructorFunction dt tyCon =
-  let defaultEmpty =
-        TSBody
-          [ TSAssignment
-              (TSPatternVar (coerce tyCon))
-              (TSLetBody (TSBody [] (TSData (prettyPrint tyCon) mempty)))
-          ]
-          (TSVar (coerce tyCon))
-   in case findDataTypeInProject dt tyCon of
-        Just [] ->
-          pure defaultEmpty
-        Just as ->
-          let numberList = zip [1 ..] as
-              args = (\(i, tn) -> TSVar (typeNameToName i tn)) <$> numberList
-              tsData = TSData (prettyPrint tyCon) args
-              constructorFn =
-                foldr
-                  ( \(i, tn) expr' ->
-                      let variable = typeNameToName i tn
-                          (tsType, generics) = toTSType tn
-                       in TSFunction variable generics tsType (TSFunctionBody (TSBody mempty expr'))
-                  )
-                  tsData
-                  numberList
-           in pure $
-                TSBody
-                  [ TSAssignment
-                      (TSPatternVar (coerce tyCon))
-                      (TSLetBody (TSBody [] constructorFn))
-                  ]
-                  (TSVar (coerce tyCon))
-        _ -> throwError (ConstructorNotFound tyCon)
-
 toInfix ::
   Operator ->
   Expr Name MonoType ->
@@ -138,7 +84,7 @@ toInfix operator a b = do
     StringConcat ->
       pure $ TSInfix TSStringConcat tsA tsB
     ArrayConcat ->
-      pure $ TSInfix TSArrayConcat tsA tsB
+      pure $ TSArray [TSArraySpread tsA, TSArraySpread tsB]
     (Custom _op) -> error "custom infixes not implemented" -- we need to save these when they are defined and pull the correct function from state
 
 -- | make TS body, but throw if we get any additional lines
@@ -165,6 +111,7 @@ toTSBody expr' =
       let newBinding =
             TSAssignment
               (TSPatternVar name)
+              Nothing
               (TSLetBody newLetExpr)
       (TSBody bindings' newExpr) <- toTSBody letBody
       pure (TSBody ([newBinding] <> bindings') newExpr)
@@ -173,13 +120,14 @@ toTSBody expr' =
       let newBinding =
             TSAssignment
               (toPattern pat)
+              Nothing
               (TSLetBody newLetExpr)
       (TSBody bindings' newExpr) <- toTSBody letBody
       pure (TSBody ([newBinding] <> bindings') newExpr)
     (MyPair _ a b) -> do
       tsA <- toTSExpr a
       tsB <- toTSExpr b
-      pure (TSBody mempty (TSArray [tsA, tsB]))
+      pure (TSBody mempty (TSArray [TSArrayItem tsA, TSArrayItem tsB]))
     (MyVar _ a) -> pure (TSBody mempty (TSVar a))
     (MyLambda fnType bind body) -> do
       let (mtFn, generics') = toTSType fnType
@@ -197,6 +145,7 @@ toTSBody expr' =
               bind
               newGenerics
               mtArg
+              Nothing
               ( TSFunctionBody tsBody
               )
           )
@@ -206,47 +155,48 @@ toTSBody expr' =
           ( \(pat, patExpr) -> do
               let tsPat = toPattern pat
               (TSBody parts tsPatExpr) <- toTSBody patExpr
-              let item = TSAssignment tsPat (TSLetBody (TSBody [] (TSVar "value")))
+              let item = TSAssignment tsPat Nothing (TSLetBody (TSBody [] (TSVar "value")))
               pure $
                 TSConditional
                   (toPattern pat)
                   (TSLetBody (TSBody (item : parts) tsPatExpr))
           )
           patterns
-      tsA <- toTSExpr matchExpr
+      (TSBody tsStatements tsA) <- toTSBody matchExpr
       let (tyMatchExpr, matchGenerics) = toTSType (getAnnotation matchExpr)
       newGenerics <- unusedGenerics matchGenerics
       pure $
         TSBody
-          [ TSAssignment
-              (TSPatternVar "match")
-              ( TSLetBody
-                  ( TSBody
-                      []
-                      ( TSFunction
-                          "value"
-                          newGenerics
-                          tyMatchExpr
-                          ( TSFunctionBody
-                              ( TSBody
-                                  matches
-                                  (TSError "Pattern match error")
-                              )
-                          )
-                      )
-                  )
-              )
-          ]
+          ( tsStatements
+              <> [ TSAssignment
+                     (TSPatternVar "match")
+                     Nothing
+                     ( TSLetBody
+                         ( TSBody
+                             []
+                             ( TSFunction
+                                 "value"
+                                 newGenerics
+                                 tyMatchExpr
+                                 Nothing
+                                 ( TSFunctionBody
+                                     ( TSBody
+                                         matches
+                                         (TSError "Pattern match error")
+                                     )
+                                 )
+                             )
+                         )
+                     )
+                 ]
+          )
           (TSApp (TSVar "match") tsA)
     (MyApp _mtApp func val) -> do
       (TSBody as tsFunc) <- toTSBody func
       (TSBody bs tsVal) <- toTSBody val
       pure $ TSBody (as <> bs) (TSApp tsFunc tsVal)
     (MyConstructor _ tyCon) -> do
-      -- this case should only happen when finding a lone constructor
-      -- which we should then transform into a function
-      state <- getState
-      createConstructorFunction (csDataTypes state) tyCon
+      pure $ TSBody [] (TSVar (coerce tyCon))
     (MyIf _mtIf predExpr thenExpr elseExpr) -> do
       (TSBody as tsPred) <- toTSBody predExpr
       (TSBody bs tsThen) <- toTSBody thenExpr
@@ -266,4 +216,7 @@ toTSBody expr' =
       toTSBody rest
     (MyInfix _ op a b) -> do
       TSBody [] <$> toInfix op a b
+    (MyArray _ as) -> do
+      tsAs <- (fmap . fmap) TSArrayItem (traverse toTSExpr as)
+      pure $ TSBody [] (TSArray tsAs)
     e -> error (show e)

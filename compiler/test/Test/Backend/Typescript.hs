@@ -14,6 +14,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Shared as Actions
+import Language.Mimsa.Backend.Typescript.DataType
 import Language.Mimsa.Backend.Typescript.FromExpr
 import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.Backend.Typescript.Types
@@ -24,7 +25,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker
-import System.Exit
 import Test.Backend.RunNode hiding (spec)
 import Test.Data.Project
 import Test.Hspec
@@ -56,12 +56,14 @@ testTypescriptInNode ts = do
   -- write file
   tsPath <- createOutputFolder "Typescript"
   let tsFilename = tsPath <> show (hash ts) <> ".ts"
+  -- cache output
+  cachePath <- createOutputFolder "Typescript-result"
+  let cacheFilename = cachePath <> show (hash ts) <> ".json"
+  -- create output
   let tsOutput = ts <> "\nconsole.log(main)"
   writeFile tsFilename (T.unpack tsOutput)
-  (ec, err) <- runTypescriptFromFile tsFilename
-  case ec of
-    ExitFailure _ -> fail err
-    _ -> pure err
+  (ec, err) <- withCache cacheFilename (runTypescriptFromFile tsFilename)
+  if ec then pure err else fail err
 
 testIt :: (Text, Text, String) -> Spec
 testIt (expr, expectedTS, expectedValue) =
@@ -72,6 +74,18 @@ testIt (expr, expectedTS, expectedValue) =
         ts `shouldBe` expectedTS
         val <- testTypescriptInNode ts
         val `shouldBe` expectedValue
+
+maybeOutput :: Text
+maybeOutput = "export type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const Just = <A>(a: A): Maybe<A> => ({ type: \"Just\", vars: [a] }); export const Nothing: Maybe<never> = { type: \"Nothing\", vars: [] }; "
+
+theseOutput :: Text
+theseOutput = "export type These<A, B> = { type: \"That\", vars: [B] } | { type: \"These\", vars: [A, B] } | { type: \"This\", vars: [A] }; export const That = <B>(b: B): These<never,B> => ({ type: \"That\", vars: [b] }); export const These = <A>(a: A) => <B>(b: B): These<A,B> => ({ type: \"These\", vars: [a,b] }); export const This = <A>(a: A): These<A,never> => ({ type: \"This\", vars: [a] }); "
+
+identOutput :: Text
+identOutput = "export type Ident<A> = { type: \"Ident\", vars: [A] }; export const Ident = <A>(a: A): Ident<A> => ({ type: \"Ident\", vars: [a] }); "
+
+pairOutput :: Text
+pairOutput = "export type Pair<A, B> = { type: \"Pair\", vars: [A, B] }; export const Pair = <A>(a: A) => <B>(b: B): Pair<A,B> => ({ type: \"Pair\", vars: [a,b] }); "
 
 -- | input, output TS, nodeJS output
 testCases :: [(Text, Text, String)]
@@ -116,20 +130,20 @@ testCases =
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
     ("aRecord.a", "const aRecord = { a: 1, b: \"dog\" }; export const main = aRecord.a", "1"),
     ( "Just",
-      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; const Just = <A>(a: A) => ({ type: \"Just\", vars: [a] }); export const main = Just",
-      "[Function: Just]"
+      maybeOutput <> "export const main = Just",
+      "[Function (anonymous)]"
     ),
     ( "Just 1",
-      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; const Just = <A>(a: A) => ({ type: \"Just\", vars: [a] }); export const main = Just(1)",
+      maybeOutput <> "export const main = Just(1)",
       "{ type: 'Just', vars: [ 1 ] }"
     ),
     ( "Nothing",
-      "type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; const Nothing = { type: \"Nothing\", vars: [] }; export const main = Nothing",
+      maybeOutput <> "export const main = Nothing",
       "{ type: 'Nothing', vars: [] }"
     ),
     ( "These",
-      "type These<A, B> = { type: \"That\", vars: [B] } | { type: \"These\", vars: [A, B] } | { type: \"This\", vars: [A] }; const These = <A>(a: A) => <B>(b: B) => ({ type: \"These\", vars: [a,b] }); export const main = These",
-      "[Function: These]"
+      theseOutput <> "export const main = These",
+      "[Function (anonymous)]"
     ),
     ("True == True", "export const main = true === true", "true"),
     ("2 + 2", "export const main = 2 + 2", "4"),
@@ -142,40 +156,43 @@ testCases =
       "export const main = { fn: <A>(a: A) => { const d = 1; return a; } }",
       "{ fn: [Function: fn] }"
     ),
-    ("[1,2] <> [3,4]", "const main = __concat([1, 2], [3, 4]);\n", "[ 1, 2, 3, 4 ]"),
+    ( "[1,2] <> [3,4]",
+      "export const main = [...[1,2],...[3,4]]",
+      "[ 1, 2, 3, 4 ]"
+    ),
     ( "match Just True with (Just a) -> a | _ -> False",
-      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => a ], [ pat => ({}), () => false ] ]);\n",
+      maybeOutput <> "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; return a; }; if (true) { return false; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
       "true"
     ),
     ( "match Just True with (Just a) -> Just a | _ -> Nothing",
-      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => ({ type: \"Just\", vars: [a] }) ], [ pat => ({}), () => ({ type: \"Nothing\", vars: [] }) ] ]);\n",
+      maybeOutput <> "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; return Just(a); }; if (true) { return Nothing; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
       "{ type: 'Just', vars: [ true ] }"
     ),
     ( "match Just True with (Just a) -> let b = 1; Just a | _ -> Nothing",
-      "const main = __patternMatch({ type: \"Just\", vars: [true] }, [ [ pat => __eq(pat.type, \"Just\") ? { a: pat.vars[0] } : null, ({ a }) => { const b = 1;\nreturn { type: \"Just\", vars: [a] } } ], [ pat => ({}), () => ({ type: \"Nothing\", vars: [] }) ] ]);\n",
+      maybeOutput <> "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; const b = 1; return Just(a); }; if (true) { return Nothing; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
       "{ type: 'Just', vars: [ true ] }"
     ),
     ( "let (a, b) = (1,2) in a",
-      "const main = function() { const [a, b] = [1,2];\nreturn a }();\n",
+      "const [a,b] = [1,2]; export const main = a",
       "1"
     ),
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
-      "const main = function() { const { cat: b, dog: a } = { cat: 2, dog: 1 };\nreturn [a,b] }();\n",
+      "const { cat: b, dog: a } = { cat: 2, dog: 1 }; export const main = [a,b]",
       "[ 1, 2 ]"
     ),
     ( "let (Ident a) = Ident 1 in a",
-      "type Ident<A> = { type: \"Ident\", vars: [A] }; const Ident = <A>(a: A) => ({ type: \"Ident\", vars: [a] }); const { vars: [a] } = Ident(1); export const main = a",
+      identOutput <> "const { vars: [a] } = Ident(1); export const main = a",
       "1"
     ),
     ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      "type Pair<A, B> = { type: \"Pair\", vars: [A, B] }; const Pair = <A>(a: A) => <B>(b: B) => ({ type: \"Pair\", vars: [a,b] }); const { vars: [a, b] } = Pair(1)(2); export const main = [a,b]",
+      pairOutput <> "const { vars: [a, b] } = Pair(1)(2); export const main = [a,b]",
       "[ 1, 2 ]"
     )
   ]
 
 spec :: Spec
 spec = do
-  fdescribe "Typescript" $ do
+  describe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
@@ -187,6 +204,7 @@ spec = do
               "a"
               mempty
               (TSType "boolean" [])
+              Nothing
               (TSFunctionBody (TSBody mempty (TSLit (TSInt 1))))
           )
           `shouldBe` "(a: boolean) => 1"
@@ -195,6 +213,7 @@ spec = do
               "maybeA"
               (S.singleton (TSGeneric "A"))
               (TSType "Maybe" [TSTypeVar "A"])
+              Nothing
               (TSFunctionBody (TSBody mempty (TSLit (TSInt 1))))
           )
           `shouldBe` "<A>(maybeA: Maybe<A>) => 1"
@@ -203,9 +222,13 @@ spec = do
               "maybeA"
               (S.singleton (TSGeneric "A"))
               (TSType "Maybe" [TSTypeVar "A"])
+              Nothing
               ( TSFunctionBody
                   ( TSBody
-                      [ TSAssignment (TSPatternVar "b") (TSLetBody (TSBody [] (TSLit (TSBool True))))
+                      [ TSAssignment
+                          (TSPatternVar "b")
+                          Nothing
+                          (TSLetBody (TSBody [] (TSLit (TSBool True))))
                       ]
                       (TSLit (TSInt 1))
                   )
@@ -235,8 +258,14 @@ spec = do
       it "record access" $ do
         prettyPrint (TSRecordAccess "a" (TSVar "record")) `shouldBe` "record.a"
       it "array" $ do
-        prettyPrint (TSArray [TSLit (TSInt 1), TSLit (TSInt 2), TSLit (TSInt 3)])
-          `shouldBe` "[1,2,3]"
+        prettyPrint
+          ( TSArray
+              [ TSArrayItem (TSLit (TSInt 1)),
+                TSArrayItem (TSLit (TSInt 2)),
+                TSArraySpread (TSVar "rest")
+              ]
+          )
+          `shouldBe` "[1,2,...rest]"
       it "array access" $ do
         prettyPrint (TSArrayAccess 2 (TSVar "array"))
           `shouldBe` "array[2]"
@@ -249,23 +278,26 @@ spec = do
           )
           `shouldBe` "true ? 1 : 2"
       it "patterns" $ do
-        destructure (TSPatternVar "a") `shouldBe` "a"
-        destructure TSPatternWildcard `shouldBe` "_"
+        destructure (TSPatternVar "a") `shouldBe` (True, "a")
+        destructure TSPatternWildcard `shouldBe` (False, "_")
         destructure
           ( TSPatternPair
               (TSPatternVar "a")
               (TSPatternVar "b")
           )
-          `shouldBe` "[a,b]"
+          `shouldBe` (True, "[a,b]")
         destructure
           ( TSPatternRecord
               ( M.fromList
                   [("a", TSPatternVar "a"), ("b", TSPatternVar "b")]
               )
           )
-          `shouldBe` "{ a: a, b: b }"
+          `shouldBe` (True, "{ a: a, b: b }")
         destructure (TSPatternConstructor "Just" [TSPatternVar "a"])
-          `shouldBe` "{ vars: [a] }"
+          `shouldBe` (True, "{ vars: [a] }")
+        destructure (TSPatternConstructor "Just" [TSPatternWildcard])
+          `shouldBe` (False, "{ vars: [_] }")
+
       it "top level module" $ do
         printModule (TSModule mempty (TSBody mempty (TSLit (TSBool True))))
           `shouldBe` "export const main = true"
@@ -275,6 +307,7 @@ spec = do
               ( TSBody
                   [ TSAssignment
                       (TSPatternVar "a")
+                      Nothing
                       (TSLetBody (TSBody mempty (TSLit (TSBool True))))
                   ]
                   (TSVar "a")
@@ -342,12 +375,41 @@ spec = do
           )
           `shouldBe` "export const main = <A>(a: A) => (a2: A) => a"
 
+      describe "Create constructor functions" $ do
+        let tsMaybe =
+              TSDataType
+                "Maybe"
+                ["A"]
+                [ TSConstructor "Just" [TSTypeVar "A"],
+                  TSConstructor "Nothing" mempty
+                ]
+            tsThese =
+              TSDataType
+                "These"
+                ["A", "B"]
+                [ TSConstructor "This" [TSTypeVar "A"],
+                  TSConstructor "That" [TSTypeVar "B"],
+                  TSConstructor "These" [TSTypeVar "A", TSTypeVar "B"]
+                ]
+
+        it "Maybe" $ do
+          prettyPrint <$> createConstructorFunctions tsMaybe
+            `shouldBe` [ "const Just = <A>(a: A): Maybe<A> => ({ type: \"Just\", vars: [a] }); ",
+                         "const Nothing: Maybe<never> = { type: \"Nothing\", vars: [] }; "
+                       ]
+        it "These" $ do
+          prettyPrint <$> createConstructorFunctions tsThese
+            `shouldBe` [ "const This = <A>(a: A): These<A,never> => ({ type: \"This\", vars: [a] }); ",
+                         "const That = <B>(b: B): These<never,B> => ({ type: \"That\", vars: [b] }); ",
+                         "const These = <A>(a: A) => <B>(b: B): These<A,B> => ({ type: \"These\", vars: [a,b] }); "
+                       ]
+
     describe "from parsed input" $ do
       traverse_ testIt testCases
 
       it "simple expression" $ do
         testFromInputText "\\a -> a + 100"
           `shouldBe` Right "export const main = (a: number) => a + 100"
-      xit "pattern matching array spreads" $ do
+      it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> Just as | [] -> Nothing"
           `shouldBe` Right ""

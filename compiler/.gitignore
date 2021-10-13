@@ -12,3 +12,5 @@ swagger.json
 # files generated during tests
 test/golden/Typescript/*.ts
 test/golden/ESModules/*.mjs
+test/golden/Typescript-results/*.ts
+test/golden/ESModules-results/*.mjs
