@@ -21,6 +21,82 @@ import Language.Mimsa.Utils (mapWithIndex)
 -- for instance in an array `[1,2,_,4]` the underscore is needed
 -- but in [_] it is useless. We return (required, tsOutput) as a tuple
 -- and try and remove useless matches
+getDestructureExpr :: TSPattern -> (Bool, TSExpr, [TSStatement])
+getDestructureExpr (TSPatternVar n) = (True, TSVar n, mempty)
+getDestructureExpr TSPatternWildcard = (False, TSVar "_", mempty)
+getDestructureExpr (TSPatternPair a b) =
+  let (needA, tsA, assignA) = getDestructureExpr a
+      (needB, tsB, assignB) = getDestructureExpr b
+   in ( needA || needB,
+        TSArray [TSArrayItem tsA, TSArrayItem tsB],
+        assignA <> assignB
+      )
+getDestructureExpr (TSPatternRecord as) =
+  let outputRecordItem (name, val) =
+        let (useful, tsA, assignA) = getDestructureExpr val
+         in if useful
+              then (M.singleton name tsA, assignA)
+              else (mempty, assignA)
+      (items, assignAs) = mconcat $ outputRecordItem <$> M.toList as
+   in ( not $ null items,
+        TSRecord items,
+        assignAs
+      )
+getDestructureExpr (TSPatternConstructor _ vars) =
+  let (required, as, assignAs) = unzip3 (getDestructureExpr <$> vars)
+   in ( or required,
+        TSRecord
+          ( M.singleton
+              "vars"
+              ( TSArray (TSArrayItem <$> as)
+              )
+          ),
+        mconcat assignAs
+      )
+getDestructureExpr (TSPatternArray as spread) =
+  let (spreadRequired, tsSpread) = case spread of
+        TSSpreadValue a -> (True, [TSArraySpread (TSVar a)])
+        _ -> (False, [])
+      (required, tsAs, assignAs) = unzip3 (getDestructureExpr <$> as)
+   in ( spreadRequired || or required,
+        TSArray ((TSArrayItem <$> tsAs) <> tsSpread),
+        mconcat assignAs
+      )
+getDestructureExpr (TSPatternLit _) = (False, TSVar "_", mempty)
+getDestructureExpr (TSPatternString _tsHead _tsTail) =
+  (False, TSVar "", mempty) -- TODO: return useful stuff in the 3rd slot
+
+{-
+  let aValue = case tsHead of
+        TSStringVar vA ->
+          [ TSInfix
+              TSEquals
+              ( TSApp
+                  (TSRecordAccess "charAt" name)
+                  (TSLit (TSInt 0))
+              )
+              (TSVar vA)
+          ]
+        _ -> mempty
+      asValue = case tsTail of
+        TSStringVar vAs ->
+          [ TSInfix
+              TSEquals
+              ( TSApp
+                  ( TSRecordAccess "slice" name
+                  )
+                  (TSLit (TSInt 1))
+              )
+              (TSVar vAs)
+          ]
+        _ -> mempty
+   in (False, "")
+-}
+
+-- | Sometimes a destructuring is not useful but it is required
+-- for instance in an array `[1,2,_,4]` the underscore is needed
+-- but in [_] it is useless. We return (required, tsOutput) as a tuple
+-- and try and remove useless matches
 destructure :: TSPattern -> (Bool, Text)
 destructure (TSPatternVar n) = (True, prettyPrint n)
 destructure TSPatternWildcard = (False, "_")
