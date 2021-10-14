@@ -20,6 +20,7 @@ genericsForType :: TSType -> Set TSGeneric
 genericsForType (TSTypeVar a) = S.singleton (TSGeneric a)
 genericsForType (TSType _ as) = mconcat (genericsForType <$> as)
 genericsForType (TSTypeFun _ f a) = genericsForType f <> genericsForType a
+genericsForType (TSTypeArray a) = genericsForType a
 
 -- | Creates the return type of a constructor
 returnType :: [Text] -> TyCon -> [TSType] -> TSType
@@ -45,34 +46,32 @@ createConstructorFunction ::
   [Text] ->
   TSConstructor ->
   TSStatement
+createConstructorFunction typeName dtArgs (TSConstructor tyCon []) =
+  TSAssignment
+    (TSPatternVar (coerce tyCon))
+    (Just (returnType dtArgs typeName mempty))
+    (TSLetBody (TSBody [] (TSData (prettyPrint tyCon) mempty)))
 createConstructorFunction typeName dtArgs (TSConstructor tyCon tsArgs) =
-  -- do
-  --  tsArgs <- extractTypeConstructor tyCon dt
-  case tsArgs of
-    [] ->
-      TSAssignment
+  let numberList = zip [1 ..] tsArgs
+      args = (\(i, tn) -> TSVar (typeNameToName i tn)) <$> numberList
+      tsData = TSData (prettyPrint tyCon) args
+      foldFn (i, tsType) expr' =
+        let variable = typeNameToName i tsType
+            generics = genericsForType tsType
+            isFinal = i == length numberList
+            returnType' =
+              if isFinal
+                then Just (returnType dtArgs typeName tsArgs)
+                else Nothing
+         in TSFunction
+              variable
+              generics
+              tsType
+              returnType'
+              (TSFunctionBody (TSBody mempty expr'))
+      constructorFn =
+        foldr foldFn tsData numberList
+   in TSAssignment
         (TSPatternVar (coerce tyCon))
-        (Just (returnType dtArgs typeName mempty))
-        (TSLetBody (TSBody [] (TSData (prettyPrint tyCon) mempty)))
-    as ->
-      let numberList = zip [1 ..] as
-          args = (\(i, tn) -> TSVar (typeNameToName i tn)) <$> numberList
-          tsData = TSData (prettyPrint tyCon) args
-          constructorFn =
-            foldr
-              ( \(i, tsType) expr' ->
-                  let variable = typeNameToName i tsType
-                      generics = genericsForType tsType
-                      isFinal = i == length numberList
-                      returnType' =
-                        if isFinal
-                          then Just (returnType dtArgs typeName tsArgs)
-                          else Nothing
-                   in TSFunction variable generics tsType returnType' (TSFunctionBody (TSBody mempty expr'))
-              )
-              tsData
-              numberList
-       in TSAssignment
-            (TSPatternVar (coerce tyCon))
-            Nothing
-            (TSLetBody (TSBody [] constructorFn))
+        Nothing
+        (TSLetBody (TSBody [] constructorFn))

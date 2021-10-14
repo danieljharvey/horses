@@ -16,6 +16,7 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Typescript.DataType
 import Language.Mimsa.Backend.Typescript.FromExpr
+import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Interpreter.UseSwaps
@@ -192,7 +193,7 @@ testCases =
 
 spec :: Spec
 spec = do
-  describe "Typescript" $ do
+  fdescribe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
@@ -277,26 +278,54 @@ spec = do
               (TSLit (TSInt 2))
           )
           `shouldBe` "true ? 1 : 2"
-      it "patterns" $ do
-        destructure (TSPatternVar "a") `shouldBe` (True, "a")
-        destructure TSPatternWildcard `shouldBe` (False, "_")
-        destructure
-          ( TSPatternPair
-              (TSPatternVar "a")
-              (TSPatternVar "b")
-          )
-          `shouldBe` (True, "[a,b]")
-        destructure
-          ( TSPatternRecord
-              ( M.fromList
-                  [("a", TSPatternVar "a"), ("b", TSPatternVar "b")]
-              )
-          )
-          `shouldBe` (True, "{ a: a, b: b }")
-        destructure (TSPatternConstructor "Just" [TSPatternVar "a"])
-          `shouldBe` (True, "{ vars: [a] }")
-        destructure (TSPatternConstructor "Just" [TSPatternWildcard])
-          `shouldBe` (False, "{ vars: [_] }")
+      describe "patterns" $ do
+        it "destructure" $ do
+          destructure (TSPatternVar "a") `shouldBe` (True, "a")
+          destructure TSPatternWildcard `shouldBe` (False, "_")
+          destructure
+            ( TSPatternPair
+                (TSPatternVar "a")
+                (TSPatternVar "b")
+            )
+            `shouldBe` (True, "[a,b]")
+          destructure
+            ( TSPatternRecord
+                ( M.fromList
+                    [("a", TSPatternVar "a"), ("b", TSPatternVar "b")]
+                )
+            )
+            `shouldBe` (True, "{ a: a, b: b }")
+          destructure (TSPatternConstructor "Just" [TSPatternVar "a"])
+            `shouldBe` (True, "{ vars: [a] }")
+          destructure (TSPatternConstructor "Just" [TSPatternWildcard])
+            `shouldBe` (False, "{ vars: [_] }")
+        {-
+                  destructure (TSPatternString (TSStringVar "d") (TSStringVar "og"))
+                    `shouldBe` (True, "{ }")
+        -}
+        it "conditions" $ do
+          let conditions' = prettyPrint . conditions
+          conditions' (TSPatternVar "a") `shouldBe` "true"
+          conditions' TSPatternWildcard `shouldBe` "true"
+          conditions'
+            ( TSPatternPair
+                (TSPatternLit (TSInt 11))
+                (TSPatternLit (TSInt 23))
+            )
+            `shouldBe` "value[0] === 11 && value[1] === 23"
+          conditions'
+            ( TSPatternRecord
+                ( M.fromList
+                    [("a", TSPatternLit (TSInt 11)), ("b", TSPatternVar "b")]
+                )
+            )
+            `shouldBe` "value.a === 11"
+          conditions' (TSPatternConstructor "Just" [TSPatternLit (TSBool True)])
+            `shouldBe` "value.type === \"Just\" && value.vars[0] === true"
+          conditions' (TSPatternConstructor "Just" [TSPatternWildcard])
+            `shouldBe` "value.type === \"Just\""
+          conditions' (TSPatternString (TSStringVar "d") (TSStringVar "og"))
+            `shouldBe` "value.length >= 1"
 
       it "top level module" $ do
         printModule (TSModule mempty (TSBody mempty (TSLit (TSBool True))))
@@ -410,6 +439,7 @@ spec = do
       it "simple expression" $ do
         testFromInputText "\\a -> a + 100"
           `shouldBe` Right "export const main = (a: number) => a + 100"
+
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> Just as | [] -> Nothing"
-          `shouldBe` Right ""
+          `shouldBe` Right (maybeOutput <> "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1, ...as] = value; return Just(as); }; if (value.length === 0) { return Nothing; }; throw new Error(\"Pattern match error\"); }; return match(a); }")

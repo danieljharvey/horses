@@ -8,6 +8,7 @@ module Language.Mimsa.Backend.Typescript.Patterns
   )
 where
 
+import Data.Foldable (foldl')
 import qualified Data.Map as M
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
@@ -55,13 +56,41 @@ destructure (TSPatternArray as spread) =
       (required, tsAs) = unzip (destructure <$> as)
    in (spreadRequired || or required, "[" <> T.intercalate ", " tsAs <> tsSpread <> "]")
 destructure (TSPatternLit _) = (False, "_")
+destructure (TSPatternString _tsHead _tsTail) =
+  (False, "")
 
+{-
+  let aValue = case tsHead of
+        TSStringVar vA ->
+          [ TSInfix
+              TSEquals
+              ( TSApp
+                  (TSRecordAccess "charAt" name)
+                  (TSLit (TSInt 0))
+              )
+              (TSVar vA)
+          ]
+        _ -> mempty
+      asValue = case tsTail of
+        TSStringVar vAs ->
+          [ TSInfix
+              TSEquals
+              ( TSApp
+                  ( TSRecordAccess "slice" name
+                  )
+                  (TSLit (TSInt 1))
+              )
+              (TSVar vAs)
+          ]
+        _ -> mempty
+   in (False, "")
+-}
 conditions :: TSPattern -> TSExpr
 conditions pat =
   let parts = toMatchExpression (TSVar "value") pat
    in case parts of
         [] -> TSLit (TSBool True)
-        (a : as) -> foldr (TSInfix TSAnd) a as
+        (a : as) -> foldl' (TSInfix TSAnd) a as
 
 -- | turn a pattern map into a match expression for this pattern
 toMatchExpression :: TSExpr -> TSPattern -> [TSExpr]
@@ -101,15 +130,9 @@ toMatchExpression name (TSPatternArray as spread) =
       subPattern i a =
         toMatchExpression (TSArrayAccess (i - 1) name) a
    in [lengthGuard] <> mconcat (mapWithIndex subPattern as)
-
-{-
-toMatchExpression name (TSString a as) =
-  let lengthGuard = GreaterThanOrEQ (name <> ".length") "1"
-      aValue = case a of
-        StrValue _ vA -> M.singleton vA (name <> ".charAt(0)")
-        _ -> mempty
-      asValue = case as of
-        StrValue _ vAs -> M.singleton vAs (name <> ".slice(1)")
-        _ -> mempty
-   in [lengthGuard]
--}
+toMatchExpression name (TSPatternString _a _as) =
+  [ TSInfix
+      TSGreaterThanOrEqualTo
+      (TSRecordAccess "length" name)
+      (TSLit (TSInt 1))
+  ]

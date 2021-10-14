@@ -34,6 +34,7 @@ printType (TSTypeFun argName arg resp) =
   "(" <> prettyPrint argName <> ": " <> printType arg
     <> ") => "
     <> printType resp
+printType (TSTypeArray as) = printType as <> "[]"
 
 printConstructor :: TSConstructor -> Text
 printConstructor (TSConstructor name types) =

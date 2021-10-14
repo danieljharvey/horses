@@ -6,6 +6,7 @@ module Language.Mimsa.Backend.Typescript.Types
     TSType (..),
     TSConstructor (..),
     TSDataType (..),
+    TSStringPart (..),
     TSLiteral (..),
     TSPattern (..),
     TSSpread (..),
@@ -34,6 +35,7 @@ data TSType
   = TSType Text [TSType]
   | TSTypeVar Text
   | TSTypeFun Text TSType TSType
+  | TSTypeArray TSType
   deriving stock (Eq, Ord, Show)
 
 data TSConstructor = TSConstructor TyCon [TSType]
@@ -51,6 +53,11 @@ data TSSpread
   | TSSpreadValue Name
   deriving stock (Eq, Ord, Show)
 
+data TSStringPart
+  = TSStringVar Name
+  | TSStringWildcard
+  deriving stock (Eq, Ord, Show)
+
 data TSPattern
   = TSPatternVar Name
   | TSPatternPair TSPattern TSPattern
@@ -59,6 +66,7 @@ data TSPattern
   | TSPatternLit TSLiteral
   | TSPatternArray [TSPattern] TSSpread
   | TSPatternWildcard
+  | TSPatternString TSStringPart TSStringPart
   deriving stock (Eq, Ord, Show)
 
 newtype TSLetBody = TSLetBody TSBody

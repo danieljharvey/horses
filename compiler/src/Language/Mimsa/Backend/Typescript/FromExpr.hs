@@ -24,6 +24,15 @@ toLiteral lit = case lit of
   (MyBool b) -> TSBool b
   (MyString (StringType s)) -> TSString s
 
+toArraySpread :: Spread Name ann -> TSSpread
+toArraySpread (SpreadValue _ a) = TSSpreadValue a
+toArraySpread (SpreadWildcard _) = TSSpreadWildcard
+toArraySpread NoSpread = TSNoSpread
+
+toStringPart :: StringPart Name ann -> TSStringPart
+toStringPart (StrValue _ a) = TSStringVar a
+toStringPart (StrWildcard _) = TSStringWildcard
+
 toPattern :: Pattern Name ann -> TSPattern
 toPattern (PVar _ a) =
   TSPatternVar a
@@ -35,7 +44,12 @@ toPattern (PConstructor _ name vars) =
   TSPatternConstructor name (toPattern <$> vars)
 toPattern (PRecord _ pMap) =
   TSPatternRecord (toPattern <$> pMap)
-toPattern other = error (show (prettyPrint other))
+toPattern (PArray _ as spread) =
+  TSPatternArray (toPattern <$> as) (toArraySpread spread)
+toPattern (PLit _ lit) =
+  TSPatternLit (toLiteral lit)
+toPattern (PString _ sHead sTail) =
+  TSPatternString (toStringPart sHead) (toStringPart sTail)
 
 -- | returns the type and any generics used in the expression
 toTSType :: Type ann -> (TSType, Set TSGeneric)
@@ -58,6 +72,9 @@ toTSType (MTFunction _ a b) =
   let (tsA, genA) = toTSType a
       (tsB, genB) = toTSType b
    in (TSTypeFun "arg" tsA tsB, genA <> genB)
+toTSType (MTArray _ as) =
+  let (tsAs, genAs) = toTSType as
+   in (TSTypeArray tsAs, genAs)
 toTSType e = (TSType ("unknown for: " <> prettyPrint e) mempty, mempty)
 
 toTSDataType :: DataType -> TSDataType
@@ -155,7 +172,14 @@ toTSBody expr' =
           ( \(pat, patExpr) -> do
               let tsPat = toPattern pat
               (TSBody parts tsPatExpr) <- toTSBody patExpr
-              let item = TSAssignment tsPat Nothing (TSLetBody (TSBody [] (TSVar "value")))
+              let item =
+                    TSAssignment
+                      tsPat
+                      Nothing
+                      ( TSLetBody
+                          ( TSBody [] (TSVar "value")
+                          )
+                      )
               pure $
                 TSConditional
                   (toPattern pat)
