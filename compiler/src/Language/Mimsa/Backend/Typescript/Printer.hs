@@ -5,6 +5,7 @@
 module Language.Mimsa.Backend.Typescript.Printer
   ( printModule,
     printLiteral,
+    printType,
   )
 where
 

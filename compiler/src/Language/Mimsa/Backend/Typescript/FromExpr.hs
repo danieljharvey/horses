@@ -150,9 +150,9 @@ toTSBody expr' =
     (MyVar _ a) -> pure (TSBody mempty (TSVar a))
     (MyLambda fnType bind body) -> do
       let (mtFn, generics') = toTSType fnType
-          mtArg = case mtFn of
-            (TSTypeFun _ a _) -> a
-            _ -> error "function does not have function type"
+      mtArg <- case mtFn of
+        (TSTypeFun _ a _) -> pure a
+        e -> throwError (ExpectedFunctionType e)
       -- get diff between generics we've not used yet
       newGenerics <- unusedGenerics generics'
       -- continue....
