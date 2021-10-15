@@ -10,6 +10,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.Monad
+import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
@@ -127,20 +128,21 @@ toTSBody expr' =
       newLetExpr <- toTSBody letExpr
       let newBinding =
             TSAssignment
-              (TSPatternVar name)
+              (TSVar name)
               Nothing
               (TSLetBody newLetExpr)
       (TSBody bindings' newExpr) <- toTSBody letBody
       pure (TSBody ([newBinding] <> bindings') newExpr)
     (MyLetPattern _ pat letExpr letBody) -> do
       newLetExpr <- toTSBody letExpr
+      let (tsPatExpr, statements) = getDestructureExpr TSUnderscore (toPattern pat)
       let newBinding =
             TSAssignment
-              (toPattern pat)
+              tsPatExpr
               Nothing
               (TSLetBody newLetExpr)
       (TSBody bindings' newExpr) <- toTSBody letBody
-      pure (TSBody ([newBinding] <> bindings') newExpr)
+      pure (TSBody ([newBinding] <> bindings' <> statements) newExpr)
     (MyPair _ a b) -> do
       tsA <- toTSExpr a
       tsB <- toTSExpr b
@@ -170,20 +172,25 @@ toTSBody expr' =
       matches <-
         traverse
           ( \(pat, patExpr) -> do
-              let tsPat = toPattern pat
+              let (tsExpr, statements) =
+                    getDestructureExpr (TSVar "value") (toPattern pat)
               (TSBody parts tsPatExpr) <- toTSBody patExpr
-              let item =
-                    TSAssignment
-                      tsPat
-                      Nothing
-                      ( TSLetBody
-                          ( TSBody [] (TSVar "value")
-                          )
-                      )
+              let items =
+                    if tsExpr /= TSUnderscore
+                      then
+                        TSAssignment
+                          tsExpr
+                          Nothing
+                          ( TSLetBody
+                              ( TSBody [] (TSVar "value")
+                              )
+                          ) :
+                        parts
+                      else parts
               pure $
                 TSConditional
-                  (toPattern pat)
-                  (TSLetBody (TSBody (item : parts) tsPatExpr))
+                  (conditions $ toPattern pat)
+                  (TSLetBody (TSBody (items <> statements) tsPatExpr))
           )
           patterns
       (TSBody tsStatements tsA) <- toTSBody matchExpr
@@ -193,7 +200,7 @@ toTSBody expr' =
         TSBody
           ( tsStatements
               <> [ TSAssignment
-                     (TSPatternVar "match")
+                     (TSVar "match")
                      Nothing
                      ( TSLetBody
                          ( TSBody

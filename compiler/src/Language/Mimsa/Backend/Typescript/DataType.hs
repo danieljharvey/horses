@@ -48,7 +48,7 @@ createConstructorFunction ::
   TSStatement
 createConstructorFunction typeName dtArgs (TSConstructor tyCon []) =
   TSAssignment
-    (TSPatternVar (coerce tyCon))
+    (TSVar (coerce tyCon))
     (Just (returnType dtArgs typeName mempty))
     (TSLetBody (TSBody [] (TSData (prettyPrint tyCon) mempty)))
 createConstructorFunction typeName dtArgs (TSConstructor tyCon tsArgs) =
@@ -72,6 +72,6 @@ createConstructorFunction typeName dtArgs (TSConstructor tyCon tsArgs) =
       constructorFn =
         foldr foldFn tsData numberList
    in TSAssignment
-        (TSPatternVar (coerce tyCon))
+        (TSVar (coerce tyCon))
         Nothing
         (TSLetBody (TSBody [] constructorFn))

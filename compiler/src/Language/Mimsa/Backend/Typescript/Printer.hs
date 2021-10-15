@@ -5,7 +5,6 @@
 module Language.Mimsa.Backend.Typescript.Printer
   ( printModule,
     printLiteral,
-    destructure,
   )
 where
 
@@ -14,7 +13,6 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.DataType
-import Language.Mimsa.Backend.Typescript.Patterns (conditions, destructure)
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 
@@ -76,20 +74,19 @@ returnExpr tsExpr@TSError {} = prettyPrint tsExpr <> ";"
 returnExpr other = "return " <> prettyPrint other <> ";"
 
 instance Printer TSStatement where
-  prettyPrint (TSAssignment pat exprType expr) =
-    let (required, tsPattern) = destructure pat
-        tsPrettyType = case exprType of
+  prettyPrint (TSAssignment lhsExpr exprType expr) =
+    let tsPrettyType = case exprType of
           Just mt' -> ": " <> printType mt'
           _ -> ""
-     in if required
-          then "const " <> tsPattern <> tsPrettyType <> " = " <> prettyPrint expr <> "; "
-          else ""
+     in "const " <> prettyPrint lhsExpr <> tsPrettyType <> " = "
+          <> prettyPrint expr
+          <> "; "
   prettyPrint (TSConditional predicate allBody@(TSLetBody (TSBody [] _))) =
-    "if (" <> prettyPrint (conditions predicate) <> ") { return "
+    "if (" <> prettyPrint predicate <> ") { return "
       <> prettyPrint allBody
-      <> " }; "
+      <> "; }; "
   prettyPrint (TSConditional predicate body) =
-    "if (" <> prettyPrint (conditions predicate) <> ") "
+    "if (" <> prettyPrint predicate <> ") "
       <> prettyPrint body
 
 instance Printer TSFunctionBody where
@@ -160,6 +157,7 @@ instance Printer TSExpr where
      in "{ type: \"" <> prettyPrint constructor <> "\", vars: [" <> prettyArgs <> "] }"
   prettyPrint (TSError msg) =
     "throw new Error(\"" <> msg <> "\")"
+  prettyPrint TSUnderscore = "_"
 
 printModule :: TSModule -> Text
 printModule (TSModule dataTypes (TSBody assignments export)) =

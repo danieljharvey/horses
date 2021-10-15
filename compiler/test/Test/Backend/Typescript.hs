@@ -186,7 +186,7 @@ testCases =
       "1"
     ),
     ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      pairOutput <> "const { vars: [a, b] } = Pair(1)(2); export const main = [a,b]",
+      pairOutput <> "const { vars: [a,b] } = Pair(1)(2); export const main = [a,b]",
       "[ 1, 2 ]"
     )
   ]
@@ -227,7 +227,7 @@ spec = do
               ( TSFunctionBody
                   ( TSBody
                       [ TSAssignment
-                          (TSPatternVar "b")
+                          (TSVar "b")
                           Nothing
                           (TSLetBody (TSBody [] (TSLit (TSBool True))))
                       ]
@@ -280,29 +280,31 @@ spec = do
           `shouldBe` "true ? 1 : 2"
       describe "patterns" $ do
         it "destructure" $ do
-          destructure (TSPatternVar "a") `shouldBe` (True, "a")
-          destructure TSPatternWildcard `shouldBe` (False, "_")
-          destructure
+          let destructure' = prettyPrint . destructure
+          destructure' (TSPatternVar "a") `shouldBe` "const a = value; "
+          destructure' TSPatternWildcard `shouldBe` ""
+          destructure'
             ( TSPatternPair
                 (TSPatternVar "a")
                 (TSPatternVar "b")
             )
-            `shouldBe` (True, "[a,b]")
-          destructure
+            `shouldBe` "const [a,b] = value; "
+          destructure'
             ( TSPatternRecord
                 ( M.fromList
                     [("a", TSPatternVar "a"), ("b", TSPatternVar "b")]
                 )
             )
-            `shouldBe` (True, "{ a: a, b: b }")
-          destructure (TSPatternConstructor "Just" [TSPatternVar "a"])
-            `shouldBe` (True, "{ vars: [a] }")
-          destructure (TSPatternConstructor "Just" [TSPatternWildcard])
-            `shouldBe` (False, "{ vars: [_] }")
-        {-
-                  destructure (TSPatternString (TSStringVar "d") (TSStringVar "og"))
-                    `shouldBe` (True, "{ }")
-        -}
+            `shouldBe` "const { a: a, b: b } = value; "
+          destructure' (TSPatternConstructor "Just" [TSPatternVar "a"])
+            `shouldBe` "const { vars: [a] } = value; "
+          destructure' (TSPatternConstructor "Just" [TSPatternWildcard])
+            `shouldBe` ""
+          destructure' (TSPatternString (TSStringVar "d") (TSStringVar "og"))
+            `shouldBe` "const d = value.charAt(0); \nconst og = value.slice(1); "
+          destructure' (TSPatternConstructor "Just" [TSPatternString (TSStringVar "d") (TSStringVar "og")])
+            `shouldBe` "const d = value.vars[0].charAt(0); \nconst og = value.vars[0].slice(1); "
+
         it "conditions" $ do
           let conditions' = prettyPrint . conditions
           conditions' (TSPatternVar "a") `shouldBe` "true"
@@ -335,7 +337,7 @@ spec = do
               mempty
               ( TSBody
                   [ TSAssignment
-                      (TSPatternVar "a")
+                      (TSVar "a")
                       Nothing
                       (TSLetBody (TSBody mempty (TSLit (TSBool True))))
                   ]
@@ -442,4 +444,4 @@ spec = do
 
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> Just as | [] -> Nothing"
-          `shouldBe` Right (maybeOutput <> "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1, ...as] = value; return Just(as); }; if (value.length === 0) { return Nothing; }; throw new Error(\"Pattern match error\"); }; return match(a); }")
+          `shouldBe` Right (maybeOutput <> "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1,...as] = value; return Just(as); }; if (value.length === 0) { return Nothing; }; throw new Error(\"Pattern match error\"); }; return match(a); }")

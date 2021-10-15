@@ -3,164 +3,124 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Language.Mimsa.Backend.Typescript.Patterns
-  ( destructure,
-    conditions,
+  ( conditions,
+    getDestructureExpr,
+    destructure,
   )
 where
 
 import Data.Foldable (foldl')
 import qualified Data.Map as M
-import Data.Maybe (catMaybes)
-import Data.Text (Text)
-import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Utils (mapWithIndex)
 
--- | Sometimes a destructuring is not useful but it is required
--- for instance in an array `[1,2,_,4]` the underscore is needed
--- but in [_] it is useless. We return (required, tsOutput) as a tuple
--- and try and remove useless matches
-getDestructureExpr :: TSPattern -> (Bool, TSExpr, [TSStatement])
-getDestructureExpr (TSPatternVar n) = (True, TSVar n, mempty)
-getDestructureExpr TSPatternWildcard = (False, TSVar "_", mempty)
-getDestructureExpr (TSPatternPair a b) =
-  let (needA, tsA, assignA) = getDestructureExpr a
-      (needB, tsB, assignB) = getDestructureExpr b
-   in ( needA || needB,
-        TSArray [TSArrayItem tsA, TSArrayItem tsB],
+isUseful :: TSExpr -> Bool
+isUseful TSUnderscore = False
+isUseful _ = True
+
+-- | matchExpr is the thing we're match against, useful when constructing
+-- string destructurings
+getDestructureExpr :: TSExpr -> TSPattern -> (TSExpr, [TSStatement])
+getDestructureExpr _ (TSPatternVar n) = (TSVar n, mempty)
+getDestructureExpr _ TSPatternWildcard = (TSUnderscore, mempty)
+getDestructureExpr matchExpr (TSPatternPair a b) =
+  let (tsA, assignA) = getDestructureExpr (TSArrayAccess 0 matchExpr) a
+      (tsB, assignB) = getDestructureExpr (TSArrayAccess 1 matchExpr) b
+   in ( TSArray [TSArrayItem tsA, TSArrayItem tsB],
         assignA <> assignB
       )
-getDestructureExpr (TSPatternRecord as) =
+getDestructureExpr matchExpr (TSPatternRecord as) =
   let outputRecordItem (name, val) =
-        let (useful, tsA, assignA) = getDestructureExpr val
-         in if useful
+        let (tsA, assignA) = getDestructureExpr (TSRecordAccess name matchExpr) val
+         in if isUseful tsA
               then (M.singleton name tsA, assignA)
               else (mempty, assignA)
       (items, assignAs) = mconcat $ outputRecordItem <$> M.toList as
-   in ( not $ null items,
-        TSRecord items,
+   in ( if null items then TSUnderscore else TSRecord items,
         assignAs
       )
-getDestructureExpr (TSPatternConstructor _ vars) =
-  let (required, as, assignAs) = unzip3 (getDestructureExpr <$> vars)
-   in ( or required,
-        TSRecord
-          ( M.singleton
-              "vars"
-              ( TSArray (TSArrayItem <$> as)
+getDestructureExpr matchExpr (TSPatternConstructor _ vars) =
+  let withIndex i var = getDestructureExpr (TSArrayAccess (i - 1) (TSRecordAccess "vars" matchExpr)) var
+      (as, assignAs) = unzip (mapWithIndex withIndex vars)
+   in ( if or (isUseful <$> as)
+          then
+            TSRecord
+              ( M.singleton
+                  "vars"
+                  ( TSArray (TSArrayItem <$> as)
+                  )
               )
-          ),
+          else TSUnderscore,
         mconcat assignAs
       )
-getDestructureExpr (TSPatternArray as spread) =
+getDestructureExpr matchExpr (TSPatternArray as spread) =
   let (spreadRequired, tsSpread) = case spread of
         TSSpreadValue a -> (True, [TSArraySpread (TSVar a)])
         _ -> (False, [])
-      (required, tsAs, assignAs) = unzip3 (getDestructureExpr <$> as)
-   in ( spreadRequired || or required,
-        TSArray ((TSArrayItem <$> tsAs) <> tsSpread),
+      withIndex i a = getDestructureExpr (TSArrayAccess (i - 1) matchExpr) a
+      (tsAs, assignAs) = unzip (mapWithIndex withIndex as)
+   in ( if spreadRequired || or (isUseful <$> tsAs)
+          then TSArray ((TSArrayItem <$> tsAs) <> tsSpread)
+          else TSUnderscore,
         mconcat assignAs
       )
-getDestructureExpr (TSPatternLit _) = (False, TSVar "_", mempty)
-getDestructureExpr (TSPatternString _tsHead _tsTail) =
-  (False, TSVar "", mempty) -- TODO: return useful stuff in the 3rd slot
-
-{-
+getDestructureExpr _ (TSPatternLit _) = (TSUnderscore, mempty)
+getDestructureExpr matchExpr (TSPatternString tsHead tsTail) =
   let aValue = case tsHead of
         TSStringVar vA ->
-          [ TSInfix
-              TSEquals
-              ( TSApp
-                  (TSRecordAccess "charAt" name)
-                  (TSLit (TSInt 0))
-              )
+          [ TSAssignment
               (TSVar vA)
+              Nothing
+              ( TSLetBody
+                  ( TSBody
+                      mempty
+                      ( TSApp
+                          (TSRecordAccess "charAt" matchExpr)
+                          (TSLit (TSInt 0))
+                      )
+                  )
+              )
           ]
         _ -> mempty
       asValue = case tsTail of
         TSStringVar vAs ->
-          [ TSInfix
-              TSEquals
-              ( TSApp
-                  ( TSRecordAccess "slice" name
-                  )
-                  (TSLit (TSInt 1))
-              )
+          [ TSAssignment
               (TSVar vAs)
-          ]
-        _ -> mempty
-   in (False, "")
--}
-
--- | Sometimes a destructuring is not useful but it is required
--- for instance in an array `[1,2,_,4]` the underscore is needed
--- but in [_] it is useless. We return (required, tsOutput) as a tuple
--- and try and remove useless matches
-destructure :: TSPattern -> (Bool, Text)
-destructure (TSPatternVar n) = (True, prettyPrint n)
-destructure TSPatternWildcard = (False, "_")
-destructure (TSPatternPair a b) =
-  let (needA, tsA) = destructure a
-      (needB, tsB) = destructure b
-   in ( needA || needB,
-        "[" <> tsA <> ","
-          <> tsB
-          <> "]"
-      )
-destructure (TSPatternRecord as) =
-  let outputRecordItem (name, val) =
-        let (useful, tsA) = destructure val
-         in if useful
-              then Just (prettyPrint name <> ": " <> tsA)
-              else Nothing
-      items = catMaybes $ outputRecordItem <$> M.toList as
-   in ( not $ null items,
-        "{ "
-          <> T.intercalate
-            ", "
-            items
-          <> " }"
-      )
-destructure (TSPatternConstructor _ vars) =
-  let (required, as) = unzip (destructure <$> vars)
-   in (or required, "{ vars: [" <> T.intercalate ", " as <> "] }")
-destructure (TSPatternArray as spread) =
-  let (spreadRequired, tsSpread) = case spread of
-        TSSpreadValue a -> (True, ", ..." <> prettyPrint a)
-        _ -> (False, "")
-      (required, tsAs) = unzip (destructure <$> as)
-   in (spreadRequired || or required, "[" <> T.intercalate ", " tsAs <> tsSpread <> "]")
-destructure (TSPatternLit _) = (False, "_")
-destructure (TSPatternString _tsHead _tsTail) =
-  (False, "")
-
-{-
-  let aValue = case tsHead of
-        TSStringVar vA ->
-          [ TSInfix
-              TSEquals
-              ( TSApp
-                  (TSRecordAccess "charAt" name)
-                  (TSLit (TSInt 0))
-              )
-              (TSVar vA)
-          ]
-        _ -> mempty
-      asValue = case tsTail of
-        TSStringVar vAs ->
-          [ TSInfix
-              TSEquals
-              ( TSApp
-                  ( TSRecordAccess "slice" name
+              Nothing
+              ( TSLetBody
+                  ( TSBody
+                      mempty
+                      ( TSApp
+                          ( TSRecordAccess "slice" matchExpr
+                          )
+                          (TSLit (TSInt 1))
+                      )
                   )
-                  (TSLit (TSInt 1))
               )
-              (TSVar vAs)
           ]
         _ -> mempty
-   in (False, "")
--}
+   in (TSUnderscore, aValue <> asValue)
+
+destructure :: TSPattern -> [TSStatement]
+destructure tsPat =
+  let (patExpr, statements) = getDestructureExpr (TSVar "value") tsPat
+      tsMainConst =
+        if isUseful patExpr
+          then
+            [ TSAssignment
+                patExpr
+                Nothing
+                ( TSLetBody
+                    ( TSBody
+                        mempty
+                        (TSVar "value")
+                    )
+                )
+            ]
+          else mempty
+   in tsMainConst <> statements
+
 conditions :: TSPattern -> TSExpr
 conditions pat =
   let parts = toMatchExpression (TSVar "value") pat

@@ -73,8 +73,8 @@ newtype TSLetBody = TSLetBody TSBody
   deriving newtype (Eq, Ord, Show)
 
 data TSStatement
-  = TSAssignment TSPattern (Maybe TSType) TSLetBody -- match pattern, type, body
-  | TSConditional TSPattern TSLetBody -- pattern to match, body
+  = TSAssignment TSExpr (Maybe TSType) TSLetBody -- match pattern, type, body
+  | TSConditional TSExpr TSLetBody -- pattern to match, body
   deriving stock (Eq, Ord, Show)
 
 -- this could be top level or in a function body, it's a list of
@@ -113,6 +113,7 @@ data TSExpr
   | TSTernary TSExpr TSExpr TSExpr
   | TSData Text [TSExpr]
   | TSError Text
+  | TSUnderscore
   deriving stock (Eq, Ord, Show)
 
 data TSModule = TSModule [TSDataType] TSBody
