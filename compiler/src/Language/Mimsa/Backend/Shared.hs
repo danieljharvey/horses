@@ -85,40 +85,56 @@ esModulesJSStandardLibrary =
 stdLibFilename :: Backend -> LBS.ByteString
 stdLibFilename CommonJS = "cjs-stdlib.js"
 stdLibFilename ESModulesJS = "ejs-stdlib.mjs"
+stdLibFilename Typescript = "ts-stdlib.ts"
 
 indexOutputFilename :: Backend -> ExprHash -> LBS.ByteString
-indexOutputFilename CommonJS exprHash = "index-" <> bsFromText (prettyPrint exprHash) <> ".js"
-indexOutputFilename ESModulesJS exprHash = "index-" <> bsFromText (prettyPrint exprHash) <> ".mjs"
+indexOutputFilename CommonJS exprHash =
+  "index-" <> bsFromText (prettyPrint exprHash) <> ".js"
+indexOutputFilename ESModulesJS exprHash =
+  "index-" <> bsFromText (prettyPrint exprHash) <> ".mjs"
+indexOutputFilename Typescript exprHash =
+  "index-" <> bsFromText (prettyPrint exprHash) <> ".ts"
 
 symlinkedOutputPath :: Backend -> FilePath
 symlinkedOutputPath CommonJS =
   "./output/cjs"
 symlinkedOutputPath ESModulesJS =
   "./output/ejs"
+symlinkedOutputPath Typescript =
+  "./output/ts"
 
 transpiledModuleOutputPath :: Backend -> FilePath
 transpiledModuleOutputPath CommonJS = "transpiled/module/common-js"
 transpiledModuleOutputPath ESModulesJS = "transpiled/module/es-modules-js"
+transpiledModuleOutputPath Typescript = "transpiled/module/typescript"
 
 transpiledIndexOutputPath :: Backend -> FilePath
 transpiledIndexOutputPath CommonJS = "transpiled/index/common-js"
 transpiledIndexOutputPath ESModulesJS = "transpiled/index/es-modules-js"
+transpiledIndexOutputPath Typescript = "transpiled/index/typescript"
 
 transpiledStdlibOutputPath :: Backend -> FilePath
 transpiledStdlibOutputPath CommonJS = "transpiled/stdlib/common-js"
 transpiledStdlibOutputPath ESModulesJS = "transpiled/stdlib/es-modules-js"
+transpiledStdlibOutputPath Typescript = "transpiled/stdlib/typescript"
 
 zipFileOutputPath :: Backend -> FilePath
-zipFileOutputPath CommonJS = "./output/zip"
-zipFileOutputPath ESModulesJS = "./output/zip"
+zipFileOutputPath _ = "./output/zip"
 
 moduleFilename :: Backend -> ExprHash -> LBS.ByteString
-moduleFilename CommonJS hash' = "cjs-" <> bsFromText (prettyPrint hash') <> ".js"
-moduleFilename ESModulesJS hash' = "ejs-" <> bsFromText (prettyPrint hash') <> ".mjs"
+moduleFilename CommonJS hash' =
+  "cjs-" <> bsFromText (prettyPrint hash') <> ".js"
+moduleFilename ESModulesJS hash' =
+  "ejs-" <> bsFromText (prettyPrint hash') <> ".mjs"
+moduleFilename Typescript hash' =
+  "ts-" <> bsFromText (prettyPrint hash') <> ".ts"
 
 outputStdlib :: Backend -> LBS.ByteString
-outputStdlib CommonJS = coerce commonJSStandardLibrary
-outputStdlib ESModulesJS = coerce esModulesJSStandardLibrary
+outputStdlib CommonJS =
+  coerce commonJSStandardLibrary
+outputStdlib ESModulesJS =
+  coerce esModulesJSStandardLibrary
+outputStdlib Typescript = mempty
 
 outputExport :: Backend -> Name -> LBS.ByteString
 outputExport CommonJS name =
@@ -127,6 +143,7 @@ outputExport CommonJS name =
     <> bsFromText (coerce name)
     <> " }"
 outputExport ESModulesJS _ = mempty -- we export each one value directly
+outputExport Typescript _ = mempty -- we export each one value directly
 
 outputStoreExpression ::
   (Monoid a) =>

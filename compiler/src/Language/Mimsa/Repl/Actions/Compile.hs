@@ -41,6 +41,7 @@ doOutputJS project input be expr = do
   let runtime = case fromMaybe CommonJS be of
         CommonJS -> cjsExportRuntime
         ESModulesJS -> ejsExportRuntime
+        Typescript -> tsExportRuntime
   resolvedExpr <-
     mimsaFromEither $ Actions.getTypecheckedStoreExpression input project expr
   (_, (rootExprHash, exprHashes)) <-

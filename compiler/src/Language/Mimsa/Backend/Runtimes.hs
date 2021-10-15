@@ -8,6 +8,7 @@ module Language.Mimsa.Backend.Runtimes
     RuntimeName (..),
     cjsExportRuntime,
     ejsExportRuntime,
+    tsExportRuntime,
     cjsConsoleRuntime,
     runtimeIsValid,
     outputIndexFile,
@@ -89,6 +90,14 @@ ejsExportRuntime =
       rtCode = "export { main }"
     }
 
+tsExportRuntime :: Runtime Javascript
+tsExportRuntime =
+  cjsExportRuntime
+    { rtBackend = Typescript,
+      rtName = RuntimeName "export-ts",
+      rtCode = "export { main }"
+    }
+
 cjsConsoleRuntime :: Runtime Javascript
 cjsConsoleRuntime =
   Runtime
@@ -160,7 +169,8 @@ runtimes =
         ejsConsoleRuntime,
         cjsExportRuntime,
         ejsExportRuntime,
-        replRuntime
+        replRuntime,
+        tsExportRuntime
       ]
 
 getValidRuntimes :: MonoType -> Map RuntimeName (Runtime Javascript)
@@ -179,6 +189,8 @@ outputIndexFile be runtime exprHash =
           Javascript ("const main = require('./" <> moduleFilename be exprHash <> "').main;\n")
         ESModulesJS ->
           Javascript ("import { main } from './" <> moduleFilename be exprHash <> "';\n")
+        Typescript ->
+          Javascript ("import { main } from './" <> moduleFilename be exprHash <> "';\n")
    in link <> rtCode runtime
 
 indexFilename :: Runtime code -> ExprHash -> LBS.ByteString
@@ -195,4 +207,10 @@ indexFilename runtime hash' =
         ( "index-" <> coerce (rtName runtime) <> "-"
             <> prettyPrint hash'
             <> ".mjs"
+        )
+    Typescript ->
+      bsFromText
+        ( "index-" <> coerce (rtName runtime) <> "-"
+            <> prettyPrint hash'
+            <> ".ts"
         )

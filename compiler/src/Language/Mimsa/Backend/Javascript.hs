@@ -18,6 +18,7 @@ import qualified Data.ByteString.Char8 as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
+import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Monoid
@@ -27,6 +28,8 @@ import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.NormaliseConstructors
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
+import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
+import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -418,19 +421,23 @@ renderWithFunction ::
   BackendM ann Javascript
 renderWithFunction be dataTypes name expr =
   if containsLet expr && not (startsWithLambda expr)
-    then do
-      dt <- output dataTypes expr
-      case be of
-        CommonJS ->
+    then case be of
+      CommonJS ->
+        output dataTypes expr >>= \dt ->
           pure $
             "const " <> textToJS (coerce name) <> " = function() { "
               <> dt
               <> " }();\n"
-        ESModulesJS ->
+      ESModulesJS ->
+        output dataTypes expr >>= \dt ->
           pure $
             "export const " <> textToJS (coerce name) <> " = function() { "
               <> dt
               <> " }();\n"
+      Typescript ->
+        case TS.fromExpr expr of
+          Right ts -> pure (textToJS (prettyPrint ts))
+          Left e -> throwError (e $> mempty)
     else do
       dt <- output dataTypes expr
       case be of
@@ -444,6 +451,7 @@ renderWithFunction be dataTypes name expr =
             "export const " <> textToJS (coerce name) <> " = "
               <> dt
               <> ";\n"
+        Typescript -> pure dt
 
 startsWithLambda :: Expr var ann -> Bool
 startsWithLambda MyLambda {} = True
@@ -461,6 +469,7 @@ outputJavascript be dataTypes =
     ( case be of
         CommonJS -> commonJSRenderer dataTypes
         ESModulesJS -> esModulesRenderer dataTypes
+        Typescript -> tsModulesRenderer dataTypes
     )
 
 commonJSRenderer ::
@@ -504,5 +513,28 @@ esModulesRenderer dts =
         let filename = Javascript (stdLibFilename ESModulesJS)
          in pure $ "import { __eq, __concat, __patternMatch } from \"./" <> filename <> "\";\n",
       renderTypeSignature = \mt -> pure ("/* \n" <> textToJS (prettyPrint mt) <> "\n */"),
+      renderNewline = textToJS "\n"
+    }
+
+tsModulesRenderer ::
+  (Monoid ann) =>
+  ResolvedTypeDeps ->
+  Renderer ann Javascript
+tsModulesRenderer dts =
+  Renderer
+    { renderFunc = renderWithFunction Typescript dts,
+      renderImport = \(name, hash') ->
+        pure $
+          "import { main as "
+            <> textToJS (coerce name)
+            <> " } from \"./"
+            <> Javascript (moduleFilename Typescript hash')
+            <> "\";\n",
+      renderExport =
+        pure . Javascript . outputExport Typescript,
+      renderStdLib =
+        pure "",
+      renderTypeSignature =
+        \mt -> pure ("/* \n" <> textToJS (prettyPrint mt) <> "\n */"),
       renderNewline = textToJS "\n"
     }
