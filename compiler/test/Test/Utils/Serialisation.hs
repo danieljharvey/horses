@@ -9,6 +9,7 @@ module Test.Utils.Serialisation
     loadRegression,
     saveRegression,
     createOutputFolder,
+    deleteOutputFolder,
   )
 where
 
@@ -33,6 +34,11 @@ createOutputFolder folder = do
   let fullPath = saveRootPath <> "/" <> folder
   createDirectoryIfMissing True fullPath
   pure (fullPath <> "/")
+
+deleteOutputFolder :: FilePath -> IO ()
+deleteOutputFolder folder = do
+  let fullPath = saveRootPath <> "/" <> folder
+  removePathForcibly fullPath
 
 getAllFilesInDir :: FilePath -> String -> IO [String]
 getAllFilesInDir folder ext = do

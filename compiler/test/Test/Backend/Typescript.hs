@@ -7,13 +7,20 @@ where
 
 import Control.Monad.Except
 import Data.Bifunctor
+import qualified Data.ByteString.Lazy as LBS
+import Data.Coerce
 import Data.Foldable
 import Data.Hashable
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Compile as Actions
+import qualified Language.Mimsa.Actions.Evaluate as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
+import Language.Mimsa.Backend.Javascript
+import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Typescript.DataType
 import Language.Mimsa.Backend.Typescript.FromExpr
 import Language.Mimsa.Backend.Typescript.Patterns
@@ -21,6 +28,7 @@ import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
+import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -31,8 +39,44 @@ import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
 import Test.Utils.Serialisation
-  ( createOutputFolder,
-  )
+
+-- | compile a project into a temp folder
+testProjectCompile ::
+  Runtime Javascript ->
+  Expr Name Annotation ->
+  IO FilePath
+testProjectCompile rt expr = do
+  let action = do
+        (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
+        let seHash = getStoreExpressionHash storeExpr
+        _ <- Actions.compile rt "id" storeExpr
+        pure seHash
+  let (_newProject_, outcomes, seHash) =
+        fromRight (Actions.run testStdlib action)
+  let folderName = "CompileProject/compile-test-" <> show seHash
+
+  -- clean up old rubbish
+  deleteOutputFolder folderName
+
+  -- re-create path
+  tsPath <- createOutputFolder folderName
+
+  -- write all files to temp folder
+  traverse_
+    ( \(_, filename, content) -> do
+        let savePath = tsPath <> show filename
+        liftIO $ LBS.writeFile savePath (coerce content)
+    )
+    (Actions.writeFilesFromOutcomes outcomes)
+
+  -- get filename of index file
+  pure $ tsPath <> lbsToString (indexFilename rt seHash)
+
+-- create temp folder
+-- compile into it
+-- run with ts-node
+-- inspect result
+-- delete temp folder
 
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
@@ -64,6 +108,13 @@ testTypescriptInNode ts = do
   let tsOutput = ts <> "\nconsole.log(main)"
   writeFile tsFilename (T.unpack tsOutput)
   (ec, err) <- withCache cacheFilename (runTypescriptFromFile tsFilename)
+  if ec then pure err else fail err
+
+-- test that we have a valid Typescript module by saving it and running it
+testTypescriptFileInNode :: FilePath -> IO String
+testTypescriptFileInNode tsFilename = do
+  -- create output
+  (ec, err) <- runTypescriptFromFile tsFilename
   if ec then pure err else fail err
 
 testIt :: (Text, Text, String) -> Spec
@@ -193,7 +244,7 @@ testCases =
 
 spec :: Spec
 spec = do
-  fdescribe "Typescript" $ do
+  describe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
@@ -445,3 +496,16 @@ spec = do
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> Just as | [] -> Nothing"
           `shouldBe` Right (maybeOutput <> "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1,...as] = value; return Just(as); }; if (value.length === 0) { return Nothing; }; throw new Error(\"Pattern match error\"); }; return match(a); }")
+
+    fdescribe "Entire compilation" $ do
+      it "Compiles the smallest project" $ do
+        let expr = MyLiteral mempty (MyString (StringType "hello world"))
+        filename <- testProjectCompile tsConsoleRuntime expr
+        result <- testTypescriptFileInNode filename
+        result `shouldBe` "hello world"
+
+-- create temp folder
+-- compile into it
+-- run with ts-node
+-- inspect result
+-- delete temp folder

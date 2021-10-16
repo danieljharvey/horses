@@ -12,7 +12,6 @@ import qualified Test.Actions.BindType as BindType
 import qualified Test.Actions.Compile as Compile
 import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Actions.RemoveBinding as RemoveBinding
-import qualified Test.Backend.BackendJS as JS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Runtimes as Runtimes
 import qualified Test.Backend.Typescript as Typescript
@@ -56,7 +55,6 @@ main =
     Repl.spec
     Unify.spec
     Usages.spec
-    JS.spec
     TypeError.spec
     Serialisation.spec
     NormaliseType.spec

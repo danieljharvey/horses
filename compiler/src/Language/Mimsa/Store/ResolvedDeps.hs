@@ -25,7 +25,8 @@ resolveDeps (Store items) (Bindings bindings') =
   where
     foundItems =
       ( \(name, hash) -> case M.lookup hash items of
-          Just storeExpr' -> Right (name, (hash, storeExpr'))
+          Just storeExpr' ->
+            Right (name, (hash, storeExpr'))
           Nothing -> Left name
       )
         <$> M.toList bindings'

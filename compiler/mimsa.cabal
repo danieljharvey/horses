@@ -39,7 +39,6 @@ library
       Language.Mimsa.Actions.Types
       Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript
-      Language.Mimsa.Backend.NormaliseConstructors
       Language.Mimsa.Backend.Runtimes
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
@@ -340,7 +339,6 @@ test-suite mimsa-test
       Test.Actions.Compile
       Test.Actions.Evaluate
       Test.Actions.RemoveBinding
-      Test.Backend.BackendJS
       Test.Backend.RunNode
       Test.Backend.Runtimes
       Test.Backend.Typescript

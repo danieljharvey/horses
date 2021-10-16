@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -29,7 +30,7 @@ data InterpreterError ann
   | TypedHoleFound (Expr Variable ann)
   | CouldNotFindSwapForVariable Variable (Map Variable Name)
   | MaximumCallSizeReached
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Functor)
 
 instance Semigroup (InterpreterError a) where
   a <> _ = a

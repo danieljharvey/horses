@@ -10,6 +10,7 @@ module Language.Mimsa.Backend.Runtimes
     ejsExportRuntime,
     tsExportRuntime,
     cjsConsoleRuntime,
+    tsConsoleRuntime,
     runtimeIsValid,
     outputIndexFile,
     indexFilename,
@@ -113,6 +114,13 @@ ejsConsoleRuntime =
   cjsConsoleRuntime
     { rtBackend = ESModulesJS,
       rtName = RuntimeName "console-ejs"
+    }
+
+tsConsoleRuntime :: Runtime Javascript
+tsConsoleRuntime =
+  cjsConsoleRuntime
+    { rtBackend = Typescript,
+      rtName = RuntimeName "console-ts"
     }
 
 replRuntime :: Runtime Javascript

@@ -10,7 +10,6 @@ import Data.Either (isLeft, isRight)
 import Data.List (nub)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -22,11 +21,6 @@ import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
-
-fromRight :: (Printer e) => Either e a -> a
-fromRight either' = case either' of
-  Left e -> error (T.unpack $ prettyPrint e)
-  Right a -> a
 
 spec :: Spec
 spec = do
@@ -43,7 +37,7 @@ spec = do
       let expr = MyVar mempty "id"
       let action = do
             (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile cjsExportRuntime "id" storeExpr
+            Actions.compile tsExportRuntime "id" storeExpr
       let (newProject, outcomes, (_, hashes)) =
             fromRight (Actions.run testStdlib action)
       -- creates three files
@@ -64,7 +58,7 @@ spec = do
       let expr = MyVar mempty "evalState"
       let action = do
             (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile cjsExportRuntime "evalState" storeExpr
+            Actions.compile tsExportRuntime "evalState" storeExpr
       let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
       -- creates six files
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 7
@@ -83,5 +77,5 @@ spec = do
       let bindings = Bindings (M.singleton "id2" exprHashForId)
       let storeExpr = StoreExpression expr bindings mempty
       let action = do
-            Actions.compile cjsExportRuntime "id2" storeExpr
+            Actions.compile tsExportRuntime "id2" storeExpr
       Actions.run testStdlib action `shouldSatisfy` isRight

@@ -24,11 +24,18 @@ import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
+
+typecheckStoreExpression :: StoreExpression Annotation -> Actions.ActionM (StoreExpression MonoType)
+typecheckStoreExpression se = do
+  project <- Actions.getProject
+  liftEither $ Actions.typecheckStoreExpression (prjStore project) se
 
 -- | this now accepts StoreExpression instead of expression
 compile ::
@@ -40,17 +47,19 @@ compile runtime input se = do
   project <- Actions.getProject
 
   -- get type of StoreExpression
-  mt <- liftEither $ Actions.typecheckStoreExpression (prjStore project) se
+  typedMt <- typecheckStoreExpression se
+
+  let mt = getAnnotation (storeExpression typedMt)
 
   -- does runtime typecheck with expression
   liftEither (first (TypeErr input) (runtimeIsValid runtime mt))
 
   -- this will eventually check for things we have already transpiled to save
   -- on work
-  let list = getTranspileList (prjStore project) se
+  list <- traverse typecheckStoreExpression (S.toList $ getTranspileList (prjStore project) se)
 
   -- transpile each required file and add to outputs
-  traverse_ (transpileModule (rtBackend runtime)) (list <> S.singleton se)
+  traverse_ (transpileModule (rtBackend runtime)) (list <> pure typedMt)
 
   -- create the index
   createIndex runtime (getStoreExpressionHash se)
@@ -62,14 +71,17 @@ compile runtime input se = do
   let rootExprHash = getStoreExpressionHash se
 
   -- return all ExprHashes created
-  let allHashes = S.map getStoreExpressionHash list <> S.singleton rootExprHash
+  let allHashes = S.map getStoreExpressionHash (S.fromList list) <> S.singleton rootExprHash
   pure (rootExprHash, allHashes)
+
+toBackendError :: BackendError MonoType -> Error Annotation
+toBackendError err = BackendErr (getAnnotationForType <$> err)
 
 -- | Each module comes from a StoreExpression
 -- | and is transpiled into a folder in the store
 transpileModule ::
   Backend ->
-  StoreExpression Annotation ->
+  StoreExpression MonoType ->
   Actions.ActionM ()
 transpileModule be se = do
   project <- Actions.getProject
@@ -78,17 +90,15 @@ transpileModule be se = do
       first
         StoreErr
         (resolveTypeDeps (prjStore project) (storeTypeBindings se))
-  monoType <-
-    liftEither $
-      Actions.typecheckStoreExpression (prjStore project) se
+  let monoType = getAnnotation (storeExpression se)
   let path = Actions.SavePath (T.pack $ transpiledModuleOutputPath be)
   let filename =
-        Actions.SaveFilename
-          ( moduleFilename
-              be
-              (getStoreExpressionHash se)
-          )
-  js <- liftEither $ first BackendErr (outputJavascript be dataTypes monoType se)
+        Actions.SaveFilename $
+          moduleFilename
+            be
+            (getStoreExpressionHash se)
+            <> fileExtension be
+  js <- liftEither $ first toBackendError (outputJavascript be dataTypes monoType se)
   let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendWriteFile path filename jsOutput
 

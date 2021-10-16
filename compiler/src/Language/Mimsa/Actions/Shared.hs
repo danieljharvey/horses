@@ -15,11 +15,13 @@ where
 
 import Control.Monad (join)
 import Data.Bifunctor (first)
+import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -166,10 +168,13 @@ evaluateText env input = do
   expr <- first ParseError $ parseExprAndFormatError input
   getTypecheckedStoreExpression input env expr
 
+-- | TODO: make this take a Store () and StoreExpression () so we can use it to
+-- rehydrate expressions from the store, by prettyPrinting and reparsing
+-- this will be helpful for displaying types etc in the UI
 typecheckStoreExpression ::
   Store Annotation ->
   StoreExpression Annotation ->
-  Either (Error Annotation) MonoType
+  Either (Error Annotation) (StoreExpression MonoType)
 typecheckStoreExpression store storeExpr = do
   let project =
         Project
@@ -180,4 +185,6 @@ typecheckStoreExpression store storeExpr = do
   let expr = storeExpression storeExpr
   resolvedExpr <-
     getTypecheckedStoreExpression (prettyPrint expr) project expr
-  pure (reMonoType resolvedExpr)
+  let typedExpr = reTypedExpression resolvedExpr
+  typedStoreExpr <- first (\e -> InterpreterErr (e $> mempty)) (useSwaps (reSwaps resolvedExpr) typedExpr)
+  pure (storeExpr {storeExpression = typedStoreExpr})

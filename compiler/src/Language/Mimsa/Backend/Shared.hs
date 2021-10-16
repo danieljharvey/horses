@@ -14,6 +14,7 @@ module Language.Mimsa.Backend.Shared
     moduleFilename,
     stdLibFilename,
     getTranspileList,
+    fileExtension,
     commonJSStandardLibrary,
     createOutputFolder,
     createModuleOutputPath,
@@ -121,13 +122,17 @@ transpiledStdlibOutputPath Typescript = "transpiled/stdlib/typescript"
 zipFileOutputPath :: Backend -> FilePath
 zipFileOutputPath _ = "./output/zip"
 
+fileExtension :: Backend -> LBS.ByteString
+fileExtension Typescript = ".ts"
+fileExtension _ = ""
+
 moduleFilename :: Backend -> ExprHash -> LBS.ByteString
 moduleFilename CommonJS hash' =
   "cjs-" <> bsFromText (prettyPrint hash') <> ".js"
 moduleFilename ESModulesJS hash' =
   "ejs-" <> bsFromText (prettyPrint hash') <> ".mjs"
 moduleFilename Typescript hash' =
-  "ts-" <> bsFromText (prettyPrint hash') <> ".ts"
+  "ts-" <> bsFromText (prettyPrint hash')
 
 outputStdlib :: Backend -> LBS.ByteString
 outputStdlib CommonJS =

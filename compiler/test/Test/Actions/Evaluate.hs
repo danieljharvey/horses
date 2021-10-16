@@ -8,7 +8,6 @@ where
 
 import Data.Either (isLeft)
 import Data.Functor
-import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
@@ -24,11 +23,6 @@ brokenExpr = MyInfix mempty Equals (int 1) (bool True)
 
 onePlusOneExpr :: Expr Name Annotation
 onePlusOneExpr = MyInfix mempty Add (int 1) (int 1)
-
-fromRight :: (Printer e) => Either e a -> a
-fromRight either' = case either' of
-  Left e -> error (T.unpack $ prettyPrint e)
-  Right a -> a
 
 spec :: Spec
 spec = do

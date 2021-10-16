@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -18,7 +19,7 @@ data BackendError ann
   | ExpectedExprGotBody TSExpr [TSStatement]
   | ConstructorNotFound TyCon
   | ExpectedFunctionType TSType
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Functor)
 
 instance Printer (BackendError ann) where
   prettyDoc (TyConFindError expr) =
