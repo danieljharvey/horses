@@ -15,7 +15,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State
-import Data.Bifunctor (second)
+import Data.Bifunctor
 import Data.Coerce
 import Data.Foldable (foldl', traverse_)
 import Data.Functor (($>))
@@ -25,16 +25,30 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.TcMonad
+import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-envWithBuiltInTypes :: Environment
-envWithBuiltInTypes = Environment mempty dts mempty
+envWithBuiltInTypes :: Map Name MonoType -> Environment
+envWithBuiltInTypes typeMap = Environment schemes dts mempty
   where
-    makeDT (name, _) = M.singleton name (DataType name mempty mempty)
-    dts = mconcat $ makeDT <$> M.toList builtInTypes
+    makeDT (name, _) =
+      M.singleton name (DataType name mempty mempty)
+    dts =
+      mconcat $ makeDT <$> M.toList builtInTypes
+    toScheme =
+      bimap
+        (\(Name n) -> TVName (coerce n))
+        schemeFromMonoType
+    schemes =
+      M.fromList . fmap toScheme . M.toList $ typeMap
+
+-- | Make all free variables polymorphic so that we get a fresh version of
+-- everything each time
+schemeFromMonoType :: MonoType -> Scheme
+schemeFromMonoType mt = Scheme (S.toList $ freeTypeVars mt) mt
 
 builtInTypes :: Map TyCon MonoType
 builtInTypes =

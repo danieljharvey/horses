@@ -4,6 +4,7 @@
 
 module Language.Mimsa.Typechecker.Unify
   ( unify,
+    freeTypeVars,
   )
 where
 
