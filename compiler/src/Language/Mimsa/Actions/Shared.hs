@@ -34,7 +34,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.SubstitutedExpression
 import Language.Mimsa.Types.Swaps
@@ -45,7 +44,6 @@ import Language.Mimsa.Types.Typechecker
 getType ::
   Map Name MonoType ->
   Swaps ->
-  Scope Annotation ->
   Text ->
   Expr Variable Annotation ->
   Either
@@ -55,14 +53,14 @@ getType ::
       Expr Variable MonoType,
       MonoType
     )
-getType typeMap swaps scope' source expr =
+getType typeMap swaps source expr = do
   first
     (TypeErr source)
     ( typecheck
         typeMap
         swaps
         mempty
-        (chainExprs expr scope')
+        expr
     )
 
 getExprPairs :: Store ann -> Bindings -> [(Name, StoreExpression ann)]
@@ -105,17 +103,6 @@ getTypesFromStore (Store items') (TypeBindings tBindings) =
         Just item -> pure [item]
         _ -> pure []
 
-chainExprs ::
-  Monoid ann =>
-  Expr Variable ann ->
-  Scope ann ->
-  Expr Variable ann
-chainExprs expr scope =
-  foldr
-    (\(name, expr') a -> MyLet mempty name expr' a)
-    expr
-    (M.toList . getScope $ scope)
-
 resolveStoreExpression ::
   Store Annotation ->
   Map Name MonoType ->
@@ -123,10 +110,12 @@ resolveStoreExpression ::
   StoreExpression Annotation ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' typeMap input storeExpr = do
-  let (SubstitutedExpression swaps newExpr scope) =
+  let (SubstitutedExpression swaps newExpr scope deps) =
         substitute store' storeExpr
+  resolvedDeps <- traverse (\se -> resolveStoreExpression store' typeMap (prettyPrint (storeExpression se)) se) deps
+  let bigTypeMap = typeMap <> (reMonoType <$> resolvedDeps)
   (_, _, typedExpr, exprType) <-
-    getType typeMap swaps scope input newExpr
+    getType bigTypeMap swaps input newExpr
   pure
     ( ResolvedExpression
         exprType

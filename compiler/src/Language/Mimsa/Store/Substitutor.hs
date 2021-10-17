@@ -28,7 +28,8 @@ import Language.Mimsa.Types.Swaps
 data SubsState ann = SubsState
   { subsSwaps :: Swaps,
     subsScope :: Scope ann,
-    subsCounter :: Int
+    subsCounter :: Int,
+    subsDeps :: Map Name (StoreExpression ann)
   }
 
 type App ann = State (SubsState ann)
@@ -39,8 +40,8 @@ substitute ::
   StoreExpression ann ->
   SubstitutedExpression ann
 substitute store' storeExpr =
-  let startingState = SubsState mempty mempty 0
-      ((_, expr'), SubsState swaps' scope' _) =
+  let startingState = SubsState mempty mempty 0 mempty
+      ((_, expr'), SubsState swaps' scope' _ seDeps') =
         runState
           (doSubstitutions store' storeExpr)
           startingState
@@ -48,6 +49,7 @@ substitute store' storeExpr =
         swaps'
         expr'
         scope'
+        seDeps'
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
 doSubstitutions ::
@@ -117,6 +119,7 @@ addDepToScope ::
   (Name, StoreExpression ann) ->
   App ann (Scope ann, Changed)
 addDepToScope store' (name, storeExpr') = do
+  addDependency name storeExpr'
   (chg, expr') <- doSubstitutions store' storeExpr'
   maybeKey <- scopeExists expr'
   var <- case maybeKey of
@@ -139,6 +142,10 @@ addScope scope' =
 addSwap :: Name -> Variable -> App ann ()
 addSwap old new =
   modify (\s -> s {subsSwaps = subsSwaps s <> M.singleton new old})
+
+addDependency :: Name -> StoreExpression ann -> App ann ()
+addDependency name se =
+  modify (\s -> s {subsDeps = subsDeps s <> M.singleton name se})
 
 mapKeyFind :: (a -> Bool) -> Map k a -> Maybe k
 mapKeyFind pred' map' = case M.toList (M.filter pred' map') of
