@@ -8,6 +8,7 @@ where
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Foldable
+import Data.Functor
 import Data.Hashable
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -454,6 +455,7 @@ spec = do
           `shouldBe` Right (maybeOutput <> "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1,...as] = value; return Just(as); }; if (value.length === 0) { return Nothing; }; throw new Error(\"Pattern match error\"); }; return match(a); }")
 
     fdescribe "Entire compilation" $ do
+      let unsafeParse = ($> mempty) . unsafeParseExpr
       it "Compiles the smallest project" $ do
         let expr = MyLiteral mempty (MyString (StringType "hello world"))
         filename <- testProjectCompile tsConsoleRuntime expr
@@ -465,3 +467,9 @@ spec = do
         filename <- testProjectCompile tsConsoleRuntime expr
         result <- testTypescriptFileInNode filename
         result `shouldBe` "hello again"
+
+      it "Compiles project with one dependency" $ do
+        let expr = unsafeParse "let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\""
+        filename <- testProjectCompile tsConsoleRuntime expr
+        result <- testTypescriptFileInNode filename
+        result `shouldBe` "1"
