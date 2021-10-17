@@ -96,7 +96,7 @@ spec =
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction mempty (unknown 1) (unknown 1),
+            ( MTFunction mempty (unknown 0) (unknown 0),
               MyLambda mempty "i" (MyVar mempty "i")
             )
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
@@ -129,11 +129,11 @@ spec =
       it "let reuse = ({ first: id, second: id 2 }) in reuse.first True" $ do
         result <- eval testStdlib "let reuse = ({ first: id, second: id 2 }) in reuse.first True"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2 1, second: const2 True }) in reuse.first 100)" $ do
-        result <- eval testStdlib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2 1, second: const2 True }) in reuse.first 100)"
+      it "reuses polymorphic function" $ do
+        result <- eval testStdlib "let reuse = ({ first: const 1, second: const True }) in reuse.first 100"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-      it "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2 True, second: const2 2 }) in reuse.second 100)" $ do
-        result <- eval testStdlib "let const2 = \\a -> \\b -> a in (let reuse = ({ first: const2 True, second: const2 2 }) in reuse.second 100)"
+      it "reuses polymorphic function 2" $ do
+        result <- eval testStdlib "let reuse = ({ first: const True, second: const 2 }) in reuse.second 100"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"

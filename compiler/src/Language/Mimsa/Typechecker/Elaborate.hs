@@ -10,10 +10,12 @@ module Language.Mimsa.Typechecker.Elaborate
   )
 where
 
+import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State (State)
 import Control.Monad.Writer
+import Data.Coerce (coerce)
 import Data.Foldable
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
@@ -70,18 +72,25 @@ elabLiteral ann lit =
         (MyString _) -> MTString
    in pure (MyLiteral (MTPrim ann tyLit) lit)
 
+lookupInEnv :: Swaps -> Variable -> Environment -> Maybe Scheme
+lookupInEnv swaps var' (Environment env' _ _) =
+  let look v = M.lookup v env'
+      wrapName (Name n) = TVName (coerce n)
+   in look (variableToTypeIdentifier var')
+        <|> (M.lookup var' swaps >>= look . wrapName)
+
 elabVarFromScope ::
   Environment ->
   Annotation ->
   Variable ->
   ElabM ElabExpr
-elabVarFromScope env@(Environment env' _ _) ann var' =
-  case M.lookup (variableToTypeIdentifier var') env' of
+elabVarFromScope env ann var' = do
+  swaps <- ask
+  case lookupInEnv swaps var' env of
     Just mt -> do
       freshMonoType <- instantiate mt
       pure (MyVar freshMonoType var')
     _ -> do
-      swaps <- ask
       throwError $
         VariableNotInEnv
           swaps
