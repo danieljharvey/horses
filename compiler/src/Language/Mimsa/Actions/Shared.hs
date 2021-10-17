@@ -112,7 +112,16 @@ resolveStoreExpression ::
 resolveStoreExpression store' typeMap input storeExpr = do
   let (SubstitutedExpression swaps newExpr scope deps) =
         substitute store' storeExpr
-  resolvedDeps <- traverse (\se -> resolveStoreExpression store' typeMap (prettyPrint (storeExpression se)) se) deps
+  resolvedDeps <-
+    traverse
+      ( \se ->
+          resolveStoreExpression
+            store'
+            typeMap
+            (prettyPrint (storeExpression se))
+            se
+      )
+      deps
   let bigTypeMap = typeMap <> (reMonoType <$> resolvedDeps)
   (_, _, typedExpr, exprType) <-
     getType bigTypeMap swaps input newExpr
