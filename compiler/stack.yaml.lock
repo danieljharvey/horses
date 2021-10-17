@@ -20,7 +20,7 @@ packages:
     hackage: swagger2-2.6@sha256:12c0752b397da71e286a2f8998dfd842376df56f624deb0ad8d858c6e20cb8bd,4578
 snapshots:
 - completed:
-    size: 581696
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2021/9/18.yaml
-    sha256: f5184f7aaede1ce0aa29ec8be072f916c3c1b1ba95772cc55cb6e1787fa0ef51
-  original: nightly-2021-09-18
+    size: 586612
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2021/10/13.yaml
+    sha256: 3ed968d68cccd6ddbc6b0b73f2507e18a969e64d1171df2e0ea1b3677b51ba75
+  original: nightly-2021-10-13
