@@ -61,7 +61,7 @@ typecheck ::
     )
 typecheck typeMap swaps env expr = do
   let tcAction = do
-        (elabExpr, constraints) <- listen (elab (envWithBuiltInTypes <> env) expr)
+        (elabExpr, constraints) <- listen (elab (envWithBuiltInTypes typeMap <> env) expr)
         subs <- solve constraints
         typedHolesCheck typeMap subs
         pure (subs, constraints, elabExpr)

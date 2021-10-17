@@ -73,7 +73,7 @@ runUnifyM swaps value =
         defaultTcState
 
 typeSearchFromText ::
-  Map Name MonoType ->
+  Map Variable MonoType ->
   Text ->
   Either (Error Annotation) (Map Name MonoType)
 typeSearchFromText typeMap input = do

@@ -11,6 +11,6 @@ import Test.Hspec
 
 spec :: Spec
 spec =
-  describe "Stdlib" $ do
+  fdescribe "Stdlib" $ do
     it "Builds" $
       buildStdlib `shouldSatisfy` isRight

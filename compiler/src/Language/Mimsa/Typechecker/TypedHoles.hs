@@ -11,6 +11,7 @@ where
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
+import Data.Bitraversable
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -24,14 +25,16 @@ import Language.Mimsa.Types.Typechecker
 
 typedHolesCheck ::
   (MonadReader Swaps m, MonadError TypeError m, MonadState TypecheckState m) =>
-  Map Name MonoType ->
+  Map Variable MonoType ->
   Substitutions ->
   m ()
 typedHolesCheck typeMap subs = do
   holes <- getTypedHoles subs
   if M.null holes
     then pure ()
-    else throwError (TypedHoles (getTypedHoleSuggestions typeMap <$> holes))
+    else do
+      typeMap' <- swapTypeMapNames typeMap
+      throwError (TypedHoles (getTypedHoleSuggestions typeMap' <$> holes))
 
 getTypedHoleSuggestions ::
   Map Name MonoType ->

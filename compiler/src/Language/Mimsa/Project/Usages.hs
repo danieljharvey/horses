@@ -1,4 +1,4 @@
-module Language.Mimsa.Project.Usages where
+module Language.Mimsa.Project.Usages (findUsages) where
 
 import qualified Data.Map as M
 import Data.Set (Set)

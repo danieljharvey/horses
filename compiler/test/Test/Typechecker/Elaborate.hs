@@ -5,6 +5,8 @@ module Test.Typechecker.Elaborate
   )
 where
 
+import Data.Map (Map)
+import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
@@ -13,12 +15,22 @@ import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 
+initialTypeMap :: Map Variable MonoType
+initialTypeMap =
+  M.singleton
+    (named "id")
+    ( MTFunction
+        mempty
+        (MTVar mempty (TVNum 1))
+        (MTVar mempty (TVNum 1))
+    )
+
 startElaborate ::
   Expr Variable Annotation ->
   Expr Variable MonoType ->
   IO ()
 startElaborate input expected = do
-  let result = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ input
+  let result = fmap (\(_, _, a, _) -> a) . typecheck initialTypeMap mempty mempty $ input
   (fmap . fmap) recoverAnn result `shouldBe` Right input
   result `shouldBe` Right expected
 
@@ -46,6 +58,30 @@ spec = do
                 (MTPrim mempty MTString)
                 ( MyString
                     (StringType "hello")
+                )
+        startElaborate expr expected
+
+      it "infers using variable in environment" $ do
+        let mtInt = MTPrim mempty MTInt
+        let expr =
+              MyLet
+                mempty
+                (named "a")
+                (int 100)
+                ( MyApp
+                    mempty
+                    (MyVar mempty (named "id"))
+                    (MyVar mempty (named "a"))
+                )
+            expected =
+              MyLet
+                mtInt
+                (named "a")
+                (MyLiteral mtInt (MyInt 100))
+                ( MyApp
+                    mtInt
+                    (MyVar (MTFunction mempty mtInt mtInt) (named "id"))
+                    (MyVar mtInt (named "a"))
                 )
         startElaborate expr expected
 

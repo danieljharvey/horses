@@ -6,13 +6,18 @@ module Test.Project.TypeSearch
   )
 where
 
+import Control.Monad.Reader
+import Data.Bifunctor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Actions.Shared
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
+import Language.Mimsa.Typechecker.TcMonad
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Test.Data.Project (testStdlib)
 import Test.Hspec
@@ -20,9 +25,12 @@ import Test.Utils.Helpers
 
 typeMap :: Map Name MonoType
 typeMap =
-  case getTypeMap testStdlib of
-    Right a -> a
-    _ -> error "Error resolving test project"
+  let result = do
+        typeMap' <- getTypeMap testStdlib
+        first (TypeErr "") (runReaderT (swapTypeMapNames typeMap') mempty)
+   in case result of
+        Right a -> a
+        _ -> error "Error resolving test project"
 
 idType :: MonoType
 idType = MTFunction mempty (unknown 0) (unknown 0)

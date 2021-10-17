@@ -10,10 +10,12 @@ module Language.Mimsa.Typechecker.Elaborate
   )
 where
 
+import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State (State)
 import Control.Monad.Writer
+import Data.Coerce
 import Data.Foldable
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
@@ -32,7 +34,13 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
-type ElabM = ExceptT TypeError (WriterT [Constraint] (ReaderT Swaps (State TypecheckState)))
+type ElabM =
+  ExceptT
+    TypeError
+    ( WriterT
+        [Constraint]
+        (ReaderT Swaps (State TypecheckState))
+    )
 
 type TcExpr = Expr Variable Annotation
 
@@ -75,19 +83,27 @@ elabVarFromScope ::
   Annotation ->
   Variable ->
   ElabM ElabExpr
-elabVarFromScope env@(Environment env' _ _) ann var' =
-  case M.lookup (variableToTypeIdentifier var') env' of
+elabVarFromScope env ann var' = do
+  swaps <- ask
+  case lookupInEnv swaps var' env of
     Just mt -> do
       freshMonoType <- instantiate mt
       pure (MyVar freshMonoType var')
     _ -> do
-      swaps <- ask
       throwError $
         VariableNotInEnv
           swaps
           ann
           var'
           (S.fromList (M.keys (getSchemes env)))
+
+-- | Lookup variable in env, checking swaps version too
+lookupInEnv :: Swaps -> Variable -> Environment -> Maybe Scheme
+lookupInEnv swaps var' (Environment env' _ _) =
+  let look v = M.lookup v env'
+      wrapName (Name n) = TVName (coerce n)
+   in look (variableToTypeIdentifier var')
+        <|> (M.lookup var' swaps >>= look . wrapName)
 
 envFromVar :: Variable -> Scheme -> Environment
 envFromVar binder scheme =

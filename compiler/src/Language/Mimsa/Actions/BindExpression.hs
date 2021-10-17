@@ -39,7 +39,8 @@ bindExpression expr name input = do
             (getExistingBinding name project)
   resolvedExpr <-
     liftEither $ Actions.getTypecheckedStoreExpression input project' expr
-  let storeExpr = reStoreExpression resolvedExpr
+  let storeExpr =
+        reStoreExpression resolvedExpr
   Actions.bindStoreExpression storeExpr name
   graphviz <- Actions.graphExpression storeExpr
   case lookupBindingName project' name of

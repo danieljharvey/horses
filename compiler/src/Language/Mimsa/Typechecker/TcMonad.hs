@@ -9,6 +9,7 @@ module Language.Mimsa.Typechecker.TcMonad
     getTypedHoles,
     TypecheckState (..),
     variableToTypeIdentifier,
+    swapTypeMapNames,
   )
 where
 
@@ -95,13 +96,11 @@ schemesToTypeMap ::
   Map TypeIdentifier Scheme ->
   m (Map Name MonoType)
 schemesToTypeMap schemes = do
-  let fn =
-        ( \(k, v) ->
-            let leName = case k of
-                  TVName n -> pure (Name $ coerce n)
-                  TVNum i -> lookupSwap (NumberedVar i)
-             in (,) <$> leName <*> instantiate v
-        )
+  let fn (k, v) =
+        let leName = case k of
+              TVName n -> pure (Name $ coerce n)
+              TVNum i -> lookupSwap (NumberedVar i)
+         in (,) <$> leName <*> instantiate v
   typeMap <- traverse fn (M.toList schemes)
   pure (M.fromList typeMap)
 
@@ -116,6 +115,18 @@ getTypedHoles subs'@(Substitutions subs) = do
         Just a -> (applySubst subs' a, applySubst subs' localTypeMap)
         Nothing -> (applySubst subs' (MTVar ann (TVNum i)), applySubst subs' localTypeMap)
   pure $ fmap getMonoType holes
+
+-- | error requires actual names for type suggestions,
+-- so retrieve them from swaps if necessary
+swapTypeMapNames ::
+  (MonadReader Swaps m, MonadError TypeError m) =>
+  Map Variable MonoType ->
+  m (Map Name MonoType)
+swapTypeMapNames typeMap = do
+  let f (k, v) = do
+        var <- lookupSwap k
+        pure (var, v)
+  M.fromList <$> traverse f (M.toList typeMap)
 
 variableToTypeIdentifier :: Variable -> TypeIdentifier
 variableToTypeIdentifier (NamedVar n) = TVName (coerce n)

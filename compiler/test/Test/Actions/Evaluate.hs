@@ -42,3 +42,9 @@ spec = do
       expr $> () `shouldBe` int 2
       -- project should be untouched
       newProject `shouldBe` testStdlib
+
+    it "Evaluates an expression that uses an external dep" $ do
+      let expr = MyApp mempty (MyVar mempty "id") (MyLiteral mempty (MyInt 100))
+          action = Actions.evaluate (prettyPrint expr) expr
+      let (_newProject, _, (mt, _, _, _, _, _)) = fromRight (Actions.run testStdlib action)
+      mt $> () `shouldBe` MTPrim mempty MTInt

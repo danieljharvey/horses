@@ -14,7 +14,7 @@ module Language.Mimsa.Actions.Shared
 where
 
 import Control.Monad (join)
-import Data.Bifunctor (first)
+import Data.Bifunctor (bimap, first)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -42,29 +42,6 @@ import Language.Mimsa.Types.Typechecker
 
 ----------
 
-getType ::
-  Map Name MonoType ->
-  Swaps ->
-  Scope Annotation ->
-  Text ->
-  Expr Variable Annotation ->
-  Either
-    (Error ann)
-    ( Substitutions,
-      [Constraint],
-      Expr Variable MonoType,
-      MonoType
-    )
-getType typeMap swaps scope' source expr =
-  first
-    (TypeErr source)
-    ( typecheck
-        typeMap
-        swaps
-        mempty
-        (chainExprs expr scope')
-    )
-
 getExprPairs :: Store ann -> Bindings -> [(Name, StoreExpression ann)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
   (name, hash) <- M.toList bindings'
@@ -85,7 +62,7 @@ resolvedDepsToTypeMap store' deps = do
           >>= \(ResolvedExpression mt _ _ _ _ _ _) -> pure mt
   listItems <-
     traverse
-      (\(name, (_, se)) -> (,) name <$> resolveType se)
+      (\(name, (_, se)) -> (,) (NamedVar name) <$> resolveType se)
       (M.toList $ getResolvedDeps deps)
   pure (M.fromList listItems)
 
@@ -105,6 +82,7 @@ getTypesFromStore (Store items') (TypeBindings tBindings) =
         Just item -> pure [item]
         _ -> pure []
 
+{-
 chainExprs ::
   Monoid ann =>
   Expr Variable ann ->
@@ -115,18 +93,20 @@ chainExprs expr scope =
     (\(name, expr') a -> MyLet mempty name expr' a)
     expr
     (M.toList . getScope $ scope)
+-}
 
 resolveStoreExpression ::
   Store Annotation ->
-  Map Name MonoType ->
+  Map Variable MonoType ->
   Text ->
   StoreExpression Annotation ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' typeMap input storeExpr = do
   let (SubstitutedExpression swaps newExpr scope) =
         substitute store' storeExpr
+  let localTypeMap = getTypeMapForScopes scope
   (_, _, typedExpr, exprType) <-
-    getType typeMap swaps scope input newExpr
+    getType (localTypeMap <> typeMap) swaps scope input newExpr
   pure
     ( ResolvedExpression
         exprType
@@ -138,10 +118,24 @@ resolveStoreExpression store' typeMap input storeExpr = do
         input
     )
 
-getTypeMap :: Project Annotation -> Either (Error Annotation) (Map Name MonoType)
-getTypeMap prj =
-  first StoreErr (resolveDeps (prjStore prj) (getCurrentBindings $ prjBindings prj))
-    >>= resolvedDepsToTypeMap (prjStore prj)
+-- | type map is whole project, now we need types of the specific deps for this
+-- expression
+getTypeMapForScopes :: Scope annotation -> Map Variable MonoType
+getTypeMapForScopes = fmap g . getScope
+  where
+    g = const (MTPrim mempty MTInt)
+
+-- | get the type of every binding in the project
+getTypeMap :: Project Annotation -> Either (Error Annotation) (Map Variable MonoType)
+getTypeMap prj = do
+  resolvedDeps <-
+    first
+      StoreErr
+      ( resolveDeps
+          (prjStore prj)
+          (getCurrentBindings $ prjBindings prj)
+      )
+  resolvedDepsToTypeMap (prjStore prj) resolvedDeps
 
 getTypecheckedStoreExpression ::
   Text ->
@@ -181,3 +175,28 @@ typecheckStoreExpression store storeExpr = do
   resolvedExpr <-
     getTypecheckedStoreExpression (prettyPrint expr) project expr
   pure (reMonoType resolvedExpr)
+
+-- | Does the actual typechecking
+getType ::
+  Map Variable MonoType ->
+  Swaps ->
+  Scope Annotation ->
+  Text ->
+  Expr Variable Annotation ->
+  Either
+    (Error ann)
+    ( Substitutions,
+      [Constraint],
+      Expr Variable MonoType,
+      MonoType
+    )
+getType typeMap swaps _scope' source expr =
+  -- TODO: add scopes to type map by typechecking them
+  first
+    (TypeErr source)
+    ( typecheck
+        typeMap
+        swaps
+        mempty
+        expr
+    )

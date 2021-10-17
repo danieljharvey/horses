@@ -54,6 +54,10 @@ instance Printer Int where
 instance (Printer a) => Printer [a] where
   prettyDoc = sep . fmap prettyDoc
 
+instance (Printer a) => Printer (Maybe a) where
+  prettyDoc (Just a) = prettyDoc a
+  prettyDoc _ = "Nothing"
+
 instance (Printer k, Printer v) => Printer (Map k v) where
   prettyDoc map' =
     let printRow (k, v) = prettyDoc k <+> ":" <+> prettyDoc v
