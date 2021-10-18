@@ -162,6 +162,10 @@ outputStoreExpression renderer mt se = do
     traverse
       (renderImport renderer)
       (M.toList (getBindings $ storeBindings se))
+  typeDeps <-
+    traverse
+      (renderTypeImport renderer)
+      (M.toList (getTypeBindings $ storeTypeBindings se))
   stdLib <- renderStdLib renderer
   func <- renderFunc renderer funcName (storeExpression se)
   typeComment <- renderTypeSignature renderer mt
@@ -171,6 +175,7 @@ outputStoreExpression renderer mt se = do
       ( intersperse
           (renderNewline renderer)
           [ mconcat deps,
+            mconcat typeDeps,
             stdLib,
             typeComment,
             func,

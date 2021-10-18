@@ -104,7 +104,7 @@ cjsConsoleRuntime =
   Runtime
     { rtName = RuntimeName "console",
       rtDescription = "Logs a string expression to console",
-      rtMonoType = mtString,
+      rtMonoType = MTVar mempty (TVName "a"),
       rtBackend = CommonJS,
       rtCode = "console.log(main);"
     }

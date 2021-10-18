@@ -41,7 +41,12 @@ copyLocalOutput runtime exprHashes rootExprHash = do
   -- link index
   copyIndex indexPath outputPath runtime rootExprHash
 
-copyModule :: FilePath -> FilePath -> Backend -> ExprHash -> MimsaM StoreError ()
+copyModule ::
+  FilePath ->
+  FilePath ->
+  Backend ->
+  ExprHash ->
+  MimsaM StoreError ()
 copyModule modulePath outputPath be exprHash = do
   let filename = moduleFilename be exprHash
       fromPath = modulePath <> LB.unpack filename
@@ -49,7 +54,11 @@ copyModule modulePath outputPath be exprHash = do
   tryCopy fromPath toPath
 
 -- the stdlib is already in the store so we copy it to the target folder
-copyStdlib :: FilePath -> FilePath -> Backend -> MimsaM StoreError LBS.ByteString
+copyStdlib ::
+  FilePath ->
+  FilePath ->
+  Backend ->
+  MimsaM StoreError LBS.ByteString
 copyStdlib stdlibPath outputPath be = do
   let fromPath = LB.pack stdlibPath <> stdLibFilename be
   let toPath = LB.pack outputPath <> stdLibFilename be

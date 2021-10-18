@@ -56,7 +56,10 @@ compile runtime input se = do
 
   -- this will eventually check for things we have already transpiled to save
   -- on work
-  list <- traverse typecheckStoreExpression (S.toList $ getTranspileList (prjStore project) se)
+  list <-
+    traverse
+      typecheckStoreExpression
+      (S.toList $ getTranspileList (prjStore project) se)
 
   -- transpile each required file and add to outputs
   traverse_ (transpileModule (rtBackend runtime)) (list <> pure typedMt)
@@ -71,7 +74,9 @@ compile runtime input se = do
   let rootExprHash = getStoreExpressionHash se
 
   -- return all ExprHashes created
-  let allHashes = S.map getStoreExpressionHash (S.fromList list) <> S.singleton rootExprHash
+  let allHashes =
+        S.map getStoreExpressionHash (S.fromList list)
+          <> S.singleton rootExprHash
   pure (rootExprHash, allHashes)
 
 toBackendError :: BackendError MonoType -> Error Annotation

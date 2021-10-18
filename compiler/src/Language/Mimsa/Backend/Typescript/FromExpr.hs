@@ -80,9 +80,13 @@ toTSType e = (TSType ("unknown for: " <> prettyPrint e) mempty, mempty)
 
 toTSDataType :: DataType -> TSDataType
 toTSDataType (DataType name gens cons) =
-  TSDataType name (T.toTitle . prettyPrint <$> gens) (toTSCons <$> M.toList cons)
+  TSDataType
+    name
+    (T.toTitle . prettyPrint <$> gens)
+    (toTSCons <$> M.toList cons)
   where
-    toTSCons (tyCon, con) = TSConstructor tyCon (fst . toTSType <$> con)
+    toTSCons (tyCon, con) =
+      TSConstructor tyCon (fst . toTSType <$> con)
 
 toInfix ::
   Operator ->
@@ -242,8 +246,7 @@ toTSBody expr' =
       (TSBody as tsExpr) <- toTSBody recExpr
       pure $ TSBody as (TSRecordAccess name tsExpr)
     (MyData _ dt rest) -> do
-      let tsDataType = toTSDataType dt
-      addDataType dt tsDataType
+      addDataType dt (toTSDataType dt)
       toTSBody rest
     (MyInfix _ op a b) -> do
       TSBody [] <$> toInfix op a b

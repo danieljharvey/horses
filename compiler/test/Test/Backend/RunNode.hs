@@ -19,21 +19,24 @@ import System.Exit
 import System.Process.Typed
 import Test.Hspec
 
+runProcessFromFile :: (MonadIO m) => String -> String -> m (Bool, String)
+runProcessFromFile binaryName filename = do
+  result <- liftIO $ try $ readProcess (proc binaryName [filename])
+  case result of
+    Right (ExitSuccess, success, _) ->
+      pure (exitCodeToBool ExitSuccess, binNewline success)
+    Right (ExitFailure exitCode, _, failure) ->
+      pure (exitCodeToBool (ExitFailure exitCode), binNewline failure)
+    Left e -> pure (False, show (e :: IOException))
+
 -- | Pass a filepath to a JS file for Node to execute.
 -- Required as ES modules don't work with the `-p` flag
 runScriptFromFile :: (MonadIO m) => String -> m (Bool, String)
-runScriptFromFile filename = do
-  (ec, success, failure) <- readProcess (proc "node" [filename])
-  case ec of
-    ExitSuccess -> pure (exitCodeToBool ec, binNewline success)
-    ExitFailure _ -> pure (exitCodeToBool ec, binNewline failure)
+runScriptFromFile = runProcessFromFile "node"
 
+-- | Pass a filepath to a TS file for `ts-node` to execute.
 runTypescriptFromFile :: (MonadIO m) => String -> m (Bool, String)
-runTypescriptFromFile filename = do
-  (ec, success, failure) <- readProcess (proc "ts-node" [filename])
-  case ec of
-    ExitSuccess -> pure (exitCodeToBool ec, binNewline success)
-    ExitFailure _ -> pure (exitCodeToBool ec, binNewline failure)
+runTypescriptFromFile = runProcessFromFile "ts-node"
 
 exitCodeToBool :: ExitCode -> Bool
 exitCodeToBool ExitSuccess = True

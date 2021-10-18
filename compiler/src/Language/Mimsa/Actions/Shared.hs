@@ -186,5 +186,8 @@ typecheckStoreExpression store storeExpr = do
   resolvedExpr <-
     getTypecheckedStoreExpression (prettyPrint expr) project expr
   let typedExpr = reTypedExpression resolvedExpr
-  typedStoreExpr <- first (\e -> InterpreterErr (e $> mempty)) (useSwaps (reSwaps resolvedExpr) typedExpr)
+  typedStoreExpr <-
+    first
+      (\e -> InterpreterErr (e $> mempty))
+      (useSwaps (reSwaps resolvedExpr) typedExpr)
   pure (storeExpr {storeExpression = typedStoreExpr})

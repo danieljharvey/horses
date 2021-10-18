@@ -21,6 +21,7 @@ data Backend = CommonJS | ESModulesJS | Typescript
 data Renderer ann a = Renderer
   { renderFunc :: Name -> Expr Name ann -> BackendM ann a,
     renderImport :: (Name, ExprHash) -> BackendM ann a,
+    renderTypeImport :: (TyCon, ExprHash) -> BackendM ann a,
     renderStdLib :: BackendM ann a,
     renderExport :: Name -> BackendM ann a,
     renderTypeSignature :: MonoType -> BackendM ann a,

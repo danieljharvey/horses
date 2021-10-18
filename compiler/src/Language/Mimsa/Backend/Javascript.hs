@@ -85,6 +85,7 @@ commonJSRenderer dts =
             <> " = require(\"./"
             <> Javascript (moduleFilename CommonJS hash')
             <> "\").main;\n",
+      renderTypeImport = const (pure (textToJS "")),
       renderExport = pure . Javascript . outputExport CommonJS,
       renderStdLib =
         let filename = Javascript (stdLibFilename CommonJS)
@@ -107,6 +108,7 @@ esModulesRenderer dts =
             <> Javascript (moduleFilename ESModulesJS hash')
             <> "\";\n",
       renderExport = pure . Javascript . outputExport ESModulesJS,
+      renderTypeImport = const (pure (textToJS "")),
       renderStdLib =
         let filename = Javascript (stdLibFilename ESModulesJS)
          in pure $ "import { __eq, __concat, __patternMatch } from \"./" <> filename <> "\";\n",
@@ -124,6 +126,13 @@ tsModulesRenderer dts =
         pure $
           "import { main as "
             <> textToJS (coerce name)
+            <> " } from \"./"
+            <> Javascript (moduleFilename Typescript hash')
+            <> "\";\n",
+      renderTypeImport = \(tyCon, hash') ->
+        pure $
+          "import { "
+            <> textToJS (coerce tyCon)
             <> " } from \"./"
             <> Javascript (moduleFilename Typescript hash')
             <> "\";\n",

@@ -84,6 +84,15 @@ testIt (expr, expectedTS, expectedValue) =
         val <- testTypescriptInNode ts
         val `shouldBe` expectedValue
 
+fullTestIt :: (Text, String) -> Spec
+fullTestIt (input, expectedValue) =
+  it (T.unpack input) $ do
+    let unsafeParse = ($> mempty) . unsafeParseExpr
+        expr = unsafeParse input
+    filename <- testProjectCompile tsConsoleRuntime expr
+    result <- testTypescriptFileInNode filename
+    result `shouldBe` expectedValue
+
 maybeOutput :: Text
 maybeOutput = "export type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const Just = <A>(a: A): Maybe<A> => ({ type: \"Just\", vars: [a] }); export const Nothing: Maybe<never> = { type: \"Nothing\", vars: [] }; "
 
@@ -103,14 +112,9 @@ testCases =
     ("False", "export const main = false", "false"),
     ("123", "export const main = 123", "123"),
     ("\"Poo\"", "export const main = \"Poo\"", "Poo"),
-    ("id", "const id = <A>(a: A) => a; export const main = id", "[Function: id]"),
     ( "\\a -> a",
       "export const main = <A>(a: A) => a",
       "[Function (anonymous)]"
-    ),
-    ( "id 1",
-      "const id = <A>(a: A) => a; export const main = id(1)",
-      "1"
     ),
     ( "if True then 1 else 2",
       "export const main = true ? 1 : 2",
@@ -128,16 +132,11 @@ testCases =
       "export const main = { a: 123, b: \"horse\" }",
       "{ a: 123, b: 'horse' }"
     ),
-    ( "let (a,b) = aPair in a",
-      "const aPair = [1,2]; \nconst [a,b] = aPair; export const main = a",
-      "1"
-    ),
     ( "\\a -> let b = 123 in a",
       "export const main = <A>(a: A) => { const b = 123; return a; }",
       "[Function (anonymous)]"
     ),
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
-    ("aRecord.a", "const aRecord = { a: 1, b: \"dog\" }; export const main = aRecord.a", "1"),
     ( "Just",
       maybeOutput <> "export const main = Just",
       "[Function (anonymous)]"
@@ -195,6 +194,87 @@ testCases =
     ),
     ( "let (Pair a b) = Pair 1 2 in (a,b)",
       pairOutput <> "const { vars: [a,b] } = Pair(1)(2); export const main = [a,b]",
+      "[ 1, 2 ]"
+    )
+  ]
+
+-- | input, nodeJS output
+fullTestCases :: [(Text, String)]
+fullTestCases =
+  [ ("True", "true"),
+    ("False", "false"),
+    ("123", "123"),
+    ("\"Poo\"", "Poo"),
+    ("id", "[Function (anonymous)]"),
+    ( "\\a -> a",
+      "[Function (anonymous)]"
+    ),
+    ( "id 1",
+      "1"
+    ),
+    ( "if True then 1 else 2",
+      "1"
+    ),
+    ( "let a = \"dog\" in 123",
+      "123"
+    ),
+    ( "let a = \"dog\" in let b = \"horse\" in 123",
+      "123"
+    ),
+    ( "{ a: 123, b: \"horse\" }",
+      "{ a: 123, b: 'horse' }"
+    ),
+    ( "let (a,b) = aPair in a",
+      "1"
+    ),
+    ( "\\a -> let b = 123 in a",
+      "[Function (anonymous)]"
+    ),
+    ("(1,2)", "[ 1, 2 ]"),
+    ("aRecord.a", "1"),
+    ( "Just",
+      "[Function (anonymous)]"
+    ),
+    ( "Just 1",
+      "{ type: 'Just', vars: [ 1 ] }"
+    ),
+    ( "Nothing",
+      "{ type: 'Nothing', vars: [] }"
+    ),
+    ( "These",
+      "[Function (anonymous)]"
+    ),
+    ("True == True", "true"),
+    ("2 + 2", "4"),
+    ("10 - 2", "8"),
+    ( "\"dog\" ++ \"log\"",
+      "doglog"
+    ),
+    ( "{ fn: (\\a -> let d = 1 in a) }",
+      "{ fn: [Function: fn] }"
+    ),
+    ( "[1,2] <> [3,4]",
+      "[ 1, 2, 3, 4 ]"
+    ),
+    ( "match Just True with (Just a) -> a | _ -> False",
+      "true"
+    ),
+    ( "match Just True with (Just a) -> Just a | _ -> Nothing",
+      "{ type: 'Just', vars: [ true ] }"
+    ),
+    ( "match Just True with (Just a) -> let b = 1; Just a | _ -> Nothing",
+      "{ type: 'Just', vars: [ true ] }"
+    ),
+    ( "let (a, b) = (1,2) in a",
+      "1"
+    ),
+    ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
+      "[ 1, 2 ]"
+    ),
+    ( "let (Ident a) = Ident 1 in a",
+      "1"
+    ),
+    ( "let (Pair a b) = Pair 1 2 in (a,b)",
       "[ 1, 2 ]"
     )
   ]
@@ -454,7 +534,9 @@ spec = do
         testFromInputText "\\a -> match a with [a1,...as] -> Just as | [] -> Nothing"
           `shouldBe` Right (maybeOutput <> "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1,...as] = value; return Just(as); }; if (value.length === 0) { return Nothing; }; throw new Error(\"Pattern match error\"); }; return match(a); }")
 
-    fdescribe "Entire compilation" $ do
+    describe "Entire compilation" $ do
+      traverse_ fullTestIt fullTestCases
+
       let unsafeParse = ($> mempty) . unsafeParseExpr
       it "Compiles the smallest project" $ do
         let expr = MyLiteral mempty (MyString (StringType "hello world"))
@@ -463,13 +545,23 @@ spec = do
         result `shouldBe` "hello world"
 
       it "Compiles project with one dependency" $ do
-        let expr = MyApp mempty (MyVar mempty "id") (MyLiteral mempty (MyString (StringType "hello again")))
+        let expr = unsafeParse "id \"hello again\""
         filename <- testProjectCompile tsConsoleRuntime expr
         result <- testTypescriptFileInNode filename
         result `shouldBe` "hello again"
 
-      it "Compiles project with one dependency" $ do
-        let expr = unsafeParse "let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\""
+      it "Compiles project with declared type" $ do
+        let expr =
+              unsafeParse
+                "type Id a = Id a; let (Id aaa) = Id \"dog\" in aaa"
         filename <- testProjectCompile tsConsoleRuntime expr
         result <- testTypescriptFileInNode filename
-        result `shouldBe` "1"
+        result `shouldBe` "dog"
+
+      it "Compiles project with type dependency" $ do
+        let expr =
+              unsafeParse
+                "let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\""
+        filename <- testProjectCompile tsConsoleRuntime expr
+        result <- testTypescriptFileInNode filename
+        result `shouldBe` "hey"
