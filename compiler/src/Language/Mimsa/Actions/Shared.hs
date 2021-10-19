@@ -110,7 +110,7 @@ resolveStoreExpression ::
   StoreExpression Annotation ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' typeMap input storeExpr = do
-  let (SubstitutedExpression swaps newExpr scope deps) =
+  let (SubstitutedExpression swaps newExpr scope deps _typeDeps) =
         substitute store' storeExpr
   resolvedDeps <-
     traverse

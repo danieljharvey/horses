@@ -1,15 +1,15 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Store.Substitutor where
+module Language.Mimsa.Store.Substitutor (substitute) where
 
 import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
+import Data.Foldable
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
@@ -29,7 +29,8 @@ data SubsState ann = SubsState
   { subsSwaps :: Swaps,
     subsScope :: Scope ann,
     subsCounter :: Int,
-    subsDeps :: Map Name (StoreExpression ann)
+    subsDeps :: Map Name (StoreExpression ann),
+    subsTypeDeps :: Set (StoreExpression ann)
   }
 
 type App ann = State (SubsState ann)
@@ -40,8 +41,8 @@ substitute ::
   StoreExpression ann ->
   SubstitutedExpression ann
 substitute store' storeExpr =
-  let startingState = SubsState mempty mempty 0 mempty
-      ((_, expr'), SubsState swaps' scope' _ seDeps') =
+  let startingState = SubsState mempty mempty 0 mempty mempty
+      ((_, expr'), SubsState swaps' scope' _ seDeps' seTypeDeps') =
         runState
           (doSubstitutions store' storeExpr)
           startingState
@@ -50,6 +51,7 @@ substitute store' storeExpr =
         expr'
         scope'
         seDeps'
+        seTypeDeps'
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
 doSubstitutions ::
@@ -62,9 +64,9 @@ doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
   addScope $ mconcat (fst <$> newScopes)
   let changed = mconcat (snd <$> newScopes)
   expr' <- mapVar changed expr
-  dtList <- toDataTypeList <$> resolveTypesRecursive store' tBindings
-  let dtExpr = addDataTypesToExpr expr' dtList
-  pure (changed, dtExpr)
+  typeStoreExpressions <- resolveTypesRecursive store' tBindings
+  traverse_ addTypeDependency typeStoreExpressions
+  pure (changed, expr')
 
 ------------ type stuff
 
@@ -96,20 +98,6 @@ resolveTypes store' (TypeBindings tBindings) =
         _ -> mempty -- TODO: are we swallowing the error here and should this all operate in ExceptT?
       manySets = fmap typeLookup (M.toList tBindings)
    in mconcat manySets
-
-toDataTypeList :: [StoreExpression ann] -> [DataType]
-toDataTypeList sExprs =
-  let getDts sExpr = extractDataTypes (storeExpression sExpr)
-   in S.toList $ mconcat (getDts <$> sExprs)
-
--- add required type declarations into our Expr
-addDataTypesToExpr ::
-  (Monoid ann) =>
-  Expr var ann ->
-  [DataType] ->
-  Expr var ann
-addDataTypesToExpr =
-  foldr (MyData mempty)
 
 --------------
 
@@ -147,16 +135,14 @@ addDependency :: Name -> StoreExpression ann -> App ann ()
 addDependency name se =
   modify (\s -> s {subsDeps = subsDeps s <> M.singleton name se})
 
+addTypeDependency :: (Ord ann) => StoreExpression ann -> App ann ()
+addTypeDependency se =
+  modify (\s -> s {subsTypeDeps = subsTypeDeps s <> S.singleton se})
+
 mapKeyFind :: (a -> Bool) -> Map k a -> Maybe k
 mapKeyFind pred' map' = case M.toList (M.filter pred' map') of
   [] -> Nothing
   ((k, _) : _) -> pure k
-
--- if we've already made up a name for this var, return that
-findInSwaps :: Name -> App ann (Maybe Variable)
-findInSwaps name = do
-  swaps' <- gets subsSwaps
-  pure (mapKeyFind (name ==) swaps')
 
 getExprPairs :: Store ann -> Bindings -> [(Name, StoreExpression ann)]
 getExprPairs (Store items') (Bindings bindings') = join $ do
@@ -178,13 +164,6 @@ getNextVarName name =
     addSwap name nextName
     pure nextName
 
-keepName ::
-  Name -> App ann Variable
-keepName name = do
-  let nextName = NamedVar name
-  addSwap name nextName
-  pure nextName
-
 nextNum :: App ann Int
 nextNum = do
   p <- gets subsCounter
@@ -201,7 +180,7 @@ nameToVar chg n = case fromChange chg n of
 -- changed by scoping, hence unique key is name
 -- we pass these around manually rather than putting them in state
 -- so that the scoping dies when we're no longer down the relevant sub-tree
-newtype Changed = Changed {getChanged :: Map Name Variable}
+newtype Changed = Changed (Map Name Variable)
   deriving newtype (Semigroup, Monoid)
 
 addChange :: Name -> Variable -> Changed -> Changed
