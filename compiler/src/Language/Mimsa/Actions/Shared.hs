@@ -29,6 +29,7 @@ import Language.Mimsa.Store
   )
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Typechecker
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -43,6 +44,7 @@ import Language.Mimsa.Types.Typechecker
 
 getType ::
   Map Name MonoType ->
+  Set (StoreExpression Annotation) ->
   Swaps ->
   Text ->
   Expr Variable Annotation ->
@@ -53,13 +55,13 @@ getType ::
       Expr Variable MonoType,
       MonoType
     )
-getType typeMap swaps source expr = do
+getType typeMap dataTypes swaps source expr = do
   first
     (TypeErr source)
     ( typecheck
         typeMap
         swaps
-        mempty
+        (createEnv typeMap dataTypes)
         expr
     )
 
@@ -110,7 +112,7 @@ resolveStoreExpression ::
   StoreExpression Annotation ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 resolveStoreExpression store' typeMap input storeExpr = do
-  let (SubstitutedExpression swaps newExpr scope deps _typeDeps) =
+  let (SubstitutedExpression swaps newExpr scope deps typeDeps) =
         substitute store' storeExpr
   resolvedDeps <-
     traverse
@@ -124,7 +126,7 @@ resolveStoreExpression store' typeMap input storeExpr = do
       deps
   let bigTypeMap = typeMap <> (reMonoType <$> resolvedDeps)
   (_, _, typedExpr, exprType) <-
-    getType bigTypeMap swaps input newExpr
+    getType bigTypeMap typeDeps swaps input newExpr
   pure
     ( ResolvedExpression
         exprType

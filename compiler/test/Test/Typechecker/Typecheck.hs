@@ -29,7 +29,10 @@ identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
 
 startInference :: Expr Variable Annotation -> Either TypeError MonoType -> IO ()
 startInference expr expected = do
-  let elabbed = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ expr
+  let elabbed =
+        fmap (\(_, _, a, _) -> a)
+          . typecheck mempty mempty mempty
+          $ expr
   getTypeFromAnn <$> elabbed `shouldBe` expected
   case elabbed of
     Right elabExpr -> recoverAnn <$> elabExpr `shouldBe` expr
@@ -37,7 +40,10 @@ startInference expr expected = do
 
 testInfer :: Expr Variable Annotation -> Either TypeError MonoType
 testInfer expr = do
-  let elabbed = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ expr
+  let elabbed =
+        fmap (\(_, _, a, _) -> a)
+          . typecheck mempty mempty mempty
+          $ expr
   getTypeFromAnn <$> elabbed
 
 spec :: Spec

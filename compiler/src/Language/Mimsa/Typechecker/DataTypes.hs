@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.DataTypes
-  ( envWithBuiltInTypes,
+  ( createEnv,
     builtInTypes,
     lookupBuiltIn,
     storeDataDeclaration,
@@ -23,43 +23,62 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Store.ExtractTypes
+import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
-envWithBuiltInTypes :: Map Name MonoType -> Environment
-envWithBuiltInTypes typeMap = Environment schemes dts mempty
+createEnv ::
+  Map Name MonoType ->
+  Set (StoreExpression Annotation) ->
+  Environment
+createEnv typeMap dataTypes =
+  createDepsEnv typeMap
+    <> createTypesEnv dataTypes
+
+createTypesEnv :: Set (StoreExpression Annotation) -> Environment
+createTypesEnv dataTypes =
+  Environment mempty (builtInDts <> otherDts) mempty
   where
     makeDT (name, _) =
       M.singleton name (DataType name mempty mempty)
-    dts =
+    builtInDts =
       mconcat $ makeDT <$> M.toList builtInTypes
+    otherDts =
+      mconcat $ storeExprToDataTypes <$> S.toList dataTypes
+
+createDepsEnv :: Map Name MonoType -> Environment
+createDepsEnv typeMap =
+  Environment (mkSchemes typeMap) mempty mempty
+  where
     toScheme =
       bimap
         (\(Name n) -> TVName (coerce n))
         schemeFromMonoType
-    schemes =
-      M.fromList . fmap toScheme . M.toList $ typeMap
+    mkSchemes =
+      M.fromList . fmap toScheme . M.toList
+
+storeExprToDataTypes :: StoreExpression ann -> Map TyCon DataType
+storeExprToDataTypes =
+  mconcat
+    . fmap withDt
+    . S.toList
+    . extractDataTypes
+    . storeExpression
+  where
+    withDt dt@(DataType tyName _ _) =
+      M.singleton tyName dt
 
 -- | Make all free variables polymorphic so that we get a fresh version of
 -- everything each time
 schemeFromMonoType :: MonoType -> Scheme
 schemeFromMonoType mt = Scheme (S.toList $ freeTypeVars mt) mt
-
-builtInTypes :: Map TyCon MonoType
-builtInTypes =
-  M.fromList
-    [ ("String", MTPrim mempty MTString),
-      ("Int", MTPrim mempty MTInt),
-      ("Boolean", MTPrim mempty MTBool)
-    ]
-
-lookupBuiltIn :: TyCon -> Maybe MonoType
-lookupBuiltIn name = M.lookup name builtInTypes
 
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
