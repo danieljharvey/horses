@@ -1,4 +1,1 @@
-let compose =
-  \f -> \g -> \a -> f (g a);
-
-compose
+let compose f g a = f (g a) in compose

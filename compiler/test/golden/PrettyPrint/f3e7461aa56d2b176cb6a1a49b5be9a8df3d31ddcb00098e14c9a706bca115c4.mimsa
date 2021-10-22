@@ -1,4 +1,0 @@
-match [] with 
-    [] -> True
-  | [_] -> False
-  | [_, ...] -> False

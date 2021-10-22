@@ -1,1 +1,0 @@
-type Pair a b    = Pair (a, b) in True
