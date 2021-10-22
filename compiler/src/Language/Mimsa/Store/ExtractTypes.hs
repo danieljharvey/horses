@@ -8,7 +8,7 @@ where
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Typechecker.DataTypes (builtInTypes)
+import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Types.AST
   ( DataType (DataType),
     Expr (..),

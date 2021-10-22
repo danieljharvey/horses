@@ -1,5 +1,5 @@
-let compose =
-  \f -> \g -> \a -> f (g a);
+let compose f g a =
+  f (g a);
 
 let f =
   compose incrementInt incrementInt;

@@ -1,0 +1,1 @@
+{"storeBindings":{},"storeExpression":{"contents":[[],{"dtConstructors":{"Zero":[],"Suc":[{"contents":[[],"Nat"],"tag":"MTConstructor"}]},"dtName":"Nat","dtVars":[]},{"contents":[[],"Suc"],"tag":"MyConstructor"}],"tag":"MyData"},"storeTypeBindings":{}}

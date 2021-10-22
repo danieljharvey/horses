@@ -12,7 +12,6 @@ import Control.Monad.Reader
 import Control.Monad.State (State, runState)
 import Control.Monad.Writer
 import Data.Map (Map)
-import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
@@ -38,7 +37,8 @@ runElabM ::
   Either TypeError ([Constraint], TypecheckState, a)
 runElabM swaps tcState value =
   case either' of
-    ((Right a, constraints), newTcState) -> Right (constraints, newTcState, a)
+    ((Right a, constraints), newTcState) ->
+      Right (constraints, newTcState, a)
     ((Left e, _), _) -> Left e
   where
     either' =
@@ -61,7 +61,7 @@ typecheck ::
     )
 typecheck typeMap swaps env expr = do
   let tcAction = do
-        (elabExpr, constraints) <- listen (elab (env <> envWithBuiltInTypes typeMap) expr)
+        (elabExpr, constraints) <- listen (elab env expr)
         subs <- solve constraints
         typedHolesCheck typeMap subs
         pure (subs, constraints, elabExpr)

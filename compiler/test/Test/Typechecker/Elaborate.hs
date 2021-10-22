@@ -18,7 +18,10 @@ startElaborate ::
   Expr Variable MonoType ->
   IO ()
 startElaborate input expected = do
-  let result = fmap (\(_, _, a, _) -> a) . typecheck mempty mempty mempty $ input
+  let result =
+        fmap (\(_, _, a, _) -> a)
+          . typecheck mempty mempty mempty
+          $ input
   (fmap . fmap) recoverAnn result `shouldBe` Right input
   result `shouldBe` Right expected
 
