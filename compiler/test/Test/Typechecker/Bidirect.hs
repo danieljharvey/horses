@@ -33,7 +33,7 @@ runInferM tcState value =
         tcState
 
 infer' :: ExpSmall Variable Annotation -> Either TypeError MonoType
-infer' expr = expAnn <$> runInferM defaultTcState (infer mempty expr)
+infer' expr = expAnn <$> runInferM testTcState (infer mempty expr)
 
 mtInt :: MonoType
 mtInt = MTPrim mempty MTInt
@@ -47,10 +47,14 @@ spec = do
     it "infers int" $ do
       let expr = Lit mempty (MyInt 1)
       infer' expr `shouldBe` Right mtInt
-    {-
     it "infers let" $ do
-      let expr = MyLet mempty (named "a") (int 1) (MyVar mempty (named "a"))
-      infer' expr `shouldBe` Right (MTPrim mempty MTInt)-}
+      let expr =
+            Let
+              mempty
+              (named "a")
+              (Lit mempty (MyInt 1))
+              (Var mempty (named "a"))
+      infer' expr `shouldBe` Right mtInt
     it "infers correct annotation" $ do
       let expr = Ann mempty mtInt (Lit mempty (MyInt 1))
       infer' expr `shouldBe` Right mtInt
@@ -89,3 +93,22 @@ spec = do
               (Lambda mempty (named "a") (Lit mempty (MyBool True)))
           expr = App mempty lambda (Lit mempty (MyInt 100))
       infer' expr `shouldBe` Right mtBool
+    it "if fails when then and else are different" $ do
+      let expr =
+            If
+              mempty
+              (Lit mempty (MyBool True))
+              (Lit mempty (MyBool False))
+              (Lit mempty (MyInt 101))
+      infer' expr `shouldSatisfy` isLeft
+    it "infers if without annotation" $ do
+      let expr =
+            If
+              mempty
+              (Lit mempty (MyBool True))
+              (Lit mempty (MyInt 100))
+              (Lit mempty (MyInt 101))
+      infer' expr `shouldBe` Right mtInt
+    it "infers raw constructor" $ do
+      let expr = Constructor mempty "Just"
+      infer' expr `shouldBe` Right (MTConstructor mempty "Maybe")

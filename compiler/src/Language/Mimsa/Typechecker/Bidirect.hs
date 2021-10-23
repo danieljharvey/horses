@@ -16,6 +16,7 @@ import Control.Monad.State (State)
 import Data.Coerce
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -36,14 +37,19 @@ data ExpSmall var ann
   | App ann (ExpSmall var ann) (ExpSmall var ann)
   | Var ann var
   | Ann ann (Type ann) (ExpSmall var ann)
+  | If ann (ExpSmall var ann) (ExpSmall var ann) (ExpSmall var ann)
+  | Constructor ann TyCon
   deriving stock (Eq, Ord, Show)
 
 expAnn :: ExpSmall var ann -> ann
 expAnn (Lit ann _) = ann
 expAnn (Lambda ann _ _) = ann
+expAnn (Let ann _ _ _) = ann
 expAnn (App ann _ _) = ann
 expAnn (Var ann _) = ann
 expAnn (Ann ann _ _) = ann
+expAnn (If ann _ _ _) = ann
+expAnn (Constructor ann _) = ann
 
 inferLiteral :: Annotation -> Literal -> InferM ElabExpr
 inferLiteral ann lit =
@@ -53,7 +59,6 @@ inferLiteral ann lit =
         (MyString _) -> MTString
    in pure (Lit (MTPrim ann tyLit) lit)
 
-{-
 inferLet :: Environment -> Variable -> TcExpr -> TcExpr -> InferM ElabExpr
 inferLet env binder bindExpr' inExpr = do
   bind <- infer env bindExpr'
@@ -61,8 +66,7 @@ inferLet env binder bindExpr' inExpr = do
         envFromVar binder (Scheme mempty (expAnn bind))
           <> env
   body <- infer newEnv inExpr
-  pure (Let (getTypeFromAnn body) binder bind body)
--}
+  pure (Let (expAnn body) binder bind body)
 
 lookupInEnv :: Swaps -> Variable -> Environment -> Maybe Scheme
 lookupInEnv swaps var' (Environment env' _ _) =
@@ -115,20 +119,50 @@ inferApp env _ann fn arg = do
     MTFunction _ mtArg mtReturn -> do
       typedArg <- check env arg mtArg
       pure (App mtReturn typedFn typedArg)
-    _ -> throwError UnknownTypeError
+    _ -> throwError UnknownTypeError -- can only apply onto function
+
+inferIf :: Environment -> Annotation -> TcExpr -> TcExpr -> TcExpr -> InferM ElabExpr
+inferIf env _ann ifExpr thenExpr elseExpr = do
+  (typedIf, typedThen, typedElse) <-
+    (,,)
+      <$> infer env ifExpr
+        <*> infer env thenExpr
+        <*> infer env elseExpr
+  if expAnn typedThen /= expAnn typedElse
+    then throwError UnknownTypeError -- type mismatch!
+    else pure (If (expAnn typedThen) typedIf typedThen typedElse)
+
+inferConstructor ::
+  Environment ->
+  Annotation ->
+  TyCon ->
+  InferM ElabExpr
+inferConstructor env ann tyCon = do
+  mt <- inferDataConstructor env ann tyCon
+  pure (Constructor mt tyCon)
 
 infer :: Environment -> TcExpr -> InferM ElabExpr
 infer env inferExpr =
   case inferExpr of
     (Lit ann a) -> inferLiteral ann a
-    {-(MyLet _ binding bindExpr' inExpr) ->
-    inferLet env binding bindExpr' inExpr-}
+    (Let _ binding bindExpr' inExpr) ->
+      inferLet env binding bindExpr' inExpr
     (Var ann var) -> inferVarFromScope env ann var
     (Lambda ann binder body) -> inferLambda env ann binder body
     (Ann _ann mt expr) -> check env expr mt
     (App ann fn val) -> inferApp env ann fn val
+    (If ann ifExpr thenExpr elseExpr) ->
+      inferIf env ann ifExpr thenExpr elseExpr
+    (Constructor ann tyCon) ->
+      inferConstructor env ann tyCon
 
-checkLambda :: Environment -> Annotation -> Variable -> TcExpr -> MonoType -> InferM ElabExpr
+checkLambda ::
+  Environment ->
+  Annotation ->
+  Variable ->
+  TcExpr ->
+  MonoType ->
+  InferM ElabExpr
 checkLambda env _ann binder body mt =
   case mt of
     MTFunction _ tyBinder tyBody -> do
