@@ -4,6 +4,7 @@
 
 module Language.Mimsa.Types.Typechecker.Substitutions
   ( Substitutions (..),
+    Substitutable,
     applySubst,
   )
 where
