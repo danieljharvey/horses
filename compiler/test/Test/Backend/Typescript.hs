@@ -96,15 +96,6 @@ fullTestIt (input, expectedValue) =
 maybeOutput :: Text
 maybeOutput = "export type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const Just = <A>(a: A): Maybe<A> => ({ type: \"Just\", vars: [a] }); export const Nothing: Maybe<never> = { type: \"Nothing\", vars: [] }; "
 
-theseOutput :: Text
-theseOutput = "export type These<A, B> = { type: \"That\", vars: [B] } | { type: \"These\", vars: [A, B] } | { type: \"This\", vars: [A] }; export const That = <B>(b: B): These<never,B> => ({ type: \"That\", vars: [b] }); export const These = <A>(a: A) => <B>(b: B): These<A,B> => ({ type: \"These\", vars: [a,b] }); export const This = <A>(a: A): These<A,never> => ({ type: \"This\", vars: [a] }); "
-
-identOutput :: Text
-identOutput = "export type Ident<A> = { type: \"Ident\", vars: [A] }; export const Ident = <A>(a: A): Ident<A> => ({ type: \"Ident\", vars: [a] }); "
-
-pairOutput :: Text
-pairOutput = "export type Pair<A, B> = { type: \"Pair\", vars: [A, B] }; export const Pair = <A>(a: A) => <B>(b: B): Pair<A,B> => ({ type: \"Pair\", vars: [a,b] }); "
-
 -- | input, output TS, nodeJS output
 testCases :: [(Text, Text, String)]
 testCases =
@@ -138,19 +129,19 @@ testCases =
     ),
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
     ( "Just",
-      maybeOutput <> "export const main = Just",
+      "export const main = Just",
       "[Function (anonymous)]"
     ),
     ( "Just 1",
-      maybeOutput <> "export const main = Just(1)",
+      "export const main = Just(1)",
       "{ type: 'Just', vars: [ 1 ] }"
     ),
     ( "Nothing",
-      maybeOutput <> "export const main = Nothing",
+      "export const main = Nothing",
       "{ type: 'Nothing', vars: [] }"
     ),
     ( "These",
-      theseOutput <> "export const main = These",
+      "export const main = These",
       "[Function (anonymous)]"
     ),
     ("True == True", "export const main = true === true", "true"),
@@ -169,15 +160,15 @@ testCases =
       "[ 1, 2, 3, 4 ]"
     ),
     ( "match Just True with (Just a) -> a | _ -> False",
-      maybeOutput <> "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; return a; }; if (true) { return false; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
+      "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; return a; }; if (true) { return false; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
       "true"
     ),
     ( "match Just True with (Just a) -> Just a | _ -> Nothing",
-      maybeOutput <> "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; return Just(a); }; if (true) { return Nothing; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
+      "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; return Just(a); }; if (true) { return Nothing; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
       "{ type: 'Just', vars: [ true ] }"
     ),
     ( "match Just True with (Just a) -> let b = 1; Just a | _ -> Nothing",
-      maybeOutput <> "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; const b = 1; return Just(a); }; if (true) { return Nothing; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
+      "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; const b = 1; return Just(a); }; if (true) { return Nothing; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
       "{ type: 'Just', vars: [ true ] }"
     ),
     ( "let (a, b) = (1,2) in a",
@@ -189,11 +180,11 @@ testCases =
       "[ 1, 2 ]"
     ),
     ( "let (Ident a) = Ident 1 in a",
-      identOutput <> "const { vars: [a] } = Ident(1); export const main = a",
+      "const { vars: [a] } = Ident(1); export const main = a",
       "1"
     ),
     ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      pairOutput <> "const { vars: [a,b] } = Pair(1)(2); export const main = [a,b]",
+      "const { vars: [a,b] } = Pair(1)(2); export const main = [a,b]",
       "[ 1, 2 ]"
     )
   ]
