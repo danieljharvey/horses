@@ -141,6 +141,7 @@ library
       Language.Mimsa.Store.Substitutor
       Language.Mimsa.Store.UpdateDeps
       Language.Mimsa.Typechecker
+      Language.Mimsa.Typechecker.Bidirect
       Language.Mimsa.Typechecker.BuiltIns
       Language.Mimsa.Typechecker.DataTypes
       Language.Mimsa.Typechecker.DisplayError
@@ -375,6 +376,7 @@ test-suite mimsa-test
       Test.Store.Resolver
       Test.Store.Substitutor
       Test.Store.UpdateDeps
+      Test.Typechecker.Bidirect
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness

@@ -33,6 +33,7 @@ import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
+import qualified Test.Typechecker.Bidirect as Bidirect
 import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
@@ -84,3 +85,4 @@ main =
     Typescript.spec
     ESModulesJS.spec
     Substitutions.spec
+    Bidirect.spec
