@@ -18,6 +18,7 @@ import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Typescript.DataType
 import Language.Mimsa.Backend.Typescript.FromExpr
+import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.Backend.Typescript.Types
@@ -37,9 +38,10 @@ import Test.Utils.Serialisation
 
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
-  case fromExpr expr of
-    Right tsModule -> (tsModule, printModule tsModule)
-    Left e -> error (T.unpack (prettyPrint e))
+  let readerState = TSReaderState mempty
+   in case fromExpr readerState expr of
+        Right tsModule -> (tsModule, printModule tsModule)
+        Left e -> error (T.unpack (prettyPrint e))
 
 testFromInputText :: Text -> Either Text Text
 testFromInputText input =
@@ -50,7 +52,8 @@ testFromInputText input =
         first
           (prettyPrint . InterpreterErr)
           (useSwaps (reSwaps resolved) (reTypedExpression resolved))
-      first prettyPrint (printModule <$> fromExpr exprName)
+      let readerState = TSReaderState mempty
+      first prettyPrint (printModule <$> fromExpr readerState exprName)
 
 -- test that we have a valid Typescript module by saving it and running it
 testTypescriptInNode :: Text -> IO String
@@ -233,7 +236,7 @@ fullTestCases =
 
 spec :: Spec
 spec = do
-  fdescribe "Typescript" $ do
+  describe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
@@ -244,7 +247,7 @@ spec = do
           ( TSFunction
               "a"
               mempty
-              (TSType "boolean" [])
+              (TSType Nothing "boolean" [])
               Nothing
               (TSFunctionBody (TSBody mempty (TSLit (TSInt 1))))
           )
@@ -253,7 +256,7 @@ spec = do
           ( TSFunction
               "maybeA"
               (S.singleton (TSGeneric "A"))
-              (TSType "Maybe.Maybe" [TSTypeVar "A"])
+              (TSType (Just "Maybe") "Maybe" [TSTypeVar "A"])
               Nothing
               (TSFunctionBody (TSBody mempty (TSLit (TSInt 1))))
           )
@@ -262,7 +265,7 @@ spec = do
           ( TSFunction
               "maybeA"
               (S.singleton (TSGeneric "A"))
-              (TSType "Maybe.Maybe" [TSTypeVar "A"])
+              (TSType (Just "Maybe") "Maybe" [TSTypeVar "A"])
               Nothing
               ( TSFunctionBody
                   ( TSBody

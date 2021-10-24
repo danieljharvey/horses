@@ -32,7 +32,7 @@ newtype TSGeneric = TSGeneric Text
   deriving newtype (Eq, Ord, Show)
 
 data TSType
-  = TSType Text [TSType]
+  = TSType (Maybe Text) Text [TSType] -- namespace, typeName, inner types
   | TSTypeVar Text
   | TSTypeFun Text TSType TSType
   | TSTypeArray TSType

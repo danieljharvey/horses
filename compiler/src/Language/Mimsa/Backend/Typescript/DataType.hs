@@ -13,26 +13,26 @@ import Language.Mimsa.Types.Identifiers
 
 typeNameToName :: Int -> TSType -> Name
 typeNameToName _ (TSTypeVar a) = coerce (T.toLower a)
-typeNameToName _ (TSType name _) = coerce (T.toLower name)
+typeNameToName _ (TSType _ name _) = coerce (T.toLower name)
 typeNameToName i _ = coerce $ "u" <> prettyPrint i
 
 genericsForType :: TSType -> Set TSGeneric
 genericsForType (TSTypeVar a) = S.singleton (TSGeneric a)
-genericsForType (TSType _ as) = mconcat (genericsForType <$> as)
+genericsForType (TSType _ _ as) = mconcat (genericsForType <$> as)
 genericsForType (TSTypeFun _ f a) = genericsForType f <> genericsForType a
 genericsForType (TSTypeArray a) = genericsForType a
 
 -- | Creates the return type of a constructor
 returnType :: [Text] -> TyCon -> [TSType] -> TSType
 returnType dtArgs typeName consArgs =
-  TSType (coerce typeName) fixedConsArgs
+  TSType Nothing (coerce typeName) fixedConsArgs
   where
     allConsArgs = mconcat (genericsForType <$> consArgs)
     fixedConsArgs =
       ( \arg ->
           if S.member (TSGeneric arg) allConsArgs
             then TSTypeVar arg
-            else TSType "never" mempty
+            else TSType Nothing "never" mempty
       )
         <$> dtArgs
 

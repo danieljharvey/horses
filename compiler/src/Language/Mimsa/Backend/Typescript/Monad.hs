@@ -5,8 +5,11 @@ module Language.Mimsa.Backend.Typescript.Monad
   ( TypescriptM,
     TSCodegenState (..),
     TSStateStack,
+    TSReaderState (..),
     runTypescriptM,
     getState,
+    findTypeName,
+    typeNameIsImport,
     unusedGenerics,
     addGenerics,
     addDataType,
@@ -14,21 +17,29 @@ module Language.Mimsa.Backend.Typescript.Monad
 where
 
 import Control.Monad.Except
+import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
 type TypescriptM =
   ExceptT
     (BackendError MonoType)
-    (WriterT [TSDataType] (State TSStateStack))
+    (WriterT [TSDataType] (ReaderT TSReaderState (State TSStateStack)))
+
+newtype TSReaderState = TSReaderState
+  { tsConstructorTypes :: Map TyCon TyCon -- Just -> Maybe, Nothing -> Maybe etc
+  }
 
 -- | we keep the datatypes in both the writer and the state
 -- because we want both a sum of all datatypes, and a stack where they are
@@ -102,15 +113,32 @@ addDataType dt tsDt = do
           }
     )
 
+-- | is this type in our reader context (and thus is it an import, and should
+-- be use it with a namespace, ie, Maybe.Maybe?
+typeNameIsImport :: (MonadReader TSReaderState m) => TyCon -> m Bool
+typeNameIsImport tyCon = do
+  consType <- asks tsConstructorTypes
+  let typeNames = S.fromList (M.elems consType)
+  pure (S.member tyCon typeNames)
+
+-- given 'Just', (hopefully) return 'Maybe'
+findTypeName :: (MonadReader TSReaderState m) => TyCon -> m (Maybe TyCon)
+findTypeName tyCon = do
+  consType <- asks tsConstructorTypes
+  case M.lookup tyCon consType of
+    Just typeName -> pure (Just typeName)
+    Nothing -> pure Nothing
+
 initialStack :: TSStateStack
 initialStack =
   NE.singleton $
     TSCodegenState mempty mempty
 
 runTypescriptM ::
+  TSReaderState ->
   TypescriptM a ->
   Either (BackendError MonoType) (a, [TSDataType])
-runTypescriptM computation =
-  case evalState (runWriterT (runExceptT computation)) initialStack of
+runTypescriptM readerState computation =
+  case evalState (runReaderT (runWriterT (runExceptT computation)) readerState) initialStack of
     (Right a, dts) -> pure (a, dts)
     (Left e, _) -> throwError e

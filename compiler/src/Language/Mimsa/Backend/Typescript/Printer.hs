@@ -23,8 +23,12 @@ printGeneric (TSGeneric t) = t
 
 printType :: TSType -> Text
 printType (TSTypeVar name) = prettyPrint name
-printType (TSType name as) = prettyPrint name <> generics
+printType (TSType namespace name as) =
+  ns <> prettyPrint name <> generics
   where
+    ns = case namespace of
+      Just typeName -> prettyPrint typeName <> "."
+      _ -> ""
     generics =
       case as of
         [] -> ""
@@ -36,8 +40,8 @@ printType (TSTypeFun argName arg resp) =
 printType (TSTypeArray as) = printType as <> "[]"
 
 printConstructor :: TSConstructor -> Text
-printConstructor (TSConstructor name types) =
-  "{ type: \"" <> prettyPrint name <> "\", vars: [" <> T.intercalate ", " (printType <$> types) <> "] }"
+printConstructor (TSConstructor tyCon types) =
+  "{ type: \"" <> prettyPrint tyCon <> "\", vars: [" <> T.intercalate ", " (printType <$> types) <> "] }"
 
 printDataType :: TSDataType -> Text
 printDataType dt@(TSDataType tyName generics constructors) =

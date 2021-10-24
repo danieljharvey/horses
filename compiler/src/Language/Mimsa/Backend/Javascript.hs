@@ -15,16 +15,19 @@ import qualified Data.ByteString.Char8 as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
+import Data.Map (Map)
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
+import qualified Language.Mimsa.Backend.Typescript.Monad as TS
 import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
-  ( Expr (..),
+  ( DataType (..),
+    Expr (..),
   )
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
@@ -51,12 +54,17 @@ renderWithFunction ::
   Name ->
   Expr Name MonoType ->
   BackendM MonoType Javascript
-renderWithFunction be _dataTypes _name expr =
-  case be of
-    Typescript -> case TS.fromExpr expr of
-      Right ts -> pure (textToJS (TS.printModule ts))
-      Left e -> throwError e
-    _ -> error "deleted js because yolo"
+renderWithFunction be dataTypes _name expr =
+  let readerState = TS.TSReaderState (makeTypeDepMap dataTypes)
+   in case be of
+        Typescript -> case TS.fromExpr readerState expr of
+          Right ts -> pure (textToJS (TS.printModule ts))
+          Left e -> throwError e
+        _ -> error "deleted js because yolo"
+
+makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TyCon
+makeTypeDepMap (ResolvedTypeDeps rtd) =
+  (\(_, DataType typeName _ _) -> typeName) <$> rtd
 
 outputJavascript ::
   Store a ->

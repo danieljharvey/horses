@@ -53,40 +53,46 @@ toPattern (PString _ sHead sTail) =
   TSPatternString (toStringPart sHead) (toStringPart sTail)
 
 -- | returns the type and any generics used in the expression
-toTSType :: Type ann -> (TSType, Set TSGeneric)
-toTSType (MTPrim _ MTString) = (TSType "string" [], mempty)
-toTSType (MTPrim _ MTInt) = (TSType "number" [], mempty)
-toTSType (MTPrim _ MTBool) = (TSType "boolean" [], mempty)
+toTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
+toTSType (MTPrim _ MTString) = pure (TSType Nothing "string" [], mempty)
+toTSType (MTPrim _ MTInt) = pure (TSType Nothing "number" [], mempty)
+toTSType (MTPrim _ MTBool) = pure (TSType Nothing "boolean" [], mempty)
 toTSType (MTVar _ a) =
   let newVar = case a of
         TVNum i' -> T.toTitle (T.pack (printTypeNum (i' + 1)))
         TVName a' -> T.toTitle (coerce a')
-   in (TSTypeVar newVar, S.singleton (TSGeneric newVar))
+   in pure (TSTypeVar newVar, S.singleton (TSGeneric newVar))
 toTSType mt@MTTypeApp {} =
   case varsFromDataType mt of
-    Just (TyCon n, vars) ->
-      let (types, generics) = unzip (toTSType <$> vars)
-       in (TSType n types, mconcat generics)
+    Just (TyCon n, vars) -> do
+      imported <- typeNameIsImport (TyCon n)
+      let namespace = if imported then Just n else Nothing
+      tsTypes <- traverse toTSType vars
+      let (types, generics) = unzip tsTypes
+      pure (TSType namespace n types, mconcat generics)
     Nothing ->
-      (TSType "weird type app error" mempty, mempty)
-toTSType (MTFunction _ a b) =
-  let (tsA, genA) = toTSType a
-      (tsB, genB) = toTSType b
-   in (TSTypeFun "arg" tsA tsB, genA <> genB)
-toTSType (MTArray _ as) =
-  let (tsAs, genAs) = toTSType as
-   in (TSTypeArray tsAs, genAs)
-toTSType e = (TSType ("unknown for: " <> prettyPrint e) mempty, mempty)
+      pure (TSType Nothing "weird type app error" mempty, mempty)
+toTSType (MTFunction _ a b) = do
+  (tsA, genA) <- toTSType a
+  (tsB, genB) <- toTSType b
+  pure (TSTypeFun "arg" tsA tsB, genA <> genB)
+toTSType (MTArray _ as) = do
+  (tsAs, genAs) <- toTSType as
+  pure (TSTypeArray tsAs, genAs)
+toTSType e =
+  pure (TSType Nothing ("unknown for: " <> prettyPrint e) mempty, mempty)
 
-toTSDataType :: DataType -> TSDataType
-toTSDataType (DataType name gens cons) =
-  TSDataType
-    name
-    (T.toTitle . prettyPrint <$> gens)
-    (toTSCons <$> M.toList cons)
-  where
-    toTSCons (tyCon, con) =
-      TSConstructor tyCon (fst . toTSType <$> con)
+toTSDataType :: DataType -> TypescriptM TSDataType
+toTSDataType (DataType name gens cons) = do
+  let toTSCons (tyCon, con) = do
+        tsTypes' <- traverse toTSType con
+        pure $ TSConstructor tyCon (fst <$> tsTypes')
+  tsTypes <- traverse toTSCons (M.toList cons)
+  pure $
+    TSDataType
+      name
+      (T.toTitle . prettyPrint <$> gens)
+      tsTypes
 
 toInfix ::
   Operator ->
@@ -118,9 +124,9 @@ toTSExpr expr' =
     (TSBody [] expr) -> pure expr
     (TSBody as a) -> throwError (ExpectedExprGotBody a as)
 
-fromExpr :: Expr Name MonoType -> Either (BackendError MonoType) TSModule
-fromExpr expr = do
-  (result, dataTypes) <- runTypescriptM (toTSBody expr)
+fromExpr :: TSReaderState -> Expr Name MonoType -> Either (BackendError MonoType) TSModule
+fromExpr readerState expr = do
+  (result, dataTypes) <- runTypescriptM readerState (toTSBody expr)
   pure (TSModule dataTypes result)
 
 toTSBody :: Expr Name MonoType -> TypescriptM TSBody
@@ -153,7 +159,7 @@ toTSBody expr' =
       pure (TSBody mempty (TSArray [TSArrayItem tsA, TSArrayItem tsB]))
     (MyVar _ a) -> pure (TSBody mempty (TSVar a))
     (MyLambda fnType bind body) -> do
-      let (mtFn, generics') = toTSType fnType
+      (mtFn, generics') <- toTSType fnType
       mtArg <- case mtFn of
         (TSTypeFun _ a _) -> pure a
         e -> throwError (ExpectedFunctionType e)
@@ -198,7 +204,7 @@ toTSBody expr' =
           )
           patterns
       (TSBody tsStatements tsA) <- toTSBody matchExpr
-      let (tyMatchExpr, matchGenerics) = toTSType (getAnnotation matchExpr)
+      (tyMatchExpr, matchGenerics) <- toTSType (getAnnotation matchExpr)
       newGenerics <- unusedGenerics matchGenerics
       pure $
         TSBody
@@ -231,7 +237,12 @@ toTSBody expr' =
       (TSBody bs tsVal) <- toTSBody val
       pure $ TSBody (as <> bs) (TSApp tsFunc tsVal)
     (MyConstructor _ tyCon) -> do
-      pure $ TSBody [] (TSVar (coerce tyCon))
+      namespace <- findTypeName tyCon
+      let expr = case namespace of
+            Just typeName ->
+              TSRecordAccess (coerce tyCon) (TSVar (coerce typeName))
+            _ -> TSVar (coerce tyCon)
+      pure $ TSBody [] expr
     (MyIf _mtIf predExpr thenExpr elseExpr) -> do
       (TSBody as tsPred) <- toTSBody predExpr
       (TSBody bs tsThen) <- toTSBody thenExpr
@@ -246,7 +257,8 @@ toTSBody expr' =
       (TSBody as tsExpr) <- toTSBody recExpr
       pure $ TSBody as (TSRecordAccess name tsExpr)
     (MyData _ dt rest) -> do
-      addDataType dt (toTSDataType dt)
+      tsDt <- toTSDataType dt
+      addDataType dt tsDt
       toTSBody rest
     (MyInfix _ op a b) -> do
       TSBody [] <$> toInfix op a b
