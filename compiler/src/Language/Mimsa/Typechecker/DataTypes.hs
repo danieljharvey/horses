@@ -10,6 +10,7 @@ module Language.Mimsa.Typechecker.DataTypes
     inferConstructorTypes,
     inferType,
     dataTypeWithVars,
+    storeExprToDataTypes,
   )
 where
 

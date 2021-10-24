@@ -59,13 +59,15 @@ renderWithFunction be _dataTypes _name expr =
     _ -> error "deleted js because yolo"
 
 outputJavascript ::
+  Store a ->
   Backend ->
   ResolvedTypeDeps ->
   MonoType ->
   StoreExpression MonoType ->
   BackendM MonoType Javascript
-outputJavascript be dataTypes =
+outputJavascript store' be dataTypes =
   outputStoreExpression
+    store'
     ( case be of
         CommonJS -> commonJSRenderer dataTypes
         ESModulesJS -> esModulesRenderer dataTypes
@@ -129,11 +131,11 @@ tsModulesRenderer dts =
             <> " } from \"./"
             <> Javascript (moduleFilename Typescript hash')
             <> "\";\n",
-      renderTypeImport = \(tyCon, hash') ->
+      renderTypeImport = \(typeName, hash') ->
         pure $
-          "import { "
-            <> textToJS (coerce tyCon)
-            <> " } from \"./"
+          "import * as "
+            <> textToJS (coerce typeName)
+            <> " from \"./"
             <> Javascript (moduleFilename Typescript hash')
             <> "\";\n",
       renderExport =

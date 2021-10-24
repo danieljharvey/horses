@@ -9,6 +9,7 @@ module Language.Mimsa.Project.Helpers
     fromStore,
     findBindingNameForExprHash,
     lookupExprHash,
+    lookupExprHashFromStore,
     bindingsToVersioned,
     typeBindingsToVersioned,
     projectFromSaved,
@@ -105,8 +106,12 @@ fromStoreExpressionDeps se =
     }
 
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
-lookupExprHash project exprHash' =
-  M.lookup exprHash' (getStore . prjStore $ project)
+lookupExprHash project =
+  lookupExprHashFromStore (prjStore project)
+
+lookupExprHashFromStore :: Store ann -> ExprHash -> Maybe (StoreExpression ann)
+lookupExprHashFromStore store exprHash' =
+  M.lookup exprHash' (getStore store)
 
 getBindingNames :: Project ann -> Set Name
 getBindingNames =

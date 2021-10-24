@@ -93,9 +93,6 @@ fullTestIt (input, expectedValue) =
     result <- testTypescriptFileInNode filename
     result `shouldBe` expectedValue
 
-maybeOutput :: Text
-maybeOutput = "export type Maybe<A> = { type: \"Just\", vars: [A] } | { type: \"Nothing\", vars: [] }; export const Just = <A>(a: A): Maybe<A> => ({ type: \"Just\", vars: [a] }); export const Nothing: Maybe<never> = { type: \"Nothing\", vars: [] }; "
-
 -- | input, output TS, nodeJS output
 testCases :: [(Text, Text, String)]
 testCases =
@@ -128,22 +125,6 @@ testCases =
       "[Function (anonymous)]"
     ),
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
-    ( "Just",
-      "export const main = Just",
-      "[Function (anonymous)]"
-    ),
-    ( "Just 1",
-      "export const main = Just(1)",
-      "{ type: 'Just', vars: [ 1 ] }"
-    ),
-    ( "Nothing",
-      "export const main = Nothing",
-      "{ type: 'Nothing', vars: [] }"
-    ),
-    ( "These",
-      "export const main = These",
-      "[Function (anonymous)]"
-    ),
     ("True == True", "export const main = true === true", "true"),
     ("2 + 2", "export const main = 2 + 2", "4"),
     ("10 - 2", "export const main = 10 - 2", "8"),
@@ -159,32 +140,12 @@ testCases =
       "export const main = [...[1,2],...[3,4]]",
       "[ 1, 2, 3, 4 ]"
     ),
-    ( "match Just True with (Just a) -> a | _ -> False",
-      "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; return a; }; if (true) { return false; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
-      "true"
-    ),
-    ( "match Just True with (Just a) -> Just a | _ -> Nothing",
-      "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; return Just(a); }; if (true) { return Nothing; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
-      "{ type: 'Just', vars: [ true ] }"
-    ),
-    ( "match Just True with (Just a) -> let b = 1; Just a | _ -> Nothing",
-      "const match = (value: Maybe<boolean>) => { if (value.type === \"Just\") { const { vars: [a] } = value; const b = 1; return Just(a); }; if (true) { return Nothing; }; throw new Error(\"Pattern match error\"); }; export const main = match(Just(true))",
-      "{ type: 'Just', vars: [ true ] }"
-    ),
     ( "let (a, b) = (1,2) in a",
       "const [a,b] = [1,2]; export const main = a",
       "1"
     ),
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
       "const { cat: b, dog: a } = { cat: 2, dog: 1 }; export const main = [a,b]",
-      "[ 1, 2 ]"
-    ),
-    ( "let (Ident a) = Ident 1 in a",
-      "const { vars: [a] } = Ident(1); export const main = a",
-      "1"
-    ),
-    ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      "const { vars: [a,b] } = Pair(1)(2); export const main = [a,b]",
       "[ 1, 2 ]"
     )
   ]
@@ -272,7 +233,7 @@ fullTestCases =
 
 spec :: Spec
 spec = do
-  describe "Typescript" $ do
+  fdescribe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
@@ -292,16 +253,16 @@ spec = do
           ( TSFunction
               "maybeA"
               (S.singleton (TSGeneric "A"))
-              (TSType "Maybe" [TSTypeVar "A"])
+              (TSType "Maybe.Maybe" [TSTypeVar "A"])
               Nothing
               (TSFunctionBody (TSBody mempty (TSLit (TSInt 1))))
           )
-          `shouldBe` "<A>(maybeA: Maybe<A>) => 1"
+          `shouldBe` "<A>(maybeA: Maybe.Maybe<A>) => 1"
         prettyPrint
           ( TSFunction
               "maybeA"
               (S.singleton (TSGeneric "A"))
-              (TSType "Maybe" [TSTypeVar "A"])
+              (TSType "Maybe.Maybe" [TSTypeVar "A"])
               Nothing
               ( TSFunctionBody
                   ( TSBody
@@ -314,7 +275,7 @@ spec = do
                   )
               )
           )
-          `shouldBe` "<A>(maybeA: Maybe<A>) => { const b = true; return 1; }"
+          `shouldBe` "<A>(maybeA: Maybe.Maybe<A>) => { const b = true; return 1; }"
       it "function application" $ do
         prettyPrint (TSApp (TSVar "id") (TSLit (TSBool True)))
           `shouldBe` "id(true)"
@@ -522,8 +483,8 @@ spec = do
           `shouldBe` Right "export const main = (a: number) => a + 100"
 
       it "pattern matching array spreads" $ do
-        testFromInputText "\\a -> match a with [a1,...as] -> Just as | [] -> Nothing"
-          `shouldBe` Right (maybeOutput <> "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1,...as] = value; return Just(as); }; if (value.length === 0) { return Nothing; }; throw new Error(\"Pattern match error\"); }; return match(a); }")
+        testFromInputText "\\a -> match a with [a1,...as] -> [as] | [] -> []"
+          `shouldBe` Right "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
 
     describe "Entire compilation" $ do
       traverse_ fullTestIt fullTestCases

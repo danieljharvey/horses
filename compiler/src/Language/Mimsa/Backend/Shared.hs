@@ -28,7 +28,9 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
 import Data.FileEmbed
+import Data.Functor
 import Data.List (intersperse)
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -37,8 +39,10 @@ import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
+import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreFolder)
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
@@ -152,11 +156,12 @@ outputExport Typescript _ = mempty -- we export each one value directly
 
 outputStoreExpression ::
   (Monoid a) =>
-  Renderer ann a ->
+  Store any ->
+  Renderer MonoType a ->
   MonoType ->
-  StoreExpression ann ->
-  BackendM ann a
-outputStoreExpression renderer mt se = do
+  StoreExpression MonoType ->
+  BackendM MonoType a
+outputStoreExpression store renderer mt se = do
   let funcName = "main"
   deps <-
     traverse
@@ -165,7 +170,7 @@ outputStoreExpression renderer mt se = do
   typeDeps <-
     traverse
       (renderTypeImport renderer)
-      (M.toList (getTypeBindings $ storeTypeBindings se))
+      (M.toList (typeBindingsByType store (storeTypeBindings se)))
   stdLib <- renderStdLib renderer
   func <- renderFunc renderer funcName (storeExpression se)
   typeComment <- renderTypeSignature renderer mt
@@ -182,6 +187,15 @@ outputStoreExpression renderer mt se = do
             export
           ]
       )
+
+-- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
+typeBindingsByType :: Store a -> TypeBindings -> Map TyCon ExprHash
+typeBindingsByType store (TypeBindings tb) =
+  let getTypeName exprHash =
+        case lookupExprHashFromStore store exprHash of
+          Just se -> storeExprToDataTypes se $> exprHash
+          Nothing -> mempty
+   in mconcat (getTypeName <$> M.elems tb)
 
 -- recursively get all the StoreExpressions we need to output
 getTranspileList ::
