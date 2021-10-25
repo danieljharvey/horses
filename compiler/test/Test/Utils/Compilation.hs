@@ -9,6 +9,7 @@ import Control.Monad.Except
 import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
 import Data.Foldable
+import Data.Hashable
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -27,7 +28,7 @@ import Test.Utils.Serialisation
 testProjectCompile ::
   Runtime Javascript ->
   Expr Name Annotation ->
-  IO FilePath
+  IO (FilePath, Int)
 testProjectCompile rt expr = do
   let action = do
         (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
@@ -52,5 +53,10 @@ testProjectCompile rt expr = do
     )
     (Actions.writeFilesFromOutcomes outcomes)
 
+  -- hash of generated content for caching test results
+  let allFilesHash = hash (Actions.writeFilesFromOutcomes outcomes)
+
   -- get filename of index file
-  pure $ tsPath <> lbsToString (indexFilename rt seHash)
+  let indexPath = tsPath <> lbsToString (indexFilename rt seHash)
+
+  pure (indexPath, allFilesHash)

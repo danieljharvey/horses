@@ -92,8 +92,11 @@ fullTestIt (input, expectedValue) =
   it (T.unpack input) $ do
     let unsafeParse = ($> mempty) . unsafeParseExpr
         expr = unsafeParse input
-    filename <- testProjectCompile tsConsoleRuntime expr
-    result <- testTypescriptFileInNode filename
+    (filename, contentHash) <- testProjectCompile tsConsoleRuntime expr
+    cachePath <- createOutputFolder "CompileProject-result"
+    let cacheFilename = cachePath <> show contentHash <> ".json"
+
+    result <- withCache cacheFilename (testTypescriptFileInNode filename)
     result `shouldBe` expectedValue
 
 -- | input, output TS, nodeJS output
@@ -231,7 +234,13 @@ fullTestCases =
     ),
     ( "let (Pair a b) = Pair 1 2 in (a,b)",
       "[ 1, 2 ]"
-    )
+    ),
+    ( "type Id a = Id a; let (Id aaa) = Id \"dog\" in aaa",
+      "dog"
+    ),
+    ("let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\"", "hey"),
+    ("\"hello world\"", "hello world"),
+    ("id \"hello again\"", "hello again")
   ]
 
 spec :: Spec
@@ -491,32 +500,3 @@ spec = do
 
     describe "Entire compilation" $ do
       traverse_ fullTestIt fullTestCases
-
-      let unsafeParse = ($> mempty) . unsafeParseExpr
-      it "Compiles the smallest project" $ do
-        let expr = MyLiteral mempty (MyString (StringType "hello world"))
-        filename <- testProjectCompile tsConsoleRuntime expr
-        result <- testTypescriptFileInNode filename
-        result `shouldBe` "hello world"
-
-      it "Compiles project with one dependency" $ do
-        let expr = unsafeParse "id \"hello again\""
-        filename <- testProjectCompile tsConsoleRuntime expr
-        result <- testTypescriptFileInNode filename
-        result `shouldBe` "hello again"
-
-      it "Compiles project with declared type" $ do
-        let expr =
-              unsafeParse
-                "type Id a = Id a; let (Id aaa) = Id \"dog\" in aaa"
-        filename <- testProjectCompile tsConsoleRuntime expr
-        result <- testTypescriptFileInNode filename
-        result `shouldBe` "dog"
-
-      it "Compiles project with type dependency" $ do
-        let expr =
-              unsafeParse
-                "let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\""
-        filename <- testProjectCompile tsConsoleRuntime expr
-        result <- testTypescriptFileInNode filename
-        result `shouldBe` "hey"

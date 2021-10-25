@@ -50,6 +50,7 @@ dependencies:
 - monad-logger # logging
 - zip-archive # downloads
 - binary # downloads
+- hashable
 
 library:
   source-dirs: src

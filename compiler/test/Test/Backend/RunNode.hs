@@ -42,13 +42,13 @@ exitCodeToBool :: ExitCode -> Bool
 exitCodeToBool ExitSuccess = True
 exitCodeToBool _ = False
 
-cacheResult :: (MonadIO m) => String -> (Bool, String) -> m ()
+cacheResult :: (MonadIO m, JSON.ToJSON a) => String -> a -> m ()
 cacheResult filename result = do
   let json = JSON.encode result
   liftIO $ LBS.writeFile filename json
 
 -- load previously
-loadCacheResult :: (MonadIO m) => String -> m (Maybe (Bool, String))
+loadCacheResult :: (MonadIO m, JSON.FromJSON a) => String -> m (Maybe a)
 loadCacheResult filename = do
   res <- liftIO $ try $ LBS.readFile filename
   case (res :: Either IOError LBS.ByteString) of
@@ -57,7 +57,11 @@ loadCacheResult filename = do
     Left _ -> pure Nothing
 
 -- | Wrap a test in caching
-withCache :: (MonadIO m) => String -> m (Bool, String) -> m (Bool, String)
+withCache ::
+  (MonadIO m, JSON.FromJSON a, JSON.ToJSON a) =>
+  String ->
+  m a ->
+  m a
 withCache cachePath action = do
   cached <- loadCacheResult cachePath
   case cached of

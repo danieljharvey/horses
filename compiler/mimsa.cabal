@@ -225,6 +225,7 @@ library
     , envy
     , exceptions
     , file-embed
+    , hashable
     , haskeline
     , http-types
     , megaparsec
@@ -265,6 +266,7 @@ executable mimsa
     , envy
     , exceptions
     , file-embed
+    , hashable
     , haskeline
     , http-types
     , megaparsec
@@ -306,6 +308,7 @@ executable swagger
     , envy
     , exceptions
     , file-embed
+    , hashable
     , haskeline
     , http-types
     , megaparsec
