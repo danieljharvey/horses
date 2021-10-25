@@ -30,9 +30,10 @@ spec = do
           expr = MyLiteral mempty (MyInt 1)
       let action = do
             (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile cjsConsoleRuntime "1" storeExpr
+            Actions.compile replRuntime "1" storeExpr
       let result = Actions.run testStdlib action
       result `shouldSatisfy` isLeft
+
     it "Simplest compilation creates four files" $ do
       let expr = MyVar mempty "id"
       let action = do
@@ -54,14 +55,15 @@ spec = do
       -- should have returned two exprHashs (one for the main expr, one
       -- for the `id` dependency
       S.size hashes `shouldBe` 2
+
     it "Complex compilation creates many files in 3 folders" $ do
       let expr = MyVar mempty "evalState"
       let action = do
             (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile tsExportRuntime "evalState" storeExpr
       let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
-      -- creates six files
-      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 7
+      -- creates 9 files
+      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
       -- doesn't change project (for now)
       newProject `shouldBe` testStdlib
       -- uses three different folders
@@ -71,6 +73,7 @@ spec = do
                   <$> Actions.writeFilesFromOutcomes outcomes
               )
       length uniqueFolders `shouldBe` 3
+
     it "Doesn't break when using bindings that aren't in the store" $ do
       let expr = MyVar mempty "id2"
       let exprHashForId = getHashOfName testStdlib "id"

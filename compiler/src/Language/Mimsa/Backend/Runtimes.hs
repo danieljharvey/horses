@@ -11,6 +11,7 @@ module Language.Mimsa.Backend.Runtimes
     tsExportRuntime,
     cjsConsoleRuntime,
     tsConsoleRuntime,
+    replRuntime,
     runtimeIsValid,
     outputIndexFile,
     indexFilename,

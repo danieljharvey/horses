@@ -18,9 +18,9 @@ spec = do
       let mt = MTPrim mempty MTString
       let result = runtimeIsValid cjsConsoleRuntime mt
       result `shouldSatisfy` isRight
-    it "Int is not allowed by console runtime" $ do
+    it "Int is not allowed by repl runtime" $ do
       let mt = MTPrim mempty MTInt
-      let result = runtimeIsValid cjsConsoleRuntime mt
+      let result = runtimeIsValid replRuntime mt
       result `shouldSatisfy` isLeft
     it "Int is allowed by module export runtime" $ do
       let mt = MTPrim mempty MTInt
