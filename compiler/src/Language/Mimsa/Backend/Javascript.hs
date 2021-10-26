@@ -1,5 +1,4 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -36,7 +35,7 @@ renderWithFunction be dataTypes _name expr =
   let readerState = TS.TSReaderState (makeTypeDepMap dataTypes)
    in case be of
         Typescript -> case TS.fromExpr readerState expr of
-          Right ts -> pure ((TS.printModule ts))
+          Right ts -> pure (TS.printModule ts)
           Left e -> throwError e
         _ -> error "deleted js because yolo"
 
@@ -53,16 +52,16 @@ _commonJSRenderer dts =
       renderImport = \(name, hash') ->
         pure $
           "const "
-            <> (coerce name)
+            <> coerce name
             <> " = require(\"./"
-            <> (moduleFilename CommonJS hash')
+            <> moduleFilename CommonJS hash'
             <> "\").main;\n",
-      renderTypeImport = const (pure ("")),
+      renderTypeImport = const (pure ""),
       renderExport = pure . outputExport CommonJS,
       renderStdLib =
-        let filename = (stdLibFilename CommonJS)
+        let filename = stdLibFilename CommonJS
          in pure $ "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n",
-      renderTypeSignature = \mt -> pure ("/* \n" <> (prettyPrint mt) <> "\n */"),
+      renderTypeSignature = \mt -> pure ("/* \n" <> prettyPrint mt <> "\n */"),
       renderNewline = "\n"
     }
 
@@ -75,44 +74,15 @@ _esModulesRenderer dts =
       renderImport = \(name, hash') ->
         pure $
           "import { main as "
-            <> (coerce name)
+            <> coerce name
             <> " } from \"./"
-            <> (moduleFilename ESModulesJS hash')
+            <> moduleFilename ESModulesJS hash'
             <> "\";\n",
       renderExport = pure . outputExport ESModulesJS,
-      renderTypeImport = const (pure ("")),
+      renderTypeImport = const (pure ""),
       renderStdLib =
-        let filename = (stdLibFilename ESModulesJS)
+        let filename = stdLibFilename ESModulesJS
          in pure $ "import { __eq, __concat, __patternMatch } from \"./" <> filename <> "\";\n",
-      renderTypeSignature = \mt -> pure ("/* \n" <> (prettyPrint mt) <> "\n */"),
-      renderNewline = "\n"
-    }
-
-_tsModulesRenderer ::
-  ResolvedTypeDeps ->
-  Renderer MonoType Text
-_tsModulesRenderer dts =
-  Renderer
-    { renderFunc = renderWithFunction Typescript dts,
-      renderImport = \(name, hash') ->
-        pure $
-          "import { main as "
-            <> (coerce name)
-            <> " } from \"./"
-            <> (moduleFilename Typescript hash')
-            <> "\";\n",
-      renderTypeImport = \(typeName, hash') ->
-        pure $
-          "import * as "
-            <> (coerce typeName)
-            <> " from \"./"
-            <> (moduleFilename Typescript hash')
-            <> "\";\n",
-      renderExport =
-        pure . outputExport Typescript,
-      renderStdLib =
-        pure "",
-      renderTypeSignature =
-        \mt -> pure ("/* \n" <> (prettyPrint mt) <> "\n */"),
+      renderTypeSignature = \mt -> pure ("/* \n" <> prettyPrint mt <> "\n */"),
       renderNewline = "\n"
     }

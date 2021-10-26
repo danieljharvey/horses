@@ -119,11 +119,11 @@ fileExtension _ = ""
 
 moduleFilename :: Backend -> ExprHash -> Text
 moduleFilename CommonJS hash' =
-  "cjs-" <> (prettyPrint hash') <> ".js"
+  "cjs-" <> prettyPrint hash' <> ".js"
 moduleFilename ESModulesJS hash' =
-  "ejs-" <> (prettyPrint hash') <> ".mjs"
+  "ejs-" <> prettyPrint hash' <> ".mjs"
 moduleFilename Typescript hash' =
-  "ts-" <> (prettyPrint hash')
+  "ts-" <> prettyPrint hash'
 
 outputStdlib :: Backend -> Text
 outputStdlib CommonJS =
@@ -134,9 +134,9 @@ outputStdlib Typescript = mempty
 
 outputExport :: Backend -> Name -> Text
 outputExport CommonJS name =
-  "module.exports = { " <> (coerce name)
+  "module.exports = { " <> coerce name
     <> ": "
-    <> (coerce name)
+    <> coerce name
     <> " }"
 outputExport ESModulesJS _ = mempty -- we export each one value directly
 outputExport Typescript _ = mempty -- we export each one value directly

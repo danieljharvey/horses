@@ -189,28 +189,25 @@ outputIndexFile :: Backend -> Runtime Text -> ExprHash -> Text
 outputIndexFile be runtime exprHash =
   let link = case be of
         CommonJS ->
-          ("const main = require('./" <> moduleFilename be exprHash <> "').main;\n")
+          "const main = require('./" <> moduleFilename be exprHash <> "').main;\n"
         ESModulesJS ->
-          ("import { main } from './" <> moduleFilename be exprHash <> "';\n")
+          "import { main } from './" <> moduleFilename be exprHash <> "';\n"
         Typescript ->
-          ("import { main } from './" <> moduleFilename be exprHash <> "';\n")
+          "import { main } from './" <> moduleFilename be exprHash <> "';\n"
    in link <> rtCode runtime
 
 indexFilename :: Runtime code -> ExprHash -> Text
 indexFilename runtime hash' =
   case rtBackend runtime of
     CommonJS ->
-      ( "index-" <> coerce (rtName runtime) <> "-"
-          <> prettyPrint hash'
-          <> ".js"
-      )
+      "index-" <> coerce (rtName runtime) <> "-"
+        <> prettyPrint hash'
+        <> ".js"
     ESModulesJS ->
-      ( "index-" <> coerce (rtName runtime) <> "-"
-          <> prettyPrint hash'
-          <> ".mjs"
-      )
+      "index-" <> coerce (rtName runtime) <> "-"
+        <> prettyPrint hash'
+        <> ".mjs"
     Typescript ->
-      ( "index-" <> coerce (rtName runtime) <> "-"
-          <> prettyPrint hash'
-          <> ".ts"
-      )
+      "index-" <> coerce (rtName runtime) <> "-"
+        <> prettyPrint hash'
+        <> ".ts"
