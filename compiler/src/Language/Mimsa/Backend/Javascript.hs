@@ -5,19 +5,13 @@
 
 module Language.Mimsa.Backend.Javascript
   ( renderWithFunction,
-    Javascript (..),
   )
 where
 
 import Control.Monad.Except
-import qualified Data.ByteString.Char8 as B
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
 import Data.Map (Map)
-import Data.String
 import Data.Text (Text)
-import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
@@ -32,32 +26,17 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
-----
-newtype Javascript = Javascript LBS.ByteString
-  deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
-
-instance Printer Javascript where
-  prettyPrint (Javascript bs) = (T.decodeUtf8 . B.concat . LBS.toChunks) bs
-
-instance IsString Javascript where
-  fromString = Javascript . LB.pack
-
-----
-
-textToJS :: Text -> Javascript
-textToJS = Javascript . LB.fromChunks . return . T.encodeUtf8
-
 renderWithFunction ::
   Backend ->
   ResolvedTypeDeps ->
   Name ->
   Expr Name MonoType ->
-  BackendM MonoType Javascript
+  BackendM MonoType Text
 renderWithFunction be dataTypes _name expr =
   let readerState = TS.TSReaderState (makeTypeDepMap dataTypes)
    in case be of
         Typescript -> case TS.fromExpr readerState expr of
-          Right ts -> pure (textToJS (TS.printModule ts))
+          Right ts -> pure ((TS.printModule ts))
           Left e -> throwError e
         _ -> error "deleted js because yolo"
 
@@ -65,75 +44,75 @@ makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TyCon
 makeTypeDepMap (ResolvedTypeDeps rtd) =
   (\(_, DataType typeName _ _) -> typeName) <$> rtd
 
-commonJSRenderer ::
+_commonJSRenderer ::
   ResolvedTypeDeps ->
-  Renderer MonoType Javascript
-commonJSRenderer dts =
+  Renderer MonoType Text
+_commonJSRenderer dts =
   Renderer
     { renderFunc = renderWithFunction CommonJS dts,
       renderImport = \(name, hash') ->
         pure $
           "const "
-            <> textToJS (coerce name)
+            <> (coerce name)
             <> " = require(\"./"
-            <> Javascript (moduleFilename CommonJS hash')
+            <> (moduleFilename CommonJS hash')
             <> "\").main;\n",
-      renderTypeImport = const (pure (textToJS "")),
-      renderExport = pure . Javascript . outputExport CommonJS,
+      renderTypeImport = const (pure ("")),
+      renderExport = pure . outputExport CommonJS,
       renderStdLib =
-        let filename = Javascript (stdLibFilename CommonJS)
+        let filename = (stdLibFilename CommonJS)
          in pure $ "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n",
-      renderTypeSignature = \mt -> pure ("/* \n" <> textToJS (prettyPrint mt) <> "\n */"),
-      renderNewline = textToJS "\n"
+      renderTypeSignature = \mt -> pure ("/* \n" <> (prettyPrint mt) <> "\n */"),
+      renderNewline = "\n"
     }
 
-esModulesRenderer ::
+_esModulesRenderer ::
   ResolvedTypeDeps ->
-  Renderer MonoType Javascript
-esModulesRenderer dts =
+  Renderer MonoType Text
+_esModulesRenderer dts =
   Renderer
     { renderFunc = renderWithFunction ESModulesJS dts,
       renderImport = \(name, hash') ->
         pure $
           "import { main as "
-            <> textToJS (coerce name)
+            <> (coerce name)
             <> " } from \"./"
-            <> Javascript (moduleFilename ESModulesJS hash')
+            <> (moduleFilename ESModulesJS hash')
             <> "\";\n",
-      renderExport = pure . Javascript . outputExport ESModulesJS,
-      renderTypeImport = const (pure (textToJS "")),
+      renderExport = pure . outputExport ESModulesJS,
+      renderTypeImport = const (pure ("")),
       renderStdLib =
-        let filename = Javascript (stdLibFilename ESModulesJS)
+        let filename = (stdLibFilename ESModulesJS)
          in pure $ "import { __eq, __concat, __patternMatch } from \"./" <> filename <> "\";\n",
-      renderTypeSignature = \mt -> pure ("/* \n" <> textToJS (prettyPrint mt) <> "\n */"),
-      renderNewline = textToJS "\n"
+      renderTypeSignature = \mt -> pure ("/* \n" <> (prettyPrint mt) <> "\n */"),
+      renderNewline = "\n"
     }
 
-tsModulesRenderer ::
+_tsModulesRenderer ::
   ResolvedTypeDeps ->
-  Renderer MonoType Javascript
-tsModulesRenderer dts =
+  Renderer MonoType Text
+_tsModulesRenderer dts =
   Renderer
     { renderFunc = renderWithFunction Typescript dts,
       renderImport = \(name, hash') ->
         pure $
           "import { main as "
-            <> textToJS (coerce name)
+            <> (coerce name)
             <> " } from \"./"
-            <> Javascript (moduleFilename Typescript hash')
+            <> (moduleFilename Typescript hash')
             <> "\";\n",
       renderTypeImport = \(typeName, hash') ->
         pure $
           "import * as "
-            <> textToJS (coerce typeName)
+            <> (coerce typeName)
             <> " from \"./"
-            <> Javascript (moduleFilename Typescript hash')
+            <> (moduleFilename Typescript hash')
             <> "\";\n",
       renderExport =
-        pure . Javascript . outputExport Typescript,
+        pure . outputExport Typescript,
       renderStdLib =
         pure "",
       renderTypeSignature =
-        \mt -> pure ("/* \n" <> textToJS (prettyPrint mt) <> "\n */"),
-      renderNewline = textToJS "\n"
+        \mt -> pure ("/* \n" <> (prettyPrint mt) <> "\n */"),
+      renderNewline = "\n"
     }

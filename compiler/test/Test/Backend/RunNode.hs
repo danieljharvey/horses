@@ -19,9 +19,10 @@ import System.Exit
 import System.Process.Typed
 import Test.Hspec
 
-runProcessFromFile :: (MonadIO m) => String -> String -> m (Bool, String)
-runProcessFromFile binaryName filename = do
-  result <- liftIO $ try $ readProcess (proc binaryName [filename])
+runProcessFromFile :: (MonadIO m) => String -> [String] -> String -> m (Bool, String)
+runProcessFromFile binaryName args filename = do
+  let allArgs = args <> [filename]
+  result <- liftIO $ try $ readProcess (proc binaryName allArgs)
   case result of
     Right (ExitSuccess, success, _) ->
       pure (exitCodeToBool ExitSuccess, binNewline success)
@@ -32,11 +33,15 @@ runProcessFromFile binaryName filename = do
 -- | Pass a filepath to a JS file for Node to execute.
 -- Required as ES modules don't work with the `-p` flag
 runScriptFromFile :: (MonadIO m) => String -> m (Bool, String)
-runScriptFromFile = runProcessFromFile "node"
+runScriptFromFile = runProcessFromFile "node" []
 
 -- | Pass a filepath to a TS file for `ts-node` to execute.
 runTypescriptFromFile :: (MonadIO m) => String -> m (Bool, String)
-runTypescriptFromFile = runProcessFromFile "ts-node"
+runTypescriptFromFile =
+  runProcessFromFile
+    "ts-node"
+    [ "--compiler-options={\"lib\":[\"dom\",\"dom.iterable\",\"es6\"]}"
+    ]
 
 exitCodeToBool :: ExitCode -> Bool
 exitCodeToBool ExitSuccess = True

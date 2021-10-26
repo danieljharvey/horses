@@ -6,27 +6,27 @@ module Test.Utils.Compilation
 where
 
 import Control.Monad.Except
-import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
 import Data.Foldable
 import Data.Hashable
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Test.Backend.RunNode hiding (spec)
 import Test.Data.Project
 import Test.Utils.Helpers
 import Test.Utils.Serialisation
 
 -- | compile a project into a temp folder and return the main filename
 testProjectCompile ::
-  Runtime Javascript ->
+  Runtime Text ->
   Expr Name Annotation ->
   IO (FilePath, Int)
 testProjectCompile rt expr = do
@@ -49,7 +49,7 @@ testProjectCompile rt expr = do
   traverse_
     ( \(_, filename, content) -> do
         let savePath = tsPath <> show filename
-        liftIO $ LBS.writeFile savePath (coerce content)
+        liftIO $ T.writeFile savePath (coerce content)
     )
     (Actions.writeFilesFromOutcomes outcomes)
 
@@ -57,6 +57,6 @@ testProjectCompile rt expr = do
   let allFilesHash = hash (Actions.writeFilesFromOutcomes outcomes)
 
   -- get filename of index file
-  let indexPath = tsPath <> lbsToString (indexFilename rt seHash)
+  let indexPath = tsPath <> T.unpack (indexFilename rt seHash)
 
   pure (indexPath, allFilesHash)

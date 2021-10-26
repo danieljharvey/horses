@@ -13,8 +13,6 @@ where
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Writer
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Hashable
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -29,14 +27,14 @@ newtype SavePath = SavePath Text
 instance Show SavePath where
   show (SavePath s) = T.unpack s
 
-newtype SaveContents = SaveContents LBS.ByteString
+newtype SaveContents = SaveContents Text
   deriving newtype (Eq, Ord, Show, Hashable)
 
-newtype SaveFilename = SaveFilename LBS.ByteString
+newtype SaveFilename = SaveFilename Text
   deriving newtype (Eq, Ord, Hashable)
 
 instance Show SaveFilename where
-  show (SaveFilename s) = LB.unpack s
+  show (SaveFilename s) = T.unpack s
 
 data ActionOutcome
   = NewMessage Text

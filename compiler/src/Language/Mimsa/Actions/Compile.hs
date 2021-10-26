@@ -21,7 +21,6 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Backend
-import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.ExprUtils
@@ -39,7 +38,7 @@ typecheckStoreExpression se = do
 
 -- | this now accepts StoreExpression instead of expression
 compile ::
-  Runtime Javascript ->
+  Runtime Text ->
   Text ->
   StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
@@ -107,7 +106,7 @@ transpileModule be se = do
     liftEither $
       first
         toBackendError
-        (outputStoreExpression be (prjStore project) dataTypes monoType se)
+        (outputStoreExpression be dataTypes (prjStore project) monoType se)
   let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendWriteFile path filename jsOutput
 
@@ -115,7 +114,7 @@ transpileModule be se = do
 -- | that exposes the expression as a function called 'main' and imports
 -- | the other files
 createIndex ::
-  Runtime Javascript -> ExprHash -> Actions.ActionM ()
+  Runtime Text -> ExprHash -> Actions.ActionM ()
 createIndex runtime exprHash = do
   let be = rtBackend runtime
       path = Actions.SavePath (T.pack $ transpiledIndexOutputPath be)

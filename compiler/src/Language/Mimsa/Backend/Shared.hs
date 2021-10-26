@@ -23,13 +23,8 @@ module Language.Mimsa.Backend.Shared
 where
 
 import Control.Monad.IO.Class
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
 import Data.FileEmbed
-import Data.Functor
-import Data.Map (Map)
-import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -37,10 +32,8 @@ import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreFolder)
-import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import System.Directory
@@ -71,31 +64,28 @@ createStdlibOutputPath :: Backend -> MimsaM e FilePath
 createStdlibOutputPath be =
   getStoreFolder (transpiledStdlibOutputPath be)
 
-bsFromText :: Text -> LBS.ByteString
-bsFromText = LB.fromChunks . return . T.encodeUtf8
-
 -- these are saved in a file that is included in compilation
-commonJSStandardLibrary :: LBS.ByteString
+commonJSStandardLibrary :: Text
 commonJSStandardLibrary =
-  LBS.fromStrict $(embedFile "static/backend/commonjs/stdlib.js")
+  T.decodeUtf8 $(embedFile "static/backend/commonjs/stdlib.js")
 
 -- these are saved in a file that is included in compilation
-esModulesJSStandardLibrary :: LBS.ByteString
+esModulesJSStandardLibrary :: Text
 esModulesJSStandardLibrary =
-  LBS.fromStrict $(embedFile "static/backend/es-modules-js/stdlib.mjs")
+  T.decodeUtf8 $(embedFile "static/backend/es-modules-js/stdlib.mjs")
 
-stdLibFilename :: Backend -> LBS.ByteString
+stdLibFilename :: Backend -> Text
 stdLibFilename CommonJS = "cjs-stdlib.js"
 stdLibFilename ESModulesJS = "ejs-stdlib.mjs"
 stdLibFilename Typescript = "ts-stdlib.ts"
 
-indexOutputFilename :: Backend -> ExprHash -> LBS.ByteString
+indexOutputFilename :: Backend -> ExprHash -> Text
 indexOutputFilename CommonJS exprHash =
-  "index-" <> bsFromText (prettyPrint exprHash) <> ".js"
+  "index-" <> prettyPrint exprHash <> ".js"
 indexOutputFilename ESModulesJS exprHash =
-  "index-" <> bsFromText (prettyPrint exprHash) <> ".mjs"
+  "index-" <> prettyPrint exprHash <> ".mjs"
 indexOutputFilename Typescript exprHash =
-  "index-" <> bsFromText (prettyPrint exprHash) <> ".ts"
+  "index-" <> prettyPrint exprHash <> ".ts"
 
 symlinkedOutputPath :: Backend -> FilePath
 symlinkedOutputPath CommonJS =
@@ -123,42 +113,33 @@ transpiledStdlibOutputPath Typescript = "transpiled/stdlib/typescript"
 zipFileOutputPath :: Backend -> FilePath
 zipFileOutputPath _ = "./output/zip"
 
-fileExtension :: Backend -> LBS.ByteString
+fileExtension :: Backend -> Text
 fileExtension Typescript = ".ts"
 fileExtension _ = ""
 
-moduleFilename :: Backend -> ExprHash -> LBS.ByteString
+moduleFilename :: Backend -> ExprHash -> Text
 moduleFilename CommonJS hash' =
-  "cjs-" <> bsFromText (prettyPrint hash') <> ".js"
+  "cjs-" <> (prettyPrint hash') <> ".js"
 moduleFilename ESModulesJS hash' =
-  "ejs-" <> bsFromText (prettyPrint hash') <> ".mjs"
+  "ejs-" <> (prettyPrint hash') <> ".mjs"
 moduleFilename Typescript hash' =
-  "ts-" <> bsFromText (prettyPrint hash')
+  "ts-" <> (prettyPrint hash')
 
-outputStdlib :: Backend -> LBS.ByteString
+outputStdlib :: Backend -> Text
 outputStdlib CommonJS =
   coerce commonJSStandardLibrary
 outputStdlib ESModulesJS =
   coerce esModulesJSStandardLibrary
 outputStdlib Typescript = mempty
 
-outputExport :: Backend -> Name -> LBS.ByteString
+outputExport :: Backend -> Name -> Text
 outputExport CommonJS name =
-  "module.exports = { " <> bsFromText (coerce name)
+  "module.exports = { " <> (coerce name)
     <> ": "
-    <> bsFromText (coerce name)
+    <> (coerce name)
     <> " }"
 outputExport ESModulesJS _ = mempty -- we export each one value directly
 outputExport Typescript _ = mempty -- we export each one value directly
-
--- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
-typeBindingsByType :: Store a -> TypeBindings -> Map TyCon ExprHash
-typeBindingsByType store (TypeBindings tb) =
-  let getTypeName exprHash =
-        case lookupExprHashFromStore store exprHash of
-          Just se -> storeExprToDataTypes se $> exprHash
-          Nothing -> mempty
-   in mconcat (getTypeName <$> M.elems tb)
 
 -- recursively get all the StoreExpressions we need to output
 getTranspileList ::
