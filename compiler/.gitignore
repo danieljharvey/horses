@@ -17,3 +17,4 @@ test/golden/Typescript-result/*.json
 test/golden/ESModules-result/*.json
 test/golden/CommonJS-result/*.json
 test/golden/CompileProject/
+test/golden/CompileProject-result/
