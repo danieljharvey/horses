@@ -252,7 +252,7 @@ spec = do
         printLiteral (TSInt 100) `shouldBe` "100"
         printLiteral (TSString "egg") `shouldBe` "\"egg\""
       it "function" $ do
-        prettyPrint
+        printExpr
           ( TSFunction
               "a"
               mempty
@@ -261,7 +261,7 @@ spec = do
               (TSFunctionBody (TSBody mempty (TSLit (TSInt 1))))
           )
           `shouldBe` "(a: boolean) => 1"
-        prettyPrint
+        printExpr
           ( TSFunction
               "maybeA"
               (S.singleton (TSGeneric "A"))
@@ -270,7 +270,7 @@ spec = do
               (TSFunctionBody (TSBody mempty (TSLit (TSInt 1))))
           )
           `shouldBe` "<A>(maybeA: Maybe.Maybe<A>) => 1"
-        prettyPrint
+        printExpr
           ( TSFunction
               "maybeA"
               (S.singleton (TSGeneric "A"))
@@ -289,15 +289,15 @@ spec = do
           )
           `shouldBe` "<A>(maybeA: Maybe.Maybe<A>) => { const b = true; return 1; }"
       it "function application" $ do
-        prettyPrint (TSApp (TSVar "id") (TSLit (TSBool True)))
+        printExpr (TSApp (TSVar "id") (TSLit (TSBool True)))
           `shouldBe` "id(true)"
-        prettyPrint (TSApp (TSApp (TSVar "id") (TSLit (TSBool True))) (TSLit (TSInt 1)))
+        printExpr (TSApp (TSApp (TSVar "id") (TSLit (TSBool True))) (TSLit (TSInt 1)))
           `shouldBe` "id(true)(1)"
       it "infix operators" $ do
-        prettyPrint (TSInfix TSEquals (TSLit (TSInt 1)) (TSLit (TSInt 2)))
+        printExpr (TSInfix TSEquals (TSLit (TSInt 1)) (TSLit (TSInt 2)))
           `shouldBe` "1 === 2"
       it "record" $ do
-        prettyPrint
+        printExpr
           ( TSRecord
               ( M.fromList
                   [ ( "a",
@@ -309,9 +309,9 @@ spec = do
           )
           `shouldBe` "{ a: 1, b: true }"
       it "record access" $ do
-        prettyPrint (TSRecordAccess "a" (TSVar "record")) `shouldBe` "record.a"
+        printExpr (TSRecordAccess "a" (TSVar "record")) `shouldBe` "record.a"
       it "array" $ do
-        prettyPrint
+        printExpr
           ( TSArray
               [ TSArrayItem (TSLit (TSInt 1)),
                 TSArrayItem (TSLit (TSInt 2)),
@@ -320,10 +320,10 @@ spec = do
           )
           `shouldBe` "[1,2,...rest]"
       it "array access" $ do
-        prettyPrint (TSArrayAccess 2 (TSVar "array"))
+        printExpr (TSArrayAccess 2 (TSVar "array"))
           `shouldBe` "array[2]"
       it "ternary" $ do
-        prettyPrint
+        printExpr
           ( TSTernary
               (TSLit (TSBool True))
               (TSLit (TSInt 1))
@@ -332,7 +332,7 @@ spec = do
           `shouldBe` "true ? 1 : 2"
       describe "patterns" $ do
         it "destructure" $ do
-          let destructure' = prettyPrint . destructure
+          let destructure' = mconcat . fmap printStatement . destructure
           destructure' (TSPatternVar "a") `shouldBe` "const a = value; "
           destructure' TSPatternWildcard `shouldBe` ""
           destructure'
@@ -353,12 +353,12 @@ spec = do
           destructure' (TSPatternConstructor "Just" [TSPatternWildcard])
             `shouldBe` ""
           destructure' (TSPatternString (TSStringVar "d") (TSStringVar "og"))
-            `shouldBe` "const d = value.charAt(0); \nconst og = value.slice(1); "
+            `shouldBe` "const d = value.charAt(0); const og = value.slice(1); "
           destructure' (TSPatternConstructor "Just" [TSPatternString (TSStringVar "d") (TSStringVar "og")])
-            `shouldBe` "const d = value.vars[0].charAt(0); \nconst og = value.vars[0].slice(1); "
+            `shouldBe` "const d = value.vars[0].charAt(0); const og = value.vars[0].slice(1); "
 
         it "conditions" $ do
-          let conditions' = prettyPrint . conditions
+          let conditions' = printExpr . conditions
           conditions' (TSPatternVar "a") `shouldBe` "true"
           conditions' TSPatternWildcard `shouldBe` "true"
           conditions'
@@ -476,12 +476,12 @@ spec = do
                 ]
 
         it "Maybe" $ do
-          prettyPrint <$> createConstructorFunctions tsMaybe
+          printStatement <$> createConstructorFunctions tsMaybe
             `shouldBe` [ "const Just = <A>(a: A): Maybe<A> => ({ type: \"Just\", vars: [a] }); ",
                          "const Nothing: Maybe<never> = { type: \"Nothing\", vars: [] }; "
                        ]
         it "These" $ do
-          prettyPrint <$> createConstructorFunctions tsThese
+          printStatement <$> createConstructorFunctions tsThese
             `shouldBe` [ "const This = <A>(a: A): These<A,never> => ({ type: \"This\", vars: [a] }); ",
                          "const That = <B>(b: B): These<never,B> => ({ type: \"That\", vars: [b] }); ",
                          "const These = <A>(a: A) => <B>(b: B): These<A,B> => ({ type: \"These\", vars: [a,b] }); "

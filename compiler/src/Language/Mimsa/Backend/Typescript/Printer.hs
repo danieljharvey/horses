@@ -6,6 +6,8 @@ module Language.Mimsa.Backend.Typescript.Printer
   ( printModule,
     printLiteral,
     printType,
+    printExpr,
+    printStatement,
   )
 where
 
@@ -53,7 +55,7 @@ printDataType dt@(TSDataType tyName generics constructors) =
         as -> T.intercalate " | " (printConstructor <$> as)
       prettyConsFns =
         mconcat $
-          (<>) "export " . prettyPrint
+          (<>) "export " . printStatement
             <$> createConstructorFunctions dt
    in "export type " <> prettyPrint tyName <> prettyGen <> " = "
         <> prettyCons
@@ -66,107 +68,107 @@ printLiteral (TSBool False) = "false"
 printLiteral (TSInt i) = prettyPrint i
 printLiteral (TSString str) = "\"" <> prettyPrint str <> "\""
 
-instance Printer TSLetBody where
-  prettyPrint (TSLetBody (TSBody [] body)) = prettyPrint body
-  prettyPrint (TSLetBody (TSBody bindings body)) =
-    "{ "
-      <> mconcat (prettyPrint <$> bindings)
-      <> returnExpr body
-      <> " }; "
+printLetBody :: TSLetBody -> Text
+printLetBody (TSLetBody (TSBody [] body)) = printExpr body
+printLetBody (TSLetBody (TSBody bindings body)) =
+  "{ "
+    <> mconcat (printStatement <$> bindings)
+    <> returnExpr body
+    <> " }; "
 
 returnExpr :: TSExpr -> Text
-returnExpr tsExpr@TSError {} = prettyPrint tsExpr <> ";"
-returnExpr other = "return " <> prettyPrint other <> ";"
+returnExpr tsExpr@TSError {} = printExpr tsExpr <> ";"
+returnExpr other = "return " <> printExpr other <> ";"
 
-instance Printer TSStatement where
-  prettyPrint (TSAssignment lhsExpr exprType expr) =
-    let tsPrettyType = case exprType of
-          Just mt' -> ": " <> printType mt'
-          _ -> ""
-     in "const " <> prettyPrint lhsExpr <> tsPrettyType <> " = "
-          <> prettyPrint expr
-          <> "; "
-  prettyPrint (TSConditional predicate allBody@(TSLetBody (TSBody [] _))) =
-    "if (" <> prettyPrint predicate <> ") { return "
-      <> prettyPrint allBody
-      <> "; }; "
-  prettyPrint (TSConditional predicate body) =
-    "if (" <> prettyPrint predicate <> ") "
-      <> prettyPrint body
+printStatement :: TSStatement -> Text
+printStatement (TSAssignment lhsExpr exprType expr) =
+  let tsPrettyType = case exprType of
+        Just mt' -> ": " <> printType mt'
+        _ -> ""
+   in "const " <> printExpr lhsExpr <> tsPrettyType <> " = "
+        <> printLetBody expr
+        <> "; "
+printStatement (TSConditional predicate allBody@(TSLetBody (TSBody [] _))) =
+  "if (" <> printExpr predicate <> ") { return "
+    <> printLetBody allBody
+    <> "; }; "
+printStatement (TSConditional predicate body) =
+  "if (" <> printExpr predicate <> ") "
+    <> printLetBody body
 
-instance Printer TSFunctionBody where
-  prettyPrint (TSFunctionBody (TSBody [] body)) = case body of
-    TSRecord {} -> "(" <> prettyPrint body <> ")"
-    TSData {} -> "(" <> prettyPrint body <> ")"
-    _ -> prettyPrint body
-  prettyPrint (TSFunctionBody (TSBody bindings body)) =
-    "{ "
-      <> mconcat (prettyPrint <$> bindings)
-      <> returnExpr body
-      <> " }"
+printFunctionBody :: TSFunctionBody -> Text
+printFunctionBody (TSFunctionBody (TSBody [] body)) = case body of
+  TSRecord {} -> "(" <> printExpr body <> ")"
+  TSData {} -> "(" <> printExpr body <> ")"
+  _ -> printExpr body
+printFunctionBody (TSFunctionBody (TSBody bindings body)) =
+  "{ "
+    <> mconcat (printStatement <$> bindings)
+    <> returnExpr body
+    <> " }"
 
-instance Printer TSOp where
-  prettyPrint TSEquals = "==="
-  prettyPrint TSAdd = "+"
-  prettyPrint TSSubtract = "-"
-  prettyPrint TSGreaterThanOrEqualTo = ">="
-  prettyPrint TSAnd = "&&"
-  prettyPrint TSStringConcat = "+"
+printOp :: TSOp -> Text
+printOp TSEquals = "==="
+printOp TSAdd = "+"
+printOp TSSubtract = "-"
+printOp TSGreaterThanOrEqualTo = ">="
+printOp TSAnd = "&&"
+printOp TSStringConcat = "+"
 
-instance Printer TSExpr where
-  prettyPrint (TSLit lit) = printLiteral lit
-  prettyPrint (TSFunction name generics mt maybeReturn expr) =
-    let prettyGen = case printGeneric <$> S.toList generics of
-          [] -> ""
-          as -> "<" <> T.intercalate "," as <> ">"
-        prettyReturnType = case maybeReturn of
-          Just mt' -> ": " <> printType mt'
-          _ -> ""
-     in prettyGen <> "(" <> prettyPrint name <> ": " <> printType mt <> ")" <> prettyReturnType <> " => "
-          <> prettyPrint expr
-  prettyPrint (TSVar var) = prettyPrint var
-  prettyPrint (TSApp func val) =
-    prettyPrint func <> "(" <> prettyPrint val <> ")"
-  prettyPrint (TSArray as) =
-    "["
-      <> T.intercalate
-        ","
-        (printArrayItem <$> as)
-      <> "]"
-    where
-      printArrayItem (TSArrayItem a) = prettyPrint a
-      printArrayItem (TSArraySpread var) = "..." <> prettyPrint var
-  prettyPrint (TSArrayAccess a expr) =
-    prettyPrint expr <> "[" <> prettyPrint a <> "]"
-  prettyPrint (TSInfix op a b) =
-    prettyPrint a <> " "
-      <> prettyPrint op
-      <> " "
-      <> prettyPrint b
-  prettyPrint (TSRecord as) =
-    let outputRecordItem (name, val) =
-          prettyPrint name <> ": " <> prettyPrint val
-        items = outputRecordItem <$> M.toList as
-     in "{ "
-          <> T.intercalate
-            ", "
-            items
-          <> " }"
-  prettyPrint (TSRecordAccess name expr) =
-    prettyPrint expr <> "." <> prettyPrint name
-  prettyPrint (TSTernary cond thenE elseE) =
-    prettyPrint cond <> " ? " <> prettyPrint thenE <> " : "
-      <> prettyPrint elseE
-  prettyPrint (TSData constructor args) =
-    let prettyArgs = T.intercalate "," (prettyPrint <$> args)
-     in "{ type: \"" <> prettyPrint constructor <> "\", vars: [" <> prettyArgs <> "] }"
-  prettyPrint (TSError msg) =
-    "throw new Error(\"" <> msg <> "\")"
-  prettyPrint TSUnderscore = "_"
+printExpr :: TSExpr -> Text
+printExpr (TSLit lit) = printLiteral lit
+printExpr (TSFunction name generics mt maybeReturn expr) =
+  let prettyGen = case printGeneric <$> S.toList generics of
+        [] -> ""
+        as -> "<" <> T.intercalate "," as <> ">"
+      prettyReturnType = case maybeReturn of
+        Just mt' -> ": " <> printType mt'
+        _ -> ""
+   in prettyGen <> "(" <> prettyPrint name <> ": " <> printType mt <> ")" <> prettyReturnType <> " => "
+        <> printFunctionBody expr
+printExpr (TSVar var) = prettyPrint var
+printExpr (TSApp func val) =
+  printExpr func <> "(" <> printExpr val <> ")"
+printExpr (TSArray as) =
+  "["
+    <> T.intercalate
+      ","
+      (printArrayItem <$> as)
+    <> "]"
+  where
+    printArrayItem (TSArrayItem a) = printExpr a
+    printArrayItem (TSArraySpread var) = "..." <> printExpr var
+printExpr (TSArrayAccess a expr) =
+  printExpr expr <> "[" <> prettyPrint a <> "]"
+printExpr (TSInfix op a b) =
+  printExpr a <> " "
+    <> printOp op
+    <> " "
+    <> printExpr b
+printExpr (TSRecord as) =
+  let outputRecordItem (name, val) =
+        prettyPrint name <> ": " <> printExpr val
+      items = outputRecordItem <$> M.toList as
+   in "{ "
+        <> T.intercalate
+          ", "
+          items
+        <> " }"
+printExpr (TSRecordAccess name expr) =
+  printExpr expr <> "." <> prettyPrint name
+printExpr (TSTernary cond thenE elseE) =
+  printExpr cond <> " ? " <> printExpr thenE <> " : "
+    <> printExpr elseE
+printExpr (TSData constructor args) =
+  let prettyArgs = T.intercalate "," (printExpr <$> args)
+   in "{ type: \"" <> prettyPrint constructor <> "\", vars: [" <> prettyArgs <> "] }"
+printExpr (TSError msg) =
+  "throw new Error(\"" <> msg <> "\")"
+printExpr TSUnderscore = "_"
 
 printModule :: TSModule -> Text
 printModule (TSModule dataTypes (TSBody assignments export)) =
   T.intercalate "\n" (printDataType <$> dataTypes)
-    <> T.intercalate "\n" (prettyPrint <$> assignments)
+    <> T.intercalate "\n" (printStatement <$> assignments)
     <> "export const main = "
-    <> prettyPrint export
+    <> printExpr export

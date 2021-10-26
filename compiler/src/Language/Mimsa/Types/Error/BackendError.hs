@@ -31,8 +31,8 @@ instance Printer (BackendError ann) where
   prettyDoc (OutputtingBadLetPattern p) =
     "Cannot output this let pattern: " <> prettyDoc p
   prettyDoc (ExpectedExprGotBody exp' exps) =
-    "Expected no extra exprs for :" <> prettyDoc exp' <> ", but found: "
-      <> prettyDoc exps
+    "Expected no extra exprs for :" <> pretty (printExpr exp') <> ", but found: "
+      <> pretty (printStatement <$> exps)
   prettyDoc (ExpectedFunctionType tsType) = "Expected function type but got " <> pretty (printType tsType)
   prettyDoc (ConstructorNotFound tyCon) =
     "Constructor" <+> prettyDoc tyCon <+> "not found"
