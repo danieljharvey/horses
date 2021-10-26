@@ -240,7 +240,10 @@ fullTestCases =
     ),
     ("let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\"", "hey"),
     ("\"hello world\"", "hello world"),
-    ("id \"hello again\"", "hello again")
+    ("id \"hello again\"", "hello again"),
+    ( "either.fmap (\\a -> a + 1) (Right 100)",
+      "{ type: 'Right', vars: [ 101 ] }"
+    )
   ]
 
 spec :: Spec
