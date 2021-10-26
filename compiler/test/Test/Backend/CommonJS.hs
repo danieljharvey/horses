@@ -248,7 +248,7 @@ fullTestCases =
 
 spec :: Spec
 spec = do
-  fdescribe "CommonJS" $ do
+  xdescribe "CommonJS" $ do
     describe "pretty print AST" $ do
       it "literals" $ do
         JS.printLiteral (TSBool True) `shouldBe` "true"

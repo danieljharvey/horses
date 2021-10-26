@@ -69,7 +69,7 @@ jobs:
           fail-on: warning
 
       - name: Run stack build
-        run: yarn global add ts-node@10.4.0 && cd compiler && stack build --test --no-run-tests
+        run: yarn global add typescript@4.4 ts-node@10.4.0 && cd compiler && stack build --test --no-run-tests
 
       - name: Run stack test
         run: cd compiler && stack test
