@@ -39,6 +39,7 @@ library
       Language.Mimsa.Actions.Types
       Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript
+      Language.Mimsa.Backend.Output
       Language.Mimsa.Backend.Runtimes
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types

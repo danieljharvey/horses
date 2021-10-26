@@ -4,8 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Language.Mimsa.Backend.Javascript
-  ( outputJavascript,
-    renderWithFunction,
+  ( renderWithFunction,
     Javascript (..),
   )
 where
@@ -65,22 +64,6 @@ renderWithFunction be dataTypes _name expr =
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TyCon
 makeTypeDepMap (ResolvedTypeDeps rtd) =
   (\(_, DataType typeName _ _) -> typeName) <$> rtd
-
-outputJavascript ::
-  Store a ->
-  Backend ->
-  ResolvedTypeDeps ->
-  MonoType ->
-  StoreExpression MonoType ->
-  BackendM MonoType Javascript
-outputJavascript store' be dataTypes =
-  outputStoreExpression
-    store'
-    ( case be of
-        CommonJS -> commonJSRenderer dataTypes
-        ESModulesJS -> esModulesRenderer dataTypes
-        Typescript -> tsModulesRenderer dataTypes
-    )
 
 commonJSRenderer ::
   ResolvedTypeDeps ->

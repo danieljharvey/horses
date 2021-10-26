@@ -7,7 +7,6 @@ module Language.Mimsa.Backend.Shared
     transpiledStdlibOutputPath,
     symlinkedOutputPath,
     zipFileOutputPath,
-    outputStoreExpression,
     outputExport,
     outputStdlib,
     indexOutputFilename,
@@ -29,7 +28,6 @@ import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce
 import Data.FileEmbed
 import Data.Functor
-import Data.List (intersperse)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -45,7 +43,6 @@ import Language.Mimsa.Store.Storage (getStoreFolder)
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import System.Directory
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
@@ -153,40 +150,6 @@ outputExport CommonJS name =
     <> " }"
 outputExport ESModulesJS _ = mempty -- we export each one value directly
 outputExport Typescript _ = mempty -- we export each one value directly
-
-outputStoreExpression ::
-  (Monoid a) =>
-  Store any ->
-  Renderer MonoType a ->
-  MonoType ->
-  StoreExpression MonoType ->
-  BackendM MonoType a
-outputStoreExpression store renderer mt se = do
-  let funcName = "main"
-  deps <-
-    traverse
-      (renderImport renderer)
-      (M.toList (getBindings $ storeBindings se))
-  typeDeps <-
-    traverse
-      (renderTypeImport renderer)
-      (M.toList (typeBindingsByType store (storeTypeBindings se)))
-  stdLib <- renderStdLib renderer
-  func <- renderFunc renderer funcName (storeExpression se)
-  typeComment <- renderTypeSignature renderer mt
-  export <- renderExport renderer funcName
-  pure $
-    mconcat
-      ( intersperse
-          (renderNewline renderer)
-          [ mconcat deps,
-            mconcat typeDeps,
-            stdLib,
-            typeComment,
-            func,
-            export
-          ]
-      )
 
 -- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
 typeBindingsByType :: Store a -> TypeBindings -> Map TyCon ExprHash

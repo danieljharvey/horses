@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Backend
-  ( outputJavascript,
+  ( outputStoreExpression,
     copyLocalOutput,
     Backend (..),
   )
@@ -11,7 +11,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Foldable (traverse_)
 import Data.Set (Set)
-import Language.Mimsa.Backend.Javascript
+import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
@@ -19,8 +19,6 @@ import Language.Mimsa.Monad
 import Language.Mimsa.Store.Storage (tryCopy)
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
-
-------
 
 -- given output type and list of expressions, copy everything to local
 -- folder for output in repl

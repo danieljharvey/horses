@@ -107,7 +107,7 @@ transpileModule be se = do
     liftEither $
       first
         toBackendError
-        (outputJavascript (prjStore project) be dataTypes monoType se)
+        (outputStoreExpression be (prjStore project) dataTypes monoType se)
   let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendWriteFile path filename jsOutput
 
