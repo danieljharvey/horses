@@ -9,6 +9,7 @@ import Data.List (intersperse)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Language.Mimsa.Backend.Javascript.Printer as JS
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
@@ -47,9 +48,9 @@ outputStoreExpression be dataTypes store mt se = do
         renderTypeImport' be
           <$> M.toList (typeBindingsByType store (storeTypeBindings se))
   let stdLib = renderStdlib' be
-  func <- renderWithFunction Typescript dataTypes (storeExpression se)
-  let typeComment = renderTypeSignature' be mt
-  let export = renderExport' be funcName
+  func <- renderExpression be dataTypes (storeExpression se)
+  let typeComment = renderTypeSignature' mt
+  let export = outputExport be funcName
   pure $
     mconcat
       ( intersperse
@@ -63,15 +64,18 @@ outputStoreExpression be dataTypes store mt se = do
           ]
       )
 
-renderWithFunction :: Backend -> ResolvedTypeDeps -> Expr Name MonoType -> BackendM MonoType Text
-renderWithFunction Typescript = renderTypescript
-renderWithFunction _ = error "not implemented"
-
-renderTypescript :: ResolvedTypeDeps -> Expr Name MonoType -> BackendM MonoType Text
-renderTypescript dataTypes expr = do
+renderExpression ::
+  Backend ->
+  ResolvedTypeDeps ->
+  Expr Name MonoType ->
+  BackendM MonoType Text
+renderExpression be dataTypes expr = do
   let readerState = TS.TSReaderState (makeTypeDepMap dataTypes)
    in case TS.fromExpr readerState expr of
-        Right ts -> pure (TS.printModule ts)
+        Right ts -> case be of
+          Typescript -> pure (TS.printModule ts)
+          CommonJS -> pure (JS.printModule ts)
+          _ -> error "no esm"
         Left e -> throwError e
 
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TyCon
@@ -85,6 +89,12 @@ renderImport' Typescript (name, hash') =
     <> " } from \"./"
     <> moduleFilename Typescript hash'
     <> "\";\n"
+renderImport' CommonJS (name, hash') =
+  "const "
+    <> coerce name
+    <> " = require(\"./"
+    <> moduleFilename CommonJS hash'
+    <> "\").main;\n"
 renderImport' _ _ = error "no renderimport for js"
 
 renderTypeImport' :: Backend -> (TyCon, ExprHash) -> Text
@@ -94,20 +104,18 @@ renderTypeImport' Typescript (typeName, hash') =
     <> " from \"./"
     <> moduleFilename Typescript hash'
     <> "\";\n"
-renderTypeImport' _ _ = error "no rendertypeimport for js"
+renderTypeImport' _ _ = mempty
 
 renderStdlib' :: Backend -> Text
 renderStdlib' Typescript = ""
+renderStdlib' CommonJS =
+  let filename = stdLibFilename CommonJS
+   in "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
 renderStdlib' _ = error "no stdlib for js"
 
-renderTypeSignature' :: Backend -> MonoType -> Text
-renderTypeSignature' Typescript mt =
+renderTypeSignature' :: MonoType -> Text
+renderTypeSignature' mt =
   "/* \n" <> prettyPrint mt <> "\n */"
-renderTypeSignature' _ _ = error "no render type signature for js"
 
 renderNewline' :: Backend -> Text
 renderNewline' _ = "\n"
-
-renderExport' :: Backend -> Name -> Text
-renderExport' Typescript _ = ""
-renderExport' _ _ = error "no render export for js"
