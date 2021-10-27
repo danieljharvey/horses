@@ -12,7 +12,7 @@ import qualified Test.Actions.BindType as BindType
 import qualified Test.Actions.Compile as Compile
 import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Actions.RemoveBinding as RemoveBinding
-import qualified Test.Backend.CommonJS as CommonJS
+import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Runtimes as Runtimes
 import qualified Test.Backend.Typescript as Typescript
@@ -84,4 +84,4 @@ main =
     SourceSpan.spec
     OutputTypes.spec
     Typescript.spec
-    CommonJS.spec
+    ESModulesJS.spec

@@ -344,7 +344,7 @@ test-suite mimsa-test
       Test.Actions.Compile
       Test.Actions.Evaluate
       Test.Actions.RemoveBinding
-      Test.Backend.CommonJS
+      Test.Backend.ESModulesJS
       Test.Backend.RunNode
       Test.Backend.Runtimes
       Test.Backend.Typescript

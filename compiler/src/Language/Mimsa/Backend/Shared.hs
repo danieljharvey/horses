@@ -13,7 +13,6 @@ module Language.Mimsa.Backend.Shared
     stdLibFilename,
     getTranspileList,
     fileExtension,
-    commonJSStandardLibrary,
     createOutputFolder,
     createModuleOutputPath,
     createStdlibOutputPath,
@@ -61,11 +60,6 @@ createIndexOutputPath be =
 createStdlibOutputPath :: Backend -> MimsaM e FilePath
 createStdlibOutputPath be =
   getStoreFolder (transpiledStdlibOutputPath be)
-
--- these are saved in a file that is included in compilation
-commonJSStandardLibrary :: Text
-commonJSStandardLibrary =
-  T.decodeUtf8 $(embedFile "static/backend/commonjs/stdlib.js")
 
 -- these are saved in a file that is included in compilation
 esModulesJSStandardLibrary :: Text

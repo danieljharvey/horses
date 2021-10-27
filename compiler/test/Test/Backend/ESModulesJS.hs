@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Backend.CommonJS
+module Test.Backend.ESModulesJS
   ( spec,
   )
 where
@@ -40,7 +40,7 @@ testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState = TSReaderState mempty
    in case fromExpr readerState expr of
-        Right cjsModule -> (cjsModule, JS.printModule cjsModule)
+        Right ejsModule -> (ejsModule, JS.printModule ejsModule)
         Left e -> error (T.unpack (prettyPrint e))
 
 testFromInputText :: Text -> Either Text Text
@@ -55,14 +55,14 @@ testFromInputText input =
       let readerState = TSReaderState mempty
       first prettyPrint (JS.printModule <$> fromExpr readerState exprName)
 
--- test that we have a valid CommonJS module by saving it and running it
-testCommonJSInNode :: Text -> IO String
-testCommonJSInNode ts = do
+-- test that we have a valid ESModulesJS module by saving it and running it
+testESModulesJSInNode :: Text -> IO String
+testESModulesJSInNode ts = do
   -- write file
-  tsPath <- createOutputFolder "CommonJS"
+  tsPath <- createOutputFolder "ESModulesJS"
   let tsFilename = tsPath <> show (hash ts) <> ".js"
   -- cache output
-  cachePath <- createOutputFolder "CommonJS-result"
+  cachePath <- createOutputFolder "ESModulesJS-result"
   let cacheFilename = cachePath <> show (hash ts) <> ".json"
   -- create output
   let tsOutput = ts <> "\nconsole.log(main)"
@@ -70,9 +70,9 @@ testCommonJSInNode ts = do
   (ec, err) <- withCache cacheFilename (runScriptFromFile tsFilename)
   if ec then pure err else fail err
 
--- test that we have a valid CommonJS module by saving it and running it
-testCommonJSFileInNode :: FilePath -> IO String
-testCommonJSFileInNode tsFilename = do
+-- test that we have a valid ESModulesJS module by saving it and running it
+testESModulesJSFileInNode :: FilePath -> IO String
+testESModulesJSFileInNode tsFilename = do
   -- create output
   (ec, err) <- runScriptFromFile tsFilename
   if ec then pure err else fail err
@@ -84,7 +84,7 @@ testIt (expr, expectedTS, expectedValue) =
       Left e -> fail (T.unpack e)
       Right ts -> do
         ts `shouldBe` expectedTS
-        val <- testCommonJSInNode ts
+        val <- testESModulesJSInNode ts
         val `shouldBe` expectedValue
 
 fullTestIt :: (Text, String) -> Spec
@@ -96,10 +96,10 @@ fullTestIt (input, expectedValue) =
     cachePath <- createOutputFolder "CompileJSProject-result"
     let cacheFilename = cachePath <> show contentHash <> ".json"
 
-    result <- withCache cacheFilename (testCommonJSFileInNode filename)
+    result <- withCache cacheFilename (testESModulesJSFileInNode filename)
     result `shouldBe` expectedValue
 
--- | input, output cjs, nodeJS output
+-- | input, output ejs, nodeJS output
 testCases :: [(Text, Text, String)]
 testCases =
   [ ("True", "const main = true", "true"),
@@ -248,7 +248,7 @@ fullTestCases =
 
 spec :: Spec
 spec = do
-  xdescribe "CommonJS" $ do
+  describe "ESModulesJS" $ do
     describe "pretty print AST" $ do
       it "literals" $ do
         JS.printLiteral (TSBool True) `shouldBe` "true"
