@@ -31,8 +31,7 @@ doOutputJS ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doOutputJS project input be expr = do
-  let runtime = case fromMaybe CommonJS be of
-        CommonJS -> cjsExportRuntime
+  let runtime = case fromMaybe ESModulesJS be of
         ESModulesJS -> ejsExportRuntime
         Typescript -> tsExportRuntime
   resolvedExpr <-

@@ -82,8 +82,7 @@ versionsParser = do
 
 backendParser :: Parser (Maybe Backend)
 backendParser =
-  thenSpace (string "commonjs") $> Just CommonJS
-    <|> thenSpace (string "es-modules") $> Just ESModulesJS
+  thenSpace (string "es-modules") $> Just ESModulesJS
     <|> thenSpace (string "typescript") $> Just Typescript
     <|> pure Nothing
 

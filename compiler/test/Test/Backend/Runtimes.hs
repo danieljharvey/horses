@@ -5,7 +5,7 @@ module Test.Backend.Runtimes
   )
 where
 
-import Data.Either (isLeft, isRight)
+import Data.Either
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Types.Identifiers ()
 import Language.Mimsa.Types.Typechecker
@@ -16,13 +16,15 @@ spec = do
   describe "Runtimes" $ do
     it "String is allowed by console runtime" $ do
       let mt = MTPrim mempty MTString
-      let result = runtimeIsValid cjsConsoleRuntime mt
+      let result = runtimeIsValid ejsConsoleRuntime mt
       result `shouldSatisfy` isRight
-    it "Int is not allowed by repl runtime" $ do
-      let mt = MTPrim mempty MTInt
-      let result = runtimeIsValid replRuntime mt
-      result `shouldSatisfy` isLeft
+    {-
+        it "Int is not allowed by repl runtime" $ do
+          let mt = MTPrim mempty MTInt
+          let result = runtimeIsValid replRuntime mt
+          result `shouldSatisfy` isLeft
+    -}
     it "Int is allowed by module export runtime" $ do
       let mt = MTPrim mempty MTInt
-      let result = runtimeIsValid cjsExportRuntime mt
+      let result = runtimeIsValid ejsExportRuntime mt
       result `shouldSatisfy` isRight

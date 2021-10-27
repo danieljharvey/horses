@@ -15,7 +15,7 @@ import Language.Mimsa.Types.Typechecker
 
 type BackendM ann = Either (BackendError ann)
 
-data Backend = CommonJS | ESModulesJS | Typescript
+data Backend = ESModulesJS | Typescript
   deriving stock (Eq, Ord, Show)
 
 data Renderer ann a = Renderer

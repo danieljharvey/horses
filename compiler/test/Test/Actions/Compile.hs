@@ -10,17 +10,30 @@ import Data.Either (isLeft, isRight)
 import Data.List (nub)
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Runtimes
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
+
+testRuntime :: Runtime Text
+testRuntime =
+  Runtime
+    { rtName = RuntimeName "Test",
+      rtDescription = "Just for lols",
+      rtMonoType = MTPrim mempty MTBool,
+      rtBackend = ESModulesJS,
+      rtCode = ""
+    }
 
 spec :: Spec
 spec = do
@@ -30,7 +43,7 @@ spec = do
           expr = MyLiteral mempty (MyInt 1)
       let action = do
             (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile replRuntime "1" storeExpr
+            Actions.compile testRuntime "1" storeExpr
       let result = Actions.run testStdlib action
       result `shouldSatisfy` isLeft
 

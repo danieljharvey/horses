@@ -7,7 +7,6 @@ module Language.Mimsa.Backend.Shared
     transpiledStdlibOutputPath,
     symlinkedOutputPath,
     zipFileOutputPath,
-    outputExport,
     outputStdlib,
     indexOutputFilename,
     moduleFilename,
@@ -34,7 +33,6 @@ import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreFolder)
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import System.Directory
 
@@ -75,38 +73,30 @@ esModulesJSStandardLibrary =
   T.decodeUtf8 $(embedFile "static/backend/es-modules-js/stdlib.mjs")
 
 stdLibFilename :: Backend -> Text
-stdLibFilename CommonJS = "cjs-stdlib.js"
 stdLibFilename ESModulesJS = "ejs-stdlib.mjs"
 stdLibFilename Typescript = "ts-stdlib.ts"
 
 indexOutputFilename :: Backend -> ExprHash -> Text
-indexOutputFilename CommonJS exprHash =
-  "index-" <> prettyPrint exprHash <> ".js"
 indexOutputFilename ESModulesJS exprHash =
   "index-" <> prettyPrint exprHash <> ".mjs"
 indexOutputFilename Typescript exprHash =
   "index-" <> prettyPrint exprHash <> ".ts"
 
 symlinkedOutputPath :: Backend -> FilePath
-symlinkedOutputPath CommonJS =
-  "./output/cjs"
 symlinkedOutputPath ESModulesJS =
   "./output/ejs"
 symlinkedOutputPath Typescript =
   "./output/ts"
 
 transpiledModuleOutputPath :: Backend -> FilePath
-transpiledModuleOutputPath CommonJS = "transpiled/module/common-js"
 transpiledModuleOutputPath ESModulesJS = "transpiled/module/es-modules-js"
 transpiledModuleOutputPath Typescript = "transpiled/module/typescript"
 
 transpiledIndexOutputPath :: Backend -> FilePath
-transpiledIndexOutputPath CommonJS = "transpiled/index/common-js"
 transpiledIndexOutputPath ESModulesJS = "transpiled/index/es-modules-js"
 transpiledIndexOutputPath Typescript = "transpiled/index/typescript"
 
 transpiledStdlibOutputPath :: Backend -> FilePath
-transpiledStdlibOutputPath CommonJS = "transpiled/stdlib/common-js"
 transpiledStdlibOutputPath ESModulesJS = "transpiled/stdlib/es-modules-js"
 transpiledStdlibOutputPath Typescript = "transpiled/stdlib/typescript"
 
@@ -118,28 +108,15 @@ fileExtension Typescript = ".ts"
 fileExtension _ = ""
 
 moduleFilename :: Backend -> ExprHash -> Text
-moduleFilename CommonJS hash' =
-  "cjs-" <> prettyPrint hash' <> ".js"
 moduleFilename ESModulesJS hash' =
   "ejs-" <> prettyPrint hash' <> ".mjs"
 moduleFilename Typescript hash' =
   "ts-" <> prettyPrint hash'
 
 outputStdlib :: Backend -> Text
-outputStdlib CommonJS =
-  coerce commonJSStandardLibrary
 outputStdlib ESModulesJS =
   coerce esModulesJSStandardLibrary
 outputStdlib Typescript = mempty
-
-outputExport :: Backend -> Name -> Text
-outputExport CommonJS name =
-  "module.exports = { " <> coerce name
-    <> ": "
-    <> coerce name
-    <> " }"
-outputExport ESModulesJS _ = mempty -- we export each one value directly
-outputExport Typescript _ = mempty -- we export each one value directly
 
 -- recursively get all the StoreExpressions we need to output
 getTranspileList ::

@@ -40,7 +40,6 @@ outputStoreExpression ::
   StoreExpression MonoType ->
   BackendM MonoType Text
 outputStoreExpression be dataTypes store mt se = do
-  let funcName = "main"
   let deps =
         renderImport' be
           <$> M.toList (getBindings $ storeBindings se)
@@ -50,7 +49,6 @@ outputStoreExpression be dataTypes store mt se = do
   let stdLib = renderStdlib' be
   func <- renderExpression be dataTypes (storeExpression se)
   let typeComment = renderTypeSignature' mt
-  let export = outputExport be funcName
   pure $
     mconcat
       ( intersperse
@@ -59,8 +57,7 @@ outputStoreExpression be dataTypes store mt se = do
             mconcat typeDeps,
             stdLib,
             typeComment,
-            func,
-            export
+            func
           ]
       )
 
@@ -74,8 +71,7 @@ renderExpression be dataTypes expr = do
    in case TS.fromExpr readerState expr of
         Right ts -> case be of
           Typescript -> pure (TS.printModule ts)
-          CommonJS -> pure (JS.printModule ts)
-          _ -> error "no esm"
+          ESModulesJS -> pure (JS.printModule ts)
         Left e -> throwError e
 
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TyCon
@@ -89,12 +85,6 @@ renderImport' Typescript (name, hash') =
     <> " } from \"./"
     <> moduleFilename Typescript hash'
     <> "\";\n"
-renderImport' CommonJS (name, hash') =
-  "const "
-    <> coerce name
-    <> " = require(\"./"
-    <> moduleFilename CommonJS hash'
-    <> "\").main;\n"
 renderImport' _ _ = error "no renderimport for js"
 
 renderTypeImport' :: Backend -> (TyCon, ExprHash) -> Text
@@ -108,9 +98,6 @@ renderTypeImport' _ _ = mempty
 
 renderStdlib' :: Backend -> Text
 renderStdlib' Typescript = ""
-renderStdlib' CommonJS =
-  let filename = stdLibFilename CommonJS
-   in "const { __eq, __concat, __patternMatch } = require(\"./" <> filename <> "\");\n"
 renderStdlib' _ = error "no stdlib for js"
 
 renderTypeSignature' :: MonoType -> Text
