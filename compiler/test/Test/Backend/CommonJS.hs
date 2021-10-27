@@ -92,8 +92,8 @@ fullTestIt (input, expectedValue) =
   it (T.unpack input) $ do
     let unsafeParse = ($> mempty) . unsafeParseExpr
         expr = unsafeParse input
-    (filename, contentHash) <- testProjectCompile cjsConsoleRuntime expr
-    cachePath <- createOutputFolder "CompileProject-result"
+    (filename, contentHash) <- testProjectCompile "CompileJSProject" cjsConsoleRuntime expr
+    cachePath <- createOutputFolder "CompileJSProject-result"
     let cacheFilename = cachePath <> show contentHash <> ".json"
 
     result <- withCache cacheFilename (testCommonJSFileInNode filename)

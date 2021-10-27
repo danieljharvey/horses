@@ -92,8 +92,8 @@ fullTestIt (input, expectedValue) =
   it (T.unpack input) $ do
     let unsafeParse = ($> mempty) . unsafeParseExpr
         expr = unsafeParse input
-    (filename, contentHash) <- testProjectCompile tsConsoleRuntime expr
-    cachePath <- createOutputFolder "CompileProject-result"
+    (filename, contentHash) <- testProjectCompile "CompileProjectTS" tsConsoleRuntime expr
+    cachePath <- createOutputFolder "CompileProjectTS-result"
     let cacheFilename = cachePath <> show contentHash <> ".json"
 
     result <- withCache cacheFilename (testTypescriptFileInNode filename)
@@ -163,9 +163,9 @@ fullTestCases =
     ("False", "false"),
     ("123", "123"),
     ("\"Poo\"", "Poo"),
-    ("id", "[Function (anonymous)]"),
+    ("id", "[Function: main]"),
     ( "\\a -> a",
-      "[Function (anonymous)]"
+      "[Function: main]"
     ),
     ( "id 1",
       "1"
@@ -186,12 +186,12 @@ fullTestCases =
       "1"
     ),
     ( "\\a -> let b = 123 in a",
-      "[Function (anonymous)]"
+      "[Function: main]"
     ),
     ("(1,2)", "[ 1, 2 ]"),
     ("aRecord.a", "1"),
     ( "Just",
-      "[Function (anonymous)]"
+      "[Function: Just]"
     ),
     ( "Just 1",
       "{ type: 'Just', vars: [ 1 ] }"
@@ -200,7 +200,7 @@ fullTestCases =
       "{ type: 'Nothing', vars: [] }"
     ),
     ( "These",
-      "[Function (anonymous)]"
+      "[Function: These]"
     ),
     ("True == True", "true"),
     ("2 + 2", "4"),

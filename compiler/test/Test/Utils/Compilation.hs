@@ -26,10 +26,11 @@ import Test.Utils.Serialisation
 
 -- | compile a project into a temp folder and return the main filename
 testProjectCompile ::
+  String ->
   Runtime Text ->
   Expr Name Annotation ->
   IO (FilePath, Int)
-testProjectCompile rt expr = do
+testProjectCompile folderPrefix rt expr = do
   let action = do
         (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
         let seHash = getStoreExpressionHash storeExpr
@@ -37,7 +38,7 @@ testProjectCompile rt expr = do
         pure seHash
   let (_newProject_, outcomes, seHash) =
         fromRight (Actions.run testStdlib action)
-  let folderName = "CompileProject/compile-test-" <> show seHash
+  let folderName = folderPrefix <> "/compile-test-" <> show seHash
 
   -- clean up old rubbish
   deleteOutputFolder folderName
