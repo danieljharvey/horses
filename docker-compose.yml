@@ -27,33 +27,5 @@ services:
     volumes:
       - ./store_data:/mimsadata
 
-  runner:
-    container_name: mimsa-runner
-    build: ./runner/.
-    image: danieljamesharvey/mimsa-runner:local
-    ports:
-      - "8777:8777"
-    restart: always
-    volumes:
-      - ./file_volume:/file_volume
-    environment:
-      VOLUME_PATH: /file_volume
-      PORT: 8777
-
-  router:
-    container_name: mimsa-router
-    build: ./router/.
-    image: danieljamesharvey/mimsa-router:local
-    ports:
-      - "8666:8666"
-    restart: always
-    volumes:
-      - ./file_volume:/file_volume
-    environment:
-      VOLUME_PATH: /file_volume
-      PORT: 8666
-      MIMSA_BASE_URL: mimsa-api 
-      MIMSA_PORT: 8999
-
 volumes:
   mimsadata:
