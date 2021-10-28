@@ -28,12 +28,10 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi
 import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
@@ -47,11 +45,6 @@ import Language.Mimsa.Types.Typechecker
 replCode :: LBS.ByteString
 replCode =
   LBS.fromStrict $(embedFile "static/runtimes/commonjs/repl.js")
-
--- these are saved in a file that is included in compilation
-taskServerCode :: LBS.ByteString
-taskServerCode =
-  LBS.fromStrict $(embedFile "static/runtimes/commonjs/task-server.js")
 
 newtype RuntimeName
   = RuntimeName Text
@@ -145,22 +138,6 @@ replRuntime =
       rtCode = Javascript replCode
     }
 
-fromRight :: (Printer e) => Either e a -> a
-fromRight either' = case either' of
-  Left e -> error (T.unpack $ prettyPrint e)
-  Right a -> a
-
-taskServerRuntime :: Runtime Javascript
-taskServerRuntime =
-  Runtime
-    { rtName = RuntimeName "task-server",
-      rtDescription = "Runs an asynchronous Task Server",
-      rtMonoType =
-        fromRight (parseAndFormat monoTypeParser "String -> Task r { data: String, status: Int }"),
-      rtBackend = CommonJS,
-      rtCode = Javascript taskServerCode
-    }
-
 runtimeIsValid :: Runtime a -> MonoType -> Either TypeError ()
 runtimeIsValid runtime mt =
   runSolveM
@@ -183,8 +160,7 @@ runtimes =
         ejsConsoleRuntime,
         cjsExportRuntime,
         ejsExportRuntime,
-        replRuntime,
-        taskServerRuntime
+        replRuntime
       ]
 
 getValidRuntimes :: MonoType -> Map RuntimeName (Runtime Javascript)
