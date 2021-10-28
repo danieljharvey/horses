@@ -106,10 +106,6 @@ testCases =
     ("False", "export const main = false", "false"),
     ("123", "export const main = 123", "123"),
     ("\"Poo\"", "export const main = \"Poo\"", "Poo"),
-    ( "\\a -> a",
-      "export const main = <A>(a: A) => a",
-      "[Function (anonymous)]"
-    ),
     ( "if True then 1 else 2",
       "export const main = true ? 1 : 2",
       "1"
@@ -125,10 +121,6 @@ testCases =
     ( "{ a: 123, b: \"horse\" }",
       "export const main = { a: 123, b: \"horse\" }",
       "{ a: 123, b: 'horse' }"
-    ),
-    ( "\\a -> let b = 123 in a",
-      "export const main = <A>(a: A) => { const b = 123; return a; }",
-      "[Function (anonymous)]"
     ),
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
     ("True == True", "export const main = true === true", "true"),
