@@ -20,7 +20,7 @@ import Language.Mimsa.Printer
 printDataType :: TSDataType -> Text
 printDataType dt =
   mconcat $
-    printStatement
+    (<>) "export " . printStatement
       <$> createConstructorFunctions dt
 
 printLiteral :: TSLiteral -> Text
@@ -122,5 +122,5 @@ printModule :: TSModule -> Text
 printModule (TSModule dataTypes (TSBody assignments export)) =
   T.intercalate "\n" (printDataType <$> dataTypes)
     <> T.intercalate "\n" (printStatement <$> assignments)
-    <> "const main = "
+    <> "export const main = "
     <> printExpr export

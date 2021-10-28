@@ -6,6 +6,7 @@ module Language.Mimsa.Backend.Shared
     transpiledIndexOutputPath,
     transpiledStdlibOutputPath,
     symlinkedOutputPath,
+    esModulesJSStandardLibrary,
     zipFileOutputPath,
     outputStdlib,
     indexOutputFilename,
