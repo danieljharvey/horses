@@ -9,7 +9,6 @@ import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { ExprHash } from '../../types'
 import { Compile } from './Compile'
-import { Deploy } from './Deploy'
 
 type Props = {
   projectHash: ExprHash
@@ -87,12 +86,6 @@ export const Feedback: React.FC<Props> = ({
                   runtime={rt.rtdName}
                   title={rt.rtdName}
                 />
-                {rt.rtdName === 'task-server' && (
-                  <Deploy
-                    exprHash={result.expression.edHash}
-                    title={result.bindingName}
-                  />
-                )}
               </>
             )
           )}
@@ -127,12 +120,6 @@ export const Feedback: React.FC<Props> = ({
                   runtime={rt.rtdName}
                   title={rt.rtdName}
                 />
-                {rt.rtdName === 'task-server' && (
-                  <Deploy
-                    exprHash={result.expression.edHash}
-                    title={'task-server'}
-                  />
-                )}
               </FlexColumnSpaced>
             )
           )}
