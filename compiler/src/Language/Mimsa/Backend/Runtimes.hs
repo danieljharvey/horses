@@ -1,7 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Language.Mimsa.Backend.Runtimes
   ( Runtime (..),
