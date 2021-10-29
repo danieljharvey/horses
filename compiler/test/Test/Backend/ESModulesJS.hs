@@ -60,7 +60,7 @@ testESModulesJSInNode :: Text -> IO String
 testESModulesJSInNode ts = do
   -- write file
   tsPath <- createOutputFolder "ESModulesJS"
-  let tsFilename = tsPath <> show (hash ts) <> ".js"
+  let tsFilename = tsPath <> show (hash ts) <> ".mjs"
   -- cache output
   cachePath <- createOutputFolder "ESModulesJS-result"
   let cacheFilename = cachePath <> show (hash ts) <> ".json"
@@ -102,56 +102,56 @@ fullTestIt (input, expectedValue) =
 -- | input, output ejs, nodeJS output
 testCases :: [(Text, Text, String)]
 testCases =
-  [ ("True", "const main = true", "true"),
-    ("False", "const main = false", "false"),
-    ("123", "const main = 123", "123"),
-    ("\"Poo\"", "const main = \"Poo\"", "Poo"),
+  [ ("True", "export const main = true", "true"),
+    ("False", "export const main = false", "false"),
+    ("123", "export const main = 123", "123"),
+    ("\"Poo\"", "export const main = \"Poo\"", "Poo"),
     ( "\\a -> a",
-      "const main = (a) => a",
+      "export const main = (a) => a",
       "[Function: main]"
     ),
     ( "if True then 1 else 2",
-      "const main = true ? 1 : 2",
+      "export const main = true ? 1 : 2",
       "1"
     ),
     ( "let a = \"dog\" in 123",
-      "const a = \"dog\"; const main = 123",
+      "const a = \"dog\"; export const main = 123",
       "123"
     ),
     ( "let a = \"dog\" in let b = \"horse\" in 123",
-      "const a = \"dog\"; \nconst b = \"horse\"; const main = 123",
+      "const a = \"dog\"; \nconst b = \"horse\"; export const main = 123",
       "123"
     ),
     ( "{ a: 123, b: \"horse\" }",
-      "const main = { a: 123, b: \"horse\" }",
+      "export const main = { a: 123, b: \"horse\" }",
       "{ a: 123, b: 'horse' }"
     ),
     ( "\\a -> let b = 123 in a",
-      "const main = (a) => { const b = 123; return a; }",
+      "export const main = (a) => { const b = 123; return a; }",
       "[Function: main]"
     ),
-    ("(1,2)", "const main = [1,2]", "[ 1, 2 ]"),
-    ("True == True", "const main = true === true", "true"),
-    ("2 + 2", "const main = 2 + 2", "4"),
-    ("10 - 2", "const main = 10 - 2", "8"),
+    ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
+    ("True == True", "export const main = true === true", "true"),
+    ("2 + 2", "export const main = 2 + 2", "4"),
+    ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",
-      "const main = \"dog\" + \"log\"",
+      "export const main = \"dog\" + \"log\"",
       "doglog"
     ),
     ( "{ fn: (\\a -> let d = 1 in a) }",
-      "const main = { fn: (a) => { const d = 1; return a; } }",
+      "export const main = { fn: (a) => { const d = 1; return a; } }",
       "{ fn: [Function: fn] }"
     ),
     ( "[1,2] <> [3,4]",
-      "const main = [...[1,2],...[3,4]]",
+      "export const main = [...[1,2],...[3,4]]",
       "[ 1, 2, 3, 4 ]"
     ),
     ( "let (a, b) = (1,2) in a",
-      "const [a,b] = [1,2]; const main = a",
+      "const [a,b] = [1,2]; export const main = a",
       "1"
     ),
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
-      "const { cat: b, dog: a } = { cat: 2, dog: 1 }; const main = [a,b]",
+      "const { cat: b, dog: a } = { cat: 2, dog: 1 }; export const main = [a,b]",
       "[ 1, 2 ]"
     )
   ]
@@ -191,7 +191,7 @@ fullTestCases =
     ("(1,2)", "[ 1, 2 ]"),
     ("aRecord.a", "1"),
     ( "Just",
-      "[Function (anonymous)]"
+      "[Function: Just]"
     ),
     ( "Just 1",
       "{ type: 'Just', vars: [ 1 ] }"
@@ -200,7 +200,7 @@ fullTestCases =
       "{ type: 'Nothing', vars: [] }"
     ),
     ( "These",
-      "[Function (anonymous)]"
+      "[Function: These]"
     ),
     ("True == True", "true"),
     ("2 + 2", "4"),
@@ -386,7 +386,7 @@ spec = do
 
       it "top level module" $ do
         JS.printModule (TSModule mempty (TSBody mempty (TSLit (TSBool True))))
-          `shouldBe` "const main = true"
+          `shouldBe` "export const main = true"
         JS.printModule
           ( TSModule
               mempty
@@ -399,7 +399,7 @@ spec = do
                   (TSVar "a")
               )
           )
-          `shouldBe` "const a = true; const main = a"
+          `shouldBe` "const a = true; export const main = a"
     describe "from typed expression" $ do
       let mtBool = MTPrim mempty MTBool
           mtString = MTPrim mempty MTString
@@ -408,7 +408,7 @@ spec = do
       it "const bool" $
         testFromExpr (MyLiteral mtBool (MyBool True))
           `shouldBe` ( TSModule mempty (TSBody [] (TSLit (TSBool True))),
-                       "const main = true"
+                       "export const main = true"
                      )
 
       it "let a = true in a" $
@@ -422,7 +422,7 @@ spec = do
                   (MyVar mtBool "a")
               )
           )
-          `shouldBe` "const a = true; const main = a"
+          `shouldBe` "const a = true; export const main = a"
 
       it "let (a,_) = (true,false) in a" $ do
         snd
@@ -438,14 +438,14 @@ spec = do
                   (MyVar mtBool "a")
               )
           )
-          `shouldBe` "const [a,_] = [true,false]; const main = a"
+          `shouldBe` "const [a,_] = [true,false]; export const main = a"
 
       it "function with known type" $ do
         snd
           ( testFromExpr
               (MyLambda (MTFunction mempty mtString mtString) "str" (MyVar mtString "str"))
           )
-          `shouldBe` "const main = (str) => str"
+          `shouldBe` "export const main = (str) => str"
       it "function with generic type used multiple times" $ do
         snd
           ( testFromExpr
@@ -459,7 +459,7 @@ spec = do
                   )
               )
           )
-          `shouldBe` "const main = (a) => (a2) => a"
+          `shouldBe` "export const main = (a) => (a2) => a"
 
       describe "Create constructor functions" $ do
         let tsMaybe =
@@ -495,11 +495,11 @@ spec = do
 
       it "simple expression" $ do
         testFromInputText "\\a -> a + 100"
-          `shouldBe` Right "const main = (a) => a + 100"
+          `shouldBe` Right "export const main = (a) => a + 100"
 
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> [as] | [] -> []"
-          `shouldBe` Right "const main = (a) => { const match = (value) => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
+          `shouldBe` Right "export const main = (a) => { const match = (value) => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
 
     describe "Entire compilation" $ do
       traverse_ fullTestIt fullTestCases
