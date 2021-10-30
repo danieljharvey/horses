@@ -129,109 +129,129 @@ fromExpr readerState expr = do
   (result, dataTypes) <- runTypescriptM readerState (toTSBody expr)
   pure (TSModule dataTypes result)
 
+toLet :: Name -> Expr Name MonoType -> Expr Name MonoType -> TypescriptM TSBody
+toLet name letExpr letBody = do
+  newLetExpr <- toTSBody letExpr
+  let newBinding =
+        TSAssignment
+          (TSVar name)
+          Nothing
+          (TSLetBody newLetExpr)
+  (TSBody bindings' newExpr) <- toTSBody letBody
+  pure (TSBody ([newBinding] <> bindings') newExpr)
+
+toLetPattern :: Pattern Name MonoType -> Expr Name MonoType -> Expr Name MonoType -> TypescriptM TSBody
+toLetPattern pat letExpr letBody = do
+  newLetExpr <- toTSBody letExpr
+  let (tsPatExpr, statements) = getDestructureExpr TSUnderscore (toPattern pat)
+  let newBinding =
+        TSAssignment
+          tsPatExpr
+          Nothing
+          (TSLetBody newLetExpr)
+  (TSBody bindings' newExpr) <- toTSBody letBody
+  pure (TSBody ([newBinding] <> bindings' <> statements) newExpr)
+
+toLambda :: MonoType -> Name -> Expr Name MonoType -> TypescriptM TSBody
+toLambda fnType bind body = do
+  (mtFn, generics') <- toTSType fnType
+  mtArg <- case mtFn of
+    (TSTypeFun _ a _) -> pure a
+    e -> throwError (ExpectedFunctionType e)
+  -- get diff between generics we've not used yet
+  newGenerics <- unusedGenerics generics'
+  -- continue....
+  tsBody <- toTSBody body
+  pure $
+    TSBody
+      []
+      ( TSFunction
+          bind
+          newGenerics
+          mtArg
+          Nothing
+          ( TSFunctionBody tsBody
+          )
+      )
+
+toPatternStatement ::
+  (Pattern Name MonoType, Expr Name MonoType) ->
+  TypescriptM TSStatement
+toPatternStatement (pat, patExpr) = do
+  let (tsExpr, statements) =
+        getDestructureExpr (TSVar "value") (toPattern pat)
+  (TSBody parts tsPatExpr) <- toTSBody patExpr
+  let items =
+        if tsExpr /= TSUnderscore
+          then
+            TSAssignment
+              tsExpr
+              Nothing
+              ( TSLetBody
+                  ( TSBody [] (TSVar "value")
+                  )
+              ) :
+            parts
+          else parts
+  pure $
+    TSConditional
+      (conditions $ toPattern pat)
+      (TSLetBody (TSBody (statements <> items) tsPatExpr))
+
+toPatternMatch ::
+  Expr Name MonoType ->
+  [(Pattern Name MonoType, Expr Name MonoType)] ->
+  TypescriptM TSBody
+toPatternMatch matchExpr patterns = do
+  matches <- traverse toPatternStatement patterns
+  (TSBody tsStatements tsA) <- toTSBody matchExpr
+  (tyMatchExpr, matchGenerics) <- toTSType (getAnnotation matchExpr)
+  newGenerics <- unusedGenerics matchGenerics
+  let assignment =
+        TSAssignment
+          (TSVar "match")
+          Nothing
+          ( TSLetBody
+              ( TSBody
+                  []
+                  ( TSFunction
+                      "value"
+                      newGenerics
+                      tyMatchExpr
+                      Nothing
+                      ( TSFunctionBody
+                          ( TSBody
+                              matches
+                              (TSError "Pattern match error")
+                          )
+                      )
+                  )
+              )
+          )
+
+  pure $
+    TSBody
+      (tsStatements <> [assignment])
+      (TSApp (TSVar "match") tsA)
+
 toTSBody :: Expr Name MonoType -> TypescriptM TSBody
 toTSBody expr' =
   case expr' of
     (MyLiteral _ lit) ->
       pure $ TSBody mempty (TSLit (toLiteral lit))
-    (MyLet _ name letExpr letBody) -> do
-      newLetExpr <- toTSBody letExpr
-      let newBinding =
-            TSAssignment
-              (TSVar name)
-              Nothing
-              (TSLetBody newLetExpr)
-      (TSBody bindings' newExpr) <- toTSBody letBody
-      pure (TSBody ([newBinding] <> bindings') newExpr)
-    (MyLetPattern _ pat letExpr letBody) -> do
-      newLetExpr <- toTSBody letExpr
-      let (tsPatExpr, statements) = getDestructureExpr TSUnderscore (toPattern pat)
-      let newBinding =
-            TSAssignment
-              tsPatExpr
-              Nothing
-              (TSLetBody newLetExpr)
-      (TSBody bindings' newExpr) <- toTSBody letBody
-      pure (TSBody ([newBinding] <> bindings' <> statements) newExpr)
+    (MyLet _ name letExpr letBody) ->
+      toLet name letExpr letBody
+    (MyLetPattern _ pat letExpr letBody) ->
+      toLetPattern pat letExpr letBody
     (MyPair _ a b) -> do
       tsA <- toTSExpr a
       tsB <- toTSExpr b
       pure (TSBody mempty (TSArray [TSArrayItem tsA, TSArrayItem tsB]))
     (MyVar _ a) -> pure (TSBody mempty (TSVar a))
-    (MyLambda fnType bind body) -> do
-      (mtFn, generics') <- toTSType fnType
-      mtArg <- case mtFn of
-        (TSTypeFun _ a _) -> pure a
-        e -> throwError (ExpectedFunctionType e)
-      -- get diff between generics we've not used yet
-      newGenerics <- unusedGenerics generics'
-      -- continue....
-      tsBody <- toTSBody body
-      pure $
-        TSBody
-          []
-          ( TSFunction
-              bind
-              newGenerics
-              mtArg
-              Nothing
-              ( TSFunctionBody tsBody
-              )
-          )
-    (MyPatternMatch _mtPatternMatch matchExpr patterns) -> do
-      matches <-
-        traverse
-          ( \(pat, patExpr) -> do
-              let (tsExpr, statements) =
-                    getDestructureExpr (TSVar "value") (toPattern pat)
-              (TSBody parts tsPatExpr) <- toTSBody patExpr
-              let items =
-                    if tsExpr /= TSUnderscore
-                      then
-                        TSAssignment
-                          tsExpr
-                          Nothing
-                          ( TSLetBody
-                              ( TSBody [] (TSVar "value")
-                              )
-                          ) :
-                        parts
-                      else parts
-              pure $
-                TSConditional
-                  (conditions $ toPattern pat)
-                  (TSLetBody (TSBody (statements <> items) tsPatExpr))
-          )
-          patterns
-      (TSBody tsStatements tsA) <- toTSBody matchExpr
-      (tyMatchExpr, matchGenerics) <- toTSType (getAnnotation matchExpr)
-      newGenerics <- unusedGenerics matchGenerics
-      pure $
-        TSBody
-          ( tsStatements
-              <> [ TSAssignment
-                     (TSVar "match")
-                     Nothing
-                     ( TSLetBody
-                         ( TSBody
-                             []
-                             ( TSFunction
-                                 "value"
-                                 newGenerics
-                                 tyMatchExpr
-                                 Nothing
-                                 ( TSFunctionBody
-                                     ( TSBody
-                                         matches
-                                         (TSError "Pattern match error")
-                                     )
-                                 )
-                             )
-                         )
-                     )
-                 ]
-          )
-          (TSApp (TSVar "match") tsA)
+    (MyLambda fnType bind body) ->
+      toLambda fnType bind body
+    (MyPatternMatch _mtPatternMatch matchExpr patterns) ->
+      toPatternMatch matchExpr patterns
     (MyApp _mtApp func val) -> do
       (TSBody as tsFunc) <- toTSBody func
       (TSBody bs tsVal) <- toTSBody val
@@ -265,4 +285,5 @@ toTSBody expr' =
     (MyArray _ as) -> do
       tsAs <- (fmap . fmap) TSArrayItem (traverse toTSExpr as)
       pure $ TSBody [] (TSArray tsAs)
-    e -> error (show e)
+    (MyTypedHole _ name) -> throwError (OutputingTypedHole name)
+    MyDefineInfix {} -> error "Define Infix not created yet"
