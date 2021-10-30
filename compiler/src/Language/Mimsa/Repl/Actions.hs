@@ -71,7 +71,7 @@ doHelp = do
   replOutput @Text ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
   replOutput @Text ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
   replOutput @Text ":list - show a list of current bindings in the environment"
-  replOutput @Text ":outputJS <commonjs|es-modules> <expr> - show JS code for <expr>"
+  replOutput @Text ":outputJS <javascript|typescript> <expr> - save JS code for <expr>"
   replOutput @Text ":tree <expr> - draw a dependency tree for <expr>"
   replOutput @Text ":graph <expr> - output graphviz dependency tree for <expr>"
   replOutput @Text ":search <mt> - search for exprs that match type"

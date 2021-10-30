@@ -1,33 +1,25 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Language.Mimsa.Backend.Shared
   ( transpiledModuleOutputPath,
     transpiledIndexOutputPath,
     transpiledStdlibOutputPath,
     symlinkedOutputPath,
-    esModulesJSStandardLibrary,
     zipFileOutputPath,
-    outputStdlib,
     indexOutputFilename,
     moduleFilename,
-    stdLibFilename,
     getTranspileList,
     fileExtension,
     createOutputFolder,
     createModuleOutputPath,
-    createStdlibOutputPath,
     createIndexOutputPath,
   )
 where
 
 import Control.Monad.IO.Class
-import Data.Coerce
-import Data.FileEmbed
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
@@ -55,21 +47,6 @@ createModuleOutputPath be =
 createIndexOutputPath :: Backend -> MimsaM e FilePath
 createIndexOutputPath be =
   getStoreFolder (transpiledIndexOutputPath be)
-
--- all files are created in the store and then symlinked into output folders
--- this creates the folder in the store
-createStdlibOutputPath :: Backend -> MimsaM e FilePath
-createStdlibOutputPath be =
-  getStoreFolder (transpiledStdlibOutputPath be)
-
--- these are saved in a file that is included in compilation
-esModulesJSStandardLibrary :: Text
-esModulesJSStandardLibrary =
-  T.decodeUtf8 $(embedFile "static/backend/es-modules-js/stdlib.mjs")
-
-stdLibFilename :: Backend -> Text
-stdLibFilename ESModulesJS = "ejs-stdlib.mjs"
-stdLibFilename Typescript = "ts-stdlib.ts"
 
 indexOutputFilename :: Backend -> ExprHash -> Text
 indexOutputFilename ESModulesJS exprHash =
@@ -107,11 +84,6 @@ moduleFilename ESModulesJS hash' =
   "ejs-" <> prettyPrint hash' <> ".mjs"
 moduleFilename Typescript hash' =
   "ts-" <> prettyPrint hash'
-
-outputStdlib :: Backend -> Text
-outputStdlib ESModulesJS =
-  coerce esModulesJSStandardLibrary
-outputStdlib Typescript = mempty
 
 -- recursively get all the StoreExpressions we need to output
 getTranspileList ::

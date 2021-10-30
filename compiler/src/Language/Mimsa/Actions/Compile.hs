@@ -66,9 +66,6 @@ compile runtime input se = do
   -- create the index
   createIndex runtime (getStoreExpressionHash se)
 
-  -- create the stdlib
-  createStdlib (rtBackend runtime)
-
   -- return useful info
   let rootExprHash = getStoreExpressionHash se
 
@@ -120,12 +117,4 @@ createIndex runtime exprHash = do
       path = Actions.SavePath (T.pack $ transpiledIndexOutputPath be)
       outputContent = Actions.SaveContents (coerce $ outputIndexFile be runtime exprHash)
       filename = Actions.SaveFilename (indexFilename runtime exprHash)
-  Actions.appendWriteFile path filename outputContent
-
--- | The stdlib is a set of functions needed to stuff like pattern matching
-createStdlib :: Backend -> Actions.ActionM ()
-createStdlib be = do
-  let path = Actions.SavePath (T.pack $ transpiledStdlibOutputPath be)
-      filename = Actions.SaveFilename (stdLibFilename be)
-      outputContent = Actions.SaveContents (outputStdlib be)
   Actions.appendWriteFile path filename outputContent

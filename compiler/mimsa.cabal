@@ -38,7 +38,6 @@ library
       Language.Mimsa.Actions.Shared
       Language.Mimsa.Actions.Types
       Language.Mimsa.Backend.Backend
-      Language.Mimsa.Backend.Javascript
       Language.Mimsa.Backend.Javascript.Printer
       Language.Mimsa.Backend.Output
       Language.Mimsa.Backend.Runtimes
@@ -226,7 +225,6 @@ library
     , directory
     , envy
     , exceptions
-    , file-embed
     , hashable
     , haskeline
     , http-types
@@ -267,7 +265,6 @@ executable mimsa
     , directory
     , envy
     , exceptions
-    , file-embed
     , hashable
     , haskeline
     , http-types
@@ -309,7 +306,6 @@ executable swagger
     , directory
     , envy
     , exceptions
-    , file-embed
     , hashable
     , haskeline
     , http-types
@@ -399,7 +395,6 @@ test-suite mimsa-test
     , directory
     , envy
     , exceptions
-    , file-embed
     , hashable
     , haskeline
     , hspec

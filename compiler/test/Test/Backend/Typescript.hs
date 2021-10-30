@@ -236,6 +236,7 @@ fullTestCases =
     ( "either.fmap (\\a -> a + 1) (Right 100)",
       "{ type: 'Right', vars: [ 101 ] }"
     )
+    --    ("stringReduce", "")
   ]
 
 spec :: Spec

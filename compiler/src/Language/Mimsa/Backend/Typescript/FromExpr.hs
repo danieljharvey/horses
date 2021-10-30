@@ -200,7 +200,7 @@ toTSBody expr' =
               pure $
                 TSConditional
                   (conditions $ toPattern pat)
-                  (TSLetBody (TSBody (items <> statements) tsPatExpr))
+                  (TSLetBody (TSBody (statements <> items) tsPatExpr))
           )
           patterns
       (TSBody tsStatements tsA) <- toTSBody matchExpr

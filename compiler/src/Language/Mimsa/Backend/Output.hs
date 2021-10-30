@@ -46,7 +46,6 @@ outputStoreExpression be dataTypes store mt se = do
   let typeDeps =
         renderTypeImport' be
           <$> M.toList (typeBindingsByType store (storeTypeBindings se))
-  let stdLib = renderStdlib' be
   func <- renderExpression be dataTypes (storeExpression se)
   let typeComment = renderTypeSignature' mt
   pure $
@@ -55,7 +54,6 @@ outputStoreExpression be dataTypes store mt se = do
           (renderNewline' be)
           [ mconcat deps,
             mconcat typeDeps,
-            stdLib,
             typeComment,
             func
           ]
@@ -105,10 +103,6 @@ renderTypeImport' ESModulesJS (typeName, hash') =
     <> " from \"./"
     <> moduleFilename ESModulesJS hash'
     <> "\";\n"
-
-renderStdlib' :: Backend -> Text
-renderStdlib' Typescript = ""
-renderStdlib' ESModulesJS = "" -- esModulesJSStandardLibrary
 
 renderTypeSignature' :: MonoType -> Text
 renderTypeSignature' mt =

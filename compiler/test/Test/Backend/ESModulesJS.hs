@@ -243,6 +243,9 @@ fullTestCases =
     ("id \"hello again\"", "hello again"),
     ( "either.fmap (\\a -> a + 1) (Right 100)",
       "{ type: 'Right', vars: [ 101 ] }"
+    ),
+    ( "let fold total item = total <> [item] in stringReduce fold [] \"dog\"",
+      "[ 'd', 'o', 'g' ]"
     )
   ]
 
