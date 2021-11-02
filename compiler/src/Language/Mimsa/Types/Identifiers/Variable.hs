@@ -23,6 +23,15 @@ data Variable
 instance Printer Variable where
   prettyDoc = renderVariable
 
+printTypeNum :: Int -> String
+printTypeNum i = [toEnum (index + start)] <> suffix
+  where
+    index = (i - 1) `mod` 26
+    start = fromEnum 'a'
+    suffix =
+      let diff = (i - 1) `div` 26
+       in if diff < 1 then "" else show diff
+
 renderVariable :: Variable -> Doc ann
 renderVariable (NamedVar n) = renderName n
-renderVariable (NumberedVar i) = "U" <> pretty i
+renderVariable (NumberedVar i) = pretty (printTypeNum i)

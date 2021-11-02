@@ -10,6 +10,7 @@ module Test.Codegen.Shared
     dtMaybe,
     dtEither,
     dtPair,
+    dtMonoPair,
     dtThese,
     dtList,
     dtDoubleList,
@@ -224,6 +225,18 @@ dtPair =
         "Pair"
         [ MTVar mempty (TVName "a"),
           MTVar mempty (TVName "b")
+        ]
+    )
+
+dtMonoPair :: DataType
+dtMonoPair =
+  DataType
+    "MonoPair"
+    ["a"]
+    ( M.singleton
+        "MonoPair"
+        [ MTVar mempty (TVName "a"),
+          MTVar mempty (TVName "a")
         ]
     )
 

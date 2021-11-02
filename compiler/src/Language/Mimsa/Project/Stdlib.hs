@@ -70,7 +70,7 @@ stateFns = do
   addBinding "pureState" "\\a -> State (\\s -> (a, s))"
   addBinding "fmapState" "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas s; match as with (a, s) -> (f a, s))"
   addBinding "apState" "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs s; match fs with (f, ss) -> match stateA with (State sas) -> let as = sas ss; match as with (a, sss) -> (f a, sss))"
-  addBinding "bindState" "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas s; match as with (a, ss) -> match f a with (State sbs) -> sbs ss)"
+  addBinding "bindState" "\\f -> \\state -> State (\\s -> match state with (State sas) -> match (sas s) with (a, ss) -> match f a with (State sbs) -> sbs ss)"
   addBinding "runState" "\\state -> \\s -> match state with (State sas) -> sas s"
   addBinding "execState" "\\state -> compose snd (runState state)"
   addBinding "evalState" "\\state -> compose fst (runState state)"
@@ -87,7 +87,7 @@ stateFns = do
 
 arrayFns :: Actions.ActionM ()
 arrayFns = do
-  addBinding "arrayReduce" "let arrayReduce = \\f -> \\def -> \\as -> match as with [] -> def | [a, ...rest] -> (let val = f a def; arrayReduce f val rest); arrayReduce"
+  addBinding "arrayReduce" "let arrayReduce = \\f -> \\def -> \\as -> match as with [] -> def | [a, ...rest] -> arrayReduce f (f a def) rest; arrayReduce"
   addBinding "arrayReverse" "arrayReduce (\\all -> \\a -> [ all ] <> a) []"
   addBinding "arrayMap" "\\f -> arrayReduce (\\a -> \\all -> all <> [ f a ]) []"
   addBinding "arrayFilter" "\\pred -> arrayReduce (\\a -> \\all -> if pred a then all <> [ a ] else all) []"
@@ -99,7 +99,7 @@ arrayFns = do
 
 stringFns :: Actions.ActionM ()
 stringFns = do
-  addBinding "stringReduce" "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> (let nextVal = f def head; stringReduce f nextVal tail); stringReduce"
+  addBinding "stringReduce" "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
   addBinding "stringMap" "\\f -> stringReduce (\\total -> \\a -> total ++ f a) \"\""
   addBinding "stringFilter" "\\pred -> stringReduce (\\all -> \\a -> if pred a then all ++ a else all) \"\""
   addBinding "stringSplit" "\\char -> \\str -> array.reverse (stringReduce (\\as -> \\a -> if (a == char) then [ \"\" ] <> as else match as with [] -> [] | [current, ...rest] -> [ current ++ a ] <> rest) [\"\"] str)"
