@@ -33,9 +33,11 @@ buildStdlib =
       addType "type Either e a = Left e | Right a"
       addType "type Task r a = Task ((a -> r) -> r)"
       addType "type Unit = Unit"
+      addType "type Monoid a = Monoid (a -> a -> a) a"
       parserFns
       addBinding "pureTask" "\\a -> Task \\r -> r a"
       arrayFns
+      monoidFns
       stringFns
       stateFns
 
@@ -48,6 +50,46 @@ baseFns = do
   addBinding "or" "\\a -> \\b -> if a then True else b"
   addBinding "fst" "\\pair -> let (a,_) = pair in a"
   addBinding "snd" "\\pair -> let (_,b) = pair in b"
+
+monoidFns :: Actions.ActionM ()
+monoidFns = do
+  addBinding
+    "monoidMaybe"
+    ( mconcat
+        [ "\\innerM -> ",
+          "Monoid (\\a -> \\b -> match (a,b) with ",
+          "          (Just iA, Just iB) -> let (Monoid innerMappend innerMempty) = innerM; Just (innerMappend iA iB)",
+          "        | (Just iA, Nothing) -> (Just iA) ",
+          "        | (Nothing, Just iB) -> (Just iB) ",
+          "        | _ -> Nothing) Nothing"
+        ]
+    )
+  addBinding
+    "monoidConcat"
+    "\\monoid -> let (Monoid mappend mempty) = monoid; array.reduce (\\b -> \\a -> mappend a b) mempty"
+  addBinding
+    "monoidFoldMap"
+    "\\monoid -> \\f -> let (Monoid mappend mempty) = monoid; (array.reduce (\\a -> \\total -> mappend total (f a)) mempty)"
+  addBinding
+    "monoidAny"
+    "Monoid or False"
+  addBinding
+    "monoidAll"
+    "Monoid and True"
+  addBinding
+    "monoidFirst"
+    "Monoid (\\a -> \\b -> match ((a, b)) with (_, Just b) -> (Just b) | (a, _) -> a) (Nothing)"
+  addBinding
+    "monoidLast"
+    "Monoid (\\a -> \\b -> match ((a, b)) with (_, Just b) -> (Just b) | (a, _) -> a) (Nothing)"
+  addBinding "monoid" "{ concat: monoidConcat, foldMap: monoidFoldMap, maybe: monoidMaybe, any: monoidAny, all: monoidAll, first: monoidFirst, last: monoidLast }"
+  removeBinding "monoidConcat"
+  removeBinding "monoidFoldMap"
+  removeBinding "monoidMaybe"
+  removeBinding "monoidAll"
+  removeBinding "monoidAny"
+  removeBinding "monoidFirst"
+  removeBinding "monoidLast"
 
 parserFns :: Actions.ActionM ()
 parserFns = do
@@ -91,11 +133,13 @@ arrayFns = do
   addBinding "arrayReverse" "arrayReduce (\\all -> \\a -> [ all ] <> a) []"
   addBinding "arrayMap" "\\f -> arrayReduce (\\a -> \\all -> all <> [ f a ]) []"
   addBinding "arrayFilter" "\\pred -> arrayReduce (\\a -> \\all -> if pred a then all <> [ a ] else all) []"
-  addBinding "array" "{ reduce: arrayReduce, reverse: arrayReverse, map: arrayMap, filter: arrayFilter }"
+  addBinding "arrayMonoid" "Monoid (\\a -> \\b -> a <> b) []"
+  addBinding "array" "{ reduce: arrayReduce, reverse: arrayReverse, map: arrayMap, filter: arrayFilter, monoid: arrayMonoid }"
   removeBinding "arrayReduce"
   removeBinding "arrayReverse"
   removeBinding "arrayMap"
   removeBinding "arrayFilter"
+  removeBinding "arrayMonoid"
 
 stringFns :: Actions.ActionM ()
 stringFns = do
@@ -103,11 +147,13 @@ stringFns = do
   addBinding "stringMap" "\\f -> stringReduce (\\total -> \\a -> total ++ f a) \"\""
   addBinding "stringFilter" "\\pred -> stringReduce (\\all -> \\a -> if pred a then all ++ a else all) \"\""
   addBinding "stringSplit" "\\char -> \\str -> array.reverse (stringReduce (\\as -> \\a -> if (a == char) then [ \"\" ] <> as else match as with [] -> [] | [current, ...rest] -> [ current ++ a ] <> rest) [\"\"] str)"
-  addBinding "string" "{ reduce: stringReduce, map: stringMap, filter: stringFilter, split: stringSplit }"
+  addBinding "stringMonoid" "Monoid (\\a -> \\b -> a ++ b) \"\""
+  addBinding "string" "{ reduce: stringReduce, map: stringMap, filter: stringFilter, split: stringSplit, monoid: stringMonoid }"
   removeBinding "stringReduce"
   removeBinding "stringMap"
   removeBinding "stringFilter"
   removeBinding "stringSplit"
+  removeBinding "stringMonoid"
 
 addType :: Text -> Actions.ActionM ()
 addType t =
