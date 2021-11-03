@@ -98,7 +98,7 @@ parserFns = do
   addBinding "fmapParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> (let outcome = p str; match outcome with (Just (a, rest)) -> (Just ((f a,rest))) | _ -> (Nothing)))"
   addBinding "bindParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> match p str with (Just (a, rest)) -> (let nextParser = f a; match nextParser with (Parser b) -> b rest) | _ -> (Nothing))"
   addBinding "charParser" "Parser (\\s -> match s with ch ++ rest -> (Just ((rest, ch))) | _ -> (Nothing))"
-  addBinding "predParser" "\\pred -> \\p -> Parser (\\s -> match parser.unwrap p s with (Just (rest, a)) -> (if pred a then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
+  addBinding "predParser" "\\pred -> \\p -> Parser (\\s -> let (Parser inner) = p; match inner s with (Just (rest, a)) -> (if pred a then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
   addBinding "parser" "{ run: runParser, fmap: fmapParser, bind: bindParser, char: charParser, pred: predParser }"
   removeBinding "runParser"
   removeBinding "fmapParser"
