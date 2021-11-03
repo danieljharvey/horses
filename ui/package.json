@@ -16,7 +16,7 @@
     "@types/react": "17.0.34",
     "@types/react-dom": "16.9.9",
     "@types/react-monaco-editor": "0.16.0",
-    "@types/react-router": "5.1.8",
+    "@types/react-router": "5.1.17",
     "@types/react-router-dom": "5.1.6",
     "axios": "0.21.2",
     "fp-ts": "2.10.5",
