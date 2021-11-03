@@ -737,200 +737,226 @@ spec =
         result
           `shouldSatisfy` isLeft
 
-      describe "Native array" $ do
-        it "[1] <> [2]" $ do
-          result <- eval testStdlib "[1] <> [2]"
-          result
-            `shouldBe` Right
-              ( MTArray mempty (MTPrim mempty MTInt),
-                MyArray mempty [int 1, int 2]
-              )
-        it "[1] <> [True]" $ do
-          result <- eval testStdlib "[1] <> [True]"
-          result `shouldSatisfy` isLeft
-        it "[1] <> \"2\"" $ do
-          result <- eval testStdlib "[1] <> \"2\""
-          result
-            `shouldSatisfy` isLeft
-        it "\"1\" <> [2]" $ do
-          result <- eval testStdlib "\"1\" <> [2]"
-          result
-            `shouldSatisfy` isLeft
-        it "mapArray (\\a -> a + 1) [1,2,3]" $ do
-          result <- eval testStdlib "mapArray (\\a -> a + 1) [1,2,3]"
-          result
-            `shouldBe` Right
-              ( MTArray mempty (MTPrim mempty MTInt),
-                MyArray mempty [int 2, int 3, int 4]
-              )
-      describe "Let pattern" $ do
-        it "Matches a wildcard" $ do
-          result <- eval testStdlib "let _ = False in True"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches a value" $ do
-          result <- eval testStdlib "let a = True in a"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches a pair" $ do
-          result <- eval testStdlib "let (a,b) = (True,False) in a"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches a record" $ do
-          result <- eval testStdlib "let { dog: a } = { dog: True } in a"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Does not match a constructor with other cases" $ do
-          result <- eval testStdlib "let (Just a) = Just True in a"
-          result `shouldSatisfy` isLeft
-        it "Matches a one case constructor" $ do
-          result <- eval testStdlib "let (Ident a) = Ident True in a"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches a nested one case constructor" $ do
-          result <- eval testStdlib "let (Ident (Ident a)) = Ident (Ident True) in a"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Does not matches a pair that is not complete" $ do
-          result <- eval testStdlib "let (a,True) = (True,False) in a"
-          result `shouldSatisfy` isLeft
-        it "Adds constructors to required types for StoreExpression" $ do
-          result <- eval testStdlib "let (Parser parser) = predParser (\\d -> d == \"d\") anyChar in parser \"dog\""
-          result `shouldSatisfy` isRight
-      describe "Pattern matching" $ do
-        it "Matches a wildcard" $ do
-          result <- eval testStdlib "match 1 with _ -> True"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches a variable" $ do
-          result <- eval testStdlib "match 1 with a -> a"
-          result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-        it "Deconstructs a pair" $ do
-          result <- eval testStdlib "match (1,True) with (a,b) -> b"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches an int literal" $ do
-          result <- eval testStdlib "match (1, True) with (1, a) -> a | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches a string literal" $ do
-          result <- eval testStdlib "match \"dog\" with \"dog\" -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches two string literals" $ do
-          result <- eval testStdlib "match \"dog\" with \"dog\" -> True | \"log\" -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches a record" $ do
-          result <- eval testStdlib "match { dog: 1 } with { dog: a } -> a"
-          result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-        it "Matches a constructor with no args" $ do
-          result <- eval testStdlib "match Nothing with Nothing -> False | _ -> True"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-        it "Matches a constructor with args" $ do
-          result <- eval testStdlib "match Just 1 with (Just _) -> True | Nothing -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches These correctly" $ do
-          result <- eval testStdlib "match This 1 with (These _ _) -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-        it "Typechecks Either correctly" $ do
-          result <- eval testStdlib "match Right 100 with (Left \"log\") -> False | (Right 100) -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Does not have a swap error" $ do
-          result <- eval testStdlib "\\a -> match (Left a) with (Left e) -> e | _ -> False"
-          result `shouldSatisfy` isRight
-        it "Pulls Left into scope from Project" $ do
-          result <- eval testStdlib "\\a -> match a with (Left e) -> e | _ -> False"
-          result `shouldSatisfy` isRight
-        it "Parses constructor application in expr" $ do
-          result <- eval testStdlib "match Just 1 with (Just a) -> Just a | _ -> Nothing"
-          result `shouldSatisfy` isRight
-        it "Parses and pretty prints more complex matches" $ do
-          result <- eval testStdlib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right (f a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
-          result `shouldSatisfy` isRight
-        it "Matches array with non-empty match" $ do
-          result <- eval testStdlib "match [1] with [_] -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Matches empty array with empty case" $ do
-          result <- eval testStdlib "match [] with [_] -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-        it "Should not match when input array is longer than pattern" $ do
-          result <- eval testStdlib "match [1,2] with [_] -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-        it "Should match when input is long but we have a SpreadWildcard at the end" $ do
-          result <- eval testStdlib "match [1,2,3] with [1,2,...] -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-        it "Shouldn't match when input is too short with SpreadWildcard at the end" $ do
-          result <- eval testStdlib "match [1] with [1,2,...] -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-        it "Binds empty remainder with array to SpreadValue" $ do
-          result <- eval testStdlib "match [1] with [1,...a] -> a | _ -> [0]"
-          result
-            `shouldBe` Right
-              ( MTArray mempty (MTPrim mempty MTInt),
-                MyArray mempty mempty
-              )
-        it "Binds remainder with array to SpreadValue" $ do
-          result <- eval testStdlib "match [1,2,3] with [1,...a] -> a | _ -> []"
-          result
-            `shouldBe` Right
-              ( MTArray mempty (MTPrim mempty MTInt),
-                MyArray mempty [int 2, int 3]
-              )
-        it "Errors if we bind the same variable twice" $ do
-          result <- eval testStdlib "match (1,2) with (a,a) -> a"
-          result `shouldSatisfy` isLeft
-        it "Uses a constructor inside an array" $ do
-          result <- eval testStdlib "match [] with [Just 1] -> True | _ -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-        it "Generates more nuanced exhaustiveness checks when using spread operatpr" $ do
-          result <- eval testStdlib "match [] with [] -> True | [_] -> False | [_,...] -> False"
-          result
-            `shouldBe` Right
-              (MTPrim mempty MTBool, bool True)
-        it "Matches an empty string" $ do
-          result <- eval testStdlib "match \"\" with _ ++ _ -> True | \"\" -> False"
-          result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-        it "Matches an non-empty string" $ do
-          result <- eval testStdlib "match \"dog\" with a ++ b -> (a,b) | \"\" -> (\"\", \"\")"
-          result
-            `shouldBe` Right
-              ( MTPair mempty (MTPrim mempty MTString) (MTPrim mempty MTString),
-                MyPair mempty (MyLiteral mempty (MyString "d")) (MyLiteral mempty (MyString "og"))
-              )
-        it "Fix empty pattern match obscuring bindings" $ do
-          result <- eval testStdlib "\\a -> match Nothing with (Nothing) -> a | _ -> a"
-          result `shouldSatisfy` isRight
-      describe "Error with List type" $ do
-        it "Is fine with no shadowed variables" $ do
-          let input =
-                mconcat
-                  [ "\\a -> \\b -> match (a, b) with ",
-                    "(Cons aa restA, Nil) -> (Cons aa restA)",
-                    " | (Nil, Cons bb restB) -> (Cons bb restB)",
-                    " | _ -> (Nil)"
-                  ]
-          result <- eval testStdlib input
-          result `shouldSatisfy` isRight
-        it "Is fine with shadowed variables" $ do
-          let input =
-                mconcat
-                  [ "\\a -> \\b -> match (a, b) with ",
-                    "(Cons a restA, Nil) -> (Cons a restA)",
-                    " | (Nil, Cons b restB) -> (Cons b restB)",
-                    " | _ -> a"
-                  ]
-          result <- eval testStdlib input
-          result `shouldSatisfy` isRight
+    describe "Native array" $ do
+      it "[1] <> [2]" $ do
+        result <- eval testStdlib "[1] <> [2]"
+        result
+          `shouldBe` Right
+            ( MTArray mempty (MTPrim mempty MTInt),
+              MyArray mempty [int 1, int 2]
+            )
+      it "[1] <> [True]" $ do
+        result <- eval testStdlib "[1] <> [True]"
+        result `shouldSatisfy` isLeft
+      it "[1] <> \"2\"" $ do
+        result <- eval testStdlib "[1] <> \"2\""
+        result
+          `shouldSatisfy` isLeft
+      it "\"1\" <> [2]" $ do
+        result <- eval testStdlib "\"1\" <> [2]"
+        result
+          `shouldSatisfy` isLeft
+      it "mapArray (\\a -> a + 1) [1,2,3]" $ do
+        result <- eval testStdlib "mapArray (\\a -> a + 1) [1,2,3]"
+        result
+          `shouldBe` Right
+            ( MTArray mempty (MTPrim mempty MTInt),
+              MyArray mempty [int 2, int 3, int 4]
+            )
+    describe "Let pattern" $ do
+      it "Matches a wildcard" $ do
+        result <- eval testStdlib "let _ = False in True"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches a value" $ do
+        result <- eval testStdlib "let a = True in a"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches a pair" $ do
+        result <- eval testStdlib "let (a,b) = (True,False) in a"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches a record" $ do
+        result <- eval testStdlib "let { dog: a } = { dog: True } in a"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Does not match a constructor with other cases" $ do
+        result <- eval testStdlib "let (Just a) = Just True in a"
+        result `shouldSatisfy` isLeft
+      it "Matches a one case constructor" $ do
+        result <- eval testStdlib "let (Ident a) = Ident True in a"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches a nested one case constructor" $ do
+        result <- eval testStdlib "let (Ident (Ident a)) = Ident (Ident True) in a"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Does not matches a pair that is not complete" $ do
+        result <- eval testStdlib "let (a,True) = (True,False) in a"
+        result `shouldSatisfy` isLeft
+      it "Adds constructors to required types for StoreExpression" $ do
+        result <- eval testStdlib "let (Parser parser) = predParser (\\d -> d == \"d\") anyChar in parser \"dog\""
+        result `shouldSatisfy` isRight
+    describe "Pattern matching" $ do
+      it "Matches a wildcard" $ do
+        result <- eval testStdlib "match 1 with _ -> True"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches a variable" $ do
+        result <- eval testStdlib "match 1 with a -> a"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+      it "Deconstructs a pair" $ do
+        result <- eval testStdlib "match (1,True) with (a,b) -> b"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches an int literal" $ do
+        result <- eval testStdlib "match (1, True) with (1, a) -> a | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches a string literal" $ do
+        result <- eval testStdlib "match \"dog\" with \"dog\" -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches two string literals" $ do
+        result <- eval testStdlib "match \"dog\" with \"dog\" -> True | \"log\" -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches a record" $ do
+        result <- eval testStdlib "match { dog: 1 } with { dog: a } -> a"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+      it "Matches a constructor with no args" $ do
+        result <- eval testStdlib "match Nothing with Nothing -> False | _ -> True"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+      it "Matches a constructor with args" $ do
+        result <- eval testStdlib "match Just 1 with (Just _) -> True | Nothing -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches These correctly" $ do
+        result <- eval testStdlib "match This 1 with (These _ _) -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+      it "Typechecks Either correctly" $ do
+        result <- eval testStdlib "match Right 100 with (Left \"log\") -> False | (Right 100) -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Does not have a swap error" $ do
+        result <- eval testStdlib "\\a -> match (Left a) with (Left e) -> e | _ -> False"
+        result `shouldSatisfy` isRight
+      it "Pulls Left into scope from Project" $ do
+        result <- eval testStdlib "\\a -> match a with (Left e) -> e | _ -> False"
+        result `shouldSatisfy` isRight
+      it "Parses constructor application in expr" $ do
+        result <- eval testStdlib "match Just 1 with (Just a) -> Just a | _ -> Nothing"
+        result `shouldSatisfy` isRight
+      it "Parses and pretty prints more complex matches" $ do
+        result <- eval testStdlib "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right (f a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
+        result `shouldSatisfy` isRight
+      it "Matches array with non-empty match" $ do
+        result <- eval testStdlib "match [1] with [_] -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Matches empty array with empty case" $ do
+        result <- eval testStdlib "match [] with [_] -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+      it "Should not match when input array is longer than pattern" $ do
+        result <- eval testStdlib "match [1,2] with [_] -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+      it "Should match when input is long but we have a SpreadWildcard at the end" $ do
+        result <- eval testStdlib "match [1,2,3] with [1,2,...] -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+      it "Shouldn't match when input is too short with SpreadWildcard at the end" $ do
+        result <- eval testStdlib "match [1] with [1,2,...] -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+      it "Binds empty remainder with array to SpreadValue" $ do
+        result <- eval testStdlib "match [1] with [1,...a] -> a | _ -> [0]"
+        result
+          `shouldBe` Right
+            ( MTArray mempty (MTPrim mempty MTInt),
+              MyArray mempty mempty
+            )
+      it "Binds remainder with array to SpreadValue" $ do
+        result <- eval testStdlib "match [1,2,3] with [1,...a] -> a | _ -> []"
+        result
+          `shouldBe` Right
+            ( MTArray mempty (MTPrim mempty MTInt),
+              MyArray mempty [int 2, int 3]
+            )
+      it "Errors if we bind the same variable twice" $ do
+        result <- eval testStdlib "match (1,2) with (a,a) -> a"
+        result `shouldSatisfy` isLeft
+      it "Uses a constructor inside an array" $ do
+        result <- eval testStdlib "match [] with [Just 1] -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+      it "Generates more nuanced exhaustiveness checks when using spread operatpr" $ do
+        result <- eval testStdlib "match [] with [] -> True | [_] -> False | [_,...] -> False"
+        result
+          `shouldBe` Right
+            (MTPrim mempty MTBool, bool True)
+      it "Matches an empty string" $ do
+        result <- eval testStdlib "match \"\" with _ ++ _ -> True | \"\" -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+      it "Matches an non-empty string" $ do
+        result <- eval testStdlib "match \"dog\" with a ++ b -> (a,b) | \"\" -> (\"\", \"\")"
+        result
+          `shouldBe` Right
+            ( MTPair mempty (MTPrim mempty MTString) (MTPrim mempty MTString),
+              MyPair mempty (MyLiteral mempty (MyString "d")) (MyLiteral mempty (MyString "og"))
+            )
+      it "Fix empty pattern match obscuring bindings" $ do
+        result <- eval testStdlib "\\a -> match Nothing with (Nothing) -> a | _ -> a"
+        result `shouldSatisfy` isRight
+    describe "Error with List type" $ do
+      it "Is fine with no shadowed variables" $ do
+        let input =
+              mconcat
+                [ "\\a -> \\b -> match (a, b) with ",
+                  "(Cons aa restA, Nil) -> (Cons aa restA)",
+                  " | (Nil, Cons bb restB) -> (Cons bb restB)",
+                  " | _ -> (Nil)"
+                ]
+        result <- eval testStdlib input
+        result `shouldSatisfy` isRight
+      it "Is fine with shadowed variables" $ do
+        let input =
+              mconcat
+                [ "\\a -> \\b -> match (a, b) with ",
+                  "(Cons a restA, Nil) -> (Cons a restA)",
+                  " | (Nil, Cons b restB) -> (Cons b restB)",
+                  " | _ -> a"
+                ]
+        result <- eval testStdlib input
+        result `shouldSatisfy` isRight
+    describe "Too many generics in stringReduce" $ do
+      it "simpler type" $ do
+        let input = "\\a -> match a with head ++ tail -> head | _ -> \"\""
+        result <- eval testStdlib input
+        fst <$> result `shouldBe` Right (MTFunction () (MTPrim () MTString) (MTPrim () MTString))
+      it "type of function" $ do
+        let input = "stringReduce"
+        result <- eval testStdlib input
+        fst <$> result
+          `shouldBe` Right
+            ( MTFunction
+                ()
+                ( MTFunction
+                    ()
+                    (MTVar () (TVNum 0))
+                    (MTFunction () (MTPrim () MTString) (MTVar () (TVNum 0)))
+                )
+                ( MTFunction
+                    ()
+                    (MTVar () (TVNum 0))
+                    (MTFunction () (MTPrim () MTString) (MTVar () (TVNum 0)))
+                )
+            )
 
-      describe "Monoid losing types" $ do
-        -- skipping because not sure what the hell is going on here
-        xit "maybeMonoid stringMonoid" $ do
-          result <- eval testStdlib "maybeMonoid stringMonoid"
-          fst <$> result
-            `shouldBe` Right
-              ( dataTypeWithVars
-                  mempty
-                  "Monoid"
-                  [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTString]
-                  ]
-              )
-        xit "maybeMonoid sumMonoid" $ do
-          result <- eval testStdlib "maybeMonoid sumMonoid"
-          fst <$> result
-            `shouldBe` Right
-              ( dataTypeWithVars
-                  mempty
-                  "Monoid"
-                  [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt]
-                  ]
-              )
+    describe "Monoid losing types" $ do
+      it "Attempt to construct broken MonoPair" $ do
+        result <- eval testStdlib "MonoPair (\\a -> a ++ a) (\\b -> b <> b)"
+        result `shouldSatisfy` isLeft
+      -- skipping because not sure what the hell is going on here
+      it "maybeMonoid stringMonoid" $ do
+        result <- eval testStdlib "maybeMonoid stringMonoid"
+        fst <$> result
+          `shouldBe` Right
+            ( dataTypeWithVars
+                mempty
+                "Monoid"
+                [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTString]
+                ]
+            )
+      it "maybeMonoid sumMonoid" $ do
+        result <- eval testStdlib "maybeMonoid sumMonoid"
+        fst <$> result
+          `shouldBe` Right
+            ( dataTypeWithVars
+                mempty
+                "Monoid"
+                [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt]
+                ]
+            )

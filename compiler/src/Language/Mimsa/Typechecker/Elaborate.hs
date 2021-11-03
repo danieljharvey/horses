@@ -34,7 +34,13 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
-type ElabM = ExceptT TypeError (WriterT [Constraint] (ReaderT Swaps (State TypecheckState)))
+type ElabM =
+  ExceptT
+    TypeError
+    ( WriterT
+        [Constraint]
+        (ReaderT Swaps (State TypecheckState))
+    )
 
 type TcExpr = Expr Variable Annotation
 
@@ -198,19 +204,14 @@ elabRecursiveLetBinding ::
   ElabM ElabExpr
 elabRecursiveLetBinding env ann binder expr body = do
   binderInExpr <- findActualBindingInSwaps binder
-  exprAsFix <- elab env (MyLambda mempty binderInExpr expr)
-  tyRec <- getUnknown ann
-  tyExpr <- getUnknown ann
-  let tyExprAsFix = getTypeFromAnn exprAsFix
-  tell
-    [ ShouldEqual tyExprAsFix (MTFunction mempty tyRec tyRec),
-      ShouldEqual tyExprAsFix (MTFunction ann tyRec tyExpr)
-    ]
-  let newEnv2 =
-        envFromVar binder (Scheme [] tyRec)
-          <> env
-  elabExpr <- elab newEnv2 expr
-  elabBody <- elab newEnv2 body
+  tyRecExpr <- getUnknown ann
+  let envWithRecursiveFn = envFromVar binderInExpr (Scheme [] tyRecExpr) <> env
+  elabExpr <- elab envWithRecursiveFn expr
+  let newEnv =
+        envFromVar binderInExpr (Scheme [] (getTypeFromAnn elabExpr)) <> env
+  elabBody <- elab newEnv body
+  tell [ShouldEqual tyRecExpr (getTypeFromAnn elabExpr)]
+
   pure (MyLet (getTypeFromAnn elabBody) binder elabExpr elabBody)
 
 elabIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
@@ -554,8 +555,8 @@ elabLetPattern ::
   TcExpr ->
   ElabM ElabExpr
 elabLetPattern env ann pat expr body = do
-  (elabPat, newEnv) <- elabPattern env pat
   elabExpr <- elab env expr
+  (elabPat, newEnv) <- elabPattern env pat
   elabBody <- elab newEnv body
   tell
     [ ShouldEqual (getPatternTypeFromAnn elabPat) (getTypeFromAnn elabExpr)

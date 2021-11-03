@@ -5,7 +5,7 @@ module Test.Codegen.Functor
   )
 where
 
-import Data.Either (isRight)
+import Data.Either
 import Language.Mimsa.Codegen
 import Test.Codegen.Shared
 import Test.Hspec
@@ -21,7 +21,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\identity -> match identity with "
-                <> " (Identity a) -> Identity (f a); "
+                <> " (Identity a1) -> Identity (f a1); "
                 <> "fmap"
           )
     it "dtMaybe functor typechecks" $ do
@@ -32,7 +32,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\maybe -> match maybe with "
-                <> "(Just a) -> Just (f a) | Nothing -> Nothing; fmap"
+                <> "(Just a1) -> Just (f a1) | Nothing -> Nothing; fmap"
           )
 
     it "dtThese functor typechecks" $ do
@@ -43,9 +43,9 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\these -> match these with "
-                <> "(That b) -> That (f b) | "
-                <> "(These a b) -> These a (f b) | "
-                <> "(This a) -> This a; "
+                <> "(That b1) -> That (f b1) | "
+                <> "(These a1 b2) -> These a1 (f b2) | "
+                <> "(This a2) -> This a2; "
                 <> "fmap"
           )
 
@@ -57,7 +57,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\list -> match list with "
-                <> "(Cons a list1) -> Cons (f a) (fmap f list1) | "
+                <> "(Cons a1 list1) -> Cons (f a1) (fmap f list1) | "
                 <> "Nil -> Nil; "
                 <> "fmap"
           )
@@ -70,7 +70,7 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\doubleList -> match doubleList with "
-                <> "(DoubleCons a b doubleList1) -> DoubleCons a (f b) (fmap f doubleList1) | "
+                <> "(DoubleCons a1 b1 doubleList1) -> DoubleCons a1 (f b1) (fmap f doubleList1) | "
                 <> "DoubleNil -> DoubleNil; "
                 <> "fmap"
           )
@@ -84,7 +84,7 @@ spec = do
           ( unsafeParse $
               "let fmap = \\f -> \\tree -> match tree with "
                 <> "(Branch tree1 tree2) -> Branch (fmap f tree1) (fmap f tree2) | "
-                <> "(Leaf a) -> Leaf (f a); "
+                <> "(Leaf a1) -> Leaf (f a1); "
                 <> "fmap"
           )
 
@@ -108,6 +108,18 @@ spec = do
         `shouldBe` Right
           ( unsafeParse $
               "let fmap = \\f -> \\env -> match env with "
-                <> "(Env w a) -> Env w (f a); "
+                <> "(Env w1 a1) -> Env w1 (f a1); "
+                <> "fmap"
+          )
+
+    it "dtMonoPair functor typechecks" $ do
+      typecheckInstance functorMap dtMonoPair `shouldSatisfy` isRight
+
+    it "Generates functorMap for dtMonoPair" $ do
+      functorMap dtMonoPair
+        `shouldBe` Right
+          ( unsafeParse $
+              "let fmap = \\f -> \\monoPair -> match monoPair with "
+                <> "(MonoPair a1 a2) -> MonoPair (f a1) (f a2); "
                 <> "fmap"
           )

@@ -60,13 +60,13 @@ functorMap_ (DataType tyCon vars items) = do
         )
 
 data FieldItemType
-  = VariableField Name
+  = VariableField Name Name -- var type, var name
   | RecurseField Name
   | Func2 Name Name Name
 
 toFieldItemType :: TyCon -> Type () -> CodegenM FieldItemType
 toFieldItemType typeName = \case
-  MTVar _ (TVName a) -> pure (VariableField (coerce a))
+  MTVar _ (TVName a) -> VariableField (coerce a) <$> nextName (coerce a)
   MTFunction _ (MTVar _ (TVName a)) (MTVar _ (TVName b)) ->
     pure $ Func2 (coerce a <> "to" <> coerce b) (coerce a) (coerce b)
   mt -> case varsFromDataType mt of
@@ -78,8 +78,8 @@ toFieldItemType typeName = \case
 reconstructField :: Name -> FieldItemType -> Expr Name ()
 reconstructField matchVar fieldItem =
   case fieldItem of
-    VariableField varName ->
-      if varName == matchVar
+    VariableField varType varName ->
+      if varType == matchVar
         then MyApp mempty (MyVar mempty "f") (MyVar mempty varName)
         else MyVar mempty varName
     RecurseField restVar ->
@@ -120,7 +120,7 @@ createPattern :: TyCon -> [FieldItemType] -> Pattern Name ()
 createPattern tyCon fields =
   PConstructor mempty tyCon (toPattern <$> fields)
   where
-    toPattern (VariableField a) = PVar mempty a
+    toPattern (VariableField _ a) = PVar mempty a
     toPattern (RecurseField a) = PVar mempty a
     toPattern (Func2 a _ _) = PVar mempty a
 

@@ -75,7 +75,9 @@ toFieldItemType ::
 toFieldItemType tyName matchVar = \case
   MTVar _ (TVName a) ->
     if coerce a == matchVar
-      then pure (coerce a, VariableField (coerce a))
+      then do
+        name <- nextName (coerce a)
+        pure (name, VariableField name)
       else pure (coerce a, NoVariable)
   mt -> case varsFromDataType mt of
     Just (tyCon, [MTVar _ (TVName var)]) -> do

@@ -1,0 +1,1 @@
+{"storeBindings":{"stringMonoid":"a902798b78902b1d1fb36d0711f66458b99d25ed81822f9de764fb7b39b81112","maybeMonoid":"bdc96ba804b54dbb2e20ae89de138c5d9c3d48c9f6257462e9850d237f1b9657"},"storeExpression":{"contents":[[],{"contents":[[],"maybeMonoid"],"tag":"MyVar"},{"contents":[[],"stringMonoid"],"tag":"MyVar"}],"tag":"MyApp"},"storeTypeBindings":{}}

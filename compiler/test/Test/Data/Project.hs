@@ -95,6 +95,9 @@ buildTestStdlib =
       addBinding
         "typePerson"
         "type Person = Person { name: String, age: Int } in {}"
+      addBinding
+        "stringReduce"
+        "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
       addListMonad
       addEither
       addPair
@@ -103,6 +106,7 @@ buildTestStdlib =
       addArray
       addIdentity
       addMonoid
+      addMonoPair
 
 addListMonad :: Actions.ActionM ()
 addListMonad = do
@@ -114,6 +118,11 @@ addListMonad = do
   addBinding
     "nil"
     "Nil"
+
+addMonoPair :: Actions.ActionM ()
+addMonoPair = do
+  addType
+    "type MonoPair a = MonoPair a a"
 
 addPair :: Actions.ActionM ()
 addPair = do
@@ -201,21 +210,22 @@ addIdentity = addType "type Ident a = Ident a"
 addMonoid :: Actions.ActionM ()
 addMonoid = do
   addType
-    "type Monoid a = Monoid { mappend: (a -> a -> a), mempty: a }"
+    "type Monoid a = Monoid (a -> a -> a) a"
   addBinding
     "stringMonoid"
-    "Monoid ({ mappend: (\\a -> \\b -> a ++ b), mempty: \"\" })"
+    "Monoid (\\a -> \\b -> a ++ b) \"\""
   addBinding
     "sumMonoid"
-    "Monoid ({ mappend: (\\a -> \\b -> a + b), mempty: 0 })"
+    "Monoid (\\a -> \\b -> a + b) 0"
   addBinding
     "maybeMonoid"
     ( mconcat
-        [ "\\innerM -> let (Monoid { mappend: innerMappend }) = innerM; let mappend = \\a -> \\b -> match (a, b) with (Just iA, Just iB) -> (Just (innerMappend iA iB))",
-          " | (Just iA, Nothing) -> (Just iA)",
-          " | (Nothing, Just iB) -> (Just iB)",
-          " | _ -> Nothing;",
-          " Monoid ({ mappend: mappend, mempty: Nothing })"
+        [ "\\innerM -> ",
+          "Monoid (\\a -> \\b -> match (a,b) with ",
+          "          (Just iA, Just iB) -> let (Monoid innerMappend innerMempty) = innerM; Just (innerMappend iA iB)",
+          "        | (Just iA, Nothing) -> (Just iA) ",
+          "        | (Nothing, Just iB) -> (Just iB) ",
+          "        | _ -> Nothing) Nothing"
         ]
     )
 
