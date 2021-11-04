@@ -236,7 +236,7 @@ fullTestCases =
     ( "either.fmap (\\a -> a + 1) (Right 100)",
       "{ type: 'Right', vars: [ 101 ] }"
     ),
-    ("stringReduce", "")
+    ("stringReduce", "[Function: stringReduce]")
   ]
 
 spec :: Spec
@@ -492,7 +492,7 @@ spec = do
 
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> [as] | [] -> []"
-          `shouldBe` Right "export const main = <C>(a: C[]) => { const match = (value: C[]) => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
+          `shouldBe` Right "export const main = <C>(a: C[]) => { const match = (value: C[]): C[][] => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
 
     describe "Entire compilation" $ do
       traverse_ fullTestIt fullTestCases

@@ -198,6 +198,11 @@ toPatternStatement (pat, patExpr) = do
       (conditions $ toPattern pat)
       (TSLetBody (TSBody (statements <> items) tsPatExpr))
 
+getMatchReturnType :: [(a, Expr Name MonoType)] -> TypescriptM TSType
+getMatchReturnType as = case as of
+  ((_pat, expr) : _) -> fst <$> toTSType (getAnnotation expr)
+  _ -> error "empty pattern match"
+
 toPatternMatch ::
   Expr Name MonoType ->
   [(Pattern Name MonoType, Expr Name MonoType)] ->
@@ -207,6 +212,7 @@ toPatternMatch matchExpr patterns = do
   (TSBody tsStatements tsA) <- toTSBody matchExpr
   (tyMatchExpr, matchGenerics) <- toTSType (getAnnotation matchExpr)
   newGenerics <- unusedGenerics matchGenerics
+  returnType <- getMatchReturnType patterns
   let assignment =
         TSAssignment
           (TSVar "match")
@@ -218,7 +224,7 @@ toPatternMatch matchExpr patterns = do
                       "value"
                       newGenerics
                       tyMatchExpr
-                      Nothing
+                      (Just returnType)
                       ( TSFunctionBody
                           ( TSBody
                               matches
