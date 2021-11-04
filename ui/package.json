@@ -9,7 +9,7 @@
     "@devexperts/remote-data-ts": "2.0.5",
     "@testing-library/jest-dom": "5.15.0",
     "@testing-library/react": "11.1.1",
-    "@testing-library/user-event": "12.2.0",
+    "@testing-library/user-event": "12.8.3",
     "@types/jest": "26.0.24",
     "@types/lodash.throttle": "4.1.6",
     "@types/node": "12.20.36",
