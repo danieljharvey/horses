@@ -5,13 +5,11 @@ import * as E from 'fp-ts/Either'
 import { projectGet } from '../../reducer/project/helpers'
 import * as TE from 'fp-ts/TaskEither'
 
-const createNewProject: TE.TaskEither<
-  string,
-  ExprHash
-> = pipe(
-  createProject(),
-  TE.map((res) => res.cpProjectData.pdHash)
-)
+const createNewProject: TE.TaskEither<string, ExprHash> =
+  pipe(
+    createProject(),
+    TE.map((res) => res.cpProjectData.pdHash)
+  )
 
 const findInSessionStorage: TE.TaskEither<
   string,

@@ -84,69 +84,71 @@ export const useEventReducer = <State, Action, Event>(
 }
 
 // do reducerA, then reducerB
-export const appendReducer = <State, A1, A2, E1, E2>(
-  reducerA: EventReducer<State, A1, E1>,
-  reducerB: EventReducer<State, A2, E2>
-): EventReducer<State, A1 | A2, E1 | E2> => (
-  state,
-  action
-) => {
-  const responseA = reducerA(state, action as A1)
-  const responseB = reducerB(responseA.state, action as A2)
-  return {
-    type: 'StateAndEvents',
-    state: responseB.state,
-    events: [...responseA.events, ...responseB.events] as (
-      | E1
-      | E2
-    )[],
-  }
-}
-
-export const emptyReducer = <
-  State,
-  Action,
-  Event
->(): EventReducer<State, Action, Event> => (state) => ({
-  type: 'StateAndEvents',
-  state,
-  events: [],
-})
-
-// make a small reducer into a big one
-export const lensReducer = <StateS, StateA, Action, Event>(
-  lens: Lens<StateS, StateA>,
-  reducer: EventReducer<StateA, Action, Event>
-): EventReducer<StateS, Action, Event> => (
-  stateS,
-  action
-) => {
-  const stateA = lens.get(stateS)
-  const response = reducer(stateA, action)
-  return {
-    ...response,
-    state: lens.set(response.state)(stateS),
-  }
-}
-
-// make a small reducer into a big one
-export const prismReducer = <StateS, StateA, Action, Event>(
-  optional: Optional<StateS, StateA>,
-  reducer: EventReducer<StateA, Action, Event>
-): EventReducer<StateS, Action, Event> => (
-  stateS,
-  action
-) =>
-  pipe(
-    optional.getOption(stateS),
-    O.fold(
-      () => stateOnly(stateS),
-      (stateA) => {
-        const response = reducer(stateA, action)
-        return {
-          ...response,
-          state: optional.set(response.state)(stateS),
-        }
-      }
+export const appendReducer =
+  <State, A1, A2, E1, E2>(
+    reducerA: EventReducer<State, A1, E1>,
+    reducerB: EventReducer<State, A2, E2>
+  ): EventReducer<State, A1 | A2, E1 | E2> =>
+  (state, action) => {
+    const responseA = reducerA(state, action as A1)
+    const responseB = reducerB(
+      responseA.state,
+      action as A2
     )
-  )
+    return {
+      type: 'StateAndEvents',
+      state: responseB.state,
+      events: [
+        ...responseA.events,
+        ...responseB.events,
+      ] as (E1 | E2)[],
+    }
+  }
+
+export const emptyReducer =
+  <State, Action, Event>(): EventReducer<
+    State,
+    Action,
+    Event
+  > =>
+  (state) => ({
+    type: 'StateAndEvents',
+    state,
+    events: [],
+  })
+
+// make a small reducer into a big one
+export const lensReducer =
+  <StateS, StateA, Action, Event>(
+    lens: Lens<StateS, StateA>,
+    reducer: EventReducer<StateA, Action, Event>
+  ): EventReducer<StateS, Action, Event> =>
+  (stateS, action) => {
+    const stateA = lens.get(stateS)
+    const response = reducer(stateA, action)
+    return {
+      ...response,
+      state: lens.set(response.state)(stateS),
+    }
+  }
+
+// make a small reducer into a big one
+export const prismReducer =
+  <StateS, StateA, Action, Event>(
+    optional: Optional<StateS, StateA>,
+    reducer: EventReducer<StateA, Action, Event>
+  ): EventReducer<StateS, Action, Event> =>
+  (stateS, action) =>
+    pipe(
+      optional.getOption(stateS),
+      O.fold(
+        () => stateOnly(stateS),
+        (stateA) => {
+          const response = reducer(stateA, action)
+          return {
+            ...response,
+            state: optional.set(response.state)(stateS),
+          }
+        }
+      )
+    )

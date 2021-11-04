@@ -17,9 +17,8 @@ import { ExprHash } from '../types/'
 type State = RemoteData<string, GraphProjectResponse>
 
 export const useProjectGraph = (projectHash: ExprHash) => {
-  const [graphData, setGraphData] = React.useState<State>(
-    initial
-  )
+  const [graphData, setGraphData] =
+    React.useState<State>(initial)
 
   React.useEffect(() => {
     setGraphData(pending)
