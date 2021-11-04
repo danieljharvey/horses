@@ -28,7 +28,7 @@ RUN mv "$(stack path --local-install-root --system-ghc)/bin" /opt/build/bin
 # -------------------------------------------------------------------------------------------
 # Base image for stack build so compiled artifact from previous
 # stage should run
-FROM ubuntu:20.04 as app
+FROM ubuntu:22.04 as app
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
 
