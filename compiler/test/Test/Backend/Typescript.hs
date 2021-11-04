@@ -236,7 +236,8 @@ fullTestCases =
     ( "either.fmap (\\a -> a + 1) (Right 100)",
       "{ type: 'Right', vars: [ 101 ] }"
     ),
-    ("stringReduce", "[Function: stringReduce]")
+    ("stringReduce", "[Function: stringReduce]"),
+    ("infix <&&> = and; True <&&> True", "true")
   ]
 
 spec :: Spec

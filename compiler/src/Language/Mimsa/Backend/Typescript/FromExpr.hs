@@ -71,6 +71,7 @@ toTSType mt@MTTypeApp {} =
       let (types, generics) = unzip tsTypes
       pure (TSType namespace n types, mconcat generics)
     Nothing ->
+      -- TODO: real error
       pure (TSType Nothing "weird type app error" mempty, mempty)
 toTSType (MTFunction _ a b) = do
   (tsA, genA) <- toTSType a
@@ -80,6 +81,7 @@ toTSType (MTArray _ as) = do
   (tsAs, genAs) <- toTSType as
   pure (TSTypeArray tsAs, genAs)
 toTSType e =
+  -- TODO: real error
   pure (TSType Nothing ("unknown for: " <> prettyPrint e) mempty, mempty)
 
 toTSDataType :: DataType -> TypescriptM TSDataType
@@ -113,7 +115,11 @@ toInfix operator a b = do
       pure $ TSInfix TSStringConcat tsA tsB
     ArrayConcat ->
       pure $ TSArray [TSArraySpread tsA, TSArraySpread tsB]
-    (Custom _op) -> error "custom infixes not implemented" -- we need to save these when they are defined and pull the correct function from state
+    (Custom op) -> do
+      state <- getState
+      case M.lookup op (csInfix state) of
+        Just expr -> pure (TSApp (TSApp expr tsA) tsB)
+        Nothing -> error "infix not found" -- TODO: proper error
 
 -- | make TS body, but throw if we get any additional lines
 -- a temporary measure so we can see how often these happen (because they don't
@@ -292,4 +298,7 @@ toTSBody expr' =
       tsAs <- (fmap . fmap) TSArrayItem (traverse toTSExpr as)
       pure $ TSBody [] (TSArray tsAs)
     (MyTypedHole _ name) -> throwError (OutputingTypedHole name)
-    MyDefineInfix {} -> error "Define Infix not created yet"
+    (MyDefineInfix _ op fn body) -> do
+      fnExpr <- toTSExpr fn
+      addInfix op fnExpr
+      toTSBody body

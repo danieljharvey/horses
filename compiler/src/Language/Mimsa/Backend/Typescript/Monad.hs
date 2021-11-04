@@ -8,6 +8,7 @@ module Language.Mimsa.Backend.Typescript.Monad
     TSReaderState (..),
     runTypescriptM,
     getState,
+    addInfix,
     findTypeName,
     typeNameIsImport,
     unusedGenerics,
@@ -46,7 +47,8 @@ newtype TSReaderState = TSReaderState
 -- brought into and out of scope
 data TSCodegenState = TSCodegenState
   { csGenerics :: Set TSGeneric,
-    csDataTypes :: [DataType]
+    csDataTypes :: [DataType],
+    csInfix :: Map InfixOp TSExpr
   }
   deriving stock (Eq, Ord, Show)
 
@@ -113,6 +115,18 @@ addDataType dt tsDt = do
           }
     )
 
+-- | define an infix operator, binding it to some 2-arity function
+addInfix :: (MonadState TSStateStack m) => InfixOp -> TSExpr -> m ()
+addInfix op expr =
+  modifyState
+    ( \codegenState ->
+        codegenState
+          { csInfix =
+              csInfix codegenState
+                <> M.singleton op expr
+          }
+    )
+
 -- | is this type in our reader context (and thus is it an import, and should
 -- be use it with a namespace, ie, Maybe.Maybe?
 typeNameIsImport :: (MonadReader TSReaderState m) => TyCon -> m Bool
@@ -132,13 +146,18 @@ findTypeName tyCon = do
 initialStack :: TSStateStack
 initialStack =
   NE.singleton $
-    TSCodegenState mempty mempty
+    TSCodegenState mempty mempty mempty
 
 runTypescriptM ::
   TSReaderState ->
   TypescriptM a ->
   Either (BackendError MonoType) (a, [TSDataType])
 runTypescriptM readerState computation =
-  case evalState (runReaderT (runWriterT (runExceptT computation)) readerState) initialStack of
+  case evalState
+    ( runReaderT
+        (runWriterT (runExceptT computation))
+        readerState
+    )
+    initialStack of
     (Right a, dts) -> pure (a, dts)
     (Left e, _) -> throwError e
