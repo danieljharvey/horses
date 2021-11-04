@@ -36,20 +36,18 @@ const stackL = viewL.compose(
   Lens.fromProp<ViewState>()('stack')
 )
 
-const editPrism: Prism<
-  Screen,
-  ScreenWithEditor
-> = new Prism(
-  (s: Screen) =>
-    s.type === 'edit' ||
-    s.type === 'new-expression' ||
-    s.type === 'scratch' ||
-    s.type === 'new-test' ||
-    s.type === 'new-type'
-      ? O.some(s as ScreenWithEditor)
-      : O.none,
-  (a: ScreenWithEditor) => a as Screen
-)
+const editPrism: Prism<Screen, ScreenWithEditor> =
+  new Prism(
+    (s: Screen) =>
+      s.type === 'edit' ||
+      s.type === 'new-expression' ||
+      s.type === 'scratch' ||
+      s.type === 'new-test' ||
+      s.type === 'new-type'
+        ? O.some(s as ScreenWithEditor)
+        : O.none,
+    (a: ScreenWithEditor) => a as Screen
+  )
 
 const editorFromScreen: Lens<
   ScreenWithEditor,
@@ -147,24 +145,18 @@ const errorLocationsO: Optional<
   Lens.fromProp<UserErrorResponse>()('ueErrorLocations')
 )
 
-const expressionO: Optional<
-  EditorState,
-  ExpressionData
-> = Lens.fromProp<EditorState>()('expression')
-  .composePrism(expressionDataPrism)
-  .composeLens(expressionDataLens)
+const expressionO: Optional<EditorState, ExpressionData> =
+  Lens.fromProp<EditorState>()('expression')
+    .composePrism(expressionDataPrism)
+    .composeLens(expressionDataLens)
 
-const sourceItemsO: Optional<
-  EditorState,
-  SourceItem[]
-> = expressionO.composeLens(
-  Lens.fromProp<ExpressionData>()('edSourceItems')
-)
+const sourceItemsO: Optional<EditorState, SourceItem[]> =
+  expressionO.composeLens(
+    Lens.fromProp<ExpressionData>()('edSourceItems')
+  )
 
-const sourceItemsFromState: Optional<
-  State,
-  SourceItem[]
-> = currentEditorO.composeOptional(sourceItemsO)
+const sourceItemsFromState: Optional<State, SourceItem[]> =
+  currentEditorO.composeOptional(sourceItemsO)
 
 export const getSourceItems = (
   state: State

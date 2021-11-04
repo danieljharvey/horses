@@ -39,9 +39,8 @@ export const useAddType = (
     hashes: ExprHash[]
   ) => void
 ) => {
-  const [typeState, setTypeState] = React.useState<State>(
-    initial
-  )
+  const [typeState, setTypeState] =
+    React.useState<State>(initial)
 
   const addNewType = async () => {
     setTypeState(pending)

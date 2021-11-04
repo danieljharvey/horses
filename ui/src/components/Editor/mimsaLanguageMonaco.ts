@@ -59,7 +59,8 @@ export const mimsaLanguage = {
   symbols: /[=><!~?:&|+\-*\/\^%]+/,
 
   // C# style strings
-  escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+  escapes:
+    /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
   // The main tokenizer for our languages
   tokenizer: {
