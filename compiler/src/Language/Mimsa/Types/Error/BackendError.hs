@@ -12,27 +12,24 @@ import Language.Mimsa.Types.Identifiers
 import Prettyprinter
 
 data BackendError ann
-  = TyConFindError (Expr Name ann)
-  | OutputtingCustomOperator InfixOp
+  = CustomOperatorNotFound InfixOp
   | OutputingTypedHole Name
-  | OutputtingBadLetPattern (Pattern Name ann)
   | ExpectedExprGotBody TSExpr [TSStatement]
-  | ConstructorNotFound TyCon
   | ExpectedFunctionType TSType
+  | PatternMatchIsEmpty
+  | NoConstructorInTypeApp
   deriving stock (Eq, Ord, Show, Functor)
 
 instance Printer (BackendError ann) where
-  prettyDoc (TyConFindError expr) =
-    "Error finding type constructor in " <> prettyDoc expr
-  prettyDoc (OutputtingCustomOperator op) =
-    "Trying to output a custom operator, which should have been substituted for a function by now. " <> prettyDoc op
+  prettyDoc (CustomOperatorNotFound op) =
+    "Could not find operator for output:" <+> prettyDoc op
+  prettyDoc PatternMatchIsEmpty = "Pattern match is empty"
   prettyDoc (OutputingTypedHole n) =
     "Trying to output a typed hold, which should not pass typechecking: " <> prettyDoc n
-  prettyDoc (OutputtingBadLetPattern p) =
-    "Cannot output this let pattern: " <> prettyDoc p
   prettyDoc (ExpectedExprGotBody exp' exps) =
     "Expected no extra exprs for :" <> pretty (printExpr exp') <> ", but found: "
       <> pretty (printStatement <$> exps)
-  prettyDoc (ExpectedFunctionType tsType) = "Expected function type but got " <> pretty (printType tsType)
-  prettyDoc (ConstructorNotFound tyCon) =
-    "Constructor" <+> prettyDoc tyCon <+> "not found"
+  prettyDoc (ExpectedFunctionType tsType) =
+    "Expected function type but got " <> pretty (printType tsType)
+  prettyDoc (NoConstructorInTypeApp) =
+    "No constructor found in type application."

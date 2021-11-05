@@ -36,6 +36,9 @@ data TSType
   | TSTypeVar Text
   | TSTypeFun Text TSType TSType
   | TSTypeArray TSType
+  | TSTypeTuple [TSType]
+  | TSTypeRecord (Map Text TSType)
+  | TSTypeAnd TSType TSType
   deriving stock (Eq, Ord, Show)
 
 data TSConstructor = TSConstructor TyCon [TSType]

@@ -3,6 +3,7 @@
 module Language.Mimsa.Backend.Typescript.DataType (createConstructorFunctions) where
 
 import Data.Coerce (coerce)
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -21,6 +22,9 @@ genericsForType (TSTypeVar a) = S.singleton (TSGeneric a)
 genericsForType (TSType _ _ as) = mconcat (genericsForType <$> as)
 genericsForType (TSTypeFun _ f a) = genericsForType f <> genericsForType a
 genericsForType (TSTypeArray a) = genericsForType a
+genericsForType (TSTypeTuple as) = mconcat (genericsForType <$> as)
+genericsForType (TSTypeRecord as) = mconcat (genericsForType <$> M.elems as)
+genericsForType (TSTypeAnd a b) = genericsForType a <> genericsForType b
 
 -- | Creates the return type of a constructor
 returnType :: [Text] -> TyCon -> [TSType] -> TSType

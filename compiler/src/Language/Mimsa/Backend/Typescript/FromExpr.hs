@@ -4,7 +4,9 @@
 module Language.Mimsa.Backend.Typescript.FromExpr (fromExpr) where
 
 import Control.Monad.Except
+import Data.Bifunctor
 import Data.Coerce (coerce)
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -52,6 +54,25 @@ toPattern (PLit _ lit) =
 toPattern (PString _ sHead sTail) =
   TSPatternString (toStringPart sHead) (toStringPart sTail)
 
+consToTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
+consToTSType mt =
+  case varsFromDataType mt of
+    Just (TyCon n, vars) -> do
+      imported <- typeNameIsImport (TyCon n)
+      let namespace = if imported then Just n else Nothing
+      tsTypes <- traverse toTSType vars
+      let (types, generics) = unzip tsTypes
+      pure (TSType namespace n types, mconcat generics)
+    Nothing ->
+      throwError NoConstructorInTypeApp
+
+toTSTypeRecord :: Map Name (Type ann) -> TypescriptM (TSType, Set TSGeneric)
+toTSTypeRecord as = do
+  tsAll <- traverse toTSType as
+  let generics = snd . snd <$> M.toList tsAll
+      tsItems = M.fromList . fmap (bimap coerce fst) . M.toList $ tsAll
+  pure (TSTypeRecord tsItems, mconcat generics)
+
 -- | returns the type and any generics used in the expression
 toTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
 toTSType (MTPrim _ MTString) = pure (TSType Nothing "string" [], mempty)
@@ -63,16 +84,7 @@ toTSType (MTVar _ a) =
         TVName a' -> T.toTitle (coerce a')
    in pure (TSTypeVar newVar, S.singleton (TSGeneric newVar))
 toTSType mt@MTTypeApp {} =
-  case varsFromDataType mt of
-    Just (TyCon n, vars) -> do
-      imported <- typeNameIsImport (TyCon n)
-      let namespace = if imported then Just n else Nothing
-      tsTypes <- traverse toTSType vars
-      let (types, generics) = unzip tsTypes
-      pure (TSType namespace n types, mconcat generics)
-    Nothing ->
-      -- TODO: real error
-      pure (TSType Nothing "weird type app error" mempty, mempty)
+  consToTSType mt
 toTSType (MTFunction _ a b) = do
   (tsA, genA) <- toTSType a
   (tsB, genB) <- toTSType b
@@ -80,9 +92,18 @@ toTSType (MTFunction _ a b) = do
 toTSType (MTArray _ as) = do
   (tsAs, genAs) <- toTSType as
   pure (TSTypeArray tsAs, genAs)
-toTSType e =
-  -- TODO: real error
-  pure (TSType Nothing ("unknown for: " <> prettyPrint e) mempty, mempty)
+toTSType (MTPair _ a b) = do
+  (tsA, genA) <- toTSType a
+  (tsB, genB) <- toTSType b
+  pure (TSTypeTuple [tsA, tsB], genA <> genB)
+toTSType mt@MTConstructor {} =
+  consToTSType mt
+toTSType (MTRecord _ as) =
+  toTSTypeRecord as
+toTSType (MTRecordRow _ as rest) = do
+  (tsItems, generics) <- toTSTypeRecord as
+  (tsRest, genRest) <- toTSType rest
+  pure (TSTypeAnd tsItems tsRest, generics <> genRest)
 
 toTSDataType :: DataType -> TypescriptM TSDataType
 toTSDataType (DataType name gens cons) = do
@@ -119,7 +140,7 @@ toInfix operator a b = do
       state <- getState
       case M.lookup op (csInfix state) of
         Just expr -> pure (TSApp (TSApp expr tsA) tsB)
-        Nothing -> error "infix not found" -- TODO: proper error
+        Nothing -> throwError (CustomOperatorNotFound op)
 
 -- | make TS body, but throw if we get any additional lines
 -- a temporary measure so we can see how often these happen (because they don't
@@ -207,7 +228,7 @@ toPatternStatement (pat, patExpr) = do
 getMatchReturnType :: [(a, Expr Name MonoType)] -> TypescriptM TSType
 getMatchReturnType as = case as of
   ((_pat, expr) : _) -> fst <$> toTSType (getAnnotation expr)
-  _ -> error "empty pattern match"
+  _ -> throwError PatternMatchIsEmpty
 
 toPatternMatch ::
   Expr Name MonoType ->

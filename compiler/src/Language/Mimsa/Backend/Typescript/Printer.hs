@@ -40,6 +40,18 @@ printType (TSTypeFun argName arg resp) =
     <> ") => "
     <> printType resp
 printType (TSTypeArray as) = printType as <> "[]"
+printType (TSTypeTuple as) = "[" <> T.intercalate "," (printType <$> as) <> "]"
+printType (TSTypeRecord as) =
+  let outputRecordItem (name, val) =
+        prettyPrint name <> ": " <> printType val
+      items = outputRecordItem <$> M.toList as
+   in "{ "
+        <> T.intercalate
+          ", "
+          items
+        <> " }"
+printType (TSTypeAnd a b) =
+  printType a <> " & " <> printType b
 
 printConstructor :: TSConstructor -> Text
 printConstructor (TSConstructor tyCon types) =
