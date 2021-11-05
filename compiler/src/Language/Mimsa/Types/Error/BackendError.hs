@@ -31,5 +31,5 @@ instance Printer (BackendError ann) where
       <> pretty (printStatement <$> exps)
   prettyDoc (ExpectedFunctionType tsType) =
     "Expected function type but got " <> pretty (printType tsType)
-  prettyDoc (NoConstructorInTypeApp) =
+  prettyDoc NoConstructorInTypeApp =
     "No constructor found in type application."
