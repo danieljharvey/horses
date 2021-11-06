@@ -52,7 +52,7 @@ moduleEntry ::
   ExprHash ->
   MimsaM StoreError Zip.Entry
 moduleEntry modulePath be exprHash = do
-  let filename = T.unpack (moduleFilename be exprHash)
+  let filename = T.unpack $ moduleFilename be exprHash <> fileExtension be
       fromPath = modulePath <> filename
   input <- liftIO (T.readFile fromPath)
   pure (zipEntry ("./" <> filename) input)

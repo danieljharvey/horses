@@ -43,7 +43,7 @@ copyModule ::
   ExprHash ->
   MimsaM StoreError ()
 copyModule modulePath outputPath be exprHash = do
-  let filename = moduleFilename be exprHash
+  let filename = moduleFilename be exprHash <> fileExtension be
       fromPath = modulePath <> T.unpack filename
       toPath = outputPath <> T.unpack filename
   tryCopy fromPath toPath
