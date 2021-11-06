@@ -17,7 +17,6 @@ import Data.Set (Set)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Compile as Actions
-import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.ZipFile
 import Language.Mimsa.Printer
@@ -95,7 +94,7 @@ compileHashEndpoint
 
 -----
 
-getRuntime :: RuntimeName -> Handler (Runtime Javascript)
+getRuntime :: RuntimeName -> Handler (Runtime Text)
 getRuntime runtimeName =
   handleEither
     InternalError

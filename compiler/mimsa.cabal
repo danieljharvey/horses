@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 7205878034db48cd99f977f9d710bab1f7782acf7058338a0a99c30002a974e3
 
 name:           mimsa
 version:        0.1.0.0
@@ -40,11 +38,17 @@ library
       Language.Mimsa.Actions.Shared
       Language.Mimsa.Actions.Types
       Language.Mimsa.Backend.Backend
-      Language.Mimsa.Backend.Javascript
-      Language.Mimsa.Backend.NormaliseConstructors
+      Language.Mimsa.Backend.Javascript.Printer
+      Language.Mimsa.Backend.Output
       Language.Mimsa.Backend.Runtimes
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
+      Language.Mimsa.Backend.Typescript.DataType
+      Language.Mimsa.Backend.Typescript.FromExpr
+      Language.Mimsa.Backend.Typescript.Monad
+      Language.Mimsa.Backend.Typescript.Patterns
+      Language.Mimsa.Backend.Typescript.Printer
+      Language.Mimsa.Backend.Typescript.Types
       Language.Mimsa.Backend.ZipFile
       Language.Mimsa.CLI
       Language.Mimsa.Codegen
@@ -221,7 +225,7 @@ library
     , directory
     , envy
     , exceptions
-    , file-embed
+    , hashable
     , haskeline
     , http-types
     , megaparsec
@@ -261,7 +265,7 @@ executable mimsa
     , directory
     , envy
     , exceptions
-    , file-embed
+    , hashable
     , haskeline
     , http-types
     , megaparsec
@@ -302,7 +306,7 @@ executable swagger
     , directory
     , envy
     , exceptions
-    , file-embed
+    , hashable
     , haskeline
     , http-types
     , megaparsec
@@ -336,9 +340,10 @@ test-suite mimsa-test
       Test.Actions.Compile
       Test.Actions.Evaluate
       Test.Actions.RemoveBinding
-      Test.Backend.BackendJS
+      Test.Backend.ESModulesJS
       Test.Backend.RunNode
       Test.Backend.Runtimes
+      Test.Backend.Typescript
       Test.Codegen
       Test.Codegen.Applicative
       Test.Codegen.Enum
@@ -373,6 +378,7 @@ test-suite mimsa-test
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
+      Test.Utils.Compilation
       Test.Utils.Helpers
       Test.Utils.Serialisation
       Paths_mimsa
@@ -389,7 +395,6 @@ test-suite mimsa-test
     , directory
     , envy
     , exceptions
-    , file-embed
     , hashable
     , haskeline
     , hspec

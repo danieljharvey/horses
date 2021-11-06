@@ -10,5 +10,15 @@ output/
 swagger.json
 
 # files generated during tests
+
+# typescript tests
 test/golden/Typescript/*.ts
-test/golden/ESModules/*.mjs
+test/golden/Typescript-result/*.json
+test/golden/CompileTSProject/
+test/golden/CompileTSProject-result/
+
+# esmodules compilation tests
+test/golden/ESModulesJS-result/*.json
+test/golden/ESModulesJS/
+test/golden/CompileJSProject/
+test/golden/CompileJSProject-result/

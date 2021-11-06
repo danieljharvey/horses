@@ -17,12 +17,12 @@ import Control.Exception
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
-import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
 import Data.Foldable
 import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Types as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
@@ -136,4 +136,4 @@ saveFile (path, filename, content) = do
   fullPath <- getStoreFolder (show path)
   let savePath = fullPath <> show filename
   logDebug $ "Saving to " <> T.pack savePath
-  liftIO $ LBS.writeFile savePath (coerce content)
+  liftIO $ T.writeFile savePath (coerce content)

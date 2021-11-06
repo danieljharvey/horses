@@ -4,6 +4,7 @@ import Data.Functor (($>))
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Types.AST
@@ -11,6 +12,11 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+
+fromRight :: (Printer e) => Either e a -> a
+fromRight either' = case either' of
+  Left e -> error (T.unpack $ prettyPrint e)
+  Right a -> a
 
 unsafeParseExpr :: Text -> Expr Name ()
 unsafeParseExpr t = case parseExpr t of

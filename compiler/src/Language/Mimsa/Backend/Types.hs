@@ -15,12 +15,13 @@ import Language.Mimsa.Types.Typechecker
 
 type BackendM ann = Either (BackendError ann)
 
-data Backend = CommonJS | ESModulesJS
+data Backend = ESModulesJS | Typescript
   deriving stock (Eq, Ord, Show)
 
 data Renderer ann a = Renderer
   { renderFunc :: Name -> Expr Name ann -> BackendM ann a,
     renderImport :: (Name, ExprHash) -> BackendM ann a,
+    renderTypeImport :: (TyCon, ExprHash) -> BackendM ann a,
     renderStdLib :: BackendM ann a,
     renderExport :: Name -> BackendM ann a,
     renderTypeSignature :: MonoType -> BackendM ann a,

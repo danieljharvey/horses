@@ -1,14 +1,14 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Language.Mimsa.Backend.Runtimes
   ( Runtime (..),
     RuntimeName (..),
-    cjsExportRuntime,
     ejsExportRuntime,
-    cjsConsoleRuntime,
+    ejsConsoleRuntime,
+    tsExportRuntime,
+    tsConsoleRuntime,
     runtimeIsValid,
     outputIndexFile,
     indexFilename,
@@ -18,18 +18,13 @@ module Language.Mimsa.Backend.Runtimes
 where
 
 import qualified Data.Aeson as JSON
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LB
 import Data.Coerce (coerce)
 import Data.Either (isRight)
-import Data.FileEmbed
 import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi
 import Data.Text (Text)
-import qualified Data.Text.Encoding as T
-import Language.Mimsa.Backend.Javascript
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
@@ -40,11 +35,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
-
--- these are saved in a file that is included in compilation
-replCode :: LBS.ByteString
-replCode =
-  LBS.fromStrict $(embedFile "static/runtimes/commonjs/repl.js")
 
 newtype RuntimeName
   = RuntimeName Text
@@ -68,74 +58,39 @@ data Runtime code = Runtime
 mtVar :: Text -> MonoType
 mtVar t = MTVar mempty (TVName (TyVar t))
 
-mtString :: MonoType
-mtString = MTPrim mempty MTString
-
-cjsExportRuntime :: Runtime Javascript
-cjsExportRuntime =
+ejsExportRuntime :: Runtime Text
+ejsExportRuntime =
   Runtime
-    { rtName = RuntimeName "export",
+    { rtName = RuntimeName "export-ejs",
       rtDescription = "Exports the expression",
-      rtMonoType = mtVar "any",
-      rtBackend = CommonJS,
-      rtCode = "module.exports = { main };"
+      rtBackend = ESModulesJS,
+      rtCode = "export { main }",
+      rtMonoType = mtVar "a"
     }
 
-ejsExportRuntime :: Runtime Javascript
-ejsExportRuntime =
-  cjsExportRuntime
-    { rtBackend = ESModulesJS,
-      rtName = RuntimeName "export-ejs",
+tsExportRuntime :: Runtime Text
+tsExportRuntime =
+  ejsExportRuntime
+    { rtBackend = Typescript,
+      rtName = RuntimeName "export-ts",
       rtCode = "export { main }"
     }
 
-cjsConsoleRuntime :: Runtime Javascript
-cjsConsoleRuntime =
-  Runtime
-    { rtName = RuntimeName "console",
-      rtDescription = "Logs a string expression to console",
-      rtMonoType = mtString,
-      rtBackend = CommonJS,
-      rtCode = "console.log(main);"
-    }
-
-ejsConsoleRuntime :: Runtime Javascript
+ejsConsoleRuntime :: Runtime Text
 ejsConsoleRuntime =
-  cjsConsoleRuntime
-    { rtBackend = ESModulesJS,
-      rtName = RuntimeName "console-ejs"
+  Runtime
+    { rtDescription = "Logs a string expression to console",
+      rtBackend = ESModulesJS,
+      rtName = RuntimeName "console-ejs",
+      rtCode = "console.log(main);",
+      rtMonoType = mtVar "a"
     }
 
-replRuntime :: Runtime Javascript
-replRuntime =
-  Runtime
-    { rtName = RuntimeName "repl",
-      rtDescription = "Runs a stateful repl session",
-      rtMonoType =
-        MTRecord
-          mempty
-          ( M.fromList
-              [ ("prompt", mtString),
-                ("intro", mtString),
-                ("init", mtVar "A"),
-                ( "next",
-                  MTFunction
-                    mempty
-                    (mtVar "A")
-                    ( MTFunction
-                        mempty
-                        mtString
-                        ( MTPair
-                            mempty
-                            (mtVar "A")
-                            mtString
-                        )
-                    )
-                )
-              ]
-          ),
-      rtBackend = CommonJS,
-      rtCode = Javascript replCode
+tsConsoleRuntime :: Runtime Text
+tsConsoleRuntime =
+  ejsConsoleRuntime
+    { rtBackend = Typescript,
+      rtName = RuntimeName "console-ts"
     }
 
 runtimeIsValid :: Runtime a -> MonoType -> Either TypeError ()
@@ -148,7 +103,7 @@ runtimeIsValid runtime mt =
 
 --------
 
-runtimes :: Map RuntimeName (Runtime Javascript)
+runtimes :: Map RuntimeName (Runtime Text)
 runtimes =
   M.fromList $
     foldr
@@ -156,43 +111,35 @@ runtimes =
           as <> [(rtName rt, rt)]
       )
       mempty
-      [ cjsConsoleRuntime,
-        ejsConsoleRuntime,
-        cjsExportRuntime,
+      [ ejsConsoleRuntime,
+        tsConsoleRuntime,
         ejsExportRuntime,
-        replRuntime
+        tsExportRuntime
       ]
 
-getValidRuntimes :: MonoType -> Map RuntimeName (Runtime Javascript)
+getValidRuntimes :: MonoType -> Map RuntimeName (Runtime Text)
 getValidRuntimes mt =
   M.filter (\rt -> isRight $ runtimeIsValid rt mt) runtimes
 
 --------
 
-bsFromText :: Text -> LBS.ByteString
-bsFromText = LB.fromChunks . return . T.encodeUtf8
-
-outputIndexFile :: Backend -> Runtime Javascript -> ExprHash -> Javascript
+outputIndexFile :: Backend -> Runtime Text -> ExprHash -> Text
 outputIndexFile be runtime exprHash =
   let link = case be of
-        CommonJS ->
-          Javascript ("const main = require('./" <> moduleFilename be exprHash <> "').main;\n")
         ESModulesJS ->
-          Javascript ("import { main } from './" <> moduleFilename be exprHash <> "';\n")
+          "import { main } from './" <> moduleFilename be exprHash <> "';\n"
+        Typescript ->
+          "import { main } from './" <> moduleFilename be exprHash <> "';\n"
    in link <> rtCode runtime
 
-indexFilename :: Runtime code -> ExprHash -> LBS.ByteString
+indexFilename :: Runtime code -> ExprHash -> Text
 indexFilename runtime hash' =
   case rtBackend runtime of
-    CommonJS ->
-      bsFromText
-        ( "index-" <> coerce (rtName runtime) <> "-"
-            <> prettyPrint hash'
-            <> ".js"
-        )
     ESModulesJS ->
-      bsFromText
-        ( "index-" <> coerce (rtName runtime) <> "-"
-            <> prettyPrint hash'
-            <> ".mjs"
-        )
+      "index-" <> coerce (rtName runtime) <> "-"
+        <> prettyPrint hash'
+        <> ".mjs"
+    Typescript ->
+      "index-" <> coerce (rtName runtime) <> "-"
+        <> prettyPrint hash'
+        <> ".ts"

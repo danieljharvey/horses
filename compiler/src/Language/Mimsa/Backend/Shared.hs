@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Language.Mimsa.Backend.Shared
   ( transpiledModuleOutputPath,
@@ -7,40 +6,26 @@ module Language.Mimsa.Backend.Shared
     transpiledStdlibOutputPath,
     symlinkedOutputPath,
     zipFileOutputPath,
-    outputStoreExpression,
-    outputExport,
-    outputStdlib,
     indexOutputFilename,
     moduleFilename,
-    stdLibFilename,
     getTranspileList,
-    commonJSStandardLibrary,
+    fileExtension,
     createOutputFolder,
     createModuleOutputPath,
-    createStdlibOutputPath,
     createIndexOutputPath,
   )
 where
 
 import Control.Monad.IO.Class
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LB
-import Data.Coerce
-import Data.FileEmbed
-import Data.List (intersperse)
-import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreFolder)
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import System.Directory
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
@@ -63,98 +48,42 @@ createIndexOutputPath :: Backend -> MimsaM e FilePath
 createIndexOutputPath be =
   getStoreFolder (transpiledIndexOutputPath be)
 
--- all files are created in the store and then symlinked into output folders
--- this creates the folder in the store
-createStdlibOutputPath :: Backend -> MimsaM e FilePath
-createStdlibOutputPath be =
-  getStoreFolder (transpiledStdlibOutputPath be)
-
-bsFromText :: Text -> LBS.ByteString
-bsFromText = LB.fromChunks . return . T.encodeUtf8
-
--- these are saved in a file that is included in compilation
-commonJSStandardLibrary :: LBS.ByteString
-commonJSStandardLibrary =
-  LBS.fromStrict $(embedFile "static/backend/commonjs/stdlib.js")
-
--- these are saved in a file that is included in compilation
-esModulesJSStandardLibrary :: LBS.ByteString
-esModulesJSStandardLibrary =
-  LBS.fromStrict $(embedFile "static/backend/es-modules-js/stdlib.mjs")
-
-stdLibFilename :: Backend -> LBS.ByteString
-stdLibFilename CommonJS = "cjs-stdlib.js"
-stdLibFilename ESModulesJS = "ejs-stdlib.mjs"
-
-indexOutputFilename :: Backend -> ExprHash -> LBS.ByteString
-indexOutputFilename CommonJS exprHash = "index-" <> bsFromText (prettyPrint exprHash) <> ".js"
-indexOutputFilename ESModulesJS exprHash = "index-" <> bsFromText (prettyPrint exprHash) <> ".mjs"
+indexOutputFilename :: Backend -> ExprHash -> Text
+indexOutputFilename ESModulesJS exprHash =
+  "index-" <> prettyPrint exprHash <> ".mjs"
+indexOutputFilename Typescript exprHash =
+  "index-" <> prettyPrint exprHash <> ".ts"
 
 symlinkedOutputPath :: Backend -> FilePath
-symlinkedOutputPath CommonJS =
-  "./output/cjs"
 symlinkedOutputPath ESModulesJS =
   "./output/ejs"
+symlinkedOutputPath Typescript =
+  "./output/ts"
 
 transpiledModuleOutputPath :: Backend -> FilePath
-transpiledModuleOutputPath CommonJS = "transpiled/module/common-js"
 transpiledModuleOutputPath ESModulesJS = "transpiled/module/es-modules-js"
+transpiledModuleOutputPath Typescript = "transpiled/module/typescript"
 
 transpiledIndexOutputPath :: Backend -> FilePath
-transpiledIndexOutputPath CommonJS = "transpiled/index/common-js"
 transpiledIndexOutputPath ESModulesJS = "transpiled/index/es-modules-js"
+transpiledIndexOutputPath Typescript = "transpiled/index/typescript"
 
 transpiledStdlibOutputPath :: Backend -> FilePath
-transpiledStdlibOutputPath CommonJS = "transpiled/stdlib/common-js"
 transpiledStdlibOutputPath ESModulesJS = "transpiled/stdlib/es-modules-js"
+transpiledStdlibOutputPath Typescript = "transpiled/stdlib/typescript"
 
 zipFileOutputPath :: Backend -> FilePath
-zipFileOutputPath CommonJS = "./output/zip"
-zipFileOutputPath ESModulesJS = "./output/zip"
+zipFileOutputPath _ = "./output/zip"
 
-moduleFilename :: Backend -> ExprHash -> LBS.ByteString
-moduleFilename CommonJS hash' = "cjs-" <> bsFromText (prettyPrint hash') <> ".js"
-moduleFilename ESModulesJS hash' = "ejs-" <> bsFromText (prettyPrint hash') <> ".mjs"
+fileExtension :: Backend -> Text
+fileExtension Typescript = ".ts"
+fileExtension _ = ""
 
-outputStdlib :: Backend -> LBS.ByteString
-outputStdlib CommonJS = coerce commonJSStandardLibrary
-outputStdlib ESModulesJS = coerce esModulesJSStandardLibrary
-
-outputExport :: Backend -> Name -> LBS.ByteString
-outputExport CommonJS name =
-  "module.exports = { " <> bsFromText (coerce name)
-    <> ": "
-    <> bsFromText (coerce name)
-    <> " }"
-outputExport ESModulesJS _ = mempty -- we export each one value directly
-
-outputStoreExpression ::
-  (Monoid a) =>
-  Renderer ann a ->
-  MonoType ->
-  StoreExpression ann ->
-  BackendM ann a
-outputStoreExpression renderer mt se = do
-  let funcName = "main"
-  deps <-
-    traverse
-      (renderImport renderer)
-      (M.toList (getBindings $ storeBindings se))
-  stdLib <- renderStdLib renderer
-  func <- renderFunc renderer funcName (storeExpression se)
-  typeComment <- renderTypeSignature renderer mt
-  export <- renderExport renderer funcName
-  pure $
-    mconcat
-      ( intersperse
-          (renderNewline renderer)
-          [ mconcat deps,
-            stdLib,
-            typeComment,
-            func,
-            export
-          ]
-      )
+moduleFilename :: Backend -> ExprHash -> Text
+moduleFilename ESModulesJS hash' =
+  "ejs-" <> prettyPrint hash' <> ".mjs"
+moduleFilename Typescript hash' =
+  "ts-" <> prettyPrint hash'
 
 -- recursively get all the StoreExpressions we need to output
 getTranspileList ::

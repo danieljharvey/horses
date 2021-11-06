@@ -6,6 +6,7 @@
 module Language.Mimsa.Types.Identifiers.TypeIdentifier
   ( TypeIdentifier (..),
     renderTypeIdentifier,
+    printTypeNum,
   )
 where
 

@@ -613,7 +613,9 @@ elabDefineInfix env ann infixOp infixExpr expr = do
     ]
   let newEnv = envFromInfixOp infixOp tyBind <> env
   if isTwoArityFunction tyBind
-    then elab newEnv expr
+    then do
+      elabBodyExpr <- elab newEnv expr
+      pure $ MyDefineInfix (getTypeFromAnn elabBodyExpr) infixOp elabBindExpr elabBodyExpr
     else throwError arityError
 
 elabArray ::

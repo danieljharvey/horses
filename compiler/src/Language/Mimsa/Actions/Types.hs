@@ -13,8 +13,7 @@ where
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Writer
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LB
+import Data.Hashable
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST
@@ -23,19 +22,19 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
 newtype SavePath = SavePath Text
-  deriving newtype (Eq, Ord)
+  deriving newtype (Eq, Ord, Hashable)
 
 instance Show SavePath where
   show (SavePath s) = T.unpack s
 
-newtype SaveContents = SaveContents LBS.ByteString
-  deriving newtype (Eq, Ord, Show)
+newtype SaveContents = SaveContents Text
+  deriving newtype (Eq, Ord, Show, Hashable)
 
-newtype SaveFilename = SaveFilename LBS.ByteString
-  deriving newtype (Eq, Ord)
+newtype SaveFilename = SaveFilename Text
+  deriving newtype (Eq, Ord, Hashable)
 
 instance Show SaveFilename where
-  show (SaveFilename s) = LB.unpack s
+  show (SaveFilename s) = T.unpack s
 
 data ActionOutcome
   = NewMessage Text
