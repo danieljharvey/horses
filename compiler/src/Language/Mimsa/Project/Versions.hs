@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Project.Versions
   ( findVersions,
+    findVersionsSimple,
     findStoreExpressionByName,
   )
 where
@@ -24,15 +25,46 @@ import Language.Mimsa.Types.Typechecker
 
 -- find which versions of a given binding are in use
 
+-- | if we don't need to show stuff this is straightforward
+findVersionsSimple ::
+  Project ann ->
+  Name ->
+  Either
+    (Error ann)
+    ( NonEmpty
+        ( Int,
+          ExprHash,
+          Set Usage
+        )
+    )
+findVersionsSimple project name = do
+  versioned <- first StoreErr (findInProject project name)
+  let findUse hash =
+        (,) hash <$> first StoreErr (findUsages project hash)
+  as <- traverse findUse versioned
+  let numbered = NE.zip (NE.fromList [1 ..]) as
+  pure $
+    NE.reverse $
+      (\(i, (hash, usages)) -> (i, hash, usages)) <$> numbered
+
 findVersions ::
   Project Annotation ->
   Name ->
-  Either (Error Annotation) (NonEmpty (Int, Expr Variable Annotation, MonoType, Set Usage))
+  Either
+    (Error Annotation)
+    ( NonEmpty
+        ( Int,
+          Expr Variable Annotation,
+          MonoType,
+          Set Usage,
+          ExprHash
+        )
+    )
 findVersions project name = do
   versioned <- first StoreErr (findInProject project name)
   as <- traverse (getExprDetails project) versioned
-  let nice = NE.zip (NE.fromList [1 ..]) as
-  pure $ NE.reverse $ (\(i, (a, b, c)) -> (i, a, b, c)) <$> nice
+  let numbered = NE.zip (NE.fromList [1 ..]) as
+  pure $ NE.reverse $ (\(i, (a, b, c, d)) -> (i, a, b, c, d)) <$> numbered
 
 findInProject :: Project ann -> Name -> Either StoreError (NonEmpty ExprHash)
 findInProject project name =
@@ -62,7 +94,7 @@ findStoreExpressionByName env name =
 getExprDetails ::
   Project Annotation ->
   ExprHash ->
-  Either (Error Annotation) (Expr Variable Annotation, MonoType, Set Usage)
+  Either (Error Annotation) (Expr Variable Annotation, MonoType, Set Usage, ExprHash)
 getExprDetails project exprHash = do
   usages <-
     first StoreErr (findUsages project exprHash)
@@ -71,4 +103,4 @@ getExprDetails project exprHash = do
   typeMap <- Actions.getTypeMap project
   resolvedExpr <-
     Actions.resolveStoreExpression (prjStore project) typeMap "" storeExpr
-  pure (reExpression resolvedExpr, reMonoType resolvedExpr, usages)
+  pure (reExpression resolvedExpr, reMonoType resolvedExpr, usages, exprHash)

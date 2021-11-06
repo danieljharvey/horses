@@ -25,8 +25,11 @@ import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import Data.Foldable (traverse_)
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
-import Data.OpenApi
+import qualified Data.Map as M
+import Data.OpenApi (ToSchema)
+import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import GHC.Generics
@@ -38,6 +41,7 @@ import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Persistence
+import Language.Mimsa.Project.Versions
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Store
@@ -103,10 +107,23 @@ outputTypeBindings project =
     <$> getTypeBindings
       (getCurrentTypeBindings (prjTypeBindings project))
 
+-- | Version of a given binding
+-- number, exprHash, usages elsewhere
+data BindingVersion = BindingVersion
+  { bvNumber :: Int,
+    bvExprHash :: ExprHash,
+    bvUsages :: Set Usage
+  }
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
+
+-- | Current state of the project
+-- should contain no exprs
 data ProjectData = ProjectData
   { pdHash :: ProjectHash,
     pdBindings :: Map Name Text,
-    pdTypeBindings :: Map TyCon Text
+    pdTypeBindings :: Map TyCon Text,
+    pdVersions :: Map Name (NE.NonEmpty BindingVersion)
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -124,12 +141,27 @@ writeStoreHandler mimsaEnv store' = do
         (mutableStore mimsaEnv)
         (<> store')
 
+versionsForBinding ::
+  (Printer ann, Show ann) =>
+  Project ann ->
+  Name ->
+  Handler (NE.NonEmpty BindingVersion)
+versionsForBinding prj name = do
+  versions <- handleEither InternalError (findVersionsSimple prj name)
+  pure $ (\(i, hash, usages) -> BindingVersion i hash usages) <$> versions
+
 -- given a new Project, save it and return the hash and bindings
 projectDataHandler ::
+  (Printer ann, Show ann) =>
   MimsaEnvironment ->
   Project ann ->
   Handler ProjectData
 projectDataHandler mimsaEnv env = do
+  let nameMap =
+        M.mapWithKey const
+          <$> getBindings . getCurrentBindings . prjBindings
+          $ env
+  versions <- traverse (versionsForBinding env) nameMap
   projHash <-
     handleMimsaM
       (mimsaConfig mimsaEnv)
@@ -140,6 +172,7 @@ projectDataHandler mimsaEnv env = do
       projHash
       (outputBindings env)
       (outputTypeBindings env)
+      versions
 
 -- given a project hash, find the project
 loadProjectHandler ::

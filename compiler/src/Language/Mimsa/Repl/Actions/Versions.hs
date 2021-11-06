@@ -21,7 +21,7 @@ import Language.Mimsa.Types.Project
 doVersions :: Project Annotation -> Name -> MimsaM (Error Annotation) ()
 doVersions env name = do
   versions <- mimsaFromEither $ findVersions env name
-  let showIt (i, mt, expr', usages) = do
+  let showIt (i, mt, expr', usages, _) = do
         replOutput $
           "#" <> T.pack (show i)
             <> ( if NE.length versions == i
