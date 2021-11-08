@@ -13,7 +13,7 @@
     "@testing-library/user-event": "13.5.0",
     "@types/jest": "27.0.2",
     "@types/lodash.throttle": "4.1.6",
-    "@types/node": "12.20.36",
+    "@types/node": "14.17.33",
     "@types/react": "17.0.34",
     "@types/react-dom": "16.9.14",
     "@types/react-monaco-editor": "0.16.0",
