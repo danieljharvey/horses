@@ -6,7 +6,7 @@ import type { ErrorLocation } from './ErrorLocation'
 import type { TypedHoleResponse } from './TypedHoleResponse'
 
 export type UserErrorResponse = {
+  ueErrorLocations: Array<ErrorLocation>
   ueText: string
   ueTypedHoles: Array<TypedHoleResponse>
-  ueErrorLocations: Array<ErrorLocation>
 }

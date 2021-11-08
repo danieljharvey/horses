@@ -3,7 +3,6 @@
 module Language.Mimsa.Project.Versions
   ( findVersions,
     findVersionsSimple,
-    findStoreExpressionByName,
   )
 where
 
@@ -23,9 +22,7 @@ import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
--- find which versions of a given binding are in use
-
--- | if we don't need to show stuff this is straightforward
+-- versions of a binding along with numbers
 findVersionsSimple ::
   Project ann ->
   Name ->
@@ -33,20 +30,15 @@ findVersionsSimple ::
     (Error ann)
     ( NonEmpty
         ( Int,
-          ExprHash,
-          Set Usage
+          ExprHash
         )
     )
 findVersionsSimple project name = do
   versioned <- first StoreErr (findInProject project name)
-  let findUse hash =
-        (,) hash <$> first StoreErr (findUsages project hash)
-  as <- traverse findUse versioned
-  let numbered = NE.zip (NE.fromList [1 ..]) as
-  pure $
-    NE.reverse $
-      (\(i, (hash, usages)) -> (i, hash, usages)) <$> numbered
+  pure . NE.reverse . NE.zip (NE.fromList [1 ..]) $ versioned
 
+-- find which versions of a given binding are in use and resolve them to
+-- expressions
 findVersions ::
   Project Annotation ->
   Name ->
@@ -80,16 +72,6 @@ getStoreExpression (Project store' _ _ _) exprHash =
   case M.lookup exprHash (getStore store') of
     Just storeExpression' -> Right storeExpression'
     _ -> Left (CouldNotFindStoreExpression exprHash)
-
-hush :: Either e a -> Maybe a
-hush (Right a) = Just a
-hush _ = Nothing
-
-findStoreExpressionByName :: Project ann -> Name -> Maybe (StoreExpression ann)
-findStoreExpressionByName env name =
-  case findInProject env name of
-    Right hashes -> hush $ getStoreExpression env (NE.last hashes)
-    _ -> Nothing
 
 getExprDetails ::
   Project Annotation ->

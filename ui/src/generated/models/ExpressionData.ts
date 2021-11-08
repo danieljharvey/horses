@@ -7,14 +7,14 @@ import type { SourceItem } from './SourceItem'
 import type { UnitTestData } from './UnitTestData'
 
 export type ExpressionData = {
-  edInput: string
-  edType: string
+  edHash: string
+  edUnitTests: Array<UnitTestData>
   edRuntimes: Record<string, RuntimeData>
   edBindings: Record<string, string>
-  edSourceItems: Array<SourceItem>
+  edInput: string
   edPretty: string
-  edHash: string
+  edType: string
   edTypeBindings: Record<string, string>
+  edSourceItems: Array<SourceItem>
   edGraphviz: string
-  edUnitTests: Array<UnitTestData>
 }

@@ -4,7 +4,7 @@
 
 export type SourceSpan = {
   ssColStart: number
-  ssRowEnd: number
-  ssRowStart: number
   ssColEnd: number
+  ssRowStart: number
+  ssRowEnd: number
 }

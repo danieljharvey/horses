@@ -41,6 +41,7 @@ import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Persistence
+import Language.Mimsa.Project.Usages
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
@@ -111,8 +112,7 @@ outputTypeBindings project =
 -- number, exprHash, usages elsewhere
 data BindingVersion = BindingVersion
   { bvNumber :: Int,
-    bvExprHash :: ExprHash,
-    bvUsages :: Set Usage
+    bvExprHash :: ExprHash
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -123,7 +123,8 @@ data ProjectData = ProjectData
   { pdHash :: ProjectHash,
     pdBindings :: Map Name Text,
     pdTypeBindings :: Map TyCon Text,
-    pdVersions :: Map Name (NE.NonEmpty BindingVersion)
+    pdVersions :: Map Name (NE.NonEmpty BindingVersion),
+    pdUsages :: Map ExprHash (Set Usage)
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -148,7 +149,11 @@ versionsForBinding ::
   Handler (NE.NonEmpty BindingVersion)
 versionsForBinding prj name = do
   versions <- handleEither InternalError (findVersionsSimple prj name)
-  pure $ (\(i, hash, usages) -> BindingVersion i hash usages) <$> versions
+  pure $ uncurry BindingVersion <$> versions
+
+usagesForExprHash :: Project ann -> ExprHash -> Handler (Set Usage)
+usagesForExprHash prj exprHash =
+  handleEither InternalError (findUsages prj exprHash)
 
 -- given a new Project, save it and return the hash and bindings
 projectDataHandler ::
@@ -157,11 +162,16 @@ projectDataHandler ::
   Project ann ->
   Handler ProjectData
 projectDataHandler mimsaEnv env = do
+  -- get all versions of a binding and numbers them
   let nameMap =
         M.mapWithKey const
           <$> getBindings . getCurrentBindings . prjBindings
           $ env
   versions <- traverse (versionsForBinding env) nameMap
+  -- list usages of each exprhash in the project
+  let hashesMap = M.mapWithKey const <$> getStore . prjStore $ env
+  usages <- traverse (usagesForExprHash env) hashesMap
+  -- save project file
   projHash <-
     handleMimsaM
       (mimsaConfig mimsaEnv)
@@ -173,6 +183,7 @@ projectDataHandler mimsaEnv env = do
       (outputBindings env)
       (outputTypeBindings env)
       versions
+      usages
 
 -- given a project hash, find the project
 loadProjectHandler ::

@@ -5,6 +5,6 @@
 import type { ExpressionData } from './ExpressionData'
 
 export type EvaluateResponse = {
-  erResult: string
   erExpressionData: ExpressionData
+  erResult: string
 }
