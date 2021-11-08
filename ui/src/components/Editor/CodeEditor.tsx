@@ -1,9 +1,10 @@
 import * as React from 'react'
 import MonacoEditor, {
-  EditorDidMount,
-  ChangeHandler,
-  EditorWillMount,
-} from 'react-monaco-editor'
+  Monaco,
+  OnMount,
+  OnChange,
+  BeforeMount,
+} from '@monaco-editor/react'
 import './CodeEditor.css'
 import {
   ErrorLocation,
@@ -14,9 +15,8 @@ import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import { mimsaLanguage } from './mimsaLanguageMonaco'
 import {
-  Position,
-  languages,
   editor,
+  languages,
 } from 'monaco-editor/esm/vs/editor/editor.api'
 import {
   createMarkerForTypedHole,
@@ -42,7 +42,7 @@ const colours = {
   darkBlue: '#26428b',
 }
 
-const editorWillMount: EditorWillMount = (monaco) => {
+const editorWillMount: BeforeMount = (monaco: Monaco) => {
   monaco.languages.register({ id: 'mimsa' })
 
   // Register a tokens provider for the language
@@ -56,7 +56,7 @@ const editorWillMount: EditorWillMount = (monaco) => {
     provideCodeActions: (
       model,
       _range,
-      context,
+      _context,
       _token
     ) => {
       const suggestions = mutableTypedHoleResponses.flatMap(
@@ -88,7 +88,7 @@ const editorWillMount: EditorWillMount = (monaco) => {
   })
 
   monaco.languages.registerHoverProvider('mimsa', {
-    provideHover: (_model: unknown, position: Position) =>
+    provideHover: (_model, position) =>
       pipe(
         chooseSourceSpan([...mutableSourceItems], position),
         O.fold<SourceItem, languages.Hover>(
@@ -180,7 +180,8 @@ export const CodeEditor: React.FC<Props> = ({
   errorLocations,
   typedHoleResponses,
 }) => {
-  const monacoRef = React.useRef<MonacoEditor>(null)
+  const monacoRef =
+    React.useRef<editor.IStandaloneCodeEditor | null>(null)
 
   React.useEffect(() => {
     mutableSourceItems = sourceItems
@@ -188,36 +189,39 @@ export const CodeEditor: React.FC<Props> = ({
   }, [sourceItems, typedHoleResponses])
 
   React.useEffect(() => {
-    if (monacoRef.current && monacoRef.current.editor) {
+    if (monacoRef.current && monacoRef.current) {
       const markers = [
         ...typedHoleResponses.map(createMarkerForTypedHole),
         ...errorLocations.map(createMarkerForError),
       ]
-      const model = monacoRef.current.editor.getModel()
+      const model = monacoRef.current.getModel()
       model &&
         editor.setModelMarkers(model, 'Mimsa', markers)
     }
   }, [errorLocations, typedHoleResponses])
 
-  const editorDidMount: EditorDidMount = (editor) => {
+  const editorDidMount: OnMount = (editor) => {
     editor.focus()
+
+    // here is the editor instance
+    // you can store it in `useRef` for further usage
+    monacoRef.current = editor
   }
 
-  const onChange: ChangeHandler = (newValue) => {
-    setCode(newValue)
+  const onChange: OnChange = (newValue) => {
+    setCode(newValue || '')
   }
 
   return (
     <section className="editor">
       <MonacoEditor
-        ref={monacoRef}
         language="mimsa"
         theme="mimsa"
         value={code}
         options={options}
         onChange={onChange}
-        editorDidMount={editorDidMount}
-        editorWillMount={editorWillMount}
+        onMount={editorDidMount}
+        beforeMount={editorWillMount}
       />
     </section>
   )
