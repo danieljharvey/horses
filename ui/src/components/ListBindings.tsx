@@ -35,11 +35,26 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
     return null
   }
 
+  const getVersion = (exprHash: string) =>
+    Math.random() > 0.5 ? 1 : 2
+
   return (
     <InlineSpaced>
-      {Object.entries(items).map(([name, exprHash]) => (
+      {Object.entries(values).map(([name, exprHash]) => (
         <Link
+          depType="expression"
+          version={getVersion(exprHash)}
           key={name}
+          onClick={() => onBindingSelect(name, exprHash)}
+        >
+          {name}
+        </Link>
+      ))}
+      {Object.entries(types).map(([name, exprHash]) => (
+        <Link
+          depType="type"
+          key={name}
+          version={getVersion(exprHash)}
           onClick={() => onBindingSelect(name, exprHash)}
         >
           {name}

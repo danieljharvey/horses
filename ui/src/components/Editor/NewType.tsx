@@ -126,7 +126,11 @@ export const NewType: React.FC<Props> = ({
                 <Paragraph>Typeclasses:</Paragraph>
                 <InlineSpaced>
                   {addType.typeclasses.map((a) => (
-                    <Link onClick={() => console.log(a)}>
+                    <Link
+                      version={1}
+                      depType="type"
+                      onClick={() => console.log(a)}
+                    >
                       {a}
                     </Link>
                   ))}

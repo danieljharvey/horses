@@ -8,4 +8,27 @@ p.link {
   color: var(--greyScale0);
   cursor: pointer;
   font-size: var(--fontMedium);
+  position: relative;
+}
+
+p.link .badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  padding: 0px 6px;
+  border-radius: 50%;
+  background: var(--background-dark);
+  color: var(--greyScale100);
+}
+
+p.link.type {
+  background-color: var(--background-even-lighter);
+}
+
+p.link.type.old {
+  background-color: var(--background-a-bit-lighter);
+}
+
+p.link.expression.old {
+  background-color: var(--greyScale50);
 }

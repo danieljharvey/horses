@@ -44,6 +44,8 @@ export const projectReducer: EventReducer<
           projectHash: action.data.pdHash,
           bindings: action.data.pdBindings,
           typeBindings: action.data.pdTypeBindings,
+          versions: action.data.pdVersions,
+          usages: action.data.pdUsages,
         })(state),
         [
           fetchExpressions(
