@@ -75,6 +75,7 @@ export const NewType: React.FC<Props> = ({
               <Panel>
                 <FlexColumnSpaced>
                   <Feedback
+                    state={state}
                     result={expression}
                     onBindingSelect={onBindingSelect}
                     onFetchExpressionsForHashes={
@@ -127,9 +128,10 @@ export const NewType: React.FC<Props> = ({
                 <InlineSpaced>
                   {addType.typeclasses.map((a) => (
                     <Link
-                      version={1}
+                      versions={1}
                       depType="type"
                       onClick={() => console.log(a)}
+                      inUse={true}
                     >
                       {a}
                     </Link>
@@ -137,6 +139,7 @@ export const NewType: React.FC<Props> = ({
                 </InlineSpaced>
                 <Paragraph>Generated functions:</Paragraph>
                 <ListBindings
+                  state={state}
                   values={addType.bindings}
                   types={addType.typeBindings}
                   onBindingSelect={onBindingSelect}

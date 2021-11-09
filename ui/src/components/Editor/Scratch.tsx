@@ -1,5 +1,9 @@
 import * as React from 'react'
-import { Action, EditorState } from '../../reducer/types'
+import {
+  Action,
+  EditorState,
+  State,
+} from '../../reducer/types'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
 import { Panel } from '../View/Panel'
@@ -24,6 +28,7 @@ type Props = {
     bindingName: string,
     exprHash: ExprHash
   ) => void
+  state: State
 }
 
 export const Scratch: React.FC<Props> = ({
@@ -31,6 +36,7 @@ export const Scratch: React.FC<Props> = ({
   editor,
   onBindingSelect,
   projectHash,
+  state,
 }) => {
   const onFormatExpression = () =>
     dispatch({ type: 'FormatExpression' })
@@ -65,6 +71,7 @@ export const Scratch: React.FC<Props> = ({
             </Button>
           )}
           <Feedback
+            state={state}
             result={editor.expression}
             onBindingSelect={onBindingSelect}
             onFetchExpressionsForHashes={

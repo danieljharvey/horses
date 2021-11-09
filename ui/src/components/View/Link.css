@@ -25,10 +25,10 @@ p.link.type {
   background-color: var(--background-even-lighter);
 }
 
-p.link.type.old {
+p.link.type.unused {
   background-color: var(--background-a-bit-lighter);
 }
 
-p.link.expression.old {
+p.link.expression.unused {
   background-color: var(--greyScale50);
 }

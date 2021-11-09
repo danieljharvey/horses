@@ -86,6 +86,7 @@ export const NewTest: React.FC<Props> = ({
             <Button onClick={onAddTest}>Create test</Button>
           )}
           <Feedback
+            state={state}
             result={expression}
             onBindingSelect={onBindingSelect}
             onFetchExpressionsForHashes={

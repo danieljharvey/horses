@@ -66,6 +66,7 @@ export const TypeSearch: React.FC<Props> = ({
             <FlexColumnSpaced>
               <Paragraph>{`${items.length} matches`}</Paragraph>
               <ListBindings
+                state={state}
                 onBindingSelect={onBindingSelect}
                 values={filteredValues}
                 types={filteredTypes}

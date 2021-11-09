@@ -9,6 +9,7 @@ import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { ExprHash } from '../../types'
 import { Compile } from './Compile'
+import { State } from '../../reducer/types'
 
 type Props = {
   projectHash: ExprHash
@@ -18,10 +19,12 @@ type Props = {
     exprHash: ExprHash
   ) => void
   onFetchExpressionsForHashes: (hashes: ExprHash[]) => void
+  state: State
 }
 
 export const Feedback: React.FC<Props> = ({
   result,
+  state,
   onBindingSelect,
   onFetchExpressionsForHashes,
 }) => {
@@ -58,6 +61,7 @@ export const Feedback: React.FC<Props> = ({
             unitTests={result.expression.edUnitTests}
           />
           <ListBindings
+            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
@@ -90,6 +94,7 @@ export const Feedback: React.FC<Props> = ({
             )
           )}
           <ListBindings
+            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
@@ -125,6 +130,7 @@ export const Feedback: React.FC<Props> = ({
           )}
 
           <ListBindings
+            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
@@ -148,6 +154,7 @@ export const Feedback: React.FC<Props> = ({
           <Paragraph>Test created</Paragraph>
           <UnitTest unitTest={result.unitTest} />
           <ListBindings
+            state={state}
             values={result.unitTest.utdBindings}
             types={{}}
             onBindingSelect={onBindingSelect}

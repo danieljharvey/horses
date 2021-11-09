@@ -79,6 +79,7 @@ export const View: React.FC<Props> = ({
         {showBindingList && (
           <PanelRow>
             <FilteredBindingList
+              state={state}
               values={state.project.bindings}
               types={state.project.typeBindings}
               onBindingSelect={onBindingSelect}
@@ -107,6 +108,7 @@ const getScreenInner = (
     case 'scratch':
       return [
         <Scratch
+          state={state}
           projectHash={state.project.projectHash}
           dispatch={dispatch}
           editor={screen.editor}

@@ -4,24 +4,26 @@ import './Link.css'
 type Props = {
   onClick: () => void
   depType: 'expression' | 'type'
-  version: number
+  versions: number
+  inUse: boolean
 }
 
 export const Link: React.FC<Props> = ({
   onClick,
   children,
   depType,
-  version,
+  versions,
+  inUse,
 }) => (
   <p
     onClick={() => onClick()}
-    className={`link${version > 1 ? ' old' : ''} ${
+    className={`link${inUse === false ? ' unused' : ''} ${
       depType === 'expression' ? 'expression' : 'type'
     }`}
   >
     {children}
-    {version > 1 && (
-      <span className="badge">{`v${version}`}</span>
+    {versions > 1 && (
+      <span className="badge">{`${versions}`}</span>
     )}
   </p>
 )

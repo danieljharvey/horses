@@ -72,6 +72,7 @@ export const EditBinding: React.FC<Props> = ({
           </Button>
         )}
         <Feedback
+          state={state}
           result={expression}
           onBindingSelect={onBindingSelect}
           onFetchExpressionsForHashes={

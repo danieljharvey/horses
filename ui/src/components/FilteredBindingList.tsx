@@ -4,6 +4,7 @@ import './FilteredBindingList.css'
 import { ExprHash } from '../types/'
 import { TextInput } from './View/TextInput'
 import { Panel } from './View/Panel'
+import { State } from '../reducer/types'
 
 type Props = {
   values: Record<string, ExprHash>
@@ -13,6 +14,7 @@ type Props = {
     exprHash: ExprHash
   ) => void
   onFetchExpressionsForHashes: (hashes: ExprHash[]) => void
+  state: State
 }
 
 const filterRecord = <A,>(
@@ -50,6 +52,7 @@ export const FilteredBindingList: React.FC<Props> = ({
   types,
   onBindingSelect,
   onFetchExpressionsForHashes,
+  state,
 }) => {
   const [filterText, setFilterText] = React.useState('')
   const filteredValues = filterRecord(filterText, values)
@@ -68,6 +71,7 @@ export const FilteredBindingList: React.FC<Props> = ({
         onFetchExpressionsForHashes={
           onFetchExpressionsForHashes
         }
+        state={state}
       />
     </Panel>
   )

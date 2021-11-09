@@ -2,6 +2,11 @@ import * as React from 'react'
 import { ExprHash } from '../types/'
 import { Link } from './View/Link'
 import { InlineSpaced } from './View/InlineSpaced'
+import {
+  countActiveVersionsOfBinding,
+  getUsagesOfExprHash,
+} from '../reducer/project/selectors'
+import { State } from '../reducer/types'
 
 type ListBindingsProps = {
   values: Record<string, ExprHash>
@@ -11,6 +16,7 @@ type ListBindingsProps = {
     exprHash: string
   ) => void
   onFetchExpressionsForHashes: (hashes: ExprHash[]) => void
+  state: State
 }
 
 export const ListBindings: React.FC<ListBindingsProps> = ({
@@ -18,6 +24,7 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
   types,
   onBindingSelect,
   onFetchExpressionsForHashes,
+  state,
 }) => {
   // try and re-use it this where possible
   const items = { ...values, ...types }
@@ -35,17 +42,21 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
     return null
   }
 
-  const getVersion = (exprHash: string) =>
-    Math.random() > 0.5 ? 1 : 2
+  const getActiveVersions = (bindingName: string) =>
+    countActiveVersionsOfBinding(bindingName, state)
+
+  const bindingInUse = (exprHash: ExprHash) =>
+    getUsagesOfExprHash(exprHash, state).length > 0
 
   return (
     <InlineSpaced>
       {Object.entries(values).map(([name, exprHash]) => (
         <Link
           depType="expression"
-          version={getVersion(exprHash)}
+          versions={getActiveVersions(name)}
           key={name}
           onClick={() => onBindingSelect(name, exprHash)}
+          inUse={bindingInUse(exprHash)}
         >
           {name}
         </Link>
@@ -54,8 +65,9 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
         <Link
           depType="type"
           key={name}
-          version={getVersion(exprHash)}
+          versions={0}
           onClick={() => onBindingSelect(name, exprHash)}
+          inUse={bindingInUse(exprHash)}
         >
           {name}
         </Link>
