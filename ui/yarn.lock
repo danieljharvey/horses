@@ -3019,6 +3019,11 @@ bindings@^1.5.0:
   dependencies:
     file-uri-to-path "1.0.0"
 
+blob-polyfill@^5.0.20210201:
+  version "5.0.20210201"
+  resolved "https://registry.yarnpkg.com/blob-polyfill/-/blob-polyfill-5.0.20210201.tgz#0024bfa5dcc3440eb5a2f1e5991cb1612a558465"
+  integrity sha512-SrH6IG6aXL9pCgSysBCiDpGcAJ1j6/c1qCwR3sTEQJhb+MTk6FITNA6eW6WNYQDNZVi4Z9GjxH5v2MMTv59CrQ==
+
 bluebird@^3.5.5:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.7.2.tgz#9f229c15be272454ffa973ace0dbee79a1b0c36f"
@@ -3847,6 +3852,14 @@ create-hmac@^1.1.0, create-hmac@^1.1.4, create-hmac@^1.1.7:
     ripemd160 "^2.0.0"
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
+
+cross-blob@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/cross-blob/-/cross-blob-2.0.1.tgz#7c187282e0855353705ed9ac5af2ee7f27c910c6"
+  integrity sha512-ARuKPPo3I6DSqizal4UCyMCiGPQdMpMJS3Owx6Lleuh26vSt2UnfWRwbMLCYqbJUrcol+KzGVSLR91ezSHP80A==
+  dependencies:
+    blob-polyfill "^5.0.20210201"
+    fetch-blob "^2.1.2"
 
 cross-spawn@7.0.3, cross-spawn@^7.0.0, cross-spawn@^7.0.2:
   version "7.0.3"
@@ -5259,6 +5272,11 @@ fb-watchman@^2.0.0:
   integrity sha512-DkPJKQeY6kKwmuMretBhr7G6Vodr7bFwDYTXIkfG1gjvNpaxBTQV3PbXg6bR1c1UP4jPOX0jHUbbHANL9vRjVg==
   dependencies:
     bser "2.1.1"
+
+fetch-blob@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/fetch-blob/-/fetch-blob-2.1.2.tgz#a7805db1361bd44c1ef62bb57fb5fe8ea173ef3c"
+  integrity sha512-YKqtUDwqLyfyMnmbw8XD6Q8j9i/HggKtPEI+pZ1+8bvheBu78biSmNaXWusx1TauGqtUUGx/cBb1mKdq2rLYow==
 
 figgy-pudding@^3.5.1:
   version "3.5.2"
@@ -8201,16 +8219,17 @@ open@^7.0.2:
     is-docker "^2.0.0"
     is-wsl "^2.1.1"
 
-openapi-typescript-codegen@0.11.8:
-  version "0.11.8"
-  resolved "https://registry.yarnpkg.com/openapi-typescript-codegen/-/openapi-typescript-codegen-0.11.8.tgz#d359ba71813f72bb8c72ccaa7965655eb5a69e6f"
-  integrity sha512-Hurkrn7tfOT4UibZaJljUfoApU80SU8UF/o0zFc/NjG1si0TjXl1L8iT7lF0alBu6D87RZNwfojAh8v4//IL9w==
+openapi-typescript-codegen@0.12.1:
+  version "0.12.1"
+  resolved "https://registry.yarnpkg.com/openapi-typescript-codegen/-/openapi-typescript-codegen-0.12.1.tgz#6c9822d2770b6498b21406b17c7612ec3b201c3f"
+  integrity sha512-dzLcbk/B2365Wg2EYOYn7xi5ZbbDAZdRX/hEEdFqfBPvg9AaILtLxxMEUOyt1510xidtDi7d0VHj9jQXWd7FbQ==
   dependencies:
     "@types/node-fetch" "^2.5.12"
     abort-controller "^3.0.0"
     axios "^0.24.0"
     camelcase "^6.2.0"
     commander "^8.3.0"
+    cross-blob "^2.0.1"
     form-data "^4.0.0"
     handlebars "^4.7.6"
     json-schema-ref-parser "^9.0.7"
