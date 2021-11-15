@@ -2,7 +2,7 @@
 
 module Language.Mimsa.Project.Versions
   ( findVersions,
-    findStoreExpressionByName,
+    findVersionsSimple,
   )
 where
 
@@ -22,17 +22,41 @@ import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
--- find which versions of a given binding are in use
+-- versions of a binding along with numbers
+findVersionsSimple ::
+  Project ann ->
+  Name ->
+  Either
+    (Error ann)
+    ( NonEmpty
+        ( Int,
+          ExprHash
+        )
+    )
+findVersionsSimple project name = do
+  versioned <- first StoreErr (findInProject project name)
+  pure . NE.reverse . NE.zip (NE.fromList [1 ..]) $ versioned
 
+-- find which versions of a given binding are in use and resolve them to
+-- expressions
 findVersions ::
   Project Annotation ->
   Name ->
-  Either (Error Annotation) (NonEmpty (Int, Expr Variable Annotation, MonoType, Set Usage))
+  Either
+    (Error Annotation)
+    ( NonEmpty
+        ( Int,
+          Expr Variable Annotation,
+          MonoType,
+          Set Usage,
+          ExprHash
+        )
+    )
 findVersions project name = do
   versioned <- first StoreErr (findInProject project name)
   as <- traverse (getExprDetails project) versioned
-  let nice = NE.zip (NE.fromList [1 ..]) as
-  pure $ NE.reverse $ (\(i, (a, b, c)) -> (i, a, b, c)) <$> nice
+  let numbered = NE.zip (NE.fromList [1 ..]) as
+  pure $ NE.reverse $ (\(i, (a, b, c, d)) -> (i, a, b, c, d)) <$> numbered
 
 findInProject :: Project ann -> Name -> Either StoreError (NonEmpty ExprHash)
 findInProject project name =
@@ -49,20 +73,10 @@ getStoreExpression (Project store' _ _ _) exprHash =
     Just storeExpression' -> Right storeExpression'
     _ -> Left (CouldNotFindStoreExpression exprHash)
 
-hush :: Either e a -> Maybe a
-hush (Right a) = Just a
-hush _ = Nothing
-
-findStoreExpressionByName :: Project ann -> Name -> Maybe (StoreExpression ann)
-findStoreExpressionByName env name =
-  case findInProject env name of
-    Right hashes -> hush $ getStoreExpression env (NE.last hashes)
-    _ -> Nothing
-
 getExprDetails ::
   Project Annotation ->
   ExprHash ->
-  Either (Error Annotation) (Expr Variable Annotation, MonoType, Set Usage)
+  Either (Error Annotation) (Expr Variable Annotation, MonoType, Set Usage, ExprHash)
 getExprDetails project exprHash = do
   usages <-
     first StoreErr (findUsages project exprHash)
@@ -71,4 +85,4 @@ getExprDetails project exprHash = do
   typeMap <- Actions.getTypeMap project
   resolvedExpr <-
     Actions.resolveStoreExpression (prjStore project) typeMap "" storeExpr
-  pure (reExpression resolvedExpr, reMonoType resolvedExpr, usages)
+  pure (reExpression resolvedExpr, reMonoType resolvedExpr, usages, exprHash)

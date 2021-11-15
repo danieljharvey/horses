@@ -8,7 +8,7 @@ import { NewTest } from './Editor/NewTest'
 import { NewType } from './Editor/NewType'
 import { ProjectGraph } from './ProjectGraph'
 import { ExpressionGraph } from './ExpressionGraph'
-import { flow } from 'fp-ts/function'
+
 import { TypeSearch } from './TypeSearch/TypeSearch'
 import { FilteredBindingList } from './FilteredBindingList'
 import { Menu } from './Menu'
@@ -22,7 +22,6 @@ import { Screen } from '../reducer/view/types'
 import { Screen as ScreenComponent } from './View/Screen'
 import { PanelRow } from './View/PanelRow'
 import { ExprHash } from '../types'
-import { fetchExpressionsForHashes } from '../reducer/project/actions'
 
 type Props = {
   state: State
@@ -55,17 +54,11 @@ export const View: React.FC<Props> = ({
     }
   }
 
-  const onFetchExpressionsForHashes = flow(
-    fetchExpressionsForHashes,
-    dispatch
-  )
-
   const [inner, showBindingList] = getScreenInner(
     screen,
     state,
     dispatch,
-    onBindingSelect,
-    onFetchExpressionsForHashes
+    onBindingSelect
   )
 
   return (
@@ -79,12 +72,10 @@ export const View: React.FC<Props> = ({
         {showBindingList && (
           <PanelRow>
             <FilteredBindingList
+              state={state}
               values={state.project.bindings}
               types={state.project.typeBindings}
               onBindingSelect={onBindingSelect}
-              onFetchExpressionsForHashes={
-                onFetchExpressionsForHashes
-              }
             />
           </PanelRow>
         )}
@@ -100,13 +91,13 @@ const getScreenInner = (
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash
-  ) => void,
-  onFetchExpressionsForHashes: (hashes: ExprHash[]) => void
+  ) => void
 ) => {
   switch (screen.type) {
     case 'scratch':
       return [
         <Scratch
+          state={state}
           projectHash={state.project.projectHash}
           dispatch={dispatch}
           editor={screen.editor}
@@ -142,9 +133,6 @@ const getScreenInner = (
         <TypeSearch
           state={state}
           onBindingSelect={onBindingSelect}
-          onFetchExpressionsForHashes={
-            onFetchExpressionsForHashes
-          }
         />,
         false,
       ]

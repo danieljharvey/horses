@@ -1,14 +1,16 @@
 import * as React from 'react'
-import { Action, EditorState } from '../../reducer/types'
+import {
+  Action,
+  EditorState,
+  State,
+} from '../../reducer/types'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
 import { Panel } from '../View/Panel'
-
+import * as O from 'fp-ts/Option'
 import { Button } from '../View/Button'
 import { ExprHash } from '../../types'
-import { fetchExpressionsForHashes } from '../../reducer/project/actions'
 
-import { flow } from 'fp-ts/function'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import {
   getTypedHolesFromEditor,
@@ -24,6 +26,7 @@ type Props = {
     bindingName: string,
     exprHash: ExprHash
   ) => void
+  state: State
 }
 
 export const Scratch: React.FC<Props> = ({
@@ -31,17 +34,13 @@ export const Scratch: React.FC<Props> = ({
   editor,
   onBindingSelect,
   projectHash,
+  state,
 }) => {
   const onFormatExpression = () =>
     dispatch({ type: 'FormatExpression' })
 
   const onCodeChange = (text: string) =>
     dispatch({ type: 'EvaluateExpression', text })
-
-  const onFetchExpressionsForHashes = flow(
-    fetchExpressionsForHashes,
-    dispatch
-  )
 
   const typedHoleResponses = getTypedHolesFromEditor(editor)
   const errorLocations = getErrorLocationsFromEditor(editor)
@@ -65,11 +64,10 @@ export const Scratch: React.FC<Props> = ({
             </Button>
           )}
           <Feedback
+            bindingName={O.none}
+            state={state}
             result={editor.expression}
             onBindingSelect={onBindingSelect}
-            onFetchExpressionsForHashes={
-              onFetchExpressionsForHashes
-            }
             projectHash={projectHash}
           />
         </FlexColumnSpaced>

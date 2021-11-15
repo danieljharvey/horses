@@ -8,6 +8,8 @@ export const initialProject = (
   projectHash,
   bindings: {},
   typeBindings: {},
+  versions: {},
+  usages: {},
 })
 
 export const createProject = (): ProjectEvent => ({

@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { UnitTestData } from '../types/'
 import { UnitTest } from './UnitTest'
+import { FlexColumnSpaced } from './View/FlexColumnSpaced'
+import { InlineSpaced } from './View/InlineSpaced'
 import { Paragraph } from './View/Paragraph'
 
 type Props = {
@@ -21,18 +23,20 @@ export const ListTests: React.FC<Props> = ({
     return null
   }
 
-  const message = `${passing.length}/${unitTests.length} tests pass`
+  const message = `Tests - ${passing.length}/${unitTests.length} pass`
   return (
-    <section className="list-tests">
+    <FlexColumnSpaced>
       <Paragraph>{message}</Paragraph>
-      <>
-        {failing.map((unitTest, key) => (
-          <UnitTest unitTest={unitTest} key={key} />
-        ))}
-        {passing.map((unitTest, key) => (
-          <UnitTest unitTest={unitTest} key={key} />
-        ))}
-      </>
-    </section>
+      <InlineSpaced>
+        <>
+          {failing.map((unitTest, key) => (
+            <UnitTest unitTest={unitTest} key={key} />
+          ))}
+          {passing.map((unitTest, key) => (
+            <UnitTest unitTest={unitTest} key={key} />
+          ))}
+        </>
+      </InlineSpaced>
+    </FlexColumnSpaced>
   )
 }

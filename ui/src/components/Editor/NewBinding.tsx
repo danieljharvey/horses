@@ -6,7 +6,7 @@ import {
   Action,
   EditorState,
 } from '../../reducer/types'
-import { pipe, flow } from 'fp-ts/function'
+import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
 import { getProjectBindings } from '../../reducer/project/selectors'
@@ -25,7 +25,6 @@ import { Button } from '../View/Button'
 import { Paragraph } from '../View/Paragraph'
 import { TextInput } from '../View/TextInput'
 import { ExprHash } from '../../types'
-import { fetchExpressionsForHashes } from '../../reducer/project/actions'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 
 type Props = {
@@ -61,10 +60,6 @@ export const NewBinding: React.FC<Props> = ({
       bindingName: existingName || name,
     })
 
-  const onFetchExpressionsForHashes = flow(
-    fetchExpressionsForHashes,
-    dispatch
-  )
   const validBinding = existingName
     ? E.right(existingName)
     : validateBinding(
@@ -113,11 +108,10 @@ export const NewBinding: React.FC<Props> = ({
                   </Button>
                 )}
                 <Feedback
+                  bindingName={O.none}
+                  state={state}
                   result={expression}
                   onBindingSelect={onBindingSelect}
-                  onFetchExpressionsForHashes={
-                    onFetchExpressionsForHashes
-                  }
                   projectHash={state.project.projectHash}
                 />
               </FlexColumnSpaced>

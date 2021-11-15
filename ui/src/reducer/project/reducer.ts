@@ -14,11 +14,23 @@ import {
   fetchExpressions,
   saveToSessionStorage,
 } from './events'
+import { ExprHash, ProjectData } from '../../types'
 export * from './events'
 export * from './actions'
 export * from './types'
 
 const projectL = Lens.fromProp<State>()('project')
+
+// all hashes mentioned in project, for fetching
+const hashesForProjectData = (
+  projectData: ProjectData
+): ExprHash[] => [
+  ...Object.values(projectData.pdBindings),
+  ...Object.values(projectData.pdTypeBindings),
+  ...Object.values(projectData.pdVersions).flatMap((bvs) =>
+    bvs.map((bv) => bv.bvExprHash)
+  ),
+]
 
 export const projectReducer: EventReducer<
   State,
@@ -38,18 +50,20 @@ export const projectReducer: EventReducer<
 
     case 'StoreProjectData':
       // store new bindings, fetching new expressions
+
       return stateAndEvents(
         projectL.set({
           ...state.project,
           projectHash: action.data.pdHash,
           bindings: action.data.pdBindings,
           typeBindings: action.data.pdTypeBindings,
+          versions: action.data.pdVersions,
+          usages: action.data.pdUsages,
         })(state),
         [
           fetchExpressions(
             [
-              ...Object.values(action.data.pdBindings),
-              ...Object.values(action.data.pdTypeBindings),
+              ...hashesForProjectData(action.data),
               ...action.extraHashes,
             ],
             action.data.pdHash

@@ -6,6 +6,7 @@ import {
 } from '../../reducer/types'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
+import * as O from 'fp-ts/Option'
 
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
@@ -16,8 +17,6 @@ import {
 } from '../../reducer/editor/selector'
 import { TextInput } from '../View/TextInput'
 import { ExprHash } from '../../types'
-import { fetchExpressionsForHashes } from '../../reducer/project/actions'
-import { flow } from 'fp-ts/function'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 
 type Props = {
@@ -47,11 +46,6 @@ export const NewTest: React.FC<Props> = ({
 
   const testExists =
     editor.expression.type === 'ShowUnitTest'
-
-  const onFetchExpressionsForHashes = flow(
-    fetchExpressionsForHashes,
-    dispatch
-  )
 
   const onAddTest = () =>
     dispatch({
@@ -86,11 +80,10 @@ export const NewTest: React.FC<Props> = ({
             <Button onClick={onAddTest}>Create test</Button>
           )}
           <Feedback
+            bindingName={O.none}
+            state={state}
             result={expression}
             onBindingSelect={onBindingSelect}
-            onFetchExpressionsForHashes={
-              onFetchExpressionsForHashes
-            }
             projectHash={state.project.projectHash}
           />
         </FlexColumnSpaced>

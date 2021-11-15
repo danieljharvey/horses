@@ -17,11 +17,14 @@ button {
   --panel-row-flex-direction: column;
 
   --greyScale100: snow;
+  --greyScale50: #ede3e3;
   --greyScale0: #333333;
   --background: lightpink;
   --background-dark: rgb(226, 160, 170);
   --background-darker: rgb(207, 148, 157);
   --background-lighter: pink;
+  --background-even-lighter: #ffe7ea;
+  --background-a-bit-lighter: #fad3d8;
 
   --negative: cornflowerblue;
 

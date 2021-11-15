@@ -1,5 +1,6 @@
 import * as React from 'react'
 
+import * as O from 'fp-ts/Option'
 import { ExpressionResult } from '../../reducer/editor/reducer'
 import { ListBindings } from '../ListBindings'
 import { UnitTest } from '../UnitTest'
@@ -7,24 +8,43 @@ import { ListTests } from '../ListTests'
 import { Code } from '../View/Code'
 import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
-import { ExprHash } from '../../types'
-import { Compile } from './Compile'
+import { BindingVersion, ExprHash } from '../../types'
+import { State } from '../../reducer/types'
+import { ListVersions } from '../ListVersions'
+import {
+  getUsagesOfExprHash,
+  getVersionsOfBinding,
+} from '../../reducer/project/selectors'
+import { pipe } from 'fp-ts/function'
+import { ListCompile } from '../ListCompile'
+import { ListUsages } from '../ListUsages'
 
 type Props = {
   projectHash: ExprHash
   result: ExpressionResult
+  bindingName: O.Option<string>
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash
   ) => void
-  onFetchExpressionsForHashes: (hashes: ExprHash[]) => void
+  state: State
 }
 
 export const Feedback: React.FC<Props> = ({
   result,
+  bindingName,
+  state,
   onBindingSelect,
-  onFetchExpressionsForHashes,
 }) => {
+  // need to return new bindings and typeBindings
+  const versions = pipe(
+    bindingName,
+    O.map((name) => getVersionsOfBinding(name, state)),
+    O.getOrElse(() => [] as BindingVersion[])
+  )
+
+  const getUsages = (exprHash: ExprHash) =>
+    getUsagesOfExprHash(exprHash, state)
   switch (result.type) {
     case 'ShowErrorResponse':
       return (
@@ -49,7 +69,6 @@ export const Feedback: React.FC<Props> = ({
     case 'ShowEvaluate':
       return (
         <FlexColumnSpaced>
-          {/*<Paragraph>#{result.expression.edHash}</Paragraph>*/}
           <Code>{result.evaluatedValue}</Code>
           <Code codeType="type">
             {result.expression.edType}
@@ -58,17 +77,18 @@ export const Feedback: React.FC<Props> = ({
             unitTests={result.expression.edUnitTests}
           />
           <ListBindings
+            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
-            onFetchExpressionsForHashes={
-              onFetchExpressionsForHashes
-            }
+          />
+          <ListUsages
+            usages={getUsages(result.expression.edHash)}
+            onBindingSelect={onBindingSelect}
           />
         </FlexColumnSpaced>
       )
     case 'ShowUpdatedBinding':
-      // need to return new bindings and typeBindings
       return (
         <FlexColumnSpaced>
           <Paragraph>{`🐴 Updated ${result.bindingName}`}</Paragraph>
@@ -78,24 +98,34 @@ export const Feedback: React.FC<Props> = ({
           <ListTests
             unitTests={result.expression.edUnitTests}
           />
-          {Object.values(result.expression.edRuntimes).map(
-            (rt) => (
-              <>
-                <Compile
-                  exprHash={result.expression.edHash}
-                  runtime={rt.rtdName}
-                  title={rt.rtdName}
-                />
-              </>
-            )
-          )}
+          <ListCompile
+            runtimes={Object.values(
+              result.expression.edRuntimes
+            )}
+            exprHash={result.expression.edHash}
+          />
           <ListBindings
+            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
-            onFetchExpressionsForHashes={
-              onFetchExpressionsForHashes
-            }
+          />
+          {pipe(
+            bindingName,
+            O.map((name) => (
+              <ListVersions
+                versions={versions}
+                currentHash={result.expression.edHash}
+                onBindingSelect={onBindingSelect}
+                name={name}
+                state={state}
+              />
+            )),
+            O.getOrElse(() => <div />)
+          )}
+          <ListUsages
+            usages={getUsages(result.expression.edHash)}
+            onBindingSelect={onBindingSelect}
           />
         </FlexColumnSpaced>
       )
@@ -103,34 +133,40 @@ export const Feedback: React.FC<Props> = ({
     case 'ShowBinding':
       return (
         <FlexColumnSpaced>
-          {/*<Paragraph>
-            🐴 {result.expression.edHash}
-          </Paragraph>*/}
           <Code codeType="type">
             {result.expression.edType}
           </Code>
           <ListTests
             unitTests={result.expression.edUnitTests}
           />
-          {Object.values(result.expression.edRuntimes).map(
-            (rt) => (
-              <FlexColumnSpaced>
-                <Compile
-                  exprHash={result.expression.edHash}
-                  runtime={rt.rtdName}
-                  title={rt.rtdName}
-                />
-              </FlexColumnSpaced>
-            )
-          )}
-
+          <ListCompile
+            runtimes={Object.values(
+              result.expression.edRuntimes
+            )}
+            exprHash={result.expression.edHash}
+          />
           <ListBindings
+            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
-            onFetchExpressionsForHashes={
-              onFetchExpressionsForHashes
-            }
+          />
+          {pipe(
+            bindingName,
+            O.map((name) => (
+              <ListVersions
+                versions={versions}
+                currentHash={result.expression.edHash}
+                onBindingSelect={onBindingSelect}
+                name={name}
+                state={state}
+              />
+            )),
+            O.getOrElse(() => <div />)
+          )}
+          <ListUsages
+            usages={getUsages(result.expression.edHash)}
+            onBindingSelect={onBindingSelect}
           />
         </FlexColumnSpaced>
       )
@@ -148,12 +184,10 @@ export const Feedback: React.FC<Props> = ({
           <Paragraph>Test created</Paragraph>
           <UnitTest unitTest={result.unitTest} />
           <ListBindings
+            state={state}
             values={result.unitTest.utdBindings}
             types={{}}
             onBindingSelect={onBindingSelect}
-            onFetchExpressionsForHashes={
-              onFetchExpressionsForHashes
-            }
           />
         </FlexColumnSpaced>
       )

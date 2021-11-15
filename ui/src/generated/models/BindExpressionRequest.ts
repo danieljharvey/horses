@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export type BindExpressionRequest = {
-  beBindingName: string
   beProjectHash: string
   beExpression: string
+  beBindingName: string
 }
