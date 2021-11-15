@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export enum Primitive {
-  MTINT = 'MTInt',
-  MTSTRING = 'MTString',
-  MTBOOL = 'MTBool',
+    MTINT = 'MTInt',
+    MTSTRING = 'MTString',
+    MTBOOL = 'MTBool',
 }

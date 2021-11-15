@@ -17,13 +17,11 @@ type Props = {
     bindingName: string,
     exprHash: ExprHash
   ) => void
-  onFetchExpressionsForHashes: (hashes: ExprHash[]) => void
 }
 
 export const TypeSearch: React.FC<Props> = ({
   state,
   onBindingSelect,
-  onFetchExpressionsForHashes,
 }) => {
   const [searchText, setSearchText] = React.useState('')
   const [items, setItems] = React.useState<string[]>([])
@@ -70,9 +68,6 @@ export const TypeSearch: React.FC<Props> = ({
                 onBindingSelect={onBindingSelect}
                 values={filteredValues}
                 types={filteredTypes}
-                onFetchExpressionsForHashes={
-                  onFetchExpressionsForHashes
-                }
               />
             </FlexColumnSpaced>
           )}

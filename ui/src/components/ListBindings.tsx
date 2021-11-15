@@ -7,6 +7,8 @@ import {
   getUsagesOfExprHash,
 } from '../reducer/project/selectors'
 import { State } from '../reducer/types'
+import { FlexColumnSpaced } from './View/FlexColumnSpaced'
+import { Paragraph } from './View/Paragraph'
 
 type ListBindingsProps = {
   values: Record<string, ExprHash>
@@ -15,7 +17,6 @@ type ListBindingsProps = {
     bindingName: string,
     exprHash: string
   ) => void
-  onFetchExpressionsForHashes: (hashes: ExprHash[]) => void
   state: State
 }
 
@@ -23,20 +24,10 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
   values,
   types,
   onBindingSelect,
-  onFetchExpressionsForHashes,
   state,
 }) => {
   // try and re-use it this where possible
   const items = { ...values, ...types }
-
-  const hashes = Object.values(items)
-
-  React.useEffect(() => {
-    if (hashes.length > 0) {
-      onFetchExpressionsForHashes(hashes)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   if (Object.keys(items).length < 1) {
     return null
@@ -49,29 +40,33 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
     getUsagesOfExprHash(exprHash, state).length > 0
 
   return (
-    <InlineSpaced>
-      {Object.entries(values).map(([name, exprHash]) => (
-        <Link
-          depType="expression"
-          versions={getActiveVersions(name)}
-          key={name}
-          onClick={() => onBindingSelect(name, exprHash)}
-          inUse={bindingInUse(exprHash)}
-        >
-          {name}
-        </Link>
-      ))}
-      {Object.entries(types).map(([name, exprHash]) => (
-        <Link
-          depType="type"
-          key={name}
-          versions={0}
-          onClick={() => onBindingSelect(name, exprHash)}
-          inUse={bindingInUse(exprHash)}
-        >
-          {name}
-        </Link>
-      ))}
-    </InlineSpaced>
+    <FlexColumnSpaced>
+      <Paragraph>Bindings</Paragraph>
+
+      <InlineSpaced>
+        {Object.entries(values).map(([name, exprHash]) => (
+          <Link
+            depType="expression"
+            number={getActiveVersions(name)}
+            key={name}
+            onClick={() => onBindingSelect(name, exprHash)}
+            highlight={bindingInUse(exprHash)}
+          >
+            {name}
+          </Link>
+        ))}
+        {Object.entries(types).map(([name, exprHash]) => (
+          <Link
+            depType="type"
+            key={name}
+            number={0}
+            onClick={() => onBindingSelect(name, exprHash)}
+            highlight={bindingInUse(exprHash)}
+          >
+            {name}
+          </Link>
+        ))}
+      </InlineSpaced>
+    </FlexColumnSpaced>
   )
 }

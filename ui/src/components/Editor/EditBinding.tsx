@@ -7,8 +7,7 @@ import * as O from 'fp-ts/Option'
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
 import { ExprHash } from '../../types'
-import { fetchExpressionsForHashes } from '../../reducer/project/actions'
-import { pipe } from 'fp-ts/lib/function'
+
 import {
   getErrorLocations,
   getSourceItems,
@@ -47,10 +46,6 @@ export const EditBinding: React.FC<Props> = ({
     }
   }
 
-  const onFetchExpressionsForHashes = (
-    hashes: ExprHash[]
-  ) => pipe(hashes, fetchExpressionsForHashes, dispatch)
-
   const typedHoleSuggestions = getTypedHoles(state)
   const errorLocations = getErrorLocations(state)
 
@@ -72,12 +67,10 @@ export const EditBinding: React.FC<Props> = ({
           </Button>
         )}
         <Feedback
+          bindingName={editor.bindingName}
           state={state}
           result={expression}
           onBindingSelect={onBindingSelect}
-          onFetchExpressionsForHashes={
-            onFetchExpressionsForHashes
-          }
           projectHash={state.project.projectHash}
         />
       </Panel>

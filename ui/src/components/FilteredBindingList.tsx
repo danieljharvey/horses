@@ -13,7 +13,6 @@ type Props = {
     bindingName: string,
     exprHash: ExprHash
   ) => void
-  onFetchExpressionsForHashes: (hashes: ExprHash[]) => void
   state: State
 }
 
@@ -51,7 +50,6 @@ export const FilteredBindingList: React.FC<Props> = ({
   values,
   types,
   onBindingSelect,
-  onFetchExpressionsForHashes,
   state,
 }) => {
   const [filterText, setFilterText] = React.useState('')
@@ -68,9 +66,6 @@ export const FilteredBindingList: React.FC<Props> = ({
         onBindingSelect={onBindingSelect}
         values={filteredValues}
         types={filteredTypes}
-        onFetchExpressionsForHashes={
-          onFetchExpressionsForHashes
-        }
         state={state}
       />
     </Panel>

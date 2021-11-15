@@ -2,11 +2,11 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { SourceSpan } from './SourceSpan'
+import type { SourceSpan } from './SourceSpan';
 
 export type TypedHoleResponse = {
-  thName: string
-  thMonoType: string
-  thSourceSpan: SourceSpan
-  thSuggestions: Array<string>
+    thName: string;
+    thMonoType: string;
+    thSourceSpan: SourceSpan;
+    thSuggestions: Array<string>;
 }

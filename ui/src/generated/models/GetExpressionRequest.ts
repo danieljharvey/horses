@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type GetExpressionRequest = {
-  geExprHash: string
-  geProjectHash: string
+    geExprHash: string;
+    geProjectHash: string;
 }

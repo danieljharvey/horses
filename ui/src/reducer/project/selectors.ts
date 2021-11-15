@@ -5,10 +5,9 @@ import { pipe, identity } from 'fp-ts/function'
 import {
   BindingVersion,
   ExprHash,
-  Usage,
+  ExprUsage,
 } from '../../types'
 import { State } from '../types'
-import { string } from 'fp-ts'
 
 const bindingsL = Lens.fromPath<State>()([
   'project',
@@ -45,7 +44,7 @@ const usagesL = Lens.fromPath<State>()([
 export const getUsagesOfExprHash = (
   exprHash: ExprHash,
   state: State
-): Usage[] =>
+): ExprUsage[] =>
   pipe(
     usagesL.get(state),
     R.lookup(exprHash),

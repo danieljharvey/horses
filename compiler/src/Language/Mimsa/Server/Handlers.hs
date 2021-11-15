@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -24,6 +25,7 @@ where
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
+import Data.Coerce
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -117,6 +119,25 @@ data BindingVersion = BindingVersion
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
+toExprUsages :: Set Usage -> [ExprUsage]
+toExprUsages =
+  fmap
+    ( \case
+        Transient name exprHash ->
+          ExprUsage exprHash (coerce name) False
+        Direct name exprHash ->
+          ExprUsage exprHash (coerce name) True
+    )
+    . S.toList
+
+data ExprUsage = ExprUsage
+  { euExprHash :: ExprHash,
+    euName :: Text,
+    euIsDirect :: Bool
+  }
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
+
 -- | Current state of the project
 -- should contain no exprs
 data ProjectData = ProjectData
@@ -124,7 +145,7 @@ data ProjectData = ProjectData
     pdBindings :: Map Name Text,
     pdTypeBindings :: Map TyCon Text,
     pdVersions :: Map Name (NE.NonEmpty BindingVersion),
-    pdUsages :: Map ExprHash (Set Usage)
+    pdUsages :: Map ExprHash [ExprUsage]
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -183,7 +204,7 @@ projectDataHandler mimsaEnv env = do
       (outputBindings env)
       (outputTypeBindings env)
       versions
-      usages
+      (toExprUsages <$> usages)
 
 -- given a project hash, find the project
 loadProjectHandler ::

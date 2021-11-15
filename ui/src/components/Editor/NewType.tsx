@@ -20,8 +20,7 @@ import { Paragraph } from '../View/Paragraph'
 import { ListBindings } from '../ListBindings'
 import { InlineSpaced } from '../View/InlineSpaced'
 import { ExprHash, UserErrorResponse } from '../../types'
-import { flow } from 'fp-ts/function'
-import { fetchExpressionsForHashes } from '../../reducer/project/actions'
+import * as O from 'fp-ts/Option'
 
 type Props = {
   state: State
@@ -50,10 +49,6 @@ export const NewType: React.FC<Props> = ({
   const onCodeChange = (a: string) =>
     dispatch({ type: 'UpdateCode', text: a })
 
-  const onFetchExpressionsForHashes = flow(
-    fetchExpressionsForHashes,
-    dispatch
-  )
   const { expression, code } = editor
 
   return (
@@ -75,12 +70,10 @@ export const NewType: React.FC<Props> = ({
               <Panel>
                 <FlexColumnSpaced>
                   <Feedback
+                    bindingName={O.none}
                     state={state}
                     result={expression}
                     onBindingSelect={onBindingSelect}
-                    onFetchExpressionsForHashes={
-                      onFetchExpressionsForHashes
-                    }
                     projectHash={projectHash}
                   />
                   {editor.stale && (
@@ -128,10 +121,10 @@ export const NewType: React.FC<Props> = ({
                 <InlineSpaced>
                   {addType.typeclasses.map((a) => (
                     <Link
-                      versions={1}
+                      number={1}
                       depType="type"
                       onClick={() => console.log(a)}
-                      inUse={true}
+                      highlight={true}
                     >
                       {a}
                     </Link>
@@ -143,9 +136,6 @@ export const NewType: React.FC<Props> = ({
                   values={addType.bindings}
                   types={addType.typeBindings}
                   onBindingSelect={onBindingSelect}
-                  onFetchExpressionsForHashes={
-                    onFetchExpressionsForHashes
-                  }
                 />
               </FlexColumnSpaced>
             </Panel>

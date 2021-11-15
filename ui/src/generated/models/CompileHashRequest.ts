@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type CompileHashRequest = {
-  chExprHash: string
-  chRuntime: string
+    chExprHash: string;
+    chRuntime: string;
 }
