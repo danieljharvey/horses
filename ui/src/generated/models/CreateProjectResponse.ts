@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { ProjectData } from './ProjectData';
+import type { ProjectData } from './ProjectData'
 
 export type CreateProjectResponse = {
-    cpProjectData: ProjectData;
+  cpProjectData: ProjectData
 }

@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type BindingVersion = {
-    bvExprHash: string;
-    bvNumber: number;
+  bvExprHash: string
+  bvNumber: number
 }

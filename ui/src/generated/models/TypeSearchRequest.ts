@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type TypeSearchRequest = {
-    tsProjectHash: string;
-    tsInput: string;
+  tsProjectHash: string
+  tsInput: string
 }
