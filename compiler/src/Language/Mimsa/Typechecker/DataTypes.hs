@@ -64,7 +64,9 @@ createDepsEnv typeMap =
     mkSchemes =
       M.fromList . fmap toScheme . M.toList
 
-storeExprToDataTypes :: StoreExpression ann -> Map TyCon DataType
+storeExprToDataTypes ::
+  StoreExpression ann ->
+  Map TypeName DataType
 storeExprToDataTypes =
   mconcat
     . fmap withDt
@@ -97,9 +99,22 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
       let newEnv = Environment mempty (M.singleton tyName dt) mempty
        in pure (newEnv <> env)
 
-errorOnBuiltIn :: (MonadError TypeError m) => Annotation -> TyCon -> m ()
-errorOnBuiltIn ann tc = case lookupBuiltIn tc of
-  Just _ -> throwError (InternalConstructorUsedOutsidePatternMatch ann tc)
+errorOnBuiltIn ::
+  (MonadError TypeError m) =>
+  Annotation ->
+  TypeName ->
+  m ()
+errorOnBuiltIn ann typeName = case lookupBuiltIn typeName of
+  Just _ -> throwError (TypeNameConflictsWithBuiltIn ann typeName)
+  _ -> pure ()
+
+errorOnBuiltInConstructor ::
+  (MonadError TypeError m) =>
+  Annotation ->
+  TyCon ->
+  m ()
+errorOnBuiltInConstructor ann tyCon = case lookupBuiltInConstructor tyCon of
+  Just _ -> throwError (ConstructorConflictsWithBuiltIn ann tyCon)
   _ -> pure ()
 
 -- infer the type of a data constructor
@@ -115,7 +130,7 @@ inferDataConstructor ::
   TyCon ->
   m MonoType
 inferDataConstructor env ann tyCon = do
-  errorOnBuiltIn ann tyCon
+  errorOnBuiltInConstructor ann tyCon
   dataType <- lookupConstructor env ann tyCon
   (_, allArgs) <- inferConstructorTypes dataType
   case M.lookup tyCon allArgs of
@@ -151,11 +166,15 @@ validateConstructors ::
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-        if M.member tyCon (getDataTypes env)
-          then throwError (CannotUseBuiltInTypeAsConstructor ann tyCon)
+        if or (containsConstructor tyCon <$> M.elems (getDataTypes env))
+          then throwError (ConstructorConflictsWithBuiltIn ann tyCon)
           else pure ()
     )
     (M.toList constructors)
+
+containsConstructor :: TyCon -> DataType -> Bool
+containsConstructor tyCon (DataType _ _ constructors) =
+  S.member tyCon (M.keysSet constructors)
 
 validateDataTypeVariables ::
   (MonadError TypeError m) =>
@@ -229,7 +248,7 @@ inferType ::
   (MonadError TypeError m) =>
   Environment ->
   Annotation ->
-  TyCon ->
+  TypeName ->
   [MonoType] ->
   m MonoType
 inferType env ann tyName tyVars =
@@ -238,9 +257,14 @@ inferType env ann tyName tyVars =
       Just mt -> pure mt
       _ -> pure (dataTypeWithVars mempty tyName tyVars)
     _ ->
-      throwError (TypeConstructorNotInScope env ann tyName)
+      throwError (TypeNameNotInScope env ann tyName)
 
-dataTypeWithVars :: (Monoid ann) => ann -> TyCon -> [Type ann] -> Type ann
+dataTypeWithVars ::
+  (Monoid ann) =>
+  ann ->
+  TypeName ->
+  [Type ann] ->
+  Type ann
 dataTypeWithVars ann tyName =
   foldl'
     (MTTypeApp mempty)

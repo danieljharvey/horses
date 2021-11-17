@@ -25,8 +25,8 @@ fold = runCodegenM . fold_
 fold_ ::
   DataType ->
   CodegenM (Expr Name ())
-fold_ (DataType tyCon vars items) = do
-  let tyName = tyConToName tyCon
+fold_ (DataType typeName vars items) = do
+  let tyName = typeNameToName typeName
   fVar <- getFunctorVar vars
   case getMapItems items of
     Nothing -> throwError "Type should have at least one constructor"
@@ -34,7 +34,7 @@ fold_ (DataType tyCon vars items) = do
       matches <-
         traverse
           ( uncurry
-              ( createMatch tyCon fVar
+              ( createMatch typeName fVar
               )
           )
           constructors
@@ -68,7 +68,7 @@ data FieldItemType
   | NoVariable
 
 toFieldItemType ::
-  TyCon ->
+  TypeName ->
   Name ->
   Type () ->
   CodegenM (Name, FieldItemType)
@@ -80,9 +80,9 @@ toFieldItemType tyName matchVar = \case
         pure (name, VariableField name)
       else pure (coerce a, NoVariable)
   mt -> case varsFromDataType mt of
-    Just (tyCon, [MTVar _ (TVName var)]) -> do
-      varName <- nextName tyName
-      if tyCon == tyName && coerce var == matchVar
+    Just (typeName, [MTVar _ (TVName var)]) -> do
+      varName <- nextTypeName tyName
+      if typeName == tyName && coerce var == matchVar
         then pure (varName, Recurse varName)
         else throwError "Can only recurse over self"
     _ -> throwError "Expected VarName"
@@ -125,7 +125,7 @@ reconstructFields =
     (MyVar mempty "total")
 
 createMatch ::
-  TyCon ->
+  TypeName ->
   Name ->
   TyCon ->
   [Type ()] ->

@@ -35,8 +35,8 @@ wrap (DataType _tyCon _vars items) =
 -- | A newtype is a datatype with one constructor
 -- | with one argument
 unwrap :: DataType -> Either Text (Expr Name ())
-unwrap (DataType tyCon _vars items) = do
-  let tyName = tyConToName tyCon
+unwrap (DataType typeName _vars items) = do
+  let tyName = typeNameToName typeName
   case getOnlyMapItem items of
     Nothing -> Left "Type should have one constructor"
     Just (consName, [_a]) ->

@@ -5,11 +5,11 @@ module Language.Mimsa.Types.Typechecker.TypeConstructor where
 
 import qualified Data.Text as T
 import Language.Mimsa.Printer (Printer (prettyPrint))
-import Language.Mimsa.Types.Identifiers (TyCon)
+import Language.Mimsa.Types.Identifiers (TyCon, TypeName)
 import Language.Mimsa.Types.Typechecker.MonoType (MonoType)
 
 data TypeConstructor = TypeConstructor
-  { tcConsName :: TyCon,
+  { tcConsName :: TypeName,
     tcTypeVars :: [MonoType],
     tcConsTypes :: [MonoType]
   }

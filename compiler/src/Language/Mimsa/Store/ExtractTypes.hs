@@ -14,15 +14,15 @@ import Language.Mimsa.Types.AST
     Expr (..),
     Pattern (..),
   )
-import Language.Mimsa.Types.Identifiers (Name, TyCon)
+import Language.Mimsa.Types.Identifiers (Name, TyCon, TypeName)
 import Language.Mimsa.Types.Typechecker.MonoType
 
 -- this works out which external types have been used in a given expression
 -- therefore, we must remove any which are declared in the expression itself
-extractTypes :: Expr Name ann -> Set TyCon
+extractTypes :: Expr Name ann -> Set TypeName
 extractTypes = filterBuiltIns . extractTypes_
 
-extractTypes_ :: Expr Name ann -> Set TyCon
+extractTypes_ :: Expr Name ann -> Set TypeName
 extractTypes_ (MyVar _ _) = mempty
 extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
 extractTypes_ (MyLet _ _ a b) = extractTypes_ a <> extractTypes_ b
@@ -36,11 +36,11 @@ extractTypes_ (MyPair _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyRecord _ map') = foldMap extractTypes_ map'
 extractTypes_ (MyRecordAccess _ a _) = extractTypes_ a
 extractTypes_ (MyArray _ items) = foldMap extractTypes_ items
-extractTypes_ (MyData _ dt a) =
+extractTypes_ (MyData _ (DataType typeName _ _) a) =
   S.difference
-    (extractConstructors dt <> extractTypes_ a)
-    (extractLocalTypeDeclarations dt)
-extractTypes_ (MyConstructor _ t) = S.singleton t
+    (extractTypes_ a)
+    (S.singleton typeName)
+extractTypes_ (MyConstructor _ _t) = mempty
 extractTypes_ (MyTypedHole _ _) = mempty
 extractTypes_ (MyDefineInfix _ _ a b) =
   extractTypes_ a <> extractTypes_ b
@@ -49,9 +49,9 @@ extractTypes_ (MyPatternMatch _ expr patterns) =
     <> mconcat (extractTypes_ . snd <$> patterns)
     <> mconcat (extractFromPattern . fst <$> patterns)
 
-extractFromPattern :: Pattern var ann -> Set TyCon
-extractFromPattern (PConstructor _ tyCon args) =
-  S.singleton tyCon <> mconcat (extractFromPattern <$> args)
+extractFromPattern :: Pattern var ann -> Set TypeName
+extractFromPattern (PConstructor _ _tyCon args) =
+  mconcat (extractFromPattern <$> args)
 extractFromPattern (PPair _ a b) = extractFromPattern a <> extractFromPattern b
 extractFromPattern (PRecord _ items) = mconcat $ extractFromPattern <$> M.elems items
 extractFromPattern (PWildcard _) = mempty
@@ -60,7 +60,7 @@ extractFromPattern (PLit _ _) = mempty
 extractFromPattern (PArray _ as _) = mconcat $ extractFromPattern <$> as
 extractFromPattern PString {} = mempty
 
-filterBuiltIns :: Set TyCon -> Set TyCon
+filterBuiltIns :: Set TypeName -> Set TypeName
 filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)
 
 -- get all the constructors mentioned in the datatype
@@ -74,7 +74,7 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
     extractFromCon (MTArray _ a) = extractFromCon a
     extractFromCon (MTTypeApp _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon MTPrim {} = mempty
-    extractFromCon (MTConstructor _ name) = S.singleton name
+    extractFromCon (MTConstructor _ _name) = mempty -- S.singleton name
     extractFromCon (MTRecord _ items) = mconcat (extractFromCon <$> M.elems items)
     extractFromCon (MTRecordRow _ items rest) =
       mconcat (extractFromCon <$> M.elems items) <> extractFromCon rest
@@ -82,8 +82,8 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
 -- get all the names of constructors (type and data) declared in the datatype
 extractLocalTypeDeclarations :: DataType -> Set TyCon
 extractLocalTypeDeclarations (DataType cName _ cons) =
-  S.singleton cName
-    <> mconcat (S.singleton . fst <$> M.toList cons)
+  --  S.singleton cName <>
+  mconcat (S.singleton . fst <$> M.toList cons)
 
 -----------
 

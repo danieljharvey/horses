@@ -148,7 +148,6 @@ library
       Language.Mimsa.Typechecker.Environment
       Language.Mimsa.Typechecker.Exhaustiveness
       Language.Mimsa.Typechecker.Generalise
-      Language.Mimsa.Typechecker.KindChecker
       Language.Mimsa.Typechecker.NormaliseTypes
       Language.Mimsa.Typechecker.OutputTypes
       Language.Mimsa.Typechecker.Solve
@@ -179,6 +178,7 @@ library
       Language.Mimsa.Types.Identifiers.Name
       Language.Mimsa.Types.Identifiers.TyCon
       Language.Mimsa.Types.Identifiers.TypeIdentifier
+      Language.Mimsa.Types.Identifiers.TypeName
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.MimsaConfig
@@ -378,7 +378,6 @@ test-suite mimsa-test
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
-      Test.Typechecker.KindChecker
       Test.Typechecker.OutputTypes
       Test.Typechecker.Substitutions
       Test.Typechecker.Typecheck

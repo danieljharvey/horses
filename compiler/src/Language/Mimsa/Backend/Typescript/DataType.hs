@@ -12,10 +12,10 @@ import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 
-typeNameToName :: Int -> TSType -> TSName
-typeNameToName _ (TSTypeVar a) = coerce (T.toLower a)
-typeNameToName _ (TSType _ name _) = coerce (T.toLower name)
-typeNameToName i _ = coerce $ "u" <> prettyPrint i
+tsTypeNameToName :: Int -> TSType -> TSName
+tsTypeNameToName _ (TSTypeVar a) = coerce (T.toLower a)
+tsTypeNameToName _ (TSType _ name _) = coerce (T.toLower name)
+tsTypeNameToName i _ = coerce $ "u" <> prettyPrint i
 
 genericsForType :: TSType -> Set TSGeneric
 genericsForType (TSTypeVar a) = S.singleton (TSGeneric a)
@@ -27,7 +27,7 @@ genericsForType (TSTypeRecord as) = mconcat (genericsForType <$> M.elems as)
 genericsForType (TSTypeAnd a b) = genericsForType a <> genericsForType b
 
 -- | Creates the return type of a constructor
-returnType :: [Text] -> TyCon -> [TSType] -> TSType
+returnType :: [Text] -> TypeName -> [TSType] -> TSType
 returnType dtArgs typeName consArgs =
   TSType Nothing (coerce typeName) fixedConsArgs
   where
@@ -46,7 +46,7 @@ createConstructorFunctions (TSDataType typeName dtArgs constructors) =
 
 -- turn Just constructor into a function like  \a -> Just a
 createConstructorFunction ::
-  TyCon ->
+  TypeName ->
   [Text] ->
   TSConstructor ->
   TSStatement
@@ -57,10 +57,10 @@ createConstructorFunction typeName dtArgs (TSConstructor tyCon []) =
     (TSLetBody (TSBody [] (TSData (prettyPrint tyCon) mempty)))
 createConstructorFunction typeName dtArgs (TSConstructor tyCon tsArgs) =
   let numberList = zip [1 ..] tsArgs
-      args = (\(i, tn) -> TSVar (typeNameToName i tn)) <$> numberList
+      args = (\(i, tn) -> TSVar (tsTypeNameToName i tn)) <$> numberList
       tsData = TSData (prettyPrint tyCon) args
       foldFn (i, tsType) expr' =
-        let variable = typeNameToName i tsType
+        let variable = tsTypeNameToName i tsType
             generics = genericsForType tsType
             isFinal = i == length numberList
             returnType' =

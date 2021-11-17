@@ -10,11 +10,11 @@ import qualified Data.Map as M
 import Data.OpenApi
 import qualified Data.Text as T
 import Language.Mimsa.Printer (Printer (prettyPrint))
-import Language.Mimsa.Types.Identifiers (TyCon)
+import Language.Mimsa.Types.Identifiers (TypeName)
 import Language.Mimsa.Types.Store.ExprHash (ExprHash)
 
 -- a list of names to hashes
-newtype TypeBindings = TypeBindings {getTypeBindings :: Map TyCon ExprHash}
+newtype TypeBindings = TypeBindings {getTypeBindings :: Map TypeName ExprHash}
   deriving newtype
     ( Eq,
       Ord,

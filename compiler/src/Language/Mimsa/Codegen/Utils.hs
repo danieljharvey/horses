@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Codegen.Utils
   ( nextName,
+    nextTypeName,
     CodegenM,
     runCodegenM,
     getFunctorVar,
@@ -37,6 +38,19 @@ getFunctorVar names = case NE.nonEmpty names of
 nextName :: TyCon -> CodegenM Name
 nextName tyCon = do
   let base = tyConToName tyCon
+  vars <- get
+  case M.lookup base vars of
+    Nothing -> do
+      modify (M.singleton base 1 <>)
+      pure $ base <> Name "1"
+    Just as -> do
+      modify (M.adjust (+ 1) base)
+      pure $ base <> Name (prettyPrint (as + 1))
+
+-- | given a type name, give me a new unique name for it
+nextTypeName :: TypeName -> CodegenM Name
+nextTypeName typeName = do
+  let base = typeNameToName typeName
   vars <- get
   case M.lookup base vars of
     Nothing -> do

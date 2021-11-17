@@ -40,16 +40,17 @@ data TypeErrorF ann
   | CannotMatchRecord Environment ann (Type ann)
   | CaseMatchExpectedPair ann (Type ann)
   | TypeConstructorNotInScope Environment ann TyCon
-  | TypeVariablesNotInDataType TyCon (Set Name) (Set Name)
+  | TypeNameNotInScope Environment ann TypeName
+  | TypeVariablesNotInDataType TypeName (Set Name) (Set Name)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
-  | DuplicateTypeDeclaration TyCon
+  | DuplicateTypeDeclaration TypeName
   | IncompletePatternMatch ann [TyCon]
   | MixedUpPatterns [TyCon]
   | TypedHoles (Map Name (Type ann, Set FoundPath))
   | CouldNotFindInfixOperator ann InfixOp (Set InfixOp)
-  | CannotUseBuiltInTypeAsConstructor ann TyCon
-  | InternalConstructorUsedOutsidePatternMatch ann TyCon
+  | ConstructorConflictsWithBuiltIn ann TyCon
+  | TypeNameConflictsWithBuiltIn ann TypeName
   | PatternMatchErr (PatternMatchErrorF ann)
   deriving stock (Eq, Ord, Show, Foldable)
 
@@ -154,6 +155,12 @@ renderTypeError (TypeConstructorNotInScope env _ constructor) =
     "The following are available:"
   ]
     <> printDataTypes env
+renderTypeError (TypeNameNotInScope env _ constructor) =
+  [ "Type " <+> prettyDoc constructor
+      <+> "not found in scope.",
+    "The following are available:"
+  ]
+    <> printDataTypes env
 renderTypeError (ConflictingConstructors _ constructor) =
   ["Multiple constructors found matching" <+> prettyDoc constructor]
 renderTypeError (DuplicateTypeDeclaration constructor) =
@@ -192,10 +199,10 @@ renderTypeError (TypedHoles map') =
       if S.null s
         then ""
         else line <> indent 2 ("Suggestions:" <+> list (prettyDoc <$> S.toList s))
-renderTypeError (CannotUseBuiltInTypeAsConstructor _ name) =
-  ["Cannot use built-in type as constructor name:" <+> prettyDoc name]
-renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
-  ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used outside of a pattern match"]
+renderTypeError (ConstructorConflictsWithBuiltIn _ tyCon) =
+  ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used."]
+renderTypeError (TypeNameConflictsWithBuiltIn _ typeName) =
+  ["Internal type name" <+> prettyDoc typeName <+> "cannot be used."]
 renderTypeError (PatternMatchErr pmErr) = [prettyDoc pmErr]
 
 printDataTypes :: Environment -> [Doc style]

@@ -4,15 +4,17 @@
 module Language.Mimsa.Typechecker.BuiltIns
   ( builtInTypes,
     lookupBuiltIn,
+    lookupBuiltInConstructor,
   )
 where
 
+import Data.Coerce
 import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-builtInTypes :: Map TyCon MonoType
+builtInTypes :: Map TypeName MonoType
 builtInTypes =
   M.fromList
     [ ("String", MTPrim mempty MTString),
@@ -20,5 +22,8 @@ builtInTypes =
       ("Boolean", MTPrim mempty MTBool)
     ]
 
-lookupBuiltIn :: TyCon -> Maybe MonoType
+lookupBuiltIn :: TypeName -> Maybe MonoType
 lookupBuiltIn name = M.lookup name builtInTypes
+
+lookupBuiltInConstructor :: TyCon -> Maybe MonoType
+lookupBuiltInConstructor tc = lookupBuiltIn (coerce tc)

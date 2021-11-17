@@ -10,6 +10,7 @@ import Data.Maybe (catMaybes, isJust)
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes (extractTypes)
 import Language.Mimsa.Store.ExtractVars (extractVars)
+import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -58,7 +59,7 @@ findBindings bindings' expr = do
 -----------
 
 isBuiltIn :: TyCon -> Bool
-isBuiltIn = isJust . lookupBuiltIn
+isBuiltIn = isJust . lookupBuiltInConstructor
 
 findHashInTypeBindings ::
   TypeBindings ->
