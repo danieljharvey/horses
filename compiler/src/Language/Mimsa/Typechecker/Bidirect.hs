@@ -33,12 +33,12 @@ import Language.Mimsa.Types.Typechecker
 type InferM = ExceptT TypeError (ReaderT Swaps (State TypecheckState))
 
 pushType :: (MonadState TypecheckState m) => MonoType -> m ()
-pushType mt = modify (\s -> s {tcsTypeStack = debugPretty "pushType" $ [mt] <> tcsTypeStack s})
+pushType mt = modify (\s -> s {tcsTypeStack = [mt] <> tcsTypeStack s})
 
 popType :: (MonadState TypecheckState m) => m (Maybe MonoType)
 popType = do
   stack <- gets tcsTypeStack
-  case debugPretty "popType" stack of
+  case stack of
     (mtHead : mtTail) -> do
       modify (\s -> s {tcsTypeStack = mtTail})
       pure (Just mtHead)
@@ -81,14 +81,25 @@ inferLiteral ann lit =
         (MyString _) -> MTString
    in pure (Lit (MTPrim ann tyLit) lit)
 
-inferLet :: Environment -> Variable -> TcExpr -> TcExpr -> InferM ElabExpr
-inferLet env binder bindExpr' inExpr = do
-  bind <- infer env bindExpr'
-  let newEnv =
-        envFromVar binder (Scheme mempty (expAnn bind))
-          <> env
-  body <- infer newEnv inExpr
-  pure (Let (expAnn body) binder bind body)
+inferLet ::
+  Environment ->
+  Annotation ->
+  Variable ->
+  TcExpr ->
+  TcExpr ->
+  InferM ElabExpr
+inferLet env ann binder bindExpr' inExpr = do
+  let desugaredExpr =
+        App
+          ann
+          ( Lambda
+              (expAnn bindExpr')
+              binder
+              inExpr
+          )
+          bindExpr'
+  -- returns different expr shape, ignore for now
+  infer env desugaredExpr
 
 lookupInEnv ::
   Swaps ->
@@ -132,9 +143,9 @@ inferApp ::
 inferApp env _ann fn arg = do
   typedArg <- infer env arg
   -- remember type
-  pushType (expAnn typedArg)
+  pushType (debugPretty "inferred arg" (expAnn typedArg))
   typedFn <- infer env fn
-  case expAnn typedFn of
+  case debugPretty "inferred fn" (expAnn typedFn) of
     MTFunction _ mtArg mtReturn -> do
       let typedArg' = typedArg $> mtArg
       pure (App mtReturn typedFn typedArg')
@@ -170,8 +181,8 @@ infer :: Environment -> TcExpr -> InferM ElabExpr
 infer env inferExpr =
   case inferExpr of
     (Lit ann a) -> inferLiteral ann a
-    (Let _ binding bindExpr' inExpr) ->
-      inferLet env binding bindExpr' inExpr
+    (Let ann binding bindExpr' inExpr) ->
+      inferLet env ann binding bindExpr' inExpr
     (Var ann var) ->
       inferVarFromScope env ann var
     (Lambda ann binder body) ->
@@ -194,49 +205,19 @@ inferLambda ::
   InferM ElabExpr
 inferLambda env ann binder body = do
   inputType <- popType
-  combinedTyBinder <- case debugPretty "popped inputType" inputType of
+  combinedTyBinder <- case inputType of
     Just inputType' -> pure inputType'
-    Nothing -> throwError UnknownTypeError
+    Nothing -> getUnknown ann
   let newEnv =
         envFromVar
           binder
-          (Scheme [] (debugPretty "combinedTyBinder" combinedTyBinder))
+          (Scheme [] combinedTyBinder)
           <> env
   typedBody <- infer newEnv body
   let mt = MTFunction ann combinedTyBinder (expAnn typedBody)
   pure (Lambda mt binder typedBody)
 
-checkLambda ::
-  Environment ->
-  Annotation ->
-  Variable ->
-  TcExpr ->
-  MonoType ->
-  InferM ElabExpr
-checkLambda env _ann binder body mt =
-  case mt of
-    MTFunction _ tyBinder tyBody -> do
-      inputType <- popType
-      combinedTyBinder <- case debugPretty "popped inputType" inputType of
-        Just inputType' -> combine inputType' tyBinder
-        Nothing -> pure tyBinder
-      let newEnv =
-            envFromVar
-              binder
-              (Scheme [] (debugPretty "combinedTyBinder" combinedTyBinder))
-              <> env
-      typedBody <- check newEnv body tyBody
-      pure (Lambda mt binder typedBody)
-    _ -> throwError UnknownTypeError -- type should be function!
-
-combine :: MonoType -> MonoType -> InferM MonoType
-combine mtA mtB = do
-  subs <- unify mtA mtB
-  pure (applySubst subs mtA)
-
 check :: Environment -> TcExpr -> MonoType -> InferM ElabExpr
-check env (Lambda ann binder body) mt =
-  checkLambda env ann binder body mt
 check env expr mt = do
   typedExpr <- infer env expr
   subs <- unify (expAnn typedExpr) mt

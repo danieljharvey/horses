@@ -71,13 +71,7 @@ spec = do
     it "errors on conflicting annotation" $ do
       let expr = Ann mempty mtBool (Lit mempty (MyInt 1))
       infer' expr `shouldSatisfy` isLeft
-    it "infers lambda fails with no annotation" $ do
-      let expr =
-            Lambda
-              mempty
-              (named "a")
-              (Lit mempty (MyInt 1))
-      infer' expr `shouldSatisfy` isLeft
+
     it "infers lambda succeeds when annotated" $ do
       let expr =
             Ann
@@ -105,7 +99,43 @@ spec = do
       let result = inferExpr expr
       expAnn <$> result `shouldBe` Right mtInt
 
-    it "infers application on polymorphic function via let binding" $ do
+    it "infers direct application on annotated polymorphic function" $ do
+      let expr =
+            App
+              mempty
+              ( Ann
+                  mempty
+                  ( MTFunction
+                      mempty
+                      (MTVar mempty (TVNum 1))
+                      (MTVar mempty (TVNum 1))
+                  )
+                  (Lambda mempty (named "aa") (Var mempty (named "aa")))
+              )
+              (Lit mempty (MyInt 100))
+      let result = inferExpr expr
+      expAnn <$> result `shouldBe` Right mtInt
+
+    fit "infers application on polymorphic function via let binding" $ do
+      let lambda =
+            Lambda
+              mempty
+              (named "aa")
+              (Var mempty (named "aa"))
+          expr =
+            Let
+              mempty
+              (named "id")
+              lambda
+              ( App
+                  mempty
+                  (Var mempty (named "id"))
+                  (Lit mempty (MyInt 100))
+              )
+      let result = inferExpr expr
+      expAnn <$> result `shouldBe` Right mtInt
+
+    fit "infers application on annotated polymorphic function via let binding" $ do
       let lambda =
             Ann
               mempty
@@ -126,7 +156,6 @@ spec = do
                   (Lit mempty (MyInt 100))
               )
       let result = inferExpr expr
-      print result
       expAnn <$> result `shouldBe` Right mtInt
 
     it "infers application onto annotated function" $ do
