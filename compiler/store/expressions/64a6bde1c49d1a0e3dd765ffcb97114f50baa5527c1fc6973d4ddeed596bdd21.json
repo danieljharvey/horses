@@ -1,1 +1,0 @@
-{"storeBindings":{"useIt":"780e216333188b431244c99de48b527b30072414d6bd8bce2a1672dfc5504eaf"},"storeExpression":{"contents":[[],{"contents":[[],"useIt"],"tag":"MyVar"},{"contents":[[],{"contents":"dog","tag":"MyString"}],"tag":"MyLiteral"},{"contents":[[],{"contents":"poo","tag":"MyString"}],"tag":"MyLiteral"}],"tag":"MyIf"},"storeTypeBindings":{}}
