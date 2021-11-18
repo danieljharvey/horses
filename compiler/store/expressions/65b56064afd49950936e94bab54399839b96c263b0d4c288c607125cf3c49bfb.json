@@ -1,0 +1,1 @@
+{"storeBindings":{},"storeExpression":{"contents":[[],{"dtConstructors":{"Right":[{"contents":[[],{"contents":"a","tag":"TVName"}],"tag":"MTVar"}],"Left":[{"contents":[[],{"contents":"e","tag":"TVName"}],"tag":"MTVar"}]},"dtName":"Either","dtVars":["e","a"]},{"contents":[[],{}],"tag":"MyRecord"}],"tag":"MyData"},"storeTypeBindings":{}}

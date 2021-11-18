@@ -1,0 +1,1 @@
+{"storeBindings":{},"storeExpression":{"contents":[[],"unit",{"contents":[[],{"contents":[[],"unit"],"tag":"MyVar"},[[{"contents":[[],"Unit",[]],"tag":"PConstructor"},{"contents":[[],{"contents":"Unit","tag":"MyString"}],"tag":"MyLiteral"}]]],"tag":"MyPatternMatch"}],"tag":"MyLambda"},"storeTypeBindings":{"Unit":"db23d74e4dcac9584ba2c85e53bc3df365b3f96ad487a3869cfaf9b4c40ff3f2"}}

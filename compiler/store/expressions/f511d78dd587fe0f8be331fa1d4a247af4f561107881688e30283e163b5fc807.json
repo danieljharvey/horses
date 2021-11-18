@@ -1,0 +1,1 @@
+{"storeBindings":{},"storeExpression":{"contents":[[],"pair",{"contents":[[],{"contents":[[],{"contents":[[],"a"],"tag":"PVar"},{"contents":[],"tag":"PWildcard"}],"tag":"PPair"},{"contents":[[],"pair"],"tag":"MyVar"},{"contents":[[],"a"],"tag":"MyVar"}],"tag":"MyLetPattern"}],"tag":"MyLambda"},"storeTypeBindings":{}}

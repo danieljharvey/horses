@@ -33,12 +33,12 @@ import Language.Mimsa.Types.Typechecker
 type InferM = ExceptT TypeError (ReaderT Swaps (State TypecheckState))
 
 pushType :: (MonadState TypecheckState m) => MonoType -> m ()
-pushType mt = modify (\s -> s {tcsTypeStack = [mt] <> tcsTypeStack s})
+pushType mt = modify (\s -> s {tcsTypeStack = debugPretty "pushType" $ [mt] <> tcsTypeStack s})
 
 popType :: (MonadState TypecheckState m) => m (Maybe MonoType)
 popType = do
   stack <- gets tcsTypeStack
-  case stack of
+  case debugPretty "popType" stack of
     (mtHead : mtTail) -> do
       modify (\s -> s {tcsTypeStack = mtTail})
       pure (Just mtHead)
@@ -174,8 +174,8 @@ infer env inferExpr =
       inferLet env binding bindExpr' inExpr
     (Var ann var) ->
       inferVarFromScope env ann var
-    (Lambda _ann _binder _body) ->
-      throwError UnknownTypeError -- can't infer lambda
+    (Lambda ann binder body) ->
+      inferLambda env ann binder body
     (Ann _ann mt expr) ->
       check env expr mt
     (App ann fn val) ->
@@ -184,6 +184,27 @@ infer env inferExpr =
       inferIf env ann ifExpr thenExpr elseExpr
     (Constructor ann tyCon) ->
       inferConstructor env ann tyCon
+
+-- | This is actually application mode
+inferLambda ::
+  Environment ->
+  Annotation ->
+  Variable ->
+  TcExpr ->
+  InferM ElabExpr
+inferLambda env ann binder body = do
+  inputType <- popType
+  combinedTyBinder <- case debugPretty "popped inputType" inputType of
+    Just inputType' -> pure inputType'
+    Nothing -> throwError UnknownTypeError
+  let newEnv =
+        envFromVar
+          binder
+          (Scheme [] (debugPretty "combinedTyBinder" combinedTyBinder))
+          <> env
+  typedBody <- infer newEnv body
+  let mt = MTFunction ann combinedTyBinder (expAnn typedBody)
+  pure (Lambda mt binder typedBody)
 
 checkLambda ::
   Environment ->
@@ -196,7 +217,7 @@ checkLambda env _ann binder body mt =
   case mt of
     MTFunction _ tyBinder tyBody -> do
       inputType <- popType
-      combinedTyBinder <- case inputType of
+      combinedTyBinder <- case debugPretty "popped inputType" inputType of
         Just inputType' -> combine inputType' tyBinder
         Nothing -> pure tyBinder
       let newEnv =

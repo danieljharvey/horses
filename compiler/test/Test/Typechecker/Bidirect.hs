@@ -95,13 +95,17 @@ spec = do
               (MTVar mempty (TVName "a"))
               mtInt
           )
-    it "infers application on un-annotated function" $ do
-      let lambda =
-            Lambda mempty (named "a") (Lit mempty (MyBool True))
-          expr = App mempty lambda (Lit mempty (MyInt 100))
-      infer' expr `shouldSatisfy` isLeft
 
-    fit "infers application on polymorphic function" $ do
+    it "infers direct application on polymorphic function" $ do
+      let expr =
+            App
+              mempty
+              (Lambda mempty (named "aa") (Var mempty (named "aa")))
+              (Lit mempty (MyInt 100))
+      let result = inferExpr expr
+      expAnn <$> result `shouldBe` Right mtInt
+
+    it "infers application on polymorphic function via let binding" $ do
       let lambda =
             Ann
               mempty
