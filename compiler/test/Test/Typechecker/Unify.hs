@@ -24,7 +24,7 @@ runUnifier (a, b) =
   fst either'
   where
     defaultState =
-      TypecheckState 1 mempty
+      TypecheckState 1 mempty mempty
     either' =
       runState
         (runReaderT (runExceptT (unify a b)) mempty)

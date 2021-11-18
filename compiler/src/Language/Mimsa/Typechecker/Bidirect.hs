@@ -1,6 +1,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 module Language.Mimsa.Typechecker.Bidirect
@@ -14,8 +15,9 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State (State)
+import Control.Monad.State
 import Data.Coerce
+import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Logging
@@ -29,6 +31,18 @@ import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
 type InferM = ExceptT TypeError (ReaderT Swaps (State TypecheckState))
+
+pushType :: (MonadState TypecheckState m) => MonoType -> m ()
+pushType mt = modify (\s -> s {tcsTypeStack = [mt] <> tcsTypeStack s})
+
+popType :: (MonadState TypecheckState m) => m (Maybe MonoType)
+popType = do
+  stack <- gets tcsTypeStack
+  case stack of
+    (mtHead : mtTail) -> do
+      modify (\s -> s {tcsTypeStack = mtTail})
+      pure (Just mtHead)
+    _ -> pure Nothing
 
 type TcExpr = ExpSmall Variable Annotation
 
@@ -116,12 +130,14 @@ inferApp ::
   TcExpr ->
   InferM ElabExpr
 inferApp env _ann fn arg = do
+  typedArg <- infer env arg
+  -- remember type
+  pushType (expAnn typedArg)
   typedFn <- infer env fn
   case expAnn typedFn of
     MTFunction _ mtArg mtReturn -> do
-      typedArg <- check env arg mtArg
-
-      pure (App mtReturn typedFn typedArg)
+      let typedArg' = typedArg $> mtArg
+      pure (App mtReturn typedFn typedArg')
     _ -> throwError UnknownTypeError -- can only apply onto function
 
 inferIf ::
@@ -179,10 +195,23 @@ checkLambda ::
 checkLambda env _ann binder body mt =
   case mt of
     MTFunction _ tyBinder tyBody -> do
-      let newEnv = envFromVar binder (Scheme [] tyBinder) <> env
+      inputType <- popType
+      combinedTyBinder <- case inputType of
+        Just inputType' -> combine inputType' tyBinder
+        Nothing -> pure tyBinder
+      let newEnv =
+            envFromVar
+              binder
+              (Scheme [] (debugPretty "combinedTyBinder" combinedTyBinder))
+              <> env
       typedBody <- check newEnv body tyBody
       pure (Lambda mt binder typedBody)
     _ -> throwError UnknownTypeError -- type should be function!
+
+combine :: MonoType -> MonoType -> InferM MonoType
+combine mtA mtB = do
+  subs <- unify mtA mtB
+  pure (applySubst subs mtA)
 
 check :: Environment -> TcExpr -> MonoType -> InferM ElabExpr
 check env (Lambda ann binder body) mt =

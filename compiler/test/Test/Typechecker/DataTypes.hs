@@ -25,7 +25,7 @@ runTC action =
   fst either'
   where
     defaultState =
-      TypecheckState 1 mempty
+      TypecheckState 1 mempty mempty
     either' =
       runState
         (runExceptT action)

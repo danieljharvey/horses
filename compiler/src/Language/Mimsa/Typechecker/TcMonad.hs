@@ -27,7 +27,8 @@ import Language.Mimsa.Types.Typechecker
 
 data TypecheckState = TypecheckState
   { tcsNum :: Int,
-    tcsTypedHoles :: Map Name (Annotation, Int, Map Name MonoType)
+    tcsTypedHoles :: Map Name (Annotation, Int, Map Name MonoType),
+    tcsTypeStack :: [MonoType]
   }
 
 instantiate ::
@@ -40,7 +41,7 @@ instantiate ann (Scheme vars ty) = do
   pure (substitutedType $> ann) -- use original annotation
 
 defaultTcState :: TypecheckState
-defaultTcState = TypecheckState 0 mempty
+defaultTcState = TypecheckState 0 mempty mempty
 
 getNextUniVar :: (MonadState TypecheckState m) => m Int
 getNextUniVar = do

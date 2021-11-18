@@ -101,7 +101,7 @@ spec = do
           expr = App mempty lambda (Lit mempty (MyInt 100))
       infer' expr `shouldSatisfy` isLeft
 
-    it "infers application on polymorphic function" $ do
+    fit "infers application on polymorphic function" $ do
       let lambda =
             Ann
               mempty
