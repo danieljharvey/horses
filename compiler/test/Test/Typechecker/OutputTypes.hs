@@ -62,5 +62,5 @@ spec = do
               "\\a -> match a with (Just b) -> b | _ -> 0"
 
       let typedStoreExpr = useSwaps' (reSwaps expr) (reTypedExpression expr)
-      getExpressionSourceItems (reInput expr) (typedStoreExpr)
+      getExpressionSourceItems (reInput expr) typedStoreExpr
         `shouldSatisfy` \a -> length a > 6

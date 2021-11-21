@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Actions.Helpers.Swaps
   ( useSwaps,
   )
