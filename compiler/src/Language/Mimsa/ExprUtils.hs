@@ -5,13 +5,14 @@ module Language.Mimsa.ExprUtils
     mapExpr,
     bindExpr,
     toEmptyAnnotation,
-    getAnnotation,
+    getAnnotation
   )
 where
 
 import Data.Bifunctor (second)
 import qualified Data.Map as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
+
 
 -------
 -- Functions for operating on the Expr type
@@ -44,6 +45,8 @@ getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyDefineInfix ann _ _ _) = ann
 getAnnotation (MyArray ann _) = ann
 getAnnotation (MyPatternMatch ann _ _) = ann
+
+
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`

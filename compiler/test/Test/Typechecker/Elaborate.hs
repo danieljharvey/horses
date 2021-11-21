@@ -38,28 +38,51 @@ spec = do
         startElaborate expr expected
 
       it "infers bool" $ do
-        let expr = bool True
-            expected = MyLiteral (MTPrim mempty MTBool) (MyBool True)
+        let expr = MyLiteral (Location 1 4) (MyBool True)
+            expected = MyLiteral (MTPrim (Location 1 4) MTBool) (MyBool True)
         startElaborate expr expected
 
       it "infers string" $ do
-        let expr = str (StringType "hello")
+        let expr =
+              MyLiteral
+                (Location 1 10)
+                (MyString (StringType "hello"))
             expected =
               MyLiteral
-                (MTPrim mempty MTString)
+                (MTPrim (Location 1 10) MTString)
                 ( MyString
                     (StringType "hello")
                 )
         startElaborate expr expected
 
-      it "infers let binding" $ do
-        let expr = MyLet mempty (named "x") (int 42) (bool True)
+      it "infers let and var" $ do
+        let expr =
+              MyLet
+                (Location 1 2)
+                (named "a")
+                (MyLiteral (Location 3 4) (MyInt 1))
+                (MyVar (Location 5 6) (named "a"))
             expected =
               MyLet
-                (MTPrim mempty MTBool)
+                (MTPrim (Location 1 2) MTInt)
+                (named "a")
+                (MyLiteral (MTPrim (Location 3 4) MTInt) (MyInt 1))
+                (MyVar (MTPrim (Location 5 6) MTInt) (named "a"))
+        startElaborate expr expected
+
+      it "infers let binding" $ do
+        let expr =
+              MyLet
+                (Location 1 2)
                 (named "x")
-                (MyLiteral (MTPrim mempty MTInt) (MyInt 42))
-                (MyLiteral (MTPrim mempty MTBool) (MyBool True))
+                (MyLiteral (Location 3 4) (MyInt 42))
+                (MyLiteral (Location 5 6) (MyBool True))
+            expected =
+              MyLet
+                (MTPrim (Location 1 2) MTBool)
+                (named "x")
+                (MyLiteral (MTPrim (Location 3 4) MTInt) (MyInt 42))
+                (MyLiteral (MTPrim (Location 5 6) MTBool) (MyBool True))
         startElaborate expr expected
 
       it "infers let binding with usage" $ do

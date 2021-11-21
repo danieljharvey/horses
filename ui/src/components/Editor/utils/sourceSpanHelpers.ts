@@ -56,8 +56,8 @@ export const createMarkerForTypedHole = ({
   message: `Inferred type: ${thMonoType}`,
   startLineNumber: thSourceSpan.ssRowStart,
   endLineNumber: thSourceSpan.ssRowEnd,
-  startColumn: thSourceSpan.ssColStart + 1,
-  endColumn: thSourceSpan.ssColEnd + 1,
+  startColumn: thSourceSpan.ssColStart,
+  endColumn: thSourceSpan.ssColEnd,
 })
 
 export const createMarkerForError = ({
@@ -67,6 +67,6 @@ export const createMarkerForError = ({
   message: 'Error!',
   startLineNumber: elSourceSpan.ssRowStart,
   endLineNumber: elSourceSpan.ssRowEnd,
-  startColumn: elSourceSpan.ssColStart + 1,
-  endColumn: elSourceSpan.ssColEnd + 1,
+  startColumn: elSourceSpan.ssColStart,
+  endColumn: elSourceSpan.ssColEnd,
 })

@@ -11,6 +11,7 @@ import Language.Mimsa.Actions.Shared
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.OutputTypes
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Project.SourceSpan
 import Language.Mimsa.Types.ResolvedExpression
@@ -25,23 +26,26 @@ unsafeTypecheckExpr tx = case evaluateText testStdlib tx of
   Right a -> a
   Left e -> error (T.unpack (prettyPrint e))
 
+getExpressionSourceItems' :: Text -> Expr Name MonoType -> [SourceItem]
+getExpressionSourceItems' = getExpressionSourceItems
+
 spec :: Spec
 spec = do
   describe "Output types" $ do
     it "Single type in literal" $ do
-      getExpressionSourceItems
+      getExpressionSourceItems'
         "True"
         ( MyLiteral
             (MTPrim (Location 1 4) MTBool)
             (MyBool True)
         )
         `shouldBe` [ SourceItem
-                       "Boolean"
+                       "True :: Boolean"
                        ( SourceSpan
                            { ssRowStart = 1,
                              ssRowEnd = 1,
-                             ssColStart = 1,
-                             ssColEnd = 4
+                             ssColStart = 2,
+                             ssColEnd = 5
                            }
                        )
                    ]
