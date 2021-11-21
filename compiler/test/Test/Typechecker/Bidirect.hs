@@ -116,7 +116,7 @@ spec = do
       let result = inferExpr expr
       expAnn <$> result `shouldBe` Right mtInt
 
-    fit "infers application on polymorphic function via let binding" $ do
+    it "infers application on polymorphic function via let binding" $ do
       let lambda =
             Lambda
               mempty
@@ -135,7 +135,7 @@ spec = do
       let result = inferExpr expr
       expAnn <$> result `shouldBe` Right mtInt
 
-    fit "infers application on annotated polymorphic function via let binding" $ do
+    it "infers application on annotated polymorphic function via let binding" $ do
       let lambda =
             Ann
               mempty
@@ -195,7 +195,7 @@ spec = do
                   (MTVar mempty (TVNum 0))
               )
           )
-    xit "infers constructor application" $ do
+    it "infers constructor application" $ do
       let expr =
             App
               mempty

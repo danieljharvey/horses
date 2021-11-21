@@ -20,7 +20,6 @@ import Data.Coerce
 import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -143,12 +142,14 @@ inferApp ::
 inferApp env _ann fn arg = do
   typedArg <- infer env arg
   -- remember type
-  pushType (debugPretty "inferred arg" (expAnn typedArg))
+  pushType (expAnn typedArg)
   typedFn <- infer env fn
-  case debugPretty "inferred fn" (expAnn typedFn) of
+  case expAnn typedFn of
     MTFunction _ mtArg mtReturn -> do
+      subs <- unify mtArg (expAnn typedArg)
       let typedArg' = typedArg $> mtArg
-      pure (App mtReturn typedFn typedArg')
+          mtReturn' = applySubst subs mtReturn
+      pure (App mtReturn' typedFn typedArg')
     _ -> throwError UnknownTypeError -- can only apply onto function
 
 inferIf ::
@@ -221,4 +222,4 @@ check :: Environment -> TcExpr -> MonoType -> InferM ElabExpr
 check env expr mt = do
   typedExpr <- infer env expr
   subs <- unify (expAnn typedExpr) mt
-  pure (applySubst (debugPretty "subs" subs) typedExpr)
+  pure (applySubst subs typedExpr)
