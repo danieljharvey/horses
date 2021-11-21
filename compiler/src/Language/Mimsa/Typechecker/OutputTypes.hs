@@ -1,76 +1,91 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Language.Mimsa.Typechecker.OutputTypes (getExpressionSourceItems) where
 
 import Data.Text (Text)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Typechecker
 
 -- return types inside spans for server
 
-getExpressionSourceItems :: Text -> Expr var MonoType -> [SourceItem]
+getExpressionSourceItems :: Text -> Expr Name MonoType -> [SourceItem]
 getExpressionSourceItems input = foldExpr fn
   where
-    fn monoType =
+    fn label monoType =
       let sSpan =
             sourceSpan
               input
               (getAnnotationForType monoType)
        in case sSpan of
             Just sSpan' ->
-              [SourceItem (prettyPrint monoType) sSpan']
+              [SourceItem (label <> " :: " <> prettyPrint monoType) sSpan']
             Nothing -> mempty
 
-foldPattern :: (Monoid a) => (ann -> a) -> Pattern var ann -> a
-foldPattern f (PVar ann _) = f ann
-foldPattern f (PWildcard ann) = f ann
-foldPattern f (PLit ann _) = f ann
-foldPattern f (PConstructor ann _ as) =
-  f ann <> foldMap (foldPattern f) as
-foldPattern f (PPair ann a b) =
-  f ann <> foldPattern f a <> foldPattern f b
-foldPattern f (PRecord ann as) =
-  f ann <> foldMap (foldPattern f) as
-foldPattern f (PArray ann as spread) =
-  f ann <> foldMap (foldPattern f) as <> foldSpread f spread
-foldPattern f (PString ann _ _) =
-  f ann
+foldPattern :: (Monoid a) => (Text -> ann -> a) -> Pattern Name ann -> a
+foldPattern fn pat =
+  foldPattern' pat
+  where
+    f = fn (prettyPrint pat)
+    foldPattern' (PVar ann _) = f ann
+    foldPattern' (PWildcard ann) = f ann
+    foldPattern' (PLit ann _) = f ann
+    foldPattern' (PConstructor ann _ as) =
+      f ann <> foldMap (foldPattern fn) as
+    foldPattern' (PPair ann a b) =
+      f ann <> foldPattern fn a <> foldPattern fn b
+    foldPattern' (PRecord ann as) =
+      f ann <> foldMap (foldPattern fn) as
+    foldPattern' (PArray ann as spread) =
+      f ann <> foldMap (foldPattern fn) as <> foldSpread fn spread
+    foldPattern' (PString ann _ _) =
+      f ann
 
-foldSpread :: (Monoid a) => (ann -> a) -> Spread var ann -> a
-foldSpread _ NoSpread = mempty
-foldSpread f (SpreadWildcard ann) = f ann
-foldSpread f (SpreadValue ann _) = f ann
+foldSpread :: (Monoid a) => (Text -> ann -> a) -> Spread Name ann -> a
+foldSpread fn spread =
+  foldSpread' spread
+  where
+    f = fn (prettyPrint spread)
+    foldSpread' NoSpread = mempty
+    foldSpread' (SpreadWildcard ann) = f ann
+    foldSpread' (SpreadValue ann _) = f ann
 
 -- fold a function through all annotations in an expression and attached
-foldExpr :: (Monoid a) => (ann -> a) -> Expr var ann -> a
-foldExpr f (MyLiteral ann _) = f ann
-foldExpr f (MyVar ann _) = f ann
-foldExpr f (MyLet ann _ expr body) =
-  f ann <> foldExpr f expr <> foldExpr f body
-foldExpr f (MyPatternMatch ann expr pats) =
-  f ann <> foldMap (foldPattern f) (fst <$> pats)
-    <> foldMap (foldExpr f) (snd <$> pats)
-    <> foldExpr f expr
-foldExpr f (MyLetPattern ann pat expr body) =
-  f ann <> foldPattern f pat <> foldExpr f expr <> foldExpr f body
-foldExpr f (MyInfix ann _ a b) =
-  f ann <> foldExpr f a <> foldExpr f b
-foldExpr f (MyLambda ann _ body) =
-  f ann <> foldExpr f body
-foldExpr f (MyApp ann fn arg) =
-  f ann <> foldExpr f fn <> foldExpr f arg
-foldExpr f (MyIf ann predExpr thenExpr elseExpr) =
-  f ann <> foldExpr f predExpr <> foldExpr f thenExpr <> foldExpr f elseExpr
-foldExpr f (MyPair ann a b) = f ann <> foldExpr f a <> foldExpr f b
-foldExpr f (MyRecord ann as) = f ann <> foldMap (foldExpr f) as
-foldExpr f (MyRecordAccess ann record _) =
-  f ann <> foldExpr f record
-foldExpr f (MyArray ann as) =
-  f ann <> foldMap (foldExpr f) as
-foldExpr f (MyDefineInfix ann _ expr body) =
-  f ann <> foldExpr f expr <> foldExpr f body
-foldExpr f (MyData ann _ body) =
-  f ann <> foldExpr f body
-foldExpr f (MyConstructor ann _) = f ann
-foldExpr f (MyTypedHole ann _) = f ann
+foldExpr :: (Monoid a) => (Text -> ann -> a) -> Expr Name ann -> a
+foldExpr fn expression =
+  foldExpr' expression
+  where
+    f = fn (prettyPrint expression)
+    foldExpr' (MyLiteral ann _) = f ann
+    foldExpr' (MyVar ann _) = f ann
+    foldExpr' (MyLet ann _ expr body) =
+      f ann <> foldExpr fn expr <> foldExpr fn body
+    foldExpr' (MyPatternMatch ann expr pats) =
+      f ann <> foldMap (foldPattern fn) (fst <$> pats)
+        <> foldMap (foldExpr fn) (snd <$> pats)
+        <> foldExpr fn expr
+    foldExpr' (MyLetPattern ann pat expr body) =
+      f ann <> foldPattern fn pat <> foldExpr fn expr <> foldExpr fn body
+    foldExpr' (MyInfix ann _ a b) =
+      f ann <> foldExpr fn a <> foldExpr fn b
+    foldExpr' (MyLambda ann _ body) =
+      f ann <> foldExpr fn body
+    foldExpr' (MyApp ann func arg) =
+      f ann <> foldExpr fn func <> foldExpr fn arg
+    foldExpr' (MyIf ann predExpr thenExpr elseExpr) =
+      f ann <> foldExpr fn predExpr <> foldExpr fn thenExpr <> foldExpr fn elseExpr
+    foldExpr' (MyPair ann a b) = f ann <> foldExpr fn a <> foldExpr fn b
+    foldExpr' (MyRecord ann as) = f ann <> foldMap (foldExpr fn) as
+    foldExpr' (MyRecordAccess ann record _) =
+      f ann <> foldExpr fn record
+    foldExpr' (MyArray ann as) =
+      f ann <> foldMap (foldExpr fn) as
+    foldExpr' (MyDefineInfix ann _ expr body) =
+      f ann <> foldExpr fn expr <> foldExpr fn body
+    foldExpr' (MyData ann _ body) =
+      f ann <> foldExpr fn body
+    foldExpr' (MyConstructor ann _) = f ann
+    foldExpr' (MyTypedHole ann _) = f ann

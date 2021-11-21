@@ -16,6 +16,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State (MonadState, gets, modify)
 import Data.Coerce
+import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Types.AST
@@ -30,12 +31,13 @@ data TypecheckState = TypecheckState
   }
 
 instantiate ::
-  (MonadState TypecheckState m) => Scheme -> m MonoType
-instantiate (Scheme vars ty) = do
-  newVars <- traverse (const $ getUnknown mempty) vars
+  (MonadState TypecheckState m) => Annotation -> Scheme -> m MonoType
+instantiate ann (Scheme vars ty) = do
+  newVars <- traverse (const $ getUnknown ann) vars
   let pairs = zip vars newVars
   let subst = Substitutions $ M.fromList pairs
-  pure (applySubst subst ty)
+  let substitutedType = applySubst subst ty
+  pure (substitutedType $> ann) -- use original annotation
 
 defaultTcState :: TypecheckState
 defaultTcState = TypecheckState 0 mempty
@@ -100,7 +102,7 @@ schemesToTypeMap schemes = do
             let leName = case k of
                   TVName n -> pure (Name $ coerce n)
                   TVNum i -> lookupSwap (NumberedVar i)
-             in (,) <$> leName <*> instantiate v
+             in (,) <$> leName <*> instantiate mempty v
         )
   typeMap <- traverse fn (M.toList schemes)
   pure (M.fromList typeMap)

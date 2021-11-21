@@ -16,8 +16,8 @@ spec =
           ( SourceSpan
               { ssRowStart = 1,
                 ssRowEnd = 1,
-                ssColStart = 0,
-                ssColEnd = 2
+                ssColStart = 1,
+                ssColEnd = 3
               }
           )
     it "Second line" $
@@ -26,8 +26,8 @@ spec =
           ( SourceSpan
               { ssRowStart = 2,
                 ssRowEnd = 2,
-                ssColStart = 0,
-                ssColEnd = 2
+                ssColStart = 1,
+                ssColEnd = 3
               }
           )
     it "Across lines" $
@@ -36,7 +36,7 @@ spec =
           ( SourceSpan
               { ssRowStart = 2,
                 ssRowEnd = 3,
-                ssColStart = 0,
-                ssColEnd = 2
+                ssColStart = 1,
+                ssColEnd = 3
               }
           )

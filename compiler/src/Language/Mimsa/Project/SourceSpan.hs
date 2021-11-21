@@ -28,8 +28,8 @@ sourceSpan tx (Location start end) =
         ( SourceSpan
             { ssRowStart = startRow,
               ssRowEnd = endRow,
-              ssColStart = startCol,
-              ssColEnd = endCol
+              ssColStart = startCol + 1,
+              ssColEnd = endCol + 1
             }
         )
 sourceSpan _ _ = Nothing

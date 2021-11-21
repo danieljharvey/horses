@@ -17,6 +17,7 @@ import Control.Monad.State (State)
 import Control.Monad.Writer
 import Data.Coerce (coerce)
 import Data.Foldable
+import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
@@ -94,7 +95,7 @@ elabVarFromScope env ann var' = do
   swaps <- ask
   case lookupInEnv swaps var' env of
     Just mt -> do
-      freshMonoType <- instantiate mt
+      freshMonoType <- instantiate ann mt
       pure (MyVar freshMonoType var')
     _ -> do
       throwError $
@@ -189,7 +190,7 @@ elabLetBinding env ann binder expr body = do
       elabBody <- elab newEnv body
       pure
         ( MyLet
-            (getTypeFromAnn elabBody)
+            (getTypeFromAnn elabBody $> ann) -- we want to make sure we keep the original source location
             binder
             elabExpr
             elabBody

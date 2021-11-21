@@ -17,6 +17,7 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Server.Handlers
@@ -69,8 +70,11 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
         ed <- case codegenInfo of
           Just resolvedExpr -> do
             let se = reStoreExpression resolvedExpr
-                typedExpr = reTypedExpression resolvedExpr
-            ed' <- expressionData se typedExpr gv input
+            typedNameExpr <-
+              Actions.useSwaps
+                (reSwaps resolvedExpr)
+                (reTypedExpression resolvedExpr)
+            ed' <- expressionData se typedNameExpr gv input
             pure (Just ed')
           Nothing -> pure Nothing
         pure (ed, typeClasses, dt)

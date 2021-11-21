@@ -89,7 +89,7 @@ data ExpressionData = ExpressionData
 makeExpressionData ::
   Project Annotation ->
   StoreExpression Annotation ->
-  Expr Variable MonoType ->
+  Expr Name MonoType ->
   [Graphviz] ->
   Text ->
   ExpressionData
@@ -117,7 +117,7 @@ makeExpressionData project se typedExpr gv input =
 
 expressionData ::
   StoreExpression Annotation ->
-  Expr Variable MonoType ->
+  Expr Name MonoType ->
   [Graphviz] ->
   Text ->
   ActionM ExpressionData
