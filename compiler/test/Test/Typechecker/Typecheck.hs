@@ -25,7 +25,7 @@ import Test.Hspec
 import Test.Utils.Helpers
 
 identity :: Monoid ann => Expr Variable ann
-identity = MyLambda mempty (named "x") (MyVar mempty (named "x"))
+identity = MyLambda mempty (Identifier mempty $ named "x") (MyVar mempty (named "x"))
 
 startInference :: Expr Variable Annotation -> Either TypeError MonoType -> IO ()
 startInference expr expected = do

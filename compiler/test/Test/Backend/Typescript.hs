@@ -437,7 +437,11 @@ spec = do
       it "function with known type" $ do
         snd
           ( testFromExpr
-              (MyLambda (MTFunction mempty mtString mtString) "str" (MyVar mtString "str"))
+              ( MyLambda
+                  (MTFunction mempty mtString mtString)
+                  (Identifier mtString "str")
+                  (MyVar mtString "str")
+              )
           )
           `shouldBe` "export const main = (str: string) => str"
       it "function with generic type used multiple times" $ do
@@ -445,10 +449,10 @@ spec = do
           ( testFromExpr
               ( MyLambda
                   (MTFunction mempty (mtVar "a") (mtVar "a"))
-                  "a"
+                  (Identifier (mtVar "a") "a")
                   ( MyLambda
                       (MTFunction mempty (mtVar "a") (mtVar "a"))
-                      "a2"
+                      (Identifier (mtVar "a") "a2")
                       (MyVar (mtVar "a") "a")
                   )
               )

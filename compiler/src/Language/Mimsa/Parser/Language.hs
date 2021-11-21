@@ -88,7 +88,7 @@ letFuncParser :: Parser ParserExpr
 letFuncParser = addLocation $ do
   _ <- thenSpace (string "let")
   name <- thenSpace nameParser
-  args <- chainl1 ((: []) <$> thenSpace nameParser) (pure (<>))
+  args <- chainl1 ((: []) <$> thenSpace identifierParser) (pure (<>))
   _ <- thenSpace (string "=")
   expr <- expressionParser
   _ <- try (literalWithSpace ";") <|> thenSpace (string "in" $> ())
@@ -117,7 +117,7 @@ lambdaParser =
     let slashNameBinder = do
           _ <- string "\\"
           _ <- space
-          thenSpace nameParser
+          thenSpace identifierParser
         arrowExprBinder = do
           _ <- thenSpace (string "->")
           expressionParser

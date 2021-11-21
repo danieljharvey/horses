@@ -23,7 +23,7 @@ wrap (DataType _tyCon _vars items) =
       Right
         ( MyLambda
             mempty
-            "a"
+            (Identifier mempty "a")
             ( MyApp
                 mempty
                 (MyConstructor mempty consName)
@@ -43,7 +43,7 @@ unwrap (DataType tyCon _vars items) = do
       Right
         ( MyLambda
             mempty
-            tyName
+            (Identifier mempty tyName)
             ( MyPatternMatch
                 mempty
                 (MyVar mempty tyName)

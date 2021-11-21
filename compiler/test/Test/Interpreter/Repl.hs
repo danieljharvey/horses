@@ -89,16 +89,19 @@ spec =
         result
           `shouldBe` Right
             (MTPrim mempty MTInt, int 1)
+
       it "let good = { dog: True } in good.dog" $ do
         result <- eval testStdlib "let good = ({ dog: True }) in good.dog"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "let prelude = { id: (\\i -> i) } in prelude.id" $ do
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
             ( MTFunction mempty (unknown 0) (unknown 0),
-              MyLambda mempty "i" (MyVar mempty "i")
+              MyLambda mempty (Identifier mempty "i") (MyVar mempty "i")
             )
+
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id 1"
         result
@@ -106,6 +109,7 @@ spec =
             ( MTPrim mempty MTInt,
               int 1
             )
+
       it "let bigPrelude = ({ prelude: { id: (\\i -> i) } }) in bigPrelude.prelude.id 1" $ do
         result <- eval testStdlib "let bigPrelude = ({ prelude: { id: (\\i -> i) } }) in bigPrelude.prelude.id 1"
         result
@@ -113,6 +117,7 @@ spec =
             ( MTPrim mempty MTInt,
               int 1
             )
+
       it "compose incrementInt" $ do
         result <- eval testStdlib "let compose = (\\f -> \\g -> \\a -> f (g a)) in let f = compose incrementInt incrementInt in f 67"
         result `shouldBe` Right (MTPrim mempty MTInt, int 69)
@@ -610,7 +615,7 @@ spec =
                 (MyConstructor mempty "Reader")
                 ( MyLambda
                     mempty
-                    "r"
+                    (Identifier mempty "r")
                     ( MyInfix
                         mempty
                         Add

@@ -32,8 +32,8 @@ useSwaps ::
 useSwaps swaps expr' = runReaderT (useSwaps' expr') swaps
 
 useSwaps' :: Expr Variable ann -> App ann (Expr Name ann)
-useSwaps' (MyLambda ann var body) =
-  MyLambda ann <$> lookupSwap var <*> useSwaps' body
+useSwaps' (MyLambda ann (Identifier bindAnn var) body) =
+  MyLambda ann <$> (Identifier bindAnn <$> lookupSwap var) <*> useSwaps' body
 useSwaps' (MyVar ann var) =
   MyVar ann <$> lookupSwap var
 useSwaps' (MyLet ann var expr' body) = do

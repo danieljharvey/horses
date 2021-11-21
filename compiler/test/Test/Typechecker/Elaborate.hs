@@ -103,7 +103,7 @@ spec = do
                 (named "dec")
                 ( MyLambda
                     mempty
-                    (named "bool")
+                    (Identifier mempty $ named "bool")
                     ( MyIf
                         mempty
                         (MyVar mempty (named "bool"))
@@ -122,7 +122,7 @@ spec = do
                 (named "dec")
                 ( MyLambda
                     (MTFunction mempty mtBool mtBool)
-                    (named "bool")
+                    (Identifier mtBool $ named "bool")
                     ( MyIf
                         mtBool
                         (MyVar mtBool (named "bool"))
@@ -147,7 +147,7 @@ spec = do
                 (named "dec")
                 ( MyLambda
                     mempty
-                    (named "bool")
+                    (Identifier mempty $ named "bool")
                     ( MyIf
                         mempty
                         (MyVar mempty (named "bool"))
@@ -166,7 +166,7 @@ spec = do
                 (named "dec")
                 ( MyLambda
                     (MTFunction mempty mtBool mtBool)
-                    (named "bool")
+                    (Identifier mtBool $ named "bool")
                     ( MyIf
                         mtBool
                         (MyVar mtBool (named "bool"))

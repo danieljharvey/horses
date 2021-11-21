@@ -19,6 +19,7 @@ import Data.OpenApi (ToSchema)
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType (DataType)
+import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
@@ -46,7 +47,7 @@ data Expr var ann
   | -- | a `f` b
     MyInfix ann Operator (Expr var ann) (Expr var ann)
   | -- | binder, body
-    MyLambda ann var (Expr var ann)
+    MyLambda ann (Identifier var ann) (Expr var ann)
   | -- | function, argument
     MyApp ann (Expr var ann) (Expr var ann)
   | -- | expr, thencase, elsecase
@@ -176,7 +177,7 @@ prettyPair a b =
 
 prettyLambda ::
   (Printer var, Show var) =>
-  var ->
+  Identifier var ann ->
   Expr var ann ->
   Doc style
 prettyLambda binder expr =

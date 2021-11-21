@@ -43,10 +43,10 @@ applicativeApply_ (DataType tyCon vars items) = do
   pure
     ( MyLambda
         mempty
-        (fName tyCon)
+        (Identifier mempty (fName tyCon))
         ( MyLambda
             mempty
-            (aName tyCon)
+            (Identifier mempty (aName tyCon))
             ( MyPatternMatch
                 mempty
                 (MyVar mempty (fName tyCon))

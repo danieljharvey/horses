@@ -570,16 +570,16 @@ elabLetPattern env ann pat expr body = do
 elabLambda ::
   Environment ->
   Annotation ->
-  Variable ->
+  Identifier Variable Annotation ->
   TcExpr ->
   ElabM ElabExpr
-elabLambda env ann binder body = do
-  tyBinder <- getUnknown ann
+elabLambda env ann (Identifier bindAnn binder) body = do
+  tyBinder <- getUnknown bindAnn
   let tmpCtx =
         envFromVar binder (Scheme [] tyBinder) <> env
   elabBody <- elab tmpCtx body
   let tyReturn = MTFunction ann tyBinder (getTypeFromAnn elabBody)
-  pure (MyLambda tyReturn binder elabBody)
+  pure (MyLambda tyReturn (Identifier tyBinder binder) elabBody)
 
 isTwoArityFunction :: MonoType -> Bool
 isTwoArityFunction (MTFunction _ _ MTFunction {}) = True

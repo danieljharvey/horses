@@ -10,10 +10,10 @@ import Language.Mimsa.Types.Identifiers
 -- | TODO: optimise this with SwapName to do all these in one recursion, this
 -- isn't super efficient right now
 instantiateVar :: Expr Variable ann -> App ann (Expr Variable ann)
-instantiateVar (MyLambda ann binder expr') = do
+instantiateVar (MyLambda ann (Identifier bindAnn binder) expr') = do
   (freshBinder, freshExpr) <- newLambdaCopy binder expr'
   subExpr <- instantiateVar freshExpr
-  pure (MyLambda ann freshBinder subExpr)
+  pure (MyLambda ann (Identifier bindAnn freshBinder) subExpr)
 instantiateVar other = bindExpr instantiateVar other
 
 -- get new var, swapping out all lambdas

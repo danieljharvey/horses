@@ -23,7 +23,7 @@ extractVars_ (MyLetPattern _ pat expr body) =
   let patVars = extractPatternVars pat
    in S.filter (`S.notMember` patVars) (extractVars_ expr <> extractVars_ body)
 extractVars_ (MyInfix _ _ a b) = extractVars_ a <> extractVars_ b
-extractVars_ (MyLambda _ newVar a) = S.delete newVar (extractVars_ a)
+extractVars_ (MyLambda _ (Identifier _ newVar) a) = S.delete newVar (extractVars_ a)
 extractVars_ (MyApp _ a b) = extractVars_ a <> extractVars_ b
 extractVars_ (MyLiteral _ _) = mempty
 extractVars_ (MyPair _ a b) = extractVars_ a <> extractVars_ b

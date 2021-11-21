@@ -44,13 +44,13 @@ fold_ (DataType tyCon vars items) = do
             "fold"
             ( MyLambda
                 mempty
-                "f"
+                (Identifier mempty "f")
                 ( MyLambda
                     mempty
-                    "total"
+                    (Identifier mempty "total")
                     ( MyLambda
                         mempty
-                        tyName
+                        (Identifier mempty tyName)
                         ( MyPatternMatch
                             mempty
                             (MyVar mempty tyName)
