@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
-    "openapi-typescript-codegen": "0.12.2",
+    "openapi-typescript-codegen": "0.12.3",
     "fork-ts-checker-webpack-plugin": "6.4.0"
   },
   "dependencies": {

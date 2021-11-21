@@ -8219,10 +8219,10 @@ open@^7.0.2:
     is-docker "^2.0.0"
     is-wsl "^2.1.1"
 
-openapi-typescript-codegen@0.12.2:
-  version "0.12.2"
-  resolved "https://registry.yarnpkg.com/openapi-typescript-codegen/-/openapi-typescript-codegen-0.12.2.tgz#12806810b6d47fd2370c73d9cbb1e0e0955d444b"
-  integrity sha512-+EkQeJ5/9no6DNX/4FZUVCqmgeOSEFz6X6NrjKZ1xG6WIgiUFMOaAfNOlnZNJscf6a7QfnhoqekbY5hLfQYAug==
+openapi-typescript-codegen@0.12.3:
+  version "0.12.3"
+  resolved "https://registry.yarnpkg.com/openapi-typescript-codegen/-/openapi-typescript-codegen-0.12.3.tgz#91bf5ebae88ba380f0928504537cd6e6511a31f7"
+  integrity sha512-6S3KjVFJSC8mRlbZRr6mxYhUBzxNwEQQ8ev6cCRVaN+GsZ+ZEeSmO84/gOg2O5qCsWtzWe8RmvVZHRAvvJk5pQ==
   dependencies:
     "@types/node-fetch" "^2.5.12"
     abort-controller "^3.0.0"
