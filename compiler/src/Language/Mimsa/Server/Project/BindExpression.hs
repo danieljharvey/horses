@@ -18,6 +18,7 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Helpers.ExpressionData
 import Language.Mimsa.Server.MimsaHandler
@@ -56,9 +57,10 @@ bindExpression ::
 bindExpression mimsaEnv (BindExpressionRequest hash name' input) = runMimsaHandlerT $ do
   let action = do
         expr <- Actions.parseExpr input
-        (_, _, ResolvedExpression _ se _ _ _ typedExpr input', gv) <-
+        (_, _, ResolvedExpression _ se _ _ swaps typedExpr input', gv) <-
           Actions.bindExpression expr name' input
-        expressionData se typedExpr gv input'
+        typedNameExpr <- Actions.useSwaps swaps typedExpr
+        expressionData se typedNameExpr gv input'
   response <-
     lift $ eitherFromActionM mimsaEnv hash action
   case response of

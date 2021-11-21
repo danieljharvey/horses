@@ -6,12 +6,13 @@ import Data.Text (Text)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Typechecker
 
 -- return types inside spans for server
 
-getExpressionSourceItems :: (Printer var, Show var) => Text -> Expr var MonoType -> [SourceItem]
+getExpressionSourceItems :: Text -> Expr Name MonoType -> [SourceItem]
 getExpressionSourceItems input = foldExpr fn
   where
     fn label monoType =
@@ -24,7 +25,7 @@ getExpressionSourceItems input = foldExpr fn
               [SourceItem (label <> " :: " <> prettyPrint monoType) sSpan']
             Nothing -> mempty
 
-foldPattern :: (Printer var, Show var, Monoid a) => (Text -> ann -> a) -> Pattern var ann -> a
+foldPattern :: (Monoid a) => (Text -> ann -> a) -> Pattern Name ann -> a
 foldPattern fn pat =
   foldPattern' pat
   where
@@ -43,7 +44,7 @@ foldPattern fn pat =
     foldPattern' (PString ann _ _) =
       f ann
 
-foldSpread :: (Printer var, Show var, Monoid a) => (Text -> ann -> a) -> Spread var ann -> a
+foldSpread :: (Monoid a) => (Text -> ann -> a) -> Spread Name ann -> a
 foldSpread fn spread =
   foldSpread' spread
   where
@@ -53,7 +54,7 @@ foldSpread fn spread =
     foldSpread' (SpreadValue ann _) = f ann
 
 -- fold a function through all annotations in an expression and attached
-foldExpr :: (Printer var, Show var, Monoid a) => (Text -> ann -> a) -> Expr var ann -> a
+foldExpr :: (Monoid a) => (Text -> ann -> a) -> Expr Name ann -> a
 foldExpr fn expression =
   foldExpr' expression
   where

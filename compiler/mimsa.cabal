@@ -33,6 +33,7 @@ library
       Language.Mimsa.Actions.Evaluate
       Language.Mimsa.Actions.Graph
       Language.Mimsa.Actions.Helpers.Parse
+      Language.Mimsa.Actions.Helpers.Swaps
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.RemoveBinding
       Language.Mimsa.Actions.Shared

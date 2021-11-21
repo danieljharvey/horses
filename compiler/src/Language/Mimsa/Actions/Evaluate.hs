@@ -7,11 +7,13 @@ where
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
+import Data.Functor
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter (interpret)
+import Language.Mimsa.Interpreter.UseSwaps (useSwaps)
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.DepGraph
 import Language.Mimsa.Types.AST
@@ -29,13 +31,19 @@ evaluate ::
       Expr Name Annotation,
       StoreExpression Annotation,
       [Graphviz],
-      Expr Variable MonoType,
+      Expr Name MonoType,
       Text
     )
 evaluate input expr = do
   project <- Actions.getProject
   (ResolvedExpression mt se expr' scope' swaps typedExpr input') <-
     liftEither $ Actions.getTypecheckedStoreExpression input project expr
+  typedNameExpr <-
+    liftEither
+      ( first
+          (\e -> InterpreterErr (e $> mempty))
+          (useSwaps swaps typedExpr)
+      )
   interpretedExpr <-
     liftEither (first InterpreterErr (interpret scope' swaps expr'))
   graphviz <- Actions.graphExpression se
@@ -44,6 +52,6 @@ evaluate input expr = do
         <> "\n::\n"
         <> prettyPrint mt
     )
-  pure (mt, interpretedExpr, se, graphviz, typedExpr, input')
+  pure (mt, interpretedExpr, se, graphviz, typedNameExpr, input')
 
 ---------
