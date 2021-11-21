@@ -17,7 +17,6 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Coerce
-import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.DataTypes
@@ -32,7 +31,8 @@ import Language.Mimsa.Types.Typechecker
 type InferM = ExceptT TypeError (ReaderT Swaps (State TypecheckState))
 
 pushType :: (MonadState TypecheckState m) => MonoType -> m ()
-pushType mt = modify (\s -> s {tcsTypeStack = [mt] <> tcsTypeStack s})
+pushType mt =
+  modify (\s -> s {tcsTypeStack = [mt] <> tcsTypeStack s})
 
 popType :: (MonadState TypecheckState m) => m (Maybe MonoType)
 popType = do
@@ -147,9 +147,8 @@ inferApp env _ann fn arg = do
   case expAnn typedFn of
     MTFunction _ mtArg mtReturn -> do
       subs <- unify mtArg (expAnn typedArg)
-      let typedArg' = typedArg $> mtArg
-          mtReturn' = applySubst subs mtReturn
-      pure (App mtReturn' typedFn typedArg')
+      let mtReturn' = applySubst subs mtReturn
+      pure (App mtReturn' typedFn typedArg)
     _ -> throwError UnknownTypeError -- can only apply onto function
 
 inferIf ::

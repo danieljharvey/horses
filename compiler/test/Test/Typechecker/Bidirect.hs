@@ -57,6 +57,7 @@ spec = do
     it "infers int" $ do
       let expr = Lit mempty (MyInt 1)
       infer' expr `shouldBe` Right mtInt
+
     it "infers let" $ do
       let expr =
             Let
@@ -65,9 +66,11 @@ spec = do
               (Lit mempty (MyInt 1))
               (Var mempty (named "a"))
       infer' expr `shouldBe` Right mtInt
+
     it "infers correct annotation" $ do
       let expr = Ann mempty mtInt (Lit mempty (MyInt 1))
       infer' expr `shouldBe` Right mtInt
+
     it "errors on conflicting annotation" $ do
       let expr = Ann mempty mtBool (Lit mempty (MyInt 1))
       infer' expr `shouldSatisfy` isLeft
@@ -166,6 +169,54 @@ spec = do
               (Lambda mempty (named "a") (Lit mempty (MyBool True)))
           expr = App mempty lambda (Lit mempty (MyInt 100))
       infer' expr `shouldBe` Right mtBool
+
+    it "fails when applying with type that does not match annotation" $ do
+      let lambda =
+            Ann
+              mempty
+              (MTFunction mempty mtInt mtBool)
+              (Lambda mempty (named "a") (Lit mempty (MyBool True)))
+          expr = App mempty lambda (Lit mempty (MyBool False))
+      infer' expr `shouldSatisfy` isLeft
+
+    it "applies to const function" $ do
+      let lambda =
+            Lambda
+              mempty
+              (named "a")
+              (Lambda mempty (named "b") (Var mempty (named "a")))
+          expr =
+            App
+              mempty
+              ( App
+                  mempty
+                  lambda
+                  (Lit mempty (MyBool False))
+              )
+              (Lit mempty (MyInt 100))
+      infer' expr `shouldBe` Right mtBool
+
+    it "applies to const function with contradicting annotation" $ do
+      let lambda =
+            Lambda
+              mempty
+              (named "a")
+              (Lambda mempty (named "b") (Var mempty (named "a")))
+          expr =
+            Ann
+              mempty
+              mtInt
+              ( App
+                  mempty
+                  ( App
+                      mempty
+                      lambda
+                      (Lit mempty (MyBool False))
+                  )
+                  (Lit mempty (MyInt 100))
+              )
+      infer' expr `shouldSatisfy` isLeft
+
     it "if fails when then and else are different" $ do
       let expr =
             If
@@ -174,6 +225,7 @@ spec = do
               (Lit mempty (MyBool False))
               (Lit mempty (MyInt 101))
       infer' expr `shouldSatisfy` isLeft
+
     it "infers if without annotation" $ do
       let expr =
             If
@@ -182,6 +234,7 @@ spec = do
               (Lit mempty (MyInt 100))
               (Lit mempty (MyInt 101))
       infer' expr `shouldBe` Right mtInt
+
     it "infers raw constructor" $ do
       let expr = Constructor mempty "Just"
       infer' expr
@@ -195,6 +248,7 @@ spec = do
                   (MTVar mempty (TVNum 0))
               )
           )
+
     it "infers constructor application" $ do
       let expr =
             App
