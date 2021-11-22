@@ -377,6 +377,7 @@ test-suite mimsa-test
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.KindChecker
       Test.Typechecker.OutputTypes
+      Test.Typechecker.Substitutions
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
