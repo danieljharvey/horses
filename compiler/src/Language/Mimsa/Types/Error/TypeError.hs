@@ -46,7 +46,6 @@ data TypeErrorF ann
   | IncompletePatternMatch ann [TyCon]
   | MixedUpPatterns [TyCon]
   | TypedHoles (Map Name (Type ann, Set Name))
-  | FunctionArityMismatch ann Int (Type ann)
   | CouldNotFindInfixOperator ann InfixOp (Set InfixOp)
   | CannotUseBuiltInTypeAsConstructor ann TyCon
   | InternalConstructorUsedOutsidePatternMatch ann TyCon
@@ -192,8 +191,6 @@ renderTypeError (TypedHoles map') =
       if S.null s
         then ""
         else line <> indent 2 ("Suggestions:" <+> list (prettyDoc <$> S.toList s))
-renderTypeError (FunctionArityMismatch _ i mt) =
-  ["Function arity mismatch. Expected " <> pretty i <> " but got " <> prettyDoc mt]
 renderTypeError (CannotUseBuiltInTypeAsConstructor _ name) =
   ["Cannot use built-in type as constructor name:" <+> prettyDoc name]
 renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
