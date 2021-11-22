@@ -40,7 +40,7 @@ nameParser =
 identifierParser :: Parser (Identifier Name Annotation)
 identifierParser =
   withLocation
-    (\loc name -> Identifier loc name)
+    Identifier
     nameParser
 
 ---
