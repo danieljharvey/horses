@@ -219,7 +219,7 @@ interpretWithScope ::
   App ann (Expr Variable ann)
 interpretWithScope interpretExpr =
   case interpretExpr of
-    (MyLet _ binder expr body) -> do
+    (MyLet _ (Identifier _ binder) expr body) -> do
       addToScope (Scope $ M.singleton binder expr)
       interpretWithScope body
     (MyLetPattern _ pat expr body) -> do

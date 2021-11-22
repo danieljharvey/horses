@@ -1,0 +1,8 @@
+let loop a =
+  if (eq 10 a)
+  then
+    a
+  else
+    (loop (addInt a 1));
+
+loop 1

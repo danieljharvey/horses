@@ -68,8 +68,8 @@ foldExpr fn expression =
     f = fn (prettyPrint expression)
     foldExpr' (MyLiteral ann _) = f ann
     foldExpr' (MyVar ann _) = f ann
-    foldExpr' (MyLet ann _ expr body) =
-      f ann <> foldExpr fn expr <> foldExpr fn body
+    foldExpr' (MyLet ann binder expr body) =
+      f ann <> foldIdentifier fn binder <> foldExpr fn expr <> foldExpr fn body
     foldExpr' (MyPatternMatch ann expr pats) =
       f ann <> foldMap (foldPattern fn) (fst <$> pats)
         <> foldMap (foldExpr fn) (snd <$> pats)

@@ -161,8 +161,8 @@ findActualBindingInSwaps (NamedVar var) = do
     _ -> pure (NamedVar var)
 findActualBindingInSwaps a = pure a
 
-bindingIsRecursive :: Variable -> TcExpr -> Bool
-bindingIsRecursive var = getAny . withMonoid findBinding
+bindingIsRecursive :: Identifier Variable ann -> TcExpr -> Bool
+bindingIsRecursive (Identifier _ var) = getAny . withMonoid findBinding
   where
     findBinding (MyVar _ binding) | binding == var = (False, Any True)
     findBinding _ = (True, mempty)
@@ -172,11 +172,11 @@ bindingIsRecursive var = getAny . withMonoid findBinding
 elabLetBinding ::
   Environment ->
   Annotation ->
-  Variable ->
+  Identifier Variable Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabLetBinding env ann binder expr body = do
+elabLetBinding env ann binder@(Identifier bindAnn bindName) expr body = do
   if bindingIsRecursive binder expr
     then elabRecursiveLetBinding env ann binder expr body
     else do
@@ -185,13 +185,13 @@ elabLetBinding env ann binder expr body = do
       subst <- solve constraints
       let tySubstExpr = applySubst subst (getTypeFromAnn elabExpr)
       let newEnv =
-            envFromVar binder (generalise env tySubstExpr)
+            envFromVar bindName (generalise env tySubstExpr)
               <> env
       elabBody <- elab newEnv body
       pure
         ( MyLet
             (getTypeFromAnn elabBody $> ann) -- we want to make sure we keep the original source location
-            binder
+            (Identifier (tySubstExpr $> bindAnn) bindName)
             elabExpr
             elabBody
         )
@@ -199,21 +199,29 @@ elabLetBinding env ann binder expr body = do
 elabRecursiveLetBinding ::
   Environment ->
   Annotation ->
-  Variable ->
+  Identifier Variable Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabRecursiveLetBinding env ann binder expr body = do
-  binderInExpr <- findActualBindingInSwaps binder
+elabRecursiveLetBinding env ann (Identifier bindAnn bindName) expr body = do
+  binderInExpr <- findActualBindingInSwaps bindName
   tyRecExpr <- getUnknown ann
   let envWithRecursiveFn = envFromVar binderInExpr (Scheme [] tyRecExpr) <> env
   elabExpr <- elab envWithRecursiveFn expr
-  let newEnv =
-        envFromVar binderInExpr (Scheme [] (getTypeFromAnn elabExpr)) <> env
+  let tyExpr = getTypeFromAnn elabExpr
+      newEnv =
+        envFromVar binderInExpr (Scheme [] tyExpr) <> env
+
   elabBody <- elab newEnv body
   tell [ShouldEqual tyRecExpr (getTypeFromAnn elabExpr)]
 
-  pure (MyLet (getTypeFromAnn elabBody) binder elabExpr elabBody)
+  pure
+    ( MyLet
+        (getTypeFromAnn elabBody)
+        (Identifier (tyExpr $> bindAnn) bindName)
+        elabExpr
+        elabBody
+    )
 
 elabIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
 elabIf env condition thenExpr elseExpr = do

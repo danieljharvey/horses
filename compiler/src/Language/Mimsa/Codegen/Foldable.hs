@@ -41,7 +41,7 @@ fold_ (DataType tyCon vars items) = do
       pure
         ( MyLet
             mempty
-            "fold"
+            (Identifier mempty "fold")
             ( MyLambda
                 mempty
                 (Identifier mempty "f")

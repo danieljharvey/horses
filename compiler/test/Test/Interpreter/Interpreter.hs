@@ -82,14 +82,14 @@ spec =
     describe "Let and Var" $
       it "let x = 1 in 1" $
         do
-          let f = MyLet mempty (named "x") (int 1) (MyVar mempty (named "x"))
+          let f = MyLet mempty (Identifier mempty $ named "x") (int 1) (MyVar mempty (named "x"))
           testInterpret mempty mempty f (int 1)
     describe "Lambda and App" $ do
       it "let id = \\x -> x in (id 1)" $ do
         let f =
               MyLet
                 mempty
-                (named "id")
+                (Identifier mempty $ named "id")
                 (MyLambda mempty (Identifier mempty $ named "x") (MyVar mempty (named "x")))
                 (MyApp mempty (MyVar mempty (named "id")) (int 1))
         testInterpret mempty mempty f (int 1)
@@ -97,7 +97,7 @@ spec =
         let f =
               MyLet
                 mempty
-                (named "const")
+                (Identifier mempty $ named "const")
                 ( MyLambda
                     mempty
                     (Identifier mempty $ named "a")
@@ -118,7 +118,7 @@ spec =
         let f =
               MyLet
                 mempty
-                (named "const")
+                (Identifier mempty $ named "const")
                 (MyLambda mempty (Identifier mempty $ numbered 0) (MyLambda mempty (Identifier mempty $ numbered 1) (MyVar mempty (numbered 0))))
                 (MyApp mempty (MyApp mempty (MyVar mempty (named "const")) (int 1)) (int 2))
         testInterpret mempty mempty f (int 1)
@@ -133,11 +133,11 @@ spec =
         let f =
               MyLet
                 mempty
-                (named "const2")
+                (Identifier mempty $ named "const2")
                 (MyLambda mempty (Identifier mempty $ named "a") (MyLambda mempty (Identifier mempty $ named "b") (MyVar mempty (named "a"))))
                 ( MyLet
                     mempty
-                    (named "reuse")
+                    (Identifier mempty $ named "reuse")
                     ( MyRecord
                         mempty
                         ( M.fromList
@@ -180,7 +180,7 @@ spec =
         let reduceFunc =
               MyLet
                 mempty
-                (named "f")
+                (Identifier mempty $ named "f")
                 (MyLambda mempty (Identifier mempty $ named "b") (MyLambda mempty (Identifier mempty $ named "a") (str' "Horse")))
                 ( MyApp
                     mempty
