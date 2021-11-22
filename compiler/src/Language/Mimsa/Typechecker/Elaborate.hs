@@ -581,10 +581,6 @@ elabLambda env ann (Identifier bindAnn binder) body = do
   let tyReturn = MTFunction ann tyBinder (getTypeFromAnn elabBody)
   pure (MyLambda tyReturn (Identifier tyBinder binder) elabBody)
 
-isTwoArityFunction :: MonoType -> Bool
-isTwoArityFunction (MTFunction _ _ MTFunction {}) = True
-isTwoArityFunction _ = False
-
 elabDefineInfix ::
   Environment ->
   Annotation ->
@@ -598,11 +594,6 @@ elabDefineInfix env ann infixOp infixExpr expr = do
   u3 <- getUnknown ann
   elabBindExpr <- elab env infixExpr
   let tyBind = getTypeFromAnn elabBindExpr
-  let arityError =
-        FunctionArityMismatch
-          (getAnnotationForType . getAnnotation $ elabBindExpr)
-          2
-          tyBind
   tell
     [ ShouldEqual
         tyBind
@@ -613,11 +604,8 @@ elabDefineInfix env ann infixOp infixExpr expr = do
         )
     ]
   let newEnv = envFromInfixOp infixOp tyBind <> env
-  if isTwoArityFunction tyBind
-    then do
-      elabBodyExpr <- elab newEnv expr
-      pure $ MyDefineInfix (getTypeFromAnn elabBodyExpr) infixOp elabBindExpr elabBodyExpr
-    else throwError arityError
+  elabBodyExpr <- elab newEnv expr
+  pure $ MyDefineInfix (getTypeFromAnn elabBodyExpr) infixOp elabBindExpr elabBodyExpr
 
 elabArray ::
   Environment ->

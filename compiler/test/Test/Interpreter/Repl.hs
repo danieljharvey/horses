@@ -624,26 +624,27 @@ spec =
                     )
                 )
             )
+
       it "\\state -> \\s -> match state with (State sas) -> sas s" $ do
         result <- eval testStdlib "\\state -> \\s -> match state with (State sas) -> sas s"
         result `shouldSatisfy` isRight
+
       it "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil" $ do
         result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil"
         result `shouldSatisfy` isRight
+
       it "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil" $ do
         result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil"
         result `shouldSatisfy` isRight
+
       it "infix <<< = compose; True" $ do
         result <- eval testStdlib "infix <<< = compose; True"
         -- binding to a two arity function is A++
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "infix <<< = incrementInt; True" $ do
         result <- eval testStdlib "infix <<< = incrementInt; True"
         -- we can only bind to a two arity function
-        result `shouldSatisfy` isLeft
-      it "infix <<< = id; True" $ do
-        result <- eval testStdlib "infix <<< = id; True"
-        -- we check polymorphic functions
         result `shouldSatisfy` isLeft
 
       it "define +++ as infix and use it" $ do
@@ -658,35 +659,44 @@ spec =
         result <- eval testStdlib "infix == = addInt; True"
         -- can't overwrite built in infix operators
         result `shouldSatisfy` isLeft
+
       it "infix +++ = addInt; 1 +++ True" $ do
         result <- eval testStdlib "infix +++ = addInt; 1 +++ True"
         -- function typechecking should still work
         result `shouldSatisfy` isLeft
+
       it "Stops boolean and Maybe<A> being used together" $ do
         result <- eval testStdlib "\\some -> match some with (Just a) -> Just (a == 1) | _ -> some"
         result `shouldSatisfy` isLeft
       -- this should be thrown out by the interpreter
+
       it "Interpreter is stopped before it loops infinitely" $ do
         result <- eval testStdlib "let forever = \\a -> forever a in forever True"
         result `shouldSatisfy` \case
           Left msg -> "interpreter aborted" `T.isInfixOf` msg
           _ -> False
+
       -- built-ins should not be used as type constructors
       it "type Justthing = String in True" $ do
         result <- eval testStdlib "type Justthing = String in True"
         result `shouldSatisfy` isLeft
+
       it "type Pair a b = Pair (a,b)" $ do
         result <- eval testStdlib "type Pair a b = Pair (a,b) in True"
         result `shouldSatisfy` isRight
+
       it "type Record a = Record { name: String, other: a } in True" $ do
         result <- eval testStdlib "type Record a = Record { name: String, other: a } in True"
         result `shouldSatisfy` isRight
+
       it "type State s a = State (s -> (a,s)) in True" $ do
         result <- eval testStdlib "type State s a = State (s -> (a,s)) in True"
         result `shouldSatisfy` isRight
+
       it "\\person -> match person with (Person p) -> p.age" $ do
         result <- eval testStdlib "\\person -> match person with (Person p) -> p.age"
         result `shouldSatisfy` isRight
+
       -- simplest swaps test
       it "\\a -> 1" $ do
         result <- eval mempty "\\a -> 1"
@@ -715,6 +725,7 @@ spec =
                 (MyConstructor mempty "Just")
                 (MyLiteral mempty (MyString "dd"))
             )
+
       it "bindParser works correctly" $ do
         result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"dog\""
         snd <$> result
@@ -724,6 +735,7 @@ spec =
                 (MyConstructor mempty "Just")
                 (MyLiteral mempty (MyString "o"))
             )
+
       it "bindParser fails correctly" $ do
         result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"log\""
         snd <$> result
@@ -737,6 +749,7 @@ spec =
             ( MTArray mempty (MTPrim mempty MTInt),
               MyArray mempty [int 1, int 2, int 3]
             )
+
       it "[1,True,3]" $ do
         result <- eval testStdlib "[1,True,3]"
         result
@@ -965,3 +978,8 @@ spec =
                 [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt]
                 ]
             )
+
+    describe "delays arity check for infix operators" $ do
+      it "is fine" $ do
+        result <- eval testStdlib "let flip f a b = f b a; let and a b = if a then b else False; infix <<>> = flip and; True <<>> False"
+        result `shouldSatisfy` isRight
