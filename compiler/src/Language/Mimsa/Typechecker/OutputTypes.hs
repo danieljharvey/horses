@@ -44,6 +44,13 @@ foldPattern fn pat =
     foldPattern' (PString ann _ _) =
       f ann
 
+foldIdentifier :: (Text -> ann -> a) -> Identifier Name ann -> a
+foldIdentifier fn ident =
+  foldIdentifier' ident
+  where
+    f = fn (prettyPrint ident)
+    foldIdentifier' (Identifier ann _) = f ann
+
 foldSpread :: (Monoid a) => (Text -> ann -> a) -> Spread Name ann -> a
 foldSpread fn spread =
   foldSpread' spread
@@ -71,8 +78,8 @@ foldExpr fn expression =
       f ann <> foldPattern fn pat <> foldExpr fn expr <> foldExpr fn body
     foldExpr' (MyInfix ann _ a b) =
       f ann <> foldExpr fn a <> foldExpr fn b
-    foldExpr' (MyLambda ann _ body) =
-      f ann <> foldExpr fn body
+    foldExpr' (MyLambda ann ident body) =
+      f ann <> foldIdentifier fn ident <> foldExpr fn body
     foldExpr' (MyApp ann func arg) =
       f ann <> foldExpr fn func <> foldExpr fn arg
     foldExpr' (MyIf ann predExpr thenExpr elseExpr) =

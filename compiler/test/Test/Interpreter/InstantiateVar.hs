@@ -37,16 +37,16 @@ spec :: Spec
 spec =
   describe "InstantiateVar" $ do
     it "Replaces id function" $ do
-      testInstantiate (MyLambda mempty (named "a") (MyVar mempty (named "a")))
-        `shouldBe` Right (MyLambda mempty (numbered 1) (MyVar mempty (numbered 1)))
+      testInstantiate (MyLambda mempty (Identifier mempty $ named "a") (MyVar mempty (named "a")))
+        `shouldBe` Right (MyLambda mempty (Identifier mempty $ numbered 1) (MyVar mempty (numbered 1)))
     it "Replaces pairing function" $ do
       testInstantiate
         ( MyLambda
             mempty
-            (named "a")
+            (Identifier mempty $ named "a")
             ( MyLambda
                 mempty
-                (named "b")
+                (Identifier mempty $ named "b")
                 ( MyPair
                     mempty
                     (MyVar mempty (named "a"))
@@ -57,10 +57,10 @@ spec =
         `shouldBe` Right
           ( MyLambda
               mempty
-              (numbered 1)
+              (Identifier mempty $ numbered 1)
               ( MyLambda
                   mempty
-                  (numbered 2)
+                  (Identifier mempty $ numbered 2)
                   ( MyPair
                       mempty
                       (MyVar mempty (numbered 1))

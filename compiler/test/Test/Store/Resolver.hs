@@ -66,7 +66,7 @@ spec =
         extractVars'
           ( MyLambda
               mempty
-              (Name "newVar")
+              (Identifier mempty $ Name "newVar")
               ( MyApp
                   mempty
                   (MyVar mempty (Name "keep"))

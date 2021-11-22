@@ -72,7 +72,7 @@ spec = do
                 (named "dec")
                 ( MyLambda
                     mempty
-                    (named "bool")
+                    (Identifier mempty $ named "bool")
                     ( MyIf
                         mempty
                         (MyVar mempty (named "bool"))
@@ -94,7 +94,7 @@ spec = do
                 (named "dec")
                 ( MyLambda
                     mempty
-                    (named "bool")
+                    (Identifier mempty $ named "bool")
                     ( MyIf
                         mempty
                         (MyVar mempty (named "bool"))
@@ -116,7 +116,7 @@ spec = do
                 (named "dec")
                 ( MyLambda
                     mempty
-                    (named "bool")
+                    (Identifier mempty $ named "bool")
                     ( MyIf
                         mempty
                         (MyVar mempty (named "bool"))
@@ -148,14 +148,18 @@ spec = do
                 (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x")))
         startInference expr $ Right (MTPrim mempty MTInt)
       it "infers const lambda" $ do
-        let expr = MyLambda mempty (named "x") (bool True)
+        let expr = MyLambda mempty (Identifier mempty $ named "x") (bool True)
         startInference expr $
           Right (MTFunction mempty (unknown 0) (MTPrim mempty MTBool))
       it "infers identity" $ do
         let expr = identity
         startInference expr $ Right (MTFunction mempty (unknown 0) (unknown 0))
       it "infers const function" $ do
-        let expr = MyLambda mempty (named "x") (MyLambda mempty (named "y") (MyVar mempty (named "x")))
+        let expr =
+              MyLambda
+                mempty
+                (Identifier mempty $ named "x")
+                (MyLambda mempty (Identifier mempty $ named "y") (MyVar mempty (named "x")))
         startInference expr $
           Right
             ( MTFunction
@@ -169,7 +173,7 @@ spec = do
                 mempty
                 ( MyLambda
                     mempty
-                    (named "x")
+                    (Identifier mempty $ named "x")
                     (bool True)
                 )
                 (int 1)
@@ -187,7 +191,7 @@ spec = do
                 mempty
                 ( MyLambda
                     mempty
-                    (named "x")
+                    (Identifier mempty $ named "x")
                     (MyIf mempty (MyVar mempty (named "x")) (int 10) (int 10))
                 )
                 (int 100)
@@ -196,7 +200,7 @@ spec = do
             ( UnificationError (MTPrim mempty MTBool) (MTPrim mempty MTInt)
             )
       it "fails occurs check" $ do
-        let expr = MyLambda mempty (named "x") (MyApp mempty (MyVar mempty (named "x")) (MyVar mempty (named "x")))
+        let expr = MyLambda mempty (Identifier mempty $ named "x") (MyApp mempty (MyVar mempty (named "x")) (MyVar mempty (named "x")))
         startInference expr $
           Left
             ( FailsOccursCheck
@@ -229,7 +233,7 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (named "x")
+                (Identifier mempty $ named "x")
                 ( MyLetPattern
                     mempty
                     ( PPair
@@ -275,7 +279,7 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (named "i")
+                (Identifier mempty $ named "i")
                 ( MyIf
                     mempty
                     ( MyRecordAccess
@@ -304,7 +308,7 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (named "a")
+                (Identifier mempty $ named "a")
                 ( MyInfix
                     mempty
                     Add
@@ -332,7 +336,7 @@ spec = do
               MyLet
                 mempty
                 (named "id")
-                (MyLambda mempty (named "var") (MyVar mempty (named "var")))
+                (MyLambda mempty (Identifier mempty $ named "var") (MyVar mempty (named "var")))
                 ( MyPair
                     mempty
                     (MyApp mempty (MyVar mempty (named "id")) (int 1))
@@ -364,7 +368,7 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (named "tuple")
+                (Identifier mempty $ named "tuple")
                 ( MyLetPattern
                     mempty
                     ( PPair
@@ -392,7 +396,7 @@ spec = do
                 (named "fst")
                 ( MyLambda
                     mempty
-                    (named "tuple")
+                    (Identifier mempty $ named "tuple")
                     ( MyPatternMatch
                         mempty
                         (MyVar mempty (named "tuple"))
@@ -421,7 +425,7 @@ spec = do
                 (named "fst")
                 ( MyLambda
                     mempty
-                    (named "tuple")
+                    (Identifier mempty $ named "tuple")
                     ( MyLetPattern
                         mempty
                         ( PPair
@@ -446,7 +450,7 @@ spec = do
         let lambda =
               MyLambda
                 mempty
-                (numbered 100)
+                (Identifier mempty $ numbered 100)
                 ( MyIf
                     mempty
                     (MyApp mempty identity (MyVar mempty (numbered 100)))
@@ -466,7 +470,7 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (named "a")
+                (Identifier mempty $ named "a")
                 ( MyPair
                     mempty
                     ( MyInfix
@@ -581,7 +585,7 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (named "a")
+                  (Identifier mempty $ named "a")
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty (named "a"))
@@ -780,7 +784,7 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (named "maybe")
+                  (Identifier mempty $ named "maybe")
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty (named "maybe"))
@@ -988,7 +992,7 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (named "a")
+                  (Identifier mempty $ named "a")
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty (named "a"))
@@ -998,7 +1002,6 @@ spec = do
                   )
               )
 
-          mtInt = MTPrim mempty MTInt
           mtMaybeInt = dataTypeWithVars mempty "Maybe" [mtInt]
       startInference expr $
         Right (MTFunction mempty mtMaybeInt mtInt)
@@ -1006,10 +1009,10 @@ spec = do
       let fn =
             MyLambda
               mempty
-              (named "a")
+              (Identifier mempty $ named "a")
               ( MyLambda
                   mempty
-                  (named "b")
+                  (Identifier mempty $ named "b")
                   ( MyPatternMatch
                       mempty
                       (bool True)
@@ -1025,10 +1028,10 @@ spec = do
       let fn =
             MyLambda
               mempty
-              (named "maybeA")
+              (Identifier mempty $ named "maybeA")
               ( MyLambda
                   mempty
-                  (named "b")
+                  (Identifier mempty $ named "b")
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty (named "maybeA"))
@@ -1132,7 +1135,7 @@ spec = do
       let expr =
             MyLambda
               mempty
-              (named "this")
+              (Identifier mempty $ named "this")
               (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
       startInference expr $ Left (TypedHoles (M.singleton "what" (MTPrim mempty MTBool, S.singleton "this")))
 
@@ -1144,7 +1147,7 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (named "f")
+                  (Identifier mempty $ named "f")
                   (MyApp mempty (MyVar mempty (named "f")) (int 1))
               )
       startInference expr $
@@ -1166,7 +1169,7 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (named "f")
+                  (Identifier mempty $ named "f")
                   (MyApp mempty (MyApp mempty (MyVar mempty (named "f")) (int 1)) (bool True))
               )
       startInference expr $

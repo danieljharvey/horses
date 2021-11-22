@@ -81,20 +81,20 @@ spec = do
           `shouldBe` Right expected
       it "Recognises a basic lambda" $
         testParse "\\x -> x"
-          `shouldBe` Right (MyLambda mempty "x" (MyVar mempty "x"))
+          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty "x"))
       it "Recognises a lambda with too much whitespace everywhere" $
         testParse "\\        x          ->             x"
-          `shouldBe` Right (MyLambda mempty "x" (MyVar mempty "x"))
+          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty "x"))
       it "Recognises a lambda in parens" $
         testParse "(\\x -> x)"
-          `shouldBe` Right (MyLambda mempty "x" (MyVar mempty "x"))
+          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty "x"))
       it "Recognises nested lambdas in parens" $
         testParse "(\\a -> (\\b -> a))"
           `shouldBe` Right
             ( MyLambda
                 mempty
-                "a"
-                (MyLambda mempty "b" (MyVar mempty "a"))
+                (Identifier mempty "a")
+                (MyLambda mempty (Identifier mempty "b") (MyVar mempty "a"))
             )
       it "Recognises minimal function syntax in let" $
         testParse "let const a b = a in True"
@@ -102,7 +102,7 @@ spec = do
             ( MyLet
                 mempty
                 "const"
-                (MyLambda mempty "a" (MyLambda mempty "b" (MyVar mempty "a")))
+                (MyLambda mempty (Identifier mempty "a") (MyLambda mempty (Identifier mempty "b") (MyVar mempty "a")))
                 (bool True)
             )
       it "Recognises function application" $
@@ -180,8 +180,8 @@ spec = do
                 "const2"
                 ( MyLambda
                     mempty
-                    "a"
-                    (MyLambda mempty "b" (MyVar mempty "a"))
+                    (Identifier mempty "a")
+                    (MyLambda mempty (Identifier mempty "b") (MyVar mempty "a"))
                 )
                 (MyVar mempty "const2")
             )
@@ -514,11 +514,24 @@ spec = do
           `shouldBe` Right
             ( MyLambda
                 mempty
-                "a"
+                (Identifier mempty "a")
                 ( MyApp
                     mempty
                     (MyConstructor mempty "State")
-                    (MyLambda mempty "s" (MyApp mempty (MyApp mempty (MyConstructor mempty "Pair") (MyVar mempty "a")) (MyVar mempty "s")))
+                    ( MyLambda
+                        mempty
+                        (Identifier mempty "s")
+                        ( MyApp
+                            mempty
+                            ( MyApp
+                                mempty
+                                ( MyConstructor mempty "Pair"
+                                )
+                                (MyVar mempty "a")
+                            )
+                            (MyVar mempty "s")
+                        )
+                    )
                 )
             )
       it "Nested constructor application" $
@@ -579,7 +592,7 @@ spec = do
           `shouldBe` Right
             ( MyLambda
                 mempty
-                "a"
+                (Identifier mempty "a")
                 ( MyApp
                     mempty
                     ( MyApp
@@ -675,7 +688,12 @@ spec = do
                 ( MyApp
                     mempty
                     (MyVar mempty "map")
-                    (MyLambda mempty "a" (MyInfix mempty Add (MyVar mempty "a") (int 1)))
+                    ( MyLambda
+                        mempty
+                        (Identifier mempty "a")
+                        ( MyInfix mempty Add (MyVar mempty "a") (int 1)
+                        )
+                    )
                 )
                 (MyArray mempty [int 1, int 2, int 3])
             )
@@ -693,7 +711,21 @@ spec = do
                     ( MyApp
                         ()
                         (MyVar () "bindParser")
-                        (MyLambda () "a" (MyIf () (MyInfix () Equals (MyVar () "a") (MyLiteral () (MyString "d"))) (MyVar () "anyChar") (MyVar () "failParser")))
+                        ( MyLambda
+                            ()
+                            (Identifier mempty "a")
+                            ( MyIf
+                                ()
+                                ( MyInfix
+                                    ()
+                                    Equals
+                                    (MyVar () "a")
+                                    (MyLiteral () (MyString "d"))
+                                )
+                                (MyVar () "anyChar")
+                                (MyVar () "failParser")
+                            )
+                        )
                     )
                     (MyVar () "anyChar")
                 )
@@ -763,7 +795,7 @@ spec = do
       it "Parsers lambda with location information" $
         testParseWithAnn "\\a -> a"
           `shouldBe` Right
-            (MyLambda (Location 0 7) "a" (MyVar (Location 6 7) "a"))
+            (MyLambda (Location 0 7) (Identifier (Location 1 2) "a") (MyVar (Location 6 7) "a"))
       it "Parses application with location information" $
         testParseWithAnn "a 1"
           `shouldBe` Right

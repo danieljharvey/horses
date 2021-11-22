@@ -87,3 +87,17 @@ tvNamed t = TVName $ mkTyVar t
 
 exprHash :: Int -> ExprHash
 exprHash = ExprHash . T.pack . show
+
+----
+
+mtInt :: MonoType
+mtInt = MTPrim mempty MTInt
+
+mtBool :: MonoType
+mtBool = MTPrim mempty MTBool
+
+mtString :: MonoType
+mtString = MTPrim mempty MTString
+
+mtVar :: Text -> MonoType
+mtVar n = MTVar mempty (tvNamed n)

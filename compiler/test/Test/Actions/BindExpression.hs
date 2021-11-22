@@ -70,7 +70,7 @@ spec = do
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
             `shouldBe` 1
     it "Updating an existing binding updates binding" $ do
-      let newIdExpr = MyLambda mempty "b" (MyVar mempty "b")
+      let newIdExpr = MyLambda mempty (Identifier mempty "b") (MyVar mempty "b")
       let action =
             Actions.bindExpression newIdExpr "id" "\\b -> b"
       case Actions.run testStdlib action of
@@ -88,7 +88,7 @@ spec = do
             "id"
             `shouldNotBe` lookupBindingName testStdlib "id"
     it "Updating an existing binding updates tests" $ do
-      let newIdExpr = MyLambda mempty "blob" (MyVar mempty "blob")
+      let newIdExpr = MyLambda mempty (Identifier mempty "blob") (MyVar mempty "blob")
       let action = do
             _ <- Actions.addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
             Actions.bindExpression newIdExpr "id" "\\blob -> blob"
@@ -110,7 +110,7 @@ spec = do
             "id"
             `shouldNotBe` lookupBindingName testStdlib "id"
     it "Re-binding an expression that uses a deleted binding does not break it" $ do
-      let newIdExpr = MyLambda mempty "b" (MyVar mempty "b")
+      let newIdExpr = MyLambda mempty (Identifier mempty "b") (MyVar mempty "b")
           useIdExpr = MyApp mempty (MyVar mempty "newId") (bool True)
           useIdExpr2 = MyApp mempty (MyVar mempty "newId") (bool False)
           action = do

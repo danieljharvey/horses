@@ -78,7 +78,11 @@ spec = do
           -- new expression
           S.size (Actions.storeExpressionsFromOutcomes outcomes) `shouldBe` 1
     it "Adds a new test, updates it's dep, but retrieving only returns one version" $ do
-      let newConst = MyLambda mempty "aaa" (MyLambda mempty "bbb" (MyVar mempty "aaa"))
+      let newConst =
+            MyLambda
+              mempty
+              (Identifier mempty "aaa")
+              (MyLambda mempty (Identifier mempty "bbb") (MyVar mempty "aaa"))
       case Actions.run
         testStdlib
         ( do

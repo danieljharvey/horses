@@ -35,10 +35,10 @@ constExpr =
   StoreExpression
     ( MyLambda
         mempty
-        "a"
+        (Identifier mempty "a")
         ( MyLambda
             mempty
-            "b"
+            (Identifier mempty "b")
             (MyVar mempty "a")
         )
     )
@@ -98,20 +98,20 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                "x"
+                (Identifier mempty "x")
                 ( MyPair
                     mempty
                     (MyVar mempty "x")
-                    (MyLambda mempty "x" (MyVar mempty "x"))
+                    (MyLambda mempty (Identifier mempty "x") (MyVar mempty "x"))
                 )
             expected =
               MyLambda
                 mempty
-                (numbered 0)
+                (Identifier mempty $ numbered 0)
                 ( MyPair
                     mempty
                     (MyVar mempty (numbered 0))
-                    (MyLambda mempty (numbered 1) (MyVar mempty (numbered 1)))
+                    (MyLambda mempty (Identifier mempty $ numbered 1) (MyVar mempty (numbered 1)))
                 )
             expectSwaps =
               M.fromList
@@ -124,7 +124,7 @@ spec = do
       let expr =
             MyLambda
               mempty
-              "a"
+              (Identifier mempty "a")
               ( MyPatternMatch
                   mempty
                   (int 1)
@@ -135,7 +135,7 @@ spec = do
           expected =
             MyLambda
               mempty
-              (numbered 0)
+              (Identifier mempty $ numbered 0)
               ( MyPatternMatch
                   mempty
                   (int 1)
@@ -176,7 +176,7 @@ spec = do
               bindings' = Bindings $ M.singleton "id" hash
               storeExpr = StoreExpression expr bindings' mempty
               store' = Store (M.singleton hash idExpr)
-              expectedId = MyLambda mempty (numbered 0) (MyVar mempty (numbered 0))
+              expectedId = MyLambda mempty (Identifier mempty $ numbered 0) (MyVar mempty (numbered 0))
           let ans = testSubstitute store' storeExpr
           seSwaps ans
             `shouldBe` M.fromList

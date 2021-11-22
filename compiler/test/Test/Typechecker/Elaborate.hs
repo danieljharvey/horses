@@ -25,9 +25,6 @@ startElaborate input expected = do
   (fmap . fmap) recoverAnn result `shouldBe` Right input
   result `shouldBe` Right expected
 
-mtBool :: MonoType
-mtBool = MTPrim mempty MTBool
-
 spec :: Spec
 spec = do
   describe "Elaborate" $ do

@@ -404,10 +404,6 @@ spec = do
           )
           `shouldBe` "const a = true; export const main = a"
     describe "from typed expression" $ do
-      let mtBool = MTPrim mempty MTBool
-          mtString = MTPrim mempty MTString
-          mtVar a = MTVar mempty (tvNamed a)
-
       it "const bool" $
         testFromExpr (MyLiteral mtBool (MyBool True))
           `shouldBe` ( TSModule mempty (TSBody [] (TSLit (TSBool True))),
