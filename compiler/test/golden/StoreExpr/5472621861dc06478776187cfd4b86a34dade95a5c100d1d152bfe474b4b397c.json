@@ -1,1 +1,0 @@
-{"storeBindings":{},"storeExpression":{"contents":[[],"a",{"contents":[[],"one",{"contents":[[],{"contents":[[],"a"],"tag":"MyVar"},"one"],"tag":"MyRecordAccess"},{"contents":[[],"two",{"contents":[[],{"contents":[[],"a"],"tag":"MyVar"},"two"],"tag":"MyRecordAccess"},{"contents":[[],"a"],"tag":"MyVar"}],"tag":"MyLet"}],"tag":"MyLet"}],"tag":"MyLambda"},"storeTypeBindings":{}}

@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Environment (lookupConstructor) where
 

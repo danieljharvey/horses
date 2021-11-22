@@ -9,12 +9,14 @@ module Language.Mimsa.Types.AST
     module Language.Mimsa.Types.AST.Pattern,
     module Language.Mimsa.Types.AST.Spread,
     module Language.Mimsa.Types.AST.StringPart,
+    module Language.Mimsa.Types.AST.Identifier,
   )
 where
 
 import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.AST.DataType
 import Language.Mimsa.Types.AST.Expr
+import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal
 import Language.Mimsa.Types.AST.Operator

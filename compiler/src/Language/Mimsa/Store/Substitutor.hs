@@ -195,10 +195,10 @@ mapVar ::
   Changed ->
   Expr Name ann ->
   App ann (Expr Variable ann)
-mapVar chg (MyLambda ann name body) = do
+mapVar chg (MyLambda ann (Identifier bindAnn name) body) = do
   -- here we introduce new vars so we give them nums to avoid collisions
   var <- getNextVarName name
-  MyLambda ann var <$> mapVar (addChange name var chg) body
+  MyLambda ann (Identifier bindAnn var) <$> mapVar (addChange name var chg) body
 mapVar chg (MyVar ann name) =
   pure $ MyVar ann (nameToVar chg name)
 mapVar chg (MyLet ann name expr' body) = do

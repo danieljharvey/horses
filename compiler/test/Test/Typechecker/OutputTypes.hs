@@ -20,6 +20,7 @@ import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Hspec
+import Test.Utils.Helpers
 
 unsafeTypecheckExpr ::
   Text ->
@@ -33,14 +34,11 @@ useSwaps' swaps expr = case Swaps.useSwaps swaps expr of
   Right a -> a
   _ -> error "using swaps failed in OutputTypes test"
 
-getExpressionSourceItems' :: Text -> Expr Name MonoType -> [SourceItem]
-getExpressionSourceItems' = getExpressionSourceItems
-
 spec :: Spec
 spec = do
   describe "Output types" $ do
     it "Single type in literal" $ do
-      getExpressionSourceItems'
+      getExpressionSourceItems
         "True"
         ( MyLiteral
             (MTPrim (Location 1 4) MTBool)
@@ -55,6 +53,19 @@ spec = do
                              ssColEnd = 5
                            }
                        )
+                   ]
+    it "Gets location of lambda arg" $ do
+      getExpressionSourceItems
+        "\\a -> a"
+        ( MyLambda
+            (MTFunction (Location 0 7) (mtVar "a") (mtVar "a"))
+            (Identifier (MTVar (Location 1 2) (tvNamed "a")) "a")
+            ( MyVar (MTVar (Location 6 7) (tvNamed "a")) "a"
+            )
+        )
+        `shouldBe` [ SourceItem "\\a -> a :: a -> a" (SourceSpan 1 1 1 8),
+                     SourceItem "a :: a" (SourceSpan 1 1 2 3),
+                     SourceItem "a :: a" (SourceSpan 1 1 7 8)
                    ]
     it "Includes pattern matches" $ do
       let expr =

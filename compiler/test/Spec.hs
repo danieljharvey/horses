@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
 module Main
   ( main,
   )
@@ -41,6 +38,7 @@ import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.KindChecker as KindChecker
 import qualified Test.Typechecker.OutputTypes as OutputTypes
+import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
@@ -85,3 +83,4 @@ main =
     OutputTypes.spec
     Typescript.spec
     ESModulesJS.spec
+    Substitutions.spec

@@ -55,7 +55,7 @@ applicativePure_ (DataType tyCon vars items) = do
   pure
     ( MyLambda
         mempty
-        fVar
+        (Identifier mempty fVar)
         expr'
     )
 
@@ -84,7 +84,7 @@ partToExpr fVar items innerExpr part =
           innerExpr
           (MyConstructor mempty emptyTyCon)
     FPart n a ->
-      pure $ MyApp mempty innerExpr (MyLambda mempty n (MyVar mempty a))
+      pure $ MyApp mempty innerExpr (MyLambda mempty (Identifier mempty n) (MyVar mempty a))
 
 data Part
   = VPart Name

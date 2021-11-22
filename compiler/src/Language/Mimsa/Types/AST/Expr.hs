@@ -19,6 +19,7 @@ import Data.OpenApi (ToSchema)
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType (DataType)
+import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
@@ -46,7 +47,7 @@ data Expr var ann
   | -- | a `f` b
     MyInfix ann Operator (Expr var ann) (Expr var ann)
   | -- | binder, body
-    MyLambda ann var (Expr var ann)
+    MyLambda ann (Identifier var ann) (Expr var ann)
   | -- | function, argument
     MyApp ann (Expr var ann) (Expr var ann)
   | -- | expr, thencase, elsecase
@@ -176,7 +177,7 @@ prettyPair a b =
 
 prettyLambda ::
   (Printer var, Show var) =>
-  var ->
+  Identifier var ann ->
   Expr var ann ->
   Doc style
 prettyLambda binder expr =
@@ -196,7 +197,7 @@ prettyRecord ::
   Doc style
 prettyRecord map' =
   let items = M.toList map'
-      printRow = \i (name, val) ->
+      printRow i (name, val) =
         prettyDoc name
           <> ":"
           <+> printSubExpr val
@@ -216,7 +217,7 @@ prettyRecord map' =
 
 prettyArray :: (Show var, Printer var) => [Expr var ann] -> Doc style
 prettyArray items =
-  let printRow = \i val ->
+  let printRow i val =
         printSubExpr val
           <> if i < length items then "," else ""
    in case items of

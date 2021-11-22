@@ -395,10 +395,6 @@ spec = do
           )
           `shouldBe` "const a = true; export const main = a"
     describe "from typed expression" $ do
-      let mtBool = MTPrim mempty MTBool
-          mtString = MTPrim mempty MTString
-          mtVar a = MTVar mempty (tvNamed a)
-
       it "const bool" $
         testFromExpr (MyLiteral mtBool (MyBool True))
           `shouldBe` ( TSModule mempty (TSBody [] (TSLit (TSBool True))),
@@ -437,7 +433,11 @@ spec = do
       it "function with known type" $ do
         snd
           ( testFromExpr
-              (MyLambda (MTFunction mempty mtString mtString) "str" (MyVar mtString "str"))
+              ( MyLambda
+                  (MTFunction mempty mtString mtString)
+                  (Identifier mtString "str")
+                  (MyVar mtString "str")
+              )
           )
           `shouldBe` "export const main = (str: string) => str"
       it "function with generic type used multiple times" $ do
@@ -445,10 +445,10 @@ spec = do
           ( testFromExpr
               ( MyLambda
                   (MTFunction mempty (mtVar "a") (mtVar "a"))
-                  "a"
+                  (Identifier (mtVar "a") "a")
                   ( MyLambda
                       (MTFunction mempty (mtVar "a") (mtVar "a"))
-                      "a2"
+                      (Identifier (mtVar "a") "a2")
                       (MyVar (mtVar "a") "a")
                   )
               )

@@ -90,7 +90,7 @@ spec =
               MyLet
                 mempty
                 (named "id")
-                (MyLambda mempty (named "x") (MyVar mempty (named "x")))
+                (MyLambda mempty (Identifier mempty $ named "x") (MyVar mempty (named "x")))
                 (MyApp mempty (MyVar mempty (named "id")) (int 1))
         testInterpret mempty mempty f (int 1)
       it "let const = \\a -> \\b -> a in const(1)" $ do
@@ -98,20 +98,28 @@ spec =
               MyLet
                 mempty
                 (named "const")
-                (MyLambda mempty (named "a") (MyLambda mempty (named "b") (MyVar mempty (named "a"))))
+                ( MyLambda
+                    mempty
+                    (Identifier mempty $ named "a")
+                    ( MyLambda
+                        mempty
+                        (Identifier mempty $ named "b")
+                        (MyVar mempty (named "a"))
+                    )
+                )
                 (MyApp mempty (MyVar mempty (named "const")) (int 1))
             swaps =
               M.fromList
                 [ (NumberedVar 3, "b"),
                   (NumberedVar 2, "a")
                 ]
-        testInterpret mempty swaps f $ MyLambda mempty "b" (MyVar mempty "a")
+        testInterpret mempty swaps f $ MyLambda mempty (Identifier mempty "b") (MyVar mempty "a")
       it "let const = \\a -> \\b -> a in ((const 1) 2)" $ do
         let f =
               MyLet
                 mempty
                 (named "const")
-                (MyLambda mempty (numbered 0) (MyLambda mempty (numbered 1) (MyVar mempty (numbered 0))))
+                (MyLambda mempty (Identifier mempty $ numbered 0) (MyLambda mempty (Identifier mempty $ numbered 1) (MyVar mempty (numbered 0))))
                 (MyApp mempty (MyApp mempty (MyVar mempty (named "const")) (int 1)) (int 2))
         testInterpret mempty mempty f (int 1)
     describe "If" $ do
@@ -126,7 +134,7 @@ spec =
               MyLet
                 mempty
                 (named "const2")
-                (MyLambda mempty (named "a") (MyLambda mempty (named "b") (MyVar mempty (named "a"))))
+                (MyLambda mempty (Identifier mempty $ named "a") (MyLambda mempty (Identifier mempty $ named "b") (MyVar mempty (named "a"))))
                 ( MyLet
                     mempty
                     (named "reuse")
@@ -173,7 +181,7 @@ spec =
               MyLet
                 mempty
                 (named "f")
-                (MyLambda mempty (named "b") (MyLambda mempty (named "a") (str' "Horse")))
+                (MyLambda mempty (Identifier mempty $ named "b") (MyLambda mempty (Identifier mempty $ named "a") (str' "Horse")))
                 ( MyApp
                     mempty
                     ( MyApp

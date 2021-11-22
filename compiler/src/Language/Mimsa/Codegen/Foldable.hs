@@ -44,13 +44,13 @@ fold_ (DataType tyCon vars items) = do
             "fold"
             ( MyLambda
                 mempty
-                "f"
+                (Identifier mempty "f")
                 ( MyLambda
                     mempty
-                    "total"
+                    (Identifier mempty "total")
                     ( MyLambda
                         mempty
-                        tyName
+                        (Identifier mempty tyName)
                         ( MyPatternMatch
                             mempty
                             (MyVar mempty tyName)
@@ -91,7 +91,7 @@ patternFromFieldItemType :: TyCon -> [Name] -> Pattern Name ()
 patternFromFieldItemType tyCon names =
   PConstructor mempty tyCon (patForField <$> names)
   where
-    patForField a = PVar mempty a
+    patForField = PVar mempty
 
 reconstructFields :: [FieldItemType] -> Expr Name ()
 reconstructFields =

@@ -8,6 +8,7 @@ module Language.Mimsa.Types.Typechecker.Substitutions
   )
 where
 
+import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
@@ -45,15 +46,17 @@ flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
   flattenRow (MTRecordRow ann (as <> bs) rest)
 flattenRow other = other
 
-substLookup :: Substitutions -> TypeIdentifier -> Maybe MonoType
-substLookup subst i = M.lookup i (getSubstitutions subst)
+substLookup :: Annotation -> Substitutions -> TypeIdentifier -> Maybe MonoType
+substLookup ann subst i =
+  let replaceAnn mt = mt $> ann
+   in replaceAnn <$> M.lookup i (getSubstitutions subst)
 
 instance Substitutable MonoType where
   applySubst subst ty = case flattenRow ty of
     MTVar ann var ->
       fromMaybe
         (MTVar ann var)
-        (substLookup subst var)
+        (substLookup ann subst var)
     MTFunction ann arg res ->
       MTFunction ann (applySubst subst arg) (applySubst subst res)
     MTPair ann a b ->

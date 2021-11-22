@@ -60,7 +60,7 @@ altIdStoreExpr =
   StoreExpression
     ( MyLambda
         mempty
-        "b"
+        (Identifier mempty "b")
         (MyVar mempty "b")
     )
     mempty

@@ -179,8 +179,12 @@ toLetPattern pat letExpr letBody = do
   (TSBody bindings' newExpr) <- toTSBody letBody
   pure (TSBody ([newBinding] <> bindings' <> statements) newExpr)
 
-toLambda :: MonoType -> Name -> Expr Name MonoType -> TypescriptM TSBody
-toLambda fnType bind body = do
+toLambda ::
+  MonoType ->
+  Identifier Name MonoType ->
+  Expr Name MonoType ->
+  TypescriptM TSBody
+toLambda fnType (Identifier _ bind) body = do
   (mtFn, generics') <- toTSType fnType
   mtArg <- case mtFn of
     (TSTypeFun _ a _) -> pure a

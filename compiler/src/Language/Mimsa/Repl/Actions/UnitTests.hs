@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Repl.Actions.UnitTests
   ( doAddUnitTest,
     doListTests,
@@ -34,8 +32,8 @@ doAddUnitTest project input testName expr = do
 doListTests ::
   Project Annotation -> Maybe Name -> MimsaM (Error Annotation) ()
 doListTests project maybeName = do
-  let fetchTestsForName =
-        \name -> case lookupBindingName project name of
+  let fetchTestsForName name =
+        case lookupBindingName project name of
           Just exprHash -> getTestsForExprHash project exprHash
           Nothing -> mempty
   let tests = case maybeName of

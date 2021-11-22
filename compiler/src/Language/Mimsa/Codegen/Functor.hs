@@ -45,10 +45,10 @@ functorMap_ (DataType tyCon vars items) = do
             "fmap"
             ( MyLambda
                 mempty
-                "f"
+                (Identifier mempty "f")
                 ( MyLambda
                     mempty
-                    tyName
+                    (Identifier mempty tyName)
                     ( MyPatternMatch
                         mempty
                         (MyVar mempty tyName)
@@ -96,7 +96,7 @@ reconstructField matchVar fieldItem =
         then
           MyLambda
             mempty
-            from
+            (Identifier mempty from)
             ( MyApp
                 mempty
                 (MyVar mempty "f")
@@ -109,7 +109,7 @@ reconstructField matchVar fieldItem =
         else
           MyLambda
             mempty
-            from
+            (Identifier mempty from)
             ( MyApp
                 mempty
                 (MyVar mempty fromF)

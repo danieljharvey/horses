@@ -40,7 +40,7 @@ toString (DataType tyCon [] items) = do
       Right
         ( MyLambda
             mempty
-            tyName
+            (Identifier mempty tyName)
             ( MyPatternMatch
                 mempty
                 (MyVar mempty tyName)
@@ -78,7 +78,7 @@ fromString (DataType _ [] items) = do
       Right
         ( MyLambda
             mempty
-            tyName
+            (Identifier mempty tyName)
             ( MyPatternMatch
                 mempty
                 (MyVar mempty tyName)

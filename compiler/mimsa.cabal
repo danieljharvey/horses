@@ -160,6 +160,7 @@ library
       Language.Mimsa.Types.AST.Annotation
       Language.Mimsa.Types.AST.DataType
       Language.Mimsa.Types.AST.Expr
+      Language.Mimsa.Types.AST.Identifier
       Language.Mimsa.Types.AST.InfixOp
       Language.Mimsa.Types.AST.Literal
       Language.Mimsa.Types.AST.Operator
@@ -376,6 +377,7 @@ test-suite mimsa-test
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.KindChecker
       Test.Typechecker.OutputTypes
+      Test.Typechecker.Substitutions
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify

@@ -17,6 +17,6 @@ spec :: Spec
 spec =
   describe "Use swaps" $ do
     it "Replaces basic" $ do
-      let expr' = MyLambda mempty (NumberedVar 1) (int 1)
+      let expr' = MyLambda mempty (Identifier mempty $ NumberedVar 1) (int 1)
           swaps = M.singleton (NumberedVar 1) "a"
-      useSwaps swaps expr' `shouldBe` Right (MyLambda () "a" (int 1))
+      useSwaps swaps expr' `shouldBe` Right (MyLambda () (Identifier mempty "a") (int 1))

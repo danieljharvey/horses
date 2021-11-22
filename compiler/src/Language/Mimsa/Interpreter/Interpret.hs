@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Interpreter.Interpret
   ( interpretWithScope,
   )
@@ -141,7 +139,7 @@ interpretApplication ann fn value = do
     (MyVar ann' f) -> do
       expr <- interpretWithScope (MyVar ann' f)
       interpretWithScope (MyApp ann expr value)
-    (MyLambda _ binder expr) -> do
+    (MyLambda _ (Identifier _ binder) expr) -> do
       value' <- interpretWithScope value
       addToScope (Scope $ M.singleton binder value')
       interpretWithScope expr
