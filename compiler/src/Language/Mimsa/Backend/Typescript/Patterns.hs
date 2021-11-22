@@ -41,7 +41,12 @@ getDestructureExpr matchExpr (TSPatternRecord as) =
         assignAs
       )
 getDestructureExpr matchExpr (TSPatternConstructor _ vars) =
-  let withIndex i var = getDestructureExpr (TSArrayAccess (i - 1) (TSRecordAccess "vars" matchExpr)) var
+  let withIndex i =
+        getDestructureExpr
+          ( TSArrayAccess
+              (i - 1)
+              (TSRecordAccess "vars" matchExpr)
+          )
       (as, assignAs) = unzip (mapWithIndex withIndex vars)
    in ( if or (isUseful <$> as)
           then
@@ -58,7 +63,7 @@ getDestructureExpr matchExpr (TSPatternArray as spread) =
   let (spreadRequired, tsSpread) = case spread of
         TSSpreadValue a -> (True, [TSArraySpread (TSVar a)])
         _ -> (False, [])
-      withIndex i a = getDestructureExpr (TSArrayAccess (i - 1) matchExpr) a
+      withIndex i = getDestructureExpr (TSArrayAccess (i - 1) matchExpr)
       (tsAs, assignAs) = unzip (mapWithIndex withIndex as)
    in ( if spreadRequired || or (isUseful <$> tsAs)
           then TSArray ((TSArrayItem <$> tsAs) <> tsSpread)
@@ -144,7 +149,7 @@ toMatchExpression name (TSPatternRecord items) =
    in mconcat (subPattern <$> M.toList items)
 toMatchExpression name (TSPatternConstructor tyCon args) =
   let tyConGuard = TSInfix TSEquals (TSRecordAccess "type" name) (TSLit (TSString (prettyPrint tyCon)))
-      subPattern i a = toMatchExpression (TSArrayAccess (i - 1) (TSRecordAccess "vars" name)) a
+      subPattern i = toMatchExpression (TSArrayAccess (i - 1) (TSRecordAccess "vars" name))
    in [tyConGuard] <> mconcat (mapWithIndex subPattern args)
 toMatchExpression name (TSPatternArray as spread) =
   let lengthGuard = case spread of
@@ -163,8 +168,8 @@ toMatchExpression name (TSPatternArray as spread) =
             TSGreaterThanOrEqualTo
             (TSRecordAccess "length" name)
             (TSLit (TSInt (length as)))
-      subPattern i a =
-        toMatchExpression (TSArrayAccess (i - 1) name) a
+      subPattern i =
+        toMatchExpression (TSArrayAccess (i - 1) name)
    in [lengthGuard] <> mconcat (mapWithIndex subPattern as)
 toMatchExpression name (TSPatternString _a _as) =
   [ TSInfix

@@ -1,6 +1,9 @@
-{-# LANGUAGE OverloadedStrings #-}
-
-module Language.Mimsa.Project.UnitTest (createUnitTest, getTestsForExprHash, createNewUnitTests) where
+module Language.Mimsa.Project.UnitTest
+  ( createUnitTest,
+    getTestsForExprHash,
+    createNewUnitTests,
+  )
+where
 
 import Control.Monad.Except
 import Data.Bifunctor (first)

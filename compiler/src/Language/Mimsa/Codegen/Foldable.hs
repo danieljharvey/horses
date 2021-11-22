@@ -91,7 +91,7 @@ patternFromFieldItemType :: TyCon -> [Name] -> Pattern Name ()
 patternFromFieldItemType tyCon names =
   PConstructor mempty tyCon (patForField <$> names)
   where
-    patForField a = PVar mempty a
+    patForField = PVar mempty
 
 reconstructFields :: [FieldItemType] -> Expr Name ()
 reconstructFields =

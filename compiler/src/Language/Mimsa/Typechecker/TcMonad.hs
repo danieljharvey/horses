@@ -97,13 +97,12 @@ schemesToTypeMap ::
   Map TypeIdentifier Scheme ->
   m (Map Name MonoType)
 schemesToTypeMap schemes = do
-  let fn =
-        ( \(k, v) ->
-            let leName = case k of
-                  TVName n -> pure (Name $ coerce n)
-                  TVNum i -> lookupSwap (NumberedVar i)
-             in (,) <$> leName <*> instantiate mempty v
-        )
+  let fn (k, v) =
+        let leName = case k of
+              TVName n -> pure (Name $ coerce n)
+              TVNum i -> lookupSwap (NumberedVar i)
+         in (,) <$> leName <*> instantiate mempty v
+
   typeMap <- traverse fn (M.toList schemes)
   pure (M.fromList typeMap)
 
@@ -114,7 +113,7 @@ getTypedHoles ::
   m (Map Name (MonoType, Map Name MonoType))
 getTypedHoles subs'@(Substitutions subs) = do
   holes <- gets tcsTypedHoles
-  let getMonoType = \(ann, i, localTypeMap) -> case M.lookup (TVNum i) subs of
+  let getMonoType (ann, i, localTypeMap) = case M.lookup (TVNum i) subs of
         Just a -> (applySubst subs' a, applySubst subs' localTypeMap)
         Nothing -> (applySubst subs' (MTVar ann (TVNum i)), applySubst subs' localTypeMap)
   pure $ fmap getMonoType holes

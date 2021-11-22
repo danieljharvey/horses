@@ -19,6 +19,7 @@ module Language.Mimsa.Parser.Helpers
   )
 where
 
+import Control.Monad (void)
 import Data.Bifunctor (first)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -113,7 +114,7 @@ filterProtectedOperators tx =
 ---
 
 literalWithSpace :: Text -> Parser ()
-literalWithSpace tx = () <$ withOptionalSpace (string tx)
+literalWithSpace tx = void $ withOptionalSpace (string tx)
 
 withOptionalSpace :: Parser a -> Parser a
 withOptionalSpace p = do

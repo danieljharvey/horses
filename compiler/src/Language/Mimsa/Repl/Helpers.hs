@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Repl.Helpers
   ( saveExpression,
     toReplM,

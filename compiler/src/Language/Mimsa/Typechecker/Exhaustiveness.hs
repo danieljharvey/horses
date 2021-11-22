@@ -180,14 +180,13 @@ filterMissing ::
 filterMissing patterns required =
   nub $ foldr annihiliatePattern required patterns
   where
-    annihiliatePattern pat remaining =
+    annihiliatePattern pat =
       filter
         ( not
             . annihilate
               (removeAnn pat)
             . removeAnn
         )
-        remaining
 
 removeAnn :: Pattern var ann -> Pattern var ()
 removeAnn p = p $> ()
@@ -239,14 +238,13 @@ redundantCases env patterns = do
   generated <-
     mconcat
       <$> traverse (generate env) patterns
-  let annihiliatePattern pat remaining =
+  let annihiliatePattern pat =
         filter
           ( not
               . annihilate
                 (removeAnn pat)
               . removeAnn
           )
-          remaining
   -- add index, the first pattern is never redundant
   let patternsWithIndex = zip patterns ([0 ..] :: [Int])
   pure $

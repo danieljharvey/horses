@@ -197,7 +197,7 @@ prettyRecord ::
   Doc style
 prettyRecord map' =
   let items = M.toList map'
-      printRow = \i (name, val) ->
+      printRow i (name, val) =
         prettyDoc name
           <> ":"
           <+> printSubExpr val
@@ -217,7 +217,7 @@ prettyRecord map' =
 
 prettyArray :: (Show var, Printer var) => [Expr var ann] -> Doc style
 prettyArray items =
-  let printRow = \i val ->
+  let printRow i val =
         printSubExpr val
           <> if i < length items then "," else ""
    in case items of

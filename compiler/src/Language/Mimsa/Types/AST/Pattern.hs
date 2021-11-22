@@ -79,7 +79,7 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
     "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> prettyDoc spread <> "]"
   prettyDoc (PRecord _ map') =
     let items = M.toList map'
-        printRow = \i (name, val) ->
+        printRow i (name, val) =
           prettyDoc name
             <> ":"
             <+> printSubPattern val
