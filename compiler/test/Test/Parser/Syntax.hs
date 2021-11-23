@@ -68,15 +68,15 @@ spec = do
         testParse "log!dog"
           `shouldSatisfy` isLeft
       it "Does a basic let binding" $ do
-        let expected = MyLet mempty "xa" (bool True) (MyVar mempty "xa")
+        let expected = MyLet mempty (Identifier mempty "xa") (bool True) (MyVar mempty "xa")
         testParse "let xa = True in xa"
           `shouldBe` Right expected
       it "Does a basic let binding with excessive whitespace" $ do
-        let expected = MyLet mempty "x" (bool True) (MyVar mempty "x")
+        let expected = MyLet mempty (Identifier mempty "x") (bool True) (MyVar mempty "x")
         testParse "let       x       =       True       in        x"
           `shouldBe` Right expected
       it "Does a let binding inside parens" $ do
-        let expected = MyLet mempty "x" (bool True) (MyVar mempty "x")
+        let expected = MyLet mempty (Identifier mempty "x") (bool True) (MyVar mempty "x")
         testParse "(let x = True in x)"
           `shouldBe` Right expected
       it "Recognises a basic lambda" $
@@ -101,7 +101,7 @@ spec = do
           `shouldBe` Right
             ( MyLet
                 mempty
-                "const"
+                (Identifier mempty "const")
                 (MyLambda mempty (Identifier mempty "a") (MyLambda mempty (Identifier mempty "b") (MyVar mempty "a")))
                 (bool True)
             )
@@ -159,7 +159,7 @@ spec = do
           `shouldBe` Right
             ( MyLet
                 mempty
-                "x"
+                (Identifier mempty "x")
                 (MyPair mempty (int 1) (int 2))
                 (MyVar mempty "x")
             )
@@ -168,7 +168,7 @@ spec = do
           `shouldBe` Right
             ( MyLet
                 mempty
-                "x"
+                (Identifier mempty "x")
                 (MyPair mempty (int 1) (int 2))
                 (MyApp mempty (MyVar mempty "fst") (MyVar mempty "x"))
             )
@@ -177,7 +177,7 @@ spec = do
           `shouldBe` Right
             ( MyLet
                 mempty
-                "const2"
+                (Identifier mempty "const2")
                 ( MyLambda
                     mempty
                     (Identifier mempty "a")
@@ -705,7 +705,7 @@ spec = do
           `shouldBe` Right
             ( MyLet
                 ()
-                "parser"
+                (Identifier mempty "parser")
                 ( MyApp
                     ()
                     ( MyApp
@@ -779,7 +779,7 @@ spec = do
           `shouldBe` Right
             ( MyLet
                 (Location 0 14)
-                "a"
+                (Identifier (Location 4 5) "a")
                 (MyLiteral (Location 8 9) (MyInt 1))
                 (MyVar (Location 13 14) "a")
             )
@@ -788,7 +788,7 @@ spec = do
           `shouldBe` Right
             ( MyLet
                 (Location 0 12)
-                "a"
+                (Identifier (Location 4 5) "a")
                 (MyLiteral (Location 8 9) (MyInt 1))
                 (MyVar (Location 11 12) "a")
             )

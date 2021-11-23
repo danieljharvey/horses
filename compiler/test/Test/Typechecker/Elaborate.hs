@@ -56,13 +56,13 @@ spec = do
         let expr =
               MyLet
                 (Location 1 2)
-                (named "a")
+                (Identifier (Location 7 8) (named "a"))
                 (MyLiteral (Location 3 4) (MyInt 1))
                 (MyVar (Location 5 6) (named "a"))
             expected =
               MyLet
                 (MTPrim (Location 1 2) MTInt)
-                (named "a")
+                (Identifier (MTPrim (Location 7 8) MTInt) (named "a"))
                 (MyLiteral (MTPrim (Location 3 4) MTInt) (MyInt 1))
                 (MyVar (MTPrim (Location 5 6) MTInt) (named "a"))
         startElaborate expr expected
@@ -71,23 +71,28 @@ spec = do
         let expr =
               MyLet
                 (Location 1 2)
-                (named "x")
+                (Identifier (Location 7 8) (named "x"))
                 (MyLiteral (Location 3 4) (MyInt 42))
                 (MyLiteral (Location 5 6) (MyBool True))
             expected =
               MyLet
                 (MTPrim (Location 1 2) MTBool)
-                (named "x")
+                (Identifier (MTPrim (Location 7 8) MTInt) (named "x"))
                 (MyLiteral (MTPrim (Location 3 4) MTInt) (MyInt 42))
                 (MyLiteral (MTPrim (Location 5 6) MTBool) (MyBool True))
         startElaborate expr expected
 
       it "infers let binding with usage" $ do
-        let expr = MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))
+        let expr =
+              MyLet
+                mempty
+                (Identifier mempty $ named "x")
+                (int 42)
+                (MyVar mempty (named "x"))
             expected =
               MyLet
                 (MTPrim mempty MTInt)
-                (named "x")
+                (Identifier (MTPrim mempty MTInt) (named "x"))
                 (MyLiteral (MTPrim mempty MTInt) (MyInt 42))
                 ( MyVar (MTPrim mempty MTInt) (named "x")
                 )
@@ -97,7 +102,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "dec")
+                (Identifier mempty $ named "dec")
                 ( MyLambda
                     mempty
                     (Identifier mempty $ named "bool")
@@ -116,7 +121,7 @@ spec = do
             expected =
               MyLet
                 (MTFunction mempty mtBool mtBool)
-                (named "dec")
+                (Identifier (MTFunction mempty mtBool mtBool) (named "dec"))
                 ( MyLambda
                     (MTFunction mempty mtBool mtBool)
                     (Identifier mtBool $ named "bool")
@@ -141,7 +146,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "dec")
+                (Identifier mempty $ named "dec")
                 ( MyLambda
                     mempty
                     (Identifier mempty $ named "bool")
@@ -160,7 +165,7 @@ spec = do
             expected =
               MyLet
                 mtBool
-                (named "dec")
+                (Identifier (MTFunction mempty mtBool mtBool) (named "dec"))
                 ( MyLambda
                     (MTFunction mempty mtBool mtBool)
                     (Identifier mtBool $ named "bool")

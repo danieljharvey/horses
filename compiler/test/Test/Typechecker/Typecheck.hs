@@ -60,16 +60,26 @@ spec = do
         let expr = str (StringType "hello")
         startInference expr $ Right (MTPrim mempty MTString)
       it "infers let binding" $ do
-        let expr = MyLet mempty (named "x") (int 42) (bool True)
+        let expr =
+              MyLet
+                mempty
+                (Identifier mempty $ named "x")
+                (int 42)
+                (bool True)
         startInference expr $ Right (MTPrim mempty MTBool)
       it "infers let binding with usage" $ do
-        let expr = MyLet mempty (named "x") (int 42) (MyVar mempty (named "x"))
+        let expr =
+              MyLet
+                mempty
+                (Identifier mempty $ named "x")
+                (int 42)
+                (MyVar mempty (named "x"))
         startInference expr $ Right (MTPrim mempty MTInt)
       it "infers let binding with recursion 0" $ do
         let expr =
               MyLet
                 mempty
-                (named "dec")
+                (Identifier mempty $ named "dec")
                 ( MyLambda
                     mempty
                     (Identifier mempty $ named "bool")
@@ -91,7 +101,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "dec")
+                (Identifier mempty $ named "dec")
                 ( MyLambda
                     mempty
                     (Identifier mempty $ named "bool")
@@ -113,7 +123,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "dec")
+                (Identifier mempty $ named "dec")
                 ( MyLambda
                     mempty
                     (Identifier mempty $ named "bool")
@@ -135,17 +145,22 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "x")
+                (Identifier mempty $ named "x")
                 (bool True)
-                (MyLet mempty (named "y") (int 42) (MyVar mempty (named "x")))
+                ( MyLet
+                    mempty
+                    (Identifier mempty $ named "y")
+                    (int 42)
+                    (MyVar mempty (named "x"))
+                )
         startInference expr $ Right (MTPrim mempty MTBool)
       it "infers shadowed let bindings" $ do
         let expr =
               MyLet
                 mempty
-                (named "x")
+                (Identifier mempty $ named "x")
                 (bool True)
-                (MyLet mempty (named "x") (int 42) (MyVar mempty (named "x")))
+                (MyLet mempty (Identifier mempty $ named "x") (int 42) (MyVar mempty (named "x")))
         startInference expr $ Right (MTPrim mempty MTInt)
       it "infers const lambda" $ do
         let expr = MyLambda mempty (Identifier mempty $ named "x") (bool True)
@@ -335,7 +350,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "id")
+                (Identifier mempty $ named "id")
                 (MyLambda mempty (Identifier mempty $ named "var") (MyVar mempty (named "var")))
                 ( MyPair
                     mempty
@@ -348,7 +363,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "pair")
+                (Identifier mempty $ named "pair")
                 (MyPair mempty (int 1) (bool True))
                 ( MyLetPattern
                     mempty
@@ -393,7 +408,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "fst")
+                (Identifier mempty $ named "fst")
                 ( MyLambda
                     mempty
                     (Identifier mempty $ named "tuple")
@@ -411,7 +426,7 @@ spec = do
                 )
                 ( MyLet
                     mempty
-                    (named "pair")
+                    (Identifier mempty $ named "pair")
                     (MyPair mempty (int 1) (bool True))
                     (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "pair")))
                 )
@@ -422,7 +437,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (named "fst")
+                (Identifier mempty $ named "fst")
                 ( MyLambda
                     mempty
                     (Identifier mempty $ named "tuple")
@@ -439,7 +454,7 @@ spec = do
                 )
                 ( MyLet
                     mempty
-                    (named "pair")
+                    (Identifier mempty $ named "pair")
                     (MyPair mempty (int 1) (bool True))
                     (MyApp mempty (MyVar mempty (named "fst")) (MyVar mempty (named "pair")))
                 )
@@ -1088,7 +1103,7 @@ spec = do
               dtMaybe
               ( MyLet
                   mempty
-                  (named "f")
+                  (Identifier mempty $ named "f")
                   (MyConstructor mempty "Just")
                   (MyApp mempty (MyVar mempty (named "f")) (int 1))
               )
@@ -1103,7 +1118,7 @@ spec = do
       let expr =
             MyLet
               mempty
-              (named "this")
+              (Identifier mempty $ named "this")
               (bool True)
               (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
       startInference expr $
@@ -1119,7 +1134,7 @@ spec = do
       let expr =
             MyLet
               mempty
-              (named "this")
+              (Identifier mempty $ named "this")
               (int 1)
               (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
       startInference expr $

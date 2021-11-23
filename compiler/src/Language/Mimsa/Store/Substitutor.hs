@@ -201,10 +201,10 @@ mapVar chg (MyLambda ann (Identifier bindAnn name) body) = do
   MyLambda ann (Identifier bindAnn var) <$> mapVar (addChange name var chg) body
 mapVar chg (MyVar ann name) =
   pure $ MyVar ann (nameToVar chg name)
-mapVar chg (MyLet ann name expr' body) = do
+mapVar chg (MyLet ann (Identifier bindAnn name) expr' body) = do
   var <- getNextVarName name
   let withChange = addChange name var chg
-  MyLet ann var
+  MyLet ann (Identifier bindAnn var)
     <$> mapVar withChange expr' <*> mapVar withChange body
 mapVar chg (MyLetPattern ann pat body expr) = do
   (newPat, newChg) <- mapPatternVar chg pat

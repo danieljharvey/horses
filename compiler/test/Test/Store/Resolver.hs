@@ -57,7 +57,7 @@ spec =
         extractVars'
           ( MyLet
               mempty
-              (Name "newVar")
+              (Identifier mempty (Name "newVar"))
               (MyApp mempty (MyVar mempty (Name "keep")) (int 1))
               (MyVar mempty (Name "newVar"))
           )

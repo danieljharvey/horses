@@ -69,10 +69,10 @@ complexParser =
 letParser :: Parser ParserExpr
 letParser = try letInParser <|> letFuncParser
 
-letNameIn :: Parser Name
+letNameIn :: Parser (Identifier Name Annotation)
 letNameIn = do
   _ <- thenSpace (string "let")
-  name <- thenSpace nameParser
+  name <- thenSpace identifierParser
   _ <- thenSpace (string "=")
   pure name
 
@@ -87,7 +87,7 @@ letInParser = addLocation $ do
 letFuncParser :: Parser ParserExpr
 letFuncParser = addLocation $ do
   _ <- thenSpace (string "let")
-  name <- thenSpace nameParser
+  name <- thenSpace identifierParser
   args <- chainl1 ((: []) <$> thenSpace identifierParser) (pure (<>))
   _ <- thenSpace (string "=")
   expr <- expressionParser

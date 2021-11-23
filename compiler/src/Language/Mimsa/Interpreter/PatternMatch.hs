@@ -120,7 +120,7 @@ createMatchExpression bindings a =
   foldl'
     ( \rest (binder, var) -> do
         comp <- rest
-        MyLet mempty binder <$> instantiateVar var <*> pure comp
+        MyLet mempty (Identifier mempty binder) <$> instantiateVar var <*> pure comp
     )
     (pure a)
     bindings

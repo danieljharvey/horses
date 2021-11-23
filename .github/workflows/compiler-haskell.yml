@@ -36,26 +36,26 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.stack
-          key: ${{ runner.os }}-stack-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
+          key: ${{ runner.os }}-1-stack-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-stack-global-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-1-stack-global-${{ matrix.plan.ghc }}
 
       - name: Cache stack-installed programs in ~/.local/bin
         id: stack-programs
         uses: actions/cache@v2
         with:
           path: ~/.local/bin
-          key: ${{ runner.os }}-stack-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
+          key: ${{ runner.os }}-1-stack-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-stack-programs-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-1-stack-programs-${{ matrix.plan.ghc }}
 
       - name: Cache .stack-work
         uses: actions/cache@v2
         with:
           path: .stack-work
-          key: ${{ runner.os }}-stack-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
+          key: ${{ runner.os }}-1-stack-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-stack-work-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-1-stack-work-${{ matrix.plan.ghc }}
 
       - name: "Set up HLint"
         uses: rwe/actions-hlint-setup@v1

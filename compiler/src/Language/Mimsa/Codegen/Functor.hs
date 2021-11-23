@@ -42,7 +42,7 @@ functorMap_ (DataType tyCon vars items) = do
       pure
         ( MyLet
             mempty
-            "fmap"
+            (Identifier mempty "fmap")
             ( MyLambda
                 mempty
                 (Identifier mempty "f")

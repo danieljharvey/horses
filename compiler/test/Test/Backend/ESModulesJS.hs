@@ -415,7 +415,7 @@ spec = do
           ( testFromExpr
               ( MyLet
                   mtBool
-                  "a"
+                  (Identifier mtBool "a")
                   ( MyLiteral mtBool (MyBool True)
                   )
                   (MyVar mtBool "a")

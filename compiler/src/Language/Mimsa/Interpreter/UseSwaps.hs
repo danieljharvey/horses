@@ -35,8 +35,8 @@ useSwaps' (MyLambda ann (Identifier bindAnn var) body) =
   MyLambda ann <$> (Identifier bindAnn <$> lookupSwap var) <*> useSwaps' body
 useSwaps' (MyVar ann var) =
   MyVar ann <$> lookupSwap var
-useSwaps' (MyLet ann var expr' body) = do
-  MyLet ann <$> lookupSwap var
+useSwaps' (MyLet ann (Identifier bindAnn var) expr' body) = do
+  MyLet ann <$> (Identifier bindAnn <$> lookupSwap var)
     <*> useSwaps' expr'
     <*> useSwaps' body
 useSwaps' (MyLetPattern ann pat expr body) = do

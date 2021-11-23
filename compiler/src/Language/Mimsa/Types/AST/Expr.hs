@@ -41,7 +41,7 @@ data Expr var ann
   | -- | a named variable
     MyVar ann var
   | -- | binder, expr, body
-    MyLet ann var (Expr var ann) (Expr var ann)
+    MyLet ann (Identifier var ann) (Expr var ann) (Expr var ann)
   | -- | pat, expr, body
     MyLetPattern ann (Pattern var ann) (Expr var ann) (Expr var ann)
   | -- | a `f` b
@@ -103,7 +103,7 @@ indentMulti i doc = flatAlt (indent i doc) doc
 
 prettyLet ::
   (Show var, Printer var) =>
-  var ->
+  Identifier var ann ->
   Expr var ann ->
   Expr var ann ->
   Doc style
