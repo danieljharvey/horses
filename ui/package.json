@@ -4,7 +4,7 @@
   "private": true,
   "devDependencies": {
     "openapi-typescript-codegen": "0.12.3",
-    "fork-ts-checker-webpack-plugin": "6.4.0"
+    "fork-ts-checker-webpack-plugin": "6.4.1"
   },
   "dependencies": {
     "@devexperts/remote-data-ts": "2.0.5",
