@@ -50,11 +50,12 @@ export const TypeSearch: React.FC<Props> = ({
   return (
     <>
       <Panel>
-        <TextInput
-          value={searchText}
-          onChange={setSearchText}
-        />
         <FlexColumnSpaced>
+          <TextInput
+            value={searchText}
+            onChange={setSearchText}
+          />
+
           <Code>{`Example: Int -> Int`}</Code>
 
           {errorMessage.length > 0 &&

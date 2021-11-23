@@ -40,33 +40,29 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
     getUsagesOfExprHash(exprHash, state).length > 0
 
   return (
-    <FlexColumnSpaced>
-      <Paragraph>Bindings</Paragraph>
-
-      <InlineSpaced>
-        {Object.entries(values).map(([name, exprHash]) => (
-          <Link
-            depType="expression"
-            number={getActiveVersions(name)}
-            key={name}
-            onClick={() => onBindingSelect(name, exprHash)}
-            highlight={bindingInUse(exprHash)}
-          >
-            {name}
-          </Link>
-        ))}
-        {Object.entries(types).map(([name, exprHash]) => (
-          <Link
-            depType="type"
-            key={name}
-            number={0}
-            onClick={() => onBindingSelect(name, exprHash)}
-            highlight={bindingInUse(exprHash)}
-          >
-            {name}
-          </Link>
-        ))}
-      </InlineSpaced>
-    </FlexColumnSpaced>
+    <InlineSpaced>
+      {Object.entries(values).map(([name, exprHash]) => (
+        <Link
+          depType="expression"
+          number={getActiveVersions(name)}
+          key={name}
+          onClick={() => onBindingSelect(name, exprHash)}
+          highlight={bindingInUse(exprHash)}
+        >
+          {name}
+        </Link>
+      ))}
+      {Object.entries(types).map(([name, exprHash]) => (
+        <Link
+          depType="type"
+          key={name}
+          number={0}
+          onClick={() => onBindingSelect(name, exprHash)}
+          highlight={bindingInUse(exprHash)}
+        >
+          {name}
+        </Link>
+      ))}
+    </InlineSpaced>
   )
 }

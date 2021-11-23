@@ -5,6 +5,8 @@ import { ExprHash } from '../types/'
 import { TextInput } from './View/TextInput'
 import { Panel } from './View/Panel'
 import { State } from '../reducer/types'
+import { FlexColumnSpaced } from './View/FlexColumnSpaced'
+import { Paragraph } from './View/Paragraph'
 
 type Props = {
   values: Record<string, ExprHash>
@@ -57,17 +59,20 @@ export const FilteredBindingList: React.FC<Props> = ({
   const filteredTypes = filterRecord(filterText, types)
   return (
     <Panel>
-      <TextInput
-        placeholder="Filter binding names"
-        value={filterText}
-        onChange={setFilterText}
-      />
-      <ListBindings
-        onBindingSelect={onBindingSelect}
-        values={filteredValues}
-        types={filteredTypes}
-        state={state}
-      />
+      <FlexColumnSpaced>
+        <Paragraph>Bindings</Paragraph>
+        <TextInput
+          placeholder="Filter binding names"
+          value={filterText}
+          onChange={setFilterText}
+        />
+        <ListBindings
+          onBindingSelect={onBindingSelect}
+          values={filteredValues}
+          types={filteredTypes}
+          state={state}
+        />
+      </FlexColumnSpaced>
     </Panel>
   )
 }
