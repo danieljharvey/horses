@@ -69,7 +69,9 @@ foldExpr fn expression =
     foldExpr' (MyLiteral ann _) = f ann
     foldExpr' (MyVar ann _) = f ann
     foldExpr' (MyLet ann binder expr body) =
-      f ann <> foldIdentifier fn binder <> foldExpr fn expr <> foldExpr fn body
+      f ann <> foldIdentifier fn binder
+        <> foldExpr fn expr
+        <> foldExpr fn body
     foldExpr' (MyPatternMatch ann expr pats) =
       f ann <> foldMap (foldPattern fn) (fst <$> pats)
         <> foldMap (foldExpr fn) (snd <$> pats)
