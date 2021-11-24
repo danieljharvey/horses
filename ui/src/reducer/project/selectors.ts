@@ -73,3 +73,6 @@ export const countActiveVersionsOfBinding = (
     )
     .filter((usage) => usage.length > 0).length
 }
+
+export const getProjectHash = (state: State): ExprHash =>
+  state.project.projectHash

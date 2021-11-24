@@ -15,12 +15,14 @@ import {
   GraphProjectResponse,
   ExprHash,
   UserErrorResponse,
+  ListTestsResponse,
 } from '../types/'
 import {
   axiosPost,
   axiosGet,
 } from '../utils/axios-taskeither'
 import * as TE from 'fp-ts/TaskEither'
+import { string } from 'fp-ts'
 
 // project-based API calls
 
@@ -83,3 +85,8 @@ export const getProjectGraph = (
   projectHash: ExprHash
 ): TE.TaskEither<string, GraphProjectResponse> =>
   axiosGet(`${baseUrl}/project/graph/${projectHash}/`)
+
+export const getProjectTests = (
+  projectHash: ExprHash
+): TE.TaskEither<string, ListTestsResponse> =>
+  axiosGet(`${baseUrl}/project/${projectHash}/tests/list`)

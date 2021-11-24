@@ -4,3 +4,7 @@ p.paragraph {
   font-weight: 400;
   font-size: var(--fontMedium);
 }
+
+p.paragraph.bold {
+  font-weight: 900;
+}

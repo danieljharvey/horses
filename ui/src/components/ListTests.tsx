@@ -6,7 +6,10 @@ import { InlineSpaced } from './View/InlineSpaced'
 import { Paragraph } from './View/Paragraph'
 
 type Props = {
-  unitTests: UnitTestData[]
+  unitTests: Pick<
+    UnitTestData,
+    'utdTestSuccess' | 'utdTestName'
+  >[]
 }
 
 export const ListTests: React.FC<Props> = ({
