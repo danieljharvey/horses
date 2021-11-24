@@ -24,6 +24,7 @@ import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
+import Language.Mimsa.Types.Typechecker.FoundPath
 import Language.Mimsa.Types.Typechecker.MonoType
 import Prettyprinter
 import Text.Megaparsec
@@ -45,7 +46,7 @@ data TypeErrorF ann
   | DuplicateTypeDeclaration TyCon
   | IncompletePatternMatch ann [TyCon]
   | MixedUpPatterns [TyCon]
-  | TypedHoles (Map Name (Type ann, Set Name))
+  | TypedHoles (Map Name (Type ann, Set FoundPath))
   | CouldNotFindInfixOperator ann InfixOp (Set InfixOp)
   | CannotUseBuiltInTypeAsConstructor ann TyCon
   | InternalConstructorUsedOutsidePatternMatch ann TyCon

@@ -39,12 +39,12 @@ data TypedHoleResponse = TypedHoleResponse
 mkTypedHoleResponse ::
   Text ->
   Name ->
-  (MonoType, Set Name) ->
+  (MonoType, Set FoundPath) ->
   Maybe TypedHoleResponse
 mkTypedHoleResponse input name (mt, suggestions) =
   TypedHoleResponse (coerce name) (prettyPrint mt)
     <$> sourceSpan input (getAnnotationForType mt)
-      <*> pure (coerce <$> S.toList suggestions)
+      <*> pure (prettyPrint <$> S.toList suggestions)
 
 newtype ErrorLocation = ErrorLocation
   {elSourceSpan :: SourceSpan}
