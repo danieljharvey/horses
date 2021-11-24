@@ -11,6 +11,8 @@ module Language.Mimsa.Backend.Javascript.Printer
 where
 
 import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.DataType
@@ -73,12 +75,18 @@ printOp TSGreaterThanOrEqualTo = ">="
 printOp TSAnd = "&&"
 printOp TSStringConcat = "+"
 
+protected :: Set Text
+protected = S.fromList ["const", "var"]
+
+printTSName :: TSName -> Text
+printTSName (TSName t) = if S.member t protected then t <> "_" else t
+
 printExpr :: TSExpr -> Text
 printExpr (TSLit lit) = printLiteral lit
 printExpr (TSFunction name _ _ _ expr) =
-  "(" <> prettyPrint name <> ")" <> " => "
+  "(" <> printTSName name <> ")" <> " => "
     <> printFunctionBody expr
-printExpr (TSVar var) = prettyPrint var
+printExpr (TSVar var) = printTSName var
 printExpr (TSApp func val) =
   printExpr func <> "(" <> printExpr val <> ")"
 printExpr (TSArray as) =
@@ -99,7 +107,7 @@ printExpr (TSInfix op a b) =
     <> printExpr b
 printExpr (TSRecord as) =
   let outputRecordItem (name, val) =
-        prettyPrint name <> ": " <> printExpr val
+        printTSName name <> ": " <> printExpr val
       items = outputRecordItem <$> M.toList as
    in "{ "
         <> T.intercalate
@@ -107,7 +115,7 @@ printExpr (TSRecord as) =
           items
         <> " }"
 printExpr (TSRecordAccess name expr) =
-  printExpr expr <> "." <> prettyPrint name
+  printExpr expr <> "." <> printTSName name
 printExpr (TSTernary cond thenE elseE) =
   printExpr cond <> " ? " <> printExpr thenE <> " : "
     <> printExpr elseE

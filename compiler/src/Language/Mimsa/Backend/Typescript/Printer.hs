@@ -12,12 +12,19 @@ module Language.Mimsa.Backend.Typescript.Printer
 where
 
 import qualified Data.Map as M
+import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.DataType
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
+
+protected :: Set Text
+protected = S.fromList ["const", "var"]
+
+printTSName :: TSName -> Text
+printTSName (TSName t) = if S.member t protected then t <> "_" else t
 
 {- maybe these shouldn't be typeclass instances at all? -}
 printGeneric :: TSGeneric -> Text
@@ -136,9 +143,9 @@ printExpr (TSFunction name generics mt maybeReturn expr) =
       prettyReturnType = case maybeReturn of
         Just mt' -> ": " <> printType mt'
         _ -> ""
-   in prettyGen <> "(" <> prettyPrint name <> ": " <> printType mt <> ")" <> prettyReturnType <> " => "
+   in prettyGen <> "(" <> printTSName name <> ": " <> printType mt <> ")" <> prettyReturnType <> " => "
         <> printFunctionBody expr
-printExpr (TSVar var) = prettyPrint var
+printExpr (TSVar var) = printTSName var
 printExpr (TSApp func val) =
   printExpr func <> "(" <> printExpr val <> ")"
 printExpr (TSArray as) =
@@ -159,7 +166,7 @@ printExpr (TSInfix op a b) =
     <> printExpr b
 printExpr (TSRecord as) =
   let outputRecordItem (name, val) =
-        prettyPrint name <> ": " <> printExpr val
+        printTSName name <> ": " <> printExpr val
       items = outputRecordItem <$> M.toList as
    in "{ "
         <> T.intercalate
@@ -167,7 +174,7 @@ printExpr (TSRecord as) =
           items
         <> " }"
 printExpr (TSRecordAccess name expr) =
-  printExpr expr <> "." <> prettyPrint name
+  printExpr expr <> "." <> printTSName name
 printExpr (TSTernary cond thenE elseE) =
   printExpr cond <> " ? " <> printExpr thenE <> " : "
     <> printExpr elseE

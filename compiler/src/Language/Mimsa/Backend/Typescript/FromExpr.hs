@@ -21,6 +21,9 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
+bimapMap :: (Ord j) => (k -> j) -> (a -> b) -> Map k a -> Map j b
+bimapMap f g = M.fromList . fmap (bimap f g) . M.toList
+
 toLiteral :: Literal -> TSLiteral
 toLiteral lit = case lit of
   (MyInt i) -> TSInt i
@@ -28,17 +31,17 @@ toLiteral lit = case lit of
   (MyString (StringType s)) -> TSString s
 
 toArraySpread :: Spread Name ann -> TSSpread
-toArraySpread (SpreadValue _ a) = TSSpreadValue a
+toArraySpread (SpreadValue _ a) = TSSpreadValue (coerce a)
 toArraySpread (SpreadWildcard _) = TSSpreadWildcard
 toArraySpread NoSpread = TSNoSpread
 
 toStringPart :: StringPart Name ann -> TSStringPart
-toStringPart (StrValue _ a) = TSStringVar a
+toStringPart (StrValue _ a) = TSStringVar (coerce a)
 toStringPart (StrWildcard _) = TSStringWildcard
 
 toPattern :: Pattern Name ann -> TSPattern
 toPattern (PVar _ a) =
-  TSPatternVar a
+  TSPatternVar (coerce a)
 toPattern (PPair _ a b) =
   TSPatternPair (toPattern a) (toPattern b)
 toPattern (PWildcard _) =
@@ -46,7 +49,7 @@ toPattern (PWildcard _) =
 toPattern (PConstructor _ name vars) =
   TSPatternConstructor name (toPattern <$> vars)
 toPattern (PRecord _ pMap) =
-  TSPatternRecord (toPattern <$> pMap)
+  TSPatternRecord (bimapMap coerce toPattern pMap)
 toPattern (PArray _ as spread) =
   TSPatternArray (toPattern <$> as) (toArraySpread spread)
 toPattern (PLit _ lit) =
@@ -161,7 +164,7 @@ toLet name letExpr letBody = do
   newLetExpr <- toTSBody letExpr
   let newBinding =
         TSAssignment
-          (TSVar name)
+          (TSVar (coerce name))
           Nothing
           (TSLetBody newLetExpr)
   (TSBody bindings' newExpr) <- toTSBody letBody
@@ -197,7 +200,7 @@ toLambda fnType (Identifier _ bind) body = do
     TSBody
       []
       ( TSFunction
-          bind
+          (coerce bind)
           newGenerics
           mtArg
           Nothing
@@ -284,7 +287,7 @@ toTSBody expr' =
       tsA <- toTSExpr a
       tsB <- toTSExpr b
       pure (TSBody mempty (TSArray [TSArrayItem tsA, TSArrayItem tsB]))
-    (MyVar _ a) -> pure (TSBody mempty (TSVar a))
+    (MyVar _ a) -> pure (TSBody mempty (TSVar (coerce a)))
     (MyLambda fnType bind body) ->
       toLambda fnType bind body
     (MyPatternMatch _mtPatternMatch matchExpr patterns) ->
@@ -309,10 +312,10 @@ toTSBody expr' =
       tsExprs <- traverse toTSBody as
       let bodies = (\(TSBody a b) -> (a, b)) <$> tsExprs
           statements = mconcat (fst <$> M.elems bodies)
-      pure $ TSBody statements (TSRecord (snd <$> bodies))
+      pure $ TSBody statements (TSRecord (bimapMap coerce snd bodies))
     (MyRecordAccess _ recExpr name) -> do
       (TSBody as tsExpr) <- toTSBody recExpr
-      pure $ TSBody as (TSRecordAccess name tsExpr)
+      pure $ TSBody as (TSRecordAccess (coerce name) tsExpr)
     (MyData _ dt rest) -> do
       tsDt <- toTSDataType dt
       addDataType dt tsDt

@@ -246,7 +246,8 @@ fullTestCases =
     ),
     ( "let fold total item = total <> [item] in stringReduce fold [] \"dog\"",
       "[ 'd', 'o', 'g' ]"
-    )
+    ),
+    ("let const = True; 1", "1")
   ]
 
 spec :: Spec
