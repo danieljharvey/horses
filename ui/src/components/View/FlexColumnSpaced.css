@@ -6,4 +6,5 @@ section.flex-column-spaced {
 
 div.vertically-spaced-container {
   margin-bottom: var(--spaceSmall);
+  display: flex;
 }

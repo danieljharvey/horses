@@ -74,20 +74,22 @@ export const NewBinding: React.FC<Props> = ({
   return (
     <>
       <Panel flexGrow={2}>
-        {!existingName && (
-          <TextInput
-            placeholder="New binding name"
-            value={bindingName}
-            onChange={setBindingName}
+        <FlexColumnSpaced>
+          {!existingName && (
+            <TextInput
+              placeholder="New binding name"
+              value={bindingName}
+              onChange={setBindingName}
+            />
+          )}
+          <CodeEditor
+            code={code}
+            setCode={onCodeChange}
+            sourceItems={getSourceItems(state)}
+            errorLocations={errorLocations}
+            typedHoleResponses={typedHoleSuggestions}
           />
-        )}
-        <CodeEditor
-          code={code}
-          setCode={onCodeChange}
-          sourceItems={getSourceItems(state)}
-          errorLocations={errorLocations}
-          typedHoleResponses={typedHoleSuggestions}
-        />
+        </FlexColumnSpaced>
       </Panel>
       <Panel>
         {pipe(

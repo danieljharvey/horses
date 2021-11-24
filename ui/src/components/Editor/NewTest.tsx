@@ -59,20 +59,22 @@ export const NewTest: React.FC<Props> = ({
   return (
     <>
       <Panel flexGrow={2}>
-        {!testExists && (
-          <TextInput
-            placeholder="Test name"
-            value={testName}
-            onChange={setTestName}
+        <FlexColumnSpaced>
+          {!testExists && (
+            <TextInput
+              placeholder="Test name"
+              value={testName}
+              onChange={setTestName}
+            />
+          )}
+          <CodeEditor
+            code={code}
+            setCode={onCodeChange}
+            sourceItems={getSourceItems(state)}
+            errorLocations={errorLocations}
+            typedHoleResponses={typedHoleSuggestions}
           />
-        )}
-        <CodeEditor
-          code={code}
-          setCode={onCodeChange}
-          sourceItems={getSourceItems(state)}
-          errorLocations={errorLocations}
-          typedHoleResponses={typedHoleSuggestions}
-        />
+        </FlexColumnSpaced>
       </Panel>
       <Panel>
         <FlexColumnSpaced>

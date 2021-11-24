@@ -1,5 +1,5 @@
 input.text-input {
-  margin: 0 0 var(--spaceMedium) 0;
+  margin: 0;
   padding: var(--spaceSmall);
   flex-grow: 2;
   background-color: var(--greyScale100);
