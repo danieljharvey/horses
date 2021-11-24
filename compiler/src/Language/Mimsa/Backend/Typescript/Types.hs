@@ -18,13 +18,15 @@ module Language.Mimsa.Backend.Typescript.Types
     TSFunctionBody (..),
     TSOp (..),
     TSModule (..),
+    TSName (..),
   )
 where
 
 import Data.Map (Map)
 import Data.Set (Set)
+import Data.String
 import Data.Text (Text)
-import Language.Mimsa.Types.Identifiers.Name
+import qualified Data.Text as T
 import Language.Mimsa.Types.Identifiers.TyCon
 
 -- | which generics have been used already?
@@ -53,18 +55,18 @@ data TSLiteral = TSBool Bool | TSString Text | TSInt Int
 data TSSpread
   = TSNoSpread
   | TSSpreadWildcard
-  | TSSpreadValue Name
+  | TSSpreadValue TSName
   deriving stock (Eq, Ord, Show)
 
 data TSStringPart
-  = TSStringVar Name
+  = TSStringVar TSName
   | TSStringWildcard
   deriving stock (Eq, Ord, Show)
 
 data TSPattern
-  = TSPatternVar Name
+  = TSPatternVar TSName
   | TSPatternPair TSPattern TSPattern
-  | TSPatternRecord (Map Name TSPattern)
+  | TSPatternRecord (Map TSName TSPattern)
   | TSPatternConstructor TyCon [TSPattern]
   | TSPatternLit TSLiteral
   | TSPatternArray [TSPattern] TSSpread
@@ -103,14 +105,20 @@ data TSArrayPart
   | TSArraySpread TSExpr
   deriving stock (Eq, Ord, Show)
 
+newtype TSName = TSName Text
+  deriving stock (Eq, Ord, Show)
+
+instance IsString TSName where
+  fromString = TSName . T.pack
+
 data TSExpr
   = TSLit TSLiteral
-  | TSFunction Name (Set TSGeneric) TSType (Maybe TSType) TSFunctionBody -- argName, generics, argType, returnType, body
-  | TSRecord (Map Name TSExpr)
-  | TSRecordAccess Name TSExpr
+  | TSFunction TSName (Set TSGeneric) TSType (Maybe TSType) TSFunctionBody -- argName, generics, argType, returnType, body
+  | TSRecord (Map TSName TSExpr)
+  | TSRecordAccess TSName TSExpr
   | TSArray [TSArrayPart]
   | TSArrayAccess Int TSExpr
-  | TSVar Name
+  | TSVar TSName
   | TSApp TSExpr TSExpr
   | TSInfix TSOp TSExpr TSExpr
   | TSTernary TSExpr TSExpr TSExpr

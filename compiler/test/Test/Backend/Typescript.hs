@@ -237,7 +237,8 @@ fullTestCases =
       "{ type: 'Right', vars: [ 101 ] }"
     ),
     ("stringReduce", "[Function: stringReduce]"),
-    ("infix <&&> = and; True <&&> True", "true")
+    ("infix <&&> = and; True <&&> True", "true"),
+    ("let const = True; 1", "1")
   ]
 
 spec :: Spec

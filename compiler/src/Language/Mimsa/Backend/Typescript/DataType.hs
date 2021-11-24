@@ -12,7 +12,7 @@ import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 
-typeNameToName :: Int -> TSType -> Name
+typeNameToName :: Int -> TSType -> TSName
 typeNameToName _ (TSTypeVar a) = coerce (T.toLower a)
 typeNameToName _ (TSType _ name _) = coerce (T.toLower name)
 typeNameToName i _ = coerce $ "u" <> prettyPrint i
