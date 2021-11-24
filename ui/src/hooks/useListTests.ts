@@ -23,27 +23,23 @@ export const useListTests = (projectHash: string) => {
   const [listTestsState, setListTestsState] =
     React.useState<ListTestsState>(initial)
 
-  const fetchTests = async () => {
+  React.useEffect(() => {
     setListTestsState(pending)
 
-    const result = await getProjectTests(projectHash)()
-
-    pipe(
-      result,
-      E.fold<string, ListTestsResponse, ListTestsState>(
-        (e) => failure(e),
-        (a) =>
-          success({
-            unitTests: a.ltUnitTests,
-          })
-      ),
-      setListTestsState
+    getProjectTests(projectHash)().then((result) =>
+      pipe(
+        result,
+        E.fold<string, ListTestsResponse, ListTestsState>(
+          (e) => failure(e),
+          (a) =>
+            success({
+              unitTests: a.ltUnitTests,
+            })
+        ),
+        setListTestsState
+      )
     )
-  }
-
-  React.useEffect(() => {
-    fetchTests()
-  }, [projectHash])
+  }, [projectHash, setListTestsState])
 
   return [listTestsState] as const
 }

@@ -2,4 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type Primitive = 'MTInt' | 'MTString' | 'MTBool'
+export type Identifier_Name__ = Array<any>

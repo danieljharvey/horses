@@ -22,7 +22,6 @@ import {
   axiosGet,
 } from '../utils/axios-taskeither'
 import * as TE from 'fp-ts/TaskEither'
-import { string } from 'fp-ts'
 
 // project-based API calls
 

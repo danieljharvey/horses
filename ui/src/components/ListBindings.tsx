@@ -7,8 +7,6 @@ import {
   getUsagesOfExprHash,
 } from '../reducer/project/selectors'
 import { State } from '../reducer/types'
-import { FlexColumnSpaced } from './View/FlexColumnSpaced'
-import { Paragraph } from './View/Paragraph'
 
 type ListBindingsProps = {
   values: Record<string, ExprHash>
