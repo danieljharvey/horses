@@ -93,6 +93,7 @@ library
       Language.Mimsa.Project.UnitTest
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
+      Language.Mimsa.Properties.Generate
       Language.Mimsa.Repl
       Language.Mimsa.Repl.Actions
       Language.Mimsa.Repl.Actions.Compile
@@ -223,7 +224,8 @@ library
   default-extensions:
       Strict
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , binary
     , bytestring
@@ -263,7 +265,8 @@ executable mimsa
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , binary
     , bytestring
@@ -304,7 +307,8 @@ executable swagger
       swagger
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , binary
     , bytestring
@@ -373,6 +377,7 @@ test-suite mimsa-test
       Test.Project.TypeSearch
       Test.Project.UnitTest
       Test.Project.Usages
+      Test.Properties.Properties
       Test.Serialisation
       Test.Store.Resolver
       Test.Store.Substitutor
@@ -395,7 +400,8 @@ test-suite mimsa-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , binary
     , bytestring

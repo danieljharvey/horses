@@ -29,6 +29,7 @@ import qualified Test.Project.Stdlib as Stdlib
 import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.UnitTest as UnitTest
 import qualified Test.Project.Usages as Usages
+import qualified Test.Properties.Properties as Properties
 import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
@@ -86,3 +87,4 @@ main =
     ESModulesJS.spec
     Substitutions.spec
     ScopeTypeVar.spec
+    Properties.spec

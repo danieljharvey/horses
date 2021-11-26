@@ -50,6 +50,7 @@ dependencies:
 - zip-archive # downloads
 - binary # downloads
 - hashable
+- QuickCheck # properties
 
 library:
   source-dirs: src
