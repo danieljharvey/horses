@@ -58,7 +58,11 @@ noDuplicateVariables ::
   m ()
 noDuplicateVariables pat = do
   swaps <- ask
-  let dupes = M.keysSet . M.filter (> 1) . M.mapKeysWith (+) (withSwap swaps) . getVariables $ pat
+  let dupes =
+        M.keysSet . M.filter (> 1)
+          . M.mapKeysWith (+) (withSwap swaps)
+          . getVariables
+          $ pat
    in if S.null dupes
         then pure ()
         else

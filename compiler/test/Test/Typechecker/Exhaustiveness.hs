@@ -341,7 +341,7 @@ spec = do
       noDuplicatesCheck
         ( PConstructor
             mempty
-            "dog"
+            "Dog"
             [ PVar mempty (named "a"),
               PVar mempty (named "b")
             ]
@@ -351,12 +351,12 @@ spec = do
       noDuplicatesCheck
         ( PConstructor
             mempty
-            "dog"
+            "Dog"
             [ PVar mempty (named "a"),
               PVar mempty (named "b"),
               PConstructor
                 mempty
-                "dog"
+                "Dog"
                 [ PVar mempty (named "c"),
                   PVar mempty (named "a")
                 ]
