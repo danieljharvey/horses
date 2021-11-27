@@ -75,6 +75,9 @@ buildTestStdlib =
         "subtractInt"
         "\\a -> \\b -> a - b"
       addBinding
+        "int"
+        "{ add: addInt, subtract: subtractInt }"
+      addBinding
         "compose"
         "\\f -> \\g -> \\a -> f (g a)"
       addBinding

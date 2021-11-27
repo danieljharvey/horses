@@ -35,8 +35,9 @@ typedHolesCheck typeMap subs = do
 getTypedHoleSuggestions ::
   Map Name MonoType ->
   (MonoType, Map Name MonoType) ->
-  (MonoType, Set Name)
-getTypedHoleSuggestions typeMap (mt, localTypeMap) = (normaliseType mt, suggestGlobal <> suggestLocal)
+  (MonoType, Set FoundPath)
+getTypedHoleSuggestions typeMap (mt, localTypeMap) =
+  (normaliseType mt, suggestGlobal <> suggestLocal)
   where
     suggestGlobal = M.keysSet $ typeSearch typeMap mt
     suggestLocal = M.keysSet $ typeSearch localTypeMap mt

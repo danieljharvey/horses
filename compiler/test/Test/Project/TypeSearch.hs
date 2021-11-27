@@ -52,6 +52,8 @@ spec =
           `shouldBe` M.fromList
             [ ("addInt", addIntType),
               ("subtractInt", addIntType),
+              ("int.add", addIntType),
+              ("int.subtract", addIntType),
               ( "const",
                 MTFunction
                   mempty

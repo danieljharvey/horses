@@ -207,6 +207,7 @@ library
       Language.Mimsa.Types.Typechecker
       Language.Mimsa.Types.Typechecker.Constraint
       Language.Mimsa.Types.Typechecker.Environment
+      Language.Mimsa.Types.Typechecker.FoundPath
       Language.Mimsa.Types.Typechecker.MonoType
       Language.Mimsa.Types.Typechecker.Scheme
       Language.Mimsa.Types.Typechecker.Substitutions

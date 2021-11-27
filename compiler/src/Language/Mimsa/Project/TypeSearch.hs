@@ -3,6 +3,7 @@
 module Language.Mimsa.Project.TypeSearch
   ( typeSearch,
     typeSearchFromText,
+    FoundPath,
   )
 where
 
@@ -12,6 +13,7 @@ import Control.Monad.State
 import Data.Bifunctor (first)
 import Data.Either (isRight)
 import Data.Functor
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -29,8 +31,8 @@ import Language.Mimsa.Types.Typechecker
 normalise :: MonoType -> Type ()
 normalise mt = normaliseType mt $> ()
 
-typeSearch :: Map Name MonoType -> MonoType -> Map Name MonoType
-typeSearch items mt = M.filter (typeEquals mt) items
+typeSearch :: Map Name MonoType -> MonoType -> Map FoundPath MonoType
+typeSearch items mt = M.filter (typeEquals mt) (typeMapToFoundPath items)
 
 -- two types are Equal in this context if we can unify them together
 typeEquals :: MonoType -> MonoType -> Bool
@@ -72,10 +74,27 @@ runUnifyM swaps value =
         (runReaderT (runExceptT value) swaps)
         defaultTcState
 
+-- | given a type map, split it into paths
+typeMapToFoundPath :: Map Name MonoType -> Map FoundPath MonoType
+typeMapToFoundPath =
+  M.fromList
+    . ( ( splitRecords
+            . (\(k, a) -> (FoundPath (NE.singleton k), a))
+        )
+          <=< M.toList
+      )
+
+splitRecords :: (FoundPath, MonoType) -> [(FoundPath, MonoType)]
+splitRecords (path, mt) = case mt of
+  MTRecord _ mtS ->
+    let toSubPath (k, v) = (appendNameToFoundPath k path, v)
+     in (splitRecords <$> toSubPath) =<< M.toList mtS
+  _ -> [(path, mt)]
+
 typeSearchFromText ::
   Map Name MonoType ->
   Text ->
-  Either (Error Annotation) (Map Name MonoType)
+  Either (Error Annotation) (Map FoundPath MonoType)
 typeSearchFromText typeMap input = do
   mt <- first ParseError (parseAndFormat monoTypeParser input)
   let found = typeSearch typeMap mt
