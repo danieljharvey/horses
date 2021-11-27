@@ -218,6 +218,8 @@ library
       Paths_mimsa
   hs-source-dirs:
       src
+  default-extensions:
+      Strict
   build-depends:
       aeson
     , base >=4.7 && <5

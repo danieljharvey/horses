@@ -53,6 +53,8 @@ dependencies:
 
 library:
   source-dirs: src
+  default-extensions:
+    - Strict 
 
 executables:
   mimsa:
