@@ -983,3 +983,16 @@ spec =
       it "is fine" $ do
         result <- eval testStdlib "let flip f a b = f b a; let and a b = if a then b else False; infix <<>> = flip and; True <<>> False"
         result `shouldSatisfy` isRight
+
+    describe "let with type annotation" $ do
+      it "should typecheck" $ do
+        result <- eval testStdlib "let a: Boolean = True in a"
+        result `shouldSatisfy` isRight
+
+      it "should typecheck (with brackets)" $ do
+        result <- eval testStdlib "let (a: Boolean) = True in a"
+        result `shouldSatisfy` isRight
+
+      it "should not typecheck" $ do
+        result <- eval testStdlib "let a: Int = True in a"
+        result `shouldSatisfy` isLeft

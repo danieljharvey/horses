@@ -159,18 +159,27 @@ fromExpr readerState expr = do
   (result, dataTypes) <- runTypescriptM readerState (toTSBody expr)
   pure (TSModule dataTypes result)
 
-toLet :: Name -> Expr Name MonoType -> Expr Name MonoType -> TypescriptM TSBody
-toLet name letExpr letBody = do
+identifierName :: Identifier Name ann -> Name
+identifierName ident = case ident of
+  Identifier _ n -> n
+  AnnotatedIdentifier _ n -> n
+
+toLet :: Identifier Name MonoType -> Expr Name MonoType -> Expr Name MonoType -> TypescriptM TSBody
+toLet ident letExpr letBody = do
   newLetExpr <- toTSBody letExpr
   let newBinding =
         TSAssignment
-          (TSVar (coerce name))
+          (TSVar (coerce (identifierName ident)))
           Nothing
           (TSLetBody newLetExpr)
   (TSBody bindings' newExpr) <- toTSBody letBody
   pure (TSBody ([newBinding] <> bindings') newExpr)
 
-toLetPattern :: Pattern Name MonoType -> Expr Name MonoType -> Expr Name MonoType -> TypescriptM TSBody
+toLetPattern ::
+  Pattern Name MonoType ->
+  Expr Name MonoType ->
+  Expr Name MonoType ->
+  TypescriptM TSBody
 toLetPattern pat letExpr letBody = do
   newLetExpr <- toTSBody letExpr
   let (tsPatExpr, statements) = getDestructureExpr TSUnderscore (toPattern pat)
@@ -187,7 +196,7 @@ toLambda ::
   Identifier Name MonoType ->
   Expr Name MonoType ->
   TypescriptM TSBody
-toLambda fnType (Identifier _ bind) body = do
+toLambda fnType ident body = do
   (mtFn, generics') <- toTSType fnType
   mtArg <- case mtFn of
     (TSTypeFun _ a _) -> pure a
@@ -200,7 +209,7 @@ toLambda fnType (Identifier _ bind) body = do
     TSBody
       []
       ( TSFunction
-          (coerce bind)
+          (coerce (identifierName ident))
           newGenerics
           mtArg
           Nothing
@@ -279,15 +288,16 @@ toTSBody expr' =
   case expr' of
     (MyLiteral _ lit) ->
       pure $ TSBody mempty (TSLit (toLiteral lit))
-    (MyLet _ (Identifier _ name) letExpr letBody) ->
-      toLet name letExpr letBody
+    (MyLet _ ident letExpr letBody) ->
+      toLet ident letExpr letBody
     (MyLetPattern _ pat letExpr letBody) ->
       toLetPattern pat letExpr letBody
     (MyPair _ a b) -> do
       tsA <- toTSExpr a
       tsB <- toTSExpr b
       pure (TSBody mempty (TSArray [TSArrayItem tsA, TSArrayItem tsB]))
-    (MyVar _ a) -> pure (TSBody mempty (TSVar (coerce a)))
+    (MyVar _ a) ->
+      pure (TSBody mempty (TSVar (coerce a)))
     (MyLambda fnType bind body) ->
       toLambda fnType bind body
     (MyPatternMatch _mtPatternMatch matchExpr patterns) ->
@@ -325,7 +335,8 @@ toTSBody expr' =
     (MyArray _ as) -> do
       tsAs <- (fmap . fmap) TSArrayItem (traverse toTSExpr as)
       pure $ TSBody [] (TSArray tsAs)
-    (MyTypedHole _ name) -> throwError (OutputingTypedHole name)
+    (MyTypedHole _ name) ->
+      throwError (OutputingTypedHole name)
     (MyDefineInfix _ op fn body) -> do
       fnExpr <- toTSExpr fn
       addInfix op fnExpr

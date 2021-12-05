@@ -73,6 +73,7 @@ library
       Language.Mimsa.Monad
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers
+      Language.Mimsa.Parser.Identifier
       Language.Mimsa.Parser.Identifiers
       Language.Mimsa.Parser.Language
       Language.Mimsa.Parser.Literal

@@ -20,6 +20,7 @@ import Data.Functor (($>))
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
+import Language.Mimsa.Parser.Identifier
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Parser.Pattern
