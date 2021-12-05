@@ -1,4 +1,0 @@
-\a ->
-  match a with 
-      head ++ tail -> head
-    | _ -> ""

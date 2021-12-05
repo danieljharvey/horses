@@ -996,3 +996,20 @@ spec =
       it "should not typecheck" $ do
         result <- eval testStdlib "let a: Int = True in a"
         result `shouldSatisfy` isLeft
+
+    describe "lambda with type annotation" $ do
+      it "should typecheck" $ do
+        result <- eval testStdlib "\\a: Int -> a + 1"
+        result `shouldSatisfy` isRight
+
+      it "should typecheck (with brackets)" $ do
+        result <- eval testStdlib "\\(a: Int) -> a + 1"
+        result `shouldSatisfy` isRight
+
+      it "should typecheck (and print properly)" $ do
+        result <- eval testStdlib "\\a: (Maybe A) -> a"
+        result `shouldSatisfy` isRight
+
+      it "should not typecheck" $ do
+        result <- eval testStdlib "\\a: Boolean -> a + 1"
+        result `shouldSatisfy` isLeft

@@ -1,0 +1,1 @@
+{"storeBindings":{},"storeExpression":{"contents":[[],{"contents":[{"contents":[[],"MTInt"],"tag":"MTPrim"},"a"],"tag":"AnnotatedIdentifier"},{"contents":[[],{"tag":"Add"},{"contents":[[],"a"],"tag":"MyVar"},{"contents":[[],{"contents":1,"tag":"MyInt"}],"tag":"MyLiteral"}],"tag":"MyInfix"}],"tag":"MyLambda"},"storeTypeBindings":{}}
