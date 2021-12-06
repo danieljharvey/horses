@@ -12,7 +12,6 @@ module Language.Mimsa.Types.Typechecker.MonoType
     Primitive (..),
     getAnnotationForType,
     varsFromDataType,
-    withParens,
   )
 where
 

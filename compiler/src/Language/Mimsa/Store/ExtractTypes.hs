@@ -12,10 +12,11 @@ import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Types.AST
   ( DataType (DataType),
     Expr (..),
+    Identifier (..),
     Pattern (..),
   )
 import Language.Mimsa.Types.Identifiers (Name, TyCon)
-import Language.Mimsa.Types.Typechecker.MonoType
+import Language.Mimsa.Types.Typechecker
 
 -- this works out which external types have been used in a given expression
 -- therefore, we must remove any which are declared in the expression itself
@@ -25,9 +26,13 @@ extractTypes = filterBuiltIns . extractTypes_
 extractTypes_ :: Expr Name ann -> Set TyCon
 extractTypes_ (MyVar _ _) = mempty
 extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
-extractTypes_ (MyLet _ _ a b) = extractTypes_ a <> extractTypes_ b
+extractTypes_ (MyLet _ ident a b) =
+  extractFromIdentifier ident
+    <> extractTypes_ a
+    <> extractTypes_ b
 extractTypes_ (MyInfix _ _ a b) = extractTypes_ a <> extractTypes_ b
-extractTypes_ (MyLambda _ _ a) = extractTypes_ a
+extractTypes_ (MyLambda _ ident a) =
+  extractFromIdentifier ident <> extractTypes_ a
 extractTypes_ (MyApp _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyLiteral _ _) = mempty
 extractTypes_ (MyLetPattern _ pat expr body) =
@@ -59,6 +64,11 @@ extractFromPattern (PVar _ _) = mempty
 extractFromPattern (PLit _ _) = mempty
 extractFromPattern (PArray _ as _) = mconcat $ extractFromPattern <$> as
 extractFromPattern PString {} = mempty
+
+extractFromIdentifier :: Identifier var ann -> Set TyCon
+extractFromIdentifier (AnnotatedIdentifier mt _) =
+  extractTypenames mt
+extractFromIdentifier _ = mempty
 
 filterBuiltIns :: Set TyCon -> Set TyCon
 filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)
@@ -120,3 +130,23 @@ withDataTypes f (MyPatternMatch _ expr patterns) =
     <> mconcat (extractFrom f . fst <$> patterns)
   where
     extractFrom _pat = mempty
+
+-----
+
+extractTypenames :: Type ann -> Set TyCon
+extractTypenames (MTConstructor _ tyCon) =
+  S.singleton tyCon
+extractTypenames (MTTypeApp _ a b) =
+  extractTypenames a <> extractTypenames b
+extractTypenames (MTPair _ a b) =
+  extractTypenames a <> extractTypenames b
+extractTypenames (MTArray _ as) = extractTypenames as
+extractTypenames (MTRecord _ as) =
+  mconcat (extractTypenames <$> M.elems as)
+extractTypenames (MTRecordRow _ as a) =
+  mconcat (extractTypenames <$> M.elems as)
+    <> extractTypenames a
+extractTypenames MTPrim {} = mempty
+extractTypenames MTVar {} = mempty
+extractTypenames (MTFunction _ a b) =
+  extractTypenames a <> extractTypenames b

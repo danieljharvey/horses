@@ -23,6 +23,7 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -180,7 +181,7 @@ annotationFromIdentifier = \case
   (Identifier ann _) -> ann
   (AnnotatedIdentifier mt _) -> getAnnotationForType mt
 
-monoTypeFromIdentifier :: Identifier var ann -> Maybe (Type ann)
+monoTypeFromIdentifier :: Identifier var Annotation -> Maybe MonoType
 monoTypeFromIdentifier = \case
   (AnnotatedIdentifier mt _) -> Just mt
   _ -> Nothing
@@ -621,15 +622,17 @@ elabLambda env ann ident body = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
   tyBinder <- getUnknown bindAnn
+
   -- compare annotated type with elabbed expr if possible
   case monoTypeFromIdentifier ident of
     (Just mt) ->
       tell
-        [ShouldEqual mt tyBinder]
+        [debugPretty "constraint" $ ShouldEqual mt tyBinder]
     _ -> pure ()
+  let freeVars = debugPretty "freeVars" $ maybe [] freeTypeVars (monoTypeFromIdentifier ident)
 
   let tmpCtx =
-        envFromVar binder (Scheme [] tyBinder) <> env
+        debugPretty "lambda env" (envFromVar binder (Scheme freeVars tyBinder)) <> env
   elabBody <- elab tmpCtx body
   let tyReturn = MTFunction ann tyBinder (getTypeFromAnn elabBody)
   pure (MyLambda tyReturn (ident $> (tyBinder $> bindAnn)) elabBody)

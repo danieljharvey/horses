@@ -26,6 +26,11 @@ unsafeParseExpr t = case parseExpr t of
       "Error parsing expr for Prettier tests:"
         <> T.unpack t
 
+textErrorContains :: Text -> Either Text a -> Bool
+textErrorContains s res = case res of
+  Left e -> s `T.isInfixOf` e
+  _ -> False
+
 getHashOfName :: Project ann -> Name -> ExprHash
 getHashOfName prj name =
   case lookupBindingName prj name of

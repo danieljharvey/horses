@@ -1,1 +1,1 @@
-\a: (Maybe A) -> a
+\(a: Maybe A) -> a

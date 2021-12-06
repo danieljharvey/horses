@@ -40,6 +40,7 @@ data TypeErrorF ann
   | CannotMatchRecord Environment ann (Type ann)
   | CaseMatchExpectedPair ann (Type ann)
   | TypeConstructorNotInScope Environment ann TyCon
+  | TypeNameNotInScope Environment ann TyCon
   | TypeVariablesNotInDataType TyCon (Set Name) (Set Name)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
@@ -154,6 +155,12 @@ renderTypeError (TypeConstructorNotInScope env _ constructor) =
     "The following are available:"
   ]
     <> printDataTypes env
+renderTypeError (TypeNameNotInScope env _ typeName) =
+  [ "Type name" <+> prettyDoc typeName
+      <+> "not found in scope.",
+    "The following are available:"
+  ]
+    <> showSet prettyDoc (M.keysSet (getDataTypes env))
 renderTypeError (ConflictingConstructors _ constructor) =
   ["Multiple constructors found matching" <+> prettyDoc constructor]
 renderTypeError (DuplicateTypeDeclaration constructor) =

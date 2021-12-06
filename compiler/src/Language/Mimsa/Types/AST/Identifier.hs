@@ -26,4 +26,4 @@ deriving anyclass instance
 instance (Printer var) => Printer (Identifier var ann) where
   prettyDoc (Identifier _ var) = prettyDoc var
   prettyDoc (AnnotatedIdentifier mt var) =
-    prettyDoc var <> ": " <> withParens mt
+    "(" <> prettyDoc var <> ": " <> prettyDoc mt <> ")"

@@ -19,7 +19,7 @@ import Text.Megaparsec.Char
 
 identifierParser :: Parser (Identifier Name Annotation)
 identifierParser =
-  try (orInBrackets annotatedIdentifierParser)
+  try (inBrackets annotatedIdentifierParser)
     <|> plainIdentifierParser
 
 annotatedIdentifierParser :: Parser (Identifier Name Annotation)
