@@ -21,7 +21,7 @@ import Prettyprinter
 
 data TypeIdentifier
   = TVName TyVar
-  | TVNum Int
+  | TVUnificationVar Int
   deriving stock
     ( Eq,
       Ord,
@@ -49,4 +49,4 @@ printTypeNum i = [toEnum (index + start)] <> suffix
 
 renderTypeIdentifier :: TypeIdentifier -> Doc ann
 renderTypeIdentifier (TVName n) = renderTyVar n
-renderTypeIdentifier (TVNum i) = pretty (printTypeNum i)
+renderTypeIdentifier (TVUnificationVar i) = pretty (printTypeNum i)

@@ -268,15 +268,15 @@ spec =
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (MTVar mempty (tvNumbered 0))
-                (dataTypeWithVars mempty "Maybe" [MTVar mempty (tvNumbered 0)]),
+                (MTVar mempty (TVUnificationVar 0))
+                (dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 0)]),
               MyConstructor mempty "Just"
             )
       it "type Maybe a = Just a | Nothing in Nothing" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in Nothing"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Maybe" [MTVar mempty (tvNumbered 0)],
+            ( dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 0)],
               MyConstructor mempty "Nothing"
             )
       it "type Maybe a = Just a | Nothing in Just 1" $ do
@@ -542,7 +542,7 @@ spec =
                 mempty
                 ( MTRecordRow
                     mempty
-                    (M.singleton "one" (MTVar mempty (tvFree 2)))
+                    (M.singleton "one" (MTVar mempty (tvNum 2)))
                     (unknown 1)
                 )
                 ( MTFunction
@@ -551,19 +551,19 @@ spec =
                         mempty
                         ( M.singleton
                             "two"
-                            (MTVar mempty (tvFree 5))
+                            (MTVar mempty (tvNum 5))
                         )
                         ( MTRecordRow
                             mempty
                             ( M.singleton
                                 "one"
-                                ( MTVar mempty (tvFree 7)
+                                ( MTVar mempty (tvNum 7)
                                 )
                             )
                             (unknown 8)
                         )
                     )
-                    (MTVar mempty (tvFree 7))
+                    (MTVar mempty (tvNum 7))
                 )
             )
       it "if ?missingFn then 1 else 2" $ do
@@ -943,13 +943,13 @@ spec =
                 ()
                 ( MTFunction
                     ()
-                    (MTVar () (TVNum 0))
-                    (MTFunction () (MTPrim () MTString) (MTVar () (TVNum 0)))
+                    (MTVar () (TVUnificationVar 0))
+                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 0)))
                 )
                 ( MTFunction
                     ()
-                    (MTVar () (TVNum 0))
-                    (MTFunction () (MTPrim () MTString) (MTVar () (TVNum 0)))
+                    (MTVar () (TVUnificationVar 0))
+                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 0)))
                 )
             )
 
@@ -1005,7 +1005,11 @@ spec =
         result <- eval testStdlib "let (a: FooBar) = True in a"
         result `shouldSatisfy` textErrorContains "A binding for type FooBar could not be found"
 
-    fdescribe "lambda with type annotation" $ do
+      it "cannot assign polymorphic type to concrete value" $ do
+        result <- eval testStdlib "let (a: anyA) = True in a"
+        result `shouldSatisfy` isLeft
+
+    describe "lambda with type annotation" $ do
       it "should not parse without brackets" $ do
         result <- eval testStdlib "\\a: Int -> a + 1"
         result `shouldSatisfy` isLeft
@@ -1025,3 +1029,15 @@ spec =
       it "should not typecheck if unifying int with 'a'" $ do
         result <- eval testStdlib "\\(abc: a) -> abc + 1"
         result `shouldSatisfy` isLeft
+
+      it "should unify named type variables with themselves" $ do
+        result <- eval testStdlib "\\(abc: a) -> \\(def: a) -> abc == def"
+        result `shouldSatisfy` isRight
+
+      it "should not unify named type variables with one another" $ do
+        result <- eval testStdlib "\\(abc: a) -> \\(def: b) -> abc == def"
+        result `shouldSatisfy` isLeft
+
+      it "should typecheck when id has a specific type" $ do
+        result <- eval testStdlib "let identity = \\(abc: a) -> abc; identity True"
+        fst <$> result `shouldBe` Right (MTPrim mempty MTBool)

@@ -1,7 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Elaborate
   ( elab,
@@ -23,7 +22,6 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -526,7 +524,8 @@ elabOperator env ann StringConcat a b = do
   (mt, elabA, elabB) <- elabInfix env (MTPrim ann MTString) a b
   pure (MyInfix mt StringConcat elabA elabB)
 elabOperator env ann ArrayConcat a b = do
-  (mt, elabA, elabB) <- elabInfix env (MTArray ann (MTVar mempty (TVName "a"))) a b
+  tyArr <- getUnknown ann
+  (mt, elabA, elabB) <- elabInfix env (MTArray ann tyArr) a b
   pure (MyInfix mt ArrayConcat elabA elabB)
 elabOperator env ann (Custom infixOp) a b = do
   tyRes <- getUnknown ann
@@ -621,18 +620,15 @@ elabLambda ::
 elabLambda env ann ident body = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
-  tyBinder <- getUnknown bindAnn
 
   -- compare annotated type with elabbed expr if possible
-  case monoTypeFromIdentifier ident of
-    (Just mt) ->
-      tell
-        [debugPretty "constraint" $ ShouldEqual mt tyBinder]
-    _ -> pure ()
-  let freeVars = debugPretty "freeVars" $ maybe [] freeTypeVars (monoTypeFromIdentifier ident)
+  tyBinder <- case monoTypeFromIdentifier ident of
+    (Just mt) -> pure mt
+    Nothing -> getUnknown bindAnn
 
   let tmpCtx =
-        debugPretty "lambda env" (envFromVar binder (Scheme freeVars tyBinder)) <> env
+        envFromVar binder (Scheme [] tyBinder) <> env
+
   elabBody <- elab tmpCtx body
   let tyReturn = MTFunction ann tyBinder (getTypeFromAnn elabBody)
   pure (MyLambda tyReturn (ident $> (tyBinder $> bindAnn)) elabBody)

@@ -83,7 +83,7 @@ toTSType (MTPrim _ MTInt) = pure (TSType Nothing "number" [], mempty)
 toTSType (MTPrim _ MTBool) = pure (TSType Nothing "boolean" [], mempty)
 toTSType (MTVar _ a) =
   let newVar = case a of
-        TVNum i' -> T.toTitle (T.pack (printTypeNum (i' + 1)))
+        TVUnificationVar i' -> T.toTitle (T.pack (printTypeNum (i' + 1)))
         TVName a' -> T.toTitle (coerce a')
    in pure (TSTypeVar newVar, S.singleton (TSGeneric newVar))
 toTSType mt@MTTypeApp {} =

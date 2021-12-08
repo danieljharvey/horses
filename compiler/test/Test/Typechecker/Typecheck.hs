@@ -220,11 +220,11 @@ spec = do
           Left
             ( FailsOccursCheck
                 mempty
-                (tvFree 0)
+                (tvNum 0)
                 ( MTFunction
                     mempty
-                    (MTVar mempty (tvFree 0))
-                    (MTVar mempty (tvFree 1))
+                    (MTVar mempty (tvNum 0))
+                    (MTVar mempty (tvNum 1))
                 )
             )
       it "infers pair" $ do

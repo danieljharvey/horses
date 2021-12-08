@@ -66,7 +66,7 @@ str' = str . StringType
 
 --
 unknown :: (Monoid ann) => Int -> Type ann
-unknown = MTVar mempty . TVNum
+unknown = MTVar mempty . TVUnificationVar
 
 typeName :: (Monoid ann) => Text -> Type ann
 typeName = MTVar mempty . TVName . mkTyVar
@@ -81,11 +81,8 @@ numbered = NumberedVar
 
 ---
 
-tvFree :: Int -> TypeIdentifier
-tvFree = TVNum
-
-tvNumbered :: Int -> TypeIdentifier
-tvNumbered = TVNum
+tvNum :: Int -> TypeIdentifier
+tvNum = TVUnificationVar
 
 tvNamed :: Text -> TypeIdentifier
 tvNamed t = TVName $ mkTyVar t

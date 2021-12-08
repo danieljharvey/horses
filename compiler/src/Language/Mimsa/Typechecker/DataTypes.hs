@@ -137,7 +137,7 @@ getVariablesForField (MTRecordRow _ items rest) =
     )
     <> getVariablesForField rest
 getVariablesForField (MTArray _ as) = getVariablesForField as
-getVariablesForField (MTVar _ (TVNum _)) = S.empty
+getVariablesForField (MTVar _ (TVUnificationVar _)) = S.empty
 getVariablesForField MTPrim {} = S.empty
 getVariablesForField MTConstructor {} = S.empty
 getVariablesForField (MTTypeApp _ a b) = getVariablesForField a <> getVariablesForField b
@@ -211,7 +211,7 @@ inferConstructorTypes (DataType typeName tyVarNames constructors) = do
           pure (MTArray mempty tyItems)
         MTTypeApp _ func arg ->
           MTTypeApp mempty <$> findType func <*> findType arg
-        MTVar _ (TVNum _) ->
+        MTVar _ (TVUnificationVar _) ->
           throwError UnknownTypeError -- should not happen but yolo
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
