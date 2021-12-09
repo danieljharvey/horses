@@ -1041,3 +1041,7 @@ spec =
       it "should typecheck when id has a specific type" $ do
         result <- eval testStdlib "let identity = \\(abc: a) -> abc; identity True"
         fst <$> result `shouldBe` Right (MTPrim mempty MTBool)
+
+      it "each type variable is unique to the scope it's introduced in" $ do
+        result <- eval testStdlib "let id1 (a: a) = (a,a); let id2 (b: a) = b; id1 (id2 True)"
+        result `shouldSatisfy` isRight

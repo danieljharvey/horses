@@ -65,7 +65,7 @@ ejsExportRuntime =
       rtDescription = "Exports the expression",
       rtBackend = ESModulesJS,
       rtCode = "export { main }",
-      rtMonoType = uniVar 1
+      rtMonoType = uniVar (-1)
     }
 
 tsExportRuntime :: Runtime Text
@@ -83,7 +83,7 @@ ejsConsoleRuntime =
       rtBackend = ESModulesJS,
       rtName = RuntimeName "console-ejs",
       rtCode = "console.log(main);",
-      rtMonoType = uniVar 1
+      rtMonoType = uniVar (-1)
     }
 
 tsConsoleRuntime :: Runtime Text
