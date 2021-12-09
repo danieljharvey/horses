@@ -55,8 +55,8 @@ data Runtime code = Runtime
     rtCode :: code
   }
 
-mtVar :: Text -> MonoType
-mtVar t = MTVar mempty (TVName (TyVar t))
+uniVar :: Int -> MonoType
+uniVar i = MTVar mempty (TVUnificationVar i)
 
 ejsExportRuntime :: Runtime Text
 ejsExportRuntime =
@@ -65,7 +65,7 @@ ejsExportRuntime =
       rtDescription = "Exports the expression",
       rtBackend = ESModulesJS,
       rtCode = "export { main }",
-      rtMonoType = mtVar "a"
+      rtMonoType = uniVar 1
     }
 
 tsExportRuntime :: Runtime Text
@@ -83,7 +83,7 @@ ejsConsoleRuntime =
       rtBackend = ESModulesJS,
       rtName = RuntimeName "console-ejs",
       rtCode = "console.log(main);",
-      rtMonoType = mtVar "a"
+      rtMonoType = uniVar 1
     }
 
 tsConsoleRuntime :: Runtime Text
