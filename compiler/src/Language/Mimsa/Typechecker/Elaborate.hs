@@ -26,6 +26,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
+import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
@@ -79,9 +80,9 @@ elabLiteral ann lit =
    in pure (MyLiteral (MTPrim ann tyLit) lit)
 
 lookupInEnv :: Swaps -> Variable -> Environment -> Maybe Scheme
-lookupInEnv swaps var' (Environment env' _ _) =
+lookupInEnv swaps var' (Environment env' _ _ _) =
   let look v = M.lookup v env'
-      wrapName (Name n) = TVName (coerce n)
+      wrapName (Name n) = TVName Nothing (coerce n)
    in look (variableToTypeIdentifier var')
         <|> (M.lookup var' swaps >>= look . wrapName)
 
@@ -106,7 +107,7 @@ elabVarFromScope env ann var' = do
 
 envFromVar :: Variable -> Scheme -> Environment
 envFromVar binder scheme =
-  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty
+  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty
 
 envFromInfixOp :: InfixOp -> MonoType -> Environment
 envFromInfixOp infixOp mt =
@@ -114,6 +115,7 @@ envFromInfixOp infixOp mt =
     mempty
     mempty
     (M.singleton infixOp mt)
+    mempty
 
 lookupInfixOp ::
   Environment ->
@@ -626,12 +628,14 @@ elabLambda env ann ident body = do
     (Just mt) -> pure mt
     Nothing -> getUnknown bindAnn
 
+  (newEnv, tyBinder') <- freshNamedType env tyBinder
+
   let tmpCtx =
-        envFromVar binder (Scheme [] tyBinder) <> env
+        envFromVar binder (Scheme [] tyBinder') <> newEnv
 
   elabBody <- elab tmpCtx body
-  let tyReturn = MTFunction ann tyBinder (getTypeFromAnn elabBody)
-  pure (MyLambda tyReturn (ident $> (tyBinder $> bindAnn)) elabBody)
+  let tyReturn = MTFunction ann tyBinder' (getTypeFromAnn elabBody)
+  pure (MyLambda tyReturn (ident $> (tyBinder' $> bindAnn)) elabBody)
 
 elabDefineInfix ::
   Environment ->

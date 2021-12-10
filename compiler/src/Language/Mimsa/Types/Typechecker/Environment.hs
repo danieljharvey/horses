@@ -11,6 +11,7 @@ import Language.Mimsa.Types.AST (DataType)
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
   ( TyCon,
+    TyVar,
     TypeIdentifier,
   )
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -20,19 +21,20 @@ import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 data Environment = Environment
   { getSchemes :: Map TypeIdentifier Scheme,
     getDataTypes :: Map TyCon DataType,
-    getInfix :: Map InfixOp MonoType
+    getInfix :: Map InfixOp MonoType,
+    getTypeVarsInScope :: Map TyVar Int
   }
   deriving stock (Eq, Ord, Show)
 
 instance Semigroup Environment where
-  (Environment a b c) <> (Environment a' b' c') =
-    Environment (a <> a') (b <> b') (c <> c')
+  (Environment a b c d) <> (Environment a' b' c' d') =
+    Environment (a <> a') (b <> b') (c <> c') (d <> d')
 
 instance Monoid Environment where
-  mempty = Environment mempty mempty mempty
+  mempty = Environment mempty mempty mempty mempty
 
 instance Printer Environment where
-  prettyPrint (Environment typeSchemes _dataTypes _infix) =
+  prettyPrint (Environment typeSchemes _dataTypes _infix _tyVars) =
     "[\n"
       <> T.intercalate ", \n" (printRow <$> M.toList typeSchemes)
       <> "\n]"

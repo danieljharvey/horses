@@ -51,7 +51,7 @@ maybeDecl =
   where
     cons' =
       M.fromList
-        [ ("Just", [MTVar mempty (TVName "a")]),
+        [ ("Just", [MTVar mempty (tvNamed "a")]),
           ("Nothing", [])
         ]
 

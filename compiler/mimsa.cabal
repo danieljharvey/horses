@@ -152,6 +152,7 @@ library
       Language.Mimsa.Typechecker.KindChecker
       Language.Mimsa.Typechecker.NormaliseTypes
       Language.Mimsa.Typechecker.OutputTypes
+      Language.Mimsa.Typechecker.ScopeTypeVar
       Language.Mimsa.Typechecker.Solve
       Language.Mimsa.Typechecker.TcMonad
       Language.Mimsa.Typechecker.Typecheck
@@ -381,6 +382,7 @@ test-suite mimsa-test
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.KindChecker
       Test.Typechecker.OutputTypes
+      Test.Typechecker.ScopeTypeVar
       Test.Typechecker.Substitutions
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError

@@ -69,7 +69,7 @@ unknown :: (Monoid ann) => Int -> Type ann
 unknown = MTVar mempty . TVUnificationVar
 
 typeName :: (Monoid ann) => Text -> Type ann
-typeName = MTVar mempty . TVName . mkTyVar
+typeName = MTVar mempty . TVName Nothing . mkTyVar
 
 ---
 
@@ -85,7 +85,7 @@ tvNum :: Int -> TypeIdentifier
 tvNum = TVUnificationVar
 
 tvNamed :: Text -> TypeIdentifier
-tvNamed t = TVName $ mkTyVar t
+tvNamed t = TVName Nothing $ mkTyVar t
 
 exprHash :: Int -> ExprHash
 exprHash = ExprHash . T.pack . show

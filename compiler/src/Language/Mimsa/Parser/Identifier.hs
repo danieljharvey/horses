@@ -26,7 +26,7 @@ annotatedIdentifierParser :: Parser (Identifier Name Annotation)
 annotatedIdentifierParser =
   withLocation (\ann (mt, name) -> AnnotatedIdentifier (mt $> ann) name) $ do
     name <- nameParser
-    _ <- thenSpace (string ":")
+    _ <- withOptionalSpace (string ":")
     mt <- monoTypeParser
     pure (mt, name)
 

@@ -50,6 +50,10 @@ varBind ann var ty
       (MTVar _ (TVUnificationVar _)) ->
         -- a named variable will unify with a unification variable
         pure (Substitutions (M.singleton var (ty $> ann)))
+      (MTVar _ tvVar@(TVName _ _))
+        | tvVar == var ->
+          -- a named var unifies with itself
+          pure (Substitutions (M.singleton var (ty $> ann)))
       _ -> throwError (UnificationError ty (MTVar ann var))
   | typeEquals ty (MTVar mempty var) = pure mempty
   | S.member var (freeTypeVars ty) = do
@@ -61,7 +65,7 @@ varBind ann var ty
     pure $ Substitutions (M.singleton var ty')
 
 isNamedVar :: TypeIdentifier -> Bool
-isNamedVar (TVName _n) = True
+isNamedVar (TVName _ _n) = True
 isNamedVar _ = False
 
 -- these are tricky to deal with, so flatten them on the way in

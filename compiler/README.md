@@ -116,6 +116,8 @@ Bound const to \x -> (\y -> x) :: A -> (B -> A)
 
 :> :bind compose = \f -> \g -> \a -> f (g a)
 Bound compose to \f -> (\g -> (\a -> (f (g a)))) :: (A -> B) -> ((C -> A) -> (C -> B))
+
+
 ```
 
 pairs:
@@ -241,3 +243,10 @@ repl:1:1:
 Function arity mismatch. Expected 2 but got f -> f
 ```
 
+type annotations:
+
+```haskell
+:> :bind dog = \(name: String) -> \(age: Int) -> (name,age)
+
+:> :bind cat = let (a: String) = "hat" in (a,a)
+```

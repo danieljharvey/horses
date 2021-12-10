@@ -64,7 +64,7 @@ instance Semigroup (TypeErrorF ann) where
 instance Monoid (TypeErrorF ann) where
   mempty = UnknownTypeError
 
-instance (Printer ann) => Printer (TypeErrorF ann) where
+instance (Printer ann, Show ann) => Printer (TypeErrorF ann) where
   prettyDoc = vsep . renderTypeError
 
 instance ShowErrorComponent (TypeErrorF Annotation) where

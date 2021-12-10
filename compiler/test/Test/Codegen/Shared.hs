@@ -37,6 +37,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker.MonoType
 import Test.Data.Project
+import Test.Utils.Helpers
 
 -- | has no constructors, we can do nothing with this
 dtVoid :: DataType
@@ -70,7 +71,7 @@ dtIdentity =
   DataType
     "Identity"
     ["a"]
-    (M.singleton "Identity" [MTVar mempty (TVName "a")])
+    (M.singleton "Identity" [MTVar mempty (tvNamed "a")])
 
 -- | Maybe monad
 dtMaybe :: DataType
@@ -79,7 +80,7 @@ dtMaybe =
     "Maybe"
     ["a"]
     ( M.fromList
-        [ ("Just", [MTVar mempty (TVName "a")]),
+        [ ("Just", [MTVar mempty (tvNamed "a")]),
           ("Nothing", [])
         ]
     )
@@ -91,8 +92,8 @@ dtEither =
     "Either"
     ["e", "a"]
     ( M.fromList
-        [ ("Right", [MTVar mempty (TVName "a")]),
-          ("Left", [MTVar mempty (TVName "e")])
+        [ ("Right", [MTVar mempty (tvNamed "a")]),
+          ("Left", [MTVar mempty (tvNamed "e")])
         ]
     )
 
@@ -103,13 +104,13 @@ dtThese =
     "These"
     ["a", "b"]
     ( M.fromList
-        [ ("This", [MTVar mempty (TVName "a")]),
-          ("That", [MTVar mempty (TVName "b")]),
+        [ ("This", [MTVar mempty (tvNamed "a")]),
+          ("That", [MTVar mempty (tvNamed "b")]),
           ( "These",
-            [ MTVar mempty (TVName "a"),
+            [ MTVar mempty (tvNamed "a"),
               MTVar
                 mempty
-                (TVName "b")
+                (tvNamed "b")
             ]
           )
         ]
@@ -123,8 +124,8 @@ dtList =
     ["a"]
     ( M.fromList
         [ ( "Cons",
-            [ MTVar mempty (TVName "a"),
-              dataTypeWithVars mempty "List" [MTVar mempty (TVName "a")]
+            [ MTVar mempty (tvNamed "a"),
+              dataTypeWithVars mempty "List" [MTVar mempty (tvNamed "a")]
             ]
           ),
           ("Nil", [])
@@ -140,13 +141,13 @@ dtDoubleList =
     ["a", "b"]
     ( M.fromList
         [ ( "DoubleCons",
-            [ MTVar mempty (TVName "a"),
-              MTVar mempty (TVName "b"),
+            [ MTVar mempty (tvNamed "a"),
+              MTVar mempty (tvNamed "b"),
               dataTypeWithVars
                 mempty
                 "DoubleList"
-                [ MTVar mempty (TVName "a"),
-                  MTVar mempty (TVName "b")
+                [ MTVar mempty (tvNamed "a"),
+                  MTVar mempty (tvNamed "b")
                 ]
             ]
           ),
@@ -160,10 +161,10 @@ dtTree =
     "Tree"
     ["a"]
     ( M.fromList
-        [ ("Leaf", [MTVar mempty (TVName "a")]),
+        [ ("Leaf", [MTVar mempty (tvNamed "a")]),
           ( "Branch",
-            [ dataTypeWithVars mempty "Tree" [MTVar mempty (TVName "a")],
-              dataTypeWithVars mempty "Tree" [MTVar mempty (TVName "a")]
+            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
+              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")]
             ]
           )
         ]
@@ -178,8 +179,8 @@ dtReader =
         "Reader"
         [ MTFunction
             mempty
-            (MTVar mempty (TVName "r"))
-            (MTVar mempty (TVName "a"))
+            (MTVar mempty (tvNamed "r"))
+            (MTVar mempty (tvNamed "a"))
         ]
     )
 
@@ -190,8 +191,8 @@ dtMatchedPair =
     ["a"]
     ( M.singleton
         "MatchedPair"
-        [ MTVar mempty (TVName "a"),
-          MTVar mempty (TVName "a")
+        [ MTVar mempty (tvNamed "a"),
+          MTVar mempty (tvNamed "a")
         ]
     )
 
@@ -203,14 +204,14 @@ dtConsoleF =
     ( M.fromList
         [ ( "Write",
             [ dataTypeWithVars mempty "String" [],
-              MTVar mempty (TVName "next")
+              MTVar mempty (tvNamed "next")
             ]
           ),
           ( "Read",
             [ MTFunction
                 mempty
                 (dataTypeWithVars mempty "String" [])
-                (MTVar mempty (TVName "next"))
+                (MTVar mempty (tvNamed "next"))
             ]
           )
         ]
@@ -223,8 +224,8 @@ dtPair =
     ["a", "b"]
     ( M.singleton
         "Pair"
-        [ MTVar mempty (TVName "a"),
-          MTVar mempty (TVName "b")
+        [ MTVar mempty (tvNamed "a"),
+          MTVar mempty (tvNamed "b")
         ]
     )
 
@@ -235,8 +236,8 @@ dtMonoPair =
     ["a"]
     ( M.singleton
         "MonoPair"
-        [ MTVar mempty (TVName "a"),
-          MTVar mempty (TVName "a")
+        [ MTVar mempty (tvNamed "a"),
+          MTVar mempty (tvNamed "a")
         ]
     )
 
@@ -247,8 +248,8 @@ dtEnv =
     ["w", "a"]
     ( M.singleton
         "Env"
-        [ MTVar mempty (TVName "w"),
-          MTVar mempty (TVName "a")
+        [ MTVar mempty (tvNamed "w"),
+          MTVar mempty (tvNamed "a")
         ]
     )
 

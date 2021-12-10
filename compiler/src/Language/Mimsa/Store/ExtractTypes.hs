@@ -2,6 +2,7 @@ module Language.Mimsa.Store.ExtractTypes
   ( extractTypes,
     extractTypeDecl,
     extractDataTypes,
+    extractNamedTypeVars,
   )
 where
 
@@ -15,7 +16,7 @@ import Language.Mimsa.Types.AST
     Identifier (..),
     Pattern (..),
   )
-import Language.Mimsa.Types.Identifiers (Name, TyCon)
+import Language.Mimsa.Types.Identifiers (Name, TyCon, TyVar, TypeIdentifier (..))
 import Language.Mimsa.Types.Typechecker
 
 -- this works out which external types have been used in a given expression
@@ -150,3 +151,24 @@ extractTypenames MTPrim {} = mempty
 extractTypenames MTVar {} = mempty
 extractTypenames (MTFunction _ a b) =
   extractTypenames a <> extractTypenames b
+
+-----
+
+extractNamedTypeVars :: Type ann -> Set TyVar
+extractNamedTypeVars (MTVar _ (TVName _ tv)) = S.singleton tv
+extractNamedTypeVars MTVar {} = mempty
+extractNamedTypeVars (MTConstructor _ _) =
+  mempty
+extractNamedTypeVars (MTTypeApp _ a b) =
+  extractNamedTypeVars a <> extractNamedTypeVars b
+extractNamedTypeVars (MTPair _ a b) =
+  extractNamedTypeVars a <> extractNamedTypeVars b
+extractNamedTypeVars (MTArray _ as) = extractNamedTypeVars as
+extractNamedTypeVars (MTRecord _ as) =
+  mconcat (extractNamedTypeVars <$> M.elems as)
+extractNamedTypeVars (MTRecordRow _ as a) =
+  mconcat (extractNamedTypeVars <$> M.elems as)
+    <> extractNamedTypeVars a
+extractNamedTypeVars MTPrim {} = mempty
+extractNamedTypeVars (MTFunction _ a b) =
+  extractNamedTypeVars a <> extractNamedTypeVars b

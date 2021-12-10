@@ -1014,6 +1014,10 @@ spec =
         result <- eval testStdlib "\\a: Int -> a + 1"
         result `shouldSatisfy` isLeft
 
+      it "should parse without space" $ do
+        result <- eval testStdlib "\\(a:Int) -> a + 1"
+        result `shouldSatisfy` isRight
+
       it "should typecheck" $ do
         result <- eval testStdlib "\\(a: Int) -> a + 1"
         result `shouldSatisfy` isRight

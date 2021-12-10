@@ -28,7 +28,7 @@ freeTypeVarsScheme (Scheme vars t) =
   freeTypeVars t \\ vars
 
 freeTypeVarsCtx :: Environment -> [TypeIdentifier]
-freeTypeVarsCtx (Environment env _ _) =
+freeTypeVarsCtx (Environment env _ _ _) =
   foldMap freeTypeVarsScheme (M.elems env)
 
 generalise :: Environment -> MonoType -> Scheme

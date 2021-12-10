@@ -38,6 +38,7 @@ import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.KindChecker as KindChecker
 import qualified Test.Typechecker.OutputTypes as OutputTypes
+import qualified Test.Typechecker.ScopeTypeVar as ScopeTypeVar
 import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
@@ -84,3 +85,4 @@ main =
     Typescript.spec
     ESModulesJS.spec
     Substitutions.spec
+    ScopeTypeVar.spec

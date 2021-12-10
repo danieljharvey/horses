@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Language.Mimsa.Typechecker.Environment (lookupConstructor, lookupTypename) where
+module Language.Mimsa.Typechecker.Environment (lookupConstructor) where
 
 import Control.Monad.Except
 import qualified Data.Map as M
@@ -26,14 +26,3 @@ lookupConstructor env ann name = do
 containsConstructor :: TyCon -> DataType -> Bool
 containsConstructor name (DataType _tyName _tyVars constructors) =
   M.member name constructors
-
-lookupTypename ::
-  (MonadError TypeError m) =>
-  Environment ->
-  Annotation ->
-  TyCon ->
-  m DataType
-lookupTypename env ann typeName =
-  case M.lookup typeName (getDataTypes env) of
-    Just a -> pure a -- we only want a single match
-    _ -> throwError (TypeNameNotInScope env ann typeName)

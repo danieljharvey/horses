@@ -99,7 +99,7 @@ data PureType
 singleVarConstructor :: Name -> Map TyCon [Type ()] -> CodegenM PureType
 singleVarConstructor fVar items = do
   let filterFn (_tc, fields) = case fields of
-        [MTVar _ (TVName a)] | coerce a == fVar -> True
+        [MTVar _ (TVName _ a)] | coerce a == fVar -> True
         _ -> False
   (tyCon, _) <- matchConstructor filterFn items
   pure (PureVar tyCon)
@@ -119,7 +119,7 @@ fieldIsRecursion tyCon vars mt =
     _ -> False
 
 fieldIsName :: Name -> Type () -> Bool
-fieldIsName name (MTVar _ (TVName a)) = name == coerce a
+fieldIsName name (MTVar _ (TVName _ a)) = name == coerce a
 fieldIsName _ _ = False
 
 multiVarConstructor :: TyCon -> [Name] -> Map TyCon [Type ()] -> CodegenM PureType
@@ -130,8 +130,8 @@ multiVarConstructor tyCon vars items = do
           WithEmpties tc
             <$> traverse
               ( \case
-                  MTVar _ (TVName a) -> Just (VPart (coerce a))
-                  MTFunction _ (MTVar _ (TVName a)) (MTVar _ (TVName b)) ->
+                  MTVar _ (TVName _ a) -> Just (VPart (coerce a))
+                  MTFunction _ (MTVar _ (TVName _ a)) (MTVar _ (TVName _ b)) ->
                     Just $ FPart (coerce a) (coerce b)
                   other ->
                     if fieldIsRecursion tyCon vars other

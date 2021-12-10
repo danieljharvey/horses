@@ -9,6 +9,7 @@ module Language.Mimsa.Typechecker.TcMonad
     getTypedHoles,
     TypecheckState (..),
     variableToTypeIdentifier,
+    getNextUniVar,
   )
 where
 
@@ -99,7 +100,7 @@ schemesToTypeMap ::
 schemesToTypeMap schemes = do
   let fn (k, v) =
         let leName = case k of
-              TVName n -> pure (Name $ coerce n)
+              TVName _ n -> pure (Name $ coerce n)
               TVUnificationVar i -> lookupSwap (NumberedVar i)
          in (,) <$> leName <*> instantiate mempty v
 
@@ -119,5 +120,5 @@ getTypedHoles subs'@(Substitutions subs) = do
   pure $ fmap getMonoType holes
 
 variableToTypeIdentifier :: Variable -> TypeIdentifier
-variableToTypeIdentifier (NamedVar n) = TVName (coerce n)
+variableToTypeIdentifier (NamedVar n) = TVName Nothing (coerce n)
 variableToTypeIdentifier (NumberedVar i) = TVUnificationVar i
