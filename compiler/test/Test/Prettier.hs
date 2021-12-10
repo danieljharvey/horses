@@ -9,10 +9,10 @@ import qualified Data.Map as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
-import Language.Mimsa.Types.Identifiers
 
 spec :: Spec
 spec =
