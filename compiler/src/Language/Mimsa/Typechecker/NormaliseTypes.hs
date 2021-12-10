@@ -30,7 +30,7 @@ normaliseType' :: MonoType -> State NormaliseState MonoType
 normaliseType' mt = case mt of
   MTVar ann tyIdent -> do
     index <- findVar tyIdent
-    pure $ MTVar ann (TVNum index)
+    pure $ MTVar ann (TVUnificationVar index)
   MTPrim ann a -> pure (MTPrim ann a)
   MTFunction ann arg fun ->
     MTFunction ann

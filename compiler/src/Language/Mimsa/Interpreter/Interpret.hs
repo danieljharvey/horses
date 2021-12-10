@@ -127,6 +127,10 @@ interpretOperator operator a b = do
         Nothing ->
           throwError (CouldNotFindInfixOp infixOp)
 
+nameFromIdent :: Identifier var ann -> var
+nameFromIdent (Identifier _ name) = name
+nameFromIdent (AnnotatedIdentifier _ name) = name
+
 interpretApplication ::
   (Eq ann, Monoid ann) =>
   ann ->
@@ -139,9 +143,9 @@ interpretApplication ann fn value = do
     (MyVar ann' f) -> do
       expr <- interpretWithScope (MyVar ann' f)
       interpretWithScope (MyApp ann expr value)
-    (MyLambda _ (Identifier _ binder) expr) -> do
+    (MyLambda _ ident expr) -> do
       value' <- interpretWithScope value
-      addToScope (Scope $ M.singleton binder value')
+      addToScope (Scope $ M.singleton (nameFromIdent ident) value')
       interpretWithScope expr
     (MyLiteral ann' a) ->
       throwError $ CannotApplyToNonFunction (MyLiteral ann' a)
@@ -219,8 +223,8 @@ interpretWithScope ::
   App ann (Expr Variable ann)
 interpretWithScope interpretExpr =
   case interpretExpr of
-    (MyLet _ (Identifier _ binder) expr body) -> do
-      addToScope (Scope $ M.singleton binder expr)
+    (MyLet _ ident expr body) -> do
+      addToScope (Scope $ M.singleton (nameFromIdent ident) expr)
       interpretWithScope body
     (MyLetPattern _ pat expr body) -> do
       expr' <- interpretWithScope expr

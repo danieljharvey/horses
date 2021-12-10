@@ -9,6 +9,7 @@ module Language.Mimsa.Typechecker.TcMonad
     getTypedHoles,
     TypecheckState (..),
     variableToTypeIdentifier,
+    getNextUniVar,
   )
 where
 
@@ -49,7 +50,7 @@ getNextUniVar = do
   pure nextUniVar
 
 typeFromUniVar :: Annotation -> Int -> MonoType
-typeFromUniVar ann = MTVar ann . TVNum
+typeFromUniVar ann = MTVar ann . TVUnificationVar
 
 getUnknown :: (MonadState TypecheckState m) => Annotation -> m MonoType
 getUnknown ann = typeFromUniVar ann <$> getNextUniVar
@@ -75,7 +76,7 @@ addTypedHole env ann name = do
                 <> M.singleton name (ann, i, localTypeMap)
           }
     )
-  pure $ MTVar ann (TVNum i)
+  pure $ MTVar ann (TVUnificationVar i)
 
 -- | if we have a `Variable`, lookup it's original `Name` in Reader context
 lookupSwap ::
@@ -99,8 +100,8 @@ schemesToTypeMap ::
 schemesToTypeMap schemes = do
   let fn (k, v) =
         let leName = case k of
-              TVName n -> pure (Name $ coerce n)
-              TVNum i -> lookupSwap (NumberedVar i)
+              TVName _ n -> pure (Name $ coerce n)
+              TVUnificationVar i -> lookupSwap (NumberedVar i)
          in (,) <$> leName <*> instantiate mempty v
 
   typeMap <- traverse fn (M.toList schemes)
@@ -113,11 +114,11 @@ getTypedHoles ::
   m (Map Name (MonoType, Map Name MonoType))
 getTypedHoles subs'@(Substitutions subs) = do
   holes <- gets tcsTypedHoles
-  let getMonoType (ann, i, localTypeMap) = case M.lookup (TVNum i) subs of
+  let getMonoType (ann, i, localTypeMap) = case M.lookup (TVUnificationVar i) subs of
         Just a -> (applySubst subs' a, applySubst subs' localTypeMap)
-        Nothing -> (applySubst subs' (MTVar ann (TVNum i)), applySubst subs' localTypeMap)
+        Nothing -> (applySubst subs' (MTVar ann (TVUnificationVar i)), applySubst subs' localTypeMap)
   pure $ fmap getMonoType holes
 
 variableToTypeIdentifier :: Variable -> TypeIdentifier
-variableToTypeIdentifier (NamedVar n) = TVName (coerce n)
-variableToTypeIdentifier (NumberedVar i) = TVNum i
+variableToTypeIdentifier (NamedVar n) = TVName Nothing (coerce n)
+variableToTypeIdentifier (NumberedVar i) = TVUnificationVar i

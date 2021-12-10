@@ -1,0 +1,4 @@
+type Blap a    = Boop a Int;
+
+match (Boop True 100) with 
+    (Boop a b) -> a

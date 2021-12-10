@@ -50,6 +50,8 @@ foldIdentifier fn ident =
   where
     f = fn (prettyPrint ident)
     foldIdentifier' (Identifier ann _) = f ann
+    foldIdentifier' (AnnotatedIdentifier mt _) =
+      f (getAnnotationForType mt)
 
 foldSpread :: (Monoid a) => (Text -> ann -> a) -> Spread Name ann -> a
 foldSpread fn spread =

@@ -20,8 +20,8 @@ import Language.Mimsa.Types.Identifiers.TyVar
 import Prettyprinter
 
 data TypeIdentifier
-  = TVName TyVar
-  | TVNum Int
+  = TVName (Maybe Int) TyVar
+  | TVUnificationVar Int
   deriving stock
     ( Eq,
       Ord,
@@ -48,5 +48,5 @@ printTypeNum i = [toEnum (index + start)] <> suffix
        in if diff < 1 then "" else show diff
 
 renderTypeIdentifier :: TypeIdentifier -> Doc ann
-renderTypeIdentifier (TVName n) = renderTyVar n
-renderTypeIdentifier (TVNum i) = pretty (printTypeNum i)
+renderTypeIdentifier (TVName _ n) = renderTyVar n
+renderTypeIdentifier (TVUnificationVar i) = pretty (printTypeNum i)

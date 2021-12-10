@@ -189,22 +189,33 @@ addChange k v (Changed changes) = Changed (M.singleton k v <> changes)
 fromChange :: Changed -> Name -> Maybe Variable
 fromChange (Changed changes) n = M.lookup n changes
 
+mapIdentifier ::
+  Changed ->
+  Identifier Name ann ->
+  App ann (Identifier Variable ann, Changed)
+mapIdentifier chg (Identifier bindAnn name) = do
+  -- here we introduce new vars so we give them nums to avoid collisions
+  var <- getNextVarName name
+  pure (Identifier bindAnn var, addChange name var chg)
+mapIdentifier chg (AnnotatedIdentifier mt name) = do
+  -- here we introduce new vars so we give them nums to avoid collisions
+  var <- getNextVarName name
+  pure (AnnotatedIdentifier mt var, addChange name var chg)
+
 -- step through Expr, replacing vars with numbered variables
 mapVar ::
   (Eq ann, Monoid ann) =>
   Changed ->
   Expr Name ann ->
   App ann (Expr Variable ann)
-mapVar chg (MyLambda ann (Identifier bindAnn name) body) = do
-  -- here we introduce new vars so we give them nums to avoid collisions
-  var <- getNextVarName name
-  MyLambda ann (Identifier bindAnn var) <$> mapVar (addChange name var chg) body
+mapVar chg (MyLambda ann ident body) = do
+  (newIdent, withChange) <- mapIdentifier chg ident
+  MyLambda ann newIdent <$> mapVar withChange body
 mapVar chg (MyVar ann name) =
   pure $ MyVar ann (nameToVar chg name)
-mapVar chg (MyLet ann (Identifier bindAnn name) expr' body) = do
-  var <- getNextVarName name
-  let withChange = addChange name var chg
-  MyLet ann (Identifier bindAnn var)
+mapVar chg (MyLet ann ident expr' body) = do
+  (newIdent, withChange) <- mapIdentifier chg ident
+  MyLet ann newIdent
     <$> mapVar withChange expr' <*> mapVar withChange body
 mapVar chg (MyLetPattern ann pat body expr) = do
   (newPat, newChg) <- mapPatternVar chg pat
@@ -214,9 +225,12 @@ mapVar chg (MyInfix ann op a b) =
 mapVar chg (MyRecordAccess ann a name) =
   MyRecordAccess ann
     <$> mapVar chg a <*> pure name
-mapVar chg (MyApp ann a b) = MyApp ann <$> mapVar chg a <*> mapVar chg b
-mapVar chg (MyIf ann a b c) = MyIf ann <$> mapVar chg a <*> mapVar chg b <*> mapVar chg c
-mapVar chg (MyPair ann a b) = MyPair ann <$> mapVar chg a <*> mapVar chg b
+mapVar chg (MyApp ann a b) =
+  MyApp ann <$> mapVar chg a <*> mapVar chg b
+mapVar chg (MyIf ann a b c) =
+  MyIf ann <$> mapVar chg a <*> mapVar chg b <*> mapVar chg c
+mapVar chg (MyPair ann a b) =
+  MyPair ann <$> mapVar chg a <*> mapVar chg b
 mapVar chg (MyRecord ann map') = do
   map2 <- traverse (mapVar chg) map'
   pure (MyRecord ann map2)

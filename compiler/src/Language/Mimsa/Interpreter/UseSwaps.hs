@@ -31,12 +31,12 @@ useSwaps ::
 useSwaps swaps expr' = runReaderT (useSwaps' expr') swaps
 
 useSwaps' :: Expr Variable ann -> App ann (Expr Name ann)
-useSwaps' (MyLambda ann (Identifier bindAnn var) body) =
-  MyLambda ann <$> (Identifier bindAnn <$> lookupSwap var) <*> useSwaps' body
+useSwaps' (MyLambda ann ident body) =
+  MyLambda ann <$> useSwapsInIdentifier ident <*> useSwaps' body
 useSwaps' (MyVar ann var) =
   MyVar ann <$> lookupSwap var
-useSwaps' (MyLet ann (Identifier bindAnn var) expr' body) = do
-  MyLet ann <$> (Identifier bindAnn <$> lookupSwap var)
+useSwaps' (MyLet ann ident expr' body) = do
+  MyLet ann <$> useSwapsInIdentifier ident
     <*> useSwaps' expr'
     <*> useSwaps' body
 useSwaps' (MyLetPattern ann pat expr body) = do
@@ -77,6 +77,12 @@ useSwaps' (MyDefineInfix ann infixOp bindExpr expr) =
     infixOp
     <$> useSwaps' bindExpr
     <*> useSwaps' expr
+
+useSwapsInIdentifier :: Identifier Variable ann -> App ann (Identifier Name ann)
+useSwapsInIdentifier (Identifier ann var) =
+  Identifier ann <$> lookupSwap var
+useSwapsInIdentifier (AnnotatedIdentifier mt var) =
+  AnnotatedIdentifier mt <$> lookupSwap var
 
 useSwapsInPattern :: Pattern Variable ann -> App ann (Pattern Name ann)
 useSwapsInPattern (PWildcard ann) = pure (PWildcard ann)

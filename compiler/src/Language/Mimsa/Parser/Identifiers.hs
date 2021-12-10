@@ -6,7 +6,6 @@ module Language.Mimsa.Parser.Identifiers
     infixOpParser,
     tyConParser,
     typedHoleParser,
-    identifierParser,
     constructorParser,
   )
 where
@@ -36,12 +35,6 @@ nameParser =
   maybePred
     identifier
     (filterProjectedNames >=> safeMkName)
-
-identifierParser :: Parser (Identifier Name Annotation)
-identifierParser =
-  withLocation
-    Identifier
-    nameParser
 
 ---
 

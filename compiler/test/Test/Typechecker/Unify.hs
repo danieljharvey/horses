@@ -14,7 +14,7 @@ import qualified Data.Map as M
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers ()
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
@@ -36,18 +36,18 @@ spec =
     it "Two same things teach us nothing" $
       runUnifier (MTPrim mempty MTInt, MTPrim mempty MTInt) `shouldBe` Right mempty
     it "Combines a known with an unknown" $
-      runUnifier (MTVar mempty (tvFree 1), MTPrim mempty MTInt)
-        `shouldBe` Right (Substitutions $ M.singleton (tvNumbered 1) (MTPrim mempty MTInt))
+      runUnifier (MTVar mempty (tvNum 1), MTPrim mempty MTInt)
+        `shouldBe` Right (Substitutions $ M.singleton (TVUnificationVar 1) (MTPrim mempty MTInt))
     it "Combines two half pairs" $
       runUnifier
-        ( MTPair mempty (MTVar mempty (tvFree 1)) (MTPrim mempty MTInt),
-          MTPair mempty (MTPrim mempty MTBool) (MTVar mempty (tvFree 2))
+        ( MTPair mempty (MTVar mempty (tvNum 1)) (MTPrim mempty MTInt),
+          MTPair mempty (MTPrim mempty MTBool) (MTVar mempty (tvNum 2))
         )
         `shouldBe` Right
           ( Substitutions $
               M.fromList
-                [ (tvNumbered 1, MTPrim mempty MTBool),
-                  (tvNumbered 2, MTPrim mempty MTInt)
+                [ (TVUnificationVar 1, MTPrim mempty MTBool),
+                  (TVUnificationVar 2, MTPrim mempty MTInt)
                 ]
           )
     describe "Constructors" $ do
@@ -59,7 +59,7 @@ spec =
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
-                  [ (tvNumbered 1, MTPrim mempty MTInt)
+                  [ (TVUnificationVar 1, MTPrim mempty MTInt)
                   ]
             )
 
@@ -71,8 +71,8 @@ spec =
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
-                  [ (tvNumbered 1, MTPrim mempty MTInt),
-                    (tvNumbered 2, MTPrim mempty MTBool)
+                  [ (TVUnificationVar 1, MTPrim mempty MTInt),
+                    (TVUnificationVar 2, MTPrim mempty MTBool)
                   ]
             )
 
@@ -82,19 +82,19 @@ spec =
           ( MTRecord mempty $
               M.fromList
                 [ ("one", MTPrim mempty MTInt),
-                  ("two", MTVar mempty (tvFree 1))
+                  ("two", MTVar mempty (tvNum 1))
                 ],
             MTRecord mempty $
               M.fromList
-                [ ("one", MTVar mempty (tvFree 2)),
+                [ ("one", MTVar mempty (tvNum 2)),
                   ("two", MTPrim mempty MTBool)
                 ]
           )
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
-                  [ (tvNumbered 1, MTPrim mempty MTBool),
-                    (tvNumbered 2, MTPrim mempty MTInt)
+                  [ (TVUnificationVar 1, MTPrim mempty MTBool),
+                    (TVUnificationVar 2, MTPrim mempty MTInt)
                   ]
             )
 
@@ -117,7 +117,7 @@ spec =
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
-                  [ (tvNumbered 3, MTRecordRow mempty (M.singleton "b" $ MTPrim mempty MTString) (unknown 1))
+                  [ (TVUnificationVar 3, MTRecordRow mempty (M.singleton "b" $ MTPrim mempty MTString) (unknown 1))
                   ]
             )
       it "Combines Record with less items with RecordRow" $ do
@@ -142,8 +142,8 @@ spec =
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
-                  [ (tvNumbered 2, MTRecordRow mempty rightItems (unknown 1)),
-                    (tvNumbered 3, MTRecordRow mempty leftItems (unknown 1))
+                  [ (TVUnificationVar 2, MTRecordRow mempty rightItems (unknown 1)),
+                    (TVUnificationVar 3, MTRecordRow mempty leftItems (unknown 1))
                   ]
             )
       it "Combines two RecordRows with some matching items" $ do
@@ -161,7 +161,7 @@ spec =
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
-                  [ ( tvNumbered 10,
+                  [ ( TVUnificationVar 10,
                       MTRecordRow
                         mempty
                         ( M.singleton
@@ -170,7 +170,7 @@ spec =
                         )
                         (unknown 1)
                     ),
-                    ( tvNumbered 11,
+                    ( TVUnificationVar 11,
                       MTRecordRow
                         mempty
                         ( M.singleton

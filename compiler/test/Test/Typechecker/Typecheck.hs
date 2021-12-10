@@ -220,11 +220,11 @@ spec = do
           Left
             ( FailsOccursCheck
                 mempty
-                (tvFree 0)
+                (tvNum 0)
                 ( MTFunction
                     mempty
-                    (MTVar mempty (tvFree 0))
-                    (MTVar mempty (tvFree 1))
+                    (MTVar mempty (tvNum 0))
+                    (MTVar mempty (tvNum 1))
                 )
             )
       it "infers pair" $ do
@@ -1153,6 +1153,45 @@ spec = do
               (Identifier mempty $ named "this")
               (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
       startInference expr $ Left (TypedHoles (M.singleton "what" (MTPrim mempty MTBool, S.singleton "this")))
+
+    describe "type annotations" $ do
+      it "Let annotation matches value" $ do
+        let expr =
+              MyLet
+                mempty
+                (AnnotatedIdentifier mtString (named "a"))
+                (MyLiteral mempty (MyString "dog"))
+                (MyLiteral mempty (MyBool True))
+        startInference expr $
+          Right mtBool
+
+      it "Let annotation does not match value" $ do
+        let expr =
+              MyLet
+                mempty
+                (AnnotatedIdentifier mtInt (named "a"))
+                (MyLiteral mempty (MyString "dog"))
+                (MyLiteral mempty (MyBool True))
+        startInference expr $
+          Left (UnificationError mtInt mtString)
+
+      it "Lambda annotation matches makes id monomorphic" $ do
+        let expr =
+              MyLambda
+                mempty
+                (AnnotatedIdentifier mtString (named "a"))
+                (MyVar mempty (named "a"))
+        startInference expr $
+          Right $ MTFunction mempty mtString mtString
+
+      it "Lambda annotation does not match lambda body" $ do
+        let expr =
+              MyLambda
+                mempty
+                (AnnotatedIdentifier mtString (named "a"))
+                (MyInfix mempty Add (MyVar mempty (named "a")) (int 1))
+        startInference expr $
+          Left (UnificationError mtString mtInt)
 
     -- needs type annotations to make this make sense
     xit "Lambda variable as constructor" $ do

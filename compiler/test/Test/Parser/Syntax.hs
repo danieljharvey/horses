@@ -273,7 +273,7 @@ spec = do
                     ["a"]
                     ( M.fromList
                         [ ( "Item",
-                            [MTVar () (TVName "a")]
+                            [MTVar () (tvNamed "a")]
                           )
                         ]
                     )
@@ -292,7 +292,7 @@ spec = do
                     ( M.fromList
                         [ ("Empty", mempty),
                           ( "Item",
-                            [MTVar () (TVName "a")]
+                            [MTVar () (tvNamed "a")]
                           )
                         ]
                     )
@@ -367,7 +367,7 @@ spec = do
                     "Maybe"
                     ["a"]
                     ( M.fromList
-                        [ ("Just", [MTVar () (TVName "a")]),
+                        [ ("Just", [MTVar () (tvNamed "a")]),
                           ("Nothing", [])
                         ]
                     )
@@ -386,8 +386,8 @@ spec = do
                         [ ( "Reader",
                             [ MTFunction
                                 ()
-                                (MTVar () (TVName "r"))
-                                (MTVar () (TVName "a"))
+                                (MTVar () (tvNamed "r"))
+                                (MTVar () (tvNamed "a"))
                             ]
                           )
                         ]
@@ -407,12 +407,12 @@ spec = do
                         [ ( "Reader",
                             [ MTFunction
                                 ()
-                                (MTVar () (TVName "r"))
+                                (MTVar () (tvNamed "r"))
                                 ( dataTypeWithVars
                                     ()
                                     "Pair"
-                                    [ MTVar () (TVName "a"),
-                                      MTVar () (TVName "b")
+                                    [ MTVar () (tvNamed "a"),
+                                      MTVar () (tvNamed "b")
                                     ]
                                 )
                             ]
@@ -433,10 +433,10 @@ spec = do
                     "Tree"
                     ["a"]
                     ( M.fromList
-                        [ ("Leaf", [MTVar () (TVName "a")]),
+                        [ ("Leaf", [MTVar () (tvNamed "a")]),
                           ( "Branch",
-                            [ dataTypeWithVars () "Tree" [MTVar () (TVName "a")],
-                              dataTypeWithVars () "Tree" [MTVar () (TVName "b")]
+                            [ dataTypeWithVars () "Tree" [MTVar () (tvNamed "a")],
+                              dataTypeWithVars () "Tree" [MTVar () (tvNamed "b")]
                             ]
                           )
                         ]
@@ -455,9 +455,9 @@ spec = do
                     ( M.fromList
                         [ ("Empty", mempty),
                           ( "Branch",
-                            [ dataTypeWithVars () "Tree" [MTVar () (TVName "a")],
-                              MTVar () (TVName "a"),
-                              dataTypeWithVars () "Tree" [MTVar () (TVName "a")]
+                            [ dataTypeWithVars () "Tree" [MTVar () (tvNamed "a")],
+                              MTVar () (tvNamed "a"),
+                              dataTypeWithVars () "Tree" [MTVar () (tvNamed "a")]
                             ]
                           )
                         ]

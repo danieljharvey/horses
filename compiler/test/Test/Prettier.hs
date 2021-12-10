@@ -9,6 +9,7 @@ import qualified Data.Map as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
@@ -135,16 +136,16 @@ spec =
                   ( MTVar mempty $
                       tvNamed "catch"
                   )
-                  (MTVar mempty $ tvNumbered 22)
+                  (MTVar mempty $ TVUnificationVar 22)
            in T.putStrLn
                 ( prettyPrint mt
                 )
         it "Names type vars" $ do
-          let mt = MTVar () (tvNumbered 1)
+          let mt = MTVar () (TVUnificationVar 1)
           prettyPrint mt `shouldBe` "a"
         it "Names type vars 2" $ do
-          let mt = MTVar () (tvNumbered 26)
+          let mt = MTVar () (TVUnificationVar 26)
           prettyPrint mt `shouldBe` "z"
         it "Names type vars 3" $ do
-          let mt = MTVar () (tvNumbered 27)
+          let mt = MTVar () (TVUnificationVar 27)
           prettyPrint mt `shouldBe` "a1"

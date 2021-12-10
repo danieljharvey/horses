@@ -13,10 +13,10 @@ import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 
 mkVar :: Int -> MonoType
-mkVar i = MTVar mempty (TVNum i)
+mkVar i = MTVar mempty (TVUnificationVar i)
 
 mkNameVar :: Text -> MonoType
-mkNameVar n = MTVar mempty (TVName (coerce n))
+mkNameVar n = MTVar mempty (TVName Nothing (coerce n))
 
 spec :: Spec
 spec =

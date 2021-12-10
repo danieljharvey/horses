@@ -62,7 +62,7 @@ containsVar n fields =
   where
     fieldContains field =
       case field of
-        (MTVar _ (TVName a)) -> coerce a == n
+        (MTVar _ (TVName _ a)) -> coerce a == n
         (MTFunction _ a b) -> fieldContains a || fieldContains b
         (MTPair _ a b) -> fieldContains a || fieldContains b
         (MTRecord _ items) -> or (fieldContains <$> items)
@@ -107,7 +107,7 @@ newtype FieldItemType = VariableField Name
 
 toFieldItemType :: Type () -> CodegenM FieldItemType
 toFieldItemType = \case
-  MTVar _ (TVName a) -> pure (VariableField $ coerce a)
+  MTVar _ (TVName _ a) -> pure (VariableField $ coerce a)
   _ -> throwError "Expected VarName"
 
 toFieldItemTypeF ::
@@ -115,7 +115,7 @@ toFieldItemTypeF ::
   Type () ->
   CodegenM FieldItemType
 toFieldItemTypeF funcVar = \case
-  MTVar _ (TVName a) ->
+  MTVar _ (TVName _ a) ->
     if coerce a == funcVar
       then pure (VariableField "f")
       else pure (VariableField (coerce a))

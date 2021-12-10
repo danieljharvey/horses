@@ -44,7 +44,7 @@ createEnv typeMap dataTypes =
 
 createTypesEnv :: Set (StoreExpression Annotation) -> Environment
 createTypesEnv dataTypes =
-  Environment mempty (builtInDts <> otherDts) mempty
+  Environment mempty (builtInDts <> otherDts) mempty mempty
   where
     makeDT (name, _) =
       M.singleton name (DataType name mempty mempty)
@@ -55,11 +55,11 @@ createTypesEnv dataTypes =
 
 createDepsEnv :: Map Name MonoType -> Environment
 createDepsEnv typeMap =
-  Environment (mkSchemes typeMap) mempty mempty
+  Environment (mkSchemes typeMap) mempty mempty mempty
   where
     toScheme =
       bimap
-        (\(Name n) -> TVName (coerce n))
+        (\(Name n) -> TVName Nothing (coerce n))
         schemeFromMonoType
     mkSchemes =
       M.fromList . fmap toScheme . M.toList
@@ -94,7 +94,7 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName dt) mempty
+      let newEnv = Environment mempty (M.singleton tyName dt) mempty mempty
        in pure (newEnv <> env)
 
 errorOnBuiltIn :: (MonadError TypeError m) => Annotation -> TyCon -> m ()
@@ -124,7 +124,7 @@ inferDataConstructor env ann tyCon = do
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 getVariablesForField :: Type ann -> Set Name
-getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
+getVariablesForField (MTVar _ (TVName _ n)) = S.singleton (coerce n)
 getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
 getVariablesForField (MTPair _ a b) = getVariablesForField a <> getVariablesForField b
@@ -137,7 +137,7 @@ getVariablesForField (MTRecordRow _ items rest) =
     )
     <> getVariablesForField rest
 getVariablesForField (MTArray _ as) = getVariablesForField as
-getVariablesForField (MTVar _ (TVNum _)) = S.empty
+getVariablesForField (MTVar _ (TVUnificationVar _)) = S.empty
 getVariablesForField MTPrim {} = S.empty
 getVariablesForField MTConstructor {} = S.empty
 getVariablesForField (MTTypeApp _ a b) = getVariablesForField a <> getVariablesForField b
@@ -180,7 +180,7 @@ inferConstructorTypes ::
 inferConstructorTypes (DataType typeName tyVarNames constructors) = do
   tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
   let findType ty = case ty of
-        MTVar _ (TVName var) ->
+        MTVar _ (TVName _ var) ->
           case filter (\(tyName, _) -> tyName == coerce var) tyVars of
             [(_, tyFound)] -> pure tyFound
             _ ->
@@ -211,7 +211,7 @@ inferConstructorTypes (DataType typeName tyVarNames constructors) = do
           pure (MTArray mempty tyItems)
         MTTypeApp _ func arg ->
           MTTypeApp mempty <$> findType func <*> findType arg
-        MTVar _ (TVNum _) ->
+        MTVar _ (TVUnificationVar _) ->
           throwError UnknownTypeError -- should not happen but yolo
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs

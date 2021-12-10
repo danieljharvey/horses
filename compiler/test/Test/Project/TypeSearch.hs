@@ -61,7 +61,7 @@ spec =
                   ( MTFunction
                       mempty
                       (unknown 1)
-                      (MTVar mempty (tvNumbered 0))
+                      (MTVar mempty (TVUnificationVar 0))
                   )
               )
             ]

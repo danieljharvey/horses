@@ -26,6 +26,11 @@ unsafeParseExpr t = case parseExpr t of
       "Error parsing expr for Prettier tests:"
         <> T.unpack t
 
+textErrorContains :: Text -> Either Text a -> Bool
+textErrorContains s res = case res of
+  Left e -> s `T.isInfixOf` e
+  _ -> False
+
 getHashOfName :: Project ann -> Name -> ExprHash
 getHashOfName prj name =
   case lookupBindingName prj name of
@@ -61,10 +66,10 @@ str' = str . StringType
 
 --
 unknown :: (Monoid ann) => Int -> Type ann
-unknown = MTVar mempty . TVNum
+unknown = MTVar mempty . TVUnificationVar
 
 typeName :: (Monoid ann) => Text -> Type ann
-typeName = MTVar mempty . TVName . mkTyVar
+typeName = MTVar mempty . TVName Nothing . mkTyVar
 
 ---
 
@@ -76,14 +81,11 @@ numbered = NumberedVar
 
 ---
 
-tvFree :: Int -> TypeIdentifier
-tvFree = TVNum
-
-tvNumbered :: Int -> TypeIdentifier
-tvNumbered = TVNum
+tvNum :: Int -> TypeIdentifier
+tvNum = TVUnificationVar
 
 tvNamed :: Text -> TypeIdentifier
-tvNamed t = TVName $ mkTyVar t
+tvNamed t = TVName Nothing $ mkTyVar t
 
 exprHash :: Int -> ExprHash
 exprHash = ExprHash . T.pack . show

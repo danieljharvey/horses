@@ -1,7 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Elaborate
   ( elab,
@@ -27,6 +26,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
+import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
@@ -80,9 +80,9 @@ elabLiteral ann lit =
    in pure (MyLiteral (MTPrim ann tyLit) lit)
 
 lookupInEnv :: Swaps -> Variable -> Environment -> Maybe Scheme
-lookupInEnv swaps var' (Environment env' _ _) =
+lookupInEnv swaps var' (Environment env' _ _ _) =
   let look v = M.lookup v env'
-      wrapName (Name n) = TVName (coerce n)
+      wrapName (Name n) = TVName Nothing (coerce n)
    in look (variableToTypeIdentifier var')
         <|> (M.lookup var' swaps >>= look . wrapName)
 
@@ -107,7 +107,7 @@ elabVarFromScope env ann var' = do
 
 envFromVar :: Variable -> Scheme -> Environment
 envFromVar binder scheme =
-  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty
+  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty
 
 envFromInfixOp :: InfixOp -> MonoType -> Environment
 envFromInfixOp infixOp mt =
@@ -115,6 +115,7 @@ envFromInfixOp infixOp mt =
     mempty
     mempty
     (M.singleton infixOp mt)
+    mempty
 
 lookupInfixOp ::
   Environment ->
@@ -162,10 +163,28 @@ findActualBindingInSwaps (NamedVar var) = do
 findActualBindingInSwaps a = pure a
 
 bindingIsRecursive :: Identifier Variable ann -> TcExpr -> Bool
-bindingIsRecursive (Identifier _ var) = getAny . withMonoid findBinding
+bindingIsRecursive ident = getAny . withMonoid findBinding
   where
-    findBinding (MyVar _ binding) | binding == var = (False, Any True)
+    variable = case ident of
+      (Identifier _ a) -> a
+      (AnnotatedIdentifier _ a) -> a
+    findBinding (MyVar _ binding) | binding == variable = (False, Any True)
     findBinding _ = (True, mempty)
+
+binderFromIdentifier :: Identifier var ann -> var
+binderFromIdentifier = \case
+  (Identifier _ a) -> a
+  (AnnotatedIdentifier _ a) -> a
+
+annotationFromIdentifier :: Identifier var ann -> ann
+annotationFromIdentifier = \case
+  (Identifier ann _) -> ann
+  (AnnotatedIdentifier mt _) -> getAnnotationForType mt
+
+monoTypeFromIdentifier :: Identifier var Annotation -> Maybe MonoType
+monoTypeFromIdentifier = \case
+  (AnnotatedIdentifier mt _) -> Just mt
+  _ -> Nothing
 
 -- if type is recursive we make it monomorphic
 -- if not, we make it polymorphic
@@ -176,13 +195,21 @@ elabLetBinding ::
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabLetBinding env ann binder@(Identifier bindAnn bindName) expr body = do
-  if bindingIsRecursive binder expr
-    then elabRecursiveLetBinding env ann binder expr body
+elabLetBinding env ann ident expr body = do
+  if bindingIsRecursive ident expr
+    then elabRecursiveLetBinding env ann ident expr body
     else do
+      let bindAnn = annotationFromIdentifier ident
+          bindName = binderFromIdentifier ident
       -- we have to run substitutions on this before "saving" it
       (elabExpr, constraints) <- listen (elab env expr)
       subst <- solve constraints
+      -- compare annotated type with elabbed expr if possible
+      case monoTypeFromIdentifier ident of
+        (Just mt) ->
+          tell
+            [ShouldEqual mt (getTypeFromAnn elabExpr)]
+        _ -> pure ()
       let tySubstExpr = applySubst subst (getTypeFromAnn elabExpr)
       let newEnv =
             envFromVar bindName (generalise env tySubstExpr)
@@ -191,7 +218,7 @@ elabLetBinding env ann binder@(Identifier bindAnn bindName) expr body = do
       pure
         ( MyLet
             (getTypeFromAnn elabBody $> ann) -- we want to make sure we keep the original source location
-            (Identifier (tySubstExpr $> bindAnn) bindName)
+            (ident $> (tySubstExpr $> bindAnn))
             elabExpr
             elabBody
         )
@@ -203,11 +230,21 @@ elabRecursiveLetBinding ::
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabRecursiveLetBinding env ann (Identifier bindAnn bindName) expr body = do
+elabRecursiveLetBinding env ann ident expr body = do
+  let bindName = binderFromIdentifier ident
+      bindAnn = annotationFromIdentifier ident
   binderInExpr <- findActualBindingInSwaps bindName
   tyRecExpr <- getUnknown ann
   let envWithRecursiveFn = envFromVar binderInExpr (Scheme [] tyRecExpr) <> env
   elabExpr <- elab envWithRecursiveFn expr
+
+  -- compare annotated type with elabbed expr if possible
+  case monoTypeFromIdentifier ident of
+    (Just mt) ->
+      tell
+        [ShouldEqual mt (getTypeFromAnn elabExpr)]
+    _ -> pure ()
+
   let tyExpr = getTypeFromAnn elabExpr
       newEnv =
         envFromVar binderInExpr (Scheme [] tyExpr) <> env
@@ -218,7 +255,7 @@ elabRecursiveLetBinding env ann (Identifier bindAnn bindName) expr body = do
   pure
     ( MyLet
         (getTypeFromAnn elabBody)
-        (Identifier (tyExpr $> bindAnn) bindName)
+        (ident $> (tyExpr $> bindAnn))
         elabExpr
         elabBody
     )
@@ -489,7 +526,8 @@ elabOperator env ann StringConcat a b = do
   (mt, elabA, elabB) <- elabInfix env (MTPrim ann MTString) a b
   pure (MyInfix mt StringConcat elabA elabB)
 elabOperator env ann ArrayConcat a b = do
-  (mt, elabA, elabB) <- elabInfix env (MTArray ann (MTVar mempty (TVName "a"))) a b
+  tyArr <- getUnknown ann
+  (mt, elabA, elabB) <- elabInfix env (MTArray ann tyArr) a b
   pure (MyInfix mt ArrayConcat elabA elabB)
 elabOperator env ann (Custom infixOp) a b = do
   tyRes <- getUnknown ann
@@ -581,13 +619,23 @@ elabLambda ::
   Identifier Variable Annotation ->
   TcExpr ->
   ElabM ElabExpr
-elabLambda env ann (Identifier bindAnn binder) body = do
-  tyBinder <- getUnknown bindAnn
+elabLambda env ann ident body = do
+  let binder = binderFromIdentifier ident
+      bindAnn = annotationFromIdentifier ident
+
+  -- compare annotated type with elabbed expr if possible
+  tyBinder <- case monoTypeFromIdentifier ident of
+    (Just mt) -> pure mt
+    Nothing -> getUnknown bindAnn
+
+  (newEnv, tyBinder') <- freshNamedType env tyBinder
+
   let tmpCtx =
-        envFromVar binder (Scheme [] tyBinder) <> env
+        envFromVar binder (Scheme [] tyBinder') <> newEnv
+
   elabBody <- elab tmpCtx body
-  let tyReturn = MTFunction ann tyBinder (getTypeFromAnn elabBody)
-  pure (MyLambda tyReturn (Identifier tyBinder binder) elabBody)
+  let tyReturn = MTFunction ann tyBinder' (getTypeFromAnn elabBody)
+  pure (MyLambda tyReturn (ident $> (tyBinder' $> bindAnn)) elabBody)
 
 elabDefineInfix ::
   Environment ->
