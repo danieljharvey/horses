@@ -118,9 +118,17 @@ createMatchExpression ::
   App ann (Expr Variable ann)
 createMatchExpression bindings a =
   foldl'
-    ( \rest (binder, var) -> do
+    ( \rest (binder, expr) -> do
         comp <- rest
-        MyLet mempty (Identifier mempty binder) <$> instantiateVar var <*> pure comp
+        -- create fresh variables for all the bound items in the pattern
+        -- match and substitute them in the expr for the pattern
+        (freshBinder, freshComp) <- freshenVariable binder comp
+        pure $
+          MyLet
+            mempty
+            (Identifier mempty freshBinder)
+            expr
+            freshComp
     )
     (pure a)
     bindings

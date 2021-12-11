@@ -113,6 +113,7 @@ buildTestStdlib =
       addIdentity
       addMonoid
       addMonoPair
+      addTree
 
 addListMonad :: Actions.ActionM ()
 addListMonad = do
@@ -232,6 +233,21 @@ addMonoid = do
           "        | (Just iA, Nothing) -> (Just iA) ",
           "        | (Nothing, Just iB) -> (Just iB) ",
           "        | _ -> Nothing) Nothing"
+        ]
+    )
+
+addTree :: Actions.ActionM ()
+addTree = do
+  addType
+    "type Tree a = Branch (Tree a) a (Tree a) | Leaf a"
+  addBinding
+    "invertTree"
+    ( mconcat
+        [ "let invert tree = ",
+          "match tree with ",
+          "(Branch left a right) -> Branch (invert right) a (invert left) ",
+          "| (Leaf a) -> Leaf a; ",
+          "invert"
         ]
     )
 
