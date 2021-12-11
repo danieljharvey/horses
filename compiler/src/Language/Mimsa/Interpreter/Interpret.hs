@@ -30,6 +30,7 @@ findActualBindingInSwaps int = do
     Just i' -> pure (NamedVar i')
     _ -> throwError $ CouldNotFindVar scope' (NumberedVar int)
 
+-- | pull a variable from scope
 useVar :: (Eq ann, Monoid ann) => Variable -> App ann (Expr Variable ann)
 useVar var' = case var' of
   (NumberedVar i) -> do
@@ -39,7 +40,8 @@ useVar var' = case var' of
         instantiateVar expr
           >>= interpretWithScope
       Nothing -> do
-        var <- findActualBindingInSwaps i -- try it by it's pre-substituted name before failing
+        -- try it by it's pre-substituted name before failing
+        var <- findActualBindingInSwaps i
         useVar var
   (NamedVar n) -> do
     scope' <- readScope

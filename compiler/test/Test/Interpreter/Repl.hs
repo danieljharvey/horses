@@ -306,22 +306,26 @@ spec =
           `shouldBe` Right
             (MTPrim mempty MTBool, bool False)
 
-      it "type Stuff = Thing String Int in match Thing \"Hello\" 1 with (Thing name num) -> name" $ do
+      it "Extracts values with pattern match" $ do
         result <- eval testStdlib "type Stuff = Thing String Int in match Thing \"Hello\" 1 with (Thing name num) -> name"
         result
           `shouldBe` Right
             (MTPrim mempty MTString, str' "Hello")
+
       it "type Result e a = Failure e | Success a in match Failure \"oh no\" with (Success a) -> \"oh yes\" | (Failure e) -> e" $ do
         result <- eval testStdlib "type Result e a = Failure e | Success a in match Failure \"oh no\" with (Success a) -> \"oh yes\" | (Failure e) -> e"
         result
           `shouldBe` Right
             (MTPrim mempty MTString, str' "oh no")
+
       it "type Blap a = Boop a Int in match Boop True 100 with (Boop a b) -> a" $ do
         result <- eval testStdlib "type Blap a = Boop a Int in match Boop True 100 with (Boop a b) -> a"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "type Maybe a = Just a | Nothing in match Nothing with Nothing False" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in match Nothing with Nothing False"
         result `shouldSatisfy` isLeft
+
       it "type Thing = Thing String in let a = Thing \"string\" in match a with (Thing s) -> s" $ do
         result <- eval testStdlib "type Thing = Thing String in let a = Thing \"string\" in match a with (Thing s) -> s"
         result `shouldBe` Right (MTPrim mempty MTString, str' "string")
@@ -978,6 +982,41 @@ spec =
                 [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt]
                 ]
             )
+
+    describe "Tree interpreter error" $ do
+      let leaf = MyApp mempty (MyConstructor mempty "Leaf")
+          branch l a =
+            MyApp
+              mempty
+              ( MyApp
+                  mempty
+                  ( MyApp
+                      mempty
+                      (MyConstructor mempty "Branch")
+                      l
+                  )
+                  a
+              )
+      it "Reverses a leaf" $ do
+        result <- eval testStdlib "invertTree (Leaf 1)"
+        snd <$> result
+          `shouldBe` Right (leaf (int 1))
+
+      it "Reverses a branch" $ do
+        result <- eval testStdlib "invertTree (Branch (Leaf 1) 2 (Leaf 3))"
+        snd <$> result
+          `shouldBe` Right (branch (leaf (int 3)) (int 2) (leaf (int 1)))
+
+      it "Reverses a small tree correctly" $ do
+        -- should be Branch (Branch (Leaf 5) 4 (Leaf 3)) 2 (Leaf 1)
+        result <- eval testStdlib "invertTree (Branch (Leaf 1) 2 (Branch (Leaf 3) 4 (Leaf 5)))"
+        snd <$> result
+          `shouldBe` Right (branch (branch (leaf (int 5)) (int 4) (leaf (int 3))) (int 2) (leaf (int 1)))
+
+      it "Reversing a tree twice is identity" $ do
+        result <- eval testStdlib "let tree = Branch (Leaf 1) 2 (Branch (Leaf 3) 4 (Leaf 5)); invertTree (invertTree tree) == tree"
+        snd <$> result
+          `shouldBe` Right (bool True)
 
     describe "delays arity check for infix operators" $ do
       it "is fine" $ do
