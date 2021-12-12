@@ -17,11 +17,12 @@ import qualified Data.Map as M
 import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.UnitTests.Types
+import Language.Mimsa.UnitTests.UnitTest
 import Servant
 
 ------

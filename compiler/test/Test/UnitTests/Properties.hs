@@ -1,20 +1,22 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Properties.Properties
+module Test.UnitTests.Properties
   ( spec,
   )
 where
 
 import Control.Monad.IO.Class
 import Data.Functor
-import Language.Mimsa.Properties.Generate
+import qualified Data.Map as M
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.UnitTests.Generate
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -29,12 +31,12 @@ itTypeChecks mt expr =
 itGenerates :: MonoType -> Expectation
 itGenerates mt = do
   samples <- liftIO $ generateFromMonoType mt
-  let success = traverse (itTypeChecks mt) (fmap ($> mempty) samples)
+  let success = traverse (itTypeChecks mt) (debugPretty "gen" (fmap ($> mempty) samples))
   and <$> success `shouldBe` Right True
 
 spec :: Spec
 spec = do
-  fdescribe "Properties" $ do
+  describe "Properties" $ do
     describe "Test the testing" $ do
       it "typechecking check works" $ do
         itTypeChecks (MTPrim mempty MTInt) (MyLiteral mempty (MyInt 100))
@@ -49,3 +51,10 @@ spec = do
         itGenerates mtInt
       it "String" $ do
         itGenerates mtString
+      it "Array of ints" $ do
+        itGenerates (MTArray mempty mtInt)
+      it "Pair of int and string" $ do
+        itGenerates (MTPair mempty mtInt mtString)
+      it "Records" $ do
+        let record = MTRecord mempty (M.fromList [("dog", mtInt), ("cat", mtBool)])
+        itGenerates record

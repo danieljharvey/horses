@@ -1,4 +1,4 @@
-module Language.Mimsa.Properties.Generate (generateFromMonoType) where
+module Language.Mimsa.UnitTests.Generate (generateFromMonoType) where
 
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST
@@ -6,8 +6,16 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.QuickCheck
 
+-- | TODO: this is wildly incomplete, but let's get the mechanism working first
 fromMonoType :: MonoType -> Gen (Expr Variable ())
-fromMonoType (MTPrim _ prim) = MyLiteral () <$> fromPrimitive prim
+fromMonoType (MTPrim _ prim) =
+  MyLiteral () <$> fromPrimitive prim
+fromMonoType (MTArray _ mt) =
+  MyArray () <$> listOf1 (fromMonoType mt) -- need to make this liftOf but tests can't handle empty list yet
+fromMonoType (MTPair _ a b) =
+  MyPair () <$> fromMonoType a <*> fromMonoType b
+fromMonoType (MTRecord _ as) =
+  MyRecord () <$> traverse fromMonoType as
 fromMonoType _ = undefined
 
 fromPrimitive :: Primitive -> Gen Literal

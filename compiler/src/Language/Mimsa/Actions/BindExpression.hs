@@ -11,13 +11,13 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Language.Mimsa.UnitTests.UnitTest
 
 -- bind a new expression to the project, updating any tests
 

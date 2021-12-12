@@ -90,10 +90,8 @@ library
       Language.Mimsa.Project.SourceSpan
       Language.Mimsa.Project.Stdlib
       Language.Mimsa.Project.TypeSearch
-      Language.Mimsa.Project.UnitTest
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
-      Language.Mimsa.Properties.Generate
       Language.Mimsa.Repl
       Language.Mimsa.Repl.Actions
       Language.Mimsa.Repl.Actions.Compile
@@ -191,7 +189,6 @@ library
       Language.Mimsa.Types.Project.SaveProject
       Language.Mimsa.Types.Project.SourceItem
       Language.Mimsa.Types.Project.SourceSpan
-      Language.Mimsa.Types.Project.UnitTest
       Language.Mimsa.Types.Project.Usage
       Language.Mimsa.Types.Project.Versioned
       Language.Mimsa.Types.Project.VersionedMap
@@ -216,6 +213,9 @@ library
       Language.Mimsa.Types.Typechecker.Substitutions
       Language.Mimsa.Types.Typechecker.TypeConstructor
       Language.Mimsa.Types.Typechecker.UniVar
+      Language.Mimsa.UnitTests.Generate
+      Language.Mimsa.UnitTests.Types
+      Language.Mimsa.UnitTests.UnitTest
       Language.Mimsa.Utils
   other-modules:
       Paths_mimsa
@@ -375,9 +375,7 @@ test-suite mimsa-test
       Test.Project.SourceSpan
       Test.Project.Stdlib
       Test.Project.TypeSearch
-      Test.Project.UnitTest
       Test.Project.Usages
-      Test.Properties.Properties
       Test.Serialisation
       Test.Store.Resolver
       Test.Store.Substitutor
@@ -392,6 +390,8 @@ test-suite mimsa-test
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
+      Test.UnitTests.Properties
+      Test.UnitTests.UnitTest
       Test.Utils.Compilation
       Test.Utils.Helpers
       Test.Utils.Serialisation

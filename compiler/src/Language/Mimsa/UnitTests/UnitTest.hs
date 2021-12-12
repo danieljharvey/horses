@@ -1,4 +1,4 @@
-module Language.Mimsa.Project.UnitTest
+module Language.Mimsa.UnitTests.UnitTest
   ( createUnitTest,
     getTestsForExprHash,
     createNewUnitTests,
@@ -25,6 +25,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Language.Mimsa.UnitTests.Types
 
 -- | a unit test must have type Boolean
 createUnitTest ::

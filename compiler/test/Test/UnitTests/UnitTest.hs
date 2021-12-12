@@ -1,6 +1,7 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Project.UnitTest
+module Test.UnitTests.UnitTest
   ( spec,
   )
 where
@@ -9,12 +10,13 @@ import Data.Either (isLeft)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.UnitTests.Types
+import Language.Mimsa.UnitTests.UnitTest
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -149,6 +151,23 @@ spec =
         let storeExpr = StoreExpression (int 100) mempty mempty
         createUnitTest testStdlib storeExpr (TestName "100 is not a valid test")
           `shouldSatisfy` isLeft
+
+      it "\\bool -> True is a valid passing property test" $ do
+        let expr = MyLambda mempty (Identifier mempty "bool") (bool True)
+            storeExpr = StoreExpression expr mempty mempty
+        createUnitTest testStdlib storeExpr (TestName "It's always true")
+          `shouldSatisfy` \case
+            Right pt -> ptResult pt == PropertyTestSuccess
+            _ -> False
+
+      it "\\bool -> False is a valid passing property test" $ do
+        let expr = MyLambda mempty (Identifier mempty "bool") (bool False)
+            storeExpr = StoreExpression expr mempty mempty
+        createUnitTest testStdlib storeExpr (TestName "It's always false")
+          `shouldSatisfy` \case
+            Right pt -> ptResult pt == PropertyTestFailures (S.fromList [bool True, bool False])
+            _ -> False
+
       it "Finds incrementInt and addInt" $ do
         createUnitTest testStdlib testStoreExpr (TestName "incrementInt is a no-op")
           `shouldBe` Right

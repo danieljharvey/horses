@@ -27,9 +27,7 @@ import qualified Test.Project.NormaliseType as NormaliseType
 import qualified Test.Project.SourceSpan as SourceSpan
 import qualified Test.Project.Stdlib as Stdlib
 import qualified Test.Project.TypeSearch as TypeSearch
-import qualified Test.Project.UnitTest as UnitTest
 import qualified Test.Project.Usages as Usages
-import qualified Test.Properties.Properties as Properties
 import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
@@ -44,6 +42,8 @@ import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
+import qualified Test.UnitTests.Properties as Properties
+import qualified Test.UnitTests.UnitTest as UnitTest
 
 main :: IO ()
 main =

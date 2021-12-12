@@ -36,6 +36,7 @@ import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.UnitTests.Types
 
 ----------
 

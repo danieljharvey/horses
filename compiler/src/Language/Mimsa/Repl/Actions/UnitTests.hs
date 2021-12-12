@@ -10,12 +10,13 @@ import Language.Mimsa.Actions.AddUnitTest
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.UnitTests.Types
+import Language.Mimsa.UnitTests.UnitTest
 
 doAddUnitTest ::
   Project Annotation ->

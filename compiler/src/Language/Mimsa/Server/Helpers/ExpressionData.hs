@@ -26,7 +26,6 @@ import Language.Mimsa.Actions.Types
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Store
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.OutputTypes
@@ -36,6 +35,8 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.UnitTests.Types
+import Language.Mimsa.UnitTests.UnitTest
 
 data UnitTestData = UnitTestData
   { utdTestName :: Text,

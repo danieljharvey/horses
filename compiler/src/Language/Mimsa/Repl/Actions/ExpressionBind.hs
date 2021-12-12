@@ -10,12 +10,12 @@ import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.UnitTests.UnitTest
 
 doBind ::
   Project Annotation ->

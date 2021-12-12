@@ -20,6 +20,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.UnitTests.Types
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
