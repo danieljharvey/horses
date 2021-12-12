@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Language.Mimsa.Tests.UnitTest
   ( createUnitTest,
     getUnitTestsForExprHash,

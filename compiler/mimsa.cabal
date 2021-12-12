@@ -141,6 +141,8 @@ library
       Language.Mimsa.Store.Substitutor
       Language.Mimsa.Store.UpdateDeps
       Language.Mimsa.Tests.Generate
+      Language.Mimsa.Tests.Helpers
+      Language.Mimsa.Tests.PropertyTest
       Language.Mimsa.Tests.Test
       Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
