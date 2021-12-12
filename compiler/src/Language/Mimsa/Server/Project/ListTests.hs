@@ -19,10 +19,10 @@ import GHC.Generics
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
+import Language.Mimsa.Tests.Types
+import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.UnitTests.Types
-import Language.Mimsa.UnitTests.UnitTest
 import Servant
 
 ------
@@ -72,6 +72,6 @@ listTestsByNameHandler mimsaEnv hash name' = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' hash
   let tests = case lookupBindingName project name' of
-        Just exprHash -> getTestsForExprHash project exprHash
+        Just exprHash -> getUnitTestsForExprHash project exprHash
         Nothing -> mempty
   pure (ListTestsByNameResponse (M.elems tests))

@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.UnitTests.Properties
+module Test.Tests.Properties
   ( spec,
   )
 where
@@ -16,7 +16,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.UnitTests.Generate
+import Language.Mimsa.Tests.Generate
 import Test.Hspec
 import Test.Utils.Helpers
 

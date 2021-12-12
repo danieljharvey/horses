@@ -8,8 +8,8 @@ import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.UnitTests.Types
-import Language.Mimsa.UnitTests.UnitTest
+import Language.Mimsa.Tests.Types
+import Language.Mimsa.Tests.UnitTest
 
 -- add a new unit test
 

@@ -1,6 +1,6 @@
-module Language.Mimsa.UnitTests.UnitTest
+module Language.Mimsa.Tests.UnitTest
   ( createUnitTest,
-    getTestsForExprHash,
+    getUnitTestsForExprHash,
     createNewUnitTests,
   )
 where
@@ -19,13 +19,13 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Store.UpdateDeps
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-import Language.Mimsa.UnitTests.Types
 
 -- | a unit test must have type Boolean
 createUnitTest ::
@@ -64,8 +64,8 @@ createUnitTestExpr =
     Equals
     (MyLiteral mempty (MyBool True))
 
-getTestsForExprHash :: Project ann -> ExprHash -> Map ExprHash UnitTest
-getTestsForExprHash prj exprHash =
+getUnitTestsForExprHash :: Project ann -> ExprHash -> Map ExprHash UnitTest
+getUnitTestsForExprHash prj exprHash =
   M.filter includeUnitTest (prjUnitTests prj)
   where
     (currentHashes, oldHashes) =
@@ -118,7 +118,7 @@ createNewUnitTests ::
   ExprHash ->
   Either (Error Annotation) (Project Annotation, [StoreExpression Annotation])
 createNewUnitTests project oldHash newHash = do
-  let tests = getTestsForExprHash project oldHash
+  let tests = getUnitTestsForExprHash project oldHash
   newTests <-
     traverse
       (updateUnitTest project oldHash newHash)

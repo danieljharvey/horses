@@ -11,8 +11,8 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.UnitTests.Types
-import Language.Mimsa.UnitTests.UnitTest
+import Language.Mimsa.Tests.Types
+import Language.Mimsa.Tests.UnitTest
 
 fromRight :: (Printer e) => Either e a -> a
 fromRight either' = case either' of

@@ -11,11 +11,11 @@ import qualified Language.Mimsa.Actions.BindType as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Repl.Helpers
+import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.UnitTests.UnitTest
 
 doBind ::
   Project Annotation ->
@@ -28,7 +28,7 @@ doBind project input name expr = do
     toReplM project (Actions.bindExpression expr name input)
   traverse_
     (replOutput . prettyPrint)
-    (getTestsForExprHash newProject newExprHash)
+    (getUnitTestsForExprHash newProject newExprHash)
   pure newProject
 
 doBindType ::

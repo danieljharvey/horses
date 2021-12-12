@@ -17,7 +17,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-import Language.Mimsa.UnitTests.UnitTest
+import Language.Mimsa.Tests.UnitTest
 
 -- bind a new expression to the project, updating any tests
 

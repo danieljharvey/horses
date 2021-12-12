@@ -21,7 +21,7 @@ import Language.Mimsa.Server.Helpers.ExpressionData
 import Language.Mimsa.Server.MimsaHandler
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
-import Language.Mimsa.UnitTests.Types
+import Language.Mimsa.Tests.Types
 import Servant
 
 ------

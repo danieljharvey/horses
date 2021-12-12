@@ -14,7 +14,7 @@ import Data.Map (Map)
 import GHC.Generics (Generic)
 import Language.Mimsa.Types.Project.Versioned
 import Language.Mimsa.Types.Store
-import Language.Mimsa.UnitTests.Types
+import Language.Mimsa.Tests.Types
 
 data SaveProject = SaveProject
   { projectVersion :: Int,

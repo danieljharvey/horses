@@ -7,7 +7,7 @@ import Language.Mimsa.Backend.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.UnitTests.Types
+import Language.Mimsa.Tests.Types
 
 data ReplAction ann
   = Help

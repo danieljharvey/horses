@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.UnitTests.UnitTest
+module Test.Tests.UnitTest
   ( spec,
   )
 where
@@ -11,12 +11,13 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
+import Language.Mimsa.Tests.Test
+import Language.Mimsa.Tests.Types
+import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.UnitTests.Types
-import Language.Mimsa.UnitTests.UnitTest
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -83,6 +84,7 @@ spec =
     describe "createNewUnitTests" $ do
       it "Returns empty when no previous unit tests match" $ do
         createNewUnitTests testStdlib idHash idHash `shouldBe` Right (testStdlib, mempty)
+
       it "Replacing a test with itself is a no-op" $ do
         let firstTest =
               createTestOrExplode
@@ -92,6 +94,7 @@ spec =
         let testStdlibWithTest = testStdlib <> fromUnitTest firstTest testingStoreExpr
         createNewUnitTests testStdlibWithTest idHash idHash
           `shouldBe` Right (testStdlibWithTest, [testingStoreExpr])
+
       it "Updating a test adds new unit tests and items to the Store" $ do
         let firstTest =
               createTestOrExplode
@@ -113,9 +116,11 @@ spec =
         exprs `shouldSatisfy` \a -> length a == 1
         -- and it's different to the original one
         exprs `shouldSatisfy` \a -> a /= [testingStoreExpr]
-    describe "getTestsForExprHash" $ do
+
+    describe "getUnitTestsForExprHash" $ do
       it "Returns none when there are no tests" $ do
-        getTestsForExprHash testStdlib (ExprHash "123") `shouldBe` mempty
+        getUnitTestsForExprHash testStdlib (ExprHash "123") `shouldBe` mempty
+
       it "Returns incrementInt test when passed its hash" $ do
         let unitTest =
               createTestOrExplode
@@ -123,7 +128,7 @@ spec =
                 testStoreExpr
                 (TestName "incrementInt is a no-op")
         let testStdlib' = fromUnitTest unitTest testStoreExpr <> testStdlib
-        getTestsForExprHash testStdlib' incrementIntH
+        getUnitTestsForExprHash testStdlib' incrementIntH
           `shouldBe` M.singleton (utExprHash unitTest) unitTest
 
     describe "createUnitTest" $ do
@@ -152,20 +157,26 @@ spec =
         createUnitTest testStdlib storeExpr (TestName "100 is not a valid test")
           `shouldSatisfy` isLeft
 
-      it "\\bool -> True is a valid passing property test" $ do
+      it "\\bool -> True is not a valid unit test" $ do
         let expr = MyLambda mempty (Identifier mempty "bool") (bool True)
             storeExpr = StoreExpression expr mempty mempty
         createUnitTest testStdlib storeExpr (TestName "It's always true")
+          `shouldSatisfy` isLeft
+
+      it "\\bool -> True is a valid property test" $ do
+        let expr = MyLambda mempty (Identifier mempty "bool") (bool True)
+            storeExpr = StoreExpression expr mempty mempty
+        createTest testStdlib storeExpr (TestName "It's always true")
           `shouldSatisfy` \case
-            Right pt -> ptResult pt == PropertyTestSuccess
+            Right (PTest _) -> True
             _ -> False
 
-      it "\\bool -> False is a valid passing property test" $ do
+      it "\\bool -> False is a valid property test" $ do
         let expr = MyLambda mempty (Identifier mempty "bool") (bool False)
             storeExpr = StoreExpression expr mempty mempty
-        createUnitTest testStdlib storeExpr (TestName "It's always false")
+        createTest testStdlib storeExpr (TestName "It's always false")
           `shouldSatisfy` \case
-            Right pt -> ptResult pt == PropertyTestFailures (S.fromList [bool True, bool False])
+            Right (PTest _) -> True
             _ -> False
 
       it "Finds incrementInt and addInt" $ do

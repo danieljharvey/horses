@@ -140,6 +140,10 @@ library
       Language.Mimsa.Store.Storage
       Language.Mimsa.Store.Substitutor
       Language.Mimsa.Store.UpdateDeps
+      Language.Mimsa.Tests.Generate
+      Language.Mimsa.Tests.Test
+      Language.Mimsa.Tests.Types
+      Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
       Language.Mimsa.Typechecker.DataTypes
@@ -213,9 +217,6 @@ library
       Language.Mimsa.Types.Typechecker.Substitutions
       Language.Mimsa.Types.Typechecker.TypeConstructor
       Language.Mimsa.Types.Typechecker.UniVar
-      Language.Mimsa.UnitTests.Generate
-      Language.Mimsa.UnitTests.Types
-      Language.Mimsa.UnitTests.UnitTest
       Language.Mimsa.Utils
   other-modules:
       Paths_mimsa
@@ -380,6 +381,8 @@ test-suite mimsa-test
       Test.Store.Resolver
       Test.Store.Substitutor
       Test.Store.UpdateDeps
+      Test.Tests.Properties
+      Test.Tests.UnitTest
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
@@ -390,8 +393,6 @@ test-suite mimsa-test
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
-      Test.UnitTests.Properties
-      Test.UnitTests.UnitTest
       Test.Utils.Compilation
       Test.Utils.Helpers
       Test.Utils.Serialisation

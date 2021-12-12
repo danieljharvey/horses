@@ -15,12 +15,12 @@ import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Tests.Types
+import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.UnitTests.Types
-import Language.Mimsa.UnitTests.UnitTest
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -95,5 +95,5 @@ spec = do
           additionalUnitTests testStdlib newProject `shouldBe` 2
           -- When actually fetching tests we should only show one for id
           -- instead of for both versions of `const`
-          let gotTests = getTestsForExprHash newProject idHash
+          let gotTests = getUnitTestsForExprHash newProject idHash
           length gotTests `shouldBe` 1

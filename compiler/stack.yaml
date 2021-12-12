@@ -48,7 +48,7 @@ extra-deps:
 
 ghc-options:
     # All packages
-    "$locals": -Wall -Wno-unticked-promoted-constructors -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wmissing-deriving-strategies 
+    "$locals": -Wall -Wno-unticked-promoted-constructors -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wmissing-deriving-strategies -fwarn-partial-fields 
     "$targets": -Werror
     "$everything": -O2 
 

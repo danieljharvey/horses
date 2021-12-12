@@ -32,6 +32,8 @@ import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
+import qualified Test.Tests.Properties as Properties
+import qualified Test.Tests.UnitTest as UnitTest
 import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
@@ -42,8 +44,6 @@ import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
-import qualified Test.UnitTests.Properties as Properties
-import qualified Test.UnitTests.UnitTest as UnitTest
 
 main :: IO ()
 main =

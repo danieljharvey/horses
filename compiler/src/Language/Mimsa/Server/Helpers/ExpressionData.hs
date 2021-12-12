@@ -27,6 +27,8 @@ import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store
+import Language.Mimsa.Tests.Types
+import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.OutputTypes
 import Language.Mimsa.Types.AST
@@ -35,8 +37,6 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.UnitTests.Types
-import Language.Mimsa.UnitTests.UnitTest
 
 data UnitTestData = UnitTestData
   { utdTestName :: Text,
@@ -99,7 +99,7 @@ makeExpressionData project se typedExpr gv input =
       tests =
         mkUnitTestData project
           <$> M.elems
-            (getTestsForExprHash project exprHash)
+            (getUnitTestsForExprHash project exprHash)
       matchingRuntimes =
         toRuntimeData
           <$> getValidRuntimes mt

@@ -1,4 +1,4 @@
-module Language.Mimsa.UnitTests.Generate (generateFromMonoType) where
+module Language.Mimsa.Tests.Generate (generateFromMonoType) where
 
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST

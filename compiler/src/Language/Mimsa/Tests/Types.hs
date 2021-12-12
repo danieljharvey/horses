@@ -4,7 +4,14 @@
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.UnitTests.Types where
+module Language.Mimsa.Tests.Types
+  ( Test (..),
+    UnitTest (..),
+    TestName (..),
+    TestSuccess (..),
+    PropertyTest (..),
+  )
+where
 
 import qualified Data.Aeson as JSON
 import Data.OpenApi
@@ -12,8 +19,6 @@ import Data.Set (Set)
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 
 newtype TestName = TestName Text
@@ -39,25 +44,24 @@ newtype TestSuccess = TestSuccess Bool
       ToSchema
     )
 
-data PropertyTestResult
-  = PropertyTestSuccess
-  | PropertyTestFailures (Set (Expr Name ()))
+data Test = UTest UnitTest | PTest PropertyTest
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
 
-data UnitTest
-  = UnitTest
-      { utName :: TestName,
-        utSuccess :: TestSuccess,
-        utExprHash :: ExprHash,
-        utDeps :: Set ExprHash
-      }
-  | PropertyTest
-      { ptName :: TestName,
-        ptResult :: PropertyTestResult,
-        ptExprHash :: ExprHash,
-        ptDeps :: Set ExprHash
-      }
+data PropertyTest = PropertyTest
+  { ptName :: TestName,
+    ptExprHash :: ExprHash,
+    ptDeps :: Set ExprHash
+  }
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+
+data UnitTest = UnitTest
+  { utName :: TestName,
+    utSuccess :: TestSuccess,
+    utExprHash :: ExprHash,
+    utDeps :: Set ExprHash
+  }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
 

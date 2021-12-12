@@ -11,12 +11,12 @@ import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Repl.Helpers
+import Language.Mimsa.Tests.Types
+import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.UnitTests.Types
-import Language.Mimsa.UnitTests.UnitTest
 
 doAddUnitTest ::
   Project Annotation ->
@@ -35,7 +35,7 @@ doListTests ::
 doListTests project maybeName = do
   let fetchTestsForName name =
         case lookupBindingName project name of
-          Just exprHash -> getTestsForExprHash project exprHash
+          Just exprHash -> getUnitTestsForExprHash project exprHash
           Nothing -> mempty
   let tests = case maybeName of
         Just name -> fetchTestsForName name

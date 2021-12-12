@@ -11,7 +11,7 @@ import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.UnitTests.Types
+import Language.Mimsa.Tests.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
