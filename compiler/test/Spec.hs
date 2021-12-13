@@ -33,6 +33,7 @@ import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Tests.Properties as Properties
+import qualified Test.Tests.PropertyTest as PropertyTest
 import qualified Test.Tests.UnitTest as UnitTest
 import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
@@ -63,6 +64,7 @@ main =
     MonoTypeParser.spec
     InstantiateVar.spec
     UnitTest.spec
+    PropertyTest.spec
     UpdateDeps.spec
     BindType.spec
     Codegen.spec

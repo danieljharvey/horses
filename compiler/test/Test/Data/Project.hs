@@ -114,6 +114,16 @@ buildTestStdlib =
       addMonoid
       addMonoPair
       addTree
+      addPropertyTests
+
+addPropertyTests :: Actions.ActionM ()
+addPropertyTests = do
+  addBinding
+    "constTrue"
+    "\\(a: Boolean) -> True"
+  addBinding
+    "constFalse"
+    "\\(a: Boolean) -> False"
 
 addListMonad :: Actions.ActionM ()
 addListMonad = do

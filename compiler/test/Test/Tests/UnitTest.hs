@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Tests.UnitTest
@@ -11,7 +10,6 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
-import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
@@ -138,7 +136,7 @@ spec =
           `shouldBe` Right
             ( UnitTest
                 (TestName "True is true")
-                (TestSuccess True)
+                (UnitTestSuccess True)
                 (getStoreExpressionHash storeExpr)
                 mempty
             )
@@ -148,7 +146,7 @@ spec =
           `shouldBe` Right
             ( UnitTest
                 (TestName "False is not true")
-                (TestSuccess False)
+                (UnitTestSuccess False)
                 (getStoreExpressionHash storeExpr)
                 mempty
             )
@@ -163,28 +161,12 @@ spec =
         createUnitTest testStdlib storeExpr (TestName "It's always true")
           `shouldSatisfy` isLeft
 
-      it "\\bool -> True is a valid property test" $ do
-        let expr = MyLambda mempty (Identifier mempty "bool") (bool True)
-            storeExpr = StoreExpression expr mempty mempty
-        createTest testStdlib storeExpr (TestName "It's always true")
-          `shouldSatisfy` \case
-            Right (PTest _) -> True
-            _ -> False
-
-      it "\\bool -> False is a valid property test" $ do
-        let expr = MyLambda mempty (Identifier mempty "bool") (bool False)
-            storeExpr = StoreExpression expr mempty mempty
-        createTest testStdlib storeExpr (TestName "It's always false")
-          `shouldSatisfy` \case
-            Right (PTest _) -> True
-            _ -> False
-
       it "Finds incrementInt and addInt" $ do
         createUnitTest testStdlib testStoreExpr (TestName "incrementInt is a no-op")
           `shouldBe` Right
             ( UnitTest
                 (TestName "incrementInt is a no-op")
-                (TestSuccess False)
+                (UnitTestSuccess False)
                 (getStoreExpressionHash testStoreExpr)
                 ( S.fromList
                     [ incrementIntH

@@ -7,15 +7,15 @@ import Language.Mimsa.Types.Typechecker
 import Test.QuickCheck
 
 -- | TODO: this is wildly incomplete, but let's get the mechanism working first
-fromMonoType :: MonoType -> Gen (Expr Variable ())
+fromMonoType :: (Monoid ann) => MonoType -> Gen (Expr Variable ann)
 fromMonoType (MTPrim _ prim) =
-  MyLiteral () <$> fromPrimitive prim
+  MyLiteral mempty <$> fromPrimitive prim
 fromMonoType (MTArray _ mt) =
-  MyArray () <$> listOf1 (fromMonoType mt) -- need to make this liftOf but tests can't handle empty list yet
+  MyArray mempty <$> listOf1 (fromMonoType mt) -- need to make this liftOf but tests can't handle empty list yet
 fromMonoType (MTPair _ a b) =
-  MyPair () <$> fromMonoType a <*> fromMonoType b
+  MyPair mempty <$> fromMonoType a <*> fromMonoType b
 fromMonoType (MTRecord _ as) =
-  MyRecord () <$> traverse fromMonoType as
+  MyRecord mempty <$> traverse fromMonoType as
 fromMonoType _ = undefined
 
 fromPrimitive :: Primitive -> Gen Literal
@@ -28,5 +28,5 @@ fromPrimitive MTString =
   -- we come to Interpret these in tests
   MyString . StringType . T.pack <$> listOf chooseAny
 
-generateFromMonoType :: MonoType -> IO [Expr Variable ()]
+generateFromMonoType :: (Monoid ann) => MonoType -> IO [Expr Variable ann]
 generateFromMonoType mt = sample' (fromMonoType mt)

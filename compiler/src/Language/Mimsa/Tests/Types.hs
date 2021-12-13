@@ -8,8 +8,9 @@ module Language.Mimsa.Tests.Types
   ( Test (..),
     UnitTest (..),
     TestName (..),
-    TestSuccess (..),
+    UnitTestSuccess (..),
     PropertyTest (..),
+    PropertyTestResult (..),
   )
 where
 
@@ -19,6 +20,7 @@ import Data.Set (Set)
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Store
 
 newtype TestName = TestName Text
@@ -34,12 +36,27 @@ newtype TestName = TestName Text
 instance Printer TestName where
   prettyPrint (TestName n) = n
 
-newtype TestSuccess = TestSuccess Bool
+newtype UnitTestSuccess = UnitTestSuccess Bool
   deriving newtype
     ( Eq,
       Ord,
       Show,
       JSON.ToJSON,
+      JSON.FromJSON,
+      ToSchema
+    )
+
+data PropertyTestResult var ann
+  = PropertyTestSuccess
+  | PropertyTestFailures (Set (Expr var ann))
+  deriving stock
+    ( Eq,
+      Ord,
+      Show,
+      Generic
+    )
+  deriving anyclass
+    ( JSON.ToJSON,
       JSON.FromJSON,
       ToSchema
     )
@@ -58,7 +75,7 @@ data PropertyTest = PropertyTest
 
 data UnitTest = UnitTest
   { utName :: TestName,
-    utSuccess :: TestSuccess,
+    utSuccess :: UnitTestSuccess,
     utExprHash :: ExprHash,
     utDeps :: Set ExprHash
   }
@@ -68,6 +85,6 @@ data UnitTest = UnitTest
 instance Printer UnitTest where
   prettyPrint test =
     let tickOrCross = case utSuccess test of
-          (TestSuccess True) -> "+++ PASS +++"
+          (UnitTestSuccess True) -> "+++ PASS +++"
           _ -> "--- FAIL ---"
      in tickOrCross <> " " <> prettyPrint (utName test)

@@ -21,10 +21,10 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Store.UpdateDeps
+import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
@@ -36,7 +36,7 @@ createUnitTest ::
   TestName ->
   Either (Error Annotation) UnitTest
 createUnitTest project storeExpr testName = do
-  let testExpr = createUnitTestExpr (storeExpression storeExpr)
+  let testExpr = exprEqualsTrue (storeExpression storeExpr)
   (ResolvedExpression _ _ rExpr rScope rSwaps _ _) <-
     Actions.getTypecheckedStoreExpression (prettyPrint testExpr) project testExpr
   result <- first InterpreterErr (interpret rScope rSwaps rExpr)
@@ -47,40 +47,32 @@ createUnitTest project storeExpr testName = do
   pure $
     UnitTest
       { utName = testName,
-        utSuccess = testIsSuccess result,
+        utSuccess = UnitTestSuccess (testIsSuccess result),
         utExprHash = getStoreExpressionHash storeExpr,
         utDeps = deps
       }
 
-testIsSuccess :: Expr var ann -> TestSuccess
-testIsSuccess (MyLiteral _ (MyBool True)) = TestSuccess True
-testIsSuccess _ = TestSuccess False
-
-createUnitTestExpr ::
-  (Monoid ann) =>
-  Expr Name ann ->
-  Expr Name ann
-createUnitTestExpr =
-  MyInfix
-    mempty
-    Equals
-    (MyLiteral mempty (MyBool True))
-
-getUnitTestsForExprHash :: Project ann -> ExprHash -> Map ExprHash UnitTest
+getUnitTestsForExprHash ::
+  Project ann ->
+  ExprHash ->
+  Map ExprHash UnitTest
 getUnitTestsForExprHash prj exprHash =
   M.filter includeUnitTest (prjUnitTests prj)
   where
     (currentHashes, oldHashes) =
       splitProjectHashesByVersion prj
     includeUnitTest ut =
-      S.member exprHash (utDeps ut) && getAll (foldMap (All . depIsValid) (S.toList (utDeps ut)))
+      S.member exprHash (utDeps ut)
+        && getAll (foldMap (All . depIsValid) (S.toList (utDeps ut)))
     depIsValid hash =
       hash == exprHash
         || S.member hash currentHashes
         || not (S.member hash oldHashes)
 
 -- | get all hashes in project, split by current and old
-splitProjectHashesByVersion :: Project ann -> (Set ExprHash, Set ExprHash)
+splitProjectHashesByVersion ::
+  Project ann ->
+  (Set ExprHash, Set ExprHash)
 splitProjectHashesByVersion prj =
   valBindings <> typeBindings
   where
@@ -114,6 +106,8 @@ updateUnitTest project oldHash newHash unitTest = do
         updateStoreExpressionBindings project newBindings testStoreExpr
       (,) newTestStoreExpr <$> createUnitTest project newTestStoreExpr (utName unitTest)
 
+-- | When a new version of an expression is bound
+-- create new versions of the tests
 createNewUnitTests ::
   Project Annotation ->
   ExprHash ->
@@ -131,5 +125,4 @@ createNewUnitTests project oldHash newHash = do
             ( (\(se, ut) -> fromUnitTest ut se)
                 <$> newTests
             )
-  let exprs = fst <$> newTests
-  pure (newProject, exprs)
+  pure (newProject, fst <$> newTests)

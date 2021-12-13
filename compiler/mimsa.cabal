@@ -384,6 +384,7 @@ test-suite mimsa-test
       Test.Store.Substitutor
       Test.Store.UpdateDeps
       Test.Tests.Properties
+      Test.Tests.PropertyTest
       Test.Tests.UnitTest
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate

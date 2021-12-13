@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Test.Tests.Properties
   ( spec,
@@ -9,14 +10,13 @@ where
 import Control.Monad.IO.Class
 import Data.Functor
 import qualified Data.Map as M
-import Language.Mimsa.Logging
+import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.Tests.Generate
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -30,8 +30,8 @@ itTypeChecks mt expr =
 
 itGenerates :: MonoType -> Expectation
 itGenerates mt = do
-  samples <- liftIO $ generateFromMonoType mt
-  let success = traverse (itTypeChecks mt) (debugPretty "gen" (fmap ($> mempty) samples))
+  samples <- liftIO $ generateFromMonoType @() mt
+  let success = traverse (itTypeChecks mt) (fmap ($> mempty) samples)
   and <$> success `shouldBe` Right True
 
 spec :: Spec
