@@ -73,7 +73,7 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
               Actions.useSwaps
                 (reSwaps resolvedExpr)
                 (reTypedExpression resolvedExpr)
-            ed' <- expressionData se typedNameExpr gv input
+            let ed' = makeExpressionData se typedNameExpr gv input
             pure (Just ed')
           Nothing -> pure Nothing
         pure (ed, typeClasses, dt)

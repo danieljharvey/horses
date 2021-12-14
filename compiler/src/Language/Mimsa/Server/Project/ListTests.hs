@@ -18,9 +18,9 @@ import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Server.Handlers
+import Language.Mimsa.Server.Helpers.TestData
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Tests.Test
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Servant
@@ -33,9 +33,8 @@ type ListTests =
     :> "list"
     :> Get '[JSON] ListTestsResponse
 
-data ListTestsResponse = ListTestsResponse
-  { ltUnitTests :: [UnitTest],
-    ltPropertyTests :: [PropertyTest]
+newtype ListTestsResponse = ListTestsResponse
+  { ltTests :: TestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -47,10 +46,15 @@ listTestsHandler ::
 listTestsHandler mimsaEnv hash = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' hash
+  let tests = M.elems (prjTests project)
+  testResults <-
+    runTestsHandler
+      mimsaEnv
+      project
+      tests
   pure $
     ListTestsResponse
-      (M.elems $ M.mapMaybe filterUnitTest $ prjTests project)
-      (M.elems $ M.mapMaybe filterPropertyTest $ prjTests project)
+      (makeTestData project testResults)
 
 ----
 
@@ -61,9 +65,8 @@ type ListTestsByName =
     :> Capture "name" Name
     :> Get '[JSON] ListTestsByNameResponse
 
-data ListTestsByNameResponse = ListTestsByNameResponse
-  { ltbnUnitTests :: [UnitTest],
-    ltbnPropertyTests :: [PropertyTest]
+newtype ListTestsByNameResponse = ListTestsByNameResponse
+  { ltbnTests :: TestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -79,7 +82,11 @@ listTestsByNameHandler mimsaEnv hash name' = do
   let tests = case lookupBindingName project name' of
         Just exprHash -> getTestsForExprHash project exprHash
         Nothing -> mempty
+  testResults <-
+    runTestsHandler
+      mimsaEnv
+      project
+      (M.elems tests)
   pure $
     ListTestsByNameResponse
-      (M.elems $ M.mapMaybe filterUnitTest tests)
-      (M.elems $ M.mapMaybe filterPropertyTest tests)
+      (makeTestData project testResults)

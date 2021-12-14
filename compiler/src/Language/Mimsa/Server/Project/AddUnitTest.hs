@@ -17,11 +17,11 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Helpers.ExpressionData
+import Language.Mimsa.Server.Helpers.TestData
 import Language.Mimsa.Server.MimsaHandler
 import Language.Mimsa.Server.Types
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Tests.Types
+import Language.Mimsa.Types.Project
 import Servant
 
 ------
@@ -41,7 +41,7 @@ data AddUnitTestRequest = AddUnitTestRequest
 
 data AddUnitTestResponse = AddUnitTestResponse
   { autProjectData :: ProjectData,
-    autUnitTest :: UnitTestData
+    autTestResult :: TestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -59,8 +59,14 @@ addUnitTestHandler mimsaEnv (AddUnitTestRequest hash testName testInput) = runMi
   case response of
     Right (newProject, unitTest) -> do
       pd <- lift $ projectDataHandler mimsaEnv newProject
+      tests <-
+        lift $
+          runTestsHandler
+            mimsaEnv
+            newProject
+            [unitTest]
       returnMimsa $
         AddUnitTestResponse
           pd
-          (mkUnitTestData newProject unitTest)
+          (makeTestData newProject tests)
     Left e -> throwMimsaError e

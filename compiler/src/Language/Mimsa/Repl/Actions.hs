@@ -57,7 +57,7 @@ doReplAction env input action =
     (TypeSearch mt) ->
       catchMimsaError env (doTypeSearch env mt $> env)
     (AddUnitTest testName testExpr) ->
-      catchMimsaError env (doAddUnitTest env input testName testExpr)
+      catchMimsaError env (doAddTest env input testName testExpr)
     (ListTests maybeName) ->
       catchMimsaError env (doListTests env maybeName $> env)
 

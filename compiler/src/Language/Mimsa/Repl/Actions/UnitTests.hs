@@ -1,5 +1,5 @@
 module Language.Mimsa.Repl.Actions.UnitTests
-  ( doAddUnitTest,
+  ( doAddTest,
     doListTests,
   )
 where
@@ -18,16 +18,16 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 
-doAddUnitTest ::
+doAddTest ::
   Project Annotation ->
   Text ->
   TestName ->
   Expr Name Annotation ->
   MimsaM (Error Annotation) (Project Annotation)
-doAddUnitTest project input testName expr = do
-  (newProject, unitTest) <-
+doAddTest project input testName expr = do
+  (newProject, test) <-
     toReplM project (addUnitTest expr testName input)
-  replOutput (prettyPrint unitTest)
+  replOutput (prettyPrint test)
   pure newProject
 
 doListTests ::

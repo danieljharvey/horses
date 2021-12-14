@@ -4,6 +4,7 @@
 module Language.Mimsa.Tests.Test
   ( createTest,
     getTestsForExprHash,
+    runTests,
     filterUnitTest,
     filterPropertyTest,
     createNewTests,
@@ -24,6 +25,7 @@ import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
@@ -146,3 +148,12 @@ updateTest project oldHash newHash test = do
         updateStoreExpressionBindings project newBindings testStoreExpr
       (,) newTestStoreExpr
         <$> createTest project newTestStoreExpr (getTestName test)
+
+runTests ::
+  (MonadIO m, MonadError (Error Annotation) m) =>
+  Project Annotation ->
+  Test ->
+  m (TestResult Variable Annotation)
+runTests _ (UTest ut) = pure (UTestResult ut)
+runTests project (PTest pt) =
+  PTestResult pt <$> runPropertyTest project pt

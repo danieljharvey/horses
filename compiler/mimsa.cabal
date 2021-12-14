@@ -113,6 +113,7 @@ library
       Language.Mimsa.Server.Handlers
       Language.Mimsa.Server.Helpers
       Language.Mimsa.Server.Helpers.ExpressionData
+      Language.Mimsa.Server.Helpers.TestData
       Language.Mimsa.Server.Main
       Language.Mimsa.Server.MimsaHandler
       Language.Mimsa.Server.Project

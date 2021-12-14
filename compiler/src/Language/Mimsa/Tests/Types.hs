@@ -11,6 +11,7 @@ module Language.Mimsa.Tests.Types
     UnitTestSuccess (..),
     PropertyTest (..),
     PropertyTestResult (..),
+    TestResult (..),
   )
 where
 
@@ -96,3 +97,11 @@ instance Printer UnitTest where
           (UnitTestSuccess True) -> "+++ PASS +++"
           _ -> "--- FAIL ---"
      in tickOrCross <> " " <> prettyPrint (utName test)
+
+data TestResult var ann
+  = -- | unit test is run once and contains its result
+    UTestResult UnitTest
+  | -- | property test is effectful and run when returning results
+    PTestResult PropertyTest (PropertyTestResult var ann)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)

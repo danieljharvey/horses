@@ -20,6 +20,7 @@ module Language.Mimsa.Server.Handlers
     readStoreHandler,
     writeStoreHandler,
     useSwapsHandler,
+    runTestsHandler,
   )
 where
 
@@ -50,6 +51,8 @@ import Language.Mimsa.Project.Versions
 import Language.Mimsa.Server.Helpers
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Store
+import Language.Mimsa.Tests.Test
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -269,3 +272,14 @@ storeFromExprHashHandler mimsaEnv exprHash =
 useSwapsHandler :: Swaps -> Expr Variable MonoType -> Handler (Expr Name MonoType)
 useSwapsHandler swaps expr =
   handleEither UserError (useSwaps swaps expr)
+
+runTestsHandler ::
+  MimsaEnvironment ->
+  Project Annotation ->
+  [Test] ->
+  Handler [TestResult Variable Annotation]
+runTestsHandler mimsaEnv project tests = do
+  handleMimsaM
+    (mimsaConfig mimsaEnv)
+    InternalError
+    (traverse (runTests project) tests)
