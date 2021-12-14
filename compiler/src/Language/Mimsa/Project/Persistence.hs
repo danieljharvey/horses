@@ -100,7 +100,7 @@ fetchProjectItems existingStore sp = do
   testStore <-
     recursiveLoadBoundExpressions
       existingStore
-      (M.keysSet $ projectUnitTests sp)
+      (M.keysSet $ projectTests sp)
   pure $
     projectFromSaved
       ( existingStore <> store' <> typeStore'

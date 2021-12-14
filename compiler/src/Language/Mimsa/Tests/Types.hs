@@ -65,6 +65,10 @@ data Test = UTest UnitTest | PTest PropertyTest
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
 
+instance Printer Test where
+  prettyPrint (PTest pt) = prettyPrint pt
+  prettyPrint (UTest ut) = prettyPrint ut
+
 data PropertyTest = PropertyTest
   { ptName :: TestName,
     ptExprHash :: ExprHash,
@@ -72,6 +76,10 @@ data PropertyTest = PropertyTest
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+
+instance Printer PropertyTest where
+  prettyPrint test =
+    prettyPrint (ptName test)
 
 data UnitTest = UnitTest
   { utName :: TestName,

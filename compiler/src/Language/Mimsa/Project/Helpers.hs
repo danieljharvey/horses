@@ -1,9 +1,10 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Project.Helpers
   ( fromItem,
     fromType,
-    fromUnitTest,
+    fromTest,
     fromStoreExpression,
     fromStoreExpressionDeps,
     fromStore,
@@ -33,10 +34,10 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Store.Storage
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Tests.Types
 
 ----------
 
@@ -46,7 +47,7 @@ projectFromSaved store' sp =
     { prjStore = store',
       prjBindings = projectBindings sp,
       prjTypeBindings = projectTypes sp,
-      prjUnitTests = projectUnitTests sp
+      prjTests = projectTests sp
     }
 
 projectToSaved :: Project a -> SaveProject
@@ -55,7 +56,7 @@ projectToSaved proj =
     { projectVersion = 1,
       projectBindings = prjBindings proj,
       projectTypes = prjTypeBindings proj,
-      projectUnitTests = prjUnitTests proj
+      projectTests = prjTests proj
     }
 
 fromStoreExpression :: StoreExpression ann -> ExprHash -> Project ann
@@ -87,10 +88,22 @@ fromType expr hash =
     typeList =
       (,pure hash) <$> S.toList typeConsUsed
 
+fromTest :: Test -> StoreExpression ann -> Project ann
+fromTest = \case
+  PTest pt -> fromPropertyTest pt
+  UTest ut -> fromUnitTest ut
+
 fromUnitTest :: UnitTest -> StoreExpression ann -> Project ann
 fromUnitTest test storeExpr =
   mempty
-    { prjUnitTests = M.singleton (utExprHash test) test,
+    { prjTests = M.singleton (utExprHash test) (UTest test),
+      prjStore = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
+    }
+
+fromPropertyTest :: PropertyTest -> StoreExpression ann -> Project ann
+fromPropertyTest test storeExpr =
+  mempty
+    { prjTests = M.singleton (ptExprHash test) (PTest test),
       prjStore = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
     }
 

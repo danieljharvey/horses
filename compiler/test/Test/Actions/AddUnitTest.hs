@@ -15,8 +15,8 @@ import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
-import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
@@ -28,12 +28,12 @@ import Test.Utils.Helpers
 brokenExpr :: Expr Name Annotation
 brokenExpr = MyInfix mempty Equals (int 1) (bool True)
 
-additionalUnitTests :: Project ann -> Project ann -> Int
-additionalUnitTests old new =
+additionalTests :: Project ann -> Project ann -> Int
+additionalTests old new =
   unitTestsSize new - unitTestsSize old
   where
     unitTestsSize :: Project ann -> Int
-    unitTestsSize = M.size . prjUnitTests
+    unitTestsSize = M.size . prjTests
 
 additionalStoreItems :: Project ann -> Project ann -> Int
 additionalStoreItems old new =
@@ -74,7 +74,7 @@ spec = do
           additionalStoreItems testStdlib newProject
             `shouldBe` 1
           -- one more unit test
-          additionalUnitTests testStdlib newProject
+          additionalTests testStdlib newProject
             `shouldBe` 1
           -- new expression
           S.size (Actions.storeExpressionsFromOutcomes outcomes) `shouldBe` 1
@@ -92,8 +92,8 @@ spec = do
         ) of
         Left e -> error (T.unpack $ prettyPrint e)
         Right (newProject, _, _) -> do
-          additionalUnitTests testStdlib newProject `shouldBe` 2
+          additionalTests testStdlib newProject `shouldBe` 2
           -- When actually fetching tests we should only show one for id
           -- instead of for both versions of `const`
-          let gotTests = getUnitTestsForExprHash newProject idHash
+          let gotTests = getTestsForExprHash newProject idHash
           length gotTests `shouldBe` 1

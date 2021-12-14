@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
+import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
@@ -73,15 +74,15 @@ altIdHash = getStoreExpressionHash altIdStoreExpr
 projectStoreSize :: Project ann -> Int
 projectStoreSize = length . getStore . prjStore
 
-unitTestCount :: Project ann -> Int
-unitTestCount = length . prjUnitTests
+testCount :: Project ann -> Int
+testCount = length . prjTests
 
 spec :: Spec
 spec =
   describe "UnitTest" $ do
-    describe "createNewUnitTests" $ do
+    describe "createNewTests" $ do
       it "Returns empty when no previous unit tests match" $ do
-        createNewUnitTests testStdlib idHash idHash `shouldBe` Right (testStdlib, mempty)
+        createNewTests testStdlib idHash idHash `shouldBe` Right (testStdlib, mempty)
 
       it "Replacing a test with itself is a no-op" $ do
         let firstTest =
@@ -89,8 +90,8 @@ spec =
                 testStdlib
                 testingStoreExpr
                 (TestName "id does nothing")
-        let testStdlibWithTest = testStdlib <> fromUnitTest firstTest testingStoreExpr
-        createNewUnitTests testStdlibWithTest idHash idHash
+        let testStdlibWithTest = testStdlib <> fromTest (UTest firstTest) testingStoreExpr
+        createNewTests testStdlibWithTest idHash idHash
           `shouldBe` Right (testStdlibWithTest, [testingStoreExpr])
 
       it "Updating a test adds new unit tests and items to the Store" $ do
@@ -101,23 +102,23 @@ spec =
                 (TestName "id does nothing")
         let testStdlibWithTest =
               testStdlib
-                <> fromUnitTest firstTest testingStoreExpr
+                <> fromTest (UTest firstTest) testingStoreExpr
                 <> fromItem "id" altIdStoreExpr altIdHash
-        let (prj, exprs) = case createNewUnitTests testStdlibWithTest idHash altIdHash of
+        let (prj, exprs) = case createNewTests testStdlibWithTest idHash altIdHash of
               Right (a, b) -> (a, b)
               Left _ -> (undefined, undefined)
         -- we've added one item to the store
         projectStoreSize prj `shouldSatisfy` \a -> a == projectStoreSize testStdlibWithTest + 1
         -- we've added another unit tests
-        unitTestCount prj `shouldSatisfy` \i -> i == unitTestCount testStdlibWithTest + 1
+        testCount prj `shouldSatisfy` \i -> i == testCount testStdlibWithTest + 1
         -- there is one store expression returned
         exprs `shouldSatisfy` \a -> length a == 1
         -- and it's different to the original one
         exprs `shouldSatisfy` \a -> a /= [testingStoreExpr]
 
-    describe "getUnitTestsForExprHash" $ do
+    describe "getTestsForExprHash" $ do
       it "Returns none when there are no tests" $ do
-        getUnitTestsForExprHash testStdlib (ExprHash "123") `shouldBe` mempty
+        getTestsForExprHash testStdlib (ExprHash "123") `shouldBe` mempty
 
       it "Returns incrementInt test when passed its hash" $ do
         let unitTest =
@@ -125,9 +126,9 @@ spec =
                 testStdlib
                 testStoreExpr
                 (TestName "incrementInt is a no-op")
-        let testStdlib' = fromUnitTest unitTest testStoreExpr <> testStdlib
-        getUnitTestsForExprHash testStdlib' incrementIntH
-          `shouldBe` M.singleton (utExprHash unitTest) unitTest
+        let testStdlib' = fromTest (UTest unitTest) testStoreExpr <> testStdlib
+        getTestsForExprHash testStdlib' incrementIntH
+          `shouldBe` M.singleton (utExprHash unitTest) (UTest unitTest)
 
     describe "createUnitTest" $ do
       it "True is a valid test" $ do

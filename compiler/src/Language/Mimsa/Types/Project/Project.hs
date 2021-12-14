@@ -9,9 +9,9 @@ import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import Data.OpenApi
 import GHC.Generics (Generic)
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Project.Versioned
 import Language.Mimsa.Types.Store (ExprHash, Store)
-import Language.Mimsa.Tests.Types
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces
@@ -19,7 +19,7 @@ data Project ann = Project
   { prjStore :: Store ann,
     prjBindings :: VersionedBindings,
     prjTypeBindings :: VersionedTypeBindings,
-    prjUnitTests :: Map ExprHash UnitTest
+    prjTests :: Map ExprHash Test
   }
   deriving stock
     ( Eq,

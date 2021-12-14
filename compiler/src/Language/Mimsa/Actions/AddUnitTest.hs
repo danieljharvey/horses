@@ -5,11 +5,11 @@ import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Tests.Types
+import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Tests.Types
-import Language.Mimsa.Tests.UnitTest
 
 -- add a new unit test
 
@@ -25,5 +25,5 @@ addUnitTest expr testName input = do
   let storeExpr = reStoreExpression resolvedExpr
   Actions.appendStoreExpression storeExpr
   test <- liftEither $ createUnitTest project storeExpr testName
-  Actions.appendProject (fromUnitTest test storeExpr)
+  Actions.appendProject (fromTest (UTest test) storeExpr)
   pure test

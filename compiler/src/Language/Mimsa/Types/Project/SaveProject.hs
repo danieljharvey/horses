@@ -12,15 +12,15 @@ import Data.Aeson
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import GHC.Generics (Generic)
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Project.Versioned
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Tests.Types
 
 data SaveProject = SaveProject
   { projectVersion :: Int,
     projectBindings :: VersionedBindings,
     projectTypes :: VersionedTypeBindings,
-    projectUnitTests :: Map ExprHash UnitTest
+    projectTests :: Map ExprHash Test
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON)

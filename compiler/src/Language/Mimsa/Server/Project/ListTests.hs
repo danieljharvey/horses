@@ -19,8 +19,8 @@ import GHC.Generics
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Types
+import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
-import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Servant
@@ -33,8 +33,9 @@ type ListTests =
     :> "list"
     :> Get '[JSON] ListTestsResponse
 
-newtype ListTestsResponse = ListTestsResponse
-  { ltUnitTests :: [UnitTest]
+data ListTestsResponse = ListTestsResponse
+  { ltUnitTests :: [UnitTest],
+    ltPropertyTests :: [PropertyTest]
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -46,7 +47,10 @@ listTestsHandler ::
 listTestsHandler mimsaEnv hash = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' hash
-  pure $ ListTestsResponse (M.elems $ prjUnitTests project)
+  pure $
+    ListTestsResponse
+      (M.elems $ M.mapMaybe filterUnitTest $ prjTests project)
+      (M.elems $ M.mapMaybe filterPropertyTest $ prjTests project)
 
 ----
 
@@ -57,8 +61,9 @@ type ListTestsByName =
     :> Capture "name" Name
     :> Get '[JSON] ListTestsByNameResponse
 
-newtype ListTestsByNameResponse = ListTestsByNameResponse
-  { ltbnUnitTests :: [UnitTest]
+data ListTestsByNameResponse = ListTestsByNameResponse
+  { ltbnUnitTests :: [UnitTest],
+    ltbnPropertyTests :: [PropertyTest]
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -72,6 +77,9 @@ listTestsByNameHandler mimsaEnv hash name' = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' hash
   let tests = case lookupBindingName project name' of
-        Just exprHash -> getUnitTestsForExprHash project exprHash
+        Just exprHash -> getTestsForExprHash project exprHash
         Nothing -> mempty
-  pure (ListTestsByNameResponse (M.elems tests))
+  pure $
+    ListTestsByNameResponse
+      (M.elems $ M.mapMaybe filterUnitTest tests)
+      (M.elems $ M.mapMaybe filterPropertyTest tests)

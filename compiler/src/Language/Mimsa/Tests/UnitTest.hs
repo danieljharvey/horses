@@ -2,25 +2,16 @@
 
 module Language.Mimsa.Tests.UnitTest
   ( createUnitTest,
-    getUnitTestsForExprHash,
-    createNewUnitTests,
   )
 where
 
-import Control.Monad.Except
 import Data.Bifunctor (first)
-import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Monoid (All (..), getAll)
-import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
-import Language.Mimsa.Store.UpdateDeps
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
@@ -51,78 +42,3 @@ createUnitTest project storeExpr testName = do
         utExprHash = getStoreExpressionHash storeExpr,
         utDeps = deps
       }
-
-getUnitTestsForExprHash ::
-  Project ann ->
-  ExprHash ->
-  Map ExprHash UnitTest
-getUnitTestsForExprHash prj exprHash =
-  M.filter includeUnitTest (prjUnitTests prj)
-  where
-    (currentHashes, oldHashes) =
-      splitProjectHashesByVersion prj
-    includeUnitTest ut =
-      S.member exprHash (utDeps ut)
-        && getAll (foldMap (All . depIsValid) (S.toList (utDeps ut)))
-    depIsValid hash =
-      hash == exprHash
-        || S.member hash currentHashes
-        || not (S.member hash oldHashes)
-
--- | get all hashes in project, split by current and old
-splitProjectHashesByVersion ::
-  Project ann ->
-  (Set ExprHash, Set ExprHash)
-splitProjectHashesByVersion prj =
-  valBindings <> typeBindings
-  where
-    getItems as =
-      mconcat $
-        (\items -> (S.singleton (NE.head items), S.fromList (NE.tail items)))
-          <$> as
-    valBindings =
-      let bindings = getVersionedMap $ prjBindings prj
-       in getItems (M.elems bindings)
-    typeBindings =
-      let bindings = getVersionedMap $ prjTypeBindings prj
-       in getItems (M.elems bindings)
-
-updateUnitTest ::
-  Project Annotation ->
-  ExprHash ->
-  ExprHash ->
-  UnitTest ->
-  Either (Error Annotation) (StoreExpression Annotation, UnitTest)
-updateUnitTest project oldHash newHash unitTest = do
-  case lookupExprHash project (utExprHash unitTest) of
-    Nothing ->
-      throwError
-        ( StoreErr $ CouldNotFindStoreExpression (utExprHash unitTest)
-        )
-    Just testStoreExpr -> do
-      let newBindings =
-            updateExprHash testStoreExpr oldHash newHash
-      newTestStoreExpr <-
-        updateStoreExpressionBindings project newBindings testStoreExpr
-      (,) newTestStoreExpr <$> createUnitTest project newTestStoreExpr (utName unitTest)
-
--- | When a new version of an expression is bound
--- create new versions of the tests
-createNewUnitTests ::
-  Project Annotation ->
-  ExprHash ->
-  ExprHash ->
-  Either (Error Annotation) (Project Annotation, [StoreExpression Annotation])
-createNewUnitTests project oldHash newHash = do
-  let tests = getUnitTestsForExprHash project oldHash
-  newTests <-
-    traverse
-      (updateUnitTest project oldHash newHash)
-      (M.elems tests)
-  let newProject =
-        project
-          <> mconcat
-            ( (\(se, ut) -> fromUnitTest ut se)
-                <$> newTests
-            )
-  pure (newProject, fst <$> newTests)

@@ -16,11 +16,11 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Tests.Types
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -31,8 +31,8 @@ brokenExpr = MyInfix mempty Equals (int 1) (bool True)
 projectStoreSize :: Project ann -> Int
 projectStoreSize = length . getStore . prjStore
 
-unitTestsSize :: Project ann -> Int
-unitTestsSize = M.size . prjUnitTests
+testsSize :: Project ann -> Int
+testsSize = M.size . prjTests
 
 testWithIdInExpr :: Expr Name Annotation
 testWithIdInExpr =
@@ -103,8 +103,8 @@ spec = do
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
             `shouldBe` 3
           -- two more unit tests
-          unitTestsSize newProject
-            `shouldBe` unitTestsSize testStdlib + 2
+          testsSize newProject
+            `shouldBe` testsSize testStdlib + 2
           -- binding hash has changed
           lookupBindingName
             newProject
