@@ -34,7 +34,7 @@ you should then see:
 :search <mt> - search for exprs that match type
 :versions <name> - list all versions of a binding
 :addTest "<test name>" <expr> - add a unit test
-:listTests <optional name> - list tests for <name>
+:tests <optional name> - list tests for <name>
 <expr> - Evaluate <expr>, returning it's simplified form and type
 :quit - give up and leave
 ```

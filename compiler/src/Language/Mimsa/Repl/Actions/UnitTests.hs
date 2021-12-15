@@ -5,6 +5,7 @@ module Language.Mimsa.Repl.Actions.UnitTests
 where
 
 import Data.Foldable
+import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Actions.AddUnitTest
 import Language.Mimsa.Monad
@@ -27,7 +28,8 @@ doAddTest ::
 doAddTest project input testName expr = do
   (newProject, test) <-
     toReplM project (addUnitTest expr testName input)
-  replOutput (prettyPrint test)
+  testResult <- runTests newProject test
+  replOutput (prettyPrint testResult)
   pure newProject
 
 doListTests ::
@@ -40,4 +42,5 @@ doListTests project maybeName = do
   let tests = case maybeName of
         Just name -> fetchTestsForName name
         Nothing -> prjTests project
-  traverse_ (replOutput . prettyPrint) tests
+  testResult <- traverse (runTests project) (M.elems tests)
+  traverse_ (replOutput . prettyPrint) testResult

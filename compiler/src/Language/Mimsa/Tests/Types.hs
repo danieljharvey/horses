@@ -18,7 +18,9 @@ where
 import qualified Data.Aeson as JSON
 import Data.OpenApi
 import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -105,3 +107,15 @@ data TestResult var ann
     PTestResult PropertyTest (PropertyTestResult var ann)
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+
+instance (Show var, Printer var) => Printer (TestResult var ann) where
+  prettyPrint (UTestResult ut) = prettyPrint ut
+  prettyPrint (PTestResult pt ptRes) =
+    let tickOrCross = case ptRes of
+          PropertyTestSuccess -> "+++ PASS +++"
+          _ -> "--- FAIL ---"
+        failures = case ptRes of
+          PropertyTestSuccess -> ""
+          PropertyTestFailures es ->
+            "\nFailing inputs:\n" <> T.intercalate "\n" ((<>) " - " . prettyPrint <$> S.toList es)
+     in tickOrCross <> " " <> prettyPrint pt <> failures

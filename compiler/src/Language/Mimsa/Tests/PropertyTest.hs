@@ -123,17 +123,19 @@ getPropertyTestResult results =
         else PropertyTestFailures (S.map fst failures)
 
 getInputType :: MonoType -> Either TypeError MonoType
-getInputType (MTFunction _ fn _) = Right fn
-getInputType other =
-  Left
-    ( UnificationError
-        other
-        ( MTFunction
-            mempty
-            (MTVar mempty (TVName Nothing "fn"))
-            (MTPrim mempty MTBool)
+getInputType input =
+  case input of
+    (MTFunction _ fn _) -> Right fn
+    other ->
+      Left
+        ( UnificationError
+            other
+            ( MTFunction
+                mempty
+                (MTVar mempty (TVName Nothing "fn"))
+                (MTPrim mempty MTBool)
+            )
         )
-    )
 
 isRightShape :: MonoType -> Either TypeError ()
 isRightShape mt = do
@@ -141,6 +143,6 @@ isRightShape mt = do
     mt
     ( MTFunction
         mempty
-        (MTVar mempty (TVName Nothing "a"))
+        (MTVar mempty (TVUnificationVar (-1)))
         (MTPrim mempty MTBool)
     )
