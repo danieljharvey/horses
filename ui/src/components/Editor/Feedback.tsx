@@ -73,9 +73,6 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
-          <ListTests
-            unitTests={result.expression.edUnitTests}
-          />
           <ListBindings
             state={state}
             values={result.expression.edBindings}
@@ -96,7 +93,8 @@ export const Feedback: React.FC<Props> = ({
             {result.expression.edType}
           </Code>
           <ListTests
-            unitTests={result.expression.edUnitTests}
+            unitTests={result.tests.tdUnitTests}
+            propertyTests={result.tests.tdPropertyTests}
           />
           <ListCompile
             runtimes={Object.values(
@@ -137,7 +135,8 @@ export const Feedback: React.FC<Props> = ({
             {result.expression.edType}
           </Code>
           <ListTests
-            unitTests={result.expression.edUnitTests}
+            unitTests={result.tests.tdUnitTests}
+            propertyTests={result.tests.tdPropertyTests}
           />
           <ListCompile
             runtimes={Object.values(

@@ -4,6 +4,7 @@ import {
   UnitTestData,
   ExpressionData,
   UserErrorResponse,
+  TestData,
 } from '../../types'
 import {
   EventReducer,
@@ -26,19 +27,23 @@ export const editorNew = (): ExpressionResult => ({
 })
 
 export const showBinding = (
-  expression: ExpressionData
+  expression: ExpressionData,
+  tests: TestData
 ): ExpressionResult => ({
   type: 'ShowBinding',
   expression,
+  tests,
 })
 
 export const showUpdatedBinding = (
   expression: ExpressionData,
+  tests: TestData,
   bindingName: string
 ): ExpressionResult => ({
   type: 'ShowUpdatedBinding',
   expression,
   bindingName,
+  tests,
 })
 
 export const showUnitTest = (
@@ -144,6 +149,7 @@ export const editorReducer: EventReducer<
         stale: false,
         expression: showUpdatedBinding(
           action.expression,
+          action.tests,
           action.bindingName
         ),
       })

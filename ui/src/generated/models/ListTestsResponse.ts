@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { UnitTest } from './UnitTest'
+import type { TestData } from './TestData';
 
 export type ListTestsResponse = {
-  ltUnitTests: Array<UnitTest>
+    ltTests: TestData;
 }

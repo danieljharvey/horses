@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export type ExprUsage = {
-  euExprHash: string
-  euIsDirect: boolean
-  euName: string
+    euExprHash: string;
+    euIsDirect: boolean;
+    euName: string;
 }

@@ -2,12 +2,10 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type TypeIdentifier =
-  | {
-      contents: string
-      tag: 'TVName'
-    }
-  | {
-      contents: number
-      tag: 'TVNum'
-    }
+export type TypeIdentifier = ({
+    contents: Array<any>;
+    tag: 'TVName';
+} | {
+    contents: number;
+    tag: 'TVUnificationVar';
+});

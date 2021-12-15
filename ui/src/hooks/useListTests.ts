@@ -7,14 +7,19 @@ import {
   failure,
   success,
 } from '@devexperts/remote-data-ts'
-import { ListTestsResponse, UnitTest } from '../generated'
+import {
+  ListTestsResponse,
+  PropertyTestData,
+  UnitTestData,
+} from '../generated'
 import { pipe } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
 
 // this is how we should do the screens from now on
 
 type ListTests = {
-  unitTests: UnitTest[]
+  unitTests: UnitTestData[]
+  propertyTests: PropertyTestData[]
 }
 
 export type ListTestsState = RemoteData<string, ListTests>
@@ -33,7 +38,8 @@ export const useListTests = (projectHash: string) => {
           (e) => failure(e),
           (a) =>
             success({
-              unitTests: a.ltUnitTests,
+              unitTests: a.ltTests.tdUnitTests,
+              propertyTests: a.ltTests.tdPropertyTests,
             })
         ),
         setListTestsState

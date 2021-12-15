@@ -137,6 +137,7 @@ export const runtime =
                 type: 'BindExpressionSuccess' as const,
                 expression: a.beExpressionData,
                 bindingName: event.bindingName,
+                tests: a.beTestData,
               },
               storeProjectData(a.beProjectData),
             ]
@@ -160,7 +161,7 @@ export const runtime =
             (a) => [
               {
                 type: 'AddUnitTestSuccess' as const,
-                unitTest: a.autUnitTest,
+                tests: a.autTestResult,
               },
               storeProjectData(a.autProjectData),
             ]

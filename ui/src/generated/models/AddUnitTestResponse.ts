@@ -2,10 +2,10 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { ProjectData } from './ProjectData'
-import type { UnitTestData } from './UnitTestData'
+import type { ProjectData } from './ProjectData';
+import type { TestData } from './TestData';
 
 export type AddUnitTestResponse = {
-  autUnitTest: UnitTestData
-  autProjectData: ProjectData
+    autTestResult: TestData;
+    autProjectData: ProjectData;
 }

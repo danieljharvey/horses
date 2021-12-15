@@ -28,7 +28,7 @@ export const editorForBinding = (
     O.map((expr) => ({
       code: expr.edPretty,
       stale: false,
-      expression: showBinding(expr),
+      expression: showBinding(expr, {}),
       bindingName: O.some(bindingName),
     }))
   )

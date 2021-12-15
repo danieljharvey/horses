@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { SourceSpan } from './SourceSpan'
+import type { SourceSpan } from './SourceSpan';
 
 export type ErrorLocation = {
-  elSourceSpan: SourceSpan
+    elSourceSpan: SourceSpan;
 }

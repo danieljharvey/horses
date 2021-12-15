@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export type UnitTestData = {
-  utdBindings: Record<string, string>
-  utdTestName: string
-  utdTestSuccess: boolean
+    utdBindings: Record<string, string>;
+    utdTestName: string;
+    utdTestSuccess: boolean;
 }

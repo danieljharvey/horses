@@ -1,7 +1,11 @@
 import * as React from 'react'
 import { ListBindings } from './ListBindings'
 import './FilteredBindingList.css'
-import { ExprHash, UnitTestData } from '../types/'
+import {
+  ExprHash,
+  PropertyTestData,
+  UnitTestData,
+} from '../types/'
 import { TextInput } from './View/TextInput'
 import { Panel } from './View/Panel'
 import { State } from '../reducer/types'
@@ -81,18 +85,16 @@ const itemSelect = (
 const renderTests = (loadingTests: ListTestsState) =>
   pipe(
     loadingTests,
-    map(({ unitTests }): UnitTestData[] =>
-      unitTests.map((ut) => ({
-        utdTestName: ut.utName,
-        utdBindings: {},
-        utdTestSuccess: ut.utSuccess,
-      }))
-    ),
     fold(
       () => <div />,
       () => <div />,
       (e) => <Paragraph>{e}</Paragraph>,
-      (unitTests) => <ListTests unitTests={unitTests} />
+      (tests) => (
+        <ListTests
+          propertyTests={tests.propertyTests}
+          unitTests={tests.unitTests}
+        />
+      )
     )
   )
 
