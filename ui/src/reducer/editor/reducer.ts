@@ -5,6 +5,7 @@ import {
   ExpressionData,
   UserErrorResponse,
   TestData,
+  PropertyTestData,
 } from '../../types'
 import {
   EventReducer,
@@ -46,11 +47,11 @@ export const showUpdatedBinding = (
   tests,
 })
 
-export const showUnitTest = (
-  unitTest: UnitTestData
+export const showTest = (
+  test: UnitTestData | PropertyTestData
 ): ExpressionResult => ({
-  type: 'ShowUnitTest',
-  unitTest,
+  type: 'ShowTest',
+  test,
 })
 
 const showErrorResponse = (
@@ -165,11 +166,17 @@ export const editorReducer: EventReducer<
         code: state.code,
       })
     case 'AddUnitTestSuccess':
-      return stateOnly({
-        ...state,
-        state: false,
-        expression: showUnitTest(action.unitTest),
-      })
+      const firstTest =
+        action.tests.tdUnitTests.find((a) => a) ||
+        action.tests.tdPropertyTests.find((a) => a)
+      return firstTest
+        ? stateOnly({
+            ...state,
+            state: false,
+            expression: showTest(firstTest),
+          })
+        : stateOnly(state)
+
     case 'AddUnitTestFailure':
       return stateOnly({
         ...state,

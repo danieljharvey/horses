@@ -1,11 +1,7 @@
 import * as React from 'react'
 import { ListBindings } from './ListBindings'
 import './FilteredBindingList.css'
-import {
-  ExprHash,
-  PropertyTestData,
-  UnitTestData,
-} from '../types/'
+import { ExprHash } from '../types/'
 import { TextInput } from './View/TextInput'
 import { Panel } from './View/Panel'
 import { State } from '../reducer/types'
@@ -17,7 +13,7 @@ import {
   ListTestsState,
 } from '../hooks/useListTests'
 import { getProjectHash } from '../reducer/project/selectors'
-import { fold, map } from '@devexperts/remote-data-ts'
+import { fold } from '@devexperts/remote-data-ts'
 import { pipe } from 'fp-ts/function'
 import { ListTests } from './ListTests'
 type Item = 'bindings' | 'tests'

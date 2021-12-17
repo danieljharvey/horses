@@ -5,6 +5,7 @@ import {
   UnitTestData,
   UserErrorResponse,
   TestData,
+  PropertyTestData,
 } from '../../types/'
 
 export type EditorState = {
@@ -25,7 +26,10 @@ export type ExpressionResult =
       type: 'ShowErrorResponse'
       errorResponse: UserErrorResponse
     }
-  | { type: 'ShowUnitTest'; unitTest: UnitTestData }
+  | {
+      type: 'ShowTest'
+      test: UnitTestData | PropertyTestData
+    }
   | { type: 'EvaluationError' }
   | {
       type: 'ShowEvaluate'

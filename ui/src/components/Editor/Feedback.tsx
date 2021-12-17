@@ -18,6 +18,7 @@ import {
 import { pipe } from 'fp-ts/function'
 import { ListCompile } from '../ListCompile'
 import { ListUsages } from '../ListUsages'
+import { PropertyTest } from '../PropertyTest'
 
 type Props = {
   projectHash: ExprHash
@@ -177,14 +178,26 @@ export const Feedback: React.FC<Props> = ({
           </Paragraph>
         </FlexColumnSpaced>
       )
-    case 'ShowUnitTest':
+    case 'ShowTest':
+      const title =
+        'utdTestName' in result.test
+          ? 'Unit test created'
+          : 'Property test created'
       return (
         <FlexColumnSpaced>
-          <Paragraph>Test created</Paragraph>
-          <UnitTest unitTest={result.unitTest} />
+          <Paragraph>{title}</Paragraph>
+          {'utdTestName' in result.test ? (
+            <UnitTest unitTest={result.test} />
+          ) : (
+            <PropertyTest propertyTest={result.test} />
+          )}
           <ListBindings
             state={state}
-            values={result.unitTest.utdBindings}
+            values={
+              'utdBindings' in result.test
+                ? result.test.utdBindings
+                : result.test.ptdBindings
+            }
             types={{}}
             onBindingSelect={onBindingSelect}
           />

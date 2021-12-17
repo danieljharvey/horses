@@ -96,7 +96,10 @@ export const projectReducer: EventReducer<
           ...state.project,
           store: {
             ...state.project.store,
-            [action.exprHash]: action.storeExpression,
+            [action.exprHash]: {
+              expression: action.storeExpression,
+              tests: action.testData,
+            },
           },
         })(state),
         fetchExpressions(

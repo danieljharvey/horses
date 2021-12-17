@@ -1,14 +1,24 @@
+import {
+  PropertyTestData,
+  UnitTestData,
+} from '../../generated'
 import { Screen } from './types'
+
+const getTestName = (
+  test: UnitTestData | PropertyTestData
+): string =>
+  'utdTestName' in test
+    ? test.utdTestName
+    : test.ptdTestName
 
 export const getScreenTitle = (screen: Screen): string => {
   switch (screen.type) {
     case 'new-expression':
       return 'new'
     case 'new-test':
-      return screen.editor.expression.type ===
-        'ShowUnitTest'
+      return screen.editor.expression.type === 'ShowTest'
         ? 'test: ' +
-            screen.editor.expression.unitTest.utdTestName
+            getTestName(screen.editor.expression.test)
         : 'new test'
     case 'edit':
       return screen.bindingName

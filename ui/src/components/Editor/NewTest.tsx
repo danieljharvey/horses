@@ -44,8 +44,7 @@ export const NewTest: React.FC<Props> = ({
 
   const { expression } = editor
 
-  const testExists =
-    editor.expression.type === 'ShowUnitTest'
+  const testExists = editor.expression.type === 'ShowTest'
 
   const onAddTest = () =>
     dispatch({

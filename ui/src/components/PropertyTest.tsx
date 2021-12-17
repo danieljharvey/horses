@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { PropertyTestData } from '../types'
+import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 import { Paragraph } from './View/Paragraph'
 
 type Props = {
@@ -7,11 +8,18 @@ type Props = {
 }
 
 export const PropertyTest: React.FC<Props> = ({
-  propertyTest,
+  propertyTest: { ptdTestFailures, ptdTestName },
 }) => {
-  const emoji =
-    propertyTest.ptdTestFailures.length === 0 ? '✅' : '❌'
+  const success = ptdTestFailures.length === 0
+  const emoji = success ? '✅' : '❌'
+
   return (
-    <Paragraph>{`${emoji} "${propertyTest.ptdTestName}"`}</Paragraph>
+    <FlexColumnSpaced>
+      <Paragraph>{`${emoji} "${ptdTestName}"`}</Paragraph>
+      {!success && <Paragraph> Failures:</Paragraph>}
+      {ptdTestFailures.map((fail) => (
+        <Paragraph>{`   ${fail}`}</Paragraph>
+      ))}
+    </FlexColumnSpaced>
   )
 }
