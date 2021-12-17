@@ -86,8 +86,11 @@ runPropertyTest project pt = do
             (TypeErr mempty)
             (getInputType (reMonoType resolvedExpr))
 
+      -- need to extract datatypes from the test deps
+      let dts = mempty
+
       -- generate inputs
-      samples <- liftIO $ generateFromMonoType inputMt
+      samples <- liftIO $ generateFromMonoType dts inputMt
 
       let exprs = applyGenerated (reExpression resolvedExpr) <$> samples
 

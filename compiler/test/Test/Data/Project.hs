@@ -104,6 +104,8 @@ buildTestStdlib =
       addBinding
         "stringReduce"
         "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
+      addType
+        "type TrafficLight = Red | Yellow | Green"
       addListMonad
       addEither
       addPair

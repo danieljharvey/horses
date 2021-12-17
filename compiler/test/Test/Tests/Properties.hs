@@ -8,42 +8,60 @@ module Test.Tests.Properties
 where
 
 import Control.Monad.IO.Class
+import Data.Either
 import Data.Functor
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Language.Mimsa.Tests.Generate
+import Language.Mimsa.Tests.Helpers
+import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
 
-itTypeChecks :: MonoType -> Expr Variable Annotation -> Either TypeError Bool
-itTypeChecks mt expr =
+getStoreExprs :: Project Annotation -> S.Set (StoreExpression Annotation)
+getStoreExprs =
+  S.fromList
+    . M.elems
+    . getStore
+    . prjStore
+
+itTypeChecks :: MonoType -> Expr Variable Annotation -> Either TypeError ()
+itTypeChecks mt expr = do
   let elabbed =
         fmap (\(_, _, a, _) -> a)
-          . typecheck mempty mempty mempty
+          . typecheck
+            mempty
+            mempty
+            (createEnv mempty (getStoreExprs testStdlib))
           $ expr
-   in (mt ==) . getTypeFromAnn <$> elabbed
+  generatedMt <- getTypeFromAnn <$> elabbed
+  unifies mt generatedMt
 
 itGenerates :: MonoType -> Expectation
 itGenerates mt = do
-  samples <- liftIO $ generateFromMonoType @() mt
+  samples <- liftIO $ generateFromMonoType @() (getStoreExprs testStdlib) mt
   let success = traverse (itTypeChecks mt) (fmap ($> mempty) samples)
-  and <$> success `shouldBe` Right True
+  success `shouldSatisfy` isRight
 
 spec :: Spec
 spec = do
-  describe "Properties" $ do
+  fdescribe "Properties" $ do
     describe "Test the testing" $ do
       it "typechecking check works" $ do
         itTypeChecks (MTPrim mempty MTInt) (MyLiteral mempty (MyInt 100))
-          `shouldBe` Right True
+          `shouldSatisfy` isRight
       it "typechecking fail works" $ do
         itTypeChecks (MTPrim mempty MTBool) (MyLiteral mempty (MyInt 100))
-          `shouldBe` Right False
+          `shouldSatisfy` isLeft
     describe "Test generators" $ do
       it "Bool" $ do
         itGenerates mtBool
@@ -58,3 +76,9 @@ spec = do
       it "Records" $ do
         let record = MTRecord mempty (M.fromList [("dog", mtInt), ("cat", mtBool)])
         itGenerates record
+      it "Functions" $ do
+        itGenerates (MTFunction mempty mtBool mtInt)
+      it "Constructor" $ do
+        itGenerates (MTConstructor mempty "TrafficLight")
+      it "Constructor with var" $ do
+        itGenerates (MTTypeApp mempty (MTConstructor mempty "Maybe") mtInt)
