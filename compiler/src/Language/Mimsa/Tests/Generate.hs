@@ -25,25 +25,31 @@ fromMonoType ::
   MonoType ->
   Gen (Expr Variable ann)
 fromMonoType gs mt =
-  case varsFromDataType mt of
-    Just (typeName, args) ->
-      fromType gs typeName args
-    Nothing ->
-      case mt of
-        (MTPrim _ prim) ->
-          MyLiteral mempty <$> fromPrimitive prim
-        (MTArray _ arrMt) ->
-          if shouldWeStopRecursing gs
-            then pure (MyArray mempty mempty)
-            else MyArray mempty <$> listOf (fromMonoType gs arrMt)
-        (MTPair _ a b) ->
-          MyPair mempty <$> fromMonoType gs a <*> fromMonoType gs b
-        (MTRecord _ as) ->
-          MyRecord mempty <$> traverse (fromMonoType gs) as
-        (MTFunction _ _from to) ->
-          MyLambda mempty (Identifier mempty (NamedVar "a"))
-            <$> fromMonoType gs to
-        _ -> undefined
+  case flattenRow mt of
+    (MTPrim _ prim) ->
+      MyLiteral mempty <$> fromPrimitive prim
+    (MTArray _ arrMt) ->
+      if shouldWeStopRecursing gs
+        then pure (MyArray mempty mempty)
+        else MyArray mempty <$> listOf (fromMonoType gs arrMt)
+    (MTPair _ a b) ->
+      MyPair mempty <$> fromMonoType gs a <*> fromMonoType gs b
+    (MTRecord _ as) ->
+      MyRecord mempty <$> traverse (fromMonoType gs) as
+    (MTRecordRow _ as _) ->
+      -- as we've already run flattenRow on this to remove nested rows, assume the
+      -- part on the end is just an unknown and ignore it
+      MyRecord mempty <$> traverse (fromMonoType gs) as
+    (MTFunction _ _from to) ->
+      MyLambda mempty (Identifier mempty (NamedVar "a"))
+        <$> fromMonoType gs to
+    (MTVar _ _) -> fromMonoType gs (MTPrim mempty MTBool) -- for unknowns, use bool for now
+    mtTA@(MTTypeApp {}) -> case varsFromDataType mtTA of
+      Just (typeName, args) -> fromType gs typeName args
+      Nothing -> error "could not work out datatype"
+    mtCons@(MTConstructor {}) -> case varsFromDataType mtCons of
+      Just (typeName, args) -> fromType gs typeName args
+      Nothing -> error "could not work out datatype"
 
 -- | take the args for the type and apply them to the type
 typeApply :: [MonoType] -> DataType -> Map TyCon [Type ()]
