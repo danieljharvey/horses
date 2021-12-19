@@ -7,7 +7,6 @@ where
 
 import Data.Either (isLeft)
 import qualified Data.Map as M
-import qualified Data.Set as S
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Tests.Test
@@ -139,7 +138,6 @@ spec =
                 (TestName "True is true")
                 (UnitTestSuccess True)
                 (getStoreExpressionHash storeExpr)
-                mempty
             )
       it "False is a valid (but failing) test" $ do
         let storeExpr = StoreExpression (bool False) mempty mempty
@@ -149,7 +147,6 @@ spec =
                 (TestName "False is not true")
                 (UnitTestSuccess False)
                 (getStoreExpressionHash storeExpr)
-                mempty
             )
       it "100 is not a valid test" $ do
         let storeExpr = StoreExpression (int 100) mempty mempty
@@ -169,8 +166,4 @@ spec =
                 (TestName "incrementInt is a no-op")
                 (UnitTestSuccess False)
                 (getStoreExpressionHash testStoreExpr)
-                ( S.fromList
-                    [ incrementIntH
-                    ]
-                )
             )

@@ -100,7 +100,7 @@ addToScope scope' =
 
 -- number of function applications before we fail
 maxCount :: Int
-maxCount = 100000
+maxCount = 500000
 
 incrementApplyCount :: App ann ()
 incrementApplyCount = do

@@ -54,7 +54,7 @@ itGenerates mt = do
 
 spec :: Spec
 spec = do
-  fdescribe "Properties" $ do
+  describe "Properties" $ do
     describe "Test the testing" $ do
       it "typechecking check works" $ do
         itTypeChecks (MTPrim mempty MTInt) (MyLiteral mempty (MyInt 100))
@@ -78,7 +78,11 @@ spec = do
         itGenerates record
       it "Functions" $ do
         itGenerates (MTFunction mempty mtBool mtInt)
+      it "Nested functions" $ do
+        itGenerates (MTFunction mempty mtString (MTFunction mempty mtBool mtInt))
       it "Constructor" $ do
         itGenerates (MTConstructor mempty "TrafficLight")
       it "Constructor with var" $ do
         itGenerates (MTTypeApp mempty (MTConstructor mempty "Maybe") mtInt)
+      it "Constructor with nested vars" $ do
+        itGenerates (MTTypeApp mempty (MTConstructor mempty "Tree") mtBool)

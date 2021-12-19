@@ -6,8 +6,6 @@ module Language.Mimsa.Tests.UnitTest
 where
 
 import Data.Bifunctor (first)
-import qualified Data.Map as M
-import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
@@ -31,14 +29,9 @@ createUnitTest project storeExpr testName = do
   (ResolvedExpression _ _ rExpr rScope rSwaps _ _) <-
     Actions.getTypecheckedStoreExpression (prettyPrint testExpr) project testExpr
   result <- first InterpreterErr (interpret rScope rSwaps rExpr)
-  let deps =
-        S.fromList $
-          M.elems (getBindings $ storeBindings storeExpr)
-            <> M.elems (getTypeBindings $ storeTypeBindings storeExpr)
   pure $
     UnitTest
       { utName = testName,
         utSuccess = UnitTestSuccess (testIsSuccess result),
-        utExprHash = getStoreExpressionHash storeExpr,
-        utDeps = deps
+        utExprHash = getStoreExpressionHash storeExpr
       }

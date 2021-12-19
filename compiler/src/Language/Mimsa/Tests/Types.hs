@@ -74,8 +74,7 @@ instance Printer Test where
 
 data PropertyTest = PropertyTest
   { ptName :: TestName,
-    ptExprHash :: ExprHash,
-    ptDeps :: Set ExprHash
+    ptExprHash :: ExprHash
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
@@ -87,8 +86,7 @@ instance Printer PropertyTest where
 data UnitTest = UnitTest
   { utName :: TestName,
     utSuccess :: UnitTestSuccess,
-    utExprHash :: ExprHash,
-    utDeps :: Set ExprHash
+    utExprHash :: ExprHash
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)

@@ -126,6 +126,9 @@ addPropertyTests = do
   addBinding
     "constFalse"
     "\\(a: Boolean) -> False"
+  addBinding
+    "invertTreeTwice"
+    "\\(tree: Tree Int) -> invertTree (invertTree tree) == tree"
 
 addListMonad :: Actions.ActionM ()
 addListMonad = do

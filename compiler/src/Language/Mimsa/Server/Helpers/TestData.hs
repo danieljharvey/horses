@@ -23,6 +23,7 @@ import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
+import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -47,7 +48,7 @@ data UnitTestData = UnitTestData
 mkUnitTestData :: Project ann -> UnitTest -> UnitTestData
 mkUnitTestData project unitTest = do
   let getDep = (`findBindingNameForExprHash` project)
-  let depMap = mconcat (getDep <$> S.toList (utDeps unitTest))
+  let depMap = mconcat (getDep <$> S.toList (getDirectDepsOfTest project (UTest unitTest)))
   UnitTestData
     (coerce $ utName unitTest)
     (coerce $ utSuccess unitTest)
@@ -68,7 +69,7 @@ mkPropertyTestData ::
   PropertyTestData
 mkPropertyTestData project propertyTest result = do
   let getDep = (`findBindingNameForExprHash` project)
-  let depMap = mconcat (getDep <$> S.toList (ptDeps propertyTest))
+  let depMap = mconcat (getDep <$> S.toList (getDirectDepsOfTest project (PTest propertyTest)))
   let failures = case result of
         PropertyTestSuccess -> mempty
         PropertyTestFailures es -> prettyPrint <$> S.toList es

@@ -8,6 +8,8 @@ module Language.Mimsa.Tests.Test
     filterUnitTest,
     filterPropertyTest,
     createNewTests,
+    getDirectDeps,
+    getDirectDepsOfTest,
   )
 where
 
@@ -58,10 +60,8 @@ getTestsForExprHash prj exprHash =
   where
     (currentHashes, oldHashes) =
       splitProjectHashesByVersion prj
-    testDeps test =
-      case test of
-        PTest pt -> ptDeps pt
-        UTest ut -> utDeps ut
+    testDeps =
+      getDirectDepsOfTest prj
     includeUnitTest ut =
       S.member exprHash (testDeps ut)
         && getAll (foldMap (All . depIsValid) (S.toList (testDeps ut)))
@@ -157,3 +157,16 @@ runTests ::
 runTests _ (UTest ut) = pure (UTestResult ut)
 runTests project (PTest pt) =
   PTestResult pt <$> runPropertyTest project pt
+
+getDirectDepsOfTest :: Project ann -> Test -> Set ExprHash
+getDirectDepsOfTest prj test =
+  let exprHash = case test of
+        (UTest ut) -> utExprHash ut
+        (PTest pt) -> ptExprHash pt
+   in maybe mempty getDirectDeps (lookupExprHash prj exprHash)
+
+getDirectDeps :: StoreExpression ann -> Set ExprHash
+getDirectDeps storeExpr =
+  S.fromList $
+    M.elems (getBindings $ storeBindings storeExpr)
+      <> M.elems (getTypeBindings $ storeTypeBindings storeExpr)

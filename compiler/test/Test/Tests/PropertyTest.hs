@@ -10,10 +10,12 @@ import Data.Either (isLeft, isRight)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Tests.PropertyTest
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
@@ -24,6 +26,20 @@ constTrueHash = getHashOfName testStdlib "constTrue"
 
 constFalseHash :: ExprHash
 constFalseHash = getHashOfName testStdlib "constFalse"
+
+invertTreeTwiceHash :: ExprHash
+invertTreeTwiceHash = getHashOfName testStdlib "invertTreeTwice"
+
+getStoreItem :: Project ann -> ExprHash -> StoreExpression ann
+getStoreItem prj hash =
+  case lookupExprHash prj hash of
+    Just a -> a
+    _ -> error "Error in getStoreItem in PropertyTest tests"
+
+createPropertyTest' :: StoreExpression Annotation -> TestName -> PropertyTest
+createPropertyTest' se testName = case createPropertyTest testStdlib se testName of
+  Right a -> a
+  Left e -> error (T.unpack (prettyPrint e))
 
 -- | run an ExceptT thing and explode on error
 runExceptYOLO :: ExceptT (Error Annotation) IO a -> IO a
@@ -38,15 +54,33 @@ spec =
   describe "PropertyTest" $ do
     describe "runPropertyTest" $ do
       it "Runs a passing test" $ do
+        let pt =
+              createPropertyTest'
+                (getStoreItem testStdlib constTrueHash)
+                (TestName "const true")
         result <-
           runExceptYOLO $
-            runPropertyTest testStdlib (PropertyTest (TestName "const true") constTrueHash mempty)
+            runPropertyTest testStdlib pt
+        result `shouldBe` PropertyTestSuccess
+
+      it "Runs a passing test that uses a datatype" $ do
+        let pt =
+              createPropertyTest'
+                (getStoreItem testStdlib invertTreeTwiceHash)
+                (TestName "inverting a tree twice is identity")
+        result <-
+          runExceptYOLO $
+            runPropertyTest testStdlib pt
         result `shouldBe` PropertyTestSuccess
 
       it "Runs a failing test" $ do
+        let pt =
+              createPropertyTest'
+                (getStoreItem testStdlib constFalseHash)
+                (TestName "const false")
         result <-
           runExceptYOLO $
-            runPropertyTest testStdlib (PropertyTest (TestName "const false") constFalseHash mempty)
+            runPropertyTest testStdlib pt
         result `shouldBe` PropertyTestFailures (S.fromList [bool True, bool False])
 
     describe "createPropertyTest" $ do

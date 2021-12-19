@@ -9,7 +9,6 @@ where
 
 import Control.Monad.Except
 import Data.Bifunctor
-import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter
@@ -46,15 +45,10 @@ createPropertyTest project storeExpr testName = do
       testExpr
 
   first (TypeErr mempty) (isRightShape (reMonoType resolvedExpr))
-  let deps =
-        S.fromList $
-          M.elems (getBindings $ storeBindings storeExpr)
-            <> M.elems (getTypeBindings $ storeTypeBindings storeExpr)
   pure $
     PropertyTest
       { ptName = testName,
-        ptExprHash = getStoreExpressionHash storeExpr,
-        ptDeps = deps
+        ptExprHash = getStoreExpressionHash storeExpr
       }
 
 runPropertyTest ::
@@ -86,11 +80,11 @@ runPropertyTest project pt = do
             (TypeErr mempty)
             (getInputType (reMonoType resolvedExpr))
 
-      -- need to extract datatypes from the test deps
-      let dts = mempty
+      -- need to recursively fetch all deps of se
+      seDeps <- toMonadError $ first StoreErr (recursiveResolve (prjStore project) se)
 
       -- generate inputs
-      samples <- liftIO $ generateFromMonoType dts inputMt
+      samples <- liftIO $ generateFromMonoType (S.fromList seDeps) inputMt
 
       let exprs = applyGenerated (reExpression resolvedExpr) <$> samples
 
