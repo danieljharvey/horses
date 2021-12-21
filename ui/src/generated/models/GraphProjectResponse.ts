@@ -3,5 +3,5 @@
 /* eslint-disable */
 
 export type GraphProjectResponse = {
-    gpGraphviz: string;
+  gpGraphviz: string
 }

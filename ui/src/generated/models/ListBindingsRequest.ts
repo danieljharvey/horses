@@ -3,5 +3,5 @@
 /* eslint-disable */
 
 export type ListBindingsRequest = {
-    lbProjectHash: string;
+  lbProjectHash: string
 }

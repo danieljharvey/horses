@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { TestData } from './TestData';
+import type { TestData } from './TestData'
 
 export type ListTestsByNameResponse = {
-    ltbnTests: TestData;
+  ltbnTests: TestData
 }
