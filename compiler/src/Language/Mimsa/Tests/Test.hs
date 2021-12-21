@@ -1,12 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Language.Mimsa.Tests.Test
   ( createTest,
     getTestsForExprHash,
     runTests,
-    filterUnitTest,
-    filterPropertyTest,
     createNewTests,
     getDirectDeps,
     getDirectDepsOfTest,
@@ -87,16 +84,6 @@ splitProjectHashesByVersion prj =
     typeBindings =
       let bindings = getVersionedMap $ prjTypeBindings prj
        in getItems (M.elems bindings)
-
-filterUnitTest :: Test -> Maybe UnitTest
-filterUnitTest = \case
-  UTest ut -> Just ut
-  PTest _ -> Nothing
-
-filterPropertyTest :: Test -> Maybe PropertyTest
-filterPropertyTest = \case
-  PTest pt -> Just pt
-  UTest _ -> Nothing
 
 -- | When a new version of an expression is bound
 -- create new versions of the tests

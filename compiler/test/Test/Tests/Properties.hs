@@ -62,6 +62,18 @@ spec = do
       it "typechecking fail works" $ do
         itTypeChecks (MTPrim mempty MTBool) (MyLiteral mempty (MyInt 100))
           `shouldSatisfy` isLeft
+    describe "isRecursive" $ do
+      it "is not recursive" $ do
+        isRecursive "Unit" [] `shouldBe` False
+      it "is not recursive 2" $ do
+        isRecursive "Maybe" [MTPrim () MTInt] `shouldBe` False
+      it "is recursive" $ do
+        isRecursive
+          "List"
+          [ MTTypeApp () (MTConstructor () "List") (MTPrim () MTInt)
+          ]
+          `shouldBe` True
+
     describe "Test generators" $ do
       it "Bool" $ do
         itGenerates mtBool

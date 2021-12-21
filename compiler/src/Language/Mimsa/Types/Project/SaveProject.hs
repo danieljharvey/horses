@@ -20,7 +20,8 @@ data SaveProject = SaveProject
   { projectVersion :: Int,
     projectBindings :: VersionedBindings,
     projectTypes :: VersionedTypeBindings,
-    projectTests :: Map ExprHash Test
+    projectUnitTests :: Map ExprHash UnitTest,
+    projectPropertyTests :: Map ExprHash PropertyTest
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON)
@@ -31,12 +32,19 @@ instance JSON.FromJSON SaveProject where
     bindings <- o .: "projectBindings"
     types <- o .: "projectTypes"
     unitTests <- o .:? "projectUnitTests"
-    tests <- case unitTests of
+    propertyTests <- o .:? "projectPropertyTests"
+    ut <- case unitTests of
       Just as -> JSON.parseJSON as
       Nothing -> pure mempty
+
+    pt <- case propertyTests of
+      Just as -> JSON.parseJSON as
+      Nothing -> pure mempty
+
     SaveProject
       <$> JSON.parseJSON version
       <*> JSON.parseJSON bindings
       <*> JSON.parseJSON types
-      <*> pure tests
+      <*> pure ut
+      <*> pure pt
   parseJSON _ = mzero

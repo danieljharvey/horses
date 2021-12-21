@@ -53,6 +53,10 @@ testWithIdInExpr =
 testWithIdAndConst :: Expr Name Annotation
 testWithIdAndConst = unsafeParseExpr "id 1 == (const 1 False)" $> mempty
 
+propertyTestWithIdAndConst :: Expr Name Annotation
+propertyTestWithIdAndConst =
+  unsafeParseExpr "\\a -> id a == (const a False)" $> mempty
+
 idHash :: ExprHash
 idHash = getHashOfName testStdlib "id"
 
@@ -64,7 +68,7 @@ spec = do
         testStdlib
         (Actions.addUnitTest brokenExpr (TestName "Oh no") "1 == True")
         `shouldSatisfy` isLeft
-    it "Adds a new test" $ do
+    it "Adds a new unit test" $ do
       case Actions.run
         testStdlib
         (Actions.addUnitTest testWithIdInExpr (TestName "Id does nothing") "id 1 == 1") of
@@ -78,7 +82,27 @@ spec = do
             `shouldBe` 1
           -- new expression
           S.size (Actions.storeExpressionsFromOutcomes outcomes) `shouldBe` 1
-    it "Adds a new test, updates it's dep, but retrieving only returns one version" $ do
+
+    it "Adds a new property test" $ do
+      case Actions.run
+        testStdlib
+        ( Actions.addUnitTest
+            propertyTestWithIdAndConst
+            (TestName "Id does nothing")
+            (prettyPrint propertyTestWithIdAndConst)
+        ) of
+        Left _ -> error "Should not have failed"
+        Right (newProject, outcomes, _) -> do
+          -- one more item in store
+          additionalStoreItems testStdlib newProject
+            `shouldBe` 1
+          -- one more unit test
+          additionalTests testStdlib newProject
+            `shouldBe` 1
+          -- new expression
+          S.size (Actions.storeExpressionsFromOutcomes outcomes) `shouldBe` 1
+
+    it "Adds a new unit test, updates it's dep, but retrieving only returns one version" $ do
       let newConst =
             MyLambda
               mempty
@@ -88,6 +112,30 @@ spec = do
         testStdlib
         ( do
             _ <- Actions.addUnitTest testWithIdAndConst (TestName "Id does nothing") (prettyPrint testWithIdAndConst)
+            Actions.bindExpression newConst "const" (prettyPrint newConst)
+        ) of
+        Left e -> error (T.unpack $ prettyPrint e)
+        Right (newProject, _, _) -> do
+          additionalTests testStdlib newProject `shouldBe` 2
+          -- When actually fetching tests we should only show one for id
+          -- instead of for both versions of `const`
+          let gotTests = getTestsForExprHash newProject idHash
+          length gotTests `shouldBe` 1
+
+    it "Adds a new property test, updates it's dep, but retrieving only returns one version" $ do
+      let newConst =
+            MyLambda
+              mempty
+              (Identifier mempty "aaa")
+              (MyLambda mempty (Identifier mempty "bbb") (MyVar mempty "aaa"))
+      case Actions.run
+        testStdlib
+        ( do
+            _ <-
+              Actions.addUnitTest
+                propertyTestWithIdAndConst
+                (TestName "Id does nothing")
+                (prettyPrint propertyTestWithIdAndConst)
             Actions.bindExpression newConst "const" (prettyPrint newConst)
         ) of
         Left e -> error (T.unpack $ prettyPrint e)

@@ -1,13 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Tests.Generate (generateFromMonoType) where
+module Language.Mimsa.Tests.Generate
+  ( generateFromMonoType,
+    isRecursive,
+  )
+where
 
 import Data.Coerce
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
+import qualified Data.Set as S
 import qualified Data.Text as T
+import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
@@ -16,7 +22,10 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Test.QuickCheck
 
-data GenerateState = GenerateState {gsDataTypes :: Map TyCon DataType, gsDepth :: Int}
+data GenerateState = GenerateState
+  { gsDataTypes :: Map TyCon DataType,
+    gsDepth :: Int
+  }
 
 -- | TODO: this is wildly incomplete, but let's get the mechanism working first
 fromMonoType ::
@@ -67,28 +76,53 @@ fromType ::
   [MonoType] ->
   Gen (Expr Variable ann)
 fromType gs typeName args = case M.lookup typeName (gsDataTypes gs) of
-  Just dt -> oneof (fromConstructor gs <$> M.toList (typeApply args dt))
+  Just dt -> do
+    let newGs = incrementDepth gs
+        dtApplied = typeApply args dt
+        info (tyCon, args') = do
+          ( constructorWeighting newGs typeName args',
+            fromConstructor newGs tyCon args'
+            )
+    frequency (info <$> M.toList dtApplied)
   Nothing -> error "could not find datatype"
+
+constructorWeighting :: GenerateState -> TyCon -> [Type ()] -> Int
+constructorWeighting gs typeName args =
+  if shouldWeStopRecursing gs
+    then
+      if isRecursive typeName args
+        then 1 -- use recursive constructors less
+        else 3 -- and non-recursive ones more
+    else 1 -- equal weighting pls
 
 -- | adjust this number to balance out good testing and interpreter crashing
 shouldWeStopRecursing :: GenerateState -> Bool
-shouldWeStopRecursing gs = gsDepth gs > 3
+shouldWeStopRecursing gs = gsDepth gs > 2
 
 -- | To stop recursive datatypes getting ridiculous we make a depth limit
 incrementDepth :: GenerateState -> GenerateState
 incrementDepth (GenerateState dts depth) = GenerateState dts (depth + 1)
 
+-- | does the type use itself?
+isRecursive :: TyCon -> [Type ()] -> Bool
+isRecursive typeName args =
+  or
+    ( S.member typeName
+        . extractTypenames
+        <$> args
+    )
+
 fromConstructor ::
   (Monoid ann) =>
   GenerateState ->
-  (TyCon, [Type ()]) ->
+  TyCon ->
+  [Type ()] ->
   Gen (Expr Variable ann)
-fromConstructor gs (tyCon, args) =
-  let newGs = incrementDepth gs
-      applyArg arg mA = do
+fromConstructor gs tyCon args =
+  let applyArg arg mA = do
         a <- mA
         let mtArg = arg $> mempty
-        MyApp mempty a <$> fromMonoType newGs mtArg
+        MyApp mempty a <$> fromMonoType gs mtArg
    in foldr
         applyArg
         (pure (MyConstructor mempty tyCon))
@@ -116,4 +150,6 @@ generateFromMonoType ::
   IO [Expr Variable ann]
 generateFromMonoType storeExprs mt =
   let generateState = GenerateState (generateTypes storeExprs) 1
-   in sample' $ resize 1000 (fromMonoType generateState (flattenRow mt))
+   in do
+        let generator = fromMonoType generateState (flattenRow mt)
+        sample' (resize 1000 generator)

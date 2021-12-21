@@ -27,6 +27,7 @@ module Language.Mimsa.Project.Helpers
 where
 
 import Data.Coerce
+import Data.Either
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -47,17 +48,27 @@ projectFromSaved store' sp =
     { prjStore = store',
       prjBindings = projectBindings sp,
       prjTypeBindings = projectTypes sp,
-      prjTests = projectTests sp
+      prjTests =
+        (UTest <$> projectUnitTests sp)
+          <> (PTest <$> projectPropertyTests sp)
     }
 
 projectToSaved :: Project a -> SaveProject
 projectToSaved proj =
-  SaveProject
-    { projectVersion = 1,
-      projectBindings = prjBindings proj,
-      projectTypes = prjTypeBindings proj,
-      projectTests = prjTests proj
-    }
+  let (uts, pts) =
+        partitionEithers $
+          ( \(hash, test) -> case test of
+              UTest ut -> Left (hash, ut)
+              PTest pt -> Right (hash, pt)
+          )
+            <$> M.toList (prjTests proj)
+   in SaveProject
+        { projectVersion = 1,
+          projectBindings = prjBindings proj,
+          projectTypes = prjTypeBindings proj,
+          projectUnitTests = M.fromList uts,
+          projectPropertyTests = M.fromList pts
+        }
 
 fromStoreExpression :: StoreExpression ann -> ExprHash -> Project ann
 fromStoreExpression storeExpr exprHash =

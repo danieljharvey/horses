@@ -48,7 +48,12 @@ data UnitTestData = UnitTestData
 mkUnitTestData :: Project ann -> UnitTest -> UnitTestData
 mkUnitTestData project unitTest = do
   let getDep = (`findBindingNameForExprHash` project)
-  let depMap = mconcat (getDep <$> S.toList (getDirectDepsOfTest project (UTest unitTest)))
+  let depMap =
+        mconcat
+          ( getDep
+              <$> S.toList
+                (getDirectDepsOfTest project (UTest unitTest))
+          )
   UnitTestData
     (coerce $ utName unitTest)
     (coerce $ utSuccess unitTest)
@@ -69,7 +74,12 @@ mkPropertyTestData ::
   PropertyTestData
 mkPropertyTestData project propertyTest result = do
   let getDep = (`findBindingNameForExprHash` project)
-  let depMap = mconcat (getDep <$> S.toList (getDirectDepsOfTest project (PTest propertyTest)))
+  let depMap =
+        mconcat
+          ( getDep
+              <$> S.toList
+                (getDirectDepsOfTest project (PTest propertyTest))
+          )
   let failures = case result of
         PropertyTestSuccess -> mempty
         PropertyTestFailures es -> prettyPrint <$> S.toList es
@@ -86,7 +96,11 @@ data RuntimeData = RuntimeData
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
-splitTestResults :: [TestResult var ann] -> ([UnitTest], [(PropertyTest, PropertyTestResult var ann)])
+splitTestResults ::
+  [TestResult var ann] ->
+  ( [UnitTest],
+    [(PropertyTest, PropertyTestResult var ann)]
+  )
 splitTestResults results =
   let f res = case res of
         PTestResult pt res' -> Right (pt, res')
