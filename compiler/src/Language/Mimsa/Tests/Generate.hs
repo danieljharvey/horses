@@ -27,7 +27,6 @@ data GenerateState = GenerateState
     gsDepth :: Int
   }
 
--- | TODO: this is wildly incomplete, but let's get the mechanism working first
 fromMonoType ::
   (Monoid ann) =>
   GenerateState ->
