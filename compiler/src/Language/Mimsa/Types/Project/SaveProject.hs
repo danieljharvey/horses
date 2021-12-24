@@ -12,7 +12,7 @@ import Data.Aeson
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import GHC.Generics (Generic)
-import Language.Mimsa.Types.Project.UnitTest
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Project.Versioned
 import Language.Mimsa.Types.Store
 
@@ -20,7 +20,8 @@ data SaveProject = SaveProject
   { projectVersion :: Int,
     projectBindings :: VersionedBindings,
     projectTypes :: VersionedTypeBindings,
-    projectUnitTests :: Map ExprHash UnitTest
+    projectUnitTests :: Map ExprHash UnitTest,
+    projectPropertyTests :: Map ExprHash PropertyTest
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON)
@@ -31,12 +32,19 @@ instance JSON.FromJSON SaveProject where
     bindings <- o .: "projectBindings"
     types <- o .: "projectTypes"
     unitTests <- o .:? "projectUnitTests"
-    tests <- case unitTests of
+    propertyTests <- o .:? "projectPropertyTests"
+    ut <- case unitTests of
       Just as -> JSON.parseJSON as
       Nothing -> pure mempty
+
+    pt <- case propertyTests of
+      Just as -> JSON.parseJSON as
+      Nothing -> pure mempty
+
     SaveProject
       <$> JSON.parseJSON version
       <*> JSON.parseJSON bindings
       <*> JSON.parseJSON types
-      <*> pure tests
+      <*> pure ut
+      <*> pure pt
   parseJSON _ = mzero

@@ -65,7 +65,11 @@ loadProject' = do
         Just sp -> fetchProjectItems mempty sp -- we're starting from scratch with this one
         _ -> throwError $ CouldNotDecodeFile envPath
 
-loadProjectFromHash :: (Monoid ann) => Store ann -> ProjectHash -> MimsaM StoreError (Project ann)
+loadProjectFromHash ::
+  (Monoid ann) =>
+  Store ann ->
+  ProjectHash ->
+  MimsaM StoreError (Project ann)
 loadProjectFromHash store' hash = do
   let unitStore = store' $> ()
   proj <- loadProjectFromHash' unitStore hash
@@ -79,7 +83,9 @@ loadProjectFromHash' store' hash = do
   path <- getProjectPath hash
   json <- liftIO $ try $ LBS.readFile path
   case json of
-    Left (_ :: IOError) -> throwError $ CouldNotReadFilePath (getProjectFilename hash)
+    Left (_ :: IOError) ->
+      throwError $
+        CouldNotReadFilePath (getProjectFilename hash)
     Right json' -> case JSON.decode json' of
       Just sp -> fetchProjectItems store' sp
       _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
@@ -100,7 +106,11 @@ fetchProjectItems existingStore sp = do
   testStore <-
     recursiveLoadBoundExpressions
       existingStore
-      (M.keysSet $ projectUnitTests sp)
+      ( M.keysSet
+          ( projectUnitTests sp
+          )
+          <> M.keysSet (projectPropertyTests sp)
+      )
   pure $
     projectFromSaved
       ( existingStore <> store' <> typeStore'
@@ -167,7 +177,9 @@ recursiveLoadBoundExpressions ::
   Set ExprHash ->
   MimsaM StoreError (Store ())
 recursiveLoadBoundExpressions existingStore hashes = do
-  newStore <- loadBoundExpressions (S.difference hashes (storeItems existingStore))
+  newStore <-
+    loadBoundExpressions
+      (S.difference hashes (storeItems existingStore))
   let newHashes =
         S.difference
           ( S.unions $
@@ -177,7 +189,10 @@ recursiveLoadBoundExpressions existingStore hashes = do
   if S.null newHashes
     then pure (existingStore <> newStore)
     else do
-      moreStore <- recursiveLoadBoundExpressions (existingStore <> newStore) newHashes
+      moreStore <-
+        recursiveLoadBoundExpressions
+          (existingStore <> newStore)
+          newHashes
       pure (existingStore <> newStore <> moreStore)
 
 --

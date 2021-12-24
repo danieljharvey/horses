@@ -90,7 +90,6 @@ library
       Language.Mimsa.Project.SourceSpan
       Language.Mimsa.Project.Stdlib
       Language.Mimsa.Project.TypeSearch
-      Language.Mimsa.Project.UnitTest
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
       Language.Mimsa.Repl
@@ -114,6 +113,7 @@ library
       Language.Mimsa.Server.Handlers
       Language.Mimsa.Server.Helpers
       Language.Mimsa.Server.Helpers.ExpressionData
+      Language.Mimsa.Server.Helpers.TestData
       Language.Mimsa.Server.Main
       Language.Mimsa.Server.MimsaHandler
       Language.Mimsa.Server.Project
@@ -141,6 +141,12 @@ library
       Language.Mimsa.Store.Storage
       Language.Mimsa.Store.Substitutor
       Language.Mimsa.Store.UpdateDeps
+      Language.Mimsa.Tests.Generate
+      Language.Mimsa.Tests.Helpers
+      Language.Mimsa.Tests.PropertyTest
+      Language.Mimsa.Tests.Test
+      Language.Mimsa.Tests.Types
+      Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
       Language.Mimsa.Typechecker.DataTypes
@@ -190,7 +196,6 @@ library
       Language.Mimsa.Types.Project.SaveProject
       Language.Mimsa.Types.Project.SourceItem
       Language.Mimsa.Types.Project.SourceSpan
-      Language.Mimsa.Types.Project.UnitTest
       Language.Mimsa.Types.Project.Usage
       Language.Mimsa.Types.Project.Versioned
       Language.Mimsa.Types.Project.VersionedMap
@@ -223,7 +228,8 @@ library
   default-extensions:
       Strict
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , binary
     , bytestring
@@ -263,7 +269,8 @@ executable mimsa
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , binary
     , bytestring
@@ -304,7 +311,8 @@ executable swagger
       swagger
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , binary
     , bytestring
@@ -371,12 +379,14 @@ test-suite mimsa-test
       Test.Project.SourceSpan
       Test.Project.Stdlib
       Test.Project.TypeSearch
-      Test.Project.UnitTest
       Test.Project.Usages
       Test.Serialisation
       Test.Store.Resolver
       Test.Store.Substitutor
       Test.Store.UpdateDeps
+      Test.Tests.Properties
+      Test.Tests.PropertyTest
+      Test.Tests.UnitTest
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
@@ -395,7 +405,8 @@ test-suite mimsa-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , binary
     , bytestring

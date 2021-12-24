@@ -4,6 +4,8 @@ import {
   EvaluateResponse,
   UnitTestData,
   UserErrorResponse,
+  TestData,
+  PropertyTestData,
 } from '../../types/'
 
 export type EditorState = {
@@ -15,12 +17,18 @@ export type EditorState = {
 
 export type ExpressionResult =
   | { type: 'EditorNew' }
-  | { type: 'ShowBinding'; expression: ExpressionData }
+  | {
+      type: 'ShowBinding'
+      expression: ExpressionData
+    }
   | {
       type: 'ShowErrorResponse'
       errorResponse: UserErrorResponse
     }
-  | { type: 'ShowUnitTest'; unitTest: UnitTestData }
+  | {
+      type: 'ShowTest'
+      test: UnitTestData | PropertyTestData
+    }
   | { type: 'EvaluationError' }
   | {
       type: 'ShowEvaluate'
@@ -31,6 +39,7 @@ export type ExpressionResult =
       type: 'ShowUpdatedBinding'
       bindingName: string
       expression: ExpressionData
+      tests: TestData
     }
 
 export type EditorAction =
@@ -47,13 +56,14 @@ export type EditorAction =
     }
   | { type: 'EvaluateExpressionError' }
   | { type: 'AddUnitTest'; testName: string }
-  | { type: 'AddUnitTestSuccess'; unitTest: UnitTestData }
+  | { type: 'AddUnitTestSuccess'; tests: TestData }
   | { type: 'AddUnitTestFailure'; error: UserErrorResponse }
   | { type: 'BindExpression'; bindingName: string }
   | {
       type: 'BindExpressionSuccess'
       expression: ExpressionData
       bindingName: string
+      tests: TestData
     }
   | {
       type: 'BindExpressionFailure'

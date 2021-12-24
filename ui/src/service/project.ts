@@ -22,6 +22,7 @@ import {
   axiosGet,
 } from '../utils/axios-taskeither'
 import * as TE from 'fp-ts/TaskEither'
+import { ListTestsByExprHashResponse } from '../generated'
 
 // project-based API calls
 
@@ -89,3 +90,11 @@ export const getProjectTests = (
   projectHash: ExprHash
 ): TE.TaskEither<string, ListTestsResponse> =>
   axiosGet(`${baseUrl}/project/${projectHash}/tests/list`)
+
+export const getTestsForExpression = (
+  projectHash: ExprHash,
+  exprHash: ExprHash
+): TE.TaskEither<string, ListTestsByExprHashResponse> =>
+  axiosGet(
+    `${baseUrl}/project/${projectHash}/tests/list/${exprHash}/`
+  )

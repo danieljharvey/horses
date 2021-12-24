@@ -6,8 +6,12 @@ import {
   ExprUsage,
 } from '../../types'
 
+export type StoreItem = {
+  expression: ExpressionData
+}
+
 export type ProjectState = {
-  store: Record<ExprHash, ExpressionData>
+  store: Record<ExprHash, StoreItem>
   projectHash: ExprHash
   bindings: Record<string, ExprHash>
   typeBindings: Record<string, ExprHash>

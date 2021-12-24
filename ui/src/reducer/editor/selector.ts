@@ -8,6 +8,7 @@ import {
   UserErrorResponse,
   TypedHoleResponse,
   ErrorLocation,
+  TestData,
 } from '../../types'
 import { pipe } from 'fp-ts/function'
 import * as NE from 'fp-ts/NonEmptyArray'
@@ -73,6 +74,7 @@ type ExpressionDataResult =
       type: 'ShowUpdatedBinding'
       bindingName: string
       expression: ExpressionData
+      tests: TestData
     }
 
 const expressionDataPrism: Prism<

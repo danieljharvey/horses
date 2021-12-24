@@ -7,6 +7,7 @@ module Test.Actions.BindExpression
 where
 
 import Data.Either (isLeft, isRight)
+import Data.Functor
 import qualified Data.Map as M
 import Data.Maybe (isJust)
 import qualified Data.Set as S
@@ -16,6 +17,7 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
@@ -30,16 +32,12 @@ brokenExpr = MyInfix mempty Equals (int 1) (bool True)
 projectStoreSize :: Project ann -> Int
 projectStoreSize = length . getStore . prjStore
 
-unitTestsSize :: Project ann -> Int
-unitTestsSize = M.size . prjUnitTests
+testsSize :: Project ann -> Int
+testsSize = M.size . prjTests
 
 testWithIdInExpr :: Expr Name Annotation
 testWithIdInExpr =
-  MyInfix
-    mempty
-    Equals
-    (MyApp mempty (MyVar mempty "id") (int 1))
-    (int 1)
+  unsafeParseExpr "id 1 == 1" $> mempty
 
 spec :: Spec
 spec = do
@@ -88,9 +86,17 @@ spec = do
             "id"
             `shouldNotBe` lookupBindingName testStdlib "id"
     it "Updating an existing binding updates tests" $ do
-      let newIdExpr = MyLambda mempty (Identifier mempty "blob") (MyVar mempty "blob")
+      let newIdExpr =
+            MyLambda
+              mempty
+              (Identifier mempty "blob")
+              (MyVar mempty "blob")
       let action = do
-            _ <- Actions.addUnitTest testWithIdInExpr (TestName "Check id is OK") "id(1) == 1"
+            _ <-
+              Actions.addUnitTest
+                testWithIdInExpr
+                (TestName "Check id is OK")
+                (prettyPrint testWithIdInExpr)
             Actions.bindExpression newIdExpr "id" "\\blob -> blob"
       case Actions.run testStdlib action of
         Left _ -> error "Should not have failed"
@@ -102,17 +108,29 @@ spec = do
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
             `shouldBe` 3
           -- two more unit tests
-          unitTestsSize newProject
-            `shouldBe` unitTestsSize testStdlib + 2
+          testsSize newProject
+            `shouldBe` testsSize testStdlib + 2
           -- binding hash has changed
           lookupBindingName
             newProject
             "id"
             `shouldNotBe` lookupBindingName testStdlib "id"
     it "Re-binding an expression that uses a deleted binding does not break it" $ do
-      let newIdExpr = MyLambda mempty (Identifier mempty "b") (MyVar mempty "b")
-          useIdExpr = MyApp mempty (MyVar mempty "newId") (bool True)
-          useIdExpr2 = MyApp mempty (MyVar mempty "newId") (bool False)
+      let newIdExpr =
+            MyLambda
+              mempty
+              (Identifier mempty "b")
+              (MyVar mempty "b")
+          useIdExpr =
+            MyApp
+              mempty
+              (MyVar mempty "newId")
+              (bool True)
+          useIdExpr2 =
+            MyApp
+              mempty
+              (MyVar mempty "newId")
+              (bool False)
           action = do
             _ <- Actions.bindExpression newIdExpr "newId" (prettyPrint newIdExpr)
             _ <- Actions.bindExpression useIdExpr "useId" (prettyPrint useIdExpr)

@@ -4,7 +4,6 @@ import * as O from 'fp-ts/Option'
 import { ExpressionResult } from '../../reducer/editor/reducer'
 import { ListBindings } from '../ListBindings'
 import { UnitTest } from '../UnitTest'
-import { ListTests } from '../ListTests'
 import { Code } from '../View/Code'
 import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
@@ -18,6 +17,8 @@ import {
 import { pipe } from 'fp-ts/function'
 import { ListCompile } from '../ListCompile'
 import { ListUsages } from '../ListUsages'
+import { PropertyTest } from '../PropertyTest'
+import { ExpressionTests } from './ExpressionTests'
 
 type Props = {
   projectHash: ExprHash
@@ -34,6 +35,7 @@ export const Feedback: React.FC<Props> = ({
   result,
   bindingName,
   state,
+  projectHash,
   onBindingSelect,
 }) => {
   // need to return new bindings and typeBindings
@@ -73,9 +75,6 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
-          <ListTests
-            unitTests={result.expression.edUnitTests}
-          />
           <ListBindings
             state={state}
             values={result.expression.edBindings}
@@ -85,6 +84,10 @@ export const Feedback: React.FC<Props> = ({
           <ListUsages
             usages={getUsages(result.expression.edHash)}
             onBindingSelect={onBindingSelect}
+          />
+          <ExpressionTests
+            exprHash={result.expression.edHash}
+            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       )
@@ -95,9 +98,6 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
-          <ListTests
-            unitTests={result.expression.edUnitTests}
-          />
           <ListCompile
             runtimes={Object.values(
               result.expression.edRuntimes
@@ -126,6 +126,10 @@ export const Feedback: React.FC<Props> = ({
           <ListUsages
             usages={getUsages(result.expression.edHash)}
             onBindingSelect={onBindingSelect}
+          />
+          <ExpressionTests
+            exprHash={result.expression.edHash}
+            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       )
@@ -136,9 +140,6 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
-          <ListTests
-            unitTests={result.expression.edUnitTests}
-          />
           <ListCompile
             runtimes={Object.values(
               result.expression.edRuntimes
@@ -167,6 +168,10 @@ export const Feedback: React.FC<Props> = ({
           <ListUsages
             usages={getUsages(result.expression.edHash)}
             onBindingSelect={onBindingSelect}
+          />
+          <ExpressionTests
+            exprHash={result.expression.edHash}
+            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       )
@@ -178,14 +183,26 @@ export const Feedback: React.FC<Props> = ({
           </Paragraph>
         </FlexColumnSpaced>
       )
-    case 'ShowUnitTest':
+    case 'ShowTest':
+      const title =
+        'utdTestName' in result.test
+          ? 'Unit test created'
+          : 'Property test created'
       return (
         <FlexColumnSpaced>
-          <Paragraph>Test created</Paragraph>
-          <UnitTest unitTest={result.unitTest} />
+          <Paragraph>{title}</Paragraph>
+          {'utdTestName' in result.test ? (
+            <UnitTest unitTest={result.test} />
+          ) : (
+            <PropertyTest propertyTest={result.test} />
+          )}
           <ListBindings
             state={state}
-            values={result.unitTest.utdBindings}
+            values={
+              'utdBindings' in result.test
+                ? result.test.utdBindings
+                : result.test.ptdBindings
+            }
             types={{}}
             onBindingSelect={onBindingSelect}
           />

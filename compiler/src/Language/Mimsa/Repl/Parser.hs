@@ -10,8 +10,8 @@ import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Repl.Types
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Project
 import Text.Megaparsec
 import Text.Megaparsec.Char
 

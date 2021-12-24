@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { State } from '../reducer/types'
+import { State, StoreItem } from '../reducer/types'
 import { Action } from '../reducer/types'
 import { findNameForExprHash } from '../reducer/project/helpers'
 
@@ -12,7 +12,7 @@ import { pipe } from 'fp-ts/function'
 import { Panel } from './View/Panel'
 import { Paragraph } from './View/Paragraph'
 import * as O from 'fp-ts/Option'
-import { ExpressionData, ExprHash } from '../types'
+import { ExprHash } from '../types'
 import { pushScreen } from '../reducer/view/reducer'
 
 type Props = {
@@ -43,7 +43,7 @@ const findExpressionHash = ({
 const getGraphData = (
   state: State,
   exprHash: ExprHash
-): O.Option<ExpressionData> =>
+): O.Option<StoreItem> =>
   pipe(findExpression(exprHash, state))
 
 export const ExpressionGraph: React.FC<Props> = ({
@@ -86,7 +86,7 @@ export const ExpressionGraph: React.FC<Props> = ({
               <Paragraph>🐴 Loading 🐴</Paragraph>
             </Panel>
           ),
-          (result) => (
+          ({ expression }) => (
             <>
               <Panel
                 flexGrow={2}
@@ -95,7 +95,7 @@ export const ExpressionGraph: React.FC<Props> = ({
                 }
               >
                 <Graphviz
-                  dot={result.edGraphviz}
+                  dot={expression.edGraphviz}
                   className="graphviz"
                   options={{
                     width: '100%',
@@ -108,9 +108,9 @@ export const ExpressionGraph: React.FC<Props> = ({
                 <FlexColumnSpaced>
                   <Paragraph>{bindingName}</Paragraph>
                   <Code codeType="type">
-                    {result.edType}
+                    {expression.edType}
                   </Code>
-                  <Code>{result.edPretty}</Code>
+                  <Code>{expression.edPretty}</Code>
                 </FlexColumnSpaced>
               </Panel>
             </>

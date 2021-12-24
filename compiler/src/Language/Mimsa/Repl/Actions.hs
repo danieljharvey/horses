@@ -57,7 +57,7 @@ doReplAction env input action =
     (TypeSearch mt) ->
       catchMimsaError env (doTypeSearch env mt $> env)
     (AddUnitTest testName testExpr) ->
-      catchMimsaError env (doAddUnitTest env input testName testExpr)
+      catchMimsaError env (doAddTest env input testName testExpr)
     (ListTests maybeName) ->
       catchMimsaError env (doListTests env maybeName $> env)
 
@@ -76,7 +76,7 @@ doHelp = do
   replOutput @Text ":graph <expr> - output graphviz dependency tree for <expr>"
   replOutput @Text ":search <mt> - search for exprs that match type"
   replOutput @Text ":addTest \"<test name>\" <expr> - add a unit test"
-  replOutput @Text ":listTests <optional name> - list tests for <name>"
+  replOutput @Text ":tests <optional name> - list tests for <name>"
   replOutput @Text ":versions <name> - list all versions of a binding"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"
   replOutput @Text ":quit - give up and leave"

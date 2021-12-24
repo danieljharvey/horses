@@ -3,9 +3,9 @@
 /* eslint-disable */
 
 import type { ProjectData } from './ProjectData'
-import type { UnitTestData } from './UnitTestData'
+import type { TestData } from './TestData'
 
 export type AddUnitTestResponse = {
-  autUnitTest: UnitTestData
+  autTestResult: TestData
   autProjectData: ProjectData
 }

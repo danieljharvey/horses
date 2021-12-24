@@ -4,9 +4,9 @@ module Language.Mimsa.Repl.Types
 where
 
 import Language.Mimsa.Backend.Types
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Typechecker
 
 data ReplAction ann

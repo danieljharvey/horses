@@ -104,6 +104,8 @@ buildTestStdlib =
       addBinding
         "stringReduce"
         "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
+      addType
+        "type TrafficLight = Red | Yellow | Green"
       addListMonad
       addEither
       addPair
@@ -114,6 +116,19 @@ buildTestStdlib =
       addMonoid
       addMonoPair
       addTree
+      addPropertyTests
+
+addPropertyTests :: Actions.ActionM ()
+addPropertyTests = do
+  addBinding
+    "constTrue"
+    "\\(a: Boolean) -> True"
+  addBinding
+    "constFalse"
+    "\\(a: Boolean) -> False"
+  addBinding
+    "invertTreeTwice"
+    "\\(tree: Tree Int) -> invertTree (invertTree tree) == tree"
 
 addListMonad :: Actions.ActionM ()
 addListMonad = do

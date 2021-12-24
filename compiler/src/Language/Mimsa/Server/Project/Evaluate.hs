@@ -59,8 +59,10 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) =
           expr <- Actions.parseExpr code
           (_, simpleExpr, se, gv, typedExpr, input) <-
             Actions.evaluate code expr
-          EvaluateResponse (prettyPrint simpleExpr)
-            <$> expressionData se typedExpr gv input
+          pure $
+            EvaluateResponse
+              (prettyPrint simpleExpr)
+              (makeExpressionData se typedExpr gv input)
     response <- lift $ eitherFromActionM mimsaEnv hash action
     case response of
       Left e -> throwMimsaError e

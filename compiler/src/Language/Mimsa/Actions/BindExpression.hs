@@ -11,8 +11,8 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Project.UnitTest
 import Language.Mimsa.Store
+import Language.Mimsa.Tests.Test
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
@@ -69,7 +69,7 @@ createUnitTests oldExprHash newExprHash = do
   project <- Actions.getProject
   (projectWithNewTests, newExprs) <-
     liftEither $
-      createNewUnitTests project oldExprHash newExprHash
+      createNewTests project oldExprHash newExprHash
   traverse_ Actions.appendStoreExpression newExprs
   Actions.setProject projectWithNewTests
   pure (length newExprs)

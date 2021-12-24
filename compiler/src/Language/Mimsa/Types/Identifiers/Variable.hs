@@ -9,6 +9,7 @@ module Language.Mimsa.Types.Identifiers.Variable
 where
 
 import qualified Data.Aeson as JSON
+import Data.OpenApi (ToSchema)
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
@@ -18,7 +19,7 @@ data Variable
   = NamedVar Name
   | NumberedVar Int
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.ToJSONKey)
+  deriving anyclass (JSON.ToJSON, JSON.ToJSONKey, JSON.FromJSON, ToSchema)
 
 instance Printer Variable where
   prettyDoc = renderVariable

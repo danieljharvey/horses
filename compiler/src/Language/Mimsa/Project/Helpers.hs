@@ -1,9 +1,10 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Project.Helpers
   ( fromItem,
     fromType,
-    fromUnitTest,
+    fromTest,
     fromStoreExpression,
     fromStoreExpressionDeps,
     fromStore,
@@ -26,6 +27,7 @@ module Language.Mimsa.Project.Helpers
 where
 
 import Data.Coerce
+import Data.Either
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -33,6 +35,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Store.Storage
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
@@ -45,17 +48,27 @@ projectFromSaved store' sp =
     { prjStore = store',
       prjBindings = projectBindings sp,
       prjTypeBindings = projectTypes sp,
-      prjUnitTests = projectUnitTests sp
+      prjTests =
+        (UTest <$> projectUnitTests sp)
+          <> (PTest <$> projectPropertyTests sp)
     }
 
 projectToSaved :: Project a -> SaveProject
 projectToSaved proj =
-  SaveProject
-    { projectVersion = 1,
-      projectBindings = prjBindings proj,
-      projectTypes = prjTypeBindings proj,
-      projectUnitTests = prjUnitTests proj
-    }
+  let (uts, pts) =
+        partitionEithers $
+          ( \(hash, test) -> case test of
+              UTest ut -> Left (hash, ut)
+              PTest pt -> Right (hash, pt)
+          )
+            <$> M.toList (prjTests proj)
+   in SaveProject
+        { projectVersion = 1,
+          projectBindings = prjBindings proj,
+          projectTypes = prjTypeBindings proj,
+          projectUnitTests = M.fromList uts,
+          projectPropertyTests = M.fromList pts
+        }
 
 fromStoreExpression :: StoreExpression ann -> ExprHash -> Project ann
 fromStoreExpression storeExpr exprHash =
@@ -86,10 +99,22 @@ fromType expr hash =
     typeList =
       (,pure hash) <$> S.toList typeConsUsed
 
+fromTest :: Test -> StoreExpression ann -> Project ann
+fromTest = \case
+  PTest pt -> fromPropertyTest pt
+  UTest ut -> fromUnitTest ut
+
 fromUnitTest :: UnitTest -> StoreExpression ann -> Project ann
 fromUnitTest test storeExpr =
   mempty
-    { prjUnitTests = M.singleton (utExprHash test) test,
+    { prjTests = M.singleton (utExprHash test) (UTest test),
+      prjStore = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
+    }
+
+fromPropertyTest :: PropertyTest -> StoreExpression ann -> Project ann
+fromPropertyTest test storeExpr =
+  mempty
+    { prjTests = M.singleton (ptExprHash test) (PTest test),
       prjStore = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
     }
 

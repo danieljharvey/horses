@@ -1,0 +1,11 @@
+section.tray {
+  border-top: 1px solid var(--greyScale0);
+  border-bottom: 1px solid var(--greyScale0);
+  padding-top: var(--spaceSmall);
+  padding-bottom: var(--spaceSmall);
+}
+
+section.tray-inner {
+  padding-top: var(--spaceSmall);
+  padding-left: var(--spaceSmall);
+}

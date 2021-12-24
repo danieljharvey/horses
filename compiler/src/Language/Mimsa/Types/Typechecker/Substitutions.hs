@@ -41,17 +41,17 @@ class Substitutable a where
   applySubst :: Substitutions -> a -> a
 
 -- these are tricky to deal with, so flatten them on the way in
-flattenRow :: MonoType -> MonoType
+flattenRow :: Type ann -> Type ann
 flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
   flattenRow (MTRecordRow ann (as <> bs) rest)
 flattenRow other = other
 
-substLookup :: Annotation -> Substitutions -> TypeIdentifier -> Maybe MonoType
+substLookup :: ann -> Substitutions -> TypeIdentifier -> Maybe (Type ann)
 substLookup ann subst i =
   let replaceAnn mt = mt $> ann
    in replaceAnn <$> M.lookup i (getSubstitutions subst)
 
-instance Substitutable MonoType where
+instance Substitutable (Type ann) where
   applySubst subst ty = case flattenRow ty of
     MTVar ann var ->
       fromMaybe

@@ -9,7 +9,7 @@ import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import Data.OpenApi
 import GHC.Generics (Generic)
-import Language.Mimsa.Types.Project.UnitTest
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Project.Versioned
 import Language.Mimsa.Types.Store (ExprHash, Store)
 
@@ -19,7 +19,7 @@ data Project ann = Project
   { prjStore :: Store ann,
     prjBindings :: VersionedBindings,
     prjTypeBindings :: VersionedTypeBindings,
-    prjUnitTests :: Map ExprHash UnitTest
+    prjTests :: Map ExprHash Test
   }
   deriving stock
     ( Eq,

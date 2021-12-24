@@ -4,10 +4,10 @@
 
 export type TypeIdentifier =
   | {
-      contents: string
+      contents: Array<any>
       tag: 'TVName'
     }
   | {
       contents: number
-      tag: 'TVNum'
+      tag: 'TVUnificationVar'
     }

@@ -34,7 +34,7 @@ type ProjectAPI =
            :<|> BindType
            :<|> AddUnitTest
            :<|> ListTests
-           :<|> ListTestsByName
+           :<|> ListTestsByExprHash
            :<|> GraphAPI
        )
 
@@ -50,7 +50,7 @@ projectEndpoints mimsaEnv =
     :<|> bindType mimsaEnv
     :<|> addUnitTestHandler mimsaEnv
     :<|> listTestsHandler mimsaEnv
-    :<|> listTestsByNameHandler mimsaEnv
+    :<|> listTestsByExprHashHandler mimsaEnv
     :<|> graphProject mimsaEnv
 
 ------

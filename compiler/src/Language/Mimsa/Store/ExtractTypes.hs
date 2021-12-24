@@ -3,6 +3,7 @@ module Language.Mimsa.Store.ExtractTypes
     extractTypeDecl,
     extractDataTypes,
     extractNamedTypeVars,
+    extractTypenames,
   )
 where
 

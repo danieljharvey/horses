@@ -1,45 +1,80 @@
 import * as React from 'react'
-import { UnitTestData } from '../types/'
+import { PropertyTestData, UnitTestData } from '../types/'
+import { PropertyTest } from './PropertyTest'
 import { UnitTest } from './UnitTest'
 import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 import { InlineSpaced } from './View/InlineSpaced'
-import { Paragraph } from './View/Paragraph'
 
+export const testCounts = (
+  unitTests: UnitTestData[],
+  propertyTests: PropertyTestData[]
+) => {
+  const utPassing = unitTests.filter(
+    (ut) => ut.utdTestSuccess
+  )
+  const utFailing = unitTests.filter(
+    (ut) => !ut.utdTestSuccess
+  )
+  const ptPassing = propertyTests.filter(
+    (pt) => pt.ptdTestFailures.length === 0
+  )
+  const ptFailing = propertyTests.filter(
+    (pt) => pt.ptdTestFailures.length > 0
+  )
+
+  const passing = utPassing.length + ptPassing.length
+  const total = unitTests.length + propertyTests.length
+
+  return {
+    utPassing,
+    utFailing,
+    ptPassing,
+    ptFailing,
+    passing,
+    total,
+  }
+}
 type Props = {
-  unitTests: Pick<
-    UnitTestData,
-    'utdTestSuccess' | 'utdTestName'
-  >[]
+  unitTests: UnitTestData[]
+  propertyTests: PropertyTestData[]
 }
 
 export const ListTests: React.FC<Props> = ({
   unitTests,
+  propertyTests,
 }) => {
-  const passing = unitTests.filter(
-    (ut) => ut.utdTestSuccess
-  )
-  const failing = unitTests.filter(
-    (ut) => !ut.utdTestSuccess
-  )
+  const {
+    total,
+    utFailing,
+    utPassing,
+    ptFailing,
+    ptPassing,
+  } = testCounts(unitTests, propertyTests)
 
-  if (unitTests.length === 0) {
-    return null
-  }
-
-  const message = `Tests - ${passing.length}/${unitTests.length} pass`
-  return (
+  return total > 0 ? (
     <FlexColumnSpaced>
-      <Paragraph>{message}</Paragraph>
       <InlineSpaced>
         <>
-          {failing.map((unitTest, key) => (
+          {utFailing.map((unitTest, key) => (
             <UnitTest unitTest={unitTest} key={key} />
           ))}
-          {passing.map((unitTest, key) => (
+          {ptFailing.map((propertyTest, key) => (
+            <PropertyTest
+              propertyTest={propertyTest}
+              key={key}
+            />
+          ))}
+          {utPassing.map((unitTest, key) => (
             <UnitTest unitTest={unitTest} key={key} />
+          ))}
+          {ptPassing.map((propertyTest, key) => (
+            <PropertyTest
+              propertyTest={propertyTest}
+              key={key}
+            />
           ))}
         </>
       </InlineSpaced>
     </FlexColumnSpaced>
-  )
+  ) : null
 }

@@ -59,7 +59,10 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   resolvedExpr <-
     resolveStoreExpressionHandler project se
   writeStoreHandler mimsaEnv (prjStore project)
-  typedExpr <- useSwapsHandler (reSwaps resolvedExpr) (reTypedExpression resolvedExpr)
+  typedExpr <-
+    useSwapsHandler
+      (reSwaps resolvedExpr)
+      (reTypedExpression resolvedExpr)
   pure $
-    GetExpressionResponse $
-      makeExpressionData project se typedExpr graphviz (reInput resolvedExpr)
+    GetExpressionResponse
+      (makeExpressionData se typedExpr graphviz (reInput resolvedExpr))
