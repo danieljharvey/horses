@@ -4,7 +4,6 @@ import { PropertyTest } from './PropertyTest'
 import { UnitTest } from './UnitTest'
 import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 import { InlineSpaced } from './View/InlineSpaced'
-import { Paragraph } from './View/Paragraph'
 
 export const testCounts = (
   unitTests: UnitTestData[],
@@ -45,7 +44,6 @@ export const ListTests: React.FC<Props> = ({
   propertyTests,
 }) => {
   const {
-    passing,
     total,
     utFailing,
     utPassing,
@@ -53,11 +51,8 @@ export const ListTests: React.FC<Props> = ({
     ptPassing,
   } = testCounts(unitTests, propertyTests)
 
-  const message = `Tests - ${passing}/${total} pass`
-
   return total > 0 ? (
     <FlexColumnSpaced>
-      <Paragraph>{message}</Paragraph>
       <InlineSpaced>
         <>
           {utFailing.map((unitTest, key) => (
