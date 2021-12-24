@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { PropertyTestData } from '../types'
 import { Code } from './View/Code'
-import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 import { Paragraph } from './View/Paragraph'
 import { Tray } from './View/Tray'
 
