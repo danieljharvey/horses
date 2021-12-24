@@ -11,13 +11,11 @@ module Language.Mimsa.Server.Project.GetExpression
 where
 
 import qualified Data.Aeson as JSON
-import qualified Data.Map as M
 import Data.OpenApi
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Helpers.ExpressionData
-import Language.Mimsa.Server.Helpers.TestData
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -39,9 +37,8 @@ data GetExpressionRequest = GetExpressionRequest
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.FromJSON, ToSchema)
 
-data GetExpressionResponse = GetExpressionResponse
-  { geExpressionData :: ExpressionData,
-    geTestData :: TestData
+newtype GetExpressionResponse = GetExpressionResponse
+  { geExpressionData :: ExpressionData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -66,12 +63,6 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
     useSwapsHandler
       (reSwaps resolvedExpr)
       (reTypedExpression resolvedExpr)
-  tests <-
-    runTestsHandler
-      mimsaEnv
-      project
-      (M.elems $ prjTests project)
   pure $
     GetExpressionResponse
       (makeExpressionData se typedExpr graphviz (reInput resolvedExpr))
-      (makeTestData project tests)

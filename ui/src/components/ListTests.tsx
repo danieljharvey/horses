@@ -6,15 +6,10 @@ import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 import { InlineSpaced } from './View/InlineSpaced'
 import { Paragraph } from './View/Paragraph'
 
-type Props = {
-  unitTests: UnitTestData[]
+export const testCounts = (
+  unitTests: UnitTestData[],
   propertyTests: PropertyTestData[]
-}
-
-export const ListTests: React.FC<Props> = ({
-  unitTests,
-  propertyTests,
-}) => {
+) => {
   const utPassing = unitTests.filter(
     (ut) => ut.utdTestSuccess
   )
@@ -28,16 +23,39 @@ export const ListTests: React.FC<Props> = ({
     (pt) => pt.ptdTestFailures.length > 0
   )
 
-  if (unitTests.length === 0) {
-    return null
-  }
-
   const passing = utPassing.length + ptPassing.length
   const total = unitTests.length + propertyTests.length
 
+  return {
+    utPassing,
+    utFailing,
+    ptPassing,
+    ptFailing,
+    passing,
+    total,
+  }
+}
+type Props = {
+  unitTests: UnitTestData[]
+  propertyTests: PropertyTestData[]
+}
+
+export const ListTests: React.FC<Props> = ({
+  unitTests,
+  propertyTests,
+}) => {
+  const {
+    passing,
+    total,
+    utFailing,
+    utPassing,
+    ptFailing,
+    ptPassing,
+  } = testCounts(unitTests, propertyTests)
+
   const message = `Tests - ${passing}/${total} pass`
 
-  return (
+  return total > 0 ? (
     <FlexColumnSpaced>
       <Paragraph>{message}</Paragraph>
       <InlineSpaced>
@@ -45,14 +63,14 @@ export const ListTests: React.FC<Props> = ({
           {utFailing.map((unitTest, key) => (
             <UnitTest unitTest={unitTest} key={key} />
           ))}
-          {utPassing.map((unitTest, key) => (
-            <UnitTest unitTest={unitTest} key={key} />
-          ))}
           {ptFailing.map((propertyTest, key) => (
             <PropertyTest
               propertyTest={propertyTest}
               key={key}
             />
+          ))}
+          {utPassing.map((unitTest, key) => (
+            <UnitTest unitTest={unitTest} key={key} />
           ))}
           {ptPassing.map((propertyTest, key) => (
             <PropertyTest
@@ -63,5 +81,5 @@ export const ListTests: React.FC<Props> = ({
         </>
       </InlineSpaced>
     </FlexColumnSpaced>
-  )
+  ) : null
 }

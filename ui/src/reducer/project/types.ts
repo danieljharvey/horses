@@ -4,12 +4,10 @@ import {
   ExpressionData,
   BindingVersion,
   ExprUsage,
-  TestData,
 } from '../../types'
 
 export type StoreItem = {
   expression: ExpressionData
-  tests: TestData
 }
 
 export type ProjectState = {
@@ -38,7 +36,6 @@ export type ProjectAction =
       type: 'FetchExpressionSuccess'
       exprHash: ExprHash
       storeExpression: ExpressionData
-      testData: TestData
     }
 
 export type ProjectEvent =

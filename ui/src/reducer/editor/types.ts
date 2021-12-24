@@ -20,7 +20,6 @@ export type ExpressionResult =
   | {
       type: 'ShowBinding'
       expression: ExpressionData
-      tests: TestData
     }
   | {
       type: 'ShowErrorResponse'

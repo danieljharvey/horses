@@ -25,10 +25,10 @@ export const editorForBinding = (
     O.alt(() =>
       findExpressionForAnyBinding(bindingName, state)
     ),
-    O.map(({ expression, tests }) => ({
+    O.map(({ expression }) => ({
       code: expression.edPretty,
       stale: false,
-      expression: showBinding(expression, tests),
+      expression: showBinding(expression),
       bindingName: O.some(bindingName),
     }))
   )

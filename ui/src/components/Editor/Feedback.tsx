@@ -19,6 +19,7 @@ import { pipe } from 'fp-ts/function'
 import { ListCompile } from '../ListCompile'
 import { ListUsages } from '../ListUsages'
 import { PropertyTest } from '../PropertyTest'
+import { ExpressionTests } from './ExpressionTests'
 
 type Props = {
   projectHash: ExprHash
@@ -35,6 +36,7 @@ export const Feedback: React.FC<Props> = ({
   result,
   bindingName,
   state,
+  projectHash,
   onBindingSelect,
 }) => {
   // need to return new bindings and typeBindings
@@ -84,6 +86,10 @@ export const Feedback: React.FC<Props> = ({
             usages={getUsages(result.expression.edHash)}
             onBindingSelect={onBindingSelect}
           />
+          <ExpressionTests
+            exprHash={result.expression.edHash}
+            projectHash={projectHash}
+          />
         </FlexColumnSpaced>
       )
     case 'ShowUpdatedBinding':
@@ -93,10 +99,6 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
-          <ListTests
-            unitTests={result.tests.tdUnitTests}
-            propertyTests={result.tests.tdPropertyTests}
-          />
           <ListCompile
             runtimes={Object.values(
               result.expression.edRuntimes
@@ -125,6 +127,10 @@ export const Feedback: React.FC<Props> = ({
           <ListUsages
             usages={getUsages(result.expression.edHash)}
             onBindingSelect={onBindingSelect}
+          />
+          <ExpressionTests
+            exprHash={result.expression.edHash}
+            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       )
@@ -135,10 +141,6 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
-          <ListTests
-            unitTests={result.tests.tdUnitTests}
-            propertyTests={result.tests.tdPropertyTests}
-          />
           <ListCompile
             runtimes={Object.values(
               result.expression.edRuntimes
@@ -167,6 +169,10 @@ export const Feedback: React.FC<Props> = ({
           <ListUsages
             usages={getUsages(result.expression.edHash)}
             onBindingSelect={onBindingSelect}
+          />
+          <ExpressionTests
+            exprHash={result.expression.edHash}
+            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       )

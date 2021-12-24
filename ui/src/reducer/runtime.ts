@@ -80,7 +80,6 @@ export const runtime =
               type: 'FetchExpressionSuccess' as const,
               exprHash,
               storeExpression: a.geExpressionData,
-              testData: a.geTestData,
             }))
           )
         const hashes = event.hashes.filter(

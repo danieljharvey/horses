@@ -7,8 +7,8 @@
 module Language.Mimsa.Server.Project.ListTests
   ( listTestsHandler,
     ListTests,
-    listTestsByNameHandler,
-    ListTestsByName,
+    listTestsByExprHashHandler,
+    ListTestsByExprHash,
   )
 where
 
@@ -16,13 +16,12 @@ import qualified Data.Aeson as JSON
 import qualified Data.Map as M
 import Data.OpenApi
 import GHC.Generics
-import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Server.Handlers
 import Language.Mimsa.Server.Helpers.TestData
 import Language.Mimsa.Server.Types
 import Language.Mimsa.Tests.Test
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Store
 import Servant
 
 ------
@@ -58,35 +57,33 @@ listTestsHandler mimsaEnv hash = do
 
 ----
 
-type ListTestsByName =
+type ListTestsByExprHash =
   Capture "projectHash" ProjectHash
     :> "tests"
     :> "list"
-    :> Capture "name" Name
-    :> Get '[JSON] ListTestsByNameResponse
+    :> Capture "exprHash" ExprHash
+    :> Get '[JSON] ListTestsByExprHashResponse
 
-newtype ListTestsByNameResponse = ListTestsByNameResponse
+newtype ListTestsByExprHashResponse = ListTestsByExprHashResponse
   { ltbnTests :: TestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
-listTestsByNameHandler ::
+listTestsByExprHashHandler ::
   MimsaEnvironment ->
   ProjectHash ->
-  Name ->
-  Handler ListTestsByNameResponse
-listTestsByNameHandler mimsaEnv hash name' = do
+  ExprHash ->
+  Handler ListTestsByExprHashResponse
+listTestsByExprHashHandler mimsaEnv projectHash exprHash = do
   store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' hash
-  let tests = case lookupBindingName project name' of
-        Just exprHash -> getTestsForExprHash project exprHash
-        Nothing -> mempty
+  project <- loadProjectHandler mimsaEnv store' projectHash
+  let tests = getTestsForExprHash project exprHash
   testResults <-
     runTestsHandler
       mimsaEnv
       project
       (M.elems tests)
   pure $
-    ListTestsByNameResponse
+    ListTestsByExprHashResponse
       (makeTestData project testResults)

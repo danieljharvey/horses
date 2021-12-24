@@ -9,13 +9,16 @@ import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 import { Paragraph } from './View/Paragraph'
 import { InlineSpaced } from './View/InlineSpaced'
 import {
-  useListTests,
-  ListTestsState,
-} from '../hooks/useListTests'
+  useListProjectTests,
+  ListProjectTestsState,
+} from '../hooks/useListProjectTests'
 import { getProjectHash } from '../reducer/project/selectors'
-import { fold } from '@devexperts/remote-data-ts'
+import {
+  fold,
+  toNullable,
+} from '@devexperts/remote-data-ts'
 import { pipe } from 'fp-ts/function'
-import { ListTests } from './ListTests'
+import { ListTests, testCounts } from './ListTests'
 type Item = 'bindings' | 'tests'
 
 type Props = {
@@ -60,7 +63,8 @@ const objectKeyFilter = <A,>(
 
 const itemSelect = (
   showItem: Item,
-  setShowItems: (item: Item) => void
+  setShowItems: (item: Item) => void,
+  loadingTests: ListProjectTestsState
 ) => (
   <InlineSpaced>
     <Paragraph
@@ -73,12 +77,12 @@ const itemSelect = (
       bold={showItem === 'tests'}
       onClick={() => setShowItems('tests')}
     >
-      Tests
+      {testTitle(loadingTests)}
     </Paragraph>
   </InlineSpaced>
 )
 
-const renderTests = (loadingTests: ListTestsState) =>
+const renderTests = (loadingTests: ListProjectTestsState) =>
   pipe(
     loadingTests,
     fold(
@@ -94,6 +98,19 @@ const renderTests = (loadingTests: ListTestsState) =>
     )
   )
 
+const testTitle = (testLoad: ListProjectTestsState) => {
+  const data = toNullable(testLoad)
+  if (!data) {
+    return 'Tests -/-'
+  }
+  const { total, passing } = testCounts(
+    data.unitTests,
+    data.propertyTests
+  )
+  const failing = total > passing
+  return failing ? `Tests ${passing}/${total}` : 'Tests ✅'
+}
+
 export const FilteredBindingList: React.FC<Props> = ({
   values,
   types,
@@ -106,11 +123,15 @@ export const FilteredBindingList: React.FC<Props> = ({
   const [showItems, setShowItems] =
     React.useState<Item>('bindings')
 
-  const selector = itemSelect(showItems, setShowItems)
-
   const projectHash = getProjectHash(state)
 
-  const [loadingTests] = useListTests(projectHash)
+  const [loadingTests] = useListProjectTests(projectHash)
+
+  const selector = itemSelect(
+    showItems,
+    setShowItems,
+    loadingTests
+  )
 
   return (
     <Panel>

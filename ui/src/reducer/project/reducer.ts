@@ -98,7 +98,6 @@ export const projectReducer: EventReducer<
             ...state.project.store,
             [action.exprHash]: {
               expression: action.storeExpression,
-              tests: action.testData,
             },
           },
         })(state),

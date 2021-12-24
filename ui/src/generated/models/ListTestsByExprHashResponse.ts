@@ -4,6 +4,6 @@
 
 import type { TestData } from './TestData'
 
-export type ListTestsByNameResponse = {
+export type ListTestsByExprHashResponse = {
   ltbnTests: TestData
 }

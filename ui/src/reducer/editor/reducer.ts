@@ -28,12 +28,10 @@ export const editorNew = (): ExpressionResult => ({
 })
 
 export const showBinding = (
-  expression: ExpressionData,
-  tests: TestData
+  expression: ExpressionData
 ): ExpressionResult => ({
   type: 'ShowBinding',
   expression,
-  tests,
 })
 
 export const showUpdatedBinding = (
