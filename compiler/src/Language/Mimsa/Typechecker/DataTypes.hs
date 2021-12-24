@@ -64,7 +64,7 @@ createDepsEnv typeMap =
     mkSchemes =
       M.fromList . fmap toScheme . M.toList
 
-storeExprToDataTypes :: StoreExpression ann -> Map TyCon DataType
+storeExprToDataTypes :: StoreExpression ann -> Map TypeName DataType
 storeExprToDataTypes =
   mconcat
     . fmap withDt

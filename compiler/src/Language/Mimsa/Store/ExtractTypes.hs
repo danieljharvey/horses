@@ -17,13 +17,13 @@ import Language.Mimsa.Types.AST
     Identifier (..),
     Pattern (..),
   )
-import Language.Mimsa.Types.Identifiers (Name, TyCon, TyVar, TypeIdentifier (..))
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
--- this works out which external types have been used in a given expression
+-- this works out which constructors have been used in a given expression
 -- therefore, we must remove any which are declared in the expression itself
 extractTypes :: Expr Name ann -> Set TyCon
-extractTypes = filterBuiltIns . extractTypes_
+extractTypes = extractTypes_
 
 extractTypes_ :: Expr Name ann -> Set TyCon
 extractTypes_ (MyVar _ _) = mempty
@@ -72,7 +72,7 @@ extractFromIdentifier (AnnotatedIdentifier mt _) =
   extractTypenames mt
 extractFromIdentifier _ = mempty
 
-filterBuiltIns :: Set TyCon -> Set TyCon
+filterBuiltIns :: Set TypeName -> Set TypeName
 filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)
 
 -- get all the constructors mentioned in the datatype

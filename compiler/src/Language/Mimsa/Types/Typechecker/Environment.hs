@@ -10,9 +10,9 @@ import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.AST (DataType)
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
-  ( TyCon,
-    TyVar,
+  ( TyVar,
     TypeIdentifier,
+    TypeName,
   )
 import Language.Mimsa.Types.Typechecker.MonoType
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
@@ -20,7 +20,7 @@ import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 -- everything we need in typechecking environment
 data Environment = Environment
   { getSchemes :: Map TypeIdentifier Scheme,
-    getDataTypes :: Map TyCon DataType,
+    getDataTypes :: Map TypeName DataType,
     getInfix :: Map InfixOp MonoType,
     getTypeVarsInScope :: Map TyVar Int
   }
