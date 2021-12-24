@@ -52,10 +52,10 @@ fromMonoType gs mt =
       MyLambda mempty (Identifier mempty (NamedVar "a"))
         <$> fromMonoType gs to
     (MTVar _ _) -> fromMonoType gs (MTPrim mempty MTBool) -- for unknowns, use bool for now
-    mtTA@(MTTypeApp {}) -> case varsFromDataType mtTA of
+    mtTA@MTTypeApp {} -> case varsFromDataType mtTA of
       Just (typeName, args) -> fromType gs typeName args
       Nothing -> error "could not work out datatype"
-    mtCons@(MTConstructor {}) -> case varsFromDataType mtCons of
+    mtCons@MTConstructor {} -> case varsFromDataType mtCons of
       Just (typeName, args) -> fromType gs typeName args
       Nothing -> error "could not work out datatype"
 
