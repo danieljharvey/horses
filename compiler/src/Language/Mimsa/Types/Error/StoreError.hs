@@ -15,7 +15,7 @@ data StoreError
   | CouldNotDecodeJson ExprHash
   | CouldNotDecodeFile FilePath
   | CouldNotFindExprHashForBindings [Name]
-  | CouldNotFindExprHashForTypeBindings [TyCon]
+  | CouldNotFindExprHashForTypeBindings [TypeName]
   | CouldNotFindBinding Name
   | CouldNotFindStoreExpression ExprHash
   | UnknownStoreError

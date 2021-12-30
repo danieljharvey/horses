@@ -3,7 +3,12 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Identifiers.TypeName (TypeName (..), typeNameToName) where
+module Language.Mimsa.Types.Identifiers.TypeName
+  ( TypeName (..),
+    typeNameToName,
+    safeMkTypeName,
+  )
+where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch

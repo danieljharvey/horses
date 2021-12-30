@@ -15,7 +15,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
-import Language.Mimsa.Parser.Identifiers (nameParser)
+import Language.Mimsa.Parser.Identifiers (nameParser, typeNameParser)
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers
@@ -152,13 +152,13 @@ dataTypeParser =
 
 multiDataTypeParser :: Parser MonoType
 multiDataTypeParser = do
-  tyName <- tyConParser
+  tyName <- typeNameParser
   tyArgs <- try $ some (spaceThen subParser)
   pure (dataTypeWithVars mempty tyName tyArgs)
 
 monoDataTypeParser :: Parser MonoType
 monoDataTypeParser = do
-  tyName <- tyConParser
+  tyName <- typeNameParser
   pure (dataTypeWithVars mempty tyName mempty)
 
 arrayParser :: Parser MonoType

@@ -59,33 +59,56 @@ findBindings bindings' expr = do
 
 -----------
 
-typeNameIsBuiltIn :: TyCon -> Bool
-typeNameIsBuiltIn = isJust . lookupBuiltIn . coerce
+typeNameIsBuiltIn :: TypeName -> Bool
+typeNameIsBuiltIn = isJust . lookupBuiltIn
 
-findHashInTypeBindings ::
+tyConIsBuiltIn :: TyCon -> Bool
+tyConIsBuiltIn = isJust . lookupBuiltIn . coerce
+
+findConstructorHashInTypeBindings ::
   TypeBindings ->
   TyCon ->
   Either ResolverError (Maybe ExprHash)
-findHashInTypeBindings (TypeBindings bindings') tyCon =
-  if typeNameIsBuiltIn tyCon
+findConstructorHashInTypeBindings tb@(TypeBindings _tnBindings tcBindings) tyCon =
+  if tyConIsBuiltIn tyCon
     then Right Nothing
-    else case M.lookup tyCon bindings' of
+    else case M.lookup tyCon tcBindings of
       Just a -> Right (Just a)
-      _ -> Left $ MissingType tyCon (TypeBindings bindings')
+      _ -> Left $ MissingTyCon tyCon tb
+
+findTypeNameHashInTypeBindings ::
+  TypeBindings ->
+  TypeName ->
+  Either ResolverError (Maybe ExprHash)
+findTypeNameHashInTypeBindings tb@(TypeBindings tnBindings _tcBindings) typeName =
+  if typeNameIsBuiltIn typeName
+    then Right Nothing
+    else case M.lookup typeName tnBindings of
+      Just a -> Right (Just a)
+      _ -> Left $ MissingTypeName typeName tb
 
 findTypeBindings ::
   TypeBindings ->
   Expr Name ann ->
   Either ResolverError TypeBindings
 findTypeBindings tBindings expr = do
-  let findTypeHash cName = do
-        maybeHash <- findHashInTypeBindings tBindings cName
-        pure $ (,) cName <$> maybeHash
+  let findTyConHash tyCon = do
+        maybeHash <- findConstructorHashInTypeBindings tBindings tyCon
+        pure $ (,) tyCon <$> maybeHash
+  let findTypeNameHash typeName = do
+        maybeHash <- findTypeNameHashInTypeBindings tBindings typeName
+        pure $ (,) typeName <$> maybeHash
+
   let (tyCons, typeNames) =
         partitionEithers $
           S.toList $ extractTypes expr
-  hashes <- traverse findTypeHash tyCons
-  pure (TypeBindings $ M.fromList (catMaybes hashes))
+  tnHashes <- traverse findTypeNameHash typeNames
+  tcHashes <- traverse findTyConHash tyCons
+  pure
+    ( TypeBindings
+        (M.fromList (catMaybes tnHashes))
+        (M.fromList (catMaybes tcHashes))
+    )
 
 -- given a data type declaration, create a StoreExpression for it
 createTypeStoreExpression ::

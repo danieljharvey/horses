@@ -5,6 +5,7 @@ module Language.Mimsa.Parser.Identifiers
     nameParser,
     infixOpParser,
     tyConParser,
+    typeNameParser,
     typedHoleParser,
     constructorParser,
   )
@@ -46,6 +47,12 @@ tyConParser =
   maybePred
     identifier
     (filterProjectedNames >=> safeMkTyCon)
+
+typeNameParser :: Parser TypeName
+typeNameParser =
+  maybePred
+    identifier
+    (filterProjectedNames >=> safeMkTypeName)
 
 -----
 

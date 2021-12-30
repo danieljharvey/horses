@@ -1,5 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Store.TypeBindings where
@@ -9,22 +10,33 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi
 import qualified Data.Text as T
+import GHC.Generics
 import Language.Mimsa.Printer (Printer (prettyPrint))
-import Language.Mimsa.Types.Identifiers (TyCon)
+import Language.Mimsa.Types.Identifiers (TyCon, TypeName)
 import Language.Mimsa.Types.Store.ExprHash (ExprHash)
 
 -- a list of names to hashes
-newtype TypeBindings = TypeBindings {getTypeBindings :: Map TyCon ExprHash}
-  deriving newtype
-    ( Eq,
-      Ord,
-      Show,
-      Semigroup,
-      Monoid,
-      JSON.FromJSON,
-      JSON.ToJSON,
-      ToSchema
-    )
+data TypeBindings = TypeBindings
+  { getTypeNameBindings :: Map TypeName ExprHash,
+    getTyConBindings :: Map TyCon ExprHash
+  }
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, JSON.ToJSON, ToSchema)
+
+instance Semigroup TypeBindings where
+  (TypeBindings a b) <> (TypeBindings a' b') =
+    TypeBindings (a <> a') (b <> b')
+
+instance Monoid TypeBindings where
+  mempty = TypeBindings mempty mempty
 
 instance Printer TypeBindings where
-  prettyPrint (TypeBindings b) = "{ " <> T.intercalate ", " (prettyPrint <$> M.keys b) <> " }"
+  prettyPrint (TypeBindings tn tc) =
+    let prettyKeys =
+          (prettyPrint <$> M.keys tn)
+            <> (prettyPrint <$> M.keys tc)
+     in "{ "
+          <> T.intercalate
+            ", "
+            prettyKeys
+          <> " }"

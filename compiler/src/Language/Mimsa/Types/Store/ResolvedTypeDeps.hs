@@ -11,7 +11,7 @@ import Prettyprinter
 newtype ResolvedTypeDeps = ResolvedTypeDeps
   { getResolvedTypeDeps ::
       Map
-        TyCon
+        TypeName
         (ExprHash, DataType)
   }
 

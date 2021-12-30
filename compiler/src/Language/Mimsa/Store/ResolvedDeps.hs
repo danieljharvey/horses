@@ -5,6 +5,7 @@ module Language.Mimsa.Store.ResolvedDeps
   )
 where
 
+import Data.Coerce
 import Data.Either (partitionEithers)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -40,41 +41,62 @@ extractDataType se =
   let types = extractDataTypes (storeExpression se)
    in listToMaybe . S.toList $ types
 
+-- | takes the Store and both TyCon and TypeName based bindings
+-- and resolves them into a Map from TypeName -> (ExprHash, DataType)
 resolveTypeDeps ::
   Store ann ->
   TypeBindings ->
   Either StoreError ResolvedTypeDeps
-resolveTypeDeps (Store items) (TypeBindings bindings') =
-  case partitionEithers foundItems of
+resolveTypeDeps (Store items) (TypeBindings tnBindings tcBindings) =
+  case partitionEithers (foundTyConItems <> foundTypeNameItems) of
     ([], found) -> Right (ResolvedTypeDeps (M.fromList found))
     (fails, _) -> Left $ CouldNotFindExprHashForTypeBindings fails
   where
-    foundItems =
+    foundTyConItems =
       ( \(tyCon, hash) -> case M.lookup hash items of
           Just storeExpr -> do
             case extractDataType storeExpr of
-              Just dt -> Right (tyCon, (hash, dt))
-              _ -> Left tyCon
-          Nothing -> Left tyCon
+              Just dt@(DataType typeName _ _) -> Right (typeName, (hash, dt))
+              _ -> Left (coerce tyCon)
+          Nothing -> Left (coerce tyCon)
       )
-        <$> M.toList bindings'
+        <$> M.toList tnBindings
+
+    foundTypeNameItems =
+      ( \(typeName, hash) -> case M.lookup hash items of
+          Just storeExpr -> do
+            case extractDataType storeExpr of
+              Just dt -> Right (typeName, (hash, dt))
+              _ -> Left typeName
+          Nothing -> Left typeName
+      )
+        <$> M.toList tnBindings
 
 resolveTypeStoreExpressions ::
   Store ann ->
   TypeBindings ->
-  Either StoreError (Map TyCon (ExprHash, StoreExpression ann))
-resolveTypeStoreExpressions (Store items) (TypeBindings bindings') =
-  case partitionEithers foundItems of
+  Either StoreError (Map TypeName (ExprHash, StoreExpression ann))
+resolveTypeStoreExpressions (Store items) (TypeBindings tnBindings tcBindings) =
+  case partitionEithers (foundTyConItems <> foundTypeNameItems) of
     ([], found) -> Right (M.fromList found)
     (fails, _) -> Left $ CouldNotFindExprHashForTypeBindings fails
   where
-    foundItems =
-      ( \(tyCon, hash) -> case M.lookup hash items of
+    foundTypeNameItems =
+      ( \(typeName, hash) -> case M.lookup hash items of
           Just storeExpr ->
-            Right (tyCon, (hash, storeExpr))
-          Nothing -> Left tyCon
+            Right (typeName, (hash, storeExpr))
+          Nothing -> Left typeName
       )
-        <$> M.toList bindings'
+        <$> M.toList tnBindings
+    foundTyConItems =
+      ( \(tyCon, hash) -> case M.lookup hash items of
+          Just storeExpr -> do
+            case extractDataType storeExpr of
+              Just dt@(DataType typeName _ _) -> Right (typeName, (hash, storeExpr))
+              _ -> Left (coerce tyCon)
+          Nothing -> Left (coerce tyCon)
+      )
+        <$> M.toList tcBindings
 
 recursiveResolve ::
   Store ann ->

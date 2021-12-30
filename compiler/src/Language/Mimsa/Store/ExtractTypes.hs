@@ -58,7 +58,7 @@ extractTypes_ (MyArray _ items) = foldMap extractTypes_ items
 extractTypes_ (MyData _ dt a) =
   S.difference
     (extractConstructors dt <> extractTypes_ a)
-    (extractLocalTypeDeclarations dt)
+    (S.map tc $ extractLocalTypeDeclarations dt)
 extractTypes_ (MyConstructor _ t) = S.singleton (tc t)
 extractTypes_ (MyTypedHole _ _) = mempty
 extractTypes_ (MyDefineInfix _ _ a b) =
@@ -104,13 +104,13 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
       mconcat (extractFromCon <$> M.elems items) <> extractFromCon rest
 
 -- get all the names of data constructors declared in the datatype
-extractLocalTypeDeclarations :: DataType -> Set TypeId
+extractLocalTypeDeclarations :: DataType -> Set TyCon
 extractLocalTypeDeclarations (DataType cName _ cons) =
-  mconcat (S.singleton . tc . fst <$> M.toList cons)
+  mconcat (S.singleton . fst <$> M.toList cons)
 
 -----------
 
-extractTypeDecl :: Expr var ann -> Set TypeId
+extractTypeDecl :: Expr var ann -> Set TyCon
 extractTypeDecl = withDataTypes extractLocalTypeDeclarations
 
 extractDataTypes :: Expr var ann -> Set DataType

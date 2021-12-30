@@ -24,7 +24,7 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 -- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
-typeBindingsByType :: Store a -> TypeBindings -> Map TyCon ExprHash
+typeBindingsByType :: Store a -> TypeBindings -> Map TypeName ExprHash
 typeBindingsByType store (TypeBindings tb) =
   let getTypeName exprHash =
         case lookupExprHashFromStore store exprHash of
@@ -72,7 +72,7 @@ renderExpression be dataTypes expr = do
           ESModulesJS -> pure (JS.printModule ts)
         Left e -> throwError e
 
-makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TyCon
+makeTypeDepMap :: ResolvedTypeDeps -> Map TypeName TyCon
 makeTypeDepMap (ResolvedTypeDeps rtd) =
   (\(_, DataType typeName _ _) -> typeName) <$> rtd
 
@@ -90,7 +90,7 @@ renderImport' ESModulesJS (name, hash') =
     <> moduleFilename ESModulesJS hash'
     <> "\";\n"
 
-renderTypeImport' :: Backend -> (TyCon, ExprHash) -> Text
+renderTypeImport' :: Backend -> (TypeName, ExprHash) -> Text
 renderTypeImport' Typescript (typeName, hash') =
   "import * as "
     <> coerce typeName
