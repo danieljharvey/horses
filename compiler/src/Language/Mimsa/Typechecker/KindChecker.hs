@@ -25,7 +25,7 @@ kindCheck _ MTPair {} = KindType
 kindCheck _ (MTRecord _ _) = KindType
 kindCheck env mt =
   case varsFromDataType mt of
-    Just (name, vars) ->
+    Just (tyCon, vars) ->
       let countVars =
             length
               ( filter
@@ -35,7 +35,7 @@ kindCheck env mt =
                   )
                   vars
               )
-       in case findDataType name env of
+       in case findDataType tyCon env of
             Just (DataType _ typeArgs _) ->
               let complexity = length typeArgs - countVars
                in foldr
@@ -47,9 +47,14 @@ kindCheck env mt =
             _ -> error "oh no"
     Nothing -> error "oh no"
 
-findDataType :: TyCon -> Environment -> Maybe DataType
-findDataType tyCon env =
-  let match = M.filter (\(DataType _ _ tyCons) -> S.member tyCon (M.keysSet tyCons)) (getDataTypes env)
+findDataType :: TypeName -> Environment -> Maybe DataType
+findDataType typeName env =
+  let match =
+        M.filter
+          ( \(DataType typeName' _ tyCons) ->
+              typeName' == typeName
+          )
+          (getDataTypes env)
    in if M.null match
         then Nothing
         else Just (snd $ M.findMin match)

@@ -26,11 +26,11 @@ import Prelude hiding (fmap)
 applicativeApply :: DataType -> Either Text (Expr Name ())
 applicativeApply = runCodegenM . applicativeApply_
 
-fName :: TyCon -> Name
-fName tyCon = Name (coerce (tyConToName tyCon) <> "F")
+fName :: TypeName -> Name
+fName typeName = Name (coerce (typeNameToName typeName) <> "F")
 
-aName :: TyCon -> Name
-aName tyCon = Name (coerce (tyConToName tyCon) <> "A")
+aName :: TypeName -> Name
+aName typeName = Name (coerce (typeNameToName typeName) <> "A")
 
 -- | `pure` takes the rightmost var and places it in the functor context
 -- | ie A -> m A
@@ -38,18 +38,18 @@ aName tyCon = Name (coerce (tyConToName tyCon) <> "A")
 applicativeApply_ ::
   DataType ->
   CodegenM (Expr Name ())
-applicativeApply_ (DataType tyCon vars items) = do
-  matches <- createMatches tyCon vars items
+applicativeApply_ (DataType typeName vars items) = do
+  matches <- createMatches typeName vars items
   pure
     ( MyLambda
         mempty
-        (Identifier mempty (fName tyCon))
+        (Identifier mempty (fName typeName))
         ( MyLambda
             mempty
-            (Identifier mempty (aName tyCon))
+            (Identifier mempty (aName typeName))
             ( MyPatternMatch
                 mempty
-                (MyVar mempty (fName tyCon))
+                (MyVar mempty (fName typeName))
                 (NE.toList matches)
             )
         )
@@ -71,7 +71,7 @@ containsVar n fields =
           _ -> False
 
 createMatches ::
-  TyCon ->
+  TypeName ->
   [Name] ->
   Map TyCon [Type ()] ->
   CodegenM (NonEmpty (Pattern Name (), Expr Name ()))
@@ -167,7 +167,7 @@ patternFromFieldItemType tyCon fields =
     toPat (VariableField a) = PVar mempty a
 
 createMatch ::
-  TyCon ->
+  TypeName ->
   Name ->
   Map TyCon [Type ()] ->
   (TyCon, [Type ()]) ->

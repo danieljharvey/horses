@@ -41,10 +41,10 @@ data TypeErrorF ann
   | CaseMatchExpectedPair ann (Type ann)
   | TypeConstructorNotInScope Environment ann TyCon
   | TypeNameNotInScope Environment ann TyCon
-  | TypeVariablesNotInDataType TyCon (Set Name) (Set Name)
+  | TypeVariablesNotInDataType TypeName (Set Name) (Set Name)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
-  | DuplicateTypeDeclaration TyCon
+  | DuplicateTypeDeclaration TypeName
   | IncompletePatternMatch ann [TyCon]
   | MixedUpPatterns [TyCon]
   | TypedHoles (Map Name (Type ann, Set FoundPath))

@@ -23,7 +23,7 @@ import Language.Mimsa.Types.Typechecker
 import Test.QuickCheck
 
 data GenerateState = GenerateState
-  { gsDataTypes :: Map TyCon DataType,
+  { gsDataTypes :: Map TypeName DataType,
     gsDepth :: Int
   }
 
@@ -71,7 +71,7 @@ typeApply mts (DataType _ vars constructors) =
 fromType ::
   (Monoid ann) =>
   GenerateState ->
-  TyCon ->
+  TypeName ->
   [MonoType] ->
   Gen (Expr Variable ann)
 fromType gs typeName args = case M.lookup typeName (gsDataTypes gs) of
@@ -85,7 +85,7 @@ fromType gs typeName args = case M.lookup typeName (gsDataTypes gs) of
     frequency (info <$> M.toList dtApplied)
   Nothing -> error "could not find datatype"
 
-constructorWeighting :: GenerateState -> TyCon -> [Type ()] -> Int
+constructorWeighting :: GenerateState -> TypeName -> [Type ()] -> Int
 constructorWeighting gs typeName args =
   if shouldWeStopRecursing gs
     then
@@ -103,7 +103,7 @@ incrementDepth :: GenerateState -> GenerateState
 incrementDepth (GenerateState dts depth) = GenerateState dts (depth + 1)
 
 -- | does the type use itself?
-isRecursive :: TyCon -> [Type ()] -> Bool
+isRecursive :: TypeName -> [Type ()] -> Bool
 isRecursive typeName args =
   or
     ( S.member typeName
@@ -139,7 +139,7 @@ fromPrimitive MTString =
 
 generateTypes ::
   Set (StoreExpression Annotation) ->
-  Map TyCon DataType
+  Map TypeName DataType
 generateTypes storeExprs = getDataTypes $ createEnv mempty storeExprs
 
 generateFromMonoType ::

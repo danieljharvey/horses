@@ -7,7 +7,6 @@ module Language.Mimsa.Typechecker.DataTypes
     storeDataDeclaration,
     inferDataConstructor,
     inferConstructorTypes,
-    inferType,
     dataTypeWithVars,
     storeExprToDataTypes,
   )
@@ -48,6 +47,7 @@ createTypesEnv dataTypes =
   where
     makeDT (name, _) =
       M.singleton name (DataType name mempty mempty)
+    builtInDts :: Map TypeName DataType
     builtInDts =
       mconcat $ makeDT <$> M.toList builtInTypes
     otherDts =
@@ -97,8 +97,9 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
       let newEnv = Environment mempty (M.singleton tyName dt) mempty mempty
        in pure (newEnv <> env)
 
+-- | errors if the constructor we are using is `String` or `Integer` etc
 errorOnBuiltIn :: (MonadError TypeError m) => Annotation -> TyCon -> m ()
-errorOnBuiltIn ann tc = case lookupBuiltIn tc of
+errorOnBuiltIn ann tc = case lookupBuiltIn (coerce tc) of
   Just _ -> throwError (InternalConstructorUsedOutsidePatternMatch ann tc)
   _ -> pure ()
 
@@ -142,6 +143,7 @@ getVariablesForField MTPrim {} = S.empty
 getVariablesForField MTConstructor {} = S.empty
 getVariablesForField (MTTypeApp _ a b) = getVariablesForField a <> getVariablesForField b
 
+--
 validateConstructors ::
   (MonadError TypeError m) =>
   Environment ->
@@ -150,10 +152,7 @@ validateConstructors ::
   m ()
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
-    ( \(tyCon, _) ->
-        if M.member tyCon (getDataTypes env)
-          then throwError (CannotUseBuiltInTypeAsConstructor ann tyCon)
-          else pure ()
+    ( \(tyCon, _) -> lookupConstructor env ann tyCon
     )
     (M.toList constructors)
 
@@ -223,28 +222,11 @@ inferConstructorTypes (DataType typeName tyVarNames constructors) = do
   let dt = dataTypeWithVars mempty typeName (snd <$> tyVars)
   pure (dt, mconcat cons')
 
--- parse a type from it's name
--- this will soon become insufficient for more complex types
-inferType ::
-  (MonadError TypeError m) =>
-  Environment ->
-  Annotation ->
-  TyCon ->
-  [MonoType] ->
-  m MonoType
-inferType env ann tyName tyVars =
-  case M.lookup tyName (getDataTypes env) of
-    (Just _) -> case lookupBuiltIn tyName of
-      Just mt -> pure mt
-      _ -> pure (dataTypeWithVars mempty tyName tyVars)
-    _ ->
-      throwError (TypeConstructorNotInScope env ann tyName)
-
-dataTypeWithVars :: (Monoid ann) => ann -> TyCon -> [Type ann] -> Type ann
-dataTypeWithVars ann tyName =
+dataTypeWithVars :: (Monoid ann) => ann -> TypeName -> [Type ann] -> Type ann
+dataTypeWithVars ann typeName =
   foldl'
     (MTTypeApp mempty)
-    (MTConstructor ann tyName)
+    (MTConstructor ann typeName)
 
 -----
 

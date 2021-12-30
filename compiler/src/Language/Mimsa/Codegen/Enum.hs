@@ -19,8 +19,8 @@ import Language.Mimsa.Types.Identifiers
 toString ::
   DataType ->
   Either Text (Expr Name ())
-toString (DataType tyCon [] items) = do
-  let tyName = tyConToName tyCon
+toString (DataType typeName [] items) = do
+  let tyName = typeNameToName typeName
   let createMatch (consName, vars) =
         case vars of
           [] ->

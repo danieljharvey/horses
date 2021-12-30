@@ -5,6 +5,8 @@ module Language.Mimsa.Store.Resolver
   )
 where
 
+import Data.Coerce
+import Data.Either
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, isJust)
 import qualified Data.Set as S
@@ -57,19 +59,19 @@ findBindings bindings' expr = do
 
 -----------
 
-isBuiltIn :: TyCon -> Bool
-isBuiltIn = isJust . lookupBuiltIn
+typeNameIsBuiltIn :: TyCon -> Bool
+typeNameIsBuiltIn = isJust . lookupBuiltIn . coerce
 
 findHashInTypeBindings ::
   TypeBindings ->
   TyCon ->
   Either ResolverError (Maybe ExprHash)
-findHashInTypeBindings (TypeBindings bindings') cName =
-  if isBuiltIn cName
+findHashInTypeBindings (TypeBindings bindings') tyCon =
+  if typeNameIsBuiltIn tyCon
     then Right Nothing
-    else case M.lookup cName bindings' of
+    else case M.lookup tyCon bindings' of
       Just a -> Right (Just a)
-      _ -> Left $ MissingType cName (TypeBindings bindings')
+      _ -> Left $ MissingType tyCon (TypeBindings bindings')
 
 findTypeBindings ::
   TypeBindings ->
@@ -79,7 +81,10 @@ findTypeBindings tBindings expr = do
   let findTypeHash cName = do
         maybeHash <- findHashInTypeBindings tBindings cName
         pure $ (,) cName <$> maybeHash
-  hashes <- traverse findTypeHash (S.toList . extractTypes $ expr)
+  let (tyCons, typeNames) =
+        partitionEithers $
+          S.toList $ extractTypes expr
+  hashes <- traverse findTypeHash tyCons
   pure (TypeBindings $ M.fromList (catMaybes hashes))
 
 -- given a data type declaration, create a StoreExpression for it

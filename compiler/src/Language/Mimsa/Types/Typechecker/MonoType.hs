@@ -56,7 +56,7 @@ data Type ann
   | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
   | MTRecordRow ann (Map Name (Type ann)) (Type ann) -- { foo:a, bar:b | rest }
   | MTArray ann (Type ann) -- [a]
-  | MTConstructor ann TyCon -- name
+  | MTConstructor ann TypeName -- name
   | MTTypeApp ann (Type ann) (Type ann) -- func arg, apply arg to func
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
@@ -125,17 +125,17 @@ renderMonoType (MTRecordRow _ as rest) =
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v
 renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
 renderMonoType (MTVar _ a) = renderTypeIdentifier a
-renderMonoType (MTConstructor _ (TyCon n)) =
+renderMonoType (MTConstructor _ (TypeName n)) =
   pretty n
 renderMonoType mt@(MTTypeApp _ func arg) =
   case varsFromDataType mt of
-    Just (TyCon n, vars) -> align $ sep ([pretty n] <> (withParens <$> vars))
+    Just (TypeName n, vars) -> align $ sep ([pretty n] <> (withParens <$> vars))
     Nothing ->
       align $ sep [renderMonoType func, renderMonoType arg]
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)
-varsFromDataType :: Type ann -> Maybe (TyCon, [Type ann])
+varsFromDataType :: Type ann -> Maybe (TypeName, [Type ann])
 varsFromDataType mt =
   let getInner mt' =
         case mt' of

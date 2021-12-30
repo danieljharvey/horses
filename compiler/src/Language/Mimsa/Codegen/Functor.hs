@@ -26,8 +26,8 @@ functorMap = runCodegenM . functorMap_
 functorMap_ ::
   DataType ->
   CodegenM (Expr Name ())
-functorMap_ (DataType tyCon vars items) = do
-  let tyName = tyConToName tyCon
+functorMap_ (DataType typeName vars items) = do
+  let tyName = typeNameToName typeName
   fVar <- getFunctorVar vars
   case getMapItems items of
     Nothing -> throwError "Type should have at least one constructor"
@@ -35,7 +35,7 @@ functorMap_ (DataType tyCon vars items) = do
       matches <-
         traverse
           ( uncurry
-              ( createMatch tyCon fVar
+              ( createMatch typeName fVar
               )
           )
           constructors
@@ -64,7 +64,7 @@ data FieldItemType
   | RecurseField Name
   | Func2 Name Name Name
 
-toFieldItemType :: TyCon -> Type () -> CodegenM FieldItemType
+toFieldItemType :: TypeName -> Type () -> CodegenM FieldItemType
 toFieldItemType typeName = \case
   MTVar _ (TVName _ a) -> VariableField (coerce a) <$> nextName (coerce a)
   MTFunction _ (MTVar _ (TVName _ a)) (MTVar _ (TVName _ b)) ->
@@ -72,7 +72,7 @@ toFieldItemType typeName = \case
   mt -> case varsFromDataType mt of
     Just (fieldConsName, _)
       | fieldConsName == typeName ->
-        RecurseField <$> nextName typeName
+        RecurseField <$> nextName (coerce typeName)
     _ -> throwError "Expected VarName"
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()
@@ -129,7 +129,7 @@ createPattern tyCon fields =
 -- TODO: allow the `f` to be configurable and to allow multiple ones so we can
 -- implement bifunctor with the same code
 createMatch ::
-  TyCon ->
+  TypeName ->
   Name ->
   TyCon ->
   [Type ()] ->

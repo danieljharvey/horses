@@ -3,7 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Identifiers.TypeName (TypeName (..)) where
+module Language.Mimsa.Types.Identifiers.TypeName (TypeName (..), typeNameToName) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
@@ -13,6 +13,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.Identifiers.Name
 import Prettyprinter
 
 -- | A TypeName is `Maybe` or `Either`
@@ -61,10 +62,7 @@ safeMkTypeName a =
 instance Printer TypeName where
   prettyDoc = pretty . getTypeName
 
-{-
 typeNameToName :: TypeName -> Name
 typeNameToName (TypeName tc) = mkName (tHead <> T.tail tc)
   where
     tHead = T.pack . pure . Ch.toLower . T.head $ tc
-
--}
