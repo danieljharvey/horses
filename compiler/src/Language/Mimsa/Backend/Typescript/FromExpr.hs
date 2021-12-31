@@ -135,6 +135,14 @@ toInfix operator a b = do
       pure $ TSInfix TSAdd tsA tsB
     Subtract ->
       pure $ TSInfix TSSubtract tsA tsB
+    GreaterThan ->
+      pure $ TSInfix TSGreaterThan tsA tsB
+    GreaterThanOrEqualTo ->
+      pure $ TSInfix TSGreaterThanOrEqualTo tsA tsB
+    LessThan ->
+      pure $ TSInfix TSLessThan tsA tsB
+    LessThanOrEqualTo ->
+      pure $ TSInfix TSLessThanOrEqualTo tsA tsB
     StringConcat ->
       pure $ TSInfix TSStringConcat tsA tsB
     ArrayConcat ->

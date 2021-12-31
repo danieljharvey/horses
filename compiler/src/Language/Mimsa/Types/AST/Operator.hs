@@ -24,6 +24,10 @@ data Operator
   | Subtract
   | StringConcat
   | ArrayConcat
+  | GreaterThan
+  | GreaterThanOrEqualTo
+  | LessThan
+  | LessThanOrEqualTo
   | Custom InfixOp
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON)
@@ -50,4 +54,8 @@ instance Printer Operator where
   prettyDoc Subtract = "-"
   prettyDoc StringConcat = "++"
   prettyDoc ArrayConcat = "<>"
+  prettyDoc GreaterThan = ">"
+  prettyDoc GreaterThanOrEqualTo = ">="
+  prettyDoc LessThan = "<"
+  prettyDoc LessThanOrEqualTo = "<="
   prettyDoc (Custom infixOp) = prettyDoc infixOp

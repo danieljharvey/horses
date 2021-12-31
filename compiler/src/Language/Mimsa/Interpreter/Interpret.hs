@@ -107,10 +107,34 @@ interpretOperator operator a b = do
       let withInt = pure . MyLiteral mempty . MyInt
       let getNum exp' = case exp' of
             (MyLiteral _ (MyInt i)) -> Right i
-            _ -> Left $ SubtractionWithNonNumber a
+            _ -> Left $ SubtractionWithNonNumber exp'
       case (,) <$> getNum plainA <*> getNum plainB of
         Right (a', b') -> withInt (a' - b')
         Left e -> throwError e
+    GreaterThan ->
+      numericComparison
+        (\iA -> \iB -> iA > iB)
+        (ComparisonWithNonNumber GreaterThan)
+        plainA
+        plainB
+    GreaterThanOrEqualTo ->
+      numericComparison
+        (\iA -> \iB -> iA >= iB)
+        (ComparisonWithNonNumber GreaterThanOrEqualTo)
+        plainA
+        plainB
+    LessThan ->
+      numericComparison
+        (\iA -> \iB -> iA < iB)
+        (ComparisonWithNonNumber LessThan)
+        plainA
+        plainB
+    LessThanOrEqualTo ->
+      numericComparison
+        (\iA -> \iB -> iA <= iB)
+        (ComparisonWithNonNumber LessThanOrEqualTo)
+        plainA
+        plainB
     StringConcat ->
       interpretStringConcat plainA plainB
     ArrayConcat ->
@@ -128,6 +152,23 @@ interpretOperator operator a b = do
             )
         Nothing ->
           throwError (CouldNotFindInfixOp infixOp)
+
+-- | lift a numeric comparison into the Expr type
+numericComparison ::
+  (Monoid ann) =>
+  (Int -> Int -> Bool) ->
+  (Expr Variable ann -> InterpreterError ann) ->
+  Expr Variable ann ->
+  Expr Variable ann ->
+  App ann (Expr Variable ann)
+numericComparison f withErr plainA plainB = do
+  let withBool = pure . MyLiteral mempty . MyBool
+  let getNum exp' = case exp' of
+        (MyLiteral _ (MyInt i)) -> Right i
+        _ -> Left $ withErr exp'
+  case (,) <$> getNum plainA <*> getNum plainB of
+    Right (a', b') -> withBool (f a' b')
+    Left e -> throwError e
 
 nameFromIdent :: Identifier var ann -> var
 nameFromIdent (Identifier _ name) = name

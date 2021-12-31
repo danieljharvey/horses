@@ -25,6 +25,7 @@ data InterpreterError ann
   | SelfReferencingBinding Variable
   | AdditionWithNonNumber (Expr Variable ann)
   | SubtractionWithNonNumber (Expr Variable ann)
+  | ComparisonWithNonNumber Operator (Expr Variable ann)
   | StringConcatenationFailure (Expr Variable ann) (Expr Variable ann)
   | ArrayConcatenationFailure (Expr Variable ann) (Expr Variable ann)
   | TypedHoleFound (Expr Variable ann)
@@ -63,6 +64,8 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
     "Addition expected number but got this: " <> prettyPrint a
   prettyPrint (SubtractionWithNonNumber a) =
     "Subtraction expected number but got this: " <> prettyPrint a
+  prettyPrint (ComparisonWithNonNumber op a) =
+    "Operator " <> prettyPrint op <> " expected number but got this: " <> prettyPrint a
   prettyPrint (StringConcatenationFailure a b) =
     "Concatenation expected string + string but got this: " <> prettyPrint a <> " and " <> prettyPrint b
   prettyPrint (ArrayConcatenationFailure a b) =
