@@ -7,6 +7,6 @@ import type { SourceSpan } from './SourceSpan'
 export type TypedHoleResponse = {
   thName: string
   thMonoType: string
-  thSourceSpan: SourceSpan
   thSuggestions: Array<string>
+  thSourceSpan: SourceSpan
 }

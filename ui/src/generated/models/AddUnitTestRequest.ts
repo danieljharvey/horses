@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export type AddUnitTestRequest = {
+  autTestName: string
   autExpression: string
   autProjectHash: string
-  autTestName: string
 }
