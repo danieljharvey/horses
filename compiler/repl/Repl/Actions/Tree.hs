@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Actions.Tree
+module Repl.Actions.Tree
   ( doTree,
     doGraph,
     doProjectGraph,
@@ -12,13 +12,13 @@ import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Store.DepGraph
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
+import Repl.Helpers
 
 -- | output basic homecooked tree structure for dependencies of expr
 doTree ::

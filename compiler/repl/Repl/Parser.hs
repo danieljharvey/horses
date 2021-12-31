@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Parser
+module Repl.Parser
   ( replParser,
   )
 where
@@ -9,9 +9,9 @@ import Data.Functor (($>))
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Literal
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
+import Repl.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
 

@@ -1,4 +1,4 @@
-module Language.Mimsa.Repl.Types
+module Repl.Types
   ( ReplAction (..),
   )
 where

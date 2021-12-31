@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl
+module Repl.Repl
   ( repl,
   )
 where
@@ -15,13 +15,13 @@ import Language.Mimsa.Project
     saveProject,
   )
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Repl.Actions (doReplAction)
-import Language.Mimsa.Repl.Parser (replParser)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Repl.Actions (doReplAction)
+import Repl.Parser (replParser)
 import System.Console.Haskeline
 import System.Directory
 

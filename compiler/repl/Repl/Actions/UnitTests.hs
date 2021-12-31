@@ -1,4 +1,4 @@
-module Language.Mimsa.Repl.Actions.UnitTests
+module Repl.Actions.UnitTests
   ( doAddTest,
     doListTests,
   )
@@ -11,13 +11,13 @@ import Language.Mimsa.Actions.AddUnitTest
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Repl.Helpers
 
 doAddTest ::
   Project Annotation ->

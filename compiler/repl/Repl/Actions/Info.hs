@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Actions.Info
+module Repl.Actions.Info
   ( doInfo,
   )
 where

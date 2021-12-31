@@ -1,4 +1,4 @@
-module Language.Mimsa.Repl.Helpers
+module Repl.Helpers
   ( saveExpression,
     toReplM,
     catchMimsaError,

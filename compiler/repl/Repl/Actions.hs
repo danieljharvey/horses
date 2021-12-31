@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Language.Mimsa.Repl.Actions
+module Repl.Actions
   ( doReplAction,
   )
 where
@@ -9,20 +9,20 @@ where
 import Data.Functor
 import Data.Text (Text)
 import Language.Mimsa.Monad
-import Language.Mimsa.Repl.Actions.Compile
-import Language.Mimsa.Repl.Actions.Evaluate
-import Language.Mimsa.Repl.Actions.ExpressionBind
-import Language.Mimsa.Repl.Actions.Info
-import Language.Mimsa.Repl.Actions.ListBindings
-import Language.Mimsa.Repl.Actions.Tree
-import Language.Mimsa.Repl.Actions.TypeSearch
-import Language.Mimsa.Repl.Actions.UnitTests
-import Language.Mimsa.Repl.Actions.Versions (doVersions)
-import Language.Mimsa.Repl.Helpers
-import Language.Mimsa.Repl.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
+import Repl.Actions.Compile
+import Repl.Actions.Evaluate
+import Repl.Actions.ExpressionBind
+import Repl.Actions.Info
+import Repl.Actions.ListBindings
+import Repl.Actions.Tree
+import Repl.Actions.TypeSearch
+import Repl.Actions.UnitTests
+import Repl.Actions.Versions (doVersions)
+import Repl.Helpers
+import Repl.Types
 
 doReplAction ::
   Project Annotation ->

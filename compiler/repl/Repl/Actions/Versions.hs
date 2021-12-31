@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Actions.Versions
+module Repl.Actions.Versions
   ( doVersions,
   )
 where

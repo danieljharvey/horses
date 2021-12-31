@@ -40,4 +40,4 @@ RUN dpkg -i /tmp/libgmp.deb && rm /tmp/libgmp.deb
 
 COPY --from=build /opt/build/bin .
 EXPOSE 8999
-CMD ["/opt/app/mimsa", "server"]
+CMD ["/opt/app/mimsa-server"]

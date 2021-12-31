@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Actions.ListBindings
+module Repl.Actions.ListBindings
   ( doListBindings,
   )
 where

@@ -25,7 +25,6 @@ source-repository head
 
 library
   exposed-modules:
-      Language.Mimsa
       Language.Mimsa.Actions.AddUnitTest
       Language.Mimsa.Actions.BindExpression
       Language.Mimsa.Actions.BindType
@@ -51,7 +50,6 @@ library
       Language.Mimsa.Backend.Typescript.Printer
       Language.Mimsa.Backend.Typescript.Types
       Language.Mimsa.Backend.ZipFile
-      Language.Mimsa.CLI
       Language.Mimsa.Codegen
       Language.Mimsa.Codegen.ApplicativeApply
       Language.Mimsa.Codegen.ApplicativePure
@@ -92,20 +90,6 @@ library
       Language.Mimsa.Project.TypeSearch
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
-      Language.Mimsa.Repl
-      Language.Mimsa.Repl.Actions
-      Language.Mimsa.Repl.Actions.Compile
-      Language.Mimsa.Repl.Actions.Evaluate
-      Language.Mimsa.Repl.Actions.ExpressionBind
-      Language.Mimsa.Repl.Actions.Info
-      Language.Mimsa.Repl.Actions.ListBindings
-      Language.Mimsa.Repl.Actions.Tree
-      Language.Mimsa.Repl.Actions.TypeSearch
-      Language.Mimsa.Repl.Actions.UnitTests
-      Language.Mimsa.Repl.Actions.Versions
-      Language.Mimsa.Repl.Helpers
-      Language.Mimsa.Repl.Parser
-      Language.Mimsa.Repl.Types
       Language.Mimsa.Server
       Language.Mimsa.Server.Compile
       Language.Mimsa.Server.EnvVars
@@ -237,7 +221,6 @@ library
     , envy
     , exceptions
     , hashable
-    , haskeline
     , http-types
     , megaparsec
     , memory
@@ -262,9 +245,23 @@ library
 executable mimsa
   main-is: Main.hs
   other-modules:
+      Repl.Actions
+      Repl.Actions.Compile
+      Repl.Actions.Evaluate
+      Repl.Actions.ExpressionBind
+      Repl.Actions.Info
+      Repl.Actions.ListBindings
+      Repl.Actions.Tree
+      Repl.Actions.TypeSearch
+      Repl.Actions.UnitTests
+      Repl.Actions.Versions
+      Repl.Helpers
+      Repl.Parser
+      Repl.Repl
+      Repl.Types
       Paths_mimsa
   hs-source-dirs:
-      app
+      repl
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
@@ -279,6 +276,47 @@ executable mimsa
     , exceptions
     , hashable
     , haskeline
+    , http-types
+    , megaparsec
+    , memory
+    , mimsa
+    , monad-logger
+    , mtl
+    , openapi3
+    , optparse-applicative
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-openapi3
+    , servant-server
+    , stm
+    , text
+    , transformers
+    , wai
+    , wai-cors
+    , warp
+    , zip-archive
+  default-language: Haskell2010
+
+executable mimsa-server
+  main-is: Main.hs
+  other-modules:
+      Paths_mimsa
+  hs-source-dirs:
+      server
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , directory
+    , envy
+    , exceptions
+    , hashable
     , http-types
     , megaparsec
     , memory
@@ -320,7 +358,6 @@ executable swagger
     , envy
     , exceptions
     , hashable
-    , haskeline
     , http-types
     , megaparsec
     , memory
@@ -414,7 +451,6 @@ test-suite mimsa-test
     , envy
     , exceptions
     , hashable
-    , haskeline
     , hspec
     , http-types
     , megaparsec

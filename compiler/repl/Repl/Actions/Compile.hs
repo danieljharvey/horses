@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Repl.Actions.Compile
+module Repl.Actions.Compile
   ( doOutputJS,
   )
 where
@@ -16,13 +16,13 @@ import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
-import Language.Mimsa.Repl.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Repl.Helpers
 
 doOutputJS ::
   Project Annotation ->
