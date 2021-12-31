@@ -1,1 +1,0 @@
-{"storeBindings":{},"storeExpression":{"contents":[[],{"dtConstructors":{"Nothing":[],"Just":[{"contents":[[],{"contents":[null,"a"],"tag":"TVName"}],"tag":"MTVar"}]},"dtName":"Maybe","dtVars":["a"]},{"contents":[[],"Just"],"tag":"MyConstructor"}],"tag":"MyData"},"storeTypeBindings":{}}
