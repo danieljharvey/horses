@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Server.Main
+module Server.Main
   ( server,
   )
 where
@@ -14,9 +14,6 @@ import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Server.EnvVars (getMimsaEnv)
-import Language.Mimsa.Server.Servant
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -29,6 +26,9 @@ import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
 import Servant
+import Server.EnvVars (getMimsaEnv)
+import Server.Servant
+import Server.Types
 
 -- allow GET and POST with JSON
 corsMiddleware :: Middleware

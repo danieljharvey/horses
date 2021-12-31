@@ -15,7 +15,7 @@ import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Printer
 import Prettyprinter
-import Servant
+import Servant (FromHttpApiData)
 
 renderName :: Name -> Doc ann
 renderName = pretty . getName

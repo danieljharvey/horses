@@ -1,23 +1,23 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Project
+module Server.Project
   ( projectEndpoints,
     ProjectAPI,
   )
 where
 
-import Language.Mimsa.Server.Project.AddUnitTest
-import Language.Mimsa.Server.Project.BindExpression
-import Language.Mimsa.Server.Project.BindType
-import Language.Mimsa.Server.Project.CreateProject
-import Language.Mimsa.Server.Project.Evaluate
-import Language.Mimsa.Server.Project.GetExpression
-import Language.Mimsa.Server.Project.Graph
-import Language.Mimsa.Server.Project.ListBindings
-import Language.Mimsa.Server.Project.ListTests
-import Language.Mimsa.Server.Types
 import Servant
+import Server.Project.AddUnitTest
+import Server.Project.BindExpression
+import Server.Project.BindType
+import Server.Project.CreateProject
+import Server.Project.Evaluate
+import Server.Project.GetExpression
+import Server.Project.Graph
+import Server.Project.ListBindings
+import Server.Project.ListTests
+import Server.Types
 
 -----
 

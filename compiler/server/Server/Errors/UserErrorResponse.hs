@@ -3,7 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Server.Errors.UserErrorResponse
+module Server.Errors.UserErrorResponse
   ( UserErrorResponse (..),
     toUserError,
   )

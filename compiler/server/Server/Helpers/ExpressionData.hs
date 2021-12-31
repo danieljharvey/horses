@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Language.Mimsa.Server.Helpers.ExpressionData
+module Server.Helpers.ExpressionData
   ( ExpressionData (..),
     UnitTestData (..),
     makeExpressionData,
@@ -19,7 +19,6 @@ import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Printer
-import Language.Mimsa.Server.Helpers.TestData
 import Language.Mimsa.Store
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.OutputTypes
@@ -28,6 +27,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+import Server.Helpers.TestData
 
 data RuntimeData = RuntimeData
   { rtdName :: Text,

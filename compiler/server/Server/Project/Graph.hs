@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Project.Graph
+module Server.Project.Graph
   ( graphProject,
     GraphAPI,
   )
@@ -15,11 +15,11 @@ import Data.OpenApi hiding (Server)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Store
 import Language.Mimsa.Types.Project
 import Servant
+import Server.Handlers
+import Server.Types
 
 -- /project/graph/<projectHash>
 

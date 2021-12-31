@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Language.Mimsa.Server.Helpers.TestData
+module Server.Helpers.TestData
   ( UnitTestData (..),
     PropertyTestData (..),
     TestData (..),

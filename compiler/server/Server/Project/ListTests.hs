@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Project.ListTests
+module Server.Project.ListTests
   ( listTestsHandler,
     ListTests,
     listTestsByExprHashHandler,
@@ -16,13 +16,13 @@ import qualified Data.Aeson as JSON
 import qualified Data.Map as M
 import Data.OpenApi
 import GHC.Generics
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Helpers.TestData
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Tests.Test
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant
+import Server.Handlers
+import Server.Helpers.TestData
+import Server.Types
 
 ------
 

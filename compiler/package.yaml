@@ -26,6 +26,8 @@ dependencies:
 - mtl
 - aeson
 - text
+- servant # server
+- servant-server # server
 - cryptonite # hashing
 - memory # hashing
 - bytestring
@@ -33,23 +35,13 @@ dependencies:
 - prettyprinter # formatting
 - megaparsec # parsing
 - parser-combinators # parsing
-- servant # server
-- servant-server # server
-- wai # server
-- warp # server
-- wai-cors # server
-- http-types # server
-- optparse-applicative # cli
-- servant-openapi3 # server
-- openapi3 # server
-- envy # server
-- stm # concurrency for server
 - monad-logger # logging
 - zip-archive # downloads
 - binary # downloads
 - hashable
 - QuickCheck # properties
 - exceptions 
+- openapi3 
 
 library:
   source-dirs: src
@@ -65,6 +57,7 @@ executables:
     dependencies:
     - mimsa
     - haskeline # repl
+    - optparse-applicative # cli
 
   mimsa-server:
     main:                Main.hs
@@ -75,16 +68,14 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - mimsa
-
-  swagger:
-    main:                Main.hs
-    source-dirs:         swagger
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - mimsa
+    - optparse-applicative # cli
+    - wai # server
+    - warp # server
+    - wai-cors # server
+    - http-types # server
+    - servant-openapi3 # server
+    - envy # server
+    - stm # concurrency for server
 
 tests:
   mimsa-test:

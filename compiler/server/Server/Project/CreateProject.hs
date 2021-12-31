@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Project.CreateProject
+module Server.Project.CreateProject
   ( createProject,
     CreateProject,
   )
@@ -14,9 +14,9 @@ import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Types
 import Servant
+import Server.Handlers
+import Server.Types
 
 type CreateProject =
   "create"

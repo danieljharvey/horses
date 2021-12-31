@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Project.GetExpression
+module Server.Project.GetExpression
   ( getExpression,
     GetExpression,
   )
@@ -14,13 +14,13 @@ import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Helpers.ExpressionData
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Servant
+import Server.Handlers
+import Server.Helpers.ExpressionData
+import Server.Types
 
 -- /project/expression/
 

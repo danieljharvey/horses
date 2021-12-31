@@ -90,31 +90,6 @@ library
       Language.Mimsa.Project.TypeSearch
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
-      Language.Mimsa.Server
-      Language.Mimsa.Server.Compile
-      Language.Mimsa.Server.EnvVars
-      Language.Mimsa.Server.Errors.UserErrorResponse
-      Language.Mimsa.Server.Handlers
-      Language.Mimsa.Server.Helpers
-      Language.Mimsa.Server.Helpers.ExpressionData
-      Language.Mimsa.Server.Helpers.TestData
-      Language.Mimsa.Server.Main
-      Language.Mimsa.Server.MimsaHandler
-      Language.Mimsa.Server.Project
-      Language.Mimsa.Server.Project.AddUnitTest
-      Language.Mimsa.Server.Project.BindExpression
-      Language.Mimsa.Server.Project.BindType
-      Language.Mimsa.Server.Project.CreateProject
-      Language.Mimsa.Server.Project.Evaluate
-      Language.Mimsa.Server.Project.GetExpression
-      Language.Mimsa.Server.Project.Graph
-      Language.Mimsa.Server.Project.ListBindings
-      Language.Mimsa.Server.Project.ListTests
-      Language.Mimsa.Server.Search
-      Language.Mimsa.Server.Servant
-      Language.Mimsa.Server.Store
-      Language.Mimsa.Server.Swagger
-      Language.Mimsa.Server.Types
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
       Language.Mimsa.Store.ExtractTypes
@@ -218,27 +193,19 @@ library
     , containers
     , cryptonite
     , directory
-    , envy
     , exceptions
     , hashable
-    , http-types
     , megaparsec
     , memory
     , monad-logger
     , mtl
     , openapi3
-    , optparse-applicative
     , parser-combinators
     , prettyprinter
     , servant
-    , servant-openapi3
     , servant-server
-    , stm
     , text
     , transformers
-    , wai
-    , wai-cors
-    , warp
     , zip-archive
   default-language: Haskell2010
 
@@ -272,11 +239,9 @@ executable mimsa
     , containers
     , cryptonite
     , directory
-    , envy
     , exceptions
     , hashable
     , haskeline
-    , http-types
     , megaparsec
     , memory
     , mimsa
@@ -287,64 +252,42 @@ executable mimsa
     , parser-combinators
     , prettyprinter
     , servant
-    , servant-openapi3
     , servant-server
-    , stm
     , text
     , transformers
-    , wai
-    , wai-cors
-    , warp
     , zip-archive
   default-language: Haskell2010
 
 executable mimsa-server
   main-is: Main.hs
   other-modules:
+      Server.Compile
+      Server.EnvVars
+      Server.Errors.UserErrorResponse
+      Server.Handlers
+      Server.Helpers
+      Server.Helpers.ExpressionData
+      Server.Helpers.TestData
+      Server.Main
+      Server.MimsaHandler
+      Server.Project
+      Server.Project.AddUnitTest
+      Server.Project.BindExpression
+      Server.Project.BindType
+      Server.Project.CreateProject
+      Server.Project.Evaluate
+      Server.Project.GetExpression
+      Server.Project.Graph
+      Server.Project.ListBindings
+      Server.Project.ListTests
+      Server.Search
+      Server.Servant
+      Server.Store
+      Server.Swagger
+      Server.Types
       Paths_mimsa
   hs-source-dirs:
       server
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      QuickCheck
-    , aeson
-    , base >=4.7 && <5
-    , binary
-    , bytestring
-    , containers
-    , cryptonite
-    , directory
-    , envy
-    , exceptions
-    , hashable
-    , http-types
-    , megaparsec
-    , memory
-    , mimsa
-    , monad-logger
-    , mtl
-    , openapi3
-    , optparse-applicative
-    , parser-combinators
-    , prettyprinter
-    , servant
-    , servant-openapi3
-    , servant-server
-    , stm
-    , text
-    , transformers
-    , wai
-    , wai-cors
-    , warp
-    , zip-archive
-  default-language: Haskell2010
-
-executable swagger
-  main-is: Main.hs
-  other-modules:
-      Paths_mimsa
-  hs-source-dirs:
-      swagger
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
@@ -448,29 +391,21 @@ test-suite mimsa-test
     , containers
     , cryptonite
     , directory
-    , envy
     , exceptions
     , hashable
     , hspec
-    , http-types
     , megaparsec
     , memory
     , mimsa
     , monad-logger
     , mtl
     , openapi3
-    , optparse-applicative
     , parser-combinators
     , prettyprinter
     , servant
-    , servant-openapi3
     , servant-server
-    , stm
     , text
     , transformers
     , typed-process
-    , wai
-    , wai-cors
-    , warp
     , zip-archive
   default-language: Haskell2010

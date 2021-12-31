@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Project.BindType
+module Server.Project.BindType
   ( bindType,
     BindType,
   )
@@ -19,16 +19,16 @@ import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Helpers.ExpressionData
-import Language.Mimsa.Server.MimsaHandler
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Servant
+import Server.Handlers
+import Server.Helpers.ExpressionData
+import Server.MimsaHandler
+import Server.Types
 
 ------
 

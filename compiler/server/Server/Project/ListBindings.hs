@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Project.ListBindings
+module Server.Project.ListBindings
   ( listBindings,
     ListBindings,
   )
@@ -13,10 +13,10 @@ where
 import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Servant
+import Server.Handlers
+import Server.Types
 
 -- /project/bindings/
 

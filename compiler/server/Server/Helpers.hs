@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Language.Mimsa.Server.Helpers
+module Server.Helpers
   ( to400Error,
     to500Error,
     ErrorType (..),

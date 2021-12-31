@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Server.EnvVars
+module Server.EnvVars
   ( getMimsaEnv,
   )
 where

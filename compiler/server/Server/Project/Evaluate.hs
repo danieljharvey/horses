@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Language.Mimsa.Server.Project.Evaluate
+module Server.Project.Evaluate
   ( evaluateExpression,
     EvaluateAPI,
   )
@@ -20,12 +20,12 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Printer
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Helpers.ExpressionData
-import Language.Mimsa.Server.MimsaHandler
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Servant
+import Server.Handlers
+import Server.Helpers.ExpressionData
+import Server.MimsaHandler
+import Server.Types
 
 -- using https://github.com/haskell-servant/servant/blob/master/doc/cookbook/uverb/UVerb.lhs
 

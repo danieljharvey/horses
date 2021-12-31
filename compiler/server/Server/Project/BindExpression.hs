@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Project.BindExpression
+module Server.Project.BindExpression
   ( bindExpression,
     BindExpression,
   )
@@ -19,15 +19,15 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Helpers.ExpressionData
-import Language.Mimsa.Server.Helpers.TestData
-import Language.Mimsa.Server.MimsaHandler
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Servant
+import Server.Handlers
+import Server.Helpers.ExpressionData
+import Server.Helpers.TestData
+import Server.MimsaHandler
+import Server.Types
 
 ------
 

@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Compile (CompileAPI, compileEndpoints) where
+module Server.Compile (CompileAPI, compileEndpoints) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
@@ -21,12 +21,12 @@ import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.ZipFile
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Helpers
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant
+import Server.Handlers
+import Server.Helpers
+import Server.Types
 
 -----
 

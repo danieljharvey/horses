@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Language.Mimsa.Server.Handlers
+module Server.Handlers
   ( ProjectData (..),
     fromActionM,
     eitherFromActionM,
@@ -48,8 +48,6 @@ import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Project.Usages
 import Language.Mimsa.Project.Versions
-import Language.Mimsa.Server.Helpers
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Store
 import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
@@ -62,6 +60,8 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Servant
+import Server.Helpers
+import Server.Types
 
 -----
 -- Commonly used functionality, lifted into Servant's Handler type

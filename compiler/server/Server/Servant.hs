@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Servant
+module Server.Servant
   ( MimsaAPI,
     mimsaAPI,
     mimsaServer,
@@ -9,12 +9,12 @@ module Language.Mimsa.Server.Servant
 where
 
 import Data.Proxy
-import Language.Mimsa.Server.Compile
-import Language.Mimsa.Server.Project
-import Language.Mimsa.Server.Search
-import Language.Mimsa.Server.Store
-import Language.Mimsa.Server.Types
 import Servant
+import Server.Compile
+import Server.Project
+import Server.Search
+import Server.Store
+import Server.Types
 
 type MimsaAPI = ProjectAPI :<|> StoreAPI :<|> SearchAPI :<|> CompileAPI
 

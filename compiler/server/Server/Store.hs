@@ -1,17 +1,17 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Store
+module Server.Store
   ( storeEndpoints,
     StoreAPI,
   )
 where
 
-import Language.Mimsa.Server.Helpers
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Store.Storage (findExpr, saveExpr)
 import Language.Mimsa.Types.Store
 import Servant
+import Server.Helpers
+import Server.Types
 
 -- the store API is used to communicate between instances of Mimsa
 -- the data it outputs should be enough for another Repl or Server to use

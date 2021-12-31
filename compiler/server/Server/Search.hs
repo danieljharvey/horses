@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Mimsa.Server.Search (SearchAPI, searchEndpoints) where
+module Server.Search (SearchAPI, searchEndpoints) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Map as M
@@ -14,11 +14,11 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.TypeSearch
-import Language.Mimsa.Server.Handlers
-import Language.Mimsa.Server.Helpers
-import Language.Mimsa.Server.Types
 import Language.Mimsa.Types.Project
 import Servant
+import Server.Handlers
+import Server.Helpers
+import Server.Types
 
 -----
 

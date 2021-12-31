@@ -7,7 +7,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Language.Mimsa.Server.MimsaHandler
+module Server.MimsaHandler
   ( runMimsaHandlerT,
     throwMimsaHandlerError,
     MimsaHandlerT (..),
@@ -21,9 +21,9 @@ where
 
 import Control.Monad.Except
 import Language.Mimsa.Printer
-import Language.Mimsa.Server.Errors.UserErrorResponse
 import Language.Mimsa.Types.Error
 import Servant
+import Server.Errors.UserErrorResponse
 
 -- magic version of handler that allows throwing of custom errors
 -- from https://github.com/haskell-servant/servant/blob/c1105899f47d5537c1bdc8c86bee3523bdf05282/doc/cookbook/uverb/UVerb.lhs

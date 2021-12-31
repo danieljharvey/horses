@@ -1,4 +1,4 @@
-module Language.Mimsa.Server.Types where
+module Server.Types where
 
 import qualified Control.Concurrent.STM as STM
 import Language.Mimsa.Types.AST
