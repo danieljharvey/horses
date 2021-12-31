@@ -92,11 +92,13 @@ resolveTypesRecursive store' typeBindings = do
 
 -- find all types needed by our expression in the store
 resolveTypes :: (Ord ann) => Store ann -> TypeBindings -> Set (StoreExpression ann)
-resolveTypes store' (TypeBindings tBindings) =
+resolveTypes store' (TypeBindings tnBindings tcBindings) =
   let typeLookup (_, hash) = case lookupStoreItem store' hash of
         Just sExpr -> S.singleton sExpr
         _ -> mempty -- TODO: are we swallowing the error here and should this all operate in ExceptT?
-      manySets = fmap typeLookup (M.toList tBindings)
+      manySets =
+        fmap typeLookup (M.toList tcBindings)
+          <> fmap typeLookup (M.toList tnBindings)
    in mconcat manySets
 
 --------------

@@ -149,7 +149,7 @@ lookupBindingName project name =
 
 lookupTypeBindingName :: Project ann -> TyCon -> Maybe ExprHash
 lookupTypeBindingName project tyCon =
-  let b = getTypeBindings . getCurrentTypeBindings . prjTypeBindings $ project
+  let b = getTyConBindings . getCurrentTypeBindings . prjTypeBindings $ project
    in M.lookup tyCon b
 
 findBindingNameForExprHash ::
