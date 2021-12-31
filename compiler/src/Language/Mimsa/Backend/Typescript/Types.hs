@@ -95,7 +95,10 @@ data TSOp
   = TSEquals
   | TSAdd
   | TSSubtract
+  | TSGreaterThan
   | TSGreaterThanOrEqualTo
+  | TSLessThan
+  | TSLessThanOrEqualTo
   | TSAnd
   | TSStringConcat
   deriving stock (Eq, Ord, Show)

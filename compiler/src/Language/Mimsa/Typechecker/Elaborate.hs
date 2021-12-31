@@ -529,6 +529,42 @@ elabOperator env ann ArrayConcat a b = do
   tyArr <- getUnknown ann
   (mt, elabA, elabB) <- elabInfix env (MTArray ann tyArr) a b
   pure (MyInfix mt ArrayConcat elabA elabB)
+elabOperator env ann GreaterThan a b = do
+  (mt, elabA, elabB) <-
+    elabComparison
+      env
+      (MTPrim ann MTInt)
+      (MTPrim ann MTBool)
+      a
+      b
+  pure (MyInfix mt GreaterThan elabA elabB)
+elabOperator env ann GreaterThanOrEqualTo a b = do
+  (mt, elabA, elabB) <-
+    elabComparison
+      env
+      (MTPrim ann MTInt)
+      (MTPrim ann MTBool)
+      a
+      b
+  pure (MyInfix mt GreaterThanOrEqualTo elabA elabB)
+elabOperator env ann LessThan a b = do
+  (mt, elabA, elabB) <-
+    elabComparison
+      env
+      (MTPrim ann MTInt)
+      (MTPrim ann MTBool)
+      a
+      b
+  pure (MyInfix mt LessThan elabA elabB)
+elabOperator env ann LessThanOrEqualTo a b = do
+  (mt, elabA, elabB) <-
+    elabComparison
+      env
+      (MTPrim ann MTInt)
+      (MTPrim ann MTBool)
+      a
+      b
+  pure (MyInfix mt LessThanOrEqualTo elabA elabB)
 elabOperator env ann (Custom infixOp) a b = do
   tyRes <- getUnknown ann
   tyFun <- lookupInfixOp env ann infixOp
@@ -545,6 +581,7 @@ elabOperator env ann (Custom infixOp) a b = do
     ]
   pure (MyInfix tyRes (Custom infixOp) elabA elabB)
 
+-- | infix operator where inputs and output are the same
 elabInfix ::
   Environment ->
   MonoType ->
@@ -558,6 +595,27 @@ elabInfix env mt a b = do
       tyB = getTypeFromAnn elabB
   tell [ShouldEqual tyA tyB, ShouldEqual tyB mt, ShouldEqual tyA mt]
   pure (mt, elabA, elabB)
+
+-- | infix operator where inputs match but output could be different
+-- | for instance, 1 < 2 == True would be `Int -> Int -> Bool`
+elabComparison ::
+  Environment ->
+  MonoType ->
+  MonoType ->
+  TcExpr ->
+  TcExpr ->
+  ElabM (MonoType, ElabExpr, ElabExpr)
+elabComparison env inputMt outputMt a b = do
+  elabA <- elab env a
+  elabB <- elab env b
+  let tyA = getTypeFromAnn elabA
+      tyB = getTypeFromAnn elabB
+  tell
+    [ ShouldEqual tyA tyB,
+      ShouldEqual tyA inputMt,
+      ShouldEqual tyB inputMt
+    ]
+  pure (outputMt, elabA, elabB)
 
 elabRecordAccess ::
   Environment ->

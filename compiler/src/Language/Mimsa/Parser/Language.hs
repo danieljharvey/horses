@@ -255,6 +255,22 @@ opParser =
           $> Subtract
       )
     <|> try
+      ( inSpaces (string ">")
+          $> GreaterThan
+      )
+    <|> try
+      ( inSpaces (string ">=")
+          $> GreaterThanOrEqualTo
+      )
+    <|> try
+      ( inSpaces (string "<")
+          $> LessThan
+      )
+    <|> try
+      ( inSpaces (string "<=")
+          $> LessThanOrEqualTo
+      )
+    <|> try
       ( inSpaces (string "++")
           $> StringConcat
       )

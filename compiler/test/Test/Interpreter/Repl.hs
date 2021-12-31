@@ -641,34 +641,6 @@ spec =
         result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil"
         result `shouldSatisfy` isRight
 
-      it "infix <<< = compose; True" $ do
-        result <- eval testStdlib "infix <<< = compose; True"
-        -- binding to a two arity function is A++
-        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-
-      it "infix <<< = incrementInt; True" $ do
-        result <- eval testStdlib "infix <<< = incrementInt; True"
-        -- we can only bind to a two arity function
-        result `shouldSatisfy` isLeft
-
-      it "define +++ as infix and use it" $ do
-        result <- eval testStdlib "infix +++ = addInt; 1 +++ 2"
-        result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-
-      it "addInt 1 2" $ do
-        result <- eval testStdlib "addInt 1 2"
-        result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-
-      it "infix == = addInt; True" $ do
-        result <- eval testStdlib "infix == = addInt; True"
-        -- can't overwrite built in infix operators
-        result `shouldSatisfy` isLeft
-
-      it "infix +++ = addInt; 1 +++ True" $ do
-        result <- eval testStdlib "infix +++ = addInt; 1 +++ True"
-        -- function typechecking should still work
-        result `shouldSatisfy` isLeft
-
       it "Stops boolean and Maybe<A> being used together" $ do
         result <- eval testStdlib "\\some -> match some with (Just a) -> Just (a == 1) | _ -> some"
         result `shouldSatisfy` isLeft
@@ -1088,3 +1060,76 @@ spec =
       it "each type variable is unique to the scope it's introduced in" $ do
         result <- eval testStdlib "let id1 (a: a) = (a,a); let id2 (b: a) = b; id1 (id2 True)"
         result `shouldSatisfy` isRight
+
+    describe "operators" $ do
+      it "infix <<< = compose; True" $ do
+        result <- eval testStdlib "infix <<< = compose; True"
+        -- binding to a two arity function is A++
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
+      it "infix <<< = incrementInt; True" $ do
+        result <- eval testStdlib "infix <<< = incrementInt; True"
+        -- we can only bind to a two arity function
+        result `shouldSatisfy` isLeft
+
+      it "define +++ as infix and use it" $ do
+        result <- eval testStdlib "infix +++ = addInt; 1 +++ 2"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
+      it "addInt 1 2" $ do
+        result <- eval testStdlib "addInt 1 2"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
+      it "infix == = addInt; True" $ do
+        result <- eval testStdlib "infix == = addInt; True"
+        -- can't overwrite built in infix operators
+        result `shouldSatisfy` isLeft
+
+      it "infix +++ = addInt; 1 +++ True" $ do
+        result <- eval testStdlib "infix +++ = addInt; 1 +++ True"
+        -- function typechecking should still work
+        result `shouldSatisfy` isLeft
+
+      it "Greater than 1" $ do
+        result <- eval testStdlib "10 > 1"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
+      it "Greater than 2" $ do
+        result <- eval testStdlib "1 > 10"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
+      it "Greater than 3" $ do
+        result <- eval testStdlib "True < 1"
+        result `shouldSatisfy` isLeft
+
+      it "Greater than or equal to 1" $ do
+        result <- eval testStdlib "10 >= 1"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
+      it "Greater than or equal to 2" $ do
+        result <- eval testStdlib "10 >= 10"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
+      it "Greater than or equal to 3" $ do
+        result <- eval testStdlib "9 >= 10"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
+      it "Less than 1" $ do
+        result <- eval testStdlib "1 < 10"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
+      it "Less than 2" $ do
+        result <- eval testStdlib "10 < 1"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
+      it "Less than or equal to 1" $ do
+        result <- eval testStdlib "1 <= 10"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
+      it "Less than or equal to 2" $ do
+        result <- eval testStdlib "10 <= 10"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
+      it "Less than or equal to 3" $ do
+        result <- eval testStdlib "10 <= 9"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)

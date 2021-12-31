@@ -71,7 +71,10 @@ printOp :: TSOp -> Text
 printOp TSEquals = "==="
 printOp TSAdd = "+"
 printOp TSSubtract = "-"
+printOp TSGreaterThan = ">"
 printOp TSGreaterThanOrEqualTo = ">="
+printOp TSLessThan = "<"
+printOp TSLessThanOrEqualTo = "<="
 printOp TSAnd = "&&"
 printOp TSStringConcat = "+"
 

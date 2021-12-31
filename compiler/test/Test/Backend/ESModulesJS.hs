@@ -247,7 +247,15 @@ fullTestCases =
     ( "let fold total item = total <> [item] in stringReduce fold [] \"dog\"",
       "[ 'd', 'o', 'g' ]"
     ),
-    ("let const = True; 1", "1")
+    ("let const = True; 1", "1"),
+    ("2 > 1", "true"),
+    ("1 > 2", "false"),
+    ("1 >= 1", "true"),
+    ("0 >= 1", "false"),
+    ("1 < 2", "true"),
+    ("2 < 1", "false"),
+    ("2 <= 2", "true"),
+    ("3 <= 2", "false")
   ]
 
 spec :: Spec
