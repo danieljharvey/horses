@@ -113,25 +113,25 @@ interpretOperator operator a b = do
         Left e -> throwError e
     GreaterThan ->
       numericComparison
-        (\iA -> \iB -> iA > iB)
+        (>)
         (ComparisonWithNonNumber GreaterThan)
         plainA
         plainB
     GreaterThanOrEqualTo ->
       numericComparison
-        (\iA -> \iB -> iA >= iB)
+        (>=)
         (ComparisonWithNonNumber GreaterThanOrEqualTo)
         plainA
         plainB
     LessThan ->
       numericComparison
-        (\iA -> \iB -> iA < iB)
+        (<)
         (ComparisonWithNonNumber LessThan)
         plainA
         plainB
     LessThanOrEqualTo ->
       numericComparison
-        (\iA -> \iB -> iA <= iB)
+        (<=)
         (ComparisonWithNonNumber LessThanOrEqualTo)
         plainA
         plainB
