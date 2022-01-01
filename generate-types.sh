@@ -1,7 +1,8 @@
 #!/bin/bash
 
 pushd compiler
-stack exec swagger > swagger.json
+stack install
+stack exec mimsa-server generate-swagger > swagger.json
 popd
 
 pushd ui

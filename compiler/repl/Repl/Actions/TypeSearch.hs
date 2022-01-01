@@ -1,0 +1,38 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+module Repl.Actions.TypeSearch
+  ( doTypeSearch,
+  )
+where
+
+import Data.Foldable
+import qualified Data.Map as M
+import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Shared as Actions
+import Language.Mimsa.Monad
+import Language.Mimsa.Printer
+import Language.Mimsa.Project.TypeSearch
+import Language.Mimsa.Typechecker.NormaliseTypes (normaliseType)
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Typechecker
+
+-------------
+
+doTypeSearch ::
+  Project Annotation -> MonoType -> MimsaM (Error Annotation) ()
+doTypeSearch env mt = do
+  typeMap <- mimsaFromEither $ Actions.getTypeMap env
+  let matches = typeSearch typeMap mt
+  let simplified = normaliseType mt
+  case M.toList matches of
+    [] ->
+      replOutput $ "Could not find a type match for " <> prettyPrint simplified
+    as -> do
+      replOutput $ (T.pack . show . length) as <> " matches for " <> prettyPrint simplified
+      traverse_
+        ( \(name, mt') ->
+            replOutput (prettyPrint name <> ": " <> prettyPrint mt')
+        )
+        as

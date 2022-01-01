@@ -16,7 +16,7 @@ copying example project...
 git clone https://github.com/danieljharvey/mimsa-test
 cd mimsa-test
 # start repl
-mimsa repl  
+mimsa 
 ```
 
 you should then see:

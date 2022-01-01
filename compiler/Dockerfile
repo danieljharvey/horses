@@ -10,7 +10,7 @@ RUN mv libgmp*.deb libgmp.deb
 
 # Docker build should not use cached layer if any of these is modified
 COPY stack.yaml package.yaml stack.yaml.lock /opt/build/
-RUN stack build --system-ghc --dependencies-only --fast
+RUN stack build :mimsa-server --system-ghc --dependencies-only --fast
 
 # -------------------------------------------------------------------------------------------
 FROM haskell:9.0.1-buster as build
@@ -21,7 +21,7 @@ COPY . /opt/build/
 
 WORKDIR /opt/build
 
-RUN stack build --system-ghc --fast
+RUN stack build :mimsa-server --system-ghc --fast
 
 RUN mv "$(stack path --local-install-root --system-ghc)/bin" /opt/build/bin
 
@@ -40,4 +40,4 @@ RUN dpkg -i /tmp/libgmp.deb && rm /tmp/libgmp.deb
 
 COPY --from=build /opt/build/bin .
 EXPOSE 8999
-CMD ["/opt/app/mimsa", "server"]
+CMD ["/opt/app/mimsa-server"]
