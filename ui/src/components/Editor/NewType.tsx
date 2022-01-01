@@ -85,33 +85,29 @@ export const NewType: React.FC<Props> = ({
               </Panel>
             </>
           ),
-          () => <p>loading</p>,
+          () => <p>Loading</p>,
 
-          (err: UserErrorResponse) => {
-            console.log('new type', { err })
-            return (
-              <>
-                <Panel flexGrow={2}>
-                  <CodeEditor
-                    code={code}
-                    setCode={onCodeChange}
-                    sourceItems={getSourceItems(state)}
-                    errorLocations={err.ueErrorLocations}
-                    typedHoleResponses={err.ueTypedHoles}
-                  />
-                </Panel>
-                <Panel>
-                  {editor.stale && (
-                    <Button onClick={addNewType}>
-                      Create
-                    </Button>
-                  )}
-                  <Code>{err.ueText}</Code>
-                </Panel>
-              </>
-            )
-          },
-
+          (err: UserErrorResponse) => (
+            <>
+              <Panel flexGrow={2}>
+                <CodeEditor
+                  code={code}
+                  setCode={onCodeChange}
+                  sourceItems={getSourceItems(state)}
+                  errorLocations={err.ueErrorLocations}
+                  typedHoleResponses={err.ueTypedHoles}
+                />
+              </Panel>
+              <Panel>
+                {editor.stale && (
+                  <Button onClick={addNewType}>
+                    Create
+                  </Button>
+                )}
+                <Code>{err.ueText}</Code>
+              </Panel>
+            </>
+          ),
           (addType) => (
             <Panel>
               <FlexColumnSpaced>
@@ -123,7 +119,7 @@ export const NewType: React.FC<Props> = ({
                     <Link
                       number={1}
                       depType="type"
-                      onClick={() => console.log(a)}
+                      onClick={() => {}}
                       highlight={true}
                     >
                       {a}

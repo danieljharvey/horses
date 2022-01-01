@@ -17,9 +17,6 @@ export const ExpressionTests: React.FC<
     projectHash,
     exprHash
   )
-  console.log('expressionTests component', {
-    expressionTests,
-  })
   return pipe(
     expressionTests,
     fold(
