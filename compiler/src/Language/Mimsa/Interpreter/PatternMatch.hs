@@ -45,7 +45,8 @@ patternMatches (PPair _ pA pB) (MyPair _ a b) = do
   pure $ as <> bs
 patternMatches (PRecord _ pAs) (MyRecord _ as)
   | S.null (S.difference (M.keysSet pAs) (M.keysSet as)) = do
-    let allPairs = zip (M.elems pAs) (M.elems as)
+    let usefulInputs = M.intersection as pAs
+        allPairs = zip (M.elems pAs) (M.elems usefulInputs)
     nice <- traverse (uncurry patternMatches) allPairs
     pure (mconcat nice)
 patternMatches (PLit _ pB) (MyLiteral _ b)
