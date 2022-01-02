@@ -40,6 +40,7 @@ buildStdlib =
       monoidFns
       stringFns
       stateFns
+      readerFns
 
 baseFns :: Actions.ActionM ()
 baseFns = do
@@ -154,6 +155,21 @@ stringFns = do
   removeBinding "stringFilter"
   removeBinding "stringSplit"
   removeBinding "stringMonoid"
+
+readerFns :: Actions.ActionM ()
+readerFns = do
+  addType "type Reader r a = Reader (r -> a)"
+  addBinding "readerRun" "\\reader -> \\r -> let (Reader ra) = reader in (ra r)"
+  addBinding "readerAsk" "Reader (\\r -> r)"
+  addBinding "readerLocal" "\\envF -> \\reader -> Reader (\\r -> readerRun reader (envF r))"
+  addBinding "readerAp" "\\readerF -> \\readerA -> let (Reader rToF) = readerF; let (Reader rToA) = readerA; (Reader (\\r -> rToF r (rToA r)))"
+  addBinding "readerMonoid" "\\innerM -> let (Monoid append empty) = innerM; (Monoid (\\rA -> \\rB -> Reader (\\r -> append (readerRun rA r) (readerRun rB r))) (Reader (\\r -> empty)))"
+  addBinding "reader" "{ run: readerRun, ask: readerAsk, local: readerLocal, fmap: reader.fmap, pure: reader.pure, ap: readerAp, monoid: readerMonoid }"
+  removeBinding "readerRun"
+  removeBinding "readerAsk"
+  removeBinding "readerLocal"
+  removeBinding "readerAp"
+  removeBinding "readerMonoid"
 
 addType :: Text -> Actions.ActionM ()
 addType t =
