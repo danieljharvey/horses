@@ -1020,6 +1020,11 @@ spec =
         result <- eval testStdlib "let (a: anyA) = True in a"
         result `shouldSatisfy` isLeft
 
+    describe "regressions" $ do
+      it "should destructure record correctly" $ do
+        result <- eval testStdlib "let { b: b } = { a: 5, b: 100 } in b"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 100)
+
     describe "lambda with type annotation" $ do
       it "should not parse without brackets" $ do
         result <- eval testStdlib "\\a: Int -> a + 1"
