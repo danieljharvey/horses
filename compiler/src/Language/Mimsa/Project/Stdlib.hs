@@ -162,10 +162,12 @@ readerFns = do
   addBinding "readerRun" "\\reader -> \\r -> let (Reader ra) = reader in (ra r)"
   addBinding "readerAsk" "Reader (\\r -> r)"
   addBinding "readerLocal" "\\envF -> \\reader -> Reader (\\r -> readerRun reader (envF r))"
-  addBinding "reader" "{ run: readerRun, ask: readerAsk, local: readerLocal, fmap: reader.fmap, pure: reader.pure }"
+  addBinding "readerAp" "\\readerF -> \\readerA -> let (Reader rToF) = readerF; let (Reader rToA) = readerA; (Reader (\\r -> rToF r (rToA r)))"
+  addBinding "reader" "{ run: readerRun, ask: readerAsk, local: readerLocal, fmap: reader.fmap, pure: reader.pure, ap: readerAp }"
   removeBinding "readerRun"
   removeBinding "readerAsk"
   removeBinding "readerLocal"
+  removeBinding "readerAp"
 
 addType :: Text -> Actions.ActionM ()
 addType t =
