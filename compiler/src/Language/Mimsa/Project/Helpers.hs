@@ -9,6 +9,7 @@ module Language.Mimsa.Project.Helpers
     fromStoreExpressionDeps,
     fromStore,
     findBindingNameForExprHash,
+    findTypeBindingNameForExprHash,
     lookupExprHash,
     lookupExprHashFromStore,
     bindingsToVersioned,
@@ -158,6 +159,14 @@ findBindingNameForExprHash ::
   Map Name ExprHash
 findBindingNameForExprHash exprHash project =
   let b = getBindings . getCurrentBindings . prjBindings $ project
+   in M.filter (== exprHash) b
+
+findTypeBindingNameForExprHash ::
+  ExprHash ->
+  Project ann ->
+  Map TyCon ExprHash
+findTypeBindingNameForExprHash exprHash project =
+  let b = getTypeBindings . getCurrentTypeBindings . prjTypeBindings $ project
    in M.filter (== exprHash) b
 
 bindingsToVersioned :: Bindings -> VersionedBindings

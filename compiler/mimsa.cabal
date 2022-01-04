@@ -37,6 +37,7 @@ library
       Language.Mimsa.Actions.RemoveBinding
       Language.Mimsa.Actions.Shared
       Language.Mimsa.Actions.Types
+      Language.Mimsa.Actions.Upgrade
       Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript.Printer
       Language.Mimsa.Backend.Output
@@ -333,6 +334,7 @@ test-suite mimsa-test
       Test.Actions.Compile
       Test.Actions.Evaluate
       Test.Actions.RemoveBinding
+      Test.Actions.Upgrade
       Test.Backend.ESModulesJS
       Test.Backend.RunNode
       Test.Backend.Runtimes

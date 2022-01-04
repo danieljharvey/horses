@@ -8,7 +8,6 @@ where
 
 import Data.Either (isLeft)
 import Data.Functor
-import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
@@ -19,7 +18,6 @@ import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
@@ -27,20 +25,6 @@ import Test.Utils.Helpers
 
 brokenExpr :: Expr Name Annotation
 brokenExpr = MyInfix mempty Equals (int 1) (bool True)
-
-additionalTests :: Project ann -> Project ann -> Int
-additionalTests old new =
-  unitTestsSize new - unitTestsSize old
-  where
-    unitTestsSize :: Project ann -> Int
-    unitTestsSize = M.size . prjTests
-
-additionalStoreItems :: Project ann -> Project ann -> Int
-additionalStoreItems old new =
-  projectStoreSize new - projectStoreSize old
-  where
-    projectStoreSize :: Project ann -> Int
-    projectStoreSize = length . getStore . prjStore
 
 testWithIdInExpr :: Expr Name Annotation
 testWithIdInExpr =
