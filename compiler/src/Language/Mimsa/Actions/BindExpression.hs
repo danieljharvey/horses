@@ -7,6 +7,7 @@ import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Graph as Actions
+import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
@@ -30,19 +31,20 @@ bindExpression expr name input = do
   project <- Actions.getProject
   -- if there is an existing binding of this name, bring its deps into scope
   -- perhaps this should be more specific and actually take the previous
-  -- exprHash as an argument
-  let project' =
-        project
-          <> maybe
-            mempty
-            fromStoreExpressionDeps
-            (getExistingBinding name project)
-  resolvedExpr <-
-    liftEither $ Actions.getTypecheckedStoreExpression input project' expr
+  -- exprHash as an argument instead of the name
+  resolvedExpr <- case getExistingBinding name project of
+    -- there is an existing one, use its deps when evaluating
+    Just se ->
+      let newSe = se {storeExpression = expr}
+       in Actions.checkStoreExpression input project newSe
+    -- no existing binding, resolve as usual
+    Nothing ->
+      liftEither $
+        Actions.getTypecheckedStoreExpression input project expr
   let storeExpr = reStoreExpression resolvedExpr
   Actions.bindStoreExpression storeExpr name
   graphviz <- Actions.graphExpression storeExpr
-  case lookupBindingName project' name of
+  case lookupBindingName project name of
     Nothing -> do
       Actions.appendMessage
         ( "Bound " <> prettyPrint name <> "."
