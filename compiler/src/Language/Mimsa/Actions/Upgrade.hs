@@ -13,7 +13,6 @@ import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
-import Language.Mimsa.Logging
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
@@ -48,7 +47,7 @@ upgradeByName bindingName = do
     then pure NoDependencies
     else do
       let replacements = replaceHashes project depHashes
-      if M.null (debugPretty "replacements" replacements)
+      if M.null replacements
         then pure AlreadyUpToDate
         else do
           let newStoreExpr = replaceDeps replacements storeExpr
@@ -66,7 +65,10 @@ upgradeByName bindingName = do
               replacements
 
 -- given a list of ExprHashes, return a list of replacements
-replaceHashes :: Project ann -> Set ExprHash -> Map ExprHash (NameOrTyCon, ExprHash)
+replaceHashes ::
+  Project ann ->
+  Set ExprHash ->
+  Map ExprHash (NameOrTyCon, ExprHash)
 replaceHashes project =
   M.fromList
     . mapMaybe
@@ -93,8 +95,7 @@ findNewestVersionFromHash ::
   Maybe (Name, ExprHash)
 findNewestVersionFromHash project exprHash =
   let getValueName =
-        listToMaybe . S.toList . M.keysSet
-          . findBindingNameForExprHash exprHash
+        findAnyBindingNameForExprHash exprHash
       lookupHash k map' =
         M.lookup k map'
           >>= \eh -> if eh == exprHash then Nothing else Just eh
@@ -113,7 +114,7 @@ findNewestTypeVersionFromHash ::
   Maybe (TyCon, ExprHash)
 findNewestTypeVersionFromHash project exprHash =
   let getTypeName =
-        listToMaybe . S.toList . M.keysSet . findTypeBindingNameForExprHash exprHash
+        findAnyTypeBindingNameForExprHash exprHash
       lookupHash k map' =
         M.lookup k map'
           >>= \eh -> if eh == exprHash then Nothing else Just eh
