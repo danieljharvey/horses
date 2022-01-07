@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Upgrade where
+module Language.Mimsa.Actions.Upgrade (upgradeByExprHash, upgradeByName, UpgradeResult (..)) where
 
 import Control.Applicative
 import Control.Monad.Except
