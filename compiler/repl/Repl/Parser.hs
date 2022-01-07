@@ -32,7 +32,8 @@ replParser =
     <|> try outputJSParser
     <|> try typeSearchParser
     <|> try addUnitTestParser
-    <|> listTestsParser
+    <|> try listTestsParser
+    <|> upgradeParser
 
 helpParser :: Parser ReplActionAnn
 helpParser = Help <$ string ":help"
@@ -114,3 +115,8 @@ listTestsParser = do
           nameParser
       )
   pure $ ListTests maybeName
+
+upgradeParser :: Parser ReplActionAnn
+upgradeParser = do
+  _ <- thenSpace (string ":upgrade")
+  Upgrade <$> nameParser

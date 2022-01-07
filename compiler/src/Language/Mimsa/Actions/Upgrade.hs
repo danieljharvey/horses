@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Actions.Upgrade where
 
@@ -10,6 +11,8 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
@@ -51,18 +54,35 @@ upgradeByName bindingName = do
         then pure AlreadyUpToDate
         else do
           let newStoreExpr = replaceDeps replacements storeExpr
+
           -- check it still typechecks
           _ <-
             Actions.checkStoreExpression
               (prettyPrint (storeExpression newStoreExpr))
               project
               newStoreExpr
+
           -- add new expression to the project
           Actions.bindStoreExpression newStoreExpr bindingName
+
+          -- output for logging and repl
+          Actions.appendMessage
+            ( "Updated " <> prettyPrint bindingName
+                <> ". "
+                <> replacementsMessage replacements
+            )
+
           pure $
             Updated
               (replaceDeps replacements storeExpr)
               replacements
+
+replacementsMessage :: Map a (NameOrTyCon, a) -> Text
+replacementsMessage items =
+  let size = M.size
+      itemNames = fmap (prettyPrint . fst) . M.elems
+      depWord i = if size i > 1 then "dependencies" else "dependency"
+   in prettyPrint (size items) <> " " <> depWord items <> " updated (" <> T.intercalate "," (itemNames items) <> ")"
 
 -- given a list of ExprHashes, return a list of replacements
 replaceHashes ::

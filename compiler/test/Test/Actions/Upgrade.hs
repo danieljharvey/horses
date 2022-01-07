@@ -53,9 +53,13 @@ spec = do
             _ <- Actions.bindExpression useIdExpr "useId" (prettyPrint useIdExpr)
             _ <- Actions.bindExpression newIdExpr "id" (prettyPrint newIdExpr)
             Actions.upgradeByName "useId"
-      let (prj, _, outcome) = fromRight $ Actions.run testStdlib action
+      let (prj, actions, outcome) = fromRight $ Actions.run testStdlib action
+      -- one dep was replaced in `useId`
       outcome `shouldSatisfy` \case
         Actions.Updated _ replacements -> M.size replacements == 1
         _ -> False
       -- the two new items (`useId` and `id`) plus the upgraded one
       additionalStoreItems testStdlib prj `shouldBe` 3
+      -- We logged a useful message
+      Actions.messagesFromOutcomes actions
+        `shouldSatisfy` elem "Updated useId. 1 dependency updated (id)"

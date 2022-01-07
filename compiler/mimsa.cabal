@@ -223,6 +223,7 @@ executable mimsa
       Repl.Actions.Tree
       Repl.Actions.TypeSearch
       Repl.Actions.UnitTests
+      Repl.Actions.Upgrade
       Repl.Actions.Versions
       Repl.Helpers
       Repl.Parser
