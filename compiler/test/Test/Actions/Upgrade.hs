@@ -29,9 +29,12 @@ useBothExpr = unsafeParseExpr "const (id 100) True" $> mempty
 newConstExpr :: Expr Name Annotation
 newConstExpr = unsafeParseExpr "let dog = True in \\a -> \\b -> a" $> mempty
 
+brokenExpr :: Expr Name Annotation
+brokenExpr = unsafeParseExpr "dog" $> mempty
+
 spec :: Spec
 spec = do
-  fdescribe "Upgrade" $ do
+  describe "Upgrade" $ do
     it "Error when binding not found" $ do
       let action = Actions.upgradeByName "nonsenseNameThatDoesntExist"
       Actions.run testStdlib action `shouldSatisfy` isLeft
@@ -74,6 +77,14 @@ spec = do
             Actions.upgradeByName "useBoth"
       let (_, _, outcome) = fromRight $ Actions.run testStdlib action
       outcome `shouldBe` Actions.AlreadyUpToDate
+    it "Fails if new dep does not typecheck" $ do
+      let action = do
+            _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)
+            _ <- Actions.bindExpression brokenExpr "id" (prettyPrint brokenExpr)
+            _ <- Actions.upgradeByName "useBoth"
+            Actions.upgradeByName "useBoth"
+      Actions.run testStdlib action `shouldSatisfy` isLeft
+
     it "Successfully updates two new deps to newest version" $ do
       let action = do
             _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)

@@ -33,15 +33,9 @@ data UpgradeResult
 
 -- takes a store expression and upgrade it's dependencies to the newest versions
 -- for now, we will just try the newest possible versions of every binding
-upgradeByName ::
-  Name ->
-  Actions.ActionM UpgradeResult
-upgradeByName bindingName = do
+upgradeByExprHash :: Name -> ExprHash -> Actions.ActionM UpgradeResult
+upgradeByExprHash bindingName exprHash = do
   project <- Actions.getProject
-  exprHash <- case lookupBindingName project bindingName of
-    Nothing ->
-      throwError (StoreErr (CouldNotFindBinding bindingName))
-    Just exprHash -> pure exprHash
   storeExpr <- Actions.lookupExpressionInStore (prjStore project) exprHash
   let depHashes = getDependencyHashes storeExpr
 
@@ -77,12 +71,25 @@ upgradeByName bindingName = do
               (replaceDeps replacements storeExpr)
               replacements
 
+-- takes a store expression and upgrade it's dependencies to the newest versions
+-- for now, we will just try the newest possible versions of every binding
+upgradeByName ::
+  Name ->
+  Actions.ActionM UpgradeResult
+upgradeByName bindingName = do
+  project <- Actions.getProject
+  exprHash <- case lookupBindingName project bindingName of
+    Nothing ->
+      throwError (StoreErr (CouldNotFindBinding bindingName))
+    Just exprHash -> pure exprHash
+  upgradeByExprHash bindingName exprHash
+
 replacementsMessage :: Map a (NameOrTyCon, a) -> Text
 replacementsMessage items =
   let size = M.size
       itemNames = fmap (prettyPrint . fst) . M.elems
       depWord i = if size i > 1 then "dependencies" else "dependency"
-   in prettyPrint (size items) <> " " <> depWord items <> " updated (" <> T.intercalate ", " (itemNames items) <> ")"
+   in prettyPrint (size items) <> " " <> depWord items <> " updated (" <> T.intercalate "," (itemNames items) <> ")"
 
 -- given a list of ExprHashes, return a list of replacements
 replaceHashes ::
