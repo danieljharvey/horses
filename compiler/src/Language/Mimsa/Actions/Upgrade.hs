@@ -82,7 +82,7 @@ replacementsMessage items =
   let size = M.size
       itemNames = fmap (prettyPrint . fst) . M.elems
       depWord i = if size i > 1 then "dependencies" else "dependency"
-   in prettyPrint (size items) <> " " <> depWord items <> " updated (" <> T.intercalate "," (itemNames items) <> ")"
+   in prettyPrint (size items) <> " " <> depWord items <> " updated (" <> T.intercalate ", " (itemNames items) <> ")"
 
 -- given a list of ExprHashes, return a list of replacements
 replaceHashes ::

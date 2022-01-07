@@ -49,23 +49,23 @@ spec = do
       outcome `shouldBe` Actions.AlreadyUpToDate
       -- no new tests
       additionalTests testStdlib prj `shouldBe` 0
-      -- one new store expression (`useBoth`)
+      -- one new store expression (`useId`)
       additionalStoreItems testStdlib prj `shouldBe` 1
     it "Successfully updates to newest version" $ do
       let action = do
-            _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)
+            _ <- Actions.bindExpression useBothExpr "useId" (prettyPrint useBothExpr)
             _ <- Actions.bindExpression newIdExpr "id" (prettyPrint newIdExpr)
             Actions.upgradeByName "useBoth"
       let (prj, actions, outcome) = fromRight $ Actions.run testStdlib action
-      -- one dep was replaced in `useBoth`
+      -- one dep was replaced in `useId`
       outcome `shouldSatisfy` \case
         Actions.Updated _ replacements -> M.size replacements == 1
         _ -> False
-      -- the two new items (`useBoth` and `id`) plus the upgraded one
+      -- the two new items (`useId` and `id`) plus the upgraded one
       additionalStoreItems testStdlib prj `shouldBe` 3
       -- We logged a useful message
       Actions.messagesFromOutcomes actions
-        `shouldSatisfy` elem "Updated useBoth. 1 dependency updated (id)"
+        `shouldSatisfy` elem "Updated useId. 1 dependency updated (id)"
     it "Repeat upgrade should return 'AlreadyUpToDate'" $ do
       let action = do
             _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)
@@ -74,21 +74,19 @@ spec = do
             Actions.upgradeByName "useBoth"
       let (_, _, outcome) = fromRight $ Actions.run testStdlib action
       outcome `shouldBe` Actions.AlreadyUpToDate
-    it "Successfully updates two new deps to newest version" $ do
+    it "Successfully updates new deps to newest version" $ do
       let action = do
             _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)
             _ <- Actions.bindExpression newIdExpr "id" (prettyPrint newIdExpr)
-            _ <- Actions.upgradeByName "useBoth"
             _ <- Actions.bindExpression newConstExpr "const" (prettyPrint newConstExpr)
             Actions.upgradeByName "useBoth"
       let (prj, actions, outcome) = fromRight $ Actions.run testStdlib action
-      -- one deps were replaced in the last upgrade of `useBoth`
+      -- two deps were replaced in `useBoth`
       outcome `shouldSatisfy` \case
-        Actions.Updated _ replacements -> M.size replacements == 1
+        Actions.Updated _ replacements -> M.size replacements == 2
         _ -> False
-      -- the three new items (`useBoth`, `id`, `const`) plus the 2 upgraded
-      -- ones
-      additionalStoreItems testStdlib prj `shouldBe` 5
+      -- the three new items (`useBoth`, `id`, `const`) plus the upgraded one
+      additionalStoreItems testStdlib prj `shouldBe` 4
       -- We logged a useful message
       Actions.messagesFromOutcomes actions
-        `shouldSatisfy` elem "Updated useBoth. 1 dependency updated (const)"
+        `shouldSatisfy` elem "Updated useBoth. 2 dependencies updated (id, const)"
