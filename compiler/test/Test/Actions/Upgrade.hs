@@ -10,10 +10,12 @@ where
 import Data.Either (isLeft)
 import Data.Functor
 import qualified Data.Map as M
+import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Upgrade as Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Test.Data.Project
@@ -31,6 +33,9 @@ newConstExpr = unsafeParseExpr "let dog = True in \\a -> \\b -> a" $> mempty
 
 brokenExpr :: Expr Name Annotation
 brokenExpr = unsafeParseExpr "dog" $> mempty
+
+testForUseBoth :: Expr Name Annotation
+testForUseBoth = unsafeParseExpr "useBoth == 100" $> mempty
 
 spec :: Spec
 spec = do
@@ -103,3 +108,20 @@ spec = do
       -- We logged a useful message
       Actions.messagesFromOutcomes actions
         `shouldSatisfy` elem "Updated useBoth. 1 dependency updated (const)"
+
+    it "Makes a copy of the test on update" $ do
+      let action = do
+            _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)
+            _ <- Actions.bindExpression newIdExpr "id" (prettyPrint newIdExpr)
+            _ <- Actions.addUnitTest testForUseBoth (TestName "Use useBoth") (prettyPrint testForUseBoth)
+            Actions.upgradeByName "useBoth"
+      let (prj, _, outcome) = fromRight $ Actions.run testStdlib action
+      -- one deps were replaced in the last upgrade of `useBoth`
+      outcome `shouldSatisfy` \case
+        Actions.Updated _ replacements -> M.size replacements == 1
+        _ -> False
+      -- the two new items (`useBoth`, `id`) plus the upgraded one plus two
+      -- tests
+      additionalStoreItems testStdlib prj `shouldBe` 5
+      -- one test added manually, one created in the upgrade
+      additionalTests testStdlib prj `shouldBe` 2

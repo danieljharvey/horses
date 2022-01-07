@@ -14,10 +14,12 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
+import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -58,6 +60,9 @@ upgradeByExprHash bindingName exprHash = do
 
           -- add new expression to the project
           Actions.bindStoreExpression newStoreExpr bindingName
+
+          -- update tests
+          _ <- Actions.updateTests exprHash (getStoreExpressionHash newStoreExpr)
 
           -- output for logging and repl
           Actions.appendMessage
