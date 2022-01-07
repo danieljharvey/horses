@@ -24,13 +24,14 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
 -- | things that could happen
 data UpgradeResult
   = NoDependencies
   | AlreadyUpToDate
-  | Updated (StoreExpression Annotation) (Map ExprHash (NameOrTyCon, ExprHash))
+  | Updated (ResolvedExpression Annotation) (Map ExprHash (NameOrTyCon, ExprHash))
   deriving stock (Eq, Ord, Show)
 
 -- takes a store expression and upgrade it's dependencies to the newest versions
@@ -52,7 +53,7 @@ upgradeByExprHash bindingName exprHash = do
           let newStoreExpr = replaceDeps replacements storeExpr
 
           -- check it still typechecks
-          _ <-
+          resolvedExpr <-
             Actions.checkStoreExpression
               (prettyPrint (storeExpression newStoreExpr))
               project
@@ -72,9 +73,7 @@ upgradeByExprHash bindingName exprHash = do
             )
 
           pure $
-            Updated
-              (replaceDeps replacements storeExpr)
-              replacements
+            Updated resolvedExpr replacements
 
 -- takes a store expression and upgrade it's dependencies to the newest versions
 -- for now, we will just try the newest possible versions of every binding
