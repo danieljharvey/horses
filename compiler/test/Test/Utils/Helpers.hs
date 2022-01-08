@@ -1,6 +1,7 @@
 module Test.Utils.Helpers where
 
 import Data.Functor (($>))
+import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser
@@ -104,3 +105,19 @@ mtString = MTPrim mempty MTString
 
 mtVar :: Text -> MonoType
 mtVar n = MTVar mempty (tvNamed n)
+
+----
+
+additionalTests :: Project ann -> Project ann -> Int
+additionalTests old new =
+  unitTestsSize new - unitTestsSize old
+  where
+    unitTestsSize :: Project ann -> Int
+    unitTestsSize = M.size . prjTests
+
+additionalStoreItems :: Project ann -> Project ann -> Int
+additionalStoreItems old new =
+  projectStoreSize new - projectStoreSize old
+  where
+    projectStoreSize :: Project ann -> Int
+    projectStoreSize = length . getStore . prjStore

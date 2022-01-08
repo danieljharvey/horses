@@ -9,6 +9,9 @@ module Language.Mimsa.Project.Helpers
     fromStoreExpressionDeps,
     fromStore,
     findBindingNameForExprHash,
+    findAnyBindingNameForExprHash,
+    findTypeBindingNameForExprHash,
+    findAnyTypeBindingNameForExprHash,
     lookupExprHash,
     lookupExprHashFromStore,
     bindingsToVersioned,
@@ -152,6 +155,7 @@ lookupTypeBindingName project tyCon =
   let b = getTypeBindings . getCurrentTypeBindings . prjTypeBindings $ project
    in M.lookup tyCon b
 
+-- | find the binding name in current expr hashes
 findBindingNameForExprHash ::
   ExprHash ->
   Project ann ->
@@ -159,6 +163,39 @@ findBindingNameForExprHash ::
 findBindingNameForExprHash exprHash project =
   let b = getBindings . getCurrentBindings . prjBindings $ project
    in M.filter (== exprHash) b
+
+-- | find the binding name in expr hashes
+findAnyBindingNameForExprHash ::
+  ExprHash ->
+  Project ann ->
+  Maybe Name
+findAnyBindingNameForExprHash exprHash project =
+  let bindings = M.toList $ getVersionedMap (prjBindings project)
+      predicate (_, hashes) = elem exprHash (NE.toList hashes)
+   in case filter predicate bindings of
+        [(name, _)] -> Just name
+        _ -> Nothing
+
+-- | find the type binding name in current expr hashes
+findTypeBindingNameForExprHash ::
+  ExprHash ->
+  Project ann ->
+  Map TyCon ExprHash
+findTypeBindingNameForExprHash exprHash project =
+  let b = getTypeBindings . getCurrentTypeBindings . prjTypeBindings $ project
+   in M.filter (== exprHash) b
+
+-- | find the type binding name in expr hashes
+findAnyTypeBindingNameForExprHash ::
+  ExprHash ->
+  Project ann ->
+  Maybe TyCon
+findAnyTypeBindingNameForExprHash exprHash project =
+  let bindings = M.toList $ getVersionedMap (prjTypeBindings project)
+      predicate (_, hashes) = elem exprHash (NE.toList hashes)
+   in case filter predicate bindings of
+        [(tyCon, _)] -> Just tyCon
+        _ -> Nothing
 
 bindingsToVersioned :: Bindings -> VersionedBindings
 bindingsToVersioned (Bindings b) = VersionedMap (pure <$> b)

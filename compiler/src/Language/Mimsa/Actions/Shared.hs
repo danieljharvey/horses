@@ -8,10 +8,11 @@ module Language.Mimsa.Actions.Shared
     fromItem,
     fromType,
     getTypeMap,
+    lookupExpressionInStore,
   )
 where
 
-import Control.Monad (join)
+import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Functor
 import Data.Map (Map)
@@ -19,6 +20,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
@@ -189,3 +191,13 @@ typecheckStoreExpression store storeExpr = do
       (\e -> InterpreterErr (e $> mempty))
       (useSwaps (reSwaps resolvedExpr) typedExpr)
   pure (storeExpr {storeExpression = typedStoreExpr})
+
+-- | given a store, try and find something in it
+lookupExpressionInStore ::
+  Store ann ->
+  ExprHash ->
+  Actions.ActionM (StoreExpression ann)
+lookupExpressionInStore store exprHash =
+  case M.lookup exprHash (getStore store) of
+    Just se -> pure se
+    _ -> throwError (StoreErr (CouldNotFindStoreExpression exprHash))

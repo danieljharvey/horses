@@ -20,6 +20,7 @@ import Repl.Actions.ListBindings
 import Repl.Actions.Tree
 import Repl.Actions.TypeSearch
 import Repl.Actions.UnitTests
+import Repl.Actions.Upgrade
 import Repl.Actions.Versions (doVersions)
 import Repl.Helpers
 import Repl.Types
@@ -38,6 +39,8 @@ doReplAction env input action =
       catchMimsaError env (doListBindings env input $> env)
     (Versions name) ->
       catchMimsaError env (doVersions env name $> env)
+    (Upgrade name) ->
+      catchMimsaError env (doUpgrade env name $> env)
     (Evaluate expr) ->
       catchMimsaError env (doEvaluate env input expr $> env)
     (Tree expr) ->
@@ -78,6 +81,7 @@ doHelp = do
   replOutput @Text ":addTest \"<test name>\" <expr> - add a unit test"
   replOutput @Text ":tests <optional name> - list tests for <name>"
   replOutput @Text ":versions <name> - list all versions of a binding"
+  replOutput @Text ":upgrade <name> - upgrade a binding to latest dependencies"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"
   replOutput @Text ":quit - give up and leave"
 
