@@ -8,7 +8,6 @@ module Language.Mimsa.Types.AST.Operator
   )
 where
 
-import Control.Applicative
 import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics (Generic)
@@ -36,14 +35,8 @@ data Operator
 -- string, so we need to fallback to a manual decoder for these older operators
 -- where they are found
 instance JSON.FromJSON Operator where
-  parseJSON input =
-    JSON.genericParseJSON JSON.defaultOptions input
-      <|> case input of
-        (JSON.String "Equals") -> pure Equals
-        (JSON.String "Add") -> pure Add
-        (JSON.String "Subtract") -> pure Subtract
-        (JSON.String "StringConcat") -> pure StringConcat
-        _ -> fail "Could not decode Operator"
+  parseJSON =
+    JSON.genericParseJSON JSON.defaultOptions
 
 instance ToSchema Operator where
   declareNamedSchema = genericDeclareNamedSchema defaultSchemaOptions

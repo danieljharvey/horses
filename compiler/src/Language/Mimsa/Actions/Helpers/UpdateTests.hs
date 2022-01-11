@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Actions.Helpers.UpdateTests (updateTests) where
 
 import Control.Monad.Except (liftEither)

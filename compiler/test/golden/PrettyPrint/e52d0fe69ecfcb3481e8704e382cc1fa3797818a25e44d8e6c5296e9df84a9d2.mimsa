@@ -1,0 +1,2 @@
+\a ->
+  if (a.one == a.two) then 100 else 0

@@ -20,11 +20,11 @@ import Prettyprinter
 -- | A literal value in the source code
 data Literal
   = -- | an integer
-    MyInt Int
+    MyInt {litInt :: Int}
   | -- | a boolean
-    MyBool Bool
+    MyBool {litBool :: Bool}
   | -- | a string
-    MyString StringType
+    MyString {litString :: StringType}
   deriving stock
     ( Eq,
       Ord,

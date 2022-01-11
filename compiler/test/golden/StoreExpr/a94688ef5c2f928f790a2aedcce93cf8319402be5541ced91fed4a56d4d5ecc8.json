@@ -1,1 +1,0 @@
-{"storeBindings":{},"storeExpression":{"contents":[[],{"tag":"GreaterThanOrEqualTo"},{"contents":[[],{"contents":10,"tag":"MyInt"}],"tag":"MyLiteral"},{"contents":[[],{"contents":1,"tag":"MyInt"}],"tag":"MyLiteral"}],"tag":"MyInfix"},"storeTypeBindings":{}}

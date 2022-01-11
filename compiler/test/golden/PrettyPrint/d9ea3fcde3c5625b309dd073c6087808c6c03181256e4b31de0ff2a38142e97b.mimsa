@@ -1,0 +1,7 @@
+type Thing    = Thing String;
+
+let a =
+  Thing "string";
+
+match a with 
+    (Thing s) -> s

@@ -37,41 +37,102 @@ import Prettyprinter
 -- which is either a string or a numbered variable
 data Expr var ann
   = -- | a literal, such as String, Int, Boolean
-    MyLiteral ann Literal
+    MyLiteral
+      { expAnn :: ann,
+        expLit :: Literal
+      }
   | -- | a named variable
-    MyVar ann var
+    MyVar
+      { expAnn :: ann,
+        expVar :: var
+      }
   | -- | binder, expr, body
-    MyLet ann (Identifier var ann) (Expr var ann) (Expr var ann)
+    MyLet
+      { expAnn :: ann,
+        expBinder :: Identifier var ann,
+        expExpr :: Expr var ann,
+        expBody :: Expr var ann
+      }
   | -- | pat, expr, body
-    MyLetPattern ann (Pattern var ann) (Expr var ann) (Expr var ann)
+    MyLetPattern
+      { exprAnn :: ann,
+        expPattern :: Pattern var ann,
+        expExpr :: Expr var ann,
+        expBody :: Expr var ann
+      }
   | -- | a `f` b
-    MyInfix ann Operator (Expr var ann) (Expr var ann)
+    MyInfix
+      { expAnn :: ann,
+        expOperator :: Operator,
+        expExpr :: Expr var ann,
+        expBody :: Expr var ann
+      }
   | -- | binder, body
-    MyLambda ann (Identifier var ann) (Expr var ann)
+    MyLambda
+      { exprAnn :: ann,
+        expBinder :: Identifier var ann,
+        expBody :: Expr var ann
+      }
   | -- | function, argument
-    MyApp ann (Expr var ann) (Expr var ann)
+    MyApp
+      { expAnn :: ann,
+        expFunc :: Expr var ann,
+        expArg :: Expr var ann
+      }
   | -- | expr, thencase, elsecase
-    MyIf ann (Expr var ann) (Expr var ann) (Expr var ann)
+    MyIf
+      { expAnn :: ann,
+        expPred :: Expr var ann,
+        expThen :: Expr var ann,
+        expElse :: Expr var ann
+      }
   | -- | (a,b)
-    MyPair ann (Expr var ann) (Expr var ann)
+    MyPair
+      { expAnn :: ann,
+        expA :: Expr var ann,
+        expB :: Expr var ann
+      }
   | -- | { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
-    MyRecord ann (Map Name (Expr var ann))
+    MyRecord
+      { expAnn :: ann,
+        expRecordItems :: Map Name (Expr var ann)
+      }
   | -- | a.foo
-    MyRecordAccess ann (Expr var ann) Name
-  | MyArray ann [Expr var ann]
+    MyRecordAccess
+      { expAnn :: ann,
+        expRecord :: Expr var ann,
+        expKey :: Name
+      }
+  | MyArray
+      { expAnn :: ann,
+        expArrayItems :: [Expr var ann]
+      }
   | -- | infix, func expr, expr
-    MyDefineInfix ann InfixOp (Expr var ann) (Expr var ann)
+    MyDefineInfix
+      { expAnn :: ann,
+        expInfixOp :: InfixOp,
+        expInfixFunc :: Expr var ann,
+        expBody :: Expr var ann
+      }
   | -- | tyName, tyArgs, Map constructor args, body
-    MyData ann DataType (Expr var ann)
+    MyData
+      { expAnn :: ann,
+        expDataType :: DataType,
+        expBody :: Expr var ann
+      }
   | -- | use a constructor by name
-    MyConstructor ann TyCon
+    MyConstructor
+      { expAnn :: ann,
+        expTyCon :: TyCon
+      }
   | -- | expr, [(pattern, expr)]
     MyPatternMatch
-      ann
-      (Expr var ann)
-      [(Pattern var ann, Expr var ann)]
+      { expAnn :: ann,
+        expExpr :: Expr var ann,
+        expPatterns :: [(Pattern var ann, Expr var ann)]
+      }
   | -- | name
-    MyTypedHole ann Name
+    MyTypedHole {expAnn :: ann, expTypedHoleName :: Name}
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 

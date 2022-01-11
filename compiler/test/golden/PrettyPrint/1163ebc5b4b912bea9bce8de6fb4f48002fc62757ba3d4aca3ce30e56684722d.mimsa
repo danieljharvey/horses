@@ -1,0 +1,3 @@
+match (Nothing) with 
+    (Nothing) -> False
+  | _ -> True

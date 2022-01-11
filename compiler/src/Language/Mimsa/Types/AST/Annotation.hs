@@ -3,7 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.AST.Annotation where
+module Language.Mimsa.Types.AST.Annotation (Annotation (..)) where
 
 import qualified Data.Aeson as JSON
 import Data.OpenApi
@@ -17,7 +17,7 @@ data Annotation
   = -- | No annotation
     None ()
   | -- | Start and end of this item in the original source
-    Location Int Int
+    Location {annStart :: Int, annEnd :: Int}
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
 

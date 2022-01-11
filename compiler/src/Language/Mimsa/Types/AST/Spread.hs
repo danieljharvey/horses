@@ -17,8 +17,13 @@ import Language.Mimsa.Printer
 
 data Spread var ann
   = NoSpread
-  | SpreadWildcard ann
-  | SpreadValue ann var
+  | SpreadWildcard
+      { sprAnn :: ann
+      }
+  | SpreadValue
+      { sprAnn :: ann,
+        sprVar :: var
+      }
   deriving stock
     ( Show,
       Eq,

@@ -16,8 +16,13 @@ import GHC.Generics
 import Language.Mimsa.Printer
 
 data StringPart var ann
-  = StrWildcard ann
-  | StrValue ann var
+  = StrWildcard
+      { stpAnn :: ann
+      }
+  | StrValue
+      { stpAnn :: ann,
+        stpVar :: var
+      }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
