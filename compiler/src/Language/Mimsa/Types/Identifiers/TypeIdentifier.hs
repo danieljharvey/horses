@@ -13,7 +13,6 @@ where
 -- the two types of id a type var can have - a named or numbered one
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.TyVar
@@ -36,8 +35,7 @@ data TypeIdentifier
   deriving anyclass
     ( JSON.ToJSON,
       JSON.ToJSONKey,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 instance Printer TypeIdentifier where

@@ -286,7 +286,6 @@ executable mimsa-server
       Server.Project.ListTests
       Server.Search
       Server.Servant
-      Server.Store
       Server.Swagger
       Server.Types
       Paths_mimsa

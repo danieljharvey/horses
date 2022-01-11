@@ -5,7 +5,6 @@
 module Language.Mimsa.Types.AST.InfixOp where
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
@@ -18,8 +17,7 @@ newtype InfixOp = InfixOp Text
       Ord,
       Show,
       JSON.ToJSON,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 -------------

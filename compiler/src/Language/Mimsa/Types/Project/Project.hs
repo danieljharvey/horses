@@ -7,7 +7,6 @@ module Language.Mimsa.Types.Project.Project where
 
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
-import Data.OpenApi
 import GHC.Generics (Generic)
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Project.Versioned
@@ -30,8 +29,7 @@ data Project ann = Project
     )
   deriving anyclass
     ( JSON.ToJSON,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 instance Semigroup (Project a) where

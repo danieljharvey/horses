@@ -15,7 +15,6 @@ where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.OpenApi hiding (Pattern, items, name)
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Literal
@@ -64,10 +63,6 @@ data Pattern var ann
       }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
-
-instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
-  declareNamedSchema =
-    genericDeclareNamedSchema defaultSchemaOptions
 
 getPatternAnnotation :: Pattern var ann -> ann
 getPatternAnnotation (PWildcard ann) = ann

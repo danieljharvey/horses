@@ -15,7 +15,6 @@ where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
-import Data.OpenApi
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -27,7 +26,6 @@ renderTyVar :: TyVar -> Doc ann
 renderTyVar = pretty . getTyVar
 
 newtype TyVar = TyVar {getTyVar' :: Text}
-  deriving newtype (ToSchema)
   deriving stock (Eq, Ord, Generic)
   deriving newtype
     ( Show,

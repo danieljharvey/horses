@@ -11,7 +11,6 @@ module Language.Mimsa.Types.AST.StringPart
 where
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi hiding (Pattern, items, name)
 import GHC.Generics
 import Language.Mimsa.Printer
 
@@ -25,13 +24,6 @@ data StringPart var ann
       }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
-
-instance
-  (ToSchema var, ToSchema ann) =>
-  ToSchema (StringPart var ann)
-  where
-  declareNamedSchema =
-    genericDeclareNamedSchema defaultSchemaOptions
 
 instance (Printer var) => Printer (StringPart var ann) where
   prettyDoc (StrWildcard _) = "_"

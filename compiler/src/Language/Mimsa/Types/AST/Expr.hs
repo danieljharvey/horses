@@ -3,7 +3,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 module Language.Mimsa.Types.AST.Expr
   ( Expr (..),
@@ -15,7 +14,6 @@ import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.OpenApi (ToSchema)
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType (DataType)
@@ -135,10 +133,6 @@ data Expr var ann
     MyTypedHole {expAnn :: ann, expTypedHoleName :: Name}
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
-
-deriving anyclass instance
-  (ToSchema var, ToSchema ann, JSON.ToJSONKey var) =>
-  ToSchema (Expr var ann)
 
 data InfixBit var ann
   = IfStart (Expr var ann)

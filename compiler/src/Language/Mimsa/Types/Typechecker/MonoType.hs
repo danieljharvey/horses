@@ -18,7 +18,6 @@ where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Annotation
@@ -37,8 +36,7 @@ data Primitive
     )
   deriving anyclass
     ( JSON.ToJSON,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 instance Printer Primitive where
@@ -91,8 +89,6 @@ data Type ann
       }
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
-
-deriving anyclass instance (ToSchema ann) => ToSchema (Type ann)
 
 getAnnotationForType :: Type ann -> ann
 getAnnotationForType (MTPrim ann _) = ann
