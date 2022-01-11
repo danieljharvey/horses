@@ -11,7 +11,6 @@ import {
   BindTypeResponse,
   Typeclass,
   ProjectData,
-  DataType,
   UserErrorResponse,
 } from '../generated'
 import { pipe } from 'fp-ts/function'
@@ -24,8 +23,6 @@ type AddType = {
   bindings: Record<string, string>
   typeBindings: Record<string, string>
   typeclasses: Typeclass[]
-  dataType: DataType
-  typeName: string
   dataTypePretty: string
 }
 
@@ -62,8 +59,6 @@ export const useAddType = (
             bindings: a.btCodegen?.edBindings || {},
             typeBindings: a.btCodegen?.edTypeBindings || {},
             typeclasses: a.btTypeclasses,
-            dataType: a.btDataType,
-            typeName: a.btDataType.dtName,
             dataTypePretty: a.btPrettyType,
           })
         }
