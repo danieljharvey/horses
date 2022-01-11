@@ -3,10 +3,9 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.AST.Annotation where
+module Language.Mimsa.Types.AST.Annotation (Annotation (..)) where
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Printer
 import Prettyprinter
@@ -17,9 +16,9 @@ data Annotation
   = -- | No annotation
     None ()
   | -- | Start and end of this item in the original source
-    Location Int Int
+    Location {annStart :: Int, annEnd :: Int}
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
 instance Semigroup Annotation where
   Location a b <> Location a' b' = Location (min a a') (max b b')

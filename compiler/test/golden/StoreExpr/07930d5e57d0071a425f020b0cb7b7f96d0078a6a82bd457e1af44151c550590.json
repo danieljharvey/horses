@@ -1,1 +1,0 @@
-{"storeBindings":{},"storeExpression":{"contents":[[],{"contents":[[],{"dog":{"contents":[[],{"contents":1,"tag":"MyInt"}],"tag":"MyLiteral"}}],"tag":"MyRecord"},[[{"contents":[[],{"dog":{"contents":[[],"a"],"tag":"PVar"}}],"tag":"PRecord"},{"contents":[[],"a"],"tag":"MyVar"}]]],"tag":"MyPatternMatch"},"storeTypeBindings":{}}

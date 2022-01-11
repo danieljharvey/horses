@@ -15,7 +15,6 @@ where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.OpenApi hiding (Pattern, items, name)
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Literal
@@ -26,25 +25,44 @@ import Language.Mimsa.Utils
 import Prettyprinter
 
 data Pattern var ann
-  = PWildcard ann
-  | PVar ann var
-  | PLit ann Literal
-  | PConstructor ann TyCon [Pattern var ann]
+  = PWildcard
+      { patAnn :: ann
+      }
+  | PVar
+      { patAnn :: ann,
+        patVar :: var
+      }
+  | PLit
+      { patAnn :: ann,
+        patLiteral :: Literal
+      }
+  | PConstructor
+      { patAnn :: ann,
+        patTyCon :: TyCon,
+        patMatches :: [Pattern var ann]
+      }
   | PPair
-      ann
-      (Pattern var ann)
-      (Pattern var ann)
+      { patAnn :: ann,
+        patA :: Pattern var ann,
+        patB :: Pattern var ann
+      }
   | PRecord
-      ann
-      (Map Name (Pattern var ann))
-  | PArray ann [Pattern var ann] (Spread var ann)
-  | PString ann (StringPart var ann) (StringPart var ann)
+      { patAnn :: ann,
+        patMap ::
+          Map Name (Pattern var ann)
+      }
+  | PArray
+      { patAnn :: ann,
+        patArray :: [Pattern var ann],
+        patSpread :: Spread var ann
+      }
+  | PString
+      { patAnn :: ann,
+        patHead :: StringPart var ann,
+        patTail :: StringPart var ann
+      }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
-
-instance (ToSchema var, ToSchema ann, JSON.ToJSONKey var) => ToSchema (Pattern var ann) where
-  declareNamedSchema =
-    genericDeclareNamedSchema defaultSchemaOptions
 
 getPatternAnnotation :: Pattern var ann -> ann
 getPatternAnnotation (PWildcard ann) = ann

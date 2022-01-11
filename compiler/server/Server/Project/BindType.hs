@@ -19,7 +19,6 @@ import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -50,7 +49,6 @@ data CodegenInfo = CodegenInfo {ciExprName :: Name, ciHash :: ExprHash}
 
 data BindTypeResponse = BindTypeResponse
   { btProjectData :: ProjectData,
-    btDataType :: DataType,
     btPrettyType :: Text,
     btCodegen :: Maybe ExpressionData,
     btTypeclasses :: [Typeclass]
@@ -83,5 +81,5 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
     Right (newProject, (ed, typeClasses, dt)) -> do
       pd <- lift $ projectDataHandler mimsaEnv newProject
       returnMimsa $
-        BindTypeResponse pd dt (prettyPrint dt) ed typeClasses
+        BindTypeResponse pd (prettyPrint dt) ed typeClasses
     Left e -> throwMimsaError e

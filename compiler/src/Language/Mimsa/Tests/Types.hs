@@ -45,8 +45,7 @@ newtype UnitTestSuccess = UnitTestSuccess Bool
       Ord,
       Show,
       JSON.ToJSON,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 data PropertyTestResult var ann
@@ -60,13 +59,12 @@ data PropertyTestResult var ann
     )
   deriving anyclass
     ( JSON.ToJSON,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 data Test = UTest UnitTest | PTest PropertyTest
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
 instance Printer Test where
   prettyPrint (PTest pt) = prettyPrint pt
@@ -77,7 +75,7 @@ data PropertyTest = PropertyTest
     ptExprHash :: ExprHash
   }
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
 instance Printer PropertyTest where
   prettyPrint test =
@@ -89,7 +87,7 @@ data UnitTest = UnitTest
     utExprHash :: ExprHash
   }
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
 instance Printer UnitTest where
   prettyPrint test =
@@ -104,7 +102,7 @@ data TestResult var ann
   | -- | property test is effectful and run when returning results
     PTestResult PropertyTest (PropertyTestResult var ann)
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.FromJSON, ToSchema)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
 instance (Show var, Printer var) => Printer (TestResult var ann) where
   prettyPrint (UTestResult ut) = prettyPrint ut

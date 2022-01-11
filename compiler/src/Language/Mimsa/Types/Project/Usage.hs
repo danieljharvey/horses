@@ -6,7 +6,6 @@
 module Language.Mimsa.Types.Project.Usage where
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi (ToSchema)
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
@@ -16,7 +15,7 @@ data Usage
   = Transient Name ExprHash
   | Direct Name ExprHash
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, ToSchema)
+  deriving anyclass (JSON.ToJSON)
 
 instance Printer Usage where
   prettyPrint (Transient name _) =

@@ -9,7 +9,6 @@ module Language.Mimsa.Types.AST.Literal
 where
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.StringType
@@ -20,11 +19,11 @@ import Prettyprinter
 -- | A literal value in the source code
 data Literal
   = -- | an integer
-    MyInt Int
+    MyInt {litInt :: Int}
   | -- | a boolean
-    MyBool Bool
+    MyBool {litBool :: Bool}
   | -- | a string
-    MyString StringType
+    MyString {litString :: StringType}
   deriving stock
     ( Eq,
       Ord,
@@ -33,8 +32,7 @@ data Literal
     )
   deriving anyclass
     ( JSON.FromJSON,
-      JSON.ToJSON,
-      ToSchema
+      JSON.ToJSON
     )
 
 instance Printer Literal where

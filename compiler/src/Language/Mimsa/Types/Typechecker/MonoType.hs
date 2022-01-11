@@ -4,7 +4,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 module Language.Mimsa.Types.Typechecker.MonoType
   ( MonoType,
@@ -18,7 +17,6 @@ where
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Annotation
@@ -37,8 +35,7 @@ data Primitive
     )
   deriving anyclass
     ( JSON.ToJSON,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 instance Printer Primitive where
@@ -49,19 +46,48 @@ instance Printer Primitive where
 type MonoType = Type Annotation
 
 data Type ann
-  = MTPrim ann Primitive
-  | MTVar ann TypeIdentifier
-  | MTFunction ann (Type ann) (Type ann) -- argument, result
-  | MTPair ann (Type ann) (Type ann) -- (a,b)
-  | MTRecord ann (Map Name (Type ann)) -- { foo: a, bar: b }
-  | MTRecordRow ann (Map Name (Type ann)) (Type ann) -- { foo:a, bar:b | rest }
-  | MTArray ann (Type ann) -- [a]
-  | MTConstructor ann TyCon -- name
-  | MTTypeApp ann (Type ann) (Type ann) -- func arg, apply arg to func
+  = MTPrim
+      { typAnn :: ann,
+        typPrim :: Primitive
+      }
+  | MTVar
+      { typAnn :: ann,
+        typIdent :: TypeIdentifier
+      }
+  | MTFunction
+      { typAnn :: ann,
+        typArg :: Type ann,
+        typRes :: Type ann -- argument, result
+      }
+  | MTPair
+      { typAnn :: ann,
+        typA :: Type ann,
+        typB :: Type ann -- (a,b)
+      }
+  | MTRecord
+      { typAnn :: ann,
+        typRecordItems :: Map Name (Type ann) -- { foo: a, bar: b }
+      }
+  | MTRecordRow
+      { typAnn :: ann,
+        typRecordItems :: Map Name (Type ann),
+        typRest :: Type ann -- { foo:a, bar:b | rest }
+      }
+  | MTArray
+      { typAnn :: ann,
+        typArrayItems :: Type ann -- [a]
+      }
+  | MTConstructor
+      { typAnn :: ann,
+        typTypeName :: TyCon -- name
+      }
+  | MTTypeApp
+      { typAnn :: ann,
+        typFunc :: Type ann,
+        typArg :: Type ann -- func arg, apply arg to func
+      }
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
-
-deriving anyclass instance (ToSchema ann) => ToSchema (Type ann)
 
 getAnnotationForType :: Type ann -> ann
 getAnnotationForType (MTPrim ann _) = ann

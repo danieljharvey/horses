@@ -1,0 +1,1 @@
+{"storeBindings":{},"storeExpression":{"expOperator":{"tag":"Equals"},"tag":"MyInfix","expBody":{"tag":"MyLiteral","expLit":{"tag":"MyBool","litBool":true},"expAnn":[]},"expAnn":[],"expExpr":{"tag":"MyLiteral","expLit":{"tag":"MyBool","litBool":true},"expAnn":[]}},"storeTypeBindings":{}}

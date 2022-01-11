@@ -1,1 +1,0 @@
-{"storeBindings":{"compose":"f48c2aa9ec2cc62e9389a73964a88b393230f70f7fa0dc8687d24512e7f2089b"},"storeExpression":{"contents":[[],"<<<",{"contents":[[],"compose"],"tag":"MyVar"},{"contents":[[],{"contents":true,"tag":"MyBool"}],"tag":"MyLiteral"}],"tag":"MyDefineInfix"},"storeTypeBindings":{}}

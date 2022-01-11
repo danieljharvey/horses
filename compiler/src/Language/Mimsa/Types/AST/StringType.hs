@@ -10,7 +10,6 @@ module Language.Mimsa.Types.AST.StringType
 where
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -23,7 +22,7 @@ import Prettyprinter
 -- parsing complicated.
 -- This should probably be revisited at some point
 newtype StringType = StringType Text
-  deriving newtype (Eq, Ord, Show, JSON.FromJSON, JSON.ToJSON, ToSchema)
+  deriving newtype (Eq, Ord, Show, JSON.FromJSON, JSON.ToJSON)
   deriving stock (Generic)
 
 instance IsString StringType where

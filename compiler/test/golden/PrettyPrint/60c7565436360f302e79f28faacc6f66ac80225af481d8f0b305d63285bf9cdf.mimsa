@@ -1,0 +1,9 @@
+let parser =
+  bindParser (\a ->
+    if (a == "d")
+    then
+      anyChar
+    else
+      failParser) anyChar;
+
+runParser parser "log"

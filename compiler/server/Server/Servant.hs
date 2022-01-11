@@ -13,10 +13,9 @@ import Servant
 import Server.Compile
 import Server.Project
 import Server.Search
-import Server.Store
 import Server.Types
 
-type MimsaAPI = ProjectAPI :<|> StoreAPI :<|> SearchAPI :<|> CompileAPI
+type MimsaAPI = ProjectAPI :<|> SearchAPI :<|> CompileAPI
 
 mimsaAPI :: Proxy MimsaAPI
 mimsaAPI = Proxy
@@ -24,6 +23,5 @@ mimsaAPI = Proxy
 mimsaServer :: MimsaEnvironment -> Server MimsaAPI
 mimsaServer mimsaEnv =
   projectEndpoints mimsaEnv
-    :<|> storeEndpoints mimsaEnv
     :<|> searchEndpoints mimsaEnv
     :<|> compileEndpoints mimsaEnv

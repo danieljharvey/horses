@@ -13,15 +13,19 @@ where
 -- the two types of id a type var can have - a named or numbered one
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.TyVar
 import Prettyprinter
 
 data TypeIdentifier
-  = TVName (Maybe Int) TyVar
-  | TVUnificationVar Int
+  = TVName
+      { tiNum :: Maybe Int,
+        tiVar :: TyVar
+      }
+  | TVUnificationVar
+      { tiUniVar :: Int
+      }
   deriving stock
     ( Eq,
       Ord,
@@ -31,8 +35,7 @@ data TypeIdentifier
   deriving anyclass
     ( JSON.ToJSON,
       JSON.ToJSONKey,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 instance Printer TypeIdentifier where

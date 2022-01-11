@@ -7,7 +7,6 @@
 module Language.Mimsa.Types.Store.StoreExpression where
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -31,8 +30,7 @@ data StoreExpression ann = StoreExpression
     )
   deriving anyclass
     ( JSON.ToJSON,
-      JSON.FromJSON,
-      ToSchema
+      JSON.FromJSON
     )
 
 instance Printer (StoreExpression ann) where

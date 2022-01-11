@@ -11,14 +11,18 @@ module Language.Mimsa.Types.AST.Spread
 where
 
 import qualified Data.Aeson as JSON
-import Data.OpenApi hiding (Pattern, items, name)
 import GHC.Generics
 import Language.Mimsa.Printer
 
 data Spread var ann
   = NoSpread
-  | SpreadWildcard ann
-  | SpreadValue ann var
+  | SpreadWildcard
+      { sprAnn :: ann
+      }
+  | SpreadValue
+      { sprAnn :: ann,
+        sprVar :: var
+      }
   deriving stock
     ( Show,
       Eq,
@@ -31,13 +35,6 @@ data Spread var ann
     ( JSON.FromJSON,
       JSON.ToJSON
     )
-
-instance
-  (ToSchema ann, ToSchema var) =>
-  ToSchema (Spread var ann)
-  where
-  declareNamedSchema =
-    genericDeclareNamedSchema defaultSchemaOptions
 
 instance (Printer var, Show var) => Printer (Spread var ann) where
   prettyDoc NoSpread = ""

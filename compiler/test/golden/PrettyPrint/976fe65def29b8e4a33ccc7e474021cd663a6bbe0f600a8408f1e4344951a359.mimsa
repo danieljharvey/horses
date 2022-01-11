@@ -1,0 +1,4 @@
+let prelude =
+  { id: (\i -> i) };
+
+prelude.id
