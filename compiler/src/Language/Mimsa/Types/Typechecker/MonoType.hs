@@ -4,7 +4,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 module Language.Mimsa.Types.Typechecker.MonoType
   ( MonoType,
