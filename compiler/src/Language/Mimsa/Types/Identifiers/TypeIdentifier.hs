@@ -20,8 +20,13 @@ import Language.Mimsa.Types.Identifiers.TyVar
 import Prettyprinter
 
 data TypeIdentifier
-  = TVName (Maybe Int) TyVar
-  | TVUnificationVar Int
+  = TVName
+      { tiNum :: Maybe Int,
+        tiVar :: TyVar
+      }
+  | TVUnificationVar
+      { tiUniVar :: Int
+      }
   deriving stock
     ( Eq,
       Ord,

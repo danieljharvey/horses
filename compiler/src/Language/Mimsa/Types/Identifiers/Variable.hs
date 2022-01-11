@@ -16,8 +16,8 @@ import Language.Mimsa.Types.Identifiers.Name
 import Prettyprinter
 
 data Variable
-  = NamedVar Name
-  | NumberedVar Int
+  = NamedVar {varNamed :: Name}
+  | NumberedVar {varNumbered :: Int}
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.ToJSONKey, JSON.FromJSON, ToSchema)
 
