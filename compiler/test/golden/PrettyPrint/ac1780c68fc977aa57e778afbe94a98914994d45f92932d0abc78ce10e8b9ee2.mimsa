@@ -1,0 +1,3 @@
+type Reader r a    = Reader (r -> a);
+
+Reader (\r -> r + 100)
