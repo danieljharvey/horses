@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Store.Storage
@@ -10,6 +11,8 @@ module Language.Mimsa.Store.Storage
     storeSize,
     saveFile,
     saveAllInStore,
+    serialiseStoreExpression,
+    deserialiseStoreExpression,
   )
 where
 
@@ -32,6 +35,17 @@ import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project.ProjectHash
 import Language.Mimsa.Types.Store
 import System.Directory
+
+-- | datatype that encodes to `null` in JSON
+data NullUnit = NullUnit
+  deriving stock (Eq, Ord, Show)
+
+instance JSON.FromJSON NullUnit where
+  parseJSON JSON.Null = pure NullUnit
+  parseJSON _ = fail "NullUnit expected a null value"
+
+instance JSON.ToJSON NullUnit where
+  toJSON _ = JSON.Null
 
 -- get store folder, creating if it does not exist
 -- the store folder usually lives in ~/.local/share
@@ -68,15 +82,13 @@ saveAllInStore store = do
   traverse_ saveExpr (getStore store)
 
 getStoreExpressionHash :: StoreExpression ann -> ExprHash
-getStoreExpressionHash se = getStoreExpressionHash' (se $> ())
+getStoreExpressionHash = snd . serialiseStoreExpression
 
-getStoreExpressionHash' :: StoreExpression () -> ExprHash
-getStoreExpressionHash' = coerce . snd . contentAndHash
-
+-- | check a loaded store expression matches its hash
 validateStoreExpression ::
-  StoreExpression () ->
+  StoreExpression NullUnit ->
   ExprHash ->
-  Either StoreError (StoreExpression ())
+  Either StoreError (StoreExpression NullUnit)
 validateStoreExpression storeExpr exprHash =
   if getStoreExpressionHash storeExpr == exprHash
     then pure storeExpr
@@ -88,14 +100,14 @@ validateStoreExpression storeExpr exprHash =
 
 saveExpr :: StoreExpression ann -> MimsaM StoreError ExprHash
 saveExpr se =
-  saveExpr' (se $> ())
+  saveExpr' (se $> NullUnit)
 
 -- take an expression, save it, return ExprHash
-saveExpr' :: StoreExpression () -> MimsaM StoreError ExprHash
-saveExpr' expr = do
+saveExpr' :: StoreExpression NullUnit -> MimsaM StoreError ExprHash
+saveExpr' storeExpr = do
   storePath <- getExpressionFolder
   let path = filePath storePath exprHash
-      (json, exprHash) = coerce $ contentAndHash expr
+      (json, exprHash) = serialiseStoreExpression storeExpr
   exists <- liftIO $ doesFileExist path
   if exists
     then logDebug $ "Expression for " <> prettyPrint exprHash <> " already exists"
@@ -107,25 +119,33 @@ saveExpr' expr = do
 findExpr ::
   ExprHash ->
   MimsaM StoreError (StoreExpression ())
-findExpr = findExprInLocalStore
+findExpr = fmap ($> ()) . findExprInLocalStore
+
+-- this is the only encode we should be doing
+serialiseStoreExpression :: StoreExpression ann -> (BS.ByteString, ExprHash)
+serialiseStoreExpression se = coerce $ contentAndHash (se $> NullUnit)
+
+-- this is the only json decode we should be doing
+deserialiseStoreExpression :: BS.ByteString -> Maybe (StoreExpression NullUnit)
+deserialiseStoreExpression =
+  JSON.decode
 
 -- find in the store
-findExprInLocalStore :: ExprHash -> MimsaM StoreError (StoreExpression ())
+findExprInLocalStore :: ExprHash -> MimsaM StoreError (StoreExpression NullUnit)
 findExprInLocalStore hash = do
   storePath <- getExpressionFolder
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
   case (json :: Either IOError BS.ByteString) of
     Left _ -> throwError $ CouldNotReadFilePath (filePath storePath hash)
-    Right json' ->
-      case JSON.decode json' of
+    Right json' -> do
+      case deserialiseStoreExpression json' of
+        Nothing -> throwError CouldNotDecodeByteString
         Just storeExpr ->
           case validateStoreExpression storeExpr hash of
             Right se -> do
               logDebug $ "Found expression for " <> prettyPrint hash
               pure se
             Left e -> throwError e
-        _ ->
-          throwError (CouldNotDecodeJson hash)
 
 -- | given an expression to save, save it
 -- | some sort of catch / error?

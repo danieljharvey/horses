@@ -10,6 +10,8 @@ module Test.Utils.Serialisation
     saveRegression,
     createOutputFolder,
     deleteOutputFolder,
+    loadStoreExpression,
+    saveStoreExpression,
   )
 where
 
@@ -17,6 +19,7 @@ import Control.Exception (try)
 import qualified Data.Aeson as JSON
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BS
+import Data.Functor
 import Data.List (isInfixOf)
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -24,6 +27,8 @@ import qualified Data.Text.IO as T
 import Data.Text.Lazy (fromStrict)
 import Data.Text.Lazy.Encoding
 import Language.Mimsa.Printer
+import Language.Mimsa.Store
+import Language.Mimsa.Types.Store
 import System.Directory
 
 saveRootPath :: String
@@ -97,6 +102,19 @@ loadJSON filename =
     ( \a -> case JSON.decode a of
         Just a' -> Right a'
         Nothing -> Left "JSON decode failed"
+    )
+
+saveStoreExpression :: String -> StoreExpression ann -> IO ()
+saveStoreExpression filename =
+  saveRegression filename (fst . serialiseStoreExpression)
+
+loadStoreExpression :: String -> IO (Either Text (StoreExpression ()))
+loadStoreExpression filename =
+  loadRegression
+    filename
+    ( \a -> case deserialiseStoreExpression a of
+        Just a' -> pure (a' $> ())
+        Nothing -> Left "Decoding Store Expression failed"
     )
 
 savePretty ::
