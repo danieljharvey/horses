@@ -35,6 +35,7 @@ import Test.Utils.Serialisation
   ( createOutputFolder,
     saveJSON,
     savePretty,
+    saveStoreExpression,
   )
 
 eval ::
@@ -57,7 +58,7 @@ saveRegressionData :: StoreExpression () -> IO ()
 saveRegressionData se = do
   jsonPath <- createOutputFolder "StoreExpr"
   let jsonFilename = jsonPath <> show (getStoreExpressionHash se) <> ".json"
-  saveJSON jsonFilename se
+  saveStoreExpression jsonFilename se
   prettyPath <- createOutputFolder "PrettyPrint"
   let prettyFilename = prettyPath <> show (getStoreExpressionHash se) <> ".mimsa"
   savePretty prettyFilename (storeExpression se)

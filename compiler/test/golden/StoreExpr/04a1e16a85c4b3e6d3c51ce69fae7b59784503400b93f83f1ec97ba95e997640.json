@@ -1,0 +1,1 @@
+{"storeBindings":{"compose":"b2855f82a73b6271e2e9a55d4e7be06a5bab7c48aab3d5fee4b2faa472c16473"},"storeExpression":{"expInfixOp":"<<<","tag":"MyDefineInfix","expBody":{"tag":"MyLiteral","expLit":{"tag":"MyBool","litBool":true},"expAnn":null},"expAnn":null,"expInfixFunc":{"tag":"MyVar","expVar":"compose","expAnn":null}},"storeTypeBindings":{}}

@@ -1,0 +1,1 @@
+type LeBool    = Faux | Vrai in Vrai

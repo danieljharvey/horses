@@ -16,11 +16,8 @@ import Language.Mimsa.Parser (parseExprAndFormatError)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Store
 import Test.Hspec
 import Test.Utils.Serialisation
-
-type StoreExpr = StoreExpression ()
 
 parseExprFromPretty :: String -> IO (Either Text Text)
 parseExprFromPretty filename =
@@ -51,7 +48,7 @@ spec =
   describe "Serialisation" $ do
     it "StoreExpression JSON" $ do
       files <- getAllFilesInDir "StoreExpr" "json"
-      loaded <- traverse (loadJSON @StoreExpr) files
+      loaded <- traverse loadStoreExpression files
       length (catEithers loaded) `shouldBe` length loaded
 
     it "Project JSON" $ do

@@ -1,1 +1,0 @@
-{"storeBindings":{},"storeExpression":{"expPatterns":[[{"patAnn":[],"tag":"PWildcard"},{"tag":"MyLiteral","expLit":{"tag":"MyBool","litBool":true},"expAnn":[]}]],"tag":"MyPatternMatch","expAnn":[],"expExpr":{"tag":"MyLiteral","expLit":{"litInt":1,"tag":"MyInt"},"expAnn":[]}},"storeTypeBindings":{}}

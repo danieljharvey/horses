@@ -14,6 +14,7 @@ data StoreError
   | CouldNotWriteFilePath FilePath
   | CouldNotDecodeJson ExprHash
   | CouldNotDecodeFile FilePath
+  | CouldNotDecodeByteString
   | CouldNotFindExprHashForBindings [Name]
   | CouldNotFindExprHashForTypeBindings [TyCon]
   | CouldNotFindBinding Name
@@ -33,6 +34,8 @@ instance Printer StoreError where
     "Could not write file at path " <> T.pack path
   prettyPrint (CouldNotDecodeJson hash') =
     "Could not decode JSON for hash " <> prettyPrint hash'
+  prettyPrint CouldNotDecodeByteString =
+    "Could not decode JSON for bytestring"
   prettyPrint (CouldNotDecodeFile path) =
     "Could not decode JSON for file " <> T.pack path
   prettyPrint (CouldNotFindExprHashForBindings missing) =
