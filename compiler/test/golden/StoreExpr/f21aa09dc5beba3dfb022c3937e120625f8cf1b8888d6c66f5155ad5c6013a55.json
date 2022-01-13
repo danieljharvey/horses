@@ -1,1 +1,0 @@
-{"storeBindings":{},"storeExpression":{"tag":"MyApp","expFunc":{"expBinder":{"idAnn":null,"tag":"Identifier","idVar":"a"},"tag":"MyLambda","expBody":{"tag":"MyVar","expVar":"a","expAnn":null},"exprAnn":null},"expAnn":null,"expArg":{"tag":"MyLiteral","expLit":{"litInt":1,"tag":"MyInt"},"expAnn":null}},"storeTypeBindings":{}}

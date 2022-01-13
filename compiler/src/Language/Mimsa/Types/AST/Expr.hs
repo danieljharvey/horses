@@ -53,7 +53,7 @@ data Expr var ann
       }
   | -- | pat, expr, body
     MyLetPattern
-      { exprAnn :: ann,
+      { expAnn :: ann,
         expPattern :: Pattern var ann,
         expExpr :: Expr var ann,
         expBody :: Expr var ann
@@ -67,7 +67,7 @@ data Expr var ann
       }
   | -- | binder, body
     MyLambda
-      { exprAnn :: ann,
+      { expAnn :: ann,
         expBinder :: Identifier var ann,
         expBody :: Expr var ann
       }

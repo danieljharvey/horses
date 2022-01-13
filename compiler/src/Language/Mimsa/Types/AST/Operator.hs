@@ -26,7 +26,7 @@ data Operator
   | GreaterThanOrEqualTo
   | LessThan
   | LessThanOrEqualTo
-  | Custom InfixOp
+  | Custom {opInfixOp :: InfixOp}
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
