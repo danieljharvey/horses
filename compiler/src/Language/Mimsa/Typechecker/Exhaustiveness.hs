@@ -147,7 +147,10 @@ generateRequired env (PConstructor ann tyCon args) = do
 generateRequired env (PArray _ items _) = do
   items' <- traverse (generateRequired env) items
   let allItems = smallerListVersions (sequence items')
-  pure $ (PArray mempty <$> allItems <*> pure (SpreadWildcard mempty)) <> [PArray mempty mempty NoSpread]
+  pure $
+    (PArray mempty <$> allItems <*> pure (SpreadWildcard mempty))
+      <> [PArray mempty mempty NoSpread]
+      <> [PArray mempty [PWildcard mempty] (SpreadWildcard mempty)]
 generateRequired _ PString {} = pure [PLit mempty (MyString "")]
 generateRequired _ _ = pure mempty
 
@@ -224,6 +227,16 @@ annihilate (PPair _ a b) _ =
   isComplete a && isComplete b
 annihilate (PRecord _ as) _ =
   foldr (\a total -> total && isComplete a) True as
+annihilate (PArray _ itemsA (SpreadWildcard _)) (PArray _ itemsB (SpreadValue _ _)) =
+  foldr
+    (\(a, b) keep -> keep && annihilate a b)
+    True
+    (zip itemsA itemsB)
+annihilate (PArray _ itemsA (SpreadValue _ _)) (PArray _ itemsB (SpreadWildcard _)) =
+  foldr
+    (\(a, b) keep -> keep && annihilate a b)
+    True
+    (zip itemsA itemsB)
 annihilate _ _as = False
 
 -- is this item total, as such, ie, is it always true?
