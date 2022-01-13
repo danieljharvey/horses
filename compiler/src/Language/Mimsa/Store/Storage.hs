@@ -32,20 +32,10 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.MimsaConfig
+import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Project.ProjectHash
 import Language.Mimsa.Types.Store
 import System.Directory
-
--- | datatype that encodes to `null` in JSON
-data NullUnit = NullUnit
-  deriving stock (Eq, Ord, Show)
-
-instance JSON.FromJSON NullUnit where
-  parseJSON JSON.Null = pure NullUnit
-  parseJSON _ = fail "NullUnit expected a null value"
-
-instance JSON.ToJSON NullUnit where
-  toJSON _ = JSON.Null
 
 -- get store folder, creating if it does not exist
 -- the store folder usually lives in ~/.local/share

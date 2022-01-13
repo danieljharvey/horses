@@ -16,6 +16,7 @@ import Language.Mimsa.Parser.MonoType (monoTypeParser)
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers (TyCon)
+import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Typechecker
 import Text.Megaparsec
 import Text.Megaparsec.Char
@@ -50,7 +51,7 @@ typeDeclParserWithCons = do
 
 --------
 
-manyTypeConstructors :: Parser (Map TyCon [Type ()])
+manyTypeConstructors :: Parser (Map TyCon [Type NullUnit])
 manyTypeConstructors = do
   tyCons <-
     sepBy
@@ -60,7 +61,7 @@ manyTypeConstructors = do
 
 -----
 
-oneTypeConstructor :: Parser (Map TyCon [Type ()])
+oneTypeConstructor :: Parser (Map TyCon [Type NullUnit])
 oneTypeConstructor = do
   name <- tyConParser
   args <-
@@ -70,7 +71,7 @@ oneTypeConstructor = do
           sepBy (withOptionalSpace monoTypeParser) space
       )
       <|> pure mempty
-  let argsWithNoType = ($> ()) <$> args
+  let argsWithNoType = ($> NullUnit) <$> args
   pure (M.singleton name argsWithNoType)
 
 -----

@@ -1,0 +1,4 @@
+\a ->
+  match a with 
+      (Just as) -> as
+    | (Nothing) -> 100

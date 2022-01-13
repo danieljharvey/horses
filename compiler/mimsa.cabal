@@ -152,6 +152,7 @@ library
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.MimsaConfig
+      Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project
       Language.Mimsa.Types.Project.ProjectHash

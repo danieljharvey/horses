@@ -70,7 +70,7 @@ data FieldItemType
 toFieldItemType ::
   TyCon ->
   Name ->
-  Type () ->
+  Type a ->
   CodegenM (Name, FieldItemType)
 toFieldItemType tyName matchVar = \case
   MTVar _ (TVName _ a) ->
@@ -128,7 +128,7 @@ createMatch ::
   TyCon ->
   Name ->
   TyCon ->
-  [Type ()] ->
+  [Type a] ->
   CodegenM (Pattern Name (), Expr Name ())
 createMatch typeName matchVar tyCon fields = do
   fieldItems <- traverse (toFieldItemType typeName matchVar) fields
