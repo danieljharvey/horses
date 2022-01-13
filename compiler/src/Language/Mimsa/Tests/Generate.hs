@@ -18,6 +18,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Test.QuickCheck
@@ -60,7 +61,7 @@ fromMonoType gs mt =
       Nothing -> error "could not work out datatype"
 
 -- | take the args for the type and apply them to the type
-typeApply :: [MonoType] -> DataType -> Map TyCon [Type ()]
+typeApply :: [MonoType] -> DataType -> Map TyCon [Type NullUnit]
 typeApply mts (DataType _ vars constructors) =
   let subs =
         Substitutions $
@@ -85,7 +86,7 @@ fromType gs typeName args = case M.lookup typeName (gsDataTypes gs) of
     frequency (info <$> M.toList dtApplied)
   Nothing -> error "could not find datatype"
 
-constructorWeighting :: GenerateState -> TyCon -> [Type ()] -> Int
+constructorWeighting :: GenerateState -> TyCon -> [Type NullUnit] -> Int
 constructorWeighting gs typeName args =
   if shouldWeStopRecursing gs
     then
@@ -103,7 +104,7 @@ incrementDepth :: GenerateState -> GenerateState
 incrementDepth (GenerateState dts depth) = GenerateState dts (depth + 1)
 
 -- | does the type use itself?
-isRecursive :: TyCon -> [Type ()] -> Bool
+isRecursive :: TyCon -> [Type NullUnit] -> Bool
 isRecursive typeName args =
   or
     ( S.member typeName
@@ -115,7 +116,7 @@ fromConstructor ::
   (Monoid ann) =>
   GenerateState ->
   TyCon ->
-  [Type ()] ->
+  [Type NullUnit] ->
   Gen (Expr Variable ann)
 fromConstructor gs tyCon args =
   let applyArg arg mA = do

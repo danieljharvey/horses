@@ -61,7 +61,7 @@ applicativePure_ (DataType tyCon vars items) = do
 
 partToExpr ::
   Name ->
-  Map TyCon [Type ()] ->
+  Map TyCon [Type a] ->
   Expr Name () ->
   Part ->
   CodegenM (Expr Name ())
@@ -96,7 +96,7 @@ data PureType
   | WithEmpties TyCon (NonEmpty Part)
 
 -- | a constructor with one variable, that is the functorVar one
-singleVarConstructor :: Name -> Map TyCon [Type ()] -> CodegenM PureType
+singleVarConstructor :: Name -> Map TyCon [Type a] -> CodegenM PureType
 singleVarConstructor fVar items = do
   let filterFn (_tc, fields) = case fields of
         [MTVar _ (TVName _ a)] | coerce a == fVar -> True
@@ -105,24 +105,24 @@ singleVarConstructor fVar items = do
   pure (PureVar tyCon)
 
 -- | an empty constructor
-emptyConstructor :: Map TyCon [Type ()] -> CodegenM TyCon
+emptyConstructor :: Map TyCon [Type a] -> CodegenM TyCon
 emptyConstructor items = do
   let filterFn (_, fields) = null fields
   (k, _) <- matchConstructor filterFn items
   pure k
 
-fieldIsRecursion :: TyCon -> [Name] -> Type () -> Bool
+fieldIsRecursion :: TyCon -> [Name] -> Type a -> Bool
 fieldIsRecursion tyCon vars mt =
   case varsFromDataType mt of
     Just (tyCon', vars') ->
       tyCon == tyCon' && and (zipWith fieldIsName vars vars')
     _ -> False
 
-fieldIsName :: Name -> Type () -> Bool
+fieldIsName :: Name -> Type a -> Bool
 fieldIsName name (MTVar _ (TVName _ a)) = name == coerce a
 fieldIsName _ _ = False
 
-multiVarConstructor :: TyCon -> [Name] -> Map TyCon [Type ()] -> CodegenM PureType
+multiVarConstructor :: TyCon -> [Name] -> Map TyCon [Type a] -> CodegenM PureType
 multiVarConstructor tyCon vars items = do
   let withField (tc, fields) = case NE.nonEmpty fields of
         Nothing -> Nothing

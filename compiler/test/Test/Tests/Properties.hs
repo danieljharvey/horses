@@ -66,11 +66,11 @@ spec = do
       it "is not recursive" $ do
         isRecursive "Unit" [] `shouldBe` False
       it "is not recursive 2" $ do
-        isRecursive "Maybe" [MTPrim () MTInt] `shouldBe` False
+        isRecursive "Maybe" [MTPrim mempty MTInt] `shouldBe` False
       it "is recursive" $ do
         isRecursive
           "List"
-          [ MTTypeApp () (MTConstructor () "List") (MTPrim () MTInt)
+          [ MTTypeApp mempty (MTConstructor mempty "List") (MTPrim mempty MTInt)
           ]
           `shouldBe` True
 

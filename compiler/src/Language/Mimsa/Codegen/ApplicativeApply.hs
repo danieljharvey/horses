@@ -56,7 +56,7 @@ applicativeApply_ (DataType tyCon vars items) = do
     )
 
 -- Do we care about this constructor?
-containsVar :: Name -> [Type ()] -> Bool
+containsVar :: Name -> [Type a] -> Bool
 containsVar n fields =
   or (fieldContains <$> fields)
   where
@@ -73,7 +73,7 @@ containsVar n fields =
 createMatches ::
   TyCon ->
   [Name] ->
-  Map TyCon [Type ()] ->
+  Map TyCon [Type a] ->
   CodegenM (NonEmpty (Pattern Name (), Expr Name ()))
 createMatches typeName vars items = do
   funcVar <- getFunctorVar vars
@@ -87,7 +87,7 @@ createMatches typeName vars items = do
     constructors
 
 -- | a case match that reconstructs the given expr untouched
-noOpMatch :: TyCon -> [Type ()] -> (Pattern Name (), Expr Name ())
+noOpMatch :: TyCon -> [Type a] -> (Pattern Name (), Expr Name ())
 noOpMatch tyCon fields =
   let numberedFields = (reverse $ zip ([1 ..] :: [Integer]) (reverse fields))
       mkFieldName i = Name ("a" <> T.pack (show i))
@@ -105,14 +105,14 @@ noOpMatch tyCon fields =
 newtype FieldItemType = VariableField Name
   deriving stock (Eq, Ord)
 
-toFieldItemType :: Type () -> CodegenM FieldItemType
+toFieldItemType :: Type a -> CodegenM FieldItemType
 toFieldItemType = \case
   MTVar _ (TVName _ a) -> pure (VariableField $ coerce a)
   _ -> throwError "Expected VarName"
 
 toFieldItemTypeF ::
   Name ->
-  Type () ->
+  Type a ->
   CodegenM FieldItemType
 toFieldItemTypeF funcVar = \case
   MTVar _ (TVName _ a) ->
@@ -132,7 +132,7 @@ reconstructField matchVar fieldItem =
 createInnerMatch ::
   Name ->
   TyCon ->
-  [Type ()] ->
+  [Type a] ->
   CodegenM (Pattern Name (), Expr Name ())
 createInnerMatch matchVar tyCon fields = do
   regFields <-
@@ -169,8 +169,8 @@ patternFromFieldItemType tyCon fields =
 createMatch ::
   TyCon ->
   Name ->
-  Map TyCon [Type ()] ->
-  (TyCon, [Type ()]) ->
+  Map TyCon [Type a] ->
+  (TyCon, [Type a]) ->
   CodegenM (Pattern Name (), Expr Name ())
 createMatch typeName funcVar items (tyCon, fields) = do
   regFields <- traverse (toFieldItemTypeF funcVar) fields

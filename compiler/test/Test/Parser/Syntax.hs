@@ -273,7 +273,7 @@ spec = do
                     ["a"]
                     ( M.fromList
                         [ ( "Item",
-                            [MTVar () (tvNamed "a")]
+                            [MTVar mempty (tvNamed "a")]
                           )
                         ]
                     )
@@ -292,7 +292,7 @@ spec = do
                     ( M.fromList
                         [ ("Empty", mempty),
                           ( "Item",
-                            [MTVar () (tvNamed "a")]
+                            [MTVar mempty (tvNamed "a")]
                           )
                         ]
                     )
@@ -309,7 +309,7 @@ spec = do
                     mempty
                     ( M.singleton
                         "Dog"
-                        [MTPrim () MTString]
+                        [MTPrim mempty MTString]
                     )
                 )
                 (int 1)
@@ -340,7 +340,7 @@ spec = do
                     mempty
                     ( M.fromList
                         [ ("Zero", []),
-                          ("Succ", [dataTypeWithVars () "Nat" mempty])
+                          ("Succ", [dataTypeWithVars mempty "Nat" mempty])
                         ]
                     )
                 )
@@ -367,7 +367,7 @@ spec = do
                     "Maybe"
                     ["a"]
                     ( M.fromList
-                        [ ("Just", [MTVar () (tvNamed "a")]),
+                        [ ("Just", [MTVar mempty (tvNamed "a")]),
                           ("Nothing", [])
                         ]
                     )
@@ -385,9 +385,9 @@ spec = do
                     ( M.fromList
                         [ ( "Reader",
                             [ MTFunction
-                                ()
-                                (MTVar () (tvNamed "r"))
-                                (MTVar () (tvNamed "a"))
+                                mempty
+                                (MTVar mempty (tvNamed "r"))
+                                (MTVar mempty (tvNamed "a"))
                             ]
                           )
                         ]
@@ -406,13 +406,13 @@ spec = do
                     ( M.fromList
                         [ ( "Reader",
                             [ MTFunction
-                                ()
-                                (MTVar () (tvNamed "r"))
+                                mempty
+                                (MTVar mempty (tvNamed "r"))
                                 ( dataTypeWithVars
-                                    ()
+                                    mempty
                                     "Pair"
-                                    [ MTVar () (tvNamed "a"),
-                                      MTVar () (tvNamed "b")
+                                    [ MTVar mempty (tvNamed "a"),
+                                      MTVar mempty (tvNamed "b")
                                     ]
                                 )
                             ]
@@ -433,10 +433,10 @@ spec = do
                     "Tree"
                     ["a"]
                     ( M.fromList
-                        [ ("Leaf", [MTVar () (tvNamed "a")]),
+                        [ ("Leaf", [MTVar mempty (tvNamed "a")]),
                           ( "Branch",
-                            [ dataTypeWithVars () "Tree" [MTVar () (tvNamed "a")],
-                              dataTypeWithVars () "Tree" [MTVar () (tvNamed "b")]
+                            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
+                              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "b")]
                             ]
                           )
                         ]
@@ -455,9 +455,9 @@ spec = do
                     ( M.fromList
                         [ ("Empty", mempty),
                           ( "Branch",
-                            [ dataTypeWithVars () "Tree" [MTVar () (tvNamed "a")],
-                              MTVar () (tvNamed "a"),
-                              dataTypeWithVars () "Tree" [MTVar () (tvNamed "a")]
+                            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
+                              MTVar mempty (tvNamed "a"),
+                              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")]
                             ]
                           )
                         ]
@@ -616,10 +616,10 @@ spec = do
                     "Tree"
                     []
                     ( M.fromList
-                        [ ("Leaf", [MTPrim () MTInt]),
+                        [ ("Leaf", [MTPrim mempty MTInt]),
                           ( "Branch",
-                            [ dataTypeWithVars () "Tree" [],
-                              dataTypeWithVars () "Tree" []
+                            [ dataTypeWithVars mempty "Tree" [],
+                              dataTypeWithVars mempty "Tree" []
                             ]
                           )
                         ]
@@ -704,32 +704,32 @@ spec = do
         testParse "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"dog\""
           `shouldBe` Right
             ( MyLet
-                ()
+                mempty
                 (Identifier mempty "parser")
                 ( MyApp
-                    ()
+                    mempty
                     ( MyApp
-                        ()
-                        (MyVar () "bindParser")
+                        mempty
+                        (MyVar mempty "bindParser")
                         ( MyLambda
-                            ()
+                            mempty
                             (Identifier mempty "a")
                             ( MyIf
-                                ()
+                                mempty
                                 ( MyInfix
-                                    ()
+                                    mempty
                                     Equals
-                                    (MyVar () "a")
-                                    (MyLiteral () (MyString "d"))
+                                    (MyVar mempty "a")
+                                    (MyLiteral mempty (MyString "d"))
                                 )
-                                (MyVar () "anyChar")
-                                (MyVar () "failParser")
+                                (MyVar mempty "anyChar")
+                                (MyVar mempty "failParser")
                             )
                         )
                     )
-                    (MyVar () "anyChar")
+                    (MyVar mempty "anyChar")
                 )
-                (MyApp () (MyApp () (MyVar () "runParser") (MyVar () "parser")) (MyLiteral () (MyString "dog")))
+                (MyApp mempty (MyApp mempty (MyVar mempty "runParser") (MyVar mempty "parser")) (MyLiteral mempty (MyString "dog")))
             )
       it "parses an infix definition" $
         testParse "infix +++ = addInt; 1 +++ 2"

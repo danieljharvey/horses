@@ -64,7 +64,7 @@ data FieldItemType
   | RecurseField Name
   | Func2 Name Name Name
 
-toFieldItemType :: TyCon -> Type () -> CodegenM FieldItemType
+toFieldItemType :: TyCon -> Type a -> CodegenM FieldItemType
 toFieldItemType typeName = \case
   MTVar _ (TVName _ a) -> VariableField (coerce a) <$> nextName (coerce a)
   MTFunction _ (MTVar _ (TVName _ a)) (MTVar _ (TVName _ b)) ->
@@ -132,7 +132,7 @@ createMatch ::
   TyCon ->
   Name ->
   TyCon ->
-  [Type ()] ->
+  [Type a] ->
   CodegenM (Pattern Name (), Expr Name ())
 createMatch typeName matchVar tyCon fields = do
   regFields <-
