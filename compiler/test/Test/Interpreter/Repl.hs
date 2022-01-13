@@ -1025,6 +1025,9 @@ spec =
       it "should destructure record correctly" $ do
         result <- eval testStdlib "let { b: b } = { a: 5, b: 100 } in b"
         result `shouldBe` Right (MTPrim mempty MTInt, int 100)
+      it "should show pattern match exhaustiveness error" $ do
+        result <- eval testStdlib "let matcher a = match a with [] -> True; matcher [1]"
+        result `shouldSatisfy` textErrorContains "Pattern match is not exhaustive"
 
     describe "lambda with type annotation" $ do
       it "should not parse without brackets" $ do
