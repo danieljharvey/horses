@@ -3,11 +3,6 @@ FROM haskell:9.0.2-buster as dependencies
 RUN mkdir /opt/build
 WORKDIR /opt/build
 
-# GHC dynamically links its compilation targets to lib gmp
-RUN apt-get update \
-  && apt-get download libgmp10
-RUN mv libgmp*.deb libgmp.deb
-
 # Docker build should not use cached layer if any of these is modified
 COPY stack.yaml package.yaml stack.yaml.lock /opt/build/
 RUN stack build :mimsa-server --system-ghc --dependencies-only --fast
@@ -33,10 +28,6 @@ RUN mkdir -p /opt/app
 WORKDIR /opt/app
  
 RUN apt-get update && apt-get install -y libncurses5 libnuma-dev
-
-# Install lib gmp
-COPY --from=dependencies /opt/build/libgmp.deb /tmp
-RUN dpkg -i /tmp/libgmp.deb && rm /tmp/libgmp.deb
 
 COPY --from=build /opt/build/bin .
 EXPOSE 8999
