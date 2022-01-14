@@ -44,6 +44,24 @@ createConstructorFunctions :: TSDataType -> [TSStatement]
 createConstructorFunctions (TSDataType typeName dtArgs constructors) =
   createConstructorFunction typeName dtArgs <$> constructors
 
+-- because we build constructors outside -> in, we can't look at the generics
+-- we've used, so instead, we take the whole thing and remove them where
+-- needed
+removeRepeatedGenerics :: TSExpr -> TSExpr
+removeRepeatedGenerics = removeSeen mempty
+  where
+    notUsedAlready alreadySeen =
+      S.filter (\a -> not (S.member a alreadySeen))
+    removeSeen seen (TSFunction a gen b c (TSFunctionBody (TSBody d rest))) =
+      let newSeen = seen <> gen
+       in TSFunction
+            a
+            (notUsedAlready seen gen)
+            b
+            c
+            (TSFunctionBody (TSBody d (removeSeen newSeen rest)))
+    removeSeen _ other = other
+
 -- turn Just constructor into a function like  \a -> Just a
 createConstructorFunction ::
   TyCon ->
@@ -78,4 +96,4 @@ createConstructorFunction typeName dtArgs (TSConstructor tyCon tsArgs) =
    in TSAssignment
         (TSVar (coerce tyCon))
         Nothing
-        (TSLetBody (TSBody [] constructorFn))
+        (TSLetBody (TSBody [] (removeRepeatedGenerics constructorFn)))

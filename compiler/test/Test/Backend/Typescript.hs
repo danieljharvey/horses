@@ -246,7 +246,8 @@ fullTestCases =
     ("1 < 2", "true"),
     ("2 < 1", "false"),
     ("2 <= 2", "true"),
-    ("3 <= 2", "false")
+    ("3 <= 2", "false"),
+    ("Monoid", "[Function: Monoid]")
   ]
 
 spec :: Spec
@@ -480,6 +481,19 @@ spec = do
                   TSConstructor "That" [TSTypeVar "B"],
                   TSConstructor "These" [TSTypeVar "A", TSTypeVar "B"]
                 ]
+            tsMonoid =
+              TSDataType
+                "Monoid"
+                ["A"]
+                [ TSConstructor
+                    "Monoid"
+                    [ TSTypeFun
+                        "arg"
+                        (TSTypeVar "A")
+                        (TSTypeFun "arg" (TSTypeVar "A") (TSTypeVar "A")),
+                      TSTypeVar "A"
+                    ]
+                ]
 
         it "Maybe" $ do
           printStatement <$> createConstructorFunctions tsMaybe
@@ -491,6 +505,10 @@ spec = do
             `shouldBe` [ "const This = <A>(a: A): These<A,never> => ({ type: \"This\", vars: [a] }); ",
                          "const That = <B>(b: B): These<never,B> => ({ type: \"That\", vars: [b] }); ",
                          "const These = <A>(a: A) => <B>(b: B): These<A,B> => ({ type: \"These\", vars: [a,b] }); "
+                       ]
+        it "Monoid" $ do
+          printStatement <$> createConstructorFunctions tsMonoid
+            `shouldBe` [ "const Monoid = <A>(u1: (arg: A) => (arg: A) => A) => (a: A): Monoid<A> => ({ type: \"Monoid\", vars: [u1,a] }); "
                        ]
 
     describe "from parsed input" $ do
