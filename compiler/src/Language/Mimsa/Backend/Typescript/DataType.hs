@@ -44,7 +44,7 @@ createConstructorFunctions :: TSDataType -> [TSStatement]
 createConstructorFunctions (TSDataType typeName dtArgs constructors) =
   createConstructorFunction typeName dtArgs <$> constructors
 
--- because we build constructors outside -> in, we can't look at the generics
+-- | because we build constructors inside -> out, we can't look at the generics
 -- we've used, so instead, we take the whole thing and remove them where
 -- needed
 removeRepeatedGenerics :: TSExpr -> TSExpr
