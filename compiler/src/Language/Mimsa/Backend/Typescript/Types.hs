@@ -27,11 +27,12 @@ import Data.Set (Set)
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.TyCon
 
 -- | which generics have been used already?
 newtype TSGeneric = TSGeneric Text
-  deriving newtype (Eq, Ord, Show)
+  deriving newtype (Eq, Ord, Show, Printer)
 
 data TSType
   = TSType (Maybe Text) Text [TSType] -- namespace, typeName, inner types

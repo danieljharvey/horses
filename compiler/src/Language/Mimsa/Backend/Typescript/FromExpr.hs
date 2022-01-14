@@ -62,7 +62,10 @@ consToTSType mt =
   case varsFromDataType mt of
     Just (TyCon n, vars) -> do
       imported <- typeNameIsImport (TyCon n)
-      let namespace = if imported then Just n else Nothing
+      let namespace =
+            if imported
+              then Just n
+              else Nothing
       tsTypes <- traverse toTSType vars
       let (types, generics) = unzip tsTypes
       pure (TSType namespace n types, mconcat generics)
