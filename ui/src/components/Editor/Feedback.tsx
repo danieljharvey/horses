@@ -19,6 +19,7 @@ import { ListCompile } from '../ListCompile'
 import { ListUsages } from '../ListUsages'
 import { PropertyTest } from '../PropertyTest'
 import { ExpressionTests } from './ExpressionTests'
+import { Upgrade } from '../Upgrade'
 
 type Props = {
   projectHash: ExprHash
@@ -68,6 +69,7 @@ export const Feedback: React.FC<Props> = ({
           ))}
         </FlexColumnSpaced>
       )
+
     case 'ShowEvaluate':
       return (
         <FlexColumnSpaced>
@@ -91,6 +93,7 @@ export const Feedback: React.FC<Props> = ({
           />
         </FlexColumnSpaced>
       )
+
     case 'ShowUpdatedBinding':
       return (
         <FlexColumnSpaced>
@@ -110,6 +113,18 @@ export const Feedback: React.FC<Props> = ({
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
           />
+          {pipe(
+            bindingName,
+            O.map((name) => (
+              <Upgrade
+                state={state}
+                name={name}
+                currentHash={result.expression.edHash}
+              />
+            )),
+            O.getOrElse(() => <div />)
+          )}
+
           {pipe(
             bindingName,
             O.map((name) => (
@@ -155,6 +170,17 @@ export const Feedback: React.FC<Props> = ({
           {pipe(
             bindingName,
             O.map((name) => (
+              <Upgrade
+                state={state}
+                name={name}
+                currentHash={result.expression.edHash}
+              />
+            )),
+            O.getOrElse(() => <div />)
+          )}
+          {pipe(
+            bindingName,
+            O.map((name) => (
               <ListVersions
                 versions={versions}
                 currentHash={result.expression.edHash}
@@ -165,6 +191,7 @@ export const Feedback: React.FC<Props> = ({
             )),
             O.getOrElse(() => <div />)
           )}
+
           <ListUsages
             usages={getUsages(result.expression.edHash)}
             onBindingSelect={onBindingSelect}
@@ -175,6 +202,7 @@ export const Feedback: React.FC<Props> = ({
           />
         </FlexColumnSpaced>
       )
+
     case 'EvaluationError':
       return (
         <FlexColumnSpaced>
@@ -183,6 +211,7 @@ export const Feedback: React.FC<Props> = ({
           </Paragraph>
         </FlexColumnSpaced>
       )
+
     case 'ShowTest':
       const title =
         'utdTestName' in result.test
@@ -208,6 +237,7 @@ export const Feedback: React.FC<Props> = ({
           />
         </FlexColumnSpaced>
       )
+
     case 'EditorNew':
       return <FlexColumnSpaced />
   }
