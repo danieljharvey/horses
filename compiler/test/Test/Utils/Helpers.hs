@@ -20,6 +20,11 @@ fromRight either' = case either' of
   Left e -> error (T.unpack $ prettyPrint e)
   Right a -> a
 
+fromLeft :: Either e a -> e
+fromLeft either' = case either' of
+  Left e -> e
+  Right _ -> error "Expected a Left!"
+
 unsafeParseExpr :: Text -> Expr Name ()
 unsafeParseExpr t = case parseExpr t of
   Right a -> a $> ()

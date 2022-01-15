@@ -17,6 +17,7 @@ import qualified Language.Mimsa.Actions.Upgrade as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Test.Data.Project
 import Test.Hspec
@@ -45,20 +46,14 @@ spec = do
       Actions.run testStdlib action `shouldSatisfy` isLeft
     it "Nothing to upgrade when expression has no dependencies" $ do
       let action = Actions.upgradeByName "id"
-      let (prj, _, outcome) = fromRight $ Actions.run testStdlib action
-      outcome `shouldBe` Actions.NoDependencies
-      -- no new bindings
-      prj `shouldBe` testStdlib
+      let err = fromLeft $ Actions.run testStdlib action
+      err `shouldBe` ProjectErr CantUpgradeNoDependencies
     it "Nothing to do when expression is up to date" $ do
       let action = do
             _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)
             Actions.upgradeByName "useBoth"
-      let (prj, _, outcome) = fromRight $ Actions.run testStdlib action
-      outcome `shouldBe` Actions.AlreadyUpToDate
-      -- no new tests
-      additionalTests testStdlib prj `shouldBe` 0
-      -- one new store expression (`useBoth`)
-      additionalStoreItems testStdlib prj `shouldBe` 1
+      let err = fromLeft $ Actions.run testStdlib action
+      err `shouldBe` ProjectErr CantUpgradeAlreadyUpToDate
     it "Successfully updates to newest version" $ do
       let action = do
             _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)
@@ -66,9 +61,8 @@ spec = do
             Actions.upgradeByName "useBoth"
       let (prj, actions, outcome) = fromRight $ Actions.run testStdlib action
       -- one dep was replaced in `useBoth`
-      outcome `shouldSatisfy` \case
-        Actions.Updated _ replacements -> M.size replacements == 1
-        _ -> False
+      outcome
+        `shouldSatisfy` \(_, replacements, _) -> M.size replacements == 1
       -- the two new items (`useBoth` and `id`) plus the upgraded one
       additionalStoreItems testStdlib prj `shouldBe` 3
       -- We logged a useful message
@@ -80,8 +74,8 @@ spec = do
             _ <- Actions.bindExpression newIdExpr "id" (prettyPrint newIdExpr)
             _ <- Actions.upgradeByName "useBoth"
             Actions.upgradeByName "useBoth"
-      let (_, _, outcome) = fromRight $ Actions.run testStdlib action
-      outcome `shouldBe` Actions.AlreadyUpToDate
+      let err = fromLeft $ Actions.run testStdlib action
+      err `shouldBe` ProjectErr CantUpgradeAlreadyUpToDate
     it "Fails if new dep does not typecheck" $ do
       let action = do
             _ <- Actions.bindExpression useBothExpr "useBoth" (prettyPrint useBothExpr)
@@ -99,9 +93,7 @@ spec = do
             Actions.upgradeByName "useBoth"
       let (prj, actions, outcome) = fromRight $ Actions.run testStdlib action
       -- one deps were replaced in the last upgrade of `useBoth`
-      outcome `shouldSatisfy` \case
-        Actions.Updated _ replacements -> M.size replacements == 1
-        _ -> False
+      outcome `shouldSatisfy` \(_, replacements, _) -> M.size replacements == 1
       -- the three new items (`useBoth`, `id`, `const`) plus the 2 upgraded
       -- ones
       additionalStoreItems testStdlib prj `shouldBe` 5
@@ -117,9 +109,7 @@ spec = do
             Actions.upgradeByName "useBoth"
       let (prj, _, outcome) = fromRight $ Actions.run testStdlib action
       -- one deps were replaced in the last upgrade of `useBoth`
-      outcome `shouldSatisfy` \case
-        Actions.Updated _ replacements -> M.size replacements == 1
-        _ -> False
+      outcome `shouldSatisfy` \(_, replacements, _) -> M.size replacements == 1
       -- the two new items (`useBoth`, `id`) plus the upgraded one plus two
       -- tests
       additionalStoreItems testStdlib prj `shouldBe` 5

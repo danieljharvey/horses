@@ -142,6 +142,7 @@ library
       Language.Mimsa.Types.Error.BackendError
       Language.Mimsa.Types.Error.InterpreterError
       Language.Mimsa.Types.Error.PatternMatchError
+      Language.Mimsa.Types.Error.ProjectError
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.StoreError
       Language.Mimsa.Types.Error.TypeError
@@ -285,6 +286,7 @@ executable mimsa-server
       Server.Project.Graph
       Server.Project.ListBindings
       Server.Project.ListTests
+      Server.Project.Upgrade
       Server.Search
       Server.Servant
       Server.Swagger
