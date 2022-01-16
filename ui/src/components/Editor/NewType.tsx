@@ -45,8 +45,8 @@ export const NewType: React.FC<Props> = ({
     editor.code,
     (pd) => dispatch(storeProjectData(pd))
   )
-  
-  const onUpgradeExpression = (_bindingName:string) => {}
+
+  const onUpgradeExpression = (_bindingName: string) => {}
 
   const onCodeChange = (a: string) =>
     dispatch({ type: 'UpdateCode', text: a })
@@ -72,7 +72,9 @@ export const NewType: React.FC<Props> = ({
               <Panel>
                 <FlexColumnSpaced>
                   <Feedback
-                    onUpgradeExpression={onUpgradeExpression}
+                    onUpgradeExpression={
+                      onUpgradeExpression
+                    }
                     bindingName={O.none}
                     state={state}
                     result={expression}

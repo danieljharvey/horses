@@ -45,11 +45,9 @@ export const EditBinding: React.FC<Props> = ({
       dispatch({ type: 'BindExpression', bindingName })
     }
   }
-  const onUpgradeExpression = (bindingName:string) => {
-      dispatch({ type: 'UpgradeExpression', bindingName })
-    
+  const onUpgradeExpression = (bindingName: string) => {
+    dispatch({ type: 'UpgradeExpression', bindingName })
   }
-
 
   const typedHoleSuggestions = getTypedHoles(state)
   const errorLocations = getErrorLocations(state)

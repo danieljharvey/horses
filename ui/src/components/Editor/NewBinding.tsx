@@ -63,9 +63,8 @@ export const NewBinding: React.FC<Props> = ({
   const onUpgradeExpression = (bindingName: string) =>
     dispatch({
       type: 'UpgradeExpression',
-      bindingName
+      bindingName,
     })
-
 
   const validBinding = existingName
     ? E.right(existingName)

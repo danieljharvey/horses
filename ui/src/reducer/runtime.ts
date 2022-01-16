@@ -182,12 +182,15 @@ export const runtime =
                 error: e,
               },
             ],
-            ({upExpressionData,upProjectData}) => [
+            ({ upExpressionData, upProjectData }) => [
               {
                 type: 'UpgradeExpressionSuccess' as const,
-                tests: {tdUnitTests:[],tdPropertyTests:[]},
+                tests: {
+                  tdUnitTests: [],
+                  tdPropertyTests: [],
+                },
                 expression: upExpressionData,
-                bindingName:event.bindingName
+                bindingName: event.bindingName,
               },
               storeProjectData(upProjectData),
             ]

@@ -52,7 +52,8 @@ export const NewTest: React.FC<Props> = ({
       testName,
     })
 
-  const onUpgradeExpression = (bindingName:string) => dispatch({type:'UpgradeExpression',bindingName})
+  const onUpgradeExpression = (bindingName: string) =>
+    dispatch({ type: 'UpgradeExpression', bindingName })
 
   const typedHoleSuggestions = getTypedHoles(state)
   const errorLocations = getErrorLocations(state)

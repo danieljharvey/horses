@@ -205,6 +205,6 @@ export const editorReducer: EventReducer<
       })
 
     default:
-      return stateOnly(state) 
+      return stateOnly(state)
   }
 }

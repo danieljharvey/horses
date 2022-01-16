@@ -42,7 +42,8 @@ export const Scratch: React.FC<Props> = ({
   const onCodeChange = (text: string) =>
     dispatch({ type: 'EvaluateExpression', text })
 
-  const onUpgradeExpression = (bindingName:string) => dispatch({type:"UpgradeExpression",bindingName})
+  const onUpgradeExpression = (bindingName: string) =>
+    dispatch({ type: 'UpgradeExpression', bindingName })
 
   const typedHoleResponses = getTypedHolesFromEditor(editor)
   const errorLocations = getErrorLocationsFromEditor(editor)
@@ -67,7 +68,7 @@ export const Scratch: React.FC<Props> = ({
           )}
           <Feedback
             bindingName={O.none}
-      onUpgradeExpression={onUpgradeExpression}
+            onUpgradeExpression={onUpgradeExpression}
             state={state}
             result={editor.expression}
             onBindingSelect={onBindingSelect}
