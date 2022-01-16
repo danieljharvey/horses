@@ -29,6 +29,7 @@ type Props = {
     bindingName: string,
     exprHash: ExprHash
   ) => void
+  onUpgradeExpression: (bindingName: string) => void
   state: State
 }
 
@@ -38,6 +39,7 @@ export const Feedback: React.FC<Props> = ({
   state,
   projectHash,
   onBindingSelect,
+  onUpgradeExpression,
 }) => {
   // need to return new bindings and typeBindings
   const versions = pipe(
@@ -48,6 +50,7 @@ export const Feedback: React.FC<Props> = ({
 
   const getUsages = (exprHash: ExprHash) =>
     getUsagesOfExprHash(exprHash, state)
+
   switch (result.type) {
     case 'ShowErrorResponse':
       return (
@@ -118,6 +121,9 @@ export const Feedback: React.FC<Props> = ({
             O.map((name) => (
               <Upgrade
                 state={state}
+                onUpgradeExpression={onUpgradeExpression}
+                values={result.expression.edBindings}
+                types={result.expression.edTypeBindings}
                 name={name}
                 currentHash={result.expression.edHash}
               />
@@ -171,6 +177,9 @@ export const Feedback: React.FC<Props> = ({
             bindingName,
             O.map((name) => (
               <Upgrade
+                onUpgradeExpression={onUpgradeExpression}
+                values={result.expression.edBindings}
+                types={result.expression.edTypeBindings}
                 state={state}
                 name={name}
                 currentHash={result.expression.edHash}

@@ -4,8 +4,9 @@ import { Link } from './View/Link'
 import { InlineSpaced } from './View/InlineSpaced'
 import {
   countActiveVersionsOfBinding,
-  getUsagesOfExprHash,
+  lookupNameForExprHash,
 } from '../reducer/project/selectors'
+import * as O from 'fp-ts/Option'
 import { State } from '../reducer/types'
 
 type ListBindingsProps = {
@@ -34,8 +35,8 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
   const getActiveVersions = (bindingName: string) =>
     countActiveVersionsOfBinding(bindingName, state)
 
-  const bindingInUse = (exprHash: ExprHash) =>
-    getUsagesOfExprHash(exprHash, state).length > 0
+  const bindingIsNewest = (exprHash: ExprHash) =>
+    O.isSome(lookupNameForExprHash(exprHash, state))
 
   return (
     <InlineSpaced>
@@ -45,7 +46,7 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
           number={getActiveVersions(name)}
           key={name}
           onClick={() => onBindingSelect(name, exprHash)}
-          highlight={bindingInUse(exprHash)}
+          highlight={bindingIsNewest(exprHash)}
         >
           {name}
         </Link>
@@ -56,7 +57,7 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
           key={name}
           number={0}
           onClick={() => onBindingSelect(name, exprHash)}
-          highlight={bindingInUse(exprHash)}
+          highlight={bindingIsNewest(exprHash)}
         >
           {name}
         </Link>

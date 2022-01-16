@@ -52,6 +52,8 @@ export const NewTest: React.FC<Props> = ({
       testName,
     })
 
+  const onUpgradeExpression = (bindingName:string) => dispatch({type:'UpgradeExpression',bindingName})
+
   const typedHoleSuggestions = getTypedHoles(state)
   const errorLocations = getErrorLocations(state)
 
@@ -85,6 +87,7 @@ export const NewTest: React.FC<Props> = ({
             state={state}
             result={expression}
             onBindingSelect={onBindingSelect}
+            onUpgradeExpression={onUpgradeExpression}
             projectHash={state.project.projectHash}
           />
         </FlexColumnSpaced>

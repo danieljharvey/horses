@@ -103,5 +103,5 @@ export const getTestsForExpression = (
 
 export const upgradeExpression = (
   upgradeRequest: UpgradeRequest
-): TE.TaskEither<string, UpgradeResponse> =>
+): TE.TaskEither<UserErrorResponse, UpgradeResponse> =>
   axiosPost(`${baseUrl}/project/upgrade`, upgradeRequest)

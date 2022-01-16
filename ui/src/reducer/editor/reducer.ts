@@ -180,7 +180,31 @@ export const editorReducer: EventReducer<
         ...state,
         expression: showErrorResponse(action.error),
       })
+
+    case 'UpgradeExpression':
+      return stateAndEvent(staleL.set(false)(state), {
+        type: 'UpgradeExpression',
+        bindingName: action.bindingName,
+      })
+    case 'UpgradeExpressionSuccess':
+      return stateOnly({
+        ...state,
+        code: action.expression.edPretty,
+        bindingName: O.some(action.bindingName),
+        stale: false,
+        expression: showUpdatedBinding(
+          action.expression,
+          action.tests,
+          action.bindingName
+        ),
+      })
+    case 'UpgradeExpressionFailure':
+      return stateOnly({
+        ...state,
+        expression: showErrorResponse(action.error),
+      })
+
     default:
-      return stateOnly(state)
+      return stateOnly(state) 
   }
 }

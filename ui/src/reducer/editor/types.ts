@@ -69,6 +69,17 @@ export type EditorAction =
       type: 'BindExpressionFailure'
       error: UserErrorResponse
     }
+  | { type: 'UpgradeExpression'; bindingName: string }
+  | {
+      type: 'UpgradeExpressionSuccess'
+      expression: ExpressionData
+      bindingName: string
+      tests: TestData
+    }
+  | {
+      type: 'UpgradeExpressionFailure'
+      error: UserErrorResponse
+    }
 
 export type EditorEvent =
   | {
@@ -81,3 +92,4 @@ export type EditorEvent =
       bindingName: string
     }
   | { type: 'AddUnitTest'; testName: string; code: string }
+  | { type: 'UpgradeExpression'; bindingName: string }

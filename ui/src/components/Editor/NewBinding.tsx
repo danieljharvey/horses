@@ -60,6 +60,13 @@ export const NewBinding: React.FC<Props> = ({
       bindingName: existingName || name,
     })
 
+  const onUpgradeExpression = (bindingName: string) =>
+    dispatch({
+      type: 'UpgradeExpression',
+      bindingName
+    })
+
+
   const validBinding = existingName
     ? E.right(existingName)
     : validateBinding(
@@ -115,6 +122,7 @@ export const NewBinding: React.FC<Props> = ({
                   result={expression}
                   onBindingSelect={onBindingSelect}
                   projectHash={state.project.projectHash}
+                  onUpgradeExpression={onUpgradeExpression}
                 />
               </FlexColumnSpaced>
             )

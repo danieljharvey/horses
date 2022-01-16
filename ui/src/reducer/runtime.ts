@@ -7,6 +7,7 @@ import {
   bindExpression,
   listBindings,
   addUnitTest,
+  upgradeExpression,
 } from '../service/project'
 import { ExprHash } from '../types/'
 import { setScreen } from './view/reducer'
@@ -164,6 +165,31 @@ export const runtime =
                 tests: a.autTestResult,
               },
               storeProjectData(a.autProjectData),
+            ]
+          ),
+          flatten()
+        )
+      case 'UpgradeExpression':
+        return pipe(
+          upgradeExpression({
+            upProjectHash: state.project.projectHash,
+            upBindingName: event.bindingName,
+          }),
+          TE.bimap(
+            (e) => [
+              {
+                type: 'UpgradeExpressionFailure' as const,
+                error: e,
+              },
+            ],
+            ({upExpressionData,upProjectData}) => [
+              {
+                type: 'UpgradeExpressionSuccess' as const,
+                tests: {tdUnitTests:[],tdPropertyTests:[]},
+                expression: upExpressionData,
+                bindingName:event.bindingName
+              },
+              storeProjectData(upProjectData),
             ]
           ),
           flatten()
