@@ -141,6 +141,9 @@ getVariablesForField (MTVar _ (TVUnificationVar _)) = S.empty
 getVariablesForField MTPrim {} = S.empty
 getVariablesForField MTConstructor {} = S.empty
 getVariablesForField (MTTypeApp _ a b) = getVariablesForField a <> getVariablesForField b
+getVariablesForField (MTContext _ ctx inner) =
+  getVariablesForField ctx
+    <> getVariablesForField inner
 
 validateConstructors ::
   (MonadError TypeError m) =>
@@ -213,6 +216,10 @@ inferConstructorTypes (DataType typeName tyVarNames constructors) = do
           MTTypeApp mempty <$> findType func <*> findType arg
         MTVar _ (TVUnificationVar _) ->
           throwError UnknownTypeError -- should not happen but yolo
+        MTContext _ ctx inner ->
+          MTContext mempty <$> findType ctx
+            <*> findType inner
+
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
         let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons

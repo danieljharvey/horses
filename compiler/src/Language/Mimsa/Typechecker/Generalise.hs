@@ -14,14 +14,16 @@ freeTypeVars :: MonoType -> [TypeIdentifier]
 freeTypeVars (MTVar _ b) = [b]
 freeTypeVars (MTFunction _ t1 t2) = freeTypeVars t1 <> freeTypeVars t2
 freeTypeVars (MTPair _ a b) = freeTypeVars a <> freeTypeVars b
-freeTypeVars (MTRecord _ as) = mconcat (freeTypeVars . snd <$> M.toList as)
+freeTypeVars (MTRecord _ as) = mconcat (freeTypeVars <$> M.elems as)
 freeTypeVars (MTRecordRow _ as rest) =
-  mconcat (freeTypeVars . snd <$> M.toList as)
+  mconcat (freeTypeVars <$> M.elems as)
     <> freeTypeVars rest
 freeTypeVars (MTArray _ a) = freeTypeVars a
 freeTypeVars (MTPrim _ _) = mempty
 freeTypeVars (MTConstructor _ _) = mempty
 freeTypeVars (MTTypeApp _ a b) = freeTypeVars a <> freeTypeVars b
+freeTypeVars (MTContext _ ctx inner) =
+  freeTypeVars ctx <> freeTypeVars inner
 
 freeTypeVarsScheme :: Scheme -> [TypeIdentifier]
 freeTypeVarsScheme (Scheme vars t) =

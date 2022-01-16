@@ -86,6 +86,11 @@ data Type ann
         typFunc :: Type ann,
         typArg :: Type ann -- func arg, apply arg to func
       }
+  | MTContext
+      { typAnn :: ann,
+        typContext :: Type ann, -- row of items
+        typInner :: Type ann -- type using the context
+      }
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
@@ -99,6 +104,7 @@ getAnnotationForType (MTRecordRow ann _ _) = ann
 getAnnotationForType (MTConstructor ann _) = ann
 getAnnotationForType (MTArray ann _) = ann
 getAnnotationForType (MTTypeApp ann _ _) = ann
+getAnnotationForType (MTContext ann _ _) = ann
 
 instance Printer (Type ann) where
   prettyDoc = renderMonoType
@@ -158,6 +164,8 @@ renderMonoType mt@(MTTypeApp _ func arg) =
     Just (TyCon n, vars) -> align $ sep ([pretty n] <> (withParens <$> vars))
     Nothing ->
       align $ sep [renderMonoType func, renderMonoType arg]
+renderMonoType (MTContext _ ctx inner) =
+  renderMonoType ctx <+> "=>" <+> renderMonoType inner
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)

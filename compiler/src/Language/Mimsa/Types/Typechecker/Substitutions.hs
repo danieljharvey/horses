@@ -74,6 +74,8 @@ instance Substitutable (Type ann) where
       MTTypeApp ann (applySubst subst func) (applySubst subst arg)
     MTConstructor ann cn -> MTConstructor ann cn
     MTPrim ann a -> MTPrim ann a
+    MTContext ann ctx inner ->
+      MTContext ann (applySubst subst ctx) (applySubst subst inner)
 
 instance (Substitutable a) => Substitutable (Map k a) where
   applySubst subst as = applySubst subst <$> as

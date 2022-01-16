@@ -59,6 +59,8 @@ fromMonoType gs mt =
     mtCons@MTConstructor {} -> case varsFromDataType mtCons of
       Just (typeName, args) -> fromType gs typeName args
       Nothing -> error "could not work out datatype"
+    MTContext _ _ctx _inner ->
+      error "cannot generate for context"
 
 -- | take the args for the type and apply them to the type
 typeApply :: [MonoType] -> DataType -> Map TyCon [Type NullUnit]

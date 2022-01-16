@@ -71,3 +71,6 @@ freshenNamedTypeVars known =
     freshen mtP@MTPrim {} = pure mtP
     freshen (MTFunction ann a b) =
       MTFunction ann <$> freshen a <*> freshen b
+    freshen (MTContext ann ctx inner) =
+      MTContext ann <$> freshen ctx
+        <*> freshen inner

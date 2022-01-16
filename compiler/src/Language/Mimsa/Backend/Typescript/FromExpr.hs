@@ -110,6 +110,8 @@ toTSType (MTRecordRow _ as rest) = do
   (tsItems, generics) <- toTSTypeRecord as
   (tsRest, genRest) <- toTSType rest
   pure (TSTypeAnd tsItems tsRest, generics <> genRest)
+toTSType (MTContext _ _ctx _inner) =
+  error "Haven't worked out how contexts work in TS"
 
 toTSDataType :: DataType -> TypescriptM TSDataType
 toTSDataType (DataType name gens cons) = do

@@ -37,6 +37,8 @@ freeTypeVars ty = case ty of
   MTPrim _ _ -> S.empty
   MTConstructor _ _ -> S.empty
   MTTypeApp _ a b -> freeTypeVars a <> freeTypeVars b
+  MTContext _ ctx inner ->
+    freeTypeVars ctx <> freeTypeVars inner
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind ::
@@ -71,8 +73,8 @@ isNamedVar _ = False
 
 -- these are tricky to deal with, so flatten them on the way in
 flattenRow :: MonoType -> MonoType
-flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
-  flattenRow (MTRecordRow ann (as <> bs) rest)
+flattenRow (MTRecordRow ann as (MTRecordRow ann' bs rest)) =
+  flattenRow (MTRecordRow (ann <> ann') (as <> bs) rest)
 flattenRow other = other
 
 checkMatching ::

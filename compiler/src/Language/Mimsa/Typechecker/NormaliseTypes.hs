@@ -49,3 +49,6 @@ normaliseType' mt = case mt of
     pure (MTConstructor ann name)
   MTTypeApp ann func arg ->
     MTTypeApp ann <$> normaliseType' func <*> normaliseType' arg
+  MTContext ann ctx inner ->
+    MTContext ann <$> normaliseType' ctx
+      <*> normaliseType' inner

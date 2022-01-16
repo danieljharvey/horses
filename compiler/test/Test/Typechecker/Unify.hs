@@ -32,7 +32,7 @@ runUnifier (a, b) =
 
 spec :: Spec
 spec =
-  describe "Unify" $ do
+  fdescribe "Unify" $ do
     it "Two same things teach us nothing" $
       runUnifier (MTPrim mempty MTInt, MTPrim mempty MTInt) `shouldBe` Right mempty
     it "Combines a known with an unknown" $
@@ -50,6 +50,20 @@ spec =
                   (TVUnificationVar 2, MTPrim mempty MTInt)
                 ]
           )
+    describe "Contexts" $ do
+      it "Empty combines with itself" $
+        runUnifier
+          ( MTContext mempty (MTRecord mempty mempty) mtInt,
+            MTContext mempty (MTRecord mempty mempty) mtInt
+          )
+          `shouldBe` Right mempty
+      it "Empty context unifies using item inside" $
+        runUnifier
+          ( MTContext mempty (MTRecord mempty mempty) mtInt,
+            mtInt
+          )
+          `shouldBe` Right mempty
+
     describe "Constructors" $ do
       it "Combines a Maybe" $ do
         runUnifier

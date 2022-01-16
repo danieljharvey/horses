@@ -54,6 +54,8 @@ isSimple (MTRecordRow _ as b) =
 isSimple (MTArray _ as) = isSimple as
 isSimple (MTConstructor _ _) = True
 isSimple (MTTypeApp _ fn val) = isSimple fn && isSimple val
+isSimple (MTContext _ ctx inner) =
+  isSimple inner && isSimple ctx
 
 unify' :: MonoType -> MonoType -> Either TypeError Substitutions
 unify' mtA mtB = runUnifyM mempty (unify mtA mtB)
