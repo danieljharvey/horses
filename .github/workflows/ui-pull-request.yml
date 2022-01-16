@@ -48,6 +48,9 @@ jobs:
       - name: Typecheck everything
         run: cd ui && yarn tsc
 
+      - name: Run tests
+        run: cd ui && yarn test
+
       - name: Build shit
         run: cd ui && yarn build
 
