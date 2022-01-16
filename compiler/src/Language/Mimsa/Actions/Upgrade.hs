@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Upgrade (upgradeByExprHash, upgradeByName, UpgradeResult (..)) where
+module Language.Mimsa.Actions.Upgrade (upgradeByName) where
 
 import Control.Applicative
 import Control.Monad.Except
@@ -13,6 +13,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -27,28 +28,28 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
--- | things that could happen
-data UpgradeResult
-  = NoDependencies
-  | AlreadyUpToDate
-  | Updated (ResolvedExpression Annotation) (Map ExprHash (NameOrTyCon, ExprHash))
-  deriving stock (Eq, Ord, Show)
+type UpgradedDeps = Map ExprHash (NameOrTyCon, ExprHash)
 
 -- takes a store expression and upgrade it's dependencies to the newest versions
 -- for now, we will just try the newest possible versions of every binding
-upgradeByExprHash :: Name -> ExprHash -> Actions.ActionM UpgradeResult
-upgradeByExprHash bindingName exprHash = do
+upgradeByName ::
+  Name ->
+  Actions.ActionM (ResolvedExpression Annotation, UpgradedDeps, [Graphviz])
+upgradeByName bindingName = do
   project <- Actions.getProject
+  exprHash <- case lookupBindingName project bindingName of
+    Nothing ->
+      throwError (StoreErr (CouldNotFindBinding bindingName))
+    Just exprHash -> pure exprHash
   storeExpr <- Actions.lookupExpressionInStore (prjStore project) exprHash
   let depHashes = getDependencyHashes storeExpr
 
-  -- TODO: maybe make an update error
   if S.null depHashes
-    then pure NoDependencies
+    then throwError (ProjectErr CantUpgradeNoDependencies)
     else do
       let replacements = replaceHashes project depHashes
       if M.null replacements
-        then pure AlreadyUpToDate
+        then throwError (ProjectErr CantUpgradeAlreadyUpToDate)
         else do
           let newStoreExpr = replaceDeps replacements storeExpr
 
@@ -72,21 +73,10 @@ upgradeByExprHash bindingName exprHash = do
                 <> replacementsMessage replacements
             )
 
-          pure $
-            Updated resolvedExpr replacements
+          graphviz <- Actions.graphExpression newStoreExpr
 
--- takes a store expression and upgrade it's dependencies to the newest versions
--- for now, we will just try the newest possible versions of every binding
-upgradeByName ::
-  Name ->
-  Actions.ActionM UpgradeResult
-upgradeByName bindingName = do
-  project <- Actions.getProject
-  exprHash <- case lookupBindingName project bindingName of
-    Nothing ->
-      throwError (StoreErr (CouldNotFindBinding bindingName))
-    Just exprHash -> pure exprHash
-  upgradeByExprHash bindingName exprHash
+          pure
+            (resolvedExpr, replacements, graphviz)
 
 replacementsMessage :: Map a (NameOrTyCon, a) -> Text
 replacementsMessage items =

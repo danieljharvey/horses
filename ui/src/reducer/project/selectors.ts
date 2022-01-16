@@ -76,3 +76,22 @@ export const countActiveVersionsOfBinding = (
 
 export const getProjectHash = (state: State): ExprHash =>
   state.project.projectHash
+
+export const lookupNameForExprHash = (
+  exprHash: ExprHash,
+  state: State
+): O.Option<string> =>
+  pipe(
+    O.fromNullable(
+      Object.keys(state.project.bindings).find(
+        (k) => state.project.bindings[k] === exprHash
+      )
+    ),
+    O.alt(() =>
+      O.fromNullable(
+        Object.keys(state.project.typeBindings).find(
+          (k) => state.project.typeBindings[k] === exprHash
+        )
+      )
+    )
+  )

@@ -17,6 +17,7 @@ import Server.Project.GetExpression
 import Server.Project.Graph
 import Server.Project.ListBindings
 import Server.Project.ListTests
+import Server.Project.Upgrade
 import Server.Types
 
 -----
@@ -36,6 +37,7 @@ type ProjectAPI =
            :<|> ListTests
            :<|> ListTestsByExprHash
            :<|> GraphAPI
+           :<|> UpgradeAPI
        )
 
 projectEndpoints ::
@@ -52,5 +54,6 @@ projectEndpoints mimsaEnv =
     :<|> listTestsHandler mimsaEnv
     :<|> listTestsByExprHashHandler mimsaEnv
     :<|> graphProject mimsaEnv
+    :<|> upgrade mimsaEnv
 
 ------

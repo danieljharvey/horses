@@ -9,7 +9,6 @@ where
 import Data.Either (isRight)
 import Data.Maybe (isJust, isNothing)
 import qualified Data.Set as S
-import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Codegen
@@ -20,14 +19,10 @@ import Language.Mimsa.Types.Store
 import Test.Codegen.Shared
 import Test.Data.Project
 import Test.Hspec
+import Test.Utils.Helpers
 
 projectStoreSize :: Project ann -> Int
 projectStoreSize = length . getStore . prjStore
-
-fromRight :: (Printer e) => Either e a -> a
-fromRight either' = case either' of
-  Left e -> error (T.unpack $ prettyPrint e)
-  Right a -> a
 
 spec :: Spec
 spec = do

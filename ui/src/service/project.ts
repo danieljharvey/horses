@@ -16,6 +16,8 @@ import {
   ExprHash,
   UserErrorResponse,
   ListTestsResponse,
+  UpgradeRequest,
+  UpgradeResponse,
 } from '../types/'
 import {
   axiosPost,
@@ -98,3 +100,8 @@ export const getTestsForExpression = (
   axiosGet(
     `${baseUrl}/project/${projectHash}/tests/list/${exprHash}/`
   )
+
+export const upgradeExpression = (
+  upgradeRequest: UpgradeRequest
+): TE.TaskEither<UserErrorResponse, UpgradeResponse> =>
+  axiosPost(`${baseUrl}/project/upgrade`, upgradeRequest)
