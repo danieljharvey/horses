@@ -30,18 +30,21 @@ runUnifier (a, b) =
         (runReaderT (runExceptT (unify a b)) mempty)
         defaultState
 
+mtUni :: Int -> MonoType
+mtUni i = MTVar mempty (tvNum i)
+
 spec :: Spec
 spec =
-  fdescribe "Unify" $ do
+  describe "Unify" $ do
     it "Two same things teach us nothing" $
       runUnifier (MTPrim mempty MTInt, MTPrim mempty MTInt) `shouldBe` Right mempty
     it "Combines a known with an unknown" $
-      runUnifier (MTVar mempty (tvNum 1), MTPrim mempty MTInt)
+      runUnifier (mtUni 1, MTPrim mempty MTInt)
         `shouldBe` Right (Substitutions $ M.singleton (TVUnificationVar 1) (MTPrim mempty MTInt))
     it "Combines two half pairs" $
       runUnifier
-        ( MTPair mempty (MTVar mempty (tvNum 1)) (MTPrim mempty MTInt),
-          MTPair mempty (MTPrim mempty MTBool) (MTVar mempty (tvNum 2))
+        ( MTPair mempty (mtUni 1) (MTPrim mempty MTInt),
+          MTPair mempty (MTPrim mempty MTBool) (mtUni 2)
         )
         `shouldBe` Right
           ( Substitutions $
@@ -63,6 +66,36 @@ spec =
             mtInt
           )
           `shouldBe` Right mempty
+      it "Combines record rows inside contexts" $
+        runUnifier
+          ( MTContext
+              mempty
+              ( MTRecordRow
+                  mempty
+                  (M.singleton "true" mtBool)
+                  (mtUni 2)
+              )
+              mtInt,
+            MTContext
+              mempty
+              ( MTRecordRow
+                  mempty
+                  (M.singleton "false" mtBool)
+                  (mtUni 3)
+              )
+              mtInt
+          )
+          `shouldBe` Right
+            ( Substitutions $
+                M.fromList
+                  [ ( TVUnificationVar 2,
+                      MTRecordRow mempty (M.singleton "false" mtBool) (mtUni 1)
+                    ),
+                    ( TVUnificationVar 3,
+                      MTRecordRow mempty (M.singleton "true" mtBool) (mtUni 1)
+                    )
+                  ]
+            )
 
     describe "Constructors" $ do
       it "Combines a Maybe" $ do

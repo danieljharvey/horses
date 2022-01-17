@@ -37,8 +37,8 @@ freeTypeVars ty = case ty of
   MTPrim _ _ -> S.empty
   MTConstructor _ _ -> S.empty
   MTTypeApp _ a b -> freeTypeVars a <> freeTypeVars b
-  MTContext _ ctx inner ->
-    freeTypeVars ctx <> freeTypeVars inner
+  MTContext _ _ctx inner ->
+    freeTypeVars inner -- vars in context aren't free
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind ::
@@ -196,6 +196,12 @@ unify tyA tyB =
     (MTArray _ a, MTArray _ b) -> unify a b
     (MTVar ann u, t) -> varBind ann u t
     (t, MTVar ann u) -> varBind ann u t
+    (MTContext _ ctxA restA, MTContext _ ctxB restB) ->
+      unifyPairs (ctxA, restA) (ctxB, restB)
+    (MTContext _ _ctxA rest, b) ->
+      unify rest b
+    (a, MTContext _ _ctxB rest) ->
+      unify a rest
     (a, b) ->
       throwError $ UnificationError a b
 

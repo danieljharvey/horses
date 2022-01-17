@@ -22,8 +22,8 @@ freeTypeVars (MTArray _ a) = freeTypeVars a
 freeTypeVars (MTPrim _ _) = mempty
 freeTypeVars (MTConstructor _ _) = mempty
 freeTypeVars (MTTypeApp _ a b) = freeTypeVars a <> freeTypeVars b
-freeTypeVars (MTContext _ ctx inner) =
-  freeTypeVars ctx <> freeTypeVars inner
+freeTypeVars (MTContext _ _ inner) =
+  freeTypeVars inner -- vars in context aren't free
 
 freeTypeVarsScheme :: Scheme -> [TypeIdentifier]
 freeTypeVarsScheme (Scheme vars t) =

@@ -1153,7 +1153,12 @@ spec = do
               (Identifier mempty $ named "this")
               (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
       startInference expr $ Left (TypedHoles (M.singleton "what" (MTPrim mempty MTBool, S.singleton "this")))
-
+    {-
+      describe "Contexts" $ do
+        xit "Context spreads from let binding" $ do
+          let expr
+            = MyLet mempty (Identifier mempty "a")
+    -}
     describe "type annotations" $ do
       it "Let annotation matches value" $ do
         let expr =
