@@ -226,6 +226,16 @@ spec = do
                     ("horse", str' "of course")
                   ]
             )
+      it "Parses a record literal with a punned item" $
+        testParse "{dog,cat:True}"
+          `shouldBe` Right
+            ( MyRecord mempty $
+                M.fromList
+                  [ ("dog", MyVar mempty "dog"),
+                    ("cat", bool True)
+                  ]
+            )
+
       it "Parses a destructuring of pairs" $
         testParse "let (a,b) = ((True,1)) in a"
           `shouldBe` Right
@@ -753,6 +763,23 @@ spec = do
                 (MyPair mempty (int 1) (int 2))
                 (MyVar mempty "a")
             )
+      it "parses destructuring a record with puns" $
+        testParse "let {a,b:c} = { a: 1, b: 2}; c"
+          `shouldBe` Right
+            ( MyLetPattern
+                mempty
+                ( PRecord
+                    mempty
+                    ( M.fromList
+                        [ ("a", PVar mempty "a"),
+                          ("b", PVar mempty "c")
+                        ]
+                    )
+                )
+                (MyRecord mempty (M.fromList [("a", int 1), ("b", int 2)]))
+                (MyVar mempty "c")
+            )
+
     describe "Test annotations" $ do
       it "Parses a var with location information" $
         testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")
