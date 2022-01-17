@@ -16,7 +16,6 @@ data InterpreterError ann
   = UnknownInterpreterError
   | CouldNotFindVar (Scope ann) Variable
   | CouldNotFindInfixOp InfixOp
-  | CannotDestructureAsPair (Expr Variable ann)
   | CannotDestructureAsRecord (Expr Variable ann) Name
   | CannotApplyToNonFunction (Expr Variable ann)
   | CannotFindMemberInRecord (Map Name (Expr Variable ann)) Name
@@ -44,34 +43,32 @@ instance (Show ann, Printer ann) => Printer (InterpreterError ann) where
     "Could not find var " <> prettyPrint name
   prettyPrint (CouldNotFindInfixOp op) =
     "Could not find infixOp " <> prettyPrint op
-  prettyPrint (CannotDestructureAsPair expr) =
-    "Expected a pair. Cannot destructure: " <> prettyPrint expr
   prettyPrint (CannotDestructureAsRecord expr name) =
-    "Expected a record with a member " <> prettyPrint name <> ". Cannot destructure: " <> prettyPrint expr
+    "Expected a record with a member " <> prettyPrint name <> ". Cannot destructure: " <> T.pack (show expr)
   prettyPrint (CannotApplyToNonFunction expr) =
-    "Expected a function. Cannot apply a value to " <> prettyPrint expr
+    "Expected a function. Cannot apply a value to " <> T.pack (show expr)
   prettyPrint (CannotFindMemberInRecord items name) =
     "Could not find member " <> prettyPrint name <> " in " <> itemList
     where
       itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
   prettyPrint (PredicateForIfMustBeABoolean expr) =
-    "Expected a boolean as a predicate. Cannot use: " <> prettyPrint expr
+    "Expected a boolean as a predicate. Cannot use: " <> T.pack (show expr)
   prettyPrint (PatternMatchFailure expr') =
-    "Could not pattern match on value " <> prettyPrint expr'
+    "Could not pattern match on value " <> T.pack (show expr')
   prettyPrint (SelfReferencingBinding b) =
     "Could not bind variable " <> prettyPrint b <> " to itself."
   prettyPrint (AdditionWithNonNumber a) =
-    "Addition expected number but got this: " <> prettyPrint a
+    "Addition expected number but got this: " <> T.pack (show a)
   prettyPrint (SubtractionWithNonNumber a) =
-    "Subtraction expected number but got this: " <> prettyPrint a
+    "Subtraction expected number but got this: " <> T.pack (show a)
   prettyPrint (ComparisonWithNonNumber op a) =
-    "Operator " <> prettyPrint op <> " expected number but got this: " <> prettyPrint a
+    "Operator " <> prettyPrint op <> " expected number but got this: " <> T.pack (show a)
   prettyPrint (StringConcatenationFailure a b) =
-    "Concatenation expected string + string but got this: " <> prettyPrint a <> " and " <> prettyPrint b
+    "Concatenation expected string + string but got this: " <> T.pack (show a) <> " and " <> T.pack (show b)
   prettyPrint (ArrayConcatenationFailure a b) =
-    "Concatenation expected array + array but got this: " <> prettyPrint a <> " and " <> prettyPrint b
+    "Concatenation expected array + array but got this: " <> T.pack (show a) <> " and " <> T.pack (show b)
   prettyPrint (TypedHoleFound a) =
-    "Typed hole found " <> prettyPrint a
+    "Typed hole found " <> T.pack (show a)
   prettyPrint (CouldNotFindSwapForVariable var swaps) =
     "Could not find swap for variable " <> prettyPrint var <> " in " <> itemList
     where

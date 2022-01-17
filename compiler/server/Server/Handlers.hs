@@ -277,7 +277,7 @@ runTestsHandler ::
   MimsaEnvironment ->
   Project Annotation ->
   [Test] ->
-  Handler [TestResult Variable Annotation]
+  Handler [TestResult Annotation]
 runTestsHandler mimsaEnv project tests = do
   handleMimsaM
     (mimsaConfig mimsaEnv)

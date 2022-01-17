@@ -27,4 +27,4 @@ newtype Scope ann = Scope
 instance (Show ann, Printer ann) => Printer (Scope ann) where
   prettyPrint (Scope s) = "{ " <> T.intercalate ", " (printItem <$> M.toList s) <> " }"
     where
-      printItem (k, a) = prettyPrint k <> ": " <> prettyPrint a
+      printItem (k, a) = prettyPrint k <> ": " <> T.pack (show a)

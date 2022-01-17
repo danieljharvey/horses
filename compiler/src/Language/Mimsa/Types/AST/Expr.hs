@@ -2,6 +2,8 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.Expr
@@ -139,14 +141,14 @@ data InfixBit var ann
   | IfMore Operator (Expr var ann)
   deriving stock (Show)
 
-getInfixList :: Expr var ann -> NE.NonEmpty (InfixBit var ann)
+getInfixList :: Expr Name ann -> NE.NonEmpty (InfixBit Name ann)
 getInfixList expr = case expr of
   (MyInfix _ op a b) ->
     let start = getInfixList a
      in start <> NE.fromList [IfMore op b]
   other -> NE.fromList [IfStart other]
 
-prettyInfixList :: (Show var, Printer var) => NE.NonEmpty (InfixBit var ann) -> Doc style
+prettyInfixList :: NE.NonEmpty (InfixBit Name ann) -> Doc style
 prettyInfixList (ifHead :| ifRest) =
   let printInfixBit (IfMore op expr') = prettyDoc op <+> printSubExpr expr'
       printInfixBit (IfStart expr') = printSubExpr expr'
@@ -157,10 +159,9 @@ indentMulti :: Int -> Doc style -> Doc style
 indentMulti i doc = flatAlt (indent i doc) doc
 
 prettyLet ::
-  (Show var, Printer var) =>
-  Identifier var ann ->
-  Expr var ann ->
-  Expr var ann ->
+  Identifier Name ann ->
+  Expr Name ann ->
+  Expr Name ann ->
   Doc style
 prettyLet var expr1 expr2 =
   let (args, letExpr) = splitExpr expr1
@@ -184,10 +185,9 @@ prettyLet var expr1 expr2 =
         other -> ([], other)
 
 prettyLetPattern ::
-  (Show var, Printer var) =>
-  Pattern var ann ->
-  Expr var ann ->
-  Expr var ann ->
+  Pattern Name ann ->
+  Expr Name ann ->
+  Expr Name ann ->
   Doc style
 prettyLetPattern pat expr body =
   group
@@ -203,10 +203,9 @@ newlineOrIn :: Doc style
 newlineOrIn = flatAlt (";" <> line <> line) " in "
 
 prettyDefineInfix ::
-  (Printer var, Show var) =>
   InfixOp ->
-  Expr var ann ->
-  Expr var ann ->
+  Expr Name ann ->
+  Expr Name ann ->
   Doc style
 prettyDefineInfix infixOp bindExpr expr =
   group
@@ -218,7 +217,7 @@ prettyDefineInfix infixOp bindExpr expr =
         <> prettyDoc expr
     )
 
-prettyPair :: (Printer var, Show var) => Expr var ann -> Expr var ann -> Doc style
+prettyPair :: Expr Name ann -> Expr Name ann -> Doc style
 prettyPair a b =
   group
     ( "("
@@ -231,9 +230,8 @@ prettyPair a b =
     )
 
 prettyLambda ::
-  (Printer var, Show var) =>
-  Identifier var ann ->
-  Expr var ann ->
+  Identifier Name ann ->
+  Expr Name ann ->
   Doc style
 prettyLambda binder expr =
   group
@@ -247,16 +245,20 @@ prettyLambda binder expr =
     )
 
 prettyRecord ::
-  (Printer var, Show var) =>
-  Map Name (Expr var ann) ->
+  Map Name (Expr Name ann) ->
   Doc style
 prettyRecord map' =
   let items = M.toList map'
       printRow i (name, val) =
-        prettyDoc name
-          <> ":"
-          <+> printSubExpr val
-          <> if i < length items then "," else ""
+        let item = case val of
+              (MyVar _ vName)
+                | vName == name ->
+                  prettyDoc name
+              _ ->
+                prettyDoc name
+                  <> ":"
+                  <+> printSubExpr val
+         in item <> if i < length items then "," else ""
    in case items of
         [] -> "{}"
         rows ->
@@ -270,7 +272,7 @@ prettyRecord map' =
                     <+> "}"
                 )
 
-prettyArray :: (Show var, Printer var) => [Expr var ann] -> Doc style
+prettyArray :: [Expr Name ann] -> Doc style
 prettyArray items =
   let printRow i val =
         printSubExpr val
@@ -289,10 +291,9 @@ prettyArray items =
                 )
 
 prettyIf ::
-  (Show var, Printer var) =>
-  Expr var ann ->
-  Expr var ann ->
-  Expr var ann ->
+  Expr Name ann ->
+  Expr Name ann ->
+  Expr Name ann ->
   Doc style
 prettyIf if' then' else' =
   group
@@ -307,9 +308,8 @@ prettyIf if' then' else' =
     )
 
 prettyPatternMatch ::
-  (Printer var, Show var) =>
-  Expr var ann ->
-  [(Pattern var ann, Expr var ann)] ->
+  Expr Name ann ->
+  [(Pattern Name ann, Expr Name ann)] ->
   Doc style
 prettyPatternMatch sumExpr matches =
   "match"
@@ -331,9 +331,8 @@ prettyPatternMatch sumExpr matches =
       printSubPattern construct <+> "->" <+> printSubExpr expr'
 
 prettyDataType ::
-  (Printer var, Show var) =>
   DataType ->
-  Expr var ann ->
+  Expr Name ann ->
   Doc style
 prettyDataType dt expr =
   group
@@ -342,7 +341,7 @@ prettyDataType dt expr =
         <> prettyDoc expr
     )
 
-instance (Show var, Printer var) => Printer (Expr var ann) where
+instance Printer (Expr Name ann) where
   prettyDoc (MyLiteral _ l) =
     prettyDoc l
   prettyDoc (MyVar _ var) =
@@ -375,16 +374,16 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyPatternMatch _ expr matches) =
     prettyPatternMatch expr matches
 
-wrapInfix :: (Show var, Printer var) => Expr var ann -> Doc style
+wrapInfix :: Expr Name ann -> Doc style
 wrapInfix val = case val of
   val'@MyInfix {} -> inParens val'
   other -> printSubExpr other
 
-inParens :: (Show var, Printer var) => Expr var ann -> Doc style
+inParens :: Expr Name ann -> Doc style
 inParens = parens . prettyDoc
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubExpr :: (Show var, Printer var) => Expr var ann -> Doc style
+printSubExpr :: Expr Name ann -> Doc style
 printSubExpr expr = case expr of
   all'@MyLet {} -> inParens all'
   all'@MyLambda {} -> inParens all'
