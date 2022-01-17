@@ -52,6 +52,7 @@ data TypeErrorF ann
   | CannotUseBuiltInTypeAsConstructor ann TyCon
   | InternalConstructorUsedOutsidePatternMatch ann TyCon
   | PatternMatchErr (PatternMatchErrorF ann)
+  | SwapsChangingError
   deriving stock (Eq, Ord, Show, Foldable)
 
 type TypeError = TypeErrorF Annotation
@@ -155,6 +156,7 @@ renderTypeError (TypeConstructorNotInScope env _ constructor) =
     "The following are available:"
   ]
     <> printDataTypes env
+renderTypeError SwapsChangingError = ["Error swapping names back for pattern match error"]
 renderTypeError (TypeNameNotInScope env _ typeName) =
   [ "Type name" <+> prettyDoc typeName
       <+> "not found in scope.",

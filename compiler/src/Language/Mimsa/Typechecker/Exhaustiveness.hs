@@ -44,14 +44,14 @@ validatePatterns env ann patterns = do
     _ -> case traverse (usePatternSwaps swaps) missing of
       Right missing' ->
         throwError (PatternMatchErr (MissingPatterns ann missing'))
-      Left _ -> error "Can't replace swaps in validate pattern error"
+      Left _ -> throwError SwapsChangingError
   redundant <- redundantCases env patterns
   case redundant of
     [] -> pure ()
     _ -> case traverse (usePatternSwaps swaps) redundant of
       Right redundant' ->
         throwError (PatternMatchErr (RedundantPatterns ann redundant'))
-      Left _ -> error "Can't replace swaps in validate pattern error"
+      Left _ -> throwError SwapsChangingError
 
 withSwap :: Swaps -> Variable -> Name
 withSwap _ (NamedVar n) = n
