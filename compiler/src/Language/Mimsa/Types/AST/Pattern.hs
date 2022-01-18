@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.AST.Pattern
@@ -78,12 +79,12 @@ inParens :: (Printer a) => a -> Doc style
 inParens = parens . prettyDoc
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubPattern :: (Show var, Printer var) => Pattern var ann -> Doc style
+printSubPattern :: Pattern Name ann -> Doc style
 printSubPattern pat = case pat of
   all'@PConstructor {} -> inParens all'
   a -> prettyDoc a
 
-instance (Printer var, Show var) => Printer (Pattern var ann) where
+instance Printer (Pattern Name ann) where
   prettyDoc (PWildcard _) = "_"
   prettyDoc (PVar _ a) = prettyDoc a
   prettyDoc (PLit _ lit) = prettyDoc lit
@@ -98,10 +99,13 @@ instance (Printer var, Show var) => Printer (Pattern var ann) where
   prettyDoc (PRecord _ map') =
     let items = M.toList map'
         printRow i (name, val) =
-          prettyDoc name
-            <> ":"
-            <+> printSubPattern val
-            <> if i < length items then "," else ""
+          let item = case val of
+                (PVar _ vName) | vName == name -> prettyDoc name
+                _ ->
+                  prettyDoc name
+                    <> ":"
+                    <+> printSubPattern val
+           in item <> if i < length items then "," else ""
      in case items of
           [] -> "{}"
           rows ->

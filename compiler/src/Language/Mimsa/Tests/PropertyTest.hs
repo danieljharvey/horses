@@ -12,6 +12,7 @@ import Data.Bifunctor
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter
+import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
@@ -55,7 +56,7 @@ runPropertyTest ::
   (MonadError (Error Annotation) m, MonadIO m) =>
   Project Annotation ->
   PropertyTest ->
-  m (PropertyTestResult Variable Annotation)
+  m (PropertyTestResult Annotation)
 runPropertyTest project pt = do
   -- fetch test expression
   case lookupExprHash project (ptExprHash pt) of
@@ -93,8 +94,21 @@ runPropertyTest project pt = do
       results <-
         toMonadError $
           traverse
-            ( \(sample, rExpr) ->
-                (,) sample <$> first InterpreterErr (interpret (reScope resolvedExpr) (reSwaps resolvedExpr) rExpr)
+            ( \(sample, rExpr) -> do
+                sampleName <-
+                  first
+                    InterpreterErr
+                    (useSwaps (reSwaps resolvedExpr) sample)
+                result <-
+                  first
+                    InterpreterErr
+                    ( interpret
+                        ( reScope resolvedExpr
+                        )
+                        (reSwaps resolvedExpr)
+                        rExpr
+                    )
+                pure (sampleName, result)
             )
             exprs
 
@@ -112,7 +126,10 @@ applyGenerated expr val =
 
 -- | if all the `snd` of the tuple == True
 -- then everything succeeded, otherwise return all the failures
-getPropertyTestResult :: (Ord ann) => [(Expr Variable ann, Expr Name ann)] -> PropertyTestResult Variable ann
+getPropertyTestResult ::
+  (Ord ann) =>
+  [(Expr Name ann, Expr Name ann)] ->
+  PropertyTestResult ann
 getPropertyTestResult results =
   let failures = S.filter (\(_, result) -> not $ testIsSuccess result) (S.fromList results)
    in if S.null failures

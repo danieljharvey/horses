@@ -26,9 +26,9 @@ data PatternMatchErrorF ann
     ConstructorArgumentLengthMismatch ann TyCon Int Int
   | -- | Cases not covered in pattern matches
     -- | ann, [missing patterns]
-    MissingPatterns ann [Pattern Variable ann]
+    MissingPatterns ann [Pattern Name ann]
   | -- | Unnecessary cases covered by previous matches
-    RedundantPatterns ann [Pattern Variable ann]
+    RedundantPatterns ann [Pattern Name ann]
   | -- | Multiple instances of the same variable
     DuplicateVariableUse ann (Set Name)
   deriving stock (Eq, Ord, Show, Foldable)

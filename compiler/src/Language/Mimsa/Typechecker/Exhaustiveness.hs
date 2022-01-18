@@ -20,6 +20,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
+import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Types.AST
@@ -35,15 +36,22 @@ validatePatterns ::
   [Pattern Variable Annotation] ->
   m ()
 validatePatterns env ann patterns = do
+  swaps <- ask
   traverse_ noDuplicateVariables patterns
   missing <- isExhaustive env patterns
   _ <- case missing of
     [] -> pure ()
-    _ -> throwError (PatternMatchErr (MissingPatterns ann missing))
+    _ -> case traverse (usePatternSwaps swaps) missing of
+      Right missing' ->
+        throwError (PatternMatchErr (MissingPatterns ann missing'))
+      Left _ -> throwError SwapsChangingError
   redundant <- redundantCases env patterns
   case redundant of
     [] -> pure ()
-    _ -> throwError (PatternMatchErr (RedundantPatterns ann redundant))
+    _ -> case traverse (usePatternSwaps swaps) redundant of
+      Right redundant' ->
+        throwError (PatternMatchErr (RedundantPatterns ann redundant'))
+      Left _ -> throwError SwapsChangingError
 
 withSwap :: Swaps -> Variable -> Name
 withSwap _ (NamedVar n) = n

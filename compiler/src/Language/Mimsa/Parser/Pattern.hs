@@ -75,9 +75,12 @@ litParser = withLocation PLit lit
 
 recordParser :: Parser ParserPattern
 recordParser = withLocation PRecord $ do
+  let itemParser =
+        try recordItemParser
+          <|> punnedRecordItemParser
   _ <- string "{"
   _ <- space
-  args <- sepBy (withOptionalSpace recordItemParser) (literalWithSpace ",")
+  args <- sepBy (withOptionalSpace itemParser) (literalWithSpace ",")
   _ <- space
   _ <- string "}"
   pure (M.fromList args)
@@ -88,6 +91,11 @@ recordItemParser = do
   literalWithSpace ":"
   expr <- withOptionalSpace patternParser
   pure (name, expr)
+
+punnedRecordItemParser :: Parser (Name, ParserPattern)
+punnedRecordItemParser = do
+  name <- nameParser
+  pure (name, PVar mempty name)
 
 ---
 

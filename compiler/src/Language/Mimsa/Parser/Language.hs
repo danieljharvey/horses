@@ -168,9 +168,12 @@ appParser = addLocation $ do
 
 recordParser :: Parser ParserExpr
 recordParser = withLocation MyRecord $ do
+  let itemParser =
+        try recordItemParser
+          <|> punnedRecordItemParser
   _ <- string "{"
   _ <- space
-  args <- sepBy (optionalSpaceThen recordItemParser) (string ",")
+  args <- sepBy (optionalSpaceThen itemParser) (string ",")
   _ <- space
   _ <- string "}"
   pure (M.fromList args)
@@ -181,6 +184,11 @@ recordItemParser = do
   literalWithSpace ":"
   expr <- optionalSpaceThen expressionParser
   pure (name, expr)
+
+punnedRecordItemParser :: Parser (Name, ParserExpr)
+punnedRecordItemParser = do
+  name <- nameParser
+  pure (name, MyVar mempty name)
 
 -----
 

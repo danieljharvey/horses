@@ -24,7 +24,6 @@ import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
@@ -140,7 +139,7 @@ runTests ::
   (MonadIO m, MonadError (Error Annotation) m) =>
   Project Annotation ->
   Test ->
-  m (TestResult Variable Annotation)
+  m (TestResult Annotation)
 runTests _ (UTest ut) = pure (UTestResult ut)
 runTests project (PTest pt) =
   PTestResult pt <$> runPropertyTest project pt

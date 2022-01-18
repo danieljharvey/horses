@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Language.Mimsa.Interpreter.UseSwaps (useSwaps) where
+module Language.Mimsa.Interpreter.UseSwaps (useSwaps, usePatternSwaps) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -83,6 +83,12 @@ useSwapsInIdentifier (Identifier ann var) =
   Identifier ann <$> lookupSwap var
 useSwapsInIdentifier (AnnotatedIdentifier mt var) =
   AnnotatedIdentifier mt <$> lookupSwap var
+
+usePatternSwaps ::
+  Swaps ->
+  Pattern Variable ann ->
+  Either (InterpreterError ann) (Pattern Name ann)
+usePatternSwaps swaps pat' = runReaderT (useSwapsInPattern pat') swaps
 
 useSwapsInPattern :: Pattern Variable ann -> App ann (Pattern Name ann)
 useSwapsInPattern (PWildcard ann) = pure (PWildcard ann)

@@ -70,7 +70,7 @@ data PropertyTestData = PropertyTestData
 mkPropertyTestData ::
   Project ann ->
   PropertyTest ->
-  PropertyTestResult Variable ann ->
+  PropertyTestResult ann ->
   PropertyTestData
 mkPropertyTestData project propertyTest result = do
   let getDep = (`findBindingNameForExprHash` project)
@@ -97,9 +97,9 @@ data RuntimeData = RuntimeData
   deriving anyclass (JSON.ToJSON, ToSchema)
 
 splitTestResults ::
-  [TestResult var ann] ->
+  [TestResult ann] ->
   ( [UnitTest],
-    [(PropertyTest, PropertyTestResult var ann)]
+    [(PropertyTest, PropertyTestResult ann)]
   )
 splitTestResults results =
   let f res = case res of
@@ -112,7 +112,7 @@ splitTestResults results =
 
 makeTestData ::
   Project Annotation ->
-  [TestResult Variable Annotation] ->
+  [TestResult Annotation] ->
   TestData
 makeTestData project testResults =
   let (uts, pts) = splitTestResults testResults

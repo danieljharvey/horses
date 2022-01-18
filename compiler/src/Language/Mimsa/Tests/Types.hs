@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -24,6 +25,7 @@ import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 
 newtype TestName = TestName Text
@@ -48,9 +50,9 @@ newtype UnitTestSuccess = UnitTestSuccess Bool
       JSON.FromJSON
     )
 
-data PropertyTestResult var ann
+data PropertyTestResult ann
   = PropertyTestSuccess
-  | PropertyTestFailures (Set (Expr var ann))
+  | PropertyTestFailures (Set (Expr Name ann))
   deriving stock
     ( Eq,
       Ord,
@@ -96,15 +98,15 @@ instance Printer UnitTest where
           _ -> "--- FAIL ---"
      in tickOrCross <> " " <> prettyPrint (utName test)
 
-data TestResult var ann
+data TestResult ann
   = -- | unit test is run once and contains its result
     UTestResult UnitTest
   | -- | property test is effectful and run when returning results
-    PTestResult PropertyTest (PropertyTestResult var ann)
+    PTestResult PropertyTest (PropertyTestResult ann)
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
-instance (Show var, Printer var) => Printer (TestResult var ann) where
+instance Printer (TestResult ann) where
   prettyPrint (UTestResult ut) = prettyPrint ut
   prettyPrint (PTestResult pt ptRes) =
     let tickOrCross = case ptRes of
