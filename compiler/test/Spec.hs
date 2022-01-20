@@ -15,6 +15,7 @@ import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Runtimes as Runtimes
 import qualified Test.Backend.Typescript as Typescript
 import qualified Test.Codegen as Codegen
+import qualified Test.ErrorFormat as ErrorFormat
 import Test.Hspec
 import qualified Test.Interpreter.InstantiateVar as InstantiateVar
 import qualified Test.Interpreter.Interpreter as Interpreter
@@ -92,3 +93,4 @@ main =
     Substitutions.spec
     ScopeTypeVar.spec
     Properties.spec
+    ErrorFormat.spec

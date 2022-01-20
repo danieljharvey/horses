@@ -61,6 +61,7 @@ library
       Language.Mimsa.Codegen.Functor
       Language.Mimsa.Codegen.Newtype
       Language.Mimsa.Codegen.Utils
+      Language.Mimsa.ErrorFormat
       Language.Mimsa.ExprUtils
       Language.Mimsa.Interpreter
       Language.Mimsa.Interpreter.HighestVar
@@ -352,6 +353,7 @@ test-suite mimsa-test
       Test.Codegen.Newtype
       Test.Codegen.Shared
       Test.Data.Project
+      Test.ErrorFormat
       Test.Interpreter.InstantiateVar
       Test.Interpreter.Interpreter
       Test.Interpreter.Repl
