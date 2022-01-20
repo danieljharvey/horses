@@ -5,6 +5,7 @@ module Language.Mimsa.ErrorFormat where
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Project.SourceItem
@@ -42,7 +43,7 @@ getLines from to input =
       mapWithIndex
         ( \i a ->
             if i >= from && i <= to
-              then Just a
+              then Just (prettyPrint i <> ". " <> a)
               else Nothing
         )
         (T.lines input)

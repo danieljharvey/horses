@@ -19,5 +19,5 @@ spec = do
       let msg = "Oh no"
           input = "let a = True"
           sourceItem = ("Should be false", Location 9 12)
-          expected = "Oh no\nlet a = True\n        ^^^^\n        Should be false"
+          expected = "Oh no\n1. let a = True\n        ^^^^\n        Should be false"
       printDiagnostic (toDiagnostic msg [sourceItem] input) `shouldBe` expected
