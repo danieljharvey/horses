@@ -38,6 +38,7 @@ extractVars_ (MyData _ _ a) = extractVars_ a
 extractVars_ (MyConstructor _ _) = mempty
 extractVars_ (MyTypedHole _ _) = mempty
 extractVars_ (MyDefineInfix _ _ a b) = extractVars_ a <> extractVars_ b
+extractVars_ (MyFromContext _ _) = mempty
 extractVars_ (MyPatternMatch _ match patterns) =
   extractVars match <> mconcat patternVars
   where

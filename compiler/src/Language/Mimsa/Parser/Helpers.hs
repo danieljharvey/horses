@@ -24,6 +24,7 @@ import Data.Bifunctor (first)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Text.Megaparsec
@@ -54,29 +55,6 @@ withLocation withP p = do
 -- | wraps any parser of Exprs and adds location information
 addLocation :: Parser ParserExpr -> Parser ParserExpr
 addLocation = withLocation (mapOuterExprAnnotation . const)
-
--- | modify the outer annotation of an expression
--- useful for adding line numbers during parsing
-mapOuterExprAnnotation :: (ann -> ann) -> Expr a ann -> Expr a ann
-mapOuterExprAnnotation f expr' =
-  case expr' of
-    MyInfix ann a op b -> MyInfix (f ann) a op b
-    MyLiteral ann a -> MyLiteral (f ann) a
-    MyVar ann a -> MyVar (f ann) a
-    MyLet ann a b c -> MyLet (f ann) a b c
-    MyLetPattern ann a b c -> MyLetPattern (f ann) a b c
-    MyLambda ann a b -> MyLambda (f ann) a b
-    MyApp ann a b -> MyApp (f ann) a b
-    MyIf ann a b c -> MyIf (f ann) a b c
-    MyPair ann a b -> MyPair (f ann) a b
-    MyRecord ann as -> MyRecord (f ann) as
-    MyRecordAccess ann a b -> MyRecordAccess (f ann) a b
-    MyArray ann as -> MyArray (f ann) as
-    MyData ann a b -> MyData (f ann) a b
-    MyConstructor ann a -> MyConstructor (f ann) a
-    MyTypedHole ann a -> MyTypedHole (f ann) a
-    MyDefineInfix ann a b c -> MyDefineInfix (f ann) a b c
-    MyPatternMatch ann a b -> MyPatternMatch (f ann) a b
 
 -----
 

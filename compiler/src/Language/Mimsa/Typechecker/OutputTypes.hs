@@ -99,4 +99,5 @@ foldExpr fn expression =
     foldExpr' (MyData ann _ body) =
       f ann <> foldExpr fn body
     foldExpr' (MyConstructor ann _) = f ann
+    foldExpr' (MyFromContext ann _) = f ann
     foldExpr' (MyTypedHole ann _) = f ann

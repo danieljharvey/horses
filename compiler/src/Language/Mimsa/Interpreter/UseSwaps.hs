@@ -77,6 +77,8 @@ useSwaps' (MyDefineInfix ann infixOp bindExpr expr) =
     infixOp
     <$> useSwaps' bindExpr
     <*> useSwaps' expr
+useSwaps' (MyFromContext ann name) =
+  pure $ MyFromContext ann name
 
 useSwapsInIdentifier :: Identifier Variable ann -> App ann (Identifier Name ann)
 useSwapsInIdentifier (Identifier ann var) =

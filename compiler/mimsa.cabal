@@ -117,6 +117,7 @@ library
       Language.Mimsa.Typechecker.Environment
       Language.Mimsa.Typechecker.Exhaustiveness
       Language.Mimsa.Typechecker.Generalise
+      Language.Mimsa.Typechecker.HoistContext
       Language.Mimsa.Typechecker.KindChecker
       Language.Mimsa.Typechecker.NormaliseTypes
       Language.Mimsa.Typechecker.OutputTypes

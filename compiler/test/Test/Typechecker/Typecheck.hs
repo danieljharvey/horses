@@ -1198,6 +1198,42 @@ spec = do
         startInference expr $
           Left (UnificationError mtString mtInt)
 
+      it "Finds context for MyFromContext" $ do
+        let expr =
+              MyFromContext mempty "true"
+        startInference expr $
+          Right
+            ( MTContext
+                mempty
+                ( MTRecordRow
+                    mempty
+                    ( M.singleton "true" (mtUniVar 0)
+                    )
+                    (mtUniVar 1)
+                )
+                (mtUniVar 0)
+            )
+      it "Pass context to parent typ" $ do
+        let expr =
+              MyLet
+                mempty
+                (Identifier mempty (named "a"))
+                ( MyFromContext mempty "true"
+                )
+                (bool True)
+        startInference expr $
+          Right
+            ( MTContext
+                mempty
+                ( MTRecordRow
+                    mempty
+                    ( M.singleton "true" (mtUniVar 0)
+                    )
+                    (mtUniVar 1)
+                )
+                (mtUniVar 0)
+            )
+
     -- needs type annotations to make this make sense
     xit "Lambda variable as constructor" $ do
       let expr =

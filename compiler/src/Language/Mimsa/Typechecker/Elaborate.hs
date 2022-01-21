@@ -26,6 +26,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
+import Language.Mimsa.Typechecker.HoistContext
 import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
@@ -733,12 +734,25 @@ elabArray env ann items = do
     Nothing -> getUnknown ann
   pure (MyArray (MTArray ann tyItems) elabItems)
 
+elabFromContext ::
+  Environment ->
+  Annotation ->
+  Name ->
+  ElabM ElabExpr
+elabFromContext _env ann name =
+  do
+    mtFromContext <- getUnknown ann
+    mtRest <- getUnknown ann
+    let mtRec = MTRecordRow ann (M.singleton name mtFromContext) mtRest
+        mtReturn = MTContext ann mtRec mtFromContext
+    pure $ MyFromContext mtReturn name
+
 elab ::
   Environment ->
   TcExpr ->
   ElabM ElabExpr
-elab env elabExpr =
-  case elabExpr of
+elab env elabExpr = do
+  elabbed <- case elabExpr of
     (MyLiteral ann a) -> elabLiteral ann a
     (MyVar ann name) ->
       elabVarFromScope env ann name
@@ -783,3 +797,6 @@ elab env elabExpr =
       elabDefineInfix env ann infixOp infixExpr expr
     (MyPatternMatch ann expr patterns) ->
       elabPatternMatch env ann expr patterns
+    (MyFromContext ann name) ->
+      elabFromContext env ann name
+  pure (hoistContext elabbed)

@@ -111,6 +111,9 @@ mtString = MTPrim mempty MTString
 mtVar :: Text -> MonoType
 mtVar n = MTVar mempty (tvNamed n)
 
+mtUniVar :: Int -> MonoType
+mtUniVar i = MTVar mempty (tvNum i)
+
 ----
 
 additionalTests :: Project ann -> Project ann -> Int

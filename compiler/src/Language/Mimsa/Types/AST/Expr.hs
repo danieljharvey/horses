@@ -130,6 +130,11 @@ data Expr var ann
         expPatterns :: [(Pattern var ann, Expr var ann)]
       }
   | -- | name
+    MyFromContext
+      { expAnn :: ann,
+        expCtxItemName :: Name
+      }
+  | -- | name
     MyTypedHole {expAnn :: ann, expTypedHoleName :: Name}
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
@@ -374,6 +379,7 @@ instance (Show var, Printer var) => Printer (Expr var ann) where
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
   prettyDoc (MyPatternMatch _ expr matches) =
     prettyPatternMatch expr matches
+  prettyDoc (MyFromContext _ name) = "!" <> prettyDoc name
 
 wrapInfix :: (Show var, Printer var) => Expr var ann -> Doc style
 wrapInfix val = case val of

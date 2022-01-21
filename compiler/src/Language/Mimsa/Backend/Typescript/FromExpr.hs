@@ -354,3 +354,5 @@ toTSBody expr' =
       fnExpr <- toTSExpr fn
       addInfix op fnExpr
       toTSBody body
+    (MyFromContext _ _) ->
+      error "need to implement MyFromContext in TS FromExpr"

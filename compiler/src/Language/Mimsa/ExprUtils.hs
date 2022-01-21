@@ -6,6 +6,7 @@ module Language.Mimsa.ExprUtils
     bindExpr,
     toEmptyAnnotation,
     getAnnotation,
+    mapOuterExprAnnotation,
   )
 where
 
@@ -44,6 +45,7 @@ getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyDefineInfix ann _ _ _) = ann
 getAnnotation (MyArray ann _) = ann
 getAnnotation (MyPatternMatch ann _ _) = ann
+getAnnotation (MyFromContext ann _) = ann
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`
@@ -144,6 +146,7 @@ withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
           m <> withMonoid f matchExpr
             <> mconcat
               (withMonoid f <$> (snd <$> matches))
+withMonoid f whole@MyFromContext {} = snd (f whole)
 
 -- | Map a function `f` over the expression. This function takes care of
 -- recursing through the Expression
@@ -171,6 +174,7 @@ mapExpr f (MyPatternMatch ann matchExpr patterns) =
 mapExpr _ (MyTypedHole ann a) = MyTypedHole ann a
 mapExpr f (MyDefineInfix ann op infixExpr inExpr) =
   MyDefineInfix ann op (f infixExpr) (f inExpr)
+mapExpr _ (MyFromContext ann name) = MyFromContext ann name
 
 -- | Bind a function `f` over the expression. This function takes care of
 -- recursing through the expression.
@@ -217,3 +221,29 @@ bindExpr f (MyPatternMatch ann matchExpr patterns) =
     <*> traverse traverseSecond patterns
   where
     traverseSecond (a, b) = (a,) <$> f b
+bindExpr _ (MyFromContext ann name) =
+  pure $ MyFromContext ann name
+
+-- | modify the outer annotation of an expression
+-- useful for adding line numbers during parsing
+mapOuterExprAnnotation :: (ann -> ann) -> Expr a ann -> Expr a ann
+mapOuterExprAnnotation f expr' =
+  case expr' of
+    MyInfix ann a op b -> MyInfix (f ann) a op b
+    MyLiteral ann a -> MyLiteral (f ann) a
+    MyVar ann a -> MyVar (f ann) a
+    MyLet ann a b c -> MyLet (f ann) a b c
+    MyLetPattern ann a b c -> MyLetPattern (f ann) a b c
+    MyLambda ann a b -> MyLambda (f ann) a b
+    MyApp ann a b -> MyApp (f ann) a b
+    MyIf ann a b c -> MyIf (f ann) a b c
+    MyPair ann a b -> MyPair (f ann) a b
+    MyRecord ann as -> MyRecord (f ann) as
+    MyRecordAccess ann a b -> MyRecordAccess (f ann) a b
+    MyArray ann as -> MyArray (f ann) as
+    MyData ann a b -> MyData (f ann) a b
+    MyConstructor ann a -> MyConstructor (f ann) a
+    MyTypedHole ann a -> MyTypedHole (f ann) a
+    MyDefineInfix ann a b c -> MyDefineInfix (f ann) a b c
+    MyPatternMatch ann a b -> MyPatternMatch (f ann) a b
+    MyFromContext ann name -> MyFromContext (f ann) name
