@@ -12,11 +12,11 @@ mtBool = MTPrim mempty MTBool
 
 addCtx :: MonoType -> Map Name MonoType -> MonoType
 addCtx mt items | M.null items = mt
-addCtx (MTContext ann (MTRecordRow rrAnn existingItems restRow) restMt) items =
-  MTContext ann (MTRecordRow rrAnn (existingItems <> items) restRow) restMt
+addCtx (MTContext ann existingItems restMt) items =
+  MTContext ann (existingItems <> items) restMt
 addCtx mt items =
   let existingAnn = getAnnotationForType mt
-   in MTContext existingAnn (MTRecordRow existingAnn items mtBool) mt
+   in MTContext existingAnn items mt
 
 -- chop out any contexts and put them on the top of the expr
 hoistContext :: Expr var MonoType -> Expr var MonoType
@@ -32,7 +32,7 @@ hoistContext expr =
        in (MyLet (addCtx mt newCtx) ident letExpr' letBody', newCtx)
     hoistContext' (MyFromContext mt name) =
       let (newCtx, newInner) = case mt of
-            (MTContext _ (MTRecordRow _ items _) actualMt) -> (items, actualMt)
+            (MTContext _ items actualMt) -> (items, actualMt)
             _ -> (mempty, mt)
        in (MyFromContext newInner name, newCtx)
     hoistContext' other = (other, mempty)

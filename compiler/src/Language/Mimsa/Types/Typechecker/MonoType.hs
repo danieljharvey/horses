@@ -88,7 +88,7 @@ data Type ann
       }
   | MTContext
       { typAnn :: ann,
-        typContext :: Type ann, -- row of items
+        typContext :: Map Name (Type ann), -- row of items
         typInner :: Type ann -- type using the context
       }
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
@@ -165,7 +165,24 @@ renderMonoType mt@(MTTypeApp _ func arg) =
     Nothing ->
       align $ sep [renderMonoType func, renderMonoType arg]
 renderMonoType (MTContext _ ctx inner) =
-  renderMonoType ctx <+> "=>" <+> renderMonoType inner
+  let renderItem (Name k, v) = pretty k <> ":" <+> withParens v
+      prettyCtx =
+        group $
+          "{"
+            <> nest
+              2
+              ( line
+                  <> mconcat
+                    ( punctuate
+                        ("," <> line)
+                        ( renderItem
+                            <$> M.toList ctx
+                        )
+                    )
+              )
+            <> line
+            <> "}"
+   in prettyCtx <+> "=>" <+> renderMonoType inner
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)

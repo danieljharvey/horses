@@ -50,5 +50,5 @@ normaliseType' mt = case mt of
   MTTypeApp ann func arg ->
     MTTypeApp ann <$> normaliseType' func <*> normaliseType' arg
   MTContext ann ctx inner ->
-    MTContext ann <$> normaliseType' ctx
+    MTContext ann <$> traverse normaliseType' ctx
       <*> normaliseType' inner

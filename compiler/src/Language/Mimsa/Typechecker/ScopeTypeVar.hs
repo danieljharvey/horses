@@ -72,5 +72,5 @@ freshenNamedTypeVars known =
     freshen (MTFunction ann a b) =
       MTFunction ann <$> freshen a <*> freshen b
     freshen (MTContext ann ctx inner) =
-      MTContext ann <$> freshen ctx
+      MTContext ann <$> traverse freshen ctx
         <*> freshen inner

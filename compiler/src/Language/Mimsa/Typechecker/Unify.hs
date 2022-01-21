@@ -196,8 +196,10 @@ unify tyA tyB =
     (MTArray _ a, MTArray _ b) -> unify a b
     (MTVar ann u, t) -> varBind ann u t
     (t, MTVar ann u) -> varBind ann u t
-    (MTContext _ ctxA restA, MTContext _ ctxB restB) ->
-      unifyPairs (ctxA, restA) (ctxB, restB)
+    (MTContext ann ctxA restA, MTContext ann' ctxB restB) -> do
+      subs <- unifyRecords (ann, ctxA) (ann', ctxB)
+      subsInner <- unify restA restB
+      pure (subs <> subsInner)
     (MTContext _ _ctxA rest, b) ->
       unify rest b
     (a, MTContext _ _ctxB rest) ->

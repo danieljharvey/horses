@@ -92,7 +92,7 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
     extractFromCon (MTRecordRow _ items rest) =
       mconcat (extractFromCon <$> M.elems items) <> extractFromCon rest
     extractFromCon (MTContext _ ctx inner) =
-      extractFromCon ctx
+      mconcat (extractFromCon <$> M.elems ctx)
         <> extractFromCon inner
 
 -- get all the names of constructors (type and data) declared in the datatype
@@ -158,7 +158,7 @@ extractTypenames MTVar {} = mempty
 extractTypenames (MTFunction _ a b) =
   extractTypenames a <> extractTypenames b
 extractTypenames (MTContext _ ctx inner) =
-  extractTypenames ctx
+  mconcat (extractTypenames <$> M.elems ctx)
     <> extractTypenames inner
 
 -----
@@ -182,5 +182,5 @@ extractNamedTypeVars MTPrim {} = mempty
 extractNamedTypeVars (MTFunction _ a b) =
   extractNamedTypeVars a <> extractNamedTypeVars b
 extractNamedTypeVars (MTContext _ ctx inner) =
-  extractNamedTypeVars ctx
+  mconcat (extractNamedTypeVars <$> M.elems ctx)
     <> extractNamedTypeVars inner
