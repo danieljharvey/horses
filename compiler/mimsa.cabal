@@ -109,6 +109,7 @@ library
       Language.Mimsa.Tests.Test
       Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
+      Language.Mimsa.Transform.FindUnused
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
       Language.Mimsa.Typechecker.DataTypes
@@ -372,6 +373,7 @@ test-suite mimsa-test
       Test.Tests.Properties
       Test.Tests.PropertyTest
       Test.Tests.UnitTest
+      Test.Transform.FindUnused
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness

@@ -36,6 +36,7 @@ import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Tests.Properties as Properties
 import qualified Test.Tests.PropertyTest as PropertyTest
 import qualified Test.Tests.UnitTest as UnitTest
+import qualified Test.Transform.FindUnused as FindUnused
 import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
@@ -92,3 +93,4 @@ main =
     Substitutions.spec
     ScopeTypeVar.spec
     Properties.spec
+    FindUnused.spec
