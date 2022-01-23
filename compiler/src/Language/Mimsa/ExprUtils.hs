@@ -6,12 +6,14 @@ module Language.Mimsa.ExprUtils
     bindExpr,
     toEmptyAnnotation,
     getAnnotation,
+    mapPattern,
   )
 where
 
 import Data.Bifunctor (second)
 import qualified Data.Map as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
+import Language.Mimsa.Types.AST.Pattern
 
 -------
 -- Functions for operating on the Expr type
@@ -217,3 +219,20 @@ bindExpr f (MyPatternMatch ann matchExpr patterns) =
     <*> traverse traverseSecond patterns
   where
     traverseSecond (a, b) = (a,) <$> f b
+
+-- | Map a function `f` over the pattern. This function takes care of
+-- recursing through the Pattern
+mapPattern :: (Pattern a b -> Pattern a b) -> Pattern a b -> Pattern a b
+mapPattern _ (PWildcard ann) = PWildcard ann
+mapPattern _ (PVar ann a) = PVar ann a
+mapPattern _ (PLit ann a) = PLit ann a
+mapPattern f (PConstructor ann tyCon vars) =
+  PConstructor ann tyCon (f <$> vars)
+mapPattern f (PPair ann a b) =
+  PPair ann (f a) (f b)
+mapPattern f (PRecord ann as) =
+  PRecord ann (f <$> as)
+mapPattern f (PArray ann as spread) =
+  PArray ann (f <$> as) spread
+mapPattern _ (PString ann pHead pTail) =
+  PString ann pHead pTail

@@ -7,8 +7,33 @@ import Language.Mimsa.ExprUtils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Typechecker
 
-removeUnused :: Set var -> Expr var ann -> Expr var ann
-removeUnused _remove expr = expr
+removeUnused :: (Ord var) => Set var -> Expr var ann -> Expr var ann
+removeUnused remove = f
+  where
+    f wholeExpr@(MyLet _ ident _ letBody) =
+      let a = case ident of
+            Identifier _ var -> var
+            AnnotatedIdentifier _ var -> var
+       in if S.member a remove
+            then letBody
+            else wholeExpr
+    f (MyPatternMatch ann expr patterns) =
+      let tidyExpr = removeUnused remove expr
+          tidyPattern (pat, patExpr) =
+            ( removeUnusedInPattern remove pat,
+              removeUnused remove patExpr
+            )
+       in MyPatternMatch ann tidyExpr (tidyPattern <$> patterns)
+    f other = mapExpr f other
+
+removeUnusedInPattern :: (Ord var) => Set var -> Pattern var ann -> Pattern var ann
+removeUnusedInPattern remove = f
+  where
+    f wholePat@(PVar ann a) =
+      if S.member a remove
+        then PWildcard ann
+        else wholePat
+    f other = mapPattern f other
 
 findUnused :: (Ord var, Ord ann) => Expr var ann -> Set (var, ann)
 findUnused expr =
