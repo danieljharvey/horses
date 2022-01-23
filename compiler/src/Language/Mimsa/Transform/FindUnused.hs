@@ -1,4 +1,4 @@
-module Language.Mimsa.Transform.FindUnused (findUnused, removeUnused) where
+module Language.Mimsa.Transform.FindUnused (findUses, findUnused, removeUnused) where
 
 import qualified Data.Map as M
 import Data.Set (Set)

@@ -75,8 +75,10 @@ appendWriteFile savePath filename content =
   tell $ pure $ NewWriteFile savePath filename content
 
 appendStoreExpression :: StoreExpression Annotation -> ActionM ()
-appendStoreExpression =
-  tell . pure . NewStoreExpression
+appendStoreExpression se = do
+  let newProject = fromStoreExpression se (getStoreExpressionHash se)
+  tell (pure (NewStoreExpression se))
+  appendProject newProject
 
 messagesFromOutcomes :: [ActionOutcome] -> [Text]
 messagesFromOutcomes =

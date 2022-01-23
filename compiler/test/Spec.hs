@@ -8,6 +8,7 @@ import qualified Test.Actions.BindExpression as BindExpression
 import qualified Test.Actions.BindType as BindType
 import qualified Test.Actions.Compile as Compile
 import qualified Test.Actions.Evaluate as Evaluate
+import qualified Test.Actions.Optimise as Optimise
 import qualified Test.Actions.RemoveBinding as RemoveBinding
 import qualified Test.Actions.Upgrade as Upgrade
 import qualified Test.Backend.ESModulesJS as ESModulesJS
@@ -94,3 +95,4 @@ main =
     ScopeTypeVar.spec
     Properties.spec
     FindUnused.spec
+    Optimise.spec
