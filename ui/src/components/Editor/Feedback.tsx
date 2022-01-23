@@ -80,6 +80,13 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
+          {result.expression.edWarnings.length > 0 && (
+            <FlexColumnSpaced>
+              {result.expression.edWarnings.map((warn) => (
+                <Paragraph>{warn}</Paragraph>
+              ))}
+            </FlexColumnSpaced>
+          )}
           <ListBindings
             state={state}
             values={result.expression.edBindings}
@@ -104,6 +111,14 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
+          {result.expression.edWarnings.length > 0 && (
+            <FlexColumnSpaced>
+              {result.expression.edWarnings.map((warn) => (
+                <Paragraph>{warn}</Paragraph>
+              ))}
+            </FlexColumnSpaced>
+          )}
+
           <ListCompile
             runtimes={Object.values(
               result.expression.edRuntimes
@@ -161,6 +176,14 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {result.expression.edType}
           </Code>
+          {result.expression.edWarnings.length > 0 && (
+            <FlexColumnSpaced>
+              {result.expression.edWarnings.map((warn) => (
+                <Paragraph>{warn}</Paragraph>
+              ))}
+            </FlexColumnSpaced>
+          )}
+
           <ListCompile
             runtimes={Object.values(
               result.expression.edRuntimes
