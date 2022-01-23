@@ -87,7 +87,7 @@ runPropertyTest project pt = do
       -- generate inputs
       samples <- liftIO $ generateFromMonoType (S.fromList seDeps) inputMt
 
-      let exprs = applyGenerated (reExpression resolvedExpr) <$> samples
+      let exprs = applyGenerated (reVarExpression resolvedExpr) <$> samples
 
       -- Apply the generated value to the test function, and return a tuple
       -- of the value and the outcome

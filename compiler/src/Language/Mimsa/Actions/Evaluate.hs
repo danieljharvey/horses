@@ -7,6 +7,7 @@ where
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
+import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Graph as Actions
@@ -16,12 +17,14 @@ import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Interpreter.UseSwaps (useSwaps)
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.DepGraph
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+import Prettyprinter
 
 evaluate ::
   Text ->
@@ -47,10 +50,19 @@ evaluate input expr = do
   interpretedExpr <-
     liftEither (first InterpreterErr (interpret scope' swaps expr'))
   graphviz <- Actions.graphExpression se
-  Actions.appendMessage
-    ( prettyPrint interpretedExpr
-        <> "\n::\n"
-        <> prettyPrint mt
+
+  -- print any warnings
+  traverse_ (Actions.appendMessage . prettyPrint) (getWarnings se)
+
+  -- print
+  Actions.appendDocMessage
+    ( group
+        ( prettyDoc interpretedExpr
+            <> line
+            <> "::"
+            <> line
+            <> prettyDoc mt
+        )
     )
   pure (mt, interpretedExpr, se, graphviz, typedNameExpr, input')
 

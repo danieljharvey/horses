@@ -110,6 +110,7 @@ library
       Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Transform.FindUnused
+      Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
       Language.Mimsa.Typechecker.DataTypes

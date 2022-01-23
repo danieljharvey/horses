@@ -6,6 +6,7 @@ module Language.Mimsa.Actions.Monad
     getProject,
     appendProject,
     appendMessage,
+    appendDocMessage,
     appendWriteFile,
     setProject,
     appendStoreExpression,
@@ -28,6 +29,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Actions.Types
+import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -35,6 +37,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Prettyprinter
 
 run ::
   Project Annotation ->
@@ -59,6 +62,9 @@ appendProject prj =
 appendMessage :: Text -> ActionM ()
 appendMessage =
   tell . pure . NewMessage
+
+appendDocMessage :: Doc ann -> ActionM ()
+appendDocMessage = appendMessage . renderWithWidth 50
 
 appendWriteFile ::
   SavePath ->

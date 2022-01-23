@@ -3,6 +3,7 @@
 module Language.Mimsa.Actions.BindExpression (bindExpression) where
 
 import Control.Monad.Except (liftEither)
+import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Graph as Actions
@@ -13,6 +14,7 @@ import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
@@ -40,6 +42,10 @@ bindExpression expr name input = do
       liftEither $
         Actions.getTypecheckedStoreExpression input project expr
   let storeExpr = reStoreExpression resolvedExpr
+
+  -- print any warnings
+  traverse_ (Actions.appendMessage . prettyPrint) (getWarnings storeExpr)
+
   Actions.bindStoreExpression storeExpr name
   graphviz <- Actions.graphExpression storeExpr
   case lookupBindingName project name of
