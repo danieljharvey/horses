@@ -25,3 +25,4 @@ data ReplAction ann
   | AddUnitTest TestName (Expr Name ann)
   | ListTests (Maybe Name)
   | Upgrade Name
+  | Optimise Name

@@ -33,7 +33,8 @@ replParser =
     <|> try typeSearchParser
     <|> try addUnitTestParser
     <|> try listTestsParser
-    <|> upgradeParser
+    <|> try upgradeParser
+    <|> optimiseParser
 
 helpParser :: Parser ReplActionAnn
 helpParser = Help <$ string ":help"
@@ -120,3 +121,8 @@ upgradeParser :: Parser ReplActionAnn
 upgradeParser = do
   _ <- thenSpace (string ":upgrade")
   Upgrade <$> nameParser
+
+optimiseParser :: Parser ReplActionAnn
+optimiseParser = do
+  _ <- thenSpace (string ":optimise")
+  Optimise <$> nameParser

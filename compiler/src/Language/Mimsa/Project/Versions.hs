@@ -3,6 +3,7 @@
 module Language.Mimsa.Project.Versions
   ( findVersions,
     findVersionsSimple,
+    findInProject,
   )
 where
 

@@ -4,10 +4,10 @@ module Language.Mimsa.Actions.BindExpression (bindExpression) where
 
 import Control.Monad.Except (liftEither)
 import Data.Foldable (traverse_)
-import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
+import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
@@ -17,7 +17,6 @@ import Language.Mimsa.Store
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
@@ -32,7 +31,7 @@ bindExpression expr name input = do
   -- if there is an existing binding of this name, bring its deps into scope
   -- perhaps this should be more specific and actually take the previous
   -- exprHash as an argument instead of the name
-  resolvedExpr <- case getExistingBinding name project of
+  resolvedExpr <- case Actions.findExistingBinding name project of
     -- there is an existing one, use its deps when evaluating
     Just se ->
       let newSe = se {storeExpression = expr}
@@ -64,11 +63,3 @@ bindExpression expr name input = do
           <$> Actions.updateTests oldExprHash newExprHash
             <*> pure resolvedExpr
             <*> pure graphviz
-
-getExistingBinding ::
-  Name ->
-  Project Annotation ->
-  Maybe (StoreExpression Annotation)
-getExistingBinding name prj =
-  lookupBindingName prj name
-    >>= \exprHash -> M.lookup exprHash (getStore $ prjStore prj)

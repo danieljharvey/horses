@@ -3,24 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    hackage: servant-swagger-1.1.10@sha256:ca3237516f11cb4d28fff6ec0991b9dc765456a3985df3fb469641fb5c742c5a,4623
-    pantry-tree:
-      size: 1636
-      sha256: 83536669b525e5c6ff3368698bcdbeec55858b713642575f88d3c3b52d0bf380
-  original:
-    hackage: servant-swagger-1.1.10@sha256:ca3237516f11cb4d28fff6ec0991b9dc765456a3985df3fb469641fb5c742c5a,4623
-- completed:
-    hackage: swagger2-2.6@sha256:12c0752b397da71e286a2f8998dfd842376df56f624deb0ad8d858c6e20cb8bd,4578
-    pantry-tree:
-      size: 2260
-      sha256: d337f87ba09804d3e3c89317cfbef5ef0c100c4bb0e3b5b61cbb8ca6703a76d5
-  original:
-    hackage: swagger2-2.6@sha256:12c0752b397da71e286a2f8998dfd842376df56f624deb0ad8d858c6e20cb8bd,4578
+packages: []
 snapshots:
 - completed:
-    size: 621061
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/1/13.yaml
-    sha256: df0d2c3ff3cd0424bf178914a068d76f3e48c89edfdcf9b015698836a106b507
-  original: nightly-2022-01-13
+    size: 631484
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/1/25.yaml
+    sha256: 6d4a50f43dd06281855af084d1522b3544628d981bb33f1bfeece7e6d6cee05a
+  original: nightly-2022-01-25

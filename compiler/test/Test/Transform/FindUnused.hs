@@ -51,3 +51,12 @@ spec = do
           expected = MyPatternMatch mempty (bool True) [(PWildcard mempty, bool True)]
       removeUnused @Name @Annotation (S.singleton "a") expr
         `shouldBe` expected
+    it "Removes let behind a lambda" $ do
+      let expr =
+            MyLambda
+              mempty
+              (Identifier mempty "a")
+              (MyLet mempty (Identifier mempty "b") (bool True) (MyVar mempty "a"))
+          expected = MyLambda mempty (Identifier mempty "a") (MyVar mempty "a")
+      removeUnused @Name @Annotation (S.singleton "b") expr
+        `shouldBe` expected

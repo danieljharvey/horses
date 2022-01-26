@@ -17,6 +17,7 @@ import Repl.Actions.Evaluate
 import Repl.Actions.ExpressionBind
 import Repl.Actions.Info
 import Repl.Actions.ListBindings
+import Repl.Actions.Optimise
 import Repl.Actions.Tree
 import Repl.Actions.TypeSearch
 import Repl.Actions.UnitTests
@@ -41,6 +42,8 @@ doReplAction env input action =
       catchMimsaError env (doVersions env name $> env)
     (Upgrade name) ->
       catchMimsaError env (doUpgrade env name $> env)
+    (Optimise name) ->
+      catchMimsaError env (doOptimise env name $> env)
     (Evaluate expr) ->
       catchMimsaError env (doEvaluate env input expr $> env)
     (Tree expr) ->
@@ -82,6 +85,7 @@ doHelp = do
   replOutput @Text ":tests <optional name> - list tests for <name>"
   replOutput @Text ":versions <name> - list all versions of a binding"
   replOutput @Text ":upgrade <name> - upgrade a binding to latest dependencies"
+  replOutput @Text ":optimise <name> - run optimisations on latest version of dep"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"
   replOutput @Text ":quit - give up and leave"
 

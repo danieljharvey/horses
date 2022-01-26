@@ -111,10 +111,10 @@ bindStoreExpression ::
   Name ->
   ActionM ()
 bindStoreExpression storeExpr name = do
-  let newProject =
-        fromItem name storeExpr (getStoreExpressionHash storeExpr)
   appendStoreExpression storeExpr
-  appendProject newProject
+  appendProject
+    ( fromItem name storeExpr (getStoreExpressionHash storeExpr)
+    )
 
 bindTypeExpression ::
   StoreExpression Annotation -> ActionM ()

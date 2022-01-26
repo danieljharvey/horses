@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: nightly-2022-01-13 
+resolver: nightly-2022-01-25 
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -39,9 +39,6 @@ packages:
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
-extra-deps: 
-  - servant-swagger-1.1.10@sha256:ca3237516f11cb4d28fff6ec0991b9dc765456a3985df3fb469641fb5c742c5a,4623
-  - swagger2-2.6@sha256:12c0752b397da71e286a2f8998dfd842376df56f624deb0ad8d858c6e20cb8bd,4578
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
