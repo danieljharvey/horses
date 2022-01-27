@@ -7220,10 +7220,10 @@ open@^8.0.9, open@^8.4.0:
     is-docker "^2.1.1"
     is-wsl "^2.2.0"
 
-openapi-typescript-codegen@0.16.0:
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/openapi-typescript-codegen/-/openapi-typescript-codegen-0.16.0.tgz#6b53461a3ea5c77117fe327ade2052d7506f6ab0"
-  integrity sha512-p9ohhfJZxfdi12S4nuEuehON6TI7szX6V2sog73LwmdSrrmKXSq1UwGN62qKJPAQPQkmp9/swdlNkpp4xNndWQ==
+openapi-typescript-codegen@0.17.0:
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/openapi-typescript-codegen/-/openapi-typescript-codegen-0.17.0.tgz#182ed3b2215b6d372ce4c68f57abee8d7ab1a5f3"
+  integrity sha512-f8UlmMD8Hm4xsfZh5MpihBTVT3f4WL4uozEsKyLVF4ksaSPdHMhLs3/UX7cY+aRrClGEjphHudJLHR/+yHK4dQ==
   dependencies:
     "@types/node-fetch" "^2.5.12"
     abort-controller "^3.0.0"
