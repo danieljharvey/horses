@@ -42,7 +42,7 @@ spec = do
       let expr :: Expr Name Annotation
           expr = MyLiteral mempty (MyInt 1)
       let action = do
-            (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
+            (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile testRuntime "1" storeExpr
       let result = Actions.run testStdlib action
       result `shouldSatisfy` isLeft
@@ -50,7 +50,7 @@ spec = do
     it "Simplest compilation creates three files" $ do
       let expr = MyVar mempty "id"
       let action = do
-            (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
+            (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile tsExportRuntime "id" storeExpr
       let (newProject, outcomes, (_, hashes)) =
             fromRight (Actions.run testStdlib action)
@@ -72,7 +72,7 @@ spec = do
     it "Complex compilation creates many files in 2 folders" $ do
       let expr = MyVar mempty "evalState"
       let action = do
-            (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
+            (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile tsExportRuntime "evalState" storeExpr
       let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
       -- creates 8 files

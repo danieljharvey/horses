@@ -5,7 +5,6 @@ module Language.Mimsa.Actions.BindExpression (bindExpression) where
 import Control.Monad.Except (liftEither)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
-import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
@@ -25,7 +24,7 @@ bindExpression ::
   Expr Name Annotation ->
   Name ->
   Text ->
-  Actions.ActionM (ExprHash, Int, ResolvedExpression Annotation, [Graphviz])
+  Actions.ActionM (ExprHash, Int, ResolvedExpression Annotation)
 bindExpression expr name input = do
   project <- Actions.getProject
   -- if there is an existing binding of this name, bring its deps into scope
@@ -46,20 +45,18 @@ bindExpression expr name input = do
   traverse_ (Actions.appendMessage . prettyPrint) (getWarnings storeExpr)
 
   Actions.bindStoreExpression storeExpr name
-  graphviz <- Actions.graphExpression storeExpr
   case lookupBindingName project name of
     Nothing -> do
       Actions.appendMessage
         ( "Bound " <> prettyPrint name <> "."
         )
-      pure (getStoreExpressionHash storeExpr, 0, resolvedExpr, graphviz)
+      pure (getStoreExpressionHash storeExpr, 0, resolvedExpr)
     Just oldExprHash ->
       do
         Actions.appendMessage
           ( "Updated binding of " <> prettyPrint name <> "."
           )
         let newExprHash = getStoreExpressionHash storeExpr
-        (,,,) newExprHash
+        (,,) newExprHash
           <$> Actions.updateTests oldExprHash newExprHash
             <*> pure resolvedExpr
-            <*> pure graphviz

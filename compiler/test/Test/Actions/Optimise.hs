@@ -14,6 +14,7 @@ import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
@@ -48,8 +49,9 @@ spec = do
       let action = do
             Actions.appendStoreExpression wontOptimise
             Actions.optimise wontOptimise
-      let (prj, _actions, StoreExpression newExpr (Bindings bindings) _) =
+      let (prj, _actions, resolved) =
             fromRight $ Actions.run testStdlib action
+      let (StoreExpression newExpr (Bindings bindings) _) = reStoreExpression resolved
       -- updated expr
       newExpr `shouldBe` storeExpression wontOptimise
       -- new store expression has no deps
@@ -60,8 +62,10 @@ spec = do
     it "Successfully optimises away unused variable and dep" $ do
       let action = do
             Actions.optimise useIdPointlessly
-      let (prj, _actions, StoreExpression newExpr (Bindings bindings) _) =
+      let (prj, _actions, resolved) =
             fromRight $ Actions.run testStdlib action
+      let (StoreExpression newExpr (Bindings bindings) _) = reStoreExpression resolved
+
       -- updated expr
       newExpr `shouldBe` trueExpr
       -- new store expression has no deps
@@ -73,8 +77,10 @@ spec = do
       let action = do
             Actions.bindStoreExpression withLambda "useId"
             Actions.optimiseByName "useId"
-      let (prj, _actions, StoreExpression newExpr (Bindings bindings) _) =
+      let (prj, _actions, resolved) =
             fromRight $ Actions.run testStdlib action
+      let (StoreExpression newExpr (Bindings bindings) _) = reStoreExpression resolved
+
       -- updated expr
       newExpr `shouldBe` optimisedLambda
       -- new store expression has no deps

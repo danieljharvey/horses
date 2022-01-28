@@ -24,7 +24,7 @@ doBind ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) (Project Annotation)
 doBind project input name expr = do
-  (newProject, (newExprHash, _, _, _)) <-
+  (newProject, (newExprHash, _, _)) <-
     toReplM project (Actions.bindExpression expr name input)
   traverse_
     (replOutput . prettyPrint)

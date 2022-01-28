@@ -19,6 +19,7 @@ import qualified Data.Map as M
 import Data.OpenApi hiding (get)
 import Data.Text (Text)
 import GHC.Generics
+import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Upgrade as Actions
 import Language.Mimsa.Printer
@@ -76,10 +77,11 @@ upgrade ::
 upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
   runMimsaHandlerT $ do
     let action = do
-          (resolvedExpr, depUpdates, gv) <-
+          (resolvedExpr, depUpdates) <-
             Actions.upgradeByName bindingName
           let (ResolvedExpression _ se _ _ swaps typedExpr input) = resolvedExpr
           typedNameExpr <- Actions.useSwaps swaps typedExpr
+          gv <- Actions.graphExpression se
           pure
             ( mapUpgradedDeps depUpdates,
               makeExpressionData se typedNameExpr gv input

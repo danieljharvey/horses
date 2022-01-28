@@ -61,7 +61,7 @@ spec = do
       let (prj, actions, outcome) = fromRight $ Actions.run testStdlib action
       -- one dep was replaced in `useBoth`
       outcome
-        `shouldSatisfy` \(_, replacements, _) -> M.size replacements == 1
+        `shouldSatisfy` \(_, replacements) -> M.size replacements == 1
       -- the two new items (`useBoth` and `id`) plus the upgraded one
       additionalStoreItems testStdlib prj `shouldBe` 3
       -- We logged a useful message
@@ -92,7 +92,7 @@ spec = do
             Actions.upgradeByName "useBoth"
       let (prj, actions, outcome) = fromRight $ Actions.run testStdlib action
       -- one deps were replaced in the last upgrade of `useBoth`
-      outcome `shouldSatisfy` \(_, replacements, _) -> M.size replacements == 1
+      outcome `shouldSatisfy` \(_, replacements) -> M.size replacements == 1
       -- the three new items (`useBoth`, `id`, `const`) plus the 2 upgraded
       -- ones
       additionalStoreItems testStdlib prj `shouldBe` 5
@@ -108,7 +108,7 @@ spec = do
             Actions.upgradeByName "useBoth"
       let (prj, _, outcome) = fromRight $ Actions.run testStdlib action
       -- one deps were replaced in the last upgrade of `useBoth`
-      outcome `shouldSatisfy` \(_, replacements, _) -> M.size replacements == 1
+      outcome `shouldSatisfy` \(_, replacements) -> M.size replacements == 1
       -- the two new items (`useBoth`, `id`) plus the upgraded one plus two
       -- tests
       additionalStoreItems testStdlib prj `shouldBe` 5

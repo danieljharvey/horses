@@ -292,6 +292,7 @@ executable mimsa-server
       Server.Project.Graph
       Server.Project.ListBindings
       Server.Project.ListTests
+      Server.Project.Optimise
       Server.Project.Upgrade
       Server.Search
       Server.Servant

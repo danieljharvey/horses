@@ -14,14 +14,11 @@ where
 
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
-import Data.Map (Map)
-import qualified Data.Map as M
 import Data.OpenApi hiding (get)
-import Data.Text (Text)
 import GHC.Generics
+import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
-import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -53,21 +50,11 @@ data FromTo = FromTo
   deriving anyclass (JSON.ToJSON, ToSchema)
 
 data OptimiseResponse = OptimiseResponse
-  { upOptimisedDeps :: Map Text FromTo,
-    upExpressionData :: ExpressionData,
+  { upExpressionData :: ExpressionData,
     upProjectData :: ProjectData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
-
-mapOptimisedDeps :: (Printer n) => Map ExprHash (n, ExprHash) -> Map Text FromTo
-mapOptimisedDeps =
-  M.fromList
-    . fmap
-      ( \(startHash, (ident, endHash)) ->
-          (prettyPrint ident, FromTo startHash endHash)
-      )
-    . M.toList
 
 optimise ::
   MimsaEnvironment ->
@@ -76,17 +63,21 @@ optimise ::
 optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
   runMimsaHandlerT $ do
     let action = do
-          se <-
+          resolvedExpr <-
             Actions.optimiseByName bindingName
           let (ResolvedExpression _ se _ _ swaps typedExpr input) = resolvedExpr
           typedNameExpr <- Actions.useSwaps swaps typedExpr
+          graphviz <- Actions.graphExpression se
           pure
-            ( mapOptimisedDeps depUpdates,
-              makeExpressionData se typedNameExpr gv input
+            ( makeExpressionData
+                se
+                typedNameExpr
+                graphviz
+                input
             )
     response <- lift $ eitherFromActionM mimsaEnv projectHash action
     case response of
       Left e -> throwMimsaError e
-      Right (newProject, (optimisedDeps, ed)) -> do
+      Right (newProject, ed) -> do
         pd <- lift $ projectDataHandler mimsaEnv newProject
-        returnMimsa $ OptimiseResponse optimisedDeps ed pd
+        returnMimsa $ OptimiseResponse ed pd

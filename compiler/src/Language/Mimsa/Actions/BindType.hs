@@ -8,7 +8,6 @@ where
 import Control.Monad.Except (liftEither)
 import qualified Data.Map as M
 import Data.Text (Text)
-import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Codegen
@@ -28,12 +27,10 @@ bindType ::
   Actions.ActionM
     ( [Typeclass],
       Maybe (ResolvedExpression Annotation),
-      DataType,
-      [Graphviz]
+      DataType
     )
 bindType input dt = do
-  storeExpr <- addTypeToProject input dt
-  graphviz <- Actions.graphExpression storeExpr
+  _ <- addTypeToProject input dt
   let name = tyConToName (dtName dt)
   project <- Actions.getProject
   codegenExpr <- createCodegenFunction project dt
@@ -42,7 +39,7 @@ bindType input dt = do
     )
   case codegenExpr of
     Nothing -> do
-      pure (mempty, Nothing, dt, graphviz)
+      pure (mempty, Nothing, dt)
     Just codegenFunc ->
       do
         Actions.bindStoreExpression (storeExprFromResolved codegenFunc) name
@@ -52,8 +49,7 @@ bindType input dt = do
         pure
           ( typeclassMatches dt,
             Just codegenFunc,
-            dt,
-            graphviz
+            dt
           )
 
 storeExprFromResolved :: ResolvedExpression ann -> StoreExpression ann
