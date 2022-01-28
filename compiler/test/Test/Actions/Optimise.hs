@@ -12,6 +12,7 @@ import qualified Data.Map as M
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Project.Versions
+import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
@@ -20,10 +21,13 @@ import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
 
+idHash :: ExprHash
+idHash = getHashOfName testStdlib "id"
+
 useIdPointlessly :: StoreExpression Annotation
 useIdPointlessly =
   let expr = unsafeParseExpr "let useless = id 100 in True" $> mempty
-   in StoreExpression expr (Bindings $ M.singleton "id" (ExprHash "123")) mempty
+   in StoreExpression expr (Bindings $ M.singleton "id" idHash) mempty
 
 trueExpr :: Expr Name Annotation
 trueExpr = unsafeParseExpr "True" $> mempty
@@ -31,7 +35,7 @@ trueExpr = unsafeParseExpr "True" $> mempty
 wontOptimise :: StoreExpression Annotation
 wontOptimise =
   let expr = unsafeParseExpr "let useless = id 100 in useless" $> mempty
-   in StoreExpression expr (Bindings $ M.singleton "id" (ExprHash "123")) mempty
+   in StoreExpression expr (Bindings $ M.singleton "id" idHash) mempty
 
 withLambda :: StoreExpression Annotation
 withLambda =
@@ -90,3 +94,6 @@ spec = do
       -- there are two versions of binding
       let boundExprHashes = fromRight $ findInProject prj "useId"
       NE.length boundExprHashes `shouldBe` 2
+      -- current hash is new one
+      let newBoundHash = getHashOfName prj "useId"
+      newBoundHash `shouldBe` getStoreExpressionHash (reStoreExpression resolved)
