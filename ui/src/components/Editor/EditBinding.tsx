@@ -45,8 +45,13 @@ export const EditBinding: React.FC<Props> = ({
       dispatch({ type: 'BindExpression', bindingName })
     }
   }
+
   const onUpgradeExpression = (bindingName: string) => {
     dispatch({ type: 'UpgradeExpression', bindingName })
+  }
+
+  const onOptimiseExpression = (bindingName: string) => {
+    dispatch({ type: 'OptimiseExpression', bindingName })
   }
 
   const typedHoleSuggestions = getTypedHoles(state)
@@ -75,6 +80,7 @@ export const EditBinding: React.FC<Props> = ({
           result={expression}
           onBindingSelect={onBindingSelect}
           onUpgradeExpression={onUpgradeExpression}
+          onOptimiseExpression={onOptimiseExpression}
           projectHash={state.project.projectHash}
         />
       </Panel>

@@ -44,6 +44,9 @@ export const Scratch: React.FC<Props> = ({
 
   const onUpgradeExpression = (bindingName: string) =>
     dispatch({ type: 'UpgradeExpression', bindingName })
+  const onOptimiseExpression = (bindingName: string) => {
+    dispatch({ type: 'OptimiseExpression', bindingName })
+  }
 
   const typedHoleResponses = getTypedHolesFromEditor(editor)
   const errorLocations = getErrorLocationsFromEditor(editor)
@@ -73,6 +76,7 @@ export const Scratch: React.FC<Props> = ({
             result={editor.expression}
             onBindingSelect={onBindingSelect}
             projectHash={projectHash}
+            onOptimiseExpression={onOptimiseExpression}
           />
         </FlexColumnSpaced>
       </Panel>

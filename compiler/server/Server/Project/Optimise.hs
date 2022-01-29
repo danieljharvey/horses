@@ -36,8 +36,8 @@ type OptimiseAPI =
     :> JsonPost OptimiseResponse
 
 data OptimiseRequest = OptimiseRequest
-  { upBindingName :: Name,
-    upProjectHash :: ProjectHash
+  { opBindingName :: Name,
+    opProjectHash :: ProjectHash
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.FromJSON, ToSchema)
@@ -50,8 +50,8 @@ data FromTo = FromTo
   deriving anyclass (JSON.ToJSON, ToSchema)
 
 data OptimiseResponse = OptimiseResponse
-  { upExpressionData :: ExpressionData,
-    upProjectData :: ProjectData
+  { opExpressionData :: ExpressionData,
+    opProjectData :: ProjectData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)

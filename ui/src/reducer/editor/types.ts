@@ -80,6 +80,17 @@ export type EditorAction =
       type: 'UpgradeExpressionFailure'
       error: UserErrorResponse
     }
+  | { type: 'OptimiseExpression'; bindingName: string }
+  | {
+      type: 'OptimiseExpressionSuccess'
+      expression: ExpressionData
+      bindingName: string
+      tests: TestData
+    }
+  | {
+      type: 'OptimiseExpressionFailure'
+      error: UserErrorResponse
+    }
 
 export type EditorEvent =
   | {
@@ -93,3 +104,4 @@ export type EditorEvent =
     }
   | { type: 'AddUnitTest'; testName: string; code: string }
   | { type: 'UpgradeExpression'; bindingName: string }
+  | { type: 'OptimiseExpression'; bindingName: string }

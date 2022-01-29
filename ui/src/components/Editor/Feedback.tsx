@@ -20,6 +20,7 @@ import { ListUsages } from '../ListUsages'
 import { PropertyTest } from '../PropertyTest'
 import { ExpressionTests } from './ExpressionTests'
 import { Upgrade } from '../Upgrade'
+import { Optimise } from '../Optimise'
 
 type Props = {
   projectHash: ExprHash
@@ -30,6 +31,7 @@ type Props = {
     exprHash: ExprHash
   ) => void
   onUpgradeExpression: (bindingName: string) => void
+  onOptimiseExpression: (bindingName: string) => void
   state: State
 }
 
@@ -40,6 +42,7 @@ export const Feedback: React.FC<Props> = ({
   projectHash,
   onBindingSelect,
   onUpgradeExpression,
+  onOptimiseExpression,
 }) => {
   // need to return new bindings and typeBindings
   const versions = pipe(
@@ -118,7 +121,6 @@ export const Feedback: React.FC<Props> = ({
               ))}
             </FlexColumnSpaced>
           )}
-
           <ListCompile
             runtimes={Object.values(
               result.expression.edRuntimes
@@ -131,34 +133,29 @@ export const Feedback: React.FC<Props> = ({
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
           />
-          {pipe(
-            bindingName,
-            O.map((name) => (
-              <Upgrade
-                state={state}
-                onUpgradeExpression={onUpgradeExpression}
-                values={result.expression.edBindings}
-                types={result.expression.edTypeBindings}
-                name={name}
-                currentHash={result.expression.edHash}
-              />
-            )),
-            O.getOrElse(() => <div />)
-          )}
-
-          {pipe(
-            bindingName,
-            O.map((name) => (
-              <ListVersions
-                versions={versions}
-                currentHash={result.expression.edHash}
-                onBindingSelect={onBindingSelect}
-                name={name}
-                state={state}
-              />
-            )),
-            O.getOrElse(() => <div />)
-          )}
+          <Upgrade
+            state={state}
+            onUpgradeExpression={onUpgradeExpression}
+            values={result.expression.edBindings}
+            types={result.expression.edTypeBindings}
+            name={result.bindingName}
+            currentHash={result.expression.edHash}
+          />
+          <Optimise
+            state={state}
+            onOptimiseExpression={onOptimiseExpression}
+            name={result.bindingName}
+            hasWarnings={
+              result.expression.edWarnings.length > 0
+            }
+          />
+          <ListVersions
+            versions={versions}
+            currentHash={result.expression.edHash}
+            onBindingSelect={onBindingSelect}
+            name={result.bindingName}
+            state={state}
+          />
           <ListUsages
             usages={getUsages(result.expression.edHash)}
             onBindingSelect={onBindingSelect}
@@ -206,6 +203,20 @@ export const Feedback: React.FC<Props> = ({
                 state={state}
                 name={name}
                 currentHash={result.expression.edHash}
+              />
+            )),
+            O.getOrElse(() => <div />)
+          )}
+          {pipe(
+            bindingName,
+            O.map((name) => (
+              <Optimise
+                state={state}
+                onOptimiseExpression={onOptimiseExpression}
+                name={name}
+                hasWarnings={
+                  result.expression.edWarnings.length > 0
+                }
               />
             )),
             O.getOrElse(() => <div />)
