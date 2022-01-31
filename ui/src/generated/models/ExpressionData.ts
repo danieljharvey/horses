@@ -14,5 +14,6 @@ export type ExpressionData = {
   edRuntimes: Record<string, RuntimeData>
   edPretty: string
   edTypeBindings: Record<string, string>
+  edWarnings: Array<string>
   edGraphviz: string
 }

@@ -18,7 +18,7 @@ import Language.Mimsa.Types.Typechecker
 data ResolvedExpression ann = ResolvedExpression
   { reMonoType :: MonoType,
     reStoreExpression :: StoreExpression ann,
-    reExpression :: Expr Variable ann,
+    reVarExpression :: Expr Variable ann,
     reScope :: Scope ann,
     reSwaps :: Swaps,
     reTypedExpression :: Expr Variable MonoType,

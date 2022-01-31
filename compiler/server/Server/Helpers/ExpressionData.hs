@@ -20,6 +20,7 @@ import GHC.Generics
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.OutputTypes
 import Language.Mimsa.Types.AST
@@ -54,7 +55,8 @@ data ExpressionData = ExpressionData
     edRuntimes :: Map RuntimeName RuntimeData,
     edGraphviz :: Text,
     edSourceItems :: [SourceItem],
-    edInput :: Text
+    edInput :: Text,
+    edWarnings :: [Text]
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -82,3 +84,4 @@ makeExpressionData se typedExpr gv input =
         (prettyGraphviz gv)
         (getExpressionSourceItems input typedExpr)
         input
+        (prettyPrint <$> getWarnings se)

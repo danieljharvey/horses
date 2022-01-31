@@ -32,7 +32,7 @@ testProjectCompile ::
   IO (FilePath, Int)
 testProjectCompile folderPrefix rt expr = do
   let action = do
-        (_, _, storeExpr, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
+        (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
         let seHash = getStoreExpressionHash storeExpr
         _ <- Actions.compile rt "id" storeExpr
         pure seHash

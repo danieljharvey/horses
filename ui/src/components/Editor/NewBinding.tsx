@@ -66,6 +66,10 @@ export const NewBinding: React.FC<Props> = ({
       bindingName,
     })
 
+  const onOptimiseExpression = (bindingName: string) => {
+    dispatch({ type: 'OptimiseExpression', bindingName })
+  }
+
   const validBinding = existingName
     ? E.right(existingName)
     : validateBinding(
@@ -122,6 +126,9 @@ export const NewBinding: React.FC<Props> = ({
                   onBindingSelect={onBindingSelect}
                   projectHash={state.project.projectHash}
                   onUpgradeExpression={onUpgradeExpression}
+                  onOptimiseExpression={
+                    onOptimiseExpression
+                  }
                 />
               </FlexColumnSpaced>
             )

@@ -204,6 +204,30 @@ export const editorReducer: EventReducer<
         expression: showErrorResponse(action.error),
       })
 
+    case 'OptimiseExpression':
+      return stateAndEvent(staleL.set(false)(state), {
+        type: 'OptimiseExpression',
+        bindingName: action.bindingName,
+      })
+
+    case 'OptimiseExpressionSuccess':
+      return stateOnly({
+        ...state,
+        code: action.expression.edPretty,
+        bindingName: O.some(action.bindingName),
+        stale: false,
+        expression: showUpdatedBinding(
+          action.expression,
+          action.tests,
+          action.bindingName
+        ),
+      })
+    case 'OptimiseExpressionFailure':
+      return stateOnly({
+        ...state,
+        expression: showErrorResponse(action.error),
+      })
+
     default:
       return stateOnly(state)
   }

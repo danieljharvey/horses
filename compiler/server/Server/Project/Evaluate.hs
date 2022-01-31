@@ -18,6 +18,7 @@ import Data.OpenApi hiding (get)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Evaluate as Actions
+import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Project
@@ -57,8 +58,9 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) =
   runMimsaHandlerT $ do
     let action = do
           expr <- Actions.parseExpr code
-          (_, simpleExpr, se, gv, typedExpr, input) <-
+          (_, simpleExpr, se, typedExpr, input) <-
             Actions.evaluate code expr
+          gv <- Actions.graphExpression se
           pure $
             EvaluateResponse
               (prettyPrint simpleExpr)

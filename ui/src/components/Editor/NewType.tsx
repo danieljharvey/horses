@@ -48,6 +48,10 @@ export const NewType: React.FC<Props> = ({
 
   const onUpgradeExpression = (_bindingName: string) => {}
 
+  const onOptimiseExpression = (bindingName: string) => {
+    dispatch({ type: 'OptimiseExpression', bindingName })
+  }
+
   const onCodeChange = (a: string) =>
     dispatch({ type: 'UpdateCode', text: a })
 
@@ -80,6 +84,9 @@ export const NewType: React.FC<Props> = ({
                     result={expression}
                     onBindingSelect={onBindingSelect}
                     projectHash={projectHash}
+                    onOptimiseExpression={
+                      onOptimiseExpression
+                    }
                   />
                   {editor.stale && (
                     <Button onClick={addNewType}>

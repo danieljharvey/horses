@@ -13,7 +13,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -34,7 +33,7 @@ type UpgradedDeps = Map ExprHash (NameOrTyCon, ExprHash)
 -- for now, we will just try the newest possible versions of every binding
 upgradeByName ::
   Name ->
-  Actions.ActionM (ResolvedExpression Annotation, UpgradedDeps, [Graphviz])
+  Actions.ActionM (ResolvedExpression Annotation, Int, UpgradedDeps)
 upgradeByName bindingName = do
   project <- Actions.getProject
   exprHash <- case lookupBindingName project bindingName of
@@ -63,9 +62,6 @@ upgradeByName bindingName = do
           -- add new expression to the project
           Actions.bindStoreExpression newStoreExpr bindingName
 
-          -- update tests
-          _ <- Actions.updateTests exprHash (getStoreExpressionHash newStoreExpr)
-
           -- output for logging and repl
           Actions.appendMessage
             ( "Updated " <> prettyPrint bindingName
@@ -73,10 +69,16 @@ upgradeByName bindingName = do
                 <> replacementsMessage replacements
             )
 
-          graphviz <- Actions.graphExpression newStoreExpr
+          -- update tests
+          numTestsUpdated <- Actions.updateTests exprHash (getStoreExpressionHash newStoreExpr)
+
+          -- output for logging and repl
+          if numTestsUpdated > 0
+            then Actions.appendMessage (prettyPrint numTestsUpdated <> " tests updated")
+            else pure ()
 
           pure
-            (resolvedExpr, replacements, graphviz)
+            (resolvedExpr, numTestsUpdated, replacements)
 
 replacementsMessage :: Map a (NameOrTyCon, a) -> Text
 replacementsMessage items =

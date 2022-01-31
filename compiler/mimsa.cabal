@@ -32,10 +32,12 @@ library
       Language.Mimsa.Actions.Evaluate
       Language.Mimsa.Actions.Graph
       Language.Mimsa.Actions.Helpers.CheckStoreExpression
+      Language.Mimsa.Actions.Helpers.FindExistingBinding
       Language.Mimsa.Actions.Helpers.Parse
       Language.Mimsa.Actions.Helpers.Swaps
       Language.Mimsa.Actions.Helpers.UpdateTests
       Language.Mimsa.Actions.Monad
+      Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding
       Language.Mimsa.Actions.Shared
       Language.Mimsa.Actions.Types
@@ -109,6 +111,9 @@ library
       Language.Mimsa.Tests.Test
       Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
+      Language.Mimsa.Transform.FindUnused
+      Language.Mimsa.Transform.TrimDeps
+      Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
       Language.Mimsa.Typechecker.DataTypes
@@ -223,6 +228,7 @@ executable mimsa
       Repl.Actions.ExpressionBind
       Repl.Actions.Info
       Repl.Actions.ListBindings
+      Repl.Actions.Optimise
       Repl.Actions.Tree
       Repl.Actions.TypeSearch
       Repl.Actions.UnitTests
@@ -286,6 +292,7 @@ executable mimsa-server
       Server.Project.Graph
       Server.Project.ListBindings
       Server.Project.ListTests
+      Server.Project.Optimise
       Server.Project.Upgrade
       Server.Search
       Server.Servant
@@ -338,6 +345,7 @@ test-suite mimsa-test
       Test.Actions.BindType
       Test.Actions.Compile
       Test.Actions.Evaluate
+      Test.Actions.Optimise
       Test.Actions.RemoveBinding
       Test.Actions.Upgrade
       Test.Backend.ESModulesJS
@@ -372,6 +380,7 @@ test-suite mimsa-test
       Test.Tests.Properties
       Test.Tests.PropertyTest
       Test.Tests.UnitTest
+      Test.Transform.FindUnused
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness

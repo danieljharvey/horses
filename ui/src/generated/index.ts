@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+
 export type { AddUnitTestRequest } from './models/AddUnitTestRequest'
 export type { AddUnitTestResponse } from './models/AddUnitTestResponse'
 export type { BindExpressionRequest } from './models/BindExpressionRequest'
@@ -23,6 +24,8 @@ export type { ListBindingsRequest } from './models/ListBindingsRequest'
 export type { ListBindingsResponse } from './models/ListBindingsResponse'
 export type { ListTestsByExprHashResponse } from './models/ListTestsByExprHashResponse'
 export type { ListTestsResponse } from './models/ListTestsResponse'
+export type { OptimiseRequest } from './models/OptimiseRequest'
+export type { OptimiseResponse } from './models/OptimiseResponse'
 export type { ProjectData } from './models/ProjectData'
 export type { PropertyTestData } from './models/PropertyTestData'
 export type { RuntimeData } from './models/RuntimeData'

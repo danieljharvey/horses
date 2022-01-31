@@ -8,4 +8,5 @@ popd
 pushd ui
 yarn
 yarn typegen
+yarn format
 popd

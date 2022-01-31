@@ -6,23 +6,20 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Server.Project.Upgrade
-  ( upgrade,
-    UpgradeAPI,
+module Server.Project.Optimise
+  ( optimise,
+    OptimiseAPI,
   )
 where
 
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
-import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi hiding (get)
-import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
-import qualified Language.Mimsa.Actions.Upgrade as Actions
-import Language.Mimsa.Printer
+import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -34,15 +31,15 @@ import Server.Helpers.TestData
 import Server.MimsaHandler
 import Server.Types
 
--- /project/upgrade/
+-- /project/optimise/
 
-type UpgradeAPI =
-  "upgrade" :> ReqBody '[JSON] UpgradeRequest
-    :> JsonPost UpgradeResponse
+type OptimiseAPI =
+  "optimise" :> ReqBody '[JSON] OptimiseRequest
+    :> JsonPost OptimiseResponse
 
-data UpgradeRequest = UpgradeRequest
-  { upBindingName :: Name,
-    upProjectHash :: ProjectHash
+data OptimiseRequest = OptimiseRequest
+  { opBindingName :: Name,
+    opProjectHash :: ProjectHash
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.FromJSON, ToSchema)
@@ -54,39 +51,32 @@ data FromTo = FromTo
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
-data UpgradeResponse = UpgradeResponse
-  { upUpgradedDeps :: Map Text FromTo,
-    upExpressionData :: ExpressionData,
-    upProjectData :: ProjectData,
-    upTestData :: TestData
+data OptimiseResponse = OptimiseResponse
+  { opExpressionData :: ExpressionData,
+    opProjectData :: ProjectData,
+    opTestData :: TestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
-mapUpgradedDeps :: (Printer n) => Map ExprHash (n, ExprHash) -> Map Text FromTo
-mapUpgradedDeps =
-  M.fromList
-    . fmap
-      ( \(startHash, (ident, endHash)) ->
-          (prettyPrint ident, FromTo startHash endHash)
-      )
-    . M.toList
-
-upgrade ::
+optimise ::
   MimsaEnvironment ->
-  UpgradeRequest ->
-  MimsaHandler UpgradeResponse
-upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
+  OptimiseRequest ->
+  MimsaHandler OptimiseResponse
+optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
   runMimsaHandlerT $ do
     let action = do
-          (resolvedExpr, _, depUpdates) <-
-            Actions.upgradeByName bindingName
+          (resolvedExpr, _) <-
+            Actions.optimiseByName bindingName
           let (ResolvedExpression _ se _ _ swaps typedExpr input) = resolvedExpr
           typedNameExpr <- Actions.useSwaps swaps typedExpr
-          gv <- Actions.graphExpression se
+          graphviz <- Actions.graphExpression se
           pure
-            ( mapUpgradedDeps depUpdates,
-              makeExpressionData se typedNameExpr gv input
+            ( makeExpressionData
+                se
+                typedNameExpr
+                graphviz
+                input
             )
 
     store' <- lift $ readStoreHandler mimsaEnv
@@ -103,6 +93,6 @@ upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
 
     case response of
       Left e -> throwMimsaError e
-      Right (newProject, (upgradedDeps, ed)) -> do
+      Right (newProject, ed) -> do
         pd <- lift $ projectDataHandler mimsaEnv newProject
-        returnMimsa $ UpgradeResponse upgradedDeps ed pd testData
+        returnMimsa $ OptimiseResponse ed pd testData
