@@ -42,28 +42,28 @@ parseExprAndFormatError = parseAndFormat (expressionParser <* eof)
 expressionParser :: Parser ParserExpr
 expressionParser =
   let parsers =
-        try infixParser
-          <|> try literalParser
-          <|> try complexParser
-          <|> try varParser
-          <|> try constructorParser
+        infixParser
+          <|> literalParser
+          <|> complexParser
+          <|> varParser
+          <|> constructorParser
    in orInBrackets parsers
 
 complexParser :: Parser ParserExpr
 complexParser =
-  try recordParser
-    <|> try arrayParser
+  recordParser
+    <|> arrayParser
     <|> try letParser
-    <|> try letPatternParser
+    <|> letPatternParser
     <|> try appParser
-    <|> try ifParser
-    <|> try pairParser
-    <|> try recordAccessParser
-    <|> try lambdaParser
-    <|> try typeParser
-    <|> try patternMatchParser
-    <|> try typedHoleParser
-    <|> try defineInfixParser
+    <|> ifParser
+    <|> pairParser
+    <|> recordAccessParser
+    <|> lambdaParser
+    <|> typeParser
+    <|> patternMatchParser
+    <|> typedHoleParser
+    <|> defineInfixParser
 
 ----
 
@@ -128,33 +128,33 @@ lambdaParser =
 
 appFunc :: Parser ParserExpr
 appFunc =
-  try constructorParser
+  constructorParser
     <|> try recordAccessParser
-    <|> try varParser
+    <|> varParser
     <|> try (inBrackets lambdaParser)
-    <|> try typedHoleParser
-    <|> try (inBrackets appParser)
+    <|> typedHoleParser
+    <|> inBrackets appParser
 
 -- we don't want to include infix stuff here
 argParser :: Parser ParserExpr
 argParser =
   let parsers =
-        try literalParser
-          <|> try recordParser
-          <|> try arrayParser
-          <|> try letParser
-          <|> try letPatternParser
-          <|> try ifParser
-          <|> try pairParser
+        literalParser
+          <|> recordParser
+          <|> arrayParser
+          <|> letParser
+          <|> letPatternParser
+          <|> ifParser
+          <|> pairParser
           <|> try recordAccessParser
-          <|> try lambdaParser
-          <|> try typeParser
-          <|> try typedHoleParser
-          <|> try varParser
-          <|> try constructorParser
+          <|> lambdaParser
+          <|> typeParser
+          <|> typedHoleParser
+          <|> varParser
+          <|> constructorParser
    in try (inBrackets infixParser)
         <|> try (inBrackets appParser)
-        <|> try (orInBrackets parsers)
+        <|> orInBrackets parsers
 
 appParser :: Parser ParserExpr
 appParser = addLocation $ do
