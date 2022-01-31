@@ -32,6 +32,11 @@ spec = do
         findUnused @Name @Annotation
           (MyPatternMatch mempty (bool True) [(PVar mempty "a", bool True)])
           `shouldBe` S.singleton ("a", mempty)
+      it "Finds `a` in a let pattern match" $ do
+        findUnused @Name @Annotation
+          (MyLetPattern mempty (PVar mempty "a") (bool True) (bool True))
+          `shouldBe` S.singleton ("a", mempty)
+
       it "Does not find `a` when it is used in a pattern match" $ do
         findUnused @Name @Annotation
           (MyPatternMatch mempty (bool True) [(PVar mempty "a", MyVar mempty "a")])
@@ -49,6 +54,11 @@ spec = do
     it "Turns `a` in pattern match to PWildcard" $ do
       let expr = MyPatternMatch mempty (bool True) [(PVar mempty "a", bool True)]
           expected = MyPatternMatch mempty (bool True) [(PWildcard mempty, bool True)]
+      removeUnused @Name @Annotation (S.singleton "a") expr
+        `shouldBe` expected
+    it "Turns `a` in let pattern match to PWildcard" $ do
+      let expr = MyLetPattern mempty (PVar mempty "a") (bool True) (bool True)
+          expected = MyLetPattern mempty (PWildcard mempty) (bool True) (bool True)
       removeUnused @Name @Annotation (S.singleton "a") expr
         `shouldBe` expected
     it "Removes let behind a lambda" $ do

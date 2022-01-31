@@ -24,6 +24,12 @@ removeUnused remove = f
               removeUnused remove patExpr
             )
        in MyPatternMatch ann tidyExpr (tidyPattern <$> patterns)
+    f (MyLetPattern ann pat expr body) =
+      MyLetPattern
+        ann
+        (removeUnusedInPattern remove pat)
+        (removeUnused remove expr)
+        (removeUnused remove body)
     f other = mapExpr f other
 
 removeUnusedInPattern :: (Ord var) => Set var -> Pattern var ann -> Pattern var ann
@@ -53,6 +59,8 @@ findVariables = withMonoid f
       (True, S.singleton (a, getAnnotationForType mt))
     f (MyPatternMatch _ _ patterns) =
       (True, mconcat (findVariableInPattern . fst <$> patterns))
+    f (MyLetPattern _ pat _ _) =
+      (True, findVariableInPattern pat)
     f _other = (True, mempty)
 
 -- | Find all variables in pattern match
