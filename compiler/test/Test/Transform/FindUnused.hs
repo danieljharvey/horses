@@ -9,7 +9,6 @@ where
 import qualified Data.Set as S
 import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -18,55 +17,55 @@ spec = do
   describe "FindUnused" $
     do
       it "Nothing in literal" $ do
-        findUnused @Name @Annotation (bool True)
+        findUnused @Annotation (bool True)
           `shouldBe` mempty
       it "Finds `a` in simple Let assignment" $ do
-        findUnused @Name @Annotation
-          (MyLet mempty (Identifier mempty "a") (bool True) (bool True))
-          `shouldBe` S.singleton ("a", mempty)
+        findUnused @Annotation
+          (MyLet mempty (Identifier mempty (named "a")) (bool True) (bool True))
+          `shouldBe` S.singleton (named "a", mempty)
       it "Does not find `a` when it is returned later from Let" $ do
-        findUnused @Name @Annotation
-          (MyLet mempty (Identifier mempty "a") (bool True) (MyVar mempty "a"))
+        findUnused @Annotation
+          (MyLet mempty (Identifier mempty (named "a")) (bool True) (MyVar mempty (named "a")))
           `shouldBe` mempty
       it "Finds `a` in a pattern match" $ do
-        findUnused @Name @Annotation
-          (MyPatternMatch mempty (bool True) [(PVar mempty "a", bool True)])
-          `shouldBe` S.singleton ("a", mempty)
+        findUnused @Annotation
+          (MyPatternMatch mempty (bool True) [(PVar mempty (named "a"), bool True)])
+          `shouldBe` S.singleton (named "a", mempty)
       it "Finds `a` in a let pattern match" $ do
-        findUnused @Name @Annotation
-          (MyLetPattern mempty (PVar mempty "a") (bool True) (bool True))
-          `shouldBe` S.singleton ("a", mempty)
+        findUnused @Annotation
+          (MyLetPattern mempty (PVar mempty (named "a")) (bool True) (bool True))
+          `shouldBe` S.singleton (named "a", mempty)
 
       it "Does not find `a` when it is used in a pattern match" $ do
-        findUnused @Name @Annotation
-          (MyPatternMatch mempty (bool True) [(PVar mempty "a", MyVar mempty "a")])
+        findUnused @Annotation
+          (MyPatternMatch mempty (bool True) [(PVar mempty (named "a"), MyVar mempty (named "a"))])
           `shouldBe` mempty
 
   describe "removeUnused" $ do
     it "No change in literal" $ do
       let expr = bool True
-      removeUnused @Name @Annotation (S.singleton "a") expr
+      removeUnused @Annotation (S.singleton (named "a")) expr
         `shouldBe` expr
     it "Remove Let with `a` in simple Let assignment" $ do
-      let expr = MyLet mempty (Identifier mempty "a") (bool True) (bool True)
-      removeUnused @Name @Annotation (S.singleton "a") expr
+      let expr = MyLet mempty (Identifier mempty (named "a")) (bool True) (bool True)
+      removeUnused @Annotation (S.singleton (named "a")) expr
         `shouldBe` bool True
     it "Turns `a` in pattern match to PWildcard" $ do
-      let expr = MyPatternMatch mempty (bool True) [(PVar mempty "a", bool True)]
+      let expr = MyPatternMatch mempty (bool True) [(PVar mempty (named "a"), bool True)]
           expected = MyPatternMatch mempty (bool True) [(PWildcard mempty, bool True)]
-      removeUnused @Name @Annotation (S.singleton "a") expr
+      removeUnused @Annotation (S.singleton (named "a")) expr
         `shouldBe` expected
     it "Turns `a` in let pattern match to PWildcard" $ do
-      let expr = MyLetPattern mempty (PVar mempty "a") (bool True) (bool True)
+      let expr = MyLetPattern mempty (PVar mempty (named "a")) (bool True) (bool True)
           expected = MyLetPattern mempty (PWildcard mempty) (bool True) (bool True)
-      removeUnused @Name @Annotation (S.singleton "a") expr
+      removeUnused @Annotation (S.singleton (named "a")) expr
         `shouldBe` expected
     it "Removes let behind a lambda" $ do
       let expr =
             MyLambda
               mempty
-              (Identifier mempty "a")
-              (MyLet mempty (Identifier mempty "b") (bool True) (MyVar mempty "a"))
-          expected = MyLambda mempty (Identifier mempty "a") (MyVar mempty "a")
-      removeUnused @Name @Annotation (S.singleton "b") expr
+              (Identifier mempty (named "a"))
+              (MyLet mempty (Identifier mempty (named "b")) (bool True) (MyVar mempty (named "a")))
+          expected = MyLambda mempty (Identifier mempty (named "a")) (MyVar mempty (named "a"))
+      removeUnused @Annotation (S.singleton (named "b")) expr
         `shouldBe` expected

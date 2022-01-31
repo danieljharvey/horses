@@ -36,7 +36,7 @@ evaluate ::
     )
 evaluate input expr = do
   project <- Actions.getProject
-  (ResolvedExpression mt se expr' scope' swaps typedExpr input') <-
+  resolved@(ResolvedExpression mt se expr' scope' swaps typedExpr input') <-
     liftEither $ Actions.getTypecheckedStoreExpression input project expr
   typedNameExpr <-
     liftEither
@@ -48,7 +48,7 @@ evaluate input expr = do
     liftEither (first InterpreterErr (interpret scope' swaps expr'))
 
   -- print any warnings
-  traverse_ (Actions.appendMessage . prettyPrint) (getWarnings se)
+  traverse_ (Actions.appendMessage . prettyPrint) (getWarnings resolved)
 
   -- print
   Actions.appendDocMessage

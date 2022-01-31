@@ -42,7 +42,7 @@ bindExpression expr name input = do
   let storeExpr = reStoreExpression resolvedExpr
 
   -- print any warnings
-  traverse_ (Actions.appendMessage . prettyPrint) (getWarnings storeExpr)
+  traverse_ (Actions.appendMessage . prettyPrint) (getWarnings resolvedExpr)
 
   Actions.bindStoreExpression storeExpr name
   case lookupBindingName project name of

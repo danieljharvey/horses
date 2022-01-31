@@ -66,8 +66,9 @@ makeExpressionData ::
   Expr Name MonoType ->
   [Graphviz] ->
   Text ->
+  [Warning] ->
   ExpressionData
-makeExpressionData se typedExpr gv input =
+makeExpressionData se typedExpr gv input warnings =
   let mt = getTypeFromAnn typedExpr
       exprHash = getStoreExpressionHash se
 
@@ -84,4 +85,4 @@ makeExpressionData se typedExpr gv input =
         (prettyGraphviz gv)
         (getExpressionSourceItems input typedExpr)
         input
-        (prettyPrint <$> getWarnings se)
+        (prettyPrint <$> warnings)
