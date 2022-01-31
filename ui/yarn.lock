@@ -7244,10 +7244,10 @@ open@^8.0.9, open@^8.4.0:
     is-docker "^2.1.1"
     is-wsl "^2.2.0"
 
-openapi-typescript-codegen@0.18.0:
-  version "0.18.0"
-  resolved "https://registry.yarnpkg.com/openapi-typescript-codegen/-/openapi-typescript-codegen-0.18.0.tgz#f8be9e55cd70d50dee3c03fb8928b483c99fef4d"
-  integrity sha512-0CBHla20+EUr8hFk2+eTC4ua35rLNrZg8+Mm5iHpvstDoebqTo4l/OuFPUzqNWZYVRXDr376/KFpAG2avckbRQ==
+openapi-typescript-codegen@0.18.1:
+  version "0.18.1"
+  resolved "https://registry.yarnpkg.com/openapi-typescript-codegen/-/openapi-typescript-codegen-0.18.1.tgz#db1ccf2459c4d9e3522b097473709b8044c7bb7d"
+  integrity sha512-hL8hlPY6yM+o3otKC4YQil7Un0UVxrzuPpo/Kfzgaoh+cBVMz7HB5DBdGG1ZEJxvGbw2iBIxzaZUQadD673U8w==
   dependencies:
     camelcase "^6.3.0"
     commander "^8.3.0"
