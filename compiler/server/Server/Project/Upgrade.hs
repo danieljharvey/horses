@@ -30,6 +30,7 @@ import Language.Mimsa.Types.Store
 import Servant
 import Server.Handlers
 import Server.Helpers.ExpressionData
+import Server.Helpers.TestData
 import Server.MimsaHandler
 import Server.Types
 
@@ -56,7 +57,8 @@ data FromTo = FromTo
 data UpgradeResponse = UpgradeResponse
   { upUpgradedDeps :: Map Text FromTo,
     upExpressionData :: ExpressionData,
-    upProjectData :: ProjectData
+    upProjectData :: ProjectData,
+    upTestData :: TestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -77,7 +79,7 @@ upgrade ::
 upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
   runMimsaHandlerT $ do
     let action = do
-          (resolvedExpr, depUpdates) <-
+          (resolvedExpr, _, depUpdates) <-
             Actions.upgradeByName bindingName
           let (ResolvedExpression _ se _ _ swaps typedExpr input) = resolvedExpr
           typedNameExpr <- Actions.useSwaps swaps typedExpr
@@ -86,9 +88,21 @@ upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
             ( mapUpgradedDeps depUpdates,
               makeExpressionData se typedNameExpr gv input
             )
+
+    store' <- lift $ readStoreHandler mimsaEnv
+    project <- lift $ loadProjectHandler mimsaEnv store' projectHash
     response <- lift $ eitherFromActionM mimsaEnv projectHash action
+
+    tests <-
+      lift $
+        runTestsHandler
+          mimsaEnv
+          project
+          (M.elems $ prjTests project)
+    let testData = makeTestData project tests
+
     case response of
       Left e -> throwMimsaError e
       Right (newProject, (upgradedDeps, ed)) -> do
         pd <- lift $ projectDataHandler mimsaEnv newProject
-        returnMimsa $ UpgradeResponse upgradedDeps ed pd
+        returnMimsa $ UpgradeResponse upgradedDeps ed pd testData

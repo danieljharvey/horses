@@ -183,13 +183,14 @@ export const runtime =
                 error: e,
               },
             ],
-            ({ upExpressionData, upProjectData }) => [
+            ({
+              upExpressionData,
+              upProjectData,
+              upTestData,
+            }) => [
               {
                 type: 'UpgradeExpressionSuccess' as const,
-                tests: {
-                  tdUnitTests: [],
-                  tdPropertyTests: [],
-                },
+                tests: upTestData,
                 expression: upExpressionData,
                 bindingName: event.bindingName,
               },
@@ -211,13 +212,14 @@ export const runtime =
                 error: e,
               },
             ],
-            ({ opExpressionData, opProjectData }) => [
+            ({
+              opExpressionData,
+              opProjectData,
+              opTestData,
+            }) => [
               {
                 type: 'OptimiseExpressionSuccess' as const,
-                tests: {
-                  tdUnitTests: [],
-                  tdPropertyTests: [],
-                },
+                tests: opTestData,
                 expression: opExpressionData,
                 bindingName: event.bindingName,
               },

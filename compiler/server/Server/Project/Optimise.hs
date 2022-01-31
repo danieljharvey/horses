@@ -14,6 +14,7 @@ where
 
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
+import qualified Data.Map as M
 import Data.OpenApi hiding (get)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
@@ -26,6 +27,7 @@ import Language.Mimsa.Types.Store
 import Servant
 import Server.Handlers
 import Server.Helpers.ExpressionData
+import Server.Helpers.TestData
 import Server.MimsaHandler
 import Server.Types
 
@@ -51,7 +53,8 @@ data FromTo = FromTo
 
 data OptimiseResponse = OptimiseResponse
   { opExpressionData :: ExpressionData,
-    opProjectData :: ProjectData
+    opProjectData :: ProjectData,
+    opTestData :: TestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -63,7 +66,7 @@ optimise ::
 optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
   runMimsaHandlerT $ do
     let action = do
-          resolvedExpr <-
+          (resolvedExpr, _) <-
             Actions.optimiseByName bindingName
           let (ResolvedExpression _ se _ _ swaps typedExpr input) = resolvedExpr
           typedNameExpr <- Actions.useSwaps swaps typedExpr
@@ -75,9 +78,21 @@ optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
                 graphviz
                 input
             )
+
+    store' <- lift $ readStoreHandler mimsaEnv
+    project <- lift $ loadProjectHandler mimsaEnv store' projectHash
     response <- lift $ eitherFromActionM mimsaEnv projectHash action
+
+    tests <-
+      lift $
+        runTestsHandler
+          mimsaEnv
+          project
+          (M.elems $ prjTests project)
+    let testData = makeTestData project tests
+
     case response of
       Left e -> throwMimsaError e
       Right (newProject, ed) -> do
         pd <- lift $ projectDataHandler mimsaEnv newProject
-        returnMimsa $ OptimiseResponse ed pd
+        returnMimsa $ OptimiseResponse ed pd testData
