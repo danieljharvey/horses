@@ -13,6 +13,7 @@ module Language.Mimsa.Backend.Shared
     createOutputFolder,
     createModuleOutputPath,
     createIndexOutputPath,
+    stdlibFilename,
   )
 where
 
@@ -84,6 +85,10 @@ moduleFilename ESModulesJS hash' =
   "ejs-" <> prettyPrint hash' <> ".mjs"
 moduleFilename Typescript hash' =
   "ts-" <> prettyPrint hash'
+
+stdlibFilename :: Backend -> Text
+stdlibFilename Typescript = "ts-stdlib"
+stdlibFilename ESModulesJS = "ejs-stdlib.mjs"
 
 -- recursively get all the StoreExpressions we need to output
 getTranspileList ::

@@ -165,10 +165,13 @@ toTSExpr expr' =
     (TSBody [] expr) -> pure expr
     (TSBody as a) -> throwError (ExpectedExprGotBody a as)
 
-fromExpr :: TSReaderState -> Expr Name MonoType -> Either (BackendError MonoType) TSModule
+fromExpr ::
+  TSReaderState ->
+  Expr Name MonoType ->
+  Either (BackendError MonoType) (TSModule, [TSImport])
 fromExpr readerState expr = do
   (result, dataTypes) <- runTypescriptM readerState (toTSBody expr)
-  pure (TSModule dataTypes result)
+  pure (TSModule dataTypes result, mempty)
 
 identifierName :: Identifier Name ann -> Name
 identifierName ident = case ident of

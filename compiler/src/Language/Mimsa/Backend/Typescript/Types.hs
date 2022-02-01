@@ -19,6 +19,7 @@ module Language.Mimsa.Backend.Typescript.Types
     TSOp (..),
     TSModule (..),
     TSName (..),
+    TSImport (..),
   )
 where
 
@@ -29,6 +30,15 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.TyCon
+
+data TSImport
+  = TSImportValue Text
+  | TSImportType Text
+  deriving stock (Eq, Ord, Show)
+
+instance Printer TSImport where
+  prettyPrint (TSImportType t) = t
+  prettyPrint (TSImportValue t) = t
 
 -- | which generics have been used already?
 newtype TSGeneric = TSGeneric Text
