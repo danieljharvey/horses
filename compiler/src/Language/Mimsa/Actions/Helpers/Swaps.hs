@@ -11,12 +11,11 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
-import Language.Mimsa.Types.Typechecker
 
 useSwaps ::
   Swaps ->
-  Expr Variable MonoType ->
-  ActionM (Expr Name MonoType)
+  Expr Variable ann ->
+  ActionM (Expr Name ann)
 useSwaps swaps expr =
   case Swaps.useSwaps swaps expr of
     Right tyExpr -> pure tyExpr

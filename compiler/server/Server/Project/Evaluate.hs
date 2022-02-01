@@ -19,8 +19,11 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
+import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Project
 import Servant
 import Server.Handlers
@@ -60,11 +63,14 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) =
           expr <- Actions.parseExpr code
           (_, simpleExpr, se, typedExpr, input) <-
             Actions.evaluate code expr
+          project <- Actions.getProject
           gv <- Actions.graphExpression se
+          res <- Actions.checkStoreExpression input project se
+          let warnings = getWarnings res
           pure $
             EvaluateResponse
               (prettyPrint simpleExpr)
-              (makeExpressionData se typedExpr gv input)
+              (makeExpressionData se typedExpr gv input warnings)
     response <- lift $ eitherFromActionM mimsaEnv hash action
     case response of
       Left e -> throwMimsaError e

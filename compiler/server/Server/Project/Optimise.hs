@@ -20,6 +20,7 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -71,12 +72,14 @@ optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
           let (ResolvedExpression _ se _ _ swaps typedExpr input) = resolvedExpr
           typedNameExpr <- Actions.useSwaps swaps typedExpr
           graphviz <- Actions.graphExpression se
+          let warnings = getWarnings resolvedExpr
           pure
             ( makeExpressionData
                 se
                 typedNameExpr
                 graphviz
                 input
+                warnings
             )
 
     store' <- lift $ readStoreHandler mimsaEnv

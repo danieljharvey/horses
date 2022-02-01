@@ -23,6 +23,7 @@ import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Upgrade as Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -84,9 +85,10 @@ upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
           let (ResolvedExpression _ se _ _ swaps typedExpr input) = resolvedExpr
           typedNameExpr <- Actions.useSwaps swaps typedExpr
           gv <- Actions.graphExpression se
+          let warnings = getWarnings resolvedExpr
           pure
             ( mapUpgradedDeps depUpdates,
-              makeExpressionData se typedNameExpr gv input
+              makeExpressionData se typedNameExpr gv input warnings
             )
 
     store' <- lift $ readStoreHandler mimsaEnv

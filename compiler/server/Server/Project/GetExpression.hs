@@ -14,6 +14,7 @@ import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
@@ -63,6 +64,7 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
     useSwapsHandler
       (reSwaps resolvedExpr)
       (reTypedExpression resolvedExpr)
+  let warnings = getWarnings resolvedExpr
   pure $
     GetExpressionResponse
-      (makeExpressionData se typedExpr graphviz (reInput resolvedExpr))
+      (makeExpressionData se typedExpr graphviz (reInput resolvedExpr) warnings)

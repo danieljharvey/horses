@@ -20,6 +20,7 @@ import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -60,11 +61,12 @@ bindExpression ::
 bindExpression mimsaEnv (BindExpressionRequest projectHash name' input) = runMimsaHandlerT $ do
   let action = do
         expr <- Actions.parseExpr input
-        (_, _, ResolvedExpression _ se _ _ swaps typedExpr input') <-
+        (_, _, resolved@(ResolvedExpression _ se _ _ swaps typedExpr input')) <-
           Actions.bindExpression expr name' input
         gv <- Actions.graphExpression se
         typedNameExpr <- Actions.useSwaps swaps typedExpr
-        pure $ makeExpressionData se typedNameExpr gv input'
+        let warnings = getWarnings resolved
+        pure $ makeExpressionData se typedNameExpr gv input' warnings
   store' <- lift $ readStoreHandler mimsaEnv
   project <- lift $ loadProjectHandler mimsaEnv store' projectHash
   response <-

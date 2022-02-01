@@ -6,6 +6,7 @@ import Control.Monad.Except
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
+import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
@@ -55,10 +56,16 @@ optimise ::
   StoreExpression Annotation ->
   Actions.ActionM (ResolvedExpression Annotation, Int)
 optimise se = do
-  let unused = findUnused (storeExpression se)
-      newExpr = removeUnused (S.map fst unused) (storeExpression se)
-  let newStoreExpr = trimDeps se newExpr
   project <- Actions.getProject
+
+  resolvedOld <- Actions.checkStoreExpression (prettyPrint (storeExpression se)) project se
+
+  let unused = findUnused (reVarExpression resolvedOld)
+      newExpr = removeUnused (S.map fst unused) (reVarExpression resolvedOld)
+
+  newExprName <- Actions.useSwaps (reSwaps resolvedOld) newExpr
+
+  let newStoreExpr = trimDeps se newExprName
 
   resolved <- Actions.checkStoreExpression (prettyPrint (storeExpression newStoreExpr)) project newStoreExpr
 

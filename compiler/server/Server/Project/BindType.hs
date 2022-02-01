@@ -20,6 +20,7 @@ import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
+import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -73,7 +74,8 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
                 (reSwaps resolvedExpr)
                 (reTypedExpression resolvedExpr)
             gv <- Actions.graphExpression se
-            let ed' = makeExpressionData se typedNameExpr gv input
+            let warnings = getWarnings resolvedExpr
+            let ed' = makeExpressionData se typedNameExpr gv input warnings
             pure (Just ed')
           Nothing -> pure Nothing
         pure (ed, typeClasses, dt)
