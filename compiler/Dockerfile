@@ -5,7 +5,7 @@ WORKDIR /opt/build
 
 # Docker build should not use cached layer if any of these is modified
 COPY stack.yaml package.yaml stack.yaml.lock /opt/build/
-RUN stack build :mimsa-server --system-ghc --dependencies-only --fast
+RUN stack build :mimsa-server --system-ghc --dependencies-only 
 
 # -------------------------------------------------------------------------------------------
 FROM haskell:9.0.2-buster as build
@@ -16,7 +16,7 @@ COPY . /opt/build/
 
 WORKDIR /opt/build
 
-RUN stack build :mimsa-server --system-ghc --fast
+RUN stack build :mimsa-server --system-ghc 
 
 RUN mv "$(stack path --local-install-root --system-ghc)/bin" /opt/build/bin
 
