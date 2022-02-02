@@ -40,7 +40,7 @@ testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState = TSReaderState mempty
    in case fromExpr readerState expr of
-        Right ejsModule -> (ejsModule, JS.printModule ejsModule)
+        Right (ejsModule, _) -> (ejsModule, JS.printModule ejsModule)
         Left e -> error (T.unpack (prettyPrint e))
 
 testFromInputText :: Text -> Either Text Text
@@ -53,7 +53,7 @@ testFromInputText input =
           (prettyPrint . InterpreterErr)
           (useSwaps (reSwaps resolved) (reTypedExpression resolved))
       let readerState = TSReaderState mempty
-      first prettyPrint (JS.printModule <$> fromExpr readerState exprName)
+      first prettyPrint (JS.printModule . fst <$> fromExpr readerState exprName)
 
 -- test that we have a valid ESModulesJS module by saving it and running it
 testESModulesJSInNode :: Text -> IO String
@@ -131,7 +131,6 @@ testCases =
       "[Function: main]"
     ),
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
-    ("True == True", "export const main = true === true", "true"),
     ("2 + 2", "export const main = 2 + 2", "4"),
     ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",

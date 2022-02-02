@@ -47,15 +47,15 @@ spec = do
       let result = Actions.run testStdlib action
       result `shouldSatisfy` isLeft
 
-    it "Simplest compilation creates three files" $ do
+    it "Simplest compilation creates four files" $ do
       let expr = MyVar mempty "id"
       let action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile tsExportRuntime "id" storeExpr
       let (newProject, outcomes, (_, hashes)) =
             fromRight (Actions.run testStdlib action)
-      -- creates three files
-      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 3
+      -- creates four files
+      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 4
       -- doesn't change project (for now)
       newProject `shouldBe` testStdlib
       -- uses three different folders
@@ -64,7 +64,7 @@ spec = do
               ( (\(path, _, _) -> path)
                   <$> Actions.writeFilesFromOutcomes outcomes
               )
-      length uniqueFolders `shouldBe` 2
+      length uniqueFolders `shouldBe` 3
       -- should have returned two exprHashs (one for the main expr, one
       -- for the `id` dependency
       S.size hashes `shouldBe` 2
@@ -75,8 +75,8 @@ spec = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile tsExportRuntime "evalState" storeExpr
       let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
-      -- creates 8 files
-      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 8
+      -- creates 9 files
+      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
       -- doesn't change project (for now)
       newProject `shouldBe` testStdlib
       -- uses three different folders
@@ -85,7 +85,7 @@ spec = do
               ( (\(path, _, _) -> path)
                   <$> Actions.writeFilesFromOutcomes outcomes
               )
-      length uniqueFolders `shouldBe` 2
+      length uniqueFolders `shouldBe` 3
 
     it "Doesn't break when using bindings that aren't in the store" $ do
       let expr = MyVar mempty "id2"

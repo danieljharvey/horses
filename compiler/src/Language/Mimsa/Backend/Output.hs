@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Output (outputStoreExpression) where
@@ -9,12 +10,14 @@ import Data.List (intersperse)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Language.Mimsa.Backend.Javascript.Printer as JS
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
 import qualified Language.Mimsa.Backend.Typescript.Monad as TS
 import qualified Language.Mimsa.Backend.Typescript.Printer as TS
+import qualified Language.Mimsa.Backend.Typescript.Types as TS
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Typechecker.DataTypes
@@ -46,7 +49,8 @@ outputStoreExpression be dataTypes store mt se = do
   let typeDeps =
         renderTypeImport' be
           <$> M.toList (typeBindingsByType store (storeTypeBindings se))
-  func <- renderExpression be dataTypes (storeExpression se)
+  (func, stdlibFuncs) <- renderExpression be dataTypes (storeExpression se)
+  let stdlib = stdlibImport be stdlibFuncs
   let typeComment = renderTypeSignature' mt
   pure $
     mconcat
@@ -54,22 +58,42 @@ outputStoreExpression be dataTypes store mt se = do
           (renderNewline' be)
           [ mconcat deps,
             mconcat typeDeps,
+            stdlib,
             typeComment,
             func
           ]
       )
 
+-- | given the fns used in a store expression
+-- return an import
+stdlibImport :: Backend -> [TS.TSImport] -> Text
+stdlibImport _ [] = ""
+stdlibImport backend names =
+  let filteredNames = case backend of
+        Typescript -> prettyPrint <$> names
+        ESModulesJS ->
+          prettyPrint
+            <$> filter
+              ( \case
+                  TS.TSImportValue _ -> True
+                  _ -> False
+              )
+              names
+   in "import { " <> T.intercalate ", " filteredNames <> " } from \"./"
+        <> stdlibFilename backend
+        <> "\";\n"
+
 renderExpression ::
   Backend ->
   ResolvedTypeDeps ->
   Expr Name MonoType ->
-  BackendM MonoType Text
+  BackendM MonoType (Text, [TS.TSImport])
 renderExpression be dataTypes expr = do
   let readerState = TS.TSReaderState (makeTypeDepMap dataTypes)
    in case TS.fromExpr readerState expr of
-        Right ts -> case be of
-          Typescript -> pure (TS.printModule ts)
-          ESModulesJS -> pure (JS.printModule ts)
+        Right (ts, stdlibFuncs) -> case be of
+          Typescript -> pure (TS.printModule ts, stdlibFuncs)
+          ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)
         Left e -> throwError e
 
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TyCon

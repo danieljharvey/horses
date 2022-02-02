@@ -78,13 +78,23 @@ createZipFile ::
 createZipFile runtime exprHashes rootExprHash = do
   modulePath <- createModuleOutputPath (rtBackend runtime)
   indexPath <- createIndexOutputPath (rtBackend runtime)
+  stdlibPath <- createStdlibOutputPath (rtBackend runtime)
   -- create entries
   modules <-
     traverse
       (moduleEntry modulePath (rtBackend runtime))
       (S.toList exprHashes)
   index <- indexEntry indexPath runtime rootExprHash
-  pure (createArchive $ modules <> [index])
+  stdlib <- stdlibEntry stdlibPath (rtBackend runtime)
+  pure (createArchive $ modules <> [index] <> [stdlib])
+
+-- the stdlib is already in the store so we copy it to the target folder
+stdlibEntry :: FilePath -> Backend -> MimsaM StoreError Zip.Entry
+stdlibEntry stdlibPath be = do
+  let filename = T.unpack $ stdlibFilename be <> fileExtension be
+  let fromPath = stdlibPath <> filename
+  input <- liftIO (T.readFile fromPath)
+  pure (zipEntry ("./" <> filename) input)
 
 -- write zip file to a given file path
 storeZipFile :: Backend -> ExprHash -> Zip.Archive -> MimsaM StoreError FilePath

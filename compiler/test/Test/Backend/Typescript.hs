@@ -40,7 +40,7 @@ testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState = TSReaderState mempty
    in case fromExpr readerState expr of
-        Right tsModule -> (tsModule, printModule tsModule)
+        Right (tsModule, _) -> (tsModule, printModule tsModule)
         Left e -> error (T.unpack (prettyPrint e))
 
 testFromInputText :: Text -> Either Text Text
@@ -53,7 +53,7 @@ testFromInputText input =
           (prettyPrint . InterpreterErr)
           (useSwaps (reSwaps resolved) (reTypedExpression resolved))
       let readerState = TSReaderState mempty
-      first prettyPrint (printModule <$> fromExpr readerState exprName)
+      first prettyPrint (printModule . fst <$> fromExpr readerState exprName)
 
 -- test that we have a valid Typescript module by saving it and running it
 testTypescriptInNode :: Text -> IO String
@@ -123,7 +123,6 @@ testCases =
       "{ a: 123, b: 'horse' }"
     ),
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
-    ("True == True", "export const main = true === true", "true"),
     ("2 + 2", "export const main = 2 + 2", "4"),
     ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",

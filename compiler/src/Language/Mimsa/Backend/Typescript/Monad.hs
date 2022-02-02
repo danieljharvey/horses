@@ -14,6 +14,7 @@ module Language.Mimsa.Backend.Typescript.Monad
     unusedGenerics,
     addGenerics,
     addDataType,
+    addImport,
   )
 where
 
@@ -21,6 +22,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
+import Data.Either
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -36,11 +38,14 @@ import Language.Mimsa.Types.Typechecker
 type TypescriptM =
   ExceptT
     (BackendError MonoType)
-    (WriterT [TSDataType] (ReaderT TSReaderState (State TSStateStack)))
+    (WriterT [TSWriterItem] (ReaderT TSReaderState (State TSStateStack)))
 
 newtype TSReaderState = TSReaderState
   { tsConstructorTypes :: Map TyCon TyCon -- Just -> Maybe, Nothing -> Maybe etc
   }
+
+type TSWriterItem =
+  Either TSDataType TSImport
 
 -- | we keep the datatypes in both the writer and the state
 -- because we want both a sum of all datatypes, and a stack where they are
@@ -101,19 +106,28 @@ unusedGenerics new = do
 -- | add a datatype to both the Writer and current stack
 addDataType ::
   ( MonadState TSStateStack m,
-    MonadWriter [TSDataType] m
+    MonadWriter [TSWriterItem] m
   ) =>
   DataType ->
   TSDataType ->
   m ()
 addDataType dt tsDt = do
-  tell [tsDt]
+  tell [Left tsDt]
   modifyState
     ( \codegenState ->
         codegenState
           { csDataTypes = csDataTypes codegenState <> [dt]
           }
     )
+
+-- | add a datatype to both the Writer and current stack
+addImport ::
+  ( MonadWriter [TSWriterItem] m
+  ) =>
+  TSImport ->
+  m ()
+addImport tsImport =
+  tell [Right tsImport]
 
 -- | define an infix operator, binding it to some 2-arity function
 addInfix :: (MonadState TSStateStack m) => InfixOp -> TSExpr -> m ()
@@ -151,7 +165,7 @@ initialStack =
 runTypescriptM ::
   TSReaderState ->
   TypescriptM a ->
-  Either (BackendError MonoType) (a, [TSDataType])
+  Either (BackendError MonoType) (a, [TSDataType], [TSImport])
 runTypescriptM readerState computation =
   case evalState
     ( runReaderT
@@ -159,5 +173,7 @@ runTypescriptM readerState computation =
         readerState
     )
     initialStack of
-    (Right a, dts) -> pure (a, dts)
+    (Right a, writerOutput) ->
+      let (dts, imports) = partitionEithers writerOutput
+       in pure (a, dts, imports)
     (Left e, _) -> throwError e

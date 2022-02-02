@@ -132,8 +132,11 @@ toInfix operator a b = do
   tsA <- toTSExpr a
   tsB <- toTSExpr b
   case operator of
-    Equals ->
-      pure $ TSInfix TSEquals tsA tsB
+    Equals -> do
+      addImport
+        (TSImportValue "equals_")
+      pure $
+        TSApp (TSApp (TSVar "equals_") tsA) tsB
     Add ->
       pure $ TSInfix TSAdd tsA tsB
     Subtract ->
@@ -165,10 +168,13 @@ toTSExpr expr' =
     (TSBody [] expr) -> pure expr
     (TSBody as a) -> throwError (ExpectedExprGotBody a as)
 
-fromExpr :: TSReaderState -> Expr Name MonoType -> Either (BackendError MonoType) TSModule
+fromExpr ::
+  TSReaderState ->
+  Expr Name MonoType ->
+  Either (BackendError MonoType) (TSModule, [TSImport])
 fromExpr readerState expr = do
-  (result, dataTypes) <- runTypescriptM readerState (toTSBody expr)
-  pure (TSModule dataTypes result)
+  (result, dataTypes, imports) <- runTypescriptM readerState (toTSBody expr)
+  pure (TSModule dataTypes result, imports)
 
 identifierName :: Identifier Name ann -> Name
 identifierName ident = case ident of
