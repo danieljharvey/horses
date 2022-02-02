@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Output (outputStoreExpression) where
@@ -70,7 +71,14 @@ stdlibImport _ [] = ""
 stdlibImport backend names =
   let filteredNames = case backend of
         Typescript -> prettyPrint <$> names
-        ESModulesJS -> prettyPrint <$> names -- TODO: wrong
+        ESModulesJS ->
+          prettyPrint
+            <$> filter
+              ( \case
+                  TS.TSImportValue _ -> True
+                  _ -> False
+              )
+              names
    in "import { " <> T.intercalate ", " filteredNames <> " } from \"./"
         <> stdlibFilename backend
         <> "\";\n"
