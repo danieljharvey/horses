@@ -28,9 +28,12 @@ copyLocalOutput ::
 copyLocalOutput runtime exprHashes rootExprHash = do
   modulePath <- createModuleOutputPath (rtBackend runtime)
   indexPath <- createIndexOutputPath (rtBackend runtime)
+  stdlibPath <- createStdlibOutputPath (rtBackend runtime)
   outputPath <- createOutputFolder (rtBackend runtime) rootExprHash
   -- link modules
   traverse_ (copyModule modulePath outputPath (rtBackend runtime)) exprHashes
+  -- link stdlib
+  _ <- copyStdlib stdlibPath outputPath (rtBackend runtime)
   -- link index
   copyIndex indexPath outputPath runtime rootExprHash
 
@@ -45,6 +48,14 @@ copyModule modulePath outputPath be exprHash = do
       fromPath = modulePath <> T.unpack filename
       toPath = outputPath <> T.unpack filename
   tryCopy fromPath toPath
+
+-- the stdlib is already in the store so we copy it to the target folder
+copyStdlib :: FilePath -> FilePath -> Backend -> MimsaM StoreError Text
+copyStdlib stdlibPath outputPath be = do
+  let fromPath = T.pack stdlibPath <> stdlibFilename be
+  let toPath = T.pack outputPath <> stdlibFilename be
+  tryCopy (T.unpack fromPath) (T.unpack toPath)
+  pure toPath
 
 -- the index is already in ths store so we copy it to the target folder
 copyIndex ::

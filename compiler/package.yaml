@@ -30,6 +30,7 @@ dependencies:
 - servant-server # server
 - cryptonite # hashing
 - memory # hashing
+- file-embed # js stdlib
 - bytestring
 - directory # store
 - prettyprinter # formatting

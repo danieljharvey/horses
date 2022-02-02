@@ -82,9 +82,11 @@ lbsToString = T.unpack . decodeUtf8 . LBS.toStrict
 binNewline :: LBS.ByteString -> String
 binNewline = init . lbsToString
 
+-- | this test is very slow, only switch on when checking node tests work in
+-- local environment
 spec :: Spec
 spec = do
-  describe "RunNode" $ do
+  xdescribe "RunNode" $ do
     describe "runScriptFromFile" $ do
       it "Succeeds with printed value" $ do
         (ec, bs) <- runScriptFromFile "static/test/test.js"

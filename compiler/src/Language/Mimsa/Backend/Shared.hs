@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Language.Mimsa.Backend.Shared
   ( transpiledModuleOutputPath,
@@ -13,14 +14,18 @@ module Language.Mimsa.Backend.Shared
     createOutputFolder,
     createModuleOutputPath,
     createIndexOutputPath,
+    createStdlibOutputPath,
     stdlibFilename,
+    outputStdlib,
   )
 where
 
 import Control.Monad.IO.Class
+import Data.FileEmbed
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
@@ -28,6 +33,20 @@ import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreFolder)
 import Language.Mimsa.Types.Store
 import System.Directory
+
+-- these are saved in a file that is included in compilation
+typescriptStandardLibrary :: Text
+typescriptStandardLibrary =
+  T.decodeUtf8 $(embedFile "static/backend/typescript/stdlib.ts")
+
+-- these are saved in a file that is included in compilation
+esModulesJSStandardLibrary :: Text
+esModulesJSStandardLibrary =
+  T.decodeUtf8 $(embedFile "static/backend/es-modules-js/stdlib.mjs")
+
+outputStdlib :: Backend -> Text
+outputStdlib Typescript = typescriptStandardLibrary
+outputStdlib ESModulesJS = esModulesJSStandardLibrary
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
 createOutputFolder :: Backend -> ExprHash -> MimsaM e FilePath
@@ -72,6 +91,12 @@ transpiledIndexOutputPath Typescript = "transpiled/index/typescript"
 transpiledStdlibOutputPath :: Backend -> FilePath
 transpiledStdlibOutputPath ESModulesJS = "transpiled/stdlib/es-modules-js"
 transpiledStdlibOutputPath Typescript = "transpiled/stdlib/typescript"
+
+-- all files are created in the store and then symlinked into output folders
+-- this creates the folder in the store
+createStdlibOutputPath :: Backend -> MimsaM e FilePath
+createStdlibOutputPath be =
+  getStoreFolder (transpiledStdlibOutputPath be)
 
 zipFileOutputPath :: Backend -> FilePath
 zipFileOutputPath _ = "./output/zip"

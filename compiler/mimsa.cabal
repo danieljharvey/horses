@@ -204,6 +204,7 @@ library
     , cryptonite
     , directory
     , exceptions
+    , file-embed
     , hashable
     , megaparsec
     , memory
@@ -252,6 +253,7 @@ executable mimsa
     , cryptonite
     , directory
     , exceptions
+    , file-embed
     , hashable
     , haskeline
     , megaparsec
@@ -313,6 +315,7 @@ executable mimsa-server
     , directory
     , envy
     , exceptions
+    , file-embed
     , hashable
     , http-types
     , megaparsec
@@ -408,6 +411,7 @@ test-suite mimsa-test
     , cryptonite
     , directory
     , exceptions
+    , file-embed
     , hashable
     , hspec
     , megaparsec

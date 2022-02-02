@@ -123,7 +123,6 @@ testCases =
       "{ a: 123, b: 'horse' }"
     ),
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
-    ("True == True", "export const main = true === true", "true"),
     ("2 + 2", "export const main = 2 + 2", "4"),
     ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",
