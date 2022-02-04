@@ -4,7 +4,6 @@
 module Language.Mimsa.Store.Substitutor (substitute) where
 
 import Control.Monad (join)
-import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy
 import Data.Foldable
 import Data.Map (Map)
@@ -12,7 +11,6 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
@@ -35,13 +33,13 @@ data SubsState ann = SubsState
     subsTypeDeps :: Set (StoreExpression ann)
   }
 
-type App ann = ExceptT StoreError (State (SubsState ann))
+type App ann = State (SubsState ann)
 
 substitute ::
   (Monoid ann, Ord ann) =>
   Store ann ->
   StoreExpression ann ->
-  Either StoreError (SubstitutedExpression ann)
+  SubstitutedExpression ann
 substitute store' storeExpr =
   let startingState = SubsState mempty mempty 0 mempty mempty
       ((_, expr'), SubsState swaps' scope' _ seDeps' seTypeDeps') =
@@ -173,10 +171,10 @@ nextNum = do
   pure p
 
 -- convert name to variable
-nameToVar :: Changed -> Name -> App ann Variable
+nameToVar :: Changed -> Name -> Variable
 nameToVar chg n = case fromChange chg n of
-  Just var -> pure var -- we've allocated this already
-  _ -> throwError "Cannot find name"
+  Just var -> var -- we've allocated this already
+  _ -> NamedVar n -- this is what we did before, not sure about it
 
 -- this is opposite to Swaps, and allows the meaning of a variable to be
 -- changed by scoping, hence unique key is name
@@ -214,7 +212,7 @@ mapVar chg (MyLambda ann ident body) = do
   (newIdent, withChange) <- mapIdentifier chg ident
   MyLambda ann newIdent <$> mapVar withChange body
 mapVar chg (MyVar ann name) =
-  MyVar ann <$> nameToVar chg name
+  pure $ MyVar ann (nameToVar chg name)
 mapVar chg (MyLet ann ident expr' body) = do
   (newIdent, withChange) <- mapIdentifier chg ident
   MyLet ann newIdent

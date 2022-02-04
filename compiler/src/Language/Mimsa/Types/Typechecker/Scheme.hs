@@ -15,5 +15,5 @@ instance Printer Scheme where
   prettyPrint (Scheme vars mt) = varText <> prettyPrint mt
     where
       varText = case vars of
-        [] -> "[] "
+        [] -> ""
         a -> "[" <> T.intercalate ", " (prettyPrint <$> a) <> "] "

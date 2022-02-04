@@ -21,6 +21,7 @@ import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -49,7 +50,7 @@ eval env input =
       saveRegressionData (se $> ())
       let endExpr = interpret scope' swaps expr'
       case toEmptyAnn <$> endExpr of
-        Right a -> pure (Right (toEmptyType mt, a))
+        Right a -> pure (Right (normaliseType (toEmptyType mt), a))
         Left e -> pure (Left (prettyPrint $ InterpreterErr e))
 
 -- These are saved and used in the deserialisation tests to make sure we avoid
@@ -80,7 +81,7 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  fdescribe "Repl" $ do
+  describe "Repl" $ do
     it "Save testStdlib" $
       saveProject testStdlib
         >> (True `shouldBe` True)
@@ -99,7 +100,7 @@ spec =
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction mempty (unknown 0) (unknown 0),
+            ( MTFunction mempty (unknown 1) (unknown 1),
               MyLambda mempty (Identifier mempty "i") (MyVar mempty "i")
             )
 
@@ -272,15 +273,15 @@ spec =
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (MTVar mempty (TVUnificationVar 0))
-                (dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 0)]),
+                (MTVar mempty (TVUnificationVar 1))
+                (dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 1)]),
               MyConstructor mempty "Just"
             )
       it "type Maybe a = Just a | Nothing in Nothing" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in Nothing"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 0)],
+            ( dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 1)],
               MyConstructor mempty "Nothing"
             )
       it "type Maybe a = Just a | Nothing in Just 1" $ do
@@ -550,8 +551,8 @@ spec =
                 mempty
                 ( MTRecordRow
                     mempty
-                    (M.singleton "one" (MTVar mempty (tvNum 2)))
-                    (unknown 1)
+                    (M.singleton "one" (MTVar mempty (tvNum 1)))
+                    (unknown 2)
                 )
                 ( MTFunction
                     mempty
@@ -559,19 +560,19 @@ spec =
                         mempty
                         ( M.singleton
                             "two"
-                            (MTVar mempty (tvNum 5))
+                            (MTVar mempty (tvNum 3))
                         )
                         ( MTRecordRow
                             mempty
                             ( M.singleton
                                 "one"
-                                ( MTVar mempty (tvNum 7)
+                                ( MTVar mempty (tvNum 4)
                                 )
                             )
-                            (unknown 8)
+                            (unknown 5)
                         )
                     )
-                    (MTVar mempty (tvNum 7))
+                    (MTVar mempty (tvNum 4))
                 )
             )
       it "if ?missingFn then 1 else 2" $ do
@@ -923,13 +924,13 @@ spec =
                 ()
                 ( MTFunction
                     ()
-                    (MTVar () (TVUnificationVar 0))
-                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 0)))
+                    (MTVar () (TVUnificationVar 1))
+                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 1)))
                 )
                 ( MTFunction
                     ()
-                    (MTVar () (TVUnificationVar 0))
-                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 0)))
+                    (MTVar () (TVUnificationVar 1))
+                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 1)))
                 )
             )
 

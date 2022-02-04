@@ -97,7 +97,7 @@ runtimeIsValid :: Runtime a -> MonoType -> Either TypeError ()
 runtimeIsValid runtime mt =
   runSolveM
     mempty
-    defaultTcState
+    (defaultTcState mempty)
     (unify (rtMonoType runtime) mt >> pure ())
     $> ()
 

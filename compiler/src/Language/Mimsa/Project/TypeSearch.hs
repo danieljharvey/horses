@@ -72,7 +72,7 @@ runUnifyM swaps value =
     either' =
       runState
         (runReaderT (runExceptT value) swaps)
-        defaultTcState
+        (defaultTcState mempty)
 
 -- | given a type map, split it into paths
 typeMapToFoundPath :: Map Name MonoType -> Map FoundPath MonoType

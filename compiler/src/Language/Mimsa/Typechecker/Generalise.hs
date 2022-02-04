@@ -1,6 +1,7 @@
 module Language.Mimsa.Typechecker.Generalise
   ( generalise,
     freeTypeVars,
+    freeTypeVarsCtx,
   )
 where
 
