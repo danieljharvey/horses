@@ -105,7 +105,6 @@ showMap renderK renderA map' =
 ------
 
 withSwap :: Swaps -> Variable -> Name
-withSwap _ (NamedVar n) = n
 withSwap swaps (NumberedVar i) =
   fromMaybe
     "unknownvar"

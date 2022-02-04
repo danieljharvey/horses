@@ -21,7 +21,9 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
+import Debug.Trace
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -86,17 +88,15 @@ lookupInEnv swaps var' (Environment env' _ _ _) =
    in look (variableToTypeIdentifier var')
         <|> (M.lookup var' swaps >>= look . wrapName)
 
-elabVarFromScope ::
+lookupScheme ::
   Environment ->
   Annotation ->
   Variable ->
-  ElabM ElabExpr
-elabVarFromScope env ann var' = do
+  ElabM Scheme
+lookupScheme env ann var' = do
   swaps <- ask
   case lookupInEnv swaps var' env of
-    Just mt -> do
-      freshMonoType <- instantiate ann mt
-      pure (MyVar freshMonoType var')
+    Just mt -> pure mt
     _ -> do
       throwError $
         VariableNotInEnv
@@ -105,16 +105,26 @@ elabVarFromScope env ann var' = do
           var'
           (S.fromList (M.keys (getSchemes env)))
 
+elabVarFromScope ::
+  Environment ->
+  Annotation ->
+  Variable ->
+  ElabM ElabExpr
+elabVarFromScope env ann var' = do
+  scheme <- lookupScheme env ann var'
+  freshMonoType <- instantiate ann scheme
+  pure (MyVar freshMonoType var')
+
 envFromVar :: Variable -> Scheme -> Environment
 envFromVar binder scheme =
   Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty
 
-envFromInfixOp :: InfixOp -> MonoType -> Environment
-envFromInfixOp infixOp mt =
+envFromInfixOp :: InfixOp -> Scheme -> Environment
+envFromInfixOp infixOp scheme =
   Environment
     mempty
     mempty
-    (M.singleton infixOp mt)
+    (M.singleton infixOp scheme)
     mempty
 
 lookupInfixOp ::
@@ -124,7 +134,9 @@ lookupInfixOp ::
   ElabM MonoType
 lookupInfixOp env ann infixOp = do
   case M.lookup infixOp (getInfix env) of
-    Just mt' -> pure mt'
+    Just typeScheme -> do
+      freshMonoType <- instantiate ann (debugPretty "infix type scheme" typeScheme)
+      pure (debugPretty "fresh infix type" freshMonoType)
     Nothing ->
       throwError
         ( CouldNotFindInfixOperator
@@ -212,7 +224,7 @@ elabLetBinding env ann ident expr body = do
         _ -> pure ()
       let tySubstExpr = applySubst subst (getTypeFromAnn elabExpr)
       let newEnv =
-            envFromVar bindName (generalise env tySubstExpr)
+            envFromVar bindName (generalise env (traceShowId tySubstExpr))
               <> env
       elabBody <- elab newEnv body
       pure
@@ -717,8 +729,18 @@ elabDefineInfix env ann infixOp infixExpr expr = do
             (MTFunction mempty u2 u3)
         )
     ]
-  let newEnv = envFromInfixOp infixOp tyBind <> env
+  -- when using a var as a op, try and use the existing scheme rather than
+  -- creating one
+  funcScheme <- case traceShowId elabBindExpr of
+    MyVar varAnn var -> lookupScheme env (getAnnotationForType varAnn) var
+    _ -> pure $ generalise env tyBind
+
+  -- add infix to environment
+  let newEnv = envFromInfixOp infixOp (debugPretty "funcScheme" funcScheme) <> env
+
+  -- elaborate rest of body with new env
   elabBodyExpr <- elab newEnv expr
+
   pure $ MyDefineInfix (getTypeFromAnn elabBodyExpr) infixOp elabBindExpr elabBodyExpr
 
 elabArray ::

@@ -80,7 +80,7 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  describe "Repl" $ do
+  fdescribe "Repl" $ do
     it "Save testStdlib" $
       saveProject testStdlib
         >> (True `shouldBe` True)
@@ -141,6 +141,9 @@ spec =
       it "reuses polymorphic function 2" $ do
         result <- eval testStdlib "let reuse = ({ first: const True, second: const 2 }) in reuse.second 100"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
+      it "reuses polymorphic function defined here" $ do
+        result <- eval testStdlib "let id2 a = a; (id2 1, id2 True)"
+        result `shouldSatisfy` isRight
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
@@ -1084,6 +1087,18 @@ spec =
       it "define +++ as infix and use it" $ do
         result <- eval testStdlib "infix +++ = addInt; 1 +++ 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
+      it "multiple uses of infix with same type" $ do
+        result <- eval testStdlib "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> incrementInt"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
+      it "multiple uses of infix with same type" $ do
+        result <- eval testStdlib "let isOne a = a == 1; let apply a f = f a; infix |> = apply; 1 |> incrementInt |> isOne"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
+      it "multiple uses of infix with different types" $ do
+        result <- eval testStdlib "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> state.wrap |> state.unwrap"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 2)
 
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"

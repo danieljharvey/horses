@@ -14,9 +14,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.Name
 import Prettyprinter
 
-data Variable
-  = NamedVar {varNamed :: Name}
-  | NumberedVar {varNumbered :: Int}
+data Variable = NumberedVar {varNumbered :: Int}
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, JSON.ToJSONKey, JSON.FromJSON)
 
@@ -33,5 +31,4 @@ printTypeNum i = [toEnum (index + start)] <> suffix
        in if diff < 1 then "" else show diff
 
 renderVariable :: Variable -> Doc ann
-renderVariable (NamedVar n) = renderName n
 renderVariable (NumberedVar i) = pretty (printTypeNum i)

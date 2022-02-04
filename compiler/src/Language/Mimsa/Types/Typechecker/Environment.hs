@@ -14,14 +14,14 @@ import Language.Mimsa.Types.Identifiers
     TyVar,
     TypeIdentifier,
   )
-import Language.Mimsa.Types.Typechecker.MonoType
+-- import Language.Mimsa.Types.Typechecker.MonoType
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 
 -- everything we need in typechecking environment
 data Environment = Environment
   { getSchemes :: Map TypeIdentifier Scheme,
     getDataTypes :: Map TyCon DataType,
-    getInfix :: Map InfixOp MonoType,
+    getInfix :: Map InfixOp Scheme,
     getTypeVarsInScope :: Map TyVar Int
   }
   deriving stock (Eq, Ord, Show)
