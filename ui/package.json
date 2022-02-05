@@ -23,7 +23,7 @@
     "fp-ts": "2.11.8",
     "graphviz-react": "1.2.0",
     "lodash.throttle": "4.1.1",
-    "monaco-editor": "0.31.1",
+    "monaco-editor": "0.32.1",
     "monocle-ts": "2.3.12",
     "prettier": "2.5.1",
     "react": "17.0.2",
