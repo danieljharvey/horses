@@ -11,7 +11,7 @@ data NormaliseState = NormaliseState
     _nsAllocated :: Map TypeIdentifier Int
   }
 
-normaliseType :: MonoType -> MonoType
+normaliseType :: (Monoid ann) => Type ann -> Type ann
 normaliseType mt =
   evalState
     (normaliseType' mt)
@@ -26,7 +26,7 @@ findVar i = do
       put (NormaliseState (next + 1) (alloc <> M.singleton i next))
       pure next
 
-normaliseType' :: MonoType -> State NormaliseState MonoType
+normaliseType' :: (Monoid ann) => Type ann -> State NormaliseState (Type ann)
 normaliseType' mt = case mt of
   MTVar ann tyIdent -> do
     index <- findVar tyIdent

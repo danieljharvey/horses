@@ -64,6 +64,6 @@ typecheck typeMap swaps env expr = do
         subs <- solve constraints
         typedHolesCheck typeMap subs
         pure (subs, constraints, elabExpr)
-  (_, _, (subs, constraints, tyExpr)) <- runElabM swaps defaultTcState tcAction
+  (_, _, (subs, constraints, tyExpr)) <- runElabM swaps (defaultTcState env) tcAction
   let typedExpr = applySubst subs tyExpr
   pure (subs, constraints, typedExpr, getTypeFromAnn typedExpr)

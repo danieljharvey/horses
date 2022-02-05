@@ -7,12 +7,14 @@ module Language.Mimsa.Types.Identifiers.TypeIdentifier
   ( TypeIdentifier (..),
     renderTypeIdentifier,
     printTypeNum,
+    getUniVar,
   )
 where
 
 -- the two types of id a type var can have - a named or numbered one
 
 import qualified Data.Aeson as JSON
+import Data.Maybe
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.TyVar
@@ -53,3 +55,7 @@ printTypeNum i = [toEnum (index + start)] <> suffix
 renderTypeIdentifier :: TypeIdentifier -> Doc ann
 renderTypeIdentifier (TVName _ n) = renderTyVar n
 renderTypeIdentifier (TVUnificationVar i) = pretty (printTypeNum i)
+
+getUniVar :: TypeIdentifier -> Int
+getUniVar (TVName i _) = fromMaybe 0 i
+getUniVar (TVUnificationVar i) = i

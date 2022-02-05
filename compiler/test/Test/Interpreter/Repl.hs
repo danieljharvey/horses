@@ -21,6 +21,7 @@ import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -49,7 +50,7 @@ eval env input =
       saveRegressionData (se $> ())
       let endExpr = interpret scope' swaps expr'
       case toEmptyAnn <$> endExpr of
-        Right a -> pure (Right (toEmptyType mt, a))
+        Right a -> pure (Right (normaliseType (toEmptyType mt), a))
         Left e -> pure (Left (prettyPrint $ InterpreterErr e))
 
 -- These are saved and used in the deserialisation tests to make sure we avoid
@@ -99,7 +100,7 @@ spec =
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
           `shouldBe` Right
-            ( MTFunction mempty (unknown 0) (unknown 0),
+            ( MTFunction mempty (unknown 1) (unknown 1),
               MyLambda mempty (Identifier mempty "i") (MyVar mempty "i")
             )
 
@@ -141,6 +142,9 @@ spec =
       it "reuses polymorphic function 2" $ do
         result <- eval testStdlib "let reuse = ({ first: const True, second: const 2 }) in reuse.second 100"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
+      it "reuses polymorphic function defined here" $ do
+        result <- eval testStdlib "let id2 a = a; (id2 1, id2 True)"
+        result `shouldSatisfy` isRight
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
@@ -269,15 +273,15 @@ spec =
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (MTVar mempty (TVUnificationVar 0))
-                (dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 0)]),
+                (MTVar mempty (TVUnificationVar 1))
+                (dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 1)]),
               MyConstructor mempty "Just"
             )
       it "type Maybe a = Just a | Nothing in Nothing" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in Nothing"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 0)],
+            ( dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 1)],
               MyConstructor mempty "Nothing"
             )
       it "type Maybe a = Just a | Nothing in Just 1" $ do
@@ -547,8 +551,8 @@ spec =
                 mempty
                 ( MTRecordRow
                     mempty
-                    (M.singleton "one" (MTVar mempty (tvNum 2)))
-                    (unknown 1)
+                    (M.singleton "one" (MTVar mempty (tvNum 1)))
+                    (unknown 2)
                 )
                 ( MTFunction
                     mempty
@@ -556,19 +560,19 @@ spec =
                         mempty
                         ( M.singleton
                             "two"
-                            (MTVar mempty (tvNum 5))
+                            (MTVar mempty (tvNum 3))
                         )
                         ( MTRecordRow
                             mempty
                             ( M.singleton
                                 "one"
-                                ( MTVar mempty (tvNum 7)
+                                ( MTVar mempty (tvNum 4)
                                 )
                             )
-                            (unknown 8)
+                            (unknown 5)
                         )
                     )
-                    (MTVar mempty (tvNum 7))
+                    (MTVar mempty (tvNum 4))
                 )
             )
       it "if ?missingFn then 1 else 2" $ do
@@ -920,13 +924,13 @@ spec =
                 ()
                 ( MTFunction
                     ()
-                    (MTVar () (TVUnificationVar 0))
-                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 0)))
+                    (MTVar () (TVUnificationVar 1))
+                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 1)))
                 )
                 ( MTFunction
                     ()
-                    (MTVar () (TVUnificationVar 0))
-                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 0)))
+                    (MTVar () (TVUnificationVar 1))
+                    (MTFunction () (MTPrim () MTString) (MTVar () (TVUnificationVar 1)))
                 )
             )
 
@@ -1084,6 +1088,18 @@ spec =
       it "define +++ as infix and use it" $ do
         result <- eval testStdlib "infix +++ = addInt; 1 +++ 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
+      it "multiple uses of infix with same type" $ do
+        result <- eval testStdlib "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> incrementInt"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
+      it "multiple uses of infix with same type" $ do
+        result <- eval testStdlib "let isOne a = a == 1; let apply a f = f a; infix |> = apply; 1 |> incrementInt |> isOne"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
+      it "multiple uses of infix with different types" $ do
+        result <- eval testStdlib "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> pureState"
+        result `shouldSatisfy` isRight
 
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"

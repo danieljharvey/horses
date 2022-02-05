@@ -20,6 +20,7 @@ import Data.Coerce
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
+import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -40,8 +41,14 @@ instantiate ann (Scheme vars ty) = do
   let substitutedType = applySubst subst ty
   pure (substitutedType $> ann) -- use original annotation
 
-defaultTcState :: TypecheckState
-defaultTcState = TypecheckState 0 mempty
+-- | get starting typechecker state,
+-- make sure our fresh vars number is higher than any we've seen before
+defaultTcState :: Environment -> TypecheckState
+defaultTcState env =
+  let maxInTypeMap = case getUniVar <$> freeTypeVarsCtx env of
+        [] -> 0
+        as -> maximum as
+   in TypecheckState (maxInTypeMap + 1) mempty
 
 getNextUniVar :: (MonadState TypecheckState m) => m Int
 getNextUniVar = do
