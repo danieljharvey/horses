@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -33,7 +34,7 @@ startInference expr expected = do
         fmap (\(_, _, a, _) -> a)
           . typecheck mempty mempty mempty
           $ expr
-  getTypeFromAnn <$> elabbed `shouldBe` expected
+  normaliseType . getTypeFromAnn <$> elabbed `shouldBe` expected
   case elabbed of
     Right elabExpr -> recoverAnn <$> elabExpr `shouldBe` expr
     _ -> pure () -- can't compare
@@ -165,10 +166,10 @@ spec = do
       it "infers const lambda" $ do
         let expr = MyLambda mempty (Identifier mempty $ named "x") (bool True)
         startInference expr $
-          Right (MTFunction mempty (unknown 0) (MTPrim mempty MTBool))
+          Right (MTFunction mempty (unknown 1) (MTPrim mempty MTBool))
       it "infers identity" $ do
         let expr = identity
-        startInference expr $ Right (MTFunction mempty (unknown 0) (unknown 0))
+        startInference expr $ Right (MTFunction mempty (unknown 1) (unknown 1))
       it "infers const function" $ do
         let expr =
               MyLambda
@@ -179,8 +180,8 @@ spec = do
           Right
             ( MTFunction
                 mempty
-                (unknown 0)
-                (MTFunction mempty (unknown 1) (unknown 0))
+                (unknown 1)
+                (MTFunction mempty (unknown 2) (unknown 1))
             )
       it "infers const applied with boolean" $ do
         let expr =
@@ -220,11 +221,11 @@ spec = do
           Left
             ( FailsOccursCheck
                 mempty
-                (tvNum 0)
+                (tvNum 1)
                 ( MTFunction
                     mempty
-                    (MTVar mempty (tvNum 0))
                     (MTVar mempty (tvNum 1))
+                    (MTVar mempty (tvNum 2))
                 )
             )
       it "infers pair" $ do

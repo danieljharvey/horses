@@ -25,7 +25,7 @@ typeMap =
     _ -> error "Error resolving test project"
 
 idType :: MonoType
-idType = MTFunction mempty (unknown 0) (unknown 0)
+idType = MTFunction mempty (unknown 1) (unknown 1)
 
 spec :: Spec
 spec =
@@ -57,11 +57,11 @@ spec =
               ( "const",
                 MTFunction
                   mempty
-                  (unknown 0)
+                  (unknown 1)
                   ( MTFunction
                       mempty
-                      (unknown 1)
-                      (MTVar mempty (TVUnificationVar 0))
+                      (unknown 2)
+                      (MTVar mempty (TVUnificationVar 1))
                   )
               )
             ]

@@ -130,7 +130,7 @@ testCases =
       "doglog"
     ),
     ( "{ fn: (\\a -> let d = 1 in a) }",
-      "export const main = { fn: <A>(a: A) => { const d = 1; return a; } }",
+      "export const main = { fn: <N1>(a: N1) => { const d = 1; return a; } }",
       "{ fn: [Function: fn] }"
     ),
     ( "[1,2] <> [3,4]",
@@ -519,7 +519,7 @@ spec = do
 
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> [as] | [] -> []"
-          `shouldBe` Right "export const main = <C>(a: C[]) => { const match = (value: C[]): C[][] => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
+          `shouldBe` Right "export const main = <P1>(a: P1[]) => { const match = (value: P1[]): P1[][] => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
 
     describe "Entire compilation" $ do
       traverse_ fullTestIt fullTestCases
