@@ -15,7 +15,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Shared as Actions
-import Language.Mimsa.Backend.Runtimes
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.Typescript.DataType
 import Language.Mimsa.Backend.Typescript.FromExpr
 import Language.Mimsa.Backend.Typescript.Monad
@@ -92,7 +92,7 @@ fullTestIt (input, expectedValue) =
   it (T.unpack input) $ do
     let unsafeParse = ($> mempty) . unsafeParseExpr
         expr = unsafeParse input
-    (filename, contentHash) <- testProjectCompile "CompileTSProject" tsConsoleRuntime expr
+    (filename, contentHash) <- testProjectCompile "CompileTSProject" Typescript expr
     cachePath <- createOutputFolder "CompileTSProject-result"
     let cacheFilename = cachePath <> show contentHash <> ".json"
 

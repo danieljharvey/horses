@@ -11,15 +11,12 @@ module Server.Compile (CompileAPI, compileEndpoints) where
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
-import qualified Data.Map as M
 import Data.OpenApi (NamedSchema (..), ToSchema, binarySchema, declareNamedSchema)
 import Data.Set (Set)
-import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Compile as Actions
-import Language.Mimsa.Backend.Runtimes
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.ZipFile
-import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
@@ -52,7 +49,7 @@ instance ToSchema ZipFileResponse where
 
 data CompileHashRequest = CompileHashRequest
   { chExprHash :: ExprHash,
-    chRuntime :: RuntimeName
+    chBackend :: Backend
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.FromJSON, ToSchema)
@@ -77,44 +74,33 @@ compileHashEndpoint ::
   Handler CompileHashResponse
 compileHashEndpoint
   mimsaEnv
-  (CompileHashRequest exprHash runtimeName) = do
+  (CompileHashRequest exprHash backend) = do
     store <- storeFromExprHashHandler mimsaEnv exprHash
     let project = fromStore store $> mempty
     storeExpr <- findExprHandler project exprHash
     pd <- projectDataHandler mimsaEnv project
-    let input = prettyPrint (storeExpression storeExpr)
-    runtime <- getRuntime runtimeName
     writeStoreHandler mimsaEnv (prjStore project)
     (_, (rootExprHash, exprHashes)) <-
-      fromActionM mimsaEnv (pdHash pd) (Actions.compile runtime input storeExpr)
+      fromActionM mimsaEnv (pdHash pd) (Actions.compile backend storeExpr)
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
-    bs <- doCreateZipFile mimsaEnv runtime exprHashes rootExprHash
+    bs <- doCreateZipFile mimsaEnv backend exprHashes rootExprHash
     pure (addHeader contentDisposition (ZipFileResponse bs))
 
 -----
 
-getRuntime :: RuntimeName -> Handler (Runtime Text)
-getRuntime runtimeName =
-  handleEither
-    InternalError
-    ( case M.lookup runtimeName runtimes of
-        Just rt -> pure rt
-        _ -> throwError ("Could not find runtime" :: Text)
-    )
-
 doCreateZipFile ::
   MimsaEnvironment ->
-  Runtime code ->
+  Backend ->
   Set ExprHash ->
   ExprHash ->
   Handler LBS.ByteString
-doCreateZipFile mimsaEnv runtime exprHashes rootExprHash = do
+doCreateZipFile mimsaEnv be exprHashes rootExprHash = do
   let mimsaCfg = mimsaConfig mimsaEnv
   archive <-
     handleMimsaM
       mimsaCfg
       InternalError
-      ( createZipFile runtime exprHashes rootExprHash
+      ( createZipFile be exprHashes rootExprHash
       )
   pure (encodeZipFile archive)

@@ -13,7 +13,6 @@ import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Backend
   ( copyLocalOutput,
   )
-import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
 import Language.Mimsa.Types.AST
@@ -30,21 +29,19 @@ doOutputJS ::
   Maybe Backend ->
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
-doOutputJS project input be expr = do
-  let runtime = case fromMaybe ESModulesJS be of
-        ESModulesJS -> ejsExportRuntime
-        Typescript -> tsExportRuntime
+doOutputJS project input maybeBackend expr = do
+  let be = fromMaybe ESModulesJS maybeBackend
   resolvedExpr <-
     mimsaFromEither $ Actions.getTypecheckedStoreExpression input project expr
   (_, (rootExprHash, exprHashes)) <-
-    toReplM project (Actions.compile runtime input (reStoreExpression resolvedExpr))
-  outputPath <- doCopying runtime exprHashes rootExprHash
+    toReplM project (Actions.compile be (reStoreExpression resolvedExpr))
+  outputPath <- doCopying be exprHashes rootExprHash
   replOutput ("Output to " <> outputPath)
 
 doCopying ::
-  Runtime code ->
+  Backend ->
   Set ExprHash ->
   ExprHash ->
   MimsaM (Error Annotation) Text
-doCopying runtime exprHashes rootExprHash =
-  mapError StoreErr (copyLocalOutput runtime exprHashes rootExprHash)
+doCopying be exprHashes rootExprHash =
+  mapError StoreErr (copyLocalOutput be exprHashes rootExprHash)

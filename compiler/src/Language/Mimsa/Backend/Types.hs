@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 
 module Language.Mimsa.Backend.Types
@@ -6,9 +8,13 @@ module Language.Mimsa.Backend.Types
   )
 where
 
+import qualified Data.Aeson as JSON
+import Data.OpenApi
+import GHC.Generics
 import Language.Mimsa.Types.Error
 
 type BackendM ann = Either (BackendError ann)
 
 data Backend = ESModulesJS | Typescript
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.FromJSON, ToSchema)

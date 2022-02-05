@@ -59,33 +59,33 @@ moduleEntry modulePath be exprHash = do
 
 indexEntry ::
   FilePath ->
-  Runtime code ->
+  Backend ->
   ExprHash ->
   MimsaM StoreError Zip.Entry
-indexEntry indexPath runtime rootExprHash = do
-  let filename = T.unpack $ indexFilename runtime rootExprHash
+indexEntry indexPath be rootExprHash = do
+  let filename = T.unpack $ indexFilename be rootExprHash
       fromPath = indexPath <> filename
-      outputFilename = T.unpack (indexOutputFilename (rtBackend runtime) rootExprHash)
+      outputFilename = T.unpack (indexOutputFilename be rootExprHash)
   input <- liftIO (T.readFile fromPath)
   pure (zipEntry ("./" <> outputFilename) input)
 
 -- create zip archive that can be saved as a file or returned through server
 createZipFile ::
-  Runtime code ->
+  Backend ->
   Set ExprHash ->
   ExprHash ->
   MimsaM StoreError Zip.Archive
-createZipFile runtime exprHashes rootExprHash = do
-  modulePath <- createModuleOutputPath (rtBackend runtime)
-  indexPath <- createIndexOutputPath (rtBackend runtime)
-  stdlibPath <- createStdlibOutputPath (rtBackend runtime)
+createZipFile be exprHashes rootExprHash = do
+  modulePath <- createModuleOutputPath be
+  indexPath <- createIndexOutputPath be
+  stdlibPath <- createStdlibOutputPath be
   -- create entries
   modules <-
     traverse
-      (moduleEntry modulePath (rtBackend runtime))
+      (moduleEntry modulePath be)
       (S.toList exprHashes)
-  index <- indexEntry indexPath runtime rootExprHash
-  stdlib <- stdlibEntry stdlibPath (rtBackend runtime)
+  index <- indexEntry indexPath be rootExprHash
+  stdlib <- stdlibEntry stdlibPath be
   pure (createArchive $ modules <> [index] <> [stdlib])
 
 -- the stdlib is already in the store so we copy it to the target folder
