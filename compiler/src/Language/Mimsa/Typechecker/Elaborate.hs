@@ -109,12 +109,12 @@ envFromVar :: Variable -> Scheme -> Environment
 envFromVar binder scheme =
   Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty
 
-envFromInfixOp :: InfixOp -> MonoType -> Environment
-envFromInfixOp infixOp mt =
+envFromInfixOp :: InfixOp -> Scheme -> Environment
+envFromInfixOp infixOp scheme =
   Environment
     mempty
     mempty
-    (M.singleton infixOp mt)
+    (M.singleton infixOp scheme)
     mempty
 
 lookupInfixOp ::
@@ -124,7 +124,7 @@ lookupInfixOp ::
   ElabM MonoType
 lookupInfixOp env ann infixOp = do
   case M.lookup infixOp (getInfix env) of
-    Just mt' -> pure mt'
+    Just scheme -> instantiate ann scheme
     Nothing ->
       throwError
         ( CouldNotFindInfixOperator
@@ -717,7 +717,7 @@ elabDefineInfix env ann infixOp infixExpr expr = do
             (MTFunction mempty u2 u3)
         )
     ]
-  let newEnv = envFromInfixOp infixOp tyBind <> env
+  let newEnv = envFromInfixOp infixOp (generalise env tyBind) <> env
   elabBodyExpr <- elab newEnv expr
   pure $ MyDefineInfix (getTypeFromAnn elabBodyExpr) infixOp elabBindExpr elabBodyExpr
 

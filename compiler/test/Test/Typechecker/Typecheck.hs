@@ -155,6 +155,7 @@ spec = do
                     (MyVar mempty (named "x"))
                 )
         startInference expr $ Right (MTPrim mempty MTBool)
+
       it "infers shadowed let bindings" $ do
         let expr =
               MyLet
@@ -163,13 +164,16 @@ spec = do
                 (bool True)
                 (MyLet mempty (Identifier mempty $ named "x") (int 42) (MyVar mempty (named "x")))
         startInference expr $ Right (MTPrim mempty MTInt)
+
       it "infers const lambda" $ do
         let expr = MyLambda mempty (Identifier mempty $ named "x") (bool True)
         startInference expr $
           Right (MTFunction mempty (unknown 1) (MTPrim mempty MTBool))
+
       it "infers identity" $ do
         let expr = identity
         startInference expr $ Right (MTFunction mempty (unknown 1) (unknown 1))
+
       it "infers const function" $ do
         let expr =
               MyLambda
@@ -183,6 +187,7 @@ spec = do
                 (unknown 1)
                 (MTFunction mempty (unknown 2) (unknown 1))
             )
+
       it "infers const applied with boolean" $ do
         let expr =
               MyApp

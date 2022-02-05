@@ -1098,8 +1098,8 @@ spec =
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
       it "multiple uses of infix with different types" $ do
-        result <- eval testStdlib "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> state.wrap |> state.unwrap"
-        result `shouldBe` Right (MTPrim mempty MTInt, int 2)
+        result <- eval testStdlib "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> pureState"
+        result `shouldSatisfy` isRight
 
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"
