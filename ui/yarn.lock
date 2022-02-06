@@ -5150,10 +5150,10 @@ follow-redirects@^1.14.7:
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.7.tgz#2004c02eb9436eee9a21446a6477debf17e81685"
   integrity sha512-+hbxoLbFMbRKDwohX8GkTataGqO6Jb7jGwpAlwgy2bIz25XtRm7KEzJM76R1WiNT5SwZkX4Y75SwBolkpmE7iQ==
 
-fork-ts-checker-webpack-plugin@7.1.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-7.1.0.tgz#00b7ba2cb5548e09c945fb5c8c339cdbc66e40e6"
-  integrity sha512-bqY4AVhvBUcqMZXi9T9JqCm0DM839P6ed5MSZ3H+TTUHHIKamvNXNl3NuE4lS9iVEKmtj9laITeDui0WRaaPvQ==
+fork-ts-checker-webpack-plugin@7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-7.1.1.tgz#9806c04f3aecaec8c9e8872806cd1f26d50d92a8"
+  integrity sha512-MgAv1g6+HLXz1iq2AZRfBjDhwBwk1HRSjuhNiMs8ax/3tsFo0rHedKwuE6ok44sJ5F5VgwPZae8gq0wiBAqYRw==
   dependencies:
     "@babel/code-frame" "^7.16.7"
     chalk "^4.1.2"
