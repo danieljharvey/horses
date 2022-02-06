@@ -15,6 +15,8 @@ import qualified Test.Actions.Typecheck as TypecheckAction
 import qualified Test.Actions.Upgrade as Upgrade
 import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
+import qualified Test.Backend.Runtimes as Runtimes
+import qualified Test.Backend.TailCall as TailCall
 import qualified Test.Backend.Typescript as Typescript
 import qualified Test.Codegen as Codegen
 import Test.Hspec
@@ -110,3 +112,5 @@ main =
     NumberVars.spec
     CheckModule.spec
     RenderErrors.spec
+    Helpers.spec
+    TailCall.spec
