@@ -14,7 +14,6 @@ import Data.Coerce
 import Data.Foldable (traverse_)
 import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
@@ -36,20 +35,14 @@ typecheckStoreExpression se = do
 
 -- | this now accepts StoreExpression instead of expression
 compile ::
-  Runtime Text ->
-  Text ->
+  Backend ->
   StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
-compile runtime input se = do
+compile be se = do
   project <- Actions.getProject
 
   -- get type of StoreExpression
   typedMt <- typecheckStoreExpression se
-
-  let mt = getAnnotation (storeExpression typedMt)
-
-  -- does runtime typecheck with expression
-  liftEither (first (TypeErr input) (runtimeIsValid runtime mt))
 
   -- this will eventually check for things we have already transpiled to save
   -- on work
@@ -59,13 +52,13 @@ compile runtime input se = do
       (S.toList $ getTranspileList (prjStore project) se)
 
   -- transpile each required file and add to outputs
-  traverse_ (transpileModule (rtBackend runtime)) (list <> pure typedMt)
+  traverse_ (transpileModule be) (list <> pure typedMt)
 
   -- create the index
-  createIndex runtime (getStoreExpressionHash se)
+  createIndex be (getStoreExpressionHash se)
 
   -- include stdlib for runtime
-  createStdlib (rtBackend runtime)
+  createStdlib be
 
   -- return useful info
   let rootExprHash = getStoreExpressionHash se
@@ -112,12 +105,11 @@ transpileModule be se = do
 -- | that exposes the expression as a function called 'main' and imports
 -- | the other files
 createIndex ::
-  Runtime Text -> ExprHash -> Actions.ActionM ()
-createIndex runtime exprHash = do
-  let be = rtBackend runtime
-      path = Actions.SavePath (T.pack $ transpiledIndexOutputPath be)
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile be runtime exprHash)
-      filename = Actions.SaveFilename (indexFilename runtime exprHash)
+  Backend -> ExprHash -> Actions.ActionM ()
+createIndex be exprHash = do
+  let path = Actions.SavePath (T.pack $ transpiledIndexOutputPath be)
+      outputContent = Actions.SaveContents (coerce $ outputIndexFile be exprHash)
+      filename = Actions.SaveFilename (indexFilename be exprHash)
   Actions.appendWriteFile path filename outputContent
 
 -- The stdlib is a set of functions needed to stuff like pattern matching

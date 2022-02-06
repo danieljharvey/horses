@@ -353,7 +353,6 @@ test-suite mimsa-test
       Test.Actions.Upgrade
       Test.Backend.ESModulesJS
       Test.Backend.RunNode
-      Test.Backend.Runtimes
       Test.Backend.Typescript
       Test.Codegen
       Test.Codegen.Applicative

@@ -21,21 +21,21 @@ import Language.Mimsa.Types.Store
 -- given output type and list of expressions, copy everything to local
 -- folder for output in repl
 copyLocalOutput ::
-  Runtime code ->
+  Backend ->
   Set ExprHash ->
   ExprHash ->
   MimsaM StoreError Text
-copyLocalOutput runtime exprHashes rootExprHash = do
-  modulePath <- createModuleOutputPath (rtBackend runtime)
-  indexPath <- createIndexOutputPath (rtBackend runtime)
-  stdlibPath <- createStdlibOutputPath (rtBackend runtime)
-  outputPath <- createOutputFolder (rtBackend runtime) rootExprHash
+copyLocalOutput be exprHashes rootExprHash = do
+  modulePath <- createModuleOutputPath be
+  indexPath <- createIndexOutputPath be
+  stdlibPath <- createStdlibOutputPath be
+  outputPath <- createOutputFolder be rootExprHash
   -- link modules
-  traverse_ (copyModule modulePath outputPath (rtBackend runtime)) exprHashes
+  traverse_ (copyModule modulePath outputPath be) exprHashes
   -- link stdlib
-  _ <- copyStdlib stdlibPath outputPath (rtBackend runtime)
+  _ <- copyStdlib stdlibPath outputPath be
   -- link index
-  copyIndex indexPath outputPath runtime rootExprHash
+  copyIndex indexPath outputPath be rootExprHash
 
 copyModule ::
   FilePath ->
@@ -61,11 +61,11 @@ copyStdlib stdlibPath outputPath be = do
 copyIndex ::
   FilePath ->
   FilePath ->
-  Runtime code ->
+  Backend ->
   ExprHash ->
   MimsaM StoreError Text
-copyIndex indexPath outputPath runtime rootExprHash = do
-  let filename = T.unpack $ indexFilename runtime rootExprHash
+copyIndex indexPath outputPath be rootExprHash = do
+  let filename = T.unpack $ indexFilename be rootExprHash
       fromPath = indexPath <> filename
       toPath = outputPath <> filename
   tryCopy fromPath toPath

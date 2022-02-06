@@ -18,23 +18,10 @@ export const getProjectBindings = (
   state: State
 ): string[] => Object.keys(bindingsL.get(state))
 
-const typeBindingsL = Lens.fromPath<State>()([
-  'project',
-  'typeBindings',
-])
-
-export const getProjectTypeBindings = (
-  state: State
-): string[] => Object.keys(typeBindingsL.get(state))
-
 const versionsL = Lens.fromPath<State>()([
   'project',
   'versions',
 ])
-
-export const getProjectVersions = (
-  state: State
-): Record<string, BindingVersion[]> => versionsL.get(state)
 
 const usagesL = Lens.fromPath<State>()([
   'project',

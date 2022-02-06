@@ -1,24 +1,24 @@
 import * as React from 'react'
 import { useCompiledExpression } from '../../hooks/useCompiledExpression'
-import { ExprHash } from '../../types'
+import { ExprHash, Backend } from '../../types'
 import { Button } from '../View/Button'
 import { ButtonLink } from '../View/ButtonLink'
 import { Paragraph } from '../View/Paragraph'
 
 type Props = {
   exprHash: ExprHash
-  runtime: string
+  backend: Backend
   title: string
 }
 
 export const Compile: React.FC<Props> = ({
   exprHash,
-  runtime,
+  backend,
   title,
 }) => {
   const [compileState, compile] = useCompiledExpression(
     exprHash,
-    runtime
+    backend
   )
 
   switch (compileState.type) {

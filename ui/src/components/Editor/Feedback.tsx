@@ -122,9 +122,6 @@ export const Feedback: React.FC<Props> = ({
             </FlexColumnSpaced>
           )}
           <ListCompile
-            runtimes={Object.values(
-              result.expression.edRuntimes
-            )}
             exprHash={result.expression.edHash}
           />
           <ListBindings
@@ -182,9 +179,6 @@ export const Feedback: React.FC<Props> = ({
           )}
 
           <ListCompile
-            runtimes={Object.values(
-              result.expression.edRuntimes
-            )}
             exprHash={result.expression.edHash}
           />
           <ListBindings

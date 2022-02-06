@@ -21,11 +21,11 @@ import {
 } from './types'
 import { pipe } from 'fp-ts/lib/function'
 import { getExpressionData } from './selector'
-export * from './types'
-
-export const editorNew = (): ExpressionResult => ({
-  type: 'EditorNew',
-})
+export type {
+  ExpressionResult,
+  EditorAction,
+  EditorEvent,
+} from './types'
 
 export const showBinding = (
   expression: ExpressionData
@@ -34,7 +34,7 @@ export const showBinding = (
   expression,
 })
 
-export const showUpdatedBinding = (
+const showUpdatedBinding = (
   expression: ExpressionData,
   tests: TestData,
   bindingName: string
@@ -45,7 +45,7 @@ export const showUpdatedBinding = (
   tests,
 })
 
-export const showTest = (
+const showTest = (
   test: UnitTestData | PropertyTestData
 ): ExpressionResult => ({
   type: 'ShowTest',
