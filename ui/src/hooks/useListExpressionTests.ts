@@ -23,7 +23,7 @@ type ListTests = {
   propertyTests: PropertyTestData[]
 }
 
-export type ListExpressionTestsState = RemoteData<
+type ListExpressionTestsState = RemoteData<
   string,
   ListTests
 >

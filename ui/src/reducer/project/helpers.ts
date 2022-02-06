@@ -3,12 +3,12 @@ import { State, StoreItem } from '../types'
 import { pipe } from 'fp-ts/function'
 import { ExprHash } from '../../types'
 
-export const safeSessionStorageGet = (
+const safeSessionStorageGet = (
   key: string
 ): O.Option<string> =>
   O.fromNullable(sessionStorage.getItem(key))
 
-export const safeDecode = <A>(str: string): O.Option<A> => {
+const safeDecode = <A>(str: string): O.Option<A> => {
   try {
     const a = JSON.parse(str)
     return O.some(a)
@@ -19,7 +19,7 @@ export const safeDecode = <A>(str: string): O.Option<A> => {
 
 const sessionStorageKey = 'project'
 
-export type Project = { hash: ExprHash }
+type Project = { hash: ExprHash }
 
 export const projectSet = (project: Project) =>
   sessionStorage.setItem(
@@ -33,7 +33,7 @@ export const projectGet = (): O.Option<Project> =>
     O.chain((str) => safeDecode<Project>(str))
   )
 
-export const findExpressionForBinding = (
+const findExpressionForBinding = (
   bindingName: string,
   state: State
 ): O.Option<StoreItem> =>
@@ -44,7 +44,7 @@ export const findExpressionForBinding = (
     )
   )
 
-export const findExpressionForTypeBinding = (
+const findExpressionForTypeBinding = (
   bindingName: string,
   state: State
 ): O.Option<StoreItem> =>

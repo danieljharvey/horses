@@ -9,10 +9,3 @@ export const storeProjectData = (
   data,
   extraHashes,
 })
-
-export const fetchExpressionsForHashes = (
-  hashes: ExprHash[]
-): ProjectAction => ({
-  type: 'FetchExpressionsForHashes',
-  hashes,
-})

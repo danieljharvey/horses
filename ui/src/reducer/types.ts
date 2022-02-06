@@ -15,10 +15,8 @@ import {
   ConsoleEvent,
 } from './console/reducer'
 
-export * from './view/types'
-export * from './console/types'
-export * from './project/types'
-export * from './editor/types'
+export type { StoreItem } from './project/types'
+export type { EditorState } from './editor/types'
 
 export type State = {
   view: ViewState

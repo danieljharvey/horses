@@ -9,7 +9,11 @@ import {
   ConsoleEvent,
   Log,
 } from './types'
-export * from './types'
+export type {
+  ConsoleState,
+  ConsoleAction,
+  ConsoleEvent,
+} from './types'
 
 export const initialConsole: ConsoleState = {
   logs: [],

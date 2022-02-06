@@ -14,7 +14,11 @@ import * as O from 'fp-ts/Option'
 
 import { emptyEditor } from '../editor/helpers'
 
-export * from './types'
+export type {
+  ViewAction,
+  ViewEvent,
+  ViewState,
+} from './types'
 
 export const initialView: ViewState = {
   stack: NE.of({ type: 'scratch', editor: emptyEditor }),
@@ -32,13 +36,6 @@ export const pushScreen = (screen: Screen): ViewAction => ({
 
 export const popScreen = (): ViewAction => ({
   type: 'PopScreen',
-})
-
-export const replaceScreen = (
-  screen: Screen
-): ViewAction => ({
-  type: 'ReplaceScreen',
-  screen,
 })
 
 const stackL = Lens.fromProp<ViewState>()('stack')

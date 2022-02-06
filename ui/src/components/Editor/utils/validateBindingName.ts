@@ -1,6 +1,6 @@
 import * as E from 'fp-ts/Either'
 
-export type ValidationError =
+type ValidationError =
   | { type: 'EmptyName' }
   | { type: 'InvalidName' }
   | { type: 'AlreadyExists'; existing: string }

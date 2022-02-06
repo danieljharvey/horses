@@ -5,31 +5,30 @@ import { InlineSpaced } from './View/InlineSpaced'
 import { Paragraph } from './View/Paragraph'
 import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 
-import { RuntimeData } from '../generated'
+import { Backend } from '../generated'
 import { Compile } from './Editor/Compile'
 
 type ListCompileProps = {
-  runtimes: RuntimeData[]
   exprHash: ExprHash
 }
 
 export const ListCompile: React.FC<ListCompileProps> = ({
-  runtimes,
   exprHash,
 }) => {
-  if (runtimes.length < 1) {
-    return null
-  }
+  const backends: { title: string; be: Backend }[] = [
+    { title: 'Typescript', be: 'Typescript' },
+    { title: 'Javascript', be: 'ESModulesJS' },
+  ]
 
   return (
     <FlexColumnSpaced>
       <Paragraph>Compile</Paragraph>
       <InlineSpaced>
-        {runtimes.map((rt) => (
+        {backends.map((be) => (
           <Compile
             exprHash={exprHash}
-            runtime={rt.rtdName}
-            title={rt.rtdName}
+            backend={be.be}
+            title={be.title}
           />
         ))}
       </InlineSpaced>

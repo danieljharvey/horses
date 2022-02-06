@@ -13,7 +13,7 @@ export type NewExpressionScreen = {
   editor: EditorState
 }
 
-export type NewTestScreen = {
+type NewTestScreen = {
   type: 'new-test'
   editor: EditorState
 }
@@ -23,20 +23,20 @@ export type ScratchScreen = {
   editor: EditorState
 }
 
-export type TypeSearchScreen = {
+type TypeSearchScreen = {
   type: 'typeSearch'
 }
 
-export type NewTypeScreen = {
+type NewTypeScreen = {
   type: 'new-type'
   editor: EditorState
 }
 
-export type ProjectGraphScreen = {
+type ProjectGraphScreen = {
   type: 'project-graph'
 }
 
-export type ExpressionGraphScreen = {
+type ExpressionGraphScreen = {
   type: 'expression-graph'
   exprHash: ExprHash
   bindingName: string

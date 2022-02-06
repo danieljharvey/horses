@@ -15,9 +15,13 @@ import {
   saveToSessionStorage,
 } from './events'
 import { ExprHash, ProjectData } from '../../types'
-export * from './events'
-export * from './actions'
-export * from './types'
+export { initialProject } from './events'
+export { storeProjectData } from './actions'
+export type {
+  ProjectState,
+  ProjectAction,
+  ProjectEvent,
+} from './types'
 
 const projectL = Lens.fromProp<State>()('project')
 

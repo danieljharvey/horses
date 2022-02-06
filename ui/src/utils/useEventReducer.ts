@@ -4,7 +4,7 @@ import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import * as T from 'fp-ts/Task'
 
-export type EventReducerResponse<State, Event> = {
+type EventReducerResponse<State, Event> = {
   type: 'StateAndEvents'
   state: State
   events: Event[]
@@ -104,18 +104,6 @@ export const appendReducer =
       ] as (E1 | E2)[],
     }
   }
-
-export const emptyReducer =
-  <State, Action, Event>(): EventReducer<
-    State,
-    Action,
-    Event
-  > =>
-  (state) => ({
-    type: 'StateAndEvents',
-    state,
-    events: [],
-  })
 
 // make a small reducer into a big one
 export const lensReducer =
