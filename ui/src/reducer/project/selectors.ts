@@ -18,11 +18,6 @@ export const getProjectBindings = (
   state: State
 ): string[] => Object.keys(bindingsL.get(state))
 
-const typeBindingsL = Lens.fromPath<State>()([
-  'project',
-  'typeBindings',
-])
-
 const versionsL = Lens.fromPath<State>()([
   'project',
   'versions',

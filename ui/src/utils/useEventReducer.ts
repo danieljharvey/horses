@@ -52,7 +52,7 @@ export const useEventReducer = <State, Action, Event>(
   runtime: EventReducerRuntime<State, Action, Event>
 ): [State, (a: Action) => void] => {
   const currentAction = React.useRef<Action | null>(null)
-  let willBeDispatch = (a: Action) => {
+  let willBeDispatch = (_a: Action) => {
     return
   }
 

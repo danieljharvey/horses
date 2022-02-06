@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { LoadingPage } from './LoadingPage'
 import { ProjectPage } from './ProjectPage'
 
