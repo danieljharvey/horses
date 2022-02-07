@@ -21,6 +21,7 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+import Text.Megaparsec
 
 fromRight :: (Printer e) => Either e a -> a
 fromRight either' = case either' of
@@ -32,13 +33,17 @@ fromLeft either' = case either' of
   Left e -> e
   Right _ -> error "Expected a Left!"
 
-unsafeParseExpr :: Text -> Expr Name ()
-unsafeParseExpr t = case parseExpr t of
-  Right a -> a $> ()
-  Left _ ->
+unsafeParseExprWithAnn :: Text -> Expr Name Annotation
+unsafeParseExprWithAnn t = case parseExpr t of
+  Right a -> a
+  Left e ->
     error $
-      "Error parsing expr for Prettier tests:"
+      "Error parsing expr in unsafeParseExpr:"
         <> T.unpack t
+        <> errorBundlePretty e
+
+unsafeParseExpr :: Text -> Expr Name ()
+unsafeParseExpr t = unsafeParseExprWithAnn t $> ()
 
 unsafeParseMonoType :: Text -> Type ()
 unsafeParseMonoType t = case parseMonoType t of
