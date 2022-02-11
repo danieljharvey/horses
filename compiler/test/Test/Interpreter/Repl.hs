@@ -10,9 +10,11 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
-import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter
@@ -46,12 +48,25 @@ eval ::
 eval env input =
   case Actions.evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
-    Right (ResolvedExpression mt se expr' scope' swaps _ _) -> do
+    Right re -> do
+      let (ResolvedExpression mt se expr' scope' swaps _ _) = optimise env (reStoreExpression re)
       saveRegressionData (se $> ())
       let endExpr = interpret scope' swaps expr'
       case toEmptyAnn <$> endExpr of
         Right a -> pure (Right (normaliseType (toEmptyType mt), a))
         Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+
+optimise ::
+  Project Annotation ->
+  StoreExpression Annotation ->
+  ResolvedExpression Annotation
+optimise prj storeExpr = do
+  let action = do
+        se <- Actions.optimiseStoreExpression storeExpr
+        Actions.checkStoreExpression (prettyPrint se) prj se
+   in case Actions.run prj action of
+        Right (_, _, re) -> re
+        Left e -> error (T.unpack $ prettyPrint e)
 
 -- These are saved and used in the deserialisation tests to make sure we avoid
 -- future regressions
@@ -541,40 +556,6 @@ spec =
         result <- eval testStdlib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord {one: 1, two: 2}"
         result `shouldSatisfy` isRight
 
-      it "\\a -> let one = a.one; \\a -> let two = a.two in a.one" $ do
-        result <- eval testStdlib "\\a -> let one = a.one; \\a -> let two = a.two in a.one"
-        -- here the two a's should be different types due to shadowing
-        -- but even knowing the second a is different it can infer stuff
-        fst <$> result
-          `shouldBe` Right
-            ( MTFunction
-                mempty
-                ( MTRecordRow
-                    mempty
-                    (M.singleton "one" (MTVar mempty (tvNum 1)))
-                    (unknown 2)
-                )
-                ( MTFunction
-                    mempty
-                    ( MTRecordRow
-                        mempty
-                        ( M.singleton
-                            "two"
-                            (MTVar mempty (tvNum 3))
-                        )
-                        ( MTRecordRow
-                            mempty
-                            ( M.singleton
-                                "one"
-                                ( MTVar mempty (tvNum 4)
-                                )
-                            )
-                            (unknown 5)
-                        )
-                    )
-                    (MTVar mempty (tvNum 4))
-                )
-            )
       it "if ?missingFn then 1 else 2" $ do
         result <- eval testStdlib "if ?missingFn then 1 else 2"
         result `shouldSatisfy` \case

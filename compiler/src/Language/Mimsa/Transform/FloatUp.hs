@@ -5,10 +5,6 @@ import Language.Mimsa.ExprUtils
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
 
-extractIdentVar :: Identifier var ann -> var
-extractIdentVar (Identifier _ name) = name
-extractIdentVar (AnnotatedIdentifier _ name) = name
-
 -- if a let is above a pattern, it pushes it down into each branch of the
 -- pattern match
 -- this is so that it can be removed by dead code elimination on branches that

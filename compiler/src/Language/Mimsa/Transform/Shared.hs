@@ -1,4 +1,4 @@
-module Language.Mimsa.Transform.Shared (findUses, repeatUntilEq) where
+module Language.Mimsa.Transform.Shared (extractIdentVar, findUses, repeatUntilEq) where
 
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -15,3 +15,7 @@ repeatUntilEq :: (Eq a) => (a -> a) -> a -> a
 repeatUntilEq f a =
   let new = f a
    in if new == a then a else repeatUntilEq f new
+
+extractIdentVar :: Identifier var ann -> var
+extractIdentVar (Identifier _ name) = name
+extractIdentVar (AnnotatedIdentifier _ name) = name
