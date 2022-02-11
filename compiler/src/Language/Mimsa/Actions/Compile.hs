@@ -1,6 +1,7 @@
 module Language.Mimsa.Actions.Compile where
 
 -- get expression
+-- optimise it
 -- work out what to compile for it
 -- compile it to Text
 -- compile stdLib to Text
@@ -16,6 +17,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Runtimes
@@ -31,7 +33,8 @@ import Language.Mimsa.Types.Typechecker
 typecheckStoreExpression :: StoreExpression Annotation -> Actions.ActionM (StoreExpression MonoType)
 typecheckStoreExpression se = do
   project <- Actions.getProject
-  liftEither $ Actions.typecheckStoreExpression (prjStore project) se
+  optSe <- Actions.optimiseStoreExpression se
+  liftEither $ Actions.typecheckStoreExpression (prjStore project) optSe
 
 -- | this now accepts StoreExpression instead of expression
 compile ::
@@ -41,32 +44,36 @@ compile ::
 compile be se = do
   project <- Actions.getProject
 
+  -- optimise expression
+  optSe <- Actions.optimiseStoreExpression se
+
   -- get type of StoreExpression
-  typedMt <- typecheckStoreExpression se
+  typedMt <- typecheckStoreExpression optSe
 
   -- this will eventually check for things we have already transpiled to save
   -- on work
   list <-
     traverse
       typecheckStoreExpression
-      (S.toList $ getTranspileList (prjStore project) se)
+      (S.toList $ getTranspileList (prjStore project) optSe)
 
   -- transpile each required file and add to outputs
   traverse_ (transpileModule be) (list <> pure typedMt)
 
   -- create the index
-  createIndex be (getStoreExpressionHash se)
+  createIndex be (getStoreExpressionHash optSe)
 
   -- include stdlib for runtime
   createStdlib be
 
   -- return useful info
-  let rootExprHash = getStoreExpressionHash se
+  let rootExprHash = getStoreExpressionHash optSe
 
   -- return all ExprHashes created
   let allHashes =
         S.map getStoreExpressionHash (S.fromList list)
           <> S.singleton rootExprHash
+
   pure (rootExprHash, allHashes)
 
 toBackendError :: BackendError MonoType -> Error Annotation
