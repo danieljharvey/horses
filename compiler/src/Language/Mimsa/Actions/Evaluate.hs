@@ -10,7 +10,9 @@ import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Text (Text)
+import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Interpreter.UseSwaps (useSwaps)
@@ -36,14 +38,29 @@ evaluate ::
     )
 evaluate input expr = do
   project <- Actions.getProject
-  resolved@(ResolvedExpression mt se expr' scope' swaps typedExpr input') <-
+  -- typecheck expression
+  resolved <-
     liftEither $ Actions.getTypecheckedStoreExpression input project expr
+
+  -- optimise
+  optimisedStoreExpr <- Actions.optimiseStoreExpression (reStoreExpression resolved)
+
+  -- resolve optimised expression
+  (ResolvedExpression mt se expr' scope' swaps typedExpr input') <-
+    Actions.checkStoreExpression
+      (prettyPrint optimisedStoreExpr)
+      project
+      optimisedStoreExpr
+
+  -- expr with types and Name
   typedNameExpr <-
     liftEither
       ( first
           (\e -> InterpreterErr (e $> mempty))
           (useSwaps swaps typedExpr)
       )
+
+  -- interpret
   interpretedExpr <-
     liftEither (first InterpreterErr (interpret scope' swaps expr'))
 
