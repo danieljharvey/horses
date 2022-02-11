@@ -1,4 +1,4 @@
-module Language.Mimsa.Transform.FindUnused (findUnused, removeUnused) where
+module Language.Mimsa.Transform.FindUnused (findUnused, removeBindings, removeUnused) where
 
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -9,8 +9,16 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-removeUnused :: Set Variable -> Expr Variable ann -> Expr Variable ann
-removeUnused remove = f
+removeUnused :: (Ord ann) => Expr Variable ann -> Expr Variable ann
+removeUnused = repeatUntilEq removeUnusedInternal
+
+removeUnusedInternal :: (Ord ann) => Expr Variable ann -> Expr Variable ann
+removeUnusedInternal expr =
+  let unused = findUnused expr
+   in removeBindings (S.map fst unused) expr
+
+removeBindings :: Set Variable -> Expr Variable ann -> Expr Variable ann
+removeBindings remove = f
   where
     f wholeExpr@(MyLet _ ident _ letBody) =
       let a = case ident of
@@ -20,25 +28,25 @@ removeUnused remove = f
             then letBody
             else wholeExpr
     f (MyPatternMatch ann expr patterns) =
-      let tidyExpr = removeUnused remove expr
+      let tidyExpr = removeBindings remove expr
           tidyPattern (pat, patExpr) =
-            ( removeUnusedInPattern remove pat,
-              removeUnused remove patExpr
+            ( removeBindingsInPattern remove pat,
+              removeBindings remove patExpr
             )
        in MyPatternMatch ann tidyExpr (tidyPattern <$> patterns)
     f (MyLetPattern ann pat expr body) =
       MyLetPattern
         ann
-        (removeUnusedInPattern remove pat)
-        (removeUnused remove expr)
-        (removeUnused remove body)
+        (removeBindingsInPattern remove pat)
+        (removeBindings remove expr)
+        (removeBindings remove body)
     f other = mapExpr f other
 
-removeUnusedInPattern ::
+removeBindingsInPattern ::
   Set Variable ->
   Pattern Variable ann ->
   Pattern Variable ann
-removeUnusedInPattern remove = f
+removeBindingsInPattern remove = f
   where
     f wholePat@(PVar ann a) =
       if S.member a remove

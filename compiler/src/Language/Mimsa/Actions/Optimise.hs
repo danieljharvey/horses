@@ -3,7 +3,6 @@
 module Language.Mimsa.Actions.Optimise (optimise, optimiseByName) where
 
 import Control.Monad.Except
-import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
@@ -89,8 +88,7 @@ optimise se = do
       project
       floatedSe
 
-  let unused = findUnused (reVarExpression resolvedFloated)
-      newExpr = removeUnused (S.map fst unused) (reVarExpression resolvedFloated)
+  let newExpr = removeUnused (reVarExpression resolvedFloated)
 
   newExprName <- Actions.useSwaps (reSwaps resolvedFloated) newExpr
 
