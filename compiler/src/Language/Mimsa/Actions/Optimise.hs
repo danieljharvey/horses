@@ -12,6 +12,9 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.FindUnused
+import Language.Mimsa.Transform.FlattenLets
+import Language.Mimsa.Transform.FloatDown
+import Language.Mimsa.Transform.FloatUp
 import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -58,12 +61,38 @@ optimise ::
 optimise se = do
   project <- Actions.getProject
 
-  resolvedOld <- Actions.checkStoreExpression (prettyPrint (storeExpression se)) project se
+  resolvedOld <-
+    Actions.checkStoreExpression
+      ( prettyPrint (storeExpression se)
+      )
+      project
+      se
 
-  let unused = findUnused (reVarExpression resolvedOld)
-      newExpr = removeUnused (S.map fst unused) (reVarExpression resolvedOld)
+  -- flatten lets
+  let flattened = flattenLets (reVarExpression resolvedOld)
 
-  newExprName <- Actions.useSwaps (reSwaps resolvedOld) newExpr
+  -- float lets up above lambdas
+  let floatedUp = floatUp flattened
+
+  -- make into Expr Name
+  floatedUpExprName <- Actions.useSwaps (reSwaps resolvedOld) floatedUp
+
+  -- float lets down into patterns
+  let floatedDown = floatDown floatedUpExprName
+
+  let floatedSe = trimDeps se floatedDown
+
+  -- turn back into Expr Variable (fresh names for copied vars)
+  resolvedFloated <-
+    Actions.checkStoreExpression
+      (prettyPrint (storeExpression floatedSe))
+      project
+      floatedSe
+
+  let unused = findUnused (reVarExpression resolvedFloated)
+      newExpr = removeUnused (S.map fst unused) (reVarExpression resolvedFloated)
+
+  newExprName <- Actions.useSwaps (reSwaps resolvedFloated) newExpr
 
   let newStoreExpr = trimDeps se newExprName
 

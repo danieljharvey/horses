@@ -1,9 +1,10 @@
-module Language.Mimsa.Transform.FindUnused (findUses, findUnused, removeUnused) where
+module Language.Mimsa.Transform.FindUnused (findUnused, removeUnused) where
 
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
@@ -89,9 +90,3 @@ findVariableInPattern (PString _ sHead sTail) =
    in findStringPartVar sHead <> findStringPartVar sTail
 findVariableInPattern PWildcard {} = mempty
 findVariableInPattern PLit {} = mempty
-
-findUses :: (Ord var) => Expr var ann -> Set var
-findUses = withMonoid f
-  where
-    f (MyVar _ a) = (False, S.singleton a)
-    f _ = (True, mempty)

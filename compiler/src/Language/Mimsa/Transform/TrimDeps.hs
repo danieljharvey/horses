@@ -2,7 +2,7 @@ module Language.Mimsa.Transform.TrimDeps where
 
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Language.Mimsa.Transform.FindUnused
+import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
