@@ -61,7 +61,7 @@ buildTestStdlib =
         "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
       addBinding
         "and"
-        "\\a -> \\b -> if a then True else b"
+        "\\a -> \\b -> if a then b else False"
       addBinding
         "eq"
         "\\a -> \\b -> a == b"

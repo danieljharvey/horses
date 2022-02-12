@@ -20,6 +20,7 @@ import Data.OpenApi hiding (get)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
+import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Upgrade as Actions
 import Language.Mimsa.Printer
@@ -86,9 +87,10 @@ upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
           typedNameExpr <- Actions.useSwaps swaps typedExpr
           gv <- Actions.graphExpression se
           let warnings = getWarnings resolvedExpr
+          canOptimise <- Actions.canOptimise se
           pure
             ( mapUpgradedDeps depUpdates,
-              makeExpressionData se typedNameExpr gv input warnings
+              makeExpressionData se typedNameExpr gv input warnings canOptimise
             )
 
     store' <- lift $ readStoreHandler mimsaEnv

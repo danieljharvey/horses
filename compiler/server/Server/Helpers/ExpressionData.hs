@@ -37,7 +37,8 @@ data ExpressionData = ExpressionData
     edGraphviz :: Text,
     edSourceItems :: [SourceItem],
     edInput :: Text,
-    edWarnings :: [Text]
+    edWarnings :: [Text],
+    edCanOptimise :: Bool
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -48,8 +49,9 @@ makeExpressionData ::
   [Graphviz] ->
   Text ->
   [Warning] ->
+  Bool ->
   ExpressionData
-makeExpressionData se typedExpr gv input warnings =
+makeExpressionData se typedExpr gv input warnings canOptimise =
   let mt = getTypeFromAnn typedExpr
       exprHash = getStoreExpressionHash se
    in ExpressionData
@@ -62,3 +64,4 @@ makeExpressionData se typedExpr gv input warnings =
         (getExpressionSourceItems input typedExpr)
         input
         (prettyPrint <$> warnings)
+        canOptimise

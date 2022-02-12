@@ -70,7 +70,7 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) =
           pure $
             EvaluateResponse
               (prettyPrint simpleExpr)
-              (makeExpressionData se typedExpr gv input warnings)
+              (makeExpressionData se typedExpr gv input warnings False)
     response <- lift $ eitherFromActionM mimsaEnv hash action
     case response of
       Left e -> throwMimsaError e

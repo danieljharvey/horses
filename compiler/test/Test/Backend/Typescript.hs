@@ -247,7 +247,7 @@ fullTestCases =
     ("2 <= 2", "true"),
     ("3 <= 2", "false"),
     ("Monoid", "[Function: Monoid]"),
-    ("let a = 1; let b = 3; let c = 6; True", "true")
+    ("let a = 1; let b = 3; let c = 6; and False True", "false")
   ]
 
 spec :: Spec

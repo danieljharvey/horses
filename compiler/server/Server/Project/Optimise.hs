@@ -80,6 +80,7 @@ optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
                 graphviz
                 input
                 warnings
+                False -- can't optimise this again, we just did
             )
 
     store' <- lift $ readStoreHandler mimsaEnv
