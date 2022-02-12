@@ -142,9 +142,7 @@ export const Feedback: React.FC<Props> = ({
             state={state}
             onOptimiseExpression={onOptimiseExpression}
             name={result.bindingName}
-            hasWarnings={
-              result.expression.edWarnings.length > 0
-            }
+            canOptimise={result.expression.edCanOptimise}
           />
           <ListVersions
             versions={versions}
@@ -208,8 +206,8 @@ export const Feedback: React.FC<Props> = ({
                 state={state}
                 onOptimiseExpression={onOptimiseExpression}
                 name={name}
-                hasWarnings={
-                  result.expression.edWarnings.length > 0
+                canOptimise={
+                  result.expression.edCanOptimise
                 }
               />
             )),

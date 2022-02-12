@@ -13,19 +13,19 @@ type OptimiseProps = {
   name: string
   state: State
   onOptimiseExpression: (bindingName: string) => void
-  hasWarnings: boolean
+  canOptimise: boolean
 }
 
 export const Optimise: React.FC<OptimiseProps> = ({
   name,
   state,
   onOptimiseExpression,
-  hasWarnings,
+  canOptimise,
 }) => {
   const bindingIsNewest = (exprHash: ExprHash) =>
     O.isSome(lookupNameForExprHash(exprHash, state))
 
-  if (!bindingIsNewest || !hasWarnings) {
+  if (!bindingIsNewest || !canOptimise) {
     return null
   }
 
