@@ -94,8 +94,10 @@ optimiseStoreExpression storeExpr = do
       project
       storeExpr
 
+  let withUnusedRemoved = removeUnused (reVarExpression resolvedOld)
+
   -- flatten lets
-  let flattened = flattenLets (reVarExpression resolvedOld)
+  let flattened = flattenLets withUnusedRemoved
 
   -- float lets up above lambdas
   let floatedUp = floatUp flattened

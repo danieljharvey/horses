@@ -62,7 +62,14 @@ optimise ::
   ResolvedExpression Annotation
 optimise prj storeExpr = do
   let action = do
+        -- optimise once
         se <- Actions.optimiseStoreExpression storeExpr
+        -- optimise twice, it should be the same, if not we need to optimise
+        -- more thoroughly
+        newSe <- Actions.optimiseStoreExpression se
+        if se /= newSe
+          then error ("Optimising twice gives different results for " <> T.unpack (prettyPrint storeExpr))
+          else pure ()
         Actions.checkStoreExpression (prettyPrint se) prj se
    in case Actions.run prj action of
         Right (_, _, re) -> re
@@ -1053,6 +1060,11 @@ spec =
 
       it "each type variable is unique to the scope it's introduced in" $ do
         result <- eval testStdlib "let id1 (a: a) = (a,a); let id2 (b: a) = b; id1 (id2 True)"
+        result `shouldSatisfy` isRight
+
+    describe "optimisations" $ do
+      it "should do all optimisations in one pass" $ do
+        result <- eval testStdlib "\\opts -> let split = [1,2,3]; match split with [a, b, c] -> (Just ((a, b))) | _ -> (Nothing)"
         result `shouldSatisfy` isRight
 
     describe "operators" $ do
