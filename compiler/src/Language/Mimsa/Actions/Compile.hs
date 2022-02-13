@@ -30,11 +30,12 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
-typecheckStoreExpression :: StoreExpression Annotation -> Actions.ActionM (StoreExpression MonoType)
+typecheckStoreExpression ::
+  StoreExpression Annotation ->
+  Actions.ActionM (StoreExpression MonoType)
 typecheckStoreExpression se = do
   project <- Actions.getProject
-  optSe <- Actions.optimiseStoreExpression se
-  liftEither $ Actions.typecheckStoreExpression (prjStore project) optSe
+  liftEither $ Actions.typecheckStoreExpression (prjStore project) se
 
 -- | this now accepts StoreExpression instead of expression
 compile ::
