@@ -328,7 +328,8 @@ prettyPatternMatch sumExpr matches =
         )
   where
     printMatch (construct, expr') =
-      printSubPattern construct <+> "->" <+> printSubExpr expr'
+      printSubPattern construct <+> "->" <+> line
+        <> indentMulti 4 (prettyDoc expr')
 
 prettyDataType ::
   DataType ->
