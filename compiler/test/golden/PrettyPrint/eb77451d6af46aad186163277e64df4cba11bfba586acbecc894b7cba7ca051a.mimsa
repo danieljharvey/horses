@@ -1,0 +1,7 @@
+let split =
+  [ 1, 2, 3 ];
+
+\opts ->
+  match split with 
+      [a, b, c] -> (Just ((a, b)))
+    | _ -> (Nothing)

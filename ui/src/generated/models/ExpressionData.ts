@@ -10,6 +10,7 @@ export type ExpressionData = {
   edInput: string
   edType: string
   edSourceItems: Array<SourceItem>
+  edCanOptimise: boolean
   edPretty: string
   edTypeBindings: Record<string, string>
   edWarnings: Array<string>

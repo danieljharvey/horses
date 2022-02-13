@@ -1,51 +1,81 @@
-module Language.Mimsa.Transform.FindUnused (findUses, findUnused, removeUnused) where
+module Language.Mimsa.Transform.FindUnused (findUnused, removeBindings, removeUnused) where
 
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
-removeUnused :: Set Variable -> Expr Variable ann -> Expr Variable ann
-removeUnused remove = f
+removeUnused :: (Ord ann, Ord var) => Expr var ann -> Expr var ann
+removeUnused = repeatUntilEq removeUnusedInternal
+
+removeUnusedInternal ::
+  (Ord ann, Ord var) =>
+  Expr var ann ->
+  Expr var ann
+removeUnusedInternal expr =
+  let unused = findUnused expr
+   in removeBindings (S.map fst unused) expr
+
+removeBindings :: (Ord var) => Set var -> Expr var ann -> Expr var ann
+removeBindings remove = f
   where
-    f wholeExpr@(MyLet _ ident _ letBody) =
+    f (MyLet ann ident letExpr letBody) =
       let a = case ident of
             Identifier _ var -> var
             AnnotatedIdentifier _ var -> var
        in if S.member a remove
             then letBody
-            else wholeExpr
+            else MyLet ann ident (f letExpr) (f letBody)
     f (MyPatternMatch ann expr patterns) =
-      let tidyExpr = removeUnused remove expr
-          tidyPattern (pat, patExpr) =
-            ( removeUnusedInPattern remove pat,
-              removeUnused remove patExpr
+      let tidyPattern (pat, patExpr) =
+            ( removeBindingsInPattern remove pat,
+              f patExpr
             )
-       in MyPatternMatch ann tidyExpr (tidyPattern <$> patterns)
+       in MyPatternMatch ann (f expr) (tidyPattern <$> patterns)
     f (MyLetPattern ann pat expr body) =
       MyLetPattern
         ann
-        (removeUnusedInPattern remove pat)
-        (removeUnused remove expr)
-        (removeUnused remove body)
+        (removeBindingsInPattern remove pat)
+        (f expr)
+        (f body)
     f other = mapExpr f other
 
-removeUnusedInPattern ::
-  Set Variable ->
-  Pattern Variable ann ->
-  Pattern Variable ann
-removeUnusedInPattern remove = f
+removeBindingsInPattern ::
+  (Ord var) =>
+  Set var ->
+  Pattern var ann ->
+  Pattern var ann
+removeBindingsInPattern remove = f
   where
     f wholePat@(PVar ann a) =
       if S.member a remove
         then PWildcard ann
         else wholePat
+    f (PString ann pHead pTail) =
+      let removeFromStringPart sp = case sp of
+            StrValue strAnn a ->
+              if S.member a remove
+                then StrWildcard strAnn
+                else sp
+            other -> other
+       in PString
+            ann
+            (removeFromStringPart pHead)
+            (removeFromStringPart pTail)
+    f (PArray ann pParts pSpread) =
+      let rmSpread = case pSpread of
+            SpreadValue sprAnn' a ->
+              if S.member a remove
+                then SpreadWildcard sprAnn'
+                else pSpread
+            other -> other
+       in PArray ann (f <$> pParts) rmSpread
     f other = mapPattern f other
 
-findUnused :: (Ord ann) => Expr Variable ann -> Set (Variable, ann)
+findUnused :: (Ord ann, Ord var) => Expr var ann -> Set (var, ann)
 findUnused expr =
   let uses = findUses expr
    in S.filter (\(var, _) -> not $ S.member var uses) (findVariables expr)
@@ -54,7 +84,7 @@ findUnused expr =
 -- | we don't need to worry about shadowing because we'll have made everything
 -- unique that needs to be in a previous step (otherwise typechecking would
 -- choke)
-findVariables :: (Ord ann) => Expr Variable ann -> Set (Variable, ann)
+findVariables :: (Ord ann, Ord var) => Expr var ann -> Set (var, ann)
 findVariables = withMonoid f
   where
     f (MyLet _ (Identifier ann a) _ _) =
@@ -68,7 +98,7 @@ findVariables = withMonoid f
     f _other = (True, mempty)
 
 -- | Find all variables in pattern match
-findVariableInPattern :: (Ord ann) => Pattern Variable ann -> Set (Variable, ann)
+findVariableInPattern :: (Ord ann, Ord var) => Pattern var ann -> Set (var, ann)
 findVariableInPattern (PVar ann a) =
   S.singleton (a, ann)
 findVariableInPattern (PPair _ a b) =
@@ -89,9 +119,3 @@ findVariableInPattern (PString _ sHead sTail) =
    in findStringPartVar sHead <> findStringPartVar sTail
 findVariableInPattern PWildcard {} = mempty
 findVariableInPattern PLit {} = mempty
-
-findUses :: (Ord var) => Expr var ann -> Set var
-findUses = withMonoid f
-  where
-    f (MyVar _ a) = (False, S.singleton a)
-    f _ = (True, mempty)

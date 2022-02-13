@@ -1,0 +1,7 @@
+let d =
+  "dog";
+
+\opts ->
+  match [ "a", "b" ] with 
+      [a, _, _] -> (Just ((a, d)))
+    | _ -> (Nothing)

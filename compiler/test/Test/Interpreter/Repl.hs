@@ -10,9 +10,12 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
-import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter
@@ -20,6 +23,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
+import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
@@ -46,12 +50,44 @@ eval ::
 eval env input =
   case Actions.evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
-    Right (ResolvedExpression mt se expr' scope' swaps _ _) -> do
+    Right re -> do
+      let (ResolvedExpression mt se expr' scope' swaps _ _) = optimise env (reStoreExpression re)
       saveRegressionData (se $> ())
       let endExpr = interpret scope' swaps expr'
       case toEmptyAnn <$> endExpr of
         Right a -> pure (Right (normaliseType (toEmptyType mt), a))
         Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+
+optimise ::
+  Project Annotation ->
+  StoreExpression Annotation ->
+  ResolvedExpression Annotation
+optimise prj storeExpr = do
+  let action = do
+        -- optimise once
+        se <- Actions.optimiseStoreExpression storeExpr
+        -- optimise twice, it should be the same, if not we need to optimise
+        -- more thoroughly
+        newSe <- Actions.optimiseStoreExpression se
+        if se /= newSe
+          then error ("Optimising twice gives different results for " <> T.unpack (prettyPrint storeExpr))
+          else pure ()
+
+        -- have we left some unused vars?
+        let stillUnused = findUnused (storeExpression se)
+        if not (S.null stillUnused)
+          then
+            error $
+              "Unused found after optimise: "
+                <> T.unpack (prettyPrint stillUnused)
+                <> "\n"
+                <> T.unpack (prettyPrint (storeExpression se))
+          else pure ()
+
+        Actions.checkStoreExpression (prettyPrint se) prj se
+   in case Actions.run prj action of
+        Right (_, _, re) -> re
+        Left e -> error (T.unpack $ prettyPrint e)
 
 -- These are saved and used in the deserialisation tests to make sure we avoid
 -- future regressions
@@ -541,40 +577,6 @@ spec =
         result <- eval testStdlib "let useRecord = (\\a -> let one = a.one; let two = a.two; one + two) in useRecord {one: 1, two: 2}"
         result `shouldSatisfy` isRight
 
-      it "\\a -> let one = a.one; \\a -> let two = a.two in a.one" $ do
-        result <- eval testStdlib "\\a -> let one = a.one; \\a -> let two = a.two in a.one"
-        -- here the two a's should be different types due to shadowing
-        -- but even knowing the second a is different it can infer stuff
-        fst <$> result
-          `shouldBe` Right
-            ( MTFunction
-                mempty
-                ( MTRecordRow
-                    mempty
-                    (M.singleton "one" (MTVar mempty (tvNum 1)))
-                    (unknown 2)
-                )
-                ( MTFunction
-                    mempty
-                    ( MTRecordRow
-                        mempty
-                        ( M.singleton
-                            "two"
-                            (MTVar mempty (tvNum 3))
-                        )
-                        ( MTRecordRow
-                            mempty
-                            ( M.singleton
-                                "one"
-                                ( MTVar mempty (tvNum 4)
-                                )
-                            )
-                            (unknown 5)
-                        )
-                    )
-                    (MTVar mempty (tvNum 4))
-                )
-            )
       it "if ?missingFn then 1 else 2" $ do
         result <- eval testStdlib "if ?missingFn then 1 else 2"
         result `shouldSatisfy` \case
@@ -1072,6 +1074,11 @@ spec =
 
       it "each type variable is unique to the scope it's introduced in" $ do
         result <- eval testStdlib "let id1 (a: a) = (a,a); let id2 (b: a) = b; id1 (id2 True)"
+        result `shouldSatisfy` isRight
+
+    describe "optimisations" $ do
+      it "should do all optimisations in one pass" $ do
+        result <- eval testStdlib "\\opts -> let d = \"dog\"; match [\"a\", \"b\"] with [a, b, c] -> (Just ((a, d))) | _ -> (Nothing)"
         result `shouldSatisfy` isRight
 
     describe "operators" $ do

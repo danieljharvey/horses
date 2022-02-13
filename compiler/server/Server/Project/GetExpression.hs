@@ -14,6 +14,7 @@ import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
+import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -52,11 +53,13 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' projectHash
   se <- findExprHandler project exprHash'
-  (_, graphviz) <-
+  let action =
+        (,) <$> Actions.graphExpression se <*> Actions.canOptimise se
+  (_, (graphviz, canOptimise)) <-
     fromActionM
       mimsaEnv
       projectHash
-      (Actions.graphExpression se)
+      action
   resolvedExpr <-
     resolveStoreExpressionHandler project se
   writeStoreHandler mimsaEnv (prjStore project)
@@ -67,4 +70,4 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
   let warnings = getWarnings resolvedExpr
   pure $
     GetExpressionResponse
-      (makeExpressionData se typedExpr graphviz (reInput resolvedExpr) warnings)
+      (makeExpressionData se typedExpr graphviz (reInput resolvedExpr) warnings canOptimise)

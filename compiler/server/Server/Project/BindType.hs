@@ -75,7 +75,7 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
                 (reTypedExpression resolvedExpr)
             gv <- Actions.graphExpression se
             let warnings = getWarnings resolvedExpr
-            let ed' = makeExpressionData se typedNameExpr gv input warnings
+            let ed' = makeExpressionData se typedNameExpr gv input warnings False
             pure (Just ed')
           Nothing -> pure Nothing
         pure (ed, typeClasses, dt)

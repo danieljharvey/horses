@@ -1,9 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Optimise (optimise, optimiseByName) where
+module Language.Mimsa.Actions.Optimise (optimise, optimiseByName, optimiseStoreExpression) where
 
 import Control.Monad.Except
-import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
@@ -12,6 +11,9 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.FindUnused
+import Language.Mimsa.Transform.FlattenLets
+import Language.Mimsa.Transform.FloatDown
+import Language.Mimsa.Transform.FloatUp
 import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -58,23 +60,72 @@ optimise ::
 optimise se = do
   project <- Actions.getProject
 
-  resolvedOld <- Actions.checkStoreExpression (prettyPrint (storeExpression se)) project se
+  -- run optimisations
+  storeExprNew <- optimiseStoreExpression se
 
-  let unused = findUnused (reVarExpression resolvedOld)
-      newExpr = removeUnused (S.map fst unused) (reVarExpression resolvedOld)
+  -- save new store expr
+  Actions.appendStoreExpression storeExprNew
 
-  newExprName <- Actions.useSwaps (reSwaps resolvedOld) newExpr
-
-  let newStoreExpr = trimDeps se newExprName
-
-  resolved <- Actions.checkStoreExpression (prettyPrint (storeExpression newStoreExpr)) project newStoreExpr
-
-  Actions.appendStoreExpression (reStoreExpression resolved)
+  -- typecheck optimisations
+  resolvedNew <-
+    Actions.checkStoreExpression
+      (prettyPrint storeExprNew)
+      project
+      storeExprNew
 
   -- update tests
   numTestsUpdated <-
     Actions.updateTests
       (getStoreExpressionHash se)
-      (getStoreExpressionHash newStoreExpr)
+      (getStoreExpressionHash storeExprNew)
 
-  pure (resolved, numTestsUpdated)
+  pure (resolvedNew, numTestsUpdated)
+
+optimiseStoreExpression ::
+  StoreExpression Annotation ->
+  Actions.ActionM (StoreExpression Annotation)
+optimiseStoreExpression storeExpr = do
+  project <- Actions.getProject
+
+  -- get Expr Variable ann
+  resolvedOld <-
+    Actions.checkStoreExpression
+      (prettyPrint storeExpr)
+      project
+      storeExpr
+
+  -- remove first unused
+  let withoutUnused = removeUnused (reVarExpression resolvedOld)
+
+  -- flatten lets
+  let flattened = flattenLets withoutUnused
+
+  -- float lets up above lambdas
+  let floatedUp = floatUp flattened
+
+  -- make into Expr Name
+  floatedUpExprName <- Actions.useSwaps (reSwaps resolvedOld) floatedUp
+
+  -- float lets down into patterns
+  let floatedSe =
+        trimDeps
+          (reStoreExpression resolvedOld)
+          (floatDown floatedUpExprName)
+
+  -- turn back into Expr Variable (fresh names for copied vars)
+  resolvedFloated <-
+    Actions.checkStoreExpression
+      (prettyPrint (storeExpression floatedSe))
+      project
+      floatedSe
+
+  -- remove unused stuff
+  newExprName <-
+    Actions.useSwaps
+      (reSwaps resolvedFloated)
+      (removeUnused (reVarExpression resolvedFloated))
+
+  pure $
+    trimDeps
+      (reStoreExpression resolvedFloated)
+      newExprName

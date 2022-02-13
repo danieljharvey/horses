@@ -31,6 +31,7 @@ library
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Evaluate
       Language.Mimsa.Actions.Graph
+      Language.Mimsa.Actions.Helpers.CanOptimise
       Language.Mimsa.Actions.Helpers.CheckStoreExpression
       Language.Mimsa.Actions.Helpers.FindExistingBinding
       Language.Mimsa.Actions.Helpers.Parse
@@ -112,6 +113,10 @@ library
       Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Transform.FindUnused
+      Language.Mimsa.Transform.FlattenLets
+      Language.Mimsa.Transform.FloatDown
+      Language.Mimsa.Transform.FloatUp
+      Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.TrimDeps
       Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
@@ -383,6 +388,9 @@ test-suite mimsa-test
       Test.Tests.PropertyTest
       Test.Tests.UnitTest
       Test.Transform.FindUnused
+      Test.Transform.FlattenLets
+      Test.Transform.FloatDown
+      Test.Transform.FloatUp
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
