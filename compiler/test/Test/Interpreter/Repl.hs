@@ -10,6 +10,7 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
@@ -22,6 +23,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
+import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
@@ -70,6 +72,18 @@ optimise prj storeExpr = do
         if se /= newSe
           then error ("Optimising twice gives different results for " <> T.unpack (prettyPrint storeExpr))
           else pure ()
+
+        -- have we left some unused vars?
+        let stillUnused = findUnused (storeExpression se)
+        if not (S.null stillUnused)
+          then
+            error $
+              "Unused found after optimise: "
+                <> T.unpack (prettyPrint stillUnused)
+                <> "\n"
+                <> T.unpack (prettyPrint (storeExpression se))
+          else pure ()
+
         Actions.checkStoreExpression (prettyPrint se) prj se
    in case Actions.run prj action of
         Right (_, _, re) -> re
@@ -1064,7 +1078,7 @@ spec =
 
     describe "optimisations" $ do
       it "should do all optimisations in one pass" $ do
-        result <- eval testStdlib "\\opts -> let split = [1,2,3]; match split with [a, b, c] -> (Just ((a, b))) | _ -> (Nothing)"
+        result <- eval testStdlib "\\opts -> let d = \"dog\"; match [\"a\", \"b\"] with [a, b, c] -> (Just ((a, d))) | _ -> (Nothing)"
         result `shouldSatisfy` isRight
 
     describe "operators" $ do
