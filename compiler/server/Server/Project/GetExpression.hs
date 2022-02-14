@@ -13,9 +13,10 @@ where
 import qualified Data.Aeson as JSON
 import Data.OpenApi
 import GHC.Generics
-import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import Language.Mimsa.Printer
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -24,7 +25,6 @@ import Servant
 import Server.Handlers
 import Server.Helpers.ExpressionData
 import Server.Types
-import Language.Mimsa.Printer
 
 -- /project/expression/
 
@@ -72,7 +72,7 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
 
   writeStoreHandler mimsaEnv (prjStore project)
 
-  -- | turn Expr Variable MonoType into Expr Name MonoType
+  -- turn Expr Variable MonoType into Expr Name MonoType
   typedExpr <-
     useSwapsHandler
       (reSwaps resolvedExpr)
