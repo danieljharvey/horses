@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project.CreateProject
+module Server.Endpoints.Project.CreateProject
   ( createProject,
     CreateProject,
   )

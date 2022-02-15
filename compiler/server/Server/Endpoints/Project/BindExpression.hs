@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project.BindExpression
+module Server.Endpoints.Project.BindExpression
   ( bindExpression,
     BindExpression,
   )

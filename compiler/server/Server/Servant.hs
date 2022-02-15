@@ -10,12 +10,13 @@ where
 
 import Data.Proxy
 import Servant
-import Server.Compile
-import Server.Project
-import Server.Search
+import Server.Endpoints.Compile
+import Server.Endpoints.Expression
+import Server.Endpoints.Project
+import Server.Endpoints.Search
 import Server.Types
 
-type MimsaAPI = ProjectAPI :<|> SearchAPI :<|> CompileAPI
+type MimsaAPI = ProjectAPI :<|> SearchAPI :<|> CompileAPI :<|> GetExpression
 
 mimsaAPI :: Proxy MimsaAPI
 mimsaAPI = Proxy
@@ -25,3 +26,4 @@ mimsaServer mimsaEnv =
   projectEndpoints mimsaEnv
     :<|> searchEndpoints mimsaEnv
     :<|> compileEndpoints mimsaEnv
+    :<|> getExpression mimsaEnv

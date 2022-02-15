@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Search (SearchAPI, searchEndpoints) where
+module Server.Endpoints.Search (SearchAPI, searchEndpoints) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Map as M

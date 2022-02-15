@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project.Graph
+module Server.Endpoints.Project.Graph
   ( graphProject,
     GraphAPI,
   )

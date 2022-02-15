@@ -1,24 +1,23 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project
+module Server.Endpoints.Project
   ( projectEndpoints,
     ProjectAPI,
   )
 where
 
 import Servant
-import Server.Project.AddUnitTest
-import Server.Project.BindExpression
-import Server.Project.BindType
-import Server.Project.CreateProject
-import Server.Project.Evaluate
-import Server.Project.GetExpression
-import Server.Project.Graph
-import Server.Project.ListBindings
-import Server.Project.ListTests
-import Server.Project.Optimise
-import Server.Project.Upgrade
+import Server.Endpoints.Project.AddUnitTest
+import Server.Endpoints.Project.BindExpression
+import Server.Endpoints.Project.BindType
+import Server.Endpoints.Project.CreateProject
+import Server.Endpoints.Project.Evaluate
+import Server.Endpoints.Project.Graph
+import Server.Endpoints.Project.ListBindings
+import Server.Endpoints.Project.ListTests
+import Server.Endpoints.Project.Optimise
+import Server.Endpoints.Project.Upgrade
 import Server.Types
 
 -----
@@ -30,7 +29,7 @@ import Server.Types
 
 type ProjectAPI =
   "project"
-    :> ( EvaluateAPI :<|> ListBindings :<|> GetExpression
+    :> ( EvaluateAPI :<|> ListBindings
            :<|> CreateProject
            :<|> BindExpression
            :<|> BindType
@@ -48,7 +47,6 @@ projectEndpoints ::
 projectEndpoints mimsaEnv =
   evaluateExpression mimsaEnv
     :<|> listBindings mimsaEnv
-    :<|> getExpression mimsaEnv
     :<|> createProject mimsaEnv
     :<|> bindExpression mimsaEnv
     :<|> bindType mimsaEnv

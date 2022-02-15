@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project.BindType
+module Server.Endpoints.Project.BindType
   ( bindType,
     BindType,
   )

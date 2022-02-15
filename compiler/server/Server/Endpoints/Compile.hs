@@ -6,19 +6,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Compile (CompileAPI, compileEndpoints) where
+module Server.Endpoints.Compile (CompileAPI, compileEndpoints) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
-import Data.Functor
 import Data.OpenApi (NamedSchema (..), ToSchema, binarySchema, declareNamedSchema)
 import Data.Set (Set)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.ZipFile
-import Language.Mimsa.Project
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant
 import Server.Handlers
@@ -75,11 +72,7 @@ compileHashEndpoint ::
 compileHashEndpoint
   mimsaEnv
   (CompileHashRequest exprHash backend) = do
-    store <- storeFromExprHashHandler mimsaEnv exprHash
-    let project = fromStore store $> mempty
-    storeExpr <- findExprHandler project exprHash
-    pd <- projectDataHandler mimsaEnv project
-    writeStoreHandler mimsaEnv (prjStore project)
+    (storeExpr, pd, _) <- projectFromExpressionHandler mimsaEnv exprHash
     (_, (rootExprHash, exprHashes)) <-
       fromActionM mimsaEnv (pdHash pd) (Actions.compile backend storeExpr)
     let filename = "mimsa-" <> show rootExprHash <> ".zip"

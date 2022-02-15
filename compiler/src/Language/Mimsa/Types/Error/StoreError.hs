@@ -1,17 +1,24 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Error.StoreError where
+module Language.Mimsa.Types.Error.StoreError (StoreError (..), FileType (..)) where
 
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 
+data FileType = ProjectFile | StoreExprFile
+  deriving stock (Eq, Ord, Show)
+
+instance Printer FileType where
+  prettyPrint ProjectFile = "project"
+  prettyPrint StoreExprFile = "store expression"
+
 data StoreError
   = ExpressionDoesNotMatchHash ExprHash ExprHash
-  | CouldNotReadFilePath FilePath
-  | CouldNotWriteFilePath FilePath
+  | CouldNotReadFilePath FileType FilePath
+  | CouldNotWriteFilePath FileType FilePath
   | CouldNotDecodeJson ExprHash
   | CouldNotDecodeFile FilePath
   | CouldNotDecodeByteString
@@ -28,10 +35,10 @@ instance Printer StoreError where
       <> prettyPrint a
       <> " !== "
       <> prettyPrint b
-  prettyPrint (CouldNotReadFilePath path) =
-    "Could not read file at path " <> T.pack path
-  prettyPrint (CouldNotWriteFilePath path) =
-    "Could not write file at path " <> T.pack path
+  prettyPrint (CouldNotReadFilePath fileType path) =
+    "Could not read " <> prettyPrint fileType <> " file at path " <> T.pack path
+  prettyPrint (CouldNotWriteFilePath fileType path) =
+    "Could not write " <> prettyPrint fileType <> " file at path " <> T.pack path
   prettyPrint (CouldNotDecodeJson hash') =
     "Could not decode JSON for hash " <> prettyPrint hash'
   prettyPrint CouldNotDecodeByteString =

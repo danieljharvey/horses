@@ -3,13 +3,13 @@ import { EventReducerRuntime } from '../utils/useEventReducer'
 import {
   evaluate,
   createProject,
-  getExpression,
   bindExpression,
   listBindings,
   addUnitTest,
   upgradeExpression,
   optimiseExpression,
 } from '../service/project'
+import { getExpression } from '../service/expression'
 import { ExprHash } from '../types/'
 import { setScreen } from './view/reducer'
 import { projectSet } from './project/helpers'
@@ -74,10 +74,7 @@ export const runtime =
       case 'FetchExpressions':
         const fetchAndDispatch = (exprHash: ExprHash) =>
           pipe(
-            getExpression({
-              geExprHash: exprHash,
-              geProjectHash: event.projectHash,
-            }),
+            getExpression(exprHash),
             TE.map((a) => ({
               type: 'FetchExpressionSuccess' as const,
               exprHash,

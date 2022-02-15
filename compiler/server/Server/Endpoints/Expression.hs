@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project.GetExpression
+module Server.Endpoints.Expression
   ( getExpression,
     GetExpression,
   )
@@ -18,7 +18,6 @@ import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Transform.Warnings
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Servant
@@ -26,17 +25,14 @@ import Server.Handlers
 import Server.Helpers.ExpressionData
 import Server.Types
 
--- /project/expression/
+-- /expression/
 
--- TODO: should this be in Store and have nothing to do with projects?
--- it could findExpr to get everything we need and then typecheck from there
 type GetExpression =
-  "expression" :> ReqBody '[JSON] GetExpressionRequest
-    :> Post '[JSON] GetExpressionResponse
+  "expression" :> Capture "exprHash" ExprHash
+    :> Get '[JSON] GetExpressionResponse
 
-data GetExpressionRequest = GetExpressionRequest
-  { geProjectHash :: ProjectHash,
-    geExprHash :: ExprHash
+newtype GetExpressionRequest = GetExpressionRequest
+  { geExprHash :: ExprHash
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.FromJSON, ToSchema)
@@ -49,28 +45,25 @@ newtype GetExpressionResponse = GetExpressionResponse
 
 getExpression ::
   MimsaEnvironment ->
-  GetExpressionRequest ->
+  ExprHash ->
   Handler GetExpressionResponse
-getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' projectHash
-  se <- findExprHandler project exprHash'
+getExpression mimsaEnv exprHash' = do
+  -- using items in the store, creating a project just for this expression
+  (storeExpr, pd, project) <- projectFromExpressionHandler mimsaEnv exprHash'
 
   let action =
-        (,,) <$> Actions.graphExpression se <*> Actions.canOptimise se
-          <*> Actions.parseExpr (prettyPrint (storeExpression se))
+        (,,) <$> Actions.graphExpression storeExpr <*> Actions.canOptimise storeExpr
+          <*> Actions.parseExpr (prettyPrint (storeExpression storeExpr))
 
   (_, (graphviz, canOptimise, exprName)) <-
     fromActionM
       mimsaEnv
-      projectHash
+      (pdHash pd)
       action
 
   -- re-resolved expr, using the parsed input expr (as it has annotations)
   resolvedExpr <-
-    resolveStoreExpressionHandler project (se {storeExpression = exprName})
-
-  writeStoreHandler mimsaEnv (prjStore project)
+    resolveStoreExpressionHandler project (storeExpr {storeExpression = exprName})
 
   -- turn Expr Variable MonoType into Expr Name MonoType
   typedExpr <-
@@ -81,4 +74,4 @@ getExpression mimsaEnv (GetExpressionRequest projectHash exprHash') = do
 
   pure $
     GetExpressionResponse
-      (makeExpressionData se typedExpr graphviz (reInput resolvedExpr) warnings canOptimise)
+      (makeExpressionData storeExpr typedExpr graphviz (reInput resolvedExpr) warnings canOptimise)

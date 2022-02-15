@@ -23,12 +23,14 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Monad
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import System.Directory
 
 storePath :: String
 storePath = "./"
@@ -59,7 +61,7 @@ loadProject' ::
 loadProject' = do
   project' <- liftIO $ try $ LBS.readFile envPath
   case project' of
-    Left (_ :: IOError) -> throwError (CouldNotReadFilePath envPath)
+    Left (_ :: IOError) -> throwError (CouldNotReadFilePath ProjectFile envPath)
     Right json' ->
       case JSON.decode json' of
         Just sp -> fetchProjectItems mempty sp -- we're starting from scratch with this one
@@ -85,7 +87,7 @@ loadProjectFromHash' store' hash = do
   case json of
     Left (_ :: IOError) ->
       throwError $
-        CouldNotReadFilePath (getProjectFilename hash)
+        CouldNotReadFilePath ProjectFile (getProjectFilename hash)
     Right json' -> case JSON.decode json' of
       Just sp -> fetchProjectItems store' sp
       _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
@@ -132,7 +134,7 @@ saveProject' env = do
   success <- liftIO $ try $ LBS.writeFile envPath jsonStr
   case success of
     Left (_ :: IOError) ->
-      throwError (CouldNotWriteFilePath envPath)
+      throwError (CouldNotWriteFilePath ProjectFile envPath)
     Right _ -> saveProjectInStore' env
 
 -- save project in store
@@ -147,11 +149,18 @@ saveProjectInStore' ::
 saveProjectInStore' env = do
   let (jsonStr, hash) = contentAndHash (projectToSaved env)
   path <- getProjectPath hash
-  success <- liftIO $ try $ LBS.writeFile path jsonStr
-  case success of
-    Left (_ :: IOError) ->
-      throwError (CouldNotWriteFilePath (getProjectFilename hash))
-    Right _ -> pure hash
+  exists <- liftIO $ doesFileExist path
+  if exists
+    then do
+      logDebug $ "Project file for " <> prettyPrint hash <> " already exists"
+      pure hash
+    else do
+      logDebug $ "Saved project for " <> prettyPrint hash
+      success <- liftIO $ try $ LBS.writeFile path jsonStr
+      case success of
+        Left (_ :: IOError) ->
+          throwError (CouldNotWriteFilePath ProjectFile (getProjectFilename hash))
+        Right _ -> pure hash
 
 --
 

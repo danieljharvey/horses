@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project.AddUnitTest
+module Server.Endpoints.Project.AddUnitTest
   ( addUnitTestHandler,
     AddUnitTest,
   )

@@ -12,6 +12,7 @@ module Language.Mimsa.Types.Error
     PatternMatchError,
     BackendError (..),
     ProjectError (..),
+    FileType (..),
   )
 where
 

@@ -15,7 +15,7 @@ module Server.Handlers
     saveExprHandler,
     saveFileHandler,
     findExprHandler,
-    storeFromExprHashHandler,
+    projectFromExpressionHandler,
     resolveStoreExpressionHandler,
     readStoreHandler,
     writeStoreHandler,
@@ -29,6 +29,7 @@ import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import Data.Coerce
 import Data.Foldable (traverse_)
+import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -189,27 +190,29 @@ projectDataHandler ::
   MimsaEnvironment ->
   Project ann ->
   Handler ProjectData
-projectDataHandler mimsaEnv env = do
+projectDataHandler mimsaEnv project = do
   -- get all versions of a binding and numbers them
   let nameMap =
         M.mapWithKey const
           <$> getBindings . getCurrentBindings . prjBindings
-          $ env
-  versions <- traverse (versionsForBinding env) nameMap
+          $ project
+  versions <- traverse (versionsForBinding project) nameMap
   -- list usages of each exprhash in the project
-  let hashesMap = M.mapWithKey const <$> getStore . prjStore $ env
-  usages <- traverse (usagesForExprHash env) hashesMap
+  let hashesMap = M.mapWithKey const <$> getStore . prjStore $ project
+  usages <- traverse (usagesForExprHash project) hashesMap
+
   -- save project file
   projHash <-
     handleMimsaM
       (mimsaConfig mimsaEnv)
       InternalError
-      (saveProjectInStore env)
+      (saveProjectInStore project)
+
   pure $
     ProjectData
       projHash
-      (outputBindings env)
-      (outputTypeBindings env)
+      (outputBindings project)
+      (outputTypeBindings project)
       versions
       (toExprUsages <$> usages)
 
@@ -258,6 +261,25 @@ findExprHandler project exprHash' =
     case lookupExprHash project exprHash' of
       Nothing -> Left ("Could not find exprhash!" :: Text)
       Just a -> Right a
+
+-- given an exprhash, load a project containing its dependents
+projectFromExpressionHandler ::
+  MimsaEnvironment ->
+  ExprHash ->
+  Handler (StoreExpression Annotation, ProjectData, Project Annotation)
+projectFromExpressionHandler mimsaEnv exprHash = do
+  -- load store with just items for storeExpr in
+  store <- storeFromExprHashHandler mimsaEnv exprHash
+  -- create a project with this store
+  let project = fromStore store $> mempty
+  -- find the storeExpr we want in the store
+  storeExpr <- findExprHandler project exprHash
+  -- add deps of storeExpr to project
+  let projectWithStoreExpr = project <> fromStoreExpressionDeps storeExpr
+  -- save shit
+  pd <- projectDataHandler mimsaEnv projectWithStoreExpr
+  writeStoreHandler mimsaEnv (prjStore projectWithStoreExpr)
+  pure (storeExpr, pd, projectWithStoreExpr)
 
 storeFromExprHashHandler ::
   MimsaEnvironment ->
