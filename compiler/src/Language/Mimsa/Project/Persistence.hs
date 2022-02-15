@@ -59,7 +59,7 @@ loadProject' ::
 loadProject' = do
   project' <- liftIO $ try $ LBS.readFile envPath
   case project' of
-    Left (_ :: IOError) -> throwError (CouldNotReadFilePath envPath)
+    Left (_ :: IOError) -> throwError (CouldNotReadFilePath ProjectFile envPath)
     Right json' ->
       case JSON.decode json' of
         Just sp -> fetchProjectItems mempty sp -- we're starting from scratch with this one
@@ -85,7 +85,7 @@ loadProjectFromHash' store' hash = do
   case json of
     Left (_ :: IOError) ->
       throwError $
-        CouldNotReadFilePath (getProjectFilename hash)
+        CouldNotReadFilePath ProjectFile (getProjectFilename hash)
     Right json' -> case JSON.decode json' of
       Just sp -> fetchProjectItems store' sp
       _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
@@ -132,7 +132,7 @@ saveProject' env = do
   success <- liftIO $ try $ LBS.writeFile envPath jsonStr
   case success of
     Left (_ :: IOError) ->
-      throwError (CouldNotWriteFilePath envPath)
+      throwError (CouldNotWriteFilePath ProjectFile envPath)
     Right _ -> saveProjectInStore' env
 
 -- save project in store
@@ -150,7 +150,7 @@ saveProjectInStore' env = do
   success <- liftIO $ try $ LBS.writeFile path jsonStr
   case success of
     Left (_ :: IOError) ->
-      throwError (CouldNotWriteFilePath (getProjectFilename hash))
+      throwError (CouldNotWriteFilePath ProjectFile (getProjectFilename hash))
     Right _ -> pure hash
 
 --

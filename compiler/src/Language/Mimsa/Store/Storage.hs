@@ -126,7 +126,7 @@ findExprInLocalStore hash = do
   storePath <- getExpressionFolder
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
   case (json :: Either IOError BS.ByteString) of
-    Left _ -> throwError $ CouldNotReadFilePath (filePath storePath hash)
+    Left _ -> throwError $ CouldNotReadFilePath StoreExprFile (filePath storePath hash)
     Right json' -> do
       case deserialiseStoreExpression json' of
         Nothing -> throwError CouldNotDecodeByteString

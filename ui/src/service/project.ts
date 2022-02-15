@@ -6,8 +6,6 @@ import {
   CreateProjectResponse,
   BindExpressionRequest,
   BindExpressionResponse,
-  GetExpressionResponse,
-  GetExpressionRequest,
   AddUnitTestRequest,
   AddUnitTestResponse,
   BindTypeRequest,
@@ -75,17 +73,6 @@ export const createProject = (): TE.TaskEither<
   string,
   CreateProjectResponse
 > => axiosGet(`${baseUrl}/project/create`)
-
-export const getExpression = (
-  getExpressionRequest: GetExpressionRequest
-): TE.TaskEither<
-  UserErrorResponse,
-  GetExpressionResponse
-> =>
-  axiosPost(
-    `${baseUrl}/project/expression/`,
-    getExpressionRequest
-  )
 
 export const getProjectGraph = (
   projectHash: ExprHash

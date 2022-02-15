@@ -13,7 +13,6 @@ import Server.Project.BindExpression
 import Server.Project.BindType
 import Server.Project.CreateProject
 import Server.Project.Evaluate
-import Server.Project.GetExpression
 import Server.Project.Graph
 import Server.Project.ListBindings
 import Server.Project.ListTests
@@ -30,7 +29,7 @@ import Server.Types
 
 type ProjectAPI =
   "project"
-    :> ( EvaluateAPI :<|> ListBindings :<|> GetExpression
+    :> ( EvaluateAPI :<|> ListBindings
            :<|> CreateProject
            :<|> BindExpression
            :<|> BindType
@@ -48,7 +47,6 @@ projectEndpoints ::
 projectEndpoints mimsaEnv =
   evaluateExpression mimsaEnv
     :<|> listBindings mimsaEnv
-    :<|> getExpression mimsaEnv
     :<|> createProject mimsaEnv
     :<|> bindExpression mimsaEnv
     :<|> bindType mimsaEnv

@@ -283,6 +283,7 @@ executable mimsa-server
       Server.Compile
       Server.EnvVars
       Server.Errors.UserErrorResponse
+      Server.Expression
       Server.Handlers
       Server.Helpers
       Server.Helpers.ExpressionData
@@ -295,7 +296,6 @@ executable mimsa-server
       Server.Project.BindType
       Server.Project.CreateProject
       Server.Project.Evaluate
-      Server.Project.GetExpression
       Server.Project.Graph
       Server.Project.ListBindings
       Server.Project.ListTests
