@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project.ListTests
+module Server.Endpoints.Project.ListTests
   ( listTestsHandler,
     ListTests,
     listTestsByExprHashHandler,

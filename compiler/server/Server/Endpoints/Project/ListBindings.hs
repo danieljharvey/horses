@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Project.ListBindings
+module Server.Endpoints.Project.ListBindings
   ( listBindings,
     ListBindings,
   )

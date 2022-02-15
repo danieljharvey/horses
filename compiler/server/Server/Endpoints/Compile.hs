@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Compile (CompileAPI, compileEndpoints) where
+module Server.Endpoints.Compile (CompileAPI, compileEndpoints) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS

@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server.Expression
+module Server.Endpoints.Expression
   ( getExpression,
     GetExpression,
   )

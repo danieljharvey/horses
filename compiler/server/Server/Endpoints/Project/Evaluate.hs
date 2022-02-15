@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Server.Project.Evaluate
+module Server.Endpoints.Project.Evaluate
   ( evaluateExpression,
     EvaluateAPI,
   )

@@ -280,28 +280,28 @@ executable mimsa
 executable mimsa-server
   main-is: Main.hs
   other-modules:
-      Server.Compile
+      Server.Endpoints.Compile
+      Server.Endpoints.Expression
+      Server.Endpoints.Project
+      Server.Endpoints.Project.AddUnitTest
+      Server.Endpoints.Project.BindExpression
+      Server.Endpoints.Project.BindType
+      Server.Endpoints.Project.CreateProject
+      Server.Endpoints.Project.Evaluate
+      Server.Endpoints.Project.Graph
+      Server.Endpoints.Project.ListBindings
+      Server.Endpoints.Project.ListTests
+      Server.Endpoints.Project.Optimise
+      Server.Endpoints.Project.Upgrade
+      Server.Endpoints.Search
       Server.EnvVars
       Server.Errors.UserErrorResponse
-      Server.Expression
       Server.Handlers
       Server.Helpers
       Server.Helpers.ExpressionData
       Server.Helpers.TestData
       Server.Main
       Server.MimsaHandler
-      Server.Project
-      Server.Project.AddUnitTest
-      Server.Project.BindExpression
-      Server.Project.BindType
-      Server.Project.CreateProject
-      Server.Project.Evaluate
-      Server.Project.Graph
-      Server.Project.ListBindings
-      Server.Project.ListTests
-      Server.Project.Optimise
-      Server.Project.Upgrade
-      Server.Search
       Server.Servant
       Server.Swagger
       Server.Types
