@@ -23,12 +23,14 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Monad
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import System.Directory
 
 storePath :: String
 storePath = "./"
@@ -147,11 +149,18 @@ saveProjectInStore' ::
 saveProjectInStore' env = do
   let (jsonStr, hash) = contentAndHash (projectToSaved env)
   path <- getProjectPath hash
-  success <- liftIO $ try $ LBS.writeFile path jsonStr
-  case success of
-    Left (_ :: IOError) ->
-      throwError (CouldNotWriteFilePath ProjectFile (getProjectFilename hash))
-    Right _ -> pure hash
+  exists <- liftIO $ doesFileExist path
+  if exists
+    then do
+      logDebug $ "Project file for " <> prettyPrint hash <> " already exists"
+      pure hash
+    else do
+      logDebug $ "Saved project for " <> prettyPrint hash
+      success <- liftIO $ try $ LBS.writeFile path jsonStr
+      case success of
+        Left (_ :: IOError) ->
+          throwError (CouldNotWriteFilePath ProjectFile (getProjectFilename hash))
+        Right _ -> pure hash
 
 --
 

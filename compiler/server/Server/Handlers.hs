@@ -208,8 +208,6 @@ projectDataHandler mimsaEnv project = do
       InternalError
       (saveProjectInStore project)
 
-  liftIO $ putStrLn $ "saved " <> show projHash
-
   pure $
     ProjectData
       projHash
