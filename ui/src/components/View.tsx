@@ -16,9 +16,9 @@ import {
   getCurrentScreen,
   getLastScreen,
 } from '../reducer/view/selectors'
-import { pushScreen } from '../reducer/view/reducer'
+import { pushScreen } from '../reducer/view/actions'
 import { editorForBinding } from '../reducer/editor/helpers'
-import { Screen } from '../reducer/view/types'
+import { Screen } from '../reducer/view/screen'
 import { Screen as ScreenComponent } from './View/Screen'
 import { PanelRow } from './View/PanelRow'
 import { ExprHash } from '../types'

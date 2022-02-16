@@ -2,7 +2,7 @@ import {
   PropertyTestData,
   UnitTestData,
 } from '../../generated'
-import { Screen } from './types'
+import { Screen } from './screen'
 
 const getTestName = (
   test: UnitTestData | PropertyTestData

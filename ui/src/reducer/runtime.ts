@@ -11,9 +11,9 @@ import {
 } from '../service/project'
 import { getExpression } from '../service/expression'
 import { ExprHash } from '../types/'
-import { setScreen } from './view/reducer'
+import { setScreen } from './view/actions'
 import { projectSet } from './project/helpers'
-import { log } from './console/reducer'
+import { log } from './console/actions'
 import { emptyEditor } from './editor/helpers'
 import * as H from 'history'
 import { storeProjectData } from './project/actions'
@@ -33,6 +33,7 @@ import {
   optimiseExpressionFailure,
   optimiseExpressionSuccess,
 } from './editor/actions'
+import { scratchScreen } from './view/screen'
 
 const orEmpty = <A>() =>
   TE.fold(
@@ -77,10 +78,7 @@ export const runtime =
           createProject(),
           TE.map((data) => [
             storeProjectData(data.cpProjectData),
-            setScreen({
-              type: 'scratch' as const,
-              editor: emptyEditor,
-            }),
+            setScreen(scratchScreen(emptyEditor)),
           ]),
           orEmpty()
         )

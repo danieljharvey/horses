@@ -13,14 +13,13 @@ import {
 } from '../../types'
 import { pipe } from 'fp-ts/function'
 import * as NE from 'fp-ts/NonEmptyArray'
+import { ViewState } from '../view/types'
 import {
-  ViewState,
   Screen,
-  EditScreen,
-  NewExpressionScreen,
-  ScratchScreen,
-} from '../view/types'
-
+  editScreen,
+  newExpressionScreen,
+  scratchScreen,
+} from '../view/screen'
 import { viewL } from '../view/selectors'
 import { ExpressionResult } from './expressionResult'
 
@@ -31,9 +30,9 @@ const neHeadL = <A>(): Lens<NE.NonEmptyArray<A>, A> =>
   )
 
 type ScreenWithEditor =
-  | EditScreen
-  | NewExpressionScreen
-  | ScratchScreen
+  | ReturnType<typeof editScreen>
+  | ReturnType<typeof newExpressionScreen>
+  | ReturnType<typeof scratchScreen>
 
 const stackL = viewL.compose(
   Lens.fromProp<ViewState>()('stack')

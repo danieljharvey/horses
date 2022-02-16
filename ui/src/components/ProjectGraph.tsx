@@ -14,8 +14,9 @@ import {
   toOption,
 } from '@devexperts/remote-data-ts'
 import { Action } from '../reducer/types'
-import { pushScreen } from '../reducer/view/reducer'
+import { pushScreen } from '../reducer/view/actions'
 import { findNameForExprHash } from '../reducer/project/helpers'
+import { expressionGraphScreen } from '../reducer/view/screen'
 
 type Props = {
   state: State
@@ -64,17 +65,18 @@ export const ProjectGraph: React.FC<Props> = ({
   ) => {
     if (O.isSome(hash)) {
       dispatch(
-        pushScreen({
-          type: 'expression-graph',
-          exprHash: hash.value,
-          bindingName: pipe(
-            findNameForExprHash(hash.value, state),
-            O.fold(
-              () => 'expression',
-              (name) => name
-            )
-          ),
-        })
+        pushScreen(
+          expressionGraphScreen(
+            pipe(
+              findNameForExprHash(hash.value, state),
+              O.fold(
+                () => 'expression',
+                (name) => name
+              )
+            ),
+            hash.value
+          )
+        )
       )
     }
   }

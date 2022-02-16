@@ -1,6 +1,6 @@
 import * as O from 'fp-ts/lib/Option'
 import { State } from '../types'
-import { Screen } from './types'
+import { Screen } from './screen'
 import * as NE from 'fp-ts/NonEmptyArray'
 import { pipe } from 'fp-ts/function'
 

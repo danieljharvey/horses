@@ -5,7 +5,7 @@ import {
   findExpression,
   findExpressionForAnyBinding,
 } from '../project/helpers'
-import { Screen } from '../view/types'
+import { Screen } from '../view/screen'
 
 import { editorNew, showBinding } from './expressionResult'
 import { EditorState } from './types'

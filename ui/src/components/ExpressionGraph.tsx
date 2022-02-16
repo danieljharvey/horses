@@ -13,7 +13,7 @@ import { Panel } from './View/Panel'
 import { Paragraph } from './View/Paragraph'
 import * as O from 'fp-ts/Option'
 import { ExprHash } from '../types'
-import { pushScreen } from '../reducer/view/reducer'
+import { pushScreen } from '../reducer/view/actions'
 import { StoreItem } from '../reducer/project/types'
 
 type Props = {

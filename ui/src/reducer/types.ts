@@ -1,13 +1,7 @@
-import {
-  ViewState,
-  ViewAction,
-  ViewEvent,
-} from './view/reducer'
-import {
-  ConsoleState,
-  ConsoleAction,
-  ConsoleEvent,
-} from './console/reducer'
+import { ViewState, ViewEvent } from './view/types'
+import { ViewAction } from './view/actions'
+import { ConsoleState, ConsoleEvent } from './console/types'
+import { ConsoleAction } from './console/actions'
 import { ProjectState } from './project/types'
 import { ProjectAction } from './project/actions'
 import { ProjectEvent } from './project/events'
