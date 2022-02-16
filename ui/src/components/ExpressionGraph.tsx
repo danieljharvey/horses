@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { State, StoreItem } from '../reducer/types'
+import { State } from '../reducer/types'
 import { Action } from '../reducer/types'
 import { findNameForExprHash } from '../reducer/project/helpers'
 
@@ -14,6 +14,7 @@ import { Paragraph } from './View/Paragraph'
 import * as O from 'fp-ts/Option'
 import { ExprHash } from '../types'
 import { pushScreen } from '../reducer/view/reducer'
+import { StoreItem } from '../reducer/project/types'
 
 type Props = {
   dispatch: (a: Action) => void

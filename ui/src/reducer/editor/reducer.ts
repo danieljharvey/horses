@@ -1,76 +1,26 @@
 import { Lens } from 'monocle-ts'
 import * as O from 'fp-ts/Option'
-import {
-  UnitTestData,
-  ExpressionData,
-  UserErrorResponse,
-  TestData,
-  PropertyTestData,
-} from '../../types'
+
 import {
   EventReducer,
   stateOnly,
   stateAndEvent,
 } from '../../utils/useEventReducer'
-import { ProjectEvent } from '../project/reducer'
+import { ProjectEvent } from '../project/events'
 import {
   EditorState,
-  ExpressionResult,
   EditorAction,
   EditorEvent,
 } from './types'
+import {
+  showErrorResponse,
+  showUpdatedBinding,
+  showTest,
+  evaluationError,
+  showEvaluate,
+} from './expressionResult'
 import { pipe } from 'fp-ts/lib/function'
 import { getExpressionData } from './selector'
-export type {
-  ExpressionResult,
-  EditorAction,
-  EditorEvent,
-} from './types'
-
-export const showBinding = (
-  expression: ExpressionData
-): ExpressionResult => ({
-  type: 'ShowBinding',
-  expression,
-})
-
-const showUpdatedBinding = (
-  expression: ExpressionData,
-  tests: TestData,
-  bindingName: string
-): ExpressionResult => ({
-  type: 'ShowUpdatedBinding',
-  expression,
-  bindingName,
-  tests,
-})
-
-const showTest = (
-  test: UnitTestData | PropertyTestData
-): ExpressionResult => ({
-  type: 'ShowTest',
-  test,
-})
-
-const showErrorResponse = (
-  errorResponse: UserErrorResponse
-): ExpressionResult => ({
-  type: 'ShowErrorResponse',
-  errorResponse,
-})
-
-const evaluationError = (): ExpressionResult => ({
-  type: 'EvaluationError',
-})
-
-const showEvaluate = (
-  expression: ExpressionData,
-  evaluatedValue: string
-): ExpressionResult => ({
-  type: 'ShowEvaluate',
-  expression,
-  evaluatedValue,
-})
 
 const staleL = Lens.fromProp<EditorState>()('stale')
 

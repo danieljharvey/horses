@@ -1,17 +1,19 @@
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
-import { State, EditorState } from '../types'
+import { State } from '../types'
 import {
   findExpression,
   findExpressionForAnyBinding,
 } from '../project/helpers'
 import { Screen } from '../view/types'
-import { showBinding } from './reducer'
+
+import { editorNew, showBinding } from './expressionResult'
+import { EditorState } from './types'
 
 export const emptyEditor: EditorState = {
   code: '',
   stale: false,
-  expression: { type: 'EditorNew' },
+  expression: editorNew(),
   bindingName: O.none,
 }
 

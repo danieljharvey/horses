@@ -2,11 +2,10 @@ import { Option } from 'fp-ts/lib/Option'
 import {
   ExpressionData,
   EvaluateResponse,
-  UnitTestData,
   UserErrorResponse,
   TestData,
-  PropertyTestData,
 } from '../../types/'
+import { ExpressionResult } from './expressionResult'
 
 export type EditorState = {
   code: string
@@ -14,33 +13,6 @@ export type EditorState = {
   expression: ExpressionResult
   bindingName: Option<string>
 }
-
-export type ExpressionResult =
-  | { type: 'EditorNew' }
-  | {
-      type: 'ShowBinding'
-      expression: ExpressionData
-    }
-  | {
-      type: 'ShowErrorResponse'
-      errorResponse: UserErrorResponse
-    }
-  | {
-      type: 'ShowTest'
-      test: UnitTestData | PropertyTestData
-    }
-  | { type: 'EvaluationError' }
-  | {
-      type: 'ShowEvaluate'
-      expression: ExpressionData
-      evaluatedValue: string
-    }
-  | {
-      type: 'ShowUpdatedBinding'
-      bindingName: string
-      expression: ExpressionData
-      tests: TestData
-    }
 
 export type EditorAction =
   | { type: 'UpdateCode'; text: string }

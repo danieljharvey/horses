@@ -16,10 +16,11 @@ import { projectSet } from './project/helpers'
 import { log } from './console/reducer'
 import { emptyEditor } from './editor/helpers'
 import * as H from 'history'
-import { storeProjectData } from './project/reducer'
+import { storeProjectData } from './project/actions'
 import * as T from 'fp-ts/Task'
 import { pipe } from 'fp-ts/function'
 import * as TE from 'fp-ts/TaskEither'
+import { fetchExpressionSuccess } from './project/actions'
 
 const orEmpty = <A>() =>
   TE.fold(
@@ -75,11 +76,12 @@ export const runtime =
         const fetchAndDispatch = (exprHash: ExprHash) =>
           pipe(
             getExpression(exprHash),
-            TE.map((a) => ({
-              type: 'FetchExpressionSuccess' as const,
-              exprHash,
-              storeExpression: a.geExpressionData,
-            }))
+            TE.map((a) =>
+              fetchExpressionSuccess(
+                exprHash,
+                a.geExpressionData
+              )
+            )
           )
         const hashes = event.hashes.filter(
           (exprHash) =>

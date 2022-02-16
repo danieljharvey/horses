@@ -4,7 +4,7 @@ import {
   Action,
   EditorState,
 } from '../../reducer/types'
-import { storeProjectData } from '../../reducer/project/reducer'
+import { storeProjectData } from '../../reducer/project/actions'
 import { getSourceItems } from '../../reducer/editor/selector'
 import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'

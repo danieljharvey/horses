@@ -1,7 +1,8 @@
 import { Lens, Optional, Prism } from 'monocle-ts'
 import { State } from '../types'
 import * as O from 'fp-ts/Option'
-import { ExpressionResult, EditorState } from './types'
+import { EditorState } from './types'
+
 import {
   ExpressionData,
   SourceItem,
@@ -21,6 +22,7 @@ import {
 } from '../view/types'
 
 import { viewL } from '../view/selectors'
+import { ExpressionResult } from './expressionResult'
 
 const neHeadL = <A>(): Lens<NE.NonEmptyArray<A>, A> =>
   new Lens(

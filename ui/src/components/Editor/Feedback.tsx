@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import * as O from 'fp-ts/Option'
-import { ExpressionResult } from '../../reducer/editor/reducer'
+import { ExpressionResult } from '../../reducer/editor/expressionResult'
 import { ListBindings } from '../ListBindings'
 import { UnitTest } from '../UnitTest'
 import { Code } from '../View/Code'

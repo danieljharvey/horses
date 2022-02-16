@@ -1,11 +1,37 @@
-import { ExprHash, ProjectData } from '../../types'
-import { ProjectAction } from './types'
+import {
+  ExprHash,
+  ProjectData,
+  ExpressionData,
+} from '../../types'
 
 export const storeProjectData = (
   data: ProjectData,
   extraHashes: ExprHash[] = []
-): ProjectAction => ({
-  type: 'StoreProjectData',
+) => ({
+  type: 'StoreProjectData' as const,
   data,
   extraHashes,
 })
+
+export const initialise = () => ({
+  type: 'Initialise' as const,
+})
+
+export const createProject = () => ({
+  type: 'CreateProject' as const,
+})
+
+export const fetchExpressionSuccess = (
+  exprHash: ExprHash,
+  storeExpression: ExpressionData
+) => ({
+  type: 'FetchExpressionSuccess' as const,
+  exprHash,
+  storeExpression,
+})
+
+export type ProjectAction =
+  | ReturnType<typeof initialise>
+  | ReturnType<typeof storeProjectData>
+  | ReturnType<typeof createProject>
+  | ReturnType<typeof fetchExpressionSuccess>
