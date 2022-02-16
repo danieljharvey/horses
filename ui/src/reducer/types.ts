@@ -11,7 +11,7 @@ import {
 import { ProjectState } from './project/types'
 import { ProjectAction } from './project/actions'
 import { ProjectEvent } from './project/events'
-import { EditorEvent } from './editor/types'
+import { EditorEvent } from './editor/events'
 import { EditorAction } from './editor/actions'
 
 export type State = {

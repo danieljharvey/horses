@@ -7,17 +7,3 @@ export type EditorState = {
   expression: ExpressionResult
   bindingName: Option<string>
 }
-
-export type EditorEvent =
-  | {
-      type: 'EvaluateExpression'
-      code: string
-    }
-  | {
-      type: 'BindExpression'
-      code: string
-      bindingName: string
-    }
-  | { type: 'AddUnitTest'; testName: string; code: string }
-  | { type: 'UpgradeExpression'; bindingName: string }
-  | { type: 'OptimiseExpression'; bindingName: string }

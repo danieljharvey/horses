@@ -109,7 +109,7 @@ export const runtime =
           )
         )
         return x
-      case 'EvaluateExpression':
+      case 'DoEvaluateExpression':
         return pipe(
           evaluate({
             erCode: event.code,
@@ -121,7 +121,7 @@ export const runtime =
           ),
           flatten()
         )
-      case 'BindExpression':
+      case 'DoBindExpression':
         return pipe(
           bindExpression({
             beProjectHash: state.project.projectHash,
@@ -141,7 +141,7 @@ export const runtime =
           ),
           flatten()
         )
-      case 'AddUnitTest':
+      case 'DoAddUnitTest':
         return pipe(
           addUnitTest({
             autProjectHash: state.project.projectHash,
@@ -157,7 +157,7 @@ export const runtime =
           ),
           flatten()
         )
-      case 'UpgradeExpression':
+      case 'DoUpgradeExpression':
         return pipe(
           upgradeExpression({
             upProjectHash: state.project.projectHash,
@@ -180,7 +180,7 @@ export const runtime =
           ),
           flatten()
         )
-      case 'OptimiseExpression':
+      case 'DoOptimiseExpression':
         return pipe(
           optimiseExpression({
             opProjectHash: state.project.projectHash,

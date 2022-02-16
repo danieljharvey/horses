@@ -7,7 +7,16 @@ import {
   stateAndEvent,
 } from '../../utils/useEventReducer'
 import { ProjectEvent } from '../project/events'
-import { EditorState, EditorEvent } from './types'
+import { EditorState } from './types'
+
+import {
+  doBindExpression,
+  doEvaluateExpression,
+  doAddUnitTest,
+  EditorEvent,
+  doUpgradeExpression,
+  doOptimiseExpression,
+} from './events'
 import { EditorAction } from './actions'
 import {
   showErrorResponse,
@@ -39,10 +48,7 @@ export const editorReducer: EventReducer<
           code: action.text,
           stale: true,
         },
-        {
-          type: 'EvaluateExpression',
-          code: action.text,
-        }
+        doEvaluateExpression(action.text)
       )
     case 'FormatExpression':
       return pipe(
@@ -52,10 +58,7 @@ export const editorReducer: EventReducer<
           (expressionData) =>
             stateAndEvent(
               { ...state, code: expressionData.edPretty },
-              {
-                type: 'EvaluateExpression',
-                code: expressionData.edPretty,
-              }
+              doEvaluateExpression(expressionData.edPretty)
             )
         )
       )
@@ -76,11 +79,10 @@ export const editorReducer: EventReducer<
         stale: false,
       })
     case 'BindExpression':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'BindExpression',
-        code: state.code,
-        bindingName: action.bindingName,
-      })
+      return stateAndEvent(
+        staleL.set(false)(state),
+        doBindExpression(action.bindingName, state.code)
+      )
     case 'BindExpressionSuccess':
       return stateOnly({
         ...state,
@@ -99,11 +101,10 @@ export const editorReducer: EventReducer<
         expression: showErrorResponse(action.error),
       })
     case 'AddUnitTest':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'AddUnitTest',
-        testName: action.testName,
-        code: state.code,
-      })
+      return stateAndEvent(
+        staleL.set(false)(state),
+        doAddUnitTest(action.testName, state.code)
+      )
     case 'AddUnitTestSuccess':
       const firstTest =
         action.tests.tdUnitTests.find((a) => a) ||
@@ -123,10 +124,10 @@ export const editorReducer: EventReducer<
       })
 
     case 'UpgradeExpression':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'UpgradeExpression',
-        bindingName: action.bindingName,
-      })
+      return stateAndEvent(
+        staleL.set(false)(state),
+        doUpgradeExpression(action.bindingName)
+      )
     case 'UpgradeExpressionSuccess':
       return stateOnly({
         ...state,
@@ -146,10 +147,10 @@ export const editorReducer: EventReducer<
       })
 
     case 'OptimiseExpression':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'OptimiseExpression',
-        bindingName: action.bindingName,
-      })
+      return stateAndEvent(
+        staleL.set(false)(state),
+        doOptimiseExpression(action.bindingName)
+      )
 
     case 'OptimiseExpressionSuccess':
       return stateOnly({
