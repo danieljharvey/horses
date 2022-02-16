@@ -1,0 +1,5 @@
+match (Just 1) with 
+    (Just _) -> 
+      True
+  | (Nothing) -> 
+      False

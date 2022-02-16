@@ -1,0 +1,10 @@
+type Nat    = Suc Nat | Zero;
+
+let loop as b =
+  match as with 
+      (Zero) -> 
+        b
+    | (Suc as2) -> 
+        (incrementInt (loop as2 b));
+
+loop (Suc (Suc (Suc (Zero)))) 10

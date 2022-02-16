@@ -1,0 +1,1 @@
+{"storeExpression":{"expBody":{"expTyCon":"Vrai","expAnn":null,"tag":"MyConstructor"},"expAnn":null,"expDataType":{"dtConstructors":{"Faux":[],"Vrai":[]},"dtVars":[],"dtName":"LeBool"},"tag":"MyData"},"storeTypeBindings":{},"storeBindings":{}}

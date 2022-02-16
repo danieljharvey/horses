@@ -159,7 +159,7 @@ findTypeName tyCon = do
 
 initialStack :: TSStateStack
 initialStack =
-  NE.singleton $
+  pure $
     TSCodegenState mempty mempty mempty
 
 runTypescriptM ::
