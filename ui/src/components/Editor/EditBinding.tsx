@@ -7,6 +7,12 @@ import * as O from 'fp-ts/Option'
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
 import { ExprHash } from '../../types'
+import {
+  updateCode,
+  optimiseExpression,
+  bindExpression,
+  upgradeExpression,
+} from '../../reducer/editor/actions'
 
 import {
   getErrorLocations,
@@ -23,12 +29,6 @@ type Props = {
     exprHash: ExprHash
   ) => void
 }
-import {
-  updateCode,
-  optimiseExpression,
-  bindExpression,
-  upgradeExpression,
-} from '../../reducer/editor/actions'
 
 export const EditBinding: React.FC<Props> = ({
   dispatch,

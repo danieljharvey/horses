@@ -1,6 +1,11 @@
 import * as React from 'react'
 import { State, Action } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
+import {
+  optimiseExpression,
+  upgradeExpression,
+  updateCode,
+} from '../../reducer/editor/actions'
 
 import { storeProjectData } from '../../reducer/project/actions'
 import { getSourceItems } from '../../reducer/editor/selector'
@@ -29,12 +34,6 @@ type Props = {
     exprHash: ExprHash
   ) => void
 }
-import {
-  optimiseExpression,
-  upgradeExpression,
-  updateCode,
-} from '../../reducer/editor/actions'
-
 export const NewType: React.FC<Props> = ({
   state,
   dispatch,
