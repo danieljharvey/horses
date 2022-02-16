@@ -7,16 +7,12 @@ import {
   stateAndEvent,
 } from '../../utils/useEventReducer'
 import { ProjectEvent } from '../project/events'
-import {
-  EditorState,
-  EditorAction,
-  EditorEvent,
-} from './types'
+import { EditorState, EditorEvent } from './types'
+import { EditorAction } from './actions'
 import {
   showErrorResponse,
   showUpdatedBinding,
   showTest,
-  evaluationError,
   showEvaluate,
 } from './expressionResult'
 import { pipe } from 'fp-ts/lib/function'
@@ -78,11 +74,6 @@ export const editorReducer: EventReducer<
           action.expression.erResult
         ),
         stale: false,
-      })
-    case 'EvaluateExpressionError':
-      return stateOnly({
-        ...state,
-        expression: evaluationError(),
       })
     case 'BindExpression':
       return stateAndEvent(staleL.set(false)(state), {

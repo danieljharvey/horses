@@ -1,9 +1,6 @@
 import * as React from 'react'
-import {
-  Action,
-  EditorState,
-  State,
-} from '../../reducer/types'
+import { Action, State } from '../../reducer/types'
+import { EditorState } from '../../reducer/editor/types'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
 import { Panel } from '../View/Panel'
@@ -17,6 +14,12 @@ import {
   getSourceItemsFromEditor,
   getErrorLocationsFromEditor,
 } from '../../reducer/editor/selector'
+import {
+  formatExpression,
+  evaluateExpression,
+  upgradeExpression,
+  optimiseExpression,
+} from '../../reducer/editor/actions'
 
 type Props = {
   projectHash: ExprHash
@@ -37,16 +40,15 @@ export const Scratch: React.FC<Props> = ({
   state,
 }) => {
   const onFormatExpression = () =>
-    dispatch({ type: 'FormatExpression' })
+    dispatch(formatExpression())
 
   const onCodeChange = (text: string) =>
-    dispatch({ type: 'EvaluateExpression', text })
+    dispatch(evaluateExpression(text))
 
   const onUpgradeExpression = (bindingName: string) =>
-    dispatch({ type: 'UpgradeExpression', bindingName })
-  const onOptimiseExpression = (bindingName: string) => {
-    dispatch({ type: 'OptimiseExpression', bindingName })
-  }
+    dispatch(upgradeExpression(bindingName))
+  const onOptimiseExpression = (bindingName: string) =>
+    dispatch(optimiseExpression(bindingName))
 
   const typedHoleResponses = getTypedHolesFromEditor(editor)
   const errorLocations = getErrorLocationsFromEditor(editor)

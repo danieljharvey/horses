@@ -21,6 +21,18 @@ import * as T from 'fp-ts/Task'
 import { pipe } from 'fp-ts/function'
 import * as TE from 'fp-ts/TaskEither'
 import { fetchExpressionSuccess } from './project/actions'
+import {
+  evaluateExpressionFailure,
+  evaluateExpressionSuccess,
+  addUnitTestFailure,
+  addUnitTestSuccess,
+  bindExpressionSuccess,
+  bindExpressionFailure,
+  upgradeExpressionSuccess,
+  upgradeExpressionFailure,
+  optimiseExpressionFailure,
+  optimiseExpressionSuccess,
+} from './editor/actions'
 
 const orEmpty = <A>() =>
   TE.fold(
@@ -104,18 +116,8 @@ export const runtime =
             erProjectHash: state.project.projectHash,
           }),
           TE.bimap(
-            (e) => [
-              {
-                type: 'EvaluateExpressionFailure' as const,
-                typeError: e,
-              },
-            ],
-            (a) => [
-              {
-                type: 'EvaluateExpressionSuccess' as const,
-                expression: a,
-              },
-            ]
+            (e) => [evaluateExpressionFailure(e)],
+            (a) => [evaluateExpressionSuccess(a)]
           ),
           flatten()
         )
@@ -127,19 +129,13 @@ export const runtime =
             beBindingName: event.bindingName,
           }),
           TE.bimap(
-            (e) => [
-              {
-                type: 'BindExpressionFailure' as const,
-                error: e,
-              },
-            ],
+            (e) => [bindExpressionFailure(e)],
             (a) => [
-              {
-                type: 'BindExpressionSuccess' as const,
-                expression: a.beExpressionData,
-                bindingName: event.bindingName,
-                tests: a.beTestData,
-              },
+              bindExpressionSuccess(
+                a.beExpressionData,
+                event.bindingName,
+                a.beTestData
+              ),
               storeProjectData(a.beProjectData),
             ]
           ),
@@ -153,17 +149,9 @@ export const runtime =
             autTestName: event.testName,
           }),
           TE.bimap(
-            (e) => [
-              {
-                type: 'AddUnitTestFailure' as const,
-                error: e,
-              },
-            ],
+            (e) => [addUnitTestFailure(e)],
             (a) => [
-              {
-                type: 'AddUnitTestSuccess' as const,
-                tests: a.autTestResult,
-              },
+              addUnitTestSuccess(a.autTestResult),
               storeProjectData(a.autProjectData),
             ]
           ),
@@ -176,23 +164,17 @@ export const runtime =
             upBindingName: event.bindingName,
           }),
           TE.bimap(
-            (e) => [
-              {
-                type: 'UpgradeExpressionFailure' as const,
-                error: e,
-              },
-            ],
+            (e) => [upgradeExpressionFailure(e)],
             ({
               upExpressionData,
               upProjectData,
               upTestData,
             }) => [
-              {
-                type: 'UpgradeExpressionSuccess' as const,
-                tests: upTestData,
-                expression: upExpressionData,
-                bindingName: event.bindingName,
-              },
+              upgradeExpressionSuccess(
+                upExpressionData,
+                event.bindingName,
+                upTestData
+              ),
               storeProjectData(upProjectData),
             ]
           ),
@@ -205,23 +187,17 @@ export const runtime =
             opBindingName: event.bindingName,
           }),
           TE.bimap(
-            (e) => [
-              {
-                type: 'OptimiseExpressionFailure' as const,
-                error: e,
-              },
-            ],
+            (e) => [optimiseExpressionFailure(e)],
             ({
               opExpressionData,
               opProjectData,
               opTestData,
             }) => [
-              {
-                type: 'OptimiseExpressionSuccess' as const,
-                tests: opTestData,
-                expression: opExpressionData,
-                bindingName: event.bindingName,
-              },
+              optimiseExpressionSuccess(
+                opExpressionData,
+                event.bindingName,
+                opTestData
+              ),
               storeProjectData(opProjectData),
             ]
           ),

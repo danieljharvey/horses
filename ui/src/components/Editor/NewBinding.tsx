@@ -1,11 +1,8 @@
 import * as React from 'react'
 import * as O from 'fp-ts/Option'
 import * as E from 'fp-ts/Either'
-import {
-  State,
-  Action,
-  EditorState,
-} from '../../reducer/types'
+import { State, Action } from '../../reducer/types'
+import { EditorState } from '../../reducer/editor/types'
 import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
@@ -26,6 +23,12 @@ import { Paragraph } from '../View/Paragraph'
 import { TextInput } from '../View/TextInput'
 import { ExprHash } from '../../types'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
+import {
+  bindExpression,
+  updateCode,
+  upgradeExpression,
+  optimiseExpression,
+} from '../../reducer/editor/actions'
 
 type Props = {
   state: State
@@ -48,27 +51,20 @@ export const NewBinding: React.FC<Props> = ({
   const code = editor.code
 
   const onCodeChange = (a: string) =>
-    dispatch({ type: 'UpdateCode', text: a })
+    dispatch(updateCode(a))
 
   const { expression } = editor
 
   const existingName = O.toNullable(editor.bindingName)
 
   const onBindExpression = (name: string) =>
-    dispatch({
-      type: 'BindExpression',
-      bindingName: existingName || name,
-    })
+    dispatch(bindExpression(existingName || name))
 
   const onUpgradeExpression = (bindingName: string) =>
-    dispatch({
-      type: 'UpgradeExpression',
-      bindingName,
-    })
+    dispatch(upgradeExpression(bindingName))
 
-  const onOptimiseExpression = (bindingName: string) => {
-    dispatch({ type: 'OptimiseExpression', bindingName })
-  }
+  const onOptimiseExpression = (bindingName: string) =>
+    dispatch(optimiseExpression(bindingName))
 
   const validBinding = existingName
     ? E.right(existingName)

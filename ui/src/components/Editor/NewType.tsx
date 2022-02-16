@@ -1,9 +1,7 @@
 import * as React from 'react'
-import {
-  State,
-  Action,
-  EditorState,
-} from '../../reducer/types'
+import { State, Action } from '../../reducer/types'
+import { EditorState } from '../../reducer/editor/types'
+
 import { storeProjectData } from '../../reducer/project/actions'
 import { getSourceItems } from '../../reducer/editor/selector'
 import { pipe } from 'fp-ts/function'
@@ -31,6 +29,11 @@ type Props = {
     exprHash: ExprHash
   ) => void
 }
+import {
+  optimiseExpression,
+  upgradeExpression,
+  updateCode,
+} from '../../reducer/editor/actions'
 
 export const NewType: React.FC<Props> = ({
   state,
@@ -46,14 +49,14 @@ export const NewType: React.FC<Props> = ({
     (pd) => dispatch(storeProjectData(pd))
   )
 
-  const onUpgradeExpression = (_bindingName: string) => {}
+  const onUpgradeExpression = (bindingName: string) =>
+    dispatch(upgradeExpression(bindingName))
 
-  const onOptimiseExpression = (bindingName: string) => {
-    dispatch({ type: 'OptimiseExpression', bindingName })
-  }
+  const onOptimiseExpression = (bindingName: string) =>
+    dispatch(optimiseExpression(bindingName))
 
   const onCodeChange = (a: string) =>
-    dispatch({ type: 'UpdateCode', text: a })
+    dispatch(updateCode(a))
 
   const { expression, code } = editor
 
