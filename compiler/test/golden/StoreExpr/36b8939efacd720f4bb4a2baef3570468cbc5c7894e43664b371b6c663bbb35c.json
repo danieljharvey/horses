@@ -1,0 +1,1 @@
+{"storeExpression":{"expBody":{"expTyCon":"Suc","expAnn":null,"tag":"MyConstructor"},"expAnn":null,"expDataType":{"dtConstructors":{"Suc":[{"typTypeName":"OhNat","typAnn":null,"tag":"MTConstructor"},{"typAnn":null,"tag":"MTPrim","typPrim":"MTString"}],"Zero":[]},"dtVars":[],"dtName":"OhNat"},"tag":"MyData"},"storeTypeBindings":{},"storeBindings":{}}

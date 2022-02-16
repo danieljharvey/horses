@@ -1,0 +1,1 @@
+{"storeExpression":{"expExpr":{"expAnn":null,"expLit":{"litBool":true,"tag":"MyBool"},"tag":"MyLiteral"},"expBody":{"expAnn":null,"tag":"MyVar","expVar":"a"},"expAnn":null,"tag":"MyLet","expBinder":{"tag":"AnnotatedIdentifier","idType":{"typAnn":null,"tag":"MTPrim","typPrim":"MTBool"},"idVar":"a"}},"storeTypeBindings":{},"storeBindings":{}}

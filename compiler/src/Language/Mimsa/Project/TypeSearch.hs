@@ -13,7 +13,6 @@ import Control.Monad.State
 import Data.Bifunctor (first)
 import Data.Either (isRight)
 import Data.Functor
-import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -79,7 +78,7 @@ typeMapToFoundPath :: Map Name MonoType -> Map FoundPath MonoType
 typeMapToFoundPath =
   M.fromList
     . ( ( splitRecords
-            . (\(k, a) -> (FoundPath (NE.singleton k), a))
+            . (\(k, a) -> (FoundPath (pure k), a))
         )
           <=< M.toList
       )
