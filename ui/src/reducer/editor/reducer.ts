@@ -1,76 +1,31 @@
 import { Lens } from 'monocle-ts'
 import * as O from 'fp-ts/Option'
-import {
-  UnitTestData,
-  ExpressionData,
-  UserErrorResponse,
-  TestData,
-  PropertyTestData,
-} from '../../types'
+
 import {
   EventReducer,
   stateOnly,
   stateAndEvent,
 } from '../../utils/useEventReducer'
-import { ProjectEvent } from '../project/reducer'
+import { ProjectEvent } from '../project/events'
+import { EditorState } from './types'
+
 import {
-  EditorState,
-  ExpressionResult,
-  EditorAction,
+  doBindExpression,
+  doEvaluateExpression,
+  doAddUnitTest,
   EditorEvent,
-} from './types'
+  doUpgradeExpression,
+  doOptimiseExpression,
+} from './events'
+import { EditorAction } from './actions'
+import {
+  showErrorResponse,
+  showUpdatedBinding,
+  showTest,
+  showEvaluate,
+} from './expressionResult'
 import { pipe } from 'fp-ts/lib/function'
 import { getExpressionData } from './selector'
-export type {
-  ExpressionResult,
-  EditorAction,
-  EditorEvent,
-} from './types'
-
-export const showBinding = (
-  expression: ExpressionData
-): ExpressionResult => ({
-  type: 'ShowBinding',
-  expression,
-})
-
-const showUpdatedBinding = (
-  expression: ExpressionData,
-  tests: TestData,
-  bindingName: string
-): ExpressionResult => ({
-  type: 'ShowUpdatedBinding',
-  expression,
-  bindingName,
-  tests,
-})
-
-const showTest = (
-  test: UnitTestData | PropertyTestData
-): ExpressionResult => ({
-  type: 'ShowTest',
-  test,
-})
-
-const showErrorResponse = (
-  errorResponse: UserErrorResponse
-): ExpressionResult => ({
-  type: 'ShowErrorResponse',
-  errorResponse,
-})
-
-const evaluationError = (): ExpressionResult => ({
-  type: 'EvaluationError',
-})
-
-const showEvaluate = (
-  expression: ExpressionData,
-  evaluatedValue: string
-): ExpressionResult => ({
-  type: 'ShowEvaluate',
-  expression,
-  evaluatedValue,
-})
 
 const staleL = Lens.fromProp<EditorState>()('stale')
 
@@ -93,10 +48,7 @@ export const editorReducer: EventReducer<
           code: action.text,
           stale: true,
         },
-        {
-          type: 'EvaluateExpression',
-          code: action.text,
-        }
+        doEvaluateExpression(action.text)
       )
     case 'FormatExpression':
       return pipe(
@@ -106,10 +58,7 @@ export const editorReducer: EventReducer<
           (expressionData) =>
             stateAndEvent(
               { ...state, code: expressionData.edPretty },
-              {
-                type: 'EvaluateExpression',
-                code: expressionData.edPretty,
-              }
+              doEvaluateExpression(expressionData.edPretty)
             )
         )
       )
@@ -129,17 +78,11 @@ export const editorReducer: EventReducer<
         ),
         stale: false,
       })
-    case 'EvaluateExpressionError':
-      return stateOnly({
-        ...state,
-        expression: evaluationError(),
-      })
     case 'BindExpression':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'BindExpression',
-        code: state.code,
-        bindingName: action.bindingName,
-      })
+      return stateAndEvent(
+        staleL.set(false)(state),
+        doBindExpression(action.bindingName, state.code)
+      )
     case 'BindExpressionSuccess':
       return stateOnly({
         ...state,
@@ -158,11 +101,10 @@ export const editorReducer: EventReducer<
         expression: showErrorResponse(action.error),
       })
     case 'AddUnitTest':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'AddUnitTest',
-        testName: action.testName,
-        code: state.code,
-      })
+      return stateAndEvent(
+        staleL.set(false)(state),
+        doAddUnitTest(action.testName, state.code)
+      )
     case 'AddUnitTestSuccess':
       const firstTest =
         action.tests.tdUnitTests.find((a) => a) ||
@@ -182,10 +124,10 @@ export const editorReducer: EventReducer<
       })
 
     case 'UpgradeExpression':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'UpgradeExpression',
-        bindingName: action.bindingName,
-      })
+      return stateAndEvent(
+        staleL.set(false)(state),
+        doUpgradeExpression(action.bindingName)
+      )
     case 'UpgradeExpressionSuccess':
       return stateOnly({
         ...state,
@@ -205,10 +147,10 @@ export const editorReducer: EventReducer<
       })
 
     case 'OptimiseExpression':
-      return stateAndEvent(staleL.set(false)(state), {
-        type: 'OptimiseExpression',
-        bindingName: action.bindingName,
-      })
+      return stateAndEvent(
+        staleL.set(false)(state),
+        doOptimiseExpression(action.bindingName)
+      )
 
     case 'OptimiseExpressionSuccess':
       return stateOnly({

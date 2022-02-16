@@ -5,6 +5,7 @@ import { runtime } from '../reducer/runtime'
 import { View } from '../components/View'
 import '../App.css'
 import { useHistory } from 'react-router-dom'
+import { initialise } from '../reducer/project/actions'
 
 interface Props {
   projectHash: string
@@ -23,7 +24,7 @@ export const ProjectPage: React.FC<Props> = ({
   )
 
   React.useEffect(() => {
-    dispatch({ type: 'Initialise' })
+    dispatch(initialise())
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [])
 

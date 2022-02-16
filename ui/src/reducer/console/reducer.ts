@@ -3,30 +3,12 @@ import {
   EventReducer,
   stateOnly,
 } from '../../utils/useEventReducer'
-import {
-  ConsoleState,
-  ConsoleAction,
-  ConsoleEvent,
-  Log,
-} from './types'
-export type {
-  ConsoleState,
-  ConsoleAction,
-  ConsoleEvent,
-} from './types'
+import { ConsoleState, ConsoleEvent, Log } from './types'
+import { ConsoleAction } from './actions'
 
 export const initialConsole: ConsoleState = {
   logs: [],
 }
-
-export const log = (
-  message: string,
-  timestamp: number
-): ConsoleAction => ({
-  type: 'Log',
-  message,
-  timestamp,
-})
 
 const logL = Lens.fromProp<ConsoleState>()('logs')
 

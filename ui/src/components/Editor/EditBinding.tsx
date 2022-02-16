@@ -7,6 +7,12 @@ import * as O from 'fp-ts/Option'
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
 import { ExprHash } from '../../types'
+import {
+  updateCode,
+  optimiseExpression,
+  bindExpression,
+  upgradeExpression,
+} from '../../reducer/editor/actions'
 
 import {
   getErrorLocations,
@@ -33,7 +39,7 @@ export const EditBinding: React.FC<Props> = ({
   const code = editor.code
 
   const onCodeChange = (a: string) =>
-    dispatch({ type: 'UpdateCode', text: a })
+    dispatch(updateCode(a))
 
   const { expression, stale } = editor
 
@@ -42,17 +48,15 @@ export const EditBinding: React.FC<Props> = ({
   const onBindExpression = () => {
     const bindingName = O.toNullable(editor.bindingName)
     if (bindingName) {
-      dispatch({ type: 'BindExpression', bindingName })
+      dispatch(bindExpression(bindingName))
     }
   }
 
-  const onUpgradeExpression = (bindingName: string) => {
-    dispatch({ type: 'UpgradeExpression', bindingName })
-  }
+  const onUpgradeExpression = (bindingName: string) =>
+    dispatch(upgradeExpression(bindingName))
 
-  const onOptimiseExpression = (bindingName: string) => {
-    dispatch({ type: 'OptimiseExpression', bindingName })
-  }
+  const onOptimiseExpression = (bindingName: string) =>
+    dispatch(optimiseExpression(bindingName))
 
   const typedHoleSuggestions = getTypedHoles(state)
   const errorLocations = getErrorLocations(state)

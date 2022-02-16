@@ -1,14 +1,21 @@
 import * as React from 'react'
 import './Menu.css'
 import { Option, isSome } from 'fp-ts/lib/Option'
-import { Screen } from '../reducer/view/types'
+import {
+  newExpressionScreen,
+  newTestScreen,
+  newTypeScreen,
+  projectGraphScreen,
+  Screen,
+  typeSearchScreen,
+} from '../reducer/view/screen'
 import { getScreenTitle } from '../reducer/view/helpers'
 import { MenuBar } from './View/MenuBar'
 import { Action } from '../reducer/types'
 import {
   popScreen,
   pushScreen,
-} from '../reducer/view/reducer'
+} from '../reducer/view/actions'
 import { newEditorFromScreen } from '../reducer/editor/helpers'
 
 type Props = {
@@ -27,37 +34,26 @@ export const Menu: React.FC<Props> = ({
   const onPopScreen = () => dispatch(popScreen())
 
   const onProjectGraph = () =>
-    dispatch(pushScreen({ type: 'project-graph' }))
+    dispatch(pushScreen(projectGraphScreen()))
 
   const onNewBinding = () =>
     dispatch(
-      pushScreen({
-        type: 'new-expression',
-        editor: newEditorFromScreen(screen),
-      })
+      pushScreen(
+        newExpressionScreen(newEditorFromScreen(screen))
+      )
     )
 
   const onNewTest = () =>
     dispatch(
-      pushScreen({
-        type: 'new-test',
-        editor: newEditorFromScreen(screen),
-      })
+      pushScreen(newTestScreen(newEditorFromScreen(screen)))
     )
 
   const onTypeSearch = () =>
-    dispatch(
-      pushScreen({
-        type: 'typeSearch',
-      })
-    )
+    dispatch(pushScreen(typeSearchScreen()))
 
   const onNewType = () =>
     dispatch(
-      pushScreen({
-        type: 'new-type',
-        editor: newEditorFromScreen(screen),
-      })
+      pushScreen(newTypeScreen(newEditorFromScreen(screen)))
     )
   return (
     <>

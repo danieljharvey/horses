@@ -1,5 +1,6 @@
 import * as O from 'fp-ts/Option'
-import { State, StoreItem } from '../types'
+import { State } from '../types'
+import { StoreItem } from './types'
 import { pipe } from 'fp-ts/function'
 import { ExprHash } from '../../types'
 

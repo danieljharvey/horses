@@ -1,22 +1,12 @@
-import { EditorAction, EditorEvent } from './editor/reducer'
-import {
-  ProjectState,
-  ProjectAction,
-  ProjectEvent,
-} from './project/reducer'
-import {
-  ViewState,
-  ViewAction,
-  ViewEvent,
-} from './view/reducer'
-import {
-  ConsoleState,
-  ConsoleAction,
-  ConsoleEvent,
-} from './console/reducer'
-
-export type { StoreItem } from './project/types'
-export type { EditorState } from './editor/types'
+import { ViewState, ViewEvent } from './view/types'
+import { ViewAction } from './view/actions'
+import { ConsoleState, ConsoleEvent } from './console/types'
+import { ConsoleAction } from './console/actions'
+import { ProjectState } from './project/types'
+import { ProjectAction } from './project/actions'
+import { ProjectEvent } from './project/events'
+import { EditorEvent } from './editor/events'
+import { EditorAction } from './editor/actions'
 
 export type State = {
   view: ViewState

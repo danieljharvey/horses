@@ -6,22 +6,16 @@ import {
   stateAndEvent,
   stateAndEvents,
 } from '../../utils/useEventReducer'
-import { ProjectAction, ProjectEvent } from './types'
 
 import {
   listBindings,
   createProject,
   fetchExpressions,
   saveToSessionStorage,
+  ProjectEvent,
 } from './events'
 import { ExprHash, ProjectData } from '../../types'
-export { initialProject } from './events'
-export { storeProjectData } from './actions'
-export type {
-  ProjectState,
-  ProjectAction,
-  ProjectEvent,
-} from './types'
+import { ProjectAction } from './actions'
 
 const projectL = Lens.fromProp<State>()('project')
 
@@ -74,24 +68,6 @@ export const projectReducer: EventReducer<
           ),
           saveToSessionStorage(action.data.pdHash),
         ]
-      )
-
-    case 'FetchExpressionsForHashes':
-      // fetch new expressions (used for fetching exprs that may not have a top level binding)
-      return stateAndEvents(state, [
-        fetchExpressions(
-          action.hashes,
-          state.project.projectHash
-        ),
-      ])
-    case 'StoreProjectHash':
-      // save the project hash only, triggering fetch of project data
-      return stateAndEvent(
-        projectL.set({
-          ...state.project,
-          projectHash: action.projectHash,
-        })(state),
-        listBindings(action.projectHash)
       )
 
     case 'FetchExpressionSuccess':

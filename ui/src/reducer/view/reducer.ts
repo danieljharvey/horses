@@ -3,40 +3,17 @@ import {
   EventReducer,
   stateOnly,
 } from '../../utils/useEventReducer'
-import {
-  Screen,
-  ViewState,
-  ViewAction,
-  ViewEvent,
-} from './types'
+import { ViewState, ViewEvent } from './types'
+import { ViewAction } from './actions'
 import * as NE from 'fp-ts/NonEmptyArray'
 import * as O from 'fp-ts/Option'
 
 import { emptyEditor } from '../editor/helpers'
-
-export type {
-  ViewAction,
-  ViewEvent,
-  ViewState,
-} from './types'
+import { scratchScreen } from './screen'
 
 export const initialView: ViewState = {
-  stack: NE.of({ type: 'scratch', editor: emptyEditor }),
+  stack: NE.of(scratchScreen(emptyEditor)),
 }
-
-export const setScreen = (screen: Screen): ViewAction => ({
-  type: 'SetScreen',
-  screen,
-})
-
-export const pushScreen = (screen: Screen): ViewAction => ({
-  type: 'PushScreen',
-  screen,
-})
-
-export const popScreen = (): ViewAction => ({
-  type: 'PopScreen',
-})
 
 const stackL = Lens.fromProp<ViewState>()('stack')
 
@@ -59,13 +36,6 @@ export const viewReducer: EventReducer<
         stackL.modify((stack) => {
           const tail = NE.fromArray(NE.tail(stack))
           return O.isSome(tail) ? tail.value : stack
-        })(state)
-      )
-    case 'ReplaceScreen':
-      return stateOnly(
-        stackL.modify((stack) => {
-          const tail = NE.tail(stack)
-          return NE.cons(action.screen, tail)
         })(state)
       )
     default:

@@ -6,10 +6,7 @@ import {
   prismReducer,
 } from '../utils/useEventReducer'
 import { editorReducer } from './editor/reducer'
-import {
-  initialProject,
-  projectReducer,
-} from './project/reducer'
+import { projectReducer } from './project/reducer'
 import { initialView, viewReducer } from './view/reducer'
 import {
   initialConsole,
@@ -17,6 +14,7 @@ import {
 } from './console/reducer'
 import { currentEditorO } from './editor/selector'
 import { Lens } from 'monocle-ts'
+import { initialProject } from './project/events'
 
 const viewL = Lens.fromProp<State>()('view')
 const consoleL = Lens.fromProp<State>()('console')
