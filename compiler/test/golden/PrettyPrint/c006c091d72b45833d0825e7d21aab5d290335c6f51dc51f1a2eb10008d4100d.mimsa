@@ -1,7 +1,0 @@
-type Tree a 
-  = Branch Tree a
-           a
-           Tree a
-  | Empty;
-
-Branch (Empty) 1 (Empty)

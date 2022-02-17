@@ -1,5 +1,0 @@
-type Stuff    = Thing String Int;
-
-match (Thing "Hello" 1) with 
-    (Thing name _) -> 
-      name

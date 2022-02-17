@@ -1,9 +1,0 @@
-let isOne a =
-  a == 1;
-
-let apply a f =
-  f a;
-
-infix |> = apply;
-
-1 |> incrementInt |> isOne
