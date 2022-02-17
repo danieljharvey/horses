@@ -1,1 +1,0 @@
-{"storeExpression":{"expArrayItems":[{"expAnn":null,"expLit":{"litInt":1,"tag":"MyInt"},"tag":"MyLiteral"},{"expAnn":null,"expLit":{"litInt":2,"tag":"MyInt"},"tag":"MyLiteral"},{"expAnn":null,"expLit":{"litInt":3,"tag":"MyInt"},"tag":"MyLiteral"}],"expAnn":null,"tag":"MyArray"},"storeTypeBindings":{},"storeBindings":{}}

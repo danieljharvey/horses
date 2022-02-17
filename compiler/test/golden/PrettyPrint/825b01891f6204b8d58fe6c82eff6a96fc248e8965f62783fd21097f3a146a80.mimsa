@@ -1,5 +1,0 @@
-match [] with 
-    [_] -> 
-      True
-  | _ -> 
-      False

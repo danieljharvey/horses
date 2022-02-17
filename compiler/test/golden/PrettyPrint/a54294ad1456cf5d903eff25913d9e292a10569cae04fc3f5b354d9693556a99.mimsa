@@ -1,3 +1,0 @@
-match ({ dog: 1 }) with 
-    { dog: a } -> 
-      a

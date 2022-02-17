@@ -18,11 +18,11 @@ instance IsString FoundPath where
     let textAs = T.pack as
      in case NE.nonEmpty (T.splitOn "." (T.pack as)) of
           Just path -> FoundPath (Name <$> path)
-          Nothing -> FoundPath (pure (Name textAs))
+          Nothing -> FoundPath (NE.singleton (Name textAs))
 
 instance Printer FoundPath where
   prettyPrint (FoundPath as) = T.intercalate "." (prettyPrint <$> NE.toList as)
 
 appendNameToFoundPath :: Name -> FoundPath -> FoundPath
 appendNameToFoundPath a (FoundPath as) =
-  FoundPath (as <> pure a)
+  FoundPath (as <> NE.singleton a)

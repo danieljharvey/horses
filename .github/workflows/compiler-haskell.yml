@@ -52,7 +52,7 @@ jobs:
       - name: Cache .stack-work
         uses: actions/cache@v2
         with:
-          path: .stack-work
+          path: compiler/.stack-work
           key: ${{ runner.os }}-1-stack-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
           restore-keys: |
             ${{ runner.os }}-1-stack-work-${{ matrix.plan.ghc }}
