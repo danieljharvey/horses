@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { State } from '../reducer/types'
 
 import './ProjectGraph.css'
 import { Graphviz } from 'graphviz-react'
@@ -17,10 +16,10 @@ import { pushScreen } from '../reducer/view/actions'
 import { findNameForExprHash } from '../reducer/project/helpers'
 import { expressionGraphScreen } from '../reducer/view/screen'
 import { useDispatch } from '../hooks/useDispatch'
+import { useStoreRec } from '../hooks/useStore'
+import { getProjectHash } from '../reducer/project/selectors'
 
-type Props = {
-  state: State
-}
+type Props = {}
 
 const findExpressionHash = ({
   nativeEvent,
@@ -51,10 +50,11 @@ const getGraphData = (
     O.map((gp) => gp.gpGraphviz)
   )
 
-export const ProjectGraph: React.FC<Props> = ({
-  state,
-}) => {
-  const projectHash = state.project.projectHash
+export const ProjectGraph: React.FC<Props> = () => {
+  const { projectHash, findName } = useStoreRec({
+    projectHash: getProjectHash,
+    findName: findNameForExprHash,
+  })
   const dispatch = useDispatch()
   const [projectGraphState] = useProjectGraph(projectHash)
 
@@ -66,7 +66,7 @@ export const ProjectGraph: React.FC<Props> = ({
         pushScreen(
           expressionGraphScreen(
             pipe(
-              findNameForExprHash(hash.value, state),
+              findName(hash.value),
               O.fold(
                 () => 'expression',
                 (name) => name

@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { State } from '../reducer/types'
 import { findNameForExprHash } from '../reducer/project/helpers'
 
 import { findExpression } from '../reducer/project/helpers'
@@ -13,11 +12,10 @@ import { Paragraph } from './View/Paragraph'
 import * as O from 'fp-ts/Option'
 import { ExprHash } from '../types'
 import { pushScreen } from '../reducer/view/actions'
-import { StoreItem } from '../reducer/project/types'
 import { useDispatch } from '../hooks/useDispatch'
+import { useStoreRec } from '../hooks/useStore'
 
 type Props = {
-  state: State
   exprHash: ExprHash
   bindingName: string
 }
@@ -39,19 +37,17 @@ const findExpressionHash = ({
   return O.none
 }
 
-// return either the expression data or the project data or nothing
-const getGraphData = (
-  state: State,
-  exprHash: ExprHash
-): O.Option<StoreItem> =>
-  pipe(findExpression(exprHash, state))
-
 export const ExpressionGraph: React.FC<Props> = ({
-  state,
   exprHash,
   bindingName,
 }) => {
   const dispatch = useDispatch()
+
+  const { getGraphData, findName } = useStoreRec({
+    getGraphData: findExpression,
+    findName: findNameForExprHash,
+  })
+
   const setSelectedExprHash = (
     hash: O.Option<ExprHash>
   ) => {
@@ -61,7 +57,7 @@ export const ExpressionGraph: React.FC<Props> = ({
           type: 'expression-graph',
           exprHash: hash.value,
           bindingName: pipe(
-            findNameForExprHash(hash.value, state),
+            findName(hash.value),
             O.fold(
               () => 'expression',
               (name) => name
@@ -74,7 +70,7 @@ export const ExpressionGraph: React.FC<Props> = ({
 
   // try to use expr graph data if available, failing that, use project data,
   // failing that, show loading
-  const useGraphData = getGraphData(state, exprHash)
+  const useGraphData = getGraphData(exprHash)
 
   return (
     <>

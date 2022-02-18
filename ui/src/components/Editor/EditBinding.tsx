@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { State } from '../../reducer/types'
 import { CodeEditor } from './CodeEditor'
 import { EditorState } from '../../reducer/editor/types'
 import { Feedback } from './Feedback'
@@ -20,9 +19,10 @@ import {
   getTypedHoles,
 } from '../../reducer/editor/selector'
 import { useDispatch } from '../../hooks/useDispatch'
+import { useStoreRec } from '../../hooks/useStore'
+import { getProjectHash } from '../../reducer/project/selectors'
 
 type Props = {
-  state: State
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -33,13 +33,24 @@ type Props = {
 export const EditBinding: React.FC<Props> = ({
   editor,
   onBindingSelect,
-  state,
 }) => {
   const code = editor.code
   const dispatch = useDispatch()
+
   const onCodeChange = (a: string) =>
     dispatch(updateCode(a))
 
+  const {
+    typedHoleSuggestions,
+    errorLocations,
+    sourceItems,
+    projectHash,
+  } = useStoreRec({
+    typedHoleSuggestions: getTypedHoles,
+    errorLocations: getErrorLocations,
+    sourceItems: getSourceItems,
+    projectHash: getProjectHash,
+  })
   const { expression, stale } = editor
 
   const bindingName = O.toNullable(editor.bindingName)
@@ -57,16 +68,13 @@ export const EditBinding: React.FC<Props> = ({
   const onOptimiseExpression = (bindingName: string) =>
     dispatch(optimiseExpression(bindingName))
 
-  const typedHoleSuggestions = getTypedHoles(state)
-  const errorLocations = getErrorLocations(state)
-
   return (
     <>
       <Panel flexGrow={2}>
         <CodeEditor
           code={code}
           setCode={onCodeChange}
-          sourceItems={getSourceItems(state)}
+          sourceItems={sourceItems}
           errorLocations={errorLocations}
           typedHoleResponses={typedHoleSuggestions}
         />
@@ -79,12 +87,11 @@ export const EditBinding: React.FC<Props> = ({
         )}
         <Feedback
           bindingName={editor.bindingName}
-          state={state}
           result={expression}
           onBindingSelect={onBindingSelect}
           onUpgradeExpression={onUpgradeExpression}
           onOptimiseExpression={onOptimiseExpression}
-          projectHash={state.project.projectHash}
+          projectHash={projectHash}
         />
       </Panel>
     </>

@@ -42,7 +42,7 @@ export const ProjectPage: React.FC<Props> = ({
   return (
     <StoreContext.Provider value={{ state, dispatch }}>
       <div className="App">
-        <View state={state} />
+        <View />
       </div>
     </StoreContext.Provider>
   )

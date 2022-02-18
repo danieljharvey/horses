@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { State } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
 import {
   optimiseExpression,
@@ -25,9 +24,10 @@ import { InlineSpaced } from '../View/InlineSpaced'
 import { ExprHash, UserErrorResponse } from '../../types'
 import * as O from 'fp-ts/Option'
 import { useDispatch } from '../../hooks/useDispatch'
+import { useStoreRec } from '../../hooks/useStore'
+import { getProjectHash } from '../../reducer/project/selectors'
 
 type Props = {
-  state: State
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -35,12 +35,16 @@ type Props = {
   ) => void
 }
 export const NewType: React.FC<Props> = ({
-  state,
   editor,
   onBindingSelect,
 }) => {
-  const projectHash = state.project.projectHash
+  const { projectHash, sourceItems } = useStoreRec({
+    projectHash: getProjectHash,
+    sourceItems: getSourceItems,
+  })
+
   const dispatch = useDispatch()
+
   const [addNewType, typeState] = useAddType(
     projectHash,
     editor.code,
@@ -69,7 +73,7 @@ export const NewType: React.FC<Props> = ({
                 <CodeEditor
                   code={code}
                   setCode={onCodeChange}
-                  sourceItems={getSourceItems(state)}
+                  sourceItems={sourceItems}
                   errorLocations={[]}
                   typedHoleResponses={[]}
                 />
@@ -81,7 +85,6 @@ export const NewType: React.FC<Props> = ({
                       onUpgradeExpression
                     }
                     bindingName={O.none}
-                    state={state}
                     result={expression}
                     onBindingSelect={onBindingSelect}
                     projectHash={projectHash}
@@ -106,7 +109,7 @@ export const NewType: React.FC<Props> = ({
                 <CodeEditor
                   code={code}
                   setCode={onCodeChange}
-                  sourceItems={getSourceItems(state)}
+                  sourceItems={sourceItems}
                   errorLocations={err.ueErrorLocations}
                   typedHoleResponses={err.ueTypedHoles}
                 />

@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { State } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
@@ -22,9 +21,10 @@ import {
   upgradeExpression,
 } from '../../reducer/editor/actions'
 import { useDispatch } from '../../hooks/useDispatch'
+import { useStoreRec } from '../../hooks/useStore'
+import { getProjectHash } from '../../reducer/project/selectors'
 
 type Props = {
-  state: State
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -35,7 +35,6 @@ type Props = {
 export const NewTest: React.FC<Props> = ({
   editor,
   onBindingSelect,
-  state,
 }) => {
   const [testName, setTestName] = React.useState('')
   const dispatch = useDispatch()
@@ -57,8 +56,17 @@ export const NewTest: React.FC<Props> = ({
   const onOptimiseExpression = (bindingName: string) =>
     dispatch(optimiseExpression(bindingName))
 
-  const typedHoleSuggestions = getTypedHoles(state)
-  const errorLocations = getErrorLocations(state)
+  const {
+    typedHoleSuggestions,
+    errorLocations,
+    sourceItems,
+    projectHash,
+  } = useStoreRec({
+    typedHoleSuggestions: getTypedHoles,
+    errorLocations: getErrorLocations,
+    sourceItems: getSourceItems,
+    projectHash: getProjectHash,
+  })
 
   return (
     <>
@@ -74,7 +82,7 @@ export const NewTest: React.FC<Props> = ({
           <CodeEditor
             code={code}
             setCode={onCodeChange}
-            sourceItems={getSourceItems(state)}
+            sourceItems={sourceItems}
             errorLocations={errorLocations}
             typedHoleResponses={typedHoleSuggestions}
           />
@@ -87,11 +95,10 @@ export const NewTest: React.FC<Props> = ({
           )}
           <Feedback
             bindingName={O.none}
-            state={state}
             result={expression}
             onBindingSelect={onBindingSelect}
             onUpgradeExpression={onUpgradeExpression}
-            projectHash={state.project.projectHash}
+            projectHash={projectHash}
             onOptimiseExpression={onOptimiseExpression}
           />
         </FlexColumnSpaced>

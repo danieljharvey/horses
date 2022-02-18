@@ -1,12 +1,14 @@
 import * as React from 'react'
 import * as O from 'fp-ts/Option'
 import * as E from 'fp-ts/Either'
-import { State } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
 import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
-import { getProjectBindings } from '../../reducer/project/selectors'
+import {
+  getProjectBindings,
+  getProjectHash,
+} from '../../reducer/project/selectors'
 import {
   validateBinding,
   showError,
@@ -30,9 +32,9 @@ import {
   optimiseExpression,
 } from '../../reducer/editor/actions'
 import { useDispatch } from '../../hooks/useDispatch'
+import { useStoreRec } from '../../hooks/useStore'
 
 type Props = {
-  state: State
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -41,7 +43,6 @@ type Props = {
 }
 
 export const NewBinding: React.FC<Props> = ({
-  state,
   editor,
   onBindingSelect,
 }) => {
@@ -56,6 +57,20 @@ export const NewBinding: React.FC<Props> = ({
 
   const existingName = O.toNullable(editor.bindingName)
 
+  const {
+    typedHoleSuggestions,
+    errorLocations,
+    sourceItems,
+    projectHash,
+    projectBindings,
+  } = useStoreRec({
+    typedHoleSuggestions: getTypedHoles,
+    errorLocations: getErrorLocations,
+    sourceItems: getSourceItems,
+    projectHash: getProjectHash,
+    projectBindings: getProjectBindings,
+  })
+
   const onBindExpression = (name: string) =>
     dispatch(bindExpression(existingName || name))
 
@@ -67,14 +82,7 @@ export const NewBinding: React.FC<Props> = ({
 
   const validBinding = existingName
     ? E.right(existingName)
-    : validateBinding(
-        bindingName,
-        code,
-        getProjectBindings(state)
-      )
-
-  const typedHoleSuggestions = getTypedHoles(state)
-  const errorLocations = getErrorLocations(state)
+    : validateBinding(bindingName, code, projectBindings)
 
   return (
     <>
@@ -90,7 +98,7 @@ export const NewBinding: React.FC<Props> = ({
           <CodeEditor
             code={code}
             setCode={onCodeChange}
-            sourceItems={getSourceItems(state)}
+            sourceItems={sourceItems}
             errorLocations={errorLocations}
             typedHoleResponses={typedHoleSuggestions}
           />
@@ -116,10 +124,9 @@ export const NewBinding: React.FC<Props> = ({
                 )}
                 <Feedback
                   bindingName={O.none}
-                  state={state}
                   result={expression}
                   onBindingSelect={onBindingSelect}
-                  projectHash={state.project.projectHash}
+                  projectHash={projectHash}
                   onUpgradeExpression={onUpgradeExpression}
                   onOptimiseExpression={
                     onOptimiseExpression

@@ -8,7 +8,6 @@ import { Code } from '../View/Code'
 import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { BindingVersion, ExprHash } from '../../types'
-import { State } from '../../reducer/types'
 import { ListVersions } from '../ListVersions'
 import {
   getUsagesOfExprHash,
@@ -21,6 +20,7 @@ import { PropertyTest } from '../PropertyTest'
 import { ExpressionTests } from './ExpressionTests'
 import { Upgrade } from '../Upgrade'
 import { Optimise } from '../Optimise'
+import { useStoreRec } from '../../hooks/useStore'
 
 type Props = {
   projectHash: ExprHash
@@ -32,27 +32,26 @@ type Props = {
   ) => void
   onUpgradeExpression: (bindingName: string) => void
   onOptimiseExpression: (bindingName: string) => void
-  state: State
 }
 
 export const Feedback: React.FC<Props> = ({
   result,
   bindingName,
-  state,
   projectHash,
   onBindingSelect,
   onUpgradeExpression,
   onOptimiseExpression,
 }) => {
+  const { getVersions, getUsages } = useStoreRec({
+    getVersions: getVersionsOfBinding,
+    getUsages: getUsagesOfExprHash,
+  })
   // need to return new bindings and typeBindings
   const versions = pipe(
     bindingName,
-    O.map((name) => getVersionsOfBinding(name, state)),
+    O.map((name) => getVersions(name)),
     O.getOrElse(() => [] as BindingVersion[])
   )
-
-  const getUsages = (exprHash: ExprHash) =>
-    getUsagesOfExprHash(exprHash, state)
 
   switch (result.type) {
     case 'ShowErrorResponse':
@@ -129,7 +128,6 @@ export const Feedback: React.FC<Props> = ({
             onBindingSelect={onBindingSelect}
           />
           <Upgrade
-            state={state}
             onUpgradeExpression={onUpgradeExpression}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
@@ -137,7 +135,6 @@ export const Feedback: React.FC<Props> = ({
             currentHash={result.expression.edHash}
           />
           <Optimise
-            state={state}
             onOptimiseExpression={onOptimiseExpression}
             name={result.bindingName}
             canOptimise={result.expression.edCanOptimise}
@@ -147,7 +144,6 @@ export const Feedback: React.FC<Props> = ({
             currentHash={result.expression.edHash}
             onBindingSelect={onBindingSelect}
             name={result.bindingName}
-            state={state}
           />
           <ListUsages
             usages={getUsages(result.expression.edHash)}
@@ -189,7 +185,6 @@ export const Feedback: React.FC<Props> = ({
                 onUpgradeExpression={onUpgradeExpression}
                 values={result.expression.edBindings}
                 types={result.expression.edTypeBindings}
-                state={state}
                 name={name}
                 currentHash={result.expression.edHash}
               />
@@ -200,7 +195,6 @@ export const Feedback: React.FC<Props> = ({
             bindingName,
             O.map((name) => (
               <Optimise
-                state={state}
                 onOptimiseExpression={onOptimiseExpression}
                 name={name}
                 canOptimise={
@@ -218,7 +212,6 @@ export const Feedback: React.FC<Props> = ({
                 currentHash={result.expression.edHash}
                 onBindingSelect={onBindingSelect}
                 name={name}
-                state={state}
               />
             )),
             O.getOrElse(() => <div />)

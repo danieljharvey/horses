@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { State } from '../../reducer/types'
 import { ListBindings } from '../ListBindings'
 
 import { typeSearch } from '../../service/search'
@@ -10,9 +9,10 @@ import { Paragraph } from '../View/Paragraph'
 import { Panel } from '../View/Panel'
 import { ExprHash } from '../../types'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
+import { useStore } from '../../hooks/useStore'
+import { getProjectHash } from '../../reducer/project/selectors'
 
 type Props = {
-  state: State
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash
@@ -20,16 +20,17 @@ type Props = {
 }
 
 export const TypeSearch: React.FC<Props> = ({
-  state,
   onBindingSelect,
 }) => {
   const [searchText, setSearchText] = React.useState('')
   const [items, setItems] = React.useState<string[]>([])
   const [errorMessage, setErrorMessage] = React.useState('')
 
+  const projectHash = useStore(getProjectHash)
+
   React.useEffect(() => {
     typeSearch({
-      tsProjectHash: state.project.projectHash,
+      tsProjectHash: projectHash,
       tsInput: searchText,
     })().then((res) => {
       if (E.isRight(res)) {
@@ -39,7 +40,7 @@ export const TypeSearch: React.FC<Props> = ({
         setErrorMessage(res.left)
       }
     })
-  }, [searchText, state.project.projectHash])
+  }, [searchText, projectHash])
 
   const filteredValues = items.reduce(
     (list, item) => ({ ...list, [item]: '' }),

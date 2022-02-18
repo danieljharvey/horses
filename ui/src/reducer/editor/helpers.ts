@@ -24,7 +24,7 @@ export const editorForBinding =
     exprHash: string
   ): O.Option<EditorState> =>
     pipe(
-      findExpression(exprHash, state),
+      findExpression(state)(exprHash),
       O.alt(() =>
         findExpressionForAnyBinding(bindingName, state)
       ),

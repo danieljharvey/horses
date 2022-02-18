@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as O from 'fp-ts/Option'
-import { State } from '../reducer/types'
 import { Scratch } from './Editor/Scratch'
 import { EditBinding } from './Editor/EditBinding'
 import { NewBinding } from './Editor/NewBinding'
@@ -24,10 +23,11 @@ import { PanelRow } from './View/PanelRow'
 import { ExprHash } from '../types'
 import { useDispatch } from '../hooks/useDispatch'
 import { useStoreRec } from '../hooks/useStore'
+import { getProjectHash } from '../reducer/project/selectors'
 
-type Props = { state: State }
+type Props = {}
 
-export const View: React.FC<Props> = ({ state }) => {
+export const View: React.FC<Props> = () => {
   const dispatch = useDispatch()
 
   const {
@@ -36,12 +36,14 @@ export const View: React.FC<Props> = ({ state }) => {
     getEditorState,
     bindings,
     typeBindings,
+    projectHash,
   } = useStoreRec({
     screen: getCurrentScreen,
     lastScreen: getLastScreen,
     getEditorState: editorForBinding,
     bindings: (s) => s.project.bindings,
     typeBindings: (s) => s.project.typeBindings,
+    projectHash: getProjectHash,
   })
 
   const onBindingSelect = (
@@ -64,7 +66,7 @@ export const View: React.FC<Props> = ({ state }) => {
 
   const [inner, showBindingList] = getScreenInner(
     screen,
-    state,
+    projectHash,
     onBindingSelect
   )
 
@@ -88,7 +90,7 @@ export const View: React.FC<Props> = ({ state }) => {
 
 const getScreenInner = (
   screen: Screen,
-  state: State,
+  projectHash: ExprHash,
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash
@@ -98,8 +100,7 @@ const getScreenInner = (
     case 'scratch':
       return [
         <Scratch
-          state={state}
-          projectHash={state.project.projectHash}
+          projectHash={projectHash}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -109,7 +110,6 @@ const getScreenInner = (
     case 'edit':
       return [
         <EditBinding
-          state={state}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -119,7 +119,6 @@ const getScreenInner = (
     case 'new-expression':
       return [
         <NewBinding
-          state={state}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -128,17 +127,13 @@ const getScreenInner = (
 
     case 'typeSearch':
       return [
-        <TypeSearch
-          state={state}
-          onBindingSelect={onBindingSelect}
-        />,
+        <TypeSearch onBindingSelect={onBindingSelect} />,
         false,
       ]
 
     case 'new-test':
       return [
         <NewTest
-          state={state}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -148,7 +143,6 @@ const getScreenInner = (
     case 'new-type':
       return [
         <NewType
-          state={state}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -156,12 +150,11 @@ const getScreenInner = (
       ]
 
     case 'project-graph':
-      return [<ProjectGraph state={state} />, false]
+      return [<ProjectGraph />, false]
 
     case 'expression-graph':
       return [
         <ExpressionGraph
-          state={state}
           exprHash={screen.exprHash}
           bindingName={screen.bindingName}
         />,
