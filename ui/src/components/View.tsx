@@ -23,23 +23,33 @@ import { Screen as ScreenComponent } from './View/Screen'
 import { PanelRow } from './View/PanelRow'
 import { ExprHash } from '../types'
 import { useDispatch } from '../hooks/useDispatch'
+import { useStoreRec } from '../hooks/useStore'
 
-type Props = {
-  state: State
-}
+type Props = { state: State }
 
 export const View: React.FC<Props> = ({ state }) => {
   const dispatch = useDispatch()
-  const screen = getCurrentScreen(state)
 
-  const lastScreen = getLastScreen(state)
+  const {
+    screen,
+    lastScreen,
+    getEditorState,
+    bindings,
+    typeBindings,
+  } = useStoreRec({
+    screen: getCurrentScreen,
+    lastScreen: getLastScreen,
+    getEditorState: editorForBinding,
+    bindings: (s) => s.project.bindings,
+    typeBindings: (s) => s.project.typeBindings,
+  })
 
   const onBindingSelect = (
     bindingName: string,
     exprHash: ExprHash
   ) => {
     const edit = O.toNullable(
-      editorForBinding(bindingName, exprHash, state)
+      getEditorState(bindingName, exprHash)
     )
     if (edit) {
       dispatch(
@@ -65,9 +75,8 @@ export const View: React.FC<Props> = ({ state }) => {
         {showBindingList && (
           <PanelRow>
             <FilteredBindingList
-              state={state}
-              values={state.project.bindings}
-              types={state.project.typeBindings}
+              values={bindings}
+              types={typeBindings}
               onBindingSelect={onBindingSelect}
             />
           </PanelRow>

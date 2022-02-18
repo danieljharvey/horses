@@ -91,7 +91,6 @@ export const Feedback: React.FC<Props> = ({
             </FlexColumnSpaced>
           )}
           <ListBindings
-            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
@@ -125,7 +124,6 @@ export const Feedback: React.FC<Props> = ({
             exprHash={result.expression.edHash}
           />
           <ListBindings
-            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
@@ -180,7 +178,6 @@ export const Feedback: React.FC<Props> = ({
             exprHash={result.expression.edHash}
           />
           <ListBindings
-            state={state}
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
             onBindingSelect={onBindingSelect}
@@ -261,7 +258,6 @@ export const Feedback: React.FC<Props> = ({
             <PropertyTest propertyTest={result.test} />
           )}
           <ListBindings
-            state={state}
             values={
               'utdBindings' in result.test
                 ? result.test.utdBindings

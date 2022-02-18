@@ -40,7 +40,7 @@ export const Upgrade: React.FC<UpgradeProps> = ({
   ]
 
   const bindingIsNewest = (exprHash: ExprHash) =>
-    O.isSome(lookupNameForExprHash(exprHash, state))
+    O.isSome(lookupNameForExprHash(state)(exprHash))
 
   const upToDateBindings =
     allDepHashes.map(bindingIsNewest).filter((a) => a)

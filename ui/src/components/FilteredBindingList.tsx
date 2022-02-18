@@ -4,7 +4,6 @@ import './FilteredBindingList.css'
 import { ExprHash } from '../types/'
 import { TextInput } from './View/TextInput'
 import { Panel } from './View/Panel'
-import { State } from '../reducer/types'
 import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 import { Paragraph } from './View/Paragraph'
 import { InlineSpaced } from './View/InlineSpaced'
@@ -19,6 +18,7 @@ import {
 } from '@devexperts/remote-data-ts'
 import { pipe } from 'fp-ts/function'
 import { ListTests, testCounts } from './ListTests'
+import { useStore } from '../hooks/useStore'
 type Item = 'bindings' | 'tests'
 
 type Props = {
@@ -28,7 +28,6 @@ type Props = {
     bindingName: string,
     exprHash: ExprHash
   ) => void
-  state: State
 }
 
 const filterRecord = <A,>(
@@ -115,7 +114,6 @@ export const FilteredBindingList: React.FC<Props> = ({
   values,
   types,
   onBindingSelect,
-  state,
 }) => {
   const [filterText, setFilterText] = React.useState('')
   const filteredValues = filterRecord(filterText, values)
@@ -123,7 +121,7 @@ export const FilteredBindingList: React.FC<Props> = ({
   const [showItems, setShowItems] =
     React.useState<Item>('bindings')
 
-  const projectHash = getProjectHash(state)
+  const projectHash = useStore(getProjectHash)
 
   const [loadingTests] = useListProjectTests(projectHash)
 
@@ -148,7 +146,6 @@ export const FilteredBindingList: React.FC<Props> = ({
             onBindingSelect={onBindingSelect}
             values={filteredValues}
             types={filteredTypes}
-            state={state}
           />
         </FlexColumnSpaced>
       ) : (

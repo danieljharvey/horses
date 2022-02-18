@@ -141,7 +141,6 @@ export const NewType: React.FC<Props> = ({
                 </InlineSpaced>
                 <Paragraph>Generated functions:</Paragraph>
                 <ListBindings
-                  state={state}
                   values={addType.bindings}
                   types={addType.typeBindings}
                   onBindingSelect={onBindingSelect}

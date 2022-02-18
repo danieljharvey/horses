@@ -23,7 +23,7 @@ export const Optimise: React.FC<OptimiseProps> = ({
   canOptimise,
 }) => {
   const bindingIsNewest = (exprHash: ExprHash) =>
-    O.isSome(lookupNameForExprHash(exprHash, state))
+    O.isSome(lookupNameForExprHash(state)(exprHash))
 
   if (!bindingIsNewest || !canOptimise) {
     return null
