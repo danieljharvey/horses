@@ -1,15 +1,26 @@
 import * as React from 'react'
-import { useEventReducer } from '../utils/useEventReducer'
+import { useEventReducer } from '../hooks/useEventReducer'
 import { eventReducer, initialState } from '../reducer/root'
 import { runtime } from '../reducer/runtime'
 import { View } from '../components/View'
 import '../App.css'
 import { useHistory } from 'react-router-dom'
 import { initialise } from '../reducer/project/actions'
+import { Action } from '../reducer/types'
 
 interface Props {
   projectHash: string
 }
+
+type Context = {
+  state: ReturnType<typeof initialState>
+  dispatch: (a: Action) => void
+}
+
+export const StoreContext = React.createContext<Context>({
+  state: initialState(''),
+  dispatch: () => {},
+})
 
 // this doesn't feel right but YOLO
 export const ProjectPage: React.FC<Props> = ({
@@ -29,8 +40,10 @@ export const ProjectPage: React.FC<Props> = ({
   }, [])
 
   return (
-    <div className="App">
-      <View state={state} dispatch={dispatch} />
-    </div>
+    <StoreContext.Provider value={{ state, dispatch }}>
+      <div className="App">
+        <View state={state} />
+      </div>
+    </StoreContext.Provider>
   )
 }

@@ -1,5 +1,5 @@
 import { State, Action, Event } from './types'
-import { EventReducerRuntime } from '../utils/useEventReducer'
+import { EventReducerRuntime } from '../hooks/useEventReducer'
 import {
   evaluate,
   createProject,

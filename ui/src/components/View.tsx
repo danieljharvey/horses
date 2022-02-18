@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as O from 'fp-ts/Option'
-import { State, Action } from '../reducer/types'
+import { State } from '../reducer/types'
 import { Scratch } from './Editor/Scratch'
 import { EditBinding } from './Editor/EditBinding'
 import { NewBinding } from './Editor/NewBinding'
@@ -22,16 +22,14 @@ import { Screen } from '../reducer/view/screen'
 import { Screen as ScreenComponent } from './View/Screen'
 import { PanelRow } from './View/PanelRow'
 import { ExprHash } from '../types'
+import { useDispatch } from '../hooks/useDispatch'
 
 type Props = {
   state: State
-  dispatch: (a: Action) => void
 }
 
-export const View: React.FC<Props> = ({
-  state,
-  dispatch,
-}) => {
+export const View: React.FC<Props> = ({ state }) => {
+  const dispatch = useDispatch()
   const screen = getCurrentScreen(state)
 
   const lastScreen = getLastScreen(state)
@@ -57,16 +55,11 @@ export const View: React.FC<Props> = ({
   const [inner, showBindingList] = getScreenInner(
     screen,
     state,
-    dispatch,
     onBindingSelect
   )
 
   return (
-    <Menu
-      screen={screen}
-      lastScreen={lastScreen}
-      dispatch={dispatch}
-    >
+    <Menu screen={screen} lastScreen={lastScreen}>
       <ScreenComponent>
         <PanelRow>{inner}</PanelRow>
         {showBindingList && (
@@ -87,7 +80,6 @@ export const View: React.FC<Props> = ({
 const getScreenInner = (
   screen: Screen,
   state: State,
-  dispatch: (a: Action) => void,
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash
@@ -99,7 +91,6 @@ const getScreenInner = (
         <Scratch
           state={state}
           projectHash={state.project.projectHash}
-          dispatch={dispatch}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -110,7 +101,6 @@ const getScreenInner = (
       return [
         <EditBinding
           state={state}
-          dispatch={dispatch}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -121,7 +111,6 @@ const getScreenInner = (
       return [
         <NewBinding
           state={state}
-          dispatch={dispatch}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -141,7 +130,6 @@ const getScreenInner = (
       return [
         <NewTest
           state={state}
-          dispatch={dispatch}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -152,7 +140,6 @@ const getScreenInner = (
       return [
         <NewType
           state={state}
-          dispatch={dispatch}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -160,17 +147,13 @@ const getScreenInner = (
       ]
 
     case 'project-graph':
-      return [
-        <ProjectGraph dispatch={dispatch} state={state} />,
-        false,
-      ]
+      return [<ProjectGraph state={state} />, false]
 
     case 'expression-graph':
       return [
         <ExpressionGraph
           state={state}
           exprHash={screen.exprHash}
-          dispatch={dispatch}
           bindingName={screen.bindingName}
         />,
         false,

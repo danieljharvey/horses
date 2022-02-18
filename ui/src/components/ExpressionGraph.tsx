@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { State } from '../reducer/types'
-import { Action } from '../reducer/types'
 import { findNameForExprHash } from '../reducer/project/helpers'
 
 import { findExpression } from '../reducer/project/helpers'
@@ -15,9 +14,9 @@ import * as O from 'fp-ts/Option'
 import { ExprHash } from '../types'
 import { pushScreen } from '../reducer/view/actions'
 import { StoreItem } from '../reducer/project/types'
+import { useDispatch } from '../hooks/useDispatch'
 
 type Props = {
-  dispatch: (a: Action) => void
   state: State
   exprHash: ExprHash
   bindingName: string
@@ -50,9 +49,9 @@ const getGraphData = (
 export const ExpressionGraph: React.FC<Props> = ({
   state,
   exprHash,
-  dispatch,
   bindingName,
 }) => {
+  const dispatch = useDispatch()
   const setSelectedExprHash = (
     hash: O.Option<ExprHash>
   ) => {

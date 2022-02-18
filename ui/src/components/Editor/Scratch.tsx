@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Action, State } from '../../reducer/types'
+import { State } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
@@ -20,10 +20,10 @@ import {
   upgradeExpression,
   optimiseExpression,
 } from '../../reducer/editor/actions'
+import { useDispatch } from '../../hooks/useDispatch'
 
 type Props = {
   projectHash: ExprHash
-  dispatch: (a: Action) => void
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -33,12 +33,12 @@ type Props = {
 }
 
 export const Scratch: React.FC<Props> = ({
-  dispatch,
   editor,
   onBindingSelect,
   projectHash,
   state,
 }) => {
+  const dispatch = useDispatch()
   const onFormatExpression = () =>
     dispatch(formatExpression())
 

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { State, Action } from '../../reducer/types'
+import { State } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
 import {
   optimiseExpression,
@@ -24,10 +24,10 @@ import { ListBindings } from '../ListBindings'
 import { InlineSpaced } from '../View/InlineSpaced'
 import { ExprHash, UserErrorResponse } from '../../types'
 import * as O from 'fp-ts/Option'
+import { useDispatch } from '../../hooks/useDispatch'
 
 type Props = {
   state: State
-  dispatch: (a: Action) => void
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -36,12 +36,11 @@ type Props = {
 }
 export const NewType: React.FC<Props> = ({
   state,
-  dispatch,
   editor,
   onBindingSelect,
 }) => {
   const projectHash = state.project.projectHash
-
+  const dispatch = useDispatch()
   const [addNewType, typeState] = useAddType(
     projectHash,
     editor.code,

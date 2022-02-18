@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { State, Action } from '../../reducer/types'
+import { State } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
@@ -21,10 +21,10 @@ import {
   optimiseExpression,
   upgradeExpression,
 } from '../../reducer/editor/actions'
+import { useDispatch } from '../../hooks/useDispatch'
 
 type Props = {
   state: State
-  dispatch: (a: Action) => void
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -33,12 +33,12 @@ type Props = {
 }
 
 export const NewTest: React.FC<Props> = ({
-  dispatch,
   editor,
   onBindingSelect,
   state,
 }) => {
   const [testName, setTestName] = React.useState('')
+  const dispatch = useDispatch()
 
   const code = editor.code
 

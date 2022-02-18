@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as O from 'fp-ts/Option'
 import * as E from 'fp-ts/Either'
-import { State, Action } from '../../reducer/types'
+import { State } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
 import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
@@ -29,10 +29,10 @@ import {
   upgradeExpression,
   optimiseExpression,
 } from '../../reducer/editor/actions'
+import { useDispatch } from '../../hooks/useDispatch'
 
 type Props = {
   state: State
-  dispatch: (a: Action) => void
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -42,12 +42,11 @@ type Props = {
 
 export const NewBinding: React.FC<Props> = ({
   state,
-  dispatch,
   editor,
   onBindingSelect,
 }) => {
   const [bindingName, setBindingName] = React.useState('')
-
+  const dispatch = useDispatch()
   const code = editor.code
 
   const onCodeChange = (a: string) =>

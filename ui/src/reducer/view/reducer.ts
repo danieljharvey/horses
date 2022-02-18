@@ -2,7 +2,7 @@ import { Lens } from 'monocle-ts'
 import {
   EventReducer,
   stateOnly,
-} from '../../utils/useEventReducer'
+} from '../../hooks/useEventReducer'
 import { ViewState, ViewEvent } from './types'
 import { ViewAction } from './actions'
 import * as NE from 'fp-ts/NonEmptyArray'

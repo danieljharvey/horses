@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { State, Action } from '../../reducer/types'
+import { State } from '../../reducer/types'
 import { CodeEditor } from './CodeEditor'
 import { EditorState } from '../../reducer/editor/types'
 import { Feedback } from './Feedback'
@@ -19,10 +19,10 @@ import {
   getSourceItems,
   getTypedHoles,
 } from '../../reducer/editor/selector'
+import { useDispatch } from '../../hooks/useDispatch'
 
 type Props = {
   state: State
-  dispatch: (a: Action) => void
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -31,13 +31,12 @@ type Props = {
 }
 
 export const EditBinding: React.FC<Props> = ({
-  dispatch,
   editor,
   onBindingSelect,
   state,
 }) => {
   const code = editor.code
-
+  const dispatch = useDispatch()
   const onCodeChange = (a: string) =>
     dispatch(updateCode(a))
 

@@ -4,7 +4,7 @@ import {
   EventReducer,
   lensReducer,
   prismReducer,
-} from '../utils/useEventReducer'
+} from '../hooks/useEventReducer'
 import { editorReducer } from './editor/reducer'
 import { projectReducer } from './project/reducer'
 import { initialView, viewReducer } from './view/reducer'
