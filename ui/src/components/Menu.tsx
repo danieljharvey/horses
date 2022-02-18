@@ -11,7 +11,7 @@ import {
 } from '../reducer/view/screen'
 import { getScreenTitle } from '../reducer/view/helpers'
 import { MenuBar } from './View/MenuBar'
-import { Action } from '../reducer/types'
+import { useDispatch } from '../hooks/useDispatch'
 import {
   popScreen,
   pushScreen,
@@ -20,7 +20,6 @@ import { newEditorFromScreen } from '../reducer/editor/helpers'
 
 type Props = {
   screen: Screen
-  dispatch: (a: Action) => void
   lastScreen: Option<Screen>
 }
 
@@ -29,8 +28,9 @@ export const Menu: React.FC<Props> = ({
   children,
 
   lastScreen,
-  dispatch,
 }) => {
+  const dispatch = useDispatch()
+
   const onPopScreen = () => dispatch(popScreen())
 
   const onProjectGraph = () =>

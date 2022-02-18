@@ -5,7 +5,7 @@ import {
   stateOnly,
   stateAndEvent,
   stateAndEvents,
-} from '../../utils/useEventReducer'
+} from '../../hooks/useEventReducer'
 
 import {
   listBindings,

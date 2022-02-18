@@ -17,23 +17,24 @@ export const emptyEditor: EditorState = {
   bindingName: O.none,
 }
 
-export const editorForBinding = (
-  bindingName: string,
-  exprHash: string,
-  state: State
-): O.Option<EditorState> =>
-  pipe(
-    findExpression(exprHash, state),
-    O.alt(() =>
-      findExpressionForAnyBinding(bindingName, state)
-    ),
-    O.map(({ expression }) => ({
-      code: expression.edPretty,
-      stale: false,
-      expression: showBinding(expression),
-      bindingName: O.some(bindingName),
-    }))
-  )
+export const editorForBinding =
+  (state: State) =>
+  (
+    bindingName: string,
+    exprHash: string
+  ): O.Option<EditorState> =>
+    pipe(
+      findExpression(state)(exprHash),
+      O.alt(() =>
+        findExpressionForAnyBinding(bindingName, state)
+      ),
+      O.map(({ expression }) => ({
+        code: expression.edPretty,
+        stale: false,
+        expression: showBinding(expression),
+        bindingName: O.some(bindingName),
+      }))
+    )
 
 export const newEditorFromScreen = (
   screen: Screen

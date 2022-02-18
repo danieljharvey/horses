@@ -28,57 +28,55 @@ const usagesL = Lens.fromPath<State>()([
   'usages',
 ])
 
-export const getUsagesOfExprHash = (
-  exprHash: ExprHash,
-  state: State
-): ExprUsage[] =>
-  pipe(
-    usagesL.get(state),
-    R.lookup(exprHash),
-    O.fold(() => [], identity)
-  )
+export const getUsagesOfExprHash =
+  (state: State) =>
+  (exprHash: ExprHash): ExprUsage[] =>
+    pipe(
+      usagesL.get(state),
+      R.lookup(exprHash),
+      O.fold(() => [], identity)
+    )
 
-export const getVersionsOfBinding = (
-  bindingName: string,
-  state: State
-): BindingVersion[] =>
-  pipe(
-    versionsL.get(state),
-    R.lookup(bindingName),
-    O.fold(() => [], identity)
-  )
+export const getVersionsOfBinding =
+  (state: State) =>
+  (bindingName: string): BindingVersion[] =>
+    pipe(
+      versionsL.get(state),
+      R.lookup(bindingName),
+      O.fold(() => [], identity)
+    )
 
 // how many versions of this binding are in active use in the project?
-export const countActiveVersionsOfBinding = (
-  bindingName: string,
-  state: State
-): number => {
-  const versions = getVersionsOfBinding(bindingName, state)
-  return versions
-    .map((version) =>
-      getUsagesOfExprHash(version.bvExprHash, state)
-    )
-    .filter((usage) => usage.length > 0).length
-}
+export const countActiveVersionsOfBinding =
+  (state: State) =>
+  (bindingName: string): number => {
+    const versions =
+      getVersionsOfBinding(state)(bindingName)
+    return versions
+      .map((version) =>
+        getUsagesOfExprHash(state)(version.bvExprHash)
+      )
+      .filter((usage) => usage.length > 0).length
+  }
 
 export const getProjectHash = (state: State): ExprHash =>
   state.project.projectHash
 
-export const lookupNameForExprHash = (
-  exprHash: ExprHash,
-  state: State
-): O.Option<string> =>
-  pipe(
-    O.fromNullable(
-      Object.keys(state.project.bindings).find(
-        (k) => state.project.bindings[k] === exprHash
-      )
-    ),
-    O.alt(() =>
+export const lookupNameForExprHash =
+  (state: State) =>
+  (exprHash: ExprHash): O.Option<string> =>
+    pipe(
       O.fromNullable(
-        Object.keys(state.project.typeBindings).find(
-          (k) => state.project.typeBindings[k] === exprHash
+        Object.keys(state.project.bindings).find(
+          (k) => state.project.bindings[k] === exprHash
+        )
+      ),
+      O.alt(() =>
+        O.fromNullable(
+          Object.keys(state.project.typeBindings).find(
+            (k) =>
+              state.project.typeBindings[k] === exprHash
+          )
         )
       )
     )
-  )

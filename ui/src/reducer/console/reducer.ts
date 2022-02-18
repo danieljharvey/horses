@@ -2,7 +2,7 @@ import { Lens } from 'monocle-ts'
 import {
   EventReducer,
   stateOnly,
-} from '../../utils/useEventReducer'
+} from '../../hooks/useEventReducer'
 import { ConsoleState, ConsoleEvent, Log } from './types'
 import { ConsoleAction } from './actions'
 

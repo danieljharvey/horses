@@ -6,16 +6,15 @@ import * as O from 'fp-ts/Option'
 import { Button } from './View/Button'
 import { Paragraph } from './View/Paragraph'
 import { FlexColumnSpaced } from './View/FlexColumnSpaced'
-import { State } from '../reducer/types'
 import {
   lookupNameForExprHash,
   getVersionsOfBinding,
 } from '../reducer/project/selectors'
+import { useStoreTuple } from '../hooks/useStore'
 
 type UpgradeProps = {
   currentHash: ExprHash
   name: string
-  state: State
   onUpgradeExpression: (bindingName: string) => void
   values: Record<string, ExprHash>
   types: Record<string, ExprHash>
@@ -24,15 +23,16 @@ type UpgradeProps = {
 export const Upgrade: React.FC<UpgradeProps> = ({
   currentHash,
   name,
-  state,
   onUpgradeExpression,
   values,
   types,
 }) => {
-  const versionsOfBinding = getVersionsOfBinding(
-    name,
-    state
-  )
+  const [getVersions, lookupName] = useStoreTuple([
+    getVersionsOfBinding,
+    lookupNameForExprHash,
+  ] as const)
+
+  const versionsOfBinding = getVersions(name)
 
   const allDepHashes: ExprHash[] = [
     ...Object.values(values),
@@ -40,7 +40,7 @@ export const Upgrade: React.FC<UpgradeProps> = ({
   ]
 
   const bindingIsNewest = (exprHash: ExprHash) =>
-    O.isSome(lookupNameForExprHash(exprHash, state))
+    O.isSome(lookupName(exprHash))
 
   const upToDateBindings =
     allDepHashes.map(bindingIsNewest).filter((a) => a)

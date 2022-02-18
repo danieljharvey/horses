@@ -67,19 +67,17 @@ export const findExpressionForAnyBinding = (
     )
   )
 
-export const findExpression = (
-  exprHash: string,
-  state: State
-): O.Option<StoreItem> =>
-  O.fromNullable(state.project.store[exprHash])
+export const findExpression =
+  (state: State) =>
+  (exprHash: string): O.Option<StoreItem> =>
+    O.fromNullable(state.project.store[exprHash])
 
-export const findNameForExprHash = (
-  exprHash: ExprHash,
-  state: State
-): O.Option<string> =>
-  O.fromNullable(
-    Object.keys(state.project.bindings).find(
-      (binding) =>
-        state.project.bindings[binding] === exprHash
+export const findNameForExprHash =
+  (state: State) =>
+  (exprHash: ExprHash): O.Option<string> =>
+    O.fromNullable(
+      Object.keys(state.project.bindings).find(
+        (binding) =>
+          state.project.bindings[binding] === exprHash
+      )
     )
-  )

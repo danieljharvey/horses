@@ -5,7 +5,7 @@ import {
   EventReducer,
   stateOnly,
   stateAndEvent,
-} from '../../utils/useEventReducer'
+} from '../../hooks/useEventReducer'
 import { ProjectEvent } from '../project/events'
 import { EditorState } from './types'
 

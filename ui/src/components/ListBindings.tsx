@@ -7,7 +7,7 @@ import {
   lookupNameForExprHash,
 } from '../reducer/project/selectors'
 import * as O from 'fp-ts/Option'
-import { State } from '../reducer/types'
+import { useStoreTuple } from '../hooks/useStore'
 
 type ListBindingsProps = {
   values: Record<string, ExprHash>
@@ -16,27 +16,27 @@ type ListBindingsProps = {
     bindingName: string,
     exprHash: string
   ) => void
-  state: State
 }
 
 export const ListBindings: React.FC<ListBindingsProps> = ({
   values,
   types,
   onBindingSelect,
-  state,
 }) => {
   // try and re-use it this where possible
   const items = { ...values, ...types }
+
+  const [getActiveVersions, lookupName] = useStoreTuple([
+    countActiveVersionsOfBinding,
+    lookupNameForExprHash,
+  ] as const)
 
   if (Object.keys(items).length < 1) {
     return null
   }
 
-  const getActiveVersions = (bindingName: string) =>
-    countActiveVersionsOfBinding(bindingName, state)
-
   const bindingIsNewest = (exprHash: ExprHash) =>
-    O.isSome(lookupNameForExprHash(exprHash, state))
+    O.isSome(lookupName(exprHash))
 
   return (
     <InlineSpaced>

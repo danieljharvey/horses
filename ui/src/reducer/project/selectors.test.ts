@@ -15,12 +15,12 @@ const state: State = {
 
 describe('lookupNameForExprHash', () => {
   it('Finds 123 in binding', () => {
-    expect(lookupNameForExprHash('123', state)).toEqual(
+    expect(lookupNameForExprHash(state)('123')).toEqual(
       O.some('test')
     )
   })
   it('Finds 234 in type bindings', () => {
-    expect(lookupNameForExprHash('234', state)).toEqual(
+    expect(lookupNameForExprHash(state)('234')).toEqual(
       O.some('Hello')
     )
   })

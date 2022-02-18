@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { State, Action } from '../../reducer/types'
 import { EditorState } from '../../reducer/editor/types'
 import {
   optimiseExpression,
@@ -24,10 +23,11 @@ import { ListBindings } from '../ListBindings'
 import { InlineSpaced } from '../View/InlineSpaced'
 import { ExprHash, UserErrorResponse } from '../../types'
 import * as O from 'fp-ts/Option'
+import { useDispatch } from '../../hooks/useDispatch'
+import { useStoreTuple } from '../../hooks/useStore'
+import { getProjectHash } from '../../reducer/project/selectors'
 
 type Props = {
-  state: State
-  dispatch: (a: Action) => void
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -35,12 +35,15 @@ type Props = {
   ) => void
 }
 export const NewType: React.FC<Props> = ({
-  state,
-  dispatch,
   editor,
   onBindingSelect,
 }) => {
-  const projectHash = state.project.projectHash
+  const [projectHash, sourceItems] = useStoreTuple([
+    getProjectHash,
+    getSourceItems,
+  ] as const)
+
+  const dispatch = useDispatch()
 
   const [addNewType, typeState] = useAddType(
     projectHash,
@@ -70,7 +73,7 @@ export const NewType: React.FC<Props> = ({
                 <CodeEditor
                   code={code}
                   setCode={onCodeChange}
-                  sourceItems={getSourceItems(state)}
+                  sourceItems={sourceItems}
                   errorLocations={[]}
                   typedHoleResponses={[]}
                 />
@@ -82,7 +85,6 @@ export const NewType: React.FC<Props> = ({
                       onUpgradeExpression
                     }
                     bindingName={O.none}
-                    state={state}
                     result={expression}
                     onBindingSelect={onBindingSelect}
                     projectHash={projectHash}
@@ -107,7 +109,7 @@ export const NewType: React.FC<Props> = ({
                 <CodeEditor
                   code={code}
                   setCode={onCodeChange}
-                  sourceItems={getSourceItems(state)}
+                  sourceItems={sourceItems}
                   errorLocations={err.ueErrorLocations}
                   typedHoleResponses={err.ueTypedHoles}
                 />
@@ -142,7 +144,6 @@ export const NewType: React.FC<Props> = ({
                 </InlineSpaced>
                 <Paragraph>Generated functions:</Paragraph>
                 <ListBindings
-                  state={state}
                   values={addType.bindings}
                   types={addType.typeBindings}
                   onBindingSelect={onBindingSelect}
