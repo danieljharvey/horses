@@ -116,6 +116,7 @@ library
       Language.Mimsa.Transform.FlattenLets
       Language.Mimsa.Transform.FloatDown
       Language.Mimsa.Transform.FloatUp
+      Language.Mimsa.Transform.Inliner
       Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.TrimDeps
       Language.Mimsa.Transform.Warnings
@@ -391,6 +392,7 @@ test-suite mimsa-test
       Test.Transform.FlattenLets
       Test.Transform.FloatDown
       Test.Transform.FloatUp
+      Test.Transform.Inliner
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
