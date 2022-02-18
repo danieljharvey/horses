@@ -24,7 +24,7 @@ import { InlineSpaced } from '../View/InlineSpaced'
 import { ExprHash, UserErrorResponse } from '../../types'
 import * as O from 'fp-ts/Option'
 import { useDispatch } from '../../hooks/useDispatch'
-import { useStoreRec } from '../../hooks/useStore'
+import { useStoreTuple } from '../../hooks/useStore'
 import { getProjectHash } from '../../reducer/project/selectors'
 
 type Props = {
@@ -38,10 +38,10 @@ export const NewType: React.FC<Props> = ({
   editor,
   onBindingSelect,
 }) => {
-  const { projectHash, sourceItems } = useStoreRec({
-    projectHash: getProjectHash,
-    sourceItems: getSourceItems,
-  })
+  const [projectHash, sourceItems] = useStoreTuple([
+    getProjectHash,
+    getSourceItems,
+  ] as const)
 
   const dispatch = useDispatch()
 

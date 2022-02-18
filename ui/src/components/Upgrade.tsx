@@ -10,7 +10,7 @@ import {
   lookupNameForExprHash,
   getVersionsOfBinding,
 } from '../reducer/project/selectors'
-import { useStoreRec } from '../hooks/useStore'
+import { useStoreTuple } from '../hooks/useStore'
 
 type UpgradeProps = {
   currentHash: ExprHash
@@ -27,10 +27,10 @@ export const Upgrade: React.FC<UpgradeProps> = ({
   values,
   types,
 }) => {
-  const { getVersions, lookupName } = useStoreRec({
-    getVersions: getVersionsOfBinding,
-    lookupName: lookupNameForExprHash,
-  })
+  const [getVersions, lookupName] = useStoreTuple([
+    getVersionsOfBinding,
+    lookupNameForExprHash,
+  ] as const)
 
   const versionsOfBinding = getVersions(name)
 
