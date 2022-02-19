@@ -1,15 +1,6 @@
-module Language.Mimsa.Transform.Shared (extractIdentVar, findUses, repeatUntilEq) where
+module Language.Mimsa.Transform.Shared (extractIdentVar, repeatUntilEq) where
 
-import Data.Set (Set)
-import qualified Data.Set as S
-import Language.Mimsa.ExprUtils
 import Language.Mimsa.Types.AST
-
-findUses :: (Ord var) => Expr var ann -> Set var
-findUses = withMonoid f
-  where
-    f (MyVar _ a) = (False, S.singleton a)
-    f _ = (True, mempty)
 
 repeatUntilEq :: (Eq a) => (a -> a) -> a -> a
 repeatUntilEq f a =

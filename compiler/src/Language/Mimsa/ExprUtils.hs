@@ -7,12 +7,14 @@ module Language.Mimsa.ExprUtils
     toEmptyAnnotation,
     getAnnotation,
     mapPattern,
+    nameFromIdent,
   )
 where
 
 import Data.Bifunctor (second)
 import qualified Data.Map as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
+import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Pattern
 
 -------
@@ -236,3 +238,7 @@ mapPattern f (PArray ann as spread) =
   PArray ann (f <$> as) spread
 mapPattern _ (PString ann pHead pTail) =
   PString ann pHead pTail
+
+nameFromIdent :: Identifier var ann -> var
+nameFromIdent (Identifier _ name) = name
+nameFromIdent (AnnotatedIdentifier _ name) = name

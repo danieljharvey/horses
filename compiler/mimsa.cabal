@@ -113,6 +113,7 @@ library
       Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Transform.FindUnused
+      Language.Mimsa.Transform.FindUses
       Language.Mimsa.Transform.FlattenLets
       Language.Mimsa.Transform.FloatDown
       Language.Mimsa.Transform.FloatUp

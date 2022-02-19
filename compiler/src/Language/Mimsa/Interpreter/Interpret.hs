@@ -170,10 +170,6 @@ numericComparison f withErr plainA plainB = do
     Right (a', b') -> withBool (f a' b')
     Left e -> throwError e
 
-nameFromIdent :: Identifier var ann -> var
-nameFromIdent (Identifier _ name) = name
-nameFromIdent (AnnotatedIdentifier _ name) = name
-
 interpretApplication ::
   (Eq ann, Monoid ann) =>
   ann ->

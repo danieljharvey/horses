@@ -1,8 +1,7 @@
 module Language.Mimsa.Transform.TrimDeps where
 
 import qualified Data.Map as M
-import qualified Data.Set as S
-import Language.Mimsa.Transform.Shared
+import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
@@ -16,6 +15,6 @@ trimDeps se newExpr =
       newBindings =
         Bindings $
           M.filterWithKey
-            (\k _ -> S.member k vars)
+            (\k _ -> memberInUses k vars)
             (getBindings (storeBindings se))
    in se {storeExpression = newExpr, storeBindings = newBindings}
