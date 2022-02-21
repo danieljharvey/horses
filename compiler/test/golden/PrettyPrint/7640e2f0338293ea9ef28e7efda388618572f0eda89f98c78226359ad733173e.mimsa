@@ -1,5 +1,1 @@
-if True
-then
-  ({ one: 1 })
-else
-  ({ one: 2 })
+if True then { one: 1 } else { one: 2 }

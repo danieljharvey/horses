@@ -1,4 +1,7 @@
 match [] with 
-    [] -> True
-  | [_] -> False
-  | [_, ...] -> False
+    [] -> 
+      True
+  | [_] -> 
+      False
+  | [_, ...] -> 
+      False

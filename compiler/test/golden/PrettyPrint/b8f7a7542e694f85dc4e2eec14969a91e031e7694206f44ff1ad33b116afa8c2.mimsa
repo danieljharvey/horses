@@ -1,4 +1,5 @@
 \state ->
   \s ->
     match state with 
-        (State sas) -> (sas s)
+        (State sas) -> 
+          (sas s)

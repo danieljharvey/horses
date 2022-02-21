@@ -1,4 +1,0 @@
-let reuse =
-  { first: id, second: (id 2) };
-
-reuse.first True

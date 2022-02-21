@@ -1,4 +1,0 @@
-let identity (abc: a) =
-  abc;
-
-identity True

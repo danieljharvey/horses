@@ -3,5 +3,7 @@ type Result e a
   | Success a;
 
 match (Failure "oh no") with 
-    (Success _) -> "oh yes"
-  | (Failure e) -> e
+    (Success _) -> 
+      "oh yes"
+  | (Failure e) -> 
+      e

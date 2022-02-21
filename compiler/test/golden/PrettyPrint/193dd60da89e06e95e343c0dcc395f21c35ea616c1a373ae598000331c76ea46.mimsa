@@ -1,6 +1,9 @@
 \a ->
   \b ->
     match ((a, b)) with 
-        (Cons a restA, Nil) -> (Cons a restA)
-      | (Nil, Cons b restB) -> (Cons b restB)
-      | _ -> a
+        (Cons a restA, Nil) -> 
+          (Cons a restA)
+      | (Nil, Cons b restB) -> 
+          (Cons b restB)
+      | _ -> 
+          a

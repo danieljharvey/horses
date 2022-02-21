@@ -1,15 +1,17 @@
 let filter pred =
   let fn s =
     match s with 
-        a ++ as -> (let rest =
-        fn as;
+        a ++ as -> 
+          (let rest =
+            fn as;
 
-      if (pred a)
-      then
-        a ++ rest
-      else
-        rest)
-      | _ -> "";
+          if (pred a)
+          then
+            a ++ rest
+          else
+            rest)
+      | _ -> 
+          "";
 
   \str -> fn str;
 

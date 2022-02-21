@@ -1,4 +1,0 @@
-let tree =
-  Branch (Leaf 1) 2 (Branch (Leaf 3) 4 (Leaf 5));
-
-(invertTree (invertTree tree)) == tree

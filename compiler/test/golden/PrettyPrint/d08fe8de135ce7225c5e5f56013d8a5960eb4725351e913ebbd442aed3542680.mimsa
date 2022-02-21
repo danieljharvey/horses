@@ -1,3 +1,5 @@
 match [] with 
-    [Just 1] -> True
-  | _ -> False
+    [Just 1] -> 
+      True
+  | _ -> 
+      False

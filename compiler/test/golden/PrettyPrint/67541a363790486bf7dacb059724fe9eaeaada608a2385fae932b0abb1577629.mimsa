@@ -1,3 +1,5 @@
 match (Nothing) with 
-    (Nothing) -> False
-  | _ -> True
+    (Nothing) -> 
+      False
+  | _ -> 
+      True

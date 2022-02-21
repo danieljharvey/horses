@@ -1,1 +1,0 @@
-let eq1 a = a == 1 in eq1 1

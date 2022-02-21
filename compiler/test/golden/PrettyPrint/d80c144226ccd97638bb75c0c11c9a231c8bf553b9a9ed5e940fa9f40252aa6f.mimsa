@@ -1,6 +1,8 @@
 let fromMaybe def maybe =
   match maybe with 
-      (Just a) -> a
-    | (Nothing) -> def;
+      (Just a) -> 
+        a
+    | (Nothing) -> 
+        def;
 
 fromMaybe "Horse" (Just "Dog")

@@ -4,4 +4,4 @@ let useRecord a =
 
   let two = a.two in one + two;
 
-useRecord ({ one: 1, two: 2 })
+useRecord { one: 1, two: 2 }

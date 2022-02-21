@@ -1,4 +1,6 @@
 \a ->
   match a with 
-      head ++ _ -> head
-    | _ -> ""
+      head ++ _ -> 
+        head
+    | _ -> 
+        ""

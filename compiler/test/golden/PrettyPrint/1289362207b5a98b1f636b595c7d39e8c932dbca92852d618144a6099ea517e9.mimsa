@@ -1,4 +1,0 @@
-let repeat =
-  fmapParser (\a -> a ++ a) anyChar;
-
-runParser repeat "dog"

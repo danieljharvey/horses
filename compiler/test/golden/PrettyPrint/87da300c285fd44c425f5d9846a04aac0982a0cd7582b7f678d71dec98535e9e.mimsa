@@ -1,4 +1,6 @@
 \a ->
   match (Nothing) with 
-      (Nothing) -> a
-    | _ -> a
+      (Nothing) -> 
+        a
+    | _ -> 
+        a

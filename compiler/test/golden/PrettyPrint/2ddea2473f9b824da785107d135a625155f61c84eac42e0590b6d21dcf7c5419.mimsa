@@ -1,1 +1,1 @@
-({ dog: True }).dog
+{ dog: True }.dog

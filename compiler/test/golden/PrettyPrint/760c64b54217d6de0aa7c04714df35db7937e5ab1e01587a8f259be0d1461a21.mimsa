@@ -4,5 +4,7 @@ type Array a
          Array a;
 
 match (Item 1 (Item 2 (Empty))) with 
-    (Empty) -> (Empty)
-  | (Item _ rest) -> rest
+    (Empty) -> 
+      (Empty)
+  | (Item _ rest) -> 
+      rest
