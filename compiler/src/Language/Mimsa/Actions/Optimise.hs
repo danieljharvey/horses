@@ -95,14 +95,14 @@ optimiseStoreExpression storeExpr = do
       project
       storeExpr
 
-  -- remove first unused
-  let withoutUnused = removeUnused (reVarExpression resolvedOld)
-
   -- inline some shit
-  let inlined = inline withoutUnused
+  let inlined = inline (reVarExpression resolvedOld)
+
+  -- remove first unused
+  let withoutUnused = removeUnused inlined
 
   -- flatten lets
-  let flattened = flattenLets inlined
+  let flattened = flattenLets withoutUnused
 
   -- float lets up above lambdas
   let floatedUp = floatUp flattened

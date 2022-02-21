@@ -1,0 +1,14 @@
+let fromMaybe def maybe =
+  match maybe with 
+      (Just a) -> 
+        a
+    | (Nothing) -> 
+        def;
+
+\def ->
+  \maybe ->
+    match maybe with 
+        (Just a) -> 
+          a
+      | (Nothing) -> 
+          def "Horse" (Just "Dog")

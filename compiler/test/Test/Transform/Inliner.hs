@@ -5,47 +5,64 @@ module Test.Transform.Inliner
   )
 where
 
+import Data.Maybe
+import Debug.Trace
 import Language.Mimsa.Transform.Inliner
 import Test.Hspec
 import Test.Utils.Helpers
 
 spec :: Spec
 spec = do
-  describe "Inliner" $ do
-    describe "shouldInline" $ do
+  fdescribe "Inliner" $ do
+    describe "howTrivial" $ do
       it "Yes to number literal" $ do
-        shouldInline 0 (unsafeParseExpr "1")
-          `shouldBe` True
+        howTrivial (unsafeParseExpr "1")
+          `shouldSatisfy` isJust
       it "Yes to string literal" $ do
-        shouldInline 0 (unsafeParseExpr "\"dog\"")
-          `shouldBe` True
+        howTrivial (unsafeParseExpr "\"dog\"")
+          `shouldSatisfy` isJust
       it "Yes to bool literal" $ do
-        shouldInline 0 (unsafeParseExpr "True")
-          `shouldBe` True
+        howTrivial (unsafeParseExpr "True")
+          `shouldSatisfy` isJust
       it "Yes to number array literal" $
         do
-          shouldInline 0 (unsafeParseExpr "[1,2,3]")
-          `shouldBe` True
+          howTrivial (unsafeParseExpr "[1,2,3]")
+          `shouldSatisfy` isJust
       it "Yes to record full of literals" $ do
-        shouldInline 0 (unsafeParseExpr "{ a: 1, b: True, c: \"dog\", d: [1,2,3] }")
-          `shouldBe` True
+        howTrivial (unsafeParseExpr "{ a: 1, b: True, c: \"dog\", d: [1,2,3] }")
+          `shouldSatisfy` isJust
+      it "Yes to var" $ do
+        howTrivial (unsafeParseExpr "b")
+          `shouldSatisfy` isJust
       it "No to function" $ do
-        shouldInline 0 (unsafeParseExpr "\\a -> True")
-          `shouldBe` False
-    describe "inline" $ do
+        howTrivial (unsafeParseExpr "\\a -> True")
+          `shouldBe` Nothing
+    describe "inlineInternal" $ do
       it "Does nothing when no vars" $ do
         let expr = unsafeParseExpr "True"
-        inline expr
+        inlineInternal expr
           `shouldBe` expr
       it "Inlines simple literal that is used once" $ do
         let expr = unsafeParseExpr "let a = 1 in a"
             expected = unsafeParseExpr "let a = 1 in 1"
-        inline expr
+        inlineInternal expr
           `shouldBe` expected
-      it "Don't inline literal used 5 times" $ do
-        let expr = unsafeParseExpr "let a = 1 in [a,a,a,a,a]"
-        inline expr `shouldBe` expr
-      it "Don't inline function" $ do
+      it "Inline function when it is used once" $ do
         let expr = unsafeParseExpr "let a = \\b -> 1 in a"
-        inline expr
+            expected = unsafeParseExpr "let a = \\b -> 1 in \\b -> 1"
+        inlineInternal expr
+          `shouldBe` expected
+      it "Does not inlines trivial item into function" $ do
+        let expr = unsafeParseExpr "let a = 1 in \\f -> g True a"
+        inlineInternal expr
           `shouldBe` expr
+      it "Inline recursive function" $ do
+        let expr = unsafeParseExpr "let dec a = if a == 0 then 0 else dec (a - 1); dec 9"
+            expected = unsafeParseExpr "let dec a = if a == 0 then 0 else dec (a - 1); (\\a -> if a == 0 then 0 else dec (a - 1)) 9"
+        inlineInternal expr
+          `shouldBe` expected
+      it "Function with type annotation" $ do
+        let expr = unsafeParseExpr "let identity = \\(abc: a) -> abc; identity True"
+            expected = traceShowId $ unsafeParseExpr "let identity = \\(abc: a) -> abc; (\\(abc: a) -> abc) True"
+        inlineInternal expr
+          `shouldBe` expected

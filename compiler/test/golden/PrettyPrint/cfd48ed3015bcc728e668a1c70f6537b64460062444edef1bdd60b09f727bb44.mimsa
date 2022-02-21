@@ -1,0 +1,3 @@
+infix |> = \a -> \f -> f a;
+
+1 |> incrementInt |> (\a -> a == 1)

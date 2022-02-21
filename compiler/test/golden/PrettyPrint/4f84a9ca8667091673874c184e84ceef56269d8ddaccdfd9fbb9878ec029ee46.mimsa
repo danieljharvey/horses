@@ -1,0 +1,6 @@
+\a ->
+  let one =
+    a.one;
+
+  let two = a.two in one + two { one: 1,
+                                 two: 2 }

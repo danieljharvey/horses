@@ -1,0 +1,5 @@
+let bigPrelude =
+  { prelude: { id: (\i -> i) } };
+
+{ prelude: { id: (\i ->
+               i) } }.prelude.id 1

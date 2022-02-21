@@ -1,0 +1,5 @@
+type Thing    = Thing String;
+
+match (Thing "string") with 
+    (Thing s) -> 
+      s

@@ -37,6 +37,7 @@ import qualified Test.Tests.Properties as Properties
 import qualified Test.Tests.PropertyTest as PropertyTest
 import qualified Test.Tests.UnitTest as UnitTest
 import qualified Test.Transform.FindUnused as FindUnused
+import qualified Test.Transform.FindUses as FindUses
 import qualified Test.Transform.FlattenLets as FlattenLets
 import qualified Test.Transform.FloatDown as FloatDown
 import qualified Test.Transform.FloatUp as FloatUp
@@ -102,3 +103,4 @@ main =
     FloatDown.spec
     FloatUp.spec
     Inliner.spec
+    FindUses.spec

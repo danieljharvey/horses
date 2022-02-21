@@ -389,6 +389,7 @@ test-suite mimsa-test
       Test.Tests.PropertyTest
       Test.Tests.UnitTest
       Test.Transform.FindUnused
+      Test.Transform.FindUses
       Test.Transform.FlattenLets
       Test.Transform.FloatDown
       Test.Transform.FloatUp

@@ -1,0 +1,14 @@
+let parser =
+  bindParser (\a ->
+    if (a == "d")
+    then
+      anyChar
+    else
+      failParser) anyChar;
+
+runParser (bindParser (\a ->
+  if (a == "d")
+  then
+    anyChar
+  else
+    failParser) anyChar) "log"

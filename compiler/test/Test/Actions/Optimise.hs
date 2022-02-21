@@ -34,7 +34,7 @@ trueExpr = unsafeParseExpr "True" $> mempty
 
 wontOptimise :: StoreExpression Annotation
 wontOptimise =
-  let expr = unsafeParseExpr "let useless = id 100 in useless" $> mempty
+  let expr = unsafeParseExpr "let useless = id 100 in \\a -> useless" $> mempty
    in StoreExpression expr (Bindings $ M.singleton "id" idHash) mempty
 
 withLambda :: StoreExpression Annotation
