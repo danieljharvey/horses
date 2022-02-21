@@ -14,6 +14,7 @@ import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Transform.FlattenLets
 import Language.Mimsa.Transform.FloatDown
 import Language.Mimsa.Transform.FloatUp
+import Language.Mimsa.Transform.Inliner
 import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -97,8 +98,11 @@ optimiseStoreExpression storeExpr = do
   -- remove first unused
   let withoutUnused = removeUnused (reVarExpression resolvedOld)
 
+  -- inline some shit
+  let inlined = inline withoutUnused
+
   -- flatten lets
-  let flattened = flattenLets withoutUnused
+  let flattened = flattenLets inlined
 
   -- float lets up above lambdas
   let floatedUp = floatUp flattened

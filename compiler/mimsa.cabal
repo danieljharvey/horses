@@ -83,7 +83,6 @@ library
       Language.Mimsa.Parser.Literal
       Language.Mimsa.Parser.MonoType
       Language.Mimsa.Parser.Pattern
-      Language.Mimsa.Parser.RecordAccess
       Language.Mimsa.Parser.TypeDecl
       Language.Mimsa.Parser.Types
       Language.Mimsa.Printer

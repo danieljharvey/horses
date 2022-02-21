@@ -1,0 +1,1 @@
+{"storeBindings":{},"storeExpression":{"tag":"MyRecordAccess","expKey":"dog","expRecord":{"tag":"MyRecord","expAnn":null,"expRecordItems":{"dog":{"tag":"MyLiteral","expLit":{"tag":"MyBool","litBool":true},"expAnn":null}}},"expAnn":null},"storeTypeBindings":{}}

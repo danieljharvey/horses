@@ -11,7 +11,7 @@ import Test.Utils.Helpers
 
 spec :: Spec
 spec = do
-  fdescribe "Inliner" $ do
+  describe "Inliner" $ do
     describe "shouldInline" $ do
       it "Yes to number literal" $ do
         shouldInline 0 (unsafeParseExpr "1")
