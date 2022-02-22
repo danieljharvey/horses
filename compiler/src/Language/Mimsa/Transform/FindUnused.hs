@@ -4,6 +4,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Typechecker
@@ -78,7 +79,7 @@ removeBindingsInPattern remove = f
 findUnused :: (Ord ann, Ord var) => Expr var ann -> Set (var, ann)
 findUnused expr =
   let uses = findUses expr
-   in S.filter (\(var, _) -> not $ S.member var uses) (findVariables expr)
+   in S.filter (\(var, _) -> not $ memberInUses var uses) (findVariables expr)
 
 -- | find all variables introduced into expression
 -- | we don't need to worry about shadowing because we'll have made everything

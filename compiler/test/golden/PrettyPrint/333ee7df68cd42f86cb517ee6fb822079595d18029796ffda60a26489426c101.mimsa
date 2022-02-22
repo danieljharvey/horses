@@ -1,4 +1,0 @@
-match (Right 100) with 
-    (Left "log") -> False
-  | (Right 100) -> True
-  | _ -> False

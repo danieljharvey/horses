@@ -1,4 +1,6 @@
 \a ->
   match a with 
-      (Just as) -> as
-    | (Nothing) -> 100
+      (Just as) -> 
+        as
+    | (Nothing) -> 
+        100

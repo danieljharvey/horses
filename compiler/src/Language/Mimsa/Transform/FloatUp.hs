@@ -1,7 +1,7 @@
 module Language.Mimsa.Transform.FloatUp (floatUp) where
 
-import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
 
@@ -13,7 +13,7 @@ floatUpInternal :: (Ord var) => Expr var ann -> Expr var ann
 floatUpInternal original@(MyLambda ann ident (MyLet ann' ident' expr body)) =
   let lambdaVar = extractIdentVar ident
       vars = findUses expr
-   in if S.member lambdaVar vars -- if lambda var is in the expr, don't float up
+   in if memberInUses lambdaVar vars -- if lambda var is in the expr, don't float up
         then original
         else MyLet ann' ident' expr (MyLambda ann ident body)
 floatUpInternal other = mapExpr floatUpInternal other

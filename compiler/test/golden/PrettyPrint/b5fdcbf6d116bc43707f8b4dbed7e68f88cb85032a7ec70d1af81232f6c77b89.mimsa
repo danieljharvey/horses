@@ -1,4 +1,0 @@
-let id1 (a: a) =
-  (a, a);
-
-let id2 (b: a) = b in id1 (id2 True)

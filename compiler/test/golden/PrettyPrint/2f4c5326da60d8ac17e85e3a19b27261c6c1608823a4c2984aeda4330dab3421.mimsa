@@ -1,4 +1,6 @@
 \a ->
   match (Left a) with 
-      (Left e) -> e
-    | _ -> False
+      (Left e) -> 
+        e
+    | _ -> 
+        False

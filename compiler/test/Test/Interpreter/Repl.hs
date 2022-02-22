@@ -70,7 +70,15 @@ optimise prj storeExpr = do
         -- more thoroughly
         newSe <- Actions.optimiseStoreExpression se
         if se /= newSe
-          then error ("Optimising twice gives different results for " <> T.unpack (prettyPrint storeExpr))
+          then do
+            error
+              ( "Optimising twice gives different results for:\n"
+                  <> T.unpack (prettyPrint (storeExpression storeExpr))
+                  <> "\nAfter first optimise:\n"
+                  <> T.unpack (prettyPrint (storeExpression se))
+                  <> "\nAfter second optimise:\n"
+                  <> T.unpack (prettyPrint (storeExpression newSe))
+              )
           else pure ()
 
         -- have we left some unused vars?
@@ -157,7 +165,7 @@ spec =
             )
 
       it "compose incrementInt" $ do
-        result <- eval testStdlib "let compose = (\\f -> \\g -> \\a -> f (g a)) in let f = compose incrementInt incrementInt in f 67"
+        result <- eval testStdlib "let compose = (\\f -> \\g -> \\a -> f (g a)) in let blah = compose incrementInt incrementInt in blah 67"
         result `shouldBe` Right (MTPrim mempty MTInt, int 69)
 
       it "let reuse = ({ first: id 1, second: id 2 }) in reuse.first" $ do

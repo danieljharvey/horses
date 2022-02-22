@@ -3,5 +3,7 @@ let d =
 
 \opts ->
   match [ "a", "b" ] with 
-      [a, _, _] -> (Just ((a, d)))
-    | _ -> (Nothing)
+      [a, _, _] -> 
+        (Just ((a, d)))
+    | _ -> 
+        Nothing

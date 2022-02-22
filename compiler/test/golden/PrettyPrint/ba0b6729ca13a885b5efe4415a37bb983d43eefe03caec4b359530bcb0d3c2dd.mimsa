@@ -5,7 +5,9 @@ type Array a
 
 let reduceA f b as =
   match as with 
-      (Empty) -> b
-    | (Item a rest) -> (reduceA f (f b a) rest);
+      (Empty) -> 
+        b
+    | (Item a rest) -> 
+        (reduceA f (f b a) rest);
 
-reduceA addInt 0 (Empty)
+reduceA addInt 0 Empty

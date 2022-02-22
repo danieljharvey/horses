@@ -1,1 +1,1 @@
-let { b: b } = ({ a: 5, b: 100 }) in b
+let { b } = { a: 5, b: 100 } in b

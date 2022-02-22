@@ -1,0 +1,1 @@
+{ first: id, second: (id 2) }.first True

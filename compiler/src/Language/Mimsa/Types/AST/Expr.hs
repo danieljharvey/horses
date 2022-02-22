@@ -358,7 +358,7 @@ instance Printer (Expr Name ann) where
   prettyDoc (MyApp _ func arg) =
     prettyDoc func <+> wrapInfix arg
   prettyDoc (MyRecordAccess _ expr name) =
-    printSubExpr expr <> "." <> prettyDoc name
+    prettyDoc expr <> "." <> prettyDoc name
   prettyDoc (MyIf _ if' then' else') =
     prettyIf if' then' else'
   prettyDoc (MyPair _ a b) =
@@ -388,9 +388,7 @@ printSubExpr :: Expr Name ann -> Doc style
 printSubExpr expr = case expr of
   all'@MyLet {} -> inParens all'
   all'@MyLambda {} -> inParens all'
-  all'@MyRecord {} -> inParens all'
   all'@MyIf {} -> inParens all'
-  all'@MyConstructor {} -> inParens all'
   all'@MyApp {} -> inParens all'
   all'@MyPair {} -> inParens all'
   a -> prettyDoc a

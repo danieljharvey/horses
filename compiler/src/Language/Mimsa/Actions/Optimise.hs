@@ -10,10 +10,13 @@ import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
+import Language.Mimsa.Transform.BetaReduce
 import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Transform.FlattenLets
 import Language.Mimsa.Transform.FloatDown
 import Language.Mimsa.Transform.FloatUp
+import Language.Mimsa.Transform.Inliner
+import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -81,6 +84,14 @@ optimise se = do
 
   pure (resolvedNew, numTestsUpdated)
 
+inlineExpression :: (Ord ann) => Expr Variable ann -> Expr Variable ann
+inlineExpression =
+  repeatUntilEq
+    ( floatUp . flattenLets . removeUnused
+        . betaReduce
+        . inline
+    )
+
 optimiseStoreExpression ::
   StoreExpression Annotation ->
   Actions.ActionM (StoreExpression Annotation)
@@ -94,17 +105,11 @@ optimiseStoreExpression storeExpr = do
       project
       storeExpr
 
-  -- remove first unused
-  let withoutUnused = removeUnused (reVarExpression resolvedOld)
-
-  -- flatten lets
-  let flattened = flattenLets withoutUnused
-
-  -- float lets up above lambdas
-  let floatedUp = floatUp flattened
+  -- do the shit
+  let optimised = inlineExpression (reVarExpression resolvedOld)
 
   -- make into Expr Name
-  floatedUpExprName <- Actions.useSwaps (reSwaps resolvedOld) floatedUp
+  floatedUpExprName <- Actions.useSwaps (reSwaps resolvedOld) optimised
 
   -- float lets down into patterns
   let floatedSe =
@@ -123,7 +128,7 @@ optimiseStoreExpression storeExpr = do
   newExprName <-
     Actions.useSwaps
       (reSwaps resolvedFloated)
-      (removeUnused (reVarExpression resolvedFloated))
+      (inlineExpression (reVarExpression resolvedFloated))
 
   pure $
     trimDeps

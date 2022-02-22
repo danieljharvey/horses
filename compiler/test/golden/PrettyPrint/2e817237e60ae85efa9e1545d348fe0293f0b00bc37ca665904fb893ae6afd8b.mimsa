@@ -1,3 +1,4 @@
 \person ->
   match person with 
-      (Person p) -> p.age
+      (Person p) -> 
+        p.age

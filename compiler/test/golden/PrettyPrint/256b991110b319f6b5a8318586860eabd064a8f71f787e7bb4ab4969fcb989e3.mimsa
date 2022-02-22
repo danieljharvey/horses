@@ -1,3 +1,0 @@
-match [] with 
-    [a, b, _] -> (Just ((a, b)))
-  | _ -> (Nothing)

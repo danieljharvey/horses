@@ -1,2 +1,3 @@
 match ((1, True)) with 
-    (_, b) -> b
+    (_, b) -> 
+      b

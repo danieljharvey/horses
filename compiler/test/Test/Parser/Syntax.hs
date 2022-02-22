@@ -779,7 +779,9 @@ spec = do
                 (MyRecord mempty (M.fromList [("a", int 1), ("b", int 2)]))
                 (MyVar mempty "c")
             )
-
+      it "parses access of a record literal" $ do
+        testParse "{ dog: True }.dog"
+          `shouldSatisfy` isRight
     describe "Test annotations" $ do
       it "Parses a var with location information" $
         testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")

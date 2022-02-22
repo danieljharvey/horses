@@ -2,7 +2,9 @@ type Nat    = Suc Nat | Zero;
 
 let loop as =
   match as with 
-      (Zero) -> 0
-    | (Suc as2) -> (incrementInt (loop as2));
+      (Zero) -> 
+        0
+    | (Suc as2) -> 
+        (incrementInt (loop as2));
 
-loop (Suc (Suc (Suc (Zero))))
+loop (Suc (Suc (Suc Zero)))

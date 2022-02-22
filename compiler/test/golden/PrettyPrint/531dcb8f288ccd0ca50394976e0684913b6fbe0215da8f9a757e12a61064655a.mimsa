@@ -1,6 +1,0 @@
-type Tree 
-  = Branch Tree
-           Tree
-  | Leaf Int;
-
-Branch (Leaf 1) (Leaf 2)

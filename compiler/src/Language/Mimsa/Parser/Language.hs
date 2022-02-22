@@ -6,6 +6,7 @@ module Language.Mimsa.Parser.Language
     parseAndFormat,
     expressionParser,
     patternMatchParser,
+    recordAccessParser,
     varParser,
     nameParser,
     tyConParser,
@@ -24,7 +25,6 @@ import Language.Mimsa.Parser.Identifier
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Parser.Pattern
-import Language.Mimsa.Parser.RecordAccess
 import Language.Mimsa.Parser.TypeDecl
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
@@ -51,14 +51,14 @@ expressionParser =
 
 complexParser :: Parser ParserExpr
 complexParser =
-  recordParser
-    <|> arrayParser
+  arrayParser
     <|> try letParser
     <|> letPatternParser
     <|> try appParser
     <|> ifParser
     <|> pairParser
-    <|> recordAccessParser
+    <|> try recordAccessParser
+    <|> recordParser
     <|> lambdaParser
     <|> typeParser
     <|> patternMatchParser
@@ -140,13 +140,13 @@ argParser :: Parser ParserExpr
 argParser =
   let parsers =
         literalParser
-          <|> recordParser
           <|> arrayParser
           <|> letParser
           <|> letPatternParser
           <|> ifParser
           <|> pairParser
           <|> try recordAccessParser
+          <|> recordParser
           <|> lambdaParser
           <|> typeParser
           <|> typedHoleParser
@@ -189,6 +189,22 @@ punnedRecordItemParser :: Parser (Name, ParserExpr)
 punnedRecordItemParser = do
   name <- nameParser
   pure (name, MyVar mempty name)
+
+-----
+
+recordAccessParser :: Parser ParserExpr
+recordAccessParser =
+  let combine location (record, names) =
+        foldl (MyRecordAccess location) record names
+   in withLocation combine $ do
+        record <- try varParser <|> recordParser
+        names <- some dotName
+        pure (record, names)
+
+dotName :: Parser Name
+dotName = do
+  _ <- string "."
+  nameParser
 
 -----
 

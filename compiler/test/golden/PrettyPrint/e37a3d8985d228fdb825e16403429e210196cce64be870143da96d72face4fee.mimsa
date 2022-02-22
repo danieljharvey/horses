@@ -4,4 +4,4 @@ type Tree a
            Tree a
   | Empty;
 
-Branch (Empty) 1 (Empty)
+Branch Empty 1 Empty
