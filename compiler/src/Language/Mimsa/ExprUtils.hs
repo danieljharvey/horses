@@ -8,6 +8,7 @@ module Language.Mimsa.ExprUtils
     getAnnotation,
     mapPattern,
     nameFromIdent,
+    detailsFromIdent,
   )
 where
 
@@ -16,6 +17,7 @@ import qualified Data.Map as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Pattern
+import Language.Mimsa.Types.Typechecker
 
 -------
 -- Functions for operating on the Expr type
@@ -240,5 +242,8 @@ mapPattern _ (PString ann pHead pTail) =
   PString ann pHead pTail
 
 nameFromIdent :: Identifier var ann -> var
-nameFromIdent (Identifier _ name) = name
-nameFromIdent (AnnotatedIdentifier _ name) = name
+nameFromIdent = fst . detailsFromIdent
+
+detailsFromIdent :: Identifier var ann -> (var, ann)
+detailsFromIdent (Identifier ann name) = (name, ann)
+detailsFromIdent (AnnotatedIdentifier mt name) = (name, getAnnotationForType mt)

@@ -3,8 +3,8 @@ type Array a
   | Item a
          Array a;
 
-match (Item 1 (Item 2 (Empty))) with 
+match (Item 1 (Item 2 Empty)) with 
     (Empty) -> 
-      (Empty)
+      Empty
   | (Item _ rest) -> 
       rest

@@ -389,7 +389,6 @@ printSubExpr expr = case expr of
   all'@MyLet {} -> inParens all'
   all'@MyLambda {} -> inParens all'
   all'@MyIf {} -> inParens all'
-  all'@MyConstructor {} -> inParens all'
   all'@MyApp {} -> inParens all'
   all'@MyPair {} -> inParens all'
   a -> prettyDoc a

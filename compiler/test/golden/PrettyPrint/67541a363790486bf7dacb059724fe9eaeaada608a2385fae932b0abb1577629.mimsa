@@ -1,4 +1,4 @@
-match (Nothing) with 
+match Nothing with 
     (Nothing) -> 
       False
   | _ -> 

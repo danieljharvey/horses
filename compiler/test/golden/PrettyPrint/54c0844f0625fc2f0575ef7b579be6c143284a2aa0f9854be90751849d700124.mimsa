@@ -1,5 +1,0 @@
-type Thing    = Thing String;
-
-match (Thing "string") with 
-    (Thing s) -> 
-      (let a = Thing "string" in s)

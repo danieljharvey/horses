@@ -36,6 +36,7 @@ import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Tests.Properties as Properties
 import qualified Test.Tests.PropertyTest as PropertyTest
 import qualified Test.Tests.UnitTest as UnitTest
+import qualified Test.Transform.BetaReduce as BetaReduce
 import qualified Test.Transform.FindUnused as FindUnused
 import qualified Test.Transform.FindUses as FindUses
 import qualified Test.Transform.FlattenLets as FlattenLets
@@ -104,3 +105,4 @@ main =
     FloatUp.spec
     Inliner.spec
     FindUses.spec
+    BetaReduce.spec

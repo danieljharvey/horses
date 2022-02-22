@@ -6,14 +6,13 @@ module Test.Transform.Inliner
 where
 
 import Data.Maybe
-import Debug.Trace
 import Language.Mimsa.Transform.Inliner
 import Test.Hspec
 import Test.Utils.Helpers
 
 spec :: Spec
 spec = do
-  fdescribe "Inliner" $ do
+  describe "Inliner" $ do
     describe "howTrivial" $ do
       it "Yes to number literal" $ do
         howTrivial (unsafeParseExpr "1")
@@ -56,13 +55,15 @@ spec = do
         let expr = unsafeParseExpr "let a = 1 in \\f -> g True a"
         inlineInternal expr
           `shouldBe` expr
-      it "Inline recursive function" $ do
-        let expr = unsafeParseExpr "let dec a = if a == 0 then 0 else dec (a - 1); dec 9"
-            expected = unsafeParseExpr "let dec a = if a == 0 then 0 else dec (a - 1); (\\a -> if a == 0 then 0 else dec (a - 1)) 9"
-        inlineInternal expr
-          `shouldBe` expected
       it "Function with type annotation" $ do
         let expr = unsafeParseExpr "let identity = \\(abc: a) -> abc; identity True"
-            expected = traceShowId $ unsafeParseExpr "let identity = \\(abc: a) -> abc; (\\(abc: a) -> abc) True"
+            expected = unsafeParseExpr "let identity = \\(abc: a) -> abc; (\\(abc: a) -> abc) True"
         inlineInternal expr
           `shouldBe` expected
+      it "Does not inline recursive definition" $ do
+        let expr = unsafeParseExpr "let flip as = if as then False else flip as in flip False"
+        inlineInternal expr
+          `shouldBe` expr
+      it "Does not inline infix definition (thus ruining let generalisation)" $ do
+        let expr = unsafeParseExpr "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> incrementInt"
+        inlineInternal expr `shouldBe` expr

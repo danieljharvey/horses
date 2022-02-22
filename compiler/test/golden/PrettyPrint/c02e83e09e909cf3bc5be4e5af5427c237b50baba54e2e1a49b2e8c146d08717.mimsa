@@ -1,7 +1,0 @@
-let a =
-  pureState "dog";
-
-let b =
-  bindState storeName a;
-
-runState (bindState storeName a) nil

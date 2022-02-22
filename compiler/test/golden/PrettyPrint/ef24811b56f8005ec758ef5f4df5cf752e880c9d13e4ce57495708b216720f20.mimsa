@@ -1,6 +1,0 @@
-let apply a f =
-  f a;
-
-infix |> = \a -> \f -> f a;
-
-1 |> incrementInt |> incrementInt

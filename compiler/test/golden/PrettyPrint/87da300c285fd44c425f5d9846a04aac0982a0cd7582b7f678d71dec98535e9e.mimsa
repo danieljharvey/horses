@@ -1,5 +1,5 @@
 \a ->
-  match (Nothing) with 
+  match Nothing with 
       (Nothing) -> 
         a
     | _ -> 

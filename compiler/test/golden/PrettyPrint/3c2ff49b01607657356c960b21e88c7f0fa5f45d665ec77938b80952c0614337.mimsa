@@ -1,4 +1,0 @@
-\f ->
-  \g ->
-    \a ->
-      f (g a) incrementInt incrementInt 67

@@ -9,6 +9,7 @@ where
 
 import Data.Either (partitionEithers)
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Text.Lazy (toStrict)
 import Data.Text.Lazy.Encoding
 import Language.Mimsa.ExprUtils
@@ -37,7 +38,13 @@ prettyPrintingParses input = do
     Left e -> Left e
     Right expr2 ->
       if toEmptyAnn expr1 /= toEmptyAnn expr2
-        then Left $ prettyPrint expr1 <> " does not match " <> prettyPrint expr2
+        then
+          Left $
+            "Pretty:\n" <> prettyPrint expr1
+              <> "\nExpr:\n"
+              <> T.pack (show expr1)
+              <> "\nDoes not match re-parsed expr:\n"
+              <> T.pack (show expr2)
         else pure input
 
 catEithers :: [Either e a] -> [a]

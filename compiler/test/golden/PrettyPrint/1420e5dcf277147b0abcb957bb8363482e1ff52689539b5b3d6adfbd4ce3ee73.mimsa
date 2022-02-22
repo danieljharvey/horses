@@ -6,4 +6,4 @@
       | (Nil, Cons bb restB) -> 
           (Cons bb restB)
       | _ -> 
-          (Nil)
+          Nil

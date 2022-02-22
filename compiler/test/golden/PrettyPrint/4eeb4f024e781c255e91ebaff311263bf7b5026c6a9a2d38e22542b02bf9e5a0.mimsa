@@ -7,4 +7,4 @@ let loop as b =
     | (Suc as2) -> 
         (incrementInt (loop as2 b));
 
-loop (Suc (Suc (Suc (Zero)))) 10
+loop (Suc (Suc (Suc Zero))) 10

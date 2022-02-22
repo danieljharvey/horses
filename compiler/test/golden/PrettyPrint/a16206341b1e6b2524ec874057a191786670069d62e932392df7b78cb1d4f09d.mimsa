@@ -1,6 +1,0 @@
-\a ->
-  if True
-  then
-    a.num
-  else
-    a.num2 { num: 1, num2: 2 }

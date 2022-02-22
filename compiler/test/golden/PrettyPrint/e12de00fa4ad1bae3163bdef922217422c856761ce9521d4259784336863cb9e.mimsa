@@ -10,4 +10,4 @@ let reduceA f b as =
     | (Item a rest) -> 
         (reduceA f (f b a) rest);
 
-reduceA addInt 0 (Item 3 (Empty))
+reduceA addInt 0 (Item 3 Empty)

@@ -1,6 +1,0 @@
-let reuse =
-  { first: (const True),
-    second: (const 2) };
-
-{ first: (const True),
-  second: (const 2) }.second 100

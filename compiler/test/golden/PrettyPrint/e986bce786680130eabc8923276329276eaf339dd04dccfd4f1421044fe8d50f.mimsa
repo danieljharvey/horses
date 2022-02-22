@@ -1,4 +1,0 @@
-let prelude =
-  { id: (\i -> i) };
-
-{ id: (\i -> i) }.id

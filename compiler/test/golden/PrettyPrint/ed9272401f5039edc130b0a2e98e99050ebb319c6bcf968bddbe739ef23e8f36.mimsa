@@ -6,4 +6,4 @@ let d =
       [a, _, _] -> 
         (Just ((a, d)))
     | _ -> 
-        (Nothing)
+        Nothing

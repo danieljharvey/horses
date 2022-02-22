@@ -1,4 +1,0 @@
-let forever a =
-  forever a;
-
-\a -> forever a True

@@ -12,9 +12,10 @@ import Language.Mimsa.Types.AST
 
 -- | should we inline this expression?
 -- if it's only used in one place, not within a lambda, yes
-shouldInline :: Int -> Bool -> Expr var ann -> Bool
+shouldInline :: Int -> Bool -> InlineItem var ann -> Bool
+shouldInline _ _ (InlineItem _ True) = False
 shouldInline 1 False _expr = True
-shouldInline _ False expr = isJust (howTrivial expr)
+shouldInline _ False (InlineItem expr _) = isJust (howTrivial expr)
 shouldInline _ True _ = False
 
 -- | complexity measure of trivial expression
@@ -27,8 +28,9 @@ howTrivial (MyVar _ _) = Just 1
 howTrivial _ = Nothing
 
 -- item that can be inlined, we can add useful info here to help our choices
-newtype InlineItem var ann = InlineItem
-  { iiExpression :: Expr var ann
+data InlineItem var ann = InlineItem
+  { iiExpression :: Expr var ann,
+    _iiRecursive :: Bool
   }
 
 -- as we traverse the expression we learn shit
@@ -50,7 +52,8 @@ inline = repeatUntilEq inlineInternal
 
 storeExpr :: (Ord var) => var -> Expr var ann -> InlineM var ann ()
 storeExpr var expr =
-  let inlineItem = InlineItem expr
+  let isRecursive = memberInUses var (findUses expr)
+      inlineItem = InlineItem expr isRecursive
    in modify
         ( \s ->
             s
@@ -75,20 +78,25 @@ getUsesCount var = asks (numberOfUses var . ieUses)
 
 substituteVar :: (Ord var) => var -> InlineM var ann (Maybe (Expr var ann))
 substituteVar var = do
-  maybeExpr <- (fmap . fmap) iiExpression (lookupVar var)
+  maybeItem <- lookupVar var
   uses <- getUsesCount var
   inLambda <- asks ieIsWithinLambda
-  case maybeExpr of
-    Just expr | shouldInline uses inLambda expr -> Just <$> inlineExpression expr
+  case maybeItem of
+    Just item
+      | shouldInline uses inLambda item ->
+        pure $ Just (iiExpression item)
     _ -> pure Nothing
 
 withinLambda :: InlineM var ann a -> InlineM var ann a
 withinLambda = local (\ie -> ie {ieIsWithinLambda = True})
 
 inlineExpression :: (Ord var) => Expr var ann -> InlineM var ann (Expr var ann)
+inlineExpression (MyDefineInfix ann op f rest) =
+  -- don't inline infix definition as it ruins let generalisation
+  MyDefineInfix ann op f <$> inlineExpression rest
 inlineExpression (MyLet ann ident expr rest) = do
   storeExpr (nameFromIdent ident) expr
-  MyLet ann ident expr <$> inlineExpression rest
+  MyLet ann ident <$> inlineExpression expr <*> inlineExpression rest
 inlineExpression (MyVar ann var) = do
   substitute <- substituteVar var
   case substitute of

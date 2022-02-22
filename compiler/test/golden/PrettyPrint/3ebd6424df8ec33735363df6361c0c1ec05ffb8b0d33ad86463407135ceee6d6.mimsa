@@ -1,3 +1,0 @@
-infix |> = \a -> \f -> f a;
-
-1 |> incrementInt |> pureState

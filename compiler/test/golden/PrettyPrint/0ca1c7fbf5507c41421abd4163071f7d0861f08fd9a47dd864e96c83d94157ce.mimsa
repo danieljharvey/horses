@@ -1,9 +1,0 @@
-let isOne a =
-  a == 1;
-
-let apply a f =
-  f a;
-
-infix |> = \a -> \f -> f a;
-
-1 |> incrementInt |> (\a -> a == 1)
