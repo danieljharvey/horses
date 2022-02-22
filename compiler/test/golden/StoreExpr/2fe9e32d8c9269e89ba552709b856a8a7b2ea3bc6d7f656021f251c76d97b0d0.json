@@ -1,1 +1,0 @@
-{"storeBindings":{},"storeExpression":{"tag":"MyRecordAccess","expKey":"num","expRecord":{"tag":"MyRecord","expAnn":null,"expRecordItems":{"num":{"tag":"MyLiteral","expLit":{"litInt":1,"tag":"MyInt"},"expAnn":null},"num2":{"tag":"MyLiteral","expLit":{"litInt":2,"tag":"MyInt"},"expAnn":null}}},"expAnn":null},"storeTypeBindings":{}}
