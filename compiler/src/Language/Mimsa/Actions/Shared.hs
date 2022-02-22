@@ -182,6 +182,7 @@ typecheckStoreExpression store storeExpr = do
           (bindingsToVersioned (storeBindings storeExpr))
           (typeBindingsToVersioned (storeTypeBindings storeExpr))
           mempty
+          mempty
   let expr = storeExpression storeExpr
   resolvedExpr <-
     getTypecheckedStoreExpression (prettyPrint expr) project expr

@@ -66,6 +66,11 @@ appendMessage =
 appendDocMessage :: Doc ann -> ActionM ()
 appendDocMessage = appendMessage . renderWithWidth 50
 
+-- | save a store expression and store which exprhash it's an optimisation of
+-- so we can re-use this later
+appendOptimisedStoreExpression :: ExprHash -> StoreExpression Annotation -> ActionM ()
+appendOptimisedStoreExpression originalHash storeExpr = poo
+
 appendWriteFile ::
   SavePath ->
   SaveFilename ->

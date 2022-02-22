@@ -87,7 +87,6 @@ library
       Language.Mimsa.Parser.Types
       Language.Mimsa.Printer
       Language.Mimsa.Project
-      Language.Mimsa.Project.Default
       Language.Mimsa.Project.Helpers
       Language.Mimsa.Project.Persistence
       Language.Mimsa.Project.SourceSpan

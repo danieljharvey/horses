@@ -53,7 +53,8 @@ projectFromSaved store' sp =
       prjTypeBindings = projectTypes sp,
       prjTests =
         (UTest <$> projectUnitTests sp)
-          <> (PTest <$> projectPropertyTests sp)
+          <> (PTest <$> projectPropertyTests sp),
+      prjOptimised = mempty
     }
 
 projectToSaved :: Project a -> SaveProject
