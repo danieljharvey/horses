@@ -69,6 +69,7 @@ library
       Language.Mimsa.Interpreter.HighestVar
       Language.Mimsa.Interpreter.InstantiateVar
       Language.Mimsa.Interpreter.Interpret
+      Language.Mimsa.Interpreter.Main
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
@@ -119,6 +120,7 @@ library
       Language.Mimsa.Transform.Inliner
       Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.TrimDeps
+      Language.Mimsa.Transform.UseOptimisedDeps
       Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns

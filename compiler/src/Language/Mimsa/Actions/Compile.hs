@@ -30,12 +30,27 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
+-- need to make this work in a tree shape or it's going to get disgusting
+-- each dep:
+-- a - optimises itself (this may remove deps)
+-- b - then optimises each dep
+-- c - and swaps them out in deps/typeDeps of StoreExpression, creating another store expression AGAIN (oh no)
+-- d - eventually we have a big pile of new StoreExpressions
+-- e - which we typecheck
+-- f - then transpile
+--
+-- feel like a-c should be a separate action as it makes sense before
+-- interpreting too
+
 typecheckStoreExpression ::
   StoreExpression Annotation ->
   Actions.ActionM (StoreExpression MonoType)
 typecheckStoreExpression se = do
   project <- Actions.getProject
-  liftEither $ Actions.typecheckStoreExpression (prjStore project) se
+  -- create optimised version of store expression
+  optimisedSe <- Actions.optimiseStoreExpression se
+  -- return that instead!
+  liftEither $ Actions.typecheckStoreExpression (prjStore project) optimisedSe
 
 -- | this now accepts StoreExpression instead of expression
 compile ::
