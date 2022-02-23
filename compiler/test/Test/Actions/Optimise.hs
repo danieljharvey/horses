@@ -11,6 +11,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -97,3 +98,28 @@ spec = do
       -- current hash is new one
       let newBoundHash = getHashOfName prj "useId"
       newBoundHash `shouldBe` getStoreExpressionHash (reStoreExpression resolved)
+      -- two new optimisations
+      additionalOptimisations testStdlib prj `shouldBe` 2
+
+    it "Optimising twice returns same store expression and does not repeat work" $ do
+      let action = do
+            Actions.bindStoreExpression withLambda "useId"
+            Actions.optimiseByName "useId"
+      let (prj, _actions, _) =
+            fromRight $ Actions.run testStdlib action
+
+      let action2 = do
+            Actions.optimiseByName "useId"
+
+      let (prj2, actions, (resolved, _)) =
+            fromRight $ Actions.run prj action2
+
+      let newSeHash = getStoreExpressionHash (reStoreExpression resolved)
+
+      -- no new expressions on second run
+      additionalStoreItems prj prj2 `shouldBe` 0
+      -- current hash has not changed
+      getHashOfName prj "useId" `shouldBe` getHashOfName prj2 "useId"
+      -- log message about reuse
+      Actions.messagesFromOutcomes actions
+        `shouldSatisfy` elem ("Expression " <> prettyPrint newSeHash <> " is already optimised")

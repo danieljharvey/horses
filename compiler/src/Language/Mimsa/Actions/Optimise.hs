@@ -9,6 +9,7 @@ import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.BetaReduce
 import Language.Mimsa.Transform.FindUnused
@@ -21,6 +22,7 @@ import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
@@ -67,7 +69,7 @@ optimise se = do
   storeExprNew <- optimiseStoreExpression se
 
   -- save new store expr
-  Actions.appendStoreExpression storeExprNew
+  Actions.appendOptimisedStoreExpression (getStoreExpressionHash se) storeExprNew
 
   -- typecheck optimisations
   resolvedNew <-
@@ -92,45 +94,68 @@ inlineExpression =
         . inline
     )
 
+lookupOptimisation ::
+  Project Annotation ->
+  StoreExpression Annotation ->
+  Maybe (StoreExpression Annotation)
+lookupOptimisation prj =
+  lookupExprHash prj <=< lookupOptimised prj . getStoreExpressionHash
+
 optimiseStoreExpression ::
   StoreExpression Annotation ->
   Actions.ActionM (StoreExpression Annotation)
 optimiseStoreExpression storeExpr = do
   project <- Actions.getProject
 
-  -- get Expr Variable ann
-  resolvedOld <-
-    Actions.checkStoreExpression
-      (prettyPrint storeExpr)
-      project
-      storeExpr
+  case lookupOptimisation project storeExpr of
+    Just optSe -> do
+      -- output message for repl
+      Actions.appendDocMessage
+        ( if optSe == storeExpr
+            then
+              "Expression "
+                <> prettyDoc (getStoreExpressionHash storeExpr)
+                <> " is already optimised"
+            else
+              "Using precalculated optimised expression for "
+                <> prettyDoc (getStoreExpressionHash storeExpr)
+        )
 
-  -- do the shit
-  let optimised = inlineExpression (reVarExpression resolvedOld)
+      pure optSe
+    Nothing -> do
+      -- get Expr Variable ann
+      resolvedOld <-
+        Actions.checkStoreExpression
+          (prettyPrint storeExpr)
+          project
+          storeExpr
 
-  -- make into Expr Name
-  floatedUpExprName <- Actions.useSwaps (reSwaps resolvedOld) optimised
+      -- do the shit
+      let optimised = inlineExpression (reVarExpression resolvedOld)
 
-  -- float lets down into patterns
-  let floatedSe =
+      -- make into Expr Name
+      floatedUpExprName <- Actions.useSwaps (reSwaps resolvedOld) optimised
+
+      -- float lets down into patterns
+      let floatedSe =
+            trimDeps
+              (reStoreExpression resolvedOld)
+              (floatDown floatedUpExprName)
+
+      -- turn back into Expr Variable (fresh names for copied vars)
+      resolvedFloated <-
+        Actions.checkStoreExpression
+          (prettyPrint (storeExpression floatedSe))
+          project
+          floatedSe
+
+      -- remove unused stuff
+      newExprName <-
+        Actions.useSwaps
+          (reSwaps resolvedFloated)
+          (inlineExpression (reVarExpression resolvedFloated))
+
+      pure $
         trimDeps
-          (reStoreExpression resolvedOld)
-          (floatDown floatedUpExprName)
-
-  -- turn back into Expr Variable (fresh names for copied vars)
-  resolvedFloated <-
-    Actions.checkStoreExpression
-      (prettyPrint (storeExpression floatedSe))
-      project
-      floatedSe
-
-  -- remove unused stuff
-  newExprName <-
-    Actions.useSwaps
-      (reSwaps resolvedFloated)
-      (inlineExpression (reVarExpression resolvedFloated))
-
-  pure $
-    trimDeps
-      (reStoreExpression resolvedFloated)
-      newExprName
+          (reStoreExpression resolvedFloated)
+          newExprName
