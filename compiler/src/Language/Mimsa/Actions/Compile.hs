@@ -1,4 +1,4 @@
-module Language.Mimsa.Actions.Compile where
+module Language.Mimsa.Actions.Compile (compile) where
 
 -- get expression
 -- optimise it
@@ -13,6 +13,7 @@ import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Coerce
 import Data.Foldable (traverse_)
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -24,6 +25,7 @@ import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Store
+import Language.Mimsa.Transform.UseOptimisedDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
@@ -52,38 +54,84 @@ typecheckStoreExpression se = do
   -- return that instead!
   liftEither $ Actions.typecheckStoreExpression (prjStore project) optimisedSe
 
+getOptimisedDeps :: StoreExpression Annotation -> Actions.ActionM (Set (StoreExpression Annotation))
+getOptimisedDeps se = do
+  -- optimise store expr to remove unrequired deps
+  optimisedSe <-
+    Actions.optimiseStoreExpression se
+  -- optimise bindings
+  -- if new versions are made, they are `saved` in the project
+  optBindings <-
+    traverse
+      ( getOptimisedDeps
+          <=< Actions.lookupExpression
+      )
+      ( M.elems
+          ( getBindings
+              ( storeBindings optimisedSe
+              )
+          )
+      )
+  -- do the same for type bindings
+  optTypeBindings <-
+    traverse
+      ( getOptimisedDeps
+          <=< Actions.lookupExpression
+      )
+      ( M.elems
+          ( getTypeBindings
+              ( storeTypeBindings optimisedSe
+              )
+          )
+      )
+  -- fetch new project
+  project <- Actions.getProject
+  -- optimise again (this will use any new versions of deps created above)
+  optimisedAgainSe <- Actions.optimiseStoreExpression (useOptimisedDeps project optimisedSe)
+  pure
+    ( S.singleton optimisedAgainSe
+        <> mconcat optBindings
+        <> mconcat optTypeBindings
+    )
+
 -- | this now accepts StoreExpression instead of expression
 compile ::
   Backend ->
   StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
 compile be se = do
+  -- get optimised store expressions
+  storeExprs <- getOptimisedDeps se
+
+  -- get up to date project
   project <- Actions.getProject
 
-  -- optimise expression
-  optSe <- Actions.optimiseStoreExpression se
-
-  -- get type of StoreExpression
-  typedMt <- typecheckStoreExpression optSe
+  -- optimise root StoreExpression
+  rootStoreExpr <-
+    ( Actions.optimiseStoreExpression
+        >=> pure . useOptimisedDeps project
+        >=> Actions.optimiseStoreExpression
+      )
+      se
 
   -- this will eventually check for things we have already transpiled to save
   -- on work
   list <-
     traverse
       typecheckStoreExpression
-      (S.toList $ getTranspileList (prjStore project) optSe)
+      (S.toList storeExprs)
 
   -- transpile each required file and add to outputs
-  traverse_ (transpileModule be) (list <> pure typedMt)
+  traverse_ (transpileModule be) list
 
   -- create the index
-  createIndex be (getStoreExpressionHash optSe)
+  createIndex be (getStoreExpressionHash rootStoreExpr)
 
   -- include stdlib for runtime
   createStdlib be
 
   -- return useful info
-  let rootExprHash = getStoreExpressionHash optSe
+  let rootExprHash = getStoreExpressionHash rootStoreExpr
 
   -- return all ExprHashes created
   let allHashes =

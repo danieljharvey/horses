@@ -1,4 +1,10 @@
-module Language.Mimsa.Transform.UseOptimisedDeps where
+module Language.Mimsa.Transform.UseOptimisedDeps (useOptimisedDeps) where
+
+import Data.Maybe
+import Language.Mimsa.Project
+import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Store
 
 -- given a store expression, update it use the bestest versions of it's deps
 useOptimisedDeps ::
@@ -8,6 +14,12 @@ useOptimisedDeps ::
 useOptimisedDeps proj se =
   let lookupOpt exprHash = fromMaybe exprHash (lookupOptimised proj exprHash)
    in se
-        { bindings = lookupOpt <$> bindings se,
-          typeBindings = lookupOpt <$> typeBindings se
+        { storeBindings =
+            Bindings $
+              lookupOpt
+                <$> getBindings (storeBindings se),
+          storeTypeBindings =
+            TypeBindings $
+              lookupOpt
+                <$> getTypeBindings (storeTypeBindings se)
         }

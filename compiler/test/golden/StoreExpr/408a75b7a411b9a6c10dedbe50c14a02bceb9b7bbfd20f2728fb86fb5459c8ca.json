@@ -1,0 +1,1 @@
+{"storeBindings":{"maybeMonoid":"7a1b8240a2ba91f7df452e152b37fe15bb1492ffe73b73a873627358a9edb856","sumMonoid":"99fa1ac270b897dcaa35b0af7ba2fc53c272ab7669bc59cec4b29e604d025772"},"storeExpression":{"expAnn":null,"expArg":{"expAnn":null,"expVar":"sumMonoid","tag":"MyVar"},"expFunc":{"expAnn":null,"expVar":"maybeMonoid","tag":"MyVar"},"tag":"MyApp"},"storeTypeBindings":{}}
