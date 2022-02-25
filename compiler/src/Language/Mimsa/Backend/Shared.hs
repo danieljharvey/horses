@@ -9,7 +9,6 @@ module Language.Mimsa.Backend.Shared
     zipFileOutputPath,
     indexOutputFilename,
     moduleFilename,
-    getTranspileList,
     fileExtension,
     createOutputFolder,
     createModuleOutputPath,
@@ -22,14 +21,11 @@ where
 
 import Control.Monad.IO.Class
 import Data.FileEmbed
-import Data.Set (Set)
-import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Storage (getStoreFolder)
 import Language.Mimsa.Types.Store
 import System.Directory
@@ -114,14 +110,3 @@ moduleFilename Typescript hash' =
 stdlibFilename :: Backend -> Text
 stdlibFilename Typescript = "ts-stdlib"
 stdlibFilename ESModulesJS = "ejs-stdlib.mjs"
-
--- recursively get all the StoreExpressions we need to output
-getTranspileList ::
-  (Ord ann) =>
-  Store ann ->
-  StoreExpression ann ->
-  Set (StoreExpression ann)
-getTranspileList store' se =
-  case recursiveResolve store' se of
-    Right as -> S.fromList as
-    Left _ -> mempty
