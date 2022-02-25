@@ -69,6 +69,7 @@ library
       Language.Mimsa.Interpreter.HighestVar
       Language.Mimsa.Interpreter.InstantiateVar
       Language.Mimsa.Interpreter.Interpret
+      Language.Mimsa.Interpreter.Main
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
@@ -87,7 +88,6 @@ library
       Language.Mimsa.Parser.Types
       Language.Mimsa.Printer
       Language.Mimsa.Project
-      Language.Mimsa.Project.Default
       Language.Mimsa.Project.Helpers
       Language.Mimsa.Project.Persistence
       Language.Mimsa.Project.SourceSpan
@@ -120,6 +120,7 @@ library
       Language.Mimsa.Transform.Inliner
       Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.TrimDeps
+      Language.Mimsa.Transform.UseOptimisedDeps
       Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
@@ -377,6 +378,7 @@ test-suite mimsa-test
       Test.Parser.Pattern
       Test.Parser.Syntax
       Test.Prettier
+      Test.Project.Helpers
       Test.Project.NormaliseType
       Test.Project.SourceSpan
       Test.Project.Stdlib

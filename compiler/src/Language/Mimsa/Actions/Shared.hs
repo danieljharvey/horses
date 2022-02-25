@@ -9,6 +9,7 @@ module Language.Mimsa.Actions.Shared
     fromType,
     getTypeMap,
     lookupExpressionInStore,
+    lookupExpression,
   )
 where
 
@@ -182,6 +183,7 @@ typecheckStoreExpression store storeExpr = do
           (bindingsToVersioned (storeBindings storeExpr))
           (typeBindingsToVersioned (storeTypeBindings storeExpr))
           mempty
+          mempty
   let expr = storeExpression storeExpr
   resolvedExpr <-
     getTypecheckedStoreExpression (prettyPrint expr) project expr
@@ -191,6 +193,15 @@ typecheckStoreExpression store storeExpr = do
       (\e -> InterpreterErr (e $> mempty))
       (useSwaps (reSwaps resolvedExpr) typedExpr)
   pure (storeExpr {storeExpression = typedStoreExpr})
+
+lookupExpression ::
+  (Monoid ann) =>
+  ExprHash ->
+  Actions.ActionM (StoreExpression ann)
+lookupExpression exprHash = do
+  project <- Actions.getProject
+  se <- lookupExpressionInStore (prjStore project) exprHash
+  pure (se $> mempty)
 
 -- | given a store, try and find something in it
 lookupExpressionInStore ::

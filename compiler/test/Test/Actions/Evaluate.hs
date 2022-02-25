@@ -34,5 +34,7 @@ spec = do
       let (newProject, _, (mt, expr, _, _, _)) = fromRight (Actions.run testStdlib action)
       mt $> () `shouldBe` MTPrim mempty MTInt
       expr $> () `shouldBe` int 2
-      -- project should be untouched
-      newProject `shouldBe` testStdlib
+      -- optimised version in store
+      additionalStoreItems testStdlib newProject `shouldBe` 1
+      -- saved link from version to new version
+      additionalOptimisations testStdlib newProject `shouldBe` 1

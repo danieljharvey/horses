@@ -1,0 +1,4 @@
+\person ->
+  match person with 
+      (Person p) -> 
+        p.age

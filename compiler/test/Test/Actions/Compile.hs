@@ -7,6 +7,7 @@ module Test.Actions.Compile
 where
 
 import Data.Either (isRight)
+import Data.Functor
 import Data.List (nub)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -33,8 +34,8 @@ spec = do
             fromRight (Actions.run testStdlib action)
       -- creates four files
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 4
-      -- doesn't change project (for now)
-      newProject `shouldBe` testStdlib
+      -- optimisations change project
+      newProject `shouldNotBe` testStdlib
       -- uses three different folders
       let uniqueFolders =
             nub
@@ -54,8 +55,8 @@ spec = do
       let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
       -- creates 9 files
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
-      -- doesn't change project (for now)
-      newProject `shouldBe` testStdlib
+      -- optimisations change project
+      newProject `shouldNotBe` testStdlib
       -- uses three different folders
       let uniqueFolders =
             nub
@@ -72,3 +73,14 @@ spec = do
       let action = do
             Actions.compile Typescript storeExpr
       Actions.run testStdlib action `shouldSatisfy` isRight
+
+    it "Compiles with deep deps" $ do
+      let expr = unsafeParseExpr "either.fmap (\\a -> a + 1) (Right 100)" $> mempty
+          action = do
+            (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
+            Actions.compile Typescript storeExpr
+      let (_, outcomes, _) = fromRight (Actions.run testStdlib action)
+      -- creates 9 files (7 expressions, stdlib, index)
+      -- this will reduce once we inline across expressions as
+      -- most of this is unneeded `either` functions
+      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9

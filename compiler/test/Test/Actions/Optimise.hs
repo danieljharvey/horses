@@ -97,3 +97,23 @@ spec = do
       -- current hash is new one
       let newBoundHash = getHashOfName prj "useId"
       newBoundHash `shouldBe` getStoreExpressionHash (reStoreExpression resolved)
+      -- one new optimisation
+      additionalOptimisations testStdlib prj `shouldBe` 1
+
+    it "Optimising twice returns same store expression and does not repeat work" $ do
+      let action = do
+            Actions.bindStoreExpression withLambda "useId"
+            Actions.optimiseByName "useId"
+      let (prj, _actions, _) =
+            fromRight $ Actions.run testStdlib action
+
+      let action2 = do
+            Actions.optimiseByName "useId"
+
+      let (prj2, _actions, _) =
+            fromRight $ Actions.run prj action2
+
+      -- no new expressions on second run
+      additionalStoreItems prj prj2 `shouldBe` 0
+      -- current hash has not changed
+      getHashOfName prj "useId" `shouldBe` getHashOfName prj2 "useId"

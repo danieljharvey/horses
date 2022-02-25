@@ -1,0 +1,1 @@
+{"storeBindings":{},"storeExpression":{"expAnn":null,"expExpr":{"expAnn":null,"expLit":{"litInt":1,"tag":"MyInt"},"tag":"MyLiteral"},"expPatterns":[[{"patAnn":null,"patVar":"a","tag":"PVar"},{"expAnn":null,"expVar":"a","tag":"MyVar"}]],"tag":"MyPatternMatch"},"storeTypeBindings":{}}
