@@ -10,15 +10,6 @@ cd mimsa
 stack install
 ```
 
-copying example project...
-
-```bash
-git clone https://github.com/danieljharvey/mimsa-test
-cd mimsa-test
-# start repl
-mimsa 
-```
-
 you should then see:
 
 ```bash
