@@ -378,6 +378,7 @@ test-suite mimsa-test
       Test.Parser.Pattern
       Test.Parser.Syntax
       Test.Prettier
+      Test.Project.Helpers
       Test.Project.NormaliseType
       Test.Project.SourceSpan
       Test.Project.Stdlib

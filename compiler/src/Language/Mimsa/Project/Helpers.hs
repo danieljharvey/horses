@@ -44,6 +44,7 @@ import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Utils (chainLookup)
 
 ----------
 
@@ -88,7 +89,7 @@ fromOptimisation oldHash newStoreExpr =
    in mempty
         { prjStore =
             Store $ M.singleton newHash newStoreExpr,
-          prjOptimised = M.fromList [(oldHash, newHash), (newHash, newHash)]
+          prjOptimised = M.fromList [(oldHash, newHash)]
         }
 
 fromItem :: Name -> StoreExpression ann -> ExprHash -> Project ann
@@ -241,4 +242,5 @@ removeBinding prj name =
 
 lookupOptimised :: Project ann -> ExprHash -> Maybe ExprHash
 lookupOptimised prj exprHash =
-  M.lookup exprHash (prjOptimised prj)
+  let look hash = M.lookup hash (prjOptimised prj)
+   in chainLookup look exprHash

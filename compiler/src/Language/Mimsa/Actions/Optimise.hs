@@ -1,6 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Optimise (optimise, optimiseByName, optimiseStoreExpression) where
+module Language.Mimsa.Actions.Optimise
+  ( optimise,
+    optimiseByName,
+    optimiseStoreExpression,
+    useOptimisedStoreExpressionDeps,
+  )
+where
 
 import Control.Monad.Except
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
@@ -19,6 +25,7 @@ import Language.Mimsa.Transform.FloatUp
 import Language.Mimsa.Transform.Inliner
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Transform.TrimDeps
+import Language.Mimsa.Transform.UseOptimisedDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -68,9 +75,6 @@ optimise se = do
   -- run optimisations
   storeExprNew <- optimiseStoreExpression se
 
-  -- save new store expr
-  Actions.appendOptimisedStoreExpression (getStoreExpressionHash se) storeExprNew
-
   -- typecheck optimisations
   resolvedNew <-
     Actions.checkStoreExpression
@@ -101,6 +105,23 @@ lookupOptimisation ::
 lookupOptimisation prj =
   lookupExprHash prj <=< lookupOptimised prj . getStoreExpressionHash
 
+-- | update a StoreExpression to use the latest optimisations of its deps
+-- this does not happen in the `optimiseStoreExpression` flow as it has
+-- different results depending on the project state
+-- so we only want to introduce this complexity explicitly
+useOptimisedStoreExpressionDeps ::
+  StoreExpression Annotation ->
+  Actions.ActionM (StoreExpression Annotation)
+useOptimisedStoreExpressionDeps se = do
+  -- get latest project
+  project <- Actions.getProject
+  -- swap in StoreExpression deps for newest versions
+  let seWithNewDeps = useOptimisedDeps project se
+  -- store new StoreExpression and optimisation
+  Actions.appendOptimisedStoreExpression (getStoreExpressionHash se) seWithNewDeps
+  -- return it
+  pure seWithNewDeps
+
 optimiseStoreExpression ::
   StoreExpression Annotation ->
   Actions.ActionM (StoreExpression Annotation)
@@ -110,16 +131,13 @@ optimiseStoreExpression storeExpr = do
   case lookupOptimisation project storeExpr of
     Just optSe -> do
       -- output message for repl
-      Actions.appendDocMessage
-        ( if optSe == storeExpr
-            then
-              "Expression "
+      if optSe /= storeExpr
+        then
+          Actions.appendDocMessage
+            ( "Using precalculated optimised expression for "
                 <> prettyDoc (getStoreExpressionHash storeExpr)
-                <> " is already optimised"
-            else
-              "Using precalculated optimised expression for "
-                <> prettyDoc (getStoreExpressionHash storeExpr)
-        )
+            )
+        else pure ()
 
       pure optSe
     Nothing -> do
@@ -155,7 +173,14 @@ optimiseStoreExpression storeExpr = do
           (reSwaps resolvedFloated)
           (inlineExpression (reVarExpression resolvedFloated))
 
-      pure $
-        trimDeps
-          (reStoreExpression resolvedFloated)
-          newExprName
+      let newStoreExpr =
+            trimDeps
+              (reStoreExpression resolvedFloated)
+              newExprName
+
+      -- save new store expr
+      Actions.appendOptimisedStoreExpression
+        (getStoreExpressionHash storeExpr)
+        newStoreExpr
+
+      pure newStoreExpr

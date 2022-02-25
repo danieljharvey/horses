@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Language.Mimsa.Actions.Compile (compile) where
 
 -- get expression
@@ -24,8 +26,8 @@ import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Printer
 import Language.Mimsa.Store
-import Language.Mimsa.Transform.UseOptimisedDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
@@ -49,16 +51,14 @@ typecheckStoreExpression ::
   Actions.ActionM (StoreExpression MonoType)
 typecheckStoreExpression se = do
   project <- Actions.getProject
-  -- create optimised version of store expression
-  optimisedSe <- Actions.optimiseStoreExpression se
-  -- return that instead!
-  liftEither $ Actions.typecheckStoreExpression (prjStore project) optimisedSe
+  liftEither $ Actions.typecheckStoreExpression (prjStore project) se
 
 getOptimisedDeps :: StoreExpression Annotation -> Actions.ActionM (Set (StoreExpression Annotation))
 getOptimisedDeps se = do
-  -- optimise store expr to remove unrequired deps
-  optimisedSe <-
-    Actions.optimiseStoreExpression se
+  let oldExprHash = getStoreExpressionHash se
+
+  Actions.appendMessage ("Optimising " <> prettyPrint oldExprHash)
+
   -- optimise bindings
   -- if new versions are made, they are `saved` in the project
   optBindings <-
@@ -68,7 +68,7 @@ getOptimisedDeps se = do
       )
       ( M.elems
           ( getBindings
-              ( storeBindings optimisedSe
+              ( storeBindings se
               )
           )
       )
@@ -80,16 +80,32 @@ getOptimisedDeps se = do
       )
       ( M.elems
           ( getTypeBindings
-              ( storeTypeBindings optimisedSe
+              ( storeTypeBindings se
               )
           )
       )
-  -- fetch new project
-  project <- Actions.getProject
-  -- optimise again (this will use any new versions of deps created above)
-  optimisedAgainSe <- Actions.optimiseStoreExpression (useOptimisedDeps project optimisedSe)
+
+  -- optimise and use new deps
+  optimised <-
+    ( Actions.optimiseStoreExpression
+        <=< Actions.useOptimisedStoreExpressionDeps
+      )
+      se
+
+  let newExprHash = getStoreExpressionHash optimised
+
+  if oldExprHash /= newExprHash
+    then
+      Actions.appendDocMessage
+        ( "Found store expression "
+            <> prettyDoc oldExprHash
+            <> " and optimised to "
+            <> prettyDoc newExprHash
+        )
+    else pure ()
+
   pure
-    ( S.singleton optimisedAgainSe
+    ( S.singleton optimised
         <> mconcat optBindings
         <> mconcat optTypeBindings
     )
@@ -103,19 +119,15 @@ compile be se = do
   -- get optimised store expressions
   storeExprs <- getOptimisedDeps se
 
-  -- get up to date project
-  project <- Actions.getProject
-
   -- optimise root StoreExpression
   rootStoreExpr <-
     ( Actions.optimiseStoreExpression
-        >=> pure . useOptimisedDeps project
-        >=> Actions.optimiseStoreExpression
+        <=< Actions.useOptimisedStoreExpressionDeps
       )
       se
 
-  -- this will eventually check for things we have already transpiled to save
-  -- on work
+  -- this will eventually check for things we have
+  -- already transpiled to save on work
   list <-
     traverse
       typecheckStoreExpression

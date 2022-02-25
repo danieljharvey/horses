@@ -69,15 +69,15 @@ optimise prj storeExpr = do
         -- optimise twice, it should be the same, if not we need to optimise
         -- more thoroughly
         newSe <- Actions.optimiseStoreExpression se
-        if se /= newSe
+        if (se $> ()) /= (newSe $> ())
           then do
             error
               ( "Optimising twice gives different results for:\n"
                   <> T.unpack (prettyPrint (storeExpression storeExpr))
                   <> "\nAfter first optimise:\n"
-                  <> T.unpack (prettyPrint (storeExpression se))
+                  <> show (storeExpression se)
                   <> "\nAfter second optimise:\n"
-                  <> T.unpack (prettyPrint (storeExpression newSe))
+                  <> show (storeExpression newSe)
               )
           else pure ()
 
