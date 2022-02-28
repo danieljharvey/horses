@@ -15,7 +15,7 @@ import Test.Utils.Helpers
 
 spec :: Spec
 spec =
-  describe "ExprGraph" $ do
+  fdescribe "ExprGraph" $ do
     describe "numberExpr" $ do
       it "Numbers a literal" $ do
         numberExpr (unsafeParseExpr "True")
@@ -66,17 +66,17 @@ spec =
     describe "createExprGraph" $ do
       it "Graphs a literal" $ do
         let graph = createExprGraph (unsafeParseExpr "True")
-        prettyGraphviz graph `shouldBe` ""
+        prettyGraphviz graph `shouldNotBe` ""
       it "Graphs an if" $ do
         let graph =
               createExprGraph (unsafeParseExpr "if True then 1 else 2")
         prettyGraphviz graph
-          `shouldBe` ""
+          `shouldNotBe` ""
       it "Graphs a lambda" $ do
         let graph =
               createExprGraph (unsafeParseExpr "\\a -> True")
         prettyGraphviz graph
-          `shouldBe` ""
+          `shouldNotBe` ""
       it "Graphs a pattern match" $ do
         let graph =
               createExprGraph
@@ -84,4 +84,7 @@ spec =
                     "\\a -> match a with (Just b) -> 100 | Nothing -> 0"
                 )
         prettyGraphviz graph
-          `shouldBe` ""
+          `shouldNotBe` ""
+      it "Graphs loads of crap" $ do
+        let graph = createExprGraph (unsafeParseExpr "let a = 1 in let (b,c) = (2,3) in { things: [a,b,c], stuff: True }")
+        prettyGraphviz graph `shouldBe` ""

@@ -11,6 +11,7 @@ where
 
 import Control.Monad.State
 import Control.Monad.Writer
+import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -66,7 +67,46 @@ createExprGraph expr = snd $ runWriter (createGraph (snd <$> numberExpr expr))
     createGraph (MyVar ann var) = do
       tell [Node ann (prettyPrint var)]
       pure ann
-    createGraph _ = error "bum"
+    createGraph (MyLet ann ident letBody rest) = do
+      letBodyId <- createGraph letBody
+      restId <- createGraph rest
+      tell
+        [ Node ann ("let " <> prettyPrint ident),
+          Edge ann letBodyId (Just "="),
+          Edge ann restId (Just "in")
+        ]
+      pure ann
+    createGraph (MyLetPattern ann matchPattern letBody rest) = do
+      letBodyId <- createGraph letBody
+      restId <- createGraph rest
+      tell
+        [ Node ann ("let " <> prettyPrint matchPattern),
+          Edge ann letBodyId (Just "="),
+          Edge ann restId (Just "in")
+        ]
+      pure ann
+    createGraph (MyPair ann a b) = do
+      aId <- createGraph a
+      bId <- createGraph b
+      tell
+        [ Node ann "pair",
+          Edge ann aId (Just "a"),
+          Edge ann bId (Just "b")
+        ]
+      pure ann
+    createGraph (MyArray ann items) = do
+      itemIds <- traverse createGraph items
+      tell [Node ann "array"]
+      tell $ (\itemId -> Edge ann itemId (Just "item")) <$> itemIds
+      pure ann
+    createGraph (MyRecord ann items) = do
+      labelledItems <- traverse createGraph items
+      tell [Node ann "record"]
+      tell $
+        (\(key, itemId) -> Edge ann itemId (Just (prettyPrint key)))
+          <$> M.toList labelledItems
+      pure ann
+    createGraph e = error ("could not graph " <> show e)
 
 getNum :: (MonadState Int m) => m Int
 getNum = do
