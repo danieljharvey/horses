@@ -4,32 +4,18 @@
 module Language.Mimsa.Store.DepGraph
   ( createDepGraph,
     createGraphviz,
-    prettyGraphviz,
-    Graphviz (..),
   )
 where
 
 import Data.Map ((!))
 import qualified Data.Map as M
-import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.Storage
+import Language.Mimsa.Types.Graphviz
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
-
-----
-
-data Graphviz = Edge ExprHash ExprHash | Node ExprHash Name
-  deriving stock (Eq, Ord, Show)
-
-instance Printer Graphviz where
-  prettyPrint (Edge from to) =
-    showHash from <> " -> " <> showHash to
-    where
-      showHash hash = "\"" <> prettyPrint hash <> "\""
-  prettyPrint (Node hash name) = "\"" <> prettyPrint hash <> "\" [ label = " <> prettyPrint name <> "]"
 
 -----
 
@@ -78,13 +64,8 @@ createDepGraph name (Store store') storeExpr' = Func depInfo leaves
         <$> children
     children = M.toList . getBindings . storeBindings $ storeExpr'
 
-createGraphviz :: DepGraph -> [Graphviz]
+createGraphviz :: DepGraph -> [Graphviz ExprHash Name]
 createGraphviz (Func (DepInfo (rootName, exprHash)) deps) =
   let getEdge hash (Func (DepInfo (depName, depHash)) more) =
-        [Edge hash depHash, Node depHash depName] <> mconcat (getEdge depHash <$> more)
+        [Edge hash depHash Nothing, Node depHash depName] <> mconcat (getEdge depHash <$> more)
    in (deps >>= getEdge exprHash) <> [Node exprHash rootName]
-
-prettyGraphviz :: [Graphviz] -> Text
-prettyGraphviz gv =
-  let parts = (\a -> "  " <> a <> "\n") . prettyPrint <$> S.toList (S.fromList gv)
-   in "strict digraph {\n" <> mconcat parts <> "}"

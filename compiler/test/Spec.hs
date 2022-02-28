@@ -31,6 +31,7 @@ import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.Usages as Usages
 import qualified Test.RenderErrors as RenderErrors
 import qualified Test.Serialisation as Serialisation
+import qualified Test.Store.ExprGraph as ExprGraph
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Tests.Properties as Properties
@@ -110,3 +111,5 @@ main =
     NumberVars.spec
     CheckModule.spec
     RenderErrors.spec
+    Helpers.spec
+    ExprGraph.spec

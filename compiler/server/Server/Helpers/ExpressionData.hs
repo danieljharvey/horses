@@ -22,6 +22,7 @@ import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.OutputTypes
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Graphviz
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
@@ -46,7 +47,7 @@ data ExpressionData = ExpressionData
 makeExpressionData ::
   StoreExpression Annotation ->
   Expr Name MonoType ->
-  [Graphviz] ->
+  [Graphviz ExprHash Name] ->
   Text ->
   [Warning] ->
   Bool ->

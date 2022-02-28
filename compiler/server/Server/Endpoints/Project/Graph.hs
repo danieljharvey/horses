@@ -15,7 +15,7 @@ import Data.OpenApi hiding (Server)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
-import Language.Mimsa.Store
+import Language.Mimsa.Types.Graphviz
 import Language.Mimsa.Types.Project
 import Servant
 import Server.Handlers

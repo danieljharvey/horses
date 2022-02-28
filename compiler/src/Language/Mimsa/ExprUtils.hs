@@ -6,6 +6,7 @@ module Language.Mimsa.ExprUtils
     bindExpr,
     toEmptyAnnotation,
     getAnnotation,
+    setAnnotation,
     mapPattern,
     nameFromIdent,
     detailsFromIdent,
@@ -50,6 +51,26 @@ getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyDefineInfix ann _ _ _) = ann
 getAnnotation (MyArray ann _) = ann
 getAnnotation (MyPatternMatch ann _ _) = ann
+
+-- | Set the top level annotation for any given Expression
+setAnnotation :: ann -> Expr var ann -> Expr var ann
+setAnnotation ann (MyLiteral _ a) = MyLiteral ann a
+setAnnotation ann (MyVar _ a) = MyVar ann a
+setAnnotation ann (MyLet _ a b c) = MyLet ann a b c
+setAnnotation ann (MyLetPattern _ a b c) = MyLetPattern ann a b c
+setAnnotation ann (MyInfix _ a b c) = MyInfix ann a b c
+setAnnotation ann (MyLambda _ a b) = MyLambda ann a b
+setAnnotation ann (MyApp _ a b) = MyApp ann a b
+setAnnotation ann (MyIf _ a b c) = MyIf ann a b c
+setAnnotation ann (MyPair _ a b) = MyPair ann a b
+setAnnotation ann (MyRecord _ a) = MyRecord ann a
+setAnnotation ann (MyRecordAccess _ a b) = MyRecordAccess ann a b
+setAnnotation ann (MyData _ a b) = MyData ann a b
+setAnnotation ann (MyConstructor _ a) = MyConstructor ann a
+setAnnotation ann (MyTypedHole _ a) = MyTypedHole ann a
+setAnnotation ann (MyDefineInfix _ a b c) = MyDefineInfix ann a b c
+setAnnotation ann (MyArray _ a) = MyArray ann a
+setAnnotation ann (MyPatternMatch _ a b) = MyPatternMatch ann a b
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`

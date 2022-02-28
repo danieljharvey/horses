@@ -11,20 +11,22 @@ import Language.Mimsa.Store.DepGraph
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Graphviz
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
 -- | create graphviz file for store expression
 graphExpression ::
   StoreExpression Annotation ->
-  Actions.ActionM [Graphviz]
+  Actions.ActionM [Graphviz ExprHash Name]
 graphExpression storeExpr = do
   project <- Actions.getProject
   let graph = createDepGraph "root" (prjStore project) storeExpr
   pure (createGraphviz graph)
 
 -- | create Graphviz for entire project
-graphProject :: Actions.ActionM [Graphviz]
+graphProject :: Actions.ActionM [Graphviz ExprHash Name]
 graphProject = do
   project <- Actions.getProject
   (ResolvedDeps deps) <-

@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -24,7 +25,7 @@ data StringPart var ann
       { stpAnn :: ann,
         stpVar :: var
       }
-  deriving stock (Show, Eq, Ord, Functor, Foldable, Generic)
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
 $(deriveBifunctor ''StringPart)

@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -86,7 +87,7 @@ data Type ann
         typFunc :: Type ann,
         typArg :: Type ann -- func arg, apply arg to func
       }
-  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
+  deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
 getAnnotationForType :: Type ann -> ann

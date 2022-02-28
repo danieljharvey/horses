@@ -105,6 +105,7 @@ library
       Language.Mimsa.Project.Versions
       Language.Mimsa.Store
       Language.Mimsa.Store.DepGraph
+      Language.Mimsa.Store.ExprGraph
       Language.Mimsa.Store.ExtractTypes
       Language.Mimsa.Store.ExtractVars
       Language.Mimsa.Store.Hashing
@@ -173,6 +174,7 @@ library
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.StoreError
       Language.Mimsa.Types.Error.TypeError
+      Language.Mimsa.Types.Graphviz
       Language.Mimsa.Types.Identifiers
       Language.Mimsa.Types.Identifiers.Name
       Language.Mimsa.Types.Identifiers.TyCon
@@ -420,6 +422,7 @@ test-suite mimsa-test
       Test.Project.Usages
       Test.RenderErrors
       Test.Serialisation
+      Test.Store.ExprGraph
       Test.Store.Resolver
       Test.Store.UpdateDeps
       Test.Tests.Properties

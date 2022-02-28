@@ -15,6 +15,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Store.DepGraph
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Graphviz
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
