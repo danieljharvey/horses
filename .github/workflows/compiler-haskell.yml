@@ -19,7 +19,7 @@ jobs:
       working-directory: compiler
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: mrkkrp/ormolu-action@v4
 
   build:
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Cache stack global package db
         id: stack-global
