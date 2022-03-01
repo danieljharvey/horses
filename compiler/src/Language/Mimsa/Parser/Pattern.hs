@@ -10,6 +10,7 @@ import Data.Either (partitionEithers)
 import qualified Data.Map as M
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers (nameParser, tyConParser)
+import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
@@ -39,25 +40,26 @@ patternParser =
 
 wildcardParser :: Parser ParserPattern
 wildcardParser =
-  withLocation
-    (\loc _ -> PWildcard loc)
-    (string "_")
+  myLexeme $
+    withLocation
+      (\loc _ -> PWildcard loc)
+      (string "_")
 
 ----
 
 variableParser :: Parser ParserPattern
 variableParser =
-  withLocation PVar nameParser
+  myLexeme $ withLocation PVar nameParser
 
 ----
 
 pairParser :: Parser ParserPattern
 pairParser = withLocation (\loc (one, two) -> PPair loc one two) $ do
-  _ <- string "("
+  _ <- myString "("
   one <- patternParser
-  _ <- literalWithSpace ","
+  _ <- myString ","
   two <- patternParser
-  _ <- string ")"
+  _ <- myString ")"
   pure (one, two)
 
 ----
@@ -78,18 +80,16 @@ recordParser = withLocation PRecord $ do
   let itemParser =
         try recordItemParser
           <|> punnedRecordItemParser
-  _ <- string "{"
-  _ <- space
-  args <- sepBy (withOptionalSpace itemParser) (literalWithSpace ",")
-  _ <- space
-  _ <- string "}"
+  _ <- myString "{"
+  args <- sepBy itemParser (myString ",")
+  _ <- myString "}"
   pure (M.fromList args)
 
 recordItemParser :: Parser (Name, ParserPattern)
 recordItemParser = do
   name <- nameParser
-  literalWithSpace ":"
-  expr <- withOptionalSpace patternParser
+  myString ":"
+  expr <- patternParser
   pure (name, expr)
 
 punnedRecordItemParser :: Parser (Name, ParserPattern)
@@ -102,11 +102,7 @@ punnedRecordItemParser = do
 argsParser :: Parser [ParserPattern]
 argsParser = try someP <|> pure []
   where
-    someP = do
-      _ <- space1
-      sepBy1
-        patternParser
-        space1
+    someP = some patternParser
 
 constructorParser :: Parser ParserPattern
 constructorParser =
@@ -129,11 +125,9 @@ arrayParser =
           <|> try (Left <$> spreadParser)
           <|> fail "Expected pattern or a spread operator"
       parser = do
-        _ <- string "["
-        _ <- space
-        args <- sepBy (withOptionalSpace itemParser) (literalWithSpace ",")
-        _ <- space
-        _ <- string "]"
+        myString "["
+        args <- sepBy itemParser (myString ",")
+        myString "]"
         case getParts args of
           Right parts -> pure parts
           Left e -> fail e
@@ -162,13 +156,13 @@ spreadParser =
 spreadWildcardParser :: Parser (Spread Name Annotation)
 spreadWildcardParser =
   let parser =
-        literalWithSpace "..."
+        myString "..."
    in withLocation (\loc _ -> SpreadWildcard loc) parser
 
 spreadValueParser :: Parser (Spread Name Annotation)
 spreadValueParser =
   let parser = do
-        _ <- literalWithSpace "..."
+        myString "..."
         nameParser
    in withLocation SpreadValue parser
 
@@ -178,7 +172,7 @@ stringParser :: Parser (Pattern Name Annotation)
 stringParser =
   let parser = do
         a <- stringPartParser
-        _ <- literalWithSpace "++"
+        myString "++"
         as <- stringPartParser
         pure (a, as)
    in withLocation (\loc (a, as) -> PString loc a as) parser
@@ -189,7 +183,7 @@ stringPartParser =
 
 stringWildcard :: Parser (StringPart Name Annotation)
 stringWildcard =
-  let parser = string "_"
+  let parser = myString "_"
    in withLocation (\loc _ -> StrWildcard loc) parser
 
 stringValue :: Parser (StringPart Name Annotation)

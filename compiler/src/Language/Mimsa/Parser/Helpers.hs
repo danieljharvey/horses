@@ -2,7 +2,6 @@
 
 module Language.Mimsa.Parser.Helpers
   ( parseAndFormat,
-    thenSpace,
     between2,
     addLocation,
     withLocation,
@@ -11,19 +10,15 @@ module Language.Mimsa.Parser.Helpers
     filterProtectedOperators,
     inBrackets,
     orInBrackets,
-    literalWithSpace,
-    withOptionalSpace,
     chainl1,
-    spaceThen,
-    optionalSpaceThen,
   )
 where
 
-import Control.Monad (void)
 import Data.Bifunctor (first)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Text.Megaparsec
@@ -36,9 +31,9 @@ parseAndFormat p = first (T.pack . errorBundlePretty) . parse (p <* eof) "repl"
 -- parses between two chars
 between2 :: Char -> Char -> Parser a -> Parser a
 between2 a b parser = do
-  _ <- char a
+  _ <- myLexeme (char a)
   val <- parser
-  _ <- char b
+  _ <- myLexeme (char b)
   pure val
 
 -----
@@ -112,38 +107,6 @@ filterProtectedOperators tx =
     else Just tx
 
 ---
-
-literalWithSpace :: Text -> Parser ()
-literalWithSpace tx = void $ withOptionalSpace (string tx)
-
-withOptionalSpace :: Parser a -> Parser a
-withOptionalSpace p = do
-  _ <- space
-  a <- p
-  _ <- space
-  pure a
-
--- looks for Parser a followed by 1 or more spaces
-thenSpace :: Parser a -> Parser a
-thenSpace parser = do
-  _ <- space
-  val <- parser
-  _ <- space1
-  pure val
-
--- at least one space then Parser a
-spaceThen :: Parser a -> Parser a
-spaceThen p = do
-  _ <- space1
-  p
-
--- at least one space then Parser a
-optionalSpaceThen :: Parser a -> Parser a
-optionalSpaceThen p = do
-  _ <- space
-  p
-
------
 
 -- | stolen from Parsec, allows parsing infix expressions without recursion
 -- death

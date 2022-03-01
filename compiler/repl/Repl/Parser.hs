@@ -8,6 +8,7 @@ where
 import Data.Functor (($>))
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
+import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
@@ -41,7 +42,7 @@ helpParser = Help <$ string ":help"
 
 infoParser :: Parser ReplActionAnn
 infoParser = do
-  _ <- thenSpace (string ":info")
+  myString ":info"
   Info <$> expressionParser
 
 evalParser :: Parser ReplActionAnn
@@ -51,27 +52,27 @@ evalParser =
 
 treeParser :: Parser ReplActionAnn
 treeParser = do
-  _ <- thenSpace (string ":tree")
+  myString ":tree"
   Tree <$> expressionParser
 
 graphParser :: Parser ReplActionAnn
 graphParser = do
-  _ <- thenSpace (string ":graph")
+  myString ":graph"
   Graph <$> expressionParser
 
 projectGraphParser :: Parser ReplActionAnn
-projectGraphParser = ProjectGraph <$ string ":projectGraph"
+projectGraphParser = ProjectGraph <$ myString ":projectGraph"
 
 bindParser :: Parser ReplActionAnn
 bindParser = do
-  _ <- thenSpace (string ":bind")
-  name <- thenSpace nameParser
-  _ <- thenSpace (string "=")
+  myString ":bind"
+  name <- nameParser
+  myString "="
   Bind name <$> expressionParser
 
 bindTypeParser :: Parser ReplActionAnn
 bindTypeParser = do
-  _ <- thenSpace (string ":bindType")
+  myString ":bindType"
   BindType <$> typeDeclParser
 
 listBindingsParser :: Parser ReplActionAnn
@@ -79,30 +80,30 @@ listBindingsParser = ListBindings <$ string ":list"
 
 versionsParser :: Parser ReplActionAnn
 versionsParser = do
-  _ <- thenSpace (string ":versions")
+  myString ":versions"
   Versions <$> nameParser
 
 backendParser :: Parser (Maybe Backend)
 backendParser =
-  thenSpace (string "javascript") $> Just ESModulesJS
-    <|> thenSpace (string "typescript") $> Just Typescript
+  myString "javascript" $> Just ESModulesJS
+    <|> myString "typescript" $> Just Typescript
     <|> pure Nothing
 
 outputJSParser :: Parser ReplActionAnn
 outputJSParser = do
-  _ <- thenSpace (string ":outputJS")
+  myString ":outputJS"
   be <- backendParser
   OutputJS be <$> expressionParser
 
 typeSearchParser :: Parser ReplActionAnn
 typeSearchParser = do
-  _ <- thenSpace (string ":search")
+  myString ":search"
   TypeSearch <$> monoTypeParser
 
 addUnitTestParser :: Parser ReplActionAnn
 addUnitTestParser = do
-  _ <- thenSpace (string ":addTest")
-  (MyString (StringType str)) <- thenSpace stringLiteral
+  myString ":addTest"
+  (MyString (StringType str)) <- stringLiteral
   AddUnitTest (TestName str) <$> expressionParser
 
 listTestsParser :: Parser ReplActionAnn
@@ -119,10 +120,10 @@ listTestsParser = do
 
 upgradeParser :: Parser ReplActionAnn
 upgradeParser = do
-  _ <- thenSpace (string ":upgrade")
+  myString ":upgrade"
   Upgrade <$> nameParser
 
 optimiseParser :: Parser ReplActionAnn
 optimiseParser = do
-  _ <- thenSpace (string ":optimise")
+  myString ":optimise"
   Optimise <$> nameParser

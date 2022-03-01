@@ -27,7 +27,7 @@ import qualified Test.Prettier as Prettier
 import qualified Test.Project.Helpers as Helpers
 import qualified Test.Project.NormaliseType as NormaliseType
 import qualified Test.Project.SourceSpan as SourceSpan
-import qualified Test.Project.Stdlib as Stdlib
+--import qualified Test.Project.Stdlib as Stdlib
 import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.Usages as Usages
 import qualified Test.Serialisation as Serialisation
@@ -83,7 +83,7 @@ main =
     Compile.spec
     Evaluate.spec
     Upgrade.spec
-    Stdlib.spec
+    -- Stdlib.spec
     Exhaustiveness.spec
     Pattern.spec
     RemoveBinding.spec
