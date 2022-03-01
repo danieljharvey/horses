@@ -449,18 +449,18 @@ spec = parallel $ do
       it "Uses a constructor" $
         testParse "Vrai" `shouldBe` Right (MyConstructor mempty "Vrai")
       it "Parses complex type constructors" $
-        testParse "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
+        testParse "type Tree = Leaf Int | Branch Tree Tree in Leaf 1"
           `shouldBe` Right
             ( MyData
                 mempty
                 ( DataType
                     "Tree"
-                    ["a"]
+                    []
                     ( M.fromList
-                        [ ("Leaf", [MTVar mempty (tvNamed "a")]),
+                        [ ("Leaf", [MTPrim mempty MTInt]),
                           ( "Branch",
-                            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
-                              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "b")]
+                            [ dataTypeWithVars mempty "Tree" [],
+                              dataTypeWithVars mempty "Tree" []
                             ]
                           )
                         ]
@@ -916,7 +916,7 @@ spec = parallel $ do
           `shouldSatisfy` isRight
       it "Parses Reader type declaration with semicolon" $
         testParseWithAnn
-          "type Reader r a = Reader r -> a; True"
+          "type Reader r a = Reader (r -> a); True"
           `shouldSatisfy` isRight
       it "Parses array of numbers" $
         testParseWithAnn "[1,2,3]"
@@ -992,3 +992,10 @@ spec = parallel $ do
                   )
                 ]
             )
+    describe "Parse regressions" $ do
+      it "regression 1" $
+        testParse "let a = 1; let b = a + 1 in match True with True -> 1 | False -> 2"
+          `shouldSatisfy` isRight
+      it "regression 2" $
+        testParse "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
+          `shouldSatisfy` isRight

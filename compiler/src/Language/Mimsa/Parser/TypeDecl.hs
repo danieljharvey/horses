@@ -13,7 +13,7 @@ import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Lexeme
-import Language.Mimsa.Parser.MonoType (monoTypeParser)
+import Language.Mimsa.Parser.MonoType
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers (TyCon)
@@ -44,10 +44,7 @@ typeDeclParserWithCons = do
   tyName <- tyConParser
   tyArgs <- many nameParser
   myString "="
-  constructors <-
-    try manyTypeConstructors
-      <|> oneTypeConstructor
-  pure $ DataType tyName tyArgs constructors
+  DataType tyName tyArgs <$> manyTypeConstructors
 
 --------
 
@@ -65,9 +62,7 @@ oneTypeConstructor :: Parser (Map TyCon [Type NullUnit])
 oneTypeConstructor = do
   name <- tyConParser
   args <-
-    try
-      ( some monoTypeParser
-      )
+    some typeDeclParser'
       <|> pure mempty
   let argsWithNoType = ($> NullUnit) <$> args
   pure (M.singleton name argsWithNoType)

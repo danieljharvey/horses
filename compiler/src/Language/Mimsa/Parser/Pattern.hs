@@ -68,8 +68,8 @@ litParser :: Parser ParserPattern
 litParser = withLocation PLit lit
   where
     lit =
-      try integerLiteral
-        <|> try stringLiteral
+      try (myLexeme integerLiteral)
+        <|> try (myLexeme stringLiteral)
         <|> trueParser
         <|> falseParser
 

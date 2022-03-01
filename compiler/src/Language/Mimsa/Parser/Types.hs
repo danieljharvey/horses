@@ -40,4 +40,17 @@ protectedNames =
     ]
 
 protectedOperators :: Set Text
-protectedOperators = S.fromList ["=", "==", "+", "<>", "-", "|", "++"]
+protectedOperators =
+  S.fromList
+    [ "=",
+      "==",
+      "+",
+      "<>",
+      "-",
+      "|",
+      "++",
+      "<=",
+      ">=",
+      ">",
+      "<"
+    ]

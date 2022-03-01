@@ -2,7 +2,7 @@
 
 module Language.Mimsa.Parser.MonoType
   ( monoTypeParser,
-    subParser,
+    typeDeclParser',
   )
 where
 
@@ -43,6 +43,21 @@ simpleTypeParser =
           <|> try dataTypeParser
    in orInBrackets parsers
 
+-- | all the types but prefer no constructor arguments
+typeDeclParser' :: Parser MonoType
+typeDeclParser' =
+  let parsers =
+        try pairParser
+          <|> try varParser
+          <|> try primitiveParser
+          <|> try recordRowParser
+          <|> try recordParser
+          <|> try arrayParser
+          <|> try functionParser
+          <|> try monoDataTypeParser
+   in try (orInBrackets parsers)
+        <|> inBrackets multiDataTypeParser
+
 -- | used where a function must be inside brackets for clarity
 subParser :: Parser MonoType
 subParser =
@@ -63,7 +78,11 @@ arrParse = InfixR $ do
   pure (MTFunction mempty)
 
 functionParser :: Parser MonoType
-functionParser = makeExprParser subParser [[arrParse]]
+functionParser = do
+  val <- makeExprParser subParser [[arrParse]]
+  case val of
+    MTFunction {} -> pure val
+    _ -> fail "don't use function for parsing non-function values"
 
 pairParser :: Parser MonoType
 pairParser = do
@@ -146,7 +165,7 @@ recordRowParser =
 dataTypeParser :: Parser MonoType
 dataTypeParser =
   try multiDataTypeParser
-    <|> try monoDataTypeParser
+    <|> monoDataTypeParser
 
 multiDataTypeParser :: Parser MonoType
 multiDataTypeParser = do

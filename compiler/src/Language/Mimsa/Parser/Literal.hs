@@ -46,10 +46,10 @@ boolParser =
     )
 
 trueParser :: Parser Literal
-trueParser = string "True" $> MyBool True
+trueParser = myString "True" $> MyBool True
 
 falseParser :: Parser Literal
-falseParser = string "False" $> MyBool False
+falseParser = myString "False" $> MyBool False
 
 -----
 

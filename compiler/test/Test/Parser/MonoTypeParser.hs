@@ -177,6 +177,17 @@ spec =
                 MTPrim mempty MTInt
               ]
           )
+    it "Binary data type" $
+      testParser "Either String Either"
+        `shouldBe` Right
+          ( dataTypeWithVars
+              mempty
+              "Either"
+              [ MTPrim mempty MTString,
+                MTConstructor mempty "Either"
+              ]
+          )
+
     it "Binary data type with sub type" $
       testParser "Either String (Maybe Int)"
         `shouldBe` Right
