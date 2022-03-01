@@ -37,7 +37,7 @@ parseExpr :: Text -> Either ParseErrorType ParserExpr
 parseExpr = parse (space *> expressionParser <* eof) "repl"
 
 parseExprAndFormatError :: Text -> Either Text ParserExpr
-parseExprAndFormatError = parseAndFormat (expressionParser <* eof)
+parseExprAndFormatError = parseAndFormat (space *> expressionParser <* eof)
 
 expressionParser :: Parser ParserExpr
 expressionParser =

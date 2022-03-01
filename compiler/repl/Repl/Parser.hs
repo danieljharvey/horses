@@ -103,7 +103,7 @@ typeSearchParser = do
 addUnitTestParser :: Parser ReplActionAnn
 addUnitTestParser = do
   myString ":addTest"
-  (MyString (StringType str)) <- stringLiteral
+  (MyString (StringType str)) <- myLexeme stringLiteral
   AddUnitTest (TestName str) <$> expressionParser
 
 listTestsParser :: Parser ReplActionAnn
