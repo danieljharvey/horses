@@ -88,8 +88,8 @@ const editorWillMount: BeforeMount = (monaco: Monaco) => {
   })
 
   monaco.languages.registerHoverProvider('mimsa', {
-    provideHover: (_model, position) =>
-      pipe(
+    provideHover: (_model, position) => {
+      const newHover = pipe(
         chooseSourceSpan([...mutableSourceItems], position),
         O.fold<SourceItem, languages.Hover>(
           (): languages.Hover => ({
@@ -113,7 +113,9 @@ const editorWillMount: BeforeMount = (monaco: Monaco) => {
             contents: [{ value: siLabel }],
           })
         )
-      ),
+      )
+      return Promise.resolve(newHover)
+    },
   })
 
   // Define a new theme that contains only rules that match this language
@@ -159,7 +161,7 @@ const editorWillMount: BeforeMount = (monaco: Monaco) => {
 }
 
 const options = {
-  selectOnLineNumbers: true,
+  selectOnLineNumbers: false,
   minimap: { enabled: false },
   automaticLayout: true,
   lineNumbers: 'off' as const,
