@@ -81,6 +81,7 @@ library
       Language.Mimsa.Parser.Identifier
       Language.Mimsa.Parser.Identifiers
       Language.Mimsa.Parser.Language
+      Language.Mimsa.Parser.Lexeme
       Language.Mimsa.Parser.Literal
       Language.Mimsa.Parser.MonoType
       Language.Mimsa.Parser.Pattern

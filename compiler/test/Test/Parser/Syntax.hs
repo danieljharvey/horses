@@ -30,7 +30,7 @@ testParseWithAnn t = case parseExpr t of
   Left e -> Left $ errorBundlePretty e
 
 spec :: Spec
-spec = do
+spec = parallel $ do
   describe "Syntax" $ do
     describe "Language" $ do
       it "Parses True" $
@@ -43,10 +43,10 @@ spec = do
         testParse "1234567" `shouldBe` Right (int 1234567)
       it "Does not parse 123.0" $
         testParse "123.0" `shouldSatisfy` isLeft
-      it "Does not parse 123 with a space at the end" $
-        testParse "123 " `shouldSatisfy` isLeft
-      it "Does not parse literal with a space at the end" $
-        testParse "True " `shouldSatisfy` isLeft
+      it "Parses 123 with a space at the end" $
+        testParse "123 " `shouldSatisfy` isRight
+      it "Parses literal with a space at the end" $
+        testParse "True " `shouldSatisfy` isRight
       it "Parses -6" $
         testParse "-6" `shouldBe` Right (int (-6))
       it "Parses +6" $
@@ -137,6 +137,20 @@ spec = do
                 )
                 (int 2)
             )
+      it "Recognises double function application onto a var with brackets" $
+        testParse "add (1) (2)"
+          `shouldBe` Right
+            ( MyApp
+                mempty
+                ( MyApp
+                    mempty
+                    ( MyVar mempty "add"
+                    )
+                    (int 1)
+                )
+                (int 2)
+            )
+
       it "Recognises an if statement" $ do
         let expected = MyIf mempty (bool True) (int 1) (int 2)
         testParse "if True then 1 else 2" `shouldBe` Right expected
@@ -195,7 +209,7 @@ spec = do
       it "Parses two integers with infix operator" $
         testParse "123 == 123" `shouldBe` Right (MyInfix mempty Equals (int 123) (int 123))
       it "Parses var and number equality" $
-        testParse "a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty "a") (int 1))
+        testParse " a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty "a") (int 1))
       it "Parsers two constructor applications with infix operator" $
         let mkSome = MyApp mempty (MyConstructor mempty "Some")
          in testParse "(Some 1) == Some 2"
@@ -435,18 +449,18 @@ spec = do
       it "Uses a constructor" $
         testParse "Vrai" `shouldBe` Right (MyConstructor mempty "Vrai")
       it "Parses complex type constructors" $
-        testParse "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
+        testParse "type Tree = Leaf Int | Branch Tree Tree in Leaf 1"
           `shouldBe` Right
             ( MyData
                 mempty
                 ( DataType
                     "Tree"
-                    ["a"]
+                    []
                     ( M.fromList
-                        [ ("Leaf", [MTVar mempty (tvNamed "a")]),
+                        [ ("Leaf", [MTPrim mempty MTInt]),
                           ( "Branch",
-                            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
-                              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "b")]
+                            [ dataTypeWithVars mempty "Tree" [],
+                              dataTypeWithVars mempty "Tree" []
                             ]
                           )
                         ]
@@ -618,18 +632,18 @@ spec = do
                 )
             )
       it "Tree type with value" $
-        testParse "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)"
+        testParse "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Branch (Leaf 1) (Leaf 2)"
           `shouldBe` Right
             ( MyData
                 mempty
                 ( DataType
                     "Tree"
-                    []
+                    ["a"]
                     ( M.fromList
-                        [ ("Leaf", [MTPrim mempty MTInt]),
+                        [ ("Leaf", [MTVar mempty (tvNamed "a")]),
                           ( "Branch",
-                            [ dataTypeWithVars mempty "Tree" [],
-                              dataTypeWithVars mempty "Tree" []
+                            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
+                              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")]
                             ]
                           )
                         ]
@@ -645,24 +659,23 @@ spec = do
                     (MyApp mempty (MyConstructor mempty "Leaf") (int 2))
                 )
             )
-      it "Trailing spaces should fail" $ do
-        testParse "a "
-          `shouldSatisfy` isLeft
-        testParse "a 1 "
-          `shouldSatisfy` isLeft
       it "dog + log" $
         testParse "dog + log"
           `shouldBe` Right (MyInfix mempty Add (MyVar mempty "dog") (MyVar mempty "log"))
+
       it "a+" $
         testParse "a+" `shouldSatisfy` isLeft
+
       it "a == 1" $
         testParse "a == 1"
           `shouldBe` Right
             (MyInfix mempty Equals (MyVar mempty "a") (int 1))
+
       it "a + 1" $
         testParse "a + 1"
           `shouldBe` Right
             (MyInfix mempty Add (MyVar mempty "a") (int 1))
+
       it "a - 1" $
         testParse "a - 1"
           `shouldBe` Right
@@ -670,11 +683,12 @@ spec = do
 
       it "a+ 1" $
         testParse "a+ 1"
-          `shouldSatisfy` isLeft
+          `shouldBe` Right
+            (MyInfix mempty Add (MyVar mempty "a") (int 1))
 
       it "a+1" $
         testParse "a+1"
-          `shouldSatisfy` isLeft
+          `shouldSatisfy` isRight
 
       it "a  +  b" $
         testParse "a  +  b"
@@ -809,7 +823,7 @@ spec = do
             ( MyLet
                 (Location 0 14)
                 (Identifier (Location 4 5) "a")
-                (MyLiteral (Location 8 9) (MyInt 1))
+                (MyLiteral (Location 8 10) (MyInt 1))
                 (MyVar (Location 13 14) "a")
             )
       it "Parses let-newline with location information" $
@@ -830,7 +844,7 @@ spec = do
           `shouldBe` Right
             ( MyApp
                 (Location 0 3)
-                (MyVar (Location 0 1) "a")
+                (MyVar (Location 0 2) "a")
                 (MyLiteral (Location 2 3) (MyInt 1))
             )
       it "Parses record with location information" $
@@ -840,7 +854,7 @@ spec = do
                 (Location 0 11)
                 ( M.singleton
                     "a"
-                    (MyLiteral (Location 5 9) (MyBool True))
+                    (MyLiteral (Location 5 10) (MyBool True))
                 )
             )
       it "Parsers if with location information" $
@@ -848,8 +862,8 @@ spec = do
           `shouldBe` Right
             ( MyIf
                 (Location 0 21)
-                (MyLiteral (Location 3 7) (MyBool True))
-                (MyLiteral (Location 13 14) (MyInt 1))
+                (MyLiteral (Location 3 8) (MyBool True))
+                (MyLiteral (Location 13 15) (MyInt 1))
                 (MyLiteral (Location 20 21) (MyInt 2))
             )
       it "Parsers pair with location information" $
@@ -877,7 +891,7 @@ spec = do
           `shouldBe` Right
             ( MyApp
                 (Location 0 6)
-                (MyConstructor (Location 0 4) "Just")
+                (MyConstructor (Location 0 5) "Just")
                 (MyLiteral (Location 5 6) (MyInt 1))
             )
       it "Parses infix equals with location information" $
@@ -894,15 +908,15 @@ spec = do
           `shouldSatisfy` isRight
       it "Parser function application in infix" $
         testParseWithAnn "id 1 + 1" `shouldSatisfy` isRight
-      it "Accepts no whitespace after record" $
-        testParseWithAnn "{ name: 1 } " `shouldSatisfy` isLeft
+      it "Accepts whitespace after record" $
+        testParseWithAnn "{ name: 1 } " `shouldSatisfy` isRight
       it "Parses Reader type declaration with 'in'" $
         testParseWithAnn
           "type Reader r a = Reader (r -> a) in True"
           `shouldSatisfy` isRight
       it "Parses Reader type declaration with semicolon" $
         testParseWithAnn
-          "type Reader r a = Reader r -> a; True"
+          "type Reader r a = Reader (r -> a); True"
           `shouldSatisfy` isRight
       it "Parses array of numbers" $
         testParseWithAnn "[1,2,3]"
@@ -925,7 +939,7 @@ spec = do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 22)
-                (MyLiteral (Location 6 7) (MyInt 1))
+                (MyLiteral (Location 6 8) (MyInt 1))
                 [ ( PWildcard (Location 13 14),
                     MyLiteral (Location 18 22) (MyBool True)
                   )
@@ -936,9 +950,9 @@ spec = do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 35)
-                (MyLiteral (Location 6 7) (MyInt 1))
+                (MyLiteral (Location 6 8) (MyInt 1))
                 [ ( PWildcard (Location 13 14),
-                    MyLiteral (Location 18 22) (MyBool True)
+                    MyLiteral (Location 18 23) (MyBool True)
                   ),
                   ( PWildcard (Location 25 26),
                     MyLiteral (Location 30 35) (MyBool False)
@@ -950,8 +964,8 @@ spec = do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 19)
-                (MyLiteral (Location 6 7) (MyInt 1))
-                [ ( PVar (Location 13 14) "a",
+                (MyLiteral (Location 6 8) (MyInt 1))
+                [ ( PVar (Location 13 15) "a",
                     MyVar (Location 18 19) "a"
                   )
                 ]
@@ -961,8 +975,8 @@ spec = do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 29)
-                (MyConstructor (Location 6 10) "None")
-                [ ( PConstructor (Location 16 20) "None" mempty,
+                (MyConstructor (Location 6 11) "None")
+                [ ( PConstructor (Location 16 21) "None" mempty,
                     MyLiteral (Location 24 29) (MyBool False)
                   )
                 ]
@@ -972,9 +986,16 @@ spec = do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 34)
-                (MyApp (Location 6 12) (MyConstructor (Location 6 10) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
+                (MyApp (Location 6 13) (MyConstructor (Location 6 11) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
                 [ ( PConstructor (Location 19 25) "Some" [PWildcard (Location 24 25)],
                     MyLiteral (Location 30 34) (MyBool True)
                   )
                 ]
             )
+    describe "Parse regressions" $ do
+      it "regression 1" $
+        testParse "let a = 1; let b = a + 1 in match True with True -> 1 | False -> 2"
+          `shouldSatisfy` isRight
+      it "regression 2" $
+        testParse "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
+          `shouldSatisfy` isRight
