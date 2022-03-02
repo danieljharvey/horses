@@ -16,7 +16,7 @@
     "@types/lodash.throttle": "4.1.6",
     "@types/node": "12.20.46",
     "@types/react": "17.0.39",
-    "@types/react-dom": "17.0.11",
+    "@types/react-dom": "17.0.12",
     "@types/react-router": "5.1.18",
     "@types/react-router-dom": "5.3.3",
     "axios": "0.26.0",
