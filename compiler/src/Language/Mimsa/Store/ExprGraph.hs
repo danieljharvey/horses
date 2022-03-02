@@ -106,7 +106,24 @@ createExprGraph expr = snd $ runWriter (createGraph (snd <$> numberExpr expr))
         (\(key, itemId) -> Edge ann itemId (Just (prettyPrint key)))
           <$> M.toList labelledItems
       pure ann
-    createGraph e = error ("could not graph " <> show e)
+    createGraph (MyInfix ann op leftExpr rightExpr) = do
+      leftId <- createGraph leftExpr
+      rightId <- createGraph rightExpr
+      tell
+        [ Node ann (prettyPrint op),
+          Edge ann leftId Nothing,
+          Edge ann rightId Nothing
+        ]
+      pure ann
+    createGraph (MyApp ann fn val) = do
+      fnId <- createGraph fn
+      valId <- createGraph val
+      tell
+        [ Node ann "apply",
+          Edge ann fnId (Just "fn"),
+          Edge ann valId (Just "val")
+        ]
+      pure ann
 
 getNum :: (MonadState Int m) => m Int
 getNum = do
