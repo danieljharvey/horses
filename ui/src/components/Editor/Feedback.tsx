@@ -21,6 +21,8 @@ import { ExpressionTests } from './ExpressionTests'
 import { Upgrade } from '../Upgrade'
 import { Optimise } from '../Optimise'
 import { useStoreRec } from '../../hooks/useStore'
+import { Expression } from './Expression'
+import { ErrorResponse } from './ErrorResponse'
 
 type Props = {
   projectHash: ExprHash
@@ -56,39 +58,16 @@ export const Feedback: React.FC<Props> = ({
   switch (result.type) {
     case 'ShowErrorResponse':
       return (
-        <FlexColumnSpaced>
-          <Paragraph>
-            {result.errorResponse.ueText}
-          </Paragraph>
-          {result.errorResponse.ueTypedHoles.map((th) => (
-            <FlexColumnSpaced>
-              <Paragraph>{`${th.thName}: ${th.thMonoType}`}</Paragraph>
-              {th.thSuggestions.length > 0 && (
-                <Paragraph>
-                  {`  Suggestions: ${th.thSuggestions.join(
-                    ', '
-                  )}`}
-                </Paragraph>
-              )}
-            </FlexColumnSpaced>
-          ))}
-        </FlexColumnSpaced>
+        <ErrorResponse
+          errorResponse={result.errorResponse}
+        />
       )
 
     case 'ShowEvaluate':
       return (
         <FlexColumnSpaced>
           <Code>{result.evaluatedValue}</Code>
-          <Code codeType="type">
-            {result.expression.edType}
-          </Code>
-          {result.expression.edWarnings.length > 0 && (
-            <FlexColumnSpaced>
-              {result.expression.edWarnings.map((warn) => (
-                <Paragraph>{warn}</Paragraph>
-              ))}
-            </FlexColumnSpaced>
-          )}
+          <Expression expression={result.expression} />
           <ListBindings
             values={result.expression.edBindings}
             types={result.expression.edTypeBindings}
@@ -109,16 +88,7 @@ export const Feedback: React.FC<Props> = ({
       return (
         <FlexColumnSpaced>
           <Paragraph>{`🐴 Updated ${result.bindingName}`}</Paragraph>
-          <Code codeType="type">
-            {result.expression.edType}
-          </Code>
-          {result.expression.edWarnings.length > 0 && (
-            <FlexColumnSpaced>
-              {result.expression.edWarnings.map((warn) => (
-                <Paragraph>{warn}</Paragraph>
-              ))}
-            </FlexColumnSpaced>
-          )}
+          <Expression expression={result.expression} />
           <ListCompile
             exprHash={result.expression.edHash}
           />
@@ -159,16 +129,7 @@ export const Feedback: React.FC<Props> = ({
     case 'ShowBinding':
       return (
         <FlexColumnSpaced>
-          <Code codeType="type">
-            {result.expression.edType}
-          </Code>
-          {result.expression.edWarnings.length > 0 && (
-            <FlexColumnSpaced>
-              {result.expression.edWarnings.map((warn) => (
-                <Paragraph>{warn}</Paragraph>
-              ))}
-            </FlexColumnSpaced>
-          )}
+          <Expression expression={result.expression} />
 
           <ListCompile
             exprHash={result.expression.edHash}
