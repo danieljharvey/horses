@@ -7,13 +7,13 @@ import {
 } from '../project/helpers'
 import { Screen } from '../view/screen'
 
-import { editorNew, showBinding } from './expressionResult'
+import { editorNew, showBinding } from './feedback'
 import { EditorState } from './types'
 
 export const emptyEditor: EditorState = {
   code: '',
   stale: false,
-  expression: editorNew(),
+  feedback: editorNew(),
   bindingName: O.none,
 }
 
@@ -31,7 +31,7 @@ export const editorForBinding =
       O.map(({ expression }) => ({
         code: expression.edPretty,
         stale: false,
-        expression: showBinding(expression),
+        feedback: showBinding(expression),
         bindingName: O.some(bindingName),
       }))
     )

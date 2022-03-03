@@ -21,7 +21,7 @@ import {
   scratchScreen,
 } from '../view/screen'
 import { viewL } from '../view/selectors'
-import { ExpressionResult } from './expressionResult'
+import { Feedback } from './feedback'
 
 const neHeadL = <A>(): Lens<NE.NonEmptyArray<A>, A> =>
   new Lens(
@@ -79,17 +79,17 @@ type ExpressionDataResult =
     }
 
 const expressionDataPrism: Prism<
-  ExpressionResult,
+  Feedback,
   ExpressionDataResult
 > = new Prism(
-  (res: ExpressionResult) =>
+  (res: Feedback) =>
     res.type === 'ShowBinding' ||
     res.type === 'ShowEvaluate' ||
     res.type === 'ShowUpdatedBinding'
       ? O.some(res as ExpressionDataResult)
       : O.none,
 
-  (a: ExpressionDataResult) => a as ExpressionResult
+  (a: ExpressionDataResult) => a as Feedback
 )
 
 const expressionDataLens: Lens<
@@ -115,20 +115,20 @@ type UserErrorResult = {
 }
 
 const userErrorResponsePrism: Prism<
-  ExpressionResult,
+  Feedback,
   UserErrorResult
 > = new Prism(
-  (res: ExpressionResult) =>
+  (res: Feedback) =>
     res.type === 'ShowErrorResponse'
       ? O.some(res as UserErrorResult)
       : O.none,
-  (a: UserErrorResult) => a as ExpressionResult
+  (a: UserErrorResult) => a as Feedback
 )
 
 const errorResponseO: Optional<
   EditorState,
   UserErrorResponse
-> = Lens.fromProp<EditorState>()('expression')
+> = Lens.fromProp<EditorState>()('feedback')
   .composePrism(userErrorResponsePrism)
   .composeLens(
     Lens.fromProp<UserErrorResult>()('errorResponse')
@@ -148,13 +148,13 @@ const errorLocationsO: Optional<
   Lens.fromProp<UserErrorResponse>()('ueErrorLocations')
 )
 
-const expressionO: Optional<EditorState, ExpressionData> =
-  Lens.fromProp<EditorState>()('expression')
+const feedbackO: Optional<EditorState, ExpressionData> =
+  Lens.fromProp<EditorState>()('feedback')
     .composePrism(expressionDataPrism)
     .composeLens(expressionDataLens)
 
 const sourceItemsO: Optional<EditorState, SourceItem[]> =
-  expressionO.composeLens(
+  feedbackO.composeLens(
     Lens.fromProp<ExpressionData>()('edSourceItems')
   )
 
@@ -215,4 +215,4 @@ export const getSourceItemsFromEditor = (
 
 export const getExpressionData = (
   state: EditorState
-): O.Option<ExpressionData> => expressionO.getOption(state)
+): O.Option<ExpressionData> => feedbackO.getOption(state)

@@ -5,11 +5,13 @@ export const doEvaluateExpression = (code: string) => ({
 
 export const doBindExpression = (
   bindingName: string,
-  code: string
+  code: string,
+  updateProject: boolean
 ) => ({
   type: 'DoBindExpression' as const,
   bindingName,
   code,
+  updateProject,
 })
 
 export const doAddUnitTest = (

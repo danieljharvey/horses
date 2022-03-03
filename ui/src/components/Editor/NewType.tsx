@@ -60,7 +60,7 @@ export const NewType: React.FC<Props> = ({
   const onCodeChange = (a: string) =>
     dispatch(updateCode(a))
 
-  const { expression, code } = editor
+  const { feedback, code } = editor
 
   return (
     <>
@@ -85,7 +85,7 @@ export const NewType: React.FC<Props> = ({
                       onUpgradeExpression
                     }
                     bindingName={O.none}
-                    result={expression}
+                    feedback={feedback}
                     onBindingSelect={onBindingSelect}
                     projectHash={projectHash}
                     onOptimiseExpression={

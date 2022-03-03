@@ -1,9 +1,9 @@
 import { Option } from 'fp-ts/lib/Option'
-import { ExpressionResult } from './expressionResult'
+import { Feedback } from './feedback'
 
 export type EditorState = {
   code: string
   stale: boolean
-  expression: ExpressionResult
+  feedback: Feedback
   bindingName: Option<string>
 }

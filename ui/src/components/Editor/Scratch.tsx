@@ -73,7 +73,7 @@ export const Scratch: React.FC<Props> = ({
           <Feedback
             bindingName={O.none}
             onUpgradeExpression={onUpgradeExpression}
-            result={editor.expression}
+            feedback={editor.feedback}
             onBindingSelect={onBindingSelect}
             projectHash={projectHash}
             onOptimiseExpression={onOptimiseExpression}

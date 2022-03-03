@@ -55,7 +55,14 @@ export const showEvaluate = (
   evaluatedValue,
 })
 
-export type ExpressionResult =
+export const showPreviewSuccess = (
+  expression: ExpressionData
+) => ({
+  type: 'ShowPreviewSuccess' as const,
+  expression,
+})
+
+export type Feedback =
   | ReturnType<typeof editorNew>
   | ReturnType<typeof showBinding>
   | ReturnType<typeof showErrorResponse>
@@ -63,3 +70,4 @@ export type ExpressionResult =
   | ReturnType<typeof evaluationError>
   | ReturnType<typeof showEvaluate>
   | ReturnType<typeof showUpdatedBinding>
+  | ReturnType<typeof showPreviewSuccess>
