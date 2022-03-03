@@ -55,6 +55,7 @@ export const NewBinding: React.FC<Props> = ({
   // on opening, evaluate contents
   React.useEffect(() => {
     onCodeChange(code)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const onCodeChange = (newCode: string) =>
