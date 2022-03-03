@@ -52,7 +52,6 @@ export const EditBinding: React.FC<Props> = ({
     projectHash: getProjectHash,
   })
   const { feedback, stale } = editor
-  console.log('EditBinding', { feedback, stale })
 
   const bindingName = O.toNullable(editor.bindingName)
 
