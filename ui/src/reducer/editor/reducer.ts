@@ -23,11 +23,13 @@ import {
   showUpdatedBinding,
   showTest,
   showEvaluate,
-} from './expressionResult'
+  showPreviewSuccess,
+} from './feedback'
 import { pipe } from 'fp-ts/lib/function'
 import { getExpressionData } from './selector'
 
 const staleL = Lens.fromProp<EditorState>()('stale')
+const codeL = Lens.fromProp<EditorState>()('code')
 
 export const editorReducer: EventReducer<
   EditorState,
@@ -66,13 +68,13 @@ export const editorReducer: EventReducer<
     case 'EvaluateExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showErrorResponse(action.typeError),
+        feedback: showErrorResponse(action.typeError),
       })
 
     case 'EvaluateExpressionSuccess':
       return stateOnly({
         ...state,
-        expression: showEvaluate(
+        feedback: showEvaluate(
           action.expression.erExpressionData,
           action.expression.erResult
         ),
@@ -80,8 +82,16 @@ export const editorReducer: EventReducer<
       })
     case 'BindExpression':
       return stateAndEvent(
-        staleL.set(false)(state),
-        doBindExpression(action.bindingName, state.code)
+        pipe(
+          state,
+          staleL.set(false),
+          codeL.set(action.code)
+        ),
+        doBindExpression(
+          action.bindingName,
+          action.code,
+          action.updateProject
+        )
       )
     case 'BindExpressionSuccess':
       return stateOnly({
@@ -89,16 +99,22 @@ export const editorReducer: EventReducer<
         code: action.expression.edPretty,
         bindingName: O.some(action.bindingName),
         stale: false,
-        expression: showUpdatedBinding(
+        feedback: showUpdatedBinding(
           action.expression,
           action.tests,
           action.bindingName
         ),
       })
+    case 'ExpressionPreviewSuccess':
+      return stateOnly({
+        ...state,
+        stale: true,
+        feedback: showPreviewSuccess(action.expression),
+      })
     case 'BindExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showErrorResponse(action.error),
+        feedback: showErrorResponse(action.error),
       })
     case 'AddUnitTest':
       return stateAndEvent(
@@ -113,14 +129,14 @@ export const editorReducer: EventReducer<
         ? stateOnly({
             ...state,
             state: false,
-            expression: showTest(firstTest),
+            feedback: showTest(firstTest),
           })
         : stateOnly(state)
 
     case 'AddUnitTestFailure':
       return stateOnly({
         ...state,
-        expression: showErrorResponse(action.error),
+        feedback: showErrorResponse(action.error),
       })
 
     case 'UpgradeExpression':
@@ -134,7 +150,7 @@ export const editorReducer: EventReducer<
         code: action.expression.edPretty,
         bindingName: O.some(action.bindingName),
         stale: false,
-        expression: showUpdatedBinding(
+        feedback: showUpdatedBinding(
           action.expression,
           action.tests,
           action.bindingName
@@ -143,7 +159,7 @@ export const editorReducer: EventReducer<
     case 'UpgradeExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showErrorResponse(action.error),
+        feedback: showErrorResponse(action.error),
       })
 
     case 'OptimiseExpression':
@@ -158,7 +174,7 @@ export const editorReducer: EventReducer<
         code: action.expression.edPretty,
         bindingName: O.some(action.bindingName),
         stale: false,
-        expression: showUpdatedBinding(
+        feedback: showUpdatedBinding(
           action.expression,
           action.tests,
           action.bindingName
@@ -167,7 +183,7 @@ export const editorReducer: EventReducer<
     case 'OptimiseExpressionFailure':
       return stateOnly({
         ...state,
-        expression: showErrorResponse(action.error),
+        feedback: showErrorResponse(action.error),
       })
 
     default:

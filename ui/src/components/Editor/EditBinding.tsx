@@ -51,14 +51,16 @@ export const EditBinding: React.FC<Props> = ({
     sourceItems: getSourceItems,
     projectHash: getProjectHash,
   })
-  const { expression, stale } = editor
+  const { feedback, stale } = editor
 
   const bindingName = O.toNullable(editor.bindingName)
 
   const onBindExpression = () => {
     const bindingName = O.toNullable(editor.bindingName)
     if (bindingName) {
-      dispatch(bindExpression(bindingName))
+      dispatch(
+        bindExpression(bindingName, editor.code, true)
+      )
     }
   }
 
@@ -87,7 +89,7 @@ export const EditBinding: React.FC<Props> = ({
         )}
         <Feedback
           bindingName={editor.bindingName}
-          result={expression}
+          feedback={feedback}
           onBindingSelect={onBindingSelect}
           onUpgradeExpression={onUpgradeExpression}
           onOptimiseExpression={onOptimiseExpression}

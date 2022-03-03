@@ -44,9 +44,9 @@ export const NewTest: React.FC<Props> = ({
   const onCodeChange = (a: string) =>
     dispatch(updateCode(a))
 
-  const { expression } = editor
+  const { feedback } = editor
 
-  const testExists = editor.expression.type === 'ShowTest'
+  const testExists = feedback.type === 'ShowTest'
 
   const onAddTest = () => dispatch(addUnitTest(testName))
 
@@ -95,7 +95,7 @@ export const NewTest: React.FC<Props> = ({
           )}
           <Feedback
             bindingName={O.none}
-            result={expression}
+            feedback={feedback}
             onBindingSelect={onBindingSelect}
             onUpgradeExpression={onUpgradeExpression}
             projectHash={projectHash}

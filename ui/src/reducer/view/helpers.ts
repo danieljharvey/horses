@@ -16,9 +16,9 @@ export const getScreenTitle = (screen: Screen): string => {
     case 'new-expression':
       return 'new'
     case 'new-test':
-      return screen.editor.expression.type === 'ShowTest'
+      return screen.editor.feedback.type === 'ShowTest'
         ? 'test: ' +
-            getTestName(screen.editor.expression.test)
+            getTestName(screen.editor.feedback.test)
         : 'new test'
     case 'edit':
       return screen.bindingName

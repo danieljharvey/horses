@@ -50,9 +50,15 @@ export const addUnitTestFailure = (
   error,
 })
 
-export const bindExpression = (bindingName: string) => ({
+export const bindExpression = (
+  bindingName: string,
+  code: string,
+  updateProject: boolean
+) => ({
   type: 'BindExpression' as const,
   bindingName,
+  code,
+  updateProject,
 })
 
 export const bindExpressionSuccess = (
@@ -64,6 +70,13 @@ export const bindExpressionSuccess = (
   expression,
   bindingName,
   tests,
+})
+
+export const expressionPreviewSuccess = (
+  expression: ExpressionData
+) => ({
+  type: 'ExpressionPreviewSuccess' as const,
+  expression,
 })
 
 export const bindExpressionFailure = (
@@ -139,3 +152,4 @@ export type EditorAction =
   | ReturnType<typeof optimiseExpression>
   | ReturnType<typeof optimiseExpressionSuccess>
   | ReturnType<typeof optimiseExpressionFailure>
+  | ReturnType<typeof expressionPreviewSuccess>

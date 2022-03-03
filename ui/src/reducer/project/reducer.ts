@@ -9,7 +9,6 @@ import {
 
 import {
   listBindings,
-  createProject,
   fetchExpressions,
   saveToSessionStorage,
   ProjectEvent,
@@ -42,9 +41,6 @@ export const projectReducer: EventReducer<
         state,
         listBindings(state.project.projectHash)
       )
-    case 'CreateProject':
-      // create new project
-      return stateAndEvent(state, createProject())
 
     case 'StoreProjectData':
       // store new bindings, fetching new expressions

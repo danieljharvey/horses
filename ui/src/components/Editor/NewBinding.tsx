@@ -21,18 +21,19 @@ import {
 
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
-import { Paragraph } from '../View/Paragraph'
+
 import { TextInput } from '../View/TextInput'
 import { ExprHash } from '../../types'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import {
   bindExpression,
-  updateCode,
   upgradeExpression,
   optimiseExpression,
 } from '../../reducer/editor/actions'
 import { useDispatch } from '../../hooks/useDispatch'
 import { useStoreRec } from '../../hooks/useStore'
+
+import { Paragraph } from '../View/Paragraph'
 
 type Props = {
   editor: EditorState
@@ -48,14 +49,23 @@ export const NewBinding: React.FC<Props> = ({
 }) => {
   const [bindingName, setBindingName] = React.useState('')
   const dispatch = useDispatch()
-  const code = editor.code
 
-  const onCodeChange = (a: string) =>
-    dispatch(updateCode(a))
+  const { feedback, code } = editor
 
-  const { expression } = editor
+  // on opening, evaluate contents
+  React.useEffect(() => {
+    onCodeChange(code)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const existingName = O.toNullable(editor.bindingName)
+  const onCodeChange = (newCode: string) =>
+    dispatch(
+      bindExpression(
+        'completeArbitraryNameForBindingThatHopefullyDoesntClash',
+        newCode,
+        false
+      )
+    )
 
   const {
     typedHoleSuggestions,
@@ -72,7 +82,7 @@ export const NewBinding: React.FC<Props> = ({
   })
 
   const onBindExpression = (name: string) =>
-    dispatch(bindExpression(existingName || name))
+    dispatch(bindExpression(name, code, true))
 
   const onUpgradeExpression = (bindingName: string) =>
     dispatch(upgradeExpression(bindingName))
@@ -80,21 +90,15 @@ export const NewBinding: React.FC<Props> = ({
   const onOptimiseExpression = (bindingName: string) =>
     dispatch(optimiseExpression(bindingName))
 
-  const validBinding = existingName
-    ? E.right(existingName)
-    : validateBinding(bindingName, code, projectBindings)
-
   return (
     <>
       <Panel flexGrow={2}>
         <FlexColumnSpaced>
-          {!existingName && (
-            <TextInput
-              placeholder="New binding name"
-              value={bindingName}
-              onChange={setBindingName}
-            />
-          )}
+          <TextInput
+            placeholder="New binding name"
+            value={bindingName}
+            onChange={setBindingName}
+          />
           <CodeEditor
             code={code}
             setCode={onCodeChange}
@@ -105,37 +109,34 @@ export const NewBinding: React.FC<Props> = ({
         </FlexColumnSpaced>
       </Panel>
       <Panel>
-        {pipe(
-          validBinding,
-          E.fold(
-            (err) => (
-              <Paragraph>{showError(err)}</Paragraph>
+        <FlexColumnSpaced>
+          {pipe(
+            validateBinding(
+              bindingName,
+              code,
+              projectBindings
             ),
-            (name) => (
-              <FlexColumnSpaced>
-                {editor.stale && (
+            E.match(
+              (e) => <Paragraph>{showError(e)}</Paragraph>,
+              (name) =>
+                editor.stale && (
                   <Button
                     onClick={() => onBindExpression(name)}
                   >
-                    {existingName
-                      ? `Update ${existingName}`
-                      : `Create ${name}`}
+                    {`Create ${name}`}
                   </Button>
-                )}
-                <Feedback
-                  bindingName={O.none}
-                  result={expression}
-                  onBindingSelect={onBindingSelect}
-                  projectHash={projectHash}
-                  onUpgradeExpression={onUpgradeExpression}
-                  onOptimiseExpression={
-                    onOptimiseExpression
-                  }
-                />
-              </FlexColumnSpaced>
+                )
             )
-          )
-        )}
+          )}
+          <Feedback
+            bindingName={O.none}
+            feedback={feedback}
+            onBindingSelect={onBindingSelect}
+            projectHash={projectHash}
+            onUpgradeExpression={onUpgradeExpression}
+            onOptimiseExpression={onOptimiseExpression}
+          />
+        </FlexColumnSpaced>
       </Panel>
     </>
   )

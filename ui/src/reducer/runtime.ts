@@ -2,7 +2,6 @@ import { State, Action, Event } from './types'
 import { EventReducerRuntime } from '../hooks/useEventReducer'
 import {
   evaluate,
-  createProject,
   bindExpression,
   listBindings,
   addUnitTest,
@@ -14,7 +13,6 @@ import { ExprHash } from '../types/'
 import { setScreen } from './view/actions'
 import { projectSet } from './project/helpers'
 import { log } from './console/actions'
-import { emptyEditor } from './editor/helpers'
 import * as H from 'history'
 import { storeProjectData } from './project/actions'
 import * as T from 'fp-ts/Task'
@@ -32,8 +30,11 @@ import {
   upgradeExpressionFailure,
   optimiseExpressionFailure,
   optimiseExpressionSuccess,
+  expressionPreviewSuccess,
 } from './editor/actions'
-import { scratchScreen } from './view/screen'
+import { editScreen } from './view/screen'
+import * as O from 'fp-ts/Option'
+import { currentEditorO } from './editor/selector'
 
 const orEmpty = <A>() =>
   TE.fold(
@@ -73,15 +74,7 @@ export const runtime =
           ]),
           orEmpty()
         )
-      case 'CreateProject':
-        return pipe(
-          createProject(),
-          TE.map((data) => [
-            storeProjectData(data.cpProjectData),
-            setScreen(scratchScreen(emptyEditor)),
-          ]),
-          orEmpty()
-        )
+
       case 'FetchExpressions':
         const fetchAndDispatch = (exprHash: ExprHash) =>
           pipe(
@@ -128,14 +121,39 @@ export const runtime =
           }),
           TE.bimap(
             (e) => [bindExpressionFailure(e)],
-            (a) => [
-              bindExpressionSuccess(
-                a.beExpressionData,
-                event.bindingName,
-                a.beTestData
-              ),
-              storeProjectData(a.beProjectData),
-            ]
+            (a): Action[] => {
+              if (event.updateProject) {
+                // if we can get the editor, redirect to it
+                const gotoEditScreen = pipe(
+                  currentEditorO.getOption(state),
+                  O.match(
+                    () => [],
+                    (editorState) => [
+                      setScreen(
+                        editScreen(
+                          event.bindingName,
+                          editorState
+                        )
+                      ),
+                    ]
+                  )
+                )
+                return [
+                  ...gotoEditScreen,
+                  bindExpressionSuccess(
+                    a.beExpressionData,
+                    event.bindingName,
+                    a.beTestData
+                  ),
+                  storeProjectData(a.beProjectData),
+                ]
+              }
+              return [
+                expressionPreviewSuccess(
+                  a.beExpressionData
+                ),
+              ]
+            }
           ),
           flatten()
         )
