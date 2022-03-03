@@ -12,10 +12,6 @@ export const initialProject = (
   usages: {},
 })
 
-export const createProject = () => ({
-  type: 'CreateProject' as const,
-})
-
 export const fetchExpressions = (
   hashes: ExprHash[],
   projectHash: ExprHash
@@ -39,6 +35,5 @@ export const listBindings = (projectHash: ExprHash) => ({
 
 export type ProjectEvent =
   | ReturnType<typeof saveToSessionStorage>
-  | ReturnType<typeof createProject>
   | ReturnType<typeof listBindings>
   | ReturnType<typeof fetchExpressions>

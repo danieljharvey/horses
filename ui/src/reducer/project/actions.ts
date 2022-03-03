@@ -17,10 +17,6 @@ export const initialise = () => ({
   type: 'Initialise' as const,
 })
 
-export const createProject = () => ({
-  type: 'CreateProject' as const,
-})
-
 export const fetchExpressionSuccess = (
   exprHash: ExprHash,
   storeExpression: ExpressionData
@@ -33,5 +29,4 @@ export const fetchExpressionSuccess = (
 export type ProjectAction =
   | ReturnType<typeof initialise>
   | ReturnType<typeof storeProjectData>
-  | ReturnType<typeof createProject>
   | ReturnType<typeof fetchExpressionSuccess>

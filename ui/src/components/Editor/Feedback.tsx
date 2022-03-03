@@ -188,15 +188,6 @@ export const Feedback: React.FC<Props> = ({
         </FlexColumnSpaced>
       )
 
-    case 'EvaluationError':
-      return (
-        <FlexColumnSpaced>
-          <Paragraph>
-            Evaluation error, please try again
-          </Paragraph>
-        </FlexColumnSpaced>
-      )
-
     case 'ShowTest':
       const title =
         'utdTestName' in feedback.test

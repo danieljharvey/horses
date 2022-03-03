@@ -42,10 +42,6 @@ export const showErrorResponse = (
   errorResponse,
 })
 
-export const evaluationError = () => ({
-  type: 'EvaluationError' as const,
-})
-
 export const showEvaluate = (
   expression: ExpressionData,
   evaluatedValue: string
@@ -67,7 +63,6 @@ export type Feedback =
   | ReturnType<typeof showBinding>
   | ReturnType<typeof showErrorResponse>
   | ReturnType<typeof showTest>
-  | ReturnType<typeof evaluationError>
   | ReturnType<typeof showEvaluate>
   | ReturnType<typeof showUpdatedBinding>
   | ReturnType<typeof showPreviewSuccess>

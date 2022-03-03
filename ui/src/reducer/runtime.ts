@@ -2,7 +2,6 @@ import { State, Action, Event } from './types'
 import { EventReducerRuntime } from '../hooks/useEventReducer'
 import {
   evaluate,
-  createProject,
   bindExpression,
   listBindings,
   addUnitTest,
@@ -14,7 +13,6 @@ import { ExprHash } from '../types/'
 import { setScreen } from './view/actions'
 import { projectSet } from './project/helpers'
 import { log } from './console/actions'
-import { emptyEditor } from './editor/helpers'
 import * as H from 'history'
 import { storeProjectData } from './project/actions'
 import * as T from 'fp-ts/Task'
@@ -34,7 +32,7 @@ import {
   optimiseExpressionSuccess,
   expressionPreviewSuccess,
 } from './editor/actions'
-import { scratchScreen, editScreen } from './view/screen'
+import { editScreen } from './view/screen'
 import * as O from 'fp-ts/Option'
 import { currentEditorO } from './editor/selector'
 
@@ -76,15 +74,7 @@ export const runtime =
           ]),
           orEmpty()
         )
-      case 'CreateProject':
-        return pipe(
-          createProject(),
-          TE.map((data) => [
-            storeProjectData(data.cpProjectData),
-            setScreen(scratchScreen(emptyEditor)),
-          ]),
-          orEmpty()
-        )
+
       case 'FetchExpressions':
         const fetchAndDispatch = (exprHash: ExprHash) =>
           pipe(
