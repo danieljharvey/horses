@@ -130,7 +130,6 @@ export const Feedback: React.FC<Props> = ({
       return (
         <FlexColumnSpaced>
           <Expression expression={feedback.expression} />
-          y
           <ListCompile
             exprHash={feedback.expression.edHash}
           />
