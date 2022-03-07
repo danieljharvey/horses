@@ -63,6 +63,9 @@ buildTestStdlib =
         "and"
         "\\a -> \\b -> if a then b else False"
       addBinding
+        "not"
+        "\\a -> if a then False else True"
+      addBinding
         "eq"
         "\\a -> \\b -> a == b"
       addBinding

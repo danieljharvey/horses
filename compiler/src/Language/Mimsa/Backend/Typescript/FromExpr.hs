@@ -79,34 +79,41 @@ toTSTypeRecord as = do
       tsItems = M.fromList . fmap (bimap coerce fst) . M.toList $ tsAll
   pure (TSTypeRecord tsItems, mconcat generics)
 
--- | returns the type and any generics used in the expression
 toTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
-toTSType (MTPrim _ MTString) = pure (TSType Nothing "string" [], mempty)
-toTSType (MTPrim _ MTInt) = pure (TSType Nothing "number" [], mempty)
-toTSType (MTPrim _ MTBool) = pure (TSType Nothing "boolean" [], mempty)
-toTSType (MTVar _ a) =
+toTSType = toTSType' False
+
+-- | returns the type and any generics used in the expression
+toTSType' :: Bool -> Type ann -> TypescriptM (TSType, Set TSGeneric)
+toTSType' _ (MTPrim _ MTString) = pure (TSType Nothing "string" [], mempty)
+toTSType' _ (MTPrim _ MTInt) = pure (TSType Nothing "number" [], mempty)
+toTSType' _ (MTPrim _ MTBool) = pure (TSType Nothing "boolean" [], mempty)
+toTSType' _ (MTVar _ a) =
   let newVar = case a of
         TVUnificationVar i' -> T.toTitle (T.pack (printTypeNum (i' + 1)))
         TVName _ a' -> T.toTitle (coerce a')
    in pure (TSTypeVar newVar, S.singleton (TSGeneric newVar))
-toTSType mt@MTTypeApp {} =
+toTSType' _ mt@MTTypeApp {} =
   consToTSType mt
-toTSType (MTFunction _ a b) = do
-  (tsA, genA) <- toTSType a
-  (tsB, genB) <- toTSType b
-  pure (TSTypeFun "arg" tsA tsB, genA <> genB)
-toTSType (MTArray _ as) = do
+toTSType' topLevel (MTFunction _ a b) = do
+  (tsA, genA) <- toTSType' False a
+  (tsB, genB) <- toTSType' False b
+  let generics =
+        if topLevel
+          then genA -- we don't want to include generics from later args in curried functions
+          else genA <> genB -- but we do want later args of higher-order functions
+  pure (TSTypeFun "arg" tsA tsB, generics)
+toTSType' _ (MTArray _ as) = do
   (tsAs, genAs) <- toTSType as
   pure (TSTypeArray tsAs, genAs)
-toTSType (MTPair _ a b) = do
+toTSType' _ (MTPair _ a b) = do
   (tsA, genA) <- toTSType a
   (tsB, genB) <- toTSType b
   pure (TSTypeTuple [tsA, tsB], genA <> genB)
-toTSType mt@MTConstructor {} =
+toTSType' _ mt@MTConstructor {} =
   consToTSType mt
-toTSType (MTRecord _ as) =
+toTSType' _ (MTRecord _ as) =
   toTSTypeRecord as
-toTSType (MTRecordRow _ as rest) = do
+toTSType' _ (MTRecordRow _ as rest) = do
   (tsItems, generics) <- toTSTypeRecord as
   (tsRest, genRest) <- toTSType rest
   pure (TSTypeAnd tsItems tsRest, generics <> genRest)
@@ -214,7 +221,7 @@ toLambda ::
   Expr Name MonoType ->
   TypescriptM TSBody
 toLambda fnType ident body = do
-  (mtFn, generics') <- toTSType fnType
+  (mtFn, generics') <- toTSType' True fnType
   mtArg <- case mtFn of
     (TSTypeFun _ a _) -> pure a
     e -> throwError (ExpectedFunctionType e)
