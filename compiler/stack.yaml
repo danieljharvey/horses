@@ -37,6 +37,7 @@ packages:
 
 extra-deps:
   - diagnose-1.8.2@sha256:d70959f2147f5a1d01c1cc14a7ad8f117d0a3cd544d626bb06a93e40b2ad5cbe,5661 
+  - wasm-1.1.1@sha256:cea1e6c43d1ee46392eabb6b0f4fc469b6d8b987bcfbdd4694f9c48be346f229,2432 
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a

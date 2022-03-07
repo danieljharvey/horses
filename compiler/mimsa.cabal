@@ -55,6 +55,7 @@ library
       Language.Mimsa.Backend.Typescript.Patterns
       Language.Mimsa.Backend.Typescript.Printer
       Language.Mimsa.Backend.Typescript.Types
+      Language.Mimsa.Backend.Wasm.Compile
       Language.Mimsa.Backend.ZipFile
       Language.Mimsa.ExprUtils
       Language.Mimsa.Interpreter.App
@@ -239,6 +240,7 @@ library
     , servant-server
     , text
     , transformers
+    , wasm
     , zip-archive
   default-language: Haskell2010
 
@@ -294,6 +296,7 @@ executable mimsa
     , servant-server
     , text
     , transformers
+    , wasm
     , zip-archive
   default-language: Haskell2010
 
@@ -364,6 +367,7 @@ executable mimsa-server
     , wai-cors
     , wai-middleware-prometheus
     , warp
+    , wasm
     , zip-archive
   default-language: Haskell2010
 
@@ -378,6 +382,7 @@ test-suite mimsa-test
       Test.Backend.ESModulesJS
       Test.Backend.RunNode
       Test.Backend.Typescript
+      Test.Backend.Wasm
       Test.Codegen.Shared
       Test.Data.Prelude
       Test.Data.Project
@@ -450,6 +455,7 @@ test-suite mimsa-test
     , text
     , transformers
     , typed-process
+    , wasm
     , zip-archive
   default-language: Haskell2010
 
@@ -489,5 +495,6 @@ benchmark mimsa-benchmark
     , servant-server
     , text
     , transformers
+    , wasm
     , zip-archive
   default-language: Haskell2010
