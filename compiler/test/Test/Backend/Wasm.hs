@@ -5,42 +5,58 @@ module Test.Backend.Wasm
   )
 where
 
-import Control.Monad.Except
-import Data.Bifunctor
-import Data.Foldable
-import Data.Functor
-import Data.Hashable
-import qualified Data.Map as M
-import qualified Data.Set as S
-import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Shared as Actions
-import Language.Mimsa.Backend.Types
-import Language.Mimsa.Backend.Typescript.DataType
-import Language.Mimsa.Backend.Typescript.FromExpr
-import Language.Mimsa.Backend.Typescript.Monad
-import Language.Mimsa.Backend.Typescript.Patterns
-import Language.Mimsa.Backend.Typescript.Printer
-import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Backend.Wasm
-import Language.Mimsa.Interpreter.UseSwaps
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Types.Typechecker
-import Test.Backend.RunNode hiding (spec)
-import Test.Data.Project
+import Language.Mimsa.Backend.Wasm.Compile
+import qualified Language.Wasm as Wasm
+import qualified Language.Wasm.Interpreter as Wasm
 import Test.Hspec
-import Test.Utils.Compilation
 import Test.Utils.Helpers
-import Test.Utils.Serialisation
+
+runWasm :: Wasm.Module -> IO (Maybe [Wasm.Value])
+runWasm wasmModule = do
+  case Wasm.validate wasmModule of
+    Right validModule -> do
+      (result, store) <- Wasm.instantiate Wasm.emptyStore mempty validModule
+      case result of
+        Right moduleInstance ->
+          Wasm.invokeExport store moduleInstance "test" mempty
+        Left e -> error e
+    Left _ -> error "invalid module"
 
 spec :: Spec
 spec = do
-  describe "Wasm" $ do
-    it "literals" $ do
-      printLiteral (TSBool True) `shouldBe` "true"
-      printLiteral (TSInt 100) `shouldBe` "100"
-      printLiteral (TSString "egg") `shouldBe` "\"egg\""
+  fdescribe "Wasm" $ do
+    describe "Number literals" $ do
+      it "int literal 1" $ do
+        result <- runWasm (compile (unsafeParseExpr "1"))
+        result `shouldBe` Just [Wasm.VI32 1]
+      it "int literal 42" $ do
+        result <- runWasm (compile (unsafeParseExpr "42"))
+        result `shouldBe` Just [Wasm.VI32 42]
+    describe "Infix ops" $ do
+      it "1 + 1 == 2" $ do
+        result <- runWasm (compile (unsafeParseExpr "1 + 1"))
+        result `shouldBe` Just [Wasm.VI32 2]
+      it "10 - 9" $ do
+        result <- runWasm (compile (unsafeParseExpr "10 - 9"))
+        result `shouldBe` Just [Wasm.VI32 1]
+      it "1 == 1" $ do
+        result <- runWasm (compile (unsafeParseExpr "1 == 1"))
+        result `shouldBe` Just [Wasm.VI32 1]
+      it "1 == 2" $ do
+        result <- runWasm (compile (unsafeParseExpr "1 == 2"))
+        result `shouldBe` Just [Wasm.VI32 0]
+      it "1 < 2" $ do
+        result <- runWasm (compile (unsafeParseExpr "1 < 2"))
+        result `shouldBe` Just [Wasm.VI32 1]
+      it "1 > 2" $ do
+        result <- runWasm (compile (unsafeParseExpr "1 > 2"))
+        result `shouldBe` Just [Wasm.VI32 0]
+      it "1 >= 1" $ do
+        result <- runWasm (compile (unsafeParseExpr "1 >= 1"))
+        result `shouldBe` Just [Wasm.VI32 1]
+      it "1 <= 1" $ do
+        result <- runWasm (compile (unsafeParseExpr "1 <= 1"))
+        result `shouldBe` Just [Wasm.VI32 1]
+      it "1 + 2 + 3 + 4 + 5" $ do
+        result <- runWasm (compile (unsafeParseExpr "1 + 2 + 3 + 4 + 5"))
+        result `shouldBe` Just [Wasm.VI32 15]
