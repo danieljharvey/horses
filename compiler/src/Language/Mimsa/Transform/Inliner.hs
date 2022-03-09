@@ -1,7 +1,18 @@
-module Language.Mimsa.Transform.Inliner (inlineInternal, inline, howTrivial, shouldInline) where
+{-# LANGUAGE FlexibleContexts #-}
+
+module Language.Mimsa.Transform.Inliner
+  ( inlineInternal,
+    InlineState (..),
+    inlineStoreExpression,
+    inline,
+    howTrivial,
+    shouldInline,
+  )
+where
 
 import Control.Monad.Reader
 import Control.Monad.State
+import Data.Foldable
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
@@ -9,6 +20,9 @@ import Language.Mimsa.ExprUtils
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.ResolvedExpression
+import Language.Mimsa.Types.Scope
 
 -- | should we inline this expression?
 -- if it's only used in one place, not within a lambda, yes
@@ -41,16 +55,19 @@ newtype InlineState var ann = InlineState
 -- static info we can use
 data InlineEnv var = InlineEnv {ieUses :: Uses var, ieIsWithinLambda :: Bool}
 
-inlineInternal :: (Ord var) => Expr var ann -> Expr var ann
-inlineInternal expr =
-  let initialState = InlineState mempty
-      initialEnv = InlineEnv (findUses expr) False
+inlineInternal :: (Ord var) => InlineState var ann -> Expr var ann -> Expr var ann
+inlineInternal initialState expr =
+  let initialEnv = InlineEnv (findUses expr) False
    in runReader (evalStateT (inlineExpression expr) initialState) initialEnv
 
 inline :: (Ord var, Eq ann) => Expr var ann -> Expr var ann
-inline = repeatUntilEq inlineInternal
+inline = repeatUntilEq (inlineInternal (InlineState mempty))
 
-storeExpr :: (Ord var) => var -> Expr var ann -> InlineM var ann ()
+storeExpr ::
+  (Ord var, MonadState (InlineState var ann) m) =>
+  var ->
+  Expr var ann ->
+  m ()
 storeExpr var expr =
   let isRecursive = memberInUses var (findUses expr)
       inlineItem = InlineItem expr isRecursive
@@ -107,3 +124,17 @@ inlineExpression (MyLambda ann ident body) = do
   pure (MyLambda ann ident body')
 inlineExpression other =
   bindExpr inlineExpression other
+
+-- When inlining a StoreExpression we need to do the following:
+-- 1. Take it's dependencies and store them as potential items for inlining
+-- 1.5 Also add your deps's deps to our deps
+-- 2. Run inlining
+-- 3. Hope that maybe the deps fall away in another step?
+inlineStoreExpression :: ResolvedExpression ann -> Expr Variable ann
+inlineStoreExpression resolvedExpr =
+  let withDepsM =
+        traverse_
+          (uncurry storeExpr)
+          (M.toList (getScope $ reScope resolvedExpr))
+      initialState = execState withDepsM (InlineState mempty)
+   in inlineInternal initialState (reVarExpression resolvedExpr)

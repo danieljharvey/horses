@@ -37,33 +37,34 @@ spec = do
         howTrivial (unsafeParseExpr "\\a -> True")
           `shouldBe` Nothing
     describe "inlineInternal" $ do
+      let inlineInternal' expr = inlineInternal (InlineState mempty) expr
       it "Does nothing when no vars" $ do
         let expr = unsafeParseExpr "True"
-        inlineInternal expr
+        inlineInternal' expr
           `shouldBe` expr
       it "Inlines simple literal that is used once" $ do
         let expr = unsafeParseExpr "let a = 1 in a"
             expected = unsafeParseExpr "let a = 1 in 1"
-        inlineInternal expr
+        inlineInternal' expr
           `shouldBe` expected
       it "Inline function when it is used once" $ do
         let expr = unsafeParseExpr "let a = \\b -> 1 in a"
             expected = unsafeParseExpr "let a = \\b -> 1 in \\b -> 1"
-        inlineInternal expr
+        inlineInternal' expr
           `shouldBe` expected
       it "Does not inlines trivial item into function" $ do
         let expr = unsafeParseExpr "let a = 1 in \\f -> g True a"
-        inlineInternal expr
+        inlineInternal' expr
           `shouldBe` expr
       it "Function with type annotation" $ do
         let expr = unsafeParseExpr "let identity = \\(abc: a) -> abc; identity True"
             expected = unsafeParseExpr "let identity = \\(abc: a) -> abc; (\\(abc: a) -> abc) True"
-        inlineInternal expr
+        inlineInternal' expr
           `shouldBe` expected
       it "Does not inline recursive definition" $ do
         let expr = unsafeParseExpr "let flip as = if as then False else flip as in flip False"
-        inlineInternal expr
+        inlineInternal' expr
           `shouldBe` expr
       it "Does not inline infix definition (thus ruining let generalisation)" $ do
         let expr = unsafeParseExpr "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> incrementInt"
-        inlineInternal expr `shouldBe` expr
+        inlineInternal' expr `shouldBe` expr

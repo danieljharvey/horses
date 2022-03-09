@@ -9,12 +9,15 @@ where
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
+import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Test.Data.Project
@@ -32,11 +35,6 @@ useIdPointlessly =
 trueExpr :: Expr Name Annotation
 trueExpr = unsafeParseExpr "True" $> mempty
 
-wontOptimise :: StoreExpression Annotation
-wontOptimise =
-  let expr = unsafeParseExpr "let useless = id 100 in \\a -> useless" $> mempty
-   in StoreExpression expr (Bindings $ M.singleton "id" idHash) mempty
-
 withLambda :: StoreExpression Annotation
 withLambda =
   let expr = unsafeParseExpr "\\a -> let useless = True in 200" $> mempty
@@ -46,23 +44,13 @@ optimisedLambda :: Expr Name Annotation
 optimisedLambda =
   unsafeParseExpr "\\a -> 200" $> mempty
 
+useTrueVal :: Expr Name Annotation
+useTrueVal =
+  unsafeParseExpr "if trueVal then 1 else 2" $> mempty
+
 spec :: Spec
 spec = do
-  describe "Optimise" $ do
-    it "Successfully optimising doesn't change" $ do
-      let action = do
-            Actions.appendStoreExpression wontOptimise
-            Actions.optimise wontOptimise
-      let (prj, _actions, (resolved, _)) =
-            fromRight $ Actions.run testStdlib action
-      let (StoreExpression newExpr (Bindings bindings) _) = reStoreExpression resolved
-      -- updated expr
-      newExpr `shouldBe` storeExpression wontOptimise
-      -- new store expression has no deps
-      M.size bindings `shouldBe` 1
-      -- only the manually added store expression added
-      additionalStoreItems testStdlib prj `shouldBe` 1
-
+  fdescribe "Optimise" $ do
     it "Successfully optimises away unused variable and dep" $ do
       let action = do
             Actions.optimise useIdPointlessly
@@ -117,3 +105,36 @@ spec = do
       additionalStoreItems prj prj2 `shouldBe` 0
       -- current hash has not changed
       getHashOfName prj "useId" `shouldBe` getHashOfName prj2 "useId"
+
+    it "Optimising inlines a small dep" $ do
+      let action = do
+            Actions.bindStoreExpression (StoreExpression trueExpr mempty mempty) "trueVal"
+            _ <- Actions.bindExpression useTrueVal "useTrueVal" (prettyPrint useTrueVal)
+            Actions.optimiseByName "useTrueVal"
+      let (prj, _actions, _) =
+            fromRight $ Actions.run testStdlib action
+
+      -- lookup 'useTrueVal' in prj
+      let useTrueValHash = getHashOfName prj "useTrueVal"
+      -- check it has no deps because they got inlined
+      case M.lookup useTrueValHash (getStore $ prjStore prj) of
+        Just se -> do
+          M.size (getBindings $ storeBindings se) `shouldBe` 0
+        _ -> error "Did not find useTrueVal store expression"
+
+    it "Optimising inlines a big dep and brings in it's deps" $ do
+      let action = do
+            let useEitherFmap = unsafeParseExpr "either.fmap (\\a -> a + 1) (Right 1)" $> mempty
+            _ <- Actions.bindExpression useEitherFmap "useEitherFmap" (prettyPrint useEitherFmap)
+            Actions.optimiseByName "useEitherFmap"
+
+      let (prj, _actions, _) =
+            fromRight $ Actions.run testStdlib action
+
+      -- lookup 'useEitherFmap' in prj
+      let useTrueValHash = getHashOfName prj "useEitherFmap"
+      -- check it has no deps because they got inlined
+      case M.lookup useTrueValHash (getStore $ prjStore prj) of
+        Just se -> do
+          M.size (getBindings $ storeBindings se) `shouldBe` 0
+        _ -> error "Did not find useEitherFmat store expression"

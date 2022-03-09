@@ -171,7 +171,7 @@ optimiseStoreExpression storeExpr = do
       newExprName <-
         Actions.useSwaps
           (reSwaps resolvedFloated)
-          (inlineExpression (reVarExpression resolvedFloated))
+          (inlineStoreExpression resolvedFloated)
 
       let newStoreExpr =
             trimDeps
