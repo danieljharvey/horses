@@ -12,6 +12,7 @@ import qualified Data.Map as M
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
+import qualified Language.Mimsa.Actions.RemoveBinding as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
@@ -122,7 +123,31 @@ spec = do
           M.size (getBindings $ storeBindings se) `shouldBe` 0
         _ -> error "Did not find useTrueVal store expression"
 
-    it "Optimising inlines a big dep and brings in it's deps" $ do
+    it "Optimising inlines a dep and brings its deps into this expression" $ do
+      let action = do
+            let rootExpr = unsafeParseExpr "123" $> mempty
+            _ <- Actions.bindExpression rootExpr "rootExpr" (prettyPrint rootExpr)
+            let middleExpr = unsafeParseExpr "{ one: rootExpr, two: id }" $> mempty
+            _ <- Actions.bindExpression middleExpr "middleExpr" (prettyPrint middleExpr)
+            -- now remove rootExpr from global scope
+            _ <- Actions.removeBinding "rootExpr"
+            -- and create the top expr that uses middleExpr
+            let topExpr = unsafeParseExpr "[middleExpr.one]" $> mempty
+            _ <- Actions.bindExpression topExpr "topExpr" (prettyPrint topExpr)
+            Actions.optimiseByName "topExpr"
+      let (prj, _actions, _) =
+            fromRight $ Actions.run testStdlib action
+
+      -- lookup 'topExpr in prj
+      let useTopExprHash = getHashOfName prj "topExpr"
+      -- check it has no deps because they got inlined
+      case M.lookup useTopExprHash (getStore $ prjStore prj) of
+        Just se -> do
+          print se
+          M.size (getBindings $ storeBindings se) `shouldBe` 1
+        _ -> error "Did not find topExpr store expression"
+
+    xit "Optimising inlines a big dep and brings in it's deps" $ do
       let action = do
             let useEitherFmap = unsafeParseExpr "either.fmap (\\a -> a + 1) (Right 1)" $> mempty
             _ <- Actions.bindExpression useEitherFmap "useEitherFmap" (prettyPrint useEitherFmap)
