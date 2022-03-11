@@ -35,12 +35,12 @@ buildStdlib =
       addType "type Unit = Unit"
       addType "type Monoid a = Monoid (a -> a -> a) a"
       parserFns
-      addBinding "pureTask" "\\a -> Task \\r -> r a"
       arrayFns
       monoidFns
       stringFns
       stateFns
       readerFns
+      mapFns
 
 baseFns :: Actions.ActionM ()
 baseFns = do
@@ -135,12 +135,14 @@ arrayFns = do
   addBinding "arrayMap" "\\f -> arrayReduce (\\a -> \\all -> all <> [ f a ]) []"
   addBinding "arrayFilter" "\\pred -> arrayReduce (\\a -> \\all -> if pred a then all <> [ a ] else all) []"
   addBinding "arrayMonoid" "Monoid (\\a -> \\b -> a <> b) []"
-  addBinding "array" "{ reduce: arrayReduce, reverse: arrayReverse, map: arrayMap, filter: arrayFilter, monoid: arrayMonoid }"
+  addBinding "arrayFind" "\\pred -> arrayReduce (\\item -> \\total -> match total with (Just found) -> (Just found) | _ -> (if (pred item) then (Just item) else Nothing)) Nothing"
+  addBinding "array" "{ reduce: arrayReduce, reverse: arrayReverse, map: arrayMap, filter: arrayFilter, find: arrayFind, monoid: arrayMonoid }"
   removeBinding "arrayReduce"
   removeBinding "arrayReverse"
   removeBinding "arrayMap"
   removeBinding "arrayFilter"
   removeBinding "arrayMonoid"
+  removeBinding "arrayFind"
 
 stringFns :: Actions.ActionM ()
 stringFns = do
@@ -170,6 +172,21 @@ readerFns = do
   removeBinding "readerLocal"
   removeBinding "readerAp"
   removeBinding "readerMonoid"
+
+mapFns :: Actions.ActionM ()
+mapFns = do
+  addType "type Map k a = Map [(k,a)]"
+  addBinding "mapEmpty" "Map []"
+  addBinding "mapDelete" "let delete k map = let (Map inner) = map; (Map (array.filter (\\val -> let (key, _) = val; (not (key == k))) inner)); delete"
+  addBinding "mapInsert" "let insert k v map = let (Map inner) = (mapDelete k map); (Map ([ ((k, v)) ] <> inner)); insert"
+  addBinding "mapLookup" "let lookup k map = let (Map inner) = map; (array.find (\\item -> let (key, value) = item; k == key) inner); lookup"
+  addBinding "mapInsert" "let insert k v map = let (Map inner) = (mapDelete k map); (Map ([ ((k, v)) ] <> inner)); insert"
+  addBinding "map" "{ empty: mapEmpty, insert: mapInsert, lookup: mapLookup, insert: mapInsert }"
+  removeBinding "mapEmpty"
+  removeBinding "mapInsert"
+  removeBinding "mapDelete"
+  removeBinding "mapLookup"
+  removeBinding "mapInsert"
 
 addType :: Text -> Actions.ActionM ()
 addType t =
