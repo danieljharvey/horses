@@ -118,6 +118,7 @@ library
       Language.Mimsa.Transform.FlattenLets
       Language.Mimsa.Transform.FloatDown
       Language.Mimsa.Transform.FloatUp
+      Language.Mimsa.Transform.InlineDeps
       Language.Mimsa.Transform.Inliner
       Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.TrimDeps

@@ -4,16 +4,19 @@ module Language.Mimsa.Actions.Optimise
   ( optimise,
     optimiseByName,
     optimiseStoreExpression,
+    optimiseWithDeps,
     useOptimisedStoreExpressionDeps,
   )
 where
 
 import Control.Monad.Except
+import qualified Data.Map as M
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store
@@ -22,6 +25,7 @@ import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Transform.FlattenLets
 import Language.Mimsa.Transform.FloatDown
 import Language.Mimsa.Transform.FloatUp
+import Language.Mimsa.Transform.InlineDeps
 import Language.Mimsa.Transform.Inliner
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Transform.TrimDeps
@@ -121,6 +125,47 @@ useOptimisedStoreExpressionDeps se = do
   Actions.appendOptimisedStoreExpression (getStoreExpressionHash se) seWithNewDeps
   -- return it
   pure seWithNewDeps
+
+-- | when we might be inlining our dependencies, we might need their deps too
+-- lets just grab all the deps ever and discard the unused ones later
+withAllDeps ::
+  StoreExpression Annotation ->
+  Actions.ActionM (StoreExpression Annotation)
+withAllDeps se = do
+  let allStoreExprHashes = M.elems $ getBindings (storeBindings se)
+  storeExprs <- traverse Actions.lookupExpression allStoreExprHashes
+  let allBindings = foldMap storeBindings storeExprs
+  pure $ se {storeBindings = storeBindings se <> allBindings}
+
+-- | optimise a StoreExpression, with potential to consider it's deps for
+-- direct inlining
+optimiseWithDeps ::
+  StoreExpression Annotation ->
+  Actions.ActionM (StoreExpression Annotation)
+optimiseWithDeps se = do
+  project <- Actions.getProject
+
+  -- turn back into Expr Variable (fresh names for copied vars)
+  resolvedExpr <-
+    Actions.checkStoreExpression
+      (prettyPrint se)
+      project
+      se
+
+  -- remove unused stuff
+  newExprName <-
+    Actions.useSwaps
+      (reSwaps resolvedExpr)
+      (inlineExpression (inlineStoreExpression resolvedExpr))
+
+  seWithManyDeps <-
+    withAllDeps
+      (reStoreExpression resolvedExpr)
+
+  pure $
+    trimDeps
+      seWithManyDeps
+      newExprName
 
 optimiseStoreExpression ::
   StoreExpression Annotation ->

@@ -1,4 +1,14 @@
-module Language.Mimsa.Transform.Inliner (inlineInternal, inline, howTrivial, shouldInline) where
+{-# LANGUAGE FlexibleContexts #-}
+
+module Language.Mimsa.Transform.Inliner
+  ( inlineInternal,
+    InlineState (..),
+    inline,
+    storeExprInState,
+    howTrivial,
+    shouldInline,
+  )
+where
 
 import Control.Monad.Reader
 import Control.Monad.State
@@ -41,17 +51,20 @@ newtype InlineState var ann = InlineState
 -- static info we can use
 data InlineEnv var = InlineEnv {ieUses :: Uses var, ieIsWithinLambda :: Bool}
 
-inlineInternal :: (Ord var) => Expr var ann -> Expr var ann
-inlineInternal expr =
-  let initialState = InlineState mempty
-      initialEnv = InlineEnv (findUses expr) False
+inlineInternal :: (Ord var) => InlineState var ann -> Expr var ann -> Expr var ann
+inlineInternal initialState expr =
+  let initialEnv = InlineEnv (findUses expr) False
    in runReader (evalStateT (inlineExpression expr) initialState) initialEnv
 
 inline :: (Ord var, Eq ann) => Expr var ann -> Expr var ann
-inline = repeatUntilEq inlineInternal
+inline = repeatUntilEq (inlineInternal (InlineState mempty))
 
-storeExpr :: (Ord var) => var -> Expr var ann -> InlineM var ann ()
-storeExpr var expr =
+storeExprInState ::
+  (Ord var, MonadState (InlineState var ann) m) =>
+  var ->
+  Expr var ann ->
+  m ()
+storeExprInState var expr =
   let isRecursive = memberInUses var (findUses expr)
       inlineItem = InlineItem expr isRecursive
    in modify
@@ -95,7 +108,7 @@ inlineExpression (MyDefineInfix ann op f rest) =
   -- don't inline infix definition as it ruins let generalisation
   MyDefineInfix ann op f <$> inlineExpression rest
 inlineExpression (MyLet ann ident expr rest) = do
-  storeExpr (nameFromIdent ident) expr
+  storeExprInState (nameFromIdent ident) expr
   MyLet ann ident <$> inlineExpression expr <*> inlineExpression rest
 inlineExpression (MyVar ann var) = do
   substitute <- substituteVar var
