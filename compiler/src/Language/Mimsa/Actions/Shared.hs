@@ -195,9 +195,8 @@ typecheckStoreExpression store storeExpr = do
   pure (storeExpr {storeExpression = typedStoreExpr})
 
 lookupExpression ::
-  (Monoid ann) =>
   ExprHash ->
-  Actions.ActionM (StoreExpression ann)
+  Actions.ActionM (StoreExpression Annotation)
 lookupExpression exprHash = do
   project <- Actions.getProject
   se <- lookupExpressionInStore (prjStore project) exprHash

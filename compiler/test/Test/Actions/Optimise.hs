@@ -51,7 +51,7 @@ useTrueVal =
 
 spec :: Spec
 spec = do
-  fdescribe "Optimise" $ do
+  describe "Optimise" $ do
     it "Successfully optimises away unused variable and dep" $ do
       let action = do
             Actions.optimise useIdPointlessly
@@ -107,11 +107,14 @@ spec = do
       -- current hash has not changed
       getHashOfName prj "useId" `shouldBe` getHashOfName prj2 "useId"
 
+  describe "Optimise with deps" $ do
     it "Optimising inlines a small dep" $ do
       let action = do
             Actions.bindStoreExpression (StoreExpression trueExpr mempty mempty) "trueVal"
-            _ <- Actions.bindExpression useTrueVal "useTrueVal" (prettyPrint useTrueVal)
-            Actions.optimiseByName "useTrueVal"
+            (_, _, resolved) <- Actions.bindExpression useTrueVal "useTrueVal" (prettyPrint useTrueVal)
+            -- optimising, bringing in deps
+            optSe <- Actions.optimiseWithDeps (reStoreExpression resolved)
+            Actions.bindStoreExpression optSe "useTrueVal"
       let (prj, _actions, _) =
             fromRight $ Actions.run testStdlib action
 
@@ -127,39 +130,46 @@ spec = do
       let action = do
             let rootExpr = unsafeParseExpr "123" $> mempty
             _ <- Actions.bindExpression rootExpr "rootExpr" (prettyPrint rootExpr)
+
             let middleExpr = unsafeParseExpr "{ one: rootExpr, two: id }" $> mempty
             _ <- Actions.bindExpression middleExpr "middleExpr" (prettyPrint middleExpr)
             -- now remove rootExpr from global scope
             _ <- Actions.removeBinding "rootExpr"
             -- and create the top expr that uses middleExpr
+
             let topExpr = unsafeParseExpr "[middleExpr.one]" $> mempty
-            _ <- Actions.bindExpression topExpr "topExpr" (prettyPrint topExpr)
-            Actions.optimiseByName "topExpr"
+            (_, _, resolved) <- Actions.bindExpression topExpr "topExpr" (prettyPrint topExpr)
+
+            -- optimise, bringing in deps
+            optSe <- Actions.optimiseWithDeps (reStoreExpression resolved)
+            Actions.bindStoreExpression optSe "topExpr"
       let (prj, _actions, _) =
             fromRight $ Actions.run testStdlib action
 
       -- lookup 'topExpr in prj
       let useTopExprHash = getHashOfName prj "topExpr"
-      -- check it has no deps because they got inlined
+      -- check it has one dep from the parent deps
       case M.lookup useTopExprHash (getStore $ prjStore prj) of
-        Just se -> do
-          print se
+        Just se ->
           M.size (getBindings $ storeBindings se) `shouldBe` 1
         _ -> error "Did not find topExpr store expression"
 
-    xit "Optimising inlines a big dep and brings in it's deps" $ do
+    it "Optimising inlines a big dep and brings in it's deps" $ do
       let action = do
             let useEitherFmap = unsafeParseExpr "either.fmap (\\a -> a + 1) (Right 1)" $> mempty
-            _ <- Actions.bindExpression useEitherFmap "useEitherFmap" (prettyPrint useEitherFmap)
-            Actions.optimiseByName "useEitherFmap"
+            (_, _, resolved) <- Actions.bindExpression useEitherFmap "useEitherFmap" (prettyPrint useEitherFmap)
+
+            -- optimise, bringing in deps
+            optSe <- Actions.optimiseWithDeps (reStoreExpression resolved)
+            Actions.bindStoreExpression optSe "useEitherFmap"
 
       let (prj, _actions, _) =
             fromRight $ Actions.run testStdlib action
 
       -- lookup 'useEitherFmap' in prj
       let useTrueValHash = getHashOfName prj "useEitherFmap"
-      -- check it has no deps because they got inlined
+      -- check it only has `fmap` dep
       case M.lookup useTrueValHash (getStore $ prjStore prj) of
         Just se -> do
-          M.size (getBindings $ storeBindings se) `shouldBe` 0
+          M.size (getBindings $ storeBindings se) `shouldBe` 1
         _ -> error "Did not find useEitherFmat store expression"

@@ -3,8 +3,8 @@
 module Language.Mimsa.Transform.Inliner
   ( inlineInternal,
     InlineState (..),
-    inlineStoreExpression,
     inline,
+    storeExprInState,
     howTrivial,
     shouldInline,
   )
@@ -12,7 +12,6 @@ where
 
 import Control.Monad.Reader
 import Control.Monad.State
-import Data.Foldable
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
@@ -20,9 +19,6 @@ import Language.Mimsa.ExprUtils
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Types.Scope
 
 -- | should we inline this expression?
 -- if it's only used in one place, not within a lambda, yes
@@ -63,12 +59,12 @@ inlineInternal initialState expr =
 inline :: (Ord var, Eq ann) => Expr var ann -> Expr var ann
 inline = repeatUntilEq (inlineInternal (InlineState mempty))
 
-storeExpr ::
+storeExprInState ::
   (Ord var, MonadState (InlineState var ann) m) =>
   var ->
   Expr var ann ->
   m ()
-storeExpr var expr =
+storeExprInState var expr =
   let isRecursive = memberInUses var (findUses expr)
       inlineItem = InlineItem expr isRecursive
    in modify
@@ -112,7 +108,7 @@ inlineExpression (MyDefineInfix ann op f rest) =
   -- don't inline infix definition as it ruins let generalisation
   MyDefineInfix ann op f <$> inlineExpression rest
 inlineExpression (MyLet ann ident expr rest) = do
-  storeExpr (nameFromIdent ident) expr
+  storeExprInState (nameFromIdent ident) expr
   MyLet ann ident <$> inlineExpression expr <*> inlineExpression rest
 inlineExpression (MyVar ann var) = do
   substitute <- substituteVar var
@@ -124,17 +120,3 @@ inlineExpression (MyLambda ann ident body) = do
   pure (MyLambda ann ident body')
 inlineExpression other =
   bindExpr inlineExpression other
-
--- When inlining a StoreExpression we need to do the following:
--- 1. Take it's dependencies and store them as potential items for inlining
--- 1.5 Also add your deps's deps to our deps
--- 2. Run inlining
--- 3. Hope that maybe the deps fall away in another step?
-inlineStoreExpression :: ResolvedExpression ann -> Expr Variable ann
-inlineStoreExpression resolvedExpr =
-  let withDepsM =
-        traverse_
-          (uncurry storeExpr)
-          (M.toList (getScope $ reScope resolvedExpr))
-      initialState = execState withDepsM (InlineState mempty)
-   in inlineInternal initialState (reVarExpression resolvedExpr)
