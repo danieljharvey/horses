@@ -12,11 +12,13 @@ where
 
 import Data.Functor
 import Data.Text (Text)
+import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
 import Language.Mimsa.Parser
+import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -34,13 +36,16 @@ buildStdlib =
       addType "type Task r a = Task ((a -> r) -> r)"
       addType "type Unit = Unit"
       addType "type Monoid a = Monoid (a -> a -> a) a"
-      parserFns
       arrayFns
+      nonEmptyArrayFns
+      parserFns
       monoidFns
       stringFns
       stateFns
       readerFns
       mapFns
+      jsonFns
+      personTestFns
 
 baseFns :: Actions.ActionM ()
 baseFns = do
@@ -95,17 +100,36 @@ monoidFns = do
 parserFns :: Actions.ActionM ()
 parserFns = do
   addType "type Parser a  = Parser (String -> Maybe (a, String))"
-  addBinding "runParser" "\\parser -> \\str -> match parser with (Parser p) -> match p str with  (Just (\"\", a)) -> (Just a) | _ -> (Nothing)"
-  addBinding "fmapParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> (let outcome = p str; match outcome with (Just (a, rest)) -> (Just ((f a,rest))) | _ -> (Nothing)))"
-  addBinding "bindParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> match p str with (Just (a, rest)) -> (let nextParser = f a; match nextParser with (Parser b) -> b rest) | _ -> (Nothing))"
-  addBinding "charParser" "Parser (\\s -> match s with ch ++ rest -> (Just ((rest, ch))) | _ -> (Nothing))"
+  addBinding "runParser" "\\parser -> \\str -> match parser with (Parser p) -> match p str with  (Just (a, \"\")) -> (Just a) | _ -> (Nothing)"
+  addBinding "fmapParser" "\\f -> \\parser -> Parser (\\str -> match parser with (Parser p) -> (match p str with (Just (a, rest)) -> (Just ((f a,rest))) | _ -> (Nothing)))"
+  addBinding "apParser" "\\parserF -> \\parserA -> let (Parser pF) = parserF; let (Parser pA) = parserA; Parser (\\input -> match (pF input) with Just (f, input2) -> (match (pA input2) with Just (a, input3) -> Just (f a, input3) | _ -> Nothing) | _ ->  Nothing)"
+  addBinding "bindParser" "\\f -> \\parser -> Parser (\\input -> let (Parser firstP) = parser; match (firstP input) with (Just (a, input2)) -> let (Parser secondP) = (f a); (secondP input2) | _ -> Nothing)"
+  addBinding "anyCharParser" "Parser (\\s -> match s with ch ++ rest -> (Just ((rest, ch))) | _ -> (Nothing))"
   addBinding "predParser" "\\pred -> \\p -> Parser (\\s -> let (Parser inner) = p; match inner s with (Just (rest, a)) -> (if pred a then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
-  addBinding "parser" "{ run: runParser, fmap: fmapParser, bind: bindParser, char: charParser, pred: predParser }"
+  addBinding "altParser" "let runParse p input = let (Parser pp) = p in (pp input); \\p1 -> \\p2 -> Parser (\\input -> match (runParse p1 input) with (Just a) -> (Just a) | (Nothing) -> (runParse p2 input))"
+  addBinding "charParser" "\\char -> predParser (\\c -> c == char) anyCharParser"
+  addBinding "manyParser" "\\parser -> let (Parser innerP) = parser; (Parser (\\input -> let go items i = match (innerP i) with (Just (a, i2)) -> (go (items <> [ a ]) i2) | (Nothing) -> (Just ((items, i))); go [] input))"
+  addBinding "liftA2Parser" "\\f -> \\p1 -> apParser (fmapParser f p1)"
+  addBinding "pairParser" "liftA2Parser (\\a -> \\b -> (a,b))"
+  addBinding "leftParser" "\\p1 -> \\p2 -> fmapParser fst (pairParser p1 p2)"
+  addBinding "rightParser" "\\p1 -> \\p2 -> fmapParser snd (pairParser p1 p2)"
+  addBinding "someParser" "\\p -> liftA2Parser NonEmptyArray p (manyParser p)"
+  addBinding "parser" "{ run: runParser, fmap: fmapParser, bind: bindParser, anyChar: anyCharParser, char: charParser, pred: predParser, alt: altParser, many: manyParser, ap: apParser, liftA2: liftA2Parser, pair: pairParser, left: leftParser, right: rightParser, some: someParser }"
+  removeBinding "apParser"
   removeBinding "runParser"
   removeBinding "fmapParser"
   removeBinding "bindParser"
   removeBinding "charParser"
   removeBinding "predParser"
+  removeBinding "altParser"
+  removeBinding "anyCharParser"
+  removeBinding "manyParser"
+  removeBinding "liftA2Parser"
+  removeBinding "pairParser"
+  removeBinding "leftParser"
+  removeBinding "rightParser"
+  removeBinding "someParser"
+  addTest "parser.char parses a specific char" "parser.run (parser.char \"a\") \"a\" == Just \"a\""
 
 stateFns :: Actions.ActionM ()
 stateFns = do
@@ -179,14 +203,34 @@ mapFns = do
   addBinding "mapEmpty" "Map []"
   addBinding "mapDelete" "let delete k map = let (Map inner) = map; (Map (array.filter (\\val -> let (key, _) = val; (not (key == k))) inner)); delete"
   addBinding "mapInsert" "let insert k v map = let (Map inner) = (mapDelete k map); (Map ([ ((k, v)) ] <> inner)); insert"
-  addBinding "mapLookup" "let lookup k map = let (Map inner) = map; (array.find (\\item -> let (key, value) = item; k == key) inner); lookup"
-  addBinding "mapInsert" "let insert k v map = let (Map inner) = (mapDelete k map); (Map ([ ((k, v)) ] <> inner)); insert"
-  addBinding "map" "{ empty: mapEmpty, insert: mapInsert, lookup: mapLookup, insert: mapInsert }"
+  addBinding "mapLookup" "let lookup k map = let (Map inner) = map; (maybe.fmap snd (array.find (\\item -> let (key, value) = item; k == key) inner)); lookup"
+  addBinding "map" "{ empty: mapEmpty, delete: mapDelete, lookup: mapLookup, insert: mapInsert }"
   removeBinding "mapEmpty"
-  removeBinding "mapInsert"
   removeBinding "mapDelete"
-  removeBinding "mapLookup"
   removeBinding "mapInsert"
+  removeBinding "mapLookup"
+
+nonEmptyArrayFns :: Actions.ActionM ()
+nonEmptyArrayFns = do
+  addType "type NonEmptyArray a = NonEmptyArray a [a]"
+
+jsonFns :: Actions.ActionM ()
+jsonFns = do
+  addType "type Json = JString String | JNumber Int | JNull | JArray [Json] | JRecord (Map String Json)"
+  addBinding "jsonTypeName" "\\json -> match json with (JRecord _) -> \"record\" | (JArray _) -> \"array\" | (JString _) -> \"string\" | (JNumber _) -> \"number\" | (JNull) -> \"null\""
+  addBinding "jsonRecord" "\\json -> match json with (JRecord record) -> (Right record) | other -> Left (\"Expected record, got \" ++ jsonTypeName other)"
+  addBinding "jsonString" "\\json -> match json with (JString s) -> Right s | other -> Left (\"Expected string, got \" ++ jsonTypeName other)"
+  addBinding "jsonNull" "\\json -> match json with JNull -> Right Unit | other -> Left (\"Expected null, got \" ++ jsonTypeName other)"
+  addBinding "jsonNumber" "\\json -> match json with JNumber i -> Right i | other -> Left (\"Expected number, got \" ++ jsonTypeName other)"
+  addBinding "jsonArray" "\\json -> match json with JArray as -> Right as | other -> Left (\"Expected array, got \" ++ jsonTypeName other)"
+  addBinding "jsonLookupRecord" "\\label -> \\json -> match (jsonRecord json) with (Right inner) -> (match (map.lookup label inner) with (Just a) -> (Right a) | _ -> (Left (\"Could not find an entry for \" ++ label))) | (Left e) -> (Left e)"
+
+personTestFns :: Actions.ActionM ()
+personTestFns = do
+  addType "type Person = Person { name: String, age: Int }"
+  addBinding "personToJson" "\\person -> let (Person p) = person in JRecord (Map [(\"name\",JString p.name),(\"age\", JNumber p.age)])"
+  addBinding "personFromJson" "let bindEither f either = match either with Right a -> f a | Left e -> Left e; \\json -> let eName = bindEither jsonString (jsonLookupRecord \"name\" json); let eAge = bindEither jsonNumber (jsonLookupRecord \"age\" json); let f name age = Person { name, age}; either.ap (either.fmap f eName) eAge"
+  addTest "Round trip JSON encoding test for Person" "\\person -> match personFromJson (personToJson person) with Right per -> per == person | _ -> False"
 
 addType :: Text -> Actions.ActionM ()
 addType t =
@@ -202,6 +246,12 @@ addBinding name b =
         name
         b
         $> ()
+
+addTest :: Text -> Text -> Actions.ActionM ()
+addTest label input = do
+  let expr = fromRight $ parseAndFormat expressionParser input
+  _ <- Actions.addUnitTest expr (TestName label) input
+  pure ()
 
 removeBinding :: Name -> Actions.ActionM ()
 removeBinding = Actions.removeBinding

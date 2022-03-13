@@ -733,6 +733,10 @@ spec =
           `shouldBe` Right
             (MyConstructor mempty "Nothing")
 
+      it "apParser formats correctly" $ do
+        result <- eval testStdlib "\\parserF -> \\parserA -> let (Parser pF) = parserF; let (Parser pA) = parserA; Parser (\\input -> match (pF input) with Just (f, input2) -> (match (pA input2) with Just (a, input3) -> Just (f a, input3) | _ -> Nothing) | _ ->  Nothing)"
+        result `shouldSatisfy` isRight
+
       it "Array literal" $ do
         result <- eval testStdlib "[1,2,3]"
         result
