@@ -48,7 +48,7 @@ spec = do
       S.size hashes `shouldBe` 2
 
     it "Complex compilation creates many files in 2 folders" $ do
-      let expr = MyVar mempty "evalState"
+      let expr = unsafeParseExpr "state.eval" $> mempty
       let action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile Typescript storeExpr

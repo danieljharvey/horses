@@ -1,0 +1,5 @@
+let (Parser p) =
+  (parser.pred (\d ->
+    d == "d") parser.anyChar);
+
+(p "dog")

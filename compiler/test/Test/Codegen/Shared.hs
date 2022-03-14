@@ -42,7 +42,7 @@ import Test.Utils.Helpers
 
 -- | has no constructors, we can do nothing with this
 dtVoid :: DataType
-dtVoid = DataType "Void" mempty mempty
+dtVoid = DataType "MyVoid" mempty mempty
 
 -- | an enum, we can go to and from a string
 dtTrafficLights :: DataType

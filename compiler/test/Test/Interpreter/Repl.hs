@@ -378,9 +378,7 @@ spec =
       it "type Thing = Thing String in let a = Thing \"string\" in match a with (Thing s) -> s" $ do
         result <- eval testStdlib "type Thing = Thing String in let a = Thing \"string\" in match a with (Thing s) -> s"
         result `shouldBe` Right (MTPrim mempty MTString, str' "string")
-      it "type Pair a b = Pair a b in match Pair \"dog\" 1 with Pair \a -> a" $ do
-        result <- eval testStdlib "type Pair a b = Pair a b in match Pair \"dog\" 1 with Pair \a -> a"
-        result `shouldSatisfy` isLeft
+
       it "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1" $ do
         result <- eval testStdlib "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1"
         result
@@ -644,16 +642,16 @@ spec =
                 )
             )
 
-      it "\\state -> \\s -> match state with (State sas) -> sas s" $ do
-        result <- eval testStdlib "\\state -> \\s -> match state with (State sas) -> sas s"
+      it "Unwrap state" $ do
+        result <- eval testStdlib "\\st -> \\s -> match st with (State sas) -> sas s"
         result `shouldSatisfy` isRight
 
-      it "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil" $ do
-        result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil"
+      it "state.bind" $ do
+        result <- eval testStdlib "let a = state.pure \"dog\"; let b = state.bind storeName a; state.run b nil"
         result `shouldSatisfy` isRight
 
-      it "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil" $ do
-        result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil"
+      it "state.bind twice" $ do
+        result <- eval testStdlib "let a = state.pure \"dog\"; let b = state.bind storeName a; let c = state.bind storeName b; state.run c nil"
         result `shouldSatisfy` isRight
 
       it "Stops boolean and Maybe<A> being used together" $ do
@@ -705,12 +703,12 @@ spec =
               MyLiteral mempty (MyString "oo")
             )
 
-      it "runParser anyChar \"dog\"" $ do
-        result <- eval testStdlib "runParser anyChar \"dog\""
+      it "Parse any character" $ do
+        result <- eval testStdlib "parser.run parser.anyChar \"dog\""
         result `shouldSatisfy` isRight
 
-      it "fmapParser works correctly" $ do
-        result <- eval testStdlib "let repeat = fmapParser (\\a -> a ++ a) anyChar in runParser repeat \"dog\""
+      it "parser.fmap works correctly" $ do
+        result <- eval testStdlib "let repeat = parser.fmap (\\a -> a ++ a) parser.anyChar in parser.run repeat \"dog\""
         snd <$> result
           `shouldBe` Right
             ( MyApp
@@ -719,8 +717,8 @@ spec =
                 (MyLiteral mempty (MyString "dd"))
             )
 
-      it "bindParser works correctly" $ do
-        result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"dog\""
+      it "parser.bind works correctly" $ do
+        result <- eval testStdlib "let failParser = Parser (\\s -> Nothing); let p = parser.bind (\\a -> if a == \"d\" then parser.anyChar else failParser) parser.anyChar; parser.run p \"dog\""
         snd <$> result
           `shouldBe` Right
             ( MyApp
@@ -730,7 +728,7 @@ spec =
             )
 
       it "bindParser fails correctly" $ do
-        result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"log\""
+        result <- eval testStdlib "let failParser = Parser (\\s -> Nothing); let p = parser.bind (\\a -> if a == \"d\" then parser.anyChar else failParser) parser.anyChar; parser.run p \"log\""
         snd <$> result
           `shouldBe` Right
             (MyConstructor mempty "Nothing")
@@ -771,8 +769,8 @@ spec =
         result <- eval testStdlib "\"1\" <> [2]"
         result
           `shouldSatisfy` isLeft
-      it "mapArray (\\a -> a + 1) [1,2,3]" $ do
-        result <- eval testStdlib "mapArray (\\a -> a + 1) [1,2,3]"
+      it "array.map (\\a -> a + 1) [1,2,3]" $ do
+        result <- eval testStdlib "array.map (\\a -> a + 1) [1,2,3]"
         result
           `shouldBe` Right
             ( MTArray mempty (MTPrim mempty MTInt),
@@ -804,8 +802,9 @@ spec =
         result <- eval testStdlib "let (a,True) = (True,False) in a"
         result `shouldSatisfy` isLeft
       it "Adds constructors to required types for StoreExpression" $ do
-        result <- eval testStdlib "let (Parser parser) = predParser (\\d -> d == \"d\") anyChar in parser \"dog\""
+        result <- eval testStdlib "let (Parser p) = parser.pred (\\d -> d == \"d\") parser.anyChar in p \"dog\""
         result `shouldSatisfy` isRight
+
     describe "Pattern matching" $ do
       it "Matches a wildcard" $ do
         result <- eval testStdlib "match 1 with _ -> True"
@@ -1119,7 +1118,7 @@ spec =
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
       it "multiple uses of infix with different types" $ do
-        result <- eval testStdlib "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> pureState"
+        result <- eval testStdlib "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> state.pure"
         result `shouldSatisfy` isRight
 
       it "addInt 1 2" $ do
@@ -1179,3 +1178,27 @@ spec =
       it "Less than or equal to 3" $ do
         result <- eval testStdlib "10 <= 9"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
+    describe "Big stuff that breaks interpreter" $ do
+      it "Parses using a lexeme" $ do
+        let expr =
+              mconcat
+                [ "let lexeme p = parser.left p parser.space0; ",
+                  "let bracketL = lexeme (parser.char \"[\"); ",
+                  "parser.run bracketL \"[          \""
+                ]
+        result <- eval testStdlib expr
+        result `shouldSatisfy` isRight
+      xit "Parses a JSON array" $ do
+        let expr =
+              mconcat
+                [ "let lexeme p = parser.left p parser.space0; ",
+                  "let bracketL = lexeme (parser.char \"[\"); ",
+                  "let bracketR = lexeme (parser.char \"]\"); ",
+                  "let comma = lexeme (parser.char \",\"); ",
+                  "let inner = lexeme (parser.char \"d\"); ",
+                  "let bigP = parser.right bracketL (parser.left (parser.sepBy comma inner) bracketR); ",
+                  "parser.run bigP \"[d,d,d,d]\""
+                ]
+        result <- eval testStdlib expr
+        result `shouldSatisfy` isRight

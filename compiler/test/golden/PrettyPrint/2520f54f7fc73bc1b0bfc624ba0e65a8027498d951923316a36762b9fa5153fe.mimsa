@@ -1,0 +1,9 @@
+let failParser =
+  Parser (\s -> Nothing);
+
+parser.run (parser.bind (\a ->
+  if (a == "d")
+  then
+    parser.anyChar
+  else
+    failParser) parser.anyChar) "dog"

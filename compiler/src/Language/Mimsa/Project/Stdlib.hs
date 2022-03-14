@@ -8,6 +8,7 @@ module Language.Mimsa.Project.Stdlib
     addBinding,
     removeBinding,
     allFns,
+    stdlibAction,
   )
 where
 
@@ -32,6 +33,17 @@ buildStdlib =
 allFns :: Actions.ActionM ()
 allFns = do
   baseFns
+  Actions.run mempty stdlibAction >>= \(proj, _, _) -> pure proj
+
+stdlibAction :: Actions.ActionM ()
+stdlibAction = do
+  baseFns
+  addType "type Void"
+  addType "type Maybe a = Just a | Nothing"
+  addType "type Either e a = Left e | Right a"
+  addType "type Unit = Unit"
+  addType "type Monoid a = Monoid (a -> a -> a) a"
+>>>>>>> 95f9d048 (use stdlib, break some stufff)
   arrayFns
   nonEmptyArrayFns
   parserFns

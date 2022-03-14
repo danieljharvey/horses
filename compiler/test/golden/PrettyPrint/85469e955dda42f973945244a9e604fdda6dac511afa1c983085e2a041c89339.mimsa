@@ -1,0 +1,1 @@
+state.run (state.bind storeName (state.pure "dog")) nil

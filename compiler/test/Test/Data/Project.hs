@@ -41,85 +41,60 @@ testStdlib = case buildTestStdlib of
 
 buildTestStdlib :: Either (Error Annotation) (Project Annotation)
 buildTestStdlib =
-  Actions.run mempty action >>= \(proj, _, _) -> pure proj
+  Actions.run mempty action
+    >>= \(proj, _, _) -> pure proj
   where
     action = do
-      addBinding
-        "id"
-        "\\a -> a"
-      addBinding
-        "const"
-        "\\a -> \\b -> a"
-      addBinding
-        "compose"
-        "\\f -> \\g -> \\a -> f g a"
-      addBinding
-        "fst"
-        "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst"
-      addBinding
-        "snd"
-        "\\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleSecond"
-      addBinding
-        "and"
-        "\\a -> \\b -> if a then b else False"
-      addBinding
-        "not"
-        "\\a -> if a then False else True"
-      addBinding
-        "eq"
-        "\\a -> \\b -> a == b"
-      addBinding
-        "eqTen"
-        "\\i -> eq 10 i"
-      addBinding
-        "addInt"
-        "\\intA -> \\intB -> intA + intB"
-      addBinding
-        "subtractInt"
-        "\\a -> \\b -> a - b"
-      addBinding
-        "int"
-        "{ add: addInt, subtract: subtractInt }"
-      addBinding
-        "compose"
-        "\\f -> \\g -> \\a -> f (g a)"
-      addBinding
-        "incrementInt"
-        "\\int -> addInt 1 int"
-      addBinding
-        "typeState"
-        "type Maybe a = Just a | Nothing in {}"
-      addBinding
-        "fmapMaybe"
-        "\\f -> \\opt -> match opt with (Just a) -> Just (f a) | _ -> Nothing"
-      addBinding
-        "typeThese"
-        "type These a b = This a | That b | These a b in {}"
-      addBinding
-        "aPair"
-        "(1,2)"
-      addBinding
-        "aRecord"
-        "{ a: 1, b: \"dog\" }"
-      addBinding
-        "typePerson"
-        "type Person = Person { name: String, age: Int } in {}"
-      addBinding
-        "stringReduce"
-        "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
-      addType
-        "type TrafficLight = Red | Yellow | Green"
-      addListMonad
-      addEither
-      addPair
-      addStateMonad
-      addParser
-      addArray
-      addIdentity
-      addMonoid
-      addMonoPair
-      addTree
-      addPropertyTests
+      stdlibAction
+      testStdlibAction
+
+testStdlibAction :: Actions.ActionM ()
+testStdlibAction = do
+  addBinding
+    "eq"
+    "\\a -> \\b -> a == b"
+  addBinding
+    "eqTen"
+    "\\i -> eq 10 i"
+  addBinding
+    "addInt"
+    "\\a -> \\b -> a + b"
+  addBinding
+    "subtractInt"
+    "\\a -> \\b -> a - b"
+  addBinding
+    "int"
+    "{ add: addInt, subtract: subtractInt }"
+  addBinding
+    "incrementInt"
+    "\\a -> addInt 1 a"
+  addBinding
+    "typeThese"
+    "type These a b = This a | That b | These a b in {}"
+  addBinding
+    "aPair"
+    "(1,2)"
+  addBinding
+    "aRecord"
+    "{ a: 1, b: \"dog\" }"
+  addBinding
+    "typePerson"
+    "type Person = Person { name: String, age: Int } in {}"
+  addBinding
+    "stringReduce"
+    "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
+  addListMonad
+  addBinding
+    "storeName"
+    "\\newName -> let sas = (\\s -> (newName ++ \"!!!\", cons newName s)) in State sas"
+  addType "type Pair a b = Pair a b"
+  addType
+    "type TrafficLight = Red | Yellow | Green"
+  addIdentity
+  addMonoid
+  addMonoPair
+  addTree
+  addPropertyTests
 
 addPropertyTests :: Actions.ActionM ()
 addPropertyTests = do
@@ -148,86 +123,6 @@ addMonoPair :: Actions.ActionM ()
 addMonoPair = do
   addType
     "type MonoPair a = MonoPair a a"
-
-addPair :: Actions.ActionM ()
-addPair = do
-  addType
-    "type Pair a b = Pair a b"
-  addBinding
-    "fstPair"
-    "\\pair -> match pair with (Pair a _) -> a"
-  addBinding
-    "sndPair"
-    "\\pair -> match pair with (Pair _ b) -> b"
-
-addEither :: Actions.ActionM ()
-addEither =
-  addType
-    "type Either e a = Left e | Right a"
-
-addStateMonad :: Actions.ActionM ()
-addStateMonad = do
-  addType
-    "type State s a = State (s -> (Pair a s))"
-  addBinding
-    "pureState"
-    "\\a -> State (\\s -> Pair a s)"
-  addBinding
-    "fmapState"
-    "\\f -> \\state -> match state with (State sas) -> State (\\s -> let as = sas s; match as with (Pair a s) -> Pair (f a) s)"
-  addBinding
-    "apState"
-    "\\stateF -> \\stateA -> State (\\s -> match stateF with (State sfs) -> let fs = sfs s; match fs with (Pair f ss) -> match stateA with (State sas) -> let as = sas ss; match as with (Pair a sss) -> Pair (f a) sss)"
-  addBinding
-    "bindState"
-    "\\f -> \\state -> State (\\s -> match state with (State sas) -> let as = sas s; match as with (Pair a ss) -> match f a with (State sbs) -> sbs ss)"
-  addBinding
-    "runState"
-    "\\state -> \\input -> match state with (State sas) -> sas input"
-  addBinding
-    "execState"
-    "\\state -> compose sndPair (runState state)"
-  addBinding
-    "evalState"
-    "\\state -> compose fstPair (runState state)"
-  addBinding
-    "liftA2State"
-    "\\f -> \\stateA -> \\stateB -> apState (fmapState f stateA) stateB"
-  addBinding
-    "storeName"
-    "\\newName -> let sas = (\\s -> let return = newName ++ \"!!!\"; let list = cons newName s; Pair return list) in State sas"
-  addBinding
-    "testStateUsages"
-    "(evalState, execState)"
-
-addParser :: Actions.ActionM ()
-addParser = do
-  addType
-    "type Parser a = Parser (String -> Maybe (a,String))"
-  addBinding
-    "anyChar"
-    "let p = (\\str -> match str with (c ++ rest) -> (Just (c, rest)) | _ -> Nothing) in Parser p"
-  addBinding
-    "runParser"
-    "\\p -> \\str -> match p with (Parser parser) -> match parser str with (Just (a, rest)) -> Just a | _ -> Nothing"
-  addBinding
-    "fmapParser"
-    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (a, rest)) -> Just (f a, rest) | _ -> Nothing)"
-  addBinding
-    "bindParser"
-    "\\f -> \\p -> match p with (Parser innerParser) -> Parser (\\s -> match innerParser s with (Just (a, restA)) -> (let nextParser = match f a with (Parser parserB) -> parserB; nextParser restA) | _ -> Nothing)"
-  addBinding
-    "predParser"
-    "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr s with (Just (a, rest)) -> (if pred a then (Just ((a, rest))) else (Nothing)) | _ -> (Nothing))"
-  addBinding
-    "failParser"
-    "Parser \\s -> Nothing"
-
-addArray :: Actions.ActionM ()
-addArray =
-  addBinding
-    "mapArray"
-    "\\f -> \\arr -> let map = \\as -> match as with [a, ...rest] -> [f a] <> map rest | _ -> []; map arr"
 
 addIdentity :: Actions.ActionM ()
 addIdentity = addType "type Ident a = Ident a"

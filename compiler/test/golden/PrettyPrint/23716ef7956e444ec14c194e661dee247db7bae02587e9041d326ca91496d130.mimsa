@@ -1,0 +1,5 @@
+\st ->
+  \s ->
+    match st with 
+        (State sas) -> 
+          (sas s)
