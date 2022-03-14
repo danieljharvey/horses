@@ -203,22 +203,22 @@ addStateMonad = do
 addParser :: Actions.ActionM ()
 addParser = do
   addType
-    "type Parser a = Parser (String -> Maybe (String,a))"
+    "type Parser a = Parser (String -> Maybe (a,String))"
   addBinding
     "anyChar"
-    "let p = (\\str -> match str with (c ++ rest) -> (Just (rest, c)) | _ -> Nothing) in Parser p"
+    "let p = (\\str -> match str with (c ++ rest) -> (Just (c, rest)) | _ -> Nothing) in Parser p"
   addBinding
     "runParser"
-    "\\p -> \\str -> match p with (Parser parser) -> match parser str with (Just (rest, a)) -> Just a | _ -> Nothing"
+    "\\p -> \\str -> match p with (Parser parser) -> match parser str with (Just (a, rest)) -> Just a | _ -> Nothing"
   addBinding
     "fmapParser"
-    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (rest, a)) -> Just (rest, f a) | _ -> Nothing)"
+    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (a, rest)) -> Just (f a, rest) | _ -> Nothing)"
   addBinding
     "bindParser"
-    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (restA, a)) -> (let nextParser = match f a with (Parser parserB) -> parserB; nextParser restA) | _ -> Nothing)"
+    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (a, restA)) -> (let nextParser = match f a with (Parser parserB) -> parserB; nextParser restA) | _ -> Nothing)"
   addBinding
     "predParser"
-    "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr s with (Just (rest, a)) -> (if pred a then (Just ((rest, a))) else (Nothing)) | _ -> (Nothing))"
+    "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr s with (Just (a, rest)) -> (if pred a then (Just ((a, rest))) else (Nothing)) | _ -> (Nothing))"
   addBinding
     "failParser"
     "Parser \\s -> Nothing"
