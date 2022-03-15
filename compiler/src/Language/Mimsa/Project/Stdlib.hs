@@ -27,9 +27,9 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 
-buildStdlib :: Project Annotation -> Either (Error Annotation) (Project Annotation)
-buildStdlib prj =
-  Actions.run prj action >>= \(proj, _, _) -> pure proj
+buildStdlib :: Either (Error Annotation) (Project Annotation)
+buildStdlib =
+  Actions.run mempty action >>= \(proj, _, _) -> pure proj
   where
     action = do
       baseFns
@@ -288,4 +288,4 @@ fromRight = \case
   Right a -> a
 
 stdlib :: Project Annotation
-stdlib = fromRight (buildStdlib mempty)
+stdlib = fromRight buildStdlib

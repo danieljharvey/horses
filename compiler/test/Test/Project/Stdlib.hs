@@ -37,9 +37,9 @@ spec :: Spec
 spec = do
   describe "Stdlib" $ do
     it "Builds" $ do
-      buildStdlib mempty `shouldSatisfy` isRight
+      buildStdlib `shouldSatisfy` isRight
   describe "Can evaluate each top-level item" $ do
-    case buildStdlib mempty of
+    case buildStdlib of
       Right prj ->
         let bindingNames = M.keys . getVersionedMap . prjBindings $ prj
          in traverse_ (evaluatesSuccessfully prj . coerce) bindingNames
