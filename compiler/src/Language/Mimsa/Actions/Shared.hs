@@ -58,9 +58,9 @@ getType ::
       Expr Variable MonoType,
       MonoType
     )
-getType typeMap dataTypes swaps source expr = do
+getType typeMap dataTypes swaps input expr = do
   first
-    (TypeErr source)
+    (TypeErr input)
     ( typecheck
         typeMap
         swaps

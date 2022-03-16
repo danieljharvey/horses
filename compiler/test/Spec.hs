@@ -6,10 +6,12 @@ where
 import qualified Test.Actions.AddUnitTest as AddUnitTest
 import qualified Test.Actions.BindExpression as BindExpression
 import qualified Test.Actions.BindType as BindType
+import qualified Test.Actions.Build as Build
 import qualified Test.Actions.Compile as Compile
 import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Actions.Optimise as Optimise
 import qualified Test.Actions.RemoveBinding as RemoveBinding
+import qualified Test.Actions.ResolveStoreExpression as ResolveStoreExpression
 import qualified Test.Actions.Upgrade as Upgrade
 import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
@@ -108,3 +110,5 @@ main =
     FindUses.spec
     BetaReduce.spec
     Helpers.spec
+    Build.spec
+    ResolveStoreExpression.spec
