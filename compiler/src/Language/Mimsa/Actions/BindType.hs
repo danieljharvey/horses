@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -60,18 +61,15 @@ addTypeToProject ::
   DataType ->
   Actions.ActionM (StoreExpression Annotation)
 addTypeToProject input dt = do
-  project <- Actions.getProject
   -- create storeExpr for new datatype
   resolvedTypeExpr <-
-    liftEither $
-      Actions.getTypecheckedStoreExpression
-        input
-        project
-        ( MyData
-            mempty
-            dt
-            (MyRecord mempty mempty)
-        )
+    Actions.typecheckExpression
+      input
+      ( MyData
+          mempty
+          dt
+          (MyRecord mempty mempty)
+      )
   Actions.bindTypeExpression (reStoreExpression resolvedTypeExpr)
   pure (storeExprFromResolved resolvedTypeExpr)
 

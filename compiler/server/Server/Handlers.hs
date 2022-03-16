@@ -16,7 +16,6 @@ module Server.Handlers
     saveFileHandler,
     findExprHandler,
     projectFromExpressionHandler,
-    resolveStoreExpressionHandler,
     readStoreHandler,
     writeStoreHandler,
     useSwapsHandler,
@@ -39,10 +38,6 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
-  ( getTypeMap,
-    resolveStoreExpression,
-  )
 import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -56,7 +51,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
@@ -238,19 +232,6 @@ saveFileHandler ::
   Handler ()
 saveFileHandler mimsaEnv saveInfo =
   handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveFile saveInfo)
-
-resolveStoreExpressionHandler ::
-  Project Annotation ->
-  StoreExpression Annotation ->
-  Handler (ResolvedExpression Annotation)
-resolveStoreExpressionHandler prj se = do
-  typeMap <- handleEither InternalError (Actions.getTypeMap prj)
-  handleEither UserError $
-    Actions.resolveStoreExpression
-      (prjStore prj)
-      typeMap
-      (prettyPrint (storeExpression se))
-      se
 
 findExprHandler ::
   Project Annotation ->

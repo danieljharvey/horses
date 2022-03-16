@@ -1,7 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Language.Mimsa.Actions.ResolveStoreExpression
-  ( resolveStoreExpression,
+module Language.Mimsa.Actions.Typecheck
+  ( typecheckStoreExpression,
+    typecheckExpression,
   )
 where
 
@@ -15,6 +16,7 @@ import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Typechecker.DataTypes
@@ -87,17 +89,17 @@ substituteAndTypecheck resolvedDeps (storeExpr, input) = do
         input
     )
 
--- given a store expression we want resolved we must
+-- given a store expression we want typechecked we must
 -- 1) recursively get all its deps as StoreExpressions
 -- 2) turn them into a Build.State shape
 -- 3) run the builder
 -- 4) pick out the one we need
 -- 5) (later) cache them to save time later
-resolveStoreExpressions ::
+typecheckStoreExpressions ::
   StoreExpression Annotation ->
   Text ->
   Actions.ActionM (Map ExprHash (ResolvedExpression Annotation))
-resolveStoreExpressions se input = do
+typecheckStoreExpressions se input = do
   let job resolvedDeps thisSe = do
         let input' =
               if getStoreExpressionHash thisSe == getStoreExpressionHash se
@@ -129,12 +131,12 @@ resolveStoreExpressions se input = do
           }
   Build.stOutputs <$> Build.doJobs job state
 
-resolveStoreExpression ::
+typecheckStoreExpression ::
   StoreExpression Annotation ->
   Text ->
   Actions.ActionM (ResolvedExpression Annotation)
-resolveStoreExpression se input = do
-  resolved <- resolveStoreExpressions se input
+typecheckStoreExpression se input = do
+  resolved <- typecheckStoreExpressions se input
   -- cache them here later maybe?
   case M.lookup (getStoreExpressionHash se) resolved of
     Just re -> pure re
@@ -155,3 +157,19 @@ getDepsForStoreExpression storeExpr = do
             <$> depsList
         )
     )
+
+-- | get an expression, capture deps from project, and typecheck it
+typecheckExpression ::
+  Text ->
+  Expr Name Annotation ->
+  Actions.ActionM (ResolvedExpression Annotation)
+typecheckExpression input expr = do
+  project <- Actions.getProject
+  storeExpr <-
+    liftEither $
+      first ResolverErr $
+        createStoreExpression
+          (getCurrentBindings $ prjBindings project)
+          (getCurrentTypeBindings $ prjTypeBindings project)
+          expr
+  typecheckStoreExpression storeExpr input

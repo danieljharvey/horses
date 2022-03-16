@@ -20,7 +20,6 @@ data ReplAction ann
   | OutputJS (Maybe Backend) (Expr Name ann)
   | TypeSearch MonoType
   | BindType DataType
-  | Versions Name
   | ListBindings
   | AddUnitTest TestName (Expr Name ann)
   | ListTests (Maybe Name)

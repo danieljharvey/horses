@@ -41,8 +41,8 @@ library
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding
-      Language.Mimsa.Actions.ResolveStoreExpression
       Language.Mimsa.Actions.Shared
+      Language.Mimsa.Actions.Typecheck
       Language.Mimsa.Actions.Types
       Language.Mimsa.Actions.Upgrade
       Language.Mimsa.Backend.Backend
@@ -246,7 +246,6 @@ executable mimsa
       Repl.Actions.TypeSearch
       Repl.Actions.UnitTests
       Repl.Actions.Upgrade
-      Repl.Actions.Versions
       Repl.Helpers
       Repl.Parser
       Repl.Repl
@@ -366,7 +365,7 @@ test-suite mimsa-test
       Test.Actions.Evaluate
       Test.Actions.Optimise
       Test.Actions.RemoveBinding
-      Test.Actions.ResolveStoreExpression
+      Test.Actions.Typecheck
       Test.Actions.Upgrade
       Test.Backend.ESModulesJS
       Test.Backend.RunNode

@@ -172,6 +172,7 @@ evaluateText env input = do
 -- | TODO: make this take a Store () and StoreExpression () so we can use it to
 -- rehydrate expressions from the store, by prettyPrinting and reparsing
 -- this will be helpful for displaying types etc in the UI
+-- used for TS compilation, surely a duplicate somehow
 typecheckStoreExpression ::
   Store Annotation ->
   StoreExpression Annotation ->

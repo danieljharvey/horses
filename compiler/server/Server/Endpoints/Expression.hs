@@ -16,6 +16,7 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.ResolvedExpression
@@ -49,21 +50,21 @@ getExpression ::
   Handler GetExpressionResponse
 getExpression mimsaEnv exprHash' = do
   -- using items in the store, creating a project just for this expression
-  (storeExpr, pd, project) <- projectFromExpressionHandler mimsaEnv exprHash'
+  (storeExpr, pd, _) <- projectFromExpressionHandler mimsaEnv exprHash'
 
-  let action =
-        (,,) <$> Actions.graphExpression storeExpr <*> Actions.canOptimise storeExpr
-          <*> Actions.parseExpr (prettyPrint (storeExpression storeExpr))
+  let action = do
+        gv <- Actions.graphExpression storeExpr
+        canOptimise <- Actions.canOptimise storeExpr
+        let input = prettyPrint (storeExpression storeExpr)
+        exprName <- Actions.parseExpr input
+        resolvedExpr <- Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
+        pure (gv, canOptimise, resolvedExpr)
 
-  (_, (graphviz, canOptimise, exprName)) <-
+  (_, (graphviz, canOptimise, resolvedExpr)) <-
     fromActionM
       mimsaEnv
       (pdHash pd)
       action
-
-  -- re-resolved expr, using the parsed input expr (as it has annotations)
-  resolvedExpr <-
-    resolveStoreExpressionHandler project (storeExpr {storeExpression = exprName})
 
   -- turn Expr Variable MonoType into Expr Name MonoType
   typedExpr <-
