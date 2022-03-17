@@ -11,6 +11,7 @@ import GHC.Generics
 data MimsaConfig = MimsaConfig
   { port :: Int, -- "PORT",
     storeRootPath :: String,
-    showLogs :: Bool
+    showLogs :: Bool,
+    prometheusPort :: Maybe Int
   }
   deriving stock (Generic, Eq, Ord, Show)

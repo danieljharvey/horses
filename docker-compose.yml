@@ -24,8 +24,35 @@ services:
     environment:
       PORT: 8999
       STORE_ROOT_PATH: /mimsadata
+      PROMETHEUS_PORT: 9090
     volumes:
       - ./store_data:/mimsadata
 
+  prometheus:
+    container_name: prometheus
+    build: ./ops/prometheus/.
+    image: danieljamesharvey/mimsa-prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=localdev
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    links:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+    user: "104"    
+
 volumes:
-  mimsadata:
+  mimsadata: {}
+  prometheus_data: {}
+  grafana_data: {}
