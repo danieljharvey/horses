@@ -34,7 +34,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        context: ops/prometheus.
+        context: ops/prometheus/.
         tags: danieljamesharvey/mimsa-prometheus:latest
     
     - name: Image digest
