@@ -25,10 +25,18 @@ import Network.HTTP.Types.Method
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
+import Network.Wai.Middleware.Prometheus
+import Prometheus
+import Prometheus.Metric.GHC
 import Servant
 import Server.EnvVars (getMimsaEnv)
 import Server.Servant
 import Server.Types
+
+createMetricsMiddleware :: Maybe Int -> Middleware
+createMetricsMiddleware Nothing = id
+createMetricsMiddleware (Just _metricsPort) = do
+  prometheus def {prometheusInstrumentPrometheus = False}
 
 -- allow GET and POST with JSON
 corsMiddleware :: Middleware
@@ -46,9 +54,9 @@ corsMiddleware = cors (const $ Just policy)
 -- 'serve' comes from servant and hands you a WAI Application,
 -- which you can think of as an "abstract" web application,
 -- not yet a webserver.
-mimsaApp :: MimsaEnvironment -> Application
-mimsaApp mimsaEnv =
-  corsMiddleware $ serve mimsaAPI (mimsaServer mimsaEnv)
+mimsaApp :: MimsaEnvironment -> Middleware -> Application
+mimsaApp mimsaEnv metricsMiddleware =
+  metricsMiddleware $ corsMiddleware $ serve mimsaAPI (mimsaServer mimsaEnv)
 
 createMimsaEnvironment :: MimsaM (Error Annotation) MimsaEnvironment
 createMimsaEnvironment = do
@@ -72,6 +80,7 @@ getDefaultProject =
 
 server :: IO ()
 server = do
+  _ <- register ghcMetrics
   mimsaConfig' <- runExceptT getMimsaEnv
   case mimsaConfig' of
     Left e -> putStrLn e >> pure ()
@@ -88,4 +97,5 @@ serverM = do
   mimsaEnv <- createMimsaEnvironment
   let port' = port cfg
   replOutput $ "Starting server on port " <> prettyPrint port' <> "..."
-  liftIO $ run port' (mimsaApp mimsaEnv) -- TODO - hoist Servant to use MimsaM?
+  let metricsMiddleware = createMetricsMiddleware (prometheusPort cfg)
+  liftIO $ run port' (mimsaApp mimsaEnv metricsMiddleware) -- TODO - hoist Servant to use MimsaM?

@@ -24,8 +24,20 @@ services:
     environment:
       PORT: 8999
       STORE_ROOT_PATH: /mimsadata
+      PROMETHEUS_PORT: 9090
     volumes:
       - ./store_data:/mimsadata
 
+  prometheus:
+    container_name: prometheus
+    build: ./ops/prometheus/.
+    image: danieljamesharvey/mimsa-prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
 volumes:
-  mimsadata:
+  mimsadata: {}
+  prometheus_data: {}

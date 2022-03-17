@@ -1,0 +1,9 @@
+global:
+    scrape_interval: 5s
+    external_labels:
+      monitor: 'mimsa'
+scrape_configs:
+  - job_name: 'mimsa-api'
+    static_configs:
+      - targets: 
+        - mimsa-api:8999

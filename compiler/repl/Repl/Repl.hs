@@ -26,10 +26,11 @@ import System.Console.Haskeline
 import System.Directory
 
 -- | Repl uses store in ~/.local/share/mimsa
+-- TODO: change this to local folder
 createMimsaConfig :: Bool -> IO MimsaConfig
 createMimsaConfig showLogs' = do
   path <- getXdgDirectory XdgData "mimsa"
-  pure $ MimsaConfig 0 path showLogs'
+  pure $ MimsaConfig 0 path showLogs' Nothing
 
 getProject :: MimsaM (Error Annotation) (Project Annotation)
 getProject =
