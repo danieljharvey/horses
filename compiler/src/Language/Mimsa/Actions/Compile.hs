@@ -19,9 +19,10 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
@@ -45,13 +46,6 @@ import Language.Mimsa.Types.Typechecker
 --
 -- feel like a-c should be a separate action as it makes sense before
 -- interpreting too
-
-typecheckStoreExpression ::
-  StoreExpression Annotation ->
-  Actions.ActionM (StoreExpression MonoType)
-typecheckStoreExpression se = do
-  project <- Actions.getProject
-  liftEither $ Actions.typecheckStoreExpression (prjStore project) se
 
 getOptimisedDeps :: StoreExpression Annotation -> Actions.ActionM (Set (StoreExpression Annotation))
 getOptimisedDeps se = do
@@ -130,7 +124,7 @@ compile be se = do
   -- already transpiled to save on work
   list <-
     traverse
-      typecheckStoreExpression
+      Actions.annotateStoreExpressionWithTypes
       (S.toList storeExprs)
 
   -- transpile each required file and add to outputs

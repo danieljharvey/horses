@@ -2,14 +2,13 @@
 
 module Language.Mimsa.Actions.BindExpression (bindExpression) where
 
-import Control.Monad.Except (liftEither)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
@@ -37,8 +36,7 @@ bindExpression expr name input = do
        in Actions.checkStoreExpression input project newSe
     -- no existing binding, resolve as usual
     Nothing ->
-      liftEither $
-        Actions.getTypecheckedStoreExpression input project expr
+      Actions.typecheckExpression project input expr
   let storeExpr = reStoreExpression resolvedExpr
 
   -- print any warnings

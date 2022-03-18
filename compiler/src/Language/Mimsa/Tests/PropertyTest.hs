@@ -10,7 +10,8 @@ where
 import Control.Monad.Except
 import Data.Bifunctor
 import qualified Data.Set as S
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
@@ -39,11 +40,14 @@ createPropertyTest ::
 createPropertyTest project storeExpr testName = do
   let testExpr = storeExpression storeExpr
 
-  resolvedExpr <-
-    Actions.getTypecheckedStoreExpression
-      (prettyPrint testExpr)
+  (_, _, resolvedExpr) <-
+    Actions.run
       project
-      testExpr
+      ( Actions.typecheckExpression
+          project
+          (prettyPrint testExpr)
+          testExpr
+      )
 
   first (TypeErr mempty) (isRightShape (reMonoType resolvedExpr))
   pure $
@@ -67,12 +71,13 @@ runPropertyTest project pt = do
       let testExpr = storeExpression se
 
       -- typecheck expression
-      resolvedExpr <-
+      (_, _, resolvedExpr) <-
         toMonadError $
-          Actions.getTypecheckedStoreExpression
-            (prettyPrint testExpr)
-            project
-            testExpr
+          Actions.run project $
+            Actions.typecheckExpression
+              project
+              (prettyPrint testExpr)
+              testExpr
 
       -- get input part of function
       inputMt <-

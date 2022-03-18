@@ -8,7 +8,10 @@ where
 
 import Data.Map (Map)
 import qualified Data.Map as M
-import Language.Mimsa.Actions.Shared
+import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
@@ -20,9 +23,10 @@ import Test.Utils.Helpers
 
 typeMap :: Map Name MonoType
 typeMap =
-  case getTypeMap testStdlib of
-    Right a -> a
-    _ -> error "Error resolving test project"
+  case Actions.run testStdlib Actions.typeMapForProjectSearch of
+    Right (_, _, a) -> a
+    Left e ->
+      error $ "Resolving typemap in TypeSearch tests: " <> T.unpack (prettyPrint e)
 
 idType :: MonoType
 idType = MTFunction mempty (unknown 1) (unknown 1)

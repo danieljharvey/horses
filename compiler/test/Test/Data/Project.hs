@@ -8,16 +8,16 @@ module Test.Data.Project
   )
 where
 
-import Data.Coerce
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser (parseExpr)
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Store.Hashing
+import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -280,10 +280,13 @@ addExprBinding ::
   Name ->
   Project Annotation ->
   Either (Error Annotation) (Project Annotation)
-addExprBinding expr name env = do
-  resolvedExpr <-
-    Actions.getTypecheckedStoreExpression (prettyPrint expr) env expr
+addExprBinding expr name project = do
+  (_, _, resolvedExpr) <-
+    Actions.run
+      project
+      ( Actions.typecheckExpression project (prettyPrint expr) expr
+      )
   let seUnit = reStoreExpression resolvedExpr $> ()
-  let hash = coerce $ snd $ contentAndHash (storeExpression seUnit)
-  let newEnv = Actions.fromItem name (reStoreExpression resolvedExpr) hash
-  pure (env <> newEnv)
+  let hash = getStoreExpressionHash seUnit
+  let newEnv = fromItem name (reStoreExpression resolvedExpr) hash
+  pure (project <> newEnv)

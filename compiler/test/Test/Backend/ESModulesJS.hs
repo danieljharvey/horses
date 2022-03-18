@@ -14,7 +14,6 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Shared as Actions
 import qualified Language.Mimsa.Backend.Javascript.Printer as JS
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.Typescript.DataType
@@ -45,7 +44,7 @@ testFromExpr expr =
 
 testFromInputText :: Text -> Either Text Text
 testFromInputText input =
-  case Actions.evaluateText testStdlib input of
+  case evaluateText testStdlib input of
     Left e -> throwError (prettyPrint e)
     Right resolved -> do
       exprName <-

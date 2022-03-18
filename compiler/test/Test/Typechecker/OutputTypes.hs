@@ -7,7 +7,6 @@ where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Actions.Shared
 import qualified Language.Mimsa.Interpreter.UseSwaps as Swaps
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.OutputTypes

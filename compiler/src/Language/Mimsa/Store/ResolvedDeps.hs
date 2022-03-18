@@ -16,9 +16,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 
--- we spend so much time passing the whole store around to match hashes
--- lets create one way of resolving a pile of them and be done with it
-
+-- given a list of bindings and the store, grab them all
 resolveDeps :: Store ann -> Bindings -> Either StoreError (ResolvedDeps ann)
 resolveDeps (Store items) (Bindings bindings') =
   case partitionEithers foundItems of
@@ -76,6 +74,8 @@ resolveTypeStoreExpressions (Store items) (TypeBindings bindings') =
       )
         <$> M.toList bindings'
 
+-- given a StoreExpression, get all the StoreExpressions it requires,
+-- recursively
 recursiveResolve ::
   Store ann ->
   StoreExpression ann ->
@@ -83,8 +83,12 @@ recursiveResolve ::
 recursiveResolve store' storeExpr = do
   (ResolvedDeps deps) <- resolveDeps store' (storeBindings storeExpr)
   typeDeps <- resolveTypeStoreExpressions store' (storeTypeBindings storeExpr)
-  let storeExprs = (\(_, (_, se)) -> se) <$> M.toList deps
-      storeTypeExprs = (\(_, (_, se)) -> se) <$> M.toList typeDeps
+  let storeExprs =
+        (\(_, (_, se)) -> se)
+          <$> M.toList deps
+      storeTypeExprs =
+        (\(_, (_, se)) -> se)
+          <$> M.toList typeDeps
       allStoreExprs = storeExprs <> storeTypeExprs
   subExprs <- traverse (recursiveResolve store') allStoreExprs
   pure $ mconcat subExprs <> allStoreExprs

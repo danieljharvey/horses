@@ -16,7 +16,6 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
@@ -48,7 +47,7 @@ eval ::
   Text ->
   IO (Either Text (Type (), Expr Name ()))
 eval env input =
-  case Actions.evaluateText env input of
+  case evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
     Right re -> do
       let (ResolvedExpression mt se expr' scope' swaps _ _) = optimise env (reStoreExpression re)

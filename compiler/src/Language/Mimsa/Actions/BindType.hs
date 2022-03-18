@@ -5,11 +5,9 @@ module Language.Mimsa.Actions.BindType
   )
 where
 
-import Control.Monad.Except (liftEither)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
@@ -61,9 +59,11 @@ addTypeToProject ::
   DataType ->
   Actions.ActionM (StoreExpression Annotation)
 addTypeToProject input dt = do
+  project <- Actions.getProject
   -- create storeExpr for new datatype
   resolvedTypeExpr <-
     Actions.typecheckExpression
+      project
       input
       ( MyData
           mempty
@@ -85,11 +85,10 @@ createCodegenFunction project dt =
         traverse
           ( \(name, expr) -> do
               resolvedExpr <-
-                liftEither $
-                  Actions.getTypecheckedStoreExpression
-                    (prettyPrint expr)
-                    project
-                    expr
+                Actions.typecheckExpression
+                  project
+                  (prettyPrint expr)
+                  expr
               Actions.appendStoreExpression (reStoreExpression resolvedExpr)
               pure
                 (name, reStoreExpression resolvedExpr)
@@ -121,5 +120,5 @@ createCodegenFunction project dt =
       let realFunctionMap = M.mapWithKey (\k _ -> MyVar mempty k) funcMap
       let recordExpr = MyRecord mempty realFunctionMap
       re <-
-        liftEither $ Actions.getTypecheckedStoreExpression (prettyPrint recordExpr) (project <> newProjectItems) recordExpr
+        Actions.typecheckExpression (project <> newProjectItems) (prettyPrint recordExpr) recordExpr
       pure (Just re)
