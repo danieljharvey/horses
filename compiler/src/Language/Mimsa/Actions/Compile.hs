@@ -35,18 +35,17 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
--- need to make this work in a tree shape or it's going to get disgusting
--- each dep:
--- a - optimises itself (this may remove deps)
--- b - then optimises each dep
--- c - and swaps them out in deps/typeDeps of StoreExpression, creating another store expression AGAIN (oh no)
--- d - eventually we have a big pile of new StoreExpressions
--- e - which we typecheck
--- f - then transpile
---
--- feel like a-c should be a separate action as it makes sense before
--- interpreting too
-
+-- | TODO: this is absolute madness
+-- | we should use the builder, and optimise starting from the leaves
+-- | 1. get StoreExpression
+-- | 2. optimise it
+-- | 3. swaps its bindings to use the actual deps its passed (which may have
+-- been optimised ofc)
+-- | 4. re-typecheck it
+-- | 5. return it
+-- | 6. Then when we're done, we lookup the original root StoreExpression hash
+-- in the map, then get it's hash, that's our new root store expression hash,
+-- now we have a great time
 getOptimisedDeps :: StoreExpression Annotation -> Actions.ActionM (Set (StoreExpression Annotation))
 getOptimisedDeps se = do
   let oldExprHash = getStoreExpressionHash se
