@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Actions.Compile (compile) where
 
 -- get expression
@@ -15,11 +13,12 @@ import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Coerce
 import Data.Foldable (traverse_)
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
+import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
@@ -27,7 +26,6 @@ import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -35,73 +33,63 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
--- | TODO: this is absolute madness
--- | we should use the builder, and optimise starting from the leaves
--- | 1. get StoreExpression
--- | 2. optimise it
--- | 3. swaps its bindings to use the actual deps its passed (which may have
--- been optimised ofc)
--- | 4. re-typecheck it
--- | 5. return it
--- | 6. Then when we're done, we lookup the original root StoreExpression hash
--- in the map, then get it's hash, that's our new root store expression hash,
--- now we have a great time
-getOptimisedDeps :: StoreExpression Annotation -> Actions.ActionM (Set (StoreExpression Annotation))
-getOptimisedDeps se = do
-  let oldExprHash = getStoreExpressionHash se
-
-  Actions.appendMessage ("Optimising " <> prettyPrint oldExprHash)
-
-  -- optimise bindings
-  -- if new versions are made, they are `saved` in the project
-  optBindings <-
-    traverse
-      ( getOptimisedDeps
-          <=< Actions.lookupExpression
-      )
-      ( M.elems
-          ( getBindings
-              ( storeBindings se
-              )
-          )
-      )
-  -- do the same for type bindings
-  optTypeBindings <-
-    traverse
-      ( getOptimisedDeps
-          <=< Actions.lookupExpression
-      )
-      ( M.elems
-          ( getTypeBindings
-              ( storeTypeBindings se
-              )
-          )
-      )
-
-  -- optimise and use new deps
-  optimised <-
-    ( Actions.optimiseStoreExpression
-        <=< Actions.useOptimisedStoreExpressionDeps
-      )
-      se
-
-  let newExprHash = getStoreExpressionHash optimised
-
-  if oldExprHash /= newExprHash
-    then
-      Actions.appendDocMessage
-        ( "Found store expression "
-            <> prettyDoc oldExprHash
-            <> " and optimised to "
-            <> prettyDoc newExprHash
-        )
-    else pure ()
-
-  pure
-    ( S.singleton optimised
-        <> mconcat optBindings
-        <> mconcat optTypeBindings
+updateBindings :: Map ExprHash ExprHash -> Bindings -> Bindings
+updateBindings swaps (Bindings bindings) =
+  Bindings $
+    ( \exprHash -> case M.lookup exprHash swaps of
+        Just newExprHash -> newExprHash
+        _ -> exprHash
     )
+      <$> bindings
+
+updateTypeBindings :: Map ExprHash ExprHash -> TypeBindings -> TypeBindings
+updateTypeBindings swaps (TypeBindings bindings) =
+  TypeBindings $
+    ( \exprHash -> case M.lookup exprHash swaps of
+        Just newExprHash -> newExprHash
+        _ -> exprHash
+    )
+      <$> bindings
+
+--
+
+optimiseAll ::
+  Map ExprHash (StoreExpression Annotation) ->
+  Actions.ActionM (Map ExprHash (StoreExpression Annotation))
+optimiseAll inputStoreExpressions = do
+  let action depMap se = do
+        -- optimise se
+        optimisedSe <- Actions.optimiseStoreExpression se
+        let swaps = getStoreExpressionHash <$> depMap
+        -- use the optimised deps passed in
+        let newSe =
+              optimisedSe
+                { storeBindings = updateBindings swaps (storeBindings optimisedSe),
+                  storeTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
+                }
+        -- store it
+        Actions.appendStoreExpression newSe
+        pure newSe
+
+  -- create initial state for builder
+  -- we tag each StoreExpression we've found with the deps it needs
+  let state =
+        Build.State
+          { Build.stInputs =
+              ( \storeExpr ->
+                  Build.Plan
+                    { Build.jbDeps =
+                        S.fromList
+                          ( M.elems (getBindings (storeBindings storeExpr))
+                              <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
+                          ),
+                      Build.jbInput = storeExpr
+                    }
+              )
+                <$> inputStoreExpressions,
+            Build.stOutputs = mempty -- we use caches here if we wanted
+          }
+  Build.stOutputs <$> Build.doJobs action state
 
 -- | this now accepts StoreExpression instead of expression
 compile ::
@@ -109,22 +97,23 @@ compile ::
   StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
 compile be se = do
-  -- get optimised store expressions
-  storeExprs <- getOptimisedDeps se
+  -- get dependencies of StoreExpression
+  depsSe <- Actions.getDepsForStoreExpression se
 
-  -- optimise root StoreExpression
-  rootStoreExpr <-
-    ( Actions.optimiseStoreExpression
-        <=< Actions.useOptimisedStoreExpressionDeps
-      )
-      se
+  -- optimise them all like a big legend
+  storeExprs <- optimiseAll (fst <$> depsSe)
+
+  -- get new root StoreExpression (it may be different due to optimisation)
+  rootStoreExpr <- case M.lookup (getStoreExpressionHash se) storeExprs of
+    Just re -> pure re
+    _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
   -- this will eventually check for things we have
   -- already transpiled to save on work
   list <-
     traverse
       Actions.annotateStoreExpressionWithTypes
-      (S.toList storeExprs)
+      (M.elems storeExprs)
 
   -- transpile each required file and add to outputs
   traverse_ (transpileModule be) list

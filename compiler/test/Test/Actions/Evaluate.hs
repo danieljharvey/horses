@@ -36,5 +36,3 @@ spec = do
       expr $> () `shouldBe` int 2
       -- optimised version in store
       additionalStoreItems testStdlib newProject `shouldBe` 1
-      -- saved link from version to new version
-      additionalOptimisations testStdlib newProject `shouldBe` 1

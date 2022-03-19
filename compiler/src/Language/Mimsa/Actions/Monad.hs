@@ -8,7 +8,6 @@ module Language.Mimsa.Actions.Monad
     appendMessage,
     appendDocMessage,
     appendWriteFile,
-    appendOptimisedStoreExpression,
     appendResolvedExpression,
     setProject,
     appendStoreExpression,
@@ -78,14 +77,6 @@ appendMessage =
 
 appendDocMessage :: Doc ann -> ActionM ()
 appendDocMessage = appendMessage . renderWithWidth 50
-
--- | save a store expression and store which exprhash it's an optimisation of
--- so we can re-use this later
-appendOptimisedStoreExpression :: ExprHash -> StoreExpression Annotation -> ActionM ()
-appendOptimisedStoreExpression originalHash storeExpr = do
-  let newProject = fromOptimisation originalHash storeExpr
-  tell (pure (NewStoreExpression storeExpr))
-  appendProject newProject
 
 -- | cache a resolved expression
 appendResolvedExpression :: ExprHash -> ResolvedExpression Annotation -> ActionM ()

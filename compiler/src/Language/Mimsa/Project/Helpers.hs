@@ -8,7 +8,6 @@ module Language.Mimsa.Project.Helpers
     fromStoreExpression,
     fromStoreExpressionDeps,
     fromStore,
-    fromOptimisation,
     findBindingNameForExprHash,
     findAnyBindingNameForExprHash,
     findTypeBindingNameForExprHash,
@@ -25,7 +24,6 @@ module Language.Mimsa.Project.Helpers
     getDependencyHashes,
     lookupBindingName,
     lookupTypeBindingName,
-    lookupOptimised,
     getBindingNames,
     removeBinding,
   )
@@ -44,7 +42,6 @@ import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Utils (chainLookup)
 
 ----------
 
@@ -56,8 +53,7 @@ projectFromSaved store' sp =
       prjTypeBindings = projectTypes sp,
       prjTests =
         (UTest <$> projectUnitTests sp)
-          <> (PTest <$> projectPropertyTests sp),
-      prjOptimised = mempty
+          <> (PTest <$> projectPropertyTests sp)
     }
 
 projectToSaved :: Project a -> SaveProject
@@ -80,17 +76,6 @@ projectToSaved proj =
 fromStoreExpression :: StoreExpression ann -> ExprHash -> Project ann
 fromStoreExpression storeExpr exprHash =
   mempty {prjStore = Store $ M.singleton exprHash storeExpr}
-
--- | given an old expr hash and a new StoreExpression which is the optimised
--- version, store the new StoreExpr plus the link between them
-fromOptimisation :: ExprHash -> StoreExpression ann -> Project ann
-fromOptimisation oldHash newStoreExpr =
-  let newHash = getStoreExpressionHash newStoreExpr
-   in mempty
-        { prjStore =
-            Store $ M.singleton newHash newStoreExpr,
-          prjOptimised = M.fromList [(oldHash, newHash)]
-        }
 
 fromItem :: Name -> StoreExpression ann -> ExprHash -> Project ann
 fromItem name expr hash =
@@ -239,8 +224,3 @@ removeBinding :: Project ann -> Name -> Project ann
 removeBinding prj name =
   let newBindings = delete name (prjBindings prj)
    in prj {prjBindings = newBindings}
-
-lookupOptimised :: Project ann -> ExprHash -> Maybe ExprHash
-lookupOptimised prj exprHash =
-  let look hash = M.lookup hash (prjOptimised prj)
-   in chainLookup look exprHash

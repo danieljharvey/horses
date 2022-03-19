@@ -26,7 +26,6 @@ import qualified Test.Parser.MonoTypeParser as MonoTypeParser
 import qualified Test.Parser.Pattern as Pattern
 import qualified Test.Parser.Syntax as Syntax
 import qualified Test.Prettier as Prettier
-import qualified Test.Project.Helpers as Helpers
 import qualified Test.Project.NormaliseType as NormaliseType
 import qualified Test.Project.SourceSpan as SourceSpan
 import qualified Test.Project.Stdlib as Stdlib
@@ -109,6 +108,5 @@ main =
     Inliner.spec
     FindUses.spec
     BetaReduce.spec
-    Helpers.spec
     Build.spec
     TypecheckAction.spec

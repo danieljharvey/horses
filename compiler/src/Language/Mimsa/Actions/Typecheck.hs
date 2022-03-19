@@ -215,7 +215,6 @@ annotateStoreExpressionWithTypes storeExpr = do
           (bindingsToVersioned (storeBindings storeExpr))
           (typeBindingsToVersioned (storeTypeBindings storeExpr))
           mempty
-          mempty
 
   let exprName = storeExpression storeExpr
 
