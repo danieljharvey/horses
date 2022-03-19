@@ -9,7 +9,8 @@ where
 
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Graph as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.DepGraph
@@ -26,11 +27,11 @@ doTree ::
   Text ->
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
-doTree env input expr = do
-  resolvedExpr <-
+doTree project input expr = do
+  (_, _, resolvedExpr) <-
     mimsaFromEither $
-      Actions.getTypecheckedStoreExpression input env expr
-  let graph = createDepGraph "root" (prjStore env) (reStoreExpression resolvedExpr)
+      Actions.run project (Actions.typecheckExpression project input expr)
+  let graph = createDepGraph "root" (prjStore project) (reStoreExpression resolvedExpr)
   replOutput (prettyPrint graph)
 
 -- | output dependency graph for expr in Graphviz format
@@ -40,9 +41,12 @@ doGraph ::
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
 doGraph project input expr = do
-  resolvedExpr <-
+  (_, _, resolvedExpr) <-
     mimsaFromEither $
-      Actions.getTypecheckedStoreExpression input project expr
+      Actions.run
+        project
+        ( Actions.typecheckExpression project input expr
+        )
   (_, graphviz) <-
     toReplM project (Actions.graphExpression (reStoreExpression resolvedExpr))
   replOutput . prettyGraphviz $ graphviz

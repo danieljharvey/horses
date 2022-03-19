@@ -11,7 +11,8 @@ import qualified Data.Map as M
 import Data.OpenApi hiding (Server)
 import Data.Text (Text)
 import GHC.Generics
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Types.Project
@@ -59,6 +60,6 @@ typeSearchEndpoint ::
 typeSearchEndpoint mimsaEnv (TypeSearchRequest projectHash input) = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' projectHash
-  typeMap <- handleEither InternalError (Actions.getTypeMap project)
+  (_, _, typeMap) <- handleEither InternalError (Actions.run project Actions.typeMapForProjectSearch)
   result <- handleEither UserError (typeSearchFromText typeMap input)
   pure (TypeSearchResponse (prettyPrint <$> M.keys result))

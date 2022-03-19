@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Store.Substitutor (substitute) where
+module Language.Mimsa.Store.Substitutor (substitute, getExprPairs) where
 
 import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy

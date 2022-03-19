@@ -4,7 +4,8 @@ module Language.Mimsa.Store.UpdateDeps
   )
 where
 
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Types.AST
@@ -41,8 +42,11 @@ updateStoreExpressionBindings project newBindings se = do
                 (storeTypeBindings se)
           }
   let expr = storeExpression se
-  resolvedExpr <-
-    Actions.getTypecheckedStoreExpression (prettyPrint expr) newProject expr
+  (_, _, resolvedExpr) <-
+    Actions.run
+      newProject
+      ( Actions.typecheckExpression newProject (prettyPrint expr) expr
+      )
   pure (reStoreExpression resolvedExpr)
 
 combine :: Bindings -> Bindings -> Bindings

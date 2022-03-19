@@ -3,7 +3,7 @@ module Language.Mimsa.Actions.AddUnitTest where
 import Control.Monad.Except (liftEither)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
@@ -21,7 +21,7 @@ addUnitTest ::
 addUnitTest expr testName input = do
   project <- Actions.getProject
   resolvedExpr <-
-    liftEither $ Actions.getTypecheckedStoreExpression input project expr
+    Actions.typecheckExpression project input expr
   let storeExpr = reStoreExpression resolvedExpr
   Actions.appendStoreExpression storeExpr
   test <- liftEither $ createTest project storeExpr testName

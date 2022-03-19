@@ -31,16 +31,18 @@ library
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Evaluate
       Language.Mimsa.Actions.Graph
+      Language.Mimsa.Actions.Helpers.Build
       Language.Mimsa.Actions.Helpers.CanOptimise
       Language.Mimsa.Actions.Helpers.CheckStoreExpression
       Language.Mimsa.Actions.Helpers.FindExistingBinding
+      Language.Mimsa.Actions.Helpers.LookupExpression
       Language.Mimsa.Actions.Helpers.Parse
       Language.Mimsa.Actions.Helpers.Swaps
       Language.Mimsa.Actions.Helpers.UpdateTests
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding
-      Language.Mimsa.Actions.Shared
+      Language.Mimsa.Actions.Typecheck
       Language.Mimsa.Actions.Types
       Language.Mimsa.Actions.Upgrade
       Language.Mimsa.Backend.Backend
@@ -244,7 +246,6 @@ executable mimsa
       Repl.Actions.TypeSearch
       Repl.Actions.UnitTests
       Repl.Actions.Upgrade
-      Repl.Actions.Versions
       Repl.Helpers
       Repl.Parser
       Repl.Repl
@@ -359,10 +360,12 @@ test-suite mimsa-test
       Test.Actions.AddUnitTest
       Test.Actions.BindExpression
       Test.Actions.BindType
+      Test.Actions.Build
       Test.Actions.Compile
       Test.Actions.Evaluate
       Test.Actions.Optimise
       Test.Actions.RemoveBinding
+      Test.Actions.Typecheck
       Test.Actions.Upgrade
       Test.Backend.ESModulesJS
       Test.Backend.RunNode

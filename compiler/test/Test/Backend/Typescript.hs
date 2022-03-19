@@ -14,7 +14,6 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.Typescript.DataType
 import Language.Mimsa.Backend.Typescript.FromExpr
@@ -45,7 +44,7 @@ testFromExpr expr =
 
 testFromInputText :: Text -> Either Text Text
 testFromInputText input =
-  case Actions.evaluateText testStdlib input of
+  case evaluateText testStdlib input of
     Left e -> throwError (prettyPrint e)
     Right resolved -> do
       exprName <-
@@ -130,7 +129,7 @@ testCases =
       "doglog"
     ),
     ( "{ fn: (\\a -> let d = 1 in a) }",
-      "export const main = { fn: <N1>(a: N1) => { const d = 1; return a; } }",
+      "export const main = { fn: <B>(a: B) => { const d = 1; return a; } }",
       "{ fn: [Function: fn] }"
     ),
     ( "[1,2] <> [3,4]",
@@ -521,7 +520,7 @@ spec = do
 
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> [as] | [] -> []"
-          `shouldBe` Right "export const main = <P1>(a: P1[]) => { const match = (value: P1[]): P1[][] => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
+          `shouldBe` Right "export const main = <D>(a: D[]) => { const match = (value: D[]): D[][] => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
 
     describe "Entire compilation" $ do
       traverse_ fullTestIt fullTestCases

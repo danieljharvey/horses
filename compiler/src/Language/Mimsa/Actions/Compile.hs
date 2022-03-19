@@ -19,9 +19,10 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Backend
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
@@ -34,25 +35,17 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
--- need to make this work in a tree shape or it's going to get disgusting
--- each dep:
--- a - optimises itself (this may remove deps)
--- b - then optimises each dep
--- c - and swaps them out in deps/typeDeps of StoreExpression, creating another store expression AGAIN (oh no)
--- d - eventually we have a big pile of new StoreExpressions
--- e - which we typecheck
--- f - then transpile
---
--- feel like a-c should be a separate action as it makes sense before
--- interpreting too
-
-typecheckStoreExpression ::
-  StoreExpression Annotation ->
-  Actions.ActionM (StoreExpression MonoType)
-typecheckStoreExpression se = do
-  project <- Actions.getProject
-  liftEither $ Actions.typecheckStoreExpression (prjStore project) se
-
+-- | TODO: this is absolute madness
+-- | we should use the builder, and optimise starting from the leaves
+-- | 1. get StoreExpression
+-- | 2. optimise it
+-- | 3. swaps its bindings to use the actual deps its passed (which may have
+-- been optimised ofc)
+-- | 4. re-typecheck it
+-- | 5. return it
+-- | 6. Then when we're done, we lookup the original root StoreExpression hash
+-- in the map, then get it's hash, that's our new root store expression hash,
+-- now we have a great time
 getOptimisedDeps :: StoreExpression Annotation -> Actions.ActionM (Set (StoreExpression Annotation))
 getOptimisedDeps se = do
   let oldExprHash = getStoreExpressionHash se
@@ -130,7 +123,7 @@ compile be se = do
   -- already transpiled to save on work
   list <-
     traverse
-      typecheckStoreExpression
+      Actions.annotateStoreExpressionWithTypes
       (S.toList storeExprs)
 
   -- transpile each required file and add to outputs

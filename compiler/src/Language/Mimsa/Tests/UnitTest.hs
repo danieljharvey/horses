@@ -6,7 +6,8 @@ module Language.Mimsa.Tests.UnitTest
 where
 
 import Data.Bifunctor (first)
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
@@ -26,8 +27,11 @@ createUnitTest ::
   Either (Error Annotation) UnitTest
 createUnitTest project storeExpr testName = do
   let testExpr = exprEqualsTrue (storeExpression storeExpr)
-  (ResolvedExpression _ _ rExpr rScope rSwaps _ _) <-
-    Actions.getTypecheckedStoreExpression (prettyPrint testExpr) project testExpr
+  (_, _, ResolvedExpression _ _ rExpr rScope rSwaps _ _) <-
+    Actions.run
+      project
+      ( Actions.typecheckExpression project (prettyPrint testExpr) testExpr
+      )
   result <- first InterpreterErr (interpret rScope rSwaps rExpr)
   pure $
     UnitTest

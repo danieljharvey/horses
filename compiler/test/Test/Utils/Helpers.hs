@@ -1,17 +1,22 @@
 module Test.Utils.Helpers where
 
-import Data.Functor (($>))
+import Data.Bifunctor (first)
+import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Project
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
@@ -133,3 +138,19 @@ additionalOptimisations old new =
   where
     projectOptSize :: Project ann -> Int
     projectOptSize = length . prjOptimised
+
+---
+
+----------
+
+evaluateText ::
+  Project Annotation ->
+  Text ->
+  Either (Error Annotation) (ResolvedExpression Annotation)
+evaluateText project input = do
+  expr <- first ParseError $ parseExprAndFormatError input
+  (_, _, re) <-
+    Actions.run
+      project
+      (Actions.typecheckExpression project input expr)
+  pure re

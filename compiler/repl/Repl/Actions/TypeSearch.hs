@@ -8,7 +8,8 @@ where
 import Data.Foldable
 import qualified Data.Map as M
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.TypeSearch
@@ -22,8 +23,8 @@ import Language.Mimsa.Types.Typechecker
 
 doTypeSearch ::
   Project Annotation -> MonoType -> MimsaM (Error Annotation) ()
-doTypeSearch env mt = do
-  typeMap <- mimsaFromEither $ Actions.getTypeMap env
+doTypeSearch project mt = do
+  (_, _, typeMap) <- mimsaFromEither $ Actions.run project Actions.typeMapForProjectSearch
   let matches = typeSearch typeMap mt
   let simplified = normaliseType mt
   case M.toList matches of

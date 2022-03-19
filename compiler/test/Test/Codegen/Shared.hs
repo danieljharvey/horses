@@ -27,7 +27,8 @@ import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Actions.Shared
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DataTypes
@@ -260,7 +261,8 @@ typecheckInstance ::
 typecheckInstance mkInstance dt =
   (,) <$> newStdLib <*> inst'
     >>= ( \(testStdlib', expr) ->
-            getTypecheckedStoreExpression (prettyPrint expr) testStdlib' expr
+            (\(_, _, re) -> re)
+              <$> Actions.run testStdlib' (Actions.typecheckExpression testStdlib' (prettyPrint expr) expr)
         )
   where
     newStdLib =

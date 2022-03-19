@@ -13,10 +13,10 @@ import Control.Monad.Except
 import qualified Data.Map as M
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
+import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store

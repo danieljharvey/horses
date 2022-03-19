@@ -29,7 +29,6 @@ replParser =
     <|> try graphParser
     <|> try projectGraphParser
     <|> try evalParser
-    <|> try versionsParser
     <|> try outputJSParser
     <|> try typeSearchParser
     <|> try addUnitTestParser
@@ -77,11 +76,6 @@ bindTypeParser = do
 
 listBindingsParser :: Parser ReplActionAnn
 listBindingsParser = ListBindings <$ string ":list"
-
-versionsParser :: Parser ReplActionAnn
-versionsParser = do
-  myString ":versions"
-  Versions <$> nameParser
 
 backendParser :: Parser (Maybe Backend)
 backendParser =

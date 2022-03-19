@@ -9,7 +9,8 @@ import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Compile as Actions
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Backend
   ( copyLocalOutput,
   )
@@ -31,8 +32,11 @@ doOutputJS ::
   MimsaM (Error Annotation) ()
 doOutputJS project input maybeBackend expr = do
   let be = fromMaybe ESModulesJS maybeBackend
-  resolvedExpr <-
-    mimsaFromEither $ Actions.getTypecheckedStoreExpression input project expr
+  (_, _, resolvedExpr) <-
+    mimsaFromEither $
+      Actions.run
+        project
+        (Actions.typecheckExpression project input expr)
   (_, (rootExprHash, exprHashes)) <-
     toReplM project (Actions.compile be (reStoreExpression resolvedExpr))
   outputPath <- doCopying be exprHashes rootExprHash

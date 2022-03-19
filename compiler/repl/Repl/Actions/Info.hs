@@ -6,7 +6,8 @@ module Repl.Actions.Info
 where
 
 import Data.Text (Text)
-import qualified Language.Mimsa.Actions.Shared as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -22,10 +23,13 @@ doInfo ::
   Text ->
   Expr Name Annotation ->
   MimsaM (Error Annotation) ()
-doInfo env input expr = do
-  resolvedExpr <-
+doInfo project input expr = do
+  (_, _, resolvedExpr) <-
     mimsaFromEither $
-      Actions.getTypecheckedStoreExpression input env expr
+      Actions.run
+        project
+        ( Actions.typecheckExpression project input expr
+        )
   replOutput $
     prettyPrint expr
       <> "/n:: "
