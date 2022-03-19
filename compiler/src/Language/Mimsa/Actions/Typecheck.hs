@@ -11,6 +11,7 @@ where
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
+import Data.Foldable (traverse_)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -100,11 +101,12 @@ substituteAndTypecheck resolvedDeps (storeExpr, input) = do
 -- 2) turn them into a Build.State shape
 -- 3) run the builder
 -- 4) pick out the one we need
--- 5) (later) cache them to save time later
+-- 5) cache them to save time later
 typecheckStoreExpressions ::
   Map ExprHash (StoreExpression Annotation, Text) ->
   Actions.ActionM (Map ExprHash (ResolvedExpression Annotation))
 typecheckStoreExpressions inputStoreExpressions = do
+  alreadyResolved <- Actions.getResolvedExpressions
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
   let state =
@@ -121,9 +123,14 @@ typecheckStoreExpressions inputStoreExpressions = do
                     }
               )
                 <$> inputStoreExpressions,
-            Build.stOutputs = mempty -- here we could reuse cached items to save on building
+            Build.stOutputs = alreadyResolved
           }
-  Build.stOutputs <$> Build.doJobs substituteAndTypecheck state
+  resolvedMap <- Build.stOutputs <$> Build.doJobs substituteAndTypecheck state
+  -- cache all the resolved expressions
+  traverse_
+    (uncurry Actions.appendResolvedExpression)
+    (M.toList resolvedMap)
+  pure resolvedMap
 
 typecheckStoreExpression ::
   StoreExpression Annotation ->
@@ -135,7 +142,10 @@ typecheckStoreExpression se input = do
         inputStoreExpressions
           <> M.singleton (getStoreExpressionHash se) (se, input) -- overwrite root storeExpression so that we use the actual user input
   resolved <- typecheckStoreExpressions allInputs
-  -- cache them here later maybe?
+  -- cache all the resolved expressions
+  traverse_
+    (uncurry Actions.appendResolvedExpression)
+    (M.toList resolved)
   case M.lookup (getStoreExpressionHash se) resolved of
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))

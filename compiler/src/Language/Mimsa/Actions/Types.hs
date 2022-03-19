@@ -7,6 +7,7 @@ module Language.Mimsa.Actions.Types
     SaveContents (..),
     SaveFilename (..),
     ActionOutcome (..),
+    ActionState (..),
   )
 where
 
@@ -14,11 +15,13 @@ import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Writer
 import Data.Hashable
+import Data.Map (Map)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
 newtype SavePath = SavePath Text
@@ -42,7 +45,13 @@ data ActionOutcome
   | NewWriteFile SavePath SaveFilename SaveContents
   deriving stock (Eq, Ord, Show)
 
+data ActionState = ActionState
+  { asProject :: Project Annotation,
+    asCachedResolved :: Map ExprHash (ResolvedExpression Annotation)
+  }
+  deriving stock (Eq, Ord, Show)
+
 type ActionM =
   ExceptT
     (Error Annotation)
-    (WriterT [ActionOutcome] (State (Project Annotation)))
+    (WriterT [ActionOutcome] (State ActionState))

@@ -9,6 +9,7 @@ module Language.Mimsa.Actions.Monad
     appendDocMessage,
     appendWriteFile,
     appendOptimisedStoreExpression,
+    appendResolvedExpression,
     setProject,
     appendStoreExpression,
     bindStoreExpression,
@@ -16,6 +17,7 @@ module Language.Mimsa.Actions.Monad
     messagesFromOutcomes,
     storeExpressionsFromOutcomes,
     writeFilesFromOutcomes,
+    getResolvedExpressions,
     ActionM,
     SavePath (..),
     SaveContents (..),
@@ -26,6 +28,8 @@ where
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Writer
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -37,28 +41,36 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Prettyprinter
+
+emptyState :: Project Annotation -> ActionState
+emptyState prj =
+  ActionState
+    { asProject = prj,
+      asCachedResolved = mempty
+    }
 
 run ::
   Project Annotation ->
   ActionM a ->
   Either (Error Annotation) (Project Annotation, [ActionOutcome], a)
 run project action =
-  let ((result, outcomes), newState) =
-        runState (runWriterT (runExceptT action)) project
-   in (,,) newState outcomes <$> result
+  let ((result, outcomes), ActionState newProject _) =
+        runState (runWriterT (runExceptT action)) (emptyState project)
+   in (,,) newProject outcomes <$> result
 
 getProject :: ActionM (Project Annotation)
-getProject = get
+getProject = gets asProject
 
 setProject :: Project Annotation -> ActionM ()
-setProject =
-  put
+setProject prj =
+  modify (\s -> s {asProject = prj})
 
 appendProject :: Project Annotation -> ActionM ()
 appendProject prj =
-  modify (<> prj)
+  modify (\s -> s {asProject = asProject s <> prj})
 
 appendMessage :: Text -> ActionM ()
 appendMessage =
@@ -74,6 +86,21 @@ appendOptimisedStoreExpression originalHash storeExpr = do
   let newProject = fromOptimisation originalHash storeExpr
   tell (pure (NewStoreExpression storeExpr))
   appendProject newProject
+
+-- | cache a resolved expression
+appendResolvedExpression :: ExprHash -> ResolvedExpression Annotation -> ActionM ()
+appendResolvedExpression exprHash re =
+  modify
+    ( \s ->
+        s
+          { asCachedResolved =
+              asCachedResolved s <> M.singleton exprHash re
+          }
+    )
+
+getResolvedExpressions :: ActionM (Map ExprHash (ResolvedExpression Annotation))
+getResolvedExpressions =
+  gets asCachedResolved
 
 appendWriteFile ::
   SavePath ->
