@@ -1,16 +1,31 @@
-build: 
+build-nix: 
 	nix-build -A hsPkgs.mimsa.components.exes.mimsa --quiet | cachix push mimsa
 
-run:
-	make build
+run-nix:
+	make build-nix
 	./result/bin/mimsa
 
-build-test:
+build-test-nix:
 	nix-build pkgs.nix -A hsPkgs.mimsa.components.tests.mimsa-test --quiet | cachix push mimsa
 
-unit-test:
-	make build-test
+unit-test-nix:
+	make build-test-nix
 	./result/bin/mimsa-test
+
+ghcid:
+	ghcid -c "stack repl --test --bench" -l=hlint
+
+build:
+	stack build --test --no-run-tests --bench --no-run-benchmarks 
+
+test-watch:
+	stack test --file-watch --bench --no-run-benchmarks
+
+test:
+	stack test --bench --no-run-benchmarks
+
+bench:
+	stack bench --test --no-run-tests 
 
 hoogle:
 	stack hoogle -- generate --local

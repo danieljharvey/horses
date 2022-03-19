@@ -38,6 +38,7 @@ main =
         "build stdlib"
         [ bench "baseFns" $ whnf (buildThing baseFns) mempty,
           bench "arrayFns" $ whnf (buildThing arrayFns') mempty,
-          bench "nonEmptyArrayFns" $ whnf (buildThing nonEmptyArrayFns') mempty
+          bench "nonEmptyArrayFns" $ whnf (buildThing nonEmptyArrayFns') mempty,
+          bench "allFns" $ whnf (buildThing allFns) mempty
         ]
     ]

@@ -10,6 +10,7 @@ module Language.Mimsa.Project.Stdlib
     baseFns,
     arrayFns,
     nonEmptyArrayFns,
+    allFns,
   )
 where
 
@@ -29,20 +30,21 @@ import Language.Mimsa.Types.Project
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
 buildStdlib =
-  Actions.run mempty action >>= \(proj, _, _) -> pure proj
-  where
-    action = do
-      baseFns
-      arrayFns
-      nonEmptyArrayFns
-      parserFns
-      monoidFns
-      stringFns
-      stateFns
-      readerFns
-      mapFns
-      jsonFns
-      personTestFns
+  Actions.run mempty allFns >>= \(proj, _, _) -> pure proj
+
+allFns :: Actions.ActionM ()
+allFns = do
+  baseFns
+  arrayFns
+  nonEmptyArrayFns
+  parserFns
+  monoidFns
+  stringFns
+  stateFns
+  readerFns
+  mapFns
+  jsonFns
+  personTestFns
 
 baseFns :: Actions.ActionM ()
 baseFns = do
