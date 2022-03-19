@@ -1,3 +1,5 @@
+.PHONY: all test 
+
 build-nix: 
 	nix-build -A hsPkgs.mimsa.components.exes.mimsa --quiet | cachix push mimsa
 
