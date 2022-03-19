@@ -7,6 +7,10 @@ module Language.Mimsa.Project.Stdlib
     addType,
     addBinding,
     removeBinding,
+    baseFns,
+    arrayFns,
+    nonEmptyArrayFns,
+    allFns,
   )
 where
 
@@ -26,25 +30,21 @@ import Language.Mimsa.Types.Project
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
 buildStdlib =
-  Actions.run mempty action >>= \(proj, _, _) -> pure proj
-  where
-    action = do
-      baseFns
-      addType "type Void"
-      addType "type Maybe a = Just a | Nothing"
-      addType "type Either e a = Left e | Right a"
-      addType "type Unit = Unit"
-      addType "type Monoid a = Monoid (a -> a -> a) a"
-      arrayFns
-      nonEmptyArrayFns
-      parserFns
-      monoidFns
-      stringFns
-      stateFns
-      readerFns
-      mapFns
-      jsonFns
-      personTestFns
+  Actions.run mempty allFns >>= \(proj, _, _) -> pure proj
+
+allFns :: Actions.ActionM ()
+allFns = do
+  baseFns
+  arrayFns
+  nonEmptyArrayFns
+  parserFns
+  monoidFns
+  stringFns
+  stateFns
+  readerFns
+  mapFns
+  jsonFns
+  personTestFns
 
 baseFns :: Actions.ActionM ()
 baseFns = do
@@ -58,6 +58,11 @@ baseFns = do
   addBinding "fst" "\\pair -> let (a,_) = pair in a"
   addBinding "snd" "\\pair -> let (_,b) = pair in b"
   addBinding "const" "\\a -> \\b -> a"
+  addType "type Void"
+  addType "type Maybe a = Just a | Nothing"
+  addType "type Either e a = Left e | Right a"
+  addType "type Unit = Unit"
+  addType "type Monoid a = Monoid (a -> a -> a) a"
 
 monoidFns :: Actions.ActionM ()
 monoidFns = do

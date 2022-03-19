@@ -69,10 +69,13 @@ jobs:
           fail-on: warning
 
       - name: Run stack test
-        run: yarn global add typescript@4.4 ts-node@10.4.0 & cd compiler && stack test
+        run: yarn global add typescript@4.4 ts-node@10.4.0 & cd compiler && make test 
 
       - name: Run stack build
-        run: cd compiler && stack build --test --no-run-tests
+        run: cd compiler && make build 
+
+      - name: Run stack bench
+        run: cd compiler && make bench 
 
       - name: Generate swagger json
         run: cd compiler && stack exec mimsa-server generate-swagger
