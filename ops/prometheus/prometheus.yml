@@ -8,3 +8,10 @@ scrape_configs:
     static_configs:
       - targets: 
         - mimsa-api:8999
+
+  - job_name: 'docker'
+         # metrics_path defaults to '/metrics'
+         # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ['localhost:9323']
