@@ -156,7 +156,11 @@ getDepsForStoreExpression ::
   Actions.ActionM (Map ExprHash (StoreExpression Annotation, Text))
 getDepsForStoreExpression storeExpr = do
   project <- Actions.getProject
-  depsList <- liftEither $ first StoreErr (recursiveResolve (prjStore project) storeExpr)
+  depsList <-
+    liftEither $
+      first
+        StoreErr
+        (recursiveResolve (prjStore project) storeExpr)
   pure $
     M.singleton (getStoreExpressionHash storeExpr) (storeExpr, prettyPrint storeExpr)
       <> M.fromList
