@@ -26,7 +26,6 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State
-import Control.Monad.Writer
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -48,7 +47,8 @@ emptyState :: Project Annotation -> ActionState
 emptyState prj =
   ActionState
     { asProject = prj,
-      asCachedResolved = mempty
+      asCachedResolved = mempty,
+      asActionOutcomes = mempty
     }
 
 run ::
@@ -56,8 +56,8 @@ run ::
   ActionM a ->
   Either (Error Annotation) (Project Annotation, [ActionOutcome], a)
 run project action =
-  let ((result, outcomes), ActionState newProject _) =
-        runState (runWriterT (runExceptT action)) (emptyState project)
+  let (result, ActionState newProject _ outcomes) =
+        runState (runExceptT action) (emptyState project)
    in (,,) newProject outcomes <$> result
 
 getProject :: ActionM (Project Annotation)
@@ -71,9 +71,13 @@ appendProject :: Project Annotation -> ActionM ()
 appendProject prj =
   modify (\s -> s {asProject = asProject s <> prj})
 
+appendActionOutcome :: ActionOutcome -> ActionM ()
+appendActionOutcome ao =
+  modify (\s -> s {asActionOutcomes = asActionOutcomes s <> [ao]})
+
 appendMessage :: Text -> ActionM ()
 appendMessage =
-  tell . pure . NewMessage
+  appendActionOutcome . NewMessage
 
 appendDocMessage :: Doc ann -> ActionM ()
 appendDocMessage = appendMessage . renderWithWidth 50
@@ -99,12 +103,12 @@ appendWriteFile ::
   SaveContents ->
   ActionM ()
 appendWriteFile savePath filename content =
-  tell $ pure $ NewWriteFile savePath filename content
+  appendActionOutcome $ NewWriteFile savePath filename content
 
 appendStoreExpression :: StoreExpression Annotation -> ActionM ()
 appendStoreExpression se = do
   let newProject = fromStoreExpression se (getStoreExpressionHash se)
-  tell (pure (NewStoreExpression se))
+  appendActionOutcome (NewStoreExpression se)
   appendProject newProject
 
 messagesFromOutcomes :: [ActionOutcome] -> [Text]
