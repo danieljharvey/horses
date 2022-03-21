@@ -8,6 +8,7 @@ where
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
+import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
@@ -16,6 +17,7 @@ import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
+import Language.Mimsa.Store
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -41,11 +43,21 @@ evaluate input expr = do
   resolved <-
     Actions.typecheckExpression project input expr
 
-  -- optimise
-  optimisedStoreExpr <- Actions.optimiseStoreExpression (reStoreExpression resolved)
+  let se = reStoreExpression resolved
+
+  -- get dependencies of StoreExpression
+  depsSe <- Actions.getDepsForStoreExpression se
+
+  -- optimise them all like a big legend
+  storeExprs <- Actions.optimiseAll (fst <$> depsSe)
+
+  -- get new root StoreExpression (it may be different due to optimisation)
+  optimisedStoreExpr <- case M.lookup (getStoreExpressionHash se) storeExprs of
+    Just re -> pure re
+    _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
   -- resolve optimised expression
-  (ResolvedExpression mt se expr' scope' swaps typedExpr input') <-
+  (ResolvedExpression mt newStoreExpr expr' scope' swaps typedExpr input') <-
     Actions.checkStoreExpression
       (prettyPrint optimisedStoreExpr)
       project
@@ -72,6 +84,6 @@ evaluate input expr = do
             <> prettyDoc mt
         )
     )
-  pure (mt, interpretedExpr, se, typedNameExpr, input')
+  pure (mt, interpretedExpr, newStoreExpr, typedNameExpr, input')
 
 ---------
