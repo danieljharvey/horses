@@ -77,6 +77,8 @@ main =
       bgroup
         "evaluate"
         [ bench "evaluate big looping thing" $
-            whnf evaluateThing "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000"
+            whnf evaluateThing "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000",
+          bench "evaluate parsing" $
+            whnf evaluateThing "let pA = parser.char \"a\"; let pB = parser.char \"b\"; let p = parser.many (parser.alt pA pB); parser.run p \"aababaa\""
         ]
     ]
