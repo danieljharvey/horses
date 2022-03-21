@@ -8,7 +8,7 @@ import type { Typeclass } from './Typeclass'
 
 export type BindTypeResponse = {
   btCodegen?: ExpressionData
-  btTypeclasses: Array<Typeclass>
-  btProjectData: ProjectData
   btPrettyType: string
+  btProjectData: ProjectData
+  btTypeclasses: Array<Typeclass>
 }

@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type OptimiseRequest = {
-  opProjectHash: string
   opBindingName: string
+  opProjectHash: string
 }

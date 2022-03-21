@@ -8,6 +8,6 @@ import type { TestData } from './TestData'
 
 export type BindExpressionResponse = {
   beExpressionData: ExpressionData
-  beTestData: TestData
   beProjectData: ProjectData
+  beTestData: TestData
 }

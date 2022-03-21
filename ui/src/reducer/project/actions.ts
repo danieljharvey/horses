@@ -17,16 +17,14 @@ export const initialise = () => ({
   type: 'Initialise' as const,
 })
 
-export const fetchExpressionSuccess = (
-  exprHash: ExprHash,
-  storeExpression: ExpressionData
+export const fetchExpressionsSuccess = (
+  fetched: Record<ExprHash, ExpressionData>
 ) => ({
-  type: 'FetchExpressionSuccess' as const,
-  exprHash,
-  storeExpression,
+  type: 'FetchExpressionsSuccess' as const,
+  fetched,
 })
 
 export type ProjectAction =
   | ReturnType<typeof initialise>
   | ReturnType<typeof storeProjectData>
-  | ReturnType<typeof fetchExpressionSuccess>
+  | ReturnType<typeof fetchExpressionsSuccess>

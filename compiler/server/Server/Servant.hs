@@ -16,7 +16,7 @@ import Server.Endpoints.Project
 import Server.Endpoints.Search
 import Server.Types
 
-type MimsaAPI = ProjectAPI :<|> SearchAPI :<|> CompileAPI :<|> GetExpression
+type MimsaAPI = ProjectAPI :<|> SearchAPI :<|> CompileAPI :<|> ExpressionAPI
 
 mimsaAPI :: Proxy MimsaAPI
 mimsaAPI = Proxy
@@ -26,4 +26,4 @@ mimsaServer mimsaEnv =
   projectEndpoints mimsaEnv
     :<|> searchEndpoints mimsaEnv
     :<|> compileEndpoints mimsaEnv
-    :<|> getExpression mimsaEnv
+    :<|> expressionEndpoints mimsaEnv

@@ -66,29 +66,37 @@ export const projectReducer: EventReducer<
         ]
       )
 
-    case 'FetchExpressionSuccess':
+    case 'FetchExpressionsSuccess': {
+      const newStore = Object.entries(
+        action.fetched
+      ).reduce(
+        (all, [key, expression]) => ({
+          ...all,
+          [key]: { expression },
+        }),
+        {}
+      )
+      const allExprHashes = Object.values(
+        action.fetched
+      ).flatMap(({ edBindings, edTypeBindings }) => [
+        ...Object.values(edBindings),
+        ...Object.values(edTypeBindings),
+      ])
+
       return stateAndEvent(
         projectL.set({
           ...state.project,
           store: {
             ...state.project.store,
-            [action.exprHash]: {
-              expression: action.storeExpression,
-            },
+            ...newStore,
           },
         })(state),
         fetchExpressions(
-          [
-            ...Object.values(
-              action.storeExpression.edBindings
-            ),
-            ...Object.values(
-              action.storeExpression.edTypeBindings
-            ),
-          ],
+          allExprHashes,
           state.project.projectHash
         )
       )
+    }
 
     default:
       return stateOnly(state)

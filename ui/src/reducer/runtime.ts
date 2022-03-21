@@ -8,17 +8,19 @@ import {
   upgradeExpression,
   optimiseExpression,
 } from '../service/project'
-import { getExpression } from '../service/expression'
+import { getExpressions } from '../service/expression'
 import { ExprHash } from '../types/'
 import { setScreen } from './view/actions'
 import { projectSet } from './project/helpers'
 import { log } from './console/actions'
 import * as H from 'history'
-import { storeProjectData } from './project/actions'
+import {
+  fetchExpressionsSuccess,
+  storeProjectData,
+} from './project/actions'
 import * as T from 'fp-ts/Task'
 import { pipe } from 'fp-ts/function'
 import * as TE from 'fp-ts/TaskEither'
-import { fetchExpressionSuccess } from './project/actions'
 import {
   evaluateExpressionFailure,
   evaluateExpressionSuccess,
@@ -76,14 +78,13 @@ export const runtime =
         )
 
       case 'FetchExpressions':
-        const fetchAndDispatch = (exprHash: ExprHash) =>
+        const fetchAndDispatch = (exprHashes: ExprHash[]) =>
           pipe(
-            getExpression(exprHash),
-            TE.map((a) =>
-              fetchExpressionSuccess(
-                exprHash,
-                a.geExpressionData
-              )
+            exprHashes.length > 0
+              ? getExpressions(exprHashes)
+              : TE.right({ geExpressionsData: {} }),
+            TE.map(({ geExpressionsData }) =>
+              fetchExpressionsSuccess(geExpressionsData)
             )
           )
         const hashes = event.hashes.filter(
@@ -93,10 +94,10 @@ export const runtime =
             )
         )
         const x = pipe(
-          TE.sequenceArray(hashes.map(fetchAndDispatch)),
+          fetchAndDispatch(hashes),
           TE.fold(
             (_) => T.of([]),
-            (actions) => T.of(actions as Action[])
+            (action) => T.of([action] as Action[])
           )
         )
         return x
