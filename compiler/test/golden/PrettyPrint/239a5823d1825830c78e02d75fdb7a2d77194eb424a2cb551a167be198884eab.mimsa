@@ -1,2 +1,0 @@
-{ first: (const 1),
-  second: (const True) }.first 100

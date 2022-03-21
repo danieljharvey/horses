@@ -1,8 +1,0 @@
-let invert tree =
-  match tree with 
-      (Branch left a right) -> 
-        (Branch (invert right) a (invert left))
-    | (Leaf a) -> 
-        (Leaf a);
-
-invert (Branch (Leaf 1) 2 (Branch (Leaf 3) 4 (Leaf 5)))
