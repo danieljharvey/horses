@@ -5,11 +5,15 @@ module Language.Mimsa.Actions.Optimise
     optimiseByName,
     optimiseStoreExpression,
     optimiseWithDeps,
+    optimiseAll,
   )
 where
 
 import Control.Monad.Except
+import Data.Map (Map)
 import qualified Data.Map as M
+import qualified Data.Set as S
+import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
@@ -188,3 +192,64 @@ optimiseStoreExpression storeExpr =
       newStoreExpr
 
     pure newStoreExpr
+
+updateBindings :: Map ExprHash ExprHash -> Bindings -> Bindings
+updateBindings swaps (Bindings bindings) =
+  Bindings $
+    ( \exprHash -> case M.lookup exprHash swaps of
+        Just newExprHash -> newExprHash
+        _ -> exprHash
+    )
+      <$> bindings
+
+updateTypeBindings :: Map ExprHash ExprHash -> TypeBindings -> TypeBindings
+updateTypeBindings swaps (TypeBindings bindings) =
+  TypeBindings $
+    ( \exprHash -> case M.lookup exprHash swaps of
+        Just newExprHash -> newExprHash
+        _ -> exprHash
+    )
+      <$> bindings
+
+--
+
+-- Optimise a group of StoreExpressions
+-- Currently optimises each one individually without using its parents
+-- This should be a reasonably easy change to try in future though
+optimiseAll ::
+  Map ExprHash (StoreExpression Annotation) ->
+  Actions.ActionM (Map ExprHash (StoreExpression Annotation))
+optimiseAll inputStoreExpressions = do
+  let action depMap se = do
+        -- optimise se
+        optimisedSe <- optimiseStoreExpression se
+        let swaps = getStoreExpressionHash <$> depMap
+        -- use the optimised deps passed in
+        let newSe =
+              optimisedSe
+                { storeBindings = updateBindings swaps (storeBindings optimisedSe),
+                  storeTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
+                }
+        -- store it
+        Actions.appendStoreExpression newSe
+        pure newSe
+
+  -- create initial state for builder
+  -- we tag each StoreExpression we've found with the deps it needs
+  let state =
+        Build.State
+          { Build.stInputs =
+              ( \storeExpr ->
+                  Build.Plan
+                    { Build.jbDeps =
+                        S.fromList
+                          ( M.elems (getBindings (storeBindings storeExpr))
+                              <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
+                          ),
+                      Build.jbInput = storeExpr
+                    }
+              )
+                <$> inputStoreExpressions,
+            Build.stOutputs = mempty -- we use caches here if we wanted
+          }
+  Build.stOutputs <$> Build.doJobs action state

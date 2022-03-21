@@ -13,12 +13,10 @@ import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Coerce
 import Data.Foldable (traverse_)
-import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
@@ -33,64 +31,6 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
-updateBindings :: Map ExprHash ExprHash -> Bindings -> Bindings
-updateBindings swaps (Bindings bindings) =
-  Bindings $
-    ( \exprHash -> case M.lookup exprHash swaps of
-        Just newExprHash -> newExprHash
-        _ -> exprHash
-    )
-      <$> bindings
-
-updateTypeBindings :: Map ExprHash ExprHash -> TypeBindings -> TypeBindings
-updateTypeBindings swaps (TypeBindings bindings) =
-  TypeBindings $
-    ( \exprHash -> case M.lookup exprHash swaps of
-        Just newExprHash -> newExprHash
-        _ -> exprHash
-    )
-      <$> bindings
-
---
-
-optimiseAll ::
-  Map ExprHash (StoreExpression Annotation) ->
-  Actions.ActionM (Map ExprHash (StoreExpression Annotation))
-optimiseAll inputStoreExpressions = do
-  let action depMap se = do
-        -- optimise se
-        optimisedSe <- Actions.optimiseStoreExpression se
-        let swaps = getStoreExpressionHash <$> depMap
-        -- use the optimised deps passed in
-        let newSe =
-              optimisedSe
-                { storeBindings = updateBindings swaps (storeBindings optimisedSe),
-                  storeTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
-                }
-        -- store it
-        Actions.appendStoreExpression newSe
-        pure newSe
-
-  -- create initial state for builder
-  -- we tag each StoreExpression we've found with the deps it needs
-  let state =
-        Build.State
-          { Build.stInputs =
-              ( \storeExpr ->
-                  Build.Plan
-                    { Build.jbDeps =
-                        S.fromList
-                          ( M.elems (getBindings (storeBindings storeExpr))
-                              <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
-                          ),
-                      Build.jbInput = storeExpr
-                    }
-              )
-                <$> inputStoreExpressions,
-            Build.stOutputs = mempty -- we use caches here if we wanted
-          }
-  Build.stOutputs <$> Build.doJobs action state
-
 -- | this now accepts StoreExpression instead of expression
 compile ::
   Backend ->
@@ -101,7 +41,7 @@ compile be se = do
   depsSe <- Actions.getDepsForStoreExpression se
 
   -- optimise them all like a big legend
-  storeExprs <- optimiseAll (fst <$> depsSe)
+  storeExprs <- Actions.optimiseAll (fst <$> depsSe)
 
   -- get new root StoreExpression (it may be different due to optimisation)
   rootStoreExpr <- case M.lookup (getStoreExpressionHash se) storeExprs of
