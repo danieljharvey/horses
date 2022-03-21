@@ -7,9 +7,6 @@ module Language.Mimsa.Project.Stdlib
     addType,
     addBinding,
     removeBinding,
-    baseFns,
-    arrayFns,
-    nonEmptyArrayFns,
     allFns,
   )
 where
