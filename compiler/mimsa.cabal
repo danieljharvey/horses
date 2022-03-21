@@ -124,7 +124,6 @@ library
       Language.Mimsa.Transform.Inliner
       Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.TrimDeps
-      Language.Mimsa.Transform.UseOptimisedDeps
       Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
@@ -386,7 +385,6 @@ test-suite mimsa-test
       Test.Parser.Pattern
       Test.Parser.Syntax
       Test.Prettier
-      Test.Project.Helpers
       Test.Project.NormaliseType
       Test.Project.SourceSpan
       Test.Project.Stdlib

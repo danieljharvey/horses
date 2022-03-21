@@ -86,8 +86,6 @@ spec = do
       -- current hash is new one
       let newBoundHash = getHashOfName prj "useId"
       newBoundHash `shouldBe` getStoreExpressionHash (reStoreExpression resolved)
-      -- one new optimisation
-      additionalOptimisations testStdlib prj `shouldBe` 1
 
     it "Optimising twice returns same store expression and does not repeat work" $ do
       let action = do

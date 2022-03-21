@@ -18,7 +18,6 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
-import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Test.Data.Project
@@ -34,8 +33,7 @@ testProjectCompile ::
 testProjectCompile folderPrefix be expr = do
   let action = do
         (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-        let seHash = getStoreExpressionHash storeExpr
-        _ <- Actions.compile be storeExpr
+        (seHash, _) <- Actions.compile be storeExpr
         pure seHash
   let (_newProject_, outcomes, seHash) =
         fromRight (Actions.run testStdlib action)

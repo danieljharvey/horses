@@ -132,15 +132,6 @@ additionalStoreItems old new =
     projectStoreSize :: Project ann -> Int
     projectStoreSize = length . getStore . prjStore
 
-additionalOptimisations :: Project ann -> Project ann -> Int
-additionalOptimisations old new =
-  projectOptSize new - projectOptSize old
-  where
-    projectOptSize :: Project ann -> Int
-    projectOptSize = length . prjOptimised
-
----
-
 ----------
 
 evaluateText ::

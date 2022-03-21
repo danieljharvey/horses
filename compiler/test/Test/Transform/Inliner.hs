@@ -37,7 +37,7 @@ spec = do
         howTrivial (unsafeParseExpr "\\a -> True")
           `shouldBe` Nothing
     describe "inlineInternal" $ do
-      let inlineInternal' expr = inlineInternal (InlineState mempty) expr
+      let inlineInternal' = inlineInternal (InlineState mempty)
       it "Does nothing when no vars" $ do
         let expr = unsafeParseExpr "True"
         inlineInternal' expr
