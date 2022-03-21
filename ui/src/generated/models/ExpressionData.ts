@@ -5,14 +5,14 @@
 import type { SourceItem } from './SourceItem'
 
 export type ExpressionData = {
-  edHash: string
   edBindings: Record<string, string>
-  edInput: string
-  edType: string
-  edSourceItems: Array<SourceItem>
   edCanOptimise: boolean
+  edGraphviz: string
+  edHash: string
+  edInput: string
   edPretty: string
+  edSourceItems: Array<SourceItem>
+  edType: string
   edTypeBindings: Record<string, string>
   edWarnings: Array<string>
-  edGraphviz: string
 }

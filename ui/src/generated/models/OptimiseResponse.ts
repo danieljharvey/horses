@@ -8,6 +8,6 @@ import type { TestData } from './TestData'
 
 export type OptimiseResponse = {
   opExpressionData: ExpressionData
-  opTestData: TestData
   opProjectData: ProjectData
+  opTestData: TestData
 }

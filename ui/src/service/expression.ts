@@ -1,5 +1,5 @@
 import {
-  GetExpressionResponse,
+  GetExpressionsResponse,
   UserErrorResponse,
   ExprHash,
 } from '../types/'
@@ -9,9 +9,10 @@ import * as TE from 'fp-ts/TaskEither'
 // project-based API calls
 
 const baseUrl = process.env.REACT_APP_MIMSA_API_URL
-export const getExpression = (
-  exprHash: ExprHash
+export const getExpressions = (
+  exprHashes: ExprHash[]
 ): TE.TaskEither<
   UserErrorResponse,
-  GetExpressionResponse
-> => axiosGet(`${baseUrl}/expression/${exprHash}`)
+  GetExpressionsResponse
+> =>
+  axiosGet(`${baseUrl}/expressions/${exprHashes.join(',')}`)

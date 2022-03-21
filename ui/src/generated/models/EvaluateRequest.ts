@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type EvaluateRequest = {
-  erProjectHash: string
   erCode: string
+  erProjectHash: string
 }

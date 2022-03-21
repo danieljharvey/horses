@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type UpgradeRequest = {
-  upProjectHash: string
   upBindingName: string
+  upProjectHash: string
 }
