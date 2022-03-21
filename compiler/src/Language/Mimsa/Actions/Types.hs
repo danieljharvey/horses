@@ -13,7 +13,6 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State
-import Control.Monad.Writer
 import Data.Hashable
 import Data.Map (Map)
 import Data.Text (Text)
@@ -47,11 +46,12 @@ data ActionOutcome
 
 data ActionState = ActionState
   { asProject :: Project Annotation,
-    asCachedResolved :: Map ExprHash (ResolvedExpression Annotation)
+    asCachedResolved :: Map ExprHash (ResolvedExpression Annotation),
+    asActionOutcomes :: [ActionOutcome]
   }
   deriving stock (Eq, Ord, Show)
 
 type ActionM =
   ExceptT
     (Error Annotation)
-    (WriterT [ActionOutcome] (State ActionState))
+    (State ActionState)
