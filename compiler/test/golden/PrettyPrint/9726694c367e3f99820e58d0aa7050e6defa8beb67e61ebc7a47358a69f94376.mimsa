@@ -1,5 +1,0 @@
-if True
-then
-  { num: 1, num2: 2 }.num
-else
-  { num: 1, num2: 2 }.num2
