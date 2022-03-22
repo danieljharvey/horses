@@ -76,6 +76,8 @@ library
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Interpreter.UseSwaps
+      Language.Mimsa.Interpreter2.Interpret
+      Language.Mimsa.Interpreter2.Types
       Language.Mimsa.Logging
       Language.Mimsa.Monad
       Language.Mimsa.Parser
@@ -379,6 +381,7 @@ test-suite mimsa-test
       Test.Data.Project
       Test.Interpreter.InstantiateVar
       Test.Interpreter.Interpreter
+      Test.Interpreter.Interpreter2
       Test.Interpreter.Repl
       Test.Interpreter.UseSwaps
       Test.Parser.MonoTypeParser
