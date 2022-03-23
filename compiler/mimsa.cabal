@@ -76,7 +76,9 @@ library
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Interpreter.UseSwaps
+      Language.Mimsa.Interpreter2.Infix
       Language.Mimsa.Interpreter2.Interpret
+      Language.Mimsa.Interpreter2.Monad
       Language.Mimsa.Interpreter2.Types
       Language.Mimsa.Logging
       Language.Mimsa.Monad
@@ -159,6 +161,7 @@ library
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.BackendError
       Language.Mimsa.Types.Error.InterpreterError
+      Language.Mimsa.Types.Error.InterpreterError2
       Language.Mimsa.Types.Error.PatternMatchError
       Language.Mimsa.Types.Error.ProjectError
       Language.Mimsa.Types.Error.ResolverError
@@ -170,6 +173,7 @@ library
       Language.Mimsa.Types.Identifiers.TypeIdentifier
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Identifiers.Variable
+      Language.Mimsa.Types.Interpreter.Stack
       Language.Mimsa.Types.MimsaConfig
       Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project

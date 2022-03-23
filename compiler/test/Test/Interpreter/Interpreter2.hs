@@ -45,7 +45,7 @@ eval env input =
       let endExpr = interpret (storeExpression se)
       case toEmptyAnn <$> endExpr of
         Right a -> pure (Right (normaliseType (toEmptyType mt), a))
-        Left e -> pure (Left (prettyPrint $ InterpreterErr e))
+        Left e -> pure (Left (prettyPrint $ InterpreterErr2 e))
 
 optimise ::
   Project Annotation ->
@@ -97,13 +97,16 @@ spec :: Spec
 spec =
   fdescribe "Interpreter2" $ do
     describe "End to end parsing to evaluation" $ do
+      fit "Let and var" $ do
+        result <- eval testStdlib "let a = 1 in a"
+        snd <$> result `shouldBe` Right (int 1)
       it "let x = ((1,2)) in fst x" $ do
         result <- eval testStdlib "let x = ((1,2)) in fst x"
         result
           `shouldBe` Right
             (MTPrim mempty MTInt, int 1)
 
-      it "let good = { dog: True } in good.dog" $ do
+      fit "let good = { dog: True } in good.dog" $ do
         result <- eval testStdlib "let good = ({ dog: True }) in good.dog"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
@@ -115,7 +118,7 @@ spec =
               MyLambda mempty (Identifier mempty "i") (MyVar mempty "i")
             )
 
-      it "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
+      fit "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id 1"
         result
           `shouldBe` Right
@@ -138,7 +141,7 @@ spec =
       it "let reuse = ({ first: id 1, second: id 2 }) in reuse.first" $ do
         result <- eval testStdlib "let reuse = ({ first: id 1, second: id 2 }) in reuse.first"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-      it "let id = \\a -> a in id 1" $ do
+      fit "let id = \\a -> a in id 1" $ do
         result <- eval mempty "let id = \\a -> a in id 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
       it "let reuse = ({ first: id True, second: id 2 }) in reuse.first" $ do
@@ -153,16 +156,16 @@ spec =
       it "reuses polymorphic function 2" $ do
         result <- eval testStdlib "let reuse = ({ first: const True, second: const 2 }) in reuse.second 100"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
-      it "reuses polymorphic function defined here" $ do
+      fit "reuses polymorphic function defined here" $ do
         result <- eval testStdlib "let id2 a = a; (id2 1, id2 True)"
         result `shouldSatisfy` isRight
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-      it "(\\a -> a) 1" $ do
+      fit "Applies identity function" $ do
         result <- eval testStdlib "(\\a -> a) 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-      it "(\\b -> (\\a -> b)) 0 1" $ do
+      fit "(\\b -> (\\a -> b)) 0 1" $ do
         result <- eval testStdlib "(\\b -> (\\a -> b)) 0 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 0)
       it "addInt 1 (addInt (addInt 2 4) 5)" $ do
@@ -477,53 +480,53 @@ spec =
         -- no function equality
         result <- eval testStdlib "(\\a -> a) == (\\b -> b)"
         result `shouldSatisfy` isLeft
-      it "True == False" $ do
+      fit "True == False" $ do
         result <- eval testStdlib "True == False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-      it "True == True" $ do
+      fit "True == True" $ do
         result <- eval testStdlib "True == True"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
       it "(Just 1) == Just 2" $ do
         result <- eval testStdlib "(Just 1) == Just 2"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-      it "let eq1 = (\\a -> a == 1) in eq1 1" $ do
+      fit "let eq1 = (\\a -> a == 1) in eq1 1" $ do
         result <- eval testStdlib "let eq1 = (\\a -> a == 1) in eq1 1"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-      it "1 + 1" $ do
+      fit "1 + 1" $ do
         result <- eval testStdlib "1 + 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
-      it "True + 1" $ do
+      fit "True + 1" $ do
         result <- eval testStdlib "True + 1"
         result `shouldSatisfy` isLeft
-      it "10 - 1" $ do
+      fit "10 - 1" $ do
         result <- eval testStdlib "10 - 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 9)
 
-      it "True - 1" $ do
+      fit "True - 1" $ do
         result <- eval testStdlib "True - 1"
         result `shouldSatisfy` isLeft
 
-      it "1 + 1 + 1 + 1" $ do
+      fit "1 + 1 + 1 + 1" $ do
         result <- eval testStdlib "1 + 1 + 1 + 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 4)
 
-      it "\"dog\" ++ \"log\"" $ do
+      fit "\"dog\" ++ \"log\"" $ do
         result <- eval testStdlib "\"dog\" ++ \"log\""
         result `shouldBe` Right (MTPrim mempty MTString, str' "doglog")
 
-      it "\"dog\" ++ 123" $ do
+      fit "\"dog\" ++ 123" $ do
         result <- eval testStdlib "\"dog\" ++ 123"
         result `shouldSatisfy` isLeft
 
-      it "passes record to function" $ do
+      fit "passes record to function" $ do
         result <- eval testStdlib "let f = (\\a -> if True then a.num else a.num2) in f {num: 1, num2: 2}"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
 
-      it "if True then { one: 1 } else { two: 2 }" $ do
+      fit "if True then { one: 1 } else { two: 2 }" $ do
         result <- eval testStdlib "if True then { one: 1 } else { two: 2 }"
         result `shouldSatisfy` isLeft
 
-      it "if True then { one: 1 } else { one: 2 }" $ do
+      fit "if True then { one: 1 } else { one: 2 }" $ do
         result <- eval testStdlib "if True then { one: 1 } else { one: 2 }"
         result `shouldSatisfy` isRight
 

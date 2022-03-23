@@ -1,15 +1,20 @@
-module Language.Mimsa.Interpreter2.Types (InterpreterM, StackFrame (..), Stack (..)) where
+{-# LANGUAGE DerivingStrategies #-}
+
+module Language.Mimsa.Interpreter2.Types (InterpreterM, InterpretExpr, InterpretFn) where
 
 import Control.Monad.Reader
-import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error.InterpreterError
+import Language.Mimsa.Types.Error.InterpreterError2
+import Language.Mimsa.Types.Interpreter.Stack
 
-type InterpreterM var ann a = ReaderT (Stack var ann) (Either (InterpreterError ann)) a
+type InterpreterM var ann a =
+  ReaderT
+    (Stack var ann)
+    (Either (InterpreterError2 var ann))
+    a
 
-newtype StackFrame var ann = StackFrame
-  { sfItems :: Map var (Expr var ann)
-  }
+type InterpretExpr var ann = Expr var (StackFrame var ann)
 
-newtype Stack var ann = Stack {getStack :: NE.NonEmpty (StackFrame var ann)}
+type InterpretFn var ann =
+  InterpretExpr var ann ->
+  InterpreterM var ann (InterpretExpr var ann)
