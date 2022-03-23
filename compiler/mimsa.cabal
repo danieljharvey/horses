@@ -76,6 +76,7 @@ library
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Interpreter.UseSwaps
+      Language.Mimsa.Interpreter2.If
       Language.Mimsa.Interpreter2.Infix
       Language.Mimsa.Interpreter2.Interpret
       Language.Mimsa.Interpreter2.Monad

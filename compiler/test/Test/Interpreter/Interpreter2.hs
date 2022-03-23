@@ -110,6 +110,9 @@ spec =
         result <- eval testStdlib "let good = ({ dog: True }) in good.dog"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
+      fit "if expressions" $ do
+        result <- eval testStdlib "if 1 == 1 then 1 else 2"
+        snd <$> result `shouldBe` Right (int 1)
       it "let prelude = { id: (\\i -> i) } in prelude.id" $ do
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
@@ -526,15 +529,11 @@ spec =
         result <- eval testStdlib "if True then { one: 1 } else { two: 2 }"
         result `shouldSatisfy` isLeft
 
-      fit "if True then { one: 1 } else { one: 2 }" $ do
-        result <- eval testStdlib "if True then { one: 1 } else { one: 2 }"
-        result `shouldSatisfy` isRight
-
-      it "let a = { one: 1 }; let one = a.one; let two = a.two; a" $ do
+      fit "let a = { one: 1 }; let one = a.one; let two = a.two; a" $ do
         result <- eval testStdlib "let a = { one: 1 }; let one = a.one; let two = a.two; a"
         result `shouldSatisfy` isLeft
 
-      it "\\a -> let one = a.one; let two = a.two; a" $ do
+      fit "\\a -> let one = a.one; let two = a.two; a" $ do
         result <- eval testStdlib "\\a -> let one = a.one; let two = a.two; a"
         result
           `shouldSatisfy` isRight

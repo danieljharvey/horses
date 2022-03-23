@@ -18,6 +18,7 @@ data InterpreterError2 var ann
   | ComparisonWithNonNumber Operator (Expr var (StackFrame var ann))
   | StringConcatenationFailure (Expr var (StackFrame var ann)) (Expr var (StackFrame var ann))
   | ArrayConcatenationFailure (Expr var (StackFrame var ann)) (Expr var (StackFrame var ann))
+  | PredicateForIfMustBeABoolean (Expr var (StackFrame var ann))
   deriving stock (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError2 var ann) where
@@ -40,3 +41,5 @@ instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterE
     "Concatenation expected string + string but got this: " <> T.pack (show a) <> " and " <> T.pack (show b)
   prettyPrint (ArrayConcatenationFailure a b) =
     "Concatenation expected array + array but got this: " <> T.pack (show a) <> " and " <> T.pack (show b)
+  prettyPrint (PredicateForIfMustBeABoolean expr) =
+    "Expected a boolean as a predicate. Cannot use: " <> T.pack (show expr)
