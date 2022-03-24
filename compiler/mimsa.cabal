@@ -76,10 +76,13 @@ library
       Language.Mimsa.Interpreter.SwapName
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Interpreter.UseSwaps
+      Language.Mimsa.Interpreter2.App
       Language.Mimsa.Interpreter2.If
       Language.Mimsa.Interpreter2.Infix
       Language.Mimsa.Interpreter2.Interpret
       Language.Mimsa.Interpreter2.Monad
+      Language.Mimsa.Interpreter2.PatternMatch
+      Language.Mimsa.Interpreter2.RecordAccess
       Language.Mimsa.Interpreter2.Types
       Language.Mimsa.Logging
       Language.Mimsa.Monad

@@ -10,16 +10,11 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
-import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
-import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter2.Interpret
 import Language.Mimsa.Printer
-import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
@@ -40,51 +35,11 @@ eval ::
 eval env input =
   case evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
-    Right re -> do
-      let (ResolvedExpression mt se _exprVar _ _ _ _input) = optimise env (reStoreExpression re)
+    Right (ResolvedExpression mt se _ _ _ _ _) -> do
       let endExpr = interpret (storeExpression se)
       case toEmptyAnn <$> endExpr of
         Right a -> pure (Right (normaliseType (toEmptyType mt), a))
         Left e -> pure (Left (prettyPrint $ InterpreterErr2 e))
-
-optimise ::
-  Project Annotation ->
-  StoreExpression Annotation ->
-  ResolvedExpression Annotation
-optimise prj storeExpr = do
-  let action = do
-        -- optimise once
-        se <- Actions.optimiseStoreExpression storeExpr
-        -- optimise twice, it should be the same, if not we need to optimise
-        -- more thoroughly
-        newSe <- Actions.optimiseStoreExpression se
-        if (se $> ()) /= (newSe $> ())
-          then do
-            error
-              ( "Optimising twice gives different results for:\n"
-                  <> T.unpack (prettyPrint (storeExpression storeExpr))
-                  <> "\nAfter first optimise:\n"
-                  <> show (storeExpression se)
-                  <> "\nAfter second optimise:\n"
-                  <> show (storeExpression newSe)
-              )
-          else pure ()
-
-        -- have we left some unused vars?
-        let stillUnused = findUnused (storeExpression se)
-        if not (S.null stillUnused)
-          then
-            error $
-              "Unused found after optimise: "
-                <> T.unpack (prettyPrint stillUnused)
-                <> "\n"
-                <> T.unpack (prettyPrint (storeExpression se))
-          else pure ()
-
-        Actions.checkStoreExpression (prettyPrint se) prj se
-   in case Actions.run prj action of
-        Right (_, _, re) -> re
-        Left e -> error (T.unpack $ prettyPrint e)
 
 -- remove annotations for comparison
 toEmptyAnn :: Expr a b -> Expr a ()
@@ -97,7 +52,7 @@ spec :: Spec
 spec =
   fdescribe "Interpreter2" $ do
     describe "End to end parsing to evaluation" $ do
-      fit "Let and var" $ do
+      it "Let and var" $ do
         result <- eval testStdlib "let a = 1 in a"
         snd <$> result `shouldBe` Right (int 1)
       it "let x = ((1,2)) in fst x" $ do
@@ -106,11 +61,11 @@ spec =
           `shouldBe` Right
             (MTPrim mempty MTInt, int 1)
 
-      fit "let good = { dog: True } in good.dog" $ do
+      it "let good = { dog: True } in good.dog" $ do
         result <- eval testStdlib "let good = ({ dog: True }) in good.dog"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
-      fit "if expressions" $ do
+      it "if expressions" $ do
         result <- eval testStdlib "if 1 == 1 then 1 else 2"
         snd <$> result `shouldBe` Right (int 1)
       it "let prelude = { id: (\\i -> i) } in prelude.id" $ do
@@ -121,7 +76,7 @@ spec =
               MyLambda mempty (Identifier mempty "i") (MyVar mempty "i")
             )
 
-      fit "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
+      it "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id 1"
         result
           `shouldBe` Right
@@ -144,7 +99,7 @@ spec =
       it "let reuse = ({ first: id 1, second: id 2 }) in reuse.first" $ do
         result <- eval testStdlib "let reuse = ({ first: id 1, second: id 2 }) in reuse.first"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-      fit "let id = \\a -> a in id 1" $ do
+      it "let id = \\a -> a in id 1" $ do
         result <- eval mempty "let id = \\a -> a in id 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
       it "let reuse = ({ first: id True, second: id 2 }) in reuse.first" $ do
@@ -159,16 +114,16 @@ spec =
       it "reuses polymorphic function 2" $ do
         result <- eval testStdlib "let reuse = ({ first: const True, second: const 2 }) in reuse.second 100"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
-      fit "reuses polymorphic function defined here" $ do
+      it "reuses polymorphic function defined here" $ do
         result <- eval testStdlib "let id2 a = a; (id2 1, id2 True)"
         result `shouldSatisfy` isRight
       it "addInt 1 2" $ do
         result <- eval testStdlib "addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-      fit "Applies identity function" $ do
+      it "Applies identity function" $ do
         result <- eval testStdlib "(\\a -> a) 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-      fit "(\\b -> (\\a -> b)) 0 1" $ do
+      it "(\\b -> (\\a -> b)) 0 1" $ do
         result <- eval testStdlib "(\\b -> (\\a -> b)) 0 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 0)
       it "addInt 1 (addInt (addInt 2 4) 5)" $ do
@@ -483,57 +438,57 @@ spec =
         -- no function equality
         result <- eval testStdlib "(\\a -> a) == (\\b -> b)"
         result `shouldSatisfy` isLeft
-      fit "True == False" $ do
+      it "True == False" $ do
         result <- eval testStdlib "True == False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-      fit "True == True" $ do
+      it "True == True" $ do
         result <- eval testStdlib "True == True"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
       it "(Just 1) == Just 2" $ do
         result <- eval testStdlib "(Just 1) == Just 2"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-      fit "let eq1 = (\\a -> a == 1) in eq1 1" $ do
+      it "let eq1 = (\\a -> a == 1) in eq1 1" $ do
         result <- eval testStdlib "let eq1 = (\\a -> a == 1) in eq1 1"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-      fit "1 + 1" $ do
+      it "1 + 1" $ do
         result <- eval testStdlib "1 + 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
-      fit "True + 1" $ do
+      it "True + 1" $ do
         result <- eval testStdlib "True + 1"
         result `shouldSatisfy` isLeft
-      fit "10 - 1" $ do
+      it "10 - 1" $ do
         result <- eval testStdlib "10 - 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 9)
 
-      fit "True - 1" $ do
+      it "True - 1" $ do
         result <- eval testStdlib "True - 1"
         result `shouldSatisfy` isLeft
 
-      fit "1 + 1 + 1 + 1" $ do
+      it "1 + 1 + 1 + 1" $ do
         result <- eval testStdlib "1 + 1 + 1 + 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 4)
 
-      fit "\"dog\" ++ \"log\"" $ do
+      it "\"dog\" ++ \"log\"" $ do
         result <- eval testStdlib "\"dog\" ++ \"log\""
         result `shouldBe` Right (MTPrim mempty MTString, str' "doglog")
 
-      fit "\"dog\" ++ 123" $ do
+      it "\"dog\" ++ 123" $ do
         result <- eval testStdlib "\"dog\" ++ 123"
         result `shouldSatisfy` isLeft
 
-      fit "passes record to function" $ do
+      it "passes record to function" $ do
         result <- eval testStdlib "let f = (\\a -> if True then a.num else a.num2) in f {num: 1, num2: 2}"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
 
-      fit "if True then { one: 1 } else { two: 2 }" $ do
+      it "if True then { one: 1 } else { two: 2 }" $ do
         result <- eval testStdlib "if True then { one: 1 } else { two: 2 }"
         result `shouldSatisfy` isLeft
 
-      fit "let a = { one: 1 }; let one = a.one; let two = a.two; a" $ do
+      it "let a = { one: 1 }; let one = a.one; let two = a.two; a" $ do
         result <- eval testStdlib "let a = { one: 1 }; let one = a.one; let two = a.two; a"
         result `shouldSatisfy` isLeft
 
-      fit "\\a -> let one = a.one; let two = a.two; a" $ do
+      it "\\a -> let one = a.one; let two = a.two; a" $ do
         result <- eval testStdlib "\\a -> let one = a.one; let two = a.two; a"
         result
           `shouldSatisfy` isRight

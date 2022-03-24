@@ -1,13 +1,14 @@
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Error.InterpreterError2 (InterpreterError2 (..)) where
 
 import Data.Map (Map)
+import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Interpreter.Stack
 
 data InterpreterError2 var ann
@@ -19,6 +20,9 @@ data InterpreterError2 var ann
   | StringConcatenationFailure (Expr var (StackFrame var ann)) (Expr var (StackFrame var ann))
   | ArrayConcatenationFailure (Expr var (StackFrame var ann)) (Expr var (StackFrame var ann))
   | PredicateForIfMustBeABoolean (Expr var (StackFrame var ann))
+  | CannotDestructureAsRecord (Expr var (StackFrame var ann)) Name
+  | CannotFindMemberInRecord (Map Name (Expr var (StackFrame var ann))) Name
+  | PatternMatchFailure (Expr var (StackFrame var ann))
   deriving stock (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError2 var ann) where
@@ -43,3 +47,11 @@ instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterE
     "Concatenation expected array + array but got this: " <> T.pack (show a) <> " and " <> T.pack (show b)
   prettyPrint (PredicateForIfMustBeABoolean expr) =
     "Expected a boolean as a predicate. Cannot use: " <> T.pack (show expr)
+  prettyPrint (CannotDestructureAsRecord expr name) =
+    "Expected a record with a member " <> prettyPrint name <> ". Cannot destructure: " <> T.pack (show expr)
+  prettyPrint (CannotFindMemberInRecord items name) =
+    "Could not find member " <> prettyPrint name <> " in " <> itemList
+    where
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+  prettyPrint (PatternMatchFailure expr') =
+    "Could not pattern match on value " <> T.pack (show expr')

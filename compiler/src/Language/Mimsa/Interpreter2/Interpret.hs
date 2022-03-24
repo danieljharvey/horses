@@ -3,9 +3,13 @@ module Language.Mimsa.Interpreter2.Interpret (interpret) where
 import Control.Monad.Reader
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
+import Language.Mimsa.ExprUtils
+import Language.Mimsa.Interpreter2.App
 import Language.Mimsa.Interpreter2.If
 import Language.Mimsa.Interpreter2.Infix
 import Language.Mimsa.Interpreter2.Monad
+import Language.Mimsa.Interpreter2.PatternMatch
+import Language.Mimsa.Interpreter2.RecordAccess
 import Language.Mimsa.Interpreter2.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError2
@@ -45,27 +49,23 @@ interpretExpr (MyLambda _ ident body) = do
   pure (MyLambda closure ident body)
 interpretExpr (MyPair ann a b) =
   MyPair ann <$> interpretExpr a <*> interpretExpr b
-interpretExpr (MyInfix _ op a b) = interpretInfix interpretExpr op a b
-interpretExpr (MyRecord ann exprs) =
-  MyRecord ann <$> traverse interpretExpr exprs
+interpretExpr (MyInfix _ op a b) =
+  interpretInfix interpretExpr op a b
 interpretExpr (MyIf ann predExpr thenExpr elseExpr) =
   interpretIf interpretExpr ann predExpr thenExpr elseExpr
-interpretExpr (MyApp ann fn a) = do
-  case fn of
-    (MyVar _ var) -> do
-      intF <- lookupVar var
-      interpretExpr (MyApp ann intF a)
-    (MyLambda closure ident body) -> do
-      -- interpret arg first
-      intA <- interpretExpr a
-      -- add arg to context
-      let newStackFrame = addVarToFrame (varFromIdent ident) intA closure
-      -- run body with closure + new arg
-      local (addStackFrame newStackFrame) (interpretExpr body)
-    other -> do
-      -- try and resolve it into something we recognise
-      unfoldedF <- interpretExpr other
-      if unfoldedF == other -- if it hasn't changed, we don't want to end up looping so give up and error
-        then error "Unfolding failed, what is going on here"
-        else interpretExpr (MyApp ann unfoldedF a)
-interpretExpr a = error (show a <> " not implemented")
+interpretExpr (MyApp ann fn a) =
+  interpretApp interpretExpr ann fn a
+interpretExpr (MyRecordAccess ann expr name) =
+  interpretRecordAccess interpretExpr ann expr name
+interpretExpr (MyDefineInfix _ op fn expr) =
+  local
+    (addOperator op fn)
+    (interpretExpr expr)
+interpretExpr (MyData _ _ expr) = interpretExpr expr
+interpretExpr (MyPatternMatch _ matchExpr patterns) = do
+  intMatchExpr <- interpretExpr matchExpr
+  interpretPatternMatch interpretExpr intMatchExpr patterns
+interpretExpr (MyLetPattern _ pat patExpr body) =
+  interpretLetPattern interpretExpr pat patExpr body
+interpretExpr other =
+  bindExpr interpretExpr other -- handle all other cases by just interpreting each subexpression
