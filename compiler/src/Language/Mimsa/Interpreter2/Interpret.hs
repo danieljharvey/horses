@@ -3,6 +3,7 @@ module Language.Mimsa.Interpreter2.Interpret (interpret) where
 import Control.Monad.Reader
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter2.App
 import Language.Mimsa.Interpreter2.If
@@ -19,16 +20,24 @@ varFromIdent :: Identifier var ann -> var
 varFromIdent (Identifier _ var) = var
 varFromIdent (AnnotatedIdentifier _ var) = var
 
-initialStack :: (Ord var) => Stack var ann
-initialStack = Stack (NE.singleton (StackFrame mempty mempty))
+-- we are currently including all the deps in with the regular stuff
+-- this means we are going to make loads of copies of it
+-- which doesn't feel efficient
+-- perhaps instead the state should contain the stack for scoped stuff
+-- and then a flat set of Map ExprHash Expr which is static throughout
+initialStack :: Map var (InterpretExpr var ann) -> Stack var ann
+initialStack deps = Stack (NE.singleton (StackFrame deps mempty))
 
 interpret ::
   (Eq ann, Ord var, Show var) =>
+  Map var (Expr var ann) ->
   Expr var ann ->
   Either (InterpreterError2 var ann) (InterpretExpr var ann)
-interpret expr =
-  let expr' = expr $> mempty
-   in runReaderT (interpretExpr expr') initialStack
+interpret deps expr =
+  let addEmptyStackFrame exp' = exp' $> mempty
+      expr' = addEmptyStackFrame expr
+      initialDeps = addEmptyStackFrame <$> deps
+   in runReaderT (interpretExpr expr') (initialStack initialDeps)
 
 interpretExpr ::
   (Eq ann, Ord var, Show var) =>

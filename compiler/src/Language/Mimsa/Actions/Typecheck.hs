@@ -3,7 +3,6 @@
 module Language.Mimsa.Actions.Typecheck
   ( typecheckStoreExpression,
     typecheckExpression,
-    getDepsForStoreExpression,
     typeMapForProjectSearch,
     annotateStoreExpressionWithTypes,
   )
@@ -18,6 +17,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -137,7 +137,7 @@ typecheckStoreExpression ::
   Text ->
   Actions.ActionM (ResolvedExpression Annotation)
 typecheckStoreExpression se input = do
-  inputStoreExpressions <- getDepsForStoreExpression se
+  inputStoreExpressions <- Actions.getDepsForStoreExpression se
   let allInputs =
         inputStoreExpressions
           <> M.singleton (getStoreExpressionHash se) (se, input) -- overwrite root storeExpression so that we use the actual user input
@@ -149,26 +149,6 @@ typecheckStoreExpression se input = do
   case M.lookup (getStoreExpressionHash se) resolved of
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
-
--- recursively get all the StoreExpressions required
-getDepsForStoreExpression ::
-  StoreExpression Annotation ->
-  Actions.ActionM (Map ExprHash (StoreExpression Annotation, Text))
-getDepsForStoreExpression storeExpr = do
-  project <- Actions.getProject
-  depsList <-
-    liftEither $
-      first
-        StoreErr
-        (recursiveResolve (prjStore project) storeExpr)
-  pure $
-    M.singleton (getStoreExpressionHash storeExpr) (storeExpr, prettyPrint storeExpr)
-      <> M.fromList
-        ( ( \se ->
-              (getStoreExpressionHash se, (se, prettyPrint se))
-          )
-            <$> depsList
-        )
 
 -- | get an expression, capture deps from project, and typecheck it
 typecheckExpression ::
@@ -200,7 +180,7 @@ typeMapForProjectSearch = do
   -- fetch StoreExpressions for top-level bindings
   storeExprs <- traverse Actions.lookupExpression (M.elems (getBindings bindings))
   -- also fetch deps of said bindings
-  manyMaps <- traverse getDepsForStoreExpression storeExprs
+  manyMaps <- traverse Actions.getDepsForStoreExpression storeExprs
   -- typecheck everything
   resolvedMap <- typecheckStoreExpressions (mconcat manyMaps)
   -- make into a nice type map

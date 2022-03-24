@@ -35,10 +35,12 @@ library
       Language.Mimsa.Actions.Helpers.CanOptimise
       Language.Mimsa.Actions.Helpers.CheckStoreExpression
       Language.Mimsa.Actions.Helpers.FindExistingBinding
+      Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression
       Language.Mimsa.Actions.Helpers.LookupExpression
       Language.Mimsa.Actions.Helpers.Parse
       Language.Mimsa.Actions.Helpers.Swaps
       Language.Mimsa.Actions.Helpers.UpdateTests
+      Language.Mimsa.Actions.Interpret
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding
@@ -80,6 +82,7 @@ library
       Language.Mimsa.Interpreter2.If
       Language.Mimsa.Interpreter2.Infix
       Language.Mimsa.Interpreter2.Interpret
+      Language.Mimsa.Interpreter2.MarkImports
       Language.Mimsa.Interpreter2.Monad
       Language.Mimsa.Interpreter2.PatternMatch
       Language.Mimsa.Interpreter2.RecordAccess
@@ -177,6 +180,7 @@ library
       Language.Mimsa.Types.Identifiers.TypeIdentifier
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Identifiers.Variable
+      Language.Mimsa.Types.Interpreter.InterpretVar
       Language.Mimsa.Types.Interpreter.Stack
       Language.Mimsa.Types.MimsaConfig
       Language.Mimsa.Types.NullUnit
