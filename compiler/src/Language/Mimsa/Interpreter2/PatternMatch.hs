@@ -19,11 +19,12 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError2
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Interpreter.Stack
+import Language.Mimsa.Types.Store.ExprHash
 
 interpretLetPattern ::
   (Ord var) =>
   InterpretFn var ann ->
-  Pattern var (StackFrame var ann) ->
+  InterpretPattern var ann ->
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
@@ -37,13 +38,13 @@ interpretLetPattern interpretFn pat expr body = do
   -- add args to context
   let newStackFrame = foldr (uncurry addVarToFrame) currentStackFrame bindings
   -- run body with closure + new arg
-  local (addStackFrame newStackFrame) (interpretFn body)
+  addStackFrame newStackFrame (interpretFn body)
 
 interpretPatternMatch ::
   (Ord var) =>
   InterpretFn var ann ->
   InterpretExpr var ann ->
-  [(Pattern var (StackFrame var ann), InterpretExpr var ann)] ->
+  [(InterpretPattern var ann, InterpretExpr var ann)] ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretPatternMatch interpretFn expr' patterns = do
   -- interpret match expression
@@ -57,19 +58,20 @@ interpretPatternMatch interpretFn expr' patterns = do
       do
         -- get current stack frame
         currentStackFrame <- getCurrentStackFrame
+
         -- add args to context
         let newStackFrame =
               foldr (uncurry addVarToFrame) currentStackFrame bindings
         -- run body with closure + new arg
-        local (addStackFrame newStackFrame) (interpretFn patExpr)
+        addStackFrame newStackFrame (interpretFn patExpr)
     _ ->
       throwError $ PatternMatchFailure expr'
 
 -- pull vars out of expr to match patterns
 patternMatches ::
-  Pattern var (StackFrame var ann) ->
+  InterpretPattern var ann ->
   InterpretExpr var ann ->
-  Maybe [(var, InterpretExpr var ann)]
+  Maybe [((var, Maybe ExprHash), InterpretExpr var ann)]
 patternMatches (PWildcard _) _ = pure []
 patternMatches (PVar _ name) expr = pure [(name, expr)]
 patternMatches (PPair _ pA pB) (MyPair _ a b) = do

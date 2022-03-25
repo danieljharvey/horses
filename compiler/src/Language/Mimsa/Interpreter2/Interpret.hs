@@ -14,29 +14,25 @@ import Language.Mimsa.Interpreter2.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError2
 import Language.Mimsa.Types.Interpreter.Stack
+import Language.Mimsa.Types.Store.ExprHash
 
 varFromIdent :: Identifier var ann -> var
 varFromIdent (Identifier _ var) = var
 varFromIdent (AnnotatedIdentifier _ var) = var
 
--- we are currently including all the deps in with the regular stuff
--- this means we are going to make loads of copies of it
--- which doesn't feel efficient
--- perhaps instead the state should contain the stack for scoped stuff
--- and then a flat set of Map ExprHash Expr which is static throughout
-initialStack :: Map var (InterpretExpr var ann) -> Stack var ann
-initialStack deps = Stack (NE.singleton (StackFrame deps mempty))
+initialStack :: (Ord var) => Stack var ann
+initialStack = Stack (NE.singleton (StackFrame mempty mempty))
 
 interpret ::
   (Eq ann, Ord var, Show var) =>
-  Map var (Expr var ann) ->
-  Expr var ann ->
+  Map ExprHash (Expr (var, Maybe ExprHash) ann) ->
+  Expr (var, Maybe ExprHash) ann ->
   Either (InterpreterError2 var ann) (InterpretExpr var ann)
 interpret deps expr =
   let addEmptyStackFrame exp' = exp' $> mempty
       expr' = addEmptyStackFrame expr
       initialDeps = addEmptyStackFrame <$> deps
-   in runReaderT (interpretExpr expr') (initialStack initialDeps)
+   in runReaderT (interpretExpr expr') (InterpretReaderEnv initialStack initialDeps)
 
 interpretExpr ::
   (Eq ann, Ord var, Show var) =>
@@ -46,12 +42,14 @@ interpretExpr (MyLiteral _ val) = pure (MyLiteral mempty val)
 interpretExpr (MyLet _ ident expr body) = do
   -- calc expr, including itself to sort recursion
   intExpr <-
-    local
-      (addToStackFrame (varFromIdent ident) expr)
+    addToStackFrame
+      (varFromIdent ident)
+      expr
       (interpretExpr expr)
   -- calc rest, with new binding added to the current stack frame
-  local
-    (addToStackFrame (varFromIdent ident) intExpr)
+  addToStackFrame
+    (varFromIdent ident)
+    intExpr
     (interpretExpr body)
 interpretExpr (MyVar _ var) = lookupVar var
 interpretExpr (MyLambda _ ident body) = do
@@ -69,8 +67,9 @@ interpretExpr (MyApp ann fn a) =
 interpretExpr (MyRecordAccess ann expr name) =
   interpretRecordAccess interpretExpr ann expr name
 interpretExpr (MyDefineInfix _ op fn expr) =
-  local
-    (addOperator op fn)
+  addOperator
+    op
+    fn
     (interpretExpr expr)
 interpretExpr (MyData _ _ expr) = interpretExpr expr
 interpretExpr (MyPatternMatch _ matchExpr patterns) = do

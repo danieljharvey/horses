@@ -9,34 +9,32 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Interpreter.InterpretVar
 import Language.Mimsa.Types.Store
 
-convertImports :: StoreExpression ann -> Expr (InterpretVar Name) ann
+convertImports :: StoreExpression ann -> Expr (Name, Maybe ExprHash) ann
 convertImports se = runReader (markImports (storeExpression se)) initialState
   where
     initialState =
       ReaderState
-        { rsBindings = getBindings (storeBindings se),
-          rsHideVars = mempty
+        { rsBindings = getBindings (storeBindings se)
         }
 
-data ReaderState var = ReaderState
-  { rsBindings :: Map var ExprHash, -- map of names to look for, and exprHashes they point to
-    rsHideVars :: Set var -- set of vars not to map as they have been introduced by lambdas etc
+newtype ReaderState var = ReaderState
+  { rsBindings :: Map var ExprHash -- map of names to look for, and exprHashes they point to
   }
 
 type ImportM var a = Reader (ReaderState var) a
 
-getVar :: (Ord var) => var -> Reader (ReaderState var) (InterpretVar var)
+getVar :: (Ord var) => var -> Reader (ReaderState var) (var, Maybe ExprHash)
 getVar var = do
   items <- asks rsBindings
   case M.lookup var items of
-    Just exprHash -> pure (IImport exprHash)
-    _ -> pure (ILocal var)
+    Just exprHash -> pure (var, Just exprHash)
+    _ -> pure (var, Nothing)
 
 -- step through Expr, replacing vars with numbered variables
 markImports ::
   (Ord var) =>
   Expr var ann ->
-  ImportM var (Expr (InterpretVar var) ann)
+  ImportM var (Expr (var, Maybe ExprHash) ann)
 markImports (MyVar ann from) =
   MyVar ann <$> getVar from
 markImports (MyLet ann ident expr body) =
@@ -76,11 +74,11 @@ markImports (MyTypedHole ann name) = pure (MyTypedHole ann name)
 -- | TODO: recurse through all cases
 markPatternImports ::
   Pattern var ann ->
-  ImportM var (Pattern (InterpretVar var) ann)
+  ImportM var (Pattern (var, Maybe ExprHash) ann)
 markPatternImports pat =
   case pat of
     (PVar ann from') ->
-      pure (PVar ann (ILocal from'))
+      pure (PVar ann (from', Nothing))
     (PWildcard ann) ->
       pure $ PWildcard ann
     (PLit ann l) -> pure $ PLit ann l
@@ -105,23 +103,23 @@ markPatternImports pat =
 
 markSpreadNameImports ::
   Spread var ann ->
-  ImportM var (Spread (InterpretVar var) ann)
+  ImportM var (Spread (var, Maybe ExprHash) ann)
 markSpreadNameImports (SpreadValue ann from') =
-  pure (SpreadValue ann (ILocal from'))
+  pure (SpreadValue ann (from', Nothing))
 markSpreadNameImports (SpreadWildcard a) = pure (SpreadWildcard a)
 markSpreadNameImports NoSpread = pure NoSpread
 
 markStringPartImports ::
   StringPart var ann ->
-  ImportM var (StringPart (InterpretVar var) ann)
+  ImportM var (StringPart (var, Maybe ExprHash) ann)
 markStringPartImports (StrValue ann from') =
-  pure (StrValue ann (ILocal from'))
+  pure (StrValue ann (from', Nothing))
 markStringPartImports (StrWildcard ann) = pure (StrWildcard ann)
 
 markIdentImports ::
   Identifier var ann ->
-  ImportM var (Identifier (InterpretVar var) ann)
+  ImportM var (Identifier (var, Maybe ExprHash) ann)
 markIdentImports (Identifier ann from') =
-  pure $ Identifier ann (ILocal from')
+  pure $ Identifier ann (from', Nothing)
 markIdentImports (AnnotatedIdentifier ann from') =
-  pure $ AnnotatedIdentifier ann (ILocal from')
+  pure $ AnnotatedIdentifier ann (from', Nothing)

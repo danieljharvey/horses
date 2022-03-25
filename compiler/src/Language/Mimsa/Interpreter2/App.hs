@@ -26,7 +26,7 @@ interpretApp interpretFn _ (MyLambda closure ident body) a = do
   -- add arg to context
   let newStackFrame = addVarToFrame (varFromIdent ident) intA closure
   -- run body with closure + new arg
-  local (addStackFrame newStackFrame) (interpretFn body)
+  addStackFrame newStackFrame (interpretFn body)
 interpretApp interpretFn ann (MyConstructor ann' const') value =
   MyApp ann (MyConstructor ann' const')
     <$> interpretFn value

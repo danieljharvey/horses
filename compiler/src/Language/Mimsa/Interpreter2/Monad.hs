@@ -9,9 +9,14 @@ import Language.Mimsa.Interpreter2.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError2
 import Language.Mimsa.Types.Interpreter.Stack
+import Language.Mimsa.Types.Store.ExprHash
 
-addStackFrame :: StackFrame var ann -> Stack var ann -> Stack var ann
-addStackFrame sf (Stack stack) = Stack (sf <| stack)
+addStackFrame :: StackFrame var ann -> InterpreterM var ann a -> InterpreterM var ann a
+addStackFrame sf fn = do
+  let addStack (Stack stack) = Stack (sf <| stack)
+  local
+    (\ire -> ire {ireStack = addStack (ireStack ire)})
+    fn
 
 mapTopFrame :: (StackFrame var ann -> StackFrame var ann) -> Stack var ann -> Stack var ann
 mapTopFrame f (Stack stack) =
@@ -19,27 +24,46 @@ mapTopFrame f (Stack stack) =
       restOfStack = NE.tail stack
    in Stack (f currentFrame :| restOfStack)
 
-addVarToFrame :: (Ord var) => var -> Expr var (StackFrame var ann) -> StackFrame var ann -> StackFrame var ann
-addVarToFrame var expr (StackFrame entries infixes) =
+addVarToFrame ::
+  (Ord var) =>
+  (var, Maybe ExprHash) ->
+  InterpretExpr var ann ->
+  StackFrame var ann ->
+  StackFrame var ann
+addVarToFrame (var, _) expr (StackFrame entries infixes) =
   StackFrame (M.singleton var expr <> entries) infixes
 
-addToStackFrame :: (Ord var) => var -> Expr var (StackFrame var ann) -> Stack var ann -> Stack var ann
-addToStackFrame var expr =
-  mapTopFrame (addVarToFrame var expr)
+addToStackFrame :: (Ord var) => (var, Maybe ExprHash) -> InterpretExpr var ann -> InterpreterM var ann a -> InterpreterM var ann a
+addToStackFrame var expr fn =
+  local
+    (\ire -> ire {ireStack = mapTopFrame (addVarToFrame var expr) (ireStack ire)})
+    fn
 
 getCurrentStackFrame :: InterpreterM var ann (StackFrame var ann)
-getCurrentStackFrame = asks (NE.head . getStack)
+getCurrentStackFrame = asks (NE.head . getStack . ireStack)
 
-lookupVar :: (Ord var) => var -> InterpreterM var ann (Expr var (StackFrame var ann))
-lookupVar var = do
-  (StackFrame entries _) <- getCurrentStackFrame
-  case M.lookup var entries of
-    Just entry -> pure entry
-    _ -> throwError (CouldNotFindVar entries var)
+lookupInGlobals :: ExprHash -> InterpreterM var ann (InterpretExpr var ann)
+lookupInGlobals exprHash = do
+  globals <- asks ireGlobals
+  case M.lookup exprHash globals of
+    Just found -> pure found
+    _ -> throwError (CouldNotFindGlobal globals exprHash)
 
-addOperator :: InfixOp -> InterpretExpr var ann -> Stack var ann -> Stack var ann
-addOperator infixOp expr = do
-  mapTopFrame (addOperatorToFrame infixOp expr)
+lookupVar :: (Ord var) => (var, Maybe ExprHash) -> InterpreterM var ann (InterpretExpr var ann)
+lookupVar (var, maybeExprHash) = do
+  case maybeExprHash of
+    Just exprHash -> lookupInGlobals exprHash
+    Nothing -> do
+      (StackFrame entries _) <- getCurrentStackFrame
+      case M.lookup var entries of
+        Just entry -> pure entry
+        _ -> throwError (CouldNotFindVar entries var)
+
+addOperator :: InfixOp -> InterpretExpr var ann -> InterpreterM var ann a -> InterpreterM var ann a
+addOperator infixOp expr fn = do
+  local
+    (\ire -> ire {ireStack = mapTopFrame (addOperatorToFrame infixOp expr) (ireStack ire)})
+    fn
 
 addOperatorToFrame :: InfixOp -> InterpretExpr var ann -> StackFrame var ann -> StackFrame var ann
 addOperatorToFrame infixOp expr (StackFrame entries infixes) =

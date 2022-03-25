@@ -31,7 +31,7 @@ interpreter se = do
   -- optimise them all like a big legend
   let depsMap = markAllImports (fst <$> depsSe)
 
-  rootExpr <- case M.lookup (IImport $ getStoreExpressionHash se) depsMap of
+  rootExpr <- case M.lookup (getStoreExpressionHash se) depsMap of
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
@@ -44,8 +44,6 @@ interpreter se = do
 -- where they come from)
 markAllImports ::
   Map ExprHash (StoreExpression Annotation) ->
-  Map (InterpretVar Name) (Expr (InterpretVar Name) Annotation)
+  Map ExprHash (Expr (Name, Maybe ExprHash) Annotation)
 markAllImports inputStoreExpressions =
-  let action se =
-        M.singleton (IImport $ getStoreExpressionHash se) (convertImports se)
-   in foldMap action inputStoreExpressions
+  convertImports <$> inputStoreExpressions

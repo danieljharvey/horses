@@ -10,19 +10,23 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Interpreter.Stack
+import Language.Mimsa.Types.Store.ExprHash
+
+type InterpretExpr var ann = Expr (var, Maybe ExprHash) (StackFrame var ann)
 
 data InterpreterError2 var ann
   = UnknownInterpreterError2
-  | CouldNotFindVar (Map var (Expr var (StackFrame var ann))) var
-  | AdditionWithNonNumber (Expr var (StackFrame var ann))
-  | SubtractionWithNonNumber (Expr var (StackFrame var ann))
-  | ComparisonWithNonNumber Operator (Expr var (StackFrame var ann))
-  | StringConcatenationFailure (Expr var (StackFrame var ann)) (Expr var (StackFrame var ann))
-  | ArrayConcatenationFailure (Expr var (StackFrame var ann)) (Expr var (StackFrame var ann))
-  | PredicateForIfMustBeABoolean (Expr var (StackFrame var ann))
-  | CannotDestructureAsRecord (Expr var (StackFrame var ann)) Name
-  | CannotFindMemberInRecord (Map Name (Expr var (StackFrame var ann))) Name
-  | PatternMatchFailure (Expr var (StackFrame var ann))
+  | CouldNotFindVar (Map var (InterpretExpr var ann)) var
+  | CouldNotFindGlobal (Map ExprHash (InterpretExpr var ann)) ExprHash
+  | AdditionWithNonNumber (InterpretExpr var ann)
+  | SubtractionWithNonNumber (InterpretExpr var ann)
+  | ComparisonWithNonNumber Operator (InterpretExpr var ann)
+  | StringConcatenationFailure (InterpretExpr var ann) (InterpretExpr var ann)
+  | ArrayConcatenationFailure (InterpretExpr var ann) (InterpretExpr var ann)
+  | PredicateForIfMustBeABoolean (InterpretExpr var ann)
+  | CannotDestructureAsRecord (InterpretExpr var ann) Name
+  | CannotFindMemberInRecord (Map Name (InterpretExpr var ann)) Name
+  | PatternMatchFailure (InterpretExpr var ann)
   deriving stock (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError2 var ann) where
@@ -34,6 +38,10 @@ instance Monoid (InterpreterError2 var ann) where
 instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterError2 var ann) where
   prettyPrint (CouldNotFindVar items name) =
     "Could not find var " <> prettyPrint name <> " in " <> itemList
+    where
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+  prettyPrint (CouldNotFindGlobal items name) =
+    "Could not find global " <> prettyPrint name <> " in " <> itemList
     where
       itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
   prettyPrint UnknownInterpreterError2 = "Unknown interpreter 2 error"

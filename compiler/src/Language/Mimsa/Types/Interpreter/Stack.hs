@@ -5,10 +5,11 @@ module Language.Mimsa.Types.Interpreter.Stack (StackFrame (..), Stack (..)) wher
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Store.ExprHash
 
 data StackFrame var ann = StackFrame
-  { sfVariables :: Map var (Expr var (StackFrame var ann)),
-    sfInfix :: Map InfixOp (Expr var (StackFrame var ann))
+  { sfVariables :: Map var (Expr (var, Maybe ExprHash) (StackFrame var ann)),
+    sfInfix :: Map InfixOp (Expr (var, Maybe ExprHash) (StackFrame var ann))
   }
   deriving stock (Eq, Ord, Show)
 
