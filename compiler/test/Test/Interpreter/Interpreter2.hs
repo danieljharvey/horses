@@ -53,17 +53,25 @@ toEmptyType a = a $> ()
 spec :: Spec
 spec =
   fdescribe "Interpreter2" $ do
-    describe "End to end parsing to evaluation" $ do
+    fdescribe "End to end parsing to evaluation" $ do
       it "Let and var" $ do
         result <- eval testStdlib "let a = 1 in a"
         snd <$> result `shouldBe` Right (int 1)
-      fit "let x = ((1,2)) in fst x" $ do
+
+      it "let x = ((1,2)) in fst x" $ do
         result <- eval testStdlib "let x = ((1,2)) in fst x"
         result
           `shouldBe` Right
             (MTPrim mempty MTInt, int 1)
-      fit "let (a,b) = ((1,2)) in a" $ do
+
+      it "let (a,b) = ((1,2)) in a" $ do
         result <- eval testStdlib "let (a,b) = ((1,2)) in a"
+        result
+          `shouldBe` Right
+            (MTPrim mempty MTInt, int 1)
+
+      it "let fst = \\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst; let x = ((1,2)) in fst x" $ do
+        result <- eval testStdlib "let fst = \\tuple -> let (tupleFirst,tupleSecond) = tuple in tupleFirst; let x = ((1,2)) in fst x"
         result
           `shouldBe` Right
             (MTPrim mempty MTInt, int 1)
@@ -75,6 +83,7 @@ spec =
       it "if expressions" $ do
         result <- eval testStdlib "if 1 == 1 then 1 else 2"
         snd <$> result `shouldBe` Right (int 1)
+
       it "let prelude = { id: (\\i -> i) } in prelude.id" $ do
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
         result
@@ -99,7 +108,7 @@ spec =
               int 1
             )
 
-      it "compose incrementInt" $ do
+      fit "compose incrementInt" $ do
         result <- eval testStdlib "let compose = (\\f -> \\g -> \\a -> f (g a)) in let blah = compose incrementInt incrementInt in blah 67"
         result `shouldBe` Right (MTPrim mempty MTInt, int 69)
 
@@ -575,15 +584,15 @@ spec =
                 )
             )
 
-      it "\\state -> \\s -> match state with (State sas) -> sas s" $ do
+      xit "\\state -> \\s -> match state with (State sas) -> sas s" $ do
         result <- eval testStdlib "\\state -> \\s -> match state with (State sas) -> sas s"
         result `shouldSatisfy` isRight
 
-      it "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil" $ do
+      xit "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil" $ do
         result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil"
         result `shouldSatisfy` isRight
 
-      it "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil" $ do
+      xit "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil" $ do
         result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil"
         result `shouldSatisfy` isRight
 

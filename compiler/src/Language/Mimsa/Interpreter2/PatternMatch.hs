@@ -28,10 +28,14 @@ interpretLetPattern ::
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretLetPattern interpretFn pat expr body = do
-  let bindings = fromMaybe [] (patternMatches pat expr)
-
+  -- interpret input
+  intExpr <- interpretFn expr
+  -- get current stack frame
+  currentStackFrame <- getCurrentStackFrame
+  -- get new bound variables
+  let bindings = fromMaybe [] (patternMatches pat intExpr)
   -- add args to context
-  let newStackFrame = foldr (uncurry addVarToFrame) mempty bindings
+  let newStackFrame = foldr (uncurry addVarToFrame) currentStackFrame bindings
   -- run body with closure + new arg
   local (addStackFrame newStackFrame) (interpretFn body)
 
@@ -42,14 +46,20 @@ interpretPatternMatch ::
   [(Pattern var (StackFrame var ann), InterpretExpr var ann)] ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretPatternMatch interpretFn expr' patterns = do
-  let foldF (pat, patExpr) = case patternMatches pat expr' of
+  -- interpret match expression
+  intExpr <- interpretFn expr'
+  let foldF (pat, patExpr) = case patternMatches pat intExpr of
         Just bindings -> First (Just (patExpr, bindings))
         _ -> First Nothing
+  -- get first matching pattern
   case getFirst (foldMap foldF patterns) of
     Just (patExpr, bindings) ->
       do
+        -- get current stack frame
+        currentStackFrame <- getCurrentStackFrame
         -- add args to context
-        let newStackFrame = foldr (uncurry addVarToFrame) mempty bindings
+        let newStackFrame =
+              foldr (uncurry addVarToFrame) currentStackFrame bindings
         -- run body with closure + new arg
         local (addStackFrame newStackFrame) (interpretFn patExpr)
     _ ->

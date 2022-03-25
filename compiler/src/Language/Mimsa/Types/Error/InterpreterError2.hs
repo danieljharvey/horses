@@ -32,8 +32,10 @@ instance Monoid (InterpreterError2 var ann) where
   mempty = UnknownInterpreterError2
 
 instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterError2 var ann) where
-  prettyPrint (CouldNotFindVar _ name) =
-    "Could not find var " <> prettyPrint name
+  prettyPrint (CouldNotFindVar items name) =
+    "Could not find var " <> prettyPrint name <> " in " <> itemList
+    where
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
   prettyPrint UnknownInterpreterError2 = "Unknown interpreter 2 error"
   prettyPrint (AdditionWithNonNumber a) =
     "Addition expected number but got this: " <> T.pack (show a)

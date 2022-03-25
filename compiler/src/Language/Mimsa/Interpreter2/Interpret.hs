@@ -4,7 +4,6 @@ import Control.Monad.Reader
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
-import Language.Mimsa.ExprUtils
 import Language.Mimsa.Interpreter2.App
 import Language.Mimsa.Interpreter2.If
 import Language.Mimsa.Interpreter2.Infix
@@ -45,11 +44,14 @@ interpretExpr ::
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr (MyLiteral _ val) = pure (MyLiteral mempty val)
 interpretExpr (MyLet _ ident expr body) = do
-  -- calc expr body
-  interpretedExpr <- interpretExpr expr
+  -- calc expr, including itself to sort recursion
+  intExpr <-
+    local
+      (addToStackFrame (varFromIdent ident) expr)
+      (interpretExpr expr)
   -- calc rest, with new binding added to the current stack frame
   local
-    (addToStackFrame (varFromIdent ident) interpretedExpr)
+    (addToStackFrame (varFromIdent ident) intExpr)
     (interpretExpr body)
 interpretExpr (MyVar _ var) = lookupVar var
 interpretExpr (MyLambda _ ident body) = do
@@ -76,5 +78,7 @@ interpretExpr (MyPatternMatch _ matchExpr patterns) = do
   interpretPatternMatch interpretExpr intMatchExpr patterns
 interpretExpr (MyLetPattern _ pat patExpr body) =
   interpretLetPattern interpretExpr pat patExpr body
-interpretExpr other =
-  bindExpr interpretExpr other -- handle all other cases by just interpreting each subexpression
+interpretExpr (MyRecord ann as) = MyRecord ann <$> traverse interpretExpr as
+interpretExpr (MyArray ann as) = MyArray ann <$> traverse interpretExpr as
+interpretExpr (MyConstructor as const') = pure (MyConstructor as const')
+interpretExpr (MyTypedHole ann name) = pure (MyTypedHole ann name)

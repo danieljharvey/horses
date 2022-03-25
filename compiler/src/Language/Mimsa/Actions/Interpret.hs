@@ -35,7 +35,7 @@ interpreter se = do
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
-  interpretedExpr <- liftEither (first InterpreterErr2 (interpret (traceShowId depsMap) (traceShowId rootExpr)))
+  interpretedExpr <- liftEither (first InterpreterErr2 (interpret depsMap (traceShowId rootExpr)))
 
   pure (interpretedExpr $> mempty)
 

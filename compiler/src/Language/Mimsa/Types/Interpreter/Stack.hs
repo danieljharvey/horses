@@ -1,6 +1,4 @@
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
 module Language.Mimsa.Types.Interpreter.Stack (StackFrame (..), Stack (..)) where
 

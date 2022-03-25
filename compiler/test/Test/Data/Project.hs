@@ -85,7 +85,7 @@ buildTestStdlib =
         "\\f -> \\g -> \\a -> f (g a)"
       addBinding
         "incrementInt"
-        "\\a -> addInt 1 a"
+        "\\int -> addInt 1 int"
       addBinding
         "typeState"
         "type Maybe a = Just a | Nothing in {}"
