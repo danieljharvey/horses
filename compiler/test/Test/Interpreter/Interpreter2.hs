@@ -396,7 +396,7 @@ spec =
                 )
                 (MyConstructor mempty "Empty")
             )
-      fit "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1" $ do
+      it "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1" $ do
         result <- eval testStdlib "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
       it "type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))" $ do

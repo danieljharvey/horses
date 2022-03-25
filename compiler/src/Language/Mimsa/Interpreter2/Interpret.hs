@@ -4,10 +4,10 @@ import Control.Monad.Reader
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
-import Debug.Trace
 import Language.Mimsa.Interpreter2.App
 import Language.Mimsa.Interpreter2.If
 import Language.Mimsa.Interpreter2.Infix
+import Language.Mimsa.Interpreter2.Let
 import Language.Mimsa.Interpreter2.Monad
 import Language.Mimsa.Interpreter2.PatternMatch
 import Language.Mimsa.Interpreter2.RecordAccess
@@ -16,10 +16,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError2
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
-
-varFromIdent :: Identifier var ann -> var
-varFromIdent (Identifier _ var) = var
-varFromIdent (AnnotatedIdentifier _ var) = var
 
 initialStack :: (Ord var) => Stack var ann
 initialStack = Stack (NE.singleton (StackFrame mempty mempty))
@@ -40,25 +36,13 @@ interpretExpr ::
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr (MyLiteral _ val) = pure (MyLiteral mempty val)
-interpretExpr (MyLet _ ident expr body) = do
-  {-
-  -- calc expr, including itself to sort recursion
-  intExpr <-
-    addToStackFrame
-      (varFromIdent ident)
-      (MyVar mempty (varFromIdent ident))
-      (interpretExpr expr)
-  -}
-  -- calc rest, with new binding added to the current stack frame
-  addToStackFrame
-    (varFromIdent ident)
-    expr
-    (interpretExpr body)
+interpretExpr (MyLet _ ident expr body) =
+  interpretLet interpretExpr ident expr body
 interpretExpr (MyVar _ var) = lookupVar var
 interpretExpr (MyLambda _ ident body) = do
   -- capture current environment
   closure <- getCurrentStackFrame
-  pure (MyLambda (traceShowId closure) ident body)
+  pure (MyLambda closure ident body)
 interpretExpr (MyPair ann a b) =
   MyPair ann <$> interpretExpr a <*> interpretExpr b
 interpretExpr (MyInfix _ op a b) =

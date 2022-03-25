@@ -82,6 +82,7 @@ library
       Language.Mimsa.Interpreter2.If
       Language.Mimsa.Interpreter2.Infix
       Language.Mimsa.Interpreter2.Interpret
+      Language.Mimsa.Interpreter2.Let
       Language.Mimsa.Interpreter2.MarkImports
       Language.Mimsa.Interpreter2.Monad
       Language.Mimsa.Interpreter2.PatternMatch
