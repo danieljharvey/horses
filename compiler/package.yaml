@@ -43,6 +43,7 @@ dependencies:
 - QuickCheck # properties
 - exceptions 
 - openapi3 
+- bifunctors 
 
 library:
   source-dirs: src

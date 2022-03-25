@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Language.Mimsa.Types.AST.Expr
   ( Expr (..),
@@ -12,6 +13,7 @@ module Language.Mimsa.Types.AST.Expr
 where
 
 import qualified Data.Aeson as JSON
+import Data.Bifunctor.TH
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -135,6 +137,8 @@ data Expr var ann
     MyTypedHole {expAnn :: ann, expTypedHoleName :: Name}
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
+
+$(deriveBifunctor ''Expr)
 
 data InfixBit var ann
   = IfStart (Expr var ann)

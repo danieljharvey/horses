@@ -223,6 +223,7 @@ library
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers
@@ -271,6 +272,7 @@ executable mimsa
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers
@@ -332,6 +334,7 @@ executable mimsa-server
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers
@@ -440,6 +443,7 @@ test-suite mimsa-test
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers
@@ -477,6 +481,7 @@ benchmark mimsa-benchmark
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers

@@ -4,6 +4,7 @@ import Control.Monad.Reader
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
+import Debug.Trace
 import Language.Mimsa.Interpreter2.App
 import Language.Mimsa.Interpreter2.If
 import Language.Mimsa.Interpreter2.Infix
@@ -40,22 +41,24 @@ interpretExpr ::
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr (MyLiteral _ val) = pure (MyLiteral mempty val)
 interpretExpr (MyLet _ ident expr body) = do
+  {-
   -- calc expr, including itself to sort recursion
   intExpr <-
     addToStackFrame
       (varFromIdent ident)
-      expr
+      (MyVar mempty (varFromIdent ident))
       (interpretExpr expr)
+  -}
   -- calc rest, with new binding added to the current stack frame
   addToStackFrame
     (varFromIdent ident)
-    intExpr
+    expr
     (interpretExpr body)
 interpretExpr (MyVar _ var) = lookupVar var
 interpretExpr (MyLambda _ ident body) = do
   -- capture current environment
   closure <- getCurrentStackFrame
-  pure (MyLambda closure ident body)
+  pure (MyLambda (traceShowId closure) ident body)
 interpretExpr (MyPair ann a b) =
   MyPair ann <$> interpretExpr a <*> interpretExpr b
 interpretExpr (MyInfix _ op a b) =

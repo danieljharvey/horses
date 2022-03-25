@@ -3,10 +3,8 @@ module Language.Mimsa.Interpreter2.MarkImports (convertImports) where
 import Control.Monad.Reader
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Set (Set)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Interpreter.InterpretVar
 import Language.Mimsa.Types.Store
 
 convertImports :: StoreExpression ann -> Expr (Name, Maybe ExprHash) ann

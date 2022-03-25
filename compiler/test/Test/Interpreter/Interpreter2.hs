@@ -20,7 +20,6 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Interpreter.InterpretVar
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker
@@ -31,7 +30,7 @@ import Test.Utils.Helpers
 eval ::
   Project Annotation ->
   Text ->
-  IO (Either Text (Type (), Expr (InterpretVar Name) ()))
+  IO (Either Text (Type (), Expr Name ()))
 eval env input =
   case evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
@@ -108,16 +107,18 @@ spec =
               int 1
             )
 
-      fit "compose incrementInt" $ do
+      it "compose incrementInt" $ do
         result <- eval testStdlib "let compose = (\\f -> \\g -> \\a -> f (g a)) in let blah = compose incrementInt incrementInt in blah 67"
         result `shouldBe` Right (MTPrim mempty MTInt, int 69)
 
       it "let reuse = ({ first: id 1, second: id 2 }) in reuse.first" $ do
         result <- eval testStdlib "let reuse = ({ first: id 1, second: id 2 }) in reuse.first"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+
       it "let id = \\a -> a in id 1" $ do
         result <- eval mempty "let id = \\a -> a in id 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+
       it "let reuse = ({ first: id True, second: id 2 }) in reuse.first" $ do
         result <- eval testStdlib "let reuse = ({ first: id True, second: id 2 }) in reuse.first"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
@@ -395,7 +396,7 @@ spec =
                 )
                 (MyConstructor mempty "Empty")
             )
-      it "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1" $ do
+      fit "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1" $ do
         result <- eval testStdlib "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
       it "type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))" $ do

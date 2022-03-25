@@ -1,6 +1,5 @@
 module Language.Mimsa.Interpreter2.App (interpretApp) where
 
-import Control.Monad.Reader
 import Language.Mimsa.Interpreter2.Monad
 import Language.Mimsa.Interpreter2.Types
 import Language.Mimsa.Types.AST

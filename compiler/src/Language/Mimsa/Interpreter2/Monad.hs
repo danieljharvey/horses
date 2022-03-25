@@ -49,7 +49,10 @@ lookupInGlobals exprHash = do
     Just found -> pure found
     _ -> throwError (CouldNotFindGlobal globals exprHash)
 
-lookupVar :: (Ord var) => (var, Maybe ExprHash) -> InterpreterM var ann (InterpretExpr var ann)
+lookupVar ::
+  (Ord var) =>
+  (var, Maybe ExprHash) ->
+  InterpreterM var ann (InterpretExpr var ann)
 lookupVar (var, maybeExprHash) = do
   case maybeExprHash of
     Just exprHash -> lookupInGlobals exprHash

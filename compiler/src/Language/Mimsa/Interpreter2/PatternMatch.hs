@@ -7,7 +7,6 @@ module Language.Mimsa.Interpreter2.PatternMatch
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Monoid
@@ -18,7 +17,6 @@ import Language.Mimsa.Interpreter2.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError2
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 
 interpretLetPattern ::
