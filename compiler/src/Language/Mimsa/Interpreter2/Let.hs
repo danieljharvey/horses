@@ -10,15 +10,23 @@ varFromIdent :: Identifier var ann -> var
 varFromIdent (Identifier _ var) = var
 varFromIdent (AnnotatedIdentifier _ var) = var
 
--- so we need to interpret the expr in a let
--- if there's no recursion we use `interpretFn`
--- if there is (the main thing will be a function)
--- then we need to work out what to use as the closure
--- i _think_ just M.singleton bindingName expr
-
-interpretLetExpr :: (var, Maybe ExprHash) -> InterpretExpr var ann -> InterpreterM var ann (InterpretExpr var ann)
-interpretLetExpr _var _expr =
-  error "interpretLetExpr broken"
+-- need to interpret the expr in the let binding
+-- BUT it needs to refer to itself
+-- this is NOT the one, we need some form of indirection so the closure can say
+-- "and look up whatever 'var' is pls"
+interpretLetExpr ::
+  (Ord var) =>
+  InterpretFn var ann ->
+  (var, Maybe ExprHash) ->
+  InterpretExpr var ann ->
+  InterpreterM var ann (InterpretExpr var ann)
+interpretLetExpr interpretFn var expr = do
+  intExpr <- interpretFn expr
+  case intExpr of
+    lambdaExpr@MyLambda {} ->
+      -- make this a function of \binding -> actualFunction
+      pure (MyLambda mempty (Identifier mempty var) lambdaExpr)
+    other -> pure other
 
 interpretLet ::
   (Ord var) =>
@@ -31,6 +39,7 @@ interpretLet interpretFn ident expr body = do
   -- calc expr, including itself to sort recursion
   intExpr <-
     interpretLetExpr
+      interpretFn
       (varFromIdent ident)
       expr
 

@@ -34,10 +34,9 @@ addVarToFrame (var, _) expr (StackFrame entries infixes) =
   StackFrame (M.singleton var expr <> entries) infixes
 
 addToStackFrame :: (Ord var) => (var, Maybe ExprHash) -> InterpretExpr var ann -> InterpreterM var ann a -> InterpreterM var ann a
-addToStackFrame var expr fn =
+addToStackFrame var expr =
   local
     (\ire -> ire {ireStack = mapTopFrame (addVarToFrame var expr) (ireStack ire)})
-    fn
 
 getCurrentStackFrame :: InterpreterM var ann (StackFrame var ann)
 getCurrentStackFrame = asks (NE.head . getStack . ireStack)
@@ -53,20 +52,31 @@ lookupVar ::
   (Ord var) =>
   (var, Maybe ExprHash) ->
   InterpreterM var ann (InterpretExpr var ann)
-lookupVar (var, maybeExprHash) = do
+lookupVar (var, maybeExprHash) =
   case maybeExprHash of
     Just exprHash -> lookupInGlobals exprHash
     Nothing -> do
       (StackFrame entries _) <- getCurrentStackFrame
       case M.lookup var entries of
-        Just entry -> pure entry
+        Just lam@MyLambda {} ->
+          -- when we save functions on the stack we save them as
+          -- \letName -> function
+          -- so that recursion works
+          -- therefore when fetching it we apply it to itself
+          -- like a fixpoint combinator thing
+          pure (MyApp mempty lam lam)
+        Just other -> pure other
         _ -> throwError (CouldNotFindVar entries var)
 
 addOperator :: InfixOp -> InterpretExpr var ann -> InterpreterM var ann a -> InterpreterM var ann a
-addOperator infixOp expr fn = do
+addOperator infixOp expr = do
   local
-    (\ire -> ire {ireStack = mapTopFrame (addOperatorToFrame infixOp expr) (ireStack ire)})
-    fn
+    ( \ire ->
+        ire
+          { ireStack =
+              mapTopFrame (addOperatorToFrame infixOp expr) (ireStack ire)
+          }
+    )
 
 addOperatorToFrame :: InfixOp -> InterpretExpr var ann -> StackFrame var ann -> StackFrame var ann
 addOperatorToFrame infixOp expr (StackFrame entries infixes) =

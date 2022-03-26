@@ -54,17 +54,18 @@ interpretExpr (MyApp ann fn a) =
 interpretExpr (MyRecordAccess ann expr name) =
   interpretRecordAccess interpretExpr ann expr name
 interpretExpr (MyDefineInfix _ op fn expr) =
-  addOperator
-    op
-    fn
-    (interpretExpr expr)
+  addOperator op fn (interpretExpr expr)
 interpretExpr (MyData _ _ expr) = interpretExpr expr
 interpretExpr (MyPatternMatch _ matchExpr patterns) = do
   intMatchExpr <- interpretExpr matchExpr
   interpretPatternMatch interpretExpr intMatchExpr patterns
 interpretExpr (MyLetPattern _ pat patExpr body) =
   interpretLetPattern interpretExpr pat patExpr body
-interpretExpr (MyRecord ann as) = MyRecord ann <$> traverse interpretExpr as
-interpretExpr (MyArray ann as) = MyArray ann <$> traverse interpretExpr as
-interpretExpr (MyConstructor as const') = pure (MyConstructor as const')
-interpretExpr (MyTypedHole ann name) = pure (MyTypedHole ann name)
+interpretExpr (MyRecord ann as) =
+  MyRecord ann <$> traverse interpretExpr as
+interpretExpr (MyArray ann as) =
+  MyArray ann <$> traverse interpretExpr as
+interpretExpr (MyConstructor as const') =
+  pure (MyConstructor as const')
+interpretExpr (MyTypedHole ann name) =
+  pure (MyTypedHole ann name)
