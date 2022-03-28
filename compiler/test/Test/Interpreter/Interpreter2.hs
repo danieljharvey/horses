@@ -661,7 +661,7 @@ spec =
                 (MyLiteral mempty (MyString "o"))
             )
 
-      it "bindParser fails correctly" $ do
+      fit "bindParser fails correctly" $ do
         result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"log\""
         snd <$> result
           `shouldBe` Right
