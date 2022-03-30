@@ -12,26 +12,28 @@ varFromIdent (AnnotatedIdentifier _ var) = var
 interpretApp ::
   (Ord var) =>
   InterpretFn var ann ->
-  StackFrame var ann ->
+  ExprData var ann ->
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
-interpretApp interpretFn ann (MyVar _ var) a = do
-  intF <- lookupVar var
-  interpretFn (MyApp ann intF a)
-interpretApp interpretFn _ (MyLambda closure ident body) a = do
-  -- interpret arg first
-  intA <- interpretFn a
-  -- add arg to context
-  let newStackFrame = addVarToFrame (varFromIdent ident) intA closure
-  -- run body with closure + new arg
-  addStackFrame newStackFrame (interpretFn body)
-interpretApp interpretFn ann (MyConstructor ann' const') value =
-  MyApp ann (MyConstructor ann' const')
-    <$> interpretFn value
-interpretApp interpretFn ann other a = do
-  -- try and resolve it into something we recognise
-  unfoldedF <- interpretFn other
-  if unfoldedF == other -- if it hasn't changed, we don't want to end up looping so give up and error
-    then pure (MyApp ann unfoldedF a)
-    else interpretFn (MyApp ann unfoldedF a)
+interpretApp interpretFn ann myFn value =
+  case myFn of
+    (MyLambda (ExprData closure _) ident body) -> do
+      -- interpret arg first
+      intValue <- interpretFn value
+      -- add arg to context
+      let newStackFrame = addVarToFrame (varFromIdent ident) intValue closure
+      -- run body with closure + new arg
+      withNewStackFrame newStackFrame (interpretFn body)
+    (MyConstructor ann' const') ->
+      MyApp ann (MyConstructor ann' const')
+        <$> interpretFn value
+    fn -> do
+      -- try and resolve it into something we recognise
+      intFn <- interpretFn fn
+      if intFn == fn -- if it hasn't changed, we don't want to end up looping so give up and error
+        then do
+          intValue <- interpretFn value
+          -- at least change the value
+          pure (MyApp ann intFn intValue)
+        else interpretFn (MyApp ann intFn value)

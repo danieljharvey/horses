@@ -16,8 +16,8 @@ interpretInfix ::
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretInfix interpretFn operator a b = do
-  plainA <- interpretFn a
-  plainB <- interpretFn b
+  plainA <- interpretFn <=< interpretFn $ a
+  plainB <- interpretFn <=< interpretFn $ b
   let removeAnn expr = expr $> ()
   case operator of
     Equals -> do

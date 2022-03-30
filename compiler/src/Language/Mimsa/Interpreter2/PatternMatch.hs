@@ -12,7 +12,6 @@ import Data.Maybe (fromMaybe)
 import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
-import Debug.Trace
 import Language.Mimsa.Interpreter2.Monad
 import Language.Mimsa.Interpreter2.Types
 import Language.Mimsa.Types.AST
@@ -30,17 +29,13 @@ interpretLetPattern ::
 interpretLetPattern interpretFn pat expr body = do
   -- interpret input
   intExpr <- interpretFn expr
-  -- get current stack frame
-  currentStackFrame <- getCurrentStackFrame
   -- get new bound variables
   let bindings = fromMaybe [] (patternMatches pat intExpr)
-  -- add args to context
-  let newStackFrame = foldr (uncurry addVarToFrame) currentStackFrame bindings
   -- run body with closure + new arg
-  addStackFrame newStackFrame (interpretFn body)
+  extendStackFrame bindings (interpretFn body)
 
 interpretPatternMatch ::
-  (Ord var, Show var) =>
+  (Ord var) =>
   InterpretFn var ann ->
   InterpretExpr var ann ->
   [(InterpretPattern var ann, InterpretExpr var ann)] ->
@@ -55,13 +50,8 @@ interpretPatternMatch interpretFn expr' patterns = do
   case getFirst (foldMap foldF patterns) of
     Just (patExpr, bindings) ->
       do
-        -- get current stack frame
-        currentStackFrame <- getCurrentStackFrame
-        -- add args to context
-        let newStackFrame =
-              foldr (uncurry addVarToFrame) currentStackFrame (traceShowId bindings)
         -- run body with closure + new arg
-        addStackFrame (traceShowId newStackFrame) (interpretFn patExpr)
+        extendStackFrame bindings (interpretFn patExpr)
     _ ->
       throwError $ PatternMatchFailure expr'
 

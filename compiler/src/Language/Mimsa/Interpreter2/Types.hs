@@ -1,6 +1,13 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Language.Mimsa.Interpreter2.Types (InterpreterM, InterpretExpr, InterpretFn, InterpretReaderEnv (..), InterpretPattern) where
+module Language.Mimsa.Interpreter2.Types
+  ( InterpreterM,
+    InterpretExpr,
+    InterpretFn,
+    InterpretReaderEnv (..),
+    InterpretPattern,
+  )
+where
 
 import Control.Monad.Reader
 import Data.Map (Map)
@@ -16,14 +23,14 @@ type InterpreterM var ann a =
     a
 
 data InterpretReaderEnv var ann = InterpretReaderEnv
-  { ireStack :: Stack var ann,
+  { ireStack :: StackFrame var ann,
     ireGlobals :: Map ExprHash (InterpretExpr var ann)
   }
 
-type InterpretExpr var ann = Expr (var, Maybe ExprHash) (StackFrame var ann)
+type InterpretExpr var ann = Expr (var, Maybe ExprHash) (ExprData var ann)
 
 type InterpretPattern var ann =
-  Pattern (var, Maybe ExprHash) (StackFrame var ann)
+  Pattern (var, Maybe ExprHash) (ExprData var ann)
 
 type InterpretFn var ann =
   InterpretExpr var ann ->

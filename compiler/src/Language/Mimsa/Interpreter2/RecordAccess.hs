@@ -10,7 +10,7 @@ import Language.Mimsa.Types.Interpreter.Stack
 
 interpretRecordAccess ::
   InterpretFn var ann ->
-  StackFrame var ann ->
+  ExprData var ann ->
   InterpretExpr var ann ->
   Name ->
   InterpreterM var ann (InterpretExpr var ann)
@@ -19,10 +19,10 @@ interpretRecordAccess interpretFn _ (MyRecord _ record) name =
     Just item -> interpretFn item
     _ -> throwError $ CannotFindMemberInRecord record name
 interpretRecordAccess interpretFn ann (MyVar ann' a) name = do
-  expr <- interpretFn (MyVar ann' a)
-  interpretFn (MyRecordAccess ann expr name)
+  intExpr <- interpretFn (MyVar ann' a)
+  interpretFn (MyRecordAccess ann intExpr name)
 interpretRecordAccess interpretFn ann (MyRecordAccess ann' a name') name = do
-  expr <- interpretFn (MyRecordAccess ann' a name')
-  interpretFn (MyRecordAccess ann expr name)
+  intExpr <- interpretFn (MyRecordAccess ann' a name')
+  interpretFn (MyRecordAccess ann intExpr name)
 interpretRecordAccess _ _ recordExpr name =
   throwError $ CannotDestructureAsRecord recordExpr name

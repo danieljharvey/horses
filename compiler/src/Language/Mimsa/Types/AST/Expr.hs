@@ -13,6 +13,7 @@ module Language.Mimsa.Types.AST.Expr
 where
 
 import qualified Data.Aeson as JSON
+import Data.Bifunctor (first)
 import Data.Bifunctor.TH
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
@@ -26,7 +27,7 @@ import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
-import Language.Mimsa.Types.Identifiers (Name, TyCon)
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Utils
 import Prettyprinter
 
@@ -345,6 +346,10 @@ prettyDataType dt expr =
         <> newlineOrIn
         <> prettyDoc expr
     )
+
+-- just for debugging
+instance (Printer var) => Printer (Expr (var, a) ann) where
+  prettyDoc = prettyDoc . first (mkName . prettyPrint . fst)
 
 instance Printer (Expr Name ann) where
   prettyDoc (MyLiteral _ l) =

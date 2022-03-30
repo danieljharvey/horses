@@ -2,6 +2,7 @@ module Language.Mimsa.Interpreter2.Let (interpretLet) where
 
 import Language.Mimsa.Interpreter2.Monad
 import Language.Mimsa.Interpreter2.Types
+import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
@@ -24,14 +25,17 @@ interpretLetExpr interpretFn var expr = do
   intExpr <- interpretFn expr
   case intExpr of
     lambdaExpr@MyLambda {} ->
-      -- make this a function of \binding -> actualFunction
-      pure (MyLambda mempty (Identifier mempty var) lambdaExpr)
-    other -> pure other
+      if isRecursive var lambdaExpr
+        then -- make this a function of \binding -> actualFunction
+          interpretFn (MyLambda (ExprData mempty True) (Identifier mempty var) lambdaExpr)
+        else -- non-recursive, run as normal
+          interpretFn lambdaExpr
+    _ -> pure intExpr
 
 interpretLet ::
   (Ord var) =>
   InterpretFn var ann ->
-  Identifier (var, Maybe ExprHash) (StackFrame var ann) ->
+  Identifier (var, Maybe ExprHash) (ExprData var ann) ->
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
@@ -44,7 +48,10 @@ interpretLet interpretFn ident expr body = do
       expr
 
   -- calc rest, with new binding added to the current stack frame
-  addToStackFrame
-    (varFromIdent ident)
-    intExpr
+  extendStackFrame
+    [(varFromIdent ident, intExpr)]
     (interpretFn body)
+
+isRecursive :: (Ord var) => var -> Expr var ann -> Bool
+isRecursive var expr =
+  memberInUses var (findUses expr)

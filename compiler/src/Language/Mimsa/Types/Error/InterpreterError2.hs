@@ -12,7 +12,7 @@ import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 
-type InterpretExpr var ann = Expr (var, Maybe ExprHash) (StackFrame var ann)
+type InterpretExpr var ann = Expr (var, Maybe ExprHash) (ExprData var ann)
 
 data InterpreterError2 var ann
   = UnknownInterpreterError2

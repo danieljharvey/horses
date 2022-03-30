@@ -8,7 +8,7 @@ import Language.Mimsa.Types.Interpreter.Stack
 
 interpretIf ::
   InterpretFn var ann ->
-  StackFrame var ann ->
+  ExprData var ann ->
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpretExpr var ann ->
