@@ -397,7 +397,6 @@ test-suite mimsa-test
       Test.Data.Project
       Test.Interpreter.InstantiateVar
       Test.Interpreter.Interpreter
-      Test.Interpreter.Interpreter2
       Test.Interpreter.Repl
       Test.Interpreter.UseSwaps
       Test.Parser.MonoTypeParser

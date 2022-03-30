@@ -20,7 +20,6 @@ import qualified Test.Codegen as Codegen
 import Test.Hspec
 import qualified Test.Interpreter.InstantiateVar as InstantiateVar
 import qualified Test.Interpreter.Interpreter as Interpreter
-import qualified Test.Interpreter.Interpreter2 as Interpreter2
 import qualified Test.Interpreter.Repl as Repl
 import qualified Test.Interpreter.UseSwaps as UseSwaps
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
@@ -111,4 +110,3 @@ main =
     BetaReduce.spec
     Build.spec
     TypecheckAction.spec
-    Interpreter2.spec
