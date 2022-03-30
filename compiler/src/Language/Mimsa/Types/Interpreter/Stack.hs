@@ -1,9 +1,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Interpreter.Stack (StackFrame (..), Stack (..), ExprData (..)) where
+module Language.Mimsa.Types.Interpreter.Stack (StackFrame (..), ExprData (..)) where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -30,16 +29,16 @@ instance (Printer var) => Printer (StackFrame var ann) where
       <> T.intercalate "," (prettyPrint <$> M.keys sfInf)
       <> "] }"
 
-newtype Stack var ann = Stack {getStack :: NE.NonEmpty (StackFrame var ann)}
-
+-- carried around in each node when interpreting
 data ExprData var ann = ExprData
   { edStackFrame :: StackFrame var ann,
-    edIsRecursive :: Bool
+    edIsRecursive :: Bool,
+    edAnnotation :: ann
   }
   deriving stock (Eq, Ord, Show)
 
-instance (Ord var) => Semigroup (ExprData var ann) where
-  (ExprData sfA isRecA) <> (ExprData sfB isRecB) = ExprData (sfA <> sfB) (isRecA || isRecB)
+instance (Ord var, Semigroup ann) => Semigroup (ExprData var ann) where
+  (ExprData sfA isRecA annA) <> (ExprData sfB isRecB annB) = ExprData (sfA <> sfB) (isRecA || isRecB) (annA <> annB)
 
-instance (Ord var) => Monoid (ExprData var ann) where
-  mempty = ExprData mempty False
+instance (Ord var, Monoid ann) => Monoid (ExprData var ann) where
+  mempty = ExprData mempty False mempty

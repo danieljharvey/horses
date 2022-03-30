@@ -16,7 +16,7 @@ varFromIdent (AnnotatedIdentifier _ var) = var
 -- this is NOT the one, we need some form of indirection so the closure can say
 -- "and look up whatever 'var' is pls"
 interpretLetExpr ::
-  (Ord var) =>
+  (Ord var, Monoid ann) =>
   InterpretFn var ann ->
   (var, Maybe ExprHash) ->
   InterpretExpr var ann ->
@@ -27,13 +27,13 @@ interpretLetExpr interpretFn var expr = do
     lambdaExpr@MyLambda {} ->
       if isRecursive var lambdaExpr
         then -- make this a function of \binding -> actualFunction
-          interpretFn (MyLambda (ExprData mempty True) (Identifier mempty var) lambdaExpr)
+          interpretFn (MyLambda (ExprData mempty True mempty) (Identifier mempty var) lambdaExpr)
         else -- non-recursive, run as normal
           interpretFn lambdaExpr
     _ -> pure intExpr
 
 interpretLet ::
-  (Ord var) =>
+  (Ord var, Monoid ann) =>
   InterpretFn var ann ->
   Identifier (var, Maybe ExprHash) (ExprData var ann) ->
   InterpretExpr var ann ->

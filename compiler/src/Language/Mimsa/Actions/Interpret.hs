@@ -2,7 +2,6 @@ module Language.Mimsa.Actions.Interpret (interpreter) where
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
-import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
@@ -33,11 +32,7 @@ interpreter se = do
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
-  interpretedExpr <- liftEither (first InterpreterErr2 (interpret depsMap rootExpr))
-
-  let exprWithoutExprHashes = first fst interpretedExpr
-
-  pure (exprWithoutExprHashes $> mempty)
+  liftEither (first InterpreterErr2 (interpret depsMap rootExpr))
 
 -- Turns a pile of store expressions into a map of Exprs ready to interpret
 -- this means their variables are marked as either Local or Import (pointing at

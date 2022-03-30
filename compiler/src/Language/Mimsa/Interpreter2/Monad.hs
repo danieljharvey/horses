@@ -56,7 +56,7 @@ lookupInGlobals exprHash = do
     _ -> throwError (CouldNotFindGlobal globals exprHash)
 
 lookupVar ::
-  (Ord var) =>
+  (Ord var, Monoid ann) =>
   (var, Maybe ExprHash) ->
   InterpreterM var ann (InterpretExpr var ann)
 lookupVar (var, maybeExprHash) =
@@ -70,7 +70,7 @@ lookupVar (var, maybeExprHash) =
     Nothing -> do
       (StackFrame entries _) <- getCurrentStackFrame
       case M.lookup var entries of
-        Just myLam@(MyLambda (ExprData _ isRec) _ _) ->
+        Just myLam@(MyLambda (ExprData _ isRec _) _ _) ->
           -- when we save functions on the stack we save them as
           -- \letName -> function
           -- so that recursion works

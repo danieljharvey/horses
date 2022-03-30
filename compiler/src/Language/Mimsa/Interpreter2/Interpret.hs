@@ -1,6 +1,7 @@
 module Language.Mimsa.Interpreter2.Interpret (interpret) where
 
 import Control.Monad.Reader
+import Data.Bifunctor
 import Data.Functor
 import Data.Map (Map)
 import Language.Mimsa.Interpreter2.App
@@ -21,27 +22,28 @@ initialStack :: (Ord var) => StackFrame var ann
 initialStack = StackFrame mempty mempty
 
 interpret ::
-  (Eq ann, Ord var, Show var, Printer var) =>
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
   Map ExprHash (Expr (var, Maybe ExprHash) ann) ->
   Expr (var, Maybe ExprHash) ann ->
-  Either (InterpreterError2 var ann) (InterpretExpr var ann)
+  Either (InterpreterError2 var ann) (Expr var ann)
 interpret deps expr =
   let addEmptyStackFrame exp' = exp' $> mempty
       expr' = addEmptyStackFrame expr
       initialDeps = addEmptyStackFrame <$> deps
-   in runReaderT (interpretExpr expr') (InterpretReaderEnv initialStack initialDeps)
+      removeExprData = bimap fst edAnnotation
+   in removeExprData <$> runReaderT (interpretExpr expr') (InterpretReaderEnv initialStack initialDeps)
 
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
 interpretExpr ::
-  (Eq ann, Ord var, Show var, Printer var) =>
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr =
   interpretExpr'
 
 interpretExpr' ::
-  (Eq ann, Ord var, Show var, Printer var) =>
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)
@@ -49,21 +51,19 @@ interpretExpr' (MyLet _ ident expr body) =
   interpretLet interpretExpr ident expr body
 interpretExpr' (MyVar _ var) =
   lookupVar var >>= interpretExpr
-interpretExpr' (MyLambda (ExprData current isRec) ident body) = do
+interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
   -- capture current environment
   stackFrame <-
     getCurrentStackFrame
-
+  -- add it to already captured vars
+  let newExprData =
+        ExprData
+          (current <> stackFrame)
+          isRec
+          ann
+  -- return it
   pure
-    ( MyLambda
-        ( ExprData
-            ( current <> stackFrame
-            )
-            isRec
-        )
-        ident
-        body
-    )
+    (MyLambda newExprData ident body)
 interpretExpr' (MyPair ann a b) =
   MyPair ann <$> interpretExpr a <*> interpretExpr b
 interpretExpr' (MyInfix _ op a b) =

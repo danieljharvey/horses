@@ -10,7 +10,7 @@ varFromIdent (Identifier _ var) = var
 varFromIdent (AnnotatedIdentifier _ var) = var
 
 interpretApp ::
-  (Ord var) =>
+  (Ord var, Eq ann) =>
   InterpretFn var ann ->
   ExprData var ann ->
   InterpretExpr var ann ->
@@ -18,7 +18,7 @@ interpretApp ::
   InterpreterM var ann (InterpretExpr var ann)
 interpretApp interpretFn ann myFn value =
   case myFn of
-    (MyLambda (ExprData closure _) ident body) -> do
+    (MyLambda (ExprData closure _ _) ident body) -> do
       -- interpret arg first
       intValue <- interpretFn value
       -- add arg to context

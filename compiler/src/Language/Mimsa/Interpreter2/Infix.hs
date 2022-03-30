@@ -9,7 +9,7 @@ import Language.Mimsa.Types.Error.InterpreterError2
 
 -- | this assumes that
 interpretInfix ::
-  (Ord var) =>
+  (Ord var, Monoid ann) =>
   InterpretFn var ann ->
   Operator ->
   InterpretExpr var ann ->
@@ -81,7 +81,7 @@ interpretInfix interpretFn operator a b = do
 
 -- | lift a numeric comparison into the Expr type
 numericComparison ::
-  (Ord var) =>
+  (Ord var, Monoid ann) =>
   (Int -> Int -> Bool) ->
   (InterpretExpr var ann -> InterpreterError2 var ann) ->
   InterpretExpr var ann ->
@@ -97,7 +97,7 @@ numericComparison f withErr plainA plainB = do
     Left e -> throwError e
 
 interpretStringConcat ::
-  (Ord var) =>
+  (Ord var, Monoid ann) =>
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
@@ -111,7 +111,7 @@ interpretStringConcat plainA plainB = do
     Left e -> throwError e
 
 interpretArrayConcat ::
-  (Ord var) =>
+  (Ord var, Monoid ann) =>
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
