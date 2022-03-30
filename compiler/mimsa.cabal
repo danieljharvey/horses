@@ -69,7 +69,6 @@ library
       Language.Mimsa.Codegen.Newtype
       Language.Mimsa.Codegen.Utils
       Language.Mimsa.ExprUtils
-      Language.Mimsa.Interpreter
       Language.Mimsa.Interpreter.HighestVar
       Language.Mimsa.Interpreter.InstantiateVar
       Language.Mimsa.Interpreter.Interpret
@@ -396,7 +395,6 @@ test-suite mimsa-test
       Test.Codegen.Shared
       Test.Data.Project
       Test.Interpreter.InstantiateVar
-      Test.Interpreter.Interpreter
       Test.Interpreter.Repl
       Test.Interpreter.UseSwaps
       Test.Parser.MonoTypeParser

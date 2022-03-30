@@ -12,7 +12,7 @@ import Data.Bifunctor
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
-import Language.Mimsa.Interpreter
+import Language.Mimsa.Interpreter.Main
 import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers

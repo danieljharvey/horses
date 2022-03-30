@@ -5,10 +5,9 @@ module Language.Mimsa.Tests.UnitTest
   )
 where
 
-import Data.Bifunctor (first)
+import qualified Language.Mimsa.Actions.Interpret as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
-import Language.Mimsa.Interpreter
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Tests.Helpers
@@ -27,12 +26,13 @@ createUnitTest ::
   Either (Error Annotation) UnitTest
 createUnitTest project storeExpr testName = do
   let testExpr = exprEqualsTrue (storeExpression storeExpr)
-  (_, _, ResolvedExpression _ _ rExpr rScope rSwaps _ _) <-
+  (_, _, result) <-
     Actions.run
       project
-      ( Actions.typecheckExpression project (prettyPrint testExpr) testExpr
+      ( do
+          resolved <- Actions.typecheckExpression project (prettyPrint testExpr) testExpr
+          Actions.interpreter (reStoreExpression resolved)
       )
-  result <- first InterpreterErr (interpret rScope rSwaps rExpr)
   pure $
     UnitTest
       { utName = testName,

@@ -19,7 +19,6 @@ import qualified Test.Backend.Typescript as Typescript
 import qualified Test.Codegen as Codegen
 import Test.Hspec
 import qualified Test.Interpreter.InstantiateVar as InstantiateVar
-import qualified Test.Interpreter.Interpreter as Interpreter
 import qualified Test.Interpreter.Repl as Repl
 import qualified Test.Interpreter.UseSwaps as UseSwaps
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
@@ -60,7 +59,6 @@ main :: IO ()
 main =
   hspec $ do
     Syntax.spec
-    Interpreter.spec
     Prettier.spec
     Resolver.spec
     Substitutor.spec
