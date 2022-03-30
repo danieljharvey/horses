@@ -51,8 +51,8 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  fdescribe "Interpreter2" $ do
-    fdescribe "End to end parsing to evaluation" $ do
+  describe "Interpreter2" $ do
+    describe "End to end parsing to evaluation" $ do
       it "Let and var" $ do
         result <- eval testStdlib "let a = 1 in a"
         snd <$> result `shouldBe` Right (int 1)
@@ -107,7 +107,7 @@ spec =
               int 1
             )
 
-      xit "compose incrementInt" $ do
+      it "compose incrementInt" $ do
         result <- eval testStdlib "let compose = (\\f -> \\g -> \\a -> f (g a)) in let blah = compose incrementInt incrementInt in blah 67"
         result `shouldBe` Right (MTPrim mempty MTInt, int 69)
 
@@ -613,23 +613,24 @@ spec =
                 )
             )
 
-      xit "\\state -> \\s -> match state with (State sas) -> sas s" $ do
+      it "\\state -> \\s -> match state with (State sas) -> sas s" $ do
         result <- eval testStdlib "\\state -> \\s -> match state with (State sas) -> sas s"
         result `shouldSatisfy` isRight
 
-      xit "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil" $ do
+      it "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil" $ do
         result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil"
         result `shouldSatisfy` isRight
 
-      xit "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil" $ do
+      it "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil" $ do
         result <- eval testStdlib "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil"
         result `shouldSatisfy` isRight
 
       it "Stops boolean and Maybe<A> being used together" $ do
         result <- eval testStdlib "\\some -> match some with (Just a) -> Just (a == 1) | _ -> some"
         result `shouldSatisfy` isLeft
-      -- this should be thrown out by the interpreter
 
+      -- this is not implemented in new interpreter
+      -- wondering whether to make this a timeout for endpoint instead
       xit "Interpreter is stopped before it loops infinitely" $ do
         result <- eval testStdlib "let forever = \\a -> forever a in forever True"
         result `shouldSatisfy` \case
@@ -657,7 +658,7 @@ spec =
         result <- eval testStdlib "\\person -> match person with (Person p) -> p.age"
         result `shouldSatisfy` isRight
 
-      xit "filter function for strings" $ do
+      it "filter function for strings" $ do
         result <- eval testStdlib "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\a -> a == \"o\") \"woo\""
         result
           `shouldBe` Right
@@ -665,11 +666,11 @@ spec =
               MyLiteral mempty (MyString "oo")
             )
 
-      xit "runParser anyChar \"dog\"" $ do
+      it "runParser anyChar \"dog\"" $ do
         result <- eval testStdlib "runParser anyChar \"dog\""
         result `shouldSatisfy` isRight
 
-      xit "fmapParser works correctly" $ do
+      it "fmapParser works correctly" $ do
         result <- eval testStdlib "let repeat = fmapParser (\\a -> a ++ a) anyChar in runParser repeat \"dog\""
         snd <$> result
           `shouldBe` Right
@@ -679,7 +680,7 @@ spec =
                 (MyLiteral mempty (MyString "dd"))
             )
 
-      xit "bindParser works correctly" $ do
+      it "bindParser works correctly" $ do
         result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"dog\""
         snd <$> result
           `shouldBe` Right
@@ -689,19 +690,19 @@ spec =
                 (MyLiteral mempty (MyString "o"))
             )
 
-      xit "bindParser fails correctly with inline stuff" $ do
+      it "bindParser fails correctly with inline stuff" $ do
         result <- eval testStdlib "let bindParser = \\f -> \\p -> match p with (Parser bParser) -> Parser (\\s -> match bParser s with (Just (a, restA)) -> (let nextParser = match f a with (Parser parserB) -> parserB; nextParser restA) | _ -> Nothing); let runParser = \\p -> \\str -> match p with (Parser innerParser) -> match innerParser str with (Just (a, rest)) -> Just a | _ -> Nothing; let theParser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser theParser \"log\""
         snd <$> result
           `shouldBe` Right
             (MyConstructor mempty "Nothing")
 
-      xit "bindParser fails correctly" $ do
+      it "bindParser fails correctly" $ do
         result <- eval testStdlib "let runParser = \\p -> \\str -> match p with (Parser innerParser) -> match innerParser str with (Just (a, rest)) -> Just a | _ -> Nothing; let theParser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser theParser \"log\""
         snd <$> result
           `shouldBe` Right
             (MyConstructor mempty "Nothing")
 
-      xit "apParser formats correctly" $ do
+      it "apParser formats correctly" $ do
         result <- eval testStdlib "\\parserF -> \\parserA -> let (Parser pF) = parserF; let (Parser pA) = parserA; Parser (\\input -> match (pF input) with Just (f, input2) -> (match (pA input2) with Just (a, input3) -> Just (f a, input3) | _ -> Nothing) | _ ->  Nothing)"
         result `shouldSatisfy` isRight
 

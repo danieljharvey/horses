@@ -11,7 +11,6 @@ import Language.Mimsa.Interpreter2.Monad
 import Language.Mimsa.Interpreter2.PatternMatch
 import Language.Mimsa.Interpreter2.RecordAccess
 import Language.Mimsa.Interpreter2.Types
-import Language.Mimsa.Logging
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError2
@@ -32,12 +31,14 @@ interpret deps expr =
       initialDeps = addEmptyStackFrame <$> deps
    in runReaderT (interpretExpr expr') (InterpretReaderEnv initialStack initialDeps)
 
+-- somewhat pointless separate function to make debug logging each value out
+-- easier
 interpretExpr ::
   (Eq ann, Ord var, Show var, Printer var) =>
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
-interpretExpr expr =
-  interpretExpr' (debugPretty "interpretExpr" expr)
+interpretExpr =
+  interpretExpr'
 
 interpretExpr' ::
   (Eq ann, Ord var, Show var, Printer var) =>
@@ -56,8 +57,7 @@ interpretExpr' (MyLambda (ExprData current isRec) ident body) = do
   pure
     ( MyLambda
         ( ExprData
-            ( debugPretty "current" current
-                <> debugPretty "stackFrame" stackFrame
+            ( current <> stackFrame
             )
             isRec
         )
