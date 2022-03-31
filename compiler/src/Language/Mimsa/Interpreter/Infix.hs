@@ -1,11 +1,11 @@
-module Language.Mimsa.Interpreter2.Infix (interpretInfix) where
+module Language.Mimsa.Interpreter.Infix (interpretInfix) where
 
 import Control.Monad.Except
 import Data.Functor
-import Language.Mimsa.Interpreter2.Monad
-import Language.Mimsa.Interpreter2.Types
+import Language.Mimsa.Interpreter.Monad
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error.InterpreterError2
+import Language.Mimsa.Types.Error.InterpreterError
 
 -- | this assumes that
 interpretInfix ::
@@ -83,7 +83,7 @@ interpretInfix interpretFn operator a b = do
 numericComparison ::
   (Ord var, Monoid ann) =>
   (Int -> Int -> Bool) ->
-  (InterpretExpr var ann -> InterpreterError2 var ann) ->
+  (InterpretExpr var ann -> InterpreterError var ann) ->
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)

@@ -1,4 +1,4 @@
-module Language.Mimsa.Interpreter2.Monad
+module Language.Mimsa.Interpreter.Monad
   ( withNewStackFrame,
     extendStackFrame,
     getCurrentStackFrame,
@@ -12,9 +12,9 @@ where
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Map as M
-import Language.Mimsa.Interpreter2.Types
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error.InterpreterError2
+import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 

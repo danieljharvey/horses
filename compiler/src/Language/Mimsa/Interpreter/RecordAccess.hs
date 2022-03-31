@@ -1,10 +1,10 @@
-module Language.Mimsa.Interpreter2.RecordAccess (interpretRecordAccess) where
+module Language.Mimsa.Interpreter.RecordAccess (interpretRecordAccess) where
 
 import Control.Monad.Except
 import qualified Data.Map as M
-import Language.Mimsa.Interpreter2.Types
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error.InterpreterError2
+import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Interpreter.Stack
 

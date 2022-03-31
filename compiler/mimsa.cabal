@@ -69,24 +69,16 @@ library
       Language.Mimsa.Codegen.Newtype
       Language.Mimsa.Codegen.Utils
       Language.Mimsa.ExprUtils
-      Language.Mimsa.Interpreter.HighestVar
-      Language.Mimsa.Interpreter.InstantiateVar
+      Language.Mimsa.Interpreter.App
+      Language.Mimsa.Interpreter.If
+      Language.Mimsa.Interpreter.Infix
       Language.Mimsa.Interpreter.Interpret
-      Language.Mimsa.Interpreter.Main
+      Language.Mimsa.Interpreter.Let
+      Language.Mimsa.Interpreter.MarkImports
+      Language.Mimsa.Interpreter.Monad
       Language.Mimsa.Interpreter.PatternMatch
-      Language.Mimsa.Interpreter.SwapName
+      Language.Mimsa.Interpreter.RecordAccess
       Language.Mimsa.Interpreter.Types
-      Language.Mimsa.Interpreter.UseSwaps
-      Language.Mimsa.Interpreter2.App
-      Language.Mimsa.Interpreter2.If
-      Language.Mimsa.Interpreter2.Infix
-      Language.Mimsa.Interpreter2.Interpret
-      Language.Mimsa.Interpreter2.Let
-      Language.Mimsa.Interpreter2.MarkImports
-      Language.Mimsa.Interpreter2.Monad
-      Language.Mimsa.Interpreter2.PatternMatch
-      Language.Mimsa.Interpreter2.RecordAccess
-      Language.Mimsa.Interpreter2.Types
       Language.Mimsa.Logging
       Language.Mimsa.Monad
       Language.Mimsa.Parser
@@ -153,6 +145,7 @@ library
       Language.Mimsa.Typechecker.Typecheck
       Language.Mimsa.Typechecker.TypedHoles
       Language.Mimsa.Typechecker.Unify
+      Language.Mimsa.Typechecker.UseSwaps
       Language.Mimsa.Types.AST
       Language.Mimsa.Types.AST.Annotation
       Language.Mimsa.Types.AST.DataType
@@ -168,7 +161,6 @@ library
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.BackendError
       Language.Mimsa.Types.Error.InterpreterError
-      Language.Mimsa.Types.Error.InterpreterError2
       Language.Mimsa.Types.Error.PatternMatchError
       Language.Mimsa.Types.Error.ProjectError
       Language.Mimsa.Types.Error.ResolverError
@@ -394,9 +386,7 @@ test-suite mimsa-test
       Test.Codegen.Newtype
       Test.Codegen.Shared
       Test.Data.Project
-      Test.Interpreter.InstantiateVar
       Test.Interpreter.Repl
-      Test.Interpreter.UseSwaps
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax
@@ -430,6 +420,7 @@ test-suite mimsa-test
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
+      Test.Typechecker.UseSwaps
       Test.Utils.Compilation
       Test.Utils.Helpers
       Test.Utils.Serialisation

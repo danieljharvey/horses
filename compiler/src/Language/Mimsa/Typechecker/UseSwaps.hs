@@ -1,20 +1,20 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Language.Mimsa.Interpreter.UseSwaps (useSwaps, usePatternSwaps) where
+module Language.Mimsa.Typechecker.UseSwaps (useSwaps, usePatternSwaps) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Map as M
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error.InterpreterError
+import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
 
-type App ann = ReaderT Swaps (Either (InterpreterError ann))
+type App = ReaderT Swaps (Either TypeError)
 
 lookupSwap ::
   ( MonadReader Swaps m,
-    MonadError (InterpreterError ann) m
+    MonadError TypeError m
   ) =>
   Variable ->
   m Name
@@ -27,10 +27,10 @@ lookupSwap var = do
 useSwaps ::
   Swaps ->
   Expr Variable ann ->
-  Either (InterpreterError ann) (Expr Name ann)
+  Either TypeError (Expr Name ann)
 useSwaps swaps expr' = runReaderT (useSwaps' expr') swaps
 
-useSwaps' :: Expr Variable ann -> App ann (Expr Name ann)
+useSwaps' :: Expr Variable ann -> App (Expr Name ann)
 useSwaps' (MyLambda ann ident body) =
   MyLambda ann <$> useSwapsInIdentifier ident <*> useSwaps' body
 useSwaps' (MyVar ann var) =
@@ -78,7 +78,7 @@ useSwaps' (MyDefineInfix ann infixOp bindExpr expr) =
     <$> useSwaps' bindExpr
     <*> useSwaps' expr
 
-useSwapsInIdentifier :: Identifier Variable ann -> App ann (Identifier Name ann)
+useSwapsInIdentifier :: Identifier Variable ann -> App (Identifier Name ann)
 useSwapsInIdentifier (Identifier ann var) =
   Identifier ann <$> lookupSwap var
 useSwapsInIdentifier (AnnotatedIdentifier mt var) =
@@ -87,10 +87,10 @@ useSwapsInIdentifier (AnnotatedIdentifier mt var) =
 usePatternSwaps ::
   Swaps ->
   Pattern Variable ann ->
-  Either (InterpreterError ann) (Pattern Name ann)
+  Either TypeError (Pattern Name ann)
 usePatternSwaps swaps pat' = runReaderT (useSwapsInPattern pat') swaps
 
-useSwapsInPattern :: Pattern Variable ann -> App ann (Pattern Name ann)
+useSwapsInPattern :: Pattern Variable ann -> App (Pattern Name ann)
 useSwapsInPattern (PWildcard ann) = pure (PWildcard ann)
 useSwapsInPattern (PVar ann var) = PVar ann <$> lookupSwap var
 useSwapsInPattern (PLit ann lit) = pure (PLit ann lit)
@@ -110,7 +110,7 @@ useSwapsInPattern (PString ann a as) =
   PString ann <$> useSwapsInStringPart a
     <*> useSwapsInStringPart as
 
-useSwapsInSpread :: Spread Variable ann -> App ann (Spread Name ann)
+useSwapsInSpread :: Spread Variable ann -> App (Spread Name ann)
 useSwapsInSpread NoSpread =
   pure NoSpread
 useSwapsInSpread (SpreadWildcard ann) =
@@ -118,6 +118,6 @@ useSwapsInSpread (SpreadWildcard ann) =
 useSwapsInSpread (SpreadValue ann var) =
   SpreadValue ann <$> lookupSwap var
 
-useSwapsInStringPart :: StringPart Variable ann -> App ann (StringPart Name ann)
+useSwapsInStringPart :: StringPart Variable ann -> App (StringPart Name ann)
 useSwapsInStringPart (StrWildcard ann) = pure (StrWildcard ann)
 useSwapsInStringPart (StrValue ann var) = StrValue ann <$> lookupSwap var

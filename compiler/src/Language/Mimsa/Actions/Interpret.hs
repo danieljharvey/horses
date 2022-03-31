@@ -6,8 +6,8 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Interpreter2.Interpret
-import Language.Mimsa.Interpreter2.MarkImports
+import Language.Mimsa.Interpreter.Interpret
+import Language.Mimsa.Interpreter.MarkImports
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -32,7 +32,7 @@ interpreter se = do
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
-  liftEither (first InterpreterErr2 (interpret depsMap rootExpr))
+  liftEither (first InterpreterErr (interpret depsMap rootExpr))
 
 -- Turns a pile of store expressions into a map of Exprs ready to interpret
 -- this means their variables are marked as either Local or Import (pointing at

@@ -10,10 +10,9 @@ where
 import Control.Monad.Except
 import Data.Bifunctor
 import qualified Data.Set as S
+import qualified Language.Mimsa.Actions.Interpret as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
-import Language.Mimsa.Interpreter.Main
-import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
@@ -92,7 +91,7 @@ runPropertyTest project pt = do
       -- generate inputs
       samples <- liftIO $ generateFromMonoType (S.fromList seDeps) inputMt
 
-      let exprs = applyGenerated (reVarExpression resolvedExpr) <$> samples
+      let exprs = applyGenerated (storeExpression . reStoreExpression $ resolvedExpr) <$> samples
 
       -- Apply the generated value to the test function, and return a tuple
       -- of the value and the outcome
@@ -100,20 +99,15 @@ runPropertyTest project pt = do
         toMonadError $
           traverse
             ( \(sample, rExpr) -> do
-                sampleName <-
-                  first
-                    InterpreterErr
-                    (useSwaps (reSwaps resolvedExpr) sample)
-                result <-
-                  first
-                    InterpreterErr
-                    ( interpret
-                        ( reScope resolvedExpr
-                        )
-                        (reSwaps resolvedExpr)
-                        rExpr
+                let sampleStoreExpr = se {storeExpression = rExpr}
+                (_, _, result) <-
+                  toMonadError
+                    ( Actions.run
+                        project
+                        (Actions.interpreter sampleStoreExpr)
                     )
-                pure (sampleName, result)
+
+                pure (sample, result)
             )
             exprs
 

@@ -1,42 +1,65 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Interpreter.PatternMatch
-  ( patternMatch,
-    patternMatches,
+  ( interpretPatternMatch,
+    interpretLetPattern,
   )
 where
 
 import Control.Monad.Except
-import Data.Foldable
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
-import Language.Mimsa.Interpreter.InstantiateVar
+import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Store.ExprHash
 
-patternMatch ::
-  (Monoid ann) =>
-  Expr Variable ann ->
-  [(Pattern Variable ann, Expr Variable ann)] ->
-  App ann (Expr Variable ann)
-patternMatch expr' patterns = do
-  let foldF (pat, patExpr) = case patternMatches pat expr' of
+interpretLetPattern ::
+  (Ord var) =>
+  InterpretFn var ann ->
+  InterpretPattern var ann ->
+  InterpretExpr var ann ->
+  InterpretExpr var ann ->
+  InterpreterM var ann (InterpretExpr var ann)
+interpretLetPattern interpretFn pat expr body = do
+  -- interpret input
+  intExpr <- interpretFn expr
+  -- get new bound variables
+  let bindings = fromMaybe [] (patternMatches pat intExpr)
+  -- run body with closure + new arg
+  extendStackFrame bindings (interpretFn body)
+
+interpretPatternMatch ::
+  (Ord var) =>
+  InterpretFn var ann ->
+  InterpretExpr var ann ->
+  [(InterpretPattern var ann, InterpretExpr var ann)] ->
+  InterpreterM var ann (InterpretExpr var ann)
+interpretPatternMatch interpretFn expr' patterns = do
+  -- interpret match expression
+  intExpr <- interpretFn expr'
+  let foldF (pat, patExpr) = case patternMatches pat intExpr of
         Just bindings -> First (Just (patExpr, bindings))
         _ -> First Nothing
+  -- get first matching pattern
   case getFirst (foldMap foldF patterns) of
-    Just (patExpr, bindings) -> createMatchExpression bindings patExpr
+    Just (patExpr, bindings) ->
+      do
+        -- run body with closure + new arg
+        extendStackFrame bindings (interpretFn patExpr)
     _ ->
       throwError $ PatternMatchFailure expr'
 
 -- pull vars out of expr to match patterns
 patternMatches ::
-  Pattern Variable ann ->
-  Expr Variable ann ->
-  Maybe [(Variable, Expr Variable ann)]
+  InterpretPattern var ann ->
+  InterpretExpr var ann ->
+  Maybe [((var, Maybe ExprHash), InterpretExpr var ann)]
 patternMatches (PWildcard _) _ = pure []
 patternMatches (PVar _ name) expr = pure [(name, expr)]
 patternMatches (PPair _ pA pB) (MyPair _ a b) = do
@@ -104,32 +127,9 @@ patternMatches (PString _ pA pAs) (MyLiteral _ (MyString (StringType str))) | no
     pure (bindingA <> bindingAs)
 patternMatches _ _ = Nothing
 
-consAppToPattern :: Expr Variable ann -> Maybe (TyCon, [Expr Variable ann])
+consAppToPattern :: InterpretExpr var ann -> Maybe (TyCon, [InterpretExpr var ann])
 consAppToPattern (MyApp _ fn val) = do
   (tyCon, more) <- consAppToPattern fn
   pure (tyCon, more <> [val])
 consAppToPattern (MyConstructor _ tyCon) = pure (tyCon, mempty)
 consAppToPattern _ = Nothing
-
--- apply each part of the constructor to the output function
-createMatchExpression ::
-  (Monoid ann) =>
-  [(Variable, Expr Variable ann)] ->
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-createMatchExpression bindings a =
-  foldl'
-    ( \rest (binder, expr) -> do
-        comp <- rest
-        -- create fresh variables for all the bound items in the pattern
-        -- match and substitute them in the expr for the pattern
-        (freshBinder, freshComp) <- freshenVariable binder comp
-        pure $
-          MyLet
-            mempty
-            (Identifier mempty freshBinder)
-            expr
-            freshComp
-    )
-    (pure a)
-    bindings

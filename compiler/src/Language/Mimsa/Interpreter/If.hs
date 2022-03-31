@@ -1,9 +1,9 @@
-module Language.Mimsa.Interpreter2.If (interpretIf) where
+module Language.Mimsa.Interpreter.If (interpretIf) where
 
 import Control.Monad.Except
-import Language.Mimsa.Interpreter2.Types
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error.InterpreterError2
+import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 
 interpretIf ::

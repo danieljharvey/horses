@@ -32,7 +32,7 @@ fromMonoType ::
   (Monoid ann) =>
   GenerateState ->
   MonoType ->
-  Gen (Expr Variable ann)
+  Gen (Expr Name ann)
 fromMonoType gs mt =
   case flattenRow mt of
     (MTPrim _ prim) ->
@@ -50,7 +50,7 @@ fromMonoType gs mt =
       -- part on the end is just an unknown and ignore it
       MyRecord mempty <$> traverse (fromMonoType gs) as
     (MTFunction _ _from to) ->
-      MyLambda mempty (Identifier mempty (NamedVar "a"))
+      MyLambda mempty (Identifier mempty "a")
         <$> fromMonoType gs to
     (MTVar _ _) -> fromMonoType gs (MTPrim mempty MTBool) -- for unknowns, use bool for now
     mtTA@MTTypeApp {} -> case varsFromDataType mtTA of
@@ -74,7 +74,7 @@ fromType ::
   GenerateState ->
   TyCon ->
   [MonoType] ->
-  Gen (Expr Variable ann)
+  Gen (Expr Name ann)
 fromType gs typeName args = case M.lookup typeName (gsDataTypes gs) of
   Just dt -> do
     let newGs = incrementDepth gs
@@ -117,7 +117,7 @@ fromConstructor ::
   GenerateState ->
   TyCon ->
   [Type NullUnit] ->
-  Gen (Expr Variable ann)
+  Gen (Expr Name ann)
 fromConstructor gs tyCon args =
   let applyArg arg mA = do
         a <- mA
@@ -147,7 +147,7 @@ generateFromMonoType ::
   (Monoid ann) =>
   Set (StoreExpression Annotation) ->
   MonoType ->
-  IO [Expr Variable ann]
+  IO [Expr Name ann]
 generateFromMonoType storeExprs mt =
   let generateState = GenerateState (generateTypes storeExprs) 1
    in do

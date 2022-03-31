@@ -1,4 +1,4 @@
-module Language.Mimsa.Interpreter2.MarkImports (convertImports) where
+module Language.Mimsa.Interpreter.MarkImports (convertImports) where
 
 import Control.Monad.Reader
 import Data.Map (Map)

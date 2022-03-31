@@ -1,7 +1,7 @@
-module Language.Mimsa.Interpreter2.Let (interpretLet) where
+module Language.Mimsa.Interpreter.Let (interpretLet) where
 
-import Language.Mimsa.Interpreter2.Monad
-import Language.Mimsa.Interpreter2.Types
+import Language.Mimsa.Interpreter.Monad
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Interpreter.Stack
