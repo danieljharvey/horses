@@ -26,11 +26,12 @@ import Language.Mimsa.Types.Error.ProjectError
 import Language.Mimsa.Types.Error.ResolverError
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Error.TypeError
+import Language.Mimsa.Types.Identifiers
 
 data Error ann
   = TypeErr Text TypeError
   | ResolverErr ResolverError
-  | InterpreterErr (InterpreterError ann)
+  | InterpreterErr (InterpreterError Name ann) -- this hardcoded Variable is bad
   | StoreErr StoreError
   | BackendErr (BackendError ann)
   | ProjectErr ProjectError

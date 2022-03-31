@@ -5,6 +5,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Language.Mimsa.Types.AST.Pattern
   ( Pattern (..),
@@ -14,6 +16,7 @@ module Language.Mimsa.Types.AST.Pattern
 where
 
 import qualified Data.Aeson as JSON
+import Data.Bifunctor.TH
 import Data.Map (Map)
 import qualified Data.Map as M
 import GHC.Generics
@@ -64,6 +67,9 @@ data Pattern var ann
       }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
+
+$(deriveBifunctor ''Map)
+$(deriveBifunctor ''Pattern)
 
 getPatternAnnotation :: Pattern var ann -> ann
 getPatternAnnotation (PWildcard ann) = ann

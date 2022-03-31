@@ -8,6 +8,7 @@ module Test.Tests.Properties
 where
 
 import Control.Monad.IO.Class
+import Data.Bifunctor
 import Data.Either
 import Data.Functor
 import qualified Data.Map as M
@@ -34,7 +35,7 @@ getStoreExprs =
     . getStore
     . prjStore
 
-itTypeChecks :: MonoType -> Expr Variable Annotation -> Either TypeError ()
+itTypeChecks :: MonoType -> Expr Name Annotation -> Either TypeError ()
 itTypeChecks mt expr = do
   let elabbed =
         fmap (\(_, _, a, _) -> a)
@@ -42,7 +43,7 @@ itTypeChecks mt expr = do
             mempty
             mempty
             (createEnv mempty (getStoreExprs testStdlib))
-          $ expr
+          $ first NamedVar expr
   generatedMt <- getTypeFromAnn <$> elabbed
   unifies mt generatedMt
 

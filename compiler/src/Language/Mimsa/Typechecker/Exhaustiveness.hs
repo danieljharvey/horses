@@ -20,9 +20,9 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
-import Language.Mimsa.Interpreter.UseSwaps
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Environment
+import Language.Mimsa.Typechecker.UseSwaps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers

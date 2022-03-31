@@ -1,292 +1,92 @@
-module Language.Mimsa.Interpreter.Interpret
-  ( interpretWithScope,
-  )
-where
+module Language.Mimsa.Interpreter.Interpret (interpret) where
 
--- let's run our code, at least for the repl
--- run == simplify, essentially
-
-import Control.Monad.Except
+import Control.Monad.Reader
+import Data.Bifunctor
 import Data.Functor
-import qualified Data.Map as M
-import Data.Maybe
-import Language.Mimsa.ExprUtils
-import Language.Mimsa.Interpreter.InstantiateVar
+import Data.Map (Map)
+import Language.Mimsa.Interpreter.App
+import Language.Mimsa.Interpreter.If
+import Language.Mimsa.Interpreter.Infix
+import Language.Mimsa.Interpreter.Let
+import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.PatternMatch
+import Language.Mimsa.Interpreter.RecordAccess
 import Language.Mimsa.Interpreter.Types
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Scope
+import Language.Mimsa.Types.Error.InterpreterError
+import Language.Mimsa.Types.Interpreter.Stack
+import Language.Mimsa.Types.Store.ExprHash
 
--- when we come to do let recursive the name of our binder
--- may already be turned into a number in the expr
--- so we look it up to make sure we bind the right thing
-findActualBindingInSwaps :: Int -> App ann Variable
-findActualBindingInSwaps int = do
-  swaps <- askForSwaps
-  scope' <- readScope
-  case M.lookup (NumberedVar int) swaps of
-    Just i' -> pure (NamedVar i')
-    _ -> throwError $ CouldNotFindVar scope' (NumberedVar int)
+initialStack :: (Ord var) => StackFrame var ann
+initialStack = StackFrame mempty mempty
 
--- | pull a variable from scope
-useVar :: (Eq ann, Monoid ann) => Variable -> App ann (Expr Variable ann)
-useVar var' = case var' of
-  (NumberedVar i) -> do
-    scope' <- readScope
-    case M.lookup (NumberedVar i) (getScope scope') of
-      Just expr ->
-        instantiateVar expr
-          >>= interpretWithScope
-      Nothing -> do
-        -- try it by it's pre-substituted name before failing
-        var <- findActualBindingInSwaps i
-        useVar var
-  (NamedVar n) -> do
-    scope' <- readScope
-    case M.lookup (NamedVar n) (getScope scope') of
-      Just expr -> do
-        instantiateVar expr
-          >>= interpretWithScope
-      Nothing -> throwError $ CouldNotFindVar scope' (NamedVar n)
+interpret ::
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
+  Map ExprHash (Expr (var, Maybe ExprHash) ann) ->
+  Expr (var, Maybe ExprHash) ann ->
+  Either (InterpreterError var ann) (Expr var ann)
+interpret deps expr =
+  let addEmptyStackFrame exp' = exp' $> mempty
+      expr' = addEmptyStackFrame expr
+      initialDeps = addEmptyStackFrame <$> deps
+      removeExprData = bimap fst edAnnotation
+   in removeExprData <$> runReaderT (interpretExpr expr') (InterpretReaderEnv initialStack initialDeps)
 
-interpretStringConcat ::
-  (Monoid ann) =>
-  Expr Variable ann ->
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-interpretStringConcat plainA plainB = do
-  let withStr = pure . MyLiteral mempty . MyString . StringType
-      getStr exp' = case exp' of
-        (MyLiteral _ (MyString (StringType i))) -> Right i
-        _ -> Left $ StringConcatenationFailure plainA plainB
-  case (,) <$> getStr plainA <*> getStr plainB of
-    Right (a', b') -> withStr (a' <> b')
-    Left e -> throwError e
+-- somewhat pointless separate function to make debug logging each value out
+-- easier
+interpretExpr ::
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
+  InterpretExpr var ann ->
+  InterpreterM var ann (InterpretExpr var ann)
+interpretExpr =
+  interpretExpr'
 
-interpretArrayConcat ::
-  (Monoid ann) =>
-  Expr Variable ann ->
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-interpretArrayConcat plainA plainB = do
-  let withArr = pure . MyArray mempty
-      getArr exp' = case exp' of
-        (MyArray _ i) -> Right i
-        _ -> Left $ ArrayConcatenationFailure plainA plainB
-  case (,) <$> getArr plainA <*> getArr plainB of
-    Right (a', b') -> withArr (a' <> b')
-    Left e -> throwError e
-
-interpretOperator ::
-  (Eq ann, Monoid ann) =>
-  Operator ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-interpretOperator operator a b = do
-  plainA <- interpretWithScope a
-  plainB <- interpretWithScope b
-  let removeAnn expr = expr $> ()
-  case operator of
-    Equals -> do
-      let withBool = pure . MyLiteral mempty . MyBool
-      if removeAnn plainA == removeAnn plainB
-        then withBool True
-        else withBool False
-    Add -> do
-      let withInt = pure . MyLiteral mempty . MyInt
-      let getNum exp' = case exp' of
-            (MyLiteral _ (MyInt i)) -> Right i
-            _ -> Left $ AdditionWithNonNumber a
-      case (,) <$> getNum plainA <*> getNum plainB of
-        Right (a', b') -> withInt (a' + b')
-        Left e -> throwError e
-    Subtract -> do
-      let withInt = pure . MyLiteral mempty . MyInt
-      let getNum exp' = case exp' of
-            (MyLiteral _ (MyInt i)) -> Right i
-            _ -> Left $ SubtractionWithNonNumber exp'
-      case (,) <$> getNum plainA <*> getNum plainB of
-        Right (a', b') -> withInt (a' - b')
-        Left e -> throwError e
-    GreaterThan ->
-      numericComparison
-        (>)
-        (ComparisonWithNonNumber GreaterThan)
-        plainA
-        plainB
-    GreaterThanOrEqualTo ->
-      numericComparison
-        (>=)
-        (ComparisonWithNonNumber GreaterThanOrEqualTo)
-        plainA
-        plainB
-    LessThan ->
-      numericComparison
-        (<)
-        (ComparisonWithNonNumber LessThan)
-        plainA
-        plainB
-    LessThanOrEqualTo ->
-      numericComparison
-        (<=)
-        (ComparisonWithNonNumber LessThanOrEqualTo)
-        plainA
-        plainB
-    StringConcat ->
-      interpretStringConcat plainA plainB
-    ArrayConcat ->
-      interpretArrayConcat plainA plainB
-    (Custom infixOp) -> do
-      opFn <- findOperator infixOp
-      case opFn of
-        Just fn -> do
-          iFn <- interpretWithScope fn
-          interpretWithScope
-            ( MyApp
-                mempty
-                (MyApp mempty iFn plainA)
-                plainB
-            )
-        Nothing ->
-          throwError (CouldNotFindInfixOp infixOp)
-
--- | lift a numeric comparison into the Expr type
-numericComparison ::
-  (Monoid ann) =>
-  (Int -> Int -> Bool) ->
-  (Expr Variable ann -> InterpreterError ann) ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-numericComparison f withErr plainA plainB = do
-  let withBool = pure . MyLiteral mempty . MyBool
-  let getNum exp' = case exp' of
-        (MyLiteral _ (MyInt i)) -> Right i
-        _ -> Left $ withErr exp'
-  case (,) <$> getNum plainA <*> getNum plainB of
-    Right (a', b') -> withBool (f a' b')
-    Left e -> throwError e
-
-interpretApplication ::
-  (Eq ann, Monoid ann) =>
-  ann ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-interpretApplication ann fn value = do
-  incrementApplyCount
-  case fn of
-    (MyVar ann' f) -> do
-      expr <- interpretWithScope (MyVar ann' f)
-      interpretWithScope (MyApp ann expr value)
-    (MyLambda _ ident expr) -> do
-      value' <- interpretWithScope value
-      addToScope (Scope $ M.singleton (nameFromIdent ident) value')
-      interpretWithScope expr
-    (MyLiteral ann' a) ->
-      throwError $ CannotApplyToNonFunction (MyLiteral ann' a)
-    (MyApp ann' f a) -> do
-      inner <- interpretApplication ann' f a
-      value' <- interpretWithScope value
-      if inner == MyApp ann' f a && value == value'
-        then pure (MyApp ann inner value')
-        else interpretWithScope (MyApp ann inner value')
-    (MyConstructor ann' const') ->
-      MyApp ann (MyConstructor ann' const')
-        <$> interpretWithScope value
-    other -> do
-      expr <- interpretWithScope other
-      interpretWithScope (MyApp ann expr value)
-
-interpretRecordAccess ::
-  (Eq ann, Monoid ann) =>
-  ann ->
-  Expr Variable ann ->
-  Name ->
-  App ann (Expr Variable ann)
-interpretRecordAccess ann recordExpr name =
-  case recordExpr of
-    (MyRecord _ record) ->
-      case M.lookup name record of
-        Just item -> interpretWithScope item
-        _ -> throwError $ CannotFindMemberInRecord record name
-    (MyVar ann' a) -> do
-      expr <- interpretWithScope (MyVar ann' a)
-      interpretWithScope (MyRecordAccess ann expr name)
-    (MyRecordAccess ann' a name') -> do
-      expr <- interpretWithScope (MyRecordAccess ann' a name')
-      interpretWithScope (MyRecordAccess ann expr name)
-    a ->
-      throwError $ CannotDestructureAsRecord a name
-
-interpretIf ::
-  (Eq ann, Monoid ann) =>
-  ann ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-interpretIf ann predicate true false =
-  case predicate of
-    (MyLiteral _ (MyBool pred')) ->
-      if pred'
-        then interpretWithScope true
-        else interpretWithScope false
-    all'@MyLiteral {} ->
-      throwError $ PredicateForIfMustBeABoolean all'
-    all'@MyLambda {} ->
-      throwError $ PredicateForIfMustBeABoolean all'
-    pred' -> do
-      predExpr <- interpretWithScope pred'
-      interpretWithScope (MyIf ann predExpr true false)
-
-interpretLetPattern ::
-  (Eq ann, Monoid ann) =>
-  Pattern Variable ann ->
-  Expr Variable ann ->
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-interpretLetPattern pat expr body = do
-  let matches = fromMaybe [] (patternMatches pat expr)
-  let newScopes = Scope $ M.fromList matches
-  addToScope newScopes
-  interpretWithScope body
-
--- warning, ordering is very important here to stop things looping forever
-interpretWithScope ::
-  (Eq ann, Monoid ann) =>
-  Expr Variable ann ->
-  App ann (Expr Variable ann)
-interpretWithScope interpretExpr =
-  case interpretExpr of
-    (MyLet _ ident expr body) -> do
-      addToScope (Scope $ M.singleton (nameFromIdent ident) expr)
-      interpretWithScope body
-    (MyLetPattern _ pat expr body) -> do
-      expr' <- interpretWithScope expr
-      interpretLetPattern pat expr' body
-    (MyInfix _ op a b) -> interpretOperator op a b
-    (MyVar _ var) ->
-      useVar var >>= interpretWithScope
-    (MyApp ann fn value) -> interpretApplication ann fn value
-    (MyRecordAccess ann recordExpr name) ->
-      interpretRecordAccess ann recordExpr name
-    (MyRecord ann as) -> do
-      exprs <- traverse interpretWithScope as
-      pure (MyRecord ann exprs)
-    (MyLambda ann a b) ->
-      pure (MyLambda ann a b)
-    (MyIf ann predicate true false) ->
-      interpretIf ann predicate true false
-    (MyData _ _ expr) -> interpretWithScope expr
-    (MyPatternMatch _ expr' patterns) -> do
-      expr'' <- interpretWithScope expr'
-      patternMatch expr'' patterns >>= interpretWithScope
-    (MyDefineInfix _ op fn expr) -> do
-      addOperator op fn
-      interpretWithScope expr
-    typedHole@MyTypedHole {} -> throwError (TypedHoleFound typedHole)
-    expr -> bindExpr interpretWithScope expr
+interpretExpr' ::
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
+  InterpretExpr var ann ->
+  InterpreterM var ann (InterpretExpr var ann)
+interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)
+interpretExpr' (MyLet _ ident expr body) =
+  interpretLet interpretExpr ident expr body
+interpretExpr' (MyVar _ var) =
+  lookupVar var >>= interpretExpr
+interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
+  -- capture current environment
+  stackFrame <-
+    getCurrentStackFrame
+  -- add it to already captured vars
+  let newExprData =
+        ExprData
+          (current <> stackFrame)
+          isRec
+          ann
+  -- return it
+  pure
+    (MyLambda newExprData ident body)
+interpretExpr' (MyPair ann a b) =
+  MyPair ann <$> interpretExpr a <*> interpretExpr b
+interpretExpr' (MyInfix _ op a b) =
+  interpretInfix interpretExpr op a b
+interpretExpr' (MyIf ann predExpr thenExpr elseExpr) =
+  interpretIf interpretExpr ann predExpr thenExpr elseExpr
+interpretExpr' (MyApp ann fn a) =
+  interpretApp interpretExpr ann fn a
+interpretExpr' (MyRecordAccess ann expr name) =
+  interpretRecordAccess interpretExpr ann expr name
+interpretExpr' (MyDefineInfix _ op fn expr) = do
+  intFn <- interpretExpr fn
+  addOperator op intFn (interpretExpr expr)
+interpretExpr' (MyData _ _ expr) = interpretExpr expr
+interpretExpr' (MyPatternMatch _ matchExpr patterns) = do
+  interpretPatternMatch interpretExpr matchExpr patterns
+interpretExpr' (MyLetPattern _ pat patExpr body) =
+  interpretLetPattern interpretExpr pat patExpr body
+interpretExpr' (MyRecord ann as) =
+  MyRecord ann <$> traverse interpretExpr as
+interpretExpr' (MyArray ann as) =
+  MyArray ann <$> traverse interpretExpr as
+interpretExpr' (MyConstructor as const') =
+  pure (MyConstructor as const')
+interpretExpr' (MyTypedHole ann name) =
+  pure (MyTypedHole ann name)

@@ -73,7 +73,7 @@ buildTestStdlib =
         "\\i -> eq 10 i"
       addBinding
         "addInt"
-        "\\a -> \\b -> a + b"
+        "\\intA -> \\intB -> intA + intB"
       addBinding
         "subtractInt"
         "\\a -> \\b -> a - b"
@@ -85,7 +85,7 @@ buildTestStdlib =
         "\\f -> \\g -> \\a -> f (g a)"
       addBinding
         "incrementInt"
-        "\\a -> addInt 1 a"
+        "\\int -> addInt 1 int"
       addBinding
         "typeState"
         "type Maybe a = Just a | Nothing in {}"
@@ -215,7 +215,7 @@ addParser = do
     "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (a, rest)) -> Just (f a, rest) | _ -> Nothing)"
   addBinding
     "bindParser"
-    "\\f -> \\p -> match p with (Parser parser) -> Parser (\\s -> match parser s with (Just (a, restA)) -> (let nextParser = match f a with (Parser parserB) -> parserB; nextParser restA) | _ -> Nothing)"
+    "\\f -> \\p -> match p with (Parser innerParser) -> Parser (\\s -> match innerParser s with (Just (a, restA)) -> (let nextParser = match f a with (Parser parserB) -> parserB; nextParser restA) | _ -> Nothing)"
   addBinding
     "predParser"
     "\\pred -> \\p -> Parser (\\s -> let (Parser psr) = p in match psr s with (Just (a, rest)) -> (if pred a then (Just ((a, rest))) else (Nothing)) | _ -> (Nothing))"

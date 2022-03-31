@@ -52,6 +52,7 @@ data TypeErrorF ann
   | CannotUseBuiltInTypeAsConstructor ann TyCon
   | InternalConstructorUsedOutsidePatternMatch ann TyCon
   | PatternMatchErr (PatternMatchErrorF ann)
+  | CouldNotFindSwapForVariable Variable Swaps
   | SwapsChangingError
   deriving stock (Eq, Ord, Show, Foldable)
 
@@ -205,7 +206,12 @@ renderTypeError (CannotUseBuiltInTypeAsConstructor _ name) =
   ["Cannot use built-in type as constructor name:" <+> prettyDoc name]
 renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
   ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used outside of a pattern match"]
-renderTypeError (PatternMatchErr pmErr) = [prettyDoc pmErr]
+renderTypeError (PatternMatchErr pmErr) =
+  [prettyDoc pmErr]
+renderTypeError (CouldNotFindSwapForVariable var swaps) =
+  ["Could not find swap for variable" <+> prettyDoc var <+> "in" <+> itemList]
+  where
+    itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> M.keys swaps)) <+> "]"
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

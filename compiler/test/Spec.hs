@@ -18,10 +18,7 @@ import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Typescript as Typescript
 import qualified Test.Codegen as Codegen
 import Test.Hspec
-import qualified Test.Interpreter.InstantiateVar as InstantiateVar
-import qualified Test.Interpreter.Interpreter as Interpreter
 import qualified Test.Interpreter.Repl as Repl
-import qualified Test.Interpreter.UseSwaps as UseSwaps
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
 import qualified Test.Parser.Pattern as Pattern
 import qualified Test.Parser.Syntax as Syntax
@@ -55,12 +52,12 @@ import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
+import qualified Test.Typechecker.UseSwaps as UseSwaps
 
 main :: IO ()
 main =
   hspec $ do
     Syntax.spec
-    Interpreter.spec
     Prettier.spec
     Resolver.spec
     Substitutor.spec
@@ -72,7 +69,6 @@ main =
     NormaliseType.spec
     TypeSearch.spec
     MonoTypeParser.spec
-    InstantiateVar.spec
     UnitTest.spec
     PropertyTest.spec
     UpdateDeps.spec

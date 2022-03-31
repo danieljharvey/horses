@@ -6,16 +6,16 @@ module Language.Mimsa.Actions.Evaluate
 where
 
 import Control.Monad.Except
-import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
+import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
+import qualified Language.Mimsa.Actions.Interpret as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
-import Language.Mimsa.Interpreter (interpret)
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.Warnings
@@ -57,7 +57,7 @@ evaluate input expr = do
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
   -- resolve optimised expression
-  (ResolvedExpression mt newStoreExpr expr' scope' swaps typedExpr input') <-
+  (ResolvedExpression mt newStoreExpr _expr' _scope' swaps typedExpr input') <-
     Actions.checkStoreExpression
       (prettyPrint optimisedStoreExpr)
       project
@@ -69,7 +69,7 @@ evaluate input expr = do
 
   -- interpret
   interpretedExpr <-
-    liftEither (first InterpreterErr (interpret scope' swaps expr'))
+    Actions.interpreter newStoreExpr --liftEither (first InterpreterErr (interpret scope' swaps expr'))
 
   -- print any warnings
   traverse_ (Actions.appendMessage . prettyPrint) (getWarnings resolved)

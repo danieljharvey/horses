@@ -11,7 +11,8 @@ import Data.Foldable
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Interpreter
+import qualified Language.Mimsa.Actions.Interpret as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
@@ -29,9 +30,9 @@ evaluatesSuccessfully env input =
   it ("Evaluates " <> T.unpack input <> " from stdlib") $ do
     case evaluateText env input of
       Left e -> error (T.unpack (prettyPrint e))
-      Right (ResolvedExpression _ _ expr' scope' swaps _ _) -> do
-        let endExpr = interpret scope' swaps expr'
-        endExpr `shouldSatisfy` isRight
+      Right resolved -> do
+        Actions.run env (Actions.interpreter (reStoreExpression resolved))
+          `shouldSatisfy` isRight
 
 spec :: Spec
 spec = do

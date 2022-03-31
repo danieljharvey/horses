@@ -41,6 +41,10 @@ instance (Printer e, Printer a) => Printer (Either e a) where
 instance Printer () where
   prettyDoc = const ""
 
+instance (Printer a) => Printer (Maybe a) where
+  prettyDoc (Just a) = prettyDoc a
+  prettyDoc _ = mempty
+
 instance Printer Text where
   prettyPrint a = a
   prettyDoc = pretty

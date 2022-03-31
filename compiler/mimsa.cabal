@@ -35,10 +35,12 @@ library
       Language.Mimsa.Actions.Helpers.CanOptimise
       Language.Mimsa.Actions.Helpers.CheckStoreExpression
       Language.Mimsa.Actions.Helpers.FindExistingBinding
+      Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression
       Language.Mimsa.Actions.Helpers.LookupExpression
       Language.Mimsa.Actions.Helpers.Parse
       Language.Mimsa.Actions.Helpers.Swaps
       Language.Mimsa.Actions.Helpers.UpdateTests
+      Language.Mimsa.Actions.Interpret
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding
@@ -67,15 +69,16 @@ library
       Language.Mimsa.Codegen.Newtype
       Language.Mimsa.Codegen.Utils
       Language.Mimsa.ExprUtils
-      Language.Mimsa.Interpreter
-      Language.Mimsa.Interpreter.HighestVar
-      Language.Mimsa.Interpreter.InstantiateVar
+      Language.Mimsa.Interpreter.App
+      Language.Mimsa.Interpreter.If
+      Language.Mimsa.Interpreter.Infix
       Language.Mimsa.Interpreter.Interpret
-      Language.Mimsa.Interpreter.Main
+      Language.Mimsa.Interpreter.Let
+      Language.Mimsa.Interpreter.MarkImports
+      Language.Mimsa.Interpreter.Monad
       Language.Mimsa.Interpreter.PatternMatch
-      Language.Mimsa.Interpreter.SwapName
+      Language.Mimsa.Interpreter.RecordAccess
       Language.Mimsa.Interpreter.Types
-      Language.Mimsa.Interpreter.UseSwaps
       Language.Mimsa.Logging
       Language.Mimsa.Monad
       Language.Mimsa.Parser
@@ -142,6 +145,7 @@ library
       Language.Mimsa.Typechecker.Typecheck
       Language.Mimsa.Typechecker.TypedHoles
       Language.Mimsa.Typechecker.Unify
+      Language.Mimsa.Typechecker.UseSwaps
       Language.Mimsa.Types.AST
       Language.Mimsa.Types.AST.Annotation
       Language.Mimsa.Types.AST.DataType
@@ -168,6 +172,7 @@ library
       Language.Mimsa.Types.Identifiers.TypeIdentifier
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Identifiers.Variable
+      Language.Mimsa.Types.Interpreter.Stack
       Language.Mimsa.Types.MimsaConfig
       Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project
@@ -209,6 +214,7 @@ library
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers
@@ -257,6 +263,7 @@ executable mimsa
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers
@@ -318,6 +325,7 @@ executable mimsa-server
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers
@@ -377,10 +385,7 @@ test-suite mimsa-test
       Test.Codegen.Newtype
       Test.Codegen.Shared
       Test.Data.Project
-      Test.Interpreter.InstantiateVar
-      Test.Interpreter.Interpreter
       Test.Interpreter.Repl
-      Test.Interpreter.UseSwaps
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax
@@ -414,6 +419,7 @@ test-suite mimsa-test
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
+      Test.Typechecker.UseSwaps
       Test.Utils.Compilation
       Test.Utils.Helpers
       Test.Utils.Serialisation
@@ -425,6 +431,7 @@ test-suite mimsa-test
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers
@@ -462,6 +469,7 @@ benchmark mimsa-benchmark
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bifunctors
     , binary
     , bytestring
     , containers

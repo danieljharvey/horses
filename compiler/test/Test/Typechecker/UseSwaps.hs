@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Interpreter.UseSwaps
+module Test.Typechecker.UseSwaps
   ( spec,
   )
 where
 
 import qualified Data.Map as M
-import Language.Mimsa.Interpreter.UseSwaps
+import Language.Mimsa.Typechecker.UseSwaps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Test.Hspec
