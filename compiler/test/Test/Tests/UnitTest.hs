@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Tests.UnitTest
@@ -14,7 +15,6 @@ import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
@@ -70,18 +70,16 @@ altIdStoreExpr =
 altIdHash :: ExprHash
 altIdHash = getStoreExpressionHash altIdStoreExpr
 
-projectStoreSize :: Project ann -> Int
-projectStoreSize = length . getStore . prjStore
-
-testCount :: Project ann -> Int
-testCount = length . prjTests
-
 spec :: Spec
 spec =
   describe "UnitTest" $ do
     describe "createNewTests" $ do
-      it "Returns empty when no previous unit tests match" $ do
-        createNewTests testStdlib idHash idHash `shouldBe` Right (testStdlib, mempty)
+      it "Returns one item when one previous unit test matches" $ do
+        let result = createNewTests testStdlib idHash idHash
+        fst <$> result `shouldBe` Right testStdlib
+        snd <$> result `shouldSatisfy` \case
+          (Right a) -> length a == 1
+          _ -> error "oh no"
 
       it "Replacing a test with itself is a no-op" $ do
         let firstTest =
@@ -90,8 +88,11 @@ spec =
                 testingStoreExpr
                 (TestName "id does nothing")
         let testStdlibWithTest = testStdlib <> fromTest (UTest firstTest) testingStoreExpr
-        createNewTests testStdlibWithTest idHash idHash
-          `shouldBe` Right (testStdlibWithTest, [testingStoreExpr])
+        let result = createNewTests testStdlibWithTest idHash idHash
+        fst <$> result `shouldBe` Right testStdlibWithTest
+        snd <$> result `shouldSatisfy` \case
+          (Right exprs) -> elem testingStoreExpr exprs
+          _ -> error "oh no"
 
       it "Updating a test adds new unit tests and items to the Store" $ do
         let firstTest =
@@ -107,11 +108,11 @@ spec =
               Right (a, b) -> (a, b)
               Left _ -> (undefined, undefined)
         -- we've added one item to the store
-        projectStoreSize prj `shouldSatisfy` \a -> a == projectStoreSize testStdlibWithTest + 1
+        additionalStoreItems testStdlibWithTest prj `shouldBe` 2
         -- we've added another unit tests
-        testCount prj `shouldSatisfy` \i -> i == testCount testStdlibWithTest + 1
+        additionalTests testStdlibWithTest prj `shouldBe` 2
         -- there is one store expression returned
-        exprs `shouldSatisfy` \a -> length a == 1
+        exprs `shouldSatisfy` \a -> length a == 2
         -- and it's different to the original one
         exprs `shouldSatisfy` \a -> a /= [testingStoreExpr]
 

@@ -17,7 +17,7 @@ spec :: Spec
 spec = do
   describe "Typecheck" $ do
     it "Resolves an item from the test stdlib" $ do
-      let inputHash = getHashOfName testStdlib "liftA2State"
+      let inputHash = getHashOfName testStdlib "const"
       -- get an arbitrary store expression from test project
       let storeExpr = getStoreExpression testStdlib inputHash
       -- resolve it

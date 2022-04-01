@@ -1189,7 +1189,7 @@ spec =
                 ]
         result <- eval testStdlib expr
         result `shouldSatisfy` isRight
-      xit "Parses a JSON array" $ do
+      it "Parses a JSON array" $ do
         let expr =
               mconcat
                 [ "let lexeme p = parser.left p parser.space0; ",

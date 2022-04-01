@@ -101,10 +101,10 @@ spec = do
         Left e -> error (T.unpack $ prettyPrint e)
         Right (newProject, _, _) -> do
           additionalTests testStdlib newProject `shouldBe` 2
-          -- When actually fetching tests we should only show one for id
+          -- When actually fetching tests we should only show the ones for id
           -- instead of for both versions of `const`
           let gotTests = getTestsForExprHash newProject idHash
-          length gotTests `shouldBe` 1
+          length gotTests `shouldBe` 2
 
     it "Adds a new property test, updates it's dep, but retrieving only returns one version" $ do
       let newConst =
@@ -125,7 +125,7 @@ spec = do
         Left e -> error (T.unpack $ prettyPrint e)
         Right (newProject, _, _) -> do
           additionalTests testStdlib newProject `shouldBe` 2
-          -- When actually fetching tests we should only show one for id
+          -- When actually fetching tests we should only show the ones for id
           -- instead of for both versions of `const`
           let gotTests = getTestsForExprHash newProject idHash
-          length gotTests `shouldBe` 1
+          length gotTests `shouldBe` 2

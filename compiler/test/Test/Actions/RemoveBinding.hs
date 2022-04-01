@@ -25,11 +25,11 @@ spec = do
         )
         `shouldSatisfy` isLeft
     it "Successfully removes a binding" $ do
-      case Actions.run testStdlib (Actions.removeBinding "execState") of
+      case Actions.run testStdlib (Actions.removeBinding "const") of
         Left _ -> error "Should not have failed"
         Right (newProject, _, _) -> do
           -- no `execState` binding
           lookupBindingName
             newProject
-            "execState"
+            "const"
             `shouldSatisfy` isNothing

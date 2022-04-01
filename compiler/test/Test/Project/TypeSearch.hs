@@ -89,6 +89,6 @@ spec =
         typeSearchFromText typeMap "(a -> b) -> (Maybe a) -> (Maybe b)"
           `shouldBe` Right
             ( M.singleton
-                "fmapMaybe"
+                "maybe.fmap"
                 (normaliseType fmapMaybe)
             )

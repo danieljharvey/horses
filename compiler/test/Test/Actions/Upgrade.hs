@@ -62,8 +62,9 @@ spec = do
       -- one dep was replaced in `useBoth`
       outcome
         `shouldSatisfy` \(_, _, replacements) -> M.size replacements == 1
-      -- the two new items (`useBoth` and `id`) plus the upgraded one
-      additionalStoreItems testStdlib prj `shouldBe` 3
+      -- the two new items (`useBoth` and `id`) plus the upgraded one plus
+      -- upgraded `id` test
+      additionalStoreItems testStdlib prj `shouldBe` 4
       -- We logged a useful message
       Actions.messagesFromOutcomes actions
         `shouldSatisfy` elem "Updated useBoth. 1 dependency updated (id)"
@@ -95,7 +96,7 @@ spec = do
       outcome `shouldSatisfy` \(_, _, replacements) -> M.size replacements == 1
       -- the three new items (`useBoth`, `id`, `const`) plus the 2 upgraded
       -- ones
-      additionalStoreItems testStdlib prj `shouldBe` 5
+      additionalStoreItems testStdlib prj `shouldBe` 6
       -- We logged a useful message
       Actions.messagesFromOutcomes actions
         `shouldSatisfy` elem "Updated useBoth. 1 dependency updated (const)"
@@ -109,8 +110,8 @@ spec = do
       let (prj, _, outcome) = fromRight $ Actions.run testStdlib action
       -- one deps were replaced in the last upgrade of `useBoth`
       outcome `shouldSatisfy` \(_, _, replacements) -> M.size replacements == 1
-      -- the two new items (`useBoth`, `id`) plus the upgraded one plus two
+      -- the two new items (`useBoth`, `id`) plus one upgraded oneis plus two
       -- tests
-      additionalStoreItems testStdlib prj `shouldBe` 5
-      -- one test added manually, one created in the upgrade
-      additionalTests testStdlib prj `shouldBe` 2
+      additionalStoreItems testStdlib prj `shouldBe` 6
+      -- one test added manually, two created in the upgrade
+      additionalTests testStdlib prj `shouldBe` 3

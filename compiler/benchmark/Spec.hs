@@ -67,7 +67,7 @@ main =
   defaultMain
     [ bgroup
         "build stdlib"
-        [ bench "allFns" $ whnf (buildThing allFns) mempty
+        [ bench "allFns" $ whnf (buildThing stdlibAction) mempty
         ],
       bgroup
         "compilation"

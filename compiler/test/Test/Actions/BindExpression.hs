@@ -8,7 +8,6 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor
-import qualified Data.Map as M
 import Data.Maybe (isJust)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
@@ -20,20 +19,12 @@ import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
 
 brokenExpr :: Expr Name Annotation
 brokenExpr = MyInfix mempty Equals (int 1) (bool True)
-
-projectStoreSize :: Project ann -> Int
-projectStoreSize = length . getStore . prjStore
-
-testsSize :: Project ann -> Int
-testsSize = M.size . prjTests
 
 testWithIdInExpr :: Expr Name Annotation
 testWithIdInExpr =
@@ -51,14 +42,15 @@ spec = do
             "1 == True"
         )
         `shouldSatisfy` isLeft
+
     it "Adds a fresh new function to Bindings and to Store" $ do
       let expr = int 1
       case Actions.run testStdlib (Actions.bindExpression expr "one" "1") of
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
           -- one more item in store
-          projectStoreSize newProject
-            `shouldBe` projectStoreSize testStdlib + 1
+          additionalStoreItems testStdlib newProject
+            `shouldBe` 1
           -- one more binding
           lookupBindingName
             newProject
@@ -67,6 +59,7 @@ spec = do
           -- one new store expression
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
             `shouldBe` 1
+
     it "Updating an existing binding updates binding" $ do
       let newIdExpr = MyLambda mempty (Identifier mempty "b") (MyVar mempty "b")
       let action =
@@ -74,17 +67,18 @@ spec = do
       case Actions.run testStdlib action of
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
-          -- one more item
-          projectStoreSize newProject
-            `shouldBe` projectStoreSize testStdlib + 1
-          -- one new expression
+          -- one more item, one updated test
+          additionalStoreItems testStdlib newProject
+            `shouldBe` 2
+          -- two new expressions
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
-            `shouldBe` 1
+            `shouldBe` 2
           -- binding hash has changed
           lookupBindingName
             newProject
             "id"
             `shouldNotBe` lookupBindingName testStdlib "id"
+
     it "Updating an existing binding updates tests" $ do
       let newIdExpr =
             MyLambda
@@ -101,20 +95,21 @@ spec = do
       case Actions.run testStdlib action of
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
-          -- three more items
-          projectStoreSize newProject
-            `shouldBe` projectStoreSize testStdlib + 3
-          -- one new expression, two new tests
+          -- four more items
+          additionalStoreItems testStdlib newProject
+            `shouldBe` 4
+          -- one new expression, three new tests
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
-            `shouldBe` 3
+            `shouldBe` 4
           -- two more unit tests
-          testsSize newProject
-            `shouldBe` testsSize testStdlib + 2
+          additionalTests testStdlib newProject
+            `shouldBe` 3
           -- binding hash has changed
           lookupBindingName
             newProject
             "id"
             `shouldNotBe` lookupBindingName testStdlib "id"
+
     it "Re-binding an expression that uses a deleted binding does not break it" $ do
       let newIdExpr =
             MyLambda
