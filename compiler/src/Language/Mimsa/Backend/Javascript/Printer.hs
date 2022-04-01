@@ -29,7 +29,7 @@ printLiteral :: TSLiteral -> Text
 printLiteral (TSBool True) = "true"
 printLiteral (TSBool False) = "false"
 printLiteral (TSInt i) = prettyPrint i
-printLiteral (TSString str) = "\"" <> prettyPrint str <> "\""
+printLiteral (TSString str) = "`" <> str <> "`"
 
 printLetBody :: TSLetBody -> Text
 printLetBody (TSLetBody (TSBody [] body)) = printExpr body

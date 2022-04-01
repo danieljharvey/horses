@@ -105,7 +105,7 @@ testCases =
   [ ("True", "export const main = true", "true"),
     ("False", "export const main = false", "false"),
     ("123", "export const main = 123", "123"),
-    ("\"Poo\"", "export const main = \"Poo\"", "Poo"),
+    ("\"Poo\"", "export const main = `Poo`", "Poo"),
     ( "\\a -> a",
       "export const main = (a) => a",
       "[Function: main]"
@@ -115,15 +115,15 @@ testCases =
       "1"
     ),
     ( "let a = \"dog\" in 123",
-      "const a = \"dog\"; export const main = 123",
+      "const a = `dog`; export const main = 123",
       "123"
     ),
     ( "let a = \"dog\" in let b = \"horse\" in 123",
-      "const a = \"dog\"; \nconst b = \"horse\"; export const main = 123",
+      "const a = `dog`; \nconst b = `horse`; export const main = 123",
       "123"
     ),
     ( "{ a: 123, b: \"horse\" }",
-      "export const main = { a: 123, b: \"horse\" }",
+      "export const main = { a: 123, b: `horse` }",
       "{ a: 123, b: 'horse' }"
     ),
     ( "\\a -> let b = 123 in a",
@@ -134,7 +134,7 @@ testCases =
     ("2 + 2", "export const main = 2 + 2", "4"),
     ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",
-      "export const main = \"dog\" + \"log\"",
+      "export const main = `dog` + `log`",
       "doglog"
     ),
     ( "{ fn: (\\a -> let d = 1 in a) }",
@@ -254,7 +254,8 @@ fullTestCases =
     ("1 < 2", "true"),
     ("2 < 1", "false"),
     ("2 <= 2", "true"),
-    ("3 <= 2", "false")
+    ("3 <= 2", "false"),
+    ("\"\nHello\n\"", "\nHello\n")
   ]
 
 spec :: Spec
@@ -264,7 +265,7 @@ spec = do
       it "literals" $ do
         JS.printLiteral (TSBool True) `shouldBe` "true"
         JS.printLiteral (TSInt 100) `shouldBe` "100"
-        JS.printLiteral (TSString "egg") `shouldBe` "\"egg\""
+        JS.printLiteral (TSString "egg") `shouldBe` "`egg`"
       it "function" $ do
         JS.printExpr
           ( TSFunction
@@ -389,9 +390,9 @@ spec = do
             )
             `shouldBe` "value.a === 11"
           conditions' (TSPatternConstructor "Just" [TSPatternLit (TSBool True)])
-            `shouldBe` "value.type === \"Just\" && value.vars[0] === true"
+            `shouldBe` "value.type === `Just` && value.vars[0] === true"
           conditions' (TSPatternConstructor "Just" [TSPatternWildcard])
-            `shouldBe` "value.type === \"Just\""
+            `shouldBe` "value.type === `Just`"
           conditions' (TSPatternString (TSStringVar "d") (TSStringVar "og"))
             `shouldBe` "value.length >= 1"
 
