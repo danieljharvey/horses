@@ -104,28 +104,28 @@ testCases =
   [ ("True", "export const main = true", "true"),
     ("False", "export const main = false", "false"),
     ("123", "export const main = 123", "123"),
-    ("\"Poo\"", "export const main = \"Poo\"", "Poo"),
+    ("\"Poo\"", "export const main = `Poo`", "Poo"),
     ( "if True then 1 else 2",
       "export const main = true ? 1 : 2",
       "1"
     ),
     ( "let a = \"dog\" in 123",
-      "const a = \"dog\"; export const main = 123",
+      "const a = `dog`; export const main = 123",
       "123"
     ),
     ( "let a = \"dog\" in let b = \"horse\" in 123",
-      "const a = \"dog\"; \nconst b = \"horse\"; export const main = 123",
+      "const a = `dog`; \nconst b = `horse`; export const main = 123",
       "123"
     ),
     ( "{ a: 123, b: \"horse\" }",
-      "export const main = { a: 123, b: \"horse\" }",
+      "export const main = { a: 123, b: `horse` }",
       "{ a: 123, b: 'horse' }"
     ),
     ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
     ("2 + 2", "export const main = 2 + 2", "4"),
     ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",
-      "export const main = \"dog\" + \"log\"",
+      "export const main = `dog` + `log`",
       "doglog"
     ),
     ( "{ fn: (\\a -> let d = 1 in a) }",
@@ -247,7 +247,8 @@ fullTestCases =
     ("3 <= 2", "false"),
     ("Monoid", "[Function: Monoid]"),
     ("let a = 1; let b = 3; let c = 6; and False True", "false"),
-    ("let apply a f = f a; infix |> = apply; let f = \\a -> a |> (and False) |> not; f False", "true")
+    ("let apply a f = f a; infix |> = apply; let f = \\a -> a |> (and False) |> not; f False", "true"),
+    ("\"\nHello\n\"", "\nHello\n")
   ]
 
 spec :: Spec
@@ -257,7 +258,7 @@ spec = do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
         printLiteral (TSInt 100) `shouldBe` "100"
-        printLiteral (TSString "egg") `shouldBe` "\"egg\""
+        printLiteral (TSString "egg") `shouldBe` "`egg`"
       it "function" $ do
         printExpr
           ( TSFunction
@@ -382,9 +383,9 @@ spec = do
             )
             `shouldBe` "value.a === 11"
           conditions' (TSPatternConstructor "Just" [TSPatternLit (TSBool True)])
-            `shouldBe` "value.type === \"Just\" && value.vars[0] === true"
+            `shouldBe` "value.type === `Just` && value.vars[0] === true"
           conditions' (TSPatternConstructor "Just" [TSPatternWildcard])
-            `shouldBe` "value.type === \"Just\""
+            `shouldBe` "value.type === `Just`"
           conditions' (TSPatternString (TSStringVar "d") (TSStringVar "og"))
             `shouldBe` "value.length >= 1"
 
