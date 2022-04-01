@@ -20,6 +20,7 @@ import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
+import Language.Mimsa.Project.Stdlib (buildStdlib)
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage (getStoreExpressionHash)
 import Language.Mimsa.Transform.FindUnused
@@ -41,6 +42,9 @@ import Test.Utils.Serialisation
     saveStoreExpression,
   )
 
+stdlib :: Project Annotation
+stdlib = fromRight buildStdlib
+
 eval ::
   Project Annotation ->
   Text ->
@@ -53,7 +57,7 @@ eval env input =
       saveRegressionData (se $> ())
       let endExpr =
             (\(_, _, a) -> a)
-              <$> Actions.run testStdlib (Actions.interpreter se)
+              <$> Actions.run env (Actions.interpreter se)
       case toEmptyAnn <$> endExpr of
         Right a -> pure (Right (normaliseType (toEmptyType mt), a))
         Left e -> pure (Left (prettyPrint e))
@@ -1179,3 +1183,28 @@ spec =
       it "Less than or equal to 3" $ do
         result <- eval testStdlib "10 <= 9"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
+    describe "Real stdlib" $ do
+      describe "Big stuff that breaks interpreter" $ do
+        it "Parses using a lexeme" $ do
+          let expr =
+                mconcat
+                  [ "let lexeme p = parser.left p parser.space0; ",
+                    "let bracketL = lexeme (parser.char \"[\"); ",
+                    "parser.run bracketL \"[          \""
+                  ]
+          result <- eval stdlib expr
+          result `shouldSatisfy` isRight
+        it "Parses a JSON array" $ do
+          let expr =
+                mconcat
+                  [ "let lexeme p = parser.left p parser.space0; ",
+                    "let bracketL = lexeme (parser.char \"[\"); ",
+                    "let bracketR = lexeme (parser.char \"]\"); ",
+                    "let comma = lexeme (parser.char \",\"); ",
+                    "let inner = lexeme (parser.char \"d\"); ",
+                    "let bigP = parser.right bracketL (parser.left (parser.sepBy comma inner) bracketR); ",
+                    "parser.run bigP \"[d,d,d,d]\""
+                  ]
+          result <- eval stdlib expr
+          result `shouldSatisfy` isRight
