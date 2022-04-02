@@ -42,6 +42,7 @@ import qualified Test.Transform.FlattenLets as FlattenLets
 import qualified Test.Transform.FloatDown as FloatDown
 import qualified Test.Transform.FloatUp as FloatUp
 import qualified Test.Transform.Inliner as Inliner
+import qualified Test.Transform.SimplifyPatterns as SimplifyPatterns
 import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
@@ -106,3 +107,4 @@ main =
     BetaReduce.spec
     Build.spec
     TypecheckAction.spec
+    SimplifyPatterns.spec

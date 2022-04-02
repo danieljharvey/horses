@@ -126,6 +126,7 @@ library
       Language.Mimsa.Transform.InlineDeps
       Language.Mimsa.Transform.Inliner
       Language.Mimsa.Transform.Shared
+      Language.Mimsa.Transform.SimplifyPatterns
       Language.Mimsa.Transform.TrimDeps
       Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
@@ -409,6 +410,7 @@ test-suite mimsa-test
       Test.Transform.FloatDown
       Test.Transform.FloatUp
       Test.Transform.Inliner
+      Test.Transform.SimplifyPatterns
       Test.Typechecker.DataTypes
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
