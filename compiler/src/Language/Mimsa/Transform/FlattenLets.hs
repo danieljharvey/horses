@@ -18,4 +18,12 @@ flattenLets (MyLet ann ident (MyLet ann' ident' expr' body') body) =
           (flattenLets body')
           (flattenLets body)
       )
+-- make simple LetPatterns into Let to enable
+-- further simplications
+flattenLets (MyLetPattern ann (PVar pAnn var) expr body) =
+  MyLet ann (Identifier pAnn var) (flattenLets expr) (flattenLets body)
+-- flatten single pattern matches into let patterns to enable
+-- further simplifications
+flattenLets (MyPatternMatch ann expr [(pat, patExpr)]) =
+  MyLetPattern ann pat (flattenLets expr) (flattenLets patExpr)
 flattenLets other = mapExpr flattenLets other
