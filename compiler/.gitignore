@@ -22,3 +22,6 @@ test/golden/ESModulesJS-result/*.json
 test/golden/ESModulesJS/
 test/golden/CompileJSProject/
 test/golden/CompileJSProject-result/
+
+# .prof files generated for profiling
+*.prof
