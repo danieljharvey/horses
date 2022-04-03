@@ -30,6 +30,7 @@ import Language.Mimsa.Transform.FloatUp
 import Language.Mimsa.Transform.InlineDeps
 import Language.Mimsa.Transform.Inliner
 import Language.Mimsa.Transform.Shared
+import Language.Mimsa.Transform.SimplifyPatterns
 import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -97,7 +98,7 @@ optimise se = do
 inlineExpression :: (Ord ann) => Expr Variable ann -> Expr Variable ann
 inlineExpression =
   repeatUntilEq
-    ( floatUp . flattenLets . removeUnused
+    ( floatUp . flattenLets . simplifyPatterns . removeUnused
         . betaReduce
         . inline
     )

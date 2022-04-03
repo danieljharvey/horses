@@ -841,6 +841,9 @@ spec =
       it "Matches These correctly" $ do
         result <- eval testStdlib "match This 1 with (These _ _) -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+      it "Fallbacks to correct catchall" $ do
+        result <- eval testStdlib "match Just 1 with (Just _) -> True | _ -> False"
+        result `shouldBe` Right (MTPrim mempty MTBool, bool True)
       it "Typechecks Either correctly" $ do
         result <- eval testStdlib "match Right 100 with (Left \"log\") -> False | (Right 100) -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
