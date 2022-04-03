@@ -29,6 +29,9 @@ test:
 bench:
 	stack bench --test --no-run-tests 
 
+profile-test:
+	stack build --test --profile && stack exec --profile -- test +RTS
+
 hoogle:
 	stack hoogle -- generate --local
 	stack hoogle -- server --local --port=8090
