@@ -28,11 +28,3 @@ spec = do
         let expr = unsafeParseExpr "match These 1 2 with (These a b) -> True | (This a) -> False | (That b) -> False"
             expected = unsafeParseExpr "match (1, 2) with (a, b) -> True"
         simplifyPatterns expr `shouldBe` expected
-    describe "let patterns" $ do
-      it "Leaves a let pattern across a variable" $ do
-        let expr = unsafeParseExpr "let (Identity (a,b)) = c in a"
-        simplifyPatterns expr `shouldBe` expr
-      it "Removes identity from both sides of a let pattern" $ do
-        let expr = unsafeParseExpr "let (Identity (a,b)) = Identity (1,2) in a"
-            expected = unsafeParseExpr "let (a,b) = (1,2) in a"
-        simplifyPatterns expr `shouldBe` expected

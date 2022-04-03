@@ -38,3 +38,8 @@ spec = do
         let expr = unsafeParseExpr "match (Identity 1) with (Identity a) -> a"
             expected = unsafeParseExpr "let (Identity a) = Identity 1 in a"
         flattenLets expr `shouldBe` expected
+    describe "Remove unbound let" $ do
+      it "Removes let pattern with wildcard" $ do
+        let expr = unsafeParseExpr "let _ = 1 in 2"
+            expected = unsafeParseExpr "2"
+        flattenLets expr `shouldBe` expected

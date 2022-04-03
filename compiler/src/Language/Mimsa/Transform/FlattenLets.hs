@@ -26,4 +26,6 @@ flattenLets (MyLetPattern ann (PVar pAnn var) expr body) =
 -- further simplifications
 flattenLets (MyPatternMatch ann expr [(pat, patExpr)]) =
   MyLetPattern ann pat (flattenLets expr) (flattenLets patExpr)
+-- if we don't use expression, bin it
+flattenLets (MyLetPattern _ (PWildcard _) _ body) = flattenLets body
 flattenLets other = mapExpr flattenLets other
