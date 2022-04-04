@@ -81,17 +81,18 @@ main =
           bench "evaluate parsing" $
             whnf evaluateThing "let pA = parser.char \"a\"; let pB = parser.char \"b\"; let p = parser.many (parser.alt pA pB); parser.run p \"aababaa\"",
           bench "evaluate parsing 2" $
-            whnf
-              evaluateThing
-              ( mconcat
-                  [ "let lexeme p = parser.left p parser.space0; ",
-                    "let bracketL = lexeme (parser.char \"[\"); ",
-                    "let bracketR = lexeme (parser.char \"]\"); ",
-                    "let comma = lexeme (parser.char \",\"); ",
-                    "let inner = lexeme (parser.char \"d\"); ",
-                    "let bigP = parser.right bracketL (parser.left (parser.sepBy comma inner) bracketR); ",
-                    "parser.run bigP \"[d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d]\""
-                  ]
-              )
+            let input = T.replicate 10000 ",d"
+             in whnf
+                  evaluateThing
+                  ( mconcat
+                      [ "let lexeme p = parser.left p parser.space0; ",
+                        "let bracketL = lexeme (parser.char \"[\"); ",
+                        "let bracketR = lexeme (parser.char \"]\"); ",
+                        "let comma = lexeme (parser.char \",\"); ",
+                        "let inner = lexeme (parser.char \"d\"); ",
+                        "let bigP = parser.right bracketL (parser.left (parser.sepBy comma inner) bracketR); ",
+                        "parser.run bigP \"[d" <> input <> "]\""
+                      ]
+                  )
         ]
     ]
