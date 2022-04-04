@@ -36,3 +36,9 @@ spec = do
       expr $> () `shouldBe` int 2
       -- optimised version in store
       additionalStoreItems testStdlib newProject `shouldBe` 1
+    it "Should evaluate an expression with a nested dependency" $ do
+      let expr = unsafeParseExpr "incrementInt 1 + id 10" $> mempty
+      let action = Actions.evaluate (prettyPrint expr) expr
+      let (_, _, (mt, newExpr, _, _, _)) = fromRight (Actions.run testStdlib action)
+      mt $> () `shouldBe` MTPrim mempty MTInt
+      newExpr $> () `shouldBe` int 12

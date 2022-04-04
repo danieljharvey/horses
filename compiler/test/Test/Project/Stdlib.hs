@@ -5,6 +5,7 @@ module Test.Project.Stdlib
   )
 where
 
+import Control.Monad.IO.Class
 import Data.Coerce
 import Data.Either
 import Data.Foldable
@@ -39,9 +40,13 @@ spec = do
   describe "Stdlib" $ do
     it "Builds" $ do
       buildStdlib `shouldSatisfy` isRight
+
   describe "Can evaluate each top-level item" $ do
     case buildStdlib of
       Right prj ->
         let bindingNames = M.keys . getVersionedMap . prjBindings $ prj
          in traverse_ (evaluatesSuccessfully prj . coerce) bindingNames
-      Left e -> error (T.unpack (prettyPrint e))
+      Left e ->
+        it "could not create stdlib" $ do
+          liftIO (putStrLn (T.unpack (prettyPrint e)))
+          False `shouldBe` True
