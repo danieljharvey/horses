@@ -1,17 +1,23 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Language.Mimsa.Actions.Interpret (interpreter) where
 
 import Control.Monad.Except
-import Data.Bifunctor (first)
+import Data.Bifunctor
 import Data.Map (Map)
 import qualified Data.Map as M
+import qualified Data.Set as S
+import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter.Interpret
 import Language.Mimsa.Interpreter.MarkImports
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
 
 -- get all the deps
@@ -26,19 +32,40 @@ interpreter se = do
   depsSe <- Actions.getDepsForStoreExpression se
 
   -- optimise them all like a big legend
-  let depsMap = markAllImports (fst <$> depsSe)
+  allInterpreted <- interpretAll (fst <$> depsSe)
 
-  rootExpr <- case M.lookup (getStoreExpressionHash se) depsMap of
-    Just re -> pure re
+  case M.lookup (getStoreExpressionHash se) allInterpreted of
+    Just re -> pure (bimap fst edAnnotation re)
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
-  liftEither (first InterpreterErr (interpret depsMap rootExpr))
-
--- Turns a pile of store expressions into a map of Exprs ready to interpret
--- this means their variables are marked as either Local or Import (pointing at
--- where they come from)
-markAllImports ::
+-- Interpret a group of StoreExpressions
+-- This means each sub dep is only interpreted once
+interpretAll ::
   Map ExprHash (StoreExpression Annotation) ->
-  Map ExprHash (Expr (Name, Maybe ExprHash) Annotation)
-markAllImports inputStoreExpressions =
-  convertImports <$> inputStoreExpressions
+  Actions.ActionM (Map ExprHash (InterpretExpr Name Annotation))
+interpretAll inputStoreExpressions = do
+  let action depMap se = do
+        -- tag each `var` with it's location if it is an import
+        let withImports = addEmptyStackFrames (convertImports se)
+        -- interpret se
+        liftEither (first InterpreterErr (interpret depMap withImports))
+
+  -- create initial state for builder
+  -- we tag each StoreExpression we've found with the deps it needs
+  let state =
+        Build.State
+          { Build.stInputs =
+              ( \storeExpr ->
+                  Build.Plan
+                    { Build.jbDeps =
+                        S.fromList
+                          ( M.elems (getBindings (storeBindings storeExpr))
+                              <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
+                          ),
+                      Build.jbInput = storeExpr
+                    }
+              )
+                <$> inputStoreExpressions,
+            Build.stOutputs = mempty -- we use caches here if we wanted
+          }
+  Build.stOutputs <$> Build.doJobs action state
