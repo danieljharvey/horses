@@ -79,6 +79,20 @@ main =
         [ bench "evaluate big looping thing" $
             whnf evaluateThing "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000",
           bench "evaluate parsing" $
-            whnf evaluateThing "let pA = parser.char \"a\"; let pB = parser.char \"b\"; let p = parser.many (parser.alt pA pB); parser.run p \"aababaa\""
+            whnf evaluateThing "let pA = parser.char \"a\"; let pB = parser.char \"b\"; let p = parser.many (parser.alt pA pB); parser.run p \"aababaa\"",
+          bench "evaluate parsing 2" $
+            let input = T.replicate 10000 ",d"
+             in whnf
+                  evaluateThing
+                  ( mconcat
+                      [ "let lexeme p = parser.left p parser.space0; ",
+                        "let bracketL = lexeme (parser.char \"[\"); ",
+                        "let bracketR = lexeme (parser.char \"]\"); ",
+                        "let comma = lexeme (parser.char \",\"); ",
+                        "let inner = lexeme (parser.char \"d\"); ",
+                        "let bigP = parser.right bracketL (parser.left (parser.sepBy comma inner) bracketR); ",
+                        "parser.run bigP \"[d" <> input <> "]\""
+                      ]
+                  )
         ]
     ]
