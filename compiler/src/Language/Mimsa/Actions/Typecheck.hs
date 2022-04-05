@@ -80,7 +80,7 @@ substituteAndTypecheck ::
   Actions.ActionM (ResolvedExpression Annotation)
 substituteAndTypecheck resolvedDeps (storeExpr, input) = do
   project <- Actions.getProject
-  let (SubstitutedExpression swaps newExpr scope _deps typeDeps) =
+  let (SubstitutedExpression swaps newExpr _scope _deps typeDeps) =
         substitute (prjStore project) storeExpr
   typeMap <- makeTypeMap resolvedDeps (storeBindings storeExpr)
   (_, _, typedExpr, exprType) <-
@@ -90,7 +90,6 @@ substituteAndTypecheck resolvedDeps (storeExpr, input) = do
         exprType
         storeExpr
         newExpr
-        scope
         swaps
         typedExpr
         input

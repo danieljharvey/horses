@@ -53,7 +53,7 @@ eval env input =
   case evaluateText env input of
     Left e -> pure (Left $ prettyPrint e)
     Right re -> do
-      let (ResolvedExpression mt se _expr' _scope' _swaps _ _) = optimise env (reStoreExpression re)
+      let (ResolvedExpression mt se _expr' _swaps _ _) = optimise env (reStoreExpression re)
       saveRegressionData (se $> ())
       let endExpr =
             (\(_, _, a) -> a)
