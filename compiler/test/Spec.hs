@@ -35,6 +35,7 @@ import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Tests.Properties as Properties
 import qualified Test.Tests.PropertyTest as PropertyTest
 import qualified Test.Tests.UnitTest as UnitTest
+import qualified Test.Transform.AsNewtype as AsNewtype
 import qualified Test.Transform.BetaReduce as BetaReduce
 import qualified Test.Transform.FindUnused as FindUnused
 import qualified Test.Transform.FindUses as FindUses
@@ -105,6 +106,7 @@ main =
     Inliner.spec
     FindUses.spec
     BetaReduce.spec
+    AsNewtype.spec
     Build.spec
     TypecheckAction.spec
     SimplifyPatterns.spec

@@ -117,6 +117,7 @@ library
       Language.Mimsa.Tests.Test
       Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
+      Language.Mimsa.Transform.AsNewtype
       Language.Mimsa.Transform.BetaReduce
       Language.Mimsa.Transform.FindUnused
       Language.Mimsa.Transform.FindUses
@@ -403,6 +404,7 @@ test-suite mimsa-test
       Test.Tests.Properties
       Test.Tests.PropertyTest
       Test.Tests.UnitTest
+      Test.Transform.AsNewtype
       Test.Transform.BetaReduce
       Test.Transform.FindUnused
       Test.Transform.FindUses

@@ -53,8 +53,8 @@ spec = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile Typescript storeExpr
       let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
-      -- creates 9 files
-      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
+      -- creates 7 files
+      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 7
       -- optimisations change project
       newProject `shouldNotBe` testStdlib
       -- uses three different folders

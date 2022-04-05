@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Actions.Optimise
@@ -22,6 +23,7 @@ import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
+import Language.Mimsa.Transform.AsNewtype
 import Language.Mimsa.Transform.BetaReduce
 import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Transform.FlattenLets
@@ -116,6 +118,7 @@ withAllDeps se = do
 
 -- | optimise a StoreExpression, with potential to consider it's deps for
 -- direct inlining
+-- TODO: destroy this
 optimiseWithDeps ::
   StoreExpression Annotation ->
   Actions.ActionM (StoreExpression Annotation)
@@ -214,6 +217,18 @@ updateTypeBindings swaps (TypeBindings bindings) =
 
 --
 
+-- given a StoreExpression and it's deps, return a Map of TyCon -> DataType
+-- in the ActionM because it might fail (although probably won't)
+createDataTypeMap ::
+  Map ExprHash (StoreExpression ann) ->
+  StoreExpression ann ->
+  Actions.ActionM (Map TyCon DataType)
+createDataTypeMap depMap se =
+  let find exprHash = case M.lookup exprHash depMap of
+        Just (StoreExpression (MyData _ dt _) _ _) -> pure dt
+        _ -> throwError (TypeErr "" UnknownTypeError)
+   in traverse find (getTypeBindings $ storeTypeBindings se)
+
 -- Optimise a group of StoreExpressions
 -- Currently optimises each one individually without using its parents
 -- This should be a reasonably easy change to try in future though
@@ -222,8 +237,12 @@ optimiseAll ::
   Actions.ActionM (Map ExprHash (StoreExpression Annotation))
 optimiseAll inputStoreExpressions = do
   let action depMap se = do
+        -- flatten newtypes
+        dtMap <- createDataTypeMap depMap se
+        let newtypedSe = se {storeExpression = asNewtype dtMap (storeExpression se)}
+
         -- optimise se
-        optimisedSe <- optimiseStoreExpression se
+        optimisedSe <- optimiseStoreExpression newtypedSe
         let swaps = getStoreExpressionHash <$> depMap
         -- use the optimised deps passed in
         let newSe =
