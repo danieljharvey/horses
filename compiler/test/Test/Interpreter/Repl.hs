@@ -1187,6 +1187,11 @@ spec =
         result <- eval testStdlib "10 <= 9"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
+    describe "Regressions" $ do
+      it "evaluates `state`" $ do
+        result <- eval testStdlib "state"
+        result `shouldSatisfy` isRight
+
     describe "Real stdlib" $ do
       describe "Big stuff that breaks interpreter" $ do
         it "Parses using a lexeme" $ do
