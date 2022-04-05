@@ -9,7 +9,6 @@ import Control.Monad.Except
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import Data.Text (Text)
-import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Interpret as Actions
@@ -56,20 +55,13 @@ evaluate input expr = do
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
-  -- resolve optimised expression
-  (ResolvedExpression mt newStoreExpr _expr' _scope' swaps typedExpr input') <-
-    Actions.checkStoreExpression
-      (prettyPrint optimisedStoreExpr)
-      project
-      optimisedStoreExpr
-
-  -- expr with types and Name
+  -- original expr with types and Name
   typedNameExpr <-
-    Actions.useSwaps swaps typedExpr
+    Actions.useSwaps (reSwaps resolved) (reTypedExpression resolved)
 
   -- interpret
   interpretedExpr <-
-    Actions.interpreter newStoreExpr --liftEither (first InterpreterErr (interpret scope' swaps expr'))
+    Actions.interpreter optimisedStoreExpr
 
   -- print any warnings
   traverse_ (Actions.appendMessage . prettyPrint) (getWarnings resolved)
@@ -81,9 +73,9 @@ evaluate input expr = do
             <> line
             <> "::"
             <> line
-            <> prettyDoc mt
+            <> prettyDoc (reMonoType resolved)
         )
     )
-  pure (mt, interpretedExpr, newStoreExpr, typedNameExpr, input')
+  pure (reMonoType resolved, interpretedExpr, optimisedStoreExpr, typedNameExpr, input)
 
 ---------
