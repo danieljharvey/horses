@@ -1,7 +1,6 @@
-module Language.Mimsa.Interpreter.Interpret (interpret) where
+module Language.Mimsa.Interpreter.Interpret (interpret, addEmptyStackFrames) where
 
 import Control.Monad.Reader
-import Data.Bifunctor
 import Data.Functor
 import Data.Map (Map)
 import Language.Mimsa.Interpreter.App
@@ -21,17 +20,20 @@ import Language.Mimsa.Types.Store.ExprHash
 initialStack :: (Ord var) => StackFrame var ann
 initialStack = StackFrame mempty mempty
 
+addEmptyStackFrames ::
+  (Ord var, Monoid ann) =>
+  Expr (var, Maybe ExprHash) ann ->
+  Expr (var, Maybe ExprHash) (ExprData var ann)
+addEmptyStackFrames expr =
+  expr $> mempty
+
 interpret ::
   (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
-  Map ExprHash (Expr (var, Maybe ExprHash) ann) ->
-  Expr (var, Maybe ExprHash) ann ->
-  Either (InterpreterError var ann) (Expr var ann)
+  Map ExprHash (InterpretExpr var ann) ->
+  InterpretExpr var ann ->
+  Either (InterpreterError var ann) (InterpretExpr var ann)
 interpret deps expr =
-  let addEmptyStackFrame exp' = exp' $> mempty
-      expr' = addEmptyStackFrame expr
-      initialDeps = addEmptyStackFrame <$> deps
-      removeExprData = bimap fst edAnnotation
-   in removeExprData <$> runReaderT (interpretExpr expr') (InterpretReaderEnv initialStack initialDeps)
+  runReaderT (interpretExpr expr) (InterpretReaderEnv initialStack deps)
 
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
