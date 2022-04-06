@@ -8,7 +8,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Identity
-import Control.Monad.State
+import Control.Monad.State.Strict
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.Error
