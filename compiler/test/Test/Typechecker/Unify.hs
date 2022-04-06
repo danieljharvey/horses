@@ -8,7 +8,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State (runState)
+import Control.Monad.State.Strict (runState)
 import Data.Either (isLeft)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.TcMonad

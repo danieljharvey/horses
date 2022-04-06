@@ -81,7 +81,7 @@ main =
           bench "evaluate parsing" $
             whnf evaluateThing "let pA = parser.char \"a\"; let pB = parser.char \"b\"; let p = parser.many (parser.alt pA pB); parser.run p \"aababaa\"",
           bench "evaluate parsing 2" $
-            let input = T.replicate 10000 ",d"
+            let input = T.replicate 1000 ",d"
              in whnf
                   evaluateThing
                   ( mconcat

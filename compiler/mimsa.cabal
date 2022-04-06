@@ -211,6 +211,8 @@ library
       Paths_mimsa
   hs-source-dirs:
       src
+  default-extensions:
+      Strict
   build-depends:
       QuickCheck
     , aeson
