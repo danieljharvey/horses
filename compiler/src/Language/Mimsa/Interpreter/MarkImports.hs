@@ -3,6 +3,8 @@ module Language.Mimsa.Interpreter.MarkImports (convertImports) where
 import Control.Monad.Reader
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
@@ -12,21 +14,33 @@ convertImports se = runReader (markImports (storeExpression se)) initialState
   where
     initialState =
       ReaderState
-        { rsBindings = getBindings (storeBindings se)
+        { rsBindings = getBindings (storeBindings se),
+          rsLambdaBindings = mempty
         }
 
-newtype ReaderState var = ReaderState
-  { rsBindings :: Map var ExprHash -- map of names to look for, and exprHashes they point to
+data ReaderState var = ReaderState
+  { rsBindings :: Map var ExprHash, -- map of names to look for, and exprHashes they point to
+    rsLambdaBindings :: Set var
   }
 
 type ImportM var a = Reader (ReaderState var) a
 
-getVar :: (Ord var) => var -> Reader (ReaderState var) (var, Maybe ExprHash)
+-- given a var,
+getVar :: (Ord var) => var -> ImportM var (var, Maybe ExprHash)
 getVar var = do
   items <- asks rsBindings
+  lambdaBindings <- asks rsLambdaBindings
   case M.lookup var items of
-    Just exprHash -> pure (var, Just exprHash)
+    Just exprHash ->
+      if S.member var lambdaBindings
+        then pure (var, Nothing)
+        else pure (var, Just exprHash)
     _ -> pure (var, Nothing)
+
+-- if we're evaluatng `\dog -> ....` then we know `dog` is not an import
+withLambdaBinding :: (Ord var) => Set var -> ImportM var a -> ImportM var a
+withLambdaBinding vars =
+  local (\rs -> rs {rsLambdaBindings = rsLambdaBindings rs <> vars})
 
 -- step through Expr, replacing vars with numbered variables
 markImports ::
@@ -44,7 +58,8 @@ markImports (MyLiteral ann lit) =
 markImports (MyInfix ann op a b) =
   MyInfix ann op <$> markImports a <*> markImports b
 markImports (MyLambda ann ident body) =
-  MyLambda ann <$> markIdentImports ident <*> markImports body
+  MyLambda ann <$> markIdentImports ident
+    <*> withLambdaBinding (S.singleton (varFromIdent ident)) (markImports body)
 markImports (MyApp ann fn val) =
   MyApp ann <$> markImports fn <*> markImports val
 markImports (MyIf ann predExpr thenExpr elseExpr) =
@@ -65,9 +80,34 @@ markImports (MyConstructor ann const') =
   pure (MyConstructor ann const')
 markImports (MyPatternMatch ann patExpr patterns) =
   let markPatterns (pat, pExpr) =
-        (,) <$> markPatternImports pat <*> markImports pExpr
+        (,) <$> markPatternImports pat
+          <*> withLambdaBinding (varsFromPattern pat) (markImports pExpr)
    in MyPatternMatch ann <$> markImports patExpr <*> traverse markPatterns patterns
 markImports (MyTypedHole ann name) = pure (MyTypedHole ann name)
+
+varFromIdent :: Identifier var ann -> var
+varFromIdent ident = case ident of
+  Identifier _ v -> v
+  AnnotatedIdentifier _ v -> v
+
+varsFromPattern :: (Ord var) => Pattern var ann -> Set var
+varsFromPattern (PVar _ var) = S.singleton var
+varsFromPattern (PWildcard _) = mempty
+varsFromPattern (PLit _ _) = mempty
+varsFromPattern (PConstructor _ _ as) = mconcat (varsFromPattern <$> as)
+varsFromPattern (PPair _ a b) = varsFromPattern a <> varsFromPattern b
+varsFromPattern (PRecord _ as) = mconcat (varsFromPattern <$> M.elems as)
+varsFromPattern (PArray _ as spread) =
+  let spreadVars = case spread of
+        SpreadValue _ a -> S.singleton a
+        SpreadWildcard _ -> mempty
+        NoSpread -> mempty
+   in spreadVars <> mconcat (varsFromPattern <$> as)
+varsFromPattern (PString _ sHead sTail) =
+  let stringPartVars sp = case sp of
+        StrValue _ a -> S.singleton a
+        StrWildcard _ -> mempty
+   in stringPartVars sHead <> stringPartVars sTail
 
 -- | TODO: recurse through all cases
 markPatternImports ::
