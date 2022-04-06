@@ -52,10 +52,15 @@ spec = do
             expected = unsafeParseExpr "let a = \\b -> 1 in \\b -> 1"
         inlineInternal' expr
           `shouldBe` expected
-      it "Does not inlines trivial item into function" $ do
-        let expr = unsafeParseExpr "let a = 1 in \\f -> g True a"
+      it "Does not inlines trivial item into function if it used more than once" $ do
+        let expr = unsafeParseExpr "let a = 1 in \\f -> g True a a"
         inlineInternal' expr
           `shouldBe` expr
+      it "Inlines trivial item into function" $ do
+        let expr = unsafeParseExpr "let a = 1 in \\f -> g True a"
+            expected = unsafeParseExpr "let a = 1 in \\f -> g True 1"
+        inlineInternal' expr
+          `shouldBe` expected
       it "Function with type annotation" $ do
         let expr = unsafeParseExpr "let identity = \\(abc: a) -> abc; identity True"
             expected = unsafeParseExpr "let identity = \\(abc: a) -> abc; (\\(abc: a) -> abc) True"
