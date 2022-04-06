@@ -13,6 +13,7 @@ import Data.Functor (($>))
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Interpret as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -49,18 +50,26 @@ eval ::
   Project Annotation ->
   Text ->
   IO (Either Text (Type (), Expr Name ()))
-eval env input =
-  case evaluateText env input of
-    Left e -> pure (Left $ prettyPrint e)
-    Right re -> do
+eval env input = do
+  let action = do
+        Actions.evaluate _
+
+  case Actions.run env action of
+    Right (_, _, endExpr) -> pure (Right (normaliseType (toEmptyType mt), toEmptyAnn endExpr))
+    Left e -> pure (Left (prettyPrint e))
+
+{-
       let (ResolvedExpression mt se _expr' _scope' _swaps _ _) = optimise env (reStoreExpression re)
       saveRegressionData (se $> ())
+      let action = do
+
       let endExpr =
             (\(_, _, a) -> a)
               <$> Actions.run env (Actions.interpreter se)
       case toEmptyAnn <$> endExpr of
         Right a -> pure (Right (normaliseType (toEmptyType mt), a))
         Left e -> pure (Left (prettyPrint e))
+-}
 
 optimise ::
   Project Annotation ->
