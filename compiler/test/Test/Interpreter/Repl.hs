@@ -15,7 +15,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
-import qualified Language.Mimsa.Actions.Interpret as Actions
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.ExprUtils
@@ -52,29 +52,20 @@ eval ::
   IO (Either Text (Type (), Expr Name ()))
 eval env input = do
   let action = do
-        Actions.evaluate _
-
+        expr <- Actions.parseExpr input
+        (mt, interpretedExpr, storeExpr, _, _) <- Actions.evaluate input expr
+        pure (mt, interpretedExpr, storeExpr)
   case Actions.run env action of
-    Right (_, _, endExpr) -> pure (Right (normaliseType (toEmptyType mt), toEmptyAnn endExpr))
-    Left e -> pure (Left (prettyPrint e))
-
-{-
-      let (ResolvedExpression mt se _expr' _scope' _swaps _ _) = optimise env (reStoreExpression re)
+    Right (newPrj, _, (mt, endExpr, se)) -> do
       saveRegressionData (se $> ())
-      let action = do
-
-      let endExpr =
-            (\(_, _, a) -> a)
-              <$> Actions.run env (Actions.interpreter se)
-      case toEmptyAnn <$> endExpr of
-        Right a -> pure (Right (normaliseType (toEmptyType mt), a))
-        Left e -> pure (Left (prettyPrint e))
--}
+      _ <- optimise newPrj se
+      pure (Right (normaliseType (toEmptyType mt), toEmptyAnn endExpr))
+    Left e -> pure (Left (prettyPrint e))
 
 optimise ::
   Project Annotation ->
   StoreExpression Annotation ->
-  ResolvedExpression Annotation
+  IO (ResolvedExpression Annotation)
 optimise prj storeExpr = do
   let action = do
         -- optimise once
@@ -107,7 +98,7 @@ optimise prj storeExpr = do
 
         Actions.checkStoreExpression (prettyPrint se) prj se
    in case Actions.run prj action of
-        Right (_, _, re) -> re
+        Right (_, _, re) -> pure re
         Left e -> error (T.unpack $ prettyPrint e)
 
 -- These are saved and used in the deserialisation tests to make sure we avoid
