@@ -1,9 +1,0 @@
-let def =
-  "Horse";
-
-\maybe ->
-  match maybe with 
-      (Just a) -> 
-        a
-    | (Nothing) -> 
-        def (Just "Dog")

@@ -1,6 +1,0 @@
-type Stuff    = Thing String Int;
-
-let (Thing name _) =
-  (Thing "Hello" 1);
-
-name
