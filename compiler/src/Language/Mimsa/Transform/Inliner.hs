@@ -20,13 +20,42 @@ import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
 
+type InlineM var ann a =
+  StateT (InlineState var ann) (Reader (InlineEnv var)) a
+
+data IsRecursive = Recursive | NotRecursive
+
+data IsWithinLambda = WithinLambda | NotWithinLambda
+
+newtype VarUses = VarUses Int
+
+-- item that can be inlined, we can add useful info here to help our choices
+data InlineItem var ann = InlineItem
+  { iiExpression :: Expr var ann,
+    _iiRecursive :: IsRecursive
+  }
+
+-- as we traverse the expression we learn shit
+newtype InlineState var ann = InlineState
+  { isExpressions :: Map var (InlineItem var ann)
+  }
+
+-- static info we can use
+data InlineEnv var = InlineEnv
+  { ieUses :: Uses var,
+    ieIsWithinLambda :: IsWithinLambda
+  }
+
 -- | should we inline this expression?
 -- if it's only used in one place, not within a lambda, yes
-shouldInline :: Int -> Bool -> InlineItem var ann -> Bool
-shouldInline _ _ (InlineItem _ True) = False
-shouldInline 1 False _expr = True
-shouldInline _ False (InlineItem expr _) = isJust (howTrivial expr)
-shouldInline _ True _ = False
+shouldInline :: VarUses -> IsWithinLambda -> InlineItem var ann -> Bool
+-- item is recursive, never inline it
+shouldInline _ _ (InlineItem _ Recursive) = False
+-- item is used once, always inline it
+shouldInline (VarUses 1) _ _expr = True
+-- item is not within a lambda, and is trivial, move it
+shouldInline _ NotWithinLambda (InlineItem expr _) = isJust (howTrivial expr)
+shouldInline _ WithinLambda _ = False
 
 -- | complexity measure of trivial expression
 howTrivial :: Expr var ann -> Maybe Int
@@ -37,23 +66,9 @@ howTrivial (MyPair _ a b) = (+ 2) . sum <$> traverse howTrivial [a, b]
 howTrivial (MyVar _ _) = Just 1
 howTrivial _ = Nothing
 
--- item that can be inlined, we can add useful info here to help our choices
-data InlineItem var ann = InlineItem
-  { iiExpression :: Expr var ann,
-    _iiRecursive :: Bool
-  }
-
--- as we traverse the expression we learn shit
-newtype InlineState var ann = InlineState
-  { isExpressions :: Map var (InlineItem var ann)
-  }
-
--- static info we can use
-data InlineEnv var = InlineEnv {ieUses :: Uses var, ieIsWithinLambda :: Bool}
-
 inlineInternal :: (Ord var) => InlineState var ann -> Expr var ann -> Expr var ann
 inlineInternal initialState expr =
-  let initialEnv = InlineEnv (findUses expr) False
+  let initialEnv = InlineEnv (findUses expr) NotWithinLambda
    in runReader (evalStateT (inlineExpression expr) initialState) initialEnv
 
 inline :: (Ord var, Eq ann) => Expr var ann -> Expr var ann
@@ -66,7 +81,7 @@ storeExprInState ::
   m ()
 storeExprInState var expr =
   let isRecursive = memberInUses var (findUses expr)
-      inlineItem = InlineItem expr isRecursive
+      inlineItem = InlineItem expr (if isRecursive then Recursive else NotRecursive)
    in modify
         ( \s ->
             s
@@ -83,11 +98,10 @@ lookupVar ::
 lookupVar var = do
   gets (M.lookup var . isExpressions)
 
-type InlineM var ann a =
-  StateT (InlineState var ann) (Reader (InlineEnv var)) a
-
-getUsesCount :: (Ord var) => var -> InlineM var ann Int
-getUsesCount var = asks (numberOfUses var . ieUses)
+getUsesCount :: (Ord var) => var -> InlineM var ann VarUses
+getUsesCount var = do
+  i <- asks (numberOfUses var . ieUses)
+  pure (VarUses i)
 
 substituteVar :: (Ord var) => var -> InlineM var ann (Maybe (Expr var ann))
 substituteVar var = do
@@ -101,7 +115,7 @@ substituteVar var = do
     _ -> pure Nothing
 
 withinLambda :: InlineM var ann a -> InlineM var ann a
-withinLambda = local (\ie -> ie {ieIsWithinLambda = True})
+withinLambda = local (\ie -> ie {ieIsWithinLambda = WithinLambda})
 
 inlineExpression :: (Ord var) => Expr var ann -> InlineM var ann (Expr var ann)
 inlineExpression (MyDefineInfix ann op f rest) =
