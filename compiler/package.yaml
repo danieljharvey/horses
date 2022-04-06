@@ -81,7 +81,8 @@ executables:
     - wai-middleware-prometheus # metrics
     - prometheus-client # metrics
     - prometheus-metrics-ghc # metrics
-
+    - unordered-containers # servant-prometheus
+    - time # servant-prometheus
 tests:
   mimsa-test:
     main:                Spec.hs

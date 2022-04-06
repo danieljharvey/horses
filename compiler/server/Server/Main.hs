@@ -6,6 +6,7 @@ module Server.Main
   )
 where
 
+import Control.Concurrent (forkIO)
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Text as T
@@ -23,20 +24,15 @@ import Language.Mimsa.Types.Store
 import Network.HTTP.Types.Header
 import Network.HTTP.Types.Method
 import Network.Wai
-import Network.Wai.Handler.Warp
+import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors
-import Network.Wai.Middleware.Prometheus
-import Prometheus
-import Prometheus.Metric.GHC
-import Servant
+import Prometheus (register)
+import Prometheus.Metric.GHC (ghcMetrics)
+import Servant (serve)
 import Server.EnvVars (getMimsaEnv)
+import Server.Prometheus
 import Server.Servant
 import Server.Types
-
-createMetricsMiddleware :: Maybe Int -> Middleware
-createMetricsMiddleware Nothing = id
-createMetricsMiddleware (Just _metricsPort) = do
-  prometheus def {prometheusInstrumentPrometheus = False}
 
 -- allow GET and POST with JSON
 corsMiddleware :: Middleware
@@ -54,9 +50,9 @@ corsMiddleware = cors (const $ Just policy)
 -- 'serve' comes from servant and hands you a WAI Application,
 -- which you can think of as an "abstract" web application,
 -- not yet a webserver.
-mimsaApp :: MimsaEnvironment -> Middleware -> Application
-mimsaApp mimsaEnv metricsMiddleware =
-  metricsMiddleware $ corsMiddleware $ serve mimsaAPI (mimsaServer mimsaEnv)
+mimsaApp :: MimsaEnvironment -> Application
+mimsaApp mimsaEnv =
+  corsMiddleware $ serve mimsaAPI (mimsaServer mimsaEnv)
 
 createMimsaEnvironment :: MimsaM (Error Annotation) MimsaEnvironment
 createMimsaEnvironment = do
@@ -80,7 +76,6 @@ getDefaultProject =
 
 server :: IO ()
 server = do
-  _ <- register ghcMetrics
   mimsaConfig' <- runExceptT getMimsaEnv
   case mimsaConfig' of
     Left e -> putStrLn e >> pure ()
@@ -97,5 +92,14 @@ serverM = do
   mimsaEnv <- createMimsaEnvironment
   let port' = port cfg
   replOutput $ "Starting server on port " <> prettyPrint port' <> "..."
-  let metricsMiddleware = createMetricsMiddleware (prometheusPort cfg)
-  liftIO $ run port' (mimsaApp mimsaEnv metricsMiddleware) -- TODO - hoist Servant to use MimsaM?
+
+  let monitoringPort = 9999
+
+  _ <- liftIO $ register ghcMetrics
+  -- Fork a separate server for serving nothing but metrics,
+  -- which you will point Prometheus at.
+  _ <- liftIO $ forkIO $ run monitoringPort servePrometheusMetrics
+  -- Allocate the counters necessary for all app endpoints.
+  meters <- liftIO $ makeMeters mimsaAPI NoQuantiles
+  -- Run your app with metric monitoring.
+  liftIO $ run port' $ monitorServant mimsaAPI meters $ mimsaApp mimsaEnv

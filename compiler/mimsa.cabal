@@ -315,6 +315,7 @@ executable mimsa-server
       Server.Helpers.TestData
       Server.Main
       Server.MimsaHandler
+      Server.Prometheus
       Server.Servant
       Server.Swagger
       Server.Types
@@ -353,7 +354,9 @@ executable mimsa-server
     , servant-server
     , stm
     , text
+    , time
     , transformers
+    , unordered-containers
     , wai
     , wai-cors
     , wai-middleware-prometheus

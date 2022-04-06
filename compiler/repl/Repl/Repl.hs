@@ -30,7 +30,7 @@ import System.Directory
 createMimsaConfig :: Bool -> IO MimsaConfig
 createMimsaConfig showLogs' = do
   path <- getXdgDirectory XdgData "mimsa"
-  pure $ MimsaConfig 0 path showLogs' Nothing
+  pure $ MimsaConfig 0 path showLogs'
 
 getProject :: MimsaM (Error Annotation) (Project Annotation)
 getProject =
