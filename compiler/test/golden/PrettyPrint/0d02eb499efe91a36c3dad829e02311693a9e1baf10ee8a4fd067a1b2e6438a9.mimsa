@@ -1,3 +1,0 @@
-type Thing    = Thing String;
-
-let (Thing s) = (Thing "string") in s
