@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Language.Mimsa.Backend.Backend
   ( outputStoreExpression,
     copyLocalOutput,
@@ -5,6 +7,8 @@ module Language.Mimsa.Backend.Backend
   )
 where
 
+import Control.Monad.Except
+import Control.Monad.Logger
 import Data.Foldable (traverse_)
 import Data.Set (Set)
 import Data.Text (Text)
@@ -13,22 +17,23 @@ import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Monad
 import Language.Mimsa.Store.Storage (tryCopy)
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Store.RootPath
 
 -- given output type and list of expressions, copy everything to local
 -- folder for output in repl
 copyLocalOutput ::
+  (MonadIO m, MonadLogger m) =>
+  RootPath ->
   Backend ->
   Set ExprHash ->
   ExprHash ->
-  MimsaM StoreError Text
-copyLocalOutput be exprHashes rootExprHash = do
-  modulePath <- createModuleOutputPath be
-  indexPath <- createIndexOutputPath be
-  stdlibPath <- createStdlibOutputPath be
+  m Text
+copyLocalOutput rootPath be exprHashes rootExprHash = do
+  modulePath <- createModuleOutputPath rootPath be
+  indexPath <- createIndexOutputPath rootPath be
+  stdlibPath <- createStdlibOutputPath rootPath be
   outputPath <- createOutputFolder be rootExprHash
   -- link modules
   traverse_ (copyModule modulePath outputPath be) exprHashes
@@ -38,11 +43,12 @@ copyLocalOutput be exprHashes rootExprHash = do
   copyIndex indexPath outputPath be rootExprHash
 
 copyModule ::
+  (MonadIO m, MonadLogger m) =>
   FilePath ->
   FilePath ->
   Backend ->
   ExprHash ->
-  MimsaM StoreError ()
+  m ()
 copyModule modulePath outputPath be exprHash = do
   let filename = moduleFilename be exprHash <> fileExtension be
       fromPath = modulePath <> T.unpack filename
@@ -50,7 +56,7 @@ copyModule modulePath outputPath be exprHash = do
   tryCopy fromPath toPath
 
 -- the stdlib is already in the store so we copy it to the target folder
-copyStdlib :: FilePath -> FilePath -> Backend -> MimsaM StoreError Text
+copyStdlib :: (MonadIO m, MonadLogger m) => FilePath -> FilePath -> Backend -> m Text
 copyStdlib stdlibPath outputPath be = do
   let fromPath = T.pack stdlibPath <> stdlibFilename be
   let toPath = T.pack outputPath <> stdlibFilename be
@@ -59,11 +65,12 @@ copyStdlib stdlibPath outputPath be = do
 
 -- the index is already in ths store so we copy it to the target folder
 copyIndex ::
+  (MonadIO m, MonadLogger m) =>
   FilePath ->
   FilePath ->
   Backend ->
   ExprHash ->
-  MimsaM StoreError Text
+  m Text
 copyIndex indexPath outputPath be rootExprHash = do
   let filename = T.unpack $ indexFilename be rootExprHash
       fromPath = indexPath <> filename

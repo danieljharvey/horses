@@ -5,6 +5,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Server.Handlers
   ( ProjectData (..),
@@ -40,7 +41,6 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Project.Persistence
 import Language.Mimsa.Project.Usages
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
@@ -56,6 +56,8 @@ import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Servant
 import Server.Helpers
+import Server.Persistence
+import Server.ServerConfig
 import Server.Types
 
 -----
@@ -197,7 +199,7 @@ projectDataHandler mimsaEnv project = do
 
   -- save project file
   projHash <-
-    handleMimsaM
+    handleServerM
       (mimsaConfig mimsaEnv)
       InternalError
       (saveProjectInStore project)
@@ -217,21 +219,23 @@ loadProjectHandler ::
   ProjectHash ->
   Handler (Project Annotation)
 loadProjectHandler mimsaEnv store' hash =
-  handleMimsaM (mimsaConfig mimsaEnv) UserError (loadProjectFromHash store' hash)
+  handleServerM (mimsaConfig mimsaEnv) UserError (loadProjectFromHash store' hash)
 
 saveExprHandler ::
   MimsaEnvironment ->
   StoreExpression ann ->
   Handler ExprHash
-saveExprHandler mimsaEnv se =
-  handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveExpr se)
+saveExprHandler mimsaEnv se = do
+  let cfg = mimsaConfig mimsaEnv
+  handleServerM @() cfg InternalError (saveExpr (scRootPath cfg) se)
 
 saveFileHandler ::
   MimsaEnvironment ->
   (Actions.SavePath, Actions.SaveFilename, Actions.SaveContents) ->
   Handler ()
-saveFileHandler mimsaEnv saveInfo =
-  handleMimsaM (mimsaConfig mimsaEnv) InternalError (saveFile saveInfo)
+saveFileHandler mimsaEnv saveInfo = do
+  let cfg = mimsaConfig mimsaEnv
+  handleServerM @() cfg InternalError (saveFile (scRootPath cfg) saveInfo)
 
 findExprHandler ::
   Project Annotation ->
@@ -267,7 +271,7 @@ storeFromExprHashHandler ::
   ExprHash ->
   Handler (Store ())
 storeFromExprHashHandler mimsaEnv exprHash =
-  handleMimsaM
+  handleServerM
     (mimsaConfig mimsaEnv)
     UserError
     (recursiveLoadBoundExpressions mempty (S.singleton exprHash))
@@ -282,7 +286,7 @@ runTestsHandler ::
   [Test] ->
   Handler [TestResult Annotation]
 runTestsHandler mimsaEnv project tests = do
-  handleMimsaM
+  handleServerM
     (mimsaConfig mimsaEnv)
     InternalError
     (traverse (runTests project) tests)

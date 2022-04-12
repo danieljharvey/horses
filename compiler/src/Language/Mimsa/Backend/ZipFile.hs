@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.ZipFile
@@ -21,9 +22,8 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Monad
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Store.RootPath
 import System.Directory
 
 ------
@@ -39,7 +39,7 @@ zipEntry filename input =
     (textToLBS input)
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
-createZipFolder :: Backend -> ExprHash -> MimsaM e FilePath
+createZipFolder :: (MonadIO m) => Backend -> ExprHash -> m FilePath
 createZipFolder be exprHash = do
   let outputPath = zipFileOutputPath be
   let path = outputPath <> "/" <> show exprHash
@@ -47,10 +47,11 @@ createZipFolder be exprHash = do
   pure (path <> "/")
 
 moduleEntry ::
+  (MonadIO m) =>
   FilePath ->
   Backend ->
   ExprHash ->
-  MimsaM StoreError Zip.Entry
+  m Zip.Entry
 moduleEntry modulePath be exprHash = do
   let filename = T.unpack $ moduleFilename be exprHash <> fileExtension be
       fromPath = modulePath <> filename
@@ -58,10 +59,11 @@ moduleEntry modulePath be exprHash = do
   pure (zipEntry ("./" <> filename) input)
 
 indexEntry ::
+  (MonadIO m) =>
   FilePath ->
   Backend ->
   ExprHash ->
-  MimsaM StoreError Zip.Entry
+  m Zip.Entry
 indexEntry indexPath be rootExprHash = do
   let filename = T.unpack $ indexFilename be rootExprHash
       fromPath = indexPath <> filename
@@ -71,14 +73,16 @@ indexEntry indexPath be rootExprHash = do
 
 -- create zip archive that can be saved as a file or returned through server
 createZipFile ::
+  (MonadIO m) =>
+  RootPath ->
   Backend ->
   Set ExprHash ->
   ExprHash ->
-  MimsaM StoreError Zip.Archive
-createZipFile be exprHashes rootExprHash = do
-  modulePath <- createModuleOutputPath be
-  indexPath <- createIndexOutputPath be
-  stdlibPath <- createStdlibOutputPath be
+  m Zip.Archive
+createZipFile rootPath be exprHashes rootExprHash = do
+  modulePath <- createModuleOutputPath rootPath be
+  indexPath <- createIndexOutputPath rootPath be
+  stdlibPath <- createStdlibOutputPath rootPath be
   -- create entries
   modules <-
     traverse
@@ -89,7 +93,7 @@ createZipFile be exprHashes rootExprHash = do
   pure (createArchive $ modules <> [index] <> [stdlib])
 
 -- the stdlib is already in the store so we copy it to the target folder
-stdlibEntry :: FilePath -> Backend -> MimsaM StoreError Zip.Entry
+stdlibEntry :: (MonadIO m) => FilePath -> Backend -> m Zip.Entry
 stdlibEntry stdlibPath be = do
   let filename = T.unpack $ stdlibFilename be <> fileExtension be
   let fromPath = stdlibPath <> filename
@@ -97,7 +101,7 @@ stdlibEntry stdlibPath be = do
   pure (zipEntry ("./" <> filename) input)
 
 -- write zip file to a given file path
-storeZipFile :: Backend -> ExprHash -> Zip.Archive -> MimsaM StoreError FilePath
+storeZipFile :: (MonadIO m) => Backend -> ExprHash -> Zip.Archive -> m FilePath
 storeZipFile be rootExprHash archive = do
   zipPath <- createZipFolder be rootExprHash
   let filename = "output.zip"

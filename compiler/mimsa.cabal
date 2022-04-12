@@ -80,7 +80,6 @@ library
       Language.Mimsa.Interpreter.RecordAccess
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
-      Language.Mimsa.Monad
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers
       Language.Mimsa.Parser.Identifier
@@ -95,7 +94,6 @@ library
       Language.Mimsa.Printer
       Language.Mimsa.Project
       Language.Mimsa.Project.Helpers
-      Language.Mimsa.Project.Persistence
       Language.Mimsa.Project.SourceSpan
       Language.Mimsa.Project.Stdlib
       Language.Mimsa.Project.TypeSearch
@@ -174,7 +172,6 @@ library
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.Interpreter.Stack
-      Language.Mimsa.Types.MimsaConfig
       Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project
@@ -192,6 +189,7 @@ library
       Language.Mimsa.Types.Store.ExprHash
       Language.Mimsa.Types.Store.ResolvedDeps
       Language.Mimsa.Types.Store.ResolvedTypeDeps
+      Language.Mimsa.Types.Store.RootPath
       Language.Mimsa.Types.Store.Store
       Language.Mimsa.Types.Store.StoreExpression
       Language.Mimsa.Types.Store.TypeBindings
@@ -256,7 +254,9 @@ executable mimsa
       Repl.Actions.Upgrade
       Repl.Helpers
       Repl.Parser
+      Repl.Persistence
       Repl.Repl
+      Repl.ReplM
       Repl.Types
       Paths_mimsa
   hs-source-dirs:
@@ -317,7 +317,10 @@ executable mimsa-server
       Server.Helpers.TestData
       Server.Main
       Server.MimsaHandler
+      Server.Persistence
       Server.Servant
+      Server.ServerConfig
+      Server.ServerM
       Server.Swagger
       Server.Types
       Paths_mimsa
@@ -334,7 +337,6 @@ executable mimsa-server
     , containers
     , cryptonite
     , directory
-    , envy
     , exceptions
     , file-embed
     , hashable

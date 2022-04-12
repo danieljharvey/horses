@@ -78,7 +78,6 @@ executables:
     - wai-cors # server
     - http-types # server
     - servant-openapi3 # server
-    - envy # server
     - stm # concurrency for server
     - wai-middleware-prometheus # metrics
     - prometheus-client # metrics

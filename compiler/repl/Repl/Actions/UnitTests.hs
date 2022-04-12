@@ -8,7 +8,6 @@ import Data.Foldable
 import qualified Data.Map as M
 import Data.Text (Text)
 import Language.Mimsa.Actions.AddUnitTest
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Tests.Test
@@ -18,13 +17,14 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Repl.Helpers
+import Repl.ReplM
 
 doAddTest ::
   Project Annotation ->
   Text ->
   TestName ->
   Expr Name Annotation ->
-  MimsaM (Error Annotation) (Project Annotation)
+  ReplM (Error Annotation) (Project Annotation)
 doAddTest project input testName expr = do
   (newProject, test) <-
     toReplM project (addUnitTest expr testName input)
@@ -33,7 +33,7 @@ doAddTest project input testName expr = do
   pure newProject
 
 doListTests ::
-  Project Annotation -> Maybe Name -> MimsaM (Error Annotation) ()
+  Project Annotation -> Maybe Name -> ReplM (Error Annotation) ()
 doListTests project maybeName = do
   let fetchTestsForName name =
         case lookupBindingName project name of

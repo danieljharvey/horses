@@ -8,13 +8,13 @@ where
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
+import Repl.ReplM
 
 ----------
 
@@ -22,10 +22,10 @@ doInfo ::
   Project Annotation ->
   Text ->
   Expr Name Annotation ->
-  MimsaM (Error Annotation) ()
+  ReplM (Error Annotation) ()
 doInfo project input expr = do
   (_, _, resolvedExpr) <-
-    mimsaFromEither $
+    replMFromEither $
       Actions.run
         project
         ( Actions.typecheckExpression project input expr

@@ -8,18 +8,14 @@ where
 
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
-import qualified Data.Text as T
+import Control.Monad.Reader
 import qualified Data.Text.IO as T
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Project
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Store
 import Network.HTTP.Types.Header
 import Network.HTTP.Types.Method
 import Network.Wai
@@ -31,6 +27,8 @@ import Prometheus.Metric.GHC
 import Servant
 import Server.EnvVars (getMimsaEnv)
 import Server.Servant
+import Server.ServerConfig
+import Server.ServerM
 import Server.Types
 
 createMetricsMiddleware :: Maybe Int -> Middleware
@@ -58,25 +56,13 @@ mimsaApp :: MimsaEnvironment -> Middleware -> Application
 mimsaApp mimsaEnv metricsMiddleware =
   metricsMiddleware $ corsMiddleware $ serve mimsaAPI (mimsaServer mimsaEnv)
 
-createMimsaEnvironment :: MimsaM (Error Annotation) MimsaEnvironment
+createMimsaEnvironment :: ServerM (Error Annotation) MimsaEnvironment
 createMimsaEnvironment = do
-  cfg <- getMimsaConfig
-  env <- getDefaultProject
-  _ <- mapError StoreErr (saveAllInStore (prjStore env))
-  stm <- liftIO (STM.newTVarIO (prjStore env))
+  cfg <- ask
+  let project = stdlib
+  _ <- mapError StoreErr (saveAllInStore (scRootPath cfg) (prjStore project))
+  stm <- liftIO (STM.newTVarIO (prjStore project))
   pure (MimsaEnvironment stm cfg)
-
-getDefaultProject :: MimsaM (Error Annotation) (Project Annotation)
-getDefaultProject =
-  ( do
-      env <- mapError StoreErr loadProject
-      let items = length . getStore . prjStore $ env
-      logInfo $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
-      pure env
-  )
-    `catchError` \_ -> do
-      logInfo "Failed to load project, loading default project"
-      pure stdlib
 
 server :: IO ()
 server = do
@@ -85,17 +71,17 @@ server = do
   case mimsaConfig' of
     Left e -> putStrLn e >> pure ()
     Right cfg -> do
-      rtn <- runMimsaM cfg serverM
+      rtn <- runServerM cfg serverM
       case rtn of
         -- error in initialisation
         Left e -> T.putStrLn (prettyPrint e)
         _ -> pure ()
 
-serverM :: MimsaM (Error Annotation) ()
+serverM :: ServerM (Error Annotation) ()
 serverM = do
-  cfg <- getMimsaConfig
+  cfg <- ask
   mimsaEnv <- createMimsaEnvironment
-  let port' = port cfg
+  let port' = scPort cfg
   replOutput $ "Starting server on port " <> prettyPrint port' <> "..."
-  let metricsMiddleware = createMetricsMiddleware (prometheusPort cfg)
-  liftIO $ run port' (mimsaApp mimsaEnv metricsMiddleware) -- TODO - hoist Servant to use MimsaM?
+  let metricsMiddleware = createMetricsMiddleware (scPrometheusPort cfg)
+  liftIO $ run port' (mimsaApp mimsaEnv metricsMiddleware) -- TODO - hoist Servant to use ServerM?

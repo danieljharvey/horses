@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Store.Storage
@@ -18,6 +19,7 @@ where
 
 import Control.Exception
 import Control.Monad.Except
+import Control.Monad.Logger
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.Coerce
@@ -27,37 +29,37 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Types as Actions
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Project.ProjectHash
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Store.RootPath
 import System.Directory
 
--- get store folder, creating if it does not exist
--- the store folder usually lives in ~/.local/share
--- see https://hackage.haskell.org/package/directory-1.3.6.1/docs/System-Directory.html#t:XdgDirectory
-getStoreFolder :: String -> MimsaM e FilePath
-getStoreFolder subFolder = do
-  cfg <- getMimsaConfig
-  let path = storeRootPath cfg <> "/" <> subFolder
+-- create subfolder in store, creating if necessary
+getStoreFolder :: (MonadIO m) => RootPath -> String -> m FilePath
+getStoreFolder (RootPath rootPath) subFolder = do
+  let path = rootPath <> "/" <> subFolder
   liftIO $ createDirectoryIfMissing True path
   pure (path <> "/")
 
 -- try copying a file from a to b
-tryCopy :: String -> String -> MimsaM StoreError ()
+tryCopy ::
+  (MonadIO m, MonadLogger m) =>
+  String ->
+  String ->
+  m ()
 tryCopy from to = do
   fileCopied <- liftIO $ try (copyFile from to)
   case (fileCopied :: Either IOError ()) of
     Right _ -> do
-      logDebug $ T.pack $ "File copied from " <> from <> " to " <> to
+      logDebugN $ T.pack $ "File copied from " <> from <> " to " <> to
     Left _ -> pure ()
 
-getExpressionFolder :: MimsaM e FilePath
-getExpressionFolder = getStoreFolder "expressions"
+getExpressionFolder :: (MonadIO m) => RootPath -> m FilePath
+getExpressionFolder rootPath = getStoreFolder rootPath "expressions"
 
 filePath :: FilePath -> ExprHash -> String
 filePath storePath hash = storePath <> show hash <> ".json"
@@ -67,9 +69,13 @@ storeSize (Store s) = M.size s
 
 -- the store is where we save all the fucking bullshit
 
-saveAllInStore :: Store ann -> MimsaM StoreError ()
-saveAllInStore store = do
-  traverse_ saveExpr (getStore store)
+saveAllInStore ::
+  (MonadIO m, MonadLogger m) =>
+  RootPath ->
+  Store ann ->
+  m ()
+saveAllInStore rootPath store = do
+  traverse_ (saveExpr rootPath) (getStore store)
 
 getStoreExpressionHash :: StoreExpression ann -> ExprHash
 getStoreExpressionHash = snd . serialiseStoreExpression
@@ -88,28 +94,38 @@ validateStoreExpression storeExpr exprHash =
           exprHash
           (getStoreExpressionHash storeExpr)
 
-saveExpr :: StoreExpression ann -> MimsaM StoreError ExprHash
-saveExpr se =
-  saveExpr' (se $> NullUnit)
+saveExpr ::
+  (MonadIO m, MonadLogger m) =>
+  RootPath ->
+  StoreExpression ann ->
+  m ExprHash
+saveExpr rootPath se =
+  saveExpr' rootPath (se $> NullUnit)
 
 -- take an expression, save it, return ExprHash
-saveExpr' :: StoreExpression NullUnit -> MimsaM StoreError ExprHash
-saveExpr' storeExpr = do
-  storePath <- getExpressionFolder
+saveExpr' ::
+  (MonadIO m, MonadLogger m) =>
+  RootPath ->
+  StoreExpression NullUnit ->
+  m ExprHash
+saveExpr' rootPath storeExpr = do
+  storePath <- getExpressionFolder rootPath
   let path = filePath storePath exprHash
       (json, exprHash) = serialiseStoreExpression storeExpr
   exists <- liftIO $ doesFileExist path
   if exists
-    then logDebug $ "Expression for " <> prettyPrint exprHash <> " already exists"
+    then logDebugN $ "Expression for " <> prettyPrint exprHash <> " already exists"
     else do
-      logDebug $ "Saved expression for " <> prettyPrint exprHash
+      logDebugN $ "Saved expression for " <> prettyPrint exprHash
       liftIO $ BS.writeFile (filePath storePath exprHash) json
   pure exprHash
 
 findExpr ::
+  (MonadIO m, MonadError StoreError m, MonadLogger m) =>
+  RootPath ->
   ExprHash ->
-  MimsaM StoreError (StoreExpression ())
-findExpr = fmap ($> ()) . findExprInLocalStore
+  m (StoreExpression ())
+findExpr rootPath = fmap ($> ()) . findExprInLocalStore rootPath
 
 -- this is the only encode we should be doing
 serialiseStoreExpression :: StoreExpression ann -> (BS.ByteString, ExprHash)
@@ -121,9 +137,13 @@ deserialiseStoreExpression =
   JSON.decode
 
 -- find in the store
-findExprInLocalStore :: ExprHash -> MimsaM StoreError (StoreExpression NullUnit)
-findExprInLocalStore hash = do
-  storePath <- getExpressionFolder
+findExprInLocalStore ::
+  (MonadIO m, MonadError StoreError m, MonadLogger m) =>
+  RootPath ->
+  ExprHash ->
+  m (StoreExpression NullUnit)
+findExprInLocalStore rootPath hash = do
+  storePath <- getExpressionFolder rootPath
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
   case (json :: Either IOError BS.ByteString) of
     Left _ -> throwError $ CouldNotReadFilePath StoreExprFile (filePath storePath hash)
@@ -133,17 +153,19 @@ findExprInLocalStore hash = do
         Just storeExpr ->
           case validateStoreExpression storeExpr hash of
             Right se -> do
-              logDebug $ "Found expression for " <> prettyPrint hash
+              logDebugN $ "Found expression for " <> prettyPrint hash
               pure se
             Left e -> throwError e
 
 -- | given an expression to save, save it
 -- | some sort of catch / error?
 saveFile ::
+  (MonadIO m, MonadLogger m) =>
+  RootPath ->
   (Actions.SavePath, Actions.SaveFilename, Actions.SaveContents) ->
-  MimsaM StoreError ()
-saveFile (path, filename, content) = do
-  fullPath <- getStoreFolder (show path)
+  m ()
+saveFile rootPath (path, filename, content) = do
+  fullPath <- getStoreFolder rootPath (show path)
   let savePath = fullPath <> show filename
-  logDebug $ "Saving to " <> T.pack savePath
+  logDebugN $ "Saving to " <> T.pack savePath
   liftIO $ T.writeFile savePath (coerce content)

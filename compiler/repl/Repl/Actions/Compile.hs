@@ -5,6 +5,7 @@ module Repl.Actions.Compile
   )
 where
 
+import Control.Monad.Reader
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
@@ -15,7 +16,6 @@ import Language.Mimsa.Backend.Backend
   ( copyLocalOutput,
   )
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Monad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -23,17 +23,19 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Repl.Helpers
+import Repl.ReplM
+import Repl.Types
 
 doOutputJS ::
   Project Annotation ->
   Text ->
   Maybe Backend ->
   Expr Name Annotation ->
-  MimsaM (Error Annotation) ()
+  ReplM (Error Annotation) ()
 doOutputJS project input maybeBackend expr = do
   let be = fromMaybe ESModulesJS maybeBackend
   (_, _, resolvedExpr) <-
-    mimsaFromEither $
+    replMFromEither $
       Actions.run
         project
         (Actions.typecheckExpression project input expr)
@@ -46,6 +48,7 @@ doCopying ::
   Backend ->
   Set ExprHash ->
   ExprHash ->
-  MimsaM (Error Annotation) Text
-doCopying be exprHashes rootExprHash =
-  mapError StoreErr (copyLocalOutput be exprHashes rootExprHash)
+  ReplM (Error Annotation) Text
+doCopying be exprHashes rootExprHash = do
+  rootPath <- asks rcRootPath
+  mapError StoreErr (copyLocalOutput rootPath be exprHashes rootExprHash)

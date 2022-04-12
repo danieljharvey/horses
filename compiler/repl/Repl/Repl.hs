@@ -6,57 +6,66 @@ module Repl.Repl
 where
 
 import Control.Monad.Except
+import Control.Monad.Logger
+import Control.Monad.Reader
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Monad
 import Language.Mimsa.Parser
-import Language.Mimsa.Project
-  ( loadProject,
-    saveProject,
-  )
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
+import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Store.RootPath
 import Repl.Actions (doReplAction)
 import Repl.Parser (replParser)
+import Repl.Persistence
+import Repl.ReplM
+import Repl.Types
 import System.Console.Haskeline
 import System.Directory
 
--- | Repl uses store in ~/.local/share/mimsa
--- TODO: change this to local folder
-createMimsaConfig :: Bool -> IO MimsaConfig
-createMimsaConfig showLogs' = do
-  path <- getXdgDirectory XdgData "mimsa"
-  pure $ MimsaConfig 0 path showLogs' Nothing
+createReplConfig :: (MonadIO m) => Bool -> m ReplConfig
+createReplConfig showLogs' = do
+  path <- liftIO getCurrentDirectory
+  pure $ ReplConfig (RootPath path) showLogs'
 
-getProject :: MimsaM (Error Annotation) (Project Annotation)
+getProject :: ReplM (Error Annotation) (Project Annotation)
 getProject =
   do
     env <- mapError StoreErr loadProject
     let items = length . getStore . prjStore $ env
     replOutput $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
     pure env
-    `catchError` \_ -> do
-      logError "Failed to load project, loading default project"
-      pure stdlib
+    `catchError` \e -> do
+      logDebugN (prettyPrint e)
+      logErrorN "Failed to load project, initialising a fresh project"
+      initialiseProject
+
+-- start a new project, using the stdlib bindings as a starting point
+initialiseProject :: ReplM (Error Annotation) (Project Annotation)
+initialiseProject = do
+  rootPath <- asks rcRootPath
+  saveAllInStore rootPath (prjStore stdlib)
+  _ <- mapError StoreErr (saveProject stdlib)
+  pure stdlib
 
 repl :: Bool -> IO ()
 repl showLogs' = do
-  mimsaConfig <- createMimsaConfig showLogs'
-  _ <- runMimsaM mimsaConfig replM
+  cfg <- createReplConfig showLogs'
+  _ <- runReplM cfg replLoop
   pure ()
 
-replM :: MimsaM (Error Annotation) ()
-replM = do
+replLoop :: ReplM (Error Annotation) ()
+replLoop = do
   env <- getProject
   runInputT defaultSettings (loop env)
   where
     loop ::
       Project Annotation ->
-      InputT (MimsaM (Error Annotation)) ()
+      InputT (ReplM (Error Annotation)) ()
     loop exprs' = do
       minput <- getInputLine ":> "
       case minput of
@@ -69,7 +78,7 @@ replM = do
 parseCommand ::
   Project Annotation ->
   Text ->
-  MimsaM (Error Annotation) (Project Annotation)
+  ReplM (Error Annotation) (Project Annotation)
 parseCommand env input =
   case parseAndFormat replParser input of
     Left e -> do
