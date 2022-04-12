@@ -44,6 +44,7 @@ getProject =
       logErrorN "Failed to load project, initialising a fresh project"
       initialiseProject
 
+-- start a new project, using the stdlib bindings as a starting point
 initialiseProject :: ReplM (Error Annotation) (Project Annotation)
 initialiseProject = do
   rootPath <- asks rcRootPath
@@ -54,11 +55,11 @@ initialiseProject = do
 repl :: Bool -> IO ()
 repl showLogs' = do
   cfg <- createReplConfig showLogs'
-  _ <- runReplM cfg replM
+  _ <- runReplM cfg replLoop
   pure ()
 
-replM :: ReplM (Error Annotation) ()
-replM = do
+replLoop :: ReplM (Error Annotation) ()
+replLoop = do
   env <- getProject
   runInputT defaultSettings (loop env)
   where
