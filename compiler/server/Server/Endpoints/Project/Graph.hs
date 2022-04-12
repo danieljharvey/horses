@@ -35,7 +35,7 @@ newtype GraphProjectResponse = GraphProjectResponse {gpGraphviz :: Text}
 graphProject ::
   MimsaEnvironment -> Server GraphAPI
 graphProject mimsaEnv projectHash = do
-  (_newProject, gv) <-
+  (_newProject, _, gv) <-
     fromActionM
       mimsaEnv
       projectHash

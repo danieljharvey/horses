@@ -107,6 +107,6 @@ upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
 
     case response of
       Left e -> throwMimsaError e
-      Right (newProject, (upgradedDeps, ed)) -> do
+      Right (newProject, _, (upgradedDeps, ed)) -> do
         pd <- lift $ projectDataHandler mimsaEnv newProject
         returnMimsa $ UpgradeResponse upgradedDeps ed pd testData

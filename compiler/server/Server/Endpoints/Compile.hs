@@ -4,7 +4,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Server.Endpoints.Compile (CompileAPI, compileEndpoints) where
@@ -12,16 +11,14 @@ module Server.Endpoints.Compile (CompileAPI, compileEndpoints) where
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.OpenApi (NamedSchema (..), ToSchema, binarySchema, declareNamedSchema)
-import Data.Set (Set)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Compile as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.ZipFile
 import Language.Mimsa.Types.Store
 import Servant
 import Server.Handlers
-import Server.Helpers
-import Server.ServerConfig
 import Server.Types
 
 -----
@@ -75,27 +72,9 @@ compileHashEndpoint
   mimsaEnv
   (CompileHashRequest exprHash backend) = do
     (storeExpr, pd, _) <- projectFromExpressionHandler mimsaEnv exprHash
-    (_, (rootExprHash, exprHashes)) <-
+    (_, outcomes, (rootExprHash, _)) <-
       fromActionM mimsaEnv (pdHash pd) (Actions.compile backend storeExpr)
+    let makeZip = encodeZipFile . zipFromSavedFiles . Actions.writeFilesFromOutcomes
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
-    bs <- doCreateZipFile mimsaEnv backend exprHashes rootExprHash
-    pure (addHeader contentDisposition (ZipFileResponse bs))
-
------
-
-doCreateZipFile ::
-  MimsaEnvironment ->
-  Backend ->
-  Set ExprHash ->
-  ExprHash ->
-  Handler LBS.ByteString
-doCreateZipFile mimsaEnv be exprHashes rootExprHash = do
-  let mimsaCfg = mimsaConfig mimsaEnv
-  archive <-
-    handleServerM @()
-      mimsaCfg
-      InternalError
-      ( createZipFile (scRootPath mimsaCfg) be exprHashes rootExprHash
-      )
-  pure (encodeZipFile archive)
+    pure (addHeader contentDisposition (ZipFileResponse (makeZip outcomes)))

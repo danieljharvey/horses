@@ -8,7 +8,6 @@ where
 
 import Data.Either (isRight)
 import Data.Functor
-import Data.List (nub)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Compile as Actions
@@ -36,18 +35,11 @@ spec = do
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 4
       -- optimisations change project
       newProject `shouldNotBe` testStdlib
-      -- uses three different folders
-      let uniqueFolders =
-            nub
-              ( (\(path, _, _) -> path)
-                  <$> Actions.writeFilesFromOutcomes outcomes
-              )
-      length uniqueFolders `shouldBe` 3
       -- should have returned two exprHashs (one for the main expr, one
       -- for the `id` dependency
       S.size hashes `shouldBe` 2
 
-    it "Complex compilation creates many files in 2 folders" $ do
+    it "Complex compilation creates many files" $ do
       let expr = MyVar mempty "evalState"
       let action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
@@ -57,13 +49,6 @@ spec = do
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
       -- optimisations change project
       newProject `shouldNotBe` testStdlib
-      -- uses three different folders
-      let uniqueFolders =
-            nub
-              ( (\(path, _, _) -> path)
-                  <$> Actions.writeFilesFromOutcomes outcomes
-              )
-      length uniqueFolders `shouldBe` 3
 
     it "Doesn't break when using bindings that aren't in the store" $ do
       let expr = MyVar mempty "id2"

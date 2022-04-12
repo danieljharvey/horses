@@ -82,7 +82,7 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
   response <-
     lift $ eitherFromActionM mimsaEnv projectHash action
   case response of
-    Right (newProject, (ed, typeClasses, dt)) -> do
+    Right (newProject, _, (ed, typeClasses, dt)) -> do
       pd <- lift $ projectDataHandler mimsaEnv newProject
       returnMimsa $
         BindTypeResponse pd (prettyPrint dt) ed typeClasses

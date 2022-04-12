@@ -76,7 +76,7 @@ getExpression mimsaEnv exprHash' = do
         resolvedExpr <- Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
         pure (gv, canOptimise, resolvedExpr)
 
-  (_, (graphviz, canOptimise, resolvedExpr)) <-
+  (_, _, (graphviz, canOptimise, resolvedExpr)) <-
     fromActionM
       mimsaEnv
       (pdHash pd)
@@ -133,7 +133,7 @@ getExpressions mimsaEnv exprHashes = do
             (reTypedExpression resolvedExpr)
         pure (gv, canOptimise, resolvedExpr, typedExpr)
 
-  (_, results) <-
+  (_, _, results) <-
     fromActionM
       mimsaEnv
       (pdHash pd)

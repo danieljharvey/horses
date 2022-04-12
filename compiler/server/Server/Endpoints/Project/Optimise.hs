@@ -97,6 +97,6 @@ optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
 
     case response of
       Left e -> throwMimsaError e
-      Right (newProject, ed) -> do
+      Right (newProject, _, ed) -> do
         pd <- lift $ projectDataHandler mimsaEnv newProject
         returnMimsa $ OptimiseResponse ed pd testData

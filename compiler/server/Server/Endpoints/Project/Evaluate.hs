@@ -74,4 +74,4 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) =
     response <- lift $ eitherFromActionM mimsaEnv hash action
     case response of
       Left e -> throwMimsaError e
-      Right (_, a) -> returnMimsa a
+      Right (_, _, a) -> returnMimsa a
