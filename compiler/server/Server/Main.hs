@@ -8,9 +8,7 @@ where
 
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
-import Control.Monad.Logger
 import Control.Monad.Reader
-import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
@@ -18,7 +16,6 @@ import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Store
 import Network.HTTP.Types.Header
 import Network.HTTP.Types.Method
 import Network.Wai
@@ -29,7 +26,6 @@ import Prometheus
 import Prometheus.Metric.GHC
 import Servant
 import Server.EnvVars (getMimsaEnv)
-import Server.Persistence
 import Server.Servant
 import Server.ServerConfig
 import Server.ServerM
@@ -63,22 +59,10 @@ mimsaApp mimsaEnv metricsMiddleware =
 createMimsaEnvironment :: ServerM (Error Annotation) MimsaEnvironment
 createMimsaEnvironment = do
   cfg <- ask
-  env <- getDefaultProject
-  _ <- mapError StoreErr (saveAllInStore (scRootPath cfg) (prjStore env))
-  stm <- liftIO (STM.newTVarIO (prjStore env))
+  let project = stdlib
+  _ <- mapError StoreErr (saveAllInStore (scRootPath cfg) (prjStore project))
+  stm <- liftIO (STM.newTVarIO (prjStore project))
   pure (MimsaEnvironment stm cfg)
-
-getDefaultProject :: ServerM (Error Annotation) (Project Annotation)
-getDefaultProject =
-  ( do
-      env <- mapError StoreErr loadProject
-      let items = length . getStore . prjStore $ env
-      logInfoN $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
-      pure env
-  )
-    `catchError` \_ -> do
-      logInfoN "Failed to load project, loading default project"
-      pure stdlib
 
 server :: IO ()
 server = do

@@ -20,7 +20,7 @@ import Data.Functor
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Printer
+import qualified Data.Text as T
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Storage
@@ -29,25 +29,9 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Store.RootPath
 import Repl.Types
-import System.Directory
 
 projectFilePath :: RootPath -> String
 projectFilePath (RootPath rp) = rp <> "/mimsa.json"
-
-getProjectFolder ::
-  (MonadIO m, MonadReader ReplConfig m) =>
-  m FilePath
-getProjectFolder = do
-  rootPath <- asks rcRootPath
-  getStoreFolder rootPath "projects"
-
-getProjectPath :: (MonadIO m, MonadReader ReplConfig m) => ProjectHash -> m FilePath
-getProjectPath hash' = do
-  folder <- getProjectFolder
-  pure (folder <> getProjectFilename hash')
-
-getProjectFilename :: ProjectHash -> FilePath
-getProjectFilename hash' = show hash' <> ".json"
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
@@ -63,12 +47,16 @@ loadProject' ::
   m (Project ())
 loadProject' = do
   rootPath <- asks rcRootPath
+  logDebugN ("Attempting to load project file at " <> T.pack (projectFilePath rootPath))
   project' <- liftIO $ try $ LBS.readFile (projectFilePath rootPath)
   case project' of
     Left (_ :: IOError) -> throwError (CouldNotReadFilePath ProjectFile (projectFilePath rootPath))
-    Right json' ->
+    Right json' -> do
+      logDebugN "Project file found"
       case JSON.decode json' of
-        Just sp -> fetchProjectItems mempty sp -- we're starting from scratch with this one
+        Just sp -> do
+          logDebugN "Project file successfully decoded. Fetching project items...."
+          fetchProjectItems mempty sp -- we're starting from scratch with this one
         _ -> throwError $ CouldNotDecodeFile (projectFilePath rootPath)
 
 fetchProjectItems ::
@@ -113,38 +101,14 @@ saveProject' ::
   m ProjectHash
 saveProject' env = do
   rootPath <- asks rcRootPath
-  let (jsonStr, _) = contentAndHash (projectToSaved env)
+  let (jsonStr, hash) = contentAndHash (projectToSaved env)
   success <- liftIO $ try $ LBS.writeFile (projectFilePath rootPath) jsonStr
   case success of
     Left (_ :: IOError) ->
       throwError (CouldNotWriteFilePath ProjectFile (projectFilePath rootPath))
-    Right _ -> saveProjectInStore' env
-
-saveProjectInStore' ::
-  ( MonadIO m,
-    MonadError StoreError m,
-    MonadLogger m,
-    MonadReader ReplConfig m
-  ) =>
-  Project () ->
-  m ProjectHash
-saveProjectInStore' env = do
-  let (jsonStr, hash) = contentAndHash (projectToSaved env)
-  path <- getProjectPath hash
-  exists <- liftIO $ doesFileExist path
-  if exists
-    then do
-      logDebugN $ "Project file for " <> prettyPrint hash <> " already exists"
+    Right _ -> do
+      logDebugN ("Successfully updated project file at " <> T.pack (projectFilePath rootPath))
       pure hash
-    else do
-      logDebugN $ "Saved project for " <> prettyPrint hash
-      success <- liftIO $ try $ LBS.writeFile path jsonStr
-      case success of
-        Left (_ :: IOError) ->
-          throwError (CouldNotWriteFilePath ProjectFile (getProjectFilename hash))
-        Right _ -> pure hash
-
---
 
 storeItems :: Store a -> Set ExprHash
 storeItems (Store s) = S.fromList (M.keys s)

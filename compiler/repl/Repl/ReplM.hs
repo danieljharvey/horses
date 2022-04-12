@@ -4,9 +4,6 @@
 module Repl.ReplM
   ( ReplM (..),
     runReplM,
-    logDebug,
-    logInfo,
-    logError,
     mapError,
     replMFromEither,
     replOutput,
@@ -19,13 +16,9 @@ import Control.Monad.Logger
   ( LoggingT,
     MonadLogger,
     filterLogger,
-    logDebugN,
-    logErrorN,
-    logInfoN,
     runStdoutLoggingT,
   )
 import Control.Monad.Reader
-import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Repl.Types
@@ -76,13 +69,3 @@ replMFromEither = ReplM . liftEither
 -- | Output stuff for use in repl
 replOutput :: (Printer a) => a -> ReplM e ()
 replOutput = liftIO . T.putStrLn . prettyPrint
-
--- | Logging
-logDebug :: (MonadLogger m) => Text -> m ()
-logDebug = logDebugN
-
-logInfo :: (MonadLogger m) => Text -> m ()
-logInfo = logInfoN
-
-logError :: (MonadLogger m) => Text -> m ()
-logError = logErrorN

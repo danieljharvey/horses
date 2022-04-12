@@ -6,10 +6,14 @@ module Repl.Repl
 where
 
 import Control.Monad.Except
+import Control.Monad.Logger
+import Control.Monad.Reader
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
+import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
@@ -35,9 +39,17 @@ getProject =
     let items = length . getStore . prjStore $ env
     replOutput $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
     pure env
-    `catchError` \_ -> do
-      logError "Failed to load project, loading default project"
-      pure stdlib
+    `catchError` \e -> do
+      logDebugN (prettyPrint e)
+      logErrorN "Failed to load project, initialising a fresh project"
+      initialiseProject
+
+initialiseProject :: ReplM (Error Annotation) (Project Annotation)
+initialiseProject = do
+  rootPath <- asks rcRootPath
+  saveAllInStore rootPath (prjStore stdlib)
+  _ <- mapError StoreErr (saveProject stdlib)
+  pure stdlib
 
 repl :: Bool -> IO ()
 repl showLogs' = do
