@@ -13,7 +13,6 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
   ( getCurrentBindings,
@@ -25,6 +24,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Repl.ReplM
 
 getTypesFromStore ::
   Store ann ->
@@ -42,7 +42,7 @@ getTypesFromStore (Store items') (TypeBindings tBindings) =
         Just item -> pure [item]
         _ -> pure []
 
-doListBindings :: Project Annotation -> Text -> MimsaM (Error Annotation) ()
+doListBindings :: Project Annotation -> Text -> ReplM (Error Annotation) ()
 doListBindings project input = do
   let showBind (name, StoreExpression expr _ _) =
         case Actions.run project (Actions.typecheckExpression project input expr) of

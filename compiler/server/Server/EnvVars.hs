@@ -6,14 +6,21 @@ module Server.EnvVars
 where
 
 import Control.Monad.Except
-import Language.Mimsa.Types.MimsaConfig
-import System.Envy
+import Data.Maybe
+import Language.Mimsa.Types.Store.RootPath
+import Server.ServerConfig
+import System.Environment
 
--- All fields will be converted to uppercase
-getMimsaEnv :: ExceptT String IO MimsaConfig
+-- manually parse env vars because yolo
+getMimsaEnv :: (MonadIO m) => m ServerConfig
 getMimsaEnv =
-  ExceptT $
-    runEnv $
-      gFromEnvCustom
-        defOption
-        (Just (MimsaConfig 8999 "./.mimsa" False Nothing))
+  ServerConfig
+    <$> getItem "PORT" read 8999
+    <*> getItem "STORE_ROOT_PATH" (pure . RootPath) (RootPath "./.mimsa")
+    <*> getItem "SHOW_LOGS" read False
+    <*> getItem "PROMETHEUS_PORT" read Nothing
+
+getItem :: (MonadIO m) => String -> (String -> Maybe a) -> a -> m a
+getItem envName parse def = do
+  item <- liftIO (lookupEnv envName)
+  pure (fromMaybe def (item >>= parse))

@@ -1,15 +1,14 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
-module Language.Mimsa.Monad
-  ( MimsaM (..),
-    runMimsaM,
-    getMimsaConfig,
+module Repl.ReplM
+  ( ReplM (..),
+    runReplM,
     logDebug,
     logInfo,
     logError,
     mapError,
-    mimsaFromEither,
+    replMFromEither,
     replOutput,
   )
 where
@@ -29,17 +28,17 @@ import Control.Monad.Reader
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.MimsaConfig
+import Repl.Types
 
 -- | Although we are lucky and can keep much of our work
 -- outside of IO, we do need to do some Serious Business sometimes
 -- so here is a Monad to do it in
-newtype MimsaM e a = MimsaM
-  { getMimsaM ::
+newtype ReplM e a = ReplM
+  { getReplM ::
       ExceptT
         e
         ( LoggingT
-            ( ReaderT MimsaConfig IO
+            ( ReaderT ReplConfig IO
             )
         )
         a
@@ -49,7 +48,7 @@ newtype MimsaM e a = MimsaM
       Applicative,
       Monad,
       MonadIO,
-      MonadReader MimsaConfig,
+      MonadReader ReplConfig,
       MonadError e,
       MonadLogger,
       MonadThrow,
@@ -57,37 +56,33 @@ newtype MimsaM e a = MimsaM
       MonadMask
     )
 
--- | get env
-getMimsaConfig :: MimsaM e MimsaConfig
-getMimsaConfig = ask
-
 -- | change error type
-mapError :: (e -> e') -> MimsaM e a -> MimsaM e' a
-mapError f = MimsaM . withExceptT f . getMimsaM
+mapError :: (e -> e') -> ReplM e a -> ReplM e' a
+mapError f = ReplM . withExceptT f . getReplM
 
 -- | run this big brave boy
-runMimsaM :: MimsaConfig -> MimsaM e a -> IO (Either e a)
-runMimsaM config app =
-  let innerApp = runExceptT (getMimsaM app)
+runReplM :: ReplConfig -> ReplM e a -> IO (Either e a)
+runReplM config app =
+  let innerApp = runExceptT (getReplM app)
    in runReaderT (runStdoutLoggingT (logFilter config innerApp)) config
 
-logFilter :: MimsaConfig -> LoggingT m a -> LoggingT m a
-logFilter mc app = if showLogs mc then app else filterLogger (\_ _ -> False) app
+logFilter :: ReplConfig -> LoggingT m a -> LoggingT m a
+logFilter mc app = if rcShowLogs mc then app else filterLogger (\_ _ -> False) app
 
--- | lift Either into MimsaM
-mimsaFromEither :: Either e a -> MimsaM e a
-mimsaFromEither = MimsaM . liftEither
+-- | lift Either into ReplM
+replMFromEither :: Either e a -> ReplM e a
+replMFromEither = ReplM . liftEither
 
 -- | Output stuff for use in repl
-replOutput :: (Printer a) => a -> MimsaM e ()
+replOutput :: (Printer a) => a -> ReplM e ()
 replOutput = liftIO . T.putStrLn . prettyPrint
 
 -- | Logging
-logDebug :: Text -> MimsaM e ()
+logDebug :: (MonadLogger m) => Text -> m ()
 logDebug = logDebugN
 
-logInfo :: Text -> MimsaM e ()
+logInfo :: (MonadLogger m) => Text -> m ()
 logInfo = logInfoN
 
-logError :: Text -> MimsaM e ()
+logError :: (MonadLogger m) => Text -> m ()
 logError = logErrorN

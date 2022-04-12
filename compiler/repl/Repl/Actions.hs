@@ -8,7 +8,6 @@ where
 
 import Data.Functor
 import Data.Text (Text)
-import Language.Mimsa.Monad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
@@ -23,13 +22,14 @@ import Repl.Actions.TypeSearch
 import Repl.Actions.UnitTests
 import Repl.Actions.Upgrade
 import Repl.Helpers
+import Repl.ReplM
 import Repl.Types
 
 doReplAction ::
   Project Annotation ->
   Text ->
   ReplAction Annotation ->
-  MimsaM (Error Annotation) (Project Annotation)
+  ReplM (Error Annotation) (Project Annotation)
 doReplAction env input action =
   case action of
     Help -> do
@@ -66,7 +66,7 @@ doReplAction env input action =
 
 ----------
 
-doHelp :: MimsaM e ()
+doHelp :: ReplM e ()
 doHelp = do
   replOutput @Text "~~~ MIMSA ~~~"
   replOutput @Text ":help - this help screen"

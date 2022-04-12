@@ -4,6 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Server.Endpoints.Compile (CompileAPI, compileEndpoints) where
@@ -20,6 +21,7 @@ import Language.Mimsa.Types.Store
 import Servant
 import Server.Handlers
 import Server.Helpers
+import Server.ServerConfig
 import Server.Types
 
 -----
@@ -91,9 +93,9 @@ doCreateZipFile ::
 doCreateZipFile mimsaEnv be exprHashes rootExprHash = do
   let mimsaCfg = mimsaConfig mimsaEnv
   archive <-
-    handleMimsaM
+    handleServerM @()
       mimsaCfg
       InternalError
-      ( createZipFile be exprHashes rootExprHash
+      ( createZipFile (scRootPath mimsaCfg) be exprHashes rootExprHash
       )
   pure (encodeZipFile archive)

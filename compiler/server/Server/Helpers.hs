@@ -9,7 +9,7 @@ module Server.Helpers
     ErrorType (..),
     handleExceptT,
     handleEither,
-    handleMimsaM,
+    handleServerM,
   )
 where
 
@@ -17,18 +17,18 @@ import Control.Monad.Except
 import Data.Bifunctor
 import Data.Text.Lazy (fromStrict)
 import Data.Text.Lazy.Encoding (encodeUtf8)
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.MimsaConfig
 import Servant
+import Server.ServerConfig
+import Server.ServerM
 
 data ErrorType
   = UserError
   | InternalError
 
-handleMimsaM :: (Printer e) => MimsaConfig -> ErrorType -> MimsaM e a -> Handler a
-handleMimsaM cfg et computation = do
-  let ioEither = runMimsaM cfg computation
+handleServerM :: (Printer e) => ServerConfig -> ErrorType -> ServerM e a -> Handler a
+handleServerM cfg et computation = do
+  let ioEither = runServerM cfg computation
   let f =
         first
           ( \e -> case et of

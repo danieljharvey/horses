@@ -24,10 +24,10 @@ import Data.FileEmbed
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store.Storage (getStoreFolder)
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Store.RootPath
 import System.Directory
 
 -- these are saved in a file that is included in compilation
@@ -45,7 +45,7 @@ outputStdlib Typescript = typescriptStandardLibrary
 outputStdlib ESModulesJS = esModulesJSStandardLibrary
 
 -- each expression is symlinked from the store to ./output/<exprhash>/<filename.ext>
-createOutputFolder :: Backend -> ExprHash -> MimsaM e FilePath
+createOutputFolder :: (MonadIO m) => Backend -> ExprHash -> m FilePath
 createOutputFolder be exprHash = do
   let outputPath = symlinkedOutputPath be
   let path = outputPath <> show exprHash
@@ -54,15 +54,15 @@ createOutputFolder be exprHash = do
 
 -- all files are created in the store and then symlinked into output folders
 -- this creates the folder in the store
-createModuleOutputPath :: Backend -> MimsaM e FilePath
-createModuleOutputPath be =
-  getStoreFolder (transpiledModuleOutputPath be)
+createModuleOutputPath :: (MonadIO m) => RootPath -> Backend -> m FilePath
+createModuleOutputPath rootPath be =
+  getStoreFolder rootPath (transpiledModuleOutputPath be)
 
 -- all files are created in the store and then symlinked into output folders
 -- this creates the folder in the store
-createIndexOutputPath :: Backend -> MimsaM e FilePath
-createIndexOutputPath be =
-  getStoreFolder (transpiledIndexOutputPath be)
+createIndexOutputPath :: (MonadIO m) => RootPath -> Backend -> m FilePath
+createIndexOutputPath rootPath be =
+  getStoreFolder rootPath (transpiledIndexOutputPath be)
 
 indexOutputFilename :: Backend -> ExprHash -> Text
 indexOutputFilename ESModulesJS exprHash =
@@ -90,9 +90,9 @@ transpiledStdlibOutputPath Typescript = "transpiled/stdlib/typescript"
 
 -- all files are created in the store and then symlinked into output folders
 -- this creates the folder in the store
-createStdlibOutputPath :: Backend -> MimsaM e FilePath
-createStdlibOutputPath be =
-  getStoreFolder (transpiledStdlibOutputPath be)
+createStdlibOutputPath :: (MonadIO m) => RootPath -> Backend -> m FilePath
+createStdlibOutputPath rootPath be =
+  getStoreFolder rootPath (transpiledStdlibOutputPath be)
 
 zipFileOutputPath :: Backend -> FilePath
 zipFileOutputPath _ = "./output/zip"

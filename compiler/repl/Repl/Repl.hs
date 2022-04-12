@@ -8,31 +8,27 @@ where
 import Control.Monad.Except
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Monad
 import Language.Mimsa.Parser
-import Language.Mimsa.Project
-  ( loadProject,
-    saveProject,
-  )
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.MimsaConfig
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Store.RootPath
 import Repl.Actions (doReplAction)
 import Repl.Parser (replParser)
+import Repl.Persistence
+import Repl.ReplM
+import Repl.Types
 import System.Console.Haskeline
 import System.Directory
 
--- | Repl uses store in ~/.local/share/mimsa
--- TODO: change this to local folder
-createMimsaConfig :: Bool -> IO MimsaConfig
-createMimsaConfig showLogs' = do
-  path <- getXdgDirectory XdgData "mimsa"
-  pure $ MimsaConfig 0 path showLogs' Nothing
+createReplConfig :: (MonadIO m) => Bool -> m ReplConfig
+createReplConfig showLogs' = do
+  path <- liftIO getCurrentDirectory
+  pure $ ReplConfig (RootPath path) showLogs'
 
-getProject :: MimsaM (Error Annotation) (Project Annotation)
+getProject :: ReplM (Error Annotation) (Project Annotation)
 getProject =
   do
     env <- mapError StoreErr loadProject
@@ -45,18 +41,18 @@ getProject =
 
 repl :: Bool -> IO ()
 repl showLogs' = do
-  mimsaConfig <- createMimsaConfig showLogs'
-  _ <- runMimsaM mimsaConfig replM
+  cfg <- createReplConfig showLogs'
+  _ <- runReplM cfg replM
   pure ()
 
-replM :: MimsaM (Error Annotation) ()
+replM :: ReplM (Error Annotation) ()
 replM = do
   env <- getProject
   runInputT defaultSettings (loop env)
   where
     loop ::
       Project Annotation ->
-      InputT (MimsaM (Error Annotation)) ()
+      InputT (ReplM (Error Annotation)) ()
     loop exprs' = do
       minput <- getInputLine ":> "
       case minput of
@@ -69,7 +65,7 @@ replM = do
 parseCommand ::
   Project Annotation ->
   Text ->
-  MimsaM (Error Annotation) (Project Annotation)
+  ReplM (Error Annotation) (Project Annotation)
 parseCommand env input =
   case parseAndFormat replParser input of
     Left e -> do

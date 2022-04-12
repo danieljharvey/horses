@@ -10,7 +10,6 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Typechecker.NormaliseTypes (normaliseType)
@@ -18,13 +17,14 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Typechecker
+import Repl.ReplM
 
 -------------
 
 doTypeSearch ::
-  Project Annotation -> MonoType -> MimsaM (Error Annotation) ()
+  Project Annotation -> MonoType -> ReplM (Error Annotation) ()
 doTypeSearch project mt = do
-  (_, _, typeMap) <- mimsaFromEither $ Actions.run project Actions.typeMapForProjectSearch
+  (_, _, typeMap) <- replMFromEither $ Actions.run project Actions.typeMapForProjectSearch
   let matches = typeSearch typeMap mt
   let simplified = normaliseType mt
   case M.toList matches of

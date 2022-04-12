@@ -1,12 +1,18 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
+
 module Repl.Types
   ( ReplAction (..),
+    ReplConfig (..),
   )
 where
 
+import GHC.Generics
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Store.RootPath
 import Language.Mimsa.Types.Typechecker
 
 data ReplAction ann
@@ -25,3 +31,9 @@ data ReplAction ann
   | ListTests (Maybe Name)
   | Upgrade Name
   | Optimise Name
+
+data ReplConfig = ReplConfig
+  { rcRootPath :: RootPath,
+    rcShowLogs :: Bool
+  }
+  deriving stock (Generic, Eq, Ord, Show)

@@ -1,13 +1,12 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Language.Mimsa.Project.Persistence
+module Server.Persistence
   ( loadProject,
     loadProjectFromHash,
     saveProject,
     saveProjectInStore,
-    getCurrentBindings,
-    getCurrentTypeBindings,
     recursiveLoadBoundExpressions,
   )
 where
@@ -16,13 +15,14 @@ where
 
 import Control.Exception
 import Control.Monad.Except
+import Control.Monad.Logger
+import Control.Monad.Reader
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
@@ -30,6 +30,7 @@ import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Server.ServerConfig
 import System.Directory
 
 storePath :: String
@@ -38,10 +39,14 @@ storePath = "./"
 envPath :: String
 envPath = storePath <> "environment.json"
 
-getProjectFolder :: MimsaM e FilePath
-getProjectFolder = getStoreFolder "projects"
+getProjectFolder ::
+  (MonadIO m, MonadReader ServerConfig m) =>
+  m FilePath
+getProjectFolder = do
+  rootPath <- asks scRootPath
+  getStoreFolder rootPath "projects"
 
-getProjectPath :: ProjectHash -> MimsaM e FilePath
+getProjectPath :: (MonadIO m, MonadReader ServerConfig m) => ProjectHash -> m FilePath
 getProjectPath hash' = do
   folder <- getProjectFolder
   pure (folder <> getProjectFilename hash')
@@ -51,13 +56,16 @@ getProjectFilename hash' = show hash' <> ".json"
 
 -- load environment.json and any hashed exprs mentioned in it
 -- should probably consider loading the exprs lazily as required in future
-loadProject :: (Monoid ann) => MimsaM StoreError (Project ann)
+loadProject ::
+  (MonadIO m, MonadError StoreError m, Monoid ann, MonadReader ServerConfig m, MonadLogger m) =>
+  m (Project ann)
 loadProject = do
   proj <- loadProject'
   pure $ proj $> mempty
 
 loadProject' ::
-  MimsaM StoreError (Project ())
+  (MonadIO m, MonadError StoreError m, MonadReader ServerConfig m, MonadLogger m) =>
+  m (Project ())
 loadProject' = do
   project' <- liftIO $ try $ LBS.readFile envPath
   case project' of
@@ -68,19 +76,20 @@ loadProject' = do
         _ -> throwError $ CouldNotDecodeFile envPath
 
 loadProjectFromHash ::
-  (Monoid ann) =>
+  (Monoid ann, MonadIO m, MonadError StoreError m, MonadLogger m, MonadReader ServerConfig m) =>
   Store ann ->
   ProjectHash ->
-  MimsaM StoreError (Project ann)
+  m (Project ann)
 loadProjectFromHash store' hash = do
   let unitStore = store' $> ()
   proj <- loadProjectFromHash' unitStore hash
   pure $ proj $> mempty
 
 loadProjectFromHash' ::
+  (MonadIO m, MonadError StoreError m, MonadLogger m, MonadReader ServerConfig m) =>
   Store () ->
   ProjectHash ->
-  MimsaM StoreError (Project ())
+  m (Project ())
 loadProjectFromHash' store' hash = do
   path <- getProjectPath hash
   json <- liftIO $ try $ LBS.readFile path
@@ -93,9 +102,10 @@ loadProjectFromHash' store' hash = do
       _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
 
 fetchProjectItems ::
+  (MonadIO m, MonadError StoreError m, MonadReader ServerConfig m, MonadLogger m) =>
   Store () ->
   SaveProject ->
-  MimsaM StoreError (Project ())
+  m (Project ())
 fetchProjectItems existingStore sp = do
   store' <-
     recursiveLoadBoundExpressions
@@ -122,13 +132,15 @@ fetchProjectItems existingStore sp = do
 
 -- save project in local folder
 saveProject ::
+  (MonadIO m, MonadError StoreError m, MonadLogger m, MonadReader ServerConfig m) =>
   Project ann ->
-  MimsaM StoreError ProjectHash
+  m ProjectHash
 saveProject p = saveProject' (p $> ())
 
 saveProject' ::
+  (MonadIO m, MonadError StoreError m, MonadLogger m, MonadReader ServerConfig m) =>
   Project () ->
-  MimsaM StoreError ProjectHash
+  m ProjectHash
 saveProject' env = do
   let (jsonStr, _) = contentAndHash (projectToSaved env)
   success <- liftIO $ try $ LBS.writeFile envPath jsonStr
@@ -139,23 +151,33 @@ saveProject' env = do
 
 -- save project in store
 saveProjectInStore ::
+  ( MonadIO m,
+    MonadError StoreError m,
+    MonadLogger m,
+    MonadReader ServerConfig m
+  ) =>
   Project ann ->
-  MimsaM StoreError ProjectHash
+  m ProjectHash
 saveProjectInStore p = saveProjectInStore' (p $> ())
 
 saveProjectInStore' ::
+  ( MonadIO m,
+    MonadError StoreError m,
+    MonadLogger m,
+    MonadReader ServerConfig m
+  ) =>
   Project () ->
-  MimsaM StoreError ProjectHash
+  m ProjectHash
 saveProjectInStore' env = do
   let (jsonStr, hash) = contentAndHash (projectToSaved env)
   path <- getProjectPath hash
   exists <- liftIO $ doesFileExist path
   if exists
     then do
-      logDebug $ "Project file for " <> prettyPrint hash <> " already exists"
+      logDebugN $ "Project file for " <> prettyPrint hash <> " already exists"
       pure hash
     else do
-      logDebug $ "Saved project for " <> prettyPrint hash
+      logDebugN $ "Saved project for " <> prettyPrint hash
       success <- liftIO $ try $ LBS.writeFile path jsonStr
       case success of
         Left (_ :: IOError) ->
@@ -168,13 +190,15 @@ storeItems :: Store a -> Set ExprHash
 storeItems (Store s) = S.fromList (M.keys s)
 
 loadBoundExpressions ::
+  (MonadIO m, MonadError StoreError m, MonadReader ServerConfig m, MonadLogger m) =>
   Set ExprHash ->
-  MimsaM StoreError (Store ())
+  m (Store ())
 loadBoundExpressions hashes = do
+  rootPath <- asks scRootPath
   items' <-
     traverse
       ( \hash -> do
-          item <- findExpr hash
+          item <- findExpr rootPath hash
           pure (hash, item)
       )
       (S.toList hashes)
@@ -182,9 +206,10 @@ loadBoundExpressions hashes = do
     (Store (M.fromList items'))
 
 recursiveLoadBoundExpressions ::
+  (MonadIO m, MonadError StoreError m, MonadReader ServerConfig m, MonadLogger m) =>
   Store () ->
   Set ExprHash ->
-  MimsaM StoreError (Store ())
+  m (Store ())
 recursiveLoadBoundExpressions existingStore hashes = do
   newStore <-
     loadBoundExpressions
