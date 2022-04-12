@@ -5,9 +5,6 @@ module Language.Mimsa.Actions.Compile (compile) where
 -- work out what to compile for it
 -- compile it to Text
 -- compile stdLib to Text
--- create folders
--- save files
--- symlinking (?)
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
@@ -21,9 +18,10 @@ import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Act
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
-import Language.Mimsa.Backend.Backend
+import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -92,7 +90,7 @@ transpileModule be se = do
         StoreErr
         (resolveTypeDeps (prjStore project) (storeTypeBindings se))
   let monoType = getAnnotation (storeExpression se)
-  let path = Actions.SavePath (T.pack $ transpiledModuleOutputPath be)
+  let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
   let filename =
         Actions.SaveFilename $
           moduleFilename
@@ -113,7 +111,7 @@ transpileModule be se = do
 createIndex ::
   Backend -> ExprHash -> Actions.ActionM ()
 createIndex be exprHash = do
-  let path = Actions.SavePath (T.pack $ transpiledIndexOutputPath be)
+  let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
       outputContent = Actions.SaveContents (coerce $ outputIndexFile be exprHash)
       filename = Actions.SaveFilename (indexFilename be exprHash)
   Actions.appendWriteFile path filename outputContent
@@ -121,7 +119,7 @@ createIndex be exprHash = do
 -- The stdlib is a set of functions needed to stuff like pattern matching
 createStdlib :: Backend -> Actions.ActionM ()
 createStdlib be = do
-  let path = Actions.SavePath (T.pack $ transpiledStdlibOutputPath be)
+  let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
       filename = Actions.SaveFilename (stdlibFilename be <> fileExtension be)
       outputContent = Actions.SaveContents (outputStdlib be)
   Actions.appendWriteFile path filename outputContent

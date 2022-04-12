@@ -81,7 +81,7 @@ bindExpression mimsaEnv (BindExpressionRequest projectHash name' input) = runMim
         (M.elems $ prjTests project)
   let testData = makeTestData project tests
   case response of
-    Right (newProject, ed) -> do
+    Right (newProject, _, ed) -> do
       pd <- lift $ projectDataHandler mimsaEnv newProject
       returnMimsa $ BindExpressionResponse pd ed testData
     Left e -> throwMimsaError e

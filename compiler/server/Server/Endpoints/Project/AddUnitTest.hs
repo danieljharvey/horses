@@ -57,7 +57,7 @@ addUnitTestHandler mimsaEnv (AddUnitTestRequest hash testName testInput) = runMi
   response <-
     lift $ eitherFromActionM mimsaEnv hash action
   case response of
-    Right (newProject, unitTest) -> do
+    Right (newProject, _, unitTest) -> do
       pd <- lift $ projectDataHandler mimsaEnv newProject
       tests <-
         lift $

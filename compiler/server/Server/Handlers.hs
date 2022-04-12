@@ -37,8 +37,10 @@ import Data.OpenApi (ToSchema)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text.IO as T
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Actions.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Usages
@@ -68,25 +70,18 @@ fromActionM ::
   MimsaEnvironment ->
   ProjectHash ->
   Actions.ActionM a ->
-  Handler (Project Annotation, a)
+  Handler (Project Annotation, [ActionOutcome], a)
 fromActionM mimsaEnv projectHash action = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' projectHash
-  case Actions.run project action of
+  eitherResp <- eitherFromActionM mimsaEnv projectHash action
+  case eitherResp of
     Left e -> throwError (to400Error e)
-    Right (newProject, outcomes, a) -> do
-      traverse_ (saveExprHandler mimsaEnv) (Actions.storeExpressionsFromOutcomes outcomes)
-      -- TODO: return these as a list of Text to show up in a toast in app
-      -- traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
-      traverse_ (saveFileHandler mimsaEnv) (Actions.writeFilesFromOutcomes outcomes)
-
-      pure (newProject, a)
+    Right a -> pure a
 
 eitherFromActionM ::
   MimsaEnvironment ->
   ProjectHash ->
   Actions.ActionM a ->
-  Handler (Either (Error Annotation) (Project Annotation, a))
+  Handler (Either (Error Annotation) (Project Annotation, [ActionOutcome], a))
 eitherFromActionM mimsaEnv projectHash action = do
   store' <- readStoreHandler mimsaEnv
   project <- loadProjectHandler mimsaEnv store' projectHash
@@ -94,11 +89,10 @@ eitherFromActionM mimsaEnv projectHash action = do
     Left e -> pure (Left e)
     Right (newProject, outcomes, a) -> do
       traverse_ (saveExprHandler mimsaEnv) (Actions.storeExpressionsFromOutcomes outcomes)
-      -- TODO: return these as a list of Text to show up in a toast in app
-      -- traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
+      -- TODO: also return these as a list of Text to show up in a toast in app
+      traverse_ (liftIO . T.putStrLn) (Actions.messagesFromOutcomes outcomes)
       traverse_ (saveFileHandler mimsaEnv) (Actions.writeFilesFromOutcomes outcomes)
-
-      pure (Right (newProject, a))
+      pure (Right (newProject, outcomes, a))
 
 outputBindings :: Project a -> Map Name Text
 outputBindings project =

@@ -47,7 +47,6 @@ library
       Language.Mimsa.Actions.Typecheck
       Language.Mimsa.Actions.Types
       Language.Mimsa.Actions.Upgrade
-      Language.Mimsa.Backend.Backend
       Language.Mimsa.Backend.Javascript.Printer
       Language.Mimsa.Backend.Output
       Language.Mimsa.Backend.Runtimes
