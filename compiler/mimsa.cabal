@@ -337,7 +337,6 @@ executable mimsa-server
     , containers
     , cryptonite
     , directory
-    , envy
     , exceptions
     , file-embed
     , hashable
