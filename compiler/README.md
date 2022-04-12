@@ -10,13 +10,11 @@ cd mimsa
 stack install
 ```
 
-copying example project...
-
 ```bash
-git clone https://github.com/danieljharvey/mimsa-test
+mkdir mimsa-test
 cd mimsa-test
-# start repl
-mimsa 
+mimsa init
+mimsa repl
 ```
 
 you should then see:
