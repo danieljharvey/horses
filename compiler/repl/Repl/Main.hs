@@ -1,19 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
-module Repl.Repl
+module Repl.Main
   ( repl,
   )
 where
 
 import Control.Monad.Except
 import Control.Monad.Logger
-import Control.Monad.Reader
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
@@ -41,16 +39,8 @@ getProject =
     pure env
     `catchError` \e -> do
       logDebugN (prettyPrint e)
-      logErrorN "Failed to load project, initialising a fresh project"
-      initialiseProject
-
--- start a new project, using the stdlib bindings as a starting point
-initialiseProject :: ReplM (Error Annotation) (Project Annotation)
-initialiseProject = do
-  rootPath <- asks rcRootPath
-  saveAllInStore rootPath (prjStore stdlib)
-  _ <- mapError StoreErr (saveProject stdlib)
-  pure stdlib
+      replOutput @Text "Failed to load project, have you initialised a project in this folder?"
+      throwError e
 
 repl :: Bool -> IO ()
 repl showLogs' = do

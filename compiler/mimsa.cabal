@@ -241,6 +241,7 @@ library
 executable mimsa
   main-is: Main.hs
   other-modules:
+      Init.Main
       Repl.Actions
       Repl.Actions.Compile
       Repl.Actions.Evaluate
@@ -253,9 +254,9 @@ executable mimsa
       Repl.Actions.UnitTests
       Repl.Actions.Upgrade
       Repl.Helpers
+      Repl.Main
       Repl.Parser
       Repl.Persistence
-      Repl.Repl
       Repl.ReplM
       Repl.Types
       Paths_mimsa
