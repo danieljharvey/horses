@@ -5,6 +5,7 @@ import Control.Applicative
 import Data.Text (Text)
 import qualified Eval.Main as Eval
 import qualified Init.Main as Init
+import Language.Mimsa.Backend.Types
 import qualified Options.Applicative as Opt
 import qualified Repl.Main as Repl
 import qualified ReplNew.Main as ReplNew
@@ -22,6 +23,7 @@ data AppAction
   | Init
   | Check Text -- check if a file is `ok`
   | Eval Text -- evaluate an expression
+  | Compile Backend
 
 parseAppAction :: Opt.Parser AppAction
 parseAppAction =
@@ -55,6 +57,13 @@ parseAppAction =
           ( Opt.info
               (Eval <$> expressionParse)
               (Opt.progDesc "Evaluate an expression. Standard library modules are available for use in the expression.")
+          )
+        <> Opt.command
+          "compile"
+          ( Opt.info
+              ( pure (Compile Typescript)
+              )
+              (Opt.progDesc "Compile the entire project")
           )
     )
 
@@ -94,3 +103,4 @@ main = do
     ReplNew -> ReplNew.repl showLogs
     Check filePath -> Check.check showLogs filePath
     Eval expr -> Eval.eval showLogs expr
+    Compile _ -> error "oh no"

@@ -15,7 +15,7 @@ import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Backend.Runtimes
+import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST

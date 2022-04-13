@@ -1,7 +1,13 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Backend.Output (outputStoreExpression) where
+module Language.Mimsa.Backend.Output
+  ( outputStoreExpression,
+    outputIndexFile,
+    indexFilename,
+    projectIndexFilename,
+  )
+where
 
 import Control.Monad.Except
 import Data.Bifunctor
@@ -144,3 +150,32 @@ renderTypeSignature' mt =
 
 renderNewline' :: Backend -> Text
 renderNewline' _ = "\n"
+
+outputIndexFile :: Backend -> Map Name ExprHash -> Text
+outputIndexFile be exportMap =
+  let exportLine (name, exprHash) = case be of
+        ESModulesJS ->
+          "import { main as " <> prettyPrint name <> " } from './" <> moduleFilename be exprHash <> "';\n"
+        Typescript ->
+          "import { main as " <> prettyPrint name <> " } from './" <> moduleFilename be exprHash <> "';\n"
+   in T.intercalate "\n" (exportLine <$> M.toList exportMap)
+
+indexFilename :: Backend -> ExprHash -> Text
+indexFilename be hash' =
+  case be of
+    ESModulesJS ->
+      "index-"
+        <> prettyPrint hash'
+        <> ".mjs"
+    Typescript ->
+      "index-"
+        <> prettyPrint hash'
+        <> ".ts"
+
+projectIndexFilename :: Backend -> Text
+projectIndexFilename be =
+  case be of
+    ESModulesJS ->
+      "index.mjs"
+    Typescript ->
+      "index.ts"

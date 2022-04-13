@@ -3,6 +3,7 @@
 
 module Repl.Actions.Compile
   ( doOutputJS,
+    doCompileProject,
   )
 where
 
@@ -35,4 +36,13 @@ doOutputJS project input maybeBackend expr = do
         (Actions.typecheckExpression project input expr)
   (_, (_, _)) <-
     toReplM project (Actions.compile be (reStoreExpression resolvedExpr))
+  replOutput @Text "Compilation complete!"
+
+doCompileProject ::
+  Project Annotation ->
+  Backend ->
+  ReplM (Error Annotation) ()
+doCompileProject project be = do
+  _ <-
+    toReplM project (Actions.compileProject be)
   replOutput @Text "Compilation complete!"
