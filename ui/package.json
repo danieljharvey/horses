@@ -20,7 +20,7 @@
     "@types/react-router": "5.1.18",
     "@types/react-router-dom": "5.3.3",
     "axios": "0.26.1",
-    "fp-ts": "2.11.9",
+    "fp-ts": "2.11.10",
     "graphviz-react": "1.2.0",
     "lodash.throttle": "4.1.1",
     "monaco-editor": "0.33.0",
