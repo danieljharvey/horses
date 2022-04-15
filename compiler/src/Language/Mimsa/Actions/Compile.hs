@@ -26,6 +26,7 @@ import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -139,6 +140,7 @@ createProjectIndex be exportMap = do
       filename = Actions.SaveFilename (projectIndexFilename be)
   Actions.appendWriteFile path filename outputContent
 
+--  compile every expression bound at the top level
 compileProject :: Backend -> Actions.ActionM (Map Name ExprHash)
 compileProject be = do
   project <- Actions.getProject
@@ -150,7 +152,14 @@ compileProject be = do
       (getBindings . getCurrentBindings . prjBindings $ project)
 
   -- compile them all
-  exportMap <- traverse (fmap fst . compile be) storeExprs
+  exportMap <-
+    traverse
+      ( \se -> do
+          Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
+          (exprHash, _) <- compile be se
+          pure exprHash
+      )
+      storeExprs
 
   -- also output a top level exports file
   createProjectIndex be exportMap

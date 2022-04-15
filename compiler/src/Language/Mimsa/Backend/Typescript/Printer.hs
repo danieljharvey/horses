@@ -8,6 +8,7 @@ module Language.Mimsa.Backend.Typescript.Printer
     printType,
     printExpr,
     printStatement,
+    printTSName,
   )
 where
 
@@ -21,7 +22,7 @@ import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 
 protected :: Set Text
-protected = S.fromList ["const", "var", "default"]
+protected = S.fromList ["const", "var", "delete","default"]
 
 printTSName :: TSName -> Text
 printTSName (TSName t) = if S.member t protected then t <> "_" else t

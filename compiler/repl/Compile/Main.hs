@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Compile.Main
   ( compile,
@@ -7,26 +8,20 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Logger
-import Control.Monad.Reader
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Parser
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Store.RootPath
-import Repl.Actions (doReplAction)
-import Repl.Parser (replParser)
+import Repl.Actions.Compile
 import Repl.Persistence
 import Repl.ReplM
 import Repl.Types
-import System.Console.Haskeline
 import System.Directory
-import Prelude hiding (init)
 
 createReplConfig :: (MonadIO m) => Bool -> m ReplConfig
 createReplConfig showLogs' = do
@@ -45,10 +40,11 @@ getProject =
       replOutput @Text "Failed to load project, have you initialised a project in this folder?"
       throwError e
 
-init :: Bool -> IO ()
-init showLogs' = do
+compile :: Backend -> Bool -> IO ()
+compile be showLogs' = do
   cfg <- createReplConfig showLogs'
-  _ <- runReplM cfg do
-    project <- getProject
-    doCompileProject be project
+  let action = do
+        project <- getProject
+        doCompileProject project be
+  _ <- runReplM cfg action
   pure ()

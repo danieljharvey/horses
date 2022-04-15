@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -23,7 +24,9 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
 import qualified Language.Mimsa.Backend.Typescript.Monad as TS
+import Language.Mimsa.Backend.Typescript.Printer
 import qualified Language.Mimsa.Backend.Typescript.Printer as TS
+import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -47,6 +50,7 @@ typeBindingsByType store (TypeBindings tb) =
 stripModules :: (Ord b) => Map (a, b) c -> Map b c
 stripModules = M.fromList . fmap (first snd) . M.toList
 
+-- | Need to also include any types mentioned but perhaps not explicitly used
 outputStoreExpression ::
   Backend ->
   ResolvedTypeDeps ->
@@ -119,13 +123,13 @@ makeTypeDepMap (ResolvedTypeDeps rtd) =
 renderImport' :: Backend -> ((a, Name), ExprHash) -> Text
 renderImport' Typescript ((_, name), hash') =
   "import { main as "
-    <> coerce name
+    <> printTSName (coerce name)
     <> " } from \"./"
     <> moduleFilename Typescript hash'
     <> "\";\n"
 renderImport' ESModulesJS ((_, name), hash') =
   "import { main as "
-    <> coerce name
+    <> printTSName (coerce name)
     <> " } from \"./"
     <> moduleFilename ESModulesJS hash'
     <> "\";\n"
@@ -155,9 +159,9 @@ outputIndexFile :: Backend -> Map Name ExprHash -> Text
 outputIndexFile be exportMap =
   let exportLine (name, exprHash) = case be of
         ESModulesJS ->
-          "import { main as " <> prettyPrint name <> " } from './" <> moduleFilename be exprHash <> "';\n"
+          "export { main as " <> printTSName (coerce name) <> " } from './" <> moduleFilename be exprHash <> "';"
         Typescript ->
-          "import { main as " <> prettyPrint name <> " } from './" <> moduleFilename be exprHash <> "';\n"
+          "export { main as " <> printTSName (coerce name) <> " } from './" <> moduleFilename be exprHash <> "';"
    in T.intercalate "\n" (exportLine <$> M.toList exportMap)
 
 indexFilename :: Backend -> ExprHash -> Text

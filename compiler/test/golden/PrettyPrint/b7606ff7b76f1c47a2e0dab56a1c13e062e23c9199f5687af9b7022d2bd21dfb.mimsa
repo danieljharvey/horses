@@ -1,0 +1,19 @@
+let lexeme p =
+  parser.left p parser.space0;
+
+let bracketL =
+  lexeme (parser.char "[");
+
+let bracketR =
+  lexeme (parser.char "]");
+
+let comma =
+  lexeme (parser.char ",");
+
+let inner =
+  lexeme (parser.char "d");
+
+let bigP =
+  parser.right bracketL (parser.left (parser.sepBy comma inner) bracketR);
+
+parser.run bigP "[d,d,d,d]"

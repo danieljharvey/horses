@@ -1,0 +1,7 @@
+let lexeme p =
+  parser.left p parser.space0;
+
+let bracketL =
+  lexeme (parser.char "[");
+
+parser.run bracketL "[          "

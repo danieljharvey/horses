@@ -1,6 +1,7 @@
 module Main where
 
 import qualified Check.Main as Check
+import qualified Compile.Main as Compile
 import Control.Applicative
 import Data.Text (Text)
 import qualified Eval.Main as Eval
@@ -23,7 +24,7 @@ data AppAction
   | Init
   | Check Text -- check if a file is `ok`
   | Eval Text -- evaluate an expression
-  | Compile Backend
+  | Compile Backend -- compile all of a project
 
 parseAppAction :: Opt.Parser AppAction
 parseAppAction =
@@ -61,8 +62,7 @@ parseAppAction =
         <> Opt.command
           "compile"
           ( Opt.info
-              ( pure (Compile Typescript)
-              )
+              (Compile <$> parseBackend)
               (Opt.progDesc "Compile the entire project")
           )
     )
@@ -78,6 +78,23 @@ expressionParse =
   Opt.argument
     Opt.str
     (Opt.metavar "<expression>")
+
+parseBackend :: Opt.Parser Backend
+parseBackend =
+  Opt.hsubparser
+    ( Opt.command
+        "typescript"
+        ( Opt.info
+            (pure Typescript)
+            (Opt.progDesc "Compile as Typescript")
+        )
+        <> Opt.command
+          "javascript"
+          ( Opt.info
+              (pure ESModulesJS)
+              (Opt.progDesc "Compile as ES Javascript")
+          )
+    )
 
 optionsParse :: Opt.Parser (AppAction, Bool)
 optionsParse = (,) <$> parseAppAction <*> parseShowLogs
@@ -103,4 +120,4 @@ main = do
     ReplNew -> ReplNew.repl showLogs
     Check filePath -> Check.check showLogs filePath
     Eval expr -> Eval.eval showLogs expr
-    Compile _ -> error "oh no"
+    Compile be -> Compile.compile be showLogs
