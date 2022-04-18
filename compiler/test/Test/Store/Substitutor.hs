@@ -11,7 +11,6 @@ import qualified Data.Map as M
 import Language.Mimsa.Store.Substitutor (substitute)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.SubstitutedExpression
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -92,7 +91,6 @@ spec = do
         let ans = testSubstitute mempty trueStoreExpr
         seSwaps ans `shouldBe` mempty
         seExpr ans `shouldBe` bool True
-        seScope ans `shouldBe` mempty
     it "Lambda vars are turned into numbers" $
       do
         let expr =
@@ -119,7 +117,7 @@ spec = do
                   (numbered 1, "x")
                 ]
             ans = testSubstitute mempty (StoreExpression expr mempty mempty)
-        ans `shouldBe` SubstitutedExpression expectSwaps expected mempty mempty mempty
+        ans `shouldBe` SubstitutedExpression expectSwaps expected mempty
     it "Pattern match entries work" $ do
       let expr =
             MyLambda
@@ -147,7 +145,7 @@ spec = do
               )
           expectSwaps = M.singleton (numbered 0) "a"
           ans = testSubstitute mempty (StoreExpression expr mempty mempty)
-      ans `shouldBe` SubstitutedExpression expectSwaps expected mempty mempty mempty
+      ans `shouldBe` SubstitutedExpression expectSwaps expected mempty
     describe "One level of dep" $
       it "Vars introduced by deps are given numbers" $
         do
@@ -161,8 +159,6 @@ spec = do
             `shouldBe` M.singleton (NumberedVar 0) (Name "exciting")
           seExpr ans
             `shouldBe` MyVar mempty (numbered 0)
-          seScope ans
-            `shouldBe` Scope (M.singleton (NumberedVar 0) (bool True))
     describe "Only creates one new var if a function is used twice" $
       it "let id = \\x -> x in { first: id(1), second: id(2) }" $
         do
@@ -176,7 +172,6 @@ spec = do
               bindings' = Bindings $ M.singleton "id" hash
               storeExpr = StoreExpression expr bindings' mempty
               store' = Store (M.singleton hash idExpr)
-              expectedId = MyLambda mempty (Identifier mempty $ numbered 0) (MyVar mempty (numbered 0))
           let ans = testSubstitute store' storeExpr
           seSwaps ans
             `shouldBe` M.fromList
@@ -189,12 +184,6 @@ spec = do
               ( M.fromList
                   [ ("first", MyApp mempty (MyVar mempty (numbered 1)) (int 1)),
                     ("second", MyApp mempty (MyVar mempty (numbered 1)) (int 2))
-                  ]
-              )
-          seScope ans
-            `shouldBe` Scope
-              ( M.fromList
-                  [ (NumberedVar 1, expectedId)
                   ]
               )
 
@@ -213,13 +202,6 @@ spec = do
               (NumberedVar 1, Name "true")
             ]
         seExpr ans `shouldBe` MyVar mempty (numbered 1)
-        seScope ans
-          `shouldBe` Scope
-            ( M.fromList
-                [ (NumberedVar 0, bool True),
-                  (NumberedVar 1, MyVar mempty (numbered 0))
-                ]
-            )
   describe "Extracts types" $
     it "Good job" $
       do
@@ -234,5 +216,4 @@ spec = do
             ans = testSubstitute store' storeExpr
         seSwaps ans `shouldBe` mempty
         seExpr ans `shouldBe` MyLiteral mempty (MyBool True)
-        seScope ans `shouldBe` mempty
         length (seTypeDeps ans) `shouldBe` 1

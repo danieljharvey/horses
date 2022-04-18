@@ -69,7 +69,7 @@ optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
     let action = do
           (resolvedExpr, _) <-
             Actions.optimiseByName bindingName
-          let (ResolvedExpression _ se _ _ swaps typedExpr input) = resolvedExpr
+          let (ResolvedExpression _ se _ swaps typedExpr input) = resolvedExpr
           typedNameExpr <- Actions.useSwaps swaps typedExpr
           graphviz <- Actions.graphExpression se
           let warnings = getWarnings resolvedExpr

@@ -12,7 +12,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Scope
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.SubstitutedExpression
 import Language.Mimsa.Types.Swaps
@@ -25,9 +24,11 @@ import Language.Mimsa.Types.Swaps
 --
 -- we'll also store what our substitutions were for errors sake
 
+type Scope ann = Map Variable (Expr Variable ann)
+
 data SubsState ann = SubsState
   { subsSwaps :: Swaps,
-    subsScope :: Scope ann,
+    subsScope :: Map Variable (Expr Variable ann),
     subsCounter :: Int,
     subsDeps :: Map Name (StoreExpression ann),
     subsTypeDeps :: Set (StoreExpression ann)
@@ -42,15 +43,13 @@ substitute ::
   SubstitutedExpression ann
 substitute store' storeExpr =
   let startingState = SubsState mempty mempty 0 mempty mempty
-      ((_, expr'), SubsState swaps' scope' _ seDeps' seTypeDeps') =
+      ((_, expr'), SubsState swaps' _ _ _ seTypeDeps') =
         runState
           (doSubstitutions store' storeExpr)
           startingState
    in SubstitutedExpression
         swaps'
         expr'
-        scope'
-        seDeps'
         seTypeDeps'
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
@@ -114,13 +113,13 @@ addDepToScope store' (name, storeExpr') = do
     Just existingKey -> pure existingKey
     Nothing -> getNextVarName name
   let changed = addChange name var chg
-  pure (Scope (M.singleton var expr'), changed)
+  pure (M.singleton var expr', changed)
 
 -- if the expression we're already saving is in the scope
 -- that's the name we want to use
 scopeExists :: (Eq ann) => Expr Variable ann -> App ann (Maybe Variable)
 scopeExists var = do
-  (Scope scope') <- gets subsScope
+  scope' <- gets subsScope
   pure (mapKeyFind (var ==) scope')
 
 addScope :: Scope ann -> App ann ()

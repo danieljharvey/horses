@@ -120,7 +120,6 @@ library
       Language.Mimsa.Transform.FlattenLets
       Language.Mimsa.Transform.FloatDown
       Language.Mimsa.Transform.FloatUp
-      Language.Mimsa.Transform.InlineDeps
       Language.Mimsa.Transform.Inliner
       Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.SimplifyPatterns
@@ -182,7 +181,6 @@ library
       Language.Mimsa.Types.Project.Versioned
       Language.Mimsa.Types.Project.VersionedMap
       Language.Mimsa.Types.ResolvedExpression
-      Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
       Language.Mimsa.Types.Store.Bindings
       Language.Mimsa.Types.Store.ExprHash

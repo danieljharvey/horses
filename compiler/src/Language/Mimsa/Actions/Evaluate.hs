@@ -57,7 +57,7 @@ evaluate input expr = do
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
   -- resolve optimised expression
-  (ResolvedExpression mt newStoreExpr _expr' _scope' swaps typedExpr input') <-
+  (ResolvedExpression mt newStoreExpr _expr' swaps typedExpr input') <-
     Actions.checkStoreExpression
       (prettyPrint optimisedStoreExpr)
       project
