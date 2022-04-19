@@ -20,7 +20,7 @@ import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store

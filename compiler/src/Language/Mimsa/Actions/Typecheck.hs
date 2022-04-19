@@ -13,7 +13,6 @@ import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
@@ -24,6 +23,7 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
+import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
@@ -40,7 +40,7 @@ import Language.Mimsa.Types.Typechecker
 
 getType ::
   Map Name MonoType ->
-  Set (StoreExpression Annotation) ->
+  Map TyCon DataType ->
   Swaps ->
   Text ->
   Expr Variable Annotation ->
@@ -50,14 +50,14 @@ getType ::
       Expr Variable MonoType,
       MonoType
     )
-getType typeMap dataTypes swaps input expr = do
+getType depTypeMap dataTypes swaps input expr = do
   liftEither $
     first
       (TypeErr input)
       ( typecheck
-          typeMap
+          depTypeMap
           swaps
-          (createEnv typeMap dataTypes)
+          (createEnv depTypeMap dataTypes)
           expr
       )
 
@@ -80,11 +80,12 @@ substituteAndTypecheck ::
   Actions.ActionM (ResolvedExpression Annotation)
 substituteAndTypecheck resolvedDeps (storeExpr, input) = do
   project <- Actions.getProject
-  let (SubstitutedExpression swaps newExpr typeDeps) =
+  let (SubstitutedExpression swaps newExpr) =
         substitute (prjStore project) storeExpr
-  typeMap <- makeTypeMap resolvedDeps (storeBindings storeExpr)
+  depTypeMap <- makeTypeMap resolvedDeps (storeBindings storeExpr)
+  dataTypes <- liftEither $ first StoreErr (resolveDataTypes (prjStore project) storeExpr)
   (_, _, typedExpr, exprType) <-
-    getType typeMap typeDeps swaps input newExpr
+    getType depTypeMap dataTypes swaps input newExpr
   pure
     ( ResolvedExpression
         exprType

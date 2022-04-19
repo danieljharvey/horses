@@ -12,7 +12,7 @@ import Data.Bifunctor
 import Data.Either
 import Data.Functor
 import qualified Data.Map as M
-import qualified Data.Set as S
+import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Typechecker.DataTypes
@@ -28,10 +28,9 @@ import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
 
-getStoreExprs :: Project Annotation -> S.Set (StoreExpression Annotation)
+getStoreExprs :: Project Annotation -> [StoreExpression Annotation]
 getStoreExprs =
-  S.fromList
-    . M.elems
+  M.elems
     . getStore
     . prjStore
 
@@ -42,14 +41,14 @@ itTypeChecks mt expr = do
           . typecheck
             mempty
             mempty
-            (createEnv mempty (getStoreExprs testStdlib))
+            (createEnv mempty (createTypeMap $ getStoreExprs testStdlib))
           $ first NamedVar expr
   generatedMt <- getTypeFromAnn <$> elabbed
   unifies mt generatedMt
 
 itGenerates :: MonoType -> Expectation
 itGenerates mt = do
-  samples <- liftIO $ generateFromMonoType @() (getStoreExprs testStdlib) mt
+  samples <- liftIO $ generateFromMonoType @() (createTypeMap $ getStoreExprs testStdlib) mt
   let success = traverse (itTypeChecks mt) (fmap ($> mempty) samples)
   success `shouldSatisfy` isRight
 

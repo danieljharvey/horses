@@ -10,16 +10,13 @@ import Data.Coerce
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Store.ExtractTypes
-import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.NullUnit
-import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Test.QuickCheck
 
@@ -138,18 +135,13 @@ fromPrimitive MTString =
   -- we come to Interpret these in tests
   MyString . StringType . T.pack <$> listOf chooseAny
 
-generateTypes ::
-  Set (StoreExpression Annotation) ->
-  Map TyCon DataType
-generateTypes storeExprs = getDataTypes $ createEnv mempty storeExprs
-
 generateFromMonoType ::
   (Monoid ann) =>
-  Set (StoreExpression Annotation) ->
+  Map TyCon DataType ->
   MonoType ->
   IO [Expr Name ann]
-generateFromMonoType storeExprs mt =
-  let generateState = GenerateState (generateTypes storeExprs) 1
+generateFromMonoType dataTypes mt =
+  let generateState = GenerateState dataTypes 1
    in do
         let generator = fromMonoType generateState (flattenRow mt)
         sample' (resize 1000 generator)

@@ -103,6 +103,8 @@ library
       Language.Mimsa.Store.ExtractTypes
       Language.Mimsa.Store.ExtractVars
       Language.Mimsa.Store.Hashing
+      Language.Mimsa.Store.Helpers
+      Language.Mimsa.Store.ResolveDataTypes
       Language.Mimsa.Store.ResolvedDeps
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage

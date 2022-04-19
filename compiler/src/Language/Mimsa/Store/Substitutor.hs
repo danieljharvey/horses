@@ -5,11 +5,8 @@ module Language.Mimsa.Store.Substitutor (substitute, getExprPairs) where
 
 import Control.Monad (join)
 import Control.Monad.Trans.State.Lazy
-import Data.Foldable
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Set (Set)
-import qualified Data.Set as S
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
@@ -29,9 +26,7 @@ type Scope ann = Map Variable (Expr Variable ann)
 data SubsState ann = SubsState
   { subsSwaps :: Swaps,
     subsScope :: Map Variable (Expr Variable ann),
-    subsCounter :: Int,
-    subsDeps :: Map Name (StoreExpression ann),
-    subsTypeDeps :: Set (StoreExpression ann)
+    subsCounter :: Int
   }
 
 type App ann = State (SubsState ann)
@@ -42,15 +37,14 @@ substitute ::
   StoreExpression ann ->
   SubstitutedExpression ann
 substitute store' storeExpr =
-  let startingState = SubsState mempty mempty 0 mempty mempty
-      ((_, expr'), SubsState swaps' _ _ _ seTypeDeps') =
+  let startingState = SubsState mempty mempty 0
+      ((_, expr'), SubsState swaps' _ _) =
         runState
           (doSubstitutions store' storeExpr)
           startingState
    in SubstitutedExpression
         swaps'
         expr'
-        seTypeDeps'
 
 -- get the list of deps for this expression, turn from hashes to StoreExprs
 doSubstitutions ::
@@ -58,45 +52,14 @@ doSubstitutions ::
   Store ann ->
   StoreExpression ann ->
   App ann (Changed, Expr Variable ann)
-doSubstitutions store' (StoreExpression expr bindings' tBindings) = do
+doSubstitutions store' (StoreExpression expr bindings' _tBindings) = do
   newScopes <- traverse (addDepToScope store') (getExprPairs store' bindings')
   addScope $ mconcat (fst <$> newScopes)
   let changed = mconcat (snd <$> newScopes)
   expr' <- mapVar changed expr
-  typeStoreExpressions <- resolveTypesRecursive store' tBindings
-  traverse_ addTypeDependency typeStoreExpressions
   pure (changed, expr')
 
 ------------ type stuff
-
--- why doesn't this exist already
-lookupStoreItem :: Store ann -> ExprHash -> Maybe (StoreExpression ann)
-lookupStoreItem (Store s') hash' = M.lookup hash' s'
-
--- | recursively fetch types mentioned by type expressions
-resolveTypesRecursive ::
-  (Ord ann) =>
-  Store ann ->
-  TypeBindings ->
-  App ann [StoreExpression ann]
-resolveTypesRecursive store' typeBindings = do
-  let storeExprs' = resolveTypes store' typeBindings
-  let newTypeBindings =
-        mconcat $ S.toList (S.map storeTypeBindings storeExprs')
-  nextGen <-
-    if S.null storeExprs'
-      then pure mempty
-      else resolveTypesRecursive store' newTypeBindings
-  pure $ S.toList storeExprs' <> nextGen
-
--- find all types needed by our expression in the store
-resolveTypes :: (Ord ann) => Store ann -> TypeBindings -> Set (StoreExpression ann)
-resolveTypes store' (TypeBindings tBindings) =
-  let typeLookup (_, hash) = case lookupStoreItem store' hash of
-        Just sExpr -> S.singleton sExpr
-        _ -> mempty -- TODO: are we swallowing the error here and should this all operate in ExceptT?
-      manySets = fmap typeLookup (M.toList tBindings)
-   in mconcat manySets
 
 --------------
 
@@ -106,7 +69,6 @@ addDepToScope ::
   (Name, StoreExpression ann) ->
   App ann (Scope ann, Changed)
 addDepToScope store' (name, storeExpr') = do
-  addDependency name storeExpr'
   (chg, expr') <- doSubstitutions store' storeExpr'
   maybeKey <- scopeExists expr'
   var <- case maybeKey of
@@ -129,14 +91,6 @@ addScope scope' =
 addSwap :: Name -> Variable -> App ann ()
 addSwap old new =
   modify (\s -> s {subsSwaps = subsSwaps s <> M.singleton new old})
-
-addDependency :: Name -> StoreExpression ann -> App ann ()
-addDependency name se =
-  modify (\s -> s {subsDeps = subsDeps s <> M.singleton name se})
-
-addTypeDependency :: (Ord ann) => StoreExpression ann -> App ann ()
-addTypeDependency se =
-  modify (\s -> s {subsTypeDeps = subsTypeDeps s <> S.singleton se})
 
 mapKeyFind :: (a -> Bool) -> Map k a -> Maybe k
 mapKeyFind pred' map' = case M.toList (M.filter pred' map') of
