@@ -137,6 +137,7 @@ library
       Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.KindChecker
       Language.Mimsa.Typechecker.NormaliseTypes
+      Language.Mimsa.Typechecker.NumberVars
       Language.Mimsa.Typechecker.OutputTypes
       Language.Mimsa.Typechecker.ScopeTypeVar
       Language.Mimsa.Typechecker.Solve
@@ -419,6 +420,7 @@ test-suite mimsa-test
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.KindChecker
+      Test.Typechecker.NumberVars
       Test.Typechecker.OutputTypes
       Test.Typechecker.ScopeTypeVar
       Test.Typechecker.Substitutions

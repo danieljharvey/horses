@@ -2,22 +2,19 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Store.Substitutor
+module Test.Typechecker.NumberVars
   ( spec,
   )
 where
 
-import qualified Data.Map as M
-import Language.Mimsa.Store.Substitutor (substitute)
+import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.SubstitutedExpression
-import Language.Mimsa.Types.Typechecker.MonoType
-import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
 
+{-
 trueStoreExpr :: Monoid ann => StoreExpression ann
 trueStoreExpr =
   StoreExpression (bool True) mempty mempty
@@ -76,21 +73,14 @@ storeWithBothIn =
           (exprHash 5, maybeExpr)
         ]
     )
+-}
 
-testSubstitute ::
-  Store Annotation ->
-  StoreExpression Annotation ->
-  SubstitutedExpression Annotation
-testSubstitute = substitute
+testAddNumbers :: StoreExpression () -> Expr Name ((), Maybe Unique)
+testAddNumbers = addNumbers
 
 spec :: Spec
 spec = do
-  describe "Substitutor" $ do
-    it "No deps, no problem" $
-      do
-        let ans = testSubstitute mempty trueStoreExpr
-        seSwaps ans `shouldBe` mempty
-        seExpr ans `shouldBe` bool True
+  fdescribe "NumberVars" $ do
     it "Lambda vars are turned into numbers" $
       do
         let expr =
@@ -104,20 +94,21 @@ spec = do
                 )
             expected =
               MyLambda
-                mempty
-                (Identifier mempty $ numbered 0)
+                (mempty, Just 0)
+                (Identifier (mempty, Nothing) "x")
                 ( MyPair
-                    mempty
-                    (MyVar mempty (numbered 0))
-                    (MyLambda mempty (Identifier mempty $ numbered 1) (MyVar mempty (numbered 1)))
+                    (mempty, Nothing)
+                    (MyVar (mempty, Just 0) "x")
+                    ( MyLambda
+                        (mempty, Just 1)
+                        ( Identifier (mempty, Nothing) "x"
+                        )
+                        (MyVar (mempty, Just 1) "x")
+                    )
                 )
-            expectSwaps =
-              M.fromList
-                [ (numbered 0, "x"),
-                  (numbered 1, "x")
-                ]
-            ans = testSubstitute mempty (StoreExpression expr mempty mempty)
-        ans `shouldBe` SubstitutedExpression expectSwaps expected
+            ans = testAddNumbers (StoreExpression expr mempty mempty)
+        ans `shouldBe` expected
+
     it "Pattern match entries work" $ do
       let expr =
             MyLambda
@@ -132,20 +123,49 @@ spec = do
               )
           expected =
             MyLambda
+              (mempty, Just 0)
+              (Identifier (mempty, Nothing) "a")
+              ( MyPatternMatch
+                  (mempty, Nothing)
+                  (MyLiteral (mempty, Nothing) (MyInt 1))
+                  [ (PLit (mempty, Nothing) (MyInt 1), MyVar (mempty, Just 0) "a"),
+                    (PWildcard (mempty, Nothing), MyVar (mempty, Just 0) "a")
+                  ]
+              )
+
+          ans = testAddNumbers (StoreExpression expr mempty mempty)
+      ans `shouldBe` expected
+
+    it "Scoping variables in pattern matches works" $ do
+      let expr =
+            MyLambda
               mempty
-              (Identifier mempty $ numbered 0)
+              (Identifier mempty "a")
               ( MyPatternMatch
                   mempty
                   (int 1)
-                  [ (PLit mempty (MyInt 1), MyVar mempty (numbered 0)),
-                    ( PWildcard mempty,
-                      MyVar mempty (numbered 0)
-                    )
+                  [ (PWildcard mempty, MyVar mempty "a"),
+                    (PVar mempty "a", MyVar mempty "a"),
+                    (PWildcard mempty, MyVar mempty "a")
                   ]
               )
-          expectSwaps = M.singleton (numbered 0) "a"
-          ans = testSubstitute mempty (StoreExpression expr mempty mempty)
-      ans `shouldBe` SubstitutedExpression expectSwaps expected
+          expected =
+            MyLambda
+              (mempty, Just 0)
+              (Identifier (mempty, Nothing) "a")
+              ( MyPatternMatch
+                  (mempty, Nothing)
+                  (MyLiteral (mempty, Nothing) (MyInt 1))
+                  [ (PWildcard (mempty, Nothing), MyVar (mempty, Just 0) "a"),
+                    (PVar (mempty, Just 1) "a", MyVar (mempty, Just 1) "a"), -- this has a new var
+                    (PWildcard (mempty, Nothing), MyVar (mempty, Just 0) "a") -- but this uses the parent one
+                  ]
+              )
+
+          ans = testAddNumbers (StoreExpression expr mempty mempty)
+      ans `shouldBe` expected
+
+{-
     describe "One level of dep" $
       it "Vars introduced by deps are given numbers" $
         do
@@ -202,3 +222,5 @@ spec = do
               (NumberedVar 1, Name "true")
             ]
         seExpr ans `shouldBe` MyVar mempty (numbered 1)
+
+-}

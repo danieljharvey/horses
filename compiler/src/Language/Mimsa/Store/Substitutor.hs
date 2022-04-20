@@ -59,8 +59,6 @@ doSubstitutions store' (StoreExpression expr bindings' _tBindings) = do
   expr' <- mapVar changed expr
   pure (changed, expr')
 
------------- type stuff
-
 --------------
 
 addDepToScope ::

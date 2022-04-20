@@ -47,6 +47,7 @@ import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.KindChecker as KindChecker
+import qualified Test.Typechecker.NumberVars as NumberVars
 import qualified Test.Typechecker.OutputTypes as OutputTypes
 import qualified Test.Typechecker.ScopeTypeVar as ScopeTypeVar
 import qualified Test.Typechecker.Substitutions as Substitutions
@@ -108,3 +109,4 @@ main =
     Build.spec
     TypecheckAction.spec
     SimplifyPatterns.spec
+    NumberVars.spec
