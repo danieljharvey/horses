@@ -165,6 +165,31 @@ spec = do
           ans = testAddNumbers (StoreExpression expr mempty mempty)
       ans `shouldBe` expected
 
+    it "Scoping variables in let patterns works" $ do
+      let expr =
+            MyLambda
+              mempty
+              (Identifier mempty "a")
+              ( MyLetPattern
+                  mempty
+                  (PVar mempty "a")
+                  (int 1)
+                  (MyVar mempty "a")
+              )
+          expected =
+            MyLambda
+              (mempty, Just 0)
+              (Identifier (mempty, Nothing) "a")
+              ( MyLetPattern
+                  (mempty, Nothing)
+                  (PVar (mempty, Just 1) "a")
+                  (MyLiteral (mempty, Nothing) (MyInt 1))
+                  (MyVar (mempty, Just 1) "a")
+              )
+
+          ans = testAddNumbers (StoreExpression expr mempty mempty)
+      ans `shouldBe` expected
+
 {-
     describe "One level of dep" $
       it "Vars introduced by deps are given numbers" $

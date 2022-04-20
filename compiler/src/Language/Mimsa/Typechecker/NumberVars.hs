@@ -10,7 +10,6 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Logging
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
@@ -72,9 +71,9 @@ freshVarsFromPattern pat =
       (\var -> (,) var <$> nextNum)
       (S.toList (varsFromPattern pat))
 
-withLambda :: (Ord var, Show var) => Map var Unique -> App var ann a -> App var ann a
+withLambda :: (Ord var) => Map var Unique -> App var ann a -> App var ann a
 withLambda newVars =
-  local (\env -> debugLog "new env" (env {seScope = newVars <> seScope env}))
+  local (\env -> env {seScope = newVars <> seScope env})
 
 nextNum :: App var ann Unique
 nextNum = do
@@ -85,7 +84,7 @@ nextNum = do
           { ssCounter = unique + 1
           }
     )
-  pure (debugLog "new unique" unique)
+  pure unique
 
 lookupVar :: (Ord var) => var -> App var ann (Maybe Unique)
 lookupVar var = asks (M.lookup var . seScope)
@@ -115,7 +114,7 @@ markImports (MyLet ann ident expr body) = do
     <*> withLambda (M.singleton var unique) (markImports body)
 markImports (MyLetPattern ann pat expr body) = do
   vars <- freshVarsFromPattern pat
-  MyLetPattern (ann, Nothing) <$> markPatternImports pat
+  MyLetPattern (ann, Nothing) <$> withLambda vars (markPatternImports pat)
     <*> markImports expr
     <*> withLambda vars (markImports body)
 markImports (MyLiteral ann lit) =
