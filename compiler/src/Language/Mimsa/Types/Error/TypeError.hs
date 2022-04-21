@@ -29,7 +29,7 @@ import Language.Mimsa.Types.Typechecker.MonoType
 import Prettyprinter
 import Text.Megaparsec
 
-data TypeErrorF ann
+data TypeErrorF var ann
   = UnknownTypeError
   | FailsOccursCheck Swaps TypeIdentifier (Type ann)
   | UnificationError (Type ann) (Type ann)
@@ -54,22 +54,23 @@ data TypeErrorF ann
   | PatternMatchErr (PatternMatchErrorF ann)
   | CouldNotFindSwapForVariable Variable Swaps
   | SwapsChangingError
+  | NameNotFoundInScope (Set var) var
   deriving stock (Eq, Ord, Show, Foldable)
 
-type TypeError = TypeErrorF Annotation
+type TypeError = TypeErrorF Variable Annotation
 
 ------
 
-instance Semigroup (TypeErrorF ann) where
+instance Semigroup (TypeErrorF var ann) where
   a <> _ = a
 
-instance Monoid (TypeErrorF ann) where
+instance Monoid (TypeErrorF var ann) where
   mempty = UnknownTypeError
 
-instance (Printer ann, Show ann) => Printer (TypeErrorF ann) where
+instance (Printer ann, Show ann, Printer var) => Printer (TypeErrorF var ann) where
   prettyDoc = vsep . renderTypeError
 
-instance ShowErrorComponent (TypeErrorF Annotation) where
+instance ShowErrorComponent (TypeErrorF Variable Annotation) where
   showErrorComponent = T.unpack . prettyPrint
   errorComponentLen typeErr = let (_, len) = getErrorPos typeErr in len
 
@@ -114,7 +115,7 @@ withSwap swaps (NumberedVar i) =
 
 -----
 
-renderTypeError :: (Printer ann) => TypeErrorF ann -> [Doc a]
+renderTypeError :: (Printer ann, Printer var) => TypeErrorF var ann -> [Doc a]
 renderTypeError UnknownTypeError =
   ["Unknown type error"]
 renderTypeError (FailsOccursCheck swaps var mt) =
@@ -212,6 +213,10 @@ renderTypeError (CouldNotFindSwapForVariable var swaps) =
   ["Could not find swap for variable" <+> prettyDoc var <+> "in" <+> itemList]
   where
     itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> M.keys swaps)) <+> "]"
+renderTypeError (NameNotFoundInScope available name) =
+  ["Could not find var " <+> prettyDoc name <+> "in" <+> itemList]
+  where
+    itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> S.toList available)) <+> "]"
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
