@@ -12,63 +12,50 @@ module Language.Mimsa.Typechecker.Exhaustiveness
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Foldable
 import Data.Functor
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Environment
-import Language.Mimsa.Typechecker.UseSwaps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker.Environment
 
 validatePatterns ::
-  (MonadError TypeError m, MonadReader Swaps m) =>
+  ( MonadError (TypeErrorF var Annotation) m,
+    Ord var,
+    Printer var,
+    Show var
+  ) =>
   Environment ->
   Annotation ->
-  [Pattern Variable Annotation] ->
+  [Pattern var Annotation] ->
   m ()
 validatePatterns env ann patterns = do
-  swaps <- ask
   traverse_ noDuplicateVariables patterns
   missing <- isExhaustive env patterns
   _ <- case missing of
     [] -> pure ()
-    _ -> case traverse (usePatternSwaps swaps) missing of
-      Right missing' ->
-        throwError (PatternMatchErr (MissingPatterns ann missing'))
-      Left _ -> throwError SwapsChangingError
+    _ ->
+      throwError (PatternMatchErr (MissingPatterns ann missing))
   redundant <- redundantCases env patterns
   case redundant of
     [] -> pure ()
-    _ -> case traverse (usePatternSwaps swaps) redundant of
-      Right redundant' ->
-        throwError (PatternMatchErr (RedundantPatterns ann redundant'))
-      Left _ -> throwError SwapsChangingError
-
-withSwap :: Swaps -> Variable -> Name
-withSwap _ (NamedVar n) = n
-withSwap swaps (NumberedVar i) =
-  fromMaybe
-    "unknownvar"
-    (M.lookup (NumberedVar i) swaps)
+    _ ->
+      throwError (PatternMatchErr (RedundantPatterns ann redundant))
 
 noDuplicateVariables ::
-  (MonadError TypeError m, MonadReader Swaps m) =>
-  Pattern Variable Annotation ->
+  ( MonadError (TypeErrorF var Annotation) m,
+    Ord var
+  ) =>
+  Pattern var Annotation ->
   m ()
 noDuplicateVariables pat = do
-  swaps <- ask
   let dupes =
         M.keysSet . M.filter (> 1)
-          . M.mapKeysWith (+) (withSwap swaps)
           . getVariables
           $ pat
    in if S.null dupes
@@ -83,8 +70,9 @@ noDuplicateVariables pat = do
             )
 
 getVariables ::
-  Pattern Variable Annotation ->
-  Map Variable Int
+  (Ord var) =>
+  Pattern var Annotation ->
+  Map var Int
 getVariables (PWildcard _) = mempty
 getVariables (PLit _ _) = mempty
 getVariables (PVar _ a) = M.singleton a 1
@@ -100,17 +88,21 @@ getVariables (PConstructor _ _ args) =
 getVariables (PString _ a as) =
   M.unionWith (+) (getStringPartVariables a) (getStringPartVariables as)
 
-getSpreadVariables :: Spread Variable Annotation -> Map Variable Int
+getSpreadVariables :: (Ord var) => Spread var Annotation -> Map var Int
 getSpreadVariables (SpreadValue _ a) = M.singleton a 1
 getSpreadVariables _ = mempty
 
-getStringPartVariables :: StringPart Variable Annotation -> Map Variable Int
+getStringPartVariables :: (Ord var) => StringPart var Annotation -> Map var Int
 getStringPartVariables (StrWildcard _) = mempty
 getStringPartVariables (StrValue _ a) = M.singleton a 1
 
 -- | given a list of patterns, return a list of missing patterns
 isExhaustive ::
-  (Eq var, MonadError TypeError m, Printer var, Show var) =>
+  ( Eq var,
+    MonadError (TypeErrorF var Annotation) m,
+    Printer var,
+    Show var
+  ) =>
   Environment ->
   [Pattern var Annotation] ->
   m [Pattern var Annotation]
@@ -121,7 +113,10 @@ isExhaustive env patterns = do
   pure $ filterMissing patterns generated
 
 generate ::
-  (MonadError TypeError m, Printer var, Show var) =>
+  ( MonadError (TypeErrorF var Annotation) m,
+    Printer var,
+    Show var
+  ) =>
   Environment ->
   Pattern var Annotation ->
   m [Pattern var Annotation]
@@ -129,7 +124,10 @@ generate env pat = (<>) [pat] <$> generateRequired env pat
 
 -- | Given a pattern, generate others required for it
 generateRequired ::
-  (MonadError TypeError m, Printer var, Show var) =>
+  ( MonadError (TypeErrorF var Annotation) m,
+    Printer var,
+    Show var
+  ) =>
   Environment ->
   Pattern var Annotation ->
   m [Pattern var Annotation]
@@ -171,7 +169,7 @@ smallerListVersions aas =
    in get =<< aas
 
 requiredFromDataType ::
-  (MonadError TypeError m) =>
+  (MonadError (TypeErrorF var Annotation) m) =>
   DataType ->
   m [Pattern var Annotation]
 requiredFromDataType (DataType _ _ cons) =
@@ -255,7 +253,11 @@ isComplete (PPair _ a b) = isComplete a && isComplete b
 isComplete _ = False
 
 redundantCases ::
-  (MonadError TypeError m, Eq var, Printer var, Show var) =>
+  ( MonadError (TypeErrorF var Annotation) m,
+    Eq var,
+    Printer var,
+    Show var
+  ) =>
   Environment ->
   [Pattern var Annotation] ->
   m [Pattern var Annotation]

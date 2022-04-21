@@ -14,11 +14,11 @@ where
 
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
+import Data.Bifunctor
 import qualified Data.Map as M
 import Data.OpenApi hiding (get)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
-import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Identifiers
@@ -69,8 +69,8 @@ optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
     let action = do
           (resolvedExpr, _) <-
             Actions.optimiseByName bindingName
-          let (ResolvedExpression _ se _ swaps typedExpr input) = resolvedExpr
-          typedNameExpr <- Actions.useSwaps swaps typedExpr
+          let (ResolvedExpression _ se _ _swaps typedExpr input) = resolvedExpr
+          let typedNameExpr = first fst typedExpr
           graphviz <- Actions.graphExpression se
           let warnings = getWarnings resolvedExpr
           pure

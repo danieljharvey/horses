@@ -11,7 +11,7 @@ import Language.Mimsa.Types.Typechecker
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
-  (MonadError TypeError m) =>
+  (MonadError (TypeErrorF var Annotation) m) =>
   Environment ->
   Annotation ->
   TyCon ->

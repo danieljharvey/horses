@@ -135,7 +135,7 @@ data Expr var ann
         expPatterns :: [(Pattern var ann, Expr var ann)]
       }
   | -- | name
-    MyTypedHole {expAnn :: ann, expTypedHoleName :: Name}
+    MyTypedHole {expAnn :: ann, expTypedHoleName :: var}
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 

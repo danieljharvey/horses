@@ -18,7 +18,6 @@ import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Test.Codegen.Shared
 import Test.Hspec
-import Test.Utils.Helpers
 
 type PatternM = ReaderT Swaps (ExceptT TypeError Identity)
 
@@ -39,7 +38,7 @@ redundantCasesCheck ::
 redundantCasesCheck = runPatternM . redundantCases testEnv
 
 noDuplicatesCheck ::
-  Pattern Variable Annotation ->
+  Pattern Name Annotation ->
   Either TypeError ()
 noDuplicatesCheck = runPatternM . noDuplicateVariables
 
@@ -272,21 +271,21 @@ spec = do
     it "Is fine with lit" $ do
       noDuplicatesCheck (PLit mempty (MyBool True)) `shouldSatisfy` isRight
     it "Is fine with single var" $ do
-      noDuplicatesCheck (PVar mempty (named "a")) `shouldSatisfy` isRight
+      noDuplicatesCheck (PVar mempty ("a")) `shouldSatisfy` isRight
     it "Is fine with a pair of different vars" $ do
       noDuplicatesCheck
         ( PPair
             mempty
-            (PVar mempty (named "a"))
-            (PVar mempty (named "b"))
+            (PVar mempty ("a"))
+            (PVar mempty ("b"))
         )
         `shouldSatisfy` isRight
     it "Hates a pair of the same var" $ do
       noDuplicatesCheck
         ( PPair
             mempty
-            (PVar mempty (named "a"))
-            (PVar mempty (named "a"))
+            (PVar mempty ("a"))
+            (PVar mempty ("a"))
         )
         `shouldSatisfy` isLeft
     it "Is fine with a record of uniques" $ do
@@ -294,8 +293,8 @@ spec = do
         ( PRecord
             mempty
             ( M.fromList
-                [ ("dog", PVar mempty (named "a")),
-                  ("log", PVar mempty (named "b"))
+                [ ("dog", PVar mempty ("a")),
+                  ("log", PVar mempty ("b"))
                 ]
             )
         )
@@ -305,8 +304,8 @@ spec = do
         ( PRecord
             mempty
             ( M.fromList
-                [ ("dog", PVar mempty (named "a")),
-                  ("log", PVar mempty (named "a"))
+                [ ("dog", PVar mempty ("a")),
+                  ("log", PVar mempty ("a"))
                 ]
             )
         )
@@ -315,8 +314,8 @@ spec = do
       noDuplicatesCheck
         ( PArray
             mempty
-            [ PVar mempty (named "a"),
-              PVar mempty (named "b")
+            [ PVar mempty ("a"),
+              PVar mempty ("b")
             ]
             NoSpread
         )
@@ -325,8 +324,8 @@ spec = do
       noDuplicatesCheck
         ( PArray
             mempty
-            [ PVar mempty (named "a"),
-              PVar mempty (named "a")
+            [ PVar mempty ("a"),
+              PVar mempty ("a")
             ]
             NoSpread
         )
@@ -335,10 +334,10 @@ spec = do
       noDuplicatesCheck
         ( PArray
             mempty
-            [ PVar mempty (named "a"),
-              PVar mempty (named "b")
+            [ PVar mempty ("a"),
+              PVar mempty ("b")
             ]
-            (SpreadValue mempty (named "a"))
+            (SpreadValue mempty ("a"))
         )
         `shouldSatisfy` isLeft
     it "Is fine with a constructor with no dupes" $ do
@@ -346,8 +345,8 @@ spec = do
         ( PConstructor
             mempty
             "Dog"
-            [ PVar mempty (named "a"),
-              PVar mempty (named "b")
+            [ PVar mempty ("a"),
+              PVar mempty ("b")
             ]
         )
         `shouldSatisfy` isRight
@@ -356,13 +355,13 @@ spec = do
         ( PConstructor
             mempty
             "Dog"
-            [ PVar mempty (named "a"),
-              PVar mempty (named "b"),
+            [ PVar mempty ("a"),
+              PVar mempty ("b"),
               PConstructor
                 mempty
                 "Dog"
-                [ PVar mempty (named "c"),
-                  PVar mempty (named "a")
+                [ PVar mempty ("c"),
+                  PVar mempty ("a")
                 ]
             ]
         )

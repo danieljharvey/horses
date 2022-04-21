@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Typechecker.NumberVars (addNumbers, NumberedExpr, Unique) where
+module Language.Mimsa.Typechecker.NumberVars (addNumbers, NumberedExpr) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -14,6 +14,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker.Unique
 
 newtype SubsState var ann = SubsState
   { ssCounter :: Unique
@@ -32,9 +33,6 @@ type App var ann =
         (SubsEnv var ann)
         (State (SubsState var ann))
     )
-
-newtype Unique = Unique Int
-  deriving newtype (Eq, Ord, Show, Num)
 
 type NumberedExpr var ann = Expr (var, Unique) ann
 
@@ -110,14 +108,14 @@ lookupVar :: (Ord var) => var -> App var ann (Maybe Unique)
 lookupVar var = asks (M.lookup var . seScope)
 
 -- given a var, given it a fresh number unless we already have a number for it
-getVar :: (Ord var) => var -> App var ann (var, Unique)
-getVar var = do
+getVar :: (Ord var) => ann -> var -> App var ann (var, Unique)
+getVar ann var = do
   found <- lookupVar var
   case found of
     Just unique -> pure (var, unique)
     Nothing -> do
       scope <- asks (M.keysSet . seScope)
-      throwError (NameNotFoundInScope scope var)
+      throwError (NameNotFoundInScope ann scope var)
 
 -- step through Expr, replacing vars with numbered variables
 markImports ::
@@ -125,7 +123,7 @@ markImports ::
   Expr var ann ->
   App var ann (NumberedExpr var ann)
 markImports (MyVar ann var) =
-  MyVar ann <$> getVar var
+  MyVar ann <$> getVar ann var
 markImports (MyLet ann ident expr body) = do
   let var = varFromIdent ident
   unique <- nextNum
@@ -179,7 +177,10 @@ markImports (MyPatternMatch ann patExpr patterns) =
           )
    in MyPatternMatch ann <$> markImports patExpr
         <*> traverse markPatterns patterns
-markImports (MyTypedHole ann name) = pure (MyTypedHole ann name)
+markImports (MyTypedHole ann name) = do
+  -- always a unique number for these
+  unique <- nextNum
+  pure (MyTypedHole ann (name, unique))
 
 markPatternImports ::
   (Ord var, Show var, Show ann) =>
@@ -188,7 +189,7 @@ markPatternImports ::
 markPatternImports pat =
   case pat of
     (PVar ann from) ->
-      PVar ann <$> getVar from
+      PVar ann <$> getVar ann from
     (PWildcard ann) ->
       pure $ PWildcard ann
     (PLit ann l) -> pure $ PLit ann l
@@ -218,7 +219,7 @@ markSpreadNameImports ::
   Spread var ann ->
   App var ann (Spread (var, Unique) ann)
 markSpreadNameImports (SpreadValue ann from') =
-  SpreadValue ann <$> getVar from'
+  SpreadValue ann <$> getVar ann from'
 markSpreadNameImports (SpreadWildcard ann) = pure (SpreadWildcard ann)
 markSpreadNameImports NoSpread = pure NoSpread
 
@@ -227,7 +228,7 @@ markStringPartImports ::
   StringPart var ann ->
   App var ann (StringPart (var, Unique) ann)
 markStringPartImports (StrValue ann from') =
-  StrValue ann <$> getVar from'
+  StrValue ann <$> getVar ann from'
 markStringPartImports (StrWildcard ann) = pure (StrWildcard ann)
 
 markIdentImports ::

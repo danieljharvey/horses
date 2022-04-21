@@ -5,17 +5,15 @@ module Test.Typechecker.OutputTypes
   )
 where
 
+import Data.Bifunctor
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.OutputTypes
-import qualified Language.Mimsa.Typechecker.UseSwaps as Swaps
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Project.SourceSpan
 import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Hspec
@@ -27,11 +25,6 @@ unsafeTypecheckExpr ::
 unsafeTypecheckExpr tx = case evaluateText testStdlib tx of
   Right a -> a
   Left e -> error (T.unpack (prettyPrint e))
-
-useSwaps' :: Swaps -> Expr Variable ann -> Expr Name ann
-useSwaps' swaps expr = case Swaps.useSwaps swaps expr of
-  Right a -> a
-  _ -> error "using swaps failed in OutputTypes test"
 
 spec :: Spec
 spec = do
@@ -71,6 +64,6 @@ spec = do
             unsafeTypecheckExpr
               "\\a -> match a with (Just b) -> b | _ -> 0"
 
-      let typedStoreExpr = useSwaps' (reSwaps expr) (reTypedExpression expr)
+      let typedStoreExpr = first fst (reTypedExpression expr)
       getExpressionSourceItems (reInput expr) typedStoreExpr
         `shouldSatisfy` \a -> length a > 6

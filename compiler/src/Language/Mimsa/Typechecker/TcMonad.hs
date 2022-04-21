@@ -26,6 +26,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Unique
 
 data TypecheckState = TypecheckState
   { tcsNum :: Int,
@@ -126,6 +127,5 @@ getTypedHoles subs'@(Substitutions subs) = do
         Nothing -> (applySubst subs' (MTVar ann (TVUnificationVar i)), applySubst subs' localTypeMap)
   pure $ fmap getMonoType holes
 
-variableToTypeIdentifier :: Variable -> TypeIdentifier
-variableToTypeIdentifier (NamedVar n) = TVName Nothing (coerce n)
-variableToTypeIdentifier (NumberedVar i) = TVUnificationVar i
+variableToTypeIdentifier :: (Name, Unique) -> TypeIdentifier
+variableToTypeIdentifier (_, Unique i) = TVUnificationVar i

@@ -14,6 +14,7 @@ where
 
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
+import Data.Bifunctor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi hiding (get)
@@ -21,7 +22,6 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
-import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Upgrade as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Transform.Warnings
@@ -83,8 +83,8 @@ upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
     let action = do
           (resolvedExpr, _, depUpdates) <-
             Actions.upgradeByName bindingName
-          let (ResolvedExpression _ se _ swaps typedExpr input) = resolvedExpr
-          typedNameExpr <- Actions.useSwaps swaps typedExpr
+          let (ResolvedExpression _ se _ _swaps typedExpr input) = resolvedExpr
+          let typedNameExpr = first fst typedExpr
           gv <- Actions.graphExpression se
           let warnings = getWarnings resolvedExpr
           canOptimise <- Actions.canOptimise se

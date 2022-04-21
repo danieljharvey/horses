@@ -13,6 +13,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker.Unique
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -136,7 +137,7 @@ spec = do
       let expr =
             MyVar mempty "what"
           ans = testAddNumbers (StoreExpression expr mempty mempty)
-      ans `shouldBe` Left (NameNotFoundInScope mempty "what")
+      ans `shouldBe` Left (NameNotFoundInScope mempty mempty "what")
 
     it "Outside deps are assigned a number" $ do
       let expr =

@@ -13,13 +13,14 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store.StoreExpression
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Unique
 
 data ResolvedExpression ann = ResolvedExpression
   { reMonoType :: MonoType,
     reStoreExpression :: StoreExpression ann,
-    reVarExpression :: Expr Variable ann,
+    reVarExpression :: Expr (Name, Unique) ann,
     reSwaps :: Swaps,
-    reTypedExpression :: Expr Variable MonoType,
+    reTypedExpression :: Expr (Name, Unique) MonoType,
     reInput :: Text
   }
   deriving stock (Eq, Ord, Show, Functor, Generic)

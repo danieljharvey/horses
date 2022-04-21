@@ -38,7 +38,6 @@ library
       Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression
       Language.Mimsa.Actions.Helpers.LookupExpression
       Language.Mimsa.Actions.Helpers.Parse
-      Language.Mimsa.Actions.Helpers.Swaps
       Language.Mimsa.Actions.Helpers.UpdateTests
       Language.Mimsa.Actions.Interpret
       Language.Mimsa.Actions.Monad
@@ -145,7 +144,6 @@ library
       Language.Mimsa.Typechecker.Typecheck
       Language.Mimsa.Typechecker.TypedHoles
       Language.Mimsa.Typechecker.Unify
-      Language.Mimsa.Typechecker.UseSwaps
       Language.Mimsa.Types.AST
       Language.Mimsa.Types.AST.Annotation
       Language.Mimsa.Types.AST.DataType
@@ -203,6 +201,7 @@ library
       Language.Mimsa.Types.Typechecker.Scheme
       Language.Mimsa.Types.Typechecker.Substitutions
       Language.Mimsa.Types.Typechecker.TypeConstructor
+      Language.Mimsa.Types.Typechecker.Unique
       Language.Mimsa.Types.Typechecker.UniVar
       Language.Mimsa.Utils
   other-modules:
@@ -427,7 +426,6 @@ test-suite mimsa-test
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
-      Test.Typechecker.UseSwaps
       Test.Utils.Compilation
       Test.Utils.Helpers
       Test.Utils.Serialisation

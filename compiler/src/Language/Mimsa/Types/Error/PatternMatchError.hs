@@ -1,7 +1,9 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Language.Mimsa.Types.Error.PatternMatchError
   ( PatternMatchErrorF (..),
@@ -18,7 +20,7 @@ import Language.Mimsa.Types.Identifiers
 import Prettyprinter
 import Text.Megaparsec
 
-data PatternMatchErrorF ann
+data PatternMatchErrorF var ann
   = -- | No patterns provided
     EmptyPatternMatch ann
   | -- | "Just 1 2" or "Nothing 3", for instance
@@ -26,21 +28,27 @@ data PatternMatchErrorF ann
     ConstructorArgumentLengthMismatch ann TyCon Int Int
   | -- | Cases not covered in pattern matches
     -- | ann, [missing patterns]
-    MissingPatterns ann [Pattern Name ann]
+    MissingPatterns ann [Pattern var ann]
   | -- | Unnecessary cases covered by previous matches
-    RedundantPatterns ann [Pattern Name ann]
+    RedundantPatterns ann [Pattern var ann]
   | -- | Multiple instances of the same variable
-    DuplicateVariableUse ann (Set Name)
+    DuplicateVariableUse ann (Set var)
   deriving stock (Eq, Ord, Show, Foldable)
 
-type PatternMatchError = PatternMatchErrorF Annotation
+type PatternMatchError = PatternMatchErrorF Name Annotation
 
 ------
 
-instance Semigroup (PatternMatchErrorF ann) where
+instance Semigroup (PatternMatchErrorF var ann) where
   a <> _ = a
 
-instance (Printer ann) => Printer (PatternMatchErrorF ann) where
+instance
+  ( Printer ann,
+    Printer var,
+    Printer (Pattern var ann)
+  ) =>
+  Printer (PatternMatchErrorF var ann)
+  where
   prettyDoc = vsep . renderPatternMatchError
 
 instance ShowErrorComponent PatternMatchError where
@@ -65,7 +73,8 @@ getAllAnnotations = foldMap pure
 -----
 
 renderPatternMatchError ::
-  PatternMatchErrorF ann ->
+  (Printer var, Printer (Pattern var ann)) =>
+  PatternMatchErrorF var ann ->
   [Doc a]
 renderPatternMatchError (EmptyPatternMatch _) =
   ["Pattern match needs at least one pattern to match"]

@@ -18,7 +18,6 @@ import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
-import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -26,6 +25,7 @@ import Language.Mimsa.Store
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Typechecker
 import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -35,6 +35,7 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.SubstitutedExpression
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Unique
 
 ----------
 
@@ -43,11 +44,11 @@ getType ::
   Map TyCon DataType ->
   Swaps ->
   Text ->
-  Expr Variable Annotation ->
+  Expr (Name, Unique) Annotation ->
   Actions.ActionM
     ( Substitutions,
       [Constraint],
-      Expr Variable MonoType,
+      Expr (Name, Unique) MonoType,
       MonoType
     )
 getType depTypeMap dataTypes swaps input expr = do
@@ -80,17 +81,18 @@ substituteAndTypecheck ::
   Actions.ActionM (ResolvedExpression Annotation)
 substituteAndTypecheck resolvedDeps (storeExpr, input) = do
   project <- Actions.getProject
-  let (SubstitutedExpression swaps newExpr) =
+  let (SubstitutedExpression swaps _newExpr) =
         substitute (prjStore project) storeExpr
+  numberedExpr <- liftEither $ first (TypeErr input) (addNumbers storeExpr)
   depTypeMap <- makeTypeMap resolvedDeps (storeBindings storeExpr)
   dataTypes <- liftEither $ first StoreErr (resolveDataTypes (prjStore project) storeExpr)
   (_, _, typedExpr, exprType) <-
-    getType depTypeMap dataTypes swaps input newExpr
+    getType depTypeMap dataTypes swaps input numberedExpr
   pure
     ( ResolvedExpression
         exprType
         storeExpr
-        newExpr
+        numberedExpr
         swaps
         typedExpr
         input
@@ -206,10 +208,7 @@ annotateStoreExpressionWithTypes storeExpr = do
   resolvedExpr <-
     typecheckExpression typecheckProject (prettyPrint exprName) exprName
 
-  let typedExpr = reTypedExpression resolvedExpr
-
-  -- swap Variables back for Names
-  typedStoreExpr <-
-    Actions.useSwaps (reSwaps resolvedExpr) typedExpr
+  -- swap (Name, Unique) back for Names
+  let typedStoreExpr = first fst (reTypedExpression resolvedExpr)
 
   pure (storeExpr {storeExpression = typedStoreExpr})

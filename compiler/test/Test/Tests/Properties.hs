@@ -8,8 +8,7 @@ module Test.Tests.Properties
 where
 
 import Control.Monad.IO.Class
-import Data.Bifunctor
-import Data.Either
+import Data.Either (isLeft, isRight)
 import Data.Functor
 import qualified Data.Map as M
 import Language.Mimsa.Store.ResolveDataTypes
@@ -17,6 +16,7 @@ import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -36,13 +36,14 @@ getStoreExprs =
 
 itTypeChecks :: MonoType -> Expr Name Annotation -> Either TypeError ()
 itTypeChecks mt expr = do
+  let numberedExpr = fromRight (addNumbers (StoreExpression expr mempty mempty))
   let elabbed =
         fmap (\(_, _, a, _) -> a)
           . typecheck
             mempty
             mempty
             (createEnv mempty (createTypeMap $ getStoreExprs testStdlib))
-          $ first NamedVar expr
+          $ numberedExpr
   generatedMt <- getTypeFromAnn <$> elabbed
   unifies mt generatedMt
 

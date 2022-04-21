@@ -1,7 +1,9 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Language.Mimsa.Types.Error.TypeError
   ( TypeErrorF (..),
@@ -51,13 +53,13 @@ data TypeErrorF var ann
   | CouldNotFindInfixOperator ann InfixOp (Set InfixOp)
   | CannotUseBuiltInTypeAsConstructor ann TyCon
   | InternalConstructorUsedOutsidePatternMatch ann TyCon
-  | PatternMatchErr (PatternMatchErrorF ann)
+  | PatternMatchErr (PatternMatchErrorF var ann)
   | CouldNotFindSwapForVariable Variable Swaps
   | SwapsChangingError
-  | NameNotFoundInScope (Set var) var
+  | NameNotFoundInScope ann (Set var) var
   deriving stock (Eq, Ord, Show, Foldable)
 
-type TypeError = TypeErrorF Variable Annotation
+type TypeError = TypeErrorF Name Annotation
 
 ------
 
@@ -67,10 +69,13 @@ instance Semigroup (TypeErrorF var ann) where
 instance Monoid (TypeErrorF var ann) where
   mempty = UnknownTypeError
 
-instance (Printer ann, Show ann, Printer var) => Printer (TypeErrorF var ann) where
+instance
+  (Printer ann, Show ann, Printer var, Printer (Pattern var ann)) =>
+  Printer (TypeErrorF var ann)
+  where
   prettyDoc = vsep . renderTypeError
 
-instance ShowErrorComponent (TypeErrorF Variable Annotation) where
+instance ShowErrorComponent (TypeErrorF Name Annotation) where
   showErrorComponent = T.unpack . prettyPrint
   errorComponentLen typeErr = let (_, len) = getErrorPos typeErr in len
 
@@ -115,7 +120,7 @@ withSwap swaps (NumberedVar i) =
 
 -----
 
-renderTypeError :: (Printer ann, Printer var) => TypeErrorF var ann -> [Doc a]
+renderTypeError :: (Printer ann, Printer var, Printer (Pattern var ann)) => TypeErrorF var ann -> [Doc a]
 renderTypeError UnknownTypeError =
   ["Unknown type error"]
 renderTypeError (FailsOccursCheck swaps var mt) =
@@ -213,7 +218,7 @@ renderTypeError (CouldNotFindSwapForVariable var swaps) =
   ["Could not find swap for variable" <+> prettyDoc var <+> "in" <+> itemList]
   where
     itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> M.keys swaps)) <+> "]"
-renderTypeError (NameNotFoundInScope available name) =
+renderTypeError (NameNotFoundInScope _ available name) =
   ["Could not find var " <+> prettyDoc name <+> "in" <+> itemList]
   where
     itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> S.toList available)) <+> "]"

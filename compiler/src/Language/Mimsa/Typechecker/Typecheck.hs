@@ -20,6 +20,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Unique
 
 type ElabM =
   ExceptT
@@ -50,12 +51,12 @@ typecheck ::
   Map Name MonoType ->
   Swaps ->
   Environment ->
-  Expr Variable Annotation ->
+  Expr (Name, Unique) Annotation ->
   Either
     TypeError
     ( Substitutions,
       [Constraint],
-      Expr Variable MonoType,
+      Expr (Name, Unique) MonoType,
       MonoType
     )
 typecheck typeMap swaps env expr = do

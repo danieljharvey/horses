@@ -54,7 +54,6 @@ import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
-import qualified Test.Typechecker.UseSwaps as UseSwaps
 
 main :: IO ()
 main =
@@ -76,7 +75,6 @@ main =
     UpdateDeps.spec
     BindType.spec
     Codegen.spec
-    UseSwaps.spec
     AddUnitTest.spec
     BindExpression.spec
     Compile.spec

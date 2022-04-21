@@ -14,6 +14,7 @@ module Server.Endpoints.Expression
 where
 
 import qualified Data.Aeson as JSON
+import Data.Bifunctor
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.OpenApi hiding (Server)
@@ -22,7 +23,6 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
-import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
@@ -83,10 +83,7 @@ getExpression mimsaEnv exprHash' = do
       action
 
   -- turn Expr Variable MonoType into Expr Name MonoType
-  typedExpr <-
-    useSwapsHandler
-      (reSwaps resolvedExpr)
-      (reTypedExpression resolvedExpr)
+  let typedExpr = first fst (reTypedExpression resolvedExpr)
   let warnings = getWarnings resolvedExpr
 
   pure $
@@ -127,10 +124,7 @@ getExpressions mimsaEnv exprHashes = do
         let input = prettyPrint (storeExpression storeExpr)
         exprName <- Actions.parseExpr input
         resolvedExpr <- Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
-        typedExpr <-
-          Actions.useSwaps
-            (reSwaps resolvedExpr)
-            (reTypedExpression resolvedExpr)
+        let typedExpr = first fst (reTypedExpression resolvedExpr)
         pure (gv, canOptimise, resolvedExpr, typedExpr)
 
   (_, _, results) <-

@@ -9,13 +9,13 @@ module Language.Mimsa.Actions.Optimise
 where
 
 import Control.Monad.Except
+import Data.Bifunctor
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
-import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
@@ -92,7 +92,7 @@ optimise se = do
 
   pure (resolvedNew, numTestsUpdated)
 
-inlineExpression :: (Ord ann) => Expr Variable ann -> Expr Variable ann
+inlineExpression :: (Ord ann, Ord var) => Expr var ann -> Expr var ann
 inlineExpression =
   repeatUntilEq
     ( floatUp . flattenLets . simplifyPatterns . removeUnused
@@ -118,7 +118,7 @@ optimiseStoreExpression storeExpr =
     let optimised = inlineExpression (reVarExpression resolvedOld)
 
     -- make into Expr Name
-    floatedUpExprName <- Actions.useSwaps (reSwaps resolvedOld) optimised
+    let floatedUpExprName = first fst optimised
 
     -- float lets down into patterns
     let floatedSe =
@@ -134,10 +134,7 @@ optimiseStoreExpression storeExpr =
         floatedSe
 
     -- remove unused stuff
-    newExprName <-
-      Actions.useSwaps
-        (reSwaps resolvedFloated)
-        (inlineExpression (reVarExpression resolvedFloated))
+    let newExprName = first fst (inlineExpression (reVarExpression resolvedFloated))
 
     let newStoreExpr =
           trimDeps

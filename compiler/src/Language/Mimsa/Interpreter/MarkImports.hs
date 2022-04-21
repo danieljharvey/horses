@@ -83,7 +83,7 @@ markImports (MyPatternMatch ann patExpr patterns) =
         (,) <$> markPatternImports pat
           <*> withLambdaBinding (varsFromPattern pat) (markImports pExpr)
    in MyPatternMatch ann <$> markImports patExpr <*> traverse markPatterns patterns
-markImports (MyTypedHole ann name) = pure (MyTypedHole ann name)
+markImports (MyTypedHole ann name) = pure (MyTypedHole ann (name, Nothing))
 
 varFromIdent :: Identifier var ann -> var
 varFromIdent ident = case ident of

@@ -199,7 +199,8 @@ mapVar chg (MyPatternMatch ann expr' patterns) = do
         pure (newPat, newExpr)
   patterns' <- traverse mapVarPair patterns
   MyPatternMatch ann <$> mapVar chg expr' <*> pure patterns'
-mapVar _ (MyTypedHole ann a) = pure $ MyTypedHole ann a
+mapVar chg (MyTypedHole ann a) =
+  pure $ MyTypedHole ann (nameToVar chg a)
 mapVar chg (MyDefineInfix ann infixOp bindExpr expr) =
   MyDefineInfix
     ann

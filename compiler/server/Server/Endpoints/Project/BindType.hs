@@ -11,13 +11,13 @@ module Server.Endpoints.Project.BindType
 where
 
 import qualified Data.Aeson as JSON
+import Data.Bifunctor
 import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
-import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
 import Language.Mimsa.Transform.Warnings
@@ -69,10 +69,7 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
         ed <- case codegenInfo of
           Just resolvedExpr -> do
             let se = reStoreExpression resolvedExpr
-            typedNameExpr <-
-              Actions.useSwaps
-                (reSwaps resolvedExpr)
-                (reTypedExpression resolvedExpr)
+            let typedNameExpr = first fst (reTypedExpression resolvedExpr)
             gv <- Actions.graphExpression se
             let warnings = getWarnings resolvedExpr
             let ed' = makeExpressionData se typedNameExpr gv input warnings False
