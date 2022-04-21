@@ -24,7 +24,7 @@ startElaborate expr expected = do
   let numberedExpr = fromRight (addNumbers (StoreExpression expr mempty mempty))
   let result =
         fmap (\(_, _, a, _) -> first fst a)
-          . typecheck mempty mempty mempty
+          . typecheck mempty mempty
           $ numberedExpr
   (fmap . fmap) recoverAnn result `shouldBe` Right expr
   result `shouldBe` Right expected

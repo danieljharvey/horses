@@ -10,7 +10,6 @@ module Language.Mimsa.Typechecker.Elaborate
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State (State)
 import Control.Monad.Writer
 import Data.Bifunctor
@@ -29,7 +28,6 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Unique
 
@@ -38,7 +36,7 @@ type ElabM =
     TypeError
     ( WriterT
         [Constraint]
-        (ReaderT Swaps (State TypecheckState))
+        (State TypecheckState)
     )
 
 type TcExpr = Expr (Name, Unique) Annotation

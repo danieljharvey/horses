@@ -7,7 +7,6 @@ module Language.Mimsa.Typechecker.Typecheck
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State (State, runState)
 import Control.Monad.Writer
 import Data.Map (Map)
@@ -18,7 +17,6 @@ import Language.Mimsa.Typechecker.TypedHoles
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Unique
 
@@ -27,15 +25,14 @@ type ElabM =
     TypeError
     ( WriterT
         [Constraint]
-        (ReaderT Swaps (State TypecheckState))
+        (State TypecheckState)
     )
 
 runElabM ::
-  Swaps ->
   TypecheckState ->
   ElabM a ->
   Either TypeError ([Constraint], TypecheckState, a)
-runElabM swaps tcState value =
+runElabM tcState value =
   case either' of
     ((Right a, constraints), newTcState) ->
       Right (constraints, newTcState, a)
@@ -43,13 +40,12 @@ runElabM swaps tcState value =
   where
     either' =
       runState
-        (runReaderT (runWriterT (runExceptT value)) swaps)
+        (runWriterT (runExceptT value))
         tcState
 
 -- run inference, and substitute everything possible
 typecheck ::
   Map Name MonoType ->
-  Swaps ->
   Environment ->
   Expr (Name, Unique) Annotation ->
   Either
@@ -59,12 +55,12 @@ typecheck ::
       Expr (Name, Unique) MonoType,
       MonoType
     )
-typecheck typeMap swaps env expr = do
+typecheck typeMap env expr = do
   let tcAction = do
         (elabExpr, constraints) <- listen (elab env expr)
         subs <- solve constraints
         typedHolesCheck typeMap subs
         pure (subs, constraints, elabExpr)
-  (_, _, (subs, constraints, tyExpr)) <- runElabM swaps (defaultTcState env) tcAction
+  (_, _, (subs, constraints, tyExpr)) <- runElabM (defaultTcState env) tcAction
   let typedExpr = applySubst subs tyExpr
   pure (subs, constraints, typedExpr, getTypeFromAnn typedExpr)

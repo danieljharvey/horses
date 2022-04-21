@@ -36,7 +36,7 @@ startInference expr expected = do
   let numberedExpr = fromRight $ addNumbers (StoreExpression expr mempty mempty)
   let elabbed =
         fmap (\(_, _, a, _) -> first fst a)
-          . typecheck mempty mempty mempty
+          . typecheck mempty mempty
           $ numberedExpr
   normaliseType . getTypeFromAnn <$> elabbed `shouldBe` expected
   case elabbed of
@@ -48,7 +48,7 @@ testInfer expr = do
   numberedExpr <- addNumbers (StoreExpression expr mempty mempty)
   let elabbed =
         fmap (\(_, _, a, _) -> a)
-          . typecheck mempty mempty mempty
+          . typecheck mempty mempty
           $ numberedExpr
   getTypeFromAnn <$> elabbed
 
@@ -230,7 +230,6 @@ spec = do
         startInference expr $
           Left
             ( FailsOccursCheck
-                mempty
                 (tvNum 1)
                 ( MTFunction
                     mempty

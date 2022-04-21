@@ -191,8 +191,6 @@ library
       Language.Mimsa.Types.Store.Store
       Language.Mimsa.Types.Store.StoreExpression
       Language.Mimsa.Types.Store.TypeBindings
-      Language.Mimsa.Types.SubstitutedExpression
-      Language.Mimsa.Types.Swaps
       Language.Mimsa.Types.Typechecker
       Language.Mimsa.Types.Typechecker.Constraint
       Language.Mimsa.Types.Typechecker.Environment
@@ -402,7 +400,6 @@ test-suite mimsa-test
       Test.Project.Usages
       Test.Serialisation
       Test.Store.Resolver
-      Test.Store.Substitutor
       Test.Store.UpdateDeps
       Test.Tests.Properties
       Test.Tests.PropertyTest

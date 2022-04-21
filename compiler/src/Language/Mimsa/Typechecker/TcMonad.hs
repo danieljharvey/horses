@@ -13,8 +13,6 @@ module Language.Mimsa.Typechecker.TcMonad
   )
 where
 
-import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State (MonadState, gets, modify)
 import Data.Coerce
 import Data.Functor
@@ -22,9 +20,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Unique
 
@@ -65,9 +61,7 @@ getUnknown ann = typeFromUniVar ann <$> getNextUniVar
 
 -- | Get a new unknown for a typed hole and return it's monotype
 addTypedHole ::
-  ( MonadState TypecheckState m,
-    MonadError TypeError m,
-    MonadReader Swaps m
+  ( MonadState TypecheckState m
   ) =>
   Environment ->
   Annotation ->
@@ -86,30 +80,17 @@ addTypedHole env ann name = do
     )
   pure $ MTVar ann (TVUnificationVar i)
 
--- | if we have a `Variable`, lookup it's original `Name` in Reader context
-lookupSwap ::
-  ( MonadReader Swaps m,
-    MonadError TypeError m
-  ) =>
-  Variable ->
-  m Name
-lookupSwap var = do
-  swaps <- ask
-  case M.lookup var swaps of
-    Just a -> pure a
-    _ -> throwError UnknownTypeError -- forgive me, Padre
-
 -- capture type schemes currently in scope
 -- instantiate them now
 schemesToTypeMap ::
-  (MonadState TypecheckState m, MonadError TypeError m, MonadReader Swaps m) =>
+  (MonadState TypecheckState m) =>
   Map TypeIdentifier Scheme ->
   m (Map Name MonoType)
 schemesToTypeMap schemes = do
   let fn (k, v) =
         let leName = case k of
               TVName _ n -> pure (Name $ coerce n)
-              TVUnificationVar i -> lookupSwap (NumberedVar i)
+              TVUnificationVar _i -> error "nope" -- lookupSwap (NumberedVar i)
          in (,) <$> leName <*> instantiate mempty v
 
   typeMap <- traverse fn (M.toList schemes)

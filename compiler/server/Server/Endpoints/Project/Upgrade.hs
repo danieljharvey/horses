@@ -83,7 +83,7 @@ upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
     let action = do
           (resolvedExpr, _, depUpdates) <-
             Actions.upgradeByName bindingName
-          let (ResolvedExpression _ se _ _swaps typedExpr input) = resolvedExpr
+          let (ResolvedExpression _ se _ typedExpr input) = resolvedExpr
           let typedNameExpr = first fst typedExpr
           gv <- Actions.graphExpression se
           let warnings = getWarnings resolvedExpr

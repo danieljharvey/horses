@@ -32,8 +32,6 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.SubstitutedExpression
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Unique
 
@@ -42,7 +40,6 @@ import Language.Mimsa.Types.Typechecker.Unique
 getType ::
   Map Name MonoType ->
   Map TyCon DataType ->
-  Swaps ->
   Text ->
   Expr (Name, Unique) Annotation ->
   Actions.ActionM
@@ -51,13 +48,12 @@ getType ::
       Expr (Name, Unique) MonoType,
       MonoType
     )
-getType depTypeMap dataTypes swaps input expr = do
+getType depTypeMap dataTypes input expr = do
   liftEither $
     first
       (TypeErr input)
       ( typecheck
           depTypeMap
-          swaps
           (createEnv depTypeMap dataTypes)
           expr
       )
@@ -81,19 +77,16 @@ substituteAndTypecheck ::
   Actions.ActionM (ResolvedExpression Annotation)
 substituteAndTypecheck resolvedDeps (storeExpr, input) = do
   project <- Actions.getProject
-  let (SubstitutedExpression swaps _newExpr) =
-        substitute (prjStore project) storeExpr
   numberedExpr <- liftEither $ first (TypeErr input) (addNumbers storeExpr)
   depTypeMap <- makeTypeMap resolvedDeps (storeBindings storeExpr)
   dataTypes <- liftEither $ first StoreErr (resolveDataTypes (prjStore project) storeExpr)
   (_, _, typedExpr, exprType) <-
-    getType depTypeMap dataTypes swaps input numberedExpr
+    getType depTypeMap dataTypes input numberedExpr
   pure
     ( ResolvedExpression
         exprType
         storeExpr
         numberedExpr
-        swaps
         typedExpr
         input
     )

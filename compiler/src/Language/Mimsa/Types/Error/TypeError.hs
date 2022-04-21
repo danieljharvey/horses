@@ -16,7 +16,6 @@ where
 import Data.Foldable (fold)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -24,7 +23,6 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Typechecker.FoundPath
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -33,9 +31,9 @@ import Text.Megaparsec
 
 data TypeErrorF var ann
   = UnknownTypeError
-  | FailsOccursCheck Swaps TypeIdentifier (Type ann)
+  | FailsOccursCheck TypeIdentifier (Type ann)
   | UnificationError (Type ann) (Type ann)
-  | VariableNotInEnv Swaps ann Variable (Set TypeIdentifier)
+  | VariableNotInEnv ann Variable (Set TypeIdentifier)
   | MissingRecordMember ann Name (Set Name)
   | MissingRecordTypeMember ann Name (Map Name (Type ann))
   | NoFunctionEquality (Type ann) (Type ann)
@@ -54,8 +52,6 @@ data TypeErrorF var ann
   | CannotUseBuiltInTypeAsConstructor ann TyCon
   | InternalConstructorUsedOutsidePatternMatch ann TyCon
   | PatternMatchErr (PatternMatchErrorF var ann)
-  | CouldNotFindSwapForVariable Variable Swaps
-  | SwapsChangingError
   | NameNotFoundInScope ann (Set var) var
   deriving stock (Eq, Ord, Show, Foldable)
 
@@ -111,23 +107,14 @@ showMap renderK renderA map' =
 
 ------
 
-withSwap :: Swaps -> Variable -> Name
-withSwap _ (NamedVar n) = n
-withSwap swaps (NumberedVar i) =
-  fromMaybe
-    "unknownvar"
-    (M.lookup (NumberedVar i) swaps)
-
 -----
 
 renderTypeError :: (Printer ann, Printer var, Printer (Pattern var ann)) => TypeErrorF var ann -> [Doc a]
 renderTypeError UnknownTypeError =
   ["Unknown type error"]
-renderTypeError (FailsOccursCheck swaps var mt) =
-  [ prettyDoc var <+> "appears inside" <+> prettyDoc mt <+> ".",
-    "Swaps:"
+renderTypeError (FailsOccursCheck var mt) =
+  [ prettyDoc var <+> "appears inside" <+> prettyDoc mt <+> "."
   ]
-    <> showMap prettyDoc prettyDoc swaps
 renderTypeError (UnificationError a b) =
   [ "Unification error",
     "Cannot match" <+> prettyDoc a <+> "and" <+> prettyDoc b
@@ -137,8 +124,8 @@ renderTypeError (CouldNotFindInfixOperator _ op allOps) =
     "The following are available:"
   ]
     <> showSet prettyDoc allOps
-renderTypeError (VariableNotInEnv swaps _ name members) =
-  ["Variable" <+> renderName (withSwap swaps name) <+> " not in scope."]
+renderTypeError (VariableNotInEnv _ name members) =
+  ["Variable" <+> prettyDoc name <+> " not in scope."]
     <> showSet prettyDoc members
 renderTypeError (MissingRecordMember _ name members) =
   [ "Cannot find" <+> prettyDoc name <> ".",
@@ -163,7 +150,6 @@ renderTypeError (TypeConstructorNotInScope env _ constructor) =
     "The following are available:"
   ]
     <> printDataTypes env
-renderTypeError SwapsChangingError = ["Error swapping names back for pattern match error"]
 renderTypeError (TypeNameNotInScope env _ typeName) =
   [ "Type name" <+> prettyDoc typeName
       <+> "not found in scope.",
@@ -214,10 +200,6 @@ renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
   ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used outside of a pattern match"]
 renderTypeError (PatternMatchErr pmErr) =
   [prettyDoc pmErr]
-renderTypeError (CouldNotFindSwapForVariable var swaps) =
-  ["Could not find swap for variable" <+> prettyDoc var <+> "in" <+> itemList]
-  where
-    itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> M.keys swaps)) <+> "]"
 renderTypeError (NameNotFoundInScope _ available name) =
   ["Could not find var " <+> prettyDoc name <+> "in" <+> itemList]
   where

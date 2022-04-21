@@ -7,7 +7,6 @@ module Test.Typechecker.Unify
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State.Strict (runState)
 import Data.Either (isLeft)
 import qualified Data.Map as M
@@ -27,7 +26,7 @@ runUnifier (a, b) =
       TypecheckState 1 mempty
     either' =
       runState
-        (runReaderT (runExceptT (unify a b)) mempty)
+        (runExceptT (unify a b))
         defaultState
 
 spec :: Spec

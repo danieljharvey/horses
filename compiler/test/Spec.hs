@@ -30,7 +30,6 @@ import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.Usages as Usages
 import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
-import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Tests.Properties as Properties
 import qualified Test.Tests.PropertyTest as PropertyTest
@@ -61,7 +60,6 @@ main =
     Syntax.spec
     Prettier.spec
     Resolver.spec
-    Substitutor.spec
     Repl.spec
     Unify.spec
     Usages.spec

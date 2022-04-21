@@ -8,7 +8,6 @@ module Language.Mimsa.Project.TypeSearch
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State
 import Data.Bifunctor (first)
 import Data.Either (isRight)
@@ -25,7 +24,6 @@ import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
 normalise :: MonoType -> Type ()
@@ -56,22 +54,21 @@ isSimple (MTConstructor _ _) = True
 isSimple (MTTypeApp _ fn val) = isSimple fn && isSimple val
 
 unify' :: MonoType -> MonoType -> Either TypeError Substitutions
-unify' mtA mtB = runUnifyM mempty (unify mtA mtB)
+unify' mtA mtB = runUnifyM (unify mtA mtB)
 
-type UnifyM = ExceptT TypeError (ReaderT Swaps (State TypecheckState))
+type UnifyM = ExceptT TypeError (State TypecheckState)
 
 runUnifyM ::
-  Swaps ->
   UnifyM a ->
   Either TypeError a
-runUnifyM swaps value =
+runUnifyM value =
   case either' of
     (Right a, _) -> Right a
     (Left e, _) -> Left e
   where
     either' =
       runState
-        (runReaderT (runExceptT value) swaps)
+        (runExceptT value)
         (defaultTcState mempty)
 
 -- | given a type map, split it into paths

@@ -62,7 +62,7 @@ bindExpression ::
 bindExpression mimsaEnv (BindExpressionRequest projectHash name' input) = runMimsaHandlerT $ do
   let action = do
         expr <- Actions.parseExpr input
-        (_, _, resolved@(ResolvedExpression _ se _ _swaps typedExpr input')) <-
+        (_, _, resolved@(ResolvedExpression _ se _ typedExpr input')) <-
           Actions.bindExpression expr name' input
         gv <- Actions.graphExpression se
         let typedNameExpr = first fst typedExpr

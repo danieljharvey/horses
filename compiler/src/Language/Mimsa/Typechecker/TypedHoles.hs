@@ -8,7 +8,6 @@ module Language.Mimsa.Typechecker.TypedHoles
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -18,11 +17,10 @@ import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
 typedHolesCheck ::
-  (MonadReader Swaps m, MonadError TypeError m, MonadState TypecheckState m) =>
+  (MonadError TypeError m, MonadState TypecheckState m) =>
   Map Name MonoType ->
   Substitutions ->
   m ()
