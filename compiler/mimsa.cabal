@@ -169,7 +169,6 @@ library
       Language.Mimsa.Types.Identifiers.TyCon
       Language.Mimsa.Types.Identifiers.TypeIdentifier
       Language.Mimsa.Types.Identifiers.TyVar
-      Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.Interpreter.Stack
       Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project

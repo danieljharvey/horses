@@ -85,14 +85,6 @@ typeName = MTVar mempty . TVName Nothing . mkTyVar
 
 ---
 
-named :: Text -> Variable
-named = NamedVar . Name
-
-numbered :: Int -> Variable
-numbered = NumberedVar
-
----
-
 tvNum :: Int -> TypeIdentifier
 tvNum = TVUnificationVar
 

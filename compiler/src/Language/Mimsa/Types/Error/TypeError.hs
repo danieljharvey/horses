@@ -33,14 +33,14 @@ data TypeErrorF var ann
   = UnknownTypeError
   | FailsOccursCheck TypeIdentifier (Type ann)
   | UnificationError (Type ann) (Type ann)
-  | MissingRecordMember ann Name (Set Name)
-  | MissingRecordTypeMember ann Name (Map Name (Type ann))
+  | MissingRecordMember ann var (Set var)
+  | MissingRecordTypeMember ann var (Map Name (Type ann))
   | NoFunctionEquality (Type ann) (Type ann)
   | CannotMatchRecord Environment ann (Type ann)
   | CaseMatchExpectedPair ann (Type ann)
   | TypeConstructorNotInScope Environment ann TyCon
   | TypeNameNotInScope Environment ann TyCon
-  | TypeVariablesNotInDataType TyCon (Set Name) (Set Name)
+  | TypeVariablesNotInDataType TyCon (Set var) (Set var)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
   | DuplicateTypeDeclaration TyCon
@@ -127,12 +127,12 @@ renderTypeError (MissingRecordMember _ name members) =
   [ "Cannot find" <+> prettyDoc name <> ".",
     "The following are available:"
   ]
-    <> showSet renderName members
+    <> showSet prettyDoc members
 renderTypeError (MissingRecordTypeMember _ name types) =
-  [ "Cannot find" <+> dquotes (renderName name) <> ".",
+  [ "Cannot find" <+> dquotes (prettyDoc name) <> ".",
     "The following record items are available:"
   ]
-    <> showKeys renderName types
+    <> showKeys prettyDoc types
 renderTypeError (CannotMatchRecord env _ mt) =
   [ "Cannot match type" <+> prettyDoc mt <+> "to record.",
     "The following are available:",
@@ -160,14 +160,14 @@ renderTypeError (RecordKeyMismatch keys) =
   [ "Record key mismatch",
     "The following keys were expected to be in both records and were not:"
   ]
-    <> showSet renderName keys
+    <> showSet prettyDoc keys
 renderTypeError (TypeVariablesNotInDataType constructor names as) =
   [ "Type variables" <+> mconcat (showSet prettyDoc names)
       <+> "could not be in found in type vars for"
       <+> prettyDoc constructor,
     "The following type variables were found:"
   ]
-    <> showSet renderName as
+    <> showSet prettyDoc as
 renderTypeError (IncompletePatternMatch _ names) =
   [ "Incomplete pattern match.",
     "Missing constructors:"
@@ -208,7 +208,7 @@ printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
     printDt (DataType tyName tyVars constructors) =
       [prettyDoc tyName] <> printTyVars tyVars
         <> zipWith (<>) (":" : repeat "|") (printCons <$> M.toList constructors)
-    printTyVars as = renderName <$> as
+    printTyVars as = prettyDoc <$> as
     printCons (consName, args) =
       fold
         ( [ prettyDoc
