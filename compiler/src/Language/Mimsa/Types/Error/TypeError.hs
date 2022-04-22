@@ -33,7 +33,6 @@ data TypeErrorF var ann
   = UnknownTypeError
   | FailsOccursCheck TypeIdentifier (Type ann)
   | UnificationError (Type ann) (Type ann)
-  | VariableNotInEnv ann Variable (Set TypeIdentifier)
   | MissingRecordMember ann Name (Set Name)
   | MissingRecordTypeMember ann Name (Map Name (Type ann))
   | NoFunctionEquality (Type ann) (Type ann)
@@ -124,9 +123,6 @@ renderTypeError (CouldNotFindInfixOperator _ op allOps) =
     "The following are available:"
   ]
     <> showSet prettyDoc allOps
-renderTypeError (VariableNotInEnv _ name members) =
-  ["Variable" <+> prettyDoc name <+> " not in scope."]
-    <> showSet prettyDoc members
 renderTypeError (MissingRecordMember _ name members) =
   [ "Cannot find" <+> prettyDoc name <> ".",
     "The following are available:"

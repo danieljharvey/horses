@@ -130,7 +130,7 @@ markImports (MyLet ann ident expr body) = do
   MyLet
     ann
     (markIdentImports ident unique)
-    <$> markImports expr
+    <$> withLambda (M.singleton var unique) (markImports expr) -- include var in case it is used recursively
     <*> withLambda (M.singleton var unique) (markImports body)
 markImports (MyLetPattern ann pat expr body) = do
   vars <- freshVarsFromPattern pat

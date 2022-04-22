@@ -69,7 +69,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "x")
+                (Identifier mempty "x")
                 (int 42)
                 (bool True)
         startInference expr $ Right (MTPrim mempty MTBool)
@@ -77,87 +77,87 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "x")
+                (Identifier mempty "x")
                 (int 42)
-                (MyVar mempty ("x"))
+                (MyVar mempty "x")
         startInference expr $ Right (MTPrim mempty MTInt)
       it "infers let binding with recursion 0" $ do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "dec")
+                (Identifier mempty "dec")
                 ( MyLambda
                     mempty
-                    (Identifier mempty $ "bool")
+                    (Identifier mempty "bool")
                     ( MyIf
                         mempty
-                        (MyVar mempty ("bool"))
+                        (MyVar mempty "bool")
                         (bool True)
                         ( MyApp
                             mempty
-                            (MyVar mempty ("dec"))
+                            (MyVar mempty "dec")
                             (bool False)
                         )
                     )
                 )
-                (MyVar mempty ("dec"))
+                (MyVar mempty "dec")
         startInference expr $ Right (MTFunction mempty (MTPrim mempty MTBool) (MTPrim mempty MTBool))
 
       it "infers let binding with recursion 1" $ do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "dec")
+                (Identifier mempty "dec")
                 ( MyLambda
                     mempty
-                    (Identifier mempty $ "bool")
+                    (Identifier mempty "bool")
                     ( MyIf
                         mempty
-                        (MyVar mempty ("bool"))
+                        (MyVar mempty "bool")
                         (bool True)
                         ( MyApp
                             mempty
-                            (MyVar mempty ("dec"))
+                            (MyVar mempty "dec")
                             (bool False)
                         )
                     )
                 )
-                (MyApp mempty (MyVar mempty ("dec")) (bool False))
+                (MyApp mempty (MyVar mempty "dec") (bool False))
         startInference expr $ Right (MTPrim mempty MTBool)
 
       it "infers let binding with recursion 2 (flipped if cases)" $ do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "dec")
+                (Identifier mempty "dec")
                 ( MyLambda
                     mempty
-                    (Identifier mempty $ "bool")
+                    (Identifier mempty "bool")
                     ( MyIf
                         mempty
-                        (MyVar mempty ("bool"))
+                        (MyVar mempty "bool")
                         ( MyApp
                             mempty
-                            (MyVar mempty ("dec"))
+                            (MyVar mempty "dec")
                             (bool False)
                         )
                         (bool True)
                     )
                 )
-                (MyApp mempty (MyVar mempty ("dec")) (bool False))
+                (MyApp mempty (MyVar mempty "dec") (bool False))
         startInference expr $ Right (MTPrim mempty MTBool)
 
       it "infers multiple let bindings" $ do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "x")
+                (Identifier mempty "x")
                 (bool True)
                 ( MyLet
                     mempty
-                    (Identifier mempty $ "y")
+                    (Identifier mempty "y")
                     (int 42)
-                    (MyVar mempty ("x"))
+                    (MyVar mempty "x")
                 )
         startInference expr $ Right (MTPrim mempty MTBool)
 
@@ -165,13 +165,13 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "x")
+                (Identifier mempty "x")
                 (bool True)
-                (MyLet mempty (Identifier mempty $ "x") (int 42) (MyVar mempty ("x")))
+                (MyLet mempty (Identifier mempty "x") (int 42) (MyVar mempty "x"))
         startInference expr $ Right (MTPrim mempty MTInt)
 
       it "infers const lambda" $ do
-        let expr = MyLambda mempty (Identifier mempty $ "x") (bool True)
+        let expr = MyLambda mempty (Identifier mempty "x") (bool True)
         startInference expr $
           Right (MTFunction mempty (unknown 1) (MTPrim mempty MTBool))
 
@@ -183,8 +183,8 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (Identifier mempty $ "x")
-                (MyLambda mempty (Identifier mempty $ "y") (MyVar mempty ("x")))
+                (Identifier mempty "x")
+                (MyLambda mempty (Identifier mempty "y") (MyVar mempty "x"))
         startInference expr $
           Right
             ( MTFunction
@@ -199,7 +199,7 @@ spec = do
                 mempty
                 ( MyLambda
                     mempty
-                    (Identifier mempty $ "x")
+                    (Identifier mempty "x")
                     (bool True)
                 )
                 (int 1)
@@ -217,8 +217,8 @@ spec = do
                 mempty
                 ( MyLambda
                     mempty
-                    (Identifier mempty $ "x")
-                    (MyIf mempty (MyVar mempty ("x")) (int 10) (int 10))
+                    (Identifier mempty "x")
+                    (MyIf mempty (MyVar mempty "x") (int 10) (int 10))
                 )
                 (int 100)
         startInference expr $
@@ -226,7 +226,15 @@ spec = do
             ( UnificationError (MTPrim mempty MTBool) (MTPrim mempty MTInt)
             )
       it "fails occurs check" $ do
-        let expr = MyLambda mempty (Identifier mempty $ "x") (MyApp mempty (MyVar mempty ("x")) (MyVar mempty ("x")))
+        let expr =
+              MyLambda
+                mempty
+                (Identifier mempty "x")
+                ( MyApp
+                    mempty
+                    (MyVar mempty "x")
+                    (MyVar mempty "x")
+                )
         startInference expr $
           Left
             ( FailsOccursCheck
@@ -248,26 +256,26 @@ spec = do
                 mempty
                 ( PPair
                     mempty
-                    (PVar mempty ("a"))
-                    (PVar mempty ("b"))
+                    (PVar mempty "a")
+                    (PVar mempty "b")
                 )
                 (MyPair mempty (int 1) (bool True))
-                (MyVar mempty ("a"))
+                (MyVar mempty "a")
         startInference expr $ Right (MTPrim mempty MTInt)
       it "infers destructured pair in a lambda" $ do
         let expr =
               MyLambda
                 mempty
-                (Identifier mempty $ "x")
+                (Identifier mempty "x")
                 ( MyLetPattern
                     mempty
                     ( PPair
                         mempty
-                        (PVar mempty ("a"))
-                        (PVar mempty ("b"))
+                        (PVar mempty "a")
+                        (PVar mempty "b")
                     )
-                    (MyVar mempty ("x"))
-                    (MyVar mempty ("a"))
+                    (MyVar mempty "x")
+                    (MyVar mempty "a")
                 )
         startInference expr $
           Right
@@ -304,12 +312,12 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (Identifier mempty $ "i")
+                (Identifier mempty "i")
                 ( MyIf
                     mempty
                     ( MyRecordAccess
                         mempty
-                        (MyVar mempty ("i"))
+                        (MyVar mempty "i")
                         "dog"
                     )
                     (int 1)
@@ -333,13 +341,13 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (Identifier mempty $ "a")
+                (Identifier mempty "a")
                 ( MyInfix
                     mempty
                     Add
                     ( MyRecordAccess
                         mempty
-                        (MyVar mempty ("a"))
+                        (MyVar mempty "a")
                         "int"
                     )
                     (int 1)
@@ -360,12 +368,12 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "id")
-                (MyLambda mempty (Identifier mempty $ "var") (MyVar mempty ("var")))
+                (Identifier mempty "id")
+                (MyLambda mempty (Identifier mempty "var") (MyVar mempty "var"))
                 ( MyPair
                     mempty
-                    (MyApp mempty (MyVar mempty ("id")) (int 1))
-                    (MyApp mempty (MyVar mempty ("id")) (bool True))
+                    (MyApp mempty (MyVar mempty "id") (int 1))
+                    (MyApp mempty (MyVar mempty "id") (bool True))
                 )
         let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
         startInference expr expected
@@ -373,17 +381,17 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "pair")
+                (Identifier mempty "pair")
                 (MyPair mempty (int 1) (bool True))
                 ( MyLetPattern
                     mempty
                     ( PPair
                         mempty
-                        (PVar mempty ("a"))
-                        (PVar mempty ("b"))
+                        (PVar mempty "a")
+                        (PVar mempty "b")
                     )
-                    (MyVar mempty ("pair"))
-                    (MyVar mempty ("a"))
+                    (MyVar mempty "pair")
+                    (MyVar mempty "a")
                 )
 
         let expected = Right (MTPrim mempty MTInt)
@@ -393,16 +401,16 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (Identifier mempty $ "tuple")
+                (Identifier mempty "tuple")
                 ( MyLetPattern
                     mempty
                     ( PPair
                         mempty
-                        (PVar mempty ("a"))
-                        (PVar mempty ("b"))
+                        (PVar mempty "a")
+                        (PVar mempty "b")
                     )
-                    (MyVar mempty ("tuple"))
-                    (MyVar mempty ("a"))
+                    (MyVar mempty "tuple")
+                    (MyVar mempty "a")
                 )
 
         let expected =
@@ -418,27 +426,27 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "fst")
+                (Identifier mempty "fst")
                 ( MyLambda
                     mempty
-                    (Identifier mempty $ "tuple")
+                    (Identifier mempty "tuple")
                     ( MyPatternMatch
                         mempty
-                        (MyVar mempty ("tuple"))
+                        (MyVar mempty "tuple")
                         [ ( PPair
                               mempty
-                              (PVar mempty ("a"))
-                              (PVar mempty ("b")),
-                            MyVar mempty ("a")
+                              (PVar mempty "a")
+                              (PVar mempty "b"),
+                            MyVar mempty "a"
                           )
                         ]
                     )
                 )
                 ( MyLet
                     mempty
-                    (Identifier mempty $ "pair")
+                    (Identifier mempty "pair")
                     (MyPair mempty (int 1) (bool True))
-                    (MyApp mempty (MyVar mempty ("fst")) (MyVar mempty ("pair")))
+                    (MyApp mempty (MyVar mempty "fst") (MyVar mempty "pair"))
                 )
         let expected = Right (MTPrim mempty MTInt)
         startInference expr expected
@@ -447,26 +455,26 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (Identifier mempty $ "fst")
+                (Identifier mempty "fst")
                 ( MyLambda
                     mempty
-                    (Identifier mempty $ "tuple")
+                    (Identifier mempty "tuple")
                     ( MyLetPattern
                         mempty
                         ( PPair
                             mempty
-                            (PVar mempty ("a"))
-                            (PVar mempty ("b"))
+                            (PVar mempty "a")
+                            (PVar mempty "b")
                         )
-                        (MyVar mempty ("tuple"))
-                        (MyVar mempty ("a"))
+                        (MyVar mempty "tuple")
+                        (MyVar mempty "a")
                     )
                 )
                 ( MyLet
                     mempty
-                    (Identifier mempty $ "pair")
+                    (Identifier mempty "pair")
                     (MyPair mempty (int 1) (bool True))
-                    (MyApp mempty (MyVar mempty ("fst")) (MyVar mempty ("pair")))
+                    (MyApp mempty (MyVar mempty "fst") (MyVar mempty "pair"))
                 )
         let expected = Right (MTPrim mempty MTInt)
         startInference expr expected
@@ -495,20 +503,20 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (Identifier mempty $ "a")
+                (Identifier mempty "a")
                 ( MyPair
                     mempty
                     ( MyInfix
                         mempty
                         Add
                         (int 1)
-                        (MyRecordAccess mempty (MyVar mempty ("a")) "prop")
+                        (MyRecordAccess mempty (MyVar mempty "a") "prop")
                     )
                     ( MyInfix
                         mempty
                         StringConcat
                         (str "!")
-                        (MyRecordAccess mempty (MyVar mempty ("a")) "prop")
+                        (MyRecordAccess mempty (MyVar mempty "a") "prop")
                     )
                 )
         testInfer expr `shouldSatisfy` isLeft
@@ -560,7 +568,7 @@ spec = do
             MyPatternMatch
               mempty
               (int 1)
-              [(PVar mempty ("dog"), bool True)]
+              [(PVar mempty "dog", bool True)]
       startInference expr $
         Right (MTPrim mempty MTBool)
     it "Matches with a variable and uses that variable" $ do
@@ -568,8 +576,8 @@ spec = do
             MyPatternMatch
               mempty
               (int 1)
-              [ ( PVar mempty ("dog"),
-                  MyVar mempty ("dog")
+              [ ( PVar mempty "dog",
+                  MyVar mempty "dog"
                 )
               ]
       startInference expr $
@@ -610,12 +618,12 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (Identifier mempty $ "a")
+                  (Identifier mempty "a")
                   ( MyPatternMatch
                       mempty
-                      (MyVar mempty ("a"))
-                      [ ( PConstructor mempty "Just" [PVar mempty ("as")],
-                          MyVar mempty ("as")
+                      (MyVar mempty "a")
+                      [ ( PConstructor mempty "Just" [PVar mempty "as"],
+                          MyVar mempty "as"
                         ),
                         ( PWildcard mempty,
                           int 100
@@ -672,8 +680,8 @@ spec = do
               ( MyPatternMatch
                   mempty
                   (MyApp mempty (MyConstructor mempty "Just") (int 1))
-                  [ ( PConstructor mempty "Just" [PVar mempty ("a")],
-                      MyVar mempty ("a")
+                  [ ( PConstructor mempty "Just" [PVar mempty "a"],
+                      MyVar mempty "a"
                     ),
                     ( PConstructor mempty "Nothing" [],
                       int 0
@@ -693,11 +701,11 @@ spec = do
                   [ ( PConstructor mempty "This" [PWildcard mempty],
                       int 0
                     ),
-                    ( PConstructor mempty "That" [PVar mempty ("b")],
-                      MyVar mempty ("b")
+                    ( PConstructor mempty "That" [PVar mempty "b"],
+                      MyVar mempty "b"
                     ),
-                    ( PConstructor mempty "These" [PWildcard mempty, PVar mempty ("b")],
-                      MyVar mempty ("b")
+                    ( PConstructor mempty "These" [PWildcard mempty, PVar mempty "b"],
+                      MyVar mempty "b"
                     )
                   ]
               )
@@ -723,9 +731,9 @@ spec = do
                         [ PConstructor
                             mempty
                             "Just"
-                            [PVar mempty ("bool")]
+                            [PVar mempty "bool"]
                         ],
-                      MyVar mempty ("bool")
+                      MyVar mempty "bool"
                     ),
                     (PWildcard mempty, bool False)
                   ]
@@ -739,9 +747,9 @@ spec = do
               (MyPair mempty (int 1) (int 2))
               [ ( PPair
                     mempty
-                    (PVar mempty ("a"))
-                    (PVar mempty ("b")),
-                  MyInfix mempty Add (MyVar mempty ("a")) (MyVar mempty ("b"))
+                    (PVar mempty "a")
+                    (PVar mempty "b"),
+                  MyInfix mempty Add (MyVar mempty "a") (MyVar mempty "b")
                 )
               ]
       startInference expr $
@@ -754,14 +762,14 @@ spec = do
               ( MyPatternMatch
                   mempty
                   (MyApp mempty (MyConstructor mempty "Left") (int 1))
-                  [ ( PConstructor mempty "Left" [PVar mempty ("e")],
-                      MyApp mempty (MyConstructor mempty "Left") (MyVar mempty ("e"))
+                  [ ( PConstructor mempty "Left" [PVar mempty "e"],
+                      MyApp mempty (MyConstructor mempty "Left") (MyVar mempty "e")
                     ),
                     ( PConstructor mempty "Right" [PLit mempty (MyInt 1)],
                       MyApp mempty (MyConstructor mempty "Right") (int 1)
                     ),
-                    ( PConstructor mempty "Right" [PVar mempty ("a")],
-                      MyApp mempty (MyConstructor mempty "Right") (MyVar mempty ("a"))
+                    ( PConstructor mempty "Right" [PVar mempty "a"],
+                      MyApp mempty (MyConstructor mempty "Right") (MyVar mempty "a")
                     )
                   ]
               )
@@ -785,11 +793,11 @@ spec = do
                   [ ( PConstructor mempty "Left" [PLit mempty (MyInt 1)],
                       MyApp mempty (MyConstructor mempty "Left") (int 1)
                     ),
-                    ( PConstructor mempty "Left" [PVar mempty ("e")],
-                      MyApp mempty (MyConstructor mempty "Left") (MyVar mempty ("e"))
+                    ( PConstructor mempty "Left" [PVar mempty "e"],
+                      MyApp mempty (MyConstructor mempty "Left") (MyVar mempty "e")
                     ),
-                    ( PConstructor mempty "Right" [PVar mempty ("a")],
-                      MyApp mempty (MyConstructor mempty "Right") (MyVar mempty ("a"))
+                    ( PConstructor mempty "Right" [PVar mempty "a"],
+                      MyApp mempty (MyConstructor mempty "Right") (MyVar mempty "a")
                     )
                   ]
               )
@@ -809,15 +817,15 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (Identifier mempty $ "maybe")
+                  (Identifier mempty "maybe")
                   ( MyPatternMatch
                       mempty
-                      (MyVar mempty ("maybe"))
-                      [ ( PConstructor mempty "Just" [PVar mempty ("a")],
-                          MyVar mempty ("a")
+                      (MyVar mempty "maybe")
+                      [ ( PConstructor mempty "Just" [PVar mempty "a"],
+                          MyVar mempty "a"
                         ),
                         ( PWildcard mempty,
-                          MyVar mempty ("maybe")
+                          MyVar mempty "maybe"
                         )
                       ]
                   )
@@ -836,8 +844,8 @@ spec = do
                   [ ( PConstructor mempty "Left" [PWildcard mempty],
                       MyApp mempty (MyConstructor mempty "Left") (int 1)
                     ),
-                    ( PVar mempty ("all"),
-                      MyVar mempty ("all")
+                    ( PVar mempty "all",
+                      MyVar mempty "all"
                     )
                   ]
               )
@@ -861,8 +869,8 @@ spec = do
                   [ ( PConstructor mempty "Right" [PWildcard mempty],
                       MyApp mempty (MyConstructor mempty "Right") (int 1)
                     ),
-                    ( PVar mempty ("all"),
-                      MyVar mempty ("all")
+                    ( PVar mempty "all",
+                      MyVar mempty "all"
                     )
                   ]
               )
@@ -893,8 +901,8 @@ spec = do
               ( MyPatternMatch
                   mempty
                   matchExpr
-                  [ ( PConstructor mempty "Pair" [PVar mempty ("a"), PVar mempty ("b")],
-                      MyPair mempty (MyVar mempty ("a")) (MyVar mempty ("b"))
+                  [ ( PConstructor mempty "Pair" [PVar mempty "a", PVar mempty "b"],
+                      MyPair mempty (MyVar mempty "a") (MyVar mempty "b")
                     )
                   ]
               )
@@ -927,8 +935,8 @@ spec = do
                   [ ( PConstructor mempty "Pair" [PLit mempty (MyInt 1), PLit mempty (MyBool True)],
                       MyPair mempty (MyLiteral mempty (MyBool True)) (MyLiteral mempty (MyInt 1))
                     ),
-                    ( PConstructor mempty "Pair" [PVar mempty ("a"), PVar mempty ("b")],
-                      MyPair mempty (MyVar mempty ("a")) (MyVar mempty ("b"))
+                    ( PConstructor mempty "Pair" [PVar mempty "a", PVar mempty "b"],
+                      MyPair mempty (MyVar mempty "a") (MyVar mempty "b")
                     )
                   ]
               )
@@ -960,9 +968,9 @@ spec = do
                     mempty
                     ( M.singleton
                         "dog"
-                        (PVar mempty ("a"))
+                        (PVar mempty "a")
                     ),
-                  MyVar mempty ("a")
+                  MyVar mempty "a"
                 )
               ]
       startInference expr $
@@ -978,16 +986,16 @@ spec = do
                         [ ( "dog",
                             PVar
                               mempty
-                              ("a")
+                              "a"
                           ),
-                          ("cat", PVar mempty ("b"))
+                          ("cat", PVar mempty "b")
                         ]
                     ),
                   MyInfix
                     mempty
                     Add
-                    (MyVar mempty ("a"))
-                    (MyVar mempty ("b"))
+                    (MyVar mempty "a")
+                    (MyVar mempty "b")
                 )
               ]
       startInference expr $
@@ -1017,11 +1025,11 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (Identifier mempty $ "a")
+                  (Identifier mempty "a")
                   ( MyPatternMatch
                       mempty
-                      (MyVar mempty ("a"))
-                      [ (PConstructor mempty "Just" [PVar mempty ("as")], MyVar mempty ("as")),
+                      (MyVar mempty "a")
+                      [ (PConstructor mempty "Just" [PVar mempty "as"], MyVar mempty "as"),
                         (PConstructor mempty "Nothing" [], MyLiteral mempty (MyInt 100))
                       ]
                   )
@@ -1034,15 +1042,15 @@ spec = do
       let fn =
             MyLambda
               mempty
-              (Identifier mempty $ "a")
+              (Identifier mempty "a")
               ( MyLambda
                   mempty
-                  (Identifier mempty $ "b")
+                  (Identifier mempty "b")
                   ( MyPatternMatch
                       mempty
                       (bool True)
-                      [ (PLit mempty (MyBool True), MyVar mempty ("a")),
-                        (PWildcard mempty, MyVar mempty ("b"))
+                      [ (PLit mempty (MyBool True), MyVar mempty "a"),
+                        (PWildcard mempty, MyVar mempty "b")
                       ]
                   )
               )
@@ -1053,17 +1061,17 @@ spec = do
       let fn =
             MyLambda
               mempty
-              (Identifier mempty $ "maybeA")
+              (Identifier mempty "maybeA")
               ( MyLambda
                   mempty
-                  (Identifier mempty $ "b")
+                  (Identifier mempty "b")
                   ( MyPatternMatch
                       mempty
-                      (MyVar mempty ("maybeA"))
-                      [ ( PConstructor mempty "Just" [PVar mempty ("a")],
-                          MyVar mempty ("a")
+                      (MyVar mempty "maybeA")
+                      [ ( PConstructor mempty "Just" [PVar mempty "a"],
+                          MyVar mempty "a"
                         ),
-                        (PWildcard mempty, MyVar mempty ("b"))
+                        (PWildcard mempty, MyVar mempty "b")
                       ]
                   )
               )
@@ -1113,9 +1121,9 @@ spec = do
               dtMaybe
               ( MyLet
                   mempty
-                  (Identifier mempty $ "f")
+                  (Identifier mempty "f")
                   (MyConstructor mempty "Just")
-                  (MyApp mempty (MyVar mempty ("f")) (int 1))
+                  (MyApp mempty (MyVar mempty "f") (int 1))
               )
       startInference expr $
         Right
@@ -1128,7 +1136,7 @@ spec = do
       let expr =
             MyLet
               mempty
-              (Identifier mempty $ "this")
+              (Identifier mempty "this")
               (bool True)
               (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
       startInference expr $
@@ -1144,7 +1152,7 @@ spec = do
       let expr =
             MyLet
               mempty
-              (Identifier mempty $ "this")
+              (Identifier mempty "this")
               (int 1)
               (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
       startInference expr $
@@ -1160,7 +1168,7 @@ spec = do
       let expr =
             MyLambda
               mempty
-              (Identifier mempty $ "this")
+              (Identifier mempty "this")
               (MyIf mempty (MyTypedHole mempty "what") (int 1) (int 2))
       startInference expr $ Left (TypedHoles (M.singleton "what" (MTPrim mempty MTBool, S.singleton "this")))
 
@@ -1169,7 +1177,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (AnnotatedIdentifier mtString ("a"))
+                (AnnotatedIdentifier mtString "a")
                 (MyLiteral mempty (MyString "dog"))
                 (MyLiteral mempty (MyBool True))
         startInference expr $
@@ -1179,7 +1187,7 @@ spec = do
         let expr =
               MyLet
                 mempty
-                (AnnotatedIdentifier mtInt ("a"))
+                (AnnotatedIdentifier mtInt "a")
                 (MyLiteral mempty (MyString "dog"))
                 (MyLiteral mempty (MyBool True))
         startInference expr $
@@ -1189,8 +1197,8 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (AnnotatedIdentifier mtString ("a"))
-                (MyVar mempty ("a"))
+                (AnnotatedIdentifier mtString "a")
+                (MyVar mempty "a")
         startInference expr $
           Right $ MTFunction mempty mtString mtString
 
@@ -1198,8 +1206,8 @@ spec = do
         let expr =
               MyLambda
                 mempty
-                (AnnotatedIdentifier mtString ("a"))
-                (MyInfix mempty Add (MyVar mempty ("a")) (int 1))
+                (AnnotatedIdentifier mtString "a")
+                (MyInfix mempty Add (MyVar mempty "a") (int 1))
         startInference expr $
           Left (UnificationError mtString mtInt)
 
@@ -1211,8 +1219,8 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (Identifier mempty $ "f")
-                  (MyApp mempty (MyVar mempty ("f")) (int 1))
+                  (Identifier mempty "f")
+                  (MyApp mempty (MyVar mempty "f") (int 1))
               )
       startInference expr $
         Right
@@ -1233,8 +1241,8 @@ spec = do
               dtMaybe
               ( MyLambda
                   mempty
-                  (Identifier mempty $ "f")
-                  (MyApp mempty (MyApp mempty (MyVar mempty ("f")) (int 1)) (bool True))
+                  (Identifier mempty "f")
+                  (MyApp mempty (MyApp mempty (MyVar mempty "f") (int 1)) (bool True))
               )
       startInference expr $
         Right
