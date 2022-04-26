@@ -14,7 +14,7 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (catMaybes)
+import Data.Maybe (mapMaybe)
 import Data.Text (Text)
 import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
@@ -139,7 +139,7 @@ multiVarConstructor tyCon vars items = do
                       else Nothing
               )
               neFields
-  let matches = catMaybes (withField <$> M.toList items)
+  let matches = mapMaybe withField (M.toList items)
   case matches of
     [match] -> pure match
     _ -> throwError "No matches or too many"
