@@ -110,3 +110,5 @@ getTypedHoles subs'@(Substitutions subs) = do
 
 variableToTypeIdentifier :: (Name, Unique) -> TypeIdentifier
 variableToTypeIdentifier (_, Unique i) = TVUnificationVar i
+variableToTypeIdentifier (name, Dependency _) =
+  TVName Nothing (coerce name) -- TODO: this might need a new entry

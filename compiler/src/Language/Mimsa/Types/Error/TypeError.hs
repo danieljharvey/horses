@@ -52,6 +52,7 @@ data TypeErrorF var ann
   | InternalConstructorUsedOutsidePatternMatch ann TyCon
   | PatternMatchErr (PatternMatchErrorF var ann)
   | NameNotFoundInScope ann (Set var) var
+  | VariableNotFound ann (Set TypeIdentifier) var
   deriving stock (Eq, Ord, Show, Foldable)
 
 type TypeError = TypeErrorF Name Annotation
@@ -200,6 +201,17 @@ renderTypeError (NameNotFoundInScope _ available name) =
   ["Could not find var " <+> prettyDoc name <+> "in" <+> itemList]
   where
     itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> S.toList available)) <+> "]"
+renderTypeError (VariableNotFound _ available name) =
+  ["Could not find var " <+> prettyDoc name <+> "in scope" <+> itemList]
+  where
+    itemList =
+      "["
+        <+> pretty
+          ( T.intercalate
+              ", "
+              (prettyPrint <$> S.toList available)
+          )
+        <+> "]"
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

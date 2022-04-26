@@ -1,9 +1,15 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Types.Typechecker.Unique where
+module Language.Mimsa.Types.Typechecker.Unique (Unique (..)) where
 
 import qualified Data.Aeson as JSON
+import GHC.Generics
+import Language.Mimsa.Types.Store.ExprHash
 
-newtype Unique = Unique Int
-  deriving newtype (Eq, Ord, Show, Num, JSON.ToJSON)
+data Unique
+  = Unique Int
+  | Dependency ExprHash
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON)

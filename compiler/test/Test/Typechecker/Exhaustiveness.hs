@@ -269,21 +269,21 @@ spec = do
     it "Is fine with lit" $ do
       noDuplicatesCheck (PLit mempty (MyBool True)) `shouldSatisfy` isRight
     it "Is fine with single var" $ do
-      noDuplicatesCheck (PVar mempty ("a")) `shouldSatisfy` isRight
+      noDuplicatesCheck (PVar mempty "a") `shouldSatisfy` isRight
     it "Is fine with a pair of different vars" $ do
       noDuplicatesCheck
         ( PPair
             mempty
-            (PVar mempty ("a"))
-            (PVar mempty ("b"))
+            (PVar mempty "a")
+            (PVar mempty "b")
         )
         `shouldSatisfy` isRight
     it "Hates a pair of the same var" $ do
       noDuplicatesCheck
         ( PPair
             mempty
-            (PVar mempty ("a"))
-            (PVar mempty ("a"))
+            (PVar mempty "a")
+            (PVar mempty "a")
         )
         `shouldSatisfy` isLeft
     it "Is fine with a record of uniques" $ do
@@ -291,8 +291,8 @@ spec = do
         ( PRecord
             mempty
             ( M.fromList
-                [ ("dog", PVar mempty ("a")),
-                  ("log", PVar mempty ("b"))
+                [ ("dog", PVar mempty "a"),
+                  ("log", PVar mempty "b")
                 ]
             )
         )
@@ -302,8 +302,8 @@ spec = do
         ( PRecord
             mempty
             ( M.fromList
-                [ ("dog", PVar mempty ("a")),
-                  ("log", PVar mempty ("a"))
+                [ ("dog", PVar mempty "a"),
+                  ("log", PVar mempty "a")
                 ]
             )
         )
@@ -312,8 +312,8 @@ spec = do
       noDuplicatesCheck
         ( PArray
             mempty
-            [ PVar mempty ("a"),
-              PVar mempty ("b")
+            [ PVar mempty "a",
+              PVar mempty "b"
             ]
             NoSpread
         )
@@ -322,8 +322,8 @@ spec = do
       noDuplicatesCheck
         ( PArray
             mempty
-            [ PVar mempty ("a"),
-              PVar mempty ("a")
+            [ PVar mempty "a",
+              PVar mempty "a"
             ]
             NoSpread
         )
@@ -332,10 +332,10 @@ spec = do
       noDuplicatesCheck
         ( PArray
             mempty
-            [ PVar mempty ("a"),
-              PVar mempty ("b")
+            [ PVar mempty "a",
+              PVar mempty "b"
             ]
-            (SpreadValue mempty ("a"))
+            (SpreadValue mempty "a")
         )
         `shouldSatisfy` isLeft
     it "Is fine with a constructor with no dupes" $ do
@@ -343,8 +343,8 @@ spec = do
         ( PConstructor
             mempty
             "Dog"
-            [ PVar mempty ("a"),
-              PVar mempty ("b")
+            [ PVar mempty "a",
+              PVar mempty "b"
             ]
         )
         `shouldSatisfy` isRight
@@ -353,13 +353,13 @@ spec = do
         ( PConstructor
             mempty
             "Dog"
-            [ PVar mempty ("a"),
-              PVar mempty ("b"),
+            [ PVar mempty "a",
+              PVar mempty "b",
               PConstructor
                 mempty
                 "Dog"
-                [ PVar mempty ("c"),
-                  PVar mempty ("a")
+                [ PVar mempty "c",
+                  PVar mempty "a"
                 ]
             ]
         )

@@ -17,7 +17,7 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker.Unique
 
 newtype SubsState var ann = SubsState
-  { ssCounter :: Unique
+  { ssCounter :: Int
   }
   deriving newtype (Eq, Ord, Show)
 
@@ -42,11 +42,11 @@ addNumbers ::
   Either (TypeErrorF Name ann) (NumberedExpr Name ann)
 addNumbers storeExpr =
   let action = do
-        -- create fresh vars for all dependencies
-        varsFromDeps <-
-          traverse
-            (const nextNum)
-            (getBindings (storeBindings storeExpr))
+        -- add dependencies to scope
+        let varsFromDeps =
+              mconcat $
+                (\(name, hash) -> M.singleton name (Dependency hash))
+                  <$> M.toList (getBindings (storeBindings storeExpr))
         -- evaluate rest of expression using these
         withLambda
           varsFromDeps
@@ -102,7 +102,7 @@ nextNum = do
           { ssCounter = unique + 1
           }
     )
-  pure unique
+  pure (Unique unique)
 
 lookupVar :: (Ord var) => var -> App var ann (Maybe Unique)
 lookupVar var = asks (M.lookup var . seScope)

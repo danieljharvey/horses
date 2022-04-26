@@ -39,15 +39,15 @@ spec = do
             expected =
               MyLambda
                 mempty
-                (Identifier mempty ("x", 0))
+                (Identifier mempty ("x", Unique 0))
                 ( MyPair
                     mempty
-                    (MyVar mempty ("x", 0))
+                    (MyVar mempty ("x", Unique 0))
                     ( MyLambda
                         mempty
-                        ( Identifier mempty ("x", 1)
+                        ( Identifier mempty ("x", Unique 1)
                         )
-                        (MyVar mempty ("x", 1))
+                        (MyVar mempty ("x", Unique 1))
                     )
                 )
             ans = testAddNumbers (StoreExpression expr mempty mempty)
@@ -68,12 +68,12 @@ spec = do
           expected =
             MyLambda
               mempty
-              (Identifier mempty ("a", 0))
+              (Identifier mempty ("a", Unique 0))
               ( MyPatternMatch
                   mempty
                   (MyLiteral mempty (MyInt 1))
-                  [ (PLit mempty (MyInt 1), MyVar mempty ("a", 0)),
-                    (PWildcard mempty, MyVar mempty ("a", 0))
+                  [ (PLit mempty (MyInt 1), MyVar mempty ("a", Unique 0)),
+                    (PWildcard mempty, MyVar mempty ("a", Unique 0))
                   ]
               )
 
@@ -96,13 +96,13 @@ spec = do
           expected =
             MyLambda
               mempty
-              (Identifier mempty ("a", 0))
+              (Identifier mempty ("a", Unique 0))
               ( MyPatternMatch
                   mempty
                   (int 1)
-                  [ (PWildcard mempty, MyVar mempty ("a", 0)),
-                    (PVar mempty ("a", 1), MyVar mempty ("a", 1)),
-                    (PWildcard mempty, MyVar mempty ("a", 0))
+                  [ (PWildcard mempty, MyVar mempty ("a", Unique 0)),
+                    (PVar mempty ("a", Unique 1), MyVar mempty ("a", Unique 1)),
+                    (PWildcard mempty, MyVar mempty ("a", Unique 0))
                   ]
               )
           ans = testAddNumbers (StoreExpression expr mempty mempty)
@@ -122,12 +122,12 @@ spec = do
           expected =
             MyLambda
               mempty
-              (Identifier mempty ("a", 0))
+              (Identifier mempty ("a", Unique 0))
               ( MyLetPattern
                   mempty
-                  (PVar mempty ("a", 1))
+                  (PVar mempty ("a", Unique 1))
                   (int 1)
-                  (MyVar mempty ("a", 1))
+                  (MyVar mempty ("a", Unique 1))
               )
 
           ans = testAddNumbers (StoreExpression expr mempty mempty)
@@ -140,10 +140,14 @@ spec = do
       ans `shouldBe` Left (NameNotFoundInScope mempty mempty "what")
 
     it "Outside deps are assigned a number" $ do
+      let hash = ExprHash "123"
       let expr =
             MyApp mempty (MyVar mempty "id") (MyVar mempty "id")
           expected =
-            MyApp mempty (MyVar mempty ("id", 0)) (MyVar mempty ("id", 0))
-          bindings = Bindings (M.singleton "id" (ExprHash "12123123"))
+            MyApp
+              mempty
+              (MyVar mempty ("id", Dependency hash))
+              (MyVar mempty ("id", Dependency hash))
+          bindings = Bindings (M.singleton "id" hash)
           ans = testAddNumbers (StoreExpression expr bindings mempty)
       ans `shouldBe` Right expected

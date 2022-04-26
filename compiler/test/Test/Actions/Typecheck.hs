@@ -15,7 +15,7 @@ import Test.Utils.Helpers
 
 spec :: Spec
 spec = do
-  fdescribe "Typecheck" $ do
+  describe "Typecheck" $ do
     it "Resolves an item from the test stdlib" $ do
       let inputHash = getHashOfName testStdlib "liftA2State"
       -- get an arbitrary store expression from test project

@@ -18,6 +18,7 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -76,9 +77,9 @@ elabLiteral ann lit =
    in pure (MyLiteral (MTPrim ann tyLit) lit)
 
 lookupInEnv :: (Name, Unique) -> Environment -> Maybe Scheme
-lookupInEnv var' (Environment env' _ _ _) =
-  let look v = M.lookup v env'
-   in look (variableToTypeIdentifier var')
+lookupInEnv (name, unique) (Environment env' _ _ _) =
+  let look v = M.lookup v (debugPretty "lookupInEnv" env')
+   in look (variableToTypeIdentifier (name, unique))
 
 elabVarFromScope ::
   Environment ->
@@ -92,10 +93,10 @@ elabVarFromScope env ann var' = do
       pure (MyVar freshMonoType var')
     _ -> do
       throwError $
-        NameNotFoundInScope
+        VariableNotFound
           ann
-          undefined --(S.fromList (M.keys (getSchemes env)))
-          undefined -- (fst var')
+          (M.keysSet $ getSchemes env)
+          (fst var')
 
 envFromVar :: (Name, Unique) -> Scheme -> Environment
 envFromVar binder scheme =
