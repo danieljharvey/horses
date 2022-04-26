@@ -17,7 +17,7 @@ import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store.ExprHash
+import Language.Mimsa.Types.Typechecker.Unique
 
 interpretLetPattern ::
   (Ord var) =>
@@ -59,7 +59,7 @@ interpretPatternMatch interpretFn expr' patterns = do
 patternMatches ::
   InterpretPattern var ann ->
   InterpretExpr var ann ->
-  Maybe [((var, Maybe ExprHash), InterpretExpr var ann)]
+  Maybe [((var, Unique), InterpretExpr var ann)]
 patternMatches (PWildcard _) _ = pure []
 patternMatches (PVar _ name) expr = pure [(name, expr)]
 patternMatches (PPair _ pA pB) (MyPair _ a b) = do

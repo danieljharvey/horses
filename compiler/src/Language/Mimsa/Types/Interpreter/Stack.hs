@@ -8,11 +8,11 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Store.ExprHash
+import Language.Mimsa.Types.Typechecker.Unique
 
 data StackFrame var ann = StackFrame
-  { sfVariables :: Map var (Expr (var, Maybe ExprHash) (ExprData var ann)),
-    sfInfix :: Map InfixOp (Expr (var, Maybe ExprHash) (ExprData var ann))
+  { sfVariables :: Map var (Expr (var, Unique) (ExprData var ann)),
+    sfInfix :: Map InfixOp (Expr (var, Unique) (ExprData var ann))
   }
   deriving stock (Eq, Ord, Show)
 

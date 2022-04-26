@@ -15,6 +15,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
+import Language.Mimsa.Types.Typechecker.Unique
 
 type InterpreterM var ann a =
   ReaderT
@@ -27,10 +28,10 @@ data InterpretReaderEnv var ann = InterpretReaderEnv
     ireGlobals :: Map ExprHash (InterpretExpr var ann)
   }
 
-type InterpretExpr var ann = Expr (var, Maybe ExprHash) (ExprData var ann)
+type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
 
 type InterpretPattern var ann =
-  Pattern (var, Maybe ExprHash) (ExprData var ann)
+  Pattern (var, Unique) (ExprData var ann)
 
 type InterpretFn var ann =
   InterpretExpr var ann ->

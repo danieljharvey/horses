@@ -16,14 +16,15 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
+import Language.Mimsa.Types.Typechecker.Unique
 
 initialStack :: (Ord var) => StackFrame var ann
 initialStack = StackFrame mempty mempty
 
 addEmptyStackFrames ::
   (Ord var, Monoid ann) =>
-  Expr (var, Maybe ExprHash) ann ->
-  Expr (var, Maybe ExprHash) (ExprData var ann)
+  Expr (var, Unique) ann ->
+  Expr (var, Unique) (ExprData var ann)
 addEmptyStackFrames expr =
   expr $> mempty
 
