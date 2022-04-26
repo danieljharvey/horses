@@ -12,7 +12,7 @@ where
 import qualified Data.Aeson as JSON
 import Data.Coerce (coerce)
 import qualified Data.Map as M
-import Data.Maybe (catMaybes)
+import Data.Maybe (mapMaybe)
 import Data.OpenApi hiding (name)
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -67,17 +67,18 @@ data UserErrorResponse = UserErrorResponse
 toUserError :: (Show ann, Printer ann) => Error ann -> UserErrorResponse
 toUserError te@(TypeErr input typeErr) =
   let errorLocations =
-        catMaybes $
-          mkErrorLocation input <$> TE.getAllAnnotations typeErr
+        mapMaybe
+          ( mkErrorLocation input
+          )
+          (TE.getAllAnnotations typeErr)
    in case typeErr of
         TypedHoles holes ->
           UserErrorResponse
             { ueText = "Typed holes found",
               ueTypedHoles =
-                catMaybes
-                  ( uncurry (mkTypedHoleResponse input)
-                      <$> M.toList holes
-                  ),
+                mapMaybe
+                  (uncurry (mkTypedHoleResponse input))
+                  (M.toList holes),
               ueErrorLocations = []
             }
         _ ->

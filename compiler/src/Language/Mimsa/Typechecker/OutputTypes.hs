@@ -75,8 +75,8 @@ foldExpr fn expression =
         <> foldExpr fn expr
         <> foldExpr fn body
     foldExpr' (MyPatternMatch ann expr pats) =
-      f ann <> foldMap (foldPattern fn) (fst <$> pats)
-        <> foldMap (foldExpr fn) (snd <$> pats)
+      f ann <> foldMap (foldPattern fn . fst) pats
+        <> foldMap (foldExpr fn . snd) pats
         <> foldExpr fn expr
     foldExpr' (MyLetPattern ann pat expr body) =
       f ann <> foldPattern fn pat <> foldExpr fn expr <> foldExpr fn body

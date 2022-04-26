@@ -49,7 +49,7 @@ filterPatterns tc pats =
   let filterPatternExprs (pat, patExpr) =
         (,) <$> filterPattern tc pat
           <*> pure (simplifyPatterns patExpr)
-      filtered = catMaybes (filterPatternExprs <$> pats)
+      filtered = mapMaybe filterPatternExprs pats
    in if null filtered
         then Nothing
         else Just (removeDuplicateWildcards filtered)
