@@ -33,14 +33,15 @@ spec :: Spec
 spec =
   describe "Unify" $ do
     it "Two same things teach us nothing" $
-      runUnifier (MTPrim mempty MTInt, MTPrim mempty MTInt) `shouldBe` Right mempty
+      runUnifier (MTPrim mempty MTInt, MTPrim mempty MTInt)
+        `shouldBe` Right mempty
     it "Combines a known with an unknown" $
-      runUnifier (MTVar mempty (tvNum 1), MTPrim mempty MTInt)
+      runUnifier (MTVar mempty (TVUnificationVar 1), MTPrim mempty MTInt)
         `shouldBe` Right (Substitutions $ M.singleton (TVUnificationVar 1) (MTPrim mempty MTInt))
     it "Combines two half pairs" $
       runUnifier
-        ( MTPair mempty (MTVar mempty (tvNum 1)) (MTPrim mempty MTInt),
-          MTPair mempty (MTPrim mempty MTBool) (MTVar mempty (tvNum 2))
+        ( MTPair mempty (MTVar mempty (TVUnificationVar 1)) (MTPrim mempty MTInt),
+          MTPair mempty (MTPrim mempty MTBool) (MTVar mempty (TVUnificationVar 2))
         )
         `shouldBe` Right
           ( Substitutions $
@@ -52,7 +53,7 @@ spec =
     describe "Constructors" $ do
       it "Combines a Maybe" $ do
         runUnifier
-          ( MTTypeApp mempty (MTConstructor mempty "Maybe") (unknown 1),
+          ( MTTypeApp mempty (MTConstructor mempty "Maybe") (MTVar mempty $ TVUnificationVar 1),
             MTTypeApp mempty (MTConstructor mempty "Maybe") (MTPrim mempty MTInt)
           )
           `shouldBe` Right
@@ -64,8 +65,8 @@ spec =
 
       it "Combines an Either" $ do
         runUnifier
-          ( MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty "Either") (unknown 1)) (MTPrim mempty MTBool),
-            MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty "Either") (MTPrim mempty MTInt)) (unknown 2)
+          ( MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty "Either") (MTVar mempty $ TVUnificationVar 1)) (MTPrim mempty MTBool),
+            MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty "Either") (MTPrim mempty MTInt)) (MTVar mempty $ TVUnificationVar 2)
           )
           `shouldBe` Right
             ( Substitutions $
@@ -81,11 +82,11 @@ spec =
           ( MTRecord mempty $
               M.fromList
                 [ ("one", MTPrim mempty MTInt),
-                  ("two", MTVar mempty (tvNum 1))
+                  ("two", MTVar mempty (TVUnificationVar 1))
                 ],
             MTRecord mempty $
               M.fromList
-                [ ("one", MTVar mempty (tvNum 2)),
+                [ ("one", MTVar mempty (TVUnificationVar 2)),
                   ("two", MTPrim mempty MTBool)
                 ]
           )

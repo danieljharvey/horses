@@ -108,6 +108,7 @@ inferDataConstructor env ann tyCon = do
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 getVariablesForField :: Type ann -> Set Name
+getVariablesForField (MTVar _ (TVVar _ name)) = S.singleton name
 getVariablesForField (MTVar _ (TVName _ n)) = S.singleton (coerce n)
 getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
@@ -165,6 +166,15 @@ inferConstructorTypes (DataType typeName tyVarNames constructors) = do
   tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
   let findType ty = case ty of
         MTVar _ (TVName _ var) ->
+          case filter (\(tyName, _) -> tyName == coerce var) tyVars of
+            [(_, tyFound)] -> pure tyFound
+            _ ->
+              throwError $
+                TypeVariablesNotInDataType
+                  typeName
+                  (S.singleton (coerce var))
+                  (S.fromList (fst <$> tyVars))
+        MTVar _ (TVVar _ var) ->
           case filter (\(tyName, _) -> tyName == coerce var) tyVars of
             [(_, tyFound)] -> pure tyFound
             _ ->

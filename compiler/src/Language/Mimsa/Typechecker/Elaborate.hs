@@ -1,6 +1,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Elaborate
   ( elab,
@@ -18,7 +19,6 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
@@ -78,7 +78,7 @@ elabLiteral ann lit =
 
 lookupInEnv :: (Name, Unique) -> Environment -> Maybe Scheme
 lookupInEnv (name, unique) (Environment env' _ _ _) =
-  let look v = M.lookup v (debugPretty "lookupInEnv" env')
+  let look v = M.lookup v env'
    in look (variableToTypeIdentifier (name, unique))
 
 elabVarFromScope ::

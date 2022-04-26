@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Test.Utils.Helpers where
 
 import Data.Bifunctor (first)
