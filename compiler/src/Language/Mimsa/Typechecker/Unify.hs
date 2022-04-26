@@ -9,7 +9,6 @@ module Language.Mimsa.Typechecker.Unify
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State
 import Data.Functor (($>))
 import Data.Map (Map)
@@ -19,7 +18,6 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
 freeTypeVars :: MonoType -> S.Set TypeIdentifier
@@ -40,7 +38,7 @@ freeTypeVars ty = case ty of
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind ::
-  (MonadReader Swaps m, MonadError TypeError m) =>
+  (MonadError TypeError m) =>
   Annotation ->
   TypeIdentifier ->
   MonoType ->
@@ -58,9 +56,8 @@ varBind ann var ty
       _ -> throwError (UnificationError ty (MTVar ann var))
   | typeEquals ty (MTVar mempty var) = pure mempty
   | S.member var (freeTypeVars ty) = do
-    swaps <- ask
     throwError $
-      FailsOccursCheck swaps var ty
+      FailsOccursCheck var ty
   | otherwise = do
     let ty' = ty $> ann
     pure $ Substitutions (M.singleton var ty')
@@ -76,8 +73,7 @@ flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
 flattenRow other = other
 
 checkMatching ::
-  ( MonadReader Swaps m,
-    MonadState TypecheckState m,
+  ( MonadState TypecheckState m,
     MonadError TypeError m
   ) =>
   Annotation ->
@@ -92,8 +88,7 @@ checkMatching ann ann' as bs k = do
   unify tyLeft tyRight
 
 unifyRecords ::
-  ( MonadReader Swaps m,
-    MonadError TypeError m,
+  ( MonadError TypeError m,
     MonadState TypecheckState m
   ) =>
   (Annotation, Map Name MonoType) ->
@@ -109,8 +104,7 @@ unifyRecords (ann, as) (ann', bs) = do
       pure (mconcat s)
 
 unifyRecordRows ::
-  ( MonadReader Swaps m,
-    MonadError TypeError m,
+  ( MonadError TypeError m,
     MonadState TypecheckState m
   ) =>
   (Annotation, Map Name MonoType, MonoType) ->
@@ -129,8 +123,7 @@ unifyRecordRows (ann, as, restA) (ann', bs, restB) = do
   pure (mconcat s1 <> s2 <> s3)
 
 unifyRecordWithRow ::
-  ( MonadReader Swaps m,
-    MonadError TypeError m,
+  ( MonadError TypeError m,
     MonadState TypecheckState m
   ) =>
   (Annotation, Map Name MonoType) ->
@@ -149,8 +142,7 @@ unifyRecordWithRow (ann, as) (ann', bs, rest) = do
   pure (mconcat s1 <> s2)
 
 unifyPairs ::
-  ( MonadReader Swaps m,
-    MonadError TypeError m,
+  ( MonadError TypeError m,
     MonadState TypecheckState m
   ) =>
   (MonoType, MonoType) ->
@@ -165,8 +157,7 @@ typeEquals :: MonoType -> MonoType -> Bool
 typeEquals mtA mtB = (mtA $> ()) == (mtB $> ())
 
 unify ::
-  ( MonadReader Swaps m,
-    MonadError TypeError m,
+  ( MonadError TypeError m,
     MonadState TypecheckState m
   ) =>
   MonoType ->

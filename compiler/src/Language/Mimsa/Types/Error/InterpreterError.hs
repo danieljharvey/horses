@@ -11,8 +11,9 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
+import Language.Mimsa.Types.Typechecker.Unique
 
-type InterpretExpr var ann = Expr (var, Maybe ExprHash) (ExprData var ann)
+type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
 
 data InterpreterError var ann
   = UnknownInterpreterError

@@ -12,6 +12,7 @@ where
 
 import Control.Monad.Trans.Class
 import qualified Data.Aeson as JSON
+import Data.Bifunctor
 import qualified Data.Map as M
 import Data.OpenApi
 import Data.Text (Text)
@@ -20,7 +21,6 @@ import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
-import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
@@ -62,10 +62,10 @@ bindExpression ::
 bindExpression mimsaEnv (BindExpressionRequest projectHash name' input) = runMimsaHandlerT $ do
   let action = do
         expr <- Actions.parseExpr input
-        (_, _, resolved@(ResolvedExpression _ se _ _ swaps typedExpr input')) <-
+        (_, _, resolved@(ResolvedExpression _ se _ typedExpr input')) <-
           Actions.bindExpression expr name' input
         gv <- Actions.graphExpression se
-        typedNameExpr <- Actions.useSwaps swaps typedExpr
+        let typedNameExpr = first fst typedExpr
         let warnings = getWarnings resolved
         canOptimise <- Actions.canOptimise se
         pure $ makeExpressionData se typedNameExpr gv input' warnings canOptimise

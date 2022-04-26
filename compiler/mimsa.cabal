@@ -38,7 +38,6 @@ library
       Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression
       Language.Mimsa.Actions.Helpers.LookupExpression
       Language.Mimsa.Actions.Helpers.Parse
-      Language.Mimsa.Actions.Helpers.Swaps
       Language.Mimsa.Actions.Helpers.UpdateTests
       Language.Mimsa.Actions.Interpret
       Language.Mimsa.Actions.Monad
@@ -73,7 +72,6 @@ library
       Language.Mimsa.Interpreter.Infix
       Language.Mimsa.Interpreter.Interpret
       Language.Mimsa.Interpreter.Let
-      Language.Mimsa.Interpreter.MarkImports
       Language.Mimsa.Interpreter.Monad
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.RecordAccess
@@ -103,6 +101,8 @@ library
       Language.Mimsa.Store.ExtractTypes
       Language.Mimsa.Store.ExtractVars
       Language.Mimsa.Store.Hashing
+      Language.Mimsa.Store.Helpers
+      Language.Mimsa.Store.ResolveDataTypes
       Language.Mimsa.Store.ResolvedDeps
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
@@ -120,7 +120,6 @@ library
       Language.Mimsa.Transform.FlattenLets
       Language.Mimsa.Transform.FloatDown
       Language.Mimsa.Transform.FloatUp
-      Language.Mimsa.Transform.InlineDeps
       Language.Mimsa.Transform.Inliner
       Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.SimplifyPatterns
@@ -136,6 +135,7 @@ library
       Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.KindChecker
       Language.Mimsa.Typechecker.NormaliseTypes
+      Language.Mimsa.Typechecker.NumberVars
       Language.Mimsa.Typechecker.OutputTypes
       Language.Mimsa.Typechecker.ScopeTypeVar
       Language.Mimsa.Typechecker.Solve
@@ -143,7 +143,6 @@ library
       Language.Mimsa.Typechecker.Typecheck
       Language.Mimsa.Typechecker.TypedHoles
       Language.Mimsa.Typechecker.Unify
-      Language.Mimsa.Typechecker.UseSwaps
       Language.Mimsa.Types.AST
       Language.Mimsa.Types.AST.Annotation
       Language.Mimsa.Types.AST.DataType
@@ -169,7 +168,6 @@ library
       Language.Mimsa.Types.Identifiers.TyCon
       Language.Mimsa.Types.Identifiers.TypeIdentifier
       Language.Mimsa.Types.Identifiers.TyVar
-      Language.Mimsa.Types.Identifiers.Variable
       Language.Mimsa.Types.Interpreter.Stack
       Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project
@@ -182,7 +180,6 @@ library
       Language.Mimsa.Types.Project.Versioned
       Language.Mimsa.Types.Project.VersionedMap
       Language.Mimsa.Types.ResolvedExpression
-      Language.Mimsa.Types.Scope
       Language.Mimsa.Types.Store
       Language.Mimsa.Types.Store.Bindings
       Language.Mimsa.Types.Store.ExprHash
@@ -192,8 +189,6 @@ library
       Language.Mimsa.Types.Store.Store
       Language.Mimsa.Types.Store.StoreExpression
       Language.Mimsa.Types.Store.TypeBindings
-      Language.Mimsa.Types.SubstitutedExpression
-      Language.Mimsa.Types.Swaps
       Language.Mimsa.Types.Typechecker
       Language.Mimsa.Types.Typechecker.Constraint
       Language.Mimsa.Types.Typechecker.Environment
@@ -202,6 +197,7 @@ library
       Language.Mimsa.Types.Typechecker.Scheme
       Language.Mimsa.Types.Typechecker.Substitutions
       Language.Mimsa.Types.Typechecker.TypeConstructor
+      Language.Mimsa.Types.Typechecker.Unique
       Language.Mimsa.Types.Typechecker.UniVar
       Language.Mimsa.Utils
   other-modules:
@@ -402,7 +398,6 @@ test-suite mimsa-test
       Test.Project.Usages
       Test.Serialisation
       Test.Store.Resolver
-      Test.Store.Substitutor
       Test.Store.UpdateDeps
       Test.Tests.Properties
       Test.Tests.PropertyTest
@@ -419,13 +414,13 @@ test-suite mimsa-test
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.KindChecker
+      Test.Typechecker.NumberVars
       Test.Typechecker.OutputTypes
       Test.Typechecker.ScopeTypeVar
       Test.Typechecker.Substitutions
       Test.Typechecker.Typecheck
       Test.Typechecker.TypeError
       Test.Typechecker.Unify
-      Test.Typechecker.UseSwaps
       Test.Utils.Compilation
       Test.Utils.Helpers
       Test.Utils.Serialisation

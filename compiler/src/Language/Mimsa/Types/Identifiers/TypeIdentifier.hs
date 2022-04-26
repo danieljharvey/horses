@@ -17,16 +17,21 @@ import qualified Data.Aeson as JSON
 import Data.Maybe
 import GHC.Generics
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Identifiers.TyVar
 import Prettyprinter
 
 data TypeIdentifier
-  = TVName
+  = TVName -- a type variable from a type signature
       { tiNum :: Maybe Int,
         tiVar :: TyVar
       }
-  | TVUnificationVar
+  | TVUnificationVar -- invented type for unification
       { tiUniVar :: Int
+      }
+  | TVVar -- variable with name for ease of errors
+      { tiUniVar :: Int,
+        tvName :: Name
       }
   deriving stock
     ( Eq,
@@ -55,7 +60,9 @@ printTypeNum i = [toEnum (index + start)] <> suffix
 renderTypeIdentifier :: TypeIdentifier -> Doc ann
 renderTypeIdentifier (TVName _ n) = renderTyVar n
 renderTypeIdentifier (TVUnificationVar i) = pretty (printTypeNum i)
+renderTypeIdentifier (TVVar i _) = pretty (printTypeNum i)
 
 getUniVar :: TypeIdentifier -> Int
 getUniVar (TVName i _) = fromMaybe 0 i
 getUniVar (TVUnificationVar i) = i
+getUniVar (TVVar i _) = i

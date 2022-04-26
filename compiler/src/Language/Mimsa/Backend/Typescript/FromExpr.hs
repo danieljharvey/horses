@@ -91,6 +91,7 @@ toTSType' _ (MTVar _ a) =
   let newVar = case a of
         TVUnificationVar i' -> T.toTitle (T.pack (printTypeNum (i' + 1)))
         TVName _ a' -> T.toTitle (coerce a')
+        TVVar i' _ -> T.toTitle (T.pack (printTypeNum (i' + 1)))
    in pure (TSTypeVar newVar, S.singleton (TSGeneric newVar))
 toTSType' _ mt@MTTypeApp {} =
   consToTSType mt

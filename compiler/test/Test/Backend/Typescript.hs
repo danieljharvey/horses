@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Test.Backend.Typescript
   ( spec,
@@ -23,9 +22,7 @@ import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
-import Language.Mimsa.Typechecker.UseSwaps
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker
@@ -48,10 +45,7 @@ testFromInputText input =
   case evaluateText testStdlib input of
     Left e -> throwError (prettyPrint e)
     Right resolved -> do
-      exprName <-
-        first
-          (prettyPrint . TypeErr @Annotation input)
-          (useSwaps (reSwaps resolved) (reTypedExpression resolved))
+      let exprName = first fst (reTypedExpression resolved)
       let readerState = TSReaderState mempty
       first prettyPrint (printModule . fst <$> fromExpr readerState exprName)
 

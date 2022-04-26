@@ -9,18 +9,14 @@ module Language.Mimsa.Typechecker.Elaborate
   )
 where
 
-import Control.Applicative
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State (State)
 import Control.Monad.Writer
-import Data.Coerce (coerce)
+import Data.Bifunctor
 import Data.Foldable
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Data.Maybe (listToMaybe)
-import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
@@ -32,18 +28,18 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Unique
 
 type ElabM =
   ExceptT
     TypeError
     ( WriterT
         [Constraint]
-        (ReaderT Swaps (State TypecheckState))
+        (State TypecheckState)
     )
 
-type TcExpr = Expr Variable Annotation
+type TcExpr = Expr (Name, Unique) Annotation
 
 recoverAnn :: MonoType -> Annotation
 recoverAnn = getAnnotationForType
@@ -51,7 +47,7 @@ recoverAnn = getAnnotationForType
 getTypeFromAnn :: Expr var MonoType -> MonoType
 getTypeFromAnn = getAnnotation
 
-getPatternTypeFromAnn :: Pattern Variable MonoType -> MonoType
+getPatternTypeFromAnn :: Pattern (Name, Unique) MonoType -> MonoType
 getPatternTypeFromAnn pat =
   case pat of
     PLit ann _ -> ann
@@ -63,11 +59,11 @@ getPatternTypeFromAnn pat =
     PArray ann _ _ -> ann
     PString ann _ _ -> ann
 
-getSpreadTypeFromAnn :: Spread Variable MonoType -> Maybe MonoType
+getSpreadTypeFromAnn :: Spread (Name, Unique) MonoType -> Maybe MonoType
 getSpreadTypeFromAnn (SpreadValue ann _) = Just ann
 getSpreadTypeFromAnn _ = Nothing
 
-type ElabExpr = Expr Variable MonoType
+type ElabExpr = Expr (Name, Unique) MonoType
 
 --------------
 
@@ -79,33 +75,29 @@ elabLiteral ann lit =
         (MyString _) -> MTString
    in pure (MyLiteral (MTPrim ann tyLit) lit)
 
-lookupInEnv :: Swaps -> Variable -> Environment -> Maybe Scheme
-lookupInEnv swaps var' (Environment env' _ _ _) =
+lookupInEnv :: (Name, Unique) -> Environment -> Maybe Scheme
+lookupInEnv (name, unique) (Environment env' _ _ _) =
   let look v = M.lookup v env'
-      wrapName (Name n) = TVName Nothing (coerce n)
-   in look (variableToTypeIdentifier var')
-        <|> (M.lookup var' swaps >>= look . wrapName)
+   in look (variableToTypeIdentifier (name, unique))
 
 elabVarFromScope ::
   Environment ->
   Annotation ->
-  Variable ->
+  (Name, Unique) ->
   ElabM ElabExpr
 elabVarFromScope env ann var' = do
-  swaps <- ask
-  case lookupInEnv swaps var' env of
+  case lookupInEnv var' env of
     Just mt -> do
       freshMonoType <- instantiate ann mt
       pure (MyVar freshMonoType var')
     _ -> do
       throwError $
-        VariableNotInEnv
-          swaps
+        VariableNotFound
           ann
-          var'
-          (S.fromList (M.keys (getSchemes env)))
+          (M.keysSet $ getSchemes env)
+          (fst var')
 
-envFromVar :: Variable -> Scheme -> Environment
+envFromVar :: (Name, Unique) -> Scheme -> Environment
 envFromVar binder scheme =
   Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty
 
@@ -151,18 +143,7 @@ elabApplication env ann function argument = do
     ]
   pure (MyApp tyRes function' argument')
 
--- when we come to do let recursive the name of our binder
--- may already be turned into a number in the expr
--- so we look it up to make sure we bind the right thing
-findActualBindingInSwaps :: Variable -> ElabM Variable
-findActualBindingInSwaps (NamedVar var) = do
-  swaps <- ask
-  case listToMaybe $ M.keys $ M.filter (== var) swaps of
-    Just i -> pure i
-    _ -> pure (NamedVar var)
-findActualBindingInSwaps a = pure a
-
-bindingIsRecursive :: Identifier Variable ann -> TcExpr -> Bool
+bindingIsRecursive :: Identifier (Name, Unique) ann -> TcExpr -> Bool
 bindingIsRecursive ident = getAny . withMonoid findBinding
   where
     variable = case ident of
@@ -191,7 +172,7 @@ monoTypeFromIdentifier = \case
 elabLetBinding ::
   Environment ->
   Annotation ->
-  Identifier Variable Annotation ->
+  Identifier (Name, Unique) Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
@@ -226,16 +207,15 @@ elabLetBinding env ann ident expr body = do
 elabRecursiveLetBinding ::
   Environment ->
   Annotation ->
-  Identifier Variable Annotation ->
+  Identifier (Name, Unique) Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
 elabRecursiveLetBinding env ann ident expr body = do
   let bindName = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
-  binderInExpr <- findActualBindingInSwaps bindName
   tyRecExpr <- getUnknown ann
-  let envWithRecursiveFn = envFromVar binderInExpr (Scheme [] tyRecExpr) <> env
+  let envWithRecursiveFn = envFromVar bindName (Scheme [] tyRecExpr) <> env
   elabExpr <- elab envWithRecursiveFn expr
 
   -- compare annotated type with elabbed expr if possible
@@ -247,7 +227,7 @@ elabRecursiveLetBinding env ann ident expr body = do
 
   let tyExpr = getTypeFromAnn elabExpr
       newEnv =
-        envFromVar binderInExpr (Scheme [] tyExpr) <> env
+        envFromVar bindName (Scheme [] tyExpr) <> env
 
   elabBody <- elab newEnv body
   tell [ShouldEqual tyRecExpr (getTypeFromAnn elabExpr)]
@@ -304,7 +284,7 @@ elabPatternMatch ::
   Environment ->
   Annotation ->
   TcExpr ->
-  [(Pattern Variable Annotation, TcExpr)] ->
+  [(Pattern (Name, Unique) Annotation, TcExpr)] ->
   ElabM ElabExpr
 elabPatternMatch env ann expr patterns = do
   -- ensure we even have any patterns to match on
@@ -331,8 +311,10 @@ elabPatternMatch env ann expr patterns = do
   tell [ShouldEqual tyMatchedPattern (getTypeFromAnn elabExpr)]
   -- combine all output expr types
   tyMatchedExprs <- matchList (getTypeFromAnn . snd <$> elabPatterns)
+  -- remove (,unique) from var
+  let patternsWithoutUnique = first fst . fst <$> patterns
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
-  validatePatterns env ann (fst <$> patterns)
+  validatePatterns env ann patternsWithoutUnique
   -- wrap up the pattern match again
   pure
     ( MyPatternMatch
@@ -349,8 +331,8 @@ checkEmptyPatterns ann as = case as of
 
 elabPattern ::
   Environment ->
-  Pattern Variable Annotation ->
-  ElabM (Pattern Variable MonoType, Environment)
+  Pattern (Name, Unique) Annotation ->
+  ElabM (Pattern (Name, Unique) MonoType, Environment)
 elabPattern env (PLit ann lit) = do
   elabExpr <- elab env (MyLiteral ann lit)
   pure
@@ -655,7 +637,7 @@ elabRecordAccess env ann a name = do
 elabLetPattern ::
   Environment ->
   Annotation ->
-  Pattern Variable Annotation ->
+  Pattern (Name, Unique) Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
@@ -668,13 +650,14 @@ elabLetPattern env ann pat expr body = do
     ]
 
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
-  validatePatterns env ann [pat]
+  validatePatterns env ann [first fst pat]
+
   pure (MyLetPattern (getTypeFromAnn elabBody) elabPat elabExpr elabBody)
 
 elabLambda ::
   Environment ->
   Annotation ->
-  Identifier Variable Annotation ->
+  Identifier (Name, Unique) Annotation ->
   TcExpr ->
   ElabM ElabExpr
 elabLambda env ann ident body = do
@@ -747,9 +730,9 @@ elab env elabExpr =
       let tyItems = getTypeFromAnn <$> elabItems
       pure (MyRecord (MTRecord ann tyItems) elabItems)
     (MyInfix ann op a b) -> elabOperator env ann op a b
-    (MyTypedHole ann name) -> do
+    (MyTypedHole ann (name, unique)) -> do
       tyHole <- addTypedHole env ann name
-      pure (MyVar tyHole (NamedVar name))
+      pure (MyVar tyHole (name, unique))
     (MyLet ann binder expr body) ->
       elabLetBinding env ann binder expr body
     (MyLetPattern ann pat expr body) ->

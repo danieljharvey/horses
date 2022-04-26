@@ -5,34 +5,30 @@
 module Language.Mimsa.Typechecker.Solve (solve, runSolveM, SolveM) where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
 
-type SolveM = ExceptT TypeError (ReaderT Swaps (State TypecheckState))
+type SolveM = ExceptT TypeError (State TypecheckState)
 
 runSolveM ::
-  Swaps ->
   TypecheckState ->
   SolveM a ->
   Either TypeError (TypecheckState, a)
-runSolveM swaps tcState value =
+runSolveM tcState value =
   case either' of
     (Right a, newTcState) -> Right (newTcState, a)
     (Left e, _) -> Left e
   where
     either' =
       runState
-        (runReaderT (runExceptT value) swaps)
+        (runExceptT value)
         tcState
 
 solve ::
   ( MonadState TypecheckState m,
-    MonadReader Swaps m,
     MonadError TypeError m
   ) =>
   [Constraint] ->

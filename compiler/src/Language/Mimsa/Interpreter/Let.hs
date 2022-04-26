@@ -5,7 +5,7 @@ import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Interpreter.Stack
-import Language.Mimsa.Types.Store.ExprHash
+import Language.Mimsa.Types.Typechecker.Unique
 
 varFromIdent :: Identifier var ann -> var
 varFromIdent (Identifier _ var) = var
@@ -18,7 +18,7 @@ varFromIdent (AnnotatedIdentifier _ var) = var
 interpretLetExpr ::
   (Ord var, Monoid ann) =>
   InterpretFn var ann ->
-  (var, Maybe ExprHash) ->
+  (var, Unique) ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretLetExpr interpretFn var expr = do
@@ -35,7 +35,7 @@ interpretLetExpr interpretFn var expr = do
 interpretLet ::
   (Ord var, Monoid ann) =>
   InterpretFn var ann ->
-  Identifier (var, Maybe ExprHash) (ExprData var ann) ->
+  Identifier (var, Unique) (ExprData var ann) ->
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)

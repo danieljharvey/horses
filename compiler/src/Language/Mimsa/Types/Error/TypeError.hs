@@ -1,7 +1,9 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Language.Mimsa.Types.Error.TypeError
   ( TypeErrorF (..),
@@ -14,7 +16,6 @@ where
 import Data.Foldable (fold)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -22,26 +23,24 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps (Swaps)
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Typechecker.FoundPath
 import Language.Mimsa.Types.Typechecker.MonoType
 import Prettyprinter
 import Text.Megaparsec
 
-data TypeErrorF ann
+data TypeErrorF var ann
   = UnknownTypeError
-  | FailsOccursCheck Swaps TypeIdentifier (Type ann)
+  | FailsOccursCheck TypeIdentifier (Type ann)
   | UnificationError (Type ann) (Type ann)
-  | VariableNotInEnv Swaps ann Variable (Set TypeIdentifier)
-  | MissingRecordMember ann Name (Set Name)
-  | MissingRecordTypeMember ann Name (Map Name (Type ann))
+  | MissingRecordMember ann var (Set var)
+  | MissingRecordTypeMember ann var (Map Name (Type ann))
   | NoFunctionEquality (Type ann) (Type ann)
   | CannotMatchRecord Environment ann (Type ann)
   | CaseMatchExpectedPair ann (Type ann)
   | TypeConstructorNotInScope Environment ann TyCon
   | TypeNameNotInScope Environment ann TyCon
-  | TypeVariablesNotInDataType TyCon (Set Name) (Set Name)
+  | TypeVariablesNotInDataType TyCon (Set var) (Set var)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
   | DuplicateTypeDeclaration TyCon
@@ -51,25 +50,28 @@ data TypeErrorF ann
   | CouldNotFindInfixOperator ann InfixOp (Set InfixOp)
   | CannotUseBuiltInTypeAsConstructor ann TyCon
   | InternalConstructorUsedOutsidePatternMatch ann TyCon
-  | PatternMatchErr (PatternMatchErrorF ann)
-  | CouldNotFindSwapForVariable Variable Swaps
-  | SwapsChangingError
+  | PatternMatchErr (PatternMatchErrorF var ann)
+  | NameNotFoundInScope ann (Set var) var
+  | VariableNotFound ann (Set TypeIdentifier) var
   deriving stock (Eq, Ord, Show, Foldable)
 
-type TypeError = TypeErrorF Annotation
+type TypeError = TypeErrorF Name Annotation
 
 ------
 
-instance Semigroup (TypeErrorF ann) where
+instance Semigroup (TypeErrorF var ann) where
   a <> _ = a
 
-instance Monoid (TypeErrorF ann) where
+instance Monoid (TypeErrorF var ann) where
   mempty = UnknownTypeError
 
-instance (Printer ann, Show ann) => Printer (TypeErrorF ann) where
+instance
+  (Printer ann, Show ann, Printer var, Printer (Pattern var ann)) =>
+  Printer (TypeErrorF var ann)
+  where
   prettyDoc = vsep . renderTypeError
 
-instance ShowErrorComponent (TypeErrorF Annotation) where
+instance ShowErrorComponent (TypeErrorF Name Annotation) where
   showErrorComponent = T.unpack . prettyPrint
   errorComponentLen typeErr = let (_, len) = getErrorPos typeErr in len
 
@@ -105,23 +107,14 @@ showMap renderK renderA map' =
 
 ------
 
-withSwap :: Swaps -> Variable -> Name
-withSwap _ (NamedVar n) = n
-withSwap swaps (NumberedVar i) =
-  fromMaybe
-    "unknownvar"
-    (M.lookup (NumberedVar i) swaps)
-
 -----
 
-renderTypeError :: (Printer ann) => TypeErrorF ann -> [Doc a]
+renderTypeError :: (Printer ann, Printer var, Printer (Pattern var ann)) => TypeErrorF var ann -> [Doc a]
 renderTypeError UnknownTypeError =
   ["Unknown type error"]
-renderTypeError (FailsOccursCheck swaps var mt) =
-  [ prettyDoc var <+> "appears inside" <+> prettyDoc mt <+> ".",
-    "Swaps:"
+renderTypeError (FailsOccursCheck var mt) =
+  [ prettyDoc var <+> "appears inside" <+> prettyDoc mt <+> "."
   ]
-    <> showMap prettyDoc prettyDoc swaps
 renderTypeError (UnificationError a b) =
   [ "Unification error",
     "Cannot match" <+> prettyDoc a <+> "and" <+> prettyDoc b
@@ -131,19 +124,16 @@ renderTypeError (CouldNotFindInfixOperator _ op allOps) =
     "The following are available:"
   ]
     <> showSet prettyDoc allOps
-renderTypeError (VariableNotInEnv swaps _ name members) =
-  ["Variable" <+> renderName (withSwap swaps name) <+> " not in scope."]
-    <> showSet prettyDoc members
 renderTypeError (MissingRecordMember _ name members) =
   [ "Cannot find" <+> prettyDoc name <> ".",
     "The following are available:"
   ]
-    <> showSet renderName members
+    <> showSet prettyDoc members
 renderTypeError (MissingRecordTypeMember _ name types) =
-  [ "Cannot find" <+> dquotes (renderName name) <> ".",
+  [ "Cannot find" <+> dquotes (prettyDoc name) <> ".",
     "The following record items are available:"
   ]
-    <> showKeys renderName types
+    <> showKeys prettyDoc types
 renderTypeError (CannotMatchRecord env _ mt) =
   [ "Cannot match type" <+> prettyDoc mt <+> "to record.",
     "The following are available:",
@@ -157,7 +147,6 @@ renderTypeError (TypeConstructorNotInScope env _ constructor) =
     "The following are available:"
   ]
     <> printDataTypes env
-renderTypeError SwapsChangingError = ["Error swapping names back for pattern match error"]
 renderTypeError (TypeNameNotInScope env _ typeName) =
   [ "Type name" <+> prettyDoc typeName
       <+> "not found in scope.",
@@ -172,14 +161,14 @@ renderTypeError (RecordKeyMismatch keys) =
   [ "Record key mismatch",
     "The following keys were expected to be in both records and were not:"
   ]
-    <> showSet renderName keys
+    <> showSet prettyDoc keys
 renderTypeError (TypeVariablesNotInDataType constructor names as) =
   [ "Type variables" <+> mconcat (showSet prettyDoc names)
       <+> "could not be in found in type vars for"
       <+> prettyDoc constructor,
     "The following type variables were found:"
   ]
-    <> showSet renderName as
+    <> showSet prettyDoc as
 renderTypeError (IncompletePatternMatch _ names) =
   [ "Incomplete pattern match.",
     "Missing constructors:"
@@ -208,10 +197,21 @@ renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
   ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used outside of a pattern match"]
 renderTypeError (PatternMatchErr pmErr) =
   [prettyDoc pmErr]
-renderTypeError (CouldNotFindSwapForVariable var swaps) =
-  ["Could not find swap for variable" <+> prettyDoc var <+> "in" <+> itemList]
+renderTypeError (NameNotFoundInScope _ available name) =
+  ["Could not find var " <+> prettyDoc name <+> "in" <+> itemList]
   where
-    itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> M.keys swaps)) <+> "]"
+    itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> S.toList available)) <+> "]"
+renderTypeError (VariableNotFound _ available name) =
+  ["Could not find var " <+> prettyDoc name <+> "in scope" <+> itemList]
+  where
+    itemList =
+      "["
+        <+> pretty
+          ( T.intercalate
+              ", "
+              (prettyPrint <$> S.toList available)
+          )
+        <+> "]"
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
@@ -220,7 +220,7 @@ printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
     printDt (DataType tyName tyVars constructors) =
       [prettyDoc tyName] <> printTyVars tyVars
         <> zipWith (<>) (":" : repeat "|") (printCons <$> M.toList constructors)
-    printTyVars as = renderName <$> as
+    printTyVars as = prettyDoc <$> as
     printCons (consName, args) =
       fold
         ( [ prettyDoc

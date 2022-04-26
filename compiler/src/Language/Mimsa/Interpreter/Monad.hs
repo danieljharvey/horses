@@ -17,6 +17,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
+import Language.Mimsa.Types.Typechecker.Unique
 
 -- | run action with entirely new frame
 -- | useful for running functions from their closures
@@ -30,7 +31,7 @@ withNewStackFrame sf =
 
 extendStackFrame ::
   (Ord var) =>
-  [ ( (var, Maybe ExprHash),
+  [ ( (var, Unique),
       InterpretExpr var ann
     )
   ] ->
@@ -57,17 +58,17 @@ lookupInGlobals exprHash = do
 
 lookupVar ::
   (Ord var, Monoid ann) =>
-  (var, Maybe ExprHash) ->
+  (var, Unique) ->
   InterpreterM var ann (InterpretExpr var ann)
 lookupVar (var, maybeExprHash) =
   case maybeExprHash of
-    Just exprHash -> do
+    Dependency exprHash -> do
       intExpr <- lookupInGlobals exprHash
       case intExpr of
         -- if it points to another var, fetch that
         (MyVar _ a) -> lookupVar a
         other -> pure other
-    Nothing -> do
+    _ -> do
       (StackFrame entries _) <- getCurrentStackFrame
       case M.lookup var entries of
         Just myLam@(MyLambda (ExprData _ isRec _) _ _) ->
@@ -109,7 +110,7 @@ addOperatorToFrame infixOp expr (StackFrame entries infixes) =
 
 addVarToFrame ::
   (Ord var) =>
-  (var, Maybe ExprHash) ->
+  (var, Unique) ->
   InterpretExpr var ann ->
   StackFrame var ann ->
   StackFrame var ann

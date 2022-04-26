@@ -30,7 +30,6 @@ import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.Usages as Usages
 import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
-import qualified Test.Store.Substitutor as Substitutor
 import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Tests.Properties as Properties
 import qualified Test.Tests.PropertyTest as PropertyTest
@@ -47,13 +46,13 @@ import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.KindChecker as KindChecker
+import qualified Test.Typechecker.NumberVars as NumberVars
 import qualified Test.Typechecker.OutputTypes as OutputTypes
 import qualified Test.Typechecker.ScopeTypeVar as ScopeTypeVar
 import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
-import qualified Test.Typechecker.UseSwaps as UseSwaps
 
 main :: IO ()
 main =
@@ -61,7 +60,6 @@ main =
     Syntax.spec
     Prettier.spec
     Resolver.spec
-    Substitutor.spec
     Repl.spec
     Unify.spec
     Usages.spec
@@ -75,7 +73,6 @@ main =
     UpdateDeps.spec
     BindType.spec
     Codegen.spec
-    UseSwaps.spec
     AddUnitTest.spec
     BindExpression.spec
     Compile.spec
@@ -108,3 +105,4 @@ main =
     Build.spec
     TypecheckAction.spec
     SimplifyPatterns.spec
+    NumberVars.spec

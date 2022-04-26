@@ -19,7 +19,6 @@ module Server.Handlers
     projectFromExpressionHandler,
     readStoreHandler,
     writeStoreHandler,
-    useSwapsHandler,
     runTestsHandler,
   )
 where
@@ -48,14 +47,11 @@ import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
 import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
-import Language.Mimsa.Typechecker.UseSwaps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Swaps
-import Language.Mimsa.Types.Typechecker
 import Servant
 import Server.Helpers
 import Server.Persistence
@@ -269,10 +265,6 @@ storeFromExprHashHandler mimsaEnv exprHash =
     (mimsaConfig mimsaEnv)
     UserError
     (recursiveLoadBoundExpressions mempty (S.singleton exprHash))
-
-useSwapsHandler :: Swaps -> Expr Variable MonoType -> Handler (Expr Name MonoType)
-useSwapsHandler swaps expr =
-  handleEither UserError (useSwaps swaps expr)
 
 runTestsHandler ::
   MimsaEnvironment ->

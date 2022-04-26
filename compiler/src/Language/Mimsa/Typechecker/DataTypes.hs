@@ -9,7 +9,6 @@ module Language.Mimsa.Typechecker.DataTypes
     inferConstructorTypes,
     inferType,
     dataTypeWithVars,
-    storeExprToDataTypes,
   )
 where
 
@@ -23,7 +22,6 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.TcMonad
@@ -31,27 +29,24 @@ import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 createEnv ::
   Map Name MonoType ->
-  Set (StoreExpression Annotation) ->
+  Map TyCon DataType ->
   Environment
 createEnv typeMap dataTypes =
   createDepsEnv typeMap
     <> createTypesEnv dataTypes
 
-createTypesEnv :: Set (StoreExpression Annotation) -> Environment
+createTypesEnv :: Map TyCon DataType -> Environment
 createTypesEnv dataTypes =
-  Environment mempty (builtInDts <> otherDts) mempty mempty
+  Environment mempty (builtInDts <> dataTypes) mempty mempty
   where
     makeDT (name, _) =
       M.singleton name (DataType name mempty mempty)
     builtInDts =
       mconcat $ makeDT <$> M.toList builtInTypes
-    otherDts =
-      mconcat $ storeExprToDataTypes <$> S.toList dataTypes
 
 createDepsEnv :: Map Name MonoType -> Environment
 createDepsEnv typeMap =
@@ -63,17 +58,6 @@ createDepsEnv typeMap =
         schemeFromMonoType
     mkSchemes =
       M.fromList . fmap toScheme . M.toList
-
-storeExprToDataTypes :: StoreExpression ann -> Map TyCon DataType
-storeExprToDataTypes =
-  mconcat
-    . fmap withDt
-    . S.toList
-    . extractDataTypes
-    . storeExpression
-  where
-    withDt dt@(DataType tyName _ _) =
-      M.singleton tyName dt
 
 -- | Make all free variables polymorphic so that we get a fresh version of
 -- everything each time
@@ -124,6 +108,7 @@ inferDataConstructor env ann tyCon = do
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 getVariablesForField :: Type ann -> Set Name
+getVariablesForField (MTVar _ (TVVar _ name)) = S.singleton name
 getVariablesForField (MTVar _ (TVName _ n)) = S.singleton (coerce n)
 getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
@@ -181,6 +166,15 @@ inferConstructorTypes (DataType typeName tyVarNames constructors) = do
   tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
   let findType ty = case ty of
         MTVar _ (TVName _ var) ->
+          case filter (\(tyName, _) -> tyName == coerce var) tyVars of
+            [(_, tyFound)] -> pure tyFound
+            _ ->
+              throwError $
+                TypeVariablesNotInDataType
+                  typeName
+                  (S.singleton (coerce var))
+                  (S.fromList (fst <$> tyVars))
+        MTVar _ (TVVar _ var) ->
           case filter (\(tyName, _) -> tyName == coerce var) tyVars of
             [(_, tyFound)] -> pure tyFound
             _ ->

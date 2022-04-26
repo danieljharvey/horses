@@ -6,12 +6,12 @@ module Language.Mimsa.Actions.Evaluate
 where
 
 import Control.Monad.Except
+import Data.Bifunctor
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
-import qualified Language.Mimsa.Actions.Helpers.Swaps as Actions
 import qualified Language.Mimsa.Actions.Interpret as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
@@ -57,15 +57,14 @@ evaluate input expr = do
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
   -- resolve optimised expression
-  (ResolvedExpression mt newStoreExpr _expr' _scope' swaps typedExpr input') <-
+  (ResolvedExpression mt newStoreExpr _expr' typedExpr input') <-
     Actions.checkStoreExpression
       (prettyPrint optimisedStoreExpr)
       project
       optimisedStoreExpr
 
   -- expr with types and Name
-  typedNameExpr <-
-    Actions.useSwaps swaps typedExpr
+  let typedNameExpr = first fst typedExpr
 
   -- interpret
   interpretedExpr <-

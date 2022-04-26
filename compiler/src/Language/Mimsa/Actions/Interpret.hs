@@ -11,9 +11,10 @@ import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter.Interpret
-import Language.Mimsa.Interpreter.MarkImports
 import Language.Mimsa.Interpreter.Types
+import Language.Mimsa.Printer
 import Language.Mimsa.Store
+import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -50,8 +51,10 @@ interpretAll inputStoreExpressions = do
   let action depMap se = do
         -- get us out of this Map of Maps situation
         let flatDeps = squashify depMap
+        -- add numbers and mark imports
+        numberedSe <- liftEither (first (TypeErr (prettyPrint se)) (addNumbers se))
         -- tag each `var` with it's location if it is an import
-        let withImports = addEmptyStackFrames (convertImports se)
+        let withImports = addEmptyStackFrames numberedSe
         -- interpret se
         interpreted <- liftEither (first InterpreterErr (interpret flatDeps withImports))
         -- we need to accumulate all deps

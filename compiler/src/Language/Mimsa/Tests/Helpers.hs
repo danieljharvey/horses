@@ -24,7 +24,6 @@ unifies ::
 unifies mtA mtB = do
   _ <-
     runSolveM
-      mempty
       (defaultTcState mempty)
       (unify mtA mtB)
   pure ()

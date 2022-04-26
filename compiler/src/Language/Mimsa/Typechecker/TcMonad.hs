@@ -14,7 +14,6 @@ module Language.Mimsa.Typechecker.TcMonad
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State (MonadState, gets, modify)
 import Data.Coerce
 import Data.Functor
@@ -22,10 +21,10 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Swaps
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Unique
 
 data TypecheckState = TypecheckState
   { tcsNum :: Int,
@@ -35,7 +34,7 @@ data TypecheckState = TypecheckState
 instantiate ::
   (MonadState TypecheckState m) => Annotation -> Scheme -> m MonoType
 instantiate ann (Scheme vars ty) = do
-  newVars <- traverse (const $ getUnknown ann) vars
+  newVars <- traverse (const (getUnknown ann)) vars
   let pairs = zip vars newVars
   let subst = Substitutions $ M.fromList pairs
   let substitutedType = applySubst subst ty
@@ -60,13 +59,14 @@ typeFromUniVar :: Annotation -> Int -> MonoType
 typeFromUniVar ann = MTVar ann . TVUnificationVar
 
 getUnknown :: (MonadState TypecheckState m) => Annotation -> m MonoType
-getUnknown ann = typeFromUniVar ann <$> getNextUniVar
+getUnknown ann =
+  typeFromUniVar ann
+    <$> getNextUniVar
 
 -- | Get a new unknown for a typed hole and return it's monotype
 addTypedHole ::
   ( MonadState TypecheckState m,
-    MonadError TypeError m,
-    MonadReader Swaps m
+    MonadError TypeError m
   ) =>
   Environment ->
   Annotation ->
@@ -83,49 +83,44 @@ addTypedHole env ann name = do
                 <> M.singleton name (ann, i, localTypeMap)
           }
     )
-  pure $ MTVar ann (TVUnificationVar i)
-
--- | if we have a `Variable`, lookup it's original `Name` in Reader context
-lookupSwap ::
-  ( MonadReader Swaps m,
-    MonadError TypeError m
-  ) =>
-  Variable ->
-  m Name
-lookupSwap var = do
-  swaps <- ask
-  case M.lookup var swaps of
-    Just a -> pure a
-    _ -> throwError UnknownTypeError -- forgive me, Padre
+  pure $ MTVar ann (TVVar i name)
 
 -- capture type schemes currently in scope
 -- instantiate them now
 schemesToTypeMap ::
-  (MonadState TypecheckState m, MonadError TypeError m, MonadReader Swaps m) =>
+  (MonadState TypecheckState m, MonadError TypeError m) =>
   Map TypeIdentifier Scheme ->
   m (Map Name MonoType)
 schemesToTypeMap schemes = do
   let fn (k, v) =
         let leName = case k of
               TVName _ n -> pure (Name $ coerce n)
-              TVUnificationVar i -> lookupSwap (NumberedVar i)
+              TVUnificationVar _i ->
+                throwError UnknownTypeError -- TODO: bespoke error
+              TVVar _ name -> pure name
          in (,) <$> leName <*> instantiate mempty v
-
   typeMap <- traverse fn (M.toList schemes)
   pure (M.fromList typeMap)
 
--- todo - look up index in substitutions to get type
 getTypedHoles ::
   (MonadState TypecheckState m) =>
   Substitutions ->
   m (Map Name (MonoType, Map Name MonoType))
 getTypedHoles subs'@(Substitutions subs) = do
   holes <- gets tcsTypedHoles
-  let getMonoType (ann, i, localTypeMap) = case M.lookup (TVUnificationVar i) subs of
-        Just a -> (applySubst subs' a, applySubst subs' localTypeMap)
-        Nothing -> (applySubst subs' (MTVar ann (TVUnificationVar i)), applySubst subs' localTypeMap)
-  pure $ fmap getMonoType holes
+  let getMonoType name (ann, i, localTypeMap) =
+        case M.lookup (TVVar i name) subs of
+          Just a ->
+            ( applySubst subs' a,
+              applySubst subs' localTypeMap
+            )
+          Nothing ->
+            ( applySubst subs' (MTVar ann (TVVar i name)),
+              applySubst subs' localTypeMap
+            )
+  pure $ M.mapWithKey getMonoType holes
 
-variableToTypeIdentifier :: Variable -> TypeIdentifier
-variableToTypeIdentifier (NamedVar n) = TVName Nothing (coerce n)
-variableToTypeIdentifier (NumberedVar i) = TVUnificationVar i
+variableToTypeIdentifier :: (Name, Unique) -> TypeIdentifier
+variableToTypeIdentifier (name, Unique i) = TVVar i name
+variableToTypeIdentifier (name, Dependency _) =
+  TVName Nothing (coerce name)

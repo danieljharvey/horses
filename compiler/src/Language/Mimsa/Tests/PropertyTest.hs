@@ -16,6 +16,7 @@ import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
+import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Tests.Types
@@ -89,7 +90,7 @@ runPropertyTest project pt = do
       seDeps <- toMonadError $ first StoreErr (recursiveResolve (prjStore project) se)
 
       -- generate inputs
-      samples <- liftIO $ generateFromMonoType (S.fromList seDeps) inputMt
+      samples <- liftIO $ generateFromMonoType (createTypeMap seDeps) inputMt
 
       let exprs = applyGenerated (storeExpression . reStoreExpression $ resolvedExpr) <$> samples
 

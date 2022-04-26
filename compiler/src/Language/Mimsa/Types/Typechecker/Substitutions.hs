@@ -20,7 +20,10 @@ import Language.Mimsa.Types.Typechecker.MonoType
 
 ---
 
-newtype Substitutions = Substitutions {getSubstitutions :: Map TypeIdentifier MonoType}
+newtype Substitutions = Substitutions
+  { getSubstitutions ::
+      Map TypeIdentifier MonoType
+  }
   deriving stock (Eq, Ord, Show)
 
 instance Semigroup Substitutions where
@@ -78,6 +81,6 @@ instance Substitutable (Type ann) where
 instance (Substitutable a) => Substitutable (Map k a) where
   applySubst subst as = applySubst subst <$> as
 
-instance Substitutable (Expr Variable MonoType) where
+instance Substitutable (Expr var MonoType) where
   applySubst subst elabExpr =
     applySubst subst <$> elabExpr

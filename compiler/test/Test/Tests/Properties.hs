@@ -8,15 +8,15 @@ module Test.Tests.Properties
 where
 
 import Control.Monad.IO.Class
-import Data.Bifunctor
-import Data.Either
+import Data.Either (isLeft, isRight)
 import Data.Functor
 import qualified Data.Map as M
-import qualified Data.Set as S
+import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -28,28 +28,27 @@ import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
 
-getStoreExprs :: Project Annotation -> S.Set (StoreExpression Annotation)
+getStoreExprs :: Project Annotation -> [StoreExpression Annotation]
 getStoreExprs =
-  S.fromList
-    . M.elems
+  M.elems
     . getStore
     . prjStore
 
 itTypeChecks :: MonoType -> Expr Name Annotation -> Either TypeError ()
 itTypeChecks mt expr = do
+  let numberedExpr = fromRight (addNumbers (StoreExpression expr mempty mempty))
   let elabbed =
         fmap (\(_, _, a, _) -> a)
           . typecheck
             mempty
-            mempty
-            (createEnv mempty (getStoreExprs testStdlib))
-          $ first NamedVar expr
+            (createEnv mempty (createTypeMap $ getStoreExprs testStdlib))
+          $ numberedExpr
   generatedMt <- getTypeFromAnn <$> elabbed
   unifies mt generatedMt
 
 itGenerates :: MonoType -> Expectation
 itGenerates mt = do
-  samples <- liftIO $ generateFromMonoType @() (getStoreExprs testStdlib) mt
+  samples <- liftIO $ generateFromMonoType @() (createTypeMap $ getStoreExprs testStdlib) mt
   let success = traverse (itTypeChecks mt) (fmap ($> mempty) samples)
   success `shouldSatisfy` isRight
 

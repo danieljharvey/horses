@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Test.Utils.Helpers where
 
 import Data.Bifunctor (first)
@@ -82,14 +84,6 @@ unknown = MTVar mempty . TVUnificationVar
 
 typeName :: (Monoid ann) => Text -> Type ann
 typeName = MTVar mempty . TVName Nothing . mkTyVar
-
----
-
-named :: Text -> Variable
-named = NamedVar . Name
-
-numbered :: Int -> Variable
-numbered = NumberedVar
 
 ---
 
