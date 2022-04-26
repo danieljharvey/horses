@@ -72,7 +72,6 @@ library
       Language.Mimsa.Interpreter.Infix
       Language.Mimsa.Interpreter.Interpret
       Language.Mimsa.Interpreter.Let
-      Language.Mimsa.Interpreter.MarkImports
       Language.Mimsa.Interpreter.Monad
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.RecordAccess

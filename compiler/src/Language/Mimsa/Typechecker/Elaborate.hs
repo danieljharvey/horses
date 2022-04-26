@@ -1,7 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Elaborate
   ( elab,

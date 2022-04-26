@@ -1,6 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Typechecker.Unify
   ( unify,
