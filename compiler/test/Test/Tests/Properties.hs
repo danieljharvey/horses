@@ -63,11 +63,11 @@ spec = do
         itTypeChecks (MTPrim mempty MTBool) (MyLiteral mempty (MyInt 100))
           `shouldSatisfy` isLeft
     describe "isRecursive" $ do
-      it "is not recursive" $ do
+      it "unit is not recursive" $ do
         isRecursive "Unit" [] `shouldBe` False
-      it "is not recursive 2" $ do
+      it "maybe is not recursive 2" $ do
         isRecursive "Maybe" [MTPrim mempty MTInt] `shouldBe` False
-      it "is recursive" $ do
+      it "list is recursive" $ do
         isRecursive
           "List"
           [ MTTypeApp mempty (MTConstructor mempty "List") (MTPrim mempty MTInt)

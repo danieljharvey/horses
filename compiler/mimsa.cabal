@@ -199,6 +199,7 @@ library
       Language.Mimsa.Types.Typechecker.TypeConstructor
       Language.Mimsa.Types.Typechecker.Unique
       Language.Mimsa.Types.Typechecker.UniVar
+      Language.Mimsa.TypeUtils
       Language.Mimsa.Utils
   other-modules:
       Paths_mimsa

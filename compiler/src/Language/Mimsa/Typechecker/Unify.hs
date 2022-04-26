@@ -14,27 +14,12 @@ import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-
-freeTypeVars :: MonoType -> S.Set TypeIdentifier
-freeTypeVars ty = case ty of
-  MTVar _ var ->
-    S.singleton var
-  MTFunction _ t1 t2 ->
-    S.union (freeTypeVars t1) (freeTypeVars t2)
-  MTPair _ t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
-  MTRecord _ as -> foldr S.union mempty (freeTypeVars <$> as)
-  MTRecordRow _ as rest ->
-    foldr S.union mempty (freeTypeVars <$> as)
-      <> freeTypeVars rest
-  MTArray _ a -> freeTypeVars a
-  MTPrim _ _ -> S.empty
-  MTConstructor _ _ -> S.empty
-  MTTypeApp _ a b -> freeTypeVars a <> freeTypeVars b
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind ::

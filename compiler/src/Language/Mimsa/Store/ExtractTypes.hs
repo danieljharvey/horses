@@ -10,6 +10,7 @@ where
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Types.AST
   ( DataType (DataType),
@@ -138,38 +139,10 @@ withDataTypes f (MyPatternMatch _ expr patterns) =
 extractTypenames :: Type ann -> Set TyCon
 extractTypenames (MTConstructor _ tyCon) =
   S.singleton tyCon
-extractTypenames (MTTypeApp _ a b) =
-  extractTypenames a <> extractTypenames b
-extractTypenames (MTPair _ a b) =
-  extractTypenames a <> extractTypenames b
-extractTypenames (MTArray _ as) = extractTypenames as
-extractTypenames (MTRecord _ as) =
-  mconcat (extractTypenames <$> M.elems as)
-extractTypenames (MTRecordRow _ as a) =
-  mconcat (extractTypenames <$> M.elems as)
-    <> extractTypenames a
-extractTypenames MTPrim {} = mempty
-extractTypenames MTVar {} = mempty
-extractTypenames (MTFunction _ a b) =
-  extractTypenames a <> extractTypenames b
+extractTypenames other = withMonoid extractTypenames other
 
 -----
 
 extractNamedTypeVars :: Type ann -> Set TyVar
 extractNamedTypeVars (MTVar _ (TVName _ tv)) = S.singleton tv
-extractNamedTypeVars MTVar {} = mempty
-extractNamedTypeVars (MTConstructor _ _) =
-  mempty
-extractNamedTypeVars (MTTypeApp _ a b) =
-  extractNamedTypeVars a <> extractNamedTypeVars b
-extractNamedTypeVars (MTPair _ a b) =
-  extractNamedTypeVars a <> extractNamedTypeVars b
-extractNamedTypeVars (MTArray _ as) = extractNamedTypeVars as
-extractNamedTypeVars (MTRecord _ as) =
-  mconcat (extractNamedTypeVars <$> M.elems as)
-extractNamedTypeVars (MTRecordRow _ as a) =
-  mconcat (extractNamedTypeVars <$> M.elems as)
-    <> extractNamedTypeVars a
-extractNamedTypeVars MTPrim {} = mempty
-extractNamedTypeVars (MTFunction _ a b) =
-  extractNamedTypeVars a <> extractNamedTypeVars b
+extractNamedTypeVars other = withMonoid extractNamedTypeVars other
