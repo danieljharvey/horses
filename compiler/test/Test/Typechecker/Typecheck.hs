@@ -54,7 +54,7 @@ testInfer expr = do
 
 spec :: Spec
 spec = do
-  describe "Typecheck" $ do
+  fdescribe "Typecheck" $ do
     describe "basic cases" $ do
       it "infers int" $ do
         let expr = int 1
@@ -81,6 +81,63 @@ spec = do
                 (int 42)
                 (MyVar mempty "x")
         startInference expr $ Right (MTPrim mempty MTInt)
+      describe "annotations" $ do
+        it "annotation that is ok" $ do
+          let expr =
+                MyAnnotation mempty (int 1) (MTPrim mempty MTInt)
+          startInference expr (Right (MTPrim mempty MTInt))
+        it "annotation that is not ok" $ do
+          let expr =
+                MyAnnotation mempty (bool True) (MTPrim mempty MTInt)
+          startInference expr (Left (UnificationError mtBool mtInt))
+        it "annotation with function" $
+          do
+            let expr =
+                  MyAnnotation
+                    mempty
+                    (MyLambda mempty (Identifier mempty "a") (int 1))
+                    (MTFunction mempty (MTPrim mempty MTBool) (MTPrim mempty MTInt))
+            startInference
+              expr
+              ( Right
+                  (MTFunction mempty (MTPrim mempty MTBool) (MTPrim mempty MTInt))
+              )
+        it "annotation with nested function makes both params the same type" $ do
+          let expr =
+                MyAnnotation
+                  mempty
+                  ( MyLambda
+                      mempty
+                      (Identifier mempty "a")
+                      ( MyLambda
+                          mempty
+                          (Identifier mempty "b")
+                          (int 1)
+                      )
+                  )
+                  ( MTFunction
+                      mempty
+                      (MTVar mempty (TVName Nothing "a"))
+                      ( MTFunction
+                          mempty
+                          (MTVar mempty (TVName Nothing "a"))
+                          (MTPrim mempty MTInt)
+                      )
+                  )
+          startInference
+            expr
+            ( Right
+                ( MTFunction
+                    mempty
+                    (unknown 1)
+                    ( MTFunction
+                        mempty
+                        (unknown 1)
+                        (MTPrim mempty MTInt)
+                    )
+                )
+            )
+
       it "infers let binding with recursion 0" $ do
         let expr =
               MyLet

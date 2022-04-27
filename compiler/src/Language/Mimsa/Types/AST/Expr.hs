@@ -28,6 +28,7 @@ import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker.MonoType
 import Language.Mimsa.Utils
 import Prettyprinter
 
@@ -43,6 +44,11 @@ data Expr var ann
     MyLiteral
       { expAnn :: ann,
         expLit :: Literal
+      }
+  | MyAnnotation
+      { expAnn :: ann,
+        expExpr :: Expr var ann,
+        expType :: Type ann
       }
   | -- | a named variable
     MyVar
@@ -354,6 +360,8 @@ instance (Printer var) => Printer (Expr (var, a) ann) where
 instance Printer (Expr Name ann) where
   prettyDoc (MyLiteral _ l) =
     prettyDoc l
+  prettyDoc (MyAnnotation _ expr mt) =
+    "(" <> prettyDoc expr <+> ":" <+> prettyDoc mt <> ")"
   prettyDoc (MyVar _ var) =
     prettyDoc var
   prettyDoc (MyLet _ var expr1 expr2) =

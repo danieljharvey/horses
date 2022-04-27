@@ -69,6 +69,8 @@ foldExpr fn expression =
   where
     f = fn (prettyPrint expression)
     foldExpr' (MyLiteral ann _) = f ann
+    foldExpr' (MyAnnotation ann expr mt) =
+      f ann <> foldExpr fn expr <> f (getAnnotationForType mt)
     foldExpr' (MyVar ann _) = f ann
     foldExpr' (MyLet ann binder expr body) =
       f ann <> foldIdentifier fn binder

@@ -124,6 +124,10 @@ markImports ::
   App var ann (NumberedExpr var ann)
 markImports (MyVar ann var) =
   MyVar ann <$> getVar ann var
+markImports (MyAnnotation ann expr mt) =
+  MyAnnotation ann
+    <$> markImports expr
+    <*> pure mt
 markImports (MyLet ann ident expr body) = do
   let var = varFromIdent ident
   unique <- nextNum

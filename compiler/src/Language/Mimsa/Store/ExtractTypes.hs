@@ -28,6 +28,7 @@ extractTypes = filterBuiltIns . extractTypes_
 
 extractTypes_ :: Expr Name ann -> Set TyCon
 extractTypes_ (MyVar _ _) = mempty
+extractTypes_ (MyAnnotation _ expr _) = extractTypes_ expr
 extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
 extractTypes_ (MyLet _ ident a b) =
   extractFromIdentifier ident
@@ -108,6 +109,7 @@ extractDataTypes = withDataTypes S.singleton
 
 withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
 withDataTypes _ (MyVar _ _) = mempty
+withDataTypes f (MyAnnotation _ expr _) = withDataTypes f expr
 withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
 withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b
 withDataTypes f (MyInfix _ _ a b) = withDataTypes f a <> withDataTypes f b

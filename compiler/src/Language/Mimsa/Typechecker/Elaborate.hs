@@ -4,6 +4,7 @@
 
 module Language.Mimsa.Typechecker.Elaborate
   ( elab,
+    infer,
     recoverAnn,
     getTypeFromAnn,
   )
@@ -25,6 +26,7 @@ import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
+import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -67,8 +69,8 @@ type ElabExpr = Expr (Name, Unique) MonoType
 
 --------------
 
-elabLiteral :: Annotation -> Literal -> ElabM ElabExpr
-elabLiteral ann lit =
+inferLiteral :: Annotation -> Literal -> ElabM ElabExpr
+inferLiteral ann lit =
   let tyLit = case lit of
         (MyInt _) -> MTInt
         (MyBool _) -> MTBool
@@ -80,12 +82,12 @@ lookupInEnv (name, unique) (Environment env' _ _ _) =
   let look v = M.lookup v env'
    in look (variableToTypeIdentifier (name, unique))
 
-elabVarFromScope ::
+inferVarFromScope ::
   Environment ->
   Annotation ->
   (Name, Unique) ->
   ElabM ElabExpr
-elabVarFromScope env ann var' = do
+inferVarFromScope env ann var' = do
   case lookupInEnv var' env of
     Just mt -> do
       freshMonoType <- instantiate ann mt
@@ -126,16 +128,16 @@ lookupInfixOp env ann infixOp = do
         )
 
 -- let's pattern match on exactly what's inside more clearly
-elabApplication ::
+inferApplication ::
   Environment ->
   Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabApplication env ann function argument = do
+inferApplication env ann function argument = do
   tyRes <- getUnknown ann
-  function' <- elab env function
-  argument' <- elab env argument
+  function' <- infer env function
+  argument' <- infer env argument
   tell
     [ ShouldEqual
         (getTypeFromAnn function')
@@ -169,82 +171,82 @@ monoTypeFromIdentifier = \case
 
 -- if type is recursive we make it monomorphic
 -- if not, we make it polymorphic
-elabLetBinding ::
+inferLetBinding ::
   Environment ->
   Annotation ->
   Identifier (Name, Unique) Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabLetBinding env ann ident expr body = do
+inferLetBinding env ann ident expr body = do
   if bindingIsRecursive ident expr
-    then elabRecursiveLetBinding env ann ident expr body
+    then inferRecursiveLetBinding env ann ident expr body
     else do
       let bindAnn = annotationFromIdentifier ident
           bindName = binderFromIdentifier ident
       -- we have to run substitutions on this before "saving" it
-      (elabExpr, constraints) <- listen (elab env expr)
+      (inferExpr, constraints) <- listen (infer env expr)
       subst <- solve constraints
-      -- compare annotated type with elabbed expr if possible
+      -- compare annotated type with inferbed expr if possible
       case monoTypeFromIdentifier ident of
         (Just mt) ->
           tell
-            [ShouldEqual mt (getTypeFromAnn elabExpr)]
+            [ShouldEqual mt (getTypeFromAnn inferExpr)]
         _ -> pure ()
-      let tySubstExpr = applySubst subst (getTypeFromAnn elabExpr)
+      let tySubstExpr = applySubst subst (getTypeFromAnn inferExpr)
       let newEnv =
             envFromVar bindName (generalise env tySubstExpr)
               <> env
-      elabBody <- elab newEnv body
+      inferBody <- infer newEnv body
       pure
         ( MyLet
-            (getTypeFromAnn elabBody $> ann) -- we want to make sure we keep the original source location
+            (getTypeFromAnn inferBody $> ann) -- we want to make sure we keep the original source location
             (ident $> (tySubstExpr $> bindAnn))
-            elabExpr
-            elabBody
+            inferExpr
+            inferBody
         )
 
-elabRecursiveLetBinding ::
+inferRecursiveLetBinding ::
   Environment ->
   Annotation ->
   Identifier (Name, Unique) Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabRecursiveLetBinding env ann ident expr body = do
+inferRecursiveLetBinding env ann ident expr body = do
   let bindName = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
   tyRecExpr <- getUnknown ann
   let envWithRecursiveFn = envFromVar bindName (Scheme [] tyRecExpr) <> env
-  elabExpr <- elab envWithRecursiveFn expr
+  inferExpr <- infer envWithRecursiveFn expr
 
-  -- compare annotated type with elabbed expr if possible
+  -- compare annotated type with inferbed expr if possible
   case monoTypeFromIdentifier ident of
     (Just mt) ->
       tell
-        [ShouldEqual mt (getTypeFromAnn elabExpr)]
+        [ShouldEqual mt (getTypeFromAnn inferExpr)]
     _ -> pure ()
 
-  let tyExpr = getTypeFromAnn elabExpr
+  let tyExpr = getTypeFromAnn inferExpr
       newEnv =
         envFromVar bindName (Scheme [] tyExpr) <> env
 
-  elabBody <- elab newEnv body
-  tell [ShouldEqual tyRecExpr (getTypeFromAnn elabExpr)]
+  inferBody <- infer newEnv body
+  tell [ShouldEqual tyRecExpr (getTypeFromAnn inferExpr)]
 
   pure
     ( MyLet
-        (getTypeFromAnn elabBody)
+        (getTypeFromAnn inferBody)
         (ident $> (tyExpr $> bindAnn))
-        elabExpr
-        elabBody
+        inferExpr
+        inferBody
     )
 
-elabIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
-elabIf env condition thenExpr elseExpr = do
-  condExpr <- elab env condition
-  thenExpr' <- elab env thenExpr
-  elseExpr' <- elab env elseExpr
+inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
+inferIf env condition thenExpr elseExpr = do
+  condExpr <- infer env condition
+  thenExpr' <- infer env thenExpr
+  elseExpr' <- infer env elseExpr
   tell
     [ ShouldEqual
         (getTypeFromAnn thenExpr')
@@ -280,37 +282,37 @@ matchList mts = do
 -- check input against patterns
 -- check patterns are complete
 -- check output types are the same
-elabPatternMatch ::
+inferPatternMatch ::
   Environment ->
   Annotation ->
   TcExpr ->
   [(Pattern (Name, Unique) Annotation, TcExpr)] ->
   ElabM ElabExpr
-elabPatternMatch env ann expr patterns = do
+inferPatternMatch env ann expr patterns = do
   -- ensure we even have any patterns to match on
   nePatterns <- checkEmptyPatterns ann patterns
-  -- elaborate source expression that we are matching
-  elabExpr <- elab env expr
-  -- elab types of all patterns
-  elabPatterns <-
+  -- inferorate source expression that we are matching
+  inferExpr <- infer env expr
+  -- infer types of all patterns
+  inferPatterns <-
     traverse
       ( \(pat, patternExpr) -> do
-          (elabPat, newEnv) <- elabPattern env pat
+          (inferPat, newEnv) <- inferPattern env pat
           tell
             [ ShouldEqual
-                (getPatternTypeFromAnn elabPat)
-                (getTypeFromAnn elabExpr)
+                (getPatternTypeFromAnn inferPat)
+                (getTypeFromAnn inferExpr)
             ]
-          tyPatternExpr <- elab newEnv patternExpr
-          pure (elabPat, tyPatternExpr)
+          tyPatternExpr <- infer newEnv patternExpr
+          pure (inferPat, tyPatternExpr)
       )
       nePatterns
   -- combine all patterns to check their types match
-  tyMatchedPattern <- matchList (getPatternTypeFromAnn . fst <$> elabPatterns)
+  tyMatchedPattern <- matchList (getPatternTypeFromAnn . fst <$> inferPatterns)
   -- match patterns with match expr
-  tell [ShouldEqual tyMatchedPattern (getTypeFromAnn elabExpr)]
+  tell [ShouldEqual tyMatchedPattern (getTypeFromAnn inferExpr)]
   -- combine all output expr types
-  tyMatchedExprs <- matchList (getTypeFromAnn . snd <$> elabPatterns)
+  tyMatchedExprs <- matchList (getTypeFromAnn . snd <$> inferPatterns)
   -- remove (,unique) from var
   let patternsWithoutUnique = first fst . fst <$> patterns
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
@@ -319,8 +321,8 @@ elabPatternMatch env ann expr patterns = do
   pure
     ( MyPatternMatch
         tyMatchedExprs
-        elabExpr
-        (NE.toList elabPatterns)
+        inferExpr
+        (NE.toList inferPatterns)
     )
 
 -- get non-empty list from list and error if not
@@ -329,17 +331,17 @@ checkEmptyPatterns ann as = case as of
   [] -> throwError (PatternMatchErr $ EmptyPatternMatch ann)
   other -> pure (NE.fromList other)
 
-elabPattern ::
+inferPattern ::
   Environment ->
   Pattern (Name, Unique) Annotation ->
   ElabM (Pattern (Name, Unique) MonoType, Environment)
-elabPattern env (PLit ann lit) = do
-  elabExpr <- elab env (MyLiteral ann lit)
+inferPattern env (PLit ann lit) = do
+  inferExpr <- infer env (MyLiteral ann lit)
   pure
-    ( PLit (getTypeFromAnn elabExpr) lit,
+    ( PLit (getTypeFromAnn inferExpr) lit,
       env
     )
-elabPattern env (PVar ann binder) = do
+inferPattern env (PVar ann binder) = do
   tyBinder <- getUnknown ann
   let tmpCtx =
         envFromVar binder (Scheme [] tyBinder) <> env
@@ -347,66 +349,66 @@ elabPattern env (PVar ann binder) = do
     ( PVar tyBinder binder,
       tmpCtx
     )
-elabPattern env (PWildcard ann) = do
+inferPattern env (PWildcard ann) = do
   tyUnknown <- getUnknown ann
   pure
     ( PWildcard tyUnknown,
       env
     )
-elabPattern env (PConstructor ann tyCon args) = do
-  elabEverything <- traverse (elabPattern env) args
-  let elabArgs = fst <$> elabEverything
-  let newEnv = mconcat (snd <$> elabEverything) <> env
+inferPattern env (PConstructor ann tyCon args) = do
+  inferEverything <- traverse (inferPattern env) args
+  let inferArgs = fst <$> inferEverything
+  let newEnv = mconcat (snd <$> inferEverything) <> env
   dt@(DataType ty _ _) <- lookupConstructor newEnv ann tyCon
   -- we get the types for the constructor in question
   -- and unify them with the tests in the pattern
   consType <- inferConstructorTypes dt
   tyTypeVars <- case M.lookup tyCon (snd consType) of
     Just (TypeConstructor _ dtTypeVars tyDtArgs) -> do
-      let tyPairs = zip (getPatternTypeFromAnn <$> elabArgs) tyDtArgs
+      let tyPairs = zip (getPatternTypeFromAnn <$> inferArgs) tyDtArgs
       traverse_ (\(a, b) -> tell [ShouldEqual a b]) tyPairs
       pure dtTypeVars
     _ -> throwError UnknownTypeError
-  checkArgsLength ann dt tyCon elabArgs
+  checkArgsLength ann dt tyCon inferArgs
   pure
-    ( PConstructor (dataTypeWithVars ann ty tyTypeVars) tyCon elabArgs,
+    ( PConstructor (dataTypeWithVars ann ty tyTypeVars) tyCon inferArgs,
       newEnv
     )
-elabPattern env (PPair ann a b) = do
-  (elabA, envA) <- elabPattern env a
-  (elabB, envB) <- elabPattern envA b
+inferPattern env (PPair ann a b) = do
+  (inferA, envA) <- inferPattern env a
+  (inferB, envB) <- inferPattern envA b
   pure
     ( PPair
         ( MTPair
             ann
-            (getPatternTypeFromAnn elabA)
-            (getPatternTypeFromAnn elabB)
+            (getPatternTypeFromAnn inferA)
+            (getPatternTypeFromAnn inferB)
         )
-        elabA
-        elabB,
+        inferA
+        inferB,
       envB
     )
-elabPattern env (PRecord ann items) = do
-  let elabRow (k, v) = do
-        (tyValue, envNew) <- elabPattern env v
+inferPattern env (PRecord ann items) = do
+  let inferRow (k, v) = do
+        (tyValue, envNew) <- inferPattern env v
         pure (M.singleton k tyValue, envNew)
-  elabEverything <- traverse elabRow (M.toList items)
-  let elabItems = mconcat (fst <$> elabEverything)
-  let newEnv = mconcat (snd <$> elabEverything) <> env
+  inferEverything <- traverse inferRow (M.toList items)
+  let inferItems = mconcat (fst <$> inferEverything)
+  let newEnv = mconcat (snd <$> inferEverything) <> env
   tyRest <- getUnknown ann
   pure
     ( PRecord
         ( MTRecordRow
             ann
-            (getPatternTypeFromAnn <$> elabItems)
+            (getPatternTypeFromAnn <$> inferItems)
             tyRest
         )
-        elabItems,
+        inferItems,
       newEnv
     )
-elabPattern env (PArray ann items spread) = do
-  elabEverything <- traverse (elabPattern env) items
-  (elabSpread, env2) <- case spread of
+inferPattern env (PArray ann items spread) = do
+  inferEverything <- traverse (inferPattern env) items
+  (inferSpread, env2) <- case spread of
     SpreadValue ann2 binder -> do
       tyBinder <- getUnknown ann2
       let tmpCtx =
@@ -420,37 +422,37 @@ elabPattern env (PArray ann items spread) = do
       tyUnknown <- getUnknown ann2
       pure (SpreadWildcard tyUnknown, env)
   tyItems <- case NE.nonEmpty
-    ( (getPatternTypeFromAnn . fst <$> elabEverything)
-        <> maybe mempty pure (getSpreadTypeFromAnn elabSpread)
+    ( (getPatternTypeFromAnn . fst <$> inferEverything)
+        <> maybe mempty pure (getSpreadTypeFromAnn inferSpread)
     ) of
     Just neItems -> matchList neItems
     _ -> getUnknown ann
-  let newEnv = mconcat (snd <$> elabEverything) <> env2
+  let newEnv = mconcat (snd <$> inferEverything) <> env2
   pure
     ( PArray
         ( MTArray
             ann
             tyItems
         )
-        (fst <$> elabEverything)
-        elabSpread,
+        (fst <$> inferEverything)
+        inferSpread,
       newEnv
     )
-elabPattern env (PString ann a as) = do
+inferPattern env (PString ann a as) = do
   let envFromStrPart x = case x of
         (StrValue ann' name) ->
           envFromVar name (Scheme [] (MTPrim ann' MTString))
         _ -> mempty
   let newEnv = envFromStrPart a <> envFromStrPart as <> env
-  let elabStringPart (StrValue ann' name) =
+  let inferStringPart (StrValue ann' name) =
         StrValue (MTPrim ann' MTString) name
-      elabStringPart (StrWildcard ann') =
+      inferStringPart (StrWildcard ann') =
         StrWildcard (MTPrim ann' MTString)
   pure
     ( PString
         (MTPrim ann MTString)
-        (elabStringPart a)
-        (elabStringPart as),
+        (inferStringPart a)
+        (inferStringPart as),
       newEnv
     )
 
@@ -471,18 +473,18 @@ checkArgsLength ann (DataType _ _ cons) tyCon args = do
               )
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
-elabOperator ::
+inferOperator ::
   Environment ->
   Annotation ->
   Operator ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabOperator env ann Equals a b = do
-  elabA <- elab env a
-  elabB <- elab env b
-  let tyA = getTypeFromAnn elabA
-      tyB = getTypeFromAnn elabB
+inferOperator env ann Equals a b = do
+  inferA <- infer env a
+  inferB <- infer env b
+  let tyA = getTypeFromAnn inferA
+      tyB = getTypeFromAnn inferB
   case tyA of
     MTFunction {} -> throwError $ NoFunctionEquality tyA tyB
     _ -> do
@@ -495,119 +497,119 @@ elabOperator env ann Equals a b = do
         ( MyInfix
             (MTPrim ann MTBool)
             Equals
-            elabA
-            elabB
+            inferA
+            inferB
         )
-elabOperator env ann Add a b = do
-  (mt, elabA, elabB) <- elabInfix env (MTPrim ann MTInt) a b
-  pure (MyInfix mt Add elabA elabB)
-elabOperator env ann Subtract a b = do
-  (mt, elabA, elabB) <- elabInfix env (MTPrim ann MTInt) a b
-  pure (MyInfix mt Subtract elabA elabB)
-elabOperator env ann StringConcat a b = do
-  (mt, elabA, elabB) <- elabInfix env (MTPrim ann MTString) a b
-  pure (MyInfix mt StringConcat elabA elabB)
-elabOperator env ann ArrayConcat a b = do
+inferOperator env ann Add a b = do
+  (mt, inferA, inferB) <- inferInfix env (MTPrim ann MTInt) a b
+  pure (MyInfix mt Add inferA inferB)
+inferOperator env ann Subtract a b = do
+  (mt, inferA, inferB) <- inferInfix env (MTPrim ann MTInt) a b
+  pure (MyInfix mt Subtract inferA inferB)
+inferOperator env ann StringConcat a b = do
+  (mt, inferA, inferB) <- inferInfix env (MTPrim ann MTString) a b
+  pure (MyInfix mt StringConcat inferA inferB)
+inferOperator env ann ArrayConcat a b = do
   tyArr <- getUnknown ann
-  (mt, elabA, elabB) <- elabInfix env (MTArray ann tyArr) a b
-  pure (MyInfix mt ArrayConcat elabA elabB)
-elabOperator env ann GreaterThan a b = do
-  (mt, elabA, elabB) <-
-    elabComparison
+  (mt, inferA, inferB) <- inferInfix env (MTArray ann tyArr) a b
+  pure (MyInfix mt ArrayConcat inferA inferB)
+inferOperator env ann GreaterThan a b = do
+  (mt, inferA, inferB) <-
+    inferComparison
       env
       (MTPrim ann MTInt)
       (MTPrim ann MTBool)
       a
       b
-  pure (MyInfix mt GreaterThan elabA elabB)
-elabOperator env ann GreaterThanOrEqualTo a b = do
-  (mt, elabA, elabB) <-
-    elabComparison
+  pure (MyInfix mt GreaterThan inferA inferB)
+inferOperator env ann GreaterThanOrEqualTo a b = do
+  (mt, inferA, inferB) <-
+    inferComparison
       env
       (MTPrim ann MTInt)
       (MTPrim ann MTBool)
       a
       b
-  pure (MyInfix mt GreaterThanOrEqualTo elabA elabB)
-elabOperator env ann LessThan a b = do
-  (mt, elabA, elabB) <-
-    elabComparison
+  pure (MyInfix mt GreaterThanOrEqualTo inferA inferB)
+inferOperator env ann LessThan a b = do
+  (mt, inferA, inferB) <-
+    inferComparison
       env
       (MTPrim ann MTInt)
       (MTPrim ann MTBool)
       a
       b
-  pure (MyInfix mt LessThan elabA elabB)
-elabOperator env ann LessThanOrEqualTo a b = do
-  (mt, elabA, elabB) <-
-    elabComparison
+  pure (MyInfix mt LessThan inferA inferB)
+inferOperator env ann LessThanOrEqualTo a b = do
+  (mt, inferA, inferB) <-
+    inferComparison
       env
       (MTPrim ann MTInt)
       (MTPrim ann MTBool)
       a
       b
-  pure (MyInfix mt LessThanOrEqualTo elabA elabB)
-elabOperator env ann (Custom infixOp) a b = do
+  pure (MyInfix mt LessThanOrEqualTo inferA inferB)
+inferOperator env ann (Custom infixOp) a b = do
   tyRes <- getUnknown ann
   tyFun <- lookupInfixOp env ann infixOp
-  elabA <- elab env a
-  elabB <- elab env b
+  inferA <- infer env a
+  inferB <- infer env b
   tell
     [ ShouldEqual
         tyFun
         ( MTFunction
             ann
-            (getTypeFromAnn elabA)
-            (MTFunction ann (getTypeFromAnn elabB) tyRes)
+            (getTypeFromAnn inferA)
+            (MTFunction ann (getTypeFromAnn inferB) tyRes)
         )
     ]
-  pure (MyInfix tyRes (Custom infixOp) elabA elabB)
+  pure (MyInfix tyRes (Custom infixOp) inferA inferB)
 
 -- | infix operator where inputs and output are the same
-elabInfix ::
+inferInfix ::
   Environment ->
   MonoType ->
   TcExpr ->
   TcExpr ->
   ElabM (MonoType, ElabExpr, ElabExpr)
-elabInfix env mt a b = do
-  elabA <- elab env a
-  elabB <- elab env b
-  let tyA = getTypeFromAnn elabA
-      tyB = getTypeFromAnn elabB
+inferInfix env mt a b = do
+  inferA <- infer env a
+  inferB <- infer env b
+  let tyA = getTypeFromAnn inferA
+      tyB = getTypeFromAnn inferB
   tell [ShouldEqual tyA tyB, ShouldEqual tyB mt, ShouldEqual tyA mt]
-  pure (mt, elabA, elabB)
+  pure (mt, inferA, inferB)
 
 -- | infix operator where inputs match but output could be different
 -- | for instance, 1 < 2 == True would be `Int -> Int -> Bool`
-elabComparison ::
+inferComparison ::
   Environment ->
   MonoType ->
   MonoType ->
   TcExpr ->
   TcExpr ->
   ElabM (MonoType, ElabExpr, ElabExpr)
-elabComparison env inputMt outputMt a b = do
-  elabA <- elab env a
-  elabB <- elab env b
-  let tyA = getTypeFromAnn elabA
-      tyB = getTypeFromAnn elabB
+inferComparison env inputMt outputMt a b = do
+  inferA <- infer env a
+  inferB <- infer env b
+  let tyA = getTypeFromAnn inferA
+      tyB = getTypeFromAnn inferB
   tell
     [ ShouldEqual tyA tyB,
       ShouldEqual tyA inputMt,
       ShouldEqual tyB inputMt
     ]
-  pure (outputMt, elabA, elabB)
+  pure (outputMt, inferA, inferB)
 
-elabRecordAccess ::
+inferRecordAccess ::
   Environment ->
   Annotation ->
   TcExpr ->
   Name ->
   ElabM ElabExpr
-elabRecordAccess env ann a name = do
-  elabItems <- elab env a
-  let elabRow = \case
+inferRecordAccess env ann a name = do
+  inferItems <- infer env a
+  let inferRow = \case
         (MTRecord _ bits) ->
           case M.lookup name bits of
             Just mt -> pure mt
@@ -616,13 +618,13 @@ elabRecordAccess env ann a name = do
         (MTRecordRow _ as rest) ->
           case M.lookup name as of
             Just mt -> pure mt
-            _ -> elabRow rest
+            _ -> inferRow rest
         (MTVar ann' _) -> do
           tyRest <- getUnknown ann'
           tyItem <- getUnknown ann'
           tell
             [ ShouldEqual
-                (getTypeFromAnn elabItems)
+                (getTypeFromAnn inferItems)
                 ( MTRecordRow
                     ann'
                     (M.singleton name tyItem)
@@ -630,41 +632,41 @@ elabRecordAccess env ann a name = do
                 )
             ]
           pure tyItem
-        _ -> throwError $ CannotMatchRecord env ann (getTypeFromAnn elabItems)
-  mt <- elabRow (getTypeFromAnn elabItems)
-  pure (MyRecordAccess mt elabItems name)
+        _ -> throwError $ CannotMatchRecord env ann (getTypeFromAnn inferItems)
+  mt <- inferRow (getTypeFromAnn inferItems)
+  pure (MyRecordAccess mt inferItems name)
 
-elabLetPattern ::
+inferLetPattern ::
   Environment ->
   Annotation ->
   Pattern (Name, Unique) Annotation ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabLetPattern env ann pat expr body = do
-  elabExpr <- elab env expr
-  (elabPat, newEnv) <- elabPattern env pat
-  elabBody <- elab newEnv body
+inferLetPattern env ann pat expr body = do
+  inferExpr <- infer env expr
+  (inferPat, newEnv) <- inferPattern env pat
+  inferBody <- infer newEnv body
   tell
-    [ ShouldEqual (getPatternTypeFromAnn elabPat) (getTypeFromAnn elabExpr)
+    [ ShouldEqual (getPatternTypeFromAnn inferPat) (getTypeFromAnn inferExpr)
     ]
 
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
   validatePatterns env ann [first fst pat]
 
-  pure (MyLetPattern (getTypeFromAnn elabBody) elabPat elabExpr elabBody)
+  pure (MyLetPattern (getTypeFromAnn inferBody) inferPat inferExpr inferBody)
 
-elabLambda ::
+inferLambda ::
   Environment ->
   Annotation ->
   Identifier (Name, Unique) Annotation ->
   TcExpr ->
   ElabM ElabExpr
-elabLambda env ann ident body = do
+inferLambda env ann ident body = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
 
-  -- compare annotated type with elabbed expr if possible
+  -- compare annotated type with inferbed expr if possible
   tyBinder <- case monoTypeFromIdentifier ident of
     (Just mt) -> pure mt
     Nothing -> getUnknown bindAnn
@@ -674,23 +676,23 @@ elabLambda env ann ident body = do
   let tmpCtx =
         envFromVar binder (Scheme [] tyBinder') <> newEnv
 
-  elabBody <- elab tmpCtx body
-  let tyReturn = MTFunction ann tyBinder' (getTypeFromAnn elabBody)
-  pure (MyLambda tyReturn (ident $> (tyBinder' $> bindAnn)) elabBody)
+  inferBody <- infer tmpCtx body
+  let tyReturn = MTFunction ann tyBinder' (getTypeFromAnn inferBody)
+  pure (MyLambda tyReturn (ident $> (tyBinder' $> bindAnn)) inferBody)
 
-elabDefineInfix ::
+inferDefineInfix ::
   Environment ->
   Annotation ->
   InfixOp ->
   TcExpr ->
   TcExpr ->
   ElabM ElabExpr
-elabDefineInfix env ann infixOp infixExpr expr = do
+inferDefineInfix env ann infixOp infixExpr expr = do
   u1 <- getUnknown ann
   u2 <- getUnknown ann
   u3 <- getUnknown ann
-  elabBindExpr <- elab env infixExpr
-  let tyBind = getTypeFromAnn elabBindExpr
+  inferBindExpr <- infer env infixExpr
+  let tyBind = getTypeFromAnn inferBindExpr
   tell
     [ ShouldEqual
         tyBind
@@ -701,68 +703,95 @@ elabDefineInfix env ann infixOp infixExpr expr = do
         )
     ]
   let newEnv = envFromInfixOp infixOp (generalise env tyBind) <> env
-  elabBodyExpr <- elab newEnv expr
-  pure $ MyDefineInfix (getTypeFromAnn elabBodyExpr) infixOp elabBindExpr elabBodyExpr
+  inferBodyExpr <- infer newEnv expr
+  pure $ MyDefineInfix (getTypeFromAnn inferBodyExpr) infixOp inferBindExpr inferBodyExpr
 
-elabArray ::
+inferArray ::
   Environment ->
   Annotation ->
   [TcExpr] ->
   ElabM ElabExpr
-elabArray env ann items = do
-  elabItems <- traverse (elab env) items
-  tyItems <- case NE.nonEmpty elabItems of
+inferArray env ann items = do
+  inferItems <- traverse (infer env) items
+  tyItems <- case NE.nonEmpty inferItems of
     Just neElabItems -> matchList (getTypeFromAnn <$> neElabItems)
     Nothing -> getUnknown ann
-  pure (MyArray (MTArray ann tyItems) elabItems)
+  pure (MyArray (MTArray ann tyItems) inferItems)
 
-elab ::
+elab :: Environment -> TcExpr -> ElabM ElabExpr
+elab = infer
+
+check :: Environment -> TcExpr -> MonoType -> ElabM ElabExpr
+check env (MyLambda ann ident body) (MTFunction _ tyBinder tyBody) = do
+  let binder = binderFromIdentifier ident
+      bindAnn = annotationFromIdentifier ident
+
+  let tmpCtx =
+        envFromVar binder (Scheme [] tyBinder) <> env
+
+  -- infer body type
+  inferBody <- infer tmpCtx body
+  tell
+    [ ShouldEqual tyBody (expAnn inferBody)
+    ]
+
+  let tyReturn = MTFunction ann tyBinder tyBody
+  pure (MyLambda tyReturn (ident $> (tyBinder $> bindAnn)) inferBody)
+check env expr mt = do
+  typedExpr <- infer env expr
+  subs <- unify (expAnn typedExpr) mt
+  pure (applySubst subs typedExpr)
+
+infer ::
   Environment ->
   TcExpr ->
   ElabM ElabExpr
-elab env elabExpr =
-  case elabExpr of
-    (MyLiteral ann a) -> elabLiteral ann a
+infer env inferExpr =
+  case inferExpr of
+    (MyLiteral ann a) -> inferLiteral ann a
+    (MyAnnotation _ann expr mt) -> do
+      elabExpr <- check env expr mt
+      pure (MyAnnotation (expAnn elabExpr) elabExpr (mt $> mt))
     (MyVar ann name) ->
-      elabVarFromScope env ann name
+      inferVarFromScope env ann name
     (MyRecord ann map') -> do
-      elabItems <- traverse (elab env) map'
-      let tyItems = getTypeFromAnn <$> elabItems
-      pure (MyRecord (MTRecord ann tyItems) elabItems)
-    (MyInfix ann op a b) -> elabOperator env ann op a b
+      inferItems <- traverse (infer env) map'
+      let tyItems = getTypeFromAnn <$> inferItems
+      pure (MyRecord (MTRecord ann tyItems) inferItems)
+    (MyInfix ann op a b) -> inferOperator env ann op a b
     (MyTypedHole ann (name, unique)) -> do
       tyHole <- addTypedHole env ann name
       pure (MyVar tyHole (name, unique))
     (MyLet ann binder expr body) ->
-      elabLetBinding env ann binder expr body
+      inferLetBinding env ann binder expr body
     (MyLetPattern ann pat expr body) ->
-      elabLetPattern env ann pat expr body
+      inferLetPattern env ann pat expr body
     (MyRecordAccess ann (MyRecord ann' items') name) ->
-      elabRecordAccess env ann (MyRecord ann' items') name
+      inferRecordAccess env ann (MyRecord ann' items') name
     (MyRecordAccess ann a name) ->
-      elabRecordAccess env ann a name
+      inferRecordAccess env ann a name
     (MyLambda ann binder body) ->
-      elabLambda env ann binder body
+      inferLambda env ann binder body
     (MyApp ann function argument) ->
-      elabApplication env ann function argument
+      inferApplication env ann function argument
     (MyIf _ condition thenCase elseCase) ->
-      elabIf env condition thenCase elseCase
+      inferIf env condition thenCase elseCase
     (MyPair ann a b) -> do
-      elabA <- elab env a
-      elabB <- elab env b
-      let tyA = getTypeFromAnn elabA
-          tyB = getTypeFromAnn elabB
-      pure (MyPair (MTPair ann tyA tyB) elabA elabB)
+      inferA <- infer env a
+      inferB <- infer env b
+      let tyA = getTypeFromAnn inferA
+          tyB = getTypeFromAnn inferB
+      pure (MyPair (MTPair ann tyA tyB) inferA inferB)
     (MyData ann dataType expr) -> do
       newEnv <- storeDataDeclaration env ann dataType
-      innerExpr <- elab newEnv expr
+      innerExpr <- infer newEnv expr
       pure (MyData (getTypeFromAnn innerExpr) dataType innerExpr)
     (MyArray ann items) -> do
-      elabArray env ann items
+      inferArray env ann items
     (MyConstructor ann name) -> do
       tyData <- inferDataConstructor env ann name
       pure (MyConstructor tyData name)
     (MyDefineInfix ann infixOp infixExpr expr) ->
-      elabDefineInfix env ann infixOp infixExpr expr
+      inferDefineInfix env ann infixOp infixExpr expr
     (MyPatternMatch ann expr patterns) ->
-      elabPatternMatch env ann expr patterns
+      inferPatternMatch env ann expr patterns

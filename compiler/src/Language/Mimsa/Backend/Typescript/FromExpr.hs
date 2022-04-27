@@ -313,6 +313,7 @@ toTSBody expr' =
   case expr' of
     (MyLiteral _ lit) ->
       pure $ TSBody mempty (TSLit (toLiteral lit))
+    (MyAnnotation _ expr _) -> toTSBody expr
     (MyLet _ ident letExpr letBody) ->
       toLet ident letExpr letBody
     (MyLetPattern _ pat letExpr letBody) ->
