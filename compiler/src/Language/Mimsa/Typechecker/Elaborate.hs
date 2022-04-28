@@ -19,12 +19,11 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
---import Language.Mimsa.Typechecker.ScopeTypeVar
+import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -713,24 +712,22 @@ checkLambda env ann ident body tyBinder tyBody = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
 
-  {-
-    -- convert TVName to TVVar and scope them where necessary
-    (newEnv1, tyBinder') <- freshNamedType env tyBinder
-    (newEnv2, tyBody') <- freshNamedType newEnv1 tyBody
-  -}
+  -- convert TVName to TVVar and scope them where necessary
+  (newEnv1, tyBinder') <- freshNamedType env tyBinder
+  (newEnv2, tyBody') <- freshNamedType newEnv1 tyBody
 
   let envWithBinder =
-        envFromVar binder (debugLog "new scheme" (Scheme [] tyBinder))
-          <> env -- newEnv2
+        envFromVar binder (Scheme [] tyBinder')
+          <> newEnv2
 
   -- check body type
-  inferBody <- check envWithBinder body tyBody
+  inferBody <- check envWithBinder body tyBody'
 
-  let tyReturn = MTFunction ann tyBinder (expAnn inferBody)
+  let tyReturn = MTFunction ann tyBinder' (expAnn inferBody)
   pure
     ( MyLambda
         tyReturn
-        (ident $> (tyBinder $> bindAnn))
+        (ident $> (tyBinder' $> bindAnn))
         inferBody
     )
 

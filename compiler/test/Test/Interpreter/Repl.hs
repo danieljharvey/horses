@@ -129,7 +129,7 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  fdescribe "Repl" $ do
+  describe "Repl" $ do
     it "Save testStdlib" $
       saveProject testStdlib
         >> (True `shouldBe` True)
@@ -1089,7 +1089,7 @@ spec =
         result <- eval testStdlib "(\\abc -> \\def -> abc == def: a -> b -> Boolean)"
         result `shouldSatisfy` isLeft
 
-      fit "should typecheck when id has a specific type" $ do
+      it "should typecheck when id has a specific type" $ do
         result <- eval testStdlib "let (identity: a -> a) abc = abc; identity True"
         fst <$> result `shouldBe` Right (MTPrim mempty MTBool)
 
