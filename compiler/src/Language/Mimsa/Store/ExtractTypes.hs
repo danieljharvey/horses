@@ -70,8 +70,6 @@ extractFromPattern (PArray _ as _) = mconcat $ extractFromPattern <$> as
 extractFromPattern PString {} = mempty
 
 extractFromIdentifier :: Identifier var ann -> Set TyCon
-extractFromIdentifier (AnnotatedIdentifier mt _) =
-  extractTypenames mt
 extractFromIdentifier _ = mempty
 
 filterBuiltIns :: Set TyCon -> Set TyCon

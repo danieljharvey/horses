@@ -187,7 +187,6 @@ fromExpr readerState expr = do
 identifierName :: Identifier Name ann -> Name
 identifierName ident = case ident of
   Identifier _ n -> n
-  AnnotatedIdentifier _ n -> n
 
 toLet :: Identifier Name MonoType -> Expr Name MonoType -> Expr Name MonoType -> TypescriptM TSBody
 toLet ident letExpr letBody = do

@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Parser.Language
   ( parseExpr,
@@ -24,11 +25,13 @@ import Language.Mimsa.Parser.Identifier
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Literal
+import Language.Mimsa.Parser.MonoType
 import Language.Mimsa.Parser.Pattern
 import Language.Mimsa.Parser.TypeDecl
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers (Name)
+import Language.Mimsa.Types.Typechecker
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
@@ -44,6 +47,7 @@ expressionParser =
   let parsers =
         infixParser
           <|> literalParser
+          <|> annotationParser
           <|> complexParser
           <|> varParser
           <|> constructorParser
@@ -70,31 +74,53 @@ complexParser =
 letParser :: Parser ParserExpr
 letParser = try letInParser <|> letFuncParser
 
-letNameIn :: Parser (Identifier Name Annotation)
-letNameIn = do
-  _ <- myString "let"
-  name <- identifierParser
-  _ <- myString "="
-  pure name
-
 letInParser :: Parser ParserExpr
 letInParser = addLocation $ do
-  name <- letNameIn
+  _ <- myString "let"
+  (name, anno) <- identifierOrAnnotatedParser
+  _ <- myString "="
   boundExpr <- expressionParser
   _ <- try (myString ";") <|> myString "in"
-  MyLet mempty name boundExpr
-    <$> expressionParser
+  case anno of
+    Just mt ->
+      MyLet
+        mempty
+        name
+        (MyAnnotation mempty boundExpr mt)
+        <$> expressionParser
+    Nothing ->
+      MyLet mempty name boundExpr
+        <$> expressionParser
 
 letFuncParser :: Parser ParserExpr
 letFuncParser = addLocation $ do
   myString "let"
-  name <- identifierParser
+  (name, anno) <- identifierOrAnnotatedParser
   args <- chainl1 ((: []) <$> identifierParser) (pure (<>))
   myString "="
   expr <- expressionParser
   _ <- try (myString ";") <|> myString "in"
   let expr' = foldr (MyLambda mempty) expr args
-  MyLet mempty name expr' <$> expressionParser
+  case anno of
+    Just mt ->
+      MyLet mempty name (MyAnnotation mempty expr' mt)
+        <$> expressionParser
+    Nothing ->
+      MyLet mempty name expr' <$> expressionParser
+
+identifierOrAnnotatedParser ::
+  Parser
+    ( Identifier Name Annotation,
+      Maybe MonoType
+    )
+identifierOrAnnotatedParser =
+  let regularParser = (,Nothing) <$> identifierParser
+      spicyParser = do
+        name <- identifierParser
+        myString ":"
+        mt <- monoTypeParser
+        pure (name, Just mt)
+   in try (inBrackets spicyParser) <|> regularParser
 
 -----
 
@@ -367,3 +393,11 @@ patternCaseParser = do
   pure (pat, patExpr)
 
 ----------
+
+annotationParser :: Parser ParserExpr
+annotationParser =
+  let innerParser = do
+        expr <- expressionParser
+        myString ":"
+        MyAnnotation mempty expr <$> monoTypeParser
+   in addLocation (inBrackets innerParser)

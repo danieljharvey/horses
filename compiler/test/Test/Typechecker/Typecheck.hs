@@ -54,7 +54,7 @@ testInfer expr = do
 
 spec :: Spec
 spec = do
-  fdescribe "Typecheck" $ do
+  describe "Typecheck" $ do
     describe "basic cases" $ do
       it "infers int" $ do
         let expr = int 1
@@ -137,6 +137,51 @@ spec = do
                     )
                 )
             )
+        it "Let annotation matches value" $ do
+          let expr =
+                MyLet
+                  mempty
+                  (Identifier mempty "a")
+                  (MyAnnotation mempty (MyLiteral mempty (MyString "dog")) mtString)
+                  (MyLiteral mempty (MyBool True))
+          startInference expr $
+            Right mtBool
+
+        it "Let annotation does not match value" $ do
+          let expr =
+                MyLet
+                  mempty
+                  (Identifier mempty "a")
+                  (MyAnnotation mempty (MyLiteral mempty (MyString "dog")) mtInt)
+                  (MyLiteral mempty (MyBool True))
+          startInference expr $
+            Left (UnificationError mtString mtInt)
+
+        it "Lambda annotation matches makes id monomorphic" $ do
+          let expr =
+                MyAnnotation
+                  mempty
+                  ( MyLambda
+                      mempty
+                      (Identifier mempty "a")
+                      (MyVar mempty "a")
+                  )
+                  (MTFunction mempty mtString mtString)
+          startInference expr $
+            Right $ MTFunction mempty mtString mtString
+
+        it "Lambda annotation does not match lambda body" $ do
+          let expr =
+                MyAnnotation
+                  mempty
+                  ( MyLambda
+                      mempty
+                      (Identifier mempty "a")
+                      (MyInfix mempty Add (MyVar mempty "a") (int 1))
+                  )
+                  (MTFunction mempty mtString mtInt)
+          startInference expr $
+            Left (UnificationError mtString mtInt)
 
       it "infers let binding with recursion 0" $ do
         let expr =
@@ -1230,105 +1275,67 @@ spec = do
       startInference expr $ Left (TypedHoles (M.singleton "what" (MTPrim mempty MTBool, S.singleton "this")))
 
     describe "type annotations" $ do
-      it "Let annotation matches value" $ do
+      -- needs type annotations to make this make sense
+      xit "Lambda variable as constructor" $ do
         let expr =
-              MyLet
+              MyData
                 mempty
-                (AnnotatedIdentifier mtString "a")
-                (MyLiteral mempty (MyString "dog"))
-                (MyLiteral mempty (MyBool True))
+                dtMaybe
+                ( MyLambda
+                    mempty
+                    (Identifier mempty "f")
+                    (MyApp mempty (MyVar mempty "f") (int 1))
+                )
         startInference expr $
-          Right mtBool
-
-      it "Let annotation does not match value" $ do
+          Right
+            ( MTFunction
+                mempty
+                ( MTFunction
+                    mempty
+                    (MTPrim mempty MTInt)
+                    (MTTypeApp mempty (unknown 2) (MTPrim mempty MTInt))
+                )
+                (MTTypeApp mempty (unknown 2) (MTPrim mempty MTInt))
+            )
+      -- needs type annotations
+      xit "Lambda variable as constructor (multiple application)" $ do
         let expr =
-              MyLet
+              MyData
                 mempty
-                (AnnotatedIdentifier mtInt "a")
-                (MyLiteral mempty (MyString "dog"))
-                (MyLiteral mempty (MyBool True))
+                dtMaybe
+                ( MyLambda
+                    mempty
+                    (Identifier mempty "f")
+                    (MyApp mempty (MyApp mempty (MyVar mempty "f") (int 1)) (bool True))
+                )
         startInference expr $
-          Left (UnificationError mtInt mtString)
-
-      it "Lambda annotation matches makes id monomorphic" $ do
-        let expr =
-              MyLambda
+          Right
+            ( MTFunction
                 mempty
-                (AnnotatedIdentifier mtString "a")
-                (MyVar mempty "a")
-        startInference expr $
-          Right $ MTFunction mempty mtString mtString
-
-      it "Lambda annotation does not match lambda body" $ do
-        let expr =
-              MyLambda
-                mempty
-                (AnnotatedIdentifier mtString "a")
-                (MyInfix mempty Add (MyVar mempty "a") (int 1))
-        startInference expr $
-          Left (UnificationError mtString mtInt)
-
-    -- needs type annotations to make this make sense
-    xit "Lambda variable as constructor" $ do
-      let expr =
-            MyData
-              mempty
-              dtMaybe
-              ( MyLambda
-                  mempty
-                  (Identifier mempty "f")
-                  (MyApp mempty (MyVar mempty "f") (int 1))
-              )
-      startInference expr $
-        Right
-          ( MTFunction
-              mempty
-              ( MTFunction
-                  mempty
-                  (MTPrim mempty MTInt)
-                  (MTTypeApp mempty (unknown 2) (MTPrim mempty MTInt))
-              )
-              (MTTypeApp mempty (unknown 2) (MTPrim mempty MTInt))
-          )
-    -- needs type annotations
-    xit "Lambda variable as constructor (multiple application)" $ do
-      let expr =
-            MyData
-              mempty
-              dtMaybe
-              ( MyLambda
-                  mempty
-                  (Identifier mempty "f")
-                  (MyApp mempty (MyApp mempty (MyVar mempty "f") (int 1)) (bool True))
-              )
-      startInference expr $
-        Right
-          ( MTFunction
-              mempty
-              ( MTFunction
-                  mempty
-                  (MTPrim mempty MTInt)
-                  ( MTFunction
-                      mempty
-                      (MTPrim mempty MTBool)
-                      ( MTTypeApp
-                          mempty
-                          ( MTTypeApp
-                              mempty
-                              (unknown 2)
-                              (MTPrim mempty MTInt)
-                          )
-                          (MTPrim mempty MTBool)
-                      )
-                  )
-              )
-              ( MTTypeApp
-                  mempty
-                  ( MTTypeApp
-                      mempty
-                      (unknown 2)
-                      (MTPrim mempty MTInt)
-                  )
-                  (MTPrim mempty MTBool)
-              )
-          )
+                ( MTFunction
+                    mempty
+                    (MTPrim mempty MTInt)
+                    ( MTFunction
+                        mempty
+                        (MTPrim mempty MTBool)
+                        ( MTTypeApp
+                            mempty
+                            ( MTTypeApp
+                                mempty
+                                (unknown 2)
+                                (MTPrim mempty MTInt)
+                            )
+                            (MTPrim mempty MTBool)
+                        )
+                    )
+                )
+                ( MTTypeApp
+                    mempty
+                    ( MTTypeApp
+                        mempty
+                        (unknown 2)
+                        (MTPrim mempty MTInt)
+                    )
+                    (MTPrim mempty MTBool)
+                )
+            )

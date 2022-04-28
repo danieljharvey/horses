@@ -31,7 +31,7 @@ testParseWithAnn t = case parseExpr t of
 
 spec :: Spec
 spec = parallel $ do
-  describe "Syntax" $ do
+  fdescribe "Syntax" $ do
     describe "Language" $ do
       it "Parses True" $
         testParse "True" `shouldBe` Right (bool True)
@@ -796,6 +796,66 @@ spec = parallel $ do
       it "parses access of a record literal" $ do
         testParse "{ dog: True }.dog"
           `shouldSatisfy` isRight
+      it "parses an int with type annotation" $ do
+        testParse "(1 : Int)"
+          `shouldBe` Right
+            ( MyAnnotation
+                mempty
+                (MyLiteral mempty (MyInt 1))
+                (MTPrim mempty MTInt)
+            )
+      it "parses a function with type annotation" $ do
+        testParse "(\\a -> a : Int -> Int)"
+          `shouldBe` Right
+            ( MyAnnotation
+                mempty
+                (MyLambda mempty (Identifier mempty "a") (MyVar mempty "a"))
+                ( MTFunction
+                    mempty
+                    (MTPrim mempty MTInt)
+                    (MTPrim mempty MTInt)
+                )
+            )
+      it "parses a let binding with type annotation" $ do
+        testParse "let (a: Int) = 1 in True"
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                (Identifier mempty "a")
+                ( MyAnnotation
+                    mempty
+                    (MyLiteral mempty (MyInt 1))
+                    (MTPrim mempty MTInt)
+                )
+                (MyLiteral mempty (MyBool True))
+            )
+      it "parses a let function with type annotation" $ do
+        testParse "let (addOne: Int -> Int) a = a + 1 in True"
+          `shouldBe` Right
+            ( MyLet
+                mempty
+                (Identifier mempty "addOne")
+                ( MyAnnotation
+                    mempty
+                    ( MyLambda
+                        mempty
+                        (Identifier mempty "a")
+                        ( MyInfix
+                            mempty
+                            Add
+                            (MyVar mempty "a")
+                            (MyLiteral mempty (MyInt 1))
+                        )
+                    )
+                    ( MTFunction
+                        mempty
+                        (MTPrim mempty MTInt)
+                        (MTPrim mempty MTInt)
+                    )
+                )
+                (MyLiteral mempty (MyBool True))
+            )
+
     describe "Test annotations" $ do
       it "Parses a var with location information" $
         testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")

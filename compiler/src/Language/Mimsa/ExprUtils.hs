@@ -17,7 +17,6 @@ import qualified Data.Map as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Pattern
-import Language.Mimsa.Types.Typechecker
 
 -------
 -- Functions for operating on the Expr type
@@ -256,4 +255,3 @@ nameFromIdent = fst . detailsFromIdent
 
 detailsFromIdent :: Identifier var ann -> (var, ann)
 detailsFromIdent (Identifier ann name) = (name, ann)
-detailsFromIdent (AnnotatedIdentifier mt name) = (name, getAnnotationForType mt)

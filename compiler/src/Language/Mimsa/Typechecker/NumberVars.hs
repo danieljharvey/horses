@@ -61,7 +61,6 @@ addNumbers storeExpr =
 varFromIdent :: Identifier var ann -> var
 varFromIdent ident = case ident of
   Identifier _ v -> v
-  AnnotatedIdentifier _ v -> v
 
 varsFromPattern :: (Ord var) => Pattern var ann -> Set var
 varsFromPattern (PVar _ var) = S.singleton var
@@ -241,5 +240,3 @@ markIdentImports ::
   Identifier (var, Unique) ann
 markIdentImports (Identifier ann from') unique =
   Identifier ann (from', unique)
-markIdentImports (AnnotatedIdentifier mt from') unique =
-  AnnotatedIdentifier mt (from', unique)

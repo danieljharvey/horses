@@ -53,7 +53,6 @@ extractVars_ (MyPatternMatch _ match patterns) =
 
 extractIdentVars :: Identifier Name ann -> Set Name
 extractIdentVars (Identifier _ name) = S.singleton name
-extractIdentVars (AnnotatedIdentifier _ name) = S.singleton name
 
 extractPatternVars :: (Eq ann, Monoid ann) => Pattern Name ann -> Set Name
 extractPatternVars (PWildcard _) = mempty

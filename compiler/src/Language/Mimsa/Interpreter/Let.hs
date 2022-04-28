@@ -9,7 +9,6 @@ import Language.Mimsa.Types.Typechecker.Unique
 
 varFromIdent :: Identifier var ann -> var
 varFromIdent (Identifier _ var) = var
-varFromIdent (AnnotatedIdentifier _ var) = var
 
 -- need to interpret the expr in the let binding
 -- BUT it needs to refer to itself

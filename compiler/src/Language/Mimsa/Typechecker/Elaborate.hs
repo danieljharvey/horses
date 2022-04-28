@@ -150,24 +150,16 @@ bindingIsRecursive ident = getAny . withMonoid findBinding
   where
     variable = case ident of
       (Identifier _ a) -> a
-      (AnnotatedIdentifier _ a) -> a
     findBinding (MyVar _ binding) | binding == variable = (False, Any True)
     findBinding _ = (True, mempty)
 
 binderFromIdentifier :: Identifier var ann -> var
 binderFromIdentifier = \case
   (Identifier _ a) -> a
-  (AnnotatedIdentifier _ a) -> a
 
 annotationFromIdentifier :: Identifier var ann -> ann
 annotationFromIdentifier = \case
   (Identifier ann _) -> ann
-  (AnnotatedIdentifier mt _) -> getAnnotationForType mt
-
-monoTypeFromIdentifier :: Identifier var Annotation -> Maybe MonoType
-monoTypeFromIdentifier = \case
-  (AnnotatedIdentifier mt _) -> Just mt
-  _ -> Nothing
 
 -- if type is recursive we make it monomorphic
 -- if not, we make it polymorphic
@@ -187,12 +179,6 @@ inferLetBinding env ann ident expr body = do
       -- we have to run substitutions on this before "saving" it
       (inferExpr, constraints) <- listen (infer env expr)
       subst <- solve constraints
-      -- compare annotated type with inferbed expr if possible
-      case monoTypeFromIdentifier ident of
-        (Just mt) ->
-          tell
-            [ShouldEqual mt (getTypeFromAnn inferExpr)]
-        _ -> pure ()
       let tySubstExpr = applySubst subst (getTypeFromAnn inferExpr)
       let newEnv =
             envFromVar bindName (generalise env tySubstExpr)
@@ -219,13 +205,6 @@ inferRecursiveLetBinding env ann ident expr body = do
   tyRecExpr <- getUnknown ann
   let envWithRecursiveFn = envFromVar bindName (Scheme [] tyRecExpr) <> env
   inferExpr <- infer envWithRecursiveFn expr
-
-  -- compare annotated type with inferbed expr if possible
-  case monoTypeFromIdentifier ident of
-    (Just mt) ->
-      tell
-        [ShouldEqual mt (getTypeFromAnn inferExpr)]
-    _ -> pure ()
 
   let tyExpr = getTypeFromAnn inferExpr
       newEnv =
@@ -667,10 +646,9 @@ inferLambda env ann ident body = do
       bindAnn = annotationFromIdentifier ident
 
   -- compare annotated type with inferbed expr if possible
-  tyBinder <- case monoTypeFromIdentifier ident of
-    (Just mt) -> pure mt
-    Nothing -> getUnknown bindAnn
+  tyBinder <- getUnknown bindAnn
 
+  -- TODO: this might be unnecessary now
   (newEnv, tyBinder') <- freshNamedType env tyBinder
 
   let tmpCtx =

@@ -7,7 +7,6 @@ import Language.Mimsa.Types.Interpreter.Stack
 
 varFromIdent :: Identifier var ann -> var
 varFromIdent (Identifier _ var) = var
-varFromIdent (AnnotatedIdentifier _ var) = var
 
 interpretApp ::
   (Ord var, Eq ann) =>

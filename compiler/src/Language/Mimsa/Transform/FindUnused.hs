@@ -7,7 +7,6 @@ import Language.Mimsa.ExprUtils
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Typechecker
 
 removeUnused :: (Ord ann, Ord var) => Expr var ann -> Expr var ann
 removeUnused = repeatUntilEq removeUnusedInternal
@@ -26,7 +25,6 @@ removeBindings remove = f
     f (MyLet ann ident letExpr letBody) =
       let a = case ident of
             Identifier _ var -> var
-            AnnotatedIdentifier _ var -> var
        in if S.member a remove
             then letBody
             else MyLet ann ident (f letExpr) (f letBody)
@@ -90,8 +88,6 @@ findVariables = withMonoid f
   where
     f (MyLet _ (Identifier ann a) _ _) =
       (True, S.singleton (a, ann))
-    f (MyLet _ (AnnotatedIdentifier mt a) _ _) =
-      (True, S.singleton (a, getAnnotationForType mt))
     f (MyPatternMatch _ _ patterns) =
       (True, mconcat (findVariableInPattern . fst <$> patterns))
     f (MyLetPattern _ pat _ _) =
