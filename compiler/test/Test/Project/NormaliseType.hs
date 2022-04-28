@@ -16,7 +16,7 @@ mkVar :: Int -> MonoType
 mkVar i = MTVar mempty (TVUnificationVar i)
 
 mkNameVar :: Text -> MonoType
-mkNameVar n = MTVar mempty (TVName Nothing (coerce n))
+mkNameVar n = MTVar mempty (TVName (coerce n))
 
 normaliseType' :: MonoType -> MonoType
 normaliseType' = normaliseType

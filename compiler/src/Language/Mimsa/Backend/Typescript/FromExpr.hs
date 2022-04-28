@@ -90,7 +90,7 @@ toTSType' _ (MTPrim _ MTBool) = pure (TSType Nothing "boolean" [], mempty)
 toTSType' _ (MTVar _ a) =
   let newVar = case a of
         TVUnificationVar i' -> T.toTitle (T.pack (printTypeNum (i' + 1)))
-        TVName _ a' -> T.toTitle (coerce a')
+        TVName a' -> T.toTitle (coerce a')
         TVVar i' _ -> T.toTitle (T.pack (printTypeNum (i' + 1)))
    in pure (TSTypeVar newVar, S.singleton (TSGeneric newVar))
 toTSType' _ mt@MTTypeApp {} =
@@ -312,7 +312,7 @@ toTSBody expr' =
   case expr' of
     (MyLiteral _ lit) ->
       pure $ TSBody mempty (TSLit (toLiteral lit))
-    (MyAnnotation _ expr _) -> toTSBody expr
+    (MyAnnotation _ _ expr) -> toTSBody expr
     (MyLet _ ident letExpr letBody) ->
       toLet ident letExpr letBody
     (MyLetPattern _ pat letExpr letBody) ->

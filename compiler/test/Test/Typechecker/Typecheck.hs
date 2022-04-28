@@ -84,19 +84,19 @@ spec = do
       describe "annotations" $ do
         it "annotation that is ok" $ do
           let expr =
-                MyAnnotation mempty (int 1) (MTPrim mempty MTInt)
+                MyAnnotation mempty (MTPrim mempty MTInt) (int 1)
           startInference expr (Right (MTPrim mempty MTInt))
         it "annotation that is not ok" $ do
           let expr =
-                MyAnnotation mempty (bool True) (MTPrim mempty MTInt)
+                MyAnnotation mempty (MTPrim mempty MTInt) (bool True)
           startInference expr (Left (UnificationError mtBool mtInt))
         it "annotation with function" $
           do
             let expr =
                   MyAnnotation
                     mempty
-                    (MyLambda mempty (Identifier mempty "a") (int 1))
                     (MTFunction mempty (MTPrim mempty MTBool) (MTPrim mempty MTInt))
+                    (MyLambda mempty (Identifier mempty "a") (int 1))
             startInference
               expr
               ( Right
@@ -106,6 +106,15 @@ spec = do
           let expr =
                 MyAnnotation
                   mempty
+                  ( MTFunction
+                      mempty
+                      (MTVar mempty (TVName "a"))
+                      ( MTFunction
+                          mempty
+                          (MTVar mempty (TVName "a"))
+                          (MTPrim mempty MTInt)
+                      )
+                  )
                   ( MyLambda
                       mempty
                       (Identifier mempty "a")
@@ -113,15 +122,6 @@ spec = do
                           mempty
                           (Identifier mempty "b")
                           (int 1)
-                      )
-                  )
-                  ( MTFunction
-                      mempty
-                      (MTVar mempty (TVName Nothing "a"))
-                      ( MTFunction
-                          mempty
-                          (MTVar mempty (TVName Nothing "a"))
-                          (MTPrim mempty MTInt)
                       )
                   )
           startInference
@@ -142,7 +142,7 @@ spec = do
                 MyLet
                   mempty
                   (Identifier mempty "a")
-                  (MyAnnotation mempty (MyLiteral mempty (MyString "dog")) mtString)
+                  (MyAnnotation mempty mtString (MyLiteral mempty (MyString "dog")))
                   (MyLiteral mempty (MyBool True))
           startInference expr $
             Right mtBool
@@ -152,7 +152,7 @@ spec = do
                 MyLet
                   mempty
                   (Identifier mempty "a")
-                  (MyAnnotation mempty (MyLiteral mempty (MyString "dog")) mtInt)
+                  (MyAnnotation mempty mtInt (MyLiteral mempty (MyString "dog")))
                   (MyLiteral mempty (MyBool True))
           startInference expr $
             Left (UnificationError mtString mtInt)
@@ -161,12 +161,12 @@ spec = do
           let expr =
                 MyAnnotation
                   mempty
+                  (MTFunction mempty mtString mtString)
                   ( MyLambda
                       mempty
                       (Identifier mempty "a")
                       (MyVar mempty "a")
                   )
-                  (MTFunction mempty mtString mtString)
           startInference expr $
             Right $ MTFunction mempty mtString mtString
 
@@ -174,15 +174,27 @@ spec = do
           let expr =
                 MyAnnotation
                   mempty
+                  (MTFunction mempty mtString mtInt)
                   ( MyLambda
                       mempty
                       (Identifier mempty "a")
                       (MyInfix mempty Add (MyVar mempty "a") (int 1))
                   )
-                  (MTFunction mempty mtString mtInt)
           startInference expr $
             Left (UnificationError mtString mtInt)
 
+        it "Applies concrete value to annotated polymorphic function" $ do
+          let expr =
+                MyApp
+                  mempty
+                  ( MyAnnotation
+                      mempty
+                      (MTFunction mempty (MTVar mempty (TVName "a")) (MTVar mempty (TVName "a")))
+                      (MyLambda mempty (Identifier mempty "a") (MyVar mempty "a"))
+                  )
+                  (bool True)
+          startInference expr $
+            Right mtBool
       it "infers let binding with recursion 0" $ do
         let expr =
               MyLet

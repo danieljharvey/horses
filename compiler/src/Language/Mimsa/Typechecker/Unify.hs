@@ -28,28 +28,30 @@ varBind ::
   TypeIdentifier ->
   MonoType ->
   m Substitutions
-varBind ann var ty
-  | isNamedVar var =
-    case ty of
-      (MTVar _ (TVUnificationVar _)) ->
-        -- a named variable will unify with a unification variable
-        pure (Substitutions (M.singleton var (ty $> ann)))
-      (MTVar _ tvVar@(TVName _ _))
-        | tvVar == var ->
-          -- a named var unifies with itself
-          pure (Substitutions (M.singleton var (ty $> ann)))
-      _ -> throwError (UnificationError ty (MTVar ann var))
-  | typeEquals ty (MTVar mempty var) = pure mempty
-  | S.member var (freeTypeVars ty) = do
+varBind ann var@(TVName _) mt@(MTVar _ (TVUnificationVar _)) =
+  -- named vars always combine with unification vars
+  pure (Substitutions (M.singleton var (mt $> ann)))
+varBind ann var@(TVName nameA) mt@(MTVar _ (TVName nameB)) =
+  -- names must match to unify
+  if nameA == nameB
+    then pure (Substitutions (M.singleton var (mt $> ann)))
+    else throwError (UnificationError mt (MTVar ann var))
+varBind ann var@(TVVar a nameA) mt@(MTVar _ (TVVar b nameB)) =
+  -- names and numbers must match to unify
+  if nameA == nameB && a == b
+    then pure (Substitutions (M.singleton var (mt $> ann)))
+    else throwError (UnificationError mt (MTVar ann var))
+varBind ann var@(TVName _) mt =
+  -- named vars don't unify with non-variable values
+  throwError (UnificationError mt (MTVar ann var))
+varBind ann var mt
+  | typeEquals mt (MTVar mempty var) = pure mempty
+  | S.member var (freeTypeVars mt) = do
     throwError $
-      FailsOccursCheck var ty
+      FailsOccursCheck var mt
   | otherwise = do
-    let ty' = ty $> ann
-    pure $ Substitutions (M.singleton var ty')
-
-isNamedVar :: TypeIdentifier -> Bool
-isNamedVar (TVName _ _n) = True
-isNamedVar _ = False
+    let mt' = mt $> ann
+    pure $ Substitutions (M.singleton var mt')
 
 -- these are tricky to deal with, so flatten them on the way in
 flattenRow :: MonoType -> MonoType

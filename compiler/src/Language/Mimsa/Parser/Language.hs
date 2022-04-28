@@ -86,7 +86,7 @@ letInParser = addLocation $ do
       MyLet
         mempty
         name
-        (MyAnnotation mempty boundExpr mt)
+        (MyAnnotation mempty mt boundExpr)
         <$> expressionParser
     Nothing ->
       MyLet mempty name boundExpr
@@ -103,7 +103,7 @@ letFuncParser = addLocation $ do
   let expr' = foldr (MyLambda mempty) expr args
   case anno of
     Just mt ->
-      MyLet mempty name (MyAnnotation mempty expr' mt)
+      MyLet mempty name (MyAnnotation mempty mt expr')
         <$> expressionParser
     Nothing ->
       MyLet mempty name expr' <$> expressionParser
@@ -399,5 +399,5 @@ annotationParser =
   let innerParser = do
         expr <- expressionParser
         myString ":"
-        MyAnnotation mempty expr <$> monoTypeParser
+        MyAnnotation mempty <$> monoTypeParser <*> pure expr
    in addLocation (inBrackets innerParser)

@@ -19,11 +19,12 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Logging
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Typechecker.Generalise
-import Language.Mimsa.Typechecker.ScopeTypeVar
+--import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -645,18 +646,19 @@ inferLambda env ann ident body = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
 
-  -- compare annotated type with inferbed expr if possible
   tyBinder <- getUnknown bindAnn
 
-  -- TODO: this might be unnecessary now
-  (newEnv, tyBinder') <- freshNamedType env tyBinder
-
   let tmpCtx =
-        envFromVar binder (Scheme [] tyBinder') <> newEnv
+        envFromVar binder (Scheme [] tyBinder) <> env
 
   inferBody <- infer tmpCtx body
-  let tyReturn = MTFunction ann tyBinder' (getTypeFromAnn inferBody)
-  pure (MyLambda tyReturn (ident $> (tyBinder' $> bindAnn)) inferBody)
+  let tyReturn = MTFunction ann tyBinder (getTypeFromAnn inferBody)
+  pure
+    ( MyLambda
+        tyReturn
+        (ident $> (tyBinder $> bindAnn))
+        inferBody
+    )
 
 inferDefineInfix ::
   Environment ->
@@ -699,22 +701,42 @@ inferArray env ann items = do
 elab :: Environment -> TcExpr -> ElabM ElabExpr
 elab = infer
 
-check :: Environment -> TcExpr -> MonoType -> ElabM ElabExpr
-check env (MyLambda ann ident body) (MTFunction _ tyBinder tyBody) = do
+checkLambda ::
+  Environment ->
+  Annotation ->
+  Identifier (Name, Unique) Annotation ->
+  TcExpr ->
+  MonoType ->
+  MonoType ->
+  ElabM ElabExpr
+checkLambda env ann ident body tyBinder tyBody = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
 
-  let tmpCtx =
-        envFromVar binder (Scheme [] tyBinder) <> env
+  {-
+    -- convert TVName to TVVar and scope them where necessary
+    (newEnv1, tyBinder') <- freshNamedType env tyBinder
+    (newEnv2, tyBody') <- freshNamedType newEnv1 tyBody
+  -}
 
-  -- infer body type
-  inferBody <- infer tmpCtx body
-  tell
-    [ ShouldEqual tyBody (expAnn inferBody)
-    ]
+  let envWithBinder =
+        envFromVar binder (debugLog "new scheme" (Scheme [] tyBinder))
+          <> env -- newEnv2
 
-  let tyReturn = MTFunction ann tyBinder tyBody
-  pure (MyLambda tyReturn (ident $> (tyBinder $> bindAnn)) inferBody)
+  -- check body type
+  inferBody <- check envWithBinder body tyBody
+
+  let tyReturn = MTFunction ann tyBinder (expAnn inferBody)
+  pure
+    ( MyLambda
+        tyReturn
+        (ident $> (tyBinder $> bindAnn))
+        inferBody
+    )
+
+check :: Environment -> TcExpr -> MonoType -> ElabM ElabExpr
+check env (MyLambda ann ident body) (MTFunction _ tyBinder tyBody) =
+  checkLambda env ann ident body tyBinder tyBody
 check env expr mt = do
   typedExpr <- infer env expr
   subs <- unify (expAnn typedExpr) mt
@@ -727,9 +749,9 @@ infer ::
 infer env inferExpr =
   case inferExpr of
     (MyLiteral ann a) -> inferLiteral ann a
-    (MyAnnotation _ann expr mt) -> do
+    (MyAnnotation _ann mt expr) -> do
       elabExpr <- check env expr mt
-      pure (MyAnnotation (expAnn elabExpr) elabExpr (mt $> mt))
+      pure (MyAnnotation (expAnn elabExpr) (mt $> mt) elabExpr)
     (MyVar ann name) ->
       inferVarFromScope env ann name
     (MyRecord ann map') -> do

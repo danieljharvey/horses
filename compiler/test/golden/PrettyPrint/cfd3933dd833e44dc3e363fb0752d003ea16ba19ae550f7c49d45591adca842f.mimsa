@@ -1,0 +1,1 @@
+\a -> if (100 == a.int) then 100 else 0

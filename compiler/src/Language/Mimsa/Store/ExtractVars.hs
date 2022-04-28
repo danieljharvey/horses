@@ -17,7 +17,7 @@ extractVars = extractVars_
 
 extractVars_ :: (Eq ann, Monoid ann) => Expr Name ann -> Set Name
 extractVars_ (MyVar _ a) = S.singleton a
-extractVars_ (MyAnnotation _ expr _) =
+extractVars_ (MyAnnotation _ _ expr) =
   extractVars_ expr
 extractVars_ (MyIf _ a b c) =
   extractVars_ a <> extractVars_ b <> extractVars_ c

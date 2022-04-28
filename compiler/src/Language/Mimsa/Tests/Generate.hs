@@ -63,7 +63,7 @@ typeApply mts (DataType _ vars constructors) =
   let subs =
         Substitutions $
           M.fromList $
-            (\(k, a) -> (TVName Nothing (coerce k), a)) <$> zip vars mts
+            (\(k, a) -> (TVName (coerce k), a)) <$> zip vars mts
    in (fmap . fmap) (applySubst subs) constructors
 
 fromType ::

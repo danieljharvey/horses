@@ -47,8 +47,8 @@ data Expr var ann
       }
   | MyAnnotation
       { expAnn :: ann,
-        expExpr :: Expr var ann,
-        expType :: Type ann
+        expType :: Type ann,
+        expExpr :: Expr var ann
       }
   | -- | a named variable
     MyVar
@@ -360,7 +360,7 @@ instance (Printer var) => Printer (Expr (var, a) ann) where
 instance Printer (Expr Name ann) where
   prettyDoc (MyLiteral _ l) =
     prettyDoc l
-  prettyDoc (MyAnnotation _ expr mt) =
+  prettyDoc (MyAnnotation _ mt expr) =
     "(" <> prettyDoc expr <+> ":" <+> prettyDoc mt <> ")"
   prettyDoc (MyVar _ var) =
     prettyDoc var

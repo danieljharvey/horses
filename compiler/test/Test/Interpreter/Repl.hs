@@ -129,7 +129,7 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  describe "Repl" $ do
+  fdescribe "Repl" $ do
     it "Save testStdlib" $
       saveProject testStdlib
         >> (True `shouldBe` True)
@@ -1042,9 +1042,9 @@ spec =
 
       it "should break with non-existent type" $ do
         result <- eval testStdlib "let (a: FooBar) = True in a"
-        result `shouldSatisfy` textErrorContains "A binding for type FooBar could not be found"
+        result `shouldSatisfy` textErrorContains "Cannot match Boolean and FooBar"
 
-      it "cannot assign polymorphic type to concrete value" $ do
+      it "cannot assign concrete value to polymorphic type" $ do
         result <- eval testStdlib "let (a: anyA) = True in a"
         result `shouldSatisfy` isLeft
 
@@ -1058,23 +1058,23 @@ spec =
 
     describe "lambda with type annotation" $ do
       it "should not parse without brackets" $ do
-        result <- eval testStdlib "\\a: Int -> a + 1"
+        result <- eval testStdlib "\\a -> a + 1 : Int -> Int"
         result `shouldSatisfy` isLeft
 
       it "should parse without space" $ do
-        result <- eval testStdlib "\\(a:Int) -> a + 1"
+        result <- eval testStdlib "(\\a -> a + 1 : Int -> Int)"
         result `shouldSatisfy` isRight
 
       it "should typecheck" $ do
-        result <- eval testStdlib "\\(a: Int) -> a + 1"
+        result <- eval testStdlib "(\\a -> a + 1 : Int -> Int)"
         result `shouldSatisfy` isRight
 
       it "should typecheck (and print properly)" $ do
-        result <- eval testStdlib "\\(a: Maybe a) -> a"
+        result <- eval testStdlib "(\\a -> a : Maybe a -> Maybe a)"
         result `shouldSatisfy` isRight
 
       it "should not typecheck if boolean and int do not match" $ do
-        result <- eval testStdlib "\\(a: Boolean) -> a + 1"
+        result <- eval testStdlib "(\\a -> a + 1 : Boolean -> Int)"
         result `shouldSatisfy` isLeft
 
       it "should not typecheck if unifying int with 'a'" $ do
@@ -1082,19 +1082,19 @@ spec =
         result `shouldSatisfy` isLeft
 
       it "should unify named type variables with themselves" $ do
-        result <- eval testStdlib "\\(abc: a) -> \\(def: a) -> abc == def"
+        result <- eval testStdlib "(\\abc -> \\def -> abc == def : a -> a -> Boolean)"
         result `shouldSatisfy` isRight
 
       it "should not unify named type variables with one another" $ do
-        result <- eval testStdlib "\\(abc: a) -> \\(def: b) -> abc == def"
+        result <- eval testStdlib "(\\abc -> \\def -> abc == def: a -> b -> Boolean)"
         result `shouldSatisfy` isLeft
 
-      it "should typecheck when id has a specific type" $ do
-        result <- eval testStdlib "let identity = \\(abc: a) -> abc; identity True"
+      fit "should typecheck when id has a specific type" $ do
+        result <- eval testStdlib "let (identity: a -> a) abc = abc; identity True"
         fst <$> result `shouldBe` Right (MTPrim mempty MTBool)
 
       it "each type variable is unique to the scope it's introduced in" $ do
-        result <- eval testStdlib "let id1 (a: a) = (a,a); let id2 (b: a) = b; id1 (id2 True)"
+        result <- eval testStdlib "let (id1: a -> (a,a)) a = (a,a); let (id2: a -> a) b = b; id1 (id2 True)"
         result `shouldSatisfy` isRight
 
     describe "optimisations" $ do

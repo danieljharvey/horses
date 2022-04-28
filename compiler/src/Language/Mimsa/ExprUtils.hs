@@ -60,7 +60,7 @@ withMonoid ::
   m
 withMonoid f whole@(MyLiteral _ _) = snd (f whole)
 withMonoid f whole@(MyVar _ _) = snd (f whole)
-withMonoid f whole@(MyAnnotation _ expr _) =
+withMonoid f whole@(MyAnnotation _ _ expr) =
   let (go, m) = f whole
    in if not go
         then m
@@ -161,8 +161,8 @@ withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
 mapExpr :: (Expr a b -> Expr a b) -> Expr a b -> Expr a b
 mapExpr _ (MyLiteral ann a) = MyLiteral ann a
 mapExpr _ (MyVar ann a) = MyVar ann a
-mapExpr f (MyAnnotation ann expr mt) =
-  MyAnnotation ann (f expr) mt
+mapExpr f (MyAnnotation ann mt expr) =
+  MyAnnotation ann mt (f expr)
 mapExpr f (MyLet ann binder bindExpr' inExpr) =
   MyLet ann binder (f bindExpr') (f inExpr)
 mapExpr f (MyLetPattern ann pat expr body) =
@@ -196,8 +196,8 @@ bindExpr _ (MyLiteral ann a) =
   pure $ MyLiteral ann a
 bindExpr _ (MyVar ann a) =
   pure $ MyVar ann a
-bindExpr f (MyAnnotation ann expr mt) =
-  MyAnnotation ann <$> f expr <*> pure mt
+bindExpr f (MyAnnotation ann mt expr) =
+  MyAnnotation ann mt <$> f expr
 bindExpr f (MyLet ann binder bindExpr' inExpr) =
   MyLet ann binder <$> f bindExpr' <*> f inExpr
 bindExpr f (MyLetPattern ann pat expr body) =

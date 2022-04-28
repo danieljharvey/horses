@@ -50,7 +50,7 @@ interpretExpr' ::
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)
-interpretExpr' (MyAnnotation _ expr _) = interpretExpr' expr
+interpretExpr' (MyAnnotation _ _ expr) = interpretExpr' expr
 interpretExpr' (MyLet _ ident expr body) =
   interpretLet interpretExpr ident expr body
 interpretExpr' (MyVar _ var) =

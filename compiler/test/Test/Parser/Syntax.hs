@@ -31,7 +31,7 @@ testParseWithAnn t = case parseExpr t of
 
 spec :: Spec
 spec = parallel $ do
-  fdescribe "Syntax" $ do
+  describe "Syntax" $ do
     describe "Language" $ do
       it "Parses True" $
         testParse "True" `shouldBe` Right (bool True)
@@ -801,20 +801,20 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyAnnotation
                 mempty
-                (MyLiteral mempty (MyInt 1))
                 (MTPrim mempty MTInt)
+                (MyLiteral mempty (MyInt 1))
             )
       it "parses a function with type annotation" $ do
         testParse "(\\a -> a : Int -> Int)"
           `shouldBe` Right
             ( MyAnnotation
                 mempty
-                (MyLambda mempty (Identifier mempty "a") (MyVar mempty "a"))
                 ( MTFunction
                     mempty
                     (MTPrim mempty MTInt)
                     (MTPrim mempty MTInt)
                 )
+                (MyLambda mempty (Identifier mempty "a") (MyVar mempty "a"))
             )
       it "parses a let binding with type annotation" $ do
         testParse "let (a: Int) = 1 in True"
@@ -824,8 +824,8 @@ spec = parallel $ do
                 (Identifier mempty "a")
                 ( MyAnnotation
                     mempty
-                    (MyLiteral mempty (MyInt 1))
                     (MTPrim mempty MTInt)
+                    (MyLiteral mempty (MyInt 1))
                 )
                 (MyLiteral mempty (MyBool True))
             )
@@ -837,6 +837,11 @@ spec = parallel $ do
                 (Identifier mempty "addOne")
                 ( MyAnnotation
                     mempty
+                    ( MTFunction
+                        mempty
+                        (MTPrim mempty MTInt)
+                        (MTPrim mempty MTInt)
+                    )
                     ( MyLambda
                         mempty
                         (Identifier mempty "a")
@@ -846,11 +851,6 @@ spec = parallel $ do
                             (MyVar mempty "a")
                             (MyLiteral mempty (MyInt 1))
                         )
-                    )
-                    ( MTFunction
-                        mempty
-                        (MTPrim mempty MTInt)
-                        (MTPrim mempty MTInt)
                     )
                 )
                 (MyLiteral mempty (MyBool True))
