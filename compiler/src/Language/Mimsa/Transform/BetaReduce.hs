@@ -13,6 +13,9 @@ betaReduceInternal :: Expr var ann -> Expr var ann
 betaReduceInternal (MyApp ann (MyLambda _ann ident body) val) =
   let (var, ann') = detailsFromIdent ident
    in MyLet ann (Identifier ann' var) val (betaReduceInternal body)
+betaReduceInternal (MyApp ann (MyAnnotation _ _ (MyLambda _ann ident body)) val) =
+  let (var, ann') = detailsFromIdent ident
+   in MyLet ann (Identifier ann' var) val (betaReduceInternal body)
 betaReduceInternal (MyIf _ (MyLiteral _ (MyBool True)) thenExpr _) =
   betaReduceInternal thenExpr
 betaReduceInternal (MyIf _ (MyLiteral _ (MyBool False)) _ elseExpr) =

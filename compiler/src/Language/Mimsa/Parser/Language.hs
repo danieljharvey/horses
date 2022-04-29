@@ -153,6 +153,7 @@ appFunc =
   constructorParser
     <|> try recordAccessParser
     <|> varParser
+    <|> try annotationParser
     <|> try (inBrackets lambdaParser)
     <|> typedHoleParser
     <|> inBrackets appParser
@@ -176,6 +177,7 @@ argParser =
           <|> constructorParser
    in try (inBrackets infixParser)
         <|> try (inBrackets appParser)
+        <|> try annotationParser
         <|> orInBrackets parsers
 
 appParser :: Parser ParserExpr
@@ -277,6 +279,7 @@ infixExpr =
         try literalParser
           <|> try complexParser
           <|> try varParser
+          <|> try annotationParser
           <|> try constructorParser
    in orInBrackets parsers
 

@@ -1,4 +1,0 @@
-let lexeme p =
-  parser.left p parser.space0;
-
-parser.run (parser.right (lexeme (parser.char "[")) (parser.left (parser.sepBy (lexeme (parser.char ",")) (lexeme (parser.char "d"))) (lexeme (parser.char "]")))) "[d,d,d,d]"

@@ -20,7 +20,7 @@ spec = do
           expected = unsafeParseExpr "let x = 3 in x + 2"
       betaReduce expr `shouldBe` expected
     it "Turns app lambda val in let val without type signature" $ do
-      let expr = unsafeParseExpr "(\\(x: a) -> x) 3"
+      let expr = unsafeParseExpr "(\\x -> x : a -> a) 3"
           expected = unsafeParseExpr "let x = 3 in x"
       betaReduce expr `shouldBe` expected
     it "Removes redundant if statement" $ do

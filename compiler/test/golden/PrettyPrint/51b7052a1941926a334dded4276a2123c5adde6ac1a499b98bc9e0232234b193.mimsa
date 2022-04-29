@@ -1,6 +1,0 @@
-\opts ->
-  match [ "a", "b" ] with 
-      [a, _, _] -> 
-        (Just ((a, "dog")))
-    | _ -> 
-        Nothing

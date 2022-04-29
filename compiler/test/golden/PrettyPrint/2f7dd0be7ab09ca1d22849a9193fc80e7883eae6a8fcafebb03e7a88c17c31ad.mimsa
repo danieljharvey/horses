@@ -1,1 +1,0 @@
-(\abc -> abc : a -> a) True

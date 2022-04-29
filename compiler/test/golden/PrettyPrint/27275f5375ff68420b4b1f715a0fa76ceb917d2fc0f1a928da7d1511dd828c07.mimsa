@@ -1,2 +1,0 @@
-(a -> a -> Boolean : \abc ->
-  \def -> abc == def)

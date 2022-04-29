@@ -62,8 +62,8 @@ spec = do
         inlineInternal' expr
           `shouldBe` expected
       it "Function with type annotation" $ do
-        let expr = unsafeParseExpr "let identity = \\(abc: a) -> abc; identity True"
-            expected = unsafeParseExpr "let identity = \\(abc: a) -> abc; (\\(abc: a) -> abc) True"
+        let expr = unsafeParseExpr "let (identity: a -> a) abc = abc; identity True"
+            expected = unsafeParseExpr "let (identity: a -> a) abc = abc; (\\abc -> abc : a -> a) True"
         inlineInternal' expr
           `shouldBe` expected
       it "Does not inline recursive definition" $ do

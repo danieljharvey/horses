@@ -123,7 +123,27 @@ spec = parallel $ do
                 )
                 (bool True)
             )
-
+      it "Recognises function application onto an annotated function" $
+        testParse "(\\a -> a: a -> a) True"
+          `shouldBe` Right
+            ( MyApp
+                mempty
+                ( MyAnnotation
+                    mempty
+                    ( MTFunction mempty (MTVar mempty (TVName "a")) (MTVar mempty (TVName "a"))
+                    )
+                    (MyLambda mempty (Identifier mempty "a") (MyVar mempty "a"))
+                )
+                (bool True)
+            )
+      it "Recognises application with an annotated argument" $
+        testParse "id (True: Boolean)"
+          `shouldBe` Right
+            ( MyApp
+                mempty
+                (MyVar mempty "id")
+                (MyAnnotation mempty (MTPrim mempty MTBool) (bool True))
+            )
       it "Recognises double function application onto a var" $
         testParse "add 1 2"
           `shouldBe` Right
@@ -527,6 +547,8 @@ spec = parallel $ do
             )
       it "Parses big infix fest" $
         testParse "(id 1) + (id 2) + (id 3)" `shouldSatisfy` isRight
+      it "Parses infix with annotations" $
+        testParse "(1 : Int) + (2 : Int) + (3 : Int)" `shouldSatisfy` isRight
       it "Parses smaller app in If" $
         testParse "if id True then 1 else 2" `shouldSatisfy` isRight
       it "Parses big app in If" $

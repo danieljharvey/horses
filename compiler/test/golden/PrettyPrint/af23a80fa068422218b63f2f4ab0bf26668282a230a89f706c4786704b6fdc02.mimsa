@@ -1,1 +1,0 @@
-((Maybe a) -> Maybe a : \a -> a)
