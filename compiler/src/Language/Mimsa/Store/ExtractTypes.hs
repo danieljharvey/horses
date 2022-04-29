@@ -7,6 +7,7 @@ module Language.Mimsa.Store.ExtractTypes
   )
 where
 
+import Data.Coerce
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -18,7 +19,7 @@ import Language.Mimsa.Types.AST
     Identifier (..),
     Pattern (..),
   )
-import Language.Mimsa.Types.Identifiers (Name, TyCon, TyVar, TypeIdentifier (..))
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
 -- this works out which external types have been used in a given expression
@@ -28,6 +29,7 @@ extractTypes = filterBuiltIns . extractTypes_
 
 extractTypes_ :: Expr Name ann -> Set TyCon
 extractTypes_ (MyVar _ _) = mempty
+extractTypes_ (MyAnnotation _ _ expr) = extractTypes_ expr
 extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
 extractTypes_ (MyLet _ ident a b) =
   extractFromIdentifier ident
@@ -69,8 +71,6 @@ extractFromPattern (PArray _ as _) = mconcat $ extractFromPattern <$> as
 extractFromPattern PString {} = mempty
 
 extractFromIdentifier :: Identifier var ann -> Set TyCon
-extractFromIdentifier (AnnotatedIdentifier mt _) =
-  extractTypenames mt
 extractFromIdentifier _ = mempty
 
 filterBuiltIns :: Set TyCon -> Set TyCon
@@ -108,6 +108,7 @@ extractDataTypes = withDataTypes S.singleton
 
 withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
 withDataTypes _ (MyVar _ _) = mempty
+withDataTypes f (MyAnnotation _ _ expr) = withDataTypes f expr
 withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
 withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b
 withDataTypes f (MyInfix _ _ a b) = withDataTypes f a <> withDataTypes f b
@@ -144,5 +145,6 @@ extractTypenames other = withMonoid extractTypenames other
 -----
 
 extractNamedTypeVars :: Type ann -> Set TyVar
-extractNamedTypeVars (MTVar _ (TVName _ tv)) = S.singleton tv
+extractNamedTypeVars (MTVar _ (TVName tv)) = S.singleton tv
+extractNamedTypeVars (MTVar _ (TVVar _ name)) = S.singleton (coerce name)
 extractNamedTypeVars other = withMonoid extractNamedTypeVars other

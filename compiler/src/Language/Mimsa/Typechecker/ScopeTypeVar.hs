@@ -4,6 +4,7 @@
 module Language.Mimsa.Typechecker.ScopeTypeVar (freshNamedType) where
 
 import Control.Monad.State
+import Data.Coerce
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -48,11 +49,17 @@ freshenNamedTypeVars ::
 freshenNamedTypeVars known =
   freshen
   where
-    freshen mtV@(MTVar ann (TVName _ tv)) =
-      case M.lookup tv known of -- if we've already scoped it
+    freshen (MTVar ann (TVName tv)) = do
+      -- get an index for this name, or find an existing one
+      case M.lookup tv known of
+        Just index ->
+          pure (MTVar ann (TVVar index (coerce tv)))
+        _ -> error "what?" -- this should have been created above?
+    freshen mtV@(MTVar ann (TVVar _ tv)) =
+      case M.lookup (coerce tv) known of -- if we've already scoped it
         Nothing -> pure mtV -- leave it
         Just i -> do
-          pure (MTVar ann (TVName (Just i) tv))
+          pure (MTVar ann (TVVar i tv))
     freshen mtV@MTVar {} = pure mtV
     freshen mtV@(MTConstructor _ _) =
       pure mtV

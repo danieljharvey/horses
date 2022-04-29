@@ -73,14 +73,14 @@ toFieldItemType ::
   Type a ->
   CodegenM (Name, FieldItemType)
 toFieldItemType tyName matchVar = \case
-  MTVar _ (TVName _ a) ->
+  MTVar _ (TVName a) ->
     if coerce a == matchVar
       then do
         name <- nextName (coerce a)
         pure (name, VariableField name)
       else pure (coerce a, NoVariable)
   mt -> case varsFromDataType mt of
-    Just (tyCon, [MTVar _ (TVName _ var)]) -> do
+    Just (tyCon, [MTVar _ (TVName var)]) -> do
       varName <- nextName tyName
       if tyCon == tyName && coerce var == matchVar
         then pure (varName, Recurse varName)

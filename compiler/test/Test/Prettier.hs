@@ -82,70 +82,80 @@ spec =
             doc = prettyDoc expr'
         renderWithWidth 50 doc `shouldBe` "type These a    = That a in 1"
         renderWithWidth 5 doc `shouldBe` "type These a \n  = That\n  a;\n\n1"
+
       it "Renders new function syntax nicely" $ do
         let expr' = unsafeParseExpr "let const a b = a in 1"
             doc = prettyDoc expr'
         renderWithWidth 50 doc `shouldBe` "let const a b = a in 1"
         renderWithWidth 5 doc `shouldBe` "let const a b =\n  a;\n\n1"
-    describe
-      "MonoType"
-      $ do
-        it "String" $
-          T.putStrLn (prettyPrint MTString)
-        it "Function" $
-          let mt :: MonoType
-              mt =
-                MTFunction
-                  mempty
-                  (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
-                  (MTPrim mempty MTBool)
-           in T.putStrLn
-                ( prettyPrint mt
+
+      it "Renders annotation for let" $ do
+        let expr' = unsafeParseExpr "let (num: Int) = 3; True"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "let (num: Int) = 3 in True"
+
+      it "Renders annotation for let function" $ do
+        let expr' = unsafeParseExpr "let (const: a -> b -> a) a b = a; True"
+            doc = prettyDoc expr'
+        renderWithWidth 50 doc `shouldBe` "let (const: a -> b -> a) a b = a in True"
+
+    describe "MonoType" $ do
+      it "String" $
+        T.putStrLn (prettyPrint MTString)
+      it "Function" $
+        let mt :: MonoType
+            mt =
+              MTFunction
+                mempty
+                (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
+                (MTPrim mempty MTBool)
+         in T.putStrLn
+              ( prettyPrint mt
+              )
+      it "Record" $
+        let mt :: MonoType
+            mt =
+              MTRecord mempty $
+                M.fromList
+                  [ ("dog", MTPrim mempty MTBool),
+                    ("horse", MTPrim mempty MTString),
+                    ( "maybeDog",
+                      dataTypeWithVars
+                        mempty
+                        "Maybe"
+                        [MTPrim mempty MTString]
+                    )
+                  ]
+         in T.putStrLn
+              ( prettyPrint mt
+              )
+      it "Pair" $
+        let mt :: MonoType
+            mt =
+              MTPair
+                mempty
+                (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTInt))
+                (MTPrim mempty MTString)
+         in T.putStrLn
+              (prettyPrint mt)
+      it "Variables" $
+        let mt :: MonoType
+            mt =
+              MTFunction
+                mempty
+                ( MTVar mempty $
+                    tvNamed "catch"
                 )
-        it "Record" $
-          let mt :: MonoType
-              mt =
-                MTRecord mempty $
-                  M.fromList
-                    [ ("dog", MTPrim mempty MTBool),
-                      ("horse", MTPrim mempty MTString),
-                      ( "maybeDog",
-                        dataTypeWithVars
-                          mempty
-                          "Maybe"
-                          [MTPrim mempty MTString]
-                      )
-                    ]
-           in T.putStrLn
-                ( prettyPrint mt
-                )
-        it "Pair" $
-          let mt :: MonoType
-              mt =
-                MTPair
-                  mempty
-                  (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTInt))
-                  (MTPrim mempty MTString)
-           in T.putStrLn
-                (prettyPrint mt)
-        it "Variables" $
-          let mt :: MonoType
-              mt =
-                MTFunction
-                  mempty
-                  ( MTVar mempty $
-                      tvNamed "catch"
-                  )
-                  (MTVar mempty $ TVUnificationVar 22)
-           in T.putStrLn
-                ( prettyPrint mt
-                )
-        it "Names type vars" $ do
-          let mt = MTVar () (TVUnificationVar 1)
-          prettyPrint mt `shouldBe` "a"
-        it "Names type vars 2" $ do
-          let mt = MTVar () (TVUnificationVar 26)
-          prettyPrint mt `shouldBe` "z"
-        it "Names type vars 3" $ do
-          let mt = MTVar () (TVUnificationVar 27)
-          prettyPrint mt `shouldBe` "a1"
+                (MTVar mempty $ TVUnificationVar 22)
+         in T.putStrLn
+              ( prettyPrint mt
+              )
+      it "Names type vars" $ do
+        let mt = MTVar () (TVUnificationVar 1)
+        prettyPrint mt `shouldBe` "a"
+      it "Names type vars 2" $ do
+        let mt = MTVar () (TVUnificationVar 26)
+        prettyPrint mt `shouldBe` "z"
+      it "Names type vars 3" $ do
+        let mt = MTVar () (TVUnificationVar 27)
+        prettyPrint mt `shouldBe` "a1"

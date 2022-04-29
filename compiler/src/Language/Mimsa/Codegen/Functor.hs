@@ -66,8 +66,8 @@ data FieldItemType
 
 toFieldItemType :: TyCon -> Type a -> CodegenM FieldItemType
 toFieldItemType typeName = \case
-  MTVar _ (TVName _ a) -> VariableField (coerce a) <$> nextName (coerce a)
-  MTFunction _ (MTVar _ (TVName _ a)) (MTVar _ (TVName _ b)) ->
+  MTVar _ (TVName a) -> VariableField (coerce a) <$> nextName (coerce a)
+  MTFunction _ (MTVar _ (TVName a)) (MTVar _ (TVName b)) ->
     pure $ Func2 (coerce a <> "to" <> coerce b) (coerce a) (coerce b)
   mt -> case varsFromDataType mt of
     Just (fieldConsName, _)

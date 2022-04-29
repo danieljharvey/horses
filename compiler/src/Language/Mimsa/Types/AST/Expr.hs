@@ -28,6 +28,7 @@ import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Typechecker.MonoType
 import Language.Mimsa.Utils
 import Prettyprinter
 
@@ -43,6 +44,11 @@ data Expr var ann
     MyLiteral
       { expAnn :: ann,
         expLit :: Literal
+      }
+  | MyAnnotation
+      { expAnn :: ann,
+        expType :: Type ann,
+        expExpr :: Expr var ann
       }
   | -- | a named variable
     MyVar
@@ -169,9 +175,14 @@ prettyLet ::
   Expr Name ann ->
   Doc style
 prettyLet var expr1 expr2 =
-  let (args, letExpr) = splitExpr expr1
+  let (args, letExpr, maybeMt) = splitExpr expr1
+      prettyVar = case maybeMt of
+        Just mt ->
+          "(" <> prettyDoc var <> ":" <+> prettyDoc mt <> ")"
+        Nothing ->
+          prettyDoc var
    in group
-        ( "let" <+> prettyDoc var <> prettyArgs args
+        ( "let" <+> prettyVar <> prettyArgs args
             <+> "="
             <> line
             <> indentMulti 2 (prettyDoc letExpr)
@@ -185,9 +196,12 @@ prettyLet var expr1 expr2 =
     splitExpr expr =
       case expr of
         (MyLambda _ a rest) ->
-          let (as, expr') = splitExpr rest
-           in ([a] <> as, expr')
-        other -> ([], other)
+          let (as, expr', mt) = splitExpr rest
+           in ([a] <> as, expr', mt)
+        (MyAnnotation _ mt annExpr) ->
+          let (as, expr', _) = splitExpr annExpr
+           in (as, expr', Just mt)
+        other -> ([], other, Nothing)
 
 prettyLetPattern ::
   Pattern Name ann ->
@@ -354,6 +368,8 @@ instance (Printer var) => Printer (Expr (var, a) ann) where
 instance Printer (Expr Name ann) where
   prettyDoc (MyLiteral _ l) =
     prettyDoc l
+  prettyDoc (MyAnnotation _ mt expr) =
+    "(" <> prettyDoc expr <+> ":" <+> prettyDoc mt <> ")"
   prettyDoc (MyVar _ var) =
     prettyDoc var
   prettyDoc (MyLet _ var expr1 expr2) =

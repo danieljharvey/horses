@@ -8,7 +8,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State.Strict (runState)
-import Data.Either (isLeft)
+import Data.Either (isLeft, isRight)
 import qualified Data.Map as M
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -38,6 +38,31 @@ spec =
     it "Combines a known with an unknown" $
       runUnifier (MTVar mempty (TVUnificationVar 1), MTPrim mempty MTInt)
         `shouldBe` Right (Substitutions $ M.singleton (TVUnificationVar 1) (MTPrim mempty MTInt))
+    it "Combines a named var with a matching named var" $
+      runUnifier (MTVar mempty (TVName "a"), MTVar mempty (TVName "a"))
+        `shouldSatisfy` isRight
+    it "Combines a named var with a unification variable" $
+      runUnifier (MTVar mempty (TVName "a"), MTVar mempty (TVUnificationVar 1))
+        `shouldSatisfy` isRight
+    it "Combines a named/numbered var with a unification variable" $
+      runUnifier (MTVar mempty (TVVar 1 "a"), MTVar mempty (TVUnificationVar 1))
+        `shouldSatisfy` isRight
+
+    it "Does not combine a named var with a different named var" $
+      runUnifier (MTVar mempty (TVName "a"), MTVar mempty (TVName "b"))
+        `shouldSatisfy` isLeft
+    it "Combines a var with the same var" $
+      runUnifier (MTVar mempty (TVVar 1 "a"), MTVar mempty (TVVar 1 "a"))
+        `shouldSatisfy` isRight
+    it "Does not combines a var with the same var" $
+      runUnifier (MTVar mempty (TVVar 2 "a"), MTVar mempty (TVVar 1 "a"))
+        `shouldSatisfy` isLeft
+    it "Does not combines a var with a different var" $
+      runUnifier (MTVar mempty (TVVar 2 "b"), MTVar mempty (TVVar 1 "a"))
+        `shouldSatisfy` isLeft
+    it "Does not unify a concrete type with a named var" $
+      runUnifier (MTVar mempty (TVName "a"), MTPrim mempty MTInt)
+        `shouldSatisfy` isLeft
     it "Combines two half pairs" $
       runUnifier
         ( MTPair mempty (MTVar mempty (TVUnificationVar 1)) (MTPrim mempty MTInt),

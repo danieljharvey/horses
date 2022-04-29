@@ -146,7 +146,7 @@ getInputType input =
             other
             ( MTFunction
                 mempty
-                (MTVar mempty (TVName Nothing "fn"))
+                (MTVar mempty (TVName "fn"))
                 (MTPrim mempty MTBool)
             )
         )

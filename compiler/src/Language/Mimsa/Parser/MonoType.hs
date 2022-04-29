@@ -129,7 +129,7 @@ tyConParser =
 
 varParser :: Parser MonoType
 varParser = do
-  MTVar mempty <$> (TVName Nothing <$> tyVarParser)
+  MTVar mempty <$> (TVName <$> tyVarParser)
 
 recordParser :: Parser MonoType
 recordParser = withLocation MTRecord $ do

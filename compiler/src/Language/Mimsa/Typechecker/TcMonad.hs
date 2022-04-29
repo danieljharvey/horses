@@ -19,6 +19,7 @@ import Data.Coerce
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
@@ -46,7 +47,7 @@ defaultTcState :: Environment -> TypecheckState
 defaultTcState env =
   let maxInTypeMap = case getUniVar <$> freeTypeVarsCtx env of
         [] -> 0
-        as -> maximum as
+        as -> maximum (catMaybes as)
    in TypecheckState (maxInTypeMap + 1) mempty
 
 getNextUniVar :: (MonadState TypecheckState m) => m Int
@@ -94,7 +95,7 @@ schemesToTypeMap ::
 schemesToTypeMap schemes = do
   let fn (k, v) =
         let leName = case k of
-              TVName _ n -> pure (Name $ coerce n)
+              TVName n -> pure (Name $ coerce n)
               TVUnificationVar _i ->
                 throwError UnknownTypeError -- TODO: bespoke error
               TVVar _ name -> pure name
@@ -123,4 +124,4 @@ getTypedHoles subs'@(Substitutions subs) = do
 variableToTypeIdentifier :: (Name, Unique) -> TypeIdentifier
 variableToTypeIdentifier (name, Unique i) = TVVar i name
 variableToTypeIdentifier (name, Dependency _) =
-  TVName Nothing (coerce name)
+  TVName (coerce name)

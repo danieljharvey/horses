@@ -34,7 +34,7 @@ spec :: Spec
 spec = do
   describe "ScopeTypeVar" $ do
     it "Empty set changes value" $ do
-      let mt = MTVar mempty (TVName Nothing "a")
+      let mt = MTVar mempty (TVName "a")
       let result =
             runTC
               ( freshNamedType
@@ -42,13 +42,13 @@ spec = do
                   )
                   mt
               )
-      snd <$> result `shouldBe` Right (MTVar mempty (TVName (Just 1) "a"))
+      snd <$> result `shouldBe` Right (MTVar mempty (TVVar 1 "a"))
     it "Empty set changes to same value" $ do
       let mt =
             MTPair
               mempty
-              (MTVar mempty (TVName Nothing "a"))
-              (MTVar mempty (TVName Nothing "a"))
+              (MTVar mempty (TVName "a"))
+              (MTVar mempty (TVName "a"))
 
       let result =
             runTC
@@ -60,13 +60,13 @@ spec = do
       let expected =
             MTPair
               mempty
-              (MTVar mempty (TVName (Just 1) "a"))
-              (MTVar mempty (TVName (Just 1) "a"))
+              (MTVar mempty (TVVar 1 "a"))
+              (MTVar mempty (TVVar 1 "a"))
 
       snd <$> result `shouldBe` Right expected
 
     it "If set contains name leave it" $ do
-      let mt = MTVar mempty (TVName Nothing "a")
+      let mt = MTVar mempty (TVName "a")
       let result =
             runTC
               ( freshNamedType
@@ -74,4 +74,4 @@ spec = do
                   )
                   mt
               )
-      snd <$> result `shouldBe` Right (MTVar mempty (TVName (Just 1) "a"))
+      snd <$> result `shouldBe` Right (MTVar mempty (TVVar 1 "a"))

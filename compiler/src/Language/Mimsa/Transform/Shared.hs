@@ -18,4 +18,3 @@ repeatUntilEqM f =
 
 extractIdentVar :: Identifier var ann -> var
 extractIdentVar (Identifier _ name) = name
-extractIdentVar (AnnotatedIdentifier _ name) = name

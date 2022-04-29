@@ -54,7 +54,7 @@ createDepsEnv typeMap =
   where
     toScheme =
       bimap
-        (\(Name n) -> TVName Nothing (coerce n))
+        (\(Name n) -> TVName (coerce n))
         schemeFromMonoType
     mkSchemes =
       M.fromList . fmap toScheme . M.toList
@@ -109,7 +109,7 @@ inferDataConstructor env ann tyCon = do
 
 getVariablesForField :: Type ann -> Set Name
 getVariablesForField (MTVar _ (TVVar _ name)) = S.singleton name
-getVariablesForField (MTVar _ (TVName _ n)) = S.singleton (coerce n)
+getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
 getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
 getVariablesForField (MTPair _ a b) = getVariablesForField a <> getVariablesForField b
@@ -165,7 +165,7 @@ inferConstructorTypes ::
 inferConstructorTypes (DataType typeName tyVarNames constructors) = do
   tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
   let findType ty = case ty of
-        MTVar _ (TVName _ var) ->
+        MTVar _ (TVName var) ->
           case filter (\(tyName, _) -> tyName == coerce var) tyVars of
             [(_, tyFound)] -> pure tyFound
             _ ->

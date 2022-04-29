@@ -56,6 +56,7 @@ mapOuterExprAnnotation :: (ann -> ann) -> Expr a ann -> Expr a ann
 mapOuterExprAnnotation f expr' =
   case expr' of
     MyInfix ann a op b -> MyInfix (f ann) a op b
+    MyAnnotation ann expr mt -> MyAnnotation (f ann) expr mt
     MyLiteral ann a -> MyLiteral (f ann) a
     MyVar ann a -> MyVar (f ann) a
     MyLet ann a b c -> MyLet (f ann) a b c
