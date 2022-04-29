@@ -82,6 +82,7 @@ spec =
             doc = prettyDoc expr'
         renderWithWidth 50 doc `shouldBe` "type These a    = That a in 1"
         renderWithWidth 5 doc `shouldBe` "type These a \n  = That\n  a;\n\n1"
+
       it "Renders new function syntax nicely" $ do
         let expr' = unsafeParseExpr "let const a b = a in 1"
             doc = prettyDoc expr'

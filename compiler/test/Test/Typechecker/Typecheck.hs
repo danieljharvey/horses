@@ -1289,26 +1289,30 @@ spec = do
     describe "type annotations" $ do
       -- needs type annotations to make this make sense
       xit "Lambda variable as constructor" $ do
+        let funcType =
+              MTFunction
+                mempty
+                (MTVar mempty (TVName "f"))
+                ( MTTypeApp
+                    mempty
+                    (MTVar mempty (TVName "f"))
+                    (MTPrim mempty MTInt)
+                )
         let expr =
               MyData
                 mempty
                 dtMaybe
-                ( MyLambda
+                ( MyAnnotation
                     mempty
-                    (Identifier mempty "f")
-                    (MyApp mempty (MyVar mempty "f") (int 1))
+                    funcType
+                    ( MyLambda
+                        mempty
+                        (Identifier mempty "f")
+                        (MyApp mempty (MyVar mempty "f") (int 1))
+                    )
                 )
         startInference expr $
-          Right
-            ( MTFunction
-                mempty
-                ( MTFunction
-                    mempty
-                    (MTPrim mempty MTInt)
-                    (MTTypeApp mempty (unknown 2) (MTPrim mempty MTInt))
-                )
-                (MTTypeApp mempty (unknown 2) (MTPrim mempty MTInt))
-            )
+          Right funcType
       -- needs type annotations
       xit "Lambda variable as constructor (multiple application)" $ do
         let expr =
