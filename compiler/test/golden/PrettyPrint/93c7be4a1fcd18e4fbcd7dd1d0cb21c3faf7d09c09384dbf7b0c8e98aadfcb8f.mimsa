@@ -1,6 +1,0 @@
-type Thing    = Thing String;
-
-let a =
-  Thing "string";
-
-let (Thing s) = a in s

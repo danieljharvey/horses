@@ -6,6 +6,7 @@ module Language.Mimsa.Backend.Output
   ( outputStoreExpression,
     outputIndexFile,
     indexFilename,
+    indexImport,
     projectIndexFilename,
   )
 where
@@ -159,10 +160,26 @@ outputIndexFile :: Backend -> Map Name ExprHash -> Text
 outputIndexFile be exportMap =
   let exportLine (name, exprHash) = case be of
         ESModulesJS ->
-          "export { main as " <> printTSName (coerce name) <> " } from './" <> moduleFilename be exprHash <> "';"
+          "export { main as " <> printTSName (coerce name) <> " } from './"
+            <> moduleFilename be exprHash
+            <> fileExtension be
+            <> "';"
         Typescript ->
-          "export { main as " <> printTSName (coerce name) <> " } from './" <> moduleFilename be exprHash <> "';"
+          "export { main as " <> printTSName (coerce name) <> " } from './"
+            <> moduleFilename be exprHash
+            <> "';"
    in T.intercalate "\n" (exportLine <$> M.toList exportMap)
+
+indexImport :: Backend -> ExprHash -> Text
+indexImport be hash' =
+  case be of
+    ESModulesJS ->
+      "index-"
+        <> prettyPrint hash'
+        <> ".mjs"
+    Typescript ->
+      "index-"
+        <> prettyPrint hash'
 
 indexFilename :: Backend -> ExprHash -> Text
 indexFilename be hash' =

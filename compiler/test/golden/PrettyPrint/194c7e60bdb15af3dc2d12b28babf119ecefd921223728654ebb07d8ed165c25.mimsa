@@ -1,7 +1,0 @@
-let compose f g a =
-  f (g a);
-
-let blah =
-  compose incrementInt incrementInt;
-
-blah 67

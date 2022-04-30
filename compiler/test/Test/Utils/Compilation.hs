@@ -55,7 +55,10 @@ testProjectCompile folderPrefix be expr = do
   let allFilesHash = hash (Actions.writeFilesFromOutcomes outcomes)
 
   -- make a new index file that imports the outcome and logs it
-  let actualIndex = "import { main } from './index-" <> prettyPrint seHash <> "';\nconsole.log(main)"
+  let actualIndex =
+        "import { main } from './"
+          <> indexImport be seHash
+          <> "';\nconsole.log(main)"
 
   -- get filename of index file
   let actualIndexPath = tsPath <> T.unpack (projectIndexFilename be)

@@ -160,9 +160,12 @@ addPair = do
     "\\pair -> match pair with (Pair _ b) -> b"
 
 addEither :: Actions.ActionM ()
-addEither =
+addEither = do
   addType
     "type Either e a = Left e | Right a"
+  addBinding
+    "useEither"
+    "\\either -> match either with Right a -> a + a | _ -> 0"
 
 addStateMonad :: Actions.ActionM ()
 addStateMonad = do
