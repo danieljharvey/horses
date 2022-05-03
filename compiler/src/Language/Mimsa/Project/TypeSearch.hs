@@ -16,8 +16,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Parser.Helpers (parseAndFormat)
-import Language.Mimsa.Parser.MonoType
+import Language.Mimsa.Parser.Language
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -93,6 +92,6 @@ typeSearchFromText ::
   Text ->
   Either (Error Annotation) (Map FoundPath MonoType)
 typeSearchFromText typeMap input = do
-  mt <- first ParseError (parseAndFormat monoTypeParser input)
+  mt <- first (ParseError input) (parseMonoType input)
   let found = typeSearch typeMap mt
   pure (normaliseType <$> found)

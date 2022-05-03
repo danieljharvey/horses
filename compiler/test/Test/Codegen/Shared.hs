@@ -255,7 +255,7 @@ dtEnv =
     )
 
 typecheckInstance ::
-  (DataType -> Either Text (Expr Name ())) ->
+  (DataType -> Either CodegenError (Expr Name ())) ->
   DataType ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 typecheckInstance mkInstance dt =
@@ -275,7 +275,7 @@ typecheckInstance mkInstance dt =
         "temporaryAddType"
         testStdlib
     inst' =
-      first ParseError (fmap ($> mempty) (mkInstance dt))
+      first CodegenErr (fmap ($> mempty) (mkInstance dt))
 
 unsafeParse :: Text -> Expr Name ()
 unsafeParse t = case parseExprAndFormatError t of

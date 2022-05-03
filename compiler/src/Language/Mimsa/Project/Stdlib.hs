@@ -13,12 +13,14 @@ where
 
 import Data.Functor
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
 import Language.Mimsa.Parser
+import Language.Mimsa.Printer
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -281,9 +283,9 @@ addTest label input = do
 removeBinding :: Name -> Actions.ActionM ()
 removeBinding = Actions.removeBinding
 
-fromRight :: (Show e) => Either e a -> a
+fromRight :: (Printer e) => Either e a -> a
 fromRight = \case
-  Left e -> error (show e)
+  Left e -> error (T.unpack (prettyPrint e))
   Right a -> a
 
 stdlib :: Project Annotation

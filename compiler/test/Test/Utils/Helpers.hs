@@ -133,7 +133,7 @@ evaluateText ::
   Text ->
   Either (Error Annotation) (ResolvedExpression Annotation)
 evaluateText project input = do
-  expr <- first ParseError $ parseExprAndFormatError input
+  expr <- first (ParseError input) (parseExpr input)
   (_, _, re) <-
     Actions.run
       project

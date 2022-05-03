@@ -76,7 +76,7 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   validateDataTypeVariables dt
   validateConstructors env ann dt
   if M.member tyName (getDataTypes env)
-    then throwError (DuplicateTypeDeclaration tyName)
+    then throwError (DuplicateTypeDeclaration ann tyName)
     else
       let newEnv = Environment mempty (M.singleton tyName dt) mempty mempty
        in pure (newEnv <> env)

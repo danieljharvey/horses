@@ -157,6 +157,7 @@ library
       Language.Mimsa.Types.AST.StringType
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.BackendError
+      Language.Mimsa.Types.Error.CodegenError
       Language.Mimsa.Types.Error.InterpreterError
       Language.Mimsa.Types.Error.PatternMatchError
       Language.Mimsa.Types.Error.ProjectError
@@ -216,6 +217,7 @@ library
     , bytestring
     , containers
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed
@@ -268,6 +270,7 @@ executable mimsa
     , bytestring
     , containers
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed
@@ -333,6 +336,7 @@ executable mimsa-server
     , bytestring
     , containers
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed
@@ -438,6 +442,7 @@ test-suite mimsa-test
     , bytestring
     , containers
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed
@@ -477,6 +482,7 @@ benchmark mimsa-benchmark
     , containers
     , criterion
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed

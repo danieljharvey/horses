@@ -37,9 +37,6 @@ spec = do
           err = UnknownTypeError
       let result = displayError input err
       result `shouldSatisfy` textContains (prettyPrint (err :: TypeError))
-    it "Shows the location with CaseMatchExpectedPair" $
-      getTypeError "let (a,b) = True in a"
-        `shouldSatisfy` maybePred (textContains "^^^^")
     it "Shows the location with CannotMatchRecord" $
       getTypeError "let dog = True in dog.tail"
         `shouldSatisfy` maybePred (textContains "^^^^^^^^")

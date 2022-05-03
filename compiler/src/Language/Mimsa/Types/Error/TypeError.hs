@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Language.Mimsa.Types.Error.TypeError
@@ -10,19 +11,25 @@ module Language.Mimsa.Types.Error.TypeError
     TypeError,
     getErrorPos,
     getAllAnnotations,
+    typeErrorDiagnostic,
   )
 where
 
 import Data.Foldable (fold)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Text (Text)
 import qualified Data.Text as T
+import Error.Diagnose
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Project.SourceSpan
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Typechecker.FoundPath
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -37,13 +44,11 @@ data TypeErrorF var ann
   | MissingRecordTypeMember ann var (Map Name (Type ann))
   | NoFunctionEquality (Type ann) (Type ann)
   | CannotMatchRecord Environment ann (Type ann)
-  | CaseMatchExpectedPair ann (Type ann)
   | TypeConstructorNotInScope Environment ann TyCon
-  | TypeNameNotInScope Environment ann TyCon
   | TypeVariablesNotInDataType TyCon (Set var) (Set var)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
-  | DuplicateTypeDeclaration TyCon
+  | DuplicateTypeDeclaration ann TyCon
   | IncompletePatternMatch ann [TyCon]
   | MixedUpPatterns [TyCon]
   | TypedHoles (Map Name (Type ann, Set FoundPath))
@@ -95,7 +100,7 @@ getAllAnnotations = foldMap pure
 ------
 
 showKeys :: (p -> Doc ann) -> Map p a -> [Doc ann]
-showKeys renderP record = renderP <$> M.keys record
+showKeys renderP record = dquotes . renderP <$> M.keys record
 
 showSet :: (a -> Doc ann) -> Set a -> [Doc ann]
 showSet renderA set = renderA <$> S.toList set
@@ -130,8 +135,7 @@ renderTypeError (MissingRecordMember _ name members) =
   ]
     <> showSet prettyDoc members
 renderTypeError (MissingRecordTypeMember _ name types) =
-  [ "Cannot find" <+> dquotes (prettyDoc name) <> ".",
-    "The following record items are available:"
+  [ "Cannot find" <+> dquotes (prettyDoc name) <> ". The following record items are available:"
   ]
     <> showKeys prettyDoc types
 renderTypeError (CannotMatchRecord env _ mt) =
@@ -139,23 +143,15 @@ renderTypeError (CannotMatchRecord env _ mt) =
     "The following are available:",
     pretty (show env)
   ]
-renderTypeError (CaseMatchExpectedPair _ mt) =
-  ["Expected pair but got" <+> prettyDoc mt]
 renderTypeError (TypeConstructorNotInScope env _ constructor) =
   [ "Type constructor for" <+> prettyDoc constructor
       <+> "not found in scope.",
     "The following are available:"
   ]
     <> printDataTypes env
-renderTypeError (TypeNameNotInScope env _ typeName) =
-  [ "Type name" <+> prettyDoc typeName
-      <+> "not found in scope.",
-    "The following are available:"
-  ]
-    <> showSet prettyDoc (M.keysSet (getDataTypes env))
 renderTypeError (ConflictingConstructors _ constructor) =
   ["Multiple constructors found matching" <+> prettyDoc constructor]
-renderTypeError (DuplicateTypeDeclaration constructor) =
+renderTypeError (DuplicateTypeDeclaration _ constructor) =
   ["Cannot redeclare existing type name" <+> prettyDoc constructor]
 renderTypeError (RecordKeyMismatch keys) =
   [ "Record key mismatch",
@@ -228,3 +224,101 @@ printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
           ]
             <> (prettyDoc <$> args)
         )
+
+positionFromAnnotation ::
+  String ->
+  Text ->
+  Annotation ->
+  Maybe Position
+positionFromAnnotation path input ann =
+  let toPos ss =
+        Position
+          (ssRowStart ss, ssColStart ss)
+          (ssRowEnd ss, ssColEnd ss)
+          path
+   in toPos <$> sourceSpan input ann
+
+typeErrorDiagnostic :: Text -> TypeError -> Diagnostic Text
+typeErrorDiagnostic input e =
+  let filename = "<repl>"
+      diag = addFile def filename (T.unpack input)
+   in case e of
+        (UnificationError a b) ->
+          let report =
+                err
+                  Nothing
+                  ( "Unification error! Expected matching types but found "
+                      <> prettyPrint a
+                      <> " and "
+                      <> prettyPrint b
+                      <> "."
+                  )
+                  ( catMaybes
+                      [ (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            (getAnnotationForType a)
+                          <*> pure
+                            ( This ("This has type " <> prettyPrint a)
+                            ),
+                        (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            (getAnnotationForType b)
+                          <*> pure (Where ("This has type " <> prettyPrint b))
+                      ]
+                  )
+                  ["These two values should be of the same type"]
+           in addReport diag report
+        (MissingRecordTypeMember ann missing _types) ->
+          let report =
+                err
+                  Nothing
+                  (prettyPrint e)
+                  ( catMaybes
+                      [ (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            ann
+                          <*> pure
+                            ( Where
+                                ( "Should contain a member called "
+                                    <> prettyPrint missing
+                                )
+                            )
+                      ]
+                  )
+                  []
+           in addReport diag report
+        (DuplicateTypeDeclaration ann _constructor) ->
+          let report =
+                err
+                  Nothing
+                  (prettyPrint e)
+                  ( catMaybes
+                      [ (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            ann
+                          <*> pure
+                            (Where "Is a duplicate")
+                      ]
+                  )
+                  []
+           in addReport diag report
+        other ->
+          let positions =
+                mapMaybe
+                  (positionFromAnnotation filename input)
+                  (getAllAnnotations other)
+              report =
+                err
+                  Nothing
+                  (prettyPrint other)
+                  ((,Where "") <$> positions)
+                  []
+           in addReport diag report

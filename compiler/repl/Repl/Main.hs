@@ -10,7 +10,6 @@ import Control.Monad.Except
 import Control.Monad.Logger
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -18,12 +17,14 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Store.RootPath
 import Repl.Actions (doReplAction)
+import Repl.Helpers
 import Repl.Parser (replParser)
 import Repl.Persistence
 import Repl.ReplM
 import Repl.Types
 import System.Console.Haskeline
 import System.Directory
+import Text.Megaparsec
 
 createReplConfig :: (MonadIO m) => Bool -> m ReplConfig
 createReplConfig showLogs' = do
@@ -70,9 +71,9 @@ parseCommand ::
   Text ->
   ReplM (Error Annotation) (Project Annotation)
 parseCommand env input =
-  case parseAndFormat replParser input of
-    Left e -> do
-      replOutput e
+  case parse replParser "<repl>" input of
+    Left errBundle -> do
+      outputErrorAsDiagnostic (ParseError input errBundle)
       pure env
     Right replAction -> do
       newExprs <- doReplAction env input replAction

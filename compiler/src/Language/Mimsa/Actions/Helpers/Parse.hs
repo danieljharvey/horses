@@ -10,12 +10,12 @@ import Language.Mimsa.Types.Identifiers
 
 parseExpr :: Text -> ActionM (Expr Name Annotation)
 parseExpr
-  input = case Parser.parseExprAndFormatError input of
+  input = case Parser.parseExpr input of
     Right a -> pure a
-    Left e -> throwError (ParseError e)
+    Left e -> throwError (ParseError input e)
 
 parseDataType :: Text -> ActionM DataType
 parseDataType input =
-  case Parser.parseTypeDeclAndFormatError input of
+  case Parser.parseTypeDecl input of
     Right a -> pure a
-    Left e -> throwError (ParseError e)
+    Left e -> throwError (ParseError input e)

@@ -6,21 +6,21 @@ module Language.Mimsa.Codegen.Newtype
   )
 where
 
---import qualified Data.List.NonEmpty as NE
+import Control.Monad.Except
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Text (Text)
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
-wrap :: DataType -> Either Text (Expr Name ())
-wrap (DataType _tyCon _vars items) =
-  case getOnlyMapItem items of
-    Nothing -> Left "Type should have one constructor"
-    Just (consName, [_a]) ->
-      Right
+wrap :: DataType -> Either CodegenError (Expr Name ())
+wrap (DataType _tyCon _vars items) = do
+  item <- getOnlyMapItem items
+  case item of
+    (consName, [_a]) ->
+      pure
         ( MyLambda
             mempty
             (Identifier mempty "a")
@@ -30,17 +30,17 @@ wrap (DataType _tyCon _vars items) =
                 (MyVar mempty "a")
             )
         )
-    Just (_, _) -> Left "Constructor should only have one argument"
+    (_, _) -> throwError NewtypeShouldOnlyHaveOneArgument
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
-unwrap :: DataType -> Either Text (Expr Name ())
+unwrap :: DataType -> Either CodegenError (Expr Name ())
 unwrap (DataType tyCon _vars items) = do
   let tyName = tyConToName tyCon
-  case getOnlyMapItem items of
-    Nothing -> Left "Type should have one constructor"
-    Just (consName, [_a]) ->
-      Right
+  item <- getOnlyMapItem items
+  case item of
+    (consName, [_a]) ->
+      pure
         ( MyLambda
             mempty
             (Identifier mempty tyName)
@@ -53,9 +53,10 @@ unwrap (DataType tyCon _vars items) = do
                 ]
             )
         )
-    Just (_, _) -> Left "Constructor should only have one argument"
+    (_, _) -> throwError NewtypeShouldOnlyHaveOneArgument
 
-getOnlyMapItem :: Map k a -> Maybe (k, a)
+getOnlyMapItem :: Map k a -> Either CodegenError (k, a)
 getOnlyMapItem items = case M.toList items of
   [(k, a)] -> pure (k, a)
-  _ -> Nothing
+  [] -> throwError NoConstructorMatches
+  _ -> throwError TooManyConstructorMatches
