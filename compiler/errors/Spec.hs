@@ -52,6 +52,9 @@ printError env input = do
 spec :: Spec
 spec =
   describe "Error printing" $ do
+    describe "Store errors" $ do
+      it "Cannot find dependency" $ do
+        printError stdlib "mysteryFunction (1,2)"
     describe "Type errors" $ do
       it "Non-boolean in If predicate" $ do
         printError stdlib "if 1 then True else False"
