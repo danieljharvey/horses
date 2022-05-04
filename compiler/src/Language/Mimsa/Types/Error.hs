@@ -1,5 +1,9 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+
+{-# OPTIONS -Wno-orphans #-}
 
 module Language.Mimsa.Types.Error
   ( Error (..),
@@ -14,14 +18,18 @@ module Language.Mimsa.Types.Error
     ProjectError (..),
     FileType (..),
     CodegenError (..),
+    errorToDiagnostic,
   )
 where
 
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
+import Error.Diagnose
+import Error.Diagnose.Compat.Megaparsec
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DisplayError
+import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Error.BackendError
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Error.InterpreterError
@@ -32,6 +40,9 @@ import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Text.Megaparsec
+
+instance HasHints Void msg where
+  hints _ = mempty
 
 data Error ann
   = TypeErr Text TypeError
@@ -46,10 +57,27 @@ data Error ann
 
 instance (Show ann, Printer ann) => Printer (Error ann) where
   prettyPrint (TypeErr input typeErr) = displayError input typeErr
-  prettyPrint (ResolverErr a) = "ResolverError:\n" <> prettyPrint a
-  prettyPrint (InterpreterErr a) = "InterpreterError:\n" <> prettyPrint a
-  prettyPrint (StoreErr a) = "StoreError:\n" <> prettyPrint a
-  prettyPrint (BackendErr a) = "BackendError:\n" <> prettyPrint a
-  prettyPrint (ProjectErr a) = "ProjectError:\n" <> prettyPrint a
-  prettyPrint (CodegenErr a) = "CodegenError:\n" <> prettyPrint a
+  prettyPrint (ResolverErr a) = prettyPrint a
+  prettyPrint (InterpreterErr a) = prettyPrint a
+  prettyPrint (StoreErr a) = prettyPrint a
+  prettyPrint (BackendErr a) = prettyPrint a
+  prettyPrint (ProjectErr a) = prettyPrint a
+  prettyPrint (CodegenErr a) = prettyPrint a
   prettyPrint (ParseError _input errorBundle) = T.pack (errorBundlePretty errorBundle)
+
+errorToDiagnostic :: Error Annotation -> Diagnostic Text
+errorToDiagnostic (ParseError input bundle) =
+  let filename = "<repl>"
+      diag = errorDiagnosticFromBundle Nothing "Parse error on input" Nothing bundle
+   in --   Creates a new diagnostic with no default hints from the bundle returned by megaparsec
+      addFile diag filename (T.unpack input)
+errorToDiagnostic (TypeErr input typeErr) =
+  typeErrorDiagnostic input typeErr
+errorToDiagnostic e =
+  let report =
+        err
+          Nothing
+          (prettyPrint e)
+          []
+          []
+   in addReport def report
