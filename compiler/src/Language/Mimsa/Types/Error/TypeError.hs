@@ -45,7 +45,7 @@ data TypeErrorF var ann
   | NoFunctionEquality (Type ann) (Type ann)
   | CannotMatchRecord Environment ann (Type ann)
   | TypeConstructorNotInScope Environment ann TyCon
-  | TypeVariablesNotInDataType TyCon (Set var) (Set var)
+  | TypeVariablesNotInDataType ann TyCon (Set var) (Set var)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
   | DuplicateTypeDeclaration ann TyCon
@@ -158,7 +158,7 @@ renderTypeError (RecordKeyMismatch keys) =
     "The following keys were expected to be in both records and were not:"
   ]
     <> showSet prettyDoc keys
-renderTypeError (TypeVariablesNotInDataType constructor names as) =
+renderTypeError (TypeVariablesNotInDataType _ann constructor names as) =
   [ "Type variables" <+> mconcat (showSet prettyDoc names)
       <+> "could not be in found in type vars for"
       <+> prettyDoc constructor,

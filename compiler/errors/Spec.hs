@@ -64,6 +64,18 @@ spec =
         printError stdlib "match Just True with Right a -> a | _ -> False"
       it "Pattern match branches have different types" $ do
         printError stdlib "match Just True with Just a -> a | _ -> 100"
+      it "Defines a type twice" $ do
+        printError stdlib "type Dog = Dog; type Dog = Log; True"
+      it "Pattern match with no matches" $ do
+        printError stdlib "match True with"
+      it "Type constructor uses variable not found in type" $ do
+        printError stdlib "type Maybe a = Just b; True"
+      it "Uses built-in type as constructor in type definition" $ do
+        printError stdlib "type Dog = String Int; True"
+      it "Annotated function called with wrong type argument" $ do
+        printError stdlib "let (f: Int -> Boolean) i = True; f False"
+      it "Inferred function called with wrong type argument" $ do
+        printError stdlib "let f i = i + 1; f False"
 
 main :: IO ()
 main = hspec spec
