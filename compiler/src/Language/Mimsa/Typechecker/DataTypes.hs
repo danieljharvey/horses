@@ -73,10 +73,10 @@ storeDataDeclaration ::
   DataType ->
   m Environment
 storeDataDeclaration env ann dt@(DataType tyName _ _) = do
-  validateDataTypeVariables dt
+  validateDataTypeVariables ann dt
   validateConstructors env ann dt
   if M.member tyName (getDataTypes env)
-    then throwError (DuplicateTypeDeclaration tyName)
+    then throwError (DuplicateTypeDeclaration ann tyName)
     else
       let newEnv = Environment mempty (M.singleton tyName dt) mempty mempty
        in pure (newEnv <> env)
@@ -101,7 +101,7 @@ inferDataConstructor ::
 inferDataConstructor env ann tyCon = do
   errorOnBuiltIn ann tyCon
   dataType <- lookupConstructor env ann tyCon
-  (_, allArgs) <- inferConstructorTypes dataType
+  (_, allArgs) <- inferConstructorTypes ann dataType
   case M.lookup tyCon allArgs of
     Just tyArg ->
       pure (constructorToType tyArg)
@@ -144,9 +144,10 @@ validateConstructors env ann (DataType _ _ constructors) = do
 
 validateDataTypeVariables ::
   (MonadError TypeError m) =>
+  Annotation ->
   DataType ->
   m ()
-validateDataTypeVariables (DataType typeName vars constructors) =
+validateDataTypeVariables ann (DataType typeName vars constructors) =
   let requiredForCons = foldMap getVariablesForField
       requiredVars = foldMap requiredForCons constructors
       availableVars = S.fromList vars
@@ -155,14 +156,15 @@ validateDataTypeVariables (DataType typeName vars constructors) =
         then pure ()
         else
           throwError $
-            TypeVariablesNotInDataType typeName unavailableVars availableVars
+            TypeVariablesNotInDataType ann typeName unavailableVars availableVars
 
 -- infer types for data type and it's constructor in one big go
 inferConstructorTypes ::
   (MonadError TypeError m, MonadState TypecheckState m) =>
+  Annotation ->
   DataType ->
   m (MonoType, Map TyCon TypeConstructor)
-inferConstructorTypes (DataType typeName tyVarNames constructors) = do
+inferConstructorTypes ann (DataType typeName tyVarNames constructors) = do
   tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
   let findType ty = case ty of
         MTVar _ (TVName var) ->
@@ -171,6 +173,7 @@ inferConstructorTypes (DataType typeName tyVarNames constructors) = do
             _ ->
               throwError $
                 TypeVariablesNotInDataType
+                  ann
                   typeName
                   (S.singleton (coerce var))
                   (S.fromList (fst <$> tyVars))
@@ -180,6 +183,7 @@ inferConstructorTypes (DataType typeName tyVarNames constructors) = do
             _ ->
               throwError $
                 TypeVariablesNotInDataType
+                  ann
                   typeName
                   (S.singleton (coerce var))
                   (S.fromList (fst <$> tyVars))

@@ -2,7 +2,7 @@
 
 module Language.Mimsa.Parser.TypeDecl
   ( typeDeclParser,
-    parseTypeDeclAndFormatError,
+    parseTypeDecl,
   )
 where
 
@@ -10,7 +10,6 @@ import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.MonoType
@@ -21,9 +20,9 @@ import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Typechecker
 import Text.Megaparsec
 
-parseTypeDeclAndFormatError :: Text -> Either Text DataType
-parseTypeDeclAndFormatError =
-  parseAndFormat (typeDeclParser <* eof)
+parseTypeDecl :: Text -> Either ParseErrorType DataType
+parseTypeDecl =
+  parse (typeDeclParser <* eof) "type"
 
 typeDeclParser :: Parser DataType
 typeDeclParser =

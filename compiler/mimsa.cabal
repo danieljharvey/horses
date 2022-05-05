@@ -157,6 +157,7 @@ library
       Language.Mimsa.Types.AST.StringType
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.BackendError
+      Language.Mimsa.Types.Error.CodegenError
       Language.Mimsa.Types.Error.InterpreterError
       Language.Mimsa.Types.Error.PatternMatchError
       Language.Mimsa.Types.Error.ProjectError
@@ -216,6 +217,7 @@ library
     , bytestring
     , containers
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed
@@ -268,6 +270,7 @@ executable mimsa
     , bytestring
     , containers
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed
@@ -333,6 +336,7 @@ executable mimsa-server
     , bytestring
     , containers
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed
@@ -359,6 +363,44 @@ executable mimsa-server
     , wai-cors
     , wai-middleware-prometheus
     , warp
+    , zip-archive
+  default-language: Haskell2010
+
+test-suite errors-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_mimsa
+  hs-source-dirs:
+      errors
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , bifunctors
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , diagnose
+    , directory
+    , exceptions
+    , file-embed
+    , hashable
+    , hspec
+    , megaparsec
+    , memory
+    , mimsa
+    , monad-logger
+    , mtl
+    , openapi3
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-server
+    , text
+    , transformers
     , zip-archive
   default-language: Haskell2010
 
@@ -438,6 +480,7 @@ test-suite mimsa-test
     , bytestring
     , containers
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed
@@ -477,6 +520,7 @@ benchmark mimsa-benchmark
     , containers
     , criterion
     , cryptonite
+    , diagnose
     , directory
     , exceptions
     , file-embed

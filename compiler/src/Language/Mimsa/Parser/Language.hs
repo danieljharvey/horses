@@ -3,6 +3,7 @@
 
 module Language.Mimsa.Parser.Language
   ( parseExpr,
+    parseMonoType,
     parseExprAndFormatError,
     parseAndFormat,
     expressionParser,
@@ -38,6 +39,10 @@ import Text.Megaparsec.Char
 -- parse expr, using it all up
 parseExpr :: Text -> Either ParseErrorType ParserExpr
 parseExpr = parse (space *> expressionParser <* eof) "repl"
+
+-- parse monotype
+parseMonoType :: Text -> Either ParseErrorType MonoType
+parseMonoType = parse (space *> monoTypeParser <* eof) "type"
 
 parseExprAndFormatError :: Text -> Either Text ParserExpr
 parseExprAndFormatError = parseAndFormat (space *> expressionParser <* eof)

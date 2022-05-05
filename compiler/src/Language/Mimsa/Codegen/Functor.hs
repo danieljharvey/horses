@@ -11,14 +11,14 @@ import Data.Coerce
 import Data.Foldable (foldl')
 import qualified Data.List.NonEmpty as NE
 import Data.Semigroup
-import Data.Text (Text)
 import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-functorMap :: DataType -> Either Text (Expr Name ())
+functorMap :: DataType -> Either CodegenError (Expr Name ())
 functorMap = runCodegenM . functorMap_
 
 -- | A newtype is a datatype with one constructor
@@ -30,7 +30,7 @@ functorMap_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon
   fVar <- getFunctorVar vars
   case getMapItems items of
-    Nothing -> throwError "Type should have at least one constructor"
+    Nothing -> throwError NoConstructorMatches
     Just constructors -> do
       matches <-
         traverse
@@ -73,7 +73,7 @@ toFieldItemType typeName = \case
     Just (fieldConsName, _)
       | fieldConsName == typeName ->
         RecurseField <$> nextName typeName
-    _ -> throwError "Expected VarName"
+    _ -> throwError CouldNotFindVarsInType
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()
 reconstructField matchVar fieldItem =

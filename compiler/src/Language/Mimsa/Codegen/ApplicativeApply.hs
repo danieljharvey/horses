@@ -15,15 +15,15 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Set as S
-import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-applicativeApply :: DataType -> Either Text (Expr Name ())
+applicativeApply :: DataType -> Either CodegenError (Expr Name ())
 applicativeApply = runCodegenM . applicativeApply_
 
 fName :: TyCon -> Name
@@ -108,7 +108,7 @@ newtype FieldItemType = VariableField Name
 toFieldItemType :: Type a -> CodegenM FieldItemType
 toFieldItemType = \case
   MTVar _ (TVName a) -> pure (VariableField $ coerce a)
-  _ -> throwError "Expected VarName"
+  _ -> throwError CouldNotFindVarsInType
 
 toFieldItemTypeF ::
   Name ->
@@ -119,7 +119,7 @@ toFieldItemTypeF funcVar = \case
     if coerce a == funcVar
       then pure (VariableField "f")
       else pure (VariableField (coerce a))
-  _ -> throwError "Expected VarName"
+  _ -> throwError CouldNotFindVarsInType
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()
 reconstructField matchVar fieldItem =
@@ -158,7 +158,7 @@ multiFunctorCheck items =
     then pure ()
     else
       throwError
-        "Multiple functor variables in first applicative argument"
+        MultipleFunctorVariablesInApplicativeArg
 
 patternFromFieldItemType :: TyCon -> [FieldItemType] -> Pattern Name ()
 patternFromFieldItemType tyCon fields =

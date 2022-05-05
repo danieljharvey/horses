@@ -1,5 +1,4 @@
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Codegen.ApplicativePure
   ( applicativePure,
@@ -15,14 +14,14 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
-import Data.Text (Text)
 import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-applicativePure :: DataType -> Either Text (Expr Name ())
+applicativePure :: DataType -> Either CodegenError (Expr Name ())
 applicativePure = runCodegenM . applicativePure_
 
 -- | `pure` takes the rightmost var and places it in the functor context
@@ -75,7 +74,7 @@ partToExpr fVar items innerExpr part =
               mempty
               innerExpr
               (MyVar mempty n)
-        else throwError "Cannot use non-functor value"
+        else throwError CannotUseNonFunctorValue
     TPart -> do
       emptyTyCon <- emptyConstructor items
       pure $
@@ -142,4 +141,5 @@ multiVarConstructor tyCon vars items = do
   let matches = mapMaybe withField (M.toList items)
   case matches of
     [match] -> pure match
-    _ -> throwError "No matches or too many"
+    [] -> throwError NoConstructorMatches
+    _ -> throwError TooManyConstructorMatches

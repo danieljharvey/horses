@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Store.StoreExpression where
 
@@ -34,4 +33,4 @@ data StoreExpression ann = StoreExpression
     )
 
 instance Printer (StoreExpression ann) where
-  prettyPrint (StoreExpression expr _ _) = "{ expr: " <> prettyPrint expr <> " }"
+  prettyPrint (StoreExpression expr _ _) = prettyPrint expr

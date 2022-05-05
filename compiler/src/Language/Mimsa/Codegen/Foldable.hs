@@ -10,14 +10,14 @@ import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable (foldl')
 import qualified Data.List.NonEmpty as NE
-import Data.Text (Text)
 import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
-fold :: DataType -> Either Text (Expr Name ())
+fold :: DataType -> Either CodegenError (Expr Name ())
 fold = runCodegenM . fold_
 
 -- | A newtype is a datatype with one constructor
@@ -29,7 +29,7 @@ fold_ (DataType tyCon vars items) = do
   let tyName = tyConToName tyCon
   fVar <- getFunctorVar vars
   case getMapItems items of
-    Nothing -> throwError "Type should have at least one constructor"
+    Nothing -> throwError NoConstructorMatches
     Just constructors -> do
       matches <-
         traverse
@@ -84,8 +84,8 @@ toFieldItemType tyName matchVar = \case
       varName <- nextName tyName
       if tyCon == tyName && coerce var == matchVar
         then pure (varName, Recurse varName)
-        else throwError "Can only recurse over self"
-    _ -> throwError "Expected VarName"
+        else throwError RecursingOverAnotherType
+    _ -> throwError CouldNotFindVarsInType
 
 patternFromFieldItemType :: TyCon -> [Name] -> Pattern Name ()
 patternFromFieldItemType tyCon names =

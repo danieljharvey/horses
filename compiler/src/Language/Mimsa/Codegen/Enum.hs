@@ -9,16 +9,15 @@ where
 import Data.Coerce
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import Data.Text (Text)
-import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
 
 -- | An enum is a datatype with at least one constructor
 -- | each have no arguments
 toString ::
   DataType ->
-  Either Text (Expr Name ())
+  Either CodegenError (Expr Name ())
 toString (DataType tyCon [] items) = do
   let tyName = tyConToName tyCon
   let createMatch (consName, vars) =
@@ -30,12 +29,10 @@ toString (DataType tyCon [] items) = do
               )
           _ ->
             Left $
-              "Constructor "
-                <> prettyPrint consName
-                <> " is expected to have no arguments"
+              ConstructorShouldHaveNoArgs consName
   matches <- traverse createMatch (M.toList items)
   case NE.nonEmpty matches of
-    Nothing -> Left "Type has no constructors"
+    Nothing -> Left NoConstructorMatches
     Just _ ->
       Right
         ( MyLambda
@@ -47,14 +44,14 @@ toString (DataType tyCon [] items) = do
                 matches
             )
         )
-toString _ = Left "Datatype is expected to have no parameters"
+toString _ = Left TypeShouldHaveNoVariables
 
 fromString ::
   DataType ->
-  Either Text (Expr Name ())
+  Either CodegenError (Expr Name ())
 fromString (DataType _ [] items) = do
   let tyName = "str"
-  let createMatch :: (TyCon, [a]) -> Either Text (Pattern Name (), Expr Name ())
+  let createMatch :: (TyCon, [a]) -> Either CodegenError (Pattern Name (), Expr Name ())
       createMatch (consName, vars) =
         case vars of
           [] ->
@@ -66,14 +63,11 @@ fromString (DataType _ [] items) = do
                   (MyConstructor mempty consName)
               )
           _ ->
-            Left $
-              "Constructor "
-                <> prettyPrint consName
-                <> " is expected to have no arguments"
+            Left $ ConstructorShouldHaveNoArgs consName
   matches <- traverse createMatch (M.toList items)
   let empty = (PWildcard mempty, MyConstructor mempty "Nothing")
   case NE.nonEmpty matches of
-    Nothing -> Left "Type has no constructors"
+    Nothing -> Left NoConstructorMatches
     Just _ ->
       Right
         ( MyLambda
@@ -85,7 +79,7 @@ fromString (DataType _ [] items) = do
                 (matches <> [empty])
             )
         )
-fromString _ = Left "Datatype is expected to have no parameters"
+fromString _ = Left TypeShouldHaveNoVariables
 
 str :: (Monoid ann) => StringType -> Expr a ann
 str a = MyLiteral mempty (MyString a)

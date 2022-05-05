@@ -120,7 +120,9 @@ typecheckStoreExpressions inputStoreExpressions = do
                 <$> inputStoreExpressions,
             Build.stOutputs = alreadyResolved
           }
-  resolvedMap <- Build.stOutputs <$> Build.doJobs substituteAndTypecheck state
+  resolvedMap <-
+    Build.stOutputs
+      <$> Build.doJobs substituteAndTypecheck state
   -- cache all the resolved expressions
   traverse_
     (uncurry Actions.appendResolvedExpression)
@@ -134,8 +136,8 @@ typecheckStoreExpression ::
 typecheckStoreExpression se input = do
   inputStoreExpressions <- Actions.getDepsForStoreExpression se
   let allInputs =
-        inputStoreExpressions
-          <> M.singleton (getStoreExpressionHash se) (se, input) -- overwrite root storeExpression so that we use the actual user input
+        M.singleton (getStoreExpressionHash se) (se, input) -- overwrite root storeExpression so that we use the actual user input
+          <> inputStoreExpressions
   resolved <- typecheckStoreExpressions allInputs
   -- cache all the resolved expressions
   traverse_

@@ -1,13 +1,19 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Repl.Helpers
   ( saveExpression,
     toReplM,
     catchMimsaError,
+    outputErrorAsDiagnostic,
   )
 where
 
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Foldable (traverse_)
+import Error.Diagnose
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -22,9 +28,9 @@ catchMimsaError ::
   a ->
   ReplM e a ->
   ReplM e a
-catchMimsaError def computation =
+catchMimsaError defValue computation =
   computation `catchError` \_e -> do
-    pure def
+    pure defValue
 
 -- | Actually save a StoreExpression to disk
 saveExpression ::
@@ -50,10 +56,16 @@ toReplM ::
   ReplM (Error Annotation) (Project Annotation, a)
 toReplM project action = case Actions.run project action of
   Left e -> do
-    replOutput e
+    outputErrorAsDiagnostic e
     throwError e
   Right (newProject, outcomes, a) -> do
     traverse_ replOutput (Actions.messagesFromOutcomes outcomes)
     traverse_ saveExpression (Actions.storeExpressionsFromOutcomes outcomes)
     traverse_ saveFile' (Actions.writeFilesFromOutcomes outcomes)
     pure (newProject, a)
+
+-- use diagnostics for errors where possible, falling back to boring errors
+outputErrorAsDiagnostic :: Error Annotation -> ReplM e ()
+outputErrorAsDiagnostic err' =
+  let diag = errorToDiagnostic err'
+   in printDiagnostic stderr True True 4 diag

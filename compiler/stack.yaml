@@ -34,7 +34,9 @@ packages:
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
 #
-# extra-deps:
+
+extra-deps:
+  - diagnose-1.8.2@sha256:d70959f2147f5a1d01c1cc14a7ad8f117d0a3cd544d626bb06a93e40b2ad5cbe,5661 
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
@@ -42,6 +44,10 @@ packages:
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
+
+flags:
+  diagnose:
+    megaparsec-compat: true 
 
 ghc-options:
     # All packages
