@@ -58,6 +58,7 @@ data TypeErrorF var ann
   | PatternMatchErr (PatternMatchErrorF var ann)
   | NameNotFoundInScope ann (Set var) var
   | VariableNotFound ann (Set TypeIdentifier) var
+  | IfPredicateIsNotBoolean ann (Type ann)
   deriving stock (Eq, Ord, Show, Foldable)
 
 type TypeError = TypeErrorF Name Annotation
@@ -124,6 +125,8 @@ renderTypeError (UnificationError a b) =
   [ "Unification error",
     "Cannot match" <+> prettyDoc a <+> "and" <+> prettyDoc b
   ]
+renderTypeError (IfPredicateIsNotBoolean _ mt) =
+  ["Predicate for an if expression should be a boolean. This has type" <+> prettyDoc mt]
 renderTypeError (CouldNotFindInfixOperator _ op allOps) =
   [ "Could not find infix operator " <> prettyDoc op,
     "The following are available:"
@@ -271,6 +274,30 @@ typeErrorDiagnostic input e =
                       ]
                   )
                   ["These two values should be of the same type"]
+           in addReport diag report
+        (IfPredicateIsNotBoolean ann mt) ->
+          let report =
+                err
+                  Nothing
+                  ("Predicate for an if expression should be a Boolean. This has type " <> prettyPrint mt)
+                  ( catMaybes
+                      [ (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            (getAnnotationForType mt)
+                          <*> pure
+                            ( This ("This has type " <> prettyPrint mt <> " but should have type Boolean")
+                            ),
+                        (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            ann
+                          <*> pure (Where "error in this expression")
+                      ]
+                  )
+                  ["Change the predicate to be a Boolean type (True or False)"]
            in addReport diag report
         (MissingRecordTypeMember ann missing _types) ->
           let report =
