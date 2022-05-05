@@ -60,6 +60,8 @@ spec =
         printError stdlib "if 1 then True else False"
       it "Non-boolean in If predicate with annotation" $ do
         printError stdlib "let (a: Boolean) = if 1 then True else False; 1"
+      it "Non-boolean from function in if predicate" $ do
+        printError stdlib "let f a = if a then 1 else 2; f 1"
       it "Non-matching if branches" $ do
         printError stdlib "if True then 1 else False"
       it "Patterns do not match input" $ do
