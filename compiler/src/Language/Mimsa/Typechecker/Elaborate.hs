@@ -221,15 +221,33 @@ inferRecursiveLetBinding env ann ident expr body = do
         inferBody
     )
 
-inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
-inferIf env condition thenExpr elseExpr = do
+unifyTypeOrError :: MonoType -> MonoType -> TypeError -> ElabM ()
+unifyTypeOrError got expected typeErr =
+  do
+    _ <- unify got expected `catchError` \_ -> throwError typeErr
+    pure ()
+
+inferIf :: Environment -> Annotation -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
+inferIf env ann condition thenExpr elseExpr = do
   condExpr <- infer env condition
+
+  -- check condition matches Boolean now as we can raise
+  -- a more accurate error, we ignore any substitutions as we'll use the constraint
+  -- below to create them later and learn about variables etc
+  unifyTypeOrError
+    (expAnn condExpr)
+    (MTPrim mempty MTBool)
+    (IfPredicateIsNotBoolean ann (expAnn condExpr))
+
   thenExpr' <- infer env thenExpr
   elseExpr' <- infer env elseExpr
   tell
-    [ ShouldEqual
+    [ -- check the two clauses have the same reply type
+      ShouldEqual
         (getTypeFromAnn thenExpr')
         (getTypeFromAnn elseExpr'),
+      -- we still need this constraint to learn about any variables
+      -- from the comparison with Boolean
       ShouldEqual
         (getTypeFromAnn condExpr)
         (MTPrim (getAnnotation condition) MTBool)
@@ -771,8 +789,8 @@ infer env inferExpr =
       inferLambda env ann binder body
     (MyApp ann function argument) ->
       inferApplication env ann function argument
-    (MyIf _ condition thenCase elseCase) ->
-      inferIf env condition thenCase elseCase
+    (MyIf ann condition thenCase elseCase) ->
+      inferIf env ann condition thenCase elseCase
     (MyPair ann a b) -> do
       inferA <- infer env a
       inferB <- infer env b

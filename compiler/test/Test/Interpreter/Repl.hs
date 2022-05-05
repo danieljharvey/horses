@@ -1097,6 +1097,11 @@ spec =
         result <- eval testStdlib "let (id1: a -> (a,a)) a = (a,a); let (id2: a -> a) b = b; id1 (id2 True)"
         result `shouldSatisfy` isRight
 
+    describe "check if" $ do
+      it "spots mismatched predicate type" $ do
+        result <- eval testStdlib "let (a: Int) = if 1 then 2 else 3; a"
+        result `shouldSatisfy` textErrorContains "Predicate for an if expression"
+
     describe "optimisations" $ do
       it "should do all optimisations in one pass" $ do
         result <- eval testStdlib "\\opts -> let d = \"dog\"; match [\"a\", \"b\"] with [a, b, c] -> (Just ((a, d))) | _ -> (Nothing)"
