@@ -13,7 +13,7 @@ packages:
     hackage: diagnose-1.8.2@sha256:d70959f2147f5a1d01c1cc14a7ad8f117d0a3cd544d626bb06a93e40b2ad5cbe,5661
 snapshots:
 - completed:
-    size: 551064
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/4/12.yaml
-    sha256: 00074ef6cdd1f994cbd788d556e49e1a6c1710249d271d24f96d53568ba3c7d0
-  original: nightly-2022-04-12
+    size: 572782
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/5/5.yaml
+    sha256: 42b5030fc96fe064d61c662330df4d0369c0ab48648ca2a51705cf26b32550a0
+  original: nightly-2022-05-05
