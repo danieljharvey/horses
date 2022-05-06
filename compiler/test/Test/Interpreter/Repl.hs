@@ -1102,6 +1102,19 @@ spec =
         result <- eval testStdlib "let (a: Int) = if 1 then 2 else 3; a"
         result `shouldSatisfy` textErrorContains "Predicate for an if expression"
 
+    describe "check app" $ do
+      it "spots function argument does not match with annotated function" $ do
+        result <- eval testStdlib "(\\a -> a: Int -> Int) True"
+        result `shouldSatisfy` textErrorContains "Incorrect function argument"
+
+      it "spots function argument does not match" $ do
+        result <- eval testStdlib "(\\a -> a + 1) True"
+        result `shouldSatisfy` textErrorContains "Incorrect function argument"
+
+      it "spots function argument does not match when it is used with a variable" $ do
+        result <- eval testStdlib "let f a = a + 1; f True"
+        result `shouldSatisfy` textErrorContains "Incorrect function argument"
+
     describe "optimisations" $ do
       it "should do all optimisations in one pass" $ do
         result <- eval testStdlib "\\opts -> let d = \"dog\"; match [\"a\", \"b\"] with [a, b, c] -> (Just ((a, d))) | _ -> (Nothing)"

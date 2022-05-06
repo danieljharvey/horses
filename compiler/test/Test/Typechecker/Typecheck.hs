@@ -337,7 +337,10 @@ spec = do
                 (int 100)
         startInference expr $
           Left
-            ( UnificationError (MTPrim mempty MTBool) (MTPrim mempty MTInt)
+            ( FunctionArgumentMismatch
+                mempty
+                (MTPrim mempty MTBool)
+                (MTPrim mempty MTInt)
             )
       it "fails occurs check" $ do
         let expr =
@@ -1170,7 +1173,7 @@ spec = do
               )
           expr = MyApp mempty (MyApp mempty fn (MyLiteral mempty (MyInt 1))) (MyLiteral mempty (MyBool True))
       startInference expr $
-        Left (UnificationError (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+        Left (FunctionArgumentMismatch mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
     it "Does substitutions correctly when pattern matching on a variable inside a constructor from a lambda with application" $ do
       let fn =
             MyLambda
@@ -1205,7 +1208,7 @@ spec = do
                   )
               )
       startInference expr $
-        Left (UnificationError (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+        Left (FunctionArgumentMismatch mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
 
     it "Spots a redundant pattern" $ do
       let expr =

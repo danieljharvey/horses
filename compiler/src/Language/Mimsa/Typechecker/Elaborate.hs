@@ -136,14 +136,38 @@ inferApplication ::
   ElabM ElabExpr
 inferApplication env ann function argument = do
   tyRes <- getUnknown ann
-  function' <- infer env function
   argument' <- infer env argument
+
+  -- run substitutions on the fn type so we can make better errors
+  (elabFunction, constraints) <- listen (infer env function)
+  subst <- solve constraints
+  let tyFunc = applySubst subst (getTypeFromAnn elabFunction)
+
+  -- check the argument against the function input
+  -- to create a better error
+  case tyFunc of
+    (MTFunction fnAnn mtArg _mtRet) -> do
+      _ <-
+        unify mtArg (getTypeFromAnn argument')
+          `catchError` \_ ->
+            throwError
+              ( FunctionArgumentMismatch
+                  fnAnn
+                  mtArg
+                  (getTypeFromAnn argument')
+              )
+
+      pure ()
+    MTVar {} -> pure () -- we still don't know what this is yet, leave it to be worked out in constraint solving
+    other ->
+      throwError (ApplicationToNonFunction (getAnnotation function) other)
+
   tell
     [ ShouldEqual
-        (getTypeFromAnn function')
+        (getTypeFromAnn elabFunction)
         (MTFunction ann (getTypeFromAnn argument') tyRes)
     ]
-  pure (MyApp tyRes function' argument')
+  pure (MyApp tyRes elabFunction argument')
 
 bindingIsRecursive :: Identifier (Name, Unique) ann -> TcExpr -> Bool
 bindingIsRecursive ident = getAny . withMonoid findBinding
