@@ -82,6 +82,10 @@ spec =
         printError stdlib "let f i = i + 1; f False"
       it "Applied a value to non-function" $ do
         printError stdlib "let f = 1; f True"
+      it "Applied wrong value to lambda" $ do
+        printError stdlib "(\\a -> a + 1) True"
+      it "Applies two args to single arity func" $ do
+        printError stdlib "let f a = a + 1; f 1 True"
 
 main :: IO ()
 main = hspec spec
