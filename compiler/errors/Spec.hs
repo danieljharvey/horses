@@ -80,6 +80,8 @@ spec =
         printError stdlib "let (f: Int -> Boolean) i = True; f False"
       it "Inferred function called with wrong type argument" $ do
         printError stdlib "let f i = i + 1; f False"
+      it "Applied a value to non-function" $ do
+        printError stdlib "let f = 1; f True"
 
 main :: IO ()
 main = hspec spec

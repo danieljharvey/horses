@@ -59,6 +59,8 @@ data TypeErrorF var ann
   | NameNotFoundInScope ann (Set var) var
   | VariableNotFound ann (Set TypeIdentifier) var
   | IfPredicateIsNotBoolean ann (Type ann)
+  | FunctionArgumentMismatch ann (Type ann) (Type ann)
+  | ApplicationToNonFunction ann (Type ann)
   deriving stock (Eq, Ord, Show, Foldable)
 
 type TypeError = TypeErrorF Name Annotation
@@ -127,6 +129,13 @@ renderTypeError (UnificationError a b) =
   ]
 renderTypeError (IfPredicateIsNotBoolean _ mt) =
   ["Predicate for an if expression should be a boolean. This has type" <+> prettyDoc mt]
+renderTypeError (FunctionArgumentMismatch _ expected actual) =
+  [ "Incorrect function argument. Expected " <> prettyDoc expected
+      <> ", got "
+      <> prettyDoc actual
+  ]
+renderTypeError (ApplicationToNonFunction _ mt) =
+  ["Cannot apply to non-function. Expected Function, got " <> prettyDoc mt]
 renderTypeError (CouldNotFindInfixOperator _ op allOps) =
   [ "Could not find infix operator " <> prettyDoc op,
     "The following are available:"
@@ -333,6 +342,53 @@ typeErrorDiagnostic input e =
                             ann
                           <*> pure
                             (Where "Is a duplicate")
+                      ]
+                  )
+                  []
+           in addReport diag report
+        (FunctionArgumentMismatch fnAnn expected actual) ->
+          let report =
+                err
+                  Nothing
+                  ( "Function called with incorrect argument type. Expected "
+                      <> prettyPrint expected
+                      <> " but got "
+                      <> prettyPrint actual
+                      <> "."
+                  )
+                  ( catMaybes
+                      [ (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            (getAnnotationForType actual)
+                          <*> pure
+                            ( This ("Passed a " <> prettyPrint actual)
+                            ),
+                        (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            fnAnn
+                          <*> pure (Where $ "Expects a " <> prettyPrint expected)
+                      ]
+                  )
+                  ["Pass a value of type " <> prettyPrint expected <> " to the function"]
+           in addReport diag report
+        (ApplicationToNonFunction _ mt) ->
+          let report =
+                err
+                  Nothing
+                  ("Cannot apply value to non-function. Expected a function, got " <> prettyPrint mt)
+                  ( catMaybes
+                      [ (,)
+                          <$> positionFromAnnotation
+                            filename
+                            input
+                            (getAnnotationForType mt)
+                          <*> pure
+                            ( This ("This should be a function, but instead has type " <> prettyPrint mt)
+                            )
                       ]
                   )
                   []
