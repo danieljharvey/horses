@@ -1,6 +1,8 @@
 module Main where
 
+import qualified Check.Main as Check
 import Control.Applicative
+import Data.Text (Text)
 import qualified Init.Main as Init
 import qualified Options.Applicative as Opt
 import qualified Repl.Main as Repl
@@ -32,7 +34,19 @@ parseAppAction =
               (pure Init)
               (Opt.progDesc "Create a new mimsa project in the current folder")
           )
+        <> Opt.command
+          "check"
+          ( Opt.info
+              (Check <$> filePathParse)
+              (Opt.progDesc "Check whether a file is valid and OK etc")
+          )
     )
+
+filePathParse :: Opt.Parser Text
+filePathParse =
+  Opt.argument
+    Opt.str
+    (Opt.metavar "<file path>")
 
 optionsParse :: Opt.Parser (AppAction, Bool)
 optionsParse = (,) <$> parseAppAction <*> parseShowLogs
@@ -55,3 +69,4 @@ main = do
   case action of
     Init -> Init.init showLogs
     Repl -> Repl.repl showLogs
+    Check filePath -> Check.check showLogs filePath

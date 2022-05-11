@@ -16,6 +16,7 @@ module Language.Mimsa.Types.Error
     PatternMatchError,
     BackendError (..),
     ProjectError (..),
+    ModuleError (..),
     FileType (..),
     CodegenError (..),
     errorToDiagnostic,
@@ -33,6 +34,7 @@ import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Error.BackendError
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Error.InterpreterError
+import Language.Mimsa.Types.Error.ModuleError
 import Language.Mimsa.Types.Error.PatternMatchError
 import Language.Mimsa.Types.Error.ProjectError
 import Language.Mimsa.Types.Error.ResolverError
@@ -52,6 +54,7 @@ data Error ann
   | BackendErr (BackendError ann)
   | ProjectErr ProjectError
   | CodegenErr CodegenError
+  | ModuleErr ModuleError
   | ParseError Text (ParseErrorBundle Text Void)
   deriving stock (Eq, Show)
 
@@ -63,6 +66,7 @@ instance (Show ann, Printer ann) => Printer (Error ann) where
   prettyPrint (BackendErr a) = prettyPrint a
   prettyPrint (ProjectErr a) = prettyPrint a
   prettyPrint (CodegenErr a) = prettyPrint a
+  prettyPrint (ModuleErr a) = prettyPrint a
   prettyPrint (ParseError _input errorBundle) = T.pack (errorBundlePretty errorBundle)
 
 errorToDiagnostic :: Error Annotation -> Diagnostic Text

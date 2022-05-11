@@ -2,7 +2,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.AST.Module (Module (..)) where
+module Language.Mimsa.Types.AST.Module (Module (..), DefPart (..), ModuleItem (..)) where
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -10,15 +10,35 @@ import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType
 import Language.Mimsa.Types.AST.Expr
-import Language.Mimsa.Types.Identifiers.Name
+import Language.Mimsa.Types.AST.Identifier
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker.MonoType
 
--- one file, basically
+-- a module is, broadly, one file
+-- it defines some datatypes, infixes and definitions
+-- and it probably exports one or more of those
 
+data DefPart ann
+  = -- | typeless argument `a`
+    DefArg (Identifier Name ann)
+  | -- | argument with type `(a: String) ->`
+    DefTypedArg (Identifier Name ann) (Type ann)
+  | -- | type with no binding `String`
+    DefType (Type ann)
+  deriving stock (Eq, Ord, Show)
+
+-- item parsed from file, kept like this so we can order them and have
+-- duplicates
+-- we will remove duplicates when we work out dependencies between everything
+data ModuleItem ann
+  = ModuleExpression Name [DefPart ann] (Expr Name ann)
+  | ModuleDataType DataType
+
+-- this is the checked module, it contains no duplicates and we don't care
+-- about ordering
 data Module ann = Module
-  { moExpressions :: Map Name (Expr Name ann),
-    moTypeSignatures :: Map Name (Type ann),
+  { moExpressions :: Map Name (Maybe (Type ann), Expr Name ann),
     moDataTypes :: Map TypeName DataType
   }
   deriving stock (Eq, Ord, Show, Functor)
@@ -37,8 +57,8 @@ instance Printer (Module ann) where
      in printedDefs
 
 instance Semigroup (Module ann) where
-  (Module exprs ts dts) <> (Module exprs' ts' dts') =
-    Module (exprs <> exprs') (ts <> ts') (dts <> dts')
+  (Module exprs dts) <> (Module exprs' dts') =
+    Module (exprs <> exprs') (dts <> dts')
 
 instance Monoid (Module ann) where
-  mempty = Module mempty mempty mempty
+  mempty = Module mempty mempty

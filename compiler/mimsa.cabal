@@ -77,6 +77,7 @@ library
       Language.Mimsa.Interpreter.RecordAccess
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
+      Language.Mimsa.Modules.Check
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers
       Language.Mimsa.Parser.Identifier
@@ -161,6 +162,7 @@ library
       Language.Mimsa.Types.Error.BackendError
       Language.Mimsa.Types.Error.CodegenError
       Language.Mimsa.Types.Error.InterpreterError
+      Language.Mimsa.Types.Error.ModuleError
       Language.Mimsa.Types.Error.PatternMatchError
       Language.Mimsa.Types.Error.ProjectError
       Language.Mimsa.Types.Error.ResolverError
@@ -242,6 +244,7 @@ library
 executable mimsa
   main-is: Main.hs
   other-modules:
+      Check.Main
       Init.Main
       Repl.Actions
       Repl.Actions.Compile
@@ -433,7 +436,7 @@ test-suite mimsa-test
       Test.Codegen.Shared
       Test.Data.Project
       Test.Interpreter.Repl
-      Test.Parser.Module
+      Test.Modules.CheckModule
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax

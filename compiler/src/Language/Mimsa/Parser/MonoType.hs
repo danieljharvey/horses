@@ -110,7 +110,11 @@ protectedTypeNames =
       "Int",
       "Boolean",
       "Unit",
-      "in"
+      "in",
+      "def",
+      "type",
+      "infix",
+      "import"
     ]
 
 tyVarParser :: Parser TyVar
