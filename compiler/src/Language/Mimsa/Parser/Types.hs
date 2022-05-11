@@ -36,7 +36,8 @@ protectedNames =
       "with",
       "infix",
       "True",
-      "False"
+      "False",
+      "def"
     ]
 
 protectedOperators :: Set Text

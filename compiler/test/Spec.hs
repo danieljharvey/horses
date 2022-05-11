@@ -19,6 +19,7 @@ import qualified Test.Backend.Typescript as Typescript
 import qualified Test.Codegen as Codegen
 import Test.Hspec
 import qualified Test.Interpreter.Repl as Repl
+import qualified Test.Parser.Module as Module
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
 import qualified Test.Parser.Pattern as Pattern
 import qualified Test.Parser.Syntax as Syntax
@@ -106,3 +107,4 @@ main =
     TypecheckAction.spec
     SimplifyPatterns.spec
     NumberVars.spec
+    Module.spec

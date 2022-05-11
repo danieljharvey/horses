@@ -10,6 +10,7 @@ module Language.Mimsa.Types.AST
     module Language.Mimsa.Types.AST.Spread,
     module Language.Mimsa.Types.AST.StringPart,
     module Language.Mimsa.Types.AST.Identifier,
+    module Language.Mimsa.Types.AST.Module,
   )
 where
 
@@ -19,6 +20,7 @@ import Language.Mimsa.Types.AST.Expr
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal
+import Language.Mimsa.Types.AST.Module
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.AST.Spread
