@@ -24,7 +24,7 @@ testParser input = do
 
 spec :: Spec
 spec =
-  fdescribe "Module parser" $ do
+  describe "Module parser" $ do
     describe "exprAndTypeFromParts" $ do
       it "No args" $ do
         let expr = unsafeParseExpr "100"

@@ -15,6 +15,7 @@ parseShowLogs =
 data AppAction
   = Repl
   | Init
+  | Check Text -- check if a file is `ok`
 
 parseAppAction :: Opt.Parser AppAction
 parseAppAction =

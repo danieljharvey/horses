@@ -1079,5 +1079,5 @@ spec = parallel $ do
         testParse "let a = 1; let b = a + 1 in match True with True -> 1 | False -> 2"
           `shouldSatisfy` isRight
       it "regression 2" $
-        testParse "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
+        testParse "let stringReduce = \\f -> \\defVal -> \\str -> match str with \"\" -> defVal | head ++ tail -> stringReduce f (f defVal head) tail; stringReduce"
           `shouldSatisfy` isRight

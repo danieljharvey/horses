@@ -502,10 +502,10 @@ spec =
                 (MTPrim mempty MTInt)
             )
       it "fromMaybe should fail typecheck when default does not match inner value" $ do
-        result <- eval testStdlib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe \"Horse\" (Just 1)"
+        result <- eval testStdlib "let fromMaybe = \\defVal -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> defVal) in fromMaybe \"Horse\" (Just 1)"
         result `shouldSatisfy` isLeft
       it "fromMaybe works when types match up" $ do
-        result <- eval testStdlib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe \"Horse\" (Just \"Dog\")"
+        result <- eval testStdlib "let fromMaybe = \\defVal -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> defVal) in fromMaybe \"Horse\" (Just \"Dog\")"
         result `shouldBe` Right (MTPrim mempty MTString, str' "Dog")
       it "True == \"dog\"" $ do
         result <- eval testStdlib "True == \"dog\""
@@ -1082,11 +1082,11 @@ spec =
         result `shouldSatisfy` isLeft
 
       it "should unify named type variables with themselves" $ do
-        result <- eval testStdlib "(\\abc -> \\def -> abc == def : a -> a -> Boolean)"
+        result <- eval testStdlib "(\\abc -> \\defVal -> abc == defVal : a -> a -> Boolean)"
         result `shouldSatisfy` isRight
 
       it "should not unify named type variables with one another" $ do
-        result <- eval testStdlib "(\\abc -> \\def -> abc == def: a -> b -> Boolean)"
+        result <- eval testStdlib "(\\abc -> \\defVal -> abc == defVal: a -> b -> Boolean)"
         result `shouldSatisfy` isLeft
 
       it "should typecheck when id has a specific type" $ do
