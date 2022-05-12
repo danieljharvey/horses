@@ -33,7 +33,7 @@ identity = MyLambda mempty (Identifier mempty "x") (MyVar mempty "x")
 
 startInference :: Expr Name Annotation -> Either TypeError MonoType -> IO ()
 startInference expr expected = do
-  let numberedExpr = fromRight $ addNumbers (StoreExpression expr mempty mempty)
+  let numberedExpr = fromRight $ addNumbersToStoreExpression (StoreExpression expr mempty mempty)
   let elabbed =
         fmap (\(_, _, a, _) -> first fst a)
           . typecheck mempty mempty
@@ -45,7 +45,7 @@ startInference expr expected = do
 
 testInfer :: Expr Name Annotation -> Either TypeError MonoType
 testInfer expr = do
-  numberedExpr <- addNumbers (StoreExpression expr mempty mempty)
+  numberedExpr <- addNumbersToStoreExpression (StoreExpression expr mempty mempty)
   let elabbed =
         fmap (\(_, _, a, _) -> a)
           . typecheck mempty mempty

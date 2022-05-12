@@ -3,7 +3,9 @@
 
 module Language.Mimsa.Types.Error.ModuleError (ModuleError (..)) where
 
+import Data.Set (Set)
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 
@@ -11,7 +13,8 @@ data ModuleError
   = DuplicateDefinition Name
   | DuplicateTypeName TypeName
   | DuplicateConstructor TyCon
-  | CannotFindValue Name
+  | CannotFindValues (Set Name)
+  | DefDoesNotTypeCheck Name TypeError
   deriving stock (Eq, Ord, Show)
 
 instance Printer ModuleError where
@@ -21,5 +24,7 @@ instance Printer ModuleError where
     "Duplicate type name: " <> prettyPrint tyName
   prettyPrint (DuplicateConstructor tyCon) =
     "Duplicate constructor name: " <> prettyPrint tyCon
-  prettyPrint (CannotFindValue name) =
-    "Cannot find value: " <> prettyPrint name
+  prettyPrint (CannotFindValues names) =
+    "Cannot find values: " <> prettyPrint names
+  prettyPrint (DefDoesNotTypeCheck name typeErr) =
+    prettyPrint name <> " had a typechecking error: " <> prettyPrint typeErr

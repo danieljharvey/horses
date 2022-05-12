@@ -7,9 +7,19 @@ module Language.Mimsa.Modules.Check (checkModule, exprAndTypeFromParts) where
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce
+import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Text (Text)
+import Debug.Trace
+import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Parser.Module
+import Language.Mimsa.Store
+import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Typechecker.NumberVars
+import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -34,9 +44,81 @@ import Language.Mimsa.Types.Typechecker
 checkModule :: Text -> Either (Error Annotation) (Module Annotation)
 checkModule input = do
   moduleItems <- first (ParseError input) (parseModule input)
-  first ModuleErr (moduleFromModuleParts moduleItems)
+  properMod <- first ModuleErr (moduleFromModuleParts moduleItems)
+  _deps <- first ModuleErr (typecheckAll properMod)
+  pure properMod
 
--- type Deps a = (a, [a])
+-- get the vars used by each def
+-- explode if there's not available
+-- this will need updating to include imports when we implement them
+getValueDependencies ::
+  (Eq ann, Monoid ann) =>
+  Module ann ->
+  Either
+    ModuleError
+    ( Map
+        Name
+        ( Maybe (Type ann),
+          Expr Name ann,
+          Set Name
+        )
+    )
+getValueDependencies mod' = do
+  let check (mt, exp') =
+        let deps = extractVars exp'
+            unknownDeps = S.filter (\dep -> S.notMember dep (M.keysSet (moExpressions mod'))) deps
+         in if S.null unknownDeps
+              then Right (mt, exp', traceShowId deps)
+              else throwError (CannotFindValues unknownDeps)
+  traverse check (moExpressions mod')
+
+typecheckAll :: Module Annotation -> Either ModuleError (Map Name (Expr Name MonoType))
+typecheckAll inputModule = do
+  -- create initial state for builder
+  -- we tag each StoreExpression we've found with the deps it needs
+  inputWithDeps <- getValueDependencies inputModule
+  let inputWithDepsAndName = M.mapWithKey (,) inputWithDeps
+
+  let state =
+        Build.State
+          { Build.stInputs =
+              ( \(name, (mt, expr, deps)) ->
+                  Build.Plan
+                    { Build.jbDeps = deps,
+                      Build.jbInput = (name, mt, expr)
+                    }
+              )
+                <$> inputWithDepsAndName,
+            Build.stOutputs = mempty
+          }
+  -- go!
+  Build.stOutputs
+    <$> Build.doJobs (typecheckOne inputModule) state
+
+makeTypeDeclMap :: Module ann -> Map TyCon DataType
+makeTypeDeclMap inputModule =
+  M.fromList . fmap (first coerce) . M.toList $ moDataTypes inputModule
+
+typecheckOne ::
+  Module Annotation ->
+  Map Name (Expr Name MonoType) ->
+  (Name, Maybe MonoType, Expr Name Annotation) ->
+  Either ModuleError (Expr Name MonoType)
+typecheckOne inputModule deps (name, _mt, expr) = do
+  let typeMap = getTypeFromAnn <$> deps
+  -- number the vars
+  numberedExpr <-
+    first
+      (DefDoesNotTypeCheck name)
+      (addNumbersToExpression (M.keysSet deps) expr)
+  -- initial typechecking environment
+  let env = traceShowId $ createEnv (getTypeFromAnn <$> deps) (makeTypeDeclMap inputModule)
+  -- typecheck it
+  (_subs, _constraints, typedExpr, _mt) <-
+    first
+      (DefDoesNotTypeCheck name)
+      (typecheck typeMap env numberedExpr)
+  pure (first fst typedExpr)
 
 moduleFromModuleParts :: (Monoid ann) => [ModuleItem ann] -> Either ModuleError (Module ann)
 moduleFromModuleParts parts =

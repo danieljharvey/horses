@@ -11,6 +11,7 @@ import Language.Mimsa.Types.Store.ExprHash
 data Unique
   = Unique Int
   | Dependency ExprHash
+  | Local
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON)
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Modules.CheckModule
@@ -9,6 +10,7 @@ import Control.Monad.IO.Class
 import Data.Either
 import Data.Functor
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Language.Mimsa.Modules.Check
@@ -48,12 +50,18 @@ spec = do
       fileContents <- liftIO $ T.readFile filePath
       checkModule' fileContents
         `shouldBe` Left (ModuleErr (DuplicateConstructor "Nothing"))
-    -- to implement
-    xit "5 errors because it refers to an non-existent value" $ do
+    it "5 errors because it refers to an non-existent value" $ do
       let filePath = modulesPath <> "5.mimsa"
       fileContents <- liftIO $ T.readFile filePath
       checkModule' fileContents
-        `shouldBe` Left (ModuleErr (CannotFindValue "eatEgg"))
+        `shouldBe` Left (ModuleErr (CannotFindValues (S.singleton "eatEgg")))
+    it "6 errors because it doesn't typecheck" $ do
+      let filePath = modulesPath <> "6.mimsa"
+      fileContents <- liftIO $ T.readFile filePath
+      checkModule' fileContents
+        `shouldSatisfy` \case
+          Left (ModuleErr (DefDoesNotTypeCheck "doesntTypecheck" _)) -> True
+          _ -> False
 
   describe "exprAndTypeFromParts" $ do
     it "No args" $ do
@@ -203,12 +211,12 @@ spec = do
               M.fromList
                 [ ( "returnFunc",
                     ( Just (unsafeParseMonoType "String -> Int -> String" $> mempty),
-                      unsafeParseExpr "\\a -> const a" $> mempty
+                      unsafeParseExpr "\\a -> \\b -> a" $> mempty
                     )
                   )
                 ]
             expectedModule = mempty {moExpressions = exprs}
-         in checkModule' "def returnFunc (a: String) : Int -> String = const a"
+         in checkModule' "def returnFunc (a: String) : Int -> String = \\b -> a"
               `shouldBe` Right expectedModule
       it "function where signature has partial types" $
         -- here we just use the identifier as a type arg
@@ -257,5 +265,5 @@ spec = do
               mempty
                 { moExpressions = exprs
                 }
-         in checkModule' "def fmap (f: a -> b) (maybeA: Maybe a): Maybe b = match maybeA with Just a -> Just (f a) | Nothing -> Nothing\n\n\ndef inc a = a + 1"
+         in checkModule' "type Maybe a = Just a | Nothing\ndef fmap (f: a -> b) (maybeA: Maybe a): Maybe b = match maybeA with Just a -> Just (f a) | Nothing -> Nothing\n\n\ndef inc a = a + 1"
               `shouldBe` Right expectedModule

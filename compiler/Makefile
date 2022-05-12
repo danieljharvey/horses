@@ -27,10 +27,10 @@ build-watch:
 	stack build --file-watch --test --no-run-tests --bench --no-run-benchmarks 
 
 test-watch:
-	stack test --file-watch --bench --no-run-benchmarks mimsa:mimsa-test
+	stack test --file-watch --bench --no-run-benchmarks 
 
 errors-watch:
-	stack test --file-watch --bench --no-run-benchmarks mimsa:errors-test
+	stack build --test --file-watch --bench --no-run-benchmarks mimsa:errors-test
 
 test:
 	stack test --bench --no-run-benchmarks

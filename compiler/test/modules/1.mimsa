@@ -2,7 +2,7 @@ def main: String = fromMaybe (id log) (Just (const (exclaim horse) False))
 
 def id a = a
 
-def const a b = a
+def const a b = id a
 
 def exclaim (str: String) = str ++ "!!!!!!!"
 
@@ -13,8 +13,7 @@ def fromMaybe (default: a) (maybeA: Maybe a): a =
       Just a -> a
       | _ -> default
 
-
-def log = "Yes"
+def log = const "Yes" True
 
 type Maybe a = Just a | Nothing
 

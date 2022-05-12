@@ -77,7 +77,7 @@ substituteAndTypecheck ::
   Actions.ActionM (ResolvedExpression Annotation)
 substituteAndTypecheck resolvedDeps (storeExpr, input) = do
   project <- Actions.getProject
-  numberedExpr <- liftEither $ first (TypeErr input) (addNumbers storeExpr)
+  numberedExpr <- liftEither $ first (TypeErr input) (addNumbersToStoreExpression storeExpr)
   depTypeMap <- makeTypeMap resolvedDeps (storeBindings storeExpr)
   dataTypes <- liftEither $ first StoreErr (resolveDataTypes (prjStore project) storeExpr)
   (_, _, typedExpr, exprType) <-
