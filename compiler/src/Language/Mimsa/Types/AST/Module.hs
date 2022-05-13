@@ -6,6 +6,7 @@ module Language.Mimsa.Types.AST.Module (Module (..), DefPart (..), ModuleItem (.
 
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Set (Set)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType
@@ -34,12 +35,14 @@ data DefPart ann
 data ModuleItem ann
   = ModuleExpression Name [DefPart ann] (Expr Name ann)
   | ModuleDataType DataType
+  | ModuleExport (ModuleItem ann)
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
 data Module ann = Module
   { moExpressions :: Map Name (Expr Name ann),
-    moDataTypes :: Map TypeName DataType
+    moDataTypes :: Map TypeName DataType,
+    moExpressionExports :: Set Name
   }
   deriving stock (Eq, Ord, Show, Functor)
 
@@ -57,8 +60,8 @@ instance Printer (Module ann) where
      in printedDefs
 
 instance Semigroup (Module ann) where
-  (Module exprs dts) <> (Module exprs' dts') =
-    Module (exprs <> exprs') (dts <> dts')
+  (Module exprs dts exports) <> (Module exprs' dts' exports') =
+    Module (exprs <> exprs') (dts <> dts') (exports <> exports')
 
 instance Monoid (Module ann) where
-  mempty = Module mempty mempty
+  mempty = Module mempty mempty mempty

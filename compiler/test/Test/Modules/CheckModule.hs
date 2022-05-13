@@ -207,6 +207,15 @@ spec = do
             expectedModule = mempty {moDataTypes = dts, moExpressions = exprs}
          in checkModule' "type Maybe a = Just a | Nothing\ndef a = 1"
               `shouldBe` Right expectedModule
+    describe "exports" $ do
+      it "export id function" $ do
+        let exprs =
+              M.fromList
+                [("id", unsafeParseExpr "\\a -> a" $> mempty)]
+            exports = S.singleton "id"
+            expectedModule = mempty {moExpressions = exprs, moExpressionExports = exports}
+        checkModule' "export def id a = a"
+          `shouldBe` Right expectedModule
 
     describe "definitions with types" $ do
       it "function with full signature" $

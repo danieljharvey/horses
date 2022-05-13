@@ -73,7 +73,7 @@ addNumbersToExpression locals expr =
         -- add dependencies to scope
         let varsFromDeps =
               mconcat $
-                (\name -> M.singleton name Local)
+                (`M.singleton` Local)
                   <$> S.toList locals
         -- evaluate rest of expression using these
         withLambda

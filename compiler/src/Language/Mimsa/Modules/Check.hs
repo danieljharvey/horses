@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -120,9 +121,14 @@ typecheckOne inputModule deps (name, expr) = do
 
 moduleFromModuleParts :: (Monoid ann) => [ModuleItem ann] -> Either ModuleError (Module ann)
 moduleFromModuleParts parts =
-  let addPart part = \case
-        Left e -> Left e
-        Right mod' -> case part of
+  let addPart part output = do
+        mod' <- output
+        case part of
+          ModuleExport modItem -> do
+            -- get whatever is inside
+            -- get the keys, add them to exports
+            innerModule <- addPart modItem output
+            pure innerModule
           ModuleExpression name bits expr ->
             case M.lookup name (moExpressions mod') of
               Just _ -> throwError (DuplicateDefinition name)
