@@ -38,7 +38,7 @@ data ModuleItem ann
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
 data Module ann = Module
-  { moExpressions :: Map Name (Maybe (Type ann), Expr Name ann),
+  { moExpressions :: Map Name (Expr Name ann),
     moDataTypes :: Map TypeName DataType
   }
   deriving stock (Eq, Ord, Show, Functor)

@@ -12,7 +12,6 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import Debug.Trace
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Parser.Module
 import Language.Mimsa.Store
@@ -41,12 +40,12 @@ import Language.Mimsa.Types.Typechecker
 --  1. infix definitions
 --  2. imports
 --  3. exports
-checkModule :: Text -> Either (Error Annotation) (Module Annotation)
+checkModule :: Text -> Either (Error Annotation) (Module (Type Annotation))
 checkModule input = do
   moduleItems <- first (ParseError input) (parseModule input)
   properMod <- first ModuleErr (moduleFromModuleParts moduleItems)
-  _deps <- first ModuleErr (typecheckAll properMod)
-  pure properMod
+  typedExpressions <- first ModuleErr (typecheckAll properMod)
+  pure $ properMod {moExpressions = typedExpressions}
 
 -- get the vars used by each def
 -- explode if there's not available
@@ -58,17 +57,16 @@ getValueDependencies ::
     ModuleError
     ( Map
         Name
-        ( Maybe (Type ann),
-          Expr Name ann,
+        ( Expr Name ann,
           Set Name
         )
     )
 getValueDependencies mod' = do
-  let check (mt, exp') =
+  let check exp' =
         let deps = extractVars exp'
             unknownDeps = S.filter (\dep -> S.notMember dep (M.keysSet (moExpressions mod'))) deps
          in if S.null unknownDeps
-              then Right (mt, exp', traceShowId deps)
+              then Right (exp', deps)
               else throwError (CannotFindValues unknownDeps)
   traverse check (moExpressions mod')
 
@@ -82,10 +80,10 @@ typecheckAll inputModule = do
   let state =
         Build.State
           { Build.stInputs =
-              ( \(name, (mt, expr, deps)) ->
+              ( \(name, (expr, deps)) ->
                   Build.Plan
                     { Build.jbDeps = deps,
-                      Build.jbInput = (name, mt, expr)
+                      Build.jbInput = (name, expr)
                     }
               )
                 <$> inputWithDepsAndName,
@@ -102,9 +100,9 @@ makeTypeDeclMap inputModule =
 typecheckOne ::
   Module Annotation ->
   Map Name (Expr Name MonoType) ->
-  (Name, Maybe MonoType, Expr Name Annotation) ->
+  (Name, Expr Name Annotation) ->
   Either ModuleError (Expr Name MonoType)
-typecheckOne inputModule deps (name, _mt, expr) = do
+typecheckOne inputModule deps (name, expr) = do
   let typeMap = getTypeFromAnn <$> deps
   -- number the vars
   numberedExpr <-
@@ -112,7 +110,7 @@ typecheckOne inputModule deps (name, _mt, expr) = do
       (DefDoesNotTypeCheck name)
       (addNumbersToExpression (M.keysSet deps) expr)
   -- initial typechecking environment
-  let env = traceShowId $ createEnv (getTypeFromAnn <$> deps) (makeTypeDeclMap inputModule)
+  let env = createEnv (getTypeFromAnn <$> deps) (makeTypeDeclMap inputModule)
   -- typecheck it
   (_subs, _constraints, typedExpr, _mt) <-
     first
@@ -129,11 +127,11 @@ moduleFromModuleParts parts =
             case M.lookup name (moExpressions mod') of
               Just _ -> throwError (DuplicateDefinition name)
               Nothing ->
-                let (exp', mt) = exprAndTypeFromParts bits expr
+                let exp' = exprAndTypeFromParts bits expr
                  in pure $
                       mod'
                         { moExpressions =
-                            M.singleton name (mt, exp') <> moExpressions mod'
+                            M.singleton name exp' <> moExpressions mod'
                         }
           ModuleDataType dt@(DataType tyCon _ _) ->
             let typeName = coerce tyCon
@@ -148,12 +146,23 @@ moduleFromModuleParts parts =
                         }
    in foldr addPart (Right mempty) parts
 
+addAnnotation :: Maybe (Type ann) -> Expr Name ann -> Expr Name ann
+addAnnotation mt expr =
+  -- add type annotation to expression
+  case mt of
+    Just typeAnnotation ->
+      MyAnnotation
+        (getAnnotationForType typeAnnotation)
+        typeAnnotation
+        expr
+    _ -> expr
+
 -- given the bits of things, make a coherent type and expression
 exprAndTypeFromParts ::
   (Monoid ann) =>
   [DefPart ann] ->
   Expr Name ann ->
-  (Expr Name ann, Maybe (Type ann))
+  Expr Name ann
 exprAndTypeFromParts parts expr =
   let expr' =
         foldr
@@ -217,4 +226,4 @@ exprAndTypeFromParts parts expr =
           )
           Nothing
           filteredParts
-   in (expr', mt)
+   in addAnnotation mt expr'

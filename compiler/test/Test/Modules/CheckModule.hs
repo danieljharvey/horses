@@ -62,28 +62,38 @@ spec = do
         `shouldSatisfy` \case
           Left (ModuleErr (DefDoesNotTypeCheck "doesntTypecheck" _)) -> True
           _ -> False
+    it "7 errors because annotation means it doesn't typecheck" $ do
+      let filePath = modulesPath <> "7.mimsa"
+      fileContents <- liftIO $ T.readFile filePath
+      checkModule' fileContents
+        `shouldSatisfy` \case
+          Left (ModuleErr (DefDoesNotTypeCheck "doesntTypecheckBecauseAnnotation" _)) -> True
+          _ -> False
+    it "8 is ok even with various amounts of partial type annotation" $ do
+      let filePath = modulesPath <> "8.mimsa"
+      fileContents <- liftIO $ T.readFile filePath
+      checkModule' fileContents
+        `shouldSatisfy` isRight
 
   describe "exprAndTypeFromParts" $ do
     it "No args" $ do
       let expr = unsafeParseExpr "100"
-      exprAndTypeFromParts mempty expr `shouldBe` (expr, Nothing)
+      exprAndTypeFromParts mempty expr `shouldBe` expr
     it "Single non-typed arg" $ do
       let expr = unsafeParseExpr "100"
           parts = [DefArg (Identifier () "a")]
       exprAndTypeFromParts parts expr
-        `shouldBe` ( MyLambda mempty (Identifier mempty "a") expr,
-                     Nothing
-                   )
+        `shouldBe` MyLambda mempty (Identifier mempty "a") expr
+
     it "Two non-typed args" $ do
       let expr = unsafeParseExpr "100"
           parts = [DefArg (Identifier () "a"), DefArg (Identifier () "b")]
       exprAndTypeFromParts parts expr
-        `shouldBe` ( MyLambda
-                       mempty
-                       (Identifier mempty "a")
-                       (MyLambda mempty (Identifier mempty "b") expr),
-                     Nothing
-                   )
+        `shouldBe` MyLambda
+          mempty
+          (Identifier mempty "a")
+          (MyLambda mempty (Identifier mempty "b") expr)
+
     it "Typed arg and return type" $ do
       let expr = unsafeParseExpr "True"
           parts =
@@ -92,12 +102,15 @@ spec = do
               DefType mtBool
             ]
       exprAndTypeFromParts parts expr
-        `shouldBe` ( MyLambda
-                       mempty
-                       (Identifier mempty "str")
-                       (MyLambda mempty (Identifier mempty "int") expr),
-                     Just (mtFun mtString (mtFun mtInt mtBool))
-                   )
+        `shouldBe` MyAnnotation
+          mempty
+          (mtFun mtString (mtFun mtInt mtBool))
+          ( MyLambda
+              mempty
+              (Identifier mempty "str")
+              (MyLambda mempty (Identifier mempty "int") expr)
+          )
+
     it "Typed arg with no return type" $ do
       let expr = unsafeParseExpr "True"
           parts =
@@ -105,12 +118,14 @@ spec = do
               DefTypedArg (Identifier () "int") mtInt
             ]
       exprAndTypeFromParts parts expr
-        `shouldBe` ( MyLambda
-                       mempty
-                       (Identifier mempty "str")
-                       (MyLambda mempty (Identifier mempty "int") expr),
-                     Just (mtFun mtString (mtFun mtInt (mtVar "returnType")))
-                   )
+        `shouldBe` MyAnnotation
+          mempty
+          (mtFun mtString (mtFun mtInt (mtVar "returnType")))
+          ( MyLambda
+              mempty
+              (Identifier mempty "str")
+              (MyLambda mempty (Identifier mempty "int") expr)
+          )
 
     describe "Examples" $ do
       it "Empty file" $
@@ -118,15 +133,15 @@ spec = do
       describe "definitions" $ do
         it "Single constant" $
           let expectedExpr = unsafeParseExpr "100" $> mempty
-              exprs = M.singleton "noSig" (Nothing, expectedExpr)
+              exprs = M.singleton "noSig" expectedExpr
               expectedModule = mempty {moExpressions = exprs}
            in checkModule' "def noSig = 100"
                 `shouldBe` Right expectedModule
         it "Two constants" $
           let exprs =
                 M.fromList
-                  [ ("one", (Nothing, unsafeParseExpr "1" $> mempty)),
-                    ("two", (Nothing, unsafeParseExpr "2" $> mempty))
+                  [ ("one", unsafeParseExpr "1" $> mempty),
+                    ("two", unsafeParseExpr "2" $> mempty)
                   ]
               expectedModule = mempty {moExpressions = exprs}
            in checkModule' "def one = 1\ndef two = 2"
@@ -134,7 +149,7 @@ spec = do
         it "id Function" $
           let exprs =
                 M.fromList
-                  [ ("id", (Nothing, unsafeParseExpr "\\a -> a" $> mempty))
+                  [ ("id", unsafeParseExpr "\\a -> a" $> mempty)
                   ]
               expectedModule = mempty {moExpressions = exprs}
            in checkModule' "def id a = a"
@@ -142,7 +157,7 @@ spec = do
         it "const Function" $
           let exprs =
                 M.fromList
-                  [ ("const", (Nothing, unsafeParseExpr "\\a -> \\b -> a" $> mempty))
+                  [ ("const", unsafeParseExpr "\\a -> \\b -> a" $> mempty)
                   ]
               expectedModule = mempty {moExpressions = exprs}
            in checkModule' "def const a b = a"
@@ -150,8 +165,8 @@ spec = do
         it "multiple Functions" $
           let exprs =
                 M.fromList
-                  [ ("id", (Nothing, unsafeParseExpr "\\a -> a" $> mempty)),
-                    ("const", (Nothing, unsafeParseExpr "\\a -> \\b -> a" $> mempty))
+                  [ ("id", unsafeParseExpr "\\a -> a" $> mempty),
+                    ("const", unsafeParseExpr "\\a -> \\b -> a" $> mempty)
                   ]
               expectedModule = mempty {moExpressions = exprs}
            in checkModule' "def id a = a\ndef const a b = a"
@@ -188,7 +203,7 @@ spec = do
                       )
                   )
                 ]
-            exprs = M.fromList [("a", (Nothing, unsafeParseExpr "1" $> mempty))]
+            exprs = M.fromList [("a", unsafeParseExpr "1" $> mempty)]
             expectedModule = mempty {moDataTypes = dts, moExpressions = exprs}
          in checkModule' "type Maybe a = Just a | Nothing\ndef a = 1"
               `shouldBe` Right expectedModule
@@ -198,9 +213,10 @@ spec = do
         let exprs =
               M.fromList
                 [ ( "const",
-                    ( Just $ unsafeParseMonoType "String -> Int -> String" $> mempty,
-                      unsafeParseExpr "\\a -> \\b -> a" $> mempty
-                    )
+                    MyAnnotation
+                      mempty
+                      (unsafeParseMonoType "String -> Int -> String" $> mempty)
+                      (unsafeParseExpr "\\a -> \\b -> a" $> mempty)
                   )
                 ]
             expectedModule = mempty {moExpressions = exprs}
@@ -210,9 +226,10 @@ spec = do
         let exprs =
               M.fromList
                 [ ( "returnFunc",
-                    ( Just (unsafeParseMonoType "String -> Int -> String" $> mempty),
-                      unsafeParseExpr "\\a -> \\b -> a" $> mempty
-                    )
+                    MyAnnotation
+                      mempty
+                      (unsafeParseMonoType "String -> Int -> String" $> mempty)
+                      (unsafeParseExpr "\\a -> \\b -> a" $> mempty)
                   )
                 ]
             expectedModule = mempty {moExpressions = exprs}
@@ -225,9 +242,11 @@ spec = do
         let exprs =
               M.fromList
                 [ ( "const",
-                    ( Just $ unsafeParseMonoType "String -> b -> String" $> mempty,
-                      unsafeParseExpr "\\a -> \\b -> a" $> mempty
-                    )
+                    MyAnnotation
+                      mempty
+                      (unsafeParseMonoType "String -> b -> String" $> mempty)
+                      ( unsafeParseExpr "\\a -> \\b -> a" $> mempty
+                      )
                   )
                 ]
             expectedModule = mempty {moExpressions = exprs}
@@ -241,9 +260,10 @@ spec = do
         let exprs =
               M.fromList
                 [ ( "const",
-                    ( Just (unsafeParseMonoType "String -> b -> returnType" $> mempty),
-                      unsafeParseExpr "\\a -> \\b -> a" $> mempty
-                    )
+                    MyAnnotation
+                      mempty
+                      (unsafeParseMonoType "String -> b -> returnType" $> mempty)
+                      (unsafeParseExpr "\\a -> \\b -> a" $> mempty)
                   )
                 ]
             expectedModule = mempty {moExpressions = exprs}
@@ -253,17 +273,34 @@ spec = do
         let exprs =
               M.fromList
                 [ ( "fmap",
-                    ( Just (unsafeParseMonoType "(a -> b) -> Maybe a -> Maybe b" $> mempty),
-                      unsafeParseExpr "\\f -> \\maybeA -> match maybeA with Just a -> Just (f a) | Nothing -> Nothing" $> mempty
-                    )
+                    MyAnnotation
+                      mempty
+                      (unsafeParseMonoType "(a -> b) -> Maybe a -> Maybe b" $> mempty)
+                      ( unsafeParseExpr "\\f -> \\maybeA -> match maybeA with Just a -> Just (f a) | Nothing -> Nothing" $> mempty
+                      )
                   ),
                   ( "inc",
-                    (Nothing, unsafeParseExpr "\\a -> a + 1" $> mempty)
+                    unsafeParseExpr "\\a -> a + 1" $> mempty
                   )
                 ]
+            dts =
+              M.fromList
+                [ ( "Maybe",
+                    DataType
+                      "Maybe"
+                      ["a"]
+                      ( M.fromList
+                          [ ("Just", [mtVar "a"]),
+                            ("Nothing", mempty)
+                          ]
+                      )
+                  )
+                ]
+
             expectedModule =
               mempty
-                { moExpressions = exprs
+                { moExpressions = exprs,
+                  moDataTypes = dts
                 }
          in checkModule' "type Maybe a = Just a | Nothing\ndef fmap (f: a -> b) (maybeA: Maybe a): Maybe b = match maybeA with Just a -> Just (f a) | Nothing -> Nothing\n\n\ndef inc a = a + 1"
               `shouldBe` Right expectedModule
