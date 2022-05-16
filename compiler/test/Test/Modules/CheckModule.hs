@@ -14,6 +14,8 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import Language.Mimsa.Modules.Check
+import Language.Mimsa.Modules.Prelude
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules.Module
@@ -317,5 +319,8 @@ spec = do
                 `shouldBe` Right expectedModule
       describe "imports" $ do
         it "uses fst from Prelude" $
-          checkModule' "def useFst = fst (1,2)"
+          checkModule' ("import * from " <> prettyPrint preludeHash <> "\ndef useFst = fst (1,2)")
             `shouldSatisfy` isRight
+        it "errors when locally defining fst" $
+          checkModule' ("import * from " <> prettyPrint preludeHash <> "\ndef fst pair = let (a,_) = pair in a")
+            `shouldBe` Left (ModuleErr $ DefinitionConflictsWithImport "fst" preludeHash)

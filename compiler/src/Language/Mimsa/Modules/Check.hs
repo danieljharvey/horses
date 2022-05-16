@@ -1,11 +1,14 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.Check (checkModule, exprAndTypeFromParts) where
 
 import Control.Monad.Except
+import Control.Monad.Reader
 import Data.Bifunctor
 import Data.Coerce
 import Data.Map (Map)
@@ -26,7 +29,48 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.Module
+import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker
+
+-- this is where we keep all the modules we need to do things
+newtype CheckEnv ann = CheckEnv
+  { ceModules :: Map ModuleHash (Module ann)
+  }
+
+lookupModule :: ModuleHash -> CheckM (Module Annotation)
+lookupModule modHash = do
+  mods <- asks ceModules
+  case M.lookup modHash mods of
+    Just foundModule -> pure foundModule
+    _ -> throwError (ModuleErr (MissingModule modHash))
+
+newtype CheckM a = CheckM
+  { runCheckM ::
+      ExceptT
+        (Error Annotation)
+        ( Reader (CheckEnv Annotation)
+        )
+        a
+  }
+  deriving newtype
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadError (Error Annotation),
+      MonadReader (CheckEnv Annotation)
+    )
+
+runCheck :: CheckM a -> Either (Error Annotation) a
+runCheck comp = runReader (runExceptT (runCheckM comp)) initialEnv
+  where
+    initialEnv =
+      CheckEnv
+        { ceModules = M.singleton preludeHash prelude
+        }
+
+checkModule :: Text -> Either (Error Annotation) (Module (Type Annotation))
+checkModule = runCheck . checkModule'
 
 -- | This is where we load a file and check that it is "OK" as such
 --  so far this entails:
@@ -46,25 +90,22 @@ import Language.Mimsa.Types.Typechecker
 --  2. tests
 --  3. property tests
 --  4. metadata / comments etc?
-checkModule :: Text -> Either (Error Annotation) (Module (Type Annotation))
-checkModule input = do
-  moduleItems <- first (ParseError input) (parseModule input)
-  properMod <- first ModuleErr (moduleFromModuleParts moduleItems)
-  typedExpressions <- first ModuleErr (typecheckAll properMod)
+checkModule' :: Text -> CheckM (Module (Type Annotation))
+checkModule' input = do
+  moduleItems <-
+    liftEither $
+      first (ParseError input) (parseModule input)
+  properMod <-
+    moduleFromModuleParts moduleItems
+  typedExpressions <- typecheckAll properMod
   pure $ properMod {moExpressions = typedExpressions}
-
-addPrelude :: [ModuleItem Annotation] -> [ModuleItem Annotation]
-addPrelude items =
-  items <> [ModuleImport (ImportAllFromHash preludeHash)]
 
 -- get the vars used by each def
 -- explode if there's not available
--- this will need updating to include imports when we implement them
 getValueDependencies ::
   (Eq ann, Monoid ann) =>
   Module ann ->
-  Either
-    ModuleError
+  CheckM
     ( Map
         Name
         ( Expr Name ann,
@@ -74,13 +115,19 @@ getValueDependencies ::
 getValueDependencies mod' = do
   let check exp' =
         let deps = extractVars exp'
-            unknownDeps = S.filter (\dep -> S.notMember dep (M.keysSet (moExpressions mod'))) deps
+            unknownDeps =
+              S.filter
+                ( \dep ->
+                    S.notMember dep (M.keysSet (moExpressions mod'))
+                      && S.notMember dep (M.keysSet (moExpressionImports mod'))
+                )
+                deps
          in if S.null unknownDeps
-              then Right (exp', deps)
-              else throwError (CannotFindValues unknownDeps)
+              then pure (exp', deps)
+              else throwError (ModuleErr (CannotFindValues unknownDeps))
   traverse check (moExpressions mod')
 
-typecheckAll :: Module Annotation -> Either ModuleError (Map Name (Expr Name MonoType))
+typecheckAll :: Module Annotation -> CheckM (Map Name (Expr Name MonoType))
 typecheckAll inputModule = do
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
@@ -111,24 +158,33 @@ typecheckOne ::
   Module Annotation ->
   Map Name (Expr Name MonoType) ->
   (Name, Expr Name Annotation) ->
-  Either ModuleError (Expr Name MonoType)
+  CheckM (Expr Name MonoType)
 typecheckOne inputModule deps (name, expr) = do
   let typeMap = getTypeFromAnn <$> deps
   -- number the vars
   numberedExpr <-
-    first
-      (DefDoesNotTypeCheck name)
-      (addNumbersToExpression (M.keysSet deps) expr)
+    liftEither $
+      first
+        (ModuleErr . DefDoesNotTypeCheck name)
+        ( addNumbersToExpression
+            (M.keysSet deps)
+            (coerce <$> moExpressionImports inputModule)
+            expr
+        )
   -- initial typechecking environment
   let env = createEnv (getTypeFromAnn <$> deps) (makeTypeDeclMap inputModule)
   -- typecheck it
   (_subs, _constraints, typedExpr, _mt) <-
-    first
-      (DefDoesNotTypeCheck name)
-      (typecheck typeMap env numberedExpr)
+    liftEither $
+      first
+        (ModuleErr . DefDoesNotTypeCheck name)
+        (typecheck typeMap env numberedExpr)
   pure (first fst typedExpr)
 
-moduleFromModuleParts :: (Monoid ann) => [ModuleItem ann] -> Either ModuleError (Module ann)
+moduleFromModuleParts ::
+  (Monoid ann) =>
+  [ModuleItem ann] ->
+  CheckM (Module ann)
 moduleFromModuleParts parts =
   let addPart part output = do
         mod' <- output
@@ -144,7 +200,7 @@ moduleFromModuleParts parts =
                 }
           ModuleExpression name bits expr ->
             case M.lookup name (moExpressions mod') of
-              Just _ -> throwError (DuplicateDefinition name)
+              Just _ -> throwError (ModuleErr $ DuplicateDefinition name)
               Nothing ->
                 let exp' = exprAndTypeFromParts bits expr
                  in pure $
@@ -155,7 +211,7 @@ moduleFromModuleParts parts =
           ModuleDataType dt@(DataType tyCon _ _) ->
             let typeName = coerce tyCon
              in case M.lookup typeName (moDataTypes mod') of
-                  Just _ -> throwError (DuplicateTypeName typeName)
+                  Just _ -> throwError (ModuleErr $ DuplicateTypeName typeName)
                   Nothing ->
                     pure $
                       mod'
@@ -163,7 +219,15 @@ moduleFromModuleParts parts =
                             M.singleton typeName dt
                               <> moDataTypes mod'
                         }
-   in foldr addPart (Right mempty) parts
+          ModuleImport (ImportAllFromHash mHash) -> do
+            importMod <- lookupModule mHash
+            let createImports =
+                  M.fromList
+                    . fmap (,mHash)
+                    . S.toList
+                    . moExpressionExports
+            pure $ mod' {moExpressionImports = createImports importMod}
+   in foldr addPart (pure mempty) parts
 
 addAnnotation :: Maybe (Type ann) -> Expr Name ann -> Expr Name ann
 addAnnotation mt expr =

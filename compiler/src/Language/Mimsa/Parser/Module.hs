@@ -8,6 +8,7 @@ module Language.Mimsa.Parser.Module
   )
 where
 
+import Data.Char as Char
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifier
@@ -17,6 +18,7 @@ import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.MonoType
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Modules.Module
+import Language.Mimsa.Types.Modules.ModuleHash
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
@@ -38,7 +40,7 @@ moduleParser =
 
 -- we've excluded Export here
 parseModuleItem :: Parser [ModuleItem Annotation]
-parseModuleItem = parseDef <|> parseType
+parseModuleItem = parseDef <|> parseType <|> parseImport
 
 -------
 
@@ -90,3 +92,18 @@ parseExport = do
   myString "export"
   items <- parseModuleItem
   pure (ModuleExport <$> items)
+
+parseHash :: Parser ModuleHash
+parseHash =
+  ModuleHash
+    <$> myLexeme
+      ( takeWhile1P (Just "module hash") Char.isAlphaNum
+      )
+
+parseImport :: Parser [ModuleItem Annotation]
+parseImport = do
+  myString "import"
+  myString "*"
+  myString "from"
+  hash <- parseHash
+  pure [ModuleImport (ImportAllFromHash hash)]

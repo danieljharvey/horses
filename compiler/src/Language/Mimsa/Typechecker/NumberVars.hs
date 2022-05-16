@@ -66,18 +66,23 @@ addNumbersToStoreExpression storeExpr =
 addNumbersToExpression ::
   (Show ann) =>
   Set Name ->
+  Map Name ExprHash ->
   Expr Name ann ->
   Either (TypeErrorF Name ann) (NumberedExpr Name ann)
-addNumbersToExpression locals expr =
+addNumbersToExpression locals imports expr =
   let action = do
         -- add dependencies to scope
-        let varsFromDeps =
+        let localVars =
               mconcat $
                 (`M.singleton` Local)
                   <$> S.toList locals
+        let importVars =
+              mconcat $
+                (\(name, hash) -> M.singleton name (Dependency hash))
+                  <$> M.toList imports
         -- evaluate rest of expression using these
         withLambda
-          varsFromDeps
+          (localVars <> importVars)
           (markImports expr)
    in evalState
         ( runReaderT
