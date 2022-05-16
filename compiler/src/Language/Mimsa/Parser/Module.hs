@@ -16,6 +16,7 @@ import Language.Mimsa.Parser.Language
 import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.MonoType
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Modules.Module
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
@@ -29,11 +30,15 @@ parseModule = parse (space *> moduleParser <* eof) "repl"
 -- use `registerParseError` from https://hackage.haskell.org/package/megaparsec-9.2.1/docs/Text-Megaparsec.html
 moduleParser :: Parser [ModuleItem Annotation]
 moduleParser =
-  let bigParsers = parseDef <|> parseType
+  let bigParsers = parseModuleItem <|> parseExport
    in mconcat
         <$> ( chainl1 ((: []) <$> bigParsers) (pure (<>))
                 <|> pure mempty
             )
+
+-- we've excluded Export here
+parseModuleItem :: Parser [ModuleItem Annotation]
+parseModuleItem = parseDef <|> parseType
 
 -------
 
@@ -79,3 +84,9 @@ parseDef = do
   myString "="
   expr <- expressionParser
   pure [ModuleExpression name parts expr]
+
+parseExport :: Parser [ModuleItem Annotation]
+parseExport = do
+  myString "export"
+  items <- parseModuleItem
+  pure (ModuleExport <$> items)

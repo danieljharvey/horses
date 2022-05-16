@@ -1,19 +1,30 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.AST.Module (Module (..), DefPart (..), ModuleItem (..)) where
+module Language.Mimsa.Types.Modules.Module
+  ( Module (..),
+    DefPart (..),
+    ModuleItem (..),
+    Import (..),
+  )
+where
 
+import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Text as T
+import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType
 import Language.Mimsa.Types.AST.Expr
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
+import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Typechecker.MonoType
 
 -- a module is, broadly, one file
@@ -36,15 +47,21 @@ data ModuleItem ann
   = ModuleExpression Name [DefPart ann] (Expr Name ann)
   | ModuleDataType DataType
   | ModuleExport (ModuleItem ann)
+  | ModuleImport Import
+
+-- going to want way more granularity here in future but _shrug_
+newtype Import = ImportAllFromHash ModuleHash
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
 data Module ann = Module
   { moExpressions :: Map Name (Expr Name ann),
     moDataTypes :: Map TypeName DataType,
-    moExpressionExports :: Set Name
+    moExpressionExports :: Set Name, -- might replace Name with a sum of things we can export instead
+    moExpressionImports :: Map Name ModuleHash -- what we imported, where it's from
   }
-  deriving stock (Eq, Ord, Show, Functor)
+  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving anyclass (JSON.ToJSON)
 
 instance Printer (Module ann) where
   prettyPrint mod' =
@@ -60,8 +77,8 @@ instance Printer (Module ann) where
      in printedDefs
 
 instance Semigroup (Module ann) where
-  (Module exprs dts exports) <> (Module exprs' dts' exports') =
-    Module (exprs <> exprs') (dts <> dts') (exports <> exports')
+  (Module exprs dts exports imports) <> (Module exprs' dts' exports' imports') =
+    Module (exprs <> exprs') (dts <> dts') (exports <> exports') (imports <> imports')
 
 instance Monoid (Module ann) where
-  mempty = Module mempty mempty mempty
+  mempty = Module mempty mempty mempty mempty

@@ -14,6 +14,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Parser.Module
 import Language.Mimsa.Store
 import Language.Mimsa.Typechecker.DataTypes
@@ -24,6 +25,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
+import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Typechecker
 
 -- | This is where we load a file and check that it is "OK" as such
@@ -36,17 +38,24 @@ import Language.Mimsa.Types.Typechecker
 --  1. definitions of values
 --  2. types of values
 --  3. definitions of datatypes
+--  4. exports
+--  5. imports
 --
 --  soon there will also need to be
 --  1. infix definitions
---  2. imports
---  3. exports
+--  2. tests
+--  3. property tests
+--  4. metadata / comments etc?
 checkModule :: Text -> Either (Error Annotation) (Module (Type Annotation))
 checkModule input = do
   moduleItems <- first (ParseError input) (parseModule input)
   properMod <- first ModuleErr (moduleFromModuleParts moduleItems)
   typedExpressions <- first ModuleErr (typecheckAll properMod)
   pure $ properMod {moExpressions = typedExpressions}
+
+addPrelude :: [ModuleItem Annotation] -> [ModuleItem Annotation]
+addPrelude items =
+  items <> [ModuleImport (ImportAllFromHash preludeHash)]
 
 -- get the vars used by each def
 -- explode if there's not available
@@ -126,9 +135,13 @@ moduleFromModuleParts parts =
         case part of
           ModuleExport modItem -> do
             -- get whatever is inside
-            -- get the keys, add them to exports
             innerModule <- addPart modItem output
-            pure innerModule
+            -- get the keys, add them to exports
+            pure $
+              innerModule
+                { moExpressionExports =
+                    M.keysSet (moExpressions innerModule)
+                }
           ModuleExpression name bits expr ->
             case M.lookup name (moExpressions mod') of
               Just _ -> throwError (DuplicateDefinition name)
