@@ -19,6 +19,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules.Module
+import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -27,8 +28,11 @@ modulesPath = "test/modules/"
 
 checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
-  a <- checkModule t
+  (a, _) <- checkModule t
   pure (a $> mempty)
+
+checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
+checkModuleType = checkModule
 
 spec :: Spec
 spec = do
@@ -319,8 +323,11 @@ spec = do
                 `shouldBe` Right expectedModule
       describe "imports" $ do
         it "uses fst from Prelude" $
-          checkModule' ("import * from " <> prettyPrint preludeHash <> "\ndef useFst = fst (1,2)")
-            `shouldSatisfy` isRight
-        it "errors when locally defining fst" $
-          checkModule' ("import * from " <> prettyPrint preludeHash <> "\ndef fst pair = let (a,_) = pair in a")
+          snd <$> checkModuleType ("import * from " <> prettyPrint preludeHash <> "\ndef useFst = fst (1,2)")
+            `shouldBe` Right (MTRecord mempty $ M.singleton "fst" (MTPrim mempty MTInt))
+        it "uses fst from Prelude but it shouldn't typecheck" $
+          checkModuleType ("import * from " <> prettyPrint preludeHash <> "\ndef useFst = fst True")
+            `shouldSatisfy` isLeft
+        xit "errors when locally defining fst" $
+          checkModuleType ("import * from " <> prettyPrint preludeHash <> "\ndef fst pair = let (a,_) = pair in a")
             `shouldBe` Left (ModuleErr $ DefinitionConflictsWithImport "fst" preludeHash)

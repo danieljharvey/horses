@@ -18,6 +18,7 @@ data ModuleError
   | CannotFindValues (Set Name)
   | DefDoesNotTypeCheck Name TypeError
   | MissingModule ModuleHash
+  | MissingModuleDep Name ModuleHash
   deriving stock (Eq, Ord, Show)
 
 instance Printer ModuleError where
@@ -35,3 +36,5 @@ instance Printer ModuleError where
     "Could not find module for " <> prettyPrint mHash
   prettyPrint (DefinitionConflictsWithImport name mHash) =
     "Cannot define " <> prettyPrint name <> " as it is already defined in import " <> prettyPrint mHash
+  prettyPrint (MissingModuleDep name mHash) =
+    "Cannot find dep " <> prettyPrint name <> " in module " <> prettyPrint mHash
