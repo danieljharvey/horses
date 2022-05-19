@@ -95,7 +95,7 @@ checkModule' input = do
   properMod <-
     moduleFromModuleParts moduleItems
   -- typecheck this module
-  tcMod <- typecheckAllModules properMod
+  tcMod <- withStoredInput input (typecheckAllModules properMod)
 
   pure (tcMod, getModuleType tcMod)
 
@@ -260,11 +260,13 @@ typecheckOneDep ::
   CheckM (Expr Name MonoType)
 typecheckOneDep inputModule typecheckedModules deps (name, expr) = do
   let typeMap = getTypeFromAnn <$> deps
+  input <- getStoredInput
+
   -- number the vars
   numberedExpr <-
     liftEither $
       first
-        (ModuleErr . DefDoesNotTypeCheck name)
+        (ModuleErr . DefDoesNotTypeCheck input name)
         ( addNumbersToExpression
             (M.keysSet deps)
             (coerce <$> moExpressionImports inputModule)
@@ -276,6 +278,6 @@ typecheckOneDep inputModule typecheckedModules deps (name, expr) = do
   (_subs, _constraints, typedExpr, _mt) <-
     liftEither $
       first
-        (ModuleErr . DefDoesNotTypeCheck name)
+        (ModuleErr . DefDoesNotTypeCheck input name)
         (typecheck typeMap env numberedExpr)
   pure (first fst typedExpr)

@@ -1,9 +1,11 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Error.ModuleError (ModuleError (..)) where
+module Language.Mimsa.Types.Error.ModuleError (ModuleError (..), moduleErrorDiagnostic) where
 
 import Data.Set (Set)
+import Data.Text (Text)
+import Error.Diagnose
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
@@ -17,7 +19,7 @@ data ModuleError
   | DefinitionConflictsWithImport Name ModuleHash
   | TypeConflictsWithImport TypeName ModuleHash
   | CannotFindValues (Set Name)
-  | DefDoesNotTypeCheck Name TypeError
+  | DefDoesNotTypeCheck Text Name TypeError
   | MissingModule ModuleHash
   | MissingModuleDep Name ModuleHash
   | MissingModuleTypeDep TypeName ModuleHash
@@ -32,7 +34,7 @@ instance Printer ModuleError where
     "Duplicate constructor name: " <> prettyPrint tyCon
   prettyPrint (CannotFindValues names) =
     "Cannot find values: " <> prettyPrint names
-  prettyPrint (DefDoesNotTypeCheck name typeErr) =
+  prettyPrint (DefDoesNotTypeCheck _ name typeErr) =
     prettyPrint name <> " had a typechecking error: " <> prettyPrint typeErr
   prettyPrint (MissingModule mHash) =
     "Could not find module for " <> prettyPrint mHash
@@ -44,3 +46,14 @@ instance Printer ModuleError where
     "Cannot find dep " <> prettyPrint name <> " in module " <> prettyPrint mHash
   prettyPrint (MissingModuleTypeDep typeName mHash) =
     "Cannot find type " <> prettyPrint typeName <> " in module " <> prettyPrint mHash
+
+moduleErrorDiagnostic :: ModuleError -> Diagnostic Text
+moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) = typeErrorDiagnostic input typeErr
+moduleErrorDiagnostic other =
+  let report =
+        err
+          Nothing
+          (prettyPrint other)
+          []
+          []
+   in addReport def report

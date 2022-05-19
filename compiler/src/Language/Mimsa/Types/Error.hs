@@ -77,6 +77,8 @@ errorToDiagnostic (ParseError input bundle) =
       addFile diag filename (T.unpack input)
 errorToDiagnostic (TypeErr input typeErr) =
   typeErrorDiagnostic input typeErr
+errorToDiagnostic (ModuleErr modErr) =
+  moduleErrorDiagnostic modErr
 errorToDiagnostic e =
   let report =
         err
