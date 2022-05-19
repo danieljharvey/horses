@@ -43,6 +43,8 @@ data DefPart ann
 -- item parsed from file, kept like this so we can order them and have
 -- duplicates
 -- we will remove duplicates when we work out dependencies between everything
+-- TODO: add more annotations to everything so we can produce clearer errors
+-- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
   = ModuleExpression Name [DefPart ann] (Expr Name ann)
   | ModuleDataType DataType
