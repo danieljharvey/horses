@@ -1,9 +1,0 @@
-export def const (a: a) (b: Int): a = a
-
-export type Either e a = Left e | Right a
-
-def id (a: String): Int = if 1 then "Poo" else 100 
-
-def fst pair = let (a,_) = pair in a 
-
-export type Maybe a = Just a | Nothin 
