@@ -367,8 +367,8 @@ spec = do
         it "errors when locally defining Either" $
           checkModuleType
             ( joinLines
-                [ "import * from " <> prettyPrint preludeHash,
-                  "type Either b c = Left b | Right c"
+                [ "type Either b c = Left b | Right c",
+                  "import * from " <> prettyPrint preludeHash
                 ]
             )
             `shouldBe` Left (ModuleErr $ TypeConflictsWithImport "Either" preludeHash)
