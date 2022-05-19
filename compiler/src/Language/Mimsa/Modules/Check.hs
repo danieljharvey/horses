@@ -119,7 +119,12 @@ checkModule' input = do
 
 -- return type of module as a MTRecord of dep -> monotype
 getModuleType :: Module (Type Annotation) -> Type Annotation
-getModuleType = error "sdfsdf"
+getModuleType mod' =
+  let defs =
+        M.filterWithKey
+          (\k _ -> S.member k (moExpressionExports mod'))
+          (moExpressions mod')
+   in MTRecord mempty (getTypeFromAnn <$> defs)
 
 -- get the vars used by each def
 -- explode if there's not available
@@ -144,10 +149,18 @@ getValueDependencies mod' = do
                 )
                 deps
          in if S.null unknownDeps
-              then pure (exp', deps)
+              then
+                let localDeps =
+                      S.filter
+                        ( `S.member`
+                            M.keysSet (moExpressions mod')
+                        )
+                        deps
+                 in pure (exp', localDeps)
               else throwError (ModuleErr (CannotFindValues unknownDeps))
   traverse check (moExpressions mod')
 
+-- typecheck a module
 typecheckAllModuleDeps ::
   Map ModuleHash (Module (Type Annotation)) ->
   Module Annotation ->

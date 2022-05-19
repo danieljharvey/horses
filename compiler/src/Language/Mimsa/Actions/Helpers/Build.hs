@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Language.Mimsa.Actions.Helpers.Build (doJobs, Plan (..), State (..), Job, Inputs) where
+module Language.Mimsa.Actions.Helpers.Build (doJobs, getMissing, Plan (..), State (..), Job, Inputs) where
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -67,14 +67,28 @@ runBuilder fn st = do
   -- add them to outputs
   pure (State newInputs (stOutputs st <> M.fromList done))
 
+-- list the required deps that cannot possibly be provided (usually indicates
+-- an error with implementation)
+getMissing :: (Ord k) => State k input output -> Set k
+getMissing (State inputs outputs) =
+  let getMissingDeps (Plan deps _) =
+        S.filter
+          (\dep -> dep `M.notMember` inputs && dep `M.notMember` outputs)
+          deps
+   in mconcat (getMissingDeps <$> M.elems inputs)
+
 -- run through a list of jobs and do them
 doJobs ::
-  (Ord k, Monad m, Eq input, Eq output) =>
+  (Ord k, Show k, Monad m, Eq input, Eq output) =>
   Job m k input output ->
   State k input output ->
   m (State k input output)
 doJobs fn st = do
-  newState <- runBuilder fn st
-  if M.null (stInputs newState) || newState == st -- no more inputs, or there was no change (to stop infinite loop)
-    then pure newState
-    else doJobs fn newState
+  let missingDeps = getMissing st
+  if not (S.null missingDeps)
+    then error ("Missing deps in build: " <> show missingDeps)
+    else do
+      newState <- runBuilder fn st
+      if M.null (stInputs newState) || newState == st -- no more inputs, or there was no change (to stop infinite loop)
+        then pure newState
+        else doJobs fn newState

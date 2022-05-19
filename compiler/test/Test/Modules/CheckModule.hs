@@ -32,11 +32,12 @@ checkModule' t = do
   pure (a $> mempty)
 
 checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
-checkModuleType = checkModule
+checkModuleType t =
+  (\(a, mt) -> (a, mt $> mempty)) <$> checkModule t
 
 spec :: Spec
 spec = do
-  fdescribe "modules" $ do
+  describe "modules" $ do
     describe "CheckModule" $ do
       it "1 parses correctly" $ do
         let filePath = modulesPath <> "1.mimsa"
@@ -323,8 +324,8 @@ spec = do
                 `shouldBe` Right expectedModule
       describe "imports" $ do
         it "uses fst from Prelude" $
-          snd <$> checkModuleType ("import * from " <> prettyPrint preludeHash <> "\ndef useFst = fst (1,2)")
-            `shouldBe` Right (MTRecord mempty $ M.singleton "fst" (MTPrim mempty MTInt))
+          snd <$> checkModuleType ("import * from " <> prettyPrint preludeHash <> "\nexport def useFst = fst (1,2)")
+            `shouldBe` Right (MTRecord mempty $ M.singleton "useFst" (MTPrim mempty MTInt))
         it "uses fst from Prelude but it shouldn't typecheck" $
           checkModuleType ("import * from " <> prettyPrint preludeHash <> "\ndef useFst = fst True")
             `shouldSatisfy` isLeft
