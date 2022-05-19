@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.34.6.
 --
 -- see: https://github.com/sol/hpack
 
@@ -78,7 +78,9 @@ library
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
       Language.Mimsa.Modules.Check
+      Language.Mimsa.Modules.FromParts
       Language.Mimsa.Modules.HashModule
+      Language.Mimsa.Modules.Monad
       Language.Mimsa.Modules.Prelude
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers

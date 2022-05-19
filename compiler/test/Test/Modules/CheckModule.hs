@@ -12,8 +12,10 @@ import Data.Functor
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Modules.Check
+import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -83,6 +85,11 @@ spec = do
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
           `shouldSatisfy` isRight
+      xit "9 fails to typecheck because we cannot have polymorphic id function with a set input type" $ do
+        let filePath = modulesPath <> "9.mimsa"
+        fileContents <- liftIO $ T.readFile filePath
+        checkModule' fileContents
+          `shouldSatisfy` isLeft
 
     describe "exprAndTypeFromParts" $ do
       it "No args" $ do
@@ -323,12 +330,45 @@ spec = do
            in checkModule' "type Maybe a = Just a | Nothing\ndef fmap (f: a -> b) (maybeA: Maybe a): Maybe b = match maybeA with Just a -> Just (f a) | Nothing -> Nothing\n\n\ndef inc a = a + 1"
                 `shouldBe` Right expectedModule
       describe "imports" $ do
+        let joinLines = T.intercalate "\n"
         it "uses fst from Prelude" $
-          snd <$> checkModuleType ("import * from " <> prettyPrint preludeHash <> "\nexport def useFst = fst (1,2)")
+          snd
+            <$> checkModuleType
+              ( joinLines
+                  [ "import * from " <> prettyPrint preludeHash,
+                    "export def useFst = fst (1,2)"
+                  ]
+              )
             `shouldBe` Right (MTRecord mempty $ M.singleton "useFst" (MTPrim mempty MTInt))
         it "uses fst from Prelude but it shouldn't typecheck" $
-          checkModuleType ("import * from " <> prettyPrint preludeHash <> "\ndef useFst = fst True")
+          checkModuleType
+            ( joinLines
+                [ "import * from " <> prettyPrint preludeHash,
+                  "def useFst = fst True"
+                ]
+            )
             `shouldSatisfy` isLeft
-        xit "errors when locally defining fst" $
-          checkModuleType ("import * from " <> prettyPrint preludeHash <> "\ndef fst pair = let (a,_) = pair in a")
+        it "errors when locally defining fst" $
+          checkModuleType
+            ( joinLines
+                [ "import * from " <> prettyPrint preludeHash,
+                  "def fst pair = let (a,_) = pair in a"
+                ]
+            )
             `shouldBe` Left (ModuleErr $ DefinitionConflictsWithImport "fst" preludeHash)
+        it "uses Either from Prelude" $
+          checkModuleType
+            ( joinLines
+                [ "import * from " <> prettyPrint preludeHash,
+                  "def withEither val = match val with Right a -> [a,a] | Left _ -> []"
+                ]
+            )
+            `shouldSatisfy` isRight
+        it "errors when locally defining Either" $
+          checkModuleType
+            ( joinLines
+                [ "import * from " <> prettyPrint preludeHash,
+                  "type Either b c = Left b | Right c"
+                ]
+            )
+            `shouldBe` Left (ModuleErr $ TypeConflictsWithImport "Either" preludeHash)

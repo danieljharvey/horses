@@ -15,10 +15,12 @@ data ModuleError
   | DuplicateTypeName TypeName
   | DuplicateConstructor TyCon
   | DefinitionConflictsWithImport Name ModuleHash
+  | TypeConflictsWithImport TypeName ModuleHash
   | CannotFindValues (Set Name)
   | DefDoesNotTypeCheck Name TypeError
   | MissingModule ModuleHash
   | MissingModuleDep Name ModuleHash
+  | MissingModuleTypeDep TypeName ModuleHash
   deriving stock (Eq, Ord, Show)
 
 instance Printer ModuleError where
@@ -36,5 +38,9 @@ instance Printer ModuleError where
     "Could not find module for " <> prettyPrint mHash
   prettyPrint (DefinitionConflictsWithImport name mHash) =
     "Cannot define " <> prettyPrint name <> " as it is already defined in import " <> prettyPrint mHash
+  prettyPrint (TypeConflictsWithImport typeName mHash) =
+    "Cannot define type " <> prettyPrint typeName <> " as it is already defined in import " <> prettyPrint mHash
   prettyPrint (MissingModuleDep name mHash) =
     "Cannot find dep " <> prettyPrint name <> " in module " <> prettyPrint mHash
+  prettyPrint (MissingModuleTypeDep typeName mHash) =
+    "Cannot find type " <> prettyPrint typeName <> " in module " <> prettyPrint mHash

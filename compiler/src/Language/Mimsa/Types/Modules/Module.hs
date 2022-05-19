@@ -58,7 +58,9 @@ data Module ann = Module
   { moExpressions :: Map Name (Expr Name ann),
     moDataTypes :: Map TypeName DataType,
     moExpressionExports :: Set Name, -- might replace Name with a sum of things we can export instead
-    moExpressionImports :: Map Name ModuleHash -- what we imported, where it's from
+    moExpressionImports :: Map Name ModuleHash, -- what we imported, where it's from
+    moDataTypeExports :: Set TypeName, -- which types to export
+    moDataTypeImports :: Map TypeName ModuleHash -- what we imported, where its from
   }
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.ToJSON)
@@ -77,8 +79,8 @@ instance Printer (Module ann) where
      in printedDefs
 
 instance Semigroup (Module ann) where
-  (Module exprs dts exports imports) <> (Module exprs' dts' exports' imports') =
-    Module (exprs <> exprs') (dts <> dts') (exports <> exports') (imports <> imports')
+  (Module a b c d e f) <> (Module a' b' c' d' e' f') =
+    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
 
 instance Monoid (Module ann) where
-  mempty = Module mempty mempty mempty mempty
+  mempty = Module mempty mempty mempty mempty mempty mempty
