@@ -28,6 +28,34 @@ lookupModule modHash = do
     Just foundModule -> pure foundModule
     _ -> throwError (ModuleErr (MissingModule modHash))
 
+errorIfExpressionAlreadyDefined :: Module ann -> Name -> CheckM ()
+errorIfExpressionAlreadyDefined mod' name =
+  if M.member name (moExpressions mod')
+    || M.member name (moExpressionImports mod')
+    then throwError (ModuleErr $ DuplicateDefinition name)
+    else pure ()
+
+errorIfTypeAlreadyDefined :: Module ann -> TypeName -> CheckM ()
+errorIfTypeAlreadyDefined mod' typeName =
+  if M.member typeName (moDataTypes mod')
+    || M.member typeName (moDataTypeImports mod')
+    then throwError (ModuleErr $ DuplicateTypeName typeName)
+    else pure ()
+
+errorIfImportAlreadyDefined :: Module ann -> Name -> ModuleHash -> CheckM ()
+errorIfImportAlreadyDefined mod' name moduleHash =
+  if M.member name (moExpressions mod')
+    || M.member name (moExpressionImports mod')
+    then throwError (ModuleErr $ DefinitionConflictsWithImport name moduleHash)
+    else pure ()
+
+errorIfTypeImportAlreadyDefined :: Module ann -> TypeName -> ModuleHash -> CheckM ()
+errorIfTypeImportAlreadyDefined mod' typeName moduleHash =
+  if M.member typeName (moDataTypes mod')
+    || M.member typeName (moDataTypeImports mod')
+    then throwError (ModuleErr $ TypeConflictsWithImport typeName moduleHash)
+    else pure ()
+
 moduleFromModuleParts ::
   (Monoid ann) =>
   [ModuleItem ann] ->
@@ -47,49 +75,58 @@ moduleFromModuleParts parts =
                   moDataTypeExports =
                     M.keysSet (moDataTypes innerModule)
                 }
-          ModuleExpression name bits expr ->
-            case M.lookup name (moExpressions mod') of
-              Just _ -> throwError (ModuleErr $ DuplicateDefinition name)
-              Nothing ->
-                let exp' = exprAndTypeFromParts bits expr
-                 in pure $
-                      mod'
-                        { moExpressions =
-                            M.singleton name exp' <> moExpressions mod'
-                        }
-          ModuleDataType dt@(DataType tyCon _ _) ->
+          ModuleExpression name bits expr -> do
+            errorIfExpressionAlreadyDefined mod' name
+            let exp' = exprAndTypeFromParts bits expr
+            pure $
+              mod'
+                { moExpressions =
+                    M.singleton name exp' <> moExpressions mod'
+                }
+          ModuleDataType dt@(DataType tyCon _ _) -> do
             let typeName = coerce tyCon
-             in case M.lookup typeName (moDataTypes mod') of
-                  Just _ -> throwError (ModuleErr $ DuplicateTypeName typeName)
-                  Nothing ->
-                    pure $
-                      mod'
-                        { moDataTypes =
-                            M.singleton typeName dt
-                              <> moDataTypes mod'
-                        }
+            errorIfTypeAlreadyDefined mod' typeName
+            pure $
+              mod'
+                { moDataTypes =
+                    M.singleton typeName dt
+                      <> moDataTypes mod'
+                }
           ModuleImport (ImportAllFromHash mHash) -> do
             importMod <- lookupModule mHash
-            -- TODO: check for existing definitions
-            let createDefImports =
+            let defImports =
                   M.fromList
                     . fmap (,mHash)
                     . S.toList
                     . moExpressionExports
+                    $ importMod
 
-            -- TODO: check for existing constructors / typenames
-            let createTypeImports =
+            -- explode if these are defined already
+            _ <-
+              M.traverseWithKey
+                (errorIfImportAlreadyDefined mod')
+                defImports
+
+            let typeImports =
                   M.fromList
                     . fmap (,mHash)
                     . S.toList
                     . moDataTypeExports
+                    $ importMod
+
+            -- explode if these types are defined already
+            _ <-
+              M.traverseWithKey
+                (errorIfTypeImportAlreadyDefined mod')
+                typeImports
+
             pure $
               mod'
                 { moExpressionImports =
-                    createDefImports importMod
+                    defImports
                       <> moExpressionImports mod',
                   moDataTypeImports =
-                    createTypeImports importMod
+                    typeImports
                       <> moDataTypeImports mod'
                 }
    in foldr addPart (pure mempty) parts

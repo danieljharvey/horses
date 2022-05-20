@@ -90,6 +90,11 @@ spec = do
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
           `shouldSatisfy` isLeft
+      it "10 contains an infix function and typechecks" $ do
+        let filePath = modulesPath <> "10.mimsa"
+        fileContents <- liftIO $ T.readFile filePath
+        checkModule' fileContents
+          `shouldSatisfy` isRight
 
     describe "exprAndTypeFromParts" $ do
       it "No args" $ do
@@ -371,4 +376,4 @@ spec = do
                   "import * from " <> prettyPrint preludeHash
                 ]
             )
-            `shouldBe` Left (ModuleErr $ TypeConflictsWithImport "Either" preludeHash)
+            `shouldBe` Left (ModuleErr $ DuplicateTypeName "Either")
