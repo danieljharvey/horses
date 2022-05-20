@@ -40,7 +40,7 @@ moduleParser =
 
 -- we've excluded Export here
 parseModuleItem :: Parser [ModuleItem Annotation]
-parseModuleItem = parseDef <|> parseType <|> parseImport
+parseModuleItem = parseDef <|> parseType <|> parseImport <|> parseInfix
 
 -------
 
@@ -107,3 +107,11 @@ parseImport = do
   myString "from"
   hash <- parseHash
   pure [ModuleImport (ImportAllFromHash hash)]
+
+parseInfix :: Parser [ModuleItem Annotation]
+parseInfix = do
+  myString "infix"
+  infixOp <- infixOpParser
+  myString "="
+  boundExpr <- expressionParser
+  pure [ModuleInfix infixOp boundExpr]

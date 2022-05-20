@@ -22,6 +22,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType
 import Language.Mimsa.Types.AST.Expr
 import Language.Mimsa.Types.AST.Identifier
+import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleHash
@@ -50,6 +51,7 @@ data ModuleItem ann
   | ModuleDataType DataType
   | ModuleExport (ModuleItem ann)
   | ModuleImport Import
+  | ModuleInfix InfixOp (Expr Name ann)
 
 -- going to want way more granularity here in future but _shrug_
 newtype Import = ImportAllFromHash ModuleHash
@@ -59,6 +61,7 @@ newtype Import = ImportAllFromHash ModuleHash
 data Module ann = Module
   { moExpressions :: Map Name (Expr Name ann),
     moDataTypes :: Map TypeName DataType,
+    moInfixes :: Map InfixOp (Expr Name ann), -- infix definitions
     moExpressionExports :: Set Name, -- might replace Name with a sum of things we can export instead
     moExpressionImports :: Map Name ModuleHash, -- what we imported, where it's from
     moDataTypeExports :: Set TypeName, -- which types to export
@@ -81,8 +84,16 @@ instance Printer (Module ann) where
      in printedDefs
 
 instance Semigroup (Module ann) where
-  (Module a b c d e f) <> (Module a' b' c' d' e' f') =
-    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
+  (Module a b c d e f g) <> (Module a' b' c' d' e' f' g') =
+    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') (g <> g')
 
 instance Monoid (Module ann) where
-  mempty = Module mempty mempty mempty mempty mempty mempty
+  mempty =
+    Module
+      mempty
+      mempty
+      mempty
+      mempty
+      mempty
+      mempty
+      mempty

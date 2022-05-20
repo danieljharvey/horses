@@ -1,8 +1,8 @@
 export type Maybe a = Just a | Nothing
 
-def alt = (mA: Maybe a) (mB: Maybe a): Maybe a =
+def alt (mA: Maybe a) (mB: Maybe a): Maybe a =
   match mA with
     Just a -> Just a
     Nothing -> mB
 
-export infix <|> = alt
+infix <|> = alt

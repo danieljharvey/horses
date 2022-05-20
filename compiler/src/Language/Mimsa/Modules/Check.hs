@@ -171,7 +171,7 @@ typecheckAllModuleDeps typecheckedDeps inputModule = do
   typecheckedDefs <-
     Build.stOutputs
       <$> Build.doJobs (typecheckOneDep inputModule typecheckedDeps) state
-  pure $ inputModule {moExpressions = typecheckedDefs}
+  pure $ inputModule {moExpressions = typecheckedDefs, moInfixes = mempty} -- TODO: need to compile infixes too
 
 makeTypeDeclMap :: Map TypeName DataType -> Module ann -> Map TyCon DataType
 makeTypeDeclMap importedTypes inputModule =

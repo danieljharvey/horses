@@ -92,6 +92,12 @@ moduleFromModuleParts parts =
                     M.singleton typeName dt
                       <> moDataTypes mod'
                 }
+          ModuleInfix infixOp expr -> do
+            -- TODO: error on dupes
+            pure $
+              mod'
+                { moInfixes = M.singleton infixOp expr <> moInfixes mod'
+                }
           ModuleImport (ImportAllFromHash mHash) -> do
             importMod <- lookupModule mHash
             let defImports =

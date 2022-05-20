@@ -24,6 +24,7 @@ prelude =
   Module
     { moExpressions = exprs,
       moDataTypes = dts,
+      moInfixes = mempty,
       moExpressionExports = S.singleton "fst",
       moExpressionImports = mempty,
       moDataTypeExports = S.singleton "Either",
