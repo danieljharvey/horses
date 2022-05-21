@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Modules.Check (checkModule) where
@@ -10,6 +11,7 @@ import Data.Bifunctor
 import Data.Coerce
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -99,122 +101,6 @@ checkModule' input = do
 
   pure (tcMod, getModuleType tcMod)
 
--- return type of module as a MTRecord of dep -> monotype
--- TODO: module should probably be it's own MTModule or something
--- as we'll want to pass them about at some point I think
-getModuleType :: Module (Type Annotation) -> Type Annotation
-getModuleType mod' =
-  let defs =
-        M.filterWithKey
-          (\k _ -> S.member k (moExpressionExports mod'))
-          (moExpressions mod')
-   in MTRecord mempty (getTypeFromAnn <$> defs)
-
--- get the vars used by each def
--- explode if there's not available
-getValueDependencies ::
-  (Eq ann, Monoid ann) =>
-  Module ann ->
-  CheckM
-    ( Map
-        Name
-        ( Expr Name ann,
-          Set Name
-        )
-    )
-getValueDependencies mod' = do
-  let check exp' =
-        let deps = extractVars exp'
-            unknownDeps =
-              S.filter
-                ( \dep ->
-                    S.notMember dep (M.keysSet (moExpressions mod'))
-                      && S.notMember dep (M.keysSet (moExpressionImports mod'))
-                )
-                deps
-         in if S.null unknownDeps
-              then
-                let localDeps =
-                      S.filter
-                        ( `S.member`
-                            M.keysSet (moExpressions mod')
-                        )
-                        deps
-                 in pure (exp', localDeps)
-              else throwError (ModuleErr (CannotFindValues unknownDeps))
-  traverse check (moExpressions mod')
-
--- typecheck a module
-typecheckAllModuleDeps ::
-  Map ModuleHash (Module (Type Annotation)) ->
-  Module Annotation ->
-  CheckM (Module (Type Annotation))
-typecheckAllModuleDeps typecheckedDeps inputModule = do
-  -- create initial state for builder
-  -- we tag each StoreExpression we've found with the deps it needs
-  inputWithDeps <- getValueDependencies inputModule
-  let inputWithDepsAndName = M.mapWithKey (,) inputWithDeps
-
-  let state =
-        Build.State
-          { Build.stInputs =
-              ( \(name, (expr, deps)) ->
-                  Build.Plan
-                    { Build.jbDeps = deps,
-                      Build.jbInput = (name, expr)
-                    }
-              )
-                <$> inputWithDepsAndName,
-            Build.stOutputs = mempty
-          }
-  -- go!
-  typecheckedDefs <-
-    Build.stOutputs
-      <$> Build.doJobs (typecheckOneDep inputModule typecheckedDeps) state
-  pure $ inputModule {moExpressions = typecheckedDefs, moInfixes = mempty} -- TODO: need to compile infixes too
-
-makeTypeDeclMap :: Map TypeName DataType -> Module ann -> Map TyCon DataType
-makeTypeDeclMap importedTypes inputModule =
-  M.fromList . fmap (first coerce) . M.toList $
-    moDataTypes inputModule
-      <> importedTypes
-
-createTypecheckEnvironment ::
-  Module Annotation ->
-  Map Name (Expr Name MonoType) ->
-  Map ModuleHash (Module (Type Annotation)) ->
-  CheckM Environment
-createTypecheckEnvironment inputModule deps typecheckedModules = do
-  -- these need to be typechecked
-  importedDeps <-
-    M.traverseWithKey
-      (lookupModuleDep typecheckedModules)
-      (moExpressionImports inputModule)
-
-  importedTypes <-
-    M.traverseWithKey
-      (lookupModuleType typecheckedModules)
-      (moDataTypeImports inputModule)
-
-  pure $
-    createEnv
-      (getTypeFromAnn <$> (deps <> importedDeps))
-      (makeTypeDeclMap importedTypes inputModule)
-
--- starting at a root module,
--- create a map of each expr hash along with the modules it needs
--- so that we can typecheck them all
-getModuleDeps :: Module Annotation -> CheckM (Map ModuleHash (Module Annotation, Set ModuleHash))
-getModuleDeps inputModule = do
-  -- get this module's deps
-  let deps = S.fromList $ M.elems (moExpressionImports inputModule)
-      mHash = hashModule inputModule
-  -- recursively fetch sub-deps
-  depModules <- traverse lookupModule (S.toList deps)
-  subDeps <- traverse getModuleDeps depModules
-
-  pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
-
 -- given up stream modules, typecheck a module
 -- 1. recursively fetch imports from Reader environment
 -- 2. setup builder input
@@ -242,7 +128,7 @@ typecheckAllModules rootModule = do
   -- go!
   allCheckedModules <-
     Build.stOutputs
-      <$> Build.doJobs typecheckAllModuleDeps state
+      <$> Build.doJobs typecheckAllModuleDefs state
 
   -- TODO: cache it or something?
   -- lookup the original one
@@ -251,33 +137,192 @@ typecheckAllModules rootModule = do
     Just mod' -> pure mod'
     _ -> error "could not find typechecked module"
 
+--- typecheck a module
+typecheckAllModuleDefs ::
+  Map ModuleHash (Module (Type Annotation)) ->
+  Module Annotation ->
+  CheckM (Module (Type Annotation))
+typecheckAllModuleDefs typecheckedDeps inputModule = do
+  -- create initial state for builder
+  -- we tag each StoreExpression we've found with the deps it needs
+  inputWithDeps <- getValueDependencies inputModule
+  let inputWithDepsAndName = M.mapWithKey (,) inputWithDeps
+
+  let state =
+        Build.State
+          { Build.stInputs =
+              ( \(name, (expr, deps)) ->
+                  Build.Plan
+                    { Build.jbDeps = deps,
+                      Build.jbInput = (name, expr)
+                    }
+              )
+                <$> inputWithDepsAndName,
+            Build.stOutputs = mempty
+          }
+  -- go!
+  typecheckedDefs <-
+    Build.stOutputs
+      <$> Build.doJobs (typecheckOneDef inputModule typecheckedDeps) state
+
+  -- replace input module with typechecked versions
+  pure $
+    inputModule
+      { moExpressions = filterNameDefs typecheckedDefs,
+        moInfixes = filterInfixDefs typecheckedDefs
+      }
+
+-- return type of module as a MTRecord of dep -> monotype
+-- TODO: module should probably be it's own MTModule or something
+-- as we'll want to pass them about at some point I think
+getModuleType :: Module (Type Annotation) -> Type Annotation
+getModuleType mod' =
+  let defs =
+        M.filterWithKey
+          (\k _ -> S.member k (moExpressionExports mod'))
+          (moExpressions mod')
+   in MTRecord mempty (getTypeFromAnn <$> defs)
+
+-- get the vars used by each def
+-- explode if there's not available
+getValueDependencies ::
+  (Eq ann, Monoid ann) =>
+  Module ann ->
+  CheckM
+    ( Map
+        DefIdentifier
+        ( Expr Name ann,
+          Set DefIdentifier
+        )
+    )
+getValueDependencies mod' = do
+  let check exp' =
+        let nameDeps = extractVars exp'
+            unknownNameDeps =
+              S.filter
+                ( \dep ->
+                    S.notMember dep (M.keysSet (moExpressions mod'))
+                      && S.notMember dep (M.keysSet (moExpressionImports mod'))
+                )
+                nameDeps
+         in if S.null unknownNameDeps
+              then
+                let localNameDeps =
+                      S.filter
+                        ( `S.member`
+                            M.keysSet (moExpressions mod')
+                        )
+                        nameDeps
+                 in pure (exp', S.map DIName localNameDeps)
+              else throwError (ModuleErr (CannotFindValues unknownNameDeps))
+  mapKeys DIName <$> traverse check (moExpressions mod')
+
+-- map isn't a functor, i know, chill out
+mapKeys :: (Ord k2) => (k -> k2) -> Map k a -> Map k2 a
+mapKeys f = M.fromList . fmap (first f) . M.toList
+
+makeTypeDeclMap :: Map TypeName DataType -> Module ann -> Map TyCon DataType
+makeTypeDeclMap importedTypes inputModule =
+  M.fromList . fmap (first coerce) . M.toList $
+    moDataTypes inputModule
+      <> importedTypes
+
+-- useful to break apart maps where
+-- key is a sum type
+filterMapKeys :: (Ord k2) => (k -> Maybe k2) -> Map k a -> Map k2 a
+filterMapKeys f =
+  M.fromList . mapMaybe (\(k, a) -> (,) <$> f k <*> pure a) . M.toList
+
+filterNameDefs :: Map DefIdentifier a -> Map Name a
+filterNameDefs =
+  filterMapKeys
+    ( \case
+        DIName name -> Just name
+        _ -> Nothing
+    )
+
+filterInfixDefs :: Map DefIdentifier a -> Map InfixOp a
+filterInfixDefs =
+  filterMapKeys
+    ( \case
+        DIInfix infixOp -> Just infixOp
+        _ -> Nothing
+    )
+
+createTypecheckEnvironment ::
+  Module Annotation ->
+  Map DefIdentifier (Expr Name MonoType) ->
+  Map ModuleHash (Module (Type Annotation)) ->
+  CheckM Environment
+createTypecheckEnvironment inputModule deps typecheckedModules = do
+  -- these need to be typechecked
+  importedDeps <-
+    M.traverseWithKey
+      (lookupModuleDep typecheckedModules)
+      (moExpressionImports inputModule)
+
+  importedTypes <-
+    M.traverseWithKey
+      (lookupModuleType typecheckedModules)
+      (moDataTypeImports inputModule)
+
+  pure $
+    createEnv
+      (getTypeFromAnn <$> (filterNameDefs deps <> importedDeps))
+      (makeTypeDeclMap importedTypes inputModule)
+
+-- starting at a root module,
+-- create a map of each expr hash along with the modules it needs
+-- so that we can typecheck them all
+getModuleDeps :: Module Annotation -> CheckM (Map ModuleHash (Module Annotation, Set ModuleHash))
+getModuleDeps inputModule = do
+  -- get this module's deps
+  let deps = S.fromList $ M.elems (moExpressionImports inputModule)
+      mHash = hashModule inputModule
+  -- recursively fetch sub-deps
+  depModules <- traverse lookupModule (S.toList deps)
+  subDeps <- traverse getModuleDeps depModules
+
+  pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
+
+-- | what are we typechecking here?
+data DefIdentifier = DIName Name | DIInfix InfixOp
+  deriving stock (Eq, Ord, Show)
+
 -- given types for other required definition, typecheck a definition
-typecheckOneDep ::
+typecheckOneDef ::
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
-  Map Name (Expr Name MonoType) ->
-  (Name, Expr Name Annotation) ->
+  Map DefIdentifier (Expr Name MonoType) ->
+  (DefIdentifier, Expr Name Annotation) ->
   CheckM (Expr Name MonoType)
-typecheckOneDep inputModule typecheckedModules deps (name, expr) = do
-  let typeMap = getTypeFromAnn <$> deps
+typecheckOneDef inputModule typecheckedModules deps (defId, expr) = do
+  let typeMap = getTypeFromAnn <$> filterNameDefs deps
   input <- getStoredInput
+
+  -- wrap type error with context of where it occurred
+  let liftTypeError typeErr = case defId of
+        (DIName name) -> ModuleErr (DefDoesNotTypeCheck input name typeErr)
+        (DIInfix infixOp) -> ModuleErr (InfixDoesNotTypeCheck input infixOp typeErr)
 
   -- number the vars
   numberedExpr <-
     liftEither $
       first
-        (ModuleErr . DefDoesNotTypeCheck input name)
+        liftTypeError
         ( addNumbersToExpression
-            (M.keysSet deps)
+            (M.keysSet (filterNameDefs deps))
             (coerce <$> moExpressionImports inputModule)
             expr
         )
+
   -- initial typechecking environment
   env <- createTypecheckEnvironment inputModule deps typecheckedModules
+
   -- typecheck it
   (_subs, _constraints, typedExpr, _mt) <-
     liftEither $
       first
-        (ModuleErr . DefDoesNotTypeCheck input name)
+        liftTypeError
         (typecheck typeMap env numberedExpr)
   pure (first fst typedExpr)

@@ -7,6 +7,7 @@ import Data.Set (Set)
 import Data.Text (Text)
 import Error.Diagnose
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
@@ -20,6 +21,7 @@ data ModuleError
   | TypeConflictsWithImport TypeName ModuleHash
   | CannotFindValues (Set Name)
   | DefDoesNotTypeCheck Text Name TypeError
+  | InfixDoesNotTypeCheck Text InfixOp TypeError
   | MissingModule ModuleHash
   | MissingModuleDep Name ModuleHash
   | MissingModuleTypeDep TypeName ModuleHash
@@ -36,6 +38,8 @@ instance Printer ModuleError where
     "Cannot find values: " <> prettyPrint names
   prettyPrint (DefDoesNotTypeCheck _ name typeErr) =
     prettyPrint name <> " had a typechecking error: " <> prettyPrint typeErr
+  prettyPrint (InfixDoesNotTypeCheck _ infixOp typeErr) =
+    prettyPrint infixOp <> " had a typechecking error: " <> prettyPrint typeErr
   prettyPrint (MissingModule mHash) =
     "Could not find module for " <> prettyPrint mHash
   prettyPrint (DefinitionConflictsWithImport name mHash) =

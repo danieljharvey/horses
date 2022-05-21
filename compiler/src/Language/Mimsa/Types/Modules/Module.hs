@@ -7,6 +7,7 @@
 module Language.Mimsa.Types.Modules.Module
   ( Module (..),
     DefPart (..),
+    DefIdentifier (..),
     ModuleItem (..),
     Import (..),
   )
@@ -41,6 +42,15 @@ data DefPart ann
     DefType (Type ann)
   deriving stock (Eq, Ord, Show)
 
+-- | what are we typechecking here?
+data DefIdentifier = DIName Name | DIInfix InfixOp
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, JSON.ToJSONKey)
+
+instance Printer DefIdentifier where
+  prettyPrint (DIName name) = prettyPrint name
+  prettyPrint (DIInfix infixOp) = prettyPrint infixOp
+
 -- item parsed from file, kept like this so we can order them and have
 -- duplicates
 -- we will remove duplicates when we work out dependencies between everything
@@ -59,11 +69,11 @@ newtype Import = ImportAllFromHash ModuleHash
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
 data Module ann = Module
-  { moExpressions :: Map Name (Expr Name ann),
+  { moExpressions :: Map DefIdentifier (Expr Name ann),
     moDataTypes :: Map TypeName DataType,
     moInfixes :: Map InfixOp (Expr Name ann), -- infix definitions
-    moExpressionExports :: Set Name, -- might replace Name with a sum of things we can export instead
-    moExpressionImports :: Map Name ModuleHash, -- what we imported, where it's from
+    moExpressionExports :: Set DefIdentifier,
+    moExpressionImports :: Map DefIdentifier ModuleHash, -- what we imported, where it's from
     moDataTypeExports :: Set TypeName, -- which types to export
     moDataTypeImports :: Map TypeName ModuleHash -- what we imported, where its from
   }
