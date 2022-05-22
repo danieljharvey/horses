@@ -70,10 +70,9 @@ newtype Import = ImportAllFromHash ModuleHash
 -- about ordering
 data Module ann = Module
   { moExpressions :: Map DefIdentifier (Expr Name ann),
-    moDataTypes :: Map TypeName DataType,
-    moInfixes :: Map InfixOp (Expr Name ann), -- infix definitions
     moExpressionExports :: Set DefIdentifier,
     moExpressionImports :: Map DefIdentifier ModuleHash, -- what we imported, where it's from
+    moDataTypes :: Map TypeName DataType,
     moDataTypeExports :: Set TypeName, -- which types to export
     moDataTypeImports :: Map TypeName ModuleHash -- what we imported, where its from
   }
@@ -96,13 +95,12 @@ instance Printer (Module ann) where
      in printedDefs
 
 instance Semigroup (Module ann) where
-  (Module a b c d e f g) <> (Module a' b' c' d' e' f' g') =
-    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') (g <> g')
+  (Module a b c d e f ) <> (Module a' b' c' d' e' f' ) =
+    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') 
 
 instance Monoid (Module ann) where
   mempty =
     Module
-      mempty
       mempty
       mempty
       mempty

@@ -24,8 +24,7 @@ prelude =
   Module
     { moExpressions = exprs,
       moDataTypes = dts,
-      moInfixes = mempty,
-      moExpressionExports = S.singleton "fst",
+      moExpressionExports = S.singleton (DIName "fst"),
       moExpressionImports = mempty,
       moDataTypeExports = S.singleton "Either",
       moDataTypeImports = mempty
@@ -33,7 +32,7 @@ prelude =
   where
     exprs =
       M.fromList
-        [ ( "fst",
+        [ ( DIName "fst",
             MyLambda
               mempty
               (Identifier mempty "pair")

@@ -28,11 +28,11 @@ lookupModule modHash = do
     Just foundModule -> pure foundModule
     _ -> throwError (ModuleErr (MissingModule modHash))
 
-errorIfExpressionAlreadyDefined :: Module ann -> Name -> CheckM ()
-errorIfExpressionAlreadyDefined mod' name =
-  if M.member name (moExpressions mod')
-    || M.member name (moExpressionImports mod')
-    then throwError (ModuleErr $ DuplicateDefinition name)
+errorIfExpressionAlreadyDefined :: Module ann -> DefIdentifier -> CheckM ()
+errorIfExpressionAlreadyDefined mod' def =
+  if M.member def (moExpressions mod')
+    || M.member def (moExpressionImports mod')
+    then throwError (ModuleErr $ DuplicateDefinition def)
     else pure ()
 
 errorIfTypeAlreadyDefined :: Module ann -> TypeName -> CheckM ()
@@ -42,11 +42,11 @@ errorIfTypeAlreadyDefined mod' typeName =
     then throwError (ModuleErr $ DuplicateTypeName typeName)
     else pure ()
 
-errorIfImportAlreadyDefined :: Module ann -> Name -> ModuleHash -> CheckM ()
-errorIfImportAlreadyDefined mod' name moduleHash =
-  if M.member name (moExpressions mod')
-    || M.member name (moExpressionImports mod')
-    then throwError (ModuleErr $ DefinitionConflictsWithImport name moduleHash)
+errorIfImportAlreadyDefined :: Module ann -> DefIdentifier -> ModuleHash -> CheckM ()
+errorIfImportAlreadyDefined mod' def moduleHash =
+  if M.member def (moExpressions mod')
+    || M.member def (moExpressionImports mod')
+    then throwError (ModuleErr $ DefinitionConflictsWithImport def moduleHash)
     else pure ()
 
 errorIfTypeImportAlreadyDefined :: Module ann -> TypeName -> ModuleHash -> CheckM ()
@@ -76,12 +76,12 @@ moduleFromModuleParts parts =
                     M.keysSet (moDataTypes innerModule)
                 }
           ModuleExpression name bits expr -> do
-            errorIfExpressionAlreadyDefined mod' name
+            errorIfExpressionAlreadyDefined mod' (DIName name)
             let exp' = exprAndTypeFromParts bits expr
             pure $
               mod'
                 { moExpressions =
-                    M.singleton name exp' <> moExpressions mod'
+                    M.singleton (DIName name) exp' <> moExpressions mod'
                 }
           ModuleDataType dt@(DataType tyCon _ _) -> do
             let typeName = coerce tyCon
@@ -93,10 +93,10 @@ moduleFromModuleParts parts =
                       <> moDataTypes mod'
                 }
           ModuleInfix infixOp expr -> do
-            -- TODO: error on dupes
+            errorIfExpressionAlreadyDefined mod' (DIInfix infixOp)
             pure $
               mod'
-                { moInfixes = M.singleton infixOp expr <> moInfixes mod'
+                { moExpressions = M.singleton (DIInfix infixOp) expr <> moExpressions mod'
                 }
           ModuleImport (ImportAllFromHash mHash) -> do
             importMod <- lookupModule mHash

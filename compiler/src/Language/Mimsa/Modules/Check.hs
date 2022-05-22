@@ -43,15 +43,15 @@ lookupModule modHash = do
 
 lookupModuleDep ::
   Map ModuleHash (Module (Type Annotation)) ->
-  Name ->
+  DefIdentifier ->
   ModuleHash ->
   CheckM (Expr Name (Type Annotation))
-lookupModuleDep typecheckedModules name modHash = do
+lookupModuleDep typecheckedModules def modHash = do
   case M.lookup modHash typecheckedModules of
     Just mod' ->
-      case M.lookup name (moExpressions mod') of
+      case M.lookup def (moExpressions mod') of
         Just expr -> pure expr
-        _ -> throwError (ModuleErr (MissingModuleDep name modHash))
+        _ -> throwError (ModuleErr (MissingModuleDep def modHash))
     _ -> throwError (ModuleErr (MissingModule modHash))
 
 lookupModuleType ::
@@ -168,8 +168,7 @@ typecheckAllModuleDefs typecheckedDeps inputModule = do
   -- replace input module with typechecked versions
   pure $
     inputModule
-      { moExpressions = filterNameDefs typecheckedDefs,
-        moInfixes = filterInfixDefs typecheckedDefs
+      { moExpressions = typecheckedDefs
       }
 
 -- return type of module as a MTRecord of dep -> monotype
@@ -181,7 +180,7 @@ getModuleType mod' =
         M.filterWithKey
           (\k _ -> S.member k (moExpressionExports mod'))
           (moExpressions mod')
-   in MTRecord mempty (getTypeFromAnn <$> defs)
+   in MTRecord mempty (getTypeFromAnn <$> filterNameDefs defs)
 
 -- get the vars used by each def
 -- explode if there's not available
@@ -197,7 +196,7 @@ getValueDependencies ::
     )
 getValueDependencies mod' = do
   let check exp' =
-        let nameDeps = extractVars exp'
+        let nameDeps = S.map DIName (extractVars exp')
             unknownNameDeps =
               S.filter
                 ( \dep ->
@@ -213,13 +212,9 @@ getValueDependencies mod' = do
                             M.keysSet (moExpressions mod')
                         )
                         nameDeps
-                 in pure (exp', S.map DIName localNameDeps)
+                 in pure (exp', localNameDeps)
               else throwError (ModuleErr (CannotFindValues unknownNameDeps))
-  mapKeys DIName <$> traverse check (moExpressions mod')
-
--- map isn't a functor, i know, chill out
-mapKeys :: (Ord k2) => (k -> k2) -> Map k a -> Map k2 a
-mapKeys f = M.fromList . fmap (first f) . M.toList
+  traverse check (moExpressions mod')
 
 makeTypeDeclMap :: Map TypeName DataType -> Module ann -> Map TyCon DataType
 makeTypeDeclMap importedTypes inputModule =
@@ -238,14 +233,6 @@ filterNameDefs =
   filterMapKeys
     ( \case
         DIName name -> Just name
-        _ -> Nothing
-    )
-
-filterInfixDefs :: Map DefIdentifier a -> Map InfixOp a
-filterInfixDefs =
-  filterMapKeys
-    ( \case
-        DIInfix infixOp -> Just infixOp
         _ -> Nothing
     )
 
@@ -268,7 +255,7 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
 
   pure $
     createEnv
-      (getTypeFromAnn <$> (filterNameDefs deps <> importedDeps))
+      (getTypeFromAnn <$> (filterNameDefs deps <> filterNameDefs importedDeps))
       (makeTypeDeclMap importedTypes inputModule)
 
 -- starting at a root module,
@@ -284,10 +271,6 @@ getModuleDeps inputModule = do
   subDeps <- traverse getModuleDeps depModules
 
   pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
-
--- | what are we typechecking here?
-data DefIdentifier = DIName Name | DIInfix InfixOp
-  deriving stock (Eq, Ord, Show)
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::
@@ -312,7 +295,7 @@ typecheckOneDef inputModule typecheckedModules deps (defId, expr) = do
         liftTypeError
         ( addNumbersToExpression
             (M.keysSet (filterNameDefs deps))
-            (coerce <$> moExpressionImports inputModule)
+            (coerce <$> filterNameDefs (moExpressionImports inputModule))
             expr
         )
 

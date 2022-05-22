@@ -49,7 +49,7 @@ spec = do
         let filePath = modulesPath <> "2.mimsa"
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
-          `shouldBe` Left (ModuleErr (DuplicateDefinition "duplicate"))
+          `shouldBe` Left (ModuleErr (DuplicateDefinition (DIName "duplicate")))
       it "3 errors because duplicate type name" $ do
         let filePath = modulesPath <> "3.mimsa"
         fileContents <- liftIO $ T.readFile filePath
@@ -65,7 +65,7 @@ spec = do
         let filePath = modulesPath <> "5.mimsa"
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
-          `shouldBe` Left (ModuleErr (CannotFindValues (S.singleton "eatEgg")))
+          `shouldBe` Left (ModuleErr (CannotFindValues (S.singleton (DIName "eatEgg"))))
       it "6 errors because it doesn't typecheck" $ do
         let filePath = modulesPath <> "6.mimsa"
         fileContents <- liftIO $ T.readFile filePath
@@ -154,15 +154,15 @@ spec = do
         describe "definitions" $ do
           it "Single constant" $
             let expectedExpr = unsafeParseExpr "100" $> mempty
-                exprs = M.singleton "noSig" expectedExpr
+                exprs = M.singleton (DIName "noSig") expectedExpr
                 expectedModule = mempty {moExpressions = exprs}
              in checkModule' "def noSig = 100"
                   `shouldBe` Right expectedModule
           it "Two constants" $
             let exprs =
                   M.fromList
-                    [ ("one", unsafeParseExpr "1" $> mempty),
-                      ("two", unsafeParseExpr "2" $> mempty)
+                    [ (DIName "one", unsafeParseExpr "1" $> mempty),
+                      (DIName "two", unsafeParseExpr "2" $> mempty)
                     ]
                 expectedModule = mempty {moExpressions = exprs}
              in checkModule' "def one = 1\ndef two = 2"
@@ -170,7 +170,7 @@ spec = do
           it "id Function" $
             let exprs =
                   M.fromList
-                    [ ("id", unsafeParseExpr "\\a -> a" $> mempty)
+                    [ (DIName "id", unsafeParseExpr "\\a -> a" $> mempty)
                     ]
                 expectedModule = mempty {moExpressions = exprs}
              in checkModule' "def id a = a"
@@ -178,7 +178,7 @@ spec = do
           it "const Function" $
             let exprs =
                   M.fromList
-                    [ ("const", unsafeParseExpr "\\a -> \\b -> a" $> mempty)
+                    [ (DIName "const", unsafeParseExpr "\\a -> \\b -> a" $> mempty)
                     ]
                 expectedModule = mempty {moExpressions = exprs}
              in checkModule' "def const a b = a"
@@ -186,8 +186,8 @@ spec = do
           it "multiple Functions" $
             let exprs =
                   M.fromList
-                    [ ("id", unsafeParseExpr "\\a -> a" $> mempty),
-                      ("const", unsafeParseExpr "\\a -> \\b -> a" $> mempty)
+                    [ (DIName "id", unsafeParseExpr "\\a -> a" $> mempty),
+                      (DIName "const", unsafeParseExpr "\\a -> \\b -> a" $> mempty)
                     ]
                 expectedModule = mempty {moExpressions = exprs}
              in checkModule' "def id a = a\ndef const a b = a"
@@ -224,7 +224,7 @@ spec = do
                         )
                     )
                   ]
-              exprs = M.fromList [("a", unsafeParseExpr "1" $> mempty)]
+              exprs = M.fromList [(DIName "a", unsafeParseExpr "1" $> mempty)]
               expectedModule = mempty {moDataTypes = dts, moExpressions = exprs}
            in checkModule' "type Maybe a = Just a | Nothing\ndef a = 1"
                 `shouldBe` Right expectedModule
@@ -232,8 +232,8 @@ spec = do
         it "export id function" $ do
           let exprs =
                 M.fromList
-                  [("id", unsafeParseExpr "\\a -> a" $> mempty)]
-              exports = S.singleton "id"
+                  [(DIName "id", unsafeParseExpr "\\a -> a" $> mempty)]
+              exports = S.singleton (DIName "id")
               expectedModule = mempty {moExpressions = exprs, moExpressionExports = exports}
           checkModule' "export def id a = a"
             `shouldBe` Right expectedModule
@@ -242,7 +242,7 @@ spec = do
         it "function with full signature" $
           let exprs =
                 M.fromList
-                  [ ( "const",
+                  [ ( DIName "const",
                       MyAnnotation
                         mempty
                         (unsafeParseMonoType "String -> Int -> String" $> mempty)
@@ -255,7 +255,7 @@ spec = do
         it "function with signature where not all args have names" $
           let exprs =
                 M.fromList
-                  [ ( "returnFunc",
+                  [ ( DIName "returnFunc",
                       MyAnnotation
                         mempty
                         (unsafeParseMonoType "String -> Int -> String" $> mempty)
@@ -271,7 +271,7 @@ spec = do
           -- but will have to see how it works in practice
           let exprs =
                 M.fromList
-                  [ ( "const",
+                  [ ( DIName "const",
                       MyAnnotation
                         mempty
                         (unsafeParseMonoType "String -> b -> String" $> mempty)
@@ -289,7 +289,7 @@ spec = do
           -- that is turned into a unification variable once found
           let exprs =
                 M.fromList
-                  [ ( "const",
+                  [ ( DIName "const",
                       MyAnnotation
                         mempty
                         (unsafeParseMonoType "String -> b -> returnType" $> mempty)
@@ -302,14 +302,14 @@ spec = do
         it "multiple functions with signatures" $
           let exprs =
                 M.fromList
-                  [ ( "fmap",
+                  [ ( DIName "fmap",
                       MyAnnotation
                         mempty
                         (unsafeParseMonoType "(a -> b) -> Maybe a -> Maybe b" $> mempty)
                         ( unsafeParseExpr "\\f -> \\maybeA -> match maybeA with Just a -> Just (f a) | Nothing -> Nothing" $> mempty
                         )
                     ),
-                    ( "inc",
+                    ( DIName "inc",
                       unsafeParseExpr "\\a -> a + 1" $> mempty
                     )
                   ]
@@ -360,7 +360,7 @@ spec = do
                   "def fst pair = let (a,_) = pair in a"
                 ]
             )
-            `shouldBe` Left (ModuleErr $ DefinitionConflictsWithImport "fst" preludeHash)
+            `shouldBe` Left (ModuleErr $ DefinitionConflictsWithImport (DIName "fst") preludeHash)
         it "uses Either from Prelude" $
           checkModuleType
             ( joinLines

@@ -12,18 +12,19 @@ import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Modules.Module
 
 data ModuleError
-  = DuplicateDefinition Name
+  = DuplicateDefinition DefIdentifier
   | DuplicateTypeName TypeName
   | DuplicateConstructor TyCon
-  | DefinitionConflictsWithImport Name ModuleHash
+  | DefinitionConflictsWithImport DefIdentifier ModuleHash
   | TypeConflictsWithImport TypeName ModuleHash
-  | CannotFindValues (Set Name)
+  | CannotFindValues (Set DefIdentifier)
   | DefDoesNotTypeCheck Text Name TypeError
   | InfixDoesNotTypeCheck Text InfixOp TypeError
   | MissingModule ModuleHash
-  | MissingModuleDep Name ModuleHash
+  | MissingModuleDep DefIdentifier ModuleHash
   | MissingModuleTypeDep TypeName ModuleHash
   deriving stock (Eq, Ord, Show)
 
