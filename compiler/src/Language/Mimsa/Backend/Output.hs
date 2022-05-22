@@ -79,7 +79,9 @@ stdlibImport backend names =
                   _ -> False
               )
               names
-   in "import { " <> T.intercalate ", " filteredNames <> " } from \"./"
+   in "import { "
+        <> T.intercalate ", " filteredNames
+        <> " } from \"./"
         <> stdlibFilename backend
         <> "\";\n"
 

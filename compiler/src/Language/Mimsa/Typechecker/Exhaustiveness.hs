@@ -55,7 +55,8 @@ noDuplicateVariables ::
   m ()
 noDuplicateVariables pat = do
   let dupes =
-        M.keysSet . M.filter (> 1)
+        M.keysSet
+          . M.filter (> 1)
           . getVariables
           $ pat
    in if S.null dupes

@@ -257,8 +257,8 @@ toPatternStatement (pat, patExpr) = do
               ( TSLetBody
                   ( TSBody [] (TSVar "value")
                   )
-              ) :
-            parts
+              )
+              : parts
           else parts
   pure $
     TSConditional

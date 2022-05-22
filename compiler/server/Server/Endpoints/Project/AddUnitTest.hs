@@ -27,7 +27,8 @@ import Server.Types
 ------
 
 type AddUnitTest =
-  "tests" :> "add"
+  "tests"
+    :> "add"
     :> ReqBody '[JSON] AddUnitTestRequest
     :> JsonPost AddUnitTestResponse
 

@@ -64,7 +64,8 @@ upgradeByName bindingName = do
 
           -- output for logging and repl
           Actions.appendMessage
-            ( "Updated " <> prettyPrint bindingName
+            ( "Updated "
+                <> prettyPrint bindingName
                 <> ". "
                 <> replacementsMessage replacements
             )

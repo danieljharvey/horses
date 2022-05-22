@@ -136,7 +136,8 @@ markImports (MyLet ann ident expr body) = do
     <*> withLambda (M.singleton var unique) (markImports body)
 markImports (MyLetPattern ann pat expr body) = do
   vars <- freshVarsFromPattern pat
-  MyLetPattern ann <$> withLambda vars (markPatternImports pat)
+  MyLetPattern ann
+    <$> withLambda vars (markPatternImports pat)
     <*> markImports expr
     <*> withLambda vars (markImports body)
 markImports (MyLiteral ann lit) =
@@ -152,7 +153,8 @@ markImports (MyLambda ann ident body) = do
 markImports (MyApp ann fn val) =
   MyApp ann <$> markImports fn <*> markImports val
 markImports (MyIf ann predExpr thenExpr elseExpr) =
-  MyIf ann <$> markImports predExpr
+  MyIf ann
+    <$> markImports predExpr
     <*> markImports thenExpr
     <*> markImports elseExpr
 markImports (MyPair ann a b) =
@@ -174,10 +176,12 @@ markImports (MyPatternMatch ann patExpr patterns) =
         uniqueMap <- freshVarsFromPattern pat
         withLambda
           uniqueMap
-          ( (,) <$> markPatternImports pat
+          ( (,)
+              <$> markPatternImports pat
               <*> markImports pExpr
           )
-   in MyPatternMatch ann <$> markImports patExpr
+   in MyPatternMatch ann
+        <$> markImports patExpr
         <*> traverse markPatterns patterns
 markImports (MyTypedHole ann name) = do
   -- always a unique number for these

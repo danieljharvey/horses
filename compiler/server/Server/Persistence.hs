@@ -101,7 +101,9 @@ fetchProjectItems existingStore sp = do
       )
   pure $
     projectFromSaved
-      ( existingStore <> store' <> typeStore'
+      ( existingStore
+          <> store'
+          <> typeStore'
           <> testStore
       )
       sp

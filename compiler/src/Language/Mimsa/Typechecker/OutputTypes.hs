@@ -71,11 +71,13 @@ foldExpr fn expression =
       f ann <> foldExpr fn expr <> f (getAnnotationForType mt)
     foldExpr' (MyVar ann _) = f ann
     foldExpr' (MyLet ann binder expr body) =
-      f ann <> foldIdentifier fn binder
+      f ann
+        <> foldIdentifier fn binder
         <> foldExpr fn expr
         <> foldExpr fn body
     foldExpr' (MyPatternMatch ann expr pats) =
-      f ann <> foldMap (foldPattern fn . fst) pats
+      f ann
+        <> foldMap (foldPattern fn . fst) pats
         <> foldMap (foldExpr fn . snd) pats
         <> foldExpr fn expr
     foldExpr' (MyLetPattern ann pat expr body) =

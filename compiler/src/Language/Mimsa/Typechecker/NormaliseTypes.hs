@@ -38,11 +38,13 @@ normaliseType' mt = case mt of
       <*> normaliseType' fun
   MTPair ann a b ->
     MTPair ann
-      <$> normaliseType' a <*> normaliseType' b
+      <$> normaliseType' a
+      <*> normaliseType' b
   MTRecord ann as ->
     MTRecord ann <$> traverse normaliseType' as
   MTRecordRow ann as rest ->
-    MTRecordRow ann <$> traverse normaliseType' as
+    MTRecordRow ann
+      <$> traverse normaliseType' as
       <*> normaliseType' rest
   MTArray ann a -> MTArray ann <$> normaliseType' a
   MTConstructor ann name ->

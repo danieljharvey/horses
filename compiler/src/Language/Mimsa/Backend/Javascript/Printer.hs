@@ -45,15 +45,21 @@ returnExpr other = "return " <> printExpr other <> ";"
 
 printStatement :: TSStatement -> Text
 printStatement (TSAssignment lhsExpr _ expr) =
-  "const " <> printExpr lhsExpr <> " = "
+  "const "
+    <> printExpr lhsExpr
+    <> " = "
     <> printLetBody expr
     <> "; "
 printStatement (TSConditional predicate allBody@(TSLetBody (TSBody [] _))) =
-  "if (" <> printExpr predicate <> ") { return "
+  "if ("
+    <> printExpr predicate
+    <> ") { return "
     <> printLetBody allBody
     <> "; }; "
 printStatement (TSConditional predicate body) =
-  "if (" <> printExpr predicate <> ") "
+  "if ("
+    <> printExpr predicate
+    <> ") "
     <> printLetBody body
 
 printFunctionBody :: TSFunctionBody -> Text
@@ -87,7 +93,10 @@ printTSName (TSName t) = if S.member t protected then t <> "_" else t
 printExpr :: TSExpr -> Text
 printExpr (TSLit lit) = printLiteral lit
 printExpr (TSFunction name _ _ _ expr) =
-  "(" <> printTSName name <> ")" <> " => "
+  "("
+    <> printTSName name
+    <> ")"
+    <> " => "
     <> printFunctionBody expr
 printExpr (TSVar var) = printTSName var
 printExpr (TSApp func val) =
@@ -104,7 +113,8 @@ printExpr (TSArray as) =
 printExpr (TSArrayAccess a expr) =
   printExpr expr <> "[" <> prettyPrint a <> "]"
 printExpr (TSInfix op a b) =
-  printExpr a <> " "
+  printExpr a
+    <> " "
     <> printOp op
     <> " "
     <> printExpr b
@@ -120,7 +130,10 @@ printExpr (TSRecord as) =
 printExpr (TSRecordAccess name expr) =
   printExpr expr <> "." <> printTSName name
 printExpr (TSTernary cond thenE elseE) =
-  printExpr cond <> " ? " <> printExpr thenE <> " : "
+  printExpr cond
+    <> " ? "
+    <> printExpr thenE
+    <> " : "
     <> printExpr elseE
 printExpr (TSData constructor args) =
   let prettyArgs = T.intercalate "," (printExpr <$> args)

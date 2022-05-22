@@ -78,7 +78,8 @@ withMonoid f whole@(MyLetPattern _ _ expr body) =
    in if not go
         then m
         else
-          m <> withMonoid f expr
+          m
+            <> withMonoid f expr
             <> withMonoid f body
 withMonoid f whole@(MyInfix _ _ a b) =
   let (go, m) = f whole
@@ -100,14 +101,16 @@ withMonoid f whole@(MyApp _ func arg) =
    in if not go
         then m
         else
-          m <> withMonoid f func
+          m
+            <> withMonoid f func
             <> withMonoid f arg
 withMonoid f whole@(MyIf _ matchExpr thenExpr elseExpr) =
   let (go, m) = f whole
    in if not go
         then m
         else
-          m <> withMonoid f matchExpr
+          m
+            <> withMonoid f matchExpr
             <> withMonoid f thenExpr
             <> withMonoid f elseExpr
 withMonoid f whole@(MyPair _ a b) =
@@ -115,7 +118,8 @@ withMonoid f whole@(MyPair _ a b) =
    in if not go
         then m
         else
-          m <> withMonoid f a
+          m
+            <> withMonoid f a
             <> withMonoid f b
 withMonoid f whole@(MyRecord _ items) =
   let (go, m) = f whole
@@ -152,7 +156,8 @@ withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
    in if not go
         then m
         else
-          m <> withMonoid f matchExpr
+          m
+            <> withMonoid f matchExpr
             <> mconcat
               (withMonoid f <$> (snd <$> matches))
 

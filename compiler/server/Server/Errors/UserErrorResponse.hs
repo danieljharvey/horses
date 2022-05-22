@@ -44,7 +44,7 @@ mkTypedHoleResponse ::
 mkTypedHoleResponse input name (mt, suggestions) =
   TypedHoleResponse (coerce name) (prettyPrint mt)
     <$> sourceSpan input (getAnnotationForType mt)
-      <*> pure (prettyPrint <$> S.toList suggestions)
+    <*> pure (prettyPrint <$> S.toList suggestions)
 
 newtype ErrorLocation = ErrorLocation
   {elSourceSpan :: SourceSpan}

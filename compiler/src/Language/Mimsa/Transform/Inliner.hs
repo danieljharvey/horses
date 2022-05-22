@@ -111,7 +111,7 @@ substituteVar var = do
   case maybeItem of
     Just item
       | shouldInline uses inLambda item ->
-        pure $ Just (iiExpression item)
+          pure $ Just (iiExpression item)
     _ -> pure Nothing
 
 withinLambda :: InlineM var ann a -> InlineM var ann a
