@@ -30,8 +30,22 @@ modulesPath = "test/modules/"
 
 checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
-  (a, _) <- checkModule t
-  pure (a $> mempty)
+  (a, tyA) <- checkModule t
+  (b, tyB) <- checkModule (prettyPrint a)
+  if (a $> ()) /= (b $> ()) 
+    then
+      error $
+        "Does not match!\n\n"
+          <> show a
+          <> "\n\n"
+          <> show b
+          <> "\n\nWhen re-parsing\n\n"
+          <> show (prettyPrint a)
+    else 
+      if (tyA $> ()) == (tyB $> ())
+         then pure (a $> mempty)
+          else error $ "Types are different:\n\n" <> T.unpack (prettyPrint tyA) <> 
+                  "\n\n" <> T.unpack (prettyPrint tyB)
 
 checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
 checkModuleType t =
@@ -39,7 +53,7 @@ checkModuleType t =
 
 spec :: Spec
 spec = do
-  describe "modules" $ do
+  fdescribe "modules" $ do
     describe "CheckModule" $ do
       it "1 parses correctly" $ do
         let filePath = modulesPath <> "1.mimsa"
@@ -377,3 +391,12 @@ spec = do
                 ]
             )
             `shouldBe` Left (ModuleErr $ DuplicateTypeName "Either")
+
+        it "Imports parse and pretty print" $
+          checkModule'
+            ( joinLines
+                [ "type Maybe a = Just a | Nothing",
+                  "import * from " <> prettyPrint preludeHash
+                ]
+            )
+            `shouldSatisfy` isRight 

@@ -68,12 +68,19 @@ moduleFromModuleParts parts =
             -- get whatever is inside
             innerModule <- addPart modItem output
             -- get the keys, add them to exports
+            let defExports = case modItem of
+                                      ModuleExpression name _ _ -> S.singleton (DIName name)
+                                      ModuleInfix infixOp  _ -> S.singleton (DIInfix infixOp)
+                                      _ -> mempty
+            let typeExports = case modItem of
+                                    ModuleDataType (DataType tn _ _) -> S.singleton (coerce tn)
+                                    _ -> mempty
             pure $
               innerModule
                 { moExpressionExports =
-                    M.keysSet (moExpressions innerModule),
+                    defExports <> moExpressionExports innerModule,
                   moDataTypeExports =
-                    M.keysSet (moDataTypes innerModule)
+                    typeExports  <> moDataTypeExports innerModule
                 }
           ModuleExpression name bits expr -> do
             errorIfExpressionAlreadyDefined mod' (DIName name)
@@ -96,7 +103,8 @@ moduleFromModuleParts parts =
             errorIfExpressionAlreadyDefined mod' (DIInfix infixOp)
             pure $
               mod'
-                { moExpressions = M.singleton (DIInfix infixOp) expr <> moExpressions mod'
+                { moExpressions = M.singleton (DIInfix infixOp) expr <> 
+                    moExpressions mod'
                 }
           ModuleImport (ImportAllFromHash mHash) -> do
             importMod <- lookupModule mHash

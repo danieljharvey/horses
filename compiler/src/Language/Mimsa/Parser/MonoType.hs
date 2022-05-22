@@ -114,7 +114,8 @@ protectedTypeNames =
       "def",
       "type",
       "infix",
-      "import"
+      "import",
+      "export"
     ]
 
 tyVarParser :: Parser TyVar

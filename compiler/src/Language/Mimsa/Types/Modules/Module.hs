@@ -17,7 +17,7 @@ import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
-import qualified Data.Text as T
+import qualified Data.Set as S
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType
@@ -28,6 +28,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Typechecker.MonoType
+import Prettyprinter
 
 -- a module is, broadly, one file
 -- it defines some datatypes, infixes and definitions
@@ -79,20 +80,52 @@ data Module ann = Module
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.ToJSON)
 
-instance Printer (Module ann) where
-  prettyPrint mod' =
+instance (Show ann) => Printer (Module ann) where
+  prettyDoc mod' =
     let printedDefs =
-          T.intercalate
-            "\n\n"
-            ( ( \(name, expr) ->
-                  "def "
-                    <> prettyPrint name
-                    <> " = "
-                    <> prettyPrint expr
-              )
-                <$> M.toList (moExpressions mod')
-            )
-     in printedDefs
+          uncurry (printDefinition mod')
+            <$> M.toList (moExpressions mod')
+        printedTypes =
+          uncurry (printTypeDef mod')
+            <$> M.toList (moDataTypes mod')
+        printedImports
+          = printImport <$> 
+               uniq (M.elems (moDataTypeImports mod') <> 
+                      M.elems (moExpressionImports mod'))
+     in withDoubleLines (printedImports <> printedTypes <> printedDefs)
+
+withDoubleLines :: [Doc a] -> Doc a
+withDoubleLines = vsep . fmap (line <> )
+
+uniq :: (Ord a) => [a] -> [a]
+uniq = S.toList . S.fromList
+
+printImport :: ModuleHash -> Doc a
+printImport modHash =
+  "import * from" <+> prettyDoc modHash
+
+printTypeDef :: Module ann -> TypeName -> DataType -> Doc a
+printTypeDef mod' tn dt =
+  let prettyExp =
+        if S.member tn (moDataTypeExports mod')
+          then "export "
+          else ""
+   in prettyExp <> prettyDoc dt
+
+printDefinition :: Module ann -> DefIdentifier -> Expr Name ann -> Doc a
+printDefinition mod' def expr =
+  let prettyExp =
+        if S.member def (moExpressionExports mod')
+          then "export "
+          else ""
+   in prettyExp <> case def of
+        DIName name ->
+          "def"
+            <+> prettyDoc name
+              <+> "="
+            <+> prettyDoc expr
+        DIInfix infixOp ->
+          "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
 
 instance Semigroup (Module ann) where
   (Module a b c d e f) <> (Module a' b' c' d' e' f') =
