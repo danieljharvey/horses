@@ -36,7 +36,8 @@ import Server.Types
 -- /project/evaluate/
 
 type EvaluateAPI =
-  "evaluate" :> ReqBody '[JSON] EvaluateRequest
+  "evaluate"
+    :> ReqBody '[JSON] EvaluateRequest
     :> JsonPost EvaluateResponse
 
 data EvaluateRequest = EvaluateRequest

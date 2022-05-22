@@ -29,7 +29,8 @@ import Server.Types
 
 type ProjectAPI =
   "project"
-    :> ( EvaluateAPI :<|> ListBindings
+    :> ( EvaluateAPI
+           :<|> ListBindings
            :<|> CreateProject
            :<|> BindExpression
            :<|> BindType

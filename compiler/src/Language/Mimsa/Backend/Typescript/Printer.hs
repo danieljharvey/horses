@@ -43,7 +43,10 @@ printType (TSType namespace name as) =
         [] -> ""
         typeVar -> "<" <> T.intercalate "," (printType <$> typeVar) <> ">"
 printType (TSTypeFun argName arg resp) =
-  "(" <> prettyPrint argName <> ": " <> printType arg
+  "("
+    <> prettyPrint argName
+    <> ": "
+    <> printType arg
     <> ") => "
     <> printType resp
 printType (TSTypeArray as) = printType as <> "[]"
@@ -76,7 +79,10 @@ printDataType dt@(TSDataType tyName generics constructors) =
         mconcat $
           (<>) "export " . printStatement
             <$> createConstructorFunctions dt
-   in "export type " <> prettyPrint tyName <> prettyGen <> " = "
+   in "export type "
+        <> prettyPrint tyName
+        <> prettyGen
+        <> " = "
         <> prettyCons
         <> "; "
         <> prettyConsFns
@@ -104,15 +110,22 @@ printStatement (TSAssignment lhsExpr exprType expr) =
   let tsPrettyType = case exprType of
         Just mt' -> ": " <> printType mt'
         _ -> ""
-   in "const " <> printExpr lhsExpr <> tsPrettyType <> " = "
+   in "const "
+        <> printExpr lhsExpr
+        <> tsPrettyType
+        <> " = "
         <> printLetBody expr
         <> "; "
 printStatement (TSConditional predicate allBody@(TSLetBody (TSBody [] _))) =
-  "if (" <> printExpr predicate <> ") { return "
+  "if ("
+    <> printExpr predicate
+    <> ") { return "
     <> printLetBody allBody
     <> "; }; "
 printStatement (TSConditional predicate body) =
-  "if (" <> printExpr predicate <> ") "
+  "if ("
+    <> printExpr predicate
+    <> ") "
     <> printLetBody body
 
 printFunctionBody :: TSFunctionBody -> Text
@@ -146,7 +159,14 @@ printExpr (TSFunction name generics mt maybeReturn expr) =
       prettyReturnType = case maybeReturn of
         Just mt' -> ": " <> printType mt'
         _ -> ""
-   in prettyGen <> "(" <> printTSName name <> ": " <> printType mt <> ")" <> prettyReturnType <> " => "
+   in prettyGen
+        <> "("
+        <> printTSName name
+        <> ": "
+        <> printType mt
+        <> ")"
+        <> prettyReturnType
+        <> " => "
         <> printFunctionBody expr
 printExpr (TSVar var) = printTSName var
 printExpr (TSApp func val) =
@@ -163,7 +183,8 @@ printExpr (TSArray as) =
 printExpr (TSArrayAccess a expr) =
   printExpr expr <> "[" <> prettyPrint a <> "]"
 printExpr (TSInfix op a b) =
-  printExpr a <> " "
+  printExpr a
+    <> " "
     <> printOp op
     <> " "
     <> printExpr b
@@ -179,7 +200,10 @@ printExpr (TSRecord as) =
 printExpr (TSRecordAccess name expr) =
   printExpr expr <> "." <> printTSName name
 printExpr (TSTernary cond thenE elseE) =
-  printExpr cond <> " ? " <> printExpr thenE <> " : "
+  printExpr cond
+    <> " ? "
+    <> printExpr thenE
+    <> " : "
     <> printExpr elseE
 printExpr (TSData constructor args) =
   let prettyArgs = T.intercalate "," (printExpr <$> args)

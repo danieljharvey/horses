@@ -27,7 +27,9 @@ instance Printer (BackendError ann) where
   prettyDoc (OutputingTypedHole n) =
     "Trying to output a typed hold, which should not pass typechecking: " <> prettyDoc n
   prettyDoc (ExpectedExprGotBody exp' exps) =
-    "Expected no extra exprs for :" <> pretty (printExpr exp') <> ", but found: "
+    "Expected no extra exprs for :"
+      <> pretty (printExpr exp')
+      <> ", but found: "
       <> pretty (printStatement <$> exps)
   prettyDoc (ExpectedFunctionType tsType) =
     "Expected function type but got " <> pretty (printType tsType)

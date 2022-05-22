@@ -57,4 +57,4 @@ bindExpression expr name input = do
         let newExprHash = getStoreExpressionHash storeExpr
         (,,) newExprHash
           <$> Actions.updateTests oldExprHash newExprHash
-            <*> pure resolvedExpr
+          <*> pure resolvedExpr

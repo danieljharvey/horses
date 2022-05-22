@@ -262,7 +262,7 @@ typeParser =
   addLocation $
     MyData mempty
       <$> typeDeclParser
-        <*> (try inExpr <|> try inNewLineExpr)
+      <*> (try inExpr <|> try inNewLineExpr)
 
 inNewLineExpr :: Parser ParserExpr
 inNewLineExpr = do

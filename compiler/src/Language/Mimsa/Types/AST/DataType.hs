@@ -49,8 +49,9 @@ instance Printer DataType where
 
 renderDataType :: DataType -> Doc style
 renderDataType (DataType tyCon vars' constructors') =
-  "type" <+> prettyDoc tyCon
-    <> printVars vars'
+  "type"
+    <+> prettyDoc tyCon
+      <> printVars vars'
     <+> if M.null constructors'
       then mempty
       else

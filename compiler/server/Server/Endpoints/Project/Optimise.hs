@@ -35,7 +35,8 @@ import Server.Types
 -- /project/optimise/
 
 type OptimiseAPI =
-  "optimise" :> ReqBody '[JSON] OptimiseRequest
+  "optimise"
+    :> ReqBody '[JSON] OptimiseRequest
     :> JsonPost OptimiseResponse
 
 data OptimiseRequest = OptimiseRequest

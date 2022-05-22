@@ -130,7 +130,8 @@ renderTypeError (UnificationError a b) =
 renderTypeError (IfPredicateIsNotBoolean _ mt) =
   ["Predicate for an if expression should be a boolean. This has type" <+> prettyDoc mt]
 renderTypeError (FunctionArgumentMismatch _ expected actual) =
-  [ "Incorrect function argument. Expected " <> prettyDoc expected
+  [ "Incorrect function argument. Expected "
+      <> prettyDoc expected
       <> ", got "
       <> prettyDoc actual
   ]
@@ -156,7 +157,8 @@ renderTypeError (CannotMatchRecord env _ mt) =
     pretty (show env)
   ]
 renderTypeError (TypeConstructorNotInScope env _ constructor) =
-  [ "Type constructor for" <+> prettyDoc constructor
+  [ "Type constructor for"
+      <+> prettyDoc constructor
       <+> "not found in scope.",
     "The following are available:"
   ]
@@ -171,7 +173,8 @@ renderTypeError (RecordKeyMismatch keys) =
   ]
     <> showSet prettyDoc keys
 renderTypeError (TypeVariablesNotInDataType _ann constructor names as) =
-  [ "Type variables" <+> mconcat (showSet prettyDoc names)
+  [ "Type variables"
+      <+> mconcat (showSet prettyDoc names)
       <+> "could not be in found in type vars for"
       <+> prettyDoc constructor,
     "The following type variables were found:"
@@ -226,7 +229,8 @@ printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
   where
     printDt :: DataType -> [Doc style]
     printDt (DataType tyName tyVars constructors) =
-      [prettyDoc tyName] <> printTyVars tyVars
+      [prettyDoc tyName]
+        <> printTyVars tyVars
         <> zipWith (<>) (":" : repeat "|") (printCons <$> M.toList constructors)
     printTyVars as = prettyDoc <$> as
     printCons (consName, args) =

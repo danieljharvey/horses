@@ -15,7 +15,8 @@ contentAndHash :: (JSON.ToJSON a) => a -> (LBS.ByteString, ProjectHash)
 contentAndHash a =
   let json' = JSON.encode a
       hash' =
-        ProjectHash . decodeUtf8
+        ProjectHash
+          . decodeUtf8
           . convertToBase Base16
           . hashWith SHA256
           . toStrict

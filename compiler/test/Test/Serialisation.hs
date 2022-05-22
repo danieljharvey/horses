@@ -40,7 +40,8 @@ prettyPrintingParses input = do
       if toEmptyAnn expr1 /= toEmptyAnn expr2
         then
           Left $
-            "Pretty:\n" <> prettyPrint expr1
+            "Pretty:\n"
+              <> prettyPrint expr1
               <> "\nExpr:\n"
               <> T.pack (show expr1)
               <> "\nDoes not match re-parsed expr:\n"

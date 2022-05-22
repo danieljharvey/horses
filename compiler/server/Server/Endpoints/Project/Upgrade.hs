@@ -39,7 +39,8 @@ import Server.Types
 -- /project/upgrade/
 
 type UpgradeAPI =
-  "upgrade" :> ReqBody '[JSON] UpgradeRequest
+  "upgrade"
+    :> ReqBody '[JSON] UpgradeRequest
     :> JsonPost UpgradeResponse
 
 data UpgradeRequest = UpgradeRequest

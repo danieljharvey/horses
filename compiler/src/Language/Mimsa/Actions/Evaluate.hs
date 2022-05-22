@@ -68,7 +68,7 @@ evaluate input expr = do
 
   -- interpret
   interpretedExpr <-
-    Actions.interpreter newStoreExpr --liftEither (first InterpreterErr (interpret scope' swaps expr'))
+    Actions.interpreter newStoreExpr -- liftEither (first InterpreterErr (interpret scope' swaps expr'))
 
   -- print any warnings
   traverse_ (Actions.appendMessage . prettyPrint) (getWarnings resolved)

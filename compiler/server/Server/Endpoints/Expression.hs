@@ -51,7 +51,8 @@ expressionEndpoints mimsaEnv =
 -- /expression/
 
 type GetExpression =
-  "expression" :> Capture "exprHash" ExprHash
+  "expression"
+    :> Capture "exprHash" ExprHash
     :> Get '[JSON] GetExpressionResponse
 
 newtype GetExpressionResponse = GetExpressionResponse
@@ -93,7 +94,8 @@ getExpression mimsaEnv exprHash' = do
 ----
 
 type GetExpressions =
-  "expressions" :> Capture "exprHashes" [ExprHash]
+  "expressions"
+    :> Capture "exprHashes" [ExprHash]
     :> Get '[JSON] GetExpressionsResponse
 
 newtype GetExpressionsResponse = GetExpressionsResponse

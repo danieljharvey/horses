@@ -25,7 +25,9 @@ instance (Ord var) => Monoid (StackFrame var ann) where
 
 instance (Printer var) => Printer (StackFrame var ann) where
   prettyPrint (StackFrame sfVars sfInf) =
-    "{ vars: [" <> T.intercalate "," (prettyPrint <$> M.keys sfVars) <> "], infix: ["
+    "{ vars: ["
+      <> T.intercalate "," (prettyPrint <$> M.keys sfVars)
+      <> "], infix: ["
       <> T.intercalate "," (prettyPrint <$> M.keys sfInf)
       <> "] }"
 

@@ -47,7 +47,8 @@ simplifyPatterns other = mapExpr simplifyPatterns other
 filterPatterns :: TyCon -> [(Pattern var ann, Expr var ann)] -> Maybe [(Pattern var ann, Expr var ann)]
 filterPatterns tc pats =
   let filterPatternExprs (pat, patExpr) =
-        (,) <$> filterPattern tc pat
+        (,)
+          <$> filterPattern tc pat
           <*> pure (simplifyPatterns patExpr)
       filtered = mapMaybe filterPatternExprs pats
    in if null filtered

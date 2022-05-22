@@ -55,7 +55,8 @@ optimiseByName name = do
         ( if se == newSe
             then "No changes in " <> prettyDoc name
             else
-              "Optimised " <> prettyDoc name
+              "Optimised "
+                <> prettyDoc name
                 <> ". New expression: "
                 <> prettyDoc (storeExpression newSe)
         )
@@ -95,7 +96,10 @@ optimise se = do
 inlineExpression :: (Ord ann, Ord var) => Expr var ann -> Expr var ann
 inlineExpression =
   repeatUntilEq
-    ( floatUp . flattenLets . simplifyPatterns . removeUnused
+    ( floatUp
+        . flattenLets
+        . simplifyPatterns
+        . removeUnused
         . betaReduce
         . inline
     )

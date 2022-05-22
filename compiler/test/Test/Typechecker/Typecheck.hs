@@ -168,7 +168,8 @@ spec = do
                       (MyVar mempty "a")
                   )
           startInference expr $
-            Right $ MTFunction mempty mtString mtString
+            Right $
+              MTFunction mempty mtString mtString
 
         it "Lambda annotation does not match lambda body" $ do
           let expr =

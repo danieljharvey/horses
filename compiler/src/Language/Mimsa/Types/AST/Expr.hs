@@ -182,12 +182,13 @@ prettyLet var expr1 expr2 =
         Nothing ->
           prettyDoc var
    in group
-        ( "let" <+> prettyVar <> prettyArgs args
+        ( "let"
+            <+> prettyVar <> prettyArgs args
             <+> "="
-            <> line
-            <> indentMulti 2 (prettyDoc letExpr)
-            <> newlineOrIn
-            <> prettyDoc expr2
+              <> line
+              <> indentMulti 2 (prettyDoc letExpr)
+              <> newlineOrIn
+              <> prettyDoc expr2
         )
   where
     prettyArgs [] = ""
@@ -210,12 +211,13 @@ prettyLetPattern ::
   Doc style
 prettyLetPattern pat expr body =
   group
-    ( "let" <+> printSubPattern pat
+    ( "let"
+        <+> printSubPattern pat
         <+> "="
-        <> line
-        <> indentMulti 2 (printSubExpr expr)
-        <> newlineOrIn
-        <> printSubExpr body
+          <> line
+          <> indentMulti 2 (printSubExpr expr)
+          <> newlineOrIn
+          <> printSubExpr body
     )
 
 newlineOrIn :: Doc style
@@ -232,8 +234,8 @@ prettyDefineInfix infixOp bindExpr expr =
         <+> prettyDoc infixOp
         <+> "="
         <+> prettyDoc bindExpr
-        <> newlineOrIn
-        <> prettyDoc expr
+          <> newlineOrIn
+          <> prettyDoc expr
     )
 
 prettyPair :: Expr Name ann -> Expr Name ann -> Doc style
@@ -272,7 +274,7 @@ prettyRecord map' =
         let item = case val of
               (MyVar _ vName)
                 | vName == name ->
-                  prettyDoc name
+                    prettyDoc name
               _ ->
                 prettyDoc name
                   <> ":"
@@ -347,8 +349,10 @@ prettyPatternMatch sumExpr matches =
         )
   where
     printMatch (construct, expr') =
-      printSubPattern construct <+> "->" <+> line
-        <> indentMulti 4 (printSubExpr expr')
+      printSubPattern construct
+        <+> "->"
+        <+> line
+          <> indentMulti 4 (printSubExpr expr')
 
 prettyDataType ::
   DataType ->
