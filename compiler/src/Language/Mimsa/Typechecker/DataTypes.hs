@@ -43,12 +43,12 @@ createEnv typeMap dataTypes infixTypes =
 
 createTypesEnv :: Map TyCon DataType -> Environment
 createTypesEnv dataTypes =
-  Environment {
-    getSchemes = mempty,
-    getDataTypes = builtInDts <> dataTypes,
-    getInfix = mempty,
-    getTypeVarsInScope = mempty
-              }
+  Environment
+    { getSchemes = mempty,
+      getDataTypes = builtInDts <> dataTypes,
+      getInfix = mempty,
+      getTypeVarsInScope = mempty
+    }
   where
     makeDT (name, _) =
       M.singleton name (DataType name mempty mempty)
@@ -57,12 +57,12 @@ createTypesEnv dataTypes =
 
 createDepsEnv :: Map Name MonoType -> Environment
 createDepsEnv typeMap =
-  Environment {
-    getSchemes = mkSchemes typeMap,
-    getDataTypes = mempty,
-    getInfix = mempty,
-    getTypeVarsInScope = mempty
-              }
+  Environment
+    { getSchemes = mkSchemes typeMap,
+      getDataTypes = mempty,
+      getInfix = mempty,
+      getTypeVarsInScope = mempty
+    }
   where
     toScheme =
       bimap
@@ -73,12 +73,12 @@ createDepsEnv typeMap =
 
 createInfixEnv :: Map InfixOp MonoType -> Environment
 createInfixEnv infixTypes =
-  Environment {
-    getSchemes = mempty,
-    getDataTypes = mempty,
-    getInfix = schemeFromMonoType <$> infixTypes,
-    getTypeVarsInScope = mempty
-              }
+  Environment
+    { getSchemes = mempty,
+      getDataTypes = mempty,
+      getInfix = schemeFromMonoType <$> infixTypes,
+      getTypeVarsInScope = mempty
+    }
 
 -- | Make all free variables polymorphic so that we get a fresh version of
 -- everything each time

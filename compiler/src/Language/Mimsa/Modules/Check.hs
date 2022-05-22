@@ -244,7 +244,6 @@ filterInfixDefs =
         _ -> Nothing
     )
 
-
 createTypecheckEnvironment ::
   Module Annotation ->
   Map DefIdentifier (Expr Name MonoType) ->
@@ -266,7 +265,7 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
     createEnv
       (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
       (makeTypeDeclMap importedTypes inputModule)
-      (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps)) 
+      (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
 
 -- starting at a root module,
 -- create a map of each expr hash along with the modules it needs
@@ -297,7 +296,7 @@ typecheckOneDef inputModule typecheckedModules deps (def, expr) = do
   numberedExpr <-
     liftEither $
       first
-        (ModuleErr . DefDoesNotTypeCheck input def) 
+        (ModuleErr . DefDoesNotTypeCheck input def)
         ( addNumbersToExpression
             (M.keysSet (filterNameDefs deps))
             (coerce <$> filterNameDefs (moExpressionImports inputModule))
@@ -311,7 +310,7 @@ typecheckOneDef inputModule typecheckedModules deps (def, expr) = do
   (_subs, _constraints, typedExpr, _mt) <-
     liftEither $
       first
-        (ModuleErr . DefDoesNotTypeCheck input def) 
+        (ModuleErr . DefDoesNotTypeCheck input def)
         (typecheck typeMap env numberedExpr)
 
   pure (first fst typedExpr)
