@@ -86,7 +86,9 @@ instance Printer (Module ann) where
           T.intercalate
             "\n\n"
             ( ( \(name, expr) ->
-                  "def " <> prettyPrint name <> " = "
+                  "def "
+                    <> prettyPrint name
+                    <> " = "
                     <> prettyPrint expr
               )
                 <$> M.toList (moExpressions mod')
