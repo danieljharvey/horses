@@ -41,7 +41,8 @@ itTypeChecks mt expr = do
         fmap (\(_, _, a, _) -> a)
           . typecheck
             mempty
-            (createEnv mempty (createTypeMap $ getStoreExprs testStdlib))
+            (createEnv mempty (createTypeMap $ getStoreExprs testStdlib) 
+                            mempty)
           $ numberedExpr
   generatedMt <- getTypeFromAnn <$> elabbed
   unifies mt generatedMt

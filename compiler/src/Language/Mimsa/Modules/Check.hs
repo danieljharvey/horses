@@ -19,8 +19,8 @@ import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
+import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Parser.Module
-import Language.Mimsa.Store
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
@@ -196,7 +196,7 @@ getValueDependencies ::
     )
 getValueDependencies mod' = do
   let check exp' =
-        let nameDeps = S.map DIName (extractVars exp')
+        let nameDeps = extractUses exp'
             unknownNameDeps =
               S.filter
                 ( \dep ->
@@ -236,6 +236,15 @@ filterNameDefs =
         _ -> Nothing
     )
 
+filterInfixDefs :: Map DefIdentifier a -> Map InfixOp a
+filterInfixDefs =
+  filterMapKeys
+    ( \case
+        DIInfix infixOp -> Just infixOp
+        _ -> Nothing
+    )
+
+
 createTypecheckEnvironment ::
   Module Annotation ->
   Map DefIdentifier (Expr Name MonoType) ->
@@ -255,8 +264,9 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
 
   pure $
     createEnv
-      (getTypeFromAnn <$> (filterNameDefs deps <> filterNameDefs importedDeps))
+      (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
       (makeTypeDeclMap importedTypes inputModule)
+      (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps)) 
 
 -- starting at a root module,
 -- create a map of each expr hash along with the modules it needs
@@ -279,20 +289,15 @@ typecheckOneDef ::
   Map DefIdentifier (Expr Name MonoType) ->
   (DefIdentifier, Expr Name Annotation) ->
   CheckM (Expr Name MonoType)
-typecheckOneDef inputModule typecheckedModules deps (defId, expr) = do
+typecheckOneDef inputModule typecheckedModules deps (def, expr) = do
   let typeMap = getTypeFromAnn <$> filterNameDefs deps
   input <- getStoredInput
-
-  -- wrap type error with context of where it occurred
-  let liftTypeError typeErr = case defId of
-        (DIName name) -> ModuleErr (DefDoesNotTypeCheck input name typeErr)
-        (DIInfix infixOp) -> ModuleErr (InfixDoesNotTypeCheck input infixOp typeErr)
 
   -- number the vars
   numberedExpr <-
     liftEither $
       first
-        liftTypeError
+        (ModuleErr . DefDoesNotTypeCheck input def) 
         ( addNumbersToExpression
             (M.keysSet (filterNameDefs deps))
             (coerce <$> filterNameDefs (moExpressionImports inputModule))
@@ -306,6 +311,7 @@ typecheckOneDef inputModule typecheckedModules deps (defId, expr) = do
   (_subs, _constraints, typedExpr, _mt) <-
     liftEither $
       first
-        liftTypeError
+        (ModuleErr . DefDoesNotTypeCheck input def) 
         (typecheck typeMap env numberedExpr)
+
   pure (first fst typedExpr)

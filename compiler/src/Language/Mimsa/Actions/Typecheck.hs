@@ -54,7 +54,7 @@ getType depTypeMap dataTypes input expr = do
       (TypeErr input)
       ( typecheck
           depTypeMap
-          (createEnv depTypeMap dataTypes)
+          (createEnv depTypeMap dataTypes mempty)
           expr
       )
 

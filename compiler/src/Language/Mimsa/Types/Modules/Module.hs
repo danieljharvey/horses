@@ -95,8 +95,8 @@ instance Printer (Module ann) where
      in printedDefs
 
 instance Semigroup (Module ann) where
-  (Module a b c d e f ) <> (Module a' b' c' d' e' f' ) =
-    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') 
+  (Module a b c d e f) <> (Module a' b' c' d' e' f') =
+    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
 
 instance Monoid (Module ann) where
   mempty =

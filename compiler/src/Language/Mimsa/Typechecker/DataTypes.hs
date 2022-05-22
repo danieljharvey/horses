@@ -34,14 +34,21 @@ import Language.Mimsa.Types.Typechecker
 createEnv ::
   Map Name MonoType ->
   Map TyCon DataType ->
+  Map InfixOp MonoType ->
   Environment
-createEnv typeMap dataTypes =
+createEnv typeMap dataTypes infixTypes =
   createDepsEnv typeMap
     <> createTypesEnv dataTypes
+    <> createInfixEnv infixTypes
 
 createTypesEnv :: Map TyCon DataType -> Environment
 createTypesEnv dataTypes =
-  Environment mempty (builtInDts <> dataTypes) mempty mempty
+  Environment {
+    getSchemes = mempty,
+    getDataTypes = builtInDts <> dataTypes,
+    getInfix = mempty,
+    getTypeVarsInScope = mempty
+              }
   where
     makeDT (name, _) =
       M.singleton name (DataType name mempty mempty)
@@ -50,7 +57,12 @@ createTypesEnv dataTypes =
 
 createDepsEnv :: Map Name MonoType -> Environment
 createDepsEnv typeMap =
-  Environment (mkSchemes typeMap) mempty mempty mempty
+  Environment {
+    getSchemes = mkSchemes typeMap,
+    getDataTypes = mempty,
+    getInfix = mempty,
+    getTypeVarsInScope = mempty
+              }
   where
     toScheme =
       bimap
@@ -58,6 +70,15 @@ createDepsEnv typeMap =
         schemeFromMonoType
     mkSchemes =
       M.fromList . fmap toScheme . M.toList
+
+createInfixEnv :: Map InfixOp MonoType -> Environment
+createInfixEnv infixTypes =
+  Environment {
+    getSchemes = mempty,
+    getDataTypes = mempty,
+    getInfix = schemeFromMonoType <$> infixTypes,
+    getTypeVarsInScope = mempty
+              }
 
 -- | Make all free variables polymorphic so that we get a fresh version of
 -- everything each time

@@ -71,14 +71,14 @@ spec = do
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
           `shouldSatisfy` \case
-            Left (ModuleErr (DefDoesNotTypeCheck _ "doesntTypecheck" _)) -> True
+            Left (ModuleErr (DefDoesNotTypeCheck _ (DIName "doesntTypecheck") _)) -> True
             _ -> False
       it "7 errors because annotation means it doesn't typecheck" $ do
         let filePath = modulesPath <> "7.mimsa"
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
           `shouldSatisfy` \case
-            Left (ModuleErr (DefDoesNotTypeCheck _ "doesntTypecheckBecauseAnnotation" _)) -> True
+            Left (ModuleErr (DefDoesNotTypeCheck _ (DIName "doesntTypecheckBecauseAnnotation") _)) -> True
             _ -> False
       it "8 is ok even with various amounts of partial type annotation" $ do
         let filePath = modulesPath <> "8.mimsa"
