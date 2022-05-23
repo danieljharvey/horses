@@ -100,6 +100,11 @@ withDoubleLines = vsep . fmap (line <> )
 uniq :: (Ord a) => [a] -> [a]
 uniq = S.toList . S.fromList
 
+-- when on multilines, indent by `i`, if not then nothing
+indentMulti :: Int -> Doc style -> Doc style
+indentMulti i doc = flatAlt (indent i doc) doc
+
+
 printImport :: ModuleHash -> Doc a
 printImport modHash =
   "import * from" <+> prettyDoc modHash
@@ -112,6 +117,13 @@ printTypeDef mod' tn dt =
           else ""
    in prettyExp <> prettyDoc dt
 
+-- given annotation and expr, pair annotation types with lambdas
+printPaired :: Type ann -> Expr Name ann -> Doc a
+printPaired (MTFunction _ fn arg) (MyLambda _ ident body) =
+  "("<> prettyDoc ident <+> ":" <+> prettyDoc fn <> ")" <+> 
+          printPaired arg body
+printPaired mt expr = ":" <+> prettyDoc mt <+> "=" <+> indentMulti 2 (prettyDoc expr )
+
 printDefinition :: Module ann -> DefIdentifier -> Expr Name ann -> Doc a
 printDefinition mod' def expr =
   let prettyExp =
@@ -119,11 +131,14 @@ printDefinition mod' def expr =
           then "export "
           else ""
    in prettyExp <> case def of
-        DIName name ->
-          "def"
-            <+> prettyDoc name
-              <+> "="
-            <+> prettyDoc expr
+        DIName name -> case expr of
+                         (MyAnnotation _ mt rest) -> 
+                          "def" <+> prettyDoc name <+> printPaired mt rest
+                         other ->
+                            "def"
+                              <+> prettyDoc name
+                                <+> "="
+                              <+> indentMulti 2 (prettyDoc other)
         DIInfix infixOp ->
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
 

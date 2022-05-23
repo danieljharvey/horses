@@ -1096,6 +1096,26 @@ spec =
       it "each type variable is unique to the scope it's introduced in" $ do
         result <- eval testStdlib "let (id1: a -> (a,a)) a = (a,a); let (id2: a -> a) b = b; id1 (id2 True)"
         result `shouldSatisfy` isRight
+      
+      it "annotation does not match" $ do
+        result <- eval testStdlib "let (f: a -> String -> a) a b = if True then a else b"
+        result `shouldSatisfy` isLeft
+
+      xit "annotation does not match (1)" $ do
+        result <- eval testStdlib "(\\a -> \\b -> if True then a else b : String -> a -> String)"
+        result `shouldSatisfy` isLeft
+
+      xit "annotation does not match (2)" $ do
+        result <- eval testStdlib "(\\a -> \\b -> if True then a else b : a -> String -> a)"
+        result `shouldSatisfy` isLeft
+
+      xit "annotation does not match (3)" $ do
+        result <- eval testStdlib "(\\a -> a : a -> String)"
+        result `shouldSatisfy` isLeft
+
+      xit "annotation does not match (4)" $ do
+        result <- eval testStdlib "(\\a -> a : String -> a)"
+        result `shouldSatisfy` isLeft
 
     describe "check if" $ do
       it "spots mismatched predicate type" $ do

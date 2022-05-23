@@ -296,6 +296,12 @@ spec = do
               expectedModule = mempty {moExpressions = exprs}
            in checkModule' "def const (a: String) b : String = a"
                 `shouldBe` Right expectedModule
+        
+        -- need to fix in typechecker
+        xit "function where signature has partial types" $
+           checkModule' "def const (a: String) b : a = a"
+                `shouldSatisfy` isLeft 
+ 
         it "function where signature has partial types but no return" $
           -- here we add a placeholder return type
           -- again, not sure about this, see how it works in practice
