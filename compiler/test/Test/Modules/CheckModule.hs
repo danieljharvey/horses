@@ -53,7 +53,7 @@ checkModuleType t =
 
 spec :: Spec
 spec = do
-  fdescribe "modules" $ do
+  describe "modules" $ do
     describe "CheckModule" $ do
       it "1 parses correctly" $ do
         let filePath = modulesPath <> "1.mimsa"
