@@ -120,9 +120,9 @@ printTypeDef mod' tn dt =
 -- given annotation and expr, pair annotation types with lambdas
 printPaired :: Type ann -> Expr Name ann -> Doc a
 printPaired (MTFunction _ fn arg) (MyLambda _ ident body) =
-  "("<> prettyDoc ident <+> ":" <+> prettyDoc fn <> ")" <+> 
+  "("<> prettyDoc ident <+> ":" <+> prettyDoc fn <> ")" <> line <> 
           printPaired arg body
-printPaired mt expr = ":" <+> prettyDoc mt <+> "=" <+> indentMulti 2 (prettyDoc expr )
+printPaired mt expr = ":" <+> prettyDoc mt <+> "=" <> line <> indentMulti 2 (prettyDoc expr )
 
 printDefinition :: Module ann -> DefIdentifier -> Expr Name ann -> Doc a
 printDefinition mod' def expr =
@@ -133,12 +133,12 @@ printDefinition mod' def expr =
    in prettyExp <> case def of
         DIName name -> case expr of
                          (MyAnnotation _ mt rest) -> 
-                          "def" <+> prettyDoc name <+> printPaired mt rest
+                          "def" <+> prettyDoc name <> line <> indentMulti 2 (printPaired mt rest)
                          other ->
                             "def"
                               <+> prettyDoc name
                                 <+> "="
-                              <+> indentMulti 2 (prettyDoc other)
+                              <> line <> indentMulti 2 (prettyDoc other)
         DIInfix infixOp ->
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
 
