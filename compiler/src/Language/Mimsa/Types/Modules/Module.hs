@@ -88,14 +88,16 @@ instance (Show ann) => Printer (Module ann) where
         printedTypes =
           uncurry (printTypeDef mod')
             <$> M.toList (moDataTypes mod')
-        printedImports
-          = printImport <$> 
-               uniq (M.elems (moDataTypeImports mod') <> 
-                      M.elems (moExpressionImports mod'))
+        printedImports =
+          printImport
+            <$> uniq
+              ( M.elems (moDataTypeImports mod')
+                  <> M.elems (moExpressionImports mod')
+              )
      in withDoubleLines (printedImports <> printedTypes <> printedDefs)
 
 withDoubleLines :: [Doc a] -> Doc a
-withDoubleLines = vsep . fmap (line <> )
+withDoubleLines = vsep . fmap (line <>)
 
 uniq :: (Ord a) => [a] -> [a]
 uniq = S.toList . S.fromList
@@ -103,7 +105,6 @@ uniq = S.toList . S.fromList
 -- when on multilines, indent by `i`, if not then nothing
 indentMulti :: Int -> Doc style -> Doc style
 indentMulti i doc = flatAlt (indent i doc) doc
-
 
 printImport :: ModuleHash -> Doc a
 printImport modHash =
@@ -120,9 +121,18 @@ printTypeDef mod' tn dt =
 -- given annotation and expr, pair annotation types with lambdas
 printPaired :: Type ann -> Expr Name ann -> Doc a
 printPaired (MTFunction _ fn arg) (MyLambda _ ident body) =
-  "("<> prettyDoc ident <+> ":" <+> prettyDoc fn <> ")" <> line <> 
-          printPaired arg body
-printPaired mt expr = ":" <+> prettyDoc mt <+> "=" <> line <> indentMulti 2 (prettyDoc expr )
+  "(" <> prettyDoc ident
+    <+> ":"
+    <+> prettyDoc fn
+      <> ")"
+      <> line
+      <> printPaired arg body
+printPaired mt expr =
+  ":"
+    <+> prettyDoc mt
+    <+> "="
+      <> line
+      <> indentMulti 2 (prettyDoc expr)
 
 printDefinition :: Module ann -> DefIdentifier -> Expr Name ann -> Doc a
 printDefinition mod' def expr =
@@ -132,13 +142,14 @@ printDefinition mod' def expr =
           else ""
    in prettyExp <> case def of
         DIName name -> case expr of
-                         (MyAnnotation _ mt rest) -> 
-                          "def" <+> prettyDoc name <> line <> indentMulti 2 (printPaired mt rest)
-                         other ->
-                            "def"
-                              <+> prettyDoc name
-                                <+> "="
-                              <> line <> indentMulti 2 (prettyDoc other)
+          (MyAnnotation _ mt rest) ->
+            "def" <+> prettyDoc name <> line <> indentMulti 2 (printPaired mt rest)
+          other ->
+            "def"
+              <+> prettyDoc name
+              <+> "="
+                <> line
+                <> indentMulti 2 (prettyDoc other)
         DIInfix infixOp ->
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
 

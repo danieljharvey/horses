@@ -1096,7 +1096,7 @@ spec =
       it "each type variable is unique to the scope it's introduced in" $ do
         result <- eval testStdlib "let (id1: a -> (a,a)) a = (a,a); let (id2: a -> a) b = b; id1 (id2 True)"
         result `shouldSatisfy` isRight
-      
+
       it "annotation does not match" $ do
         result <- eval testStdlib "let (f: a -> String -> a) a b = if True then a else b"
         result `shouldSatisfy` isLeft

@@ -33,7 +33,7 @@ checkFile filePath = do
   fileContents <- liftIO $ T.readFile (T.unpack filePath)
   -- liftIO $ T.putStrLn fileContents
   case checkModule fileContents of
-    Right (mod',_) -> do
+    Right (mod', _) -> do
       liftIO $ T.putStrLn $ prettyPrint mod'
       -- format and rewrite
       -- liftIO $ T.writeFile (T.unpack filePath) (prettyPrint mod')

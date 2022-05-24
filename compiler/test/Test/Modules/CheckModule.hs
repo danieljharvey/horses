@@ -32,7 +32,7 @@ checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
   (a, tyA) <- checkModule t
   (b, tyB) <- checkModule (prettyPrint a)
-  if (a $> ()) /= (b $> ()) 
+  if (a $> ()) /= (b $> ())
     then
       error $
         "Does not match!\n\n"
@@ -41,11 +41,15 @@ checkModule' t = do
           <> show b
           <> "\n\nWhen re-parsing\n\n"
           <> show (prettyPrint a)
-    else 
+    else
       if (tyA $> ()) == (tyB $> ())
-         then pure (a $> mempty)
-          else error $ "Types are different:\n\n" <> T.unpack (prettyPrint tyA) <> 
-                  "\n\n" <> T.unpack (prettyPrint tyB)
+        then pure (a $> mempty)
+        else
+          error $
+            "Types are different:\n\n"
+              <> T.unpack (prettyPrint tyA)
+              <> "\n\n"
+              <> T.unpack (prettyPrint tyB)
 
 checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
 checkModuleType t =
@@ -296,12 +300,12 @@ spec = do
               expectedModule = mempty {moExpressions = exprs}
            in checkModule' "def const (a: String) b : String = a"
                 `shouldBe` Right expectedModule
-        
+
         -- need to fix in typechecker
         xit "function where signature has partial types" $
-           checkModule' "def const (a: String) b : a = a"
-                `shouldSatisfy` isLeft 
- 
+          checkModule' "def const (a: String) b : a = a"
+            `shouldSatisfy` isLeft
+
         it "function where signature has partial types but no return" $
           -- here we add a placeholder return type
           -- again, not sure about this, see how it works in practice
@@ -405,4 +409,4 @@ spec = do
                   "import * from " <> prettyPrint preludeHash
                 ]
             )
-            `shouldSatisfy` isRight 
+            `shouldSatisfy` isRight
