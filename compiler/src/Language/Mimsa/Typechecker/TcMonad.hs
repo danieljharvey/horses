@@ -125,3 +125,5 @@ variableToTypeIdentifier :: (Name, Unique) -> TypeIdentifier
 variableToTypeIdentifier (name, Unique i) = TVVar i name
 variableToTypeIdentifier (name, Dependency _) =
   TVName (coerce name)
+variableToTypeIdentifier (name, Local) =
+  TVName (coerce name) -- hmm

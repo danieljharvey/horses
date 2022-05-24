@@ -86,7 +86,7 @@ binNewline = init . lbsToString
 -- local environment
 spec :: Spec
 spec = do
-  xdescribe "RunNode" $ do
+  describe "RunNode" $ do
     describe "runScriptFromFile" $ do
       it "Succeeds with printed value" $ do
         (ec, bs) <- runScriptFromFile "static/test/test.js"

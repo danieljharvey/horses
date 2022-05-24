@@ -40,7 +40,7 @@ nameParserInt :: Parser Name
 nameParserInt =
   maybePred
     identifier
-    (filterProjectedNames >=> safeMkName)
+    (filterProtectedNames >=> safeMkName)
 
 ---
 
@@ -52,7 +52,7 @@ tyConParser =
   myLexeme $
     maybePred
       identifier
-      (filterProjectedNames >=> safeMkTyCon)
+      (filterProtectedNames >=> safeMkTyCon)
 
 -----
 

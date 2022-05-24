@@ -17,6 +17,7 @@ newtype InfixOp = InfixOp Text
       Ord,
       Show,
       JSON.ToJSON,
+      JSON.ToJSONKey,
       JSON.FromJSON
     )
 

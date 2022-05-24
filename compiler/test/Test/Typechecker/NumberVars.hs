@@ -20,7 +20,7 @@ import Test.Utils.Helpers
 testAddNumbers ::
   StoreExpression () ->
   Either (TypeErrorF Name ()) (Expr (Name, Unique) ())
-testAddNumbers = addNumbers
+testAddNumbers = addNumbersToStoreExpression
 
 spec :: Spec
 spec = do

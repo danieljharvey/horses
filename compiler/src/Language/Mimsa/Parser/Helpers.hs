@@ -6,7 +6,7 @@ module Language.Mimsa.Parser.Helpers
     addLocation,
     withLocation,
     maybePred,
-    filterProjectedNames,
+    filterProtectedNames,
     filterProtectedOperators,
     inBrackets,
     orInBrackets,
@@ -95,8 +95,8 @@ maybePred parser predicate' = try $ do
 
 -----
 
-filterProjectedNames :: Text -> Maybe Text
-filterProjectedNames tx =
+filterProtectedNames :: Text -> Maybe Text
+filterProtectedNames tx =
   if S.member tx protectedNames
     then Nothing
     else Just tx

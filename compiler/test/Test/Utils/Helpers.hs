@@ -40,6 +40,14 @@ unsafeParseExpr t = case parseExpr t of
       "Error parsing expr for Prettier tests:"
         <> T.unpack t
 
+unsafeParseMonoType :: Text -> Type ()
+unsafeParseMonoType t = case parseMonoType t of
+  Right a -> a $> ()
+  Left _ ->
+    error $
+      "Error parsing monotype for Prettier tests:"
+        <> T.unpack t
+
 textErrorContains :: Text -> Either Text a -> Bool
 textErrorContains s res = case res of
   Left e -> s `T.isInfixOf` e
@@ -98,17 +106,20 @@ exprHash = ExprHash . T.pack . show
 
 ----
 
-mtInt :: MonoType
+mtInt :: (Monoid ann) => Type ann
 mtInt = MTPrim mempty MTInt
 
-mtBool :: MonoType
+mtBool :: (Monoid ann) => Type ann
 mtBool = MTPrim mempty MTBool
 
-mtString :: MonoType
+mtString :: (Monoid ann) => Type ann
 mtString = MTPrim mempty MTString
 
-mtVar :: Text -> MonoType
+mtVar :: (Monoid ann) => Text -> Type ann
 mtVar n = MTVar mempty (tvNamed n)
+
+mtFun :: (Monoid ann) => Type ann -> Type ann -> Type ann
+mtFun = MTFunction mempty
 
 ----
 

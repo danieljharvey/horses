@@ -106,7 +106,7 @@ buildTestStdlib =
         "type Person = Person { name: String, age: Int } in {}"
       addBinding
         "stringReduce"
-        "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
+        "let stringReduce = \\f -> \\default -> \\str -> match str with \"\" -> default | head ++ tail -> stringReduce f (f default head) tail; stringReduce"
       addType
         "type TrafficLight = Red | Yellow | Green"
       addListMonad

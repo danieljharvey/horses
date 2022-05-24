@@ -168,7 +168,7 @@ stateFns = do
 
 arrayFns :: Actions.ActionM ()
 arrayFns = do
-  addBinding "arrayReduce" "let arrayReduce = \\f -> \\def -> \\as -> match as with [] -> def | [a, ...rest] -> arrayReduce f (f a def) rest; arrayReduce"
+  addBinding "arrayReduce" "let arrayReduce = \\f -> \\default -> \\as -> match as with [] -> default | [a, ...rest] -> arrayReduce f (f a default) rest; arrayReduce"
   addBinding "arrayReverse" "arrayReduce (\\all -> \\a -> [ all ] <> a) []"
   addBinding "arrayMap" "\\f -> arrayReduce (\\a -> \\all -> all <> [ f a ]) []"
   addBinding "arrayFilter" "\\pred -> arrayReduce (\\a -> \\all -> if pred a then all <> [ a ] else all) []"
@@ -184,7 +184,7 @@ arrayFns = do
 
 stringFns :: Actions.ActionM ()
 stringFns = do
-  addBinding "stringReduce" "let stringReduce = \\f -> \\def -> \\str -> match str with \"\" -> def | head ++ tail -> stringReduce f (f def head) tail; stringReduce"
+  addBinding "stringReduce" "let stringReduce = \\f -> \\default -> \\str -> match str with \"\" -> default | head ++ tail -> stringReduce f (f default head) tail; stringReduce"
   addBinding "stringMap" "\\f -> stringReduce (\\total -> \\a -> total ++ f a) \"\""
   addBinding "stringFilter" "\\pred -> stringReduce (\\all -> \\a -> if pred a then all ++ a else all) \"\""
   addBinding "stringSplit" "\\char -> \\str -> array.reverse (stringReduce (\\as -> \\a -> if (a == char) then [ \"\" ] <> as else match as with [] -> [] | [current, ...rest] -> [ current ++ a ] <> rest) [\"\"] str)"

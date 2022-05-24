@@ -1,4 +1,4 @@
-.PHONY: all test 
+.PHONY: all test install
 
 build-nix: 
 	nix-build -A hsPkgs.mimsa.components.exes.mimsa --quiet | cachix push mimsa
@@ -20,11 +20,17 @@ ghcid:
 build:
 	stack build --test --no-run-tests --bench --no-run-benchmarks 
 
+install:
+	stack install --test --no-run-tests --bench --no-run-benchmarks
+
+build-watch:
+	stack build --file-watch --test --no-run-tests --bench --no-run-benchmarks 
+
 test-watch:
-	stack test --file-watch --bench --no-run-benchmarks mimsa:mimsa-test
+	stack test --file-watch --bench --no-run-benchmarks 
 
 errors-watch:
-	stack test --file-watch --bench --no-run-benchmarks mimsa:errors-test
+	stack build --test --file-watch --bench --no-run-benchmarks mimsa:errors-test
 
 test:
 	stack test --bench --no-run-benchmarks

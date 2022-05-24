@@ -21,7 +21,7 @@ startElaborate ::
   Expr Name MonoType ->
   IO ()
 startElaborate storeExpr expected = do
-  let numberedExpr = fromRight (addNumbers storeExpr)
+  let numberedExpr = fromRight (addNumbersToStoreExpression storeExpr)
   let result =
         fmap (\(_, _, a, _) -> first fst a)
           . typecheck mempty mempty

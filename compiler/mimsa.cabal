@@ -77,6 +77,12 @@ library
       Language.Mimsa.Interpreter.RecordAccess
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
+      Language.Mimsa.Modules.Check
+      Language.Mimsa.Modules.FromParts
+      Language.Mimsa.Modules.HashModule
+      Language.Mimsa.Modules.Monad
+      Language.Mimsa.Modules.Prelude
+      Language.Mimsa.Modules.Uses
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers
       Language.Mimsa.Parser.Identifier
@@ -84,6 +90,7 @@ library
       Language.Mimsa.Parser.Language
       Language.Mimsa.Parser.Lexeme
       Language.Mimsa.Parser.Literal
+      Language.Mimsa.Parser.Module
       Language.Mimsa.Parser.MonoType
       Language.Mimsa.Parser.Pattern
       Language.Mimsa.Parser.TypeDecl
@@ -159,6 +166,7 @@ library
       Language.Mimsa.Types.Error.BackendError
       Language.Mimsa.Types.Error.CodegenError
       Language.Mimsa.Types.Error.InterpreterError
+      Language.Mimsa.Types.Error.ModuleError
       Language.Mimsa.Types.Error.PatternMatchError
       Language.Mimsa.Types.Error.ProjectError
       Language.Mimsa.Types.Error.ResolverError
@@ -168,8 +176,11 @@ library
       Language.Mimsa.Types.Identifiers.Name
       Language.Mimsa.Types.Identifiers.TyCon
       Language.Mimsa.Types.Identifiers.TypeIdentifier
+      Language.Mimsa.Types.Identifiers.TypeName
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Interpreter.Stack
+      Language.Mimsa.Types.Modules.Module
+      Language.Mimsa.Types.Modules.ModuleHash
       Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project
@@ -239,6 +250,7 @@ library
 executable mimsa
   main-is: Main.hs
   other-modules:
+      Check.Main
       Init.Main
       Repl.Actions
       Repl.Actions.Compile
@@ -430,6 +442,7 @@ test-suite mimsa-test
       Test.Codegen.Shared
       Test.Data.Project
       Test.Interpreter.Repl
+      Test.Modules.CheckModule
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax

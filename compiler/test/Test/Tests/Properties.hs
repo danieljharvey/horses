@@ -36,12 +36,16 @@ getStoreExprs =
 
 itTypeChecks :: MonoType -> Expr Name Annotation -> Either TypeError ()
 itTypeChecks mt expr = do
-  let numberedExpr = fromRight (addNumbers (StoreExpression expr mempty mempty))
+  let numberedExpr = fromRight (addNumbersToStoreExpression (StoreExpression expr mempty mempty))
   let elabbed =
         fmap (\(_, _, a, _) -> a)
           . typecheck
             mempty
-            (createEnv mempty (createTypeMap $ getStoreExprs testStdlib))
+            ( createEnv
+                mempty
+                (createTypeMap $ getStoreExprs testStdlib)
+                mempty
+            )
           $ numberedExpr
   generatedMt <- getTypeFromAnn <$> elabbed
   unifies mt generatedMt

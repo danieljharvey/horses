@@ -1,7 +1,12 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Typechecker.NumberVars (addNumbers, NumberedExpr) where
+module Language.Mimsa.Typechecker.NumberVars
+  ( addNumbersToStoreExpression,
+    addNumbersToExpression,
+    NumberedExpr,
+  )
+where
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -36,11 +41,11 @@ type App var ann =
 
 type NumberedExpr var ann = Expr (var, Unique) ann
 
-addNumbers ::
+addNumbersToStoreExpression ::
   (Show ann) =>
   StoreExpression ann ->
   Either (TypeErrorF Name ann) (NumberedExpr Name ann)
-addNumbers storeExpr =
+addNumbersToStoreExpression storeExpr =
   let action = do
         -- add dependencies to scope
         let varsFromDeps =
@@ -51,6 +56,34 @@ addNumbers storeExpr =
         withLambda
           varsFromDeps
           (markImports (storeExpression storeExpr))
+   in evalState
+        ( runReaderT
+            (runExceptT action)
+            mempty
+        )
+        (SubsState 0)
+
+addNumbersToExpression ::
+  (Show ann) =>
+  Set Name ->
+  Map Name ExprHash ->
+  Expr Name ann ->
+  Either (TypeErrorF Name ann) (NumberedExpr Name ann)
+addNumbersToExpression locals imports expr =
+  let action = do
+        -- add dependencies to scope
+        let localVars =
+              mconcat $
+                (`M.singleton` Local)
+                  <$> S.toList locals
+        let importVars =
+              mconcat $
+                (\(name, hash) -> M.singleton name (Dependency hash))
+                  <$> M.toList imports
+        -- evaluate rest of expression using these
+        withLambda
+          (localVars <> importVars)
+          (markImports expr)
    in evalState
         ( runReaderT
             (runExceptT action)

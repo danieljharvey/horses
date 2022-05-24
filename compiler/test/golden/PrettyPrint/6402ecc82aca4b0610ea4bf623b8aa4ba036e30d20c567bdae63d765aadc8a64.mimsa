@@ -1,0 +1,3 @@
+(\abc ->
+  \defVal ->
+    abc == defVal : a -> a -> Boolean)

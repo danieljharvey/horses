@@ -28,7 +28,7 @@ data Operator
   | LessThanOrEqualTo
   | Custom {opInfixOp :: InfixOp}
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
+  deriving anyclass (JSON.ToJSON, JSON.ToJSONKey, JSON.FromJSON)
 
 instance Printer Operator where
   prettyDoc Equals = "=="

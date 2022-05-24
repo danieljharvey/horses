@@ -502,10 +502,10 @@ spec =
                 (MTPrim mempty MTInt)
             )
       it "fromMaybe should fail typecheck when default does not match inner value" $ do
-        result <- eval testStdlib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe \"Horse\" (Just 1)"
+        result <- eval testStdlib "let fromMaybe = \\defVal -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> defVal) in fromMaybe \"Horse\" (Just 1)"
         result `shouldSatisfy` isLeft
       it "fromMaybe works when types match up" $ do
-        result <- eval testStdlib "let fromMaybe = \\def -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> def) in fromMaybe \"Horse\" (Just \"Dog\")"
+        result <- eval testStdlib "let fromMaybe = \\defVal -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> defVal) in fromMaybe \"Horse\" (Just \"Dog\")"
         result `shouldBe` Right (MTPrim mempty MTString, str' "Dog")
       it "True == \"dog\"" $ do
         result <- eval testStdlib "True == \"dog\""
@@ -1082,11 +1082,11 @@ spec =
         result `shouldSatisfy` isLeft
 
       it "should unify named type variables with themselves" $ do
-        result <- eval testStdlib "(\\abc -> \\def -> abc == def : a -> a -> Boolean)"
+        result <- eval testStdlib "(\\abc -> \\defVal -> abc == defVal : a -> a -> Boolean)"
         result `shouldSatisfy` isRight
 
       it "should not unify named type variables with one another" $ do
-        result <- eval testStdlib "(\\abc -> \\def -> abc == def: a -> b -> Boolean)"
+        result <- eval testStdlib "(\\abc -> \\defVal -> abc == defVal: a -> b -> Boolean)"
         result `shouldSatisfy` isLeft
 
       it "should typecheck when id has a specific type" $ do
@@ -1096,6 +1096,26 @@ spec =
       it "each type variable is unique to the scope it's introduced in" $ do
         result <- eval testStdlib "let (id1: a -> (a,a)) a = (a,a); let (id2: a -> a) b = b; id1 (id2 True)"
         result `shouldSatisfy` isRight
+
+      it "annotation does not match" $ do
+        result <- eval testStdlib "let (f: a -> String -> a) a b = if True then a else b"
+        result `shouldSatisfy` isLeft
+
+      xit "annotation does not match (1)" $ do
+        result <- eval testStdlib "(\\a -> \\b -> if True then a else b : String -> a -> String)"
+        result `shouldSatisfy` isLeft
+
+      xit "annotation does not match (2)" $ do
+        result <- eval testStdlib "(\\a -> \\b -> if True then a else b : a -> String -> a)"
+        result `shouldSatisfy` isLeft
+
+      xit "annotation does not match (3)" $ do
+        result <- eval testStdlib "(\\a -> a : a -> String)"
+        result `shouldSatisfy` isLeft
+
+      xit "annotation does not match (4)" $ do
+        result <- eval testStdlib "(\\a -> a : String -> a)"
+        result `shouldSatisfy` isLeft
 
     describe "check if" $ do
       it "spots mismatched predicate type" $ do

@@ -89,3 +89,14 @@ spec = do
                 [ (4, ["Dog", "Hello!", "Horse!", "Hello!"])
                 ]
       Actions.stOutputs newState `shouldBe` expectedOutputs
+    it "Detects missing deps" $ do
+      let inputs =
+            M.fromList
+              [ ( 1,
+                  Actions.Plan (S.singleton (100 :: Int)) ("100 doesn't exist" :: String)
+                ),
+                (2, Actions.Plan (S.fromList [101, 1]) "101 doesn't exist either")
+              ]
+          outputs = mempty
+          state = Actions.State inputs outputs
+      Actions.getMissing state `shouldBe` S.fromList [100, 101]
