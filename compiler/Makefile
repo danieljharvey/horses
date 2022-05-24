@@ -29,9 +29,6 @@ build-watch:
 test-watch:
 	stack test --file-watch --bench --no-run-benchmarks 
 
-errors-watch:
-	stack build --test --file-watch --bench --no-run-benchmarks mimsa:errors-test
-
 test:
 	stack test --bench --no-run-benchmarks
 

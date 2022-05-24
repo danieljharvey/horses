@@ -3,6 +3,7 @@ module Main
   )
 where
 
+import qualified Test.RenderErrors as RenderErrors
 import qualified Test.Actions.AddUnitTest as AddUnitTest
 import qualified Test.Actions.BindExpression as BindExpression
 import qualified Test.Actions.BindType as BindType
@@ -108,3 +109,4 @@ main =
     SimplifyPatterns.spec
     NumberVars.spec
     CheckModule.spec
+    RenderErrors.spec
