@@ -507,7 +507,7 @@ spec = do
             `shouldBe` [ "const Monoid = <A>(u1: (arg: A) => (arg: A) => A) => (a: A): Monoid<A> => ({ type: \"Monoid\", vars: [u1,a] }); "
                        ]
 
-    xdescribe "from parsed input" $ do
+    describe "from parsed input" $ do
       traverse_ testIt testCases
 
       it "simple expression" $ do
