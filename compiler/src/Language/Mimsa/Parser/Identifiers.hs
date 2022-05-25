@@ -27,7 +27,23 @@ import Language.Mimsa.Types.Modules.ModuleName
 
 varParser :: Parser ParserExpr
 varParser = 
-  myLexeme (withLocation (\ann -> MyVar ann Nothing) nameParser)
+  plainVarParser <|> try namespacedVarParser
+
+-- `dog`, `log`, `a`
+plainVarParser :: Parser ParserExpr
+plainVarParser =
+  myLexeme (withLocation (`MyVar` Nothing) nameParser)
+
+-- `Dog.log`, `Maybe.fmap`
+namespacedVarParser :: Parser ParserExpr
+namespacedVarParser =
+  let inner = do
+                    mName <- moduleNameParser
+                    myString "."
+                    MyVar mempty (Just mName) <$> nameParser
+  in 
+  myLexeme (addLocation inner)
+
 
 ---
 
