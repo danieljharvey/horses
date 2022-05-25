@@ -31,7 +31,7 @@ runUnifier (a, b) =
 
 spec :: Spec
 spec =
-  describe "Unify" $ do
+  fdescribe "Unify" $ do
     it "Two same things teach us nothing" $
       runUnifier (MTPrim mempty MTInt, MTPrim mempty MTInt)
         `shouldBe` Right mempty
@@ -51,6 +51,10 @@ spec =
     it "Does not combine a named var with a different named var" $
       runUnifier (MTVar mempty (TVName "a"), MTVar mempty (TVName "b"))
         `shouldSatisfy` isLeft
+    it "Does not combine a named var with a concrete type" $
+      runUnifier (MTVar mempty (TVName "a"), MTPrim mempty MTString)
+        `shouldSatisfy` isLeft
+
     it "Combines a var with the same var" $
       runUnifier (MTVar mempty (TVVar 1 "a"), MTVar mempty (TVVar 1 "a"))
         `shouldSatisfy` isRight
