@@ -1,1 +1,1 @@
-def doesntTypecheckBecauseAnnotation (a: String) = 1 + a
+def doesntTypecheckBecauseAnnotation (a: String): String = 1 + a

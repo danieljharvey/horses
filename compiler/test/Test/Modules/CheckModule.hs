@@ -24,9 +24,16 @@ import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
+import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Modules.Monad
 
 modulesPath :: FilePath
 modulesPath = "test/modules/"
+
+exprAndTypeFromParts' :: (Monoid ann) => [DefPart ann] ->
+  Expr Name ann ->
+  Either (Error Annotation) (Expr Name ann)
+exprAndTypeFromParts' parts expr = runCheck (exprAndTypeFromParts (DIName "test") parts expr)
 
 checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
@@ -98,11 +105,11 @@ spec = do
           `shouldSatisfy` \case
             Left (ModuleErr (DefDoesNotTypeCheck _ (DIName "doesntTypecheckBecauseAnnotation") _)) -> True
             _ -> False
-      it "8 is ok even with various amounts of partial type annotation" $ do
+      it "8 is broken because of partial type annotation" $ do
         let filePath = modulesPath <> "8.mimsa"
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
-          `shouldSatisfy` isRight
+          `shouldSatisfy` isLeft
       xit "9 fails to typecheck because we cannot have polymorphic id function with a set input type" $ do
         let filePath = modulesPath <> "9.mimsa"
         fileContents <- liftIO $ T.readFile filePath
@@ -117,22 +124,22 @@ spec = do
     describe "exprAndTypeFromParts" $ do
       it "No args" $ do
         let expr = unsafeParseExpr "100"
-        exprAndTypeFromParts mempty expr `shouldBe` expr
+        exprAndTypeFromParts' mempty expr `shouldBe` Right expr
       it "Single non-typed arg" $ do
         let expr = unsafeParseExpr "100"
             parts = [DefArg (Identifier () "a")]
-        exprAndTypeFromParts parts expr
-          `shouldBe` MyLambda mempty (Identifier mempty "a") expr
+        exprAndTypeFromParts' parts expr
+          `shouldBe` Right (MyLambda mempty (Identifier mempty "a") expr)
 
       it "Two non-typed args" $ do
         let expr = unsafeParseExpr "100"
             parts = [DefArg (Identifier () "a"), DefArg (Identifier () "b")]
-        exprAndTypeFromParts parts expr
-          `shouldBe` MyLambda
+        exprAndTypeFromParts' parts expr
+          `shouldBe` Right (MyLambda
             mempty
             (Identifier mempty "a")
             (MyLambda mempty (Identifier mempty "b") expr)
-
+          )
       it "Typed arg and return type" $ do
         let expr = unsafeParseExpr "True"
             parts =
@@ -140,31 +147,24 @@ spec = do
                 DefTypedArg (Identifier () "int") mtInt,
                 DefType mtBool
               ]
-        exprAndTypeFromParts parts expr
-          `shouldBe` MyAnnotation
+        exprAndTypeFromParts' parts expr
+          `shouldBe` Right (MyAnnotation
             mempty
             (mtFun mtString (mtFun mtInt mtBool))
             ( MyLambda
                 mempty
                 (Identifier mempty "str")
                 (MyLambda mempty (Identifier mempty "int") expr)
-            )
+            ))
 
-      it "Typed arg with no return type" $ do
+      it "Errors on typed arg but no return type" $ do
         let expr = unsafeParseExpr "True"
             parts =
               [ DefTypedArg (Identifier () "str") mtString,
                 DefTypedArg (Identifier () "int") mtInt
               ]
-        exprAndTypeFromParts parts expr
-          `shouldBe` MyAnnotation
-            mempty
-            (mtFun mtString (mtFun mtInt (mtVar "returnType")))
-            ( MyLambda
-                mempty
-                (Identifier mempty "str")
-                (MyLambda mempty (Identifier mempty "int") expr)
-            )
+        exprAndTypeFromParts' parts expr
+          `shouldSatisfy` isLeft 
 
       describe "Examples" $ do
         it "Empty file" $
@@ -283,46 +283,15 @@ spec = do
               expectedModule = mempty {moExpressions = exprs}
            in checkModule' "def returnFunc (a: String) : Int -> String = \\b -> a"
                 `shouldBe` Right expectedModule
+
         it "function where signature has partial types" $
-          -- here we just use the identifier as a type arg
-          -- feel this could blow up in our faces tbh
-          -- but will have to see how it works in practice
-          let exprs =
-                M.fromList
-                  [ ( DIName "const",
-                      MyAnnotation
-                        mempty
-                        (unsafeParseMonoType "String -> b -> String" $> mempty)
-                        ( unsafeParseExpr "\\a -> \\b -> a" $> mempty
-                        )
-                    )
-                  ]
-              expectedModule = mempty {moExpressions = exprs}
-           in checkModule' "def const (a: String) b : String = a"
-                `shouldBe` Right expectedModule
-
-        -- need to fix in typechecker
-        xit "function where signature has partial types" $
           checkModule' "def const (a: String) b : a = a"
-            `shouldSatisfy` isLeft
+            `shouldBe` Left (ModuleErr (DefMissingTypeAnnotation (DIName "const") "b")) 
 
-        it "function where signature has partial types but no return" $
-          -- here we add a placeholder return type
-          -- again, not sure about this, see how it works in practice
-          -- might need to add a specific type checker notion of `dont know`
-          -- that is turned into a unification variable once found
-          let exprs =
-                M.fromList
-                  [ ( DIName "const",
-                      MyAnnotation
-                        mempty
-                        (unsafeParseMonoType "String -> b -> returnType" $> mempty)
-                        (unsafeParseExpr "\\a -> \\b -> a" $> mempty)
-                    )
-                  ]
-              expectedModule = mempty {moExpressions = exprs}
-           in checkModule' "def const (a: String) b = a"
-                `shouldBe` Right expectedModule
+        it "function where signature has incomplete type annotations explodes" $
+           checkModule' "def const (a: String) b = a"
+                `shouldBe` Left (ModuleErr (DefMissingReturnType (DIName "const"))) 
+
         it "multiple functions with signatures" $
           let exprs =
                 M.fromList

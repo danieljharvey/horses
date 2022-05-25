@@ -1,7 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.FromParts (moduleFromModuleParts, exprAndTypeFromParts) where
@@ -84,7 +83,7 @@ moduleFromModuleParts parts =
                 }
           ModuleExpression name bits expr -> do
             errorIfExpressionAlreadyDefined mod' (DIName name)
-            let exp' = exprAndTypeFromParts bits expr
+            exp' <- exprAndTypeFromParts (DIName name) bits expr
             pure $
               mod'
                 { moExpressions =
@@ -157,13 +156,34 @@ addAnnotation mt expr =
         expr
     _ -> expr
 
+
+includesExplicitTypes :: [DefPart ann] -> Bool
+includesExplicitTypes =
+        any
+          ( \case
+              (DefArg _) -> False
+              _ -> True
+          )
+
+includesReturnType :: [DefPart ann] -> Bool
+includesReturnType =
+              any
+                ( \case
+                    (DefType _) -> True
+                    _ -> False
+                )
+
 -- given the bits of things, make a coherent type and expression
+-- 1) check we have any type annotations
+-- 2) if so - ensure we have a full set (error if not) and create annotation
+-- 3) if not, just return expr
 exprAndTypeFromParts ::
   (Monoid ann) =>
+  DefIdentifier ->
   [DefPart ann] ->
   Expr Name ann ->
-  Expr Name ann
-exprAndTypeFromParts parts expr =
+  CheckM (Expr Name ann)
+exprAndTypeFromParts def parts expr = do
   let expr' =
         foldr
           ( \part rest -> case part of
@@ -173,57 +193,31 @@ exprAndTypeFromParts parts expr =
           )
           expr
           parts
-      -- if we only have un-typed args, don't bother, we only want them as
-      -- placeholders
-      filteredParts =
-        let includesExplicitTypes =
-              any
-                ( \case
-                    (DefArg _) -> False
-                    _ -> True
-                )
-                parts
-            includesReturnType =
-              any
-                ( \case
-                    (DefType _) -> True
-                    _ -> False
-                )
-                parts
-         in if includesExplicitTypes
-              then
-                if includesReturnType
-                  then parts
-                  else parts <> [DefType (MTVar mempty (TVName "returnType"))]
-              else mempty
-      mt =
-        foldr
-          ( \part rest -> case part of
-              (DefArg (Identifier _ name)) -> case rest of
-                Just rest' ->
-                  Just
-                    ( MTFunction
-                        mempty
-                        (MTVar mempty (TVName (coerce name)))
-                        rest'
-                    )
-                Nothing ->
-                  Just
-                    ( MTVar
-                        mempty
-                        (TVName (coerce name))
-                    )
-              (DefTypedArg _ thisMt) -> case rest of
-                Just rest' ->
-                  Just
-                    (MTFunction mempty thisMt rest')
-                _ -> Just thisMt
-              (DefType thisMt) -> case rest of
-                Just rest' ->
-                  Just
-                    (MTFunction mempty rest' thisMt)
-                _ -> Just thisMt
-          )
-          Nothing
-          filteredParts
-   in addAnnotation mt expr'
+  -- if we only have un-typed args, don't bother, we only want them as
+  -- placeholders
+  if not (includesExplicitTypes parts)
+    then pure expr'
+    else do
+      if includesReturnType parts
+              then pure ()
+              else throwError (ModuleErr (DefMissingReturnType def))
+      mt <- foldr
+              ( \part mRest -> do
+                rest <- mRest
+                case part of
+                  (DefArg (Identifier _ name)) -> 
+                    throwError (ModuleErr (DefMissingTypeAnnotation def name))
+                  (DefTypedArg _ thisMt) -> pure $ case rest of
+                    Just rest' ->
+                      Just
+                        (MTFunction mempty thisMt rest')
+                    _ -> Just thisMt
+                  (DefType thisMt) -> pure $ case rest of
+                    Just rest' ->
+                      Just
+                        (MTFunction mempty rest' thisMt)
+                    _ -> Just thisMt
+              )
+              (pure Nothing)
+              parts
+      pure $ addAnnotation mt expr'

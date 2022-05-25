@@ -774,12 +774,14 @@ checkLambda env ann ident body tyBinder tyBody = do
     )
 
 check :: Environment -> TcExpr -> MonoType -> ElabM ElabExpr
-check env (MyLambda ann ident body) (MTFunction _ tyBinder tyBody) =
-  checkLambda env ann ident body tyBinder tyBody
-check env expr mt = do
-  typedExpr <- infer env expr
-  subs <- unify (expAnn typedExpr) mt
-  pure (applySubst subs typedExpr)
+check env expr mt =
+  case (expr, mt) of
+    (MyLambda ann ident body, MTFunction _ tyBinder tyBody) ->
+      checkLambda env ann ident body tyBinder tyBody
+    _ -> do
+      typedExpr <- infer env expr
+      subs <- unify (expAnn typedExpr) mt
+      pure (applySubst subs typedExpr)
 
 infer ::
   Environment ->

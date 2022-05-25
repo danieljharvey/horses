@@ -4,7 +4,7 @@ def id a = a
 
 def const a b = id a
 
-def exclaim (str: String) = str ++ "!!!!!!!"
+def exclaim (str: String): String = str ++ "!!!!!!!"
 
 def horse = "fucking horse"
 

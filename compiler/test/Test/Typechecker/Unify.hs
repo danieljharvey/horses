@@ -31,19 +31,23 @@ runUnifier (a, b) =
 
 spec :: Spec
 spec =
-  fdescribe "Unify" $ do
+  describe "Unify" $ do
     it "Two same things teach us nothing" $
       runUnifier (MTPrim mempty MTInt, MTPrim mempty MTInt)
         `shouldBe` Right mempty
+
     it "Combines a known with an unknown" $
       runUnifier (MTVar mempty (TVUnificationVar 1), MTPrim mempty MTInt)
         `shouldBe` Right (Substitutions $ M.singleton (TVUnificationVar 1) (MTPrim mempty MTInt))
+
     it "Combines a named var with a matching named var" $
       runUnifier (MTVar mempty (TVName "a"), MTVar mempty (TVName "a"))
         `shouldSatisfy` isRight
-    it "Combines a named var with a unification variable" $
+
+    it "Does not combines a named var with a unification variable" $
       runUnifier (MTVar mempty (TVName "a"), MTVar mempty (TVUnificationVar 1))
-        `shouldSatisfy` isRight
+        `shouldSatisfy` isLeft
+
     it "Combines a named/numbered var with a unification variable" $
       runUnifier (MTVar mempty (TVVar 1 "a"), MTVar mempty (TVUnificationVar 1))
         `shouldSatisfy` isRight
@@ -51,6 +55,7 @@ spec =
     it "Does not combine a named var with a different named var" $
       runUnifier (MTVar mempty (TVName "a"), MTVar mempty (TVName "b"))
         `shouldSatisfy` isLeft
+
     it "Does not combine a named var with a concrete type" $
       runUnifier (MTVar mempty (TVName "a"), MTPrim mempty MTString)
         `shouldSatisfy` isLeft
@@ -58,15 +63,23 @@ spec =
     it "Combines a var with the same var" $
       runUnifier (MTVar mempty (TVVar 1 "a"), MTVar mempty (TVVar 1 "a"))
         `shouldSatisfy` isRight
+
     it "Does not combines a var with the same var" $
       runUnifier (MTVar mempty (TVVar 2 "a"), MTVar mempty (TVVar 1 "a"))
         `shouldSatisfy` isLeft
+
     it "Does not combines a var with a different var" $
       runUnifier (MTVar mempty (TVVar 2 "b"), MTVar mempty (TVVar 1 "a"))
         `shouldSatisfy` isLeft
+
     it "Does not unify a concrete type with a named var" $
       runUnifier (MTVar mempty (TVName "a"), MTPrim mempty MTInt)
         `shouldSatisfy` isLeft
+
+    it "Does not unify a concrete type with a numbered var" $
+      runUnifier (MTVar mempty (TVVar 1 "a"), MTPrim mempty MTBool)
+        `shouldSatisfy` isLeft
+
     it "Combines two half pairs" $
       runUnifier
         ( MTPair mempty (MTVar mempty (TVUnificationVar 1)) (MTPrim mempty MTInt),
@@ -79,6 +92,7 @@ spec =
                   (TVUnificationVar 2, MTPrim mempty MTInt)
                 ]
           )
+
     describe "Constructors" $ do
       it "Combines a Maybe" $ do
         runUnifier
