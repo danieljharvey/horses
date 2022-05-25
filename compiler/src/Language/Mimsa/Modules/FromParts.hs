@@ -4,6 +4,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.FromParts (moduleFromModuleParts, exprAndTypeFromParts) where
+import Language.Mimsa.Types.Modules.DefIdentifier
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -106,6 +107,8 @@ moduleFromModuleParts parts =
                     M.singleton (DIInfix infixOp) expr
                       <> moExpressions mod'
                 }
+          ModuleImport (ImportNamedFromHash mHash mName) -> 
+            pure $ mod' { moNamedImports = M.singleton mName mHash <> moNamedImports mod' }
           ModuleImport (ImportAllFromHash mHash) -> do
             importMod <- lookupModule mHash
             let defImports =

@@ -2,13 +2,13 @@ module Language.Mimsa.Modules.Uses
   ( extractUses,
   )
 where
+import Language.Mimsa.Types.Modules.DefIdentifier
 
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.Module
 
 -- find all uses of external vars, types, infix operators etc
 -- used in dependency analysis

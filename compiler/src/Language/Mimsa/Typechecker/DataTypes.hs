@@ -128,6 +128,7 @@ inferDataConstructor env ann tyCon = do
       pure (constructorToType tyArg)
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
+-- which vars are used in this type?
 getVariablesForField :: Type ann -> Set Name
 getVariablesForField (MTVar _ (TVVar _ name)) = S.singleton name
 getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)

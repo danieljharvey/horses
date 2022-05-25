@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Modules.Check (checkModule) where
+import Language.Mimsa.Types.Modules.DefIdentifier
 
 import Control.Monad.Except
 import Control.Monad.Reader

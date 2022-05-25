@@ -101,7 +101,19 @@ parseHash =
       )
 
 parseImport :: Parser [ModuleItem Annotation]
-parseImport = do
+parseImport = parseImportAll <|> parseImportNamed
+
+parseImportNamed :: Parser [ModuleItem Annotation]
+parseImportNamed = do
+  myString "import"
+  modName <- moduleNameParser 
+  myString "from"
+  hash <- parseHash
+  pure [ModuleImport (ImportNamedFromHash hash modName)]
+
+
+parseImportAll :: Parser [ModuleItem Annotation]
+parseImportAll = do
   myString "import"
   myString "*"
   myString "from"

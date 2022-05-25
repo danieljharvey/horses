@@ -6,6 +6,7 @@ module Language.Mimsa.Modules.Prelude (prelude, preludeHash) where
 -- this is not The Way however we have a chicken/egg situation in terms of
 -- implementing imports/exports/other modules so this should unblock us
 --
+import Language.Mimsa.Types.Modules.DefIdentifier
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -27,7 +28,8 @@ prelude =
       moExpressionExports = S.singleton (DIName "fst"),
       moExpressionImports = mempty,
       moDataTypeExports = S.singleton "Either",
-      moDataTypeImports = mempty
+      moDataTypeImports = mempty,
+      moNamedImports = mempty
     }
   where
     exprs =

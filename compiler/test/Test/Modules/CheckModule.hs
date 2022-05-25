@@ -5,6 +5,7 @@ module Test.Modules.CheckModule
   ( spec,
   )
 where
+import Language.Mimsa.Types.Modules.DefIdentifier
 
 import Control.Monad.IO.Class
 import Data.Either
@@ -382,5 +383,13 @@ spec = do
                 [ "type Maybe a = Just a | Nothing",
                   "import * from " <> prettyPrint preludeHash
                 ]
+            )
+            `shouldSatisfy` isRight
+        it "Uses Either from Prelude with named import" $
+          checkModuleType
+            (joinLines 
+              ["import Prelude from " <> prettyPrint preludeHash,
+              "def withFst = Prelude.fst (True, 1)"
+              ]
             )
             `shouldSatisfy` isRight

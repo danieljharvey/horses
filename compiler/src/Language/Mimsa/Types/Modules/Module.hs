@@ -7,12 +7,13 @@
 module Language.Mimsa.Types.Modules.Module
   ( Module (..),
     DefPart (..),
-    DefIdentifier (..),
     ModuleItem (..),
     Import (..),
   )
 where
 
+import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Types.Modules.DefIdentifier
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -43,15 +44,6 @@ data DefPart ann
     DefType (Type ann)
   deriving stock (Eq, Ord, Show)
 
--- | what are we typechecking here?
-data DefIdentifier = DIName Name | DIInfix InfixOp
-  deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.ToJSONKey)
-
-instance Printer DefIdentifier where
-  prettyPrint (DIName name) = prettyPrint name
-  prettyPrint (DIInfix infixOp) = prettyPrint infixOp
-
 -- item parsed from file, kept like this so we can order them and have
 -- duplicates
 -- we will remove duplicates when we work out dependencies between everything
@@ -65,7 +57,8 @@ data ModuleItem ann
   | ModuleInfix InfixOp (Expr Name ann)
 
 -- going to want way more granularity here in future but _shrug_
-newtype Import = ImportAllFromHash ModuleHash
+data Import = ImportAllFromHash ModuleHash | 
+        ImportNamedFromHash ModuleHash ModuleName 
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
@@ -75,7 +68,8 @@ data Module ann = Module
     moExpressionImports :: Map DefIdentifier ModuleHash, -- what we imported, where it's from
     moDataTypes :: Map TypeName DataType,
     moDataTypeExports :: Set TypeName, -- which types to export
-    moDataTypeImports :: Map TypeName ModuleHash -- what we imported, where its from
+    moDataTypeImports :: Map TypeName ModuleHash, -- what we imported, where its from,
+    moNamedImports :: Map ModuleName ModuleHash -- `import sdfsdf as Prelude`..
   }
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (JSON.ToJSON)
@@ -154,12 +148,13 @@ printDefinition mod' def expr =
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
 
 instance Semigroup (Module ann) where
-  (Module a b c d e f) <> (Module a' b' c' d' e' f') =
-    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
+  (Module a b c d e f g) <> (Module a' b' c' d' e' f' g') =
+    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') (g <> g')
 
 instance Monoid (Module ann) where
   mempty =
     Module
+      mempty
       mempty
       mempty
       mempty
