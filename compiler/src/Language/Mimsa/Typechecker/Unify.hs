@@ -28,21 +28,19 @@ varBind ::
   TypeIdentifier ->
   MonoType ->
   m Substitutions
-varBind ann var@(TVName _) mt@(MTVar _ (TVUnificationVar _)) =
-  -- named vars always combine with unification vars
+varBind ann var@(TVName _) _ =
+  -- these should always be scoped when found, so if we find them, error
+  throwError (UnscopedTypeVarFound ann var)
+varBind ann var@(TVVar _ _) mt@(MTVar _ (TVUnificationVar _)) =
+  -- numbered vars always combine with unification vars
   pure (Substitutions (M.singleton var (mt $> ann)))
-varBind ann var@(TVName nameA) mt@(MTVar _ (TVName nameB)) =
-  -- names must match to unify
-  if nameA == nameB
-    then pure (Substitutions (M.singleton var (mt $> ann)))
-    else throwError (UnificationError mt (MTVar ann var))
 varBind ann var@(TVVar a nameA) mt@(MTVar _ (TVVar b nameB)) =
   -- names and numbers must match to unify
   if nameA == nameB && a == b
     then pure (Substitutions (M.singleton var (mt $> ann)))
     else throwError (UnificationError mt (MTVar ann var))
-varBind ann var@(TVName _) mt =
-  -- named vars don't unify with non-variable values
+varBind ann var@(TVVar _ _) mt =
+  -- named vars only unify with themselves
   throwError (UnificationError mt (MTVar ann var))
 varBind ann var mt
   | typeEquals mt (MTVar mempty var) = pure mempty

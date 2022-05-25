@@ -184,16 +184,21 @@ spec = do
           startInference expr $
             Left (UnificationError mtString mtInt)
 
-        it "Applies concrete value to annotated polymorphic function" $ do
+        it "Applies concrete value to annotated polymorphic function after let generalisation" $ do
           let expr =
-                MyApp
+                MyLet
                   mempty
+                  (Identifier mempty "f")
                   ( MyAnnotation
                       mempty
                       (MTFunction mempty (MTVar mempty (TVName "a")) (MTVar mempty (TVName "a")))
                       (MyLambda mempty (Identifier mempty "a") (MyVar mempty "a"))
                   )
-                  (bool True)
+                  ( MyApp
+                      mempty
+                      (MyVar mempty "f")
+                      (bool True)
+                  )
           startInference expr $
             Right mtBool
       it "infers let binding with recursion 0" $ do

@@ -1101,20 +1101,20 @@ spec =
         result <- eval testStdlib "let (f: a -> String -> a) a b = if True then a else b"
         result `shouldSatisfy` isLeft
 
-      xit "annotation does not match (1)" $ do
-        result <- eval testStdlib "(\\a -> \\b -> if True then a else b : String -> a -> String)"
+      it "annotation does not match (1)" $ do
+        result <- eval testStdlib "(\\a -> \\b -> if True then a else b : String -> a -> String) \"Hi\" \"Lo\""
         result `shouldSatisfy` isLeft
 
-      xit "annotation does not match (2)" $ do
-        result <- eval testStdlib "(\\a -> \\b -> if True then a else b : a -> String -> a)"
+      it "annotation does not match (2)" $ do
+        result <- eval testStdlib "(\\a -> \\b -> if True then a else b : a -> String -> a) \"Hi\" \"Lo\""
         result `shouldSatisfy` isLeft
 
-      xit "annotation does not match (3)" $ do
-        result <- eval testStdlib "(\\a -> a : a -> String)"
+      it "annotation does not match (3)" $ do
+        result <- eval testStdlib "(\\a -> a : a -> String) \"Hi\""
         result `shouldSatisfy` isLeft
 
-      xit "annotation does not match (4)" $ do
-        result <- eval testStdlib "(\\a -> a : String -> a)"
+      it "annotation does not match (4)" $ do
+        result <- eval testStdlib "(\\a -> a : String -> a) \"Hi\""
         result `shouldSatisfy` isLeft
 
     describe "check if" $ do

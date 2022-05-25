@@ -61,6 +61,7 @@ data TypeErrorF var ann
   | IfPredicateIsNotBoolean ann (Type ann)
   | FunctionArgumentMismatch ann (Type ann) (Type ann)
   | ApplicationToNonFunction ann (Type ann)
+  | UnscopedTypeVarFound ann TypeIdentifier
   deriving stock (Eq, Ord, Show, Foldable)
 
 type TypeError = TypeErrorF Name Annotation
@@ -223,6 +224,10 @@ renderTypeError (VariableNotFound _ available name) =
               (prettyPrint <$> S.toList available)
           )
         <+> "]"
+renderTypeError (UnscopedTypeVarFound _ typeVar) =
+  [ "Unscoped type var found: " <> prettyDoc typeVar,
+    "This is an implementation error, please complain on Github or write a mean tweet"
+  ]
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)

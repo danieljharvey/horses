@@ -84,7 +84,7 @@ addTypedHole env ann name = do
                 <> M.singleton name (ann, i, localTypeMap)
           }
     )
-  pure $ MTVar ann (TVVar i name)
+  pure $ MTVar ann (TVUnificationVar i)
 
 -- capture type schemes currently in scope
 -- instantiate them now
@@ -109,14 +109,14 @@ getTypedHoles ::
   m (Map Name (MonoType, Map Name MonoType))
 getTypedHoles subs'@(Substitutions subs) = do
   holes <- gets tcsTypedHoles
-  let getMonoType name (ann, i, localTypeMap) =
-        case M.lookup (TVVar i name) subs of
+  let getMonoType _ (ann, i, localTypeMap) =
+        case M.lookup (TVUnificationVar i) subs of
           Just a ->
             ( applySubst subs' a,
               applySubst subs' localTypeMap
             )
           Nothing ->
-            ( applySubst subs' (MTVar ann (TVVar i name)),
+            ( applySubst subs' (MTVar ann (TVUnificationVar i)),
               applySubst subs' localTypeMap
             )
   pure $ M.mapWithKey getMonoType holes
