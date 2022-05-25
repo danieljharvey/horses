@@ -16,21 +16,23 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
+import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Modules.Monad
 
 modulesPath :: FilePath
 modulesPath = "test/modules/"
 
-exprAndTypeFromParts' :: (Monoid ann) => [DefPart ann] ->
+exprAndTypeFromParts' ::
+  (Monoid ann) =>
+  [DefPart ann] ->
   Expr Name ann ->
   Either (Error Annotation) (Expr Name ann)
 exprAndTypeFromParts' parts expr = runCheck (exprAndTypeFromParts (DIName "test") parts expr)
@@ -135,11 +137,12 @@ spec = do
         let expr = unsafeParseExpr "100"
             parts = [DefArg (Identifier () "a"), DefArg (Identifier () "b")]
         exprAndTypeFromParts' parts expr
-          `shouldBe` Right (MyLambda
-            mempty
-            (Identifier mempty "a")
-            (MyLambda mempty (Identifier mempty "b") expr)
-          )
+          `shouldBe` Right
+            ( MyLambda
+                mempty
+                (Identifier mempty "a")
+                (MyLambda mempty (Identifier mempty "b") expr)
+            )
       it "Typed arg and return type" $ do
         let expr = unsafeParseExpr "True"
             parts =
@@ -148,14 +151,16 @@ spec = do
                 DefType mtBool
               ]
         exprAndTypeFromParts' parts expr
-          `shouldBe` Right (MyAnnotation
-            mempty
-            (mtFun mtString (mtFun mtInt mtBool))
-            ( MyLambda
+          `shouldBe` Right
+            ( MyAnnotation
                 mempty
-                (Identifier mempty "str")
-                (MyLambda mempty (Identifier mempty "int") expr)
-            ))
+                (mtFun mtString (mtFun mtInt mtBool))
+                ( MyLambda
+                    mempty
+                    (Identifier mempty "str")
+                    (MyLambda mempty (Identifier mempty "int") expr)
+                )
+            )
 
       it "Errors on typed arg but no return type" $ do
         let expr = unsafeParseExpr "True"
@@ -164,7 +169,7 @@ spec = do
                 DefTypedArg (Identifier () "int") mtInt
               ]
         exprAndTypeFromParts' parts expr
-          `shouldSatisfy` isLeft 
+          `shouldSatisfy` isLeft
 
       describe "Examples" $ do
         it "Empty file" $
@@ -286,11 +291,11 @@ spec = do
 
         it "function where signature has partial types" $
           checkModule' "def const (a: String) b : a = a"
-            `shouldBe` Left (ModuleErr (DefMissingTypeAnnotation (DIName "const") "b")) 
+            `shouldBe` Left (ModuleErr (DefMissingTypeAnnotation (DIName "const") "b"))
 
         it "function where signature has incomplete type annotations explodes" $
-           checkModule' "def const (a: String) b = a"
-                `shouldBe` Left (ModuleErr (DefMissingReturnType (DIName "const"))) 
+          checkModule' "def const (a: String) b = a"
+            `shouldBe` Left (ModuleErr (DefMissingReturnType (DIName "const")))
 
         it "multiple functions with signatures" $
           let exprs =

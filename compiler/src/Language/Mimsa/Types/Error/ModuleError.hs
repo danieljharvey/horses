@@ -25,7 +25,7 @@ data ModuleError
   | MissingModuleDep DefIdentifier ModuleHash
   | MissingModuleTypeDep TypeName ModuleHash
   | DefMissingReturnType DefIdentifier
-  | DefMissingTypeAnnotation DefIdentifier Name 
+  | DefMissingTypeAnnotation DefIdentifier Name
   deriving stock (Eq, Ord, Show)
 
 instance Printer ModuleError where
@@ -53,7 +53,6 @@ instance Printer ModuleError where
     "Definition " <> prettyPrint defName <> " was expected to have a return type but it is missing"
   prettyPrint (DefMissingTypeAnnotation defName name) =
     "Argument " <> prettyPrint name <> " in " <> prettyPrint defName <> " was expected to have a type annotation but it does not."
-
 
 moduleErrorDiagnostic :: ModuleError -> Diagnostic Text
 moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) = typeErrorDiagnostic input typeErr

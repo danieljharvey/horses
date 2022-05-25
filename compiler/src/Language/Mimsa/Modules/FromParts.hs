@@ -156,22 +156,21 @@ addAnnotation mt expr =
         expr
     _ -> expr
 
-
 includesExplicitTypes :: [DefPart ann] -> Bool
 includesExplicitTypes =
-        any
-          ( \case
-              (DefArg _) -> False
-              _ -> True
-          )
+  any
+    ( \case
+        (DefArg _) -> False
+        _ -> True
+    )
 
 includesReturnType :: [DefPart ann] -> Bool
 includesReturnType =
-              any
-                ( \case
-                    (DefType _) -> True
-                    _ -> False
-                )
+  any
+    ( \case
+        (DefType _) -> True
+        _ -> False
+    )
 
 -- given the bits of things, make a coherent type and expression
 -- 1) check we have any type annotations
@@ -199,25 +198,26 @@ exprAndTypeFromParts def parts expr = do
     then pure expr'
     else do
       if includesReturnType parts
-              then pure ()
-              else throwError (ModuleErr (DefMissingReturnType def))
-      mt <- foldr
-              ( \part mRest -> do
-                rest <- mRest
-                case part of
-                  (DefArg (Identifier _ name)) -> 
-                    throwError (ModuleErr (DefMissingTypeAnnotation def name))
-                  (DefTypedArg _ thisMt) -> pure $ case rest of
-                    Just rest' ->
-                      Just
-                        (MTFunction mempty thisMt rest')
-                    _ -> Just thisMt
-                  (DefType thisMt) -> pure $ case rest of
-                    Just rest' ->
-                      Just
-                        (MTFunction mempty rest' thisMt)
-                    _ -> Just thisMt
-              )
-              (pure Nothing)
-              parts
+        then pure ()
+        else throwError (ModuleErr (DefMissingReturnType def))
+      mt <-
+        foldr
+          ( \part mRest -> do
+              rest <- mRest
+              case part of
+                (DefArg (Identifier _ name)) ->
+                  throwError (ModuleErr (DefMissingTypeAnnotation def name))
+                (DefTypedArg _ thisMt) -> pure $ case rest of
+                  Just rest' ->
+                    Just
+                      (MTFunction mempty thisMt rest')
+                  _ -> Just thisMt
+                (DefType thisMt) -> pure $ case rest of
+                  Just rest' ->
+                    Just
+                      (MTFunction mempty rest' thisMt)
+                  _ -> Just thisMt
+          )
+          (pure Nothing)
+          parts
       pure $ addAnnotation mt expr'
