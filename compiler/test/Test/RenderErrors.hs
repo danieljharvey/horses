@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Main where
+module Test.RenderErrors (spec) where
 
 -- this prints out loads of errors so we can look at them and decide if they
 -- look bad
@@ -86,6 +86,3 @@ spec =
         printError stdlib "(\\a -> a + 1) True"
       it "Applies two args to single arity func" $ do
         printError stdlib "let f a = a + 1; f 1 True"
-
-main :: IO ()
-main = hspec spec

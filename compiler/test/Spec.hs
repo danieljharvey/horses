@@ -29,6 +29,7 @@ import qualified Test.Project.SourceSpan as SourceSpan
 import qualified Test.Project.Stdlib as Stdlib
 import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.Usages as Usages
+import qualified Test.RenderErrors as RenderErrors
 import qualified Test.Serialisation as Serialisation
 import qualified Test.Store.Resolver as Resolver
 import qualified Test.Store.UpdateDeps as UpdateDeps
@@ -108,3 +109,4 @@ main =
     SimplifyPatterns.spec
     NumberVars.spec
     CheckModule.spec
+    RenderErrors.spec
