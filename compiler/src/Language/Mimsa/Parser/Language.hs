@@ -215,7 +215,7 @@ recordItemParser = do
 punnedRecordItemParser :: Parser (Name, ParserExpr)
 punnedRecordItemParser = do
   name <- nameParser
-  pure (name, MyVar mempty name)
+  pure (name, MyVar mempty Nothing name)
 
 -----
 

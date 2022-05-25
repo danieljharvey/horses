@@ -53,8 +53,10 @@ interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)
 interpretExpr' (MyAnnotation _ _ expr) = interpretExpr' expr
 interpretExpr' (MyLet _ ident expr body) =
   interpretLet interpretExpr ident expr body
-interpretExpr' (MyVar _ var) =
+interpretExpr' (MyVar _ Nothing var) =
   lookupVar var >>= interpretExpr
+interpretExpr' (MyVar _ (Just _) _var) =
+  error "namespaced var oh no" 
 interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
   -- capture current environment
   stackFrame <-

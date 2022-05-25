@@ -33,8 +33,8 @@ spec = do
                 (Identifier mempty "x")
                 ( MyPair
                     mempty
-                    (MyVar mempty "x")
-                    (MyLambda mempty (Identifier mempty "x") (MyVar mempty "x"))
+                    (MyVar mempty Nothing "x")
+                    (MyLambda mempty (Identifier mempty "x") (MyVar mempty Nothing "x"))
                 )
             expected =
               MyLambda
@@ -42,12 +42,12 @@ spec = do
                 (Identifier mempty ("x", Unique 0))
                 ( MyPair
                     mempty
-                    (MyVar mempty ("x", Unique 0))
+                    (MyVar mempty Nothing ("x", Unique 0))
                     ( MyLambda
                         mempty
                         ( Identifier mempty ("x", Unique 1)
                         )
-                        (MyVar mempty ("x", Unique 1))
+                        (MyVar mempty Nothing ("x", Unique 1))
                     )
                 )
             ans = testAddNumbers (StoreExpression expr mempty mempty)
@@ -61,8 +61,8 @@ spec = do
               ( MyPatternMatch
                   mempty
                   (int 1)
-                  [ (PLit mempty (MyInt 1), MyVar mempty "a"),
-                    (PWildcard mempty, MyVar mempty "a")
+                  [ (PLit mempty (MyInt 1), MyVar mempty Nothing "a"),
+                    (PWildcard mempty, MyVar mempty Nothing "a")
                   ]
               )
           expected =
@@ -72,8 +72,8 @@ spec = do
               ( MyPatternMatch
                   mempty
                   (MyLiteral mempty (MyInt 1))
-                  [ (PLit mempty (MyInt 1), MyVar mempty ("a", Unique 0)),
-                    (PWildcard mempty, MyVar mempty ("a", Unique 0))
+                  [ (PLit mempty (MyInt 1), MyVar mempty Nothing ("a", Unique 0)),
+                    (PWildcard mempty, MyVar mempty Nothing ("a", Unique 0))
                   ]
               )
 
@@ -88,9 +88,9 @@ spec = do
               ( MyPatternMatch
                   mempty
                   (int 1)
-                  [ (PWildcard mempty, MyVar mempty "a"),
-                    (PVar mempty "a", MyVar mempty "a"),
-                    (PWildcard mempty, MyVar mempty "a")
+                  [ (PWildcard mempty, MyVar mempty Nothing "a"),
+                    (PVar mempty "a", MyVar mempty Nothing "a"),
+                    (PWildcard mempty, MyVar mempty Nothing "a")
                   ]
               )
           expected =
@@ -100,9 +100,9 @@ spec = do
               ( MyPatternMatch
                   mempty
                   (int 1)
-                  [ (PWildcard mempty, MyVar mempty ("a", Unique 0)),
-                    (PVar mempty ("a", Unique 1), MyVar mempty ("a", Unique 1)),
-                    (PWildcard mempty, MyVar mempty ("a", Unique 0))
+                  [ (PWildcard mempty, MyVar mempty Nothing ("a", Unique 0)),
+                    (PVar mempty ("a", Unique 1), MyVar mempty Nothing ("a", Unique 1)),
+                    (PWildcard mempty, MyVar mempty Nothing ("a", Unique 0))
                   ]
               )
           ans = testAddNumbers (StoreExpression expr mempty mempty)
@@ -117,7 +117,7 @@ spec = do
                   mempty
                   (PVar mempty "a")
                   (int 1)
-                  (MyVar mempty "a")
+                  (MyVar mempty Nothing "a")
               )
           expected =
             MyLambda
@@ -127,7 +127,7 @@ spec = do
                   mempty
                   (PVar mempty ("a", Unique 1))
                   (int 1)
-                  (MyVar mempty ("a", Unique 1))
+                  (MyVar mempty Nothing ("a", Unique 1))
               )
 
           ans = testAddNumbers (StoreExpression expr mempty mempty)
@@ -135,19 +135,19 @@ spec = do
 
     it "Fails if can't find outside dep" $ do
       let expr =
-            MyVar mempty "what"
+            MyVar mempty Nothing "what"
           ans = testAddNumbers (StoreExpression expr mempty mempty)
       ans `shouldBe` Left (NameNotFoundInScope mempty mempty "what")
 
     it "Outside deps are assigned a number" $ do
       let hash = ExprHash "123"
       let expr =
-            MyApp mempty (MyVar mempty "id") (MyVar mempty "id")
+            MyApp mempty (MyVar mempty Nothing "id") (MyVar mempty Nothing "id")
           expected =
             MyApp
               mempty
-              (MyVar mempty ("id", Dependency hash))
-              (MyVar mempty ("id", Dependency hash))
+              (MyVar mempty Nothing ("id", Dependency hash))
+              (MyVar mempty Nothing ("id", Dependency hash))
           bindings = Bindings (M.singleton "id" hash)
           ans = testAddNumbers (StoreExpression expr bindings mempty)
       ans `shouldBe` Right expected

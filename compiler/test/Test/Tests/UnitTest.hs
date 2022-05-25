@@ -26,7 +26,7 @@ testExpr =
     mempty
     Equals
     (int 1)
-    (MyApp mempty (MyVar mempty "incrementInt") (int 1))
+    (MyApp mempty (MyVar mempty Nothing "incrementInt") (int 1))
 
 incrementIntH :: ExprHash
 incrementIntH = getHashOfName testStdlib "incrementInt"
@@ -46,7 +46,7 @@ testingIdExpr =
   MyInfix
     mempty
     Equals
-    (MyApp mempty (MyVar mempty "id") (int 100))
+    (MyApp mempty (MyVar mempty Nothing "id") (int 100))
     (int 100)
 
 testingStoreExpr :: StoreExpression Annotation
@@ -62,7 +62,7 @@ altIdStoreExpr =
     ( MyLambda
         mempty
         (Identifier mempty "b")
-        (MyVar mempty "b")
+        (MyVar mempty Nothing "b")
     )
     mempty
     mempty

@@ -154,8 +154,8 @@ markImports ::
   (Ord var, Show var, Show ann) =>
   Expr var ann ->
   App var ann (NumberedExpr var ann)
-markImports (MyVar ann var) =
-  MyVar ann <$> getVar ann var
+markImports (MyVar ann modName var) =
+  MyVar ann modName <$> getVar ann var
 markImports (MyAnnotation ann mt expr) =
   MyAnnotation ann mt
     <$> markImports expr

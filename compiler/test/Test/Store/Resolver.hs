@@ -43,14 +43,14 @@ spec =
         extractVars' (int 1) `shouldBe` mempty
         extractVars' (str (StringType "poo")) `shouldBe` mempty
       it "Finds a var" $
-        extractVars' (MyVar mempty (Name "dog")) `shouldBe` S.singleton (Name "dog")
+        extractVars' (MyVar mempty Nothing (Name "dog")) `shouldBe` S.singleton (Name "dog")
       it "Finds the vars in an if" $
         extractVars'
           ( MyIf
               mempty
-              (MyVar mempty (Name "one"))
-              (MyVar mempty (Name "two"))
-              (MyVar mempty (Name "three"))
+              (MyVar mempty Nothing (Name "one"))
+              (MyVar mempty Nothing (Name "two"))
+              (MyVar mempty Nothing (Name "three"))
           )
           `shouldBe` S.fromList [Name "one", Name "two", Name "three"]
       it "Does not include var introduced in Let" $
@@ -58,8 +58,8 @@ spec =
           ( MyLet
               mempty
               (Identifier mempty (Name "newVar"))
-              (MyApp mempty (MyVar mempty (Name "keep")) (int 1))
-              (MyVar mempty (Name "newVar"))
+              (MyApp mempty (MyVar mempty Nothing (Name "keep")) (int 1))
+              (MyVar mempty Nothing (Name "newVar"))
           )
           `shouldBe` S.singleton (Name "keep")
       it "Does not introduce vars introduced in lambda" $
@@ -69,8 +69,8 @@ spec =
               (Identifier mempty $ Name "newVar")
               ( MyApp
                   mempty
-                  (MyVar mempty (Name "keep"))
-                  (MyVar mempty (Name "newVar"))
+                  (MyVar mempty Nothing (Name "keep"))
+                  (MyVar mempty Nothing (Name "newVar"))
               )
           )
           `shouldBe` S.singleton (Name "keep")
@@ -101,12 +101,12 @@ spec =
                 }
             )
       it "Looks for vars and can't find them" $
-        createStoreExpression' mempty mempty (MyVar mempty (Name "missing"))
+        createStoreExpression' mempty mempty (MyVar mempty Nothing (Name "missing"))
           `shouldBe` Left
             (MissingBinding "missing" mempty)
       it "Looks for vars and finds them" $ do
         let hash = exprHash 1234
-            expr = MyVar mempty (Name "missing")
+            expr = MyVar mempty Nothing (Name "missing")
             bindings' = Bindings $ M.singleton (Name "missing") hash
             storeExpr = createStoreExpression' bindings' mempty expr
         storeExpr

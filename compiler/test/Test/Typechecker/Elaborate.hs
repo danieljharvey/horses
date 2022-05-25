@@ -62,13 +62,13 @@ spec = do
                 (Location 1 2)
                 (Identifier (Location 7 8) "a")
                 (MyLiteral (Location 3 4) (MyInt 1))
-                (MyVar (Location 5 6) "a")
+                (MyVar (Location 5 6) Nothing "a")
             expected =
               MyLet
                 (MTPrim (Location 1 2) MTInt)
                 (Identifier (MTPrim (Location 7 8) MTInt) "a")
                 (MyLiteral (MTPrim (Location 3 4) MTInt) (MyInt 1))
-                (MyVar (MTPrim (Location 5 6) MTInt) "a")
+                (MyVar (MTPrim (Location 5 6) MTInt) Nothing "a")
         startElaborate (StoreExpression expr mempty mempty) expected
 
       it "infers let binding" $ do
@@ -92,13 +92,13 @@ spec = do
                 mempty
                 (Identifier mempty "x")
                 (int 42)
-                (MyVar mempty "x")
+                (MyVar mempty Nothing "x")
             expected =
               MyLet
                 (MTPrim mempty MTInt)
                 (Identifier (MTPrim mempty MTInt) "x")
                 (MyLiteral (MTPrim mempty MTInt) (MyInt 42))
-                ( MyVar (MTPrim mempty MTInt) "x"
+                ( MyVar (MTPrim mempty MTInt) Nothing "x"
                 )
         startElaborate (StoreExpression expr mempty mempty) expected
 
@@ -112,16 +112,16 @@ spec = do
                     (Identifier mempty "bool")
                     ( MyIf
                         mempty
-                        (MyVar mempty "bool")
+                        (MyVar mempty Nothing "bool")
                         (bool True)
                         ( MyApp
                             mempty
-                            (MyVar mempty "dec")
+                            (MyVar mempty Nothing "dec")
                             (bool False)
                         )
                     )
                 )
-                (MyVar mempty "dec")
+                (MyVar mempty Nothing "dec")
             expected =
               MyLet
                 (MTFunction mempty mtBool mtBool)
@@ -131,19 +131,20 @@ spec = do
                     (Identifier mtBool "bool")
                     ( MyIf
                         mtBool
-                        (MyVar mtBool "bool")
+                        (MyVar mtBool Nothing "bool")
                         (MyLiteral mtBool (MyBool True))
                         ( MyApp
                             mtBool
                             ( MyVar
                                 (MTFunction mempty mtBool mtBool)
+                                Nothing
                                 "dec"
                             )
                             (MyLiteral mtBool (MyBool False))
                         )
                     )
                 )
-                (MyVar (MTFunction mempty mtBool mtBool) "dec")
+                (MyVar (MTFunction mempty mtBool mtBool) Nothing "dec")
         startElaborate (StoreExpression expr mempty mempty) expected
 
       it "infers let binding with recursion 1" $ do
@@ -156,16 +157,16 @@ spec = do
                     (Identifier mempty "bool")
                     ( MyIf
                         mempty
-                        (MyVar mempty "bool")
+                        (MyVar mempty Nothing "bool")
                         (bool True)
                         ( MyApp
                             mempty
-                            (MyVar mempty "dec")
+                            (MyVar mempty Nothing "dec")
                             (bool False)
                         )
                     )
                 )
-                (MyApp mempty (MyVar mempty "dec") (bool False))
+                (MyApp mempty (MyVar mempty Nothing "dec") (bool False))
             expected =
               MyLet
                 mtBool
@@ -175,11 +176,11 @@ spec = do
                     (Identifier mtBool "bool")
                     ( MyIf
                         mtBool
-                        (MyVar mtBool "bool")
+                        (MyVar mtBool Nothing "bool")
                         (MyLiteral mtBool (MyBool True))
                         ( MyApp
                             mtBool
-                            (MyVar (MTFunction mempty mtBool mtBool) "dec")
+                            (MyVar (MTFunction mempty mtBool mtBool) Nothing "dec")
                             (MyLiteral mtBool (MyBool False))
                         )
                     )
@@ -188,6 +189,7 @@ spec = do
                     mtBool
                     ( MyVar
                         (MTFunction mempty mtBool mtBool)
+                        Nothing
                         "dec"
                     )
                     (MyLiteral mtBool (MyBool False))

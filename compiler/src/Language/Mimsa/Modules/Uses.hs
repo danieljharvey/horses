@@ -19,7 +19,7 @@ extractUses :: (Eq ann, Monoid ann) => Expr Name ann -> Set DefIdentifier
 extractUses = extractUses_
 
 extractUses_ :: (Eq ann, Monoid ann) => Expr Name ann -> Set DefIdentifier
-extractUses_ (MyVar _ a) = S.singleton (DIName a)
+extractUses_ (MyVar _ _ a) = S.singleton (DIName a)
 extractUses_ (MyAnnotation _ _ expr) =
   extractUses_ expr
 extractUses_ (MyIf _ a b c) =

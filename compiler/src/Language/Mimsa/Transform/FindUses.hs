@@ -26,7 +26,7 @@ findUses = withMonoid f
           usesInBody = clearVarFromUses var (findUses body)
           usesInExpr = findUses expr
        in (False, usesInBody <> usesInExpr)
-    f (MyVar _ a) = (False, Uses (M.singleton a 1))
+    f (MyVar _ Nothing a) = (False, Uses (M.singleton a 1))
     f _ = (True, mempty)
 
 -- | remove recursive uses of a var from it's body

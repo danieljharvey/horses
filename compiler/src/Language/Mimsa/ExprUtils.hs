@@ -34,7 +34,7 @@ toEmptyAnnotation = fmap (const mempty)
 getAnnotation :: Expr var ann -> ann
 getAnnotation (MyLiteral ann _) = ann
 getAnnotation (MyAnnotation ann _ _) = ann
-getAnnotation (MyVar ann _) = ann
+getAnnotation (MyVar ann _ _) = ann
 getAnnotation (MyLet ann _ _ _) = ann
 getAnnotation (MyLetPattern ann _ _ _) = ann
 getAnnotation (MyInfix ann _ _ _) = ann
@@ -59,7 +59,7 @@ withMonoid ::
   Expr var ann ->
   m
 withMonoid f whole@(MyLiteral _ _) = snd (f whole)
-withMonoid f whole@(MyVar _ _) = snd (f whole)
+withMonoid f whole@(MyVar _ _ _) = snd (f whole)
 withMonoid f whole@(MyAnnotation _ _ expr) =
   let (go, m) = f whole
    in if not go
@@ -165,7 +165,7 @@ withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
 -- recursing through the Expression
 mapExpr :: (Expr a b -> Expr a b) -> Expr a b -> Expr a b
 mapExpr _ (MyLiteral ann a) = MyLiteral ann a
-mapExpr _ (MyVar ann a) = MyVar ann a
+mapExpr _ (MyVar ann modName a) = MyVar ann modName a
 mapExpr f (MyAnnotation ann mt expr) =
   MyAnnotation ann mt (f expr)
 mapExpr f (MyLet ann binder bindExpr' inExpr) =
@@ -199,8 +199,8 @@ bindExpr ::
   m (Expr a b)
 bindExpr _ (MyLiteral ann a) =
   pure $ MyLiteral ann a
-bindExpr _ (MyVar ann a) =
-  pure $ MyVar ann a
+bindExpr _ (MyVar ann modName a) =
+  pure $ MyVar ann modName a
 bindExpr f (MyAnnotation ann mt expr) =
   MyAnnotation ann mt <$> f expr
 bindExpr f (MyLet ann binder bindExpr' inExpr) =

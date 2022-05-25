@@ -49,7 +49,7 @@ applicativeApply_ (DataType tyCon vars items) = do
             (Identifier mempty (aName tyCon))
             ( MyPatternMatch
                 mempty
-                (MyVar mempty (fName tyCon))
+                (MyVar mempty Nothing (fName tyCon))
                 (NE.toList matches)
             )
         )
@@ -95,7 +95,7 @@ noOpMatch tyCon fields =
         foldl'
           ( \expr' (i, _field) ->
               let fieldName = mkFieldName i
-               in MyApp mempty expr' (MyVar mempty fieldName)
+               in MyApp mempty expr' (MyVar mempty Nothing fieldName)
           )
           (MyConstructor mempty tyCon)
           numberedFields
@@ -126,8 +126,8 @@ reconstructField matchVar fieldItem =
   case fieldItem of
     VariableField varName ->
       if varName == matchVar
-        then MyApp mempty (MyVar mempty "f") (MyVar mempty varName)
-        else MyVar mempty varName
+        then MyApp mempty (MyVar mempty Nothing "f") (MyVar mempty Nothing varName)
+        else MyVar mempty Nothing varName
 
 createInnerMatch ::
   Name ->
@@ -189,6 +189,6 @@ createMatch typeName funcVar items (tyCon, fields) = do
     ( patternFromFieldItemType tyCon regFields,
       MyPatternMatch
         mempty
-        (MyVar mempty (aName typeName))
+        (MyVar mempty Nothing (aName typeName))
         (NE.toList matches)
     )

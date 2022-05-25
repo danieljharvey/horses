@@ -66,7 +66,7 @@ lookupVar (var, maybeExprHash) =
       intExpr <- lookupInGlobals exprHash
       case intExpr of
         -- if it points to another var, fetch that
-        (MyVar _ a) -> lookupVar a
+        (MyVar _ Nothing a) -> lookupVar a
         other -> pure other
     _ -> do
       (StackFrame entries _) <- getCurrentStackFrame
@@ -81,7 +81,7 @@ lookupVar (var, maybeExprHash) =
             then pure (MyApp mempty myLam myLam)
             else pure myLam
         -- if it's another var, fetch that
-        Just (MyVar _ a) -> lookupVar a
+        Just (MyVar _ Nothing a) -> lookupVar a
         -- otherwise return it
         Just other -> pure other
         -- could not find var

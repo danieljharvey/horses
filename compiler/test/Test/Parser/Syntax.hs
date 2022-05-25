@@ -55,7 +55,7 @@ spec = parallel $ do
         testParse "\"dog\"" `shouldBe` Right (str (StringType "dog"))
       it "Parses a variable name" $
         testParse "log"
-          `shouldBe` Right (MyVar mempty "log")
+          `shouldBe` Right (MyVar mempty Nothing "log")
       it "Does not accept 'let' as a variable name" $
         isLeft (testParse "let")
           `shouldBe` True
@@ -68,33 +68,33 @@ spec = parallel $ do
         testParse "log!dog"
           `shouldSatisfy` isLeft
       it "Does a basic let binding" $ do
-        let expected = MyLet mempty (Identifier mempty "xa") (bool True) (MyVar mempty "xa")
+        let expected = MyLet mempty (Identifier mempty "xa") (bool True) (MyVar mempty Nothing "xa")
         testParse "let xa = True in xa"
           `shouldBe` Right expected
       it "Does a basic let binding with excessive whitespace" $ do
-        let expected = MyLet mempty (Identifier mempty "x") (bool True) (MyVar mempty "x")
+        let expected = MyLet mempty (Identifier mempty "x") (bool True) (MyVar mempty Nothing "x")
         testParse "let       x       =       True       in        x"
           `shouldBe` Right expected
       it "Does a let binding inside parens" $ do
-        let expected = MyLet mempty (Identifier mempty "x") (bool True) (MyVar mempty "x")
+        let expected = MyLet mempty (Identifier mempty "x") (bool True) (MyVar mempty Nothing "x")
         testParse "(let x = True in x)"
           `shouldBe` Right expected
       it "Recognises a basic lambda" $
         testParse "\\x -> x"
-          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty "x"))
+          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty Nothing "x"))
       it "Recognises a lambda with too much whitespace everywhere" $
         testParse "\\        x          ->             x"
-          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty "x"))
+          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty Nothing "x"))
       it "Recognises a lambda in parens" $
         testParse "(\\x -> x)"
-          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty "x"))
+          `shouldBe` Right (MyLambda mempty (Identifier mempty "x") (MyVar mempty Nothing "x"))
       it "Recognises nested lambdas in parens" $
         testParse "(\\a -> (\\b -> a))"
           `shouldBe` Right
             ( MyLambda
                 mempty
                 (Identifier mempty "a")
-                (MyLambda mempty (Identifier mempty "b") (MyVar mempty "a"))
+                (MyLambda mempty (Identifier mempty "b") (MyVar mempty Nothing "a"))
             )
       it "Recognises minimal function syntax in let" $
         testParse "let const a b = a in True"
@@ -102,7 +102,7 @@ spec = parallel $ do
             ( MyLet
                 mempty
                 (Identifier mempty "const")
-                (MyLambda mempty (Identifier mempty "a") (MyLambda mempty (Identifier mempty "b") (MyVar mempty "a")))
+                (MyLambda mempty (Identifier mempty "a") (MyLambda mempty (Identifier mempty "b") (MyVar mempty Nothing "a")))
                 (bool True)
             )
       it "Recognises function application" $
@@ -110,7 +110,7 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyApp
                 mempty
-                ( MyVar mempty "add"
+                ( MyVar mempty Nothing "add"
                 )
                 (int 1)
             )
@@ -119,7 +119,7 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyApp
                 mempty
-                ( MyVar mempty "add"
+                ( MyVar mempty Nothing "add"
                 )
                 (bool True)
             )
@@ -132,7 +132,7 @@ spec = parallel $ do
                     mempty
                     ( MTFunction mempty (MTVar mempty (TVName "a")) (MTVar mempty (TVName "a"))
                     )
-                    (MyLambda mempty (Identifier mempty "a") (MyVar mempty "a"))
+                    (MyLambda mempty (Identifier mempty "a") (MyVar mempty Nothing "a"))
                 )
                 (bool True)
             )
@@ -141,7 +141,7 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyApp
                 mempty
-                (MyVar mempty "id")
+                (MyVar mempty Nothing "id")
                 (MyAnnotation mempty (MTPrim mempty MTBool) (bool True))
             )
       it "Recognises double function application onto a var" $
@@ -151,7 +151,7 @@ spec = parallel $ do
                 mempty
                 ( MyApp
                     mempty
-                    ( MyVar mempty "add"
+                    ( MyVar mempty Nothing "add"
                     )
                     (int 1)
                 )
@@ -164,7 +164,7 @@ spec = parallel $ do
                 mempty
                 ( MyApp
                     mempty
-                    ( MyVar mempty "add"
+                    ( MyVar mempty Nothing "add"
                     )
                     (int 1)
                 )
@@ -195,7 +195,7 @@ spec = parallel $ do
                 mempty
                 (Identifier mempty "x")
                 (MyPair mempty (int 1) (int 2))
-                (MyVar mempty "x")
+                (MyVar mempty Nothing "x")
             )
       it "Allows a let to use a pair and apply to it" $
         testParse "let x = ((1,2)) in fst x"
@@ -204,7 +204,7 @@ spec = parallel $ do
                 mempty
                 (Identifier mempty "x")
                 (MyPair mempty (int 1) (int 2))
-                (MyApp mempty (MyVar mempty "fst") (MyVar mempty "x"))
+                (MyApp mempty (MyVar mempty Nothing "fst") (MyVar mempty Nothing "x"))
             )
       it "Allows a let to use a nested lambda" $
         testParse "let const2 = (\\a -> (\\b -> a)) in (const2)"
@@ -215,9 +215,9 @@ spec = parallel $ do
                 ( MyLambda
                     mempty
                     (Identifier mempty "a")
-                    (MyLambda mempty (Identifier mempty "b") (MyVar mempty "a"))
+                    (MyLambda mempty (Identifier mempty "b") (MyVar mempty Nothing "a"))
                 )
-                (MyVar mempty "const2")
+                (MyVar mempty Nothing "const2")
             )
       it "Parses typed hole" $ do
         testParse "?dog" `shouldBe` Right (MyTypedHole mempty "dog")
@@ -229,7 +229,7 @@ spec = parallel $ do
       it "Parses two integers with infix operator" $
         testParse "123 == 123" `shouldBe` Right (MyInfix mempty Equals (int 123) (int 123))
       it "Parses var and number equality" $
-        testParse " a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty "a") (int 1))
+        testParse " a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty Nothing "a") (int 1))
       it "Parsers two constructor applications with infix operator" $
         let mkSome = MyApp mempty (MyConstructor mempty "Some")
          in testParse "(Some 1) == Some 2"
@@ -265,7 +265,7 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyRecord mempty $
                 M.fromList
-                  [ ("dog", MyVar mempty "dog"),
+                  [ ("dog", MyVar mempty Nothing "dog"),
                     ("cat", bool True)
                   ]
             )
@@ -281,7 +281,7 @@ spec = parallel $ do
                     (PVar mempty "b")
                 )
                 (MyPair mempty (bool True) (int 1))
-                (MyVar mempty "a")
+                (MyVar mempty Nothing "a")
             )
       it "Parses Void" $
         testParse "type Void in 1"
@@ -534,7 +534,7 @@ spec = parallel $ do
                             mempty
                             ( MyApp
                                 mempty
-                                (MyVar mempty "thing")
+                                (MyVar mempty Nothing "thing")
                                 (int 1)
                             )
                             (int 2)
@@ -573,9 +573,9 @@ spec = parallel $ do
                                 mempty
                                 ( MyConstructor mempty "Pair"
                                 )
-                                (MyVar mempty "a")
+                                (MyVar mempty Nothing "a")
                             )
-                            (MyVar mempty "s")
+                            (MyVar mempty Nothing "s")
                         )
                     )
                 )
@@ -610,7 +610,7 @@ spec = parallel $ do
                     mempty
                     ( MyApp
                         mempty
-                        (MyVar mempty "func")
+                        (MyVar mempty Nothing "func")
                         (str "dog")
                     )
                     (int 1)
@@ -626,7 +626,7 @@ spec = parallel $ do
                     mempty
                     ( MyApp
                         mempty
-                        (MyVar mempty "func")
+                        (MyVar mempty Nothing "func")
                         (int 1)
                     )
                     (str "dog")
@@ -645,12 +645,12 @@ spec = parallel $ do
                         mempty
                         ( MyApp
                             mempty
-                            (MyVar mempty "compose")
-                            (MyVar mempty "id")
+                            (MyVar mempty Nothing "compose")
+                            (MyVar mempty Nothing "id")
                         )
-                        (MyVar mempty "id")
+                        (MyVar mempty Nothing "id")
                     )
-                    (MyVar mempty "a")
+                    (MyVar mempty Nothing "a")
                 )
             )
       it "Tree type with value" $
@@ -683,7 +683,7 @@ spec = parallel $ do
             )
       it "dog + log" $
         testParse "dog + log"
-          `shouldBe` Right (MyInfix mempty Add (MyVar mempty "dog") (MyVar mempty "log"))
+          `shouldBe` Right (MyInfix mempty Add (MyVar mempty Nothing "dog") (MyVar mempty Nothing "log"))
 
       it "a+" $
         testParse "a+" `shouldSatisfy` isLeft
@@ -691,22 +691,22 @@ spec = parallel $ do
       it "a == 1" $
         testParse "a == 1"
           `shouldBe` Right
-            (MyInfix mempty Equals (MyVar mempty "a") (int 1))
+            (MyInfix mempty Equals (MyVar mempty Nothing "a") (int 1))
 
       it "a + 1" $
         testParse "a + 1"
           `shouldBe` Right
-            (MyInfix mempty Add (MyVar mempty "a") (int 1))
+            (MyInfix mempty Add (MyVar mempty Nothing "a") (int 1))
 
       it "a - 1" $
         testParse "a - 1"
           `shouldBe` Right
-            (MyInfix mempty Subtract (MyVar mempty "a") (int 1))
+            (MyInfix mempty Subtract (MyVar mempty Nothing "a") (int 1))
 
       it "a+ 1" $
         testParse "a+ 1"
           `shouldBe` Right
-            (MyInfix mempty Add (MyVar mempty "a") (int 1))
+            (MyInfix mempty Add (MyVar mempty Nothing "a") (int 1))
 
       it "a+1" $
         testParse "a+1"
@@ -715,16 +715,16 @@ spec = parallel $ do
       it "a  +  b" $
         testParse "a  +  b"
           `shouldBe` Right
-            (MyInfix mempty Add (MyVar mempty "a") (MyVar mempty "b"))
+            (MyInfix mempty Add (MyVar mempty Nothing "a") (MyVar mempty Nothing "b"))
 
       it "1 + a" $
         testParse "1 + a"
           `shouldBe` Right
-            (MyInfix mempty Add (int 1) (MyVar mempty "a"))
+            (MyInfix mempty Add (int 1) (MyVar mempty Nothing "a"))
 
       it "newName ++ \"!!!\"" $
         testParse "newName ++ \"!!!\""
-          `shouldBe` Right (MyInfix mempty StringConcat (MyVar mempty "newName") (str "!!!"))
+          `shouldBe` Right (MyInfix mempty StringConcat (MyVar mempty Nothing "newName") (str "!!!"))
 
       it "Applies a lambda to a function" $
         testParse "map (\\a -> a + 1) [1,2,3]"
@@ -733,11 +733,11 @@ spec = parallel $ do
                 mempty
                 ( MyApp
                     mempty
-                    (MyVar mempty "map")
+                    (MyVar mempty Nothing "map")
                     ( MyLambda
                         mempty
                         (Identifier mempty "a")
-                        ( MyInfix mempty Add (MyVar mempty "a") (int 1)
+                        ( MyInfix mempty Add (MyVar mempty Nothing "a") (int 1)
                         )
                     )
                 )
@@ -756,7 +756,7 @@ spec = parallel $ do
                     mempty
                     ( MyApp
                         mempty
-                        (MyVar mempty "bindParser")
+                        (MyVar mempty Nothing "bindParser")
                         ( MyLambda
                             mempty
                             (Identifier mempty "a")
@@ -765,17 +765,17 @@ spec = parallel $ do
                                 ( MyInfix
                                     mempty
                                     Equals
-                                    (MyVar mempty "a")
+                                    (MyVar mempty Nothing "a")
                                     (MyLiteral mempty (MyString "d"))
                                 )
-                                (MyVar mempty "anyChar")
-                                (MyVar mempty "failParser")
+                                (MyVar mempty Nothing "anyChar")
+                                (MyVar mempty Nothing "failParser")
                             )
                         )
                     )
-                    (MyVar mempty "anyChar")
+                    (MyVar mempty Nothing "anyChar")
                 )
-                (MyApp mempty (MyApp mempty (MyVar mempty "runParser") (MyVar mempty "parser")) (MyLiteral mempty (MyString "dog")))
+                (MyApp mempty (MyApp mempty (MyVar mempty Nothing "runParser") (MyVar mempty Nothing "parser")) (MyLiteral mempty (MyString "dog")))
             )
       it "parses an infix definition" $
         testParse "infix +++ = addInt; 1 +++ 2"
@@ -783,7 +783,7 @@ spec = parallel $ do
             ( MyDefineInfix
                 mempty
                 (InfixOp "+++")
-                (MyVar mempty "addInt")
+                (MyVar mempty Nothing "addInt")
                 (MyInfix mempty (Custom (InfixOp "+++")) (int 1) (int 2))
             )
       it "parses destructuring a tuple" $
@@ -797,7 +797,7 @@ spec = parallel $ do
                     (PVar mempty "b")
                 )
                 (MyPair mempty (int 1) (int 2))
-                (MyVar mempty "a")
+                (MyVar mempty Nothing "a")
             )
       it "parses destructuring a record with puns" $
         testParse "let {a,b:c} = { a: 1, b: 2}; c"
@@ -813,7 +813,7 @@ spec = parallel $ do
                     )
                 )
                 (MyRecord mempty (M.fromList [("a", int 1), ("b", int 2)]))
-                (MyVar mempty "c")
+                (MyVar mempty Nothing "c")
             )
       it "parses access of a record literal" $ do
         testParse "{ dog: True }.dog"
@@ -836,7 +836,7 @@ spec = parallel $ do
                     (MTPrim mempty MTInt)
                     (MTPrim mempty MTInt)
                 )
-                (MyLambda mempty (Identifier mempty "a") (MyVar mempty "a"))
+                (MyLambda mempty (Identifier mempty "a") (MyVar mempty Nothing "a"))
             )
       it "parses a let binding with type annotation" $ do
         testParse "let (a: Int) = 1 in True"
@@ -870,7 +870,7 @@ spec = parallel $ do
                         ( MyInfix
                             mempty
                             Add
-                            (MyVar mempty "a")
+                            (MyVar mempty Nothing "a")
                             (MyLiteral mempty (MyInt 1))
                         )
                     )
@@ -880,7 +880,7 @@ spec = parallel $ do
 
     describe "Test annotations" $ do
       it "Parses a var with location information" $
-        testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) "dog")
+        testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) Nothing "dog")
       it "Parses a tyCon with location information" $
         testParseWithAnn "Log" `shouldBe` Right (MyConstructor (Location 0 3) "Log")
       it "Parses a true bool with location information" $
@@ -896,7 +896,7 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyRecordAccess
                 (Location 0 8)
-                (MyVar (Location 0 3) "dog")
+                (MyVar (Location 0 3) Nothing "dog")
                 "tail"
             )
       it "Parses let-in with location information" $
@@ -906,7 +906,7 @@ spec = parallel $ do
                 (Location 0 14)
                 (Identifier (Location 4 5) "a")
                 (MyLiteral (Location 8 10) (MyInt 1))
-                (MyVar (Location 13 14) "a")
+                (MyVar (Location 13 14) Nothing "a")
             )
       it "Parses let-newline with location information" $
         testParseWithAnn "let a = 1; a"
@@ -915,18 +915,18 @@ spec = parallel $ do
                 (Location 0 12)
                 (Identifier (Location 4 5) "a")
                 (MyLiteral (Location 8 9) (MyInt 1))
-                (MyVar (Location 11 12) "a")
+                (MyVar (Location 11 12) Nothing "a")
             )
       it "Parsers lambda with location information" $
         testParseWithAnn "\\a -> a"
           `shouldBe` Right
-            (MyLambda (Location 0 7) (Identifier (Location 1 2) "a") (MyVar (Location 6 7) "a"))
+            (MyLambda (Location 0 7) (Identifier (Location 1 2) "a") (MyVar (Location 6 7) Nothing "a"))
       it "Parses application with location information" $
         testParseWithAnn "a 1"
           `shouldBe` Right
             ( MyApp
                 (Location 0 3)
-                (MyVar (Location 0 2) "a")
+                (MyVar (Location 0 2) Nothing "a")
                 (MyLiteral (Location 2 3) (MyInt 1))
             )
       it "Parses record with location information" $
@@ -1048,7 +1048,7 @@ spec = parallel $ do
                 (Location 0 19)
                 (MyLiteral (Location 6 8) (MyInt 1))
                 [ ( PVar (Location 13 15) "a",
-                    MyVar (Location 18 19) "a"
+                    MyVar (Location 18 19) Nothing "a"
                   )
                 ]
             )

@@ -18,8 +18,8 @@ interpretRecordAccess interpretFn _ (MyRecord _ record) name =
   case M.lookup name record of
     Just item -> interpretFn item
     _ -> throwError $ CannotFindMemberInRecord record name
-interpretRecordAccess interpretFn ann (MyVar ann' a) name = do
-  intExpr <- interpretFn (MyVar ann' a)
+interpretRecordAccess interpretFn ann (MyVar ann' modName a) name = do
+  intExpr <- interpretFn (MyVar ann' modName a)
   interpretFn (MyRecordAccess ann intExpr name)
 interpretRecordAccess interpretFn ann (MyRecordAccess ann' a name') name = do
   intExpr <- interpretFn (MyRecordAccess ann' a name')

@@ -117,7 +117,7 @@ createCodegenFunction project dt =
                 <$> storeExprs
             )
         )
-      let realFunctionMap = M.mapWithKey (\k _ -> MyVar mempty k) funcMap
+      let realFunctionMap = M.mapWithKey (\k _ -> MyVar mempty Nothing k) funcMap
       let recordExpr = MyRecord mempty realFunctionMap
       re <-
         Actions.typecheckExpression (project <> newProjectItems) (prettyPrint recordExpr) recordExpr

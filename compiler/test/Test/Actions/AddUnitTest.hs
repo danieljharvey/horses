@@ -31,7 +31,7 @@ testWithIdInExpr =
   MyInfix
     mempty
     Equals
-    (MyApp mempty (MyVar mempty "id") (int 1))
+    (MyApp mempty (MyVar mempty Nothing "id") (int 1))
     (int 1)
 
 testWithIdAndConst :: Expr Name Annotation
@@ -91,7 +91,7 @@ spec = do
             MyLambda
               mempty
               (Identifier mempty "aaa")
-              (MyLambda mempty (Identifier mempty "bbb") (MyVar mempty "aaa"))
+              (MyLambda mempty (Identifier mempty "bbb") (MyVar mempty Nothing "aaa"))
       case Actions.run
         testStdlib
         ( do
@@ -111,7 +111,7 @@ spec = do
             MyLambda
               mempty
               (Identifier mempty "aaa")
-              (MyLambda mempty (Identifier mempty "bbb") (MyVar mempty "aaa"))
+              (MyLambda mempty (Identifier mempty "bbb") (MyVar mempty Nothing "aaa"))
       case Actions.run
         testStdlib
         ( do

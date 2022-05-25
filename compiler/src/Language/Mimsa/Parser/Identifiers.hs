@@ -26,7 +26,8 @@ import Language.Mimsa.Types.Modules.ModuleName
 ----
 
 varParser :: Parser ParserExpr
-varParser = myLexeme (withLocation MyVar nameParser)
+varParser = 
+  myLexeme (withLocation (\ann -> MyVar ann Nothing) nameParser)
 
 ---
 

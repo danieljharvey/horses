@@ -68,7 +68,7 @@ spec = do
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
             `shouldBe` 1
     it "Updating an existing binding updates binding" $ do
-      let newIdExpr = MyLambda mempty (Identifier mempty "b") (MyVar mempty "b")
+      let newIdExpr = MyLambda mempty (Identifier mempty "b") (MyVar mempty Nothing "b")
       let action =
             Actions.bindExpression newIdExpr "id" "\\b -> b"
       case Actions.run testStdlib action of
@@ -90,7 +90,7 @@ spec = do
             MyLambda
               mempty
               (Identifier mempty "blob")
-              (MyVar mempty "blob")
+              (MyVar mempty Nothing "blob")
       let action = do
             _ <-
               Actions.addUnitTest
@@ -120,16 +120,16 @@ spec = do
             MyLambda
               mempty
               (Identifier mempty "b")
-              (MyVar mempty "b")
+              (MyVar mempty Nothing "b")
           useIdExpr =
             MyApp
               mempty
-              (MyVar mempty "newId")
+              (MyVar mempty Nothing "newId")
               (bool True)
           useIdExpr2 =
             MyApp
               mempty
-              (MyVar mempty "newId")
+              (MyVar mempty Nothing "newId")
               (bool False)
           action = do
             _ <- Actions.bindExpression newIdExpr "newId" (prettyPrint newIdExpr)

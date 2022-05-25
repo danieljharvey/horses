@@ -41,8 +41,8 @@ prelude =
               ( MyLetPattern
                   mempty
                   (PPair mempty (PVar mempty "a") (PWildcard mempty))
-                  (MyVar mempty "pair")
-                  (MyVar mempty "a")
+                  (MyVar mempty Nothing "pair")
+                  (MyVar mempty Nothing "a")
               )
           )
         ]

@@ -91,7 +91,7 @@ inferVarFromScope env ann var' = do
   case lookupInEnv var' env of
     Just mt -> do
       freshMonoType <- instantiate ann mt
-      pure (MyVar freshMonoType var')
+      pure (MyVar freshMonoType Nothing var') -- TODO: namespace modName?
     _ -> do
       throwError $
         VariableNotFound
@@ -174,7 +174,7 @@ bindingIsRecursive ident = getAny . withMonoid findBinding
   where
     variable = case ident of
       (Identifier _ a) -> a
-    findBinding (MyVar _ binding) | binding == variable = (False, Any True)
+    findBinding (MyVar _ _ binding) | binding == variable = (False, Any True)
     findBinding _ = (True, mempty)
 
 binderFromIdentifier :: Identifier var ann -> var
@@ -793,7 +793,7 @@ infer env inferExpr =
     (MyAnnotation _ann mt expr) -> do
       elabExpr <- check env expr mt
       pure (MyAnnotation (expAnn elabExpr) (mt $> mt) elabExpr)
-    (MyVar ann name) ->
+    (MyVar ann _ name) ->
       inferVarFromScope env ann name
     (MyRecord ann map') -> do
       inferItems <- traverse (infer env) map'
@@ -802,7 +802,7 @@ infer env inferExpr =
     (MyInfix ann op a b) -> inferOperator env ann op a b
     (MyTypedHole ann (name, unique)) -> do
       tyHole <- addTypedHole env ann name
-      pure (MyVar tyHole (name, unique))
+      pure (MyVar tyHole Nothing (name, unique))
     (MyLet ann binder expr body) ->
       inferLetBinding env ann binder expr body
     (MyLetPattern ann pat expr body) ->

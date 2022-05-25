@@ -321,7 +321,7 @@ toTSBody expr' =
       tsA <- toTSExpr a
       tsB <- toTSExpr b
       pure (TSBody mempty (TSArray [TSArrayItem tsA, TSArrayItem tsB]))
-    (MyVar _ a) ->
+    (MyVar _ _ a) ->
       pure (TSBody mempty (TSVar (coerce a)))
     (MyLambda fnType bind body) ->
       toLambda fnType bind body
