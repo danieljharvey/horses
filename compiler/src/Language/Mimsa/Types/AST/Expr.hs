@@ -12,7 +12,6 @@ module Language.Mimsa.Types.AST.Expr
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Aeson as JSON
 import Data.Bifunctor (first)
 import Data.Bifunctor.TH
@@ -29,6 +28,7 @@ import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker.MonoType
 import Language.Mimsa.Utils
 import Prettyprinter
@@ -54,7 +54,7 @@ data Expr var ann
   | -- | a named variable
     MyVar
       { expAnn :: ann,
-        expModuleName:: Maybe ModuleName,
+        expModuleName :: Maybe ModuleName,
         expVar :: var
       }
   | -- | binder, expr, body

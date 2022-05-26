@@ -83,8 +83,15 @@ partToExpr fVar items innerExpr part =
           innerExpr
           (MyConstructor mempty emptyTyCon)
     FPart n a ->
-      pure $ MyApp mempty innerExpr (MyLambda mempty (Identifier mempty n) 
-                    (MyVar mempty Nothing a))
+      pure $
+        MyApp
+          mempty
+          innerExpr
+          ( MyLambda
+              mempty
+              (Identifier mempty n)
+              (MyVar mempty Nothing a)
+          )
 
 data Part
   = VPart Name

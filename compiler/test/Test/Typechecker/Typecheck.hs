@@ -29,8 +29,11 @@ import Test.Hspec
 import Test.Utils.Helpers
 
 identity :: Monoid ann => Expr Name ann
-identity = MyLambda mempty (Identifier mempty "x") 
-              (MyVar mempty Nothing "x")
+identity =
+  MyLambda
+    mempty
+    (Identifier mempty "x")
+    (MyVar mempty Nothing "x")
 
 startInference :: Expr Name Annotation -> Either TypeError MonoType -> IO ()
 startInference expr expected = do
@@ -288,8 +291,12 @@ spec = do
                 mempty
                 (Identifier mempty "x")
                 (bool True)
-                (MyLet mempty (Identifier mempty "x") (int 42) 
-                          (MyVar mempty Nothing "x"))
+                ( MyLet
+                    mempty
+                    (Identifier mempty "x")
+                    (int 42)
+                    (MyVar mempty Nothing "x")
+                )
         startInference expr $ Right (MTPrim mempty MTInt)
 
       it "infers const lambda" $ do
@@ -572,8 +579,11 @@ spec = do
                     mempty
                     (Identifier mempty "pair")
                     (MyPair mempty (int 1) (bool True))
-                    (MyApp mempty (MyVar mempty Nothing "fst") 
-                        (MyVar mempty Nothing "pair"))
+                    ( MyApp
+                        mempty
+                        (MyVar mempty Nothing "fst")
+                        (MyVar mempty Nothing "pair")
+                    )
                 )
         let expected = Right (MTPrim mempty MTInt)
         startInference expr expected
@@ -876,8 +886,11 @@ spec = do
                     mempty
                     (PVar mempty "a")
                     (PVar mempty "b"),
-                  MyInfix mempty Add 
-                            (MyVar mempty Nothing "a") (MyVar mempty Nothing "b")
+                  MyInfix
+                    mempty
+                    Add
+                    (MyVar mempty Nothing "a")
+                    (MyVar mempty Nothing "b")
                 )
               ]
       startInference expr $

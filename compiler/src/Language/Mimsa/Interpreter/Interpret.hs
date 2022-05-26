@@ -56,7 +56,7 @@ interpretExpr' (MyLet _ ident expr body) =
 interpretExpr' (MyVar _ Nothing var) =
   lookupVar var >>= interpretExpr
 interpretExpr' (MyVar _ (Just _) _var) =
-  error "namespaced var oh no" 
+  error "namespaced var oh no"
 interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
   -- capture current environment
   stackFrame <-

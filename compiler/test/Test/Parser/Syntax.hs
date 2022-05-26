@@ -56,6 +56,9 @@ spec = parallel $ do
       it "Parses a variable name" $
         testParse "log"
           `shouldBe` Right (MyVar mempty Nothing "log")
+      it "Parses a namespaced variable name" $
+        testParse "Console.log"
+          `shouldBe` Right (MyVar mempty (Just "Console") "log")
       it "Does not accept 'let' as a variable name" $
         isLeft (testParse "let")
           `shouldBe` True
@@ -123,6 +126,20 @@ spec = parallel $ do
                 )
                 (bool True)
             )
+
+
+      it "Recognises function application onto namespaced var" $
+        testParse "Console.log 1"
+          `shouldBe` Right (MyApp mempty (MyVar mempty 
+                (Just "Console") "log") (int 1))
+
+      it "Recognises function application with namespaced arg" $
+        testParse "log Prelude.one"
+          `shouldBe` Right 
+              (MyApp mempty (MyVar mempty 
+                Nothing "log") (MyVar mempty (Just "Prelude") "one") )
+
+
       it "Recognises function application onto an annotated function" $
         testParse "(\\a -> a: a -> a) True"
           `shouldBe` Right

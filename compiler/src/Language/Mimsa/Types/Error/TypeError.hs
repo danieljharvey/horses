@@ -15,6 +15,7 @@ module Language.Mimsa.Types.Error.TypeError
   )
 where
 
+import Language.Mimsa.Types.Modules.ModuleName
 import Data.Foldable (fold)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -56,7 +57,7 @@ data TypeErrorF var ann
   | CannotUseBuiltInTypeAsConstructor ann TyCon
   | InternalConstructorUsedOutsidePatternMatch ann TyCon
   | PatternMatchErr (PatternMatchErrorF var ann)
-  | NameNotFoundInScope ann (Set var) var
+  | NameNotFoundInScope ann (Set (var, Maybe ModuleName)) (Maybe ModuleName) var
   | VariableNotFound ann (Set TypeIdentifier) var
   | IfPredicateIsNotBoolean ann (Type ann)
   | FunctionArgumentMismatch ann (Type ann) (Type ann)
@@ -209,8 +210,12 @@ renderTypeError (InternalConstructorUsedOutsidePatternMatch _ tyCon) =
   ["Internal type constructor" <+> prettyDoc tyCon <+> "cannot be used outside of a pattern match"]
 renderTypeError (PatternMatchErr pmErr) =
   [prettyDoc pmErr]
-renderTypeError (NameNotFoundInScope _ available name) =
-  ["Could not find var " <+> prettyDoc name <+> "in" <+> itemList]
+renderTypeError (NameNotFoundInScope _ available mModName name) =
+  case mModName of
+    Just modName ->
+      ["Could not find" <+> prettyDoc modName <> "." <> prettyDoc name <+> itemList]
+    Nothing ->
+      ["Could not find var" <+> prettyDoc name <+> "in" <+> itemList]
   where
     itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> S.toList available)) <+> "]"
 renderTypeError (VariableNotFound _ available name) =

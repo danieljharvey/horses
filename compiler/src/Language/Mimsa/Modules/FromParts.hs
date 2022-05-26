@@ -4,7 +4,6 @@
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.FromParts (moduleFromModuleParts, exprAndTypeFromParts) where
-import Language.Mimsa.Types.Modules.DefIdentifier
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -17,6 +16,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
+import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Typechecker
@@ -107,8 +107,8 @@ moduleFromModuleParts parts =
                     M.singleton (DIInfix infixOp) expr
                       <> moExpressions mod'
                 }
-          ModuleImport (ImportNamedFromHash mHash mName) -> 
-            pure $ mod' { moNamedImports = M.singleton mName mHash <> moNamedImports mod' }
+          ModuleImport (ImportNamedFromHash mHash mName) ->
+            pure $ mod' {moNamedImports = M.singleton mName mHash <> moNamedImports mod'}
           ModuleImport (ImportAllFromHash mHash) -> do
             importMod <- lookupModule mHash
             let defImports =

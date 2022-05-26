@@ -100,17 +100,18 @@ parseHash =
       ( takeWhile1P (Just "module hash") Char.isAlphaNum
       )
 
+-- TODO: maybe make these into one parser that handles both to avoid
+-- backtracking
 parseImport :: Parser [ModuleItem Annotation]
-parseImport = parseImportAll <|> parseImportNamed
+parseImport = try parseImportAll <|> parseImportNamed
 
 parseImportNamed :: Parser [ModuleItem Annotation]
 parseImportNamed = do
   myString "import"
-  modName <- moduleNameParser 
+  modName <- moduleNameParser
   myString "from"
   hash <- parseHash
   pure [ModuleImport (ImportNamedFromHash hash modName)]
-
 
 parseImportAll :: Parser [ModuleItem Annotation]
 parseImportAll = do

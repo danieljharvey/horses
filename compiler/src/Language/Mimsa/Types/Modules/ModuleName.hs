@@ -7,7 +7,7 @@ module Language.Mimsa.Types.Modules.ModuleName
   ( ModuleName (..),
     getModuleName,
     validModuleName,
-    safeMkModuleName
+    safeMkModuleName,
   )
 where
 

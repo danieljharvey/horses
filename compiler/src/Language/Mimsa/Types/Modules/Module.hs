@@ -12,8 +12,6 @@ module Language.Mimsa.Types.Modules.Module
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
-import Language.Mimsa.Types.Modules.DefIdentifier
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -27,7 +25,9 @@ import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
+import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker.MonoType
 import Prettyprinter
 
@@ -57,8 +57,9 @@ data ModuleItem ann
   | ModuleInfix InfixOp (Expr Name ann)
 
 -- going to want way more granularity here in future but _shrug_
-data Import = ImportAllFromHash ModuleHash | 
-        ImportNamedFromHash ModuleHash ModuleName 
+data Import
+  = ImportAllFromHash ModuleHash
+  | ImportNamedFromHash ModuleHash ModuleName
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
@@ -137,7 +138,8 @@ printDefinition mod' def expr =
    in prettyExp <> case def of
         DIName name -> case expr of
           (MyAnnotation _ mt rest) ->
-            "def" <+> prettyDoc name <> line <> indentMulti 2 (printPaired mt rest)
+            "def" <+> prettyDoc name <> line <> 
+                indentMulti 2 (printPaired mt rest)
           other ->
             "def"
               <+> prettyDoc name
