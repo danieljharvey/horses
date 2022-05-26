@@ -6,8 +6,8 @@ module Language.Mimsa.Types.Typechecker.Unique (Unique (..), getExprHash) where
 
 import qualified Data.Aeson as JSON
 import GHC.Generics
-import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Store.ExprHash
 
 data Unique
   = Unique Int

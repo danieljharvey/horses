@@ -5,9 +5,6 @@
 
 module Language.Mimsa.Modules.Check (checkModule) where
 
-import Debug.Trace
-import Language.Mimsa.Types.Modules.ModuleName
-import Language.Mimsa.Types.Modules.Entity
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Bifunctor
@@ -18,6 +15,7 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import Debug.Trace
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
@@ -33,8 +31,10 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.DefIdentifier
+import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker
 
@@ -187,11 +187,15 @@ getModuleType mod' =
    in MTRecord mempty (getTypeFromAnn <$> filterNameDefs defs)
 
 filterDefs :: Set Entity -> Set DefIdentifier
-filterDefs = S.fromList . mapMaybe (\case 
-                            EName name -> Just (DIName name)
-                            EInfix infixOp -> Just (DIInfix infixOp)
-                            _ -> Nothing) . S.toList
-
+filterDefs =
+  S.fromList
+    . mapMaybe
+      ( \case
+          EName name -> Just (DIName name)
+          EInfix infixOp -> Just (DIInfix infixOp)
+          _ -> Nothing
+      )
+    . S.toList
 
 -- get the vars used by each def
 -- explode if there's not available
@@ -284,8 +288,11 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
 getModuleDeps :: Module Annotation -> CheckM (Map ModuleHash (Module Annotation, Set ModuleHash))
 getModuleDeps inputModule = do
   -- get this module's deps
-  let deps = S.fromList (M.elems (moExpressionImports inputModule)
-                  <> M.elems (moNamedImports inputModule))
+  let deps =
+        S.fromList
+          ( M.elems (moExpressionImports inputModule)
+              <> M.elems (moNamedImports inputModule)
+          )
       mHash = hashModule inputModule
   -- recursively fetch sub-deps
   depModules <- traverse lookupModule (S.toList deps)
@@ -293,19 +300,25 @@ getModuleDeps inputModule = do
 
   pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
 
-namespacedModules :: Module Annotation -> Map ModuleHash (Module (Type Annotation)) ->
-    Map ModuleName (ModuleHash, Set Name)
+namespacedModules ::
+  Module Annotation ->
+  Map ModuleHash (Module (Type Annotation)) ->
+  Map ModuleName (ModuleHash, Set Name)
 namespacedModules inputModule typecheckedModules =
   let getPair hash = case M.lookup hash (traceShowId typecheckedModules) of
-                       Just mod' -> (hash, namesOnly (moExpressionExports mod'))
-                       Nothing -> (hash, mempty) 
+        Just mod' -> (hash, namesOnly (moExpressionExports mod'))
+        Nothing -> (hash, mempty)
    in traceShowId $ getPair <$> moNamedImports inputModule
 
 namesOnly :: Set DefIdentifier -> Set Name
-namesOnly = S.fromList . mapMaybe (\case 
-                                    DIName name -> Just name
-                                    _ -> Nothing) . S.toList
-
+namesOnly =
+  S.fromList
+    . mapMaybe
+      ( \case
+          DIName name -> Just name
+          _ -> Nothing
+      )
+    . S.toList
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::

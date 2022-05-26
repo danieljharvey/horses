@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-  {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Modules.Entity where
 
@@ -13,7 +13,6 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
-
 
 data Entity = EName Name | EInfix InfixOp | ENamespacedName ModuleName Name
   deriving stock (Eq, Ord, Show, Generic)
@@ -27,6 +26,5 @@ data Entity = EName Name | EInfix InfixOp | ENamespacedName ModuleName Name
 instance Printer Entity where
   prettyPrint (EName name) = prettyPrint name
   prettyPrint (EInfix infixOp) = prettyPrint infixOp
-  prettyPrint (ENamespacedName modName name) = 
-        prettyPrint modName <> "." <> prettyPrint name
-
+  prettyPrint (ENamespacedName modName name) =
+    prettyPrint modName <> "." <> prettyPrint name

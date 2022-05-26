@@ -15,7 +15,6 @@ module Language.Mimsa.Types.Error.TypeError
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
 import Data.Foldable (fold)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -30,6 +29,7 @@ import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Project.SourceSpan
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Typechecker.FoundPath

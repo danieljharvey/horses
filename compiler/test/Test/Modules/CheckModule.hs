@@ -386,7 +386,7 @@ spec = do
             )
             `shouldSatisfy` isRight
 
-        it "Parses namespaced import" $ 
+        it "Parses namespaced import" $
           checkModuleType
             ( joinLines
                 [ "import Prelude from " <> prettyPrint preludeHash

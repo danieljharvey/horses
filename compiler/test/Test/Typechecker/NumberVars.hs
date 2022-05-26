@@ -7,26 +7,27 @@ module Test.Typechecker.NumberVars
   )
 where
 
-import qualified Data.Set as S
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker.Unique
 import Test.Hspec
 import Test.Utils.Helpers
-import Language.Mimsa.Types.Modules.ModuleHash
 
 testAddNumbers ::
   StoreExpression () ->
   Either (TypeErrorF Name ()) (Expr (Name, Unique) ())
 testAddNumbers = addNumbersToStoreExpression
 
-testAddToExpr :: Expr Name ()
-  -> Either (TypeErrorF Name ()) (Expr (Name, Unique) ())
-testAddToExpr = addNumbersToExpression mempty mempty mapMods 
+testAddToExpr ::
+  Expr Name () ->
+  Either (TypeErrorF Name ()) (Expr (Name, Unique) ())
+testAddToExpr = addNumbersToExpression mempty mempty mapMods
   where
     mapMods = M.singleton "Prelude" (ModuleHash "123", S.singleton "id")
 
@@ -35,16 +36,26 @@ spec = do
   describe "NumberVars" $ do
     describe "Expression" $ do
       it "Normal var" $ do
-        let expr = MyLambda mempty (Identifier mempty "x")
-                      (MyVar mempty Nothing "x")
-            expected = MyLambda mempty (Identifier mempty ("x",Unique 0)) (
-                      MyVar mempty Nothing ("x", Unique 0))
+        let expr =
+              MyLambda
+                mempty
+                (Identifier mempty "x")
+                (MyVar mempty Nothing "x")
+            expected =
+              MyLambda
+                mempty
+                (Identifier mempty ("x", Unique 0))
+                ( MyVar mempty Nothing ("x", Unique 0)
+                )
         testAddToExpr expr `shouldBe` Right expected
 
       it "Namespaced var" $ do
         let expr = MyVar mempty (Just "Prelude") "id"
-            expected = MyVar mempty (Just "Prelude") 
-                              ("id", ModuleDep (ModuleHash "123"))
+            expected =
+              MyVar
+                mempty
+                (Just "Prelude")
+                ("id", ModuleDep (ModuleHash "123"))
         testAddToExpr expr `shouldBe` Right expected
 
     describe "StoreExpression" $ do
@@ -174,5 +185,3 @@ spec = do
             bindings = Bindings (M.singleton "id" hash)
             ans = testAddNumbers (StoreExpression expr bindings mempty)
         ans `shouldBe` Right expected
-      
-      

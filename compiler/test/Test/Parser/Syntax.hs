@@ -127,18 +127,31 @@ spec = parallel $ do
                 (bool True)
             )
 
-
       it "Recognises function application onto namespaced var" $
         testParse "Console.log 1"
-          `shouldBe` Right (MyApp mempty (MyVar mempty 
-                (Just "Console") "log") (int 1))
+          `shouldBe` Right
+            ( MyApp
+                mempty
+                ( MyVar
+                    mempty
+                    (Just "Console")
+                    "log"
+                )
+                (int 1)
+            )
 
       it "Recognises function application with namespaced arg" $
         testParse "log Prelude.one"
-          `shouldBe` Right 
-              (MyApp mempty (MyVar mempty 
-                Nothing "log") (MyVar mempty (Just "Prelude") "one") )
-
+          `shouldBe` Right
+            ( MyApp
+                mempty
+                ( MyVar
+                    mempty
+                    Nothing
+                    "log"
+                )
+                (MyVar mempty (Just "Prelude") "one")
+            )
 
       it "Recognises function application onto an annotated function" $
         testParse "(\\a -> a: a -> a) True"

@@ -138,8 +138,10 @@ printDefinition mod' def expr =
    in prettyExp <> case def of
         DIName name -> case expr of
           (MyAnnotation _ mt rest) ->
-            "def" <+> prettyDoc name <> line <> 
-                indentMulti 2 (printPaired mt rest)
+            "def"
+              <+> prettyDoc name
+                <> line
+                <> indentMulti 2 (printPaired mt rest)
           other ->
             "def"
               <+> prettyDoc name

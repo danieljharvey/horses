@@ -8,8 +8,6 @@ module Language.Mimsa.Typechecker.NumberVars
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
-import Language.Mimsa.Types.Modules.ModuleHash
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -20,6 +18,8 @@ import qualified Data.Set as S
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker.Unique
 
@@ -29,7 +29,7 @@ newtype SubsState var ann = SubsState
   deriving newtype (Eq, Ord, Show)
 
 newtype SubsEnv var ann = SubsEnv
-  { seScope :: Map (var,Maybe ModuleName) Unique
+  { seScope :: Map (var, Maybe ModuleName) Unique
   }
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
@@ -52,7 +52,7 @@ addNumbersToStoreExpression storeExpr =
         -- add dependencies to scope
         let varsFromDeps =
               mconcat $
-                (\(name, hash) -> M.singleton (name,Nothing) (Dependency hash))
+                (\(name, hash) -> M.singleton (name, Nothing) (Dependency hash))
                   <$> M.toList (getBindings (storeBindings storeExpr))
         -- evaluate rest of expression using these
         withLambda
@@ -69,7 +69,7 @@ addNumbersToExpression ::
   (Show ann) =>
   Set Name ->
   Map Name ExprHash ->
-  Map ModuleName (ModuleHash, Set Name) -> 
+  Map ModuleName (ModuleHash, Set Name) ->
   Expr Name ann ->
   Either (TypeErrorF Name ann) (NumberedExpr Name ann)
 addNumbersToExpression locals imports modules expr =
@@ -82,13 +82,17 @@ addNumbersToExpression locals imports modules expr =
 
         let importVars =
               mconcat $
-                (\(name, hash) -> M.singleton (name,Nothing) (Dependency hash))
+                (\(name, hash) -> M.singleton (name, Nothing) (Dependency hash))
                   <$> M.toList imports
-        let moduleVars = mconcat $
-                          (\(modName, (hash, names)) -> 
-                              M.fromList ((\name -> ((name, Just modName),ModuleDep hash)) <$> 
-                                                        S.toList names))
-                            <$> M.toList modules
+        let moduleVars =
+              mconcat $
+                ( \(modName, (hash, names)) ->
+                    M.fromList
+                      ( (\name -> ((name, Just modName), ModuleDep hash))
+                          <$> S.toList names
+                      )
+                )
+                  <$> M.toList modules
 
         -- evaluate rest of expression using these
         withLambda
@@ -124,15 +128,17 @@ varsFromPattern (PString _ sHead sTail) =
         StrWildcard _ -> mempty
    in stringPartVars sHead <> stringPartVars sTail
 
-freshVarsFromPattern :: (Ord var) => Pattern var ann -> 
-    App var ann (Map (var,Maybe ModuleName) Unique)
+freshVarsFromPattern ::
+  (Ord var) =>
+  Pattern var ann ->
+  App var ann (Map (var, Maybe ModuleName) Unique)
 freshVarsFromPattern pat =
   M.fromList
     <$> traverse
-      (\var -> (,) (var,Nothing) <$> nextNum)
+      (\var -> (,) (var, Nothing) <$> nextNum)
       (S.toList (varsFromPattern pat))
 
-withLambda :: (Ord var) => Map (var,Maybe ModuleName) Unique -> App var ann a -> App var ann a
+withLambda :: (Ord var) => Map (var, Maybe ModuleName) Unique -> App var ann a -> App var ann a
 withLambda newVars =
   local (\env -> env {seScope = newVars <> seScope env})
 
@@ -147,10 +153,13 @@ nextNum = do
     )
   pure (Unique unique)
 
-lookupVar :: (Ord var) => var -> 
-    Maybe ModuleName -> App var ann (Maybe Unique)
-lookupVar var maybeMod = 
-  asks (M.lookup (var,maybeMod) . seScope)
+lookupVar ::
+  (Ord var) =>
+  var ->
+  Maybe ModuleName ->
+  App var ann (Maybe Unique)
+lookupVar var maybeMod =
+  asks (M.lookup (var, maybeMod) . seScope)
 
 -- given a var, given it a fresh number unless we already have a number for it
 getVar :: (Ord var) => ann -> var -> Maybe ModuleName -> App var ann (var, Unique)
@@ -178,10 +187,12 @@ markImports (MyLet ann ident expr body) = do
   MyLet
     ann
     (markIdentImports ident unique)
-    <$> withLambda (M.singleton (var,Nothing) unique) 
-                (markImports expr) -- include var in case it is used recursively
-    <*> withLambda (M.singleton (var,Nothing) unique) 
-                  (markImports body)
+    <$> withLambda
+      (M.singleton (var, Nothing) unique)
+      (markImports expr) -- include var in case it is used recursively
+    <*> withLambda
+      (M.singleton (var, Nothing) unique)
+      (markImports body)
 markImports (MyLetPattern ann pat expr body) = do
   vars <- freshVarsFromPattern pat
   MyLetPattern ann
@@ -197,7 +208,7 @@ markImports (MyLambda ann ident body) = do
   MyLambda
     ann
     (markIdentImports ident unique)
-    <$> withLambda (M.singleton (varFromIdent ident,Nothing) unique) (markImports body)
+    <$> withLambda (M.singleton (varFromIdent ident, Nothing) unique) (markImports body)
 markImports (MyApp ann fn val) =
   MyApp ann <$> markImports fn <*> markImports val
 markImports (MyIf ann predExpr thenExpr elseExpr) =
