@@ -85,12 +85,12 @@ checkModule = runCheck . checkModule'
 --  3. definitions of datatypes
 --  4. exports
 --  5. imports
+--  6. infix
 --
 --  soon there will also need to be
---  1. infix definitions
---  2. tests
---  3. property tests
---  4. metadata / comments etc?
+--  1. tests
+--  2. property tests
+--  3. metadata / comments etc?
 checkModule' :: Text -> CheckM (Module (Type Annotation), MonoType)
 checkModule' input = do
   moduleItems <-
@@ -308,7 +308,7 @@ getModuleTypes inputModule typecheckedModules =
   let getTypes hash = case M.lookup hash typecheckedModules of
         Just mod' -> case getModuleType mod' of
           MTRecord _ parts -> (hash, parts)
-          _ -> error "what the hell man"
+          _ -> error "expected getModuleType to return a MTRecord but it did not"
         Nothing -> (hash, mempty)
    in M.fromList (getTypes <$> M.elems (moNamedImports inputModule))
 

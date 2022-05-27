@@ -394,7 +394,7 @@ spec = do
             )
             `shouldSatisfy` isRight
 
-        it "Uses Either from Prelude with named import" $
+        it ("Uses Either from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
           checkModuleType
             ( joinLines
                 [ "import Prelude from " <> prettyPrint preludeHash,
