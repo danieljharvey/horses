@@ -27,7 +27,7 @@ data TypeIdentifier
   | TVUnificationVar -- invented type for unification
       { tiUniVar :: Int
       }
-  | TVVar -- variable with name for ease of errors
+  | TVScopedVar -- named variable with unique int to allow scoping
       { tiUniVar :: Int,
         tvName :: Name
       }
@@ -58,9 +58,9 @@ printTypeNum i = [toEnum (index + start)] <> suffix
 renderTypeIdentifier :: TypeIdentifier -> Doc ann
 renderTypeIdentifier (TVName n) = renderTyVar n
 renderTypeIdentifier (TVUnificationVar i) = pretty (printTypeNum i)
-renderTypeIdentifier (TVVar i _) = pretty (printTypeNum i)
+renderTypeIdentifier (TVScopedVar i _) = pretty (printTypeNum i)
 
 getUniVar :: TypeIdentifier -> Maybe Int
 getUniVar (TVName _) = Nothing
 getUniVar (TVUnificationVar i) = Just i
-getUniVar (TVVar i _) = Just i
+getUniVar (TVScopedVar i _) = Just i

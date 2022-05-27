@@ -14,7 +14,7 @@ import qualified Data.Map as M
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Tests.Helpers
-import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
@@ -44,6 +44,7 @@ itTypeChecks mt expr = do
             ( createEnv
                 mempty
                 (createTypeMap $ getStoreExprs testStdlib)
+                mempty
                 mempty
             )
           $ numberedExpr

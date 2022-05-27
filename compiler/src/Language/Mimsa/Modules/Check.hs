@@ -15,14 +15,13 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import Debug.Trace
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Parser.Module
-import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
@@ -281,6 +280,7 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
       (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
       (makeTypeDeclMap importedTypes inputModule)
       (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
+      (getModuleTypes inputModule typecheckedModules)
 
 -- starting at a root module,
 -- create a map of each expr hash along with the modules it needs
@@ -300,15 +300,27 @@ getModuleDeps inputModule = do
 
   pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
 
+getModuleTypes ::
+  Module Annotation ->
+  Map ModuleHash (Module (Type Annotation)) ->
+  Map ModuleHash (Map Name MonoType)
+getModuleTypes inputModule typecheckedModules =
+  let getTypes hash = case M.lookup hash typecheckedModules of
+        Just mod' -> case getModuleType mod' of
+          MTRecord _ parts -> (hash, parts)
+          _ -> error "what the hell man"
+        Nothing -> (hash, mempty)
+   in M.fromList (getTypes <$> M.elems (moNamedImports inputModule))
+
 namespacedModules ::
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map ModuleName (ModuleHash, Set Name)
 namespacedModules inputModule typecheckedModules =
-  let getPair hash = case M.lookup hash (traceShowId typecheckedModules) of
+  let getPair hash = case M.lookup hash typecheckedModules of
         Just mod' -> (hash, namesOnly (moExpressionExports mod'))
         Nothing -> (hash, mempty)
-   in traceShowId $ getPair <$> moNamedImports inputModule
+   in getPair <$> moNamedImports inputModule
 
 namesOnly :: Set DefIdentifier -> Set Name
 namesOnly =

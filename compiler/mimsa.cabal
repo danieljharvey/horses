@@ -134,6 +134,7 @@ library
       Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
+      Language.Mimsa.Typechecker.CreateEnv
       Language.Mimsa.Typechecker.DataTypes
       Language.Mimsa.Typechecker.DisplayError
       Language.Mimsa.Typechecker.Elaborate

@@ -98,7 +98,7 @@ schemesToTypeMap schemes = do
               TVName n -> pure (Name $ coerce n)
               TVUnificationVar _i ->
                 throwError UnknownTypeError -- TODO: bespoke error
-              TVVar _ name -> pure name
+              TVScopedVar _ name -> pure name
          in (,) <$> leName <*> instantiate mempty v
   typeMap <- traverse fn (M.toList schemes)
   pure (M.fromList typeMap)
@@ -122,6 +122,6 @@ getTypedHoles subs'@(Substitutions subs) = do
   pure $ M.mapWithKey getMonoType holes
 
 variableToTypeIdentifier :: (Name, Unique) -> TypeIdentifier
-variableToTypeIdentifier (name, Unique i) = TVVar i name
+variableToTypeIdentifier (name, Unique i) = TVScopedVar i name
 variableToTypeIdentifier (name, _) =
   TVName (coerce name)

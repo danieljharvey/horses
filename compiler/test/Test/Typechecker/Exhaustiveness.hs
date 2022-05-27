@@ -41,7 +41,7 @@ noDuplicatesCheck ::
 noDuplicatesCheck = runPatternM . noDuplicateVariables
 
 testEnv :: Environment
-testEnv = Environment mempty dts mempty mempty
+testEnv = mempty {getDataTypes = dts}
   where
     dts = M.fromList [("Maybe", dtMaybe), ("These", dtThese)]
 

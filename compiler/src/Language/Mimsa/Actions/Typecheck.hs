@@ -24,7 +24,7 @@ import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Typechecker
-import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -54,7 +54,7 @@ getType depTypeMap dataTypes input expr = do
       (TypeErr input)
       ( typecheck
           depTypeMap
-          (createEnv depTypeMap dataTypes mempty)
+          (createEnv depTypeMap dataTypes mempty mempty)
           expr
       )
 
