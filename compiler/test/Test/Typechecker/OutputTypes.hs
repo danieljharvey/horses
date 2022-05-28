@@ -52,7 +52,7 @@ spec = do
         ( MyLambda
             (MTFunction (Location 0 7) (mtVar "a") (mtVar "a"))
             (Identifier (MTVar (Location 1 2) (tvNamed "a")) "a")
-            ( MyVar (MTVar (Location 6 7) (tvNamed "a")) "a"
+            ( MyVar (MTVar (Location 6 7) (tvNamed "a")) Nothing "a"
             )
         )
         `shouldBe` [ SourceItem "\\a -> a :: a -> a" (SourceSpan 1 1 1 8),

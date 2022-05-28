@@ -27,8 +27,8 @@ spec = do
         flattenLets expr `shouldBe` expected
     describe "Simple let patterns become Let again" $ do
       it "Turns a simple let pattern into let" $ do
-        let expr = MyLetPattern () (PVar mempty ("a" :: String)) (int 1) (MyVar mempty "a")
-            expected = MyLet mempty (Identifier mempty "a") (int 1) (MyVar mempty "a")
+        let expr = MyLetPattern () (PVar mempty ("a" :: String)) (int 1) (MyVar mempty Nothing "a")
+            expected = MyLet mempty (Identifier mempty "a") (int 1) (MyVar mempty Nothing "a")
         flattenLets expr `shouldBe` expected
     describe "Single match pattern matches become let patterns" $ do
       it "Leaves a multiple pattern match alone" $ do

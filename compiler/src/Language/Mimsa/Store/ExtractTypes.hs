@@ -28,7 +28,7 @@ extractTypes :: Expr Name ann -> Set TyCon
 extractTypes = filterBuiltIns . extractTypes_
 
 extractTypes_ :: Expr Name ann -> Set TyCon
-extractTypes_ (MyVar _ _) = mempty
+extractTypes_ (MyVar _ _ _) = mempty
 extractTypes_ (MyAnnotation _ _ expr) = extractTypes_ expr
 extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
 extractTypes_ (MyLet _ ident a b) =
@@ -107,7 +107,7 @@ extractDataTypes :: Expr var ann -> Set DataType
 extractDataTypes = withDataTypes S.singleton
 
 withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
-withDataTypes _ (MyVar _ _) = mempty
+withDataTypes _ (MyVar _ _ _) = mempty
 withDataTypes f (MyAnnotation _ _ expr) = withDataTypes f expr
 withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
 withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b
@@ -146,5 +146,5 @@ extractTypenames other = withMonoid extractTypenames other
 
 extractNamedTypeVars :: Type ann -> Set TyVar
 extractNamedTypeVars (MTVar _ (TVName tv)) = S.singleton tv
-extractNamedTypeVars (MTVar _ (TVVar _ name)) = S.singleton (coerce name)
+extractNamedTypeVars (MTVar _ (TVScopedVar _ name)) = S.singleton (coerce name)
 extractNamedTypeVars other = withMonoid extractNamedTypeVars other

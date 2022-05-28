@@ -22,6 +22,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
@@ -381,6 +382,23 @@ spec = do
             ( joinLines
                 [ "type Maybe a = Just a | Nothing",
                   "import * from " <> prettyPrint preludeHash
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it "Parses namespaced import" $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it ("Uses Either from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash,
+                  "def withFst = Prelude.fst (True, 1)"
                 ]
             )
             `shouldSatisfy` isRight

@@ -40,7 +40,7 @@ toString (DataType tyCon [] items) = do
             (Identifier mempty tyName)
             ( MyPatternMatch
                 mempty
-                (MyVar mempty tyName)
+                (MyVar mempty Nothing tyName)
                 matches
             )
         )
@@ -75,7 +75,7 @@ fromString (DataType _ [] items) = do
             (Identifier mempty tyName)
             ( MyPatternMatch
                 mempty
-                (MyVar mempty tyName)
+                (MyVar mempty Nothing tyName)
                 (matches <> [empty])
             )
         )

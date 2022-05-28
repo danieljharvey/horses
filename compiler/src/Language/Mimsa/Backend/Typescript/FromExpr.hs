@@ -91,7 +91,7 @@ toTSType' _ (MTVar _ a) =
   let newVar = case a of
         TVUnificationVar i' -> T.toTitle (T.pack (printTypeNum (i' + 1)))
         TVName a' -> T.toTitle (coerce a')
-        TVVar i' _ -> T.toTitle (T.pack (printTypeNum (i' + 1)))
+        TVScopedVar i' _ -> T.toTitle (T.pack (printTypeNum (i' + 1)))
    in pure (TSTypeVar newVar, S.singleton (TSGeneric newVar))
 toTSType' _ mt@MTTypeApp {} =
   consToTSType mt
@@ -321,7 +321,7 @@ toTSBody expr' =
       tsA <- toTSExpr a
       tsB <- toTSExpr b
       pure (TSBody mempty (TSArray [TSArrayItem tsA, TSArrayItem tsB]))
-    (MyVar _ a) ->
+    (MyVar _ _ a) ->
       pure (TSBody mempty (TSVar (coerce a)))
     (MyLambda fnType bind body) ->
       toLambda fnType bind body

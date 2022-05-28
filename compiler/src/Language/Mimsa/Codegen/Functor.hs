@@ -51,12 +51,12 @@ functorMap_ (DataType tyCon vars items) = do
                     (Identifier mempty tyName)
                     ( MyPatternMatch
                         mempty
-                        (MyVar mempty tyName)
+                        (MyVar mempty Nothing tyName)
                         (NE.toList matches)
                     )
                 )
             )
-            (MyVar mempty "fmap")
+            (MyVar mempty Nothing "fmap")
         )
 
 data FieldItemType
@@ -80,17 +80,17 @@ reconstructField matchVar fieldItem =
   case fieldItem of
     VariableField varType varName ->
       if varType == matchVar
-        then MyApp mempty (MyVar mempty "f") (MyVar mempty varName)
-        else MyVar mempty varName
+        then MyApp mempty (MyVar mempty Nothing "f") (MyVar mempty Nothing varName)
+        else MyVar mempty Nothing varName
     RecurseField restVar ->
       MyApp
         mempty
         ( MyApp
             mempty
-            (MyVar mempty "fmap")
-            (MyVar mempty "f")
+            (MyVar mempty Nothing "fmap")
+            (MyVar mempty Nothing "f")
         )
-        (MyVar mempty restVar)
+        (MyVar mempty Nothing restVar)
     Func2 fromF from to ->
       if to == matchVar
         then
@@ -99,11 +99,11 @@ reconstructField matchVar fieldItem =
             (Identifier mempty from)
             ( MyApp
                 mempty
-                (MyVar mempty "f")
+                (MyVar mempty Nothing "f")
                 ( MyApp
                     mempty
-                    (MyVar mempty fromF)
-                    (MyVar mempty from)
+                    (MyVar mempty Nothing fromF)
+                    (MyVar mempty Nothing from)
                 )
             )
         else
@@ -112,8 +112,8 @@ reconstructField matchVar fieldItem =
             (Identifier mempty from)
             ( MyApp
                 mempty
-                (MyVar mempty fromF)
-                (MyVar mempty from)
+                (MyVar mempty Nothing fromF)
+                (MyVar mempty Nothing from)
             )
 
 createPattern :: TyCon -> [FieldItemType] -> Pattern Name ()

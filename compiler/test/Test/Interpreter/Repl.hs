@@ -149,7 +149,7 @@ spec =
         result
           `shouldBe` Right
             ( MTFunction mempty (unknown 1) (unknown 1),
-              MyLambda mempty (Identifier mempty "i") (MyVar mempty "i")
+              MyLambda mempty (Identifier mempty "i") (MyVar mempty Nothing "i")
             )
 
       it "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
@@ -642,7 +642,7 @@ spec =
                     ( MyInfix
                         mempty
                         Add
-                        (MyVar mempty "r")
+                        (MyVar mempty Nothing "r")
                         (int 100)
                     )
                 )

@@ -21,7 +21,7 @@ import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Parser.Module
-import Language.Mimsa.Typechecker.DataTypes
+import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
@@ -29,8 +29,11 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
+import Language.Mimsa.Types.Modules.DefIdentifier
+import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker
 
@@ -82,12 +85,12 @@ checkModule = runCheck . checkModule'
 --  3. definitions of datatypes
 --  4. exports
 --  5. imports
+--  6. infix
 --
 --  soon there will also need to be
---  1. infix definitions
---  2. tests
---  3. property tests
---  4. metadata / comments etc?
+--  1. tests
+--  2. property tests
+--  3. metadata / comments etc?
 checkModule' :: Text -> CheckM (Module (Type Annotation), MonoType)
 checkModule' input = do
   moduleItems <-
@@ -182,6 +185,17 @@ getModuleType mod' =
           (moExpressions mod')
    in MTRecord mempty (getTypeFromAnn <$> filterNameDefs defs)
 
+filterDefs :: Set Entity -> Set DefIdentifier
+filterDefs =
+  S.fromList
+    . mapMaybe
+      ( \case
+          EName name -> Just (DIName name)
+          EInfix infixOp -> Just (DIInfix infixOp)
+          _ -> Nothing
+      )
+    . S.toList
+
 -- get the vars used by each def
 -- explode if there's not available
 getValueDependencies ::
@@ -196,7 +210,7 @@ getValueDependencies ::
     )
 getValueDependencies mod' = do
   let check exp' =
-        let nameDeps = extractUses exp'
+        let nameDeps = filterDefs (extractUses exp')
             unknownNameDeps =
               S.filter
                 ( \dep ->
@@ -266,6 +280,7 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
       (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
       (makeTypeDeclMap importedTypes inputModule)
       (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
+      (getModuleTypes inputModule typecheckedModules)
 
 -- starting at a root module,
 -- create a map of each expr hash along with the modules it needs
@@ -273,13 +288,49 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
 getModuleDeps :: Module Annotation -> CheckM (Map ModuleHash (Module Annotation, Set ModuleHash))
 getModuleDeps inputModule = do
   -- get this module's deps
-  let deps = S.fromList $ M.elems (moExpressionImports inputModule)
+  let deps =
+        S.fromList
+          ( M.elems (moExpressionImports inputModule)
+              <> M.elems (moNamedImports inputModule)
+          )
       mHash = hashModule inputModule
   -- recursively fetch sub-deps
   depModules <- traverse lookupModule (S.toList deps)
   subDeps <- traverse getModuleDeps depModules
 
   pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
+
+getModuleTypes ::
+  Module Annotation ->
+  Map ModuleHash (Module (Type Annotation)) ->
+  Map ModuleHash (Map Name MonoType)
+getModuleTypes inputModule typecheckedModules =
+  let getTypes hash = case M.lookup hash typecheckedModules of
+        Just mod' -> case getModuleType mod' of
+          MTRecord _ parts -> (hash, parts)
+          _ -> error "expected getModuleType to return a MTRecord but it did not"
+        Nothing -> (hash, mempty)
+   in M.fromList (getTypes <$> M.elems (moNamedImports inputModule))
+
+namespacedModules ::
+  Module Annotation ->
+  Map ModuleHash (Module (Type Annotation)) ->
+  Map ModuleName (ModuleHash, Set Name)
+namespacedModules inputModule typecheckedModules =
+  let getPair hash = case M.lookup hash typecheckedModules of
+        Just mod' -> (hash, namesOnly (moExpressionExports mod'))
+        Nothing -> (hash, mempty)
+   in getPair <$> moNamedImports inputModule
+
+namesOnly :: Set DefIdentifier -> Set Name
+namesOnly =
+  S.fromList
+    . mapMaybe
+      ( \case
+          DIName name -> Just name
+          _ -> Nothing
+      )
+    . S.toList
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::
@@ -300,6 +351,7 @@ typecheckOneDef inputModule typecheckedModules deps (def, expr) = do
         ( addNumbersToExpression
             (M.keysSet (filterNameDefs deps))
             (coerce <$> filterNameDefs (moExpressionImports inputModule))
+            (namespacedModules inputModule typecheckedModules)
             expr
         )
 

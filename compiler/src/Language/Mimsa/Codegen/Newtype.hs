@@ -27,7 +27,7 @@ wrap (DataType _tyCon _vars items) = do
             ( MyApp
                 mempty
                 (MyConstructor mempty consName)
-                (MyVar mempty "a")
+                (MyVar mempty Nothing "a")
             )
         )
     (_, _) -> throwError NewtypeShouldOnlyHaveOneArgument
@@ -46,9 +46,9 @@ unwrap (DataType tyCon _vars items) = do
             (Identifier mempty tyName)
             ( MyPatternMatch
                 mempty
-                (MyVar mempty tyName)
+                (MyVar mempty Nothing tyName)
                 [ ( PConstructor mempty consName [PVar mempty "a"],
-                    MyVar mempty "a"
+                    MyVar mempty Nothing "a"
                   )
                 ]
             )

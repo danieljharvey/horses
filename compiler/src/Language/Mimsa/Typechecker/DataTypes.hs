@@ -1,8 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Language.Mimsa.Typechecker.DataTypes
-  ( createEnv,
-    builtInTypes,
+  ( builtInTypes,
     lookupBuiltIn,
     storeDataDeclaration,
     inferDataConstructor,
@@ -25,65 +24,10 @@ import qualified Data.Set as S
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.TcMonad
-import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-
-createEnv ::
-  Map Name MonoType ->
-  Map TyCon DataType ->
-  Map InfixOp MonoType ->
-  Environment
-createEnv typeMap dataTypes infixTypes =
-  createDepsEnv typeMap
-    <> createTypesEnv dataTypes
-    <> createInfixEnv infixTypes
-
-createTypesEnv :: Map TyCon DataType -> Environment
-createTypesEnv dataTypes =
-  Environment
-    { getSchemes = mempty,
-      getDataTypes = builtInDts <> dataTypes,
-      getInfix = mempty,
-      getTypeVarsInScope = mempty
-    }
-  where
-    makeDT (name, _) =
-      M.singleton name (DataType name mempty mempty)
-    builtInDts =
-      mconcat $ makeDT <$> M.toList builtInTypes
-
-createDepsEnv :: Map Name MonoType -> Environment
-createDepsEnv typeMap =
-  Environment
-    { getSchemes = mkSchemes typeMap,
-      getDataTypes = mempty,
-      getInfix = mempty,
-      getTypeVarsInScope = mempty
-    }
-  where
-    toScheme =
-      bimap
-        (\(Name n) -> TVName (coerce n))
-        schemeFromMonoType
-    mkSchemes =
-      M.fromList . fmap toScheme . M.toList
-
-createInfixEnv :: Map InfixOp MonoType -> Environment
-createInfixEnv infixTypes =
-  Environment
-    { getSchemes = mempty,
-      getDataTypes = mempty,
-      getInfix = schemeFromMonoType <$> infixTypes,
-      getTypeVarsInScope = mempty
-    }
-
--- | Make all free variables polymorphic so that we get a fresh version of
--- everything each time
-schemeFromMonoType :: MonoType -> Scheme
-schemeFromMonoType mt = Scheme (S.toList $ freeTypeVars mt) mt
 
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
@@ -99,7 +43,7 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   if M.member tyName (getDataTypes env)
     then throwError (DuplicateTypeDeclaration ann tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName dt) mempty mempty
+      let newEnv = Environment mempty (M.singleton tyName dt) mempty mempty mempty
        in pure (newEnv <> env)
 
 errorOnBuiltIn :: (MonadError TypeError m) => Annotation -> TyCon -> m ()
@@ -128,8 +72,9 @@ inferDataConstructor env ann tyCon = do
       pure (constructorToType tyArg)
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
+-- which vars are used in this type?
 getVariablesForField :: Type ann -> Set Name
-getVariablesForField (MTVar _ (TVVar _ name)) = S.singleton name
+getVariablesForField (MTVar _ (TVScopedVar _ name)) = S.singleton name
 getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
 getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
@@ -198,7 +143,7 @@ inferConstructorTypes ann (DataType typeName tyVarNames constructors) = do
                   typeName
                   (S.singleton (coerce var))
                   (S.fromList (fst <$> tyVars))
-        MTVar _ (TVVar _ var) ->
+        MTVar _ (TVScopedVar _ var) ->
           case filter (\(tyName, _) -> tyName == coerce var) tyVars of
             [(_, tyFound)] -> pure tyFound
             _ ->

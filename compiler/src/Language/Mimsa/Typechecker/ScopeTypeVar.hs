@@ -53,13 +53,13 @@ freshenNamedTypeVars known =
       -- get an index for this name, or find an existing one
       case M.lookup tv known of
         Just index ->
-          pure (MTVar ann (TVVar index (coerce tv)))
+          pure (MTVar ann (TVScopedVar index (coerce tv)))
         _ -> error "what?" -- this should have been created above?
-    freshen mtV@(MTVar ann (TVVar _ tv)) =
+    freshen mtV@(MTVar ann (TVScopedVar _ tv)) =
       case M.lookup (coerce tv) known of -- if we've already scoped it
         Nothing -> pure mtV -- leave it
         Just i -> do
-          pure (MTVar ann (TVVar i tv))
+          pure (MTVar ann (TVScopedVar i tv))
     freshen mtV@MTVar {} = pure mtV
     freshen mtV@(MTConstructor _ _) =
       pure mtV

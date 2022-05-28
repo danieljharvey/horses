@@ -134,6 +134,7 @@ library
       Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
+      Language.Mimsa.Typechecker.CreateEnv
       Language.Mimsa.Typechecker.DataTypes
       Language.Mimsa.Typechecker.DisplayError
       Language.Mimsa.Typechecker.Elaborate
@@ -179,8 +180,11 @@ library
       Language.Mimsa.Types.Identifiers.TypeName
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Interpreter.Stack
+      Language.Mimsa.Types.Modules.DefIdentifier
+      Language.Mimsa.Types.Modules.Entity
       Language.Mimsa.Types.Modules.Module
       Language.Mimsa.Types.Modules.ModuleHash
+      Language.Mimsa.Types.Modules.ModuleName
       Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project

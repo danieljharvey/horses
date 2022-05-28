@@ -63,7 +63,7 @@ howTrivial (MyLiteral _ _) = Just 1
 howTrivial (MyArray _ as) = (+ 1) . sum <$> traverse howTrivial as
 howTrivial (MyRecord _ as) = (+ 1) . sum <$> traverse howTrivial as
 howTrivial (MyPair _ a b) = (+ 2) . sum <$> traverse howTrivial [a, b]
-howTrivial (MyVar _ _) = Just 1
+howTrivial (MyVar _ _ _) = Just 1
 howTrivial _ = Nothing
 
 inlineInternal :: (Ord var) => InlineState var ann -> Expr var ann -> Expr var ann
@@ -124,11 +124,11 @@ inlineExpression (MyDefineInfix ann op f rest) =
 inlineExpression (MyLet ann ident expr rest) = do
   storeExprInState (nameFromIdent ident) expr
   MyLet ann ident <$> inlineExpression expr <*> inlineExpression rest
-inlineExpression (MyVar ann var) = do
+inlineExpression (MyVar ann Nothing var) = do
   substitute <- substituteVar var
   case substitute of
     Just new -> pure new
-    _ -> pure (MyVar ann var)
+    _ -> pure (MyVar ann Nothing var)
 inlineExpression (MyLambda ann ident body) = do
   body' <- withinLambda (inlineExpression body)
   pure (MyLambda ann ident body')

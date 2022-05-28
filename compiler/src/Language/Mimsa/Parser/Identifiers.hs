@@ -8,6 +8,7 @@ module Language.Mimsa.Parser.Identifiers
     tyConParser,
     typedHoleParser,
     constructorParser,
+    moduleNameParser,
   )
 where
 
@@ -19,12 +20,28 @@ import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Text.Megaparsec
 
 ----
 
 varParser :: Parser ParserExpr
-varParser = myLexeme (withLocation MyVar nameParser)
+varParser =
+  try namespacedVarParser <|> try plainVarParser
+
+-- `dog`, `log`, `a`
+plainVarParser :: Parser ParserExpr
+plainVarParser =
+  myLexeme (withLocation (`MyVar` Nothing) nameParser)
+
+-- `Dog.log`, `Maybe.fmap`
+namespacedVarParser :: Parser ParserExpr
+namespacedVarParser =
+  let inner = do
+        mName <- moduleNameParser
+        myString "."
+        MyVar mempty (Just mName) <$> nameParser
+   in myLexeme (addLocation inner)
 
 ---
 
@@ -53,6 +70,15 @@ tyConParser =
     maybePred
       identifier
       (filterProtectedNames >=> safeMkTyCon)
+
+---
+
+moduleNameParser :: Parser ModuleName
+moduleNameParser =
+  myLexeme $
+    maybePred
+      identifier
+      (filterProtectedNames >=> safeMkModuleName)
 
 -----
 

@@ -155,9 +155,9 @@ lambdaParser =
 
 appFunc :: Parser ParserExpr
 appFunc =
-  constructorParser
-    <|> try recordAccessParser
-    <|> varParser
+  try recordAccessParser
+    <|> try varParser
+    <|> try constructorParser
     <|> try annotationParser
     <|> try (inBrackets lambdaParser)
     <|> typedHoleParser
@@ -215,7 +215,7 @@ recordItemParser = do
 punnedRecordItemParser :: Parser (Name, ParserExpr)
 punnedRecordItemParser = do
   name <- nameParser
-  pure (name, MyVar mempty name)
+  pure (name, MyVar mempty Nothing name)
 
 -----
 

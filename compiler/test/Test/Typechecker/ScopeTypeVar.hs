@@ -38,11 +38,10 @@ spec = do
       let result =
             runTC
               ( freshNamedType
-                  ( Environment mempty mempty mempty mempty
-                  )
+                  mempty
                   mt
               )
-      snd <$> result `shouldBe` Right (MTVar mempty (TVVar 1 "a"))
+      snd <$> result `shouldBe` Right (MTVar mempty (TVScopedVar 1 "a"))
     it "Empty set changes to same value" $ do
       let mt =
             MTPair
@@ -53,15 +52,14 @@ spec = do
       let result =
             runTC
               ( freshNamedType
-                  ( Environment mempty mempty mempty mempty
-                  )
+                  mempty
                   mt
               )
       let expected =
             MTPair
               mempty
-              (MTVar mempty (TVVar 1 "a"))
-              (MTVar mempty (TVVar 1 "a"))
+              (MTVar mempty (TVScopedVar 1 "a"))
+              (MTVar mempty (TVScopedVar 1 "a"))
 
       snd <$> result `shouldBe` Right expected
 
@@ -70,8 +68,8 @@ spec = do
       let result =
             runTC
               ( freshNamedType
-                  ( Environment mempty mempty mempty (M.singleton "a" 1)
+                  ( Environment mempty mempty mempty (M.singleton "a" 1) mempty
                   )
                   mt
               )
-      snd <$> result `shouldBe` Right (MTVar mempty (TVVar 1 "a"))
+      snd <$> result `shouldBe` Right (MTVar mempty (TVScopedVar 1 "a"))

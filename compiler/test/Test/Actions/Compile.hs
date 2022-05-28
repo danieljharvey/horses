@@ -25,7 +25,7 @@ spec :: Spec
 spec = do
   describe "Compile" $ do
     it "Simplest compilation creates four files" $ do
-      let expr = MyVar mempty "id"
+      let expr = MyVar mempty Nothing "id"
       let action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile Typescript storeExpr
@@ -40,7 +40,7 @@ spec = do
       S.size hashes `shouldBe` 2
 
     it "Complex compilation creates many files" $ do
-      let expr = MyVar mempty "evalState"
+      let expr = MyVar mempty Nothing "evalState"
       let action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compile Typescript storeExpr
@@ -51,7 +51,7 @@ spec = do
       newProject `shouldNotBe` testStdlib
 
     it "Doesn't break when using bindings that aren't in the store" $ do
-      let expr = MyVar mempty "id2"
+      let expr = MyVar mempty Nothing "id2"
       let exprHashForId = getHashOfName testStdlib "id"
       let bindings = Bindings (M.singleton "id2" exprHashForId)
       let storeExpr = StoreExpression expr bindings mempty

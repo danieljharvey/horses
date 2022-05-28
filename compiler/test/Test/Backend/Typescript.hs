@@ -415,7 +415,7 @@ spec = do
                   (Identifier mtBool "a")
                   ( MyLiteral mtBool (MyBool True)
                   )
-                  (MyVar mtBool "a")
+                  (MyVar mtBool Nothing "a")
               )
           )
           `shouldBe` "const a = true; export const main = a"
@@ -431,7 +431,7 @@ spec = do
                       (MyLiteral mtBool (MyBool True))
                       (MyLiteral mtBool (MyBool False))
                   )
-                  (MyVar mtBool "a")
+                  (MyVar mtBool Nothing "a")
               )
           )
           `shouldBe` "const [a,_] = [true,false]; export const main = a"
@@ -442,7 +442,7 @@ spec = do
               ( MyLambda
                   (MTFunction mempty mtString mtString)
                   (Identifier mtString "str")
-                  (MyVar mtString "str")
+                  (MyVar mtString Nothing "str")
               )
           )
           `shouldBe` "export const main = (str: string) => str"
@@ -455,7 +455,7 @@ spec = do
                   ( MyLambda
                       (MTFunction mempty (mtVar "a") (mtVar "a"))
                       (Identifier (mtVar "a") "a2")
-                      (MyVar (mtVar "a") "a")
+                      (MyVar (mtVar "a") Nothing "a")
                   )
               )
           )

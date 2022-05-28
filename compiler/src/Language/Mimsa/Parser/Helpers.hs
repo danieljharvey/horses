@@ -58,7 +58,7 @@ mapOuterExprAnnotation f expr' =
     MyInfix ann a op b -> MyInfix (f ann) a op b
     MyAnnotation ann expr mt -> MyAnnotation (f ann) expr mt
     MyLiteral ann a -> MyLiteral (f ann) a
-    MyVar ann a -> MyVar (f ann) a
+    MyVar ann modName a -> MyVar (f ann) modName a
     MyLet ann a b c -> MyLet (f ann) a b c
     MyLetPattern ann a b c -> MyLetPattern (f ann) a b c
     MyLambda ann a b -> MyLambda (f ann) a b

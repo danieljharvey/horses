@@ -41,7 +41,7 @@ applicativePure_ (DataType tyCon vars items) = do
         MyApp
           mempty
           (MyConstructor mempty tc)
-          (MyVar mempty fVar)
+          (MyVar mempty Nothing fVar)
     WithEmpties tc parts -> do
       foldl'
         ( \mExprA part -> do
@@ -73,7 +73,7 @@ partToExpr fVar items innerExpr part =
             MyApp
               mempty
               innerExpr
-              (MyVar mempty n)
+              (MyVar mempty Nothing n)
         else throwError CannotUseNonFunctorValue
     TPart -> do
       emptyTyCon <- emptyConstructor items
@@ -83,7 +83,15 @@ partToExpr fVar items innerExpr part =
           innerExpr
           (MyConstructor mempty emptyTyCon)
     FPart n a ->
-      pure $ MyApp mempty innerExpr (MyLambda mempty (Identifier mempty n) (MyVar mempty a))
+      pure $
+        MyApp
+          mempty
+          innerExpr
+          ( MyLambda
+              mempty
+              (Identifier mempty n)
+              (MyVar mempty Nothing a)
+          )
 
 data Part
   = VPart Name

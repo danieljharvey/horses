@@ -78,21 +78,22 @@ inferLiteral ann lit =
    in pure (MyLiteral (MTPrim ann tyLit) lit)
 
 lookupInEnv :: (Name, Unique) -> Environment -> Maybe Scheme
-lookupInEnv (name, unique) (Environment env' _ _ _) =
-  let look v = M.lookup v env'
+lookupInEnv (name, ModuleDep mHash) env =
+  M.lookup mHash (getNamespacedSchemes env) >>= M.lookup name
+lookupInEnv (name, unique) env =
+  let look v = M.lookup v (getSchemes env)
    in look (variableToTypeIdentifier (name, unique))
 
 inferVarFromScope ::
   Environment ->
   Annotation ->
   (Name, Unique) ->
-  ElabM ElabExpr
-inferVarFromScope env ann var' = do
+  ElabM MonoType
+inferVarFromScope env ann var' =
   case lookupInEnv var' env of
-    Just mt -> do
-      freshMonoType <- instantiate ann mt
-      pure (MyVar freshMonoType var')
-    _ -> do
+    Just mt ->
+      instantiate ann mt
+    _ ->
       throwError $
         VariableNotFound
           ann
@@ -101,7 +102,7 @@ inferVarFromScope env ann var' = do
 
 envFromVar :: (Name, Unique) -> Scheme -> Environment
 envFromVar binder scheme =
-  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty
+  Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty mempty
 
 envFromInfixOp :: InfixOp -> Scheme -> Environment
 envFromInfixOp infixOp scheme =
@@ -109,6 +110,7 @@ envFromInfixOp infixOp scheme =
     mempty
     mempty
     (M.singleton infixOp scheme)
+    mempty
     mempty
 
 lookupInfixOp ::
@@ -174,7 +176,7 @@ bindingIsRecursive ident = getAny . withMonoid findBinding
   where
     variable = case ident of
       (Identifier _ a) -> a
-    findBinding (MyVar _ binding) | binding == variable = (False, Any True)
+    findBinding (MyVar _ _ binding) | binding == variable = (False, Any True)
     findBinding _ = (True, mempty)
 
 binderFromIdentifier :: Identifier var ann -> var
@@ -754,7 +756,7 @@ checkLambda env ann ident body tyBinder tyBody = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
 
-  -- convert TVName to TVVar and scope them where necessary
+  -- convert TVName to TVScopedVar and scope them where necessary
   (newEnv1, tyBinder') <- freshNamedType env tyBinder
   (newEnv2, tyBody') <- freshNamedType newEnv1 tyBody
 
@@ -793,8 +795,9 @@ infer env inferExpr =
     (MyAnnotation _ann mt expr) -> do
       elabExpr <- check env expr mt
       pure (MyAnnotation (expAnn elabExpr) (mt $> mt) elabExpr)
-    (MyVar ann name) ->
-      inferVarFromScope env ann name
+    (MyVar ann maybeMod name) -> do
+      mt <- inferVarFromScope env ann name
+      pure (MyVar mt maybeMod name)
     (MyRecord ann map') -> do
       inferItems <- traverse (infer env) map'
       let tyItems = getTypeFromAnn <$> inferItems
@@ -802,7 +805,7 @@ infer env inferExpr =
     (MyInfix ann op a b) -> inferOperator env ann op a b
     (MyTypedHole ann (name, unique)) -> do
       tyHole <- addTypedHole env ann name
-      pure (MyVar tyHole (name, unique))
+      pure (MyVar tyHole Nothing (name, unique))
     (MyLet ann binder expr body) ->
       inferLetBinding env ann binder expr body
     (MyLetPattern ann pat expr body) ->

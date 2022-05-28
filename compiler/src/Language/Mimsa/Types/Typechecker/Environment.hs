@@ -10,10 +10,12 @@ import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.AST (DataType)
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
-  ( TyCon,
+  ( Name,
+    TyCon,
     TyVar,
     TypeIdentifier,
   )
+import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 
 -- everything we need in typechecking environment
@@ -21,19 +23,21 @@ data Environment = Environment
   { getSchemes :: Map TypeIdentifier Scheme,
     getDataTypes :: Map TyCon DataType,
     getInfix :: Map InfixOp Scheme,
-    getTypeVarsInScope :: Map TyVar Int
+    getTypeVarsInScope :: Map TyVar Int, -- used for scoping type variables
+    getNamespacedSchemes :: Map ModuleHash (Map Name Scheme) -- Name should probably be DefIdentifier or something so we can do Infix in future
   }
   deriving stock (Eq, Ord, Show)
 
 instance Semigroup Environment where
-  (Environment a b c d) <> (Environment a' b' c' d') =
-    Environment (a <> a') (b <> b') (c <> c') (d <> d')
+  (Environment a b c d e) <> (Environment a' b' c' d' e') =
+    Environment (a <> a') (b <> b') (c <> c') (d <> d') (e <> e')
 
 instance Monoid Environment where
-  mempty = Environment mempty mempty mempty mempty
+  mempty = Environment mempty mempty mempty mempty mempty
 
+-- TODO: this should include everything in order to be helpful
 instance Printer Environment where
-  prettyPrint (Environment typeSchemes _dataTypes _infix _tyVars) =
+  prettyPrint (Environment typeSchemes _dataTypes _infix _tyVars _) =
     "[\n"
       <> T.intercalate ", \n" (printRow <$> M.toList typeSchemes)
       <> "\n]"

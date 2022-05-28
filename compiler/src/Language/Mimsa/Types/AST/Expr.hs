@@ -28,6 +28,7 @@ import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker.MonoType
 import Language.Mimsa.Utils
 import Prettyprinter
@@ -53,6 +54,7 @@ data Expr var ann
   | -- | a named variable
     MyVar
       { expAnn :: ann,
+        expModuleName :: Maybe ModuleName,
         expVar :: var
       }
   | -- | binder, expr, body
@@ -272,7 +274,7 @@ prettyRecord map' =
   let items = M.toList map'
       printRow i (name, val) =
         let item = case val of
-              (MyVar _ vName)
+              (MyVar _ _ vName)
                 | vName == name ->
                     prettyDoc name
               _ ->
@@ -374,7 +376,9 @@ instance Printer (Expr Name ann) where
     prettyDoc l
   prettyDoc (MyAnnotation _ mt expr) =
     "(" <> prettyDoc expr <+> ":" <+> prettyDoc mt <> ")"
-  prettyDoc (MyVar _ var) =
+  prettyDoc (MyVar _ (Just modName) var) =
+    prettyDoc modName <> "." <> prettyDoc var
+  prettyDoc (MyVar _ Nothing var) =
     prettyDoc var
   prettyDoc (MyLet _ var expr1 expr2) =
     prettyLet var expr1 expr2

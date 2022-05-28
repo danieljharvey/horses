@@ -31,15 +31,15 @@ varBind ::
 varBind ann var@(TVName _) _ =
   -- these should always be scoped when found, so if we find them, error
   throwError (UnscopedTypeVarFound ann var)
-varBind ann var@(TVVar _ _) mt@(MTVar _ (TVUnificationVar _)) =
+varBind ann var@(TVScopedVar _ _) mt@(MTVar _ (TVUnificationVar _)) =
   -- numbered vars always combine with unification vars
   pure (Substitutions (M.singleton var (mt $> ann)))
-varBind ann var@(TVVar a nameA) mt@(MTVar _ (TVVar b nameB)) =
+varBind ann var@(TVScopedVar a nameA) mt@(MTVar _ (TVScopedVar b nameB)) =
   -- names and numbers must match to unify
   if nameA == nameB && a == b
     then pure (Substitutions (M.singleton var (mt $> ann)))
     else throwError (UnificationError mt (MTVar ann var))
-varBind ann var@(TVVar _ _) mt =
+varBind ann var@(TVScopedVar _ _) mt =
   -- named vars only unify with themselves
   throwError (UnificationError mt (MTVar ann var))
 varBind ann var mt

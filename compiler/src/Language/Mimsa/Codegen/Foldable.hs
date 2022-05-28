@@ -53,13 +53,13 @@ fold_ (DataType tyCon vars items) = do
                         (Identifier mempty tyName)
                         ( MyPatternMatch
                             mempty
-                            (MyVar mempty tyName)
+                            (MyVar mempty Nothing tyName)
                             (NE.toList matches)
                         )
                     )
                 )
             )
-            (MyVar mempty "fold")
+            (MyVar mempty Nothing "fold")
         )
 
 data FieldItemType
@@ -107,22 +107,23 @@ reconstructFields =
                       mempty
                       ( MyVar
                           mempty
+                          Nothing
                           "fold"
                       )
-                      (MyVar mempty "f")
+                      (MyVar mempty Nothing "f")
                   )
                   expr'
               )
-              (MyVar mempty tyName)
+              (MyVar mempty Nothing tyName)
           )
         VariableField a ->
           ( MyApp
               mempty
-              (MyApp mempty (MyVar mempty "f") expr')
-              (MyVar mempty a)
+              (MyApp mempty (MyVar mempty Nothing "f") expr')
+              (MyVar mempty Nothing a)
           )
     )
-    (MyVar mempty "total")
+    (MyVar mempty Nothing "total")
 
 createMatch ::
   TyCon ->

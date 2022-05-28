@@ -12,6 +12,7 @@ import qualified Data.Set as S
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Typechecker
@@ -27,7 +28,8 @@ prelude =
       moExpressionExports = S.singleton (DIName "fst"),
       moExpressionImports = mempty,
       moDataTypeExports = S.singleton "Either",
-      moDataTypeImports = mempty
+      moDataTypeImports = mempty,
+      moNamedImports = mempty
     }
   where
     exprs =
@@ -39,8 +41,8 @@ prelude =
               ( MyLetPattern
                   mempty
                   (PPair mempty (PVar mempty "a") (PWildcard mempty))
-                  (MyVar mempty "pair")
-                  (MyVar mempty "a")
+                  (MyVar mempty Nothing "pair")
+                  (MyVar mempty Nothing "a")
               )
           )
         ]

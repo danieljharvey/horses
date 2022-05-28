@@ -1,0 +1,1 @@
+runState (bindState storeName (pureState "dog")) nil

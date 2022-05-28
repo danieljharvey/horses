@@ -26,7 +26,7 @@ spec = do
           `shouldBe` S.singleton ("a", mempty)
       it "Does not find `a` when it is returned later from Let" $ do
         findUnused @Annotation @Name
-          (MyLet mempty (Identifier mempty "a") (bool True) (MyVar mempty "a"))
+          (MyLet mempty (Identifier mempty "a") (bool True) (MyVar mempty Nothing "a"))
           `shouldBe` mempty
       it "Finds `a` in a pattern match" $ do
         findUnused @Annotation @Name
@@ -39,7 +39,7 @@ spec = do
 
       it "Does not find `a` when it is used in a pattern match" $ do
         findUnused @Annotation @Name
-          (MyPatternMatch mempty (bool True) [(PVar mempty "a", MyVar mempty "a")])
+          (MyPatternMatch mempty (bool True) [(PVar mempty "a", MyVar mempty Nothing "a")])
           `shouldBe` mempty
 
   describe "removeUnused" $ do
@@ -66,8 +66,8 @@ spec = do
             MyLambda
               mempty
               (Identifier mempty "a")
-              (MyLet mempty (Identifier mempty "b") (bool True) (MyVar mempty "a"))
-          expected = MyLambda mempty (Identifier mempty "a") (MyVar mempty "a")
+              (MyLet mempty (Identifier mempty "b") (bool True) (MyVar mempty Nothing "a"))
+          expected = MyLambda mempty (Identifier mempty "a") (MyVar mempty Nothing "a")
       removeUnused @Annotation @Name expr
         `shouldBe` expected
     it "Removes from broken thing" $ do

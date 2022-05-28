@@ -8,18 +8,19 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.Module
+import Language.Mimsa.Types.Modules.Entity
 
 -- find all uses of external vars, types, infix operators etc
 -- used in dependency analysis
 -- important - we must not count variables brought in via lambdas or let
 -- bindings as those aren't external deps
 
-extractUses :: (Eq ann, Monoid ann) => Expr Name ann -> Set DefIdentifier
+extractUses :: (Eq ann, Monoid ann) => Expr Name ann -> Set Entity
 extractUses = extractUses_
 
-extractUses_ :: (Eq ann, Monoid ann) => Expr Name ann -> Set DefIdentifier
-extractUses_ (MyVar _ a) = S.singleton (DIName a)
+extractUses_ :: (Eq ann, Monoid ann) => Expr Name ann -> Set Entity
+extractUses_ (MyVar _ (Just modName) a) = S.singleton (ENamespacedName modName a)
+extractUses_ (MyVar _ _ a) = S.singleton (EName a)
 extractUses_ (MyAnnotation _ _ expr) =
   extractUses_ expr
 extractUses_ (MyIf _ a b c) =
@@ -31,7 +32,7 @@ extractUses_ (MyLetPattern _ pat expr body) =
    in S.filter (`S.notMember` patUses) (extractUses_ expr <> extractUses_ body)
 extractUses_ (MyInfix _ op a b) =
   let infixUses = case op of
-        Custom infixOp -> S.singleton (DIInfix infixOp)
+        Custom infixOp -> S.singleton (EInfix infixOp)
         _ -> mempty
    in infixUses
         <> extractUses_ a
@@ -51,7 +52,7 @@ extractUses_ (MyDefineInfix _ _ a b) = extractUses_ a <> extractUses_ b
 extractUses_ (MyPatternMatch _ match patterns) =
   extractUses match <> mconcat patternUses
   where
-    patternUses :: [Set DefIdentifier]
+    patternUses :: [Set Entity]
     patternUses =
       ( \(pat, expr) ->
           let patUses = extractPatternUses pat
@@ -59,13 +60,13 @@ extractUses_ (MyPatternMatch _ match patterns) =
       )
         <$> patterns
 
-extractIdentUses :: Identifier Name ann -> Set DefIdentifier
-extractIdentUses (Identifier _ name) = S.singleton (DIName name)
+extractIdentUses :: Identifier Name ann -> Set Entity
+extractIdentUses (Identifier _ name) = S.singleton (EName name)
 
-extractPatternUses :: (Eq ann, Monoid ann) => Pattern Name ann -> Set DefIdentifier
+extractPatternUses :: (Eq ann, Monoid ann) => Pattern Name ann -> Set Entity
 extractPatternUses (PWildcard _) = mempty
 extractPatternUses (PLit _ _) = mempty
-extractPatternUses (PVar _ a) = S.singleton (DIName a)
+extractPatternUses (PVar _ a) = S.singleton (EName a)
 extractPatternUses (PRecord _ as) =
   mconcat (extractPatternUses <$> M.elems as)
 extractPatternUses (PPair _ a b) =
@@ -77,11 +78,11 @@ extractPatternUses (PArray _ as spread) =
 extractPatternUses (PString _ a as) =
   extractStringPart a <> extractStringPart as
 
-extractSpreadUses :: Spread Name ann -> Set DefIdentifier
+extractSpreadUses :: Spread Name ann -> Set Entity
 extractSpreadUses NoSpread = mempty
 extractSpreadUses (SpreadWildcard _) = mempty
-extractSpreadUses (SpreadValue _ a) = S.singleton (DIName a)
+extractSpreadUses (SpreadValue _ a) = S.singleton (EName a)
 
-extractStringPart :: StringPart Name ann -> Set DefIdentifier
+extractStringPart :: StringPart Name ann -> Set Entity
 extractStringPart (StrWildcard _) = mempty
-extractStringPart (StrValue _ a) = S.singleton (DIName a)
+extractStringPart (StrValue _ a) = S.singleton (EName a)
