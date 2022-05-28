@@ -3,6 +3,7 @@ module Language.Mimsa.Typechecker.CreateEnv
   )
 where
 
+import Language.Mimsa.Types.Modules.ModuleName
 import Data.Bifunctor
 import Data.Coerce
 import Data.Map (Map)
@@ -17,7 +18,7 @@ import Language.Mimsa.Types.Typechecker
 
 createEnv ::
   Map Name MonoType ->
-  Map TyCon DataType ->
+  Map (Maybe ModuleName,TyCon) DataType ->
   Map InfixOp MonoType ->
   Map ModuleHash (Map Name MonoType) ->
   Environment
@@ -27,7 +28,7 @@ createEnv typeMap dataTypes infixTypes modTypes =
     <> createInfixEnv infixTypes
     <> createModuleEnv modTypes
 
-createTypesEnv :: Map TyCon DataType -> Environment
+createTypesEnv :: Map (Maybe ModuleName,TyCon) DataType -> Environment
 createTypesEnv dataTypes =
   Environment
     { getSchemes = mempty,
@@ -38,7 +39,7 @@ createTypesEnv dataTypes =
     }
   where
     makeDT (name, _) =
-      M.singleton name (DataType name mempty mempty)
+      M.singleton (Nothing,name) (DataType name mempty mempty)
     builtInDts =
       mconcat $ makeDT <$> M.toList builtInTypes
 

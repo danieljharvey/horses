@@ -230,9 +230,9 @@ getValueDependencies mod' = do
               else throwError (ModuleErr (CannotFindValues unknownNameDeps))
   traverse check (moExpressions mod')
 
-makeTypeDeclMap :: Map TypeName DataType -> Module ann -> Map TyCon DataType
+makeTypeDeclMap :: Map TypeName DataType -> Module ann -> Map (Maybe ModuleName, TyCon) DataType
 makeTypeDeclMap importedTypes inputModule =
-  M.fromList . fmap (first coerce) . M.toList $
+  M.fromList . fmap (\(tyCon, val) -> ((Nothing, coerce tyCon),val)) . M.toList $
     moDataTypes inputModule
       <> importedTypes
 

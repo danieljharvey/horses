@@ -146,7 +146,7 @@ generateRequired env (PRecord _ items) = do
   items' <- traverse (generateRequired env) items
   pure (PRecord mempty <$> sequence items')
 generateRequired env (PConstructor ann modName tyCon args) = do
-  dt <- lookupConstructor env ann tyCon
+  dt <- lookupConstructor env ann modName tyCon
   newFromArgs <- traverse (generateRequired env) args
   newDataTypes <- requiredFromDataType dt
   let newCons = PConstructor mempty modName tyCon <$> sequence newFromArgs

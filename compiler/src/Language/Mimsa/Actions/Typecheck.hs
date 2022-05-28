@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-
+  {-# LANGUAGE TupleSections #-}
 module Language.Mimsa.Actions.Typecheck
   ( typecheckStoreExpression,
     typecheckExpression,
@@ -34,12 +34,13 @@ import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Unique
+import Language.Mimsa.Types.Modules.ModuleName
 
 ----------
 
 getType ::
   Map Name MonoType ->
-  Map TyCon DataType ->
+  Map (Maybe ModuleName,TyCon) DataType ->
   Text ->
   Expr (Name, Unique) Annotation ->
   Actions.ActionM

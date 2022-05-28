@@ -35,7 +35,7 @@ testInferDataConstructor :: TyCon -> Either TypeError MonoType
 testInferDataConstructor tyCon = runTC $ do
   env1 <- storeDataDeclaration mempty mempty dtMaybe
   env2 <- storeDataDeclaration env1 mempty dtEither
-  inferDataConstructor env2 mempty tyCon
+  inferDataConstructor env2 mempty Nothing tyCon
 
 spec :: Spec
 spec = do

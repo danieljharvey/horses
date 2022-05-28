@@ -382,7 +382,7 @@ inferPattern env (PConstructor ann modName tyCon args) = do
   inferEverything <- traverse (inferPattern env) args
   let inferArgs = fst <$> inferEverything
   let newEnv = mconcat (snd <$> inferEverything) <> env
-  dt@(DataType ty _ _) <- lookupConstructor newEnv ann tyCon
+  dt@(DataType ty _ _) <- lookupConstructor newEnv ann modName tyCon
   -- we get the types for the constructor in question
   -- and unify them with the tests in the pattern
   consType <- inferConstructorTypes ann dt
@@ -833,7 +833,7 @@ infer env inferExpr =
     (MyArray ann items) -> do
       inferArray env ann items
     (MyConstructor ann modName name) -> do
-      tyData <- inferDataConstructor env ann name
+      tyData <- inferDataConstructor env ann modName name
       pure (MyConstructor tyData modName name)
     (MyDefineInfix ann infixOp infixExpr expr) ->
       inferDefineInfix env ann infixOp infixExpr expr

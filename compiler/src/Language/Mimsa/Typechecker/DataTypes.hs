@@ -11,6 +11,7 @@ module Language.Mimsa.Typechecker.DataTypes
   )
 where
 
+import Language.Mimsa.Types.Modules.ModuleName
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor
@@ -40,10 +41,10 @@ storeDataDeclaration ::
 storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   validateDataTypeVariables ann dt
   validateConstructors env ann dt
-  if M.member tyName (getDataTypes env)
+  if M.member (Nothing,tyName) (getDataTypes env)
     then throwError (DuplicateTypeDeclaration ann tyName)
     else
-      let newEnv = Environment mempty (M.singleton tyName dt) mempty mempty mempty
+      let newEnv = mempty { getDataTypes = M.singleton (Nothing,tyName) dt } 
        in pure (newEnv <> env)
 
 errorOnBuiltIn :: (MonadError TypeError m) => Annotation -> TyCon -> m ()
@@ -61,11 +62,12 @@ inferDataConstructor ::
   ) =>
   Environment ->
   Annotation ->
+  Maybe ModuleName ->
   TyCon ->
   m MonoType
-inferDataConstructor env ann tyCon = do
+inferDataConstructor env ann modName tyCon = do
   errorOnBuiltIn ann tyCon
-  dataType <- lookupConstructor env ann tyCon
+  dataType <- lookupConstructor env ann modName tyCon
   (_, allArgs) <- inferConstructorTypes ann dataType
   case M.lookup tyCon allArgs of
     Just tyArg ->
@@ -93,6 +95,7 @@ getVariablesForField MTPrim {} = S.empty
 getVariablesForField MTConstructor {} = S.empty
 getVariablesForField (MTTypeApp _ a b) = getVariablesForField a <> getVariablesForField b
 
+-- when adding a new datatype, check none of the constructors already exist
 validateConstructors ::
   (MonadError TypeError m) =>
   Environment ->
@@ -102,7 +105,7 @@ validateConstructors ::
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-        if M.member tyCon (getDataTypes env)
+        if M.member (Nothing,tyCon) (getDataTypes env)
           then throwError (CannotUseBuiltInTypeAsConstructor ann tyCon)
           else pure ()
     )
@@ -193,16 +196,17 @@ inferType ::
   (MonadError TypeError m) =>
   Environment ->
   Annotation ->
+    Maybe ModuleName ->
   TyCon ->
   [MonoType] ->
   m MonoType
-inferType env ann tyName tyVars =
-  case M.lookup tyName (getDataTypes env) of
+inferType env ann modName tyName tyVars =
+  case M.lookup (modName,tyName) (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
       _ -> pure (dataTypeWithVars mempty tyName tyVars)
     _ ->
-      throwError (TypeConstructorNotInScope env ann tyName)
+      throwError (TypeConstructorNotInScope env ann modName tyName)
 
 dataTypeWithVars :: (Monoid ann) => ann -> TyCon -> [Type ann] -> Type ann
 dataTypeWithVars ann tyName =

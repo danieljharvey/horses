@@ -45,7 +45,7 @@ data TypeErrorF var ann
   | MissingRecordTypeMember ann var (Map Name (Type ann))
   | NoFunctionEquality (Type ann) (Type ann)
   | CannotMatchRecord Environment ann (Type ann)
-  | TypeConstructorNotInScope Environment ann TyCon
+  | TypeConstructorNotInScope Environment ann (Maybe ModuleName) TyCon
   | TypeVariablesNotInDataType ann TyCon (Set var) (Set var)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
@@ -158,9 +158,12 @@ renderTypeError (CannotMatchRecord env _ mt) =
     "The following are available:",
     pretty (show env)
   ]
-renderTypeError (TypeConstructorNotInScope env _ constructor) =
-  [ "Type constructor for"
-      <+> prettyDoc constructor
+renderTypeError (TypeConstructorNotInScope env _ modName constructor) =
+  let prettyName = case modName of
+                     Just mod' -> prettyDoc mod' <> "." <> prettyDoc constructor
+                     _ -> prettyDoc constructor
+   in [ "Type constructor for"
+      <+> prettyName 
       <+> "not found in scope.",
     "The following are available:"
   ]
