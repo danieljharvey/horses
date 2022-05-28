@@ -122,7 +122,7 @@ fromConstructor gs tyCon args =
         MyApp mempty a <$> fromMonoType gs mtArg
    in foldr
         applyArg
-        (pure (MyConstructor mempty tyCon))
+        (pure (MyConstructor mempty Nothing tyCon))
         args
 
 fromPrimitive :: Primitive -> Gen Literal

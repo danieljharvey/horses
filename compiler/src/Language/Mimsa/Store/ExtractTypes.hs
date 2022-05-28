@@ -28,7 +28,7 @@ extractTypes :: Expr Name ann -> Set TyCon
 extractTypes = filterBuiltIns . extractTypes_
 
 extractTypes_ :: Expr Name ann -> Set TyCon
-extractTypes_ (MyVar _ _ _) = mempty
+extractTypes_ MyVar {}  = mempty
 extractTypes_ (MyAnnotation _ _ expr) = extractTypes_ expr
 extractTypes_ (MyIf _ a b c) = extractTypes_ a <> extractTypes_ b <> extractTypes_ c
 extractTypes_ (MyLet _ ident a b) =
@@ -50,7 +50,7 @@ extractTypes_ (MyData _ dt a) =
   S.difference
     (extractConstructors dt <> extractTypes_ a)
     (extractLocalTypeDeclarations dt)
-extractTypes_ (MyConstructor _ t) = S.singleton t
+extractTypes_ (MyConstructor _ _ t) = S.singleton t
 extractTypes_ (MyTypedHole _ _) = mempty
 extractTypes_ (MyDefineInfix _ _ a b) =
   extractTypes_ a <> extractTypes_ b
@@ -60,7 +60,7 @@ extractTypes_ (MyPatternMatch _ expr patterns) =
     <> mconcat (extractFromPattern . fst <$> patterns)
 
 extractFromPattern :: Pattern var ann -> Set TyCon
-extractFromPattern (PConstructor _ tyCon args) =
+extractFromPattern (PConstructor _ _ tyCon args) =
   S.singleton tyCon <> mconcat (extractFromPattern <$> args)
 extractFromPattern (PPair _ a b) = extractFromPattern a <> extractFromPattern b
 extractFromPattern (PRecord _ items) = mconcat $ extractFromPattern <$> M.elems items
@@ -107,7 +107,7 @@ extractDataTypes :: Expr var ann -> Set DataType
 extractDataTypes = withDataTypes S.singleton
 
 withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
-withDataTypes _ (MyVar _ _ _) = mempty
+withDataTypes _ MyVar {}  = mempty
 withDataTypes f (MyAnnotation _ _ expr) = withDataTypes f expr
 withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
 withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b
@@ -124,7 +124,7 @@ withDataTypes f (MyArray _ map') = foldMap (withDataTypes f) map'
 withDataTypes f (MyData _ dt a) =
   withDataTypes f a
     <> f dt
-withDataTypes _ (MyConstructor _ _) = mempty
+withDataTypes _ (MyConstructor _ _ _) = mempty
 withDataTypes _ (MyTypedHole _ _) = mempty
 withDataTypes f (MyDefineInfix _ _ infixA a) =
   withDataTypes f infixA <> withDataTypes f a

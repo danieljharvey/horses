@@ -261,7 +261,7 @@ spec = parallel $ do
       it "Parses var and number equality" $
         testParse " a == 1" `shouldBe` Right (MyInfix mempty Equals (MyVar mempty Nothing "a") (int 1))
       it "Parsers two constructor applications with infix operator" $
-        let mkSome = MyApp mempty (MyConstructor mempty "Some")
+        let mkSome = MyApp mempty (MyConstructor mempty Nothing "Some")
          in testParse "(Some 1) == Some 2"
               `shouldBe` Right (MyInfix mempty Equals (mkSome (int 1)) (mkSome (int 2)))
       it "Parses an empty record literal" $
@@ -427,7 +427,7 @@ spec = parallel $ do
                 mempty
                 ( MyApp
                     mempty
-                    (MyConstructor mempty "Dog")
+                    (MyConstructor mempty Nothing "Dog")
                     (str' "hi")
                 )
                 (str' "dog")
@@ -446,7 +446,7 @@ spec = parallel $ do
                         ]
                     )
                 )
-                (MyConstructor mempty "Nothing")
+                (MyConstructor mempty Nothing "Nothing")
             )
       it "Parses a type declaration with a function as arg" $
         testParse "type Reader r a = Reader (r -> a) in {}"
@@ -497,7 +497,9 @@ spec = parallel $ do
                 (MyRecord mempty mempty)
             )
       it "Uses a constructor" $
-        testParse "Vrai" `shouldBe` Right (MyConstructor mempty "Vrai")
+        testParse "Vrai" `shouldBe` Right (MyConstructor mempty Nothing "Vrai")
+      it "Uses a namespaced constructor" $
+        testParse "LeBool.Vrai" `shouldBe` Right (MyConstructor mempty (Just "LeBool") "Vrai")
       it "Parses complex type constructors" $
         testParse "type Tree = Leaf Int | Branch Tree Tree in Leaf 1"
           `shouldBe` Right
@@ -516,7 +518,7 @@ spec = parallel $ do
                         ]
                     )
                 )
-                (MyApp mempty (MyConstructor mempty "Leaf") (int 1))
+                (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 1))
             )
       it "Parses even more complex type constructors" $
         testParse "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
@@ -543,12 +545,12 @@ spec = parallel $ do
                         mempty
                         ( MyApp
                             mempty
-                            (MyConstructor mempty "Branch")
-                            (MyConstructor mempty "Empty")
+                            (MyConstructor mempty Nothing "Branch")
+                            (MyConstructor mempty Nothing "Empty")
                         )
                         (int 1)
                     )
-                    (MyConstructor mempty "Empty")
+                    (MyConstructor mempty Nothing "Empty")
                 )
             )
       it "Parses big function application" $
@@ -593,7 +595,7 @@ spec = parallel $ do
                 (Identifier mempty "a")
                 ( MyApp
                     mempty
-                    (MyConstructor mempty "State")
+                    (MyConstructor mempty Nothing "State")
                     ( MyLambda
                         mempty
                         (Identifier mempty "s")
@@ -601,7 +603,7 @@ spec = parallel $ do
                             mempty
                             ( MyApp
                                 mempty
-                                ( MyConstructor mempty "Pair"
+                                ( MyConstructor mempty Nothing "Pair"
                                 )
                                 (MyVar mempty Nothing "a")
                             )
@@ -619,7 +621,7 @@ spec = parallel $ do
                     mempty
                     ( MyApp
                         mempty
-                        (MyConstructor mempty "Log")
+                        (MyConstructor mempty Nothing "Log")
                         (int 1)
                     )
                     (str "dog")
@@ -633,7 +635,7 @@ spec = parallel $ do
                 mempty
                 ( MyApp
                     mempty
-                    (MyConstructor mempty "Log")
+                    (MyConstructor mempty Nothing "Log")
                     (int 1)
                 )
                 ( MyApp
@@ -705,10 +707,10 @@ spec = parallel $ do
                     mempty
                     ( MyApp
                         mempty
-                        (MyConstructor mempty "Branch")
-                        (MyApp mempty (MyConstructor mempty "Leaf") (int 1))
+                        (MyConstructor mempty Nothing "Branch")
+                        (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 1))
                     )
-                    (MyApp mempty (MyConstructor mempty "Leaf") (int 2))
+                    (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 2))
                 )
             )
       it "dog + log" $
@@ -912,7 +914,7 @@ spec = parallel $ do
       it "Parses a var with location information" $
         testParseWithAnn "dog" `shouldBe` Right (MyVar (Location 0 3) Nothing "dog")
       it "Parses a tyCon with location information" $
-        testParseWithAnn "Log" `shouldBe` Right (MyConstructor (Location 0 3) "Log")
+        testParseWithAnn "Log" `shouldBe` Right (MyConstructor (Location 0 3) Nothing "Log")
       it "Parses a true bool with location information" $
         testParseWithAnn "True" `shouldBe` Right (MyLiteral (Location 0 4) (MyBool True))
       it "Parses a false bool with location information" $
@@ -1003,7 +1005,7 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyApp
                 (Location 0 6)
-                (MyConstructor (Location 0 5) "Just")
+                (MyConstructor (Location 0 5) Nothing "Just")
                 (MyLiteral (Location 5 6) (MyInt 1))
             )
       it "Parses infix equals with location information" $
@@ -1087,8 +1089,8 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 29)
-                (MyConstructor (Location 6 11) "None")
-                [ ( PConstructor (Location 16 21) "None" mempty,
+                (MyConstructor (Location 6 11) Nothing "None")
+                [ ( PConstructor (Location 16 21) Nothing "None" mempty,
                     MyLiteral (Location 24 29) (MyBool False)
                   )
                 ]
@@ -1098,12 +1100,24 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyPatternMatch
                 (Location 0 34)
-                (MyApp (Location 6 13) (MyConstructor (Location 6 11) "Some") (MyLiteral (Location 11 12) (MyInt 1)))
-                [ ( PConstructor (Location 19 25) "Some" [PWildcard (Location 24 25)],
+                (MyApp (Location 6 13) (MyConstructor (Location 6 11) Nothing "Some") (MyLiteral (Location 11 12) (MyInt 1)))
+                [ ( PConstructor (Location 19 25) Nothing "Some" [PWildcard (Location 24 25)],
                     MyLiteral (Location 30 34) (MyBool True)
                   )
                 ]
             )
+      it "Parses namespaced constructor with arg pattern match" $
+        testParseWithAnn "match Maybe.Some 1 with (Maybe.Some _) -> True"
+          `shouldBe` Right
+            ( MyPatternMatch
+                (Location 0 46)
+                (MyApp (Location 6 19) (MyConstructor (Location 6 17) (Just "Maybe") "Some") (MyLiteral (Location 17 18) (MyInt 1)))
+                [ ( PConstructor (Location 25 37) (Just "Maybe") "Some" [PWildcard (Location 36 37)],
+                    MyLiteral (Location 42 46) (MyBool True)
+                  )
+                ]
+            )
+
     describe "Parse regressions" $ do
       it "regression 1" $
         testParse "let a = 1; let b = a + 1 in match True with True -> 1 | False -> 2"

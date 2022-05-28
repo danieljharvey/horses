@@ -118,7 +118,7 @@ reconstructField matchVar fieldItem =
 
 createPattern :: TyCon -> [FieldItemType] -> Pattern Name ()
 createPattern tyCon fields =
-  PConstructor mempty tyCon (toPattern <$> fields)
+  PConstructor mempty Nothing tyCon (toPattern <$> fields)
   where
     toPattern (VariableField _ a) = PVar mempty a
     toPattern (RecurseField a) = PVar mempty a
@@ -143,6 +143,6 @@ createMatch typeName matchVar tyCon fields = do
               let reconstruct = reconstructField matchVar fieldItem
                in MyApp mempty expr' reconstruct
           )
-          (MyConstructor mempty tyCon)
+          (MyConstructor mempty Nothing tyCon)
           regFields
   pure (createPattern tyCon regFields, withConsApp)

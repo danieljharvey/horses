@@ -1,0 +1,2 @@
+\person ->
+  let (Person p) = person in p.age

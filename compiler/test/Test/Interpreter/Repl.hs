@@ -210,7 +210,7 @@ spec =
         result
           `shouldBe` Right
             ( dataTypeWithVars mempty "LeBool" [],
-              MyConstructor mempty "Vrai"
+              MyConstructor mempty Nothing "Vrai"
             )
       it "type Nat = Zero | Suc Nat in Suc Zero" $ do
         result <- eval testStdlib "type Nat = Zero | Suc Nat in Suc Zero"
@@ -219,8 +219,8 @@ spec =
             ( dataTypeWithVars mempty "Nat" [],
               MyApp
                 mempty
-                (MyConstructor mempty "Suc")
-                (MyConstructor mempty "Zero")
+                (MyConstructor mempty Nothing "Suc")
+                (MyConstructor mempty Nothing "Zero")
             )
       it "type Nat = Zero | Suc Nat in Suc (Suc Zero)" $ do
         result <- eval testStdlib "type Nat = Zero | Suc Nat in Suc (Suc Zero)"
@@ -229,11 +229,11 @@ spec =
             ( dataTypeWithVars mempty "Nat" [],
               MyApp
                 mempty
-                (MyConstructor mempty "Suc")
+                (MyConstructor mempty Nothing "Suc")
                 ( MyApp
                     mempty
-                    (MyConstructor mempty "Suc")
-                    (MyConstructor mempty "Zero")
+                    (MyConstructor mempty Nothing "Suc")
+                    (MyConstructor mempty Nothing "Zero")
                 )
             )
       it "type Nat = Zero | Suc Nat in Suc 1" $ do
@@ -252,7 +252,7 @@ spec =
                 mempty
                 (dataTypeWithVars mempty "Nat" [])
                 (dataTypeWithVars mempty "Nat" []),
-              MyConstructor mempty "Suc"
+              MyConstructor mempty Nothing "Suc"
             )
       it "type OhNat = Zero | Suc OhNat String in Suc" $ do
         result <- eval testStdlib "type OhNat = Zero | Suc OhNat String in Suc"
@@ -266,7 +266,7 @@ spec =
                     (MTPrim mempty MTString)
                     (dataTypeWithVars mempty "OhNat" [])
                 ),
-              MyConstructor mempty "Suc"
+              MyConstructor mempty Nothing "Suc"
             )
       it "type Pet = Cat String | Dog String in Cat \"mimsa\"" $ do
         result <- eval testStdlib "type Pet = Cat String | Dog String in Cat \"mimsa\""
@@ -275,7 +275,7 @@ spec =
             ( dataTypeWithVars mempty "Pet" [],
               MyApp
                 mempty
-                (MyConstructor mempty "Cat")
+                (MyConstructor mempty Nothing "Cat")
                 (str' "mimsa")
             )
       it "type Void in 1" $ do
@@ -298,7 +298,7 @@ spec =
                 ),
               MyApp
                 mempty
-                (MyConstructor mempty "Stuff")
+                (MyConstructor mempty Nothing "Stuff")
                 (str' "yes")
             )
       it "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)" $ do
@@ -310,10 +310,10 @@ spec =
                 mempty
                 ( MyApp
                     mempty
-                    (MyConstructor mempty "Branch")
-                    (MyApp mempty (MyConstructor mempty "Leaf") (int 1))
+                    (MyConstructor mempty Nothing "Branch")
+                    (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 1))
                 )
-                (MyApp mempty (MyConstructor mempty "Leaf") (int 2))
+                (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 2))
             )
       it "type Maybe a = Just a | Nothing in Just" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in Just"
@@ -323,14 +323,14 @@ spec =
                 mempty
                 (MTVar mempty (TVUnificationVar 1))
                 (dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 1)]),
-              MyConstructor mempty "Just"
+              MyConstructor mempty Nothing "Just"
             )
       it "type Maybe a = Just a | Nothing in Nothing" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in Nothing"
         result
           `shouldBe` Right
             ( dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 1)],
-              MyConstructor mempty "Nothing"
+              MyConstructor mempty Nothing "Nothing"
             )
       it "type Maybe a = Just a | Nothing in Just 1" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in Just 1"
@@ -339,7 +339,7 @@ spec =
             ( dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt],
               MyApp
                 mempty
-                (MyConstructor mempty "Just")
+                (MyConstructor mempty Nothing "Just")
                 (int 1)
             )
 
@@ -392,7 +392,7 @@ spec =
             ( dataTypeWithVars mempty "Tree" [MTPrim mempty MTInt],
               MyApp
                 mempty
-                (MyConstructor mempty "Leaf")
+                (MyConstructor mempty Nothing "Leaf")
                 (int 1)
             )
       it "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1" $ do
@@ -414,12 +414,12 @@ spec =
                     mempty
                     ( MyApp
                         mempty
-                        (MyConstructor mempty "Branch")
-                        (MyConstructor mempty "Empty")
+                        (MyConstructor mempty Nothing "Branch")
+                        (MyConstructor mempty Nothing "Empty")
                     )
                     (int 1)
                 )
-                (MyConstructor mempty "Empty")
+                (MyConstructor mempty Nothing "Empty")
             )
 
       it "unwrapping Maybe" $ do
@@ -449,11 +449,12 @@ spec =
                     mempty
                     ( MyConstructor
                         mempty
+                        Nothing
                         "Item"
                     )
                     (int 2)
                 )
-                (MyConstructor mempty "Empty")
+                (MyConstructor mempty Nothing "Empty")
             )
       it "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1" $ do
         result <- eval testStdlib "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
@@ -485,7 +486,7 @@ spec =
             ( dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt],
               MyApp
                 mempty
-                (MyConstructor mempty "Just")
+                (MyConstructor mempty Nothing "Just")
                 (int 1)
             )
       it "\\a -> match a with (Just as) -> True | Nothing -> 100" $ do
@@ -616,7 +617,7 @@ spec =
           `shouldBe` Right
             ( MyApp
                 mempty
-                (MyConstructor mempty "Just")
+                (MyConstructor mempty Nothing "Just")
                 (bool True)
             )
       it "\\a -> if (100 == a.int) then 100 else 0" $ do
@@ -635,7 +636,7 @@ spec =
                 [MTPrim mempty MTInt, MTPrim mempty MTInt],
               MyApp
                 mempty
-                (MyConstructor mempty "Reader")
+                (MyConstructor mempty Nothing "Reader")
                 ( MyLambda
                     mempty
                     (Identifier mempty "r")
@@ -719,7 +720,7 @@ spec =
           `shouldBe` Right
             ( MyApp
                 mempty
-                (MyConstructor mempty "Just")
+                (MyConstructor mempty Nothing "Just")
                 (MyLiteral mempty (MyString "dd"))
             )
 
@@ -729,7 +730,7 @@ spec =
           `shouldBe` Right
             ( MyApp
                 mempty
-                (MyConstructor mempty "Just")
+                (MyConstructor mempty Nothing "Just")
                 (MyLiteral mempty (MyString "o"))
             )
 
@@ -737,7 +738,7 @@ spec =
         result <- eval testStdlib "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"log\""
         snd <$> result
           `shouldBe` Right
-            (MyConstructor mempty "Nothing")
+            (MyConstructor mempty Nothing "Nothing")
 
       it "apParser formats correctly" $ do
         result <- eval testStdlib "\\parserF -> \\parserA -> let (Parser pF) = parserF; let (Parser pA) = parserA; Parser (\\input -> match (pF input) with Just (f, input2) -> (match (pA input2) with Just (a, input3) -> Just (f a, input3) | _ -> Nothing) | _ ->  Nothing)"
@@ -984,7 +985,7 @@ spec =
             )
 
     describe "Tree interpreter error" $ do
-      let leaf = MyApp mempty (MyConstructor mempty "Leaf")
+      let leaf = MyApp mempty (MyConstructor mempty Nothing "Leaf")
           branch l a =
             MyApp
               mempty
@@ -992,7 +993,7 @@ spec =
                   mempty
                   ( MyApp
                       mempty
-                      (MyConstructor mempty "Branch")
+                      (MyConstructor mempty Nothing "Branch")
                       l
                   )
                   a

@@ -55,7 +55,7 @@ getPatternTypeFromAnn pat =
     PLit ann _ -> ann
     PWildcard ann -> ann
     PVar ann _ -> ann
-    PConstructor ann _ _ -> ann
+    PConstructor ann _ _ _ -> ann
     PPair ann _ _ -> ann
     PRecord ann _ -> ann
     PArray ann _ _ -> ann
@@ -378,7 +378,7 @@ inferPattern env (PWildcard ann) = do
     ( PWildcard tyUnknown,
       env
     )
-inferPattern env (PConstructor ann tyCon args) = do
+inferPattern env (PConstructor ann modName tyCon args) = do
   inferEverything <- traverse (inferPattern env) args
   let inferArgs = fst <$> inferEverything
   let newEnv = mconcat (snd <$> inferEverything) <> env
@@ -394,7 +394,7 @@ inferPattern env (PConstructor ann tyCon args) = do
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon inferArgs
   pure
-    ( PConstructor (dataTypeWithVars ann ty tyTypeVars) tyCon inferArgs,
+    ( PConstructor (dataTypeWithVars ann ty tyTypeVars) modName tyCon inferArgs,
       newEnv
     )
 inferPattern env (PPair ann a b) = do
@@ -832,9 +832,9 @@ infer env inferExpr =
       pure (MyData (getTypeFromAnn innerExpr) dataType innerExpr)
     (MyArray ann items) -> do
       inferArray env ann items
-    (MyConstructor ann name) -> do
+    (MyConstructor ann modName name) -> do
       tyData <- inferDataConstructor env ann name
-      pure (MyConstructor tyData name)
+      pure (MyConstructor tyData modName name)
     (MyDefineInfix ann infixOp infixExpr expr) ->
       inferDefineInfix env ann infixOp infixExpr expr
     (MyPatternMatch ann expr patterns) ->

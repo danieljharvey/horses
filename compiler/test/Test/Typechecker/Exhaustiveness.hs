@@ -142,28 +142,29 @@ spec = do
           `shouldBe` Right [PRecord mempty (M.fromList [("a", false), ("b", false)])]
       it "A pair annihilates empty" $ do
         exhaustiveCheck
-          [ PConstructor mempty "Just" [PPair mempty (PWildcard mempty) (PWildcard mempty)],
-            PConstructor mempty "Nothing" mempty
+          [ PConstructor mempty Nothing "Just" [PPair mempty (PWildcard mempty) (PWildcard mempty)],
+            PConstructor mempty Nothing "Nothing" mempty
           ]
           `shouldBe` Right mempty
       it "A record annihilates empty" $ do
         exhaustiveCheck
-          [ PConstructor mempty "Just" [PRecord mempty mempty],
-            PConstructor mempty "Nothing" mempty
+          [ PConstructor mempty Nothing "Just" [PRecord mempty mempty],
+            PConstructor mempty Nothing "Nothing" mempty
           ]
           `shouldBe` Right mempty
       it "Constructor returns unused constructor" $ do
         exhaustiveCheck
-          [PConstructor mempty "Just" [PWildcard mempty]]
-          `shouldBe` Right [PConstructor mempty "Nothing" []]
+          [PConstructor mempty Nothing "Just" [PWildcard mempty]]
+          `shouldBe` Right [PConstructor mempty Nothing "Nothing" []]
       it "Constructor returns unused items inside it" $ do
         exhaustiveCheck
-          [ PConstructor mempty "Just" [PLit mempty (MyBool True)],
-            PConstructor mempty "Nothing" mempty
+          [ PConstructor mempty Nothing "Just" [PLit mempty (MyBool True)],
+            PConstructor mempty Nothing "Nothing" mempty
           ]
           `shouldBe` Right
             [ PConstructor
                 mempty
+                Nothing
                 "Just"
                 [ PLit
                     mempty
@@ -171,30 +172,31 @@ spec = do
                 ],
               PConstructor
                 mempty
+                Nothing
                 "Just"
                 [ PWildcard mempty
                 ]
             ]
       it "Constructor returns multiple unused constructors" $ do
         exhaustiveCheck
-          [ PConstructor mempty "This" [PWildcard mempty]
+          [ PConstructor mempty Nothing "This" [PWildcard mempty]
           ]
           `shouldBe` Right
-            [ PConstructor mempty "That" [PWildcard mempty],
-              PConstructor mempty "These" [PWildcard mempty, PWildcard mempty]
+            [ PConstructor mempty Nothing "That" [PWildcard mempty],
+              PConstructor mempty Nothing "These" [PWildcard mempty, PWildcard mempty]
             ]
       it "Nested constructors" $ do
         exhaustiveCheck
-          [ PConstructor mempty "Just" [PConstructor mempty "Nothing" mempty],
-            PConstructor mempty "Just" [PWildcard mempty]
+          [ PConstructor mempty Nothing "Just" [PConstructor mempty Nothing "Nothing" mempty],
+            PConstructor mempty Nothing "Just" [PWildcard mempty]
           ]
           `shouldBe` Right
-            [ PConstructor mempty "Nothing" []
+            [ PConstructor mempty Nothing "Nothing" []
             ]
       it "A var is equivalent to a wildcard" $ do
         exhaustiveCheck
-          [ PConstructor mempty "Just" [PVar mempty "a"],
-            PConstructor mempty "Nothing" mempty
+          [ PConstructor mempty Nothing "Just" [PVar mempty "a"],
+            PConstructor mempty Nothing "Nothing" mempty
           ]
           `shouldBe` Right []
       it "Multiple int literals" $ do
@@ -249,13 +251,14 @@ spec = do
           ]
     it "Works with constructors" $ do
       redundantCasesCheck
-        [ PConstructor mempty "Just" [PWildcard mempty],
-          PConstructor mempty "Just" [PLit mempty (MyInt 1)],
-          PConstructor mempty "Nothing" mempty
+        [ PConstructor mempty Nothing "Just" [PWildcard mempty],
+          PConstructor mempty Nothing "Just" [PLit mempty (MyInt 1)],
+          PConstructor mempty Nothing "Nothing" mempty
         ]
         `shouldBe` Right
           [ PConstructor
               mempty
+              Nothing
               "Just"
               [PLit mempty (MyInt 1)]
           ]
@@ -342,6 +345,7 @@ spec = do
       noDuplicatesCheck
         ( PConstructor
             mempty
+            Nothing
             "Dog"
             [ PVar mempty "a",
               PVar mempty "b"
@@ -352,11 +356,13 @@ spec = do
       noDuplicatesCheck
         ( PConstructor
             mempty
+            Nothing
             "Dog"
             [ PVar mempty "a",
               PVar mempty "b",
               PConstructor
                 mempty
+                Nothing
                 "Dog"
                 [ PVar mempty "c",
                   PVar mempty "a"

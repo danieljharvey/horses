@@ -40,7 +40,7 @@ applicativePure_ (DataType tyCon vars items) = do
       pure $
         MyApp
           mempty
-          (MyConstructor mempty tc)
+          (MyConstructor mempty Nothing tc)
           (MyVar mempty Nothing fVar)
     WithEmpties tc parts -> do
       foldl'
@@ -48,7 +48,7 @@ applicativePure_ (DataType tyCon vars items) = do
             exprA <- mExprA
             partToExpr fVar items exprA part
         )
-        (pure (MyConstructor mempty tc))
+        (pure (MyConstructor mempty Nothing tc))
         parts
 
   pure
@@ -81,7 +81,7 @@ partToExpr fVar items innerExpr part =
         MyApp
           mempty
           innerExpr
-          (MyConstructor mempty emptyTyCon)
+          (MyConstructor mempty Nothing emptyTyCon)
     FPart n a ->
       pure $
         MyApp

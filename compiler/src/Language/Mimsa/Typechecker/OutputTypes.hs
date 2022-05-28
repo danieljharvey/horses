@@ -33,7 +33,7 @@ foldPattern fn pat =
     foldPattern' (PVar ann _) = f ann
     foldPattern' (PWildcard ann) = f ann
     foldPattern' (PLit ann _) = f ann
-    foldPattern' (PConstructor ann _ as) =
+    foldPattern' (PConstructor ann _ _ as) =
       f ann <> foldMap (foldPattern fn) as
     foldPattern' (PPair ann a b) =
       f ann <> foldPattern fn a <> foldPattern fn b
@@ -100,5 +100,5 @@ foldExpr fn expression =
       f ann <> foldExpr fn expr <> foldExpr fn body
     foldExpr' (MyData ann _ body) =
       f ann <> foldExpr fn body
-    foldExpr' (MyConstructor ann _) = f ann
+    foldExpr' (MyConstructor ann _ _) = f ann
     foldExpr' (MyTypedHole ann _) = f ann

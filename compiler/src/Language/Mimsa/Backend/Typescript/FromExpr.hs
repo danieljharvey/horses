@@ -46,7 +46,7 @@ toPattern (PPair _ a b) =
   TSPatternPair (toPattern a) (toPattern b)
 toPattern (PWildcard _) =
   TSPatternWildcard
-toPattern (PConstructor _ name vars) =
+toPattern (PConstructor _ _ name vars) =
   TSPatternConstructor name (toPattern <$> vars)
 toPattern (PRecord _ pMap) =
   TSPatternRecord (bimapMap coerce toPattern pMap)
@@ -331,7 +331,7 @@ toTSBody expr' =
       (TSBody as tsFunc) <- toTSBody func
       (TSBody bs tsVal) <- toTSBody val
       pure $ TSBody (as <> bs) (TSApp tsFunc tsVal)
-    (MyConstructor _ tyCon) -> do
+    (MyConstructor _ _ tyCon) -> do
       namespace <- findTypeName tyCon
       let expr = case namespace of
             Just typeName ->

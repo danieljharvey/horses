@@ -134,6 +134,7 @@ data Expr var ann
   | -- | use a constructor by name
     MyConstructor
       { expAnn :: ann,
+        expModuleName :: Maybe ModuleName,
         expTyCon :: TyCon
       }
   | -- | expr, [(pattern, expr)]
@@ -403,7 +404,10 @@ instance Printer (Expr Name ann) where
     prettyDefineInfix infixOp bindExpr expr
   prettyDoc (MyData _ dataType expr) =
     prettyDataType dataType expr
-  prettyDoc (MyConstructor _ name) = prettyDoc name
+  prettyDoc (MyConstructor _ (Just modName) name) = 
+    prettyDoc modName <> "." <> prettyDoc name
+  prettyDoc (MyConstructor _ Nothing name) = 
+    prettyDoc name
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
   prettyDoc (MyPatternMatch _ expr matches) =
     prettyPatternMatch expr matches

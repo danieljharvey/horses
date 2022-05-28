@@ -89,7 +89,7 @@ toFieldItemType tyName matchVar = \case
 
 patternFromFieldItemType :: TyCon -> [Name] -> Pattern Name ()
 patternFromFieldItemType tyCon names =
-  PConstructor mempty tyCon (patForField <$> names)
+  PConstructor mempty Nothing tyCon (patForField <$> names)
   where
     patForField = PVar mempty
 

@@ -15,6 +15,7 @@ module Language.Mimsa.Types.AST.Pattern
   )
 where
 
+import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Aeson as JSON
 import Data.Bifunctor.TH
 import Data.Map (Map)
@@ -42,6 +43,7 @@ data Pattern var ann
       }
   | PConstructor
       { patAnn :: ann,
+        patModuleName :: Maybe ModuleName,
         patTyCon :: TyCon,
         patMatches :: [Pattern var ann]
       }
@@ -75,7 +77,7 @@ getPatternAnnotation :: Pattern var ann -> ann
 getPatternAnnotation (PWildcard ann) = ann
 getPatternAnnotation (PVar ann _) = ann
 getPatternAnnotation (PLit ann _) = ann
-getPatternAnnotation (PConstructor ann _ _) = ann
+getPatternAnnotation (PConstructor ann _ _ _) = ann
 getPatternAnnotation (PPair ann _ _) = ann
 getPatternAnnotation (PRecord ann _) = ann
 getPatternAnnotation (PArray ann _ _) = ann
@@ -94,10 +96,14 @@ instance Printer (Pattern Name ann) where
   prettyDoc (PWildcard _) = "_"
   prettyDoc (PVar _ a) = prettyDoc a
   prettyDoc (PLit _ lit) = prettyDoc lit
-  prettyDoc (PConstructor _ tyCon []) =
-    prettyDoc tyCon
-  prettyDoc (PConstructor _ tyCon args) =
-    prettyDoc tyCon <> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
+  prettyDoc (PConstructor _ modName tyCon args) =
+    let prettyArgs = case args of
+                       [] -> mempty
+                       _ -> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
+        prettyNamespace = case modName of
+                            Just m -> prettyDoc m <> "."
+                            _ -> mempty
+     in prettyNamespace <> prettyDoc tyCon <> prettyArgs 
   prettyDoc (PPair _ a b) =
     "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
   prettyDoc (PArray _ as spread) =

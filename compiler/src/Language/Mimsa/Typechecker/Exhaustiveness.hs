@@ -84,7 +84,7 @@ getVariables (PRecord _ as) =
 getVariables (PArray _ as spread) =
   let vars = [getSpreadVariables spread] <> (getVariables <$> as)
    in foldr (M.unionWith (+)) mempty vars
-getVariables (PConstructor _ _ args) =
+getVariables (PConstructor _ _ _ args) =
   foldr (M.unionWith (+)) mempty (getVariables <$> args)
 getVariables (PString _ a as) =
   M.unionWith (+) (getStringPartVariables a) (getStringPartVariables as)
@@ -145,11 +145,11 @@ generateRequired env (PPair _ l r) = do
 generateRequired env (PRecord _ items) = do
   items' <- traverse (generateRequired env) items
   pure (PRecord mempty <$> sequence items')
-generateRequired env (PConstructor ann tyCon args) = do
+generateRequired env (PConstructor ann modName tyCon args) = do
   dt <- lookupConstructor env ann tyCon
   newFromArgs <- traverse (generateRequired env) args
   newDataTypes <- requiredFromDataType dt
-  let newCons = PConstructor mempty tyCon <$> sequence newFromArgs
+  let newCons = PConstructor mempty modName tyCon <$> sequence newFromArgs
   pure (newCons <> newDataTypes)
 generateRequired env (PArray _ items _) = do
   items' <- traverse (generateRequired env) items
@@ -180,6 +180,7 @@ requiredFromDataType (DataType _ _ cons) =
       let new (n, as) =
             [ PConstructor
                 mempty
+                Nothing
                 n
                 (PWildcard mempty <$ as)
             ]
@@ -223,7 +224,7 @@ annihilate (PRecord _ as) (PRecord _ bs) =
             (\(a, b) keep -> keep && annihilate a b)
             True
             allPairs
-annihilate (PConstructor _ tyConA argsA) (PConstructor _ tyConB argsB) =
+annihilate (PConstructor _ _ tyConA argsA) (PConstructor _ _ tyConB argsB) =
   (tyConA == tyConB)
     && foldr
       (\(a, b) keep -> keep && annihilate a b)

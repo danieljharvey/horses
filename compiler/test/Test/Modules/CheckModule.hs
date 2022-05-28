@@ -394,11 +394,29 @@ spec = do
             )
             `shouldSatisfy` isRight
 
-        it ("Uses Either from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
+        it ("Uses fst from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
           checkModuleType
             ( joinLines
                 [ "import Prelude from " <> prettyPrint preludeHash,
                   "def withFst = Prelude.fst (True, 1)"
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it ("Uses Right and Left from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash,
+                  "def useEither eA = match eA with Prelude.Right a -> [a] | Prelude.Left _ -> []" 
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it ("Uses Either type from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash,
+                  "def useEither (eA: Prelude.Either e String): String = match eA with Prelude.Right a -> a | Prelude.Left _ -> \"\""
                 ]
             )
             `shouldSatisfy` isRight

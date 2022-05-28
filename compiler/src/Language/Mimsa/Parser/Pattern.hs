@@ -9,7 +9,7 @@ where
 import Data.Either (partitionEithers)
 import qualified Data.Map as M
 import Language.Mimsa.Parser.Helpers
-import Language.Mimsa.Parser.Identifiers (nameParser, tyConParser)
+import Language.Mimsa.Parser.Identifiers (nameParser, tyConParser, moduleNameParser)
 import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Parser.Types
@@ -104,17 +104,38 @@ argsParser = try someP <|> pure []
   where
     someP = some patternParser
 
+----
+
 constructorParser :: Parser ParserPattern
-constructorParser =
+constructorParser = try namespacedConstructorParser <|> 
+        try plainConstructorParser 
+
+
+plainConstructorParser :: Parser ParserPattern
+plainConstructorParser =
   let parser = do
         cons <- tyConParser
         args <- try argsParser
-        pure (cons, args)
+        pure (cons,  args)
    in withLocation
-        ( \loc (cons, args) ->
-            PConstructor loc cons args
+        ( \loc (cons,  args) ->
+            PConstructor loc Nothing cons args
+            
         )
         parser
+
+namespacedConstructorParser :: Parser ParserPattern
+namespacedConstructorParser =
+  let inner = do
+                  mName <- moduleNameParser
+                  myString "."
+                  tyCon <- tyConParser
+                  args <- try argsParser
+                  pure (mName,tyCon, args)
+  in myLexeme (withLocation (\loc (mName,tyCon,args) ->
+        PConstructor loc (Just mName) tyCon args)
+         inner)
+
 
 ---
 

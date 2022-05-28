@@ -24,7 +24,7 @@ toString (DataType tyCon [] items) = do
         case vars of
           [] ->
             Right
-              ( PConstructor mempty consName mempty,
+              ( PConstructor mempty Nothing consName mempty,
                 str (showTyCon consName)
               )
           _ ->
@@ -59,13 +59,13 @@ fromString (DataType _ [] items) = do
               ( PLit mempty (MyString (coerce consName)),
                 MyApp
                   mempty
-                  (MyConstructor mempty "Just")
-                  (MyConstructor mempty consName)
+                  (MyConstructor mempty Nothing "Just")
+                  (MyConstructor mempty Nothing consName)
               )
           _ ->
             Left $ ConstructorShouldHaveNoArgs consName
   matches <- traverse createMatch (M.toList items)
-  let empty = (PWildcard mempty, MyConstructor mempty "Nothing")
+  let empty = (PWildcard mempty, MyConstructor mempty Nothing "Nothing")
   case NE.nonEmpty matches of
     Nothing -> Left NoConstructorMatches
     Just _ ->

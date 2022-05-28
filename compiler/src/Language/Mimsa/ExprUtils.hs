@@ -45,7 +45,7 @@ getAnnotation (MyPair ann _ _) = ann
 getAnnotation (MyRecord ann _) = ann
 getAnnotation (MyRecordAccess ann _ _) = ann
 getAnnotation (MyData ann _ _) = ann
-getAnnotation (MyConstructor ann _) = ann
+getAnnotation (MyConstructor ann _ _) = ann
 getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyDefineInfix ann _ _ _) = ann
 getAnnotation (MyArray ann _) = ann
@@ -59,7 +59,7 @@ withMonoid ::
   Expr var ann ->
   m
 withMonoid f whole@(MyLiteral _ _) = snd (f whole)
-withMonoid f whole@(MyVar _ _ _) = snd (f whole)
+withMonoid f whole@MyVar {}  = snd (f whole)
 withMonoid f whole@(MyAnnotation _ _ expr) =
   let (go, m) = f whole
    in if not go
@@ -144,7 +144,7 @@ withMonoid f whole@(MyRecordAccess _ expr _name) =
 withMonoid f whole@(MyData _ _ expr) =
   let (go, m) = f whole
    in if not go then m else m <> withMonoid f expr
-withMonoid f whole@(MyConstructor _ _) = snd (f whole)
+withMonoid f whole@MyConstructor {}  = snd (f whole)
 withMonoid f whole@MyTypedHole {} = snd (f whole)
 withMonoid f whole@(MyDefineInfix _ _ infixExpr inExpr) =
   let (go, m) = f whole
@@ -183,7 +183,7 @@ mapExpr f (MyRecordAccess ann expr name) =
   MyRecordAccess ann (f expr) name
 mapExpr f (MyArray ann items) = MyArray ann (f <$> items)
 mapExpr f (MyData ann dt expr) = MyData ann dt (f expr)
-mapExpr _ (MyConstructor ann cons) = MyConstructor ann cons
+mapExpr _ (MyConstructor ann modName cons) = MyConstructor ann modName cons
 mapExpr f (MyPatternMatch ann matchExpr patterns) =
   MyPatternMatch ann (f matchExpr) (second f <$> patterns)
 mapExpr _ (MyTypedHole ann a) = MyTypedHole ann a
@@ -225,8 +225,8 @@ bindExpr f (MyArray ann items) =
   MyArray ann <$> traverse f items
 bindExpr f (MyData ann dt expr) =
   MyData ann dt <$> f expr
-bindExpr _ (MyConstructor ann cons) =
-  pure $ MyConstructor ann cons
+bindExpr _ (MyConstructor ann modName cons) =
+  pure $ MyConstructor ann modName cons
 bindExpr _ (MyTypedHole ann a) = pure (MyTypedHole ann a)
 bindExpr f (MyDefineInfix ann op infixExpr expr) =
   MyDefineInfix ann op <$> f infixExpr <*> f expr
@@ -244,8 +244,8 @@ mapPattern :: (Pattern a b -> Pattern a b) -> Pattern a b -> Pattern a b
 mapPattern _ (PWildcard ann) = PWildcard ann
 mapPattern _ (PVar ann a) = PVar ann a
 mapPattern _ (PLit ann a) = PLit ann a
-mapPattern f (PConstructor ann tyCon vars) =
-  PConstructor ann tyCon (f <$> vars)
+mapPattern f (PConstructor ann modName tyCon vars) =
+  PConstructor ann modName tyCon (f <$> vars)
 mapPattern f (PPair ann a b) =
   PPair ann (f a) (f b)
 mapPattern f (PRecord ann as) =
