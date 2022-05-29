@@ -24,7 +24,7 @@ freeTypeVars ty = case ty of
       <> freeTypeVars rest
   MTArray _ a -> freeTypeVars a
   MTPrim _ _ -> S.empty
-  MTConstructor _ _ -> S.empty
+  MTConstructor {} -> S.empty
   MTTypeApp _ a b -> freeTypeVars a <> freeTypeVars b
 
 freeTypeVarsScheme :: Scheme -> [TypeIdentifier]

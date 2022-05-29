@@ -60,7 +60,7 @@ toPattern (PString _ sHead sTail) =
 consToTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
 consToTSType mt =
   case varsFromDataType mt of
-    Just (TyCon n, vars) -> do
+    Just (_modName, TyCon n, vars) -> do
       imported <- typeNameIsImport (TyCon n)
       let namespace =
             if imported

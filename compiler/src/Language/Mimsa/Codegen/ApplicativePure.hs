@@ -121,7 +121,7 @@ emptyConstructor items = do
 fieldIsRecursion :: TyCon -> [Name] -> Type a -> Bool
 fieldIsRecursion tyCon vars mt =
   case varsFromDataType mt of
-    Just (tyCon', vars') ->
+    Just (_, tyCon', vars') ->
       tyCon == tyCon' && and (zipWith fieldIsName vars vars')
     _ -> False
 

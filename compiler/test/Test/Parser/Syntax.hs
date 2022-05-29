@@ -414,7 +414,7 @@ spec = parallel $ do
                     mempty
                     ( M.fromList
                         [ ("Zero", []),
-                          ("Succ", [dataTypeWithVars mempty "Nat" mempty])
+                          ("Succ", [dataTypeWithVars mempty Nothing "Nat" mempty])
                         ]
                     )
                 )
@@ -484,6 +484,7 @@ spec = parallel $ do
                                 (MTVar mempty (tvNamed "r"))
                                 ( dataTypeWithVars
                                     mempty
+                                    Nothing
                                     "Pair"
                                     [ MTVar mempty (tvNamed "a"),
                                       MTVar mempty (tvNamed "b")
@@ -511,8 +512,8 @@ spec = parallel $ do
                     ( M.fromList
                         [ ("Leaf", [MTPrim mempty MTInt]),
                           ( "Branch",
-                            [ dataTypeWithVars mempty "Tree" [],
-                              dataTypeWithVars mempty "Tree" []
+                            [ dataTypeWithVars mempty Nothing "Tree" [],
+                              dataTypeWithVars mempty Nothing "Tree" []
                             ]
                           )
                         ]
@@ -531,9 +532,9 @@ spec = parallel $ do
                     ( M.fromList
                         [ ("Empty", mempty),
                           ( "Branch",
-                            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
+                            [ dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")],
                               MTVar mempty (tvNamed "a"),
-                              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")]
+                              dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")]
                             ]
                           )
                         ]
@@ -696,8 +697,8 @@ spec = parallel $ do
                     ( M.fromList
                         [ ("Leaf", [MTVar mempty (tvNamed "a")]),
                           ( "Branch",
-                            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
-                              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")]
+                            [ dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")],
+                              dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")]
                             ]
                           )
                         ]

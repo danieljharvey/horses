@@ -68,7 +68,7 @@ inferDataConstructor ::
 inferDataConstructor env ann modName tyCon = do
   errorOnBuiltIn ann tyCon
   dataType <- lookupConstructor env ann modName tyCon
-  (_, allArgs) <- inferConstructorTypes ann dataType
+  (_, allArgs) <- inferConstructorTypes ann modName dataType
   case M.lookup tyCon allArgs of
     Just tyArg ->
       pure (constructorToType tyArg)
@@ -131,9 +131,10 @@ validateDataTypeVariables ann (DataType typeName vars constructors) =
 inferConstructorTypes ::
   (MonadError TypeError m, MonadState TypecheckState m) =>
   Annotation ->
+  Maybe ModuleName ->
   DataType ->
   m (MonoType, Map TyCon TypeConstructor)
-inferConstructorTypes ann (DataType typeName tyVarNames constructors) = do
+inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = do
   tyVars <- traverse (\tyName -> (,) tyName <$> getUnknown mempty) tyVarNames
   let findType ty = case ty of
         MTVar _ (TVName var) ->
@@ -182,12 +183,12 @@ inferConstructorTypes ann (DataType typeName tyVarNames constructors) = do
           throwError UnknownTypeError -- should not happen but yolo
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
-        let constructor = TypeConstructor typeName (snd <$> tyVars) tyCons
+        let constructor = TypeConstructor modName typeName (snd <$> tyVars) tyCons
         pure $ M.singleton consName constructor
   let mtConstructors :: [(TyCon, [MonoType])]
       mtConstructors = second (($> mempty) <$>) <$> M.toList constructors
   cons' <- traverse inferConstructor mtConstructors
-  let dt = dataTypeWithVars mempty typeName (snd <$> tyVars)
+  let dt = dataTypeWithVars mempty modName typeName (snd <$> tyVars)
   pure (dt, mconcat cons')
 
 -- parse a type from it's name
@@ -204,21 +205,21 @@ inferType env ann modName tyName tyVars =
   case M.lookup (modName, tyName) (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
-      _ -> pure (dataTypeWithVars mempty tyName tyVars)
+      _ -> pure (dataTypeWithVars mempty modName tyName tyVars)
     _ ->
       throwError (TypeConstructorNotInScope env ann modName tyName)
 
-dataTypeWithVars :: (Monoid ann) => ann -> TyCon -> [Type ann] -> Type ann
-dataTypeWithVars ann tyName =
+dataTypeWithVars :: (Monoid ann) => ann -> Maybe ModuleName -> TyCon -> [Type ann] -> Type ann
+dataTypeWithVars ann modName tyName =
   foldl'
     (MTTypeApp mempty)
-    (MTConstructor ann tyName)
+    (MTConstructor ann modName tyName)
 
 -----
 
 constructorToType :: TypeConstructor -> MonoType
-constructorToType (TypeConstructor typeName tyVars constructTypes) =
+constructorToType (TypeConstructor modName typeName tyVars constructTypes) =
   foldr
     (MTFunction mempty)
-    (dataTypeWithVars mempty typeName tyVars)
+    (dataTypeWithVars mempty modName typeName tyVars)
     constructTypes

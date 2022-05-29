@@ -385,16 +385,16 @@ inferPattern env (PConstructor ann modName tyCon args) = do
   dt@(DataType ty _ _) <- lookupConstructor newEnv ann modName tyCon
   -- we get the types for the constructor in question
   -- and unify them with the tests in the pattern
-  consType <- inferConstructorTypes ann dt
+  consType <- inferConstructorTypes ann modName dt
   tyTypeVars <- case M.lookup tyCon (snd consType) of
-    Just (TypeConstructor _ dtTypeVars tyDtArgs) -> do
+    Just (TypeConstructor _ _ dtTypeVars tyDtArgs) -> do
       let tyPairs = zip (getPatternTypeFromAnn <$> inferArgs) tyDtArgs
       traverse_ (\(a, b) -> tell [ShouldEqual a b]) tyPairs
       pure dtTypeVars
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon inferArgs
   pure
-    ( PConstructor (dataTypeWithVars ann ty tyTypeVars) modName tyCon inferArgs,
+    ( PConstructor (dataTypeWithVars ann modName ty tyTypeVars) modName tyCon inferArgs,
       newEnv
     )
 inferPattern env (PPair ann a b) = do

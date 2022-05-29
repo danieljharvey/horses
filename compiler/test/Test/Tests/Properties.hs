@@ -75,7 +75,7 @@ spec = do
       it "list is recursive" $ do
         isRecursive
           "List"
-          [ MTTypeApp mempty (MTConstructor mempty "List") (MTPrim mempty MTInt)
+          [ MTTypeApp mempty (MTConstructor mempty Nothing "List") (MTPrim mempty MTInt)
           ]
           `shouldBe` True
 
@@ -98,8 +98,8 @@ spec = do
       it "Nested functions" $ do
         itGenerates (MTFunction mempty mtString (MTFunction mempty mtBool mtInt))
       it "Constructor" $ do
-        itGenerates (MTConstructor mempty "TrafficLight")
+        itGenerates (MTConstructor mempty Nothing "TrafficLight")
       it "Constructor with var" $ do
-        itGenerates (MTTypeApp mempty (MTConstructor mempty "Maybe") mtInt)
+        itGenerates (MTTypeApp mempty (MTConstructor mempty Nothing "Maybe") mtInt)
       it "Constructor with nested vars" $ do
-        itGenerates (MTTypeApp mempty (MTConstructor mempty "Tree") mtBool)
+        itGenerates (MTTypeApp mempty (MTConstructor mempty Nothing "Tree") mtBool)

@@ -87,7 +87,7 @@ extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.t
     extractFromCon (MTArray _ a) = extractFromCon a
     extractFromCon (MTTypeApp _ a b) = extractFromCon a <> extractFromCon b
     extractFromCon MTPrim {} = mempty
-    extractFromCon (MTConstructor _ name) = S.singleton name
+    extractFromCon (MTConstructor _ _ name) = S.singleton name
     extractFromCon (MTRecord _ items) = mconcat (extractFromCon <$> M.elems items)
     extractFromCon (MTRecordRow _ items rest) =
       mconcat (extractFromCon <$> M.elems items) <> extractFromCon rest
@@ -124,7 +124,7 @@ withDataTypes f (MyArray _ map') = foldMap (withDataTypes f) map'
 withDataTypes f (MyData _ dt a) =
   withDataTypes f a
     <> f dt
-withDataTypes _ (MyConstructor _ _ _) = mempty
+withDataTypes _ MyConstructor {}  = mempty
 withDataTypes _ (MyTypedHole _ _) = mempty
 withDataTypes f (MyDefineInfix _ _ infixA a) =
   withDataTypes f infixA <> withDataTypes f a
@@ -138,7 +138,7 @@ withDataTypes f (MyPatternMatch _ expr patterns) =
 -----
 
 extractTypenames :: Type ann -> Set TyCon
-extractTypenames (MTConstructor _ tyCon) =
+extractTypenames (MTConstructor _ _ tyCon) =
   S.singleton tyCon
 extractTypenames other = withMonoid extractTypenames other
 

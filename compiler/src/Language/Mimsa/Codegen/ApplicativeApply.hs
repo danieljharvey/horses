@@ -67,7 +67,7 @@ containsVar n fields =
         (MTPair _ a b) -> fieldContains a || fieldContains b
         (MTRecord _ items) -> or (fieldContains <$> items)
         mt -> case varsFromDataType mt of
-          Just (_, as') -> or (fieldContains <$> as')
+          Just (_, _, as') -> or (fieldContains <$> as')
           _ -> False
 
 createMatches ::

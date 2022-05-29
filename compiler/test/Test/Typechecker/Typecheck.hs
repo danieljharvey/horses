@@ -770,7 +770,7 @@ spec = do
               )
       startInference expr $
         Right
-          (MTFunction mempty (dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
+          (MTFunction mempty (dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
 
     it "Errors when number of args does not match for Just" $ do
       let expr =
@@ -920,6 +920,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
+            Nothing
               "Either"
               [ MTPrim mempty MTInt,
                 MTPrim mempty MTInt
@@ -948,6 +949,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
+        Nothing
               "Either"
               [ MTPrim mempty MTInt,
                 MTPrim mempty MTBool
@@ -996,6 +998,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
+              Nothing
               "Either"
               [ MTPrim mempty MTInt,
                 MTPrim mempty MTBool
@@ -1021,6 +1024,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
+              Nothing
               "Either"
               [ MTPrim mempty MTBool,
                 MTPrim mempty MTInt
@@ -1178,7 +1182,7 @@ spec = do
                   )
               )
 
-          mtMaybeInt = dataTypeWithVars mempty "Maybe" [mtInt]
+          mtMaybeInt = dataTypeWithVars mempty Nothing "Maybe" [mtInt]
       startInference expr $
         Right (MTFunction mempty mtMaybeInt mtInt)
     it "Does substitutions correctly when pattern matching on a variable from a lambda with application" $ do
@@ -1272,7 +1276,7 @@ spec = do
         Right
           ( MTTypeApp
               mempty
-              (MTConstructor mempty "Maybe")
+              (MTConstructor mempty Nothing "Maybe")
               (MTPrim mempty MTInt)
           )
     it "Typed hole suggestions in scope item" $ do

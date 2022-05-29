@@ -42,26 +42,26 @@ spec = do
   describe "Datatypes" $ do
     it "varsFromDataType" $ do
       varsFromDataType (MTPrim () MTInt) `shouldBe` Nothing
-      varsFromDataType (MTConstructor () "Dog") `shouldBe` Just ("Dog", mempty)
-      varsFromDataType (MTTypeApp () (MTConstructor () "Dog") (MTPrim () MTInt))
-        `shouldBe` Just ("Dog", [MTPrim () MTInt])
+      varsFromDataType (MTConstructor () Nothing "Dog") `shouldBe` Just (Nothing,"Dog", mempty)
+      varsFromDataType (MTTypeApp () (MTConstructor () Nothing "Dog") (MTPrim () MTInt))
+        `shouldBe` Just (Nothing,"Dog", [MTPrim () MTInt])
       varsFromDataType
         ( MTTypeApp
             ()
-            (MTTypeApp () (MTConstructor () "Dog") (MTPrim () MTInt))
+            (MTTypeApp () (MTConstructor () Nothing "Dog") (MTPrim () MTInt))
             (MTPrim () MTBool)
         )
-        `shouldBe` Just ("Dog", [MTPrim () MTInt, MTPrim () MTBool])
+        `shouldBe` Just (Nothing,"Dog", [MTPrim () MTInt, MTPrim () MTBool])
 
     it "Instantiates Maybe" $ do
       testInferDataConstructor "Nothing"
-        `shouldBe` Right (MTTypeApp mempty (MTConstructor mempty "Maybe") (unknown 1))
+        `shouldBe` Right (MTTypeApp mempty (MTConstructor mempty Nothing "Maybe") (unknown 1))
       testInferDataConstructor "Just"
         `shouldBe` Right
           ( MTFunction
               mempty
               (unknown 1)
-              ( MTTypeApp mempty (MTConstructor mempty "Maybe") (unknown 1)
+              ( MTTypeApp mempty (MTConstructor mempty Nothing "Maybe") (unknown 1)
               )
           )
 
@@ -75,7 +75,7 @@ spec = do
                   mempty
                   ( MTTypeApp
                       mempty
-                      (MTConstructor mempty "Either")
+                      (MTConstructor mempty Nothing "Either")
                       (unknown 1)
                   )
                   (unknown 2)
@@ -90,7 +90,7 @@ spec = do
                   mempty
                   ( MTTypeApp
                       mempty
-                      (MTConstructor mempty "Either")
+                      (MTConstructor mempty Nothing "Either")
                       (unknown 1)
                   )
                   (unknown 2)

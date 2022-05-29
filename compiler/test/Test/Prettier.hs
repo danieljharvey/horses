@@ -122,6 +122,7 @@ spec =
                     ( "maybeDog",
                       dataTypeWithVars
                         mempty
+                        Nothing
                         "Maybe"
                         [MTPrim mempty MTString]
                     )

@@ -176,12 +176,12 @@ multiDataTypeParser :: Parser MonoType
 multiDataTypeParser = do
   tyName <- tyConParser
   tyArgs <- some subParser
-  pure (dataTypeWithVars mempty tyName tyArgs)
+  pure (dataTypeWithVars mempty Nothing tyName tyArgs)
 
 monoDataTypeParser :: Parser MonoType
 monoDataTypeParser = do
   tyName <- tyConParser
-  pure (dataTypeWithVars mempty tyName mempty)
+  pure (dataTypeWithVars mempty Nothing tyName mempty)
 
 arrayParser :: Parser MonoType
 arrayParser = do

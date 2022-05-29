@@ -14,6 +14,7 @@ module Language.Mimsa.Types.Typechecker.MonoType
   )
 where
 
+import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -79,6 +80,7 @@ data Type ann
       }
   | MTConstructor
       { typAnn :: ann,
+        typModuleName :: Maybe ModuleName,
         typTypeName :: TyCon -- name
       }
   | MTTypeApp
@@ -96,7 +98,7 @@ getAnnotationForType (MTFunction ann _ _) = ann
 getAnnotationForType (MTPair ann _ _) = ann
 getAnnotationForType (MTRecord ann _) = ann
 getAnnotationForType (MTRecordRow ann _ _) = ann
-getAnnotationForType (MTConstructor ann _) = ann
+getAnnotationForType (MTConstructor ann _ _) = ann
 getAnnotationForType (MTArray ann _) = ann
 getAnnotationForType (MTTypeApp ann _ _) = ann
 
@@ -151,22 +153,30 @@ renderMonoType (MTRecordRow _ as rest) =
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v
 renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
 renderMonoType (MTVar _ a) = renderTypeIdentifier a
-renderMonoType (MTConstructor _ (TyCon n)) =
-  pretty n
+renderMonoType (MTConstructor _ (Just modName) tyCon ) =
+  prettyDoc modName <> "." <> prettyDoc tyCon
+renderMonoType (MTConstructor _ Nothing tyCon ) =
+  prettyDoc tyCon
 renderMonoType mt@(MTTypeApp _ func arg) =
   case varsFromDataType mt of
-    Just (TyCon n, vars) -> align $ sep ([pretty n] <> (withParens <$> vars))
+    Just (modName, tyCon, vars) -> 
+      let typeName = case modName of
+                       Just mName -> prettyDoc mName <> "." <> prettyDoc tyCon
+                       _ -> prettyDoc tyCon
+       in align $ sep ([typeName] <> (withParens <$> vars))
     Nothing ->
       align $ sep [renderMonoType func, renderMonoType arg]
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)
-varsFromDataType :: Type ann -> Maybe (TyCon, [Type ann])
+varsFromDataType :: Type ann -> Maybe (Maybe ModuleName, TyCon, [Type ann])
 varsFromDataType mt =
   let getInner mt' =
         case mt' of
-          (MTConstructor _ tyCon) -> Just (tyCon, mempty)
-          (MTTypeApp _ f a) -> (\(tyCon, vars) -> (tyCon, vars <> [a])) <$> getInner f
+          (MTConstructor _ modName tyCon) -> 
+            Just (modName, tyCon, mempty)
+          (MTTypeApp _ f a) -> (\(modName, tyCon, vars) -> 
+            (modName, tyCon, vars <> [a])) <$> getInner f
           _ -> Nothing
    in getInner mt
 

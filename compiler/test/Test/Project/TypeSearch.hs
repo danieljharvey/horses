@@ -83,8 +83,8 @@ spec =
                 (MTFunction mempty (typeName "a") (typeName "b"))
                 ( MTFunction
                     mempty
-                    (dataTypeWithVars mempty "Maybe" [typeName "a"])
-                    (dataTypeWithVars mempty "Maybe" [typeName "b"])
+                    (dataTypeWithVars mempty Nothing "Maybe" [typeName "a"])
+                    (dataTypeWithVars mempty Nothing "Maybe" [typeName "b"])
                 )
         typeSearchFromText typeMap "(a -> b) -> (Maybe a) -> (Maybe b)"
           `shouldBe` Right

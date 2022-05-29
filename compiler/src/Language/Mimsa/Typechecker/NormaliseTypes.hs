@@ -47,7 +47,7 @@ normaliseType' mt = case mt of
       <$> traverse normaliseType' as
       <*> normaliseType' rest
   MTArray ann a -> MTArray ann <$> normaliseType' a
-  MTConstructor ann name ->
-    pure (MTConstructor ann name)
+  MTConstructor ann modName name ->
+    pure (MTConstructor ann modName name)
   MTTypeApp ann func arg ->
     MTTypeApp ann <$> normaliseType' func <*> normaliseType' arg

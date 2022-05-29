@@ -49,7 +49,7 @@ isSimple (MTRecordRow _ as b) =
   isSimple b
     && and (isSimple <$> as)
 isSimple (MTArray _ as) = isSimple as
-isSimple (MTConstructor _ _) = True
+isSimple MTConstructor {} = True
 isSimple (MTTypeApp _ fn val) = isSimple fn && isSimple val
 
 unify' :: MonoType -> MonoType -> Either TypeError Substitutions

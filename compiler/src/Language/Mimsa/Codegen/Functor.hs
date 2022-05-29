@@ -70,7 +70,7 @@ toFieldItemType typeName = \case
   MTFunction _ (MTVar _ (TVName a)) (MTVar _ (TVName b)) ->
     pure $ Func2 (coerce a <> "to" <> coerce b) (coerce a) (coerce b)
   mt -> case varsFromDataType mt of
-    Just (fieldConsName, _)
+    Just (_modName, fieldConsName, _)
       | fieldConsName == typeName ->
           RecurseField <$> nextName typeName
     _ -> throwError CouldNotFindVarsInType

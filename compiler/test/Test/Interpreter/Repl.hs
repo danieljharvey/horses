@@ -209,14 +209,14 @@ spec =
         result <- eval testStdlib "type LeBool = Vrai | Faux in Vrai"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "LeBool" [],
+            ( dataTypeWithVars mempty Nothing "LeBool" [],
               MyConstructor mempty Nothing "Vrai"
             )
       it "type Nat = Zero | Suc Nat in Suc Zero" $ do
         result <- eval testStdlib "type Nat = Zero | Suc Nat in Suc Zero"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Nat" [],
+            ( dataTypeWithVars mempty Nothing "Nat" [],
               MyApp
                 mempty
                 (MyConstructor mempty Nothing "Suc")
@@ -226,7 +226,7 @@ spec =
         result <- eval testStdlib "type Nat = Zero | Suc Nat in Suc (Suc Zero)"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Nat" [],
+            ( dataTypeWithVars mempty Nothing "Nat" [],
               MyApp
                 mempty
                 (MyConstructor mempty Nothing "Suc")
@@ -250,8 +250,8 @@ spec =
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (dataTypeWithVars mempty "Nat" [])
-                (dataTypeWithVars mempty "Nat" []),
+                (dataTypeWithVars mempty Nothing "Nat" [])
+                (dataTypeWithVars mempty Nothing "Nat" []),
               MyConstructor mempty Nothing "Suc"
             )
       it "type OhNat = Zero | Suc OhNat String in Suc" $ do
@@ -260,11 +260,11 @@ spec =
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (dataTypeWithVars mempty "OhNat" [])
+                (dataTypeWithVars mempty Nothing "OhNat" [])
                 ( MTFunction
                     mempty
                     (MTPrim mempty MTString)
-                    (dataTypeWithVars mempty "OhNat" [])
+                    (dataTypeWithVars mempty Nothing "OhNat" [])
                 ),
               MyConstructor mempty Nothing "Suc"
             )
@@ -272,7 +272,7 @@ spec =
         result <- eval testStdlib "type Pet = Cat String | Dog String in Cat \"mimsa\""
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Pet" [],
+            ( dataTypeWithVars mempty Nothing "Pet" [],
               MyApp
                 mempty
                 (MyConstructor mempty Nothing "Cat")
@@ -294,7 +294,7 @@ spec =
                 ( MTFunction
                     mempty
                     (MTPrim mempty MTString)
-                    (dataTypeWithVars mempty "LongBoy" [])
+                    (dataTypeWithVars mempty Nothing "LongBoy" [])
                 ),
               MyApp
                 mempty
@@ -305,7 +305,7 @@ spec =
         result <- eval testStdlib "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Tree" [],
+            ( dataTypeWithVars mempty Nothing "Tree" [],
               MyApp
                 mempty
                 ( MyApp
@@ -322,21 +322,21 @@ spec =
             ( MTFunction
                 mempty
                 (MTVar mempty (TVUnificationVar 1))
-                (dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 1)]),
+                (dataTypeWithVars mempty Nothing "Maybe" [MTVar mempty (TVUnificationVar 1)]),
               MyConstructor mempty Nothing "Just"
             )
       it "type Maybe a = Just a | Nothing in Nothing" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in Nothing"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Maybe" [MTVar mempty (TVUnificationVar 1)],
+            ( dataTypeWithVars mempty Nothing "Maybe" [MTVar mempty (TVUnificationVar 1)],
               MyConstructor mempty Nothing "Nothing"
             )
       it "type Maybe a = Just a | Nothing in Just 1" $ do
         result <- eval testStdlib "type Maybe a = Just a | Nothing in Just 1"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt],
+            ( dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt],
               MyApp
                 mempty
                 (MyConstructor mempty Nothing "Just")
@@ -389,7 +389,7 @@ spec =
         result <- eval testStdlib "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Tree" [MTPrim mempty MTInt],
+            ( dataTypeWithVars mempty Nothing "Tree" [MTPrim mempty MTInt],
               MyApp
                 mempty
                 (MyConstructor mempty Nothing "Leaf")
@@ -407,7 +407,7 @@ spec =
         result <- eval testStdlib "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Tree" [MTPrim mempty MTInt],
+            ( dataTypeWithVars mempty Nothing "Tree" [MTPrim mempty MTInt],
               MyApp
                 mempty
                 ( MyApp
@@ -442,7 +442,7 @@ spec =
         result <- eval testStdlib "type Array a = Empty | Item a (Array a) in match (Item 1 (Item 2 Empty)) with Empty -> Empty | (Item a rest) -> rest"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Array" [MTPrim mempty MTInt],
+            ( dataTypeWithVars mempty Nothing "Array" [MTPrim mempty MTInt],
               MyApp
                 mempty
                 ( MyApp
@@ -483,7 +483,7 @@ spec =
         result <- eval testStdlib "let some = \\a -> Just a in if True then some 1 else Nothing"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt],
+            ( dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt],
               MyApp
                 mempty
                 (MyConstructor mempty Nothing "Just")
@@ -499,7 +499,7 @@ spec =
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt])
+                (dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt])
                 (MTPrim mempty MTInt)
             )
       it "fromMaybe should fail typecheck when default does not match inner value" $ do
@@ -632,6 +632,7 @@ spec =
           `shouldBe` Right
             ( dataTypeWithVars
                 mempty
+                Nothing
                 "Reader"
                 [MTPrim mempty MTInt, MTPrim mempty MTInt],
               MyApp
@@ -969,8 +970,9 @@ spec =
           `shouldBe` Right
             ( dataTypeWithVars
                 mempty
+                Nothing
                 "Monoid"
-                [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTString]
+                [ dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTString]
                 ]
             )
       it "maybeMonoid sumMonoid" $ do
@@ -979,8 +981,9 @@ spec =
           `shouldBe` Right
             ( dataTypeWithVars
                 mempty
+                  Nothing
                 "Monoid"
-                [ dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt]
+                [ dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt]
                 ]
             )
 
