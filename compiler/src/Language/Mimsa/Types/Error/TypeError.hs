@@ -160,14 +160,14 @@ renderTypeError (CannotMatchRecord env _ mt) =
   ]
 renderTypeError (TypeConstructorNotInScope env _ modName constructor) =
   let prettyName = case modName of
-                     Just mod' -> prettyDoc mod' <> "." <> prettyDoc constructor
-                     _ -> prettyDoc constructor
+        Just mod' -> prettyDoc mod' <> "." <> prettyDoc constructor
+        _ -> prettyDoc constructor
    in [ "Type constructor for"
-      <+> prettyName 
-      <+> "not found in scope.",
-    "The following are available:"
-  ]
-    <> printDataTypes env
+          <+> prettyName
+          <+> "not found in scope.",
+        "The following are available:"
+      ]
+        <> printDataTypes env
 renderTypeError (ConflictingConstructors _ constructor) =
   ["Multiple constructors found matching" <+> prettyDoc constructor]
 renderTypeError (DuplicateTypeDeclaration _ constructor) =

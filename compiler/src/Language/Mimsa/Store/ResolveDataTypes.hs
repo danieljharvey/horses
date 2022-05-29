@@ -11,8 +11,8 @@ import Language.Mimsa.Store.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Types.Store
 
 -- given a StoreExpression (and the Store), return all DataTypes used in the
 -- expression
@@ -20,7 +20,7 @@ resolveDataTypes ::
   (MonadError StoreError m) =>
   Store ann ->
   StoreExpression ann ->
-  m (Map (Maybe ModuleName,TyCon) DataType)
+  m (Map (Maybe ModuleName, TyCon) DataType)
 resolveDataTypes store' storeExpr = do
   exprs <-
     traverse
@@ -28,11 +28,11 @@ resolveDataTypes store' storeExpr = do
       (M.elems (getTypeBindings $ storeTypeBindings storeExpr))
   pure (createTypeMap exprs)
 
-createTypeMap :: [StoreExpression ann] -> Map (Maybe ModuleName,TyCon) DataType
+createTypeMap :: [StoreExpression ann] -> Map (Maybe ModuleName, TyCon) DataType
 createTypeMap dataTypes =
   mconcat (storeExprToDataTypes <$> dataTypes)
 
-storeExprToDataTypes :: StoreExpression ann -> Map (Maybe ModuleName,TyCon) DataType
+storeExprToDataTypes :: StoreExpression ann -> Map (Maybe ModuleName, TyCon) DataType
 storeExprToDataTypes =
   mconcat
     . fmap withDt
@@ -41,4 +41,4 @@ storeExprToDataTypes =
     . storeExpression
   where
     withDt dt@(DataType tyName _ _) =
-      M.singleton (Nothing,tyName) dt
+      M.singleton (Nothing, tyName) dt

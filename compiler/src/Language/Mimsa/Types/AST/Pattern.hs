@@ -15,7 +15,6 @@ module Language.Mimsa.Types.AST.Pattern
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Aeson as JSON
 import Data.Bifunctor.TH
 import Data.Map (Map)
@@ -26,6 +25,7 @@ import Language.Mimsa.Types.AST.Literal
 import Language.Mimsa.Types.AST.Spread
 import Language.Mimsa.Types.AST.StringPart
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Utils
 import Prettyprinter
 
@@ -98,12 +98,12 @@ instance Printer (Pattern Name ann) where
   prettyDoc (PLit _ lit) = prettyDoc lit
   prettyDoc (PConstructor _ modName tyCon args) =
     let prettyArgs = case args of
-                       [] -> mempty
-                       _ -> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
+          [] -> mempty
+          _ -> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
         prettyNamespace = case modName of
-                            Just m -> prettyDoc m <> "."
-                            _ -> mempty
-     in prettyNamespace <> prettyDoc tyCon <> prettyArgs 
+          Just m -> prettyDoc m <> "."
+          _ -> mempty
+     in prettyNamespace <> prettyDoc tyCon <> prettyArgs
   prettyDoc (PPair _ a b) =
     "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
   prettyDoc (PArray _ as spread) =

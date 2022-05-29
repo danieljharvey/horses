@@ -3,8 +3,8 @@
 
 module Language.Mimsa.Backend.Output (outputStoreExpression) where
 
-import Data.Bifunctor
 import Control.Monad.Except
+import Data.Bifunctor
 import Data.Coerce
 import Data.Functor
 import Data.List (intersperse)
@@ -38,7 +38,7 @@ typeBindingsByType store (TypeBindings tb) =
 
 -- remove moduleName from type. will probably need these later when we come to
 -- fix TS but for now YOLO
-stripModules :: (Ord b) => Map (a,b) c -> Map b c
+stripModules :: (Ord b) => Map (a, b) c -> Map b c
 stripModules = M.fromList . fmap (first snd) . M.toList
 
 outputStoreExpression ::

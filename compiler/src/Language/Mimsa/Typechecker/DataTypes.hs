@@ -11,7 +11,6 @@ module Language.Mimsa.Typechecker.DataTypes
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor
@@ -28,6 +27,7 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
 
 -- given a datatype declaration, checks it makes sense and if so,
@@ -41,10 +41,10 @@ storeDataDeclaration ::
 storeDataDeclaration env ann dt@(DataType tyName _ _) = do
   validateDataTypeVariables ann dt
   validateConstructors env ann dt
-  if M.member (Nothing,tyName) (getDataTypes env)
+  if M.member (Nothing, tyName) (getDataTypes env)
     then throwError (DuplicateTypeDeclaration ann tyName)
     else
-      let newEnv = mempty { getDataTypes = M.singleton (Nothing,tyName) dt } 
+      let newEnv = mempty {getDataTypes = M.singleton (Nothing, tyName) dt}
        in pure (newEnv <> env)
 
 errorOnBuiltIn :: (MonadError TypeError m) => Annotation -> TyCon -> m ()
@@ -105,7 +105,7 @@ validateConstructors ::
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-        if M.member (Nothing,tyCon) (getDataTypes env)
+        if M.member (Nothing, tyCon) (getDataTypes env)
           then throwError (CannotUseBuiltInTypeAsConstructor ann tyCon)
           else pure ()
     )
@@ -196,12 +196,12 @@ inferType ::
   (MonadError TypeError m) =>
   Environment ->
   Annotation ->
-    Maybe ModuleName ->
+  Maybe ModuleName ->
   TyCon ->
   [MonoType] ->
   m MonoType
 inferType env ann modName tyName tyVars =
-  case M.lookup (modName,tyName) (getDataTypes env) of
+  case M.lookup (modName, tyName) (getDataTypes env) of
     (Just _) -> case lookupBuiltIn tyName of
       Just mt -> pure mt
       _ -> pure (dataTypeWithVars mempty tyName tyVars)

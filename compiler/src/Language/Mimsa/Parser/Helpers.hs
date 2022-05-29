@@ -69,7 +69,7 @@ mapOuterExprAnnotation f expr' =
     MyRecordAccess ann a b -> MyRecordAccess (f ann) a b
     MyArray ann as -> MyArray (f ann) as
     MyData ann a b -> MyData (f ann) a b
-    MyConstructor ann a b-> MyConstructor (f ann) a b
+    MyConstructor ann a b -> MyConstructor (f ann) a b
     MyTypedHole ann a -> MyTypedHole (f ann) a
     MyDefineInfix ann a b c -> MyDefineInfix (f ann) a b c
     MyPatternMatch ann a b -> MyPatternMatch (f ann) a b

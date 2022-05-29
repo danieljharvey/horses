@@ -59,7 +59,7 @@ withMonoid ::
   Expr var ann ->
   m
 withMonoid f whole@(MyLiteral _ _) = snd (f whole)
-withMonoid f whole@MyVar {}  = snd (f whole)
+withMonoid f whole@MyVar {} = snd (f whole)
 withMonoid f whole@(MyAnnotation _ _ expr) =
   let (go, m) = f whole
    in if not go
@@ -144,7 +144,7 @@ withMonoid f whole@(MyRecordAccess _ expr _name) =
 withMonoid f whole@(MyData _ _ expr) =
   let (go, m) = f whole
    in if not go then m else m <> withMonoid f expr
-withMonoid f whole@MyConstructor {}  = snd (f whole)
+withMonoid f whole@MyConstructor {} = snd (f whole)
 withMonoid f whole@MyTypedHole {} = snd (f whole)
 withMonoid f whole@(MyDefineInfix _ _ infixExpr inExpr) =
   let (go, m) = f whole

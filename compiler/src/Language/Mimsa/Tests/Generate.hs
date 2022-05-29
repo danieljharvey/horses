@@ -16,15 +16,15 @@ import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Typechecker
 import Test.QuickCheck
-import Language.Mimsa.Types.Modules.ModuleName
 
 -- TODO: we'll need a namespace in the MTConstructor to make sure we generate
 -- the right thing
 data GenerateState = GenerateState
-  { gsDataTypes :: Map (Maybe ModuleName,TyCon) DataType,
+  { gsDataTypes :: Map (Maybe ModuleName, TyCon) DataType,
     gsDepth :: Int
   }
 
@@ -75,7 +75,7 @@ fromType ::
   TyCon ->
   [MonoType] ->
   Gen (Expr Name ann)
-fromType gs typeName args = case M.lookup (Nothing,typeName) (gsDataTypes gs) of
+fromType gs typeName args = case M.lookup (Nothing, typeName) (gsDataTypes gs) of
   Just dt -> do
     let newGs = incrementDepth gs
         dtApplied = typeApply args dt
@@ -140,7 +140,7 @@ fromPrimitive MTString =
 
 generateFromMonoType ::
   (Monoid ann) =>
-  Map (Maybe ModuleName,TyCon) DataType ->
+  Map (Maybe ModuleName, TyCon) DataType ->
   MonoType ->
   IO [Expr Name ann]
 generateFromMonoType dataTypes mt =

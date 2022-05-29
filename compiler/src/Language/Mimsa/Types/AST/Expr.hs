@@ -404,9 +404,9 @@ instance Printer (Expr Name ann) where
     prettyDefineInfix infixOp bindExpr expr
   prettyDoc (MyData _ dataType expr) =
     prettyDataType dataType expr
-  prettyDoc (MyConstructor _ (Just modName) name) = 
+  prettyDoc (MyConstructor _ (Just modName) name) =
     prettyDoc modName <> "." <> prettyDoc name
-  prettyDoc (MyConstructor _ Nothing name) = 
+  prettyDoc (MyConstructor _ Nothing name) =
     prettyDoc name
   prettyDoc (MyTypedHole _ name) = "?" <> prettyDoc name
   prettyDoc (MyPatternMatch _ expr matches) =

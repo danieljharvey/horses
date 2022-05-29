@@ -14,9 +14,9 @@ defaultEnv =
   mempty
     { getDataTypes =
         M.fromList
-          [ ((Nothing,"Maybe"), dtMaybe),
-            ((Nothing,"Either"), dtEither),
-            ((Nothing,"MatchedPair"), dtMatchedPair)
+          [ ((Nothing, "Maybe"), dtMaybe),
+            ((Nothing, "Either"), dtEither),
+            ((Nothing, "MatchedPair"), dtMatchedPair)
           ]
     }
 

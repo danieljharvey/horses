@@ -7,15 +7,15 @@ import qualified Data.Map as M
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Types.Typechecker
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::
   (MonadError (TypeErrorF var Annotation) m) =>
   Environment ->
   Annotation ->
-    Maybe ModuleName -> 
+  Maybe ModuleName ->
   TyCon ->
   m DataType
 lookupConstructor env ann modName name = do

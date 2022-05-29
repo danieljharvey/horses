@@ -407,7 +407,7 @@ spec = do
           checkModuleType
             ( joinLines
                 [ "import Prelude from " <> prettyPrint preludeHash,
-                  "def useEither eA = match eA with Prelude.Right a -> [a] | Prelude.Left _ -> []" 
+                  "def useEither eA = match eA with Prelude.Right a -> [a] | Prelude.Left _ -> []"
                 ]
             )
             `shouldSatisfy` isRight
