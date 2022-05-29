@@ -36,7 +36,7 @@ spec = do
       doKindCheck
         ( MTConstructor
             mempty
-              Nothing
+            Nothing
             "Right"
         )
         `shouldBe` KindArrow (KindArrow KindType KindType) KindType

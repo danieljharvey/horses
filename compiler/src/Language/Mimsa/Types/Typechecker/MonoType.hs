@@ -14,7 +14,6 @@ module Language.Mimsa.Types.Typechecker.MonoType
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -22,6 +21,7 @@ import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Prettyprinter
 
 data Primitive
@@ -153,16 +153,16 @@ renderMonoType (MTRecordRow _ as rest) =
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v
 renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
 renderMonoType (MTVar _ a) = renderTypeIdentifier a
-renderMonoType (MTConstructor _ (Just modName) tyCon ) =
+renderMonoType (MTConstructor _ (Just modName) tyCon) =
   prettyDoc modName <> "." <> prettyDoc tyCon
-renderMonoType (MTConstructor _ Nothing tyCon ) =
+renderMonoType (MTConstructor _ Nothing tyCon) =
   prettyDoc tyCon
 renderMonoType mt@(MTTypeApp _ func arg) =
   case varsFromDataType mt of
-    Just (modName, tyCon, vars) -> 
+    Just (modName, tyCon, vars) ->
       let typeName = case modName of
-                       Just mName -> prettyDoc mName <> "." <> prettyDoc tyCon
-                       _ -> prettyDoc tyCon
+            Just mName -> prettyDoc mName <> "." <> prettyDoc tyCon
+            _ -> prettyDoc tyCon
        in align $ sep ([typeName] <> (withParens <$> vars))
     Nothing ->
       align $ sep [renderMonoType func, renderMonoType arg]
@@ -173,10 +173,13 @@ varsFromDataType :: Type ann -> Maybe (Maybe ModuleName, TyCon, [Type ann])
 varsFromDataType mt =
   let getInner mt' =
         case mt' of
-          (MTConstructor _ modName tyCon) -> 
+          (MTConstructor _ modName tyCon) ->
             Just (modName, tyCon, mempty)
-          (MTTypeApp _ f a) -> (\(modName, tyCon, vars) -> 
-            (modName, tyCon, vars <> [a])) <$> getInner f
+          (MTTypeApp _ f a) ->
+            ( \(modName, tyCon, vars) ->
+                (modName, tyCon, vars <> [a])
+            )
+              <$> getInner f
           _ -> Nothing
    in getInner mt
 

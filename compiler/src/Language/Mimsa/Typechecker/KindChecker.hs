@@ -25,7 +25,7 @@ kindCheck _ MTPair {} = KindType
 kindCheck _ (MTRecord _ _) = KindType
 kindCheck env mt =
   case varsFromDataType mt of
-    Just (_,name, vars) ->
+    Just (_, name, vars) ->
       let countVars =
             length
               ( filter

@@ -42,16 +42,16 @@ spec = do
   describe "Datatypes" $ do
     it "varsFromDataType" $ do
       varsFromDataType (MTPrim () MTInt) `shouldBe` Nothing
-      varsFromDataType (MTConstructor () Nothing "Dog") `shouldBe` Just (Nothing,"Dog", mempty)
+      varsFromDataType (MTConstructor () Nothing "Dog") `shouldBe` Just (Nothing, "Dog", mempty)
       varsFromDataType (MTTypeApp () (MTConstructor () Nothing "Dog") (MTPrim () MTInt))
-        `shouldBe` Just (Nothing,"Dog", [MTPrim () MTInt])
+        `shouldBe` Just (Nothing, "Dog", [MTPrim () MTInt])
       varsFromDataType
         ( MTTypeApp
             ()
             (MTTypeApp () (MTConstructor () Nothing "Dog") (MTPrim () MTInt))
             (MTPrim () MTBool)
         )
-        `shouldBe` Just (Nothing,"Dog", [MTPrim () MTInt, MTPrim () MTBool])
+        `shouldBe` Just (Nothing, "Dog", [MTPrim () MTInt, MTPrim () MTBool])
 
     it "Instantiates Maybe" $ do
       testInferDataConstructor "Nothing"

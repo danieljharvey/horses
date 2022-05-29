@@ -61,7 +61,7 @@ freshenNamedTypeVars known =
         Just i -> do
           pure (MTVar ann (TVScopedVar i tv))
     freshen mtV@MTVar {} = pure mtV
-    freshen mtV@MTConstructor {}  =
+    freshen mtV@MTConstructor {} =
       pure mtV
     freshen (MTTypeApp ann a b) =
       MTTypeApp ann <$> freshen a <*> freshen b

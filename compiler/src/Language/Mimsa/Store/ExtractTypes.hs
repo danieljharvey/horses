@@ -124,7 +124,7 @@ withDataTypes f (MyArray _ map') = foldMap (withDataTypes f) map'
 withDataTypes f (MyData _ dt a) =
   withDataTypes f a
     <> f dt
-withDataTypes _ MyConstructor {}  = mempty
+withDataTypes _ MyConstructor {} = mempty
 withDataTypes _ (MyTypedHole _ _) = mempty
 withDataTypes f (MyDefineInfix _ _ infixA a) =
   withDataTypes f infixA <> withDataTypes f a

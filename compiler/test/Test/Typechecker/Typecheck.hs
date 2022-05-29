@@ -920,7 +920,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
-            Nothing
+              Nothing
               "Either"
               [ MTPrim mempty MTInt,
                 MTPrim mempty MTInt
@@ -949,7 +949,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
-        Nothing
+              Nothing
               "Either"
               [ MTPrim mempty MTInt,
                 MTPrim mempty MTBool

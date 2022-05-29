@@ -166,7 +166,7 @@ spec =
         `shouldBe` Right
           ( dataTypeWithVars
               mempty
-                Nothing
+              Nothing
               "Maybe"
               [MTPrim mempty MTString]
           )
@@ -198,12 +198,12 @@ spec =
         `shouldBe` Right
           ( dataTypeWithVars
               mempty
-                Nothing
+              Nothing
               "Either"
               [ MTPrim mempty MTString,
                 dataTypeWithVars
                   mempty
-                Nothing
+                  Nothing
                   "Maybe"
                   [MTPrim mempty MTInt]
               ]

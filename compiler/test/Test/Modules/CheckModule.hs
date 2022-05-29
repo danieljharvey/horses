@@ -420,3 +420,12 @@ spec = do
                 ]
             )
             `shouldSatisfy` isRight
+
+        it "Uses Either type from Prelude without specifying namespace fails" $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash,
+                  "def useEither (eA: Either e String): String = match eA with Right a -> a | _ -> \"\""
+                ]
+            )
+            `shouldSatisfy` isLeft

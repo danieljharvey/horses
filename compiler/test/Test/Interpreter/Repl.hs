@@ -981,7 +981,7 @@ spec =
           `shouldBe` Right
             ( dataTypeWithVars
                 mempty
-                  Nothing
+                Nothing
                 "Monoid"
                 [ dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt]
                 ]

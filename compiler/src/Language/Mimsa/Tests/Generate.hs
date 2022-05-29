@@ -54,7 +54,7 @@ fromMonoType gs mt =
         <$> fromMonoType gs to
     (MTVar _ _) -> fromMonoType gs (MTPrim mempty MTBool) -- for unknowns, use bool for now
     mtTA@MTTypeApp {} -> case varsFromDataType mtTA of
-      Just (_,typeName, args) -> fromType gs typeName args
+      Just (_, typeName, args) -> fromType gs typeName args
       Nothing -> error "could not work out datatype"
     mtCons@MTConstructor {} -> case varsFromDataType mtCons of
       Just (_, typeName, args) -> fromType gs typeName args

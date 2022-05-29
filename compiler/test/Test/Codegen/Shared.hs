@@ -146,7 +146,7 @@ dtDoubleList =
               MTVar mempty (tvNamed "b"),
               dataTypeWithVars
                 mempty
-                  Nothing
+                Nothing
                 "DoubleList"
                 [ MTVar mempty (tvNamed "a"),
                   MTVar mempty (tvNamed "b")
