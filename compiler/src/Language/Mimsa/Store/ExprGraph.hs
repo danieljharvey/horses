@@ -64,7 +64,10 @@ createExprGraph expr = snd $ runWriter (createGraph (snd <$> numberExpr expr))
             <$> labelledPatterns
         )
       pure ann
-    createGraph (MyVar ann var) = do
+    createGraph (MyVar ann (Just modName) var) = do
+      tell [Node ann (prettyPrint modName <> "." <> prettyPrint var)]
+      pure ann
+    createGraph (MyVar ann Nothing var) = do
       tell [Node ann (prettyPrint var)]
       pure ann
     createGraph (MyLet ann ident letBody rest) = do
