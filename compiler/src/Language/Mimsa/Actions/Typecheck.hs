@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Actions.Typecheck
   ( typecheckStoreExpression,
