@@ -27,6 +27,7 @@ library
   exposed-modules:
       Language.Mimsa.Actions.AddUnitTest
       Language.Mimsa.Actions.BindExpression
+      Language.Mimsa.Actions.BindModule
       Language.Mimsa.Actions.BindType
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Evaluate
@@ -179,6 +180,7 @@ library
       Language.Mimsa.Types.Identifiers.TypeName
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Interpreter.Stack
+      Language.Mimsa.Types.Modules
       Language.Mimsa.Types.Modules.DefIdentifier
       Language.Mimsa.Types.Modules.Entity
       Language.Mimsa.Types.Modules.Module
@@ -387,6 +389,7 @@ test-suite mimsa-test
   other-modules:
       Test.Actions.AddUnitTest
       Test.Actions.BindExpression
+      Test.Actions.BindModule
       Test.Actions.BindType
       Test.Actions.Build
       Test.Actions.Compile

@@ -13,6 +13,7 @@ module Language.Mimsa.Actions.Monad
     appendStoreExpression,
     bindStoreExpression,
     bindTypeExpression,
+    bindModuleInProject,
     messagesFromOutcomes,
     storeExpressionsFromOutcomes,
     writeFilesFromOutcomes,
@@ -24,6 +25,8 @@ module Language.Mimsa.Actions.Monad
   )
 where
 
+import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Modules
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Map (Map)
@@ -135,6 +138,21 @@ writeFilesFromOutcomes =
         NewWriteFile sp sf sc -> pure (sp, sf, sc)
         _ -> mempty
     )
+
+
+
+-- add binding for module and add it to store
+bindModuleInProject ::
+  Module (Type Annotation) ->
+  ModuleName ->
+  ActionM ()
+bindModuleInProject typecheckedModule modName = do
+  -- appendStoreExpression storeExpr
+  appendProject
+    ( fromModule modName (getAnnotationForType <$> typecheckedModule )
+    )
+
+
 
 -- add binding for expression and add it to store
 bindStoreExpression ::
