@@ -84,7 +84,7 @@ spec = do
         checkModule' fileContents
           `shouldBe` Left (ModuleErr (DuplicateTypeName "Maybe"))
       -- to implement
-      xit "4 errors because duplicate constructor" $ do
+      it "4 errors because duplicate constructor" $ do
         let filePath = modulesPath <> "4.mimsa"
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
@@ -113,7 +113,7 @@ spec = do
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
           `shouldSatisfy` isLeft
-      xit "9 fails to typecheck because we cannot have polymorphic id function with a set input type" $ do
+      it "9 fails to typecheck because we cannot have polymorphic id function with a set input type" $ do
         let filePath = modulesPath <> "9.mimsa"
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
