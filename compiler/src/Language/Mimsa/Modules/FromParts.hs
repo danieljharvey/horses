@@ -4,10 +4,11 @@
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.FromParts (moduleFromModuleParts, exprAndTypeFromParts) where
-import Data.Foldable
+
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Coerce
+import Data.Foldable
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Modules.Monad
@@ -35,7 +36,6 @@ errorIfExpressionAlreadyDefined mod' def =
     then throwError (ModuleErr $ DuplicateDefinition def)
     else pure ()
 
-
 checkDataType :: Module ann -> DataType -> CheckM ()
 checkDataType mod' (DataType typeName _ constructors) = do
   errorIfTypeAlreadyDefined mod' (coerce typeName)
@@ -51,9 +51,9 @@ errorIfTypeAlreadyDefined mod' typeName =
 errorIfConstructorAlreadyDefined :: Module ann -> TyCon -> CheckM ()
 errorIfConstructorAlreadyDefined mod' tyCon =
   let allCons = mconcat (M.keysSet . dtConstructors <$> M.elems (moDataTypes mod'))
-  in  if S.member tyCon allCons
-     then throwError (ModuleErr $ DuplicateConstructor tyCon) 
-     else pure ()
+   in if S.member tyCon allCons
+        then throwError (ModuleErr $ DuplicateConstructor tyCon)
+        else pure ()
 
 errorIfImportAlreadyDefined :: Module ann -> DefIdentifier -> ModuleHash -> CheckM ()
 errorIfImportAlreadyDefined mod' def moduleHash =
