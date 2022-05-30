@@ -8,6 +8,7 @@ module Language.Mimsa.Project.Helpers
     fromStoreExpression,
     fromStoreExpressionDeps,
     fromStore,
+    fromModule,
     findBindingNameForExprHash,
     findAnyBindingNameForExprHash,
     findTypeBindingNameForExprHash,
@@ -25,6 +26,7 @@ module Language.Mimsa.Project.Helpers
     getDependencyHashes,
     lookupBindingName,
     lookupTypeBindingName,
+    lookupModuleName,
     getBindingNames,
     removeBinding,
   )
@@ -44,18 +46,23 @@ import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Modules
+import Language.Mimsa.Modules.HashModule
 
 ----------
 
-projectFromSaved :: Store a -> SaveProject -> Project a
-projectFromSaved store' sp =
+projectFromSaved :: Map ModuleHash (Module ann) -> Store ann -> SaveProject -> 
+    Project ann
+projectFromSaved moduleStore store' sp =
   Project
     { prjStore = store',
       prjBindings = projectBindings sp,
       prjTypeBindings = projectTypes sp,
+      prjModules = projectModules sp,
       prjTests =
         (UTest <$> projectUnitTests sp)
-          <> (PTest <$> projectPropertyTests sp)
+          <> (PTest <$> projectPropertyTests sp),
+          prjModuleStore = moduleStore
     }
 
 projectToSaved :: Project a -> SaveProject
@@ -72,7 +79,8 @@ projectToSaved proj =
           projectBindings = prjBindings proj,
           projectTypes = prjTypeBindings proj,
           projectUnitTests = M.fromList uts,
-          projectPropertyTests = M.fromList pts
+          projectPropertyTests = M.fromList pts,
+          projectModules = prjModules proj
         }
 
 fromStoreExpression :: StoreExpression ann -> ExprHash -> Project ann
@@ -103,6 +111,13 @@ fromType expr hash =
       extractTypeDecl (storeExpression expr)
     typeList =
       (,pure hash) <$> S.toList typeConsUsed
+
+-- TODO: also store the module itself in a store shaped thing
+fromModule :: ModuleName -> Module ann -> Project ann
+fromModule modName newModule =
+  mempty 
+    { prjModules = VersionedMap $ M.singleton modName (pure $ hashModule newModule)
+    }
 
 fromTest :: Test -> StoreExpression ann -> Project ann
 fromTest = \case
@@ -159,6 +174,12 @@ lookupTypeBindingName :: Project ann -> TyCon -> Maybe ExprHash
 lookupTypeBindingName project tyCon =
   let b = getTypeBindings . getCurrentTypeBindings . prjTypeBindings $ project
    in M.lookup tyCon b
+
+lookupModuleName :: Project ann -> ModuleName -> Maybe ModuleHash
+lookupModuleName project modName =
+  let b = getCurrentModules . prjModules $ project
+   in M.lookup modName b
+
 
 -- | find the binding name in current expr hashes
 findBindingNameForExprHash ::
@@ -218,6 +239,9 @@ getCurrentBindings versioned =
 getCurrentTypeBindings :: VersionedTypeBindings -> TypeBindings
 getCurrentTypeBindings versioned =
   TypeBindings (NE.last <$> getVersionedMap versioned)
+
+getCurrentModules :: VersionedModules -> Map ModuleName ModuleHash
+getCurrentModules = fmap NE.last . getVersionedMap
 
 getItemsForAllVersions :: (Ord a) => VersionedMap k a -> Set a
 getItemsForAllVersions versioned =

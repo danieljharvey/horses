@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module Language.Mimsa.Modules.Check (checkModule) where
+module Language.Mimsa.Modules.Check (checkModule, typecheckAllModules) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -72,7 +72,7 @@ lookupModuleType typecheckedModules typeName modHash = do
     _ -> throwError (ModuleErr (MissingModule modHash))
 
 checkModule :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
-checkModule = runCheck . checkModule'
+checkModule input = runCheck input (checkModule' input)
 
 -- | This is where we load a file and check that it is "OK" as such
 --  so far this entails:
@@ -101,7 +101,7 @@ checkModule' input = do
   properMod <-
     moduleFromModuleParts moduleItems
   -- typecheck this module
-  tcMod <- withStoredInput input (typecheckAllModules properMod)
+  tcMod <- typecheckAllModules properMod
 
   pure (tcMod, getModuleType tcMod)
 

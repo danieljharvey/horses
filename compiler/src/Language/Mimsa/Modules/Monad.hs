@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
-module Language.Mimsa.Modules.Monad (CheckM (..), CheckEnv (..), runCheck, withStoredInput, getStoredInput) where
+module Language.Mimsa.Modules.Monad (CheckM (..), CheckEnv (..), runCheck,  getStoredInput) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -37,18 +37,14 @@ newtype CheckM a = CheckM
       MonadReader (CheckEnv Annotation)
     )
 
-runCheck :: CheckM a -> Either (Error Annotation) a
-runCheck comp = runReader (runExceptT (runCheckM comp)) initialEnv
+runCheck :: Text -> CheckM a -> Either (Error Annotation) a
+runCheck input comp = runReader (runExceptT (runCheckM comp)) initialEnv
   where
     initialEnv =
       CheckEnv
         { ceModules = M.singleton preludeHash prelude,
-          ceInput = mempty
+          ceInput = input 
         }
-
-withStoredInput :: Text -> CheckM a -> CheckM a
-withStoredInput input =
-  local (\env -> env {ceInput = input})
 
 getStoredInput :: CheckM Text
 getStoredInput = asks ceInput

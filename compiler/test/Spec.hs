@@ -5,6 +5,7 @@ where
 
 import qualified Test.Actions.AddUnitTest as AddUnitTest
 import qualified Test.Actions.BindExpression as BindExpression
+import qualified Test.Actions.BindModule as BindModule
 import qualified Test.Actions.BindType as BindType
 import qualified Test.Actions.Build as Build
 import qualified Test.Actions.Compile as Compile
@@ -76,6 +77,7 @@ main =
     Codegen.spec
     AddUnitTest.spec
     BindExpression.spec
+    BindModule.spec
     Compile.spec
     Evaluate.spec
     Upgrade.spec
@@ -108,3 +110,4 @@ main =
     NumberVars.spec
     CheckModule.spec
     RenderErrors.spec
+

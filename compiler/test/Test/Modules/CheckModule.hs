@@ -36,7 +36,7 @@ exprAndTypeFromParts' ::
   [DefPart ann] ->
   Expr Name ann ->
   Either (Error Annotation) (Expr Name ann)
-exprAndTypeFromParts' parts expr = runCheck (exprAndTypeFromParts (DIName "test") parts expr)
+exprAndTypeFromParts' parts expr = runCheck "" (exprAndTypeFromParts (DIName "test") parts expr)
 
 checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
