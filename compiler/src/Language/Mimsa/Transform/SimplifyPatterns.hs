@@ -30,13 +30,13 @@ match ("dog", "log") with
 
 simplifyPatterns :: Expr var ann -> Expr var ann
 -- constructor with single arg
-simplifyPatterns orig@(MyPatternMatch ann (MyApp _ (MyConstructor _ tc) argA) patterns) =
+simplifyPatterns orig@(MyPatternMatch ann (MyApp _ (MyConstructor _ _ tc) argA) patterns) =
   case filterPatterns tc patterns of
     Just newPatterns ->
       MyPatternMatch ann argA newPatterns
     Nothing -> orig
 -- constructor with two args
-simplifyPatterns orig@(MyPatternMatch ann (MyApp appAnn (MyApp _ (MyConstructor _ tc) argA) argB) patterns) =
+simplifyPatterns orig@(MyPatternMatch ann (MyApp appAnn (MyApp _ (MyConstructor _ _ tc) argA) argB) patterns) =
   case filterPatterns tc patterns of
     Just newPatterns ->
       MyPatternMatch ann (MyPair appAnn argA argB) newPatterns
@@ -77,8 +77,8 @@ removeDuplicateWildcards =
       (False, mempty)
 
 filterPattern :: TyCon -> Pattern var ann -> Maybe (Pattern var ann)
-filterPattern tc (PConstructor _ tc2 [a]) | tc == tc2 = Just a
-filterPattern tc (PConstructor pAnn tc2 [a, b]) | tc == tc2 = Just (PPair pAnn a b)
+filterPattern tc (PConstructor _ _ tc2 [a]) | tc == tc2 = Just a -- TODO: check this works with namespace
+filterPattern tc (PConstructor pAnn _ tc2 [a, b]) | tc == tc2 = Just (PPair pAnn a b)
 filterPattern _ (PWildcard ann) = Just (PWildcard ann)
 filterPattern _ (PVar ann var) = Just (PVar ann var)
 filterPattern _ _ = Nothing

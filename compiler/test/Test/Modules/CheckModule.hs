@@ -84,7 +84,7 @@ spec = do
         checkModule' fileContents
           `shouldBe` Left (ModuleErr (DuplicateTypeName "Maybe"))
       -- to implement
-      xit "4 errors because duplicate constructor" $ do
+      it "4 errors because duplicate constructor" $ do
         let filePath = modulesPath <> "4.mimsa"
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
@@ -113,7 +113,7 @@ spec = do
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
           `shouldSatisfy` isLeft
-      xit "9 fails to typecheck because we cannot have polymorphic id function with a set input type" $ do
+      it "9 fails to typecheck because we cannot have polymorphic id function with a set input type" $ do
         let filePath = modulesPath <> "9.mimsa"
         fileContents <- liftIO $ T.readFile filePath
         checkModule' fileContents
@@ -377,6 +377,15 @@ spec = do
             )
             `shouldBe` Left (ModuleErr $ DuplicateTypeName "Either")
 
+        it "Errors when adding a duplicate Right constructor" $
+          checkModule
+            ( joinLines
+                [ "type Result e a = Failure e | Right a",
+                  "type Either e a = Left e | Right a"
+                ]
+            )
+            `shouldSatisfy` isLeft
+
         it "Imports parse and pretty print" $
           checkModule'
             ( joinLines
@@ -394,11 +403,49 @@ spec = do
             )
             `shouldSatisfy` isRight
 
-        it ("Uses Either from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
+        it ("Uses fst from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
           checkModuleType
             ( joinLines
                 [ "import Prelude from " <> prettyPrint preludeHash,
                   "def withFst = Prelude.fst (True, 1)"
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it ("Uses Right and Left from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash,
+                  "def useEither eA = match eA with Prelude.Right a -> [a] | Prelude.Left _ -> []"
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it ("Uses Either type from Prelude with named import: " <> T.unpack (prettyPrint preludeHash)) $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash,
+                  "def useEither (eA: Prelude.Either e String): String = match eA with Prelude.Right a -> a | Prelude.Left _ -> \"\""
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it "Uses Either type from Prelude without specifying namespace fails" $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash,
+                  "def useEither (eA: Either e String): String = match eA with Right a -> a | _ -> \"\""
+                ]
+            )
+            `shouldSatisfy` isLeft
+
+        it "Locally defined Either does not mess with namespace imported Either" $
+          checkModuleType
+            ( joinLines
+                [ "import Prelude from " <> prettyPrint preludeHash,
+                  "type Either e a = Left e | Right a",
+                  "def convert (val: Either e a): Prelude.Either e a = ",
+                  "  match val with Right a -> Prelude.Right a | Left e -> Prelude.Left e"
                 ]
             )
             `shouldSatisfy` isRight

@@ -26,7 +26,7 @@ wrap (DataType _tyCon _vars items) = do
             (Identifier mempty "a")
             ( MyApp
                 mempty
-                (MyConstructor mempty consName)
+                (MyConstructor mempty Nothing consName)
                 (MyVar mempty Nothing "a")
             )
         )
@@ -47,7 +47,7 @@ unwrap (DataType tyCon _vars items) = do
             ( MyPatternMatch
                 mempty
                 (MyVar mempty Nothing tyName)
-                [ ( PConstructor mempty consName [PVar mempty "a"],
+                [ ( PConstructor mempty Nothing consName [PVar mempty "a"],
                     MyVar mempty Nothing "a"
                   )
                 ]

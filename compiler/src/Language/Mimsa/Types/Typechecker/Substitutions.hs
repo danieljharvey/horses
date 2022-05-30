@@ -75,7 +75,7 @@ instance Substitutable (Type ann) where
       MTArray ann (applySubst subst a)
     MTTypeApp ann func arg ->
       MTTypeApp ann (applySubst subst func) (applySubst subst arg)
-    MTConstructor ann cn -> MTConstructor ann cn
+    MTConstructor ann modName cn -> MTConstructor ann modName cn
     MTPrim ann a -> MTPrim ann a
 
 instance (Substitutable a) => Substitutable (Map k a) where

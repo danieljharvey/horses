@@ -96,8 +96,8 @@ spec =
     describe "Constructors" $ do
       it "Combines a Maybe" $ do
         runUnifier
-          ( MTTypeApp mempty (MTConstructor mempty "Maybe") (MTVar mempty $ TVUnificationVar 1),
-            MTTypeApp mempty (MTConstructor mempty "Maybe") (MTPrim mempty MTInt)
+          ( MTTypeApp mempty (MTConstructor mempty Nothing "Maybe") (MTVar mempty $ TVUnificationVar 1),
+            MTTypeApp mempty (MTConstructor mempty Nothing "Maybe") (MTPrim mempty MTInt)
           )
           `shouldBe` Right
             ( Substitutions $
@@ -108,8 +108,8 @@ spec =
 
       it "Combines an Either" $ do
         runUnifier
-          ( MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty "Either") (MTVar mempty $ TVUnificationVar 1)) (MTPrim mempty MTBool),
-            MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty "Either") (MTPrim mempty MTInt)) (MTVar mempty $ TVUnificationVar 2)
+          ( MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty Nothing "Either") (MTVar mempty $ TVUnificationVar 1)) (MTPrim mempty MTBool),
+            MTTypeApp mempty (MTTypeApp mempty (MTConstructor mempty Nothing "Either") (MTPrim mempty MTInt)) (MTVar mempty $ TVUnificationVar 2)
           )
           `shouldBe` Right
             ( Substitutions $

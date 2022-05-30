@@ -74,9 +74,9 @@ patternMatches (PRecord _ pAs) (MyRecord _ as)
       pure (mconcat nice)
 patternMatches (PLit _ pB) (MyLiteral _ b)
   | pB == b = pure mempty
-patternMatches (PConstructor _ _pTyCon []) (MyConstructor _ _tyCon) =
+patternMatches (PConstructor _ _ _pTyCon []) (MyConstructor _ _ _tyCon) =
   pure mempty
-patternMatches (PConstructor _ pTyCon pArgs) (MyApp ann fn val) = do
+patternMatches (PConstructor _ _ pTyCon pArgs) (MyApp ann fn val) = do
   (tyCon, args) <- consAppToPattern (MyApp ann fn val)
   if tyCon /= pTyCon
     then Nothing
@@ -131,5 +131,5 @@ consAppToPattern :: InterpretExpr var ann -> Maybe (TyCon, [InterpretExpr var an
 consAppToPattern (MyApp _ fn val) = do
   (tyCon, more) <- consAppToPattern fn
   pure (tyCon, more <> [val])
-consAppToPattern (MyConstructor _ tyCon) = pure (tyCon, mempty)
+consAppToPattern (MyConstructor _ _ tyCon) = pure (tyCon, mempty)
 consAppToPattern _ = Nothing

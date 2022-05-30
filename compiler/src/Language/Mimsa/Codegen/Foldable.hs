@@ -80,7 +80,7 @@ toFieldItemType tyName matchVar = \case
         pure (name, VariableField name)
       else pure (coerce a, NoVariable)
   mt -> case varsFromDataType mt of
-    Just (tyCon, [MTVar _ (TVName var)]) -> do
+    Just (_, tyCon, [MTVar _ (TVName var)]) -> do
       varName <- nextName tyName
       if tyCon == tyName && coerce var == matchVar
         then pure (varName, Recurse varName)
@@ -89,7 +89,7 @@ toFieldItemType tyName matchVar = \case
 
 patternFromFieldItemType :: TyCon -> [Name] -> Pattern Name ()
 patternFromFieldItemType tyCon names =
-  PConstructor mempty tyCon (patForField <$> names)
+  PConstructor mempty Nothing tyCon (patForField <$> names)
   where
     patForField = PVar mempty
 

@@ -67,7 +67,7 @@ containsVar n fields =
         (MTPair _ a b) -> fieldContains a || fieldContains b
         (MTRecord _ items) -> or (fieldContains <$> items)
         mt -> case varsFromDataType mt of
-          Just (_, as') -> or (fieldContains <$> as')
+          Just (_, _, as') -> or (fieldContains <$> as')
           _ -> False
 
 createMatches ::
@@ -97,9 +97,9 @@ noOpMatch tyCon fields =
               let fieldName = mkFieldName i
                in MyApp mempty expr' (MyVar mempty Nothing fieldName)
           )
-          (MyConstructor mempty tyCon)
+          (MyConstructor mempty Nothing tyCon)
           numberedFields
-      pat = PConstructor mempty tyCon (PVar mempty . mkFieldName . fst <$> numberedFields)
+      pat = PConstructor mempty Nothing tyCon (PVar mempty . mkFieldName . fst <$> numberedFields)
    in (pat, patternExpr)
 
 newtype FieldItemType = VariableField Name
@@ -143,7 +143,7 @@ createInnerMatch matchVar tyCon fields = do
               let reconstruct = reconstructField matchVar fieldItem
                in MyApp mempty expr' reconstruct
           )
-          (MyConstructor mempty tyCon)
+          (MyConstructor mempty Nothing tyCon)
           regFields
   let pat = patternFromFieldItemType tyCon regFields
   pure
@@ -162,7 +162,7 @@ multiFunctorCheck items =
 
 patternFromFieldItemType :: TyCon -> [FieldItemType] -> Pattern Name ()
 patternFromFieldItemType tyCon fields =
-  PConstructor mempty tyCon (toPat <$> fields)
+  PConstructor mempty Nothing tyCon (toPat <$> fields)
   where
     toPat (VariableField a) = PVar mempty a
 

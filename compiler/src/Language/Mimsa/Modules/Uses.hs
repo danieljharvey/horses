@@ -46,7 +46,7 @@ extractUses_ (MyRecord _ map') = foldMap extractUses_ map'
 extractUses_ (MyRecordAccess _ a _) = extractUses_ a
 extractUses_ (MyArray _ map') = foldMap extractUses_ map'
 extractUses_ (MyData _ _ a) = extractUses_ a
-extractUses_ (MyConstructor _ _) = mempty
+extractUses_ MyConstructor {} = mempty
 extractUses_ (MyTypedHole _ _) = mempty
 extractUses_ (MyDefineInfix _ _ a b) = extractUses_ a <> extractUses_ b
 extractUses_ (MyPatternMatch _ match patterns) =
@@ -71,7 +71,7 @@ extractPatternUses (PRecord _ as) =
   mconcat (extractPatternUses <$> M.elems as)
 extractPatternUses (PPair _ a b) =
   extractPatternUses a <> extractPatternUses b
-extractPatternUses (PConstructor _ _ args) =
+extractPatternUses (PConstructor _ _ _ args) =
   mconcat (extractPatternUses <$> args)
 extractPatternUses (PArray _ as spread) =
   mconcat (extractPatternUses <$> as) <> extractSpreadUses spread

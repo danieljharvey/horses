@@ -16,12 +16,13 @@ import Language.Mimsa.Types.Identifiers
     TypeIdentifier,
   )
 import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 
 -- everything we need in typechecking environment
 data Environment = Environment
   { getSchemes :: Map TypeIdentifier Scheme,
-    getDataTypes :: Map TyCon DataType,
+    getDataTypes :: Map (Maybe ModuleName, TyCon) DataType,
     getInfix :: Map InfixOp Scheme,
     getTypeVarsInScope :: Map TyVar Int, -- used for scoping type variables
     getNamespacedSchemes :: Map ModuleHash (Map Name Scheme) -- Name should probably be DefIdentifier or something so we can do Infix in future

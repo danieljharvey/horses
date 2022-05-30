@@ -64,7 +64,7 @@ dtWrappedString =
   DataType
     "WrappedString"
     mempty
-    (M.singleton "Wrapped" [dataTypeWithVars mempty "String" mempty])
+    (M.singleton "Wrapped" [dataTypeWithVars mempty Nothing "String" mempty])
 
 -- | Identity monad
 dtIdentity :: DataType
@@ -126,7 +126,7 @@ dtList =
     ( M.fromList
         [ ( "Cons",
             [ MTVar mempty (tvNamed "a"),
-              dataTypeWithVars mempty "List" [MTVar mempty (tvNamed "a")]
+              dataTypeWithVars mempty Nothing "List" [MTVar mempty (tvNamed "a")]
             ]
           ),
           ("Nil", [])
@@ -146,6 +146,7 @@ dtDoubleList =
               MTVar mempty (tvNamed "b"),
               dataTypeWithVars
                 mempty
+                Nothing
                 "DoubleList"
                 [ MTVar mempty (tvNamed "a"),
                   MTVar mempty (tvNamed "b")
@@ -164,8 +165,8 @@ dtTree =
     ( M.fromList
         [ ("Leaf", [MTVar mempty (tvNamed "a")]),
           ( "Branch",
-            [ dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")],
-              dataTypeWithVars mempty "Tree" [MTVar mempty (tvNamed "a")]
+            [ dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")],
+              dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")]
             ]
           )
         ]
@@ -204,14 +205,14 @@ dtConsoleF =
     ["next"]
     ( M.fromList
         [ ( "Write",
-            [ dataTypeWithVars mempty "String" [],
+            [ dataTypeWithVars mempty Nothing "String" [],
               MTVar mempty (tvNamed "next")
             ]
           ),
           ( "Read",
             [ MTFunction
                 mempty
-                (dataTypeWithVars mempty "String" [])
+                (dataTypeWithVars mempty Nothing "String" [])
                 (MTVar mempty (tvNamed "next"))
             ]
           )

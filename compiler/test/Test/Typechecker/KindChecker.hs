@@ -14,9 +14,9 @@ defaultEnv =
   mempty
     { getDataTypes =
         M.fromList
-          [ ("Maybe", dtMaybe),
-            ("Either", dtEither),
-            ("MatchedPair", dtMatchedPair)
+          [ ((Nothing, "Maybe"), dtMaybe),
+            ((Nothing, "Either"), dtEither),
+            ((Nothing, "MatchedPair"), dtMatchedPair)
           ]
     }
 
@@ -27,15 +27,16 @@ spec :: Spec
 spec = do
   describe "Kind checker" $ do
     it "Maybe is * -> *" $ do
-      doKindCheck (MTConstructor mempty "Just")
+      doKindCheck (MTConstructor mempty Nothing "Just")
         `shouldBe` KindArrow KindType KindType
     it "Maybe String is *" $ do
-      doKindCheck (MTTypeApp mempty (MTConstructor mempty "Just") (MTPrim mempty MTString))
+      doKindCheck (MTTypeApp mempty (MTConstructor mempty Nothing "Just") (MTPrim mempty MTString))
         `shouldBe` KindType
     it "Either is * -> * -> *" $ do
       doKindCheck
         ( MTConstructor
             mempty
+            Nothing
             "Right"
         )
         `shouldBe` KindArrow (KindArrow KindType KindType) KindType
@@ -45,16 +46,17 @@ spec = do
             mempty
             ( MTConstructor
                 mempty
+                Nothing
                 "Right"
             )
             (MTPrim mempty MTString)
         )
         `shouldBe` KindArrow KindType KindType
     it "MatchedPair is * -> *" $ do
-      doKindCheck (MTConstructor mempty "MatchedPair")
+      doKindCheck (MTConstructor mempty Nothing "MatchedPair")
         `shouldBe` KindArrow KindType KindType
     it "MatchedPair String is *" $ do
-      doKindCheck (MTTypeApp mempty (MTConstructor mempty "MatchedPair") (MTPrim mempty MTString))
+      doKindCheck (MTTypeApp mempty (MTConstructor mempty Nothing "MatchedPair") (MTPrim mempty MTString))
         `shouldBe` KindType
     it "Concrete types are *" $ do
       doKindCheck (MTPrim mempty MTString) `shouldBe` (KindType :: Kind Name)

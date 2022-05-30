@@ -113,7 +113,7 @@ varsFromPattern :: (Ord var) => Pattern var ann -> Set var
 varsFromPattern (PVar _ var) = S.singleton var
 varsFromPattern (PWildcard _) = mempty
 varsFromPattern (PLit _ _) = mempty
-varsFromPattern (PConstructor _ _ as) = mconcat (varsFromPattern <$> as)
+varsFromPattern (PConstructor _ _ _ as) = mconcat (varsFromPattern <$> as)
 varsFromPattern (PPair _ a b) = varsFromPattern a <> varsFromPattern b
 varsFromPattern (PRecord _ as) = mconcat (varsFromPattern <$> M.elems as)
 varsFromPattern (PArray _ as spread) =
@@ -228,8 +228,8 @@ markImports (MyDefineInfix ann op fn expr) =
   MyDefineInfix ann op <$> markImports fn <*> markImports expr
 markImports (MyData ann dt expr) =
   MyData ann dt <$> markImports expr
-markImports (MyConstructor ann const') =
-  pure (MyConstructor ann const')
+markImports (MyConstructor ann modName const') =
+  pure (MyConstructor ann modName const')
 markImports (MyPatternMatch ann patExpr patterns) =
   let markPatterns (pat, pExpr) = do
         uniqueMap <- freshVarsFromPattern pat
@@ -258,9 +258,9 @@ markPatternImports pat =
     (PWildcard ann) ->
       pure $ PWildcard ann
     (PLit ann l) -> pure $ PLit ann l
-    (PConstructor ann c d) ->
-      PConstructor ann c
-        <$> traverse markPatternImports d
+    (PConstructor ann c d e) ->
+      PConstructor ann c d
+        <$> traverse markPatternImports e
     (PPair ann a b) ->
       PPair
         ann

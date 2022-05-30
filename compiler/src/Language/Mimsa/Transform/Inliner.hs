@@ -63,7 +63,7 @@ howTrivial (MyLiteral _ _) = Just 1
 howTrivial (MyArray _ as) = (+ 1) . sum <$> traverse howTrivial as
 howTrivial (MyRecord _ as) = (+ 1) . sum <$> traverse howTrivial as
 howTrivial (MyPair _ a b) = (+ 2) . sum <$> traverse howTrivial [a, b]
-howTrivial (MyVar _ _ _) = Just 1
+howTrivial MyVar {} = Just 1
 howTrivial _ = Nothing
 
 inlineInternal :: (Ord var) => InlineState var ann -> Expr var ann -> Expr var ann

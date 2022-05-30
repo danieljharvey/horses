@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Parser.MonoType
   ( monoTypeParser,
@@ -16,11 +17,12 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
-import Language.Mimsa.Parser.Identifiers (nameParser)
+import Language.Mimsa.Parser.Identifiers (moduleNameParser, nameParser)
 import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
 import Text.Megaparsec
 
@@ -174,14 +176,33 @@ dataTypeParser =
 
 multiDataTypeParser :: Parser MonoType
 multiDataTypeParser = do
-  tyName <- tyConParser
+  (modName, tyName) <- constructorParser
   tyArgs <- some subParser
-  pure (dataTypeWithVars mempty tyName tyArgs)
+  pure (dataTypeWithVars mempty modName tyName tyArgs)
 
 monoDataTypeParser :: Parser MonoType
 monoDataTypeParser = do
-  tyName <- tyConParser
-  pure (dataTypeWithVars mempty tyName mempty)
+  (modName, tyName) <- constructorParser
+  pure (dataTypeWithVars mempty modName tyName mempty)
+
+----
+
+constructorParser :: Parser (Maybe ModuleName, TyCon)
+constructorParser =
+  try namespacedConstructorParser
+    <|> try plainConstructorParser
+
+plainConstructorParser :: Parser (Maybe ModuleName, TyCon)
+plainConstructorParser =
+  (Nothing,) <$> tyConParser
+
+namespacedConstructorParser :: Parser (Maybe ModuleName, TyCon)
+namespacedConstructorParser = do
+  mName <- moduleNameParser
+  myString "."
+  (,) (Just mName) <$> tyConParser
+
+---
 
 arrayParser :: Parser MonoType
 arrayParser = do

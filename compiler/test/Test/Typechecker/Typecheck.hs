@@ -738,10 +738,10 @@ spec = do
               ( MyPatternMatch
                   mempty
                   (int 1)
-                  [ ( PConstructor mempty "Nothing" [],
+                  [ ( PConstructor mempty Nothing "Nothing" [],
                       bool True
                     ),
-                    ( PConstructor mempty "Just" [PWildcard mempty],
+                    ( PConstructor mempty Nothing "Just" [PWildcard mempty],
                       bool False
                     )
                   ]
@@ -759,7 +759,7 @@ spec = do
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty Nothing "a")
-                      [ ( PConstructor mempty "Just" [PVar mempty "as"],
+                      [ ( PConstructor mempty Nothing "Just" [PVar mempty "as"],
                           MyVar mempty Nothing "as"
                         ),
                         ( PWildcard mempty,
@@ -770,7 +770,7 @@ spec = do
               )
       startInference expr $
         Right
-          (MTFunction mempty (dataTypeWithVars mempty "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
+          (MTFunction mempty (dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
 
     it "Errors when number of args does not match for Just" $ do
       let expr =
@@ -779,14 +779,14 @@ spec = do
               dtMaybe
               ( MyPatternMatch
                   mempty
-                  (MyApp mempty (MyConstructor mempty "Just") (int 1))
-                  [ ( PConstructor mempty "Just" [],
+                  (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
+                  [ ( PConstructor mempty Nothing "Just" [],
                       bool True
                     ),
-                    ( PConstructor mempty "Nothing" [],
+                    ( PConstructor mempty Nothing "Nothing" [],
                       bool False
                     ),
-                    (PConstructor mempty "Just" [PWildcard mempty], bool False)
+                    (PConstructor mempty Nothing "Just" [PWildcard mempty], bool False)
                   ]
               )
       startInference expr $
@@ -798,11 +798,11 @@ spec = do
               dtMaybe
               ( MyPatternMatch
                   mempty
-                  (MyApp mempty (MyConstructor mempty "Just") (int 1))
-                  [ ( PConstructor mempty "Just" [PWildcard mempty],
+                  (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
+                  [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
                       bool True
                     ),
-                    ( PConstructor mempty "Nothing" [],
+                    ( PConstructor mempty Nothing "Nothing" [],
                       bool False
                     )
                   ]
@@ -816,11 +816,11 @@ spec = do
               dtMaybe
               ( MyPatternMatch
                   mempty
-                  (MyApp mempty (MyConstructor mempty "Just") (int 1))
-                  [ ( PConstructor mempty "Just" [PVar mempty "a"],
+                  (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
+                  [ ( PConstructor mempty Nothing "Just" [PVar mempty "a"],
                       MyVar mempty Nothing "a"
                     ),
-                    ( PConstructor mempty "Nothing" [],
+                    ( PConstructor mempty Nothing "Nothing" [],
                       int 0
                     )
                   ]
@@ -834,14 +834,14 @@ spec = do
               dtThese
               ( MyPatternMatch
                   mempty
-                  (MyApp mempty (MyConstructor mempty "That") (int 1))
-                  [ ( PConstructor mempty "This" [PWildcard mempty],
+                  (MyApp mempty (MyConstructor mempty Nothing "That") (int 1))
+                  [ ( PConstructor mempty Nothing "This" [PWildcard mempty],
                       int 0
                     ),
-                    ( PConstructor mempty "That" [PVar mempty "b"],
+                    ( PConstructor mempty Nothing "That" [PVar mempty "b"],
                       MyVar mempty Nothing "b"
                     ),
-                    ( PConstructor mempty "These" [PWildcard mempty, PVar mempty "b"],
+                    ( PConstructor mempty Nothing "These" [PWildcard mempty, PVar mempty "b"],
                       MyVar mempty Nothing "b"
                     )
                   ]
@@ -852,8 +852,8 @@ spec = do
       let val =
             MyApp
               mempty
-              (MyConstructor mempty "Just")
-              ( MyApp mempty (MyConstructor mempty "Just") (bool True)
+              (MyConstructor mempty Nothing "Just")
+              ( MyApp mempty (MyConstructor mempty Nothing "Just") (bool True)
               )
       let expr =
             MyData
@@ -864,9 +864,11 @@ spec = do
                   val
                   [ ( PConstructor
                         mempty
+                        Nothing
                         "Just"
                         [ PConstructor
                             mempty
+                            Nothing
                             "Just"
                             [PVar mempty "bool"]
                         ],
@@ -902,15 +904,15 @@ spec = do
               dtEither
               ( MyPatternMatch
                   mempty
-                  (MyApp mempty (MyConstructor mempty "Left") (int 1))
-                  [ ( PConstructor mempty "Left" [PVar mempty "e"],
-                      MyApp mempty (MyConstructor mempty "Left") (MyVar mempty Nothing "e")
+                  (MyApp mempty (MyConstructor mempty Nothing "Left") (int 1))
+                  [ ( PConstructor mempty Nothing "Left" [PVar mempty "e"],
+                      MyApp mempty (MyConstructor mempty Nothing "Left") (MyVar mempty Nothing "e")
                     ),
-                    ( PConstructor mempty "Right" [PLit mempty (MyInt 1)],
-                      MyApp mempty (MyConstructor mempty "Right") (int 1)
+                    ( PConstructor mempty Nothing "Right" [PLit mempty (MyInt 1)],
+                      MyApp mempty (MyConstructor mempty Nothing "Right") (int 1)
                     ),
-                    ( PConstructor mempty "Right" [PVar mempty "a"],
-                      MyApp mempty (MyConstructor mempty "Right") (MyVar mempty Nothing "a")
+                    ( PConstructor mempty Nothing "Right" [PVar mempty "a"],
+                      MyApp mempty (MyConstructor mempty Nothing "Right") (MyVar mempty Nothing "a")
                     )
                   ]
               )
@@ -918,6 +920,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
+              Nothing
               "Either"
               [ MTPrim mempty MTInt,
                 MTPrim mempty MTInt
@@ -930,15 +933,15 @@ spec = do
               dtEither
               ( MyPatternMatch
                   mempty
-                  (MyApp mempty (MyConstructor mempty "Right") (bool True))
-                  [ ( PConstructor mempty "Left" [PLit mempty (MyInt 1)],
-                      MyApp mempty (MyConstructor mempty "Left") (int 1)
+                  (MyApp mempty (MyConstructor mempty Nothing "Right") (bool True))
+                  [ ( PConstructor mempty Nothing "Left" [PLit mempty (MyInt 1)],
+                      MyApp mempty (MyConstructor mempty Nothing "Left") (int 1)
                     ),
-                    ( PConstructor mempty "Left" [PVar mempty "e"],
-                      MyApp mempty (MyConstructor mempty "Left") (MyVar mempty Nothing "e")
+                    ( PConstructor mempty Nothing "Left" [PVar mempty "e"],
+                      MyApp mempty (MyConstructor mempty Nothing "Left") (MyVar mempty Nothing "e")
                     ),
-                    ( PConstructor mempty "Right" [PVar mempty "a"],
-                      MyApp mempty (MyConstructor mempty "Right") (MyVar mempty Nothing "a")
+                    ( PConstructor mempty Nothing "Right" [PVar mempty "a"],
+                      MyApp mempty (MyConstructor mempty Nothing "Right") (MyVar mempty Nothing "a")
                     )
                   ]
               )
@@ -946,6 +949,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
+              Nothing
               "Either"
               [ MTPrim mempty MTInt,
                 MTPrim mempty MTBool
@@ -962,7 +966,7 @@ spec = do
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty Nothing "maybe")
-                      [ ( PConstructor mempty "Just" [PVar mempty "a"],
+                      [ ( PConstructor mempty Nothing "Just" [PVar mempty "a"],
                           MyVar mempty Nothing "a"
                         ),
                         ( PWildcard mempty,
@@ -981,9 +985,9 @@ spec = do
               dtEither
               ( MyPatternMatch
                   mempty
-                  (MyApp mempty (MyConstructor mempty "Right") (bool True))
-                  [ ( PConstructor mempty "Left" [PWildcard mempty],
-                      MyApp mempty (MyConstructor mempty "Left") (int 1)
+                  (MyApp mempty (MyConstructor mempty Nothing "Right") (bool True))
+                  [ ( PConstructor mempty Nothing "Left" [PWildcard mempty],
+                      MyApp mempty (MyConstructor mempty Nothing "Left") (int 1)
                     ),
                     ( PVar mempty "all",
                       MyVar mempty Nothing "all"
@@ -994,6 +998,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
+              Nothing
               "Either"
               [ MTPrim mempty MTInt,
                 MTPrim mempty MTBool
@@ -1006,9 +1011,9 @@ spec = do
               dtEither
               ( MyPatternMatch
                   mempty
-                  (MyApp mempty (MyConstructor mempty "Left") (bool True))
-                  [ ( PConstructor mempty "Right" [PWildcard mempty],
-                      MyApp mempty (MyConstructor mempty "Right") (int 1)
+                  (MyApp mempty (MyConstructor mempty Nothing "Left") (bool True))
+                  [ ( PConstructor mempty Nothing "Right" [PWildcard mempty],
+                      MyApp mempty (MyConstructor mempty Nothing "Right") (int 1)
                     ),
                     ( PVar mempty "all",
                       MyVar mempty Nothing "all"
@@ -1019,6 +1024,7 @@ spec = do
         Right
           ( dataTypeWithVars
               mempty
+              Nothing
               "Either"
               [ MTPrim mempty MTBool,
                 MTPrim mempty MTInt
@@ -1030,7 +1036,7 @@ spec = do
               mempty
               ( MyApp
                   mempty
-                  (MyConstructor mempty "Pair")
+                  (MyConstructor mempty Nothing "Pair")
                   (bool True)
               )
               (int 1)
@@ -1042,7 +1048,7 @@ spec = do
               ( MyPatternMatch
                   mempty
                   matchExpr
-                  [ ( PConstructor mempty "Pair" [PVar mempty "a", PVar mempty "b"],
+                  [ ( PConstructor mempty Nothing "Pair" [PVar mempty "a", PVar mempty "b"],
                       MyPair mempty (MyVar mempty Nothing "a") (MyVar mempty Nothing "b")
                     )
                   ]
@@ -1061,7 +1067,7 @@ spec = do
               mempty
               ( MyApp
                   mempty
-                  (MyConstructor mempty "Pair")
+                  (MyConstructor mempty Nothing "Pair")
                   (bool True)
               )
               (int 1)
@@ -1073,10 +1079,10 @@ spec = do
               ( MyPatternMatch
                   mempty
                   matchExpr
-                  [ ( PConstructor mempty "Pair" [PLit mempty (MyInt 1), PLit mempty (MyBool True)],
+                  [ ( PConstructor mempty Nothing "Pair" [PLit mempty (MyInt 1), PLit mempty (MyBool True)],
                       MyPair mempty (MyLiteral mempty (MyBool True)) (MyLiteral mempty (MyInt 1))
                     ),
-                    ( PConstructor mempty "Pair" [PVar mempty "a", PVar mempty "b"],
+                    ( PConstructor mempty Nothing "Pair" [PVar mempty "a", PVar mempty "b"],
                       MyPair mempty (MyVar mempty Nothing "a") (MyVar mempty Nothing "b")
                     )
                   ]
@@ -1148,8 +1154,8 @@ spec = do
               dtMaybe
               ( MyPatternMatch
                   mempty
-                  (MyConstructor mempty "Nothing")
-                  [ ( PConstructor mempty "Just" [PWildcard mempty],
+                  (MyConstructor mempty Nothing "Nothing")
+                  [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
                       bool False
                     )
                   ]
@@ -1157,7 +1163,7 @@ spec = do
       startInference expr $
         Left
           ( PatternMatchErr
-              (MissingPatterns mempty [PConstructor mempty "Nothing" mempty])
+              (MissingPatterns mempty [PConstructor mempty Nothing "Nothing" mempty])
           )
     it "Does substitutions correctly when pattern matching on a variable from a lambda" $ do
       let expr =
@@ -1170,13 +1176,13 @@ spec = do
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty Nothing "a")
-                      [ (PConstructor mempty "Just" [PVar mempty "as"], MyVar mempty Nothing "as"),
-                        (PConstructor mempty "Nothing" [], MyLiteral mempty (MyInt 100))
+                      [ (PConstructor mempty Nothing "Just" [PVar mempty "as"], MyVar mempty Nothing "as"),
+                        (PConstructor mempty Nothing "Nothing" [], MyLiteral mempty (MyInt 100))
                       ]
                   )
               )
 
-          mtMaybeInt = dataTypeWithVars mempty "Maybe" [mtInt]
+          mtMaybeInt = dataTypeWithVars mempty Nothing "Maybe" [mtInt]
       startInference expr $
         Right (MTFunction mempty mtMaybeInt mtInt)
     it "Does substitutions correctly when pattern matching on a variable from a lambda with application" $ do
@@ -1209,7 +1215,7 @@ spec = do
                   ( MyPatternMatch
                       mempty
                       (MyVar mempty Nothing "maybeA")
-                      [ ( PConstructor mempty "Just" [PVar mempty "a"],
+                      [ ( PConstructor mempty Nothing "Just" [PVar mempty "a"],
                           MyVar mempty Nothing "a"
                         ),
                         (PWildcard mempty, MyVar mempty Nothing "b")
@@ -1219,7 +1225,7 @@ spec = do
           maybeExpr =
             MyApp
               mempty
-              (MyConstructor mempty "Just")
+              (MyConstructor mempty Nothing "Just")
               (MyLiteral mempty (MyInt 1))
           expr =
             MyData
@@ -1241,18 +1247,18 @@ spec = do
               dtMaybe
               ( MyPatternMatch
                   mempty
-                  (MyConstructor mempty "Nothing")
-                  [ ( PConstructor mempty "Just" [PWildcard mempty],
+                  (MyConstructor mempty Nothing "Nothing")
+                  [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
                       bool False
                     ),
-                    (PConstructor mempty "Nothing" mempty, bool True),
-                    (PConstructor mempty "Nothing" mempty, bool True)
+                    (PConstructor mempty Nothing "Nothing" mempty, bool True),
+                    (PConstructor mempty Nothing "Nothing" mempty, bool True)
                   ]
               )
       startInference expr $
         Left
           ( PatternMatchErr
-              (RedundantPatterns mempty [PConstructor mempty "Nothing" mempty])
+              (RedundantPatterns mempty [PConstructor mempty Nothing "Nothing" mempty])
           )
   describe "Variables as constructors" $ do
     it "Let variable as constructor" $ do
@@ -1263,14 +1269,14 @@ spec = do
               ( MyLet
                   mempty
                   (Identifier mempty "f")
-                  (MyConstructor mempty "Just")
+                  (MyConstructor mempty Nothing "Just")
                   (MyApp mempty (MyVar mempty Nothing "f") (int 1))
               )
       startInference expr $
         Right
           ( MTTypeApp
               mempty
-              (MTConstructor mempty "Maybe")
+              (MTConstructor mempty Nothing "Maybe")
               (MTPrim mempty MTInt)
           )
     it "Typed hole suggestions in scope item" $ do

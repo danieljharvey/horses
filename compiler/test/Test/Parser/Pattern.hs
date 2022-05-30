@@ -34,14 +34,15 @@ spec :: Spec
 spec =
   describe "Pattern" $ do
     it "Parses constructor with no args" $
-      testParse "None" `shouldBe` Right (PConstructor mempty "None" mempty)
+      testParse "None" `shouldBe` Right (PConstructor mempty Nothing "None" mempty)
     it "Parses constructor with 1 arg" $
-      testParse "Some _" `shouldBe` Right (PConstructor mempty "Some" [PWildcard mempty])
+      testParse "Some _" `shouldBe` Right (PConstructor mempty Nothing "Some" [PWildcard mempty])
     it "Parses constructor with 2 args" $
       testParse "Some _ 1"
         `shouldBe` Right
           ( PConstructor
               mempty
+              Nothing
               "Some"
               [ PWildcard mempty,
                 PLit mempty (MyInt 1)

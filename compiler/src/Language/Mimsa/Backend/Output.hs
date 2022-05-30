@@ -4,6 +4,7 @@
 module Language.Mimsa.Backend.Output (outputStoreExpression) where
 
 import Control.Monad.Except
+import Data.Bifunctor
 import Data.Coerce
 import Data.Functor
 import Data.List (intersperse)
@@ -33,7 +34,12 @@ typeBindingsByType store (TypeBindings tb) =
         case lookupExprHashFromStore store exprHash of
           Just se -> storeExprToDataTypes se $> exprHash
           Nothing -> mempty
-   in mconcat (getTypeName <$> M.elems tb)
+   in stripModules $ mconcat (getTypeName <$> M.elems tb)
+
+-- remove moduleName from type. will probably need these later when we come to
+-- fix TS but for now YOLO
+stripModules :: (Ord b) => Map (a, b) c -> Map b c
+stripModules = M.fromList . fmap (first snd) . M.toList
 
 outputStoreExpression ::
   Backend ->

@@ -55,7 +55,7 @@ getPatternTypeFromAnn pat =
     PLit ann _ -> ann
     PWildcard ann -> ann
     PVar ann _ -> ann
-    PConstructor ann _ _ -> ann
+    PConstructor ann _ _ _ -> ann
     PPair ann _ _ -> ann
     PRecord ann _ -> ann
     PArray ann _ _ -> ann
@@ -378,23 +378,23 @@ inferPattern env (PWildcard ann) = do
     ( PWildcard tyUnknown,
       env
     )
-inferPattern env (PConstructor ann tyCon args) = do
+inferPattern env (PConstructor ann modName tyCon args) = do
   inferEverything <- traverse (inferPattern env) args
   let inferArgs = fst <$> inferEverything
   let newEnv = mconcat (snd <$> inferEverything) <> env
-  dt@(DataType ty _ _) <- lookupConstructor newEnv ann tyCon
+  dt@(DataType ty _ _) <- lookupConstructor newEnv ann modName tyCon
   -- we get the types for the constructor in question
   -- and unify them with the tests in the pattern
-  consType <- inferConstructorTypes ann dt
+  consType <- inferConstructorTypes ann modName dt
   tyTypeVars <- case M.lookup tyCon (snd consType) of
-    Just (TypeConstructor _ dtTypeVars tyDtArgs) -> do
+    Just (TypeConstructor _ _ dtTypeVars tyDtArgs) -> do
       let tyPairs = zip (getPatternTypeFromAnn <$> inferArgs) tyDtArgs
       traverse_ (\(a, b) -> tell [ShouldEqual a b]) tyPairs
       pure dtTypeVars
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon inferArgs
   pure
-    ( PConstructor (dataTypeWithVars ann ty tyTypeVars) tyCon inferArgs,
+    ( PConstructor (dataTypeWithVars ann modName ty tyTypeVars) modName tyCon inferArgs,
       newEnv
     )
 inferPattern env (PPair ann a b) = do
@@ -832,9 +832,9 @@ infer env inferExpr =
       pure (MyData (getTypeFromAnn innerExpr) dataType innerExpr)
     (MyArray ann items) -> do
       inferArray env ann items
-    (MyConstructor ann name) -> do
-      tyData <- inferDataConstructor env ann name
-      pure (MyConstructor tyData name)
+    (MyConstructor ann modName name) -> do
+      tyData <- inferDataConstructor env ann modName name
+      pure (MyConstructor tyData modName name)
     (MyDefineInfix ann infixOp infixExpr expr) ->
       inferDefineInfix env ann infixOp infixExpr expr
     (MyPatternMatch ann expr patterns) ->

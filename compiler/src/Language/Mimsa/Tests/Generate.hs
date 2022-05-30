@@ -16,12 +16,15 @@ import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Typechecker
 import Test.QuickCheck
 
+-- TODO: we'll need a namespace in the MTConstructor to make sure we generate
+-- the right thing
 data GenerateState = GenerateState
-  { gsDataTypes :: Map TyCon DataType,
+  { gsDataTypes :: Map (Maybe ModuleName, TyCon) DataType,
     gsDepth :: Int
   }
 
@@ -51,10 +54,10 @@ fromMonoType gs mt =
         <$> fromMonoType gs to
     (MTVar _ _) -> fromMonoType gs (MTPrim mempty MTBool) -- for unknowns, use bool for now
     mtTA@MTTypeApp {} -> case varsFromDataType mtTA of
-      Just (typeName, args) -> fromType gs typeName args
+      Just (_, typeName, args) -> fromType gs typeName args
       Nothing -> error "could not work out datatype"
     mtCons@MTConstructor {} -> case varsFromDataType mtCons of
-      Just (typeName, args) -> fromType gs typeName args
+      Just (_, typeName, args) -> fromType gs typeName args
       Nothing -> error "could not work out datatype"
 
 -- | take the args for the type and apply them to the type
@@ -72,7 +75,7 @@ fromType ::
   TyCon ->
   [MonoType] ->
   Gen (Expr Name ann)
-fromType gs typeName args = case M.lookup typeName (gsDataTypes gs) of
+fromType gs typeName args = case M.lookup (Nothing, typeName) (gsDataTypes gs) of
   Just dt -> do
     let newGs = incrementDepth gs
         dtApplied = typeApply args dt
@@ -122,7 +125,7 @@ fromConstructor gs tyCon args =
         MyApp mempty a <$> fromMonoType gs mtArg
    in foldr
         applyArg
-        (pure (MyConstructor mempty tyCon))
+        (pure (MyConstructor mempty Nothing tyCon))
         args
 
 fromPrimitive :: Primitive -> Gen Literal
@@ -137,7 +140,7 @@ fromPrimitive MTString =
 
 generateFromMonoType ::
   (Monoid ann) =>
-  Map TyCon DataType ->
+  Map (Maybe ModuleName, TyCon) DataType ->
   MonoType ->
   IO [Expr Name ann]
 generateFromMonoType dataTypes mt =

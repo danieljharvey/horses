@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.Check (checkModule) where
 
@@ -230,11 +231,48 @@ getValueDependencies mod' = do
               else throwError (ModuleErr (CannotFindValues unknownNameDeps))
   traverse check (moExpressions mod')
 
-makeTypeDeclMap :: Map TypeName DataType -> Module ann -> Map TyCon DataType
-makeTypeDeclMap importedTypes inputModule =
-  M.fromList . fmap (first coerce) . M.toList $
-    moDataTypes inputModule
-      <> importedTypes
+-- pass types to the typechecker
+makeTypeDeclMap ::
+  Map ModuleHash (Module (Type Annotation)) ->
+  Map TypeName DataType ->
+  Module ann ->
+  Map (Maybe ModuleName, TyCon) DataType
+makeTypeDeclMap typecheckedModules importedTypes inputModule =
+  let regularScopeTypes =
+        mapKeys
+          (\tyCon -> (Nothing, coerce tyCon))
+          ( moDataTypes inputModule
+              <> importedTypes
+          )
+      namespacedTypes =
+        mconcat $
+          fmap
+            ( \(modName, modHash) ->
+                let byTyCon = case M.lookup modHash typecheckedModules of
+                      Just foundModule -> getModuleDataTypesByConstructor foundModule
+                      _ -> mempty
+                 in mapKeys (Just modName,) byTyCon
+            )
+            (M.toList $ moNamedImports inputModule)
+   in regularScopeTypes <> namespacedTypes
+
+-- for any given module, return a Map of its DataTypes
+-- really the key is TypeName, but we need to untangle that still
+getModuleDataTypesByConstructor :: Module ann -> Map TyCon DataType
+getModuleDataTypesByConstructor inputModule =
+  let exportedDts =
+        M.filterWithKey
+          ( \k _ ->
+              S.member
+                k
+                (moDataTypeExports inputModule)
+          )
+          (moDataTypes inputModule)
+   in mapKeys coerce exportedDts
+
+-- mess with map keys for lols
+mapKeys :: (Ord k2) => (k -> k2) -> Map k a -> Map k2 a
+mapKeys f = M.fromList . fmap (first f) . M.toList
 
 -- useful to break apart maps where
 -- key is a sum type
@@ -278,14 +316,22 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
   pure $
     createEnv
       (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
-      (makeTypeDeclMap importedTypes inputModule)
+      (makeTypeDeclMap typecheckedModules importedTypes inputModule)
       (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
       (getModuleTypes inputModule typecheckedModules)
 
 -- starting at a root module,
 -- create a map of each expr hash along with the modules it needs
 -- so that we can typecheck them all
-getModuleDeps :: Module Annotation -> CheckM (Map ModuleHash (Module Annotation, Set ModuleHash))
+getModuleDeps ::
+  Module Annotation ->
+  CheckM
+    ( Map
+        ModuleHash
+        ( Module Annotation,
+          Set ModuleHash
+        )
+    )
 getModuleDeps inputModule = do
   -- get this module's deps
   let deps =

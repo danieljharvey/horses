@@ -62,7 +62,22 @@ nameParserInt =
 ---
 
 constructorParser :: Parser ParserExpr
-constructorParser = withLocation MyConstructor tyConParser
+constructorParser =
+  try namespacedConstructorParser
+    <|> try plainConstructorParser
+
+plainConstructorParser :: Parser ParserExpr
+plainConstructorParser = withLocation (`MyConstructor` Nothing) tyConParser
+
+namespacedConstructorParser :: Parser ParserExpr
+namespacedConstructorParser =
+  let inner = do
+        mName <- moduleNameParser
+        myString "."
+        MyConstructor mempty (Just mName) <$> tyConParser
+   in myLexeme (addLocation inner)
+
+--
 
 tyConParser :: Parser TyCon
 tyConParser =

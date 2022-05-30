@@ -24,8 +24,8 @@ interpretApp interpretFn ann myFn value =
       let newStackFrame = addVarToFrame (varFromIdent ident) intValue closure
       -- run body with closure + new arg
       withNewStackFrame newStackFrame (interpretFn body)
-    (MyConstructor ann' const') ->
-      MyApp ann (MyConstructor ann' const')
+    (MyConstructor ann' modName const') ->
+      MyApp ann (MyConstructor ann' modName const')
         <$> interpretFn value
     fn -> do
       -- try and resolve it into something we recognise

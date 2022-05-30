@@ -131,7 +131,7 @@ spec =
                 }
             )
       it "Throws when trying to use an unavailable type" $ do
-        let cons' = dataTypeWithVars mempty "MyUnit" []
+        let cons' = dataTypeWithVars mempty Nothing "MyUnit" []
             dt =
               DataType
                 "VoidBox"
@@ -141,7 +141,7 @@ spec =
         storeExpr
           `shouldBe` Left (MissingType "MyUnit" mempty)
       it "Creates a StoreExpression that uses a type from the type bindings" $ do
-        let cons' = dataTypeWithVars mempty "MyUnit" []
+        let cons' = dataTypeWithVars mempty Nothing "MyUnit" []
             dt =
               DataType
                 "VoidBox"

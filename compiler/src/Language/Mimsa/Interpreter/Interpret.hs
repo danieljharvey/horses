@@ -92,7 +92,7 @@ interpretExpr' (MyRecord ann as) =
   MyRecord ann <$> traverse interpretExpr as
 interpretExpr' (MyArray ann as) =
   MyArray ann <$> traverse interpretExpr as
-interpretExpr' (MyConstructor as const') =
-  pure (MyConstructor as const')
+interpretExpr' (MyConstructor as modName const') =
+  pure (MyConstructor as modName const')
 interpretExpr' (MyTypedHole ann name) =
   pure (MyTypedHole ann name)
