@@ -377,6 +377,15 @@ spec = do
             )
             `shouldBe` Left (ModuleErr $ DuplicateTypeName "Either")
 
+        it "Errors when adding a duplicate Right constructor" $
+          checkModule
+            (joinLines
+                [
+                "type Result e a = Failure e | Right a",
+                "type Either e a = Left e | Right a"
+                ])
+                `shouldSatisfy` isLeft
+    
         it "Imports parse and pretty print" $
           checkModule'
             ( joinLines
@@ -429,3 +438,13 @@ spec = do
                 ]
             )
             `shouldSatisfy` isLeft
+
+        it "Locally defined Either does not mess with namespace imported Either" $
+          checkModuleType
+            (joinLines
+              ["import Prelude from " <> prettyPrint preludeHash,
+                "type Either e a = Left e | Right a",
+                "def convert (val: Either e a): Prelude.Either e a = ",
+                "  match val with Right a -> Prelude.Right a | Left e -> Prelude.Left e"
+              ])
+              `shouldSatisfy` isRight

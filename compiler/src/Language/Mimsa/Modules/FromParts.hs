@@ -4,7 +4,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.FromParts (moduleFromModuleParts, exprAndTypeFromParts) where
-
+import Data.Foldable
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Coerce
@@ -35,12 +35,25 @@ errorIfExpressionAlreadyDefined mod' def =
     then throwError (ModuleErr $ DuplicateDefinition def)
     else pure ()
 
+
+checkDataType :: Module ann -> DataType -> CheckM ()
+checkDataType mod' (DataType typeName _ constructors) = do
+  errorIfTypeAlreadyDefined mod' (coerce typeName)
+  traverse_ (errorIfConstructorAlreadyDefined mod') (M.keys constructors)
+
 errorIfTypeAlreadyDefined :: Module ann -> TypeName -> CheckM ()
 errorIfTypeAlreadyDefined mod' typeName =
   if M.member typeName (moDataTypes mod')
     || M.member typeName (moDataTypeImports mod')
     then throwError (ModuleErr $ DuplicateTypeName typeName)
     else pure ()
+
+errorIfConstructorAlreadyDefined :: Module ann -> TyCon -> CheckM ()
+errorIfConstructorAlreadyDefined mod' tyCon =
+  let allCons = mconcat (M.keysSet . dtConstructors <$> M.elems (moDataTypes mod'))
+  in  if S.member tyCon allCons
+     then throwError (ModuleErr $ DuplicateConstructor tyCon) 
+     else pure ()
 
 errorIfImportAlreadyDefined :: Module ann -> DefIdentifier -> ModuleHash -> CheckM ()
 errorIfImportAlreadyDefined mod' def moduleHash =
@@ -92,7 +105,7 @@ moduleFromModuleParts parts =
                 }
           ModuleDataType dt@(DataType tyCon _ _) -> do
             let typeName = coerce tyCon
-            errorIfTypeAlreadyDefined mod' typeName
+            checkDataType mod' dt
             pure $
               mod'
                 { moDataTypes =
