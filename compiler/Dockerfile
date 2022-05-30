@@ -3,7 +3,7 @@ FROM haskell:9.2.2-buster as dependencies
 RUN mkdir /opt/build
 WORKDIR /opt/build
 
-RUN apt-get update && apt-get install -y llvm-11
+RUN apt-get update && apt-get install -y llvm
 
 # Docker build should not use cached layer if any of these is modified
 COPY stack.yaml package.yaml stack.yaml.lock /opt/build/
@@ -18,7 +18,7 @@ COPY . /opt/build/
 
 WORKDIR /opt/build
 
-RUN apt-get update && apt-get install -y llvm-11
+RUN apt-get update && apt-get install -y llvm
 
 RUN stack build :mimsa-server --system-ghc --ghc-options="-fllvm"
 
