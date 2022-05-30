@@ -5,9 +5,8 @@
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.Check (checkModule, typecheckAllModules) where
-
+import Language.Mimsa.Modules.Parse
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Bifunctor
 import Data.Coerce
 import Data.Map (Map)
@@ -17,11 +16,9 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
-import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Parser.Module
 import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
@@ -37,39 +34,6 @@ import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker
-
-lookupModule :: ModuleHash -> CheckM (Module Annotation)
-lookupModule modHash = do
-  mods <- asks ceModules
-  case M.lookup modHash mods of
-    Just foundModule -> pure foundModule
-    _ -> throwError (ModuleErr (MissingModule modHash))
-
-lookupModuleDep ::
-  Map ModuleHash (Module (Type Annotation)) ->
-  DefIdentifier ->
-  ModuleHash ->
-  CheckM (Expr Name (Type Annotation))
-lookupModuleDep typecheckedModules def modHash = do
-  case M.lookup modHash typecheckedModules of
-    Just mod' ->
-      case M.lookup def (moExpressions mod') of
-        Just expr -> pure expr
-        _ -> throwError (ModuleErr (MissingModuleDep def modHash))
-    _ -> throwError (ModuleErr (MissingModule modHash))
-
-lookupModuleType ::
-  Map ModuleHash (Module (Type Annotation)) ->
-  TypeName ->
-  ModuleHash ->
-  CheckM DataType
-lookupModuleType typecheckedModules typeName modHash = do
-  case M.lookup modHash typecheckedModules of
-    Just mod' ->
-      case M.lookup typeName (moDataTypes mod') of
-        Just dt -> pure dt
-        _ -> throwError (ModuleErr (MissingModuleTypeDep typeName modHash))
-    _ -> throwError (ModuleErr (MissingModule modHash))
 
 checkModule :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
 checkModule input = runCheck input (checkModule' input)
@@ -94,12 +58,8 @@ checkModule input = runCheck input (checkModule' input)
 --  3. metadata / comments etc?
 checkModule' :: Text -> CheckM (Module (Type Annotation), MonoType)
 checkModule' input = do
-  moduleItems <-
-    liftEither $
-      first (ParseError input) (parseModule input)
-  -- create module from parsed items
-  properMod <-
-    moduleFromModuleParts moduleItems
+  properMod <- parseModule' input
+
   -- typecheck this module
   tcMod <- typecheckAllModules properMod
 

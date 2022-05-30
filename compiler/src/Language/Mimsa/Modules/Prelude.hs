@@ -1,11 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module Language.Mimsa.Modules.Prelude (prelude, preludeHash) where
+module Language.Mimsa.Modules.Prelude (prelude, preludeHash, maybeInput, preludeInput) where
 
 -- hard coding a Prelude in here for testing
 -- this is not The Way however we have a chicken/egg situation in terms of
 -- implementing imports/exports/other modules so this should unblock us
 --
+import Data.FileEmbed
+import Data.Text (Text)
+import qualified Data.Text.Encoding as T
+
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -20,6 +25,7 @@ import Language.Mimsa.Types.Typechecker
 preludeHash :: ModuleHash
 preludeHash = hashModule prelude
 
+-- this is only really used in tests, we should move it there
 prelude :: Module Annotation
 prelude =
   Module
@@ -59,3 +65,10 @@ prelude =
               )
           )
         ]
+
+maybeInput :: Text
+maybeInput =  T.decodeUtf8 $(embedFile "static/modules/Maybe.mimsa")
+
+preludeInput :: Text
+preludeInput =  T.decodeUtf8 $(embedFile "static/modules/Prelude.mimsa")
+

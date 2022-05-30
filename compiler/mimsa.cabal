@@ -82,6 +82,7 @@ library
       Language.Mimsa.Modules.FromParts
       Language.Mimsa.Modules.HashModule
       Language.Mimsa.Modules.Monad
+      Language.Mimsa.Modules.Parse
       Language.Mimsa.Modules.Prelude
       Language.Mimsa.Modules.Uses
       Language.Mimsa.Parser
