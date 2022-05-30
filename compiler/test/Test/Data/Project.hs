@@ -3,7 +3,6 @@
 module Test.Data.Project
   ( testStdlib,
     idExpr,
-    addBinding,
     addExprBinding,
   )
 where

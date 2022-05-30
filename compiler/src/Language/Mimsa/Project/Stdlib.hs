@@ -6,6 +6,7 @@ module Language.Mimsa.Project.Stdlib
     stdlib,
     addType,
     addBinding,
+    addModule,
     removeBinding,
     allFns,
   )
@@ -14,6 +15,10 @@ where
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Types.Modules
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.BindModule as Actions
+
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
@@ -26,6 +31,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Modules.Prelude
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
 buildStdlib =
@@ -33,6 +39,7 @@ buildStdlib =
 
 allFns :: Actions.ActionM ()
 allFns = do
+  modules
   baseFns
   arrayFns
   nonEmptyArrayFns
@@ -44,6 +51,12 @@ allFns = do
   mapFns
   jsonFns
   personTestFns
+
+-- | these are files in /static/modules folder that we import
+modules :: Actions.ActionM ()
+modules = do 
+  addModule "Maybe" maybeInput
+  addModule "Prelude" preludeInput
 
 baseFns :: Actions.ActionM ()
 baseFns = do
@@ -260,19 +273,21 @@ personTestFns = do
   addTest "Round trip JSON encoding test for Person" "\\person -> match personFromJson (personToJson person) with Right per -> per == person | _ -> False"
 
 addType :: Text -> Actions.ActionM ()
-addType t =
-  let dt = fromRight $ parseAndFormat typeDeclParser t
-   in Actions.bindType t dt $> ()
+addType t = do
+  dt <- Actions.parseDataType t
+  Actions.bindType t dt $> ()
 
 addBinding :: Name -> Text -> Actions.ActionM ()
-addBinding name b =
-  let expr =
-        fromRight $ parseAndFormat expressionParser b
-   in Actions.bindExpression
-        expr
-        name
-        b
-        $> ()
+addBinding name b = do
+  expr <-  Actions.parseExpr b
+  _ <- Actions.bindExpression expr name b 
+  pure () 
+
+addModule :: ModuleName -> Text -> Actions.ActionM ()
+addModule moduleName input = do 
+  mod' <- Actions.parseModule input
+  _ <- Actions.bindModule mod' moduleName input
+  pure ()
 
 addTest :: Text -> Text -> Actions.ActionM ()
 addTest label input = do

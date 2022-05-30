@@ -6,9 +6,7 @@
 module Language.Mimsa.Modules.FromParts (moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Coerce
-import Data.Foldable
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Modules.Monad
@@ -19,55 +17,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Module
-import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Typechecker
-
-lookupModule :: ModuleHash -> CheckM (Module Annotation)
-lookupModule modHash = do
-  mods <- asks ceModules
-  case M.lookup modHash mods of
-    Just foundModule -> pure foundModule
-    _ -> throwError (ModuleErr (MissingModule modHash))
-
-errorIfExpressionAlreadyDefined :: Module ann -> DefIdentifier -> CheckM ()
-errorIfExpressionAlreadyDefined mod' def =
-  if M.member def (moExpressions mod')
-    || M.member def (moExpressionImports mod')
-    then throwError (ModuleErr $ DuplicateDefinition def)
-    else pure ()
-
-checkDataType :: Module ann -> DataType -> CheckM ()
-checkDataType mod' (DataType typeName _ constructors) = do
-  errorIfTypeAlreadyDefined mod' (coerce typeName)
-  traverse_ (errorIfConstructorAlreadyDefined mod') (M.keys constructors)
-
-errorIfTypeAlreadyDefined :: Module ann -> TypeName -> CheckM ()
-errorIfTypeAlreadyDefined mod' typeName =
-  if M.member typeName (moDataTypes mod')
-    || M.member typeName (moDataTypeImports mod')
-    then throwError (ModuleErr $ DuplicateTypeName typeName)
-    else pure ()
-
-errorIfConstructorAlreadyDefined :: Module ann -> TyCon -> CheckM ()
-errorIfConstructorAlreadyDefined mod' tyCon =
-  let allCons = mconcat (M.keysSet . dtConstructors <$> M.elems (moDataTypes mod'))
-   in if S.member tyCon allCons
-        then throwError (ModuleErr $ DuplicateConstructor tyCon)
-        else pure ()
-
-errorIfImportAlreadyDefined :: Module ann -> DefIdentifier -> ModuleHash -> CheckM ()
-errorIfImportAlreadyDefined mod' def moduleHash =
-  if M.member def (moExpressions mod')
-    || M.member def (moExpressionImports mod')
-    then throwError (ModuleErr $ DefinitionConflictsWithImport def moduleHash)
-    else pure ()
-
-errorIfTypeImportAlreadyDefined :: Module ann -> TypeName -> ModuleHash -> CheckM ()
-errorIfTypeImportAlreadyDefined mod' typeName moduleHash =
-  if M.member typeName (moDataTypes mod')
-    || M.member typeName (moDataTypeImports mod')
-    then throwError (ModuleErr $ TypeConflictsWithImport typeName moduleHash)
-    else pure ()
 
 moduleFromModuleParts ::
   (Monoid ann) =>
