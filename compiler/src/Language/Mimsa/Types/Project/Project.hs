@@ -1,11 +1,9 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 
 module Language.Mimsa.Types.Project.Project where
 
-import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import GHC.Generics (Generic)
 import Language.Mimsa.Tests.Types

@@ -14,12 +14,13 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
 
-projectStoreSize :: Project ann -> Int
-projectStoreSize = length . getStore . prjStore
+newModules :: Project ann -> Project ann -> Int
+newModules old new = 
+  let countModules = length .  prjModuleStore
+  in countModules new - countModules old
 
 spec :: Spec
 spec = do
@@ -29,14 +30,14 @@ spec = do
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
           -- one more item in module store
-          projectStoreSize newProject
-            `shouldBe` projectStoreSize testStdlib + 1
+          newModules testStdlib newProject 
+            `shouldBe` 1 
           -- one more binding
           lookupModuleName
             newProject
             "Prelude"
             `shouldSatisfy` isJust
           -- one new store expression
-          S.size (Actions.storeExpressionsFromOutcomes outcomes)
+          S.size (Actions.modulesFromOutcomes outcomes)
             `shouldBe` 1
 

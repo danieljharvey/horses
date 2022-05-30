@@ -15,6 +15,7 @@ module Language.Mimsa.Actions.Monad
     bindTypeExpression,
     bindModuleInProject,
     messagesFromOutcomes,
+    modulesFromOutcomes,
     storeExpressionsFromOutcomes,
     writeFilesFromOutcomes,
     getResolvedExpressions,
@@ -114,6 +115,11 @@ appendStoreExpression se = do
   appendActionOutcome (NewStoreExpression se)
   appendProject newProject
 
+appendModule :: Module Annotation -> ActionM ()
+appendModule = 
+  appendActionOutcome . NewModule 
+
+
 messagesFromOutcomes :: [ActionOutcome] -> [Text]
 messagesFromOutcomes =
   foldMap
@@ -139,7 +145,12 @@ writeFilesFromOutcomes =
         _ -> mempty
     )
 
-
+modulesFromOutcomes :: [ActionOutcome] -> Set (Module Annotation)
+modulesFromOutcomes = S.fromList . foldMap
+                                    (\case 
+                                        NewModule mod' -> pure mod'
+                                        _ -> mempty
+                                    )
 
 -- add binding for module and add it to store
 bindModuleInProject ::
@@ -147,12 +158,11 @@ bindModuleInProject ::
   ModuleName ->
   ActionM ()
 bindModuleInProject typecheckedModule modName = do
-  -- appendStoreExpression storeExpr
+  let untypedModule = getAnnotationForType <$> typecheckedModule
+  appendModule untypedModule 
   appendProject
-    ( fromModule modName (getAnnotationForType <$> typecheckedModule )
+    ( fromModule modName untypedModule
     )
-
-
 
 -- add binding for expression and add it to store
 bindStoreExpression ::

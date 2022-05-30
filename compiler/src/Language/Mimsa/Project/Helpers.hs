@@ -112,11 +112,12 @@ fromType expr hash =
     typeList =
       (,pure hash) <$> S.toList typeConsUsed
 
--- TODO: also store the module itself in a store shaped thing
 fromModule :: ModuleName -> Module ann -> Project ann
 fromModule modName newModule =
-  mempty 
-    { prjModules = VersionedMap $ M.singleton modName (pure $ hashModule newModule)
+  let moduleHash = hashModule newModule
+   in mempty 
+    { prjModules = VersionedMap $ M.singleton modName (pure moduleHash),
+      prjModuleStore = M.singleton moduleHash newModule
     }
 
 fromTest :: Test -> StoreExpression ann -> Project ann
