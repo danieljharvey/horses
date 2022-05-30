@@ -11,6 +11,7 @@ module Language.Mimsa.Actions.Types
   )
 where
 
+import Language.Mimsa.Types.Modules
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Hashable
@@ -42,6 +43,7 @@ data ActionOutcome
   = NewMessage Text
   | NewStoreExpression (StoreExpression Annotation)
   | NewWriteFile SavePath SaveFilename SaveContents
+  | NewModule (Module Annotation)
   deriving stock (Eq, Ord, Show)
 
 data ActionState = ActionState

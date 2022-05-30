@@ -101,6 +101,7 @@ fetchProjectItems existingStore sp = do
       )
   pure $
     projectFromSaved
+      mempty -- TODO: where are we getting modules from?
       ( existingStore
           <> store'
           <> typeStore'
