@@ -12,14 +12,15 @@ import qualified Data.Map as M
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 
 -- | An enum is a datatype with at least one constructor
 -- | each have no arguments
 toString ::
   DataType ->
   Either CodegenError (Expr Name ())
-toString (DataType tyCon [] items) = do
-  let tyName = tyConToName tyCon
+toString (DataType typeName [] items) = do
+  let tyName = typeNameToName typeName
   let createMatch (consName, vars) =
         case vars of
           [] ->

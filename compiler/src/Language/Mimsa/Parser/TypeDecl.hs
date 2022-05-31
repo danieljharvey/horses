@@ -33,14 +33,14 @@ typeDeclParser =
 typeDeclParserEmpty :: Parser DataType
 typeDeclParserEmpty = do
   myString "type"
-  tyName <- tyConParser
+  tyName <- typeNameParser
   pure (DataType tyName mempty mempty)
 
 -- it's your more complex cases
 typeDeclParserWithCons :: Parser DataType
 typeDeclParserWithCons = do
   myString "type"
-  tyName <- tyConParser
+  tyName <- typeNameParser
   tyArgs <- many nameParser
   myString "="
   DataType tyName tyArgs <$> manyTypeConstructors

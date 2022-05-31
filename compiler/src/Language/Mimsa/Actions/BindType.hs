@@ -14,7 +14,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
@@ -30,7 +30,7 @@ bindType ::
     )
 bindType input dt = do
   _ <- addTypeToProject input dt
-  let name = tyConToName (dtName dt)
+  let name = typeNameToName (dtName dt)
   project <- Actions.getProject
   codegenExpr <- createCodegenFunction project dt
   Actions.appendMessage

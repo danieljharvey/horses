@@ -20,9 +20,10 @@ import Language.Mimsa.Types.AST
     Pattern (..),
   )
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 
--- this works out which external types have been used in a given expression
+-- this works out which external constructors have been used in a given expression
 -- therefore, we must remove any which are declared in the expression itself
 extractTypes :: Expr Name ann -> Set TyCon
 extractTypes = filterBuiltIns . extractTypes_
@@ -48,7 +49,7 @@ extractTypes_ (MyRecordAccess _ a _) = extractTypes_ a
 extractTypes_ (MyArray _ items) = foldMap extractTypes_ items
 extractTypes_ (MyData _ dt a) =
   S.difference
-    (extractConstructors dt <> extractTypes_ a)
+    (extractTypes_ a)
     (extractLocalTypeDeclarations dt)
 extractTypes_ (MyConstructor _ _ t) = S.singleton t
 extractTypes_ (MyTypedHole _ _) = mempty
@@ -74,28 +75,12 @@ extractFromIdentifier :: Identifier var ann -> Set TyCon
 extractFromIdentifier _ = mempty
 
 filterBuiltIns :: Set TyCon -> Set TyCon
-filterBuiltIns = S.filter (\c -> not $ M.member c builtInTypes)
-
--- get all the constructors mentioned in the datatype
-extractConstructors :: DataType -> Set TyCon
-extractConstructors (DataType _ _ cons) = mconcat (extractFromCons . snd <$> M.toList cons)
-  where
-    extractFromCons as = mconcat (extractFromCon <$> as)
-    extractFromCon (MTVar _ _) = mempty
-    extractFromCon (MTFunction _ a b) = extractFromCon a <> extractFromCon b
-    extractFromCon (MTPair _ a b) = extractFromCon a <> extractFromCon b
-    extractFromCon (MTArray _ a) = extractFromCon a
-    extractFromCon (MTTypeApp _ a b) = extractFromCon a <> extractFromCon b
-    extractFromCon MTPrim {} = mempty
-    extractFromCon (MTConstructor _ _ name) = S.singleton name
-    extractFromCon (MTRecord _ items) = mconcat (extractFromCon <$> M.elems items)
-    extractFromCon (MTRecordRow _ items rest) =
-      mconcat (extractFromCon <$> M.elems items) <> extractFromCon rest
+filterBuiltIns = S.filter (\c -> not $ M.member (coerce c) builtInTypes)
 
 -- get all the names of constructors (type and data) declared in the datatype
 extractLocalTypeDeclarations :: DataType -> Set TyCon
 extractLocalTypeDeclarations (DataType cName _ cons) =
-  S.singleton cName
+  S.singleton (coerce cName) -- TODO: this is the type name and should not be included but also YOLO
     <> mconcat (S.singleton . fst <$> M.toList cons)
 
 -----------
@@ -137,9 +122,9 @@ withDataTypes f (MyPatternMatch _ expr patterns) =
 
 -----
 
-extractTypenames :: Type ann -> Set TyCon
-extractTypenames (MTConstructor _ _ tyCon) =
-  S.singleton tyCon
+extractTypenames :: Type ann -> Set TypeName
+extractTypenames (MTConstructor _ _ typeName) =
+  S.singleton typeName
 extractTypenames other = withMonoid extractTypenames other
 
 -----

@@ -21,6 +21,7 @@ import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Prettyprinter
 
@@ -81,7 +82,7 @@ data Type ann
   | MTConstructor
       { typAnn :: ann,
         typModuleName :: Maybe ModuleName,
-        typTypeName :: TyCon -- name
+        typTypeName :: TypeName -- name
       }
   | MTTypeApp
       { typAnn :: ann,
@@ -169,7 +170,7 @@ renderMonoType mt@(MTTypeApp _ func arg) =
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)
-varsFromDataType :: Type ann -> Maybe (Maybe ModuleName, TyCon, [Type ann])
+varsFromDataType :: Type ann -> Maybe (Maybe ModuleName, TypeName, [Type ann])
 varsFromDataType mt =
   let getInner mt' =
         case mt' of

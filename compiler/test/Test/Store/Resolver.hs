@@ -10,7 +10,6 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Store.Resolver
-import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -27,12 +26,6 @@ createStoreExpression' ::
   Expr Name () ->
   Either ResolverError (StoreExpression ())
 createStoreExpression' = createStoreExpression
-
-createTypeStoreExpression' ::
-  TypeBindings ->
-  DataType ->
-  Either ResolverError (StoreExpression ())
-createTypeStoreExpression' = createTypeStoreExpression
 
 spec :: Spec
 spec =
@@ -127,35 +120,6 @@ spec =
             ( StoreExpression
                 { storeBindings = mempty,
                   storeTypeBindings = mempty,
-                  storeExpression = expr
-                }
-            )
-      it "Throws when trying to use an unavailable type" $ do
-        let cons' = dataTypeWithVars mempty Nothing "MyUnit" []
-            dt =
-              DataType
-                "VoidBox"
-                mempty
-                (M.singleton "Box" [cons'])
-            storeExpr = createTypeStoreExpression' mempty dt
-        storeExpr
-          `shouldBe` Left (MissingType "MyUnit" mempty)
-      it "Creates a StoreExpression that uses a type from the type bindings" $ do
-        let cons' = dataTypeWithVars mempty Nothing "MyUnit" []
-            dt =
-              DataType
-                "VoidBox"
-                mempty
-                (M.singleton "Box" [cons'])
-            hash = exprHash 123
-            tBindings' = TypeBindings $ M.singleton (TyCon "MyUnit") hash
-            storeExpr = createTypeStoreExpression' tBindings' dt
-            expr = MyData mempty dt (MyRecord mempty mempty)
-        storeExpr
-          `shouldBe` Right
-            ( StoreExpression
-                { storeBindings = mempty,
-                  storeTypeBindings = tBindings',
                   storeExpression = expr
                 }
             )

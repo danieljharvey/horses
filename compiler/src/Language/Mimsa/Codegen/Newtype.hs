@@ -12,6 +12,7 @@ import qualified Data.Map as M
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 
 -- | A newtype is a datatype with one constructor
 -- | with one argument
@@ -36,7 +37,7 @@ wrap (DataType _tyCon _vars items) = do
 -- | with one argument
 unwrap :: DataType -> Either CodegenError (Expr Name ())
 unwrap (DataType tyCon _vars items) = do
-  let tyName = tyConToName tyCon
+  let tyName = typeNameToName tyCon
   item <- getOnlyMapItem items
   case item of
     (consName, [_a]) ->

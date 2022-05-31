@@ -7,6 +7,8 @@ module Language.Mimsa.Types.Identifiers.TypeName
   ( TypeName (..),
     getTypeName,
     validTypeName,
+    safeMkTypeName,
+    typeNameToName,
   )
 where
 
@@ -18,6 +20,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.Identifiers.Name
 import Prettyprinter
 
 -- | A TypeName is like `Either` or `Maybe`.
@@ -65,3 +68,8 @@ safeMkTypeName a =
 
 instance Printer TypeName where
   prettyDoc = pretty . getTypeName
+
+typeNameToName :: TypeName -> Name
+typeNameToName (TypeName tn) = mkName (tHead <> T.tail tn)
+  where
+    tHead = T.pack . pure . Ch.toLower . T.head $ tn

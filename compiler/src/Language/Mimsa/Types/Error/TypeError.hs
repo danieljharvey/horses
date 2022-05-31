@@ -29,6 +29,7 @@ import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Project.SourceSpan
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
@@ -46,10 +47,10 @@ data TypeErrorF var ann
   | NoFunctionEquality (Type ann) (Type ann)
   | CannotMatchRecord Environment ann (Type ann)
   | TypeConstructorNotInScope Environment ann (Maybe ModuleName) TyCon
-  | TypeVariablesNotInDataType ann TyCon (Set var) (Set var)
+  | TypeVariablesNotInDataType ann TypeName (Set var) (Set var)
   | ConflictingConstructors ann TyCon
   | RecordKeyMismatch (Set Name)
-  | DuplicateTypeDeclaration ann TyCon
+  | DuplicateTypeDeclaration ann TypeName
   | IncompletePatternMatch ann [TyCon]
   | MixedUpPatterns [TyCon]
   | TypedHoles (Map Name (Type ann, Set FoundPath))

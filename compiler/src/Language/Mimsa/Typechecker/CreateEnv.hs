@@ -12,13 +12,14 @@ import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
 
 createEnv ::
   Map Name MonoType ->
-  Map (Maybe ModuleName, TyCon) DataType ->
+  Map (Maybe ModuleName, TypeName) DataType ->
   Map InfixOp MonoType ->
   Map ModuleHash (Map Name MonoType) ->
   Environment
@@ -28,7 +29,7 @@ createEnv typeMap dataTypes infixTypes modTypes =
     <> createInfixEnv infixTypes
     <> createModuleEnv modTypes
 
-createTypesEnv :: Map (Maybe ModuleName, TyCon) DataType -> Environment
+createTypesEnv :: Map (Maybe ModuleName, TypeName) DataType -> Environment
 createTypesEnv dataTypes =
   Environment
     { getSchemes = mempty,

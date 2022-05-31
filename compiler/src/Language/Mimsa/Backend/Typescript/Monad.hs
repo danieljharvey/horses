@@ -33,6 +33,7 @@ import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 
 type TypescriptM =
@@ -41,7 +42,7 @@ type TypescriptM =
     (WriterT [TSWriterItem] (ReaderT TSReaderState (State TSStateStack)))
 
 newtype TSReaderState = TSReaderState
-  { tsConstructorTypes :: Map TyCon TyCon -- Just -> Maybe, Nothing -> Maybe etc
+  { tsConstructorTypes :: Map TyCon TypeName -- Just -> Maybe, Nothing -> Maybe etc
   }
 
 type TSWriterItem =
@@ -143,14 +144,14 @@ addInfix op expr =
 
 -- | is this type in our reader context (and thus is it an import, and should
 -- be use it with a namespace, ie, Maybe.Maybe?
-typeNameIsImport :: (MonadReader TSReaderState m) => TyCon -> m Bool
-typeNameIsImport tyCon = do
+typeNameIsImport :: (MonadReader TSReaderState m) => TypeName -> m Bool
+typeNameIsImport typeName = do
   consType <- asks tsConstructorTypes
   let typeNames = S.fromList (M.elems consType)
-  pure (S.member tyCon typeNames)
+  pure (S.member typeName typeNames)
 
 -- given 'Just', (hopefully) return 'Maybe'
-findTypeName :: (MonadReader TSReaderState m) => TyCon -> m (Maybe TyCon)
+findTypeName :: (MonadReader TSReaderState m) => TyCon -> m (Maybe TypeName)
 findTypeName tyCon = do
   consType <- asks tsConstructorTypes
   case M.lookup tyCon consType of
