@@ -1228,8 +1228,12 @@ spec =
       it "Less than or equal to 3" $ do
         result <- eval testStdlib "10 <= 9"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-
     describe "Real stdlib" $ do
+      describe "Using modules" $ do
+        it "Uses Prelude.id" $ do
+          result <- eval stdlib "Prelude.id True"
+          result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       describe "Big stuff that breaks interpreter" $ do
         it "Parses using a lexeme" $ do
           let expr =
