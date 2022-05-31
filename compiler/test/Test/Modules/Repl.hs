@@ -1,47 +1,33 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Interpreter.Repl
+module Test.Modules.Repl
   ( spec,
   )
 where
 
+-- testing doing repl things but in the modules world
+
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
-import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Evaluate as Actions
-import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Stdlib (buildStdlib)
-import Language.Mimsa.Store.Hashing
-import Language.Mimsa.Store.Storage (getStoreExpressionHash)
-import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
-import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
-import Test.Utils.Serialisation
-  ( createOutputFolder,
-    saveJSON,
-    savePretty,
-    saveStoreExpression,
-  )
 
 stdlib :: Project Annotation
 stdlib = fromRight buildStdlib
@@ -53,72 +39,13 @@ eval ::
 eval env input = do
   let action = do
         expr <- Actions.parseExpr input
-        (mt, interpretedExpr, storeExpr, _, _) <- Actions.evaluate input expr
-        pure (mt, interpretedExpr, storeExpr)
+        (mt, interpretedExpr,_ ) <- 
+            Actions.evaluateModule input expr mempty
+        pure (mt, interpretedExpr )
   case Actions.run env action of
-    Right (newPrj, _, (mt, endExpr, se)) -> do
-      saveRegressionData (se $> ())
-      _ <- optimise newPrj se
+    Right (_, _, (mt, endExpr )) -> do
       pure (Right (normaliseType (toEmptyType mt), toEmptyAnn endExpr))
     Left e -> pure (Left (prettyPrint e))
-
-optimise ::
-  Project Annotation ->
-  StoreExpression Annotation ->
-  IO (ResolvedExpression Annotation)
-optimise prj storeExpr = do
-  let action = do
-        -- optimise once
-        se <- Actions.optimiseStoreExpression storeExpr
-        -- optimise twice, it should be the same, if not we need to optimise
-        -- more thoroughly
-        newSe <- Actions.optimiseStoreExpression se
-        if (se $> ()) /= (newSe $> ())
-          then do
-            error
-              ( "Optimising twice gives different results for:\n"
-                  <> T.unpack (prettyPrint (storeExpression storeExpr))
-                  <> "\nAfter first optimise:\n"
-                  <> show (storeExpression se)
-                  <> "\nAfter second optimise:\n"
-                  <> show (storeExpression newSe)
-              )
-          else pure ()
-
-        -- have we left some unused vars?
-        let stillUnused = findUnused (storeExpression se)
-        if not (S.null stillUnused)
-          then
-            error $
-              "Unused found after optimise: "
-                <> T.unpack (prettyPrint stillUnused)
-                <> "\n"
-                <> T.unpack (prettyPrint (storeExpression se))
-          else pure ()
-
-        Actions.checkStoreExpression (prettyPrint se) prj se
-   in case Actions.run prj action of
-        Right (_, _, re) -> pure re
-        Left e -> error (T.unpack $ prettyPrint e)
-
--- These are saved and used in the deserialisation tests to make sure we avoid
--- future regressions
-saveRegressionData :: StoreExpression () -> IO ()
-saveRegressionData se = do
-  jsonPath <- createOutputFolder "StoreExpr"
-  let jsonFilename = jsonPath <> show (getStoreExpressionHash se) <> ".json"
-  saveStoreExpression jsonFilename se
-  prettyPath <- createOutputFolder "PrettyPrint"
-  let prettyFilename = prettyPath <> show (getStoreExpressionHash se) <> ".mimsa"
-  savePretty prettyFilename (storeExpression se)
-
-saveProject :: Project ann -> IO ()
-saveProject prj = do
-  let saveProject' = projectToSaved prj
-  let (_, projectHash) = contentAndHash saveProject'
-  jsonPath <- createOutputFolder "SaveProject"
-  let jsonFilename = jsonPath <> show projectHash <> ".json"
-  saveJSON jsonFilename saveProject'
 
 -- remove annotations for comparison
 toEmptyAnn :: Expr a b -> Expr a ()
@@ -129,30 +56,27 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  describe "Repl" $ do
-    it "Save testStdlib" $
-      saveProject testStdlib
-        >> (True `shouldBe` True)
+  fdescribe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
-      it "let x = ((1,2)) in fst x" $ do
-        result <- eval testStdlib "let x = ((1,2)) in fst x"
+      fit "Use Prelude.fst" $ do
+        result <- eval testStdlib "let x = ((1,2)) in Prelude.fst x"
         result
           `shouldBe` Right
             (MTPrim mempty MTInt, int 1)
 
-      it "let good = { dog: True } in good.dog" $ do
+      fit "let good = { dog: True } in good.dog" $ do
         result <- eval testStdlib "let good = ({ dog: True }) in good.dog"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
-      it "let prelude = { id: (\\i -> i) } in prelude.id" $ do
-        result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id"
+      fit "Run function from record" $ do
+        result <- eval testStdlib "let record = ({ id: (\\i -> i) }) in record.id"
         result
           `shouldBe` Right
             ( MTFunction mempty (unknown 1) (unknown 1),
               MyLambda mempty (Identifier mempty "i") (MyVar mempty Nothing "i")
             )
 
-      it "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
+      fit "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
         result <- eval testStdlib "let prelude = ({ id: (\\i -> i) }) in prelude.id 1"
         result
           `shouldBe` Right
