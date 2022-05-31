@@ -30,6 +30,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers.TyCon
+import Language.Mimsa.Types.Identifiers.TypeName
 
 data TSImport
   = TSImportValue Text
@@ -57,7 +58,7 @@ data TSType
 data TSConstructor = TSConstructor TyCon [TSType]
   deriving stock (Eq, Ord, Show)
 
-data TSDataType = TSDataType TyCon [Text] [TSConstructor]
+data TSDataType = TSDataType TypeName [Text] [TSConstructor]
   deriving stock (Eq, Ord, Show)
 
 data TSLiteral = TSBool Bool | TSString Text | TSInt Int

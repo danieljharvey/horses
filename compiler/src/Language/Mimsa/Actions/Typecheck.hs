@@ -29,6 +29,7 @@ import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -40,7 +41,7 @@ import Language.Mimsa.Types.Typechecker.Unique
 
 getType ::
   Map Name MonoType ->
-  Map (Maybe ModuleName, TyCon) DataType ->
+  Map (Maybe ModuleName, TypeName) DataType ->
   Text ->
   Expr (Name, Unique) Annotation ->
   Actions.ActionM

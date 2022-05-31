@@ -236,7 +236,7 @@ makeTypeDeclMap ::
   Map ModuleHash (Module (Type Annotation)) ->
   Map TypeName DataType ->
   Module ann ->
-  Map (Maybe ModuleName, TyCon) DataType
+  Map (Maybe ModuleName, TypeName) DataType
 makeTypeDeclMap typecheckedModules importedTypes inputModule =
   let regularScopeTypes =
         mapKeys
@@ -258,7 +258,7 @@ makeTypeDeclMap typecheckedModules importedTypes inputModule =
 
 -- for any given module, return a Map of its DataTypes
 -- really the key is TypeName, but we need to untangle that still
-getModuleDataTypesByConstructor :: Module ann -> Map TyCon DataType
+getModuleDataTypesByConstructor :: Module ann -> Map TypeName DataType
 getModuleDataTypesByConstructor inputModule =
   let exportedDts =
         M.filterWithKey

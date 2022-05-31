@@ -15,6 +15,7 @@ import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
@@ -27,7 +28,7 @@ functorMap_ ::
   DataType ->
   CodegenM (Expr Name ())
 functorMap_ (DataType tyCon vars items) = do
-  let tyName = tyConToName tyCon
+  let tyName = typeNameToName tyCon
   fVar <- getFunctorVar vars
   case getMapItems items of
     Nothing -> throwError NoConstructorMatches
@@ -64,15 +65,16 @@ data FieldItemType
   | RecurseField Name
   | Func2 Name Name Name
 
-toFieldItemType :: TyCon -> Type a -> CodegenM FieldItemType
+toFieldItemType :: TypeName -> Type a -> CodegenM FieldItemType
 toFieldItemType typeName = \case
-  MTVar _ (TVName a) -> VariableField (coerce a) <$> nextName (coerce a)
+  MTVar _ (TVName a) ->
+    VariableField (coerce a) <$> nextName (coerce a)
   MTFunction _ (MTVar _ (TVName a)) (MTVar _ (TVName b)) ->
     pure $ Func2 (coerce a <> "to" <> coerce b) (coerce a) (coerce b)
   mt -> case varsFromDataType mt of
     Just (_modName, fieldConsName, _)
       | fieldConsName == typeName ->
-          RecurseField <$> nextName typeName
+          RecurseField <$> nextName (coerce typeName)
     _ -> throwError CouldNotFindVarsInType
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()
@@ -129,7 +131,7 @@ createPattern tyCon fields =
 -- TODO: allow the `f` to be configurable and to allow multiple ones so we can
 -- implement bifunctor with the same code
 createMatch ::
-  TyCon ->
+  TypeName ->
   Name ->
   TyCon ->
   [Type a] ->

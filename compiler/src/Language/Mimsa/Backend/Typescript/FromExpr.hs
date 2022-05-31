@@ -19,6 +19,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 
 bimapMap :: (Ord j) => (k -> j) -> (a -> b) -> Map k a -> Map j b
@@ -60,8 +61,8 @@ toPattern (PString _ sHead sTail) =
 consToTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
 consToTSType mt =
   case varsFromDataType mt of
-    Just (_modName, TyCon n, vars) -> do
-      imported <- typeNameIsImport (TyCon n)
+    Just (_modName, TypeName n, vars) -> do
+      imported <- typeNameIsImport (TypeName n)
       let namespace =
             if imported
               then Just n

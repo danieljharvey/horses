@@ -11,10 +11,10 @@ import Language.Mimsa.Types.AST (DataType)
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
   ( Name,
-    TyCon,
     TyVar,
     TypeIdentifier,
   )
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
@@ -22,7 +22,7 @@ import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 -- everything we need in typechecking environment
 data Environment = Environment
   { getSchemes :: Map TypeIdentifier Scheme,
-    getDataTypes :: Map (Maybe ModuleName, TyCon) DataType,
+    getDataTypes :: Map (Maybe ModuleName, TypeName) DataType,
     getInfix :: Map InfixOp Scheme,
     getTypeVarsInScope :: Map TyVar Int, -- used for scoping type variables
     getNamespacedSchemes :: Map ModuleHash (Map Name Scheme) -- Name should probably be DefIdentifier or something so we can do Infix in future

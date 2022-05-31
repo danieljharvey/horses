@@ -17,11 +17,12 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
-import Language.Mimsa.Parser.Identifiers (moduleNameParser, nameParser)
+import Language.Mimsa.Parser.Identifiers (moduleNameParser, nameParser, typeNameParser)
 import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
 import Text.Megaparsec
@@ -127,13 +128,6 @@ tyVarParser =
       identifier
       (inProtectedTypes >=> safeMkTyVar)
 
-tyConParser :: Parser TyCon
-tyConParser =
-  myLexeme $
-    maybePred
-      identifier
-      (inProtectedTypes >=> safeMkTyCon)
-
 varParser :: Parser MonoType
 varParser = do
   MTVar mempty <$> (TVName <$> tyVarParser)
@@ -187,20 +181,20 @@ monoDataTypeParser = do
 
 ----
 
-constructorParser :: Parser (Maybe ModuleName, TyCon)
+constructorParser :: Parser (Maybe ModuleName, TypeName)
 constructorParser =
   try namespacedConstructorParser
     <|> try plainConstructorParser
 
-plainConstructorParser :: Parser (Maybe ModuleName, TyCon)
+plainConstructorParser :: Parser (Maybe ModuleName, TypeName)
 plainConstructorParser =
-  (Nothing,) <$> tyConParser
+  (Nothing,) <$> typeNameParser
 
-namespacedConstructorParser :: Parser (Maybe ModuleName, TyCon)
+namespacedConstructorParser :: Parser (Maybe ModuleName, TypeName)
 namespacedConstructorParser = do
   mName <- moduleNameParser
   myString "."
-  (,) (Just mName) <$> tyConParser
+  (,) (Just mName) <$> typeNameParser
 
 ---
 

@@ -18,6 +18,7 @@ import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
@@ -30,11 +31,11 @@ applicativePure = runCodegenM . applicativePure_
 applicativePure_ ::
   DataType ->
   CodegenM (Expr Name ())
-applicativePure_ (DataType tyCon vars items) = do
+applicativePure_ (DataType typeName vars items) = do
   fVar <- getFunctorVar vars
   pureType <-
     singleVarConstructor fVar items
-      <|> multiVarConstructor tyCon vars items
+      <|> multiVarConstructor typeName vars items
   expr' <- case pureType of
     PureVar tc ->
       pure $
@@ -118,19 +119,19 @@ emptyConstructor items = do
   (k, _) <- matchConstructor filterFn items
   pure k
 
-fieldIsRecursion :: TyCon -> [Name] -> Type a -> Bool
-fieldIsRecursion tyCon vars mt =
+fieldIsRecursion :: TypeName -> [Name] -> Type a -> Bool
+fieldIsRecursion typeName vars mt =
   case varsFromDataType mt of
-    Just (_, tyCon', vars') ->
-      tyCon == tyCon' && and (zipWith fieldIsName vars vars')
+    Just (_, typeName', vars') ->
+      typeName == typeName' && and (zipWith fieldIsName vars vars')
     _ -> False
 
 fieldIsName :: Name -> Type a -> Bool
 fieldIsName name (MTVar _ (TVName a)) = name == coerce a
 fieldIsName _ _ = False
 
-multiVarConstructor :: TyCon -> [Name] -> Map TyCon [Type a] -> CodegenM PureType
-multiVarConstructor tyCon vars items = do
+multiVarConstructor :: TypeName -> [Name] -> Map TyCon [Type a] -> CodegenM PureType
+multiVarConstructor typeName vars items = do
   let withField (tc, fields) = case NE.nonEmpty fields of
         Nothing -> Nothing
         Just neFields -> do
@@ -141,7 +142,7 @@ multiVarConstructor tyCon vars items = do
                   MTFunction _ (MTVar _ (TVName a)) (MTVar _ (TVName b)) ->
                     Just $ FPart (coerce a) (coerce b)
                   other ->
-                    if fieldIsRecursion tyCon vars other
+                    if fieldIsRecursion typeName vars other
                       then Just TPart
                       else Nothing
               )

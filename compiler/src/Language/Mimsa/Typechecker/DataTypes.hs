@@ -6,7 +6,6 @@ module Language.Mimsa.Typechecker.DataTypes
     storeDataDeclaration,
     inferDataConstructor,
     inferConstructorTypes,
-    inferType,
     dataTypeWithVars,
   )
 where
@@ -27,6 +26,7 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
 
@@ -48,7 +48,7 @@ storeDataDeclaration env ann dt@(DataType tyName _ _) = do
        in pure (newEnv <> env)
 
 errorOnBuiltIn :: (MonadError TypeError m) => Annotation -> TyCon -> m ()
-errorOnBuiltIn ann tc = case lookupBuiltIn tc of
+errorOnBuiltIn ann tc = case lookupBuiltIn (coerce tc) of
   Just _ -> throwError (InternalConstructorUsedOutsidePatternMatch ann tc)
   _ -> pure ()
 
@@ -105,8 +105,8 @@ validateConstructors ::
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-        if M.member (Nothing, tyCon) (getDataTypes env)
-          then throwError (CannotUseBuiltInTypeAsConstructor ann tyCon)
+        if M.member (Nothing, coerce tyCon) (getDataTypes env)
+          then throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon))
           else pure ()
     )
     (M.toList constructors)
@@ -191,25 +191,7 @@ inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = 
   let dt = dataTypeWithVars mempty modName typeName (snd <$> tyVars)
   pure (dt, mconcat cons')
 
--- parse a type from it's name
--- this will soon become insufficient for more complex types
-inferType ::
-  (MonadError TypeError m) =>
-  Environment ->
-  Annotation ->
-  Maybe ModuleName ->
-  TyCon ->
-  [MonoType] ->
-  m MonoType
-inferType env ann modName tyName tyVars =
-  case M.lookup (modName, tyName) (getDataTypes env) of
-    (Just _) -> case lookupBuiltIn tyName of
-      Just mt -> pure mt
-      _ -> pure (dataTypeWithVars mempty modName tyName tyVars)
-    _ ->
-      throwError (TypeConstructorNotInScope env ann modName tyName)
-
-dataTypeWithVars :: (Monoid ann) => ann -> Maybe ModuleName -> TyCon -> [Type ann] -> Type ann
+dataTypeWithVars :: (Monoid ann) => ann -> Maybe ModuleName -> TypeName -> [Type ann] -> Type ann
 dataTypeWithVars ann modName tyName =
   foldl'
     (MTTypeApp mempty)

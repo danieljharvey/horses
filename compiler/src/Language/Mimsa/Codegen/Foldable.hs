@@ -14,6 +14,7 @@ import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
@@ -25,8 +26,8 @@ fold = runCodegenM . fold_
 fold_ ::
   DataType ->
   CodegenM (Expr Name ())
-fold_ (DataType tyCon vars items) = do
-  let tyName = tyConToName tyCon
+fold_ (DataType typeName vars items) = do
+  let tyName = typeNameToName typeName
   fVar <- getFunctorVar vars
   case getMapItems items of
     Nothing -> throwError NoConstructorMatches
@@ -34,7 +35,7 @@ fold_ (DataType tyCon vars items) = do
       matches <-
         traverse
           ( uncurry
-              ( createMatch tyCon fVar
+              ( createMatch typeName fVar
               )
           )
           constructors
@@ -68,7 +69,7 @@ data FieldItemType
   | NoVariable
 
 toFieldItemType ::
-  TyCon ->
+  TypeName ->
   Name ->
   Type a ->
   CodegenM (Name, FieldItemType)
@@ -80,9 +81,9 @@ toFieldItemType tyName matchVar = \case
         pure (name, VariableField name)
       else pure (coerce a, NoVariable)
   mt -> case varsFromDataType mt of
-    Just (_, tyCon, [MTVar _ (TVName var)]) -> do
-      varName <- nextName tyName
-      if tyCon == tyName && coerce var == matchVar
+    Just (_, typeName, [MTVar _ (TVName var)]) -> do
+      varName <- nextName (coerce tyName)
+      if typeName == coerce tyName && coerce var == matchVar
         then pure (varName, Recurse varName)
         else throwError RecursingOverAnotherType
     _ -> throwError CouldNotFindVarsInType
@@ -126,7 +127,7 @@ reconstructFields =
     (MyVar mempty Nothing "total")
 
 createMatch ::
-  TyCon ->
+  TypeName ->
   Name ->
   TyCon ->
   [Type a] ->

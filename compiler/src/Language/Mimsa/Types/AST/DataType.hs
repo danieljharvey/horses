@@ -18,6 +18,7 @@ import Language.Mimsa.Types.Identifiers
     TyCon,
     renderName,
   )
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Typechecker.MonoType
 import Prettyprinter
@@ -27,7 +28,7 @@ import Prettyprinter
 -- | This describes a custom data type, such as `Either e a = Left e | Right a`
 data DataType = DataType
   { -- | The name of this type, ie `Either`
-    dtName :: TyCon,
+    dtName :: TypeName,
     -- | The type variables for the data type, ie `e`, `a`
     dtVars :: [Name],
     -- | map from constructor name to it's arguments, ie "`Left` -> [`e`]" or "`Right` -> [`a`]"

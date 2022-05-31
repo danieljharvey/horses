@@ -13,7 +13,10 @@ import Language.Mimsa.Types.Identifiers (TyCon)
 import Language.Mimsa.Types.Store.ExprHash (ExprHash)
 
 -- a list of names to hashes
-newtype TypeBindings = TypeBindings {getTypeBindings :: Map TyCon ExprHash}
+newtype TypeBindings = TypeBindings
+  { getTypeBindings ::
+      Map TyCon ExprHash
+  }
   deriving newtype
     ( Eq,
       Ord,

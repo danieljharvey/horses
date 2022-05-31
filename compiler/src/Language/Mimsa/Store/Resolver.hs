@@ -5,6 +5,7 @@ module Language.Mimsa.Store.Resolver
   )
 where
 
+import Data.Coerce
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, isJust)
 import qualified Data.Set as S
@@ -14,6 +15,7 @@ import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Store
 
 -- this takes the expression, works out what it needs from it's environment
@@ -58,7 +60,7 @@ findBindings bindings' expr = do
 -----------
 
 isBuiltIn :: TyCon -> Bool
-isBuiltIn = isJust . lookupBuiltIn
+isBuiltIn = isJust . lookupBuiltIn . coerce
 
 findHashInTypeBindings ::
   TypeBindings ->

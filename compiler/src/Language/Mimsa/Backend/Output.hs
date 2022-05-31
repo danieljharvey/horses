@@ -24,17 +24,18 @@ import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 -- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
-typeBindingsByType :: Store a -> TypeBindings -> Map TyCon ExprHash
+typeBindingsByType :: Store a -> TypeBindings -> Map TypeName ExprHash
 typeBindingsByType store (TypeBindings tb) =
-  let getTypeName exprHash =
+  let getTypeName' exprHash =
         case lookupExprHashFromStore store exprHash of
           Just se -> storeExprToDataTypes se $> exprHash
           Nothing -> mempty
-   in stripModules $ mconcat (getTypeName <$> M.elems tb)
+   in stripModules $ mconcat (getTypeName' <$> M.elems tb)
 
 -- remove moduleName from type. will probably need these later when we come to
 -- fix TS but for now YOLO
@@ -55,7 +56,8 @@ outputStoreExpression be dataTypes store mt se = do
   let typeDeps =
         renderTypeImport' be
           <$> M.toList (typeBindingsByType store (storeTypeBindings se))
-  (func, stdlibFuncs) <- renderExpression be dataTypes (storeExpression se)
+  (func, stdlibFuncs) <-
+    renderExpression be dataTypes (storeExpression se)
   let stdlib = stdlibImport be stdlibFuncs
   let typeComment = renderTypeSignature' mt
   pure $
@@ -104,7 +106,8 @@ renderExpression be dataTypes expr = do
           ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)
         Left e -> throwError e
 
-makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TyCon
+-- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..
+makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName
 makeTypeDepMap (ResolvedTypeDeps rtd) =
   (\(_, DataType typeName _ _) -> typeName) <$> rtd
 
@@ -122,7 +125,7 @@ renderImport' ESModulesJS (name, hash') =
     <> moduleFilename ESModulesJS hash'
     <> "\";\n"
 
-renderTypeImport' :: Backend -> (TyCon, ExprHash) -> Text
+renderTypeImport' :: Backend -> (TypeName, ExprHash) -> Text
 renderTypeImport' Typescript (typeName, hash') =
   "import * as "
     <> coerce typeName

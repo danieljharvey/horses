@@ -11,11 +11,12 @@ import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 
-typeNameToName :: Int -> TSType -> TSName
-typeNameToName _ (TSTypeVar a) = coerce (T.toLower a)
-typeNameToName _ (TSType _ name _) = coerce (T.toLower name)
-typeNameToName i _ = coerce $ "u" <> prettyPrint i
+typeNameToTSName :: Int -> TSType -> TSName
+typeNameToTSName _ (TSTypeVar a) = coerce (T.toLower a)
+typeNameToTSName _ (TSType _ name _) = coerce (T.toLower name)
+typeNameToTSName i _ = coerce $ "u" <> prettyPrint i
 
 genericsForType :: TSType -> Set TSGeneric
 genericsForType (TSTypeVar a) = S.singleton (TSGeneric a)
@@ -27,7 +28,7 @@ genericsForType (TSTypeRecord as) = mconcat (genericsForType <$> M.elems as)
 genericsForType (TSTypeAnd a b) = genericsForType a <> genericsForType b
 
 -- | Creates the return type of a constructor
-returnType :: [Text] -> TyCon -> [TSType] -> TSType
+returnType :: [Text] -> TypeName -> [TSType] -> TSType
 returnType dtArgs typeName consArgs =
   TSType Nothing (coerce typeName) fixedConsArgs
   where
@@ -64,7 +65,7 @@ removeRepeatedGenerics = removeSeen mempty
 
 -- turn Just constructor into a function like  \a -> Just a
 createConstructorFunction ::
-  TyCon ->
+  TypeName ->
   [Text] ->
   TSConstructor ->
   TSStatement
@@ -75,10 +76,10 @@ createConstructorFunction typeName dtArgs (TSConstructor tyCon []) =
     (TSLetBody (TSBody [] (TSData (prettyPrint tyCon) mempty)))
 createConstructorFunction typeName dtArgs (TSConstructor tyCon tsArgs) =
   let numberList = zip [1 ..] tsArgs
-      args = (\(i, tn) -> TSVar (typeNameToName i tn)) <$> numberList
+      args = (\(i, tn) -> TSVar (typeNameToTSName i tn)) <$> numberList
       tsData = TSData (prettyPrint tyCon) args
       foldFn (i, tsType) expr' =
-        let variable = typeNameToName i tsType
+        let variable = typeNameToTSName i tsType
             generics = genericsForType tsType
             isFinal = i == length numberList
             returnType' =

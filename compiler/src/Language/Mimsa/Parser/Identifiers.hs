@@ -9,6 +9,7 @@ module Language.Mimsa.Parser.Identifiers
     typedHoleParser,
     constructorParser,
     moduleNameParser,
+    typeNameParser,
   )
 where
 
@@ -20,6 +21,7 @@ import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Text.Megaparsec
 
@@ -85,6 +87,15 @@ tyConParser =
     maybePred
       identifier
       (filterProtectedNames >=> safeMkTyCon)
+
+---
+
+typeNameParser :: Parser TypeName
+typeNameParser =
+  myLexeme $
+    maybePred
+      identifier
+      (filterProtectedNames >=> safeMkTypeName)
 
 ---
 
