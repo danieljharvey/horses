@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.BindModule (bindModule) where
+module Language.Mimsa.Actions.BindModule (bindModule, typecheckModule) where
 import Language.Mimsa.Modules.HashModule 
 
 import Data.Text (Text)
@@ -16,8 +16,10 @@ import Language.Mimsa.Modules.Monad
 import Control.Monad.Except
 import Language.Mimsa.Types.Typechecker
 
-typecheckModule :: Text -> Module Annotation -> Actions.ActionM (Module MonoType)
-typecheckModule input = liftEither . runCheck input . typecheckAllModules 
+typecheckModule :: Text -> Module Annotation -> 
+    Actions.ActionM (Module MonoType)
+typecheckModule input = 
+  liftEither . runCheck input . typecheckAllModules 
 
 -- add/update a module 
 bindModule ::

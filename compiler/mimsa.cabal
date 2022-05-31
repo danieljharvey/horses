@@ -412,6 +412,7 @@ test-suite mimsa-test
       Test.Data.Project
       Test.Interpreter.Repl
       Test.Modules.CheckModule
+      Test.Modules.Repl
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax

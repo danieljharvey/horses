@@ -55,6 +55,7 @@ import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
+import qualified Test.Modules.Repl as ModuleRepl
 
 main :: IO ()
 main =
@@ -110,4 +111,4 @@ main =
     NumberVars.spec
     CheckModule.spec
     RenderErrors.spec
-
+    ModuleRepl.spec
