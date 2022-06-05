@@ -44,8 +44,8 @@ instance JSON.FromJSON SaveProject where
       Just as -> JSON.parseJSON as
       Nothing -> pure mempty
     mods <- case modules of
-              Just as -> JSON.parseJSON as
-              Nothing -> pure mempty
+      Just as -> JSON.parseJSON as
+      Nothing -> pure mempty
 
     SaveProject
       <$> JSON.parseJSON version

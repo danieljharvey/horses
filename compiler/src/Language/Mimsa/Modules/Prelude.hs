@@ -8,12 +8,10 @@ module Language.Mimsa.Modules.Prelude (prelude, preludeHash, maybeInput, prelude
 -- implementing imports/exports/other modules so this should unblock us
 --
 import Data.FileEmbed
-import Data.Text (Text)
-import qualified Data.Text.Encoding as T
-
-
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Data.Text (Text)
+import qualified Data.Text.Encoding as T
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -67,8 +65,7 @@ prelude =
         ]
 
 maybeInput :: Text
-maybeInput =  T.decodeUtf8 $(embedFile "static/modules/Maybe.mimsa")
+maybeInput = T.decodeUtf8 $(embedFile "static/modules/Maybe.mimsa")
 
 preludeInput :: Text
-preludeInput =  T.decodeUtf8 $(embedFile "static/modules/Prelude.mimsa")
-
+preludeInput = T.decodeUtf8 $(embedFile "static/modules/Prelude.mimsa")

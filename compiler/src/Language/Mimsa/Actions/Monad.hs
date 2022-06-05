@@ -26,8 +26,6 @@ module Language.Mimsa.Actions.Monad
   )
 where
 
-import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.Types.Modules
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Map (Map)
@@ -42,9 +40,11 @@ import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Prettyprinter
 
 emptyState :: Project Annotation -> ActionState
@@ -116,9 +116,8 @@ appendStoreExpression se = do
   appendProject newProject
 
 appendModule :: Module Annotation -> ActionM ()
-appendModule = 
-  appendActionOutcome . NewModule 
-
+appendModule =
+  appendActionOutcome . NewModule
 
 messagesFromOutcomes :: [ActionOutcome] -> [Text]
 messagesFromOutcomes =
@@ -146,11 +145,13 @@ writeFilesFromOutcomes =
     )
 
 modulesFromOutcomes :: [ActionOutcome] -> Set (Module Annotation)
-modulesFromOutcomes = S.fromList . foldMap
-                                    (\case 
-                                        NewModule mod' -> pure mod'
-                                        _ -> mempty
-                                    )
+modulesFromOutcomes =
+  S.fromList
+    . foldMap
+      ( \case
+          NewModule mod' -> pure mod'
+          _ -> mempty
+      )
 
 -- add binding for module and add it to store
 bindModuleInProject ::
@@ -159,7 +160,7 @@ bindModuleInProject ::
   ActionM ()
 bindModuleInProject typecheckedModule modName = do
   let untypedModule = getAnnotationForType <$> typecheckedModule
-  appendModule untypedModule 
+  appendModule untypedModule
   appendProject
     ( fromModule modName untypedModule
     )

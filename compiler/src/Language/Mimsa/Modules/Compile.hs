@@ -5,15 +5,15 @@ module Language.Mimsa.Modules.Compile (compile, CompiledModule (..)) where
 
 -- `compile` here means "turn it into a bunch of StoreExpressions"
 
-import Language.Mimsa.Printer
-import qualified Data.Text as T
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.Monad
+import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -54,7 +54,7 @@ bindingsFromEntities inputs uses =
     ( \case
         EName name -> case M.lookup (DIName name) inputs of
           Just se -> Bindings $ M.singleton name (getStoreExpressionHash se)
-          _ -> error $ "Could not find binding for " <> T.unpack (prettyPrint name) 
+          _ -> error $ "Could not find binding for " <> T.unpack (prettyPrint name)
         _ -> mempty
     )
     (S.toList uses)

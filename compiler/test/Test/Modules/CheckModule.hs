@@ -6,11 +6,10 @@ module Test.Modules.CheckModule
   )
 where
 
-import Language.Mimsa.Types.Modules
-import Data.Map (Map)
 import Control.Monad.IO.Class
 import Data.Either
 import Data.Functor
+import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -24,6 +23,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
@@ -37,8 +37,8 @@ exprAndTypeFromParts' ::
   [DefPart ann] ->
   Expr Name ann ->
   Either (Error Annotation) (Expr Name ann)
-exprAndTypeFromParts' parts expr = runCheck "" testModules 
-      (exprAndTypeFromParts (DIName "test") parts expr)
+exprAndTypeFromParts' parts expr =
+  runCheck "" testModules (exprAndTypeFromParts (DIName "test") parts expr)
 
 testModules :: Map ModuleHash (Module Annotation)
 testModules = M.singleton preludeHash prelude
@@ -72,7 +72,7 @@ checkModuleType t =
 
 spec :: Spec
 spec = do
-  describe "modules" $ do
+  fdescribe "modules" $ do
     describe "CheckModule" $ do
       it "1 parses correctly" $ do
         let filePath = modulesPath <> "1.mimsa"

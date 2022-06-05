@@ -11,7 +11,6 @@ module Language.Mimsa.Actions.Types
   )
 where
 
-import Language.Mimsa.Types.Modules
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Hashable
@@ -20,6 +19,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store

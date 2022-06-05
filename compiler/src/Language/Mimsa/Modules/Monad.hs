@@ -2,26 +2,37 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
-module Language.Mimsa.Modules.Monad (CheckM (..), CheckEnv (..), runCheck,  getStoredInput, 
-    lookupModule,lookupModuleDep,lookupModuleType, errorIfExpressionAlreadyDefined,checkDataType,errorIfImportAlreadyDefined, errorIfTypeImportAlreadyDefined) where
+module Language.Mimsa.Modules.Monad
+  ( CheckM (..),
+    CheckEnv (..),
+    runCheck,
+    getStoredInput,
+    lookupModule,
+    lookupModuleDep,
+    lookupModuleType,
+    errorIfExpressionAlreadyDefined,
+    checkDataType,
+    errorIfImportAlreadyDefined,
+    errorIfTypeImportAlreadyDefined,
+  )
+where
 
-import Data.Foldable
 import Control.Monad.Except
 import Control.Monad.Reader
+import Data.Coerce
+import Data.Foldable
 import Data.Map (Map)
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules.Module
-import Language.Mimsa.Types.Modules.ModuleHash
-import Data.Coerce
-import qualified Data.Set as S
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.DefIdentifier
+import Language.Mimsa.Types.Modules.Module
+import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Typechecker
-
 
 -- this is where we keep all the modules we need to do things
 data CheckEnv ann = CheckEnv
@@ -46,17 +57,17 @@ newtype CheckM a = CheckM
     )
 
 runCheck :: Text -> Map ModuleHash (Module Annotation) -> CheckM a -> Either (Error Annotation) a
-runCheck input modules comp = runReader (runExceptT (runCheckM comp)) initialEnv
+runCheck input modules comp =
+  runReader (runExceptT (runCheckM comp)) initialEnv
   where
     initialEnv =
       CheckEnv
-        { ceModules = modules, 
-          ceInput = input 
+        { ceModules = modules,
+          ceInput = input
         }
 
 getStoredInput :: CheckM Text
 getStoredInput = asks ceInput
-
 
 lookupModule :: ModuleHash -> CheckM (Module Annotation)
 lookupModule modHash = do
@@ -90,7 +101,6 @@ lookupModuleType typecheckedModules typeName modHash = do
         Just dt -> pure dt
         _ -> throwError (ModuleErr (MissingModuleTypeDep typeName modHash))
     _ -> throwError (ModuleErr (MissingModule modHash))
-
 
 errorIfExpressionAlreadyDefined :: Module ann -> DefIdentifier -> CheckM ()
 errorIfExpressionAlreadyDefined mod' def =
@@ -131,5 +141,3 @@ errorIfTypeImportAlreadyDefined mod' typeName moduleHash =
     || M.member typeName (moDataTypeImports mod')
     then throwError (ModuleErr $ TypeConflictsWithImport typeName moduleHash)
     else pure ()
-
-

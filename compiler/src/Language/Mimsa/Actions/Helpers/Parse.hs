@@ -3,11 +3,11 @@ module Language.Mimsa.Actions.Helpers.Parse (parseExpr, parseDataType, parseModu
 import Control.Monad.Except
 import Data.Text (Text)
 import Language.Mimsa.Actions.Types
+import qualified Language.Mimsa.Modules.Parse as Module
 import qualified Language.Mimsa.Parser as Parser
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import qualified Language.Mimsa.Modules.Parse as Module
 import Language.Mimsa.Types.Modules
 
 parseExpr :: Text -> ActionM (Expr Name Annotation)
@@ -23,5 +23,5 @@ parseDataType input =
     Left e -> throwError (ParseError input e)
 
 parseModule :: Text -> ActionM (Module Annotation)
-parseModule = 
-  liftEither . Module.parseModule 
+parseModule =
+  liftEither . Module.parseModule

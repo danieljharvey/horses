@@ -22,6 +22,7 @@ module Language.Mimsa.Project.Helpers
     projectToSaved,
     getCurrentBindings,
     getCurrentTypeBindings,
+    getCurrentModules,
     getItemsForAllVersions,
     getDependencyHashes,
     lookupBindingName,
@@ -40,19 +41,22 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Modules.HashModule
 
 ----------
 
-projectFromSaved :: Map ModuleHash (Module ann) -> Store ann -> SaveProject -> 
-    Project ann
+projectFromSaved ::
+  Map ModuleHash (Module ann) ->
+  Store ann ->
+  SaveProject ->
+  Project ann
 projectFromSaved moduleStore store' sp =
   Project
     { prjStore = store',
@@ -62,7 +66,7 @@ projectFromSaved moduleStore store' sp =
       prjTests =
         (UTest <$> projectUnitTests sp)
           <> (PTest <$> projectPropertyTests sp),
-          prjModuleStore = moduleStore
+      prjModuleStore = moduleStore
     }
 
 projectToSaved :: Project a -> SaveProject
@@ -115,10 +119,10 @@ fromType expr hash =
 fromModule :: ModuleName -> Module ann -> Project ann
 fromModule modName newModule =
   let moduleHash = hashModule newModule
-   in mempty 
-    { prjModules = VersionedMap $ M.singleton modName (pure moduleHash),
-      prjModuleStore = M.singleton moduleHash newModule
-    }
+   in mempty
+        { prjModules = VersionedMap $ M.singleton modName (pure moduleHash),
+          prjModuleStore = M.singleton moduleHash newModule
+        }
 
 fromTest :: Test -> StoreExpression ann -> Project ann
 fromTest = \case
@@ -180,7 +184,6 @@ lookupModuleName :: Project ann -> ModuleName -> Maybe ModuleHash
 lookupModuleName project modName =
   let b = getCurrentModules . prjModules $ project
    in M.lookup modName b
-
 
 -- | find the binding name in current expr hashes
 findBindingNameForExprHash ::
