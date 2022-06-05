@@ -20,7 +20,7 @@ runWasm wasmModule = do
         Right moduleInstance ->
           Wasm.invokeExport store moduleInstance "test" mempty
         Left e -> error e
-    Left _ -> error "invalid module"
+    Left e -> error $ "invalid module: " <> show e
 
 spec :: Spec
 spec = do
@@ -32,6 +32,23 @@ spec = do
       it "int literal 42" $ do
         result <- runWasm (compile (unsafeParseExpr "42"))
         result `shouldBe` Just [Wasm.VI32 42]
+    describe "Boolean literals" $ do
+      it "true" $ do
+        result <- runWasm (compile (unsafeParseExpr "True"))
+        result `shouldBe` Just [Wasm.VI32 1]
+      it "false" $ do
+        result <- runWasm (compile (unsafeParseExpr "False"))
+        result `shouldBe` Just [Wasm.VI32 0]
+    describe "If expression" $ do
+      it "true branch" $ do
+        result <- runWasm (compile (unsafeParseExpr "if True then 42 else 5"))
+        result `shouldBe` Just [Wasm.VI32 42]
+      it "false branch" $ do
+        result <- runWasm (compile (unsafeParseExpr "if False then 42 else 5"))
+        result `shouldBe` Just [Wasm.VI32 5]
+      it "using infix op" $ do
+        result <- runWasm (compile (unsafeParseExpr "if 4 == 5 then 42 else 5"))
+        result `shouldBe` Just [Wasm.VI32 5]
     describe "Infix ops" $ do
       it "1 + 1 == 2" $ do
         result <- runWasm (compile (unsafeParseExpr "1 + 1"))
