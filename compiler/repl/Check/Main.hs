@@ -32,7 +32,7 @@ checkFile filePath = do
   replOutput ("Reading " <> T.pack (show filePath))
   fileContents <- liftIO $ T.readFile (T.unpack filePath)
   -- liftIO $ T.putStrLn fileContents
-  case checkModule fileContents of
+  case checkModule fileContents mempty of
     Right (mod', _) -> do
       liftIO $ T.putStrLn $ prettyPrint mod'
       -- format and rewrite

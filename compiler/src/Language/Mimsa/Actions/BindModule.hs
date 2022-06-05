@@ -15,11 +15,14 @@ import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.Monad
 import Control.Monad.Except
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Project
 
 typecheckModule :: Text -> Module Annotation -> 
     Actions.ActionM (Module MonoType)
-typecheckModule input = 
-  liftEither . runCheck input . typecheckAllModules 
+typecheckModule input mod' = do
+  modules <- prjModuleStore <$> Actions.getProject
+
+  liftEither (runCheck input modules (typecheckAllModules mod'))
 
 -- add/update a module 
 bindModule ::

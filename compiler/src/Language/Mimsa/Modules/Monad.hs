@@ -11,7 +11,6 @@ import Control.Monad.Reader
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
-import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules.Module
@@ -46,12 +45,12 @@ newtype CheckM a = CheckM
       MonadReader (CheckEnv Annotation)
     )
 
-runCheck :: Text -> CheckM a -> Either (Error Annotation) a
-runCheck input comp = runReader (runExceptT (runCheckM comp)) initialEnv
+runCheck :: Text -> Map ModuleHash (Module Annotation) -> CheckM a -> Either (Error Annotation) a
+runCheck input modules comp = runReader (runExceptT (runCheckM comp)) initialEnv
   where
     initialEnv =
       CheckEnv
-        { ceModules = M.singleton preludeHash prelude,
+        { ceModules = modules, 
           ceInput = input 
         }
 

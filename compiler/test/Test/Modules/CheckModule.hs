@@ -6,6 +6,8 @@ module Test.Modules.CheckModule
   )
 where
 
+import Language.Mimsa.Types.Modules
+import Data.Map (Map)
 import Control.Monad.IO.Class
 import Data.Either
 import Data.Functor
@@ -23,7 +25,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
@@ -36,12 +37,16 @@ exprAndTypeFromParts' ::
   [DefPart ann] ->
   Expr Name ann ->
   Either (Error Annotation) (Expr Name ann)
-exprAndTypeFromParts' parts expr = runCheck "" (exprAndTypeFromParts (DIName "test") parts expr)
+exprAndTypeFromParts' parts expr = runCheck "" testModules 
+      (exprAndTypeFromParts (DIName "test") parts expr)
+
+testModules :: Map ModuleHash (Module Annotation)
+testModules = M.singleton preludeHash prelude
 
 checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
-  (a, tyA) <- checkModule t
-  (b, tyB) <- checkModule (prettyPrint a)
+  (a, tyA) <- checkModule t testModules
+  (b, tyB) <- checkModule (prettyPrint a) testModules
   if (a $> ()) /= (b $> ())
     then
       error $
@@ -63,7 +68,7 @@ checkModule' t = do
 
 checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
 checkModuleType t =
-  (\(a, mt) -> (a, mt $> mempty)) <$> checkModule t
+  (\(a, mt) -> (a, mt $> mempty)) <$> checkModule t testModules
 
 spec :: Spec
 spec = do
@@ -378,7 +383,7 @@ spec = do
             `shouldBe` Left (ModuleErr $ DuplicateTypeName "Either")
 
         it "Errors when adding a duplicate Right constructor" $
-          checkModule
+          checkModule'
             ( joinLines
                 [ "type Result e a = Failure e | Right a",
                   "type Either e a = Left e | Right a"

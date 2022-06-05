@@ -58,7 +58,7 @@ spec :: Spec
 spec =
   fdescribe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
-      fit "Use Prelude.fst" $ do
+      it "Use Prelude.fst" $ do
         result <- eval testStdlib "let x = ((1,2)) in Prelude.fst x"
         result
           `shouldBe` Right
