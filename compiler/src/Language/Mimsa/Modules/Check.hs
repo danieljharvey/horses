@@ -35,8 +35,9 @@ import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker
 
-checkModule :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
-checkModule input = runCheck input (checkModule' input)
+checkModule :: Text -> 
+  Map ModuleHash (Module Annotation) -> Either (Error Annotation) (Module (Type Annotation), MonoType)
+checkModule input modules = runCheck input modules (checkModule' input)
 
 -- | This is where we load a file and check that it is "OK" as such
 --  so far this entails:
