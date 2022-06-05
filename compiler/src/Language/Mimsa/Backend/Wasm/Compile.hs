@@ -1,7 +1,8 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE DataKinds #-}
-    {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Language.Mimsa.Backend.Wasm.Compile where
 
 import Data.Proxy
@@ -17,7 +18,7 @@ compile :: forall var ann. (Printer (Expr var ann)) => Expr var ann -> WasmModul
 compile expr =
   Wasm.genMod (Wasm.export "test" (Wasm.fun Wasm.i32 (mainFn expr)))
   where
-    mainFn :: Expr var ann -> Wasm.GenFun (Proxy 'Wasm.I32) 
+    mainFn :: Expr var ann -> Wasm.GenFun (Proxy 'Wasm.I32)
     mainFn exp' = case exp' of
       (MyLiteral _ (MyInt i)) ->
         Wasm.i32c i
@@ -25,8 +26,8 @@ compile expr =
         Wasm.i32c (1 :: Integer)
       (MyLiteral _ (MyBool False)) ->
         Wasm.i32c (0 :: Integer)
-      (MyIf _ predExpr thenExpr elseExpr) -> 
-          Wasm.select (mainFn predExpr) (mainFn thenExpr) (mainFn elseExpr)
+      (MyIf _ predExpr thenExpr elseExpr) ->
+        Wasm.select (mainFn predExpr) (mainFn thenExpr) (mainFn elseExpr)
       (MyInfix _ op a b) -> do
         let valA = mainFn a
             valB = mainFn b
