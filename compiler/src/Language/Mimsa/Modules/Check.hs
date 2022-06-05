@@ -4,8 +4,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module Language.Mimsa.Modules.Check (checkModule, typecheckAllModules) where
-import Language.Mimsa.Modules.Parse
+module Language.Mimsa.Modules.Check (checkModule, typecheckAllModules, lookupModuleDefType) where
+
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce
@@ -16,9 +16,10 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
-import Language.Mimsa.Modules.Uses
+import Language.Mimsa.Modules.Parse
 import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
@@ -28,15 +29,16 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker
 
-checkModule :: Text -> 
-  Map ModuleHash (Module Annotation) -> Either (Error Annotation) (Module (Type Annotation), MonoType)
+checkModule ::
+  Text ->
+  Map ModuleHash (Module Annotation) ->
+  Either (Error Annotation) (Module (Type Annotation), MonoType)
 checkModule input modules = runCheck input modules (checkModule' input)
 
 -- | This is where we load a file and check that it is "OK" as such
@@ -66,7 +68,7 @@ checkModule' input = do
 
   pure (tcMod, getModuleType tcMod)
 
--- given up stream modules, typecheck a module
+-- given the upstream modules, typecheck a module
 -- 1. recursively fetch imports from Reader environment
 -- 2. setup builder input
 -- 3. do it!
@@ -116,7 +118,7 @@ typecheckAllModuleDefs typecheckedDeps inputModule = do
   let state =
         Build.State
           { Build.stInputs =
-              ( \(name, (expr, deps)) ->
+              ( \(name, (expr, deps, _)) ->
                   Build.Plan
                     { Build.jbDeps = deps,
                       Build.jbInput = (name, expr)
@@ -147,50 +149,13 @@ getModuleType mod' =
           (moExpressions mod')
    in MTRecord mempty (getTypeFromAnn <$> filterNameDefs defs)
 
-filterDefs :: Set Entity -> Set DefIdentifier
-filterDefs =
-  S.fromList
-    . mapMaybe
-      ( \case
-          EName name -> Just (DIName name)
-          EInfix infixOp -> Just (DIInfix infixOp)
-          _ -> Nothing
-      )
-    . S.toList
-
--- get the vars used by each def
--- explode if there's not available
-getValueDependencies ::
-  (Eq ann, Monoid ann) =>
-  Module ann ->
-  CheckM
-    ( Map
-        DefIdentifier
-        ( Expr Name ann,
-          Set DefIdentifier
-        )
-    )
-getValueDependencies mod' = do
-  let check exp' =
-        let nameDeps = filterDefs (extractUses exp')
-            unknownNameDeps =
-              S.filter
-                ( \dep ->
-                    S.notMember dep (M.keysSet (moExpressions mod'))
-                      && S.notMember dep (M.keysSet (moExpressionImports mod'))
-                )
-                nameDeps
-         in if S.null unknownNameDeps
-              then
-                let localNameDeps =
-                      S.filter
-                        ( `S.member`
-                            M.keysSet (moExpressions mod')
-                        )
-                        nameDeps
-                 in pure (exp', localNameDeps)
-              else throwError (ModuleErr (CannotFindValues unknownNameDeps))
-  traverse check (moExpressions mod')
+lookupModuleDefType :: Module (Type Annotation) -> DefIdentifier -> Maybe (Type Annotation)
+lookupModuleDefType mod' defId =
+  let defs =
+        M.filterWithKey
+          (\k _ -> S.member k (moExpressionExports mod'))
+          (moExpressions mod')
+   in getTypeFromAnn <$> M.lookup defId defs
 
 -- pass types to the typechecker
 makeTypeDeclMap ::

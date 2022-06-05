@@ -1,18 +1,21 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Actions.Evaluate
   ( evaluate,
-  evaluateModule
+    evaluateModule,
   )
 where
 
-import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Types.Modules
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
+import Data.Maybe (fromJust)
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Text (Text)
+import Debug.Trace
 import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
@@ -20,12 +23,21 @@ import qualified Language.Mimsa.Actions.Interpret as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
+import Language.Mimsa.Modules.Check
+import Language.Mimsa.Modules.Compile
+import Language.Mimsa.Modules.Monad
+import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
+import Language.Mimsa.Types.Modules.DefIdentifier
+import Language.Mimsa.Types.Modules.Entity
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
@@ -72,7 +84,7 @@ evaluate input expr = do
 
   -- interpret
   interpretedExpr <-
-    Actions.interpreter newStoreExpr -- liftEither (first InterpreterErr (interpret scope' swaps expr'))
+    Actions.interpreter newStoreExpr
 
   -- print any warnings
   traverse_ (Actions.appendMessage . prettyPrint) (getWarnings resolved)
@@ -91,6 +103,26 @@ evaluate input expr = do
 
 ---------
 
+-- we need to bind our new expression to _something_
+-- so we make a `Name` which is strictly broken, but it means
+-- we won't have name collisions with a real expression
+evalId :: DefIdentifier
+evalId = DIName (Name "_repl")
+
+-- given deps that this expression requires, attempt to resolve these into
+-- imports we'll need from the Project environment
+importsFromEntities :: Set Entity -> Actions.ActionM (Module Annotation)
+importsFromEntities uses = do
+  prj <- Actions.getProject
+  let fromEntity = \case
+        ENamespacedName modName _ ->
+          case lookupModuleName prj modName of
+            Just modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
+            _ -> throwError undefined
+        _ -> pure mempty
+  imports <- traverse fromEntity (S.toList uses)
+  pure (mconcat imports)
+
 -- when we evaluate an expression, really we are adding it to an open module
 -- then evaluating the expression in the context of that module
 -- this means we can bind successive values
@@ -101,21 +133,53 @@ evaluate input expr = do
 -- 2. turns those into a module (ie, implied imports, new defs etc)
 -- 3. combine that with the local module
 -- 4. typecheck it
--- 5. get the expression type from the module typ
--- 6. run the new expression
-evaluateModule :: Text -> Expr Name Annotation -> Module Annotation -> 
+-- 5. get the expression type from the module type
+-- 6. compile into store expressions
+-- 6. interpret store expressions as normal
+evaluateModule ::
+  Text ->
+  Expr Name Annotation ->
+  Module Annotation ->
   Actions.ActionM (MonoType, Expr Name Annotation, Module Annotation)
-evaluateModule _input expr localModule = do
+evaluateModule input expr localModule = do
   -- work out implied imports
-  let _uses = extractUses expr
-  
-  -- make a big module for it
-  let newModule = localModule
+  moduleImports <- importsFromEntities (extractUses expr)
 
-  _typecheckedModule <- Actions.typecheckModule (prettyPrint newModule) newModule
+  -- make a module for it, adding our expression as _repl
+  let newModule =
+        localModule
+          { moExpressions =
+              M.singleton evalId expr,
+            moExpressionExports = S.singleton evalId
+          }
+          <> moduleImports
 
-  let exprType = MTPrim mempty MTBool
+  typecheckedModule <- Actions.typecheckModule (prettyPrint newModule) newModule
 
-  let evaluatedExpression = expr 
+  compiled <- compileModule input typecheckedModule
+
+  -- find the root StoreExpression by name
+  rootStoreExpr <- case M.lookup evalId (cmExprs compiled) >>= flip M.lookup (getStore $ cmStore compiled) of
+    Just se -> pure se
+    _ -> error "fuck, could not find the thing we just made"
+
+  -- YOLO, cheat here for now
+  let exprType = fromJust (lookupModuleDefType typecheckedModule evalId)
+
+  -- need to get our new store items into the project so this works I reckon
+
+  -- interpret
+  evaluatedExpression <-
+    Actions.interpreter (traceShowId rootStoreExpr)
 
   pure (exprType, evaluatedExpression, newModule)
+
+-- turn the module back into a bunch of StoreExpressions for interpreting etc
+compileModule ::
+  Text ->
+  Module (Type Annotation) ->
+  Actions.ActionM (CompiledModule Annotation)
+compileModule input inputModule = do
+  modules <- prjModuleStore <$> Actions.getProject
+
+  liftEither $ runCheck input modules (compile inputModule)

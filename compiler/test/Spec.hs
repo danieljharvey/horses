@@ -21,6 +21,8 @@ import qualified Test.Codegen as Codegen
 import Test.Hspec
 import qualified Test.Interpreter.Repl as Repl
 import qualified Test.Modules.CheckModule as CheckModule
+import qualified Test.Modules.Compile as ModuleCompile
+import qualified Test.Modules.Repl as ModuleRepl
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
 import qualified Test.Parser.Pattern as Pattern
 import qualified Test.Parser.Syntax as Syntax
@@ -55,7 +57,6 @@ import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
-import qualified Test.Modules.Repl as ModuleRepl
 
 main :: IO ()
 main =
@@ -112,3 +113,4 @@ main =
     CheckModule.spec
     RenderErrors.spec
     ModuleRepl.spec
+    ModuleCompile.spec

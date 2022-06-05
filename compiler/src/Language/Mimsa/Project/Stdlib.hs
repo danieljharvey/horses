@@ -15,23 +15,22 @@ where
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Types.Modules
-import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
-import qualified Language.Mimsa.Actions.BindModule as Actions
-
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
+import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
+import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Modules.Prelude
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
 buildStdlib =
@@ -54,7 +53,7 @@ allFns = do
 
 -- | these are files in /static/modules folder that we import
 modules :: Actions.ActionM ()
-modules = do 
+modules = do
   addModule "Maybe" maybeInput
   addModule "Prelude" preludeInput
 
@@ -279,12 +278,12 @@ addType t = do
 
 addBinding :: Name -> Text -> Actions.ActionM ()
 addBinding name b = do
-  expr <-  Actions.parseExpr b
-  _ <- Actions.bindExpression expr name b 
-  pure () 
+  expr <- Actions.parseExpr b
+  _ <- Actions.bindExpression expr name b
+  pure ()
 
 addModule :: ModuleName -> Text -> Actions.ActionM ()
-addModule moduleName input = do 
+addModule moduleName input = do
   mod' <- Actions.parseModule input
   _ <- Actions.bindModule mod' moduleName input
   pure ()

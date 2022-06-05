@@ -6,11 +6,11 @@ module Test.Actions.BindModule
   )
 where
 
-import Language.Mimsa.Modules.Prelude
 import Data.Maybe (isJust)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.Project
@@ -18,9 +18,9 @@ import Test.Data.Project
 import Test.Hspec
 
 newModules :: Project ann -> Project ann -> Int
-newModules old new = 
-  let countModules = length .  prjModuleStore
-  in countModules new - countModules old
+newModules old new =
+  let countModules = length . prjModuleStore
+   in countModules new - countModules old
 
 spec :: Spec
 spec = do
@@ -30,8 +30,8 @@ spec = do
         Left _ -> error "Should not have failed"
         Right (newProject, outcomes, _) -> do
           -- one more item in module store
-          newModules testStdlib newProject 
-            `shouldBe` 1 
+          newModules testStdlib newProject
+            `shouldBe` 1
           -- one more binding
           lookupModuleName
             newProject
@@ -40,4 +40,3 @@ spec = do
           -- one new store expression
           S.size (Actions.modulesFromOutcomes outcomes)
             `shouldBe` 1
-
