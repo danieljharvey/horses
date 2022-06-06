@@ -13,7 +13,7 @@ import Language.Mimsa.Types.Identifiers
 -- don't use it
 floatDownInternal :: Expr Name ann -> Expr Name ann
 floatDownInternal original@(MyLet ann ident expr (MyPatternMatch pAnn matchExpr pats)) =
-  if memberInUses (extractIdentVar ident) (findUses matchExpr) -- if let var is in the matchExpr, don't float up
+  if memberInUses (extractIdentVar ident) Nothing (findUses matchExpr) -- if let var is in the matchExpr, don't float up
     then original
     else
       let newPatterns = second (MyLet ann ident expr) <$> pats

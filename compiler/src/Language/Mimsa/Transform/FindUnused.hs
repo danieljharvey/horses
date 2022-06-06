@@ -77,7 +77,7 @@ removeBindingsInPattern remove = f
 findUnused :: (Ord ann, Ord var) => Expr var ann -> Set (var, ann)
 findUnused expr =
   let uses = findUses expr
-   in S.filter (\(var, _) -> not $ memberInUses var uses) (findVariables expr)
+   in S.filter (\(var, _) -> not $ memberInUses var Nothing uses) (findVariables expr)
 
 -- | find all variables introduced into expression
 -- | we don't need to worry about shadowing because we'll have made everything

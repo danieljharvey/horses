@@ -35,7 +35,7 @@ testStoreExpr :: StoreExpression Annotation
 testStoreExpr =
   StoreExpression
     testExpr
-    (Bindings $ M.singleton "incrementInt" incrementIntH)
+    ( M.singleton (Nothing,"incrementInt") incrementIntH)
     mempty
 
 idHash :: ExprHash
@@ -53,7 +53,7 @@ testingStoreExpr :: StoreExpression Annotation
 testingStoreExpr =
   StoreExpression
     testingIdExpr
-    (Bindings $ M.singleton "id" idHash)
+    (M.singleton (Nothing,"id") idHash)
     mempty
 
 altIdStoreExpr :: StoreExpression Annotation

@@ -3,6 +3,7 @@
 
 module Language.Mimsa.Types.Error.StoreError (StoreError (..), FileType (..)) where
 
+import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
@@ -22,7 +23,7 @@ data StoreError
   | CouldNotDecodeJson ExprHash
   | CouldNotDecodeFile FilePath
   | CouldNotDecodeByteString
-  | CouldNotFindExprHashForBindings [Name]
+  | CouldNotFindExprHashForBindings [(Maybe ModuleName, Name)]
   | CouldNotFindExprHashForTypeBindings [TyCon]
   | CouldNotFindBinding Name
   | CouldNotFindStoreExpression ExprHash

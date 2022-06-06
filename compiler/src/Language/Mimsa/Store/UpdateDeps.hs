@@ -4,6 +4,11 @@ module Language.Mimsa.Store.UpdateDeps
   )
 where
 
+import qualified Data.Map as M
+import Data.Bifunctor
+import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Types.Identifiers.Name
+import Data.Map (Map)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
@@ -18,25 +23,23 @@ updateExprHash ::
   StoreExpression Annotation ->
   ExprHash ->
   ExprHash ->
-  Bindings
+  Map (Maybe ModuleName, Name) ExprHash
 updateExprHash se oldHash newHash =
-  Bindings $
     (\hash -> if hash == oldHash then newHash else hash)
-      <$> getBindings (storeBindings se)
+      <$> storeBindings se
 
 updateStoreExpressionBindings ::
   Project Annotation ->
-  Bindings ->
+  Map (Maybe ModuleName, Name) ExprHash -> 
   StoreExpression Annotation ->
   Either (Error Annotation) (StoreExpression Annotation)
 updateStoreExpressionBindings project newBindings se = do
   let newProject =
         project
           { prjBindings =
-              bindingsToVersioned $
-                combine
-                  newBindings
-                  (storeBindings se),
+              toVersioned (binOffModule $
+                  newBindings <>
+                  storeBindings se),
             prjTypeBindings =
               typeBindingsToVersioned
                 (storeTypeBindings se)
@@ -49,6 +52,5 @@ updateStoreExpressionBindings project newBindings se = do
       )
   pure (reStoreExpression resolvedExpr)
 
-combine :: Bindings -> Bindings -> Bindings
-combine (Bindings a) (Bindings b) =
-  Bindings (a <> b)
+binOffModule :: (Ord k2) => Map (k1,k2) a -> Map k2 a
+binOffModule = M.fromList . fmap (first snd) . M.toList

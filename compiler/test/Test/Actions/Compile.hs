@@ -53,7 +53,7 @@ spec = do
     it "Doesn't break when using bindings that aren't in the store" $ do
       let expr = MyVar mempty Nothing "id2"
       let exprHashForId = getHashOfName testStdlib "id"
-      let bindings = Bindings (M.singleton "id2" exprHashForId)
+      let bindings = M.singleton (Nothing,"id2") exprHashForId
       let storeExpr = StoreExpression expr bindings mempty
       let action = do
             Actions.compile Typescript storeExpr

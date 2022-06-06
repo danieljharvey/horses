@@ -52,7 +52,7 @@ outputStoreExpression ::
 outputStoreExpression be dataTypes store mt se = do
   let deps =
         renderImport' be
-          <$> M.toList (getBindings $ storeBindings se)
+          <$> M.toList ( storeBindings se)
   let typeDeps =
         renderTypeImport' be
           <$> M.toList (typeBindingsByType store (storeTypeBindings se))
@@ -111,14 +111,14 @@ makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName
 makeTypeDepMap (ResolvedTypeDeps rtd) =
   (\(_, DataType typeName _ _) -> typeName) <$> rtd
 
-renderImport' :: Backend -> (Name, ExprHash) -> Text
-renderImport' Typescript (name, hash') =
+renderImport' :: Backend -> ((a,Name), ExprHash) -> Text
+renderImport' Typescript ((_,name), hash') =
   "import { main as "
     <> coerce name
     <> " } from \"./"
     <> moduleFilename Typescript hash'
     <> "\";\n"
-renderImport' ESModulesJS (name, hash') =
+renderImport' ESModulesJS ((_,name), hash') =
   "import { main as "
     <> coerce name
     <> " } from \"./"

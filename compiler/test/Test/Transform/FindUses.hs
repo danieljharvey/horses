@@ -22,7 +22,7 @@ spec = do
         `shouldBe` mempty
     it "One in var uses" $ do
       findUses (unsafeParseExpr "let a = 1 in a")
-        `shouldBe` Uses (M.singleton "a" (Sum 1))
+        `shouldBe` Uses (M.singleton (Nothing,"a") (Sum 1))
     it "Does not find uses of a var in it's own recursive def" $ do
       findUses (unsafeParseExpr "let a b = if b == 0 then 0 else a (b - 1) in a")
-        `shouldBe` Uses (M.fromList [("a", Sum 1), ("b", Sum 2)])
+        `shouldBe` Uses (M.fromList [((Nothing,"a"), Sum 1), ((Nothing,"b"), Sum 2)])

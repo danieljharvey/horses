@@ -10,6 +10,7 @@ module Language.Mimsa.Transform.Inliner
   )
 where
 
+import Language.Mimsa.Types.Modules.ModuleName
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map (Map)
@@ -77,10 +78,11 @@ inline = repeatUntilEq (inlineInternal (InlineState mempty))
 storeExprInState ::
   (Ord var, MonadState (InlineState var ann) m) =>
   var ->
+    Maybe ModuleName ->
   Expr var ann ->
   m ()
-storeExprInState var expr =
-  let isRecursive = memberInUses var (findUses expr)
+storeExprInState var modName expr =
+  let isRecursive = memberInUses var modName (findUses expr)
       inlineItem = InlineItem expr (if isRecursive then Recursive else NotRecursive)
    in modify
         ( \s ->
@@ -98,15 +100,15 @@ lookupVar ::
 lookupVar var = do
   gets (M.lookup var . isExpressions)
 
-getUsesCount :: (Ord var) => var -> InlineM var ann VarUses
-getUsesCount var = do
-  i <- asks (numberOfUses var . ieUses)
+getUsesCount :: (Ord var) => var -> Maybe ModuleName -> InlineM var ann VarUses
+getUsesCount var modName = do
+  i <- asks (numberOfUses var modName . ieUses)
   pure (VarUses i)
 
-substituteVar :: (Ord var) => var -> InlineM var ann (Maybe (Expr var ann))
-substituteVar var = do
-  maybeItem <- lookupVar var
-  uses <- getUsesCount var
+substituteVar :: (Ord var) => var -> Maybe ModuleName -> InlineM var ann (Maybe (Expr var ann))
+substituteVar var modName = do
+  maybeItem <- lookupVar var 
+  uses <- getUsesCount var modName
   inLambda <- asks ieIsWithinLambda
   case maybeItem of
     Just item
@@ -122,13 +124,13 @@ inlineExpression (MyDefineInfix ann op f rest) =
   -- don't inline infix definition as it ruins let generalisation
   MyDefineInfix ann op f <$> inlineExpression rest
 inlineExpression (MyLet ann ident expr rest) = do
-  storeExprInState (nameFromIdent ident) expr
+  storeExprInState (nameFromIdent ident) Nothing expr
   MyLet ann ident <$> inlineExpression expr <*> inlineExpression rest
-inlineExpression (MyVar ann Nothing var) = do
-  substitute <- substituteVar var
+inlineExpression (MyVar ann modName var) = do
+  substitute <- substituteVar var modName
   case substitute of
     Just new -> pure new
-    _ -> pure (MyVar ann Nothing var)
+    _ -> pure (MyVar ann modName var)
 inlineExpression (MyLambda ann ident body) = do
   body' <- withinLambda (inlineExpression body)
   pure (MyLambda ann ident body')

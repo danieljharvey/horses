@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-
+  {-# LANGUAGE OverloadedStrings #-}
 module Server.Helpers.ExpressionData
   ( ExpressionData (..),
     UnitTestData (..),
@@ -11,6 +11,10 @@ module Server.Helpers.ExpressionData
   )
 where
 
+import Data.Coerce
+import Data.Bifunctor
+import qualified Data.Map as M
+import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import Data.OpenApi hiding (get)
@@ -43,6 +47,13 @@ data ExpressionData = ExpressionData
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
+sanitiseBindings :: Map (Maybe ModuleName, Name) ExprHash -> Map Name Text
+sanitiseBindings = M.fromList . fmap (bimap combineName prettyPrint) . M.toList
+  where 
+    combineName (modName, name') = case modName of
+                                    Just m -> coerce m <> "." <> name'
+                                    _ ->  name'
+
 makeExpressionData ::
   StoreExpression Annotation ->
   Expr Name MonoType ->
@@ -58,7 +69,7 @@ makeExpressionData se typedExpr gv input warnings canOptimise =
         (prettyPrint exprHash)
         (prettyPrint (storeExpression se))
         (prettyPrint mt)
-        (prettyPrint <$> getBindings (storeBindings se))
+        (sanitiseBindings (storeBindings se))
         (prettyPrint <$> getTypeBindings (storeTypeBindings se))
         (prettyGraphviz gv)
         (getExpressionSourceItems input typedExpr)

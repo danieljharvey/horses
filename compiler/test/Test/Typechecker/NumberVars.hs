@@ -182,6 +182,6 @@ spec = do
                 mempty
                 (MyVar mempty Nothing ("id", Dependency hash))
                 (MyVar mempty Nothing ("id", Dependency hash))
-            bindings = Bindings (M.singleton "id" hash)
+            bindings = M.singleton (Nothing,"id") hash
             ans = testAddNumbers (StoreExpression expr bindings mempty)
         ans `shouldBe` Right expected

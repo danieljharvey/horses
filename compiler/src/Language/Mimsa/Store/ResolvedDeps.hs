@@ -5,6 +5,7 @@ module Language.Mimsa.Store.ResolvedDeps
   )
 where
 
+import Language.Mimsa.Types.Modules.ModuleName
 import Data.Either (partitionEithers)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -17,8 +18,9 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 
 -- given a list of bindings and the store, grab them all
-resolveDeps :: Store ann -> Bindings -> Either StoreError (ResolvedDeps ann)
-resolveDeps (Store items) (Bindings bindings') =
+resolveDeps :: Store ann -> Map (Maybe ModuleName, Name) ExprHash -> 
+    Either StoreError (ResolvedDeps ann)
+resolveDeps (Store items) bindings' =
   case partitionEithers foundItems of
     ([], found) -> Right (ResolvedDeps (M.fromList found))
     (fails, _) -> Left $ CouldNotFindExprHashForBindings fails

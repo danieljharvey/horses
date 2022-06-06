@@ -52,8 +52,9 @@ addNumbersToStoreExpression storeExpr =
         -- add dependencies to scope
         let varsFromDeps =
               mconcat $
-                (\(name, hash) -> M.singleton (name, Nothing) (Dependency hash))
-                  <$> M.toList (getBindings (storeBindings storeExpr))
+                (\((modName,name), hash) -> 
+                                                M.singleton (name, modName) (Dependency hash))
+                  <$> M.toList (storeBindings storeExpr)
         -- evaluate rest of expression using these
         withLambda
           varsFromDeps

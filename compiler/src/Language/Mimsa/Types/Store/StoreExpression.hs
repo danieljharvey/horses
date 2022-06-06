@@ -10,14 +10,16 @@ import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store.Bindings
 import Language.Mimsa.Types.Store.TypeBindings
+import Data.Map (Map)
+import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Types.Store.ExprHash
 
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside
 data StoreExpression ann = StoreExpression
   { storeExpression :: Expr Name ann,
-    storeBindings :: Bindings,
+    storeBindings :: Map (Maybe ModuleName, Name) ExprHash,
     storeTypeBindings :: TypeBindings
   }
   deriving stock

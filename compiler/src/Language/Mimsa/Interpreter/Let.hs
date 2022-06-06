@@ -53,4 +53,4 @@ interpretLet interpretFn ident expr body = do
 
 isRecursive :: (Ord var) => var -> Expr var ann -> Bool
 isRecursive var expr =
-  memberInUses var (findUses expr)
+  memberInUses var Nothing (findUses expr)
