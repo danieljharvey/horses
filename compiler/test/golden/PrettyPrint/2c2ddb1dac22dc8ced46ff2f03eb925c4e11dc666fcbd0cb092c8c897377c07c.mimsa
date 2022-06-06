@@ -1,9 +1,0 @@
-\mf ->
-  \ma ->
-    match ((mf, ma)) with 
-        (Right f, Right a) -> 
-          (Right (f a))
-      | (Left e, _) -> 
-          (Left e)
-      | (_, Left e) -> 
-          (Left e)

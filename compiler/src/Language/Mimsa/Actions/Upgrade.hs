@@ -157,9 +157,9 @@ replaceDeps ::
   StoreExpression ann
 replaceDeps replacements se =
   let replace oldHash = maybe oldHash snd (M.lookup oldHash replacements)
-      newBindings = replace <$> getBindings (storeBindings se)
+      newBindings = replace <$> storeBindings se
       newTypeBindings = replace <$> getTypeBindings (storeTypeBindings se)
    in se
-        { storeBindings = Bindings newBindings,
+        { storeBindings = newBindings,
           storeTypeBindings = TypeBindings newTypeBindings
         }

@@ -1,0 +1,1 @@
+{"storeBindings":[[[null,"id"],"177e7ddb0df8237a4e9b0376761fc0c74b397052e21fc43b7ef508cc18af7e80"]],"storeExpression":{"expAnn":null,"expArg":{"expAnn":null,"expLit":{"litInt":1,"tag":"MyInt"},"tag":"MyLiteral"},"expFunc":{"expAnn":null,"expModuleName":null,"expVar":"id","tag":"MyVar"},"tag":"MyApp"},"storeTypeBindings":{}}

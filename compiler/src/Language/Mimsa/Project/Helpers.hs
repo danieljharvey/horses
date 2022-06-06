@@ -14,8 +14,9 @@ module Language.Mimsa.Project.Helpers
     findAnyTypeBindingNameForExprHash,
     lookupExprHash,
     lookupExprHashFromStore,
-    bindingsToVersioned,
     typeBindingsToVersioned,
+    bindingsToVersioned,
+    toVersioned,
     projectFromSaved,
     projectToSaved,
     getCurrentBindings,
@@ -29,6 +30,7 @@ module Language.Mimsa.Project.Helpers
   )
 where
 
+import Data.Bifunctor
 import Data.Coerce
 import Data.Either
 import qualified Data.List.NonEmpty as NE
@@ -124,12 +126,15 @@ fromPropertyTest test storeExpr =
 fromStore :: Store ann -> Project ann
 fromStore store' = mempty {prjStore = store'}
 
+removeNamespaceFromKey :: (Ord k2) => Map (k1, k2) a -> Map k2 a
+removeNamespaceFromKey = M.fromList . fmap (first snd) . M.toList
+
 -- | create a project where all the bindings of a store expression are
 -- available in global scope
 fromStoreExpressionDeps :: StoreExpression ann -> Project ann
 fromStoreExpressionDeps se =
   mempty
-    { prjBindings = bindingsToVersioned (storeBindings se),
+    { prjBindings = toVersioned (removeNamespaceFromKey $ storeBindings se),
       prjTypeBindings = typeBindingsToVersioned (storeTypeBindings se)
     }
 
@@ -197,6 +202,9 @@ findAnyTypeBindingNameForExprHash exprHash project =
         [(tyCon, _)] -> Just tyCon
         _ -> Nothing
 
+toVersioned :: Map k a -> VersionedMap k a
+toVersioned b = VersionedMap (pure <$> b)
+
 bindingsToVersioned :: Bindings -> VersionedBindings
 bindingsToVersioned (Bindings b) = VersionedMap (pure <$> b)
 
@@ -217,7 +225,7 @@ getItemsForAllVersions versioned =
 
 getDependencyHashes :: StoreExpression ann -> Set ExprHash
 getDependencyHashes =
-  S.fromList . M.elems . getBindings . storeBindings
+  S.fromList . M.elems . storeBindings
     <> S.fromList . M.elems . getTypeBindings . storeTypeBindings
 
 removeBinding :: Project ann -> Name -> Project ann

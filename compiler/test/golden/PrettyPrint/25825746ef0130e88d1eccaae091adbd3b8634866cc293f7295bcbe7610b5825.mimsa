@@ -1,3 +1,0 @@
-\state ->
-  \s ->
-    let (State sas) = state in (sas s)

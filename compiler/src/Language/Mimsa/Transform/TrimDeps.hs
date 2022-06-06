@@ -13,8 +13,7 @@ trimDeps :: StoreExpression ann -> Expr Name ann -> StoreExpression ann
 trimDeps se newExpr =
   let vars = findUses newExpr
       newBindings =
-        Bindings $
-          M.filterWithKey
-            (\k _ -> memberInUses k vars)
-            (getBindings (storeBindings se))
+        M.filterWithKey
+          (\(modName, k) _ -> memberInUses k modName vars)
+          (storeBindings se)
    in se {storeExpression = newExpr, storeBindings = newBindings}

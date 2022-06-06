@@ -105,7 +105,7 @@ spec =
         storeExpr
           `shouldBe` Right
             ( StoreExpression
-                { storeBindings = Bindings $ M.singleton (Name "missing") hash,
+                { storeBindings = M.singleton (Nothing, Name "missing") hash,
                   storeExpression = expr,
                   storeTypeBindings = mempty
                 }

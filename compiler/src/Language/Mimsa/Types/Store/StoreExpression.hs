@@ -6,18 +6,20 @@
 module Language.Mimsa.Types.Store.StoreExpression where
 
 import qualified Data.Aeson as JSON
+import Data.Map (Map)
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store.Bindings
+import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Store.TypeBindings
 
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside
 data StoreExpression ann = StoreExpression
   { storeExpression :: Expr Name ann,
-    storeBindings :: Bindings,
+    storeBindings :: Map (Maybe ModuleName, Name) ExprHash,
     storeTypeBindings :: TypeBindings
   }
   deriving stock

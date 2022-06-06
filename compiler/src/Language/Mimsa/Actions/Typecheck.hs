@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Actions.Typecheck
   ( typecheckStoreExpression,
@@ -64,13 +65,16 @@ getType depTypeMap dataTypes input expr = do
 -- and some bindings, match them to the names and pull out their types
 makeTypeMap ::
   Map ExprHash (ResolvedExpression Annotation) ->
-  Bindings ->
+  Map (Maybe ModuleName, Name) ExprHash ->
   Actions.ActionM (Map Name MonoType)
 makeTypeMap resolvedDeps bindings = do
   let lookupRe exprHash = case M.lookup exprHash resolvedDeps of
         Just re -> pure (reMonoType re)
         Nothing -> throwError (StoreErr (CouldNotFindStoreExpression exprHash))
-  traverse lookupRe (getBindings bindings)
+  removeModuleNames <$> traverse lookupRe bindings
+
+removeModuleNames :: (Ord k2) => Map (k1, k2) a -> Map k2 a
+removeModuleNames = M.fromList . fmap (first snd) . M.toList
 
 -- | "better" version of this
 substituteAndTypecheck ::
@@ -113,7 +117,7 @@ typecheckStoreExpressions inputStoreExpressions = do
                   Build.Plan
                     { Build.jbDeps =
                         S.fromList
-                          ( M.elems (getBindings (storeBindings storeExpr))
+                          ( M.elems (storeBindings storeExpr)
                               <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
                           ),
                       Build.jbInput = (storeExpr, input)
@@ -183,7 +187,17 @@ typeMapForProjectSearch = do
   -- typecheck everything
   resolvedMap <- typecheckStoreExpressions (mconcat manyMaps)
   -- make into a nice type map
-  makeTypeMap resolvedMap bindings
+  makeTypeMap resolvedMap (bindingsToModuleThing bindings)
+
+bindingsToModuleThing :: Bindings -> Map (Maybe ModuleName, Name) ExprHash
+bindingsToModuleThing (Bindings b) =
+  M.fromList
+    . fmap (first (Nothing,))
+    . M.toList
+    $ b
+
+bindingsFromModuleThing :: Map (Maybe ModuleName, Name) ExprHash -> Bindings
+bindingsFromModuleThing = Bindings . M.fromList . fmap (first snd) . M.toList
 
 annotateStoreExpressionWithTypes ::
   StoreExpression Annotation ->
@@ -195,7 +209,7 @@ annotateStoreExpressionWithTypes storeExpr = do
   let typecheckProject =
         Project
           (prjStore project)
-          (bindingsToVersioned (storeBindings storeExpr))
+          (bindingsToVersioned (bindingsFromModuleThing (storeBindings storeExpr)))
           (typeBindingsToVersioned (storeTypeBindings storeExpr))
           mempty
 

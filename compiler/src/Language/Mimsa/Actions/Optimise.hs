@@ -32,6 +32,7 @@ import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
@@ -151,14 +152,13 @@ optimiseStoreExpression storeExpr =
 
     pure newStoreExpr
 
-updateBindings :: Map ExprHash ExprHash -> Bindings -> Bindings
-updateBindings swaps (Bindings bindings) =
-  Bindings $
+updateBindings :: Map ExprHash ExprHash -> Map (Maybe ModuleName, Name) ExprHash -> Map (Maybe ModuleName, Name) ExprHash
+updateBindings swaps =
+  fmap
     ( \exprHash -> case M.lookup exprHash swaps of
         Just newExprHash -> newExprHash
         _ -> exprHash
     )
-      <$> bindings
 
 updateTypeBindings :: Map ExprHash ExprHash -> TypeBindings -> TypeBindings
 updateTypeBindings swaps (TypeBindings bindings) =
@@ -201,7 +201,7 @@ optimiseAll inputStoreExpressions = do
                   Build.Plan
                     { Build.jbDeps =
                         S.fromList
-                          ( M.elems (getBindings (storeBindings storeExpr))
+                          ( M.elems (storeBindings storeExpr)
                               <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
                           ),
                       Build.jbInput = storeExpr

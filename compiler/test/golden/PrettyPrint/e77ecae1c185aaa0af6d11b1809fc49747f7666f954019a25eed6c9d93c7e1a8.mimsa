@@ -1,3 +1,0 @@
-type Blap a    = Boop a Int;
-
-let (a, _) = ((True, 100)) in a

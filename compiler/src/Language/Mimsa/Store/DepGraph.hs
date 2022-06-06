@@ -72,11 +72,11 @@ createDepGraph name (Store store') storeExpr' = Func depInfo leaves
   where
     depInfo = DepInfo (name, getStoreExpressionHash storeExpr')
     leaves =
-      ( \(name', hash) ->
+      ( \((_, name'), hash) ->
           createDepGraph name' (Store store') (store' ! hash)
       )
         <$> children
-    children = M.toList . getBindings . storeBindings $ storeExpr'
+    children = M.toList . storeBindings $ storeExpr'
 
 createGraphviz :: DepGraph -> [Graphviz]
 createGraphviz (Func (DepInfo (rootName, exprHash)) deps) =
