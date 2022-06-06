@@ -1,3 +1,0 @@
-type OhNat    = Suc OhNat String | Zero;
-
-Suc
