@@ -126,7 +126,7 @@ fromPropertyTest test storeExpr =
 fromStore :: Store ann -> Project ann
 fromStore store' = mempty {prjStore = store'}
 
-removeNamespaceFromKey :: (Ord k2) => Map (k1,k2) a -> Map k2 a
+removeNamespaceFromKey :: (Ord k2) => Map (k1, k2) a -> Map k2 a
 removeNamespaceFromKey = M.fromList . fmap (first snd) . M.toList
 
 -- | create a project where all the bindings of a store expression are
@@ -225,7 +225,7 @@ getItemsForAllVersions versioned =
 
 getDependencyHashes :: StoreExpression ann -> Set ExprHash
 getDependencyHashes =
-  S.fromList . M.elems .  storeBindings
+  S.fromList . M.elems . storeBindings
     <> S.fromList . M.elems . getTypeBindings . storeTypeBindings
 
 removeBinding :: Project ann -> Name -> Project ann

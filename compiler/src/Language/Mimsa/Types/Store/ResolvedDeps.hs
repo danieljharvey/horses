@@ -8,15 +8,15 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Store.StoreExpression
 import Prettyprinter
-import Language.Mimsa.Types.Modules.ModuleName
 
 newtype ResolvedDeps a = ResolvedDeps
   { getResolvedDeps ::
       Map
-        (Maybe ModuleName,Name)
+        (Maybe ModuleName, Name)
         (ExprHash, StoreExpression a)
   }
   deriving newtype (Semigroup, Monoid)

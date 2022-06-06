@@ -2,8 +2,9 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-  {-# LANGUAGE OverloadedStrings #-}
+
 module Server.Helpers.ExpressionData
   ( ExpressionData (..),
     UnitTestData (..),
@@ -11,12 +12,11 @@ module Server.Helpers.ExpressionData
   )
 where
 
-import Data.Coerce
-import Data.Bifunctor
-import qualified Data.Map as M
-import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Aeson as JSON
+import Data.Bifunctor
+import Data.Coerce
 import Data.Map (Map)
+import qualified Data.Map as M
 import Data.OpenApi hiding (get)
 import Data.Text (Text)
 import GHC.Generics
@@ -27,6 +27,7 @@ import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.OutputTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
@@ -49,10 +50,10 @@ data ExpressionData = ExpressionData
 
 sanitiseBindings :: Map (Maybe ModuleName, Name) ExprHash -> Map Name Text
 sanitiseBindings = M.fromList . fmap (bimap combineName prettyPrint) . M.toList
-  where 
+  where
     combineName (modName, name') = case modName of
-                                    Just m -> coerce m <> "." <> name'
-                                    _ ->  name'
+      Just m -> coerce m <> "." <> name'
+      _ -> name'
 
 makeExpressionData ::
   StoreExpression Annotation ->

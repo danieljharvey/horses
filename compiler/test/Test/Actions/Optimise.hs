@@ -27,7 +27,7 @@ idHash = getHashOfName testStdlib "id"
 useIdPointlessly :: StoreExpression Annotation
 useIdPointlessly =
   let expr = unsafeParseExpr "let useless = id 100 in True" $> mempty
-   in StoreExpression expr (M.singleton (Nothing,"id") idHash) mempty
+   in StoreExpression expr (M.singleton (Nothing, "id") idHash) mempty
 
 trueExpr :: Expr Name Annotation
 trueExpr = unsafeParseExpr "True" $> mempty

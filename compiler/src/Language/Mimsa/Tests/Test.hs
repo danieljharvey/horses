@@ -154,5 +154,5 @@ getDirectDepsOfTest prj test =
 getDirectDeps :: StoreExpression ann -> Set ExprHash
 getDirectDeps storeExpr =
   S.fromList $
-    M.elems ( storeBindings storeExpr)
+    M.elems (storeBindings storeExpr)
       <> M.elems (getTypeBindings $ storeTypeBindings storeExpr)

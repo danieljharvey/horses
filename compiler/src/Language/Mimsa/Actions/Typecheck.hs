@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
-  {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections #-}
+
 module Language.Mimsa.Actions.Typecheck
   ( typecheckStoreExpression,
     typecheckExpression,
@@ -70,7 +71,7 @@ makeTypeMap resolvedDeps bindings = do
   let lookupRe exprHash = case M.lookup exprHash resolvedDeps of
         Just re -> pure (reMonoType re)
         Nothing -> throwError (StoreErr (CouldNotFindStoreExpression exprHash))
-  removeModuleNames <$>  traverse lookupRe bindings
+  removeModuleNames <$> traverse lookupRe bindings
 
 removeModuleNames :: (Ord k2) => Map (k1, k2) a -> Map k2 a
 removeModuleNames = M.fromList . fmap (first snd) . M.toList
@@ -188,9 +189,12 @@ typeMapForProjectSearch = do
   -- make into a nice type map
   makeTypeMap resolvedMap (bindingsToModuleThing bindings)
 
-bindingsToModuleThing :: Bindings -> Map (Maybe ModuleName,Name) ExprHash
-bindingsToModuleThing (Bindings b) = M.fromList . fmap (first (Nothing, ))  . 
-    M.toList $ b
+bindingsToModuleThing :: Bindings -> Map (Maybe ModuleName, Name) ExprHash
+bindingsToModuleThing (Bindings b) =
+  M.fromList
+    . fmap (first (Nothing,))
+    . M.toList
+    $ b
 
 bindingsFromModuleThing :: Map (Maybe ModuleName, Name) ExprHash -> Bindings
 bindingsFromModuleThing = Bindings . M.fromList . fmap (first snd) . M.toList

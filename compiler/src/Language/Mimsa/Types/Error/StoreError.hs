@@ -3,10 +3,10 @@
 
 module Language.Mimsa.Types.Error.StoreError (StoreError (..), FileType (..)) where
 
-import Language.Mimsa.Types.Modules.ModuleName
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store
 
 data FileType = ProjectFile | StoreExprFile

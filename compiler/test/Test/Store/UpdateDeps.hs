@@ -24,12 +24,11 @@ spec = do
       let storeExpr =
             StoreExpression
               (bool True)
-              ( M.singleton (Nothing,"dog") (ExprHash "1"))
+              (M.singleton (Nothing, "dog") (ExprHash "1"))
               mempty
       updateExprHash storeExpr (ExprHash "1") (ExprHash "2")
-        `shouldBe` 
-          ( M.singleton (Nothing,"dog") (ExprHash "2")
-          )
+        `shouldBe` ( M.singleton (Nothing, "dog") (ExprHash "2")
+                   )
   describe
     "UpdateDeps"
     $ do
@@ -40,12 +39,12 @@ spec = do
       it "Replacing function with one that doesn't typecheck fails" $ do
         let storeExpr = getStoreExpression testStdlib (getHashOfName testStdlib "incrementInt")
         let newHash = getHashOfName testStdlib "id"
-        let newBindings = M.singleton (Nothing,"addInt") newHash
+        let newBindings = M.singleton (Nothing, "addInt") newHash
         updateStoreExpressionBindings testStdlib newBindings storeExpr
           `shouldSatisfy` isLeft
       it "Replacing function with an equivalent one succeeds" $ do
         let storeExpr = getStoreExpression testStdlib (getHashOfName testStdlib "incrementInt")
         let newHash = getHashOfName testStdlib "subtractInt"
-        let newBindings = M.singleton (Nothing,"addInt") newHash
+        let newBindings = M.singleton (Nothing, "addInt") newHash
         updateStoreExpressionBindings testStdlib newBindings storeExpr
           `shouldSatisfy` isRight

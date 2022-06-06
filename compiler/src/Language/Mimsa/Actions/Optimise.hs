@@ -8,7 +8,6 @@ module Language.Mimsa.Actions.Optimise
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map (Map)
@@ -33,6 +32,7 @@ import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
@@ -152,9 +152,10 @@ optimiseStoreExpression storeExpr =
 
     pure newStoreExpr
 
-updateBindings :: Map ExprHash ExprHash -> Map (Maybe ModuleName, Name) ExprHash -> Map (Maybe ModuleName, Name) ExprHash 
+updateBindings :: Map ExprHash ExprHash -> Map (Maybe ModuleName, Name) ExprHash -> Map (Maybe ModuleName, Name) ExprHash
 updateBindings swaps =
-    fmap ( \exprHash -> case M.lookup exprHash swaps of
+  fmap
+    ( \exprHash -> case M.lookup exprHash swaps of
         Just newExprHash -> newExprHash
         _ -> exprHash
     )

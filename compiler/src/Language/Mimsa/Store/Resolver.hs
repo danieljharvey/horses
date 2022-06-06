@@ -5,9 +5,8 @@ module Language.Mimsa.Store.Resolver
   )
 where
 
-import Data.Map (Map)
-import Language.Mimsa.Types.Modules.ModuleName
 import Data.Coerce
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, isJust)
 import qualified Data.Set as S
@@ -18,6 +17,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Identifiers.TypeName
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store
 
 -- this takes the expression, works out what it needs from it's environment
@@ -54,7 +54,7 @@ findBindings ::
   Either ResolverError (Map (Maybe ModuleName, Name) ExprHash)
 findBindings bindings' expr = do
   let findValueHash name =
-        (,) (Nothing,name)
+        (,) (Nothing, name)
           <$> findHashInBindings bindings' name
   valueHashes <- traverse findValueHash (S.toList . extractVars $ expr)
   pure (M.fromList valueHashes)

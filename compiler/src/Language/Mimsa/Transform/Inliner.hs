@@ -10,7 +10,6 @@ module Language.Mimsa.Transform.Inliner
   )
 where
 
-import Language.Mimsa.Types.Modules.ModuleName
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map (Map)
@@ -20,6 +19,7 @@ import Language.Mimsa.ExprUtils
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Modules.ModuleName
 
 type InlineM var ann a =
   StateT (InlineState var ann) (Reader (InlineEnv var)) a
@@ -78,7 +78,7 @@ inline = repeatUntilEq (inlineInternal (InlineState mempty))
 storeExprInState ::
   (Ord var, MonadState (InlineState var ann) m) =>
   var ->
-    Maybe ModuleName ->
+  Maybe ModuleName ->
   Expr var ann ->
   m ()
 storeExprInState var modName expr =
@@ -107,7 +107,7 @@ getUsesCount var modName = do
 
 substituteVar :: (Ord var) => var -> Maybe ModuleName -> InlineM var ann (Maybe (Expr var ann))
 substituteVar var modName = do
-  maybeItem <- lookupVar var 
+  maybeItem <- lookupVar var
   uses <- getUsesCount var modName
   inLambda <- asks ieIsWithinLambda
   case maybeItem of
