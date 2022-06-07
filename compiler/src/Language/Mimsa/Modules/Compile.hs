@@ -97,7 +97,7 @@ toStore :: Map a (StoreExpression ann) -> Store ann
 toStore = Store . M.fromList . fmap (\a -> (getStoreExpressionHash a, a)) . M.elems
 
 compile ::
-  (Eq ann, Monoid ann) =>
+  (Eq ann, Monoid ann, Show ann) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   CheckM (CompiledModule ann)
@@ -152,13 +152,12 @@ compileModuleDefinitions compiledModules inputModule = do
 
 --- compile many modules
 compileAllModules ::
-  (Eq ann, Monoid ann) =>
+  (Eq ann, Monoid ann, Show ann) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   CheckM (Map ModuleHash (CompiledModule ann))
 compileAllModules myDeps rootModule = do
-  -- create initial state for builder
-  -- we tag each StoreExpression we've found with the deps it needs
+  -- which other modules do we need to compile in order to compile this one?
   inputWithDeps <- getModuleDeps myDeps rootModule
 
   let state =

@@ -19,7 +19,6 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 
 bimapMap :: (Ord j) => (k -> j) -> (a -> b) -> Map k a -> Map j b

@@ -16,7 +16,6 @@ import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Typechecker

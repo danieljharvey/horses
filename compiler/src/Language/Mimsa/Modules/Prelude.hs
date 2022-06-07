@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Language.Mimsa.Modules.Prelude (prelude, preludeHash, maybeInput, preludeInput) where
+module Language.Mimsa.Modules.Prelude (prelude, preludeHash, maybeInput, preludeInput, 
+      stateInput) where
 
 -- hard coding a Prelude in here for testing
 -- this is not The Way however we have a chicken/egg situation in terms of
@@ -67,5 +68,9 @@ prelude =
 maybeInput :: Text
 maybeInput = T.decodeUtf8 $(embedFile "static/modules/Maybe.mimsa")
 
+stateInput :: Text
+stateInput = T.decodeUtf8 $(embedFile "static/modules/State.mimsa")
+
 preludeInput :: Text
 preludeInput = T.decodeUtf8 $(embedFile "static/modules/Prelude.mimsa")
+

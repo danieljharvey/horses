@@ -24,7 +24,6 @@ import Language.Mimsa.Types.AST.Expr
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName

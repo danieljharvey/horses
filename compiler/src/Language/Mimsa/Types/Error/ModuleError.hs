@@ -9,7 +9,6 @@ import Error.Diagnose
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.ModuleHash
 
