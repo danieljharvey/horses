@@ -62,7 +62,7 @@ spec =
           `shouldBe` Right
             (MTPrim mempty MTInt, int 1)
 
-      it "let good = { dog: True } in good.dog" $ do
+      fit "let good = { dog: True } in good.dog" $ do
         result <- eval "let good = ({ dog: True }) in good.dog"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 

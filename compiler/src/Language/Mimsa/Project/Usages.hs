@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Language.Mimsa.Project.Usages where
 
 import Data.Bifunctor
@@ -14,11 +16,15 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 
 findUsages :: Project ann -> ExprHash -> Either StoreError (Set Usage)
-findUsages prj = 
+findUsages prj =
   findUsages_ (prjStore prj) (toModuleBindings $ getCurrentBindings $ prjBindings prj)
 
 toModuleBindings :: Bindings -> Map (Maybe ModuleName, Name) ExprHash
-toModuleBindings (Bindings b) = M.fromList . fmap (first (\a -> (Nothing, a))) . M.toList $ b
+toModuleBindings (Bindings b) =
+  M.fromList
+    . fmap (first (Nothing,))
+    . M.toList
+    $ b
 
 findUsages_ :: Store ann -> Map (Maybe ModuleName, Name) ExprHash -> ExprHash -> Either StoreError (Set Usage)
 findUsages_ store' bindings exprHash = do

@@ -69,9 +69,8 @@ runCheck input modules comp =
 getStoredInput :: CheckM Text
 getStoredInput = asks ceInput
 
-lookupModule :: ModuleHash -> CheckM (Module Annotation)
-lookupModule modHash = do
-  mods <- asks ceModules
+lookupModule :: Map ModuleHash (Module ann) -> ModuleHash -> CheckM (Module ann)
+lookupModule mods modHash = do
   case M.lookup modHash mods of
     Just foundModule -> pure foundModule
     _ -> throwError (ModuleErr (MissingModule modHash))

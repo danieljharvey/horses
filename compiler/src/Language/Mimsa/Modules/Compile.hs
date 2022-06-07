@@ -5,17 +5,21 @@ module Language.Mimsa.Modules.Compile (compile, CompiledModule (..)) where
 
 -- `compile` here means "turn it into a bunch of StoreExpressions"
 
+import Control.Monad.Except
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Dependencies
+import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Modules.DefIdentifier
@@ -28,6 +32,13 @@ data CompiledModule ann = CompiledModule
     cmExprs :: Map DefIdentifier ExprHash
   }
   deriving stock (Eq, Ord, Show)
+
+instance Semigroup (CompiledModule ann) where
+  (CompiledModule a b) <> (CompiledModule a' b') =
+    CompiledModule (a <> a') (b <> b')
+
+instance Monoid (CompiledModule ann) where
+  mempty = CompiledModule mempty mempty
 
 -- to make a store expression we need to
 -- a) work out all the deps this expression has
@@ -48,14 +59,16 @@ toStoreExpression inputs (_, expr, uses) =
 bindingsFromEntities ::
   Map DefIdentifier (StoreExpression ann) ->
   Set Entity ->
-  Bindings
+  Map (Maybe ModuleName, Name) ExprHash
 bindingsFromEntities inputs uses =
   foldMap
     ( \case
         EName name -> case M.lookup (DIName name) inputs of
-          Just se -> Bindings $ M.singleton name (getStoreExpressionHash se)
+          Just se -> M.singleton (Nothing, name) (getStoreExpressionHash se)
           _ -> error $ "Could not find binding for " <> T.unpack (prettyPrint name)
-        _ -> mempty
+        ENamespacedName modName _name ->
+          error $ "creating bindings for " <> show modName
+        otherEntity -> error (show otherEntity)
     )
     (S.toList uses)
 
@@ -63,22 +76,27 @@ bindingsFromEntities inputs uses =
 toStore :: Map a (StoreExpression ann) -> Store ann
 toStore = Store . M.fromList . fmap (\a -> (getStoreExpressionHash a, a)) . M.elems
 
-compile :: (Eq ann, Monoid ann) => Module (Type ann) -> CheckM (CompiledModule ann)
-compile inputModule = do
-  storeExprs <- compileModuleDefinitions mempty inputModule
-  pure $
-    CompiledModule
-      { cmStore = toStore storeExprs,
-        cmExprs = getStoreExpressionHash <$> storeExprs
-      }
+compile ::
+  (Eq ann, Monoid ann, Show ann) =>
+  Map ModuleHash (Module (Type ann)) ->
+  Module (Type ann) ->
+  CheckM (CompiledModule ann)
+compile typecheckedModules inputModule = do
+  allCompiledModules <- compileAllModules typecheckedModules inputModule
+  let rootModuleHash = hashModule inputModule
+  case M.lookup rootModuleHash (debugLog "all combined modules" allCompiledModules) of
+    Just (CompiledModule _ compiledMod) ->
+      let withBigStore = mconcat (M.elems allCompiledModules)
+       in pure $ withBigStore {cmExprs = compiledMod}
+    Nothing -> throwError (ModuleErr $ MissingModule rootModuleHash)
 
 --- compile a module into StoreExpressions
 compileModuleDefinitions ::
   (Eq ann, Monoid ann) =>
-  Map ModuleHash (Module (Type ann)) -> -- this input is surely wrong
+  Map ModuleHash (CompiledModule ann) ->
   Module (Type ann) ->
-  CheckM (Map DefIdentifier (StoreExpression ann))
-compileModuleDefinitions _typecheckedDeps inputModule = do
+  CheckM (CompiledModule ann)
+compileModuleDefinitions _deps inputModule = do
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
   inputWithDeps <-
@@ -100,5 +118,39 @@ compileModuleDefinitions _typecheckedDeps inputModule = do
           }
 
   -- go!
+  storeExprs <-
+    Build.stOutputs
+      <$> Build.doJobs toStoreExpression state
+
+  pure $
+    CompiledModule
+      { cmStore = toStore storeExprs,
+        cmExprs = getStoreExpressionHash <$> storeExprs
+      }
+
+--- compile many modules
+compileAllModules ::
+  (Eq ann, Monoid ann) =>
+  Map ModuleHash (Module (Type ann)) ->
+  Module (Type ann) ->
+  CheckM (Map ModuleHash (CompiledModule ann))
+compileAllModules myDeps rootModule = do
+  -- create initial state for builder
+  -- we tag each StoreExpression we've found with the deps it needs
+  inputWithDeps <- getModuleDeps myDeps rootModule
+
+  let state =
+        Build.State
+          { Build.stInputs =
+              ( \(mod', deps) ->
+                  Build.Plan
+                    { Build.jbDeps = deps,
+                      Build.jbInput = mod'
+                    }
+              )
+                <$> inputWithDeps,
+            Build.stOutputs = mempty
+          }
+  -- go!
   Build.stOutputs
-    <$> Build.doJobs toStoreExpression state
+    <$> Build.doJobs compileModuleDefinitions state
