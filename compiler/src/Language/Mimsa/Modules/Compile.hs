@@ -54,19 +54,21 @@ toStoreExpression compiledModules inputModule inputs (_, expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
   pure $ StoreExpression expr bindings mempty
 
-resolveNamespacedName :: Map ModuleHash (CompiledModule ann)
-  -> Module (Type ann)
-  -> ModuleName -> Name -> 
-    Maybe ExprHash
-resolveNamespacedName compiledModules inputModule modName name = do 
-   -- find out which module the modName refers to
-   modHash <- M.lookup modName (moNamedImports inputModule) 
+resolveNamespacedName ::
+  Map ModuleHash (CompiledModule ann) ->
+  Module (Type ann) ->
+  ModuleName ->
+  Name ->
+  Maybe ExprHash
+resolveNamespacedName compiledModules inputModule modName name = do
+  -- find out which module the modName refers to
+  modHash <- M.lookup modName (moNamedImports inputModule)
 
-   -- find the module in our pile of already compiled modules
-   compiledMod <- M.lookup modHash compiledModules 
+  -- find the module in our pile of already compiled modules
+  compiledMod <- M.lookup modHash compiledModules
 
-   -- lookup the name in the module
-   M.lookup (DIName name) (cmExprs compiledMod) 
+  -- lookup the name in the module
+  M.lookup (DIName name) (cmExprs compiledMod)
 
 -- given our dependencies and the entities used by the expression, create the
 -- bindings
@@ -77,16 +79,16 @@ bindingsFromEntities ::
   Set Entity ->
   CheckM (Map (Maybe ModuleName, Name) ExprHash)
 bindingsFromEntities compiledModules inputModule inputs uses = do
-  let fromUse =  \case
+  let fromUse = \case
         EName name -> case M.lookup (DIName name) inputs of
           Just se -> pure $ M.singleton (Nothing, name) (getStoreExpressionHash se)
           _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIName name)))
         ENamespacedName modName name ->
           case resolveNamespacedName compiledModules inputModule modName name of
-                  Just hash -> pure $ M.singleton (Just modName, name) hash
-                  _ -> pure mempty -- should this be an error? 
-        _ -> pure mempty 
-    
+            Just hash -> pure $ M.singleton (Just modName, name) hash
+            _ -> pure mempty -- should this be an error?
+        _ -> pure mempty
+
   -- combine results
   mconcat <$> traverse fromUse (S.toList uses)
 
@@ -95,7 +97,7 @@ toStore :: Map a (StoreExpression ann) -> Store ann
 toStore = Store . M.fromList . fmap (\a -> (getStoreExpressionHash a, a)) . M.elems
 
 compile ::
-  (Eq ann, Monoid ann ) =>
+  (Eq ann, Monoid ann) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   CheckM (CompiledModule ann)
