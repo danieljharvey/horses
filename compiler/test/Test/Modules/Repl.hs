@@ -56,13 +56,13 @@ spec :: Spec
 spec =
   fdescribe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
-      fit "Use Prelude.fst" $ do
+      it "Use Prelude.fst" $ do
         result <- eval "let x = ((1,2)) in Prelude.fst x"
         result
           `shouldBe` Right
             (MTPrim mempty MTInt, int 1)
 
-      fit "let good = { dog: True } in good.dog" $ do
+      it "Access value inside record" $ do
         result <- eval "let good = ({ dog: True }) in good.dog"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
@@ -74,7 +74,7 @@ spec =
               MyLambda mempty (Identifier mempty "i") (MyVar mempty Nothing "i")
             )
 
-      it "let prelude = ({ id: (\\i -> i) }) in prelude.id 1" $ do
+      it "Use polymorphic function from inside record" $ do
         result <- eval "let prelude = ({ id: (\\i -> i) }) in prelude.id 1"
         result
           `shouldBe` Right
@@ -82,7 +82,7 @@ spec =
               int 1
             )
 
-      it "let bigPrelude = ({ prelude: { id: (\\i -> i) } }) in bigPrelude.prelude.id 1" $ do
+      it "Calls function from doubly nested record" $ do
         result <- eval "let bigPrelude = ({ prelude: { id: (\\i -> i) } }) in bigPrelude.prelude.id 1"
         result
           `shouldBe` Right
@@ -91,42 +91,53 @@ spec =
             )
 
       it "compose incrementInt" $ do
-        result <- eval "let compose = (\\f -> \\g -> \\a -> f (g a)) in let blah = compose incrementInt incrementInt in blah 67"
+        result <- eval "let incrementInt a = a + 1; let compose = (\\f -> \\g -> \\a -> f (g a)) in let blah = compose incrementInt incrementInt in blah 67"
         result `shouldBe` Right (MTPrim mempty MTInt, int 69)
 
-      it "let reuse = ({ first: id 1, second: id 2 }) in reuse.first" $ do
-        result <- eval "let reuse = ({ first: id 1, second: id 2 }) in reuse.first"
+      it "Use id function twice" $ do
+        result <- eval "let reuse = ({ first: Prelude.id 1, second: Prelude.id 2 }) in reuse.first"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-      it "let id = \\a -> a in id 1" $ do
+
+      it "Define and use id function" $ do
         result <- eval "let id = \\a -> a in id 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
-      it "let reuse = ({ first: id True, second: id 2 }) in reuse.first" $ do
-        result <- eval "let reuse = ({ first: id True, second: id 2 }) in reuse.first"
+
+      it "Use id function twice with different types" $ do
+        result <- eval "let reuse = ({ first: Prelude.id True, second: Prelude.id 2 }) in reuse.first"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-      it "let reuse = ({ first: id, second: id 2 }) in reuse.first True" $ do
-        result <- eval "let reuse = ({ first: id, second: id 2 }) in reuse.first True"
+
+      it "Use id function with different types (2)" $ do
+        result <- eval "let reuse = ({ first: Prelude.id, second: Prelude.id 2 }) in reuse.first True"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "reuses polymorphic function" $ do
-        result <- eval "let reuse = ({ first: const 1, second: const True }) in reuse.first 100"
+        result <- eval "let reuse = ({ first: Prelude.const 1, second: Prelude.const True }) in reuse.first 100"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+
       it "reuses polymorphic function 2" $ do
-        result <- eval "let reuse = ({ first: const True, second: const 2 }) in reuse.second 100"
+        result <- eval "let reuse = ({ first: Prelude.const True, second: Prelude.const 2 }) in reuse.second 100"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
+
       it "reuses polymorphic function defined here" $ do
         result <- eval "let id2 a = a; (id2 1, id2 True)"
         result `shouldSatisfy` isRight
-      it "addInt 1 2" $ do
-        result <- eval "addInt 1 2"
+
+      it "Use a function" $ do
+        result <- eval "let addInt a b = a + b; addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
       it "(\\a -> a) 1" $ do
         result <- eval "(\\a -> a) 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+
       it "(\\b -> (\\a -> b)) 0 1" $ do
         result <- eval "(\\b -> (\\a -> b)) 0 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 0)
-      it "addInt 1 (addInt (addInt 2 4) 5)" $ do
-        result <- eval "addInt 1 (addInt (addInt 2 4) 5)"
+
+      it "Nested function application" $ do
+        result <- eval "let addInt a b = a + b; addInt 1 (addInt (addInt 2 4) 5)"
         result `shouldBe` Right (MTPrim mempty MTInt, int 12)
+
       it "type LeBool = Vrai | Faux in Vrai" $ do
         result <- eval "type LeBool = Vrai | Faux in Vrai"
         result
@@ -134,6 +145,7 @@ spec =
             ( dataTypeWithVars mempty Nothing "LeBool" [],
               MyConstructor mempty Nothing "Vrai"
             )
+
       it "type Nat = Zero | Suc Nat in Suc Zero" $ do
         result <- eval "type Nat = Zero | Suc Nat in Suc Zero"
         result
@@ -144,6 +156,7 @@ spec =
                 (MyConstructor mempty Nothing "Suc")
                 (MyConstructor mempty Nothing "Zero")
             )
+
       it "type Nat = Zero | Suc Nat in Suc (Suc Zero)" $ do
         result <- eval "type Nat = Zero | Suc Nat in Suc (Suc Zero)"
         result
@@ -158,14 +171,17 @@ spec =
                     (MyConstructor mempty Nothing "Zero")
                 )
             )
+
       it "type Nat = Zero | Suc Nat in Suc 1" $ do
         result <- eval "type Nat = Zero | Suc Nat in Suc 1"
         result
           `shouldSatisfy` isLeft
+
       it "type Nat = Zero | Suc Nat in Suc Dog" $ do
         result <- eval "type Nat = Zero | Suc Nat in Suc Dog"
         result
           `shouldSatisfy` isLeft
+
       it "type Nat = Zero | Suc Nat in Suc" $ do
         result <- eval "type Nat = Zero | Suc Nat in Suc"
         result
@@ -176,6 +192,7 @@ spec =
                 (dataTypeWithVars mempty Nothing "Nat" []),
               MyConstructor mempty Nothing "Suc"
             )
+
       it "type OhNat = Zero | Suc OhNat String in Suc" $ do
         result <- eval "type OhNat = Zero | Suc OhNat String in Suc"
         result
@@ -266,7 +283,7 @@ spec =
             )
 
       it "use Maybe with eq" $ do
-        result <- eval "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq 100 a | Nothing -> False"
+        result <- eval "let eq a b = a == b; type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq 100 a | Nothing -> False"
         result
           `shouldBe` Right
             (MTPrim mempty MTBool, bool False)
@@ -276,7 +293,7 @@ spec =
         result `shouldSatisfy` isLeft
 
       it "unfolding Maybe more" $ do
-        result <- eval "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq 100 a | _ -> False"
+        result <- eval "let eq a b = a == b; type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> eq 100 a | _ -> False"
         result
           `shouldBe` Right
             (MTPrim mempty MTBool, bool False)
@@ -287,26 +304,28 @@ spec =
           `shouldBe` Right
             (MTPrim mempty MTString, str' "Hello")
 
-      it "type Result e a = Failure e | Success a in match Failure \"oh no\" with (Success a) -> \"oh yes\" | (Failure e) -> e" $ do
+      it "Pattern matching on result" $ do
         result <- eval "type Result e a = Failure e | Success a in match Failure \"oh no\" with (Success a) -> \"oh yes\" | (Failure e) -> e"
         result
           `shouldBe` Right
             (MTPrim mempty MTString, str' "oh no")
 
-      it "type Blap a = Boop a Int in match Boop True 100 with (Boop a b) -> a" $ do
+      it "Pattern matching datatype with type vars and concrete types" $ do
         result <- eval "type Blap a = Boop a Int in match Boop True 100 with (Boop a b) -> a"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
-      it "type Maybe a = Just a | Nothing in match Nothing with Nothing False" $ do
+      it "Identifies broken pattern match" $ do
         result <- eval "type Maybe a = Just a | Nothing in match Nothing with Nothing False"
         result `shouldSatisfy` isLeft
 
       it "type Thing = Thing String in let a = Thing \"string\" in match a with (Thing s) -> s" $ do
         result <- eval "type Thing = Thing String in let a = Thing \"string\" in match a with (Thing s) -> s"
         result `shouldBe` Right (MTPrim mempty MTString, str' "string")
+
       it "type Pair a b = Pair a b in match Pair \"dog\" 1 with Pair \a -> a" $ do
         result <- eval "type Pair a b = Pair a b in match Pair \"dog\" 1 with Pair \a -> a"
         result `shouldSatisfy` isLeft
+
       it "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1" $ do
         result <- eval "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1"
         result
@@ -321,10 +340,12 @@ spec =
         result <- eval "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1"
         result
           `shouldSatisfy` isLeft
+
       it "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Branch (Leaf 1) (Leaf True)" $ do
         result <- eval "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Branch (Leaf 1) (Leaf True)"
         result
           `shouldSatisfy` isLeft
+
       it "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)" $ do
         result <- eval "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
         result
@@ -378,43 +399,52 @@ spec =
                 )
                 (MyConstructor mempty Nothing "Empty")
             )
-      it "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1" $ do
-        result <- eval "let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
+
+      it "Recursive function works" $ do
+        result <- eval "let eq a b = a == b; let addInt a b = a + b; let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
-      it "type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))" $ do
-        result <- eval "type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))"
+
+      it "Recursively converts Nat to integer" $ do
+        result <- eval "let incrementInt a = a + 1; type Nat = Zero | Suc Nat in let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-      it "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10" $ do
-        result <- eval "type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10"
+
+      it "Recursively converts bigger Nat to integer" $ do
+        result <- eval "let incrementInt a = a + 1; type Nat = Zero | Suc Nat in let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10"
         result `shouldBe` Right (MTPrim mempty MTInt, int 13)
       {-
             it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)" $ do
               result <- eval "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)"
               result `shouldBe` Right (MTPrim mempty MTInt, int 3)
       -}
-      it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty" $ do
-        result <- eval "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty"
+
+      it "Array reduce function" $ do
+        result <- eval "let addInt a b = a + b; type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty"
         result `shouldBe` Right (MTPrim mempty MTInt, int 0)
-      it "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 (Item 3 Empty)" $ do
-        result <- eval "type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 (Item 3 Empty)"
+
+      it "Array reduce function 2" $ do
+        result <- eval "let addInt a b = a + b; type Array a = Empty | Item a (Array a) in let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 (Item 3 Empty)"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
+
       it "type Tlee a = Non | Tlee (Maybe b) in {}" $ do
         result <- eval "type Tlee a = Non | Tlee (Maybe b) in {}"
         result `shouldSatisfy` isLeft
-      it "let some = \\a -> Just a in if True then some 1 else Nothing" $ do
-        result <- eval "let some = \\a -> Just a in if True then some 1 else Nothing"
+
+      fit "Use Maybe module" $ do
+        result <- eval "let some = \\a -> Maybe.Just a in if True then some 1 else Maybe.Nothing"
         result
           `shouldBe` Right
-            ( dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt],
+            ( dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTInt],
               MyApp
                 mempty
-                (MyConstructor mempty Nothing "Just")
+                (MyConstructor mempty (Just "Maybe") "Just")
                 (int 1)
             )
+
       it "\\a -> match a with (Just as) -> True | Nothing -> 100" $ do
         result <- eval "\\a -> match a with (Just as) -> True | Nothing -> 100"
         fst <$> result
           `shouldSatisfy` isLeft
+
       it "\\a -> match a with (Just as) -> as | Nothing -> 100" $ do
         result <- eval "\\a -> match a with (Just as) -> as | Nothing -> 100"
         fst <$> result
