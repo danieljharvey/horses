@@ -56,6 +56,7 @@ modules :: Actions.ActionM ()
 modules = do
   addModule "Maybe" maybeInput
   addModule "Prelude" preludeInput
+  addModule "State" stateInput
 
 baseFns :: Actions.ActionM ()
 baseFns = do

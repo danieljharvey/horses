@@ -21,7 +21,6 @@ import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Prettyprinter
 

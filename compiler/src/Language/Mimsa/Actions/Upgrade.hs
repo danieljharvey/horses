@@ -137,12 +137,12 @@ findNewestTypeVersionFromHash ::
   ExprHash ->
   Maybe (TyCon, ExprHash)
 findNewestTypeVersionFromHash project exprHash =
-  let getTypeName =
+  let getTypeName' =
         findAnyTypeBindingNameForExprHash exprHash
       lookupHash k map' =
         M.lookup k map'
           >>= \eh -> if eh == exprHash then Nothing else Just eh
-   in case getTypeName project of
+   in case getTypeName' project of
         Just tyCon ->
           let (TypeBindings bindings) = getCurrentTypeBindings (prjTypeBindings project)
            in (,) tyCon

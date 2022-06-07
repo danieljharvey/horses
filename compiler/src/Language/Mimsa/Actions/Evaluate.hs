@@ -120,9 +120,17 @@ importsFromEntities uses = do
           case lookupModuleName prj modName of
             Just modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
             _ -> throwError undefined
+        ENamespacedType modName _ ->
+          case lookupModuleName prj modName of
+            Just modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
+            _ -> throwError undefined
+        ENamespacedConstructor modName _ ->
+          case lookupModuleName prj modName of
+            Just modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
+            _ -> throwError undefined
         _ -> pure mempty
-  imports <- traverse fromEntity (S.toList uses)
-  pure (mconcat imports)
+  -- check them all, combine them
+  mconcat <$> traverse fromEntity (S.toList uses)
 
 -- when we evaluate an expression, really we are adding it to an open module
 -- then evaluating the expression in the context of that module
@@ -158,10 +166,13 @@ evaluateModule input expr localModule = do
   typecheckedModules <- Actions.typecheckModules (prettyPrint newModule) newModule
 
   let rootModuleHash = hashModule newModule
+
+  -- pull root module out from pile of typechecked modules
   typecheckedModule <- case M.lookup rootModuleHash typecheckedModules of
     Just tcMod -> pure tcMod
     _ -> throwError (ModuleErr $ MissingModule rootModuleHash)
 
+  -- compile to store expressions
   compiled <- compileModule typecheckedModules input typecheckedModule
 
   -- find the root StoreExpression by name
@@ -169,10 +180,11 @@ evaluateModule input expr localModule = do
     Just se -> pure se
     _ -> error "fuck, could not find the thing we just made"
 
-  -- YOLO, cheat here for now
+  -- unsafe, yolo 
   let exprType = fromJust (lookupModuleDefType typecheckedModule evalId)
 
   -- need to get our new store items into the project so this works I reckon
+  traverse_ Actions.appendStoreExpression (getStore $ cmStore compiled)
 
   -- interpret
   evaluatedExpression <-

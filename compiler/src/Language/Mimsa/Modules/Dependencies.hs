@@ -74,7 +74,7 @@ getExprDependencies mod' expr =
 -- starting at a root module,
 -- create a map of each expr hash along with the modules it needs
 -- so that we can typecheck them all
-getModuleDeps ::
+getModuleDeps :: (Show ann) =>
   Map ModuleHash (Module ann) ->
   Module ann ->
   CheckM

@@ -12,7 +12,6 @@ import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker

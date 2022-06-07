@@ -429,7 +429,7 @@ spec =
         result <- eval "type Tlee a = Non | Tlee (Maybe b) in {}"
         result `shouldSatisfy` isLeft
 
-      fit "Use Maybe module" $ do
+      it "Use Maybe module" $ do
         result <- eval "let some = \\a -> Maybe.Just a in if True then some 1 else Maybe.Nothing"
         result
           `shouldBe` Right
@@ -440,51 +440,62 @@ spec =
                 (int 1)
             )
 
-      it "\\a -> match a with (Just as) -> True | Nothing -> 100" $ do
-        result <- eval "\\a -> match a with (Just as) -> True | Nothing -> 100"
+      it "Pattern match fails using Maybe" $ do
+        result <- eval "\\a -> match a with (Maybe.Just as) -> True | Maybe.Nothing -> 100"
         fst <$> result
           `shouldSatisfy` isLeft
 
-      it "\\a -> match a with (Just as) -> as | Nothing -> 100" $ do
-        result <- eval "\\a -> match a with (Just as) -> as | Nothing -> 100"
+      it "Pattern match succeeds using Maybe" $ do
+        result <- eval "\\a -> match a with (Maybe.Just as) -> as | Maybe.Nothing -> 100"
         fst <$> result
           `shouldBe` Right
             ( MTFunction
                 mempty
-                (dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt])
+                (dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTInt])
                 (MTPrim mempty MTInt)
             )
+
       it "fromMaybe should fail typecheck when default does not match inner value" $ do
-        result <- eval "let fromMaybe = \\defVal -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> defVal) in fromMaybe \"Horse\" (Just 1)"
+        result <- eval "let fromMaybe = \\defVal -> (\\maybe -> match maybe with (Maybe.Just a) -> a | Maybe.Nothing -> defVal) in fromMaybe \"Horse\" (Maybe.Just 1)"
         result `shouldSatisfy` isLeft
+
       it "fromMaybe works when types match up" $ do
-        result <- eval "let fromMaybe = \\defVal -> (\\maybe -> match maybe with (Just a) -> a | Nothing -> defVal) in fromMaybe \"Horse\" (Just \"Dog\")"
+        result <- eval "let fromMaybe = \\defVal -> (\\maybe -> match maybe with (Maybe.Just a) -> a | Maybe.Nothing -> defVal) in fromMaybe \"Horse\" (Maybe.Just \"Dog\")"
         result `shouldBe` Right (MTPrim mempty MTString, str' "Dog")
-      it "True == \"dog\"" $ do
+
+      it "String and bool fail to equals" $ do
         result <- eval "True == \"dog\""
         result `shouldSatisfy` isLeft
-      it "(\\a -> a) == (\\b -> b)" $ do
+
+      it "Errors when attempting function equality" $ do
         -- no function equality
         result <- eval "(\\a -> a) == (\\b -> b)"
         result `shouldSatisfy` isLeft
+
       it "True == False" $ do
         result <- eval "True == False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
       it "True == True" $ do
         result <- eval "True == True"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
-      it "(Just 1) == Just 2" $ do
-        result <- eval "(Just 1) == Just 2"
+
+      it "Equality with constructors" $ do
+        result <- eval "(Maybe.Just 1) == Maybe.Just 2"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
-      it "let eq1 = (\\a -> a == 1) in eq1 1" $ do
+
+      it "Equality as a function" $ do
         result <- eval "let eq1 = (\\a -> a == 1) in eq1 1"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "1 + 1" $ do
         result <- eval "1 + 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 2)
+
       it "True + 1" $ do
         result <- eval "True + 1"
         result `shouldSatisfy` isLeft
+
       it "10 - 1" $ do
         result <- eval "10 - 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 9)
@@ -556,7 +567,6 @@ spec =
         result `shouldSatisfy` \case
           (Left msg) ->
             T.isInfixOf "Typed holes found" msg
-              && T.isInfixOf "^^^^^^^" msg
           (Right _) -> False
 
       it "compose function" $ do
@@ -564,20 +574,22 @@ spec =
         result `shouldSatisfy` isRight
 
       it "Just (1 == 1)" $ do
-        result <- eval "Just (1 == 1)"
+        result <- eval "Maybe.Just (1 == 1)"
         snd <$> result
           `shouldBe` Right
             ( MyApp
                 mempty
-                (MyConstructor mempty Nothing "Just")
+                (MyConstructor mempty (Just "Maybe") "Just")
                 (bool True)
             )
       it "\\a -> if (100 == a.int) then 100 else 0" $ do
         result <- eval "\\a -> if (100 == a.int) then 100 else 0"
         result `shouldSatisfy` isRight
+
       it "\\a -> if (a.one == a.two) then 100 else 0" $ do
         result <- eval "\\a -> if (a.one == a.two) then 100 else 0"
         result `shouldSatisfy` isRight
+
       it "type Reader r a = Reader (r -> a) in Reader (\\r -> r + 100)" $ do
         result <- eval "type Reader r a = Reader (r -> a) in Reader (\\r -> r + 100)"
         result
@@ -602,20 +614,16 @@ spec =
                 )
             )
 
-      it "\\state -> \\s -> match state with (State sas) -> sas s" $ do
-        result <- eval "\\state -> \\s -> match state with (State sas) -> sas s"
+      it "Match State monad" $ do
+        result <- eval "\\state -> \\s -> match state with (State.State sas) -> sas s"
         result `shouldSatisfy` isRight
 
-      it "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil" $ do
-        result <- eval "let a = pureState \"dog\"; let b = bindState storeName a; runState b nil"
-        result `shouldSatisfy` isRight
-
-      it "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil" $ do
-        result <- eval "let a = pureState \"dog\"; let b = bindState storeName a; let c = bindState storeName b; runState c nil"
+      it "Bind with State monad" $ do 
+        result <- eval "let storeName = State.put; let a = State.pure \"dog\"; let b = State.bind storeName a; State.run b \"\""
         result `shouldSatisfy` isRight
 
       it "Stops boolean and Maybe<A> being used together" $ do
-        result <- eval "\\some -> match some with (Just a) -> Just (a == 1) | _ -> some"
+        result <- eval "\\some -> match some with (Maybe.Just a) -> Maybe.Just (a == 1) | _ -> some"
         result `shouldSatisfy` isLeft
 
       -- need a new way of stopping this looping

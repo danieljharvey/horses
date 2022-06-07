@@ -11,7 +11,6 @@ import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 
 typeNameToTSName :: Int -> TSType -> TSName
 typeNameToTSName _ (TSTypeVar a) = coerce (T.toLower a)
