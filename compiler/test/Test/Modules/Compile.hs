@@ -9,6 +9,7 @@ import Data.Functor
 import qualified Data.Map as M
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.Compile
+import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
@@ -22,8 +23,10 @@ import Test.Utils.Helpers
 compile' :: Module Annotation -> CompiledModule Annotation
 compile' mod' =
   let action = do
-        tcMod <- typecheckAllModules mod'
-        compile tcMod
+        tcMods <- typecheckAllModules mod'
+        case M.lookup (hashModule mod') tcMods of
+          Just tcMod -> compile tcMods tcMod
+          Nothing -> error "Could not find the module we just typechecked"
    in fromRight $ runCheck (prettyPrint mod') mempty action
 
 spec :: Spec
@@ -55,7 +58,7 @@ spec = do
           hashA = getStoreExpressionHash storeExprA
 
           exprB = unsafeParseExpr "id 100" $> mempty
-          storeExprB = StoreExpression exprB (Bindings $ M.singleton "id" hashA) mempty
+          storeExprB = StoreExpression exprB (M.singleton (Nothing, "id") hashA) mempty
           hashB = getStoreExpressionHash storeExprB
 
           inputModule =

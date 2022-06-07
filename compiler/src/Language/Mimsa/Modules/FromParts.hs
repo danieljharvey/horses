@@ -6,6 +6,7 @@
 module Language.Mimsa.Modules.FromParts (moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad.Except
+import Control.Monad.Reader
 import Data.Coerce
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -73,7 +74,8 @@ moduleFromModuleParts parts =
           ModuleImport (ImportNamedFromHash mHash mName) ->
             pure $ mod' {moNamedImports = M.singleton mName mHash <> moNamedImports mod'}
           ModuleImport (ImportAllFromHash mHash) -> do
-            importMod <- lookupModule mHash
+            modules <- asks ceModules
+            importMod <- lookupModule modules mHash
             let defImports =
                   M.fromList
                     . fmap (,mHash)

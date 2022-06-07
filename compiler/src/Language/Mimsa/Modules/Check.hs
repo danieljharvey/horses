@@ -7,6 +7,7 @@
 module Language.Mimsa.Modules.Check (checkModule, typecheckAllModules, lookupModuleDefType) where
 
 import Control.Monad.Except
+import Control.Monad.Reader
 import Data.Bifunctor
 import Data.Coerce
 import Data.Map (Map)
@@ -64,9 +65,13 @@ checkModule' input = do
   properMod <- parseModule' input
 
   -- typecheck this module
-  tcMod <- typecheckAllModules properMod
+  tcMods <- typecheckAllModules properMod
 
-  pure (tcMod, getModuleType tcMod)
+  let rootModuleHash = hashModule properMod
+
+  case M.lookup rootModuleHash tcMods of
+    Nothing -> throwError (ModuleErr $ MissingModule rootModuleHash)
+    Just tcMod -> pure (tcMod, getModuleType tcMod)
 
 -- given the upstream modules, typecheck a module
 -- 1. recursively fetch imports from Reader environment
@@ -74,11 +79,12 @@ checkModule' input = do
 -- 3. do it!
 typecheckAllModules ::
   Module Annotation ->
-  CheckM (Module (Type Annotation))
+  CheckM (Map ModuleHash (Module (Type Annotation)))
 typecheckAllModules rootModule = do
+  modules <- asks ceModules
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
-  inputWithDeps <- getModuleDeps rootModule
+  inputWithDeps <- getModuleDeps modules rootModule
 
   let state =
         Build.State
@@ -93,16 +99,8 @@ typecheckAllModules rootModule = do
             Build.stOutputs = mempty
           }
   -- go!
-  allCheckedModules <-
-    Build.stOutputs
-      <$> Build.doJobs typecheckAllModuleDefs state
-
-  -- TODO: cache it or something?
-  -- lookup the original one
-  -- return it
-  case M.lookup (hashModule rootModule) allCheckedModules of
-    Just mod' -> pure mod'
-    _ -> error "could not find typechecked module"
+  Build.stOutputs
+    <$> Build.doJobs typecheckAllModuleDefs state
 
 --- typecheck a module
 typecheckAllModuleDefs ::
@@ -245,32 +243,6 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
       (makeTypeDeclMap typecheckedModules importedTypes inputModule)
       (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
       (getModuleTypes inputModule typecheckedModules)
-
--- starting at a root module,
--- create a map of each expr hash along with the modules it needs
--- so that we can typecheck them all
-getModuleDeps ::
-  Module Annotation ->
-  CheckM
-    ( Map
-        ModuleHash
-        ( Module Annotation,
-          Set ModuleHash
-        )
-    )
-getModuleDeps inputModule = do
-  -- get this module's deps
-  let deps =
-        S.fromList
-          ( M.elems (moExpressionImports inputModule)
-              <> M.elems (moNamedImports inputModule)
-          )
-      mHash = hashModule inputModule
-  -- recursively fetch sub-deps
-  depModules <- traverse lookupModule (S.toList deps)
-  subDeps <- traverse getModuleDeps depModules
-
-  pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
 
 getModuleTypes ::
   Module Annotation ->

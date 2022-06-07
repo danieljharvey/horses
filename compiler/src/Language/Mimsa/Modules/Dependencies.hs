@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Modules.Dependencies (getValueDependencies) where
+module Language.Mimsa.Modules.Dependencies (getValueDependencies, getModuleDeps) where
 
 -- work out the dependencies between definitions inside a module
 
@@ -12,14 +12,15 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Entity
-import Language.Mimsa.Types.Modules.Module
 
 filterDefs :: Set Entity -> Set DefIdentifier
 filterDefs =
@@ -69,3 +70,30 @@ getExprDependencies mod' expr =
                   nameDeps
            in pure (expr, localNameDeps, allUses)
         else throwError (ModuleErr (CannotFindValues unknownNameDeps))
+
+-- starting at a root module,
+-- create a map of each expr hash along with the modules it needs
+-- so that we can typecheck them all
+getModuleDeps ::
+  Map ModuleHash (Module ann) ->
+  Module ann ->
+  CheckM
+    ( Map
+        ModuleHash
+        ( Module ann,
+          Set ModuleHash
+        )
+    )
+getModuleDeps moduleDeps inputModule = do
+  -- get this module's deps
+  let deps =
+        S.fromList
+          ( M.elems (moExpressionImports inputModule)
+              <> M.elems (moNamedImports inputModule)
+          )
+      mHash = hashModule inputModule
+  -- recursively fetch sub-deps
+  depModules <- traverse (lookupModule moduleDeps) (S.toList deps)
+  subDeps <- traverse (getModuleDeps moduleDeps) depModules
+
+  pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
