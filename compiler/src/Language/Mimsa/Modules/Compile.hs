@@ -83,6 +83,9 @@ bindingsFromEntities compiledModules inputModule inputs uses = do
         EName name -> case M.lookup (DIName name) inputs of
           Just se -> pure $ M.singleton (Nothing, name) (getStoreExpressionHash se)
           _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIName name)))
+        EInfix infixOp -> case M.lookup (DIInfix infixOp) inputs of
+                            Just _se -> error "No way of passing an infix to a StoreExpression"
+                            _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIInfix infixOp)))
         ENamespacedName modName name ->
           case resolveNamespacedName compiledModules inputModule modName name of
             Just hash -> pure $ M.singleton (Just modName, name) hash

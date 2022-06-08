@@ -13,4 +13,5 @@ export def fst pair = let (a,_) = pair in a
 export def snd pair = let (_,b) = pair in b
 
 export def const a b = a
- 
+
+export type Unit = Unit

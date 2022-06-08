@@ -619,7 +619,7 @@ spec =
         result `shouldSatisfy` isRight
 
       it "Bind with State monad" $ do 
-        result <- eval "let storeName = State.put; let a = State.pure \"dog\"; let b = State.bind storeName a; State.run b \"\""
+        result <- eval "let storeName a = State.fmap (Prelude.const a) (State.put a); let a = State.pure \"dog\"; let b = State.bind storeName a; State.run b \"\""
         result `shouldSatisfy` isRight
 
       it "Stops boolean and Maybe<A> being used together" $ do
@@ -640,7 +640,7 @@ spec =
         result <- eval "type Justthing = String in True"
         result `shouldSatisfy` isLeft
 
-      it "type Pair a b = Pair (a,b)" $ do
+      it "Define Pair" $ do
         result <- eval "type Pair a b = Pair (a,b) in True"
         result `shouldSatisfy` isRight
 
@@ -650,10 +650,6 @@ spec =
 
       it "type State s a = State (s -> (a,s)) in True" $ do
         result <- eval "type State s a = State (s -> (a,s)) in True"
-        result `shouldSatisfy` isRight
-
-      it "\\person -> match person with (Person p) -> p.age" $ do
-        result <- eval "\\person -> match person with (Person p) -> p.age"
         result `shouldSatisfy` isRight
 
       -- simplest swaps test
@@ -671,38 +667,38 @@ spec =
               MyLiteral mempty (MyString "oo")
             )
 
-      it "runParser anyChar \"dog\"" $ do
-        result <- eval "runParser anyChar \"dog\""
+      it "Parse any character" $ do
+        result <- eval "Parser.run Parser.anyChar \"dog\""
         result `shouldSatisfy` isRight
 
-      it "fmapParser works correctly" $ do
-        result <- eval "let repeat = fmapParser (\\a -> a ++ a) anyChar in runParser repeat \"dog\""
+      it "Parser.fmap works correctly" $ do
+        result <- eval "let repeat = Parser.fmap (\\a -> a ++ a) Parser.anyChar in Parser.run repeat \"dog\""
         snd <$> result
           `shouldBe` Right
             ( MyApp
                 mempty
-                (MyConstructor mempty Nothing "Just")
+                (MyConstructor mempty (Just "Maybe") "Just")
                 (MyLiteral mempty (MyString "dd"))
             )
 
-      it "bindParser works correctly" $ do
-        result <- eval "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"dog\""
+      it "Parser.bind works correctly" $ do
+        result <- eval "let parser = Parser.bind (\\a -> if a == \"d\" then Parser.anyChar else Parser.fail) Parser.anyChar; Parser.run parser \"dog\""
         snd <$> result
           `shouldBe` Right
             ( MyApp
                 mempty
-                (MyConstructor mempty Nothing "Just")
+                (MyConstructor mempty (Just "Maybe") "Just")
                 (MyLiteral mempty (MyString "o"))
             )
 
-      it "bindParser fails correctly" $ do
-        result <- eval "let parser = bindParser (\\a -> if a == \"d\" then anyChar else failParser) anyChar; runParser parser \"log\""
+      it "Parser.bind fails correctly" $ do
+        result <- eval "let parser = Parser.bind (\\a -> if a == \"d\" then Parser.anyChar else Parser.fail) Parser.anyChar; Parser.run parser \"log\""
         snd <$> result
           `shouldBe` Right
-            (MyConstructor mempty Nothing "Nothing")
+            (MyConstructor mempty (Just "Maybe") "Nothing")
 
-      it "apParser formats correctly" $ do
-        result <- eval "\\parserF -> \\parserA -> let (Parser pF) = parserF; let (Parser pA) = parserA; Parser (\\input -> match (pF input) with Just (f, input2) -> (match (pA input2) with Just (a, input3) -> Just (f a, input3) | _ -> Nothing) | _ ->  Nothing)"
+      it "Parser.ap formats correctly" $ do
+        result <- eval "\\parserF -> \\parserA -> let (Parser pF) = parserF; let (Parser pA) = parserA; Parser (\\input -> match (pF input) with Maybe.Just (f, input2) -> (match (pA input2) with Maybe.Just (a, input3) -> Just (f a, input3) | _ -> Nothing) | _ ->  Nothing)"
         result `shouldSatisfy` isRight
 
       it "Array literal" $ do
@@ -726,80 +722,103 @@ spec =
             ( MTArray mempty (MTPrim mempty MTInt),
               MyArray mempty [int 1, int 2]
             )
+
       it "[1] <> [True]" $ do
         result <- eval "[1] <> [True]"
         result `shouldSatisfy` isLeft
+
       it "[1] <> \"2\"" $ do
         result <- eval "[1] <> \"2\""
         result
           `shouldSatisfy` isLeft
+
       it "\"1\" <> [2]" $ do
         result <- eval "\"1\" <> [2]"
         result
           `shouldSatisfy` isLeft
-      it "mapArray (\\a -> a + 1) [1,2,3]" $ do
-        result <- eval "mapArray (\\a -> a + 1) [1,2,3]"
+
+      it "Array.fmap increments ints inside" $ do
+        result <- eval "Array.fmap (\\a -> a + 1) [1,2,3]"
         result
           `shouldBe` Right
             ( MTArray mempty (MTPrim mempty MTInt),
               MyArray mempty [int 2, int 3, int 4]
             )
+
     describe "Let pattern" $ do
       it "Matches a wildcard" $ do
         result <- eval "let _ = False in True"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches a value" $ do
         result <- eval "let a = True in a"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches a pair" $ do
         result <- eval "let (a,b) = (True,False) in a"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches a record" $ do
         result <- eval "let { dog: a } = { dog: True } in a"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Does not match a constructor with other cases" $ do
-        result <- eval "let (Just a) = Just True in a"
+        result <- eval "let (Maybe.Just a) = Maybe.Just True in a"
         result `shouldSatisfy` isLeft
+
       it "Matches a one case constructor" $ do
-        result <- eval "let (Ident a) = Ident True in a"
+        result <- eval "type Ident a = Ident a; let (Ident a) = Ident True in a"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches a nested one case constructor" $ do
-        result <- eval "let (Ident (Ident a)) = Ident (Ident True) in a"
+        result <- eval "type Ident a = Ident a; let (Ident (Ident a)) = Ident (Ident True) in a"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Does not matches a pair that is not complete" $ do
         result <- eval "let (a,True) = (True,False) in a"
         result `shouldSatisfy` isLeft
+
       it "Adds constructors to required types for StoreExpression" $ do
-        result <- eval "let (Parser parser) = predParser (\\d -> d == \"d\") anyChar in parser \"dog\""
+        result <- eval "let (Parser.Parser parser) = Parser.pred (\\d -> d == \"d\") Parser.anyChar in parser \"dog\""
         result `shouldSatisfy` isRight
+
     describe "Pattern matching" $ do
       it "Matches a wildcard" $ do
         result <- eval "match 1 with _ -> True"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches a variable" $ do
         result <- eval "match 1 with a -> a"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+
       it "Deconstructs a pair" $ do
         result <- eval "match (1,True) with (a,b) -> b"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches an int literal" $ do
         result <- eval "match (1, True) with (1, a) -> a | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches a string literal" $ do
         result <- eval "match \"dog\" with \"dog\" -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches two string literals" $ do
         result <- eval "match \"dog\" with \"dog\" -> True | \"log\" -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches a record" $ do
         result <- eval "match { dog: 1 } with { dog: a } -> a"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
+
       it "Matches a constructor with no args" $ do
-        result <- eval "match Nothing with Nothing -> False | _ -> True"
+        result <- eval "match Maybe.Nothing with Maybe.Nothing -> False | _ -> True"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
       it "Matches a constructor with args" $ do
-        result <- eval "match Just 1 with (Just _) -> True | Nothing -> False"
+        result <- eval "match Maybe.Just 1 with (Maybe.Just _) -> True | Maybe.Nothing -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches These correctly" $ do
         result <- eval "match This 1 with (These _ _) -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
@@ -1193,22 +1212,22 @@ spec =
         it "Parses using a lexeme" $ do
           let expr =
                 mconcat
-                  [ "let lexeme p = parser.left p parser.space0; ",
-                    "let bracketL = lexeme (parser.char \"[\"); ",
-                    "parser.run bracketL \"[          \""
+                  [ "let lexeme p = Parser.left p Parser.space0; ",
+                    "let bracketL = lexeme (Parser.char \"[\"); ",
+                    "Parser.run bracketL \"[          \""
                   ]
           result <- eval expr
           result `shouldSatisfy` isRight
         it "Parses a JSON array" $ do
           let expr =
                 mconcat
-                  [ "let lexeme p = parser.left p parser.space0; ",
-                    "let bracketL = lexeme (parser.char \"[\"); ",
-                    "let bracketR = lexeme (parser.char \"]\"); ",
-                    "let comma = lexeme (parser.char \",\"); ",
-                    "let inner = lexeme (parser.char \"d\"); ",
-                    "let bigP = parser.right bracketL (parser.left (parser.sepBy comma inner) bracketR); ",
-                    "parser.run bigP \"[d,d,d,d]\""
+                  [ "let lexeme p = Parser.left p Parser.space0; ",
+                    "let bracketL = lexeme (Parser.char \"[\"); ",
+                    "let bracketR = lexeme (Parser.char \"]\"); ",
+                    "let comma = lexeme (Parser.char \",\"); ",
+                    "let inner = lexeme (Parser.char \"d\"); ",
+                    "let bigP = Parser.right bracketL (Parser.left (Parser.sepBy comma inner) bracketR); ",
+                    "Parser.run bigP \"[d,d,d,d]\""
                   ]
           result <- eval expr
           result `shouldSatisfy` isRight

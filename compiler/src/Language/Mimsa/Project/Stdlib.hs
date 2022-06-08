@@ -12,6 +12,7 @@ module Language.Mimsa.Project.Stdlib
   )
 where
 
+import Language.Mimsa.Modules.HashModule
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -22,7 +23,7 @@ import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
-import Language.Mimsa.Modules.Prelude
+import Language.Mimsa.Modules.Prelude 
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Tests.Types
@@ -31,6 +32,8 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
+import qualified Data.Map as M
+import Data.Map (Map)
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
 buildStdlib =
@@ -54,9 +57,23 @@ allFns = do
 -- | these are files in /static/modules folder that we import
 modules :: Actions.ActionM ()
 modules = do
-  addModule "Maybe" maybeInput
-  addModule "Prelude" preludeInput
-  addModule "State" stateInput
+  maybeHash <- 
+    addModule "Maybe" mempty maybeInput
+  preludeHash <- 
+    addModule "Prelude" mempty preludeInput
+  arrayHash <-
+    addModule "Array" (M.fromList [("Maybe",maybeHash)]) arrayInput
+  nonEmptyArrayHash <- 
+    addModule "NonEmptyArray" (M.fromList [("Array", arrayHash)]) nonEmptyArrayInput
+  _ <- 
+    addModule "State" (M.fromList [("Prelude",preludeHash)]) stateInput
+  _ <- 
+    addModule "Parser" (M.fromList [
+        ("Maybe", maybeHash),
+        ("Prelude", preludeHash),
+        ("NonEmptyArray", nonEmptyArrayHash)
+                                   ]) parserInput
+  pure ()
 
 baseFns :: Actions.ActionM ()
 baseFns = do
@@ -283,11 +300,13 @@ addBinding name b = do
   _ <- Actions.bindExpression expr name b
   pure ()
 
-addModule :: ModuleName -> Text -> Actions.ActionM ()
-addModule moduleName input = do
+-- | add a module to the stdlib, adding some named imports
+addModule :: ModuleName -> Map ModuleName ModuleHash -> Text -> Actions.ActionM ModuleHash
+addModule moduleName deps input = do
   mod' <- Actions.parseModule input
-  _ <- Actions.bindModule mod' moduleName input
-  pure ()
+  let modWithImports = mod' { moNamedImports = moNamedImports mod' <> deps }
+  _ <- Actions.bindModule modWithImports moduleName input
+  pure (hashModule modWithImports)
 
 addTest :: Text -> Text -> Actions.ActionM ()
 addTest label input = do

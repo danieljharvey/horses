@@ -1,14 +1,9 @@
 export type State s a = State (s -> (a, s))
 
-def compose f g a = f (g a)
-
-def fst pair = let (a,_) = pair in a
-
-def snd pair = let (_,b) = pair in b
-
 export def get = State (\s -> (s, s))
 
-export def put s = State (\oldS -> (s, s)) 
+export def put s =
+  State (Prelude.const (Prelude.Unit, s)) 
 
 export def pure a = State (\s -> (a, s))
 
@@ -25,9 +20,9 @@ export def bind f state = State (\s -> match state with (State sas) -> match (sa
 
 export def run state s = match state with (State sas) -> sas s
 
-export def exec state = compose snd (run state)
+export def exec state = Prelude.compose Prelude.snd (run state)
 
-export def eval state =  compose fst (run state)
+export def eval state =  Prelude.compose Prelude.fst (run state)
 
 export def liftA2 f stateA stateB = ap (fmap f stateA) stateB
 

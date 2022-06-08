@@ -18,7 +18,7 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.Monad
-import Language.Mimsa.Modules.Prelude
+import Test.Data.Prelude
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -370,6 +370,15 @@ spec = do
             ( joinLines
                 [ "import * from " <> prettyPrint preludeHash,
                   "def withEither val = match val with Right a -> [a,a] | Left _ -> []"
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it "uses Either and <|> from Prelude" $
+          checkModuleType
+            ( joinLines
+                [ "import * from " <> prettyPrint preludeHash,
+                "def nice = Left 1 <|> Right True"
                 ]
             )
             `shouldSatisfy` isRight
