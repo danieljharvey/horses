@@ -27,8 +27,8 @@ spec = do
               (M.singleton (Nothing, "dog") (ExprHash "1"))
               mempty
       updateExprHash storeExpr (ExprHash "1") (ExprHash "2")
-        `shouldBe`  M.singleton (Nothing, "dog") (ExprHash "2")
-                   
+        `shouldBe` M.singleton (Nothing, "dog") (ExprHash "2")
+
   describe
     "UpdateDeps"
     $ do

@@ -1,8 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Language.Mimsa.Modules.Prelude ( maybeInput, preludeInput, 
-      stateInput, parserInput, nonEmptyArrayInput, arrayInput) where
+module Language.Mimsa.Modules.Prelude
+  ( maybeInput,
+    preludeInput,
+    stateInput,
+    parserInput,
+    nonEmptyArrayInput,
+    arrayInput,
+  )
+where
 
 import Data.FileEmbed
 import Data.Text (Text)

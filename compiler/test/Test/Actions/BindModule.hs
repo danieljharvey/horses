@@ -10,10 +10,10 @@ import Data.Maybe (isJust)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Test.Data.Prelude 
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.Project
+import Test.Data.Prelude
 import Test.Data.Project
 import Test.Hspec
 

@@ -49,12 +49,15 @@ getValueDependencies ::
 getValueDependencies mod' = do
   traverse (getExprDependencies mod') (moExpressions mod')
 
-getExprDependencies :: (Eq ann, Monoid ann) => Module ann -> Expr Name ann -> 
+getExprDependencies ::
+  (Eq ann, Monoid ann) =>
+  Module ann ->
+  Expr Name ann ->
   CheckM (Expr Name ann, Set DefIdentifier, Set Entity)
 getExprDependencies mod' expr =
   let allUses = extractUses expr
       nameDeps = filterDefs allUses
-      unknownNameDeps = 
+      unknownNameDeps =
         S.filter
           ( \dep ->
               S.notMember dep (M.keysSet (moExpressions mod'))
@@ -75,7 +78,8 @@ getExprDependencies mod' expr =
 -- starting at a root module,
 -- create a map of each expr hash along with the modules it needs
 -- so that we can typecheck them all
-getModuleDeps :: (Show ann) =>
+getModuleDeps ::
+  (Show ann) =>
   Map ModuleHash (Module ann) ->
   Module ann ->
   CheckM
