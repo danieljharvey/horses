@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Data.Prelude( prelude, preludeHash) where 
+module Test.Data.Prelude (prelude, preludeHash) where
 
 -- hard coded basic Prelude module used for tests
 

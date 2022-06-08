@@ -46,7 +46,6 @@ instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterE
     "Could not find infix " <> prettyPrint infixOp <> " in " <> itemList
     where
       itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
-
   prettyPrint (CouldNotFindGlobal items name) =
     "Could not find global " <> prettyPrint name <> " in " <> itemList
     where

@@ -14,22 +14,21 @@ import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 
-data Entity = 
-  -- | a variable, `dog` 
-  EName Name | 
-    -- | an infix operator, `<|>`
-    EInfix InfixOp | 
-      -- | a namespaced var, `Prelude.id`
-      ENamespacedName ModuleName Name | 
-      -- | a typename, `Maybe`
-    EType TypeName |
-      -- | a namespaced typename, `Prelude.Either`
-    ENamespacedType ModuleName TypeName  |
-      -- | a constructor, `Just`
-      EConstructor TyCon | 
-        
--- | a namespaced constructor, `Maybe.Just`
-  ENamespacedConstructor ModuleName TyCon
+data Entity
+  = -- | a variable, `dog`
+    EName Name
+  | -- | an infix operator, `<|>`
+    EInfix InfixOp
+  | -- | a namespaced var, `Prelude.id`
+    ENamespacedName ModuleName Name
+  | -- | a typename, `Maybe`
+    EType TypeName
+  | -- | a namespaced typename, `Prelude.Either`
+    ENamespacedType ModuleName TypeName
+  | -- | a constructor, `Just`
+    EConstructor TyCon
+  | -- \| a namespaced constructor, `Maybe.Just`
+    ENamespacedConstructor ModuleName TyCon
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass
     ( JSON.ToJSON,
@@ -47,6 +46,6 @@ instance Printer Entity where
   prettyPrint (ENamespacedType modName typeName) =
     prettyPrint modName <> "." <> prettyPrint typeName
   prettyPrint (EConstructor tyCon) =
-     prettyPrint tyCon
-  prettyPrint (ENamespacedConstructor modName tyCon)
-    = prettyPrint modName <> "." <> prettyPrint tyCon
+    prettyPrint tyCon
+  prettyPrint (ENamespacedConstructor modName tyCon) =
+    prettyPrint modName <> "." <> prettyPrint tyCon

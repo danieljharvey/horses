@@ -180,7 +180,7 @@ evaluateModule input expr localModule = do
     Just se -> pure se
     _ -> error "fuck, could not find the thing we just made"
 
-  -- unsafe, yolo 
+  -- unsafe, yolo
   let exprType = fromJust (lookupModuleDefType typecheckedModule evalId)
 
   -- need to get our new store items into the project so this works I reckon

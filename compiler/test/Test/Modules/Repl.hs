@@ -618,7 +618,7 @@ spec =
         result <- eval "\\state -> \\s -> match state with (State.State sas) -> sas s"
         result `shouldSatisfy` isRight
 
-      it "Bind with State monad" $ do 
+      it "Bind with State monad" $ do
         result <- eval "let storeName a = State.fmap (Prelude.const a) (State.put a); let a = State.pure \"dog\"; let b = State.bind storeName a; State.run b \"\""
         result `shouldSatisfy` isRight
 

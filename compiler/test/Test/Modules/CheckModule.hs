@@ -18,7 +18,6 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.Monad
-import Test.Data.Prelude
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -26,6 +25,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Typechecker
+import Test.Data.Prelude
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -378,7 +378,7 @@ spec = do
           checkModuleType
             ( joinLines
                 [ "import * from " <> prettyPrint preludeHash,
-                "def nice = Left 1 <|> Right True"
+                  "def nice = Left 1 <|> Right True"
                 ]
             )
             `shouldSatisfy` isRight

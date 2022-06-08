@@ -3,7 +3,7 @@ module Language.Mimsa.Types.Identifiers
     module Language.Mimsa.Types.Identifiers.Name,
     module Language.Mimsa.Types.Identifiers.TypeIdentifier,
     module Language.Mimsa.Types.Identifiers.TyVar,
-      module Language.Mimsa.Types.Identifiers.TypeName
+    module Language.Mimsa.Types.Identifiers.TypeName,
   )
 where
 
