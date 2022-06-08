@@ -52,7 +52,7 @@ toStoreExpression ::
   CheckM (StoreExpression ann)
 toStoreExpression compiledModules inputModule inputs (_, expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
-  pure $ StoreExpression expr bindings mempty
+  pure $ StoreExpression expr bindings mempty mempty
 
 resolveNamespacedName ::
   Map ModuleHash (CompiledModule ann) ->

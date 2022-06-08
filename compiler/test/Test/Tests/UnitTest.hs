@@ -37,6 +37,7 @@ testStoreExpr =
     testExpr
     (M.singleton (Nothing, "incrementInt") incrementIntH)
     mempty
+    mempty
 
 idHash :: ExprHash
 idHash = getHashOfName testStdlib "id"
@@ -55,6 +56,7 @@ testingStoreExpr =
     testingIdExpr
     (M.singleton (Nothing, "id") idHash)
     mempty
+    mempty
 
 altIdStoreExpr :: StoreExpression Annotation
 altIdStoreExpr =
@@ -64,6 +66,7 @@ altIdStoreExpr =
         (Identifier mempty "b")
         (MyVar mempty Nothing "b")
     )
+    mempty
     mempty
     mempty
 
@@ -131,7 +134,7 @@ spec =
 
     describe "createUnitTest" $ do
       it "True is a valid test" $ do
-        let storeExpr = StoreExpression (bool True) mempty mempty
+        let storeExpr = StoreExpression (bool True) mempty mempty mempty
         createUnitTest testStdlib storeExpr (TestName "True is true")
           `shouldBe` Right
             ( UnitTest
@@ -140,7 +143,7 @@ spec =
                 (getStoreExpressionHash storeExpr)
             )
       it "False is a valid (but failing) test" $ do
-        let storeExpr = StoreExpression (bool False) mempty mempty
+        let storeExpr = StoreExpression (bool False) mempty mempty mempty
         createUnitTest testStdlib storeExpr (TestName "False is not true")
           `shouldBe` Right
             ( UnitTest
@@ -149,13 +152,13 @@ spec =
                 (getStoreExpressionHash storeExpr)
             )
       it "100 is not a valid test" $ do
-        let storeExpr = StoreExpression (int 100) mempty mempty
+        let storeExpr = StoreExpression (int 100) mempty mempty mempty
         createUnitTest testStdlib storeExpr (TestName "100 is not a valid test")
           `shouldSatisfy` isLeft
 
       it "\\bool -> True is not a valid unit test" $ do
         let expr = MyLambda mempty (Identifier mempty "bool") (bool True)
-            storeExpr = StoreExpression expr mempty mempty
+            storeExpr = StoreExpression expr mempty mempty mempty
         createUnitTest testStdlib storeExpr (TestName "It's always true")
           `shouldSatisfy` isLeft
 

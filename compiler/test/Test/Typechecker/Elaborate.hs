@@ -36,12 +36,12 @@ spec = do
       it "infers int" $ do
         let expr = int 1
             expected = MyLiteral (MTPrim mempty MTInt) (MyInt 1)
-        startElaborate (StoreExpression expr mempty mempty) expected
+        startElaborate (StoreExpression expr mempty mempty mempty) expected
 
       it "infers bool" $ do
         let expr = MyLiteral (Location 1 4) (MyBool True)
             expected = MyLiteral (MTPrim (Location 1 4) MTBool) (MyBool True)
-        startElaborate (StoreExpression expr mempty mempty) expected
+        startElaborate (StoreExpression expr mempty mempty mempty) expected
 
       it "infers string" $ do
         let expr =
@@ -54,7 +54,7 @@ spec = do
                 ( MyString
                     (StringType "hello")
                 )
-        startElaborate (StoreExpression expr mempty mempty) expected
+        startElaborate (StoreExpression expr mempty mempty mempty) expected
 
       it "infers let and var" $ do
         let expr =
@@ -69,7 +69,7 @@ spec = do
                 (Identifier (MTPrim (Location 7 8) MTInt) "a")
                 (MyLiteral (MTPrim (Location 3 4) MTInt) (MyInt 1))
                 (MyVar (MTPrim (Location 5 6) MTInt) Nothing "a")
-        startElaborate (StoreExpression expr mempty mempty) expected
+        startElaborate (StoreExpression expr mempty mempty mempty) expected
 
       it "infers let binding" $ do
         let expr =
@@ -84,7 +84,7 @@ spec = do
                 (Identifier (MTPrim (Location 7 8) MTInt) "x")
                 (MyLiteral (MTPrim (Location 3 4) MTInt) (MyInt 42))
                 (MyLiteral (MTPrim (Location 5 6) MTBool) (MyBool True))
-        startElaborate (StoreExpression expr mempty mempty) expected
+        startElaborate (StoreExpression expr mempty mempty mempty) expected
 
       it "infers let binding with usage" $ do
         let expr =
@@ -100,7 +100,7 @@ spec = do
                 (MyLiteral (MTPrim mempty MTInt) (MyInt 42))
                 ( MyVar (MTPrim mempty MTInt) Nothing "x"
                 )
-        startElaborate (StoreExpression expr mempty mempty) expected
+        startElaborate (StoreExpression expr mempty mempty mempty) expected
 
       it "infers let binding with recursion 0" $ do
         let expr =
@@ -145,7 +145,7 @@ spec = do
                     )
                 )
                 (MyVar (MTFunction mempty mtBool mtBool) Nothing "dec")
-        startElaborate (StoreExpression expr mempty mempty) expected
+        startElaborate (StoreExpression expr mempty mempty mempty) expected
 
       it "infers let binding with recursion 1" $ do
         let expr =
@@ -194,4 +194,4 @@ spec = do
                     )
                     (MyLiteral mtBool (MyBool False))
                 )
-        startElaborate (StoreExpression expr mempty mempty) expected
+        startElaborate (StoreExpression expr mempty mempty mempty) expected

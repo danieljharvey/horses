@@ -40,7 +40,7 @@ spec = do
           }
     it "Single expression, single output with no deps" $ do
       let expr = unsafeParseExpr "\\a -> a" $> mempty
-          storeExpr = StoreExpression expr mempty mempty
+          storeExpr = StoreExpression expr mempty mempty mempty
           hash = getStoreExpressionHash storeExpr
           inputModule =
             mempty
@@ -54,11 +54,11 @@ spec = do
       compile' inputModule `shouldBe` expected
     it "Two expressions, one depends on the other" $ do
       let exprA = unsafeParseExpr "\\a -> a" $> mempty
-          storeExprA = StoreExpression exprA mempty mempty
+          storeExprA = StoreExpression exprA mempty mempty mempty
           hashA = getStoreExpressionHash storeExprA
 
           exprB = unsafeParseExpr "id 100" $> mempty
-          storeExprB = StoreExpression exprB (M.singleton (Nothing, "id") hashA) mempty
+          storeExprB = StoreExpression exprB (M.singleton (Nothing, "id") hashA) mempty mempty
           hashB = getStoreExpressionHash storeExprB
 
           inputModule =

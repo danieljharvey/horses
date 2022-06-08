@@ -74,7 +74,8 @@ spec =
             ( StoreExpression
                 { storeBindings = mempty,
                   storeExpression = int 1,
-                  storeTypeBindings = mempty
+                  storeTypeBindings = mempty,
+                  storeInfixes = mempty
                 }
             )
         createStoreExpression' mempty mempty (bool True)
@@ -82,7 +83,8 @@ spec =
             ( StoreExpression
                 { storeBindings = mempty,
                   storeExpression = bool True,
-                  storeTypeBindings = mempty
+                  storeTypeBindings = mempty,
+                  storeInfixes = mempty
                 }
             )
         createStoreExpression' mempty mempty (str (StringType "poo"))
@@ -90,7 +92,8 @@ spec =
             ( StoreExpression
                 { storeBindings = mempty,
                   storeExpression = str (StringType "poo"),
-                  storeTypeBindings = mempty
+                  storeTypeBindings = mempty,
+                  storeInfixes = mempty
                 }
             )
       it "Looks for vars and can't find them" $
@@ -107,7 +110,8 @@ spec =
             ( StoreExpression
                 { storeBindings = M.singleton (Nothing, Name "missing") hash,
                   storeExpression = expr,
-                  storeTypeBindings = mempty
+                  storeTypeBindings = mempty,
+                  storeInfixes = mempty
                 }
             )
     describe "createTypeStoreExpression" $ do
@@ -120,6 +124,7 @@ spec =
             ( StoreExpression
                 { storeBindings = mempty,
                   storeTypeBindings = mempty,
-                  storeExpression = expr
+                  storeExpression = expr,
+                  storeInfixes = mempty
                 }
             )
