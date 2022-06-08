@@ -33,8 +33,9 @@ extractUses_ (MyLet _ ident a b) =
   S.difference (extractUses_ a <> extractUses_ b) (extractIdentUses ident)
 extractUses_ (MyLetPattern _ pat expr body) =
   let patUses = extractPatternUses pat
-   in filterVarsIntroducedInPatterns patUses 
-            (extractUses_ expr <> extractUses_ body)
+   in filterVarsIntroducedInPatterns
+        patUses
+        (extractUses_ expr <> extractUses_ body)
 extractUses_ (MyInfix _ op a b) =
   let infixUses = case op of
         Custom infixOp -> S.singleton (EInfix infixOp)
@@ -56,7 +57,10 @@ extractUses_ (MyConstructor _ (Just modName) tyCon) =
 extractUses_ (MyConstructor _ Nothing tyCon) =
   S.singleton (EConstructor tyCon)
 extractUses_ (MyTypedHole _ _) = mempty
-extractUses_ (MyDefineInfix _ _ a b) = extractUses_ a <> extractUses_ b
+extractUses_ (MyDefineInfix _ infixOp a b) =
+  filterVarsIntroducedInPatterns
+    (S.singleton (EInfix infixOp))
+    (extractUses_ a <> extractUses_ b)
 extractUses_ (MyPatternMatch _ match patterns) =
   extractUses match <> mconcat patternUses
   where
@@ -77,6 +81,7 @@ filterVarsIntroducedInPatterns patUses exprUses =
         S.filter
           ( \case
               EName _ -> True
+              EInfix _ -> True
               _ -> False
           )
           patUses
