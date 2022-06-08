@@ -102,7 +102,7 @@ findOperator infixOp = do
   (StackFrame _ infixes) <- getCurrentStackFrame
   case M.lookup infixOp infixes of
     Just entry -> pure entry
-    _ -> error "could not find op" -- throwError (CouldNotFindVar infixes infixOp)
+    _ -> throwError (CouldNotFindInfix infixes infixOp)
 
 addOperatorToFrame :: InfixOp -> InterpretExpr var ann -> StackFrame var ann -> StackFrame var ann
 addOperatorToFrame infixOp expr (StackFrame entries infixes) =
