@@ -33,7 +33,8 @@ extractUses_ (MyLet _ ident a b) =
   S.difference (extractUses_ a <> extractUses_ b) (extractIdentUses ident)
 extractUses_ (MyLetPattern _ pat expr body) =
   let patUses = extractPatternUses pat
-   in S.filter (`S.notMember` patUses) (extractUses_ expr <> extractUses_ body)
+   in filterVarsIntroducedInPatterns patUses 
+            (extractUses_ expr <> extractUses_ body)
 extractUses_ (MyInfix _ op a b) =
   let infixUses = case op of
         Custom infixOp -> S.singleton (EInfix infixOp)

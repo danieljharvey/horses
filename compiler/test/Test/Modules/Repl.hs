@@ -698,7 +698,7 @@ spec =
             (MyConstructor mempty (Just "Maybe") "Nothing")
 
       it "Parser.ap formats correctly" $ do
-        result <- eval "\\parserF -> \\parserA -> let (Parser pF) = parserF; let (Parser pA) = parserA; Parser (\\input -> match (pF input) with Maybe.Just (f, input2) -> (match (pA input2) with Maybe.Just (a, input3) -> Just (f a, input3) | _ -> Nothing) | _ ->  Nothing)"
+        result <- eval "\\parserF -> \\parserA -> let (Parser.Parser pF) = parserF; let (Parser.Parser pA) = parserA; Parser.Parser (\\input -> match (pF input) with Maybe.Just (f, input2) -> (match (pA input2) with Maybe.Just (a, input3) -> Maybe.Just (f a, input3) | _ -> Maybe.Nothing) | _ ->  Maybe.Nothing)"
         result `shouldSatisfy` isRight
 
       it "Array literal" $ do
@@ -822,39 +822,51 @@ spec =
       it "Matches These correctly" $ do
         result <- eval "match This 1 with (These _ _) -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
       it "Fallbacks to correct catchall" $ do
-        result <- eval "match Just 1 with (Just _) -> True | _ -> False"
+        result <- eval "match Maybe.Just 1 with (Maybe.Just _) -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Typechecks Either correctly" $ do
         result <- eval "match Right 100 with (Left \"log\") -> False | (Right 100) -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Does not have a swap error" $ do
         result <- eval "\\a -> match (Left a) with (Left e) -> e | _ -> False"
         result `shouldSatisfy` isRight
+
       it "Pulls Left into scope from Project" $ do
         result <- eval "\\a -> match a with (Left e) -> e | _ -> False"
         result `shouldSatisfy` isRight
+
       it "Parses constructor application in expr" $ do
-        result <- eval "match Just 1 with (Just a) -> Just a | _ -> Nothing"
+        result <- eval "match Maybe.Just 1 with (Maybe.Just a) -> Maybe.Just a | _ -> Maybe.Nothing"
         result `shouldSatisfy` isRight
+
       it "Parses and pretty prints more complex matches" $ do
         result <- eval "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right (f a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
         result `shouldSatisfy` isRight
+
       it "Matches array with non-empty match" $ do
         result <- eval "match [1] with [_] -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Matches empty array with empty case" $ do
         result <- eval "match [] with [_] -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
       it "Should not match when input array is longer than pattern" $ do
         result <- eval "match [1,2] with [_] -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
       it "Should match when input is long but we have a SpreadWildcard at the end" $ do
         result <- eval "match [1,2,3] with [1,2,...] -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
+
       it "Shouldn't match when input is too short with SpreadWildcard at the end" $ do
         result <- eval "match [1] with [1,2,...] -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
       it "Binds empty remainder with array to SpreadValue" $ do
         result <- eval "match [1] with [1,...a] -> a | _ -> [0]"
         result
@@ -869,20 +881,25 @@ spec =
             ( MTArray mempty (MTPrim mempty MTInt),
               MyArray mempty [int 2, int 3]
             )
+
       it "Errors if we bind the same variable twice" $ do
         result <- eval "match (1,2) with (a,a) -> a"
         result `shouldSatisfy` isLeft
+
       it "Uses a constructor inside an array" $ do
-        result <- eval "match [] with [Just 1] -> True | _ -> False"
+        result <- eval "match [] with [Maybe.Just 1] -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
       it "Generates more nuanced exhaustiveness checks when using spread operatpr" $ do
         result <- eval "match [] with [] -> True | [_] -> False | [_,...] -> False"
         result
           `shouldBe` Right
             (MTPrim mempty MTBool, bool True)
+
       it "Matches an empty string" $ do
         result <- eval "match \"\" with _ ++ _ -> True | \"\" -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
+
       it "Matches an non-empty string" $ do
         result <- eval "match \"dog\" with a ++ b -> (a,b) | \"\" -> (\"\", \"\")"
         result
@@ -890,9 +907,11 @@ spec =
             ( MTPair mempty (MTPrim mempty MTString) (MTPrim mempty MTString),
               MyPair mempty (MyLiteral mempty (MyString "d")) (MyLiteral mempty (MyString "og"))
             )
+
       it "Fix empty pattern match obscuring bindings" $ do
-        result <- eval "\\a -> match Nothing with (Nothing) -> a | _ -> a"
+        result <- eval "\\a -> match Maybe.Nothing with (Maybe.Nothing) -> a | _ -> a"
         result `shouldSatisfy` isRight
+
     describe "Error with List type" $ do
       it "Is fine with no shadowed variables" $ do
         let input =
@@ -1120,47 +1139,43 @@ spec =
 
     describe "optimisations" $ do
       it "should do all optimisations in one pass" $ do
-        result <- eval "\\opts -> let d = \"dog\"; match [\"a\", \"b\"] with [a, b, c] -> (Just ((a, d))) | _ -> (Nothing)"
+        result <- eval "\\opts -> let d = \"dog\"; match [\"a\", \"b\"] with [a, b, c] -> (Maybe.Just ((a, d))) | _ -> (Maybe.Nothing)"
         result `shouldSatisfy` isRight
 
     describe "operators" $ do
-      it "infix <<< = compose; True" $ do
-        result <- eval "infix <<< = compose; True"
+      it "Bind <<< to compose" $ do
+        result <- eval "infix <<< = Prelude.compose; True"
         -- binding to a two arity function is A++
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
-      it "infix <<< = incrementInt; True" $ do
-        result <- eval "infix <<< = incrementInt; True"
+      it "Bind incrementInt to <<<" $ do
+        result <- eval "let incrementInt a = a + 1; infix <<< = incrementInt; True"
         -- we can only bind to a two arity function
         result `shouldSatisfy` isLeft
 
       it "define +++ as infix and use it" $ do
-        result <- eval "infix +++ = addInt; 1 +++ 2"
+        result <- eval "let addInt a b = a + b; infix +++ = addInt; 1 +++ 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
       it "multiple uses of infix with same type" $ do
-        result <- eval "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> incrementInt"
+        result <- eval "let incrementInt a = a + 1; let apply a f = f a; infix |> = apply; 1 |> incrementInt |> incrementInt"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
-      it "multiple uses of infix with same type" $ do
-        result <- eval "let isOne a = a == 1; let apply a f = f a; infix |> = apply; 1 |> incrementInt |> isOne"
+      it "multiple uses of infix with same type 2" $ do
+        result <- eval "let incrementInt a = a + 1; let isOne a = a == 1; let apply a f = f a; infix |> = apply; 1 |> incrementInt |> isOne"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
       it "multiple uses of infix with different types" $ do
-        result <- eval "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> pureState"
+        result <- eval "let incrementInt a = a + 1; let apply a f = f a; infix |> = apply; 1 |> incrementInt |> State.pure"
         result `shouldSatisfy` isRight
 
-      it "addInt 1 2" $ do
-        result <- eval "addInt 1 2"
-        result `shouldBe` Right (MTPrim mempty MTInt, int 3)
-
-      it "infix == = addInt; True" $ do
+      it "Can't override a built-in infix op" $ do
         result <- eval "infix == = addInt; True"
         -- can't overwrite built in infix operators
         result `shouldSatisfy` isLeft
 
-      it "infix +++ = addInt; 1 +++ True" $ do
-        result <- eval "infix +++ = addInt; 1 +++ True"
+      it "Binds addInt to +++" $ do
+        result <- eval "let addInt a b = a + b; infix +++ = addInt; 1 +++ True"
         -- function typechecking should still work
         result `shouldSatisfy` isLeft
 
