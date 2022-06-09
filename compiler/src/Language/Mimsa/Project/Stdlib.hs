@@ -65,8 +65,18 @@ modules = do
     addModule "Array" (M.fromList [("Maybe", maybeHash)]) arrayInput
   nonEmptyArrayHash <-
     addModule "NonEmptyArray" (M.fromList [("Array", arrayHash)]) nonEmptyArrayInput
+  _ <- 
+    addModule "Either" mempty eitherInput
+  _ <- 
+    addModule "Reader" (M.fromList [("Prelude",preludeHash)]) readerInput
+  _ <- 
+    addModule "These" mempty theseInput
+  _ <- 
+    addModule "Monoid" (M.fromList [("Array", arrayHash), ("Prelude", preludeHash), ("Maybe", maybeHash)]) monoidInput
   _ <-
     addModule "State" (M.fromList [("Prelude", preludeHash)]) stateInput
+  _ <-
+    addModule "String" (M.fromList [("Array", arrayHash)]) stringInput
   _ <-
     addModule
       "Parser"
@@ -77,6 +87,8 @@ modules = do
           ]
       )
       parserInput
+  _ <-
+    addModule "Tree" mempty treeInput
   pure ()
 
 baseFns :: Actions.ActionM ()

@@ -8,6 +8,12 @@ module Language.Mimsa.Modules.Prelude
     parserInput,
     nonEmptyArrayInput,
     arrayInput,
+    stringInput,
+    monoidInput,
+    readerInput,
+    eitherInput,
+    theseInput,
+    treeInput
   )
 where
 
@@ -32,3 +38,21 @@ arrayInput = T.decodeUtf8 $(embedFile "static/modules/Array.mimsa")
 
 nonEmptyArrayInput :: Text
 nonEmptyArrayInput = T.decodeUtf8 $(embedFile "static/modules/NonEmptyArray.mimsa")
+
+stringInput :: Text
+stringInput = T.decodeUtf8 $(embedFile "static/modules/String.mimsa")
+
+monoidInput :: Text
+monoidInput = T.decodeUtf8 $(embedFile "static/modules/Monoid.mimsa")
+
+readerInput :: Text
+readerInput = T.decodeUtf8 $(embedFile "static/modules/Reader.mimsa")
+
+eitherInput :: Text
+eitherInput = T.decodeUtf8 $(embedFile "static/modules/Either.mimsa")
+
+theseInput :: Text
+theseInput = T.decodeUtf8 $(embedFile "static/modules/These.mimsa")
+
+treeInput :: Text
+treeInput = T.decodeUtf8 $(embedFile "static/modules/Tree.mimsa")

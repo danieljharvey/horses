@@ -820,7 +820,7 @@ spec =
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
       it "Matches These correctly" $ do
-        result <- eval "match This 1 with (These _ _) -> True | _ -> False"
+        result <- eval "match These.This 1 with (These.These _ _) -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
       it "Fallbacks to correct catchall" $ do
@@ -828,15 +828,15 @@ spec =
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
       it "Typechecks Either correctly" $ do
-        result <- eval "match Right 100 with (Left \"log\") -> False | (Right 100) -> True | _ -> False"
+        result <- eval "match Either.Right 100 with (Either.Left \"log\") -> False | (Either.Right 100) -> True | _ -> False"
         result `shouldBe` Right (MTPrim mempty MTBool, bool True)
 
       it "Does not have a swap error" $ do
-        result <- eval "\\a -> match (Left a) with (Left e) -> e | _ -> False"
+        result <- eval "\\a -> match (Either.Left a) with (Either.Left e) -> e | _ -> False"
         result `shouldSatisfy` isRight
 
       it "Pulls Left into scope from Project" $ do
-        result <- eval "\\a -> match a with (Left e) -> e | _ -> False"
+        result <- eval "\\a -> match a with (Either.Left e) -> e | _ -> False"
         result `shouldSatisfy` isRight
 
       it "Parses constructor application in expr" $ do
@@ -844,7 +844,7 @@ spec =
         result `shouldSatisfy` isRight
 
       it "Parses and pretty prints more complex matches" $ do
-        result <- eval "\\mf -> \\ma -> match (mf, ma) with (Right f, Right a) -> Right (f a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
+        result <- eval "\\mf -> \\ma -> match (mf, ma) with (Either.Right f, Either.Right a) -> Either.Right (f a) | (Either.Left e, _) -> Either.Left e | (_, Either.Left e) -> Either.Left e"
         result `shouldSatisfy` isRight
 
       it "Matches array with non-empty match" $ do
@@ -916,7 +916,8 @@ spec =
       it "Is fine with no shadowed variables" $ do
         let input =
               mconcat
-                [ "\\a -> \\b -> match (a, b) with ",
+                [ "type List a = Cons a (List a) | Nil; ",
+                    "\\a -> \\b -> match (a, b) with ",
                   "(Cons aa restA, Nil) -> (Cons aa restA)",
                   " | (Nil, Cons bb restB) -> (Cons bb restB)",
                   " | _ -> (Nil)"
@@ -926,7 +927,8 @@ spec =
       it "Is fine with shadowed variables" $ do
         let input =
               mconcat
-                [ "\\a -> \\b -> match (a, b) with ",
+                [ "type List a = Cons a (List a) | Nil; ",
+                  " \\a -> \\b -> match (a, b) with ",
                   "(Cons a restA, Nil) -> (Cons a restA)",
                   " | (Nil, Cons b restB) -> (Cons b restB)",
                   " | _ -> a"
@@ -939,7 +941,7 @@ spec =
         result <- eval input
         fst <$> result `shouldBe` Right (MTFunction () (MTPrim () MTString) (MTPrim () MTString))
       it "type of function" $ do
-        let input = "stringReduce"
+        let input = "String.reduce"
         result <- eval input
         fst <$> result
           `shouldBe` Right
@@ -958,35 +960,25 @@ spec =
             )
 
     describe "Monoid losing types" $ do
-      it "Attempt to construct broken MonoPair" $ do
-        result <- eval "MonoPair (\\a -> a ++ a) (\\b -> b <> b)"
-        result `shouldSatisfy` isLeft
-      -- skipping because not sure what the hell is going on here
-      it "maybeMonoid stringMonoid" $ do
-        result <- eval "maybeMonoid stringMonoid"
+      it "Monoid.maybe with String.monoid" $ do
+        result <- eval "let monoid = Monoid.maybe String.monoid in monoid.mappend (Maybe.Just \"1\") Maybe.Nothing"
         fst <$> result
           `shouldBe` Right
-            ( dataTypeWithVars
-                mempty
-                Nothing
-                "Monoid"
-                [ dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTString]
-                ]
+            ( 
+                 dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTString]
+                
             )
-      it "maybeMonoid sumMonoid" $ do
-        result <- eval "maybeMonoid sumMonoid"
+      it "Monoid.sum with Monoid.maybe" $ do
+        result <- eval "let monoid = Monoid.maybe Monoid.sum; monoid.mappend (Maybe.Just 1) Maybe.Nothing"
         fst <$> result
           `shouldBe` Right
-            ( dataTypeWithVars
-                mempty
-                Nothing
-                "Monoid"
-                [ dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt]
-                ]
+            ( 
+                 dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTInt]
+                
             )
 
     describe "Tree interpreter error" $ do
-      let leaf = MyApp mempty (MyConstructor mempty Nothing "Leaf")
+      let leaf = MyApp mempty (MyConstructor mempty (Just "Tree") "Leaf")
           branch l a =
             MyApp
               mempty
@@ -994,29 +986,29 @@ spec =
                   mempty
                   ( MyApp
                       mempty
-                      (MyConstructor mempty Nothing "Branch")
+                      (MyConstructor mempty (Just "Tree") "Branch")
                       l
                   )
                   a
               )
       it "Reverses a leaf" $ do
-        result <- eval "invertTree (Leaf 1)"
+        result <- eval "Tree.invert (Tree.Leaf 1)"
         snd <$> result
           `shouldBe` Right (leaf (int 1))
 
       it "Reverses a branch" $ do
-        result <- eval "invertTree (Branch (Leaf 1) 2 (Leaf 3))"
+        result <- eval "Tree.invert (Tree.Branch (Tree.Leaf 1) 2 (Tree.Leaf 3))"
         snd <$> result
           `shouldBe` Right (branch (leaf (int 3)) (int 2) (leaf (int 1)))
 
       it "Reverses a small tree correctly" $ do
-        -- should be Branch (Branch (Leaf 5) 4 (Leaf 3)) 2 (Leaf 1)
-        result <- eval "invertTree (Branch (Leaf 1) 2 (Branch (Leaf 3) 4 (Leaf 5)))"
+        -- should be Tree.Branch (Tree.Branch (Tree.Leaf 5) 4 (Tree.Leaf 3)) 2 (Tree.Leaf 1)
+        result <- eval "Tree.invert (Tree.Branch (Tree.Leaf 1) 2 (Tree.Branch (Tree.Leaf 3) 4 (Tree.Leaf 5)))"
         snd <$> result
           `shouldBe` Right (branch (branch (leaf (int 5)) (int 4) (leaf (int 3))) (int 2) (leaf (int 1)))
 
       it "Reversing a tree twice is identity" $ do
-        result <- eval "let tree = Branch (Leaf 1) 2 (Branch (Leaf 3) 4 (Leaf 5)); invertTree (invertTree tree) == tree"
+        result <- eval "let tree = Tree.Branch (Tree.Leaf 1) 2 (Tree.Branch (Tree.Leaf 3) 4 (Tree.Leaf 5)); Tree.invert (Tree.invert tree) == tree"
         snd <$> result
           `shouldBe` Right (bool True)
 
