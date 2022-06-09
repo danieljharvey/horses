@@ -53,7 +53,6 @@ resolveInfixDeps (Store items) infixes =
       )
         <$> M.toList infixes
 
-
 extractDataType ::
   StoreExpression ann ->
   Maybe DataType

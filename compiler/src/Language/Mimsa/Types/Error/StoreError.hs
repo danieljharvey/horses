@@ -5,10 +5,10 @@ module Language.Mimsa.Types.Error.StoreError (StoreError (..), FileType (..)) wh
 
 import qualified Data.Text as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.AST.InfixOp
 
 data FileType = ProjectFile | StoreExprFile
   deriving stock (Eq, Ord, Show)
@@ -54,7 +54,6 @@ instance Printer StoreError where
   prettyPrint (CouldNotFindExprHashForInfixes missing) =
     "Could not find expressions in the store for the following: "
       <> T.intercalate "," (prettyPrint <$> missing)
-
   prettyPrint (CouldNotFindExprHashForTypeBindings missing) =
     "Could not find type expressions in the store for the following: "
       <> T.intercalate "," (prettyPrint <$> missing)

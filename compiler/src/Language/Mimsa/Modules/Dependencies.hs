@@ -46,7 +46,7 @@ getValueDependencies ::
           Set Entity
         )
     )
-getValueDependencies mod' = do
+getValueDependencies mod' =
   traverse (getExprDependencies mod') (moExpressions mod')
 
 getExprDependencies ::

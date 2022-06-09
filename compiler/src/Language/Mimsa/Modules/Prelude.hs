@@ -13,7 +13,7 @@ module Language.Mimsa.Modules.Prelude
     readerInput,
     eitherInput,
     theseInput,
-    treeInput
+    treeInput,
   )
 where
 

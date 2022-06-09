@@ -85,16 +85,18 @@ typecheckAllModules rootModule = do
   -- we tag each StoreExpression we've found with the deps it needs
   inputWithDeps <- getModuleDeps modules rootModule
 
+  let stInputs =
+        ( \(mod', deps) ->
+            Build.Plan
+              { Build.jbDeps = deps,
+                Build.jbInput = mod'
+              }
+        )
+          <$> inputWithDeps
+
   let state =
         Build.State
-          { Build.stInputs =
-              ( \(mod', deps) ->
-                  Build.Plan
-                    { Build.jbDeps = deps,
-                      Build.jbInput = mod'
-                    }
-              )
-                <$> inputWithDeps,
+          { Build.stInputs = stInputs,
             Build.stOutputs = mempty
           }
   -- go!
@@ -112,16 +114,18 @@ typecheckAllModuleDefs typecheckedDeps inputModule = do
   inputWithDeps <- getValueDependencies inputModule
   let inputWithDepsAndName = M.mapWithKey (,) inputWithDeps
 
+  let stInputs =
+        ( \(name, (expr, deps, _)) ->
+            Build.Plan
+              { Build.jbDeps = deps,
+                Build.jbInput = (name, expr)
+              }
+        )
+          <$> inputWithDepsAndName
+
   let state =
         Build.State
-          { Build.stInputs =
-              ( \(name, (expr, deps, _)) ->
-                  Build.Plan
-                    { Build.jbDeps = deps,
-                      Build.jbInput = (name, expr)
-                    }
-              )
-                <$> inputWithDepsAndName,
+          { Build.stInputs = stInputs,
             Build.stOutputs = mempty
           }
   -- go!
@@ -274,6 +278,8 @@ namesOnly =
           _ -> Nothing
       )
     . S.toList
+
+-- typecheckDef ::
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::

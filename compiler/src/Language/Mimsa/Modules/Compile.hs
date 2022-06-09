@@ -102,13 +102,12 @@ infixesFromEntities ::
 infixesFromEntities inputs uses = do
   let fromUse = \case
         EInfix infixOp -> case M.lookup (DIInfix infixOp) inputs of
-          Just se -> pure $ M.singleton infixOp (getStoreExpressionHash se) 
+          Just se -> pure $ M.singleton infixOp (getStoreExpressionHash se)
           _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIInfix infixOp)))
         _ -> pure mempty
 
   -- combine results
   mconcat <$> traverse fromUse (S.toList uses)
-
 
 -- turns a bunch of StoreExpressions into a Store
 toStore :: Map a (StoreExpression ann) -> Store ann

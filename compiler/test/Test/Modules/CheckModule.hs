@@ -72,7 +72,7 @@ checkModuleType t =
 
 spec :: Spec
 spec = do
-  describe "modules" $ do
+  fdescribe "modules" $ do
     describe "CheckModule" $ do
       it "1 parses correctly" $ do
         let filePath = modulesPath <> "1.mimsa"
@@ -338,6 +338,33 @@ spec = do
                   }
            in checkModule' "type Maybe a = Just a | Nothing\ndef fmap (f: a -> b) (maybeA: Maybe a): Maybe b = match maybeA with Just a -> Just (f a) | Nothing -> Nothing\n\n\ndef inc a = a + 1"
                 `shouldBe` Right expectedModule
+      describe "check types" $ do
+        let joinLines = T.intercalate "\n"
+        it "broken type declaration" $
+          checkModuleType
+            ( joinLines
+                ["type Maybe a = Just b | Nothing"]
+            )
+            `shouldSatisfy` isLeft
+
+        it "one type uses another correctly" $
+          checkModuleType
+            ( joinLines
+                [ "type Maybe a = Just a | Nothing",
+                  "type Parser a = Parser (String -> Maybe (String, a))"
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        it "one type uses another incorrectly and fails" $
+          checkModuleType
+            ( joinLines
+                [ "type Maybe a = Just a | Nothing",
+                  "type Parser a = Parser (String -> Maybe Int (String, a))"
+                ]
+            )
+            `shouldSatisfy` isLeft
+
       describe "imports" $ do
         let joinLines = T.intercalate "\n"
         it "uses fst from Prelude" $

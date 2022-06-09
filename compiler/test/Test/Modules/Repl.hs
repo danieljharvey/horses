@@ -54,7 +54,7 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  fdescribe "Modules repl" $ do
+  describe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "Use Prelude.fst" $ do
         result <- eval "let x = ((1,2)) in Prelude.fst x"
@@ -917,7 +917,7 @@ spec =
         let input =
               mconcat
                 [ "type List a = Cons a (List a) | Nil; ",
-                    "\\a -> \\b -> match (a, b) with ",
+                  "\\a -> \\b -> match (a, b) with ",
                   "(Cons aa restA, Nil) -> (Cons aa restA)",
                   " | (Nil, Cons bb restB) -> (Cons bb restB)",
                   " | _ -> (Nil)"
@@ -964,17 +964,13 @@ spec =
         result <- eval "let monoid = Monoid.maybe String.monoid in monoid.mappend (Maybe.Just \"1\") Maybe.Nothing"
         fst <$> result
           `shouldBe` Right
-            ( 
-                 dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTString]
-                
+            ( dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTString]
             )
       it "Monoid.sum with Monoid.maybe" $ do
         result <- eval "let monoid = Monoid.maybe Monoid.sum; monoid.mappend (Maybe.Just 1) Maybe.Nothing"
         fst <$> result
           `shouldBe` Right
-            ( 
-                 dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTInt]
-                
+            ( dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTInt]
             )
 
     describe "Tree interpreter error" $ do

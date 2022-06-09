@@ -65,13 +65,13 @@ modules = do
     addModule "Array" (M.fromList [("Maybe", maybeHash)]) arrayInput
   nonEmptyArrayHash <-
     addModule "NonEmptyArray" (M.fromList [("Array", arrayHash)]) nonEmptyArrayInput
-  _ <- 
+  _ <-
     addModule "Either" mempty eitherInput
-  _ <- 
-    addModule "Reader" (M.fromList [("Prelude",preludeHash)]) readerInput
-  _ <- 
+  _ <-
+    addModule "Reader" (M.fromList [("Prelude", preludeHash)]) readerInput
+  _ <-
     addModule "These" mempty theseInput
-  _ <- 
+  _ <-
     addModule "Monoid" (M.fromList [("Array", arrayHash), ("Prelude", preludeHash), ("Maybe", maybeHash)]) monoidInput
   _ <-
     addModule "State" (M.fromList [("Prelude", preludeHash)]) stateInput
