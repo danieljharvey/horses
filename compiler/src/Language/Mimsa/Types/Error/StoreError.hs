@@ -8,6 +8,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.AST.InfixOp
 
 data FileType = ProjectFile | StoreExprFile
   deriving stock (Eq, Ord, Show)
@@ -24,6 +25,7 @@ data StoreError
   | CouldNotDecodeFile FilePath
   | CouldNotDecodeByteString
   | CouldNotFindExprHashForBindings [(Maybe ModuleName, Name)]
+  | CouldNotFindExprHashForInfixes [InfixOp]
   | CouldNotFindExprHashForTypeBindings [TyCon]
   | CouldNotFindBinding Name
   | CouldNotFindStoreExpression ExprHash
@@ -49,6 +51,10 @@ instance Printer StoreError where
   prettyPrint (CouldNotFindExprHashForBindings missing) =
     "Could not find expressions in the store for the following: "
       <> T.intercalate "," (prettyPrint <$> missing)
+  prettyPrint (CouldNotFindExprHashForInfixes missing) =
+    "Could not find expressions in the store for the following: "
+      <> T.intercalate "," (prettyPrint <$> missing)
+
   prettyPrint (CouldNotFindExprHashForTypeBindings missing) =
     "Could not find type expressions in the store for the following: "
       <> T.intercalate "," (prettyPrint <$> missing)

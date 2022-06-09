@@ -9,7 +9,7 @@ import Language.Mimsa.Types.Error.InterpreterError
 
 -- | this assumes that
 interpretInfix ::
-  (Ord var, Monoid ann) =>
+  (Ord var, Monoid ann) => 
   InterpretFn var ann ->
   Operator ->
   InterpretExpr var ann ->

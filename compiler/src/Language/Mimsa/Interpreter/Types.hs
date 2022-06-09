@@ -25,7 +25,8 @@ type InterpreterM var ann a =
 
 data InterpretReaderEnv var ann = InterpretReaderEnv
   { ireStack :: StackFrame var ann,
-    ireGlobals :: Map ExprHash (InterpretExpr var ann)
+    ireGlobals :: Map ExprHash (InterpretExpr var ann),
+    ireInfixes :: Map InfixOp ExprHash
   }
 
 type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)

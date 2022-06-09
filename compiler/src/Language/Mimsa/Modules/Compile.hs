@@ -52,7 +52,8 @@ toStoreExpression ::
   CheckM (StoreExpression ann)
 toStoreExpression compiledModules inputModule inputs (_, expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
-  pure $ StoreExpression expr bindings mempty mempty
+  infixes <- infixesFromEntities inputs uses
+  pure $ StoreExpression expr bindings mempty infixes
 
 resolveNamespacedName ::
   Map ModuleHash (CompiledModule ann) ->
@@ -83,9 +84,6 @@ bindingsFromEntities compiledModules inputModule inputs uses = do
         EName name -> case M.lookup (DIName name) inputs of
           Just se -> pure $ M.singleton (Nothing, name) (getStoreExpressionHash se)
           _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIName name)))
-        EInfix infixOp -> case M.lookup (DIInfix infixOp) inputs of
-          Just _se -> error "No way of passing an infix to a StoreExpression"
-          _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIInfix infixOp)))
         ENamespacedName modName name ->
           case resolveNamespacedName compiledModules inputModule modName name of
             Just hash -> pure $ M.singleton (Just modName, name) hash
@@ -94,6 +92,23 @@ bindingsFromEntities compiledModules inputModule inputs uses = do
 
   -- combine results
   mconcat <$> traverse fromUse (S.toList uses)
+
+-- given our dependencies and the entities used by the expression, create the
+-- bindings
+infixesFromEntities ::
+  Map DefIdentifier (StoreExpression ann) ->
+  Set Entity ->
+  CheckM (Map InfixOp ExprHash)
+infixesFromEntities inputs uses = do
+  let fromUse = \case
+        EInfix infixOp -> case M.lookup (DIInfix infixOp) inputs of
+          Just se -> pure $ M.singleton infixOp (getStoreExpressionHash se) 
+          _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIInfix infixOp)))
+        _ -> pure mempty
+
+  -- combine results
+  mconcat <$> traverse fromUse (S.toList uses)
+
 
 -- turns a bunch of StoreExpressions into a Store
 toStore :: Map a (StoreExpression ann) -> Store ann

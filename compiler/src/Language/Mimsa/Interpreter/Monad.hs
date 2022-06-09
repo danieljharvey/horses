@@ -57,7 +57,7 @@ lookupInGlobals exprHash = do
     _ -> throwError (CouldNotFindGlobal globals exprHash)
 
 lookupVar ::
-  (Ord var, Monoid ann) =>
+  (Ord var, Monoid ann, Show var, Show ann) =>
   (var, Unique) ->
   InterpreterM var ann (InterpretExpr var ann)
 lookupVar (var, maybeExprHash) =
@@ -97,12 +97,17 @@ addOperator infixOp expr = do
           }
     )
 
+-- lookup custom infixOp in stack and then global scope
 findOperator :: InfixOp -> InterpreterM var ann (InterpretExpr var ann)
 findOperator infixOp = do
   (StackFrame _ infixes) <- getCurrentStackFrame
   case M.lookup infixOp infixes of
     Just entry -> pure entry
-    _ -> throwError (CouldNotFindInfix infixes infixOp)
+    _ -> do
+      allInfixes <- asks ireInfixes
+      case M.lookup infixOp allInfixes of
+        Just infixHash -> lookupInGlobals infixHash
+        _ -> throwError (CouldNotFindInfix infixes infixOp)
 
 addOperatorToFrame :: InfixOp -> InterpretExpr var ann -> StackFrame var ann -> StackFrame var ann
 addOperatorToFrame infixOp expr (StackFrame entries infixes) =

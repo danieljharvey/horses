@@ -35,6 +35,25 @@ resolveDeps (Store items) bindings' =
       )
         <$> M.toList bindings'
 
+-- given a list of bindings and the store, grab them all
+resolveInfixDeps ::
+  Store ann ->
+  Map InfixOp ExprHash ->
+  Either StoreError (Map InfixOp (ExprHash, StoreExpression ann))
+resolveInfixDeps (Store items) infixes =
+  case partitionEithers foundItems of
+    ([], found) -> Right (M.fromList found)
+    (fails, _) -> Left $ CouldNotFindExprHashForInfixes fails
+  where
+    foundItems =
+      ( \(infixOp, hash) -> case M.lookup hash items of
+          Just storeExpr' ->
+            Right (infixOp, (hash, storeExpr'))
+          Nothing -> Left infixOp
+      )
+        <$> M.toList infixes
+
+
 extractDataType ::
   StoreExpression ann ->
   Maybe DataType
@@ -86,13 +105,11 @@ recursiveResolve ::
   Either StoreError [StoreExpression ann]
 recursiveResolve store' storeExpr = do
   (ResolvedDeps deps) <- resolveDeps store' (storeBindings storeExpr)
+  infixDeps <- resolveInfixDeps store' (storeInfixes storeExpr)
   typeDeps <- resolveTypeStoreExpressions store' (storeTypeBindings storeExpr)
-  let storeExprs =
-        (\(_, (_, se)) -> se)
-          <$> M.toList deps
-      storeTypeExprs =
-        (\(_, (_, se)) -> se)
-          <$> M.toList typeDeps
-      allStoreExprs = storeExprs <> storeTypeExprs
+  let storeExprs = snd <$> M.elems deps
+      storeTypeExprs = snd <$> M.elems typeDeps
+      storeInfixExprs = snd <$> M.elems infixDeps
+      allStoreExprs = storeExprs <> storeTypeExprs <> storeInfixExprs
   subExprs <- traverse (recursiveResolve store') allStoreExprs
   pure $ mconcat subExprs <> allStoreExprs
