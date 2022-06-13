@@ -7,9 +7,11 @@ module Language.Mimsa.Typechecker.DataTypes
     inferDataConstructor,
     inferConstructorTypes,
     dataTypeWithVars,
+    validateDataType,
   )
 where
 
+import Debug.Trace
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor
@@ -28,6 +30,17 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
+
+-- on declaring a datatype, basically is it ok
+validateDataType ::
+  (MonadError TypeError m) =>
+  Environment ->
+  Annotation ->
+  DataType ->
+  m ()
+validateDataType _env ann dt = do
+  validateDataTypeVariables ann dt
+  validateConstructorsArentBuiltIns ann dt
 
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
@@ -104,11 +117,27 @@ validateConstructors ::
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-        if M.member (Nothing, coerce tyCon) (getDataTypes env)
+        if M.member (Nothing, coerce tyCon) (traceShowId $ getDataTypes env)
           then throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon))
           else pure ()
     )
     (M.toList constructors)
+
+-- when adding a new datatype, check none of the constructors already exist
+validateConstructorsArentBuiltIns ::
+  (MonadError TypeError m) =>
+  Annotation ->
+  DataType ->
+  m ()
+validateConstructorsArentBuiltIns ann (DataType _ _ constructors) = do
+  traverse_
+    ( \(tyCon, _) ->
+      case lookupBuiltIn (coerce tyCon) of
+          Just _ -> throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon))
+          _ -> pure () 
+    )
+    (M.toList constructors)
+
 
 validateDataTypeVariables ::
   (MonadError TypeError m) =>

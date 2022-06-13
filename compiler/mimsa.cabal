@@ -86,6 +86,7 @@ library
       Language.Mimsa.Modules.Monad
       Language.Mimsa.Modules.Parse
       Language.Mimsa.Modules.Prelude
+      Language.Mimsa.Modules.Typecheck
       Language.Mimsa.Modules.Uses
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers

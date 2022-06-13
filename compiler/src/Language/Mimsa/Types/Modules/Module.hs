@@ -149,6 +149,7 @@ printDefinition mod' def expr =
                 <> indentMulti 2 (prettyDoc other)
         DIInfix infixOp ->
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
+        DIType _ -> error "printing type oh no"
 
 instance Semigroup (Module ann) where
   (Module a b c d e f g) <> (Module a' b' c' d' e' f' g') =

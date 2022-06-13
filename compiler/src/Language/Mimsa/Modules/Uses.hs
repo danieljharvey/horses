@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Modules.Uses
   ( extractUses,
+    extractDataTypeUses,
   )
 where
 
@@ -124,3 +125,7 @@ extractTypeUses (MTConstructor _ (Just modName) typeName) =
 extractTypeUses (MTConstructor _ Nothing typeName) =
   S.singleton (EType typeName)
 extractTypeUses other = withMonoid extractTypeUses other
+
+extractDataTypeUses :: DataType -> Set Entity
+extractDataTypeUses (DataType _ _ constructors) =
+  foldMap (foldMap extractTypeUses) constructors

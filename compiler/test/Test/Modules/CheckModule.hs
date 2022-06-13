@@ -338,7 +338,8 @@ spec = do
                   }
            in checkModule' "type Maybe a = Just a | Nothing\ndef fmap (f: a -> b) (maybeA: Maybe a): Maybe b = match maybeA with Just a -> Just (f a) | Nothing -> Nothing\n\n\ndef inc a = a + 1"
                 `shouldBe` Right expectedModule
-      describe "check types" $ do
+
+      fdescribe "check types" $ do
         let joinLines = T.intercalate "\n"
         it "broken type declaration" $
           checkModuleType

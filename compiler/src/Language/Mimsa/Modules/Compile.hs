@@ -37,6 +37,17 @@ instance Semigroup (CompiledModule ann) where
 instance Monoid (CompiledModule ann) where
   mempty = CompiledModule mempty mempty
 
+toStoreExpression ::
+  Map ModuleHash (CompiledModule ann) ->
+  Module (Type ann) ->
+  Map DefIdentifier (StoreExpression ann) ->
+  (DefIdentifier, DepType ann, Set Entity) ->
+  CheckM (StoreExpression ann)
+toStoreExpression compiledModules inputModule inputs (_, dep, uses) =
+  case dep of
+    (DTExpr expr) -> exprToStoreExpression compiledModules inputModule inputs (expr, uses)
+    _ -> error "compile data type"
+
 -- to make a store expression we need to
 -- a) work out all the deps this expression has
 --   - values
@@ -44,13 +55,13 @@ instance Monoid (CompiledModule ann) where
 --   - type constructors
 --   - type names
 -- b) map them to specific ExprHashes
-toStoreExpression ::
+exprToStoreExpression ::
   Map ModuleHash (CompiledModule ann) ->
   Module (Type ann) ->
   Map DefIdentifier (StoreExpression ann) ->
-  (DefIdentifier, Expr Name ann, Set Entity) ->
+  (Expr Name ann, Set Entity) ->
   CheckM (StoreExpression ann)
-toStoreExpression compiledModules inputModule inputs (_, expr, uses) = do
+exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
   infixes <- infixesFromEntities inputs uses
   pure $ StoreExpression expr bindings mempty infixes

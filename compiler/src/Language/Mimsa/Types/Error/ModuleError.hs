@@ -9,8 +9,8 @@ import Error.Diagnose
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.ModuleHash
 
 data ModuleError
   = DuplicateDefinition DefIdentifier
@@ -19,6 +19,7 @@ data ModuleError
   | DefinitionConflictsWithImport DefIdentifier ModuleHash
   | TypeConflictsWithImport TypeName ModuleHash
   | CannotFindValues (Set DefIdentifier)
+  | CannotFindTypes (Set (Maybe ModuleName, TypeName))
   | DefDoesNotTypeCheck Text DefIdentifier TypeError
   | MissingModule ModuleHash
   | MissingModuleDep DefIdentifier ModuleHash
@@ -36,6 +37,8 @@ instance Printer ModuleError where
     "Duplicate constructor name: " <> prettyPrint tyCon
   prettyPrint (CannotFindValues names) =
     "Cannot find values: " <> prettyPrint names
+  prettyPrint (CannotFindTypes names) =
+    "Cannot find types: " <> prettyPrint names
   prettyPrint (DefDoesNotTypeCheck _ name typeErr) =
     prettyPrint name <> " had a typechecking error: " <> prettyPrint typeErr
   prettyPrint (MissingModule mHash) =

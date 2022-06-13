@@ -7,9 +7,9 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
+import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST

@@ -7,10 +7,10 @@ where
 
 import Data.Functor
 import qualified Data.Map as M
-import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
+import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST

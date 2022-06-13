@@ -14,7 +14,7 @@ import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
 
 -- | different kinds of top-level definitions
-data DefIdentifier = DIName Name | DIInfix InfixOp
+data DefIdentifier = DIName Name | DIInfix InfixOp | DIType TypeName
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass
     ( JSON.ToJSON,
@@ -26,3 +26,4 @@ data DefIdentifier = DIName Name | DIInfix InfixOp
 instance Printer DefIdentifier where
   prettyPrint (DIName name) = prettyPrint name
   prettyPrint (DIInfix infixOp) = prettyPrint infixOp
+  prettyPrint (DIType typeName) = prettyPrint typeName
