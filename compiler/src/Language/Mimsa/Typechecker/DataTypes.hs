@@ -11,7 +11,6 @@ module Language.Mimsa.Typechecker.DataTypes
   )
 where
 
-import Debug.Trace
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor
@@ -117,7 +116,7 @@ validateConstructors ::
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-        if M.member (Nothing, coerce tyCon) (traceShowId $ getDataTypes env)
+        if M.member (Nothing, coerce tyCon) (getDataTypes env)
           then throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon))
           else pure ()
     )
@@ -132,12 +131,11 @@ validateConstructorsArentBuiltIns ::
 validateConstructorsArentBuiltIns ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-      case lookupBuiltIn (coerce tyCon) of
+        case lookupBuiltIn (coerce tyCon) of
           Just _ -> throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon))
-          _ -> pure () 
+          _ -> pure ()
     )
     (M.toList constructors)
-
 
 validateDataTypeVariables ::
   (MonadError TypeError m) =>

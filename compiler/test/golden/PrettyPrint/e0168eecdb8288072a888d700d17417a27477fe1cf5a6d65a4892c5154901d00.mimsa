@@ -1,0 +1,1 @@
+parser.run (parser.left (parser.char "[") parser.space0) "[          "

@@ -1,0 +1,10 @@
+type Either e a    = Left e | Right a;
+
+\f ->
+  \g ->
+    \either ->
+      match either with 
+          (Left e) -> 
+            (g e)
+        | (Right a) -> 
+            (f a)

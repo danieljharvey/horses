@@ -38,6 +38,7 @@ instance Monoid (CompiledModule ann) where
   mempty = CompiledModule mempty mempty
 
 toStoreExpression ::
+  (Monoid ann) =>
   Map ModuleHash (CompiledModule ann) ->
   Module (Type ann) ->
   Map DefIdentifier (StoreExpression ann) ->
@@ -46,7 +47,16 @@ toStoreExpression ::
 toStoreExpression compiledModules inputModule inputs (_, dep, uses) =
   case dep of
     (DTExpr expr) -> exprToStoreExpression compiledModules inputModule inputs (expr, uses)
-    _ -> error "compile data type"
+    (DTData dt) -> dataTypeToStoreExpression dt
+
+-- this is crap, need to add type bindings
+dataTypeToStoreExpression ::
+  (Monoid ann) =>
+  DataType ->
+  CheckM (StoreExpression ann)
+dataTypeToStoreExpression dt =
+  let expr = MyData mempty dt (MyRecord mempty mempty)
+   in pure (StoreExpression expr mempty mempty mempty)
 
 -- to make a store expression we need to
 -- a) work out all the deps this expression has

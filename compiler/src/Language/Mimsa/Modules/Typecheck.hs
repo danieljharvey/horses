@@ -240,11 +240,11 @@ typecheckOneDef inputModule typecheckedModules deps (def, dep) =
       DTData
         <$> typecheckOneTypeDef inputModule typecheckedModules (filterDataTypes deps) (def, dt)
 
-keyDeps ::
+_keyDeps ::
   Module Annotation ->
   Map DefIdentifier DataType ->
   Map (Maybe ModuleName, TypeName) DataType
-keyDeps _mod =
+_keyDeps _mod =
   filterMapKeys
     ( \case
         DIType typeName -> Just (Nothing, typeName)
@@ -259,7 +259,7 @@ typecheckOneTypeDef ::
   Map DefIdentifier DataType ->
   (DefIdentifier, DataType) ->
   CheckM DataType
-typecheckOneTypeDef inputModule _typecheckedModules typeDeps (def, dt) = do
+typecheckOneTypeDef _inputModule _typecheckedModules _typeDeps (def, dt) = do
   input <- getStoredInput
 
   -- ideally we'd attach annotations to the DefIdentifiers or something, so we
@@ -269,7 +269,7 @@ typecheckOneTypeDef inputModule _typecheckedModules typeDeps (def, dt) = do
   let action = do
         validateConstructorsArentBuiltIns ann dt
         validateDataTypeVariables ann dt
-        validateDataTypeUses (keyDeps inputModule typeDeps) ann dt
+  -- validateDataTypeUses (keyDeps inputModule typeDeps) ann dt
 
   -- typecheck it
   liftEither $
@@ -314,13 +314,13 @@ validateDataTypeVariables ann (DataType typeName vars constructors) =
 
 -- type Broken a = Broken (Maybe a a)
 -- should not make sense because it's using `Maybe` wrong
-validateDataTypeUses ::
+_validateDataTypeUses ::
   (MonadError TypeError m) =>
   Map (Maybe ModuleName, TypeName) DataType ->
   Annotation ->
   DataType ->
   m ()
-validateDataTypeUses deps ann (DataType _ _ constructors) = do
+_validateDataTypeUses deps ann (DataType _ _ constructors) = do
   let allUses = foldMap (foldMap getConstructorUses) (M.elems constructors)
   traverse_
     ( \(modName, typeName, kind) -> do
