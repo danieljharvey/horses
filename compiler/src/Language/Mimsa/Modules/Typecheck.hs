@@ -6,12 +6,11 @@
 
 module Language.Mimsa.Modules.Typecheck (typecheckAllModules) where
 
-import Data.Foldable
-import Language.Mimsa.TypeUtils
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Bifunctor
 import Data.Coerce
+import Data.Foldable
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
@@ -20,6 +19,7 @@ import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.Monad
+import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
@@ -240,6 +240,17 @@ typecheckOneDef inputModule typecheckedModules deps (def, dep) =
       DTData
         <$> typecheckOneTypeDef inputModule typecheckedModules (filterDataTypes deps) (def, dt)
 
+keyDeps ::
+  Module Annotation ->
+  Map DefIdentifier DataType ->
+  Map (Maybe ModuleName, TypeName) DataType
+keyDeps _mod =
+  filterMapKeys
+    ( \case
+        DIType typeName -> Just (Nothing, typeName)
+        _ -> Nothing
+    )
+
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"
 typecheckOneTypeDef ::
@@ -248,29 +259,27 @@ typecheckOneTypeDef ::
   Map DefIdentifier DataType ->
   (DefIdentifier, DataType) ->
   CheckM DataType
-typecheckOneTypeDef _inputModule _typecheckedModules typeDeps (def, dt) = do
+typecheckOneTypeDef inputModule _typecheckedModules typeDeps (def, dt) = do
   input <- getStoredInput
-  
-  let depsKeyedByTypeName = _ typeDeps
 
   -- ideally we'd attach annotations to the DefIdentifiers or something, so we
   -- can show the original code in errors
   let ann = mempty
 
   let action = do
-                      validateConstructorsArentBuiltIns ann dt
-                      validateDataTypeVariables ann dt
-                      validateDataTypeUses depsKeyedByTypeName ann dt
+        validateConstructorsArentBuiltIns ann dt
+        validateDataTypeVariables ann dt
+        validateDataTypeUses (keyDeps inputModule typeDeps) ann dt
 
   -- typecheck it
   liftEither $
     first
       (ModuleErr . DefDoesNotTypeCheck input def)
-      action 
+      action
 
   pure dt
 
--- when adding a new datatype, check none of the constructors are built in ones 
+-- when adding a new datatype, check none of the constructors are built in ones
 validateConstructorsArentBuiltIns ::
   (MonadError TypeError m) =>
   Annotation ->
@@ -279,9 +288,9 @@ validateConstructorsArentBuiltIns ::
 validateConstructorsArentBuiltIns ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-      case lookupBuiltIn (coerce tyCon) of
+        case lookupBuiltIn (coerce tyCon) of
           Just _ -> throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon))
-          _ -> pure () 
+          _ -> pure ()
     )
     (M.toList constructors)
 
@@ -305,16 +314,43 @@ validateDataTypeVariables ann (DataType typeName vars constructors) =
 
 -- type Broken a = Broken (Maybe a a)
 -- should not make sense because it's using `Maybe` wrong
-validateDataTypeUses :: (MonadError TypeError m) =>
-  Map (Maybe ModuleName, TypeName)  DataType ->
-  Annotation -> DataType -> m ()
-validateDataTypeUses _deps _ann _dt = pure ()
+validateDataTypeUses ::
+  (MonadError TypeError m) =>
+  Map (Maybe ModuleName, TypeName) DataType ->
+  Annotation ->
+  DataType ->
+  m ()
+validateDataTypeUses deps ann (DataType _ _ constructors) = do
+  let allUses = foldMap (foldMap getConstructorUses) (M.elems constructors)
+  traverse_
+    ( \(modName, typeName, kind) -> do
+        let foundKind = lookupDepKind deps (modName, typeName)
+        if foundKind == kind
+          then pure ()
+          else throwError (KindMismatchInDataDeclaration ann modName typeName kind foundKind)
+    )
+    (S.toList allUses)
+
+lookupDepKind ::
+  Map (Maybe ModuleName, TypeName) DataType ->
+  (Maybe ModuleName, TypeName) ->
+  Int
+lookupDepKind deps defId =
+  case M.lookup defId deps of
+    Just (DataType _ vars _) -> length vars
+    Nothing -> 0
 
 -- which vars are used in this type?
 getVariablesInType :: Type ann -> Set Name
 getVariablesInType (MTVar _ (TVScopedVar _ name)) = S.singleton name
 getVariablesInType (MTVar _ (TVName n)) = S.singleton (coerce n)
 getVariablesInType other = withMonoid getVariablesInType other
+
+-- TODO: this is wrong
+getConstructorUses :: Type ann -> Set (Maybe ModuleName, TypeName, Int)
+getConstructorUses (MTConstructor _ modName typeName) =
+  S.singleton (modName, typeName, 0)
+getConstructorUses other = withMonoid getConstructorUses other
 
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::
@@ -350,6 +386,3 @@ typecheckOneExprDef inputModule typecheckedModules deps (def, expr) = do
         (typecheck typeMap env numberedExpr)
 
   pure (first fst typedExpr)
-
-
-

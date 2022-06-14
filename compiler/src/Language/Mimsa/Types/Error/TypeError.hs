@@ -63,6 +63,7 @@ data TypeErrorF var ann
   | FunctionArgumentMismatch ann (Type ann) (Type ann)
   | ApplicationToNonFunction ann (Type ann)
   | UnscopedTypeVarFound ann TypeIdentifier
+  | KindMismatchInDataDeclaration ann (Maybe ModuleName) TypeName Int Int
   deriving stock (Eq, Ord, Show, Foldable)
 
 type TypeError = TypeErrorF Name Annotation
@@ -236,6 +237,11 @@ renderTypeError (UnscopedTypeVarFound _ typeVar) =
   [ "Unscoped type var found: " <> prettyDoc typeVar,
     "This is an implementation error, please complain on Github or write a mean tweet"
   ]
+renderTypeError (KindMismatchInDataDeclaration _ modName typeName expectedArgs actualArgs) =
+  let nameo = case modName of
+        Just m -> prettyDoc m <> "." <> prettyDoc typeName
+        _ -> prettyDoc typeName
+   in ["Kind mismatch " <> nameo <> " expected " <> pretty expectedArgs <> " but got " <> pretty actualArgs]
 
 printDataTypes :: Environment -> [Doc style]
 printDataTypes env = mconcat $ snd <$> M.toList (printDt <$> getDataTypes env)
