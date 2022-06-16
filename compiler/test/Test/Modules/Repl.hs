@@ -54,7 +54,7 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  describe "Modules repl" $ do
+  fdescribe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "Use Prelude.fst" $ do
         result <- eval "let x = ((1,2)) in Prelude.fst x"
@@ -973,8 +973,8 @@ spec =
             ( dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTInt]
             )
 
-    describe "Tree interpreter error" $ do
-      let leaf = MyApp mempty (MyConstructor mempty (Just "Tree") "Leaf")
+    fdescribe "Tree interpreter error" $ do
+      let leaf = MyApp mempty (MyConstructor mempty Nothing "Leaf")
           branch l a =
             MyApp
               mempty
@@ -982,15 +982,23 @@ spec =
                   mempty
                   ( MyApp
                       mempty
-                      (MyConstructor mempty (Just "Tree") "Branch")
+                      (MyConstructor mempty Nothing "Branch")
                       l
                   )
                   a
               )
+      it "Constructs a Tree" $ do
+        result <- eval "Tree.Leaf 1"
+        result `shouldSatisfy` isRight
+
       it "Reverses a leaf" $ do
         result <- eval "Tree.invert (Tree.Leaf 1)"
         snd <$> result
           `shouldBe` Right (leaf (int 1))
+
+      it "Maps a tree" $ do
+        result <- eval "Tree.fmap (Prelude.const True) (Tree.Branch (Tree.Leaf 1) 2 (Tree.Leaf 3))"
+        result `shouldSatisfy` isRight
 
       it "Reverses a branch" $ do
         result <- eval "Tree.invert (Tree.Branch (Tree.Leaf 1) 2 (Tree.Leaf 3))"
@@ -1032,7 +1040,7 @@ spec =
 
       it "should break with non-existent type" $ do
         result <- eval "let (a: FooBar) = True in a"
-        result `shouldSatisfy` textErrorContains "Cannot match Boolean and FooBar"
+        result `shouldSatisfy` isLeft
 
       it "cannot assign concrete value to polymorphic type" $ do
         result <- eval "let (a: anyA) = True in a"
@@ -1060,7 +1068,7 @@ spec =
         result `shouldSatisfy` isRight
 
       it "should typecheck (and print properly)" $ do
-        result <- eval "(\\a -> a : Maybe a -> Maybe a)"
+        result <- eval "(\\a -> a : Maybe.Maybe a -> Maybe.Maybe a)"
         result `shouldSatisfy` isRight
 
       it "should not typecheck if boolean and int do not match" $ do

@@ -17,6 +17,7 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.TypeUtils
@@ -106,13 +107,33 @@ typecheckAllModuleDefs typecheckedDeps inputModule = do
 -- return type of module as a MTRecord of dep -> monotype
 -- TODO: module should probably be it's own MTModule or something
 -- as we'll want to pass them about at some point I think
-getModuleType :: Module (Type Annotation) -> Type Annotation
-getModuleType mod' =
+-- also if any types defined in this module are used in it's types, namespace
+-- those too
+-- so if the module defines `export type Tree a = ...`
+-- and is imported as `Tree`, change "Tree" types to "Tree.Tree" so they unify
+getModuleType :: ModuleName -> Module (Type Annotation) -> Type Annotation
+getModuleType modName mod' =
   let defs =
         M.filterWithKey
           (\k _ -> S.member k (moExpressionExports mod'))
           (moExpressions mod')
-   in MTRecord mempty (getTypeFromAnn <$> filterNameDefs defs)
+      moduleTypeNames = M.keysSet (moDataTypes mod')
+   in MTRecord
+        mempty
+        ( addNamespaceToType modName moduleTypeNames
+            . getTypeFromAnn
+            <$> filterNameDefs defs
+        )
+
+addNamespaceToType :: ModuleName -> Set TypeName -> MonoType -> MonoType
+addNamespaceToType modName swapTypes =
+  addNS
+  where
+    addNS old@(MTConstructor ann Nothing typeName) =
+      if S.member typeName swapTypes
+        then MTConstructor ann (Just modName) typeName
+        else old
+    addNS other = mapMonoType addNS other
 
 -- pass types to the typechecker
 makeTypeDeclMap ::
@@ -132,8 +153,9 @@ makeTypeDeclMap typecheckedModules importedTypes inputModule =
           fmap
             ( \(modName, modHash) ->
                 let byTyCon = case M.lookup modHash typecheckedModules of
-                      Just foundModule -> getModuleDataTypesByConstructor foundModule
-                      _ -> mempty
+                      Just foundModule ->
+                        getModuleDataTypesByConstructor foundModule
+                      _ -> error "could not find module"
                  in mapKeys (Just modName,) byTyCon
             )
             (M.toList $ moNamedImports inputModule)
@@ -186,23 +208,24 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
       (moDataTypeImports inputModule)
 
   pure $
-    createEnv
-      (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
-      (makeTypeDeclMap typecheckedModules importedTypes inputModule)
-      (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
-      (getModuleTypes inputModule typecheckedModules)
+    debugPretty "env" $
+      createEnv
+        (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
+        (makeTypeDeclMap typecheckedModules importedTypes inputModule)
+        (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
+        (getModuleTypes inputModule typecheckedModules)
 
 getModuleTypes ::
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map ModuleHash (Map Name MonoType)
 getModuleTypes inputModule typecheckedModules =
-  let getTypes hash = case M.lookup hash typecheckedModules of
-        Just mod' -> case getModuleType mod' of
+  let getTypes (modName, hash) = case M.lookup hash typecheckedModules of
+        Just mod' -> case getModuleType modName mod' of
           MTRecord _ parts -> (hash, parts)
           _ -> error "expected getModuleType to return a MTRecord but it did not"
-        Nothing -> (hash, mempty)
-   in M.fromList (getTypes <$> M.elems (moNamedImports inputModule))
+        Nothing -> (hash, mempty) -- should be an error
+   in M.fromList (getTypes <$> M.toList (moNamedImports inputModule))
 
 namespacedModules ::
   Module Annotation ->

@@ -80,16 +80,31 @@ getValueDependencies ::
         )
     )
 getValueDependencies mod' = do
-  valDeps <- traverse (getExprDependencies mod') (moExpressions mod')
-  typeDeps <- mapKeys DIType <$> traverse (getTypeDependencies mod') (moDataTypes mod')
-  pure (valDeps <> typeDeps)
+  exprDeps <-
+    traverse
+      (getExprDependencies mod')
+      (moExpressions mod')
+  typeDeps <-
+    mapKeys DIType
+      <$> traverse
+        (getTypeDependencies mod')
+        (moDataTypes mod')
+  pure (exprDeps <> typeDeps)
 
 -- get all dependencies of a type
 getTypeDependencies ::
-  Module ann -> DataType -> CheckM (DepType ann, Set DefIdentifier, Set Entity)
-getTypeDependencies mod' dt =
+  Module ann ->
+  DataType ->
+  CheckM (DepType ann, Set DefIdentifier, Set Entity)
+getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
-      typeDeps = filterTypes allUses
+  typeDefIds <- getTypeUses mod' allUses
+  exprDefIds <- getExprDeps mod' allUses
+  pure (DTData dt, typeDefIds <> exprDefIds, allUses)
+
+getTypeUses :: Module ann -> Set Entity -> CheckM (Set DefIdentifier)
+getTypeUses mod' uses =
+  let typeDeps = filterTypes uses
       unknownTypeDeps =
         S.filter
           ( \(modName, typeName) ->
@@ -105,12 +120,12 @@ getTypeDependencies mod' dt =
           let localTypeDeps =
                 S.filter
                   ( \(modName, typeName) -> case modName of
-                      Just _externalMod -> False 
+                      Just _externalMod -> False
                       Nothing -> typeName `S.member` M.keysSet (moDataTypes mod')
                   )
                   typeDeps
               withoutExternal = localsOnly localTypeDeps
-           in pure (DTData dt, S.map DIType withoutExternal, allUses)
+           in pure (S.map DIType withoutExternal)
         else throwError (ModuleErr (CannotFindTypes unknownTypeDeps))
 
 localsOnly :: (Ord b) => Set (Maybe a, b) -> Set b
@@ -126,9 +141,18 @@ getExprDependencies ::
   Module ann ->
   Expr Name ann ->
   CheckM (DepType ann, Set DefIdentifier, Set Entity)
-getExprDependencies mod' expr =
+getExprDependencies mod' expr = do
   let allUses = extractUses expr
-      nameDeps = filterDefs allUses
+  exprDefIds <- getExprDeps mod' allUses
+  typeDefIds <- getTypeUses mod' allUses
+  pure (DTExpr expr, exprDefIds <> typeDefIds, allUses)
+
+getExprDeps ::
+  Module ann ->
+  Set Entity ->
+  CheckM (Set DefIdentifier)
+getExprDeps mod' uses =
+  let nameDeps = filterDefs uses
       unknownNameDeps =
         S.filter
           ( \dep ->
@@ -144,7 +168,7 @@ getExprDependencies mod' expr =
                       M.keysSet (moExpressions mod')
                   )
                   nameDeps
-           in pure (DTExpr expr, localNameDeps, allUses)
+           in pure localNameDeps
         else throwError (ModuleErr (CannotFindValues unknownNameDeps))
 
 -- starting at a root module,

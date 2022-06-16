@@ -1,4 +1,3 @@
-
 export type Tree a = Branch (Tree a) a (Tree a) | Leaf a
 
 export def fmap f tree = 
@@ -6,12 +5,12 @@ export def fmap f tree =
     match innerTree with
       (Branch left a right) -> Branch (map left) (f a) (map right)
     | (Leaf a) -> Leaf (f a)
-  in map
+  in map tree 
 
-export def invert =
-  let invertTree tree = 
-    match tree with 
+export def invert tree =
+  let invertTree innerTree = 
+    match innerTree with 
       (Branch left a right) -> Branch (invertTree right) a (invertTree left) 
     | (Leaf a) -> Leaf a
-  in invertTree
+  in invertTree tree
 
