@@ -17,7 +17,6 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
-import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.TypeUtils
@@ -208,12 +207,11 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
       (moDataTypeImports inputModule)
 
   pure $
-    debugPretty "env" $
-      createEnv
-        (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
-        (makeTypeDeclMap typecheckedModules importedTypes inputModule)
-        (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
-        (getModuleTypes inputModule typecheckedModules)
+    createEnv
+      (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
+      (makeTypeDeclMap typecheckedModules importedTypes inputModule)
+      (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
+      (getModuleTypes inputModule typecheckedModules)
 
 getModuleTypes ::
   Module Annotation ->

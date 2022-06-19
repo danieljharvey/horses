@@ -4,12 +4,14 @@ import Control.Monad.Except
 import Data.Functor
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
+import Language.Mimsa.Logging
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
 
 -- | this assumes that
 interpretInfix ::
-  (Ord var, Monoid ann) =>
+  (Ord var, Monoid ann, Printer var) =>
   InterpretFn var ann ->
   Operator ->
   InterpretExpr var ann ->
@@ -19,10 +21,10 @@ interpretInfix interpretFn operator a b = do
   plainA <- interpretFn <=< interpretFn $ a
   plainB <- interpretFn <=< interpretFn $ b
   let removeAnn expr = expr $> ()
-  case operator of
+  case debugPretty "op" operator of
     Equals -> do
       let withBool = pure . MyLiteral mempty . MyBool
-      if removeAnn plainA == removeAnn plainB
+      if debugPretty "a" (removeAnn plainA) == debugPretty "b" (removeAnn plainB)
         then withBool True
         else withBool False
     Add -> do

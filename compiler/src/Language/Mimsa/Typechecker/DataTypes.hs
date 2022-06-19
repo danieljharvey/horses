@@ -192,7 +192,15 @@ inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = 
           tyB <- findType b
           pure (MTPair mempty tyA tyB)
         tyPrim@MTPrim {} -> pure tyPrim
-        tyCon@MTConstructor {} -> pure tyCon
+        MTConstructor _ localModName tn ->
+          -- if this is the datatype we are creating types for
+          -- then make sure it's constructors match the namespace
+          -- we are using the type in
+          let newModName =
+                if tn == typeName
+                  then modName
+                  else localModName
+           in pure (MTConstructor mempty newModName tn)
         MTRecord _ items -> do
           tyItems <- traverse findType items
           pure (MTRecord mempty tyItems)

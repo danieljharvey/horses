@@ -973,7 +973,7 @@ spec =
             ( dataTypeWithVars mempty (Just "Maybe") "Maybe" [MTPrim mempty MTInt]
             )
 
-    fdescribe "Tree interpreter error" $ do
+    describe "Tree interpreter error" $ do
       let leaf = MyApp mempty (MyConstructor mempty Nothing "Leaf")
           branch l a =
             MyApp
@@ -1006,12 +1006,11 @@ spec =
           `shouldBe` Right (branch (leaf (int 3)) (int 2) (leaf (int 1)))
 
       it "Reverses a small tree correctly" $ do
-        -- should be Tree.Branch (Tree.Branch (Tree.Leaf 5) 4 (Tree.Leaf 3)) 2 (Tree.Leaf 1)
         result <- eval "Tree.invert (Tree.Branch (Tree.Leaf 1) 2 (Tree.Branch (Tree.Leaf 3) 4 (Tree.Leaf 5)))"
         snd <$> result
           `shouldBe` Right (branch (branch (leaf (int 5)) (int 4) (leaf (int 3))) (int 2) (leaf (int 1)))
 
-      it "Reversing a tree twice is identity" $ do
+      fit "Reversing a tree twice is identity" $ do
         result <- eval "let tree = Tree.Branch (Tree.Leaf 1) 2 (Tree.Branch (Tree.Leaf 3) 4 (Tree.Leaf 5)); Tree.invert (Tree.invert tree) == tree"
         snd <$> result
           `shouldBe` Right (bool True)
