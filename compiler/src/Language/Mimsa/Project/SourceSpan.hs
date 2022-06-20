@@ -15,7 +15,7 @@ toColumnAndRow = go 1
       (row, col)
     go row (line : rest) col
       | (col - 1) >= line =
-        go (row + 1) rest (col - line - 1)
+          go (row + 1) rest (col - line - 1)
     go row _ col = (row, col)
 
 sourceSpan :: Text -> Annotation -> Maybe SourceSpan

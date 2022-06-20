@@ -68,10 +68,10 @@ patternMatches (PPair _ pA pB) (MyPair _ a b) = do
   pure $ as <> bs
 patternMatches (PRecord _ pAs) (MyRecord _ as)
   | S.null (S.difference (M.keysSet pAs) (M.keysSet as)) = do
-    let usefulInputs = M.intersection as pAs
-        allPairs = zip (M.elems pAs) (M.elems usefulInputs)
-    nice <- traverse (uncurry patternMatches) allPairs
-    pure (mconcat nice)
+      let usefulInputs = M.intersection as pAs
+          allPairs = zip (M.elems pAs) (M.elems usefulInputs)
+      nice <- traverse (uncurry patternMatches) allPairs
+      pure (mconcat nice)
 patternMatches (PLit _ pB) (MyLiteral _ b)
   | pB == b = pure mempty
 patternMatches (PConstructor _ _ _pTyCon []) (MyConstructor _ _ _tyCon) =
@@ -86,20 +86,20 @@ patternMatches (PConstructor _ _ pTyCon pArgs) (MyApp ann fn val) = do
       pure (mconcat nice)
 patternMatches (PArray _ pAs NoSpread) (MyArray _ as)
   | length pAs == length as = do
-    let allPairs = zip pAs as
-    nice <- traverse (uncurry patternMatches) allPairs
-    pure (mconcat nice)
+      let allPairs = zip pAs as
+      nice <- traverse (uncurry patternMatches) allPairs
+      pure (mconcat nice)
 patternMatches (PArray _ pAs (SpreadWildcard _)) (MyArray _ as)
   | length pAs <= length as = do
-    let allPairs = zip pAs as
-    nice <- traverse (uncurry patternMatches) allPairs
-    pure (mconcat nice)
+      let allPairs = zip pAs as
+      nice <- traverse (uncurry patternMatches) allPairs
+      pure (mconcat nice)
 patternMatches (PArray _ pAs (SpreadValue _ a)) (MyArray ann as)
   | length pAs <= length as = do
-    let binding = (a, MyArray ann (drop (length pAs) as))
-    let allPairs = zip pAs as
-    nice <- traverse (uncurry patternMatches) allPairs
-    pure (mconcat nice <> [binding])
+      let binding = (a, MyArray ann (drop (length pAs) as))
+      let allPairs = zip pAs as
+      nice <- traverse (uncurry patternMatches) allPairs
+      pure (mconcat nice <> [binding])
 patternMatches (PString _ pA pAs) (MyLiteral _ (MyString (StringType str))) | not (T.null str) =
   do
     let bindingA = case pA of
