@@ -54,7 +54,7 @@ toEmptyType a = a $> ()
 
 spec :: Spec
 spec =
-  fdescribe "Modules repl" $ do
+  describe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "Use Prelude.fst" $ do
         result <- eval "let x = ((1,2)) in Prelude.fst x"
@@ -1010,7 +1010,7 @@ spec =
         snd <$> result
           `shouldBe` Right (branch (branch (leaf (int 5)) (int 4) (leaf (int 3))) (int 2) (leaf (int 1)))
 
-      fit "Reversing a tree twice is identity" $ do
+      it "Reversing a tree twice is identity" $ do
         result <- eval "let tree = Tree.Branch (Tree.Leaf 1) 2 (Tree.Branch (Tree.Leaf 3) 4 (Tree.Leaf 5)); Tree.invert (Tree.invert tree) == tree"
         snd <$> result
           `shouldBe` Right (bool True)

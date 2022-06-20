@@ -76,6 +76,7 @@ library
       Language.Mimsa.Interpreter.Monad
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.RecordAccess
+      Language.Mimsa.Interpreter.SimpleExpr
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
       Language.Mimsa.Modules.Check
