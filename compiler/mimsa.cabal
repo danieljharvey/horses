@@ -248,6 +248,7 @@ library
     , monad-logger
     , mtl
     , openapi3
+    , parallel
     , parser-combinators
     , prettyprinter
     , servant
@@ -305,6 +306,7 @@ executable mimsa
     , mtl
     , openapi3
     , optparse-applicative
+    , parallel
     , parser-combinators
     , prettyprinter
     , servant
@@ -371,6 +373,7 @@ executable mimsa-server
     , mtl
     , openapi3
     , optparse-applicative
+    , parallel
     , parser-combinators
     , prettyprinter
     , prometheus-client
@@ -481,6 +484,7 @@ test-suite mimsa-test
     , monad-logger
     , mtl
     , openapi3
+    , parallel
     , parser-combinators
     , prettyprinter
     , servant
@@ -520,6 +524,7 @@ benchmark mimsa-benchmark
     , monad-logger
     , mtl
     , openapi3
+    , parallel
     , parser-combinators
     , prettyprinter
     , servant

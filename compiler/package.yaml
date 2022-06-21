@@ -45,6 +45,7 @@ dependencies:
 - openapi3 
 - bifunctors 
 - diagnose # nice errors
+- parallel # zoooooooooom
 
 library:
   source-dirs: src
