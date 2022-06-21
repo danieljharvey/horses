@@ -1,5 +1,4 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Language.Mimsa.Actions.Helpers.Build (doJobs, getMissing, Plan (..), State (..), Job, Inputs) where
 
@@ -31,7 +30,6 @@ data State k input output = State
 -- | one run of the builder builds everything that is currently ready, then
 -- updates the state
 runBuilder ::
-  forall k m input output.
   (Ord k, Monad m) =>
   Job m k input output ->
   State k input output ->
