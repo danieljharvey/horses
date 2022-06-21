@@ -19,6 +19,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
@@ -42,6 +43,7 @@ data ActionOutcome
   = NewMessage Text
   | NewStoreExpression (StoreExpression Annotation)
   | NewWriteFile SavePath SaveFilename SaveContents
+  | NewModule (Module Annotation)
   deriving stock (Eq, Ord, Show)
 
 data ActionState = ActionState

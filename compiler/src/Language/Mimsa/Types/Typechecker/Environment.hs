@@ -4,9 +4,7 @@
 module Language.Mimsa.Types.Typechecker.Environment where
 
 import Data.Map (Map)
-import qualified Data.Map as M
-import qualified Data.Text as T
-import Language.Mimsa.Printer (Printer (prettyPrint))
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST (DataType)
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
@@ -18,6 +16,7 @@ import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
+import Prettyprinter
 
 -- everything we need in typechecking environment
 data Environment = Environment
@@ -36,12 +35,34 @@ instance Semigroup Environment where
 instance Monoid Environment where
   mempty = Environment mempty mempty mempty mempty mempty
 
--- TODO: this should include everything in order to be helpful
+-- when on multilines, indent by `i`, if not then nothing
+indentMulti :: Int -> Doc style -> Doc style
+indentMulti i doc = flatAlt (indent i doc) doc
+
 instance Printer Environment where
-  prettyPrint (Environment typeSchemes _dataTypes _infix _tyVars _) =
-    "[\n"
-      <> T.intercalate ", \n" (printRow <$> M.toList typeSchemes)
-      <> "\n]"
-    where
-      printRow (var, scheme) =
-        prettyPrint var <> ": " <> prettyPrint scheme
+  prettyDoc (Environment typeSchemes dataTypes infixes tyVars externals) =
+    "["
+      <> indentMulti
+        2
+        ( line
+            <> "typeSchemes:"
+            <> indentMulti 2 (prettyDoc typeSchemes)
+            <> comma
+            <> line
+            <> "dataTypes:"
+            <> indentMulti 2 (prettyDoc dataTypes)
+            <> comma
+            <> line
+            <> "infixes:"
+            <> indentMulti 2 (prettyDoc infixes)
+            <> comma
+            <> line
+            <> "tyVars:"
+            <> indentMulti 2 (prettyDoc tyVars)
+            <> comma
+            <> line
+            <> "externals:"
+            <> indentMulti 2 (prettyDoc externals)
+        )
+      <> line
+      <> "]"

@@ -9,6 +9,7 @@ where
 import Control.Monad.IO.Class
 import Data.Either
 import Data.Functor
+import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -17,14 +18,14 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.Monad
-import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Typechecker
+import Test.Data.Prelude
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -36,12 +37,16 @@ exprAndTypeFromParts' ::
   [DefPart ann] ->
   Expr Name ann ->
   Either (Error Annotation) (Expr Name ann)
-exprAndTypeFromParts' parts expr = runCheck (exprAndTypeFromParts (DIName "test") parts expr)
+exprAndTypeFromParts' parts expr =
+  runCheck "" testModules (exprAndTypeFromParts (DIName "test") parts expr)
+
+testModules :: Map ModuleHash (Module Annotation)
+testModules = M.singleton preludeHash prelude
 
 checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
-  (a, tyA) <- checkModule t
-  (b, tyB) <- checkModule (prettyPrint a)
+  (a, tyA) <- checkModule t testModules
+  (b, tyB) <- checkModule (prettyPrint a) testModules
   if (a $> ()) /= (b $> ())
     then
       error $
@@ -63,7 +68,7 @@ checkModule' t = do
 
 checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
 checkModuleType t =
-  (\(a, mt) -> (a, mt $> mempty)) <$> checkModule t
+  (\(a, mt) -> (a, mt $> mempty)) <$> checkModule t testModules
 
 spec :: Spec
 spec = do
@@ -333,6 +338,35 @@ spec = do
                   }
            in checkModule' "type Maybe a = Just a | Nothing\ndef fmap (f: a -> b) (maybeA: Maybe a): Maybe b = match maybeA with Just a -> Just (f a) | Nothing -> Nothing\n\n\ndef inc a = a + 1"
                 `shouldBe` Right expectedModule
+
+      describe "check types" $ do
+        let joinLines = T.intercalate "\n"
+        it "broken type declaration" $
+          checkModuleType
+            ( joinLines
+                ["type Maybe a = Just b | Nothing"]
+            )
+            `shouldSatisfy` isLeft
+
+        it "one type uses another correctly" $
+          checkModuleType
+            ( joinLines
+                [ "type Maybe a = Just a | Nothing",
+                  "type Parser a = Parser (String -> Maybe (String, a))"
+                ]
+            )
+            `shouldSatisfy` isRight
+
+        -- need to implement kind checking in datatype declarations
+        xit "one type uses another incorrectly and fails" $
+          checkModuleType
+            ( joinLines
+                [ "type Maybe a = Just a | Nothing",
+                  "type Parser a = Parser (String -> Maybe Int (String, a))"
+                ]
+            )
+            `shouldSatisfy` isLeft
+
       describe "imports" $ do
         let joinLines = T.intercalate "\n"
         it "uses fst from Prelude" $
@@ -368,6 +402,15 @@ spec = do
                 ]
             )
             `shouldSatisfy` isRight
+
+        it "uses Either and <|> from Prelude" $
+          checkModuleType
+            ( joinLines
+                [ "import * from " <> prettyPrint preludeHash,
+                  "def nice = Left 1 <|> Right True"
+                ]
+            )
+            `shouldSatisfy` isRight
         it "errors when locally defining Either" $
           checkModuleType
             ( joinLines
@@ -378,7 +421,7 @@ spec = do
             `shouldBe` Left (ModuleErr $ DuplicateTypeName "Either")
 
         it "Errors when adding a duplicate Right constructor" $
-          checkModule
+          checkModule'
             ( joinLines
                 [ "type Result e a = Failure e | Right a",
                   "type Either e a = Left e | Right a"

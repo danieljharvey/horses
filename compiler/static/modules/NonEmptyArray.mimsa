@@ -1,0 +1,6 @@
+export type NonEmptyArray a = NonEmptyArray a [a]
+
+export def fmap f ne = 
+  let (NonEmptyArray a as) = ne; 
+  NonEmptyArray (f a) (Array.fmap f as)
+ 

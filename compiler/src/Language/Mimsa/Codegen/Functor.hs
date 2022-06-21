@@ -15,7 +15,6 @@ import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 import Prelude hiding (fmap)
 
@@ -74,7 +73,7 @@ toFieldItemType typeName = \case
   mt -> case varsFromDataType mt of
     Just (_modName, fieldConsName, _)
       | fieldConsName == typeName ->
-          RecurseField <$> nextName (coerce typeName)
+        RecurseField <$> nextName (coerce typeName)
     _ -> throwError CouldNotFindVarsInType
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()

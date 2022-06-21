@@ -5,6 +5,7 @@ module Language.Mimsa.Types.Error.StoreError (StoreError (..), FileType (..)) wh
 
 import qualified Data.Text as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store
@@ -24,6 +25,7 @@ data StoreError
   | CouldNotDecodeFile FilePath
   | CouldNotDecodeByteString
   | CouldNotFindExprHashForBindings [(Maybe ModuleName, Name)]
+  | CouldNotFindExprHashForInfixes [InfixOp]
   | CouldNotFindExprHashForTypeBindings [TyCon]
   | CouldNotFindBinding Name
   | CouldNotFindStoreExpression ExprHash
@@ -47,6 +49,9 @@ instance Printer StoreError where
   prettyPrint (CouldNotDecodeFile path) =
     "Could not decode JSON for file " <> T.pack path
   prettyPrint (CouldNotFindExprHashForBindings missing) =
+    "Could not find expressions in the store for the following: "
+      <> T.intercalate "," (prettyPrint <$> missing)
+  prettyPrint (CouldNotFindExprHashForInfixes missing) =
     "Could not find expressions in the store for the following: "
       <> T.intercalate "," (prettyPrint <$> missing)
   prettyPrint (CouldNotFindExprHashForTypeBindings missing) =

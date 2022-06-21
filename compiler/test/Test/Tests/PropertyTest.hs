@@ -86,18 +86,18 @@ spec =
     describe "createPropertyTest" $ do
       it "True is not a valid property test" $ do
         let expr = bool True
-            storeExpr = StoreExpression expr mempty mempty
+            storeExpr = StoreExpression expr mempty mempty mempty
         createPropertyTest testStdlib storeExpr (TestName "It's a mess")
           `shouldSatisfy` isLeft
 
       it "\\bool -> True is a valid property test" $ do
         let expr = MyLambda mempty (Identifier mempty "bool") (bool True)
-            storeExpr = StoreExpression expr mempty mempty
+            storeExpr = StoreExpression expr mempty mempty mempty
         createPropertyTest testStdlib storeExpr (TestName "It's always true")
           `shouldSatisfy` isRight
 
       it "\\bool -> False is a valid property test" $ do
         let expr = MyLambda mempty (Identifier mempty "bool") (bool False)
-            storeExpr = StoreExpression expr mempty mempty
+            storeExpr = StoreExpression expr mempty mempty mempty
         createPropertyTest testStdlib storeExpr (TestName "It's always false")
           `shouldSatisfy` isRight

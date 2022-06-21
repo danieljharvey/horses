@@ -55,8 +55,10 @@ interpretAll inputStoreExpressions = do
         numberedSe <- liftEither (first (TypeErr (prettyPrint se)) (addNumbersToStoreExpression se))
         -- tag each `var` with it's location if it is an import
         let withImports = addEmptyStackFrames numberedSe
+        -- get exprhashes for any infixOps we need
+        let infixHashes = storeInfixes se
         -- interpret se
-        interpreted <- liftEither (first InterpreterErr (interpret flatDeps withImports))
+        interpreted <- liftEither (first InterpreterErr (interpret flatDeps infixHashes withImports))
         -- we need to accumulate all deps
         -- as we go, so pass them up too
         let allDeps = flatDeps <> M.singleton (getStoreExpressionHash se) interpreted
@@ -73,6 +75,7 @@ interpretAll inputStoreExpressions = do
                         S.fromList
                           ( M.elems (storeBindings storeExpr)
                               <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
+                              <> M.elems (storeInfixes storeExpr)
                           ),
                       Build.jbInput = storeExpr
                     }
@@ -80,5 +83,5 @@ interpretAll inputStoreExpressions = do
                 <$> inputStoreExpressions,
             Build.stOutputs = mempty -- we use caches here if we wanted
           }
-  splat <- Build.stOutputs <$> Build.doJobs action state
-  pure (squashify splat)
+  -- go!
+  squashify . Build.stOutputs <$> Build.doJobs action state

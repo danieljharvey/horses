@@ -34,7 +34,7 @@ getTypesFromStore (Store items') (TypeBindings tBindings) =
   S.fromList $
     join $ do
       (_, hash) <- M.toList tBindings
-      let getDt (StoreExpression expr' _ _) =
+      let getDt (StoreExpression expr' _ _ _) =
             case expr' of
               (MyData _ dt _) -> Just dt
               _ -> Nothing
@@ -44,7 +44,7 @@ getTypesFromStore (Store items') (TypeBindings tBindings) =
 
 doListBindings :: Project Annotation -> Text -> ReplM (Error Annotation) ()
 doListBindings project input = do
-  let showBind (name, StoreExpression expr _ _) =
+  let showBind (name, StoreExpression expr _ _ _) =
         case Actions.run project (Actions.typecheckExpression project input expr) of
           Right (_, _, resolvedExpr) ->
             replOutput (prettyPrint name <> " :: " <> prettyPrint (reMonoType resolvedExpr))

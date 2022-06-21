@@ -12,7 +12,6 @@ import qualified Data.Map as M
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 
 -- | An enum is a datatype with at least one constructor
 -- | each have no arguments

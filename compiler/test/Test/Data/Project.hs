@@ -3,7 +3,6 @@
 module Test.Data.Project
   ( testStdlib,
     idExpr,
-    addBinding,
     addExprBinding,
   )
 where
@@ -272,7 +271,7 @@ addTree = do
 unsafeGetExpr :: Text -> StoreExpression Annotation
 unsafeGetExpr input =
   case parseExpr input of
-    Right expr' -> StoreExpression expr' mempty mempty
+    Right expr' -> StoreExpression expr' mempty mempty mempty
     a -> error $ "Error evaluating " <> T.unpack input <> ": " <> show a
 
 addExprBinding ::

@@ -21,7 +21,6 @@ import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Text.Megaparsec
 

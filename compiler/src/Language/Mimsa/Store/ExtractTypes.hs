@@ -20,7 +20,6 @@ import Language.Mimsa.Types.AST
     Pattern (..),
   )
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Typechecker
 
 -- this works out which external constructors have been used in a given expression

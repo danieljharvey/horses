@@ -1,4 +1,4 @@
-module Language.Mimsa.TypeUtils (withMonoid) where
+module Language.Mimsa.TypeUtils (withMonoid, mapMonoType) where
 
 import qualified Data.Map as M
 import Language.Mimsa.Types.Typechecker
@@ -19,3 +19,19 @@ withMonoid f (MTRecordRow _ as a) =
     <> f a
 withMonoid f (MTFunction _ a b) =
   f a <> f b
+
+mapMonoType :: (Type ann -> Type ann) -> Type ann -> Type ann
+mapMonoType _ mt@MTVar {} = mt
+mapMonoType _ mt@MTConstructor {} = mt
+mapMonoType _ mt@MTPrim {} = mt
+mapMonoType f (MTTypeApp ann a b) =
+  MTTypeApp ann (f a) (f b)
+mapMonoType f (MTPair ann a b) =
+  MTPair ann (f a) (f b)
+mapMonoType f (MTArray ann as) = MTArray ann (f as)
+mapMonoType f (MTRecord ann as) =
+  MTRecord ann (f <$> as)
+mapMonoType f (MTRecordRow ann as a) =
+  MTRecordRow ann (f <$> as) (f a)
+mapMonoType f (MTFunction ann a b) =
+  MTFunction ann (f a) (f b)

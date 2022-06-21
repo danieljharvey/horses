@@ -18,6 +18,7 @@ type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
 data InterpreterError var ann
   = UnknownInterpreterError
   | CouldNotFindVar (Map var (InterpretExpr var ann)) var
+  | CouldNotFindInfix (Map InfixOp (InterpretExpr var ann)) InfixOp
   | CouldNotFindGlobal (Map ExprHash (InterpretExpr var ann)) ExprHash
   | AdditionWithNonNumber (InterpretExpr var ann)
   | SubtractionWithNonNumber (InterpretExpr var ann)
@@ -39,6 +40,10 @@ instance Monoid (InterpreterError var ann) where
 instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterError var ann) where
   prettyPrint (CouldNotFindVar items name) =
     "Could not find var " <> prettyPrint name <> " in " <> itemList
+    where
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+  prettyPrint (CouldNotFindInfix items infixOp) =
+    "Could not find infix " <> prettyPrint infixOp <> " in " <> itemList
     where
       itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
   prettyPrint (CouldNotFindGlobal items name) =

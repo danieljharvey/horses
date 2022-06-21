@@ -7,6 +7,7 @@ module Language.Mimsa.Typechecker.DataTypes
     inferDataConstructor,
     inferConstructorTypes,
     dataTypeWithVars,
+    validateDataType,
   )
 where
 
@@ -26,9 +27,19 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
+
+-- on declaring a datatype, basically is it ok
+validateDataType ::
+  (MonadError TypeError m) =>
+  Environment ->
+  Annotation ->
+  DataType ->
+  m ()
+validateDataType _env ann dt = do
+  validateDataTypeVariables ann dt
+  validateConstructorsArentBuiltIns ann dt
 
 -- given a datatype declaration, checks it makes sense and if so,
 -- add it to the Environment
@@ -111,6 +122,21 @@ validateConstructors env ann (DataType _ _ constructors) = do
     )
     (M.toList constructors)
 
+-- when adding a new datatype, check none of the constructors already exist
+validateConstructorsArentBuiltIns ::
+  (MonadError TypeError m) =>
+  Annotation ->
+  DataType ->
+  m ()
+validateConstructorsArentBuiltIns ann (DataType _ _ constructors) = do
+  traverse_
+    ( \(tyCon, _) ->
+        case lookupBuiltIn (coerce tyCon) of
+          Just _ -> throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon))
+          _ -> pure ()
+    )
+    (M.toList constructors)
+
 validateDataTypeVariables ::
   (MonadError TypeError m) =>
   Annotation ->
@@ -166,7 +192,15 @@ inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = 
           tyB <- findType b
           pure (MTPair mempty tyA tyB)
         tyPrim@MTPrim {} -> pure tyPrim
-        tyCon@MTConstructor {} -> pure tyCon
+        MTConstructor _ localModName tn ->
+          -- if this is the datatype we are creating types for
+          -- then make sure it's constructors match the namespace
+          -- we are using the type in
+          let newModName =
+                if tn == typeName
+                  then modName
+                  else localModName
+           in pure (MTConstructor mempty newModName tn)
         MTRecord _ items -> do
           tyItems <- traverse findType items
           pure (MTRecord mempty tyItems)

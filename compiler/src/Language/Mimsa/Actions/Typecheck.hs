@@ -30,7 +30,6 @@ import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Identifiers.TypeName
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -211,6 +210,8 @@ annotateStoreExpressionWithTypes storeExpr = do
           (prjStore project)
           (bindingsToVersioned (bindingsFromModuleThing (storeBindings storeExpr)))
           (typeBindingsToVersioned (storeTypeBindings storeExpr))
+          mempty
+          mempty
           mempty
 
   let exprName = storeExpression storeExpr

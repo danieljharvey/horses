@@ -18,7 +18,8 @@ newtype InfixOp = InfixOp Text
       Show,
       JSON.ToJSON,
       JSON.ToJSONKey,
-      JSON.FromJSON
+      JSON.FromJSON,
+      JSON.FromJSONKey
     )
 
 -------------

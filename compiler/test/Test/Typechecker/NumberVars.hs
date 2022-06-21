@@ -84,7 +84,7 @@ spec = do
                           (MyVar mempty Nothing ("x", Unique 1))
                       )
                   )
-              ans = testAddNumbers (StoreExpression expr mempty mempty)
+              ans = testAddNumbers (StoreExpression expr mempty mempty mempty)
           ans `shouldBe` Right expected
 
       it "Pattern match entries work" $ do
@@ -111,7 +111,7 @@ spec = do
                     ]
                 )
 
-            ans = testAddNumbers (StoreExpression expr mempty mempty)
+            ans = testAddNumbers (StoreExpression expr mempty mempty mempty)
         ans `shouldBe` Right expected
 
       it "Scoping variables in pattern matches works" $ do
@@ -139,7 +139,7 @@ spec = do
                       (PWildcard mempty, MyVar mempty Nothing ("a", Unique 0))
                     ]
                 )
-            ans = testAddNumbers (StoreExpression expr mempty mempty)
+            ans = testAddNumbers (StoreExpression expr mempty mempty mempty)
         ans `shouldBe` Right expected
 
       it "Scoping variables in let patterns works" $ do
@@ -164,13 +164,13 @@ spec = do
                     (MyVar mempty Nothing ("a", Unique 1))
                 )
 
-            ans = testAddNumbers (StoreExpression expr mempty mempty)
+            ans = testAddNumbers (StoreExpression expr mempty mempty mempty)
         ans `shouldBe` Right expected
 
       it "Fails if can't find outside dep" $ do
         let expr =
               MyVar mempty Nothing "what"
-            ans = testAddNumbers (StoreExpression expr mempty mempty)
+            ans = testAddNumbers (StoreExpression expr mempty mempty mempty)
         ans `shouldBe` Left (NameNotFoundInScope mempty mempty Nothing "what")
 
       it "Outside deps are assigned a number" $ do
@@ -183,5 +183,5 @@ spec = do
                 (MyVar mempty Nothing ("id", Dependency hash))
                 (MyVar mempty Nothing ("id", Dependency hash))
             bindings = M.singleton (Nothing, "id") hash
-            ans = testAddNumbers (StoreExpression expr bindings mempty)
+            ans = testAddNumbers (StoreExpression expr bindings mempty mempty)
         ans `shouldBe` Right expected

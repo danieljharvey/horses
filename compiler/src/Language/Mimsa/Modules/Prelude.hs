@@ -1,61 +1,58 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module Language.Mimsa.Modules.Prelude (prelude, preludeHash) where
+module Language.Mimsa.Modules.Prelude
+  ( maybeInput,
+    preludeInput,
+    stateInput,
+    parserInput,
+    nonEmptyArrayInput,
+    arrayInput,
+    stringInput,
+    monoidInput,
+    readerInput,
+    eitherInput,
+    theseInput,
+    treeInput,
+  )
+where
 
--- hard coding a Prelude in here for testing
--- this is not The Way however we have a chicken/egg situation in terms of
--- implementing imports/exports/other modules so this should unblock us
---
+import Data.FileEmbed
+import Data.Text (Text)
+import qualified Data.Text.Encoding as T
 
-import qualified Data.Map as M
-import qualified Data.Set as S
-import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.Module
-import Language.Mimsa.Types.Modules.ModuleHash
-import Language.Mimsa.Types.Typechecker
+maybeInput :: Text
+maybeInput = T.decodeUtf8 $(embedFile "static/modules/Maybe.mimsa")
 
-preludeHash :: ModuleHash
-preludeHash = hashModule prelude
+stateInput :: Text
+stateInput = T.decodeUtf8 $(embedFile "static/modules/State.mimsa")
 
-prelude :: Module Annotation
-prelude =
-  Module
-    { moExpressions = exprs,
-      moDataTypes = dts,
-      moExpressionExports = S.singleton (DIName "fst"),
-      moExpressionImports = mempty,
-      moDataTypeExports = S.singleton "Either",
-      moDataTypeImports = mempty,
-      moNamedImports = mempty
-    }
-  where
-    exprs =
-      M.fromList
-        [ ( DIName "fst",
-            MyLambda
-              mempty
-              (Identifier mempty "pair")
-              ( MyLetPattern
-                  mempty
-                  (PPair mempty (PVar mempty "a") (PWildcard mempty))
-                  (MyVar mempty Nothing "pair")
-                  (MyVar mempty Nothing "a")
-              )
-          )
-        ]
-    dts =
-      M.fromList
-        [ ( "Either",
-            DataType
-              "Either"
-              ["e", "a"]
-              ( M.fromList
-                  [ ("Left", [MTVar mempty (TVName "e")]),
-                    ("Right", [MTVar mempty (TVName "a")])
-                  ]
-              )
-          )
-        ]
+preludeInput :: Text
+preludeInput = T.decodeUtf8 $(embedFile "static/modules/Prelude.mimsa")
+
+parserInput :: Text
+parserInput = T.decodeUtf8 $(embedFile "static/modules/Parser.mimsa")
+
+arrayInput :: Text
+arrayInput = T.decodeUtf8 $(embedFile "static/modules/Array.mimsa")
+
+nonEmptyArrayInput :: Text
+nonEmptyArrayInput = T.decodeUtf8 $(embedFile "static/modules/NonEmptyArray.mimsa")
+
+stringInput :: Text
+stringInput = T.decodeUtf8 $(embedFile "static/modules/String.mimsa")
+
+monoidInput :: Text
+monoidInput = T.decodeUtf8 $(embedFile "static/modules/Monoid.mimsa")
+
+readerInput :: Text
+readerInput = T.decodeUtf8 $(embedFile "static/modules/Reader.mimsa")
+
+eitherInput :: Text
+eitherInput = T.decodeUtf8 $(embedFile "static/modules/Either.mimsa")
+
+theseInput :: Text
+theseInput = T.decodeUtf8 $(embedFile "static/modules/These.mimsa")
+
+treeInput :: Text
+treeInput = T.decodeUtf8 $(embedFile "static/modules/Tree.mimsa")

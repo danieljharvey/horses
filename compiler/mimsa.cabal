@@ -27,6 +27,7 @@ library
   exposed-modules:
       Language.Mimsa.Actions.AddUnitTest
       Language.Mimsa.Actions.BindExpression
+      Language.Mimsa.Actions.BindModule
       Language.Mimsa.Actions.BindType
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Evaluate
@@ -75,13 +76,18 @@ library
       Language.Mimsa.Interpreter.Monad
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.RecordAccess
+      Language.Mimsa.Interpreter.SimpleExpr
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
       Language.Mimsa.Modules.Check
+      Language.Mimsa.Modules.Compile
+      Language.Mimsa.Modules.Dependencies
       Language.Mimsa.Modules.FromParts
       Language.Mimsa.Modules.HashModule
       Language.Mimsa.Modules.Monad
+      Language.Mimsa.Modules.Parse
       Language.Mimsa.Modules.Prelude
+      Language.Mimsa.Modules.Typecheck
       Language.Mimsa.Modules.Uses
       Language.Mimsa.Parser
       Language.Mimsa.Parser.Helpers
@@ -179,6 +185,7 @@ library
       Language.Mimsa.Types.Identifiers.TypeName
       Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Interpreter.Stack
+      Language.Mimsa.Types.Modules
       Language.Mimsa.Types.Modules.DefIdentifier
       Language.Mimsa.Types.Modules.Entity
       Language.Mimsa.Types.Modules.Module
@@ -387,6 +394,7 @@ test-suite mimsa-test
   other-modules:
       Test.Actions.AddUnitTest
       Test.Actions.BindExpression
+      Test.Actions.BindModule
       Test.Actions.BindType
       Test.Actions.Build
       Test.Actions.Compile
@@ -405,9 +413,12 @@ test-suite mimsa-test
       Test.Codegen.Functor
       Test.Codegen.Newtype
       Test.Codegen.Shared
+      Test.Data.Prelude
       Test.Data.Project
       Test.Interpreter.Repl
       Test.Modules.CheckModule
+      Test.Modules.Compile
+      Test.Modules.Repl
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax

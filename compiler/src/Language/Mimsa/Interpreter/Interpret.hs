@@ -29,34 +29,33 @@ addEmptyStackFrames expr =
   expr $> mempty
 
 interpret ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
   Map ExprHash (InterpretExpr var ann) ->
+  Map InfixOp ExprHash ->
   InterpretExpr var ann ->
   Either (InterpreterError var ann) (InterpretExpr var ann)
-interpret deps expr =
-  runReaderT (interpretExpr expr) (InterpretReaderEnv initialStack deps)
+interpret deps infixes expr =
+  runReaderT (interpretExpr expr) (InterpretReaderEnv initialStack deps infixes)
 
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
 interpretExpr ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr =
   interpretExpr'
 
 interpretExpr' ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann) =>
+  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)
 interpretExpr' (MyAnnotation _ _ expr) = interpretExpr' expr
 interpretExpr' (MyLet _ ident expr body) =
   interpretLet interpretExpr ident expr body
-interpretExpr' (MyVar _ Nothing var) =
+interpretExpr' (MyVar _ _ var) =
   lookupVar var >>= interpretExpr
-interpretExpr' (MyVar _ (Just _) _var) =
-  error "namespaced var oh no"
 interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
   -- capture current environment
   stackFrame <-

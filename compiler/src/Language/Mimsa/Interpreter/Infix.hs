@@ -1,8 +1,8 @@
 module Language.Mimsa.Interpreter.Infix (interpretInfix) where
 
 import Control.Monad.Except
-import Data.Functor
 import Language.Mimsa.Interpreter.Monad
+import Language.Mimsa.Interpreter.SimpleExpr
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
@@ -18,11 +18,10 @@ interpretInfix ::
 interpretInfix interpretFn operator a b = do
   plainA <- interpretFn <=< interpretFn $ a
   plainB <- interpretFn <=< interpretFn $ b
-  let removeAnn expr = expr $> ()
   case operator of
     Equals -> do
       let withBool = pure . MyLiteral mempty . MyBool
-      if removeAnn plainA == removeAnn plainB
+      if simpleExpr plainA == simpleExpr plainB
         then withBool True
         else withBool False
     Add -> do

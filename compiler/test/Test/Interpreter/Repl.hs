@@ -1229,7 +1229,6 @@ spec =
         result <- eval testStdlib "10 <= 9"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
-    describe "Real stdlib" $ do
       describe "Big stuff that breaks interpreter" $ do
         it "Parses using a lexeme" $ do
           let expr =

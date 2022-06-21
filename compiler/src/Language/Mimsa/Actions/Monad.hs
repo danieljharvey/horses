@@ -13,7 +13,9 @@ module Language.Mimsa.Actions.Monad
     appendStoreExpression,
     bindStoreExpression,
     bindTypeExpression,
+    bindModuleInProject,
     messagesFromOutcomes,
+    modulesFromOutcomes,
     storeExpressionsFromOutcomes,
     writeFilesFromOutcomes,
     getResolvedExpressions,
@@ -38,9 +40,11 @@ import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Prettyprinter
 
 emptyState :: Project Annotation -> ActionState
@@ -111,6 +115,10 @@ appendStoreExpression se = do
   appendActionOutcome (NewStoreExpression se)
   appendProject newProject
 
+appendModule :: Module Annotation -> ActionM ()
+appendModule =
+  appendActionOutcome . NewModule
+
 messagesFromOutcomes :: [ActionOutcome] -> [Text]
 messagesFromOutcomes =
   foldMap
@@ -134,6 +142,27 @@ writeFilesFromOutcomes =
     ( \case
         NewWriteFile sp sf sc -> pure (sp, sf, sc)
         _ -> mempty
+    )
+
+modulesFromOutcomes :: [ActionOutcome] -> Set (Module Annotation)
+modulesFromOutcomes =
+  S.fromList
+    . foldMap
+      ( \case
+          NewModule mod' -> pure mod'
+          _ -> mempty
+      )
+
+-- add binding for module and add it to store
+bindModuleInProject ::
+  Module (Type Annotation) ->
+  ModuleName ->
+  ActionM ()
+bindModuleInProject typecheckedModule modName = do
+  let untypedModule = getAnnotationForType <$> typecheckedModule
+  appendModule untypedModule
+  appendProject
+    ( fromModule modName untypedModule
     )
 
 -- add binding for expression and add it to store

@@ -54,7 +54,7 @@ spec = do
       let expr = MyVar mempty Nothing "id2"
       let exprHashForId = getHashOfName testStdlib "id"
       let bindings = M.singleton (Nothing, "id2") exprHashForId
-      let storeExpr = StoreExpression expr bindings mempty
+      let storeExpr = StoreExpression expr bindings mempty mempty
       let action = do
             Actions.compile Typescript storeExpr
       Actions.run testStdlib action `shouldSatisfy` isRight

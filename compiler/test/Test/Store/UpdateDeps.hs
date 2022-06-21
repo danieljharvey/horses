@@ -18,7 +18,7 @@ spec :: Spec
 spec = do
   describe "updateExprHash" $ do
     it "Empty makes empty" $ do
-      let storeExpr = StoreExpression (bool True) mempty mempty
+      let storeExpr = StoreExpression (bool True) mempty mempty mempty
       updateExprHash storeExpr (ExprHash "1") (ExprHash "2") `shouldBe` mempty
     it "Match is swapped" $ do
       let storeExpr =
@@ -26,14 +26,15 @@ spec = do
               (bool True)
               (M.singleton (Nothing, "dog") (ExprHash "1"))
               mempty
+              mempty
       updateExprHash storeExpr (ExprHash "1") (ExprHash "2")
-        `shouldBe` ( M.singleton (Nothing, "dog") (ExprHash "2")
-                   )
+        `shouldBe` M.singleton (Nothing, "dog") (ExprHash "2")
+
   describe
     "UpdateDeps"
     $ do
       it "Update with empty bindings is no-op" $ do
-        let storeExpr = StoreExpression (bool True) mempty mempty
+        let storeExpr = StoreExpression (bool True) mempty mempty mempty
         updateStoreExpressionBindings testStdlib mempty storeExpr
           `shouldBe` Right storeExpr
       it "Replacing function with one that doesn't typecheck fails" $ do

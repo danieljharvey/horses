@@ -60,7 +60,7 @@ instance (Printer a) => Printer [a] where
 
 instance (Printer k, Printer v) => Printer (Map k v) where
   prettyDoc map' =
-    let printRow (k, v) = prettyDoc k <+> ":" <+> prettyDoc v
+    let printRow (k, v) = prettyDoc k <> ":" <+> prettyDoc v
      in encloseSep lbrace rbrace comma (printRow <$> M.toList map')
 
 instance (Printer a, Printer b) => Printer (a, b) where

@@ -6,25 +6,33 @@ module Language.Mimsa.Project.Stdlib
     stdlib,
     addType,
     addBinding,
+    addModule,
     removeBinding,
     allFns,
   )
 where
 
 import Data.Functor
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
+import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
+import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
@@ -33,6 +41,7 @@ buildStdlib =
 
 allFns :: Actions.ActionM ()
 allFns = do
+  modules
   baseFns
   arrayFns
   nonEmptyArrayFns
@@ -44,6 +53,43 @@ allFns = do
   mapFns
   jsonFns
   personTestFns
+
+-- | these are files in /static/modules folder that we import
+modules :: Actions.ActionM ()
+modules = do
+  maybeHash <-
+    addModule "Maybe" mempty maybeInput
+  preludeHash <-
+    addModule "Prelude" mempty preludeInput
+  arrayHash <-
+    addModule "Array" (M.fromList [("Maybe", maybeHash)]) arrayInput
+  nonEmptyArrayHash <-
+    addModule "NonEmptyArray" (M.fromList [("Array", arrayHash)]) nonEmptyArrayInput
+  _ <-
+    addModule "Either" mempty eitherInput
+  _ <-
+    addModule "Reader" (M.fromList [("Prelude", preludeHash)]) readerInput
+  _ <-
+    addModule "These" mempty theseInput
+  _ <-
+    addModule "Monoid" (M.fromList [("Array", arrayHash), ("Prelude", preludeHash), ("Maybe", maybeHash)]) monoidInput
+  _ <-
+    addModule "State" (M.fromList [("Prelude", preludeHash)]) stateInput
+  _ <-
+    addModule "String" (M.fromList [("Array", arrayHash)]) stringInput
+  _ <-
+    addModule
+      "Parser"
+      ( M.fromList
+          [ ("Maybe", maybeHash),
+            ("Prelude", preludeHash),
+            ("NonEmptyArray", nonEmptyArrayHash)
+          ]
+      )
+      parserInput
+  _ <-
+    addModule "Tree" mempty treeInput
+  pure ()
 
 baseFns :: Actions.ActionM ()
 baseFns = do
@@ -260,19 +306,23 @@ personTestFns = do
   addTest "Round trip JSON encoding test for Person" "\\person -> match personFromJson (personToJson person) with Right per -> per == person | _ -> False"
 
 addType :: Text -> Actions.ActionM ()
-addType t =
-  let dt = fromRight $ parseAndFormat typeDeclParser t
-   in Actions.bindType t dt $> ()
+addType t = do
+  dt <- Actions.parseDataType t
+  Actions.bindType t dt $> ()
 
 addBinding :: Name -> Text -> Actions.ActionM ()
-addBinding name b =
-  let expr =
-        fromRight $ parseAndFormat expressionParser b
-   in Actions.bindExpression
-        expr
-        name
-        b
-        $> ()
+addBinding name b = do
+  expr <- Actions.parseExpr b
+  _ <- Actions.bindExpression expr name b
+  pure ()
+
+-- | add a module to the stdlib, adding some named imports
+addModule :: ModuleName -> Map ModuleName ModuleHash -> Text -> Actions.ActionM ModuleHash
+addModule moduleName deps input = do
+  mod' <- Actions.parseModule input
+  let modWithImports = mod' {moNamedImports = moNamedImports mod' <> deps}
+  _ <- Actions.bindModule modWithImports moduleName input
+  pure (hashModule modWithImports)
 
 addTest :: Text -> Text -> Actions.ActionM ()
 addTest label input = do

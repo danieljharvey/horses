@@ -31,8 +31,10 @@ checkFile :: Text -> ReplM (Error Annotation) ExitCode
 checkFile filePath = do
   replOutput ("Reading " <> T.pack (show filePath))
   fileContents <- liftIO $ T.readFile (T.unpack filePath)
-  -- liftIO $ T.putStrLn fileContents
-  case checkModule fileContents of
+  -- TODO: currently we pass no available modules
+  -- but we should really read the current project
+  -- and then include those so that external deps are available?
+  case checkModule fileContents mempty of
     Right (mod', _) -> do
       liftIO $ T.putStrLn $ prettyPrint mod'
       -- format and rewrite

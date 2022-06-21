@@ -36,7 +36,11 @@ getStoreExprs =
 
 itTypeChecks :: MonoType -> Expr Name Annotation -> Either TypeError ()
 itTypeChecks mt expr = do
-  let numberedExpr = fromRight (addNumbersToStoreExpression (StoreExpression expr mempty mempty))
+  let numberedExpr =
+        fromRight
+          ( addNumbersToStoreExpression
+              (StoreExpression expr mempty mempty mempty)
+          )
   let elabbed =
         fmap (\(_, _, a, _) -> a)
           . typecheck
