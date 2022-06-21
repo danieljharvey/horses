@@ -62,8 +62,7 @@ runBuilder fn st = do
       (M.toList readyJobs)
 
   -- evaluate everything in parallel
-  let reallyDone =
-        done `using` parTraversable rseq
+  let reallyDone = done `using` parTraversable rseq
 
   -- remove them from inputs
   let newInputs =

@@ -228,7 +228,7 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      StrictData
+      Strict
   build-depends:
       QuickCheck
     , aeson
@@ -283,8 +283,6 @@ executable mimsa
       Paths_mimsa
   hs-source-dirs:
       repl
-  default-extensions:
-      StrictData
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
@@ -352,8 +350,6 @@ executable mimsa-server
       Paths_mimsa
   hs-source-dirs:
       server
-  default-extensions:
-      StrictData
   ghc-options: -threaded -rtsopts -with-rtsopts=-T
   build-depends:
       QuickCheck
