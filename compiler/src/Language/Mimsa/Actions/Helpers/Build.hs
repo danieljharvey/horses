@@ -1,7 +1,9 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Language.Mimsa.Actions.Helpers.Build (doJobs, getMissing, Plan (..), State (..), Job, Inputs) where
 
+import Control.Parallel.Strategies
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -29,6 +31,7 @@ data State k input output = State
 -- | one run of the builder builds everything that is currently ready, then
 -- updates the state
 runBuilder ::
+  forall k m input output.
   (Ord k, Monad m) =>
   Job m k input output ->
   State k input output ->
@@ -58,6 +61,10 @@ runBuilder fn st = do
       )
       (M.toList readyJobs)
 
+  -- evaluate everything in parallel
+  let reallyDone =
+        done `using` parTraversable rseq
+
   -- remove them from inputs
   let newInputs =
         M.filterWithKey
@@ -65,7 +72,7 @@ runBuilder fn st = do
           inputs
 
   -- add them to outputs
-  pure (State newInputs (stOutputs st <> M.fromList done))
+  pure (State newInputs (stOutputs st <> M.fromList reallyDone))
 
 -- list the required deps that cannot possibly be provided (usually indicates
 -- an error with implementation)

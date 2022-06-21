@@ -45,16 +45,19 @@ dependencies:
 - openapi3 
 - bifunctors 
 - diagnose # nice errors
+- parallel
 
 library:
   source-dirs: src
   default-extensions:
-  - Strict 
+  - StrictData 
 
 executables:
   mimsa:
     main:                Main.hs
     source-dirs:         repl
+    default-extensions:
+      - StrictData
     ghc-options:
     - -threaded
     - -rtsopts
@@ -67,6 +70,8 @@ executables:
   mimsa-server:
     main:                Main.hs
     source-dirs:         server
+    default-extensions:
+      - StrictData
     ghc-options:
     - -threaded
     - -rtsopts
