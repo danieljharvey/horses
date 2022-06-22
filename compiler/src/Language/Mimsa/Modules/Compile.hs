@@ -141,7 +141,7 @@ compile ::
   CheckM (CompiledModule ann)
 compile typecheckedModules inputModule = do
   allCompiledModules <- compileAllModules typecheckedModules inputModule
-  let rootModuleHash = hashModule inputModule
+  let (_, rootModuleHash) = serializeModule inputModule
   case M.lookup rootModuleHash allCompiledModules of
     Just (CompiledModule _ compiledMod) ->
       -- we want the compiled module for the main thing but with all the store

@@ -6,7 +6,7 @@ module Test.Actions.BindModule
   )
 where
 
-import Data.Maybe (isJust)
+import Data.Either
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -36,7 +36,7 @@ spec = do
           lookupModuleName
             newProject
             "Prelude"
-            `shouldSatisfy` isJust
+            `shouldSatisfy` isRight
           -- one new store expression
           S.size (Actions.modulesFromOutcomes outcomes)
             `shouldBe` 1

@@ -30,6 +30,7 @@ initialiseProject :: ReplM (Error Annotation) (Project Annotation)
 initialiseProject = do
   rootPath <- asks rcRootPath
   saveAllInStore rootPath (prjStore stdlib)
+  saveModulesInStore rootPath (prjModuleStore stdlib)
   _ <- mapError StoreErr (saveProject stdlib)
   replOutput ("New project created in " <> T.pack (show rootPath))
   pure stdlib

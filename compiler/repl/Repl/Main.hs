@@ -35,8 +35,11 @@ getProject :: ReplM (Error Annotation) (Project Annotation)
 getProject =
   do
     env <- mapError StoreErr loadProject
-    let items = length . getStore . prjStore $ env
-    replOutput $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
+    let storeItems = length . getStore . prjStore $ env
+        moduleItems = length . prjModuleStore $ env
+    replOutput ("Successfully loaded project." :: Text)
+    replOutput $ T.pack (show storeItems) <> " store items found"
+    replOutput $ T.pack (show moduleItems) <> " modules found"
     pure env
     `catchError` \e -> do
       logDebugN (prettyPrint e)

@@ -5,7 +5,6 @@
 module Server.Persistence
   ( loadProjectFromHash,
     saveProjectInStore,
-    recursiveLoadBoundExpressions,
   )
 where
 
@@ -18,12 +17,10 @@ import Control.Monad.Reader
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
-import qualified Data.Map as M
-import Data.Set (Set)
-import qualified Data.Set as S
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
+import Language.Mimsa.Store.Persistence
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
@@ -67,6 +64,7 @@ loadProjectFromHash' ::
   ProjectHash ->
   m (Project ())
 loadProjectFromHash' store' hash = do
+  rootPath <- asks scRootPath
   path <- getProjectPath hash
   json <- liftIO $ try $ LBS.readFile path
   case json of
@@ -74,40 +72,8 @@ loadProjectFromHash' store' hash = do
       throwError $
         CouldNotReadFilePath ProjectFile (getProjectFilename hash)
     Right json' -> case JSON.decode json' of
-      Just sp -> fetchProjectItems store' sp
+      Just sp -> fetchProjectItems rootPath store' sp
       _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
-
-fetchProjectItems ::
-  (MonadIO m, MonadError StoreError m, MonadReader ServerConfig m, MonadLogger m) =>
-  Store () ->
-  SaveProject ->
-  m (Project ())
-fetchProjectItems existingStore sp = do
-  store' <-
-    recursiveLoadBoundExpressions
-      existingStore
-      (getItemsForAllVersions . projectBindings $ sp)
-  typeStore' <-
-    recursiveLoadBoundExpressions
-      existingStore
-      (getItemsForAllVersions . projectTypes $ sp)
-  testStore <-
-    recursiveLoadBoundExpressions
-      existingStore
-      ( M.keysSet
-          ( projectUnitTests sp
-          )
-          <> M.keysSet (projectPropertyTests sp)
-      )
-  pure $
-    projectFromSaved
-      mempty -- TODO: where are we getting modules from?
-      ( existingStore
-          <> store'
-          <> typeStore'
-          <> testStore
-      )
-      sp
 
 -- save project in store
 saveProjectInStore ::
@@ -143,50 +109,3 @@ saveProjectInStore' env = do
         Left (_ :: IOError) ->
           throwError (CouldNotWriteFilePath ProjectFile (getProjectFilename hash))
         Right _ -> pure hash
-
---
-
-storeItems :: Store a -> Set ExprHash
-storeItems (Store s) = S.fromList (M.keys s)
-
-loadBoundExpressions ::
-  (MonadIO m, MonadError StoreError m, MonadReader ServerConfig m, MonadLogger m) =>
-  Set ExprHash ->
-  m (Store ())
-loadBoundExpressions hashes = do
-  rootPath <- asks scRootPath
-  items' <-
-    traverse
-      ( \hash -> do
-          item <- findExpr rootPath hash
-          pure (hash, item)
-      )
-      (S.toList hashes)
-  pure
-    (Store (M.fromList items'))
-
-recursiveLoadBoundExpressions ::
-  (MonadIO m, MonadError StoreError m, MonadReader ServerConfig m, MonadLogger m) =>
-  Store () ->
-  Set ExprHash ->
-  m (Store ())
-recursiveLoadBoundExpressions existingStore hashes = do
-  newStore <-
-    loadBoundExpressions
-      (S.difference hashes (storeItems existingStore))
-  let newHashes =
-        S.difference
-          ( S.unions $
-              getDependencyHashes <$> M.elems (getStore newStore)
-          )
-          hashes
-  if S.null newHashes
-    then pure (existingStore <> newStore)
-    else do
-      moreStore <-
-        recursiveLoadBoundExpressions
-          (existingStore <> newStore)
-          newHashes
-      pure (existingStore <> newStore <> moreStore)
-
---

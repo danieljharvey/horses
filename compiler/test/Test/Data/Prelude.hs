@@ -17,7 +17,7 @@ import Language.Mimsa.Types.Typechecker
 import Test.Utils.Helpers
 
 preludeHash :: ModuleHash
-preludeHash = hashModule prelude
+preludeHash = snd (serializeModule prelude)
 
 prelude :: Module Annotation
 prelude =

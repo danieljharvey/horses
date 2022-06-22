@@ -322,7 +322,7 @@ addModule moduleName deps input = do
   mod' <- Actions.parseModule input
   let modWithImports = mod' {moNamedImports = moNamedImports mod' <> deps}
   _ <- Actions.bindModule modWithImports moduleName input
-  pure (hashModule modWithImports)
+  pure (snd $ serializeModule modWithImports)
 
 addTest :: Text -> Text -> Actions.ActionM ()
 addTest label input = do

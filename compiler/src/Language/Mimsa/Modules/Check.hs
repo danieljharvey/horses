@@ -53,7 +53,7 @@ checkModule' input = do
   -- typecheck this module
   tcMods <- typecheckAllModules properMod
 
-  let rootModuleHash = hashModule properMod
+  let (_, rootModuleHash) = serializeModule properMod
 
   case M.lookup rootModuleHash tcMods of
     Nothing -> throwError (ModuleErr $ MissingModule rootModuleHash)

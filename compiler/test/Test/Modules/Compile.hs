@@ -24,7 +24,7 @@ compile' :: Module Annotation -> CompiledModule Annotation
 compile' mod' =
   let action = do
         tcMods <- typecheckAllModules mod'
-        case M.lookup (hashModule mod') tcMods of
+        case M.lookup (snd $ serializeModule mod') tcMods of
           Just tcMod -> compile tcMods tcMod
           Nothing -> error "Could not find the module we just typechecked"
    in fromRight $ runCheck (prettyPrint mod') mempty action

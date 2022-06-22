@@ -115,6 +115,7 @@ library
       Language.Mimsa.Store.ExtractVars
       Language.Mimsa.Store.Hashing
       Language.Mimsa.Store.Helpers
+      Language.Mimsa.Store.Persistence
       Language.Mimsa.Store.ResolveDataTypes
       Language.Mimsa.Store.ResolvedDeps
       Language.Mimsa.Store.Resolver

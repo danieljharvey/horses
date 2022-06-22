@@ -118,16 +118,16 @@ importsFromEntities uses = do
   let fromEntity = \case
         ENamespacedName modName _ ->
           case lookupModuleName prj modName of
-            Just modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
-            _ -> throwError undefined
+            Right modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
+            Left found -> throwError (ProjectErr (CannotFindModuleByName modName found))
         ENamespacedType modName _ ->
           case lookupModuleName prj modName of
-            Just modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
-            _ -> throwError undefined
+            Right modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
+            Left found -> throwError (ProjectErr (CannotFindModuleByName modName found))
         ENamespacedConstructor modName _ ->
           case lookupModuleName prj modName of
-            Just modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
-            _ -> throwError undefined
+            Right modHash -> pure $ mempty {moNamedImports = M.singleton modName modHash}
+            Left found -> throwError (ProjectErr (CannotFindModuleByName modName found))
         _ -> pure mempty
   -- check them all, combine them
   mconcat <$> traverse fromEntity (S.toList uses)
@@ -165,7 +165,7 @@ evaluateModule input expr localModule = do
 
   typecheckedModules <- Actions.typecheckModules (prettyPrint newModule) newModule
 
-  let rootModuleHash = hashModule newModule
+  let (_, rootModuleHash) = serializeModule newModule
 
   -- pull root module out from pile of typechecked modules
   typecheckedModule <- case M.lookup rootModuleHash typecheckedModules of
@@ -189,6 +189,17 @@ evaluateModule input expr localModule = do
   -- interpret
   evaluatedExpression <-
     Actions.interpreter rootStoreExpr
+
+  -- print
+  Actions.appendDocMessage
+    ( group
+        ( prettyDoc evaluatedExpression
+            <> line
+            <> "::"
+            <> line
+            <> prettyDoc exprType
+        )
+    )
 
   pure (exprType, evaluatedExpression, newModule)
 

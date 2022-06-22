@@ -17,16 +17,12 @@ import Control.Monad.Reader
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
-import qualified Data.Map as M
-import Data.Set (Set)
-import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
-import Language.Mimsa.Store.Storage
+import Language.Mimsa.Store.Persistence
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Store.RootPath
 import Repl.Types
 
@@ -56,40 +52,8 @@ loadProject' = do
       case JSON.decode json' of
         Just sp -> do
           logDebugN "Project file successfully decoded. Fetching project items...."
-          fetchProjectItems mempty sp -- we're starting from scratch with this one
+          fetchProjectItems rootPath mempty sp -- we're starting from scratch with this one
         _ -> throwError $ CouldNotDecodeFile (projectFilePath rootPath)
-
-fetchProjectItems ::
-  (MonadIO m, MonadError StoreError m, MonadReader ReplConfig m, MonadLogger m) =>
-  Store () ->
-  SaveProject ->
-  m (Project ())
-fetchProjectItems existingStore sp = do
-  store' <-
-    recursiveLoadBoundExpressions
-      existingStore
-      (getItemsForAllVersions . projectBindings $ sp)
-  typeStore' <-
-    recursiveLoadBoundExpressions
-      existingStore
-      (getItemsForAllVersions . projectTypes $ sp)
-  testStore <-
-    recursiveLoadBoundExpressions
-      existingStore
-      ( M.keysSet
-          ( projectUnitTests sp
-          )
-          <> M.keysSet (projectPropertyTests sp)
-      )
-  pure $
-    projectFromSaved
-      mempty -- TODO: where are we getting modules from?
-      ( existingStore
-          <> store'
-          <> typeStore'
-          <> testStore
-      )
-      sp
 
 -- save project in local folder
 saveProject ::
@@ -112,48 +76,5 @@ saveProject' env = do
     Right _ -> do
       logDebugN ("Successfully updated project file at " <> T.pack (projectFilePath rootPath))
       pure hash
-
-storeItems :: Store a -> Set ExprHash
-storeItems (Store s) = S.fromList (M.keys s)
-
-loadBoundExpressions ::
-  (MonadIO m, MonadError StoreError m, MonadReader ReplConfig m, MonadLogger m) =>
-  Set ExprHash ->
-  m (Store ())
-loadBoundExpressions hashes = do
-  rootPath <- asks rcRootPath
-  items' <-
-    traverse
-      ( \hash -> do
-          item <- findExpr rootPath hash
-          pure (hash, item)
-      )
-      (S.toList hashes)
-  pure
-    (Store (M.fromList items'))
-
-recursiveLoadBoundExpressions ::
-  (MonadIO m, MonadError StoreError m, MonadReader ReplConfig m, MonadLogger m) =>
-  Store () ->
-  Set ExprHash ->
-  m (Store ())
-recursiveLoadBoundExpressions existingStore hashes = do
-  newStore <-
-    loadBoundExpressions
-      (S.difference hashes (storeItems existingStore))
-  let newHashes =
-        S.difference
-          ( S.unions $
-              getDependencyHashes <$> M.elems (getStore newStore)
-          )
-          hashes
-  if S.null newHashes
-    then pure (existingStore <> newStore)
-    else do
-      moreStore <-
-        recursiveLoadBoundExpressions
-          (existingStore <> newStore)
-          newHashes
-      pure (existingStore <> newStore <> moreStore)
 
 --

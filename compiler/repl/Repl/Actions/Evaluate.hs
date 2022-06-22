@@ -18,7 +18,7 @@ doEvaluate ::
   Expr Name Annotation ->
   ReplM (Error Annotation) ()
 doEvaluate project input expr = do
-  _ <- toReplM project (Actions.evaluate input expr)
+  _ <- toReplM project (Actions.evaluateModule input expr mempty)
   pure ()
 
 ---------
