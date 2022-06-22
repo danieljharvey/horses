@@ -26,6 +26,7 @@ you should then see:
 :bind <name> = <expr> - binds <expr> to <name> and saves it in the environment
 :bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment
 :list - show a list of current bindings in the environment
+:modules - show a list of modules in the project 
 :outputJS <javascript|typescript> <expr> - save JS/TS code for <expr>
 :tree <expr> - draw a dependency tree for <expr>
 :graph <expr> - output graphviz dependency tree for <expr>
