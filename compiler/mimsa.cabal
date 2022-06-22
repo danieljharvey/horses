@@ -270,6 +270,7 @@ executable mimsa
       Repl.Actions.ExpressionBind
       Repl.Actions.Info
       Repl.Actions.ListBindings
+      Repl.Actions.ListModules
       Repl.Actions.Optimise
       Repl.Actions.Tree
       Repl.Actions.TypeSearch

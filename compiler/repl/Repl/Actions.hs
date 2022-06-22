@@ -16,6 +16,7 @@ import Repl.Actions.Evaluate
 import Repl.Actions.ExpressionBind
 import Repl.Actions.Info
 import Repl.Actions.ListBindings
+import Repl.Actions.ListModules
 import Repl.Actions.Optimise
 import Repl.Actions.Tree
 import Repl.Actions.TypeSearch
@@ -37,6 +38,8 @@ doReplAction env input action =
       pure env
     ListBindings ->
       catchMimsaError env (doListBindings env input $> env)
+    ListModules ->
+      catchMimsaError env (doListModules env input $> env)
     (Upgrade name) ->
       catchMimsaError env (doUpgrade env name $> env)
     (Optimise name) ->

@@ -25,6 +25,7 @@ replParser =
     <|> try bindParser
     <|> try bindTypeParser
     <|> try listBindingsParser
+    <|> try listModulesParser
     <|> try treeParser
     <|> try graphParser
     <|> try projectGraphParser
@@ -76,6 +77,9 @@ bindTypeParser = do
 
 listBindingsParser :: Parser ReplActionAnn
 listBindingsParser = ListBindings <$ string ":list"
+
+listModulesParser :: Parser ReplActionAnn
+listModulesParser = ListModules <$ string ":modules"
 
 backendParser :: Parser (Maybe Backend)
 backendParser =

@@ -14,6 +14,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
+import Prettyprinter
 import Repl.ReplM
 
 ----------
@@ -31,8 +32,10 @@ doInfo project input expr = do
         ( Actions.typecheckExpression project input expr
         )
   replOutput $
-    prettyPrint expr
-      <> "/n:: "
-      <> prettyPrint (reMonoType resolvedExpr)
+    prettyDoc expr
+      <> line
+      <> "::"
+      <> line
+      <> prettyDoc (reMonoType resolvedExpr)
 
 ----------

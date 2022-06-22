@@ -27,6 +27,7 @@ data ReplAction ann
   | TypeSearch MonoType
   | BindType DataType
   | ListBindings
+  | ListModules
   | AddUnitTest TestName (Expr Name ann)
   | ListTests (Maybe Name)
   | Upgrade Name
