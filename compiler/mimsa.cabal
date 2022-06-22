@@ -282,15 +282,8 @@ executable mimsa
       Repl.ReplM
       Repl.Types
       ReplNew.Actions
-      ReplNew.Actions.Compile
       ReplNew.Actions.Evaluate
-      ReplNew.Actions.ExpressionBind
       ReplNew.Actions.ListModules
-      ReplNew.Actions.Optimise
-      ReplNew.Actions.Tree
-      ReplNew.Actions.TypeSearch
-      ReplNew.Actions.UnitTests
-      ReplNew.Actions.Upgrade
       ReplNew.Helpers
       ReplNew.Main
       ReplNew.Parser

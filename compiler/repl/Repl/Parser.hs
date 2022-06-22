@@ -5,6 +5,7 @@ module Repl.Parser
   )
 where
 
+import Data.Functor (($>))
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Lexeme
