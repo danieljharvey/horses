@@ -1,4 +1,4 @@
-module Repl.Actions.Upgrade
+module ReplNew.Actions.Upgrade
   ( doUpgrade,
   )
 where
@@ -8,8 +8,8 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Repl.Helpers
-import Repl.ReplM
+import ReplNew.Helpers
+import ReplNew.ReplM
 
 doUpgrade ::
   Project Annotation ->

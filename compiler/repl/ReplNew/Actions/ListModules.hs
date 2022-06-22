@@ -1,4 +1,4 @@
-module Repl.Actions.ListModules
+module ReplNew.Actions.ListModules
   ( doListModules,
   )
 where
@@ -11,7 +11,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
-import Repl.ReplM
+import ReplNew.ReplM
 
 showModule :: ModuleName -> ReplM e ()
 showModule = replOutput

@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 
-module Repl.Types
+module ReplNew.Types
   ( ReplAction (..),
     ReplConfig (..),
   )
@@ -17,7 +17,6 @@ import Language.Mimsa.Types.Typechecker
 
 data ReplAction ann
   = Help
-  | Info (Expr Name ann)
   | Evaluate (Expr Name ann)
   | Tree (Expr Name ann)
   | Graph (Expr Name ann)
@@ -26,7 +25,6 @@ data ReplAction ann
   | OutputJS (Maybe Backend) (Expr Name ann)
   | TypeSearch MonoType
   | BindType DataType
-  | ListBindings
   | ListModules
   | AddUnitTest TestName (Expr Name ann)
   | ListTests (Maybe Name)

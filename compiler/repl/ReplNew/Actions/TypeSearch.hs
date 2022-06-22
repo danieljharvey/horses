@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Repl.Actions.TypeSearch
+module ReplNew.Actions.TypeSearch
   ( doTypeSearch,
   )
 where
@@ -17,7 +17,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Typechecker
-import Repl.ReplM
+import ReplNew.ReplM
 
 -------------
 

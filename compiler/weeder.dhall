@@ -1,1 +1,1 @@
-{ roots = [ "Language.Mimsa", "Main.main", "^Paths_.*" ], type-class-roots = True }
+{ roots = [ "Language.Mimsa", "Main.main", "^Paths_.*", "Repl", "Server" ], type-class-roots = True }

@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Repl.Helpers
+module ReplNew.Helpers
   ( saveExpression,
     toReplM,
     catchMimsaError,
@@ -20,8 +20,8 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Repl.ReplM
-import Repl.Types
+import ReplNew.ReplM
+import ReplNew.Types
 
 -- | if an error has been thrown, log it and return default value
 catchMimsaError ::

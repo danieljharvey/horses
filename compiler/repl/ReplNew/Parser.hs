@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Repl.Parser
+module ReplNew.Parser
   ( replParser,
   )
 where
@@ -12,7 +12,7 @@ import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
-import Repl.Types
+import ReplNew.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
 
@@ -21,10 +21,8 @@ type ReplActionAnn = ReplAction Annotation
 replParser :: Parser ReplActionAnn
 replParser =
   try helpParser
-    <|> try infoParser
     <|> try bindParser
     <|> try bindTypeParser
-    <|> try listBindingsParser
     <|> try listModulesParser
     <|> try treeParser
     <|> try graphParser
@@ -39,11 +37,6 @@ replParser =
 
 helpParser :: Parser ReplActionAnn
 helpParser = Help <$ string ":help"
-
-infoParser :: Parser ReplActionAnn
-infoParser = do
-  myString ":info"
-  Info <$> expressionParser
 
 evalParser :: Parser ReplActionAnn
 evalParser =
@@ -74,9 +67,6 @@ bindTypeParser :: Parser ReplActionAnn
 bindTypeParser = do
   myString ":bindType"
   BindType <$> typeDeclParser
-
-listBindingsParser :: Parser ReplActionAnn
-listBindingsParser = ListBindings <$ string ":list"
 
 listModulesParser :: Parser ReplActionAnn
 listModulesParser = ListModules <$ string ":modules"

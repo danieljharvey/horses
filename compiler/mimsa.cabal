@@ -264,24 +264,22 @@ executable mimsa
   other-modules:
       Check.Main
       Init.Main
-      Repl.Actions
-      Repl.Actions.Compile
-      Repl.Actions.Evaluate
-      Repl.Actions.ExpressionBind
-      Repl.Actions.Info
-      Repl.Actions.ListBindings
-      Repl.Actions.ListModules
-      Repl.Actions.Optimise
-      Repl.Actions.Tree
-      Repl.Actions.TypeSearch
-      Repl.Actions.UnitTests
-      Repl.Actions.Upgrade
-      Repl.Helpers
-      Repl.Main
-      Repl.Parser
-      Repl.Persistence
-      Repl.ReplM
-      Repl.Types
+      ReplNew.Actions
+      ReplNew.Actions.Compile
+      ReplNew.Actions.Evaluate
+      ReplNew.Actions.ExpressionBind
+      ReplNew.Actions.ListModules
+      ReplNew.Actions.Optimise
+      ReplNew.Actions.Tree
+      ReplNew.Actions.TypeSearch
+      ReplNew.Actions.UnitTests
+      ReplNew.Actions.Upgrade
+      ReplNew.Helpers
+      ReplNew.Main
+      ReplNew.Parser
+      ReplNew.Persistence
+      ReplNew.ReplM
+      ReplNew.Types
       Paths_mimsa
   hs-source-dirs:
       repl

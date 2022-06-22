@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Repl.Actions
+module ReplNew.Actions
   ( doReplAction,
   )
 where
@@ -11,20 +11,18 @@ import Data.Text (Text)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
-import Repl.Actions.Compile
-import Repl.Actions.Evaluate
-import Repl.Actions.ExpressionBind
-import Repl.Actions.Info
-import Repl.Actions.ListBindings
-import Repl.Actions.ListModules
-import Repl.Actions.Optimise
-import Repl.Actions.Tree
-import Repl.Actions.TypeSearch
-import Repl.Actions.UnitTests
-import Repl.Actions.Upgrade
-import Repl.Helpers
-import Repl.ReplM
-import Repl.Types
+import ReplNew.Actions.Compile
+import ReplNew.Actions.Evaluate
+import ReplNew.Actions.ExpressionBind
+import ReplNew.Actions.ListModules
+import ReplNew.Actions.Optimise
+import ReplNew.Actions.Tree
+import ReplNew.Actions.TypeSearch
+import ReplNew.Actions.UnitTests
+import ReplNew.Actions.Upgrade
+import ReplNew.Helpers
+import ReplNew.ReplM
+import ReplNew.Types
 
 doReplAction ::
   Project Annotation ->
@@ -36,8 +34,6 @@ doReplAction env input action =
     Help -> do
       doHelp
       pure env
-    ListBindings ->
-      catchMimsaError env (doListBindings env input $> env)
     ListModules ->
       catchMimsaError env (doListModules env input $> env)
     (Upgrade name) ->
@@ -52,8 +48,6 @@ doReplAction env input action =
       catchMimsaError env (doGraph env input expr $> env)
     ProjectGraph ->
       catchMimsaError env (doProjectGraph env $> env)
-    (Info expr) ->
-      catchMimsaError env (doInfo env input expr $> env)
     (Bind name expr) ->
       catchMimsaError env (doBind env input name expr)
     (BindType dt) ->
@@ -73,10 +67,8 @@ doHelp :: ReplM e ()
 doHelp = do
   replOutput @Text "~~~ MIMSA ~~~"
   replOutput @Text ":help - this help screen"
-  replOutput @Text ":info <expr> - get the type of <expr>"
   replOutput @Text ":bind <name> = <expr> - binds <expr> to <name> and saves it in the environment"
   replOutput @Text ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
-  replOutput @Text ":list - show a list of current bindings in the environment"
   replOutput @Text ":modules - show a list of modules in the project"
   replOutput @Text ":outputJS <javascript|typescript> <expr> - save JS code for <expr>"
   replOutput @Text ":tree <expr> - draw a dependency tree for <expr>"

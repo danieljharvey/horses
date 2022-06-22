@@ -14,9 +14,9 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store.RootPath
-import Repl.Helpers
-import Repl.ReplM
-import Repl.Types
+import ReplNew.Helpers
+import ReplNew.ReplM
+import ReplNew.Types
 import System.Directory
 import System.Exit
 import Prelude hiding (init)

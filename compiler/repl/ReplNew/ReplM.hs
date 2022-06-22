@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
-module Repl.ReplM
+module ReplNew.ReplM
   ( ReplM (..),
     runReplM,
     mapError,
@@ -21,7 +21,7 @@ import Control.Monad.Logger
 import Control.Monad.Reader
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
-import Repl.Types
+import ReplNew.Types
 
 -- | Although we are lucky and can keep much of our work
 -- outside of IO, we do need to do some Serious Business sometimes

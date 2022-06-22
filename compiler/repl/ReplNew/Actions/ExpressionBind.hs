@@ -1,4 +1,4 @@
-module Repl.Actions.ExpressionBind
+module ReplNew.Actions.ExpressionBind
   ( doBind,
     doBindType,
   )
@@ -14,8 +14,8 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Repl.Helpers
-import Repl.ReplM
+import ReplNew.Helpers
+import ReplNew.ReplM
 
 doBind ::
   Project Annotation ->

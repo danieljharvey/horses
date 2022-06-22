@@ -14,9 +14,9 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath
-import Repl.Persistence
-import Repl.ReplM
-import Repl.Types
+import ReplNew.Persistence
+import ReplNew.ReplM
+import ReplNew.Types
 import System.Directory
 import Prelude hiding (init)
 
