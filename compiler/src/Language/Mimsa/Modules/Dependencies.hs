@@ -192,7 +192,7 @@ getModuleDeps moduleDeps inputModule = do
           ( M.elems (moExpressionImports inputModule)
               <> M.elems (moNamedImports inputModule)
           )
-      mHash = hashModule inputModule
+      mHash = snd $ serializeModule inputModule
   -- recursively fetch sub-deps
   depModules <- traverse (lookupModule moduleDeps) (S.toList deps)
   subDeps <- traverse (getModuleDeps moduleDeps) depModules

@@ -61,6 +61,7 @@ createMimsaEnvironment = do
   cfg <- ask
   let project = stdlib
   _ <- mapError StoreErr (saveAllInStore (scRootPath cfg) (prjStore project))
+  _ <- mapError StoreErr (saveModulesInStore (scRootPath cfg) (prjModuleStore project))
   stm <- liftIO (STM.newTVarIO (prjStore project))
   pure (MimsaEnvironment stm cfg)
 

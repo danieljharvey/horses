@@ -6,6 +6,7 @@ import Data.Text (Text)
 import qualified Init.Main as Init
 import qualified Options.Applicative as Opt
 import qualified Repl.Main as Repl
+import qualified ReplNew.Main as ReplNew
 import System.IO
 
 -- | this runs the repl
@@ -16,6 +17,7 @@ parseShowLogs =
 
 data AppAction
   = Repl
+  | ReplNew
   | Init
   | Check Text -- check if a file is `ok`
 
@@ -28,6 +30,12 @@ parseAppAction =
             (pure Repl)
             (Opt.progDesc "Start a Mimsa repl")
         )
+        <> Opt.command
+          "repl-new"
+          ( Opt.info
+              (pure ReplNew)
+              (Opt.progDesc "Start new module-based Mimsa repl")
+          )
         <> Opt.command
           "init"
           ( Opt.info
@@ -69,4 +77,5 @@ main = do
   case action of
     Init -> Init.init showLogs
     Repl -> Repl.repl showLogs
+    ReplNew -> ReplNew.repl showLogs
     Check filePath -> Check.check showLogs filePath

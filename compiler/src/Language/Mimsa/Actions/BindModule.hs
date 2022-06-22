@@ -46,7 +46,7 @@ bindModule inputModule moduleName input = do
   typecheckedModules <-
     typecheckModules input inputModule
 
-  let rootModuleHash = hashModule inputModule
+  let (_, rootModuleHash) = serializeModule inputModule
   typecheckedModule <- case M.lookup rootModuleHash typecheckedModules of
     Just tcMod -> pure tcMod
     _ -> throwError (ModuleErr $ MissingModule rootModuleHash)
@@ -56,13 +56,13 @@ bindModule inputModule moduleName input = do
 
   -- display messages depending on whether this is new or update
   case lookupModuleName project moduleName of
-    Nothing ->
-      Actions.appendMessage
-        ( "Bound " <> prettyPrint moduleName <> "."
-        )
-    Just _ ->
+    Right _ ->
       Actions.appendMessage
         ( "Updated binding of " <> prettyPrint moduleName <> "."
         )
+    _ ->
+      Actions.appendMessage
+        ( "Bound " <> prettyPrint moduleName <> "."
+        )
   -- return stuff
-  pure (hashModule typecheckedModule, typecheckedModule)
+  pure (snd (serializeModule typecheckedModule), typecheckedModule)

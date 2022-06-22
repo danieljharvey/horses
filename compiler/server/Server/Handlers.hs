@@ -45,6 +45,7 @@ import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Usages
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
+import Language.Mimsa.Store.Persistence
 import Language.Mimsa.Tests.Test
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
@@ -261,10 +262,11 @@ storeFromExprHashHandler ::
   ExprHash ->
   Handler (Store ())
 storeFromExprHashHandler mimsaEnv exprHash =
-  handleServerM
-    (mimsaConfig mimsaEnv)
-    UserError
-    (recursiveLoadBoundExpressions mempty (S.singleton exprHash))
+  let cfg = mimsaConfig mimsaEnv
+   in handleServerM
+        (mimsaConfig mimsaEnv)
+        UserError
+        (recursiveLoadBoundExpressions (scRootPath cfg) mempty (S.singleton exprHash))
 
 runTestsHandler ::
   MimsaEnvironment ->

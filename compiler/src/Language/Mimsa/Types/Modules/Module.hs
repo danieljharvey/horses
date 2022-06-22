@@ -72,7 +72,7 @@ data Module ann = Module
     moNamedImports :: Map ModuleName ModuleHash -- `import sdfsdf as Prelude`..
   }
   deriving stock (Eq, Ord, Show, Functor, Generic)
-  deriving anyclass (JSON.ToJSON)
+  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
 instance (Show ann) => Printer (Module ann) where
   prettyDoc mod' =

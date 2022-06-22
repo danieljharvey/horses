@@ -25,6 +25,7 @@ module Language.Mimsa.Project.Helpers
     getCurrentModules,
     getItemsForAllVersions,
     getDependencyHashes,
+    getModuleDependencyHashes,
     lookupBindingName,
     lookupTypeBindingName,
     lookupModuleName,
@@ -118,7 +119,7 @@ fromType expr hash =
 
 fromModule :: ModuleName -> Module ann -> Project ann
 fromModule modName newModule =
-  let moduleHash = hashModule newModule
+  let (_, moduleHash) = serializeModule newModule
    in mempty
         { prjModules = VersionedMap $ M.singleton modName (pure moduleHash),
           prjModuleStore = M.singleton moduleHash newModule
@@ -180,10 +181,12 @@ lookupTypeBindingName project tyCon =
   let b = getTypeBindings . getCurrentTypeBindings . prjTypeBindings $ project
    in M.lookup tyCon b
 
-lookupModuleName :: Project ann -> ModuleName -> Maybe ModuleHash
+lookupModuleName :: Project ann -> ModuleName -> Either (Set ModuleName) ModuleHash
 lookupModuleName project modName =
   let b = getCurrentModules . prjModules $ project
-   in M.lookup modName b
+   in case M.lookup modName b of
+        Just a -> pure a
+        _ -> Left (M.keysSet b)
 
 -- | find the binding name in current expr hashes
 findBindingNameForExprHash ::
@@ -255,6 +258,13 @@ getDependencyHashes :: StoreExpression ann -> Set ExprHash
 getDependencyHashes =
   S.fromList . M.elems . storeBindings
     <> S.fromList . M.elems . getTypeBindings . storeTypeBindings
+
+getModuleDependencyHashes :: Module ann -> Set ModuleHash
+getModuleDependencyHashes inputModule =
+  S.fromList
+    ( M.elems (moExpressionImports inputModule)
+        <> M.elems (moNamedImports inputModule)
+    )
 
 removeBinding :: Project ann -> Name -> Project ann
 removeBinding prj name =

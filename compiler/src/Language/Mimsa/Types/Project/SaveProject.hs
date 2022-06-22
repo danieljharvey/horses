@@ -34,7 +34,7 @@ instance JSON.FromJSON SaveProject where
     types <- o .: "projectTypes"
     unitTests <- o .:? "projectUnitTests"
     propertyTests <- o .:? "projectPropertyTests"
-    modules <- o .:? "propertyModules"
+    modules <- o .:? "projectModules"
 
     ut <- case unitTests of
       Just as -> JSON.parseJSON as
@@ -43,6 +43,7 @@ instance JSON.FromJSON SaveProject where
     pt <- case propertyTests of
       Just as -> JSON.parseJSON as
       Nothing -> pure mempty
+
     mods <- case modules of
       Just as -> JSON.parseJSON as
       Nothing -> pure mempty

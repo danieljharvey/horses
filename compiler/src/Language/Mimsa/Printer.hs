@@ -34,6 +34,8 @@ class Printer a where
   default prettyDoc :: a -> Doc ann
   prettyDoc = pretty . T.unpack . prettyPrint
 
+instance Printer (Doc ann)
+
 instance (Printer e, Printer a) => Printer (Either e a) where
   prettyDoc (Left e) = prettyDoc e
   prettyDoc (Right a) = prettyDoc a
