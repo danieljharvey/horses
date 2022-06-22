@@ -33,7 +33,7 @@ parseAppAction =
         <> Opt.command
           "repl-new"
           ( Opt.info
-              (pure Repl)
+              (pure ReplNew)
               (Opt.progDesc "Start new module-based Mimsa repl")
           )
         <> Opt.command

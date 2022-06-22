@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module ReplNew.Main
+module Repl.Main
   ( repl,
   )
 where
@@ -14,13 +14,14 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Store.RootPath
-import ReplNew.Actions (doReplAction)
-import ReplNew.Helpers
-import ReplNew.Parser (replParser)
-import ReplNew.Persistence
-import ReplNew.ReplM
-import ReplNew.Types
+import Repl.Actions (doReplAction)
+import Repl.Helpers
+import Repl.Parser (replParser)
+import Repl.Persistence
+import Repl.ReplM
+import Repl.Types
 import System.Console.Haskeline
 import System.Directory
 import Text.Megaparsec
@@ -34,9 +35,8 @@ getProject :: ReplM (Error Annotation) (Project Annotation)
 getProject =
   do
     env <- mapError StoreErr loadProject
-    let moduleItems = length . prjModuleStore $ env
-    replOutput ("Successfully loaded project." :: Text)
-    replOutput $ T.pack (show moduleItems) <> " modules found"
+    let items = length . getStore . prjStore $ env
+    replOutput $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
     pure env
     `catchError` \e -> do
       logDebugN (prettyPrint e)

@@ -264,6 +264,23 @@ executable mimsa
   other-modules:
       Check.Main
       Init.Main
+      Repl.Actions
+      Repl.Actions.Compile
+      Repl.Actions.Evaluate
+      Repl.Actions.ExpressionBind
+      Repl.Actions.Info
+      Repl.Actions.ListBindings
+      Repl.Actions.Optimise
+      Repl.Actions.Tree
+      Repl.Actions.TypeSearch
+      Repl.Actions.UnitTests
+      Repl.Actions.Upgrade
+      Repl.Helpers
+      Repl.Main
+      Repl.Parser
+      Repl.Persistence
+      Repl.ReplM
+      Repl.Types
       ReplNew.Actions
       ReplNew.Actions.Compile
       ReplNew.Actions.Evaluate
