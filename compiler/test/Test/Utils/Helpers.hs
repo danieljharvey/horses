@@ -10,6 +10,7 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser
+import Language.Mimsa.Parser.Module
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Tests.Types
@@ -17,6 +18,7 @@ import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
@@ -32,13 +34,22 @@ fromLeft either' = case either' of
   Left e -> e
   Right _ -> error "Expected a Left!"
 
-unsafeParseExpr :: Text -> Expr Name ()
-unsafeParseExpr t = case parseExpr t of
-  Right a -> a $> ()
+unsafeParseExpr' :: Monoid ann => Text -> Expr Name ann
+unsafeParseExpr' t = case parseExpr t of
+  Right a -> a $> mempty
   Left _ ->
     error $
       "Error parsing expr for Prettier tests:"
         <> T.unpack t
+
+unsafeParseExpr :: Text -> Expr Name ()
+unsafeParseExpr = unsafeParseExpr'
+
+unsafeParseModuleItem :: Text -> ModuleItem ann
+unsafeParseModuleItem t = case parseModuleItem t of
+  Right [item] -> item $> mempty
+  Right many -> error "ModuleItem parser succeeded but did not have 1 item"
+  Left e -> error $ "Error parsing ModuleItem for tests: " <> T.pack (prettyPrint e)
 
 unsafeParseMonoType :: Text -> Type ()
 unsafeParseMonoType t = case parseMonoType t of

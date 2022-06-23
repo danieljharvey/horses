@@ -3,6 +3,7 @@
 
 module Language.Mimsa.Parser.Module
   ( parseModule,
+    parseModuleItem,
     moduleParser,
     DefPart (..),
   )

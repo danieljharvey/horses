@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.BindModule (bindModule, typecheckModules) where
+module Language.Mimsa.Actions.BindModule
+  ( bindModule,
+    typecheckModules,
+    addBindingToModule,
+  )
+where
 
 import Control.Monad.Except
 import Data.Map (Map)
@@ -14,6 +19,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName
@@ -64,5 +70,14 @@ bindModule inputModule moduleName input = do
       Actions.appendMessage
         ( "Bound " <> prettyPrint moduleName <> "."
         )
+
   -- return stuff
   pure (snd (serializeModule typecheckedModule), typecheckedModule)
+
+addBindingToModule ::
+  Module MonoType ->
+  ModuleItem Annotation ->
+  Text ->
+  Actions.ActionM (Module MonoType)
+addBindingToModule _mod' _modItem _input = do
+  error "fuck"
