@@ -45,11 +45,11 @@ unsafeParseExpr' t = case parseExpr t of
 unsafeParseExpr :: Text -> Expr Name ()
 unsafeParseExpr = unsafeParseExpr'
 
-unsafeParseModuleItem :: Text -> ModuleItem ann
-unsafeParseModuleItem t = case parseModuleItem t of
+unsafeParseModuleItem :: (Monoid ann) => Text -> ModuleItem ann
+unsafeParseModuleItem t = case parseAndFormat moduleParser t of
   Right [item] -> item $> mempty
-  Right many -> error "ModuleItem parser succeeded but did not have 1 item"
-  Left e -> error $ "Error parsing ModuleItem for tests: " <> T.pack (prettyPrint e)
+  Right _many -> error "ModuleItem parser succeeded but did not have 1 item"
+  Left e -> error $ "Error parsing ModuleItem for tests: " <> T.unpack (prettyPrint e)
 
 unsafeParseMonoType :: Text -> Type ()
 unsafeParseMonoType t = case parseMonoType t of

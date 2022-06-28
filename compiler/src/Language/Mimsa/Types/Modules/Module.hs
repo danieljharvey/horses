@@ -41,7 +41,7 @@ data DefPart ann
     DefTypedArg (Identifier Name ann) (Type ann)
   | -- | type with no binding `String`
     DefType (Type ann)
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Functor)
 
 -- item parsed from file, kept like this so we can order them and have
 -- duplicates
@@ -54,6 +54,7 @@ data ModuleItem ann
   | ModuleExport (ModuleItem ann)
   | ModuleImport Import
   | ModuleInfix InfixOp (Expr Name ann)
+  deriving stock (Functor)
 
 -- going to want way more granularity here in future but _shrug_
 data Import

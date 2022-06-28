@@ -3,7 +3,6 @@
 
 module Language.Mimsa.Parser.Module
   ( parseModule,
-    parseModuleItem,
     moduleParser,
     DefPart (..),
   )
@@ -41,15 +40,15 @@ moduleParser =
 
 -- we've excluded Export here
 parseModuleItem :: Parser [ModuleItem Annotation]
-parseModuleItem = parseDef <|> parseType <|> parseImport <|> parseInfix
+parseModuleItem = parseDef <|> typeParser <|> parseImport <|> parseInfix
 
 -------
 
 -- type definitions
 -- type Maybe a = Just a | Nothing
 -- type Tree a = Branch (Tree a) a (Tree a) | Leaf a
-parseType :: Parser [ModuleItem Annotation]
-parseType = do
+typeParser :: Parser [ModuleItem Annotation]
+typeParser = do
   td <- typeDeclParser
   pure [ModuleDataType td]
 
