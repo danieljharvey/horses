@@ -12,6 +12,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
@@ -98,4 +99,12 @@ addBindingToModule mod' modItem input = do
   -- add our new definition
   newModule <- addModuleItemToModule input (getAnnotationForType <$> mod') modItem
   -- check everything still makes sense
-  typecheckModule (prettyPrint newModule) newModule
+  typecheckedModule <- typecheckModule (prettyPrint newModule) newModule
+  -- output what's happened
+  case getModuleItemIdentifier modItem of
+    Just di ->
+      Actions.appendMessage
+        ("Added definition " <> prettyPrint di <> " to module")
+    Nothing -> Actions.appendMessage "Module updated"
+
+  pure typecheckedModule

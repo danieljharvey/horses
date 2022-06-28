@@ -282,6 +282,7 @@ executable mimsa
       Repl.ReplM
       Repl.Types
       ReplNew.Actions
+      ReplNew.Actions.Bindings
       ReplNew.Actions.Evaluate
       ReplNew.Actions.ListModules
       ReplNew.Helpers

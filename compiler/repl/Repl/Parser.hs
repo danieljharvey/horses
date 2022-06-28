@@ -8,7 +8,6 @@ where
 import Data.Functor (($>))
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
-import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST

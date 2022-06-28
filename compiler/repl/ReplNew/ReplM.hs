@@ -3,8 +3,11 @@
 
 module ReplNew.ReplM
   ( ReplM (..),
+    ReplState (..),
     runReplM,
     mapError,
+    setStoredModule,
+    getStoredModule,
     replMFromEither,
     replOutput,
   )
@@ -19,9 +22,18 @@ import Control.Monad.Logger
     runStdoutLoggingT,
   )
 import Control.Monad.Reader
+import Control.Monad.State
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.Modules
+import Language.Mimsa.Types.Typechecker
 import ReplNew.Types
+
+-- | to allow us to do 'bindings' in the repl,
+-- we maintain a current Module and add to it
+newtype ReplState = ReplState
+  { rsModule :: Module MonoType
+  }
 
 -- | Although we are lucky and can keep much of our work
 -- outside of IO, we do need to do some Serious Business sometimes
@@ -31,7 +43,9 @@ newtype ReplM e a = ReplM
       ExceptT
         e
         ( LoggingT
-            ( ReaderT ReplConfig IO
+            ( ReaderT
+                ReplConfig
+                (StateT ReplState IO)
             )
         )
         a
@@ -42,6 +56,7 @@ newtype ReplM e a = ReplM
       Monad,
       MonadIO,
       MonadReader ReplConfig,
+      MonadState ReplState,
       MonadError e,
       MonadLogger,
       MonadThrow,
@@ -57,7 +72,15 @@ mapError f = ReplM . withExceptT f . getReplM
 runReplM :: ReplConfig -> ReplM e a -> IO (Either e a)
 runReplM config app =
   let innerApp = runExceptT (getReplM app)
-   in runReaderT (runStdoutLoggingT (logFilter config innerApp)) config
+      emptyState = ReplState mempty
+   in evalStateT
+        ( runReaderT
+            ( runStdoutLoggingT
+                (logFilter config innerApp)
+            )
+            config
+        )
+        emptyState
 
 logFilter :: ReplConfig -> LoggingT m a -> LoggingT m a
 logFilter mc app = if rcShowLogs mc then app else filterLogger (\_ _ -> False) app
@@ -69,3 +92,11 @@ replMFromEither = ReplM . liftEither
 -- | Output stuff for use in repl
 replOutput :: (Printer a) => a -> ReplM e ()
 replOutput = liftIO . T.putStrLn . prettyPrint
+
+-- | we maintain a module in state, this allows us to update it
+setStoredModule :: Module MonoType -> ReplM e ()
+setStoredModule newMod =
+  modify (\s -> s {rsModule = newMod})
+
+getStoredModule :: ReplM e (Module MonoType)
+getStoredModule = gets rsModule

@@ -10,7 +10,6 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser
-import Language.Mimsa.Parser.Module
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Tests.Types
