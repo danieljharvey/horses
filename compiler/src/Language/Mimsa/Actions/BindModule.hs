@@ -1,12 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.BindModule (bindModule, typecheckModules) where
+module Language.Mimsa.Actions.BindModule
+  ( bindModule,
+    typecheckModules,
+    addBindingToModule,
+  )
+where
 
 import Control.Monad.Except
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Modules.Check
+import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Typecheck
@@ -33,6 +40,17 @@ typecheckModules input inputModule = do
       modules
       (typecheckAllModules inputModule)
 
+typecheckModule :: Text -> Module Annotation -> Actions.ActionM (Module MonoType)
+typecheckModule input inputModule = do
+  -- typecheck it to make sure it's not silly
+  typecheckedModules <-
+    typecheckModules input inputModule
+
+  let (_, rootModuleHash) = serializeModule inputModule
+  case M.lookup rootModuleHash typecheckedModules of
+    Just tcMod -> pure tcMod
+    _ -> throwError (ModuleErr $ MissingModule rootModuleHash)
+
 -- add/update a module
 bindModule ::
   Module Annotation ->
@@ -43,13 +61,7 @@ bindModule inputModule moduleName input = do
   project <- Actions.getProject
 
   -- typecheck it to make sure it's not silly
-  typecheckedModules <-
-    typecheckModules input inputModule
-
-  let (_, rootModuleHash) = serializeModule inputModule
-  typecheckedModule <- case M.lookup rootModuleHash typecheckedModules of
-    Just tcMod -> pure tcMod
-    _ -> throwError (ModuleErr $ MissingModule rootModuleHash)
+  typecheckedModule <- typecheckModule input inputModule
 
   -- store the name/hash pair and save the module data in the store
   Actions.bindModuleInProject typecheckedModule moduleName
@@ -64,5 +76,35 @@ bindModule inputModule moduleName input = do
       Actions.appendMessage
         ( "Bound " <> prettyPrint moduleName <> "."
         )
+
   -- return stuff
   pure (snd (serializeModule typecheckedModule), typecheckedModule)
+
+-- | probably replace with a generic lift-checkM function but whatevers
+addModuleItemToModule ::
+  (Monoid ann) =>
+  Text ->
+  Module ann ->
+  ModuleItem ann ->
+  Actions.ActionM (Module ann)
+addModuleItemToModule input mod' modPart =
+  liftEither $ runCheck input mempty (addModulePart modPart mod')
+
+addBindingToModule ::
+  Module MonoType ->
+  ModuleItem Annotation ->
+  Text ->
+  Actions.ActionM (Module MonoType)
+addBindingToModule mod' modItem input = do
+  -- add our new definition
+  newModule <- addModuleItemToModule input (getAnnotationForType <$> mod') modItem
+  -- check everything still makes sense
+  typecheckedModule <- typecheckModule (prettyPrint newModule) newModule
+  -- output what's happened
+  case getModuleItemIdentifier modItem of
+    Just di ->
+      Actions.appendMessage
+        ("Added definition " <> prettyPrint di <> " to module")
+    Nothing -> Actions.appendMessage "Module updated"
+
+  pure typecheckedModule

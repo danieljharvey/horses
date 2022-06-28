@@ -157,10 +157,11 @@ evaluateModule input expr localModule = do
   -- make a module for it, adding our expression as _repl
   let newModule =
         localModule
-          { moExpressions =
-              M.singleton evalId expr,
-            moExpressionExports = S.singleton evalId
-          }
+          <> mempty
+            { moExpressions =
+                M.singleton evalId expr,
+              moExpressionExports = S.singleton evalId
+            }
           <> moduleImports
 
   typecheckedModules <- Actions.typecheckModules (prettyPrint newModule) newModule

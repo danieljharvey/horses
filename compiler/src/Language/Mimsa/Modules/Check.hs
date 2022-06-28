@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Modules.Check (checkModule, lookupModuleDefType) where
+module Language.Mimsa.Modules.Check (checkModule, getModuleItemIdentifier, lookupModuleDefType) where
 
 import Control.Monad.Except
 import Data.Map (Map)
@@ -85,3 +85,11 @@ filterNameDefs =
         DIName name -> Just name
         _ -> Nothing
     )
+
+-- used in logging etc, "what is this thing"
+getModuleItemIdentifier :: ModuleItem ann -> Maybe DefIdentifier
+getModuleItemIdentifier (ModuleInfix infixOp _) = Just (DIInfix infixOp)
+getModuleItemIdentifier (ModuleExpression name _ _) = Just (DIName name)
+getModuleItemIdentifier (ModuleDataType (DataType typeName _ _)) = Just (DIType typeName)
+getModuleItemIdentifier (ModuleExport a) = getModuleItemIdentifier a
+getModuleItemIdentifier (ModuleImport _) = Nothing

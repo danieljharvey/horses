@@ -5,22 +5,25 @@ module ReplNew.Parser
   )
 where
 
+import qualified Data.List.NonEmpty as NE
+import qualified Data.Set as S
 import Language.Mimsa.Parser
 import Language.Mimsa.Types.AST
 import ReplNew.Types
 import Text.Megaparsec
-import Text.Megaparsec.Char
 
 type ReplActionAnn = ReplAction Annotation
 
 replParser :: Parser ReplActionAnn
 replParser =
   try helpParser
-    <|> try listModulesParser
+    <|> listModulesParser
+    <|> listBindingsParser
+    <|> try addBindingParser
     <|> evalParser
 
 helpParser :: Parser ReplActionAnn
-helpParser = Help <$ string ":help"
+helpParser = Help <$ myString ":help"
 
 evalParser :: Parser ReplActionAnn
 evalParser =
@@ -28,4 +31,23 @@ evalParser =
     <$> expressionParser
 
 listModulesParser :: Parser ReplActionAnn
-listModulesParser = ListModules <$ string ":modules"
+listModulesParser = ListModules <$ myString ":modules"
+
+listBindingsParser :: Parser ReplActionAnn
+listBindingsParser = ListBindings <$ myString ":list"
+
+-- return very basic error
+explode :: String -> Parser any
+explode msg =
+  failure Nothing (S.singleton (Label (NE.fromList msg)))
+
+addBindingParser :: Parser ReplActionAnn
+addBindingParser = AddBinding <$> singleModuleItemParser
+  where
+    singleModuleItemParser = do
+      _ <- myString ":bind"
+      item <- moduleParser
+      case item of
+        [] -> explode "Expected a module binding"
+        [a] -> pure a
+        _other -> explode "Expected a single module binding"

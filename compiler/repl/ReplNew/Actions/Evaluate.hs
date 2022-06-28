@@ -9,6 +9,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Typechecker
 import ReplNew.Helpers
 import ReplNew.ReplM
 
@@ -18,7 +19,9 @@ doEvaluate ::
   Expr Name Annotation ->
   ReplM (Error Annotation) ()
 doEvaluate project input expr = do
-  _ <- toReplM project (Actions.evaluateModule input expr mempty)
+  oldModule <- fmap getAnnotationForType <$> getStoredModule
+
+  _ <- toReplM project (Actions.evaluateModule input expr oldModule)
   pure ()
 
 ---------
