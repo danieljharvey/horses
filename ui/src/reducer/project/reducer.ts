@@ -11,6 +11,7 @@ import {
   listBindings,
   fetchExpressions,
   saveToSessionStorage,
+  fetchModule,
   ProjectEvent,
 } from './events'
 import {
@@ -78,7 +79,7 @@ export const projectReducer: EventReducer<
           ),
         ]
       )
-
+    
     case 'FetchExpressionsSuccess': {
       const newStore = Object.entries(
         action.fetched
@@ -110,6 +111,9 @@ export const projectReducer: EventReducer<
         )
       )
     }
+    
+    case 'FetchModule':
+      return stateAndEvent(state,fetchModule(action.moduleHash))
 
     default:
       return stateOnly(state)

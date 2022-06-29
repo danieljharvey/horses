@@ -1,5 +1,6 @@
 import {
   ExprHash,
+  ModuleHash,
   ProjectHash,
   projectHash,
 } from '../../types'
@@ -9,6 +10,7 @@ export const initialProject = (
   projHash: string
 ): ProjectState => ({
   store: {},
+  moduleStore: {},
   projectHash: projectHash(projHash),
   bindings: {},
   typeBindings: {},
@@ -26,6 +28,9 @@ export const fetchExpressions = (
   projectHash,
 })
 
+export const fetchModule = (moduleHash: ModuleHash )  => ({ type: "FetchModule" as const,
+    moduleHash})
+
 export const saveToSessionStorage = (
   projectHash: ProjectHash
 ) => ({
@@ -42,3 +47,4 @@ export type ProjectEvent =
   | ReturnType<typeof saveToSessionStorage>
   | ReturnType<typeof listBindings>
   | ReturnType<typeof fetchExpressions>
+  | ReturnType<typeof fetchModule>
