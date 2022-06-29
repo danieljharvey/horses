@@ -79,6 +79,10 @@ makeExpressionData se typedExpr gv input warnings canOptimise =
         (prettyPrint <$> warnings)
         canOptimise
 
+-- this returns a partial but working set of expressionData
+-- that is compatible with the old one
+-- it is used in modules - once these become the default this type
+-- probably needs reviewing
 makeMinimalExpressionData ::
   StoreExpression Annotation ->
   MonoType ->
