@@ -1,6 +1,7 @@
 import * as React from 'react'
 import * as O from 'fp-ts/Option'
 import { Scratch } from './Editor/Scratch'
+import { ScratchModule } from './Editor/ScratchModule'
 import { EditBinding } from './Editor/EditBinding'
 import { NewBinding } from './Editor/NewBinding'
 import { NewTest } from './Editor/NewTest'
@@ -100,6 +101,16 @@ const getScreenInner = (
     case 'scratch':
       return [
         <Scratch
+          projectHash={projectHash}
+          editor={screen.editor}
+          onBindingSelect={onBindingSelect}
+        />,
+        true,
+      ]
+
+    case 'scratch-module':
+      return [
+        <ScratchModule
           projectHash={projectHash}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}

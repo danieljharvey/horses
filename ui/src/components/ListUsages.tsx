@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ExprUsage } from '../types/'
+import type { ExprUsage } from '../types/'
 import { Link } from './View/Link'
 import { InlineSpaced } from './View/InlineSpaced'
 

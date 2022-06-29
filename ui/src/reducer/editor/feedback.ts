@@ -1,4 +1,4 @@
-import {
+import type {
   ExpressionData,
   PropertyTestData,
   TestData,

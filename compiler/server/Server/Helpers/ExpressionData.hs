@@ -9,6 +9,7 @@ module Server.Helpers.ExpressionData
   ( ExpressionData (..),
     UnitTestData (..),
     makeExpressionData,
+    makeMinimalExpressionData,
   )
 where
 
@@ -76,4 +77,24 @@ makeExpressionData se typedExpr gv input warnings canOptimise =
         (getExpressionSourceItems input typedExpr)
         input
         (prettyPrint <$> warnings)
+        canOptimise
+
+makeMinimalExpressionData ::
+  StoreExpression Annotation ->
+  MonoType ->
+  Text ->
+  Bool ->
+  ExpressionData
+makeMinimalExpressionData se mt input canOptimise =
+  let exprHash = getStoreExpressionHash se
+   in ExpressionData
+        (prettyPrint exprHash)
+        (prettyPrint (storeExpression se))
+        (prettyPrint mt)
+        (sanitiseBindings (storeBindings se))
+        (prettyPrint <$> getTypeBindings (storeTypeBindings se))
+        mempty
+        mempty
+        input
+        mempty
         canOptimise

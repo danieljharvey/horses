@@ -123,8 +123,8 @@ export const editorReducer: EventReducer<
       )
     case 'AddUnitTestSuccess':
       const firstTest =
-        action.tests.tdUnitTests.find((a) => a) ||
-        action.tests.tdPropertyTests.find((a) => a)
+        action.tests.tdUnitTests.find((a: unknown) => a) ||
+        action.tests.tdPropertyTests.find((a: unknown) => a)
       return firstTest
         ? stateOnly({
             ...state,

@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
-import { UserErrorResponse } from '../../types'
+import type { UserErrorResponse } from '../../types'
 
 type Props = {
   errorResponse: UserErrorResponse

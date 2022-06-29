@@ -6,7 +6,7 @@ import MonacoEditor, {
   BeforeMount,
 } from '@monaco-editor/react'
 import './CodeEditor.css'
-import {
+import type {
   ErrorLocation,
   SourceItem,
   TypedHoleResponse,

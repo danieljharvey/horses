@@ -3,7 +3,7 @@ import * as React from 'react'
 import { Code } from '../View/Code'
 import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
-import { ExpressionData } from '../../types'
+import type { ExpressionData } from '../../types'
 
 type Props = {
   expression: ExpressionData
