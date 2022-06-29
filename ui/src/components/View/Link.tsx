@@ -3,7 +3,7 @@ import './Link.css'
 
 type Props = {
   onClick: () => void
-  depType: 'expression' | 'type'
+  depType: 'expression' | 'type' | 'module'
   number: number
   highlight: boolean
 }
@@ -19,7 +19,7 @@ export const Link: React.FC<Props> = ({
     onClick={() => onClick()}
     className={`link${
       highlight === false ? ' unused' : ''
-    } ${depType === 'expression' ? 'expression' : 'type'}`}
+    } ${depType}`}
   >
     {children}
     {number > 1 && (

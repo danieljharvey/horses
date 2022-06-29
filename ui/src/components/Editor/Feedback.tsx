@@ -74,6 +74,8 @@ export const Feedback: React.FC<Props> = ({
           <Code>{feedback.evaluatedValue}</Code>
           <Expression expression={feedback.expression} />
           <ListBindings
+            modules={{}}
+            onModuleSelect={() => {}}
             values={
               feedback.expression.edBindings as Record<
                 string,
@@ -110,6 +112,8 @@ export const Feedback: React.FC<Props> = ({
             exprHash={exprHash(feedback.expression.edHash)}
           />
           <ListBindings
+            modules={{}}
+            onModuleSelect={() => {}}
             values={
               feedback.expression.edBindings as Record<
                 string,
@@ -177,6 +181,8 @@ export const Feedback: React.FC<Props> = ({
             exprHash={exprHash(feedback.expression.edHash)}
           />
           <ListBindings
+            modules={{}}
+            onModuleSelect={() => {}}
             values={
               feedback.expression.edBindings as Record<
                 string,
@@ -271,6 +277,8 @@ export const Feedback: React.FC<Props> = ({
             <PropertyTest propertyTest={feedback.test} />
           )}
           <ListBindings
+            modules={{}}
+            onModuleSelect={() => {}}
             values={
               ('utdBindings' in feedback.test
                 ? feedback.test.utdBindings

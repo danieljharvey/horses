@@ -51,6 +51,7 @@ import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant
@@ -105,6 +106,11 @@ outputTypeBindings project =
     <$> getTypeBindings
       (getCurrentTypeBindings (prjTypeBindings project))
 
+outputModuleBindings :: Project a -> Map ModuleName Text
+outputModuleBindings project =
+  prettyPrint
+    <$> getCurrentModules (prjModules project)
+
 -- | Version of a given binding
 -- number, exprHash, usages elsewhere
 data BindingVersion = BindingVersion
@@ -139,6 +145,7 @@ data ProjectData = ProjectData
   { pdHash :: ProjectHash,
     pdBindings :: Map Name Text,
     pdTypeBindings :: Map TyCon Text,
+    pdModuleBindings :: Map ModuleName Text,
     pdVersions :: Map Name (NE.NonEmpty BindingVersion),
     pdUsages :: Map ExprHash [ExprUsage]
   }
@@ -200,6 +207,7 @@ projectDataHandler mimsaEnv project = do
       projHash
       (outputBindings project)
       (outputTypeBindings project)
+      (outputModuleBindings project)
       versions
       (toExprUsages <$> usages)
 

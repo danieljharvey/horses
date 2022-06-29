@@ -60,6 +60,8 @@ export const projectReducer: EventReducer<
             .pdBindings as ProjectState['bindings'],
           typeBindings: action.data
             .pdTypeBindings as ProjectState['typeBindings'],
+          modules: action.data
+            .pdModuleBindings as ProjectState['modules'],
           versions: action.data.pdVersions,
           usages: action.data.pdUsages,
         })(state),

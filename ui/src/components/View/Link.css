@@ -25,6 +25,10 @@ p.link.type {
   background-color: var(--background-even-lighter);
 }
 
+p.link.module {
+  background-color: var(--background-even-lighter);
+}
+
 p.link.type.unused {
   background-color: var(--background-a-bit-lighter);
 }

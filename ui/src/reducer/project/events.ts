@@ -14,6 +14,7 @@ export const initialProject = (
   typeBindings: {},
   versions: {},
   usages: {},
+  modules: {},
 })
 
 export const fetchExpressions = (

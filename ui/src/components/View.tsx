@@ -38,12 +38,14 @@ export const View: React.FC<Props> = () => {
     bindings,
     typeBindings,
     projectHash,
+    modules,
   } = useStoreRec({
     screen: getCurrentScreen,
     lastScreen: getLastScreen,
     getEditorState: editorForBinding,
     bindings: (s) => s.project.bindings,
     typeBindings: (s) => s.project.typeBindings,
+    modules: (s) => s.project.modules,
     projectHash: getProjectHash,
   })
 
@@ -80,6 +82,8 @@ export const View: React.FC<Props> = () => {
             <FilteredBindingList
               values={bindings}
               types={typeBindings}
+              modules={modules}
+              onModuleSelect={() => {}}
               onBindingSelect={onBindingSelect}
             />
           </PanelRow>
