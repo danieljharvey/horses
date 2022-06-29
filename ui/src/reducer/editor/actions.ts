@@ -1,4 +1,4 @@
-import {
+import type {
   ExpressionData,
   EvaluateResponse,
   UserErrorResponse,
@@ -9,14 +9,13 @@ export const updateCode = (text: string) => ({
   type: 'UpdateCode' as const,
   text,
 })
+export const formatExpression = () => ({
+  type: 'FormatExpression' as const,
+})
 
 export const evaluateExpression = (text: string) => ({
   type: 'EvaluateExpression' as const,
   text,
-})
-
-export const formatExpression = () => ({
-  type: 'FormatExpression' as const,
 })
 
 export const evaluateExpressionSuccess = (

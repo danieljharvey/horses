@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { UnitTestData } from '../types'
+import type { UnitTestData } from '../types'
 import { Paragraph } from './View/Paragraph'
 
 type Props = {

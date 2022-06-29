@@ -1,4 +1,4 @@
-import { CompileHashRequest } from '../types/'
+import type { CompileHashRequest } from '../types/'
 import { axiosPost } from '../utils/axios-taskeither'
 import * as TE from 'fp-ts/TaskEither'
 

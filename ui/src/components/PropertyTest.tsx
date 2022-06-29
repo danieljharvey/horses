@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { PropertyTestData } from '../types'
+import type { PropertyTestData } from '../types'
 import { Code } from './View/Code'
 import { Paragraph } from './View/Paragraph'
 import { Tray } from './View/Tray'

@@ -1,4 +1,4 @@
-import {
+import type {
   TypeSearchRequest,
   TypeSearchResponse,
 } from '../types/'

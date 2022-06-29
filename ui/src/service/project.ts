@@ -1,6 +1,8 @@
 import {
   EvaluateRequest,
   EvaluateResponse,
+  EvaluateModuleRequest,
+  EvaluateModuleResponse,
   ListBindingsRequest,
   ListBindingsResponse,
   CreateProjectResponse,
@@ -36,6 +38,17 @@ export const evaluate = (
   evaluateRequest: EvaluateRequest
 ): TE.TaskEither<UserErrorResponse, EvaluateResponse> =>
   axiosPost(`${baseUrl}/project/evaluate/`, evaluateRequest)
+
+export const evaluateModule = (
+  evaluateRequest: EvaluateModuleRequest
+): TE.TaskEither<
+  UserErrorResponse,
+  EvaluateModuleResponse
+> =>
+  axiosPost(
+    `${baseUrl}/project/evaluate-module/`,
+    evaluateRequest
+  )
 
 export const bindExpression = (
   bindExpressionRequest: BindExpressionRequest

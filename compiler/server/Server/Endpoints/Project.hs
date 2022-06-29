@@ -46,7 +46,7 @@ projectEndpoints ::
   MimsaEnvironment ->
   Server ProjectAPI
 projectEndpoints mimsaEnv =
-  evaluateExpression mimsaEnv
+  evaluate mimsaEnv
     :<|> listBindings mimsaEnv
     :<|> createProject mimsaEnv
     :<|> bindExpression mimsaEnv

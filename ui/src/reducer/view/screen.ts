@@ -27,6 +27,13 @@ export const scratchScreen = (editor: EditorState) => ({
   editor,
 })
 
+export const scratchModuleScreen = (
+  editor: EditorState
+) => ({
+  type: 'scratch-module' as const,
+  editor,
+})
+
 export const typeSearchScreen = () => ({
   type: 'typeSearch' as const,
 })
@@ -58,3 +65,4 @@ export type Screen =
   | ReturnType<typeof newTypeScreen>
   | ReturnType<typeof projectGraphScreen>
   | ReturnType<typeof expressionGraphScreen>
+  | ReturnType<typeof scratchModuleScreen>

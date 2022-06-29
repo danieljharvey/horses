@@ -11,6 +11,8 @@ import * as O from 'fp-ts/Option'
 import { emptyEditor } from '../editor/helpers'
 import { scratchScreen } from './screen'
 
+// for now we start with the scratch screen
+// this should be changed to `scratchModuleScreen` when we are ready
 export const initialView: ViewState = {
   stack: NE.of(scratchScreen(emptyEditor)),
 }
