@@ -25,7 +25,7 @@ export const getScreenTitle = (screen: Screen): string => {
     case 'scratch':
       return 'scratch'
     case 'scratch-module':
-      return 'scratch'
+      return 'scratch v2'
     case 'typeSearch':
       return 'type search'
     case 'new-type':
