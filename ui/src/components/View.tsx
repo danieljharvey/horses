@@ -21,7 +21,7 @@ import { editorForBinding } from '../reducer/editor/helpers'
 import { Screen } from '../reducer/view/screen'
 import { Screen as ScreenComponent } from './View/Screen'
 import { PanelRow } from './View/PanelRow'
-import { ExprHash } from '../types'
+import { ExprHash, ProjectHash } from '../types'
 import { useDispatch } from '../hooks/useDispatch'
 import { useStoreRec } from '../hooks/useStore'
 import { getProjectHash } from '../reducer/project/selectors'
@@ -91,7 +91,7 @@ export const View: React.FC<Props> = () => {
 
 const getScreenInner = (
   screen: Screen,
-  projectHash: ExprHash,
+  projectHash: ProjectHash,
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash

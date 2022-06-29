@@ -14,6 +14,7 @@ import {
   BindTypeResponse,
   GraphProjectResponse,
   ExprHash,
+  ProjectHash,
   UserErrorResponse,
   ListTestsResponse,
   UpgradeRequest,
@@ -88,17 +89,17 @@ export const createProject = (): TE.TaskEither<
 > => axiosGet(`${baseUrl}/project/create`)
 
 export const getProjectGraph = (
-  projectHash: ExprHash
+  projectHash: ProjectHash
 ): TE.TaskEither<string, GraphProjectResponse> =>
   axiosGet(`${baseUrl}/project/graph/${projectHash}/`)
 
 export const getProjectTests = (
-  projectHash: ExprHash
+  projectHash: ProjectHash
 ): TE.TaskEither<string, ListTestsResponse> =>
   axiosGet(`${baseUrl}/project/${projectHash}/tests/list`)
 
 export const getTestsForExpression = (
-  projectHash: ExprHash,
+  projectHash: ProjectHash,
   exprHash: ExprHash
 ): TE.TaskEither<string, ListTestsByExprHashResponse> =>
   axiosGet(

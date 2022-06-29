@@ -1,6 +1,7 @@
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import { State } from '../types'
+import { ExprHash } from '../../types'
 import {
   findExpression,
   findExpressionForAnyBinding,
@@ -21,7 +22,7 @@ export const editorForBinding =
   (state: State) =>
   (
     bindingName: string,
-    exprHash: string
+    exprHash: ExprHash
   ): O.Option<EditorState> =>
     pipe(
       findExpression(state)(exprHash),

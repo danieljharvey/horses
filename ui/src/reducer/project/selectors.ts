@@ -5,6 +5,9 @@ import { pipe, identity } from 'fp-ts/function'
 import {
   BindingVersion,
   ExprHash,
+  exprHash,
+  ProjectHash,
+  projectHash,
   ExprUsage,
 } from '../../types'
 import { State } from '../types'
@@ -54,13 +57,15 @@ export const countActiveVersionsOfBinding =
       getVersionsOfBinding(state)(bindingName)
     return versions
       .map((version) =>
-        getUsagesOfExprHash(state)(version.bvExprHash)
+        getUsagesOfExprHash(state)(
+          exprHash(version.bvExprHash)
+        )
       )
       .filter((usage) => usage.length > 0).length
   }
 
-export const getProjectHash = (state: State): ExprHash =>
-  state.project.projectHash
+export const getProjectHash = (state: State): ProjectHash =>
+  projectHash(state.project.projectHash)
 
 export const lookupNameForExprHash =
   (state: State) =>

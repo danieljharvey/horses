@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { getProjectTests } from '../service/project'
+import { ProjectHash } from '../types'
 import {
   initial,
   pending,
@@ -28,7 +29,7 @@ export type ListProjectTestsState = RemoteData<
 >
 
 export const useListProjectTests = (
-  projectHash: string
+  projectHash: ProjectHash
 ) => {
   const [listTestsState, setListTestsState] =
     React.useState<ListProjectTestsState>(initial)

@@ -14,7 +14,7 @@ type ListBindingsProps = {
   types: Record<string, ExprHash>
   onBindingSelect: (
     bindingName: string,
-    exprHash: string
+    exprHash: ExprHash
   ) => void
 }
 

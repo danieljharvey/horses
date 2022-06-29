@@ -1,11 +1,15 @@
-import { ExprHash } from '../../types'
+import {
+  ExprHash,
+  ProjectHash,
+  projectHash,
+} from '../../types'
 import { ProjectState } from './types'
 
 export const initialProject = (
-  projectHash: string
+  projHash: string
 ): ProjectState => ({
   store: {},
-  projectHash,
+  projectHash: projectHash(projHash),
   bindings: {},
   typeBindings: {},
   versions: {},
@@ -14,7 +18,7 @@ export const initialProject = (
 
 export const fetchExpressions = (
   hashes: ExprHash[],
-  projectHash: ExprHash
+  projectHash: ProjectHash
 ) => ({
   type: 'FetchExpressions' as const,
   hashes,
@@ -22,13 +26,13 @@ export const fetchExpressions = (
 })
 
 export const saveToSessionStorage = (
-  projectHash: ExprHash
+  projectHash: ProjectHash
 ) => ({
   type: 'SaveToSessionStorage' as const,
   projectHash,
 })
 
-export const listBindings = (projectHash: ExprHash) => ({
+export const listBindings = (projectHash: ProjectHash) => ({
   type: 'ListBindings' as const,
   projectHash,
 })

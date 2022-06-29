@@ -14,7 +14,7 @@ import {
 } from '../generated'
 import { pipe } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
-import { ExprHash } from '../types'
+import { ExprHash, ProjectHash } from '../types'
 
 // this is how we should do the screens from now on
 
@@ -35,7 +35,7 @@ type ListExpressionTestsState = RemoteData<
  * @returns current unit and property tests that use this expression
  */
 export const useListExpressionTests = (
-  projectHash: ExprHash,
+  projectHash: ProjectHash,
   exprHash: ExprHash
 ) => {
   const [listTestsState, setListTestsState] =

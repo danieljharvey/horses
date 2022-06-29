@@ -7,7 +7,12 @@ import { UnitTest } from '../UnitTest'
 import { Code } from '../View/Code'
 import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
-import { BindingVersion, ExprHash } from '../../types'
+import {
+  BindingVersion,
+  ProjectHash,
+  ExprHash,
+  exprHash,
+} from '../../types'
 import { ListVersions } from '../ListVersions'
 import {
   getUsagesOfExprHash,
@@ -25,7 +30,7 @@ import { Expression } from './Expression'
 import { ErrorResponse } from './ErrorResponse'
 
 type Props = {
-  projectHash: ExprHash
+  projectHash: ProjectHash
   feedback: FeedbackType
   bindingName: O.Option<string>
   onBindingSelect: (
@@ -69,16 +74,28 @@ export const Feedback: React.FC<Props> = ({
           <Code>{feedback.evaluatedValue}</Code>
           <Expression expression={feedback.expression} />
           <ListBindings
-            values={feedback.expression.edBindings}
-            types={feedback.expression.edTypeBindings}
+            values={
+              feedback.expression.edBindings as Record<
+                string,
+                ExprHash
+              >
+            }
+            types={
+              feedback.expression.edTypeBindings as Record<
+                string,
+                ExprHash
+              >
+            }
             onBindingSelect={onBindingSelect}
           />
           <ListUsages
-            usages={getUsages(feedback.expression.edHash)}
+            usages={getUsages(
+              exprHash(feedback.expression.edHash)
+            )}
             onBindingSelect={onBindingSelect}
           />
           <ExpressionTests
-            exprHash={feedback.expression.edHash}
+            exprHash={exprHash(feedback.expression.edHash)}
             projectHash={projectHash}
           />
         </FlexColumnSpaced>
@@ -90,19 +107,41 @@ export const Feedback: React.FC<Props> = ({
           <Paragraph>{`🐴 Updated ${feedback.bindingName}`}</Paragraph>
           <Expression expression={feedback.expression} />
           <ListCompile
-            exprHash={feedback.expression.edHash}
+            exprHash={exprHash(feedback.expression.edHash)}
           />
           <ListBindings
-            values={feedback.expression.edBindings}
-            types={feedback.expression.edTypeBindings}
+            values={
+              feedback.expression.edBindings as Record<
+                string,
+                ExprHash
+              >
+            }
+            types={
+              feedback.expression.edTypeBindings as Record<
+                string,
+                ExprHash
+              >
+            }
             onBindingSelect={onBindingSelect}
           />
           <Upgrade
             onUpgradeExpression={onUpgradeExpression}
-            values={feedback.expression.edBindings}
-            types={feedback.expression.edTypeBindings}
+            values={
+              feedback.expression.edBindings as Record<
+                string,
+                ExprHash
+              >
+            }
+            types={
+              feedback.expression.edTypeBindings as Record<
+                string,
+                ExprHash
+              >
+            }
             name={feedback.bindingName}
-            currentHash={feedback.expression.edHash}
+            currentHash={exprHash(
+              feedback.expression.edHash
+            )}
           />
           <Optimise
             onOptimiseExpression={onOptimiseExpression}
@@ -111,16 +150,20 @@ export const Feedback: React.FC<Props> = ({
           />
           <ListVersions
             versions={versions}
-            currentHash={feedback.expression.edHash}
+            currentHash={exprHash(
+              feedback.expression.edHash
+            )}
             onBindingSelect={onBindingSelect}
             name={feedback.bindingName}
           />
           <ListUsages
-            usages={getUsages(feedback.expression.edHash)}
+            usages={getUsages(
+              exprHash(feedback.expression.edHash)
+            )}
             onBindingSelect={onBindingSelect}
           />
           <ExpressionTests
-            exprHash={feedback.expression.edHash}
+            exprHash={exprHash(feedback.expression.edHash)}
             projectHash={projectHash}
           />
         </FlexColumnSpaced>
@@ -131,11 +174,21 @@ export const Feedback: React.FC<Props> = ({
         <FlexColumnSpaced>
           <Expression expression={feedback.expression} />
           <ListCompile
-            exprHash={feedback.expression.edHash}
+            exprHash={exprHash(feedback.expression.edHash)}
           />
           <ListBindings
-            values={feedback.expression.edBindings}
-            types={feedback.expression.edTypeBindings}
+            values={
+              feedback.expression.edBindings as Record<
+                string,
+                ExprHash
+              >
+            }
+            types={
+              feedback.expression.edTypeBindings as Record<
+                string,
+                ExprHash
+              >
+            }
             onBindingSelect={onBindingSelect}
           />
           {pipe(
@@ -143,10 +196,23 @@ export const Feedback: React.FC<Props> = ({
             O.map((name) => (
               <Upgrade
                 onUpgradeExpression={onUpgradeExpression}
-                values={feedback.expression.edBindings}
-                types={feedback.expression.edTypeBindings}
+                values={
+                  feedback.expression.edBindings as Record<
+                    string,
+                    ExprHash
+                  >
+                }
+                types={
+                  feedback.expression
+                    .edTypeBindings as Record<
+                    string,
+                    ExprHash
+                  >
+                }
                 name={name}
-                currentHash={feedback.expression.edHash}
+                currentHash={exprHash(
+                  feedback.expression.edHash
+                )}
               />
             )),
             O.getOrElse(() => <div />)
@@ -169,7 +235,9 @@ export const Feedback: React.FC<Props> = ({
             O.map((name) => (
               <ListVersions
                 versions={versions}
-                currentHash={feedback.expression.edHash}
+                currentHash={exprHash(
+                  feedback.expression.edHash
+                )}
                 onBindingSelect={onBindingSelect}
                 name={name}
               />
@@ -177,11 +245,13 @@ export const Feedback: React.FC<Props> = ({
             O.getOrElse(() => <div />)
           )}
           <ListUsages
-            usages={getUsages(feedback.expression.edHash)}
+            usages={getUsages(
+              exprHash(feedback.expression.edHash)
+            )}
             onBindingSelect={onBindingSelect}
           />
           <ExpressionTests
-            exprHash={feedback.expression.edHash}
+            exprHash={exprHash(feedback.expression.edHash)}
             projectHash={projectHash}
           />
         </FlexColumnSpaced>
@@ -202,9 +272,12 @@ export const Feedback: React.FC<Props> = ({
           )}
           <ListBindings
             values={
-              'utdBindings' in feedback.test
+              ('utdBindings' in feedback.test
                 ? feedback.test.utdBindings
-                : feedback.test.ptdBindings
+                : feedback.test.ptdBindings) as Record<
+                string,
+                ExprHash
+              >
             }
             types={{}}
             onBindingSelect={onBindingSelect}

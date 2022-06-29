@@ -10,13 +10,15 @@ import {
 import { GraphProjectResponse } from '../generated'
 import { flow } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
-import { ExprHash } from '../types/'
+import { ProjectHash } from '../types/'
 
 // this is how we should do the screens from now on
 
 type State = RemoteData<string, GraphProjectResponse>
 
-export const useProjectGraph = (projectHash: ExprHash) => {
+export const useProjectGraph = (
+  projectHash: ProjectHash
+) => {
   const [graphData, setGraphData] =
     React.useState<State>(initial)
 

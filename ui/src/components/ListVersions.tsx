@@ -1,5 +1,9 @@
 import * as React from 'react'
-import { BindingVersion, ExprHash } from '../types/'
+import {
+  BindingVersion,
+  ExprHash,
+  exprHash,
+} from '../types/'
 import { Link } from './View/Link'
 import { InlineSpaced } from './View/InlineSpaced'
 
@@ -15,7 +19,7 @@ type ListVersionsProps = {
   name: string
   onBindingSelect: (
     bindingName: string,
-    exprHash: string
+    exprHash: ExprHash
   ) => void
 }
 
@@ -43,10 +47,12 @@ export const ListVersions: React.FC<ListVersionsProps> = ({
           return (
             <Link
               depType="expression"
-              number={usagesOfExprHash(bvExprHash)}
+              number={usagesOfExprHash(
+                exprHash(bvExprHash)
+              )}
               key={title}
               onClick={() =>
-                onBindingSelect(name, bvExprHash)
+                onBindingSelect(name, exprHash(bvExprHash))
               }
               highlight={bvExprHash === currentHash}
             >
