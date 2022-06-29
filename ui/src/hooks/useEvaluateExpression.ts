@@ -26,7 +26,7 @@ export const useEvaluateExpression = (
 
   React.useEffect(() => {
     setLastCode(code)
-    if (code == '' || code == lastCode) return
+    if (code === '' || code === lastCode) return
     setStale(true)
 
     evaluateModule({
