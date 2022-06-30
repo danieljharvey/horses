@@ -8,11 +8,13 @@ module Language.Mimsa.Project.Helpers
     fromStoreExpression,
     fromStoreExpressionDeps,
     fromStore,
+    fromModuleStore,
     fromModule,
     findBindingNameForExprHash,
     findAnyBindingNameForExprHash,
     findTypeBindingNameForExprHash,
     findAnyTypeBindingNameForExprHash,
+    lookupModuleHash,
     lookupExprHash,
     lookupExprHashFromStore,
     typeBindingsToVersioned,
@@ -147,6 +149,9 @@ fromPropertyTest test storeExpr =
 fromStore :: Store ann -> Project ann
 fromStore store' = mempty {prjStore = store'}
 
+fromModuleStore :: Map ModuleHash (Module ann) -> Project ann
+fromModuleStore modules = mempty {prjModuleStore = modules}
+
 removeNamespaceFromKey :: (Ord k2) => Map (k1, k2) a -> Map k2 a
 removeNamespaceFromKey = M.fromList . fmap (first snd) . M.toList
 
@@ -166,6 +171,10 @@ lookupExprHash project =
 lookupExprHashFromStore :: Store ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHashFromStore store exprHash' =
   M.lookup exprHash' (getStore store)
+
+lookupModuleHash :: Project ann -> ModuleHash -> Maybe (Module ann)
+lookupModuleHash project modHash =
+  M.lookup modHash (prjModuleStore project)
 
 getBindingNames :: Project ann -> Set Name
 getBindingNames =

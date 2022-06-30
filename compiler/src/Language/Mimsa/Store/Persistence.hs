@@ -4,6 +4,7 @@
 module Language.Mimsa.Store.Persistence
   ( fetchProjectItems,
     recursiveLoadBoundExpressions,
+    recursiveLoadModules,
   )
 where
 

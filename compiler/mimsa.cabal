@@ -332,6 +332,7 @@ executable mimsa-server
   other-modules:
       Server.Endpoints.Compile
       Server.Endpoints.Expression
+      Server.Endpoints.Module
       Server.Endpoints.Project
       Server.Endpoints.Project.AddUnitTest
       Server.Endpoints.Project.BindExpression
@@ -349,6 +350,7 @@ executable mimsa-server
       Server.Handlers
       Server.Helpers
       Server.Helpers.ExpressionData
+      Server.Helpers.ModuleData
       Server.Helpers.TestData
       Server.Main
       Server.MimsaHandler

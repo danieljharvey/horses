@@ -17,6 +17,7 @@ module Server.Handlers
     saveFileHandler,
     findExprHandler,
     projectFromExpressionHandler,
+    projectFromModuleHandler,
     readStoreHandler,
     writeStoreHandler,
     runTestsHandler,
@@ -246,6 +247,16 @@ findExprHandler project exprHash' =
       Nothing -> Left ("Could not find exprhash!" :: Text)
       Just a -> Right a
 
+findModuleHandler ::
+  Project Annotation ->
+  ModuleHash ->
+  Handler (Module Annotation)
+findModuleHandler project modHash =
+  handleEither InternalError $
+    case lookupModuleHash project modHash of
+      Nothing -> Left ("Could not find moduleHash!" :: Text)
+      Just a -> Right a
+
 -- given an exprhash, load a project containing its dependents
 projectFromExpressionHandler ::
   MimsaEnvironment ->
@@ -264,6 +275,36 @@ projectFromExpressionHandler mimsaEnv exprHash = do
   pd <- projectDataHandler mimsaEnv projectWithStoreExpr
   writeStoreHandler mimsaEnv (prjStore projectWithStoreExpr)
   pure (storeExpr, pd, projectWithStoreExpr)
+
+-- given a moduleHash, load a project containing its dependents
+projectFromModuleHandler ::
+  MimsaEnvironment ->
+  ModuleHash ->
+  Handler (Module Annotation, ProjectData, Project Annotation)
+projectFromModuleHandler mimsaEnv modHash = do
+  -- load store with just items for module in
+  modules <- storeFromModuleHashHandler mimsaEnv modHash
+  -- create a project with this store
+  let project = fromModuleStore modules $> mempty
+  -- find the storeExpr we want in the store
+  storeExpr <- findModuleHandler project modHash
+  -- add deps of module to project
+  let projectWithStoreExpr = project -- <> fromStoreExpressionDeps storeExpr
+  -- save shit
+  pd <- projectDataHandler mimsaEnv projectWithStoreExpr
+  writeStoreHandler mimsaEnv (prjStore projectWithStoreExpr)
+  pure (storeExpr, pd, projectWithStoreExpr)
+
+storeFromModuleHashHandler ::
+  MimsaEnvironment ->
+  ModuleHash ->
+  Handler (Map ModuleHash (Module ()))
+storeFromModuleHashHandler mimsaEnv modHash =
+  let cfg = mimsaConfig mimsaEnv
+   in handleServerM
+        (mimsaConfig mimsaEnv)
+        UserError
+        (recursiveLoadModules (scRootPath cfg) mempty (S.singleton modHash))
 
 storeFromExprHashHandler ::
   MimsaEnvironment ->
