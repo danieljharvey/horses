@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
 import { EditorState } from '../../reducer/editor/types'
 import { Feedback } from './Feedback'
@@ -10,7 +11,6 @@ import {
   updateCode,
   bindExpression,
 } from '../../reducer/editor/actions'
-import { fetchModule } from '../../reducer/project/actions'
 import {
   getErrorLocations,
   getSourceItems,
@@ -19,25 +19,32 @@ import {
 import { useDispatch } from '../../hooks/useDispatch'
 import { useStoreRec } from '../../hooks/useStore'
 import { getProjectHash } from '../../reducer/project/selectors'
+import { useModule } from '../../hooks/useModule'
 
 type Props = {
   editor: EditorState
-  moduleHash:ModuleHash
-  onModuleSelect: (
-    moduleHash: ModuleHash
-  ) => void
+  moduleHash: ModuleHash
+  onModuleSelect: (moduleHash: ModuleHash) => void
 }
 
 export const EditModule: React.FC<Props> = ({
   editor,
   moduleHash,
 }) => {
-  const code = editor.code
   const dispatch = useDispatch()
-  
-  React.useEffect(() => {
-    dispatch(fetchModule(moduleHash)) 
-  },[moduleHash])
+
+  const [maybeMod] = useModule(moduleHash)
+
+  const code = pipe(
+    maybeMod,
+    O.fold(
+      () => editor.code,
+      (a) => a.mdModulePretty
+    )
+  )
+
+  console.log(maybeMod)
+
   const onCodeChange = (a: string) =>
     dispatch(updateCode(a))
 
