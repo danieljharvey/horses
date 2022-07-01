@@ -24,8 +24,6 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
   values,
   types,
   onBindingSelect,
-  modules,
-  onModuleSelect,
 }) => {
   // try and re-use it this where possible
   const items = { ...values, ...types }
@@ -44,6 +42,7 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
 
   return (
     <InlineSpaced>
+      {/*
       {Object.entries(modules).map(([name, moduleHash]) => (
         <Link
           depType="module"
@@ -55,7 +54,7 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
           {name}
         </Link>
       ))}
-
+  */}
       {Object.entries(values).map(([name, exprHash]) => (
         <Link
           depType="expression"

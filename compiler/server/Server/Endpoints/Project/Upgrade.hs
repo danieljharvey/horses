@@ -94,8 +94,7 @@ upgrade mimsaEnv (UpgradeRequest bindingName projectHash) =
               makeExpressionData se typedNameExpr gv input warnings canOptimise
             )
 
-    store' <- lift $ readStoreHandler mimsaEnv
-    project <- lift $ loadProjectHandler mimsaEnv store' projectHash
+    project <- lift $ loadProjectHandler mimsaEnv projectHash
     response <- lift $ eitherFromActionM mimsaEnv projectHash action
 
     tests <-

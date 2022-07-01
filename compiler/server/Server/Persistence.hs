@@ -17,12 +17,14 @@ import Control.Monad.Reader
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
+import Data.Map (Map)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Persistence
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Server.ServerConfig
@@ -51,19 +53,22 @@ loadProjectFromHash ::
     MonadReader ServerConfig m
   ) =>
   Store ann ->
+  Map ModuleHash (Module ann) ->
   ProjectHash ->
   m (Project ann)
-loadProjectFromHash store' hash = do
+loadProjectFromHash store' moduleStore hash = do
   let unitStore = store' $> ()
-  proj <- loadProjectFromHash' unitStore hash
+      unitModuleStore = fmap void moduleStore
+  proj <- loadProjectFromHash' unitStore unitModuleStore hash
   pure $ proj $> mempty
 
 loadProjectFromHash' ::
   (MonadIO m, MonadError StoreError m, MonadLogger m, MonadReader ServerConfig m) =>
   Store () ->
+  Map ModuleHash (Module ()) ->
   ProjectHash ->
   m (Project ())
-loadProjectFromHash' store' hash = do
+loadProjectFromHash' store' moduleStore hash = do
   rootPath <- asks scRootPath
   path <- getProjectPath hash
   json <- liftIO $ try $ LBS.readFile path
@@ -72,7 +77,7 @@ loadProjectFromHash' store' hash = do
       throwError $
         CouldNotReadFilePath ProjectFile (getProjectFilename hash)
     Right json' -> case JSON.decode json' of
-      Just sp -> fetchProjectItems rootPath store' sp
+      Just sp -> fetchProjectItems rootPath store' moduleStore sp
       _ -> throwError $ CouldNotDecodeFile (getProjectFilename hash)
 
 -- save project in store

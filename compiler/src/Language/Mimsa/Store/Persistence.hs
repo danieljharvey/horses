@@ -28,9 +28,10 @@ fetchProjectItems ::
   (MonadIO m, MonadError StoreError m, MonadLogger m) =>
   RootPath ->
   Store () ->
+  Map ModuleHash (Module ()) ->
   SaveProject ->
   m (Project ())
-fetchProjectItems rootPath existingStore sp = do
+fetchProjectItems rootPath existingStore existingModuleStore sp = do
   store' <-
     recursiveLoadBoundExpressions
       rootPath
@@ -53,7 +54,7 @@ fetchProjectItems rootPath existingStore sp = do
   moduleStore <-
     recursiveLoadModules
       rootPath
-      mempty
+      existingModuleStore
       (getItemsForAllVersions . projectModules $ sp)
   pure $
     projectFromSaved

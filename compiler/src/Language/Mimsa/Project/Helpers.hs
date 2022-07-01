@@ -7,6 +7,7 @@ module Language.Mimsa.Project.Helpers
     fromTest,
     fromStoreExpression,
     fromStoreExpressionDeps,
+    fromModuleDeps,
     fromStore,
     fromModuleStore,
     fromModule,
@@ -162,6 +163,14 @@ fromStoreExpressionDeps se =
   mempty
     { prjBindings = toVersioned (removeNamespaceFromKey $ storeBindings se),
       prjTypeBindings = typeBindingsToVersioned (storeTypeBindings se)
+    }
+
+-- | create a project where all the bindings of a store expression are
+-- available in global scope
+fromModuleDeps :: Map ModuleHash (Module ann) -> Module ann -> Project ann
+fromModuleDeps _moduleStore _mod' =
+  mempty
+    { prjModules = mempty
     }
 
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)

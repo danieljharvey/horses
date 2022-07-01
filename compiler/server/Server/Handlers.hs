@@ -20,6 +20,8 @@ module Server.Handlers
     projectFromModuleHandler,
     readStoreHandler,
     writeStoreHandler,
+    readModuleStoreHandler,
+    writeModuleStoreHandler,
     runTestsHandler,
   )
 where
@@ -82,8 +84,7 @@ eitherFromActionM ::
   Actions.ActionM a ->
   Handler (Either (Error Annotation) (Project Annotation, [ActionOutcome], a))
 eitherFromActionM mimsaEnv projectHash action = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' projectHash
+  project <- loadProjectHandler mimsaEnv projectHash
   case Actions.run project action of
     Left e -> pure (Left e)
     Right (newProject, outcomes, a) -> do
@@ -156,8 +157,9 @@ data ProjectData = ProjectData
 -- read the store from mutable var to stop repeated loading of exprs
 readStoreHandler :: MimsaEnvironment -> Handler (Store Annotation)
 readStoreHandler mimsaEnv = do
-  liftIO $ STM.atomically $ STM.readTVar (mutableStore mimsaEnv)
+  liftIO $ STM.readTVarIO (mutableStore mimsaEnv)
 
+-- write the store to mutable var to reduce file system access
 writeStoreHandler :: MimsaEnvironment -> Store Annotation -> Handler ()
 writeStoreHandler mimsaEnv store' = do
   liftIO $
@@ -165,6 +167,20 @@ writeStoreHandler mimsaEnv store' = do
       STM.modifyTVar
         (mutableStore mimsaEnv)
         (<> store')
+
+-- read the store from mutable var to stop repeated loading of exprs
+readModuleStoreHandler :: MimsaEnvironment -> Handler (Map ModuleHash (Module Annotation))
+readModuleStoreHandler mimsaEnv = do
+  liftIO $ STM.readTVarIO (mutableModuleStore mimsaEnv)
+
+-- write the store to mutable var to reduce file system access
+writeModuleStoreHandler :: MimsaEnvironment -> Map ModuleHash (Module Annotation) -> Handler ()
+writeModuleStoreHandler mimsaEnv moduleStore = do
+  liftIO $
+    STM.atomically $
+      STM.modifyTVar
+        (mutableModuleStore mimsaEnv)
+        (<> moduleStore)
 
 versionsForBinding ::
   (Printer ann, Show ann) =>
@@ -215,11 +231,12 @@ projectDataHandler mimsaEnv project = do
 -- given a project hash, find the project
 loadProjectHandler ::
   MimsaEnvironment ->
-  Store Annotation ->
   ProjectHash ->
   Handler (Project Annotation)
-loadProjectHandler mimsaEnv store' hash =
-  handleServerM (mimsaConfig mimsaEnv) UserError (loadProjectFromHash store' hash)
+loadProjectHandler mimsaEnv projectHash = do
+  store' <- readStoreHandler mimsaEnv
+  moduleStore <- readModuleStoreHandler mimsaEnv
+  handleServerM (mimsaConfig mimsaEnv) UserError (loadProjectFromHash store' moduleStore projectHash)
 
 saveExprHandler ::
   MimsaEnvironment ->
@@ -287,13 +304,12 @@ projectFromModuleHandler mimsaEnv modHash = do
   -- create a project with this store
   let project = fromModuleStore modules $> mempty
   -- find the storeExpr we want in the store
-  storeExpr <- findModuleHandler project modHash
-  -- add deps of module to project
-  let projectWithStoreExpr = project -- <> fromStoreExpressionDeps storeExpr
+  foundModule <- findModuleHandler project modHash
   -- save shit
-  pd <- projectDataHandler mimsaEnv projectWithStoreExpr
-  writeStoreHandler mimsaEnv (prjStore projectWithStoreExpr)
-  pure (storeExpr, pd, projectWithStoreExpr)
+  pd <- projectDataHandler mimsaEnv project
+  -- cache our findings
+  writeStoreHandler mimsaEnv (prjStore project)
+  pure (foundModule, pd, project)
 
 storeFromModuleHashHandler ::
   MimsaEnvironment ->

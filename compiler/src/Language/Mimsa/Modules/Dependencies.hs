@@ -175,10 +175,10 @@ getExprDeps mod' uses =
 -- create a map of each expr hash along with the modules it needs
 -- so that we can typecheck them all
 getModuleDeps ::
-  (Show ann) =>
+  (MonadError (Error Annotation) m, Show ann) =>
   Map ModuleHash (Module ann) ->
   Module ann ->
-  CheckM
+  m
     ( Map
         ModuleHash
         ( Module ann,
