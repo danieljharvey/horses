@@ -43,8 +43,7 @@ listTestsHandler ::
   ProjectHash ->
   Handler ListTestsResponse
 listTestsHandler mimsaEnv hash = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' hash
+  project <- loadProjectHandler mimsaEnv hash
   let tests = M.elems (prjTests project)
   testResults <-
     runTestsHandler
@@ -76,8 +75,7 @@ listTestsByExprHashHandler ::
   ExprHash ->
   Handler ListTestsByExprHashResponse
 listTestsByExprHashHandler mimsaEnv projectHash exprHash = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' projectHash
+  project <- loadProjectHandler mimsaEnv projectHash
   let tests = getTestsForExprHash project exprHash
   testResults <-
     runTestsHandler

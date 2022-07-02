@@ -3,6 +3,7 @@
 module Language.Mimsa.Actions.BindModule
   ( bindModule,
     typecheckModules,
+    typecheckModule,
     addBindingToModule,
   )
 where

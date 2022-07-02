@@ -15,13 +15,13 @@ import {
 } from '../generated'
 import { pipe } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
-import { ExprHash } from '../types/'
+import { ExprHash, ProjectHash, exprHash } from '../types/'
 
 // this is how we should do the screens from now on
 
 type AddType = {
-  bindings: Record<string, string>
-  typeBindings: Record<string, string>
+  bindings: Record<string, ExprHash>
+  typeBindings: Record<string, ExprHash>
   typeclasses: Typeclass[]
   dataTypePretty: string
 }
@@ -29,7 +29,7 @@ type AddType = {
 type State = RemoteData<UserErrorResponse, AddType>
 
 export const useAddType = (
-  projectHash: string,
+  projectHash: ProjectHash,
   code: string,
   updateProject: (
     pd: ProjectData,
@@ -53,11 +53,15 @@ export const useAddType = (
         (a) => {
           updateProject(
             a.btProjectData,
-            Object.values(a.btCodegen?.edBindings || {})
+            Object.values(
+              a.btCodegen?.edBindings || {}
+            ).map(exprHash)
           )
           return success({
-            bindings: a.btCodegen?.edBindings || {},
-            typeBindings: a.btCodegen?.edTypeBindings || {},
+            bindings: (a.btCodegen?.edBindings ||
+              {}) as Record<string, ExprHash>,
+            typeBindings: (a.btCodegen?.edTypeBindings ||
+              {}) as Record<string, ExprHash>,
             typeclasses: a.btTypeclasses,
             dataTypePretty: a.btPrettyType,
           })

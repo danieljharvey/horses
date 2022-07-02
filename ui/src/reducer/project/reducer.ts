@@ -11,23 +11,31 @@ import {
   listBindings,
   fetchExpressions,
   saveToSessionStorage,
+  fetchModule,
   ProjectEvent,
 } from './events'
-import { ExprHash, ProjectData } from '../../types'
+import {
+  exprHash,
+  projectHash,
+  ExprHash,
+  ProjectData,
+} from '../../types'
 import { ProjectAction } from './actions'
+import { ProjectState } from './types'
 
 const projectL = Lens.fromProp<State>()('project')
 
 // all hashes mentioned in project, for fetching
 const hashesForProjectData = (
   projectData: ProjectData
-): ExprHash[] => [
-  ...Object.values(projectData.pdBindings),
-  ...Object.values(projectData.pdTypeBindings),
-  ...Object.values(projectData.pdVersions).flatMap((bvs) =>
-    bvs.map((bv) => bv.bvExprHash)
-  ),
-]
+): ExprHash[] =>
+  [
+    ...Object.values(projectData.pdBindings),
+    ...Object.values(projectData.pdTypeBindings),
+    ...Object.values(projectData.pdVersions).flatMap(
+      (bvs) => bvs.map((bv) => bv.bvExprHash)
+    ),
+  ].map(exprHash)
 
 export const projectReducer: EventReducer<
   State,
@@ -48,9 +56,13 @@ export const projectReducer: EventReducer<
       return stateAndEvents(
         projectL.set({
           ...state.project,
-          projectHash: action.data.pdHash,
-          bindings: action.data.pdBindings,
-          typeBindings: action.data.pdTypeBindings,
+          projectHash: projectHash(action.data.pdHash),
+          bindings: action.data
+            .pdBindings as ProjectState['bindings'],
+          typeBindings: action.data
+            .pdTypeBindings as ProjectState['typeBindings'],
+          modules: action.data
+            .pdModuleBindings as ProjectState['modules'],
           versions: action.data.pdVersions,
           usages: action.data.pdUsages,
         })(state),
@@ -60,9 +72,11 @@ export const projectReducer: EventReducer<
               ...hashesForProjectData(action.data),
               ...action.extraHashes,
             ],
-            action.data.pdHash
+            projectHash(action.data.pdHash)
           ),
-          saveToSessionStorage(action.data.pdHash),
+          saveToSessionStorage(
+            projectHash(action.data.pdHash)
+          ),
         ]
       )
 
@@ -76,12 +90,12 @@ export const projectReducer: EventReducer<
         }),
         {}
       )
-      const allExprHashes = Object.values(
-        action.fetched
-      ).flatMap(({ edBindings, edTypeBindings }) => [
-        ...Object.values(edBindings),
-        ...Object.values(edTypeBindings),
-      ])
+      const allExprHashes = Object.values(action.fetched)
+        .flatMap(({ edBindings, edTypeBindings }) => [
+          ...Object.values(edBindings),
+          ...Object.values(edTypeBindings),
+        ])
+        .map(exprHash)
 
       return stateAndEvent(
         projectL.set({
@@ -97,6 +111,12 @@ export const projectReducer: EventReducer<
         )
       )
     }
+
+    case 'FetchModule':
+      return stateAndEvent(
+        state,
+        fetchModule(action.moduleHash)
+      )
 
     default:
       return stateOnly(state)

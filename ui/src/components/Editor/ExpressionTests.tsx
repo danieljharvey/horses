@@ -1,12 +1,12 @@
 import { fold } from '@devexperts/remote-data-ts'
 import { pipe } from 'fp-ts/lib/function'
 import { useListExpressionTests } from '../../hooks/useListExpressionTests'
-import { ExprHash } from '../../types'
+import { ExprHash, ProjectHash } from '../../types'
 import { ListTests } from '../ListTests'
 import { Paragraph } from '../View/Paragraph'
 
 type ExpressionTestsProps = {
-  projectHash: ExprHash
+  projectHash: ProjectHash
   exprHash: ExprHash
 }
 

@@ -58,8 +58,7 @@ typeSearchEndpoint ::
   TypeSearchRequest ->
   Handler TypeSearchResponse
 typeSearchEndpoint mimsaEnv (TypeSearchRequest projectHash input) = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' projectHash
+  project <- loadProjectHandler mimsaEnv projectHash
   (_, _, typeMap) <- handleEither InternalError (Actions.run project Actions.typeMapForProjectSearch)
   result <- handleEither UserError (typeSearchFromText typeMap input)
   pure (TypeSearchResponse (prettyPrint <$> M.keys result))

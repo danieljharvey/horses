@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { ListBindings } from './ListBindings'
 import './FilteredBindingList.css'
-import { ExprHash } from '../types/'
+import { ModuleHash, ExprHash } from '../types/'
 import { TextInput } from './View/TextInput'
 import { Panel } from './View/Panel'
 import { FlexColumnSpaced } from './View/FlexColumnSpaced'
@@ -24,10 +24,12 @@ type Item = 'bindings' | 'tests'
 type Props = {
   values: Record<string, ExprHash>
   types: Record<string, ExprHash>
+  modules: Record<string, ModuleHash>
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash
   ) => void
+  onModuleSelect: (moduleHash: ModuleHash) => void
 }
 
 const filterRecord = <A,>(
@@ -113,11 +115,15 @@ const testTitle = (testLoad: ListProjectTestsState) => {
 export const FilteredBindingList: React.FC<Props> = ({
   values,
   types,
+  modules,
   onBindingSelect,
+  onModuleSelect,
 }) => {
   const [filterText, setFilterText] = React.useState('')
   const filteredValues = filterRecord(filterText, values)
   const filteredTypes = filterRecord(filterText, types)
+  const filteredModules = filterRecord(filterText, modules)
+
   const [showItems, setShowItems] =
     React.useState<Item>('bindings')
 
@@ -143,6 +149,8 @@ export const FilteredBindingList: React.FC<Props> = ({
             onChange={setFilterText}
           />
           <ListBindings
+            onModuleSelect={onModuleSelect}
+            modules={filteredModules}
             onBindingSelect={onBindingSelect}
             values={filteredValues}
             types={filteredTypes}

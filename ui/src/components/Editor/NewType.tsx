@@ -144,6 +144,8 @@ export const NewType: React.FC<Props> = ({
                 </InlineSpaced>
                 <Paragraph>Generated functions:</Paragraph>
                 <ListBindings
+                  onModuleSelect={() => {}}
+                  modules={{}}
                   values={addType.bindings}
                   types={addType.typeBindings}
                   onBindingSelect={onBindingSelect}

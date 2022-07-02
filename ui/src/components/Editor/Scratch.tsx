@@ -5,7 +5,7 @@ import { Feedback } from './Feedback'
 import { Panel } from '../View/Panel'
 import * as O from 'fp-ts/Option'
 import { Button } from '../View/Button'
-import { ExprHash } from '../../types'
+import { ProjectHash, ExprHash } from '../../types'
 
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import {
@@ -22,7 +22,7 @@ import {
 import { useDispatch } from '../../hooks/useDispatch'
 
 type Props = {
-  projectHash: ExprHash
+  projectHash: ProjectHash
   editor: EditorState
   onBindingSelect: (
     bindingName: string,

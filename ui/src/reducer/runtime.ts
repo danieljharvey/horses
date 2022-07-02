@@ -9,13 +9,16 @@ import {
   optimiseExpression,
 } from '../service/project'
 import { getExpressions } from '../service/expression'
-import { ExprHash } from '../types/'
+import { getModule } from '../service/module'
+
+import { ModuleHash, ExprHash } from '../types/'
 import { setScreen } from './view/actions'
 import { projectSet } from './project/helpers'
 import { log } from './console/actions'
 import * as H from 'history'
 import {
   fetchExpressionsSuccess,
+  fetchModuleSuccess,
   storeProjectData,
 } from './project/actions'
 import * as T from 'fp-ts/Task'
@@ -101,6 +104,24 @@ export const runtime =
           )
         )
         return x
+
+      case 'FetchModule':
+        const fetchModuleAndDispatch = (
+          moduleHash: ModuleHash
+        ) =>
+          pipe(
+            getModule(moduleHash),
+            TE.map(fetchModuleSuccess)
+          )
+
+        return pipe(
+          fetchModuleAndDispatch(event.moduleHash),
+          TE.fold(
+            (_) => T.of([]),
+            (action) => T.of([action] as Action[])
+          )
+        )
+
       case 'DoEvaluateExpression':
         return pipe(
           evaluate({

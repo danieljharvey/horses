@@ -84,8 +84,7 @@ optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
                 False -- can't optimise this again, we just did
             )
 
-    store' <- lift $ readStoreHandler mimsaEnv
-    project <- lift $ loadProjectHandler mimsaEnv store' projectHash
+    project <- lift $ loadProjectHandler mimsaEnv projectHash
     response <- lift $ eitherFromActionM mimsaEnv projectHash action
 
     tests <-

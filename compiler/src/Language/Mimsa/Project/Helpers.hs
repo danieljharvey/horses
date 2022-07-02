@@ -7,12 +7,15 @@ module Language.Mimsa.Project.Helpers
     fromTest,
     fromStoreExpression,
     fromStoreExpressionDeps,
+    fromModuleDeps,
     fromStore,
+    fromModuleStore,
     fromModule,
     findBindingNameForExprHash,
     findAnyBindingNameForExprHash,
     findTypeBindingNameForExprHash,
     findAnyTypeBindingNameForExprHash,
+    lookupModuleHash,
     lookupExprHash,
     lookupExprHashFromStore,
     typeBindingsToVersioned,
@@ -147,6 +150,9 @@ fromPropertyTest test storeExpr =
 fromStore :: Store ann -> Project ann
 fromStore store' = mempty {prjStore = store'}
 
+fromModuleStore :: Map ModuleHash (Module ann) -> Project ann
+fromModuleStore modules = mempty {prjModuleStore = modules}
+
 removeNamespaceFromKey :: (Ord k2) => Map (k1, k2) a -> Map k2 a
 removeNamespaceFromKey = M.fromList . fmap (first snd) . M.toList
 
@@ -159,6 +165,14 @@ fromStoreExpressionDeps se =
       prjTypeBindings = typeBindingsToVersioned (storeTypeBindings se)
     }
 
+-- | create a project where all the bindings of a store expression are
+-- available in global scope
+fromModuleDeps :: Map ModuleHash (Module ann) -> Module ann -> Project ann
+fromModuleDeps _moduleStore _mod' =
+  mempty
+    { prjModules = mempty
+    }
+
 lookupExprHash :: Project ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHash project =
   lookupExprHashFromStore (prjStore project)
@@ -166,6 +180,10 @@ lookupExprHash project =
 lookupExprHashFromStore :: Store ann -> ExprHash -> Maybe (StoreExpression ann)
 lookupExprHashFromStore store exprHash' =
   M.lookup exprHash' (getStore store)
+
+lookupModuleHash :: Project ann -> ModuleHash -> Maybe (Module ann)
+lookupModuleHash project modHash =
+  M.lookup modHash (prjModuleStore project)
 
 getBindingNames :: Project ann -> Set Name
 getBindingNames =

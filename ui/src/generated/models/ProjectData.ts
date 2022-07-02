@@ -8,6 +8,7 @@ import type { ExprUsage } from './ExprUsage'
 export type ProjectData = {
   pdBindings: Record<string, string>
   pdHash: string
+  pdModuleBindings: Record<string, string>
   pdTypeBindings: Record<string, string>
   pdUsages: Record<string, Array<ExprUsage>>
   pdVersions: Record<string, Array<BindingVersion>>

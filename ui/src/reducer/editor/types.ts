@@ -1,5 +1,13 @@
 import { Option } from 'fp-ts/lib/Option'
-import { Feedback } from './feedback'
+import * as O from 'fp-ts/lib/Option'
+import { Feedback, editorNew } from './feedback'
+
+export const emptyEditor: EditorState = {
+  code: '',
+  stale: false,
+  feedback: editorNew(),
+  bindingName: O.none,
+}
 
 export type EditorState = {
   code: string

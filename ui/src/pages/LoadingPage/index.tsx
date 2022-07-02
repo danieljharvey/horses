@@ -3,7 +3,7 @@ import './LoadingPage.css'
 import { findProject } from './logic'
 import * as E from 'fp-ts/Either'
 import { Redirect } from 'react-router'
-import { ExprHash } from '../../types/'
+import { ProjectHash } from '../../types/'
 import { Button } from '../../components/View/Button'
 const RotatingHorse = () => (
   <div className="rotating-horse">🐴</div>
@@ -17,7 +17,7 @@ const RotatingHorse = () => (
 type State =
   | { type: 'Loading' }
   | { type: 'LoadingError'; message: string }
-  | { type: 'Found'; projectHash: ExprHash }
+  | { type: 'Found'; projectHash: ProjectHash }
 
 export const LoadingPage = () => {
   const [state, setState] = React.useState<State>({

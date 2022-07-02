@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ExprHash } from '../types/'
+import { ModuleHash, ExprHash } from '../types/'
 import { Link } from './View/Link'
 import { InlineSpaced } from './View/InlineSpaced'
 import {
@@ -12,10 +12,12 @@ import { useStoreTuple } from '../hooks/useStore'
 type ListBindingsProps = {
   values: Record<string, ExprHash>
   types: Record<string, ExprHash>
+  modules: Record<string, ModuleHash>
   onBindingSelect: (
     bindingName: string,
-    exprHash: string
+    exprHash: ExprHash
   ) => void
+  onModuleSelect: (moduleHash: ModuleHash) => void
 }
 
 export const ListBindings: React.FC<ListBindingsProps> = ({
@@ -40,6 +42,19 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
 
   return (
     <InlineSpaced>
+      {/*
+      {Object.entries(modules).map(([name, moduleHash]) => (
+        <Link
+          depType="module"
+          number={0}
+          key={name}
+          onClick={() => onModuleSelect(moduleHash)}
+          highlight={false}
+        >
+          {name}
+        </Link>
+      ))}
+  */}
       {Object.entries(values).map(([name, exprHash]) => (
         <Link
           depType="expression"

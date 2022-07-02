@@ -68,7 +68,7 @@ runCheck input modules comp =
 getStoredInput :: CheckM Text
 getStoredInput = asks ceInput
 
-lookupModule :: Map ModuleHash (Module ann) -> ModuleHash -> CheckM (Module ann)
+lookupModule :: (MonadError (Error Annotation) m) => Map ModuleHash (Module ann) -> ModuleHash -> m (Module ann)
 lookupModule mods modHash = do
   case M.lookup modHash mods of
     Just foundModule -> pure foundModule

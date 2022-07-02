@@ -1,19 +1,19 @@
 import { pipe } from 'fp-ts/function'
 import { createProject } from '../../service/project'
-import { ExprHash } from '../../types/'
+import { ProjectHash, projectHash } from '../../types/'
 import * as E from 'fp-ts/Either'
 import { projectGet } from '../../reducer/project/helpers'
 import * as TE from 'fp-ts/TaskEither'
 
-const createNewProject: TE.TaskEither<string, ExprHash> =
+const createNewProject: TE.TaskEither<string, ProjectHash> =
   pipe(
     createProject(),
-    TE.map((res) => res.cpProjectData.pdHash)
+    TE.map((res) => projectHash(res.cpProjectData.pdHash))
   )
 
 const findInSessionStorage: TE.TaskEither<
   string,
-  ExprHash
+  ProjectHash
 > = pipe(
   TE.fromEither(
     E.fromOption(

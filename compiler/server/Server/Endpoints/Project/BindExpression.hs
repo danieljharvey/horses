@@ -69,8 +69,7 @@ bindExpression mimsaEnv (BindExpressionRequest projectHash name' input) = runMim
         let warnings = getWarnings resolved
         canOptimise <- Actions.canOptimise se
         pure $ makeExpressionData se typedNameExpr gv input' warnings canOptimise
-  store' <- lift $ readStoreHandler mimsaEnv
-  project <- lift $ loadProjectHandler mimsaEnv store' projectHash
+  project <- lift $ loadProjectHandler mimsaEnv projectHash
   response <-
     lift $ eitherFromActionM mimsaEnv projectHash action
   tests <-

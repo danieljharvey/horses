@@ -52,7 +52,7 @@ loadProject' = do
       case JSON.decode json' of
         Just sp -> do
           logDebugN "Project file successfully decoded. Fetching project items...."
-          fetchProjectItems rootPath mempty sp -- we're starting from scratch with this one
+          fetchProjectItems rootPath mempty mempty sp -- we're starting from scratch with this one
         _ -> throwError $ CouldNotDecodeFile (projectFilePath rootPath)
 
 -- save project in local folder

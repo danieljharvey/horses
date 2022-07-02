@@ -17,8 +17,11 @@ module Server.Handlers
     saveFileHandler,
     findExprHandler,
     projectFromExpressionHandler,
+    projectFromModuleHandler,
     readStoreHandler,
     writeStoreHandler,
+    readModuleStoreHandler,
+    writeModuleStoreHandler,
     runTestsHandler,
   )
 where
@@ -51,6 +54,7 @@ import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant
@@ -80,8 +84,7 @@ eitherFromActionM ::
   Actions.ActionM a ->
   Handler (Either (Error Annotation) (Project Annotation, [ActionOutcome], a))
 eitherFromActionM mimsaEnv projectHash action = do
-  store' <- readStoreHandler mimsaEnv
-  project <- loadProjectHandler mimsaEnv store' projectHash
+  project <- loadProjectHandler mimsaEnv projectHash
   case Actions.run project action of
     Left e -> pure (Left e)
     Right (newProject, outcomes, a) -> do
@@ -104,6 +107,11 @@ outputTypeBindings project =
   prettyPrint
     <$> getTypeBindings
       (getCurrentTypeBindings (prjTypeBindings project))
+
+outputModuleBindings :: Project a -> Map ModuleName Text
+outputModuleBindings project =
+  prettyPrint
+    <$> getCurrentModules (prjModules project)
 
 -- | Version of a given binding
 -- number, exprHash, usages elsewhere
@@ -139,6 +147,7 @@ data ProjectData = ProjectData
   { pdHash :: ProjectHash,
     pdBindings :: Map Name Text,
     pdTypeBindings :: Map TyCon Text,
+    pdModuleBindings :: Map ModuleName Text,
     pdVersions :: Map Name (NE.NonEmpty BindingVersion),
     pdUsages :: Map ExprHash [ExprUsage]
   }
@@ -148,8 +157,9 @@ data ProjectData = ProjectData
 -- read the store from mutable var to stop repeated loading of exprs
 readStoreHandler :: MimsaEnvironment -> Handler (Store Annotation)
 readStoreHandler mimsaEnv = do
-  liftIO $ STM.atomically $ STM.readTVar (mutableStore mimsaEnv)
+  liftIO $ STM.readTVarIO (mutableStore mimsaEnv)
 
+-- write the store to mutable var to reduce file system access
 writeStoreHandler :: MimsaEnvironment -> Store Annotation -> Handler ()
 writeStoreHandler mimsaEnv store' = do
   liftIO $
@@ -157,6 +167,20 @@ writeStoreHandler mimsaEnv store' = do
       STM.modifyTVar
         (mutableStore mimsaEnv)
         (<> store')
+
+-- read the store from mutable var to stop repeated loading of exprs
+readModuleStoreHandler :: MimsaEnvironment -> Handler (Map ModuleHash (Module Annotation))
+readModuleStoreHandler mimsaEnv = do
+  liftIO $ STM.readTVarIO (mutableModuleStore mimsaEnv)
+
+-- write the store to mutable var to reduce file system access
+writeModuleStoreHandler :: MimsaEnvironment -> Map ModuleHash (Module Annotation) -> Handler ()
+writeModuleStoreHandler mimsaEnv moduleStore = do
+  liftIO $
+    STM.atomically $
+      STM.modifyTVar
+        (mutableModuleStore mimsaEnv)
+        (<> moduleStore)
 
 versionsForBinding ::
   (Printer ann, Show ann) =>
@@ -200,17 +224,19 @@ projectDataHandler mimsaEnv project = do
       projHash
       (outputBindings project)
       (outputTypeBindings project)
+      (outputModuleBindings project)
       versions
       (toExprUsages <$> usages)
 
 -- given a project hash, find the project
 loadProjectHandler ::
   MimsaEnvironment ->
-  Store Annotation ->
   ProjectHash ->
   Handler (Project Annotation)
-loadProjectHandler mimsaEnv store' hash =
-  handleServerM (mimsaConfig mimsaEnv) UserError (loadProjectFromHash store' hash)
+loadProjectHandler mimsaEnv projectHash = do
+  store' <- readStoreHandler mimsaEnv
+  moduleStore <- readModuleStoreHandler mimsaEnv
+  handleServerM (mimsaConfig mimsaEnv) UserError (loadProjectFromHash store' moduleStore projectHash)
 
 saveExprHandler ::
   MimsaEnvironment ->
@@ -238,6 +264,16 @@ findExprHandler project exprHash' =
       Nothing -> Left ("Could not find exprhash!" :: Text)
       Just a -> Right a
 
+findModuleHandler ::
+  Project Annotation ->
+  ModuleHash ->
+  Handler (Module Annotation)
+findModuleHandler project modHash =
+  handleEither InternalError $
+    case lookupModuleHash project modHash of
+      Nothing -> Left ("Could not find moduleHash!" :: Text)
+      Just a -> Right a
+
 -- given an exprhash, load a project containing its dependents
 projectFromExpressionHandler ::
   MimsaEnvironment ->
@@ -256,6 +292,35 @@ projectFromExpressionHandler mimsaEnv exprHash = do
   pd <- projectDataHandler mimsaEnv projectWithStoreExpr
   writeStoreHandler mimsaEnv (prjStore projectWithStoreExpr)
   pure (storeExpr, pd, projectWithStoreExpr)
+
+-- given a moduleHash, load a project containing its dependents
+projectFromModuleHandler ::
+  MimsaEnvironment ->
+  ModuleHash ->
+  Handler (Module Annotation, ProjectData, Project Annotation)
+projectFromModuleHandler mimsaEnv modHash = do
+  -- load store with just items for module in
+  modules <- storeFromModuleHashHandler mimsaEnv modHash
+  -- create a project with this store
+  let project = fromModuleStore modules $> mempty
+  -- find the storeExpr we want in the store
+  foundModule <- findModuleHandler project modHash
+  -- save shit
+  pd <- projectDataHandler mimsaEnv project
+  -- cache our findings
+  writeStoreHandler mimsaEnv (prjStore project)
+  pure (foundModule, pd, project)
+
+storeFromModuleHashHandler ::
+  MimsaEnvironment ->
+  ModuleHash ->
+  Handler (Map ModuleHash (Module ()))
+storeFromModuleHashHandler mimsaEnv modHash =
+  let cfg = mimsaConfig mimsaEnv
+   in handleServerM
+        (mimsaConfig mimsaEnv)
+        UserError
+        (recursiveLoadModules (scRootPath cfg) mempty (S.singleton modHash))
 
 storeFromExprHashHandler ::
   MimsaEnvironment ->

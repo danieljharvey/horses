@@ -1,5 +1,6 @@
 import * as React from 'react'
-import type { ExprUsage } from '../types/'
+import type { ExprUsage, ExprHash } from '../types/'
+import { exprHash } from '../types'
 import { Link } from './View/Link'
 import { InlineSpaced } from './View/InlineSpaced'
 
@@ -10,7 +11,7 @@ type ListUsagesProps = {
   usages: ExprUsage[]
   onBindingSelect: (
     bindingName: string,
-    exprHash: string
+    exprHash: ExprHash
   ) => void
 }
 
@@ -35,7 +36,7 @@ export const ListUsages: React.FC<ListUsagesProps> = ({
             number={0}
             key={euExprHash}
             onClick={() =>
-              onBindingSelect(euName, euExprHash)
+              onBindingSelect(euName, exprHash(euExprHash))
             }
             highlight={false}
           >

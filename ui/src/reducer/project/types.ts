@@ -1,5 +1,7 @@
 import type {
   ExprHash,
+  ModuleHash,
+  ProjectHash,
   ExpressionData,
   BindingVersion,
   ExprUsage,
@@ -11,9 +13,11 @@ export type StoreItem = {
 
 export type ProjectState = {
   store: Record<ExprHash, StoreItem>
-  projectHash: ExprHash
+  moduleStore: Record<ModuleHash, unknown>
+  projectHash: ProjectHash
   bindings: Record<string, ExprHash>
   typeBindings: Record<string, ExprHash>
+  modules: Record<string, ModuleHash>
   versions: Record<string, BindingVersion[]>
   usages: Record<ExprHash, ExprUsage[]>
 }

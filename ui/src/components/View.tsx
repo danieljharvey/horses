@@ -8,7 +8,6 @@ import { NewTest } from './Editor/NewTest'
 import { NewType } from './Editor/NewType'
 import { ProjectGraph } from './ProjectGraph'
 import { ExpressionGraph } from './ExpressionGraph'
-
 import { TypeSearch } from './TypeSearch/TypeSearch'
 import { FilteredBindingList } from './FilteredBindingList'
 import { Menu } from './Menu'
@@ -18,13 +17,19 @@ import {
 } from '../reducer/view/selectors'
 import { pushScreen } from '../reducer/view/actions'
 import { editorForBinding } from '../reducer/editor/helpers'
-import { Screen } from '../reducer/view/screen'
+import {
+  Screen,
+  editScreen,
+  editModuleScreen,
+} from '../reducer/view/screen'
 import { Screen as ScreenComponent } from './View/Screen'
 import { PanelRow } from './View/PanelRow'
-import { ExprHash } from '../types'
+import { ExprHash, ProjectHash, ModuleHash } from '../types'
 import { useDispatch } from '../hooks/useDispatch'
 import { useStoreRec } from '../hooks/useStore'
 import { getProjectHash } from '../reducer/project/selectors'
+import { EditModule } from './Editor/EditModule'
+import { emptyEditor } from '../reducer/editor/types'
 
 type Props = {}
 
@@ -38,12 +43,14 @@ export const View: React.FC<Props> = () => {
     bindings,
     typeBindings,
     projectHash,
+    modules,
   } = useStoreRec({
     screen: getCurrentScreen,
     lastScreen: getLastScreen,
     getEditorState: editorForBinding,
     bindings: (s) => s.project.bindings,
     typeBindings: (s) => s.project.typeBindings,
+    modules: (s) => s.project.modules,
     projectHash: getProjectHash,
   })
 
@@ -55,20 +62,19 @@ export const View: React.FC<Props> = () => {
       getEditorState(bindingName, exprHash)
     )
     if (edit) {
-      dispatch(
-        pushScreen({
-          type: 'edit',
-          bindingName,
-          editor: edit,
-        })
-      )
+      dispatch(pushScreen(editScreen(bindingName, edit)))
     }
+  }
+
+  const onModuleSelect = (moduleHash: ModuleHash) => {
+    dispatch(pushScreen(editModuleScreen(moduleHash)))
   }
 
   const [inner, showBindingList] = getScreenInner(
     screen,
     projectHash,
-    onBindingSelect
+    onBindingSelect,
+    onModuleSelect
   )
 
   return (
@@ -80,6 +86,8 @@ export const View: React.FC<Props> = () => {
             <FilteredBindingList
               values={bindings}
               types={typeBindings}
+              modules={modules}
+              onModuleSelect={onModuleSelect}
               onBindingSelect={onBindingSelect}
             />
           </PanelRow>
@@ -91,12 +99,13 @@ export const View: React.FC<Props> = () => {
 
 const getScreenInner = (
   screen: Screen,
-  projectHash: ExprHash,
+  projectHash: ProjectHash,
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash
-  ) => void
-) => {
+  ) => void,
+  onModuleSelect: (moduleHash: ModuleHash) => void
+): [JSX.Element, boolean] => {
   switch (screen.type) {
     case 'scratch':
       return [
@@ -118,6 +127,15 @@ const getScreenInner = (
         true,
       ]
 
+    case 'edit-module':
+      return [
+        <EditModule
+          editor={emptyEditor}
+          moduleHash={screen.moduleHash}
+          onModuleSelect={onModuleSelect}
+        />,
+        true,
+      ]
     case 'edit':
       return [
         <EditBinding
