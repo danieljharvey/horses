@@ -106,13 +106,15 @@ export const runtime =
         return x
 
       case 'FetchModule':
-        const fetchModuleAndDispatch = (moduleHash: ModuleHash) =>
+        const fetchModuleAndDispatch = (
+          moduleHash: ModuleHash
+        ) =>
           pipe(
-               getModule(moduleHash),
+            getModule(moduleHash),
             TE.map(fetchModuleSuccess)
           )
-        
-        return  pipe(
+
+        return pipe(
           fetchModuleAndDispatch(event.moduleHash),
           TE.fold(
             (_) => T.of([]),

@@ -1,8 +1,9 @@
 import type {
-  ExprHash,ModuleHash,
+  ExprHash,
+  ModuleHash,
   ProjectData,
   ExpressionData,
-    GetModuleResponse
+  GetModuleResponse,
 } from '../../types'
 
 export const storeProjectData = (
@@ -14,8 +15,10 @@ export const storeProjectData = (
   extraHashes,
 })
 
-export const fetchModule = (moduleHash:ModuleHash) => ({
-  type:"FetchModule" as const,moduleHash })
+export const fetchModule = (moduleHash: ModuleHash) => ({
+  type: 'FetchModule' as const,
+  moduleHash,
+})
 
 export const initialise = () => ({
   type: 'Initialise' as const,
@@ -28,7 +31,9 @@ export const fetchExpressionsSuccess = (
   fetched,
 })
 
-export const fetchModuleSuccess = (fetched:GetModuleResponse)  => ({ type: "FetchModuleSuccess" as const, fetched })
+export const fetchModuleSuccess = (
+  fetched: GetModuleResponse
+) => ({ type: 'FetchModuleSuccess' as const, fetched })
 
 export type ProjectAction =
   | ReturnType<typeof initialise>

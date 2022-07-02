@@ -28,8 +28,10 @@ export const fetchExpressions = (
   projectHash,
 })
 
-export const fetchModule = (moduleHash: ModuleHash )  => ({ type: "FetchModule" as const,
-    moduleHash})
+export const fetchModule = (moduleHash: ModuleHash) => ({
+  type: 'FetchModule' as const,
+  moduleHash,
+})
 
 export const saveToSessionStorage = (
   projectHash: ProjectHash
