@@ -263,6 +263,7 @@ executable mimsa
   main-is: Main.hs
   other-modules:
       Check.Main
+      Eval.Main
       Init.Main
       Repl.Actions
       Repl.Actions.Compile
