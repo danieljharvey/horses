@@ -6,17 +6,21 @@ module Check.Main
 where
 
 import Control.Monad.Except
+import Data.Either
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath
 import ReplNew.Helpers
 import ReplNew.ReplM
 import ReplNew.Types
+import qualified Shared.LoadProject as Shared
 import System.Directory
 import System.Exit
 import Prelude hiding (init)
@@ -31,10 +35,12 @@ checkFile :: Text -> ReplM (Error Annotation) ExitCode
 checkFile filePath = do
   replOutput ("Reading " <> T.pack (show filePath))
   fileContents <- liftIO $ T.readFile (T.unpack filePath)
-  -- TODO: currently we pass no available modules
-  -- but we should really read the current project
-  -- and then include those so that external deps are available?
-  case checkModule fileContents mempty of
+
+  maybeProject <- Shared.loadProject
+  -- use project if we're in one, if not, stdlib
+  let project = fromRight stdlib maybeProject
+  -- check module
+  case checkModule fileContents (prjModuleStore project) of
     Right (mod', _) -> do
       liftIO $ T.putStrLn $ prettyPrint mod'
       -- format and rewrite

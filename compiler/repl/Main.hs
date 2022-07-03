@@ -3,6 +3,7 @@ module Main where
 import qualified Check.Main as Check
 import Control.Applicative
 import Data.Text (Text)
+import qualified Eval.Main as Eval
 import qualified Init.Main as Init
 import qualified Options.Applicative as Opt
 import qualified Repl.Main as Repl
@@ -20,6 +21,7 @@ data AppAction
   | ReplNew
   | Init
   | Check Text -- check if a file is `ok`
+  | Eval Text -- evaluate an expression
 
 parseAppAction :: Opt.Parser AppAction
 parseAppAction =
@@ -48,6 +50,12 @@ parseAppAction =
               (Check <$> filePathParse)
               (Opt.progDesc "Check whether a file is valid and OK etc")
           )
+        <> Opt.command
+          "eval"
+          ( Opt.info
+              (Eval <$> expressionParse)
+              (Opt.progDesc "Evaluate an expression. Standard library modules are available for use in the expression.")
+          )
     )
 
 filePathParse :: Opt.Parser Text
@@ -55,6 +63,12 @@ filePathParse =
   Opt.argument
     Opt.str
     (Opt.metavar "<file path>")
+
+expressionParse :: Opt.Parser Text
+expressionParse =
+  Opt.argument
+    Opt.str
+    (Opt.metavar "<expression>")
 
 optionsParse :: Opt.Parser (AppAction, Bool)
 optionsParse = (,) <$> parseAppAction <*> parseShowLogs
@@ -79,3 +93,4 @@ main = do
     Repl -> Repl.repl showLogs
     ReplNew -> ReplNew.repl showLogs
     Check filePath -> Check.check showLogs filePath
+    Eval expr -> Eval.eval showLogs expr

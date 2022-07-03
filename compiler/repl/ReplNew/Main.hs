@@ -21,6 +21,7 @@ import ReplNew.Parser (replParser)
 import ReplNew.Persistence
 import ReplNew.ReplM
 import ReplNew.Types
+import qualified Shared.LoadProject as Shared
 import System.Console.Haskeline
 import System.Directory
 import Text.Megaparsec
@@ -33,15 +34,17 @@ createReplConfig showLogs' = do
 getProject :: ReplM (Error Annotation) (Project Annotation)
 getProject =
   do
-    env <- mapError StoreErr loadProject
-    let moduleItems = length . prjModuleStore $ env
-    replOutput ("Successfully loaded project." :: Text)
-    replOutput $ T.pack (show moduleItems) <> " modules found"
-    pure env
-    `catchError` \e -> do
-      logDebugN (prettyPrint e)
-      replOutput @Text "Failed to load project, have you initialised a project in this folder?"
-      throwError e
+    maybeProject <- Shared.loadProject
+    case maybeProject of
+      Right prj -> do
+        let moduleItems = length . prjModuleStore $ prj
+        replOutput ("Successfully loaded project." :: Text)
+        replOutput $ T.pack (show moduleItems) <> " modules found"
+        pure prj
+      Left e -> do
+        logDebugN (prettyPrint e)
+        replOutput @Text "Failed to load project, have you initialised a project in this folder?"
+        throwError e
 
 repl :: Bool -> IO ()
 repl showLogs' = do
