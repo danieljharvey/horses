@@ -21,6 +21,7 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.BetaReduce
+import Language.Mimsa.Transform.EtaReduce
 import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Transform.FlattenLets
 import Language.Mimsa.Transform.FloatDown
@@ -100,6 +101,7 @@ inlineExpression =
     ( floatUp
         . flattenLets
         . simplifyPatterns
+        . etaReduce
         . removeUnused
         . betaReduce
         . inline
