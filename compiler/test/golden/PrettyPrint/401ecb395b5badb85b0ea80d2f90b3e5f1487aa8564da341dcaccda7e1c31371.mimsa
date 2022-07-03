@@ -12,4 +12,4 @@ let fn s =
     | _ -> 
         "";
 
-\str -> fn str "woo"
+fn "woo"

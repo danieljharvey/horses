@@ -40,6 +40,7 @@ import qualified Test.Tests.Properties as Properties
 import qualified Test.Tests.PropertyTest as PropertyTest
 import qualified Test.Tests.UnitTest as UnitTest
 import qualified Test.Transform.BetaReduce as BetaReduce
+import qualified Test.Transform.EtaReduce as EtaReduce
 import qualified Test.Transform.FindUnused as FindUnused
 import qualified Test.Transform.FindUses as FindUses
 import qualified Test.Transform.FlattenLets as FlattenLets
@@ -106,6 +107,7 @@ main =
     Inliner.spec
     FindUses.spec
     BetaReduce.spec
+    EtaReduce.spec
     Build.spec
     TypecheckAction.spec
     SimplifyPatterns.spec

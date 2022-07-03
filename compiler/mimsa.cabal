@@ -129,6 +129,7 @@ library
       Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Transform.BetaReduce
+      Language.Mimsa.Transform.EtaReduce
       Language.Mimsa.Transform.FindUnused
       Language.Mimsa.Transform.FindUses
       Language.Mimsa.Transform.FlattenLets
@@ -452,6 +453,7 @@ test-suite mimsa-test
       Test.Tests.PropertyTest
       Test.Tests.UnitTest
       Test.Transform.BetaReduce
+      Test.Transform.EtaReduce
       Test.Transform.FindUnused
       Test.Transform.FindUses
       Test.Transform.FlattenLets
