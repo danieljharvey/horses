@@ -6,17 +6,18 @@ module Eval.Main
 where
 
 import Control.Monad.Except
+import Data.Either
 import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import Language.Mimsa.Modules.Check
-import Language.Mimsa.Printer
+import qualified Language.Mimsa.Actions.Evaluate as Actions
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store.RootPath
 import ReplNew.Helpers
 import ReplNew.ReplM
 import ReplNew.Types
+import qualified Shared.LoadProject as Shared
 import System.Directory
 import System.Exit
 import Prelude hiding (init)
@@ -26,21 +27,27 @@ createReplConfig showLogs' = do
   path <- liftIO getCurrentDirectory
   pure $ ReplConfig (RootPath path) showLogs'
 
--- read a file, check if it is OK etc
+---------
+
+-- evaluate an expression
 evalInput :: Text -> ReplM (Error Annotation) ExitCode
 evalInput input = do
-  -- TODO: currently we pass no available modules
-  -- but we should really read the current project
-  -- and then include those so that external deps are available?
-  case checkModule fileContents mempty of
-    Right (mod', _) -> do
-      liftIO $ T.putStrLn $ prettyPrint mod'
-      -- format and rewrite
-      -- liftIO $ T.writeFile (T.unpack filePath) (prettyPrint mod')
-      pure ExitSuccess
-    Left err -> do
-      outputErrorAsDiagnostic err
-      pure (ExitFailure 1)
+  maybeProject <- Shared.loadProject
+  -- use project if we're in one, if not, stdlib
+  let project = fromRight stdlib maybeProject
+  let action = do
+        expr <- Actions.parseExpr input
+        Actions.evaluateModule input expr mempty
+  result <-
+    (Right <$> toReplM project action)
+      `catchError` (pure . Left)
+
+  let returnCode =
+        if isRight result
+          then ExitSuccess
+          else ExitFailure 1
+  --
+  pure returnCode
 
 eval :: Bool -> Text -> IO ()
 eval showLogs' input = do

@@ -93,4 +93,4 @@ main = do
     Repl -> Repl.repl showLogs
     ReplNew -> ReplNew.repl showLogs
     Check filePath -> Check.check showLogs filePath
-    Eval expr -> Eval.main showLogs expr
+    Eval expr -> Eval.eval showLogs expr

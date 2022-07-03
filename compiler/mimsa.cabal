@@ -292,6 +292,7 @@ executable mimsa
       ReplNew.Persistence
       ReplNew.ReplM
       ReplNew.Types
+      Shared.LoadProject
       Paths_mimsa
   hs-source-dirs:
       repl
