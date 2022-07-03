@@ -16,6 +16,14 @@ spec = do
       let expr = unsafeParseExpr "let a = True in 1"
       etaReduce expr `shouldBe` expr
 
+    it "Doesn't mess things up" $ do
+      let expr = unsafeParseExpr "\\a -> const a 1"
+      etaReduce expr `shouldBe` expr
+
+    it "Doesn't mess things up 2" $ do
+      let expr = unsafeParseExpr "\\a -> \\b -> const b a"
+      etaReduce expr `shouldBe` expr
+
     it "Removes unnecessary lambda on single arity function" $ do
       let expr = unsafeParseExpr "\\a -> id a"
           expected = unsafeParseExpr "id"
