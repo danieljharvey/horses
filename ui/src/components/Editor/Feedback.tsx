@@ -173,6 +173,26 @@ export const Feedback: React.FC<Props> = ({
         </FlexColumnSpaced>
       )
 
+    case 'ShowModuleData':
+      return (
+        <FlexColumnSpaced>
+          <Code codeType="type">
+            {feedback.moduleData.mdModuleType}
+          </Code>
+          <ListBindings
+            modules={{}}
+            onModuleSelect={() => {}}
+            values={{}}
+            types={{}}
+            onBindingSelect={onBindingSelect}
+          />
+          <ListUsages
+            usages={[]}
+            onBindingSelect={onBindingSelect}
+          />
+        </FlexColumnSpaced>
+      )
+
     case 'ShowBinding':
       return (
         <FlexColumnSpaced>

@@ -28,8 +28,8 @@ doReplAction prj input action =
     Help -> do
       doHelp
       pure prj
-    ListModules ->
-      catchMimsaError prj (doListModules prj input $> prj)
+    ListModules modName ->
+      catchMimsaError prj (doListModules prj modName $> prj)
     ListBindings ->
       catchMimsaError prj (doListBindings $> prj)
     (Evaluate expr) ->
@@ -46,7 +46,7 @@ doHelp :: ReplM e ()
 doHelp = do
   replOutput @Text "~~~ MIMSA ~~~"
   replOutput @Text ":help - this help screen"
-  replOutput @Text ":modules - show a list of modules in the project"
+  replOutput @Text ":modules <moduleName> - show a list of modules in the project or details of a module"
   replOutput @Text ":list - show a list of bindings created in this repl session"
   replOutput @Text ":bind <binding> - bind an expression, infix or type"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"

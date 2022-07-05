@@ -4,6 +4,7 @@ import type {
   TestData,
   UnitTestData,
   UserErrorResponse,
+  ModuleData,
 } from '../../types'
 
 export const editorNew = () => ({
@@ -58,6 +59,11 @@ export const showPreviewSuccess = (
   expression,
 })
 
+export const showModule = (moduleData: ModuleData) => ({
+  type: 'ShowModuleData' as const,
+  moduleData,
+})
+
 export type Feedback =
   | ReturnType<typeof editorNew>
   | ReturnType<typeof showBinding>
@@ -66,3 +72,4 @@ export type Feedback =
   | ReturnType<typeof showEvaluate>
   | ReturnType<typeof showUpdatedBinding>
   | ReturnType<typeof showPreviewSuccess>
+  | ReturnType<typeof showModule>

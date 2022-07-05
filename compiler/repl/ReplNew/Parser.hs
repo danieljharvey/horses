@@ -8,6 +8,7 @@ where
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import Language.Mimsa.Parser
+import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Types.AST
 import ReplNew.Types
 import Text.Megaparsec
@@ -31,7 +32,10 @@ evalParser =
     <$> expressionParser
 
 listModulesParser :: Parser ReplActionAnn
-listModulesParser = ListModules <$ myString ":modules"
+listModulesParser = do
+  myString ":modules"
+  modName <- optional moduleNameParser
+  pure (ListModules modName)
 
 listBindingsParser :: Parser ReplActionAnn
 listBindingsParser = ListBindings <$ myString ":list"

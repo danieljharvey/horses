@@ -17,7 +17,7 @@ data ReplAction ann
   = Help
   | Evaluate (Expr Name ann)
   | AddBinding (ModuleItem ann)
-  | ListModules
+  | ListModules (Maybe ModuleName)
   | ListBindings
 
 data ReplConfig = ReplConfig

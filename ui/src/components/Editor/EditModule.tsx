@@ -6,11 +6,16 @@ import { Feedback } from './Feedback'
 import * as O from 'fp-ts/Option'
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
-import { ModuleHash } from '../../types'
+import { ModuleData, ModuleHash } from '../../types'
 import {
   updateCode,
   bindExpression,
 } from '../../reducer/editor/actions'
+import {
+  editorNew,
+  showModule,
+  Feedback as FeedbackType,
+} from '../../reducer/editor/feedback'
 import {
   getErrorLocations,
   getSourceItems,
@@ -43,7 +48,13 @@ export const EditModule: React.FC<Props> = ({
     )
   )
 
-  console.log(maybeMod)
+  const feedback = pipe(
+    maybeMod,
+    O.fold<ModuleData, FeedbackType>(
+      () => editorNew(),
+      showModule
+    )
+  )
 
   const onCodeChange = (a: string) =>
     dispatch(updateCode(a))
@@ -59,7 +70,7 @@ export const EditModule: React.FC<Props> = ({
     sourceItems: getSourceItems,
     projectHash: getProjectHash,
   })
-  const { feedback, stale } = editor
+  const { stale } = editor
 
   const bindingName = O.toNullable(editor.bindingName)
 
