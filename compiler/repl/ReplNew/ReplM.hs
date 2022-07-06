@@ -10,6 +10,7 @@ module ReplNew.ReplM
     getStoredModule,
     replMFromEither,
     replOutput,
+    replDocOutput,
   )
 where
 
@@ -27,6 +28,7 @@ import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Typechecker
+import Prettyprinter
 import ReplNew.Types
 
 -- | to allow us to do 'bindings' in the repl,
@@ -92,6 +94,10 @@ replMFromEither = ReplM . liftEither
 -- | Output stuff for use in repl
 replOutput :: (Printer a) => a -> ReplM e ()
 replOutput = liftIO . T.putStrLn . prettyPrint
+
+-- | Output a Doc from prettyprinter
+replDocOutput :: Doc a -> ReplM e ()
+replDocOutput = liftIO . T.putStrLn . renderWithWidth 40
 
 -- | we maintain a module in state, this allows us to update it
 setStoredModule :: Module MonoType -> ReplM e ()

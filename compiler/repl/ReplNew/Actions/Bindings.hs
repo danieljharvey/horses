@@ -8,6 +8,7 @@ where
 
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.BindModule as Actions
+import Language.Mimsa.Modules.Pretty
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
@@ -35,4 +36,4 @@ doListBindings = do
   -- output to console
   if oldModule == mempty
     then replOutput ("Current module is empty" :: Text)
-    else replOutput oldModule
+    else replDocOutput (modulePretty oldModule)

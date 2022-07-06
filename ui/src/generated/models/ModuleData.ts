@@ -6,4 +6,5 @@ export type ModuleData = {
   mdInput: string
   mdModuleHash: string
   mdModulePretty: string
+  mdModuleType: string
 }

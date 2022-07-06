@@ -7,7 +7,7 @@ import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
 
 data FileType = ProjectFile | StoreExprFile
@@ -29,6 +29,7 @@ data StoreError
   | CouldNotFindExprHashForTypeBindings [TyCon]
   | CouldNotFindBinding Name
   | CouldNotFindStoreExpression ExprHash
+  | CouldNotFindModule ModuleHash
   | UnknownStoreError
   deriving stock (Eq, Ord, Show)
 
@@ -61,6 +62,8 @@ instance Printer StoreError where
     "Could not find binding " <> prettyPrint name
   prettyPrint (CouldNotFindStoreExpression exprHash) =
     "Could not find store expression for hash " <> prettyPrint exprHash
+  prettyPrint (CouldNotFindModule modHash) =
+    "Could not find module for hash " <> prettyPrint modHash
   prettyPrint UnknownStoreError =
     "Unknown store error"
 

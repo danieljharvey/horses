@@ -34,8 +34,6 @@ class Printer a where
   default prettyDoc :: a -> Doc ann
   prettyDoc = pretty . T.unpack . prettyPrint
 
-instance Printer (Doc ann)
-
 instance (Printer e, Printer a) => Printer (Either e a) where
   prettyDoc (Left e) = prettyDoc e
   prettyDoc (Right a) = prettyDoc a
@@ -62,7 +60,7 @@ instance (Printer a) => Printer [a] where
 
 instance (Printer k, Printer v) => Printer (Map k v) where
   prettyDoc map' =
-    let printRow (k, v) = prettyDoc k <> ":" <+> prettyDoc v
+    let printRow (k, v) = "  " <> prettyDoc k <> ":" <+> prettyDoc v
      in encloseSep lbrace rbrace comma (printRow <$> M.toList map')
 
 instance (Printer a, Printer b) => Printer (a, b) where

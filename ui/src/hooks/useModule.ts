@@ -26,7 +26,7 @@ export const useModule = (moduleHash: ModuleHash) => {
           O.Option<ModuleData>
         >(
           () => O.none,
-          (a) => O.some(a.geModuleData)
+          ({ geModuleData }) => O.some(geModuleData)
         ),
         setResult
       )
