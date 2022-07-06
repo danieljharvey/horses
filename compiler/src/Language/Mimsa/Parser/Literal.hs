@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Parser.Literal
   ( literalParser,
+    testNameParser,
     stringLiteral,
     trueParser,
     falseParser,
@@ -10,11 +11,13 @@ module Language.Mimsa.Parser.Literal
 where
 
 import Data.Functor (($>))
+import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Types
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Tests
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -53,10 +56,12 @@ falseParser = myString "False" $> MyBool False
 
 -----
 
+textLiteral :: Parser Text
+textLiteral = T.pack <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
+
 stringLiteral :: Parser Literal
-stringLiteral = do
-  chr <- char '\"' *> manyTill L.charLiteral (char '\"')
-  pure (MyString $ StringType $ T.pack chr)
+stringLiteral =
+  MyString . StringType <$> textLiteral
 
 stringParser :: Parser ParserExpr
 stringParser =
@@ -65,3 +70,6 @@ stringParser =
         MyLiteral
         stringLiteral
     )
+
+testNameParser :: Parser TestName
+testNameParser = TestName <$> myLexeme textLiteral

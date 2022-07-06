@@ -127,7 +127,6 @@ library
       Language.Mimsa.Tests.Helpers
       Language.Mimsa.Tests.PropertyTest
       Language.Mimsa.Tests.Test
-      Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Transform.BetaReduce
       Language.Mimsa.Transform.EtaReduce
@@ -214,6 +213,7 @@ library
       Language.Mimsa.Types.Store.Store
       Language.Mimsa.Types.Store.StoreExpression
       Language.Mimsa.Types.Store.TypeBindings
+      Language.Mimsa.Types.Tests
       Language.Mimsa.Types.Typechecker
       Language.Mimsa.Types.Typechecker.Constraint
       Language.Mimsa.Types.Typechecker.Environment
@@ -436,7 +436,7 @@ test-suite mimsa-test
       Test.Data.Prelude
       Test.Data.Project
       Test.Interpreter.Repl
-      Test.Modules.CheckModule
+      Test.Modules.Check
       Test.Modules.Compile
       Test.Modules.Repl
       Test.Parser.MonoTypeParser

@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
@@ -17,6 +18,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Module
+import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
 moduleFromModuleParts ::
@@ -32,24 +34,6 @@ moduleFromModuleParts parts =
 addModulePart :: Monoid ann => ModuleItem ann -> Module ann -> CheckM (Module ann)
 addModulePart part mod' =
   case part of
-    ModuleExport modItem -> do
-      -- get whatever is inside
-      innerModule <- addModulePart modItem mod'
-      -- get the keys, add them to exports
-      let defExports = case modItem of
-            ModuleExpression name _ _ -> S.singleton (DIName name)
-            ModuleInfix infixOp _ -> S.singleton (DIInfix infixOp)
-            _ -> mempty
-      let typeExports = case modItem of
-            ModuleDataType (DataType tn _ _) -> S.singleton (coerce tn)
-            _ -> mempty
-      pure $
-        innerModule
-          { moExpressionExports =
-              defExports <> moExpressionExports innerModule,
-            moDataTypeExports =
-              typeExports <> moDataTypeExports innerModule
-          }
     ModuleExpression name bits expr -> do
       errorIfExpressionAlreadyDefined mod' (DIName name)
       exp' <- exprAndTypeFromParts (DIName name) bits expr
@@ -74,6 +58,37 @@ addModulePart part mod' =
           { moExpressions =
               M.singleton (DIInfix infixOp) expr
                 <> moExpressions mod'
+          }
+    ModuleTest testName expr -> do
+      errorIfExpressionAlreadyDefined mod' (DITest testName)
+      when
+        (testName == TestName "")
+        ( throwError (ModuleErr (EmptyTestName $ void expr))
+        )
+
+      pure $
+        mod'
+          { moExpressions =
+              M.singleton (DITest testName) expr
+                <> moExpressions mod'
+          }
+    ModuleExport modItem -> do
+      -- get whatever is inside
+      innerModule <- addModulePart modItem mod'
+      -- get the keys, add them to exports
+      let defExports = case modItem of
+            ModuleExpression name _ _ -> S.singleton (DIName name)
+            ModuleInfix infixOp _ -> S.singleton (DIInfix infixOp)
+            _ -> mempty
+      let typeExports = case modItem of
+            ModuleDataType (DataType tn _ _) -> S.singleton (coerce tn)
+            _ -> mempty
+      pure $
+        innerModule
+          { moExpressionExports =
+              defExports <> moExpressionExports innerModule,
+            moDataTypeExports =
+              typeExports <> moDataTypeExports innerModule
           }
     ModuleImport (ImportNamedFromHash mHash mName) ->
       pure $ mod' {moNamedImports = M.singleton mName mHash <> moNamedImports mod'}

@@ -20,7 +20,7 @@ import qualified Test.Backend.Typescript as Typescript
 import qualified Test.Codegen as Codegen
 import Test.Hspec
 import qualified Test.Interpreter.Repl as Repl
-import qualified Test.Modules.CheckModule as CheckModule
+import qualified Test.Modules.Check as ModuleCheck
 import qualified Test.Modules.Compile as ModuleCompile
 import qualified Test.Modules.Repl as ModuleRepl
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
@@ -112,7 +112,7 @@ main =
     TypecheckAction.spec
     SimplifyPatterns.spec
     NumberVars.spec
-    CheckModule.spec
+    ModuleCheck.spec
     RenderErrors.spec
     ModuleRepl.spec
     ModuleCompile.spec

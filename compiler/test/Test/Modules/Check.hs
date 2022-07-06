@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Modules.CheckModule
+module Test.Modules.Check
   ( spec,
   )
 where
@@ -31,6 +31,9 @@ import Test.Utils.Helpers
 
 modulesPath :: FilePath
 modulesPath = "test/modules/"
+
+joinLines :: [Text] -> Text
+joinLines = T.intercalate "\n"
 
 exprAndTypeFromParts' ::
   (Monoid ann) =>
@@ -340,7 +343,6 @@ spec = do
                 `shouldBe` Right expectedModule
 
       describe "check types" $ do
-        let joinLines = T.intercalate "\n"
         it "broken type declaration" $
           checkModuleType
             ( joinLines
@@ -367,8 +369,36 @@ spec = do
             )
             `shouldSatisfy` isLeft
 
+      describe "tests" $ do
+        it "Accepts a trivial test" $
+          checkModuleType
+            (joinLines ["test \"2 equals 2\" = 2 == 2"])
+            `shouldSatisfy` isRight
+
+        it "Does not accept a test with an empty name" $
+          checkModuleType
+            (joinLines ["test \"\" = 2 == 2"])
+            `shouldSatisfy` isLeft
+
+        it "Does not accept a duplicated test name" $
+          checkModuleType
+            ( joinLines
+                [ "test \"test\" = 2 == 2",
+                  "test \"test\" = 2 + 2 == 4"
+                ]
+            )
+            `shouldSatisfy` isLeft
+
+        it "Accepts a trivial test that refers to another expression" $
+          checkModuleType
+            ( joinLines
+                [ "test \"id 2 equals 2\" = id 2 == 2",
+                  "def id a = a"
+                ]
+            )
+            `shouldSatisfy` isRight
+
       describe "imports" $ do
-        let joinLines = T.intercalate "\n"
         it "uses fst from Prelude" $
           snd
             <$> checkModuleType

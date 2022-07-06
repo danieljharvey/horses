@@ -11,12 +11,12 @@ import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Tests.Helpers
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 
 -- | a unit test must have type Boolean
 createUnitTest ::

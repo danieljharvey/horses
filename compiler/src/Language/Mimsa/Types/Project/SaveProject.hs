@@ -12,9 +12,9 @@ import Data.Aeson
 import qualified Data.Aeson as JSON
 import Data.Map (Map)
 import GHC.Generics (Generic)
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Project.Versioned
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 
 data SaveProject = SaveProject
   { projectVersion :: Int,

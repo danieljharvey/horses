@@ -9,8 +9,8 @@ import Data.Functor (($>))
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Literal
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Tests
 import Repl.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char

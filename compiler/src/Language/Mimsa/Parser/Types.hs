@@ -39,7 +39,8 @@ protectedNames =
       "False",
       "def",
       "export",
-      "import"
+      "import",
+      "test"
     ]
 
 protectedOperators :: Set Text

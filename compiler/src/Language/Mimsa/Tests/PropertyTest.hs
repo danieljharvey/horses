@@ -19,13 +19,13 @@ import Language.Mimsa.Store
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Tests.Helpers
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
 -- | given a StoreExpression, check it is the correct type

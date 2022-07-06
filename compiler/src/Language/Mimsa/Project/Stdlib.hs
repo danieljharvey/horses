@@ -28,12 +28,12 @@ import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Tests
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
 buildStdlib =

@@ -116,6 +116,7 @@ protectedTypeNames =
       "def",
       "type",
       "infix",
+      "test",
       "import",
       "export"
     ]

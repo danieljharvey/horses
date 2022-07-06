@@ -10,12 +10,12 @@ import qualified Data.Map as M
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Tests.Test
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers

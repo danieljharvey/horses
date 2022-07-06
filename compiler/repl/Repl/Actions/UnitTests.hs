@@ -11,11 +11,11 @@ import Language.Mimsa.Actions.AddUnitTest
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Tests.Test
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Tests
 import Repl.Helpers
 import Repl.ReplM
 

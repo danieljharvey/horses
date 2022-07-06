@@ -16,8 +16,8 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Tests
 import Servant
 import Server.Handlers
 import Server.Helpers.TestData

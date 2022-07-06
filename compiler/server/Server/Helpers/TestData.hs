@@ -24,11 +24,11 @@ import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Tests.Test
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 
 data TestData = TestData
   { tdUnitTests :: [UnitTestData],

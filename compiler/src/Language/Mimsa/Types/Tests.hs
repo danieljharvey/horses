@@ -5,7 +5,7 @@
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Tests.Types
+module Language.Mimsa.Types.Tests
   ( Test (..),
     UnitTest (..),
     TestName (..),
