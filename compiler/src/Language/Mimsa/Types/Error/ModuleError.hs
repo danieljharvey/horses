@@ -11,7 +11,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Modules.DefIdentifier
 
 data ModuleError
   = DuplicateDefinition DefIdentifier

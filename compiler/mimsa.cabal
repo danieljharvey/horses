@@ -44,6 +44,7 @@ library
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding
+      Language.Mimsa.Actions.RunModuleTests
       Language.Mimsa.Actions.Typecheck
       Language.Mimsa.Actions.Types
       Language.Mimsa.Actions.Upgrade
@@ -439,6 +440,7 @@ test-suite mimsa-test
       Test.Modules.Check
       Test.Modules.Compile
       Test.Modules.Repl
+      Test.Modules.Test
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax

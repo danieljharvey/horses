@@ -13,6 +13,7 @@ module Language.Mimsa.Types.Tests
     PropertyTest (..),
     PropertyTestResult (..),
     TestResult (..),
+    ModuleTestResult (..),
   )
 where
 
@@ -117,3 +118,8 @@ instance Printer (TestResult ann) where
           PropertyTestFailures es ->
             "\nFailing inputs:\n" <> T.intercalate "\n" ((<>) " - " . prettyPrint <$> S.toList es)
      in tickOrCross <> " " <> prettyPrint pt <> failures
+
+data ModuleTestResult
+  = ModuleTestPassed
+  | ModuleTestFailed
+  deriving stock (Eq, Ord, Show)

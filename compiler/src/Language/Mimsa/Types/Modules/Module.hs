@@ -153,7 +153,8 @@ printDefinition mod' def expr =
         DIInfix infixOp ->
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
         DIType _ -> error "printDefinition is printing type oh no"
-        DITest _ -> error "printDefinition is printing test oh no"
+        DITest testName ->
+          "test" <+> "\"" <> prettyDoc testName <> "\"" <+> "=" <+> prettyDoc expr
 
 instance Semigroup (Module ann) where
   (Module a b c d e f g) <> (Module a' b' c' d' e' f' g') =

@@ -23,6 +23,7 @@ import qualified Test.Interpreter.Repl as Repl
 import qualified Test.Modules.Check as ModuleCheck
 import qualified Test.Modules.Compile as ModuleCompile
 import qualified Test.Modules.Repl as ModuleRepl
+import qualified Test.Modules.Test as ModuleTest
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
 import qualified Test.Parser.Pattern as Pattern
 import qualified Test.Parser.Syntax as Syntax
@@ -116,3 +117,4 @@ main =
     RenderErrors.spec
     ModuleRepl.spec
     ModuleCompile.spec
+    ModuleTest.spec

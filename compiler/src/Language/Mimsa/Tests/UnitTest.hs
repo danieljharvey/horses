@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Tests.UnitTest
   ( createUnitTest,
+    resultIsBoolean,
   )
 where
 
@@ -17,6 +18,7 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Tests
+import Language.Mimsa.Types.Typechecker
 
 -- | a unit test must have type Boolean
 createUnitTest ::
@@ -39,3 +41,9 @@ createUnitTest project storeExpr testName = do
         utSuccess = UnitTestSuccess (testIsSuccess result),
         utExprHash = getStoreExpressionHash storeExpr
       }
+
+resultIsBoolean :: MonoType -> Either TypeError ()
+resultIsBoolean mt = do
+  unifies
+    mt
+    (MTPrim mempty MTBool)

@@ -18,7 +18,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Utils
 
