@@ -37,7 +37,6 @@ typecheckModules input inputModule = do
 
   liftEither $
     runCheck
-      input
       modules
       (typecheckAllModules inputModule)
 
@@ -89,7 +88,7 @@ addModuleItemToModule ::
   ModuleItem ann ->
   Actions.ActionM (Module ann)
 addModuleItemToModule input mod' modPart =
-  liftEither $ runCheck input mempty (addModulePart modPart mod')
+  liftEither $ runCheck mempty (addModulePart modPart mod')
 
 addBindingToModule ::
   Module MonoType ->

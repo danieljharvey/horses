@@ -27,7 +27,7 @@ compile' mod' =
         case M.lookup (snd $ serializeModule mod') tcMods of
           Just tcMod -> compile tcMods tcMod
           Nothing -> error "Could not find the module we just typechecked"
-   in fromRight $ runCheck (prettyPrint mod') mempty action
+   in fromRight $ runCheck mempty action
 
 spec :: Spec
 spec = do

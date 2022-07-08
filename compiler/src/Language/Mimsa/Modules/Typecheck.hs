@@ -16,9 +16,11 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.Monad
+import Language.Mimsa.Printer
 import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.DataTypes
@@ -53,7 +55,7 @@ typecheckAllModules rootModule = do
         ( \(mod', deps) ->
             Build.Plan
               { Build.jbDeps = deps,
-                Build.jbInput = mod'
+                Build.jbInput = (prettyPrint mod', mod')
               }
         )
           <$> inputWithDeps
@@ -65,14 +67,15 @@ typecheckAllModules rootModule = do
           }
   -- go!
   Build.stOutputs
-    <$> Build.doJobs typecheckAllModuleDefs state
+    <$> Build.doJobs (\deps (input, mod) -> typecheckAllModuleDefs deps input mod) state
 
 --- typecheck a single module
 typecheckAllModuleDefs ::
   Map ModuleHash (Module (Type Annotation)) ->
+  Text ->
   Module Annotation ->
   CheckM (Module (Type Annotation))
-typecheckAllModuleDefs typecheckedDeps inputModule = do
+typecheckAllModuleDefs typecheckedDeps input inputModule = do
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
   inputWithDeps <- getValueDependencies inputModule
@@ -95,7 +98,7 @@ typecheckAllModuleDefs typecheckedDeps inputModule = do
   -- go!
   typecheckedDefs <-
     Build.stOutputs
-      <$> Build.doJobs (typecheckOneDef inputModule typecheckedDeps) state
+      <$> Build.doJobs (typecheckOneDef input inputModule typecheckedDeps) state
 
   -- replace input module with typechecked versions
   pure $
@@ -247,19 +250,20 @@ namesOnly =
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::
+  Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier (DepType MonoType) ->
   (DefIdentifier, DepType Annotation) ->
   CheckM (DepType MonoType)
-typecheckOneDef inputModule typecheckedModules deps (def, dep) =
+typecheckOneDef input inputModule typecheckedModules deps (def, dep) =
   case dep of
     DTExpr expr ->
       DTExpr
-        <$> typecheckOneExprDef inputModule typecheckedModules (filterExprs deps) (def, expr)
+        <$> typecheckOneExprDef input inputModule typecheckedModules (filterExprs deps) (def, expr)
     DTData dt ->
       DTData
-        <$> typecheckOneTypeDef inputModule typecheckedModules (filterDataTypes deps) (def, dt)
+        <$> typecheckOneTypeDef input inputModule typecheckedModules (filterDataTypes deps) (def, dt)
 
 _keyDeps ::
   Module Annotation ->
@@ -275,14 +279,13 @@ _keyDeps _mod =
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"
 typecheckOneTypeDef ::
+  Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier DataType ->
   (DefIdentifier, DataType) ->
   CheckM DataType
-typecheckOneTypeDef _inputModule _typecheckedModules _typeDeps (def, dt) = do
-  input <- getStoredInput
-
+typecheckOneTypeDef input _inputModule _typecheckedModules _typeDeps (def, dt) = do
   -- ideally we'd attach annotations to the DefIdentifiers or something, so we
   -- can show the original code in errors
   let ann = mempty
@@ -375,14 +378,14 @@ getConstructorUses other = withMonoid getConstructorUses other
 
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::
+  Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier (Expr Name MonoType) ->
   (DefIdentifier, Expr Name Annotation) ->
   CheckM (Expr Name MonoType)
-typecheckOneExprDef inputModule typecheckedModules deps (def, expr) = do
+typecheckOneExprDef input inputModule typecheckedModules deps (def, expr) = do
   let typeMap = getTypeFromAnn <$> filterNameDefs deps
-  input <- getStoredInput
 
   -- number the vars
   numberedExpr <-

@@ -6,7 +6,6 @@ module Language.Mimsa.Modules.Monad
   ( CheckM (..),
     CheckEnv (..),
     runCheck,
-    getStoredInput,
     lookupModule,
     lookupModuleDep,
     lookupModuleType,
@@ -35,8 +34,7 @@ import Language.Mimsa.Types.Typechecker
 
 -- this is where we keep all the modules we need to do things
 data CheckEnv ann = CheckEnv
-  { ceModules :: Map ModuleHash (Module ann),
-    ceInput :: Text
+  { ceModules :: Map ModuleHash (Module ann)
   }
 
 newtype CheckM a = CheckM
@@ -55,18 +53,14 @@ newtype CheckM a = CheckM
       MonadReader (CheckEnv Annotation)
     )
 
-runCheck :: Text -> Map ModuleHash (Module Annotation) -> CheckM a -> Either (Error Annotation) a
-runCheck input modules comp =
+runCheck :: Map ModuleHash (Module Annotation) -> CheckM a -> Either (Error Annotation) a
+runCheck modules comp =
   runReader (runExceptT (runCheckM comp)) initialEnv
   where
     initialEnv =
       CheckEnv
-        { ceModules = modules,
-          ceInput = input
+        { ceModules = modules
         }
-
-getStoredInput :: CheckM Text
-getStoredInput = asks ceInput
 
 lookupModule :: (MonadError (Error Annotation) m) => Map ModuleHash (Module ann) -> ModuleHash -> m (Module ann)
 lookupModule mods modHash = do

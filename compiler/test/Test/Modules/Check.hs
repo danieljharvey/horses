@@ -40,7 +40,7 @@ exprAndTypeFromParts' ::
   Expr Name ann ->
   Either (Error Annotation) (Expr Name ann)
 exprAndTypeFromParts' parts expr =
-  runCheck "" testModules (exprAndTypeFromParts (DIName "test") parts expr)
+  runCheck testModules (exprAndTypeFromParts (DIName "test") parts expr)
 
 testModules :: Map ModuleHash (Module Annotation)
 testModules = M.singleton preludeHash prelude

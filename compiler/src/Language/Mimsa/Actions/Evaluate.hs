@@ -212,4 +212,4 @@ compileModule ::
 compileModule typecheckedModules input inputModule = do
   modules <- prjModuleStore <$> Actions.getProject
 
-  liftEither $ runCheck input modules (compile typecheckedModules inputModule)
+  liftEither $ runCheck modules (compile typecheckedModules inputModule)

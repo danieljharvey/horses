@@ -14,7 +14,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 
 parseModule :: Text -> Either (Error Annotation) (Module Annotation)
-parseModule input = runCheck input mempty (parseModule' input)
+parseModule input = runCheck mempty (parseModule' input)
 
 parseModule' :: Text -> CheckM (Module Annotation)
 parseModule' input = do

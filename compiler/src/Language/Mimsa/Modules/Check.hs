@@ -4,7 +4,6 @@
 
 module Language.Mimsa.Modules.Check (checkModule, getModuleItemIdentifier, lookupModuleDefType) where
 
-import Control.Monad.Except
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -25,7 +24,7 @@ checkModule ::
   Text ->
   Map ModuleHash (Module Annotation) ->
   Either (Error Annotation) (Module (Type Annotation), MonoType)
-checkModule input modules = runCheck input modules (checkModule' input)
+checkModule input modules = runCheck modules (checkModule' input)
 
 -- | This is where we load a file and check that it is "OK" as such
 --  so far this entails:
@@ -54,9 +53,8 @@ checkModule' input = do
 
   let (_, rootModuleHash) = serializeModule properMod
 
-  case M.lookup rootModuleHash tcMods of
-    Nothing -> throwError (ModuleErr $ MissingModule rootModuleHash)
-    Just tcMod -> pure (tcMod, getModuleType tcMod)
+  tcMod <- lookupModule tcMods rootModuleHash
+  pure (tcMod, getModuleType tcMod)
 
 -- return type of module as a MTRecord of dep -> monotype
 -- TODO: module should probably be it's own MTModule or something
