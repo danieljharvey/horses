@@ -20,12 +20,11 @@ import ReplNew.ReplM
 doAddBinding ::
   Project Annotation ->
   ModuleItem Annotation ->
-  Text ->
   ReplM (Error Annotation) ()
-doAddBinding project modItem input = do
+doAddBinding project modItem = do
   oldModule <- getStoredModule
   -- add the new binding
-  (_prj, newModule) <- toReplM project (Actions.addBindingToModule oldModule modItem input)
+  (_prj, newModule) <- toReplM project (Actions.addBindingToModule mempty oldModule modItem)
   -- store the new module in Repl state
   setStoredModule newModule
 

@@ -7,7 +7,7 @@ module Test.Modules.Check
 where
 
 import Control.Monad.IO.Class
-import Data.Either
+import Data.Either (isLeft, isRight)
 import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -15,9 +15,9 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Language.Mimsa.Modules.Check
+import qualified Language.Mimsa.Actions.Modules.Check as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.FromParts
-import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -39,38 +39,48 @@ exprAndTypeFromParts' ::
   [DefPart ann] ->
   Expr Name ann ->
   Either (Error Annotation) (Expr Name ann)
-exprAndTypeFromParts' parts expr =
-  runCheck testModules (exprAndTypeFromParts (DIName "test") parts expr)
+exprAndTypeFromParts' =
+  exprAndTypeFromParts (DIName "test")
 
 testModules :: Map ModuleHash (Module Annotation)
 testModules = M.singleton preludeHash prelude
 
 checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
-  (a, tyA) <- checkModule t testModules
-  (b, tyB) <- checkModule (prettyPrint a) testModules
-  if (a $> ()) /= (b $> ())
-    then
-      error $
-        "Does not match!\n\n"
-          <> show a
-          <> "\n\n"
-          <> show b
-          <> "\n\nWhen re-parsing\n\n"
-          <> show (prettyPrint a)
-    else
-      if (tyA $> ()) == (tyB $> ())
-        then pure (a $> mempty)
-        else
-          error $
-            "Types are different:\n\n"
-              <> T.unpack (prettyPrint tyA)
-              <> "\n\n"
-              <> T.unpack (prettyPrint tyB)
+  let action = do
+        (a, tyA) <- Actions.checkModule testModules t
+        (b, tyB) <- Actions.checkModule testModules (prettyPrint a)
+        if (a $> ()) /= (b $> ())
+          then
+            error $
+              "Does not match!\n\n"
+                <> show a
+                <> "\n\n"
+                <> show b
+                <> "\n\nWhen re-parsing\n\n"
+                <> show (prettyPrint a)
+          else
+            if (tyA $> ()) == (tyB $> ())
+              then pure (a $> mempty)
+              else
+                error $
+                  "Types are different:\n\n"
+                    <> T.unpack (prettyPrint tyA)
+                    <> "\n\n"
+                    <> T.unpack (prettyPrint tyB)
+  getResult <$> Actions.run mempty action
+
+getResult :: (a, b, c) -> c
+getResult (_, _, c) = c
 
 checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
 checkModuleType t =
-  (\(a, mt) -> (a, mt $> mempty)) <$> checkModule t testModules
+  getResult
+    <$> Actions.run
+      mempty
+      ( (\(a, mt) -> (a, mt $> mempty))
+          <$> Actions.checkModule testModules t
+      )
 
 spec :: Spec
 spec = do

@@ -7,7 +7,6 @@
 module Language.Mimsa.Modules.Typecheck (typecheckAllModules) where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Bifunctor
 import Data.Coerce
 import Data.Foldable
@@ -19,6 +18,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.Dependencies
+import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Printer
 import Language.Mimsa.TypeUtils
@@ -43,19 +43,27 @@ import Language.Mimsa.Utils
 -- 2. setup builder input
 -- 3. do it!
 typecheckAllModules ::
+  (MonadError (Error Annotation) m) =>
+  Map ModuleHash (Module Annotation) ->
+  Text ->
   Module Annotation ->
-  CheckM (Map ModuleHash (Module (Type Annotation)))
-typecheckAllModules rootModule = do
-  modules <- asks ceModules
+  m (Map ModuleHash (Module (Type Annotation)))
+typecheckAllModules modules rootModuleInput rootModule = do
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
   inputWithDeps <- getModuleDeps modules rootModule
+
+  let (_, rootModuleHash) = serializeModule rootModule
 
   let stInputs =
         ( \(mod', deps) ->
             Build.Plan
               { Build.jbDeps = deps,
-                Build.jbInput = (prettyPrint mod', mod')
+                Build.jbInput =
+                  let (_, moduleHash) = serializeModule mod'
+                   in if moduleHash == rootModuleHash
+                        then (rootModuleInput, mod')
+                        else (prettyPrint mod', mod')
               }
         )
           <$> inputWithDeps
@@ -67,14 +75,19 @@ typecheckAllModules rootModule = do
           }
   -- go!
   Build.stOutputs
-    <$> Build.doJobs (\deps (input, mod) -> typecheckAllModuleDefs deps input mod) state
+    <$> Build.doJobs
+      ( \deps (input, mod') ->
+          typecheckAllModuleDefs deps input mod'
+      )
+      state
 
 --- typecheck a single module
 typecheckAllModuleDefs ::
+  (MonadError (Error Annotation) m) =>
   Map ModuleHash (Module (Type Annotation)) ->
   Text ->
   Module Annotation ->
-  CheckM (Module (Type Annotation))
+  m (Module (Type Annotation))
 typecheckAllModuleDefs typecheckedDeps input inputModule = do
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
@@ -193,10 +206,11 @@ filterInfixDefs =
     )
 
 createTypecheckEnvironment ::
+  (MonadError (Error Annotation) m) =>
   Module Annotation ->
   Map DefIdentifier (Expr Name MonoType) ->
   Map ModuleHash (Module (Type Annotation)) ->
-  CheckM Environment
+  m Environment
 createTypecheckEnvironment inputModule deps typecheckedModules = do
   -- these need to be typechecked
   importedDeps <-
@@ -250,12 +264,13 @@ namesOnly =
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::
+  (MonadError (Error Annotation) m) =>
   Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier (DepType MonoType) ->
   (DefIdentifier, DepType Annotation) ->
-  CheckM (DepType MonoType)
+  m (DepType MonoType)
 typecheckOneDef input inputModule typecheckedModules deps (def, dep) =
   case dep of
     DTExpr expr ->
@@ -279,12 +294,13 @@ _keyDeps _mod =
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"
 typecheckOneTypeDef ::
+  (MonadError (Error Annotation) m) =>
   Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier DataType ->
   (DefIdentifier, DataType) ->
-  CheckM DataType
+  m DataType
 typecheckOneTypeDef input _inputModule _typecheckedModules _typeDeps (def, dt) = do
   -- ideally we'd attach annotations to the DefIdentifiers or something, so we
   -- can show the original code in errors
@@ -378,12 +394,13 @@ getConstructorUses other = withMonoid getConstructorUses other
 
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::
+  (MonadError (Error Annotation) m) =>
   Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier (Expr Name MonoType) ->
   (DefIdentifier, Expr Name Annotation) ->
-  CheckM (Expr Name MonoType)
+  m (Expr Name MonoType)
 typecheckOneExprDef input inputModule typecheckedModules deps (def, expr) = do
   let typeMap = getTypeFromAnn <$> filterNameDefs deps
 

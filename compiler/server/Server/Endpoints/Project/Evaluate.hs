@@ -114,7 +114,7 @@ evaluateModuleExpression mimsaEnv (EvaluateModuleRequest input hash) =
     let action = do
           expr <- Actions.parseExpr input
           (mt, exprResult, _newModule) <-
-            Actions.evaluateModule input expr mempty
+            Actions.evaluateModule expr mempty
           let se = StoreExpression exprResult mempty mempty mempty
           pure $
             EvaluateModuleResponse

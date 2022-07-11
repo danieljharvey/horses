@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Actions.RunModuleTests (runModuleTests) where
+module Language.Mimsa.Actions.Modules.RunTests (runModuleTests) where
 
 import Control.Monad.Except
 import Data.Bifunctor
@@ -50,7 +50,7 @@ runUnitTest :: Module Annotation -> Expr Name MonoType -> Actions.ActionM Module
 runUnitTest mod' testExpr = do
   _ <- unifiesWithBoolean testExpr
   let untypedExpr = getAnnotationForType <$> testExpr
-  (_, result, _) <- Actions.evaluateModule (prettyPrint untypedExpr) untypedExpr mod'
+  (_, result, _) <- Actions.evaluateModule untypedExpr mod'
   pure $
     if testIsSuccess result
       then ModuleTestPassed

@@ -10,7 +10,8 @@ import Data.Either
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Language.Mimsa.Modules.Check
+import qualified Language.Mimsa.Actions.Modules.Check as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
@@ -40,8 +41,8 @@ checkFile filePath = do
   -- use project if we're in one, if not, stdlib
   let project = fromRight stdlib maybeProject
   -- check module
-  case checkModule fileContents (prjModuleStore project) of
-    Right (mod', _) -> do
+  case Actions.run project (Actions.checkModule (prjModuleStore project) fileContents) of
+    Right (_, _, (mod', _)) -> do
       liftIO $ T.putStrLn $ prettyPrint mod'
       -- format and rewrite
       -- liftIO $ T.writeFile (T.unpack filePath) (prettyPrint mod')

@@ -20,10 +20,9 @@ import ReplNew.Types
 
 doReplAction ::
   Project Annotation ->
-  Text ->
   ReplAction Annotation ->
   ReplM (Error Annotation) (Project Annotation)
-doReplAction prj input action =
+doReplAction prj action =
   case action of
     Help -> do
       doHelp
@@ -33,11 +32,11 @@ doReplAction prj input action =
     ListBindings ->
       catchMimsaError prj (doListBindings $> prj)
     (Evaluate expr) ->
-      catchMimsaError prj (doEvaluate prj input expr $> prj)
+      catchMimsaError prj (doEvaluate prj expr $> prj)
     (AddBinding modItem) ->
       catchMimsaError
         prj
-        ( doAddBinding prj modItem input $> prj
+        ( doAddBinding prj modItem $> prj
         )
 
 ----------

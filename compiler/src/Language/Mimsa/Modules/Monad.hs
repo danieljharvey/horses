@@ -1,12 +1,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
 module Language.Mimsa.Modules.Monad
-  ( CheckM (..),
-    CheckEnv (..),
-    runCheck,
-    lookupModule,
+  ( lookupModule,
     lookupModuleDep,
     lookupModuleType,
     errorIfExpressionAlreadyDefined,
@@ -17,13 +13,11 @@ module Language.Mimsa.Modules.Monad
 where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Coerce
 import Data.Foldable
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Data.Text (Text)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -32,47 +26,22 @@ import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Typechecker
 
--- this is where we keep all the modules we need to do things
-data CheckEnv ann = CheckEnv
-  { ceModules :: Map ModuleHash (Module ann)
-  }
-
-newtype CheckM a = CheckM
-  { runCheckM ::
-      ExceptT
-        (Error Annotation)
-        ( Reader (CheckEnv Annotation)
-        )
-        a
-  }
-  deriving newtype
-    ( Functor,
-      Applicative,
-      Monad,
-      MonadError (Error Annotation),
-      MonadReader (CheckEnv Annotation)
-    )
-
-runCheck :: Map ModuleHash (Module Annotation) -> CheckM a -> Either (Error Annotation) a
-runCheck modules comp =
-  runReader (runExceptT (runCheckM comp)) initialEnv
-  where
-    initialEnv =
-      CheckEnv
-        { ceModules = modules
-        }
-
-lookupModule :: (MonadError (Error Annotation) m) => Map ModuleHash (Module ann) -> ModuleHash -> m (Module ann)
+lookupModule ::
+  (MonadError (Error Annotation) m) =>
+  Map ModuleHash (Module ann) ->
+  ModuleHash ->
+  m (Module ann)
 lookupModule mods modHash = do
   case M.lookup modHash mods of
     Just foundModule -> pure foundModule
     _ -> throwError (ModuleErr (MissingModule modHash))
 
 lookupModuleDep ::
+  (MonadError (Error Annotation) m) =>
   Map ModuleHash (Module (Type Annotation)) ->
   DefIdentifier ->
   ModuleHash ->
-  CheckM (Expr Name (Type Annotation))
+  m (Expr Name (Type Annotation))
 lookupModuleDep typecheckedModules def modHash = do
   case M.lookup modHash typecheckedModules of
     Just mod' ->
@@ -82,10 +51,11 @@ lookupModuleDep typecheckedModules def modHash = do
     _ -> throwError (ModuleErr (MissingModule modHash))
 
 lookupModuleType ::
+  (MonadError (Error Annotation) m) =>
   Map ModuleHash (Module (Type Annotation)) ->
   TypeName ->
   ModuleHash ->
-  CheckM DataType
+  m DataType
 lookupModuleType typecheckedModules typeName modHash = do
   case M.lookup modHash typecheckedModules of
     Just mod' ->
@@ -94,40 +64,66 @@ lookupModuleType typecheckedModules typeName modHash = do
         _ -> throwError (ModuleErr (MissingModuleTypeDep typeName modHash))
     _ -> throwError (ModuleErr (MissingModule modHash))
 
-errorIfExpressionAlreadyDefined :: Module ann -> DefIdentifier -> CheckM ()
+errorIfExpressionAlreadyDefined ::
+  (MonadError (Error Annotation) m) =>
+  Module ann ->
+  DefIdentifier ->
+  m ()
 errorIfExpressionAlreadyDefined mod' def =
   if M.member def (moExpressions mod')
     || M.member def (moExpressionImports mod')
     then throwError (ModuleErr $ DuplicateDefinition def)
     else pure ()
 
-checkDataType :: Module ann -> DataType -> CheckM ()
+checkDataType ::
+  (MonadError (Error Annotation) m) =>
+  Module ann ->
+  DataType ->
+  m ()
 checkDataType mod' (DataType typeName _ constructors) = do
   errorIfTypeAlreadyDefined mod' (coerce typeName)
   traverse_ (errorIfConstructorAlreadyDefined mod') (M.keys constructors)
 
-errorIfTypeAlreadyDefined :: Module ann -> TypeName -> CheckM ()
+errorIfTypeAlreadyDefined ::
+  (MonadError (Error Annotation) m) =>
+  Module ann ->
+  TypeName ->
+  m ()
 errorIfTypeAlreadyDefined mod' typeName =
   if M.member typeName (moDataTypes mod')
     || M.member typeName (moDataTypeImports mod')
     then throwError (ModuleErr $ DuplicateTypeName typeName)
     else pure ()
 
-errorIfConstructorAlreadyDefined :: Module ann -> TyCon -> CheckM ()
+errorIfConstructorAlreadyDefined ::
+  (MonadError (Error Annotation) m) =>
+  Module ann ->
+  TyCon ->
+  m ()
 errorIfConstructorAlreadyDefined mod' tyCon =
   let allCons = mconcat (M.keysSet . dtConstructors <$> M.elems (moDataTypes mod'))
    in if S.member tyCon allCons
         then throwError (ModuleErr $ DuplicateConstructor tyCon)
         else pure ()
 
-errorIfImportAlreadyDefined :: Module ann -> DefIdentifier -> ModuleHash -> CheckM ()
+errorIfImportAlreadyDefined ::
+  (MonadError (Error Annotation) m) =>
+  Module ann ->
+  DefIdentifier ->
+  ModuleHash ->
+  m ()
 errorIfImportAlreadyDefined mod' def moduleHash =
   if M.member def (moExpressions mod')
     || M.member def (moExpressionImports mod')
     then throwError (ModuleErr $ DefinitionConflictsWithImport def moduleHash)
     else pure ()
 
-errorIfTypeImportAlreadyDefined :: Module ann -> TypeName -> ModuleHash -> CheckM ()
+errorIfTypeImportAlreadyDefined ::
+  (MonadError (Error Annotation) m) =>
+  Module ann ->
+  TypeName ->
+  ModuleHash ->
+  m ()
 errorIfTypeImportAlreadyDefined mod' typeName moduleHash =
   if M.member typeName (moDataTypes mod')
     || M.member typeName (moDataTypeImports mod')

@@ -7,8 +7,8 @@
 module Language.Mimsa.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Coerce
+import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Modules.Monad
@@ -16,23 +16,30 @@ import Language.Mimsa.Parser.Module
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.Module
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
 moduleFromModuleParts ::
-  (Monoid ann) =>
+  ( MonadError (Error Annotation) m,
+    Monoid ann
+  ) =>
+  Map ModuleHash (Module Annotation) ->
   [ModuleItem ann] ->
-  CheckM (Module ann)
-moduleFromModuleParts parts =
+  m (Module ann)
+moduleFromModuleParts modules parts =
   let addPart part output = do
         mod' <- output
-        addModulePart part mod'
+        addModulePart modules part mod'
    in foldr addPart (pure mempty) parts
 
-addModulePart :: Monoid ann => ModuleItem ann -> Module ann -> CheckM (Module ann)
-addModulePart part mod' =
+addModulePart ::
+  (MonadError (Error Annotation) m, Monoid ann) =>
+  Map ModuleHash (Module Annotation) ->
+  ModuleItem ann ->
+  Module ann ->
+  m (Module ann)
+addModulePart modules part mod' =
   case part of
     ModuleExpression name bits expr -> do
       errorIfExpressionAlreadyDefined mod' (DIName name)
@@ -74,7 +81,7 @@ addModulePart part mod' =
           }
     ModuleExport modItem -> do
       -- get whatever is inside
-      innerModule <- addModulePart modItem mod'
+      innerModule <- addModulePart modules modItem mod'
       -- get the keys, add them to exports
       let defExports = case modItem of
             ModuleExpression name _ _ -> S.singleton (DIName name)
@@ -93,7 +100,6 @@ addModulePart part mod' =
     ModuleImport (ImportNamedFromHash mHash mName) ->
       pure $ mod' {moNamedImports = M.singleton mName mHash <> moNamedImports mod'}
     ModuleImport (ImportAllFromHash mHash) -> do
-      modules <- asks ceModules
       importMod <- lookupModule modules mHash
       let defImports =
             M.fromList
@@ -163,11 +169,11 @@ includesReturnType =
 -- 2) if so - ensure we have a full set (error if not) and create annotation
 -- 3) if not, just return expr
 exprAndTypeFromParts ::
-  (Monoid ann) =>
+  (MonadError (Error Annotation) m, Monoid ann) =>
   DefIdentifier ->
   [DefPart ann] ->
   Expr Name ann ->
-  CheckM (Expr Name ann)
+  m (Expr Name ann)
 exprAndTypeFromParts def parts expr = do
   let expr' =
         foldr

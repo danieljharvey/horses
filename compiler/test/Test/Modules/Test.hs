@@ -11,9 +11,9 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Modules.Check as Actions
+import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.RunModuleTests as Actions
-import Language.Mimsa.Modules.Check
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Stdlib
@@ -28,8 +28,9 @@ joinLines = T.intercalate "\n"
 
 runTests :: Text -> Either (Error Annotation) (Map TestName ModuleTestResult)
 runTests t = do
-  (modA, _tyA) <- checkModule t (prjModuleStore stdlib)
-  let action = Actions.runModuleTests modA
+  let action = do
+        (modA, _tyA) <- Actions.checkModule (prjModuleStore stdlib) t
+        Actions.runModuleTests modA
   (_, _, a) <- Actions.run stdlib action
   pure a
 

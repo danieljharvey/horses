@@ -52,7 +52,7 @@ spec = do
         let action = do
               -- add a definition to an empty module
               let expr = unsafeParseModuleItem "def dog = True"
-              newMod <- Actions.addBindingToModule mempty expr ""
+              newMod <- Actions.addBindingToModule mempty mempty expr
               -- evaluate using that module
-              Actions.evaluateModule "dog" (unsafeParseExpr' "dog") (getAnnotationForType <$> newMod)
+              Actions.evaluateModule (unsafeParseExpr' "dog") (getAnnotationForType <$> newMod)
         Actions.run testStdlib action `shouldSatisfy` isRight

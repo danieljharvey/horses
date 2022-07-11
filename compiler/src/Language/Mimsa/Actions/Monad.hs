@@ -61,7 +61,7 @@ run ::
   Either (Error Annotation) (Project Annotation, [ActionOutcome], a)
 run project action =
   let (result, ActionState newProject _ outcomes) =
-        runState (runExceptT action) (emptyState project)
+        runState (runExceptT (runActionM action)) (emptyState project)
    in (,,) newProject outcomes <$> result
 
 getProject :: ActionM (Project Annotation)

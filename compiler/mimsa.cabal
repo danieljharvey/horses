@@ -41,10 +41,11 @@ library
       Language.Mimsa.Actions.Helpers.Parse
       Language.Mimsa.Actions.Helpers.UpdateTests
       Language.Mimsa.Actions.Interpret
+      Language.Mimsa.Actions.Modules.Check
+      Language.Mimsa.Actions.Modules.RunTests
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding
-      Language.Mimsa.Actions.RunModuleTests
       Language.Mimsa.Actions.Typecheck
       Language.Mimsa.Actions.Types
       Language.Mimsa.Actions.Upgrade

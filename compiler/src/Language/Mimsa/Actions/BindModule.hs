@@ -16,7 +16,6 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -35,10 +34,7 @@ typecheckModules ::
 typecheckModules input inputModule = do
   modules <- prjModuleStore <$> Actions.getProject
 
-  liftEither $
-    runCheck
-      modules
-      (typecheckAllModules inputModule)
+  typecheckAllModules modules input inputModule
 
 typecheckModule :: Text -> Module Annotation -> Actions.ActionM (Module MonoType)
 typecheckModule input inputModule = do
@@ -80,24 +76,14 @@ bindModule inputModule moduleName input = do
   -- return stuff
   pure (snd (serializeModule typecheckedModule), typecheckedModule)
 
--- | probably replace with a generic lift-checkM function but whatevers
-addModuleItemToModule ::
-  (Monoid ann) =>
-  Text ->
-  Module ann ->
-  ModuleItem ann ->
-  Actions.ActionM (Module ann)
-addModuleItemToModule input mod' modPart =
-  liftEither $ runCheck mempty (addModulePart modPart mod')
-
 addBindingToModule ::
+  Map ModuleHash (Module Annotation) ->
   Module MonoType ->
   ModuleItem Annotation ->
-  Text ->
   Actions.ActionM (Module MonoType)
-addBindingToModule mod' modItem input = do
+addBindingToModule modules mod' modItem = do
   -- add our new definition
-  newModule <- addModuleItemToModule input (getAnnotationForType <$> mod') modItem
+  newModule <- addModulePart modules modItem (getAnnotationForType <$> mod')
   -- check everything still makes sense
   typecheckedModule <- typecheckModule (prettyPrint newModule) newModule
   -- output what's happened

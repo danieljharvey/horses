@@ -10,7 +10,6 @@ where
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Foldable (traverse_)
-import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromJust)
 import Data.Set (Set)
@@ -26,7 +25,6 @@ import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -37,7 +35,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Modules.Entity
-import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
@@ -145,11 +142,10 @@ importsFromEntities uses = do
 -- 6. compile into store expressions
 -- 6. interpret store expressions as normal
 evaluateModule ::
-  Text ->
   Expr Name Annotation ->
   Module Annotation ->
   Actions.ActionM (MonoType, Expr Name Annotation, Module Annotation)
-evaluateModule input expr localModule = do
+evaluateModule expr localModule = do
   -- work out implied imports
   moduleImports <- importsFromEntities (extractUses expr)
 
@@ -173,7 +169,7 @@ evaluateModule input expr localModule = do
     _ -> throwError (ModuleErr $ MissingModule rootModuleHash)
 
   -- compile to store expressions
-  compiled <- compileModule typecheckedModules input typecheckedModule
+  compiled <- compile typecheckedModules typecheckedModule
 
   -- find the root StoreExpression by name
   rootStoreExpr <- case M.lookup evalId (cmExprs compiled) >>= flip M.lookup (getStore $ cmStore compiled) of
@@ -202,14 +198,3 @@ evaluateModule input expr localModule = do
     )
 
   pure (exprType, evaluatedExpression, newModule)
-
--- turn the module back into a bunch of StoreExpressions for interpreting etc
-compileModule ::
-  Map ModuleHash (Module (Type Annotation)) ->
-  Text ->
-  Module (Type Annotation) ->
-  Actions.ActionM (CompiledModule Annotation)
-compileModule typecheckedModules input inputModule = do
-  modules <- prjModuleStore <$> Actions.getProject
-
-  liftEither $ runCheck modules (compile typecheckedModules inputModule)

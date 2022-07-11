@@ -38,7 +38,7 @@ eval input = do
   let action = do
         expr <- Actions.parseExpr input
         (mt, interpretedExpr, _) <-
-          Actions.evaluateModule input expr mempty
+          Actions.evaluateModule expr mempty
         pure (mt, interpretedExpr)
   case Actions.run stdlib action of
     Right (_, _, (mt, endExpr)) -> do

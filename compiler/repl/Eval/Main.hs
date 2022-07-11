@@ -37,7 +37,7 @@ evalInput input = do
   let project = fromRight stdlib maybeProject
   let action = do
         expr <- Actions.parseExpr input
-        Actions.evaluateModule input expr mempty
+        Actions.evaluateModule expr mempty
   result <-
     (Right <$> toReplM project action)
       `catchError` (pure . Left)

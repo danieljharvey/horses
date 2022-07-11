@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Language.Mimsa.Actions.Types
-  ( ActionM,
+  ( ActionM (..),
     SavePath (..),
     SaveContents (..),
     SaveFilename (..),
@@ -53,7 +53,17 @@ data ActionState = ActionState
   }
   deriving stock (Eq, Ord, Show)
 
-type ActionM =
-  ExceptT
-    (Error Annotation)
-    (State ActionState)
+newtype ActionM a = ActionM
+  { runActionM ::
+      ExceptT
+        (Error Annotation)
+        (State ActionState)
+        a
+  }
+  deriving newtype
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadError (Error Annotation),
+      MonadState ActionState
+    )
