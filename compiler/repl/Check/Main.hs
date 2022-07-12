@@ -42,8 +42,9 @@ checkFile filePath = do
   let project = fromRight stdlib maybeProject
   -- check module
   case Actions.run project (Actions.checkModule (prjModuleStore project) fileContents) of
-    Right (_, _, (mod', _)) -> do
+    Right (_, _, (mod', testResults)) -> do
       liftIO $ T.putStrLn $ prettyPrint mod'
+      liftIO $ T.putStrLn $ prettyPrint testResults -- should failing tests means a non-zero exit code?
       -- format and rewrite
       -- liftIO $ T.writeFile (T.unpack filePath) (prettyPrint mod')
       pure ExitSuccess

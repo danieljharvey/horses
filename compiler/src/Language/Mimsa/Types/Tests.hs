@@ -14,10 +14,14 @@ module Language.Mimsa.Types.Tests
     PropertyTestResult (..),
     TestResult (..),
     ModuleTestResult (..),
+    ModuleTestResults (..),
   )
 where
 
 import qualified Data.Aeson as JSON
+import Data.Either (partitionEithers)
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.OpenApi
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -28,6 +32,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
+import Prettyprinter
 
 newtype TestName = TestName Text
   deriving newtype
@@ -119,7 +124,37 @@ instance Printer (TestResult ann) where
             "\nFailing inputs:\n" <> T.intercalate "\n" ((<>) " - " . prettyPrint <$> S.toList es)
      in tickOrCross <> " " <> prettyPrint pt <> failures
 
+newtype ModuleTestResults = ModuleTestResults {getModuleTests :: Map TestName ModuleTestResult}
+  deriving newtype (Eq, Ord, Show)
+
+instance Printer ModuleTestResults where
+  prettyDoc (ModuleTestResults results) | M.null results = ""
+  prettyDoc results =
+    case partitionModuleTestResults results of
+      ([], successes) -> "👍" <+> pretty (length successes) <+> "tests passed"
+      (fails, successes) ->
+        let printFail testName = "💩" <+> prettyDoc testName <> line
+            printSuccess testName = "👍" <+> prettyDoc testName <> line
+            successCount = pretty (length successes) <> "\\" <> pretty (length successes + length fails) <+> "tests passed"
+         in successCount <> line <> foldMap printFail fails <> foldMap printSuccess successes
+
+-- | split the test results into a list of successes and failures
+-- when we come to include property tests this will need to show
+-- failed cases too
+partitionModuleTestResults :: ModuleTestResults -> ([TestName], [TestName])
+partitionModuleTestResults (ModuleTestResults results) =
+  partitionEithers $
+    ( \(testName, result) -> case result of
+        ModuleTestPassed -> Right testName
+        ModuleTestFailed -> Left testName
+    )
+      <$> M.toList results
+
 data ModuleTestResult
   = ModuleTestPassed
   | ModuleTestFailed
   deriving stock (Eq, Ord, Show)
+
+instance Printer ModuleTestResult where
+  prettyPrint ModuleTestPassed = "+"
+  prettyPrint ModuleTestFailed = "-"

@@ -24,7 +24,8 @@ doAddBinding ::
 doAddBinding project modItem = do
   oldModule <- getStoredModule
   -- add the new binding
-  (_prj, newModule) <- toReplM project (Actions.addBindingToModule mempty oldModule modItem)
+  (_prj, (newModule, testResults)) <- toReplM project (Actions.addBindingToModule mempty oldModule modItem)
+
   -- store the new module in Repl state
   setStoredModule newModule
 

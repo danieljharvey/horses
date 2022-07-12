@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Types.Modules.DefIdentifier
   ( DefIdentifier (..),
@@ -32,4 +33,4 @@ instance Printer DefIdentifier where
   prettyPrint (DIName name) = prettyPrint name
   prettyPrint (DIInfix infixOp) = prettyPrint infixOp
   prettyPrint (DIType typeName) = prettyPrint typeName
-  prettyPrint (DITest testName) = prettyPrint testName
+  prettyPrint (DITest testName) = "\"" <> prettyPrint testName <> "\""

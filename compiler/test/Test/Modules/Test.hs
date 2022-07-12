@@ -6,7 +6,6 @@ module Test.Modules.Test
 where
 
 import Data.Either (isLeft)
-import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Text (Text)
@@ -26,7 +25,7 @@ import Test.Hspec
 joinLines :: [Text] -> Text
 joinLines = T.intercalate "\n"
 
-runTests :: Text -> Either (Error Annotation) (Map TestName ModuleTestResult)
+runTests :: Text -> Either (Error Annotation) ModuleTestResults
 runTests t = do
   let action = do
         (modA, _tyA) <- Actions.checkModule (prjModuleStore stdlib) t
@@ -40,12 +39,12 @@ spec = do
     it "Trivial passing unit test" $
       runTests
         (joinLines ["test \"2 equals 2\" = 2 == 2"])
-        `shouldBe` Right (M.singleton (TestName "2 equals 2") ModuleTestPassed)
+        `shouldBe` Right (ModuleTestResults (M.singleton (TestName "2 equals 2") ModuleTestPassed))
 
     it "Trivial failing unit test" $
       runTests
         (joinLines ["test \"2 equals 3\" = 2 == 3"])
-        `shouldBe` Right (M.singleton (TestName "2 equals 3") ModuleTestFailed)
+        `shouldBe` Right (ModuleTestResults (M.singleton (TestName "2 equals 3") ModuleTestFailed))
 
     it "A test that does not typecheck with Boolean fails" $
       runTests
@@ -59,7 +58,7 @@ spec = do
               "def id a = a"
             ]
         )
-        `shouldBe` Right (M.singleton (TestName "identity 2 equals 2") ModuleTestPassed)
+        `shouldBe` Right (ModuleTestResults (M.singleton (TestName "identity 2 equals 2") ModuleTestPassed))
 
     it "Runs a trivial test that refers to a Prelude expression" $ do
       let preludeHash = fromJust (M.lookup "Prelude" (getCurrentModules $ prjModules stdlib))
@@ -69,4 +68,4 @@ spec = do
                   "import Prelude from " <> prettyPrint preludeHash
                 ]
             )
-            `shouldBe` Right (M.singleton (TestName "Prelude.id 2 equals 2") ModuleTestPassed)
+            `shouldBe` Right (ModuleTestResults (M.singleton (TestName "Prelude.id 2 equals 2") ModuleTestPassed))

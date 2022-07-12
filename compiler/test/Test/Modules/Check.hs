@@ -17,6 +17,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -48,8 +49,8 @@ testModules = M.singleton preludeHash prelude
 checkModule' :: Text -> Either (Error Annotation) (Module ())
 checkModule' t = do
   let action = do
-        (a, tyA) <- Actions.checkModule testModules t
-        (b, tyB) <- Actions.checkModule testModules (prettyPrint a)
+        (a, _) <- Actions.checkModule testModules t
+        (b, _) <- Actions.checkModule testModules (prettyPrint a)
         if (a $> ()) /= (b $> ())
           then
             error $
@@ -60,26 +61,27 @@ checkModule' t = do
                 <> "\n\nWhen re-parsing\n\n"
                 <> show (prettyPrint a)
           else
-            if (tyA $> ()) == (tyB $> ())
-              then pure (a $> mempty)
-              else
-                error $
-                  "Types are different:\n\n"
-                    <> T.unpack (prettyPrint tyA)
-                    <> "\n\n"
-                    <> T.unpack (prettyPrint tyB)
+            let tyA = getModuleType a
+                tyB = getModuleType b
+             in if (tyA $> ()) == (tyB $> ())
+                  then pure (a $> mempty)
+                  else
+                    error $
+                      "Types are different:\n\n"
+                        <> T.unpack (prettyPrint tyA)
+                        <> "\n\n"
+                        <> T.unpack (prettyPrint tyB)
   getResult <$> Actions.run mempty action
 
 getResult :: (a, b, c) -> c
 getResult (_, _, c) = c
 
-checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation), MonoType)
+checkModuleType :: Text -> Either (Error Annotation) (Module (Type Annotation))
 checkModuleType t =
-  getResult
+  fst . getResult
     <$> Actions.run
       mempty
-      ( (\(a, mt) -> (a, mt $> mempty))
-          <$> Actions.checkModule testModules t
+      ( Actions.checkModule testModules t
       )
 
 spec :: Spec
@@ -409,14 +411,14 @@ spec = do
 
       describe "imports" $ do
         it "uses fst from Prelude" $
-          snd
+          getModuleType
             <$> checkModuleType
               ( joinLines
                   [ "import * from " <> prettyPrint preludeHash,
                     "export def useFst = fst (1,2)"
                   ]
               )
-            `shouldBe` Right (MTRecord mempty $ M.singleton "useFst" (MTPrim mempty MTInt))
+            `shouldSatisfy` isRight
         it "uses fst from Prelude but it shouldn't typecheck" $
           checkModuleType
             ( joinLines

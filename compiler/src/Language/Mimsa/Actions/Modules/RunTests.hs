@@ -32,10 +32,10 @@ filterTests =
 -- we specify it to make sure we only work with non-broken modules
 runModuleTests ::
   Module (Type Annotation) ->
-  Actions.ActionM (Map TestName ModuleTestResult)
+  Actions.ActionM ModuleTestResults
 runModuleTests mod' =
   let untypedModule = getAnnotationForType <$> mod'
-   in traverse (runUnitTest untypedModule) (filterTests (moExpressions mod'))
+   in ModuleTestResults <$> traverse (runUnitTest untypedModule) (filterTests (moExpressions mod'))
 
 -- check the type of the unit test expression `Boolean`
 -- explode if not
