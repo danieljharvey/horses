@@ -14,12 +14,14 @@ where
 import qualified Data.Aeson as JSON
 import Data.OpenApi hiding (Server)
 import GHC.Generics
+import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Modules
 import Servant
 import Server.Handlers
 import Server.Helpers.ModuleData
+import Server.Helpers.TestData
 import Server.Types
 
 type ModuleAPI = GetModule
@@ -35,8 +37,9 @@ type GetModule =
     :> Capture "exprHash" ModuleHash
     :> Get '[JSON] GetModuleResponse
 
-newtype GetModuleResponse = GetModuleResponse
-  { geModuleData :: ModuleData
+data GetModuleResponse = GetModuleResponse
+  { geModuleData :: ModuleData,
+    geTestData :: TestData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -53,10 +56,12 @@ getModule mimsaEnv modHash = do
 
   -- we want to reprint and parse the module in order to get annotations
   -- to show types on them
-  let action =
-        Actions.typecheckModule input storedModule
+  let action = do
+        typedModule <- Actions.typecheckModule input storedModule
+        testResults <- Actions.runModuleTests typedModule
+        pure (typedModule, testResults)
 
-  (_, _, typedModule) <-
+  (_, _, (typedModule, testResults)) <-
     fromActionM
       mimsaEnv
       (pdHash pd)
@@ -65,3 +70,4 @@ getModule mimsaEnv modHash = do
   pure $
     GetModuleResponse
       (makeModuleData typedModule input)
+      (makeTestDataFromModule testResults)
