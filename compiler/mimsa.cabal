@@ -27,7 +27,6 @@ library
   exposed-modules:
       Language.Mimsa.Actions.AddUnitTest
       Language.Mimsa.Actions.BindExpression
-      Language.Mimsa.Actions.BindModule
       Language.Mimsa.Actions.BindType
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Evaluate
@@ -41,8 +40,11 @@ library
       Language.Mimsa.Actions.Helpers.Parse
       Language.Mimsa.Actions.Helpers.UpdateTests
       Language.Mimsa.Actions.Interpret
+      Language.Mimsa.Actions.Modules.Bind
       Language.Mimsa.Actions.Modules.Check
+      Language.Mimsa.Actions.Modules.Evaluate
       Language.Mimsa.Actions.Modules.RunTests
+      Language.Mimsa.Actions.Modules.Typecheck
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding

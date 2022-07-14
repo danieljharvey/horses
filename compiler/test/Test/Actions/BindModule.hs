@@ -8,7 +8,7 @@ where
 
 import Data.Either (isLeft, isRight)
 import qualified Data.Set as S
-import qualified Language.Mimsa.Actions.BindModule as Actions
+import qualified Language.Mimsa.Actions.Modules.Bind as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers

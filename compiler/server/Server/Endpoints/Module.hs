@@ -14,7 +14,7 @@ where
 import qualified Data.Aeson as JSON
 import Data.OpenApi hiding (Server)
 import GHC.Generics
-import qualified Language.Mimsa.Actions.BindModule as Actions
+import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Modules
 import Servant

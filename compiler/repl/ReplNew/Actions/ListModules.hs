@@ -9,8 +9,8 @@ where
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import Data.Text (Text)
-import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
+import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import Language.Mimsa.Modules.Pretty
 import Language.Mimsa.Printer
 import Language.Mimsa.Project

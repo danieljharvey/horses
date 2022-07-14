@@ -19,9 +19,9 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
-import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Modules.Bind as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
 import Language.Mimsa.Modules.HashModule

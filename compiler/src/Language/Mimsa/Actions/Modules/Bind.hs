@@ -1,14 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.BindModule
+module Language.Mimsa.Actions.Modules.Bind
   ( bindModule,
     addBindingToModule,
   )
 where
 
-import Control.Monad.Except
 import Data.Map (Map)
-import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
@@ -16,15 +14,10 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules.Module
-import Language.Mimsa.Types.Modules.ModuleHash
-import Language.Mimsa.Types.Modules.ModuleName
-import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
