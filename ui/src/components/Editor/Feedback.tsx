@@ -7,6 +7,7 @@ import { UnitTest } from '../UnitTest'
 import { Code } from '../View/Code'
 import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
+import { ListTests } from '../ListTests'
 import {
   BindingVersion,
   ProjectHash,
@@ -179,6 +180,12 @@ export const Feedback: React.FC<Props> = ({
           <Code codeType="type">
             {feedback.moduleData.mdModuleType}
           </Code>
+          <ListTests
+            propertyTests={
+              feedback.testData.tdPropertyTests
+            }
+            unitTests={feedback.testData.tdUnitTests}
+          />
           <ListBindings
             modules={{}}
             onModuleSelect={() => {}}
