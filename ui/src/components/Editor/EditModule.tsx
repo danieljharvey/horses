@@ -6,10 +6,7 @@ import { Feedback } from './Feedback'
 import * as O from 'fp-ts/Option'
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
-import {
-  GetModuleResponse,
-  ModuleHash,
-} from '../../types'
+import { GetModuleResponse, ModuleHash } from '../../types'
 import {
   updateCode,
   bindExpression,
