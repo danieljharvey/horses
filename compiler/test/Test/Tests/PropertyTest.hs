@@ -12,11 +12,11 @@ import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Tests.PropertyTest
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers

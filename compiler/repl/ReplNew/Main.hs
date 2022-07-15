@@ -79,6 +79,6 @@ parseCommand env input =
       outputErrorAsDiagnostic (ParseError input errBundle)
       pure env
     Right replAction -> do
-      newExprs <- doReplAction env input replAction
+      newExprs <- doReplAction env replAction
       _ <- mapError StoreErr (saveProject newExprs)
       pure newExprs

@@ -19,7 +19,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Utils
 
@@ -69,9 +68,9 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getValueDependencies ::
-  (Eq ann, Monoid ann) =>
+  (Eq ann, Monoid ann, MonadError (Error Annotation) m) =>
   Module ann ->
-  CheckM
+  m
     ( Map
         DefIdentifier
         ( DepType ann,
@@ -93,16 +92,21 @@ getValueDependencies mod' = do
 
 -- get all dependencies of a type
 getTypeDependencies ::
+  (MonadError (Error Annotation) m) =>
   Module ann ->
   DataType ->
-  CheckM (DepType ann, Set DefIdentifier, Set Entity)
+  m (DepType ann, Set DefIdentifier, Set Entity)
 getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
   exprDefIds <- getExprDeps mod' allUses
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
-getTypeUses :: Module ann -> Set Entity -> CheckM (Set DefIdentifier)
+getTypeUses ::
+  (MonadError (Error Annotation) m) =>
+  Module ann ->
+  Set Entity ->
+  m (Set DefIdentifier)
 getTypeUses mod' uses =
   let typeDeps = filterTypes uses
       unknownTypeDeps =
@@ -137,10 +141,10 @@ localsOnly =
     )
 
 getExprDependencies ::
-  (Eq ann, Monoid ann) =>
+  (Eq ann, Monoid ann, MonadError (Error Annotation) m) =>
   Module ann ->
   Expr Name ann ->
-  CheckM (DepType ann, Set DefIdentifier, Set Entity)
+  m (DepType ann, Set DefIdentifier, Set Entity)
 getExprDependencies mod' expr = do
   let allUses = extractUses expr
   exprDefIds <- getExprDeps mod' allUses
@@ -148,9 +152,10 @@ getExprDependencies mod' expr = do
   pure (DTExpr expr, exprDefIds <> typeDefIds, allUses)
 
 getExprDeps ::
+  (MonadError (Error Annotation) m) =>
   Module ann ->
   Set Entity ->
-  CheckM (Set DefIdentifier)
+  m (Set DefIdentifier)
 getExprDeps mod' uses =
   let nameDeps = filterDefs uses
       unknownNameDeps =

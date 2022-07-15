@@ -9,7 +9,6 @@ import Data.Functor
 import qualified Data.Map as M
 import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
@@ -23,11 +22,11 @@ import Test.Utils.Helpers
 compile' :: Module Annotation -> CompiledModule Annotation
 compile' mod' =
   let action = do
-        tcMods <- typecheckAllModules mod'
+        tcMods <- typecheckAllModules mempty (prettyPrint mod') mod'
         case M.lookup (snd $ serializeModule mod') tcMods of
           Just tcMod -> compile tcMods tcMod
           Nothing -> error "Could not find the module we just typechecked"
-   in fromRight $ runCheck (prettyPrint mod') mempty action
+   in fromRight action
 
 spec :: Spec
 spec = do

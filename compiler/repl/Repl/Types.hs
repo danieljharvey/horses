@@ -9,10 +9,10 @@ where
 
 import GHC.Generics
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store.RootPath
+import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
 data ReplAction ann

@@ -7,7 +7,7 @@ module ReplNew.Actions.Bindings
 where
 
 import Data.Text (Text)
-import qualified Language.Mimsa.Actions.BindModule as Actions
+import qualified Language.Mimsa.Actions.Modules.Bind as Actions
 import Language.Mimsa.Modules.Pretty
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -20,12 +20,15 @@ import ReplNew.ReplM
 doAddBinding ::
   Project Annotation ->
   ModuleItem Annotation ->
-  Text ->
   ReplM (Error Annotation) ()
-doAddBinding project modItem input = do
+doAddBinding project modItem = do
   oldModule <- getStoredModule
   -- add the new binding
-  (_prj, newModule) <- toReplM project (Actions.addBindingToModule oldModule modItem input)
+  (_prj, (newModule, testResults)) <- toReplM project (Actions.addBindingToModule mempty oldModule modItem)
+
+  -- show test results
+  replOutput testResults
+
   -- store the new module in Repl state
   setStoredModule newModule
 

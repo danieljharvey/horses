@@ -59,9 +59,13 @@ export const showPreviewSuccess = (
   expression,
 })
 
-export const showModule = (moduleData: ModuleData) => ({
+export const showModule = (
+  moduleData: ModuleData,
+  testData: TestData
+) => ({
   type: 'ShowModuleData' as const,
   moduleData,
+  testData,
 })
 
 export type Feedback =

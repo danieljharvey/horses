@@ -4,7 +4,6 @@ import { getModule } from '../service/module'
 import {
   GetModuleResponse,
   UserErrorResponse,
-  ModuleData,
 } from '../generated'
 import { ModuleHash } from '../types'
 import { pipe } from 'fp-ts/function'
@@ -13,7 +12,7 @@ import * as E from 'fp-ts/Either'
 // fetch module from API and/or store
 export const useModule = (moduleHash: ModuleHash) => {
   const [result, setResult] = React.useState<
-    O.Option<ModuleData>
+    O.Option<GetModuleResponse>
   >(O.none)
 
   React.useEffect(() => {
@@ -23,11 +22,8 @@ export const useModule = (moduleHash: ModuleHash) => {
         E.fold<
           UserErrorResponse,
           GetModuleResponse,
-          O.Option<ModuleData>
-        >(
-          () => O.none,
-          ({ geModuleData }) => O.some(geModuleData)
-        ),
+          O.Option<GetModuleResponse>
+        >(() => O.none, O.some),
         setResult
       )
     )

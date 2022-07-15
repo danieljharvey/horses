@@ -13,8 +13,8 @@ import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
@@ -38,7 +38,7 @@ eval input = do
   let action = do
         expr <- Actions.parseExpr input
         (mt, interpretedExpr, _) <-
-          Actions.evaluateModule input expr mempty
+          Actions.evaluateModule expr mempty
         pure (mt, interpretedExpr)
   case Actions.run stdlib action of
     Right (_, _, (mt, endExpr)) -> do

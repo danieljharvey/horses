@@ -12,7 +12,6 @@ import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -21,6 +20,7 @@ import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
 fromRight :: (Printer e) => Either e a -> a

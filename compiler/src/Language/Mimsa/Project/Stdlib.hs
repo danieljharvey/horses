@@ -19,21 +19,21 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
-import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Modules.Bind as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Prelude
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Tests
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
 buildStdlib =

@@ -24,4 +24,4 @@ parseDataType input =
 
 parseModule :: Text -> ActionM (Module Annotation)
 parseModule =
-  liftEither . Module.parseModule
+  Module.parseModule mempty

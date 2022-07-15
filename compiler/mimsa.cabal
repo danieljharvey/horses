@@ -27,7 +27,6 @@ library
   exposed-modules:
       Language.Mimsa.Actions.AddUnitTest
       Language.Mimsa.Actions.BindExpression
-      Language.Mimsa.Actions.BindModule
       Language.Mimsa.Actions.BindType
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Evaluate
@@ -41,6 +40,11 @@ library
       Language.Mimsa.Actions.Helpers.Parse
       Language.Mimsa.Actions.Helpers.UpdateTests
       Language.Mimsa.Actions.Interpret
+      Language.Mimsa.Actions.Modules.Bind
+      Language.Mimsa.Actions.Modules.Check
+      Language.Mimsa.Actions.Modules.Evaluate
+      Language.Mimsa.Actions.Modules.RunTests
+      Language.Mimsa.Actions.Modules.Typecheck
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
       Language.Mimsa.Actions.RemoveBinding
@@ -127,7 +131,6 @@ library
       Language.Mimsa.Tests.Helpers
       Language.Mimsa.Tests.PropertyTest
       Language.Mimsa.Tests.Test
-      Language.Mimsa.Tests.Types
       Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Transform.BetaReduce
       Language.Mimsa.Transform.EtaReduce
@@ -214,6 +217,7 @@ library
       Language.Mimsa.Types.Store.Store
       Language.Mimsa.Types.Store.StoreExpression
       Language.Mimsa.Types.Store.TypeBindings
+      Language.Mimsa.Types.Tests
       Language.Mimsa.Types.Typechecker
       Language.Mimsa.Types.Typechecker.Constraint
       Language.Mimsa.Types.Typechecker.Environment
@@ -436,9 +440,10 @@ test-suite mimsa-test
       Test.Data.Prelude
       Test.Data.Project
       Test.Interpreter.Repl
-      Test.Modules.CheckModule
+      Test.Modules.Check
       Test.Modules.Compile
       Test.Modules.Repl
+      Test.Modules.Test
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax

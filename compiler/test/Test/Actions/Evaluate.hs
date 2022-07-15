@@ -8,8 +8,9 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor
-import qualified Language.Mimsa.Actions.BindModule as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
+import qualified Language.Mimsa.Actions.Modules.Bind as Actions
+import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -52,7 +53,7 @@ spec = do
         let action = do
               -- add a definition to an empty module
               let expr = unsafeParseModuleItem "def dog = True"
-              newMod <- Actions.addBindingToModule mempty expr ""
+              (newMod, _) <- Actions.addBindingToModule mempty mempty expr
               -- evaluate using that module
-              Actions.evaluateModule "dog" (unsafeParseExpr' "dog") (getAnnotationForType <$> newMod)
+              Actions.evaluateModule (unsafeParseExpr' "dog") (getAnnotationForType <$> newMod)
         Actions.run testStdlib action `shouldSatisfy` isRight

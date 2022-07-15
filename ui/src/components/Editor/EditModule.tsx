@@ -6,7 +6,7 @@ import { Feedback } from './Feedback'
 import * as O from 'fp-ts/Option'
 import { Panel } from '../View/Panel'
 import { Button } from '../View/Button'
-import { ModuleData, ModuleHash } from '../../types'
+import { GetModuleResponse, ModuleHash } from '../../types'
 import {
   updateCode,
   bindExpression,
@@ -44,15 +44,16 @@ export const EditModule: React.FC<Props> = ({
     maybeMod,
     O.fold(
       () => editor.code,
-      (a) => a.mdModulePretty
+      ({ geModuleData }) => geModuleData.mdModulePretty
     )
   )
 
   const feedback = pipe(
     maybeMod,
-    O.fold<ModuleData, FeedbackType>(
+    O.fold<GetModuleResponse, FeedbackType>(
       () => editorNew(),
-      showModule
+      ({ geModuleData, geTestData }) =>
+        showModule(geModuleData, geTestData)
     )
   )
 

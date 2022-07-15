@@ -27,6 +27,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.ModuleHash
 import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker.MonoType
 import Prettyprinter
 
@@ -54,6 +55,7 @@ data ModuleItem ann
   | ModuleExport (ModuleItem ann)
   | ModuleImport Import
   | ModuleInfix InfixOp (Expr Name ann)
+  | ModuleTest TestName (Expr Name ann)
   deriving stock (Functor)
 
 -- going to want way more granularity here in future but _shrug_
@@ -150,7 +152,9 @@ printDefinition mod' def expr =
                 <> indentMulti 2 (prettyDoc other)
         DIInfix infixOp ->
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
-        DIType _ -> error "printing type oh no"
+        DIType _ -> error "printDefinition is printing type oh no"
+        DITest testName ->
+          "test" <+> "\"" <> prettyDoc testName <> "\"" <+> "=" <+> prettyDoc expr
 
 instance Semigroup (Module ann) where
   (Module a b c d e f g) <> (Module a' b' c' d' e' f' g') =

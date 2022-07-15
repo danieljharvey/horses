@@ -21,6 +21,7 @@ import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Transform.Warnings
@@ -114,7 +115,7 @@ evaluateModuleExpression mimsaEnv (EvaluateModuleRequest input hash) =
     let action = do
           expr <- Actions.parseExpr input
           (mt, exprResult, _newModule) <-
-            Actions.evaluateModule input expr mempty
+            Actions.evaluateModule expr mempty
           let se = StoreExpression exprResult mempty mempty mempty
           pure $
             EvaluateModuleResponse

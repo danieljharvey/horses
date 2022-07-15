@@ -50,13 +50,13 @@ import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
 import Language.Mimsa.Store.Persistence
 import Language.Mimsa.Tests.Test
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 import Servant
 import Server.Helpers
 import Server.Persistence

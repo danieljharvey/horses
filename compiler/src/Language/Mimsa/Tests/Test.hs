@@ -20,12 +20,12 @@ import qualified Data.Set as S
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.UpdateDeps
 import Language.Mimsa.Tests.PropertyTest
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 
 {- we have multiple types of test, this module operates on all kinds
 -}

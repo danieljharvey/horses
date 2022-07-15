@@ -8,7 +8,7 @@ where
 
 import Data.Either (isLeft, isRight)
 import qualified Data.Set as S
-import qualified Language.Mimsa.Actions.BindModule as Actions
+import qualified Language.Mimsa.Actions.Modules.Bind as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -33,7 +33,7 @@ spec = do
               (_hash, mod') <- Actions.bindModule prelude "Prelude" (prettyPrint prelude)
               let input = "def idTrue = fst True"
                   modItem = unsafeParseModuleItem input
-              Actions.addBindingToModule mod' modItem input
+              Actions.addBindingToModule mempty mod' modItem
         Actions.run testStdlib action `shouldSatisfy` isLeft
 
       it "Adds a new function to Prelude that is good typecheck" $ do
@@ -41,7 +41,7 @@ spec = do
               (_hash, mod') <- Actions.bindModule prelude "Prelude" (prettyPrint prelude)
               let input = "def useId = fst (True, 1)"
                   modItem = unsafeParseModuleItem input
-              newModule <- Actions.addBindingToModule mod' modItem input
+              (newModule, _) <- Actions.addBindingToModule mempty mod' modItem
               Actions.bindModule (getAnnotationForType <$> newModule) "Repl" (prettyPrint newModule)
         let (newProject, _outcomes, _) = fromRight $ Actions.run testStdlib action
         newModules testStdlib newProject
@@ -53,10 +53,10 @@ spec = do
               (preludeHash', _mod') <- Actions.bindModule prelude "Prelude" (prettyPrint prelude)
               -- import Prelude
               let importExpr = unsafeParseModuleItem $ "import MyPrelude from " <> prettyPrint preludeHash'
-              mod2 <- Actions.addBindingToModule mempty importExpr ""
+              (mod2, _) <- Actions.addBindingToModule mempty mempty importExpr
               -- use Prelude
               let expr = unsafeParseModuleItem "def useFst = MyPrelude.fst (1,2)"
-              mod3 <- Actions.addBindingToModule mod2 expr ""
+              (mod3, _) <- Actions.addBindingToModule mempty mod2 expr
               -- store the updated thing
               Actions.bindModule (getAnnotationForType <$> mod3) "Repl" (prettyPrint mod3)
         let (newProject, _outcomes, _) = fromRight $ Actions.run testStdlib action

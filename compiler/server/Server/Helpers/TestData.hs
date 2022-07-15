@@ -10,6 +10,7 @@ module Server.Helpers.TestData
     TestData (..),
     makeTestData,
     mkUnitTestData,
+    makeTestDataFromModule,
   )
 where
 
@@ -17,6 +18,7 @@ import qualified Data.Aeson as JSON
 import Data.Coerce
 import Data.Either
 import Data.Map (Map)
+import qualified Data.Map as M
 import Data.OpenApi hiding (get)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -24,11 +26,11 @@ import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Tests.Test
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Tests
 
 data TestData = TestData
   { tdUnitTests :: [UnitTestData],
@@ -40,7 +42,7 @@ data TestData = TestData
 data UnitTestData = UnitTestData
   { utdTestName :: Text,
     utdTestSuccess :: Bool,
-    utdBindings :: Map Name Text
+    utdBindings :: Map Name Text -- bin this off once we're doing modules
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -62,7 +64,7 @@ mkUnitTestData project unitTest = do
 data PropertyTestData = PropertyTestData
   { ptdTestName :: Text,
     ptdTestFailures :: [Text],
-    ptdBindings :: Map Name Text
+    ptdBindings :: Map Name Text -- bin this off once we're doing modules
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -124,3 +126,10 @@ makeTestData project testResults =
       propertyTests =
         uncurry (mkPropertyTestData project) <$> pts
    in TestData unitTests propertyTests
+
+makeTestDataFromModule :: ModuleTestResults -> TestData
+makeTestDataFromModule (ModuleTestResults results) =
+  let makeUnitTest (TestName testName, result) = case result of
+        ModuleTestPassed -> UnitTestData testName True mempty
+        ModuleTestFailed -> UnitTestData testName False mempty
+   in TestData (makeUnitTest <$> M.toList results) mempty

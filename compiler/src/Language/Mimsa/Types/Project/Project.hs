@@ -6,10 +6,10 @@ module Language.Mimsa.Types.Project.Project where
 
 import Data.Map (Map)
 import GHC.Generics (Generic)
-import Language.Mimsa.Tests.Types
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project.Versioned
 import Language.Mimsa.Types.Store (ExprHash, Store)
+import Language.Mimsa.Types.Tests
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces

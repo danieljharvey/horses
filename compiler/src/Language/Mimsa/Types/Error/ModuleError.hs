@@ -7,10 +7,10 @@ import Data.Set (Set)
 import Data.Text (Text)
 import Error.Diagnose
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Modules.DefIdentifier
 
 data ModuleError
   = DuplicateDefinition DefIdentifier
@@ -26,6 +26,7 @@ data ModuleError
   | MissingModuleTypeDep TypeName ModuleHash
   | DefMissingReturnType DefIdentifier
   | DefMissingTypeAnnotation DefIdentifier Name
+  | EmptyTestName (Expr Name ())
   deriving stock (Eq, Ord, Show)
 
 instance Printer ModuleError where
@@ -55,6 +56,8 @@ instance Printer ModuleError where
     "Definition " <> prettyPrint defName <> " was expected to have a return type but it is missing"
   prettyPrint (DefMissingTypeAnnotation defName name) =
     "Argument " <> prettyPrint name <> " in " <> prettyPrint defName <> " was expected to have a type annotation but it does not."
+  prettyPrint (EmptyTestName expr) =
+    "Test name must be non-empty for expression " <> prettyPrint expr
 
 moduleErrorDiagnostic :: ModuleError -> Diagnostic Text
 moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) = typeErrorDiagnostic input typeErr
