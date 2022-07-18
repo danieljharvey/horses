@@ -44,6 +44,7 @@ library
       Language.Mimsa.Actions.Modules.Check
       Language.Mimsa.Actions.Modules.Evaluate
       Language.Mimsa.Actions.Modules.RunTests
+      Language.Mimsa.Actions.Modules.ToStoreExpressions
       Language.Mimsa.Actions.Modules.Typecheck
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise

@@ -2,6 +2,7 @@
 
 module Test.Utils.Compilation
   ( testProjectCompile,
+    testModuleCompile,
   )
 where
 
@@ -12,12 +13,19 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
+import qualified Language.Mimsa.Actions.Modules.Check as Actions
+import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Types as Actions
 import Language.Mimsa.Backend.Output
+import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
+import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Utils.Helpers
 import Test.Utils.Serialisation
@@ -35,6 +43,35 @@ testProjectCompile folderPrefix be expr = do
         pure seHash
   let (_newProject_, outcomes, seHash) =
         fromRight (Actions.run testStdlib action)
+
+  writeFiles be folderPrefix seHash outcomes
+
+-- | compile a module into a temp folder and return the main filename
+testModuleCompile ::
+  String ->
+  Backend ->
+  T.Text ->
+  IO (FilePath, Int)
+testModuleCompile folderPrefix be input = do
+  let action = do
+        -- parse a module from text
+        (parsedModule, _) <- Actions.checkModule mempty input
+        -- turn it into StoreExprs
+        (_, storeExprs) <- Actions.toStoreExpressions (getAnnotationForType <$> parsedModule)
+        -- get the 'main' StoreExpr
+        -- TODO: create a TS file for the Module itself, that outputs all its
+        -- stuff
+        rootStoreExpr <- Actions.lookupByName storeExprs (DIName "main")
+        -- turn into TS / JS etc
+        (seHash, _) <- Actions.compile be rootStoreExpr
+        pure seHash
+  let (_newProject_, outcomes, seHash) =
+        fromRight (Actions.run testStdlib action)
+
+  writeFiles be folderPrefix seHash outcomes
+
+writeFiles :: Backend -> String -> ExprHash -> [Actions.ActionOutcome] -> IO (FilePath, Int)
+writeFiles be folderPrefix seHash outcomes = do
   let folderName = folderPrefix <> "/compile-test-" <> show seHash
 
   -- clean up old rubbish
