@@ -1,10 +1,13 @@
+let pred a =
+  a == "o";
+
 let fn s =
   match s with 
       a ++ as -> 
         (let rest =
           fn as;
 
-        if (a == "o")
+        if (pred a)
         then
           a ++ rest
         else

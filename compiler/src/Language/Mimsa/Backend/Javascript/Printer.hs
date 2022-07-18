@@ -85,7 +85,7 @@ printOp TSAnd = "&&"
 printOp TSStringConcat = "+"
 
 protected :: Set Text
-protected = S.fromList ["const", "var", "default"]
+protected = S.fromList ["const", "var", "default", "delete"]
 
 printTSName :: TSName -> Text
 printTSName (TSName t) = if S.member t protected then t <> "_" else t

@@ -1,7 +1,15 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Backend.Output (outputStoreExpression) where
+module Language.Mimsa.Backend.Output
+  ( outputStoreExpression,
+    outputIndexFile,
+    indexFilename,
+    indexImport,
+    projectIndexFilename,
+  )
+where
 
 import Control.Monad.Except
 import Data.Bifunctor
@@ -17,7 +25,9 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
 import qualified Language.Mimsa.Backend.Typescript.Monad as TS
+import Language.Mimsa.Backend.Typescript.Printer
 import qualified Language.Mimsa.Backend.Typescript.Printer as TS
+import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -41,6 +51,7 @@ typeBindingsByType store (TypeBindings tb) =
 stripModules :: (Ord b) => Map (a, b) c -> Map b c
 stripModules = M.fromList . fmap (first snd) . M.toList
 
+-- | Need to also include any types mentioned but perhaps not explicitly used
 outputStoreExpression ::
   Backend ->
   ResolvedTypeDeps ->
@@ -113,13 +124,13 @@ makeTypeDepMap (ResolvedTypeDeps rtd) =
 renderImport' :: Backend -> ((a, Name), ExprHash) -> Text
 renderImport' Typescript ((_, name), hash') =
   "import { main as "
-    <> coerce name
+    <> printTSName (coerce name)
     <> " } from \"./"
     <> moduleFilename Typescript hash'
     <> "\";\n"
 renderImport' ESModulesJS ((_, name), hash') =
   "import { main as "
-    <> coerce name
+    <> printTSName (coerce name)
     <> " } from \"./"
     <> moduleFilename ESModulesJS hash'
     <> "\";\n"
@@ -144,3 +155,48 @@ renderTypeSignature' mt =
 
 renderNewline' :: Backend -> Text
 renderNewline' _ = "\n"
+
+outputIndexFile :: Backend -> Map Name ExprHash -> Text
+outputIndexFile be exportMap =
+  let exportLine (name, exprHash) = case be of
+        ESModulesJS ->
+          "export { main as " <> printTSName (coerce name) <> " } from './"
+            <> moduleFilename be exprHash
+            <> fileExtension be
+            <> "';"
+        Typescript ->
+          "export { main as " <> printTSName (coerce name) <> " } from './"
+            <> moduleFilename be exprHash
+            <> "';"
+   in T.intercalate "\n" (exportLine <$> M.toList exportMap)
+
+indexImport :: Backend -> ExprHash -> Text
+indexImport be hash' =
+  case be of
+    ESModulesJS ->
+      "index-"
+        <> prettyPrint hash'
+        <> ".mjs"
+    Typescript ->
+      "index-"
+        <> prettyPrint hash'
+
+indexFilename :: Backend -> ExprHash -> Text
+indexFilename be hash' =
+  case be of
+    ESModulesJS ->
+      "index-"
+        <> prettyPrint hash'
+        <> ".mjs"
+    Typescript ->
+      "index-"
+        <> prettyPrint hash'
+        <> ".ts"
+
+projectIndexFilename :: Backend -> Text
+projectIndexFilename be =
+  case be of
+    ESModulesJS ->
+      "index.mjs"
+    Typescript ->
+      "index.ts"

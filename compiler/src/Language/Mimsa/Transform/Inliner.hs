@@ -53,7 +53,7 @@ shouldInline :: VarUses -> IsWithinLambda -> InlineItem var ann -> Bool
 -- item is recursive, never inline it
 shouldInline _ _ (InlineItem _ Recursive) = False
 -- item is used once, always inline it
-shouldInline (VarUses 1) _ _expr = True
+shouldInline (VarUses 1) NotWithinLambda _expr = True
 -- item is not within a lambda, and is trivial, move it
 shouldInline _ NotWithinLambda (InlineItem expr _) = isJust (howTrivial expr)
 shouldInline _ WithinLambda _ = False

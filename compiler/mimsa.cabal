@@ -53,7 +53,6 @@ library
       Language.Mimsa.Actions.Upgrade
       Language.Mimsa.Backend.Javascript.Printer
       Language.Mimsa.Backend.Output
-      Language.Mimsa.Backend.Runtimes
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
       Language.Mimsa.Backend.Typescript.DataType
@@ -269,6 +268,7 @@ executable mimsa
   main-is: Main.hs
   other-modules:
       Check.Main
+      Compile.Main
       Eval.Main
       Init.Main
       Repl.Actions

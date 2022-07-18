@@ -1,4 +1,6 @@
-module Language.Mimsa.Actions.Compile (compile) where
+{-# LANGUAGE OverloadedStrings #-}
+
+module Language.Mimsa.Actions.Compile (compile, compileProject) where
 
 -- get expression
 -- optimise it
@@ -10,22 +12,26 @@ import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Coerce
 import Data.Foldable (traverse_)
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
+import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Output
-import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Printer
+import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
@@ -112,7 +118,7 @@ createIndex ::
   Backend -> ExprHash -> Actions.ActionM ()
 createIndex be exprHash = do
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile be exprHash)
+      outputContent = Actions.SaveContents (coerce $ outputIndexFile be (M.singleton "main" exprHash))
       filename = Actions.SaveFilename (indexFilename be exprHash)
   Actions.appendWriteFile path filename outputContent
 
@@ -123,3 +129,40 @@ createStdlib be = do
       filename = Actions.SaveFilename (stdlibFilename be <> fileExtension be)
       outputContent = Actions.SaveContents (outputStdlib be)
   Actions.appendWriteFile path filename outputContent
+
+-- | The project index file is a `index.ts` or `index.js` that exports
+-- | all the top-level items in the project
+createProjectIndex ::
+  Backend -> Map Name ExprHash -> Actions.ActionM ()
+createProjectIndex be exportMap = do
+  let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
+      outputContent = Actions.SaveContents (coerce $ outputIndexFile be exportMap)
+      filename = Actions.SaveFilename (projectIndexFilename be)
+  Actions.appendWriteFile path filename outputContent
+
+--  compile every expression bound at the top level
+compileProject :: Backend -> Actions.ActionM (Map Name ExprHash)
+compileProject be = do
+  project <- Actions.getProject
+
+  -- get store expressions for all the top level bindings in the project
+  storeExprs <-
+    traverse
+      Actions.lookupExpression
+      (getBindings . getCurrentBindings . prjBindings $ project)
+
+  -- compile them all
+  exportMap <-
+    traverse
+      ( \se -> do
+          Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
+          (exprHash, _) <- compile be se
+          pure exprHash
+      )
+      storeExprs
+
+  -- also output a top level exports file
+  createProjectIndex be exportMap
+
+  -- great job
+  pure exportMap

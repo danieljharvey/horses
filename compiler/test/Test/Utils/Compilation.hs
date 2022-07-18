@@ -6,16 +6,14 @@ module Test.Utils.Compilation
 where
 
 import Control.Monad.Except
-import Data.Coerce
 import Data.Foldable
 import Data.Hashable
-import Data.List (isInfixOf)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Backend.Runtimes
+import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -47,21 +45,25 @@ testProjectCompile folderPrefix be expr = do
 
   -- write all files to temp folder
   traverse_
-    ( \(_, filename, content) -> do
+    ( \(_, filename, Actions.SaveContents content) -> do
         let savePath = tsPath <> show filename
-        -- hack to add the console.log, forgive me padre
-        let content' =
-              if "index" `isInfixOf` savePath
-                then coerce content <> "console.log(main)"
-                else coerce content
-        liftIO $ T.writeFile savePath content'
+        liftIO $ T.writeFile savePath content
     )
     (Actions.writeFilesFromOutcomes outcomes)
 
   -- hash of generated content for caching test results
   let allFilesHash = hash (Actions.writeFilesFromOutcomes outcomes)
 
-  -- get filename of index file
-  let indexPath = tsPath <> T.unpack (indexFilename be seHash)
+  -- make a new index file that imports the outcome and logs it
+  let actualIndex =
+        "import { main } from './"
+          <> indexImport be seHash
+          <> "';\nconsole.log(main)"
 
-  pure (indexPath, allFilesHash)
+  -- get filename of index file
+  let actualIndexPath = tsPath <> T.unpack (projectIndexFilename be)
+
+  -- write actual index
+  liftIO (T.writeFile actualIndexPath actualIndex)
+
+  pure (actualIndexPath, allFilesHash)

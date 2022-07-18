@@ -243,7 +243,8 @@ fullTestCases =
     ("Monoid", "[Function: Monoid]"),
     ("let a = 1; let b = 3; let c = 6; and False True", "false"),
     ("let apply a f = f a; infix |> = apply; let f = \\a -> a |> (and False) |> not; f False", "true"),
-    ("\"\nHello\n\"", "\nHello\n")
+    ("\"\nHello\n\"", "\nHello\n"),
+    ("\\a -> useEither a", "[Function: main]")
   ]
 
 spec :: Spec
