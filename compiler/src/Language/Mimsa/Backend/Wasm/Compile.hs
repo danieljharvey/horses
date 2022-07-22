@@ -1,10 +1,14 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Language.Mimsa.Backend.Wasm.Compile where
 
+import Control.Monad.Except
+import Control.Monad.State
 import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -16,31 +20,55 @@ import qualified Language.Wasm.Structure as Wasm
 type WasmModule = Wasm.Module
 
 data WasmState var = WasmState
-  { wsEnv :: Map var Natural,
+  { wsEnv :: Map var (Natural, Wasm.ValueType),
     wsCounter :: Natural
   }
+
+newtype WasmError var
+  = CouldNotFindVar var
+  deriving newtype (Show)
 
 emptyState :: (Ord var) => WasmState var
 emptyState = WasmState mempty 0
 
-addEnvItem :: (Ord var) => var -> WasmState var -> (WasmState var, Natural)
-addEnvItem var (WasmState env count) =
-  let newCount = count + 1
-   in ( WasmState (env <> M.singleton var count) newCount,
-        count
-      )
+addEnvItem :: (Ord var) => var -> Wasm.ValueType -> WasmM var Natural
+addEnvItem var wasmType =
+  state
+    ( \(WasmState env count) ->
+        let newCount = count + 1
+         in ( count,
+              WasmState (env <> M.singleton var (count, wasmType)) newCount
+            )
+    )
 
--- newtype WasmM var a = WasmM {getWasmM :: State (WasmState var) a}
+lookupEnvItem :: (Ord var) => var -> WasmM var (Natural, Wasm.ValueType)
+lookupEnvItem var = do
+  maybeVal <- gets (\(WasmState env _) -> M.lookup var env)
+  case maybeVal of
+    Just a -> pure a
+    Nothing -> throwError (CouldNotFindVar var)
+
+newtype WasmM var a = WasmM {getWasmM :: StateT (WasmState var) (Except (WasmError var)) a}
+  deriving newtype
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadState (WasmState var),
+      MonadError (WasmError var)
+    )
+
+runWasmM :: (Ord var) => WasmM var a -> Either (WasmError var) (a, WasmState var)
+runWasmM (WasmM comp) = runExcept $ runStateT comp emptyState
 
 compileRaw ::
   forall var ann.
-  (Ord var, Printer (Expr var ann)) =>
+  (Ord var, Show var, Printer (Expr var ann)) =>
   Expr var ann ->
   WasmModule
 compileRaw expr =
   let func = compileTestFunc expr
       localTypes = []
-      funcType = Wasm.FuncType localTypes [Wasm.I32]
+      funcType = Wasm.FuncType localTypes [Wasm.I32] -- assumption - return is an I32
       export =
         Wasm.Export "test" (Wasm.ExportFunc 0)
    in Wasm.Module
@@ -56,45 +84,58 @@ compileRaw expr =
           Wasm.exports = [export]
         }
 
+localTypesFromState :: WasmState var -> [Wasm.ValueType]
+localTypesFromState =
+  fmap snd . M.elems . wsEnv
+
 compileTestFunc ::
   forall var ann.
-  (Ord var, Printer (Expr var ann)) =>
+  (Ord var, Show var, Printer (Expr var ann)) =>
   Expr var ann ->
   Wasm.Function
 compileTestFunc expr =
-  let locals = [Wasm.I32, Wasm.I32]
-   in Wasm.Function 0 locals body
+  case runWasmM (mainFn emptyState expr) of
+    Right (body, wsState) ->
+      let locals = localTypesFromState wsState
+       in Wasm.Function 0 locals body
+    Left e -> error (show e)
   where
-    body = mainFn emptyState expr
-    mainFn :: WasmState var -> Expr var ann -> [Wasm.Instruction Natural]
+    mainFn :: WasmState var -> Expr var ann -> WasmM var [Wasm.Instruction Natural]
     mainFn ws exp' = case exp' of
       (MyLiteral _ (MyInt i)) ->
-        [Wasm.I32Const (fromIntegral i)]
+        pure [Wasm.I32Const (fromIntegral i)]
       (MyLiteral _ (MyBool True)) ->
-        [Wasm.I32Const 1]
+        pure [Wasm.I32Const 1]
       (MyLiteral _ (MyBool False)) ->
-        [Wasm.I32Const 0]
-      (MyIf _ predExpr thenExpr elseExpr) ->
+        pure [Wasm.I32Const 0]
+      (MyIf _ predExpr thenExpr elseExpr) -> do
         let block = Wasm.Inline (Just Wasm.I32) -- return type
-         in mainFn ws predExpr
-              <> [ Wasm.If
-                     block
-                     (mainFn ws thenExpr)
-                     (mainFn ws elseExpr)
-                 ]
+        predW <- mainFn ws predExpr
+        ifW <-
+          Wasm.If
+            block
+            <$> mainFn ws thenExpr
+            <*> mainFn ws elseExpr
+        pure $ predW <> [ifW]
       (MyInfix _ op a b) -> do
-        let valA = mainFn ws a
-            valB = mainFn ws b
-        valA <> valB <> [compileBinOp op]
+        valA <- mainFn ws a
+        valB <- mainFn ws b
+        pure $ valA <> valB <> [compileBinOp op]
       (MyLet _ (Identifier _ ident) letExpr body') -> do
-        let (ws2, index) = addEnvItem ident ws
-        mainFn ws letExpr <> [Wasm.SetLocal index] <> mainFn ws2 body'
+        index <- addEnvItem ident Wasm.I32
+        letW <- mainFn ws letExpr
+        let setW = [Wasm.SetLocal index]
+        bodyW <- mainFn ws body'
+        pure $ letW <> setW <> bodyW
       (MyVar _ _ ident) -> do
         -- ignoring namespaces
         -- should think about that at some point
-        case M.lookup ident (wsEnv ws) of
-          Just n -> [Wasm.GetLocal n]
-          Nothing -> error "found jack shit in env"
+        (n, _) <- lookupEnvItem ident
+        pure [Wasm.GetLocal n]
+      (MyApp _ (MyVar _ _ f) a) -> do
+        (fIndex, _) <- lookupEnvItem f
+        fA <- mainFn ws a
+        pure $ fA <> [Wasm.Call fIndex]
       other -> error (T.unpack (prettyPrint other))
 
 compileBinOp :: Operator -> Wasm.Instruction i
@@ -108,18 +149,3 @@ compileBinOp op =
     GreaterThanOrEqualTo -> Wasm.IRelOp Wasm.BS32 Wasm.IGeU
     LessThanOrEqualTo -> Wasm.IRelOp Wasm.BS32 Wasm.ILeU
     op' -> error (T.unpack (prettyPrint op'))
-
-{-
-      (MyLet _ (Identifier _ ident) letExpr body) -> do
-        loc <- Wasm.local (Proxy :: Proxy 'Wasm.I32)
-        loc .= mainFn ws letExpr
-        mainFn (addEnvItem ident loc ws) body
-      (MyVar _ _ ident) -> do
-        -- ignoring namespaces
-        -- should think about that at some point
-        case M.lookup ident (wsEnv ws) of
-          Just n -> Wasm.ret n
-          Nothing -> error "found jack shit in env"
-      (MyApp _ f a) -> do
-        Wasm.call (mainFn ws f) [mainFn ws a]
--}

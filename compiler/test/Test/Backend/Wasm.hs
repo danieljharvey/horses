@@ -90,3 +90,6 @@ spec = do
       it "let a = 1; let b = 2; a + b" $ do
         result <- runWasm (compileRaw (unsafeParseExpr "let a = 1; let b = 2; a + b"))
         result `shouldBe` Just [Wasm.VI32 3]
+      it "let a = 1; let b = 2; let c = 3; a + b - c" $ do
+        result <- runWasm (compileRaw (unsafeParseExpr "let a = 1; let b = 2; let c = 3; a + b - c"))
+        result `shouldBe` Just [Wasm.VI32 0]
