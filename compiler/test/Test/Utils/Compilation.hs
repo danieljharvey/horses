@@ -14,11 +14,9 @@ import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
-import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Types as Actions
 import Language.Mimsa.Backend.Output
-import Language.Mimsa.Backend.Runtimes
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
@@ -56,19 +54,47 @@ testModuleCompile folderPrefix be input = do
   let action = do
         -- parse a module from text
         (parsedModule, _) <- Actions.checkModule mempty input
-        -- turn it into StoreExprs
-        (_, storeExprs) <- Actions.toStoreExpressions (getAnnotationForType <$> parsedModule)
-        -- get the 'main' StoreExpr
-        -- TODO: create a TS file for the Module itself, that outputs all its
-        -- stuff
-        rootStoreExpr <- Actions.lookupByName storeExprs (DIName "main")
         -- turn into TS / JS etc
-        (seHash, _) <- Actions.compile be rootStoreExpr
-        pure seHash
-  let (_newProject_, outcomes, seHash) =
+        Actions.compileModule be (getAnnotationForType <$> parsedModule)
+  let (_newProject_, outcomes, modHash) =
         fromRight (Actions.run testStdlib action)
 
-  writeFiles be folderPrefix seHash outcomes
+  writeModuleFiles be folderPrefix modHash outcomes
+
+writeModuleFiles :: Backend -> String -> ModuleHash -> [Actions.ActionOutcome] -> IO (FilePath, Int)
+writeModuleFiles be folderPrefix modHash outcomes = do
+  let folderName = folderPrefix <> "/compile-test-" <> show modHash
+
+  -- clean up old rubbish
+  deleteOutputFolder folderName
+
+  -- re-create path
+  tsPath <- createOutputFolder folderName
+
+  -- write all files to temp folder
+  traverse_
+    ( \(_, filename, Actions.SaveContents content) -> do
+        let savePath = tsPath <> show filename
+        liftIO $ T.writeFile savePath content
+    )
+    (Actions.writeFilesFromOutcomes outcomes)
+
+  -- hash of generated content for caching test results
+  let allFilesHash = hash (Actions.writeFilesFromOutcomes outcomes)
+
+  -- make a new index file that imports the outcome and logs it
+  let actualIndex =
+        "import { main } from './"
+          <> moduleImport be modHash
+          <> "';\nconsole.log(main)"
+
+  -- get filename of index file
+  let actualIndexPath = tsPath <> T.unpack (projectIndexFilename be)
+
+  -- write actual index
+  liftIO (T.writeFile actualIndexPath actualIndex)
+
+  pure (actualIndexPath, allFilesHash)
 
 writeFiles :: Backend -> String -> ExprHash -> [Actions.ActionOutcome] -> IO (FilePath, Int)
 writeFiles be folderPrefix seHash outcomes = do

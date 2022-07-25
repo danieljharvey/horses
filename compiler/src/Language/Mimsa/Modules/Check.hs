@@ -2,7 +2,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Modules.Check (getModuleType, getModuleItemIdentifier, lookupModuleDefType) where
+module Language.Mimsa.Modules.Check
+  ( getModuleType,
+    getModuleItemIdentifier,
+    lookupModuleDefType,
+    filterNameDefs,
+  )
+where
 
 import Data.Map (Map)
 import qualified Data.Map as M
