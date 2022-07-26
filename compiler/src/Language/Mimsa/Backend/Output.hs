@@ -220,6 +220,6 @@ moduleFilename :: Backend -> ModuleHash -> Text
 moduleFilename be modHash =
   case be of
     ESModulesJS ->
-      moduleFilename be modHash
+      moduleImport be modHash
     Typescript ->
       moduleImport be modHash <> ".ts"

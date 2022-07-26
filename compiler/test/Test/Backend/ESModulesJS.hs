@@ -33,6 +33,9 @@ import Test.Utils.Compilation
 import Test.Utils.Helpers
 import Test.Utils.Serialisation
 
+joinLines :: [Text] -> Text
+joinLines = T.intercalate "\n"
+
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState = TSReaderState mempty
@@ -88,6 +91,16 @@ fullTestIt (input, expectedValue) =
         expr = unsafeParse input
     (filename, contentHash) <- testProjectCompile "CompileJSProject" ESModulesJS expr
     cachePath <- createOutputFolder "CompileJSProject-result"
+    let cacheFilename = cachePath <> show contentHash <> ".json"
+
+    result <- withCache cacheFilename (testESModulesJSFileInNode filename)
+    result `shouldBe` expectedValue
+
+testModule :: (Text, String) -> Spec
+testModule (input, expectedValue) =
+  it (T.unpack input) $ do
+    (filename, contentHash) <- testModuleCompile "CompileJSModuleProject" ESModulesJS input
+    cachePath <- createOutputFolder "CompileJSModuleProject-result"
     let cacheFilename = cachePath <> show contentHash <> ".json"
 
     result <- withCache cacheFilename (testESModulesJSFileInNode filename)
@@ -509,3 +522,19 @@ spec = do
 
     describe "Entire compilation" $ do
       traverse_ fullTestIt fullTestCases
+
+    describe "Compile `main` function from modules and run them in Node" $ do
+      let moduleTestCases =
+            [ ( joinLines
+                  [ "export def main = 1 + 2"
+                  ],
+                "3"
+              ),
+              ( joinLines
+                  [ "def adding a b = a + b",
+                    "export def main = adding 1 2"
+                  ],
+                "3"
+              )
+            ]
+       in traverse_ testModule moduleTestCases
