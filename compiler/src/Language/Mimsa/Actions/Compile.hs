@@ -151,7 +151,7 @@ createIndex ::
   Backend -> ExprHash -> Actions.ActionM ()
 createIndex be exprHash = do
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile be (M.singleton "main" exprHash))
+      outputContent = Actions.SaveContents (coerce $ outputIndexFile be (M.singleton "main" exprHash) mempty)
       filename = Actions.SaveFilename (indexFilename be exprHash)
   Actions.appendWriteFile path filename outputContent
 
@@ -166,10 +166,11 @@ createStdlib be = do
 -- | The project index file is a `index.ts` or `index.js` that exports
 -- | all the top-level items in the project
 createProjectIndex ::
-  Backend -> Map Name ExprHash -> Actions.ActionM ()
-createProjectIndex be exportMap = do
+  Backend -> Map Name ExprHash -> Map ModuleName ModuleHash -> Actions.ActionM ()
+createProjectIndex be exportMap moduleExportMap = do
+  let indexFileContents = outputIndexFile be exportMap moduleExportMap
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile be exportMap)
+      outputContent = Actions.SaveContents (coerce indexFileContents)
       filename = Actions.SaveFilename (projectIndexFilename be)
   Actions.appendWriteFile path filename outputContent
 
@@ -179,7 +180,7 @@ createModuleIndex ::
   ModuleHash -> Backend -> Map Name ExprHash -> Actions.ActionM ()
 createModuleIndex modHash be exportMap = do
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile be exportMap)
+      outputContent = Actions.SaveContents (coerce $ outputIndexFile be exportMap mempty)
       filename = Actions.SaveFilename (moduleFilename be modHash)
   Actions.appendWriteFile path filename outputContent
 
@@ -227,8 +228,23 @@ compileProject be = do
   -- include stdlib for runtime
   createStdlib be
 
+  -- get all top-level module bindings in the project
+  modules <-
+    traverse
+      Actions.lookupModule
+      (getCurrentModules $ prjModules project)
+
+  -- compile these too! why the hell not!
+  exportModuleMap <-
+    traverse
+      ( \thisMod -> do
+          Actions.appendMessage ("Compiling module " <> prettyPrint (snd (serializeModule thisMod)))
+          compileModule be thisMod
+      )
+      modules
+
   -- also output a top level exports file
-  createProjectIndex be exportMap
+  createProjectIndex be exportMap exportModuleMap
 
   -- great job
   pure exportMap

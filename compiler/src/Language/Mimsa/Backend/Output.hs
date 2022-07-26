@@ -159,9 +159,9 @@ renderTypeSignature' mt =
 renderNewline' :: Backend -> Text
 renderNewline' _ = "\n"
 
-outputIndexFile :: Backend -> Map Name ExprHash -> Text
-outputIndexFile be exportMap =
-  let exportLine (name, exprHash) = case be of
+outputIndexFile :: Backend -> Map Name ExprHash -> Map ModuleName ModuleHash -> Text
+outputIndexFile be exportMap exportModuleMap =
+  let exportExpression (name, exprHash) = case be of
         ESModulesJS ->
           "export { main as " <> printTSName (coerce name) <> " } from './"
             <> storeExprFilename be exprHash
@@ -171,7 +171,21 @@ outputIndexFile be exportMap =
           "export { main as " <> printTSName (coerce name) <> " } from './"
             <> storeExprFilename be exprHash
             <> "';"
-   in T.intercalate "\n" (exportLine <$> M.toList exportMap)
+
+      exportModule (modName, modHash) = case be of
+        ESModulesJS ->
+          "export { * as " <> printTSName (coerce modName) <> " } from './"
+            <> moduleImport be modHash
+            <> "';"
+        Typescript ->
+          "export { main as " <> printTSName (coerce modName) <> " } from './"
+            <> moduleImport be modHash
+            <> "';"
+
+      allExports =
+        (exportExpression <$> M.toList exportMap)
+          <> (exportModule <$> M.toList exportModuleMap)
+   in T.intercalate "\n" allExports
 
 -- | file name of index file (no extension for ts)
 indexImport :: Backend -> ExprHash -> Text

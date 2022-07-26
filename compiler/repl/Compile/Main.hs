@@ -7,44 +7,41 @@ module Compile.Main
 where
 
 import Control.Monad.Except
-import Control.Monad.Logger
 import Data.Text (Text)
-import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Store.RootPath
-import Repl.Actions.Compile
-import Repl.Persistence
-import Repl.ReplM
-import Repl.Types
+import ReplNew.Helpers
+import ReplNew.ReplM
+import ReplNew.Types
+import qualified Shared.LoadProject as Shared
 import System.Directory
+import System.Exit
 
 createReplConfig :: (MonadIO m) => Bool -> m ReplConfig
 createReplConfig showLogs' = do
   path <- liftIO getCurrentDirectory
   pure $ ReplConfig (RootPath path) showLogs'
 
-getProject :: ReplM (Error Annotation) (Project Annotation)
-getProject =
-  do
-    env <- mapError StoreErr loadProject
-    let items = length . getStore . prjStore $ env
-    replOutput $ "Successfully loaded project, " <> T.pack (show items) <> " store items found"
-    pure env
-    `catchError` \e -> do
-      logDebugN (prettyPrint e)
+compileProject :: Backend -> ReplM (Error Annotation) ExitCode
+compileProject be = do
+  maybeProject <- Shared.loadProject
+  case maybeProject of
+    Right project -> do
+      _ <-
+        toReplM project (Actions.compileProject be)
+      replOutput @Text "Compilation complete!"
+      pure ExitSuccess
+    Left _e -> do
       replOutput @Text "Failed to load project, have you initialised a project in this folder?"
-      throwError e
+      pure (ExitFailure 1)
 
 compile :: Backend -> Bool -> IO ()
 compile be showLogs' = do
   cfg <- createReplConfig showLogs'
-  let action = do
-        project <- getProject
-        doCompileProject project be
-  _ <- runReplM cfg action
-  pure ()
+  exitCode <- runReplM cfg (compileProject be)
+  case exitCode of
+    Right ec -> exitWith ec
+    _ -> exitWith $ ExitFailure 1

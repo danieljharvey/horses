@@ -15,6 +15,7 @@ import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Store
 import Test.Data.Project
@@ -69,3 +70,9 @@ spec = do
       -- this will reduce once we inline across expressions as
       -- most of this is unneeded `either` functions
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
+
+    it "Compiles entire project" $ do
+      let action = do
+            _ <- Actions.compileProject Typescript
+            pure ()
+      Actions.run stdlib action `shouldSatisfy` isRight
