@@ -75,8 +75,9 @@ exprToStoreExpression ::
   m (StoreExpression (Type ann))
 exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
+  typeBindings <- typesFromEntities
   infixes <- infixesFromEntities inputs uses
-  pure $ StoreExpression expr bindings mempty infixes
+  pure $ StoreExpression expr bindings typeBindings infixes
 
 resolveNamespacedName ::
   Map ModuleHash (CompiledModule (Type ann)) ->
@@ -93,6 +94,11 @@ resolveNamespacedName compiledModules inputModule modName name = do
 
   -- lookup the name in the module
   M.lookup (DIName name) (cmExprs compiledMod)
+
+-- | given our dependencies and the entities used by the expressions, create
+-- the type bindings
+typesFromEntities :: (Applicative m) => m (Map (Maybe ModuleName, TyCon) ExprHash)
+typesFromEntities = pure mempty
 
 -- given our dependencies and the entities used by the expression, create the
 -- bindings

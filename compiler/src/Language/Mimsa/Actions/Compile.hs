@@ -28,6 +28,7 @@ import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
@@ -59,7 +60,7 @@ compileStoreExpression ::
   Actions.ActionM (ExprHash, Set ExprHash)
 compileStoreExpression be se = do
   -- get dependencies of StoreExpression
-  depsSe <- Actions.getDepsForStoreExpression se
+  depsSe <- Actions.getDepsForStoreExpression (debugLog "compile store expression" se)
 
   -- optimise them all like a big legend
   storeExprs <- Actions.optimiseAll (fst <$> depsSe)
