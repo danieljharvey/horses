@@ -24,7 +24,7 @@ import Test.Utils.Helpers
 
 spec :: Spec
 spec = do
-  describe "Compile" $ do
+  fdescribe "Compile" $ do
     it "Simplest compilation creates four files" $ do
       let expr = MyVar mempty Nothing "id"
       let action = do
@@ -71,7 +71,7 @@ spec = do
       -- most of this is unneeded `either` functions
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
 
-    it "Compiles entire project" $ do
+    fit "Compiles entire project" $ do
       let action = do
             _ <- Actions.compileProject Typescript
             pure ()

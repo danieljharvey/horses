@@ -257,18 +257,18 @@ compileModule ::
 compileModule be compModule = do
   (_, compiledExps) <- Actions.toStoreExpressions compModule
 
-  -- get map of stuff to output - just exprs, not infixes
-  compMap <- compiledModulesToMap compiledExps
-
   -- compile them all
-  exportMap <-
-    traverse
-      ( \se -> do
-          Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
-          fst <$> compileStoreExpression be se
-      )
-      compMap
+  traverse_
+    ( \se -> do
+        Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
+        fst <$> compileStoreExpression be se
+    )
+    (getStore (cmStore compiledExps))
 
+  -- create map of items to hashes for index file
+  exportMap <- (fmap . fmap) getStoreExpressionHash (compiledModulesToMap compiledExps)
+
+  -- get hash of module for index
   let (_, moduleHash) = serializeModule compModule
 
   -- also output a top level exports file
