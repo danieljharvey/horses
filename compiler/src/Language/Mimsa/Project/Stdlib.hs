@@ -321,7 +321,7 @@ addModule :: ModuleName -> Map ModuleName ModuleHash -> Text -> Actions.ActionM 
 addModule moduleName deps input = do
   mod' <- Actions.parseModule input
   let modWithImports = mod' {moNamedImports = moNamedImports mod' <> deps}
-  _ <- Actions.bindModule modWithImports moduleName input
+  _ <- Actions.bindModule modWithImports moduleName (prettyPrint modWithImports)
   pure (snd $ serializeModule modWithImports)
 
 addTest :: Text -> Text -> Actions.ActionM ()

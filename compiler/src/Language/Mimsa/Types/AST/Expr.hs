@@ -428,4 +428,5 @@ printSubExpr expr = case expr of
   all'@MyIf {} -> inParens all'
   all'@MyApp {} -> inParens all'
   all'@MyPair {} -> inParens all'
+  all'@MyPatternMatch {} -> inParens all'
   a -> prettyDoc a

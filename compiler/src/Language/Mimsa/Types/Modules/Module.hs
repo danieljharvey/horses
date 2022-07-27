@@ -91,7 +91,13 @@ instance (Show ann) => Printer (Module ann) where
               ( M.elems (moDataTypeImports mod')
                   <> M.elems (moExpressionImports mod')
               )
-     in withDoubleLines (printedImports <> printedTypes <> printedDefs)
+        printedNamedImports =
+          printNamedImport <$> M.toList (moNamedImports mod')
+     in withDoubleLines
+          ( printedImports <> printedTypes
+              <> printedDefs
+              <> printedNamedImports
+          )
 
 withDoubleLines :: [Doc a] -> Doc a
 withDoubleLines = vsep . fmap (line <>)
@@ -102,6 +108,10 @@ uniq = S.toList . S.fromList
 -- when on multilines, indent by `i`, if not then nothing
 indentMulti :: Int -> Doc style -> Doc style
 indentMulti i doc = flatAlt (indent i doc) doc
+
+printNamedImport :: (ModuleName, ModuleHash) -> Doc a
+printNamedImport (modName, modHash) =
+  "import" <+> prettyDoc modName <+> "from" <+> prettyDoc modHash
 
 printImport :: ModuleHash -> Doc a
 printImport modHash =

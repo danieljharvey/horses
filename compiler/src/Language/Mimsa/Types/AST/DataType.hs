@@ -80,5 +80,6 @@ renderDataType (DataType tyCon vars' constructors') =
               vsep (prettyMt <$> args)
           )
     prettyMt mt = case mt of
+      mtApp@MTTypeApp {} -> "(" <> prettyDoc mtApp <> ")"
       mtFunc@MTFunction {} -> "(" <> prettyDoc mtFunc <> ")"
       other -> prettyDoc other

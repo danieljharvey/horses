@@ -14,10 +14,10 @@ export def map = fmap
 export def filter pred = 
   reduce (\a -> \all -> if pred a then all <> [ a ] else all) []
 
-export def find pred = 
-  reduce (\item -> \total -> 
-    match total with 
-      (Maybe.Just found) -> (Maybe.Just found) 
-    | _ -> (if (pred item) then (Maybe.Just item) else Maybe.Nothing)) 
+export def find pred =
+  reduce (\item -> \total ->
+    match total with
+      (Maybe.Just found) -> (Maybe.Just found)
+    | _ -> (if (pred item) then (Maybe.Just item) else Maybe.Nothing))
     Maybe.Nothing
-  
+
