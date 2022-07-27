@@ -10,12 +10,14 @@ module Language.Mimsa.Modules.Compile (compile, CompiledModule (..)) where
 import Control.Monad.Except
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (catMaybes, listToMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Store
+import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -75,10 +77,11 @@ exprToStoreExpression ::
   m (StoreExpression (Type ann))
 exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
-  typeBindings <- typesFromEntities
+  typeBindings <- typesFromEntities compiledModules inputModule inputs uses
   infixes <- infixesFromEntities inputs uses
   pure $ StoreExpression expr bindings typeBindings infixes
 
+-- | where can I find this function?
 resolveNamespacedName ::
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
@@ -95,10 +98,72 @@ resolveNamespacedName compiledModules inputModule modName name = do
   -- lookup the name in the module
   M.lookup (DIName name) (cmExprs compiledMod)
 
+-- | where can I find this Constructor?
+resolveNamespacedTyCon ::
+  Map ModuleHash (CompiledModule ann) ->
+  Module (Type ann) ->
+  ModuleName ->
+  TyCon ->
+  Maybe ExprHash
+resolveNamespacedTyCon compiledModules inputModule modName tyCon = do
+  -- find out which module the modName refers to
+  modHash <- M.lookup modName (moNamedImports inputModule)
+
+  -- find the module in our pile of already compiled modules
+  compiledMod <- M.lookup modHash compiledModules
+
+  let allDataTypeStoreExpressions =
+        M.filterWithKey
+          ( \k _ -> case k of
+              DIType _ -> True
+              _ -> False
+          )
+          (cmExprs compiledMod)
+
+  -- lookup the name in the module
+  getStoreExpressionHash <$> M.lookup tyCon (dataTypesByTyCon (flattenCompiled compiledMod))
+
+-- filter data types out, and put in a map keyed by TyCon
+dataTypesByTyCon :: Map DefIdentifier (StoreExpression ann) -> Map TyCon (StoreExpression ann)
+dataTypesByTyCon items =
+  let withSe se =
+        listToMaybe $ S.toList $ extractDataTypes se
+      dataTypes = catMaybes (withSe <$> M.elems items)
+   in mempty
+
+flattenCompiled ::
+  CompiledModule ann ->
+  Map DefIdentifier (StoreExpression ann)
+flattenCompiled cm =
+  let lookup exprHash =
+        M.lookup exprHash (getStore $ cmStore cm)
+   in M.mapMaybe lookup (cmExprs cm)
+
 -- | given our dependencies and the entities used by the expressions, create
 -- the type bindings
-typesFromEntities :: (Applicative m) => m (Map (Maybe ModuleName, TyCon) ExprHash)
-typesFromEntities = pure mempty
+typesFromEntities ::
+  (MonadError (Error Annotation) m) =>
+  Map ModuleHash (CompiledModule ann) ->
+  Module (Type ann) ->
+  Map DefIdentifier (StoreExpression ann) ->
+  Set Entity ->
+  m (Map (Maybe ModuleName, TyCon) ExprHash)
+typesFromEntities compiledModules inputModule inputs uses = do
+  let fromUse = \case
+        {-
+        EConstructor tyCon -> case M.lookup (DIName name) inputs of
+          Just se -> pure $ M.singleton (Nothing, name) (getStoreExpressionHash se)
+          _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIName name)))
+
+        -}
+        ENamespacedConstructor modName tyCon ->
+          case resolveNamespacedTyCon compiledModules inputModule modName tyCon of
+            Just hash -> pure $ M.singleton (Just modName, tyCon) hash
+            _ -> pure mempty -- should this be an error?
+        _ -> pure mempty
+
+  -- combine results
+  mconcat <$> traverse fromUse (S.toList uses)
 
 -- given our dependencies and the entities used by the expression, create the
 -- bindings
