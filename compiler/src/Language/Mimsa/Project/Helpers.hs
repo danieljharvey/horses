@@ -162,7 +162,7 @@ fromStoreExpressionDeps :: StoreExpression ann -> Project ann
 fromStoreExpressionDeps se =
   mempty
     { prjBindings = toVersioned (removeNamespaceFromKey $ storeBindings se),
-      prjTypeBindings = typeBindingsToVersioned (storeTypeBindings se)
+      prjTypeBindings = toVersioned (removeNamespaceFromKey $ storeTypeBindings se)
     }
 
 -- | create a project where all the bindings of a store expression are
@@ -275,7 +275,7 @@ getItemsForAllVersions versioned =
 getDependencyHashes :: StoreExpression ann -> Set ExprHash
 getDependencyHashes =
   S.fromList . M.elems . storeBindings
-    <> S.fromList . M.elems . getTypeBindings . storeTypeBindings
+    <> S.fromList . M.elems . storeTypeBindings
 
 getModuleDependencyHashes :: Module ann -> Set ModuleHash
 getModuleDependencyHashes inputModule =

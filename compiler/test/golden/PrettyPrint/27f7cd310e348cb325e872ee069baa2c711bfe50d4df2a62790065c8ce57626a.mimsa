@@ -1,0 +1,3 @@
+type Stuff    = Thing String Int;
+
+let (name, _) = (("Hello", 1)) in name

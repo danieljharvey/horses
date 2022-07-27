@@ -13,14 +13,13 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
-import Language.Mimsa.Types.Store.TypeBindings
 
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside
 data StoreExpression ann = StoreExpression
   { storeExpression :: Expr Name ann,
     storeBindings :: Map (Maybe ModuleName, Name) ExprHash,
-    storeTypeBindings :: TypeBindings,
+    storeTypeBindings :: Map (Maybe ModuleName, TyCon) ExprHash,
     storeInfixes :: Map InfixOp ExprHash
   }
   deriving stock

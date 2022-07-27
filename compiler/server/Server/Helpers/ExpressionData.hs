@@ -56,6 +56,13 @@ sanitiseBindings = M.fromList . fmap (bimap combineName prettyPrint) . M.toList
       Just m -> coerce m <> "." <> name'
       _ -> name'
 
+sanitiseTypeBindings :: Map (Maybe ModuleName, TyCon) ExprHash -> Map TyCon Text
+sanitiseTypeBindings = M.fromList . fmap (bimap combineName prettyPrint) . M.toList
+  where
+    combineName (modName, name') = case modName of
+      Just m -> coerce m <> "." <> name'
+      _ -> name'
+
 makeExpressionData ::
   StoreExpression Annotation ->
   Expr Name MonoType ->
@@ -72,7 +79,7 @@ makeExpressionData se typedExpr gv input warnings canOptimise =
         (prettyPrint (storeExpression se))
         (prettyPrint mt)
         (sanitiseBindings (storeBindings se))
-        (prettyPrint <$> getTypeBindings (storeTypeBindings se))
+        (sanitiseTypeBindings (storeTypeBindings se))
         (prettyGraphviz gv)
         (getExpressionSourceItems input typedExpr)
         input
@@ -96,7 +103,7 @@ makeMinimalExpressionData se mt input canOptimise =
         (prettyPrint (storeExpression se))
         (prettyPrint mt)
         (sanitiseBindings (storeBindings se))
-        (prettyPrint <$> getTypeBindings (storeTypeBindings se))
+        (sanitiseTypeBindings (storeTypeBindings se))
         mempty
         mempty
         input

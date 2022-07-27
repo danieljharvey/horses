@@ -25,7 +25,9 @@ newtype TyCon = TyCon Text
     ( Show,
       JSON.FromJSONKey,
       JSON.ToJSON,
-      JSON.ToJSONKey
+      JSON.ToJSONKey,
+      Semigroup,
+      Monoid
     )
 
 instance JSON.FromJSON TyCon where

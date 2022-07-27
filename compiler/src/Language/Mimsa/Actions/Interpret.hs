@@ -74,7 +74,7 @@ interpretAll inputStoreExpressions = do
                     { Build.jbDeps =
                         S.fromList
                           ( M.elems (storeBindings storeExpr)
-                              <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
+                              <> M.elems (storeTypeBindings storeExpr)
                               <> M.elems (storeInfixes storeExpr)
                           ),
                       Build.jbInput = storeExpr

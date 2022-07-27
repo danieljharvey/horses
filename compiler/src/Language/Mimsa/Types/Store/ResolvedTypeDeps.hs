@@ -5,13 +5,14 @@ import qualified Data.Map as M
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
 import Prettyprinter
 
 newtype ResolvedTypeDeps = ResolvedTypeDeps
   { getResolvedTypeDeps ::
       Map
-        TyCon
+        (Maybe ModuleName, TyCon)
         (ExprHash, DataType)
   }
 
