@@ -61,4 +61,4 @@ spec = do
               _ -> error "could not find the store expression we just made"
       let (_, _, found) = fromRight (Actions.run testStdlib action)
 
-      M.size (getTypeBindings $ storeTypeBindings found) `shouldBe` 1
+      M.size (storeTypeBindings found) `shouldBe` 1

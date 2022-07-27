@@ -1,1 +1,0 @@
-{"storeBindings":[],"storeExpression":{"expA":{"expAnn":null,"expLit":{"litBool":true,"tag":"MyBool"},"tag":"MyLiteral"},"expAnn":null,"expB":{"expAnn":null,"expLit":{"litBool":true,"tag":"MyBool"},"tag":"MyLiteral"},"tag":"MyPair"},"storeInfixes":{},"storeTypeBindings":{}}

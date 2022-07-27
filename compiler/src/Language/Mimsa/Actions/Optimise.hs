@@ -162,14 +162,13 @@ updateBindings swaps =
         _ -> exprHash
     )
 
-updateTypeBindings :: Map ExprHash ExprHash -> TypeBindings -> TypeBindings
-updateTypeBindings swaps (TypeBindings bindings) =
-  TypeBindings $
-    ( \exprHash -> case M.lookup exprHash swaps of
-        Just newExprHash -> newExprHash
-        _ -> exprHash
-    )
-      <$> bindings
+updateTypeBindings :: Map ExprHash ExprHash -> Map k ExprHash -> Map k ExprHash
+updateTypeBindings swaps bindings =
+  ( \exprHash -> case M.lookup exprHash swaps of
+      Just newExprHash -> newExprHash
+      _ -> exprHash
+  )
+    <$> bindings
 
 --
 
@@ -204,7 +203,7 @@ optimiseAll inputStoreExpressions = do
                     { Build.jbDeps =
                         S.fromList
                           ( M.elems (storeBindings storeExpr)
-                              <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
+                              <> M.elems (storeTypeBindings storeExpr)
                           ),
                       Build.jbInput = storeExpr
                     }

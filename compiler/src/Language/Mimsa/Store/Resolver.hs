@@ -78,13 +78,13 @@ findHashInTypeBindings (TypeBindings bindings') cName =
 findTypeBindings ::
   TypeBindings ->
   Expr Name ann ->
-  Either ResolverError TypeBindings
+  Either ResolverError (Map (Maybe ModuleName, TyCon) ExprHash)
 findTypeBindings tBindings expr = do
   let findTypeHash cName = do
         maybeHash <- findHashInTypeBindings tBindings cName
-        pure $ (,) cName <$> maybeHash
+        pure $ (,) (Nothing, cName) <$> maybeHash
   hashes <- traverse findTypeHash (S.toList . extractTypes $ expr)
-  pure (TypeBindings $ M.fromList (catMaybes hashes))
+  pure (M.fromList (catMaybes hashes))
 
 -- given a data type declaration, create a StoreExpression for it
 createTypeStoreExpression ::

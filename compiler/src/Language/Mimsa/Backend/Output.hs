@@ -34,12 +34,13 @@ import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 -- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
-typeBindingsByType :: Store a -> TypeBindings -> Map TypeName ExprHash
-typeBindingsByType store (TypeBindings tb) =
+typeBindingsByType :: Store a -> Map (Maybe ModuleName, TyCon) ExprHash -> Map TypeName ExprHash
+typeBindingsByType store tb =
   let getTypeName' exprHash =
         case lookupExprHashFromStore store exprHash of
           Just se -> storeExprToDataTypes se $> exprHash
@@ -119,7 +120,7 @@ renderExpression be dataTypes expr = do
 -- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName
 makeTypeDepMap (ResolvedTypeDeps rtd) =
-  (\(_, DataType typeName _ _) -> typeName) <$> rtd
+  (\(_, DataType typeName _ _) -> typeName) <$> first snd rtd
 
 renderImport' :: Backend -> ((a, Name), ExprHash) -> Text
 renderImport' Typescript ((_, name), hash') =

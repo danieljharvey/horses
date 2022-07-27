@@ -1,0 +1,1 @@
+{"storeBindings":[],"storeExpression":{"expAnn":null,"expBody":{"expAnn":null,"expLit":{"litInt":1,"tag":"MyInt"},"tag":"MyLiteral"},"expDataType":{"dtConstructors":{},"dtName":"Void","dtVars":[]},"tag":"MyData"},"storeInfixes":{},"storeTypeBindings":[]}

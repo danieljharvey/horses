@@ -43,8 +43,9 @@ updateStoreExpressionBindings project newBindings se = do
                       <> storeBindings se
                 ),
             prjTypeBindings =
-              typeBindingsToVersioned
-                (storeTypeBindings se)
+              toVersioned $
+                binOffModule
+                  (storeTypeBindings se)
           }
   let expr = storeExpression se
   (_, _, resolvedExpr) <-

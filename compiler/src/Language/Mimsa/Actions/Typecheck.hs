@@ -117,7 +117,7 @@ typecheckStoreExpressions inputStoreExpressions = do
                     { Build.jbDeps =
                         S.fromList
                           ( M.elems (storeBindings storeExpr)
-                              <> M.elems (getTypeBindings (storeTypeBindings storeExpr))
+                              <> M.elems (storeTypeBindings storeExpr)
                           ),
                       Build.jbInput = (storeExpr, input)
                     }
@@ -195,8 +195,9 @@ bindingsToModuleThing (Bindings b) =
     . M.toList
     $ b
 
-bindingsFromModuleThing :: Map (Maybe ModuleName, Name) ExprHash -> Bindings
-bindingsFromModuleThing = Bindings . M.fromList . fmap (first snd) . M.toList
+-- | StoreExpressions use the namespaced version, projects used the versioned one,
+namespacedMapToVersionedMap :: (Ord k2) => Map (k1, k2) a -> VersionedMap k2 a
+namespacedMapToVersionedMap = toVersioned . M.fromList . fmap (first snd) . M.toList
 
 annotateStoreExpressionWithTypes ::
   StoreExpression Annotation ->
@@ -208,8 +209,8 @@ annotateStoreExpressionWithTypes storeExpr = do
   let typecheckProject =
         Project
           (prjStore project)
-          (bindingsToVersioned (bindingsFromModuleThing (storeBindings storeExpr)))
-          (typeBindingsToVersioned (storeTypeBindings storeExpr))
+          (namespacedMapToVersionedMap (storeBindings storeExpr))
+          (namespacedMapToVersionedMap (storeTypeBindings storeExpr))
           mempty
           mempty
           mempty

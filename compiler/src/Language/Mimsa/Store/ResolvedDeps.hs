@@ -62,12 +62,12 @@ extractDataType se =
 
 resolveTypeDeps ::
   Store ann ->
-  TypeBindings ->
+  Map (Maybe ModuleName, TyCon) ExprHash ->
   Either StoreError ResolvedTypeDeps
-resolveTypeDeps (Store items) (TypeBindings bindings') =
+resolveTypeDeps (Store items) typeBindings =
   case partitionEithers foundItems of
     ([], found) -> Right (ResolvedTypeDeps (M.fromList found))
-    (fails, _) -> Left $ CouldNotFindExprHashForTypeBindings fails
+    (fails, _) -> Left $ CouldNotFindExprHashForTypeBindings (snd <$> fails)
   where
     foundItems =
       ( \(tyCon, hash) -> case M.lookup hash items of
@@ -77,16 +77,16 @@ resolveTypeDeps (Store items) (TypeBindings bindings') =
               _ -> Left tyCon
           Nothing -> Left tyCon
       )
-        <$> M.toList bindings'
+        <$> M.toList typeBindings
 
 resolveTypeStoreExpressions ::
   Store ann ->
-  TypeBindings ->
-  Either StoreError (Map TyCon (ExprHash, StoreExpression ann))
-resolveTypeStoreExpressions (Store items) (TypeBindings bindings') =
+  Map (Maybe ModuleName, TyCon) ExprHash ->
+  Either StoreError (Map (Maybe ModuleName, TyCon) (ExprHash, StoreExpression ann))
+resolveTypeStoreExpressions (Store items) typeBindings =
   case partitionEithers foundItems of
     ([], found) -> Right (M.fromList found)
-    (fails, _) -> Left $ CouldNotFindExprHashForTypeBindings fails
+    (fails, _) -> Left $ CouldNotFindExprHashForTypeBindings (snd <$> fails)
   where
     foundItems =
       ( \(tyCon, hash) -> case M.lookup hash items of
@@ -94,7 +94,7 @@ resolveTypeStoreExpressions (Store items) (TypeBindings bindings') =
             Right (tyCon, (hash, storeExpr))
           Nothing -> Left tyCon
       )
-        <$> M.toList bindings'
+        <$> M.toList typeBindings
 
 -- given a StoreExpression, get all the StoreExpressions it requires,
 -- recursively

@@ -1,1 +1,0 @@
-{"storeBindings":[],"storeExpression":{"expAnn":null,"expArg":{"expAnn":null,"expLit":{"litInt":1,"tag":"MyInt"},"tag":"MyLiteral"},"expFunc":{"expAnn":null,"expModuleName":null,"expTyCon":"Just","tag":"MyConstructor"},"tag":"MyApp"},"storeInfixes":{},"storeTypeBindings":{"Just":"869565058daf6c73edf768ae1acb43b2b03299c41898e02ba31f80eef4906930"}}
