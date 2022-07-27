@@ -13,7 +13,12 @@ export def fmap f parser =
 export def ap parserF parserA = 
   let (Parser pF) = parserF;
   let (Parser pA) = parserA;
-  Parser (\input -> match (pF input) with Maybe.Just (f, input2) -> (match (pA input2) with Maybe.Just (a, input3) -> Maybe.Just (f a, input3) | _ -> Maybe.Nothing) | _ ->  Maybe.Nothing)
+  Parser (\input -> match (pF input) with
+    Maybe.Just (f, input2) -> (
+      match (pA input2) with
+        Maybe.Just (a, input3) -> Maybe.Just (f a, input3)
+      | _ -> Maybe.Nothing)
+  | _ ->  Maybe.Nothing)
 
 export def bind f parser = 
   Parser (\input -> let (Parser firstP) = parser; match (firstP input) with (Maybe.Just (a, input2)) -> let (Parser secondP) = (f a); (secondP input2) | _ -> Maybe.Nothing)
