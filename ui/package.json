@@ -21,7 +21,7 @@
     "@types/react-router-dom": "5.3.3",
     "axios": "0.27.2",
     "fp-ts": "2.12.2",
-    "graphviz-react": "1.2.0",
+    "graphviz-react": "1.2.1",
     "lodash.throttle": "4.1.1",
     "monaco-editor": "0.33.0",
     "monocle-ts": "2.3.13",
