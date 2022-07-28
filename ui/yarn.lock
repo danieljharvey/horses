@@ -5444,10 +5444,10 @@ graceful-fs@^4.2.9:
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.10.tgz#147d3a006da4ca3ce14728c7aefc287c367d7a6c"
   integrity sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA==
 
-graphviz-react@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/graphviz-react/-/graphviz-react-1.2.0.tgz#ec2fafc5482569408576e1d6844cf62fbe8dda3d"
-  integrity sha512-C3V0LGLSs/gGskGwh5r8QGqGhc3D+H7b+vVGATG6ME5R50FYSl/cQNTTu9p4uOeWlHClVtL/wVZr+/+as9yBKg==
+graphviz-react@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/graphviz-react/-/graphviz-react-1.2.1.tgz#eef9c1d074dfdaa7afe844f78e96cd131e41d228"
+  integrity sha512-hb/CNfe/r51kMBh+VEMd+1FUh3PMmiUaGO1lgkkz70vbTNB8VYS5ecTlKBJg8zeToxWyQjV++f65HOH6i20hQA==
   dependencies:
     d3-graphviz "^2.6.1"
     react "^16.13.1"
