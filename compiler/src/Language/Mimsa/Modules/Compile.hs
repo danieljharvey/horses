@@ -2,15 +2,17 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Modules.Compile (compile, CompiledModule (..)) where
 
 -- `compile` here means "turn it into a bunch of StoreExpressions"
 
 import Control.Monad.Except
+import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (catMaybes, listToMaybe)
+import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
@@ -112,32 +114,36 @@ resolveNamespacedTyCon compiledModules inputModule modName tyCon = do
   -- find the module in our pile of already compiled modules
   compiledMod <- M.lookup modHash compiledModules
 
-  let allDataTypeStoreExpressions =
-        M.filterWithKey
-          ( \k _ -> case k of
-              DIType _ -> True
-              _ -> False
-          )
-          (cmExprs compiledMod)
-
   -- lookup the name in the module
   getStoreExpressionHash <$> M.lookup tyCon (dataTypesByTyCon (flattenCompiled compiledMod))
 
 -- filter data types out, and put in a map keyed by TyCon
-dataTypesByTyCon :: Map DefIdentifier (StoreExpression ann) -> Map TyCon (StoreExpression ann)
+dataTypesByTyCon ::
+  Map DefIdentifier (StoreExpression ann) ->
+  Map
+    TyCon
+    ( StoreExpression ann
+    )
 dataTypesByTyCon items =
   let withSe se =
-        listToMaybe $ S.toList $ extractDataTypes se
-      dataTypes = catMaybes (withSe <$> M.elems items)
-   in mempty
+        fmap (se,) . listToMaybe . S.toList . extractDataTypes
+          . storeExpression
+          $ se
+
+      dataTypes = mapMaybe withSe (M.elems items)
+   in mconcat $
+        ( \(se, DataType _ _ constructors) ->
+            constructors $> se
+        )
+          <$> dataTypes
 
 flattenCompiled ::
   CompiledModule ann ->
   Map DefIdentifier (StoreExpression ann)
 flattenCompiled cm =
-  let lookup exprHash =
+  let lookupHash exprHash =
         M.lookup exprHash (getStore $ cmStore cm)
-   in M.mapMaybe lookup (cmExprs cm)
+   in M.mapMaybe lookupHash (cmExprs cm)
 
 -- | given our dependencies and the entities used by the expressions, create
 -- the type bindings
@@ -150,12 +156,10 @@ typesFromEntities ::
   m (Map (Maybe ModuleName, TyCon) ExprHash)
 typesFromEntities compiledModules inputModule inputs uses = do
   let fromUse = \case
-        {-
-        EConstructor tyCon -> case M.lookup (DIName name) inputs of
-          Just se -> pure $ M.singleton (Nothing, name) (getStoreExpressionHash se)
-          _ -> throwError (ModuleErr $ CannotFindValues (S.singleton (DIName name)))
-
-        -}
+        EConstructor tyCon ->
+          case getStoreExpressionHash <$> M.lookup tyCon (dataTypesByTyCon inputs) of
+            Just exprHash -> pure $ M.singleton (Nothing, tyCon) exprHash
+            _ -> throwError (ModuleErr $ CannotFindConstructor tyCon)
         ENamespacedConstructor modName tyCon ->
           case resolveNamespacedTyCon compiledModules inputModule modName tyCon of
             Just hash -> pure $ M.singleton (Just modName, tyCon) hash
