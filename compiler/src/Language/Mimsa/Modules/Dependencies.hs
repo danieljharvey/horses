@@ -99,8 +99,15 @@ getTypeDependencies ::
 getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
-  exprDefIds <- getExprDeps mod' allUses
-  pure (DTData dt, typeDefIds <> exprDefIds, allUses)
+  pure (DTData dt, typeDefIds, allUses)
+
+-- | get types needed from constructors used
+getConstructorUses ::
+  Module ann ->
+  Set Entity ->
+  m (Set DefIdentifier)
+getConstructorUses _mod' _uses =
+  error "getConstructorUses not implemented"
 
 getTypeUses ::
   (MonadError (Error Annotation) m) =>
@@ -149,8 +156,10 @@ getExprDependencies mod' expr = do
   let allUses = extractUses expr
   exprDefIds <- getExprDeps mod' allUses
   typeDefIds <- getTypeUses mod' allUses
-  pure (DTExpr expr, exprDefIds <> typeDefIds, allUses)
+  consDefIds <- getConstructorUses mod' allUses
+  pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
 
+-- | this gets dependencies that are functions / values
 getExprDeps ::
   (MonadError (Error Annotation) m) =>
   Module ann ->
