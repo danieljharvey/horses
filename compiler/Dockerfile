@@ -1,5 +1,5 @@
 # Loosely based on https://www.fpcomplete.com/blog/2017/12/building-haskell-apps-with-docker
-FROM haskell:9.2.3-buster as dependencies
+FROM haskell:9.2.4-buster as dependencies
 RUN mkdir /opt/build
 WORKDIR /opt/build
 
@@ -8,7 +8,7 @@ COPY stack.yaml package.yaml stack.yaml.lock /opt/build/
 RUN stack build :mimsa-server --system-ghc --dependencies-only 
 
 # -------------------------------------------------------------------------------------------
-FROM haskell:9.2.3-buster as build
+FROM haskell:9.2.4-buster as build
 
 # Copy compiled dependencies from previous stage
 COPY --from=dependencies /root/.stack /root/.stack
