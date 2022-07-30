@@ -35,7 +35,7 @@ doOutputJS project input maybeBackend expr = do
         project
         (Actions.typecheckExpression project input expr)
   (_, (_, _)) <-
-    toReplM project (Actions.compile be (reStoreExpression resolvedExpr))
+    toReplM project (Actions.compileStoreExpression be (reStoreExpression resolvedExpr))
   replOutput @Text "Compilation complete!"
 
 doCompileProject ::

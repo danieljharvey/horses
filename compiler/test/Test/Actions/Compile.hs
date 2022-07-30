@@ -28,7 +28,7 @@ spec = do
       let expr = MyVar mempty Nothing "id"
       let action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile Typescript storeExpr
+            Actions.compileStoreExpression Typescript storeExpr
       let (newProject, outcomes, (_, hashes)) =
             fromRight (Actions.run testStdlib action)
       -- creates four files
@@ -43,7 +43,7 @@ spec = do
       let expr = MyVar mempty Nothing "evalState"
       let action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile Typescript storeExpr
+            Actions.compileStoreExpression Typescript storeExpr
       let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
       -- creates 9 files
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
@@ -56,14 +56,14 @@ spec = do
       let bindings = M.singleton (Nothing, "id2") exprHashForId
       let storeExpr = StoreExpression expr bindings mempty mempty
       let action = do
-            Actions.compile Typescript storeExpr
+            Actions.compileStoreExpression Typescript storeExpr
       Actions.run testStdlib action `shouldSatisfy` isRight
 
     it "Compiles with deep deps" $ do
       let expr = unsafeParseExpr "either.fmap (\\a -> a + 1) (Right 100)" $> mempty
           action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compile Typescript storeExpr
+            Actions.compileStoreExpression Typescript storeExpr
       let (_, outcomes, _) = fromRight (Actions.run testStdlib action)
       -- creates 9 files (7 expressions, stdlib, index)
       -- this will reduce once we inline across expressions as

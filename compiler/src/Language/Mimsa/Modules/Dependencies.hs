@@ -68,7 +68,7 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getValueDependencies ::
-  (Eq ann, Monoid ann, MonadError (Error Annotation) m) =>
+  (Eq ann, MonadError (Error Annotation) m) =>
   Module ann ->
   m
     ( Map
@@ -141,7 +141,7 @@ localsOnly =
     )
 
 getExprDependencies ::
-  (Eq ann, Monoid ann, MonadError (Error Annotation) m) =>
+  (Eq ann, MonadError (Error Annotation) m) =>
   Module ann ->
   Expr Name ann ->
   m (DepType ann, Set DefIdentifier, Set Entity)

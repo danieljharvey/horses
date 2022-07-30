@@ -45,7 +45,7 @@ compileThing input =
   let action = do
         let expr = unsafeParseExpr input $> mempty
         (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-        Actions.compile Typescript storeExpr
+        Actions.compileStoreExpression Typescript storeExpr
    in case Actions.run stdlib action of
         Right (proj, _, _) -> proj
         Left e -> error (show e)

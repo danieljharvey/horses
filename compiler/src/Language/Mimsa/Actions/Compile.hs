@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Compile (compile, compileProject) where
+module Language.Mimsa.Actions.Compile (compileStoreExpression, compileProject) where
 
 -- get expression
 -- optimise it
@@ -36,12 +36,22 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
+lookupRootStoreExpr ::
+  Map ExprHash (StoreExpression ann) ->
+  ExprHash ->
+  Actions.ActionM (StoreExpression ann)
+lookupRootStoreExpr storeExprs exprHash =
+  -- get new root StoreExpression (it may be different due to optimisation)
+  case M.lookup exprHash storeExprs of
+    Just re -> pure re
+    _ -> throwError (StoreErr (CouldNotFindStoreExpression exprHash))
+
 -- | this now accepts StoreExpression instead of expression
-compile ::
+compileStoreExpression ::
   Backend ->
   StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
-compile be se = do
+compileStoreExpression be se = do
   -- get dependencies of StoreExpression
   depsSe <- Actions.getDepsForStoreExpression se
 
@@ -49,19 +59,19 @@ compile be se = do
   storeExprs <- Actions.optimiseAll (fst <$> depsSe)
 
   -- get new root StoreExpression (it may be different due to optimisation)
-  rootStoreExpr <- case M.lookup (getStoreExpressionHash se) storeExprs of
-    Just re -> pure re
-    _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
+  rootStoreExpr <- lookupRootStoreExpr storeExprs (getStoreExpressionHash se)
 
   -- this will eventually check for things we have
   -- already transpiled to save on work
-  list <-
+  typedStoreExprs <-
     traverse
       Actions.annotateStoreExpressionWithTypes
-      (M.elems storeExprs)
+      storeExprs
 
-  -- transpile each required file and add to outputs
-  traverse_ (transpileModule be) list
+  -- this will eventually check for things we have
+  -- already transpiled to save on work
+  hashes <-
+    compileStoreExpressions be typedStoreExprs
 
   -- create the index
   createIndex be (getStoreExpressionHash rootStoreExpr)
@@ -74,10 +84,27 @@ compile be se = do
 
   -- return all ExprHashes created
   let allHashes =
-        S.map getStoreExpressionHash (S.fromList list)
+        hashes
           <> S.singleton rootExprHash
 
   pure (rootExprHash, allHashes)
+
+-- | given a pile of StoreExpressions, turn them all into TS/JS etc
+compileStoreExpressions ::
+  Backend ->
+  Map ExprHash (StoreExpression MonoType) ->
+  Actions.ActionM (Set ExprHash)
+compileStoreExpressions be typedStoreExprs = do
+  -- transpile each required file and add to outputs
+  traverse_
+    ( \se -> do
+        Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
+        transpileModule be se
+    )
+    typedStoreExprs
+
+  -- return all ExprHashes created
+  pure $ S.map getStoreExpressionHash (S.fromList $ M.elems typedStoreExprs)
 
 toBackendError :: BackendError MonoType -> Error Annotation
 toBackendError err = BackendErr (getAnnotationForType <$> err)
@@ -151,15 +178,30 @@ compileProject be = do
       Actions.lookupExpression
       (getBindings . getCurrentBindings . prjBindings $ project)
 
-  -- compile them all
-  exportMap <-
+  -- get dependencies of all the StoreExpressions
+  depsSe <- mconcat <$> traverse Actions.getDepsForStoreExpression (M.elems storeExprs)
+
+  -- optimise them all like a big legend
+  optimisedStoreExprs <- Actions.optimiseAll (fst <$> depsSe)
+
+  -- this will eventually check for things we have
+  -- already transpiled to save on work
+  typedStoreExprs <-
     traverse
-      ( \se -> do
-          Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
-          (exprHash, _) <- compile be se
-          pure exprHash
-      )
-      storeExprs
+      Actions.annotateStoreExpressionWithTypes
+      optimisedStoreExprs
+
+  -- compile them all
+  _ <- compileStoreExpressions be typedStoreExprs
+
+  -- work out what the new hashes are for each output
+  -- given optimisation may have changed things
+  exportMap <-
+    fmap getStoreExpressionHash
+      <$> traverse (lookupRootStoreExpr optimisedStoreExprs . getStoreExpressionHash) storeExprs
+
+  -- include stdlib for runtime
+  createStdlib be
 
   -- also output a top level exports file
   createProjectIndex be exportMap
