@@ -55,8 +55,15 @@ compileStoreExpression be se = do
 
   -- this will eventually check for things we have
   -- already transpiled to save on work
+  typedStoreExprs <-
+    traverse
+      Actions.annotateStoreExpressionWithTypes
+      storeExprs
+
+  -- this will eventually check for things we have
+  -- already transpiled to save on work
   hashes <-
-    compileStoreExpressions be storeExprs
+    compileStoreExpressions be typedStoreExprs
 
   -- create the index
   createIndex be (getStoreExpressionHash rootStoreExpr)
@@ -77,26 +84,19 @@ compileStoreExpression be se = do
 -- | given a pile of StoreExpressions, turn them all into TS/JS etc
 compileStoreExpressions ::
   Backend ->
-  Map ExprHash (StoreExpression Annotation) ->
+  Map ExprHash (StoreExpression MonoType) ->
   Actions.ActionM (Set ExprHash)
-compileStoreExpressions be storeExprs = do
-  -- this will eventually check for things we have
-  -- already transpiled to save on work
-  list <-
-    traverse
-      Actions.annotateStoreExpressionWithTypes
-      (M.elems storeExprs)
-
+compileStoreExpressions be typedStoreExprs = do
   -- transpile each required file and add to outputs
   traverse_
     ( \se -> do
         Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
         transpileModule be se
     )
-    list
+    typedStoreExprs
 
   -- return all ExprHashes created
-  pure $ S.map getStoreExpressionHash (S.fromList list)
+  pure $ S.map getStoreExpressionHash (S.fromList $ M.elems typedStoreExprs)
 
 toBackendError :: BackendError MonoType -> Error Annotation
 toBackendError err = BackendErr (getAnnotationForType <$> err)
@@ -173,9 +173,16 @@ compileProject be = do
   -- get dependencies of all the StoreExpressions
   depsSe <- mconcat <$> traverse Actions.getDepsForStoreExpression (M.elems storeExprs)
 
+  -- this will eventually check for things we have
+  -- already transpiled to save on work
+  typedStoreExprs <-
+    traverse
+      Actions.annotateStoreExpressionWithTypes
+      (fst <$> depsSe)
+
   -- compile them all
   -- TODO: we are not optimising these, perhaps we should
-  _ <- compileStoreExpressions be (fst <$> depsSe)
+  _ <- compileStoreExpressions be typedStoreExprs
 
   let exportMap = getStoreExpressionHash <$> storeExprs
 
