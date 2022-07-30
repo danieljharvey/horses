@@ -21,8 +21,9 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
+import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
--- import qualified Language.Mimsa.Actions.Optimise as Actions
+import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
@@ -55,7 +56,7 @@ lookupRootStoreExpr storeExprs exprHash =
 -- | compile a StoreExpression and all of its dependents
 compileStoreExpression ::
   Backend ->
-  StoreExpression MonoType ->
+  StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
 compileStoreExpression be se = do
   -- get dependencies of StoreExpression
@@ -257,15 +258,14 @@ compileModule ::
   Module Annotation ->
   Actions.ActionM ModuleHash
 compileModule be compModule = do
-  (_, compiledExps) <- Actions.toStoreExpressions compModule
+  -- typecheck module
+  typecheckedModule <- Actions.typecheckModule (prettyPrint compModule) compModule
+
+  -- turn it into store expressions
+  compiledExps <- Actions.toStoreExpressions typecheckedModule
 
   -- compile them all
-  traverse_
-    ( \se -> do
-        Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
-        fst <$> compileStoreExpression be se
-    )
-    (getStore (cmStore compiledExps))
+  _ <- compileStoreExpressions be (getStore (cmStore compiledExps))
 
   -- create map of items to hashes for index file
   exportMap <- (fmap . fmap) getStoreExpressionHash (compiledModulesToMap compiledExps)

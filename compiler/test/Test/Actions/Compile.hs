@@ -82,7 +82,7 @@ spec = do
             pure ()
       Actions.run stdlib action `shouldSatisfy` isRight
 
-    fdescribe "Can compile each top-level module" $ do
+    describe "Can compile each top-level module" $ do
       let compileModule (modName, modHash) =
             it ("Compiles module " <> T.unpack (prettyPrint modName) <> " from stdlib") $ do
               let action =
@@ -91,5 +91,4 @@ spec = do
               Actions.run stdlib action
                 `shouldSatisfy` isRight
       let moduleNames = M.toList . getCurrentModules . prjModules $ stdlib
-          onlyNe = filter (\(modName, _) -> modName == "Array") moduleNames
-       in traverse_ compileModule onlyNe
+       in traverse_ compileModule moduleNames

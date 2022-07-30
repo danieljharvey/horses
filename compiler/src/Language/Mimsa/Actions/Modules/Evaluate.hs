@@ -7,21 +7,26 @@ module Language.Mimsa.Actions.Modules.Evaluate
 where
 
 import Control.Monad.Except
+import Data.Foldable
 import qualified Data.Map as M
 import Data.Maybe (fromJust)
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Interpret as Actions
 import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
+import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
+import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Modules.Uses
+import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Modules.Entity
+import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 -- we need to bind our new expression to _something_
@@ -83,8 +88,11 @@ evaluateModule expr localModule = do
             }
           <> moduleImports
 
+  -- typecheck it
+  typecheckedModule <- Actions.typecheckModule (prettyPrint newModule) newModule
+
   -- compile to store expressions
-  (typecheckedModule, compiled) <- Actions.toStoreExpressions newModule
+  compiled <- Actions.toStoreExpressions typecheckedModule
 
   -- find the root StoreExpression by name
   rootStoreExpr <- Actions.lookupByName compiled evalId

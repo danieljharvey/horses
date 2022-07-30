@@ -27,7 +27,7 @@ compile' mod' =
       action = do
         tcMods <- typecheckAllModules mempty (prettyPrint mod') mod'
         case M.lookup (snd $ serializeModule mod') tcMods of
-          Just tcMod -> (fmap . fmap) getAnnotationForType (compile tcMods tcMod)
+          Just tcMod -> (fmap . fmap) getAnnotationForType (toStoreExprs tcMods tcMod)
           Nothing -> error "Could not find the module we just typechecked"
    in fromRight action
 

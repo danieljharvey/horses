@@ -12,7 +12,6 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
@@ -20,7 +19,7 @@ import Language.Mimsa.Types.Typechecker
 
 toStoreExpressions ::
   Module MonoType ->
-  Actions.ActionM (Module MonoType, CompiledModule MonoType)
+  Actions.ActionM (CompiledModule MonoType)
 toStoreExpressions localModule = do
   typecheckedModules <- Actions.typecheckModules (prettyPrint localModule) (getAnnotationForType <$> localModule)
 
@@ -39,7 +38,7 @@ toStoreExpressions localModule = do
     (Actions.appendStoreExpression . fmap getAnnotationForType)
     (getStore $ cmStore compiledModule)
 
-  pure (typecheckedModule, compiledModule)
+  pure compiledModule
 
 -- TODO: real errors
 lookupByName ::
