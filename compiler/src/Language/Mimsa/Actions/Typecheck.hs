@@ -20,6 +20,7 @@ import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Logging
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
@@ -195,31 +196,15 @@ bindingsToModuleThing (Bindings b) =
     . M.toList
     $ b
 
--- | StoreExpressions use the namespaced version, projects used the versioned one,
-namespacedMapToVersionedMap :: (Ord k2) => Map (k1, k2) a -> VersionedMap k2 a
-namespacedMapToVersionedMap = toVersioned . M.fromList . fmap (first snd) . M.toList
-
+-- | re-typecheck a single store expression
+-- not sure how this is different from other typechecking fns now
 annotateStoreExpressionWithTypes ::
   StoreExpression Annotation ->
   Actions.ActionM (StoreExpression MonoType)
 annotateStoreExpressionWithTypes storeExpr = do
-  project <- Actions.getProject
-
-  -- make a new project that contains the StoreExpression's bindings
-  let typecheckProject =
-        Project
-          (prjStore project)
-          (namespacedMapToVersionedMap (storeBindings storeExpr))
-          (namespacedMapToVersionedMap (storeTypeBindings storeExpr))
-          mempty
-          mempty
-          mempty
-
-  let exprName = storeExpression storeExpr
-
   -- re-typecheck the expression
   resolvedExpr <-
-    typecheckExpression typecheckProject (prettyPrint exprName) exprName
+    typecheckStoreExpression (debugLog "storeExpr b4 annotate" storeExpr) (prettyPrint storeExpr)
 
   -- swap (Name, Unique) back for Names
   let typedStoreExpr = first fst (reTypedExpression resolvedExpr)

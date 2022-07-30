@@ -29,7 +29,7 @@ import Test.Utils.Helpers
 
 spec :: Spec
 spec = do
-  fdescribe "Compile" $ do
+  describe "Compile" $ do
     it "Simplest compilation creates four files" $ do
       let expr = MyVar mempty Nothing "id"
       let action = do
@@ -76,7 +76,7 @@ spec = do
       -- most of this is unneeded `either` functions
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
 
-    fit "Compiles entire project" $ do
+    it "Compiles entire project" $ do
       let action = do
             _ <- Actions.compileProject Typescript
             pure ()
@@ -91,4 +91,5 @@ spec = do
               Actions.run stdlib action
                 `shouldSatisfy` isRight
       let moduleNames = M.toList . getCurrentModules . prjModules $ stdlib
-       in traverse_ compileModule moduleNames
+          onlyNe = filter (\(modName, _) -> modName == "Array") moduleNames
+       in traverse_ compileModule onlyNe

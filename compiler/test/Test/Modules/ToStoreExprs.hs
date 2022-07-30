@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Modules.Compile
+module Test.Modules.ToStoreExprs
   ( spec,
   )
 where
 
 import Data.Functor
 import qualified Data.Map as M
-import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
 import Language.Mimsa.Store

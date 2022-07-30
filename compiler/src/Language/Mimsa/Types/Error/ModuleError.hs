@@ -20,7 +20,7 @@ data ModuleError
   | TypeConflictsWithImport TypeName ModuleHash
   | CannotFindValues (Set DefIdentifier)
   | CannotFindConstructor TyCon
-  | CannotFindTypes (Set (Maybe ModuleName, TypeName))
+  | CannotFindTypes (Set TypeName)
   | DefDoesNotTypeCheck Text DefIdentifier TypeError
   | MissingModule ModuleHash
   | MissingModuleDep DefIdentifier ModuleHash

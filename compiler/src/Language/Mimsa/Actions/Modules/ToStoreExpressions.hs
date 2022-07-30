@@ -9,8 +9,8 @@ import Data.Foldable
 import qualified Data.Map as M
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -19,10 +19,10 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 toStoreExpressions ::
-  Module Annotation ->
-  Actions.ActionM (Module MonoType, CompiledModule Annotation)
+  Module MonoType ->
+  Actions.ActionM (Module MonoType, CompiledModule MonoType)
 toStoreExpressions localModule = do
-  typecheckedModules <- Actions.typecheckModules (prettyPrint localModule) localModule
+  typecheckedModules <- Actions.typecheckModules (prettyPrint localModule) (getAnnotationForType <$> localModule)
 
   let (_, rootModuleHash) = serializeModule localModule
 
@@ -32,10 +32,12 @@ toStoreExpressions localModule = do
     _ -> throwError (ModuleErr $ MissingModule rootModuleHash)
 
   -- compile to store expressions
-  compiledModule <- compile typecheckedModules typecheckedModule
+  compiledModule <- toStoreExprs typecheckedModules typecheckedModule
 
   -- need to get our new store items into the project so this works I reckon
-  traverse_ Actions.appendStoreExpression (getStore $ cmStore compiledModule)
+  traverse_
+    (Actions.appendStoreExpression . fmap getAnnotationForType)
+    (getStore $ cmStore compiledModule)
 
   pure (typecheckedModule, compiledModule)
 

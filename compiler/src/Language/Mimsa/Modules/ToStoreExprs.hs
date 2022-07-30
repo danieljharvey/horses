@@ -4,7 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
 
-module Language.Mimsa.Modules.Compile (compile, CompiledModule (..)) where
+module Language.Mimsa.Modules.ToStoreExprs (toStoreExprs, CompiledModule (..)) where
 
 -- `compile` here means "turn it into a bunch of StoreExpressions"
 
@@ -16,6 +16,7 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Store
@@ -81,7 +82,7 @@ exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
   typeBindings <- typesFromEntities compiledModules inputModule inputs uses
   infixes <- infixesFromEntities inputs uses
-  pure $ StoreExpression expr bindings typeBindings infixes
+  pure $ debugPretty "se" $ StoreExpression expr bindings typeBindings infixes
 
 -- | where can I find this function?
 resolveNamespacedName ::
@@ -102,7 +103,7 @@ resolveNamespacedName compiledModules inputModule modName name = do
 
 -- | where can I find this Constructor?
 resolveNamespacedTyCon ::
-  Map ModuleHash (CompiledModule ann) ->
+  Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
   ModuleName ->
   TyCon ->
@@ -115,14 +116,14 @@ resolveNamespacedTyCon compiledModules inputModule modName tyCon = do
   compiledMod <- M.lookup modHash compiledModules
 
   -- lookup the name in the module
-  getStoreExpressionHash <$> M.lookup tyCon (dataTypesByTyCon (flattenCompiled compiledMod))
+  getStoreExpressionHash <$> M.lookup tyCon (debugPretty "dataTypesByTyCon" $ dataTypesByTyCon (flattenCompiled compiledMod))
 
 -- filter data types out, and put in a map keyed by TyCon
 dataTypesByTyCon ::
-  Map DefIdentifier (StoreExpression ann) ->
+  Map DefIdentifier (StoreExpression (Type ann)) ->
   Map
     TyCon
-    ( StoreExpression ann
+    ( StoreExpression (Type ann)
     )
 dataTypesByTyCon items =
   let withSe se =
@@ -138,8 +139,8 @@ dataTypesByTyCon items =
           <$> dataTypes
 
 flattenCompiled ::
-  CompiledModule ann ->
-  Map DefIdentifier (StoreExpression ann)
+  CompiledModule (Type ann) ->
+  Map DefIdentifier (StoreExpression (Type ann))
 flattenCompiled cm =
   let lookupHash exprHash =
         M.lookup exprHash (getStore $ cmStore cm)
@@ -149,9 +150,9 @@ flattenCompiled cm =
 -- the type bindings
 typesFromEntities ::
   (MonadError (Error Annotation) m) =>
-  Map ModuleHash (CompiledModule ann) ->
+  Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
-  Map DefIdentifier (StoreExpression ann) ->
+  Map DefIdentifier (StoreExpression (Type ann)) ->
   Set Entity ->
   m (Map (Maybe ModuleName, TyCon) ExprHash)
 typesFromEntities compiledModules inputModule inputs uses = do
@@ -163,7 +164,7 @@ typesFromEntities compiledModules inputModule inputs uses = do
         ENamespacedConstructor modName tyCon ->
           case resolveNamespacedTyCon compiledModules inputModule modName tyCon of
             Just hash -> pure $ M.singleton (Just modName, tyCon) hash
-            _ -> pure mempty -- should this be an error?
+            _ -> error $ "could not resolve namespaced type " <> show modName <> "." <> show tyCon
         _ -> pure mempty
 
   -- combine results
@@ -186,7 +187,7 @@ bindingsFromEntities compiledModules inputModule inputs uses = do
         ENamespacedName modName name ->
           case resolveNamespacedName compiledModules inputModule modName name of
             Just hash -> pure $ M.singleton (Just modName, name) hash
-            _ -> pure mempty -- should this be an error?
+            _ -> error "could not resolve namespaced name"
         _ -> pure mempty
 
   -- combine results
@@ -213,12 +214,16 @@ infixesFromEntities inputs uses = do
 toStore :: Map a (StoreExpression ann) -> Store ann
 toStore = Store . M.fromList . fmap (\a -> (getStoreExpressionHash a, a)) . M.elems
 
-compile ::
-  (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
+toStoreExprs ::
+  ( MonadError (Error Annotation) m,
+    Eq ann,
+    Monoid ann,
+    Show ann
+  ) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (CompiledModule (Type ann))
-compile typecheckedModules inputModule = do
+toStoreExprs typecheckedModules inputModule = do
   allCompiledModules <- compileAllModules typecheckedModules inputModule
   let (_, rootModuleHash) = serializeModule inputModule
   case M.lookup rootModuleHash allCompiledModules of
@@ -231,7 +236,10 @@ compile typecheckedModules inputModule = do
 
 --- compile a module into StoreExpressions
 compileModuleDefinitions ::
-  (MonadError (Error Annotation) m, Eq ann, Monoid ann) =>
+  ( MonadError (Error Annotation) m,
+    Eq ann,
+    Monoid ann
+  ) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
   m (CompiledModule (Type ann))
@@ -269,7 +277,11 @@ compileModuleDefinitions compiledModules inputModule = do
 
 --- compile many modules
 compileAllModules ::
-  (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
+  ( MonadError (Error Annotation) m,
+    Eq ann,
+    Monoid ann,
+    Show ann
+  ) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (Map ModuleHash (CompiledModule (Type ann)))

@@ -84,7 +84,6 @@ library
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
       Language.Mimsa.Modules.Check
-      Language.Mimsa.Modules.Compile
       Language.Mimsa.Modules.Dependencies
       Language.Mimsa.Modules.FromParts
       Language.Mimsa.Modules.HashModule
@@ -92,6 +91,7 @@ library
       Language.Mimsa.Modules.Parse
       Language.Mimsa.Modules.Prelude
       Language.Mimsa.Modules.Pretty
+      Language.Mimsa.Modules.ToStoreExprs
       Language.Mimsa.Modules.Typecheck
       Language.Mimsa.Modules.Uses
       Language.Mimsa.Parser
@@ -442,9 +442,9 @@ test-suite mimsa-test
       Test.Data.Project
       Test.Interpreter.Repl
       Test.Modules.Check
-      Test.Modules.Compile
       Test.Modules.Repl
       Test.Modules.Test
+      Test.Modules.ToStoreExprs
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax

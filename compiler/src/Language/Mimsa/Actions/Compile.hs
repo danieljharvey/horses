@@ -22,15 +22,15 @@ import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Act
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Optimise as Actions
+-- import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Modules.Check
-import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store
@@ -55,14 +55,16 @@ lookupRootStoreExpr storeExprs exprHash =
 -- | compile a StoreExpression and all of its dependents
 compileStoreExpression ::
   Backend ->
-  StoreExpression Annotation ->
+  StoreExpression MonoType ->
   Actions.ActionM (ExprHash, Set ExprHash)
 compileStoreExpression be se = do
   -- get dependencies of StoreExpression
   depsSe <- Actions.getDepsForStoreExpression se
 
   -- optimise them all like a big legend
-  storeExprs <- Actions.optimiseAll (fst <$> depsSe)
+  -- storeExprs <- Actions.optimiseAll (fst <$> depsSe)
+  -- TODO: renable this once we know it's not the cause
+  let storeExprs = fst <$> depsSe
 
   -- get new root StoreExpression (it may be different due to optimisation)
   rootStoreExpr <- lookupRootStoreExpr storeExprs (getStoreExpressionHash se)

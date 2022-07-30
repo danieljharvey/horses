@@ -15,6 +15,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Logging
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
@@ -51,11 +52,13 @@ addNumbersToStoreExpression storeExpr =
   let action = do
         -- add dependencies to scope
         let varsFromDeps =
-              mconcat $
-                ( \((modName, name), hash) ->
-                    M.singleton (name, modName) (Dependency hash)
-                )
-                  <$> M.toList (storeBindings storeExpr)
+              debugLog "varsFromDeps" $
+                mconcat $
+                  ( \((modName, name), hash) ->
+                      M.singleton (name, modName) (Dependency hash)
+                  )
+                    <$> M.toList (debugPretty "storeBindings" $ storeBindings (debugPretty "storeExpr" storeExpr))
+
         -- evaluate rest of expression using these
         withLambda
           varsFromDeps
