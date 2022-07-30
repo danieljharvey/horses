@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -27,7 +28,7 @@ data CompiledModule ann = CompiledModule
   { cmStore :: Store ann,
     cmExprs :: Map DefIdentifier ExprHash
   }
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Functor)
 
 instance Semigroup (CompiledModule ann) where
   (CompiledModule a b) <> (CompiledModule a' b') =
@@ -38,11 +39,11 @@ instance Monoid (CompiledModule ann) where
 
 toStoreExpression ::
   (MonadError (Error Annotation) m, Monoid ann) =>
-  Map ModuleHash (CompiledModule ann) ->
+  Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
-  Map DefIdentifier (StoreExpression ann) ->
-  (DefIdentifier, DepType ann, Set Entity) ->
-  m (StoreExpression ann)
+  Map DefIdentifier (StoreExpression (Type ann)) ->
+  (DefIdentifier, DepType (Type ann), Set Entity) ->
+  m (StoreExpression (Type ann))
 toStoreExpression compiledModules inputModule inputs (_, dep, uses) =
   case dep of
     (DTExpr expr) -> exprToStoreExpression compiledModules inputModule inputs (expr, uses)
@@ -52,9 +53,10 @@ toStoreExpression compiledModules inputModule inputs (_, dep, uses) =
 dataTypeToStoreExpression ::
   (Monad m, Monoid ann) =>
   DataType ->
-  m (StoreExpression ann)
+  m (StoreExpression (Type ann))
 dataTypeToStoreExpression dt =
-  let expr = MyData mempty dt (MyRecord mempty mempty)
+  let mt = MTRecord mempty mempty -- it's weird MyData needs this, so give it rubbish
+      expr = MyData mt dt (MyRecord mt mempty)
    in pure (StoreExpression expr mempty mempty mempty)
 
 -- to make a store expression we need to
@@ -66,18 +68,18 @@ dataTypeToStoreExpression dt =
 -- b) map them to specific ExprHashes
 exprToStoreExpression ::
   (MonadError (Error Annotation) m) =>
-  Map ModuleHash (CompiledModule ann) ->
+  Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
-  Map DefIdentifier (StoreExpression ann) ->
-  (Expr Name ann, Set Entity) ->
-  m (StoreExpression ann)
+  Map DefIdentifier (StoreExpression (Type ann)) ->
+  (Expr Name (Type ann), Set Entity) ->
+  m (StoreExpression (Type ann))
 exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
   infixes <- infixesFromEntities inputs uses
   pure $ StoreExpression expr bindings mempty infixes
 
 resolveNamespacedName ::
-  Map ModuleHash (CompiledModule ann) ->
+  Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
   ModuleName ->
   Name ->
@@ -96,9 +98,9 @@ resolveNamespacedName compiledModules inputModule modName name = do
 -- bindings
 bindingsFromEntities ::
   (MonadError (Error Annotation) m) =>
-  Map ModuleHash (CompiledModule ann) ->
+  Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
-  Map DefIdentifier (StoreExpression ann) ->
+  Map DefIdentifier (StoreExpression (Type ann)) ->
   Set Entity ->
   m (Map (Maybe ModuleName, Name) ExprHash)
 bindingsFromEntities compiledModules inputModule inputs uses = do
@@ -119,7 +121,7 @@ bindingsFromEntities compiledModules inputModule inputs uses = do
 -- bindings
 infixesFromEntities ::
   (MonadError (Error Annotation) m) =>
-  Map DefIdentifier (StoreExpression ann) ->
+  Map DefIdentifier (StoreExpression (Type ann)) ->
   Set Entity ->
   m (Map InfixOp ExprHash)
 infixesFromEntities inputs uses = do
@@ -140,7 +142,7 @@ compile ::
   (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
-  m (CompiledModule ann)
+  m (CompiledModule (Type ann))
 compile typecheckedModules inputModule = do
   allCompiledModules <- compileAllModules typecheckedModules inputModule
   let (_, rootModuleHash) = serializeModule inputModule
@@ -155,15 +157,15 @@ compile typecheckedModules inputModule = do
 --- compile a module into StoreExpressions
 compileModuleDefinitions ::
   (MonadError (Error Annotation) m, Eq ann, Monoid ann) =>
-  Map ModuleHash (CompiledModule ann) ->
+  Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
-  m (CompiledModule ann)
+  m (CompiledModule (Type ann))
 compileModuleDefinitions compiledModules inputModule = do
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
   inputWithDeps <-
-    getValueDependencies
-      (getAnnotationForType <$> inputModule) -- we're going to need the types soon to extract which types are returned etc
+    getValueDependencies inputModule
+
   let inputWithDepsAndName = M.mapWithKey (,) inputWithDeps
 
   let state =
@@ -195,7 +197,7 @@ compileAllModules ::
   (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
-  m (Map ModuleHash (CompiledModule ann))
+  m (Map ModuleHash (CompiledModule (Type ann)))
 compileAllModules myDeps rootModule = do
   -- which other modules do we need to compile in order to compile this one?
   inputWithDeps <- getModuleDeps myDeps rootModule

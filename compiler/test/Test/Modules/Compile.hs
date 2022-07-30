@@ -13,18 +13,21 @@ import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 
 compile' :: Module Annotation -> CompiledModule Annotation
 compile' mod' =
-  let action = do
+  let action :: Either (Error Annotation) (CompiledModule Annotation)
+      action = do
         tcMods <- typecheckAllModules mempty (prettyPrint mod') mod'
         case M.lookup (snd $ serializeModule mod') tcMods of
-          Just tcMod -> compile tcMods tcMod
+          Just tcMod -> (fmap . fmap) getAnnotationForType (compile tcMods tcMod)
           Nothing -> error "Could not find the module we just typechecked"
    in fromRight action
 

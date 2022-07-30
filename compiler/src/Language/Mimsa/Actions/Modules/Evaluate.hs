@@ -109,10 +109,12 @@ evaluateModule expr localModule = do
   let exprType = fromJust (lookupModuleDefType typecheckedModule evalId)
 
   -- need to get our new store items into the project so this works I reckon
-  traverse_ Actions.appendStoreExpression (getStore $ cmStore compiled)
+  traverse_
+    (Actions.appendStoreExpression . fmap getAnnotationForType)
+    (getStore $ cmStore compiled)
 
   -- interpret
   evaluatedExpression <-
-    Actions.interpreter rootStoreExpr
+    Actions.interpreter (getAnnotationForType <$> rootStoreExpr)
 
   pure (exprType, evaluatedExpression, newModule)

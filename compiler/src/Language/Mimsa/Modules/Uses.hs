@@ -20,10 +20,10 @@ import Language.Mimsa.Types.Typechecker
 -- important - we must not count variables brought in via lambdas or let
 -- bindings as those aren't external deps
 
-extractUses :: (Eq ann, Monoid ann) => Expr Name ann -> Set Entity
+extractUses :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses = extractUses_
 
-extractUses_ :: (Eq ann, Monoid ann) => Expr Name ann -> Set Entity
+extractUses_ :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses_ (MyVar _ (Just modName) a) = S.singleton (ENamespacedName modName a)
 extractUses_ (MyVar _ _ a) = S.singleton (EName a)
 extractUses_ (MyAnnotation _ mt expr) =
@@ -91,7 +91,7 @@ filterVarsIntroducedInPatterns patUses exprUses =
 extractIdentUses :: Identifier Name ann -> Set Entity
 extractIdentUses (Identifier _ name) = S.singleton (EName name)
 
-extractPatternUses :: (Eq ann, Monoid ann) => Pattern Name ann -> Set Entity
+extractPatternUses :: (Eq ann) => Pattern Name ann -> Set Entity
 extractPatternUses (PWildcard _) = mempty
 extractPatternUses (PLit _ _) = mempty
 extractPatternUses (PVar _ a) = S.singleton (EName a)
