@@ -31,7 +31,7 @@ testProjectCompile ::
 testProjectCompile folderPrefix be expr = do
   let action = do
         (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-        (seHash, _) <- Actions.compile be storeExpr
+        (seHash, _) <- Actions.compileStoreExpression be storeExpr
         pure seHash
   let (_newProject_, outcomes, seHash) =
         fromRight (Actions.run testStdlib action)

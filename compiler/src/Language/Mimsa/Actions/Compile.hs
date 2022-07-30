@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Compile (compile, compileProject) where
+module Language.Mimsa.Actions.Compile (compileStoreExpression, compileProject) where
 
 -- get expression
 -- optimise it
@@ -37,11 +37,11 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
 -- | this now accepts StoreExpression instead of expression
-compile ::
+compileStoreExpression ::
   Backend ->
   StoreExpression Annotation ->
   Actions.ActionM (ExprHash, Set ExprHash)
-compile be se = do
+compileStoreExpression be se = do
   -- get dependencies of StoreExpression
   depsSe <- Actions.getDepsForStoreExpression se
 
@@ -55,13 +55,8 @@ compile be se = do
 
   -- this will eventually check for things we have
   -- already transpiled to save on work
-  list <-
-    traverse
-      Actions.annotateStoreExpressionWithTypes
-      (M.elems storeExprs)
-
-  -- transpile each required file and add to outputs
-  traverse_ (transpileModule be) list
+  hashes <-
+    compileStoreExpressions be storeExprs
 
   -- create the index
   createIndex be (getStoreExpressionHash rootStoreExpr)
@@ -74,10 +69,34 @@ compile be se = do
 
   -- return all ExprHashes created
   let allHashes =
-        S.map getStoreExpressionHash (S.fromList list)
+        hashes
           <> S.singleton rootExprHash
 
   pure (rootExprHash, allHashes)
+
+-- | given a pile of StoreExpressions, turn them all into TS/JS etc
+compileStoreExpressions ::
+  Backend ->
+  Map ExprHash (StoreExpression Annotation) ->
+  Actions.ActionM (Set ExprHash)
+compileStoreExpressions be storeExprs = do
+  -- this will eventually check for things we have
+  -- already transpiled to save on work
+  list <-
+    traverse
+      Actions.annotateStoreExpressionWithTypes
+      (M.elems storeExprs)
+
+  -- transpile each required file and add to outputs
+  traverse_
+    ( \se -> do
+        Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
+        transpileModule be se
+    )
+    list
+
+  -- return all ExprHashes created
+  pure $ S.map getStoreExpressionHash (S.fromList list)
 
 toBackendError :: BackendError MonoType -> Error Annotation
 toBackendError err = BackendErr (getAnnotationForType <$> err)
@@ -151,15 +170,17 @@ compileProject be = do
       Actions.lookupExpression
       (getBindings . getCurrentBindings . prjBindings $ project)
 
+  -- get dependencies of all the StoreExpressions
+  depsSe <- mconcat <$> traverse Actions.getDepsForStoreExpression (M.elems storeExprs)
+
   -- compile them all
-  exportMap <-
-    traverse
-      ( \se -> do
-          Actions.appendMessage ("Compiling " <> prettyPrint (getStoreExpressionHash se))
-          (exprHash, _) <- compile be se
-          pure exprHash
-      )
-      storeExprs
+  -- TODO: we are not optimising these, perhaps we should
+  _ <- compileStoreExpressions be (fst <$> depsSe)
+
+  let exportMap = getStoreExpressionHash <$> storeExprs
+
+  -- include stdlib for runtime
+  createStdlib be
 
   -- also output a top level exports file
   createProjectIndex be exportMap

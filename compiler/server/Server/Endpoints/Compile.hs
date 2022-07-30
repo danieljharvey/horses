@@ -73,7 +73,7 @@ compileHashEndpoint
   (CompileHashRequest exprHash backend) = do
     (storeExpr, pd, _) <- projectFromExpressionHandler mimsaEnv exprHash
     (_, outcomes, (rootExprHash, _)) <-
-      fromActionM mimsaEnv (pdHash pd) (Actions.compile backend storeExpr)
+      fromActionM mimsaEnv (pdHash pd) (Actions.compileStoreExpression backend storeExpr)
     let makeZip = encodeZipFile . zipFromSavedFiles . Actions.writeFilesFromOutcomes
     let filename = "mimsa-" <> show rootExprHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
