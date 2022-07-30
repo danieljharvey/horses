@@ -36,6 +36,16 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 
+lookupRootStoreExpr ::
+  Map ExprHash (StoreExpression ann) ->
+  ExprHash ->
+  Actions.ActionM (StoreExpression ann)
+lookupRootStoreExpr storeExprs exprHash =
+  -- get new root StoreExpression (it may be different due to optimisation)
+  case M.lookup exprHash storeExprs of
+    Just re -> pure re
+    _ -> throwError (StoreErr (CouldNotFindStoreExpression exprHash))
+
 -- | this now accepts StoreExpression instead of expression
 compileStoreExpression ::
   Backend ->
@@ -49,9 +59,7 @@ compileStoreExpression be se = do
   storeExprs <- Actions.optimiseAll (fst <$> depsSe)
 
   -- get new root StoreExpression (it may be different due to optimisation)
-  rootStoreExpr <- case M.lookup (getStoreExpressionHash se) storeExprs of
-    Just re -> pure re
-    _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
+  rootStoreExpr <- lookupRootStoreExpr storeExprs (getStoreExpressionHash se)
 
   -- this will eventually check for things we have
   -- already transpiled to save on work
@@ -173,18 +181,24 @@ compileProject be = do
   -- get dependencies of all the StoreExpressions
   depsSe <- mconcat <$> traverse Actions.getDepsForStoreExpression (M.elems storeExprs)
 
+  -- optimise them all like a big legend
+  optimisedStoreExprs <- Actions.optimiseAll (fst <$> depsSe)
+
   -- this will eventually check for things we have
   -- already transpiled to save on work
   typedStoreExprs <-
     traverse
       Actions.annotateStoreExpressionWithTypes
-      (fst <$> depsSe)
+      optimisedStoreExprs
 
   -- compile them all
-  -- TODO: we are not optimising these, perhaps we should
   _ <- compileStoreExpressions be typedStoreExprs
 
-  let exportMap = getStoreExpressionHash <$> storeExprs
+  -- work out what the new hashes are for each output
+  -- given optimisation may have changed things
+  exportMap <-
+    fmap getStoreExpressionHash
+      <$> traverse (lookupRootStoreExpr optimisedStoreExprs . getStoreExpressionHash) storeExprs
 
   -- include stdlib for runtime
   createStdlib be
