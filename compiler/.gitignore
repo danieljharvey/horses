@@ -16,12 +16,16 @@ test/golden/Typescript/*.ts
 test/golden/Typescript-result/*.json
 test/golden/CompileTSProject/
 test/golden/CompileTSProject-result/
+test/golden/CompileTSModuleProject/
+test/golden/CompileTSModuleProject-result/
 
 # esmodules compilation tests
 test/golden/ESModulesJS-result/*.json
 test/golden/ESModulesJS/
 test/golden/CompileJSProject/
 test/golden/CompileJSProject-result/
+test/golden/CompileJSModuleProject/
+test/golden/CompileJSModuleProject-result/
 
 # .prof files generated for profiling
 *.prof

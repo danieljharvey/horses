@@ -33,10 +33,14 @@ import Test.Utils.Compilation
 import Test.Utils.Helpers
 import Test.Utils.Serialisation
 
+joinLines :: [Text] -> Text
+joinLines = T.intercalate "\n"
+
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState = TSReaderState mempty
-   in case fromExpr readerState expr of
+      startState = TSCodegenState mempty mempty mempty
+   in case fromExpr readerState startState expr of
         Right (ejsModule, _) -> (ejsModule, JS.printModule ejsModule)
         Left e -> error (T.unpack (prettyPrint e))
 
@@ -47,7 +51,8 @@ testFromInputText input =
     Right resolved -> do
       let exprName = first fst (reTypedExpression resolved)
       let readerState = TSReaderState mempty
-      first prettyPrint (JS.printModule . fst <$> fromExpr readerState exprName)
+          startState = TSCodegenState mempty mempty mempty
+      first prettyPrint (JS.printModule . fst <$> fromExpr readerState startState exprName)
 
 -- test that we have a valid ESModulesJS module by saving it and running it
 testESModulesJSInNode :: Text -> IO String
@@ -88,6 +93,16 @@ fullTestIt (input, expectedValue) =
         expr = unsafeParse input
     (filename, contentHash) <- testProjectCompile "CompileJSProject" ESModulesJS expr
     cachePath <- createOutputFolder "CompileJSProject-result"
+    let cacheFilename = cachePath <> show contentHash <> ".json"
+
+    result <- withCache cacheFilename (testESModulesJSFileInNode filename)
+    result `shouldBe` expectedValue
+
+testModule :: (Text, String) -> Spec
+testModule (input, expectedValue) =
+  it (T.unpack input) $ do
+    (filename, contentHash) <- testModuleCompile "CompileJSModuleProject" ESModulesJS input
+    cachePath <- createOutputFolder "CompileJSModuleProject-result"
     let cacheFilename = cachePath <> show contentHash <> ".json"
 
     result <- withCache cacheFilename (testESModulesJSFileInNode filename)
@@ -509,3 +524,19 @@ spec = do
 
     describe "Entire compilation" $ do
       traverse_ fullTestIt fullTestCases
+
+    describe "Compile `main` function from modules and run them in Node" $ do
+      let moduleTestCases =
+            [ ( joinLines
+                  [ "export def main = 1 + 2"
+                  ],
+                "3"
+              ),
+              ( joinLines
+                  [ "def adding a b = a + b",
+                    "export def main = adding 1 2"
+                  ],
+                "3"
+              )
+            ]
+       in traverse_ testModule moduleTestCases

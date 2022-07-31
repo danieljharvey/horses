@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Modules.Compile
+module Test.Modules.ToStoreExprs
   ( spec,
   )
 where

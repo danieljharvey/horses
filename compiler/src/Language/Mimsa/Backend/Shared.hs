@@ -5,7 +5,7 @@ module Language.Mimsa.Backend.Shared
   ( symlinkedOutputPath,
     zipFileOutputPath,
     indexOutputFilename,
-    moduleFilename,
+    storeExprFilename,
     fileExtension,
     stdlibFilename,
     outputStdlib,
@@ -52,10 +52,10 @@ fileExtension :: Backend -> Text
 fileExtension Typescript = ".ts"
 fileExtension _ = ""
 
-moduleFilename :: Backend -> ExprHash -> Text
-moduleFilename ESModulesJS hash' =
+storeExprFilename :: Backend -> ExprHash -> Text
+storeExprFilename ESModulesJS hash' =
   "ejs-" <> prettyPrint hash' <> ".mjs"
-moduleFilename Typescript hash' =
+storeExprFilename Typescript hash' =
   "ts-" <> prettyPrint hash'
 
 stdlibFilename :: Backend -> Text

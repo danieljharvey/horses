@@ -7,6 +7,7 @@ module Test.Typechecker.NumberVars
   )
 where
 
+import Data.Either
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.NumberVars
@@ -166,6 +167,13 @@ spec = do
 
             ans = testAddNumbers (StoreExpression expr mempty mempty mempty)
         ans `shouldBe` Right expected
+
+      it "Does not explode with a namespaced dep" $ do
+        let expr =
+              MyVar mempty (Just "Prelude") "what"
+            valueDeps = M.singleton (Just "Prelude", "what") (ExprHash "13")
+            ans = testAddNumbers (StoreExpression expr valueDeps mempty mempty)
+        ans `shouldSatisfy` isRight
 
       it "Fails if can't find outside dep" $ do
         let expr =

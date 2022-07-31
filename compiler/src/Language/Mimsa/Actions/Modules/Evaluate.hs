@@ -7,17 +7,17 @@ module Language.Mimsa.Actions.Modules.Evaluate
 where
 
 import Control.Monad.Except
-import Data.Foldable (traverse_)
+import Data.Foldable
 import qualified Data.Map as M
 import Data.Maybe (fromJust)
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Interpret as Actions
+import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.Compile
-import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -88,22 +88,14 @@ evaluateModule expr localModule = do
             }
           <> moduleImports
 
-  typecheckedModules <- Actions.typecheckModules (prettyPrint newModule) newModule
-
-  let (_, rootModuleHash) = serializeModule newModule
-
-  -- pull root module out from pile of typechecked modules
-  typecheckedModule <- case M.lookup rootModuleHash typecheckedModules of
-    Just tcMod -> pure tcMod
-    _ -> throwError (ModuleErr $ MissingModule rootModuleHash)
+  -- typecheck it
+  typecheckedModule <- Actions.typecheckModule (prettyPrint newModule) newModule
 
   -- compile to store expressions
-  compiled <- compile typecheckedModules typecheckedModule
+  compiled <- Actions.toStoreExpressions typecheckedModule
 
   -- find the root StoreExpression by name
-  rootStoreExpr <- case M.lookup evalId (cmExprs compiled) >>= flip M.lookup (getStore $ cmStore compiled) of
-    Just se -> pure se
-    _ -> error "fuck, could not find the thing we just made"
+  rootStoreExpr <- Actions.lookupByName compiled evalId
 
   -- unsafe, yolo
   let exprType = fromJust (lookupModuleDefType typecheckedModule evalId)

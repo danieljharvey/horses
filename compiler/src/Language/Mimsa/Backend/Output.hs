@@ -8,6 +8,8 @@ module Language.Mimsa.Backend.Output
     indexFilename,
     indexImport,
     projectIndexFilename,
+    moduleFilename,
+    moduleImport,
   )
 where
 
@@ -111,7 +113,8 @@ renderExpression ::
   BackendM MonoType (Text, [TS.TSImport])
 renderExpression be dataTypes expr = do
   let readerState = TS.TSReaderState (makeTypeDepMap dataTypes)
-   in case TS.fromExpr readerState expr of
+      startState = TS.TSCodegenState mempty mempty mempty
+   in case TS.fromExpr readerState startState expr of
         Right (ts, stdlibFuncs) -> case be of
           Typescript -> pure (TS.printModule ts, stdlibFuncs)
           ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)
@@ -127,13 +130,13 @@ renderImport' Typescript ((_, name), hash') =
   "import { main as "
     <> printTSName (coerce name)
     <> " } from \"./"
-    <> moduleFilename Typescript hash'
+    <> storeExprFilename Typescript hash'
     <> "\";\n"
 renderImport' ESModulesJS ((_, name), hash') =
   "import { main as "
     <> printTSName (coerce name)
     <> " } from \"./"
-    <> moduleFilename ESModulesJS hash'
+    <> storeExprFilename ESModulesJS hash'
     <> "\";\n"
 
 renderTypeImport' :: Backend -> (TypeName, ExprHash) -> Text
@@ -141,13 +144,13 @@ renderTypeImport' Typescript (typeName, hash') =
   "import * as "
     <> coerce typeName
     <> " from \"./"
-    <> moduleFilename Typescript hash'
+    <> storeExprFilename Typescript hash'
     <> "\";\n"
 renderTypeImport' ESModulesJS (typeName, hash') =
   "import * as "
     <> coerce typeName
     <> " from \"./"
-    <> moduleFilename ESModulesJS hash'
+    <> storeExprFilename ESModulesJS hash'
     <> "\";\n"
 
 renderTypeSignature' :: MonoType -> Text
@@ -157,20 +160,35 @@ renderTypeSignature' mt =
 renderNewline' :: Backend -> Text
 renderNewline' _ = "\n"
 
-outputIndexFile :: Backend -> Map Name ExprHash -> Text
-outputIndexFile be exportMap =
-  let exportLine (name, exprHash) = case be of
+outputIndexFile :: Backend -> Map Name ExprHash -> Map ModuleName ModuleHash -> Text
+outputIndexFile be exportMap exportModuleMap =
+  let exportExpression (name, exprHash) = case be of
         ESModulesJS ->
           "export { main as " <> printTSName (coerce name) <> " } from './"
-            <> moduleFilename be exprHash
+            <> storeExprFilename be exprHash
             <> fileExtension be
             <> "';"
         Typescript ->
           "export { main as " <> printTSName (coerce name) <> " } from './"
-            <> moduleFilename be exprHash
+            <> storeExprFilename be exprHash
             <> "';"
-   in T.intercalate "\n" (exportLine <$> M.toList exportMap)
 
+      exportModule (modName, modHash) = case be of
+        ESModulesJS ->
+          "export { * as " <> printTSName (coerce modName) <> " } from './"
+            <> moduleImport be modHash
+            <> "';"
+        Typescript ->
+          "export { main as " <> printTSName (coerce modName) <> " } from './"
+            <> moduleImport be modHash
+            <> "';"
+
+      allExports =
+        (exportExpression <$> M.toList exportMap)
+          <> (exportModule <$> M.toList exportModuleMap)
+   in T.intercalate "\n" allExports
+
+-- | file name of index file (no extension for ts)
 indexImport :: Backend -> ExprHash -> Text
 indexImport be hash' =
   case be of
@@ -182,6 +200,7 @@ indexImport be hash' =
       "index-"
         <> prettyPrint hash'
 
+-- | filename of index file (including extension always)
 indexFilename :: Backend -> ExprHash -> Text
 indexFilename be hash' =
   case be of
@@ -201,3 +220,21 @@ projectIndexFilename be =
       "index.mjs"
     Typescript ->
       "index.ts"
+
+-- | filename for a module (without extension for TS)
+moduleImport :: Backend -> ModuleHash -> Text
+moduleImport be modHash =
+  case be of
+    ESModulesJS ->
+      "module-" <> prettyPrint modHash <> ".mjs"
+    Typescript ->
+      "module-" <> prettyPrint modHash
+
+-- | filename of module, always including extension
+moduleFilename :: Backend -> ModuleHash -> Text
+moduleFilename be modHash =
+  case be of
+    ESModulesJS ->
+      moduleImport be modHash
+    Typescript ->
+      moduleImport be modHash <> ".ts"

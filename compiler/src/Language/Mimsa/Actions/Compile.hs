@@ -1,6 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Compile (compileStoreExpression, compileProject) where
+module Language.Mimsa.Actions.Compile (compileStoreExpression, compileModule, compileProject) where
 
 -- get expression
 -- optimise it
@@ -19,6 +20,8 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
+import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
+import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
@@ -26,12 +29,16 @@ import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
+import Language.Mimsa.Modules.Check
+import Language.Mimsa.Modules.Compile
+import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
@@ -46,7 +53,7 @@ lookupRootStoreExpr storeExprs exprHash =
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression exprHash))
 
--- | this now accepts StoreExpression instead of expression
+-- | compile a StoreExpression and all of its dependents
 compileStoreExpression ::
   Backend ->
   StoreExpression Annotation ->
@@ -56,7 +63,9 @@ compileStoreExpression be se = do
   depsSe <- Actions.getDepsForStoreExpression se
 
   -- optimise them all like a big legend
-  storeExprs <- Actions.optimiseAll (fst <$> depsSe)
+  -- storeExprs <- Actions.optimiseAll (fst <$> depsSe)
+  -- TODO: renable this once we know it's not the cause
+  let storeExprs = fst <$> depsSe
 
   -- get new root StoreExpression (it may be different due to optimisation)
   rootStoreExpr <- lookupRootStoreExpr storeExprs (getStoreExpressionHash se)
@@ -126,7 +135,7 @@ transpileModule be se = do
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
   let filename =
         Actions.SaveFilename $
-          moduleFilename
+          storeExprFilename
             be
             (getStoreExpressionHash se)
             <> fileExtension be
@@ -145,7 +154,7 @@ createIndex ::
   Backend -> ExprHash -> Actions.ActionM ()
 createIndex be exprHash = do
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile be (M.singleton "main" exprHash))
+      outputContent = Actions.SaveContents (coerce $ outputIndexFile be (M.singleton "main" exprHash) mempty)
       filename = Actions.SaveFilename (indexFilename be exprHash)
   Actions.appendWriteFile path filename outputContent
 
@@ -160,12 +169,31 @@ createStdlib be = do
 -- | The project index file is a `index.ts` or `index.js` that exports
 -- | all the top-level items in the project
 createProjectIndex ::
-  Backend -> Map Name ExprHash -> Actions.ActionM ()
-createProjectIndex be exportMap = do
+  Backend -> Map Name ExprHash -> Map ModuleName ModuleHash -> Actions.ActionM ()
+createProjectIndex be exportMap moduleExportMap = do
+  let indexFileContents = outputIndexFile be exportMap moduleExportMap
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile be exportMap)
+      outputContent = Actions.SaveContents (coerce indexFileContents)
       filename = Actions.SaveFilename (projectIndexFilename be)
   Actions.appendWriteFile path filename outputContent
+
+-- | The project index file is a `index.ts` or `index.js` that exports
+-- | all the top-level items in the project
+createModuleIndex ::
+  ModuleHash -> Backend -> Map Name ExprHash -> Actions.ActionM ()
+createModuleIndex modHash be exportMap = do
+  let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
+      outputContent = Actions.SaveContents (coerce $ outputIndexFile be exportMap mempty)
+      filename = Actions.SaveFilename (moduleFilename be modHash)
+  Actions.appendWriteFile path filename outputContent
+
+-- | get map of names -> storeexprs from compiled outputs
+compiledModulesToMap :: CompiledModule ann -> Actions.ActionM (Map Name (StoreExpression ann))
+compiledModulesToMap compModule =
+  let findCompiled exprHash = case M.lookup exprHash (getStore $ cmStore compModule) of
+        Just mod' -> pure mod'
+        _ -> throwError (StoreErr (CouldNotFindStoreExpression exprHash))
+   in traverse findCompiled (filterNameDefs (cmExprs compModule))
 
 --  compile every expression bound at the top level
 compileProject :: Backend -> Actions.ActionM (Map Name ExprHash)
@@ -203,8 +231,50 @@ compileProject be = do
   -- include stdlib for runtime
   createStdlib be
 
+  -- get all top-level module bindings in the project
+  modules <-
+    traverse
+      Actions.lookupModule
+      (getCurrentModules $ prjModules project)
+
+  -- compile these too! why the hell not!
+  exportModuleMap <-
+    traverse
+      ( \thisMod -> do
+          Actions.appendMessage ("Compiling module " <> prettyPrint (snd (serializeModule thisMod)))
+          compileModule be thisMod
+      )
+      modules
+
   -- also output a top level exports file
-  createProjectIndex be exportMap
+  createProjectIndex be exportMap exportModuleMap
 
   -- great job
   pure exportMap
+
+-- | compile a Module and all of its dependents
+compileModule ::
+  Backend ->
+  Module Annotation ->
+  Actions.ActionM ModuleHash
+compileModule be compModule = do
+  -- typecheck module
+  typecheckedModule <- Actions.typecheckModule (prettyPrint compModule) compModule
+
+  -- turn it into store expressions
+  compiledExps <- Actions.toStoreExpressions typecheckedModule
+
+  -- compile them all
+  _ <- compileStoreExpressions be (getStore (cmStore compiledExps))
+
+  -- create map of items to hashes for index file
+  exportMap <- (fmap . fmap) getStoreExpressionHash (compiledModulesToMap compiledExps)
+
+  -- get hash of module for index
+  let (_, moduleHash) = serializeModule compModule
+
+  -- also output a top level exports file
+  createModuleIndex moduleHash be exportMap
+
+  -- great job
+  pure moduleHash
