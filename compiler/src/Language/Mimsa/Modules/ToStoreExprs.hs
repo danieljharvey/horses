@@ -16,7 +16,6 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
-import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Store
@@ -82,7 +81,7 @@ exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
   typeBindings <- typesFromEntities compiledModules inputModule inputs uses
   infixes <- infixesFromEntities inputs uses
-  pure $ debugPretty "se" $ StoreExpression expr bindings typeBindings infixes
+  pure $ StoreExpression expr bindings typeBindings infixes
 
 -- | where can I find this function?
 resolveNamespacedName ::
@@ -116,7 +115,7 @@ resolveNamespacedTyCon compiledModules inputModule modName tyCon = do
   compiledMod <- M.lookup modHash compiledModules
 
   -- lookup the name in the module
-  getStoreExpressionHash <$> M.lookup tyCon (debugPretty "dataTypesByTyCon" $ dataTypesByTyCon (flattenCompiled compiledMod))
+  getStoreExpressionHash <$> M.lookup tyCon (dataTypesByTyCon (flattenCompiled compiledMod))
 
 -- filter data types out, and put in a map keyed by TyCon
 dataTypesByTyCon ::

@@ -20,7 +20,6 @@ import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Logging
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
@@ -204,7 +203,7 @@ annotateStoreExpressionWithTypes ::
 annotateStoreExpressionWithTypes storeExpr = do
   -- re-typecheck the expression
   resolvedExpr <-
-    typecheckStoreExpression (debugLog "storeExpr b4 annotate" storeExpr) (prettyPrint storeExpr)
+    typecheckStoreExpression storeExpr (prettyPrint storeExpr)
 
   -- swap (Name, Unique) back for Names
   let typedStoreExpr = first fst (reTypedExpression resolvedExpr)

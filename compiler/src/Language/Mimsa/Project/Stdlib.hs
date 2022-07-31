@@ -76,7 +76,7 @@ modules = do
   _ <-
     addModule "State" (M.fromList [("Prelude", preludeHash)]) stateInput
   _ <-
-    addModule "String" (M.fromList [("Array", arrayHash), ("Maybe", maybeHash)]) stringInput
+    addModule "String" (M.fromList [("Array", arrayHash)]) stringInput
   _ <-
     addModule
       "Parser"
