@@ -113,7 +113,8 @@ renderExpression ::
   BackendM MonoType (Text, [TS.TSImport])
 renderExpression be dataTypes expr = do
   let readerState = TS.TSReaderState (makeTypeDepMap dataTypes)
-   in case TS.fromExpr readerState expr of
+      startState = TS.TSCodegenState mempty mempty mempty
+   in case TS.fromExpr readerState startState expr of
         Right (ts, stdlibFuncs) -> case be of
           Typescript -> pure (TS.printModule ts, stdlibFuncs)
           ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)

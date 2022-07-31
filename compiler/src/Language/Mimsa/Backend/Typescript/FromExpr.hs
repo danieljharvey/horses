@@ -178,10 +178,11 @@ toTSExpr expr' =
 
 fromExpr ::
   TSReaderState ->
+  TSCodegenState ->
   Expr Name MonoType ->
   Either (BackendError MonoType) (TSModule, [TSImport])
-fromExpr readerState expr = do
-  (result, dataTypes, imports) <- runTypescriptM readerState (toTSBody expr)
+fromExpr readerState startState expr = do
+  (result, dataTypes, imports) <- runTypescriptM readerState startState (toTSBody expr)
   pure (TSModule dataTypes result, imports)
 
 identifierName :: Identifier Name ann -> Name

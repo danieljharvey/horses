@@ -157,22 +157,18 @@ findTypeName tyCon = do
     Just typeName -> pure (Just typeName)
     Nothing -> pure Nothing
 
-initialStack :: TSStateStack
-initialStack =
-  NE.singleton $
-    TSCodegenState mempty mempty mempty
-
 runTypescriptM ::
   TSReaderState ->
+  TSCodegenState ->
   TypescriptM a ->
   Either (BackendError MonoType) (a, [TSDataType], [TSImport])
-runTypescriptM readerState computation =
+runTypescriptM readerState startState computation =
   case evalState
     ( runReaderT
         (runWriterT (runExceptT computation))
         readerState
     )
-    initialStack of
+    (NE.singleton startState) of
     (Right a, writerOutput) ->
       let (dts, imports) = partitionEithers writerOutput
        in pure (a, dts, imports)

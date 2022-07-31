@@ -39,7 +39,8 @@ joinLines = T.intercalate "\n"
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState = TSReaderState mempty
-   in case fromExpr readerState expr of
+      startState = TSCodegenState mempty mempty mempty
+   in case fromExpr readerState startState expr of
         Right (ejsModule, _) -> (ejsModule, JS.printModule ejsModule)
         Left e -> error (T.unpack (prettyPrint e))
 
@@ -50,7 +51,8 @@ testFromInputText input =
     Right resolved -> do
       let exprName = first fst (reTypedExpression resolved)
       let readerState = TSReaderState mempty
-      first prettyPrint (JS.printModule . fst <$> fromExpr readerState exprName)
+          startState = TSCodegenState mempty mempty mempty
+      first prettyPrint (JS.printModule . fst <$> fromExpr readerState startState exprName)
 
 -- test that we have a valid ESModulesJS module by saving it and running it
 testESModulesJSInNode :: Text -> IO String

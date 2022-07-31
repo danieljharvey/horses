@@ -76,13 +76,13 @@ spec = do
       -- most of this is unneeded `either` functions
       length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
 
-    it "Compiles entire project" $ do
+    xit "Compiles entire project" $ do
       let action = do
             _ <- Actions.compileProject Typescript
             pure ()
       Actions.run stdlib action `shouldSatisfy` isRight
 
-    describe "Can compile each top-level module" $ do
+    xdescribe "Can compile each top-level module" $ do
       let compileModule (modName, modHash) =
             it ("Compiles module " <> T.unpack (prettyPrint modName) <> " from stdlib") $ do
               let action =
