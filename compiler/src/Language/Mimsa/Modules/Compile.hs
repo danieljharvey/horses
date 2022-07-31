@@ -2,24 +2,20 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TupleSections #-}
 
-module Language.Mimsa.Modules.ToStoreExprs (toStoreExprs, CompiledModule (..)) where
+module Language.Mimsa.Modules.Compile (compile, CompiledModule (..)) where
 
 -- `compile` here means "turn it into a bunch of StoreExpressions"
 
 import Control.Monad.Except
-import Data.Functor
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Store
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -79,11 +75,9 @@ exprToStoreExpression ::
   m (StoreExpression (Type ann))
 exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
   bindings <- bindingsFromEntities compiledModules inputModule inputs uses
-  typeBindings <- typesFromEntities compiledModules inputModule inputs uses
   infixes <- infixesFromEntities inputs uses
-  pure $ StoreExpression expr bindings typeBindings infixes
+  pure $ StoreExpression expr bindings mempty infixes
 
--- | where can I find this function?
 resolveNamespacedName ::
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
@@ -99,75 +93,6 @@ resolveNamespacedName compiledModules inputModule modName name = do
 
   -- lookup the name in the module
   M.lookup (DIName name) (cmExprs compiledMod)
-
--- | where can I find this Constructor?
-resolveNamespacedTyCon ::
-  Map ModuleHash (CompiledModule (Type ann)) ->
-  Module (Type ann) ->
-  ModuleName ->
-  TyCon ->
-  Maybe ExprHash
-resolveNamespacedTyCon compiledModules inputModule modName tyCon = do
-  -- find out which module the modName refers to
-  modHash <- M.lookup modName (moNamedImports inputModule)
-
-  -- find the module in our pile of already compiled modules
-  compiledMod <- M.lookup modHash compiledModules
-
-  -- lookup the name in the module
-  getStoreExpressionHash <$> M.lookup tyCon (dataTypesByTyCon (flattenCompiled compiledMod))
-
--- filter data types out, and put in a map keyed by TyCon
-dataTypesByTyCon ::
-  Map DefIdentifier (StoreExpression (Type ann)) ->
-  Map
-    TyCon
-    ( StoreExpression (Type ann)
-    )
-dataTypesByTyCon items =
-  let withSe se =
-        fmap (se,) . listToMaybe . S.toList . extractDataTypes
-          . storeExpression
-          $ se
-
-      dataTypes = mapMaybe withSe (M.elems items)
-   in mconcat $
-        ( \(se, DataType _ _ constructors) ->
-            constructors $> se
-        )
-          <$> dataTypes
-
-flattenCompiled ::
-  CompiledModule (Type ann) ->
-  Map DefIdentifier (StoreExpression (Type ann))
-flattenCompiled cm =
-  let lookupHash exprHash =
-        M.lookup exprHash (getStore $ cmStore cm)
-   in M.mapMaybe lookupHash (cmExprs cm)
-
--- | given our dependencies and the entities used by the expressions, create
--- the type bindings
-typesFromEntities ::
-  (MonadError (Error Annotation) m) =>
-  Map ModuleHash (CompiledModule (Type ann)) ->
-  Module (Type ann) ->
-  Map DefIdentifier (StoreExpression (Type ann)) ->
-  Set Entity ->
-  m (Map (Maybe ModuleName, TyCon) ExprHash)
-typesFromEntities compiledModules inputModule inputs uses = do
-  let fromUse = \case
-        EConstructor tyCon ->
-          case getStoreExpressionHash <$> M.lookup tyCon (dataTypesByTyCon inputs) of
-            Just exprHash -> pure $ M.singleton (Nothing, tyCon) exprHash
-            _ -> throwError (ModuleErr $ CannotFindConstructor tyCon)
-        ENamespacedConstructor modName tyCon ->
-          case resolveNamespacedTyCon compiledModules inputModule modName tyCon of
-            Just hash -> pure $ M.singleton (Just modName, tyCon) hash
-            _ -> error $ "could not resolve namespaced type " <> show modName <> "." <> show tyCon
-        _ -> pure mempty
-
-  -- combine results
-  mconcat <$> traverse fromUse (S.toList uses)
 
 -- given our dependencies and the entities used by the expression, create the
 -- bindings
@@ -186,7 +111,7 @@ bindingsFromEntities compiledModules inputModule inputs uses = do
         ENamespacedName modName name ->
           case resolveNamespacedName compiledModules inputModule modName name of
             Just hash -> pure $ M.singleton (Just modName, name) hash
-            _ -> error "could not resolve namespaced name"
+            _ -> pure mempty -- should this be an error?
         _ -> pure mempty
 
   -- combine results
@@ -213,16 +138,12 @@ infixesFromEntities inputs uses = do
 toStore :: Map a (StoreExpression ann) -> Store ann
 toStore = Store . M.fromList . fmap (\a -> (getStoreExpressionHash a, a)) . M.elems
 
-toStoreExprs ::
-  ( MonadError (Error Annotation) m,
-    Eq ann,
-    Monoid ann,
-    Show ann
-  ) =>
+compile ::
+  (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (CompiledModule (Type ann))
-toStoreExprs typecheckedModules inputModule = do
+compile typecheckedModules inputModule = do
   allCompiledModules <- compileAllModules typecheckedModules inputModule
   let (_, rootModuleHash) = serializeModule inputModule
   case M.lookup rootModuleHash allCompiledModules of
@@ -235,10 +156,7 @@ toStoreExprs typecheckedModules inputModule = do
 
 --- compile a module into StoreExpressions
 compileModuleDefinitions ::
-  ( MonadError (Error Annotation) m,
-    Eq ann,
-    Monoid ann
-  ) =>
+  (MonadError (Error Annotation) m, Eq ann, Monoid ann) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
   m (CompiledModule (Type ann))
@@ -276,11 +194,7 @@ compileModuleDefinitions compiledModules inputModule = do
 
 --- compile many modules
 compileAllModules ::
-  ( MonadError (Error Annotation) m,
-    Eq ann,
-    Monoid ann,
-    Show ann
-  ) =>
+  (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (Map ModuleHash (CompiledModule (Type ann)))
