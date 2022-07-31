@@ -17,7 +17,7 @@ import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
-import Language.Mimsa.Modules.Compile
+import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers

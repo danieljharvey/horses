@@ -3,9 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Modules.Compile (compile, CompiledModule (..)) where
-
--- `compile` here means "turn it into a bunch of StoreExpressions"
+module Language.Mimsa.Modules.ToStoreExprs (toStoreExpressions, CompiledModule (..)) where
 
 import Control.Monad.Except
 import Data.Map (Map)
@@ -138,12 +136,12 @@ infixesFromEntities inputs uses = do
 toStore :: Map a (StoreExpression ann) -> Store ann
 toStore = Store . M.fromList . fmap (\a -> (getStoreExpressionHash a, a)) . M.elems
 
-compile ::
+toStoreExpressions ::
   (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (CompiledModule (Type ann))
-compile typecheckedModules inputModule = do
+toStoreExpressions typecheckedModules inputModule = do
   allCompiledModules <- compileAllModules typecheckedModules inputModule
   let (_, rootModuleHash) = serializeModule inputModule
   case M.lookup rootModuleHash allCompiledModules of
