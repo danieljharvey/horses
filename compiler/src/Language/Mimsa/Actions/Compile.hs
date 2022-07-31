@@ -30,8 +30,8 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Modules.Check
-import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store

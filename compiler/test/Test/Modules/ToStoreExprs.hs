@@ -7,8 +7,8 @@ where
 
 import Data.Functor
 import qualified Data.Map as M
-import Language.Mimsa.Modules.Compile
 import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
@@ -21,13 +21,13 @@ import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 
-compile' :: Module Annotation -> CompiledModule Annotation
-compile' mod' =
+toStoreExpressions' :: Module Annotation -> CompiledModule Annotation
+toStoreExpressions' mod' =
   let action :: Either (Error Annotation) (CompiledModule Annotation)
       action = do
         tcMods <- typecheckAllModules mempty (prettyPrint mod') mod'
         case M.lookup (snd $ serializeModule mod') tcMods of
-          Just tcMod -> (fmap . fmap) getAnnotationForType (compile tcMods tcMod)
+          Just tcMod -> (fmap . fmap) getAnnotationForType (toStoreExpressions tcMods tcMod)
           Nothing -> error "Could not find the module we just typechecked"
    in fromRight action
 
@@ -35,7 +35,7 @@ spec :: Spec
 spec = do
   describe "Compile modules" $ do
     it "Empty module, no outputs" $ do
-      compile' mempty
+      toStoreExpressions' mempty
         `shouldBe` CompiledModule
           { cmStore = mempty,
             cmExprs = mempty
@@ -53,7 +53,7 @@ spec = do
               { cmStore = Store $ M.singleton hash storeExpr,
                 cmExprs = M.singleton (DIName "id") hash
               }
-      compile' inputModule `shouldBe` expected
+      toStoreExpressions' inputModule `shouldBe` expected
     it "Two expressions, one depends on the other" $ do
       let exprA = unsafeParseExpr "\\a -> a" $> mempty
           storeExprA = StoreExpression exprA mempty mempty mempty
@@ -85,4 +85,4 @@ spec = do
                       (DIName "useId", hashB)
                     ]
               }
-      compile' inputModule `shouldBe` expected
+      toStoreExpressions' inputModule `shouldBe` expected
