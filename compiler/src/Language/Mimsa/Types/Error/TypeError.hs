@@ -219,11 +219,11 @@ renderTypeError (NameNotFoundInScope _ available mModName name) =
     Just modName ->
       ["Could not find" <+> prettyDoc modName <> "." <> prettyDoc name <+> itemList]
     Nothing ->
-      ["Could not find var" <+> prettyDoc name <+> "in" <+> itemList]
+      ["Could not find " <+> prettyDoc name <+> "in" <+> itemList]
   where
     itemList = "[" <+> pretty (T.intercalate ", " (prettyPrint <$> S.toList available)) <+> "]"
 renderTypeError (VariableNotFound _ available name) =
-  ["Could not find var " <+> prettyDoc name <+> "in scope" <+> itemList]
+  ["Could not find var" <+> prettyDoc name <+> "in scope" <+> itemList]
   where
     itemList =
       "["

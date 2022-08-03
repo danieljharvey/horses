@@ -551,6 +551,13 @@ spec = do
                     "export def main = 1 +++ 2"
                   ],
                 "3"
+              ),
+              ( joinLines
+                  [ "export type Identity a = Identity a",
+                    "def runIdentity a = let (Identity inner) = a in inner",
+                    "export def main = runIdentity (Identity True)"
+                  ],
+                "true"
               )
             ]
        in traverse_ testModule moduleTestCases

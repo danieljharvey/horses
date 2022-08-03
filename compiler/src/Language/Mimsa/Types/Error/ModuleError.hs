@@ -19,7 +19,7 @@ data ModuleError
   | DefinitionConflictsWithImport DefIdentifier ModuleHash
   | TypeConflictsWithImport TypeName ModuleHash
   | CannotFindValues (Set DefIdentifier)
-  | CannotFindTypes (Set (Maybe ModuleName, TypeName))
+  | CannotFindTypes (Set TypeName)
   | DefDoesNotTypeCheck Text DefIdentifier TypeError
   | MissingModule ModuleHash
   | MissingModuleDep DefIdentifier ModuleHash

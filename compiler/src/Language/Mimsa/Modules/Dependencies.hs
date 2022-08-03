@@ -54,13 +54,12 @@ filterDefs =
       )
     . S.toList
 
-filterTypes :: Set Entity -> Set (Maybe ModuleName, TypeName)
+filterTypes :: Set Entity -> Set TypeName
 filterTypes =
   S.fromList
     . mapMaybe
       ( \case
-          EType typeName -> Just (Nothing, typeName)
-          ENamespacedType modName typeName -> Just (Just modName, typeName)
+          EType typeName -> Just typeName
           _ -> Nothing
       )
     . S.toList
@@ -90,7 +89,7 @@ getValueDependencies mod' = do
         (moDataTypes mod')
   pure (exprDeps <> typeDeps)
 
--- get all dependencies of a type
+-- get all dependencies of a type definition
 getTypeDependencies ::
   (MonadError (Error Annotation) m) =>
   Module ann ->
@@ -99,8 +98,7 @@ getTypeDependencies ::
 getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
-  exprDefIds <- getExprDeps mod' allUses
-  pure (DTData dt, typeDefIds <> exprDefIds, allUses)
+  pure (DTData dt, typeDefIds, allUses)
 
 getTypeUses ::
   (MonadError (Error Annotation) m) =>
@@ -111,34 +109,21 @@ getTypeUses mod' uses =
   let typeDeps = filterTypes uses
       unknownTypeDeps =
         S.filter
-          ( \(modName, typeName) ->
-              case modName of
-                Just _externalMod -> False
-                Nothing ->
-                  S.notMember typeName (M.keysSet (moDataTypes mod'))
-                    && S.notMember typeName (M.keysSet (moDataTypeImports mod'))
+          ( \typeName ->
+              S.notMember typeName (M.keysSet (moDataTypes mod'))
+                && S.notMember typeName (M.keysSet (moDataTypeImports mod'))
           )
           typeDeps
    in if S.null unknownTypeDeps
         then
           let localTypeDeps =
                 S.filter
-                  ( \(modName, typeName) -> case modName of
-                      Just _externalMod -> False
-                      Nothing -> typeName `S.member` M.keysSet (moDataTypes mod')
+                  ( \typeName ->
+                      typeName `S.member` M.keysSet (moDataTypes mod')
                   )
                   typeDeps
-              withoutExternal = localsOnly localTypeDeps
-           in pure (S.map DIType withoutExternal)
+           in pure (S.map DIType localTypeDeps)
         else throwError (ModuleErr (CannotFindTypes unknownTypeDeps))
-
-localsOnly :: (Ord b) => Set (Maybe a, b) -> Set b
-localsOnly =
-  setMapMaybe
-    ( \case
-        (Just _, _) -> Nothing
-        (Nothing, b) -> Just b
-    )
 
 getExprDependencies ::
   (Eq ann, MonadError (Error Annotation) m) =>
