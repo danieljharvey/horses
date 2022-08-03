@@ -39,6 +39,7 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Utils
 
 -- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
 typeBindingsByType :: Store a -> Map (Maybe ModuleName, TyCon) ExprHash -> Map TypeName ExprHash
@@ -54,13 +55,9 @@ typeBindingsByType store tb =
 stripModules :: (Ord b) => Map (a, b) c -> Map b c
 stripModules = M.fromList . fmap (first snd) . M.toList
 
-addNumbersToMap :: (Ord k) => Map k a -> Map k (Int, a)
-addNumbersToMap =
-  M.fromList
-    . fmap (\(i, (k, a)) -> (k, (i, a)))
-    . zip [0 ..]
-    . M.toList
-
+-- | Numbers each infix operator, and names them `_infix0`, `_infix1` etc
+-- these are then used to create both imports and the mapping from infix
+-- operator to the variable to use in the TS code
 nameInfixes :: Map InfixOp ExprHash -> (Map Name ExprHash, Map InfixOp TSName)
 nameInfixes infixes =
   let numbered = addNumbersToMap infixes
