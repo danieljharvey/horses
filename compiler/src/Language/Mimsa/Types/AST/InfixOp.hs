@@ -5,6 +5,7 @@
 module Language.Mimsa.Types.AST.InfixOp where
 
 import qualified Data.Aeson as JSON
+import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
@@ -43,6 +44,9 @@ safeMkInfixOp a =
   if validInfixOp a
     then Just (InfixOp a)
     else Nothing
+
+instance IsString InfixOp where
+  fromString = mkInfixOp . T.pack
 
 instance Printer InfixOp where
   prettyPrint (InfixOp t) = t

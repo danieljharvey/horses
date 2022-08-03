@@ -1,4 +1,4 @@
-module Language.Mimsa.Utils (mapWithIndex, setMapMaybe, mapKeys, filterMapKeys) where
+module Language.Mimsa.Utils (mapWithIndex, setMapMaybe, mapKeys, filterMapKeys, addNumbersToMap) where
 
 import Data.Bifunctor
 import Data.Map (Map)
@@ -24,3 +24,10 @@ mapKeys f = M.fromList . fmap (first f) . M.toList
 filterMapKeys :: (Ord k2) => (k -> Maybe k2) -> Map k a -> Map k2 a
 filterMapKeys f =
   M.fromList . mapMaybe (\(k, a) -> (,) <$> f k <*> pure a) . M.toList
+
+addNumbersToMap :: (Ord k) => Map k a -> Map k (Int, a)
+addNumbersToMap =
+  M.fromList
+    . fmap (\(i, (k, a)) -> (k, (i, a)))
+    . zip [0 ..]
+    . M.toList

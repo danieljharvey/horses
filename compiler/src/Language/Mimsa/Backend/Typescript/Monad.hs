@@ -9,6 +9,7 @@ module Language.Mimsa.Backend.Typescript.Monad
     runTypescriptM,
     getState,
     addInfix,
+    findInfix,
     findTypeName,
     typeNameIsImport,
     unusedGenerics,
@@ -40,8 +41,9 @@ type TypescriptM =
     (BackendError MonoType)
     (WriterT [TSWriterItem] (ReaderT TSReaderState (State TSStateStack)))
 
-newtype TSReaderState = TSReaderState
-  { tsConstructorTypes :: Map TyCon TypeName -- Just -> Maybe, Nothing -> Maybe etc
+data TSReaderState = TSReaderState
+  { tsConstructorTypes :: Map TyCon TypeName, -- Just -> Maybe, Nothing -> Maybe etc
+    tsInfixNames :: Map InfixOp TSName -- infix operators from imports
   }
 
 type TSWriterItem =
@@ -156,6 +158,26 @@ findTypeName tyCon = do
   case M.lookup tyCon consType of
     Just typeName -> pure (Just typeName)
     Nothing -> pure Nothing
+
+-- | lookup an infix op firstly in scope then in imports
+-- later when we bin off scoped infix defintions we'll only
+-- look in the reader state
+findInfix ::
+  ( MonadReader TSReaderState m,
+    MonadState TSStateStack m,
+    MonadError (BackendError MonoType) m
+  ) =>
+  InfixOp ->
+  m TSExpr
+findInfix op = do
+  tsState <- getState
+  case M.lookup op (csInfix tsState) of
+    Just expr -> pure expr
+    Nothing -> do
+      infixMap <- asks tsInfixNames
+      case M.lookup op infixMap of
+        Just name -> pure (TSVar name)
+        Nothing -> throwError (CustomOperatorNotFound op)
 
 runTypescriptM ::
   TSReaderState ->

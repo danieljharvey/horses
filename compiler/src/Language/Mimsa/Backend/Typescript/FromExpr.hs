@@ -162,10 +162,8 @@ toInfix operator a b = do
     ArrayConcat ->
       pure $ TSArray [TSArraySpread tsA, TSArraySpread tsB]
     (Custom op) -> do
-      state <- getState
-      case M.lookup op (csInfix state) of
-        Just expr -> pure (TSApp (TSApp expr tsA) tsB)
-        Nothing -> throwError (CustomOperatorNotFound op)
+      expr <- findInfix op
+      pure (TSApp (TSApp expr tsA) tsB)
 
 -- | make TS body, but throw if we get any additional lines
 -- a temporary measure so we can see how often these happen (because they don't

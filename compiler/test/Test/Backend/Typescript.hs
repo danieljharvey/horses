@@ -38,7 +38,8 @@ joinLines = T.intercalate "\n"
 
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
-  let readerState = TSReaderState mempty
+  let readerState =
+        TSReaderState mempty mempty
       startState = TSCodegenState mempty mempty mempty
    in case fromExpr readerState startState expr of
         Right (tsModule, _) -> (tsModule, printModule tsModule)
@@ -50,7 +51,7 @@ testFromInputText input =
     Left e -> throwError (prettyPrint e)
     Right resolved -> do
       let exprName = first fst (reTypedExpression resolved)
-      let readerState = TSReaderState mempty
+      let readerState = TSReaderState mempty mempty
           startState = TSCodegenState mempty mempty mempty
       first prettyPrint (printModule . fst <$> fromExpr readerState startState exprName)
 
@@ -546,7 +547,8 @@ spec = do
               ),
               ( joinLines
                   [ "def adding a b = a + b",
-                    "export def main = adding 1 2"
+                    "infix +++ = adding",
+                    "export def main = 1 +++ 2"
                   ],
                 "3"
               )
