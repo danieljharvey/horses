@@ -38,7 +38,7 @@ joinLines = T.intercalate "\n"
 
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
-  let readerState = TSReaderState mempty
+  let readerState = TSReaderState mempty mempty
       startState = TSCodegenState mempty mempty mempty
    in case fromExpr readerState startState expr of
         Right (ejsModule, _) -> (ejsModule, JS.printModule ejsModule)
@@ -50,7 +50,7 @@ testFromInputText input =
     Left e -> throwError (prettyPrint e)
     Right resolved -> do
       let exprName = first fst (reTypedExpression resolved)
-      let readerState = TSReaderState mempty
+      let readerState = TSReaderState mempty mempty
           startState = TSCodegenState mempty mempty mempty
       first prettyPrint (JS.printModule . fst <$> fromExpr readerState startState exprName)
 

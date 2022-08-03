@@ -54,6 +54,22 @@ typeBindingsByType store tb =
 stripModules :: (Ord b) => Map (a, b) c -> Map b c
 stripModules = M.fromList . fmap (first snd) . M.toList
 
+addNumbersToMap :: (Ord k) => Map k a -> Map k (Int, a)
+addNumbersToMap =
+  M.fromList
+    . fmap (\(i, (k, a)) -> (k, (i, a)))
+    . zip [0 ..]
+    . M.toList
+
+nameInfixes :: Map InfixOp ExprHash -> (Map Name ExprHash, Map InfixOp TSName)
+nameInfixes infixes =
+  let numbered = addNumbersToMap infixes
+      infixName i = Name $ "_infix" <> T.pack (show i)
+      tsInfixName i = TSName $ "_infix" <> T.pack (show i)
+      toNameToHash = M.fromList . fmap (first infixName) . M.elems
+      toInfixToName = tsInfixName . fst <$> numbered
+   in (toNameToHash numbered, toInfixToName)
+
 -- | Need to also include any types mentioned but perhaps not explicitly used
 outputStoreExpression ::
   Backend ->
@@ -63,22 +79,32 @@ outputStoreExpression ::
   StoreExpression MonoType ->
   BackendM MonoType Text
 outputStoreExpression be dataTypes store mt se = do
-  let deps =
+  let (infixHashes, infixNames) =
+        nameInfixes (storeInfixes se)
+      deps =
         renderImport' be
           <$> M.toList (storeBindings se)
-  let typeDeps =
+      typeDeps =
         renderTypeImport' be
           <$> M.toList (typeBindingsByType store (storeTypeBindings se))
+
+      infixDeps =
+        renderInfixImport be
+          <$> M.toList infixHashes
+
   (func, stdlibFuncs) <-
-    renderExpression be dataTypes (storeExpression se)
+    renderExpression be dataTypes infixNames (storeExpression se)
+
   let stdlib = stdlibImport be stdlibFuncs
-  let typeComment = renderTypeSignature' mt
+      typeComment = renderTypeSignature' mt
+
   pure $
     mconcat
       ( intersperse
           (renderNewline' be)
           [ mconcat deps,
             mconcat typeDeps,
+            mconcat infixDeps,
             stdlib,
             typeComment,
             func
@@ -109,10 +135,14 @@ stdlibImport backend names =
 renderExpression ::
   Backend ->
   ResolvedTypeDeps ->
+  Map InfixOp TSName ->
   Expr Name MonoType ->
   BackendM MonoType (Text, [TS.TSImport])
-renderExpression be dataTypes expr = do
-  let readerState = TS.TSReaderState (makeTypeDepMap dataTypes)
+renderExpression be dataTypes infixes expr = do
+  let readerState =
+        TS.TSReaderState
+          (makeTypeDepMap dataTypes)
+          infixes
       startState = TS.TSCodegenState mempty mempty mempty
    in case TS.fromExpr readerState startState expr of
         Right (ts, stdlibFuncs) -> case be of
@@ -133,6 +163,20 @@ renderImport' Typescript ((_, name), hash') =
     <> storeExprFilename Typescript hash'
     <> "\";\n"
 renderImport' ESModulesJS ((_, name), hash') =
+  "import { main as "
+    <> printTSName (coerce name)
+    <> " } from \"./"
+    <> storeExprFilename ESModulesJS hash'
+    <> "\";\n"
+
+renderInfixImport :: Backend -> (Name, ExprHash) -> Text
+renderInfixImport Typescript (name, hash') =
+  "import { main as "
+    <> printTSName (coerce name)
+    <> " } from \"./"
+    <> storeExprFilename Typescript hash'
+    <> "\";\n"
+renderInfixImport ESModulesJS (name, hash') =
   "import { main as "
     <> printTSName (coerce name)
     <> " } from \"./"
