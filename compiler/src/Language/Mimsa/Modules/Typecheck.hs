@@ -239,7 +239,7 @@ getModuleTypes inputModule typecheckedModules =
         Just mod' -> case getModuleType modName mod' of
           MTRecord _ parts -> (hash, parts)
           _ -> error "expected getModuleType to return a MTRecord but it did not"
-        Nothing -> (hash, mempty) -- should be an error
+        Nothing -> error "Could not find module for hash in getModuleTypes"
    in M.fromList (getTypes <$> M.toList (moNamedImports inputModule))
 
 namespacedModules ::

@@ -10,11 +10,13 @@ import Control.Monad.Except
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -26,6 +28,10 @@ data DepType ann
   = DTExpr (Expr Name ann)
   | DTData DataType
   deriving stock (Eq, Ord, Show)
+
+instance (Printer ann) => Printer (DepType ann) where
+  prettyPrint (DTExpr expr) = prettyPrint expr
+  prettyPrint (DTData dt) = prettyPrint dt
 
 filterExprs :: Map k (DepType ann) -> Map k (Expr Name ann)
 filterExprs =
@@ -54,13 +60,22 @@ filterDefs =
       )
     . S.toList
 
-filterTypes :: Set Entity -> Set (Maybe ModuleName, TypeName)
+filterConstructors :: Set Entity -> Set TyCon
+filterConstructors =
+  S.fromList
+    . mapMaybe
+      ( \case
+          EConstructor tyCon -> Just tyCon
+          _ -> Nothing
+      )
+    . S.toList
+
+filterTypes :: Set Entity -> Set TypeName
 filterTypes =
   S.fromList
     . mapMaybe
       ( \case
-          EType typeName -> Just (Nothing, typeName)
-          ENamespacedType modName typeName -> Just (Just modName, typeName)
+          EType typeName -> Just typeName
           _ -> Nothing
       )
     . S.toList
@@ -90,7 +105,7 @@ getValueDependencies mod' = do
         (moDataTypes mod')
   pure (exprDeps <> typeDeps)
 
--- get all dependencies of a type
+-- get all dependencies of a type definition
 getTypeDependencies ::
   (MonadError (Error Annotation) m) =>
   Module ann ->
@@ -100,7 +115,9 @@ getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
   exprDefIds <- getExprDeps mod' allUses
-  pure (DTData dt, typeDefIds <> exprDefIds, allUses)
+  let typesWithoutSelf =
+        S.filter (\typeName -> typeName /= DIType (dtName dt)) typeDefIds
+  pure (DTData dt, typesWithoutSelf <> exprDefIds, allUses)
 
 getTypeUses ::
   (MonadError (Error Annotation) m) =>
@@ -111,34 +128,62 @@ getTypeUses mod' uses =
   let typeDeps = filterTypes uses
       unknownTypeDeps =
         S.filter
-          ( \(modName, typeName) ->
-              case modName of
-                Just _externalMod -> False
-                Nothing ->
-                  S.notMember typeName (M.keysSet (moDataTypes mod'))
-                    && S.notMember typeName (M.keysSet (moDataTypeImports mod'))
+          ( \typeName ->
+              S.notMember typeName (M.keysSet (moDataTypes mod'))
+                && S.notMember typeName (M.keysSet (moDataTypeImports mod'))
           )
           typeDeps
    in if S.null unknownTypeDeps
         then
           let localTypeDeps =
                 S.filter
-                  ( \(modName, typeName) -> case modName of
-                      Just _externalMod -> False
-                      Nothing -> typeName `S.member` M.keysSet (moDataTypes mod')
+                  ( \typeName ->
+                      typeName `S.member` M.keysSet (moDataTypes mod')
                   )
                   typeDeps
-              withoutExternal = localsOnly localTypeDeps
-           in pure (S.map DIType withoutExternal)
+           in pure (S.map DIType localTypeDeps)
         else throwError (ModuleErr (CannotFindTypes unknownTypeDeps))
 
-localsOnly :: (Ord b) => Set (Maybe a, b) -> Set b
-localsOnly =
-  setMapMaybe
-    ( \case
-        (Just _, _) -> Nothing
-        (Nothing, b) -> Just b
-    )
+findTypenameInModule ::
+  Module ann ->
+  TyCon ->
+  Maybe TypeName
+findTypenameInModule mod' tyCon =
+  let lookupInDataType (DataType typeName _ constructors) =
+        if M.member tyCon constructors then First (Just typeName) else First Nothing
+   in getFirst $ foldMap lookupInDataType (M.elems (moDataTypes mod'))
+
+-- get typenames where we can, ignore missing ones as they're from another
+-- module
+-- (fingers crosseD!???!)
+findTypesForConstructors :: Module ann -> Set TyCon -> Set TypeName
+findTypesForConstructors mod' =
+  S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
+
+getConstructorUses ::
+  (MonadError (Error Annotation) m) =>
+  Module ann ->
+  Set Entity ->
+  m (Set DefIdentifier)
+getConstructorUses mod' uses = do
+  let typeDeps = findTypesForConstructors mod' (filterConstructors uses)
+  let unknownTypeDeps =
+        S.filter
+          ( \typeName ->
+              S.notMember typeName (M.keysSet (moDataTypes mod'))
+                && S.notMember typeName (M.keysSet (moDataTypeImports mod'))
+          )
+          typeDeps
+   in if S.null unknownTypeDeps
+        then
+          let localTypeDeps =
+                S.filter
+                  ( \typeName ->
+                      typeName `S.member` M.keysSet (moDataTypes mod')
+                  )
+                  typeDeps
+           in pure (S.map DIType localTypeDeps)
+        else throwError (ModuleErr (CannotFindTypes unknownTypeDeps))
 
 getExprDependencies ::
   (Eq ann, MonadError (Error Annotation) m) =>
@@ -148,8 +193,9 @@ getExprDependencies ::
 getExprDependencies mod' expr = do
   let allUses = extractUses expr
   exprDefIds <- getExprDeps mod' allUses
+  consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
-  pure (DTExpr expr, exprDefIds <> typeDefIds, allUses)
+  pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getExprDeps ::
   (MonadError (Error Annotation) m) =>

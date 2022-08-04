@@ -19,7 +19,8 @@ data ModuleError
   | DefinitionConflictsWithImport DefIdentifier ModuleHash
   | TypeConflictsWithImport TypeName ModuleHash
   | CannotFindValues (Set DefIdentifier)
-  | CannotFindTypes (Set (Maybe ModuleName, TypeName))
+  | CannotFindTypes (Set TypeName)
+  | CannotFindConstructors (Set TyCon)
   | DefDoesNotTypeCheck Text DefIdentifier TypeError
   | MissingModule ModuleHash
   | MissingModuleDep DefIdentifier ModuleHash
@@ -40,6 +41,8 @@ instance Printer ModuleError where
     "Cannot find values: " <> prettyPrint names
   prettyPrint (CannotFindTypes names) =
     "Cannot find types: " <> prettyPrint names
+  prettyPrint (CannotFindConstructors names) =
+    "Cannot find constructors: " <> prettyPrint names
   prettyPrint (DefDoesNotTypeCheck _ name typeErr) =
     prettyPrint name <> " had a typechecking error: " <> prettyPrint typeErr
   prettyPrint (MissingModule mHash) =
