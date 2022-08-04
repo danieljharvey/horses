@@ -23,6 +23,10 @@ spec = do
       it "Finds one type" $ do
         let entities = extractUsesTyped (MyVar (MTConstructor () Nothing "Unit") Nothing "a")
         entities `shouldBe` S.fromList [EName "a", EType "Unit"]
+      it "Finds one namespaced type" $ do
+        let entities = extractUsesTyped (MyVar (MTConstructor () (Just "Prelude") "Unit") Nothing "a")
+        entities `shouldBe` S.fromList [EName "a", ENamespacedType "Prelude" "Unit"]
+
       -- ahh fuck it
       xit "Does not find type declared in expression" $ do
         let entities =
