@@ -10,7 +10,7 @@ where
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.TypeUtils (withMonoid)
+import qualified Language.Mimsa.TypeUtils as MT
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.Entity
@@ -24,8 +24,10 @@ extractUses :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses = extractUses_
 
 -- | extract uses in an expression annotated with types
-extractUsesTyped :: Expr Name (Type ann) -> Set Entity
-extractUsesTyped _ = mempty
+extractUsesTyped :: (Eq ann) => Expr Name (Type ann) -> Set Entity
+extractUsesTyped expr =
+  extractUses_ expr
+    <> foldMap extractTypeUses expr
 
 extractUses_ :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses_ (MyVar _ (Just modName) a) = S.singleton (ENamespacedName modName a)
@@ -141,8 +143,12 @@ extractTypeUses (MTConstructor _ (Just modName) typeName) =
   S.singleton (ENamespacedType modName typeName)
 extractTypeUses (MTConstructor _ Nothing typeName) =
   S.singleton (EType typeName)
-extractTypeUses other = withMonoid extractTypeUses other
+extractTypeUses other = MT.withMonoid extractTypeUses other
 
+-- | find other types used in the declaration of a datatype
 extractDataTypeUses :: DataType -> Set Entity
-extractDataTypeUses (DataType _ _ constructors) =
-  foldMap (foldMap extractTypeUses) constructors
+extractDataTypeUses (DataType typeName _ constructors) =
+  S.filter
+    (\entity -> entity /= EType typeName)
+    ( foldMap (foldMap extractTypeUses) constructors
+    )
