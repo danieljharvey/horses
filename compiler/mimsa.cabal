@@ -445,6 +445,7 @@ test-suite mimsa-test
       Test.Modules.Repl
       Test.Modules.Test
       Test.Modules.ToStoreExprs
+      Test.Modules.Uses
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax

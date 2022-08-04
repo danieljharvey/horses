@@ -24,6 +24,7 @@ import qualified Test.Modules.Check as ModuleCheck
 import qualified Test.Modules.Repl as ModuleRepl
 import qualified Test.Modules.Test as ModuleTest
 import qualified Test.Modules.ToStoreExprs as ModuleToStoreExprs
+import qualified Test.Modules.Uses as ModuleUses
 import qualified Test.Parser.MonoTypeParser as MonoTypeParser
 import qualified Test.Parser.Pattern as Pattern
 import qualified Test.Parser.Syntax as Syntax
@@ -118,3 +119,4 @@ main =
     ModuleRepl.spec
     ModuleToStoreExprs.spec
     ModuleTest.spec
+    ModuleUses.spec

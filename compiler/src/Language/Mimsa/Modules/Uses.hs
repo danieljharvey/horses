@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Modules.Uses
   ( extractUses,
+    extractUsesTyped,
     extractDataTypeUses,
   )
 where
@@ -15,13 +16,16 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Types.Typechecker
 
--- find all uses of external vars, types, infix operators etc
+-- | find all uses of external vars, types, infix operators etc
 -- used in dependency analysis
 -- important - we must not count variables brought in via lambdas or let
 -- bindings as those aren't external deps
-
 extractUses :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses = extractUses_
+
+-- | extract uses in an expression annotated with types
+extractUsesTyped :: Expr Name (Type ann) -> Set Entity
+extractUsesTyped _ = mempty
 
 extractUses_ :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses_ (MyVar _ (Just modName) a) = S.singleton (ENamespacedName modName a)
