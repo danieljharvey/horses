@@ -1,0 +1,4 @@
+type Record a 
+  = Record { name: String, other: a };
+
+True

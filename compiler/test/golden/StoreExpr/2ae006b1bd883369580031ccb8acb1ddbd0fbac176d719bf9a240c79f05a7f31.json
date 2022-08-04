@@ -1,0 +1,1 @@
+{"storeBindings":[],"storeExpression":{"expAnn":null,"expBody":{"expAnn":null,"expModuleName":null,"expTyCon":"Just","tag":"MyConstructor"},"expDataType":{"dtConstructors":{"Just":[{"tag":"MTVar","typAnn":null,"typIdent":{"tag":"TVName","tiVar":"a"}}],"Nothing":[]},"dtName":"Maybe","dtVars":["a"]},"tag":"MyData"},"storeInfixes":{},"storeTypeBindings":[],"storeTypes":[]}

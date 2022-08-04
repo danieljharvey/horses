@@ -14,7 +14,6 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
-import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Uses
@@ -61,7 +60,7 @@ dataTypeToStoreExpression ::
 dataTypeToStoreExpression dt =
   let mt = MTRecord mempty mempty -- it's weird MyData needs this, so give it rubbish
       expr = MyData mt dt (MyRecord mt mempty)
-   in pure (StoreExpression expr mempty mempty mempty)
+   in pure (StoreExpression expr mempty mempty mempty mempty) -- what about dependencies of a type, ie Maybe used in Parser?
 
 -- to make a store expression we need to
 -- a) work out all the deps this expression has
@@ -78,10 +77,11 @@ exprToStoreExpression ::
   (Expr Name (Type ann), Set Entity) ->
   m (StoreExpression (Type ann))
 exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
-  bindings <- bindingsFromEntities compiledModules inputModule inputs (debugPretty "uses" uses)
+  bindings <- bindingsFromEntities compiledModules inputModule inputs uses
   infixes <- infixesFromEntities inputs uses
-  typeBindings <- typesFromEntities compiledModules inputModule inputs uses
-  pure $ StoreExpression expr bindings typeBindings infixes
+  constructors <- constructorsFromEntities compiledModules inputModule inputs uses
+  types <- typesFromEntities compiledModules inputModule inputs uses
+  pure $ StoreExpression expr bindings constructors infixes types
 
 -- given our dependencies and the entities used by the expression, create the
 -- bindings
@@ -155,7 +155,7 @@ compileModuleDefinitions compiledModules inputModule = do
   inputWithDeps <-
     getDependencies extractUsesTyped inputModule
 
-  let inputWithDepsAndName = debugPretty "inputWithDepsAndName" $ M.mapWithKey (,) inputWithDeps
+  let inputWithDepsAndName = M.mapWithKey (,) inputWithDeps
 
   let state =
         Build.State
@@ -222,6 +222,21 @@ resolveNamespacedName compiledModules inputModule modName name = do
   -- lookup the name in the module
   M.lookup (DIName name) (cmExprs compiledMod)
 
+-- | where can I find this type?
+resolveNamespacedTypename ::
+  Map ModuleHash (CompiledModule (Type ann)) ->
+  Module (Type ann) ->
+  ModuleName ->
+  TypeName ->
+  Maybe ExprHash
+resolveNamespacedTypename compiledModules inputModule modName typeName = do
+  -- find out which module the modName refers to
+  modHash <- M.lookup modName (moNamedImports inputModule)
+  -- find the module in our pile of already compiled modules
+  compiledMod <- M.lookup modHash compiledModules
+  -- lookup the name in the module
+  M.lookup (DIType typeName) (cmExprs compiledMod)
+
 -- | where can I find this Constructor?
 resolveNamespacedTyCon ::
   Map ModuleHash (CompiledModule (Type ann)) ->
@@ -269,14 +284,14 @@ flattenCompiled cm =
 
 -- | given our dependencies and the entities used by the expressions, create
 -- the type bindings
-typesFromEntities ::
+constructorsFromEntities ::
   (MonadError (Error Annotation) m) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
   Map DefIdentifier (StoreExpression (Type ann)) ->
   Set Entity ->
   m (Map (Maybe ModuleName, TyCon) ExprHash)
-typesFromEntities compiledModules inputModule inputs uses = do
+constructorsFromEntities compiledModules inputModule inputs uses = do
   let fromUse = \case
         EConstructor tyCon ->
           case getStoreExpressionHash <$> M.lookup tyCon (dataTypesByTyCon inputs) of
@@ -285,7 +300,31 @@ typesFromEntities compiledModules inputModule inputs uses = do
         ENamespacedConstructor modName tyCon ->
           case resolveNamespacedTyCon compiledModules inputModule modName tyCon of
             Just hash -> pure $ M.singleton (Just modName, tyCon) hash
-            _ -> error $ "could not resolve namespaced type " <> show modName <> "." <> show tyCon
+            _ -> error $ "could not resolve namespaced TyCon " <> show modName <> "." <> show tyCon
+        _ -> pure mempty
+
+  -- combine results
+  mconcat <$> traverse fromUse (S.toList uses)
+
+-- | given our dependencies and the entities used by the expressions, create
+-- the type bindings
+typesFromEntities ::
+  (MonadError (Error Annotation) m) =>
+  Map ModuleHash (CompiledModule (Type ann)) ->
+  Module (Type ann) ->
+  Map DefIdentifier (StoreExpression (Type ann)) ->
+  Set Entity ->
+  m (Map (Maybe ModuleName, TypeName) ExprHash)
+typesFromEntities compiledModules inputModule inputs uses = do
+  let fromUse = \case
+        EType typeName ->
+          case getStoreExpressionHash <$> M.lookup (DIType typeName) inputs of
+            Just exprHash -> pure $ M.singleton (Nothing, typeName) exprHash
+            _ -> throwError (ModuleErr $ CannotFindTypes (S.singleton typeName))
+        ENamespacedType modName typeName ->
+          case resolveNamespacedTypename compiledModules inputModule modName typeName of
+            Just hash -> pure $ M.singleton (Just modName, typeName) hash
+            _ -> error $ "could not resolve namespaced TypeName " <> show modName <> "." <> show typeName
         _ -> pure mempty
 
   -- combine results

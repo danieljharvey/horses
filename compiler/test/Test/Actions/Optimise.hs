@@ -27,7 +27,12 @@ idHash = getHashOfName testStdlib "id"
 useIdPointlessly :: StoreExpression Annotation
 useIdPointlessly =
   let expr = unsafeParseExpr "let useless = id 100 in True" $> mempty
-   in StoreExpression expr (M.singleton (Nothing, "id") idHash) mempty mempty
+   in StoreExpression
+        expr
+        (M.singleton (Nothing, "id") idHash)
+        mempty
+        mempty
+        mempty
 
 trueExpr :: Expr Name Annotation
 trueExpr = unsafeParseExpr "True" $> mempty
@@ -35,7 +40,7 @@ trueExpr = unsafeParseExpr "True" $> mempty
 withLambda :: StoreExpression Annotation
 withLambda =
   let expr = unsafeParseExpr "\\a -> let useless = True in 200" $> mempty
-   in StoreExpression expr mempty mempty mempty
+   in mkStoreExpression expr
 
 optimisedLambda :: Expr Name Annotation
 optimisedLambda =
@@ -49,7 +54,7 @@ spec = do
             Actions.optimise useIdPointlessly
       let (prj, _actions, (resolved, _)) =
             fromRight $ Actions.run testStdlib action
-      let (StoreExpression newExpr bindings _ _) = reStoreExpression resolved
+      let (StoreExpression newExpr bindings _ _ _) = reStoreExpression resolved
 
       -- updated expr
       newExpr `shouldBe` trueExpr
@@ -64,7 +69,7 @@ spec = do
             Actions.optimiseByName "useId"
       let (prj, _actions, (resolved, _)) =
             fromRight $ Actions.run testStdlib action
-      let (StoreExpression newExpr bindings _ _) = reStoreExpression resolved
+      let (StoreExpression newExpr bindings _ _ _) = reStoreExpression resolved
 
       -- updated expr
       newExpr `shouldBe` optimisedLambda

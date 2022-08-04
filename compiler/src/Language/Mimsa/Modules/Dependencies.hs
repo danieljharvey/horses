@@ -20,7 +20,6 @@ import Data.Maybe
 import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Logging
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
@@ -201,7 +200,7 @@ getExprDependencies ::
   Expr Name ann ->
   m (DepType ann, Set DefIdentifier, Set Entity)
 getExprDependencies getUses mod' expr = do
-  let allUses = debugPretty "expr uses" $ getUses expr
+  let allUses = getUses expr
   exprDefIds <- getExprDeps mod' allUses
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses

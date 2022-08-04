@@ -41,6 +41,10 @@ fromJust maybe' = case maybe' of
   Just a -> a
   _ -> error "Expected a Just"
 
+-- | make a StoreExpression with no deps
+mkStoreExpression :: Expr Name ann -> StoreExpression ann
+mkStoreExpression expr = StoreExpression expr mempty mempty mempty mempty
+
 unsafeParseExpr' :: Monoid ann => Text -> Expr Name ann
 unsafeParseExpr' t = case parseExpr t of
   Right a -> a $> mempty

@@ -33,11 +33,12 @@ incrementIntH = getHashOfName testStdlib "incrementInt"
 
 testStoreExpr :: StoreExpression Annotation
 testStoreExpr =
-  StoreExpression
-    testExpr
-    (M.singleton (Nothing, "incrementInt") incrementIntH)
-    mempty
-    mempty
+  ( mkStoreExpression
+      testExpr
+  )
+    { storeBindings =
+        M.singleton (Nothing, "incrementInt") incrementIntH
+    }
 
 idHash :: ExprHash
 idHash = getHashOfName testStdlib "id"
@@ -52,23 +53,21 @@ testingIdExpr =
 
 testingStoreExpr :: StoreExpression Annotation
 testingStoreExpr =
-  StoreExpression
-    testingIdExpr
-    (M.singleton (Nothing, "id") idHash)
-    mempty
-    mempty
+  ( mkStoreExpression
+      testingIdExpr
+  )
+    { storeBindings =
+        M.singleton (Nothing, "id") idHash
+    }
 
 altIdStoreExpr :: StoreExpression Annotation
 altIdStoreExpr =
-  StoreExpression
+  mkStoreExpression
     ( MyLambda
         mempty
         (Identifier mempty "b")
         (MyVar mempty Nothing "b")
     )
-    mempty
-    mempty
-    mempty
 
 altIdHash :: ExprHash
 altIdHash = getStoreExpressionHash altIdStoreExpr
@@ -134,7 +133,7 @@ spec =
 
     describe "createUnitTest" $ do
       it "True is a valid test" $ do
-        let storeExpr = StoreExpression (bool True) mempty mempty mempty
+        let storeExpr = mkStoreExpression (bool True)
         createUnitTest testStdlib storeExpr (TestName "True is true")
           `shouldBe` Right
             ( UnitTest
@@ -143,7 +142,7 @@ spec =
                 (getStoreExpressionHash storeExpr)
             )
       it "False is a valid (but failing) test" $ do
-        let storeExpr = StoreExpression (bool False) mempty mempty mempty
+        let storeExpr = mkStoreExpression (bool False)
         createUnitTest testStdlib storeExpr (TestName "False is not true")
           `shouldBe` Right
             ( UnitTest
@@ -152,13 +151,13 @@ spec =
                 (getStoreExpressionHash storeExpr)
             )
       it "100 is not a valid test" $ do
-        let storeExpr = StoreExpression (int 100) mempty mempty mempty
+        let storeExpr = mkStoreExpression (int 100)
         createUnitTest testStdlib storeExpr (TestName "100 is not a valid test")
           `shouldSatisfy` isLeft
 
       it "\\bool -> True is not a valid unit test" $ do
         let expr = MyLambda mempty (Identifier mempty "bool") (bool True)
-            storeExpr = StoreExpression expr mempty mempty mempty
+            storeExpr = mkStoreExpression expr
         createUnitTest testStdlib storeExpr (TestName "It's always true")
           `shouldSatisfy` isLeft
 

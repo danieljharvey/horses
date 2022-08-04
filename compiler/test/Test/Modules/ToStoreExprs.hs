@@ -43,7 +43,7 @@ spec = do
           }
     it "Single expression, single output with no deps" $ do
       let expr = unsafeParseExpr "\\a -> a" $> mempty
-          storeExpr = StoreExpression expr mempty mempty mempty
+          storeExpr = StoreExpression expr mempty mempty mempty mempty
           hash = getStoreExpressionHash storeExpr
           inputModule =
             mempty
@@ -57,11 +57,11 @@ spec = do
       toStoreExpressions' inputModule `shouldBe` expected
     it "Two expressions, one depends on the other" $ do
       let exprA = unsafeParseExpr "\\a -> a" $> mempty
-          storeExprA = StoreExpression exprA mempty mempty mempty
+          storeExprA = StoreExpression exprA mempty mempty mempty mempty
           hashA = getStoreExpressionHash storeExprA
 
           exprB = unsafeParseExpr "id 100" $> mempty
-          storeExprB = StoreExpression exprB (M.singleton (Nothing, "id") hashA) mempty mempty
+          storeExprB = StoreExpression exprB (M.singleton (Nothing, "id") hashA) mempty mempty mempty
           hashB = getStoreExpressionHash storeExprB
 
           inputModule =
@@ -88,7 +88,7 @@ spec = do
               }
       toStoreExpressions' inputModule `shouldBe` expected
 
-    fit "Two expressions, one type, second expression uses type indirectly and should have it as a dep" $ do
+    it "Two expressions, one type, second expression uses type indirectly and should have it as a dep" $ do
       let lookupInCompiled name compiled =
             fromJust $ M.lookup (DIName name) (cmExprs compiled) >>= \hash -> M.lookup hash (getStore (cmStore compiled))
 
@@ -105,4 +105,4 @@ spec = do
       cmStore output `shouldSatisfy` \(Store a) -> M.size a == 3
       -- main one has Either as dep
       let shouldHaveEither = lookupInCompiled "shouldHaveEitherAsDep" output
-      storeTypeBindings shouldHaveEither `shouldSatisfy` \a -> M.size a == 1
+      storeTypes shouldHaveEither `shouldSatisfy` \a -> M.size a == 1
