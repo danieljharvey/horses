@@ -33,9 +33,6 @@ import Test.Utils.Compilation
 import Test.Utils.Helpers
 import Test.Utils.Serialisation
 
-joinLines :: [Text] -> Text
-joinLines = T.intercalate "\n"
-
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState = TSReaderState mempty mempty

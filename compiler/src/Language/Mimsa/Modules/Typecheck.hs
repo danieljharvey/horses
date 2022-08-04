@@ -20,6 +20,7 @@ import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
+import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.CreateEnv
@@ -91,7 +92,7 @@ typecheckAllModuleDefs ::
 typecheckAllModuleDefs typecheckedDeps input inputModule = do
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
-  inputWithDeps <- getValueDependencies inputModule
+  inputWithDeps <- getDependencies extractUses inputModule
   let inputWithDepsAndName = M.mapWithKey (,) inputWithDeps
 
   let stInputs =

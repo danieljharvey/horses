@@ -14,8 +14,10 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Store
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.AST
@@ -76,7 +78,7 @@ exprToStoreExpression ::
   (Expr Name (Type ann), Set Entity) ->
   m (StoreExpression (Type ann))
 exprToStoreExpression compiledModules inputModule inputs (expr, uses) = do
-  bindings <- bindingsFromEntities compiledModules inputModule inputs uses
+  bindings <- bindingsFromEntities compiledModules inputModule inputs (debugPretty "uses" uses)
   infixes <- infixesFromEntities inputs uses
   typeBindings <- typesFromEntities compiledModules inputModule inputs uses
   pure $ StoreExpression expr bindings typeBindings infixes
@@ -151,9 +153,9 @@ compileModuleDefinitions compiledModules inputModule = do
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
   inputWithDeps <-
-    getValueDependencies inputModule
+    getDependencies extractUsesTyped inputModule
 
-  let inputWithDepsAndName = M.mapWithKey (,) inputWithDeps
+  let inputWithDepsAndName = debugPretty "inputWithDepsAndName" $ M.mapWithKey (,) inputWithDeps
 
   let state =
         Build.State

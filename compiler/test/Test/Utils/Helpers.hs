@@ -23,6 +23,9 @@ import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
+joinLines :: [Text] -> Text
+joinLines = T.intercalate "\n"
+
 fromRight :: (Printer e) => Either e a -> a
 fromRight either' = case either' of
   Left e -> error (T.unpack $ prettyPrint e)
@@ -32,6 +35,11 @@ fromLeft :: Either e a -> e
 fromLeft either' = case either' of
   Left e -> e
   Right _ -> error "Expected a Left!"
+
+fromJust :: Maybe a -> a
+fromJust maybe' = case maybe' of
+  Just a -> a
+  _ -> error "Expected a Just"
 
 unsafeParseExpr' :: Monoid ann => Text -> Expr Name ann
 unsafeParseExpr' t = case parseExpr t of

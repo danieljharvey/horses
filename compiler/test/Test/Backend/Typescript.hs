@@ -33,9 +33,6 @@ import Test.Utils.Compilation
 import Test.Utils.Helpers
 import Test.Utils.Serialisation
 
-joinLines :: [Text] -> Text
-joinLines = T.intercalate "\n"
-
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState =
@@ -556,6 +553,14 @@ spec = do
                   [ "export type Identity a = Identity a",
                     "def runIdentity a = let (Identity inner) = a in inner",
                     "export def main = runIdentity (Identity True)"
+                  ],
+                "true"
+              ),
+              ( joinLines
+                  [ "export type Either e a = Left e | Right a",
+                    "def useEither val = match val with Right a -> a | _ -> False",
+                    "def shouldHaveEitherAsDep val = useEither val",
+                    "export def main = shouldHaveEitherAsDep (Right True)"
                   ],
                 "true"
               )

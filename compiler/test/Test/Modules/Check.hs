@@ -32,9 +32,6 @@ import Test.Utils.Helpers
 modulesPath :: FilePath
 modulesPath = "test/modules/"
 
-joinLines :: [Text] -> Text
-joinLines = T.intercalate "\n"
-
 exprAndTypeFromParts' ::
   (Monoid ann) =>
   [DefPart ann] ->

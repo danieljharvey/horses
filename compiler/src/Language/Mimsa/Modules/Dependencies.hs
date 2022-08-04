@@ -2,7 +2,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Modules.Dependencies (getValueDependencies, getModuleDeps, filterExprs, filterDataTypes, DepType (..)) where
+module Language.Mimsa.Modules.Dependencies
+  ( getDependencies,
+    getModuleDeps,
+    filterExprs,
+    filterDataTypes,
+    DepType (..),
+  )
+where
 
 -- work out the dependencies between definitions inside a module
 
@@ -13,6 +20,7 @@ import Data.Maybe
 import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Logging
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
@@ -82,8 +90,9 @@ filterTypes =
 
 -- get the vars used by each def
 -- explode if there's not available
-getValueDependencies ::
-  (Eq ann, MonadError (Error Annotation) m) =>
+getDependencies ::
+  (MonadError (Error Annotation) m) =>
+  (Expr Name ann -> Set Entity) ->
   Module ann ->
   m
     ( Map
@@ -93,10 +102,10 @@ getValueDependencies ::
           Set Entity
         )
     )
-getValueDependencies mod' = do
+getDependencies getUses mod' = do
   exprDeps <-
     traverse
-      (getExprDependencies mod')
+      (getExprDependencies getUses mod')
       (moExpressions mod')
   typeDeps <-
     mapKeys DIType
@@ -186,12 +195,13 @@ getConstructorUses mod' uses = do
         else throwError (ModuleErr (CannotFindTypes unknownTypeDeps))
 
 getExprDependencies ::
-  (Eq ann, MonadError (Error Annotation) m) =>
+  (MonadError (Error Annotation) m) =>
+  (Expr Name ann -> Set Entity) ->
   Module ann ->
   Expr Name ann ->
   m (DepType ann, Set DefIdentifier, Set Entity)
-getExprDependencies mod' expr = do
-  let allUses = extractUses expr
+getExprDependencies getUses mod' expr = do
+  let allUses = debugPretty "expr uses" $ getUses expr
   exprDefIds <- getExprDeps mod' allUses
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
