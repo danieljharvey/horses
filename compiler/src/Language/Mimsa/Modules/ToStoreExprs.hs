@@ -14,6 +14,7 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Logging
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Uses
@@ -41,7 +42,7 @@ instance Monoid (CompiledModule ann) where
   mempty = CompiledModule mempty mempty
 
 toStoreExpression ::
-  (MonadError (Error Annotation) m, Monoid ann) =>
+  (MonadError (Error Annotation) m, Monoid ann, Show ann) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
   Map DefIdentifier (StoreExpression (Type ann)) ->
@@ -50,17 +51,25 @@ toStoreExpression ::
 toStoreExpression compiledModules inputModule inputs (_, dep, uses) =
   case dep of
     (DTExpr expr) -> exprToStoreExpression compiledModules inputModule inputs (expr, uses)
-    (DTData dt) -> dataTypeToStoreExpression dt
+    (DTData dt) -> dataTypeToStoreExpression compiledModules inputModule inputs dt
 
 -- this is crap, need to add type bindings
 dataTypeToStoreExpression ::
-  (Monad m, Monoid ann) =>
+  ( Monoid ann,
+    Show ann,
+    MonadError (Error Annotation) m
+  ) =>
+  Map ModuleHash (CompiledModule (Type ann)) ->
+  Module (Type ann) ->
+  Map DefIdentifier (StoreExpression (Type ann)) ->
   DataType ->
   m (StoreExpression (Type ann))
-dataTypeToStoreExpression dt =
+dataTypeToStoreExpression compiledModules inputModule inputs dt = do
   let mt = MTRecord mempty mempty -- it's weird MyData needs this, so give it rubbish
       expr = MyData mt dt (MyRecord mt mempty)
-   in pure (StoreExpression expr mempty mempty mempty mempty) -- what about dependencies of a type, ie Maybe used in Parser?
+      uses = extractDataTypeUses dt
+  types <- typesFromEntities compiledModules (debugPretty "dt inputModule" inputModule) inputs (debugPretty "dt uses" uses)
+  pure $ StoreExpression expr mempty mempty mempty types
 
 -- to make a store expression we need to
 -- a) work out all the deps this expression has
@@ -70,7 +79,7 @@ dataTypeToStoreExpression dt =
 --   - type names
 -- b) map them to specific ExprHashes
 exprToStoreExpression ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError (Error Annotation) m, Show ann) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
   Map DefIdentifier (StoreExpression (Type ann)) ->
@@ -145,7 +154,7 @@ toStoreExpressions typecheckedModules inputModule = do
 
 --- compile a module into StoreExpressions
 compileModuleDefinitions ::
-  (MonadError (Error Annotation) m, Eq ann, Monoid ann) =>
+  (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
   m (CompiledModule (Type ann))
@@ -231,11 +240,11 @@ resolveNamespacedTypename ::
   Maybe ExprHash
 resolveNamespacedTypename compiledModules inputModule modName typeName = do
   -- find out which module the modName refers to
-  modHash <- M.lookup modName (moNamedImports inputModule)
+  modHash <- debugPretty "modHash" $ M.lookup modName (moNamedImports inputModule)
   -- find the module in our pile of already compiled modules
   compiledMod <- M.lookup modHash compiledModules
   -- lookup the name in the module
-  M.lookup (DIType typeName) (cmExprs compiledMod)
+  debugPretty "found" $ M.lookup (DIType (debugPretty "typeName" typeName)) (cmExprs compiledMod)
 
 -- | where can I find this Constructor?
 resolveNamespacedTyCon ::

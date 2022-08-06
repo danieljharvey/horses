@@ -123,9 +123,7 @@ getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
   exprDefIds <- getExprDeps mod' allUses
-  let typesWithoutSelf =
-        S.filter (\typeName -> typeName /= DIType (dtName dt)) typeDefIds
-  pure (DTData dt, typesWithoutSelf <> exprDefIds, allUses)
+  pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
 getTypeUses ::
   (MonadError (Error Annotation) m) =>
@@ -253,6 +251,7 @@ getModuleDeps moduleDeps inputModule = do
               <> M.elems (moNamedImports inputModule)
           )
       mHash = snd $ serializeModule inputModule
+
   -- recursively fetch sub-deps
   depModules <- traverse (lookupModule moduleDeps) (S.toList deps)
   subDeps <- traverse (getModuleDeps moduleDeps) depModules

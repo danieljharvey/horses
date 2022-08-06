@@ -1228,7 +1228,7 @@ spec =
                   ]
           result <- eval expr
           result `shouldSatisfy` isRight
-        it "Parses a JSON array" $ do
+        fit "Parses a JSON array" $ do
           let expr =
                 mconcat
                   [ "let lexeme p = Parser.left p Parser.space0; ",
