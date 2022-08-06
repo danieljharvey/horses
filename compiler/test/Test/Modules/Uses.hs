@@ -5,6 +5,7 @@ module Test.Modules.Uses
   )
 where
 
+import qualified Data.Map as M
 import qualified Data.Set as S
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Types.AST
@@ -39,6 +40,16 @@ spec = do
       it "Finds one namespaced type" $ do
         let entities = extractUsesTyped (MyVar (MTConstructor () (Just "Prelude") "Unit") Nothing "a")
         entities `shouldBe` S.fromList [EName "a", ENamespacedType "Prelude" "Unit"]
+
+      it "Does not finds one namespaced type after its declared" $ do
+        let entities =
+              extractUsesTyped
+                ( MyData
+                    (MTRecord () mempty)
+                    (DataType "Unit" mempty (M.singleton "MkUnit" mempty))
+                    (MyVar (MTConstructor () Nothing "Unit") Nothing "a")
+                )
+        entities `shouldBe` S.fromList []
 
       it "Finds Either" $ do
         let expr :: Expr Name (Type ())

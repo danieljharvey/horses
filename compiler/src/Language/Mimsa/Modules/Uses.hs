@@ -17,13 +17,22 @@ import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Types.Typechecker
 
 extractUses :: (Eq ann) => Expr Name ann -> Set Entity
-extractUses = extractUses_
+extractUses expr =
+  let typeNames = dataTypeNames expr
+   in S.filter
+        (\ent -> not $ S.member ent typeNames)
+        ( extractUses_ expr
+        )
 
 -- | extract uses in an expression annotated with types
 extractUsesTyped :: (Eq ann) => Expr Name (Type ann) -> Set Entity
 extractUsesTyped expr =
-  extractUses_ expr
-    <> foldMap extractTypeUses expr
+  let typeNames = dataTypeNames expr
+   in S.filter
+        (\ent -> not $ S.member ent typeNames)
+        ( extractUses_ expr
+            <> foldMap extractTypeUses expr
+        )
 
 -- | find all uses of external vars, types, infix operators etc
 -- used in dependency analysis
@@ -152,3 +161,9 @@ extractDataTypeUses (DataType typeName _ constructors) =
     (\entity -> entity /= EType typeName)
     ( foldMap (foldMap extractTypeUses) constructors
     )
+
+dataTypeNames :: Expr Name ann -> Set Entity
+dataTypeNames (MyData _ (DataType tn _ _) rest) =
+  S.singleton (EType tn) <> dataTypeNames rest
+dataTypeNames (MyLet _ _ expr body) = dataTypeNames expr <> dataTypeNames body
+dataTypeNames _ = mempty
