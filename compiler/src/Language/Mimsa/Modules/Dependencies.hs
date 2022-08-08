@@ -249,6 +249,7 @@ getModuleDeps moduleDeps inputModule = do
         S.fromList
           ( M.elems (moExpressionImports inputModule)
               <> M.elems (moNamedImports inputModule)
+              <> M.elems (moDataTypeImports inputModule)
           )
       mHash = snd $ serializeModule inputModule
 

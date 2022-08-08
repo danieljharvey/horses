@@ -22,6 +22,7 @@ data ModuleError
   | CannotFindTypes (Set TypeName)
   | CannotFindConstructors (Set TyCon)
   | DefDoesNotTypeCheck Text DefIdentifier TypeError
+  | NamedImportNotFound (Set ModuleName) ModuleName
   | MissingModule ModuleHash
   | MissingModuleDep DefIdentifier ModuleHash
   | MissingModuleTypeDep TypeName ModuleHash
@@ -61,6 +62,8 @@ instance Printer ModuleError where
     "Argument " <> prettyPrint name <> " in " <> prettyPrint defName <> " was expected to have a type annotation but it does not."
   prettyPrint (EmptyTestName expr) =
     "Test name must be non-empty for expression " <> prettyPrint expr
+  prettyPrint (NamedImportNotFound haystack needle) =
+    "Could not find import for " <> prettyPrint needle <> " in " <> prettyPrint haystack
 
 moduleErrorDiagnostic :: ModuleError -> Diagnostic Text
 moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) = typeErrorDiagnostic input typeErr

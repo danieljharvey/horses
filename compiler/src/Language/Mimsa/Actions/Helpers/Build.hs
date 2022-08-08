@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Actions.Helpers.Build (doJobs, getMissing, Plan (..), State (..), Job, Inputs) where
 
@@ -7,6 +8,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Printer
 
 -- a thing we want to do
 data Plan k input = Plan
@@ -14,6 +16,9 @@ data Plan k input = Plan
     jbInput :: input
   }
   deriving stock (Eq, Ord, Show)
+
+instance (Printer k, Printer input) => Printer (Plan k input) where
+  prettyPrint (Plan deps _input) = prettyPrint deps
 
 -- how we're going to do it
 type Job m k input output = Map k output -> input -> m output
@@ -26,6 +31,10 @@ data State k input output = State
     stOutputs :: Map k output
   }
   deriving stock (Eq, Ord, Show)
+
+instance (Printer k, Printer input, Printer output) => Printer (State k input output) where
+  prettyPrint (State inputs _outputs) =
+    prettyPrint inputs
 
 -- | one run of the builder builds everything that is currently ready, then
 -- updates the state
@@ -50,11 +59,9 @@ runBuilder fn st = do
   done <-
     traverse
       ( \(k, plan) -> do
-          let filteredOutput =
-                M.filterWithKey
-                  (\depK _ -> S.member depK (jbDeps plan))
-                  (stOutputs st)
-          output <- fn filteredOutput (jbInput plan)
+          -- we pass all previously built things in case
+          -- we need look at transient dependencies
+          output <- fn (stOutputs st) (jbInput plan)
           pure (k, output)
       )
       (M.toList readyJobs)
