@@ -46,7 +46,7 @@ spec = do
               [ (1, ["Hello"]),
                 (2, ["Egg", "Hello"]),
                 (3, ["Horse", "Hello"]),
-                (4, ["Dog", "Hello", "Egg", "Hello", "Horse", "Hello"])
+                (4, ["Dog", "Hello", "Horse", "Hello"])
               ]
       Actions.stOutputs newState `shouldBe` expectedOutputs
     it "If all work is done, just return it" $ do
@@ -86,7 +86,7 @@ spec = do
       let expectedOutputs =
             outputs
               <> M.fromList
-                [ (4, ["Dog", "Hello!", "Egg!", "Hello!", "Horse!", "Hello!"])
+                [ (4, ["Dog", "Hello!", "Horse!", "Hello!"])
                 ]
       Actions.stOutputs newState `shouldBe` expectedOutputs
     it "Detects missing deps" $ do

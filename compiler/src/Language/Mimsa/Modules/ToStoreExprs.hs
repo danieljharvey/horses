@@ -8,6 +8,7 @@
 module Language.Mimsa.Modules.ToStoreExprs (toStoreExpressions, CompiledModule (..)) where
 
 import Control.Monad.Except
+import Control.Monad.Identity
 import Data.Bifunctor
 import Data.Functor (($>))
 import Data.Map (Map)
@@ -69,6 +70,27 @@ toStoreExpressions typecheckedModules inputModule = do
        in pure $ withBigStore {cmExprs = compiledMod}
     Nothing -> throwError (ModuleErr $ MissingModule rootModuleHash)
 
+-- if `b` needs `a`, and `c` needs `b`, add `a` to the deps for `c`
+includeTransitiveDeps :: (Eq a, Ord k, Show k) => Map k (a, Set k) -> Map k (a, Set k)
+includeTransitiveDeps depsMap = runIdentity $ do
+  let state =
+        Build.State
+          { Build.stInputs =
+              ( \(a, deps') ->
+                  Build.Plan
+                    { Build.jbDeps = deps',
+                      Build.jbInput = a
+                    }
+              )
+                <$> depsMap,
+            Build.stOutputs = mempty
+          }
+  let action deps' a = do
+        let allDeps = M.keysSet deps' <> foldMap snd deps'
+        pure (a, allDeps)
+
+  Build.stOutputs <$> Build.doJobs action state
+
 --- compile many modules
 compileAllModules ::
   (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
@@ -77,7 +99,7 @@ compileAllModules ::
   m (Map ModuleHash (CompiledModule (Type ann)))
 compileAllModules myDeps rootModule = do
   -- which other modules do we need to compile in order to compile this one?
-  inputWithDeps <- getModuleDeps myDeps rootModule
+  inputWithDeps <- includeTransitiveDeps <$> getModuleDeps myDeps rootModule
 
   let state =
         Build.State

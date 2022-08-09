@@ -59,9 +59,11 @@ runBuilder fn st = do
   done <-
     traverse
       ( \(k, plan) -> do
-          -- we pass all previously built things in case
-          -- we need look at transient dependencies
-          output <- fn (stOutputs st) (jbInput plan)
+          let filteredOutput =
+                M.filterWithKey
+                  (\depK _ -> S.member depK (jbDeps plan))
+                  (stOutputs st)
+          output <- fn filteredOutput (jbInput plan)
           pure (k, output)
       )
       (M.toList readyJobs)
