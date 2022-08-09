@@ -1,0 +1,4 @@
+let f =
+  incrementInt;
+
+\g -> \a -> f (g a) incrementInt 67

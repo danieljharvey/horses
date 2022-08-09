@@ -71,30 +71,14 @@ spec =
       it "Creates expressions from literals with empty Project" $ do
         createStoreExpression' mempty mempty (int 1)
           `shouldBe` Right
-            ( StoreExpression
-                { storeBindings = mempty,
-                  storeExpression = int 1,
-                  storeTypeBindings = mempty,
-                  storeInfixes = mempty
-                }
+            ( mkStoreExpression (int 1)
             )
         createStoreExpression' mempty mempty (bool True)
           `shouldBe` Right
-            ( StoreExpression
-                { storeBindings = mempty,
-                  storeExpression = bool True,
-                  storeTypeBindings = mempty,
-                  storeInfixes = mempty
-                }
-            )
+            (mkStoreExpression (bool True))
         createStoreExpression' mempty mempty (str (StringType "poo"))
           `shouldBe` Right
-            ( StoreExpression
-                { storeBindings = mempty,
-                  storeExpression = str (StringType "poo"),
-                  storeTypeBindings = mempty,
-                  storeInfixes = mempty
-                }
+            ( mkStoreExpression (str (StringType "poo"))
             )
       it "Looks for vars and can't find them" $
         createStoreExpression' mempty mempty (MyVar mempty Nothing (Name "missing"))
@@ -111,7 +95,8 @@ spec =
                 { storeBindings = M.singleton (Nothing, Name "missing") hash,
                   storeExpression = expr,
                   storeTypeBindings = mempty,
-                  storeInfixes = mempty
+                  storeInfixes = mempty,
+                  storeTypes = mempty
                 }
             )
     describe "createTypeStoreExpression" $ do
@@ -125,6 +110,7 @@ spec =
                 { storeBindings = mempty,
                   storeTypeBindings = mempty,
                   storeExpression = expr,
-                  storeInfixes = mempty
+                  storeInfixes = mempty,
+                  storeTypes = mempty
                 }
             )

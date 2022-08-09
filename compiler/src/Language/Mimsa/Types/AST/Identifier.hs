@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -16,7 +17,7 @@ data Identifier var ann = Identifier
   { idAnn :: ann,
     idVar :: var
   }
-  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
 $(deriveBifunctor ''Identifier)

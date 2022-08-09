@@ -8,6 +8,7 @@ where
 import Data.Functor
 import qualified Data.Map as M
 import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.Parse
 import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Printer
@@ -42,7 +43,7 @@ spec = do
           }
     it "Single expression, single output with no deps" $ do
       let expr = unsafeParseExpr "\\a -> a" $> mempty
-          storeExpr = StoreExpression expr mempty mempty mempty
+          storeExpr = StoreExpression expr mempty mempty mempty mempty
           hash = getStoreExpressionHash storeExpr
           inputModule =
             mempty
@@ -56,11 +57,11 @@ spec = do
       toStoreExpressions' inputModule `shouldBe` expected
     it "Two expressions, one depends on the other" $ do
       let exprA = unsafeParseExpr "\\a -> a" $> mempty
-          storeExprA = StoreExpression exprA mempty mempty mempty
+          storeExprA = StoreExpression exprA mempty mempty mempty mempty
           hashA = getStoreExpressionHash storeExprA
 
           exprB = unsafeParseExpr "id 100" $> mempty
-          storeExprB = StoreExpression exprB (M.singleton (Nothing, "id") hashA) mempty mempty
+          storeExprB = StoreExpression exprB (M.singleton (Nothing, "id") hashA) mempty mempty mempty
           hashB = getStoreExpressionHash storeExprB
 
           inputModule =
@@ -86,3 +87,22 @@ spec = do
                     ]
               }
       toStoreExpressions' inputModule `shouldBe` expected
+
+    it "Two expressions, one type, second expression uses type indirectly and should have it as a dep" $ do
+      let lookupInCompiled name compiled =
+            fromJust $ M.lookup (DIName name) (cmExprs compiled) >>= \hash -> M.lookup hash (getStore (cmStore compiled))
+
+      let inputModule =
+            fromRight $
+              parseModule mempty $
+                joinLines
+                  [ "export type Either e a = Left e | Right a",
+                    "def useEither val = match val with Right a -> a | _ -> False",
+                    "def shouldHaveEitherAsDep val = useEither val"
+                  ]
+          output = toStoreExpressions' inputModule
+      -- three output items
+      cmStore output `shouldSatisfy` \(Store a) -> M.size a == 3
+      -- main one has Either as dep
+      let shouldHaveEither = lookupInCompiled "shouldHaveEitherAsDep" output
+      storeTypes shouldHaveEither `shouldSatisfy` \a -> M.size a == 1

@@ -2,7 +2,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Modules.Dependencies (getValueDependencies, getModuleDeps, filterExprs, filterDataTypes, DepType (..)) where
+module Language.Mimsa.Modules.Dependencies
+  ( getDependencies,
+    getModuleDeps,
+    filterExprs,
+    filterDataTypes,
+    DepType (..),
+  )
+where
 
 -- work out the dependencies between definitions inside a module
 
@@ -82,8 +89,9 @@ filterTypes =
 
 -- get the vars used by each def
 -- explode if there's not available
-getValueDependencies ::
-  (Eq ann, MonadError (Error Annotation) m) =>
+getDependencies ::
+  (MonadError (Error Annotation) m) =>
+  (Expr Name ann -> Set Entity) ->
   Module ann ->
   m
     ( Map
@@ -93,10 +101,10 @@ getValueDependencies ::
           Set Entity
         )
     )
-getValueDependencies mod' = do
+getDependencies getUses mod' = do
   exprDeps <-
     traverse
-      (getExprDependencies mod')
+      (getExprDependencies getUses mod')
       (moExpressions mod')
   typeDeps <-
     mapKeys DIType
@@ -115,9 +123,7 @@ getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
   exprDefIds <- getExprDeps mod' allUses
-  let typesWithoutSelf =
-        S.filter (\typeName -> typeName /= DIType (dtName dt)) typeDefIds
-  pure (DTData dt, typesWithoutSelf <> exprDefIds, allUses)
+  pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
 getTypeUses ::
   (MonadError (Error Annotation) m) =>
@@ -186,12 +192,13 @@ getConstructorUses mod' uses = do
         else throwError (ModuleErr (CannotFindTypes unknownTypeDeps))
 
 getExprDependencies ::
-  (Eq ann, MonadError (Error Annotation) m) =>
+  (MonadError (Error Annotation) m) =>
+  (Expr Name ann -> Set Entity) ->
   Module ann ->
   Expr Name ann ->
   m (DepType ann, Set DefIdentifier, Set Entity)
-getExprDependencies mod' expr = do
-  let allUses = extractUses expr
+getExprDependencies getUses mod' expr = do
+  let allUses = getUses expr
   exprDefIds <- getExprDeps mod' allUses
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
@@ -242,8 +249,10 @@ getModuleDeps moduleDeps inputModule = do
         S.fromList
           ( M.elems (moExpressionImports inputModule)
               <> M.elems (moNamedImports inputModule)
+              <> M.elems (moDataTypeImports inputModule)
           )
       mHash = snd $ serializeModule inputModule
+
   -- recursively fetch sub-deps
   depModules <- traverse (lookupModule moduleDeps) (S.toList deps)
   subDeps <- traverse (getModuleDeps moduleDeps) depModules

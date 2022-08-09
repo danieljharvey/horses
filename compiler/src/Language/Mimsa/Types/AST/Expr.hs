@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -145,7 +146,7 @@ data Expr var ann
       }
   | -- | name
     MyTypedHole {expAnn :: ann, expTypedHoleName :: var}
-  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
 $(deriveBifunctor ''Expr)

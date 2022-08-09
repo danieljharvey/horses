@@ -46,6 +46,7 @@ createStoreExpression bindings' tBindings expr =
     <$> findBindings bindings' expr
     <*> findTypeBindings tBindings expr
     <*> pure mempty
+    <*> pure mempty
 
 findBindings ::
   (Eq ann, Monoid ann) =>

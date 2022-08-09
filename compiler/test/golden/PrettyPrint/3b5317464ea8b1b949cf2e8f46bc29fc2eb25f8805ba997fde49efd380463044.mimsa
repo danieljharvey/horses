@@ -1,0 +1,1 @@
+type Nat    = Suc Nat | Zero in Suc Zero

@@ -20,6 +20,7 @@ import Data.Functor
 import Data.List (intersperse)
 import Data.Map (Map)
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Backend.Javascript.Printer as JS
@@ -76,18 +77,29 @@ outputStoreExpression ::
   StoreExpression MonoType ->
   BackendM MonoType Text
 outputStoreExpression be dataTypes store mt se = do
-  let (infixHashes, infixNames) =
+  let typeBindings = typeBindingsByType store (storeTypeBindings se)
+
+      (infixHashes, infixNames) =
         nameInfixes (storeInfixes se)
+
       deps =
         renderImport' be
           <$> M.toList (storeBindings se)
+
       typeDeps =
         renderTypeImport' be
-          <$> M.toList (typeBindingsByType store (storeTypeBindings se))
+          <$> M.toList typeBindings
 
       infixDeps =
         renderInfixImport be
           <$> M.toList infixHashes
+
+      -- we import types where they are used transitively, so we don't need
+      -- them if they are imported explicitly
+      requiredTypeImports =
+        M.filterWithKey (\(_, tn) _ -> S.notMember tn (M.keysSet typeBindings)) (storeTypes se)
+
+      directTypeDeps = renderDirectTypeImport be <$> M.toList requiredTypeImports
 
   (func, stdlibFuncs) <-
     renderExpression be dataTypes infixNames (storeExpression se)
@@ -102,6 +114,7 @@ outputStoreExpression be dataTypes store mt se = do
           [ mconcat deps,
             mconcat typeDeps,
             mconcat infixDeps,
+            mconcat directTypeDeps,
             stdlib,
             typeComment,
             func
@@ -194,6 +207,16 @@ renderTypeImport' ESModulesJS (typeName, hash') =
     <> storeExprFilename ESModulesJS hash'
     <> "\";\n"
 
+-- | 10x-ing hard right now, could be rekt
+renderDirectTypeImport :: Backend -> ((Maybe ModuleName, TypeName), ExprHash) -> Text
+renderDirectTypeImport Typescript ((_, typeName), hash') =
+  "import type { "
+    <> coerce typeName
+    <> " } from \"./"
+    <> storeExprFilename Typescript hash'
+    <> "\";\n"
+renderDirectTypeImport ESModulesJS _ = mempty
+
 renderTypeSignature' :: MonoType -> Text
 renderTypeSignature' mt =
   "/* \n" <> prettyPrint mt <> "\n */"
@@ -216,11 +239,11 @@ outputIndexFile be exportMap exportModuleMap =
 
       exportModule (modName, modHash) = case be of
         ESModulesJS ->
-          "export { * as " <> printTSName (coerce modName) <> " } from './"
+          "export * as " <> printTSName (coerce modName) <> " from './"
             <> moduleImport be modHash
             <> "';"
         Typescript ->
-          "export { main as " <> printTSName (coerce modName) <> " } from './"
+          "export * as " <> printTSName (coerce modName) <> " from './"
             <> moduleImport be modHash
             <> "';"
 

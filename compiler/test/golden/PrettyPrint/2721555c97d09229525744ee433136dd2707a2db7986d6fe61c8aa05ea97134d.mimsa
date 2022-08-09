@@ -1,0 +1,7 @@
+match "dog" with 
+    "dog" -> 
+      True
+  | "log" -> 
+      True
+  | _ -> 
+      False

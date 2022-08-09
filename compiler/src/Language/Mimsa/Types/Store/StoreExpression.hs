@@ -20,7 +20,8 @@ data StoreExpression ann = StoreExpression
   { storeExpression :: Expr Name ann,
     storeBindings :: Map (Maybe ModuleName, Name) ExprHash,
     storeTypeBindings :: Map (Maybe ModuleName, TyCon) ExprHash,
-    storeInfixes :: Map InfixOp ExprHash
+    storeInfixes :: Map InfixOp ExprHash,
+    storeTypes :: Map (Maybe ModuleName, TypeName) ExprHash
   }
   deriving stock
     ( Eq,
@@ -35,4 +36,4 @@ data StoreExpression ann = StoreExpression
     )
 
 instance Printer (StoreExpression ann) where
-  prettyPrint (StoreExpression expr _ _ _) = prettyPrint expr
+  prettyPrint (StoreExpression expr _ _ _ _) = prettyPrint expr

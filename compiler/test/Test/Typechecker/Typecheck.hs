@@ -40,7 +40,7 @@ startInference expr expected = do
   let numberedExpr =
         fromRight $
           addNumbersToStoreExpression
-            (StoreExpression expr mempty mempty mempty)
+            (StoreExpression expr mempty mempty mempty mempty)
   let elabbed =
         fmap (\(_, _, a, _) -> first fst a)
           . typecheck mempty mempty
@@ -54,7 +54,7 @@ testInfer :: Expr Name Annotation -> Either TypeError MonoType
 testInfer expr = do
   numberedExpr <-
     addNumbersToStoreExpression
-      (StoreExpression expr mempty mempty mempty)
+      (StoreExpression expr mempty mempty mempty mempty)
   let elabbed =
         fmap (\(_, _, a, _) -> a)
           . typecheck mempty mempty

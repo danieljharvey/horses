@@ -7,9 +7,7 @@ where
 
 import Data.Either (isLeft)
 import qualified Data.Map as M
-import Data.Maybe
 import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
 import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -21,9 +19,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Tests
 import Test.Hspec
-
-joinLines :: [Text] -> Text
-joinLines = T.intercalate "\n"
+import Test.Utils.Helpers
 
 runTests :: Text -> Either (Error Annotation) ModuleTestResults
 runTests t = do
