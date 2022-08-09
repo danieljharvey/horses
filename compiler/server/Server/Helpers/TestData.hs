@@ -17,8 +17,8 @@ where
 import qualified Data.Aeson as JSON
 import Data.Coerce
 import Data.Either
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (get)
 import qualified Data.Set as S
 import Data.Text (Text)

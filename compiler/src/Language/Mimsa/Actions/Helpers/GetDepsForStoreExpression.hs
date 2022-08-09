@@ -7,8 +7,8 @@ where
 
 import Control.Monad.Except
 import Data.Bifunctor (first)
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer

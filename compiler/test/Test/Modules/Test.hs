@@ -6,7 +6,7 @@ module Test.Modules.Test
 where
 
 import Data.Either (isLeft)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
 import qualified Language.Mimsa.Actions.Modules.RunTests as Actions

@@ -20,8 +20,8 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.Either (partitionEithers)
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.OpenApi
 import Data.Set (Set)
 import qualified Data.Set as S

@@ -9,8 +9,8 @@ module Language.Mimsa.Types.Typechecker.Substitutions
 where
 
 import Data.Functor (($>))
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Language.Mimsa.Printer

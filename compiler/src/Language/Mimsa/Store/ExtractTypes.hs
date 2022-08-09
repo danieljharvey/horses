@@ -8,7 +8,7 @@ module Language.Mimsa.Store.ExtractTypes
 where
 
 import Data.Coerce
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.TypeUtils

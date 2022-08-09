@@ -7,7 +7,7 @@ where
 
 import Data.Bifunctor
 import Data.Either (isLeft)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate

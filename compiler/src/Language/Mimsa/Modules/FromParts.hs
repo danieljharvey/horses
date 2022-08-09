@@ -8,8 +8,8 @@ module Language.Mimsa.Modules.FromParts (addModulePart, moduleFromModuleParts, e
 
 import Control.Monad.Except
 import Data.Coerce
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Parser.Module

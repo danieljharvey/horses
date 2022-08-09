@@ -6,7 +6,7 @@ module Test.Tests.UnitTest
 where
 
 import Data.Either (isLeft)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Tests.Test

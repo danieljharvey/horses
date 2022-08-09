@@ -12,8 +12,8 @@ where
 
 import Control.Monad.Reader
 import Control.Monad.State
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Maybe
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Transform.FindUses

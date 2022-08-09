@@ -5,7 +5,7 @@ module Repl.Actions.UnitTests
 where
 
 import Data.Foldable
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.Actions.AddUnitTest
 import Language.Mimsa.Printer

@@ -41,8 +41,8 @@ import Data.Bifunctor
 import Data.Coerce
 import Data.Either
 import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Modules.HashModule

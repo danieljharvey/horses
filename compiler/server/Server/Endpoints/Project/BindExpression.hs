@@ -13,7 +13,7 @@ where
 import Control.Monad.Trans.Class
 import qualified Data.Aeson as JSON
 import Data.Bifunctor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics

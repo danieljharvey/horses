@@ -7,8 +7,8 @@ import qualified Data.Aeson as JSON
 import Data.List (nub)
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 
 ------
 -- A versioned Map is a Map whose contents are a unique nonempty list

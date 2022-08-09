@@ -1,6 +1,6 @@
 module Language.Mimsa.TypeUtils (withMonoid, mapMonoType) where
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Types.Typechecker
 
 withMonoid :: (Monoid m) => (Type ann -> m) -> Type ann -> m

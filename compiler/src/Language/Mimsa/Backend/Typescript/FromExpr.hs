@@ -6,8 +6,8 @@ module Language.Mimsa.Backend.Typescript.FromExpr (fromExpr) where
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce (coerce)
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T

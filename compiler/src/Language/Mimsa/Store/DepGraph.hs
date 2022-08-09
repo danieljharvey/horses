@@ -9,8 +9,8 @@ module Language.Mimsa.Store.DepGraph
   )
 where
 
-import Data.Map ((!))
-import qualified Data.Map as M
+import Data.Map.Strict ((!))
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T

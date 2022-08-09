@@ -23,7 +23,7 @@ module Language.Mimsa.Backend.Typescript.Types
   )
 where
 
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Data.Set (Set)
 import Data.String
 import Data.Text (Text)

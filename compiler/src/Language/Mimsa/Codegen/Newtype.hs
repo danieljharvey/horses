@@ -7,8 +7,8 @@ module Language.Mimsa.Codegen.Newtype
 where
 
 import Control.Monad.Except
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers

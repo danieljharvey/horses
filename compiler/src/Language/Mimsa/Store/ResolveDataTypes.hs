@@ -3,8 +3,8 @@
 module Language.Mimsa.Store.ResolveDataTypes (resolveDataTypes, createTypeMap, storeExprToDataTypes) where
 
 import Control.Monad.Except
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Store.Helpers

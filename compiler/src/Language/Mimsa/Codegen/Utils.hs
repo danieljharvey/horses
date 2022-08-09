@@ -14,8 +14,8 @@ where
 import Control.Monad.Except
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Semigroup
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Error

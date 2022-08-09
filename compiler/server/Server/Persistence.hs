@@ -17,7 +17,7 @@ import Control.Monad.Reader
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing

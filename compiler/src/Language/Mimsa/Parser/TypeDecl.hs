@@ -7,8 +7,8 @@ module Language.Mimsa.Parser.TypeDecl
 where
 
 import Data.Functor (($>))
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Lexeme

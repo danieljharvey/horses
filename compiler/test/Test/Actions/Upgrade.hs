@@ -8,7 +8,7 @@ where
 
 import Data.Either (isLeft)
 import Data.Functor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions

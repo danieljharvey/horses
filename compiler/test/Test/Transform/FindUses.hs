@@ -6,7 +6,7 @@ module Test.Transform.FindUses
   )
 where
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Monoid
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Types.AST

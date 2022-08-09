@@ -10,7 +10,7 @@ import Data.Bifunctor
 import Data.Foldable
 import Data.Functor
 import Data.Hashable
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T

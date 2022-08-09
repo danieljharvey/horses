@@ -19,7 +19,7 @@ module Language.Mimsa.Parser.Language
 where
 
 import Data.Functor (($>))
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers (addLocation, chainl1, inBrackets, orInBrackets, parseAndFormat, withLocation)
 import Language.Mimsa.Parser.Identifier

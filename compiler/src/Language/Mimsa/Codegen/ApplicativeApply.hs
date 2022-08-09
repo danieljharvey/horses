@@ -13,7 +13,7 @@ import Data.Coerce
 import Data.Foldable (foldl')
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Codegen.Utils

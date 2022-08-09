@@ -1,7 +1,7 @@
 module Server.Types where
 
 import qualified Control.Concurrent.STM as STM
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store

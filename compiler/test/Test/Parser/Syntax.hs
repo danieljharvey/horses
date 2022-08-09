@@ -6,7 +6,7 @@ module Test.Parser.Syntax
 where
 
 import Data.Either (isLeft, isRight)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Parser

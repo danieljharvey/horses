@@ -7,7 +7,7 @@ module Language.Mimsa.Parser.Pattern
 where
 
 import Data.Either (partitionEithers)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers (moduleNameParser, nameParser, tyConParser)
 import Language.Mimsa.Parser.Lexeme

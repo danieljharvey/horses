@@ -2,7 +2,7 @@ module Language.Mimsa.Interpreter.Interpret (interpret, addEmptyStackFrames) whe
 
 import Control.Monad.Reader
 import Data.Functor
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Language.Mimsa.Interpreter.App
 import Language.Mimsa.Interpreter.If
 import Language.Mimsa.Interpreter.Infix

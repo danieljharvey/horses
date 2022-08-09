@@ -8,7 +8,7 @@ where
 import Control.Monad.Except
 import Data.Either (isRight)
 import Data.Functor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.MonoType

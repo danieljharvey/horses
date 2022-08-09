@@ -13,7 +13,7 @@ module Server.Endpoints.Project.ListTests
 where
 
 import qualified Data.Aeson as JSON
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Tests.Test

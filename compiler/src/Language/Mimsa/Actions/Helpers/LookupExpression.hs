@@ -7,7 +7,7 @@ where
 
 import Control.Monad.Except
 import Data.Functor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error

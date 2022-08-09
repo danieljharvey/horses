@@ -4,7 +4,7 @@ module Language.Mimsa.Actions.Modules.RunTests (runModuleTests) where
 
 import Control.Monad.Except
 import Data.Bifunctor
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer

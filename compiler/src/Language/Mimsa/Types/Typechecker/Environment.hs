@@ -3,7 +3,7 @@
 
 module Language.Mimsa.Types.Typechecker.Environment where
 
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST (DataType)
 import Language.Mimsa.Types.AST.InfixOp

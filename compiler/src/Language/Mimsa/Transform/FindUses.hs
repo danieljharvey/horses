@@ -3,8 +3,8 @@
 
 module Language.Mimsa.Transform.FindUses (findUses, memberInUses, numberOfUses, Uses (..)) where
 
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Monoid
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Types.AST

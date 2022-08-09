@@ -10,7 +10,7 @@ module Language.Mimsa.Backend.Typescript.Patterns
 where
 
 import Data.Foldable (foldl')
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Utils (mapWithIndex)

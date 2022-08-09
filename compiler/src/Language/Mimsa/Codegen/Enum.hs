@@ -8,7 +8,7 @@ where
 
 import Data.Coerce
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Identifiers
