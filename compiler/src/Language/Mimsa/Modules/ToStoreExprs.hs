@@ -85,6 +85,7 @@ includeTransitiveDeps depsMap = runIdentity $ do
                 <$> depsMap,
             Build.stOutputs = mempty
           }
+
   let action deps' a = do
         let allDeps = M.keysSet deps' <> foldMap snd deps'
         pure (a, allDeps)
