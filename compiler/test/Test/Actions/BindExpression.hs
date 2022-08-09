@@ -8,7 +8,7 @@ where
 
 import Data.Either (isLeft, isRight)
 import Data.Functor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Maybe (isJust)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions

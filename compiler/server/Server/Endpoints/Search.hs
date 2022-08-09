@@ -7,7 +7,7 @@
 module Server.Endpoints.Search (SearchAPI, searchEndpoints) where
 
 import qualified Data.Aeson as JSON
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (Server)
 import Data.Text (Text)
 import GHC.Generics

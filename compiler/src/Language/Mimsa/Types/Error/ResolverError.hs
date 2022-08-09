@@ -3,7 +3,7 @@
 
 module Language.Mimsa.Types.Error.ResolverError where
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer (Printer (prettyPrint))
 import Language.Mimsa.Types.Identifiers (Name, TyCon)

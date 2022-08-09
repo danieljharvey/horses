@@ -3,7 +3,7 @@
 module Language.Mimsa.Backend.Typescript.DataType (createConstructorFunctions) where
 
 import Data.Coerce (coerce)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)

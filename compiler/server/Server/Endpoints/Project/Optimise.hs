@@ -15,7 +15,7 @@ where
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import Data.Bifunctor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (get)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Graph as Actions

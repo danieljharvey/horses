@@ -5,7 +5,7 @@ module Test.Prettier
   )
 where
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DataTypes

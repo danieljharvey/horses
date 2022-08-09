@@ -10,7 +10,7 @@ module Language.Mimsa.Interpreter.Types
 where
 
 import Control.Monad.Reader
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack

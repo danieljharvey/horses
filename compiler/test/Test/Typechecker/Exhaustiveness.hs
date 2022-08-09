@@ -8,7 +8,7 @@ where
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Either
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error

@@ -9,8 +9,8 @@ where
 import Control.Monad.IO.Class
 import Data.Either (isLeft, isRight)
 import Data.Functor
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T

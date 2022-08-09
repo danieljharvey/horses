@@ -6,8 +6,8 @@ module Language.Mimsa.Store.ResolvedDeps
 where
 
 import Data.Either (partitionEithers)
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes

@@ -15,8 +15,8 @@ where
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import Data.Bifunctor
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (get)
 import Data.Text (Text)
 import GHC.Generics

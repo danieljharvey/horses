@@ -11,8 +11,8 @@ import Data.Coerce
 import Data.Foldable (foldl')
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
 import Language.Mimsa.Codegen.Utils
 import Language.Mimsa.Types.AST

@@ -7,7 +7,7 @@ where
 
 import Control.Monad (join)
 import Data.Foldable (traverse_)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)

@@ -9,8 +9,8 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Typechecker.NormaliseTypes

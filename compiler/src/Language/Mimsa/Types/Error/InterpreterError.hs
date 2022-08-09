@@ -3,8 +3,8 @@
 
 module Language.Mimsa.Types.Error.InterpreterError (InterpreterError (..)) where
 
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST

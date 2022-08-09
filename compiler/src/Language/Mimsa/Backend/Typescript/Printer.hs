@@ -12,7 +12,7 @@ module Language.Mimsa.Backend.Typescript.Printer
   )
 where
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)

@@ -1,6 +1,6 @@
 module Language.Mimsa.Actions.Helpers.FindExistingBinding (findExistingBinding) where
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers

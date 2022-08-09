@@ -13,8 +13,8 @@ module Language.Mimsa.Project.Stdlib
 where
 
 import Data.Functor
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.AddUnitTest as Actions

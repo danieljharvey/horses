@@ -10,7 +10,7 @@ module Language.Mimsa.Types.Project.SaveProject where
 import Control.Monad (mzero)
 import Data.Aeson
 import qualified Data.Aeson as JSON
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import GHC.Generics (Generic)
 import Language.Mimsa.Types.Project.Versioned
 import Language.Mimsa.Types.Store

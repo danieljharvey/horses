@@ -1,7 +1,7 @@
 module Language.Mimsa.Store.Substitutor (getExprPairs) where
 
 import Control.Monad (join)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store
 

@@ -8,7 +8,7 @@ where
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Foldable (traverse_)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions

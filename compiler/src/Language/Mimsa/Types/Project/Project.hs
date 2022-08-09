@@ -4,7 +4,7 @@
 
 module Language.Mimsa.Types.Project.Project where
 
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import GHC.Generics (Generic)
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project.Versioned

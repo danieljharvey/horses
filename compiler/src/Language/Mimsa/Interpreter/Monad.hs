@@ -11,7 +11,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError

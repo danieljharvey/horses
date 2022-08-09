@@ -11,7 +11,7 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.Coerce (coerce)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
 import Data.OpenApi hiding (name)
 import Data.Set (Set)

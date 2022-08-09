@@ -11,8 +11,8 @@ import Control.Monad ((>=>))
 import Control.Monad.Combinators.Expr
 import qualified Data.Char as Char
 import Data.Functor (($>))
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)

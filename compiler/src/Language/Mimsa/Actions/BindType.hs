@@ -5,7 +5,7 @@ module Language.Mimsa.Actions.BindType
   )
 where
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions

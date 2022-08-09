@@ -24,7 +24,7 @@ where
 
 import Data.Bifunctor (first)
 import Data.Functor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions

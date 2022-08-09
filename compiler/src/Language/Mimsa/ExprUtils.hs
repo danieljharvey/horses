@@ -13,7 +13,7 @@ module Language.Mimsa.ExprUtils
 where
 
 import Data.Bifunctor (second)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Pattern

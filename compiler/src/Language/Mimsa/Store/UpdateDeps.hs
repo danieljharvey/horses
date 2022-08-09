@@ -5,8 +5,8 @@ module Language.Mimsa.Store.UpdateDeps
 where
 
 import Data.Bifunctor
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer

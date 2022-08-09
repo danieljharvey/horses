@@ -10,7 +10,7 @@ where
 import Control.Monad.IO.Class
 import Data.Either (isLeft, isRight)
 import Data.Functor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Tests.Helpers

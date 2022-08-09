@@ -9,8 +9,8 @@ module Language.Mimsa.Types.AST.DataType
 where
 
 import qualified Data.Aeson as JSON
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer (Printer (prettyDoc))
 import Language.Mimsa.Types.Identifiers

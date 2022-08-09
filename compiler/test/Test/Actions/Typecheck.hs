@@ -7,7 +7,7 @@ module Test.Actions.Typecheck
 where
 
 import Data.Functor
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions

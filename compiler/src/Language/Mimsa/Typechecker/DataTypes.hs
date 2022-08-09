@@ -17,8 +17,8 @@ import Data.Bifunctor
 import Data.Coerce
 import Data.Foldable (foldl', traverse_)
 import Data.Functor (($>))
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.BuiltIns

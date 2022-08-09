@@ -6,7 +6,7 @@ where
 
 import Control.Monad.Except
 import Data.Foldable
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.HashModule

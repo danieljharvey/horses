@@ -27,8 +27,8 @@ import qualified Data.ByteString.Lazy as BS
 import Data.Coerce
 import Data.Foldable
 import Data.Functor
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Types as Actions

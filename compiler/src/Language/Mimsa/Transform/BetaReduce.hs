@@ -1,6 +1,6 @@
 module Language.Mimsa.Transform.BetaReduce (betaReduce) where
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Types.AST

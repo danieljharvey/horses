@@ -4,8 +4,8 @@ module Language.Mimsa.Actions.Interpret (interpreter) where
 
 import Control.Monad.Except
 import Data.Bifunctor
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions

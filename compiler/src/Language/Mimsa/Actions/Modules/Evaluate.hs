@@ -8,7 +8,7 @@ where
 
 import Control.Monad.Except
 import Data.Foldable
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.Maybe (fromJust)
 import Data.Set (Set)
 import qualified Data.Set as S

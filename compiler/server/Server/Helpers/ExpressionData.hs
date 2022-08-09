@@ -16,8 +16,8 @@ where
 import qualified Data.Aeson as JSON
 import Data.Bifunctor
 import Data.Coerce
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (get)
 import Data.Text (Text)
 import GHC.Generics
