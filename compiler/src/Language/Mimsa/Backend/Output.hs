@@ -239,11 +239,11 @@ outputIndexFile be exportMap exportModuleMap =
 
       exportModule (modName, modHash) = case be of
         ESModulesJS ->
-          "export { * as " <> printTSName (coerce modName) <> " } from './"
+          "export * as " <> printTSName (coerce modName) <> " from './"
             <> moduleImport be modHash
             <> "';"
         Typescript ->
-          "export { main as " <> printTSName (coerce modName) <> " } from './"
+          "export * as " <> printTSName (coerce modName) <> " from './"
             <> moduleImport be modHash
             <> "';"
 

@@ -1219,6 +1219,11 @@ spec =
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
       describe "Big stuff that breaks interpreter" $ do
+        it "Uses Parser.char" $ do
+          let expr = "Parser.char"
+          result <- eval expr
+          result `shouldSatisfy` isRight
+
         it "Parses using a lexeme" $ do
           let expr =
                 mconcat
