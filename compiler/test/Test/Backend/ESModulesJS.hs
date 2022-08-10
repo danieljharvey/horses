@@ -22,6 +22,7 @@ import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
@@ -531,9 +532,35 @@ spec = do
               ),
               ( joinLines
                   [ "def adding a b = a + b",
-                    "export def main = adding 1 2"
+                    "infix +++ = adding",
+                    "export def main = 1 +++ 2"
                   ],
                 "3"
+              ),
+              ( joinLines
+                  [ "export type Identity a = Identity a",
+                    "def runIdentity a = let (Identity inner) = a in inner",
+                    "export def main = runIdentity (Identity True)"
+                  ],
+                "true"
+              ),
+              ( joinLines
+                  [ "export type Either e a = Left e | Right a",
+                    "def useEither val = match val with Right a -> a | _ -> False",
+                    "def shouldHaveEitherAsDep val = useEither val",
+                    "export def main = shouldHaveEitherAsDep (Right True)"
+                  ],
+                "true"
               )
             ]
        in traverse_ testModule moduleTestCases
+
+    -- Unique variable errors here, maybe more than we want to chew off rn?
+    xdescribe "Compile and open entire project" $ do
+      it "Compiles entire project" $ do
+        (filename, contentHash) <- testWholeProjectCompile "CompileJSProjectWhole" stdlib ESModulesJS
+        cachePath <- createOutputFolder "CompileJSProjectWhole-result"
+        let cacheFilename = cachePath <> show contentHash <> ".json"
+
+        result <- withCache cacheFilename (testESModulesJSFileInNode filename)
+        result `shouldSatisfy` const True

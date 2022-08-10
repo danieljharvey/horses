@@ -22,6 +22,7 @@ import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
@@ -102,7 +103,7 @@ testModule (input, expectedValue) =
     (filename, contentHash) <- testModuleCompile "CompileTSModuleProject" Typescript input
     cachePath <- createOutputFolder "CompileTSModuleProject-result"
     let cacheFilename = cachePath <> show contentHash <> ".json"
-
+    print filename
     result <- withCache cacheFilename (testTypescriptFileInNode filename)
     result `shouldBe` expectedValue
 
@@ -566,3 +567,12 @@ spec = do
               )
             ]
        in traverse_ testModule moduleTestCases
+
+    fdescribe "Compile and open entire project" $ do
+      it "Compiles entire project" $ do
+        (filename, contentHash) <- testWholeProjectCompile "CompileTSProjectWhole" stdlib Typescript
+        cachePath <- createOutputFolder "CompileTSProjectWhole-result"
+        let cacheFilename = cachePath <> show contentHash <> ".json"
+
+        result <- withCache cacheFilename (testTypescriptFileInNode filename)
+        result `shouldSatisfy` const True

@@ -3,6 +3,7 @@
 module Test.Utils.Compilation
   ( testProjectCompile,
     testModuleCompile,
+    testWholeProjectCompile,
   )
 where
 
@@ -22,6 +23,7 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
+import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
@@ -60,6 +62,40 @@ testModuleCompile folderPrefix be input = do
         fromRight (Actions.run testStdlib action)
 
   writeModuleFiles be folderPrefix modHash outcomes
+
+-- | compile a project into a temp folder and return the main filename
+testWholeProjectCompile ::
+  String ->
+  Project Annotation ->
+  Backend ->
+  IO (FilePath, Int)
+testWholeProjectCompile folderName project be = do
+  let action = do
+        _ <- Actions.compileProject be
+        pure ()
+  let (_newProject_, outcomes, _) =
+        fromRight (Actions.run project action)
+
+  -- clean up old rubbish
+  deleteOutputFolder folderName
+
+  -- re-create path
+  tsPath <- createOutputFolder folderName
+
+  -- write all files to temp folder
+  traverse_
+    ( \(_, filename, Actions.SaveContents content) -> do
+        let savePath = tsPath <> show filename
+        liftIO $ T.writeFile savePath content
+    )
+    (Actions.writeFilesFromOutcomes outcomes)
+
+  -- hash of generated content for caching test results
+  let allFilesHash = hash (Actions.writeFilesFromOutcomes outcomes)
+
+  let actualIndexPath = tsPath <> "/" <> T.unpack (projectIndexFilename be)
+
+  pure (actualIndexPath, allFilesHash)
 
 writeModuleFiles :: Backend -> String -> ModuleHash -> [Actions.ActionOutcome] -> IO (FilePath, Int)
 writeModuleFiles be folderPrefix modHash outcomes = do
