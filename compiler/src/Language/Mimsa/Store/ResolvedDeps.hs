@@ -1,6 +1,7 @@
 module Language.Mimsa.Store.ResolvedDeps
   ( resolveDeps,
     resolveTypeDeps,
+    resolveTypeNameDeps,
     recursiveResolve,
   )
 where
@@ -73,9 +74,28 @@ resolveTypeDeps (Store items) typeBindings =
       ( \(tyCon, hash) -> case M.lookup hash items of
           Just storeExpr -> do
             case extractDataType storeExpr of
-              Just dt -> Right (tyCon, (hash, dt))
+              Just dt -> Right (tyCon, dt)
               _ -> Left tyCon
           Nothing -> Left tyCon
+      )
+        <$> M.toList typeBindings
+
+resolveTypeNameDeps ::
+  Store ann ->
+  Map (Maybe ModuleName, TypeName) ExprHash ->
+  Either StoreError (Map (Maybe ModuleName, TypeName) (ExprHash, DataType))
+resolveTypeNameDeps (Store items) typeBindings =
+  case partitionEithers foundItems of
+    ([], found) -> Right (M.fromList found)
+    (fails, _) -> Left $ CouldNotFindExprHashForTypeNameBindings (snd <$> fails)
+  where
+    foundItems =
+      ( \(typeName, hash) -> case M.lookup hash items of
+          Just storeExpr -> do
+            case extractDataType storeExpr of
+              Just dt -> Right (typeName, (hash, dt))
+              _ -> Left typeName
+          Nothing -> Left typeName
       )
         <$> M.toList typeBindings
 

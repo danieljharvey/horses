@@ -332,11 +332,11 @@ toTSBody expr' =
       pure $ TSBody (as <> bs) (TSApp tsFunc tsVal)
     (MyConstructor _ _ tyCon) -> do
       namespace <- findTypeName tyCon
-      let expr = case namespace of
-            Just typeName ->
-              TSRecordAccess (coerce tyCon) (TSVar (coerce typeName))
-            _ -> TSVar (coerce tyCon)
-      pure $ TSBody [] expr
+      pure $
+        TSBody [] $ case namespace of
+          Just typeName ->
+            TSRecordAccess (coerce tyCon) (TSVar (coerce typeName))
+          _ -> TSVar (coerce tyCon)
     (MyIf _mtIf predExpr thenExpr elseExpr) -> do
       (TSBody as tsPred) <- toTSBody predExpr
       (TSBody bs tsThen) <- toTSBody thenExpr

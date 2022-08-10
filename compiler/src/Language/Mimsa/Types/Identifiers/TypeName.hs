@@ -26,10 +26,12 @@ import Prettyprinter
 -- | A TypeName is like `Either` or `Maybe`.
 -- It must start with a capital letter.
 newtype TypeName = TypeName Text
-  deriving newtype (ToSchema)
-  deriving stock (Eq, Ord, Generic)
+  deriving stock (Generic)
   deriving newtype
     ( Show,
+      Eq,
+      Ord,
+      ToSchema,
       JSON.FromJSONKey,
       JSON.ToJSON,
       JSON.ToJSONKey

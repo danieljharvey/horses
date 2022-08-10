@@ -32,6 +32,7 @@ import Language.Mimsa.Backend.Typescript.Printer
 import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
+import Language.Mimsa.Logging
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolveDataTypes
@@ -151,19 +152,19 @@ renderExpression ::
 renderExpression be dataTypes infixes expr = do
   let readerState =
         TS.TSReaderState
-          (makeTypeDepMap dataTypes)
+          (debugPretty "type dep map" $ makeTypeDepMap dataTypes)
           infixes
       startState = TS.TSCodegenState mempty mempty mempty
-   in case TS.fromExpr readerState startState expr of
+   in case TS.fromExpr readerState startState (debugPretty "render expr" expr) of
         Right (ts, stdlibFuncs) -> case be of
-          Typescript -> pure (TS.printModule ts, stdlibFuncs)
+          Typescript -> pure (debugPretty "ts" $ TS.printModule ts, stdlibFuncs)
           ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)
         Left e -> throwError e
 
 -- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName
 makeTypeDepMap (ResolvedTypeDeps rtd) =
-  (\(_, DataType typeName _ _) -> typeName) <$> first snd rtd
+  (\(DataType typeName _ _) -> typeName) <$> first snd rtd
 
 renderImport' :: Backend -> ((a, Name), ExprHash) -> Text
 renderImport' Typescript ((_, name), hash') =
@@ -224,8 +225,13 @@ renderTypeSignature' mt =
 renderNewline' :: Backend -> Text
 renderNewline' _ = "\n"
 
-outputIndexFile :: Backend -> Map Name ExprHash -> Map ModuleName ModuleHash -> Text
-outputIndexFile be exportMap exportModuleMap =
+outputIndexFile ::
+  Backend ->
+  Map Name ExprHash ->
+  Map ModuleName ModuleHash ->
+  Map TypeName ExprHash ->
+  Text
+outputIndexFile be exportMap exportModuleMap exportTypeMap =
   let exportExpression (name, exprHash) = case be of
         ESModulesJS ->
           "export { main as " <> printTSName (coerce name) <> " } from './"
@@ -247,9 +253,21 @@ outputIndexFile be exportMap exportModuleMap =
             <> moduleImport be modHash
             <> "';"
 
+      exportType (_typeName, exprHash) = case be of
+        ESModulesJS ->
+          "export * from './"
+            <> storeExprFilename be exprHash
+            <> fileExtension be
+            <> "';"
+        Typescript ->
+          "export * from './"
+            <> storeExprFilename be exprHash
+            <> "';"
+
       allExports =
         (exportExpression <$> M.toList exportMap)
           <> (exportModule <$> M.toList exportModuleMap)
+          <> (exportType <$> M.toList exportTypeMap)
    in T.intercalate "\n" allExports
 
 -- | file name of index file (no extension for ts)

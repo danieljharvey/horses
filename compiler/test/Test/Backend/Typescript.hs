@@ -37,7 +37,7 @@ import Test.Utils.Serialisation
 testFromExpr :: Expr Name MonoType -> (TSModule, Text)
 testFromExpr expr =
   let readerState =
-        TSReaderState mempty mempty
+        TSReaderState (M.fromList [("Dog", "Pet"), ("Same", "Same")]) mempty
       startState = TSCodegenState mempty mempty mempty
    in case fromExpr readerState startState expr of
         Right (tsModule, _) -> (tsModule, printModule tsModule)
@@ -258,12 +258,13 @@ fullTestCases =
     ("let a = 1; let b = 3; let c = 6; and False True", "false"),
     ("let apply a f = f a; infix |> = apply; let f = \\a -> a |> (and False) |> not; f False", "true"),
     ("\"\nHello\n\"", "\nHello\n"),
-    ("\\a -> useEither a", "[Function: main]")
+    ("\\a -> useEither a", "[Function: main]"),
+    ("match Right 1 with Right a -> a | _ -> 0", "1")
   ]
 
 spec :: Spec
 spec = do
-  describe "Typescript" $ do
+  fdescribe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
@@ -415,7 +416,30 @@ spec = do
               )
           )
           `shouldBe` "const a = true; export const main = a"
-    describe "from typed expression" $ do
+
+    fdescribe "from typed expression" $ do
+      it "Namespaced constructor" $ do
+        testFromExpr (MyConstructor mtBool Nothing "Dog")
+          `shouldBe` ( TSModule mempty (TSBody [] $ TSRecordAccess "Dog" (TSVar "Pet")),
+                       "export const main = Pet.Dog"
+                     )
+
+      it "Namespaced constructor with same" $ do
+        testFromExpr (MyConstructor mtBool Nothing "Same")
+          `shouldBe` ( TSModule mempty (TSBody [] $ TSRecordAccess "Same" (TSVar "Same")),
+                       "export const main = Same.Same"
+                     )
+
+      it "Namespaced constructor with blah" $ do
+        testFromExpr (MyConstructor mtBool (Just "distraction") "Dog")
+          `shouldBe` ( TSModule mempty (TSBody [] $ TSRecordAccess "Dog" (TSVar "Pet")),
+                       "export const main = Pet.Dog"
+                     )
+
+      it "Not namespaced constructor" $ do
+        testFromExpr (MyConstructor mtBool Nothing "Log")
+          `shouldBe` (TSModule mempty (TSBody [] (TSVar "Log")), "export const main = Log")
+
       it "const bool" $
         testFromExpr (MyLiteral mtBool (MyBool True))
           `shouldBe` ( TSModule mempty (TSBody [] (TSLit (TSBool True))),

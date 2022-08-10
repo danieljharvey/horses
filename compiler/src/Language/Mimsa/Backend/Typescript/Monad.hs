@@ -30,6 +30,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Debug.Trace
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -154,10 +155,10 @@ typeNameIsImport typeName = do
 -- given 'Just', (hopefully) return 'Maybe'
 findTypeName :: (MonadReader TSReaderState m) => TyCon -> m (Maybe TypeName)
 findTypeName tyCon = do
-  consType <- asks tsConstructorTypes
-  case M.lookup tyCon consType of
+  found <- asks (M.lookup (traceShowId tyCon) . traceShowId . tsConstructorTypes)
+  case found of
     Just typeName -> pure (Just typeName)
-    Nothing -> pure Nothing
+    Nothing -> pure (error "fuck") -- Nothing
 
 -- | lookup an infix op firstly in scope then in imports
 -- later when we bin off scoped infix defintions we'll only

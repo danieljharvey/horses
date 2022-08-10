@@ -27,6 +27,7 @@ data StoreError
   | CouldNotFindExprHashForBindings [(Maybe ModuleName, Name)]
   | CouldNotFindExprHashForInfixes [InfixOp]
   | CouldNotFindExprHashForTypeBindings [TyCon]
+  | CouldNotFindExprHashForTypeNameBindings [TypeName]
   | CouldNotFindBinding Name
   | CouldNotFindStoreExpression ExprHash
   | CouldNotFindModule ModuleHash
@@ -57,6 +58,9 @@ instance Printer StoreError where
       <> T.intercalate "," (prettyPrint <$> missing)
   prettyPrint (CouldNotFindExprHashForTypeBindings missing) =
     "Could not find type expressions in the store for the following: "
+      <> T.intercalate "," (prettyPrint <$> missing)
+  prettyPrint (CouldNotFindExprHashForTypeNameBindings missing) =
+    "Could not find type name expressions in the store for the following: "
       <> T.intercalate "," (prettyPrint <$> missing)
   prettyPrint (CouldNotFindBinding name) =
     "Could not find binding " <> prettyPrint name

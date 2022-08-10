@@ -19,10 +19,12 @@ import Prettyprinter
 -- | A TyCon is a Type Constructor like `Just` or `Right`.
 -- It must start with a capital letter.
 newtype TyCon = TyCon Text
-  deriving newtype (ToSchema)
-  deriving stock (Eq, Ord, Generic)
+  deriving stock (Generic)
   deriving newtype
-    ( Show,
+    ( Eq,
+      Ord,
+      Show,
+      ToSchema,
       JSON.FromJSONKey,
       JSON.ToJSON,
       JSON.ToJSONKey,
