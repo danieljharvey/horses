@@ -130,7 +130,8 @@ testCases =
       "export const main = { a: 123, b: `horse` }",
       "{ a: 123, b: 'horse' }"
     ),
-    ("(1,2)", "export const main = [1,2]", "[ 1, 2 ]"),
+    ("(1,2)", "export const main = [1,2] as const", "[ 1, 2 ]"),
+    ("\\a -> let (b,c) = a in b", "export const main = <C,D>(a: readonly [C,D]) => { const [b,c] = a; return b; }", "[Function: main]"),
     ("2 + 2", "export const main = 2 + 2", "4"),
     ("10 - 2", "export const main = 10 - 2", "8"),
     ( "\"dog\" ++ \"log\"",
@@ -146,11 +147,11 @@ testCases =
       "[ 1, 2, 3, 4 ]"
     ),
     ( "let (a, b) = (1,2) in a",
-      "const [a,b] = [1,2]; export const main = a",
+      "const [a,b] = [1,2] as const; export const main = a",
       "1"
     ),
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
-      "const { cat: b, dog: a } = { cat: 2, dog: 1 }; export const main = [a,b]",
+      "const { cat: b, dog: a } = { cat: 2, dog: 1 }; export const main = [a,b] as const",
       "[ 1, 2 ]"
     )
   ]
@@ -327,6 +328,8 @@ spec = do
               )
           )
           `shouldBe` "{ a: 1, b: true }"
+      it "pair" $ do
+        printExpr (TSPair (TSLit (TSInt 1)) (TSLit (TSInt 2))) `shouldBe` "[1,2] as const"
       it "record access" $ do
         printExpr (TSRecordAccess "a" (TSVar "record")) `shouldBe` "record.a"
       it "array" $ do
@@ -417,7 +420,7 @@ spec = do
           )
           `shouldBe` "const a = true; export const main = a"
 
-    fdescribe "from typed expression" $ do
+    describe "from typed expression" $ do
       it "Namespaced constructor" $ do
         testFromExpr (MyConstructor mtBool Nothing "Dog")
           `shouldBe` ( TSModule mempty (TSBody [] $ TSRecordAccess "Dog" (TSVar "Pet")),
@@ -473,7 +476,7 @@ spec = do
                   (MyVar mtBool Nothing "a")
               )
           )
-          `shouldBe` "const [a,_] = [true,false]; export const main = a"
+          `shouldBe` "const [a,_] = [true,false] as const; export const main = a"
 
       it "function with known type" $ do
         snd
@@ -592,7 +595,7 @@ spec = do
             ]
        in traverse_ testModule moduleTestCases
 
-    fdescribe "Compile and open entire project" $ do
+    describe "Compile and open entire project" $ do
       it "Compiles entire project" $ do
         (filename, contentHash) <- testWholeProjectCompile "CompileTSProjectWhole" stdlib Typescript
         cachePath <- createOutputFolder "CompileTSProjectWhole-result"

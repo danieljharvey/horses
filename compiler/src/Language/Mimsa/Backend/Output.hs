@@ -32,7 +32,6 @@ import Language.Mimsa.Backend.Typescript.Printer
 import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
-import Language.Mimsa.Logging
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolveDataTypes
@@ -152,12 +151,12 @@ renderExpression ::
 renderExpression be dataTypes infixes expr = do
   let readerState =
         TS.TSReaderState
-          (debugPretty "type dep map" $ makeTypeDepMap dataTypes)
+          (makeTypeDepMap dataTypes)
           infixes
       startState = TS.TSCodegenState mempty mempty mempty
-   in case TS.fromExpr readerState startState (debugPretty "render expr" expr) of
+   in case TS.fromExpr readerState startState expr of
         Right (ts, stdlibFuncs) -> case be of
-          Typescript -> pure (debugPretty "ts" $ TS.printModule ts, stdlibFuncs)
+          Typescript -> pure (TS.printModule ts, stdlibFuncs)
           ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)
         Left e -> throwError e
 

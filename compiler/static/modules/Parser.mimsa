@@ -1,4 +1,4 @@
-export type Parser a  = Parser (String -> Maybe.Maybe (a, String))
+export type Parser a = Parser (String -> Maybe.Maybe (a, String))
 
 export def run parser str =
   match parser with (Parser p) -> 

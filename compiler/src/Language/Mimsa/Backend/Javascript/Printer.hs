@@ -110,6 +110,7 @@ printExpr (TSArray as) =
   where
     printArrayItem (TSArrayItem a) = printExpr a
     printArrayItem (TSArraySpread var) = "..." <> printExpr var
+printExpr (TSPair a b) = "[" <> printExpr a <> "," <> printExpr b <> "]"
 printExpr (TSArrayAccess a expr) =
   printExpr expr <> "[" <> prettyPrint a <> "]"
 printExpr (TSInfix op a b) =

@@ -51,7 +51,7 @@ printType (TSTypeFun argName arg resp) =
     <> ") => "
     <> printType resp
 printType (TSTypeArray as) = printType as <> "[]"
-printType (TSTypeTuple as) = "[" <> T.intercalate "," (printType <$> as) <> "]"
+printType (TSTypeTuple as) = "readonly [" <> T.intercalate "," (printType <$> as) <> "]"
 printType (TSTypeRecord as) =
   let outputRecordItem (name, val) =
         prettyPrint name <> ": " <> printType val
@@ -172,6 +172,7 @@ printExpr (TSFunction name generics mt maybeReturn expr) =
 printExpr (TSVar var) = printTSName var
 printExpr (TSApp func val) =
   printExpr func <> "(" <> printExpr val <> ")"
+printExpr (TSPair a b) = "[" <> printExpr a <> "," <> printExpr b <> "] as const"
 printExpr (TSArray as) =
   "["
     <> T.intercalate
