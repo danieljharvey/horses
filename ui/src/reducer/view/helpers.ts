@@ -32,9 +32,5 @@ export const getScreenTitle = (screen: Screen): string => {
       return 'type search'
     case 'new-type':
       return 'new type'
-    case 'project-graph':
-      return 'project graph'
-    case 'expression-graph':
-      return screen.bindingName
   }
 }

@@ -18,7 +18,6 @@ import Data.OpenApi hiding (Server, get)
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Evaluate as Actions
-import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
@@ -73,13 +72,12 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) =
           (_, simpleExpr, se, typedExpr, input) <-
             Actions.evaluate code expr
           project <- Actions.getProject
-          gv <- Actions.graphExpression se
           res <- Actions.checkStoreExpression input project se
           let warnings = getWarnings res
           pure $
             EvaluateResponse
               (prettyPrint simpleExpr)
-              (makeExpressionData se typedExpr gv input warnings False)
+              (makeExpressionData se typedExpr input warnings False)
     response <- lift $ eitherFromActionM mimsaEnv hash action
     case response of
       Left e -> throwMimsaError e

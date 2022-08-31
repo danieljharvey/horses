@@ -6,8 +6,6 @@ import { EditBinding } from './Editor/EditBinding'
 import { NewBinding } from './Editor/NewBinding'
 import { NewTest } from './Editor/NewTest'
 import { NewType } from './Editor/NewType'
-import { ProjectGraph } from './ProjectGraph'
-import { ExpressionGraph } from './ExpressionGraph'
 import { TypeSearch } from './TypeSearch/TypeSearch'
 import { FilteredBindingList } from './FilteredBindingList'
 import { Menu } from './Menu'
@@ -176,18 +174,6 @@ const getScreenInner = (
           onBindingSelect={onBindingSelect}
         />,
         true,
-      ]
-
-    case 'project-graph':
-      return [<ProjectGraph />, false]
-
-    case 'expression-graph':
-      return [
-        <ExpressionGraph
-          exprHash={screen.exprHash}
-          bindingName={screen.bindingName}
-        />,
-        false,
       ]
   }
 }

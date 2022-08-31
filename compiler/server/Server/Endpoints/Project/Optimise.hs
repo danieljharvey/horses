@@ -18,7 +18,6 @@ import Data.Bifunctor
 import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (get)
 import GHC.Generics
-import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Types.Identifiers
@@ -72,13 +71,11 @@ optimise mimsaEnv (OptimiseRequest bindingName projectHash) =
             Actions.optimiseByName bindingName
           let (ResolvedExpression _ se _ typedExpr input) = resolvedExpr
           let typedNameExpr = first fst typedExpr
-          graphviz <- Actions.graphExpression se
           let warnings = getWarnings resolvedExpr
           pure
             ( makeExpressionData
                 se
                 typedNameExpr
-                graphviz
                 input
                 warnings
                 False -- can't optimise this again, we just did

@@ -5,7 +5,6 @@ import {
   newExpressionScreen,
   newTestScreen,
   newTypeScreen,
-  projectGraphScreen,
   Screen,
   typeSearchScreen,
 } from '../reducer/view/screen'
@@ -32,9 +31,6 @@ export const Menu: React.FC<Props> = ({
   const dispatch = useDispatch()
 
   const onPopScreen = () => dispatch(popScreen())
-
-  const onProjectGraph = () =>
-    dispatch(pushScreen(projectGraphScreen()))
 
   const onNewBinding = () =>
     dispatch(
@@ -71,12 +67,6 @@ export const Menu: React.FC<Props> = ({
         </>
 
         <>
-          <div
-            className="menu-button"
-            onClick={onProjectGraph}
-          >
-            📊
-          </div>
           <div
             className="menu-button"
             onClick={onTypeSearch}

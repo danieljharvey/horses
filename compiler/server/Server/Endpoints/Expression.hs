@@ -20,7 +20,6 @@ import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (Server)
 import qualified Data.Text as T
 import GHC.Generics
-import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
@@ -70,14 +69,13 @@ getExpression mimsaEnv exprHash' = do
   (storeExpr, pd, _) <- projectFromExpressionHandler mimsaEnv exprHash'
 
   let action = do
-        gv <- Actions.graphExpression storeExpr
         canOptimise <- Actions.canOptimise storeExpr
         let input = prettyPrint (storeExpression storeExpr)
         exprName <- Actions.parseExpr input
         resolvedExpr <- Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
-        pure (gv, canOptimise, resolvedExpr)
+        pure (canOptimise, resolvedExpr)
 
-  (_, _, (graphviz, canOptimise, resolvedExpr)) <-
+  (_, _, (canOptimise, resolvedExpr)) <-
     fromActionM
       mimsaEnv
       (pdHash pd)
@@ -89,7 +87,7 @@ getExpression mimsaEnv exprHash' = do
 
   pure $
     GetExpressionResponse
-      (makeExpressionData storeExpr typedExpr graphviz (reInput resolvedExpr) warnings canOptimise)
+      (makeExpressionData storeExpr typedExpr (reInput resolvedExpr) warnings canOptimise)
 
 ----
 
@@ -121,13 +119,12 @@ getExpressions mimsaEnv exprHashes = do
   pd <- projectDataHandler mimsaEnv combinedProject
 
   let action storeExpr = do
-        gv <- Actions.graphExpression storeExpr
         canOptimise <- Actions.canOptimise storeExpr
         let input = prettyPrint (storeExpression storeExpr)
         exprName <- Actions.parseExpr input
         resolvedExpr <- Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
         let typedExpr = first fst (reTypedExpression resolvedExpr)
-        pure (gv, canOptimise, resolvedExpr, typedExpr)
+        pure (canOptimise, resolvedExpr, typedExpr)
 
   (_, _, results) <-
     fromActionM
@@ -135,14 +132,13 @@ getExpressions mimsaEnv exprHashes = do
       (pdHash pd)
       (traverse action storeExprs)
 
-  let create (graphviz, canOptimise, resolvedExpr, typedExpr) =
+  let create (canOptimise, resolvedExpr, typedExpr) =
         let warnings = getWarnings resolvedExpr
             storeExpr = reStoreExpression resolvedExpr
             ed =
               makeExpressionData
                 storeExpr
                 typedExpr
-                graphviz
                 (reInput resolvedExpr)
                 warnings
                 canOptimise
