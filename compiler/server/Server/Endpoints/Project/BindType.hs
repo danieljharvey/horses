@@ -16,7 +16,6 @@ import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindType as Actions
-import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Codegen
 import Language.Mimsa.Printer
@@ -70,9 +69,8 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
           Just resolvedExpr -> do
             let se = reStoreExpression resolvedExpr
             let typedNameExpr = first fst (reTypedExpression resolvedExpr)
-            gv <- Actions.graphExpression se
             let warnings = getWarnings resolvedExpr
-            let ed' = makeExpressionData se typedNameExpr gv input warnings False
+            let ed' = makeExpressionData se typedNameExpr input warnings False
             pure (Just ed')
           Nothing -> pure Nothing
         pure (ed, typeClasses, dt)

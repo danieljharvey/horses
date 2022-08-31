@@ -18,7 +18,6 @@ import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.BindExpression as Actions
-import qualified Language.Mimsa.Actions.Graph as Actions
 import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Language.Mimsa.Transform.Warnings
@@ -64,11 +63,10 @@ bindExpression mimsaEnv (BindExpressionRequest projectHash name' input) = runMim
         expr <- Actions.parseExpr input
         (_, _, resolved@(ResolvedExpression _ se _ typedExpr input')) <-
           Actions.bindExpression expr name' input
-        gv <- Actions.graphExpression se
         let typedNameExpr = first fst typedExpr
         let warnings = getWarnings resolved
         canOptimise <- Actions.canOptimise se
-        pure $ makeExpressionData se typedNameExpr gv input' warnings canOptimise
+        pure $ makeExpressionData se typedNameExpr input' warnings canOptimise
   project <- lift $ loadProjectHandler mimsaEnv projectHash
   response <-
     lift $ eitherFromActionM mimsaEnv projectHash action

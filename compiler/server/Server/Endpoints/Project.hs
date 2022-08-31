@@ -13,7 +13,6 @@ import Server.Endpoints.Project.BindExpression
 import Server.Endpoints.Project.BindType
 import Server.Endpoints.Project.CreateProject
 import Server.Endpoints.Project.Evaluate
-import Server.Endpoints.Project.Graph
 import Server.Endpoints.Project.ListBindings
 import Server.Endpoints.Project.ListTests
 import Server.Endpoints.Project.Optimise
@@ -37,7 +36,6 @@ type ProjectAPI =
            :<|> AddUnitTest
            :<|> ListTests
            :<|> ListTestsByExprHash
-           :<|> GraphAPI
            :<|> UpgradeAPI
            :<|> OptimiseAPI
        )
@@ -54,7 +52,6 @@ projectEndpoints mimsaEnv =
     :<|> addUnitTestHandler mimsaEnv
     :<|> listTestsHandler mimsaEnv
     :<|> listTestsByExprHashHandler mimsaEnv
-    :<|> graphProject mimsaEnv
     :<|> upgrade mimsaEnv
     :<|> optimise mimsaEnv
 

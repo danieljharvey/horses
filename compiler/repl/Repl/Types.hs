@@ -19,9 +19,6 @@ data ReplAction ann
   = Help
   | Info (Expr Name ann)
   | Evaluate (Expr Name ann)
-  | Tree (Expr Name ann)
-  | Graph (Expr Name ann)
-  | ProjectGraph
   | Bind Name (Expr Name ann)
   | OutputJS (Maybe Backend) (Expr Name ann)
   | TypeSearch MonoType

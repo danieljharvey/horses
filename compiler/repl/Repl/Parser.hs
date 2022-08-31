@@ -24,9 +24,6 @@ replParser =
     <|> try bindParser
     <|> try bindTypeParser
     <|> try listBindingsParser
-    <|> try treeParser
-    <|> try graphParser
-    <|> try projectGraphParser
     <|> try evalParser
     <|> try outputJSParser
     <|> try typeSearchParser
@@ -47,19 +44,6 @@ evalParser :: Parser ReplActionAnn
 evalParser =
   Evaluate
     <$> expressionParser
-
-treeParser :: Parser ReplActionAnn
-treeParser = do
-  myString ":tree"
-  Tree <$> expressionParser
-
-graphParser :: Parser ReplActionAnn
-graphParser = do
-  myString ":graph"
-  Graph <$> expressionParser
-
-projectGraphParser :: Parser ReplActionAnn
-projectGraphParser = ProjectGraph <$ myString ":projectGraph"
 
 bindParser :: Parser ReplActionAnn
 bindParser = do

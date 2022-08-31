@@ -17,7 +17,6 @@ import Repl.Actions.ExpressionBind
 import Repl.Actions.Info
 import Repl.Actions.ListBindings
 import Repl.Actions.Optimise
-import Repl.Actions.Tree
 import Repl.Actions.TypeSearch
 import Repl.Actions.UnitTests
 import Repl.Actions.Upgrade
@@ -43,12 +42,6 @@ doReplAction env input action =
       catchMimsaError env (doOptimise env name $> env)
     (Evaluate expr) ->
       catchMimsaError env (doEvaluate env input expr $> env)
-    (Tree expr) ->
-      catchMimsaError env (doTree env input expr $> env)
-    (Graph expr) ->
-      catchMimsaError env (doGraph env input expr $> env)
-    ProjectGraph ->
-      catchMimsaError env (doProjectGraph env $> env)
     (Info expr) ->
       catchMimsaError env (doInfo env input expr $> env)
     (Bind name expr) ->
@@ -75,8 +68,6 @@ doHelp = do
   replOutput @Text ":bindType type Either a b = Left a | Right b - binds a new type and saves it in the environment"
   replOutput @Text ":list - show a list of current bindings in the environment"
   replOutput @Text ":outputJS <javascript|typescript> <expr> - save JS code for <expr>"
-  replOutput @Text ":tree <expr> - draw a dependency tree for <expr>"
-  replOutput @Text ":graph <expr> - output graphviz dependency tree for <expr>"
   replOutput @Text ":search <mt> - search for exprs that match type"
   replOutput @Text ":addTest \"<test name>\" <expr> - add a unit test"
   replOutput @Text ":tests <optional name> - list tests for <name>"

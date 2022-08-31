@@ -1,5 +1,5 @@
 import { EditorState } from '../editor/types'
-import { ModuleHash, ExprHash } from '../../types'
+import { ModuleHash } from '../../types'
 
 export const editScreen = (
   bindingName: string,
@@ -50,19 +50,6 @@ export const newTypeScreen = (editor: EditorState) => ({
   editor,
 })
 
-export const projectGraphScreen = () => ({
-  type: 'project-graph' as const,
-})
-
-export const expressionGraphScreen = (
-  bindingName: string,
-  exprHash: ExprHash
-) => ({
-  type: 'expression-graph' as const,
-  exprHash,
-  bindingName,
-})
-
 export type Screen =
   | ReturnType<typeof scratchScreen>
   | ReturnType<typeof editScreen>
@@ -70,7 +57,5 @@ export type Screen =
   | ReturnType<typeof newTestScreen>
   | ReturnType<typeof typeSearchScreen>
   | ReturnType<typeof newTypeScreen>
-  | ReturnType<typeof projectGraphScreen>
-  | ReturnType<typeof expressionGraphScreen>
   | ReturnType<typeof scratchModuleScreen>
   | ReturnType<typeof editModuleScreen>

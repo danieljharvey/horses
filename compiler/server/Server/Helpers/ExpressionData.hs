@@ -40,7 +40,6 @@ data ExpressionData = ExpressionData
     edType :: Text,
     edBindings :: Map Name Text,
     edTypeBindings :: Map TyCon Text,
-    edGraphviz :: Text,
     edSourceItems :: [SourceItem],
     edInput :: Text,
     edWarnings :: [Text],
@@ -66,12 +65,11 @@ sanitiseTypeBindings = M.fromList . fmap (bimap combineName prettyPrint) . M.toL
 makeExpressionData ::
   StoreExpression Annotation ->
   Expr Name MonoType ->
-  [Graphviz] ->
   Text ->
   [Warning] ->
   Bool ->
   ExpressionData
-makeExpressionData se typedExpr gv input warnings canOptimise =
+makeExpressionData se typedExpr input warnings canOptimise =
   let mt = getTypeFromAnn typedExpr
       exprHash = getStoreExpressionHash se
    in ExpressionData
@@ -80,7 +78,6 @@ makeExpressionData se typedExpr gv input warnings canOptimise =
         (prettyPrint mt)
         (sanitiseBindings (storeBindings se))
         (sanitiseTypeBindings (storeTypeBindings se))
-        (prettyGraphviz gv)
         (getExpressionSourceItems input typedExpr)
         input
         (prettyPrint <$> warnings)
@@ -104,7 +101,6 @@ makeMinimalExpressionData se mt input canOptimise =
         (prettyPrint mt)
         (sanitiseBindings (storeBindings se))
         (sanitiseTypeBindings (storeTypeBindings se))
-        mempty
         mempty
         input
         mempty

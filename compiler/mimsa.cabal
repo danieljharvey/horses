@@ -30,7 +30,6 @@ library
       Language.Mimsa.Actions.BindType
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Evaluate
-      Language.Mimsa.Actions.Graph
       Language.Mimsa.Actions.Helpers.Build
       Language.Mimsa.Actions.Helpers.CanOptimise
       Language.Mimsa.Actions.Helpers.CheckStoreExpression
@@ -115,7 +114,6 @@ library
       Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
       Language.Mimsa.Store
-      Language.Mimsa.Store.DepGraph
       Language.Mimsa.Store.ExtractTypes
       Language.Mimsa.Store.ExtractVars
       Language.Mimsa.Store.Hashing
@@ -279,7 +277,6 @@ executable mimsa
       Repl.Actions.Info
       Repl.Actions.ListBindings
       Repl.Actions.Optimise
-      Repl.Actions.Tree
       Repl.Actions.TypeSearch
       Repl.Actions.UnitTests
       Repl.Actions.Upgrade
@@ -348,7 +345,6 @@ executable mimsa-server
       Server.Endpoints.Project.BindType
       Server.Endpoints.Project.CreateProject
       Server.Endpoints.Project.Evaluate
-      Server.Endpoints.Project.Graph
       Server.Endpoints.Project.ListBindings
       Server.Endpoints.Project.ListTests
       Server.Endpoints.Project.Optimise
