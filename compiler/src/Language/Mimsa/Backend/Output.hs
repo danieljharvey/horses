@@ -163,7 +163,7 @@ renderExpression be dataTypes infixes expr = do
 -- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName
 makeTypeDepMap (ResolvedTypeDeps rtd) =
-  (\(_, DataType typeName _ _) -> typeName) <$> first snd rtd
+  (\(DataType typeName _ _) -> typeName) <$> first snd rtd
 
 renderImport' :: Backend -> ((a, Name), ExprHash) -> Text
 renderImport' Typescript ((_, name), hash') =
@@ -224,8 +224,13 @@ renderTypeSignature' mt =
 renderNewline' :: Backend -> Text
 renderNewline' _ = "\n"
 
-outputIndexFile :: Backend -> Map Name ExprHash -> Map ModuleName ModuleHash -> Text
-outputIndexFile be exportMap exportModuleMap =
+outputIndexFile ::
+  Backend ->
+  Map Name ExprHash ->
+  Map ModuleName ModuleHash ->
+  Map TypeName ExprHash ->
+  Text
+outputIndexFile be exportMap exportModuleMap exportTypeMap =
   let exportExpression (name, exprHash) = case be of
         ESModulesJS ->
           "export { main as " <> printTSName (coerce name) <> " } from './"
@@ -247,9 +252,21 @@ outputIndexFile be exportMap exportModuleMap =
             <> moduleImport be modHash
             <> "';"
 
+      exportType (_typeName, exprHash) = case be of
+        ESModulesJS ->
+          "export * from './"
+            <> storeExprFilename be exprHash
+            <> fileExtension be
+            <> "';"
+        Typescript ->
+          "export * from './"
+            <> storeExprFilename be exprHash
+            <> "';"
+
       allExports =
         (exportExpression <$> M.toList exportMap)
           <> (exportModule <$> M.toList exportModuleMap)
+          <> (exportType <$> M.toList exportTypeMap)
    in T.intercalate "\n" allExports
 
 -- | file name of index file (no extension for ts)

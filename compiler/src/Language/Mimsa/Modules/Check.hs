@@ -7,6 +7,7 @@ module Language.Mimsa.Modules.Check
     getModuleItemIdentifier,
     lookupModuleDefType,
     filterNameDefs,
+    filterTypeDefs,
   )
 where
 
@@ -53,5 +54,13 @@ filterNameDefs =
   filterMapKeys
     ( \case
         DIName name -> Just name
+        _ -> Nothing
+    )
+
+filterTypeDefs :: Map DefIdentifier a -> Map TypeName a
+filterTypeDefs =
+  filterMapKeys
+    ( \case
+        DIType typeName -> Just typeName
         _ -> Nothing
     )

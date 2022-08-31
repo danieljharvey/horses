@@ -28,9 +28,11 @@ import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Backend.Typescript.Types
+import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -151,11 +153,16 @@ typeNameIsImport typeName = do
   let typeNames = S.fromList (M.elems consType)
   pure (S.member typeName typeNames)
 
+-- | what the absolute fuck why must we do this
+strFind :: (Printer k) => k -> Map k a -> Maybe a
+strFind key =
+  listToMaybe . M.elems . M.filterWithKey (\k1 _ -> prettyPrint k1 == prettyPrint key)
+
 -- given 'Just', (hopefully) return 'Maybe'
 findTypeName :: (MonadReader TSReaderState m) => TyCon -> m (Maybe TypeName)
 findTypeName tyCon = do
-  consType <- asks tsConstructorTypes
-  case M.lookup tyCon consType of
+  consTypes <- asks tsConstructorTypes
+  case strFind tyCon consTypes of
     Just typeName -> pure (Just typeName)
     Nothing -> pure Nothing
 

@@ -26,9 +26,11 @@ renderTyVar :: TyVar -> Doc ann
 renderTyVar = pretty . getTyVar
 
 newtype TyVar = TyVar {getTyVar' :: Text}
-  deriving stock (Eq, Ord, Generic)
+  deriving stock (Generic)
   deriving newtype
-    ( Show,
+    ( Eq,
+      Ord,
+      Show,
       JSON.FromJSON,
       JSON.FromJSONKey,
       JSON.ToJSON,

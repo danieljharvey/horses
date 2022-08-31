@@ -1,4 +1,4 @@
-export type Parser a  = Parser (String -> Maybe.Maybe (a, String))
+export type Parser a = Parser (String -> Maybe.Maybe (a, String))
 
 export def run parser str =
   match parser with (Parser p) -> 
@@ -38,16 +38,11 @@ export def many parser =
   let (Parser innerP) = parser; 
   (Parser (\input -> let go items i = match (innerP i) with (Maybe.Just (a, i2)) -> (go (items <> [ a ]) i2) | (Maybe.Nothing) -> (Maybe.Just ((items, i))); go [] input))
 
-export def liftA2 f p1 =
-  ap (fmap f p1)
+export def left p1 p2 = ap (fmap (\a -> \b -> a) p1) p2
 
-export def pair = liftA2 (\a -> \b -> (a,b))
+export def right p1 p2 = ap (fmap (\a -> \b -> b) p1) p2
 
-export def left p1 p2 = fmap Prelude.fst (pair p1 p2)
-
-export def right p1 p2 = fmap Prelude.snd (pair p1 p2)
-
-export def some p = liftA2 NonEmptyArray.NonEmptyArray p (many p)
+export def some p = ap (fmap NonEmptyArray.NonEmptyArray p) (many p)
 
 infix <|> = alt
 
@@ -59,6 +54,6 @@ export def space0 = fmap (Prelude.const Prelude.Unit) (many whitespace)
 export def space1 = fmap (Prelude.const Prelude.Unit) (some whitespace)
 
 export def sepBy sepP p = 
-  let pairP = right sepP p; liftA2 NonEmptyArray.NonEmptyArray p (many pairP)
+  let pairP = right sepP p; ap (fmap NonEmptyArray.NonEmptyArray p) (many pairP)
 
 export def fail = Parser (Prelude.const Maybe.Nothing)
