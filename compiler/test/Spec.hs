@@ -13,7 +13,6 @@ import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Actions.Optimise as Optimise
 import qualified Test.Actions.RemoveBinding as RemoveBinding
 import qualified Test.Actions.Typecheck as TypecheckAction
-import qualified Test.Actions.Upgrade as Upgrade
 import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Typescript as Typescript
@@ -85,7 +84,6 @@ main =
     BindModule.spec
     Compile.spec
     Evaluate.spec
-    Upgrade.spec
     Stdlib.spec
     Exhaustiveness.spec
     Pattern.spec

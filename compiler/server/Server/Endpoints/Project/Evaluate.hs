@@ -77,7 +77,7 @@ evaluateExpression mimsaEnv (EvaluateRequest code hash) =
           pure $
             EvaluateResponse
               (prettyPrint simpleExpr)
-              (makeExpressionData se typedExpr input warnings False)
+              (makeExpressionData se typedExpr input warnings)
     response <- lift $ eitherFromActionM mimsaEnv hash action
     case response of
       Left e -> throwMimsaError e
@@ -118,7 +118,7 @@ evaluateModuleExpression mimsaEnv (EvaluateModuleRequest input hash) =
           pure $
             EvaluateModuleResponse
               (prettyPrint exprResult)
-              (makeMinimalExpressionData se mt input False)
+              (makeMinimalExpressionData se mt input)
     response <- lift $ eitherFromActionM mimsaEnv hash action
     case response of
       Left e -> throwMimsaError e

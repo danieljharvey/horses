@@ -29,8 +29,6 @@ replParser =
     <|> try typeSearchParser
     <|> try addUnitTestParser
     <|> try listTestsParser
-    <|> try upgradeParser
-    <|> optimiseParser
 
 helpParser :: Parser ReplActionAnn
 helpParser = Help <$ string ":help"
@@ -94,13 +92,3 @@ listTestsParser = do
           nameParser
       )
   pure $ ListTests maybeName
-
-upgradeParser :: Parser ReplActionAnn
-upgradeParser = do
-  myString ":upgrade"
-  Upgrade <$> nameParser
-
-optimiseParser :: Parser ReplActionAnn
-optimiseParser = do
-  myString ":optimise"
-  Optimise <$> nameParser

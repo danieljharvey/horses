@@ -16,10 +16,8 @@ import Repl.Actions.Evaluate
 import Repl.Actions.ExpressionBind
 import Repl.Actions.Info
 import Repl.Actions.ListBindings
-import Repl.Actions.Optimise
 import Repl.Actions.TypeSearch
 import Repl.Actions.UnitTests
-import Repl.Actions.Upgrade
 import Repl.Helpers
 import Repl.ReplM
 import Repl.Types
@@ -36,10 +34,6 @@ doReplAction env input action =
       pure env
     ListBindings ->
       catchMimsaError env (doListBindings env input $> env)
-    (Upgrade name) ->
-      catchMimsaError env (doUpgrade env name $> env)
-    (Optimise name) ->
-      catchMimsaError env (doOptimise env name $> env)
     (Evaluate expr) ->
       catchMimsaError env (doEvaluate env input expr $> env)
     (Info expr) ->
@@ -71,8 +65,6 @@ doHelp = do
   replOutput @Text ":search <mt> - search for exprs that match type"
   replOutput @Text ":addTest \"<test name>\" <expr> - add a unit test"
   replOutput @Text ":tests <optional name> - list tests for <name>"
-  replOutput @Text ":upgrade <name> - upgrade a binding to latest dependencies"
-  replOutput @Text ":optimise <name> - run optimisations on latest version of dep"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"
   replOutput @Text ":quit - give up and leave"
 
