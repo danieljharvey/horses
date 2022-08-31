@@ -41,11 +41,9 @@ export def many parser =
 export def liftA2 f p1 =
   ap (fmap f p1)
 
-export def pair = liftA2 (\a -> \b -> (a,b))
+export def left p1 p2 = liftA2 (\a -> \b -> a) p1 p2
 
-export def left p1 p2 = fmap Prelude.fst (pair p1 p2)
-
-export def right p1 p2 = fmap Prelude.snd (pair p1 p2)
+export def right p1 p2 = liftA2 (\a -> \b -> b) p1 p2
 
 export def some p = liftA2 NonEmptyArray.NonEmptyArray p (many p)
 
