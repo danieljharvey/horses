@@ -556,8 +556,8 @@ spec = do
        in traverse_ testModule moduleTestCases
 
     -- Unique variable errors here, maybe more than we want to chew off rn?
-    xdescribe "Compile and open entire project" $ do
-      it "Compiles entire project" $ do
+    describe "Compile and open entire project" $ do
+      xit "Compiles entire project" $ do
         (filename, contentHash) <- testWholeProjectCompile "CompileJSProjectWhole" stdlib ESModulesJS
         cachePath <- createOutputFolder "CompileJSProjectWhole-result"
         let cacheFilename = cachePath <> show contentHash <> ".json"

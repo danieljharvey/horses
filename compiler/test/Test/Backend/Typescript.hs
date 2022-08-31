@@ -265,7 +265,7 @@ fullTestCases =
 
 spec :: Spec
 spec = do
-  fdescribe "Typescript" $ do
+  describe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
@@ -596,7 +596,7 @@ spec = do
        in traverse_ testModule moduleTestCases
 
     describe "Compile and open entire project" $ do
-      it "Compiles entire project" $ do
+      xit "Compiles entire project" $ do
         (filename, contentHash) <- testWholeProjectCompile "CompileTSProjectWhole" stdlib Typescript
         cachePath <- createOutputFolder "CompileTSProjectWhole-result"
         let cacheFilename = cachePath <> show contentHash <> ".json"
