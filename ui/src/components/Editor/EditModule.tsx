@@ -84,10 +84,6 @@ export const EditModule: React.FC<Props> = ({
     }
   }
 
-  const onUpgradeExpression = (_bindingName: string) => {}
-
-  const onOptimiseExpression = (_bindingName: string) => {}
-
   return (
     <>
       <Panel flexGrow={2}>
@@ -109,8 +105,6 @@ export const EditModule: React.FC<Props> = ({
           bindingName={editor.bindingName}
           feedback={feedback}
           onBindingSelect={() => {}}
-          onUpgradeExpression={onUpgradeExpression}
-          onOptimiseExpression={onOptimiseExpression}
           projectHash={projectHash}
         />
       </Panel>

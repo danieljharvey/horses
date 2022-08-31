@@ -14,8 +14,6 @@ import {
   doEvaluateExpression,
   doAddUnitTest,
   EditorEvent,
-  doUpgradeExpression,
-  doOptimiseExpression,
 } from './events'
 import { EditorAction } from './actions'
 import {
@@ -134,53 +132,6 @@ export const editorReducer: EventReducer<
         : stateOnly(state)
 
     case 'AddUnitTestFailure':
-      return stateOnly({
-        ...state,
-        feedback: showErrorResponse(action.error),
-      })
-
-    case 'UpgradeExpression':
-      return stateAndEvent(
-        staleL.set(false)(state),
-        doUpgradeExpression(action.bindingName)
-      )
-    case 'UpgradeExpressionSuccess':
-      return stateOnly({
-        ...state,
-        code: action.expression.edPretty,
-        bindingName: O.some(action.bindingName),
-        stale: false,
-        feedback: showUpdatedBinding(
-          action.expression,
-          action.tests,
-          action.bindingName
-        ),
-      })
-    case 'UpgradeExpressionFailure':
-      return stateOnly({
-        ...state,
-        feedback: showErrorResponse(action.error),
-      })
-
-    case 'OptimiseExpression':
-      return stateAndEvent(
-        staleL.set(false)(state),
-        doOptimiseExpression(action.bindingName)
-      )
-
-    case 'OptimiseExpressionSuccess':
-      return stateOnly({
-        ...state,
-        code: action.expression.edPretty,
-        bindingName: O.some(action.bindingName),
-        stale: false,
-        feedback: showUpdatedBinding(
-          action.expression,
-          action.tests,
-          action.bindingName
-        ),
-      })
-    case 'OptimiseExpressionFailure':
       return stateOnly({
         ...state,
         feedback: showErrorResponse(action.error),

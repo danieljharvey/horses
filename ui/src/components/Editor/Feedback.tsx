@@ -24,8 +24,6 @@ import { ListCompile } from '../ListCompile'
 import { ListUsages } from '../ListUsages'
 import { PropertyTest } from '../PropertyTest'
 import { ExpressionTests } from './ExpressionTests'
-import { Upgrade } from '../Upgrade'
-import { Optimise } from '../Optimise'
 import { useStoreRec } from '../../hooks/useStore'
 import { Expression } from './Expression'
 import { ErrorResponse } from './ErrorResponse'
@@ -38,8 +36,6 @@ type Props = {
     bindingName: string,
     exprHash: ExprHash
   ) => void
-  onUpgradeExpression: (bindingName: string) => void
-  onOptimiseExpression: (bindingName: string) => void
 }
 
 export const Feedback: React.FC<Props> = ({
@@ -47,8 +43,6 @@ export const Feedback: React.FC<Props> = ({
   bindingName,
   projectHash,
   onBindingSelect,
-  onUpgradeExpression,
-  onOptimiseExpression,
 }) => {
   const { getVersions, getUsages } = useStoreRec({
     getVersions: getVersionsOfBinding,
@@ -129,30 +123,6 @@ export const Feedback: React.FC<Props> = ({
             }
             onBindingSelect={onBindingSelect}
           />
-          <Upgrade
-            onUpgradeExpression={onUpgradeExpression}
-            values={
-              feedback.expression.edBindings as Record<
-                string,
-                ExprHash
-              >
-            }
-            types={
-              feedback.expression.edTypeBindings as Record<
-                string,
-                ExprHash
-              >
-            }
-            name={feedback.bindingName}
-            currentHash={exprHash(
-              feedback.expression.edHash
-            )}
-          />
-          <Optimise
-            onOptimiseExpression={onOptimiseExpression}
-            name={feedback.bindingName}
-            canOptimise={feedback.expression.edCanOptimise}
-          />
           <ListVersions
             versions={versions}
             currentHash={exprHash(
@@ -224,45 +194,6 @@ export const Feedback: React.FC<Props> = ({
             }
             onBindingSelect={onBindingSelect}
           />
-          {pipe(
-            bindingName,
-            O.map((name) => (
-              <Upgrade
-                onUpgradeExpression={onUpgradeExpression}
-                values={
-                  feedback.expression.edBindings as Record<
-                    string,
-                    ExprHash
-                  >
-                }
-                types={
-                  feedback.expression
-                    .edTypeBindings as Record<
-                    string,
-                    ExprHash
-                  >
-                }
-                name={name}
-                currentHash={exprHash(
-                  feedback.expression.edHash
-                )}
-              />
-            )),
-            O.getOrElse(() => <div />)
-          )}
-          {pipe(
-            bindingName,
-            O.map((name) => (
-              <Optimise
-                onOptimiseExpression={onOptimiseExpression}
-                name={name}
-                canOptimise={
-                  feedback.expression.edCanOptimise
-                }
-              />
-            )),
-            O.getOrElse(() => <div />)
-          )}
           {pipe(
             bindingName,
             O.map((name) => (

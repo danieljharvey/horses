@@ -5,8 +5,6 @@ import {
   bindExpression,
   listBindings,
   addUnitTest,
-  upgradeExpression,
-  optimiseExpression,
 } from '../service/project'
 import { getExpressions } from '../service/expression'
 import { getModule } from '../service/module'
@@ -31,10 +29,6 @@ import {
   addUnitTestSuccess,
   bindExpressionSuccess,
   bindExpressionFailure,
-  upgradeExpressionSuccess,
-  upgradeExpressionFailure,
-  optimiseExpressionFailure,
-  optimiseExpressionSuccess,
   expressionPreviewSuccess,
 } from './editor/actions'
 import { editScreen } from './view/screen'
@@ -191,52 +185,6 @@ export const runtime =
             (a) => [
               addUnitTestSuccess(a.autTestResult),
               storeProjectData(a.autProjectData),
-            ]
-          ),
-          flatten()
-        )
-      case 'DoUpgradeExpression':
-        return pipe(
-          upgradeExpression({
-            upProjectHash: state.project.projectHash,
-            upBindingName: event.bindingName,
-          }),
-          TE.bimap(
-            (e) => [upgradeExpressionFailure(e)],
-            ({
-              upExpressionData,
-              upProjectData,
-              upTestData,
-            }) => [
-              upgradeExpressionSuccess(
-                upExpressionData,
-                event.bindingName,
-                upTestData
-              ),
-              storeProjectData(upProjectData),
-            ]
-          ),
-          flatten()
-        )
-      case 'DoOptimiseExpression':
-        return pipe(
-          optimiseExpression({
-            opProjectHash: state.project.projectHash,
-            opBindingName: event.bindingName,
-          }),
-          TE.bimap(
-            (e) => [optimiseExpressionFailure(e)],
-            ({
-              opExpressionData,
-              opProjectData,
-              opTestData,
-            }) => [
-              optimiseExpressionSuccess(
-                opExpressionData,
-                event.bindingName,
-                opTestData
-              ),
-              storeProjectData(opProjectData),
             ]
           ),
           flatten()

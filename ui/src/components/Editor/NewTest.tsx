@@ -17,8 +17,6 @@ import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import {
   addUnitTest,
   updateCode,
-  optimiseExpression,
-  upgradeExpression,
 } from '../../reducer/editor/actions'
 import { useDispatch } from '../../hooks/useDispatch'
 import { useStoreRec } from '../../hooks/useStore'
@@ -49,12 +47,6 @@ export const NewTest: React.FC<Props> = ({
   const testExists = feedback.type === 'ShowTest'
 
   const onAddTest = () => dispatch(addUnitTest(testName))
-
-  const onUpgradeExpression = (bindingName: string) =>
-    dispatch(upgradeExpression(bindingName))
-
-  const onOptimiseExpression = (bindingName: string) =>
-    dispatch(optimiseExpression(bindingName))
 
   const {
     typedHoleSuggestions,
@@ -97,9 +89,7 @@ export const NewTest: React.FC<Props> = ({
             bindingName={O.none}
             feedback={feedback}
             onBindingSelect={onBindingSelect}
-            onUpgradeExpression={onUpgradeExpression}
             projectHash={projectHash}
-            onOptimiseExpression={onOptimiseExpression}
           />
         </FlexColumnSpaced>
       </Panel>

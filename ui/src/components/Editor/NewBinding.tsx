@@ -25,11 +25,7 @@ import { Button } from '../View/Button'
 import { TextInput } from '../View/TextInput'
 import { ExprHash } from '../../types'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
-import {
-  bindExpression,
-  upgradeExpression,
-  optimiseExpression,
-} from '../../reducer/editor/actions'
+import { bindExpression } from '../../reducer/editor/actions'
 import { useDispatch } from '../../hooks/useDispatch'
 import { useStoreRec } from '../../hooks/useStore'
 
@@ -84,12 +80,6 @@ export const NewBinding: React.FC<Props> = ({
   const onBindExpression = (name: string) =>
     dispatch(bindExpression(name, code, true))
 
-  const onUpgradeExpression = (bindingName: string) =>
-    dispatch(upgradeExpression(bindingName))
-
-  const onOptimiseExpression = (bindingName: string) =>
-    dispatch(optimiseExpression(bindingName))
-
   return (
     <>
       <Panel flexGrow={2}>
@@ -133,8 +123,6 @@ export const NewBinding: React.FC<Props> = ({
             feedback={feedback}
             onBindingSelect={onBindingSelect}
             projectHash={projectHash}
-            onUpgradeExpression={onUpgradeExpression}
-            onOptimiseExpression={onOptimiseExpression}
           />
         </FlexColumnSpaced>
       </Panel>

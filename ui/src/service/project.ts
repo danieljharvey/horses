@@ -16,19 +16,13 @@ import {
   ProjectHash,
   UserErrorResponse,
   ListTestsResponse,
-  UpgradeRequest,
-  UpgradeResponse,
 } from '../types/'
 import {
   axiosPost,
   axiosGet,
 } from '../utils/axios-taskeither'
 import * as TE from 'fp-ts/TaskEither'
-import {
-  ListTestsByExprHashResponse,
-  OptimiseRequest,
-  OptimiseResponse,
-} from '../generated'
+import { ListTestsByExprHashResponse } from '../generated'
 
 // project-based API calls
 
@@ -99,13 +93,3 @@ export const getTestsForExpression = (
   axiosGet(
     `${baseUrl}/project/${projectHash}/tests/list/${exprHash}/`
   )
-
-export const upgradeExpression = (
-  upgradeRequest: UpgradeRequest
-): TE.TaskEither<UserErrorResponse, UpgradeResponse> =>
-  axiosPost(`${baseUrl}/project/upgrade`, upgradeRequest)
-
-export const optimiseExpression = (
-  optimiseRequest: OptimiseRequest
-): TE.TaskEither<UserErrorResponse, OptimiseResponse> =>
-  axiosPost(`${baseUrl}/project/optimise`, optimiseRequest)

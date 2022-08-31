@@ -16,8 +16,6 @@ import {
 import {
   formatExpression,
   evaluateExpression,
-  upgradeExpression,
-  optimiseExpression,
 } from '../../reducer/editor/actions'
 import { useDispatch } from '../../hooks/useDispatch'
 
@@ -43,12 +41,6 @@ export const Scratch: React.FC<Props> = ({
   const onCodeChange = (text: string) =>
     dispatch(evaluateExpression(text))
 
-  const onUpgradeExpression = (bindingName: string) =>
-    dispatch(upgradeExpression(bindingName))
-
-  const onOptimiseExpression = (bindingName: string) =>
-    dispatch(optimiseExpression(bindingName))
-
   const typedHoleResponses = getTypedHolesFromEditor(editor)
   const errorLocations = getErrorLocationsFromEditor(editor)
 
@@ -72,11 +64,9 @@ export const Scratch: React.FC<Props> = ({
           )}
           <Feedback
             bindingName={O.none}
-            onUpgradeExpression={onUpgradeExpression}
             feedback={editor.feedback}
             onBindingSelect={onBindingSelect}
             projectHash={projectHash}
-            onOptimiseExpression={onOptimiseExpression}
           />
         </FlexColumnSpaced>
       </Panel>
