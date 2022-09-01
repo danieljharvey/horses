@@ -52,10 +52,6 @@ export const ScratchModule: React.FC<Props> = ({
     setCode(newCode)
   }
 
-  const onUpgradeExpression = (_bindingName: string) => {}
-
-  const onOptimiseExpression = (_bindingName: string) => {}
-
   const typedHoleResponses =
     feedback.type === 'ShowErrorResponse'
       ? feedback.errorResponse.ueTypedHoles
@@ -93,11 +89,9 @@ export const ScratchModule: React.FC<Props> = ({
             )}
           <Feedback
             bindingName={O.none}
-            onUpgradeExpression={onUpgradeExpression}
             feedback={feedback}
             onBindingSelect={onBindingSelect}
             projectHash={projectHash}
-            onOptimiseExpression={onOptimiseExpression}
           />
         </FlexColumnSpaced>
       </Panel>

@@ -26,8 +26,6 @@ data ReplAction ann
   | ListBindings
   | AddUnitTest TestName (Expr Name ann)
   | ListTests (Maybe Name)
-  | Upgrade Name
-  | Optimise Name
 
 data ReplConfig = ReplConfig
   { rcRootPath :: RootPath,

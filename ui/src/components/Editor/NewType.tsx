@@ -1,10 +1,6 @@
 import * as React from 'react'
 import { EditorState } from '../../reducer/editor/types'
-import {
-  optimiseExpression,
-  upgradeExpression,
-  updateCode,
-} from '../../reducer/editor/actions'
+import { updateCode } from '../../reducer/editor/actions'
 
 import { storeProjectData } from '../../reducer/project/actions'
 import { getSourceItems } from '../../reducer/editor/selector'
@@ -51,12 +47,6 @@ export const NewType: React.FC<Props> = ({
     (pd) => dispatch(storeProjectData(pd))
   )
 
-  const onUpgradeExpression = (bindingName: string) =>
-    dispatch(upgradeExpression(bindingName))
-
-  const onOptimiseExpression = (bindingName: string) =>
-    dispatch(optimiseExpression(bindingName))
-
   const onCodeChange = (a: string) =>
     dispatch(updateCode(a))
 
@@ -81,16 +71,10 @@ export const NewType: React.FC<Props> = ({
               <Panel>
                 <FlexColumnSpaced>
                   <Feedback
-                    onUpgradeExpression={
-                      onUpgradeExpression
-                    }
                     bindingName={O.none}
                     feedback={feedback}
                     onBindingSelect={onBindingSelect}
                     projectHash={projectHash}
-                    onOptimiseExpression={
-                      onOptimiseExpression
-                    }
                   />
                   {editor.stale && (
                     <Button onClick={addNewType}>

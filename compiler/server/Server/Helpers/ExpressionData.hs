@@ -42,8 +42,7 @@ data ExpressionData = ExpressionData
     edTypeBindings :: Map TyCon Text,
     edSourceItems :: [SourceItem],
     edInput :: Text,
-    edWarnings :: [Text],
-    edCanOptimise :: Bool
+    edWarnings :: [Text]
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -67,9 +66,8 @@ makeExpressionData ::
   Expr Name MonoType ->
   Text ->
   [Warning] ->
-  Bool ->
   ExpressionData
-makeExpressionData se typedExpr input warnings canOptimise =
+makeExpressionData se typedExpr input warnings =
   let mt = getTypeFromAnn typedExpr
       exprHash = getStoreExpressionHash se
    in ExpressionData
@@ -81,7 +79,6 @@ makeExpressionData se typedExpr input warnings canOptimise =
         (getExpressionSourceItems input typedExpr)
         input
         (prettyPrint <$> warnings)
-        canOptimise
 
 -- this returns a partial but working set of expressionData
 -- that is compatible with the old one
@@ -91,9 +88,8 @@ makeMinimalExpressionData ::
   StoreExpression Annotation ->
   MonoType ->
   Text ->
-  Bool ->
   ExpressionData
-makeMinimalExpressionData se mt input canOptimise =
+makeMinimalExpressionData se mt input =
   let exprHash = getStoreExpressionHash se
    in ExpressionData
         (prettyPrint exprHash)
@@ -104,4 +100,3 @@ makeMinimalExpressionData se mt input canOptimise =
         mempty
         input
         mempty
-        canOptimise

@@ -8,9 +8,7 @@ import { Button } from '../View/Button'
 import { ExprHash } from '../../types'
 import {
   updateCode,
-  optimiseExpression,
   bindExpression,
-  upgradeExpression,
 } from '../../reducer/editor/actions'
 
 import {
@@ -64,12 +62,6 @@ export const EditBinding: React.FC<Props> = ({
     }
   }
 
-  const onUpgradeExpression = (bindingName: string) =>
-    dispatch(upgradeExpression(bindingName))
-
-  const onOptimiseExpression = (bindingName: string) =>
-    dispatch(optimiseExpression(bindingName))
-
   return (
     <>
       <Panel flexGrow={2}>
@@ -91,8 +83,6 @@ export const EditBinding: React.FC<Props> = ({
           bindingName={editor.bindingName}
           feedback={feedback}
           onBindingSelect={onBindingSelect}
-          onUpgradeExpression={onUpgradeExpression}
-          onOptimiseExpression={onOptimiseExpression}
           projectHash={projectHash}
         />
       </Panel>

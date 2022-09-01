@@ -15,8 +15,6 @@ import Server.Endpoints.Project.CreateProject
 import Server.Endpoints.Project.Evaluate
 import Server.Endpoints.Project.ListBindings
 import Server.Endpoints.Project.ListTests
-import Server.Endpoints.Project.Optimise
-import Server.Endpoints.Project.Upgrade
 import Server.Types
 
 -----
@@ -36,8 +34,6 @@ type ProjectAPI =
            :<|> AddUnitTest
            :<|> ListTests
            :<|> ListTestsByExprHash
-           :<|> UpgradeAPI
-           :<|> OptimiseAPI
        )
 
 projectEndpoints ::
@@ -52,7 +48,5 @@ projectEndpoints mimsaEnv =
     :<|> addUnitTestHandler mimsaEnv
     :<|> listTestsHandler mimsaEnv
     :<|> listTestsByExprHashHandler mimsaEnv
-    :<|> upgrade mimsaEnv
-    :<|> optimise mimsaEnv
 
 ------

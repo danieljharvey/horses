@@ -70,7 +70,7 @@ bindType mimsaEnv (BindTypeRequest projectHash input) = runMimsaHandlerT $ do
             let se = reStoreExpression resolvedExpr
             let typedNameExpr = first fst (reTypedExpression resolvedExpr)
             let warnings = getWarnings resolvedExpr
-            let ed' = makeExpressionData se typedNameExpr input warnings False
+            let ed' = makeExpressionData se typedNameExpr input warnings
             pure (Just ed')
           Nothing -> pure Nothing
         pure (ed, typeClasses, dt)

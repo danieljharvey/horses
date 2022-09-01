@@ -85,54 +85,6 @@ export const bindExpressionFailure = (
   error,
 })
 
-export const upgradeExpression = (bindingName: string) => ({
-  type: 'UpgradeExpression' as const,
-  bindingName,
-})
-
-export const upgradeExpressionSuccess = (
-  expression: ExpressionData,
-  bindingName: string,
-  tests: TestData
-) => ({
-  type: 'UpgradeExpressionSuccess' as const,
-  expression,
-  bindingName,
-  tests,
-})
-
-export const upgradeExpressionFailure = (
-  error: UserErrorResponse
-) => ({
-  type: 'UpgradeExpressionFailure' as const,
-  error,
-})
-
-export const optimiseExpression = (
-  bindingName: string
-) => ({
-  type: 'OptimiseExpression' as const,
-  bindingName,
-})
-
-export const optimiseExpressionSuccess = (
-  expression: ExpressionData,
-  bindingName: string,
-  tests: TestData
-) => ({
-  type: 'OptimiseExpressionSuccess' as const,
-  expression,
-  bindingName,
-  tests,
-})
-
-export const optimiseExpressionFailure = (
-  error: UserErrorResponse
-) => ({
-  type: 'OptimiseExpressionFailure' as const,
-  error,
-})
-
 export type EditorAction =
   | ReturnType<typeof updateCode>
   | ReturnType<typeof formatExpression>
@@ -145,10 +97,4 @@ export type EditorAction =
   | ReturnType<typeof bindExpression>
   | ReturnType<typeof bindExpressionSuccess>
   | ReturnType<typeof bindExpressionFailure>
-  | ReturnType<typeof upgradeExpression>
-  | ReturnType<typeof upgradeExpressionSuccess>
-  | ReturnType<typeof upgradeExpressionFailure>
-  | ReturnType<typeof optimiseExpression>
-  | ReturnType<typeof optimiseExpressionSuccess>
-  | ReturnType<typeof optimiseExpressionFailure>
   | ReturnType<typeof expressionPreviewSuccess>

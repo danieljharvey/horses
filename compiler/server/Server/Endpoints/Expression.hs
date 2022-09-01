@@ -20,7 +20,6 @@ import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (Server)
 import qualified Data.Text as T
 import GHC.Generics
-import qualified Language.Mimsa.Actions.Helpers.CanOptimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
@@ -69,13 +68,11 @@ getExpression mimsaEnv exprHash' = do
   (storeExpr, pd, _) <- projectFromExpressionHandler mimsaEnv exprHash'
 
   let action = do
-        canOptimise <- Actions.canOptimise storeExpr
         let input = prettyPrint (storeExpression storeExpr)
         exprName <- Actions.parseExpr input
-        resolvedExpr <- Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
-        pure (canOptimise, resolvedExpr)
+        Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
 
-  (_, _, (canOptimise, resolvedExpr)) <-
+  (_, _, resolvedExpr) <-
     fromActionM
       mimsaEnv
       (pdHash pd)
@@ -87,7 +84,7 @@ getExpression mimsaEnv exprHash' = do
 
   pure $
     GetExpressionResponse
-      (makeExpressionData storeExpr typedExpr (reInput resolvedExpr) warnings canOptimise)
+      (makeExpressionData storeExpr typedExpr (reInput resolvedExpr) warnings)
 
 ----
 
@@ -119,12 +116,11 @@ getExpressions mimsaEnv exprHashes = do
   pd <- projectDataHandler mimsaEnv combinedProject
 
   let action storeExpr = do
-        canOptimise <- Actions.canOptimise storeExpr
         let input = prettyPrint (storeExpression storeExpr)
         exprName <- Actions.parseExpr input
         resolvedExpr <- Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
         let typedExpr = first fst (reTypedExpression resolvedExpr)
-        pure (canOptimise, resolvedExpr, typedExpr)
+        pure (resolvedExpr, typedExpr)
 
   (_, _, results) <-
     fromActionM
@@ -132,7 +128,7 @@ getExpressions mimsaEnv exprHashes = do
       (pdHash pd)
       (traverse action storeExprs)
 
-  let create (canOptimise, resolvedExpr, typedExpr) =
+  let create (resolvedExpr, typedExpr) =
         let warnings = getWarnings resolvedExpr
             storeExpr = reStoreExpression resolvedExpr
             ed =
@@ -141,7 +137,6 @@ getExpressions mimsaEnv exprHashes = do
                 typedExpr
                 (reInput resolvedExpr)
                 warnings
-                canOptimise
          in M.singleton (getStoreExpressionHash storeExpr) ed
 
   pure $ GetExpressionsResponse $ mconcat (create <$> results)

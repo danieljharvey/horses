@@ -23,23 +23,7 @@ export const doAddUnitTest = (
   code,
 })
 
-export const doUpgradeExpression = (
-  bindingName: string
-) => ({
-  type: 'DoUpgradeExpression' as const,
-  bindingName,
-})
-
-export const doOptimiseExpression = (
-  bindingName: string
-) => ({
-  type: 'DoOptimiseExpression' as const,
-  bindingName,
-})
-
 export type EditorEvent =
   | ReturnType<typeof doEvaluateExpression>
   | ReturnType<typeof doBindExpression>
   | ReturnType<typeof doAddUnitTest>
-  | ReturnType<typeof doUpgradeExpression>
-  | ReturnType<typeof doOptimiseExpression>
