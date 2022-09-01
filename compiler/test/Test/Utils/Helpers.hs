@@ -145,13 +145,6 @@ mtFun = MTFunction mempty
 
 ----
 
-additionalTests :: Project ann -> Project ann -> Int
-additionalTests old new =
-  unitTestsSize new - unitTestsSize old
-  where
-    unitTestsSize :: Project ann -> Int
-    unitTestsSize = M.size . prjTests
-
 additionalStoreItems :: Project ann -> Project ann -> Int
 additionalStoreItems old new =
   projectStoreSize new - projectStoreSize old

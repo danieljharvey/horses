@@ -17,7 +17,6 @@ import Repl.Actions.ExpressionBind
 import Repl.Actions.Info
 import Repl.Actions.ListBindings
 import Repl.Actions.TypeSearch
-import Repl.Actions.UnitTests
 import Repl.Helpers
 import Repl.ReplM
 import Repl.Types
@@ -46,10 +45,6 @@ doReplAction env input action =
       catchMimsaError env (doOutputJS env input be expr $> env)
     (TypeSearch mt) ->
       catchMimsaError env (doTypeSearch env mt $> env)
-    (AddUnitTest testName testExpr) ->
-      catchMimsaError env (doAddTest env input testName testExpr)
-    (ListTests maybeName) ->
-      catchMimsaError env (doListTests env maybeName $> env)
 
 ----------
 
@@ -63,8 +58,6 @@ doHelp = do
   replOutput @Text ":list - show a list of current bindings in the environment"
   replOutput @Text ":outputJS <javascript|typescript> <expr> - save JS code for <expr>"
   replOutput @Text ":search <mt> - search for exprs that match type"
-  replOutput @Text ":addTest \"<test name>\" <expr> - add a unit test"
-  replOutput @Text ":tests <optional name> - list tests for <name>"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"
   replOutput @Text ":quit - give up and leave"
 

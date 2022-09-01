@@ -275,7 +275,6 @@ executable mimsa
       Repl.Actions.Info
       Repl.Actions.ListBindings
       Repl.Actions.TypeSearch
-      Repl.Actions.UnitTests
       Repl.Helpers
       Repl.Main
       Repl.Parser
@@ -336,13 +335,11 @@ executable mimsa-server
       Server.Endpoints.Expression
       Server.Endpoints.Module
       Server.Endpoints.Project
-      Server.Endpoints.Project.AddUnitTest
       Server.Endpoints.Project.BindExpression
       Server.Endpoints.Project.BindType
       Server.Endpoints.Project.CreateProject
       Server.Endpoints.Project.Evaluate
       Server.Endpoints.Project.ListBindings
-      Server.Endpoints.Project.ListTests
       Server.Endpoints.Search
       Server.EnvVars
       Server.Errors.UserErrorResponse

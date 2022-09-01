@@ -20,8 +20,6 @@ data SaveProject = SaveProject
   { projectVersion :: Int,
     projectBindings :: VersionedBindings,
     projectTypes :: VersionedTypeBindings,
-    projectUnitTests :: Map ExprHash UnitTest,
-    projectPropertyTests :: Map ExprHash PropertyTest,
     projectModules :: VersionedModules
   }
   deriving stock (Eq, Ord, Show, Generic)
@@ -32,17 +30,7 @@ instance JSON.FromJSON SaveProject where
     version <- o .: "projectVersion"
     bindings <- o .: "projectBindings"
     types <- o .: "projectTypes"
-    unitTests <- o .:? "projectUnitTests"
-    propertyTests <- o .:? "projectPropertyTests"
     modules <- o .:? "projectModules"
-
-    ut <- case unitTests of
-      Just as -> JSON.parseJSON as
-      Nothing -> pure mempty
-
-    pt <- case propertyTests of
-      Just as -> JSON.parseJSON as
-      Nothing -> pure mempty
 
     mods <- case modules of
       Just as -> JSON.parseJSON as
@@ -52,7 +40,5 @@ instance JSON.FromJSON SaveProject where
       <$> JSON.parseJSON version
       <*> JSON.parseJSON bindings
       <*> JSON.parseJSON types
-      <*> pure ut
-      <*> pure pt
       <*> pure mods
   parseJSON _ = mzero
