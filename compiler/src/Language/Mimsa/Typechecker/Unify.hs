@@ -45,11 +45,11 @@ varBind ann var@(TVScopedVar _ _) mt =
 varBind ann var mt
   | typeEquals mt (MTVar mempty var) = pure mempty
   | S.member var (freeTypeVars mt) = do
-    throwError $
-      FailsOccursCheck var mt
+      throwError $
+        FailsOccursCheck var mt
   | otherwise = do
-    let mt' = mt $> ann
-    pure $ Substitutions (M.singleton var mt')
+      let mt' = mt $> ann
+      pure $ Substitutions (M.singleton var mt')
 
 -- these are tricky to deal with, so flatten them on the way in
 flattenRow :: MonoType -> MonoType
@@ -152,7 +152,7 @@ unify tyA tyB =
   case (flattenRow tyA, flattenRow tyB) of
     (a, b)
       | typeEquals a b ->
-        pure mempty
+          pure mempty
     (MTFunction _ l r, MTFunction _ l' r') ->
       unifyPairs (l, r) (l', r')
     (MTPair _ a b, MTPair _ a' b') ->

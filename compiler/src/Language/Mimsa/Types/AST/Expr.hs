@@ -278,7 +278,7 @@ prettyRecord map' =
         let item = case val of
               (MyVar _ _ vName)
                 | vName == name ->
-                  prettyDoc name
+                    prettyDoc name
               _ ->
                 prettyDoc name
                   <> ":"
