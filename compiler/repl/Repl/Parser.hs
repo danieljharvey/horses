@@ -70,5 +70,3 @@ typeSearchParser :: Parser ReplActionAnn
 typeSearchParser = do
   myString ":search"
   TypeSearch <$> monoTypeParser
-
-

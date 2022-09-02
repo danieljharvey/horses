@@ -36,7 +36,7 @@ import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
-optimiseByName :: Name -> Actions.ActionM (ResolvedExpression Annotation )
+optimiseByName :: Name -> Actions.ActionM (ResolvedExpression Annotation)
 optimiseByName name = do
   project <- Actions.getProject
   -- find existing expression matching name
@@ -44,7 +44,7 @@ optimiseByName name = do
     -- there is an existing one, use its deps when evaluating
     Just se -> do
       -- make new se
-      resolved  <- optimise se
+      resolved <- optimise se
 
       let newSe = reStoreExpression resolved
 
@@ -72,7 +72,7 @@ optimiseByName name = do
 -- | this now accepts StoreExpression instead of expression
 optimise ::
   StoreExpression Annotation ->
-  Actions.ActionM (ResolvedExpression Annotation )
+  Actions.ActionM (ResolvedExpression Annotation)
 optimise se = do
   project <- Actions.getProject
 
@@ -81,9 +81,9 @@ optimise se = do
 
   -- typecheck optimisations
   Actions.checkStoreExpression
-      (prettyPrint storeExprNew)
-      project
-      storeExprNew
+    (prettyPrint storeExprNew)
+    project
+    storeExprNew
 
 inlineExpression :: (Ord ann, Ord var) => Expr var ann -> Expr var ann
 inlineExpression =

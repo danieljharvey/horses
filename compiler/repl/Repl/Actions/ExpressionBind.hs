@@ -21,7 +21,7 @@ doBind ::
   Expr Name Annotation ->
   ReplM (Error Annotation) (Project Annotation)
 doBind project input name expr = do
-  (newProject, _ ) <-
+  (newProject, _) <-
     toReplM project (Actions.bindExpression expr name input)
   pure newProject
 

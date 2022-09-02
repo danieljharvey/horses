@@ -68,5 +68,5 @@ bindExpression mimsaEnv (BindExpressionRequest projectHash name' input) = runMim
   case response of
     Right (newProject, _, ed) -> do
       pd <- lift $ projectDataHandler mimsaEnv newProject
-      returnMimsa $ BindExpressionResponse pd ed 
+      returnMimsa $ BindExpressionResponse pd ed
     Left e -> throwMimsaError e
