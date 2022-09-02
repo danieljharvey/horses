@@ -94,7 +94,8 @@ instance (Show ann) => Printer (Module ann) where
         printedNamedImports =
           printNamedImport <$> M.toList (moNamedImports mod')
      in withDoubleLines
-          ( printedImports <> printedTypes
+          ( printedImports
+              <> printedTypes
               <> printedDefs
               <> printedNamedImports
           )

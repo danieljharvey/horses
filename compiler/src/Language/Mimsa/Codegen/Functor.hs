@@ -73,7 +73,7 @@ toFieldItemType typeName = \case
   mt -> case varsFromDataType mt of
     Just (_modName, fieldConsName, _)
       | fieldConsName == typeName ->
-        RecurseField <$> nextName (coerce typeName)
+          RecurseField <$> nextName (coerce typeName)
     _ -> throwError CouldNotFindVarsInType
 
 reconstructField :: Name -> FieldItemType -> Expr Name ()

@@ -18,7 +18,9 @@ import Server.Endpoints.Search
 import Server.Types
 
 type MimsaAPI =
-  ProjectAPI :<|> SearchAPI :<|> CompileAPI
+  ProjectAPI
+    :<|> SearchAPI
+    :<|> CompileAPI
     :<|> ExpressionAPI
     :<|> ModuleAPI
 

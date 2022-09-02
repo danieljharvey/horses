@@ -233,22 +233,30 @@ outputIndexFile ::
 outputIndexFile be exportMap exportModuleMap exportTypeMap =
   let exportExpression (name, exprHash) = case be of
         ESModulesJS ->
-          "export { main as " <> printTSName (coerce name) <> " } from './"
+          "export { main as "
+            <> printTSName (coerce name)
+            <> " } from './"
             <> storeExprFilename be exprHash
             <> fileExtension be
             <> "';"
         Typescript ->
-          "export { main as " <> printTSName (coerce name) <> " } from './"
+          "export { main as "
+            <> printTSName (coerce name)
+            <> " } from './"
             <> storeExprFilename be exprHash
             <> "';"
 
       exportModule (modName, modHash) = case be of
         ESModulesJS ->
-          "export * as " <> printTSName (coerce modName) <> " from './"
+          "export * as "
+            <> printTSName (coerce modName)
+            <> " from './"
             <> moduleImport be modHash
             <> "';"
         Typescript ->
-          "export * as " <> printTSName (coerce modName) <> " from './"
+          "export * as "
+            <> printTSName (coerce modName)
+            <> " from './"
             <> moduleImport be modHash
             <> "';"
 
