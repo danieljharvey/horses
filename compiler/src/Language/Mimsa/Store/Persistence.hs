@@ -42,15 +42,6 @@ fetchProjectItems rootPath existingStore existingModuleStore sp = do
       rootPath
       existingStore
       (getItemsForAllVersions . projectTypes $ sp)
-  testStore <-
-    recursiveLoadBoundExpressions
-      rootPath
-      existingStore
-      ( M.keysSet
-          ( projectUnitTests sp
-          )
-          <> M.keysSet (projectPropertyTests sp)
-      )
   moduleStore <-
     recursiveLoadModules
       rootPath
@@ -62,7 +53,6 @@ fetchProjectItems rootPath existingStore existingModuleStore sp = do
       ( existingStore
           <> store'
           <> typeStore'
-          <> testStore
       )
       sp
 

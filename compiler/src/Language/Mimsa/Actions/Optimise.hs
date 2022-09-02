@@ -16,7 +16,6 @@ import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
-import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
@@ -37,7 +36,7 @@ import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
-optimiseByName :: Name -> Actions.ActionM (ResolvedExpression Annotation, Int)
+optimiseByName :: Name -> Actions.ActionM (ResolvedExpression Annotation )
 optimiseByName name = do
   project <- Actions.getProject
   -- find existing expression matching name
@@ -45,7 +44,7 @@ optimiseByName name = do
     -- there is an existing one, use its deps when evaluating
     Just se -> do
       -- make new se
-      (resolved, numTestsUpdated) <- optimise se
+      resolved  <- optimise se
 
       let newSe = reStoreExpression resolved
 
@@ -63,7 +62,7 @@ optimiseByName name = do
                 <> prettyDoc (storeExpression newSe)
         )
       -- return it
-      pure (resolved, numTestsUpdated)
+      pure resolved
 
     -- no existing binding, error
     Nothing ->
@@ -73,7 +72,7 @@ optimiseByName name = do
 -- | this now accepts StoreExpression instead of expression
 optimise ::
   StoreExpression Annotation ->
-  Actions.ActionM (ResolvedExpression Annotation, Int)
+  Actions.ActionM (ResolvedExpression Annotation )
 optimise se = do
   project <- Actions.getProject
 
@@ -81,19 +80,10 @@ optimise se = do
   storeExprNew <- optimiseStoreExpression se
 
   -- typecheck optimisations
-  resolvedNew <-
-    Actions.checkStoreExpression
+  Actions.checkStoreExpression
       (prettyPrint storeExprNew)
       project
       storeExprNew
-
-  -- update tests
-  numTestsUpdated <-
-    Actions.updateTests
-      (getStoreExpressionHash se)
-      (getStoreExpressionHash storeExprNew)
-
-  pure (resolvedNew, numTestsUpdated)
 
 inlineExpression :: (Ord ann, Ord var) => Expr var ann -> Expr var ann
 inlineExpression =

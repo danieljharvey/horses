@@ -8,7 +8,7 @@ import Data.Map.Strict (Map)
 import GHC.Generics (Generic)
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project.Versioned
-import Language.Mimsa.Types.Store (ExprHash, Store)
+import Language.Mimsa.Types.Store ( Store)
 
 -- our environment contains whichever hash/expr pairs we have flapping about
 -- and a list of mappings of names to those pieces

@@ -73,21 +73,12 @@ fetchProjectItems existingStore sp = do
     recursiveLoadBoundExpressions
       existingStore
       (getItemsForAllVersions . projectTypes $ sp)
-  testStore <-
-    recursiveLoadBoundExpressions
-      existingStore
-      ( M.keysSet
-          ( projectUnitTests sp
-          )
-          <> M.keysSet (projectPropertyTests sp)
-      )
   pure $
     projectFromSaved
       mempty -- TODO: where are we getting modules from?
       ( existingStore
           <> store'
           <> typeStore'
-          <> testStore
       )
       sp
 

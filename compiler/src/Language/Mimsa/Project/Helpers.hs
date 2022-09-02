@@ -38,7 +38,6 @@ where
 
 import Data.Bifunctor
 import Data.Coerce
-import Data.Either
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -46,12 +45,10 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Store.ExtractTypes
-import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Tests
 
 ----------
 

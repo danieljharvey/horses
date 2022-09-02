@@ -17,7 +17,6 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
@@ -26,14 +25,12 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Prelude
-import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Tests
 
 buildStdlib :: Either (Error Annotation) (Project Annotation)
 buildStdlib =
@@ -94,10 +91,8 @@ modules = do
 baseFns :: Actions.ActionM ()
 baseFns = do
   addBinding "id" "\\a -> a"
-  addTest "id does nothing" "\\a -> id a == a"
   addBinding "compose" "\\f -> \\g -> \\a -> f (g a)"
   addBinding "not" "\\a -> if a then False else True"
-  addTest "Running not twice is identity on booleans" "\\a -> not (not a) == a"
   addBinding "and" "\\a -> \\b -> if a then b else False"
   addBinding "or" "\\a -> \\b -> if a then True else b"
   addBinding "fst" "\\pair -> let (a,_) = pair in a"
@@ -189,7 +184,6 @@ parserFns = do
   removeBinding "space0Parser"
   removeBinding "space1Parser"
   removeBinding "sepByParser"
-  addTest "parser.char parses a specific char" "parser.run (parser.char \"a\") \"a\" == Just \"a\""
 
 stateFns :: Actions.ActionM ()
 stateFns = do
@@ -303,7 +297,6 @@ personTestFns = do
   addType "type Person = Person { name: String, age: Int }"
   addBinding "personToJson" "\\person -> let (Person p) = person in JRecord (Map [(\"name\",JString p.name),(\"age\", JNumber p.age)])"
   addBinding "personFromJson" "let bindEither f either = match either with Right a -> f a | Left e -> Left e; \\input -> let eName = bindEither json.getString (json.lookupRecord \"name\" input); let eAge = bindEither json.getNumber (json.lookupRecord \"age\" input); let f name age = Person { name, age}; either.ap (either.fmap f eName) eAge"
-  addTest "Round trip JSON encoding test for Person" "\\person -> match personFromJson (personToJson person) with Right per -> per == person | _ -> False"
 
 addType :: Text -> Actions.ActionM ()
 addType t = do
@@ -323,12 +316,6 @@ addModule moduleName deps input = do
   let modWithImports = mod' {moNamedImports = moNamedImports mod' <> deps}
   _ <- Actions.bindModule modWithImports moduleName (prettyPrint modWithImports)
   pure (snd $ serializeModule modWithImports)
-
-addTest :: Text -> Text -> Actions.ActionM ()
-addTest label input = do
-  let expr = fromRight $ parseAndFormat expressionParser input
-  _ <- Actions.addUnitTest expr (TestName label) input
-  pure ()
 
 removeBinding :: Name -> Actions.ActionM ()
 removeBinding = Actions.removeBinding

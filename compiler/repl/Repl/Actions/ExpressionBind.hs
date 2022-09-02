@@ -4,12 +4,9 @@ module Repl.Actions.ExpressionBind
   )
 where
 
-import Data.Foldable
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.BindType as Actions
-import Language.Mimsa.Printer
-import Language.Mimsa.Tests.Test
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -24,11 +21,8 @@ doBind ::
   Expr Name Annotation ->
   ReplM (Error Annotation) (Project Annotation)
 doBind project input name expr = do
-  (newProject, (newExprHash, _, _)) <-
+  (newProject, _ ) <-
     toReplM project (Actions.bindExpression expr name input)
-  traverse_
-    (replOutput . prettyPrint)
-    (getTestsForExprHash newProject newExprHash)
   pure newProject
 
 doBindType ::

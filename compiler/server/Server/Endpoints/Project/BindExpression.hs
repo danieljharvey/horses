@@ -13,7 +13,6 @@ where
 import Control.Monad.Trans.Class
 import qualified Data.Aeson as JSON
 import Data.Bifunctor
-import qualified Data.Map.Strict as M
 import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
@@ -26,7 +25,6 @@ import Language.Mimsa.Types.ResolvedExpression
 import Servant
 import Server.Handlers
 import Server.Helpers.ExpressionData
-import Server.Helpers.TestData
 import Server.MimsaHandler
 import Server.Types
 
@@ -47,8 +45,7 @@ data BindExpressionRequest = BindExpressionRequest
 
 data BindExpressionResponse = BindExpressionResponse
   { beProjectData :: ProjectData,
-    beExpressionData :: ExpressionData,
-    beTestData :: TestData
+    beExpressionData :: ExpressionData
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -60,23 +57,16 @@ bindExpression ::
 bindExpression mimsaEnv (BindExpressionRequest projectHash name' input) = runMimsaHandlerT $ do
   let action = do
         expr <- Actions.parseExpr input
-        (_, _, resolved@(ResolvedExpression _ se _ typedExpr input')) <-
+        (_, resolved@(ResolvedExpression _ se _ typedExpr input')) <-
           Actions.bindExpression expr name' input
         let typedNameExpr = first fst typedExpr
         let warnings = getWarnings resolved
         pure $ makeExpressionData se typedNameExpr input' warnings
-  project <- lift $ loadProjectHandler mimsaEnv projectHash
+  _ <- lift $ loadProjectHandler mimsaEnv projectHash
   response <-
     lift $ eitherFromActionM mimsaEnv projectHash action
-  tests <-
-    lift $
-      runTestsHandler
-        mimsaEnv
-        project
-        (M.elems $ prjTests project)
-  let testData = makeTestData project tests
   case response of
     Right (newProject, _, ed) -> do
       pd <- lift $ projectDataHandler mimsaEnv newProject
-      returnMimsa $ BindExpressionResponse pd ed testData
+      returnMimsa $ BindExpressionResponse pd ed 
     Left e -> throwMimsaError e

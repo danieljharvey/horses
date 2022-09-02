@@ -25,7 +25,6 @@ source-repository head
 
 library
   exposed-modules:
-      Language.Mimsa.Actions.AddUnitTest
       Language.Mimsa.Actions.BindExpression
       Language.Mimsa.Actions.BindType
       Language.Mimsa.Actions.Compile
@@ -36,7 +35,6 @@ library
       Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression
       Language.Mimsa.Actions.Helpers.LookupExpression
       Language.Mimsa.Actions.Helpers.Parse
-      Language.Mimsa.Actions.Helpers.UpdateTests
       Language.Mimsa.Actions.Interpret
       Language.Mimsa.Actions.Modules.Bind
       Language.Mimsa.Actions.Modules.Check
@@ -404,7 +402,6 @@ test-suite mimsa-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Test.Actions.AddUnitTest
       Test.Actions.BindExpression
       Test.Actions.BindModule
       Test.Actions.BindType

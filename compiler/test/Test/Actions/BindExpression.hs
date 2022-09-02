@@ -7,11 +7,8 @@ module Test.Actions.BindExpression
 where
 
 import Data.Either (isLeft, isRight)
-import Data.Functor
-import qualified Data.Map.Strict as M
 import Data.Maybe (isJust)
 import qualified Data.Set as S
-import qualified Language.Mimsa.Actions.AddUnitTest as Actions
 import qualified Language.Mimsa.Actions.BindExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.RemoveBinding as Actions
@@ -21,7 +18,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Tests
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
@@ -31,13 +27,6 @@ brokenExpr = MyInfix mempty Equals (int 1) (bool True)
 
 projectStoreSize :: Project ann -> Int
 projectStoreSize = length . getStore . prjStore
-
-testsSize :: Project ann -> Int
-testsSize = M.size . prjTests
-
-testWithIdInExpr :: Expr Name Annotation
-testWithIdInExpr =
-  unsafeParseExpr "id 1 == 1" $> mempty
 
 spec :: Spec
 spec = do
@@ -80,36 +69,6 @@ spec = do
           -- one new expression
           S.size (Actions.storeExpressionsFromOutcomes outcomes)
             `shouldBe` 1
-          -- binding hash has changed
-          lookupBindingName
-            newProject
-            "id"
-            `shouldNotBe` lookupBindingName testStdlib "id"
-    it "Updating an existing binding updates tests" $ do
-      let newIdExpr =
-            MyLambda
-              mempty
-              (Identifier mempty "blob")
-              (MyVar mempty Nothing "blob")
-      let action = do
-            _ <-
-              Actions.addUnitTest
-                testWithIdInExpr
-                (TestName "Check id is OK")
-                (prettyPrint testWithIdInExpr)
-            Actions.bindExpression newIdExpr "id" "\\blob -> blob"
-      case Actions.run testStdlib action of
-        Left _ -> error "Should not have failed"
-        Right (newProject, outcomes, _) -> do
-          -- three more items
-          projectStoreSize newProject
-            `shouldBe` projectStoreSize testStdlib + 3
-          -- one new expression, two new tests
-          S.size (Actions.storeExpressionsFromOutcomes outcomes)
-            `shouldBe` 3
-          -- two more unit tests
-          testsSize newProject
-            `shouldBe` testsSize testStdlib + 2
           -- binding hash has changed
           lookupBindingName
             newProject
