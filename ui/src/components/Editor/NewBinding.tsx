@@ -5,10 +5,7 @@ import { EditorState } from '../../reducer/editor/types'
 import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
 import { Feedback } from './Feedback'
-import {
-  getProjectBindings,
-  getProjectHash,
-} from '../../reducer/project/selectors'
+import { getProjectBindings } from '../../reducer/project/selectors'
 import {
   validateBinding,
   showError,
@@ -67,13 +64,11 @@ export const NewBinding: React.FC<Props> = ({
     typedHoleSuggestions,
     errorLocations,
     sourceItems,
-    projectHash,
     projectBindings,
   } = useStoreRec({
     typedHoleSuggestions: getTypedHoles,
     errorLocations: getErrorLocations,
     sourceItems: getSourceItems,
-    projectHash: getProjectHash,
     projectBindings: getProjectBindings,
   })
 
@@ -122,7 +117,6 @@ export const NewBinding: React.FC<Props> = ({
             bindingName={O.none}
             feedback={feedback}
             onBindingSelect={onBindingSelect}
-            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       </Panel>

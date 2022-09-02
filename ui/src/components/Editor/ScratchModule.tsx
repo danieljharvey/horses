@@ -91,7 +91,6 @@ export const ScratchModule: React.FC<Props> = ({
             bindingName={O.none}
             feedback={feedback}
             onBindingSelect={onBindingSelect}
-            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       </Panel>

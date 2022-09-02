@@ -18,7 +18,6 @@ import {
 } from '../../reducer/editor/selector'
 import { useDispatch } from '../../hooks/useDispatch'
 import { useStoreRec } from '../../hooks/useStore'
-import { getProjectHash } from '../../reducer/project/selectors'
 
 type Props = {
   editor: EditorState
@@ -42,12 +41,10 @@ export const EditBinding: React.FC<Props> = ({
     typedHoleSuggestions,
     errorLocations,
     sourceItems,
-    projectHash,
   } = useStoreRec({
     typedHoleSuggestions: getTypedHoles,
     errorLocations: getErrorLocations,
     sourceItems: getSourceItems,
-    projectHash: getProjectHash,
   })
   const { feedback, stale } = editor
 
@@ -83,7 +80,6 @@ export const EditBinding: React.FC<Props> = ({
           bindingName={editor.bindingName}
           feedback={feedback}
           onBindingSelect={onBindingSelect}
-          projectHash={projectHash}
         />
       </Panel>
     </>

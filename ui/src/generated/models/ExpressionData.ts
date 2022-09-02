@@ -6,7 +6,6 @@ import type { SourceItem } from './SourceItem'
 
 export type ExpressionData = {
   edBindings: Record<string, string>
-  edCanOptimise: boolean
   edHash: string
   edInput: string
   edPretty: string

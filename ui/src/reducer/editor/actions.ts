@@ -62,13 +62,11 @@ export const bindExpression = (
 
 export const bindExpressionSuccess = (
   expression: ExpressionData,
-  bindingName: string,
-  tests: TestData
+  bindingName: string
 ) => ({
   type: 'BindExpressionSuccess' as const,
   expression,
   bindingName,
-  tests,
 })
 
 export const expressionPreviewSuccess = (
@@ -91,9 +89,6 @@ export type EditorAction =
   | ReturnType<typeof evaluateExpression>
   | ReturnType<typeof evaluateExpressionSuccess>
   | ReturnType<typeof evaluateExpressionFailure>
-  | ReturnType<typeof addUnitTest>
-  | ReturnType<typeof addUnitTestSuccess>
-  | ReturnType<typeof addUnitTestFailure>
   | ReturnType<typeof bindExpression>
   | ReturnType<typeof bindExpressionSuccess>
   | ReturnType<typeof bindExpressionFailure>
