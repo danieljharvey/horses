@@ -15,7 +15,7 @@ export const storeProjectData = (
   extraHashes,
 })
 
-export const fetchModule = (moduleHash: ModuleHash) => ({
+const fetchModule = (moduleHash: ModuleHash) => ({
   type: 'FetchModule' as const,
   moduleHash,
 })

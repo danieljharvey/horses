@@ -22,9 +22,7 @@ export const scratchScreen = (editor: EditorState) => ({
   editor,
 })
 
-export const scratchModuleScreen = (
-  editor: EditorState
-) => ({
+const scratchModuleScreen = (editor: EditorState) => ({
   type: 'scratch-module' as const,
   editor,
 })
