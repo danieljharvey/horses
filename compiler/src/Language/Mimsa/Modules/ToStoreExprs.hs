@@ -307,7 +307,10 @@ dataTypesByTyCon ::
     )
 dataTypesByTyCon items =
   let withSe se =
-        fmap (se,) . listToMaybe . S.toList . extractDataTypes
+        fmap (se,)
+          . listToMaybe
+          . S.toList
+          . extractDataTypes
           . storeExpression
           $ se
 

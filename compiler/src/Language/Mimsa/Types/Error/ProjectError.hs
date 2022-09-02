@@ -22,6 +22,8 @@ instance Printer ProjectError where
   prettyPrint CantUpgradeNoDependencies =
     "Cannot upgrade, expression has no dependencies"
   prettyPrint (CannotFindModuleByName needle haystack) =
-    "Could not find a module called " <> prettyPrint needle <> " in project. Found "
+    "Could not find a module called "
+      <> prettyPrint needle
+      <> " in project. Found "
       <> T.intercalate ", " (prettyPrint <$> S.toList haystack)
       <> "."
