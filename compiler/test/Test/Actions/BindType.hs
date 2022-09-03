@@ -28,7 +28,7 @@ spec = do
   describe "BindType" $ do
     it "Should bind Void" $ do
       let action = Actions.bindType (prettyPrint dtVoid) dtVoid
-      let (newProject, outcomes, _ ) =
+      let (newProject, outcomes, _) =
             fromRight (Actions.run testStdlib action)
       -- one more item in store
       projectStoreSize newProject
@@ -49,7 +49,7 @@ spec = do
         `shouldBe` 1
     it "Should bind Identity" $ do
       let action = Actions.bindType (prettyPrint dtIdentity) dtIdentity
-      let (newProject, outcomes, _ ) = fromRight (Actions.run testStdlib action)
+      let (newProject, outcomes, _) = fromRight (Actions.run testStdlib action)
       -- one more items in store
       projectStoreSize newProject
         `shouldBe` projectStoreSize testStdlib + 1
@@ -64,7 +64,7 @@ spec = do
         `shouldBe` 1
     it "Should bind TrafficLights" $ do
       let action = Actions.bindType (prettyPrint dtTrafficLights) dtTrafficLights
-      let (newProject, outcomes, _ ) =
+      let (newProject, outcomes, _) =
             fromRight (Actions.run testStdlib action)
       -- one more items in store
       projectStoreSize newProject
