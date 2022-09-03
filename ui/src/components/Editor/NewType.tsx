@@ -11,12 +11,9 @@ import { Code } from '../View/Code'
 import { Panel } from '../View/Panel'
 import { useAddType } from '../../hooks/useAddType'
 import { fold } from '@devexperts/remote-data-ts'
-import { Link } from '../View/Link'
 import { Button } from '../View/Button'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { Paragraph } from '../View/Paragraph'
-import { ListBindings } from '../ListBindings'
-import { InlineSpaced } from '../View/InlineSpaced'
 import { ExprHash, UserErrorResponse } from '../../types'
 import * as O from 'fp-ts/Option'
 import { useDispatch } from '../../hooks/useDispatch'
@@ -112,27 +109,6 @@ export const NewType: React.FC<Props> = ({
               <FlexColumnSpaced>
                 <Paragraph>{`New type added`}</Paragraph>
                 <Code>{addType.dataTypePretty}</Code>
-                <Paragraph>Typeclasses:</Paragraph>
-                <InlineSpaced>
-                  {addType.typeclasses.map((a) => (
-                    <Link
-                      number={1}
-                      depType="type"
-                      onClick={() => {}}
-                      highlight={true}
-                    >
-                      {a}
-                    </Link>
-                  ))}
-                </InlineSpaced>
-                <Paragraph>Generated functions:</Paragraph>
-                <ListBindings
-                  onModuleSelect={() => {}}
-                  modules={{}}
-                  values={addType.bindings}
-                  types={addType.typeBindings}
-                  onBindingSelect={onBindingSelect}
-                />
               </FlexColumnSpaced>
             </Panel>
           )

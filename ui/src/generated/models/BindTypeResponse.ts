@@ -2,13 +2,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { ExpressionData } from './ExpressionData'
 import type { ProjectData } from './ProjectData'
-import type { Typeclass } from './Typeclass'
 
 export type BindTypeResponse = {
-  btCodegen?: ExpressionData
   btPrettyType: string
   btProjectData: ProjectData
-  btTypeclasses: Array<Typeclass>
 }

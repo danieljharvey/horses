@@ -9,20 +9,16 @@ import {
 } from '@devexperts/remote-data-ts'
 import {
   BindTypeResponse,
-  Typeclass,
   ProjectData,
   UserErrorResponse,
 } from '../generated'
 import { pipe } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
-import { ExprHash, ProjectHash, exprHash } from '../types/'
+import { ExprHash, ProjectHash } from '../types/'
 
 // this is how we should do the screens from now on
 
 type AddType = {
-  bindings: Record<string, ExprHash>
-  typeBindings: Record<string, ExprHash>
-  typeclasses: Typeclass[]
   dataTypePretty: string
 }
 
@@ -51,18 +47,8 @@ export const useAddType = (
       E.fold<UserErrorResponse, BindTypeResponse, State>(
         (e) => failure(e),
         (a) => {
-          updateProject(
-            a.btProjectData,
-            Object.values(
-              a.btCodegen?.edBindings || {}
-            ).map(exprHash)
-          )
+          updateProject(a.btProjectData, [])
           return success({
-            bindings: (a.btCodegen?.edBindings ||
-              {}) as Record<string, ExprHash>,
-            typeBindings: (a.btCodegen?.edTypeBindings ||
-              {}) as Record<string, ExprHash>,
-            typeclasses: a.btTypeclasses,
             dataTypePretty: a.btPrettyType,
           })
         }

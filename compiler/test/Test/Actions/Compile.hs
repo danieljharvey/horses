@@ -70,7 +70,7 @@ spec = do
           action = do
             (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
             Actions.compileStoreExpression Typescript storeExpr
-      let (_, outcomes, _) = fromRight (Actions.run testStdlib action)
+      let (_, outcomes, _) = fromRight (Actions.run stdlib action)
       -- creates 9 files (7 expressions, stdlib, index)
       -- this will reduce once we inline across expressions as
       -- most of this is unneeded `either` functions
