@@ -5,7 +5,7 @@ import { Feedback } from './Feedback'
 import { Panel } from '../View/Panel'
 import * as O from 'fp-ts/Option'
 import { Button } from '../View/Button'
-import { ProjectHash, ExprHash } from '../../types'
+import { ExprHash } from '../../types'
 
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import {
@@ -20,7 +20,6 @@ import {
 import { useDispatch } from '../../hooks/useDispatch'
 
 type Props = {
-  projectHash: ProjectHash
   editor: EditorState
   onBindingSelect: (
     bindingName: string,
@@ -31,7 +30,6 @@ type Props = {
 export const Scratch: React.FC<Props> = ({
   editor,
   onBindingSelect,
-  projectHash,
 }) => {
   const dispatch = useDispatch()
 
@@ -66,7 +64,6 @@ export const Scratch: React.FC<Props> = ({
             bindingName={O.none}
             feedback={editor.feedback}
             onBindingSelect={onBindingSelect}
-            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       </Panel>

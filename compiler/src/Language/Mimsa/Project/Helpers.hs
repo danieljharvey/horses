@@ -1,10 +1,8 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Project.Helpers
   ( fromItem,
     fromType,
-    fromTest,
     fromStoreExpression,
     fromStoreExpressionDeps,
     fromModuleDeps,
@@ -39,7 +37,6 @@ where
 
 import Data.Bifunctor
 import Data.Coerce
-import Data.Either
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -47,12 +44,10 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Store.ExtractTypes
-import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Tests
 
 ----------
 
@@ -67,29 +62,17 @@ projectFromSaved moduleStore store' sp =
       prjBindings = projectBindings sp,
       prjTypeBindings = projectTypes sp,
       prjModules = projectModules sp,
-      prjTests =
-        (UTest <$> projectUnitTests sp)
-          <> (PTest <$> projectPropertyTests sp),
       prjModuleStore = moduleStore
     }
 
 projectToSaved :: Project a -> SaveProject
 projectToSaved proj =
-  let (uts, pts) =
-        partitionEithers $
-          ( \(hash, test) -> case test of
-              UTest ut -> Left (hash, ut)
-              PTest pt -> Right (hash, pt)
-          )
-            <$> M.toList (prjTests proj)
-   in SaveProject
-        { projectVersion = 1,
-          projectBindings = prjBindings proj,
-          projectTypes = prjTypeBindings proj,
-          projectUnitTests = M.fromList uts,
-          projectPropertyTests = M.fromList pts,
-          projectModules = prjModules proj
-        }
+  SaveProject
+    { projectVersion = 1,
+      projectBindings = prjBindings proj,
+      projectTypes = prjTypeBindings proj,
+      projectModules = prjModules proj
+    }
 
 fromStoreExpression :: StoreExpression ann -> ExprHash -> Project ann
 fromStoreExpression storeExpr exprHash =
@@ -127,25 +110,6 @@ fromModule modName newModule =
         { prjModules = VersionedMap $ M.singleton modName (pure moduleHash),
           prjModuleStore = M.singleton moduleHash newModule
         }
-
-fromTest :: Test -> StoreExpression ann -> Project ann
-fromTest = \case
-  PTest pt -> fromPropertyTest pt
-  UTest ut -> fromUnitTest ut
-
-fromUnitTest :: UnitTest -> StoreExpression ann -> Project ann
-fromUnitTest test storeExpr =
-  mempty
-    { prjTests = M.singleton (utExprHash test) (UTest test),
-      prjStore = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
-    }
-
-fromPropertyTest :: PropertyTest -> StoreExpression ann -> Project ann
-fromPropertyTest test storeExpr =
-  mempty
-    { prjTests = M.singleton (ptExprHash test) (PTest test),
-      prjStore = Store $ M.singleton (getStoreExpressionHash storeExpr) storeExpr
-    }
 
 fromStore :: Store ann -> Project ann
 fromStore store' = mempty {prjStore = store'}

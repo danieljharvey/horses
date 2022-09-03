@@ -41,7 +41,6 @@ export const newEditorFromScreen = (
   screen: Screen
 ): EditorState =>
   screen.type === 'new-expression' ||
-  screen.type === 'new-test' ||
   screen.type === 'edit' ||
   screen.type === 'scratch'
     ? {

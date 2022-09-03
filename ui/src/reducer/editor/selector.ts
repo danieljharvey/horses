@@ -45,7 +45,6 @@ const editPrism: Prism<Screen, ScreenWithEditor> =
       s.type === 'new-expression' ||
       s.type === 'scratch' ||
       s.type === 'scratch-module' ||
-      s.type === 'new-test' ||
       s.type === 'new-type'
         ? O.some(s as ScreenWithEditor)
         : O.none,

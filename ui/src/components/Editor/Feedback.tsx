@@ -3,14 +3,12 @@ import * as React from 'react'
 import * as O from 'fp-ts/Option'
 import { Feedback as FeedbackType } from '../../reducer/editor/feedback'
 import { ListBindings } from '../ListBindings'
-import { UnitTest } from '../UnitTest'
 import { Code } from '../View/Code'
 import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { ListTests } from '../ListTests'
 import {
   BindingVersion,
-  ProjectHash,
   ExprHash,
   exprHash,
 } from '../../types'
@@ -22,14 +20,11 @@ import {
 import { pipe } from 'fp-ts/function'
 import { ListCompile } from '../ListCompile'
 import { ListUsages } from '../ListUsages'
-import { PropertyTest } from '../PropertyTest'
-import { ExpressionTests } from './ExpressionTests'
 import { useStoreRec } from '../../hooks/useStore'
 import { Expression } from './Expression'
 import { ErrorResponse } from './ErrorResponse'
 
 type Props = {
-  projectHash: ProjectHash
   feedback: FeedbackType
   bindingName: O.Option<string>
   onBindingSelect: (
@@ -41,7 +36,6 @@ type Props = {
 export const Feedback: React.FC<Props> = ({
   feedback,
   bindingName,
-  projectHash,
   onBindingSelect,
 }) => {
   const { getVersions, getUsages } = useStoreRec({
@@ -91,10 +85,6 @@ export const Feedback: React.FC<Props> = ({
             )}
             onBindingSelect={onBindingSelect}
           />
-          <ExpressionTests
-            exprHash={exprHash(feedback.expression.edHash)}
-            projectHash={projectHash}
-          />
         </FlexColumnSpaced>
       )
 
@@ -136,10 +126,6 @@ export const Feedback: React.FC<Props> = ({
               exprHash(feedback.expression.edHash)
             )}
             onBindingSelect={onBindingSelect}
-          />
-          <ExpressionTests
-            exprHash={exprHash(feedback.expression.edHash)}
-            projectHash={projectHash}
           />
         </FlexColumnSpaced>
       )
@@ -212,40 +198,6 @@ export const Feedback: React.FC<Props> = ({
             usages={getUsages(
               exprHash(feedback.expression.edHash)
             )}
-            onBindingSelect={onBindingSelect}
-          />
-          <ExpressionTests
-            exprHash={exprHash(feedback.expression.edHash)}
-            projectHash={projectHash}
-          />
-        </FlexColumnSpaced>
-      )
-
-    case 'ShowTest':
-      const title =
-        'utdTestName' in feedback.test
-          ? 'Unit test created'
-          : 'Property test created'
-      return (
-        <FlexColumnSpaced>
-          <Paragraph>{title}</Paragraph>
-          {'utdTestName' in feedback.test ? (
-            <UnitTest unitTest={feedback.test} />
-          ) : (
-            <PropertyTest propertyTest={feedback.test} />
-          )}
-          <ListBindings
-            modules={{}}
-            onModuleSelect={() => {}}
-            values={
-              ('utdBindings' in feedback.test
-                ? feedback.test.utdBindings
-                : feedback.test.ptdBindings) as Record<
-                string,
-                ExprHash
-              >
-            }
-            types={{}}
             onBindingSelect={onBindingSelect}
           />
         </FlexColumnSpaced>

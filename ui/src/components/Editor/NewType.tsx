@@ -74,7 +74,6 @@ export const NewType: React.FC<Props> = ({
                     bindingName={O.none}
                     feedback={feedback}
                     onBindingSelect={onBindingSelect}
-                    projectHash={projectHash}
                   />
                   {editor.stale && (
                     <Button onClick={addNewType}>

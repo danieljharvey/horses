@@ -3,7 +3,6 @@ module Main
   )
 where
 
-import qualified Test.Actions.AddUnitTest as AddUnitTest
 import qualified Test.Actions.BindExpression as BindExpression
 import qualified Test.Actions.BindModule as BindModule
 import qualified Test.Actions.BindType as BindType
@@ -79,7 +78,6 @@ main =
     UpdateDeps.spec
     BindType.spec
     Codegen.spec
-    AddUnitTest.spec
     BindExpression.spec
     BindModule.spec
     Compile.spec

@@ -4,7 +4,6 @@ import {
   evaluate,
   bindExpression,
   listBindings,
-  addUnitTest,
 } from '../service/project'
 import { getExpressions } from '../service/expression'
 import { getModule } from '../service/module'
@@ -25,8 +24,6 @@ import * as TE from 'fp-ts/TaskEither'
 import {
   evaluateExpressionFailure,
   evaluateExpressionSuccess,
-  addUnitTestFailure,
-  addUnitTestSuccess,
   bindExpressionSuccess,
   bindExpressionFailure,
   expressionPreviewSuccess,
@@ -158,8 +155,7 @@ export const runtime =
                   ...gotoEditScreen,
                   bindExpressionSuccess(
                     a.beExpressionData,
-                    event.bindingName,
-                    a.beTestData
+                    event.bindingName
                   ),
                   storeProjectData(a.beProjectData),
                 ]
@@ -170,22 +166,6 @@ export const runtime =
                 ),
               ]
             }
-          ),
-          flatten()
-        )
-      case 'DoAddUnitTest':
-        return pipe(
-          addUnitTest({
-            autProjectHash: state.project.projectHash,
-            autExpression: event.code,
-            autTestName: event.testName,
-          }),
-          TE.bimap(
-            (e) => [addUnitTestFailure(e)],
-            (a) => [
-              addUnitTestSuccess(a.autTestResult),
-              storeProjectData(a.autProjectData),
-            ]
           ),
           flatten()
         )

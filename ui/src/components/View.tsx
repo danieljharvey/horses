@@ -4,7 +4,6 @@ import { Scratch } from './Editor/Scratch'
 import { ScratchModule } from './Editor/ScratchModule'
 import { EditBinding } from './Editor/EditBinding'
 import { NewBinding } from './Editor/NewBinding'
-import { NewTest } from './Editor/NewTest'
 import { NewType } from './Editor/NewType'
 import { TypeSearch } from './TypeSearch/TypeSearch'
 import { FilteredBindingList } from './FilteredBindingList'
@@ -108,7 +107,6 @@ const getScreenInner = (
     case 'scratch':
       return [
         <Scratch
-          projectHash={projectHash}
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,
@@ -155,15 +153,6 @@ const getScreenInner = (
     case 'typeSearch':
       return [
         <TypeSearch onBindingSelect={onBindingSelect} />,
-        false,
-      ]
-
-    case 'new-test':
-      return [
-        <NewTest
-          editor={screen.editor}
-          onBindingSelect={onBindingSelect}
-        />,
         false,
       ]
 

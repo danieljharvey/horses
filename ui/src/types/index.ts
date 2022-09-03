@@ -4,7 +4,7 @@ type Nominal<T> = {
   readonly symbol: T
 }
 
-export type Tagged<Tag extends string, A> = A & Nominal<Tag>
+type Tagged<Tag extends string, A> = A & Nominal<Tag>
 
 // a store expression
 export type ExprHash = Tagged<'ExprHash', string>
@@ -19,5 +19,3 @@ export const projectHash = (str: string) =>
 
 // a module hash
 export type ModuleHash = Tagged<'ModuleHash', string>
-
-export const moduleHash = (str: string) => str as ModuleHash

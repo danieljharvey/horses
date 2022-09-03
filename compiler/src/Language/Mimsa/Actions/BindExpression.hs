@@ -6,7 +6,6 @@ import Data.Foldable (traverse_)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
-import qualified Language.Mimsa.Actions.Helpers.UpdateTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Printer
@@ -18,12 +17,12 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 
--- bind a new expression to the project, updating any tests
+-- bind a new expression to the project
 bindExpression ::
   Expr Name Annotation ->
   Name ->
   Text ->
-  Actions.ActionM (ExprHash, Int, ResolvedExpression Annotation)
+  Actions.ActionM (ExprHash, ResolvedExpression Annotation)
 bindExpression expr name input = do
   project <- Actions.getProject
   -- if there is an existing binding of this name, bring its deps into scope
@@ -48,13 +47,10 @@ bindExpression expr name input = do
       Actions.appendMessage
         ( "Bound " <> prettyPrint name <> "."
         )
-      pure (getStoreExpressionHash storeExpr, 0, resolvedExpr)
-    Just oldExprHash ->
+      pure (getStoreExpressionHash storeExpr, resolvedExpr)
+    Just _ ->
       do
         Actions.appendMessage
           ( "Updated binding of " <> prettyPrint name <> "."
           )
-        let newExprHash = getStoreExpressionHash storeExpr
-        (,,) newExprHash
-          <$> Actions.updateTests oldExprHash newExprHash
-          <*> pure resolvedExpr
+        pure (getStoreExpressionHash storeExpr, resolvedExpr)

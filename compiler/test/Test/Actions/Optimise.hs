@@ -52,7 +52,7 @@ spec = do
     it "Successfully optimises away unused variable and dep" $ do
       let action = do
             Actions.optimise useIdPointlessly
-      let (prj, _actions, (resolved, _)) =
+      let (prj, _actions, resolved) =
             fromRight $ Actions.run testStdlib action
       let (StoreExpression newExpr bindings _ _ _) = reStoreExpression resolved
 
@@ -67,7 +67,7 @@ spec = do
       let action = do
             Actions.bindStoreExpression withLambda "useId"
             Actions.optimiseByName "useId"
-      let (prj, _actions, (resolved, _)) =
+      let (prj, _actions, resolved) =
             fromRight $ Actions.run testStdlib action
       let (StoreExpression newExpr bindings _ _ _) = reStoreExpression resolved
 

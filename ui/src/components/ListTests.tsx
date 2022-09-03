@@ -5,7 +5,7 @@ import { UnitTest } from './UnitTest'
 import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 import { InlineSpaced } from './View/InlineSpaced'
 
-export const testCounts = (
+const testCounts = (
   unitTests: UnitTestData[],
   propertyTests: PropertyTestData[]
 ) => {

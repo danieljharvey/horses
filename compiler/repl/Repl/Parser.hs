@@ -8,9 +8,7 @@ where
 import Data.Functor (($>))
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
-import Language.Mimsa.Parser.Literal
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Tests
 import Repl.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
@@ -27,8 +25,6 @@ replParser =
     <|> try evalParser
     <|> try outputJSParser
     <|> try typeSearchParser
-    <|> try addUnitTestParser
-    <|> try listTestsParser
 
 helpParser :: Parser ReplActionAnn
 helpParser = Help <$ string ":help"
@@ -74,21 +70,3 @@ typeSearchParser :: Parser ReplActionAnn
 typeSearchParser = do
   myString ":search"
   TypeSearch <$> monoTypeParser
-
-addUnitTestParser :: Parser ReplActionAnn
-addUnitTestParser = do
-  myString ":addTest"
-  (MyString (StringType str)) <- myLexeme stringLiteral
-  AddUnitTest (TestName str) <$> expressionParser
-
-listTestsParser :: Parser ReplActionAnn
-listTestsParser = do
-  _ <- string ":tests"
-  maybeName <-
-    optional
-      ( do
-          _ <-
-            space1
-          nameParser
-      )
-  pure $ ListTests maybeName

@@ -1,8 +1,6 @@
 import type {
   ExpressionData,
-  PropertyTestData,
   TestData,
-  UnitTestData,
   UserErrorResponse,
   ModuleData,
 } from '../../types'
@@ -20,20 +18,11 @@ export const showBinding = (
 
 export const showUpdatedBinding = (
   expression: ExpressionData,
-  tests: TestData,
   bindingName: string
 ) => ({
   type: 'ShowUpdatedBinding' as const,
   expression,
   bindingName,
-  tests,
-})
-
-export const showTest = (
-  test: UnitTestData | PropertyTestData
-) => ({
-  type: 'ShowTest' as const,
-  test,
 })
 
 export const showErrorResponse = (
@@ -72,7 +61,6 @@ export type Feedback =
   | ReturnType<typeof editorNew>
   | ReturnType<typeof showBinding>
   | ReturnType<typeof showErrorResponse>
-  | ReturnType<typeof showTest>
   | ReturnType<typeof showEvaluate>
   | ReturnType<typeof showUpdatedBinding>
   | ReturnType<typeof showPreviewSuccess>

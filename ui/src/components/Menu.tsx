@@ -3,7 +3,6 @@ import './Menu.css'
 import { Option, isSome } from 'fp-ts/lib/Option'
 import {
   newExpressionScreen,
-  newTestScreen,
   newTypeScreen,
   Screen,
   typeSearchScreen,
@@ -39,11 +38,6 @@ export const Menu: React.FC<Props> = ({
       )
     )
 
-  const onNewTest = () =>
-    dispatch(
-      pushScreen(newTestScreen(newEditorFromScreen(screen)))
-    )
-
   const onTypeSearch = () =>
     dispatch(pushScreen(typeSearchScreen()))
 
@@ -72,9 +66,6 @@ export const Menu: React.FC<Props> = ({
             onClick={onTypeSearch}
           >
             🔎
-          </div>
-          <div className="menu-button" onClick={onNewTest}>
-            🧪
           </div>
           <div className="menu-button" onClick={onNewType}>
             🧷

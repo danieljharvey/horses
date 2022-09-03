@@ -4,7 +4,6 @@ module Test.Utils.Helpers where
 
 import Data.Bifunctor (first)
 import Data.Functor
-import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -144,13 +143,6 @@ mtFun :: (Monoid ann) => Type ann -> Type ann -> Type ann
 mtFun = MTFunction mempty
 
 ----
-
-additionalTests :: Project ann -> Project ann -> Int
-additionalTests old new =
-  unitTestsSize new - unitTestsSize old
-  where
-    unitTestsSize :: Project ann -> Int
-    unitTestsSize = M.size . prjTests
 
 additionalStoreItems :: Project ann -> Project ann -> Int
 additionalStoreItems old new =

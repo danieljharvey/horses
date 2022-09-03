@@ -8,13 +8,11 @@ module Server.Endpoints.Project
 where
 
 import Servant
-import Server.Endpoints.Project.AddUnitTest
 import Server.Endpoints.Project.BindExpression
 import Server.Endpoints.Project.BindType
 import Server.Endpoints.Project.CreateProject
 import Server.Endpoints.Project.Evaluate
 import Server.Endpoints.Project.ListBindings
-import Server.Endpoints.Project.ListTests
 import Server.Types
 
 -----
@@ -31,9 +29,6 @@ type ProjectAPI =
            :<|> CreateProject
            :<|> BindExpression
            :<|> BindType
-           :<|> AddUnitTest
-           :<|> ListTests
-           :<|> ListTestsByExprHash
        )
 
 projectEndpoints ::
@@ -45,8 +40,5 @@ projectEndpoints mimsaEnv =
     :<|> createProject mimsaEnv
     :<|> bindExpression mimsaEnv
     :<|> bindType mimsaEnv
-    :<|> addUnitTestHandler mimsaEnv
-    :<|> listTestsHandler mimsaEnv
-    :<|> listTestsByExprHashHandler mimsaEnv
 
 ------

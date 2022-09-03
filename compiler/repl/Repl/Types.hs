@@ -12,7 +12,6 @@ import Language.Mimsa.Backend.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Store.RootPath
-import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
 data ReplAction ann
@@ -24,8 +23,6 @@ data ReplAction ann
   | TypeSearch MonoType
   | BindType DataType
   | ListBindings
-  | AddUnitTest TestName (Expr Name ann)
-  | ListTests (Maybe Name)
 
 data ReplConfig = ReplConfig
   { rcRootPath :: RootPath,

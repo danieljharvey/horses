@@ -12,14 +12,12 @@ import { EditorState } from './types'
 import {
   doBindExpression,
   doEvaluateExpression,
-  doAddUnitTest,
   EditorEvent,
 } from './events'
 import { EditorAction } from './actions'
 import {
   showErrorResponse,
   showUpdatedBinding,
-  showTest,
   showEvaluate,
   showPreviewSuccess,
 } from './feedback'
@@ -99,7 +97,6 @@ export const editorReducer: EventReducer<
         stale: false,
         feedback: showUpdatedBinding(
           action.expression,
-          action.tests,
           action.bindingName
         ),
       })
@@ -110,28 +107,6 @@ export const editorReducer: EventReducer<
         feedback: showPreviewSuccess(action.expression),
       })
     case 'BindExpressionFailure':
-      return stateOnly({
-        ...state,
-        feedback: showErrorResponse(action.error),
-      })
-    case 'AddUnitTest':
-      return stateAndEvent(
-        staleL.set(false)(state),
-        doAddUnitTest(action.testName, state.code)
-      )
-    case 'AddUnitTestSuccess':
-      const firstTest =
-        action.tests.tdUnitTests.find((a: unknown) => a) ||
-        action.tests.tdPropertyTests.find((a: unknown) => a)
-      return firstTest
-        ? stateOnly({
-            ...state,
-            state: false,
-            feedback: showTest(firstTest),
-          })
-        : stateOnly(state)
-
-    case 'AddUnitTestFailure':
       return stateOnly({
         ...state,
         feedback: showErrorResponse(action.error),

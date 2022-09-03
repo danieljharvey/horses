@@ -2,7 +2,6 @@ import type {
   ExpressionData,
   EvaluateResponse,
   UserErrorResponse,
-  TestData,
 } from '../../types/'
 
 export const updateCode = (text: string) => ({
@@ -32,23 +31,6 @@ export const evaluateExpressionFailure = (
   typeError,
 })
 
-export const addUnitTest = (testName: string) => ({
-  type: 'AddUnitTest' as const,
-  testName,
-})
-
-export const addUnitTestSuccess = (tests: TestData) => ({
-  type: 'AddUnitTestSuccess' as const,
-  tests,
-})
-
-export const addUnitTestFailure = (
-  error: UserErrorResponse
-) => ({
-  type: 'AddUnitTestFailure' as const,
-  error,
-})
-
 export const bindExpression = (
   bindingName: string,
   code: string,
@@ -62,13 +44,11 @@ export const bindExpression = (
 
 export const bindExpressionSuccess = (
   expression: ExpressionData,
-  bindingName: string,
-  tests: TestData
+  bindingName: string
 ) => ({
   type: 'BindExpressionSuccess' as const,
   expression,
   bindingName,
-  tests,
 })
 
 export const expressionPreviewSuccess = (
@@ -91,9 +71,6 @@ export type EditorAction =
   | ReturnType<typeof evaluateExpression>
   | ReturnType<typeof evaluateExpressionSuccess>
   | ReturnType<typeof evaluateExpressionFailure>
-  | ReturnType<typeof addUnitTest>
-  | ReturnType<typeof addUnitTestSuccess>
-  | ReturnType<typeof addUnitTestFailure>
   | ReturnType<typeof bindExpression>
   | ReturnType<typeof bindExpressionSuccess>
   | ReturnType<typeof bindExpressionFailure>

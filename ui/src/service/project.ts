@@ -8,21 +8,15 @@ import {
   CreateProjectResponse,
   BindExpressionRequest,
   BindExpressionResponse,
-  AddUnitTestRequest,
-  AddUnitTestResponse,
   BindTypeRequest,
   BindTypeResponse,
-  ExprHash,
-  ProjectHash,
   UserErrorResponse,
-  ListTestsResponse,
 } from '../types/'
 import {
   axiosPost,
   axiosGet,
 } from '../utils/axios-taskeither'
 import * as TE from 'fp-ts/TaskEither'
-import { ListTestsByExprHashResponse } from '../generated'
 
 // project-based API calls
 
@@ -60,14 +54,6 @@ export const bindType = (
 ): TE.TaskEither<UserErrorResponse, BindTypeResponse> =>
   axiosPost(`${baseUrl}/project/type/`, bindTypeRequest)
 
-export const addUnitTest = (
-  addUnitTestRequest: AddUnitTestRequest
-): TE.TaskEither<UserErrorResponse, AddUnitTestResponse> =>
-  axiosPost(
-    `${baseUrl}/project/tests/add/`,
-    addUnitTestRequest
-  )
-
 export const listBindings = (
   listBindingsRequest: ListBindingsRequest
 ): TE.TaskEither<string, ListBindingsResponse> =>
@@ -80,16 +66,3 @@ export const createProject = (): TE.TaskEither<
   string,
   CreateProjectResponse
 > => axiosGet(`${baseUrl}/project/create`)
-
-export const getProjectTests = (
-  projectHash: ProjectHash
-): TE.TaskEither<string, ListTestsResponse> =>
-  axiosGet(`${baseUrl}/project/${projectHash}/tests/list`)
-
-export const getTestsForExpression = (
-  projectHash: ProjectHash,
-  exprHash: ExprHash
-): TE.TaskEither<string, ListTestsByExprHashResponse> =>
-  axiosGet(
-    `${baseUrl}/project/${projectHash}/tests/list/${exprHash}/`
-  )
