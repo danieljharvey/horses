@@ -109,8 +109,6 @@ export const NewType: React.FC<Props> = ({
               <FlexColumnSpaced>
                 <Paragraph>{`New type added`}</Paragraph>
                 <Code>{addType.dataTypePretty}</Code>
-                <Paragraph>Typeclasses:</Paragraph>
-                <Paragraph>Generated functions:</Paragraph>
               </FlexColumnSpaced>
             </Panel>
           )
