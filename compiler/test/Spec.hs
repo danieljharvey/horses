@@ -15,7 +15,6 @@ import qualified Test.Actions.Typecheck as TypecheckAction
 import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Typescript as Typescript
-import qualified Test.Codegen as Codegen
 import Test.Hspec
 import qualified Test.Interpreter.Repl as Repl
 import qualified Test.Modules.Check as ModuleCheck
@@ -77,7 +76,6 @@ main =
     PropertyTest.spec
     UpdateDeps.spec
     BindType.spec
-    Codegen.spec
     BindExpression.spec
     BindModule.spec
     Compile.spec

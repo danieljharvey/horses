@@ -163,6 +163,10 @@ addEither :: Actions.ActionM ()
 addEither = do
   addType
     "type Either e a = Left e | Right a"
+  addBinding "eitherPure" "\\a -> Just a"
+  addBinding "eitherFmap" "\\f -> \\either -> match either with (Right a) -> Right (f a) | (Left e) -> Left e"
+  addBinding "eitherAp" "\\fab -> \\fa -> match (fab, fa) with (Right f, Right a) -> Right (f a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
+  addBinding "either" "{ pure: eitherPure, fmap: eitherFmap, ap: eitherAp }"
   addBinding
     "useEither"
     "\\either -> match either with Right a -> a + a | _ -> 0"

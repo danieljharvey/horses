@@ -58,14 +58,6 @@ library
       Language.Mimsa.Backend.Typescript.Printer
       Language.Mimsa.Backend.Typescript.Types
       Language.Mimsa.Backend.ZipFile
-      Language.Mimsa.Codegen
-      Language.Mimsa.Codegen.ApplicativeApply
-      Language.Mimsa.Codegen.ApplicativePure
-      Language.Mimsa.Codegen.Enum
-      Language.Mimsa.Codegen.Foldable
-      Language.Mimsa.Codegen.Functor
-      Language.Mimsa.Codegen.Newtype
-      Language.Mimsa.Codegen.Utils
       Language.Mimsa.ExprUtils
       Language.Mimsa.Interpreter.App
       Language.Mimsa.Interpreter.If
@@ -414,12 +406,6 @@ test-suite mimsa-test
       Test.Backend.ESModulesJS
       Test.Backend.RunNode
       Test.Backend.Typescript
-      Test.Codegen
-      Test.Codegen.Applicative
-      Test.Codegen.Enum
-      Test.Codegen.Foldable
-      Test.Codegen.Functor
-      Test.Codegen.Newtype
       Test.Codegen.Shared
       Test.Data.Prelude
       Test.Data.Project

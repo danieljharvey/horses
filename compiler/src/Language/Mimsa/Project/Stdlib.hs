@@ -40,6 +40,8 @@ allFns :: Actions.ActionM ()
 allFns = do
   modules
   baseFns
+  maybeFns
+  eitherFns
   arrayFns
   nonEmptyArrayFns
   parserFns
@@ -99,10 +101,28 @@ baseFns = do
   addBinding "snd" "\\pair -> let (_,b) = pair in b"
   addBinding "const" "\\a -> \\b -> a"
   addType "type Void"
-  addType "type Maybe a = Just a | Nothing"
-  addType "type Either e a = Left e | Right a"
   addType "type Unit = Unit"
   addType "type Monoid a = Monoid (a -> a -> a) a"
+
+maybeFns :: Actions.ActionM ()
+maybeFns = do
+  addType "type Maybe a = Just a | Nothing"
+  addBinding "maybePure" "\\a -> Just a"
+  addBinding "maybeFmap" "\\f -> \\maybe -> match maybe with (Just a) -> Just (f a) | Nothing -> Nothing"
+  addBinding "maybe" "{ pure: maybePure, fmap: maybeFmap }"
+  removeBinding "maybePure"
+  removeBinding "maybeFmap"
+
+eitherFns :: Actions.ActionM ()
+eitherFns = do
+  addType "type Either e a = Left e | Right a"
+  addBinding "eitherPure" "\\a -> Just a"
+  addBinding "eitherFmap" "\\f -> \\either -> match either with (Right a) -> Right (f a) | (Left e) -> Left e"
+  addBinding "eitherAp" "\\fab -> \\fa -> match (fab, fa) with (Right f, Right a) -> Right (f a) | (Left e, _) -> Left e | (_, Left e) -> Left e"
+  addBinding "either" "{ pure: eitherPure, fmap: eitherFmap, ap: eitherAp }"
+  removeBinding "eitherPure"
+  removeBinding "eitherFmap"
+  removeBinding "eitherAp"
 
 monoidFns :: Actions.ActionM ()
 monoidFns = do
@@ -239,12 +259,16 @@ stringFns = do
 readerFns :: Actions.ActionM ()
 readerFns = do
   addType "type Reader r a = Reader (r -> a)"
+  addBinding "readerPure" "\\a -> Reader (\\r -> a)"
+  addBinding "readerFmap" "\\f -> \\reader -> let (Reader ra) = reader in Reader (\\r -> f (ra r))"
   addBinding "readerRun" "\\reader -> \\r -> let (Reader ra) = reader in (ra r)"
   addBinding "readerAsk" "Reader (\\r -> r)"
   addBinding "readerLocal" "\\envF -> \\reader -> Reader (\\r -> readerRun reader (envF r))"
   addBinding "readerAp" "\\readerF -> \\readerA -> let (Reader rToF) = readerF; let (Reader rToA) = readerA; (Reader (\\r -> rToF r (rToA r)))"
   addBinding "readerMonoid" "\\innerM -> let (Monoid append empty) = innerM; (Monoid (\\rA -> \\rB -> Reader (\\r -> append (readerRun rA r) (readerRun rB r))) (Reader (\\r -> empty)))"
-  addBinding "reader" "{ run: readerRun, ask: readerAsk, local: readerLocal, fmap: reader.fmap, pure: reader.pure, ap: readerAp, monoid: readerMonoid }"
+  addBinding "reader" "{ run: readerRun, ask: readerAsk, local: readerLocal, fmap: readerFmap, pure: readerPure, ap: readerAp, monoid: readerMonoid }"
+  removeBinding "readerPure"
+  removeBinding "readerFmap"
   removeBinding "readerRun"
   removeBinding "readerAsk"
   removeBinding "readerLocal"
