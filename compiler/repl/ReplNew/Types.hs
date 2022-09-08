@@ -8,11 +8,11 @@ module ReplNew.Types
 where
 
 import GHC.Generics
+import Language.Mimsa.Backend.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store.RootPath
-import Language.Mimsa.Backend.Types
 
 data ReplAction ann
   = Help

@@ -9,15 +9,15 @@ where
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Compile as Actions
+import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import ReplNew.Helpers
 import ReplNew.ReplM
-import Language.Mimsa.Types.Modules
-import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 
 doOutputModuleJS ::
   Project Annotation ->

@@ -2,7 +2,7 @@ module Language.Mimsa.Actions.Helpers.LookupExpression
   ( lookupExpressionInStore,
     lookupExpression,
     lookupModule,
-    lookupModuleByName
+    lookupModuleByName,
   )
 where
 
@@ -10,12 +10,12 @@ import Control.Monad.Except
 import Data.Functor
 import qualified Data.Map.Strict as M
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Project.Helpers
 
 lookupModuleByName :: ModuleName -> Actions.ActionM (Module Annotation)
 lookupModuleByName modName = do

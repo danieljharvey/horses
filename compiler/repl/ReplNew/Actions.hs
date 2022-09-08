@@ -2,7 +2,8 @@
 {-# LANGUAGE TypeApplications #-}
 
 module ReplNew.Actions
-  ( doReplAction,doHelp
+  ( doReplAction,
+    doHelp,
   )
 where
 
@@ -12,12 +13,12 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import ReplNew.Actions.Bindings
+import ReplNew.Actions.Compile
 import ReplNew.Actions.Evaluate
 import ReplNew.Actions.ListModules
 import ReplNew.Helpers
 import ReplNew.ReplM
 import ReplNew.Types
-import ReplNew.Actions.Compile
 
 doReplAction ::
   Project Annotation ->
@@ -40,7 +41,7 @@ doReplAction prj action =
         ( doAddBinding prj modItem $> prj
         )
     (OutputModuleJS be moduleName) ->
-        catchMimsaError prj (doOutputModuleJS prj be moduleName $> prj)
+      catchMimsaError prj (doOutputModuleJS prj be moduleName $> prj)
 
 ----------
 

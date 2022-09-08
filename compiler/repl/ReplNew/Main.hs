@@ -15,7 +15,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath
-import ReplNew.Actions (doReplAction )
+import ReplNew.Actions (doReplAction)
 import ReplNew.Helpers
 import ReplNew.Parser (replParser)
 import ReplNew.Persistence
