@@ -15,7 +15,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath
-import ReplNew.Actions (doReplAction)
+import ReplNew.Actions (doReplAction )
 import ReplNew.Helpers
 import ReplNew.Parser (replParser)
 import ReplNew.Persistence
@@ -55,6 +55,7 @@ repl showLogs' = do
 replLoop :: ReplM (Error Annotation) ()
 replLoop = do
   env <- getProject
+  _ <- doReplAction env Help
   runInputT defaultSettings (loop env)
   where
     loop ::

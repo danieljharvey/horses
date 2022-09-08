@@ -4,6 +4,8 @@ module ReplNew.Parser
   ( replParser,
   )
 where
+import Data.Functor
+import Language.Mimsa.Backend.Types
 
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
@@ -21,6 +23,7 @@ replParser =
     <|> listModulesParser
     <|> listBindingsParser
     <|> try addBindingParser
+    <|> try outputJSModuleParser
     <|> evalParser
 
 helpParser :: Parser ReplActionAnn
@@ -55,3 +58,16 @@ addBindingParser = AddBinding <$> singleModuleItemParser
         [] -> explode "Expected a module binding"
         [a] -> pure a
         _other -> explode "Expected a single module binding"
+
+backendParser :: Parser (Maybe Backend)
+backendParser =
+  myString "javascript" $> Just ESModulesJS
+    <|> myString "typescript" $> Just Typescript
+    <|> pure Nothing
+
+outputJSModuleParser :: Parser ReplActionAnn
+outputJSModuleParser = do
+  myString ":compile"
+  be <- backendParser
+  OutputModuleJS be <$> moduleNameParser
+

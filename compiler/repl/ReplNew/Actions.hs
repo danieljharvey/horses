@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 module ReplNew.Actions
-  ( doReplAction,
+  ( doReplAction,doHelp
   )
 where
 
@@ -17,6 +17,7 @@ import ReplNew.Actions.ListModules
 import ReplNew.Helpers
 import ReplNew.ReplM
 import ReplNew.Types
+import ReplNew.Actions.Compile
 
 doReplAction ::
   Project Annotation ->
@@ -38,6 +39,8 @@ doReplAction prj action =
         prj
         ( doAddBinding prj modItem $> prj
         )
+    (OutputModuleJS be moduleName) ->
+        catchMimsaError prj (doOutputModuleJS prj be moduleName $> prj)
 
 ----------
 
@@ -49,6 +52,7 @@ doHelp = do
   replOutput @Text ":list - show a list of bindings created in this repl session"
   replOutput @Text ":bind <binding> - bind an expression, infix or type"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"
+  replOutput @Text ":compile <typescript|javascript> <moduleName> - compile module"
   replOutput @Text ":quit - give up and leave"
 
 ----------

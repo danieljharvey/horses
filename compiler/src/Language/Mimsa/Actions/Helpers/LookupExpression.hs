@@ -2,6 +2,7 @@ module Language.Mimsa.Actions.Helpers.LookupExpression
   ( lookupExpressionInStore,
     lookupExpression,
     lookupModule,
+    lookupModuleByName
   )
 where
 
@@ -14,6 +15,14 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Project.Helpers
+
+lookupModuleByName :: ModuleName -> Actions.ActionM (Module Annotation)
+lookupModuleByName modName = do
+  project <- Actions.getProject
+  case lookupModuleName project modName of
+    Right modHash -> lookupModule modHash
+    Left found -> throwError (ProjectErr (CannotFindModuleByName modName found))
 
 lookupModule ::
   ModuleHash ->
