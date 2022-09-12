@@ -55,6 +55,7 @@ repl showLogs' = do
 replLoop :: ReplM (Error Annotation) ()
 replLoop = do
   env <- getProject
+  _ <- doReplAction env Help
   runInputT defaultSettings (loop env)
   where
     loop ::

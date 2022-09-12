@@ -3,6 +3,7 @@
 
 module ReplNew.Actions
   ( doReplAction,
+    doHelp,
   )
 where
 
@@ -12,6 +13,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import ReplNew.Actions.Bindings
+import ReplNew.Actions.Compile
 import ReplNew.Actions.Evaluate
 import ReplNew.Actions.ListModules
 import ReplNew.Helpers
@@ -38,6 +40,8 @@ doReplAction prj action =
         prj
         ( doAddBinding prj modItem $> prj
         )
+    (OutputModuleJS be moduleName) ->
+      catchMimsaError prj (doOutputModuleJS prj be moduleName $> prj)
 
 ----------
 
@@ -49,6 +53,7 @@ doHelp = do
   replOutput @Text ":list - show a list of bindings created in this repl session"
   replOutput @Text ":bind <binding> - bind an expression, infix or type"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"
+  replOutput @Text ":compile <typescript|javascript> <moduleName> - compile module"
   replOutput @Text ":quit - give up and leave"
 
 ----------
