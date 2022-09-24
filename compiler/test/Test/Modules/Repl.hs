@@ -31,8 +31,10 @@ import Test.Utils.Helpers
 stdlib :: Project Annotation
 stdlib = fromRight buildStdlib
 
-evalWithDefs :: Maybe Text -> Text ->
-    IO (Either Text (Type (), Expr Name ()))
+evalWithDefs ::
+  Maybe Text ->
+  Text ->
+  IO (Either Text (Type (), Expr Name ()))
 evalWithDefs inputParts input = do
   let action = do
         mod' <- case inputParts of
@@ -46,7 +48,6 @@ evalWithDefs inputParts input = do
     Right (_, _, (mt, endExpr)) -> do
       pure (Right (normaliseType (toEmptyType mt), toEmptyAnn endExpr))
     Left e -> pure (Left (prettyPrint e))
-
 
 eval ::
   Text ->
@@ -229,14 +230,16 @@ spec =
                 (str' "mimsa")
             )
       it "type Void in 1" $ do
-        result <- evalWithDefs (Just "type Void")  "1"
+        result <- evalWithDefs (Just "type Void") "1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
       it "type String = Should | Error in Error" $ do
         result <- evalWithDefs (Just "type String = Should | Error") "Error"
         result `shouldSatisfy` isLeft
       it "type LongBoy = Stuff String Int String in Stuff \"yes\"" $ do
-        result <- evalWithDefs
-                    (Just "type LongBoy = Stuff String Int String") "Stuff \"yes\""
+        result <-
+          evalWithDefs
+            (Just "type LongBoy = Stuff String Int String")
+            "Stuff \"yes\""
         result
           `shouldBe` Right
             ( MTFunction
@@ -253,8 +256,10 @@ spec =
                 (str' "yes")
             )
       it "type Tree = Leaf Int | Branch Tree Tree in Branch (Leaf 1) (Leaf 2)" $ do
-        result <- evalWithDefs (Just "type Tree = Leaf Int | Branch Tree Tree")
-                        "Branch (Leaf 1) (Leaf 2)"
+        result <-
+          evalWithDefs
+            (Just "type Tree = Leaf Int | Branch Tree Tree")
+            "Branch (Leaf 1) (Leaf 2)"
         result
           `shouldBe` Right
             ( dataTypeWithVars mempty Nothing "Tree" [],
@@ -302,12 +307,14 @@ spec =
             (MTPrim mempty MTBool, bool False)
 
       it "type Maybe a = Just a | Nothing in match Just 1 with (Just a) -> True | Nothing -> 1" $ do
-        result <- evalWithDefs (Just "type Maybe a = Just a | Nothing" ) "match Just 1 with (Just a) -> True | Nothing -> 1"
+        result <- evalWithDefs (Just "type Maybe a = Just a | Nothing") "match Just 1 with (Just a) -> True | Nothing -> 1"
         result `shouldSatisfy` isLeft
 
       it "unfolding Maybe more" $ do
-        result <- evalWithDefs (Just "type Maybe a = Just a | Nothing")
-              "let eq a b = a == b; match Just 1 with (Just a) -> eq 100 a | _ -> False"
+        result <-
+          evalWithDefs
+            (Just "type Maybe a = Just a | Nothing")
+            "let eq a b = a == b; match Just 1 with (Just a) -> eq 100 a | _ -> False"
         result
           `shouldBe` Right
             (MTPrim mempty MTBool, bool False)
@@ -319,8 +326,10 @@ spec =
             (MTPrim mempty MTString, str' "Hello")
 
       it "Pattern matching on result" $ do
-        result <- evalWithDefs (Just "type Result e a = Failure e | Success a")
-              "match Failure \"oh no\" with (Success a) -> \"oh yes\" | (Failure e) -> e"
+        result <-
+          evalWithDefs
+            (Just "type Result e a = Failure e | Success a")
+            "match Failure \"oh no\" with (Success a) -> \"oh yes\" | (Failure e) -> e"
         result
           `shouldBe` Right
             (MTPrim mempty MTString, str' "oh no")
@@ -338,11 +347,11 @@ spec =
         result `shouldBe` Right (MTPrim mempty MTString, str' "string")
 
       it "type Pair a b = Pair a b in match Pair \"dog\" 1 with Pair \a -> a" $ do
-        result <- evalWithDefs (Just "type Pair a b = Pair a b")  "match Pair \"dog\" 1 with Pair \a -> a"
+        result <- evalWithDefs (Just "type Pair a b = Pair a b") "match Pair \"dog\" 1 with Pair \a -> a"
         result `shouldSatisfy` isLeft
 
       it "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Leaf 1" $ do
-        result <- evalWithDefs (Just  "type Tree a = Leaf a | Branch (Tree a) (Tree a)") "Leaf 1"
+        result <- evalWithDefs (Just "type Tree a = Leaf a | Branch (Tree a) (Tree a)") "Leaf 1"
         result
           `shouldBe` Right
             ( dataTypeWithVars mempty Nothing "Tree" [MTPrim mempty MTInt],
@@ -352,8 +361,10 @@ spec =
                 (int 1)
             )
       it "type Tree a = Leaf a | Branch (Tree a) (Tree b) in Leaf 1" $ do
-        result <- evalWithDefs (Just "type Tree a = Leaf a | Branch (Tree a) (Tree b)")
-                      "Leaf 1"
+        result <-
+          evalWithDefs
+            (Just "type Tree a = Leaf a | Branch (Tree a) (Tree b)")
+            "Leaf 1"
         result
           `shouldSatisfy` isLeft
 
@@ -421,13 +432,17 @@ spec =
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
 
       it "Recursively converts Nat to integer" $ do
-        result <- evalWithDefs (Just "type Nat = Zero | Suc Nat")
-                      "let incrementInt a = a + 1; let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))"
+        result <-
+          evalWithDefs
+            (Just "type Nat = Zero | Suc Nat")
+            "let incrementInt a = a + 1; let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
       it "Recursively converts bigger Nat to integer" $ do
-        result <- evalWithDefs (Just "type Nat = Zero | Suc Nat")
-              "let incrementInt a = a + 1; let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10"
+        result <-
+          evalWithDefs
+            (Just "type Nat = Zero | Suc Nat")
+            "let incrementInt a = a + 1; let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10"
         result `shouldBe` Right (MTPrim mempty MTInt, int 13)
       {-
             it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)" $ do
@@ -436,8 +451,10 @@ spec =
       -}
 
       it "Array reduce function" $ do
-        result <- evalWithDefs (Just "type Array a = Empty | Item a (Array a)")
-                      "let addInt a b = a + b; let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty"
+        result <-
+          evalWithDefs
+            (Just "type Array a = Empty | Item a (Array a)")
+            "let addInt a b = a + b; let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty"
         result `shouldBe` Right (MTPrim mempty MTInt, int 0)
 
       it "Array reduce function 2" $ do
@@ -935,24 +952,23 @@ spec =
       it "Is fine with no shadowed variables" $ do
         let input =
               mconcat
-                [
-                  "\\a -> \\b -> match (a, b) with ",
+                [ "\\a -> \\b -> match (a, b) with ",
                   "(Cons aa restA, Nil) -> (Cons aa restA)",
                   " | (Nil, Cons bb restB) -> (Cons bb restB)",
                   " | _ -> (Nil)"
                 ]
-        result <- evalWithDefs (Just "type List a = Cons a (List a) | Nil")  input
+        result <- evalWithDefs (Just "type List a = Cons a (List a) | Nil") input
         result `shouldSatisfy` isRight
 
       it "Is fine with shadowed variables" $ do
         let input =
               mconcat
-                [                   " \\a -> \\b -> match (a, b) with ",
+                [ " \\a -> \\b -> match (a, b) with ",
                   "(Cons a restA, Nil) -> (Cons a restA)",
                   " | (Nil, Cons b restB) -> (Cons b restB)",
                   " | _ -> a"
                 ]
-        result <- evalWithDefs (Just  "type List a = Cons a (List a) | Nil") input
+        result <- evalWithDefs (Just "type List a = Cons a (List a) | Nil") input
         result `shouldSatisfy` isRight
 
     describe "Too many generics in stringReduce" $ do
@@ -1038,8 +1054,16 @@ spec =
 
     describe "delays arity check for infix operators" $ do
       it "is fine" $ do
-        result <- evalWithDefs (Just $ defs ["def flip f a b = f b a",
-              "def and a b = if a then b else False", "infix <<>> = flip and"]) "True <<>> False"
+        result <-
+          evalWithDefs
+            ( Just $
+                defs
+                  [ "def flip f a b = f b a",
+                    "def and a b = if a then b else False",
+                    "infix <<>> = flip and"
+                  ]
+            )
+            "True <<>> False"
         result `shouldSatisfy` isRight
 
     describe "let with type annotation" $ do
@@ -1167,34 +1191,54 @@ spec =
 
       -- we don't seem to be checking this infix op's type
       xit "Bind incrementInt to <<<" $ do
-        result <- evalWithDefs (Just $ defs ["def incrementInt a = a + 1",
-                          "infix <<< = incrementInt"]) "True"
+        result <-
+          evalWithDefs
+            ( Just $
+                defs
+                  [ "def incrementInt a = a + 1",
+                    "infix <<< = incrementInt"
+                  ]
+            )
+            "True"
         -- we can only bind to a two arity function
         result `shouldSatisfy` isLeft
 
       it "define +++ as infix and use it" $ do
-        result <- evalWithDefs (Just $ defs ["def addInt a b = a + b","infix +++ = addInt"])
-                                      "1 +++ 2"
+        result <-
+          evalWithDefs
+            (Just $ defs ["def addInt a b = a + b", "infix +++ = addInt"])
+            "1 +++ 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
       it "multiple uses of infix with same type" $ do
-        result <- evalWithDefs (Just $ defs ["def incrementInt a = a + 1","def apply a f = f a","infix |> = apply"])
-                              "1 |> incrementInt |> incrementInt"
+        result <-
+          evalWithDefs
+            (Just $ defs ["def incrementInt a = a + 1", "def apply a f = f a", "infix |> = apply"])
+            "1 |> incrementInt |> incrementInt"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
       it "multiple uses of infix with same type 2" $ do
-        result <- evalWithDefs (Just $ defs ["def incrementInt a = a + 1","def isOne a = a == 1", "def apply a f = f a", "infix |> = apply"])
-                        "1 |> incrementInt |> isOne"
+        result <-
+          evalWithDefs
+            (Just $ defs ["def incrementInt a = a + 1", "def isOne a = a == 1", "def apply a f = f a", "infix |> = apply"])
+            "1 |> incrementInt |> isOne"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
       it "multiple uses of infix with different types" $ do
-        result <- evalWithDefs (Just $ defs ["def incrementInt a = a + 1",
-                        "def apply a f = f a","infix |> = apply"])
-                            "1 |> incrementInt |> State.pure"
+        result <-
+          evalWithDefs
+            ( Just $
+                defs
+                  [ "def incrementInt a = a + 1",
+                    "def apply a f = f a",
+                    "infix |> = apply"
+                  ]
+            )
+            "1 |> incrementInt |> State.pure"
         result `shouldSatisfy` isRight
 
       it "Can't override a built-in infix op" $ do
-        result <- evalWithDefs (Just $ defs ["def addInt a b = a + b","infix == = addInt"]) "True"
+        result <- evalWithDefs (Just $ defs ["def addInt a b = a + b", "infix == = addInt"]) "True"
         -- can't overwrite built in infix operators
         result `shouldSatisfy` isLeft
 

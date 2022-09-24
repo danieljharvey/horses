@@ -59,7 +59,7 @@ importsFromEntities uses = do
 
 entitiesFromModule :: (Eq ann) => Module ann -> Set Entity
 entitiesFromModule localModule =
-   foldMap extractUses (M.elems (moExpressions localModule))
+  foldMap extractUses (M.elems (moExpressions localModule))
 
 -- when we evaluate an expression, really we are adding it to an open module
 -- then evaluating the expression in the context of that module
@@ -80,8 +80,11 @@ evaluateModule ::
   Actions.ActionM (MonoType, Expr Name Annotation, Module Annotation)
 evaluateModule expr localModule = do
   -- work out implied imports
-  moduleImports <- importsFromEntities (extractUses expr <>
-                          entitiesFromModule localModule)
+  moduleImports <-
+    importsFromEntities
+      ( extractUses expr
+          <> entitiesFromModule localModule
+      )
 
   -- make a module for it, adding our expression as _repl
   let newModule =
