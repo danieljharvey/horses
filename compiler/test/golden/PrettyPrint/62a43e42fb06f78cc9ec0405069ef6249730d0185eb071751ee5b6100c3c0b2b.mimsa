@@ -1,6 +1,0 @@
-let apply a f =
-  f a;
-
-infix |> = apply;
-
-1 |> incrementInt |> (\a -> a == 1)

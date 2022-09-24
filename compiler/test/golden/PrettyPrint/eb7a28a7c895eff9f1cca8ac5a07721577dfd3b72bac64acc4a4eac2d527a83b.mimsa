@@ -1,5 +1,0 @@
-match "" with 
-    _ ++ _ -> 
-      True
-  | "" -> 
-      False

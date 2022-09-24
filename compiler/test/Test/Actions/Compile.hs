@@ -8,7 +8,6 @@ where
 
 import Data.Either (isRight)
 import Data.Foldable
-import Data.Functor
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -64,17 +63,6 @@ spec = do
       let action = do
             Actions.compileStoreExpression Typescript storeExpr
       Actions.run testStdlib action `shouldSatisfy` isRight
-
-    it "Compiles with deep deps" $ do
-      let expr = unsafeParseExpr "either.fmap (\\a -> a + 1) (Right 100)" $> mempty
-          action = do
-            (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-            Actions.compileStoreExpression Typescript storeExpr
-      let (_, outcomes, _) = fromRight (Actions.run stdlib action)
-      -- creates 9 files (7 expressions, stdlib, index)
-      -- this will reduce once we inline across expressions as
-      -- most of this is unneeded `either` functions
-      length (Actions.writeFilesFromOutcomes outcomes) `shouldBe` 9
 
     it "Compiles entire project" $ do
       let action = do

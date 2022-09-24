@@ -1,1 +1,0 @@
-let id2 a = a in ((id2 1), (id2 True))

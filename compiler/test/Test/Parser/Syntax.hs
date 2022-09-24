@@ -810,15 +810,7 @@ spec = parallel $ do
                 )
                 (MyApp mempty (MyApp mempty (MyVar mempty Nothing "runParser") (MyVar mempty Nothing "parser")) (MyLiteral mempty (MyString "dog")))
             )
-      it "parses an infix definition" $
-        testParse "infix +++ = addInt; 1 +++ 2"
-          `shouldBe` Right
-            ( MyDefineInfix
-                mempty
-                (InfixOp "+++")
-                (MyVar mempty Nothing "addInt")
-                (MyInfix mempty (Custom (InfixOp "+++")) (int 1) (int 2))
-            )
+
       it "parses destructuring a tuple" $
         testParse "let (a,b) = (1,2); a"
           `shouldBe` Right

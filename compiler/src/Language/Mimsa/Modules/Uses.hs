@@ -76,10 +76,6 @@ extractUses_ (MyConstructor _ (Just modName) tyCon) =
 extractUses_ (MyConstructor _ Nothing tyCon) =
   S.singleton (EConstructor tyCon)
 extractUses_ (MyTypedHole _ _) = mempty
-extractUses_ (MyDefineInfix _ infixOp a b) =
-  filterVarsIntroducedInPatterns
-    (S.singleton (EInfix infixOp))
-    (extractUses_ a <> extractUses_ b)
 extractUses_ (MyPatternMatch _ match patterns) =
   extractUses match <> mconcat patternUses
   where

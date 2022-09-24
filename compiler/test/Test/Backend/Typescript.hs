@@ -245,7 +245,6 @@ fullTestCases =
       "{ type: 'Right', vars: [ 101 ] }"
     ),
     ("stringReduce", "[Function: stringReduce]"),
-    ("infix <&&> = and; True <&&> True", "true"),
     ("let const = True; 1", "1"),
     ("2 > 1", "true"),
     ("1 > 2", "false"),
@@ -257,7 +256,6 @@ fullTestCases =
     ("3 <= 2", "false"),
     ("Monoid", "[Function: Monoid]"),
     ("let a = 1; let b = 3; let c = 6; and False True", "false"),
-    ("let apply a f = f a; infix |> = apply; let f = \\a -> a |> (and False) |> not; f False", "true"),
     ("\"\nHello\n\"", "\nHello\n"),
     ("\\a -> useEither a", "[Function: main]"),
     ("match Right 1 with Right a -> a | _ -> 0", "1")

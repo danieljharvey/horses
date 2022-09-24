@@ -120,9 +120,6 @@ withinLambda :: InlineM var ann a -> InlineM var ann a
 withinLambda = local (\ie -> ie {ieIsWithinLambda = WithinLambda})
 
 inlineExpression :: (Ord var) => Expr var ann -> InlineM var ann (Expr var ann)
-inlineExpression (MyDefineInfix ann op f rest) =
-  -- don't inline infix definition as it ruins let generalisation
-  MyDefineInfix ann op f <$> inlineExpression rest
 inlineExpression (MyLet ann ident expr rest) = do
   storeExprInState (nameFromIdent ident) Nothing expr
   MyLet ann ident <$> inlineExpression expr <*> inlineExpression rest

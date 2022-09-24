@@ -1,9 +1,0 @@
-type Array a 
-  = Empty
-  | Item a
-         (Array a);
-
-let (_, rest) =
-  ((1, (Item 2 Empty)));
-
-rest

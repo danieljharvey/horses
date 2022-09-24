@@ -72,7 +72,6 @@ complexParser =
     <|> typeParser
     <|> patternMatchParser
     <|> typedHoleParser
-    <|> defineInfixParser
 
 ----
 
@@ -338,18 +337,6 @@ infixParser =
         ( MyInfix mempty <$> opParser
         )
     )
-
-----------
-
-defineInfixParser :: Parser ParserExpr
-defineInfixParser = addLocation $ do
-  myString "infix"
-  infixOp <- infixOpParser
-  myString "="
-  boundExpr <- expressionParser
-  myString ";" <|> myString "in"
-  MyDefineInfix mempty infixOp boundExpr
-    <$> expressionParser
 
 ----------
 

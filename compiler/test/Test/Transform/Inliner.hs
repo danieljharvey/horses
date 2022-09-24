@@ -71,6 +71,3 @@ spec = do
         let expr = unsafeParseExpr "let flip as = if as then False else flip as in flip False"
         inlineInternal' expr
           `shouldBe` expr
-      it "Does not inline infix definition (thus ruining let generalisation)" $ do
-        let expr = unsafeParseExpr "let apply a f = f a; infix |> = apply; 1 |> incrementInt |> incrementInt"
-        inlineInternal' expr `shouldBe` expr
