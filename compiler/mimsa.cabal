@@ -258,19 +258,6 @@ executable mimsa
       Compile.Main
       Eval.Main
       Init.Main
-      Repl.Actions
-      Repl.Actions.Compile
-      Repl.Actions.Evaluate
-      Repl.Actions.ExpressionBind
-      Repl.Actions.Info
-      Repl.Actions.ListBindings
-      Repl.Actions.TypeSearch
-      Repl.Helpers
-      Repl.Main
-      Repl.Parser
-      Repl.Persistence
-      Repl.ReplM
-      Repl.Types
       ReplNew.Actions
       ReplNew.Actions.Bindings
       ReplNew.Actions.Compile
