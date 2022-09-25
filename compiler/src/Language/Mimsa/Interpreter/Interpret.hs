@@ -1,94 +1,85 @@
-module Language.Mimsa.Interpreter.Interpret (interpret, addEmptyStackFrames) where
+{-# LANGUAGE FlexibleContexts #-}
+
+module Language.Mimsa.Interpreter.Interpret (interpret) where
 
 import Control.Monad.Reader
-import Data.Functor
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.App
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.If
 import Language.Mimsa.Interpreter.Infix
-import Language.Mimsa.Interpreter.Let
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.RecordAccess
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
-import Language.Mimsa.Types.Typechecker.Unique
-
-initialStack :: (Ord var) => StackFrame var ann
-initialStack = StackFrame mempty mempty
-
-addEmptyStackFrames ::
-  (Ord var, Monoid ann) =>
-  Expr (var, Unique) ann ->
-  Expr (var, Unique) (ExprData var ann)
-addEmptyStackFrames expr =
-  expr $> mempty
 
 interpret ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  Map ExprHash (InterpretExpr var ann) ->
+  (Eq ann, Monoid ann, Show ann) =>
+  Map ExprHash (InterpretExpr ann) ->
   Map InfixOp ExprHash ->
-  InterpretExpr var ann ->
-  Either (InterpreterError var ann) (InterpretExpr var ann)
+  InterpretExpr ann ->
+  Either (InterpreterError Name ann) (InterpretExpr ann)
 interpret deps infixes expr =
-  runReaderT (interpretExpr expr) (InterpretReaderEnv initialStack deps infixes)
+  runReaderT (interpretExpr expr) (InterpretReaderEnv deps mempty infixes )
 
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
 interpretExpr ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
-interpretExpr =
-  interpretExpr'
+  (Eq ann, Monoid ann, Show ann) =>
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
+interpretExpr expr = do
+  interpretExpr' expr
 
 interpretExpr' ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
-interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)
-interpretExpr' (MyAnnotation _ _ expr) = interpretExpr' expr
-interpretExpr' (MyLet _ ident expr body) =
-  interpretLet interpretExpr ident expr body
-interpretExpr' (MyVar _ _ var) =
-  lookupVar var >>= interpretExpr
-interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
-  -- capture current environment
-  stackFrame <-
-    getCurrentStackFrame
-  -- add it to already captured vars
-  let newExprData =
-        ExprData
-          (current <> stackFrame)
-          isRec
-          ann
+  (Eq ann, Monoid ann, Show ann) =>
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
+interpretExpr' (HOAS.MyLiteral _ val) = pure (HOAS.MyLiteral mempty val)
+interpretExpr' (HOAS.MyAnnotation _ _ expr) = interpretExpr' expr
+interpretExpr' (HOAS.MyVar _ _ var) = do
+  global <- lookupGlobal var
+  case global of
+    Just next -> pure next
+    Nothing -> do
+      value <- lookupVar var
+      case value of
+        Just next -> pure next
+        Nothing -> error $ "Could not find " <> show var
+interpretExpr' (HOAS.MyLambda exprData ident body) =
   -- return it
   pure
-    (MyLambda newExprData ident body)
-interpretExpr' (MyTuple ann a as) =
-  MyTuple ann <$> interpretExpr a <*> traverse interpretExpr as
-interpretExpr' (MyInfix _ op a b) =
-  interpretInfix interpretExpr op a b
-interpretExpr' (MyIf ann predExpr thenExpr elseExpr) =
+    (HOAS.MyLambda exprData ident body)
+interpretExpr' (HOAS.MyTuple ann a as) =
+  HOAS.MyTuple ann <$> interpretExpr a <*> traverse interpretExpr as
+interpretExpr' (HOAS.MyRecursiveLambda exprData ident recIdent body) = do
+  -- return it
+  pure
+    (HOAS.MyRecursiveLambda exprData ident recIdent body)
+interpretExpr' (HOAS.MyInfix _ op a b) = do
+  opA <- interpretExpr a
+  opB <- interpretExpr b
+  interpretInfix interpretExpr op opA opB
+interpretExpr' (HOAS.MyIf ann predExpr thenExpr elseExpr) =
   interpretIf interpretExpr ann predExpr thenExpr elseExpr
-interpretExpr' (MyApp ann fn a) =
+interpretExpr' (HOAS.MyApp ann fn a) =
   interpretApp interpretExpr ann fn a
-interpretExpr' (MyRecordAccess ann expr name) =
+interpretExpr' (HOAS.MyRecordAccess ann expr name) =
   interpretRecordAccess interpretExpr ann expr name
-interpretExpr' (MyTupleAccess ann expr index) =
+interpretExpr' (HOAS.MyTupleAccess ann expr index) =
   interpretTupleAccess interpretExpr ann expr index
-interpretExpr' (MyPatternMatch _ matchExpr patterns) = do
-  interpretPatternMatch interpretExpr matchExpr patterns
-interpretExpr' (MyLetPattern _ pat patExpr body) =
-  interpretLetPattern interpretExpr pat patExpr body
-interpretExpr' (MyRecord ann as) =
-  MyRecord ann <$> traverse interpretExpr as
-interpretExpr' (MyArray ann as) =
-  MyArray ann <$> traverse interpretExpr as
-interpretExpr' (MyConstructor as modName const') =
-  pure (MyConstructor as modName const')
-interpretExpr' (MyTypedHole ann name) =
-  pure (MyTypedHole ann name)
+interpretExpr' (HOAS.MyPatternMatch ann matchExpr patterns) = do
+  interpretPatternMatch ann interpretExpr matchExpr patterns
+interpretExpr' (HOAS.MyLetPattern ann pat patExpr body) =
+  interpretLetPattern ann interpretExpr pat patExpr body
+interpretExpr' (HOAS.MyRecord ann as) =
+  HOAS.MyRecord ann <$> traverse interpretExpr as
+interpretExpr' (HOAS.MyArray ann as) =
+  HOAS.MyArray ann <$> traverse interpretExpr as
+interpretExpr' (HOAS.MyConstructor as modName const') =
+  pure (HOAS.MyConstructor as modName const')
+interpretExpr' (HOAS.MyTypedHole ann name) =
+  pure (HOAS.MyTypedHole ann name)

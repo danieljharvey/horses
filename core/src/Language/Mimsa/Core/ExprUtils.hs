@@ -7,6 +7,7 @@ module Language.Mimsa.Core.ExprUtils
     toEmptyAnnotation,
     getAnnotation,
     mapPattern,
+    patternMonoid,
     nameFromIdent,
     detailsFromIdent,
   )
@@ -246,6 +247,20 @@ mapPattern f (PArray ann as spread) =
   PArray ann (f <$> as) spread
 mapPattern _ (PString ann pHead pTail) =
   PString ann pHead pTail
+
+patternMonoid :: (Monoid a) => (Pattern var ann -> a) -> Pattern var ann -> a
+patternMonoid _ PLit {} = mempty
+patternMonoid _ PWildcard {} = mempty
+patternMonoid _ PVar {} = mempty
+patternMonoid f (PTuple _ a as) =
+  f a <> foldMap f as
+patternMonoid f (PConstructor _ _ _ as) =
+  foldMap f as
+patternMonoid f (PRecord _ as) =
+  foldMap f as
+patternMonoid f (PArray _ as _) =
+  foldMap f as
+patternMonoid _ PString {} = mempty
 
 nameFromIdent :: Identifier var ann -> var
 nameFromIdent = fst . detailsFromIdent

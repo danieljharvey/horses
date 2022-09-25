@@ -1,4 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Language.Mimsa.Actions.Interpret (interpreter) where
 
@@ -13,12 +15,17 @@ import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Core
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.Interpret
+import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Store
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
+
+-- cheeky orphaned instance
+instance (Eq ann, Ord x) => Eq (HOAS.HOASExpr (Name, x) ann) where
+  a == b = fromHOAS a == fromHOAS b
 
 -- get all the deps
 -- change var to InterpretVar to point at imports
@@ -44,7 +51,7 @@ interpreter se = do
 
   -- pick out the value we're interested in
   case M.lookup newRootExprHash allInterpreted of
-    Just re -> pure (bimap fst edAnnotation re)
+    Just re -> pure (first fst (fromHOAS re))
     _ -> throwError (StoreErr (CouldNotFindStoreExpression newRootExprHash))
 
 fixKeys :: Map ExprHash (StoreExpression Annotation) -> Map ExprHash (StoreExpression Annotation)
@@ -57,7 +64,7 @@ squashify = mconcat . M.elems
 -- This means each sub dep is only interpreted once
 interpretAll ::
   Map ExprHash (StoreExpression Annotation) ->
-  Actions.ActionM (Map ExprHash (InterpretExpr Name Annotation))
+  Actions.ActionM (Map ExprHash (InterpretExpr Annotation))
 interpretAll inputStoreExpressions = do
   let action depMap se =
         case storeExpression se of
@@ -69,12 +76,16 @@ interpretAll inputStoreExpressions = do
             numberedSe <-
               Actions.numberStoreExpression expr (storeBindings se)
 
-            -- tag each `var` with it's location if it is an import
-            let withImports = addEmptyStackFrames numberedSe
             -- get exprhashes for any infixOps we need
             let infixHashes = storeInfixes se
             -- interpret se
-            interpreted <- liftEither (first InterpreterErr (interpret flatDeps infixHashes withImports))
+            interpreted <-
+              liftEither
+                ( first
+                    InterpreterErr
+                    (interpret flatDeps infixHashes (toHOAS numberedSe))
+                )
+
             -- we need to accumulate all deps
             -- as we go, so pass them up too
             let allDeps = flatDeps <> M.singleton (getStoreExpressionHash se) interpreted

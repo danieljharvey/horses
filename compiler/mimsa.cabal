@@ -134,7 +134,6 @@ library
     Language.Mimsa.Types.Error.ResolverError
     Language.Mimsa.Types.Error.StoreError
     Language.Mimsa.Types.Error.TypeError
-    Language.Mimsa.Types.Interpreter.Stack
     Language.Mimsa.Types.Project
     Language.Mimsa.Types.Project.Project
     Language.Mimsa.Types.Project.ProjectHash

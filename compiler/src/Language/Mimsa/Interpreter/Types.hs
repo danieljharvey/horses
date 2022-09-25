@@ -12,28 +12,28 @@ where
 import Control.Monad.Reader
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
 
-type InterpreterM var ann a =
+type InterpreterM ann a =
   ReaderT
-    (InterpretReaderEnv var ann)
-    (Either (InterpreterError var ann))
+    (InterpretReaderEnv ann)
+    (Either (InterpreterError Name ann))
     a
 
-data InterpretReaderEnv var ann = InterpretReaderEnv
-  { ireStack :: StackFrame var ann,
-    ireGlobals :: Map ExprHash (InterpretExpr var ann),
+data InterpretReaderEnv ann = InterpretReaderEnv
+  { ireGlobals :: Map ExprHash (InterpretExpr ann),
+    ireVars :: Map (Name, Unique) (InterpretExpr ann), -- used for recursion
     ireInfixes :: Map InfixOp ExprHash
   }
 
-type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
+type InterpretExpr ann = HOAS.HOASExpr (Name, Unique) ann
 
-type InterpretPattern var ann =
-  Pattern (var, Unique) (ExprData var ann)
+type InterpretPattern ann =
+  Pattern (Name, Unique) ann
 
-type InterpretFn var ann =
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+type InterpretFn ann =
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)

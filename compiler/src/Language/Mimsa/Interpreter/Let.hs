@@ -4,7 +4,7 @@ import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Transform.FindUses
-import Language.Mimsa.Types.Interpreter.Stack
+-- import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Typechecker.Unique
 
 varFromIdent :: Identifier var ann -> var

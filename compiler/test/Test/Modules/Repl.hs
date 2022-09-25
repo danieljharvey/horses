@@ -62,7 +62,7 @@ defs = T.intercalate "\n"
 
 spec :: Spec
 spec =
-  describe "Modules repl" $ do
+  fdescribe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "No functions" $ do
         result <- eval "100"
@@ -435,18 +435,26 @@ spec =
         result <- eval "let eq a b = a == b; let addInt a b = a + b; let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
 
-      it "Recursively converts Nat to integer" $ do
+      it "Big loop go zoom 1" $ do
+        result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 10"
+        result `shouldSatisfy` isRight
+
+      it "Big loop go zoom 2" $ do
+        result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000" -- this seems to be the limit on my current machine
+        result `shouldSatisfy` isRight
+
+      fit "Recursively converts Nat to integer" $ do
         result <-
           evalWithDefs
             (Just "type Nat = Zero | Suc Nat")
-            "let incrementInt a = a + 1; let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> incrementInt (loop as2)) in loop (Suc (Suc (Suc Zero)))"
+            "let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> (loop as2) + 1) in loop (Suc (Suc (Suc Zero)))"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
       it "Recursively converts bigger Nat to integer" $ do
         result <-
           evalWithDefs
             (Just "type Nat = Zero | Suc Nat")
-            "let incrementInt a = a + 1; let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> incrementInt (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10"
+            "let loop = (\\as -> \\b -> match as with Zero -> b | (Suc as2) -> 1 + (loop as2 b)) in loop (Suc (Suc (Suc Zero))) 10"
         result `shouldBe` Right (MTPrim mempty MTInt, int 13)
       {-
             it "type Arr a = Empty | Item a (Arr a) in let reduceA = (\\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA(addInt(b)(a))(rest)) in reduceA(0)(Item 3 Empty)" $ do
@@ -699,8 +707,8 @@ spec =
           Left _ -> error "Was not supposed to fail"
           Right (_, expr') -> T.unpack (prettyPrint expr') `shouldContain` "a"
 
-      it "filter function for strings" $ do
-        result <- eval "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\a -> a == \"o\") \"woo\""
+      fit "filter function for strings" $ do
+        result <- eval "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\aa -> aa == \"o\") \"woo\""
         result
           `shouldBe` Right
             ( MTPrim mempty MTString,
@@ -1327,6 +1335,7 @@ spec =
           result <- eval expr
           result `shouldSatisfy` isRight
 
+        -- what the hell
         it "Parses using a lexeme" $ do
           let expr =
                 mconcat

@@ -8,16 +8,15 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import GHC.Natural
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
 
-type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
+type InterpretExpr var ann = Expr (var, Unique) ann
 
 data InterpreterError var ann
   = UnknownInterpreterError
   | CouldNotFindVar (Map var (InterpretExpr var ann)) var
-  | CouldNotFindInfix (Map InfixOp (InterpretExpr var ann)) InfixOp
+  | CouldNotFindInfix InfixOp
   | CouldNotFindGlobal (Map ExprHash (InterpretExpr var ann)) ExprHash
   | AdditionWithNonNumber (InterpretExpr var ann)
   | SubtractionWithNonNumber (InterpretExpr var ann)
@@ -38,15 +37,16 @@ instance Semigroup (InterpreterError var ann) where
 instance Monoid (InterpreterError var ann) where
   mempty = UnknownInterpreterError
 
-instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterError var ann) where
+instance
+  (Show ann, Show var, Printer ann, Printer var) =>
+  Printer (InterpreterError var ann)
+  where
   prettyPrint (CouldNotFindVar items name) =
     "Could not find var " <> prettyPrint name <> " in " <> itemList
     where
       itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
-  prettyPrint (CouldNotFindInfix items infixOp) =
-    "Could not find infix " <> prettyPrint infixOp <> " in " <> itemList
-    where
-      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+  prettyPrint (CouldNotFindInfix infixOp) =
+    "Could not find infix " <> prettyPrint infixOp
   prettyPrint (CouldNotFindGlobal items name) =
     "Could not find global " <> prettyPrint name <> " in " <> itemList
     where

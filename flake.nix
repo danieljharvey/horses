@@ -47,6 +47,7 @@
             ghcid
             cabal-fmt
             cabal-install
+            cabal-fmt
             pkgs.zlib # used by `digest` package
             pkgs.nodejs-18_x
             pkgs.clang_14

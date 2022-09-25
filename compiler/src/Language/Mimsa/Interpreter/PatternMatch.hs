@@ -5,6 +5,7 @@ module Language.Mimsa.Interpreter.PatternMatch
 where
 
 import Control.Monad.Except
+import Data.Bifunctor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
@@ -12,33 +13,43 @@ import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Core
-import Language.Mimsa.Interpreter.Monad
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
+import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Typechecker.Unique
 
 interpretLetPattern ::
-  (Ord var) =>
-  InterpretFn var ann ->
-  InterpretPattern var ann ->
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
-interpretLetPattern interpretFn pat expr body = do
+  ann ->
+  InterpretFn ann ->
+  InterpretPattern ann ->
+  InterpretExpr ann ->
+  (InterpretExpr ann -> InterpretExpr ann) ->
+  InterpreterM ann (InterpretExpr ann)
+interpretLetPattern ann interpretFn pat patExpr body = do
   -- interpret input
-  intExpr <- interpretFn expr
+  intExpr <- interpretFn patExpr
+
   -- get new bound variables
   let bindings = fromMaybe [] (patternMatches pat intExpr)
-  -- run body with closure + new arg
-  extendStackFrame bindings (interpretFn body)
+      value = valueFromBindings ann bindings
+
+  interpretFn (body value)
+
+valueFromBindings :: ann -> [(Name, InterpretExpr ann)] -> InterpretExpr ann
+valueFromBindings ann bindings =
+  case snd <$> bindings of
+    [] -> HOAS.MyLiteral ann (MyBool True)
+    [a] -> a
+    (a : b : bs) ->
+      HOAS.MyTuple ann a (b NE.:| bs)
 
 interpretPatternMatch ::
-  (Ord var) =>
-  InterpretFn var ann ->
-  InterpretExpr var ann ->
-  [(InterpretPattern var ann, InterpretExpr var ann)] ->
-  InterpreterM var ann (InterpretExpr var ann)
-interpretPatternMatch interpretFn expr' patterns = do
+  ann ->
+  InterpretFn ann ->
+  InterpretExpr ann ->
+  [(InterpretPattern ann, InterpretExpr ann -> InterpretExpr ann)] ->
+  InterpreterM ann (InterpretExpr ann)
+interpretPatternMatch ann interpretFn expr' patterns = do
   -- interpret match expression
   intExpr <- interpretFn expr'
   let foldF (pat, patExpr) = case patternMatches pat intExpr of
@@ -48,65 +59,66 @@ interpretPatternMatch interpretFn expr' patterns = do
   case getFirst (foldMap foldF patterns) of
     Just (patExpr, bindings) ->
       do
-        -- run body with closure + new arg
-        extendStackFrame bindings (interpretFn patExpr)
+        let value = valueFromBindings ann bindings
+
+        interpretFn (patExpr value)
     _ ->
-      throwError $ PatternMatchFailure expr'
+      throwError $ PatternMatchFailure (fromHOAS expr')
 
 -- pull vars out of expr to match patterns
 patternMatches ::
-  InterpretPattern var ann ->
-  InterpretExpr var ann ->
-  Maybe [((var, Unique), InterpretExpr var ann)]
+  InterpretPattern ann ->
+  InterpretExpr ann ->
+  Maybe [(Name, InterpretExpr ann)]
 patternMatches (PWildcard _) _ = pure []
-patternMatches (PVar _ name) expr = pure [(name, expr)]
-patternMatches (PTuple _ pA pAs) (MyTuple _ a as) = do
+patternMatches (PVar _ name) expr = pure [(fst name, expr)]
+patternMatches (PTuple _ pA pAs) (HOAS.MyTuple _ a as) = do
   matchA <- patternMatches pA a
   matchAs <-
     traverse
       (uncurry patternMatches)
       (zip (NE.toList pAs) (NE.toList as))
   pure $ matchA <> mconcat matchAs
-patternMatches (PRecord _ pAs) (MyRecord _ as)
+patternMatches (PRecord _ pAs) (HOAS.MyRecord _ as)
   | S.null (S.difference (M.keysSet pAs) (M.keysSet as)) = do
       let usefulInputs = M.intersection as pAs
           allPairs = zip (M.elems pAs) (M.elems usefulInputs)
       nice <- traverse (uncurry patternMatches) allPairs
       pure (mconcat nice)
-patternMatches (PLit _ pB) (MyLiteral _ b)
+patternMatches (PLit _ pB) (HOAS.MyLiteral _ b)
   | pB == b = pure mempty
-patternMatches (PConstructor _ _ _pTyCon []) (MyConstructor _ _ _tyCon) =
+patternMatches (PConstructor _ _ _pTyCon []) (HOAS.MyConstructor _ _ _tyCon) =
   pure mempty
-patternMatches (PConstructor _ _ pTyCon pArgs) (MyApp ann fn val) = do
-  (tyCon, args) <- consAppToPattern (MyApp ann fn val)
+patternMatches (PConstructor _ _ pTyCon pArgs) (HOAS.MyApp ann fn val) = do
+  (tyCon, args) <- consAppToPattern (HOAS.MyApp ann fn val)
   if tyCon /= pTyCon
     then Nothing
     else do
       let allPairs = zip pArgs args
       nice <- traverse (uncurry patternMatches) allPairs
       pure (mconcat nice)
-patternMatches (PArray _ pAs NoSpread) (MyArray _ as)
+patternMatches (PArray _ pAs NoSpread) (HOAS.MyArray _ as)
   | length pAs == length as = do
       let allPairs = zip pAs as
       nice <- traverse (uncurry patternMatches) allPairs
       pure (mconcat nice)
-patternMatches (PArray _ pAs (SpreadWildcard _)) (MyArray _ as)
+patternMatches (PArray _ pAs (SpreadWildcard _)) (HOAS.MyArray _ as)
   | length pAs <= length as = do
       let allPairs = zip pAs as
       nice <- traverse (uncurry patternMatches) allPairs
       pure (mconcat nice)
-patternMatches (PArray _ pAs (SpreadValue _ a)) (MyArray ann as)
+patternMatches (PArray _ pAs (SpreadValue _ a)) (HOAS.MyArray ann as)
   | length pAs <= length as = do
-      let binding = (a, MyArray ann (drop (length pAs) as))
+      let binding = (a, HOAS.MyArray ann (drop (length pAs) as))
       let allPairs = zip pAs as
       nice <- traverse (uncurry patternMatches) allPairs
-      pure (mconcat nice <> [binding])
-patternMatches (PString _ pA pAs) (MyLiteral _ (MyString (StringType str))) | not (T.null str) =
+      pure (mconcat nice <> [first fst binding])
+patternMatches (PString _ pA pAs) (HOAS.MyLiteral _ (MyString (StringType str))) | not (T.null str) =
   do
     let bindingA = case pA of
           (StrValue ann a) ->
-            [ ( a,
-                MyLiteral
+            [ ( fst a,
+                HOAS.MyLiteral
                   ann
                   ( MyString
                       ( StringType (T.singleton (T.head str))
@@ -117,8 +129,8 @@ patternMatches (PString _ pA pAs) (MyLiteral _ (MyString (StringType str))) | no
           _ -> []
         bindingAs = case pAs of
           (StrValue ann as) ->
-            [ ( as,
-                MyLiteral
+            [ ( fst as,
+                HOAS.MyLiteral
                   ann
                   ( MyString (StringType (T.drop 1 str))
                   )
@@ -128,9 +140,11 @@ patternMatches (PString _ pA pAs) (MyLiteral _ (MyString (StringType str))) | no
     pure (bindingA <> bindingAs)
 patternMatches _ _ = Nothing
 
-consAppToPattern :: InterpretExpr var ann -> Maybe (TyCon, [InterpretExpr var ann])
-consAppToPattern (MyApp _ fn val) = do
+consAppToPattern ::
+  InterpretExpr ann ->
+  Maybe (TyCon, [InterpretExpr ann])
+consAppToPattern (HOAS.MyApp _ fn val) = do
   (tyCon, more) <- consAppToPattern fn
   pure (tyCon, more <> [val])
-consAppToPattern (MyConstructor _ _ tyCon) = pure (tyCon, mempty)
+consAppToPattern (HOAS.MyConstructor _ _ tyCon) = pure (tyCon, mempty)
 consAppToPattern _ = Nothing
