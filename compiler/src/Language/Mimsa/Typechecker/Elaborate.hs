@@ -104,15 +104,6 @@ envFromVar :: (Name, Unique) -> Scheme -> Environment
 envFromVar binder scheme =
   Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty mempty
 
-envFromInfixOp :: InfixOp -> Scheme -> Environment
-envFromInfixOp infixOp scheme =
-  Environment
-    mempty
-    mempty
-    (M.singleton infixOp scheme)
-    mempty
-    mempty
-
 lookupInfixOp ::
   Environment ->
   Annotation ->
@@ -703,32 +694,6 @@ inferLambda env ann ident body = do
         inferBody
     )
 
-inferDefineInfix ::
-  Environment ->
-  Annotation ->
-  InfixOp ->
-  TcExpr ->
-  TcExpr ->
-  ElabM ElabExpr
-inferDefineInfix env ann infixOp infixExpr expr = do
-  u1 <- getUnknown ann
-  u2 <- getUnknown ann
-  u3 <- getUnknown ann
-  inferBindExpr <- infer env infixExpr
-  let tyBind = getTypeFromAnn inferBindExpr
-  tell
-    [ ShouldEqual
-        tyBind
-        ( MTFunction
-            mempty
-            u1
-            (MTFunction mempty u2 u3)
-        )
-    ]
-  let newEnv = envFromInfixOp infixOp (generalise env tyBind) <> env
-  inferBodyExpr <- infer newEnv expr
-  pure $ MyDefineInfix (getTypeFromAnn inferBodyExpr) infixOp inferBindExpr inferBodyExpr
-
 inferArray ::
   Environment ->
   Annotation ->
@@ -835,7 +800,5 @@ infer env inferExpr =
     (MyConstructor ann modName name) -> do
       tyData <- inferDataConstructor env ann modName name
       pure (MyConstructor tyData modName name)
-    (MyDefineInfix ann infixOp infixExpr expr) ->
-      inferDefineInfix env ann infixOp infixExpr expr
     (MyPatternMatch ann expr patterns) ->
       inferPatternMatch env ann expr patterns

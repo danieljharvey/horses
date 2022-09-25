@@ -16,7 +16,6 @@ import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Typescript as Typescript
 import Test.Hspec
-import qualified Test.Interpreter.Repl as Repl
 import qualified Test.Modules.Check as ModuleCheck
 import qualified Test.Modules.Repl as ModuleRepl
 import qualified Test.Modules.Test as ModuleTest
@@ -64,7 +63,6 @@ main =
     Syntax.spec
     Prettier.spec
     Resolver.spec
-    Repl.spec
     Unify.spec
     Usages.spec
     TypeError.spec

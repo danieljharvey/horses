@@ -397,7 +397,6 @@ test-suite mimsa-test
       Test.Codegen.Shared
       Test.Data.Prelude
       Test.Data.Project
-      Test.Interpreter.Repl
       Test.Modules.Check
       Test.Modules.Repl
       Test.Modules.Test

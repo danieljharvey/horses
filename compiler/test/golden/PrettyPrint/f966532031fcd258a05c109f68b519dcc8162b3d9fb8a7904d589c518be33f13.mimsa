@@ -1,2 +1,0 @@
-runParser (fmapParser (\a ->
-  a ++ a) anyChar) "dog"

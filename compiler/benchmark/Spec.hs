@@ -10,11 +10,10 @@ import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Compile as Actions
-import qualified Language.Mimsa.Actions.Evaluate as Actions
+import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
-import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -44,8 +43,8 @@ compileThing :: Text -> Project Annotation
 compileThing input =
   let action = do
         let expr = unsafeParseExpr input $> mempty
-        (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-        Actions.compileStoreExpression Typescript storeExpr
+        (_, _, newModule) <- Actions.evaluateModule expr mempty
+        Actions.compileModule Typescript newModule
    in case Actions.run stdlib action of
         Right (proj, _, _) -> proj
         Left e -> error (show e)
@@ -55,7 +54,7 @@ evaluateThing :: Text -> Expr Name Annotation
 evaluateThing input =
   let action = do
         let expr = unsafeParseExpr input $> mempty
-        (_, result, _, _, _) <- Actions.evaluate (prettyPrint expr) expr
+        (_, result, _) <- Actions.evaluateModule expr mempty
         pure result
    in case Actions.run stdlib action of
         Right (_, _, res) -> res
@@ -72,26 +71,26 @@ main =
       bgroup
         "compilation"
         [ bench "compile either fmap test" $
-            whnf compileThing "either.fmap (\\a -> a + 1) (Right 100)"
+            whnf compileThing "Either.fmap (\\a -> a + 1) (Either.Right 100)"
         ],
       bgroup
         "evaluate"
         [ bench "evaluate big looping thing" $
             whnf evaluateThing "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000",
           bench "evaluate parsing" $
-            whnf evaluateThing "let pA = parser.char \"a\"; let pB = parser.char \"b\"; let p = parser.many (parser.alt pA pB); parser.run p \"aababaa\"",
+            whnf evaluateThing "let pA = Parser.char \"a\"; let pB = Parser.char \"b\"; let p = Parser.many (Parser.alt pA pB); Parser.run p \"aababaa\"",
           bench "evaluate parsing 2" $
             let input = T.replicate 1000 ",d"
              in whnf
                   evaluateThing
                   ( mconcat
-                      [ "let lexeme p = parser.left p parser.space0; ",
-                        "let bracketL = lexeme (parser.char \"[\"); ",
-                        "let bracketR = lexeme (parser.char \"]\"); ",
-                        "let comma = lexeme (parser.char \",\"); ",
-                        "let inner = lexeme (parser.char \"d\"); ",
-                        "let bigP = parser.right bracketL (parser.left (parser.sepBy comma inner) bracketR); ",
-                        "parser.run bigP \"[d" <> input <> "]\""
+                      [ "let lexeme p = Parser.left p Parser.space0; ",
+                        "let bracketL = lexeme (Parser.char \"[\"); ",
+                        "let bracketR = lexeme (Parser.char \"]\"); ",
+                        "let comma = lexeme (Parser.char \",\"); ",
+                        "let inner = lexeme (Parser.char \"d\"); ",
+                        "let bigP = Parser.right bracketL (Parser.left (Parser.sepBy comma inner) bracketR); ",
+                        "Parser.run bigP \"[d" <> input <> "]\""
                       ]
                   )
         ]

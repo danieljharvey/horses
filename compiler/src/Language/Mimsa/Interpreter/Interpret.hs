@@ -79,9 +79,6 @@ interpretExpr' (MyApp ann fn a) =
   interpretApp interpretExpr ann fn a
 interpretExpr' (MyRecordAccess ann expr name) =
   interpretRecordAccess interpretExpr ann expr name
-interpretExpr' (MyDefineInfix _ op fn expr) = do
-  intFn <- interpretExpr fn
-  addOperator op intFn (interpretExpr expr)
 interpretExpr' (MyData _ _ expr) = interpretExpr expr
 interpretExpr' (MyPatternMatch _ matchExpr patterns) = do
   interpretPatternMatch interpretExpr matchExpr patterns

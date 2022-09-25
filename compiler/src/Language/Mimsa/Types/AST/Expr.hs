@@ -24,7 +24,6 @@ import GHC.Generics (Generic)
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.DataType (DataType)
 import Language.Mimsa.Types.AST.Identifier
-import Language.Mimsa.Types.AST.InfixOp
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
 import Language.Mimsa.Types.AST.Pattern
@@ -118,13 +117,6 @@ data Expr var ann
   | MyArray
       { expAnn :: ann,
         expArrayItems :: [Expr var ann]
-      }
-  | -- | infix, func expr, expr
-    MyDefineInfix
-      { expAnn :: ann,
-        expInfixOp :: InfixOp,
-        expInfixFunc :: Expr var ann,
-        expBody :: Expr var ann
       }
   | -- | tyName, tyArgs, Map constructor args, body
     MyData
@@ -226,21 +218,6 @@ prettyLetPattern pat expr body =
 
 newlineOrIn :: Doc style
 newlineOrIn = flatAlt (";" <> line <> line) " in "
-
-prettyDefineInfix ::
-  InfixOp ->
-  Expr Name ann ->
-  Expr Name ann ->
-  Doc style
-prettyDefineInfix infixOp bindExpr expr =
-  group
-    ( "infix"
-        <+> prettyDoc infixOp
-        <+> "="
-        <+> prettyDoc bindExpr
-          <> newlineOrIn
-          <> prettyDoc expr
-    )
 
 prettyPair :: Expr Name ann -> Expr Name ann -> Doc style
 prettyPair a b =
@@ -401,8 +378,6 @@ instance Printer (Expr Name ann) where
   prettyDoc (MyRecord _ map') =
     prettyRecord map'
   prettyDoc (MyArray _ items) = prettyArray items
-  prettyDoc (MyDefineInfix _ infixOp bindExpr expr) =
-    prettyDefineInfix infixOp bindExpr expr
   prettyDoc (MyData _ dataType expr) =
     prettyDataType dataType expr
   prettyDoc (MyConstructor _ (Just modName) name) =

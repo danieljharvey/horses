@@ -1,6 +1,0 @@
-\a ->
-  match Nothing with 
-      (Nothing) -> 
-        a
-    | _ -> 
-        a

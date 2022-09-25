@@ -1,5 +1,0 @@
-type Result e a 
-  = Failure e
-  | Success a;
-
-"oh no"

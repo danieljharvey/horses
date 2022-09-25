@@ -47,12 +47,6 @@ spec =
         renderWithWidth 50 doc `shouldBe` "let (a, b) = ((1, 2)) in a"
         renderWithWidth 5 doc `shouldBe` "let (a, b) =\n  ((1,\n    2));\n\na"
 
-      it "Line between infix bindings" $ do
-        let expr' = unsafeParseExpr "infix >> = compose in a"
-            doc = prettyDoc expr'
-        renderWithWidth 50 doc `shouldBe` "infix >> = compose in a"
-        renderWithWidth 5 doc `shouldBe` "infix >> = compose;\n\na"
-
       it "Spreads long pairs across two lines" $ do
         let expr' = unsafeParseExpr "(\"horseshorseshorses1\",\"horseshorseshorses2\")"
             doc = prettyDoc expr'

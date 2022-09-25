@@ -26,7 +26,6 @@ simpleExpr (MyPair _ a b) = MyPair mempty (simpleExpr a) (simpleExpr b)
 simpleExpr (MyRecord _ as) = MyRecord mempty (simpleExpr <$> as)
 simpleExpr (MyRecordAccess _ expr name) = MyRecordAccess mempty (simpleExpr expr) name
 simpleExpr (MyArray _ as) = MyArray mempty (simpleExpr <$> as)
-simpleExpr (MyDefineInfix _ op expr body) = MyDefineInfix mempty op (simpleExpr expr) (simpleExpr body)
 simpleExpr (MyData _ dt expr) = MyData mempty dt (simpleExpr expr)
 simpleExpr (MyPatternMatch _ expr pats) =
   MyPatternMatch mempty (simpleExpr expr) (bimap simplePattern simpleExpr <$> pats)

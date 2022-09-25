@@ -226,8 +226,6 @@ markImports (MyRecordAccess ann recExpr name) =
   MyRecordAccess ann <$> markImports recExpr <*> pure name
 markImports (MyArray ann as) =
   MyArray ann <$> traverse markImports as
-markImports (MyDefineInfix ann op fn expr) =
-  MyDefineInfix ann op <$> markImports fn <*> markImports expr
 markImports (MyData ann dt expr) =
   MyData ann dt <$> markImports expr
 markImports (MyConstructor ann modName const') =

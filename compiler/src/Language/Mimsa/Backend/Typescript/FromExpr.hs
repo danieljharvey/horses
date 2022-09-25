@@ -361,7 +361,3 @@ toTSBody expr' =
       pure $ TSBody [] (TSArray tsAs)
     (MyTypedHole _ name) ->
       throwError (OutputingTypedHole name)
-    (MyDefineInfix _ op fn body) -> do
-      fnExpr <- toTSExpr fn
-      addInfix op fnExpr
-      toTSBody body
