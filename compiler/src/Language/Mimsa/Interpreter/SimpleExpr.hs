@@ -18,7 +18,7 @@ simpleExpr (MyAnnotation _ mt expr) =
 simpleExpr (MyLet _ ident expr body) =
   MyLet mempty (ident $> mempty) (simpleExpr expr) (simpleExpr body)
 simpleExpr (MyInfix _ op a b) = MyInfix mempty op (simpleExpr a) (simpleExpr b)
-simpleExpr (MyLambda _ ident body) = MyLambda mempty (ident $> mempty) (simpleExpr body)
+simpleExpr (MyLambda _ ident body) = MyLambda mempty (ident $> mempty) (simpleExpr body )
 simpleExpr (MyApp _ fn val) = MyApp mempty (simpleExpr fn) (simpleExpr val)
 simpleExpr (MyIf _ predExpr thenExpr elseExpr) =
   MyIf mempty (simpleExpr predExpr) (simpleExpr thenExpr) (simpleExpr elseExpr)

@@ -1,7 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Language.Mimsa.Actions.Interpret (interpreter) where
 
+import Language.Mimsa.Interpreter.ToHOAS
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)
@@ -16,9 +18,14 @@ import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Interpret
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Store
+import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
+
+-- cheeky orphaned instance
+instance (Eq ann, Eq var) => Eq (HOAS.HOASExpr var ann) where
+  a == b = fromHOAS a == fromHOAS b
 
 -- get all the deps
 -- change var to InterpretVar to point at imports
@@ -37,6 +44,8 @@ interpreter se = do
   -- what is this rootExprHash now we've messed with everything
   newRootExprHash <- case M.lookup (getStoreExpressionHash se) allOptimised of
     Just re -> pure (getStoreExpressionHash re)
+  case M.lookup (getStoreExpressionHash se) allInterpreted of
+    Just re -> pure (bimap fst edAnnotation (fromHOAS re))
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
   -- interpret everything
@@ -70,11 +79,13 @@ interpretAll inputStoreExpressions = do
               Actions.numberStoreExpression expr (storeBindings se)
 
             -- tag each `var` with it's location if it is an import
-            let withImports = addEmptyStackFrames numberedSe
+            let exprWithImports = addEmptyStackFrames numberedSe
             -- get exprhashes for any infixOps we need
             let infixHashes = storeInfixes se
             -- interpret se
-            interpreted <- liftEither (first InterpreterErr (interpret flatDeps infixHashes withImports))
+            interpreted <- liftEither (first InterpreterErr
+              (interpret flatDeps infixHashes (toHOAS exprWithImports)))
+
             -- we need to accumulate all deps
             -- as we go, so pass them up too
             let allDeps = flatDeps <> M.singleton (getStoreExpressionHash se) interpreted

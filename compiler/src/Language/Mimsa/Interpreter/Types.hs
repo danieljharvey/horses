@@ -12,6 +12,7 @@ where
 import Control.Monad.Reader
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
+import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
@@ -24,15 +25,15 @@ type InterpreterM var ann a =
     a
 
 data InterpretReaderEnv var ann = InterpretReaderEnv
-  { ireStack :: StackFrame var ann,
+  {
     ireGlobals :: Map ExprHash (InterpretExpr var ann),
     ireInfixes :: Map InfixOp ExprHash
   }
 
-type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
+type InterpretExpr var ann = HOAS.HOASExpr (var, Unique) (ExprData ann)
 
 type InterpretPattern var ann =
-  Pattern (var, Unique) (ExprData var ann)
+  Pattern (var, Unique) (ExprData ann)
 
 type InterpretFn var ann =
   InterpretExpr var ann ->

@@ -11,6 +11,15 @@ import qualified Test.Backend.ESModulesJS
 import qualified Test.Backend.RunNode
 import qualified Test.Backend.Typescript
 import qualified Test.Backend.Wasm
+import qualified Test.Interpreter.ToHOAS
+import qualified Test.Actions.BindModule
+import qualified Test.Actions.Build
+import qualified Test.Actions.Compile
+import qualified Test.Actions.Evaluate
+import qualified Test.Backend.ESModulesJS
+import qualified Test.Backend.RunNode
+import qualified Test.Backend.Typescript
+import qualified Test.Backend.Wasm
 import Test.Hspec
 import qualified Test.Modules.Check
 import qualified Test.Modules.Repl
@@ -80,3 +89,45 @@ main =
     Test.Typechecker.Substitutions.spec
     Test.Typechecker.Typecheck.spec
     Test.Typechecker.Unify.spec
+    Syntax.spec
+    Prettier.spec
+    Unify.spec
+    Serialisation.spec
+    NormaliseType.spec
+    MonoTypeParser.spec
+    BindModule.spec
+    Compile.spec
+    Evaluate.spec
+    Stdlib.spec
+    Exhaustiveness.spec
+    Pattern.spec
+    Typecheck.spec
+    RunNode.spec
+    DataTypes.spec
+    Elaborate.spec
+    SourceSpan.spec
+    Typescript.spec
+    ESModulesJS.spec
+    Substitutions.spec
+    ScopeTypeVar.spec
+    Properties.spec
+    FindUnused.spec
+    FlattenLets.spec
+    FloatDown.spec
+    FloatUp.spec
+    Inliner.spec
+    FindUses.spec
+    BetaReduce.spec
+    EtaReduce.spec
+    Build.spec
+    SimplifyPatterns.spec
+    NumberVars.spec
+    ModuleCheck.spec
+    RenderErrors.spec
+    ModuleRepl.spec
+    ModuleToStoreExprs.spec
+    ModuleTest.spec
+    ModuleUses.spec
+    ParseDataTypes.spec
+    Wasm.spec
+    ToHOAS.spec

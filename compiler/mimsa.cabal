@@ -75,11 +75,11 @@ library
       Language.Mimsa.Interpreter.If
       Language.Mimsa.Interpreter.Infix
       Language.Mimsa.Interpreter.Interpret
-      Language.Mimsa.Interpreter.Let
       Language.Mimsa.Interpreter.Monad
       Language.Mimsa.Interpreter.PatternMatch
       Language.Mimsa.Interpreter.RecordAccess
       Language.Mimsa.Interpreter.SimpleExpr
+      Language.Mimsa.Interpreter.ToHOAS
       Language.Mimsa.Interpreter.Types
       Language.Mimsa.Logging
       Language.Mimsa.Modules.Check
@@ -230,6 +230,7 @@ test-suite mimsa-test
       Test.Codegen.Shared
       Test.Data.Prelude
       Test.Data.Project
+      Test.Interpreter.ToHOAS
       Test.Modules.Check
       Test.Modules.Repl
       Test.Modules.Test
