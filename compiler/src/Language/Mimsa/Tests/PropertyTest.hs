@@ -100,7 +100,7 @@ runPropertyTest project pt = do
         toMonadError $
           traverse
             ( \(sample, rExpr) -> do
-                let sampleStoreExpr = se {storeExpression = rExpr}
+                let sampleStoreExpr = setStoreExpression se rExpr
                 (_, _, result) <-
                   toMonadError
                     ( Actions.run

@@ -24,7 +24,7 @@ resolveDataTypes ::
 resolveDataTypes store' storeExpr = do
   exprs <-
     traverse
-      (lookupExprHash store')
+      (lookupExprHashInStore store')
       (M.elems (storeTypeBindings storeExpr))
   pure (createTypeMap exprs)
 

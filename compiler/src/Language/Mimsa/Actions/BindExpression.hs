@@ -31,7 +31,7 @@ bindExpression expr name input = do
   resolvedExpr <- case Actions.findExistingBinding name project of
     -- there is an existing one, use its deps when evaluating
     Just se ->
-      let newSe = se {storeExpression = expr}
+      let newSe = setStoreExpression se expr
        in Actions.checkStoreExpression input project newSe
     -- no existing binding, resolve as usual
     Nothing ->

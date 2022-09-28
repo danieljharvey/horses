@@ -9,6 +9,7 @@ module Language.Mimsa.Actions.Typecheck
   )
 where
 
+import Language.Mimsa.Store.Helpers
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
@@ -208,4 +209,4 @@ annotateStoreExpressionWithTypes storeExpr = do
   -- swap (Name, Unique) back for Names
   let typedStoreExpr = first fst (reTypedExpression resolvedExpr)
 
-  pure (storeExpr {storeExpression = typedStoreExpr})
+  pure (setStoreExpression storeExpr typedStoreExpr)

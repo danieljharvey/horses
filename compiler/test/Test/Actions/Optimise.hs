@@ -54,12 +54,12 @@ spec = do
             Actions.optimise useIdPointlessly
       let (prj, _actions, resolved) =
             fromRight $ Actions.run testStdlib action
-      let (StoreExpression newExpr bindings _ _ _) = reStoreExpression resolved
+      let newSe = reStoreExpression resolved
 
       -- updated expr
-      newExpr `shouldBe` trueExpr
+      storeExpression newSe `shouldBe` trueExpr
       -- new store expression has no deps
-      M.null bindings `shouldBe` True
+      M.null (storeBindings newSe) `shouldBe` True
       -- stored new expression
       additionalStoreItems testStdlib prj `shouldBe` 1
 
@@ -69,12 +69,12 @@ spec = do
             Actions.optimiseByName "useId"
       let (prj, _actions, resolved) =
             fromRight $ Actions.run testStdlib action
-      let (StoreExpression newExpr bindings _ _ _) = reStoreExpression resolved
+      let newSe = reStoreExpression resolved
 
       -- updated expr
-      newExpr `shouldBe` optimisedLambda
+      storeExpression newSe `shouldBe` optimisedLambda
       -- new store expression has no deps
-      M.null bindings `shouldBe` True
+      M.null (storeBindings newSe) `shouldBe` True
       -- stored new expression
       additionalStoreItems testStdlib prj `shouldBe` 2
       -- there are two versions of binding

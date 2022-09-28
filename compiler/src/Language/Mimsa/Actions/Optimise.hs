@@ -175,10 +175,12 @@ optimiseAll inputStoreExpressions = do
         let swaps = getStoreExpressionHash <$> depMap
         -- use the optimised deps passed in
         let newSe =
-              optimisedSe
-                { storeBindings = updateBindings swaps (storeBindings optimisedSe),
-                  storeTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
-                }
+              case optimisedSe of
+                ose@(StoreExpression {}) -> ose
+                  { storeBindings = updateBindings swaps (storeBindings optimisedSe),
+                    storeTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
+                  }
+                sd -> sd
         -- store it
         Actions.appendStoreExpression newSe
         pure newSe

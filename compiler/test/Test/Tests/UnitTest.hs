@@ -30,10 +30,12 @@ incrementIntH = getHashOfName testStdlib "incrementInt"
 
 testStoreExpr :: StoreExpression Annotation
 testStoreExpr =
-  ( mkStoreExpression
-      testExpr
-  )
-    { storeBindings =
+  StoreExpression {
+  storeExpression =  testExpr,
+    storeTypeBindings = mempty,
+    storeTypes = mempty,
+    storeInfixes = mempty,
+     storeBindings =
         M.singleton (Nothing, "incrementInt") incrementIntH
     }
 
