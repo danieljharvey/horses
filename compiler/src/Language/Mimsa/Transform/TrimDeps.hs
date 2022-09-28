@@ -16,9 +16,10 @@ trimDeps se newExpr =
         M.filterWithKey
           (\(modName, k) _ -> memberInUses k modName vars)
           (storeBindings se)
-   in StoreExpression {
-      storeExpression = newExpr, storeBindings = newBindings,
-      storeTypeBindings = storeTypeBindings se,
-      storeTypes = storeTypes se,
-      storeInfixes = storeInfixes se
-                      }
+   in StoreExpression
+        { storeExpression = newExpr,
+          storeBindings = newBindings,
+          storeTypeBindings = storeTypeBindings se,
+          storeTypes = storeTypes se,
+          storeInfixes = storeInfixes se
+        }

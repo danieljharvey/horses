@@ -16,16 +16,18 @@ import Language.Mimsa.Types.Store.ExprHash
 
 -- a storeExpression contains the AST Expr
 -- and a map of names to hashes with further functions inside
-data StoreExpression ann = StoreExpression
-  { storeExpression :: Expr Name ann,
-    storeBindings :: Map (Maybe ModuleName, Name) ExprHash,
-    storeTypeBindings :: Map (Maybe ModuleName, TyCon) ExprHash,
-    storeInfixes :: Map InfixOp ExprHash,
-    storeTypes :: Map (Maybe ModuleName, TypeName) ExprHash
-  } | StoreDataType {
-      storeDataType :: DataType,
-      storeTypes :: Map (Maybe ModuleName, TypeName) ExprHash
-                    }
+data StoreExpression ann
+  = StoreExpression
+      { storeExpression :: Expr Name ann,
+        storeBindings :: Map (Maybe ModuleName, Name) ExprHash,
+        storeTypeBindings :: Map (Maybe ModuleName, TyCon) ExprHash,
+        storeInfixes :: Map InfixOp ExprHash,
+        storeTypes :: Map (Maybe ModuleName, TypeName) ExprHash
+      }
+  | StoreDataType
+      { storeDataType :: DataType,
+        storeTypes :: Map (Maybe ModuleName, TypeName) ExprHash
+      }
   deriving stock
     ( Eq,
       Ord,

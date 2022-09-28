@@ -6,7 +6,7 @@ module Language.Mimsa.Store
   )
 where
 
+import Language.Mimsa.Store.Helpers
 import Language.Mimsa.Store.ResolvedDeps
 import Language.Mimsa.Store.Resolver
 import Language.Mimsa.Store.Storage
-import Language.Mimsa.Store.Helpers

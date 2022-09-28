@@ -22,13 +22,12 @@ spec = do
       updateExprHash storeExpr (ExprHash "1") (ExprHash "2") `shouldBe` mempty
     it "Match is swapped" $ do
       let storeExpr =
-             StoreExpression
-                { storeExpression =  bool True,
+            StoreExpression
+              { storeExpression = bool True,
                 storeTypeBindings = mempty,
                 storeTypes = mempty,
                 storeInfixes = mempty,
-
-               storeBindings =
+                storeBindings =
                   M.singleton (Nothing, "dog") (ExprHash "1")
               }
       updateExprHash storeExpr (ExprHash "1") (ExprHash "2")

@@ -9,7 +9,6 @@ module Language.Mimsa.Actions.Typecheck
   )
 where
 
-import Language.Mimsa.Store.Helpers
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
