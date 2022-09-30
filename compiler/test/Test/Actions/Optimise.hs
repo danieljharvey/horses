@@ -57,7 +57,7 @@ spec = do
       let newSe = reStoreExpression resolved
 
       -- updated expr
-      storeExpression newSe `shouldBe` trueExpr
+      storeExpression newSe `shouldBe` Just trueExpr
       -- new store expression has no deps
       M.null (storeBindings newSe) `shouldBe` True
       -- stored new expression
@@ -72,7 +72,7 @@ spec = do
       let newSe = reStoreExpression resolved
 
       -- updated expr
-      storeExpression newSe `shouldBe` optimisedLambda
+      storeExpression newSe `shouldBe` Just optimisedLambda
       -- new store expression has no deps
       M.null (storeBindings newSe) `shouldBe` True
       -- stored new expression

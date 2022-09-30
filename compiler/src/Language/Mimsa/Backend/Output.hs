@@ -102,7 +102,7 @@ outputStoreExpression be dataTypes store mt se = do
       directTypeDeps = renderDirectTypeImport be <$> M.toList requiredTypeImports
 
   (func, stdlibFuncs) <-
-    renderExpression be dataTypes infixNames (storeExpression se)
+    renderExpression be dataTypes infixNames se
 
   let stdlib = stdlibImport be stdlibFuncs
       typeComment = renderTypeSignature' mt
@@ -146,9 +146,9 @@ renderExpression ::
   Backend ->
   ResolvedTypeDeps ->
   Map InfixOp TSName ->
-  Expr Name MonoType ->
+  StoreExpression MonoType ->
   BackendM MonoType (Text, [TS.TSImport])
-renderExpression be dataTypes infixes expr = do
+renderExpression be dataTypes infixes (StoreExpression expr _ _ _ _) = do
   let readerState =
         TS.TSReaderState
           (makeTypeDepMap dataTypes)
@@ -159,6 +159,7 @@ renderExpression be dataTypes infixes expr = do
           Typescript -> pure (TS.printModule ts, stdlibFuncs)
           ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)
         Left e -> throwError e
+renderExpression _ _ _ _dt = error "render dt"
 
 -- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName

@@ -34,6 +34,7 @@ module Language.Mimsa.Project.Helpers
     removeBinding,
   )
 where
+import Language.Mimsa.Types.AST.DataType
 
 import Data.Bifunctor
 import Data.Coerce
@@ -43,7 +44,6 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
@@ -79,29 +79,33 @@ fromStoreExpression storeExpr exprHash =
   mempty {prjStore = Store $ M.singleton exprHash storeExpr}
 
 fromItem :: Name -> StoreExpression ann -> ExprHash -> Project ann
-fromItem name expr hash =
+fromItem name se hash =
   mempty
-    { prjStore = Store $ M.singleton hash expr,
+    { prjStore = Store $ M.singleton hash se,
       prjBindings = VersionedMap $ M.singleton name (pure hash),
       prjTypeBindings = VersionedMap $ M.fromList typeList
     }
   where
     typeConsUsed =
-      extractTypeDecl (storeExpression expr)
+      case se of
+        (StoreDataType (DataType _ _ constructors) _) -> M.keys constructors
+        _ -> mempty
     typeList =
-      (,pure hash) <$> S.toList typeConsUsed
+      (,pure hash) <$> typeConsUsed
 
 fromType :: StoreExpression ann -> ExprHash -> Project ann
-fromType expr hash =
+fromType se hash =
   mempty
-    { prjStore = Store $ M.singleton hash expr,
+    { prjStore = Store $ M.singleton hash se,
       prjTypeBindings = VersionedMap $ M.fromList typeList
     }
   where
     typeConsUsed =
-      extractTypeDecl (storeExpression expr)
+      case se of
+        (StoreDataType (DataType _ _ constructors) _) -> M.keys constructors
+        _ -> mempty
     typeList =
-      (,pure hash) <$> S.toList typeConsUsed
+      (,pure hash) <$> typeConsUsed
 
 fromModule :: ModuleName -> Module ann -> Project ann
 fromModule modName newModule =

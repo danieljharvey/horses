@@ -69,7 +69,6 @@ complexParser =
     <|> try recordAccessParser
     <|> recordParser
     <|> lambdaParser
-    <|> typeParser
     <|> patternMatchParser
     <|> typedHoleParser
 
@@ -175,7 +174,6 @@ argParser =
           <|> try recordAccessParser
           <|> recordParser
           <|> lambdaParser
-          <|> typeParser
           <|> typedHoleParser
           <|> varParser
           <|> constructorParser
@@ -255,25 +253,6 @@ pairParser = addLocation $ do
   pure (MyPair mempty exprA exprB)
 
 -----
-
-typeParser :: Parser ParserExpr
-typeParser =
-  addLocation $
-    MyData mempty
-      <$> typeDeclParser
-      <*> (try inExpr <|> try inNewLineExpr)
-
-inNewLineExpr :: Parser ParserExpr
-inNewLineExpr = do
-  _ <- myString ";"
-  expressionParser
-
-inExpr :: Parser ParserExpr
-inExpr = do
-  _ <- myString "in"
-  expressionParser
-
-----------
 
 -- we don't allow super complicate exprs to be used around infix
 -- just because it makes awful code and it's slow to parse

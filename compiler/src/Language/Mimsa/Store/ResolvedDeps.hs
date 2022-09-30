@@ -9,9 +9,6 @@ where
 import Data.Either (partitionEithers)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import Data.Maybe
-import qualified Data.Set as S
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -57,9 +54,8 @@ resolveInfixDeps (Store items) infixes =
 extractDataType ::
   StoreExpression ann ->
   Maybe DataType
-extractDataType se =
-  let types = extractDataTypes (storeExpression se)
-   in listToMaybe . S.toList $ types
+extractDataType (StoreDataType dt _) = Just dt
+extractDataType _ = Nothing
 
 resolveTypeDeps ::
   Store ann ->

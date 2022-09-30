@@ -1,7 +1,6 @@
 module Language.Mimsa.Store.ExtractTypes
   ( extractTypes,
-    extractTypeDecl,
-    extractDataTypes,
+
     extractNamedTypeVars,
     extractTypenames,
   )
@@ -14,7 +13,7 @@ import qualified Data.Set as S
 import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Types.AST
-  ( DataType (DataType),
+  (
     Expr (..),
     Identifier (..),
     Pattern (..),
@@ -46,10 +45,6 @@ extractTypes_ (MyPair _ a b) = extractTypes_ a <> extractTypes_ b
 extractTypes_ (MyRecord _ map') = foldMap extractTypes_ map'
 extractTypes_ (MyRecordAccess _ a _) = extractTypes_ a
 extractTypes_ (MyArray _ items) = foldMap extractTypes_ items
-extractTypes_ (MyData _ dt a) =
-  S.difference
-    (extractTypes_ a)
-    (extractLocalTypeDeclarations dt)
 extractTypes_ (MyConstructor _ _ t) = S.singleton t
 extractTypes_ (MyTypedHole _ _) = mempty
 extractTypes_ (MyPatternMatch _ expr patterns) =
@@ -74,48 +69,7 @@ extractFromIdentifier _ = mempty
 filterBuiltIns :: Set TyCon -> Set TyCon
 filterBuiltIns = S.filter (\c -> not $ M.member (coerce c) builtInTypes)
 
--- get all the names of constructors (type and data) declared in the datatype
-extractLocalTypeDeclarations :: DataType -> Set TyCon
-extractLocalTypeDeclarations (DataType cName _ cons) =
-  S.singleton (coerce cName) -- TODO: this is the type name and should not be included but also YOLO
-    <> mconcat (S.singleton . fst <$> M.toList cons)
-
 -----------
-
-extractTypeDecl :: Expr var ann -> Set TyCon
-extractTypeDecl = withDataTypes extractLocalTypeDeclarations
-
-extractDataTypes :: Expr var ann -> Set DataType
-extractDataTypes = withDataTypes S.singleton
-
-withDataTypes :: (Monoid b) => (DataType -> b) -> Expr var ann -> b
-withDataTypes _ MyVar {} = mempty
-withDataTypes f (MyAnnotation _ _ expr) = withDataTypes f expr
-withDataTypes f (MyIf _ a b c) = withDataTypes f a <> withDataTypes f b <> withDataTypes f c
-withDataTypes f (MyLet _ _ a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyInfix _ _ a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyLambda _ _ a) = withDataTypes f a
-withDataTypes f (MyApp _ a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes _ (MyLiteral _ _) = mempty
-withDataTypes f (MyLetPattern _ _ a b) =
-  withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyPair _ a b) = withDataTypes f a <> withDataTypes f b
-withDataTypes f (MyRecord _ map') = foldMap (withDataTypes f) map'
-withDataTypes f (MyRecordAccess _ a _) = withDataTypes f a
-withDataTypes f (MyArray _ map') = foldMap (withDataTypes f) map'
-withDataTypes f (MyData _ dt a) =
-  withDataTypes f a
-    <> f dt
-withDataTypes _ MyConstructor {} = mempty
-withDataTypes _ (MyTypedHole _ _) = mempty
-withDataTypes f (MyPatternMatch _ expr patterns) =
-  withDataTypes f expr
-    <> mconcat (withDataTypes f . snd <$> patterns)
-    <> mconcat (extractFrom f . fst <$> patterns)
-  where
-    extractFrom _pat = mempty
-
------
 
 extractTypenames :: Type ann -> Set TypeName
 extractTypenames (MTConstructor _ _ typeName) =

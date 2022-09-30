@@ -45,9 +45,10 @@ type NumberedExpr var ann = Expr (var, Unique) ann
 
 addNumbersToStoreExpression ::
   (Show ann) =>
-  StoreExpression ann ->
+  Expr Name ann ->
+  Map (Maybe ModuleName, Name) ExprHash ->
   Either (TypeErrorF Name ann) (NumberedExpr Name ann)
-addNumbersToStoreExpression storeExpr =
+addNumbersToStoreExpression expr bindings =
   let action = do
         -- add dependencies to scope
         let varsFromDeps =
@@ -55,11 +56,11 @@ addNumbersToStoreExpression storeExpr =
                 ( \((modName, name), hash) ->
                     M.singleton (name, modName) (Dependency hash)
                 )
-                  <$> M.toList (storeBindings storeExpr)
+                  <$> M.toList bindings
         -- evaluate rest of expression using these
         withLambda
           varsFromDeps
-          (markImports (storeExpression storeExpr))
+          (markImports expr)
    in evalState
         ( runReaderT
             (runExceptT action)
@@ -226,8 +227,6 @@ markImports (MyRecordAccess ann recExpr name) =
   MyRecordAccess ann <$> markImports recExpr <*> pure name
 markImports (MyArray ann as) =
   MyArray ann <$> traverse markImports as
-markImports (MyData ann dt expr) =
-  MyData ann dt <$> markImports expr
 markImports (MyConstructor ann modName const') =
   pure (MyConstructor ann modName const')
 markImports (MyPatternMatch ann patExpr patterns) =

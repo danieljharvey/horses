@@ -22,7 +22,6 @@ module Server.Handlers
     writeStoreHandler,
     readModuleStoreHandler,
     writeModuleStoreHandler,
-    runTestsHandler,
   )
 where
 
@@ -49,14 +48,12 @@ import Language.Mimsa.Project.Usages
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
 import Language.Mimsa.Store.Persistence
-import Language.Mimsa.Tests.Test
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Tests
 import Servant
 import Server.Helpers
 import Server.Persistence
@@ -332,14 +329,3 @@ storeFromExprHashHandler mimsaEnv exprHash =
         (mimsaConfig mimsaEnv)
         UserError
         (recursiveLoadBoundExpressions (scRootPath cfg) mempty (S.singleton exprHash))
-
-runTestsHandler ::
-  MimsaEnvironment ->
-  Project Annotation ->
-  [Test] ->
-  Handler [TestResult Annotation]
-runTestsHandler mimsaEnv project tests = do
-  handleServerM
-    (mimsaConfig mimsaEnv)
-    InternalError
-    (traverse (runTests project) tests)

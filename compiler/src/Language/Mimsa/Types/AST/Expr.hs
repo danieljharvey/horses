@@ -22,7 +22,6 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Generics (Generic)
 import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST.DataType (DataType)
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
@@ -117,12 +116,6 @@ data Expr var ann
   | MyArray
       { expAnn :: ann,
         expArrayItems :: [Expr var ann]
-      }
-  | -- | tyName, tyArgs, Map constructor args, body
-    MyData
-      { expAnn :: ann,
-        expDataType :: DataType,
-        expBody :: Expr var ann
       }
   | -- | use a constructor by name
     MyConstructor
@@ -335,17 +328,6 @@ prettyPatternMatch sumExpr matches =
         <+> line
           <> indentMulti 4 (printSubExpr expr')
 
-prettyDataType ::
-  DataType ->
-  Expr Name ann ->
-  Doc style
-prettyDataType dt expr =
-  group
-    ( prettyDoc dt
-        <> newlineOrIn
-        <> prettyDoc expr
-    )
-
 -- just for debugging
 instance (Printer var) => Printer (Expr (var, a) ann) where
   prettyDoc = prettyDoc . first (mkName . prettyPrint . fst)
@@ -378,8 +360,6 @@ instance Printer (Expr Name ann) where
   prettyDoc (MyRecord _ map') =
     prettyRecord map'
   prettyDoc (MyArray _ items) = prettyArray items
-  prettyDoc (MyData _ dataType expr) =
-    prettyDataType dataType expr
   prettyDoc (MyConstructor _ (Just modName) name) =
     prettyDoc modName <> "." <> prettyDoc name
   prettyDoc (MyConstructor _ Nothing name) =

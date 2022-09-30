@@ -67,10 +67,6 @@ extractUses_ (MyPair _ a b) = extractUses_ a <> extractUses_ b
 extractUses_ (MyRecord _ map') = foldMap extractUses_ map'
 extractUses_ (MyRecordAccess _ a _) = extractUses_ a
 extractUses_ (MyArray _ map') = foldMap extractUses_ map'
-extractUses_ (MyData _ dt a) =
-  filterConstructorsIntroducedInDataType
-    dt
-    (extractUses_ a)
 extractUses_ (MyConstructor _ (Just modName) tyCon) =
   S.singleton (ENamespacedConstructor modName tyCon)
 extractUses_ (MyConstructor _ Nothing tyCon) =
@@ -87,16 +83,6 @@ extractUses_ (MyPatternMatch _ match patterns) =
             (extractUses expr)
       )
         <$> patterns
-
--- | if we've just introduced a datatype, no need to tell anybody else about
--- the constructors we used
-filterConstructorsIntroducedInDataType :: DataType -> Set Entity -> Set Entity
-filterConstructorsIntroducedInDataType (DataType _tn _ constructors) =
-  S.filter
-    ( \case
-        EConstructor tyCon -> S.notMember tyCon (M.keysSet constructors)
-        _ -> False
-    )
 
 -- for vars, remove any vars introduced in patterns in the expressions
 -- for everything else, keep both
@@ -159,7 +145,5 @@ extractDataTypeUses (DataType typeName _ constructors) =
     )
 
 dataTypeNames :: Expr Name ann -> Set Entity
-dataTypeNames (MyData _ (DataType tn _ _) rest) =
-  S.singleton (EType tn) <> dataTypeNames rest
 dataTypeNames (MyLet _ _ expr body) = dataTypeNames expr <> dataTypeNames body
 dataTypeNames _ = mempty

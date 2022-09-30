@@ -72,7 +72,7 @@ makeExpressionData se typedExpr input warnings =
       exprHash = getStoreExpressionHash se
    in ExpressionData
         (prettyPrint exprHash)
-        (prettyPrint (storeExpression se))
+        (prettyPrint se)
         (prettyPrint mt)
         (sanitiseBindings (storeBindings se))
         (sanitiseTypeBindings (storeTypeBindings se))
@@ -93,7 +93,7 @@ makeMinimalExpressionData se mt input =
   let exprHash = getStoreExpressionHash se
    in ExpressionData
         (prettyPrint exprHash)
-        (prettyPrint (storeExpression se))
+        (prettyPrint se)
         (prettyPrint mt)
         (sanitiseBindings (storeBindings se))
         (sanitiseTypeBindings (storeTypeBindings se))

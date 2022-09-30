@@ -21,5 +21,5 @@ lookupExprHashInStore store exprHash =
 
 setStoreExpression :: StoreExpression ann -> Expr Name annB -> StoreExpression annB
 setStoreExpression se@(StoreExpression {}) expr =
-  se {storeExpression = expr}
+  se {seExpr = expr}
 setStoreExpression (StoreDataType a b) _ = StoreDataType a b

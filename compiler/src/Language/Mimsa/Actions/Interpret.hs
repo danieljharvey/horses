@@ -48,21 +48,25 @@ interpretAll ::
   Map ExprHash (StoreExpression Annotation) ->
   Actions.ActionM (Map ExprHash (InterpretExpr Name Annotation))
 interpretAll inputStoreExpressions = do
-  let action depMap se = do
-        -- get us out of this Map of Maps situation
-        let flatDeps = squashify depMap
-        -- add numbers and mark imports
-        numberedSe <- liftEither (first (TypeErr (prettyPrint se)) (addNumbersToStoreExpression se))
-        -- tag each `var` with it's location if it is an import
-        let withImports = addEmptyStackFrames numberedSe
-        -- get exprhashes for any infixOps we need
-        let infixHashes = storeInfixes se
-        -- interpret se
-        interpreted <- liftEither (first InterpreterErr (interpret flatDeps infixHashes withImports))
-        -- we need to accumulate all deps
-        -- as we go, so pass them up too
-        let allDeps = flatDeps <> M.singleton (getStoreExpressionHash se) interpreted
-        pure allDeps
+  let action depMap se =
+        case storeExpression se of
+          Just expr -> do
+            -- get us out of this Map of Maps situation
+            let flatDeps = squashify depMap
+            -- add numbers and mark imports
+            numberedSe <- liftEither (first (TypeErr (prettyPrint se))
+                              (addNumbersToStoreExpression expr (storeBindings se)))
+            -- tag each `var` with it's location if it is an import
+            let withImports = addEmptyStackFrames numberedSe
+            -- get exprhashes for any infixOps we need
+            let infixHashes = storeInfixes se
+            -- interpret se
+            interpreted <- liftEither (first InterpreterErr (interpret flatDeps infixHashes withImports))
+            -- we need to accumulate all deps
+            -- as we go, so pass them up too
+            let allDeps = flatDeps <> M.singleton (getStoreExpressionHash se) interpreted
+            pure allDeps
+          Nothing -> pure mempty -- do nothing with DataType
 
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs

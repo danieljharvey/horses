@@ -17,9 +17,9 @@ trimDeps se newExpr =
           (\(modName, k) _ -> memberInUses k modName vars)
           (storeBindings se)
    in StoreExpression
-        { storeExpression = newExpr,
-          storeBindings = newBindings,
-          storeTypeBindings = storeTypeBindings se,
-          storeTypes = storeTypes se,
-          storeInfixes = storeInfixes se
+        { seExpr = newExpr,
+          seBindings = newBindings,
+          seTypeBindings = storeTypeBindings se,
+          seTypes = storeTypes se,
+          seInfixes = storeInfixes se
         }

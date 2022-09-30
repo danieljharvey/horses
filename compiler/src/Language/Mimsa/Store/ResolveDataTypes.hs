@@ -5,8 +5,6 @@ module Language.Mimsa.Store.ResolveDataTypes (resolveDataTypes, createTypeMap, s
 import Control.Monad.Except
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import qualified Data.Set as S
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Store.Helpers
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -33,12 +31,6 @@ createTypeMap dataTypes =
   mconcat (storeExprToDataTypes <$> dataTypes)
 
 storeExprToDataTypes :: StoreExpression ann -> Map (Maybe ModuleName, TypeName) DataType
-storeExprToDataTypes =
-  mconcat
-    . fmap withDt
-    . S.toList
-    . extractDataTypes
-    . storeExpression
-  where
-    withDt dt@(DataType tyName _ _) =
-      M.singleton (Nothing, tyName) dt
+storeExprToDataTypes (StoreDataType dt@(DataType tn _ _) _) =
+  M.singleton (Nothing,tn) dt
+storeExprToDataTypes _ = mempty

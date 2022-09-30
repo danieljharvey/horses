@@ -15,7 +15,6 @@ import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -118,18 +117,6 @@ toTSType' _ (MTRecordRow _ as rest) = do
   (tsItems, generics) <- toTSTypeRecord as
   (tsRest, genRest) <- toTSType rest
   pure (TSTypeAnd tsItems tsRest, generics <> genRest)
-
-toTSDataType :: DataType -> TypescriptM TSDataType
-toTSDataType (DataType name gens cons) = do
-  let toTSCons (tyCon, con) = do
-        tsTypes' <- traverse toTSType con
-        pure $ TSConstructor tyCon (fst <$> tsTypes')
-  tsTypes <- traverse toTSCons (M.toList cons)
-  pure $
-    TSDataType
-      name
-      (T.toTitle . prettyPrint <$> gens)
-      tsTypes
 
 toInfix ::
   Operator ->
@@ -350,10 +337,6 @@ toTSBody expr' =
     (MyRecordAccess _ recExpr name) -> do
       (TSBody as tsExpr) <- toTSBody recExpr
       pure $ TSBody as (TSRecordAccess (coerce name) tsExpr)
-    (MyData _ dt rest) -> do
-      tsDt <- toTSDataType dt
-      addDataType dt tsDt
-      toTSBody rest
     (MyInfix _ op a b) -> do
       TSBody [] <$> toInfix op a b
     (MyArray _ as) -> do

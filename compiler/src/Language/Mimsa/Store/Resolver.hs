@@ -1,7 +1,6 @@
 module Language.Mimsa.Store.Resolver
   ( extractVars,
     createStoreExpression,
-    createTypeStoreExpression,
   )
 where
 
@@ -86,13 +85,3 @@ findTypeBindings tBindings expr = do
         pure $ (,) (Nothing, cName) <$> maybeHash
   hashes <- traverse findTypeHash (S.toList . extractTypes $ expr)
   pure (M.fromList (catMaybes hashes))
-
--- given a data type declaration, create a StoreExpression for it
-createTypeStoreExpression ::
-  (Eq ann, Monoid ann) =>
-  TypeBindings ->
-  DataType ->
-  Either ResolverError (StoreExpression ann)
-createTypeStoreExpression tBindings dt =
-  let expr = MyData mempty dt (MyRecord mempty mempty)
-   in createStoreExpression mempty tBindings expr

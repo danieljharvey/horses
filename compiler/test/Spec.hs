@@ -33,11 +33,7 @@ import qualified Test.Project.TypeSearch as TypeSearch
 import qualified Test.Project.Usages as Usages
 import qualified Test.RenderErrors as RenderErrors
 import qualified Test.Serialisation as Serialisation
-import qualified Test.Store.Resolver as Resolver
-import qualified Test.Store.UpdateDeps as UpdateDeps
 import qualified Test.Tests.Properties as Properties
-import qualified Test.Tests.PropertyTest as PropertyTest
-import qualified Test.Tests.UnitTest as UnitTest
 import qualified Test.Transform.BetaReduce as BetaReduce
 import qualified Test.Transform.EtaReduce as EtaReduce
 import qualified Test.Transform.FindUnused as FindUnused
@@ -63,7 +59,6 @@ main =
   hspec $ do
     Syntax.spec
     Prettier.spec
-    Resolver.spec
     Unify.spec
     Usages.spec
     TypeError.spec
@@ -71,9 +66,6 @@ main =
     NormaliseType.spec
     TypeSearch.spec
     MonoTypeParser.spec
-    UnitTest.spec
-    PropertyTest.spec
-    UpdateDeps.spec
     BindType.spec
     BindExpression.spec
     BindModule.spec

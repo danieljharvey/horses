@@ -112,11 +112,8 @@ library
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
       Language.Mimsa.Store.Substitutor
-      Language.Mimsa.Store.UpdateDeps
       Language.Mimsa.Tests.Generate
       Language.Mimsa.Tests.Helpers
-      Language.Mimsa.Tests.PropertyTest
-      Language.Mimsa.Tests.Test
       Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Transform.BetaReduce
       Language.Mimsa.Transform.EtaReduce
@@ -414,11 +411,7 @@ test-suite mimsa-test
       Test.Project.Usages
       Test.RenderErrors
       Test.Serialisation
-      Test.Store.Resolver
-      Test.Store.UpdateDeps
       Test.Tests.Properties
-      Test.Tests.PropertyTest
-      Test.Tests.UnitTest
       Test.Transform.BetaReduce
       Test.Transform.EtaReduce
       Test.Transform.FindUnused

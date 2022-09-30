@@ -11,7 +11,6 @@ import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -19,7 +18,6 @@ import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
 joinLines :: [Text] -> Text
@@ -79,15 +77,6 @@ getHashOfName prj name =
   case lookupBindingName prj name of
     Just a -> a
     _ -> error "could not getHashOfName"
-
-createTestOrExplode ::
-  Project Annotation ->
-  StoreExpression Annotation ->
-  TestName ->
-  UnitTest
-createTestOrExplode prj sExpr name = case createUnitTest prj sExpr name of
-  Right a -> a
-  _ -> error "EXPLODE"
 
 getStoreExpression :: Project ann -> ExprHash -> StoreExpression ann
 getStoreExpression project exprHash' =

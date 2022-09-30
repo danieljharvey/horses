@@ -178,8 +178,8 @@ optimiseAll inputStoreExpressions = do
               case optimisedSe of
                 ose@(StoreExpression {}) ->
                   ose
-                    { storeBindings = updateBindings swaps (storeBindings optimisedSe),
-                      storeTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
+                    { seBindings = updateBindings swaps (storeBindings optimisedSe),
+                      seTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
                     }
                 sd -> sd
         -- store it

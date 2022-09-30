@@ -19,7 +19,6 @@ import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Test.Codegen.Shared
   ( dtEither,
@@ -48,7 +47,7 @@ startInferenceWithDataTypes dts expr expected = do
   let numberedExpr =
         fromRight $
           addNumbersToStoreExpression
-            (StoreExpression expr mempty mempty mempty mempty)
+            expr mempty
   let env = mempty { getDataTypes = mconcat ( dtToMap <$> dts ) }
   let elabbed =
         fmap (\(_, _, a, _) -> first fst a)
@@ -63,7 +62,7 @@ testInfer :: Expr Name Annotation -> Either TypeError MonoType
 testInfer expr = do
   numberedExpr <-
     addNumbersToStoreExpression
-      (StoreExpression expr mempty mempty mempty mempty)
+      expr mempty
   let elabbed =
         fmap (\(_, _, a, _) -> a)
           . typecheck mempty mempty

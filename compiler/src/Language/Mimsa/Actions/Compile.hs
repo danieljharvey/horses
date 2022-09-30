@@ -130,7 +130,9 @@ transpileModule be se = do
       first
         StoreErr
         (resolveTypeDeps (prjStore project) (storeTypeBindings se))
-  let monoType = getAnnotation (storeExpression se)
+  let monoType = case getAnnotation <$> storeExpression se of
+                   Just mt -> mt
+                   Nothing -> error "cant transpileModule with StoreDataType"
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
   let filename =
         Actions.SaveFilename $

@@ -39,7 +39,7 @@ itTypeChecks mt expr = do
   let numberedExpr =
         fromRight
           ( addNumbersToStoreExpression
-              (mkStoreExpression expr)
+              expr mempty
           )
   let elabbed =
         fmap (\(_, _, a, _) -> a)
