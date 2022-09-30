@@ -99,7 +99,6 @@ library
       Language.Mimsa.Project.SourceSpan
       Language.Mimsa.Project.Stdlib
       Language.Mimsa.Project.TypeSearch
-      Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
       Language.Mimsa.Store
       Language.Mimsa.Store.ExtractTypes
@@ -315,7 +314,6 @@ executable mimsa-server
       Server.Endpoints.Project.CreateProject
       Server.Endpoints.Project.Evaluate
       Server.Endpoints.Project.ListBindings
-      Server.Endpoints.Search
       Server.EnvVars
       Server.Errors.UserErrorResponse
       Server.Handlers
@@ -381,13 +379,10 @@ test-suite mimsa-test
   other-modules:
       Test.Actions.BindExpression
       Test.Actions.BindModule
-      Test.Actions.BindType
       Test.Actions.Build
       Test.Actions.Compile
       Test.Actions.Evaluate
       Test.Actions.Optimise
-      Test.Actions.RemoveBinding
-      Test.Actions.Typecheck
       Test.Backend.ESModulesJS
       Test.Backend.RunNode
       Test.Backend.Typescript
@@ -407,8 +402,6 @@ test-suite mimsa-test
       Test.Project.NormaliseType
       Test.Project.SourceSpan
       Test.Project.Stdlib
-      Test.Project.TypeSearch
-      Test.Project.Usages
       Test.RenderErrors
       Test.Serialisation
       Test.Tests.Properties
@@ -425,7 +418,6 @@ test-suite mimsa-test
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.NumberVars
-      Test.Typechecker.OutputTypes
       Test.Typechecker.ScopeTypeVar
       Test.Typechecker.Substitutions
       Test.Typechecker.Typecheck

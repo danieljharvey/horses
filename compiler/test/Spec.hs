@@ -5,13 +5,10 @@ where
 
 import qualified Test.Actions.BindExpression as BindExpression
 import qualified Test.Actions.BindModule as BindModule
-import qualified Test.Actions.BindType as BindType
 import qualified Test.Actions.Build as Build
 import qualified Test.Actions.Compile as Compile
 import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Actions.Optimise as Optimise
-import qualified Test.Actions.RemoveBinding as RemoveBinding
-import qualified Test.Actions.Typecheck as TypecheckAction
 import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Typescript as Typescript
@@ -29,8 +26,6 @@ import qualified Test.Prettier as Prettier
 import qualified Test.Project.NormaliseType as NormaliseType
 import qualified Test.Project.SourceSpan as SourceSpan
 import qualified Test.Project.Stdlib as Stdlib
-import qualified Test.Project.TypeSearch as TypeSearch
-import qualified Test.Project.Usages as Usages
 import qualified Test.RenderErrors as RenderErrors
 import qualified Test.Serialisation as Serialisation
 import qualified Test.Tests.Properties as Properties
@@ -47,7 +42,6 @@ import qualified Test.Typechecker.DataTypes as DataTypes
 import qualified Test.Typechecker.Elaborate as Elaborate
 import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.NumberVars as NumberVars
-import qualified Test.Typechecker.OutputTypes as OutputTypes
 import qualified Test.Typechecker.ScopeTypeVar as ScopeTypeVar
 import qualified Test.Typechecker.Substitutions as Substitutions
 import qualified Test.Typechecker.TypeError as TypeError
@@ -60,13 +54,10 @@ main =
     Syntax.spec
     Prettier.spec
     Unify.spec
-    Usages.spec
     TypeError.spec
     Serialisation.spec
     NormaliseType.spec
-    TypeSearch.spec
     MonoTypeParser.spec
-    BindType.spec
     BindExpression.spec
     BindModule.spec
     Compile.spec
@@ -74,13 +65,11 @@ main =
     Stdlib.spec
     Exhaustiveness.spec
     Pattern.spec
-    RemoveBinding.spec
     Typecheck.spec
     RunNode.spec
     DataTypes.spec
     Elaborate.spec
     SourceSpan.spec
-    OutputTypes.spec
     Typescript.spec
     ESModulesJS.spec
     Substitutions.spec
@@ -96,7 +85,6 @@ main =
     BetaReduce.spec
     EtaReduce.spec
     Build.spec
-    TypecheckAction.spec
     SimplifyPatterns.spec
     NumberVars.spec
     ModuleCheck.spec

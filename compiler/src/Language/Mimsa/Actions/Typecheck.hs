@@ -1,10 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Actions.Typecheck
   ( typecheckStoreExpression,
     typecheckExpression,
-    typeMapForProjectSearch,
     annotateStoreExpressionWithTypes,
   )
 where
@@ -18,7 +16,6 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
-import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -169,33 +166,6 @@ typecheckExpression project input expr = do
           (getCurrentTypeBindings $ prjTypeBindings project)
           expr
   typecheckStoreExpression storeExpr input
-
--- | get types for every top-level expression bound in the project
--- | 1. get all top-level exprhashes
--- | 2. turn them into store exprs
--- | 3. get their dependency StoreExpressions too
--- | 4. typecheck them
--- | 5. make them into a type map
-typeMapForProjectSearch :: Actions.ActionM (Map Name MonoType)
-typeMapForProjectSearch = do
-  project <- Actions.getProject
-  -- get all top level items
-  let bindings = getCurrentBindings . prjBindings $ project
-  -- fetch StoreExpressions for top-level bindings
-  storeExprs <- traverse Actions.lookupExpression (M.elems (getBindings bindings))
-  -- also fetch deps of said bindings
-  manyMaps <- traverse Actions.getDepsForStoreExpression storeExprs
-  -- typecheck everything
-  resolvedMap <- typecheckStoreExpressions (mconcat manyMaps)
-  -- make into a nice type map
-  makeTypeMap resolvedMap (bindingsToModuleThing bindings)
-
-bindingsToModuleThing :: Bindings -> Map (Maybe ModuleName, Name) ExprHash
-bindingsToModuleThing (Bindings b) =
-  M.fromList
-    . fmap (first (Nothing,))
-    . M.toList
-    $ b
 
 -- | re-typecheck a single store expression
 -- not sure how this is different from other typechecking fns now

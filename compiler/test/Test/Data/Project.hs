@@ -1,4 +1,3 @@
-
 module Test.Data.Project
   ( testStdlib,
     addExprBinding,

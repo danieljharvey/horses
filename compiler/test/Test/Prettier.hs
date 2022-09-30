@@ -72,10 +72,10 @@ spec =
         renderWithWidth 4 doc `shouldBe` "if True\nthen\n  1\nelse\n  2"
 
       it "Renders datatype nicely with two line break" $ do
-        let expr' = unsafeParseExpr "type These a = That a in 1"
+        let expr' = unsafeParseDataType "type These a = That a"
             doc = prettyDoc expr'
-        renderWithWidth 50 doc `shouldBe` "type These a    = That a in 1"
-        renderWithWidth 5 doc `shouldBe` "type These a \n  = That\n  a;\n\n1"
+        renderWithWidth 50 doc `shouldBe` "type These a    = That a"
+        renderWithWidth 5 doc `shouldBe` "type These a \n  = That\n  a"
 
       it "Renders new function syntax nicely" $ do
         let expr' = unsafeParseExpr "let const a b = a in 1"

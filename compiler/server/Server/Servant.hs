@@ -14,12 +14,10 @@ import Server.Endpoints.Compile
 import Server.Endpoints.Expression
 import Server.Endpoints.Module
 import Server.Endpoints.Project
-import Server.Endpoints.Search
 import Server.Types
 
 type MimsaAPI =
   ProjectAPI
-    :<|> SearchAPI
     :<|> CompileAPI
     :<|> ExpressionAPI
     :<|> ModuleAPI
@@ -30,7 +28,6 @@ mimsaAPI = Proxy
 mimsaServer :: MimsaEnvironment -> Server MimsaAPI
 mimsaServer mimsaEnv =
   projectEndpoints mimsaEnv
-    :<|> searchEndpoints mimsaEnv
     :<|> compileEndpoints mimsaEnv
     :<|> expressionEndpoints mimsaEnv
     :<|> moduleEndpoints mimsaEnv

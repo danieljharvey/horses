@@ -20,6 +20,7 @@ import Language.Mimsa.Types.Store
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers
+import Language.Mimsa.Project.Stdlib
 
 idHash :: ExprHash
 idHash = getHashOfName testStdlib "id"
@@ -53,7 +54,7 @@ spec = do
       let action = do
             Actions.optimise useIdPointlessly
       let (prj, _actions, resolved) =
-            fromRight $ Actions.run testStdlib action
+            fromRight $ Actions.run stdlib action
       let newSe = reStoreExpression resolved
 
       -- updated expr

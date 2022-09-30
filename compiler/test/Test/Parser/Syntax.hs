@@ -768,14 +768,6 @@ spec = parallel $ do
         testParseWithAnn "id 1 + 1" `shouldSatisfy` isRight
       it "Accepts whitespace after record" $
         testParseWithAnn "{ name: 1 } " `shouldSatisfy` isRight
-      it "Parses Reader type declaration with 'in'" $
-        testParseWithAnn
-          "type Reader r a = Reader (r -> a) in True"
-          `shouldSatisfy` isRight
-      it "Parses Reader type declaration with semicolon" $
-        testParseWithAnn
-          "type Reader r a = Reader (r -> a); True"
-          `shouldSatisfy` isRight
       it "Parses array of numbers" $
         testParseWithAnn "[1,2,3]"
           `shouldBe` Right

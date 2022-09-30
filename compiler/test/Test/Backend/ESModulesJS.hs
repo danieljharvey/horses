@@ -267,7 +267,7 @@ fullTestCases =
 
 spec :: Spec
 spec = do
-  describe "ESModulesJS" $ do
+  xdescribe "ESModulesJS" $ do
     describe "pretty print AST" $ do
       it "literals" $ do
         JS.printLiteral (TSBool True) `shouldBe` "true"

@@ -50,6 +50,11 @@ unsafeParseExpr' t = case parseExpr t of
       "Error parsing expr for Prettier tests:"
         <> T.unpack t
 
+unsafeParseDataType :: Text -> DataType
+unsafeParseDataType t = case parseTypeDecl t of
+                          Right a -> a
+                          Left _ -> error $ "could not parse data type: " <> T.unpack t
+
 unsafeParseExpr :: Text -> Expr Name ()
 unsafeParseExpr = unsafeParseExpr'
 
