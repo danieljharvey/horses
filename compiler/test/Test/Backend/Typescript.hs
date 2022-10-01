@@ -163,11 +163,10 @@ fullTestCases =
     ("False", "false"),
     ("123", "123"),
     ("\"Poo\"", "Poo"),
-    ("id", "[Function: main]"),
     ( "\\a -> a",
       "[Function: main]"
     ),
-    ( "id 1",
+    ( "let id a = a; id 1",
       "1"
     ),
     ( "if True then 1 else 2",
@@ -182,25 +181,21 @@ fullTestCases =
     ( "{ a: 123, b: \"horse\" }",
       "{ a: 123, b: 'horse' }"
     ),
-    ( "let (a,b) = aPair in a",
+    ( "let aPair = (1,2); let (a,b) = aPair in a",
       "1"
     ),
     ( "\\a -> let b = 123 in a",
       "[Function: main]"
     ),
     ("(1,2)", "[ 1, 2 ]"),
-    ("aRecord.a", "1"),
-    ( "Just",
+    ( "Maybe.Just",
       "[Function: Just]"
     ),
-    ( "Just 1",
+    ( "Maybe.Just 1",
       "{ type: 'Just', vars: [ 1 ] }"
     ),
-    ( "Nothing",
+    ( "Maybe.Nothing",
       "{ type: 'Nothing', vars: [] }"
-    ),
-    ( "These",
-      "[Function: These]"
     ),
     ("True == True", "true"),
     ("2 + 2", "4"),
@@ -214,13 +209,13 @@ fullTestCases =
     ( "[1,2] <> [3,4]",
       "[ 1, 2, 3, 4 ]"
     ),
-    ( "match Just True with (Just a) -> a | _ -> False",
+    ( "match Maybe.Just True with (Maybe.Just a) -> a | _ -> False",
       "true"
     ),
-    ( "match Just True with (Just a) -> Just a | _ -> Nothing",
+    ( "match Maybe.Just True with (Maybe.Just a) -> Maybe.Just a | _ -> Maybe.Nothing",
       "{ type: 'Just', vars: [ true ] }"
     ),
-    ( "match Just True with (Just a) -> let b = 1; Just a | _ -> Nothing",
+    ( "match Maybe.Just True with (Maybe.Just a) -> let b = 1; Maybe.Just a | _ -> Maybe.Nothing",
       "{ type: 'Just', vars: [ true ] }"
     ),
     ( "let (a, b) = (1,2) in a",
@@ -238,13 +233,12 @@ fullTestCases =
     ( "type Id a = Id a; let (Id aaa) = Id \"dog\" in aaa",
       "dog"
     ),
-    ("let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\"", "hey"),
+    ("let str = \"hey\" in match (Maybe.Just str) with (Maybe.Just a) -> a | _ -> \"\"", "hey"),
     ("\"hello world\"", "hello world"),
-    ("id \"hello again\"", "hello again"),
-    ( "either.fmap (\\a -> a + 1) (Right 100)",
+    ( "Either.fmap (\\a -> a + 1) (Either.Right 100)",
       "{ type: 'Right', vars: [ 101 ] }"
     ),
-    ("stringReduce", "[Function: stringReduce]"),
+    ("let stringReduce a = 100 in stringReduce", "[Function: main]"),
     ("let const = True; 1", "1"),
     ("2 > 1", "true"),
     ("1 > 2", "false"),
@@ -255,15 +249,14 @@ fullTestCases =
     ("2 <= 2", "true"),
     ("3 <= 2", "false"),
     ("Monoid", "[Function: Monoid]"),
-    ("let a = 1; let b = 3; let c = 6; and False True", "false"),
+    ("let and a b = if a then b else False; let a = 1; let b = 3; let c = 6; and False True", "false"),
     ("\"\nHello\n\"", "\nHello\n"),
-    ("\\a -> useEither a", "[Function: main]"),
-    ("match Right 1 with Right a -> a | _ -> 0", "1")
+    ("match Either.Right 1 with Either.Right a -> a | _ -> 0", "1")
   ]
 
 spec :: Spec
 spec = do
-  xdescribe "Typescript" $ do
+  describe "Typescript" $ do
     describe "pretty print Typescript AST" $ do
       it "literals" $ do
         printLiteral (TSBool True) `shouldBe` "true"
