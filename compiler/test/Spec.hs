@@ -8,7 +8,6 @@ import qualified Test.Actions.BindModule as BindModule
 import qualified Test.Actions.Build as Build
 import qualified Test.Actions.Compile as Compile
 import qualified Test.Actions.Evaluate as Evaluate
-import qualified Test.Actions.Optimise as Optimise
 import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Typescript as Typescript
@@ -77,7 +76,6 @@ main =
     Properties.spec
     FindUnused.spec
     FlattenLets.spec
-    Optimise.spec
     FloatDown.spec
     FloatUp.spec
     Inliner.spec

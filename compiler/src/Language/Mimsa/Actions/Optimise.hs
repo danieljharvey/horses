@@ -1,21 +1,17 @@
-{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Actions.Optimise
   ( optimise,
-    optimiseByName,
     optimiseStoreExpression,
     optimiseAll,
   )
 where
 
-import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
-import qualified Language.Mimsa.Actions.Helpers.FindExistingBinding as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
@@ -30,43 +26,10 @@ import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Transform.SimplifyPatterns
 import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-
-optimiseByName :: Name -> Actions.ActionM (ResolvedExpression Annotation)
-optimiseByName name = do
-  project <- Actions.getProject
-  -- find existing expression matching name
-  case Actions.findExistingBinding name project of
-    -- there is an existing one, use its deps when evaluating
-    Just se -> do
-      -- make new se
-      resolved <- optimise se
-
-      let newSe = reStoreExpression resolved
-
-      -- bind it to `name`
-      Actions.bindStoreExpression newSe name
-
-      -- output message for repl
-      Actions.appendDocMessage
-        ( if se == newSe
-            then "No changes in " <> prettyDoc name
-            else
-              "Optimised "
-                <> prettyDoc name
-                <> ". New expression: "
-                <> prettyDoc (storeExpression newSe)
-        )
-      -- return it
-      pure resolved
-
-    -- no existing binding, error
-    Nothing ->
-      throwError $ StoreErr $ CouldNotFindBinding name
 
 -- | given an expression, optimise it and create a new StoreExpression
 -- | this now accepts StoreExpression instead of expression

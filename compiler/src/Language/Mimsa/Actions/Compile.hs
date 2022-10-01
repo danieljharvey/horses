@@ -27,7 +27,6 @@ import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.ExprUtils
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.ToStoreExprs
@@ -130,9 +129,6 @@ transpileModule be se = do
       first
         StoreErr
         (resolveTypeDeps (prjStore project) (storeTypeBindings se))
-  let monoType = case getAnnotation <$> storeExpression se of
-                   Just mt -> mt
-                   Nothing -> error "cant transpileModule with StoreDataType"
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
   let filename =
         Actions.SaveFilename $
@@ -144,7 +140,7 @@ transpileModule be se = do
     liftEither $
       first
         toBackendError
-        (outputStoreExpression be dataTypes (prjStore project) monoType se)
+        (outputStoreExpression be dataTypes (prjStore project) se)
   let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendWriteFile path filename jsOutput
 

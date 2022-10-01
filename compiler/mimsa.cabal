@@ -52,7 +52,9 @@ library
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
       Language.Mimsa.Backend.Typescript.DataType
+      Language.Mimsa.Backend.Typescript.FromDataType
       Language.Mimsa.Backend.Typescript.FromExpr
+      Language.Mimsa.Backend.Typescript.FromType
       Language.Mimsa.Backend.Typescript.Monad
       Language.Mimsa.Backend.Typescript.Patterns
       Language.Mimsa.Backend.Typescript.Printer
@@ -382,7 +384,6 @@ test-suite mimsa-test
       Test.Actions.Build
       Test.Actions.Compile
       Test.Actions.Evaluate
-      Test.Actions.Optimise
       Test.Backend.ESModulesJS
       Test.Backend.RunNode
       Test.Backend.Typescript

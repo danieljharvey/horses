@@ -12,7 +12,9 @@ module Language.Mimsa.Backend.Output
     moduleImport,
   )
 where
+import Language.Mimsa.ExprUtils
 
+import qualified Language.Mimsa.Backend.Typescript.FromDataType as TS
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce
@@ -73,10 +75,9 @@ outputStoreExpression ::
   Backend ->
   ResolvedTypeDeps ->
   Store any ->
-  MonoType ->
   StoreExpression MonoType ->
   BackendM MonoType Text
-outputStoreExpression be dataTypes store mt se = do
+outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) = do
   let typeBindings = typeBindingsByType store (storeTypeBindings se)
 
       (infixHashes, infixNames) =
@@ -93,7 +94,8 @@ outputStoreExpression be dataTypes store mt se = do
       infixDeps =
         renderInfixImport be
           <$> M.toList infixHashes
-
+      
+      mt = getAnnotation expr
       -- we import types where they are used transitively, so we don't need
       -- them if they are imported explicitly
       requiredTypeImports =
@@ -102,7 +104,7 @@ outputStoreExpression be dataTypes store mt se = do
       directTypeDeps = renderDirectTypeImport be <$> M.toList requiredTypeImports
 
   (func, stdlibFuncs) <-
-    renderExpression be dataTypes infixNames se
+    renderExpression be dataTypes infixNames expr 
 
   let stdlib = stdlibImport be stdlibFuncs
       typeComment = renderTypeSignature' mt
@@ -120,6 +122,23 @@ outputStoreExpression be dataTypes store mt se = do
             func
           ]
       )
+outputStoreExpression be dataTypes _store (StoreDataType dt types) = do
+
+  let directTypeDeps = renderDirectTypeImport be <$> M.toList types
+  
+  prettyDataType <- renderDataType be dataTypes dt
+
+  pure $
+    mconcat
+      ( intersperse
+          (renderNewline' be)
+          [
+            mconcat directTypeDeps,
+            prettyDataType 
+          ]
+      )
+
+
 
 -- | given the fns used in a store expression
 -- return an import
@@ -146,9 +165,9 @@ renderExpression ::
   Backend ->
   ResolvedTypeDeps ->
   Map InfixOp TSName ->
-  StoreExpression MonoType ->
+  Expr Name MonoType ->
   BackendM MonoType (Text, [TS.TSImport])
-renderExpression be dataTypes infixes (StoreExpression expr _ _ _ _) = do
+renderExpression be dataTypes infixes expr = do
   let readerState =
         TS.TSReaderState
           (makeTypeDepMap dataTypes)
@@ -159,7 +178,24 @@ renderExpression be dataTypes infixes (StoreExpression expr _ _ _ _) = do
           Typescript -> pure (TS.printModule ts, stdlibFuncs)
           ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)
         Left e -> throwError e
-renderExpression _ _ _ _dt = error "render dt"
+
+renderDataType ::
+  Backend ->
+  ResolvedTypeDeps ->
+  DataType ->
+  BackendM MonoType Text
+renderDataType be dataTypes dt = do
+  let readerState =
+        TS.TSReaderState
+          (makeTypeDepMap dataTypes)
+          mempty
+      startState = TS.TSCodegenState mempty mempty mempty
+   in case TS.fromDataType readerState startState dt of
+        Right tsDt -> case be of
+          Typescript -> pure $ TS.printDataType tsDt
+          ESModulesJS -> pure $ JS.printDataType tsDt
+        Left e -> throwError e
+
 
 -- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName
