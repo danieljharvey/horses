@@ -25,10 +25,8 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker
 import Test.Backend.RunNode hiding (spec)
-import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Compilation
 import Test.Utils.Helpers
@@ -45,10 +43,10 @@ testFromExpr expr =
 
 testFromInputText :: Text -> Either Text Text
 testFromInputText input =
-  case evaluateText testStdlib input of
+  case evaluateText stdlib input of
     Left e -> throwError (prettyPrint e)
-    Right resolved -> do
-      let exprName = first fst (reTypedExpression resolved)
+    Right typedExpr -> do
+      let exprName = typedExpr
       let readerState = TSReaderState mempty mempty
           startState = TSCodegenState mempty mempty mempty
       first prettyPrint (printModule . fst <$> fromExpr readerState startState exprName)

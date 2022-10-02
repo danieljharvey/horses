@@ -39,6 +39,7 @@ library
       Language.Mimsa.Actions.Modules.Bind
       Language.Mimsa.Actions.Modules.Check
       Language.Mimsa.Actions.Modules.Evaluate
+      Language.Mimsa.Actions.Modules.Imports
       Language.Mimsa.Actions.Modules.RunTests
       Language.Mimsa.Actions.Modules.ToStoreExpressions
       Language.Mimsa.Actions.Modules.Typecheck
