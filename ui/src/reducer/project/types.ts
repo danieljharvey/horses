@@ -4,7 +4,6 @@ import type {
   ProjectHash,
   ExpressionData,
   BindingVersion,
-  ExprUsage,
 } from '../../types'
 
 export type StoreItem = {
@@ -19,5 +18,4 @@ export type ProjectState = {
   typeBindings: Record<string, ExprHash>
   modules: Record<string, ModuleHash>
   versions: Record<string, BindingVersion[]>
-  usages: Record<ExprHash, ExprUsage[]>
 }

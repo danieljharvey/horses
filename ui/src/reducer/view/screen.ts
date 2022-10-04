@@ -34,10 +34,6 @@ export const editModuleScreen = (
   moduleHash,
 })
 
-export const typeSearchScreen = () => ({
-  type: 'typeSearch' as const,
-})
-
 export const newTypeScreen = (editor: EditorState) => ({
   type: 'new-type' as const,
   editor,
@@ -47,7 +43,6 @@ export type Screen =
   | ReturnType<typeof scratchScreen>
   | ReturnType<typeof editScreen>
   | ReturnType<typeof newExpressionScreen>
-  | ReturnType<typeof typeSearchScreen>
   | ReturnType<typeof newTypeScreen>
   | ReturnType<typeof scratchModuleScreen>
   | ReturnType<typeof editModuleScreen>

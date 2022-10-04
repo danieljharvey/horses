@@ -47,11 +47,3 @@ export const useStoreTuple = <
     fn(state)
   ) as any as TupleReturns<SelectorsTuple>
 }
-
-// use information from the shared state
-// to stop rendering the world every time the state changes
-// only return bits we need
-export const useStore = <A>(fn: (s: State) => A): A => {
-  const { state } = React.useContext(StoreContext)
-  return fn(state)
-}

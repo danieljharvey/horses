@@ -13,13 +13,9 @@ import {
   exprHash,
 } from '../../types'
 import { ListVersions } from '../ListVersions'
-import {
-  getUsagesOfExprHash,
-  getVersionsOfBinding,
-} from '../../reducer/project/selectors'
+import { getVersionsOfBinding } from '../../reducer/project/selectors'
 import { pipe } from 'fp-ts/function'
 import { ListCompile } from '../ListCompile'
-import { ListUsages } from '../ListUsages'
 import { useStoreRec } from '../../hooks/useStore'
 import { Expression } from './Expression'
 import { ErrorResponse } from './ErrorResponse'
@@ -38,9 +34,8 @@ export const Feedback: React.FC<Props> = ({
   bindingName,
   onBindingSelect,
 }) => {
-  const { getVersions, getUsages } = useStoreRec({
+  const { getVersions } = useStoreRec({
     getVersions: getVersionsOfBinding,
-    getUsages: getUsagesOfExprHash,
   })
   // need to return new bindings and typeBindings
   const versions = pipe(
@@ -79,12 +74,6 @@ export const Feedback: React.FC<Props> = ({
             }
             onBindingSelect={onBindingSelect}
           />
-          <ListUsages
-            usages={getUsages(
-              exprHash(feedback.expression.edHash)
-            )}
-            onBindingSelect={onBindingSelect}
-          />
         </FlexColumnSpaced>
       )
 
@@ -121,12 +110,6 @@ export const Feedback: React.FC<Props> = ({
             onBindingSelect={onBindingSelect}
             name={feedback.bindingName}
           />
-          <ListUsages
-            usages={getUsages(
-              exprHash(feedback.expression.edHash)
-            )}
-            onBindingSelect={onBindingSelect}
-          />
         </FlexColumnSpaced>
       )
 
@@ -147,10 +130,6 @@ export const Feedback: React.FC<Props> = ({
             onModuleSelect={() => {}}
             values={{}}
             types={{}}
-            onBindingSelect={onBindingSelect}
-          />
-          <ListUsages
-            usages={[]}
             onBindingSelect={onBindingSelect}
           />
         </FlexColumnSpaced>
@@ -194,12 +173,6 @@ export const Feedback: React.FC<Props> = ({
             )),
             O.getOrElse(() => <div />)
           )}
-          <ListUsages
-            usages={getUsages(
-              exprHash(feedback.expression.edHash)
-            )}
-            onBindingSelect={onBindingSelect}
-          />
         </FlexColumnSpaced>
       )
 
