@@ -20,6 +20,6 @@ lookupExprHashInStore store exprHash =
     _ -> throwError (CouldNotFindStoreExpression exprHash)
 
 setStoreExpression :: StoreExpression ann -> Expr Name annB -> StoreExpression annB
-setStoreExpression se@(StoreExpression {}) expr =
+setStoreExpression se@StoreExpression {} expr =
   se {seExpr = expr}
 setStoreExpression (StoreDataType a b) _ = StoreDataType a b
