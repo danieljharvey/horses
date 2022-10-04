@@ -53,7 +53,7 @@ spec = do
                 ( MyString
                     (StringType "hello")
                 )
-        startElaborate expr  expected
+        startElaborate expr expected
 
       it "infers let and var" $ do
         let expr =
@@ -83,7 +83,7 @@ spec = do
                 (Identifier (MTPrim (Location 7 8) MTInt) "x")
                 (MyLiteral (MTPrim (Location 3 4) MTInt) (MyInt 42))
                 (MyLiteral (MTPrim (Location 5 6) MTBool) (MyBool True))
-        startElaborate expr  expected
+        startElaborate expr expected
 
       it "infers let binding with usage" $ do
         let expr =
@@ -99,7 +99,7 @@ spec = do
                 (MyLiteral (MTPrim mempty MTInt) (MyInt 42))
                 ( MyVar (MTPrim mempty MTInt) Nothing "x"
                 )
-        startElaborate expr  expected
+        startElaborate expr expected
 
       it "infers let binding with recursion 0" $ do
         let expr =

@@ -34,7 +34,6 @@ module Language.Mimsa.Project.Helpers
     removeBinding,
   )
 where
-import Language.Mimsa.Types.AST.DataType
 
 import Data.Bifunctor
 import Data.Coerce
@@ -44,6 +43,7 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Types.AST.DataType
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project

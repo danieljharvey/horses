@@ -1,30 +1,29 @@
 module Language.Mimsa.Actions.Modules.Typecheck
   ( typecheckModules,
     typecheckModule,
-    typecheckExpression
+    typecheckExpression,
   )
 where
 
+import Control.Monad.Except
+import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromJust)
 import qualified Data.Set as S
+import Data.Text (Text)
+import qualified Language.Mimsa.Actions.Modules.Imports as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
+import Language.Mimsa.Modules.HashModule
+import Language.Mimsa.Modules.Typecheck
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Typechecker
-import qualified Language.Mimsa.Actions.Modules.Imports as Actions
-
 import Language.Mimsa.Types.Identifiers
-import Control.Monad.Except
-import Data.Map.Strict (Map)
-import Data.Text (Text)
-import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Modules.Typecheck
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
+import Language.Mimsa.Types.Typechecker
 
 typecheckModules ::
   Text ->
@@ -74,5 +73,3 @@ typecheckExpression expr localModule = do
 
   -- unsafe, yolo
   pure $ fromJust (lookupModuleDef typecheckedModule Actions.evalId)
-
-

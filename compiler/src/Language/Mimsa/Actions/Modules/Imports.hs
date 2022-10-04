@@ -2,7 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Actions.Modules.Imports
-  ( evalId, importsFromEntities, entitiesFromModule
+  ( evalId,
+    importsFromEntities,
+    entitiesFromModule,
   )
 where
 
@@ -50,5 +52,3 @@ importsFromEntities uses = do
 entitiesFromModule :: (Eq ann) => Module ann -> Set Entity
 entitiesFromModule localModule =
   foldMap extractUses (M.elems (moExpressions localModule))
-
-

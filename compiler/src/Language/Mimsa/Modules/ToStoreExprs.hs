@@ -23,8 +23,8 @@ import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
-import Language.Mimsa.Types.AST.DataType
 import Language.Mimsa.Types.AST
+import Language.Mimsa.Types.AST.DataType
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
@@ -55,8 +55,10 @@ instance (Printer ann) => Printer (CompiledModule ann) where
       )
 
 toStoreExpressions ::
-  (MonadError (Error Annotation) m,
-    Eq ann, Show ann) =>
+  ( MonadError (Error Annotation) m,
+    Eq ann,
+    Show ann
+  ) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (CompiledModule (Type ann))
@@ -95,8 +97,10 @@ includeTransitiveDeps depsMap = runIdentity $ do
 
 --- compile many modules
 compileAllModules ::
-  (MonadError (Error Annotation) m,
-    Eq ann, Show ann) =>
+  ( MonadError (Error Annotation) m,
+    Eq ann,
+    Show ann
+  ) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (Map ModuleHash (CompiledModule (Type ann)))
@@ -175,8 +179,7 @@ toStoreExpression compiledModules inputModule inputs (_, dep, uses) =
 
 -- this is crap, need to add type bindings
 dataTypeToStoreExpression ::
-  (
-    MonadError (Error Annotation) m
+  ( MonadError (Error Annotation) m
   ) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->

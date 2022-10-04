@@ -218,7 +218,7 @@ compileProject be = do
     traverse
       ( \thisMod -> do
           Actions.appendMessage ("Compiling module " <> prettyPrint (snd (serializeModule thisMod)))
-          (moduleHash,_,_) <- compileModule be thisMod
+          (moduleHash, _, _) <- compileModule be thisMod
           pure moduleHash
       )
       modules

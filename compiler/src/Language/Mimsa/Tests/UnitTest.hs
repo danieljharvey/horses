@@ -1,8 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Language.Mimsa.Tests.UnitTest
-  (
-    resultIsBoolean,
+  ( resultIsBoolean,
   )
 where
 

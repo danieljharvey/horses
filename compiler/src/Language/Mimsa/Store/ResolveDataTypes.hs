@@ -32,5 +32,5 @@ createTypeMap dataTypes =
 
 storeExprToDataTypes :: StoreExpression ann -> Map (Maybe ModuleName, TypeName) DataType
 storeExprToDataTypes (StoreDataType dt@(DataType tn _ _) _) =
-  M.singleton (Nothing,tn) dt
+  M.singleton (Nothing, tn) dt
 storeExprToDataTypes _ = mempty

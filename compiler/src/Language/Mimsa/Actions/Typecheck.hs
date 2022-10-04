@@ -77,7 +77,7 @@ substituteAndTypecheck ::
   Map ExprHash (ResolvedExpression Annotation) ->
   (StoreExpression Annotation, Text) ->
   Actions.ActionM (ResolvedExpression Annotation)
-substituteAndTypecheck _ (StoreDataType _dt _,_) =
+substituteAndTypecheck _ (StoreDataType _dt _, _) =
   throwError (TypeErr mempty UnknownTypeError)
 substituteAndTypecheck resolvedDeps (storeExpr@(StoreExpression expr bindings _ _ _), input) = do
   project <- Actions.getProject

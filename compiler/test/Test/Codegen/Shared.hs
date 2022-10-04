@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Codegen.Shared
-  (
-    unsafeParse,
+  ( unsafeParse,
     dtVoid,
     dtTrafficLights,
     dtWrappedString,

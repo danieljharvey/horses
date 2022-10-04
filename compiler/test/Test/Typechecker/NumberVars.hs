@@ -7,15 +7,15 @@ module Test.Typechecker.NumberVars
   )
 where
 
-import Language.Mimsa.Types.Modules
-import Data.Map.Strict (Map)
 import Data.Either
+import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker.Unique
 import Test.Hspec

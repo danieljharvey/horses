@@ -12,9 +12,7 @@ module Language.Mimsa.Backend.Output
     moduleImport,
   )
 where
-import Language.Mimsa.ExprUtils
 
-import qualified Language.Mimsa.Backend.Typescript.FromDataType as TS
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce
@@ -28,12 +26,14 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Backend.Javascript.Printer as JS
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
+import qualified Language.Mimsa.Backend.Typescript.FromDataType as TS
 import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
 import qualified Language.Mimsa.Backend.Typescript.Monad as TS
 import Language.Mimsa.Backend.Typescript.Printer
 import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolveDataTypes
@@ -94,7 +94,7 @@ outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) = do
       infixDeps =
         renderInfixImport be
           <$> M.toList infixHashes
-      
+
       mt = getAnnotation expr
       -- we import types where they are used transitively, so we don't need
       -- them if they are imported explicitly
@@ -104,7 +104,7 @@ outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) = do
       directTypeDeps = renderDirectTypeImport be <$> M.toList requiredTypeImports
 
   (func, stdlibFuncs) <-
-    renderExpression be dataTypes infixNames expr 
+    renderExpression be dataTypes infixNames expr
 
   let stdlib = stdlibImport be stdlibFuncs
       typeComment = renderTypeSignature' mt
@@ -123,22 +123,18 @@ outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) = do
           ]
       )
 outputStoreExpression be dataTypes _store (StoreDataType dt types) = do
-
   let directTypeDeps = renderDirectTypeImport be <$> M.toList types
-  
+
   prettyDataType <- renderDataType be dataTypes dt
 
   pure $
     mconcat
       ( intersperse
           (renderNewline' be)
-          [
-            mconcat directTypeDeps,
-            prettyDataType 
+          [ mconcat directTypeDeps,
+            prettyDataType
           ]
       )
-
-
 
 -- | given the fns used in a store expression
 -- return an import
@@ -195,7 +191,6 @@ renderDataType be dataTypes dt = do
           Typescript -> pure $ TS.printDataType tsDt
           ESModulesJS -> pure $ JS.printDataType tsDt
         Left e -> throwError e
-
 
 -- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..
 makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName

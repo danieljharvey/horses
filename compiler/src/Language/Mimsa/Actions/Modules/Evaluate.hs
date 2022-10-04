@@ -1,4 +1,3 @@
-
 module Language.Mimsa.Actions.Modules.Evaluate
   ( evaluateModule,
   )
@@ -9,6 +8,7 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (fromJust)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Interpret as Actions
+import qualified Language.Mimsa.Actions.Modules.Imports as Actions
 import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -21,7 +21,6 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
-import qualified Language.Mimsa.Actions.Modules.Imports as Actions
 
 -- when we evaluate an expression, really we are adding it to an open module
 -- then evaluating the expression in the context of that module
@@ -79,7 +78,7 @@ evaluateModule expr localModule = do
   evaluatedExpression <-
     Actions.interpreter (getAnnotationForType <$> rootStoreExpr)
 
-  let moduleWithExpression
-        = newModule { moExpressions = M.singleton Actions.evalId evaluatedExpression }
+  let moduleWithExpression =
+        newModule {moExpressions = M.singleton Actions.evalId evaluatedExpression}
 
-  pure (exprType, evaluatedExpression, moduleWithExpression )
+  pure (exprType, evaluatedExpression, moduleWithExpression)

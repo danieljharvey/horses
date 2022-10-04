@@ -48,7 +48,8 @@ testFromInputText input =
     Right typedExpr -> do
       let readerState = TSReaderState mempty mempty
           startState = TSCodegenState mempty mempty mempty
-      first prettyPrint
+      first
+        prettyPrint
         (printModule . fst <$> fromExpr readerState startState typedExpr)
 
 -- test that we have a valid Typescript module by saving it and running it

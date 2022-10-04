@@ -1,6 +1,5 @@
 module Language.Mimsa.Store.ExtractTypes
   ( extractTypes,
-
     extractNamedTypeVars,
     extractTypenames,
   )
@@ -13,8 +12,7 @@ import qualified Data.Set as S
 import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Types.AST
-  (
-    Expr (..),
+  ( Expr (..),
     Identifier (..),
     Pattern (..),
   )

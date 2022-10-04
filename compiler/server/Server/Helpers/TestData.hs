@@ -98,7 +98,7 @@ makeTestData testResults =
           <$> uts
 
       propertyTests =
-        uncurry mkPropertyTestData  <$> pts
+        uncurry mkPropertyTestData <$> pts
    in TestData unitTests propertyTests
 
 makeTestDataFromModule :: ModuleTestResults -> TestData

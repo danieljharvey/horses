@@ -17,7 +17,7 @@ checkStoreExpression ::
   StoreExpression Annotation ->
   Actions.ActionM (ResolvedExpression Annotation)
 checkStoreExpression input _project se = do
---  let project' = project <> fromStoreExpressionDeps se
+  --  let project' = project <> fromStoreExpressionDeps se
 
   Actions.typecheckStoreExpression se input
 

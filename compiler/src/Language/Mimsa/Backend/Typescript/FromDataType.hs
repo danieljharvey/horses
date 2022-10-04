@@ -1,8 +1,8 @@
 module Language.Mimsa.Backend.Typescript.FromDataType (fromDataType) where
 
-import Language.Mimsa.Backend.Typescript.FromType
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import Language.Mimsa.Backend.Typescript.FromType
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Printer

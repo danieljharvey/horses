@@ -54,8 +54,12 @@ interpretAll inputStoreExpressions = do
             -- get us out of this Map of Maps situation
             let flatDeps = squashify depMap
             -- add numbers and mark imports
-            numberedSe <- liftEither (first (TypeErr (prettyPrint se))
-                              (addNumbersToStoreExpression expr (storeBindings se)))
+            numberedSe <-
+              liftEither
+                ( first
+                    (TypeErr (prettyPrint se))
+                    (addNumbersToStoreExpression expr (storeBindings se))
+                )
             -- tag each `var` with it's location if it is an import
             let withImports = addEmptyStackFrames numberedSe
             -- get exprhashes for any infixOps we need

@@ -2,12 +2,12 @@
 
 module Test.Utils.Helpers where
 
-import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
+import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
@@ -51,8 +51,8 @@ unsafeParseExpr' t = case parseExpr t of
 
 unsafeParseDataType :: Text -> DataType
 unsafeParseDataType t = case parseTypeDecl t of
-                          Right a -> a
-                          Left _ -> error $ "could not parse data type: " <> T.unpack t
+  Right a -> a
+  Left _ -> error $ "could not parse data type: " <> T.unpack t
 
 unsafeParseExpr :: Text -> Expr Name ()
 unsafeParseExpr = unsafeParseExpr'

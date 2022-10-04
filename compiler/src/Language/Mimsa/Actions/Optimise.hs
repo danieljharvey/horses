@@ -1,4 +1,3 @@
-
 module Language.Mimsa.Actions.Optimise
   ( optimise,
     optimiseStoreExpression,

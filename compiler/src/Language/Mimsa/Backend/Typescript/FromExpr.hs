@@ -3,12 +3,12 @@
 
 module Language.Mimsa.Backend.Typescript.FromExpr (fromExpr) where
 
-import Language.Mimsa.Backend.Typescript.FromType
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce (coerce)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Language.Mimsa.Backend.Typescript.FromType
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types

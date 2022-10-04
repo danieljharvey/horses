@@ -7,7 +7,7 @@ module Language.Mimsa.Backend.Javascript.Printer
     printLiteral,
     printExpr,
     printStatement,
-    printDataType
+    printDataType,
   )
 where
 
