@@ -14,7 +14,6 @@ import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.ToStoreExprs
-import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -41,11 +40,7 @@ evaluateModule ::
   Actions.ActionM (MonoType, Expr Name Annotation, Module Annotation)
 evaluateModule expr localModule = do
   -- work out implied imports
-  moduleImports <-
-    Actions.importsFromEntities
-      ( extractUses expr
-          <> Actions.entitiesFromModule localModule
-      )
+  moduleImports <- Actions.findUsesInProject expr localModule
 
   -- make a module for it, adding our expression as _repl
   let newModule =

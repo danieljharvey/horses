@@ -5,6 +5,7 @@ module Language.Mimsa.Actions.Modules.Imports
   ( evalId,
     importsFromEntities,
     entitiesFromModule,
+    findUsesInProject,
   )
 where
 
@@ -52,3 +53,14 @@ importsFromEntities uses = do
 entitiesFromModule :: (Eq ann) => Module ann -> Set Entity
 entitiesFromModule localModule =
   foldMap extractUses (M.elems (moExpressions localModule))
+
+findUsesInProject ::
+  Expr Name Annotation ->
+  Module Annotation ->
+  Actions.ActionM (Module Annotation)
+findUsesInProject expr localModule = do
+  -- work out implied imports
+  importsFromEntities
+    ( extractUses expr
+        <> entitiesFromModule localModule
+    )

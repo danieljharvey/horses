@@ -16,7 +16,6 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Typecheck
-import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
@@ -52,11 +51,7 @@ typecheckExpression ::
   Actions.ActionM (Expr Name MonoType)
 typecheckExpression expr localModule = do
   -- work out implied imports
-  moduleImports <-
-    Actions.importsFromEntities
-      ( extractUses expr
-          <> Actions.entitiesFromModule localModule
-      )
+  moduleImports <- Actions.findUsesInProject expr localModule
 
   -- make a module for it, adding our expression as _repl
   let newModule =
