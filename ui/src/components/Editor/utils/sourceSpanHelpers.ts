@@ -9,6 +9,7 @@ import {
   Position,
   editor,
 } from 'monaco-editor/esm/vs/editor/editor.api'
+import { TextSpan } from 'typescript'
 
 const sourceSize = ({
   ssRowStart,
@@ -47,6 +48,13 @@ export const chooseSourceSpan = (
           sourceSize(b.siSourceSpan)
       )
   )
+
+export const createTextSpanForTypedHole = ({
+  thSourceSpan,
+}: TypedHoleResponse): TextSpan => ({
+  start: thSourceSpan.ssRowStart,
+  length: thSourceSpan.ssRowEnd - thSourceSpan.ssRowStart, // this ignores lines, need to fix in server
+})
 
 export const createMarkerForTypedHole = ({
   thMonoType,
