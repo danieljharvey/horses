@@ -138,7 +138,7 @@ testCases =
     ),
     ( "{ fun: (\\a -> let d = 1 in a) }",
       "export const main = { fun: <B>(a: B) => { const d = 1; return a; } }",
-      "{ fun: [Function: fn] }"
+      "{ fun: [Function: fun] }"
     ),
     ( "[1,2] <> [3,4]",
       "export const main = [...[1,2],...[3,4]]",

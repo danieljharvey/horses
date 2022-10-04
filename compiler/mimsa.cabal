@@ -423,7 +423,6 @@ test-suite mimsa-test
       Test.Typechecker.ScopeTypeVar
       Test.Typechecker.Substitutions
       Test.Typechecker.Typecheck
-      Test.Typechecker.TypeError
       Test.Typechecker.Unify
       Test.Utils.Compilation
       Test.Utils.Helpers

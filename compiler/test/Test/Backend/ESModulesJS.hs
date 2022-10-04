@@ -167,11 +167,11 @@ fullTestCases =
     ("False", "false"),
     ("123", "123"),
     ("\"Poo\"", "Poo"),
-    ("id", "[Function: main]"),
+    ("let id a = a; id", "[Function: main]"),
     ( "\\a -> a",
       "[Function: main]"
     ),
-    ( "id 1",
+    ( "let id a = a; id 1",
       "1"
     ),
     ( "if True then 1 else 2",
@@ -186,24 +186,24 @@ fullTestCases =
     ( "{ a: 123, b: \"horse\" }",
       "{ a: 123, b: 'horse' }"
     ),
-    ( "let (a,b) = aPair in a",
+    ( "let aPair = (1,2); let (a,b) = aPair in a",
       "1"
     ),
     ( "\\a -> let b = 123 in a",
       "[Function: main]"
     ),
     ("(1,2)", "[ 1, 2 ]"),
-    ("aRecord.a", "1"),
-    ( "Just",
+    ("let aRecord = { a: 1 }; aRecord.a", "1"),
+    ( "Maybe.Just",
       "[Function: Just]"
     ),
-    ( "Just 1",
+    ( "Maybe.Just 1",
       "{ type: 'Just', vars: [ 1 ] }"
     ),
-    ( "Nothing",
+    ( "Maybe.Nothing",
       "{ type: 'Nothing', vars: [] }"
     ),
-    ( "These",
+    ( "These.These",
       "[Function: These]"
     ),
     ("True == True", "true"),
@@ -218,13 +218,13 @@ fullTestCases =
     ( "[1,2] <> [3,4]",
       "[ 1, 2, 3, 4 ]"
     ),
-    ( "match Just True with (Just a) -> a | _ -> False",
+    ( "match Maybe.Just True with (Maybe.Just a) -> a | _ -> False",
       "true"
     ),
-    ( "match Just True with (Just a) -> Just a | _ -> Nothing",
+    ( "match Maybe.Just True with (Maybe.Just a) -> Maybe.Just a | _ -> Maybe.Nothing",
       "{ type: 'Just', vars: [ true ] }"
     ),
-    ( "match Just True with (Just a) -> let b = 1; Just a | _ -> Nothing",
+    ( "match Maybe.Just True with (Maybe.Just a) -> let b = 1; Maybe.Just a | _ -> Maybe.Nothing",
       "{ type: 'Just', vars: [ true ] }"
     ),
     ( "let (a, b) = (1,2) in a",
@@ -233,23 +233,11 @@ fullTestCases =
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
       "[ 1, 2 ]"
     ),
-    ( "let (Ident a) = Ident 1 in a",
-      "1"
-    ),
-    ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      "[ 1, 2 ]"
-    ),
-    ( "type Id a = Id a; let (Id aaa) = Id \"dog\" in aaa",
-      "dog"
-    ),
-    ("let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\"", "hey"),
+    ("let str = \"hey\" in match (Maybe.Just str) with (Maybe.Just a) -> a | _ -> \"\"", "hey"),
     ("\"hello world\"", "hello world"),
-    ("id \"hello again\"", "hello again"),
-    ( "either.fmap (\\a -> a + 1) (Right 100)",
+    ("let id a = a; id \"hello again\"", "hello again"),
+    ( "Either.Right 101",
       "{ type: 'Right', vars: [ 101 ] }"
-    ),
-    ( "let fold total item = total <> [item] in stringReduce fold [] \"dog\"",
-      "[ 'd', 'o', 'g' ]"
     ),
     ("let const = True; 1", "1"),
     ("2 > 1", "true"),
@@ -265,7 +253,7 @@ fullTestCases =
 
 spec :: Spec
 spec = do
-  xdescribe "ESModulesJS" $ do
+  describe "ESModulesJS" $ do
     describe "pretty print AST" $ do
       it "literals" $ do
         JS.printLiteral (TSBool True) `shouldBe` "true"

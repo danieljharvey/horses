@@ -43,7 +43,6 @@ import qualified Test.Typechecker.Exhaustiveness as Exhaustiveness
 import qualified Test.Typechecker.NumberVars as NumberVars
 import qualified Test.Typechecker.ScopeTypeVar as ScopeTypeVar
 import qualified Test.Typechecker.Substitutions as Substitutions
-import qualified Test.Typechecker.TypeError as TypeError
 import qualified Test.Typechecker.Typecheck as Typecheck
 import qualified Test.Typechecker.Unify as Unify
 
@@ -53,7 +52,6 @@ main =
     Syntax.spec
     Prettier.spec
     Unify.spec
-    TypeError.spec
     Serialisation.spec
     NormaliseType.spec
     MonoTypeParser.spec
