@@ -98,6 +98,13 @@ spec = do
                 (int 42)
                 (MyVar mempty Nothing "x")
         startInference expr $ Right (MTPrim mempty MTInt)
+      it "regressions" $ do
+        let expr = unsafeParseExpr' "{ fun: (\\a -> let d = 1 in a) }"
+        startInference expr $ Right (MTRecord mempty $ M.singleton "fun" (
+                                    MTFunction mempty (MTVar mempty (TVUnificationVar 1))
+                                            (MTVar mempty (TVUnificationVar 1))
+                                                                         ))
+
       describe "annotations" $ do
         it "annotation that is ok" $ do
           let expr =

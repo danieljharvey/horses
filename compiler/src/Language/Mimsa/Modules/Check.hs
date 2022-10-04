@@ -6,6 +6,7 @@ module Language.Mimsa.Modules.Check
   ( getModuleType,
     getModuleItemIdentifier,
     lookupModuleDefType,
+    lookupModuleDef,
     filterNameDefs,
     filterTypeDefs,
   )
@@ -21,13 +22,16 @@ import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Utils
 
-lookupModuleDefType :: Module (Type Annotation) -> DefIdentifier -> Maybe (Type Annotation)
-lookupModuleDefType mod' defId =
+lookupModuleDef :: Module (Type Annotation) -> DefIdentifier -> Maybe (Expr Name (Type Annotation))
+lookupModuleDef mod' defId =
   let defs =
         M.filterWithKey
           (\k _ -> S.member k (moExpressionExports mod'))
           (moExpressions mod')
-   in getTypeFromAnn <$> M.lookup defId defs
+   in M.lookup defId defs
+
+lookupModuleDefType :: Module (Type Annotation) -> DefIdentifier -> Maybe (Type Annotation)
+lookupModuleDefType = (fmap . fmap) getTypeFromAnn . lookupModuleDef
 
 -- used in logging etc, "what is this thing"
 getModuleItemIdentifier :: ModuleItem ann -> Maybe DefIdentifier

@@ -155,7 +155,6 @@ evaluateText project input = do
   let action = do
         expr <- Actions.parseExpr input
         Actions.typecheckExpression expr mempty
-
   (_, _, typedExpr) <-
     Actions.run
       project

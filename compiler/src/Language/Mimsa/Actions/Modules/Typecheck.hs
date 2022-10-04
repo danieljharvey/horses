@@ -5,7 +5,6 @@ module Language.Mimsa.Actions.Modules.Typecheck
   )
 where
 
-import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromJust)
 import qualified Data.Set as S
@@ -74,7 +73,6 @@ typecheckExpression expr localModule = do
   typecheckedModule <- typecheckModule (prettyPrint newModule) newModule
 
   -- unsafe, yolo
-  let mt = fromJust (lookupModuleDefType typecheckedModule Actions.evalId)
+  pure $ fromJust (lookupModuleDef typecheckedModule Actions.evalId)
 
-  pure (expr $> mt)
 

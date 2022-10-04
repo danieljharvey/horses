@@ -3,7 +3,6 @@
 
 module Language.Mimsa.Backend.Typescript.FromExpr (fromExpr) where
 
-
 import Language.Mimsa.Backend.Typescript.FromType
 import Control.Monad.Except
 import Data.Bifunctor

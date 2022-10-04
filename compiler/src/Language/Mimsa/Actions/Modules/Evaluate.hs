@@ -79,4 +79,7 @@ evaluateModule expr localModule = do
   evaluatedExpression <-
     Actions.interpreter (getAnnotationForType <$> rootStoreExpr)
 
-  pure (exprType, evaluatedExpression, newModule)
+  let moduleWithExpression
+        = newModule { moExpressions = M.singleton Actions.evalId evaluatedExpression }
+
+  pure (exprType, evaluatedExpression, moduleWithExpression )

@@ -218,7 +218,8 @@ compileProject be = do
     traverse
       ( \thisMod -> do
           Actions.appendMessage ("Compiling module " <> prettyPrint (snd (serializeModule thisMod)))
-          compileModule be thisMod
+          (moduleHash,_,_) <- compileModule be thisMod
+          pure moduleHash
       )
       modules
 
@@ -232,7 +233,7 @@ compileProject be = do
 compileModule ::
   Backend ->
   Module Annotation ->
-  Actions.ActionM ModuleHash
+  Actions.ActionM (ModuleHash, Map Name ExprHash, Map TypeName ExprHash)
 compileModule be compModule = do
   -- typecheck module
   typecheckedModule <- Actions.typecheckModule (prettyPrint compModule) compModule
@@ -254,4 +255,4 @@ compileModule be compModule = do
   createModuleIndex moduleHash be exportMap exportTypeMap
 
   -- great job
-  pure moduleHash
+  pure (moduleHash, exportMap, exportTypeMap)

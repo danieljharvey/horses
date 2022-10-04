@@ -46,10 +46,10 @@ testFromInputText input =
   case evaluateText stdlib input of
     Left e -> throwError (prettyPrint e)
     Right typedExpr -> do
-      let exprName = typedExpr
       let readerState = TSReaderState mempty mempty
           startState = TSCodegenState mempty mempty mempty
-      first prettyPrint (printModule . fst <$> fromExpr readerState startState exprName)
+      first prettyPrint
+        (printModule . fst <$> fromExpr readerState startState typedExpr)
 
 -- test that we have a valid Typescript module by saving it and running it
 testTypescriptInNode :: Text -> IO String
@@ -136,9 +136,9 @@ testCases =
       "export const main = `dog` + `log`",
       "doglog"
     ),
-    ( "{ fn: (\\a -> let d = 1 in a) }",
-      "export const main = { fn: <B>(a: B) => { const d = 1; return a; } }",
-      "{ fn: [Function: fn] }"
+    ( "{ fun: (\\a -> let d = 1 in a) }",
+      "export const main = { fun: <B>(a: B) => { const d = 1; return a; } }",
+      "{ fun: [Function: fn] }"
     ),
     ( "[1,2] <> [3,4]",
       "export const main = [...[1,2],...[3,4]]",
@@ -222,20 +222,9 @@ fullTestCases =
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
       "[ 1, 2 ]"
     ),
-    ( "let (Ident a) = Ident 1 in a",
-      "1"
-    ),
-    ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      "[ 1, 2 ]"
-    ),
-    ( "type Id a = Id a; let (Id aaa) = Id \"dog\" in aaa",
-      "dog"
-    ),
     ("let str = \"hey\" in match (Maybe.Just str) with (Maybe.Just a) -> a | _ -> \"\"", "hey"),
     ("\"hello world\"", "hello world"),
-    ( "Either.fmap (\\a -> a + 1) (Either.Right 100)",
-      "{ type: 'Right', vars: [ 101 ] }"
-    ),
+    ("Either.Right 101", "{ type: 'Right', vars: [ 101 ] }"),
     ("let stringReduce a = 100 in stringReduce", "[Function: main]"),
     ("let const = True; 1", "1"),
     ("2 > 1", "true"),
@@ -246,7 +235,6 @@ fullTestCases =
     ("2 < 1", "false"),
     ("2 <= 2", "true"),
     ("3 <= 2", "false"),
-    ("Monoid", "[Function: Monoid]"),
     ("let and a b = if a then b else False; let a = 1; let b = 3; let c = 6; and False True", "false"),
     ("\"\nHello\n\"", "\nHello\n"),
     ("match Either.Right 1 with Either.Right a -> a | _ -> 0", "1")
@@ -542,9 +530,10 @@ spec = do
       traverse_ testIt testCases
 
       it "simple expression" $ do
-        testFromInputText "\\a -> a + 100"
-          `shouldBe` Right "export const main = (a: number) => a + 100"
+        testFromInputText "{ dog: \\a -> a + 100 }"
+          `shouldBe` Right "export const main = { dog: (a: number) => a + 100 }"
 
+      -- what the fuck
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> [as] | [] -> []"
           `shouldBe` Right "export const main = <D>(a: D[]) => { const match = (value: D[]): D[][] => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"
