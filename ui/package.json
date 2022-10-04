@@ -19,7 +19,7 @@
     "@types/react-dom": "18.0.6",
     "@types/react-router": "5.1.19",
     "@types/react-router-dom": "5.3.3",
-    "axios": "0.27.2",
+    "axios": "1.0.0",
     "fp-ts": "2.12.3",
     "lodash.throttle": "4.1.1",
     "monaco-editor": "0.33.0",
