@@ -791,10 +791,6 @@ infer env inferExpr =
       let tyA = getTypeFromAnn inferA
           tyB = getTypeFromAnn inferB
       pure (MyPair (MTPair ann tyA tyB) inferA inferB)
-    (MyData ann dataType expr) -> do
-      newEnv <- storeDataDeclaration env ann dataType
-      innerExpr <- infer newEnv expr
-      pure (MyData (getTypeFromAnn innerExpr) dataType innerExpr)
     (MyArray ann items) -> do
       inferArray env ann items
     (MyConstructor ann modName name) -> do

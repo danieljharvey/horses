@@ -44,7 +44,6 @@ getAnnotation (MyIf ann _ _ _) = ann
 getAnnotation (MyPair ann _ _) = ann
 getAnnotation (MyRecord ann _) = ann
 getAnnotation (MyRecordAccess ann _ _) = ann
-getAnnotation (MyData ann _ _) = ann
 getAnnotation (MyConstructor ann _ _) = ann
 getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyArray ann _) = ann
@@ -140,9 +139,6 @@ withMonoid f whole@(MyArray _ items) =
 withMonoid f whole@(MyRecordAccess _ expr _name) =
   let (go, m) = f whole
    in if not go then m else m <> withMonoid f expr
-withMonoid f whole@(MyData _ _ expr) =
-  let (go, m) = f whole
-   in if not go then m else m <> withMonoid f expr
 withMonoid f whole@MyConstructor {} = snd (f whole)
 withMonoid f whole@MyTypedHole {} = snd (f whole)
 withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
@@ -176,7 +172,6 @@ mapExpr f (MyRecord ann items) = MyRecord ann (f <$> items)
 mapExpr f (MyRecordAccess ann expr name) =
   MyRecordAccess ann (f expr) name
 mapExpr f (MyArray ann items) = MyArray ann (f <$> items)
-mapExpr f (MyData ann dt expr) = MyData ann dt (f expr)
 mapExpr _ (MyConstructor ann modName cons) = MyConstructor ann modName cons
 mapExpr f (MyPatternMatch ann matchExpr patterns) =
   MyPatternMatch ann (f matchExpr) (second f <$> patterns)
@@ -215,8 +210,6 @@ bindExpr f (MyRecordAccess ann expr name) =
   MyRecordAccess ann <$> f expr <*> pure name
 bindExpr f (MyArray ann items) =
   MyArray ann <$> traverse f items
-bindExpr f (MyData ann dt expr) =
-  MyData ann dt <$> f expr
 bindExpr _ (MyConstructor ann modName cons) =
   pure $ MyConstructor ann modName cons
 bindExpr _ (MyTypedHole ann a) = pure (MyTypedHole ann a)

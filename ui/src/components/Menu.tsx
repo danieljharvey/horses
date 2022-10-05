@@ -5,7 +5,6 @@ import {
   newExpressionScreen,
   newTypeScreen,
   Screen,
-  typeSearchScreen,
 } from '../reducer/view/screen'
 import { getScreenTitle } from '../reducer/view/helpers'
 import { MenuBar } from './View/MenuBar'
@@ -38,9 +37,6 @@ export const Menu: React.FC<Props> = ({
       )
     )
 
-  const onTypeSearch = () =>
-    dispatch(pushScreen(typeSearchScreen()))
-
   const onNewType = () =>
     dispatch(
       pushScreen(newTypeScreen(newEditorFromScreen(screen)))
@@ -61,12 +57,6 @@ export const Menu: React.FC<Props> = ({
         </>
 
         <>
-          <div
-            className="menu-button"
-            onClick={onTypeSearch}
-          >
-            🔎
-          </div>
           <div className="menu-button" onClick={onNewType}>
             🧷
           </div>

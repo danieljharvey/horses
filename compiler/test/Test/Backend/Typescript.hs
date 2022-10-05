@@ -25,10 +25,8 @@ import Language.Mimsa.Printer
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker
 import Test.Backend.RunNode hiding (spec)
-import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Compilation
 import Test.Utils.Helpers
@@ -45,13 +43,14 @@ testFromExpr expr =
 
 testFromInputText :: Text -> Either Text Text
 testFromInputText input =
-  case evaluateText testStdlib input of
+  case evaluateText stdlib input of
     Left e -> throwError (prettyPrint e)
-    Right resolved -> do
-      let exprName = first fst (reTypedExpression resolved)
+    Right typedExpr -> do
       let readerState = TSReaderState mempty mempty
           startState = TSCodegenState mempty mempty mempty
-      first prettyPrint (printModule . fst <$> fromExpr readerState startState exprName)
+      first
+        prettyPrint
+        (printModule . fst <$> fromExpr readerState startState typedExpr)
 
 -- test that we have a valid Typescript module by saving it and running it
 testTypescriptInNode :: Text -> IO String
@@ -138,9 +137,9 @@ testCases =
       "export const main = `dog` + `log`",
       "doglog"
     ),
-    ( "{ fn: (\\a -> let d = 1 in a) }",
-      "export const main = { fn: <B>(a: B) => { const d = 1; return a; } }",
-      "{ fn: [Function: fn] }"
+    ( "{ fun: (\\a -> let d = 1 in a) }",
+      "export const main = { fun: <B>(a: B) => { const d = 1; return a; } }",
+      "{ fun: [Function: fun] }"
     ),
     ( "[1,2] <> [3,4]",
       "export const main = [...[1,2],...[3,4]]",
@@ -163,11 +162,10 @@ fullTestCases =
     ("False", "false"),
     ("123", "123"),
     ("\"Poo\"", "Poo"),
-    ("id", "[Function: main]"),
     ( "\\a -> a",
       "[Function: main]"
     ),
-    ( "id 1",
+    ( "let id a = a; id 1",
       "1"
     ),
     ( "if True then 1 else 2",
@@ -182,25 +180,21 @@ fullTestCases =
     ( "{ a: 123, b: \"horse\" }",
       "{ a: 123, b: 'horse' }"
     ),
-    ( "let (a,b) = aPair in a",
+    ( "let aPair = (1,2); let (a,b) = aPair in a",
       "1"
     ),
     ( "\\a -> let b = 123 in a",
       "[Function: main]"
     ),
     ("(1,2)", "[ 1, 2 ]"),
-    ("aRecord.a", "1"),
-    ( "Just",
+    ( "Maybe.Just",
       "[Function: Just]"
     ),
-    ( "Just 1",
+    ( "Maybe.Just 1",
       "{ type: 'Just', vars: [ 1 ] }"
     ),
-    ( "Nothing",
+    ( "Maybe.Nothing",
       "{ type: 'Nothing', vars: [] }"
-    ),
-    ( "These",
-      "[Function: These]"
     ),
     ("True == True", "true"),
     ("2 + 2", "4"),
@@ -214,13 +208,13 @@ fullTestCases =
     ( "[1,2] <> [3,4]",
       "[ 1, 2, 3, 4 ]"
     ),
-    ( "match Just True with (Just a) -> a | _ -> False",
+    ( "match Maybe.Just True with (Maybe.Just a) -> a | _ -> False",
       "true"
     ),
-    ( "match Just True with (Just a) -> Just a | _ -> Nothing",
+    ( "match Maybe.Just True with (Maybe.Just a) -> Maybe.Just a | _ -> Maybe.Nothing",
       "{ type: 'Just', vars: [ true ] }"
     ),
-    ( "match Just True with (Just a) -> let b = 1; Just a | _ -> Nothing",
+    ( "match Maybe.Just True with (Maybe.Just a) -> let b = 1; Maybe.Just a | _ -> Maybe.Nothing",
       "{ type: 'Just', vars: [ true ] }"
     ),
     ( "let (a, b) = (1,2) in a",
@@ -229,22 +223,10 @@ fullTestCases =
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
       "[ 1, 2 ]"
     ),
-    ( "let (Ident a) = Ident 1 in a",
-      "1"
-    ),
-    ( "let (Pair a b) = Pair 1 2 in (a,b)",
-      "[ 1, 2 ]"
-    ),
-    ( "type Id a = Id a; let (Id aaa) = Id \"dog\" in aaa",
-      "dog"
-    ),
-    ("let str = \"hey\" in match (Just str) with (Just a) -> a | _ -> \"\"", "hey"),
+    ("let str = \"hey\" in match (Maybe.Just str) with (Maybe.Just a) -> a | _ -> \"\"", "hey"),
     ("\"hello world\"", "hello world"),
-    ("id \"hello again\"", "hello again"),
-    ( "either.fmap (\\a -> a + 1) (Right 100)",
-      "{ type: 'Right', vars: [ 101 ] }"
-    ),
-    ("stringReduce", "[Function: stringReduce]"),
+    ("Either.Right 101", "{ type: 'Right', vars: [ 101 ] }"),
+    ("let stringReduce a = 100 in stringReduce", "[Function: main]"),
     ("let const = True; 1", "1"),
     ("2 > 1", "true"),
     ("1 > 2", "false"),
@@ -254,11 +236,9 @@ fullTestCases =
     ("2 < 1", "false"),
     ("2 <= 2", "true"),
     ("3 <= 2", "false"),
-    ("Monoid", "[Function: Monoid]"),
-    ("let a = 1; let b = 3; let c = 6; and False True", "false"),
+    ("let and a b = if a then b else False; let a = 1; let b = 3; let c = 6; and False True", "false"),
     ("\"\nHello\n\"", "\nHello\n"),
-    ("\\a -> useEither a", "[Function: main]"),
-    ("match Right 1 with Right a -> a | _ -> 0", "1")
+    ("match Either.Right 1 with Either.Right a -> a | _ -> 0", "1")
   ]
 
 spec :: Spec
@@ -551,9 +531,10 @@ spec = do
       traverse_ testIt testCases
 
       it "simple expression" $ do
-        testFromInputText "\\a -> a + 100"
-          `shouldBe` Right "export const main = (a: number) => a + 100"
+        testFromInputText "{ dog: \\a -> a + 100 }"
+          `shouldBe` Right "export const main = { dog: (a: number) => a + 100 }"
 
+      -- what the fuck
       it "pattern matching array spreads" $ do
         testFromInputText "\\a -> match a with [a1,...as] -> [as] | [] -> []"
           `shouldBe` Right "export const main = <D>(a: D[]) => { const match = (value: D[]): D[][] => { if (value.length >= 1) { const [a1,...as] = value; return [as]; }; if (value.length === 0) { return []; }; throw new Error(\"Pattern match error\"); }; return match(a); }"

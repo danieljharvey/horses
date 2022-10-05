@@ -8,20 +8,22 @@ module Test.Typechecker.NumberVars
 where
 
 import Data.Either
+import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker.Unique
 import Test.Hspec
 import Test.Utils.Helpers
 
 testAddNumbers ::
-  StoreExpression () ->
+  Expr Name () ->
+  Map (Maybe ModuleName, Name) ExprHash ->
   Either (TypeErrorF Name ()) (Expr (Name, Unique) ())
 testAddNumbers = addNumbersToStoreExpression
 
@@ -85,7 +87,7 @@ spec = do
                           (MyVar mempty Nothing ("x", Unique 1))
                       )
                   )
-              ans = testAddNumbers (StoreExpression expr mempty mempty mempty mempty)
+              ans = testAddNumbers expr mempty
           ans `shouldBe` Right expected
 
       it "Pattern match entries work" $ do
@@ -112,7 +114,7 @@ spec = do
                     ]
                 )
 
-            ans = testAddNumbers (StoreExpression expr mempty mempty mempty mempty)
+            ans = testAddNumbers expr mempty
         ans `shouldBe` Right expected
 
       it "Scoping variables in pattern matches works" $ do
@@ -140,7 +142,7 @@ spec = do
                       (PWildcard mempty, MyVar mempty Nothing ("a", Unique 0))
                     ]
                 )
-            ans = testAddNumbers (StoreExpression expr mempty mempty mempty mempty)
+            ans = testAddNumbers expr mempty
         ans `shouldBe` Right expected
 
       it "Scoping variables in let patterns works" $ do
@@ -165,20 +167,20 @@ spec = do
                     (MyVar mempty Nothing ("a", Unique 1))
                 )
 
-            ans = testAddNumbers (StoreExpression expr mempty mempty mempty mempty)
+            ans = testAddNumbers expr mempty
         ans `shouldBe` Right expected
 
       it "Does not explode with a namespaced dep" $ do
         let expr =
               MyVar mempty (Just "Prelude") "what"
             valueDeps = M.singleton (Just "Prelude", "what") (ExprHash "13")
-            ans = testAddNumbers (StoreExpression expr valueDeps mempty mempty mempty)
+            ans = testAddNumbers expr valueDeps
         ans `shouldSatisfy` isRight
 
       it "Fails if can't find outside dep" $ do
         let expr =
               MyVar mempty Nothing "what"
-            ans = testAddNumbers (StoreExpression expr mempty mempty mempty mempty)
+            ans = testAddNumbers expr mempty
         ans `shouldBe` Left (NameNotFoundInScope mempty mempty Nothing "what")
 
       it "Outside deps are assigned a number" $ do
@@ -191,5 +193,5 @@ spec = do
                 (MyVar mempty Nothing ("id", Dependency hash))
                 (MyVar mempty Nothing ("id", Dependency hash))
             bindings = M.singleton (Nothing, "id") hash
-            ans = testAddNumbers (StoreExpression expr bindings mempty mempty mempty)
+            ans = testAddNumbers expr bindings
         ans `shouldBe` Right expected

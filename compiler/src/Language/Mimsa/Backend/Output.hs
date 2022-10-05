@@ -26,12 +26,14 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Backend.Javascript.Printer as JS
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
+import qualified Language.Mimsa.Backend.Typescript.FromDataType as TS
 import qualified Language.Mimsa.Backend.Typescript.FromExpr as TS
 import qualified Language.Mimsa.Backend.Typescript.Monad as TS
 import Language.Mimsa.Backend.Typescript.Printer
 import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
+import Language.Mimsa.ExprUtils
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolveDataTypes
@@ -73,10 +75,9 @@ outputStoreExpression ::
   Backend ->
   ResolvedTypeDeps ->
   Store any ->
-  MonoType ->
   StoreExpression MonoType ->
   BackendM MonoType Text
-outputStoreExpression be dataTypes store mt se = do
+outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) = do
   let typeBindings = typeBindingsByType store (storeTypeBindings se)
 
       (infixHashes, infixNames) =
@@ -94,6 +95,7 @@ outputStoreExpression be dataTypes store mt se = do
         renderInfixImport be
           <$> M.toList infixHashes
 
+      mt = getAnnotation expr
       -- we import types where they are used transitively, so we don't need
       -- them if they are imported explicitly
       requiredTypeImports =
@@ -102,7 +104,7 @@ outputStoreExpression be dataTypes store mt se = do
       directTypeDeps = renderDirectTypeImport be <$> M.toList requiredTypeImports
 
   (func, stdlibFuncs) <-
-    renderExpression be dataTypes infixNames (storeExpression se)
+    renderExpression be dataTypes infixNames expr
 
   let stdlib = stdlibImport be stdlibFuncs
       typeComment = renderTypeSignature' mt
@@ -118,6 +120,19 @@ outputStoreExpression be dataTypes store mt se = do
             stdlib,
             typeComment,
             func
+          ]
+      )
+outputStoreExpression be dataTypes _store (StoreDataType dt types) = do
+  let directTypeDeps = renderDirectTypeImport be <$> M.toList types
+
+  prettyDataType <- renderDataType be dataTypes dt
+
+  pure $
+    mconcat
+      ( intersperse
+          (renderNewline' be)
+          [ mconcat directTypeDeps,
+            prettyDataType
           ]
       )
 
@@ -158,6 +173,23 @@ renderExpression be dataTypes infixes expr = do
         Right (ts, stdlibFuncs) -> case be of
           Typescript -> pure (TS.printModule ts, stdlibFuncs)
           ESModulesJS -> pure (JS.printModule ts, stdlibFuncs)
+        Left e -> throwError e
+
+renderDataType ::
+  Backend ->
+  ResolvedTypeDeps ->
+  DataType ->
+  BackendM MonoType Text
+renderDataType be dataTypes dt = do
+  let readerState =
+        TS.TSReaderState
+          (makeTypeDepMap dataTypes)
+          mempty
+      startState = TS.TSCodegenState mempty mempty mempty
+   in case TS.fromDataType readerState startState dt of
+        Right tsDt -> case be of
+          Typescript -> pure $ TS.printDataType tsDt
+          ESModulesJS -> pure $ JS.printDataType tsDt
         Left e -> throwError e
 
 -- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..

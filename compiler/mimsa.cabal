@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -39,6 +39,7 @@ library
       Language.Mimsa.Actions.Modules.Bind
       Language.Mimsa.Actions.Modules.Check
       Language.Mimsa.Actions.Modules.Evaluate
+      Language.Mimsa.Actions.Modules.Imports
       Language.Mimsa.Actions.Modules.RunTests
       Language.Mimsa.Actions.Modules.ToStoreExpressions
       Language.Mimsa.Actions.Modules.Typecheck
@@ -52,7 +53,9 @@ library
       Language.Mimsa.Backend.Shared
       Language.Mimsa.Backend.Types
       Language.Mimsa.Backend.Typescript.DataType
+      Language.Mimsa.Backend.Typescript.FromDataType
       Language.Mimsa.Backend.Typescript.FromExpr
+      Language.Mimsa.Backend.Typescript.FromType
       Language.Mimsa.Backend.Typescript.Monad
       Language.Mimsa.Backend.Typescript.Patterns
       Language.Mimsa.Backend.Typescript.Printer
@@ -99,7 +102,6 @@ library
       Language.Mimsa.Project.SourceSpan
       Language.Mimsa.Project.Stdlib
       Language.Mimsa.Project.TypeSearch
-      Language.Mimsa.Project.Usages
       Language.Mimsa.Project.Versions
       Language.Mimsa.Store
       Language.Mimsa.Store.ExtractTypes
@@ -112,11 +114,8 @@ library
       Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
       Language.Mimsa.Store.Substitutor
-      Language.Mimsa.Store.UpdateDeps
       Language.Mimsa.Tests.Generate
       Language.Mimsa.Tests.Helpers
-      Language.Mimsa.Tests.PropertyTest
-      Language.Mimsa.Tests.Test
       Language.Mimsa.Tests.UnitTest
       Language.Mimsa.Transform.BetaReduce
       Language.Mimsa.Transform.EtaReduce
@@ -318,7 +317,6 @@ executable mimsa-server
       Server.Endpoints.Project.CreateProject
       Server.Endpoints.Project.Evaluate
       Server.Endpoints.Project.ListBindings
-      Server.Endpoints.Search
       Server.EnvVars
       Server.Errors.UserErrorResponse
       Server.Handlers
@@ -384,13 +382,9 @@ test-suite mimsa-test
   other-modules:
       Test.Actions.BindExpression
       Test.Actions.BindModule
-      Test.Actions.BindType
       Test.Actions.Build
       Test.Actions.Compile
       Test.Actions.Evaluate
-      Test.Actions.Optimise
-      Test.Actions.RemoveBinding
-      Test.Actions.Typecheck
       Test.Backend.ESModulesJS
       Test.Backend.RunNode
       Test.Backend.Typescript
@@ -402,6 +396,7 @@ test-suite mimsa-test
       Test.Modules.Test
       Test.Modules.ToStoreExprs
       Test.Modules.Uses
+      Test.Parser.DataTypes
       Test.Parser.MonoTypeParser
       Test.Parser.Pattern
       Test.Parser.Syntax
@@ -409,15 +404,9 @@ test-suite mimsa-test
       Test.Project.NormaliseType
       Test.Project.SourceSpan
       Test.Project.Stdlib
-      Test.Project.TypeSearch
-      Test.Project.Usages
       Test.RenderErrors
       Test.Serialisation
-      Test.Store.Resolver
-      Test.Store.UpdateDeps
       Test.Tests.Properties
-      Test.Tests.PropertyTest
-      Test.Tests.UnitTest
       Test.Transform.BetaReduce
       Test.Transform.EtaReduce
       Test.Transform.FindUnused
@@ -431,11 +420,9 @@ test-suite mimsa-test
       Test.Typechecker.Elaborate
       Test.Typechecker.Exhaustiveness
       Test.Typechecker.NumberVars
-      Test.Typechecker.OutputTypes
       Test.Typechecker.ScopeTypeVar
       Test.Typechecker.Substitutions
       Test.Typechecker.Typecheck
-      Test.Typechecker.TypeError
       Test.Typechecker.Unify
       Test.Utils.Compilation
       Test.Utils.Helpers

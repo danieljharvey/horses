@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Codegen.Shared
-  ( typecheckInstance,
-    unsafeParse,
+  ( unsafeParse,
     dtVoid,
     dtTrafficLights,
     dtWrappedString,
@@ -22,22 +21,15 @@ module Test.Codegen.Shared
   )
 where
 
-import Data.Bifunctor (first)
 import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser
-import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Typechecker.MonoType
-import Test.Data.Project
 import Test.Utils.Helpers
 
 -- | has no constructors, we can do nothing with this
@@ -254,29 +246,6 @@ dtEnv =
           MTVar mempty (tvNamed "a")
         ]
     )
-
-typecheckInstance ::
-  (DataType -> Either CodegenError (Expr Name ())) ->
-  DataType ->
-  Either (Error Annotation) (ResolvedExpression Annotation)
-typecheckInstance mkInstance dt =
-  (,) <$> newStdLib <*> inst'
-    >>= ( \(testStdlib', expr) ->
-            (\(_, _, re) -> re)
-              <$> Actions.run testStdlib' (Actions.typecheckExpression testStdlib' (prettyPrint expr) expr)
-        )
-  where
-    newStdLib =
-      addExprBinding
-        ( MyData
-            mempty
-            dt
-            (MyRecord mempty mempty)
-        )
-        "temporaryAddType"
-        testStdlib
-    inst' =
-      first CodegenErr (fmap ($> mempty) (mkInstance dt))
 
 unsafeParse :: Text -> Expr Name ()
 unsafeParse t = case parseExprAndFormatError t of

@@ -10,9 +10,6 @@ import { InlineSpaced } from './View/InlineSpaced'
 import { Paragraph } from './View/Paragraph'
 import { FlexColumnSpaced } from './View/FlexColumnSpaced'
 
-import { getUsagesOfExprHash } from '../reducer/project/selectors'
-import { useStore } from '../hooks/useStore'
-
 type ListVersionsProps = {
   versions: BindingVersion[]
   currentHash: ExprHash
@@ -29,14 +26,9 @@ export const ListVersions: React.FC<ListVersionsProps> = ({
   onBindingSelect,
   name,
 }) => {
-  const getUsages = useStore(getUsagesOfExprHash)
-
   if (versions.length < 1) {
     return null
   }
-
-  const usagesOfExprHash = (exprHash: ExprHash) =>
-    getUsages(exprHash).length
 
   return (
     <FlexColumnSpaced>
@@ -47,9 +39,7 @@ export const ListVersions: React.FC<ListVersionsProps> = ({
           return (
             <Link
               depType="expression"
-              number={usagesOfExprHash(
-                exprHash(bvExprHash)
-              )}
+              number={1}
               key={title}
               onClick={() =>
                 onBindingSelect(name, exprHash(bvExprHash))

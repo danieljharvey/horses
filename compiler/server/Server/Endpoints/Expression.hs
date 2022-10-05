@@ -70,7 +70,7 @@ getExpression mimsaEnv exprHash' = do
   let action = do
         let input = prettyPrint (storeExpression storeExpr)
         exprName <- Actions.parseExpr input
-        Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
+        Actions.typecheckStoreExpression (setStoreExpression storeExpr exprName) input
 
   (_, _, resolvedExpr) <-
     fromActionM
@@ -118,7 +118,7 @@ getExpressions mimsaEnv exprHashes = do
   let action storeExpr = do
         let input = prettyPrint (storeExpression storeExpr)
         exprName <- Actions.parseExpr input
-        resolvedExpr <- Actions.typecheckStoreExpression (storeExpr {storeExpression = exprName}) input
+        resolvedExpr <- Actions.typecheckStoreExpression (setStoreExpression storeExpr exprName) input
         let typedExpr = first fst (reTypedExpression resolvedExpr)
         pure (resolvedExpr, typedExpr)
 

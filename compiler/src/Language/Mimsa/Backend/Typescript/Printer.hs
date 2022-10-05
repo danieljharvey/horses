@@ -9,6 +9,7 @@ module Language.Mimsa.Backend.Typescript.Printer
     printExpr,
     printStatement,
     printTSName,
+    printDataType,
   )
 where
 

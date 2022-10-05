@@ -27,7 +27,6 @@ import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.ExprUtils
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.ToStoreExprs
@@ -130,7 +129,6 @@ transpileModule be se = do
       first
         StoreErr
         (resolveTypeDeps (prjStore project) (storeTypeBindings se))
-  let monoType = getAnnotation (storeExpression se)
   let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
   let filename =
         Actions.SaveFilename $
@@ -142,7 +140,7 @@ transpileModule be se = do
     liftEither $
       first
         toBackendError
-        (outputStoreExpression be dataTypes (prjStore project) monoType se)
+        (outputStoreExpression be dataTypes (prjStore project) se)
   let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendWriteFile path filename jsOutput
 
@@ -220,7 +218,8 @@ compileProject be = do
     traverse
       ( \thisMod -> do
           Actions.appendMessage ("Compiling module " <> prettyPrint (snd (serializeModule thisMod)))
-          compileModule be thisMod
+          (moduleHash, _, _) <- compileModule be thisMod
+          pure moduleHash
       )
       modules
 
@@ -234,7 +233,7 @@ compileProject be = do
 compileModule ::
   Backend ->
   Module Annotation ->
-  Actions.ActionM ModuleHash
+  Actions.ActionM (ModuleHash, Map Name ExprHash, Map TypeName ExprHash)
 compileModule be compModule = do
   -- typecheck module
   typecheckedModule <- Actions.typecheckModule (prettyPrint compModule) compModule
@@ -256,4 +255,4 @@ compileModule be compModule = do
   createModuleIndex moduleHash be exportMap exportTypeMap
 
   -- great job
-  pure moduleHash
+  pure (moduleHash, exportMap, exportTypeMap)

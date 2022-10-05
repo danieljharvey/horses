@@ -681,7 +681,7 @@ spec =
         result `shouldSatisfy` isRight
 
       it "type Record a = Record { name: String, other: a } in True" $ do
-        result <- eval "type Record a = Record { name: String, other: a } in True"
+        result <- evalWithDefs (Just "type Record a = Record { name: String, other: a }") "True"
         result `shouldSatisfy` isRight
 
       it "type State s a = State (s -> (a,s)) in True" $ do

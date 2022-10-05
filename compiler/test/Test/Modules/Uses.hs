@@ -5,7 +5,6 @@ module Test.Modules.Uses
   )
 where
 
-import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Types.AST
@@ -13,17 +12,10 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Types.Typechecker
 import Test.Hspec
-import Test.Utils.Helpers
 
 spec :: Spec
 spec = do
   describe "Uses" $ do
-    describe "extractUses" $ do
-      it "Does not include DataType declared in expression" $ do
-        let expr = unsafeParseExpr "type Maybe a = Just a | Nothing; (\\val -> val : Maybe a -> Maybe a)"
-            entities = extractUses expr
-        entities `shouldBe` S.fromList []
-
     describe "extractUsesTyped" $ do
       it "Finds no types" $ do
         let entities = extractUsesTyped (MyLiteral (MTPrim () MTInt) (MyInt 1))
@@ -40,16 +32,6 @@ spec = do
       it "Finds one namespaced type" $ do
         let entities = extractUsesTyped (MyVar (MTConstructor () (Just "Prelude") "Unit") Nothing "a")
         entities `shouldBe` S.fromList [EName "a", ENamespacedType "Prelude" "Unit"]
-
-      it "Does not finds one namespaced type after its declared" $ do
-        let entities =
-              extractUsesTyped
-                ( MyData
-                    (MTRecord () mempty)
-                    (DataType "Unit" mempty (M.singleton "MkUnit" mempty))
-                    (MyVar (MTConstructor () Nothing "Unit") Nothing "a")
-                )
-        entities `shouldBe` S.fromList []
 
       it "Finds Either" $ do
         let expr :: Expr Name (Type ())

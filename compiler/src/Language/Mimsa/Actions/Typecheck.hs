@@ -1,10 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TupleSections #-}
 
 module Language.Mimsa.Actions.Typecheck
   ( typecheckStoreExpression,
     typecheckExpression,
-    typeMapForProjectSearch,
     annotateStoreExpressionWithTypes,
   )
 where
@@ -18,7 +16,6 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
-import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
@@ -80,10 +77,12 @@ substituteAndTypecheck ::
   Map ExprHash (ResolvedExpression Annotation) ->
   (StoreExpression Annotation, Text) ->
   Actions.ActionM (ResolvedExpression Annotation)
-substituteAndTypecheck resolvedDeps (storeExpr, input) = do
+substituteAndTypecheck _ (StoreDataType _dt _, _) =
+  throwError (TypeErr mempty UnknownTypeError)
+substituteAndTypecheck resolvedDeps (storeExpr@(StoreExpression expr bindings _ _ _), input) = do
   project <- Actions.getProject
-  numberedExpr <- liftEither $ first (TypeErr input) (addNumbersToStoreExpression storeExpr)
-  depTypeMap <- makeTypeMap resolvedDeps (storeBindings storeExpr)
+  numberedExpr <- liftEither $ first (TypeErr input) (addNumbersToStoreExpression expr bindings)
+  depTypeMap <- makeTypeMap resolvedDeps bindings
   dataTypes <- liftEither $ first StoreErr (resolveDataTypes (prjStore project) storeExpr)
   (_, _, typedExpr, exprType) <-
     getType depTypeMap dataTypes input numberedExpr
@@ -168,33 +167,6 @@ typecheckExpression project input expr = do
           expr
   typecheckStoreExpression storeExpr input
 
--- | get types for every top-level expression bound in the project
--- | 1. get all top-level exprhashes
--- | 2. turn them into store exprs
--- | 3. get their dependency StoreExpressions too
--- | 4. typecheck them
--- | 5. make them into a type map
-typeMapForProjectSearch :: Actions.ActionM (Map Name MonoType)
-typeMapForProjectSearch = do
-  project <- Actions.getProject
-  -- get all top level items
-  let bindings = getCurrentBindings . prjBindings $ project
-  -- fetch StoreExpressions for top-level bindings
-  storeExprs <- traverse Actions.lookupExpression (M.elems (getBindings bindings))
-  -- also fetch deps of said bindings
-  manyMaps <- traverse Actions.getDepsForStoreExpression storeExprs
-  -- typecheck everything
-  resolvedMap <- typecheckStoreExpressions (mconcat manyMaps)
-  -- make into a nice type map
-  makeTypeMap resolvedMap (bindingsToModuleThing bindings)
-
-bindingsToModuleThing :: Bindings -> Map (Maybe ModuleName, Name) ExprHash
-bindingsToModuleThing (Bindings b) =
-  M.fromList
-    . fmap (first (Nothing,))
-    . M.toList
-    $ b
-
 -- | re-typecheck a single store expression
 -- not sure how this is different from other typechecking fns now
 annotateStoreExpressionWithTypes ::
@@ -208,4 +180,4 @@ annotateStoreExpressionWithTypes storeExpr = do
   -- swap (Name, Unique) back for Names
   let typedStoreExpr = first fst (reTypedExpression resolvedExpr)
 
-  pure (storeExpr {storeExpression = typedStoreExpr})
+  pure (setStoreExpression storeExpr typedStoreExpr)

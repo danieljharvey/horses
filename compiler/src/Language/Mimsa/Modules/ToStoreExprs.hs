@@ -23,7 +23,6 @@ import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -55,7 +54,10 @@ instance (Printer ann) => Printer (CompiledModule ann) where
       )
 
 toStoreExpressions ::
-  (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
+  ( MonadError (Error Annotation) m,
+    Eq ann,
+    Show ann
+  ) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (CompiledModule (Type ann))
@@ -94,7 +96,10 @@ includeTransitiveDeps depsMap = runIdentity $ do
 
 --- compile many modules
 compileAllModules ::
-  (MonadError (Error Annotation) m, Eq ann, Monoid ann, Show ann) =>
+  ( MonadError (Error Annotation) m,
+    Eq ann,
+    Show ann
+  ) =>
   Map ModuleHash (Module (Type ann)) ->
   Module (Type ann) ->
   m (Map ModuleHash (CompiledModule (Type ann)))
@@ -121,8 +126,7 @@ compileAllModules myDeps rootModule = do
 --- compile a module into StoreExpressions
 compileModuleDefinitions ::
   ( MonadError (Error Annotation) m,
-    Eq ann,
-    Monoid ann
+    Eq ann
   ) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
@@ -160,8 +164,7 @@ compileModuleDefinitions compiledModules inputModule = do
       }
 
 toStoreExpression ::
-  ( MonadError (Error Annotation) m,
-    Monoid ann
+  ( MonadError (Error Annotation) m
   ) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
@@ -175,8 +178,7 @@ toStoreExpression compiledModules inputModule inputs (_, dep, uses) =
 
 -- this is crap, need to add type bindings
 dataTypeToStoreExpression ::
-  ( Monoid ann,
-    MonadError (Error Annotation) m
+  ( MonadError (Error Annotation) m
   ) =>
   Map ModuleHash (CompiledModule (Type ann)) ->
   Module (Type ann) ->
@@ -184,11 +186,9 @@ dataTypeToStoreExpression ::
   DataType ->
   m (StoreExpression (Type ann))
 dataTypeToStoreExpression compiledModules inputModule inputs dt = do
-  let mt = MTRecord mempty mempty -- it's weird MyData needs this, so give it rubbish
-      expr = MyData mt dt (MyRecord mt mempty)
-      uses = extractDataTypeUses dt
+  let uses = extractDataTypeUses dt
   types <- typesFromEntities compiledModules inputModule inputs uses
-  pure $ StoreExpression expr mempty mempty mempty types
+  pure $ StoreDataType dt types
 
 -- to make a store expression we need to
 -- a) work out all the deps this expression has
@@ -308,10 +308,7 @@ dataTypesByTyCon ::
 dataTypesByTyCon items =
   let withSe se =
         fmap (se,)
-          . listToMaybe
-          . S.toList
-          . extractDataTypes
-          . storeExpression
+          . extractDataType
           $ se
 
       dataTypes = mapMaybe withSe (M.elems items)
@@ -320,6 +317,10 @@ dataTypesByTyCon items =
             constructors $> se
         )
           <$> dataTypes
+
+extractDataType :: StoreExpression ann -> Maybe DataType
+extractDataType (StoreDataType dt _) = Just dt
+extractDataType _ = Nothing
 
 flattenCompiled ::
   CompiledModule (Type ann) ->

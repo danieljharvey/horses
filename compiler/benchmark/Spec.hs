@@ -9,10 +9,8 @@ import Criterion.Main
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Backend.Types
 import Language.Mimsa.Parser
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
@@ -38,17 +36,6 @@ buildThing action prj =
     Right (proj, _, _) -> proj
     Left e -> error (show e)
 
--- compile something
-compileThing :: Text -> Project Annotation
-compileThing input =
-  let action = do
-        let expr = unsafeParseExpr input $> mempty
-        (_, _, newModule) <- Actions.evaluateModule expr mempty
-        Actions.compileModule Typescript newModule
-   in case Actions.run stdlib action of
-        Right (proj, _, _) -> proj
-        Left e -> error (show e)
-
 -- evaluate something
 evaluateThing :: Text -> Expr Name Annotation
 evaluateThing input =
@@ -66,12 +53,7 @@ main =
   defaultMain
     [ bgroup
         "build stdlib"
-        [ bench "allFns" $ whnf (buildThing allFns) mempty
-        ],
-      bgroup
-        "compilation"
-        [ bench "compile either fmap test" $
-            whnf compileThing "Either.fmap (\\a -> a + 1) (Either.Right 100)"
+        [ bench "allFns" $ whnf (buildThing stdModules) mempty
         ],
       bgroup
         "evaluate"

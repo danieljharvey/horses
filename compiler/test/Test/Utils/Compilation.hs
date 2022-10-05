@@ -10,16 +10,19 @@ where
 import Control.Monad.Except
 import Data.Foldable
 import Data.Hashable
+import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Compile as Actions
-import qualified Language.Mimsa.Actions.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
+import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
+import qualified Language.Mimsa.Actions.Modules.Imports as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Types as Actions
 import Language.Mimsa.Backend.Output
+import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Printer
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
@@ -30,7 +33,8 @@ import Test.Data.Project
 import Test.Utils.Helpers
 import Test.Utils.Serialisation
 
--- | compile a project into a temp folder and return the main filename
+-- | evaluate an expression, then compile into a temp folder and return the
+-- main filename
 testProjectCompile ::
   String ->
   Backend ->
@@ -38,11 +42,16 @@ testProjectCompile ::
   IO (FilePath, Int)
 testProjectCompile folderPrefix be expr = do
   let action = do
-        (_, _, storeExpr, _, _) <- Actions.evaluate (prettyPrint expr) expr
-        (seHash, _) <- Actions.compileStoreExpression be storeExpr
-        pure seHash
+        (_, _, newModule) <- Actions.evaluateModule expr mempty
+        (_, exprMap, _) <- Actions.compileModule be newModule
+        let exprName = case Actions.evalId of
+              DIName name -> name
+              _ -> error "broken evalId"
+        case M.lookup exprName exprMap of
+          Just eh -> pure eh
+          Nothing -> error "could not find outputted exprHash to compile"
   let (_newProject_, outcomes, seHash) =
-        fromRight (Actions.run testStdlib action)
+        fromRight (Actions.run stdlib action)
 
   writeFiles be folderPrefix seHash outcomes
 
@@ -57,7 +66,8 @@ testModuleCompile folderPrefix be input = do
         -- parse a module from text
         (parsedModule, _) <- Actions.checkModule mempty input
         -- turn into TS / JS etc
-        Actions.compileModule be (getAnnotationForType <$> parsedModule)
+        (moduleHash, _, _) <- Actions.compileModule be (getAnnotationForType <$> parsedModule)
+        pure moduleHash
   let (_newProject_, outcomes, modHash) =
         fromRight (Actions.run testStdlib action)
 
@@ -156,7 +166,7 @@ writeFiles be folderPrefix seHash outcomes = do
   -- make a new index file that imports the outcome and logs it
   let actualIndex =
         "import { main } from './"
-          <> indexImport be seHash
+          <> storeExprFilename be seHash
           <> "';\nconsole.log(main)"
 
   -- get filename of index file

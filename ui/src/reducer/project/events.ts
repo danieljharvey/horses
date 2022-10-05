@@ -15,7 +15,6 @@ export const initialProject = (
   bindings: {},
   typeBindings: {},
   versions: {},
-  usages: {},
   modules: {},
 })
 

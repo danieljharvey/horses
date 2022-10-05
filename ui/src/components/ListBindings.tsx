@@ -2,10 +2,7 @@ import * as React from 'react'
 import { ModuleHash, ExprHash } from '../types/'
 import { Link } from './View/Link'
 import { InlineSpaced } from './View/InlineSpaced'
-import {
-  countActiveVersionsOfBinding,
-  lookupNameForExprHash,
-} from '../reducer/project/selectors'
+import { lookupNameForExprHash } from '../reducer/project/selectors'
 import * as O from 'fp-ts/Option'
 import { useStoreTuple } from '../hooks/useStore'
 
@@ -24,14 +21,13 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
   values,
   types,
   onBindingSelect,
-  //  modules,
-  //onModuleSelect,
+  modules,
+  onModuleSelect,
 }) => {
   // try and re-use it this where possible
   const items = { ...values, ...types }
 
-  const [getActiveVersions, lookupName] = useStoreTuple([
-    countActiveVersionsOfBinding,
+  const [lookupName] = useStoreTuple([
     lookupNameForExprHash,
   ] as const)
 
@@ -44,7 +40,6 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
 
   return (
     <InlineSpaced>
-      {/*
       {Object.entries(modules).map(([name, moduleHash]) => (
         <Link
           depType="module"
@@ -56,11 +51,10 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
           {name}
         </Link>
       ))}
-        */}
       {Object.entries(values).map(([name, exprHash]) => (
         <Link
           depType="expression"
-          number={getActiveVersions(name)}
+          number={1}
           key={name}
           onClick={() => onBindingSelect(name, exprHash)}
           highlight={bindingIsNewest(exprHash)}

@@ -5,10 +5,8 @@ import { pipe, identity } from 'fp-ts/function'
 import {
   BindingVersion,
   ExprHash,
-  exprHash,
   ProjectHash,
   projectHash,
-  ExprUsage,
 } from '../../types'
 import { State } from '../types'
 
@@ -26,20 +24,6 @@ const versionsL = Lens.fromPath<State>()([
   'versions',
 ])
 
-const usagesL = Lens.fromPath<State>()([
-  'project',
-  'usages',
-])
-
-export const getUsagesOfExprHash =
-  (state: State) =>
-  (exprHash: ExprHash): ExprUsage[] =>
-    pipe(
-      usagesL.get(state),
-      R.lookup(exprHash),
-      O.fold(() => [], identity)
-    )
-
 export const getVersionsOfBinding =
   (state: State) =>
   (bindingName: string): BindingVersion[] =>
@@ -48,21 +32,6 @@ export const getVersionsOfBinding =
       R.lookup(bindingName),
       O.fold(() => [], identity)
     )
-
-// how many versions of this binding are in active use in the project?
-export const countActiveVersionsOfBinding =
-  (state: State) =>
-  (bindingName: string): number => {
-    const versions =
-      getVersionsOfBinding(state)(bindingName)
-    return versions
-      .map((version) =>
-        getUsagesOfExprHash(state)(
-          exprHash(version.bvExprHash)
-        )
-      )
-      .filter((usage) => usage.length > 0).length
-  }
 
 export const getProjectHash = (state: State): ProjectHash =>
   projectHash(state.project.projectHash)

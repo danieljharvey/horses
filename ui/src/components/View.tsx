@@ -5,7 +5,6 @@ import { ScratchModule } from './Editor/ScratchModule'
 import { EditBinding } from './Editor/EditBinding'
 import { NewBinding } from './Editor/NewBinding'
 import { NewType } from './Editor/NewType'
-import { TypeSearch } from './TypeSearch/TypeSearch'
 import { FilteredBindingList } from './FilteredBindingList'
 import { Menu } from './Menu'
 import {
@@ -148,12 +147,6 @@ const getScreenInner = (
           onBindingSelect={onBindingSelect}
         />,
         true,
-      ]
-
-    case 'typeSearch':
-      return [
-        <TypeSearch onBindingSelect={onBindingSelect} />,
-        false,
       ]
 
     case 'new-type':

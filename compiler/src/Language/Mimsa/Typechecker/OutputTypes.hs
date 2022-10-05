@@ -96,7 +96,5 @@ foldExpr fn expression =
       f ann <> foldExpr fn record
     foldExpr' (MyArray ann as) =
       f ann <> foldMap (foldExpr fn) as
-    foldExpr' (MyData ann _ body) =
-      f ann <> foldExpr fn body
     foldExpr' (MyConstructor ann _ _) = f ann
     foldExpr' (MyTypedHole ann _) = f ann

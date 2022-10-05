@@ -2,24 +2,21 @@
 
 module Test.Utils.Helpers where
 
-import Data.Bifunctor (first)
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
+import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker
 
 joinLines :: [Text] -> Text
@@ -52,6 +49,11 @@ unsafeParseExpr' t = case parseExpr t of
       "Error parsing expr for Prettier tests:"
         <> T.unpack t
 
+unsafeParseDataType :: Text -> DataType
+unsafeParseDataType t = case parseTypeDecl t of
+  Right a -> a
+  Left _ -> error $ "could not parse data type: " <> T.unpack t
+
 unsafeParseExpr :: Text -> Expr Name ()
 unsafeParseExpr = unsafeParseExpr'
 
@@ -79,15 +81,6 @@ getHashOfName prj name =
   case lookupBindingName prj name of
     Just a -> a
     _ -> error "could not getHashOfName"
-
-createTestOrExplode ::
-  Project Annotation ->
-  StoreExpression Annotation ->
-  TestName ->
-  UnitTest
-createTestOrExplode prj sExpr name = case createUnitTest prj sExpr name of
-  Right a -> a
-  _ -> error "EXPLODE"
 
 getStoreExpression :: Project ann -> ExprHash -> StoreExpression ann
 getStoreExpression project exprHash' =
@@ -153,14 +146,17 @@ additionalStoreItems old new =
 
 ----------
 
+-- | given some text, parse and typecheck it
 evaluateText ::
   Project Annotation ->
   Text ->
-  Either (Error Annotation) (ResolvedExpression Annotation)
+  Either (Error Annotation) (Expr Name MonoType)
 evaluateText project input = do
-  expr <- first (ParseError input) (parseExpr input)
-  (_, _, re) <-
+  let action = do
+        expr <- Actions.parseExpr input
+        Actions.typecheckExpression expr mempty
+  (_, _, typedExpr) <-
     Actions.run
       project
-      (Actions.typecheckExpression project input expr)
-  pure re
+      action
+  pure typedExpr

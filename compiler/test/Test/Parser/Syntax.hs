@@ -10,7 +10,6 @@ import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Parser
-import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -313,113 +312,7 @@ spec = parallel $ do
                 (MyPair mempty (bool True) (int 1))
                 (MyVar mempty Nothing "a")
             )
-      it "Parses Void" $
-        testParse "type Void in 1"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Void"
-                    mempty
-                    mempty
-                )
-                (int 1)
-            )
-      it "Parses an absolute unit" $
-        testParse "type AbsoluteUnit = AbsoluteUnit in 1"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "AbsoluteUnit"
-                    mempty
-                    (M.singleton "AbsoluteUnit" mempty)
-                )
-                (int 1)
-            )
-      it "Parses an absolute unit with type var" $
-        testParse "type Arr a = Item a in 1"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Arr"
-                    ["a"]
-                    ( M.fromList
-                        [ ( "Item",
-                            [MTVar mempty (tvNamed "a")]
-                          )
-                        ]
-                    )
-                )
-                (int 1)
-            )
 
-      it "Parses an absolute unit with type var" $
-        testParse "type Arr a = Empty\n | Item a\nin 1"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Arr"
-                    ["a"]
-                    ( M.fromList
-                        [ ("Empty", mempty),
-                          ( "Item",
-                            [MTVar mempty (tvNamed "a")]
-                          )
-                        ]
-                    )
-                )
-                (int 1)
-            )
-      it "Parses a single constructor with one arg" $
-        testParse "type Dog = Dog String in 1"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Dog"
-                    mempty
-                    ( M.singleton
-                        "Dog"
-                        [MTPrim mempty MTString]
-                    )
-                )
-                (int 1)
-            )
-      it "Parses a french boolean" $
-        testParse "type LeBool = Vrai | Faux in 1"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "LeBool"
-                    mempty
-                    ( M.fromList
-                        [ ("Vrai", []),
-                          ("Faux", [])
-                        ]
-                    )
-                )
-                (int 1)
-            )
-      it "Parses a peano number data declaration" $
-        testParse "type Nat = Zero | Succ Nat in 1"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Nat"
-                    mempty
-                    ( M.fromList
-                        [ ("Zero", []),
-                          ("Succ", [dataTypeWithVars mempty Nothing "Nat" mempty])
-                        ]
-                    )
-                )
-                (int 1)
-            )
       it "Parses a multiple argument constructor" $
         testParse "Dog \"hi\" \"dog\""
           `shouldBe` Right
@@ -432,128 +325,12 @@ spec = parallel $ do
                 )
                 (str' "dog")
             )
-      it "Parses a type declaration with variable" $
-        testParse "type Maybe a = Just a | Nothing in Nothing"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Maybe"
-                    ["a"]
-                    ( M.fromList
-                        [ ("Just", [MTVar mempty (tvNamed "a")]),
-                          ("Nothing", [])
-                        ]
-                    )
-                )
-                (MyConstructor mempty Nothing "Nothing")
-            )
-      it "Parses a type declaration with a function as arg" $
-        testParse "type Reader r a = Reader (r -> a) in {}"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Reader"
-                    ["r", "a"]
-                    ( M.fromList
-                        [ ( "Reader",
-                            [ MTFunction
-                                mempty
-                                (MTVar mempty (tvNamed "r"))
-                                (MTVar mempty (tvNamed "a"))
-                            ]
-                          )
-                        ]
-                    )
-                )
-                (MyRecord mempty mempty)
-            )
-      it "Parses a type declaration with a function and data type as arg" $
-        testParse "type Reader r a = Reader (r -> (Pair a b)) in {}"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Reader"
-                    ["r", "a"]
-                    ( M.fromList
-                        [ ( "Reader",
-                            [ MTFunction
-                                mempty
-                                (MTVar mempty (tvNamed "r"))
-                                ( dataTypeWithVars
-                                    mempty
-                                    Nothing
-                                    "Pair"
-                                    [ MTVar mempty (tvNamed "a"),
-                                      MTVar mempty (tvNamed "b")
-                                    ]
-                                )
-                            ]
-                          )
-                        ]
-                    )
-                )
-                (MyRecord mempty mempty)
-            )
+
       it "Uses a constructor" $
         testParse "Vrai" `shouldBe` Right (MyConstructor mempty Nothing "Vrai")
       it "Uses a namespaced constructor" $
         testParse "LeBool.Vrai" `shouldBe` Right (MyConstructor mempty (Just "LeBool") "Vrai")
-      it "Parses complex type constructors" $
-        testParse "type Tree = Leaf Int | Branch Tree Tree in Leaf 1"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Tree"
-                    []
-                    ( M.fromList
-                        [ ("Leaf", [MTPrim mempty MTInt]),
-                          ( "Branch",
-                            [ dataTypeWithVars mempty Nothing "Tree" [],
-                              dataTypeWithVars mempty Nothing "Tree" []
-                            ]
-                          )
-                        ]
-                    )
-                )
-                (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 1))
-            )
-      it "Parses even more complex type constructors" $
-        testParse "type Tree a = Empty | Branch (Tree a) a (Tree a) in Branch (Empty) 1 (Empty)"
-          `shouldBe` Right
-            ( MyData
-                mempty
-                ( DataType
-                    "Tree"
-                    ["a"]
-                    ( M.fromList
-                        [ ("Empty", mempty),
-                          ( "Branch",
-                            [ dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")],
-                              MTVar mempty (tvNamed "a"),
-                              dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")]
-                            ]
-                          )
-                        ]
-                    )
-                )
-                ( MyApp
-                    mempty
-                    ( MyApp
-                        mempty
-                        ( MyApp
-                            mempty
-                            (MyConstructor mempty Nothing "Branch")
-                            (MyConstructor mempty Nothing "Empty")
-                        )
-                        (int 1)
-                    )
-                    (MyConstructor mempty Nothing "Empty")
-                )
-            )
+
       it "Parses big function application" $
         testParse "thing 1 2 3 4 5"
           `shouldBe` Right
@@ -686,34 +463,20 @@ spec = parallel $ do
                     (MyVar mempty Nothing "a")
                 )
             )
-      it "Tree type with value" $
-        testParse "type Tree a = Leaf a | Branch (Tree a) (Tree a) in Branch (Leaf 1) (Leaf 2)"
+
+      it "Tree type value" $
+        testParse "Branch (Leaf 1) (Leaf 2)"
           `shouldBe` Right
-            ( MyData
+            ( MyApp
                 mempty
-                ( DataType
-                    "Tree"
-                    ["a"]
-                    ( M.fromList
-                        [ ("Leaf", [MTVar mempty (tvNamed "a")]),
-                          ( "Branch",
-                            [ dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")],
-                              dataTypeWithVars mempty Nothing "Tree" [MTVar mempty (tvNamed "a")]
-                            ]
-                          )
-                        ]
-                    )
-                )
                 ( MyApp
                     mempty
-                    ( MyApp
-                        mempty
-                        (MyConstructor mempty Nothing "Branch")
-                        (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 1))
-                    )
-                    (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 2))
+                    (MyConstructor mempty Nothing "Branch")
+                    (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 1))
                 )
+                (MyApp mempty (MyConstructor mempty Nothing "Leaf") (int 2))
             )
+
       it "dog + log" $
         testParse "dog + log"
           `shouldBe` Right (MyInfix mempty Add (MyVar mempty Nothing "dog") (MyVar mempty Nothing "log"))
@@ -981,18 +744,6 @@ spec = parallel $ do
                 (MyLiteral (Location 1 2) (MyInt 1))
                 (MyLiteral (Location 3 4) (MyInt 2))
             )
-      it "Parses data declaration with location information" $
-        testParseWithAnn "type MyUnit = MyUnit in 1"
-          `shouldBe` Right
-            ( MyData
-                (Location 0 25)
-                ( DataType
-                    "MyUnit"
-                    mempty
-                    (M.singleton "MyUnit" mempty)
-                )
-                (MyLiteral (Location 24 25) (MyInt 1))
-            )
       it "Parses constructor application with location information" $
         testParseWithAnn "Just 1"
           `shouldBe` Right
@@ -1017,14 +768,6 @@ spec = parallel $ do
         testParseWithAnn "id 1 + 1" `shouldSatisfy` isRight
       it "Accepts whitespace after record" $
         testParseWithAnn "{ name: 1 } " `shouldSatisfy` isRight
-      it "Parses Reader type declaration with 'in'" $
-        testParseWithAnn
-          "type Reader r a = Reader (r -> a) in True"
-          `shouldSatisfy` isRight
-      it "Parses Reader type declaration with semicolon" $
-        testParseWithAnn
-          "type Reader r a = Reader (r -> a); True"
-          `shouldSatisfy` isRight
       it "Parses array of numbers" $
         testParseWithAnn "[1,2,3]"
           `shouldBe` Right

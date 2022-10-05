@@ -64,7 +64,6 @@ export const projectReducer: EventReducer<
           modules: action.data
             .pdModuleBindings as ProjectState['modules'],
           versions: action.data.pdVersions,
-          usages: action.data.pdUsages,
         })(state),
         [
           fetchExpressions(

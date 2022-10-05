@@ -17,19 +17,13 @@ where
 import qualified Data.Aeson as JSON
 import Data.Coerce
 import Data.Either
-import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (get)
 import qualified Data.Set as S
 import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Printer
-import Language.Mimsa.Project
-import Language.Mimsa.Tests.Test
 import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Tests
 
 data TestData = TestData
@@ -41,54 +35,35 @@ data TestData = TestData
 
 data UnitTestData = UnitTestData
   { utdTestName :: Text,
-    utdTestSuccess :: Bool,
-    utdBindings :: Map Name Text -- bin this off once we're doing modules
+    utdTestSuccess :: Bool
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
-mkUnitTestData :: Project ann -> UnitTest -> UnitTestData
-mkUnitTestData project unitTest = do
-  let getDep = (`findBindingNameForExprHash` project)
-  let depMap =
-        mconcat
-          ( getDep
-              <$> S.toList
-                (getDirectDepsOfTest project (UTest unitTest))
-          )
+mkUnitTestData :: UnitTest -> UnitTestData
+mkUnitTestData unitTest =
   UnitTestData
     (coerce $ utName unitTest)
     (coerce $ utSuccess unitTest)
-    (coerce <$> depMap)
 
 data PropertyTestData = PropertyTestData
   { ptdTestName :: Text,
-    ptdTestFailures :: [Text],
-    ptdBindings :: Map Name Text -- bin this off once we're doing modules
+    ptdTestFailures :: [Text]
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
 mkPropertyTestData ::
-  Project ann ->
   PropertyTest ->
   PropertyTestResult ann ->
   PropertyTestData
-mkPropertyTestData project propertyTest result = do
-  let getDep = (`findBindingNameForExprHash` project)
-  let depMap =
-        mconcat
-          ( getDep
-              <$> S.toList
-                (getDirectDepsOfTest project (PTest propertyTest))
-          )
+mkPropertyTestData propertyTest result = do
   let failures = case result of
         PropertyTestSuccess -> mempty
         PropertyTestFailures es -> prettyPrint <$> S.toList es
   PropertyTestData
     (coerce $ ptName propertyTest)
     failures
-    (coerce <$> depMap)
 
 data RuntimeData = RuntimeData
   { rtdName :: Text,
@@ -113,23 +88,22 @@ splitTestResults results =
         )
 
 makeTestData ::
-  Project Annotation ->
   [TestResult Annotation] ->
   TestData
-makeTestData project testResults =
+makeTestData testResults =
   let (uts, pts) = splitTestResults testResults
 
       unitTests =
-        mkUnitTestData project
+        mkUnitTestData
           <$> uts
 
       propertyTests =
-        uncurry (mkPropertyTestData project) <$> pts
+        uncurry mkPropertyTestData <$> pts
    in TestData unitTests propertyTests
 
 makeTestDataFromModule :: ModuleTestResults -> TestData
 makeTestDataFromModule (ModuleTestResults results) =
   let makeUnitTest (TestName testName, result) = case result of
-        ModuleTestPassed -> UnitTestData testName True mempty
-        ModuleTestFailed -> UnitTestData testName False mempty
+        ModuleTestPassed -> UnitTestData testName True
+        ModuleTestFailed -> UnitTestData testName False
    in TestData (makeUnitTest <$> M.toList results) mempty

@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -22,21 +21,18 @@ module Server.Handlers
     writeStoreHandler,
     readModuleStoreHandler,
     writeModuleStoreHandler,
-    runTestsHandler,
   )
 where
 
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import qualified Data.Aeson as JSON
-import Data.Coerce
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.OpenApi (ToSchema)
-import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text.IO as T
@@ -45,18 +41,15 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Actions.Types
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Project.Usages
 import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
 import Language.Mimsa.Store.Persistence
-import Language.Mimsa.Tests.Test
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Tests
 import Servant
 import Server.Helpers
 import Server.Persistence
@@ -122,25 +115,6 @@ data BindingVersion = BindingVersion
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
 
-toExprUsages :: Set Usage -> [ExprUsage]
-toExprUsages =
-  fmap
-    ( \case
-        Transient name exprHash ->
-          ExprUsage exprHash (coerce name) False
-        Direct name exprHash ->
-          ExprUsage exprHash (coerce name) True
-    )
-    . S.toList
-
-data ExprUsage = ExprUsage
-  { euExprHash :: ExprHash,
-    euName :: Text,
-    euIsDirect :: Bool
-  }
-  deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, ToSchema)
-
 -- | Current state of the project
 -- should contain no exprs
 data ProjectData = ProjectData
@@ -148,8 +122,7 @@ data ProjectData = ProjectData
     pdBindings :: Map Name Text,
     pdTypeBindings :: Map TyCon Text,
     pdModuleBindings :: Map ModuleName Text,
-    pdVersions :: Map Name (NE.NonEmpty BindingVersion),
-    pdUsages :: Map ExprHash [ExprUsage]
+    pdVersions :: Map Name (NE.NonEmpty BindingVersion)
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -191,10 +164,6 @@ versionsForBinding prj name = do
   versions <- handleEither InternalError (findVersionsSimple prj name)
   pure $ uncurry BindingVersion <$> versions
 
-usagesForExprHash :: Project ann -> ExprHash -> Handler (Set Usage)
-usagesForExprHash prj exprHash =
-  handleEither InternalError (findUsages prj exprHash)
-
 -- given a new Project, save it and return the hash and bindings
 projectDataHandler ::
   (Printer ann, Show ann) =>
@@ -208,9 +177,6 @@ projectDataHandler mimsaEnv project = do
           <$> getBindings . getCurrentBindings . prjBindings
           $ project
   versions <- traverse (versionsForBinding project) nameMap
-  -- list usages of each exprhash in the project
-  let hashesMap = M.mapWithKey const <$> getStore . prjStore $ project
-  usages <- traverse (usagesForExprHash project) hashesMap
 
   -- save project file
   projHash <-
@@ -226,7 +192,6 @@ projectDataHandler mimsaEnv project = do
       (outputTypeBindings project)
       (outputModuleBindings project)
       versions
-      (toExprUsages <$> usages)
 
 -- given a project hash, find the project
 loadProjectHandler ::
@@ -332,14 +297,3 @@ storeFromExprHashHandler mimsaEnv exprHash =
         (mimsaConfig mimsaEnv)
         UserError
         (recursiveLoadBoundExpressions (scRootPath cfg) mempty (S.singleton exprHash))
-
-runTestsHandler ::
-  MimsaEnvironment ->
-  Project Annotation ->
-  [Test] ->
-  Handler [TestResult Annotation]
-runTestsHandler mimsaEnv project tests = do
-  handleServerM
-    (mimsaConfig mimsaEnv)
-    InternalError
-    (traverse (runTests project) tests)

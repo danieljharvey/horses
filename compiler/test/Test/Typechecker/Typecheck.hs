@@ -7,6 +7,7 @@ where
 
 import Data.Bifunctor
 import Data.Either (isLeft)
+import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.DataTypes
@@ -17,7 +18,7 @@ import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Typechecker
 import Test.Codegen.Shared
   ( dtEither,
@@ -36,14 +37,22 @@ identity =
     (MyVar mempty Nothing "x")
 
 startInference :: Expr Name Annotation -> Either TypeError MonoType -> IO ()
-startInference expr expected = do
+startInference = startInferenceWithDataTypes []
+
+dtToMap :: DataType -> Map (Maybe ModuleName, TypeName) DataType
+dtToMap dt@(DataType tn _ _) = M.singleton (Nothing, tn) dt
+
+startInferenceWithDataTypes :: [DataType] -> Expr Name Annotation -> Either TypeError MonoType -> IO ()
+startInferenceWithDataTypes dts expr expected = do
   let numberedExpr =
         fromRight $
           addNumbersToStoreExpression
-            (StoreExpression expr mempty mempty mempty mempty)
+            expr
+            mempty
+  let env = mempty {getDataTypes = mconcat (dtToMap <$> dts)}
   let elabbed =
         fmap (\(_, _, a, _) -> first fst a)
-          . typecheck mempty mempty
+          . typecheck mempty env
           $ numberedExpr
   normaliseType . getTypeFromAnn <$> elabbed `shouldBe` expected
   case elabbed of
@@ -54,7 +63,8 @@ testInfer :: Expr Name Annotation -> Either TypeError MonoType
 testInfer expr = do
   numberedExpr <-
     addNumbersToStoreExpression
-      (StoreExpression expr mempty mempty mempty mempty)
+      expr
+      mempty
   let elabbed =
         fmap (\(_, _, a, _) -> a)
           . typecheck mempty mempty
@@ -90,6 +100,20 @@ spec = do
                 (int 42)
                 (MyVar mempty Nothing "x")
         startInference expr $ Right (MTPrim mempty MTInt)
+      it "regressions" $ do
+        let expr = unsafeParseExpr' "{ fun: (\\a -> let d = 1 in a) }"
+        startInference expr $
+          Right
+            ( MTRecord mempty $
+                M.singleton
+                  "fun"
+                  ( MTFunction
+                      mempty
+                      (MTVar mempty (TVUnificationVar 1))
+                      (MTVar mempty (TVUnificationVar 1))
+                  )
+            )
+
       describe "annotations" $ do
         it "annotation that is ok" $ do
           let expr =
@@ -735,124 +759,94 @@ spec = do
               ]
       startInference expr $
         Right (MTPrim mempty MTBool)
-    it "An integer does not match with a Maybe" $ do
+
+    it "Matches pattern match values to branch return types" $ do
       let expr =
-            MyData
+            MyLambda
               mempty
-              dtMaybe
+              (Identifier mempty "a")
               ( MyPatternMatch
                   mempty
-                  (int 1)
-                  [ ( PConstructor mempty Nothing "Nothing" [],
-                      bool True
+                  (MyVar mempty Nothing "a")
+                  [ ( PConstructor mempty Nothing "Just" [PVar mempty "as"],
+                      MyVar mempty Nothing "as"
                     ),
-                    ( PConstructor mempty Nothing "Just" [PWildcard mempty],
-                      bool False
+                    ( PWildcard mempty,
+                      int 100
                     )
                   ]
               )
-      testInfer expr
-        `shouldSatisfy` isLeft
-    it "Matches pattern match values to branch return types" $ do
-      let expr =
-            MyData
-              mempty
-              dtMaybe
-              ( MyLambda
-                  mempty
-                  (Identifier mempty "a")
-                  ( MyPatternMatch
-                      mempty
-                      (MyVar mempty Nothing "a")
-                      [ ( PConstructor mempty Nothing "Just" [PVar mempty "as"],
-                          MyVar mempty Nothing "as"
-                        ),
-                        ( PWildcard mempty,
-                          int 100
-                        )
-                      ]
-                  )
-              )
-      startInference expr $
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Right
           (MTFunction mempty (dataTypeWithVars mempty Nothing "Maybe" [MTPrim mempty MTInt]) (MTPrim mempty MTInt))
 
     it "Errors when number of args does not match for Just" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtMaybe
-              ( MyPatternMatch
-                  mempty
-                  (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
-                  [ ( PConstructor mempty Nothing "Just" [],
-                      bool True
-                    ),
-                    ( PConstructor mempty Nothing "Nothing" [],
-                      bool False
-                    ),
-                    (PConstructor mempty Nothing "Just" [PWildcard mempty], bool False)
-                  ]
-              )
-      startInference expr $
+              (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
+              [ ( PConstructor mempty Nothing "Just" [],
+                  bool True
+                ),
+                ( PConstructor mempty Nothing "Nothing" [],
+                  bool False
+                ),
+                (PConstructor mempty Nothing "Just" [PWildcard mempty], bool False)
+              ]
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Left (PatternMatchErr $ ConstructorArgumentLengthMismatch mempty "Just" 1 0)
     it "Matches wildcard inside datatype" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtMaybe
-              ( MyPatternMatch
-                  mempty
-                  (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
-                  [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
-                      bool True
-                    ),
-                    ( PConstructor mempty Nothing "Nothing" [],
-                      bool False
-                    )
-                  ]
-              )
-      startInference expr $
+              (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
+              [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
+                  bool True
+                ),
+                ( PConstructor mempty Nothing "Nothing" [],
+                  bool False
+                )
+              ]
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Right (MTPrim mempty MTBool)
     it "Matches value inside datatype" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtMaybe
-              ( MyPatternMatch
-                  mempty
-                  (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
-                  [ ( PConstructor mempty Nothing "Just" [PVar mempty "a"],
-                      MyVar mempty Nothing "a"
-                    ),
-                    ( PConstructor mempty Nothing "Nothing" [],
-                      int 0
-                    )
-                  ]
-              )
-      startInference expr $
+              (MyApp mempty (MyConstructor mempty Nothing "Just") (int 1))
+              [ ( PConstructor mempty Nothing "Just" [PVar mempty "a"],
+                  MyVar mempty Nothing "a"
+                ),
+                ( PConstructor mempty Nothing "Nothing" [],
+                  int 0
+                )
+              ]
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Right (MTPrim mempty MTInt)
+
     it "Matches value inside more complex datatype" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtThese
-              ( MyPatternMatch
-                  mempty
-                  (MyApp mempty (MyConstructor mempty Nothing "That") (int 1))
-                  [ ( PConstructor mempty Nothing "This" [PWildcard mempty],
-                      int 0
-                    ),
-                    ( PConstructor mempty Nothing "That" [PVar mempty "b"],
-                      MyVar mempty Nothing "b"
-                    ),
-                    ( PConstructor mempty Nothing "These" [PWildcard mempty, PVar mempty "b"],
-                      MyVar mempty Nothing "b"
-                    )
-                  ]
-              )
-      startInference expr $
+              (MyApp mempty (MyConstructor mempty Nothing "That") (int 1))
+              [ ( PConstructor mempty Nothing "This" [PWildcard mempty],
+                  int 0
+                ),
+                ( PConstructor mempty Nothing "That" [PVar mempty "b"],
+                  MyVar mempty Nothing "b"
+                ),
+                ( PConstructor mempty Nothing "These" [PWildcard mempty, PVar mempty "b"],
+                  MyVar mempty Nothing "b"
+                )
+              ]
+
+      startInferenceWithDataTypes [dtThese] expr $
         Right (MTPrim mempty MTInt)
+
     it "Matches nested datatype" $ do
       let val =
             MyApp
@@ -861,29 +855,27 @@ spec = do
               ( MyApp mempty (MyConstructor mempty Nothing "Just") (bool True)
               )
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtMaybe
-              ( MyPatternMatch
-                  mempty
-                  val
-                  [ ( PConstructor
+              val
+              [ ( PConstructor
+                    mempty
+                    Nothing
+                    "Just"
+                    [ PConstructor
                         mempty
                         Nothing
                         "Just"
-                        [ PConstructor
-                            mempty
-                            Nothing
-                            "Just"
-                            [PVar mempty "bool"]
-                        ],
-                      MyVar mempty Nothing "bool"
-                    ),
-                    (PWildcard mempty, bool False)
-                  ]
-              )
-      startInference expr $
+                        [PVar mempty "bool"]
+                    ],
+                  MyVar mempty Nothing "bool"
+                ),
+                (PWildcard mempty, bool False)
+              ]
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Right (MTPrim mempty MTBool)
+
     it "Matches pair" $ do
       let expr =
             MyPatternMatch
@@ -902,26 +894,24 @@ spec = do
               ]
       startInference expr $
         Right (MTPrim mempty MTInt)
+
     it "Infers Left type variable in Either from pattern" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtEither
-              ( MyPatternMatch
-                  mempty
-                  (MyApp mempty (MyConstructor mempty Nothing "Left") (int 1))
-                  [ ( PConstructor mempty Nothing "Left" [PVar mempty "e"],
-                      MyApp mempty (MyConstructor mempty Nothing "Left") (MyVar mempty Nothing "e")
-                    ),
-                    ( PConstructor mempty Nothing "Right" [PLit mempty (MyInt 1)],
-                      MyApp mempty (MyConstructor mempty Nothing "Right") (int 1)
-                    ),
-                    ( PConstructor mempty Nothing "Right" [PVar mempty "a"],
-                      MyApp mempty (MyConstructor mempty Nothing "Right") (MyVar mempty Nothing "a")
-                    )
-                  ]
-              )
-      startInference expr $
+              (MyApp mempty (MyConstructor mempty Nothing "Left") (int 1))
+              [ ( PConstructor mempty Nothing "Left" [PVar mempty "e"],
+                  MyApp mempty (MyConstructor mempty Nothing "Left") (MyVar mempty Nothing "e")
+                ),
+                ( PConstructor mempty Nothing "Right" [PLit mempty (MyInt 1)],
+                  MyApp mempty (MyConstructor mempty Nothing "Right") (int 1)
+                ),
+                ( PConstructor mempty Nothing "Right" [PVar mempty "a"],
+                  MyApp mempty (MyConstructor mempty Nothing "Right") (MyVar mempty Nothing "a")
+                )
+              ]
+
+      startInferenceWithDataTypes [dtEither] expr $
         Right
           ( dataTypeWithVars
               mempty
@@ -933,24 +923,21 @@ spec = do
           )
     it "Infers Right type variable in Either from pattern" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtEither
-              ( MyPatternMatch
-                  mempty
-                  (MyApp mempty (MyConstructor mempty Nothing "Right") (bool True))
-                  [ ( PConstructor mempty Nothing "Left" [PLit mempty (MyInt 1)],
-                      MyApp mempty (MyConstructor mempty Nothing "Left") (int 1)
-                    ),
-                    ( PConstructor mempty Nothing "Left" [PVar mempty "e"],
-                      MyApp mempty (MyConstructor mempty Nothing "Left") (MyVar mempty Nothing "e")
-                    ),
-                    ( PConstructor mempty Nothing "Right" [PVar mempty "a"],
-                      MyApp mempty (MyConstructor mempty Nothing "Right") (MyVar mempty Nothing "a")
-                    )
-                  ]
-              )
-      startInference expr $
+              (MyApp mempty (MyConstructor mempty Nothing "Right") (bool True))
+              [ ( PConstructor mempty Nothing "Left" [PLit mempty (MyInt 1)],
+                  MyApp mempty (MyConstructor mempty Nothing "Left") (int 1)
+                ),
+                ( PConstructor mempty Nothing "Left" [PVar mempty "e"],
+                  MyApp mempty (MyConstructor mempty Nothing "Left") (MyVar mempty Nothing "e")
+                ),
+                ( PConstructor mempty Nothing "Right" [PVar mempty "a"],
+                  MyApp mempty (MyConstructor mempty Nothing "Right") (MyVar mempty Nothing "a")
+                )
+              ]
+
+      startInferenceWithDataTypes [dtEither] expr $
         Right
           ( dataTypeWithVars
               mempty
@@ -960,46 +947,21 @@ spec = do
                 MTPrim mempty MTBool
               ]
           )
-    it "Typechecking pattern matching after lambda" $ do
-      let expr =
-            MyData
-              mempty
-              dtMaybe
-              ( MyLambda
-                  mempty
-                  (Identifier mempty "maybe")
-                  ( MyPatternMatch
-                      mempty
-                      (MyVar mempty Nothing "maybe")
-                      [ ( PConstructor mempty Nothing "Just" [PVar mempty "a"],
-                          MyVar mempty Nothing "a"
-                        ),
-                        ( PWildcard mempty,
-                          MyVar mempty Nothing "maybe"
-                        )
-                      ]
-                  )
-              )
-      testInfer expr
-        `shouldSatisfy` isLeft
 
     it "Simpler Either example" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtEither
-              ( MyPatternMatch
-                  mempty
-                  (MyApp mempty (MyConstructor mempty Nothing "Right") (bool True))
-                  [ ( PConstructor mempty Nothing "Left" [PWildcard mempty],
-                      MyApp mempty (MyConstructor mempty Nothing "Left") (int 1)
-                    ),
-                    ( PVar mempty "all",
-                      MyVar mempty Nothing "all"
-                    )
-                  ]
-              )
-      startInference expr $
+              (MyApp mempty (MyConstructor mempty Nothing "Right") (bool True))
+              [ ( PConstructor mempty Nothing "Left" [PWildcard mempty],
+                  MyApp mempty (MyConstructor mempty Nothing "Left") (int 1)
+                ),
+                ( PVar mempty "all",
+                  MyVar mempty Nothing "all"
+                )
+              ]
+
+      startInferenceWithDataTypes [dtEither] expr $
         Right
           ( dataTypeWithVars
               mempty
@@ -1011,21 +973,18 @@ spec = do
           )
     it "Simpler Either example 2" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtEither
-              ( MyPatternMatch
-                  mempty
-                  (MyApp mempty (MyConstructor mempty Nothing "Left") (bool True))
-                  [ ( PConstructor mempty Nothing "Right" [PWildcard mempty],
-                      MyApp mempty (MyConstructor mempty Nothing "Right") (int 1)
-                    ),
-                    ( PVar mempty "all",
-                      MyVar mempty Nothing "all"
-                    )
-                  ]
-              )
-      startInference expr $
+              (MyApp mempty (MyConstructor mempty Nothing "Left") (bool True))
+              [ ( PConstructor mempty Nothing "Right" [PWildcard mempty],
+                  MyApp mempty (MyConstructor mempty Nothing "Right") (int 1)
+                ),
+                ( PVar mempty "all",
+                  MyVar mempty Nothing "all"
+                )
+              ]
+
+      startInferenceWithDataTypes [dtEither] expr $
         Right
           ( dataTypeWithVars
               mempty
@@ -1047,18 +1006,15 @@ spec = do
               (int 1)
 
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtPair
-              ( MyPatternMatch
-                  mempty
-                  matchExpr
-                  [ ( PConstructor mempty Nothing "Pair" [PVar mempty "a", PVar mempty "b"],
-                      MyPair mempty (MyVar mempty Nothing "a") (MyVar mempty Nothing "b")
-                    )
-                  ]
-              )
-      startInference expr $
+              matchExpr
+              [ ( PConstructor mempty Nothing "Pair" [PVar mempty "a", PVar mempty "b"],
+                  MyPair mempty (MyVar mempty Nothing "a") (MyVar mempty Nothing "b")
+                )
+              ]
+
+      startInferenceWithDataTypes [dtPair] expr $
         Right
           ( MTPair
               mempty
@@ -1066,34 +1022,6 @@ spec = do
               ( MTPrim mempty MTInt
               )
           )
-    it "Conflicting types in pair and patterns" $ do
-      let matchExpr =
-            MyApp
-              mempty
-              ( MyApp
-                  mempty
-                  (MyConstructor mempty Nothing "Pair")
-                  (bool True)
-              )
-              (int 1)
-
-      let expr =
-            MyData
-              mempty
-              dtPair
-              ( MyPatternMatch
-                  mempty
-                  matchExpr
-                  [ ( PConstructor mempty Nothing "Pair" [PLit mempty (MyInt 1), PLit mempty (MyBool True)],
-                      MyPair mempty (MyLiteral mempty (MyBool True)) (MyLiteral mempty (MyInt 1))
-                    ),
-                    ( PConstructor mempty Nothing "Pair" [PVar mempty "a", PVar mempty "b"],
-                      MyPair mempty (MyVar mempty Nothing "a") (MyVar mempty Nothing "b")
-                    )
-                  ]
-              )
-      testInfer expr
-        `shouldSatisfy` isLeft
 
     it "Fails when record does not match pattern" $ do
       let expr =
@@ -1154,41 +1082,34 @@ spec = do
         Right (MTPrim mempty MTInt)
     it "Spots a missing pattern" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtMaybe
-              ( MyPatternMatch
-                  mempty
-                  (MyConstructor mempty Nothing "Nothing")
-                  [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
-                      bool False
-                    )
-                  ]
-              )
-      startInference expr $
+              (MyConstructor mempty Nothing "Nothing")
+              [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
+                  bool False
+                )
+              ]
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Left
           ( PatternMatchErr
               (MissingPatterns mempty [PConstructor mempty Nothing "Nothing" mempty])
           )
     it "Does substitutions correctly when pattern matching on a variable from a lambda" $ do
       let expr =
-            MyData
+            MyLambda
               mempty
-              dtMaybe
-              ( MyLambda
+              (Identifier mempty "a")
+              ( MyPatternMatch
                   mempty
-                  (Identifier mempty "a")
-                  ( MyPatternMatch
-                      mempty
-                      (MyVar mempty Nothing "a")
-                      [ (PConstructor mempty Nothing "Just" [PVar mempty "as"], MyVar mempty Nothing "as"),
-                        (PConstructor mempty Nothing "Nothing" [], MyLiteral mempty (MyInt 100))
-                      ]
-                  )
+                  (MyVar mempty Nothing "a")
+                  [ (PConstructor mempty Nothing "Just" [PVar mempty "as"], MyVar mempty Nothing "as"),
+                    (PConstructor mempty Nothing "Nothing" [], MyLiteral mempty (MyInt 100))
+                  ]
               )
 
           mtMaybeInt = dataTypeWithVars mempty Nothing "Maybe" [mtInt]
-      startInference expr $
+      startInferenceWithDataTypes [dtMaybe] expr $
         Right (MTFunction mempty mtMaybeInt mtInt)
     it "Does substitutions correctly when pattern matching on a variable from a lambda with application" $ do
       let fn =
@@ -1233,34 +1154,28 @@ spec = do
               (MyConstructor mempty Nothing "Just")
               (MyLiteral mempty (MyInt 1))
           expr =
-            MyData
+            MyApp
               mempty
-              dtMaybe
-              ( MyApp
-                  mempty
-                  (MyApp mempty fn maybeExpr)
-                  ( MyLiteral mempty (MyBool True)
-                  )
+              (MyApp mempty fn maybeExpr)
+              ( MyLiteral mempty (MyBool True)
               )
-      startInference expr $
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Left (FunctionArgumentMismatch mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
 
     it "Spots a redundant pattern" $ do
       let expr =
-            MyData
+            MyPatternMatch
               mempty
-              dtMaybe
-              ( MyPatternMatch
-                  mempty
-                  (MyConstructor mempty Nothing "Nothing")
-                  [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
-                      bool False
-                    ),
-                    (PConstructor mempty Nothing "Nothing" mempty, bool True),
-                    (PConstructor mempty Nothing "Nothing" mempty, bool True)
-                  ]
-              )
-      startInference expr $
+              (MyConstructor mempty Nothing "Nothing")
+              [ ( PConstructor mempty Nothing "Just" [PWildcard mempty],
+                  bool False
+                ),
+                (PConstructor mempty Nothing "Nothing" mempty, bool True),
+                (PConstructor mempty Nothing "Nothing" mempty, bool True)
+              ]
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Left
           ( PatternMatchErr
               (RedundantPatterns mempty [PConstructor mempty Nothing "Nothing" mempty])
@@ -1268,16 +1183,13 @@ spec = do
   describe "Variables as constructors" $ do
     it "Let variable as constructor" $ do
       let expr =
-            MyData
+            MyLet
               mempty
-              dtMaybe
-              ( MyLet
-                  mempty
-                  (Identifier mempty "f")
-                  (MyConstructor mempty Nothing "Just")
-                  (MyApp mempty (MyVar mempty Nothing "f") (int 1))
-              )
-      startInference expr $
+              (Identifier mempty "f")
+              (MyConstructor mempty Nothing "Just")
+              (MyApp mempty (MyVar mempty Nothing "f") (int 1))
+
+      startInferenceWithDataTypes [dtMaybe] expr $
         Right
           ( MTTypeApp
               mempty
@@ -1337,32 +1249,26 @@ spec = do
                     (MTPrim mempty MTInt)
                 )
         let expr =
-              MyData
+              MyAnnotation
                 mempty
-                dtMaybe
-                ( MyAnnotation
+                funcType
+                ( MyLambda
                     mempty
-                    funcType
-                    ( MyLambda
-                        mempty
-                        (Identifier mempty "f")
-                        (MyApp mempty (MyVar mempty Nothing "f") (int 1))
-                    )
+                    (Identifier mempty "f")
+                    (MyApp mempty (MyVar mempty Nothing "f") (int 1))
                 )
-        startInference expr $
+
+        startInferenceWithDataTypes [dtMaybe] expr $
           Right funcType
       -- needs type annotations
       xit "Lambda variable as constructor (multiple application)" $ do
         let expr =
-              MyData
+              MyLambda
                 mempty
-                dtMaybe
-                ( MyLambda
-                    mempty
-                    (Identifier mempty "f")
-                    (MyApp mempty (MyApp mempty (MyVar mempty Nothing "f") (int 1)) (bool True))
-                )
-        startInference expr $
+                (Identifier mempty "f")
+                (MyApp mempty (MyApp mempty (MyVar mempty Nothing "f") (int 1)) (bool True))
+
+        startInferenceWithDataTypes [dtMaybe] expr $
           Right
             ( MTFunction
                 mempty
