@@ -61,23 +61,26 @@ const editorWillMount: BeforeMount = (monaco: Monaco) => {
     ) => {
       const suggestions = mutableTypedHoleResponses.flatMap(
         (ths) =>
-          ths.thSuggestions.map((sug) => ({
-            title: `Replace ?${ths.thName} with ${sug}`,
-            diagnostics: [createMarkerForTypedHole(ths)],
-            kind: 'quickfix',
-            edit: {
-              edits: [
-                {
-                  resource: model.uri,
-                  edit: {
-                    range: createMarkerForTypedHole(ths),
-                    text: sug,
+          ths.thSuggestions.map(
+            (sug): languages.CodeAction => ({
+              title: `Replace ?${ths.thName} with ${sug}`,
+              diagnostics: [createMarkerForTypedHole(ths)],
+              kind: 'quickfix',
+              edit: {
+                edits: [
+                  {
+                    resource: model.uri,
+                    versionId: 1,
+                    textEdit: {
+                      range: createMarkerForTypedHole(ths),
+                      text: sug,
+                    },
                   },
-                },
-              ],
-            },
-            isPreferred: true,
-          }))
+                ],
+              },
+              isPreferred: true,
+            })
+          )
       )
 
       return {
