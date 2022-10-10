@@ -1,10 +1,7 @@
 import * as React from 'react'
 import * as O from 'fp-ts/Option'
-import { Scratch } from './Editor/Scratch'
 import { ScratchModule } from './Editor/ScratchModule'
 import { EditBinding } from './Editor/EditBinding'
-import { NewBinding } from './Editor/NewBinding'
-import { NewType } from './Editor/NewType'
 import { FilteredBindingList } from './FilteredBindingList'
 import { Menu } from './Menu'
 import {
@@ -103,15 +100,6 @@ const getScreenInner = (
   onModuleSelect: (moduleHash: ModuleHash) => void
 ): [JSX.Element, boolean] => {
   switch (screen.type) {
-    case 'scratch':
-      return [
-        <Scratch
-          editor={screen.editor}
-          onBindingSelect={onBindingSelect}
-        />,
-        true,
-      ]
-
     case 'scratch-module':
       return [
         <ScratchModule
@@ -134,24 +122,6 @@ const getScreenInner = (
     case 'edit':
       return [
         <EditBinding
-          editor={screen.editor}
-          onBindingSelect={onBindingSelect}
-        />,
-        true,
-      ]
-
-    case 'new-expression':
-      return [
-        <NewBinding
-          editor={screen.editor}
-          onBindingSelect={onBindingSelect}
-        />,
-        true,
-      ]
-
-    case 'new-type':
-      return [
-        <NewType
           editor={screen.editor}
           onBindingSelect={onBindingSelect}
         />,

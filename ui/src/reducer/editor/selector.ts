@@ -17,8 +17,7 @@ import { ViewState } from '../view/types'
 import {
   Screen,
   editScreen,
-  newExpressionScreen,
-  scratchScreen,
+  scratchModuleScreen,
 } from '../view/screen'
 import { viewL } from '../view/selectors'
 import { Feedback } from './feedback'
@@ -31,8 +30,7 @@ const neHeadL = <A>(): Lens<NE.NonEmptyArray<A>, A> =>
 
 type ScreenWithEditor =
   | ReturnType<typeof editScreen>
-  | ReturnType<typeof newExpressionScreen>
-  | ReturnType<typeof scratchScreen>
+  | ReturnType<typeof scratchModuleScreen>
 
 const stackL = viewL.compose(
   Lens.fromProp<ViewState>()('stack')
@@ -41,11 +39,7 @@ const stackL = viewL.compose(
 const editPrism: Prism<Screen, ScreenWithEditor> =
   new Prism(
     (s: Screen) =>
-      s.type === 'edit' ||
-      s.type === 'new-expression' ||
-      s.type === 'scratch' ||
-      s.type === 'scratch-module' ||
-      s.type === 'new-type'
+      s.type === 'edit' || s.type === 'scratch-module'
         ? O.some(s as ScreenWithEditor)
         : O.none,
     (a: ScreenWithEditor) => a as Screen
