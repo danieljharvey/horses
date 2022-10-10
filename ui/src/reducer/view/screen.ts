@@ -10,19 +10,9 @@ export const editScreen = (
   editor,
 })
 
-export const newExpressionScreen = (
+export const scratchModuleScreen = (
   editor: EditorState
 ) => ({
-  type: 'new-expression' as const,
-  editor,
-})
-
-export const scratchScreen = (editor: EditorState) => ({
-  type: 'scratch' as const,
-  editor,
-})
-
-const scratchModuleScreen = (editor: EditorState) => ({
   type: 'scratch-module' as const,
   editor,
 })
@@ -34,15 +24,7 @@ export const editModuleScreen = (
   moduleHash,
 })
 
-export const newTypeScreen = (editor: EditorState) => ({
-  type: 'new-type' as const,
-  editor,
-})
-
 export type Screen =
-  | ReturnType<typeof scratchScreen>
   | ReturnType<typeof editScreen>
-  | ReturnType<typeof newExpressionScreen>
-  | ReturnType<typeof newTypeScreen>
   | ReturnType<typeof scratchModuleScreen>
   | ReturnType<typeof editModuleScreen>

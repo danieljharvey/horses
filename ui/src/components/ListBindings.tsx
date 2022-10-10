@@ -24,14 +24,11 @@ export const ListBindings: React.FC<ListBindingsProps> = ({
   modules,
   onModuleSelect,
 }) => {
-  // try and re-use it this where possible
-  const items = { ...values, ...types }
-
   const [lookupName] = useStoreTuple([
     lookupNameForExprHash,
   ] as const)
 
-  if (Object.keys(items).length < 1) {
+  if (Object.keys(modules).length < 1) {
     return null
   }
 

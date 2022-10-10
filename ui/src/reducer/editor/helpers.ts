@@ -40,9 +40,7 @@ export const editorForBinding =
 export const newEditorFromScreen = (
   screen: Screen
 ): EditorState =>
-  screen.type === 'new-expression' ||
-  screen.type === 'edit' ||
-  screen.type === 'scratch'
+  screen.type === 'edit' || screen.type === 'scratch-module'
     ? {
         ...emptyEditor,
         code: screen.editor.code,

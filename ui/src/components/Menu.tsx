@@ -1,19 +1,11 @@
 import * as React from 'react'
 import './Menu.css'
 import { Option, isSome } from 'fp-ts/lib/Option'
-import {
-  newExpressionScreen,
-  newTypeScreen,
-  Screen,
-} from '../reducer/view/screen'
+import { Screen } from '../reducer/view/screen'
 import { getScreenTitle } from '../reducer/view/helpers'
 import { MenuBar } from './View/MenuBar'
 import { useDispatch } from '../hooks/useDispatch'
-import {
-  popScreen,
-  pushScreen,
-} from '../reducer/view/actions'
-import { newEditorFromScreen } from '../reducer/editor/helpers'
+import { popScreen } from '../reducer/view/actions'
 
 type Props = {
   screen: Screen
@@ -30,17 +22,6 @@ export const Menu: React.FC<Props> = ({
 
   const onPopScreen = () => dispatch(popScreen())
 
-  const onNewBinding = () =>
-    dispatch(
-      pushScreen(
-        newExpressionScreen(newEditorFromScreen(screen))
-      )
-    )
-
-  const onNewType = () =>
-    dispatch(
-      pushScreen(newTypeScreen(newEditorFromScreen(screen)))
-    )
   return (
     <>
       <MenuBar>
@@ -54,18 +35,6 @@ export const Menu: React.FC<Props> = ({
           <p className="menu-title">
             {getScreenTitle(screen)}
           </p>
-        </>
-
-        <>
-          <div className="menu-button" onClick={onNewType}>
-            🧷
-          </div>
-          <div
-            className="menu-button"
-            onClick={onNewBinding}
-          >
-            ➕
-          </div>
         </>
       </MenuBar>
       {children}
