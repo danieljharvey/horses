@@ -33,7 +33,7 @@ export const useModule = (moduleHash: ModuleHash) => {
         setResult
       )
     )
-  }, [moduleHash, setResult, getModule])
+  }, [moduleHash, setResult])
 
   return result
 }
