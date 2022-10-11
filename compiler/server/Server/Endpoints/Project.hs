@@ -9,6 +9,7 @@ where
 
 import Servant
 import Server.Endpoints.Project.BindExpression
+import Server.Endpoints.Project.BindModule
 import Server.Endpoints.Project.BindType
 import Server.Endpoints.Project.CreateProject
 import Server.Endpoints.Project.Evaluate
@@ -29,6 +30,7 @@ type ProjectAPI =
            :<|> CreateProject
            :<|> BindExpression
            :<|> BindType
+           :<|> BindModule
        )
 
 projectEndpoints ::
@@ -40,5 +42,6 @@ projectEndpoints mimsaEnv =
     :<|> createProject mimsaEnv
     :<|> bindExpression mimsaEnv
     :<|> bindType mimsaEnv
+    :<|> bindModule mimsaEnv
 
 ------

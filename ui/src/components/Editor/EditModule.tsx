@@ -1,18 +1,17 @@
 import * as React from 'react'
-import { pipe } from 'fp-ts/function'
 import { CodeEditor } from './CodeEditor'
-import { EditorState } from '../../reducer/editor/types'
-import { Feedback } from './Feedback'
+import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
+import { Feedback } from './Feedback'
 import { Panel } from '../View/Panel'
-import { Button } from '../View/Button'
-import { GetModuleResponse, ModuleHash } from '../../types'
 import {
-  updateCode,
-  bindExpression,
-} from '../../reducer/editor/actions'
+  ModuleData,
+  UserErrorResponse,
+  ModuleHash,
+} from '../../types'
 import {
   editorNew,
+  showErrorResponse,
   showModule,
   Feedback as FeedbackType,
 } from '../../reducer/editor/feedback'
@@ -21,71 +20,74 @@ import {
   getSourceItems,
   getTypedHoles,
 } from '../../reducer/editor/selector'
-import { useDispatch } from '../../hooks/useDispatch'
 import { useStoreRec } from '../../hooks/useStore'
-import { useModule } from '../../hooks/useModule'
+import {
+  BindModule,
+  useBindModule,
+} from '../../hooks/useBindModule'
+import { getProjectHash } from '../../reducer/project/selectors'
+import { fold } from '@devexperts/remote-data-ts'
 
 type Props = {
-  editor: EditorState
-  moduleHash: ModuleHash
+  moduleData: ModuleData
   onModuleSelect: (moduleHash: ModuleHash) => void
 }
 
 export const EditModule: React.FC<Props> = ({
-  editor,
-  moduleHash,
+  moduleData,
 }) => {
-  const dispatch = useDispatch()
-
-  const [maybeMod] = useModule(moduleHash)
-
-  const code = pipe(
-    maybeMod,
-    O.fold(
-      () => editor.code,
-      ({ geModuleData }) => geModuleData.mdModulePretty
-    )
+  const [userInput, setUserInput] = React.useState<string>(
+    moduleData.mdModulePretty
   )
-
-  const feedback = pipe(
-    maybeMod,
-    O.fold<GetModuleResponse, FeedbackType>(
-      () => editorNew(),
-      ({ geModuleData, geTestData }) =>
-        showModule(geModuleData, geTestData)
-    )
-  )
-
-  const onCodeChange = (a: string) =>
-    dispatch(updateCode(a))
 
   const {
     typedHoleSuggestions,
     errorLocations,
     sourceItems,
+    projectHash,
   } = useStoreRec({
     typedHoleSuggestions: getTypedHoles,
     errorLocations: getErrorLocations,
     sourceItems: getSourceItems,
+    projectHash: getProjectHash,
   })
-  const { stale } = editor
 
-  const bindingName = O.toNullable(editor.bindingName)
+  const [bindModule, boundModule] = useBindModule(
+    projectHash,
+    userInput,
+    undefined,
+    () => {}
+  )
 
-  const onBindExpression = () => {
-    const bindingName = O.toNullable(editor.bindingName)
-    if (bindingName) {
-      dispatch(
-        bindExpression(bindingName, editor.code, true)
-      )
-    }
+  const onCodeChange = (str: string) => {
+    setUserInput(str)
+    bindModule()
   }
+
+  // this would be nicer if we kept the old feedback and only updated when we
+  // found new useful info, otherwise it flashes lots
+  const feedback = pipe(
+    boundModule,
+    fold<UserErrorResponse, BindModule, FeedbackType>(
+      () => editorNew(),
+      () => editorNew(), // loading?
+      (e) => showErrorResponse(e),
+      ({ moduleData, testData }) =>
+        showModule(moduleData, testData)
+    )
+  )
+
+  /*O.fold<GetModuleResponse, FeedbackType>(
+      () => editorNew(),
+      ({ geModuleData, geTestData }) =>
+        showModule(geModuleData, geTestData)
+    )*/
 
   return (
     <>
       <Panel flexGrow={2}>
         <CodeEditor
-          code={code}
+          code={userInput}
           setCode={onCodeChange}
           sourceItems={sourceItems}
           errorLocations={errorLocations}
@@ -93,13 +95,8 @@ export const EditModule: React.FC<Props> = ({
         />
       </Panel>
       <Panel>
-        {stale && (
-          <Button onClick={() => onBindExpression()}>
-            {`Update ${bindingName}`}
-          </Button>
-        )}
         <Feedback
-          bindingName={editor.bindingName}
+          bindingName={O.none}
           feedback={feedback}
           onBindingSelect={() => {}}
         />

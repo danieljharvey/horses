@@ -11,6 +11,8 @@ import {
   BindTypeRequest,
   BindTypeResponse,
   UserErrorResponse,
+  BindModuleRequest,
+  BindModuleResponse,
 } from '../types/'
 import {
   axiosPost,
@@ -47,6 +49,14 @@ export const bindExpression = (
   axiosPost(
     `${baseUrl}/project/bind/`,
     bindExpressionRequest
+  )
+
+export const bindModule = (
+  bindModuleRequest: BindModuleRequest
+): TE.TaskEither<UserErrorResponse, BindModuleResponse> =>
+  axiosPost(
+    `${baseUrl}/project/bind-module/`,
+    bindModuleRequest
   )
 
 export const bindType = (

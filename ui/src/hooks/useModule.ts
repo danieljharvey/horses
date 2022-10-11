@@ -14,20 +14,26 @@ export const useModule = (moduleHash: ModuleHash) => {
   const [result, setResult] = React.useState<
     O.Option<GetModuleResponse>
   >(O.none)
+  console.log({ result, moduleHash })
 
   React.useEffect(() => {
-    getModule(moduleHash)().then((result) =>
+    getModule(moduleHash)().then((newResult) =>
       pipe(
-        result,
+        newResult,
         E.fold<
           UserErrorResponse,
           GetModuleResponse,
           O.Option<GetModuleResponse>
-        >(() => O.none, O.some),
+        >(
+          () => O.none,
+          (modResponse) => {
+            return O.some(modResponse)
+          }
+        ),
         setResult
       )
     )
-  }, [moduleHash])
+  }, [moduleHash, setResult])
 
-  return [result] as const
+  return result
 }
