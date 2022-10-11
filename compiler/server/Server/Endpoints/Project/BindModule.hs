@@ -9,23 +9,23 @@ module Server.Endpoints.Project.BindModule
     BindModule,
   )
 where
-import Language.Mimsa.Typechecker.Elaborate
 
-import Server.Helpers.ModuleData
-import qualified Language.Mimsa.Actions.Modules.Check as Actions
-import qualified Language.Mimsa.Actions.Modules.Bind as Actions
-import Language.Mimsa.Types.Modules
 import Control.Monad.Trans.Class
 import qualified Data.Aeson as JSON
 import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
+import qualified Language.Mimsa.Actions.Modules.Bind as Actions
+import qualified Language.Mimsa.Actions.Modules.Check as Actions
+import Language.Mimsa.Typechecker.Elaborate
+import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Servant
 import Server.Handlers
+import Server.Helpers.ModuleData
+import Server.Helpers.TestData
 import Server.MimsaHandler
 import Server.Types
-import Server.Helpers.TestData
 
 ------
 
@@ -59,7 +59,7 @@ bindModule mimsaEnv (BindModuleRequest projectHash modName input) = runMimsaHand
   project <- lift $ loadProjectHandler mimsaEnv projectHash
   let action = do
         (newMod, testResults) <-
-            Actions.checkModule (prjModuleStore project) input
+          Actions.checkModule (prjModuleStore project) input
         case modName of
           Just mName -> do
             _ <- Actions.bindModule (recoverAnn <$> newMod) mName input

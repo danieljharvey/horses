@@ -24,6 +24,7 @@ export const viewReducer: EventReducer<
   ViewAction,
   ViewEvent
 > = (state, action) => {
+  console.log(state, action)
   switch (action.type) {
     case 'SetScreen':
       return stateOnly(stackL.set([action.screen])(state))

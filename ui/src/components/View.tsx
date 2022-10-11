@@ -21,8 +21,7 @@ import { ExprHash, ProjectHash, ModuleHash } from '../types'
 import { useDispatch } from '../hooks/useDispatch'
 import { useStoreRec } from '../hooks/useStore'
 import { getProjectHash } from '../reducer/project/selectors'
-import { EditModule } from './Editor/EditModule'
-import { emptyEditor } from '../reducer/editor/types'
+import { LoadModule } from './Editor/LoadModule'
 
 type Props = {}
 
@@ -66,8 +65,7 @@ export const View: React.FC<Props> = () => {
   const [inner, showBindingList] = getScreenInner(
     screen,
     projectHash,
-    onBindingSelect,
-    onModuleSelect
+    onBindingSelect
   )
 
   return (
@@ -96,8 +94,7 @@ const getScreenInner = (
   onBindingSelect: (
     bindingName: string,
     exprHash: ExprHash
-  ) => void,
-  onModuleSelect: (moduleHash: ModuleHash) => void
+  ) => void
 ): [JSX.Element, boolean] => {
   switch (screen.type) {
     case 'scratch-module':
@@ -112,11 +109,7 @@ const getScreenInner = (
 
     case 'edit-module':
       return [
-        <EditModule
-          editor={emptyEditor}
-          moduleHash={screen.moduleHash}
-          onModuleSelect={onModuleSelect}
-        />,
+        <LoadModule moduleHash={screen.moduleHash} />,
         true,
       ]
     case 'edit':

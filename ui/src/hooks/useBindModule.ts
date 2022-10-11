@@ -14,15 +14,24 @@ import {
 } from '../generated'
 import { pipe } from 'fp-ts/function'
 import * as E from 'fp-ts/Either'
-import { ExprHash, ProjectHash } from '../types/'
+import {
+  ExprHash,
+  ProjectHash,
+  ModuleData,
+  TestData,
+} from '../types/'
 
 // this is how we should do the screens from now on
 
-type BindModule = {
-  modulePretty: string
+export type BindModule = {
+  moduleData: ModuleData
+  testData: TestData
 }
 
-type State = RemoteData<UserErrorResponse, BindModule>
+export type BindModuleState = RemoteData<
+  UserErrorResponse,
+  BindModule
+>
 
 export const useBindModule = (
   projectHash: ProjectHash,
@@ -34,7 +43,7 @@ export const useBindModule = (
   ) => void
 ) => {
   const [moduleState, setModuleState] =
-    React.useState<State>(initial)
+    React.useState<BindModuleState>(initial)
 
   const bindNewModule = async () => {
     setModuleState(pending)
@@ -46,12 +55,17 @@ export const useBindModule = (
 
     pipe(
       result,
-      E.fold<UserErrorResponse, BindModuleResponse, State>(
+      E.fold<
+        UserErrorResponse,
+        BindModuleResponse,
+        BindModuleState
+      >(
         (e) => failure(e),
         (a) => {
           updateProject(a.bmProjectData, [])
           return success({
-            modulePretty: a.bmModuleData.mdModulePretty,
+            moduleData: a.bmModuleData,
+            testData: a.bmTestData,
           })
         }
       ),

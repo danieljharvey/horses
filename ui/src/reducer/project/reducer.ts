@@ -9,33 +9,15 @@ import {
 
 import {
   listBindings,
-  fetchExpressions,
   saveToSessionStorage,
   fetchModule,
   ProjectEvent,
 } from './events'
-import {
-  exprHash,
-  projectHash,
-  ExprHash,
-  ProjectData,
-} from '../../types'
+import { projectHash } from '../../types'
 import { ProjectAction } from './actions'
 import { ProjectState } from './types'
 
 const projectL = Lens.fromProp<State>()('project')
-
-// all hashes mentioned in project, for fetching
-const hashesForProjectData = (
-  projectData: ProjectData
-): ExprHash[] =>
-  [
-    ...Object.values(projectData.pdBindings),
-    ...Object.values(projectData.pdTypeBindings),
-    ...Object.values(projectData.pdVersions).flatMap(
-      (bvs) => bvs.map((bv) => bv.bvExprHash)
-    ),
-  ].map(exprHash)
 
 export const projectReducer: EventReducer<
   State,
@@ -66,50 +48,11 @@ export const projectReducer: EventReducer<
           versions: action.data.pdVersions,
         })(state),
         [
-          fetchExpressions(
-            [
-              ...hashesForProjectData(action.data),
-              ...action.extraHashes,
-            ],
-            projectHash(action.data.pdHash)
-          ),
           saveToSessionStorage(
             projectHash(action.data.pdHash)
           ),
         ]
       )
-
-    case 'FetchExpressionsSuccess': {
-      const newStore = Object.entries(
-        action.fetched
-      ).reduce(
-        (all, [key, expression]) => ({
-          ...all,
-          [key]: { expression },
-        }),
-        {}
-      )
-      const allExprHashes = Object.values(action.fetched)
-        .flatMap(({ edBindings, edTypeBindings }) => [
-          ...Object.values(edBindings),
-          ...Object.values(edTypeBindings),
-        ])
-        .map(exprHash)
-
-      return stateAndEvent(
-        projectL.set({
-          ...state.project,
-          store: {
-            ...state.project.store,
-            ...newStore,
-          },
-        })(state),
-        fetchExpressions(
-          allExprHashes,
-          state.project.projectHash
-        )
-      )
-    }
 
     case 'FetchModule':
       return stateAndEvent(
