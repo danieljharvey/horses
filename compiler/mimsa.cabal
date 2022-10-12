@@ -25,13 +25,9 @@ source-repository head
 
 library
   exposed-modules:
-      Language.Mimsa.Actions.BindExpression
-      Language.Mimsa.Actions.BindType
       Language.Mimsa.Actions.Compile
-      Language.Mimsa.Actions.Evaluate
       Language.Mimsa.Actions.Helpers.Build
       Language.Mimsa.Actions.Helpers.CheckStoreExpression
-      Language.Mimsa.Actions.Helpers.FindExistingBinding
       Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression
       Language.Mimsa.Actions.Helpers.LookupExpression
       Language.Mimsa.Actions.Helpers.Parse
@@ -45,7 +41,6 @@ library
       Language.Mimsa.Actions.Modules.Typecheck
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
-      Language.Mimsa.Actions.RemoveBinding
       Language.Mimsa.Actions.Typecheck
       Language.Mimsa.Actions.Types
       Language.Mimsa.Backend.Javascript.Printer
@@ -102,18 +97,14 @@ library
       Language.Mimsa.Project.SourceSpan
       Language.Mimsa.Project.Stdlib
       Language.Mimsa.Project.TypeSearch
-      Language.Mimsa.Project.Versions
       Language.Mimsa.Store
       Language.Mimsa.Store.ExtractTypes
-      Language.Mimsa.Store.ExtractVars
       Language.Mimsa.Store.Hashing
       Language.Mimsa.Store.Helpers
       Language.Mimsa.Store.Persistence
       Language.Mimsa.Store.ResolveDataTypes
       Language.Mimsa.Store.ResolvedDeps
-      Language.Mimsa.Store.Resolver
       Language.Mimsa.Store.Storage
-      Language.Mimsa.Store.Substitutor
       Language.Mimsa.Tests.Generate
       Language.Mimsa.Tests.Helpers
       Language.Mimsa.Tests.UnitTest
@@ -309,12 +300,9 @@ executable mimsa-server
   main-is: Main.hs
   other-modules:
       Server.Endpoints.Compile
-      Server.Endpoints.Expression
       Server.Endpoints.Module
       Server.Endpoints.Project
-      Server.Endpoints.Project.BindExpression
       Server.Endpoints.Project.BindModule
-      Server.Endpoints.Project.BindType
       Server.Endpoints.Project.CreateProject
       Server.Endpoints.Project.Evaluate
       Server.Endpoints.Project.ListBindings
@@ -324,6 +312,7 @@ executable mimsa-server
       Server.Helpers
       Server.Helpers.ExpressionData
       Server.Helpers.ModuleData
+      Server.Helpers.ProjectData
       Server.Helpers.TestData
       Server.Main
       Server.MimsaHandler
@@ -381,7 +370,6 @@ test-suite mimsa-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Test.Actions.BindExpression
       Test.Actions.BindModule
       Test.Actions.Build
       Test.Actions.Compile

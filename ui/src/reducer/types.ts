@@ -5,7 +5,6 @@ import { ConsoleAction } from './console/actions'
 import { ProjectState } from './project/types'
 import { ProjectAction } from './project/actions'
 import { ProjectEvent } from './project/events'
-import { EditorEvent } from './editor/events'
 import { EditorAction } from './editor/actions'
 
 export type State = {
@@ -20,8 +19,4 @@ export type Action =
   | ViewAction
   | ConsoleAction
 
-export type Event =
-  | ProjectEvent
-  | EditorEvent
-  | ViewEvent
-  | ConsoleEvent
+export type Event = ProjectEvent | ViewEvent | ConsoleEvent

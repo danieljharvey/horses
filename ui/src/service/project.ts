@@ -1,15 +1,9 @@
 import {
-  EvaluateRequest,
-  EvaluateResponse,
   EvaluateModuleRequest,
   EvaluateModuleResponse,
   ListBindingsRequest,
   ListBindingsResponse,
   CreateProjectResponse,
-  BindExpressionRequest,
-  BindExpressionResponse,
-  BindTypeRequest,
-  BindTypeResponse,
   UserErrorResponse,
   BindModuleRequest,
   BindModuleResponse,
@@ -24,11 +18,6 @@ import * as TE from 'fp-ts/TaskEither'
 
 const baseUrl = process.env.REACT_APP_MIMSA_API_URL
 
-export const evaluate = (
-  evaluateRequest: EvaluateRequest
-): TE.TaskEither<UserErrorResponse, EvaluateResponse> =>
-  axiosPost(`${baseUrl}/project/evaluate/`, evaluateRequest)
-
 export const evaluateModule = (
   evaluateRequest: EvaluateModuleRequest
 ): TE.TaskEither<
@@ -40,17 +29,6 @@ export const evaluateModule = (
     evaluateRequest
   )
 
-export const bindExpression = (
-  bindExpressionRequest: BindExpressionRequest
-): TE.TaskEither<
-  UserErrorResponse,
-  BindExpressionResponse
-> =>
-  axiosPost(
-    `${baseUrl}/project/bind/`,
-    bindExpressionRequest
-  )
-
 export const bindModule = (
   bindModuleRequest: BindModuleRequest
 ): TE.TaskEither<UserErrorResponse, BindModuleResponse> =>
@@ -58,11 +36,6 @@ export const bindModule = (
     `${baseUrl}/project/bind-module/`,
     bindModuleRequest
   )
-
-export const bindType = (
-  bindTypeRequest: BindTypeRequest
-): TE.TaskEither<UserErrorResponse, BindTypeResponse> =>
-  axiosPost(`${baseUrl}/project/type/`, bindTypeRequest)
 
 export const listBindings = (
   listBindingsRequest: ListBindingsRequest

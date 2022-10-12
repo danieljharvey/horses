@@ -98,7 +98,6 @@ export const EditModule: React.FC<Props> = ({
         <Feedback
           bindingName={O.none}
           feedback={feedback}
-          onBindingSelect={() => {}}
         />
       </Panel>
     </>

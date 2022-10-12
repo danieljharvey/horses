@@ -1,8 +1,6 @@
 import * as O from 'fp-ts/Option'
-import { State } from '../types'
-import { StoreItem } from './types'
 import { pipe } from 'fp-ts/function'
-import { ExprHash, ProjectHash } from '../../types'
+import { ProjectHash } from '../../types'
 
 const safeSessionStorageGet = (
   key: string
@@ -33,41 +31,3 @@ export const projectGet = (): O.Option<Project> =>
     safeSessionStorageGet(sessionStorageKey),
     O.chain((str) => safeDecode<Project>(str))
   )
-
-const findExpressionForBinding = (
-  bindingName: string,
-  state: State
-): O.Option<StoreItem> =>
-  pipe(
-    O.fromNullable(state.project.bindings[bindingName]),
-    O.chain((exprHash) =>
-      O.fromNullable(state.project.store[exprHash])
-    )
-  )
-
-const findExpressionForTypeBinding = (
-  bindingName: string,
-  state: State
-): O.Option<StoreItem> =>
-  pipe(
-    O.fromNullable(state.project.typeBindings[bindingName]),
-    O.chain((exprHash) =>
-      O.fromNullable(state.project.store[exprHash])
-    )
-  )
-
-export const findExpressionForAnyBinding = (
-  bindingName: string,
-  state: State
-): O.Option<StoreItem> =>
-  pipe(
-    findExpressionForBinding(bindingName, state),
-    O.alt(() =>
-      findExpressionForTypeBinding(bindingName, state)
-    )
-  )
-
-export const findExpression =
-  (state: State) =>
-  (exprHash: ExprHash): O.Option<StoreItem> =>
-    O.fromNullable(state.project.store[exprHash])

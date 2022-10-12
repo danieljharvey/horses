@@ -21,6 +21,7 @@ import Language.Mimsa.Types.Modules
 import Servant
 import Server.Handlers
 import Server.Helpers.ModuleData
+import Server.Helpers.ProjectData
 import Server.Helpers.TestData
 import Server.Types
 

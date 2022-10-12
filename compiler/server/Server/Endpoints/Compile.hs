@@ -19,6 +19,7 @@ import Language.Mimsa.Backend.ZipFile
 import Language.Mimsa.Types.Store
 import Servant
 import Server.Handlers
+import Server.Helpers.ProjectData
 import Server.Types
 
 -----

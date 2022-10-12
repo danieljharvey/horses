@@ -15,7 +15,7 @@ import Data.OpenApi
 import GHC.Generics
 import Language.Mimsa.Project.Stdlib
 import Servant
-import Server.Handlers
+import Server.Helpers.ProjectData
 import Server.Types
 
 type CreateProject =

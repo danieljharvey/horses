@@ -16,6 +16,7 @@ import GHC.Generics
 import Language.Mimsa.Types.Project
 import Servant
 import Server.Handlers
+import Server.Helpers.ProjectData
 import Server.Types
 
 -- /project/bindings/

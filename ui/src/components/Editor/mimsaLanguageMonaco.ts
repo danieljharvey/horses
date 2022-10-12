@@ -11,6 +11,10 @@ export const mimsaLanguage = {
     'else',
     'match',
     'with',
+    'export',
+    'def',
+    'type',
+    'test',
   ],
 
   typeKeywords: [],
