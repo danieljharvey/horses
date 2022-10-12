@@ -3,7 +3,6 @@ module Main
   )
 where
 
-import qualified Test.Actions.BindExpression as BindExpression
 import qualified Test.Actions.BindModule as BindModule
 import qualified Test.Actions.Build as Build
 import qualified Test.Actions.Compile as Compile
@@ -55,7 +54,6 @@ main =
     Serialisation.spec
     NormaliseType.spec
     MonoTypeParser.spec
-    BindExpression.spec
     BindModule.spec
     Compile.spec
     Evaluate.spec
