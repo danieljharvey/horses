@@ -5,7 +5,7 @@ import { Feedback } from './Feedback'
 import { Panel } from '../View/Panel'
 import * as O from 'fp-ts/Option'
 import { Button } from '../View/Button'
-import { ExprHash, ProjectHash } from '../../types'
+import { ProjectHash } from '../../types'
 import { useDispatch } from '../../hooks/useDispatch'
 import { updateCode } from '../../reducer/editor/actions'
 
@@ -14,15 +14,10 @@ import { useEvaluateExpression } from '../../hooks/useEvaluateExpression'
 
 type Props = {
   projectHash: ProjectHash
-  onBindingSelect: (
-    bindingName: string,
-    exprHash: ExprHash
-  ) => void
   editor: EditorState
 }
 
 export const ScratchModule: React.FC<Props> = ({
-  onBindingSelect,
   projectHash,
   editor,
 }) => {
@@ -90,7 +85,6 @@ export const ScratchModule: React.FC<Props> = ({
           <Feedback
             bindingName={O.none}
             feedback={feedback}
-            onBindingSelect={onBindingSelect}
           />
         </FlexColumnSpaced>
       </Panel>

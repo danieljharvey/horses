@@ -14,11 +14,7 @@ import {
 import { pipe } from 'fp-ts/function'
 import * as NE from 'fp-ts/NonEmptyArray'
 import { ViewState } from '../view/types'
-import {
-  Screen,
-  editScreen,
-  scratchModuleScreen,
-} from '../view/screen'
+import { Screen, scratchModuleScreen } from '../view/screen'
 import { viewL } from '../view/selectors'
 import { Feedback } from './feedback'
 
@@ -28,9 +24,9 @@ const neHeadL = <A>(): Lens<NE.NonEmptyArray<A>, A> =>
     (a) => (s) => NE.cons(a, NE.tail(s))
   )
 
-type ScreenWithEditor =
-  | ReturnType<typeof editScreen>
-  | ReturnType<typeof scratchModuleScreen>
+type ScreenWithEditor = ReturnType<
+  typeof scratchModuleScreen
+>
 
 const stackL = viewL.compose(
   Lens.fromProp<ViewState>()('stack')
@@ -39,7 +35,7 @@ const stackL = viewL.compose(
 const editPrism: Prism<Screen, ScreenWithEditor> =
   new Prism(
     (s: Screen) =>
-      s.type === 'edit' || s.type === 'scratch-module'
+      s.type === 'scratch-module'
         ? O.some(s as ScreenWithEditor)
         : O.none,
     (a: ScreenWithEditor) => a as Screen

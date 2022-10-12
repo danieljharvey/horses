@@ -1,8 +1,4 @@
-import type {
-  ExpressionData,
-  EvaluateResponse,
-  UserErrorResponse,
-} from '../../types/'
+import type { ExpressionData } from '../../types/'
 
 export const updateCode = (text: string) => ({
   type: 'UpdateCode' as const,

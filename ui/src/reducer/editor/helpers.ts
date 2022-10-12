@@ -2,10 +2,7 @@ import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
 import { State } from '../types'
 import { ExprHash } from '../../types'
-import {
-  findExpression,
-  findExpressionForAnyBinding,
-} from '../project/helpers'
+import { findExpression } from '../project/helpers'
 import { Screen } from '../view/screen'
 
 import { editorNew, showBinding } from './feedback'
@@ -26,9 +23,6 @@ export const editorForBinding =
   ): O.Option<EditorState> =>
     pipe(
       findExpression(state)(exprHash),
-      O.alt(() =>
-        findExpressionForAnyBinding(bindingName, state)
-      ),
       O.map(({ expression }) => ({
         code: expression.edPretty,
         stale: false,
@@ -40,7 +34,7 @@ export const editorForBinding =
 export const newEditorFromScreen = (
   screen: Screen
 ): EditorState =>
-  screen.type === 'edit' || screen.type === 'scratch-module'
+  screen.type === 'scratch-module'
     ? {
         ...emptyEditor,
         code: screen.editor.code,
