@@ -10,7 +10,6 @@ module Server.Endpoints.Module
     ModuleAPI,
   )
 where
-import Server.Helpers.ProjectData
 
 import qualified Data.Aeson as JSON
 import Data.OpenApi hiding (Server)
@@ -22,6 +21,7 @@ import Language.Mimsa.Types.Modules
 import Servant
 import Server.Handlers
 import Server.Helpers.ModuleData
+import Server.Helpers.ProjectData
 import Server.Helpers.TestData
 import Server.Types
 

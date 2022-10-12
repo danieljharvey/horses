@@ -1,6 +1,5 @@
 module Language.Mimsa.Store
   ( module Language.Mimsa.Store.Storage,
-
     module Language.Mimsa.Store.Helpers,
     module Language.Mimsa.Store.ResolvedDeps,
   )

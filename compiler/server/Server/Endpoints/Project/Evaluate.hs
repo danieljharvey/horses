@@ -36,7 +36,6 @@ evaluate :: MimsaEnvironment -> Server EvaluateAPI
 evaluate =
   evaluateModuleExpression
 
-
 -- /project/evaluate-module/
 
 type EvaluateModule =

@@ -5,8 +5,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Server.Handlers
-  (
-    fromActionM,
+  ( fromActionM,
     eitherFromActionM,
     projectDataHandler,
     loadProjectHandler,
@@ -22,7 +21,6 @@ module Server.Handlers
   )
 where
 
-import Server.Helpers.ProjectData
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import Data.Foldable (traverse_)
@@ -43,6 +41,7 @@ import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant
 import Server.Helpers
+import Server.Helpers.ProjectData
 import Server.Persistence
 import Server.ServerConfig
 import Server.Types

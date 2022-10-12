@@ -1,6 +1,5 @@
 module Language.Mimsa.Store.ExtractTypes
-  (
-    extractNamedTypeVars,
+  ( extractNamedTypeVars,
     extractTypenames,
   )
 where

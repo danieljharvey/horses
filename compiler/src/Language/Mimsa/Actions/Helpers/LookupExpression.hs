@@ -1,7 +1,5 @@
 module Language.Mimsa.Actions.Helpers.LookupExpression
-  (
-
-    lookupModule,
+  ( lookupModule,
     lookupModuleByName,
   )
 where
