@@ -1,8 +1,6 @@
 import * as O from 'fp-ts/Option'
-import { State } from '../types'
-import { StoreItem } from './types'
 import { pipe } from 'fp-ts/function'
-import { ExprHash, ProjectHash } from '../../types'
+import { ProjectHash } from '../../types'
 
 const safeSessionStorageGet = (
   key: string
@@ -33,8 +31,3 @@ export const projectGet = (): O.Option<Project> =>
     safeSessionStorageGet(sessionStorageKey),
     O.chain((str) => safeDecode<Project>(str))
   )
-
-export const findExpression =
-  (state: State) =>
-  (exprHash: ExprHash): O.Option<StoreItem> =>
-    O.fromNullable(state.project.store[exprHash])

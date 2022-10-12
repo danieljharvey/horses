@@ -8,7 +8,6 @@ import { ProjectState } from './types'
 export const initialProject = (
   projHash: string
 ): ProjectState => ({
-  store: {},
   moduleStore: {},
   projectHash: projectHash(projHash),
   modules: {},

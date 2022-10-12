@@ -4,7 +4,6 @@ import * as O from 'fp-ts/Option'
 import { Feedback as FeedbackType } from '../../reducer/editor/feedback'
 import { ListBindings } from '../ListBindings'
 import { Code } from '../View/Code'
-import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { ListTests } from '../ListTests'
 import { exprHash } from '../../types'
@@ -31,21 +30,6 @@ export const Feedback: React.FC<Props> = ({ feedback }) => {
         <FlexColumnSpaced>
           <Code>{feedback.evaluatedValue}</Code>
           <Expression expression={feedback.expression} />
-          <ListBindings
-            modules={{}}
-            onModuleSelect={() => {}}
-          />
-        </FlexColumnSpaced>
-      )
-
-    case 'ShowUpdatedBinding':
-      return (
-        <FlexColumnSpaced>
-          <Paragraph>{`🐴 Updated ${feedback.bindingName}`}</Paragraph>
-          <Expression expression={feedback.expression} />
-          <ListCompile
-            exprHash={exprHash(feedback.expression.edHash)}
-          />
           <ListBindings
             modules={{}}
             onModuleSelect={() => {}}
@@ -88,12 +72,5 @@ export const Feedback: React.FC<Props> = ({ feedback }) => {
 
     case 'EditorNew':
       return <FlexColumnSpaced />
-
-    case 'ShowPreviewSuccess':
-      return (
-        <FlexColumnSpaced>
-          <Expression expression={feedback.expression} />
-        </FlexColumnSpaced>
-      )
   }
 }

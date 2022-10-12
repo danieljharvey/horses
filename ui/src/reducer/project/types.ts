@@ -1,16 +1,6 @@
-import type {
-  ExprHash,
-  ModuleHash,
-  ProjectHash,
-  ExpressionData,
-} from '../../types'
-
-export type StoreItem = {
-  expression: ExpressionData
-}
+import type { ModuleHash, ProjectHash } from '../../types'
 
 export type ProjectState = {
-  store: Record<ExprHash, StoreItem> // probably irrelevant now too?
   moduleStore: Record<ModuleHash, unknown>
   projectHash: ProjectHash
   modules: Record<string, ModuleHash>

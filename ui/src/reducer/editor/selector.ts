@@ -74,8 +74,7 @@ const expressionDataPrism: Prism<
 > = new Prism(
   (res: Feedback) =>
     res.type === 'ShowBinding' ||
-    res.type === 'ShowEvaluate' ||
-    res.type === 'ShowUpdatedBinding'
+    res.type === 'ShowEvaluate'
       ? O.some(res as ExpressionDataResult)
       : O.none,
 
@@ -202,7 +201,3 @@ export const getSourceItemsFromEditor = (
     sourceItemsO.getOption(state),
     O.getOrElse<SourceItem[]>(() => [])
   )
-
-export const getExpressionData = (
-  state: EditorState
-): O.Option<ExpressionData> => feedbackO.getOption(state)

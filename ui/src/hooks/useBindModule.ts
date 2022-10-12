@@ -28,7 +28,7 @@ export type BindModule = {
   testData: TestData
 }
 
-export type BindModuleState = RemoteData<
+type BindModuleState = RemoteData<
   UserErrorResponse,
   BindModule
 >

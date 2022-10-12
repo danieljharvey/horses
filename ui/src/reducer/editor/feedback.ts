@@ -16,15 +16,6 @@ export const showBinding = (
   expression,
 })
 
-export const showUpdatedBinding = (
-  expression: ExpressionData,
-  bindingName: string
-) => ({
-  type: 'ShowUpdatedBinding' as const,
-  expression,
-  bindingName,
-})
-
 export const showErrorResponse = (
   errorResponse: UserErrorResponse
 ) => ({
@@ -41,13 +32,6 @@ export const showEvaluate = (
   evaluatedValue,
 })
 
-export const showPreviewSuccess = (
-  expression: ExpressionData
-) => ({
-  type: 'ShowPreviewSuccess' as const,
-  expression,
-})
-
 export const showModule = (
   moduleData: ModuleData,
   testData: TestData
@@ -62,6 +46,4 @@ export type Feedback =
   | ReturnType<typeof showBinding>
   | ReturnType<typeof showErrorResponse>
   | ReturnType<typeof showEvaluate>
-  | ReturnType<typeof showUpdatedBinding>
-  | ReturnType<typeof showPreviewSuccess>
   | ReturnType<typeof showModule>

@@ -1,5 +1,3 @@
-import * as O from 'fp-ts/Option'
-
 import {
   EventReducer,
   stateOnly,
@@ -8,9 +6,6 @@ import { ProjectEvent } from '../project/events'
 import { EditorState } from './types'
 
 import { EditorAction } from './actions'
-import { showPreviewSuccess } from './feedback'
-import { pipe } from 'fp-ts/lib/function'
-import { getExpressionData } from './selector'
 
 export const editorReducer: EventReducer<
   EditorState,
@@ -23,26 +18,6 @@ export const editorReducer: EventReducer<
         ...state,
         code: action.text,
         stale: true,
-      })
-
-    case 'FormatExpression':
-      return pipe(
-        getExpressionData(state),
-        O.fold(
-          () => stateOnly(state),
-          (expressionData) =>
-            stateOnly({
-              ...state,
-              code: expressionData.edPretty,
-            })
-        )
-      )
-
-    case 'ExpressionPreviewSuccess':
-      return stateOnly({
-        ...state,
-        stale: true,
-        feedback: showPreviewSuccess(action.expression),
       })
 
     default:
