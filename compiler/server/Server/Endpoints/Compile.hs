@@ -7,6 +7,7 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Server.Endpoints.Compile (CompileAPI, compileEndpoints) where
+import Server.Helpers.ProjectData
 
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS

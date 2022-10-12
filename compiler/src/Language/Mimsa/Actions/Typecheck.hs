@@ -1,8 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 
+-- once we remove typechecking from optimising, hopefully we can bin this
+
 module Language.Mimsa.Actions.Typecheck
   ( typecheckStoreExpression,
-    typecheckExpression,
     annotateStoreExpressionWithTypes,
   )
 where
@@ -18,7 +19,6 @@ import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
-import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Typechecker
@@ -150,22 +150,6 @@ typecheckStoreExpression se input = do
   case M.lookup (getStoreExpressionHash se) resolved of
     Just re -> pure re
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
-
--- | get an expression, capture deps from project, and typecheck it
-typecheckExpression ::
-  Project Annotation ->
-  Text ->
-  Expr Name Annotation ->
-  Actions.ActionM (ResolvedExpression Annotation)
-typecheckExpression project input expr = do
-  storeExpr <-
-    liftEither $
-      first ResolverErr $
-        createStoreExpression
-          (getCurrentBindings $ prjBindings project)
-          (getCurrentTypeBindings $ prjTypeBindings project)
-          expr
-  typecheckStoreExpression storeExpr input
 
 -- | re-typecheck a single store expression
 -- not sure how this is different from other typechecking fns now

@@ -1,13 +1,11 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Server.Handlers
-  ( ProjectData (..),
+  (
     fromActionM,
     eitherFromActionM,
     projectDataHandler,
@@ -24,29 +22,22 @@ module Server.Handlers
   )
 where
 
+import Server.Helpers.ProjectData
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
-import qualified Data.Aeson as JSON
 import Data.Foldable (traverse_)
 import Data.Functor
-import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
-import Data.OpenApi (ToSchema)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text.IO as T
-import GHC.Generics
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Actions.Types
-import Language.Mimsa.Printer
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Project.Versions
 import Language.Mimsa.Store
 import Language.Mimsa.Store.Persistence
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
@@ -87,46 +78,6 @@ eitherFromActionM mimsaEnv projectHash action = do
       traverse_ (saveFileHandler mimsaEnv) (Actions.writeFilesFromOutcomes outcomes)
       pure (Right (newProject, outcomes, a))
 
-outputBindings :: Project a -> Map Name Text
-outputBindings project =
-  prettyPrint
-    <$> getBindings
-      ( getCurrentBindings
-          (prjBindings project)
-      )
-
-outputTypeBindings :: Project a -> Map TyCon Text
-outputTypeBindings project =
-  prettyPrint
-    <$> getTypeBindings
-      (getCurrentTypeBindings (prjTypeBindings project))
-
-outputModuleBindings :: Project a -> Map ModuleName Text
-outputModuleBindings project =
-  prettyPrint
-    <$> getCurrentModules (prjModules project)
-
--- | Version of a given binding
--- number, exprHash, usages elsewhere
-data BindingVersion = BindingVersion
-  { bvNumber :: Int,
-    bvExprHash :: ExprHash
-  }
-  deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, ToSchema)
-
--- | Current state of the project
--- should contain no exprs
-data ProjectData = ProjectData
-  { pdHash :: ProjectHash,
-    pdBindings :: Map Name Text,
-    pdTypeBindings :: Map TyCon Text,
-    pdModuleBindings :: Map ModuleName Text,
-    pdVersions :: Map Name (NE.NonEmpty BindingVersion)
-  }
-  deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (JSON.ToJSON, ToSchema)
-
 -- read the store from mutable var to stop repeated loading of exprs
 readStoreHandler :: MimsaEnvironment -> Handler (Store Annotation)
 readStoreHandler mimsaEnv = do
@@ -154,44 +105,6 @@ writeModuleStoreHandler mimsaEnv moduleStore = do
       STM.modifyTVar
         (mutableModuleStore mimsaEnv)
         (<> moduleStore)
-
-versionsForBinding ::
-  (Printer ann, Show ann) =>
-  Project ann ->
-  Name ->
-  Handler (NE.NonEmpty BindingVersion)
-versionsForBinding prj name = do
-  versions <- handleEither InternalError (findVersionsSimple prj name)
-  pure $ uncurry BindingVersion <$> versions
-
--- given a new Project, save it and return the hash and bindings
-projectDataHandler ::
-  (Printer ann, Show ann) =>
-  MimsaEnvironment ->
-  Project ann ->
-  Handler ProjectData
-projectDataHandler mimsaEnv project = do
-  -- get all versions of a binding and numbers them
-  let nameMap =
-        M.mapWithKey const
-          <$> getBindings . getCurrentBindings . prjBindings
-          $ project
-  versions <- traverse (versionsForBinding project) nameMap
-
-  -- save project file
-  projHash <-
-    handleServerM
-      (mimsaConfig mimsaEnv)
-      InternalError
-      (saveProjectInStore project)
-
-  pure $
-    ProjectData
-      projHash
-      (outputBindings project)
-      (outputTypeBindings project)
-      (outputModuleBindings project)
-      versions
 
 -- given a project hash, find the project
 loadProjectHandler ::

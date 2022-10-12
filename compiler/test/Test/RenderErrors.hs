@@ -11,7 +11,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Error.Diagnose
-import qualified Language.Mimsa.Actions.Evaluate as Actions
+import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Printer
@@ -33,8 +33,8 @@ printError ::
 printError env input = do
   let action = do
         expr <- Actions.parseExpr input
-        (mt, interpretedExpr, storeExpr, _, _) <- Actions.evaluate input expr
-        pure (mt, interpretedExpr, storeExpr)
+        (mt, interpretedExpr, _) <- Actions.evaluateModule  expr mempty
+        pure (mt, interpretedExpr )
   case Actions.run env action of
     Right (_, _, result) -> do
       liftIO $

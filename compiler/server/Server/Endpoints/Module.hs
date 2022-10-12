@@ -10,6 +10,7 @@ module Server.Endpoints.Module
     ModuleAPI,
   )
 where
+import Server.Helpers.ProjectData
 
 import qualified Data.Aeson as JSON
 import Data.OpenApi hiding (Server)

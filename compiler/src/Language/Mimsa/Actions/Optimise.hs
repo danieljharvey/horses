@@ -1,9 +1,11 @@
 module Language.Mimsa.Actions.Optimise
   ( optimise,
-    optimiseStoreExpression,
     optimiseAll,
   )
 where
+
+-- this module is currently unused, we should be using it
+-- to optimise StoreExpressions before Evaluating or Compiling them
 
 import Data.Bifunctor
 import Data.Map.Strict (Map)
@@ -67,6 +69,8 @@ optimiseStoreExpression storeExpr =
     project <- Actions.getProject
 
     -- get Expr Variable ann
+    -- we should do NumberVars directly to avoid needing
+    -- to typecheck StoreExpressions anymore
     resolvedOld <-
       Actions.checkStoreExpression
         (prettyPrint storeExpr)

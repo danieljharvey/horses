@@ -17,6 +17,7 @@ import Language.Mimsa.Types.Project
 import Servant
 import Server.Handlers
 import Server.Types
+import Server.Helpers.ProjectData
 
 -- /project/bindings/
 
