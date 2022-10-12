@@ -11,9 +11,6 @@ export const initialProject = (
   store: {},
   moduleStore: {},
   projectHash: projectHash(projHash),
-  bindings: {},
-  typeBindings: {},
-  versions: {},
   modules: {},
 })
 

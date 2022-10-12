@@ -39,13 +39,8 @@ export const projectReducer: EventReducer<
         projectL.set({
           ...state.project,
           projectHash: projectHash(action.data.pdHash),
-          bindings: action.data
-            .pdBindings as ProjectState['bindings'],
-          typeBindings: action.data
-            .pdTypeBindings as ProjectState['typeBindings'],
           modules: action.data
             .pdModuleBindings as ProjectState['modules'],
-          versions: action.data.pdVersions,
         })(state),
         [
           saveToSessionStorage(

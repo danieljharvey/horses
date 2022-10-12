@@ -34,39 +34,6 @@ export const projectGet = (): O.Option<Project> =>
     O.chain((str) => safeDecode<Project>(str))
   )
 
-const findExpressionForBinding = (
-  bindingName: string,
-  state: State
-): O.Option<StoreItem> =>
-  pipe(
-    O.fromNullable(state.project.bindings[bindingName]),
-    O.chain((exprHash) =>
-      O.fromNullable(state.project.store[exprHash])
-    )
-  )
-
-const findExpressionForTypeBinding = (
-  bindingName: string,
-  state: State
-): O.Option<StoreItem> =>
-  pipe(
-    O.fromNullable(state.project.typeBindings[bindingName]),
-    O.chain((exprHash) =>
-      O.fromNullable(state.project.store[exprHash])
-    )
-  )
-
-export const findExpressionForAnyBinding = (
-  bindingName: string,
-  state: State
-): O.Option<StoreItem> =>
-  pipe(
-    findExpressionForBinding(bindingName, state),
-    O.alt(() =>
-      findExpressionForTypeBinding(bindingName, state)
-    )
-  )
-
 export const findExpression =
   (state: State) =>
   (exprHash: ExprHash): O.Option<StoreItem> =>

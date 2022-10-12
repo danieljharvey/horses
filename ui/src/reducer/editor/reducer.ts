@@ -9,11 +9,6 @@ import {
 import { ProjectEvent } from '../project/events'
 import { EditorState } from './types'
 
-import {
-  doBindExpression,
-  doEvaluateExpression,
-  EditorEvent,
-} from './events'
 import { EditorAction } from './actions'
 import {
   showErrorResponse,
@@ -30,7 +25,7 @@ const codeL = Lens.fromProp<EditorState>()('code')
 export const editorReducer: EventReducer<
   EditorState,
   EditorAction,
-  EditorEvent | ProjectEvent
+  ProjectEvent
 > = (state, action) => {
   switch (action.type) {
     case 'UpdateCode':
