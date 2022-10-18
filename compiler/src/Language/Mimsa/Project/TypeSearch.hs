@@ -7,8 +7,6 @@ module Language.Mimsa.Project.TypeSearch
   )
 where
 
-import Language.Mimsa.TypeUtils
-import Data.Monoid
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor (first)
@@ -17,8 +15,10 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Data.Monoid
 import Data.Text (Text)
 import Language.Mimsa.Parser.Language
+import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -44,13 +44,13 @@ typeEquals needle mtB =
 -- | isSimple == no vars
 isSimple :: MonoType -> Bool
 isSimple =
-   getAll . isSimple' 
-    where 
-      isSimple' :: MonoType -> All 
-      isSimple' (MTVar _ _) = All False
-      isSimple' (MTPrim _ _) = All True
-      isSimple' (MTConstructor {}) = All True
-      isSimple' other = withMonoid isSimple' other
+  getAll . isSimple'
+  where
+    isSimple' :: MonoType -> All
+    isSimple' (MTVar _ _) = All False
+    isSimple' (MTPrim _ _) = All True
+    isSimple' (MTConstructor {}) = All True
+    isSimple' other = withMonoid isSimple' other
 
 unify' :: MonoType -> MonoType -> Either TypeError Substitutions
 unify' mtA mtB = runUnifyM (unify mtA mtB)

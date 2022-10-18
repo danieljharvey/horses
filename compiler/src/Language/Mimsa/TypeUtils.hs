@@ -39,10 +39,13 @@ mapMonoType f (MTGlobals ann globs rest expr) =
   MTGlobals ann (f <$> globs) (f <$> rest) (f expr)
 
 -- lift a monadic action over a type
-bindMonoType :: (Applicative m ) => (Type ann -> m (Type ann)) -> 
-    Type ann -> m (Type ann)
+bindMonoType ::
+  (Applicative m) =>
+  (Type ann -> m (Type ann)) ->
+  Type ann ->
+  m (Type ann)
 bindMonoType f mt = case mt of
-  MTVar ann tyIdent -> pure (MTVar ann tyIdent) 
+  MTVar ann tyIdent -> pure (MTVar ann tyIdent)
   MTPrim ann a -> pure (MTPrim ann a)
   MTFunction ann arg fun ->
     MTFunction ann
@@ -62,6 +65,7 @@ bindMonoType f mt = case mt of
   MTTypeApp ann func arg ->
     MTTypeApp ann <$> f func <*> f arg
   MTGlobals ann globs rest expr ->
-    MTGlobals ann <$> traverse f globs <*> 
-        traverse f rest <*> f expr
-
+    MTGlobals ann
+      <$> traverse f globs
+      <*> traverse f rest
+      <*> f expr

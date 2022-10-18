@@ -114,7 +114,7 @@ renderMonoType (MTFunction _ a b) =
 renderMonoType (MTPair _ a b) =
   "(" <> renderMonoType a <> "," <+> renderMonoType b <> ")"
 renderMonoType (MTRecord _ as rest) =
-  renderRecord as rest 
+  renderRecord as rest
 renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
 renderMonoType (MTVar _ a) = renderTypeIdentifier a
 renderMonoType (MTConstructor _ (Just modName) tyCon) =
@@ -130,7 +130,7 @@ renderMonoType mt@(MTTypeApp _ func arg) =
        in align $ sep ([typeName] <> (withParens <$> vars))
     Nothing ->
       align $ sep [renderMonoType func, renderMonoType arg]
-renderMonoType (MTGlobals _ parts rest expr) = 
+renderMonoType (MTGlobals _ parts rest expr) =
   renderRecord parts rest <> " => " <> renderMonoType expr
 
 renderRecord :: Map Name (Type ann) -> Maybe (Type ann) -> Doc style

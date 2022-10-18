@@ -8,9 +8,9 @@ where
 import Data.List ((\\))
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import Language.Mimsa.TypeUtils
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.TypeUtils
 
 freeTypeVars :: MonoType -> S.Set TypeIdentifier
 freeTypeVars ty = case ty of
