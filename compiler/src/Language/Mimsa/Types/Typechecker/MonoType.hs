@@ -84,6 +84,12 @@ data Type ann
         typFunc :: Type ann,
         typArg :: Type ann -- func arg, apply arg to func
       }
+  | MTGlobals
+      { typAnn :: ann,
+        typGlobals :: Map Name (Type ann),
+        typRest :: Maybe (Type ann),
+        typInner :: Type ann
+      }
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.ToJSON, JSON.FromJSON)
 
@@ -96,6 +102,7 @@ getAnnotationForType (MTRecord ann _ _) = ann
 getAnnotationForType (MTConstructor ann _ _) = ann
 getAnnotationForType (MTArray ann _) = ann
 getAnnotationForType (MTTypeApp ann _ _) = ann
+getAnnotationForType (MTGlobals ann _ _ _) = ann
 
 instance Printer (Type ann) where
   prettyDoc = renderMonoType
@@ -106,7 +113,28 @@ renderMonoType (MTFunction _ a b) =
   withParens a <+> "->" <+> renderMonoType b
 renderMonoType (MTPair _ a b) =
   "(" <> renderMonoType a <> "," <+> renderMonoType b <> ")"
-renderMonoType (MTRecord _ as Nothing) =
+renderMonoType (MTRecord _ as rest) =
+  renderRecord as rest 
+renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
+renderMonoType (MTVar _ a) = renderTypeIdentifier a
+renderMonoType (MTConstructor _ (Just modName) tyCon) =
+  prettyDoc modName <> "." <> prettyDoc tyCon
+renderMonoType (MTConstructor _ Nothing tyCon) =
+  prettyDoc tyCon
+renderMonoType mt@(MTTypeApp _ func arg) =
+  case varsFromDataType mt of
+    Just (modName, tyCon, vars) ->
+      let typeName = case modName of
+            Just mName -> prettyDoc mName <> "." <> prettyDoc tyCon
+            _ -> prettyDoc tyCon
+       in align $ sep ([typeName] <> (withParens <$> vars))
+    Nothing ->
+      align $ sep [renderMonoType func, renderMonoType arg]
+renderMonoType (MTGlobals _ parts rest expr) = 
+  renderRecord parts rest <> " => " <> renderMonoType expr
+
+renderRecord :: Map Name (Type ann) -> Maybe (Type ann) -> Doc style
+renderRecord as Nothing =
   group $
     "{"
       <> nest
@@ -124,7 +152,7 @@ renderMonoType (MTRecord _ as Nothing) =
       <> "}"
   where
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v
-renderMonoType (MTRecord _ as (Just rest)) =
+renderRecord as (Just rest) =
   group $
     "{"
       <> nest
@@ -146,21 +174,6 @@ renderMonoType (MTRecord _ as (Just rest)) =
       <> "}"
   where
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v
-renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"
-renderMonoType (MTVar _ a) = renderTypeIdentifier a
-renderMonoType (MTConstructor _ (Just modName) tyCon) =
-  prettyDoc modName <> "." <> prettyDoc tyCon
-renderMonoType (MTConstructor _ Nothing tyCon) =
-  prettyDoc tyCon
-renderMonoType mt@(MTTypeApp _ func arg) =
-  case varsFromDataType mt of
-    Just (modName, tyCon, vars) ->
-      let typeName = case modName of
-            Just mName -> prettyDoc mName <> "." <> prettyDoc tyCon
-            _ -> prettyDoc tyCon
-       in align $ sep ([typeName] <> (withParens <$> vars))
-    Nothing ->
-      align $ sep [renderMonoType func, renderMonoType arg]
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)

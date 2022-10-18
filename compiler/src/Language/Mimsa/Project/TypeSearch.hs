@@ -7,6 +7,8 @@ module Language.Mimsa.Project.TypeSearch
   )
 where
 
+import Language.Mimsa.TypeUtils
+import Data.Monoid
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor (first)
@@ -41,17 +43,14 @@ typeEquals needle mtB =
 
 -- | isSimple == no vars
 isSimple :: MonoType -> Bool
-isSimple (MTVar _ _) = False
-isSimple (MTFunction _ a b) = isSimple a && isSimple b
-isSimple (MTPrim _ _) = True
-isSimple (MTPair _ a b) = isSimple a && isSimple b
-isSimple (MTRecord _ as Nothing) = and (isSimple <$> as)
-isSimple (MTRecord _ as (Just b)) =
-  isSimple b
-    && and (isSimple <$> as)
-isSimple (MTArray _ as) = isSimple as
-isSimple MTConstructor {} = True
-isSimple (MTTypeApp _ fn val) = isSimple fn && isSimple val
+isSimple =
+   getAll . isSimple' 
+    where 
+      isSimple' :: MonoType -> All 
+      isSimple' (MTVar _ _) = All False
+      isSimple' (MTPrim _ _) = All True
+      isSimple' (MTConstructor {}) = All True
+      isSimple' other = withMonoid isSimple' other
 
 unify' :: MonoType -> MonoType -> Either TypeError Substitutions
 unify' mtA mtB = runUnifyM (unify mtA mtB)

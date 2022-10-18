@@ -10,22 +10,13 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.TypeUtils
 
 freeTypeVars :: MonoType -> S.Set TypeIdentifier
 freeTypeVars ty = case ty of
   MTVar _ var ->
     S.singleton var
-  MTFunction _ t1 t2 ->
-    S.union (freeTypeVars t1) (freeTypeVars t2)
-  MTPair _ t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
-  MTRecord _ as Nothing -> foldr S.union mempty (freeTypeVars <$> as)
-  MTRecord _ as (Just rest) ->
-    foldr S.union mempty (freeTypeVars <$> as)
-      <> freeTypeVars rest
-  MTArray _ a -> freeTypeVars a
-  MTPrim _ _ -> S.empty
-  MTConstructor {} -> S.empty
-  MTTypeApp _ a b -> freeTypeVars a <> freeTypeVars b
+  other -> withMonoid freeTypeVars other
 
 freeTypeVarsScheme :: Scheme -> [TypeIdentifier]
 freeTypeVarsScheme (Scheme vars t) =

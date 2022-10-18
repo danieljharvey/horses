@@ -3,6 +3,7 @@
 
 module Language.Mimsa.Typechecker.ScopeTypeVar (freshNamedType) where
 
+import Language.Mimsa.TypeUtils
 import Control.Monad.State
 import Data.Coerce
 import Data.Map.Strict (Map)
@@ -60,17 +61,4 @@ freshenNamedTypeVars known =
         Nothing -> pure mtV -- leave it
         Just i -> do
           pure (MTVar ann (TVScopedVar i tv))
-    freshen mtV@MTVar {} = pure mtV
-    freshen mtV@MTConstructor {} =
-      pure mtV
-    freshen (MTTypeApp ann a b) =
-      MTTypeApp ann <$> freshen a <*> freshen b
-    freshen (MTPair ann a b) =
-      MTPair ann <$> freshen a <*> freshen b
-    freshen (MTArray ann as) =
-      MTArray ann <$> freshen as
-    freshen (MTRecord ann as rest) =
-      MTRecord ann <$> traverse freshen as <*> traverse freshen rest
-    freshen mtP@MTPrim {} = pure mtP
-    freshen (MTFunction ann a b) =
-      MTFunction ann <$> freshen a <*> freshen b
+    freshen other = bindMonoType freshen other
