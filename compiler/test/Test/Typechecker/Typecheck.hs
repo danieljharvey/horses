@@ -104,14 +104,14 @@ spec = do
         let expr = unsafeParseExpr' "{ fun: (\\a -> let d = 1 in a) }"
         startInference expr $
           Right
-            ( MTRecord mempty $
+            ( MTRecord mempty (
                 M.singleton
                   "fun"
                   ( MTFunction
                       mempty
                       (MTVar mempty (TVUnificationVar 1))
                       (MTVar mempty (TVUnificationVar 1))
-                  )
+                  )) Nothing
             )
 
       describe "annotations" $ do
@@ -448,7 +448,7 @@ spec = do
                 mempty
         startInference expr $
           Right
-            ( MTRecord mempty mempty
+            ( MTRecord mempty mempty Nothing
             )
       it "infers record with two ints in it" $ do
         let expr =
@@ -468,6 +468,7 @@ spec = do
                       ("cat", MTPrim mempty MTInt)
                     ]
                 )
+                Nothing
             )
       it "Infers a record literal from a lambda" $ do
         let expr =
@@ -488,13 +489,13 @@ spec = do
           Right
             ( MTFunction
                 mempty
-                ( MTRecordRow
+                ( MTRecord
                     mempty
                     ( M.singleton
                         "dog"
                         (MTPrim mempty MTBool)
                     )
-                    (unknown 1)
+                    (Just $ unknown 1)
                 )
                 (MTPrim mempty MTInt)
             )
@@ -517,10 +518,10 @@ spec = do
           Right
             ( MTFunction
                 mempty
-                ( MTRecordRow
+                ( MTRecord
                     mempty
                     (M.singleton "int" (MTPrim mempty MTInt))
-                    (unknown 1)
+                    (Just $ unknown 1)
                 )
                 (MTPrim mempty MTInt)
             )

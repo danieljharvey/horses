@@ -98,7 +98,7 @@ spec = do
       it "Pair of int and string" $ do
         itGenerates (MTPair mempty mtInt mtString)
       it "Records" $ do
-        let record = MTRecord mempty (M.fromList [("dog", mtInt), ("cat", mtBool)])
+        let record = MTRecord mempty (M.fromList [("dog", mtInt), ("cat", mtBool)]) Nothing
         itGenerates record
       it "Functions" $ do
         itGenerates (MTFunction mempty mtBool mtInt)

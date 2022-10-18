@@ -13,6 +13,7 @@ module Language.Mimsa.Typechecker.TcMonad
   )
 where
 
+import Language.Mimsa.Types.Typechecker.Substitutions
 import Control.Monad.Except
 import Control.Monad.State (MonadState, gets, modify)
 import Data.Coerce

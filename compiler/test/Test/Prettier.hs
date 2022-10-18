@@ -109,7 +109,7 @@ spec =
       it "Record" $
         let mt :: MonoType
             mt =
-              MTRecord mempty $
+              MTRecord mempty (
                 M.fromList
                   [ ("dog", MTPrim mempty MTBool),
                     ("horse", MTPrim mempty MTString),
@@ -120,7 +120,7 @@ spec =
                         "Maybe"
                         [MTPrim mempty MTString]
                     )
-                  ]
+                  ]) Nothing
          in T.putStrLn
               ( prettyPrint mt
               )

@@ -92,10 +92,10 @@ getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
 getVariablesForField (MTFunction _ a b) =
   getVariablesForField a <> getVariablesForField b
 getVariablesForField (MTPair _ a b) = getVariablesForField a <> getVariablesForField b
-getVariablesForField (MTRecord _ items) =
+getVariablesForField (MTRecord _ items Nothing) =
   mconcat $
     getVariablesForField <$> M.elems items
-getVariablesForField (MTRecordRow _ items rest) =
+getVariablesForField (MTRecord _ items (Just rest)) =
   mconcat
     ( getVariablesForField <$> M.elems items
     )
@@ -201,13 +201,13 @@ inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = 
                   then modName
                   else localModName
            in pure (MTConstructor mempty newModName tn)
-        MTRecord _ items -> do
+        MTRecord _ items Nothing -> do
           tyItems <- traverse findType items
-          pure (MTRecord mempty tyItems)
-        MTRecordRow _ items rest -> do
+          pure (MTRecord mempty tyItems Nothing)
+        MTRecord _ items (Just rest) -> do
           tyItems <- traverse findType items
-          MTRecordRow mempty tyItems
-            <$> findType rest
+          MTRecord mempty tyItems
+            <$> (Just <$> findType rest)
         MTArray _ item -> do
           tyItems <- findType item
           pure (MTArray mempty tyItems)

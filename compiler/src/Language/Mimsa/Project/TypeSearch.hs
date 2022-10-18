@@ -24,6 +24,7 @@ import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 
 normalise :: MonoType -> Type ()
 normalise mt = normaliseType mt $> ()
@@ -44,8 +45,8 @@ isSimple (MTVar _ _) = False
 isSimple (MTFunction _ a b) = isSimple a && isSimple b
 isSimple (MTPrim _ _) = True
 isSimple (MTPair _ a b) = isSimple a && isSimple b
-isSimple (MTRecord _ as) = and (isSimple <$> as)
-isSimple (MTRecordRow _ as b) =
+isSimple (MTRecord _ as Nothing) = and (isSimple <$> as)
+isSimple (MTRecord _ as (Just b)) =
   isSimple b
     && and (isSimple <$> as)
 isSimple (MTArray _ as) = isSimple as
@@ -82,7 +83,7 @@ typeMapToFoundPath =
 
 splitRecords :: (FoundPath, MonoType) -> [(FoundPath, MonoType)]
 splitRecords (path, mt) = case mt of
-  MTRecord _ mtS ->
+  MTRecord _ mtS _ ->
     let toSubPath (k, v) = (appendNameToFoundPath k path, v)
      in (splitRecords <$> toSubPath) =<< M.toList mtS
   _ -> [(path, mt)]

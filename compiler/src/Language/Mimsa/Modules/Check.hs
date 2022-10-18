@@ -51,7 +51,7 @@ getModuleType mod' =
         M.filterWithKey
           (\k _ -> S.member k (moExpressionExports mod'))
           (moExpressions mod')
-   in MTRecord mempty (getTypeFromAnn <$> filterNameDefs defs)
+   in MTRecord mempty (getTypeFromAnn <$> filterNameDefs defs) Nothing
 
 filterNameDefs :: Map DefIdentifier a -> Map Name a
 filterNameDefs =

@@ -71,9 +71,9 @@ toTSType' _ (MTPair _ a b) = do
   pure (TSTypeTuple [tsA, tsB], genA <> genB)
 toTSType' _ mt@MTConstructor {} =
   consToTSType mt
-toTSType' _ (MTRecord _ as) =
+toTSType' _ (MTRecord _ as Nothing) =
   toTSTypeRecord as
-toTSType' _ (MTRecordRow _ as rest) = do
+toTSType' _ (MTRecord _ as (Just rest)) = do
   (tsItems, generics) <- toTSTypeRecord as
   (tsRest, genRest) <- toTSType rest
   pure (TSTypeAnd tsItems tsRest, generics <> genRest)

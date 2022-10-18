@@ -6,6 +6,8 @@ module Language.Mimsa.Tests.Generate
   )
 where
 
+import Language.Mimsa.Types.Typechecker.Substitutions
+import Language.Mimsa.Typechecker.FlattenRow
 import Data.Coerce
 import Data.Functor
 import Data.Map.Strict (Map)
@@ -13,7 +15,6 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Store.ExtractTypes
-import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
@@ -43,11 +44,10 @@ fromMonoType gs mt =
         else MyArray mempty <$> listOf (fromMonoType gs arrMt)
     (MTPair _ a b) ->
       MyPair mempty <$> fromMonoType gs a <*> fromMonoType gs b
-    (MTRecord _ as) ->
-      MyRecord mempty <$> traverse (fromMonoType gs) as
-    (MTRecordRow _ as _) ->
+    (MTRecord _ as _) ->
       -- as we've already run flattenRow on this to remove nested rows, assume the
       -- part on the end is just an unknown and ignore it
+
       MyRecord mempty <$> traverse (fromMonoType gs) as
     (MTFunction _ _from to) ->
       MyLambda mempty (Identifier mempty "a")

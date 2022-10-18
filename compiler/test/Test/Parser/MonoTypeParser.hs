@@ -91,20 +91,20 @@ spec =
           )
     it "Empty record" $
       testParser "{}"
-        `shouldBe` Right (MTRecord mempty mempty)
+        `shouldBe` Right (MTRecord mempty mempty Nothing)
     it "Record with items" $
       testParser "{one:Int,two:String}"
         `shouldBe` Right
-          ( MTRecord mempty $
+          ( MTRecord mempty (
               M.fromList
                 [ ("one", MTPrim mempty MTInt),
                   ("two", MTPrim mempty MTString)
-                ]
+                ]) Nothing
           )
     it "Record with functions as items" $
       testParser "{ one: (Int -> Int), two: (String -> b) }"
         `shouldBe` Right
-          ( MTRecord mempty $
+          ( MTRecord mempty (
               M.fromList
                 [ ( "one",
                     MTFunction
@@ -118,14 +118,14 @@ spec =
                       (MTPrim mempty MTString)
                       (MTVar mempty (tvNamed "b"))
                   )
-                ]
+                ]) Nothing
           )
     it "Record with one function inside" $
       testParser "{ one: (Int -> Maybe Int) }" `shouldSatisfy` isRight
     it "Record with all sorts of stuff in it" $
       testParser "{ one: (Int -> Maybe Int), two: (String -> (b, Either String Int)) }"
         `shouldBe` Right
-          ( MTRecord mempty $
+          ( MTRecord mempty (
               M.fromList
                 [ ( "one",
                     MTFunction
@@ -155,7 +155,7 @@ spec =
                           )
                       )
                   )
-                ]
+                ]) Nothing
           )
     it "Nullary data type" $
       testParser "MyUnit"
@@ -288,8 +288,8 @@ spec =
     it "Parses RecordRow" $
       testParser "{ a: String | b }"
         `shouldBe` Right
-          ( MTRecordRow
+          ( MTRecord
               mempty
               (M.singleton "a" (MTPrim mempty MTString))
-              (MTVar mempty (tvNamed "b"))
+              (Just $ MTVar mempty (tvNamed "b"))
           )

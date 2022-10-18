@@ -12,9 +12,9 @@ withMonoid f (MTTypeApp _ a b) =
 withMonoid f (MTPair _ a b) =
   f a <> f b
 withMonoid f (MTArray _ as) = f as
-withMonoid f (MTRecord _ as) =
+withMonoid f (MTRecord _ as Nothing) =
   mconcat (f <$> M.elems as)
-withMonoid f (MTRecordRow _ as a) =
+withMonoid f (MTRecord _ as (Just a)) =
   mconcat (f <$> M.elems as)
     <> f a
 withMonoid f (MTFunction _ a b) =
@@ -29,9 +29,7 @@ mapMonoType f (MTTypeApp ann a b) =
 mapMonoType f (MTPair ann a b) =
   MTPair ann (f a) (f b)
 mapMonoType f (MTArray ann as) = MTArray ann (f as)
-mapMonoType f (MTRecord ann as) =
-  MTRecord ann (f <$> as)
-mapMonoType f (MTRecordRow ann as a) =
-  MTRecordRow ann (f <$> as) (f a)
+mapMonoType f (MTRecord ann as a) =
+  MTRecord ann (f <$> as) (f <$> a)
 mapMonoType f (MTFunction ann a b) =
   MTFunction ann (f a) (f b)

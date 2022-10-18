@@ -18,6 +18,7 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 
 typedHolesCheck ::
   (MonadError TypeError m, MonadState TypecheckState m) =>

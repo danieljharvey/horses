@@ -15,6 +15,8 @@ import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
+
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -122,16 +124,16 @@ spec =
     describe "Records" $ do
       it "Combines two half records" $
         runUnifier
-          ( MTRecord mempty $
+          ( MTRecord mempty (
               M.fromList
                 [ ("one", MTPrim mempty MTInt),
                   ("two", MTVar mempty (TVUnificationVar 1))
-                ],
-            MTRecord mempty $
+                ]) Nothing,
+            MTRecord mempty (
               M.fromList
                 [ ("one", MTVar mempty (TVUnificationVar 2)),
                   ("two", MTPrim mempty MTBool)
-                ]
+                ]) Nothing
           )
           `shouldBe` Right
             ( Substitutions $
@@ -145,48 +147,48 @@ spec =
         let leftItems = M.singleton "a" (MTPrim mempty MTInt)
             rightItems = M.singleton "a" (MTPrim mempty MTString)
         runUnifier
-          ( MTRecordRow mempty leftItems (unknown 1),
-            MTRecordRow mempty rightItems (unknown 2)
+          ( MTRecord mempty leftItems (Just $ unknown 1),
+            MTRecord mempty rightItems (Just $ unknown 2)
           )
           `shouldSatisfy` isLeft
       it "Combines Record with matching RecordRow" $ do
         let items = M.fromList [("a", MTPrim mempty MTInt), ("b", MTPrim mempty MTString)]
-        runUnifier (MTRecordRow mempty items (unknown 3), MTRecord mempty items)
+        runUnifier (MTRecord mempty items (Just $ unknown 3), MTRecord mempty items Nothing)
           `shouldBe` Right mempty
       it "Combines Record with RecordRow with less items" $ do
         let recordItems = M.fromList [("a", MTPrim mempty MTInt), ("b", MTPrim mempty MTString)]
             rowItems = M.fromList [("a", MTPrim mempty MTInt)]
-        runUnifier (MTRecordRow mempty rowItems (unknown 3), MTRecord mempty recordItems)
+        runUnifier (MTRecord mempty rowItems (Just $ unknown 3), MTRecord mempty recordItems Nothing)
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
-                  [ (TVUnificationVar 3, MTRecordRow mempty (M.singleton "b" $ MTPrim mempty MTString) (unknown 1))
+                  [ (TVUnificationVar 3, MTRecord mempty (M.singleton "b" $ MTPrim mempty MTString) (Just $ unknown 1))
                   ]
             )
       it "Combines Record with less items with RecordRow" $ do
         let rowItems = M.fromList [("a", MTPrim mempty MTInt), ("b", MTPrim mempty MTString)]
             recordItems = M.fromList [("a", MTPrim mempty MTInt)]
-        runUnifier (MTRecordRow mempty rowItems (unknown 3), MTRecord mempty recordItems)
+        runUnifier (MTRecord mempty rowItems (Just $ unknown 3), MTRecord mempty recordItems Nothing)
           `shouldSatisfy` isLeft
       it "Combines Record with less items with nested RecordRow" $ do
         let rowOne = M.singleton "a" (MTPrim mempty MTInt)
             rowTwo = M.singleton "b" (MTPrim mempty MTString)
             recordItems = M.fromList [("a", MTPrim mempty MTInt)]
-        runUnifier (MTRecordRow mempty rowOne (MTRecordRow mempty rowTwo (unknown 3)), MTRecord mempty recordItems)
+        runUnifier (MTRecord mempty rowOne (Just $ MTRecord mempty rowTwo (Just $ unknown 3)), MTRecord mempty recordItems Nothing)
           `shouldSatisfy` isLeft
 
       it "Combines two RecordRows with different items" $ do
         let leftItems = M.singleton "a" (MTPrim mempty MTInt)
             rightItems = M.singleton "b" (MTPrim mempty MTString)
         runUnifier
-          ( MTRecordRow mempty leftItems (unknown 2),
-            MTRecordRow mempty rightItems (unknown 3)
+          ( MTRecord mempty leftItems (Just $ unknown 2),
+            MTRecord mempty rightItems (Just $ unknown 3)
           )
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
-                  [ (TVUnificationVar 2, MTRecordRow mempty rightItems (unknown 1)),
-                    (TVUnificationVar 3, MTRecordRow mempty leftItems (unknown 1))
+                  [ (TVUnificationVar 2, MTRecord mempty rightItems (Just $ unknown 1)),
+                    (TVUnificationVar 3, MTRecord mempty leftItems (Just $ unknown 1))
                   ]
             )
       it "Combines two RecordRows with some matching items" $ do
@@ -200,27 +202,27 @@ spec =
                 [ ("same", MTPrim mempty MTInt),
                   ("b", MTPrim mempty MTBool)
                 ]
-        runUnifier (MTRecordRow mempty leftItems (unknown 10), MTRecordRow mempty rightItems (unknown 11))
+        runUnifier (MTRecord mempty leftItems (Just $ unknown 10), MTRecord mempty rightItems (Just $ unknown 11))
           `shouldBe` Right
             ( Substitutions $
                 M.fromList
                   [ ( TVUnificationVar 10,
-                      MTRecordRow
+                      MTRecord
                         mempty
                         ( M.singleton
                             "b"
                             (MTPrim mempty MTBool)
                         )
-                        (unknown 1)
+                        (Just $ unknown 1)
                     ),
                     ( TVUnificationVar 11,
-                      MTRecordRow
+                      MTRecord
                         mempty
                         ( M.singleton
                             "a"
                             (MTPrim mempty MTString)
                         )
-                        (unknown 1)
+                        (Just $ unknown 1)
                     )
                   ]
             )

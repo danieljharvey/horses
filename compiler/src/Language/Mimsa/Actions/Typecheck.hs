@@ -7,6 +7,7 @@ module Language.Mimsa.Actions.Typecheck
     annotateStoreExpressionWithTypes,
   )
 where
+import Language.Mimsa.Types.Typechecker.Substitutions
 
 import Control.Monad.Except
 import Data.Bifunctor (first)

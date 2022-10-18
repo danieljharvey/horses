@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Language.Mimsa.Typechecker.Solve (solve, runSolveM, SolveM) where
+import Language.Mimsa.Types.Typechecker.Substitutions
 
 import Control.Monad.Except
 import Control.Monad.State
