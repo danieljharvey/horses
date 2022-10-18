@@ -95,67 +95,76 @@ spec =
     it "Record with items" $
       testParser "{one:Int,two:String}"
         `shouldBe` Right
-          ( MTRecord mempty (
-              M.fromList
-                [ ("one", MTPrim mempty MTInt),
-                  ("two", MTPrim mempty MTString)
-                ]) Nothing
+          ( MTRecord
+              mempty
+              ( M.fromList
+                  [ ("one", MTPrim mempty MTInt),
+                    ("two", MTPrim mempty MTString)
+                  ]
+              )
+              Nothing
           )
     it "Record with functions as items" $
       testParser "{ one: (Int -> Int), two: (String -> b) }"
         `shouldBe` Right
-          ( MTRecord mempty (
-              M.fromList
-                [ ( "one",
-                    MTFunction
-                      mempty
-                      (MTPrim mempty MTInt)
-                      (MTPrim mempty MTInt)
-                  ),
-                  ( "two",
-                    MTFunction
-                      mempty
-                      (MTPrim mempty MTString)
-                      (MTVar mempty (tvNamed "b"))
-                  )
-                ]) Nothing
+          ( MTRecord
+              mempty
+              ( M.fromList
+                  [ ( "one",
+                      MTFunction
+                        mempty
+                        (MTPrim mempty MTInt)
+                        (MTPrim mempty MTInt)
+                    ),
+                    ( "two",
+                      MTFunction
+                        mempty
+                        (MTPrim mempty MTString)
+                        (MTVar mempty (tvNamed "b"))
+                    )
+                  ]
+              )
+              Nothing
           )
     it "Record with one function inside" $
       testParser "{ one: (Int -> Maybe Int) }" `shouldSatisfy` isRight
     it "Record with all sorts of stuff in it" $
       testParser "{ one: (Int -> Maybe Int), two: (String -> (b, Either String Int)) }"
         `shouldBe` Right
-          ( MTRecord mempty (
-              M.fromList
-                [ ( "one",
-                    MTFunction
-                      mempty
-                      (MTPrim mempty MTInt)
-                      ( dataTypeWithVars
-                          mempty
-                          Nothing
-                          "Maybe"
-                          [MTPrim mempty MTInt]
-                      )
-                  ),
-                  ( "two",
-                    MTFunction
-                      mempty
-                      (MTPrim mempty MTString)
-                      ( MTPair
-                          mempty
-                          (MTVar mempty (tvNamed "b"))
-                          ( dataTypeWithVars
-                              mempty
-                              Nothing
-                              "Either"
-                              [ MTPrim mempty MTString,
-                                MTPrim mempty MTInt
-                              ]
-                          )
-                      )
-                  )
-                ]) Nothing
+          ( MTRecord
+              mempty
+              ( M.fromList
+                  [ ( "one",
+                      MTFunction
+                        mempty
+                        (MTPrim mempty MTInt)
+                        ( dataTypeWithVars
+                            mempty
+                            Nothing
+                            "Maybe"
+                            [MTPrim mempty MTInt]
+                        )
+                    ),
+                    ( "two",
+                      MTFunction
+                        mempty
+                        (MTPrim mempty MTString)
+                        ( MTPair
+                            mempty
+                            (MTVar mempty (tvNamed "b"))
+                            ( dataTypeWithVars
+                                mempty
+                                Nothing
+                                "Either"
+                                [ MTPrim mempty MTString,
+                                  MTPrim mempty MTInt
+                                ]
+                            )
+                        )
+                    )
+                  ]
+              )
+              Nothing
           )
     it "Nullary data type" $
       testParser "MyUnit"

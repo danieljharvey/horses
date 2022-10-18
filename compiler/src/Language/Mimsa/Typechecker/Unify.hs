@@ -6,20 +6,21 @@ module Language.Mimsa.Typechecker.Unify
     freeTypeVars,
   )
 where
-import Language.Mimsa.Types.Typechecker.Substitutions
-import Language.Mimsa.Typechecker.FlattenRow
+
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Functor (($>))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import Language.Mimsa.Typechecker.FlattenRow
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind ::

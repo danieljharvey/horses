@@ -16,7 +16,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
-
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -124,16 +123,22 @@ spec =
     describe "Records" $ do
       it "Combines two half records" $
         runUnifier
-          ( MTRecord mempty (
-              M.fromList
-                [ ("one", MTPrim mempty MTInt),
-                  ("two", MTVar mempty (TVUnificationVar 1))
-                ]) Nothing,
-            MTRecord mempty (
-              M.fromList
-                [ ("one", MTVar mempty (TVUnificationVar 2)),
-                  ("two", MTPrim mempty MTBool)
-                ]) Nothing
+          ( MTRecord
+              mempty
+              ( M.fromList
+                  [ ("one", MTPrim mempty MTInt),
+                    ("two", MTVar mempty (TVUnificationVar 1))
+                  ]
+              )
+              Nothing,
+            MTRecord
+              mempty
+              ( M.fromList
+                  [ ("one", MTVar mempty (TVUnificationVar 2)),
+                    ("two", MTPrim mempty MTBool)
+                  ]
+              )
+              Nothing
           )
           `shouldBe` Right
             ( Substitutions $

@@ -41,7 +41,8 @@ normaliseType' mt = case mt of
       <$> normaliseType' a
       <*> normaliseType' b
   MTRecord ann as rest ->
-    MTRecord ann <$> traverse normaliseType' as
+    MTRecord ann
+      <$> traverse normaliseType' as
       <*> traverse normaliseType' rest
   MTArray ann a -> MTArray ann <$> normaliseType' a
   MTConstructor ann modName name ->

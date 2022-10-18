@@ -6,8 +6,6 @@ module Language.Mimsa.Tests.Generate
   )
 where
 
-import Language.Mimsa.Types.Typechecker.Substitutions
-import Language.Mimsa.Typechecker.FlattenRow
 import Data.Coerce
 import Data.Functor
 import Data.Map.Strict (Map)
@@ -15,11 +13,13 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Store.ExtractTypes
+import Language.Mimsa.Typechecker.FlattenRow
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 import Test.QuickCheck
 
 -- TODO: we'll need a namespace in the MTConstructor to make sure we generate

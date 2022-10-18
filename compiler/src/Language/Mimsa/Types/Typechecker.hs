@@ -1,6 +1,5 @@
 module Language.Mimsa.Types.Typechecker
-  (
-  module Language.Mimsa.Types.Typechecker.MonoType,
+  ( module Language.Mimsa.Types.Typechecker.MonoType,
     module Language.Mimsa.Types.Typechecker.Scheme,
     module Language.Mimsa.Types.Typechecker.Environment,
     module Language.Mimsa.Types.Typechecker.Constraint,

@@ -19,7 +19,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
-
 import Language.Mimsa.Types.Typechecker.Unique
 
 type ElabM =

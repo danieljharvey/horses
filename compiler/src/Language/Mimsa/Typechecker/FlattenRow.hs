@@ -2,9 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Language.Mimsa.Typechecker.FlattenRow
-  (
-
-    flattenRow,
+  ( flattenRow,
   )
 where
 

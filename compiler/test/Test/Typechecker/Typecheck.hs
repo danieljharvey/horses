@@ -104,14 +104,17 @@ spec = do
         let expr = unsafeParseExpr' "{ fun: (\\a -> let d = 1 in a) }"
         startInference expr $
           Right
-            ( MTRecord mempty (
-                M.singleton
-                  "fun"
-                  ( MTFunction
-                      mempty
-                      (MTVar mempty (TVUnificationVar 1))
-                      (MTVar mempty (TVUnificationVar 1))
-                  )) Nothing
+            ( MTRecord
+                mempty
+                ( M.singleton
+                    "fun"
+                    ( MTFunction
+                        mempty
+                        (MTVar mempty (TVUnificationVar 1))
+                        (MTVar mempty (TVUnificationVar 1))
+                    )
+                )
+                Nothing
             )
 
       describe "annotations" $ do

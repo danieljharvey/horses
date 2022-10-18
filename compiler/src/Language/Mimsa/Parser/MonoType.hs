@@ -131,15 +131,17 @@ varParser = do
   MTVar mempty <$> (TVName <$> tyVarParser)
 
 recordParser :: Parser MonoType
-recordParser = withLocation (\loc (args, rest) -> MTRecord loc args rest)
-  (do
-      args <- recordArgs
-      rest <- optional $ do
-        myString "|"
-        monoTypeParser
-      myString "}"
-      pure (args, rest)
-  )
+recordParser =
+  withLocation
+    (\loc (args, rest) -> MTRecord loc args rest)
+    ( do
+        args <- recordArgs
+        rest <- optional $ do
+          myString "|"
+          monoTypeParser
+        myString "}"
+        pure (args, rest)
+    )
 
 recordArgs :: Parser (Map Name MonoType)
 recordArgs = do

@@ -109,18 +109,21 @@ spec =
       it "Record" $
         let mt :: MonoType
             mt =
-              MTRecord mempty (
-                M.fromList
-                  [ ("dog", MTPrim mempty MTBool),
-                    ("horse", MTPrim mempty MTString),
-                    ( "maybeDog",
-                      dataTypeWithVars
-                        mempty
-                        Nothing
-                        "Maybe"
-                        [MTPrim mempty MTString]
-                    )
-                  ]) Nothing
+              MTRecord
+                mempty
+                ( M.fromList
+                    [ ("dog", MTPrim mempty MTBool),
+                      ("horse", MTPrim mempty MTString),
+                      ( "maybeDog",
+                        dataTypeWithVars
+                          mempty
+                          Nothing
+                          "Maybe"
+                          [MTPrim mempty MTString]
+                      )
+                    ]
+                )
+                Nothing
          in T.putStrLn
               ( prettyPrint mt
               )
