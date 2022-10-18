@@ -7,13 +7,13 @@ packages:
 - completed:
     hackage: diagnose-1.8.2@sha256:d70959f2147f5a1d01c1cc14a7ad8f117d0a3cd544d626bb06a93e40b2ad5cbe,5661
     pantry-tree:
-      size: 1200
       sha256: 3153c3dd608ed606523dc6d50e56ea5621f0ba59ad54b264840741e818b32005
+      size: 1200
   original:
     hackage: diagnose-1.8.2@sha256:d70959f2147f5a1d01c1cc14a7ad8f117d0a3cd544d626bb06a93e40b2ad5cbe,5661
 snapshots:
 - completed:
-    size: 636747
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/9/23.yaml
-    sha256: a2f307c3e8087b22aa65b23870ebe3e612573a7a1f52f86e6c46c42419496c95
-  original: nightly-2022-09-23
+    sha256: 895204e9116cba1f32047525ec5bad7423216587706e5df044c4a7c191a5d8cb
+    size: 644482
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/10/18.yaml
+  original: nightly-2022-10-18
