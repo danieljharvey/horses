@@ -140,6 +140,7 @@ getModuleType modName mod' =
             . getTypeFromAnn
             <$> filterNameDefs defs
         )
+        Nothing
 
 addNamespaceToType :: ModuleName -> Set TypeName -> MonoType -> MonoType
 addNamespaceToType modName swapTypes =
@@ -238,7 +239,7 @@ getModuleTypes ::
 getModuleTypes inputModule typecheckedModules =
   let getTypes (modName, hash) = case M.lookup hash typecheckedModules of
         Just mod' -> case getModuleType modName mod' of
-          MTRecord _ parts -> (hash, parts)
+          MTRecord _ parts _ -> (hash, parts)
           _ -> error "expected getModuleType to return a MTRecord but it did not"
         Nothing -> error "Could not find module for hash in getModuleTypes"
    in M.fromList (getTypes <$> M.toList (moNamedImports inputModule))

@@ -39,7 +39,6 @@ simpleTypeParser =
         try pairParser
           <|> try varParser
           <|> try primitiveParser
-          <|> try recordRowParser
           <|> try recordParser
           <|> try arrayParser
           <|> try dataTypeParser
@@ -52,7 +51,6 @@ typeDeclParser' =
         try pairParser
           <|> try varParser
           <|> try primitiveParser
-          <|> try recordRowParser
           <|> try recordParser
           <|> try arrayParser
           <|> try functionParser
@@ -133,10 +131,17 @@ varParser = do
   MTVar mempty <$> (TVName <$> tyVarParser)
 
 recordParser :: Parser MonoType
-recordParser = withLocation MTRecord $ do
-  args <- recordArgs
-  myString "}"
-  pure args
+recordParser =
+  withLocation
+    (\loc (args, rest) -> MTRecord loc args rest)
+    ( do
+        args <- recordArgs
+        rest <- optional $ do
+          myString "|"
+          monoTypeParser
+        myString "}"
+        pure (args, rest)
+    )
 
 recordArgs :: Parser (Map Name MonoType)
 recordArgs = do
@@ -150,18 +155,6 @@ recordItemParser = do
   myString ":"
   expr <- monoTypeParser
   pure (name, expr)
-
-recordRowParser :: Parser MonoType
-recordRowParser =
-  withLocation
-    (\loc (args, rest) -> MTRecordRow loc args rest)
-    ( do
-        args <- recordArgs
-        myString "|"
-        rest <- monoTypeParser
-        myString "}"
-        pure (args, rest)
-    )
 
 dataTypeParser :: Parser MonoType
 dataTypeParser =

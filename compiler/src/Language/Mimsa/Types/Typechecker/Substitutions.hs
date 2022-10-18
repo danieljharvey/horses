@@ -14,6 +14,7 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
+import Language.Mimsa.Typechecker.FlattenRow
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.MonoType
@@ -43,12 +44,6 @@ instance Printer Substitutions where
 class Substitutable a where
   applySubst :: Substitutions -> a -> a
 
--- these are tricky to deal with, so flatten them on the way in
-flattenRow :: Type ann -> Type ann
-flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
-  flattenRow (MTRecordRow ann (as <> bs) rest)
-flattenRow other = other
-
 substLookup :: ann -> Substitutions -> TypeIdentifier -> Maybe (Type ann)
 substLookup ann subst i =
   let replaceAnn mt = mt $> ann
@@ -67,10 +62,8 @@ instance Substitutable (Type ann) where
         ann
         (applySubst subst a)
         (applySubst subst b)
-    MTRecord ann a ->
-      MTRecord ann (applySubst subst <$> a)
-    MTRecordRow ann a rest ->
-      MTRecordRow ann (applySubst subst <$> a) (applySubst subst rest)
+    MTRecord ann a rest ->
+      MTRecord ann (applySubst subst <$> a) (applySubst subst <$> rest)
     MTArray ann a ->
       MTArray ann (applySubst subst a)
     MTTypeApp ann func arg ->

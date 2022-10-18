@@ -69,12 +69,8 @@ freshenNamedTypeVars known =
       MTPair ann <$> freshen a <*> freshen b
     freshen (MTArray ann as) =
       MTArray ann <$> freshen as
-    freshen (MTRecord ann as) =
-      MTRecord ann <$> traverse freshen as
-    freshen (MTRecordRow ann as a) =
-      MTRecordRow ann
-        <$> traverse freshen as
-        <*> freshen a
+    freshen (MTRecord ann as rest) =
+      MTRecord ann <$> traverse freshen as <*> traverse freshen rest
     freshen mtP@MTPrim {} = pure mtP
     freshen (MTFunction ann a b) =
       MTFunction ann <$> freshen a <*> freshen b

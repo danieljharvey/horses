@@ -8,6 +8,7 @@ where
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 import Test.Hspec
 import Test.Utils.Helpers
 

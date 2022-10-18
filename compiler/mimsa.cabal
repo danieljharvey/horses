@@ -128,6 +128,7 @@ library
       Language.Mimsa.Typechecker.Elaborate
       Language.Mimsa.Typechecker.Environment
       Language.Mimsa.Typechecker.Exhaustiveness
+      Language.Mimsa.Typechecker.FlattenRow
       Language.Mimsa.Typechecker.Generalise
       Language.Mimsa.Typechecker.NormaliseTypes
       Language.Mimsa.Typechecker.NumberVars

@@ -31,6 +31,7 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 import Language.Mimsa.Types.Typechecker.Unique
 
 type ElabM =
@@ -412,10 +413,10 @@ inferPattern env (PRecord ann items) = do
   tyRest <- getUnknown ann
   pure
     ( PRecord
-        ( MTRecordRow
+        ( MTRecord
             ann
             (getPatternTypeFromAnn <$> inferItems)
-            tyRest
+            (Just tyRest)
         )
         inferItems,
       newEnv
@@ -624,12 +625,12 @@ inferRecordAccess ::
 inferRecordAccess env ann a name = do
   inferItems <- infer env a
   let inferRow = \case
-        (MTRecord _ bits) ->
+        (MTRecord _ bits Nothing) ->
           case M.lookup name bits of
             Just mt -> pure mt
             _ ->
               throwError $ MissingRecordTypeMember ann name bits
-        (MTRecordRow _ as rest) ->
+        (MTRecord _ as (Just rest)) ->
           case M.lookup name as of
             Just mt -> pure mt
             _ -> inferRow rest
@@ -639,10 +640,10 @@ inferRecordAccess env ann a name = do
           tell
             [ ShouldEqual
                 (getTypeFromAnn inferItems)
-                ( MTRecordRow
+                ( MTRecord
                     ann'
                     (M.singleton name tyItem)
-                    tyRest
+                    (Just tyRest)
                 )
             ]
           pure tyItem
@@ -766,7 +767,7 @@ infer env inferExpr =
     (MyRecord ann map') -> do
       inferItems <- traverse (infer env) map'
       let tyItems = getTypeFromAnn <$> inferItems
-      pure (MyRecord (MTRecord ann tyItems) inferItems)
+      pure (MyRecord (MTRecord ann tyItems Nothing) inferItems)
     (MyInfix ann op a b) -> inferOperator env ann op a b
     (MyTypedHole ann (name, unique)) -> do
       tyHole <- addTypedHole env ann name

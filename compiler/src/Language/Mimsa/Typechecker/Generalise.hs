@@ -18,8 +18,8 @@ freeTypeVars ty = case ty of
   MTFunction _ t1 t2 ->
     S.union (freeTypeVars t1) (freeTypeVars t2)
   MTPair _ t1 t2 -> S.union (freeTypeVars t1) (freeTypeVars t2)
-  MTRecord _ as -> foldr S.union mempty (freeTypeVars <$> as)
-  MTRecordRow _ as rest ->
+  MTRecord _ as Nothing -> foldr S.union mempty (freeTypeVars <$> as)
+  MTRecord _ as (Just rest) ->
     foldr S.union mempty (freeTypeVars <$> as)
       <> freeTypeVars rest
   MTArray _ a -> freeTypeVars a

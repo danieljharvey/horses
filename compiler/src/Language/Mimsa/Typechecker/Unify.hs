@@ -4,7 +4,6 @@
 module Language.Mimsa.Typechecker.Unify
   ( unify,
     freeTypeVars,
-    flattenRow,
   )
 where
 
@@ -14,12 +13,14 @@ import Data.Functor (($>))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import Language.Mimsa.Typechecker.FlattenRow
 import Language.Mimsa.Typechecker.Generalise
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 
 -- | Creates a fresh unification variable and binds it to the given type
 varBind ::
@@ -50,12 +51,6 @@ varBind ann var mt
   | otherwise = do
       let mt' = mt $> ann
       pure $ Substitutions (M.singleton var mt')
-
--- these are tricky to deal with, so flatten them on the way in
-flattenRow :: MonoType -> MonoType
-flattenRow (MTRecordRow ann as (MTRecordRow _ann' bs rest)) =
-  flattenRow (MTRecordRow ann (as <> bs) rest)
-flattenRow other = other
 
 checkMatching ::
   ( MonadState TypecheckState m,
@@ -103,8 +98,8 @@ unifyRecordRows (ann, as, restA) (ann', bs, restB) = do
   let filterMap keys =
         M.filterWithKey (\k _ -> S.member k keys)
   newUnknown <- getUnknown ann
-  s2 <- unify (MTRecordRow ann (filterMap leftKeys as) newUnknown) restB
-  s3 <- unify (MTRecordRow ann' (filterMap rightKeys bs) newUnknown) restA
+  s2 <- unify (MTRecord ann (filterMap leftKeys as) (Just newUnknown)) restB
+  s3 <- unify (MTRecord ann' (filterMap rightKeys bs) (Just newUnknown)) restA
   pure (mconcat s1 <> s2 <> s3)
 
 unifyRecordWithRow ::
@@ -123,7 +118,7 @@ unifyRecordWithRow (ann, as) (ann', bs, rest) = do
   s2 <-
     if M.null extraRecordMap
       then pure mempty
-      else unify (MTRecordRow ann' extraRecordMap newUnknown) rest
+      else unify (MTRecord ann' extraRecordMap (Just newUnknown)) rest
   pure (mconcat s1 <> s2)
 
 unifyPairs ::
@@ -157,13 +152,13 @@ unify tyA tyB =
       unifyPairs (l, r) (l', r')
     (MTPair _ a b, MTPair _ a' b') ->
       unifyPairs (a, b) (a', b')
-    (MTRecord ann as, MTRecord ann' bs) ->
+    (MTRecord ann as Nothing, MTRecord ann' bs Nothing) ->
       unifyRecords (ann, as) (ann', bs)
-    (MTRecordRow ann as restA, MTRecordRow ann' bs restB) ->
+    (MTRecord ann as (Just restA), MTRecord ann' bs (Just restB)) ->
       unifyRecordRows (ann, as, restA) (ann', bs, restB)
-    (MTRecord ann as, MTRecordRow ann' bs rest) ->
+    (MTRecord ann as Nothing, MTRecord ann' bs (Just rest)) ->
       unifyRecordWithRow (ann, as) (ann', bs, rest)
-    (MTRecordRow ann as rest, MTRecord ann' bs) ->
+    (MTRecord ann as (Just rest), MTRecord ann' bs Nothing) ->
       unifyRecordWithRow (ann', bs) (ann, as, rest)
     (MTTypeApp _ a b, MTTypeApp _ a' b') ->
       unifyPairs (a, b) (a', b')

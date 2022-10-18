@@ -13,12 +13,13 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Store.ExtractTypes
-import Language.Mimsa.Typechecker.Unify
+import Language.Mimsa.Typechecker.FlattenRow
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 import Test.QuickCheck
 
 -- TODO: we'll need a namespace in the MTConstructor to make sure we generate
@@ -43,11 +44,10 @@ fromMonoType gs mt =
         else MyArray mempty <$> listOf (fromMonoType gs arrMt)
     (MTPair _ a b) ->
       MyPair mempty <$> fromMonoType gs a <*> fromMonoType gs b
-    (MTRecord _ as) ->
-      MyRecord mempty <$> traverse (fromMonoType gs) as
-    (MTRecordRow _ as _) ->
+    (MTRecord _ as _) ->
       -- as we've already run flattenRow on this to remove nested rows, assume the
       -- part on the end is just an unknown and ignore it
+
       MyRecord mempty <$> traverse (fromMonoType gs) as
     (MTFunction _ _from to) ->
       MyLambda mempty (Identifier mempty "a")

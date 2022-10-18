@@ -67,12 +67,8 @@ data Type ann
       }
   | MTRecord
       { typAnn :: ann,
-        typRecordItems :: Map Name (Type ann) -- { foo: a, bar: b }
-      }
-  | MTRecordRow
-      { typAnn :: ann,
-        typRecordItems :: Map Name (Type ann),
-        typRest :: Type ann -- { foo:a, bar:b | rest }
+        typRecordItems :: Map Name (Type ann), -- { foo: a, bar: b | rest }
+        typRest :: Maybe (Type ann)
       }
   | MTArray
       { typAnn :: ann,
@@ -96,8 +92,7 @@ getAnnotationForType (MTPrim ann _) = ann
 getAnnotationForType (MTVar ann _) = ann
 getAnnotationForType (MTFunction ann _ _) = ann
 getAnnotationForType (MTPair ann _ _) = ann
-getAnnotationForType (MTRecord ann _) = ann
-getAnnotationForType (MTRecordRow ann _ _) = ann
+getAnnotationForType (MTRecord ann _ _) = ann
 getAnnotationForType (MTConstructor ann _ _) = ann
 getAnnotationForType (MTArray ann _) = ann
 getAnnotationForType (MTTypeApp ann _ _) = ann
@@ -111,7 +106,7 @@ renderMonoType (MTFunction _ a b) =
   withParens a <+> "->" <+> renderMonoType b
 renderMonoType (MTPair _ a b) =
   "(" <> renderMonoType a <> "," <+> renderMonoType b <> ")"
-renderMonoType (MTRecord _ as) =
+renderMonoType (MTRecord _ as Nothing) =
   group $
     "{"
       <> nest
@@ -129,7 +124,7 @@ renderMonoType (MTRecord _ as) =
       <> "}"
   where
     renderItem (Name k, v) = pretty k <> ":" <+> withParens v
-renderMonoType (MTRecordRow _ as rest) =
+renderMonoType (MTRecord _ as (Just rest)) =
   group $
     "{"
       <> nest

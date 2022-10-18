@@ -10,6 +10,7 @@ import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Types.Typechecker.Substitutions
 
 type SolveM = ExceptT TypeError (State TypecheckState)
 
