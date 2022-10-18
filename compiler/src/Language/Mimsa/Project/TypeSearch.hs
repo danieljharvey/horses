@@ -49,7 +49,7 @@ isSimple =
     isSimple' :: MonoType -> All
     isSimple' (MTVar _ _) = All False
     isSimple' (MTPrim _ _) = All True
-    isSimple' (MTConstructor {}) = All True
+    isSimple' MTConstructor {} = All True
     isSimple' other = withMonoid isSimple' other
 
 unify' :: MonoType -> MonoType -> Either TypeError Substitutions
