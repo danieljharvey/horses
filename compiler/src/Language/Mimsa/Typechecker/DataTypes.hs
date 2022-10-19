@@ -21,6 +21,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.TcMonad
@@ -89,22 +90,7 @@ inferDataConstructor env ann modName tyCon = do
 getVariablesForField :: Type ann -> Set Name
 getVariablesForField (MTVar _ (TVScopedVar _ name)) = S.singleton name
 getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
-getVariablesForField (MTFunction _ a b) =
-  getVariablesForField a <> getVariablesForField b
-getVariablesForField (MTPair _ a b) = getVariablesForField a <> getVariablesForField b
-getVariablesForField (MTRecord _ items Nothing) =
-  mconcat $
-    getVariablesForField <$> M.elems items
-getVariablesForField (MTRecord _ items (Just rest)) =
-  mconcat
-    ( getVariablesForField <$> M.elems items
-    )
-    <> getVariablesForField rest
-getVariablesForField (MTArray _ as) = getVariablesForField as
-getVariablesForField (MTVar _ (TVUnificationVar _)) = S.empty
-getVariablesForField MTPrim {} = S.empty
-getVariablesForField MTConstructor {} = S.empty
-getVariablesForField (MTTypeApp _ a b) = getVariablesForField a <> getVariablesForField b
+getVariablesForField other = withMonoid getVariablesForField other
 
 -- when adding a new datatype, check none of the constructors already exist
 validateConstructors ::
@@ -183,15 +169,6 @@ inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = 
                   typeName
                   (S.singleton (coerce var))
                   (S.fromList (fst <$> tyVars))
-        MTFunction _ a b -> do
-          tyA <- findType a
-          tyB <- findType b
-          pure (MTFunction mempty tyA tyB)
-        MTPair _ a b -> do
-          tyA <- findType a
-          tyB <- findType b
-          pure (MTPair mempty tyA tyB)
-        tyPrim@MTPrim {} -> pure tyPrim
         MTConstructor _ localModName tn ->
           -- if this is the datatype we are creating types for
           -- then make sure it's constructors match the namespace
@@ -201,20 +178,9 @@ inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = 
                   then modName
                   else localModName
            in pure (MTConstructor mempty newModName tn)
-        MTRecord _ items Nothing -> do
-          tyItems <- traverse findType items
-          pure (MTRecord mempty tyItems Nothing)
-        MTRecord _ items (Just rest) -> do
-          tyItems <- traverse findType items
-          MTRecord mempty tyItems
-            <$> (Just <$> findType rest)
-        MTArray _ item -> do
-          tyItems <- findType item
-          pure (MTArray mempty tyItems)
-        MTTypeApp _ func arg ->
-          MTTypeApp mempty <$> findType func <*> findType arg
         MTVar _ (TVUnificationVar _) ->
           throwError UnknownTypeError -- should not happen but yolo
+        other -> bindMonoType findType other
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
         let constructor = TypeConstructor modName typeName (snd <$> tyVars) tyCons

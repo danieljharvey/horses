@@ -10,6 +10,7 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes
+import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
@@ -60,17 +61,4 @@ freshenNamedTypeVars known =
         Nothing -> pure mtV -- leave it
         Just i -> do
           pure (MTVar ann (TVScopedVar i tv))
-    freshen mtV@MTVar {} = pure mtV
-    freshen mtV@MTConstructor {} =
-      pure mtV
-    freshen (MTTypeApp ann a b) =
-      MTTypeApp ann <$> freshen a <*> freshen b
-    freshen (MTPair ann a b) =
-      MTPair ann <$> freshen a <*> freshen b
-    freshen (MTArray ann as) =
-      MTArray ann <$> freshen as
-    freshen (MTRecord ann as rest) =
-      MTRecord ann <$> traverse freshen as <*> traverse freshen rest
-    freshen mtP@MTPrim {} = pure mtP
-    freshen (MTFunction ann a b) =
-      MTFunction ann <$> freshen a <*> freshen b
+    freshen other = bindMonoType freshen other

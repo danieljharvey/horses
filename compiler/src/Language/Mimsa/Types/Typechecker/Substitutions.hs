@@ -14,6 +14,7 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Language.Mimsa.Printer
+import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.FlattenRow
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
@@ -55,21 +56,7 @@ instance Substitutable (Type ann) where
       fromMaybe
         (MTVar ann var)
         (substLookup ann subst var)
-    MTFunction ann arg res ->
-      MTFunction ann (applySubst subst arg) (applySubst subst res)
-    MTPair ann a b ->
-      MTPair
-        ann
-        (applySubst subst a)
-        (applySubst subst b)
-    MTRecord ann a rest ->
-      MTRecord ann (applySubst subst <$> a) (applySubst subst <$> rest)
-    MTArray ann a ->
-      MTArray ann (applySubst subst a)
-    MTTypeApp ann func arg ->
-      MTTypeApp ann (applySubst subst func) (applySubst subst arg)
-    MTConstructor ann modName cn -> MTConstructor ann modName cn
-    MTPrim ann a -> MTPrim ann a
+    other -> mapMonoType (applySubst subst) other
 
 instance (Substitutable a) => Substitutable (Map k a) where
   applySubst subst as = applySubst subst <$> as

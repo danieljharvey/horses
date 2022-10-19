@@ -3,6 +3,7 @@ module Language.Mimsa.Typechecker.NormaliseTypes (normaliseType) where
 import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Language.Mimsa.TypeUtils
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
@@ -27,25 +28,7 @@ findVar i = do
       pure next
 
 normaliseType' :: (Monoid ann) => Type ann -> State NormaliseState (Type ann)
-normaliseType' mt = case mt of
-  MTVar ann tyIdent -> do
-    index <- findVar tyIdent
-    pure $ MTVar ann (TVUnificationVar index)
-  MTPrim ann a -> pure (MTPrim ann a)
-  MTFunction ann arg fun ->
-    MTFunction ann
-      <$> normaliseType' arg
-      <*> normaliseType' fun
-  MTPair ann a b ->
-    MTPair ann
-      <$> normaliseType' a
-      <*> normaliseType' b
-  MTRecord ann as rest ->
-    MTRecord ann
-      <$> traverse normaliseType' as
-      <*> traverse normaliseType' rest
-  MTArray ann a -> MTArray ann <$> normaliseType' a
-  MTConstructor ann modName name ->
-    pure (MTConstructor ann modName name)
-  MTTypeApp ann func arg ->
-    MTTypeApp ann <$> normaliseType' func <*> normaliseType' arg
+normaliseType' (MTVar ann tyIdent) = do
+  index <- findVar tyIdent
+  pure $ MTVar ann (TVUnificationVar index)
+normaliseType' other = bindMonoType normaliseType' other
