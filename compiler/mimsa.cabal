@@ -18,6 +18,20 @@ build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
+    static/backend/es-modules-js/stdlib.mjs
+    static/backend/typescript/stdlib.ts
+    static/modules/Maybe.mimsa
+    static/modules/State.mimsa
+    static/modules/Prelude.mimsa
+    static/modules/Parser.mimsa
+    static/modules/Array.mimsa
+    static/modules/NonEmptyArray.mimsa
+    static/modules/String.mimsa
+    static/modules/Monoid.mimsa
+    static/modules/Reader.mimsa
+    static/modules/Either.mimsa
+    static/modules/These.mimsa
+    static/modules/Tree.mimsa
 
 source-repository head
   type: git

@@ -26,7 +26,7 @@ where
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
-import Error.Diagnose
+import qualified Error.Diagnose as Diag
 import Error.Diagnose.Compat.Megaparsec
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.DisplayError
@@ -69,21 +69,21 @@ instance (Show ann, Printer ann) => Printer (Error ann) where
   prettyPrint (ModuleErr a) = prettyPrint a
   prettyPrint (ParseError _input errorBundle) = T.pack (errorBundlePretty errorBundle)
 
-errorToDiagnostic :: Error Annotation -> Diagnostic Text
+errorToDiagnostic :: Error Annotation -> Diag.Diagnostic Text
 errorToDiagnostic (ParseError input bundle) =
   let filename = "<repl>"
       diag = errorDiagnosticFromBundle Nothing "Parse error on input" Nothing bundle
    in --   Creates a new diagnostic with no default hints from the bundle returned by megaparsec
-      addFile diag filename (T.unpack input)
+      Diag.addFile diag filename (T.unpack input)
 errorToDiagnostic (TypeErr input typeErr) =
   typeErrorDiagnostic input typeErr
 errorToDiagnostic (ModuleErr modErr) =
   moduleErrorDiagnostic modErr
 errorToDiagnostic e =
   let report =
-        err
+        Diag.err
           Nothing
           (prettyPrint e)
           []
           []
-   in addReport def report
+   in Diag.addReport Diag.def report

@@ -13,7 +13,7 @@ where
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Foldable (traverse_)
-import Error.Diagnose
+import Error.Diagnose hiding (Annotation)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
@@ -68,4 +68,4 @@ toReplM project action = case Actions.run project action of
 outputErrorAsDiagnostic :: Error Annotation -> ReplM e ()
 outputErrorAsDiagnostic err' =
   let diag = errorToDiagnostic err'
-   in printDiagnostic stderr True True 4 diag
+   in printDiagnostic stderr True True 4 defaultStyle diag

@@ -23,7 +23,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Error.Diagnose
+import qualified Error.Diagnose as Diag
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.AST
@@ -264,23 +264,23 @@ positionFromAnnotation ::
   String ->
   Text ->
   Annotation ->
-  Maybe Position
+  Maybe Diag.Position
 positionFromAnnotation path input ann =
   let toPos ss =
-        Position
+        Diag.Position
           (ssRowStart ss, ssColStart ss)
           (ssRowEnd ss, ssColEnd ss)
           path
    in toPos <$> sourceSpan input ann
 
-typeErrorDiagnostic :: Text -> TypeError -> Diagnostic Text
+typeErrorDiagnostic :: Text -> TypeError -> Diag.Diagnostic Text
 typeErrorDiagnostic input e =
   let filename = "<repl>"
-      diag = addFile def filename (T.unpack input)
+      diag = Diag.addFile Diag.def filename (T.unpack input)
    in case e of
         (UnificationError a b) ->
           let report =
-                err
+                Diag.err
                   Nothing
                   ( "Unification error! Expected matching types but found "
                       <> prettyPrint a
@@ -295,21 +295,21 @@ typeErrorDiagnostic input e =
                             input
                             (getAnnotationForType a)
                           <*> pure
-                            ( This ("This has type " <> prettyPrint a)
+                            ( Diag.This ("This has type " <> prettyPrint a)
                             ),
                         (,)
                           <$> positionFromAnnotation
                             filename
                             input
                             (getAnnotationForType b)
-                          <*> pure (Where ("This has type " <> prettyPrint b))
+                          <*> pure (Diag.Where ("This has type " <> prettyPrint b))
                       ]
                   )
                   ["These two values should be of the same type"]
-           in addReport diag report
+           in Diag.addReport diag report
         (IfPredicateIsNotBoolean ann mt) ->
           let report =
-                err
+                Diag.err
                   Nothing
                   ("Predicate for an if expression should be a Boolean. This has type " <> prettyPrint mt)
                   ( catMaybes
@@ -319,21 +319,21 @@ typeErrorDiagnostic input e =
                             input
                             (getAnnotationForType mt)
                           <*> pure
-                            ( This ("This has type " <> prettyPrint mt <> " but should have type Boolean")
+                            ( Diag.This ("This has type " <> prettyPrint mt <> " but should have type Boolean")
                             ),
                         (,)
                           <$> positionFromAnnotation
                             filename
                             input
                             ann
-                          <*> pure (Where "error in this expression")
+                          <*> pure (Diag.Where "error in this expression")
                       ]
                   )
                   ["Change the predicate to be a Boolean type (True or False)"]
-           in addReport diag report
+           in Diag.addReport diag report
         (MissingRecordTypeMember ann missing _types) ->
           let report =
-                err
+                Diag.err
                   Nothing
                   (prettyPrint e)
                   ( catMaybes
@@ -343,7 +343,7 @@ typeErrorDiagnostic input e =
                             input
                             ann
                           <*> pure
-                            ( Where
+                            ( Diag.Where
                                 ( "Should contain a member called "
                                     <> prettyPrint missing
                                 )
@@ -351,10 +351,10 @@ typeErrorDiagnostic input e =
                       ]
                   )
                   []
-           in addReport diag report
+           in Diag.addReport diag report
         (DuplicateTypeDeclaration ann _constructor) ->
           let report =
-                err
+                Diag.err
                   Nothing
                   (prettyPrint e)
                   ( catMaybes
@@ -364,14 +364,14 @@ typeErrorDiagnostic input e =
                             input
                             ann
                           <*> pure
-                            (Where "Is a duplicate")
+                            (Diag.Where "Is a duplicate")
                       ]
                   )
                   []
-           in addReport diag report
+           in Diag.addReport diag report
         (FunctionArgumentMismatch fnAnn expected actual) ->
           let report =
-                err
+                Diag.err
                   Nothing
                   ( "Function called with incorrect argument type. Expected "
                       <> prettyPrint expected
@@ -386,21 +386,21 @@ typeErrorDiagnostic input e =
                             input
                             (getAnnotationForType actual)
                           <*> pure
-                            ( This ("Passed a " <> prettyPrint actual)
+                            ( Diag.This ("Passed a " <> prettyPrint actual)
                             ),
                         (,)
                           <$> positionFromAnnotation
                             filename
                             input
                             fnAnn
-                          <*> pure (Where $ "Expects a " <> prettyPrint expected)
+                          <*> pure (Diag.Where $ "Expects a " <> prettyPrint expected)
                       ]
                   )
                   ["Pass a value of type " <> prettyPrint expected <> " to the function"]
-           in addReport diag report
+           in Diag.addReport diag report
         (ApplicationToNonFunction _ mt) ->
           let report =
-                err
+                Diag.err
                   Nothing
                   ("Cannot apply value to non-function. Expected a function, got " <> prettyPrint mt)
                   ( catMaybes
@@ -410,21 +410,21 @@ typeErrorDiagnostic input e =
                             input
                             (getAnnotationForType mt)
                           <*> pure
-                            ( This ("This should be a function, but instead has type " <> prettyPrint mt)
+                            ( Diag.This ("This should be a function, but instead has type " <> prettyPrint mt)
                             )
                       ]
                   )
                   []
-           in addReport diag report
+           in Diag.addReport diag report
         other ->
           let positions =
                 mapMaybe
                   (positionFromAnnotation filename input)
                   (getAllAnnotations other)
               report =
-                err
+                Diag.err
                   Nothing
                   (prettyPrint other)
-                  ((,Where "") <$> positions)
+                  ((,Diag.Where "") <$> positions)
                   []
-           in addReport diag report
+           in Diag.addReport diag report

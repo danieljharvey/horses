@@ -22,12 +22,12 @@ import Language.Mimsa.Types.Store
 -- these are saved in a file that is included in compilation
 typescriptStandardLibrary :: Text
 typescriptStandardLibrary =
-  T.decodeUtf8 $(embedFile "static/backend/typescript/stdlib.ts")
+  T.decodeUtf8 $(makeRelativeToProject "static/backend/typescript/stdlib.ts" >>= embedFile)
 
 -- these are saved in a file that is included in compilation
 esModulesJSStandardLibrary :: Text
 esModulesJSStandardLibrary =
-  T.decodeUtf8 $(embedFile "static/backend/es-modules-js/stdlib.mjs")
+  T.decodeUtf8 $(makeRelativeToProject "static/backend/es-modules-js/stdlib.mjs" >>= embedFile)
 
 outputStdlib :: Backend -> Text
 outputStdlib Typescript = typescriptStandardLibrary
