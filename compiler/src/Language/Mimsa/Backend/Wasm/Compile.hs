@@ -15,23 +15,22 @@ import qualified Data.Text as T
 import GHC.Natural
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
-import qualified Language.Wasm.Structure as Wasm
 import Language.Mimsa.Types.Typechecker
+import qualified Language.Wasm.Structure as Wasm
 
 type WasmModule = Wasm.Module
 
 data WasmState var = WasmState
   { wsEnv :: Map var (Natural, Wasm.ValueType),
     wsCounter :: Natural,
-    wsFuncs :: Map Int (WasmFunction var )
+    wsFuncs :: Map Int (WasmFunction var)
   }
 
-data WasmFunction var =
-  WasmFunction {
-    wfRetType :: Type (),
+data WasmFunction var = WasmFunction
+  { wfRetType :: Type (),
     wfArgs :: [Type ()],
     wfBody :: Expr var (Type ())
-               }
+  }
 
 newtype WasmError var
   = CouldNotFindVar var
@@ -57,22 +56,26 @@ lookupEnvItem var = do
     Just a -> pure a
     Nothing -> throwError (CouldNotFindVar var)
 
-newtype WasmM var a = WasmM {getWasmM ::
-  StateT (WasmState var ) (Except (WasmError var)) a}
+newtype WasmM var a = WasmM
+  { getWasmM ::
+      StateT (WasmState var) (Except (WasmError var)) a
+  }
   deriving newtype
     ( Functor,
       Applicative,
       Monad,
-      MonadState (WasmState var ),
+      MonadState (WasmState var),
       MonadError (WasmError var)
     )
 
-runWasmM :: (Ord var) => WasmM var a ->
-    Either (WasmError var) (a, WasmState var)
+runWasmM ::
+  (Ord var) =>
+  WasmM var a ->
+  Either (WasmError var) (a, WasmState var)
 runWasmM (WasmM comp) = runExcept $ runStateT comp emptyState
 
 compileRaw ::
-  forall var .
+  forall var.
   (Ord var, Show var, Printer (Expr var (Type ()))) =>
   Expr var (Type ()) ->
   WasmModule
