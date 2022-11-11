@@ -10,6 +10,7 @@ import qualified Test.Actions.Evaluate as Evaluate
 import qualified Test.Backend.ESModulesJS as ESModulesJS
 import qualified Test.Backend.RunNode as RunNode
 import qualified Test.Backend.Typescript as Typescript
+import qualified Test.Backend.Wasm as Wasm
 import Test.Hspec
 import qualified Test.Modules.Check as ModuleCheck
 import qualified Test.Modules.Repl as ModuleRepl
@@ -88,3 +89,4 @@ main =
     ModuleTest.spec
     ModuleUses.spec
     ParseDataTypes.spec
+    Wasm.spec

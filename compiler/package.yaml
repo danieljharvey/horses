@@ -46,6 +46,7 @@ dependencies:
 - bifunctors 
 - diagnose # nice errors
 - parallel # zoooooooooom
+- wasm
 
 library:
   source-dirs: src
