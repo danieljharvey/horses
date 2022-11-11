@@ -2,7 +2,7 @@
 
 pushd compiler
 make install
-stack exec mimsa-server generate-swagger > swagger.json
+mimsa-server generate-swagger > swagger.json
 popd
 
 pushd ui
