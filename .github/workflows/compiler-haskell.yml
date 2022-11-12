@@ -69,7 +69,7 @@ jobs:
           fail-on: warning
 
       - name: cabal update
-        run: cabal update
+        run: cd compiler && cabal update
 
       - name: Run cabal test
         run: yarn global add typescript@4.4 ts-node@10.4.0 & cd compiler && make test
