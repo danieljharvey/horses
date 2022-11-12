@@ -81,7 +81,7 @@ errorToDiagnostic (ModuleErr modErr) =
   moduleErrorDiagnostic modErr
 errorToDiagnostic e =
   let report =
-        Diag.err
+        Diag.Err
           Nothing
           (prettyPrint e)
           []

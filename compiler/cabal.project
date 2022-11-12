@@ -3,4 +3,4 @@ packages: mimsa.cabal
 package diagnose
   flags: +megaparsec-compat
 
-
+allow-newer: all

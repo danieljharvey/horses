@@ -280,7 +280,7 @@ typeErrorDiagnostic input e =
    in case e of
         (UnificationError a b) ->
           let report =
-                Diag.err
+                Diag.Err
                   Nothing
                   ( "Unification error! Expected matching types but found "
                       <> prettyPrint a
@@ -309,7 +309,7 @@ typeErrorDiagnostic input e =
            in Diag.addReport diag report
         (IfPredicateIsNotBoolean ann mt) ->
           let report =
-                Diag.err
+                Diag.Err
                   Nothing
                   ("Predicate for an if expression should be a Boolean. This has type " <> prettyPrint mt)
                   ( catMaybes
@@ -333,7 +333,7 @@ typeErrorDiagnostic input e =
            in Diag.addReport diag report
         (MissingRecordTypeMember ann missing _types) ->
           let report =
-                Diag.err
+                Diag.Err
                   Nothing
                   (prettyPrint e)
                   ( catMaybes
@@ -354,7 +354,7 @@ typeErrorDiagnostic input e =
            in Diag.addReport diag report
         (DuplicateTypeDeclaration ann _constructor) ->
           let report =
-                Diag.err
+                Diag.Err
                   Nothing
                   (prettyPrint e)
                   ( catMaybes
@@ -371,7 +371,7 @@ typeErrorDiagnostic input e =
            in Diag.addReport diag report
         (FunctionArgumentMismatch fnAnn expected actual) ->
           let report =
-                Diag.err
+                Diag.Err
                   Nothing
                   ( "Function called with incorrect argument type. Expected "
                       <> prettyPrint expected
@@ -396,11 +396,11 @@ typeErrorDiagnostic input e =
                           <*> pure (Diag.Where $ "Expects a " <> prettyPrint expected)
                       ]
                   )
-                  ["Pass a value of type " <> prettyPrint expected <> " to the function"]
+                  [Diag.Note ("Pass a value of type " <> prettyPrint expected <> " to the function")]
            in Diag.addReport diag report
         (ApplicationToNonFunction _ mt) ->
           let report =
-                Diag.err
+                Diag.Err
                   Nothing
                   ("Cannot apply value to non-function. Expected a function, got " <> prettyPrint mt)
                   ( catMaybes
@@ -422,7 +422,7 @@ typeErrorDiagnostic input e =
                   (positionFromAnnotation filename input)
                   (getAllAnnotations other)
               report =
-                Diag.err
+                Diag.Err
                   Nothing
                   (prettyPrint other)
                   ((,Diag.Where "") <$> positions)
