@@ -43,15 +43,15 @@ data HOASExpr var ann
     MyLetPattern
       { expAnn :: ann,
         expPattern :: Pattern var ann,
-        expExpr :: HOASExpr var ann,
+        expExprFn :: HOASExpr var ann -> HOASExpr var ann,
         expBody :: HOASExpr var ann
       }
   | -- | a `f` b
     MyInfix
       { expAnn :: ann,
         expOperator :: Operator,
-        expExpr :: HOASExpr var ann,
-        expBody :: HOASExpr var ann
+        expLeft :: HOASExpr var ann,
+        expRight :: HOASExpr var ann
       }
   | -- | binder, body
     MyLambda
@@ -103,7 +103,11 @@ data HOASExpr var ann
     MyPatternMatch
       { expAnn :: ann,
         expExpr :: HOASExpr var ann,
-        expPatterns :: [(Pattern var ann, HOASExpr var ann)]
+        expPatterns ::
+          [ ( Pattern var ann,
+              HOASExpr var ann -> HOASExpr var ann
+            )
+          ]
       }
   | -- | name
     MyTypedHole {expAnn :: ann, expTypedHoleName :: var}

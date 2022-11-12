@@ -9,12 +9,12 @@ import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 
 interpretIf ::
-  InterpretFn var ann ->
+  InterpretFn ann ->
   ExprData ann ->
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  InterpretExpr ann ->
+  InterpretExpr ann ->
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretIf interpretFn ann predicate true false =
   case predicate of
     (HOAS.MyLiteral _ (MyBool pred')) ->

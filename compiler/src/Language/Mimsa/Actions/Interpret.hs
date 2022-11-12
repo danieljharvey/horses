@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+  {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Language.Mimsa.Actions.Interpret (interpreter) where
@@ -24,7 +25,7 @@ import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
 
 -- cheeky orphaned instance
-instance (Eq ann, Eq var) => Eq (HOAS.HOASExpr var ann) where
+instance (Eq ann, Ord x) => Eq (HOAS.HOASExpr (Name,x) ann) where
   a == b = fromHOAS a == fromHOAS b
 
 -- get all the deps
@@ -66,7 +67,7 @@ squashify = mconcat . M.elems
 -- This means each sub dep is only interpreted once
 interpretAll ::
   Map ExprHash (StoreExpression Annotation) ->
-  Actions.ActionM (Map ExprHash (InterpretExpr Name Annotation))
+  Actions.ActionM (Map ExprHash (InterpretExpr Annotation))
 interpretAll inputStoreExpressions = do
   let action depMap se =
         case storeExpression se of

@@ -15,6 +15,7 @@ import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
+import Language.Mimsa.Types.Identifiers
 
 addEmptyStackFrames ::
   (Monoid ann) =>
@@ -24,27 +25,27 @@ addEmptyStackFrames expr =
   expr $> mempty
 
 interpret ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  Map ExprHash (InterpretExpr var ann) ->
+  (Eq ann, Monoid ann, Show ann) =>
+  Map ExprHash (InterpretExpr ann) ->
   Map InfixOp ExprHash ->
-  InterpretExpr var ann ->
-  Either (InterpreterError var ann) (InterpretExpr var ann)
+  InterpretExpr ann ->
+  Either (InterpreterError Name ann) (InterpretExpr ann)
 interpret deps infixes expr =
   runReaderT (interpretExpr expr) (InterpretReaderEnv deps infixes)
 
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
 interpretExpr ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  (Eq ann, Monoid ann, Show ann) =>
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretExpr =
   interpretExpr'
 
 interpretExpr' ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  (Eq ann, Monoid ann, Show ann) =>
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretExpr' (HOAS.MyLiteral _ val) = pure (HOAS.MyLiteral mempty val)
 interpretExpr' (HOAS.MyAnnotation _ _ expr) = interpretExpr' expr
 interpretExpr' (HOAS.MyVar ann modName var) =

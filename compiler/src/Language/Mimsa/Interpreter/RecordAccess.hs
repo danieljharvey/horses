@@ -13,11 +13,11 @@ import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 
 interpretRecordAccess ::
-  InterpretFn var ann ->
+  InterpretFn ann ->
   ExprData ann ->
-  InterpretExpr var ann ->
+  InterpretExpr ann ->
   Name ->
-  InterpreterM var ann (InterpretExpr var ann)
+  InterpreterM ann (InterpretExpr ann)
 interpretRecordAccess interpretFn _ (MyRecord _ record) name =
   case M.lookup name record of
     Just item -> interpretFn item

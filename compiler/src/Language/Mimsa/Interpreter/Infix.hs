@@ -11,12 +11,12 @@ import Language.Mimsa.Types.Error.InterpreterError
 
 -- | this assumes that
 interpretInfix ::
-  (Eq var, Monoid ann) =>
-  InterpretFn var ann ->
+  (Monoid ann) =>
+  InterpretFn ann ->
   Operator ->
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  InterpretExpr ann ->
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretInfix interpretFn operator a b = do
   plainA <- interpretFn <=< interpretFn $ a
   plainB <- interpretFn <=< interpretFn $ b
@@ -84,10 +84,10 @@ interpretInfix interpretFn operator a b = do
 numericComparison ::
   (Monoid ann) =>
   (Int -> Int -> Bool) ->
-  (InterpretExpr var ann -> InterpreterError var ann) ->
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  (InterpretExpr ann -> InterpreterError Name ann) ->
+  InterpretExpr ann ->
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 numericComparison f withErr plainA plainB = do
   let withBool = pure . MyLiteral mempty . MyBool
   let getNum exp' = case exp' of
@@ -99,9 +99,9 @@ numericComparison f withErr plainA plainB = do
 
 interpretStringConcat ::
   (Monoid ann) =>
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  InterpretExpr ann ->
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretStringConcat plainA plainB = do
   let withStr = pure . MyLiteral mempty . MyString . StringType
       getStr exp' = case exp' of
@@ -113,9 +113,9 @@ interpretStringConcat plainA plainB = do
 
 interpretArrayConcat ::
   (Monoid ann) =>
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  InterpretExpr ann ->
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretArrayConcat plainA plainB = do
   let withArr = pure . MyArray mempty
       getArr exp' = case exp' of

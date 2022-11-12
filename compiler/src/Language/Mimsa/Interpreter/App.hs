@@ -8,12 +8,12 @@ import Language.Mimsa.Types.AST.HOASExpr
 import Language.Mimsa.Types.Interpreter.Stack
 
 interpretApp ::
-  (Show ann, Show var) =>
-  InterpretFn var ann ->
+  (Show ann ) =>
+  InterpretFn ann ->
   ExprData ann ->
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  InterpretExpr ann ->
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretApp interpretFn ann myFn value =
   case myFn of
     (MyLambda (ExprData _ _) _ident body) -> do

@@ -17,23 +17,24 @@ import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
+import Language.Mimsa.Types.Identifiers.Name
 
-type InterpreterM var ann a =
+type InterpreterM ann a =
   ReaderT
-    (InterpretReaderEnv var ann)
-    (Either (InterpreterError var ann))
+    (InterpretReaderEnv ann)
+    (Either (InterpreterError Name ann))
     a
 
-data InterpretReaderEnv var ann = InterpretReaderEnv
-  { ireGlobals :: Map ExprHash (InterpretExpr var ann),
+data InterpretReaderEnv ann = InterpretReaderEnv
+  { ireGlobals :: Map ExprHash (InterpretExpr ann),
     ireInfixes :: Map InfixOp ExprHash
   }
 
-type InterpretExpr var ann = HOAS.HOASExpr (var, Unique) (ExprData ann)
+type InterpretExpr ann = HOAS.HOASExpr (Name, Unique) (ExprData ann)
 
-type InterpretPattern var ann =
-  Pattern (var, Unique) (ExprData ann)
+type InterpretPattern ann =
+  Pattern (Name, Unique) (ExprData ann)
 
-type InterpretFn var ann =
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+type InterpretFn ann =
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
