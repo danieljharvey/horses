@@ -30,7 +30,7 @@ data InterpreterError var ann
   | CannotFindMemberInRecord (Map Name (InterpretExpr var ann)) Name
   | CannotFindMemberInTuple [InterpretExpr var ann] Natural
   | PatternMatchFailure (InterpretExpr var ann)
-  deriving stock (Eq,Ord,Show)
+  deriving stock (Eq, Ord, Show)
 
 instance Semigroup (InterpreterError var ann) where
   a <> _ = a
@@ -38,8 +38,10 @@ instance Semigroup (InterpreterError var ann) where
 instance Monoid (InterpreterError var ann) where
   mempty = UnknownInterpreterError
 
-instance (Show ann, Show var, Printer ann, Printer var) =>
-    Printer (InterpreterError var ann) where
+instance
+  (Show ann, Show var, Printer ann, Printer var) =>
+  Printer (InterpreterError var ann)
+  where
   prettyPrint (CouldNotFindVar items name) =
     "Could not find var " <> prettyPrint name <> " in " <> itemList
     where

@@ -1,18 +1,13 @@
 module Language.Mimsa.Interpreter.Monad
-  (
-
-
-
-
-    findOperator,
+  ( findOperator,
   )
 where
 
-import Language.Mimsa.Interpreter.ToHOAS
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Core
+import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Store.ExprHash
@@ -27,7 +22,7 @@ lookupInGlobals exprHash = do
 -- lookup custom infixOp in global scope
 findOperator :: InfixOp -> InterpreterM var ann (InterpretExpr var ann)
 findOperator infixOp = do
-      allInfixes <- asks ireInfixes
-      case M.lookup infixOp allInfixes of
-        Just infixHash -> lookupInGlobals infixHash
-        _ -> throwError (CouldNotFindInfix infixOp)
+  allInfixes <- asks ireInfixes
+  case M.lookup infixOp allInfixes of
+    Just infixHash -> lookupInGlobals infixHash
+    _ -> throwError (CouldNotFindInfix infixOp)

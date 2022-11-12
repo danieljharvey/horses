@@ -1,8 +1,8 @@
 module Language.Mimsa.Interpreter.If (interpretIf) where
 
-import Language.Mimsa.Interpreter.ToHOAS
 import Control.Monad.Except
 import Language.Mimsa.Core
+import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError

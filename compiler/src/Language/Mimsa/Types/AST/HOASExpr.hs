@@ -107,5 +107,3 @@ data HOASExpr var ann
       }
   | -- | name
     MyTypedHole {expAnn :: ann, expTypedHoleName :: var}
-
-

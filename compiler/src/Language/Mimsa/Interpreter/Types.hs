@@ -25,8 +25,7 @@ type InterpreterM var ann a =
     a
 
 data InterpretReaderEnv var ann = InterpretReaderEnv
-  {
-    ireGlobals :: Map ExprHash (InterpretExpr var ann),
+  { ireGlobals :: Map ExprHash (InterpretExpr var ann),
     ireInfixes :: Map InfixOp ExprHash
   }
 

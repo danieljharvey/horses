@@ -3,7 +3,6 @@
 
 module Language.Mimsa.Actions.Interpret (interpreter) where
 
-import Language.Mimsa.Interpreter.ToHOAS
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)
@@ -16,6 +15,7 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Interpret
+import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Store
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
@@ -83,8 +83,12 @@ interpretAll inputStoreExpressions = do
             -- get exprhashes for any infixOps we need
             let infixHashes = storeInfixes se
             -- interpret se
-            interpreted <- liftEither (first InterpreterErr
-              (interpret flatDeps infixHashes (toHOAS exprWithImports)))
+            interpreted <-
+              liftEither
+                ( first
+                    InterpreterErr
+                    (interpret flatDeps infixHashes (toHOAS exprWithImports))
+                )
 
             -- we need to accumulate all deps
             -- as we go, so pass them up too

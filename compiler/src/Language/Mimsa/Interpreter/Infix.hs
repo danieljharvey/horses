@@ -1,10 +1,10 @@
 module Language.Mimsa.Interpreter.Infix (interpretInfix) where
 
-import Language.Mimsa.Interpreter.ToHOAS
 import Control.Monad.Except
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.SimpleExpr
+import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST.HOASExpr
 import Language.Mimsa.Types.Error.InterpreterError
@@ -82,7 +82,7 @@ interpretInfix interpretFn operator a b = do
 
 -- | lift a numeric comparison into the Expr type
 numericComparison ::
-  ( Monoid ann) =>
+  (Monoid ann) =>
   (Int -> Int -> Bool) ->
   (InterpretExpr var ann -> InterpreterError var ann) ->
   InterpretExpr var ann ->
@@ -106,13 +106,13 @@ interpretStringConcat plainA plainB = do
   let withStr = pure . MyLiteral mempty . MyString . StringType
       getStr exp' = case exp' of
         (MyLiteral _ (MyString (StringType i))) -> Right i
-        _ -> Left $ StringConcatenationFailure (fromHOAS plainA)  (fromHOAS plainB)
+        _ -> Left $ StringConcatenationFailure (fromHOAS plainA) (fromHOAS plainB)
   case (,) <$> getStr plainA <*> getStr plainB of
     Right (a', b') -> withStr (a' <> b')
     Left e -> throwError e
 
 interpretArrayConcat ::
-  ( Monoid ann) =>
+  (Monoid ann) =>
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)

@@ -5,9 +5,9 @@ module Test.Interpreter.ToHOAS
   )
 where
 
+import Language.Mimsa.Interpreter.ToHOAS
 import Test.Hspec
 import Test.Utils.Helpers
-import Language.Mimsa.Interpreter.ToHOAS
 
 spec :: Spec
 spec = do
@@ -25,7 +25,3 @@ spec = do
         let input = unsafeParseExpr "match (1,2) with (a,b) -> a"
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
-
-
-
-

@@ -48,7 +48,7 @@ interpretExpr' ::
 interpretExpr' (HOAS.MyLiteral _ val) = pure (HOAS.MyLiteral mempty val)
 interpretExpr' (HOAS.MyAnnotation _ _ expr) = interpretExpr' expr
 interpretExpr' (HOAS.MyVar ann modName var) =
-  --lookupVar var >>= interpretExpr
+  -- lookupVar var >>= interpretExpr
   pure (HOAS.MyVar ann modName var) -- TODO: is this right?
 interpretExpr' (HOAS.MyLambda exprData ident body) = do
   -- return it

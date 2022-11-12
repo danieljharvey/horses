@@ -4,7 +4,6 @@ module Language.Mimsa.Interpreter.PatternMatch
   )
 where
 
-import Language.Mimsa.Interpreter.ToHOAS
 import Control.Monad.Except
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
@@ -16,6 +15,7 @@ import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
+import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Typechecker.Unique
 
@@ -31,7 +31,7 @@ interpretLetPattern interpretFn pat expr body = do
   -- get new bound variables
   let _bindings = fromMaybe [] (patternMatches pat intExpr)
   -- run body with closure + new arg
-  --extendStackFrame bindings (interpretFn body)
+  -- extendStackFrame bindings (interpretFn body)
   interpretFn body -- TODO: we'll change this into a function soon, allow it to be wrong for now
 
 interpretPatternMatch ::
@@ -130,8 +130,9 @@ patternMatches (PString _ pA pAs) (HOAS.MyLiteral _ (MyString (StringType str)))
     pure (bindingA <> bindingAs)
 patternMatches _ _ = Nothing
 
-consAppToPattern :: InterpretExpr var ann ->
-    Maybe (TyCon, [InterpretExpr var ann])
+consAppToPattern ::
+  InterpretExpr var ann ->
+  Maybe (TyCon, [InterpretExpr var ann])
 consAppToPattern (HOAS.MyApp _ fn val) = do
   (tyCon, more) <- consAppToPattern fn
   pure (tyCon, more <> [val])

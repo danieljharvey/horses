@@ -1,42 +1,48 @@
 module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS) where
 
-import Language.Mimsa.Types.AST.Identifier
+import Data.Bifunctor (second)
 import Language.Mimsa.Types.AST.Expr
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
-import Data.Bifunctor (second)
+import Language.Mimsa.Types.AST.Identifier
 
 toHOAS :: (Eq var) => Expr var ann -> HOAS.HOASExpr var ann
 toHOAS (MyVar ann modName a) = HOAS.MyVar ann modName a
 toHOAS (MyLiteral ann lit) = HOAS.MyLiteral ann lit
 toHOAS (MyAnnotation ann mt body) = HOAS.MyAnnotation ann mt (toHOAS body)
-toHOAS (MyLet ann ident expr body) = 
+toHOAS (MyLet ann ident expr body) =
   toHOAS (MyApp ann (MyLambda ann ident body) expr)
 toHOAS (MyLetPattern ann pat expr body) = HOAS.MyLetPattern ann pat (toHOAS expr) (toHOAS body)
 toHOAS (MyInfix ann op a b) = HOAS.MyInfix ann op (toHOAS a) (toHOAS b)
 toHOAS (MyIf ann a b c) = HOAS.MyIf ann (toHOAS a) (toHOAS b) (toHOAS c)
 toHOAS (MyTuple ann a as) = HOAS.MyTuple ann (toHOAS a) (toHOAS <$> as)
 toHOAS (MyLambda ann (Identifier iAnn ident) body) =
-  HOAS.MyLambda ann (Identifier iAnn ident) (\arg ->
-       replaceVars ident arg (toHOAS body)
-     )
+  HOAS.MyLambda
+    ann
+    (Identifier iAnn ident)
+    ( \arg ->
+        replaceVars ident arg (toHOAS body)
+    )
 toHOAS (MyApp ann fn arg) = HOAS.MyApp ann (toHOAS fn) (toHOAS arg)
 toHOAS (MyRecord ann as) = HOAS.MyRecord ann (toHOAS <$> as)
-toHOAS (MyRecordAccess ann a name ) = HOAS.MyRecordAccess ann (toHOAS a) name
+toHOAS (MyRecordAccess ann a name) = HOAS.MyRecordAccess ann (toHOAS a) name
 toHOAS (MyArray ann as) = HOAS.MyArray ann (toHOAS <$> as)
 toHOAS (MyConstructor ann modName con) = HOAS.MyConstructor ann modName con
 toHOAS (MyPatternMatch ann expr pats) = HOAS.MyPatternMatch ann (toHOAS expr) (second toHOAS <$> pats)
 toHOAS (MyTypedHole ann a) = HOAS.MyTypedHole ann a
 
 --
-replaceVars :: (Eq var) =>
-  var -> HOAS.HOASExpr var ann -> HOAS.HOASExpr var ann -> HOAS.HOASExpr var ann
+replaceVars ::
+  (Eq var) =>
+  var ->
+  HOAS.HOASExpr var ann ->
+  HOAS.HOASExpr var ann ->
+  HOAS.HOASExpr var ann
 replaceVars ident value =
   replaceInner
-    where
-      replaceInner (HOAS.MyVar _ Nothing identifier) | identifier == ident = value
-      replaceInner (HOAS.MyVar ann modName identifier) = HOAS.MyVar ann modName identifier
-      replaceInner other = mapHOASExpr replaceInner other
-
+  where
+    replaceInner (HOAS.MyVar _ Nothing identifier) | identifier == ident = value
+    replaceInner (HOAS.MyVar ann modName identifier) = HOAS.MyVar ann modName identifier
+    replaceInner other = mapHOASExpr replaceInner other
 
 -- | Map a function `f` over the expression. This function takes care of
 -- recursing through the Expression
@@ -62,7 +68,6 @@ mapHOASExpr f (HOAS.MyPatternMatch ann matchExpr patterns) =
   HOAS.MyPatternMatch ann (f matchExpr) (second f <$> patterns)
 mapHOASExpr _ (HOAS.MyTypedHole ann a) = HOAS.MyTypedHole ann a
 
-
 fromHOAS :: HOAS.HOASExpr var ann -> Expr var ann
 fromHOAS (HOAS.MyVar ann modName a) = MyVar ann modName a
 fromHOAS (HOAS.MyLiteral ann lit) = MyLiteral ann lit
@@ -75,11 +80,8 @@ fromHOAS (HOAS.MyLambda ann (Identifier iAnn ident) f) =
   MyLambda ann (Identifier iAnn ident) (fromHOAS $ f (HOAS.MyVar ann Nothing ident))
 fromHOAS (HOAS.MyApp ann fn arg) = MyApp ann (fromHOAS fn) (fromHOAS arg)
 fromHOAS (HOAS.MyRecord ann as) = MyRecord ann (fromHOAS <$> as)
-fromHOAS (HOAS.MyRecordAccess ann a name ) = MyRecordAccess ann (fromHOAS a) name
+fromHOAS (HOAS.MyRecordAccess ann a name) = MyRecordAccess ann (fromHOAS a) name
 fromHOAS (HOAS.MyArray ann as) = MyArray ann (fromHOAS <$> as)
 fromHOAS (HOAS.MyConstructor ann modName con) = MyConstructor ann modName con
 fromHOAS (HOAS.MyPatternMatch ann expr pats) = MyPatternMatch ann (fromHOAS expr) (second fromHOAS <$> pats)
 fromHOAS (HOAS.MyTypedHole ann a) = MyTypedHole ann a
-
-
-
