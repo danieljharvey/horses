@@ -4,6 +4,9 @@ module Language.Mimsa.Interpreter.PatternMatch
   )
 where
 
+import Data.Maybe (fromMaybe)
+import Language.Mimsa.Types.Interpreter.Stack
+import Data.Bifunctor
 import Control.Monad.Except
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
@@ -17,31 +20,32 @@ import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Typechecker.Unique
+import Language.Mimsa.Types.Identifiers
 
 interpretLetPattern ::
+  ExprData ann ->
   InterpretFn ann ->
   InterpretPattern ann ->
-    (InterpretExpr ann -> InterpretExpr ann) ->
   InterpretExpr ann ->
+    (InterpretExpr ann -> InterpretExpr ann) ->
   InterpreterM ann (InterpretExpr ann)
-interpretLetPattern interpretFn _pat _expr body = do
-  interpretFn body
-    {-
+interpretLetPattern ann interpretFn pat patExpr body = do
   -- interpret input
-  _intExpr <- interpretFn expr
+  intExpr <- interpretFn patExpr
+
   -- get new bound variables
-  let _bindings = fromMaybe [] (patternMatches pat intExpr)
-  -- run body with closure + new arg
-  -- extendStackFrame bindings (interpretFn body)
-  interpretFn body -- TODO: we'll change this into a function soon, allow it to be wrong for now
--}
+  let bindings = fromMaybe [] (patternMatches pat intExpr)
+      value = HOAS.MyRecord ann (M.fromList bindings)
+
+  interpretFn (body value)
 
 interpretPatternMatch ::
+  ExprData ann ->
   InterpretFn ann ->
   InterpretExpr ann ->
   [(InterpretPattern ann, InterpretExpr ann -> InterpretExpr ann)] ->
   InterpreterM ann (InterpretExpr ann)
-interpretPatternMatch interpretFn expr' patterns = do
+interpretPatternMatch ann interpretFn expr' patterns = do
   -- interpret match expression
   intExpr <- interpretFn expr'
   let foldF (pat, patExpr) = case patternMatches pat intExpr of
@@ -49,12 +53,11 @@ interpretPatternMatch interpretFn expr' patterns = do
         _ -> First Nothing
   -- get first matching pattern
   case getFirst (foldMap foldF patterns) of
-    Just (_patExpr, _bindings) ->
+    Just (patExpr, bindings) ->
       do
-        -- run body with closure + new arg
-        -- extendStackFrame bindings (interpretFn patExpr)
-        --interpretFn patExpr -- TODO: wrong, need to put the stuff in a record and pass it all in
-        error "whoa"
+        let value = HOAS.MyRecord ann (M.fromList bindings)
+
+        interpretFn (patExpr value)
     _ ->
       throwError $ PatternMatchFailure (fromHOAS expr')
 
@@ -62,9 +65,9 @@ interpretPatternMatch interpretFn expr' patterns = do
 patternMatches ::
   InterpretPattern ann ->
   InterpretExpr ann ->
-  Maybe [((Name, Unique), InterpretExpr ann)]
+  Maybe [(Name, InterpretExpr ann)]
 patternMatches (PWildcard _) _ = pure []
-patternMatches (PVar _ name) expr = pure [(name, expr)]
+patternMatches (PVar _ name) expr = pure [(fst name, expr)]
 patternMatches (PTuple _ pA pAs) (HOAS.MyTuple _ a as) = do
   matchA <- patternMatches pA a
   matchAs <-
@@ -105,12 +108,12 @@ patternMatches (PArray _ pAs (SpreadValue _ a)) (HOAS.MyArray ann as)
       let binding = (a, HOAS.MyArray ann (drop (length pAs) as))
       let allPairs = zip pAs as
       nice <- traverse (uncurry patternMatches) allPairs
-      pure (mconcat nice <> [binding])
+      pure (mconcat nice <> [first fst binding])
 patternMatches (PString _ pA pAs) (HOAS.MyLiteral _ (MyString (StringType str))) | not (T.null str) =
   do
     let bindingA = case pA of
           (StrValue ann a) ->
-            [ ( a,
+            [ ( fst a,
                 HOAS.MyLiteral
                   ann
                   ( MyString
@@ -122,7 +125,7 @@ patternMatches (PString _ pA pAs) (HOAS.MyLiteral _ (MyString (StringType str)))
           _ -> []
         bindingAs = case pAs of
           (StrValue ann as) ->
-            [ ( as,
+            [ ( fst as,
                 HOAS.MyLiteral
                   ann
                   ( MyString (StringType (T.drop 1 str))

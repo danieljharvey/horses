@@ -10,6 +10,8 @@ import Language.Mimsa.Interpreter.Infix
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.RecordAccess
 import Language.Mimsa.Interpreter.Types
+import Language.Mimsa.Interpreter.Monad
+import qualified Language.Mimsa.Types.AST.Expr as Regular
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
@@ -48,9 +50,11 @@ interpretExpr' ::
   InterpreterM ann (InterpretExpr ann)
 interpretExpr' (HOAS.MyLiteral _ val) = pure (HOAS.MyLiteral mempty val)
 interpretExpr' (HOAS.MyAnnotation _ _ expr) = interpretExpr' expr
-interpretExpr' (HOAS.MyVar ann modName var) =
-  -- lookupVar var >>= interpretExpr
-  pure (HOAS.MyVar ann modName var) -- TODO: is this right?
+interpretExpr' origVar@(HOAS.MyVar _ _ var) = do
+  val <-lookupVar var
+  case val of
+    Just next -> pure next
+    Nothing -> pure origVar
 interpretExpr' (HOAS.MyLambda exprData ident body) = do
   -- return it
   pure
@@ -67,10 +71,10 @@ interpretExpr' (HOAS.MyRecordAccess ann expr name) =
   interpretRecordAccess interpretExpr ann expr name
 interpretExpr' (HOAS.MyTupleAccess ann expr index) =
   interpretTupleAccess interpretExpr ann expr index
-interpretExpr' (HOAS.MyPatternMatch _ matchExpr patterns) = do
-  interpretPatternMatch interpretExpr matchExpr patterns
-interpretExpr' (HOAS.MyLetPattern _ pat patExpr body) =
-  interpretLetPattern interpretExpr pat patExpr body
+interpretExpr' (HOAS.MyPatternMatch ann matchExpr patterns) = do
+  interpretPatternMatch ann interpretExpr matchExpr patterns
+interpretExpr' (HOAS.MyLetPattern ann pat patExpr body) =
+  interpretLetPattern ann interpretExpr pat patExpr body
 interpretExpr' (HOAS.MyRecord ann as) =
   HOAS.MyRecord ann <$> traverse interpretExpr as
 interpretExpr' (HOAS.MyArray ann as) =

@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS) where
 
 import Data.Bifunctor (second)
@@ -8,6 +9,9 @@ import Language.Mimsa.Types.AST.Expr
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Pattern
+import Language.Mimsa.Types.AST.StringPart
+import Language.Mimsa.Types.AST.Spread
+
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.ExprUtils
 
@@ -19,8 +23,8 @@ toHOAS (MyAnnotation ann mt body) = HOAS.MyAnnotation ann mt (toHOAS body)
 toHOAS (MyLet ann ident expr body) =
   toHOAS (MyApp ann (MyLambda ann ident body) expr)
 toHOAS (MyLetPattern ann pat expr body) =
-  let (hoasPat, hoasExpr) = fromPat ann pat expr
-   in HOAS.MyLetPattern ann hoasPat hoasExpr (toHOAS body)
+  let (hoasPat, hoasBody) = fromPat ann pat body
+   in HOAS.MyLetPattern ann hoasPat (toHOAS expr) hoasBody
 toHOAS (MyInfix ann op a b) = HOAS.MyInfix ann op (toHOAS a) (toHOAS b)
 toHOAS (MyIf ann a b c) = HOAS.MyIf ann (toHOAS a) (toHOAS b) (toHOAS c)
 toHOAS (MyTuple ann a as) = HOAS.MyTuple ann (toHOAS a) (toHOAS <$> as)
@@ -86,8 +90,10 @@ replaceVars ::
 replaceVars ident value =
   replaceInner
   where
-    replaceInner (HOAS.MyVar _ Nothing identifier) | identifier == ident = value
-    replaceInner (HOAS.MyVar ann modName identifier) = HOAS.MyVar ann modName identifier
+    replaceInner (HOAS.MyVar _ Nothing identifier)
+        | identifier == ident = value
+    replaceInner (HOAS.MyVar ann modName identifier) =
+        HOAS.MyVar ann modName identifier
     replaceInner other = mapHOASExpr replaceInner other
 
 -- | Map a function `f` over the expression. This function takes care of
@@ -98,7 +104,7 @@ mapHOASExpr _ (HOAS.MyVar ann modName a) = HOAS.MyVar ann modName a
 mapHOASExpr f (HOAS.MyAnnotation ann mt expr) =
   HOAS.MyAnnotation ann mt (f expr)
 mapHOASExpr f (HOAS.MyLetPattern ann pat expr body) =
-  HOAS.MyLetPattern ann pat (f . expr) (f body)
+  HOAS.MyLetPattern ann pat (f expr) (f . body)
 mapHOASExpr f (HOAS.MyInfix ann op a b) = HOAS.MyInfix ann op (f a) (f b)
 mapHOASExpr f (HOAS.MyLambda ann binder fn) = HOAS.MyLambda ann binder (f . fn)
 mapHOASExpr f (HOAS.MyApp ann func arg) = HOAS.MyApp ann (f func) (f arg)
@@ -121,7 +127,7 @@ fromHOAS (HOAS.MyLiteral ann lit) = MyLiteral ann lit
 fromHOAS (HOAS.MyAnnotation ann mt body) = 
   MyAnnotation ann mt (fromHOAS body)
 fromHOAS (HOAS.MyLetPattern ann pat expr body) =
-  MyLetPattern ann pat (snd (toPat ann pat expr)) (fromHOAS body)
+  MyLetPattern ann pat (fromHOAS expr) (snd (toPat ann pat body))
 fromHOAS (HOAS.MyInfix ann op a b) = MyInfix ann op (fromHOAS a) (fromHOAS b)
 fromHOAS (HOAS.MyIf ann a b c) = MyIf ann (fromHOAS a) (fromHOAS b) (fromHOAS c)
 fromHOAS (HOAS.MyTuple ann a as) = MyTuple ann (fromHOAS a) (fromHOAS <$> as)
@@ -168,4 +174,17 @@ reduceRecords ident =
 
 patternVars :: (Ord var) => Pattern var ann -> Set var
 patternVars (PVar _ v) = S.singleton v
+patternVars (PString _ sHead sTail) =
+  let fromStrPart = \case
+          StrValue _ a -> S.singleton a
+          StrWildcard _ -> mempty
+  in fromStrPart sHead <> fromStrPart sTail
+patternVars pArr@(PArray _ _ pTail) =
+  let pSpread = case pTail of
+                    SpreadValue _ a -> S.singleton a
+                    SpreadWildcard _ -> mempty
+                    NoSpread -> mempty
+   in patternMonoid patternVars pArr <> pSpread
 patternVars other = patternMonoid patternVars other
+
+

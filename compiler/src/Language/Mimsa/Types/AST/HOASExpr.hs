@@ -43,8 +43,8 @@ data HOASExpr var ann
     MyLetPattern
       { expAnn :: ann,
         expPattern :: Pattern var ann,
-        expExprFn :: HOASExpr var ann -> HOASExpr var ann,
-        expBody :: HOASExpr var ann
+        expExpr :: HOASExpr var ann,
+        expBodyFunc :: HOASExpr var ann -> HOASExpr var ann
       }
   | -- | a `f` b
     MyInfix

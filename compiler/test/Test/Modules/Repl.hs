@@ -431,7 +431,7 @@ spec =
                 (MyConstructor mempty Nothing "Empty")
             )
 
-      it "Recursive function works" $ do
+      fit "Recursive function works" $ do
         result <- eval "let eq a b = a == b; let addInt a b = a + b; let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
 
