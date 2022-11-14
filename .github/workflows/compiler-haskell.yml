@@ -60,7 +60,7 @@ jobs:
       - uses: haskell/actions/setup@v2
         with:
           ghc-version: '9.4.3'
-          cabal-version: '3.6.2.0'
+          cabal-version: '3.8.1.0'
 
       - name: "Set up HLint"
         uses: rwe/actions-hlint-setup@v1

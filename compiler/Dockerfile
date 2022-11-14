@@ -5,8 +5,7 @@ WORKDIR /opt/build
 
 # Docker build should not use cached layer if any of these is modified
 COPY mimsa.cabal cabal.project cabal.project.freeze /opt/build/
-RUN cabal update
-RUN cabal build mimsa:exe:mimsa-server --dependencies-only
+RUN cabal update && cabal build mimsa:exe:mimsa-server --dependencies-only
 
 # -------------------------------------------------------------------------------------------
 FROM haskell:9.4.3-buster as build
@@ -17,7 +16,7 @@ COPY . /opt/build/
 
 WORKDIR /opt/build
 
-RUN cabal build mimsa:exe:mimsa-server
+RUN cabal update && cabal build mimsa:exe:mimsa-server
 
 RUN mv "$(cabal list-bin mimsa:exe:mimsa-server)" /opt/build/bin
 
