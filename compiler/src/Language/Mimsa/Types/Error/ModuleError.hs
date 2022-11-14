@@ -5,7 +5,7 @@ module Language.Mimsa.Types.Error.ModuleError (ModuleError (..), moduleErrorDiag
 
 import Data.Set (Set)
 import Data.Text (Text)
-import Error.Diagnose
+import qualified Error.Diagnose as Diag
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
@@ -65,13 +65,13 @@ instance Printer ModuleError where
   prettyPrint (NamedImportNotFound haystack needle) =
     "Could not find import for " <> prettyPrint needle <> " in " <> prettyPrint haystack
 
-moduleErrorDiagnostic :: ModuleError -> Diagnostic Text
+moduleErrorDiagnostic :: ModuleError -> Diag.Diagnostic Text
 moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) = typeErrorDiagnostic input typeErr
 moduleErrorDiagnostic other =
   let report =
-        err
+        Diag.Err
           Nothing
           (prettyPrint other)
           []
           []
-   in addReport def report
+   in Diag.addReport Diag.def report

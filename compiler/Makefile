@@ -1,47 +1,29 @@
-.PHONY: all test install
-
-build-nix: 
-	nix-build -A hsPkgs.mimsa.components.exes.mimsa --quiet | cachix push mimsa
-
-run-nix:
-	make build-nix
-	./result/bin/mimsa
-
-build-test-nix:
-	nix-build pkgs.nix -A hsPkgs.mimsa.components.tests.mimsa-test --quiet | cachix push mimsa
-
-unit-test-nix:
-	make build-test-nix
-	./result/bin/mimsa-test
+.PHONY: all ghcid ghcid-repl ghcid-server test install
 
 ghcid:
-	ghcid -c "stack repl --test --bench" -l=hlint
+	ghcid -c "cabal repl mimsa" -l=hlint
+
+ghcid-repl:
+	ghcid -c "cabal repl mimsa:exe:mimsa" -l=hlint
+
+ghcid-server:
+	ghcid -c "cabal repl mimsa:exe:mimsa-server" -l=hlint
 
 build:
-	stack build --test --no-run-tests --bench --no-run-benchmarks 
+	cabal update
+	cabal build all
 
 install:
-	stack install --test --no-run-tests --bench --no-run-benchmarks
-
-build-watch:
-	stack build --file-watch --test --no-run-tests --bench --no-run-benchmarks 
+	cabal update
+	cabal install mimsa:exe:mimsa --overwrite-policy=always
 
 test-watch:
-	stack test --file-watch --bench --no-run-benchmarks 
+	ghcid -c "cabal repl mimsa:tests" -l=hlint --test="main"
 
 test:
-	stack test --bench --no-run-benchmarks
+	cabal update
+	cabal run mimsa:test:mimsa-test
 
 bench:
-	stack bench --test --no-run-tests 
-
-profile-test:
-	stack build --test --profile && stack exec --profile -- test +RTS
-
-hoogle:
-	stack hoogle -- generate --local
-	stack hoogle -- server --local --port=8090
-
-haddock:
-	stack build --fast --haddock-deps
-	stack haddock --open
+	cabal update
+	cabal bench

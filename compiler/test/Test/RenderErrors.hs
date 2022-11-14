@@ -10,7 +10,7 @@ import Control.Monad.IO.Class
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Error.Diagnose
+import Error.Diagnose hiding (Annotation)
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
@@ -45,7 +45,7 @@ printError env input = do
       let diag = errorToDiagnostic err'
       liftIO (T.putStrLn "\n---")
       liftIO (T.putStrLn input)
-      liftIO $ printDiagnostic stderr True True 4 diag
+      liftIO $ printDiagnostic stderr True True 4 defaultStyle diag
       liftIO (T.putStrLn "---\n")
       True `shouldBe` True
 

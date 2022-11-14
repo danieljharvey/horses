@@ -33,3 +33,6 @@ test/golden/CompileJSProjectWhole-result/
 
 # .prof files generated for profiling
 *.prof
+
+# cabal shit
+dist-newstyle

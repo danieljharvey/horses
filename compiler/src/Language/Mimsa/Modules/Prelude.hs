@@ -22,37 +22,37 @@ import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 
 maybeInput :: Text
-maybeInput = T.decodeUtf8 $(embedFile "static/modules/Maybe.mimsa")
+maybeInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/Maybe.mimsa" >>= embedFile)
 
 stateInput :: Text
-stateInput = T.decodeUtf8 $(embedFile "static/modules/State.mimsa")
+stateInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/State.mimsa" >>= embedFile)
 
 preludeInput :: Text
-preludeInput = T.decodeUtf8 $(embedFile "static/modules/Prelude.mimsa")
+preludeInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/Prelude.mimsa" >>= embedFile)
 
 parserInput :: Text
-parserInput = T.decodeUtf8 $(embedFile "static/modules/Parser.mimsa")
+parserInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/Parser.mimsa" >>= embedFile)
 
 arrayInput :: Text
-arrayInput = T.decodeUtf8 $(embedFile "static/modules/Array.mimsa")
+arrayInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/Array.mimsa" >>= embedFile)
 
 nonEmptyArrayInput :: Text
-nonEmptyArrayInput = T.decodeUtf8 $(embedFile "static/modules/NonEmptyArray.mimsa")
+nonEmptyArrayInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/NonEmptyArray.mimsa" >>= embedFile)
 
 stringInput :: Text
-stringInput = T.decodeUtf8 $(embedFile "static/modules/String.mimsa")
+stringInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/String.mimsa" >>= embedFile)
 
 monoidInput :: Text
-monoidInput = T.decodeUtf8 $(embedFile "static/modules/Monoid.mimsa")
+monoidInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/Monoid.mimsa" >>= embedFile)
 
 readerInput :: Text
-readerInput = T.decodeUtf8 $(embedFile "static/modules/Reader.mimsa")
+readerInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/Reader.mimsa" >>= embedFile)
 
 eitherInput :: Text
-eitherInput = T.decodeUtf8 $(embedFile "static/modules/Either.mimsa")
+eitherInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/Either.mimsa" >>= embedFile)
 
 theseInput :: Text
-theseInput = T.decodeUtf8 $(embedFile "static/modules/These.mimsa")
+theseInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/These.mimsa" >>= embedFile)
 
 treeInput :: Text
-treeInput = T.decodeUtf8 $(embedFile "static/modules/Tree.mimsa")
+treeInput = T.decodeUtf8 $(makeRelativeToProject "static/modules/Tree.mimsa" >>= embedFile)

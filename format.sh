@@ -1,3 +1,3 @@
 #!/bin/bash
-
-ormolu --mode inplace $(find . -name '*.hs') && echo "Ormolu success!"
+HS_FILES=$(git ls-files '*.hs')
+ormolu --mode inplace $HS_FILES && echo "Ormolu success!"
