@@ -1,20 +1,10 @@
-# Loosely based on https://www.fpcomplete.com/blog/2017/12/building-haskell-apps-with-docker
-FROM haskell:9.4.3-buster as dependencies
-RUN mkdir /opt/build
-WORKDIR /opt/build
-
-# Docker build should not use cached layer if any of these is modified
-COPY mimsa.cabal cabal.project cabal.project.freeze /opt/build/
-RUN cabal update && cabal build mimsa:exe:mimsa-server --dependencies-only
-
-# -------------------------------------------------------------------------------------------
 FROM haskell:9.4.3-buster as build
 
-# Copy compiled dependencies from previous stage
-COPY --from=dependencies /root/.cabal /root/.cabal
 COPY . /opt/build/
 
 WORKDIR /opt/build
+
+RUN mkdir /opt/build/bin
 
 RUN cabal update && cabal build mimsa:exe:mimsa-server
 
