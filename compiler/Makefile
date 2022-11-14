@@ -10,16 +10,20 @@ ghcid-server:
 	ghcid -c "cabal repl mimsa:exe:mimsa-server" -l=hlint
 
 build:
+	cabal update
 	cabal build all
 
 install:
+	cabal update
 	cabal install mimsa:exe:mimsa --overwrite-policy=always
 
 test-watch:
 	ghcid -c "cabal repl mimsa:tests" -l=hlint --test="main"
 
 test:
+	cabal update
 	cabal run mimsa:test:mimsa-test
 
 bench:
+	cabal update
 	cabal bench
