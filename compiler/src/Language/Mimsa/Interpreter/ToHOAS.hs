@@ -15,11 +15,27 @@ import Language.Mimsa.Types.AST.Spread
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.ExprUtils
 
+import Data.Monoid
+
+hasVar :: (Eq x) => (Name, x) ->
+    Expr (Name,x) ann -> Bool
+hasVar var expr = getAny $ withMonoid f expr
+  where
+    f (MyVar _ Nothing varA) | varA == var =  (False,Any True)
+    f MyVar {} = (False,Any False)
+    f _ = (True,mempty)
+
 toHOAS :: (Ord x) => 
     Expr (Name, x) ann -> HOAS.HOASExpr (Name, x) ann
 toHOAS (MyVar ann modName a) = HOAS.MyVar ann modName a
 toHOAS (MyLiteral ann lit) = HOAS.MyLiteral ann lit
 toHOAS (MyAnnotation ann mt body) = HOAS.MyAnnotation ann mt (toHOAS body)
+toHOAS (MyLet ann (Identifier _ ident) (MyLambda lambdaAnn lambdaIdent@(Identifier lAnn lIdent) lBody) body) | hasVar ident lBody =
+  let lambdaBody recurse arg =
+        replaceVars lIdent arg (replaceVars ident recurse (toHOAS lBody))
+      lambdaFunc =
+        fromHOAS (HOAS.MyLambda lambdaAnn lambdaIdent (lambdaBody (toHOAS lambdaFunc)))
+   in toHOAS (MyApp ann lambdaFunc body)
 toHOAS (MyLet ann ident expr body) =
   toHOAS (MyApp ann (MyLambda ann ident body) expr)
 toHOAS (MyLetPattern ann pat expr body) =

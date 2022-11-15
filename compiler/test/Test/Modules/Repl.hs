@@ -62,7 +62,7 @@ defs = T.intercalate "\n"
 
 spec :: Spec
 spec =
-  fdescribe "Modules repl" $ do
+  describe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "No functions" $ do
         result <- eval "100"

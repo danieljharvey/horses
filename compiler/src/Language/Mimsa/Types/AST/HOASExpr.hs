@@ -59,6 +59,14 @@ data HOASExpr var ann
         expBinder :: Identifier var ann,
         expBodyFunc :: HOASExpr var ann -> HOASExpr var ann
       }
+  | -- | binder, body
+    MyRecursiveLambda
+      { expAnn :: ann,
+        expBinder :: Identifier var ann,
+        expBodyRecursiveFunc :: (HOASExpr var ann -> HOASExpr var ann) ->
+              (HOASExpr var ann -> HOASExpr var ann)
+      }
+
   | -- | function, argument
     MyApp
       { expAnn :: ann,
