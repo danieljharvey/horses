@@ -6,11 +6,10 @@ import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Interpreter.Stack
 
 interpretIf ::
   InterpretFn ann ->
-  ExprData ann ->
+  ann ->
   InterpretExpr ann ->
   InterpretExpr ann ->
   InterpretExpr ann ->

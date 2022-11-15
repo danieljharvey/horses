@@ -10,11 +10,10 @@ import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST.HOASExpr
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Interpreter.Stack
 
 interpretRecordAccess ::
   InterpretFn ann ->
-  ExprData ann ->
+  ann ->
   InterpretExpr ann ->
   Name ->
   InterpreterM ann (InterpretExpr ann)

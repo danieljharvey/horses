@@ -1,4 +1,4 @@
-module Language.Mimsa.Interpreter.Interpret (interpret, addEmptyStackFrames) where
+module Language.Mimsa.Interpreter.Interpret (interpret ) where
 
 import Control.Monad.Reader
 import Data.Functor
@@ -14,17 +14,9 @@ import Language.Mimsa.Interpreter.Monad
 import qualified Language.Mimsa.Types.AST.Expr as Regular
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
 import Language.Mimsa.Types.Identifiers
-
-addEmptyStackFrames ::
-  (Monoid ann) =>
-  Regular.Expr (var, Unique) ann ->
-  Regular.Expr (var, Unique) (ExprData ann)
-addEmptyStackFrames expr =
-  expr $> mempty
 
 interpret ::
   (Eq ann, Monoid ann, Show ann) =>

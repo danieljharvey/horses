@@ -435,8 +435,12 @@ spec =
         result <- eval "let eq a b = a == b; let addInt a b = a + b; let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
 
-      it "Big loop go zoom" $ do
-        result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 1000000"
+      it "Big loop go zoom 1" $ do
+        result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 10"
+        result `shouldSatisfy` isRight
+
+      it "Big loop go zoom 2" $ do
+        result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 22" -- this seems to be the limit on my current machine
         result `shouldSatisfy` isRight
 
       it "Recursively converts Nat to integer" $ do

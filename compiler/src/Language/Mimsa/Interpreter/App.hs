@@ -6,12 +6,11 @@ import Debug.Trace
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST.HOASExpr
-import Language.Mimsa.Types.Interpreter.Stack
 
 interpretApp ::
   (Eq ann,Show ann) =>
   InterpretFn ann ->
-  ExprData ann ->
+  ann ->
   InterpretExpr ann ->
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)

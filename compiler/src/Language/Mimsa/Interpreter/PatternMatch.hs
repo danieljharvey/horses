@@ -5,7 +5,6 @@ module Language.Mimsa.Interpreter.PatternMatch
 where
 
 import Data.Maybe (fromMaybe)
-import Language.Mimsa.Types.Interpreter.Stack
 import Data.Bifunctor
 import Control.Monad.Except
 import qualified Data.List.NonEmpty as NE
@@ -23,7 +22,7 @@ import Language.Mimsa.Types.Typechecker.Unique
 import Language.Mimsa.Types.Identifiers
 
 interpretLetPattern ::
-  ExprData ann ->
+  ann ->
   InterpretFn ann ->
   InterpretPattern ann ->
   InterpretExpr ann ->
@@ -40,7 +39,7 @@ interpretLetPattern ann interpretFn pat patExpr body = do
   interpretFn (body value)
 
 interpretPatternMatch ::
-  ExprData ann ->
+  ann ->
   InterpretFn ann ->
   InterpretExpr ann ->
   [(InterpretPattern ann, InterpretExpr ann -> InterpretExpr ann)] ->

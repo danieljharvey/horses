@@ -21,7 +21,6 @@ import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Store
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
 
 -- cheeky orphaned instance
@@ -46,7 +45,7 @@ interpreter se = do
   newRootExprHash <- case M.lookup (getStoreExpressionHash se) allOptimised of
     Just re -> pure (getStoreExpressionHash re)
   case M.lookup (getStoreExpressionHash se) allInterpreted of
-    Just re -> pure (bimap fst edAnnotation (fromHOAS re))
+    Just re -> pure (first fst (fromHOAS re))
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
   -- interpret everything
@@ -81,6 +80,7 @@ interpretAll inputStoreExpressions = do
 
             -- tag each `var` with it's location if it is an import
             let exprWithImports = addEmptyStackFrames numberedSe
+
             -- get exprhashes for any infixOps we need
             let infixHashes = storeInfixes se
             -- interpret se
@@ -88,7 +88,7 @@ interpretAll inputStoreExpressions = do
               liftEither
                 ( first
                     InterpreterErr
-                    (interpret flatDeps infixHashes (toHOAS exprWithImports))
+                    (interpret flatDeps infixHashes (toHOAS numberedSe))
                 )
 
             -- we need to accumulate all deps
