@@ -19,6 +19,13 @@ import Language.Mimsa.Types.Typechecker.MonoType
 
 -------
 
+instance Show (HOASExpr var ann -> HOASExpr var ann) where
+  show _ = "some function"
+
+instance Show (HOASExpr var ann -> HOASExpr var ann -> HOASExpr var ann) where
+  show _ = "some recursive function"
+
+
 -- |
 -- version of Expr where functions are represented as functions
 -- for interpreting but ZOOM
@@ -63,8 +70,8 @@ data HOASExpr var ann
     MyRecursiveLambda
       { expAnn :: ann,
         expBinder :: Identifier var ann,
-        expBodyRecursiveFunc :: (HOASExpr var ann -> HOASExpr var ann) ->
-              (HOASExpr var ann -> HOASExpr var ann)
+        expBodyRecursiveFunc :: HOASExpr var ann ->
+              HOASExpr var ann -> HOASExpr var ann
       }
 
   | -- | function, argument
@@ -119,3 +126,4 @@ data HOASExpr var ann
       }
   | -- | name
     MyTypedHole {expAnn :: ann, expTypedHoleName :: var}
+  deriving (Show)

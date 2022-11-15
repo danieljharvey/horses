@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS) where
 
+import Data.String
 import Data.Bifunctor (second)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -25,17 +26,18 @@ hasVar var expr = getAny $ withMonoid f expr
     f MyVar {} = (False,Any False)
     f _ = (True,mempty)
 
-toHOAS :: (Ord x) => 
+toHOAS :: (Ord x, Show ann,Show x) =>
     Expr (Name, x) ann -> HOAS.HOASExpr (Name, x) ann
 toHOAS (MyVar ann modName a) = HOAS.MyVar ann modName a
 toHOAS (MyLiteral ann lit) = HOAS.MyLiteral ann lit
 toHOAS (MyAnnotation ann mt body) = HOAS.MyAnnotation ann mt (toHOAS body)
-toHOAS (MyLet ann (Identifier _ ident) (MyLambda lambdaAnn lambdaIdent@(Identifier lAnn lIdent) lBody) body) | hasVar ident lBody =
-  let lambdaBody recurse arg =
-        replaceVars lIdent arg (replaceVars ident recurse (toHOAS lBody))
-      lambdaFunc =
-        fromHOAS (HOAS.MyLambda lambdaAnn lambdaIdent (lambdaBody (toHOAS lambdaFunc)))
-   in toHOAS (MyApp ann lambdaFunc body)
+toHOAS (MyLet ann recIdent@(Identifier _ rIdent) (MyLambda lambdaAnn argIdent@(Identifier aAnn aIdent) lBody) rest) | hasVar rIdent lBody =
+  let
+      hoasLambda =
+        HOAS.MyRecursiveLambda lambdaAnn argIdent (\recFn arg ->
+            replaceVars aIdent arg (replaceVars rIdent recFn (toHOAS lBody))
+          )
+   in HOAS.MyApp ann (toHOAS (MyLambda ann recIdent rest)) hoasLambda
 toHOAS (MyLet ann ident expr body) =
   toHOAS (MyApp ann (MyLambda ann ident body) expr)
 toHOAS (MyLetPattern ann pat expr body) =
@@ -61,7 +63,7 @@ toHOAS (MyPatternMatch ann patExpr pats) =
 toHOAS (MyTypedHole ann a) = HOAS.MyTypedHole ann a
 
 fromPat ::
-  (Ord x) => 
+  (Ord x, Show ann,Show x) =>
   ann ->
   Pattern (Name, x) ann ->
   Expr (Name, x) ann ->
@@ -123,6 +125,7 @@ mapHOASExpr f (HOAS.MyLetPattern ann pat expr body) =
   HOAS.MyLetPattern ann pat (f expr) (f . body)
 mapHOASExpr f (HOAS.MyInfix ann op a b) = HOAS.MyInfix ann op (f a) (f b)
 mapHOASExpr f (HOAS.MyLambda ann binder fn) = HOAS.MyLambda ann binder (f . fn)
+mapHOASExpr f (HOAS.MyRecursiveLambda ann binder fn) = HOAS.MyRecursiveLambda ann binder (\recFn arg -> f (fn recFn arg))
 mapHOASExpr f (HOAS.MyApp ann func arg) = HOAS.MyApp ann (f func) (f arg)
 mapHOASExpr f (HOAS.MyIf ann matchExpr thenExpr elseExpr) =
   HOAS.MyIf ann (f matchExpr) (f thenExpr) (f elseExpr)
@@ -151,6 +154,10 @@ fromHOAS (HOAS.MyLambda ann (Identifier iAnn ident) f) =
   MyLambda ann (Identifier iAnn ident) (fromHOAS $ f (HOAS.MyVar ann Nothing ident))
 fromHOAS (HOAS.MyApp ann (HOAS.MyLambda _ (Identifier iAnn ident) rest) expr) =
   MyLet ann (Identifier iAnn ident) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
+fromHOAS (HOAS.MyRecursiveLambda ann (Identifier iAnn ident) rest) =
+  MyLambda ann (Identifier iAnn ident)
+    (fromHOAS $ rest (HOAS.MyVar ann Nothing (fromString "again",snd ident)) (HOAS.MyVar ann Nothing ident))
+
 fromHOAS (HOAS.MyApp ann fn arg) = MyApp ann (fromHOAS fn) (fromHOAS arg)
 fromHOAS (HOAS.MyRecord ann as) = MyRecord ann (fromHOAS <$> as)
 fromHOAS (HOAS.MyRecordAccess ann a name) = MyRecordAccess ann (fromHOAS a) name
@@ -159,7 +166,6 @@ fromHOAS (HOAS.MyConstructor ann modName con) = MyConstructor ann modName con
 fromHOAS (HOAS.MyPatternMatch ann expr pats) = 
   MyPatternMatch ann (fromHOAS expr) (uncurry (toPat ann) <$> pats)
 fromHOAS (HOAS.MyTypedHole ann a) = MyTypedHole ann a
-
 
 -------
 

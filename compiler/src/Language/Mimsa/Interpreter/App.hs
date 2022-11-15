@@ -22,12 +22,15 @@ interpretApp interpretFn ann myFn value =
       intValue <- interpretFn value
       -- run it
       interpretFn (body intValue)
+    thing@(MyRecursiveLambda _ _ident body) -> do
+      -- interpret arg first
+      intValue <- interpretFn value
+      -- run it twice because of potential recursion
+      interpretFn (body thing intValue) >>= interpretFn
+
     (MyConstructor ann' modName const') ->
       MyApp ann (MyConstructor ann' modName const')
         <$> interpretFn value
-    (MyVar exprData  _ _a) -> do
-      traceShowM exprData
-      error "what to do with fixed point funcs"
 
     fn -> do
       -- try and resolve it into something we recognise

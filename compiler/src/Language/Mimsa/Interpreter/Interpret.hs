@@ -55,12 +55,16 @@ interpretExpr' origVar@(HOAS.MyVar _ _ var) = do
   case val of
     Just next -> pure next
     Nothing -> pure origVar
-interpretExpr' (HOAS.MyLambda exprData ident body) = do
+interpretExpr' (HOAS.MyLambda exprData ident body) = doInterper
   -- return it
   pure
     (HOAS.MyLambda exprData ident body)
 interpretExpr' (HOAS.MyTuple ann a as) =
   HOAS.MyTuple ann <$> interpretExpr a <*> traverse interpretExpr as
+interpretExpr' (HOAS.MyRecursiveLambda exprData ident body) = do
+  -- return it
+  pure
+    (HOAS.MyRecursiveLambda exprData ident body)
 interpretExpr' (HOAS.MyInfix _ op a b) =
   interpretInfix interpretExpr op a b
 interpretExpr' (HOAS.MyIf ann predExpr thenExpr elseExpr) =

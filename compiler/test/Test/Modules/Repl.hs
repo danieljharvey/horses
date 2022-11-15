@@ -62,7 +62,7 @@ defs = T.intercalate "\n"
 
 spec :: Spec
 spec =
-  describe "Modules repl" $ do
+  fdescribe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "No functions" $ do
         result <- eval "100"
@@ -431,7 +431,7 @@ spec =
                 (MyConstructor mempty Nothing "Empty")
             )
 
-      fit "Recursive function works" $ do
+      it "Recursive function works" $ do
         result <- eval "let eq a b = a == b; let addInt a b = a + b; let loop = (\\a -> if eq 10 a then a else loop (addInt a 1)) in loop 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 10)
 
