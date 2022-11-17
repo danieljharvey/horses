@@ -7,11 +7,11 @@ module Language.Mimsa.Parser.MonoType
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad ((>=>))
 import Control.Monad.Combinators.Expr
 import qualified Data.Char as Char
 import Data.Functor (($>))
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)

@@ -1,7 +1,7 @@
 module Language.Mimsa.Transform.SimplifyPatterns where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Foldable
+import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Types.AST

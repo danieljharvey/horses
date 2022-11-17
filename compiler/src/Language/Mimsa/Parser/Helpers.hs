@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Parser.Helpers
-  ( parseAndFormat,commaSep,
+  ( parseAndFormat,
+    commaSep,
     between2,
     addLocation,
     withLocation,
@@ -14,8 +15,8 @@ module Language.Mimsa.Parser.Helpers
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (first)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T

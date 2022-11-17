@@ -11,14 +11,14 @@ module Language.Mimsa.Typechecker.Exhaustiveness
   )
 where
 
-import Data.Monoid
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Data.Foldable
 import Data.Functor
 import Data.List (nub)
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Data.Monoid
 import qualified Data.Set as S
 import Language.Mimsa.Printer
 import Language.Mimsa.Typechecker.Environment
@@ -209,13 +209,14 @@ removeAnn p = p $> ()
 
 -- does left pattern satisfy right pattern?
 annihilate :: (Eq var) => Pattern var () -> Pattern var () -> Bool
-
-annihilateAll :: (Eq var) =>
-  [(Pattern var (), Pattern var ())] -> Bool
-annihilateAll
-  =          foldr
-            (\(a, b) keep -> keep && annihilate a b)
-            True
+annihilateAll ::
+  (Eq var) =>
+  [(Pattern var (), Pattern var ())] ->
+  Bool
+annihilateAll =
+  foldr
+    (\(a, b) keep -> keep && annihilate a b)
+    True
 
 -- | if left is on the right, get rid
 annihilate a b | a == b = True
@@ -227,12 +228,11 @@ annihilate (PTuple _ a as) (PTuple _ a' as') =
 annihilate (PRecord _ as) (PRecord _ bs) =
   let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
    in S.null diffKeys
-        &&
-          annihilateAll (zip (M.elems as) (M.elems bs))
+        && annihilateAll (zip (M.elems as) (M.elems bs))
 annihilate (PConstructor _ _ tyConA argsA) (PConstructor _ _ tyConB argsB) =
   (tyConA == tyConB)
     && annihilateAll
-        (zip argsA argsB)
+      (zip argsA argsB)
 annihilate PString {} PString {} = True
 annihilate (PTuple _ a as) _ =
   isComplete a && getAll (foldMap (All . isComplete) as)

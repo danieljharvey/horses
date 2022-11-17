@@ -15,9 +15,9 @@ module Language.Mimsa.Types.AST.Pattern
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Aeson as JSON
 import Data.Bifunctor.TH
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Generics

@@ -18,11 +18,11 @@ module Language.Mimsa.Parser.Language
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Functor (($>))
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
-import Language.Mimsa.Parser.Helpers (addLocation, commaSep,chainl1, inBrackets, orInBrackets, parseAndFormat, withLocation)
+import Language.Mimsa.Parser.Helpers (addLocation, chainl1, commaSep, inBrackets, orInBrackets, parseAndFormat, withLocation)
 import Language.Mimsa.Parser.Identifier
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Lexeme
@@ -254,7 +254,6 @@ tupleParser = label "tuple" $
       _ -> fail "Expected at least two items in a tuple"
     _ <- myString ")"
     pure (MyTuple mempty (NE.head neArgs) neTail)
-
 
 -----
 

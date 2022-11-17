@@ -6,8 +6,8 @@ module Language.Mimsa.Parser.Pattern
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Either (partitionEithers)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers (moduleNameParser, nameParser, tyConParser)
@@ -64,7 +64,6 @@ tupleParser = label "tuple" $
       _ -> fail "Expected at least two items in a tuple"
     _ <- myString ")"
     pure (NE.head neArgs, neTail)
-
 
 ----
 

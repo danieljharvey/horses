@@ -2,10 +2,10 @@
 
 module Language.Mimsa.Backend.Typescript.FromType (toTSType, toTSType') where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce (coerce)
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -42,7 +42,7 @@ toTSTypeRecord as = do
 toTSTypeTuple :: [Type ann] -> TypescriptM (TSType, Set TSGeneric)
 toTSTypeTuple as = do
   tsAll <- traverse toTSType as
-  let generics = snd  <$> tsAll
+  let generics = snd <$> tsAll
       tsItems = fst <$> tsAll
   pure (TSTypeTuple tsItems, mconcat generics)
 

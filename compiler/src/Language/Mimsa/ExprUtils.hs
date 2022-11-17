@@ -12,8 +12,8 @@ module Language.Mimsa.ExprUtils
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (second)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
 import Language.Mimsa.Types.AST.Identifier

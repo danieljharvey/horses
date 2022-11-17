@@ -25,8 +25,7 @@ getDestructureExpr :: TSExpr -> TSPattern -> (TSExpr, [TSStatement])
 getDestructureExpr _ (TSPatternVar n) = (TSVar n, mempty)
 getDestructureExpr _ TSPatternWildcard = (TSUnderscore, mempty)
 getDestructureExpr matchExpr (TSPatternTuple as) =
-  let
-      withIndex i = getDestructureExpr (TSArrayAccess (i - 1) matchExpr)
+  let withIndex i = getDestructureExpr (TSArrayAccess (i - 1) matchExpr)
       (tsAs, assignAs) = unzip (mapWithIndex withIndex as)
    in ( if or (isUseful <$> tsAs)
           then TSArray (TSArrayItem <$> tsAs)
@@ -146,7 +145,6 @@ toMatchExpression name (TSPatternTuple as) =
   let subPattern i =
         toMatchExpression (TSArrayAccess (i - 1) name)
    in mconcat (mapWithIndex subPattern as)
-
 toMatchExpression name (TSPatternLit lit) =
   [TSInfix TSEquals name (TSLit lit)]
 toMatchExpression name (TSPatternRecord items) =
