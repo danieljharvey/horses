@@ -9,8 +9,8 @@ withMonoid _ MTConstructor {} = mempty
 withMonoid _ MTPrim {} = mempty
 withMonoid f (MTTypeApp _ a b) =
   f a <> f b
-withMonoid f (MTPair _ a b) =
-  f a <> f b
+withMonoid f (MTTuple _ a as) =
+  f a <> foldMap f as
 withMonoid f (MTArray _ as) = f as
 withMonoid f (MTRecord _ as Nothing) =
   mconcat (f <$> M.elems as)
@@ -28,8 +28,8 @@ mapMonoType _ mt@MTConstructor {} = mt
 mapMonoType _ mt@MTPrim {} = mt
 mapMonoType f (MTTypeApp ann a b) =
   MTTypeApp ann (f a) (f b)
-mapMonoType f (MTPair ann a b) =
-  MTPair ann (f a) (f b)
+mapMonoType f (MTTuple ann a as) =
+  MTTuple ann (f a) (f <$> as)
 mapMonoType f (MTArray ann as) = MTArray ann (f as)
 mapMonoType f (MTRecord ann as a) =
   MTRecord ann (f <$> as) (f <$> a)
@@ -51,10 +51,10 @@ bindMonoType f mt = case mt of
     MTFunction ann
       <$> f arg
       <*> f fun
-  MTPair ann a b ->
-    MTPair ann
+  MTTuple ann a as ->
+    MTTuple ann
       <$> f a
-      <*> f b
+      <*> traverse f as
   MTRecord ann as rest ->
     MTRecord ann
       <$> traverse f as

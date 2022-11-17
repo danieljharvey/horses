@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Parser.Helpers
-  ( parseAndFormat,
+  ( parseAndFormat,commaSep,
     between2,
     addLocation,
     withLocation,
@@ -14,6 +14,7 @@ module Language.Mimsa.Parser.Helpers
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (first)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -64,7 +65,7 @@ mapOuterExprAnnotation f expr' =
     MyLambda ann a b -> MyLambda (f ann) a b
     MyApp ann a b -> MyApp (f ann) a b
     MyIf ann a b c -> MyIf (f ann) a b c
-    MyPair ann a b -> MyPair (f ann) a b
+    MyTuple ann a as -> MyTuple (f ann) a as
     MyRecord ann as -> MyRecord (f ann) as
     MyRecordAccess ann a b -> MyRecordAccess (f ann) a b
     MyArray ann as -> MyArray (f ann) as
@@ -118,3 +119,8 @@ chainl1 p op = do x <- p; rest x
         y <- p
         rest (f x y)
         <|> return x
+
+---
+
+commaSep :: Parser p -> Parser (NE.NonEmpty p)
+commaSep p = NE.fromList <$> p `sepBy1` myString ","

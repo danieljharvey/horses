@@ -7,6 +7,7 @@ module Language.Mimsa.Parser.MonoType
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad ((>=>))
 import Control.Monad.Combinators.Expr
 import qualified Data.Char as Char
@@ -36,7 +37,7 @@ monoTypeParser =
 simpleTypeParser :: Parser MonoType
 simpleTypeParser =
   let parsers =
-        try pairParser
+        try tupleParser
           <|> try varParser
           <|> try primitiveParser
           <|> try recordParser
@@ -48,7 +49,7 @@ simpleTypeParser =
 typeDeclParser' :: Parser MonoType
 typeDeclParser' =
   let parsers =
-        try pairParser
+        try tupleParser
           <|> try varParser
           <|> try primitiveParser
           <|> try recordParser
@@ -84,14 +85,15 @@ functionParser = do
     MTFunction {} -> pure val
     _ -> fail "don't use function for parsing non-function values"
 
-pairParser :: Parser MonoType
-pairParser = do
+tupleParser :: Parser MonoType
+tupleParser = do
   myString "("
-  one <- monoTypeParser
-  myString ","
-  two <- monoTypeParser
+  neArgs <- commaSep monoTypeParser
+  neTail <- case NE.nonEmpty (NE.tail neArgs) of
+    Just ne -> pure ne
+    _ -> fail "Expected at least two items in a tuple"
   myString ")"
-  pure (MTPair mempty one two)
+  pure (MTTuple mempty (NE.head neArgs) neTail)
 
 identifier :: Parser Text
 identifier = myLexeme (takeWhile1P (Just "type variable name") Char.isAlphaNum)

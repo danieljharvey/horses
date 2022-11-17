@@ -8,6 +8,7 @@ module Language.Mimsa.Typechecker.NumberVars
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -117,7 +118,7 @@ varsFromPattern (PVar _ var) = S.singleton var
 varsFromPattern (PWildcard _) = mempty
 varsFromPattern (PLit _ _) = mempty
 varsFromPattern (PConstructor _ _ _ as) = mconcat (varsFromPattern <$> as)
-varsFromPattern (PPair _ a b) = varsFromPattern a <> varsFromPattern b
+varsFromPattern (PTuple _ a as) = varsFromPattern a <> mconcat (varsFromPattern <$> NE.toList as)
 varsFromPattern (PRecord _ as) = mconcat (varsFromPattern <$> M.elems as)
 varsFromPattern (PArray _ as spread) =
   let spreadVars = case spread of
@@ -219,8 +220,8 @@ markImports (MyIf ann predExpr thenExpr elseExpr) =
     <$> markImports predExpr
     <*> markImports thenExpr
     <*> markImports elseExpr
-markImports (MyPair ann a b) =
-  MyPair ann <$> markImports a <*> markImports b
+markImports (MyTuple ann a as) =
+  MyTuple ann <$> markImports a <*> traverse markImports as
 markImports (MyRecord ann as) =
   MyRecord ann <$> traverse markImports as
 markImports (MyRecordAccess ann recExpr name) =
@@ -260,11 +261,11 @@ markPatternImports pat =
     (PConstructor ann c d e) ->
       PConstructor ann c d
         <$> traverse markPatternImports e
-    (PPair ann a b) ->
-      PPair
+    (PTuple ann a as) ->
+      PTuple
         ann
         <$> markPatternImports a
-        <*> markPatternImports b
+        <*> traverse markPatternImports as
     (PRecord ann as) ->
       PRecord ann <$> traverse markPatternImports as
     (PArray ann as a) ->

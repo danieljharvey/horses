@@ -57,7 +57,7 @@ getPatternTypeFromAnn pat =
     PWildcard ann -> ann
     PVar ann _ -> ann
     PConstructor ann _ _ _ -> ann
-    PPair ann _ _ -> ann
+    PTuple ann _ _ -> ann
     PRecord ann _ -> ann
     PArray ann _ _ -> ann
     PString ann _ _ -> ann
@@ -389,12 +389,12 @@ inferPattern env (PConstructor ann modName tyCon args) = do
     ( PConstructor (dataTypeWithVars ann modName ty tyTypeVars) modName tyCon inferArgs,
       newEnv
     )
-inferPattern env (PPair ann a b) = do
+inferPattern env (PTuple ann a as) = do
   (inferA, envA) <- inferPattern env a
   (inferB, envB) <- inferPattern envA b
   pure
-    ( PPair
-        ( MTPair
+    ( PTuple
+        ( MTTuple
             ann
             (getPatternTypeFromAnn inferA)
             (getPatternTypeFromAnn inferB)

@@ -11,6 +11,8 @@ module Language.Mimsa.Typechecker.Exhaustiveness
   )
 where
 
+import Data.Monoid
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Data.Foldable
 import Data.Functor
@@ -77,8 +79,8 @@ getVariables ::
 getVariables (PWildcard _) = mempty
 getVariables (PLit _ _) = mempty
 getVariables (PVar _ a) = M.singleton a 1
-getVariables (PPair _ a b) =
-  M.unionWith (+) (getVariables a) (getVariables b)
+getVariables (PTuple _ a as) =
+  M.unionWith (+) (getVariables a) (foldMap getVariables as)
 getVariables (PRecord _ as) =
   foldr (M.unionWith (+)) mempty (getVariables <$> as)
 getVariables (PArray _ as spread) =
@@ -137,11 +139,10 @@ generateRequired _ (PLit _ (MyBool False)) = pure [PLit mempty (MyBool True)]
 generateRequired _ (PLit _ (MyInt _)) = pure [PWildcard mempty]
 generateRequired _ (PLit _ (MyString "")) = pure [PString mempty (StrWildcard mempty) (StrWildcard mempty)]
 generateRequired _ (PLit _ (MyString _)) = pure [PWildcard mempty]
-generateRequired env (PPair _ l r) = do
-  ls <- generateRequired env l
-  rs <- generateRequired env r
-  let allPairs = PPair mempty <$> ls <*> rs
-  pure allPairs
+generateRequired env (PTuple _ a as) = do
+  genA <- generateRequired env a
+  genAs <- traverse (generateRequired env) as
+  pure (PTuple mempty <$> genA <*> sequence genAs)
 generateRequired env (PRecord _ items) = do
   items' <- traverse (generateRequired env) items
   pure (PRecord mempty <$> sequence items')
@@ -209,21 +210,28 @@ removeAnn p = p $> ()
 -- does left pattern satisfy right pattern?
 annihilate :: (Eq var) => Pattern var () -> Pattern var () -> Bool
 
+annihilateAll :: (Eq var) =>
+  [(Pattern var (), Pattern var ())] -> Bool
+annihilateAll
+  =          foldr
+            (\(a, b) keep -> keep && annihilate a b)
+            True
+
 -- | if left is on the right, get rid
 annihilate a b | a == b = True
 annihilate (PWildcard _) _ = True
 annihilate (PVar _ _) _ = True
-annihilate (PPair _ a b) (PPair _ a' b') =
-  annihilate a a' && annihilate b b'
-annihilate (PRecord _ as) (PRecord _ bs) =
-  let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
-   in S.null diffKeys
-        && do
-          let allPairs = zip (M.elems as) (M.elems bs)
-          foldr
+annihilate (PTuple _ a as) (PTuple _ a' as') =
+  let allPairs = zip ([a] <> NE.toList as) ([a'] <> NE.toList as')
+   in foldr
             (\(a, b) keep -> keep && annihilate a b)
             True
             allPairs
+annihilate (PRecord _ as) (PRecord _ bs) =
+  let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
+   in S.null diffKeys
+        &&
+          annihilateAll (zip (M.elems as) (M.elems bs))
 annihilate (PConstructor _ _ tyConA argsA) (PConstructor _ _ tyConB argsB) =
   (tyConA == tyConB)
     && foldr
@@ -231,8 +239,8 @@ annihilate (PConstructor _ _ tyConA argsA) (PConstructor _ _ tyConB argsB) =
       True
       (zip argsA argsB)
 annihilate PString {} PString {} = True
-annihilate (PPair _ a b) _ =
-  isComplete a && isComplete b
+annihilate (PTuple _ a as) _ =
+  isComplete a && getAll (foldMap (All . isComplete) as)
 annihilate (PRecord _ as) _ =
   foldr (\a total -> total && isComplete a) True as
 annihilate (PArray _ itemsA (SpreadWildcard _)) (PArray _ itemsB (SpreadValue _ _)) =
@@ -251,7 +259,7 @@ annihilate _ _as = False
 isComplete :: Pattern var ann -> Bool
 isComplete (PWildcard _) = True
 isComplete (PVar _ _) = True
-isComplete (PPair _ a b) = isComplete a && isComplete b
+isComplete (PTuple _ a as) = isComplete a && getAll (foldMap (All . isComplete) (NE.toList as))
 isComplete _ = False
 
 redundantCases ::

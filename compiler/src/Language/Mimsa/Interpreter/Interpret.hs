@@ -69,8 +69,8 @@ interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
   -- return it
   pure
     (MyLambda newExprData ident body)
-interpretExpr' (MyPair ann a b) =
-  MyPair ann <$> interpretExpr a <*> interpretExpr b
+interpretExpr' (MyTuple ann a as) =
+  MyTuple ann <$> interpretExpr a <*> traverse interpretExpr as
 interpretExpr' (MyInfix _ op a b) =
   interpretInfix interpretExpr op a b
 interpretExpr' (MyIf ann predExpr thenExpr elseExpr) =

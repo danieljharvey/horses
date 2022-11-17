@@ -22,7 +22,7 @@ simpleExpr (MyLambda _ ident body) = MyLambda mempty (ident $> mempty) (simpleEx
 simpleExpr (MyApp _ fn val) = MyApp mempty (simpleExpr fn) (simpleExpr val)
 simpleExpr (MyIf _ predExpr thenExpr elseExpr) =
   MyIf mempty (simpleExpr predExpr) (simpleExpr thenExpr) (simpleExpr elseExpr)
-simpleExpr (MyPair _ a b) = MyPair mempty (simpleExpr a) (simpleExpr b)
+simpleExpr (MyTuple _ a as) = MyTuple mempty (simpleExpr a) (simpleExpr <$> as)
 simpleExpr (MyRecord _ as) = MyRecord mempty (simpleExpr <$> as)
 simpleExpr (MyRecordAccess _ expr name) = MyRecordAccess mempty (simpleExpr expr) name
 simpleExpr (MyArray _ as) = MyArray mempty (simpleExpr <$> as)
@@ -35,7 +35,7 @@ simplePattern (PVar _ var) = PVar mempty var
 simplePattern (PConstructor _ _ tyCon args) =
   PConstructor mempty Nothing tyCon (simplePattern <$> args)
 simplePattern (PWildcard _) = PWildcard mempty
-simplePattern (PPair _ a b) = PPair mempty (simplePattern a) (simplePattern b)
+simplePattern (PTuple _ a as) = PTuple mempty (simplePattern a) (simplePattern <$> as)
 simplePattern (PRecord _ as) = PRecord mempty (simplePattern <$> as)
 simplePattern (PLit _ lit) = PLit mempty lit
 simplePattern (PArray _ vals spread) =

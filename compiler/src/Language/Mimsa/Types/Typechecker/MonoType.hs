@@ -13,7 +13,7 @@ module Language.Mimsa.Types.Typechecker.MonoType
     varsFromDataType,
   )
 where
-
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Aeson as JSON
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -60,10 +60,10 @@ data Type ann
         typArg :: Type ann,
         typRes :: Type ann -- argument, result
       }
-  | MTPair
+  | MTTuple
       { typAnn :: ann,
         typA :: Type ann,
-        typB :: Type ann -- (a,b)
+        typAs :: NE.NonEmpty (Type ann) -- (a,b,---)
       }
   | MTRecord
       { typAnn :: ann,
@@ -97,7 +97,7 @@ getAnnotationForType :: Type ann -> ann
 getAnnotationForType (MTPrim ann _) = ann
 getAnnotationForType (MTVar ann _) = ann
 getAnnotationForType (MTFunction ann _ _) = ann
-getAnnotationForType (MTPair ann _ _) = ann
+getAnnotationForType (MTTuple ann _ _) = ann
 getAnnotationForType (MTRecord ann _ _) = ann
 getAnnotationForType (MTConstructor ann _ _) = ann
 getAnnotationForType (MTArray ann _) = ann
@@ -111,8 +111,8 @@ renderMonoType :: Type ann -> Doc style
 renderMonoType (MTPrim _ a) = prettyDoc a
 renderMonoType (MTFunction _ a b) =
   withParens a <+> "->" <+> renderMonoType b
-renderMonoType (MTPair _ a b) =
-  "(" <> renderMonoType a <> "," <+> renderMonoType b <> ")"
+renderMonoType (MTTuple _ a as) =
+  "(" <> hsep (punctuate ", " (renderMonoType <$> ([a] <> NE.toList as))) <> ")"
 renderMonoType (MTRecord _ as rest) =
   renderRecord as rest
 renderMonoType (MTArray _ a) = "[" <+> renderMonoType a <+> "]"

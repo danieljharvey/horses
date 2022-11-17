@@ -42,8 +42,8 @@ fromMonoType gs mt =
       if shouldWeStopRecursing gs
         then pure (MyArray mempty mempty)
         else MyArray mempty <$> listOf (fromMonoType gs arrMt)
-    (MTPair _ a b) ->
-      MyPair mempty <$> fromMonoType gs a <*> fromMonoType gs b
+    (MTTuple _ a as) ->
+      MyTuple mempty <$> fromMonoType gs a <*> traverse (fromMonoType gs) as
     (MTRecord _ as _) ->
       -- as we've already run flattenRow on this to remove nested rows, assume the
       -- part on the end is just an unknown and ignore it

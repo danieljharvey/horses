@@ -77,7 +77,7 @@ data TSStringPart
 
 data TSPattern
   = TSPatternVar TSName
-  | TSPatternPair TSPattern TSPattern
+  | TSPatternTuple [TSPattern]
   | TSPatternRecord (Map TSName TSPattern)
   | TSPatternConstructor TyCon [TSPattern]
   | TSPatternLit TSLiteral

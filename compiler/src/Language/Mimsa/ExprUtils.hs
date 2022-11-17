@@ -12,6 +12,7 @@ module Language.Mimsa.ExprUtils
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (second)
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Types.AST.Expr (Expr (..))
@@ -41,7 +42,7 @@ getAnnotation (MyInfix ann _ _ _) = ann
 getAnnotation (MyLambda ann _ _) = ann
 getAnnotation (MyApp ann _ _) = ann
 getAnnotation (MyIf ann _ _ _) = ann
-getAnnotation (MyPair ann _ _) = ann
+getAnnotation (MyTuple ann _ _) = ann
 getAnnotation (MyRecord ann _) = ann
 getAnnotation (MyRecordAccess ann _ _) = ann
 getAnnotation (MyConstructor ann _ _) = ann
@@ -111,14 +112,14 @@ withMonoid f whole@(MyIf _ matchExpr thenExpr elseExpr) =
             <> withMonoid f matchExpr
             <> withMonoid f thenExpr
             <> withMonoid f elseExpr
-withMonoid f whole@(MyPair _ a b) =
+withMonoid f whole@(MyTuple _ a as) =
   let (go, m) = f whole
    in if not go
         then m
         else
           m
             <> withMonoid f a
-            <> withMonoid f b
+            <> mconcat (withMonoid f <$> NE.toList as)
 withMonoid f whole@(MyRecord _ items) =
   let (go, m) = f whole
    in if not go
@@ -167,7 +168,7 @@ mapExpr f (MyLambda ann binder expr) = MyLambda ann binder (f expr)
 mapExpr f (MyApp ann func arg) = MyApp ann (f func) (f arg)
 mapExpr f (MyIf ann matchExpr thenExpr elseExpr) =
   MyIf ann (f matchExpr) (f thenExpr) (f elseExpr)
-mapExpr f (MyPair ann a b) = MyPair ann (f a) (f b)
+mapExpr f (MyTuple ann a as) = MyTuple ann (f a) (f <$> as)
 mapExpr f (MyRecord ann items) = MyRecord ann (f <$> items)
 mapExpr f (MyRecordAccess ann expr name) =
   MyRecordAccess ann (f expr) name
@@ -202,8 +203,8 @@ bindExpr f (MyApp ann func arg) =
   MyApp ann <$> f func <*> f arg
 bindExpr f (MyIf ann matchExpr thenExpr elseExpr) =
   MyIf ann <$> f matchExpr <*> f thenExpr <*> f elseExpr
-bindExpr f (MyPair ann a b) =
-  MyPair ann <$> f a <*> f b
+bindExpr f (MyTuple ann a as) =
+  MyTuple ann <$> f a <*> traverse f as
 bindExpr f (MyRecord ann items) =
   MyRecord ann <$> traverse f items
 bindExpr f (MyRecordAccess ann expr name) =
@@ -229,8 +230,8 @@ mapPattern _ (PVar ann a) = PVar ann a
 mapPattern _ (PLit ann a) = PLit ann a
 mapPattern f (PConstructor ann modName tyCon vars) =
   PConstructor ann modName tyCon (f <$> vars)
-mapPattern f (PPair ann a b) =
-  PPair ann (f a) (f b)
+mapPattern f (PTuple ann a as) =
+  PTuple ann (f a) (f <$> as)
 mapPattern f (PRecord ann as) =
   PRecord ann (f <$> as)
 mapPattern f (PArray ann as spread) =
