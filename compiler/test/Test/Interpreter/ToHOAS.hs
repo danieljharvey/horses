@@ -19,7 +19,7 @@ parseExpr input = first (,()) (unsafeParseExpr input)
 
 spec :: Spec
 spec = do
-  describe "ToHOAS" $ do
+  fdescribe "ToHOAS" $ do
     describe "There and back again" $ do
       it "Infixes, literals" $ do
         let input = parseExpr "1 + 2 + 3"
@@ -46,7 +46,7 @@ spec = do
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
       it "Recursive function" $ do
-        let input = parseExpr "let again = \\a -> if a > 0 then again (a - 1) else 0; True"
+        let input = parseExpr "let loop = \\a -> if a > 0 then loop (a - 1) else 0; True"
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
       it "A pattern match appears" $ do

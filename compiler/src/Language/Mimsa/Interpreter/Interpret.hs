@@ -53,10 +53,10 @@ interpretExpr' (HOAS.MyLambda exprData ident body) = doInterper
     (HOAS.MyLambda exprData ident body)
 interpretExpr' (HOAS.MyTuple ann a as) =
   HOAS.MyTuple ann <$> interpretExpr a <*> traverse interpretExpr as
-interpretExpr' (HOAS.MyRecursiveLambda exprData ident body) = do
+interpretExpr' (HOAS.MyRecursiveLambda exprData ident recIdent body) = do
   -- return it
   pure
-    (HOAS.MyRecursiveLambda exprData ident body)
+    (HOAS.MyRecursiveLambda exprData ident recIdent body)
 interpretExpr' (HOAS.MyInfix _ op a b) =
   interpretInfix interpretExpr op a b
 interpretExpr' (HOAS.MyIf ann predExpr thenExpr elseExpr) =

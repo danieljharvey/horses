@@ -70,7 +70,8 @@ data HOASExpr var ann
     MyRecursiveLambda
       { expAnn :: ann,
         expBinder :: Identifier var ann,
-        expBodyRecursiveFunc :: HOASExpr var ann ->
+        expRecursingBinder :: Identifier var ann,
+        expBodyRecursiveFunc ::
               HOASExpr var ann -> HOASExpr var ann
       }
 

@@ -1,5 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
-module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS) where
+module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS, replaceVars) where
 
 import Data.String
 import Data.Bifunctor (second)
@@ -34,8 +34,8 @@ toHOAS (MyAnnotation ann mt body) = HOAS.MyAnnotation ann mt (toHOAS body)
 toHOAS (MyLet ann recIdent@(Identifier _ rIdent) (MyLambda lambdaAnn argIdent@(Identifier aAnn aIdent) lBody) rest) | hasVar rIdent lBody =
   let
       hoasLambda =
-        HOAS.MyRecursiveLambda lambdaAnn argIdent (\recFn arg ->
-            replaceVars aIdent arg (replaceVars rIdent recFn (toHOAS lBody))
+        HOAS.MyRecursiveLambda lambdaAnn argIdent recIdent (\arg ->
+            replaceVars aIdent arg (toHOAS lBody)
           )
    in HOAS.MyApp ann (toHOAS (MyLambda ann recIdent rest)) hoasLambda
 toHOAS (MyLet ann ident expr body) =
@@ -108,7 +108,7 @@ replaceVars ::
 replaceVars ident value =
   replaceInner
   where
-    replaceInner (HOAS.MyVar _ Nothing identifier)
+    replaceInner (HOAS.MyVar _ _ identifier)
         | identifier == ident = value
     replaceInner (HOAS.MyVar ann modName identifier) =
         HOAS.MyVar ann modName identifier
@@ -125,7 +125,7 @@ mapHOASExpr f (HOAS.MyLetPattern ann pat expr body) =
   HOAS.MyLetPattern ann pat (f expr) (f . body)
 mapHOASExpr f (HOAS.MyInfix ann op a b) = HOAS.MyInfix ann op (f a) (f b)
 mapHOASExpr f (HOAS.MyLambda ann binder fn) = HOAS.MyLambda ann binder (f . fn)
-mapHOASExpr f (HOAS.MyRecursiveLambda ann binder fn) = HOAS.MyRecursiveLambda ann binder (\recFn arg -> f (fn recFn arg))
+mapHOASExpr f (HOAS.MyRecursiveLambda ann binder recBinder fn) = HOAS.MyRecursiveLambda ann binder recBinder (f . fn)
 mapHOASExpr f (HOAS.MyApp ann func arg) = HOAS.MyApp ann (f func) (f arg)
 mapHOASExpr f (HOAS.MyIf ann matchExpr thenExpr elseExpr) =
   HOAS.MyIf ann (f matchExpr) (f thenExpr) (f elseExpr)
@@ -154,10 +154,9 @@ fromHOAS (HOAS.MyLambda ann (Identifier iAnn ident) f) =
   MyLambda ann (Identifier iAnn ident) (fromHOAS $ f (HOAS.MyVar ann Nothing ident))
 fromHOAS (HOAS.MyApp ann (HOAS.MyLambda _ (Identifier iAnn ident) rest) expr) =
   MyLet ann (Identifier iAnn ident) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
-fromHOAS (HOAS.MyRecursiveLambda ann (Identifier iAnn ident) rest) =
+fromHOAS (HOAS.MyRecursiveLambda ann (Identifier iAnn ident) (Identifier _ recIdent) rest) =
   MyLambda ann (Identifier iAnn ident)
-    (fromHOAS $ rest (HOAS.MyVar ann Nothing (fromString "again",snd ident)) (HOAS.MyVar ann Nothing ident))
-
+    (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
 fromHOAS (HOAS.MyApp ann fn arg) = MyApp ann (fromHOAS fn) (fromHOAS arg)
 fromHOAS (HOAS.MyRecord ann as) = MyRecord ann (fromHOAS <$> as)
 fromHOAS (HOAS.MyRecordAccess ann a name) = MyRecordAccess ann (fromHOAS a) name
