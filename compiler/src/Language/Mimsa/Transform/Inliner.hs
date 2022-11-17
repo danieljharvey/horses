@@ -10,6 +10,7 @@ module Language.Mimsa.Transform.Inliner
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map.Strict (Map)
@@ -63,7 +64,7 @@ howTrivial :: Expr var ann -> Maybe Int
 howTrivial (MyLiteral _ _) = Just 1
 howTrivial (MyArray _ as) = (+ 1) . sum <$> traverse howTrivial as
 howTrivial (MyRecord _ as) = (+ 1) . sum <$> traverse howTrivial as
-howTrivial (MyPair _ a b) = (+ 2) . sum <$> traverse howTrivial [a, b]
+howTrivial (MyTuple _ a as) = (+ 2) . sum <$> traverse howTrivial ([a] <> NE.toList as)
 howTrivial MyVar {} = Just 1
 howTrivial _ = Nothing
 

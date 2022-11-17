@@ -133,7 +133,7 @@ data TSExpr
   | TSRecordAccess TSName TSExpr
   | TSArray [TSArrayPart]
   | TSArrayAccess Int TSExpr
-  | TSPair TSExpr TSExpr
+  | TSTuple [TSExpr]
   | TSVar TSName
   | TSApp TSExpr TSExpr
   | TSInfix TSOp TSExpr TSExpr

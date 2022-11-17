@@ -223,10 +223,7 @@ annihilate (PWildcard _) _ = True
 annihilate (PVar _ _) _ = True
 annihilate (PTuple _ a as) (PTuple _ a' as') =
   let allPairs = zip ([a] <> NE.toList as) ([a'] <> NE.toList as')
-   in foldr
-            (\(a, b) keep -> keep && annihilate a b)
-            True
-            allPairs
+   in annihilateAll allPairs
 annihilate (PRecord _ as) (PRecord _ bs) =
   let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
    in S.null diffKeys
@@ -234,10 +231,8 @@ annihilate (PRecord _ as) (PRecord _ bs) =
           annihilateAll (zip (M.elems as) (M.elems bs))
 annihilate (PConstructor _ _ tyConA argsA) (PConstructor _ _ tyConB argsB) =
   (tyConA == tyConB)
-    && foldr
-      (\(a, b) keep -> keep && annihilate a b)
-      True
-      (zip argsA argsB)
+    && annihilateAll
+        (zip argsA argsB)
 annihilate PString {} PString {} = True
 annihilate (PTuple _ a as) _ =
   isComplete a && getAll (foldMap (All . isComplete) as)
