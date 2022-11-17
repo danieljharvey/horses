@@ -440,10 +440,10 @@ spec =
         result `shouldSatisfy` isRight
 
       it "Big loop go zoom 2" $ do
-        result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 22" -- this seems to be the limit on my current machine
+        result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000" -- this seems to be the limit on my current machine
         result `shouldSatisfy` isRight
 
-      it "Recursively converts Nat to integer" $ do
+      fit "Recursively converts Nat to integer" $ do
         result <-
           evalWithDefs
             (Just "type Nat = Zero | Suc Nat")
@@ -469,7 +469,7 @@ spec =
             "let addInt a b = a + b; let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty"
         result `shouldBe` Right (MTPrim mempty MTInt, int 0)
 
-      it "Array reduce function 2" $ do
+      fit "Array reduce function 2" $ do
         result <- evalWithDefs (Just "type Array a = Empty | Item a (Array a)") "let addInt a b = a + b; let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 (Item 3 Empty)"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
@@ -707,8 +707,8 @@ spec =
           Left _ -> error "Was not supposed to fail"
           Right (_, expr') -> T.unpack (prettyPrint expr') `shouldContain` "a"
 
-      it "filter function for strings" $ do
-        result <- eval "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\a -> a == \"o\") \"woo\""
+      fit "filter function for strings" $ do
+        result <- eval "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\aa -> aa == \"o\") \"woo\""
         result
           `shouldBe` Right
             ( MTPrim mempty MTString,
@@ -785,7 +785,7 @@ spec =
         result
           `shouldSatisfy` isLeft
 
-      it "Array.fmap increments ints inside" $ do
+      fit "Array.fmap increments ints inside" $ do
         result <- eval "Array.fmap (\\a -> a + 1) [1,2,3]"
         result
           `shouldBe` Right
@@ -1335,6 +1335,7 @@ spec =
           result <- eval expr
           result `shouldSatisfy` isRight
 
+        -- what the hell
         xit "Parses using a lexeme" $ do
           let expr =
                 mconcat

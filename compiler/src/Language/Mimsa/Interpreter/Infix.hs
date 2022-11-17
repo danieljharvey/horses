@@ -7,6 +7,8 @@ import Language.Mimsa.Interpreter.SimpleExpr
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST.HOASExpr
+
+import Debug.Trace
 import Language.Mimsa.Types.Error.InterpreterError
 
 -- | this assumes that
@@ -23,7 +25,7 @@ interpretInfix interpretFn operator a b = do
   case operator of
     Equals -> do
       let withBool = pure . MyLiteral mempty . MyBool
-      if simpleExpr (fromHOAS plainA) == simpleExpr (fromHOAS plainB)
+      if traceShowId (simpleExpr (fromHOAS plainA)) == traceShowId (simpleExpr (fromHOAS plainB))
         then withBool True
         else withBool False
     Add -> do

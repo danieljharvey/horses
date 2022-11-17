@@ -5,9 +5,10 @@ import Language.Mimsa.Interpreter.Monad
 import Debug.Trace
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types.AST.HOASExpr
+import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Printer
+import Language.Mimsa.Types.AST
 
 interpretApp ::
   (Eq ann,Show ann ) =>
@@ -18,25 +19,27 @@ interpretApp ::
   InterpreterM ann (InterpretExpr ann)
 interpretApp interpretFn ann myFn value =
   case myFn of
-    (MyLambda _ _ident body) -> do
+    (HOAS.MyLambda _ _ident body) -> do
       -- interpret arg first
       intValue <- interpretFn value
       -- run it
       interpretFn (body intValue) >>= interpretFn
-    thing@(MyRecursiveLambda _ _ident (Identifier _ recIdent) body) -> do
+    thing@(HOAS.MyRecursiveLambda _ _ident recI@(Identifier _ recIdent) body) -> do
       -- interpret arg first
       intValue <- interpretFn value
       -- run the func
       result <- interpretFn (body intValue)
+
       traceShowM (prettyDoc (fromHOAS result))
-      let result2 = replaceVars recIdent thing result
-      traceShowM (prettyDoc (fromHOAS result2))
 
-      -- replace all instances of the recursive identifier with the function
-      interpretFn result2 >>= interpretFn
+      let withRecursiveFunc = toHOAS (MyLet ann recI (fromHOAS thing) (fromHOAS result))
 
-    (MyConstructor ann' modName const') ->
-      MyApp ann (MyConstructor ann' modName const')
+      traceShowM (prettyDoc (fromHOAS withRecursiveFunc))
+
+      interpretFn withRecursiveFunc >>= interpretFn
+
+    (HOAS.MyConstructor ann' modName const') ->
+      HOAS.MyApp ann (HOAS.MyConstructor ann' modName const')
         <$> interpretFn value
 
     fn -> do
@@ -47,5 +50,5 @@ interpretApp interpretFn ann myFn value =
         then do
           intValue <- interpretFn value
           -- at least change the value
-          pure (MyApp ann intFn intValue)
-        else interpretFn (MyApp ann intFn value)
+          pure (HOAS.MyApp ann intFn intValue)
+        else interpretFn (HOAS.MyApp ann intFn value)
