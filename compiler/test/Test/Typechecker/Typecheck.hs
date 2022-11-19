@@ -5,6 +5,7 @@ module Test.Typechecker.Typecheck
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor
 import Data.Either (isLeft)
 import Data.Map.Strict (Map)
@@ -410,20 +411,20 @@ spec = do
                 )
             )
       it "infers pair" $ do
-        let expr = MyPair mempty (int 1) (bool True)
+        let expr = MyTuple mempty (int 1) (NE.singleton $ bool True)
         startInference expr $
           Right
-            (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+            (MTTuple mempty (MTPrim mempty MTInt) (NE.singleton $ MTPrim mempty MTBool))
       it "infers and destructures pair" $ do
         let expr =
               MyLetPattern
                 mempty
-                ( PPair
+                ( PTuple
                     mempty
                     (PVar mempty "a")
-                    (PVar mempty "b")
+                    (NE.singleton $ PVar mempty "b")
                 )
-                (MyPair mempty (int 1) (bool True))
+                (MyTuple mempty (int 1) (NE.singleton $ bool True))
                 (MyVar mempty Nothing "a")
         startInference expr $ Right (MTPrim mempty MTInt)
       it "infers destructured pair in a lambda" $ do
@@ -433,17 +434,17 @@ spec = do
                 (Identifier mempty "x")
                 ( MyLetPattern
                     mempty
-                    ( PPair
+                    ( PTuple
                         mempty
                         (PVar mempty "a")
-                        (PVar mempty "b")
+                        (NE.singleton $ PVar mempty "b")
                     )
                     (MyVar mempty Nothing "x")
                     (MyVar mempty Nothing "a")
                 )
         startInference expr $
           Right
-            (MTFunction mempty (MTPair mempty (unknown 1) (unknown 2)) (unknown 1))
+            (MTFunction mempty (MTTuple mempty (unknown 1) (NE.singleton $ unknown 2)) (unknown 1))
       it "infers empty record" $ do
         let expr =
               MyRecord
@@ -535,12 +536,12 @@ spec = do
                 mempty
                 (Identifier mempty "id")
                 (MyLambda mempty (Identifier mempty "var") (MyVar mempty Nothing "var"))
-                ( MyPair
+                ( MyTuple
                     mempty
                     (MyApp mempty (MyVar mempty Nothing "id") (int 1))
-                    (MyApp mempty (MyVar mempty Nothing "id") (bool True))
+                    (NE.singleton $ MyApp mempty (MyVar mempty Nothing "id") (bool True))
                 )
-        let expected = Right (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTBool))
+        let expected = Right (MTTuple mempty (MTPrim mempty MTInt) (NE.singleton $ MTPrim mempty MTBool))
         startInference expr expected
 
       it "Simple let pattern with tuple" $ do
@@ -548,13 +549,13 @@ spec = do
               MyLet
                 mempty
                 (Identifier mempty "pair")
-                (MyPair mempty (int 1) (bool True))
+                (MyTuple mempty (int 1) (NE.singleton $ bool True))
                 ( MyLetPattern
                     mempty
-                    ( PPair
+                    ( PTuple
                         mempty
                         (PVar mempty "a")
-                        (PVar mempty "b")
+                        (NE.singleton $ PVar mempty "b")
                     )
                     (MyVar mempty Nothing "pair")
                     (MyVar mempty Nothing "a")
@@ -570,10 +571,10 @@ spec = do
                 (Identifier mempty "tuple")
                 ( MyLetPattern
                     mempty
-                    ( PPair
+                    ( PTuple
                         mempty
                         (PVar mempty "a")
-                        (PVar mempty "b")
+                        (NE.singleton $ PVar mempty "b")
                     )
                     (MyVar mempty Nothing "tuple")
                     (MyVar mempty Nothing "a")
@@ -583,7 +584,7 @@ spec = do
               Right
                 ( MTFunction
                     mempty
-                    (MTPair mempty (unknown 1) (unknown 2))
+                    (MTTuple mempty (unknown 1) (NE.singleton $ unknown 2))
                     (unknown 1)
                 )
         startInference expr expected
@@ -599,10 +600,10 @@ spec = do
                     ( MyPatternMatch
                         mempty
                         (MyVar mempty Nothing "tuple")
-                        [ ( PPair
+                        [ ( PTuple
                               mempty
                               (PVar mempty "a")
-                              (PVar mempty "b"),
+                              (NE.singleton $ PVar mempty "b"),
                             MyVar mempty Nothing "a"
                           )
                         ]
@@ -611,7 +612,7 @@ spec = do
                 ( MyLet
                     mempty
                     (Identifier mempty "pair")
-                    (MyPair mempty (int 1) (bool True))
+                    (MyTuple mempty (int 1) (NE.singleton $ bool True))
                     ( MyApp
                         mempty
                         (MyVar mempty Nothing "fst")
@@ -631,10 +632,10 @@ spec = do
                     (Identifier mempty "tuple")
                     ( MyLetPattern
                         mempty
-                        ( PPair
+                        ( PTuple
                             mempty
                             (PVar mempty "a")
-                            (PVar mempty "b")
+                            (NE.singleton $ PVar mempty "b")
                         )
                         (MyVar mempty Nothing "tuple")
                         (MyVar mempty Nothing "a")
@@ -643,7 +644,7 @@ spec = do
                 ( MyLet
                     mempty
                     (Identifier mempty "pair")
-                    (MyPair mempty (int 1) (bool True))
+                    (MyTuple mempty (int 1) (NE.singleton $ bool True))
                     (MyApp mempty (MyVar mempty Nothing "fst") (MyVar mempty Nothing "pair"))
                 )
         let expected = Right (MTPrim mempty MTInt)
@@ -674,7 +675,7 @@ spec = do
               MyLambda
                 mempty
                 (Identifier mempty "a")
-                ( MyPair
+                ( MyTuple
                     mempty
                     ( MyInfix
                         mempty
@@ -682,7 +683,7 @@ spec = do
                         (int 1)
                         (MyRecordAccess mempty (MyVar mempty Nothing "a") "prop")
                     )
-                    ( MyInfix
+                    ( NE.singleton $ MyInfix
                         mempty
                         StringConcat
                         (str "!")
@@ -884,11 +885,11 @@ spec = do
       let expr =
             MyPatternMatch
               mempty
-              (MyPair mempty (int 1) (int 2))
-              [ ( PPair
+              (MyTuple mempty (int 1) (NE.singleton $ int 2))
+              [ ( PTuple
                     mempty
                     (PVar mempty "a")
-                    (PVar mempty "b"),
+                    (NE.singleton $ PVar mempty "b"),
                   MyInfix
                     mempty
                     Add
@@ -1014,16 +1015,16 @@ spec = do
               mempty
               matchExpr
               [ ( PConstructor mempty Nothing "Pair" [PVar mempty "a", PVar mempty "b"],
-                  MyPair mempty (MyVar mempty Nothing "a") (MyVar mempty Nothing "b")
+                  MyTuple mempty (MyVar mempty Nothing "a") (NE.singleton $ MyVar mempty Nothing "b")
                 )
               ]
 
       startInferenceWithDataTypes [dtPair] expr $
         Right
-          ( MTPair
+          ( MTTuple
               mempty
               (MTPrim mempty MTBool)
-              ( MTPrim mempty MTInt
+              ( NE.singleton $ MTPrim mempty MTInt
               )
           )
 

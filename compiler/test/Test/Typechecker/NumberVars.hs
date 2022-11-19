@@ -7,6 +7,7 @@ module Test.Typechecker.NumberVars
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Either
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -68,19 +69,19 @@ spec = do
                 MyLambda
                   mempty
                   (Identifier mempty "x")
-                  ( MyPair
+                  ( MyTuple
                       mempty
                       (MyVar mempty Nothing "x")
-                      (MyLambda mempty (Identifier mempty "x") (MyVar mempty Nothing "x"))
+                      (NE.singleton $ MyLambda mempty (Identifier mempty "x") (MyVar mempty Nothing "x"))
                   )
               expected =
                 MyLambda
                   mempty
                   (Identifier mempty ("x", Unique 0))
-                  ( MyPair
+                  ( MyTuple
                       mempty
                       (MyVar mempty Nothing ("x", Unique 0))
-                      ( MyLambda
+                      ( NE.singleton $ MyLambda
                           mempty
                           ( Identifier mempty ("x", Unique 1)
                           )

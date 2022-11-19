@@ -130,7 +130,7 @@ spec =
       it "Pair" $
         let mt :: MonoType
             mt =
-              MTPair
+              MTTuple
                 mempty
                 (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTInt))
                 (MTPrim mempty MTString)

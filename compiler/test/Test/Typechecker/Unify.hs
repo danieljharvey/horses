@@ -83,8 +83,8 @@ spec =
 
     it "Combines two half pairs" $
       runUnifier
-        ( MTPair mempty (MTVar mempty (TVUnificationVar 1)) (MTPrim mempty MTInt),
-          MTPair mempty (MTPrim mempty MTBool) (MTVar mempty (TVUnificationVar 2))
+        ( MTTuple mempty (MTVar mempty (TVUnificationVar 1)) (MTPrim mempty MTInt),
+          MTTuple mempty (MTPrim mempty MTBool) (MTVar mempty (TVUnificationVar 2))
         )
         `shouldBe` Right
           ( Substitutions $

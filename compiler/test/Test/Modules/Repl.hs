@@ -9,6 +9,7 @@ where
 
 -- testing doing repl things but in the modules world
 
+import qualified Data.List.NonEmpty as NE
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
 import Data.Text (Text)
@@ -940,8 +941,8 @@ spec =
         result <- eval "match \"dog\" with a ++ b -> (a,b) | \"\" -> (\"\", \"\")"
         result
           `shouldBe` Right
-            ( MTPair mempty (MTPrim mempty MTString) (MTPrim mempty MTString),
-              MyPair mempty (MyLiteral mempty (MyString "d")) (MyLiteral mempty (MyString "og"))
+            ( MTTuple mempty (MTPrim mempty MTString) (NE.singleton $ MTPrim mempty MTString),
+              MyTuple mempty (MyLiteral mempty (MyString "d")) (NE.singleton $ MyLiteral mempty (MyString "og"))
             )
 
       it "Fix empty pattern match obscuring bindings" $ do

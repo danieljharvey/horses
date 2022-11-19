@@ -31,22 +31,22 @@ spec =
       normaliseType' (mkVar 10)
         `shouldBe` mkVar 1
     it "The same vars should get the same numbers " $
-      normaliseType' (MTPair mempty (mkVar 10) (mkVar 10))
-        `shouldBe` MTPair mempty (mkVar 1) (mkVar 1)
+      normaliseType' (MTTuple mempty (mkVar 10) (mkVar 10))
+        `shouldBe` MTTuple mempty (mkVar 1) (mkVar 1)
     it "We increase the value we return as we go" $
-      normaliseType' (MTPair mempty (mkVar 10) (mkVar 8))
-        `shouldBe` MTPair mempty (mkVar 1) (mkVar 2)
+      normaliseType' (MTTuple mempty (mkVar 10) (mkVar 8))
+        `shouldBe` MTTuple mempty (mkVar 1) (mkVar 2)
     it "Repeating an earlier value does not break it" $
       normaliseType'
-        ( MTPair
+        ( MTTuple
             mempty
             (mkVar 10)
-            (MTPair mempty (mkVar 8) (mkVar 10))
+            (MTTuple mempty (mkVar 8) (mkVar 10))
         )
-        `shouldBe` MTPair
+        `shouldBe` MTTuple
           mempty
           (mkVar 1)
-          ( MTPair
+          ( MTTuple
               mempty
               (mkVar 2)
               (mkVar 1)

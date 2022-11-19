@@ -52,13 +52,13 @@ spec =
     it "Pair of primitives" $
       testParser "(Int,     String)"
         `shouldBe` Right
-          (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
+          (MTTuple mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
     it "Pair with less spacing" $
       testParser "(a,b) ->   a"
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTPair mempty (MTVar mempty (tvNamed "a")) (MTVar mempty (tvNamed "b")))
+              (MTTuple mempty (MTVar mempty (tvNamed "a")) (MTVar mempty (tvNamed "b")))
               (MTVar mempty (tvNamed "a"))
           )
     it "Function with pair" $
@@ -66,7 +66,7 @@ spec =
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTPair mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
+              (MTTuple mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
               (MTPrim mempty MTInt)
           )
     it "Function with variables" $
@@ -149,7 +149,7 @@ spec =
                       MTFunction
                         mempty
                         (MTPrim mempty MTString)
-                        ( MTPair
+                        ( MTTuple
                             mempty
                             (MTVar mempty (tvNamed "b"))
                             ( dataTypeWithVars

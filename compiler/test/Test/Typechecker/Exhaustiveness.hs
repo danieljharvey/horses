@@ -5,6 +5,7 @@ module Test.Typechecker.Exhaustiveness
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Either
@@ -105,10 +106,10 @@ spec = do
 
       it "Pair of vars is fine" $ do
         exhaustiveCheck
-          [ PPair
+          [ PTuple
               mempty
               (PWildcard mempty)
-              (PWildcard mempty)
+              (NE.singleton $ PWildcard mempty)
           ]
           `shouldBe` Right []
       it "Pair of False is returned" $
@@ -116,18 +117,18 @@ spec = do
           let true = PLit mempty (MyBool True)
               false = PLit mempty (MyBool False)
           exhaustiveCheck
-            [ PPair mempty true true,
-              PPair mempty false true,
-              PPair mempty true false
+            [ PTuple mempty true (NE.singleton true),
+              PTuple mempty false (NE.singleton true),
+              PTuple mempty true (NE.singleton false)
             ]
-            `shouldBe` Right [PPair mempty false false]
+            `shouldBe` Right [PTuple mempty false (NE.singleton false)]
       it "Pair with var is exhaustive" $ do
         let true = PLit mempty (MyBool True)
             false = PLit mempty (MyBool False)
         exhaustiveCheck
-          [ PPair mempty true true,
-            PPair mempty false true,
-            PPair mempty (PVar mempty "dog") false
+          [ PTuple mempty true (NE.singleton true),
+            PTuple mempty false (NE.singleton true),
+            PTuple mempty (PVar mempty "dog") (NE.singleton false)
           ]
           `shouldBe` Right []
 
@@ -142,7 +143,7 @@ spec = do
           `shouldBe` Right [PRecord mempty (M.fromList [("a", false), ("b", false)])]
       it "A pair annihilates empty" $ do
         exhaustiveCheck
-          [ PConstructor mempty Nothing "Just" [PPair mempty (PWildcard mempty) (PWildcard mempty)],
+          [ PConstructor mempty Nothing "Just" [PTuple mempty (PWildcard mempty) (NE.singleton $ PWildcard mempty)],
             PConstructor mempty Nothing "Nothing" mempty
           ]
           `shouldBe` Right mempty
@@ -275,18 +276,18 @@ spec = do
       noDuplicatesCheck (PVar mempty "a") `shouldSatisfy` isRight
     it "Is fine with a pair of different vars" $ do
       noDuplicatesCheck
-        ( PPair
+        ( PTuple
             mempty
             (PVar mempty "a")
-            (PVar mempty "b")
+            (NE.singleton $ PVar mempty "b")
         )
         `shouldSatisfy` isRight
     it "Hates a pair of the same var" $ do
       noDuplicatesCheck
-        ( PPair
+        ( PTuple
             mempty
             (PVar mempty "a")
-            (PVar mempty "a")
+            (NE.singleton $ PVar mempty "a")
         )
         `shouldSatisfy` isLeft
     it "Is fine with a record of uniques" $ do

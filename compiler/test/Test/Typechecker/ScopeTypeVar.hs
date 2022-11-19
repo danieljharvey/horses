@@ -44,7 +44,7 @@ spec = do
       snd <$> result `shouldBe` Right (MTVar mempty (TVScopedVar 1 "a"))
     it "Empty set changes to same value" $ do
       let mt =
-            MTPair
+            MTTuple
               mempty
               (MTVar mempty (TVName "a"))
               (MTVar mempty (TVName "a"))
@@ -56,7 +56,7 @@ spec = do
                   mt
               )
       let expected =
-            MTPair
+            MTTuple
               mempty
               (MTVar mempty (TVScopedVar 1 "a"))
               (MTVar mempty (TVScopedVar 1 "a"))
