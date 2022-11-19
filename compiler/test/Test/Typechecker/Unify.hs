@@ -6,6 +6,7 @@ module Test.Typechecker.Unify
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Control.Monad.State.Strict (runState)
 import Data.Either (isLeft, isRight)
@@ -83,8 +84,8 @@ spec =
 
     it "Combines two half pairs" $
       runUnifier
-        ( MTTuple mempty (MTVar mempty (TVUnificationVar 1)) (MTPrim mempty MTInt),
-          MTTuple mempty (MTPrim mempty MTBool) (MTVar mempty (TVUnificationVar 2))
+        ( MTTuple mempty (MTVar mempty (TVUnificationVar 1)) (NE.singleton $ MTPrim mempty MTInt),
+          MTTuple mempty (MTPrim mempty MTBool) (NE.singleton $ MTVar mempty (TVUnificationVar 2))
         )
         `shouldBe` Right
           ( Substitutions $

@@ -50,7 +50,7 @@ wasmTest input =
 
 spec :: Spec
 spec = do
-  fdescribe "Wasm" $ do
+  describe "Wasm" $ do
     describe "Number literals" $ do
       it "int literal 1" $ do
         result <- wasmTest "1"

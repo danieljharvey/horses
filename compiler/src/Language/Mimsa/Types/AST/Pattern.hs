@@ -106,7 +106,7 @@ instance Printer (Pattern Name ann) where
           _ -> mempty
      in prettyNamespace <> prettyDoc tyCon <> prettyArgs
   prettyDoc (PTuple _ a as) =
-    "(" <> hsep (punctuate ", " (prettyDoc <$> ([a] <> NE.toList as))) <> ")"
+    "(" <> hsep (punctuate "," (prettyDoc <$> ([a] <> NE.toList as))) <> ")"
   prettyDoc (PArray _ as spread) =
     "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> prettyDoc spread <> "]"
   prettyDoc (PRecord _ map') =

@@ -5,6 +5,7 @@ module Test.Project.NormaliseType
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Coerce
 import Data.Text (Text)
 import Language.Mimsa.Typechecker.NormaliseTypes
@@ -31,25 +32,25 @@ spec =
       normaliseType' (mkVar 10)
         `shouldBe` mkVar 1
     it "The same vars should get the same numbers " $
-      normaliseType' (MTTuple mempty (mkVar 10) (mkVar 10))
-        `shouldBe` MTTuple mempty (mkVar 1) (mkVar 1)
+      normaliseType' (MTTuple mempty (mkVar 10) (NE.singleton $ mkVar 10))
+        `shouldBe` MTTuple mempty (mkVar 1) (NE.singleton $ mkVar 1)
     it "We increase the value we return as we go" $
-      normaliseType' (MTTuple mempty (mkVar 10) (mkVar 8))
-        `shouldBe` MTTuple mempty (mkVar 1) (mkVar 2)
+      normaliseType' (MTTuple mempty (mkVar 10) (NE.singleton $ mkVar 8))
+        `shouldBe` MTTuple mempty (mkVar 1) (NE.singleton $ mkVar 2)
     it "Repeating an earlier value does not break it" $
       normaliseType'
         ( MTTuple
             mempty
             (mkVar 10)
-            (MTTuple mempty (mkVar 8) (mkVar 10))
+            (NE.singleton $ MTTuple mempty (mkVar 8) (NE.singleton $ mkVar 10))
         )
         `shouldBe` MTTuple
           mempty
           (mkVar 1)
-          ( MTTuple
+          ( NE.singleton $ MTTuple
               mempty
               (mkVar 2)
-              (mkVar 1)
+              (NE.singleton $ mkVar 1)
           )
     it "Normalises named variables too" $
       normaliseType'

@@ -5,6 +5,7 @@ module Test.Parser.MonoTypeParser
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Data.Either (isRight)
 import Data.Functor
@@ -52,13 +53,13 @@ spec =
     it "Pair of primitives" $
       testParser "(Int,     String)"
         `shouldBe` Right
-          (MTTuple mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
+          (MTTuple mempty (MTPrim mempty MTInt) (NE.singleton $ MTPrim mempty MTString))
     it "Pair with less spacing" $
       testParser "(a,b) ->   a"
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTTuple mempty (MTVar mempty (tvNamed "a")) (MTVar mempty (tvNamed "b")))
+              (MTTuple mempty (MTVar mempty (tvNamed "a")) (NE.singleton $ MTVar mempty (tvNamed "b")))
               (MTVar mempty (tvNamed "a"))
           )
     it "Function with pair" $
@@ -66,7 +67,7 @@ spec =
         `shouldBe` Right
           ( MTFunction
               mempty
-              (MTTuple mempty (MTPrim mempty MTInt) (MTPrim mempty MTString))
+              (MTTuple mempty (MTPrim mempty MTInt) (NE.singleton $ MTPrim mempty MTString))
               (MTPrim mempty MTInt)
           )
     it "Function with variables" $
@@ -152,7 +153,7 @@ spec =
                         ( MTTuple
                             mempty
                             (MTVar mempty (tvNamed "b"))
-                            ( dataTypeWithVars
+                            ( NE.singleton $ dataTypeWithVars
                                 mempty
                                 Nothing
                                 "Either"

@@ -6,6 +6,7 @@ module Test.Typechecker.ScopeTypeVar
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Control.Monad.Identity
 import Control.Monad.State.Strict
@@ -47,7 +48,7 @@ spec = do
             MTTuple
               mempty
               (MTVar mempty (TVName "a"))
-              (MTVar mempty (TVName "a"))
+              (NE.singleton $ MTVar mempty (TVName "a"))
 
       let result =
             runTC
@@ -59,7 +60,7 @@ spec = do
             MTTuple
               mempty
               (MTVar mempty (TVScopedVar 1 "a"))
-              (MTVar mempty (TVScopedVar 1 "a"))
+              (NE.singleton $ MTVar mempty (TVScopedVar 1 "a"))
 
       snd <$> result `shouldBe` Right expected
 

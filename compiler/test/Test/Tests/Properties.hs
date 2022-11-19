@@ -7,6 +7,7 @@ module Test.Tests.Properties
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.IO.Class
 import Data.Either (isLeft, isRight)
 import Data.Functor
@@ -96,7 +97,7 @@ spec = do
       it "Array of ints" $ do
         itGenerates (MTArray mempty mtInt)
       it "Pair of int and string" $ do
-        itGenerates (MTTuple mempty mtInt mtString)
+        itGenerates (MTTuple mempty mtInt (NE.singleton mtString))
       it "Records" $ do
         let record = MTRecord mempty (M.fromList [("dog", mtInt), ("cat", mtBool)]) Nothing
         itGenerates record
