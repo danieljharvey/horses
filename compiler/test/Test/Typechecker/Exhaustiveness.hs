@@ -122,6 +122,11 @@ spec = do
               PTuple mempty true (NE.singleton false)
             ]
             `shouldBe` Right [PTuple mempty false (NE.singleton false)]
+      it "3-tuples work as expected" $ do
+        let true = PLit mempty (MyBool True)
+            false = PLit mempty (MyBool False)
+        -- [a,b,True] should return [_, _, False] or something
+        exhaustiveCheck [PTuple mempty.....]
       it "Pair with var is exhaustive" $ do
         let true = PLit mempty (MyBool True)
             false = PLit mempty (MyBool False)
