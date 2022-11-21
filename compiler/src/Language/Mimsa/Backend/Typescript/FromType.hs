@@ -5,6 +5,7 @@ module Language.Mimsa.Backend.Typescript.FromType (toTSType, toTSType') where
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce (coerce)
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -38,6 +39,13 @@ toTSTypeRecord as = do
       tsItems = M.fromList . fmap (bimap coerce fst) . M.toList $ tsAll
   pure (TSTypeRecord tsItems, mconcat generics)
 
+toTSTypeTuple :: [Type ann] -> TypescriptM (TSType, Set TSGeneric)
+toTSTypeTuple as = do
+  tsAll <- traverse toTSType as
+  let generics = snd <$> tsAll
+      tsItems = fst <$> tsAll
+  pure (TSTypeTuple tsItems, mconcat generics)
+
 toTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
 toTSType = toTSType' False
 
@@ -65,10 +73,8 @@ toTSType' topLevel (MTFunction _ a b) = do
 toTSType' _ (MTArray _ as) = do
   (tsAs, genAs) <- toTSType as
   pure (TSTypeArray tsAs, genAs)
-toTSType' _ (MTPair _ a b) = do
-  (tsA, genA) <- toTSType a
-  (tsB, genB) <- toTSType b
-  pure (TSTypeTuple [tsA, tsB], genA <> genB)
+toTSType' _ (MTTuple _ a as) = do
+  toTSTypeTuple ([a] <> NE.toList as)
 toTSType' _ mt@MTConstructor {} =
   consToTSType mt
 toTSType' _ (MTRecord _ as Nothing) =

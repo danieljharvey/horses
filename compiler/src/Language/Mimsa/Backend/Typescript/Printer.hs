@@ -173,7 +173,7 @@ printExpr (TSFunction name generics mt maybeReturn expr) =
 printExpr (TSVar var) = printTSName var
 printExpr (TSApp func val) =
   printExpr func <> "(" <> printExpr val <> ")"
-printExpr (TSPair a b) = "[" <> printExpr a <> "," <> printExpr b <> "] as const"
+printExpr (TSTuple as) = printExpr (TSArray (TSArrayItem <$> as)) <> " as const"
 printExpr (TSArray as) =
   "["
     <> T.intercalate

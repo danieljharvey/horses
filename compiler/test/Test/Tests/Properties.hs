@@ -10,6 +10,7 @@ where
 import Control.Monad.IO.Class
 import Data.Either (isLeft, isRight)
 import Data.Functor
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate
@@ -96,7 +97,7 @@ spec = do
       it "Array of ints" $ do
         itGenerates (MTArray mempty mtInt)
       it "Pair of int and string" $ do
-        itGenerates (MTPair mempty mtInt mtString)
+        itGenerates (MTTuple mempty mtInt (NE.singleton mtString))
       it "Records" $ do
         let record = MTRecord mempty (M.fromList [("dog", mtInt), ("cat", mtBool)]) Nothing
         itGenerates record

@@ -35,8 +35,8 @@ foldPattern fn pat =
     foldPattern' (PLit ann _) = f ann
     foldPattern' (PConstructor ann _ _ as) =
       f ann <> foldMap (foldPattern fn) as
-    foldPattern' (PPair ann a b) =
-      f ann <> foldPattern fn a <> foldPattern fn b
+    foldPattern' (PTuple ann a as) =
+      f ann <> foldPattern fn a <> foldMap (foldPattern fn) as
     foldPattern' (PRecord ann as) =
       f ann <> foldMap (foldPattern fn) as
     foldPattern' (PArray ann as spread) =
@@ -90,7 +90,7 @@ foldExpr fn expression =
       f ann <> foldExpr fn func <> foldExpr fn arg
     foldExpr' (MyIf ann predExpr thenExpr elseExpr) =
       f ann <> foldExpr fn predExpr <> foldExpr fn thenExpr <> foldExpr fn elseExpr
-    foldExpr' (MyPair ann a b) = f ann <> foldExpr fn a <> foldExpr fn b
+    foldExpr' (MyTuple ann a as) = f ann <> foldExpr fn a <> foldMap (foldExpr fn) as
     foldExpr' (MyRecord ann as) = f ann <> foldMap (foldExpr fn) as
     foldExpr' (MyRecordAccess ann record _) =
       f ann <> foldExpr fn record

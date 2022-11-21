@@ -9,6 +9,7 @@ where
 import Control.Monad.Except
 import Control.Monad.State.Strict (runState)
 import Data.Either (isLeft, isRight)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
@@ -83,8 +84,8 @@ spec =
 
     it "Combines two half pairs" $
       runUnifier
-        ( MTPair mempty (MTVar mempty (TVUnificationVar 1)) (MTPrim mempty MTInt),
-          MTPair mempty (MTPrim mempty MTBool) (MTVar mempty (TVUnificationVar 2))
+        ( MTTuple mempty (MTVar mempty (TVUnificationVar 1)) (NE.singleton $ MTPrim mempty MTInt),
+          MTTuple mempty (MTPrim mempty MTBool) (NE.singleton $ MTVar mempty (TVUnificationVar 2))
         )
         `shouldBe` Right
           ( Substitutions $

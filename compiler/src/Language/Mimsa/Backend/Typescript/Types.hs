@@ -77,7 +77,7 @@ data TSStringPart
 
 data TSPattern
   = TSPatternVar TSName
-  | TSPatternPair TSPattern TSPattern
+  | TSPatternTuple [TSPattern]
   | TSPatternRecord (Map TSName TSPattern)
   | TSPatternConstructor TyCon [TSPattern]
   | TSPatternLit TSLiteral
@@ -133,7 +133,7 @@ data TSExpr
   | TSRecordAccess TSName TSExpr
   | TSArray [TSArrayPart]
   | TSArrayAccess Int TSExpr
-  | TSPair TSExpr TSExpr
+  | TSTuple [TSExpr]
   | TSVar TSName
   | TSApp TSExpr TSExpr
   | TSInfix TSOp TSExpr TSExpr

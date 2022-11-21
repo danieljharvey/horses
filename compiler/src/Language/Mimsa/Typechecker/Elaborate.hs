@@ -57,7 +57,7 @@ getPatternTypeFromAnn pat =
     PWildcard ann -> ann
     PVar ann _ -> ann
     PConstructor ann _ _ _ -> ann
-    PPair ann _ _ -> ann
+    PTuple ann _ _ -> ann
     PRecord ann _ -> ann
     PArray ann _ _ -> ann
     PString ann _ _ -> ann
@@ -389,19 +389,19 @@ inferPattern env (PConstructor ann modName tyCon args) = do
     ( PConstructor (dataTypeWithVars ann modName ty tyTypeVars) modName tyCon inferArgs,
       newEnv
     )
-inferPattern env (PPair ann a b) = do
+inferPattern env (PTuple ann a as) = do
   (inferA, envA) <- inferPattern env a
-  (inferB, envB) <- inferPattern envA b
+  lump <- traverse (inferPattern envA) as
   pure
-    ( PPair
-        ( MTPair
+    ( PTuple
+        ( MTTuple
             ann
             (getPatternTypeFromAnn inferA)
-            (getPatternTypeFromAnn inferB)
+            (getPatternTypeFromAnn . fst <$> lump)
         )
         inferA
-        inferB,
-      envB
+        (fst <$> lump),
+      foldMap snd lump
     )
 inferPattern env (PRecord ann items) = do
   let inferRow (k, v) = do
@@ -786,12 +786,12 @@ infer env inferExpr =
       inferApplication env ann function argument
     (MyIf ann condition thenCase elseCase) ->
       inferIf env ann condition thenCase elseCase
-    (MyPair ann a b) -> do
+    (MyTuple ann a as) -> do
       inferA <- infer env a
-      inferB <- infer env b
+      inferAs <- traverse (infer env) as
       let tyA = getTypeFromAnn inferA
-          tyB = getTypeFromAnn inferB
-      pure (MyPair (MTPair ann tyA tyB) inferA inferB)
+          tyAs = getTypeFromAnn <$> inferAs
+      pure (MyTuple (MTTuple ann tyA tyAs) inferA inferAs)
     (MyArray ann items) -> do
       inferArray env ann items
     (MyConstructor ann modName name) -> do

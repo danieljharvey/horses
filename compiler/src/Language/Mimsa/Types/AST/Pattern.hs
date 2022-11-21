@@ -17,6 +17,7 @@ where
 
 import qualified Data.Aeson as JSON
 import Data.Bifunctor.TH
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Generics
@@ -47,10 +48,10 @@ data Pattern var ann
         patTyCon :: TyCon,
         patMatches :: [Pattern var ann]
       }
-  | PPair
+  | PTuple
       { patAnn :: ann,
         patA :: Pattern var ann,
-        patB :: Pattern var ann
+        patAs :: NE.NonEmpty (Pattern var ann)
       }
   | PRecord
       { patAnn :: ann,
@@ -78,7 +79,7 @@ getPatternAnnotation (PWildcard ann) = ann
 getPatternAnnotation (PVar ann _) = ann
 getPatternAnnotation (PLit ann _) = ann
 getPatternAnnotation (PConstructor ann _ _ _) = ann
-getPatternAnnotation (PPair ann _ _) = ann
+getPatternAnnotation (PTuple ann _ _) = ann
 getPatternAnnotation (PRecord ann _) = ann
 getPatternAnnotation (PArray ann _ _) = ann
 getPatternAnnotation (PString ann _ _) = ann
@@ -104,8 +105,8 @@ instance Printer (Pattern Name ann) where
           Just m -> prettyDoc m <> "."
           _ -> mempty
      in prettyNamespace <> prettyDoc tyCon <> prettyArgs
-  prettyDoc (PPair _ a b) =
-    "(" <> prettyDoc a <> ", " <> prettyDoc b <> ")"
+  prettyDoc (PTuple _ a as) =
+    "(" <> hsep (punctuate "," (prettyDoc <$> ([a] <> NE.toList as))) <> ")"
   prettyDoc (PArray _ as spread) =
     "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> prettyDoc spread <> "]"
   prettyDoc (PRecord _ map') =

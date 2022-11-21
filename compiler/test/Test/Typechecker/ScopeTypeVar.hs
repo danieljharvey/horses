@@ -9,6 +9,7 @@ where
 import Control.Monad.Except
 import Control.Monad.Identity
 import Control.Monad.State.Strict
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.TcMonad
@@ -44,10 +45,10 @@ spec = do
       snd <$> result `shouldBe` Right (MTVar mempty (TVScopedVar 1 "a"))
     it "Empty set changes to same value" $ do
       let mt =
-            MTPair
+            MTTuple
               mempty
               (MTVar mempty (TVName "a"))
-              (MTVar mempty (TVName "a"))
+              (NE.singleton $ MTVar mempty (TVName "a"))
 
       let result =
             runTC
@@ -56,10 +57,10 @@ spec = do
                   mt
               )
       let expected =
-            MTPair
+            MTTuple
               mempty
               (MTVar mempty (TVScopedVar 1 "a"))
-              (MTVar mempty (TVScopedVar 1 "a"))
+              (NE.singleton $ MTVar mempty (TVScopedVar 1 "a"))
 
       snd <$> result `shouldBe` Right expected
 

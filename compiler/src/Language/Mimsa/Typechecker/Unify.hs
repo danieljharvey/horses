@@ -10,6 +10,7 @@ where
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Functor (($>))
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
@@ -150,8 +151,9 @@ unify tyA tyB =
           pure mempty
     (MTFunction _ l r, MTFunction _ l' r') ->
       unifyPairs (l, r) (l', r')
-    (MTPair _ a b, MTPair _ a' b') ->
-      unifyPairs (a, b) (a', b')
+    (MTTuple _ a as, MTTuple _ a' as') ->
+      let pairs = zip ([a] <> NE.toList as) ([a'] <> NE.toList as')
+       in mconcat <$> traverse (uncurry unify) pairs
     (MTRecord ann as Nothing, MTRecord ann' bs Nothing) ->
       unifyRecords (ann, as) (ann', bs)
     (MTRecord ann as (Just restA), MTRecord ann' bs (Just restB)) ->

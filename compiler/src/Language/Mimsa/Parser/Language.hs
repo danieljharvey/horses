@@ -19,9 +19,10 @@ module Language.Mimsa.Parser.Language
 where
 
 import Data.Functor (($>))
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
-import Language.Mimsa.Parser.Helpers (addLocation, chainl1, inBrackets, orInBrackets, parseAndFormat, withLocation)
+import Language.Mimsa.Parser.Helpers (addLocation, chainl1, commaSep, inBrackets, orInBrackets, parseAndFormat, withLocation)
 import Language.Mimsa.Parser.Identifier
 import Language.Mimsa.Parser.Identifiers
 import Language.Mimsa.Parser.Lexeme
@@ -65,7 +66,7 @@ complexParser =
     <|> letPatternParser
     <|> try appParser
     <|> ifParser
-    <|> pairParser
+    <|> tupleParser
     <|> try recordAccessParser
     <|> recordParser
     <|> lambdaParser
@@ -170,7 +171,7 @@ argParser =
           <|> letParser
           <|> letPatternParser
           <|> ifParser
-          <|> pairParser
+          <|> tupleParser
           <|> try recordAccessParser
           <|> recordParser
           <|> lambdaParser
@@ -243,14 +244,16 @@ ifParser = addLocation $ do
 
 -----
 
-pairParser :: Parser ParserExpr
-pairParser = addLocation $ do
-  _ <- myString "("
-  exprA <- expressionParser
-  _ <- myString ","
-  exprB <- expressionParser
-  _ <- myString ")"
-  pure (MyPair mempty exprA exprB)
+tupleParser :: Parser ParserExpr
+tupleParser = label "tuple" $
+  addLocation $ do
+    _ <- myString "("
+    neArgs <- commaSep expressionParser
+    neTail <- case NE.nonEmpty (NE.tail neArgs) of
+      Just ne -> pure ne
+      _ -> fail "Expected at least two items in a tuple"
+    _ <- myString ")"
+    pure (MyTuple mempty (NE.head neArgs) neTail)
 
 -----
 

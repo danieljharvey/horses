@@ -96,11 +96,11 @@ data Expr var ann
         expThen :: Expr var ann,
         expElse :: Expr var ann
       }
-  | -- | (a,b)
-    MyPair
+  | -- | (a,b,...)
+    MyTuple
       { expAnn :: ann,
         expA :: Expr var ann,
-        expB :: Expr var ann
+        expB :: NE.NonEmpty (Expr var ann)
       }
   | -- | { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
     MyRecord
@@ -212,16 +212,18 @@ prettyLetPattern pat expr body =
 newlineOrIn :: Doc style
 newlineOrIn = flatAlt (";" <> line <> line) " in "
 
-prettyPair :: Expr Name ann -> Expr Name ann -> Doc style
-prettyPair a b =
+prettyTuple :: Expr Name ann -> NE.NonEmpty (Expr Name ann) -> Doc style
+prettyTuple a as =
   group
     ( "("
         <> align
           ( vsep
-              [ printSubExpr a <> ",",
-                printSubExpr b <> ")"
-              ]
+              ( punctuate
+                  ","
+                  (printSubExpr <$> ([a] <> NE.toList as))
+              )
           )
+        <> ")"
     )
 
 prettyLambda ::
@@ -355,8 +357,8 @@ instance Printer (Expr Name ann) where
     prettyDoc expr <> "." <> prettyDoc name
   prettyDoc (MyIf _ if' then' else') =
     prettyIf if' then' else'
-  prettyDoc (MyPair _ a b) =
-    prettyPair a b
+  prettyDoc (MyTuple _ a as) =
+    prettyTuple a as
   prettyDoc (MyRecord _ map') =
     prettyRecord map'
   prettyDoc (MyArray _ items) = prettyArray items
@@ -383,6 +385,6 @@ printSubExpr expr = case expr of
   all'@MyLambda {} -> inParens all'
   all'@MyIf {} -> inParens all'
   all'@MyApp {} -> inParens all'
-  all'@MyPair {} -> inParens all'
+  all'@MyTuple {} -> inParens all'
   all'@MyPatternMatch {} -> inParens all'
   a -> prettyDoc a

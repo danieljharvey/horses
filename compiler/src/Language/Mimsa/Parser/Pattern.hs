@@ -7,6 +7,7 @@ module Language.Mimsa.Parser.Pattern
 where
 
 import Data.Either (partitionEithers)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Identifiers (moduleNameParser, nameParser, tyConParser)
@@ -26,7 +27,7 @@ patternParser =
     "pattern match"
     ( orInBrackets
         ( try stringParser
-            <|> try pairParser
+            <|> try tupleParser
             <|> try wildcardParser
             <|> try variableParser
             <|> try litParser
@@ -53,14 +54,16 @@ variableParser =
 
 ----
 
-pairParser :: Parser ParserPattern
-pairParser = withLocation (\loc (one, two) -> PPair loc one two) $ do
-  _ <- myString "("
-  one <- patternParser
-  _ <- myString ","
-  two <- patternParser
-  _ <- myString ")"
-  pure (one, two)
+tupleParser :: Parser ParserPattern
+tupleParser = label "tuple" $
+  withLocation (\loc (pHead, pTail) -> PTuple loc pHead pTail) $ do
+    _ <- myString "("
+    neArgs <- commaSep patternParser
+    neTail <- case NE.nonEmpty (NE.tail neArgs) of
+      Just ne -> pure ne
+      _ -> fail "Expected at least two items in a tuple"
+    _ <- myString ")"
+    pure (NE.head neArgs, neTail)
 
 ----
 

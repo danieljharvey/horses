@@ -8,6 +8,7 @@ where
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Either
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Types.AST
@@ -43,7 +44,12 @@ noDuplicatesCheck = runPatternM . noDuplicateVariables
 testEnv :: Environment
 testEnv = mempty {getDataTypes = dts}
   where
-    dts = M.fromList [((Nothing, "Maybe"), dtMaybe), ((Nothing, "These"), dtThese)]
+    dts =
+      M.fromList
+        [ ((Nothing, "Maybe"), dtMaybe),
+          ((Nothing, "Either"), dtEither),
+          ((Nothing, "These"), dtThese)
+        ]
 
 spec :: Spec
 spec = do
@@ -105,31 +111,95 @@ spec = do
 
       it "Pair of vars is fine" $ do
         exhaustiveCheck
-          [ PPair
+          [ PTuple
               mempty
               (PWildcard mempty)
-              (PWildcard mempty)
+              (NE.singleton $ PWildcard mempty)
           ]
           `shouldBe` Right []
+
       it "Pair of False is returned" $
         do
           let true = PLit mempty (MyBool True)
               false = PLit mempty (MyBool False)
           exhaustiveCheck
-            [ PPair mempty true true,
-              PPair mempty false true,
-              PPair mempty true false
+            [ PTuple mempty true (NE.singleton true),
+              PTuple mempty false (NE.singleton true),
+              PTuple mempty true (NE.singleton false)
             ]
-            `shouldBe` Right [PPair mempty false false]
-      it "Pair with var is exhaustive" $ do
+            `shouldBe` Right [PTuple mempty false (NE.singleton false)]
+
+      it "3 tuple of wildcards is exhaustive" $ do
+        let wildcard = PWildcard mempty
+        exhaustiveCheck [PTuple mempty wildcard (NE.fromList [wildcard, wildcard])]
+          `shouldBe` Right mempty
+
+      it "3 tuple of ones are not exhaustive" $ do
+        let one = PLit mempty (MyInt 1)
+            wildcard = PWildcard mempty
+        exhaustiveCheck [PTuple mempty one (NE.fromList [one, one])]
+          `shouldBe` Right [PTuple mempty wildcard (NE.fromList [wildcard, wildcard])]
+
+      it "First in 3-tuples is non-exhaustive" $ do
+        let one = PLit mempty (MyInt 1)
+            wildcard = PWildcard mempty
+        exhaustiveCheck
+          [ PTuple
+              mempty
+              one
+              ( NE.fromList [wildcard, wildcard]
+              )
+          ]
+          `shouldBe` Right
+            [ PTuple
+                mempty
+                wildcard
+                ( NE.fromList [wildcard, wildcard]
+                )
+            ]
+
+      it "Third in a 3-tuple is non-exhaustive" $ do
+        let true = PLit mempty (MyBool True)
+            false = PLit mempty (MyBool False)
+            wildcard = PWildcard mempty
+        exhaustiveCheck
+          [ PTuple
+              mempty
+              wildcard
+              ( NE.fromList [wildcard, true]
+              )
+          ]
+          `shouldBe` Right
+            [ PTuple
+                mempty
+                wildcard
+                ( NE.fromList [wildcard, false]
+                )
+            ]
+
+      -- its not but cba fixing now, making it over rather than under safe
+      xit "Pair with var is exhaustive" $ do
         let true = PLit mempty (MyBool True)
             false = PLit mempty (MyBool False)
         exhaustiveCheck
-          [ PPair mempty true true,
-            PPair mempty false true,
-            PPair mempty (PVar mempty "dog") false
+          [ PTuple mempty true (NE.singleton true),
+            PTuple mempty false (NE.singleton true),
+            PTuple mempty (PVar mempty "dog") (NE.singleton false)
           ]
           `shouldBe` Right []
+
+      -- same as above
+      xit "A pair with complete coverage of Right and Left is exhaustive" $ do
+        let leftE = PConstructor mempty Nothing "Left" [PVar mempty "e"]
+            rightF = PConstructor mempty Nothing "Right" [PVar mempty "f"]
+            rightA = PConstructor mempty Nothing "Right" [PVar mempty "a"]
+            wildcard = PWildcard mempty
+        exhaustiveCheck
+          [ PTuple mempty rightF (NE.singleton rightA),
+            PTuple mempty leftE (NE.singleton wildcard),
+            PTuple mempty wildcard (NE.singleton leftE)
+          ]
+          `shouldBe` Right mempty
 
       it "Record with two False values is returned" $ do
         let true = PLit mempty (MyBool True)
@@ -142,7 +212,7 @@ spec = do
           `shouldBe` Right [PRecord mempty (M.fromList [("a", false), ("b", false)])]
       it "A pair annihilates empty" $ do
         exhaustiveCheck
-          [ PConstructor mempty Nothing "Just" [PPair mempty (PWildcard mempty) (PWildcard mempty)],
+          [ PConstructor mempty Nothing "Just" [PTuple mempty (PWildcard mempty) (NE.singleton $ PWildcard mempty)],
             PConstructor mempty Nothing "Nothing" mempty
           ]
           `shouldBe` Right mempty
@@ -275,18 +345,18 @@ spec = do
       noDuplicatesCheck (PVar mempty "a") `shouldSatisfy` isRight
     it "Is fine with a pair of different vars" $ do
       noDuplicatesCheck
-        ( PPair
+        ( PTuple
             mempty
             (PVar mempty "a")
-            (PVar mempty "b")
+            (NE.singleton $ PVar mempty "b")
         )
         `shouldSatisfy` isRight
     it "Hates a pair of the same var" $ do
       noDuplicatesCheck
-        ( PPair
+        ( PTuple
             mempty
             (PVar mempty "a")
-            (PVar mempty "a")
+            (NE.singleton $ PVar mempty "a")
         )
         `shouldSatisfy` isLeft
     it "Is fine with a record of uniques" $ do

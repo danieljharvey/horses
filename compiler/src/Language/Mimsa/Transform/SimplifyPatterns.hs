@@ -1,6 +1,7 @@
 module Language.Mimsa.Transform.SimplifyPatterns where
 
 import Data.Foldable
+import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Types.AST
@@ -9,6 +10,8 @@ import Language.Mimsa.Types.Identifiers.TyCon
 {-
 
 RULE 1: reduce patterns (currently only works with 1 or 2 arg constructors)
+
+TODO: we can do loads now because of tuples
 
 match (Just (("dog", "log"))) with
     (Just (b, c)) ->
@@ -39,7 +42,7 @@ simplifyPatterns orig@(MyPatternMatch ann (MyApp _ (MyConstructor _ _ tc) argA) 
 simplifyPatterns orig@(MyPatternMatch ann (MyApp appAnn (MyApp _ (MyConstructor _ _ tc) argA) argB) patterns) =
   case filterPatterns tc patterns of
     Just newPatterns ->
-      MyPatternMatch ann (MyPair appAnn argA argB) newPatterns
+      MyPatternMatch ann (MyTuple appAnn argA (NE.singleton argB)) newPatterns
     Nothing -> orig
 -- otherwise look through expr looking for more
 simplifyPatterns other = mapExpr simplifyPatterns other
@@ -78,7 +81,7 @@ removeDuplicateWildcards =
 
 filterPattern :: TyCon -> Pattern var ann -> Maybe (Pattern var ann)
 filterPattern tc (PConstructor _ _ tc2 [a]) | tc == tc2 = Just a -- TODO: check this works with namespace
-filterPattern tc (PConstructor pAnn _ tc2 [a, b]) | tc == tc2 = Just (PPair pAnn a b)
+filterPattern tc (PConstructor pAnn _ tc2 [a, b]) | tc == tc2 = Just (PTuple pAnn a (NE.singleton b))
 filterPattern _ (PWildcard ann) = Just (PWildcard ann)
 filterPattern _ (PVar ann var) = Just (PVar ann var)
 filterPattern _ _ = Nothing

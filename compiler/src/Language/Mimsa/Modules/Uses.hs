@@ -63,7 +63,7 @@ extractUses_ (MyLambda _ ident a) =
   S.difference (extractUses_ a) (extractIdentUses ident)
 extractUses_ (MyApp _ a b) = extractUses_ a <> extractUses_ b
 extractUses_ (MyLiteral _ _) = mempty
-extractUses_ (MyPair _ a b) = extractUses_ a <> extractUses_ b
+extractUses_ (MyTuple _ a as) = extractUses_ a <> foldMap extractUses_ as
 extractUses_ (MyRecord _ map') = foldMap extractUses_ map'
 extractUses_ (MyRecordAccess _ a _) = extractUses_ a
 extractUses_ (MyArray _ map') = foldMap extractUses_ map'
@@ -107,8 +107,8 @@ extractPatternUses (PLit _ _) = mempty
 extractPatternUses (PVar _ a) = S.singleton (EName a)
 extractPatternUses (PRecord _ as) =
   mconcat (extractPatternUses <$> M.elems as)
-extractPatternUses (PPair _ a b) =
-  extractPatternUses a <> extractPatternUses b
+extractPatternUses (PTuple _ a as) =
+  extractPatternUses a <> foldMap extractPatternUses as
 extractPatternUses (PConstructor _ maybeMod tyCon args) =
   let modEntity = case maybeMod of
         Just modName -> S.singleton (ENamespacedConstructor modName tyCon)

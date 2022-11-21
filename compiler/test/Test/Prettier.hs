@@ -5,6 +5,7 @@ module Test.Prettier
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Printer
@@ -130,10 +131,10 @@ spec =
       it "Pair" $
         let mt :: MonoType
             mt =
-              MTPair
+              MTTuple
                 mempty
                 (MTFunction mempty (MTPrim mempty MTInt) (MTPrim mempty MTInt))
-                (MTPrim mempty MTString)
+                (NE.singleton $ MTPrim mempty MTString)
          in T.putStrLn
               (prettyPrint mt)
       it "Variables" $

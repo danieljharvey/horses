@@ -1,8 +1,4 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.35.0.
---
--- see: https://github.com/sol/hpack
+cabal-version: 2.2
 
 name:           mimsa
 version:        0.1.0.0
@@ -12,7 +8,7 @@ bug-reports:    https://github.com/danieljharvey/mimsa/issues
 author:         Daniel J Harvey
 maintainer:     danieljamesharvey@gmail.com
 copyright:      2021 Daniel J Harvey
-license:        BSD3
+license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
@@ -37,7 +33,14 @@ source-repository head
   type: git
   location: https://github.com/danieljharvey/mimsa
 
+common common-all
+  ghc-options:
+    -Wall -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
 library
+  import: common-all
   exposed-modules:
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Helpers.Build
@@ -259,6 +262,7 @@ library
   default-language: Haskell2010
 
 executable mimsa
+  import: common-all
   main-is: Main.hs
   other-modules:
       Check.Main
@@ -315,6 +319,7 @@ executable mimsa
   default-language: Haskell2010
 
 executable mimsa-server
+  import: common-all
   main-is: Main.hs
   other-modules:
       Server.Endpoints.Compile
@@ -386,6 +391,7 @@ executable mimsa-server
   default-language: Haskell2010
 
 test-suite mimsa-test
+  import: common-all
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
@@ -474,6 +480,7 @@ test-suite mimsa-test
   default-language: Haskell2010
 
 benchmark mimsa-benchmark
+  import: common-all
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:

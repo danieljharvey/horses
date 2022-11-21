@@ -10,6 +10,7 @@ import Data.Bifunctor
 import Data.Foldable
 import Data.Functor
 import Data.Hashable
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -307,7 +308,7 @@ spec = do
           )
           `shouldBe` "{ a: 1, b: true }"
       it "pair" $ do
-        printExpr (TSPair (TSLit (TSInt 1)) (TSLit (TSInt 2))) `shouldBe` "[1,2] as const"
+        printExpr (TSTuple [TSLit (TSInt 1), TSLit (TSInt 2)]) `shouldBe` "[1,2] as const"
       it "record access" $ do
         printExpr (TSRecordAccess "a" (TSVar "record")) `shouldBe` "record.a"
       it "array" $ do
@@ -336,9 +337,10 @@ spec = do
           destructure' (TSPatternVar "a") `shouldBe` "const a = value; "
           destructure' TSPatternWildcard `shouldBe` ""
           destructure'
-            ( TSPatternPair
-                (TSPatternVar "a")
-                (TSPatternVar "b")
+            ( TSPatternTuple
+                [ TSPatternVar "a",
+                  TSPatternVar "b"
+                ]
             )
             `shouldBe` "const [a,b] = value; "
           destructure'
@@ -362,9 +364,10 @@ spec = do
           conditions' (TSPatternVar "a") `shouldBe` "true"
           conditions' TSPatternWildcard `shouldBe` "true"
           conditions'
-            ( TSPatternPair
-                (TSPatternLit (TSInt 11))
-                (TSPatternLit (TSInt 23))
+            ( TSPatternTuple
+                [ TSPatternLit (TSInt 11),
+                  TSPatternLit (TSInt 23)
+                ]
             )
             `shouldBe` "value[0] === 11 && value[1] === 23"
           conditions'
@@ -444,12 +447,12 @@ spec = do
         snd
           ( testFromExpr
               ( MyLetPattern
-                  (MTPair mempty mtBool mtBool)
-                  (PPair (MTPair mempty mtBool mtBool) (PVar mtBool "a") (PWildcard mtBool))
-                  ( MyPair
-                      (MTPair mempty mtBool mtBool)
+                  (MTTuple mempty mtBool (NE.singleton mtBool))
+                  (PTuple (MTTuple mempty mtBool (NE.singleton mtBool)) (PVar mtBool "a") (NE.singleton $ PWildcard mtBool))
+                  ( MyTuple
+                      (MTTuple mempty mtBool (NE.singleton mtBool))
                       (MyLiteral mtBool (MyBool True))
-                      (MyLiteral mtBool (MyBool False))
+                      (NE.singleton $ MyLiteral mtBool (MyBool False))
                   )
                   (MyVar mtBool Nothing "a")
               )

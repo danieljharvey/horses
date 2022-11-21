@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Language.Mimsa.Interpreter.PatternMatch
   ( interpretPatternMatch,
     interpretLetPattern,
@@ -7,6 +5,7 @@ module Language.Mimsa.Interpreter.PatternMatch
 where
 
 import Control.Monad.Except
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 import Data.Monoid
@@ -62,10 +61,13 @@ patternMatches ::
   Maybe [((var, Unique), InterpretExpr var ann)]
 patternMatches (PWildcard _) _ = pure []
 patternMatches (PVar _ name) expr = pure [(name, expr)]
-patternMatches (PPair _ pA pB) (MyPair _ a b) = do
-  as <- patternMatches pA a
-  bs <- patternMatches pB b
-  pure $ as <> bs
+patternMatches (PTuple _ pA pAs) (MyTuple _ a as) = do
+  matchA <- patternMatches pA a
+  matchAs <-
+    traverse
+      (uncurry patternMatches)
+      (zip (NE.toList pAs) (NE.toList as))
+  pure $ matchA <> mconcat matchAs
 patternMatches (PRecord _ pAs) (MyRecord _ as)
   | S.null (S.difference (M.keysSet pAs) (M.keysSet as)) = do
       let usefulInputs = M.intersection as pAs

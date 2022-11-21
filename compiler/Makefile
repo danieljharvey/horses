@@ -1,7 +1,10 @@
-.PHONY: all ghcid ghcid-repl ghcid-server test install
+.PHONY: all ghcid ghcid-repl ghcid-server ghcid-test test install
 
 ghcid:
 	ghcid -c "cabal repl mimsa" -l=hlint
+
+ghcid-test:
+	ghcid -c "cabal repl mimsa:tests:mimsa-test" -l=hlint
 
 ghcid-repl:
 	ghcid -c "cabal repl mimsa:exe:mimsa" -l=hlint

@@ -6,6 +6,7 @@ module Language.Mimsa.Backend.Typescript.FromExpr (fromExpr) where
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce (coerce)
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Backend.Typescript.FromType
@@ -39,8 +40,8 @@ toStringPart (StrWildcard _) = TSStringWildcard
 toPattern :: Pattern Name ann -> TSPattern
 toPattern (PVar _ a) =
   TSPatternVar (coerce a)
-toPattern (PPair _ a b) =
-  TSPatternPair (toPattern a) (toPattern b)
+toPattern (PTuple _ a as) =
+  TSPatternTuple (toPattern <$> [a] <> NE.toList as)
 toPattern (PWildcard _) =
   TSPatternWildcard
 toPattern (PConstructor _ _ name vars) =
@@ -239,10 +240,10 @@ toTSBody expr' =
       toLet ident letExpr letBody
     (MyLetPattern _ pat letExpr letBody) ->
       toLetPattern pat letExpr letBody
-    (MyPair _ a b) -> do
+    (MyTuple _ a as) -> do
       tsA <- toTSExpr a
-      tsB <- toTSExpr b
-      pure (TSBody mempty (TSPair tsA tsB))
+      tsAs <- traverse toTSExpr as
+      pure (TSBody mempty (TSTuple $ [tsA] <> NE.toList tsAs))
     (MyVar _ _ a) ->
       pure (TSBody mempty (TSVar (coerce a)))
     (MyLambda fnType bind body) ->

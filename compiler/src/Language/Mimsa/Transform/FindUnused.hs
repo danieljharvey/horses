@@ -98,8 +98,8 @@ findVariables = withMonoid f
 findVariableInPattern :: (Ord ann, Ord var) => Pattern var ann -> Set (var, ann)
 findVariableInPattern (PVar ann a) =
   S.singleton (a, ann)
-findVariableInPattern (PPair _ a b) =
-  findVariableInPattern a <> findVariableInPattern b
+findVariableInPattern (PTuple _ a as) =
+  findVariableInPattern a <> foldMap findVariableInPattern as
 findVariableInPattern (PConstructor _ _ _ vars) =
   mconcat (findVariableInPattern <$> vars)
 findVariableInPattern (PRecord _ as) =

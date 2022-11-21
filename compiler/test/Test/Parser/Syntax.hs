@@ -6,6 +6,7 @@ module Test.Parser.Syntax
 where
 
 import Data.Either (isLeft, isRight)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.ExprUtils
@@ -212,18 +213,18 @@ spec = parallel $ do
       it "Parses a pair of things" $
         testParse "(2, 2)"
           `shouldBe` Right
-            (MyPair mempty (int 2) (int 2))
+            (MyTuple mempty (int 2) (NE.singleton $ int 2))
       it "Parses a pair of things with silly whitespace" $
         testParse "(     2    ,   2     )"
           `shouldBe` Right
-            (MyPair mempty (int 2) (int 2))
+            (MyTuple mempty (int 2) (NE.singleton $ int 2))
       it "Allows a let to use a pair" $
         testParse "let x = ((1,2)) in x"
           `shouldBe` Right
             ( MyLet
                 mempty
                 (Identifier mempty "x")
-                (MyPair mempty (int 1) (int 2))
+                (MyTuple mempty (int 1) (NE.singleton $ int 2))
                 (MyVar mempty Nothing "x")
             )
       it "Allows a let to use a pair and apply to it" $
@@ -232,7 +233,7 @@ spec = parallel $ do
             ( MyLet
                 mempty
                 (Identifier mempty "x")
-                (MyPair mempty (int 1) (int 2))
+                (MyTuple mempty (int 1) (NE.singleton $ int 2))
                 (MyApp mempty (MyVar mempty Nothing "fst") (MyVar mempty Nothing "x"))
             )
       it "Allows a let to use a nested lambda" $
@@ -304,12 +305,12 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyLetPattern
                 mempty
-                ( PPair
+                ( PTuple
                     mempty
                     (PVar mempty "a")
-                    (PVar mempty "b")
+                    (NE.singleton $ PVar mempty "b")
                 )
-                (MyPair mempty (bool True) (int 1))
+                (MyTuple mempty (bool True) (NE.singleton $ int 1))
                 (MyVar mempty Nothing "a")
             )
 
@@ -579,12 +580,12 @@ spec = parallel $ do
           `shouldBe` Right
             ( MyLetPattern
                 mempty
-                ( PPair
+                ( PTuple
                     mempty
                     (PVar mempty "a")
-                    (PVar mempty "b")
+                    (NE.singleton $ PVar mempty "b")
                 )
-                (MyPair mempty (int 1) (int 2))
+                (MyTuple mempty (int 1) (NE.singleton $ int 2))
                 (MyVar mempty Nothing "a")
             )
       it "parses destructuring a record with puns" $
@@ -739,10 +740,10 @@ spec = parallel $ do
       it "Parsers pair with location information" $
         testParseWithAnn "(1,2)"
           `shouldBe` Right
-            ( MyPair
+            ( MyTuple
                 (Location 0 5)
                 (MyLiteral (Location 1 2) (MyInt 1))
-                (MyLiteral (Location 3 4) (MyInt 2))
+                (NE.singleton $ MyLiteral (Location 3 4) (MyInt 2))
             )
       it "Parses constructor application with location information" $
         testParseWithAnn "Just 1"
