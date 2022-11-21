@@ -11,6 +11,7 @@ where
 -- prettyPrint is for debug output
 -- prettyDoc returns a Prettyprinter doc for nicer output
 
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -56,7 +57,10 @@ instance Printer Int where
   prettyPrint = T.pack . show
 
 instance (Printer a) => Printer [a] where
-  prettyDoc = sep . fmap prettyDoc
+  prettyDoc = sep . punctuate "," . fmap prettyDoc
+
+instance (Printer a) => Printer (NE.NonEmpty a) where
+  prettyDoc = prettyDoc . NE.toList
 
 instance (Printer k, Printer v) => Printer (Map k v) where
   prettyDoc map' =

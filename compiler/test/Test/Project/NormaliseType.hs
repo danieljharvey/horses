@@ -5,8 +5,8 @@ module Test.Project.NormaliseType
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Coerce
+import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Types.Identifiers
@@ -47,10 +47,11 @@ spec =
         `shouldBe` MTTuple
           mempty
           (mkVar 1)
-          ( NE.singleton $ MTTuple
-              mempty
-              (mkVar 2)
-              (NE.singleton $ mkVar 1)
+          ( NE.singleton $
+              MTTuple
+                mempty
+                (mkVar 2)
+                (NE.singleton $ mkVar 1)
           )
     it "Normalises named variables too" $
       normaliseType'

@@ -7,10 +7,10 @@ module Test.Tests.Properties
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.IO.Class
 import Data.Either (isLeft, isRight)
 import Data.Functor
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate

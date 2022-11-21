@@ -9,9 +9,9 @@ where
 
 -- testing doing repl things but in the modules world
 
-import qualified Data.List.NonEmpty as NE
 import Data.Either (isLeft, isRight)
 import Data.Functor (($>))
+import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions

@@ -11,6 +11,7 @@ module Language.Mimsa.Typechecker.Exhaustiveness
   )
 where
 
+import Language.Mimsa.Logging 
 import Control.Monad.Except
 import Data.Foldable
 import Data.Functor
@@ -30,6 +31,8 @@ validatePatterns ::
   ( MonadError (TypeErrorF var Annotation) m,
     Ord var,
     Printer var,
+    Printer (Pattern var Annotation),
+
     Show var
   ) =>
   Environment ->
@@ -104,6 +107,7 @@ isExhaustive ::
   ( Eq var,
     MonadError (TypeErrorF var Annotation) m,
     Printer var,
+    Printer (Pattern var Annotation),
     Show var
   ) =>
   Environment ->
@@ -113,11 +117,13 @@ isExhaustive env patterns = do
   generated <-
     mconcat
       <$> traverse (generate env) patterns
-  pure $ filterMissing patterns generated
+  pure $ debugPretty "results" $ filterMissing (debugPretty "patterns" patterns) (debugPretty "generated" generated)
 
 generate ::
   ( MonadError (TypeErrorF var Annotation) m,
     Printer var,
+    Printer (Pattern var Annotation),
+
     Show var
   ) =>
   Environment ->
@@ -128,21 +134,38 @@ generate env pat = (<>) [pat] <$> generateRequired env pat
 -- | Given a pattern, generate others required for it
 generateRequired ::
   ( MonadError (TypeErrorF var Annotation) m,
+
+    Printer (Pattern var Annotation),
+
     Printer var,
     Show var
   ) =>
   Environment ->
   Pattern var Annotation ->
   m [Pattern var Annotation]
-generateRequired _ (PLit _ (MyBool True)) = pure [PLit mempty (MyBool False)]
-generateRequired _ (PLit _ (MyBool False)) = pure [PLit mempty (MyBool True)]
-generateRequired _ (PLit _ (MyInt _)) = pure [PWildcard mempty]
-generateRequired _ (PLit _ (MyString "")) = pure [PString mempty (StrWildcard mempty) (StrWildcard mempty)]
-generateRequired _ (PLit _ (MyString _)) = pure [PWildcard mempty]
+generateRequired _ (PLit _ (MyBool True)) =
+  pure [PLit mempty (MyBool False)]
+generateRequired _ (PLit _ (MyBool False)) =
+  pure [PLit mempty (MyBool True)]
+generateRequired _ (PLit _ (MyInt _)) =
+  pure [PWildcard mempty]
+generateRequired _ (PLit _ (MyString "")) =
+  pure [PString mempty (StrWildcard mempty) (StrWildcard mempty)]
+generateRequired _ (PLit _ (MyString _)) =
+  pure [PWildcard mempty]
 generateRequired env (PTuple _ a as) = do
-  genA <- generateRequired env a
-  genAs <- traverse (generateRequired env) as
-  pure (PTuple mempty <$> genA <*> sequence genAs)
+  -- the thing that sucks here is that you don't want to annihilate
+  -- unnecessarily, but also you don't want to create too many extra lads
+  let genOrOriginal pat = do
+                  generated <- generateRequired env (debugPretty "generated from " pat)
+                  case debugPretty "generated yes" generated of
+                    [] -> if isComplete pat then 
+                                              pure [] else 
+                                                pure [pat]
+                    items -> pure items
+  genAs <- traverse genOrOriginal (NE.cons a as)
+  let tuple ne = PTuple mempty (NE.head ne) (NE.fromList $ NE.tail ne)
+  pure (tuple <$> sequence (debugPretty "genAs" genAs))
 generateRequired env (PRecord _ items) = do
   items' <- traverse (generateRequired env) items
   pure (PRecord mempty <$> sequence items')
@@ -189,7 +212,7 @@ requiredFromDataType (DataType _ _ cons) =
 
 -- filter outstanding items
 filterMissing ::
-  (Eq var, Eq ann) =>
+  (Eq var, Eq ann, Show var) =>
   [Pattern var ann] ->
   [Pattern var ann] ->
   [Pattern var ann]
@@ -208,9 +231,8 @@ removeAnn :: Pattern var ann -> Pattern var ()
 removeAnn p = p $> ()
 
 -- does left pattern satisfy right pattern?
-annihilate :: (Eq var) => Pattern var () -> Pattern var () -> Bool
 annihilateAll ::
-  (Eq var) =>
+  (Eq var, Show var) =>
   [(Pattern var (), Pattern var ())] ->
   Bool
 annihilateAll =
@@ -218,12 +240,13 @@ annihilateAll =
     (\(a, b) keep -> keep && annihilate a b)
     True
 
--- | if left is on the right, get rid
+-- | if left is on the right, should we get rid?
+annihilate :: (Eq var, Show var) => Pattern var () -> Pattern var () -> Bool
 annihilate a b | a == b = True
-annihilate (PWildcard _) _ = True
-annihilate (PVar _ _) _ = True
-annihilate (PTuple _ a as) (PTuple _ a' as') =
-  let allPairs = zip ([a] <> NE.toList as) ([a'] <> NE.toList as')
+annihilate (PWildcard _) _ = True -- wildcard trumps all
+annihilate (PVar _ _) _ = True -- as does var
+annihilate (PTuple _ a as) (PTuple _ b bs) =
+  let allPairs = zip ([a] <> NE.toList as) ([b] <> NE.toList bs)
    in annihilateAll allPairs
 annihilate (PRecord _ as) (PRecord _ bs) =
   let diffKeys = S.difference (M.keysSet as) (M.keysSet bs)
@@ -239,14 +262,10 @@ annihilate (PTuple _ a as) _ =
 annihilate (PRecord _ as) _ =
   foldr (\a total -> total && isComplete a) True as
 annihilate (PArray _ itemsA (SpreadWildcard _)) (PArray _ itemsB (SpreadValue _ _)) =
-  foldr
-    (\(a, b) keep -> keep && annihilate a b)
-    True
+  annihilateAll
     (zip itemsA itemsB)
 annihilate (PArray _ itemsA (SpreadValue _ _)) (PArray _ itemsB (SpreadWildcard _)) =
-  foldr
-    (\(a, b) keep -> keep && annihilate a b)
-    True
+  annihilateAll
     (zip itemsA itemsB)
 annihilate _ _as = False
 
@@ -261,6 +280,7 @@ redundantCases ::
   ( MonadError (TypeErrorF var Annotation) m,
     Eq var,
     Printer var,
+    Printer (Pattern var Annotation),
     Show var
   ) =>
   Environment ->

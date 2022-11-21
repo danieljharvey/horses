@@ -5,10 +5,10 @@ module Test.Parser.MonoTypeParser
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Data.Either (isRight)
 import Data.Functor
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
@@ -153,13 +153,14 @@ spec =
                         ( MTTuple
                             mempty
                             (MTVar mempty (tvNamed "b"))
-                            ( NE.singleton $ dataTypeWithVars
-                                mempty
-                                Nothing
-                                "Either"
-                                [ MTPrim mempty MTString,
-                                  MTPrim mempty MTInt
-                                ]
+                            ( NE.singleton $
+                                dataTypeWithVars
+                                  mempty
+                                  Nothing
+                                  "Either"
+                                  [ MTPrim mempty MTString,
+                                    MTPrim mempty MTInt
+                                  ]
                             )
                         )
                     )

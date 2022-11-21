@@ -5,9 +5,9 @@ module Test.Typechecker.Typecheck
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor
 import Data.Either (isLeft)
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
@@ -683,11 +683,12 @@ spec = do
                         (int 1)
                         (MyRecordAccess mempty (MyVar mempty Nothing "a") "prop")
                     )
-                    ( NE.singleton $ MyInfix
-                        mempty
-                        StringConcat
-                        (str "!")
-                        (MyRecordAccess mempty (MyVar mempty Nothing "a") "prop")
+                    ( NE.singleton $
+                        MyInfix
+                          mempty
+                          StringConcat
+                          (str "!")
+                          (MyRecordAccess mempty (MyVar mempty Nothing "a") "prop")
                     )
                 )
         testInfer expr `shouldSatisfy` isLeft

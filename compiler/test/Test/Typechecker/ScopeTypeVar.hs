@@ -6,10 +6,10 @@ module Test.Typechecker.ScopeTypeVar
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Control.Monad.Identity
 import Control.Monad.State.Strict
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.TcMonad

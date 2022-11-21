@@ -5,12 +5,12 @@ module Test.Backend.ESModulesJS
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Foldable
 import Data.Functor
 import Data.Hashable
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -345,9 +345,10 @@ spec = do
           destructure' (TSPatternVar "a") `shouldBe` "const a = value; "
           destructure' TSPatternWildcard `shouldBe` ""
           destructure'
-            ( TSPatternTuple [
-                TSPatternVar "a",
-                TSPatternVar "b"]
+            ( TSPatternTuple
+                [ TSPatternVar "a",
+                  TSPatternVar "b"
+                ]
             )
             `shouldBe` "const [a,b] = value; "
           destructure'
@@ -372,8 +373,9 @@ spec = do
           conditions' TSPatternWildcard `shouldBe` "true"
           conditions'
             ( TSPatternTuple
-                [TSPatternLit (TSInt 11),
-                TSPatternLit (TSInt 23)]
+                [ TSPatternLit (TSInt 11),
+                  TSPatternLit (TSInt 23)
+                ]
             )
             `shouldBe` "value[0] === 11 && value[1] === 23"
           conditions'

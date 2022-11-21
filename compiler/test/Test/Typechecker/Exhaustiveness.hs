@@ -5,10 +5,10 @@ module Test.Typechecker.Exhaustiveness
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Either
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Typechecker.Exhaustiveness
 import Language.Mimsa.Types.AST
@@ -44,7 +44,9 @@ noDuplicatesCheck = runPatternM . noDuplicateVariables
 testEnv :: Environment
 testEnv = mempty {getDataTypes = dts}
   where
-    dts = M.fromList [((Nothing, "Maybe"), dtMaybe), ((Nothing, "These"), dtThese)]
+    dts = M.fromList [((Nothing, "Maybe"), dtMaybe), 
+                      ((Nothing,"Either"),dtEither),
+                      ((Nothing, "These"), dtThese)]
 
 spec :: Spec
 spec = do
@@ -58,7 +60,7 @@ spec = do
     it "3 list adds a 2 and a 1 list" $ do
       smallerListVersions [[1, 2, 3]] `shouldBe` ([[3], [2, 3], [1, 2, 3]] :: [[Int]])
 
-  describe "Exhaustiveness" $
+  fdescribe "Exhaustiveness" $
     do
       it "Wildcard is fine" $ do
         exhaustiveCheck [PWildcard mempty] `shouldBe` Right []
@@ -112,6 +114,7 @@ spec = do
               (NE.singleton $ PWildcard mempty)
           ]
           `shouldBe` Right []
+
       it "Pair of False is returned" $
         do
           let true = PLit mempty (MyBool True)
@@ -122,11 +125,55 @@ spec = do
               PTuple mempty true (NE.singleton false)
             ]
             `shouldBe` Right [PTuple mempty false (NE.singleton false)]
-      it "3-tuples work as expected" $ do
+
+      it "3 tuple of wildcards is exhaustive" $ do
+        let wildcard = PWildcard mempty
+        exhaustiveCheck [PTuple mempty wildcard (NE.fromList [wildcard, wildcard])]
+          `shouldBe` Right mempty
+
+      it "3 tuple of ones are not exhaustive" $ do
+        let one = PLit mempty (MyInt 1)
+            wildcard = PWildcard mempty
+        exhaustiveCheck [PTuple mempty one (NE.fromList [one, one])]
+          `shouldBe` Right [PTuple mempty wildcard (NE.fromList [wildcard, wildcard])]
+
+      it "First in 3-tuples is non-exhaustive" $ do
+        let one = PLit mempty (MyInt 1)
+            wildcard = PWildcard mempty
+        exhaustiveCheck
+          [ PTuple
+              mempty
+              one
+              ( NE.fromList [wildcard, wildcard]
+              )
+          ]
+          `shouldBe` Right
+            [ PTuple
+                mempty
+                wildcard
+                ( NE.fromList [wildcard, wildcard]
+                )
+            ]
+
+      it "Third in a 3-tuple is non-exhaustive" $ do
         let true = PLit mempty (MyBool True)
             false = PLit mempty (MyBool False)
-        -- [a,b,True] should return [_, _, False] or something
-        exhaustiveCheck [PTuple mempty.....]
+            wildcard = PWildcard mempty
+        exhaustiveCheck
+          [ PTuple
+              mempty
+              wildcard
+              ( NE.fromList [wildcard, true]
+              )
+          ]
+          `shouldBe` Right
+            [ PTuple
+                mempty
+                wildcard
+                ( NE.fromList [wildcard, false]
+                )
+            ]
+
       it "Pair with var is exhaustive" $ do
         let true = PLit mempty (MyBool True)
             false = PLit mempty (MyBool False)
@@ -136,6 +183,18 @@ spec = do
             PTuple mempty (PVar mempty "dog") (NE.singleton false)
           ]
           `shouldBe` Right []
+
+      it "A pair with complete coverage of Right and Left is exhaustive" $ do
+        let leftE = PConstructor mempty Nothing "Left" [PVar mempty "e"]
+            rightF = PConstructor mempty Nothing "Right" [PVar mempty "f"]
+            rightA = PConstructor mempty Nothing "Right" [PVar mempty "a"]
+            wildcard = PWildcard mempty
+        exhaustiveCheck
+          [ PTuple mempty rightF (NE.singleton rightA),
+            PTuple mempty leftE (NE.singleton wildcard),
+            PTuple mempty wildcard (NE.singleton leftE)
+          ]
+          `shouldBe` Right mempty
 
       it "Record with two False values is returned" $ do
         let true = PLit mempty (MyBool True)

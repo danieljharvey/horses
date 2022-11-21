@@ -5,8 +5,8 @@ module Test.Parser.Syntax
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Either (isLeft, isRight)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.ExprUtils
