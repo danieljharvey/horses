@@ -11,7 +11,6 @@ module Language.Mimsa.Typechecker.Exhaustiveness
   )
 where
 
-import Language.Mimsa.Logging 
 import Control.Monad.Except
 import Data.Foldable
 import Data.Functor
@@ -31,8 +30,6 @@ validatePatterns ::
   ( MonadError (TypeErrorF var Annotation) m,
     Ord var,
     Printer var,
-    Printer (Pattern var Annotation),
-
     Show var
   ) =>
   Environment ->
@@ -107,7 +104,6 @@ isExhaustive ::
   ( Eq var,
     MonadError (TypeErrorF var Annotation) m,
     Printer var,
-    Printer (Pattern var Annotation),
     Show var
   ) =>
   Environment ->
@@ -117,13 +113,11 @@ isExhaustive env patterns = do
   generated <-
     mconcat
       <$> traverse (generate env) patterns
-  pure $ debugPretty "results" $ filterMissing (debugPretty "patterns" patterns) (debugPretty "generated" generated)
+  pure $ filterMissing patterns generated
 
 generate ::
   ( MonadError (TypeErrorF var Annotation) m,
     Printer var,
-    Printer (Pattern var Annotation),
-
     Show var
   ) =>
   Environment ->
@@ -134,9 +128,6 @@ generate env pat = (<>) [pat] <$> generateRequired env pat
 -- | Given a pattern, generate others required for it
 generateRequired ::
   ( MonadError (TypeErrorF var Annotation) m,
-
-    Printer (Pattern var Annotation),
-
     Printer var,
     Show var
   ) =>
@@ -157,15 +148,13 @@ generateRequired env (PTuple _ a as) = do
   -- the thing that sucks here is that you don't want to annihilate
   -- unnecessarily, but also you don't want to create too many extra lads
   let genOrOriginal pat = do
-                  generated <- generateRequired env (debugPretty "generated from " pat)
-                  case debugPretty "generated yes" generated of
-                    [] -> if isComplete pat then 
-                                              pure [] else 
-                                                pure [pat]
-                    items -> pure items
+        generated <- generateRequired env pat
+        case generated of
+          [] -> pure [pat]
+          items -> pure items
   genAs <- traverse genOrOriginal (NE.cons a as)
   let tuple ne = PTuple mempty (NE.head ne) (NE.fromList $ NE.tail ne)
-  pure (tuple <$> sequence (debugPretty "genAs" genAs))
+  pure (tuple <$> sequence genAs)
 generateRequired env (PRecord _ items) = do
   items' <- traverse (generateRequired env) items
   pure (PRecord mempty <$> sequence items')
@@ -280,7 +269,6 @@ redundantCases ::
   ( MonadError (TypeErrorF var Annotation) m,
     Eq var,
     Printer var,
-    Printer (Pattern var Annotation),
     Show var
   ) =>
   Environment ->
