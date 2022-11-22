@@ -37,6 +37,10 @@ spec = do
         let input = parseExpr "let a = 1 in a"
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
+      it "A let pattern" $ do
+        let input = parseExpr "let (a,b,c) = (1,2,3) in a + b + c"
+            result = fromHOAS (toHOAS input)
+        result `shouldBe` input
       it "Array spread pattern match" $ do
         let input = parseExpr "\\as -> match as with [a,b,...c] -> (a + b, c) | _ -> (0,[])"
             result = fromHOAS (toHOAS input)

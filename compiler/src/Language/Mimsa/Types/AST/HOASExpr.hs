@@ -127,4 +127,4 @@ data HOASExpr var ann
       }
   | -- | name
     MyTypedHole {expAnn :: ann, expTypedHoleName :: var}
-  deriving (Show)
+  deriving stock (Show)

@@ -6,7 +6,6 @@ import Debug.Trace
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
-import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 
@@ -24,7 +23,7 @@ interpretApp interpretFn ann myFn value =
       intValue <- interpretFn value
       -- run it
       interpretFn (body intValue) >>= interpretFn
-    thing@(HOAS.MyRecursiveLambda _ _ident recI@(Identifier _ recIdent) body) -> do
+    thing@(HOAS.MyRecursiveLambda _ _ident recIdent body) -> do
       -- interpret arg first
       intValue <- interpretFn value
       -- run the func
@@ -32,7 +31,7 @@ interpretApp interpretFn ann myFn value =
 
       traceShowM (prettyDoc (fromHOAS result))
 
-      let withRecursiveFunc = toHOAS (MyLet ann recI (fromHOAS thing) (fromHOAS result))
+      let withRecursiveFunc = toHOAS (MyLet ann recIdent (fromHOAS thing) (fromHOAS result))
 
       traceShowM (prettyDoc (fromHOAS withRecursiveFunc))
 

@@ -1,7 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS, replaceVars) where
 
-import Data.String
 import Data.Bifunctor (second)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -31,7 +30,7 @@ toHOAS :: (Ord x, Show ann,Show x) =>
 toHOAS (MyVar ann modName a) = HOAS.MyVar ann modName a
 toHOAS (MyLiteral ann lit) = HOAS.MyLiteral ann lit
 toHOAS (MyAnnotation ann mt body) = HOAS.MyAnnotation ann mt (toHOAS body)
-toHOAS (MyLet ann recIdent@(Identifier _ rIdent) (MyLambda lambdaAnn argIdent@(Identifier aAnn aIdent) lBody) rest) | hasVar rIdent lBody =
+toHOAS (MyLet ann recIdent@(Identifier _ rIdent) (MyLambda lambdaAnn argIdent@(Identifier _ aIdent) lBody) rest) | hasVar rIdent lBody =
   let
       hoasLambda =
         HOAS.MyRecursiveLambda lambdaAnn argIdent recIdent (\arg ->
@@ -154,7 +153,7 @@ fromHOAS (HOAS.MyLambda ann (Identifier iAnn ident) f) =
   MyLambda ann (Identifier iAnn ident) (fromHOAS $ f (HOAS.MyVar ann Nothing ident))
 fromHOAS (HOAS.MyApp ann (HOAS.MyLambda _ (Identifier iAnn ident) rest) expr) =
   MyLet ann (Identifier iAnn ident) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
-fromHOAS (HOAS.MyRecursiveLambda ann (Identifier iAnn ident) (Identifier _ recIdent) rest) =
+fromHOAS (HOAS.MyRecursiveLambda ann (Identifier iAnn ident) _ rest) =
   MyLambda ann (Identifier iAnn ident)
     (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
 fromHOAS (HOAS.MyApp ann fn arg) = MyApp ann (fromHOAS fn) (fromHOAS arg)

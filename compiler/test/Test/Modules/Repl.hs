@@ -62,7 +62,7 @@ defs = T.intercalate "\n"
 
 spec :: Spec
 spec =
-  fdescribe "Modules repl" $ do
+  describe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "No functions" $ do
         result <- eval "100"
@@ -443,7 +443,7 @@ spec =
         result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000" -- this seems to be the limit on my current machine
         result `shouldSatisfy` isRight
 
-      fit "Recursively converts Nat to integer" $ do
+      it "Recursively converts Nat to integer" $ do
         result <-
           evalWithDefs
             (Just "type Nat = Zero | Suc Nat")
@@ -469,7 +469,7 @@ spec =
             "let addInt a b = a + b; let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 Empty"
         result `shouldBe` Right (MTPrim mempty MTInt, int 0)
 
-      fit "Array reduce function 2" $ do
+      it "Array reduce function 2" $ do
         result <- evalWithDefs (Just "type Array a = Empty | Item a (Array a)") "let addInt a b = a + b; let reduceA = (\\f -> \\b -> \\as -> match as with Empty -> b | (Item a rest) -> reduceA f (f b a) rest) in reduceA addInt 0 (Item 3 Empty)"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
@@ -707,7 +707,7 @@ spec =
           Left _ -> error "Was not supposed to fail"
           Right (_, expr') -> T.unpack (prettyPrint expr') `shouldContain` "a"
 
-      fit "filter function for strings" $ do
+      it "filter function for strings" $ do
         result <- eval "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\aa -> aa == \"o\") \"woo\""
         result
           `shouldBe` Right
@@ -785,7 +785,7 @@ spec =
         result
           `shouldSatisfy` isLeft
 
-      fit "Array.fmap increments ints inside" $ do
+      it "Array.fmap increments ints inside" $ do
         result <- eval "Array.fmap (\\a -> a + 1) [1,2,3]"
         result
           `shouldBe` Right

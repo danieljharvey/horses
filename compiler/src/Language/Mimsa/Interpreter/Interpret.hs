@@ -1,7 +1,6 @@
 module Language.Mimsa.Interpreter.Interpret (interpret ) where
 
 import Control.Monad.Reader
-import Data.Functor
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.App
@@ -11,11 +10,9 @@ import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.RecordAccess
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Interpreter.Monad
-import qualified Language.Mimsa.Types.AST.Expr as Regular
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Store.ExprHash
-import Language.Mimsa.Types.Typechecker.Unique
 import Language.Mimsa.Types.Identifiers
 
 interpret ::
@@ -47,7 +44,7 @@ interpretExpr' origVar@(HOAS.MyVar _ _ var) = do
   case val of
     Just next -> pure next
     Nothing -> pure origVar
-interpretExpr' (HOAS.MyLambda exprData ident body) = doInterper
+interpretExpr' (HOAS.MyLambda exprData ident body) =
   -- return it
   pure
     (HOAS.MyLambda exprData ident body)
