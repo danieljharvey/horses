@@ -55,6 +55,7 @@ toHOAS (MyLambda ann (Identifier iAnn ident) body) =
 toHOAS (MyApp ann fn arg) = HOAS.MyApp ann (toHOAS fn) (toHOAS arg)
 toHOAS (MyRecord ann as) = HOAS.MyRecord ann (toHOAS <$> as)
 toHOAS (MyRecordAccess ann a name) = HOAS.MyRecordAccess ann (toHOAS a) name
+toHOAS (MyTupleAccess ann a index) = HOAS.MyTupleAccess ann (toHOAS a) index
 toHOAS (MyArray ann as) = HOAS.MyArray ann (toHOAS <$> as)
 toHOAS (MyConstructor ann modName con) = HOAS.MyConstructor ann modName con
 toHOAS (MyPatternMatch ann patExpr pats) =
@@ -132,6 +133,8 @@ mapHOASExpr f (HOAS.MyTuple ann a as) = HOAS.MyTuple ann (f a) (f <$> as)
 mapHOASExpr f (HOAS.MyRecord ann items) = HOAS.MyRecord ann (f <$> items)
 mapHOASExpr f (HOAS.MyRecordAccess ann expr name) =
   HOAS.MyRecordAccess ann (f expr) name
+mapHOASExpr f (HOAS.MyTupleAccess ann expr index) =
+  HOAS.MyTupleAccess ann (f expr) index
 mapHOASExpr f (HOAS.MyArray ann items) = HOAS.MyArray ann (f <$> items)
 mapHOASExpr _ (HOAS.MyConstructor ann modName cons) = HOAS.MyConstructor ann modName cons
 mapHOASExpr f (HOAS.MyPatternMatch ann matchExpr patterns) =
@@ -159,6 +162,7 @@ fromHOAS (HOAS.MyRecursiveLambda ann (Identifier iAnn ident) _ rest) =
 fromHOAS (HOAS.MyApp ann fn arg) = MyApp ann (fromHOAS fn) (fromHOAS arg)
 fromHOAS (HOAS.MyRecord ann as) = MyRecord ann (fromHOAS <$> as)
 fromHOAS (HOAS.MyRecordAccess ann a name) = MyRecordAccess ann (fromHOAS a) name
+fromHOAS (HOAS.MyTupleAccess ann a index) = MyTupleAccess ann (fromHOAS a) index
 fromHOAS (HOAS.MyArray ann as) = MyArray ann (fromHOAS <$> as)
 fromHOAS (HOAS.MyConstructor ann modName con) = MyConstructor ann modName con
 fromHOAS (HOAS.MyPatternMatch ann expr pats) = 

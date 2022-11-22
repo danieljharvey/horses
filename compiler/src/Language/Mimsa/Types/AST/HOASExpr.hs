@@ -7,6 +7,7 @@ module Language.Mimsa.Types.AST.HOASExpr
   )
 where
 
+import GHC.Natural
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import Language.Mimsa.Types.AST.Identifier
@@ -94,6 +95,13 @@ data HOASExpr var ann
         expA :: HOASExpr var ann,
         expAs :: NE.NonEmpty (HOASExpr var ann)
       }
+  | -- | (a,b,c).1 == a
+    MyTupleAccess
+      { expAnn :: ann,
+        expRecord :: HOASExpr var ann,
+        expIndex :: Natural
+      }
+
   | -- | { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
     MyRecord
       { expAnn :: ann,

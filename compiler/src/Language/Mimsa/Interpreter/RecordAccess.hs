@@ -34,16 +34,16 @@ interpretRecordAccess _ _ recordExpr name =
   throwError $ CannotDestructureAsRecord (fromHOAS recordExpr) name
 
 interpretTupleAccess ::
-  InterpretFn var ann ->
-  ExprData var ann ->
-  InterpretExpr var ann ->
+  InterpretFn ann ->
+  ann ->
+  InterpretExpr ann ->
   Natural ->
-  InterpreterM var ann (InterpretExpr var ann)
+  InterpreterM ann (InterpretExpr ann)
 interpretTupleAccess interpretFn _ (MyTuple _ a as) index =
   let allItems = [a] <> NE.toList as
    in case listToMaybe (drop (fromIntegral index - 1) allItems) of
         Just item -> interpretFn item
-        _ -> throwError $ CannotFindMemberInTuple allItems index
+        _ -> throwError $ CannotFindMemberInTuple (fromHOAS <$> allItems) index
 interpretTupleAccess interpretFn ann (MyVar ann' modName a) index = do
   intExpr <- interpretFn (MyVar ann' modName a)
   interpretFn (MyTupleAccess ann intExpr index)
@@ -51,4 +51,4 @@ interpretTupleAccess interpretFn ann (MyTupleAccess ann' a index') index = do
   intExpr <- interpretFn (MyTupleAccess ann' a index')
   interpretFn (MyTupleAccess ann intExpr index)
 interpretTupleAccess _ _ recordExpr index =
-  throwError $ CannotDestructureAsTuple recordExpr index
+  throwError $ CannotDestructureAsTuple (fromHOAS recordExpr) index
