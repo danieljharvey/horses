@@ -226,6 +226,8 @@ markImports (MyRecord ann as) =
   MyRecord ann <$> traverse markImports as
 markImports (MyRecordAccess ann recExpr name) =
   MyRecordAccess ann <$> markImports recExpr <*> pure name
+markImports (MyTupleAccess ann tupleExpr index) =
+  MyTupleAccess ann <$> markImports tupleExpr <*> pure index
 markImports (MyArray ann as) =
   MyArray ann <$> traverse markImports as
 markImports (MyConstructor ann modName const') =

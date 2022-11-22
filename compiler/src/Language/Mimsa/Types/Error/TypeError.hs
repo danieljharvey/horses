@@ -24,6 +24,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
+import GHC.Natural
 import Language.Mimsa.Printer
 import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.AST
@@ -43,8 +44,10 @@ data TypeErrorF var ann
   | UnificationError (Type ann) (Type ann)
   | MissingRecordMember ann var (Set var)
   | MissingRecordTypeMember ann var (Map Name (Type ann))
+  | MissingTupleTypeMember ann Natural [Type ann]
   | NoFunctionEquality (Type ann) (Type ann)
   | CannotMatchRecord Environment ann (Type ann)
+  | CannotMatchTuple Environment ann (Type ann)
   | TypeConstructorNotInScope Environment ann (Maybe ModuleName) TyCon
   | TypeVariablesNotInDataType ann TypeName (Set var) (Set var)
   | ConflictingConstructors ann TyCon
@@ -154,9 +157,18 @@ renderTypeError (MissingRecordTypeMember _ name types) =
   [ "Cannot find" <+> dquotes (prettyDoc name) <> ". The following record items are available:"
   ]
     <> showKeys prettyDoc types
+renderTypeError (MissingTupleTypeMember _ index types) =
+  [ "Cannot find index " <+> dquotes (prettyDoc index) <> ". The following items are available:"
+  ]
+    <> (prettyDoc <$> types)
 renderTypeError (CannotMatchRecord env _ mt) =
   [ "Cannot match type" <+> prettyDoc mt <+> "to record.",
-    "The following are available:",
+    "The following vars are available:",
+    pretty (show env)
+  ]
+renderTypeError (CannotMatchTuple env _ mt) =
+  [ "Cannot match type" <+> prettyDoc mt <+> "to tuple.",
+    "The following vars are available:",
     pretty (show env)
   ]
 renderTypeError (TypeConstructorNotInScope env _ modName constructor) =

@@ -7,12 +7,14 @@ module Language.Mimsa.Parser.Literal
     trueParser,
     falseParser,
     integerLiteral,
+    natParser,
   )
 where
 
 import Data.Functor (($>))
 import Data.Text (Text)
 import qualified Data.Text as T
+import GHC.Natural
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.Lexeme
 import Language.Mimsa.Parser.Types
@@ -37,6 +39,11 @@ integerLiteral =
 
 intParser :: Parser ParserExpr
 intParser = myLexeme (withLocation MyLiteral integerLiteral)
+
+---
+
+natParser :: Parser Natural
+natParser = L.decimal
 
 ---
 

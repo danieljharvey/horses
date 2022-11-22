@@ -69,6 +69,7 @@ mapOuterExprAnnotation f expr' =
     MyTuple ann a as -> MyTuple (f ann) a as
     MyRecord ann as -> MyRecord (f ann) as
     MyRecordAccess ann a b -> MyRecordAccess (f ann) a b
+    MyTupleAccess ann a b -> MyTupleAccess (f ann) a b
     MyArray ann as -> MyArray (f ann) as
     MyConstructor ann a b -> MyConstructor (f ann) a b
     MyTypedHole ann a -> MyTypedHole (f ann) a

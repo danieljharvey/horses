@@ -1293,6 +1293,31 @@ spec =
         result <- eval "10 <= 9"
         result `shouldBe` Right (MTPrim mempty MTBool, bool False)
 
+      describe "Tuple access" $ do
+        it "Can't index below 1" $ do
+          result <- eval "(1,2,3).0"
+          result `shouldSatisfy` isLeft
+
+        it "Can't index past length" $ do
+          result <- eval "(1,2,3).4"
+          result `shouldSatisfy` isLeft
+
+        it "First item works" $ do
+          result <- eval "(10,True,\"dog\").1"
+          result `shouldBe` Right (MTPrim mempty MTInt, int 10)
+
+        it "Third item works" $ do
+          result <- eval "(10,True,\"dog\").3"
+          result `shouldBe` Right (MTPrim mempty MTString, str "dog")
+
+        it "Access from var works" $ do
+          result <- eval "let tup = (10,True,\"dog\") in tup.3"
+          result `shouldBe` Right (MTPrim mempty MTString, str "dog")
+
+        it "Nested access from var works" $ do
+          result <- eval "let tup = (10,True,(1,2,\"dog\")) in tup.3.3"
+          result `shouldBe` Right (MTPrim mempty MTString, str "dog")
+
       describe "Big stuff that breaks interpreter" $ do
         it "Uses Parser.char" $ do
           let expr = "Parser.char"

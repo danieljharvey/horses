@@ -274,6 +274,9 @@ toTSBody expr' =
     (MyRecordAccess _ recExpr name) -> do
       (TSBody as tsExpr) <- toTSBody recExpr
       pure $ TSBody as (TSRecordAccess (coerce name) tsExpr)
+    (MyTupleAccess _ tupExpr index) -> do
+      (TSBody as tsExpr) <- toTSBody tupExpr
+      pure $ TSBody as (TSArrayAccess (fromIntegral (index - 1)) tsExpr) -- TupleAccess starts at 1, not 0
     (MyInfix _ op a b) -> do
       TSBody [] <$> toInfix op a b
     (MyArray _ as) -> do

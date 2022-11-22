@@ -1,5 +1,6 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Language.Mimsa.Printer
   ( Printer (..),
@@ -18,6 +19,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import GHC.Natural
 import Prettyprinter
 import Prettyprinter.Render.Text
 
@@ -38,6 +40,9 @@ class Printer a where
 instance (Printer e, Printer a) => Printer (Either e a) where
   prettyDoc (Left e) = prettyDoc e
   prettyDoc (Right a) = prettyDoc a
+
+instance Printer Natural where
+  prettyDoc i = pretty @Int (fromIntegral i)
 
 instance Printer () where
   prettyDoc = const ""
