@@ -18,6 +18,8 @@ import Data.Foldable
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Data.Maybe (listToMaybe)
+import GHC.Natural
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Environment
@@ -651,6 +653,30 @@ inferRecordAccess env ann a name = do
   mt <- inferRow (getTypeFromAnn inferItems)
   pure (MyRecordAccess mt inferItems name)
 
+inferTupleAccess ::
+  Environment ->
+  Annotation ->
+  TcExpr ->
+  Natural ->
+  ElabM ElabExpr
+inferTupleAccess env ann expr index = do
+  inferItems <- infer env expr
+  -- bin off stupid numbers
+  when
+    (index < 1)
+    (throwError $ CannotMatchTuple env ann (getTypeFromAnn inferItems))
+
+  let inferRow = \case
+        (MTTuple _ a as) -> do
+          let allItems = [a] <> NE.toList as
+          case listToMaybe (drop (fromIntegral index - 1) allItems) of
+            Just mt -> pure mt
+            _ ->
+              throwError $ MissingTupleTypeMember ann index ([a] <> NE.toList as)
+        _ -> throwError $ CannotMatchTuple env ann (getTypeFromAnn inferItems)
+  mt <- inferRow (getTypeFromAnn inferItems)
+  pure (MyTupleAccess mt inferItems index)
+
 inferLetPattern ::
   Environment ->
   Annotation ->
@@ -776,10 +802,10 @@ infer env inferExpr =
       inferLetBinding env ann binder expr body
     (MyLetPattern ann pat expr body) ->
       inferLetPattern env ann pat expr body
-    (MyRecordAccess ann (MyRecord ann' items') name) ->
-      inferRecordAccess env ann (MyRecord ann' items') name
     (MyRecordAccess ann a name) ->
       inferRecordAccess env ann a name
+    (MyTupleAccess ann a index) ->
+      inferTupleAccess env ann a index
     (MyLambda ann binder body) ->
       inferLambda env ann binder body
     (MyApp ann function argument) ->

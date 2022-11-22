@@ -79,6 +79,8 @@ interpretExpr' (MyApp ann fn a) =
   interpretApp interpretExpr ann fn a
 interpretExpr' (MyRecordAccess ann expr name) =
   interpretRecordAccess interpretExpr ann expr name
+interpretExpr' (MyTupleAccess ann expr index) =
+  interpretTupleAccess interpretExpr ann expr index
 interpretExpr' (MyPatternMatch _ matchExpr patterns) = do
   interpretPatternMatch interpretExpr matchExpr patterns
 interpretExpr' (MyLetPattern _ pat patExpr body) =

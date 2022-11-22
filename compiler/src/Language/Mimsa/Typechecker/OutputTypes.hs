@@ -92,6 +92,8 @@ foldExpr fn expression =
       f ann <> foldExpr fn predExpr <> foldExpr fn thenExpr <> foldExpr fn elseExpr
     foldExpr' (MyTuple ann a as) = f ann <> foldExpr fn a <> foldMap (foldExpr fn) as
     foldExpr' (MyRecord ann as) = f ann <> foldMap (foldExpr fn) as
+    foldExpr' (MyTupleAccess ann tuple _) =
+      f ann <> foldExpr fn tuple
     foldExpr' (MyRecordAccess ann record _) =
       f ann <> foldExpr fn record
     foldExpr' (MyArray ann as) =

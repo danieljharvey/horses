@@ -1,7 +1,10 @@
-module Language.Mimsa.Interpreter.RecordAccess (interpretRecordAccess) where
+module Language.Mimsa.Interpreter.RecordAccess (interpretRecordAccess, interpretTupleAccess) where
 
 import Control.Monad.Except
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Data.Maybe (listToMaybe)
+import GHC.Natural
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
@@ -26,3 +29,23 @@ interpretRecordAccess interpretFn ann (MyRecordAccess ann' a name') name = do
   interpretFn (MyRecordAccess ann intExpr name)
 interpretRecordAccess _ _ recordExpr name =
   throwError $ CannotDestructureAsRecord recordExpr name
+
+interpretTupleAccess ::
+  InterpretFn var ann ->
+  ExprData var ann ->
+  InterpretExpr var ann ->
+  Natural ->
+  InterpreterM var ann (InterpretExpr var ann)
+interpretTupleAccess interpretFn _ (MyTuple _ a as) index =
+  let allItems = [a] <> NE.toList as
+   in case listToMaybe (drop (fromIntegral index - 1) allItems) of
+        Just item -> interpretFn item
+        _ -> throwError $ CannotFindMemberInTuple allItems index
+interpretTupleAccess interpretFn ann (MyVar ann' modName a) index = do
+  intExpr <- interpretFn (MyVar ann' modName a)
+  interpretFn (MyTupleAccess ann intExpr index)
+interpretTupleAccess interpretFn ann (MyTupleAccess ann' a index') index = do
+  intExpr <- interpretFn (MyTupleAccess ann' a index')
+  interpretFn (MyTupleAccess ann intExpr index)
+interpretTupleAccess _ _ recordExpr index =
+  throwError $ CannotDestructureAsTuple recordExpr index

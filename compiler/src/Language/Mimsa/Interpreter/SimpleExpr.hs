@@ -25,6 +25,7 @@ simpleExpr (MyIf _ predExpr thenExpr elseExpr) =
 simpleExpr (MyTuple _ a as) = MyTuple mempty (simpleExpr a) (simpleExpr <$> as)
 simpleExpr (MyRecord _ as) = MyRecord mempty (simpleExpr <$> as)
 simpleExpr (MyRecordAccess _ expr name) = MyRecordAccess mempty (simpleExpr expr) name
+simpleExpr (MyTupleAccess _ expr index) = MyTupleAccess mempty (simpleExpr expr) index
 simpleExpr (MyArray _ as) = MyArray mempty (simpleExpr <$> as)
 simpleExpr (MyPatternMatch _ expr pats) =
   MyPatternMatch mempty (simpleExpr expr) (bimap simplePattern simpleExpr <$> pats)

@@ -6,6 +6,7 @@ module Language.Mimsa.Types.Error.InterpreterError (InterpreterError (..)) where
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import GHC.Natural
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers.Name
@@ -27,7 +28,9 @@ data InterpreterError var ann
   | ArrayConcatenationFailure (InterpretExpr var ann) (InterpretExpr var ann)
   | PredicateForIfMustBeABoolean (InterpretExpr var ann)
   | CannotDestructureAsRecord (InterpretExpr var ann) Name
+  | CannotDestructureAsTuple (InterpretExpr var ann) Natural
   | CannotFindMemberInRecord (Map Name (InterpretExpr var ann)) Name
+  | CannotFindMemberInTuple [InterpretExpr var ann] Natural
   | PatternMatchFailure (InterpretExpr var ann)
   deriving stock (Eq, Ord, Show)
 
@@ -65,9 +68,15 @@ instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterE
     "Expected a boolean as a predicate. Cannot use: " <> T.pack (show expr)
   prettyPrint (CannotDestructureAsRecord expr name) =
     "Expected a record with a member " <> prettyPrint name <> ". Cannot destructure: " <> T.pack (show expr)
+  prettyPrint (CannotDestructureAsTuple expr index) =
+    "Expected a tuple with an index at " <> prettyPrint index <> ". Cannot destructure: " <> T.pack (show expr)
   prettyPrint (CannotFindMemberInRecord items name) =
     "Could not find member " <> prettyPrint name <> " in " <> itemList
     where
       itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+  prettyPrint (CannotFindMemberInTuple items index) =
+    "Could not find index " <> prettyPrint index <> " in " <> itemList
+    where
+      itemList = "[ " <> prettyPrint items <> " ]"
   prettyPrint (PatternMatchFailure expr') =
     "Could not pattern match on value " <> T.pack (show expr')

@@ -22,6 +22,7 @@ import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
+import GHC.Natural
 import Language.Mimsa.Parser.Helpers (addLocation, chainl1, commaSep, inBrackets, orInBrackets, parseAndFormat, withLocation)
 import Language.Mimsa.Parser.Identifier
 import Language.Mimsa.Parser.Identifiers
@@ -66,6 +67,7 @@ complexParser =
     <|> letPatternParser
     <|> try appParser
     <|> ifParser
+    <|> try tupleAccessParser
     <|> tupleParser
     <|> try recordAccessParser
     <|> recordParser
@@ -155,6 +157,7 @@ lambdaParser =
 appFunc :: Parser ParserExpr
 appFunc =
   try recordAccessParser
+    <|> try tupleAccessParser
     <|> try varParser
     <|> try constructorParser
     <|> try annotationParser
@@ -171,6 +174,7 @@ argParser =
           <|> letParser
           <|> letPatternParser
           <|> ifParser
+          <|> try tupleAccessParser
           <|> tupleParser
           <|> try recordAccessParser
           <|> recordParser
@@ -232,6 +236,22 @@ dotName = do
   nameParser
 
 -----
+
+tupleAccessParser :: Parser ParserExpr
+tupleAccessParser =
+  let combine location (tuple, indexes) =
+        foldl (MyTupleAccess location) tuple indexes
+   in withLocation combine $ do
+        tuple <- try varParser <|> try tupleParser
+        indexes <- some dotIndex
+        pure (tuple, indexes)
+
+dotIndex :: Parser Natural
+dotIndex = do
+  _ <- myString "."
+  natParser
+
+---
 
 ifParser :: Parser ParserExpr
 ifParser = addLocation $ do

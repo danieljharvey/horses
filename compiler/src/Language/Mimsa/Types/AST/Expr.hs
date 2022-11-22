@@ -21,6 +21,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Generics (Generic)
+import GHC.Natural
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Literal (Literal)
@@ -101,6 +102,12 @@ data Expr var ann
       { expAnn :: ann,
         expA :: Expr var ann,
         expB :: NE.NonEmpty (Expr var ann)
+      }
+  | -- | (a,b,c).1 == a
+    MyTupleAccess
+      { expAnn :: ann,
+        expTuple :: Expr var ann,
+        expIndex :: Natural
       }
   | -- | { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
     MyRecord
@@ -355,6 +362,8 @@ instance Printer (Expr Name ann) where
     prettyDoc func <+> wrapInfix arg
   prettyDoc (MyRecordAccess _ expr name) =
     prettyDoc expr <> "." <> prettyDoc name
+  prettyDoc (MyTupleAccess _ expr index) =
+    prettyDoc expr <> "." <> prettyDoc index
   prettyDoc (MyIf _ if' then' else') =
     prettyIf if' then' else'
   prettyDoc (MyTuple _ a as) =

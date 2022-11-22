@@ -66,6 +66,7 @@ extractUses_ (MyLiteral _ _) = mempty
 extractUses_ (MyTuple _ a as) = extractUses_ a <> foldMap extractUses_ as
 extractUses_ (MyRecord _ map') = foldMap extractUses_ map'
 extractUses_ (MyRecordAccess _ a _) = extractUses_ a
+extractUses_ (MyTupleAccess _ a _) = extractUses_ a
 extractUses_ (MyArray _ map') = foldMap extractUses_ map'
 extractUses_ (MyConstructor _ (Just modName) tyCon) =
   S.singleton (ENamespacedConstructor modName tyCon)

@@ -45,6 +45,7 @@ getAnnotation (MyIf ann _ _ _) = ann
 getAnnotation (MyTuple ann _ _) = ann
 getAnnotation (MyRecord ann _) = ann
 getAnnotation (MyRecordAccess ann _ _) = ann
+getAnnotation (MyTupleAccess ann _ _) = ann
 getAnnotation (MyConstructor ann _ _) = ann
 getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyArray ann _) = ann
@@ -140,6 +141,9 @@ withMonoid f whole@(MyArray _ items) =
 withMonoid f whole@(MyRecordAccess _ expr _name) =
   let (go, m) = f whole
    in if not go then m else m <> withMonoid f expr
+withMonoid f whole@(MyTupleAccess _ expr _index) =
+  let (go, m) = f whole
+   in if not go then m else m <> withMonoid f expr
 withMonoid f whole@MyConstructor {} = snd (f whole)
 withMonoid f whole@MyTypedHole {} = snd (f whole)
 withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
@@ -172,6 +176,8 @@ mapExpr f (MyTuple ann a as) = MyTuple ann (f a) (f <$> as)
 mapExpr f (MyRecord ann items) = MyRecord ann (f <$> items)
 mapExpr f (MyRecordAccess ann expr name) =
   MyRecordAccess ann (f expr) name
+mapExpr f (MyTupleAccess ann expr index) =
+  MyTupleAccess ann (f expr) index
 mapExpr f (MyArray ann items) = MyArray ann (f <$> items)
 mapExpr _ (MyConstructor ann modName cons) = MyConstructor ann modName cons
 mapExpr f (MyPatternMatch ann matchExpr patterns) =
@@ -209,6 +215,8 @@ bindExpr f (MyRecord ann items) =
   MyRecord ann <$> traverse f items
 bindExpr f (MyRecordAccess ann expr name) =
   MyRecordAccess ann <$> f expr <*> pure name
+bindExpr f (MyTupleAccess ann expr index) =
+  MyTupleAccess ann <$> f expr <*> pure index
 bindExpr f (MyArray ann items) =
   MyArray ann <$> traverse f items
 bindExpr _ (MyConstructor ann modName cons) =
