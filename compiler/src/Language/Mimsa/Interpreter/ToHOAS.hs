@@ -1,8 +1,8 @@
 {-# LANGUAGE LambdaCase #-}
 module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS, replaceVars) where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (second)
-import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Types.AST.Expr
@@ -11,12 +11,13 @@ import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.AST.StringPart
 import Language.Mimsa.Types.AST.Spread
-
+import Language.Mimsa.Types.AST.Literal
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.ExprUtils
 
 import Data.Monoid
 
+-- does an expression contain itself, ie, is it a recursive function?
 hasVar :: (Eq x) => (Name, x) ->
     Expr (Name,x) ann -> Bool
 hasVar var expr = getAny $ withMonoid f expr
@@ -74,14 +75,18 @@ fromPat ann pat pExpr =
   let patFnExpr iInput =
         let eInput = fromHOAS iInput
             vars = patternVars pat
-         in toHOAS
-              ( foldr
-                  ( \(ident,_x) totalExpr ->
-                      swapOutVar ident (MyRecordAccess ann eInput ident) totalExpr
+            varsWithIndex = zip (S.toList vars) ([0 ..] :: [Int])
+         in toHOAS $ if S.size vars == 1 then
+
+                            swapOutVar (fst $ fst (head varsWithIndex)) eInput pExpr -- no tuple, just a single var
+                    else
+               foldr
+                  ( \((ident,_x),i) totalExpr ->
+                      swapOutVar ident (MyTupleAccess ann eInput (fromIntegral i + 1)) totalExpr
                   )
                   pExpr
-                  vars
-              )
+                  varsWithIndex
+
    in (pat, patFnExpr)
 
 toPat :: (Ord x) => ann ->
@@ -92,10 +97,14 @@ toPat :: (Ord x) => ann ->
   )
 toPat ann pat pExpr =
         let vars = patternVars pat
-            input = foldMap (\k -> M.singleton (fst k) (HOAS.MyVar ann Nothing k)) 
-                                    (S.toList vars)
-            runPattern = fromHOAS (pExpr (HOAS.MyRecord ann input))
-         in (pat, foldr reduceRecords runPattern vars)
+            runPattern = if S.size vars > 0 then
+                               let neVars = HOAS.MyVar ann Nothing <$> NE.fromList (S.toList vars)
+              in case NE.uncons neVars of
+                (a, Nothing) -> fromHOAS (pExpr a)
+                (a, Just as) -> fromHOAS (pExpr (HOAS.MyTuple ann a as))
+            else
+              fromHOAS (pExpr (HOAS.MyLiteral ann (MyBool True)))
+         in (pat, runPattern )
 
 
 --
@@ -180,20 +189,6 @@ swapOutVar matchIdent new =
   go
   where
     go (MyVar _ _ (ident,_)) | matchIdent == ident = new
-    go other = mapExpr go other
-
--- we end up with lots of `{ varName: varName }.varName , this turns them back
--- into `varName`
-reduceRecords :: (Name,x) -> Expr (Name, x) ann -> Expr (Name, x) ann
-reduceRecords ident =
-  go
-  where
-    go expr@(MyRecordAccess ann (MyRecord _ items) accessIdent)
-      | fst ident == accessIdent =
-          case M.lookup (fst ident) items of
-            Just (MyVar _ Nothing var)
-              | fst var == fst ident -> MyVar ann Nothing var
-            _ -> expr
     go other = mapExpr go other
 
 patternVars :: (Ord var) => Pattern var ann -> Set var

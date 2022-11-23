@@ -19,7 +19,7 @@ parseExpr input = first (,()) (unsafeParseExpr input)
 
 spec :: Spec
 spec = do
-  fdescribe "ToHOAS" $ do
+  describe "ToHOAS" $ do
     describe "There and back again" $ do
       it "Infixes, literals" $ do
         let input = parseExpr "1 + 2 + 3"
