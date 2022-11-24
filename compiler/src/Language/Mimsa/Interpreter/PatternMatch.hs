@@ -34,9 +34,17 @@ interpretLetPattern ann interpretFn pat patExpr body = do
 
   -- get new bound variables
   let bindings = fromMaybe [] (patternMatches pat intExpr)
-      value = HOAS.MyRecord ann (M.fromList bindings)
+      value = valueFromBindings ann bindings
 
   interpretFn (body value)
+
+valueFromBindings :: ann -> [(Name,InterpretExpr ann)] -> InterpretExpr ann
+valueFromBindings ann bindings =
+  case snd <$> bindings of
+                [] -> HOAS.MyLiteral ann (MyBool True)
+                [a] -> a
+                (a:b:bs) ->
+                    HOAS.MyTuple ann a (b NE.:| bs)
 
 interpretPatternMatch ::
   ann ->
@@ -54,7 +62,7 @@ interpretPatternMatch ann interpretFn expr' patterns = do
   case getFirst (foldMap foldF patterns) of
     Just (patExpr, bindings) ->
       do
-        let value = HOAS.MyRecord ann (M.fromList bindings)
+        let value =valueFromBindings ann bindings
 
         interpretFn (patExpr value)
     _ ->

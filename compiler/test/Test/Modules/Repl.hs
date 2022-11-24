@@ -1336,7 +1336,7 @@ spec =
           result `shouldSatisfy` isRight
 
         -- what the hell
-        xit "Parses using a lexeme" $ do
+        it "Parses using a lexeme" $ do
           let expr =
                 mconcat
                   [ "let lexeme p = Parser.left p Parser.space0; ",
