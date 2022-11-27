@@ -16,11 +16,11 @@ import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.ZipFile
+import Language.Mimsa.Types.Modules.ModuleHash
 import Servant
 import Server.Handlers
 import Server.Helpers.ProjectData
 import Server.Types
-import Language.Mimsa.Types.Modules.ModuleHash
 
 -----
 

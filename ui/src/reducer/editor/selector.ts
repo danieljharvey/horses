@@ -9,7 +9,6 @@ import {
   UserErrorResponse,
   TypedHoleResponse,
   ErrorLocation,
-  TestData,
 } from '../../types'
 import { pipe } from 'fp-ts/function'
 import * as NE from 'fp-ts/NonEmptyArray'
@@ -54,26 +53,17 @@ export const currentEditorO = stackL
   .composePrism(editPrism)
   .composeLens(editorFromScreen)
 
-type ExpressionDataResult =
-  | { type: 'ShowBinding'; expression: ExpressionData }
-  | {
-      type: 'ShowEvaluate'
-      expression: ExpressionData
-      evaluatedValue: string
-    }
-  | {
-      type: 'ShowUpdatedBinding'
-      bindingName: string
-      expression: ExpressionData
-      tests: TestData
-    }
+type ExpressionDataResult = {
+  type: 'ShowEvaluate'
+  expression: ExpressionData
+  evaluatedValue: string
+}
 
 const expressionDataPrism: Prism<
   Feedback,
   ExpressionDataResult
 > = new Prism(
   (res: Feedback) =>
-    res.type === 'ShowBinding' ||
     res.type === 'ShowEvaluate'
       ? O.some(res as ExpressionDataResult)
       : O.none,
@@ -87,11 +77,7 @@ const expressionDataLens: Lens<
 > = new Lens(
   (res: ExpressionDataResult) => {
     switch (res.type) {
-      case 'ShowUpdatedBinding':
-        return res.expression
       case 'ShowEvaluate':
-        return res.expression
-      case 'ShowBinding':
         return res.expression
     }
   },

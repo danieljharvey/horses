@@ -16,7 +16,7 @@ module Language.Mimsa.Store.Storage
     saveModulesInStore,
     serialiseStoreExpression,
     deserialiseStoreExpression,
-    getModuleHash
+    getModuleHash,
   )
 where
 

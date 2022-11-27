@@ -19,3 +19,5 @@ export const projectHash = (str: string) =>
 
 // a module hash
 export type ModuleHash = Tagged<'ModuleHash', string>
+
+export const moduleHash = (str: string) => str as ModuleHash

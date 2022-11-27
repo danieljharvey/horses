@@ -16,9 +16,9 @@ import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Modules.Pretty
 import Language.Mimsa.Printer
+import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.Store.Storage
 
 data ModuleData = ModuleData
   { mdModuleHash :: Text,

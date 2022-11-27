@@ -5,7 +5,7 @@
 export type { Backend } from './models/Backend'
 export type { BindModuleRequest } from './models/BindModuleRequest'
 export type { BindModuleResponse } from './models/BindModuleResponse'
-export type { CompileHashRequest } from './models/CompileHashRequest'
+export type { CompileModuleRequest } from './models/CompileModuleRequest'
 export type { CreateProjectResponse } from './models/CreateProjectResponse'
 export type { ErrorLocation } from './models/ErrorLocation'
 export type { EvaluateModuleRequest } from './models/EvaluateModuleRequest'

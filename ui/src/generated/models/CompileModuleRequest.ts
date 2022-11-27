@@ -4,7 +4,7 @@
 
 import type { Backend } from './Backend'
 
-export type CompileHashRequest = {
+export type CompileModuleRequest = {
   chBackend: Backend
-  chExprHash: string
+  chModuleHash: string
 }
