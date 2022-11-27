@@ -32,16 +32,6 @@ fetchProjectItems ::
   SaveProject ->
   m (Project ())
 fetchProjectItems rootPath existingStore existingModuleStore sp = do
-  store' <-
-    recursiveLoadBoundExpressions
-      rootPath
-      existingStore
-      (getItemsForAllVersions . projectBindings $ sp)
-  typeStore' <-
-    recursiveLoadBoundExpressions
-      rootPath
-      existingStore
-      (getItemsForAllVersions . projectTypes $ sp)
   moduleStore <-
     recursiveLoadModules
       rootPath
@@ -50,10 +40,7 @@ fetchProjectItems rootPath existingStore existingModuleStore sp = do
   pure $
     projectFromSaved
       moduleStore
-      ( existingStore
-          <> store'
-          <> typeStore'
-      )
+      existingStore
       sp
 
 --

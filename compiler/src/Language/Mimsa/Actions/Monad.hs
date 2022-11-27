@@ -11,8 +11,6 @@ module Language.Mimsa.Actions.Monad
     appendResolvedExpression,
     setProject,
     appendStoreExpression,
-    bindStoreExpression,
-    bindTypeExpression,
     bindModuleInProject,
     messagesFromOutcomes,
     modulesFromOutcomes,
@@ -39,7 +37,6 @@ import Language.Mimsa.Project
 import Language.Mimsa.Store
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.ResolvedExpression
@@ -164,25 +161,3 @@ bindModuleInProject typecheckedModule modName = do
   appendProject
     ( fromModule modName untypedModule
     )
-
--- add binding for expression and add it to store
-bindStoreExpression ::
-  StoreExpression Annotation ->
-  Name ->
-  ActionM ()
-bindStoreExpression storeExpr name = do
-  appendStoreExpression storeExpr
-  appendProject
-    ( fromItem name storeExpr (getStoreExpressionHash storeExpr)
-    )
-
-bindTypeExpression ::
-  StoreExpression Annotation -> ActionM ()
-bindTypeExpression storeExpr = do
-  -- add the expression to the store
-  appendStoreExpression storeExpr
-  -- add the type to the project
-  appendProject $
-    fromType
-      storeExpr
-      (getStoreExpressionHash storeExpr)

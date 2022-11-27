@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Utils.Helpers where
+module Test.Utils.Helpers (joinLines, fromRight, fromLeft, fromJust, mkStoreExpression, unsafeParseExpr', int, bool, unknown, str', textErrorContains, str, evaluateText, unsafeParseExpr, mtBool, mtString, mtVar, mtInt, unsafeParseDataType, tvNamed, tvNum, typeName, unsafeParseModuleItem, mtFun, unsafeParseMonoType) where
 
 import Data.Functor
 import Data.Text (Text)
@@ -10,7 +10,6 @@ import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Printer
-import Language.Mimsa.Project
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
@@ -76,18 +75,6 @@ textErrorContains s res = case res of
   Left e -> s `T.isInfixOf` e
   _ -> False
 
-getHashOfName :: Project ann -> Name -> ExprHash
-getHashOfName prj name =
-  case lookupBindingName prj name of
-    Just a -> a
-    _ -> error "could not getHashOfName"
-
-getStoreExpression :: Project ann -> ExprHash -> StoreExpression ann
-getStoreExpression project exprHash' =
-  case lookupExprHash project exprHash' of
-    Just a -> a
-    _ -> error "could not getStoreExpression"
-
 bool :: (Monoid ann) => Bool -> Expr a ann
 bool a = MyLiteral mempty (MyBool a)
 
@@ -115,9 +102,6 @@ tvNum = TVUnificationVar
 tvNamed :: Text -> TypeIdentifier
 tvNamed t = TVName $ mkTyVar t
 
-exprHash :: Int -> ExprHash
-exprHash = ExprHash . T.pack . show
-
 ----
 
 mtInt :: (Monoid ann) => Type ann
@@ -136,15 +120,6 @@ mtFun :: (Monoid ann) => Type ann -> Type ann -> Type ann
 mtFun = MTFunction mempty
 
 ----
-
-additionalStoreItems :: Project ann -> Project ann -> Int
-additionalStoreItems old new =
-  projectStoreSize new - projectStoreSize old
-  where
-    projectStoreSize :: Project ann -> Int
-    projectStoreSize = length . getStore . prjStore
-
-----------
 
 -- | given some text, parse and typecheck it
 evaluateText ::

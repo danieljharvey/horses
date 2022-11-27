@@ -15,8 +15,6 @@ import Language.Mimsa.Types.Project.Versioned
 
 data SaveProject = SaveProject
   { projectVersion :: Int,
-    projectBindings :: VersionedBindings,
-    projectTypes :: VersionedTypeBindings,
     projectModules :: VersionedModules
   }
   deriving stock (Eq, Ord, Show, Generic)
@@ -25,8 +23,6 @@ data SaveProject = SaveProject
 instance JSON.FromJSON SaveProject where
   parseJSON (JSON.Object o) = do
     version <- o .: "projectVersion"
-    bindings <- o .: "projectBindings"
-    types <- o .: "projectTypes"
     modules <- o .:? "projectModules"
 
     mods <- case modules of
@@ -35,7 +31,5 @@ instance JSON.FromJSON SaveProject where
 
     SaveProject
       <$> JSON.parseJSON version
-      <*> JSON.parseJSON bindings
-      <*> JSON.parseJSON types
       <*> pure mods
   parseJSON _ = mzero
