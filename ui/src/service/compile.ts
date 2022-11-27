@@ -1,4 +1,4 @@
-import type { CompileHashRequest } from '../types/'
+import type { CompileModuleRequest } from '../types/'
 import { axiosPost } from '../utils/axios-taskeither'
 import * as TE from 'fp-ts/TaskEither'
 
@@ -8,12 +8,12 @@ const baseUrl = process.env.REACT_APP_MIMSA_API_URL
 
 type Binary = any
 
-export const compileStoreExpression = (
-  compileHashRequest: CompileHashRequest
+export const compileModule = (
+  compileModuleRequest: CompileModuleRequest
 ): TE.TaskEither<string, Binary> =>
   axiosPost(
     `${baseUrl}/compile/hash/`,
-    compileHashRequest,
+    compileModuleRequest,
     {
       responseType: 'blob',
     }

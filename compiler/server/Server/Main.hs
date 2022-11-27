@@ -71,7 +71,7 @@ server = do
   _ <- register ghcMetrics
   mimsaConfig' <- runExceptT getMimsaEnv
   case mimsaConfig' of
-    Left e -> putStrLn e >> pure ()
+    Left e -> void (putStrLn e)
     Right cfg -> do
       rtn <- runServerM cfg serverM
       case rtn of

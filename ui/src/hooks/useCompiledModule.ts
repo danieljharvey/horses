@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { compileStoreExpression } from '../service/compile'
+import { compileModule } from '../service/compile'
 import * as E from 'fp-ts/Either'
-import { Backend, ExprHash } from '../types'
+import { Backend, ModuleHash } from '../types'
 
 type CompiledState =
   | { type: 'Empty' }
@@ -11,26 +11,26 @@ type CompiledState =
 
 type State = {
   compiled: CompiledState
-  chExprHash: ExprHash
+  chModuleHash: ModuleHash
   chBackend: Backend
 }
 
-export const useCompiledExpression = (
-  chExprHash: ExprHash,
+export const useCompiledModule = (
+  chModuleHash: ModuleHash,
   chBackend: Backend
 ) => {
   const def: State = {
     compiled: {
       type: 'Empty',
     },
-    chExprHash,
+    chModuleHash,
     chBackend,
   }
 
   const [state, setState] = React.useState<State>(def)
 
   if (
-    state.chExprHash !== chExprHash ||
+    state.chModuleHash !== chModuleHash ||
     state.chBackend !== chBackend
   ) {
     setState(def)
@@ -42,8 +42,8 @@ export const useCompiledExpression = (
     }
 
     setState({ ...state, compiled: { type: 'Fetching' } })
-    const resp = await compileStoreExpression({
-      chExprHash,
+    const resp = await compileModule({
+      chModuleHash,
       chBackend,
     })()
 

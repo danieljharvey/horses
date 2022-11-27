@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ExprHash } from '../types'
+import { ModuleHash } from '../types'
 import { InlineSpaced } from './View/InlineSpaced'
 
 import { Paragraph } from './View/Paragraph'
@@ -9,11 +9,11 @@ import { Backend } from '../generated'
 import { Compile } from './Editor/Compile'
 
 type ListCompileProps = {
-  exprHash: ExprHash
+  moduleHash: ModuleHash
 }
 
 export const ListCompile: React.FC<ListCompileProps> = ({
-  exprHash,
+  moduleHash,
 }) => {
   const backends: { title: string; be: Backend }[] = [
     { title: 'Typescript', be: 'Typescript' },
@@ -26,7 +26,7 @@ export const ListCompile: React.FC<ListCompileProps> = ({
       <InlineSpaced>
         {backends.map((be) => (
           <Compile
-            exprHash={exprHash}
+            moduleHash={moduleHash}
             backend={be.be}
             title={be.title}
           />

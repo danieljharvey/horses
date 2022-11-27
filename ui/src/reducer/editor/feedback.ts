@@ -9,13 +9,6 @@ export const editorNew = () => ({
   type: 'EditorNew' as const,
 })
 
-export const showBinding = (
-  expression: ExpressionData
-) => ({
-  type: 'ShowBinding' as const,
-  expression,
-})
-
 export const showErrorResponse = (
   errorResponse: UserErrorResponse
 ) => ({
@@ -43,7 +36,6 @@ export const showModule = (
 
 export type Feedback =
   | ReturnType<typeof editorNew>
-  | ReturnType<typeof showBinding>
   | ReturnType<typeof showErrorResponse>
   | ReturnType<typeof showEvaluate>
   | ReturnType<typeof showModule>

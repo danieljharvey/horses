@@ -6,7 +6,7 @@ import { ListBindings } from '../ListBindings'
 import { Code } from '../View/Code'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import { ListTests } from '../ListTests'
-import { exprHash } from '../../types'
+import { moduleHash } from '../../types'
 import { ListCompile } from '../ListCompile'
 import { Expression } from './Expression'
 import { ErrorResponse } from './ErrorResponse'
@@ -38,6 +38,7 @@ export const Feedback: React.FC<Props> = ({ feedback }) => {
       )
 
     case 'ShowModuleData':
+      console.log(feedback.moduleData)
       return (
         <FlexColumnSpaced>
           <Code codeType="type">
@@ -49,20 +50,12 @@ export const Feedback: React.FC<Props> = ({ feedback }) => {
             }
             unitTests={feedback.testData.tdUnitTests}
           />
-          <ListBindings
-            modules={{}}
-            onModuleSelect={() => {}}
-          />
-        </FlexColumnSpaced>
-      )
-
-    case 'ShowBinding':
-      return (
-        <FlexColumnSpaced>
-          <Expression expression={feedback.expression} />
           <ListCompile
-            exprHash={exprHash(feedback.expression.edHash)}
+            moduleHash={moduleHash(
+              feedback.moduleData.mdModuleHash
+            )}
           />
+
           <ListBindings
             modules={{}}
             onModuleSelect={() => {}}

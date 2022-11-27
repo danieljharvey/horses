@@ -14,8 +14,6 @@ import Language.Mimsa.Types.Store (Store)
 -- and a list of mappings of names to those pieces
 data Project ann = Project
   { prjStore :: Store ann,
-    prjBindings :: VersionedBindings,
-    prjTypeBindings :: VersionedTypeBindings,
     prjModules :: VersionedModules,
     prjModuleStore :: Map ModuleHash (Module ann)
   }
@@ -28,10 +26,10 @@ data Project ann = Project
     )
 
 instance Semigroup (Project a) where
-  Project a a1 a2 a3 a4 <> Project b b1 b2 b3 b4 =
-    Project (a <> b) (a1 <> b1) (a2 <> b2) (a3 <> b3) (a4 <> b4)
+  Project a a1 a2 <> Project b b1 b2 =
+    Project (a <> b) (a1 <> b1) (a2 <> b2)
 
 instance Monoid (Project a) where
-  mempty = Project mempty mempty mempty mempty mempty
+  mempty = Project mempty mempty mempty
 
 -------------

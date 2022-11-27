@@ -20,6 +20,9 @@ install:
 	cabal update
 	cabal install mimsa:exe:mimsa --overwrite-policy=always
 
+run-server:
+	cabal run mimsa:exe:mimsa-server
+
 test-watch:
 	ghcid -c "cabal repl mimsa:tests" -l=hlint --test="main"
 
