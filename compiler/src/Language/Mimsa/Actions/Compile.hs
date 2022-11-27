@@ -18,12 +18,10 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import qualified Language.Mimsa.Actions.Typecheck as Actions
 import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
@@ -40,61 +38,6 @@ import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
-
-lookupRootStoreExpr ::
-  Map ExprHash (StoreExpression ann) ->
-  ExprHash ->
-  Actions.ActionM (StoreExpression ann)
-lookupRootStoreExpr storeExprs exprHash =
-  -- get new root StoreExpression (it may be different due to optimisation)
-  case M.lookup exprHash storeExprs of
-    Just re -> pure re
-    _ -> throwError (StoreErr (CouldNotFindStoreExpression exprHash))
-
--- | compile a StoreExpression and all of its dependents
-compileStoreExpression ::
-  Backend ->
-  StoreExpression Annotation ->
-  Actions.ActionM (ExprHash, Set ExprHash)
-compileStoreExpression be se = do
-  -- get dependencies of StoreExpression
-  depsSe <- Actions.getDepsForStoreExpression se
-
-  -- optimise them all like a big legend
-  -- storeExprs <- Actions.optimiseAll (fst <$> depsSe)
-  -- TODO: renable this once we know it's not the cause
-  let storeExprs = fst <$> depsSe
-
-  -- get new root StoreExpression (it may be different due to optimisation)
-  rootStoreExpr <- lookupRootStoreExpr storeExprs (getStoreExpressionHash se)
-
-  -- this will eventually check for things we have
-  -- already transpiled to save on work
-  typedStoreExprs <-
-    traverse
-      Actions.annotateStoreExpressionWithTypes
-      storeExprs
-
-  -- this will eventually check for things we have
-  -- already transpiled to save on work
-  hashes <-
-    compileStoreExpressions be typedStoreExprs
-
-  -- create the index
-  createIndex be (getStoreExpressionHash rootStoreExpr)
-
-  -- include stdlib for runtime
-  createStdlib be
-
-  -- return useful info
-  let rootExprHash = getStoreExpressionHash rootStoreExpr
-
-  -- return all ExprHashes created
-  let allHashes =
-        hashes
-          <> S.singleton rootExprHash
-
-  pure (rootExprHash, allHashes)
 
 -- | given a pile of StoreExpressions, turn them all into TS/JS etc
 compileStoreExpressions ::
@@ -143,17 +86,6 @@ transpileModule be se = do
         (outputStoreExpression be dataTypes (prjStore project) se)
   let jsOutput = Actions.SaveContents (coerce js)
   Actions.appendWriteFile path filename jsOutput
-
--- | The index file for a given exprHash is the 'entrypoint' file
--- | that exposes the expression as a function called 'main' and imports
--- | the other files
-createIndex ::
-  Backend -> ExprHash -> Actions.ActionM ()
-createIndex be exprHash = do
-  let path = Actions.SavePath (T.pack $ symlinkedOutputPath be)
-      outputContent = Actions.SaveContents (coerce $ outputIndexFile be (M.singleton "main" exprHash) mempty mempty)
-      filename = Actions.SaveFilename (indexFilename be exprHash)
-  Actions.appendWriteFile path filename outputContent
 
 -- The stdlib is a set of functions needed to stuff like pattern matching
 createStdlib :: Backend -> Actions.ActionM ()
