@@ -1,5 +1,3 @@
-{-# LANGUAGE TupleSections #-}
-
 module Language.Mimsa.Project.Helpers
   ( fromStoreExpression,
     fromModuleDeps,

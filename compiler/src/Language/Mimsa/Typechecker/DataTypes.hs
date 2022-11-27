@@ -102,9 +102,9 @@ validateConstructors ::
 validateConstructors env ann (DataType _ _ constructors) = do
   traverse_
     ( \(tyCon, _) ->
-        if M.member (Nothing, coerce tyCon) (getDataTypes env)
-          then throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon))
-          else pure ()
+        when
+          (M.member (Nothing, coerce tyCon) (getDataTypes env))
+          (throwError (CannotUseBuiltInTypeAsConstructor ann (coerce tyCon)))
     )
     (M.toList constructors)
 

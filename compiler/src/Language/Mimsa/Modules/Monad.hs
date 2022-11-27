@@ -70,10 +70,11 @@ errorIfExpressionAlreadyDefined ::
   DefIdentifier ->
   m ()
 errorIfExpressionAlreadyDefined mod' def =
-  if M.member def (moExpressions mod')
-    || M.member def (moExpressionImports mod')
-    then throwError (ModuleErr $ DuplicateDefinition def)
-    else pure ()
+  when
+    ( M.member def (moExpressions mod')
+        || M.member def (moExpressionImports mod')
+    )
+    (throwError (ModuleErr $ DuplicateDefinition def))
 
 checkDataType ::
   (MonadError (Error Annotation) m) =>
@@ -90,10 +91,11 @@ errorIfTypeAlreadyDefined ::
   TypeName ->
   m ()
 errorIfTypeAlreadyDefined mod' typeName =
-  if M.member typeName (moDataTypes mod')
-    || M.member typeName (moDataTypeImports mod')
-    then throwError (ModuleErr $ DuplicateTypeName typeName)
-    else pure ()
+  when
+    ( M.member typeName (moDataTypes mod')
+        || M.member typeName (moDataTypeImports mod')
+    )
+    (throwError (ModuleErr $ DuplicateTypeName typeName))
 
 errorIfConstructorAlreadyDefined ::
   (MonadError (Error Annotation) m) =>
@@ -102,9 +104,9 @@ errorIfConstructorAlreadyDefined ::
   m ()
 errorIfConstructorAlreadyDefined mod' tyCon =
   let allCons = mconcat (M.keysSet . dtConstructors <$> M.elems (moDataTypes mod'))
-   in if S.member tyCon allCons
-        then throwError (ModuleErr $ DuplicateConstructor tyCon)
-        else pure ()
+   in when
+        (S.member tyCon allCons)
+        (throwError (ModuleErr $ DuplicateConstructor tyCon))
 
 errorIfImportAlreadyDefined ::
   (MonadError (Error Annotation) m) =>
@@ -113,10 +115,11 @@ errorIfImportAlreadyDefined ::
   ModuleHash ->
   m ()
 errorIfImportAlreadyDefined mod' def moduleHash =
-  if M.member def (moExpressions mod')
-    || M.member def (moExpressionImports mod')
-    then throwError (ModuleErr $ DefinitionConflictsWithImport def moduleHash)
-    else pure ()
+  when
+    ( M.member def (moExpressions mod')
+        || M.member def (moExpressionImports mod')
+    )
+    (throwError (ModuleErr $ DefinitionConflictsWithImport def moduleHash))
 
 errorIfTypeImportAlreadyDefined ::
   (MonadError (Error Annotation) m) =>
@@ -125,7 +128,8 @@ errorIfTypeImportAlreadyDefined ::
   ModuleHash ->
   m ()
 errorIfTypeImportAlreadyDefined mod' typeName moduleHash =
-  if M.member typeName (moDataTypes mod')
-    || M.member typeName (moDataTypeImports mod')
-    then throwError (ModuleErr $ TypeConflictsWithImport typeName moduleHash)
-    else pure ()
+  when
+    ( M.member typeName (moDataTypes mod')
+        || M.member typeName (moDataTypeImports mod')
+    )
+    (throwError (ModuleErr $ TypeConflictsWithImport typeName moduleHash))
