@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Compile (compileStoreExpression, compileModule, compileProject) where
+module Language.Mimsa.Actions.Compile (compileModule, compileProject) where
 
 -- get expression
 -- optimise it

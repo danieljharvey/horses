@@ -16,6 +16,7 @@ module Language.Mimsa.Store.Storage
     saveModulesInStore,
     serialiseStoreExpression,
     deserialiseStoreExpression,
+    getModuleHash
   )
 where
 
@@ -235,7 +236,7 @@ findModuleInLocalStore rootPath hash = do
   storePath <- getModuleFolder rootPath
   json <- liftIO $ try $ BS.readFile (filePath storePath (coerce hash))
   case (json :: Either IOError BS.ByteString) of
-    Left _ -> throwError $ CouldNotReadFilePath StoreExprFile (filePath storePath (coerce hash))
+    Left _ -> throwError $ CouldNotReadFilePath ModuleFile (filePath storePath (coerce hash))
     Right json' -> do
       case deserializeModule json' of
         Nothing -> throwError CouldNotDecodeByteString

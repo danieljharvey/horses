@@ -16,23 +16,23 @@ import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.ZipFile
-import Language.Mimsa.Types.Store
 import Servant
 import Server.Handlers
 import Server.Helpers.ProjectData
 import Server.Types
+import Language.Mimsa.Types.Modules.ModuleHash
 
 -----
 
 type CompileAPI =
   "compile"
-    :> CompileHash
+    :> CompileModule
 
 compileEndpoints ::
   MimsaEnvironment ->
   Server CompileAPI
 compileEndpoints =
-  compileHashEndpoint
+  compileModuleEndpoint
 
 -----
 
@@ -44,38 +44,38 @@ instance ToSchema ZipFileResponse where
 
 -----
 
-data CompileHashRequest = CompileHashRequest
-  { chExprHash :: ExprHash,
+data CompileModuleRequest = CompileModuleRequest
+  { chModuleHash :: ModuleHash,
     chBackend :: Backend
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.FromJSON, ToSchema)
 
 -- return type of a ZIP file download with a filename in it's header
-type CompileHashResponse =
+type CompileModuleResponse =
   ( Headers
       '[Header "Content-Disposition" String]
       ZipFileResponse
   )
 
-type CompileHash =
+type CompileModule =
   "hash"
-    :> ReqBody '[JSON] CompileHashRequest
+    :> ReqBody '[JSON] CompileModuleRequest
     :> Post
          '[OctetStream]
-         CompileHashResponse
+         CompileModuleResponse
 
-compileHashEndpoint ::
+compileModuleEndpoint ::
   MimsaEnvironment ->
-  CompileHashRequest ->
-  Handler CompileHashResponse
-compileHashEndpoint
+  CompileModuleRequest ->
+  Handler CompileModuleResponse
+compileModuleEndpoint
   mimsaEnv
-  (CompileHashRequest exprHash backend) = do
-    (storeExpr, pd, _) <- projectFromExpressionHandler mimsaEnv exprHash
-    (_, outcomes, (rootExprHash, _)) <-
-      fromActionM mimsaEnv (pdHash pd) (Actions.compileStoreExpression backend storeExpr)
+  (CompileModuleRequest moduleHash backend) = do
+    (rootModule, pd, _) <- projectFromModuleHandler mimsaEnv moduleHash
+    (_, outcomes, (rootModuleHash, _, _)) <-
+      fromActionM mimsaEnv (pdHash pd) (Actions.compileModule backend rootModule)
     let makeZip = encodeZipFile . zipFromSavedFiles . Actions.writeFilesFromOutcomes
-    let filename = "mimsa-" <> show rootExprHash <> ".zip"
+    let filename = "mimsa-" <> show rootModuleHash <> ".zip"
         contentDisposition = "attachment; filename=\"" <> filename <> "\""
     pure (addHeader contentDisposition (ZipFileResponse (makeZip outcomes)))

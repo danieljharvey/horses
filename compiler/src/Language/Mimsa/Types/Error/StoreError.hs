@@ -10,12 +10,13 @@ import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
 
-data FileType = ProjectFile | StoreExprFile
+data FileType = ProjectFile | StoreExprFile | ModuleFile
   deriving stock (Eq, Ord, Show)
 
 instance Printer FileType where
   prettyPrint ProjectFile = "project"
   prettyPrint StoreExprFile = "store expression"
+  prettyPrint ModuleFile = "module"
 
 data StoreError
   = ExpressionDoesNotMatchHash ExprHash ExprHash

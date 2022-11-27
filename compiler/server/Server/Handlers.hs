@@ -12,7 +12,6 @@ module Server.Handlers
     saveExprHandler,
     saveFileHandler,
     findExprHandler,
-    projectFromExpressionHandler,
     projectFromModuleHandler,
     readStoreHandler,
     writeStoreHandler,
@@ -151,25 +150,6 @@ findModuleHandler project modHash =
       Nothing -> Left ("Could not find moduleHash!" :: Text)
       Just a -> Right a
 
--- given an exprhash, load a project containing its dependents
-projectFromExpressionHandler ::
-  MimsaEnvironment ->
-  ExprHash ->
-  Handler (StoreExpression Annotation, ProjectData, Project Annotation)
-projectFromExpressionHandler mimsaEnv exprHash = do
-  -- load store with just items for storeExpr in
-  store <- storeFromExprHashHandler mimsaEnv exprHash
-  -- create a project with this store
-  let project = fromStore store $> mempty
-  -- find the storeExpr we want in the store
-  storeExpr <- findExprHandler project exprHash
-  -- add deps of storeExpr to project
-  let projectWithStoreExpr = project <> fromStoreExpressionDeps storeExpr
-  -- save shit
-  pd <- projectDataHandler mimsaEnv projectWithStoreExpr
-  writeStoreHandler mimsaEnv (prjStore projectWithStoreExpr)
-  pure (storeExpr, pd, projectWithStoreExpr)
-
 -- given a moduleHash, load a project containing its dependents
 projectFromModuleHandler ::
   MimsaEnvironment ->
@@ -198,14 +178,3 @@ storeFromModuleHashHandler mimsaEnv modHash =
         (mimsaConfig mimsaEnv)
         UserError
         (recursiveLoadModules (scRootPath cfg) mempty (S.singleton modHash))
-
-storeFromExprHashHandler ::
-  MimsaEnvironment ->
-  ExprHash ->
-  Handler (Store ())
-storeFromExprHashHandler mimsaEnv exprHash =
-  let cfg = mimsaConfig mimsaEnv
-   in handleServerM
-        (mimsaConfig mimsaEnv)
-        UserError
-        (recursiveLoadBoundExpressions (scRootPath cfg) mempty (S.singleton exprHash))

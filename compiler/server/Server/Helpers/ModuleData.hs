@@ -18,6 +18,7 @@ import Language.Mimsa.Modules.Pretty
 import Language.Mimsa.Printer
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Store.Storage
 
 data ModuleData = ModuleData
   { mdModuleHash :: Text,
@@ -33,7 +34,8 @@ makeModuleData ::
   Text ->
   ModuleData
 makeModuleData typedModule input =
-  let moduleHash = typedModule
+  let moduleHash :: ModuleHash
+      moduleHash = getModuleHash typedModule
    in ModuleData
         { mdModuleHash = prettyPrint moduleHash,
           mdModulePretty = prettyPrint typedModule,
