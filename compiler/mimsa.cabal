@@ -44,9 +44,9 @@ library
   exposed-modules:
       Language.Mimsa.Actions.Compile
       Language.Mimsa.Actions.Helpers.Build
-      Language.Mimsa.Actions.Helpers.CheckStoreExpression
       Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression
       Language.Mimsa.Actions.Helpers.LookupExpression
+      Language.Mimsa.Actions.Helpers.NumberStoreExpression
       Language.Mimsa.Actions.Helpers.Parse
       Language.Mimsa.Actions.Interpret
       Language.Mimsa.Actions.Modules.Bind
@@ -58,7 +58,6 @@ library
       Language.Mimsa.Actions.Modules.Typecheck
       Language.Mimsa.Actions.Monad
       Language.Mimsa.Actions.Optimise
-      Language.Mimsa.Actions.Typecheck
       Language.Mimsa.Actions.Types
       Language.Mimsa.Backend.Javascript.Printer
       Language.Mimsa.Backend.Output
@@ -137,7 +136,6 @@ library
       Language.Mimsa.Transform.Shared
       Language.Mimsa.Transform.SimplifyPatterns
       Language.Mimsa.Transform.TrimDeps
-      Language.Mimsa.Transform.Warnings
       Language.Mimsa.Typechecker
       Language.Mimsa.Typechecker.BuiltIns
       Language.Mimsa.Typechecker.CreateEnv
@@ -202,7 +200,6 @@ library
       Language.Mimsa.Types.Project.Usage
       Language.Mimsa.Types.Project.Versioned
       Language.Mimsa.Types.Project.VersionedMap
-      Language.Mimsa.Types.ResolvedExpression
       Language.Mimsa.Types.Store
       Language.Mimsa.Types.Store.Bindings
       Language.Mimsa.Types.Store.ExprHash

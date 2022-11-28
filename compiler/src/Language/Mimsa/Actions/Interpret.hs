@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Actions.Interpret (interpreter) where
 
+import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)
@@ -12,14 +13,13 @@ import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Act
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Interpreter.Interpret
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Printer
 import Language.Mimsa.Store
-import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
+import qualified Language.Mimsa.Actions.Optimise as Actions
 
 -- get all the deps
 -- change var to InterpretVar to point at imports
@@ -33,7 +33,10 @@ interpreter se = do
   depsSe <- Actions.getDepsForStoreExpression se
 
   -- optimise them all like a big legend
-  allInterpreted <- interpretAll (fst <$> depsSe)
+  allOptimised <- Actions.optimiseAll (fst <$> depsSe)
+
+  -- damn
+  allInterpreted <- interpretAll allOptimised
 
   case M.lookup (getStoreExpressionHash se) allInterpreted of
     Just re -> pure (bimap fst edAnnotation re)
@@ -53,13 +56,11 @@ interpretAll inputStoreExpressions = do
           Just expr -> do
             -- get us out of this Map of Maps situation
             let flatDeps = squashify depMap
+
             -- add numbers and mark imports
             numberedSe <-
-              liftEither
-                ( first
-                    (TypeErr (prettyPrint se))
-                    (addNumbersToStoreExpression expr (storeBindings se))
-                )
+              Actions.numberStoreExpression expr (storeBindings se)
+
             -- tag each `var` with it's location if it is an import
             let withImports = addEmptyStackFrames numberedSe
             -- get exprhashes for any infixOps we need

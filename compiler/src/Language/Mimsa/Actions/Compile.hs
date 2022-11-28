@@ -18,6 +18,7 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
+-- import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
@@ -172,6 +173,10 @@ compileModule be compModule = do
 
   -- turn it into store expressions
   compiledExps <- Actions.toStoreExpressions typecheckedModule
+
+  -- optimise them all like a big legend -- needs them to be typechecked first
+  -- though
+  --allOptimised <- Actions.optimiseAll (getStore (cmStore compiledExps))
 
   -- compile them all
   _ <- compileStoreExpressions be (getStore (cmStore compiledExps))
