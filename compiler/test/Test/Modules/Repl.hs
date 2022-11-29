@@ -69,6 +69,14 @@ spec :: Spec
 spec =
   describe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
+      it "No functions" $ do
+        result <- eval "100"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 100)
+
+      it "No dependencies" $ do
+        result <- eval "let id a = a in id 100"
+        result `shouldBe` Right (MTPrim mempty MTInt, int 100)
+
       it "Use Prelude.fst" $ do
         result <- eval "let x = ((1,2)) in Prelude.fst x"
         result

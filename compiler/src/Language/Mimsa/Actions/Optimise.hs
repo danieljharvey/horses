@@ -1,18 +1,17 @@
 module Language.Mimsa.Actions.Optimise
-  (
-    optimiseAll,
+  ( optimiseAll,
   )
 where
 
 -- this module is currently unused, we should be using it
 -- to optimise StoreExpressions before Evaluating or Compiling them
 
-import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import Data.Bifunctor
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.BetaReduce
@@ -63,7 +62,7 @@ optimiseStoreExpression storeExpr =
 
         -- float lets down into patterns
         let floatedSe =
-                floatDown floatedUpExprName
+              floatDown floatedUpExprName
 
         -- turn back into Expr Variable (fresh names for copied vars)
         floatedWithNumbers <-
@@ -78,16 +77,8 @@ optimiseStoreExpression storeExpr =
 
         pure newStoreExpr
 
-updateBindings :: Map ExprHash ExprHash -> Map (Maybe ModuleName, Name) ExprHash -> Map (Maybe ModuleName, Name) ExprHash
-updateBindings swaps =
-  fmap
-    ( \exprHash -> case M.lookup exprHash swaps of
-        Just newExprHash -> newExprHash
-        _ -> exprHash
-    )
-
-updateTypeBindings :: Map ExprHash ExprHash -> Map k ExprHash -> Map k ExprHash
-updateTypeBindings swaps bindings =
+useSwaps :: Map ExprHash ExprHash -> Map k ExprHash -> Map k ExprHash
+useSwaps swaps bindings =
   ( \exprHash -> case M.lookup exprHash swaps of
       Just newExprHash -> newExprHash
       _ -> exprHash
@@ -97,8 +88,6 @@ updateTypeBindings swaps bindings =
 --
 
 -- Optimise a group of StoreExpressions
--- Currently optimises each one individually without using its parents
--- This should be a reasonably easy change to try in future though
 optimiseAll ::
   Map ExprHash (StoreExpression Annotation) ->
   Actions.ActionM (Map ExprHash (StoreExpression Annotation))
@@ -106,14 +95,17 @@ optimiseAll inputStoreExpressions = do
   let action depMap se = do
         -- optimise se
         optimisedSe <- optimiseStoreExpression se
+        -- make a map of expected hash with new actual hash for swapping
         let swaps = getStoreExpressionHash <$> depMap
         -- use the optimised deps passed in
         let newSe =
               case optimisedSe of
                 ose@StoreExpression {} ->
                   ose
-                    { seBindings = updateBindings swaps (storeBindings optimisedSe),
-                      seTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
+                    { seBindings = useSwaps swaps (storeBindings optimisedSe),
+                      seTypeBindings = useSwaps swaps (storeTypeBindings optimisedSe),
+                      seInfixes = useSwaps swaps (storeInfixes optimisedSe),
+                      seTypes = useSwaps swaps (storeTypes optimisedSe)
                     }
                 sd -> sd
         -- store it

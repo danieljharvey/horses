@@ -2,7 +2,6 @@
 
 module Language.Mimsa.Actions.Interpret (interpreter) where
 
-import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)
@@ -10,7 +9,9 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Actions
+import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Interpreter.Interpret
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Store
@@ -19,7 +20,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
-import qualified Language.Mimsa.Actions.Optimise as Actions
 
 -- get all the deps
 -- change var to InterpretVar to point at imports
@@ -35,12 +35,21 @@ interpreter se = do
   -- optimise them all like a big legend
   allOptimised <- Actions.optimiseAll (fst <$> depsSe)
 
-  -- damn
-  allInterpreted <- interpretAll allOptimised
-
-  case M.lookup (getStoreExpressionHash se) allInterpreted of
-    Just re -> pure (bimap fst edAnnotation re)
+  -- what is this rootExprHash now we've messed with everything
+  newRootExprHash <- case M.lookup (getStoreExpressionHash se) allOptimised of
+    Just re -> pure (getStoreExpressionHash re)
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
+
+  -- interpret everything
+  allInterpreted <- interpretAll (fixKeys allOptimised)
+
+  -- pick out the value we're interested in
+  case M.lookup newRootExprHash allInterpreted of
+    Just re -> pure (bimap fst edAnnotation re)
+    _ -> throwError (StoreErr (CouldNotFindStoreExpression newRootExprHash))
+
+fixKeys :: Map ExprHash (StoreExpression Annotation) -> Map ExprHash (StoreExpression Annotation)
+fixKeys = foldMap (\se -> M.singleton (getStoreExpressionHash se) se) . M.elems
 
 squashify :: (Ord e) => Map e (Map e a) -> Map e a
 squashify = mconcat . M.elems

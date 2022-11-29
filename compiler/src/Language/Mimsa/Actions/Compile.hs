@@ -176,7 +176,7 @@ compileModule be compModule = do
 
   -- optimise them all like a big legend -- needs them to be typechecked first
   -- though
-  --allOptimised <- Actions.optimiseAll (getStore (cmStore compiledExps))
+  -- allOptimised <- Actions.optimiseAll (getStore (cmStore compiledExps))
 
   -- compile them all
   _ <- compileStoreExpressions be (getStore (cmStore compiledExps))
