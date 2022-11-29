@@ -8,7 +8,7 @@ module Language.Mimsa.Actions.Monad
     appendMessage,
     appendDocMessage,
     appendWriteFile,
-    appendResolvedExpression,
+    cacheTypecheckedStoreExpression,
     setProject,
     appendStoreExpression,
     bindModuleInProject,
@@ -16,7 +16,7 @@ module Language.Mimsa.Actions.Monad
     modulesFromOutcomes,
     storeExpressionsFromOutcomes,
     writeFilesFromOutcomes,
-    getResolvedExpressions,
+    getCachedTypecheckedStoreExpressions,
     ActionM,
     SavePath (..),
     SaveContents (..),
@@ -39,7 +39,6 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker
 import Prettyprinter
@@ -48,7 +47,7 @@ emptyState :: Project Annotation -> ActionState
 emptyState prj =
   ActionState
     { asProject = prj,
-      asCachedResolved = mempty,
+      asCachedTypechecked = mempty,
       asActionOutcomes = mempty
     }
 
@@ -84,19 +83,19 @@ appendDocMessage :: Doc ann -> ActionM ()
 appendDocMessage = appendMessage . renderWithWidth 50
 
 -- | cache a resolved expression
-appendResolvedExpression :: ExprHash -> ResolvedExpression Annotation -> ActionM ()
-appendResolvedExpression exprHash re =
+cacheTypecheckedStoreExpression :: ExprHash -> StoreExpression (Type Annotation) -> ActionM ()
+cacheTypecheckedStoreExpression exprHash re =
   modify
     ( \s ->
         s
-          { asCachedResolved =
-              asCachedResolved s <> M.singleton exprHash re
+          { asCachedTypechecked =
+              asCachedTypechecked s <> M.singleton exprHash re
           }
     )
 
-getResolvedExpressions :: ActionM (Map ExprHash (ResolvedExpression Annotation))
-getResolvedExpressions =
-  gets asCachedResolved
+getCachedTypecheckedStoreExpressions :: ActionM (Map ExprHash (StoreExpression (Type Annotation)))
+getCachedTypecheckedStoreExpressions =
+  gets asCachedTypechecked
 
 appendWriteFile ::
   SavePath ->

@@ -27,7 +27,10 @@ interpretRecordAccess interpretFn ann (MyVar ann' modName a) name = do
 interpretRecordAccess interpretFn ann (MyRecordAccess ann' a name') name = do
   intExpr <- interpretFn (MyRecordAccess ann' a name')
   interpretFn (MyRecordAccess ann intExpr name)
-interpretRecordAccess _ _ recordExpr name =
+interpretRecordAccess interpretFn ann (MyApp ann' fn arg) name = do
+  res <- interpretFn (MyApp ann' fn arg)
+  interpretFn (MyRecordAccess ann res name)
+interpretRecordAccess _ _ recordExpr name = do
   throwError $ CannotDestructureAsRecord recordExpr name
 
 interpretTupleAccess ::

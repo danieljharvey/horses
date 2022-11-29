@@ -23,7 +23,6 @@ import Data.Text (Text)
 import GHC.Generics
 import Language.Mimsa.Printer
 import Language.Mimsa.Store
-import Language.Mimsa.Transform.Warnings
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.OutputTypes
 import Language.Mimsa.Types.AST
@@ -41,8 +40,7 @@ data ExpressionData = ExpressionData
     edBindings :: Map Name Text,
     edTypeBindings :: Map TyCon Text,
     edSourceItems :: [SourceItem],
-    edInput :: Text,
-    edWarnings :: [Text]
+    edInput :: Text
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (JSON.ToJSON, ToSchema)
@@ -65,9 +63,8 @@ makeExpressionData ::
   StoreExpression Annotation ->
   Expr Name MonoType ->
   Text ->
-  [Warning] ->
   ExpressionData
-makeExpressionData se typedExpr input warnings =
+makeExpressionData se typedExpr input =
   let mt = getTypeFromAnn typedExpr
       exprHash = getStoreExpressionHash se
    in ExpressionData
@@ -78,7 +75,6 @@ makeExpressionData se typedExpr input warnings =
         (sanitiseTypeBindings (storeTypeBindings se))
         (getExpressionSourceItems input typedExpr)
         input
-        (prettyPrint <$> warnings)
 
 -- this returns a partial but working set of expressionData
 -- that is compatible with the old one
@@ -99,4 +95,3 @@ makeMinimalExpressionData se mt input =
         (sanitiseTypeBindings (storeTypeBindings se))
         mempty
         input
-        mempty

@@ -1,6 +1,5 @@
 module Language.Mimsa.Actions.Optimise
-  ( optimise,
-    optimiseAll,
+  ( optimiseAll,
   )
 where
 
@@ -12,9 +11,8 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
-import qualified Language.Mimsa.Actions.Helpers.CheckStoreExpression as Actions
+import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Printer
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.BetaReduce
 import Language.Mimsa.Transform.EtaReduce
@@ -29,25 +27,7 @@ import Language.Mimsa.Transform.TrimDeps
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.ModuleName
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
-
--- | given an expression, optimise it and create a new StoreExpression
--- | this now accepts StoreExpression instead of expression
-optimise ::
-  StoreExpression Annotation ->
-  Actions.ActionM (ResolvedExpression Annotation)
-optimise se = do
-  project <- Actions.getProject
-
-  -- run optimisations
-  storeExprNew <- optimiseStoreExpression se
-
-  -- typecheck optimisations
-  Actions.checkStoreExpression
-    (prettyPrint storeExprNew)
-    project
-    storeExprNew
 
 inlineExpression :: (Ord ann, Ord var) => Expr var ann -> Expr var ann
 inlineExpression =
@@ -66,60 +46,39 @@ optimiseStoreExpression ::
   Actions.ActionM (StoreExpression Annotation)
 optimiseStoreExpression storeExpr =
   do
-    project <- Actions.getProject
+    case storeExpression storeExpr of
+      Nothing -> pure storeExpr
+      Just expr -> do
+        let originalBindings = storeBindings storeExpr
 
-    -- get Expr Variable ann
-    -- we should do NumberVars directly to avoid needing
-    -- to typecheck StoreExpressions anymore
-    resolvedOld <-
-      Actions.checkStoreExpression
-        (prettyPrint storeExpr)
-        project
-        storeExpr
+        withNumbers <-
+          Actions.numberStoreExpression expr originalBindings
 
-    -- do the shit
-    let optimised = inlineExpression (reVarExpression resolvedOld)
+        -- do the shit
+        let optimised = inlineExpression withNumbers
 
-    -- make into Expr Name
-    let floatedUpExprName = first fst optimised
+        -- make into Expr Name
+        let floatedUpExprName = first fst optimised
 
-    -- float lets down into patterns
-    let floatedSe =
-          trimDeps
-            (reStoreExpression resolvedOld)
-            (floatDown floatedUpExprName)
+        -- float lets down into patterns
+        let floatedSe =
+              floatDown floatedUpExprName
 
-    -- turn back into Expr Variable (fresh names for copied vars)
-    resolvedFloated <-
-      Actions.checkStoreExpression
-        (prettyPrint (storeExpression floatedSe))
-        project
-        floatedSe
+        -- turn back into Expr Variable (fresh names for copied vars)
+        floatedWithNumbers <-
+          Actions.numberStoreExpression floatedSe originalBindings
 
-    -- remove unused stuff
-    let newExprName = first fst (inlineExpression (reVarExpression resolvedFloated))
+        -- remove unused stuff
+        let newStoreExpr = trimDeps storeExpr (first fst (inlineExpression floatedWithNumbers))
 
-    let newStoreExpr =
-          trimDeps
-            (reStoreExpression resolvedFloated)
-            newExprName
+        -- save new store expr
+        Actions.appendStoreExpression
+          newStoreExpr
 
-    -- save new store expr
-    Actions.appendStoreExpression
-      newStoreExpr
+        pure newStoreExpr
 
-    pure newStoreExpr
-
-updateBindings :: Map ExprHash ExprHash -> Map (Maybe ModuleName, Name) ExprHash -> Map (Maybe ModuleName, Name) ExprHash
-updateBindings swaps =
-  fmap
-    ( \exprHash -> case M.lookup exprHash swaps of
-        Just newExprHash -> newExprHash
-        _ -> exprHash
-    )
-
-updateTypeBindings :: Map ExprHash ExprHash -> Map k ExprHash -> Map k ExprHash
-updateTypeBindings swaps bindings =
+useSwaps :: Map ExprHash ExprHash -> Map k ExprHash -> Map k ExprHash
+useSwaps swaps bindings =
   ( \exprHash -> case M.lookup exprHash swaps of
       Just newExprHash -> newExprHash
       _ -> exprHash
@@ -129,8 +88,6 @@ updateTypeBindings swaps bindings =
 --
 
 -- Optimise a group of StoreExpressions
--- Currently optimises each one individually without using its parents
--- This should be a reasonably easy change to try in future though
 optimiseAll ::
   Map ExprHash (StoreExpression Annotation) ->
   Actions.ActionM (Map ExprHash (StoreExpression Annotation))
@@ -138,14 +95,17 @@ optimiseAll inputStoreExpressions = do
   let action depMap se = do
         -- optimise se
         optimisedSe <- optimiseStoreExpression se
+        -- make a map of expected hash with new actual hash for swapping
         let swaps = getStoreExpressionHash <$> depMap
         -- use the optimised deps passed in
         let newSe =
               case optimisedSe of
                 ose@StoreExpression {} ->
                   ose
-                    { seBindings = updateBindings swaps (storeBindings optimisedSe),
-                      seTypeBindings = updateTypeBindings swaps (storeTypeBindings optimisedSe)
+                    { seBindings = useSwaps swaps (storeBindings optimisedSe),
+                      seTypeBindings = useSwaps swaps (storeTypeBindings optimisedSe),
+                      seInfixes = useSwaps swaps (storeInfixes optimisedSe),
+                      seTypes = useSwaps swaps (storeTypes optimisedSe)
                     }
                 sd -> sd
         -- store it

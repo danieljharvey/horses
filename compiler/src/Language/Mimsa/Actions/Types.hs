@@ -21,8 +21,8 @@ import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.ResolvedExpression
 import Language.Mimsa.Types.Store
+import Language.Mimsa.Types.Typechecker
 
 newtype SavePath = SavePath Text
   deriving newtype (Eq, Ord, Hashable)
@@ -48,7 +48,7 @@ data ActionOutcome
 
 data ActionState = ActionState
   { asProject :: Project Annotation,
-    asCachedResolved :: Map ExprHash (ResolvedExpression Annotation),
+    asCachedTypechecked :: Map ExprHash (StoreExpression (Type Annotation)),
     asActionOutcomes :: [ActionOutcome]
   }
   deriving stock (Eq, Ord, Show)
