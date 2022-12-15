@@ -44,8 +44,6 @@ interpreter se = do
   -- what is this rootExprHash now we've messed with everything
   newRootExprHash <- case M.lookup (getStoreExpressionHash se) allOptimised of
     Just re -> pure (getStoreExpressionHash re)
-  case M.lookup (getStoreExpressionHash se) allInterpreted of
-    Just re -> pure (first fst (fromHOAS re))
     _ -> throwError (StoreErr (CouldNotFindStoreExpression (getStoreExpressionHash se)))
 
   -- interpret everything
@@ -53,7 +51,7 @@ interpreter se = do
 
   -- pick out the value we're interested in
   case M.lookup newRootExprHash allInterpreted of
-    Just re -> pure (bimap fst edAnnotation re)
+    Just re -> pure (first fst (fromHOAS re))
     _ -> throwError (StoreErr (CouldNotFindStoreExpression newRootExprHash))
 
 fixKeys :: Map ExprHash (StoreExpression Annotation) -> Map ExprHash (StoreExpression Annotation)
@@ -77,9 +75,6 @@ interpretAll inputStoreExpressions = do
             -- add numbers and mark imports
             numberedSe <-
               Actions.numberStoreExpression expr (storeBindings se)
-
-            -- tag each `var` with it's location if it is an import
-            let exprWithImports = addEmptyStackFrames numberedSe
 
             -- get exprhashes for any infixOps we need
             let infixHashes = storeInfixes se
