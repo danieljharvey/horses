@@ -31,7 +31,7 @@
         jailbreakUnbreak = pkg:
           pkgs.haskell.lib.doJailbreak (pkg.overrideAttrs (_: { meta = { }; }));
 
-        packageName = "typechecker";
+        packageName = "mimsa";
       in {
         packages.${packageName} = # (ref:haskell-package-def)
           haskellPackages.callCabal2nix packageName self rec {
