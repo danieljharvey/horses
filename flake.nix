@@ -11,7 +11,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         
-        compilerVersion = "ghc943";
+        compilerVersion = "ghc925";
         
         haskell = pkgs.haskell // {
           packages = pkgs.haskell.packages // {
@@ -33,16 +33,11 @@
 
         packageName = "mimsa";
       in {
-        packages.${packageName} = # (ref:haskell-package-def)
-          haskellPackages.callCabal2nix packageName self rec {
-            # Dependency overrides go here
-          };
-
         defaultPackage = self.packages.${system}.${packageName};
 
         devShell = pkgs.mkShell {
           buildInputs = with haskellPackages; [
-            ## haskell-language-server
+            ghc
             ghcid
             cabal-install
           ];
