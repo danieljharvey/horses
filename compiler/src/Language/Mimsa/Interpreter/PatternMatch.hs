@@ -4,11 +4,11 @@ module Language.Mimsa.Interpreter.PatternMatch
   )
 where
 
-import Data.Maybe (fromMaybe)
-import Data.Bifunctor
 import Control.Monad.Except
+import Data.Bifunctor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Data.Maybe (fromMaybe)
 import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -26,7 +26,7 @@ interpretLetPattern ::
   InterpretFn ann ->
   InterpretPattern ann ->
   InterpretExpr ann ->
-    (InterpretExpr ann -> InterpretExpr ann) ->
+  (InterpretExpr ann -> InterpretExpr ann) ->
   InterpreterM ann (InterpretExpr ann)
 interpretLetPattern ann interpretFn pat patExpr body = do
   -- interpret input

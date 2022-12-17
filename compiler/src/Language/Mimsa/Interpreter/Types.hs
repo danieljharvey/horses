@@ -14,9 +14,9 @@ import Data.Map.Strict (Map)
 import Language.Mimsa.Core
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
+import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
-import Language.Mimsa.Types.Identifiers.Name
 
 type InterpreterM ann a =
   ReaderT

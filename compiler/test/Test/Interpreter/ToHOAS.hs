@@ -6,15 +6,15 @@ module Test.Interpreter.ToHOAS
   )
 where
 
-import Language.Mimsa.Interpreter.ToHOAS
-import Test.Hspec
-import Test.Utils.Helpers
+import Data.Bifunctor
 import Data.Text
+import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Identifiers
-import Data.Bifunctor
+import Test.Hspec
+import Test.Utils.Helpers
 
-parseExpr :: Text -> Expr (Name,()) ()
+parseExpr :: Text -> Expr (Name, ()) ()
 parseExpr input = first (,()) (unsafeParseExpr input)
 
 spec :: Spec
@@ -55,5 +55,9 @@ spec = do
         result `shouldBe` input
       it "A pattern match appears" $ do
         let input = parseExpr "match (1,2) with (a,b) -> a"
+            result = fromHOAS (toHOAS input)
+        result `shouldBe` input
+      it "A pattern match with multiple bindings appears" $ do
+        let input = parseExpr "match (1,2) with (a,b) -> a + b"
             result = fromHOAS (toHOAS input)
         result `shouldBe` input

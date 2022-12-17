@@ -256,10 +256,10 @@ patternMonoid f (PTuple _ a as) =
   f a <> foldMap f as
 patternMonoid f (PConstructor _ _ _ as) =
   foldMap f as
-patternMonoid f (PRecord _ as)
-  = foldMap f as
-patternMonoid f (PArray _ as _)
- = foldMap f as
+patternMonoid f (PRecord _ as) =
+  foldMap f as
+patternMonoid f (PArray _ as _) =
+  foldMap f as
 patternMonoid _ PString {} = mempty
 
 nameFromIdent :: Identifier var ann -> var

@@ -7,9 +7,9 @@ module Language.Mimsa.Types.AST.HOASExpr
   )
 where
 
-import GHC.Natural
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
+import GHC.Natural
 import Language.Mimsa.Types.AST.Identifier
 import Language.Mimsa.Types.AST.Literal (Literal)
 import Language.Mimsa.Types.AST.Operator
@@ -25,7 +25,6 @@ instance Show (HOASExpr var ann -> HOASExpr var ann) where
 
 instance Show (HOASExpr var ann -> HOASExpr var ann -> HOASExpr var ann) where
   show _ = "some recursive function"
-
 
 -- |
 -- version of Expr where functions are represented as functions
@@ -73,9 +72,9 @@ data HOASExpr var ann
         expBinder :: Identifier var ann,
         expRecursingBinder :: Identifier var ann,
         expBodyRecursiveFunc ::
-              HOASExpr var ann -> HOASExpr var ann
+          HOASExpr var ann ->
+          HOASExpr var ann
       }
-
   | -- | function, argument
     MyApp
       { expAnn :: ann,
@@ -101,7 +100,6 @@ data HOASExpr var ann
         expRecord :: HOASExpr var ann,
         expIndex :: Natural
       }
-
   | -- | { dog: MyLiteral (MyInt 1), cat: MyLiteral (MyInt 2) }
     MyRecord
       { expAnn :: ann,

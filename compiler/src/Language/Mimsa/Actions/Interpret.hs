@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-  {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Language.Mimsa.Actions.Interpret (interpreter) where
@@ -24,7 +24,7 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
 
 -- cheeky orphaned instance
-instance (Eq ann, Ord x) => Eq (HOAS.HOASExpr (Name,x) ann) where
+instance (Eq ann, Ord x) => Eq (HOAS.HOASExpr (Name, x) ann) where
   a == b = fromHOAS a == fromHOAS b
 
 -- get all the deps

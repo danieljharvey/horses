@@ -5,12 +5,11 @@ import Language.Mimsa.Interpreter.Monad
 import Debug.Trace
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
-import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
-import Language.Mimsa.Printer
 import Language.Mimsa.Types.AST
+import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 
 interpretApp ::
-  (Eq ann,Show ann ) =>
+  (Eq ann, Show ann) =>
   InterpretFn ann ->
   ann ->
   InterpretExpr ann ->
@@ -29,18 +28,12 @@ interpretApp interpretFn ann myFn value =
       -- run the func
       result <- interpretFn (body intValue)
 
-      traceShowM (prettyDoc (fromHOAS result))
-
       let withRecursiveFunc = toHOAS (MyLet ann recIdent (fromHOAS thing) (fromHOAS result))
 
-      traceShowM (prettyDoc (fromHOAS withRecursiveFunc))
-
       interpretFn withRecursiveFunc >>= interpretFn
-
     (HOAS.MyConstructor ann' modName const') ->
       HOAS.MyApp ann (HOAS.MyConstructor ann' modName const')
         <$> interpretFn value
-
     fn -> do
       -- try and resolve it into something we recognise
       intFn <- interpretFn fn
