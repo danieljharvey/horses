@@ -2,15 +2,17 @@
 
 module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS, replaceVars) where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (second)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Data.Monoid
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
 import Language.Mimsa.Types.AST.Expr
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.AST.Identifier
+import Language.Mimsa.Types.AST.Literal
 import Language.Mimsa.Types.AST.Pattern
 import Language.Mimsa.Types.AST.Spread
 import Language.Mimsa.Types.AST.Literal
@@ -18,6 +20,9 @@ import Language.Mimsa.Types.AST.StringPart
 import Language.Mimsa.Types.Identifiers
 
 import Data.Monoid
+
+import Language.Mimsa.Types.AST.StringPart
+import Language.Mimsa.Types.Identifiers
 
 -- does an expression contain itself, ie, is it a recursive function?
 hasVar ::
@@ -52,7 +57,7 @@ toHOAS (MyLet ann recIdent@(Identifier _ rIdent) (MyLambda lambdaAnn argIdent@(I
 toHOAS (MyLet ann ident expr body) =
   toHOAS (MyApp ann (MyLambda ann ident body) expr)
 toHOAS (MyLetPattern ann pat expr body) =
-  let (hoasPat, hoasBody) = fromPat ann pat body
+  let (hoasPat, hoasBody) = toHOASPat ann pat body
    in HOAS.MyLetPattern ann hoasPat (toHOAS expr) hoasBody
 toHOAS (MyInfix ann op a b) = HOAS.MyInfix ann op (toHOAS a) (toHOAS b)
 toHOAS (MyIf ann a b c) = HOAS.MyIf ann (toHOAS a) (toHOAS b) (toHOAS c)
@@ -71,10 +76,10 @@ toHOAS (MyTupleAccess ann a index) = HOAS.MyTupleAccess ann (toHOAS a) index
 toHOAS (MyArray ann as) = HOAS.MyArray ann (toHOAS <$> as)
 toHOAS (MyConstructor ann modName con) = HOAS.MyConstructor ann modName con
 toHOAS (MyPatternMatch ann patExpr pats) =
-  HOAS.MyPatternMatch ann (toHOAS patExpr) (uncurry (fromPat ann) <$> pats)
+  HOAS.MyPatternMatch ann (toHOAS patExpr) (uncurry (toHOASPat ann) <$> pats)
 toHOAS (MyTypedHole ann a) = HOAS.MyTypedHole ann a
 
-fromPat ::
+toHOASPat ::
   (Ord x, Show ann, Show x) =>
   ann ->
   Pattern (Name, x) ann ->
@@ -82,25 +87,24 @@ fromPat ::
   ( Pattern (Name, x) ann,
     HOAS.HOASExpr (Name, x) ann -> HOAS.HOASExpr (Name, x) ann
   )
-fromPat ann pat pExpr =
+toHOASPat ann pat pExpr =
   let patFnExpr iInput =
         let eInput = fromHOAS iInput
             vars = patternVars pat
             varsWithIndex = zip (S.toList vars) ([0 ..] :: [Int])
-         in toHOAS $ if S.size vars == 1 then
-
-                            swapOutVar (fst $ fst (head varsWithIndex)) eInput pExpr -- no tuple, just a single var
-                    else
-               foldr
-                  ( \((ident,_x),i) totalExpr ->
-                      swapOutVar ident (MyTupleAccess ann eInput (fromIntegral i + 1)) totalExpr
-                  )
-                  pExpr
-                  varsWithIndex
-
+         in toHOAS $
+              if S.size vars == 1
+                then swapOutVar (fst $ fst (head varsWithIndex)) eInput pExpr -- no tuple, just a single var
+                else
+                  foldr
+                    ( \((ident, _x), i) totalExpr ->
+                        swapOutVar ident (MyTupleAccess ann eInput (fromIntegral i + 1)) totalExpr
+                    )
+                    pExpr
+                    varsWithIndex
    in (pat, patFnExpr)
 
-toPat ::
+fromHOASPat ::
   (Ord x) =>
   ann ->
   Pattern (Name, x) ann ->
@@ -108,17 +112,17 @@ toPat ::
   ( Pattern (Name, x) ann,
     Expr (Name, x) ann
   )
-toPat ann pat pExpr =
-        let vars = patternVars pat
-            runPattern = if S.size vars > 0 then
-                               let neVars = HOAS.MyVar ann Nothing <$> NE.fromList (S.toList vars)
-              in case NE.uncons neVars of
-                (a, Nothing) -> fromHOAS (pExpr a)
-                (a, Just as) -> fromHOAS (pExpr (HOAS.MyTuple ann a as))
-            else
-              fromHOAS (pExpr (HOAS.MyLiteral ann (MyBool True)))
-         in (pat, runPattern )
-
+fromHOASPat ann pat pExpr =
+  let vars = patternVars pat
+      runPattern =
+        if S.size vars > 0
+          then
+            let neVars = HOAS.MyVar ann Nothing <$> NE.fromList (S.toList vars)
+             in case NE.uncons neVars of
+                  (a, Nothing) -> fromHOAS (pExpr a)
+                  (a, Just as) -> fromHOAS (pExpr (HOAS.MyTuple ann a as))
+          else fromHOAS (pExpr (HOAS.MyLiteral ann (MyBool True)))
+   in (pat, runPattern)
 
 --
 replaceVars ::
@@ -172,7 +176,7 @@ fromHOAS (HOAS.MyLiteral ann lit) = MyLiteral ann lit
 fromHOAS (HOAS.MyAnnotation ann mt body) =
   MyAnnotation ann mt (fromHOAS body)
 fromHOAS (HOAS.MyLetPattern ann pat expr body) =
-  MyLetPattern ann pat (fromHOAS expr) (snd (toPat ann pat body))
+  MyLetPattern ann pat (fromHOAS expr) (snd (fromHOASPat ann pat body))
 fromHOAS (HOAS.MyInfix ann op a b) = MyInfix ann op (fromHOAS a) (fromHOAS b)
 fromHOAS (HOAS.MyIf ann a b c) = MyIf ann (fromHOAS a) (fromHOAS b) (fromHOAS c)
 fromHOAS (HOAS.MyTuple ann a as) = MyTuple ann (fromHOAS a) (fromHOAS <$> as)
@@ -192,7 +196,7 @@ fromHOAS (HOAS.MyTupleAccess ann a index) = MyTupleAccess ann (fromHOAS a) index
 fromHOAS (HOAS.MyArray ann as) = MyArray ann (fromHOAS <$> as)
 fromHOAS (HOAS.MyConstructor ann modName con) = MyConstructor ann modName con
 fromHOAS (HOAS.MyPatternMatch ann expr pats) =
-  MyPatternMatch ann (fromHOAS expr) (uncurry (toPat ann) <$> pats)
+  MyPatternMatch ann (fromHOAS expr) (uncurry (fromHOASPat ann) <$> pats)
 fromHOAS (HOAS.MyTypedHole ann a) = MyTypedHole ann a
 
 -------
@@ -208,7 +212,7 @@ swapOutVar matchIdent new =
     go (MyVar _ _ (ident, _)) | matchIdent == ident = new
     go other = mapExpr go other
 
-  {-
+{-
 reduceRecords :: (Name, x) -> Expr (Name, x) ann -> Expr (Name, x) ann
 reduceRecords ident =
   go

@@ -38,13 +38,13 @@ interpretLetPattern ann interpretFn pat patExpr body = do
 
   interpretFn (body value)
 
-valueFromBindings :: ann -> [(Name,InterpretExpr ann)] -> InterpretExpr ann
+valueFromBindings :: ann -> [(Name, InterpretExpr ann)] -> InterpretExpr ann
 valueFromBindings ann bindings =
   case snd <$> bindings of
-                [] -> HOAS.MyLiteral ann (MyBool True)
-                [a] -> a
-                (a:b:bs) ->
-                    HOAS.MyTuple ann a (b NE.:| bs)
+    [] -> HOAS.MyLiteral ann (MyBool True)
+    [a] -> a
+    (a : b : bs) ->
+      HOAS.MyTuple ann a (b NE.:| bs)
 
 interpretPatternMatch ::
   ann ->
@@ -62,7 +62,7 @@ interpretPatternMatch ann interpretFn expr' patterns = do
   case getFirst (foldMap foldF patterns) of
     Just (patExpr, bindings) ->
       do
-        let value =valueFromBindings ann bindings
+        let value = valueFromBindings ann bindings
 
         interpretFn (patExpr value)
     _ ->
