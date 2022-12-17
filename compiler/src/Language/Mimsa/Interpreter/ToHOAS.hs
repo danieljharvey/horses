@@ -123,7 +123,7 @@ fromHOASPat ann pat pExpr =
                   (a, Nothing) -> fromHOAS (pExpr a)
                   (a, Just as) -> fromHOAS (pExpr (HOAS.MyTuple ann a as))
           else fromHOAS (pExpr (HOAS.MyLiteral ann (MyBool True)))
-   in (pat, foldr reduceRecords runPattern varsWithIndex)
+   in (pat, foldr reduceTuples runPattern varsWithIndex)
 
 --
 replaceVars ::
@@ -214,8 +214,12 @@ swapOutVar matchIdent new =
     go (MyVar _ _ ident) | matchIdent == ident = new
     go other = mapExpr go other
 
-reduceRecords :: (Eq var) => (var ,Int) -> Expr var ann -> Expr var ann
-reduceRecords (ident,index) =
+-- | we have to wrap all the arguments for a pattern match into a tuple, this
+-- removes all the waste and tidies up again
+-- | given `('a", 1), turn any ("a",..).1 into "a"
+-- | given ('b', 2), turn (_, "b",...).2 into "b"
+reduceTuples :: (Eq var) => (var ,Int) -> Expr var ann -> Expr var ann
+reduceTuples (ident,index) =
   go 
   where
     go expr@(MyTupleAccess ann (MyTuple _ a as) accessIdent) | 
