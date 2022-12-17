@@ -2,9 +2,9 @@
 
 module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS, replaceVars) where
 
+import Data.Maybe
 import Data.Bifunctor (second)
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map.Strict as M
 import Data.Monoid
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -94,10 +94,10 @@ toHOASPat ann pat pExpr =
             varsWithIndex = zip (S.toList vars) ([0 ..] :: [Int])
          in toHOAS $
               if S.size vars == 1
-                then swapOutVar (fst $ fst (head varsWithIndex)) eInput pExpr -- no tuple, just a single var
+                then swapOutVar (fst (head varsWithIndex)) eInput pExpr -- no tuple, just a single var
                 else
                   foldr
-                    ( \((ident, _x), i) totalExpr ->
+                    ( \(ident, i) totalExpr ->
                         swapOutVar ident (MyTupleAccess ann eInput (fromIntegral i + 1)) totalExpr
                     )
                     pExpr
@@ -114,6 +114,7 @@ fromHOASPat ::
   )
 fromHOASPat ann pat pExpr =
   let vars = patternVars pat
+      varsWithIndex = zip (S.toList vars) ([0 ..] :: [Int])
       runPattern =
         if S.size vars > 0
           then
@@ -122,7 +123,7 @@ fromHOASPat ann pat pExpr =
                   (a, Nothing) -> fromHOAS (pExpr a)
                   (a, Just as) -> fromHOAS (pExpr (HOAS.MyTuple ann a as))
           else fromHOAS (pExpr (HOAS.MyLiteral ann (MyBool True)))
-   in (pat, runPattern)
+   in (pat, foldr reduceRecords runPattern varsWithIndex)
 
 --
 replaceVars ::
@@ -202,29 +203,29 @@ fromHOAS (HOAS.MyTypedHole ann a) = MyTypedHole ann a
 -------
 
 swapOutVar ::
-  Name ->
+  (Eq x) =>
+  (Name, x) ->
   Expr (Name, x) ann ->
   Expr (Name, x) ann ->
   Expr (Name, x) ann
 swapOutVar matchIdent new =
   go
   where
-    go (MyVar _ _ (ident, _)) | matchIdent == ident = new
+    go (MyVar _ _ ident) | matchIdent == ident = new
     go other = mapExpr go other
 
-{-
-reduceRecords :: (Name, x) -> Expr (Name, x) ann -> Expr (Name, x) ann
-reduceRecords ident =
-  go
+reduceRecords :: (Eq var) => (var ,Int) -> Expr var ann -> Expr var ann
+reduceRecords (ident,index) =
+  go 
   where
-    go expr@(MyRecordAccess ann (MyRecord _ items) accessIdent)
-      | fst ident == accessIdent =
-          case M.lookup (fst ident) items of
-            Just (MyVar _ Nothing var)
-              | fst var == fst ident -> MyVar ann Nothing var
+    go expr@(MyTupleAccess ann (MyTuple _ a as) accessIdent) | 
+        index + 1 == fromIntegral accessIdent =
+      let allAs = [a] <> NE.toList as
+       in case listToMaybe (drop index allAs) of
+            Just (MyVar _ modName var)
+              | var == ident -> MyVar ann modName var
             _ -> expr
     go other = mapExpr go other
--}
 
 patternVars :: (Ord var) => Pattern var ann -> Set var
 patternVars (PVar _ v) = S.singleton v
