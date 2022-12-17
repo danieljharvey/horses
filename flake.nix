@@ -33,6 +33,8 @@
 
         packageName = "mimsa";
       in {
+        packages.${system}.${packageName} = {};
+
         defaultPackage = self.packages.${system}.${packageName};
 
         devShell = pkgs.mkShell {
