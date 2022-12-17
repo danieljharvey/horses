@@ -6,6 +6,9 @@ import Data.Maybe
 import Data.Bifunctor (second)
 import qualified Data.List.NonEmpty as NE
 import Data.Monoid
+import qualified Data.Map.Strict as M
+import qualified Data.Map.Strict as M
+import Data.Monoid
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.ExprUtils
@@ -25,11 +28,16 @@ import Language.Mimsa.Types.AST.StringPart
 import Language.Mimsa.Types.Identifiers
 
 -- does an expression contain itself, ie, is it a recursive function?
-hasVar ::
-  (Eq x) =>
-  (Name, x) ->
-  Expr (Name, x) ann ->
-  Bool
+import Language.Mimsa.Types.AST.Literal
+
+import Language.Mimsa.Types.AST.StringPart
+import Language.Mimsa.Types.Identifiers
+
+import Data.Monoid
+
+-- does an expression contain itself, ie, is it a recursive function?
+hasVar :: (Eq x) => (Name, x) ->
+    Expr (Name,x) ann -> Bool
 hasVar var expr = getAny $ withMonoid f expr
   where
     f (MyVar _ Nothing varA) | varA == var = (False, Any True)
@@ -230,6 +238,20 @@ reduceTuples (ident,index) =
               | var == ident -> MyVar ann modName var
             _ -> expr
     go other = mapExpr go other
+
+  {-
+reduceRecords :: (Name, x) -> Expr (Name, x) ann -> Expr (Name, x) ann
+reduceRecords ident =
+  go
+  where
+    go expr@(MyRecordAccess ann (MyRecord _ items) accessIdent)
+      | fst ident == accessIdent =
+          case M.lookup (fst ident) items of
+            Just (MyVar _ Nothing var)
+              | fst var == fst ident -> MyVar ann Nothing var
+            _ -> expr
+    go other = mapExpr go other
+-}
 
 patternVars :: (Ord var) => Pattern var ann -> Set var
 patternVars (PVar _ v) = S.singleton v
