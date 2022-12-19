@@ -25,7 +25,6 @@ import Language.Mimsa.Types.Identifiers
 import Data.Monoid
 
 import Language.Mimsa.Types.AST.StringPart
-import Language.Mimsa.Types.Identifiers
 
 -- does an expression contain itself, ie, is it a recursive function?
 import Language.Mimsa.Types.AST.Literal
@@ -36,8 +35,11 @@ import Language.Mimsa.Types.Identifiers
 import Data.Monoid
 
 -- does an expression contain itself, ie, is it a recursive function?
-hasVar :: (Eq x) => (Name, x) ->
-    Expr (Name,x) ann -> Bool
+hasVar ::
+  (Eq var) =>
+  var ->
+  Expr var ann ->
+  Bool
 hasVar var expr = getAny $ withMonoid f expr
   where
     f (MyVar _ Nothing varA) | varA == var = (False, Any True)
@@ -45,9 +47,9 @@ hasVar var expr = getAny $ withMonoid f expr
     f _ = (True, mempty)
 
 toHOAS ::
-  (Ord x, Show ann, Show x) =>
-  Expr (Name, x) ann ->
-  HOAS.HOASExpr (Name, x) ann
+  (Ord var, Show ann, Show var) =>
+  Expr var ann ->
+  HOAS.HOASExpr var ann
 toHOAS (MyVar ann modName a) = HOAS.MyVar ann modName a
 toHOAS (MyLiteral ann lit) = HOAS.MyLiteral ann lit
 toHOAS (MyAnnotation ann mt body) = HOAS.MyAnnotation ann mt (toHOAS body)
@@ -88,12 +90,12 @@ toHOAS (MyPatternMatch ann patExpr pats) =
 toHOAS (MyTypedHole ann a) = HOAS.MyTypedHole ann a
 
 toHOASPat ::
-  (Ord x, Show ann, Show x) =>
+  (Ord var, Show ann, Show var) =>
   ann ->
-  Pattern (Name, x) ann ->
-  Expr (Name, x) ann ->
-  ( Pattern (Name, x) ann,
-    HOAS.HOASExpr (Name, x) ann -> HOAS.HOASExpr (Name, x) ann
+  Pattern var ann ->
+  Expr var ann ->
+  ( Pattern var ann,
+    HOAS.HOASExpr var ann -> HOAS.HOASExpr var ann
   )
 toHOASPat ann pat pExpr =
   let patFnExpr iInput =
@@ -113,12 +115,12 @@ toHOASPat ann pat pExpr =
    in (pat, patFnExpr)
 
 fromHOASPat ::
-  (Ord x) =>
+  (Ord var) =>
   ann ->
-  Pattern (Name, x) ann ->
-  (HOAS.HOASExpr (Name, x) ann -> HOAS.HOASExpr (Name, x) ann) ->
-  ( Pattern (Name, x) ann,
-    Expr (Name, x) ann
+  Pattern var ann ->
+  (HOAS.HOASExpr var ann -> HOAS.HOASExpr var ann) ->
+  ( Pattern var ann,
+    Expr var ann
   )
 fromHOASPat ann pat pExpr =
   let vars = patternVars pat
@@ -143,10 +145,8 @@ replaceVars ::
 replaceVars ident value =
   replaceInner
   where
-    replaceInner (HOAS.MyVar _ _ identifier)
+    replaceInner (HOAS.MyVar _ Nothing identifier)
       | identifier == ident = value
-    replaceInner (HOAS.MyVar ann modName identifier) =
-      HOAS.MyVar ann modName identifier
     replaceInner other = mapHOASExpr replaceInner other
 
 -- | Map a function `f` over the expression. This function takes care of
@@ -177,9 +177,9 @@ mapHOASExpr f (HOAS.MyPatternMatch ann matchExpr patterns) =
 mapHOASExpr _ (HOAS.MyTypedHole ann a) = HOAS.MyTypedHole ann a
 
 fromHOAS ::
-  (Ord x) =>
-  HOAS.HOASExpr (Name, x) ann ->
-  Expr (Name, x) ann
+  (Ord var) =>
+  HOAS.HOASExpr var ann ->
+  Expr var ann
 fromHOAS (HOAS.MyVar ann modName a) = MyVar ann modName a
 fromHOAS (HOAS.MyLiteral ann lit) = MyLiteral ann lit
 fromHOAS (HOAS.MyAnnotation ann mt body) =
@@ -211,15 +211,15 @@ fromHOAS (HOAS.MyTypedHole ann a) = MyTypedHole ann a
 -------
 
 swapOutVar ::
-  (Eq x) =>
-  (Name, x) ->
-  Expr (Name, x) ann ->
-  Expr (Name, x) ann ->
-  Expr (Name, x) ann
+  (Eq var) =>
+  var ->
+  Expr var ann ->
+  Expr var ann ->
+  Expr var ann
 swapOutVar matchIdent new =
   go
   where
-    go (MyVar _ _ ident) | matchIdent == ident = new
+    go (MyVar _ Nothing ident) | matchIdent == ident = new
     go other = mapExpr go other
 
 -- | we have to wrap all the arguments for a pattern match into a tuple, this
@@ -234,8 +234,8 @@ reduceTuples (ident,index) =
         index + 1 == fromIntegral accessIdent =
       let allAs = [a] <> NE.toList as
        in case listToMaybe (drop index allAs) of
-            Just (MyVar _ modName var)
-              | var == ident -> MyVar ann modName var
+            Just (MyVar _ Nothing var)
+              | var == ident -> MyVar ann Nothing var
             _ -> expr
     go other = mapExpr go other
 
