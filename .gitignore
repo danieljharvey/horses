@@ -1,3 +1,6 @@
+dist-newstyle/
+.direnv/
+
 .stack-work/
 *~
 store/*.json
