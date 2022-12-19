@@ -1,5 +1,6 @@
 module Language.Mimsa.Interpreter.Infix (interpretInfix) where
 
+import Language.Mimsa.Logging
 import Control.Monad.Except
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
@@ -12,17 +13,17 @@ import Debug.Trace
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Identifiers
 
--- | this assumes that
 interpretInfix ::
-  (Monoid ann) =>
+  (Monoid ann ) =>
   InterpretFn ann ->
   Operator ->
   InterpretExpr ann ->
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
 interpretInfix interpretFn operator a b = do
-  plainA <- interpretFn <=< interpretFn $ a
-  plainB <- interpretFn <=< interpretFn $ b
+  debugPrettyM "infix" (fromHOAS a, fromHOAS b)
+  plainA <- interpretFn a
+  plainB <- interpretFn b
   case operator of
     Equals -> do
       let withBool = pure . MyLiteral mempty . MyBool
@@ -33,7 +34,7 @@ interpretInfix interpretFn operator a b = do
       let withInt = pure . MyLiteral mempty . MyInt
       let getNum exp' = case exp' of
             (MyLiteral _ (MyInt i)) -> Right i
-            _ -> Left $ AdditionWithNonNumber (fromHOAS a)
+            _ -> Left $ AdditionWithNonNumber (fromHOAS exp')
       case (,) <$> getNum plainA <*> getNum plainB of
         Right (a', b') -> withInt (a' + b')
         Left e -> throwError e

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Language.Mimsa.Interpreter.Interpret (interpret) where
 
 import Control.Monad.Reader
@@ -30,8 +31,9 @@ interpretExpr ::
   (Eq ann, Monoid ann, Show ann) =>
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
-interpretExpr =
-  interpretExpr'
+interpretExpr expr = do
+  --debugPrettyM "interpret" (first fst $ fromHOAS expr)
+  interpretExpr' expr
 
 interpretExpr' ::
   (Eq ann, Monoid ann, Show ann) =>
@@ -54,8 +56,10 @@ interpretExpr' (HOAS.MyRecursiveLambda exprData ident recIdent body) = do
   -- return it
   pure
     (HOAS.MyRecursiveLambda exprData ident recIdent body)
-interpretExpr' (HOAS.MyInfix _ op a b) =
-  interpretInfix interpretExpr op a b
+interpretExpr' (HOAS.MyInfix _ op a b) = do
+  opA <- interpretExpr a
+  opB <- interpretExpr b
+  interpretInfix interpretExpr op opA opB
 interpretExpr' (HOAS.MyIf ann predExpr thenExpr elseExpr) =
   interpretIf interpretExpr ann predExpr thenExpr elseExpr
 interpretExpr' (HOAS.MyApp ann fn a) =

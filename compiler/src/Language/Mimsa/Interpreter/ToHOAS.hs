@@ -56,14 +56,13 @@ toHOAS (MyAnnotation ann mt body) = HOAS.MyAnnotation ann mt (toHOAS body)
 toHOAS (MyLet ann recIdent@(Identifier _ rIdent) (MyLambda lambdaAnn argIdent@(Identifier _ aIdent) lBody) rest)
   | hasVar rIdent lBody =
       let hoasLambda =
-            HOAS.MyRecursiveLambda
+            HOAS.MyLambda
               lambdaAnn
               argIdent
-              recIdent
               ( \arg ->
                   replaceVars aIdent arg (toHOAS lBody)
               )
-       in HOAS.MyApp ann (toHOAS (MyLambda ann recIdent rest)) hoasLambda
+       in HOAS.MyApp ann (HOAS.MyRecursiveLambda ann recIdent argIdent (\arg -> replaceVars aIdent arg (toHOAS rest))) hoasLambda
 toHOAS (MyLet ann ident expr body) =
   toHOAS (MyApp ann (MyLambda ann ident body) expr)
 toHOAS (MyLetPattern ann pat expr body) =
@@ -191,6 +190,9 @@ fromHOAS (HOAS.MyIf ann a b c) = MyIf ann (fromHOAS a) (fromHOAS b) (fromHOAS c)
 fromHOAS (HOAS.MyTuple ann a as) = MyTuple ann (fromHOAS a) (fromHOAS <$> as)
 fromHOAS (HOAS.MyLambda ann (Identifier iAnn ident) f) =
   MyLambda ann (Identifier iAnn ident) (fromHOAS $ f (HOAS.MyVar ann Nothing ident))
+fromHOAS (HOAS.MyApp ann (HOAS.MyRecursiveLambda _ (Identifier iAnn ident) _ rest) expr) =
+  MyLet ann (Identifier iAnn ident) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
+
 fromHOAS (HOAS.MyApp ann (HOAS.MyLambda _ (Identifier iAnn ident) rest) expr) =
   MyLet ann (Identifier iAnn ident) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
 fromHOAS (HOAS.MyRecursiveLambda ann (Identifier iAnn ident) _ rest) =

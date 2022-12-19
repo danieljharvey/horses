@@ -1,11 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
-
+  {-# LANGUAGE LambdaCase #-}
 module Test.Interpreter.ToHOAS
   ( spec,
   )
 where
 
+import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Data.Bifunctor
 import Data.Text
 import Language.Mimsa.Interpreter.ToHOAS
@@ -20,7 +21,22 @@ parseExpr input = first (,()) (unsafeParseExpr input)
 spec :: Spec
 spec = do
   describe "ToHOAS" $ do
-    describe "There and back again" $ do
+    describe "Are we creating recursive lambdas when we should?" $ do
+      it "Single arg recursive function" $ do
+        let input = parseExpr "let loop = \\a -> loop (a - 1) in loop 0"
+            result = toHOAS input
+        result `shouldSatisfy` \case
+          (HOAS.MyApp _ (HOAS.MyLambda {} ) (HOAS.MyRecursiveLambda {})) -> True
+          _ -> False
+      it "Double arg recursive function" $ do
+        let input = parseExpr "let loop = \\a -> \\b -> loop (a - 1) True in loop 0 False"
+            result = toHOAS input
+        result `shouldSatisfy` \case
+          (HOAS.MyApp _ (HOAS.MyLambda {} ) (HOAS.MyRecursiveLambda {})) -> True
+          _ -> False
+
+
+    fdescribe "There and back again" $ do
       it "Infixes, literals" $ do
         let input = parseExpr "1 + 2 + 3"
             result = fromHOAS (toHOAS input)

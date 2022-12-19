@@ -3,6 +3,7 @@ module Language.Mimsa.Interpreter.App (interpretApp) where
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Debug.Trace
+import Language.Mimsa.Logging
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST
@@ -15,20 +16,29 @@ interpretApp ::
   InterpretExpr ann ->
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
-interpretApp interpretFn ann myFn value =
+interpretApp interpretFn ann myFn value = do
+  debugPrettyM "function" (fromHOAS myFn)
   case myFn of
-    (HOAS.MyLambda _ _ident body) -> do
+    (HOAS.MyLambda _ ident body) -> do
+      debugPrettyM "lambda" ident
+
       -- interpret arg first
       intValue <- interpretFn value
       -- run it
       interpretFn (body intValue) >>= interpretFn
-    thing@(HOAS.MyRecursiveLambda _ _ident recIdent body) -> do
+    recursiveFunc@(HOAS.MyRecursiveLambda _ ident recIdent body) -> do
+      debugPrettyM "recursive lambda" ident
+
       -- interpret arg first
       intValue <- interpretFn value
       -- run the func
       result <- interpretFn (body intValue)
 
-      let withRecursiveFunc = toHOAS (MyLet ann recIdent (fromHOAS thing) (fromHOAS result))
+      debugPrettyM "recursion result" (fromHOAS result)
+      debugPrettyM "recursion identifier" recIdent
+
+      let withRecursiveFunc = HOAS.MyApp ann result (HOAS.MyLambda ann recIdent body)
+      debugPrettyM "recursion func to push" (fromHOAS withRecursiveFunc)
 
       interpretFn withRecursiveFunc >>= interpretFn
     (HOAS.MyConstructor ann' modName const') ->
