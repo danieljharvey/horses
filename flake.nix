@@ -12,7 +12,8 @@
         pkgs = nixpkgs.legacyPackages.${system};
         
         compilerVersion = "ghc925";
-        
+
+        # fix things
         haskell = pkgs.haskell // {
           packages = pkgs.haskell.packages // {
             "${compilerVersion}" =
@@ -33,6 +34,7 @@
 
         packageName = "mimsa";
       in {
+        # we're not interested in building with Nix, just using it for deps
         packages.${system}.${packageName} = {};
 
         defaultPackage = self.packages.${system}.${packageName};
@@ -40,8 +42,12 @@
         devShell = pkgs.mkShell {
           buildInputs = with haskellPackages; [
             ghc
+            hlint
+            ormolu
             ghcid
             cabal-install
+            pkgs.zlib # used by `digest` package
+            pkgs.nodejs-18_x
           ];
 
           # put clang_14 on the path

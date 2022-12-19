@@ -1,5 +1,8 @@
 .PHONY: all ghcid ghcid-repl ghcid-server ghcid-test test install
 
+HS_FILES = $(shell git ls-files '*.hs')
+
+
 ghcid:
 	ghcid -c "cabal repl mimsa" -l=hlint
 
@@ -26,6 +29,9 @@ run-server:
 test-watch:
 	ghcid -c "cabal repl mimsa:tests" -l=hlint --test="main"
 
+freeze:
+	cabal freeze --enable-tests --enable-benchmarks
+
 test:
 	cabal update
 	cabal run mimsa:test:mimsa-test
@@ -33,3 +39,6 @@ test:
 bench:
 	cabal update
 	cabal bench
+
+format:
+	@ormolu --mode inplace $(HS_FILES) && echo "Ormolu success!"
