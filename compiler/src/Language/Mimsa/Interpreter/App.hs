@@ -6,11 +6,10 @@ import Debug.Trace
 import Language.Mimsa.Logging
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types.AST
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 
 interpretApp ::
-  (Eq ann, Show ann) =>
+  (Eq ann ) =>
   InterpretFn ann ->
   ann ->
   InterpretExpr ann ->
@@ -26,7 +25,7 @@ interpretApp interpretFn ann myFn value = do
       intValue <- interpretFn value
       -- run it
       interpretFn (body intValue) >>= interpretFn
-    recursiveFunc@(HOAS.MyRecursiveLambda _ ident recIdent body) -> do
+    _recursiveFunc@(HOAS.MyRecursiveLambda _ ident recIdent body) -> do
       debugPrettyM "recursive lambda" ident
 
       -- interpret arg first
