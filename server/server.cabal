@@ -1,0 +1,97 @@
+cabal-version: 2.2
+
+name:           server
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
+homepage:       https://github.com/danieljharvey/mimsa#readme
+bug-reports:    https://github.com/danieljharvey/mimsa/issues
+author:         Daniel J Harvey
+maintainer:     danieljamesharvey@gmail.com
+copyright:      2021 Daniel J Harvey
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/danieljharvey/mimsa
+
+common common-all
+  ghc-options:
+    -Wall -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
+executable mimsa-server
+  import: common-all
+  main-is: Main.hs
+  other-modules:
+      Server.Endpoints.Compile
+      Server.Endpoints.Module
+      Server.Endpoints.Project
+      Server.Endpoints.Project.BindModule
+      Server.Endpoints.Project.CreateProject
+      Server.Endpoints.Project.Evaluate
+      Server.Endpoints.Project.ListBindings
+      Server.EnvVars
+      Server.Errors.UserErrorResponse
+      Server.Handlers
+      Server.Helpers
+      Server.Helpers.ExpressionData
+      Server.Helpers.ModuleData
+      Server.Helpers.ProjectData
+      Server.Helpers.TestData
+      Server.Main
+      Server.MimsaHandler
+      Server.Persistence
+      Server.Servant
+      Server.ServerConfig
+      Server.ServerM
+      Server.Swagger
+      Server.Types
+  hs-source-dirs:
+      server
+  ghc-options: -threaded -rtsopts -with-rtsopts=-T
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , bifunctors
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , diagnose
+    , directory
+    , exceptions
+    , file-embed
+    , hashable
+    , http-types
+    , megaparsec
+    , memory
+    , mimsa
+    , monad-logger
+    , mtl
+    , openapi3
+    , optparse-applicative
+    , parallel
+    , parser-combinators
+    , prettyprinter
+    , prometheus-client
+    , prometheus-metrics-ghc
+    , servant
+    , servant-openapi3
+    , servant-server
+    , stm
+    , text
+    , transformers
+    , wai
+    , wai-cors
+    , wai-middleware-prometheus
+    , warp
+    , wasm
+    , zip-archive
+  default-language: Haskell2010
