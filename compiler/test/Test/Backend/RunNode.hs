@@ -89,16 +89,16 @@ spec = do
   describe "RunNode" $ do
     describe "runScriptFromFile" $ do
       it "Succeeds with printed value" $ do
-        (ec, bs) <- runScriptFromFile "static/test/test.js"
+        (ec, bs) <- runScriptFromFile "compiler/static/test/test.js"
         ec `shouldBe` True
         bs `shouldBe` "i am a test"
 
     describe "runTypescriptFromFile" $ do
       it "Succeeds with printed value" $ do
-        (ec, bs) <- runTypescriptFromFile "static/test/test.ts"
+        (ec, bs) <- runTypescriptFromFile "compiler/static/test/test.ts"
         ec `shouldBe` True
         bs `shouldBe` "i am a test"
 
       it "Fails with badly-typed file" $ do
-        (ec, _) <- runTypescriptFromFile "static/test/failing-test.ts"
+        (ec, _) <- runTypescriptFromFile "compiler/static/test/failing-test.ts"
         ec `shouldBe` False

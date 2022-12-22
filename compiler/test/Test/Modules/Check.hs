@@ -30,7 +30,7 @@ import Test.Hspec
 import Test.Utils.Helpers
 
 modulesPath :: FilePath
-modulesPath = "test/modules/"
+modulesPath = "compiler/test/modules/"
 
 exprAndTypeFromParts' ::
   (Monoid ann) =>

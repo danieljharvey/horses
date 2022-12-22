@@ -33,12 +33,10 @@ freeze:
 	cabal freeze --enable-tests --enable-benchmarks
 
 test:
-	cabal update
 	cabal run mimsa:test:mimsa-test
 
 bench:
-	cabal update
-	cabal bench
+	cabal bench mimsa
 
 format:
 	@ormolu --mode inplace $(HS_FILES) && echo "Ormolu success!"
