@@ -12,5 +12,4 @@ export type ExpressionData = {
   edSourceItems: Array<SourceItem>
   edType: string
   edTypeBindings: Record<string, string>
-  edWarnings: Array<string>
 }

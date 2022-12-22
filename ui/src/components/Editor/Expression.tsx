@@ -1,7 +1,6 @@
 import * as React from 'react'
 
 import { Code } from '../View/Code'
-import { Paragraph } from '../View/Paragraph'
 import { FlexColumnSpaced } from '../View/FlexColumnSpaced'
 import type { ExpressionData } from '../../types'
 
@@ -16,13 +15,6 @@ export const Expression: React.FC<Props> = ({
   return (
     <FlexColumnSpaced>
       <Code codeType="type">{expression.edType}</Code>
-      {expression.edWarnings.length > 0 && (
-        <FlexColumnSpaced>
-          {expression.edWarnings.map((warn) => (
-            <Paragraph>{warn}</Paragraph>
-          ))}
-        </FlexColumnSpaced>
-      )}
     </FlexColumnSpaced>
   )
 }
