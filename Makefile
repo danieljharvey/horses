@@ -7,13 +7,13 @@ ghcid:
 	ghcid -c "cabal repl mimsa" -l=hlint
 
 ghcid-test:
-	ghcid -c "cabal repl mimsa:tests:mimsa-test" -l=hlint
+	ghcid -c "cabal repl mimsa:test:mimsa-test" -l=hlint
 
 ghcid-repl:
 	ghcid -c "cabal repl mimsa:exe:mimsa" -l=hlint
 
 ghcid-server:
-	ghcid -c "cabal repl mimsa:exe:mimsa-server" -l=hlint
+	ghcid -c "cabal repl server:exe:mimsa-server" -l=hlint
 
 build:
 	cabal update
@@ -24,10 +24,10 @@ install:
 	cabal install mimsa:exe:mimsa --overwrite-policy=always
 
 run-server:
-	cabal run mimsa:exe:mimsa-server
+	cabal run server:exe:mimsa-server
 
 test-watch:
-	ghcid -c "cabal repl mimsa:tests" -l=hlint --test="main"
+	ghcid -c "cabal repl mimsa:test:mimsa-test" -l=hlint --test="main"
 
 freeze:
 	cabal freeze --enable-tests --enable-benchmarks
