@@ -1,14 +1,15 @@
-FROM haskell:9.4.3-buster as build
+FROM haskell:9.2.5-buster as build
 
+# work from root of monorepo
 COPY . /opt/build/
 
 WORKDIR /opt/build
 
 RUN mkdir /opt/build/bin
 
-RUN cabal update && cabal build mimsa:exe:mimsa-server
+RUN cabal update && cabal build server:exe:mimsa-server
 
-RUN mv "$(cabal list-bin mimsa:exe:mimsa-server)" /opt/build/bin
+RUN mv "$(cabal list-bin server:exe:mimsa-server)" /opt/build/bin
 
 # -------------------------------------------------------------------------------------------
 # Base image for stack build so compiled artifact from previous

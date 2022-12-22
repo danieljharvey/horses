@@ -6,17 +6,17 @@ on:
       - trunk
     paths:
       - "compiler/**"
+      - "server/**"
 
   pull_request:
     branches:
       - trunk
     paths:
       - "compiler/**"
+      - "server/**"
 
 jobs:
   ormolu:
-    env:
-      working-directory: compiler
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,8 +24,6 @@ jobs:
 
   build:
     needs: ormolu
-    env:
-      working-directory: compiler
     runs-on: ubuntu-latest
 
     steps:
@@ -52,20 +50,21 @@ jobs:
       - name: Cache .cabal-work
         uses: actions/cache@v3
         with:
-          path: compiler/dist-newstyle
+          path: dist-newstyle
           key: ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
             ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
 
       - uses: haskell/actions/setup@v2
         with:
-          ghc-version: '9.4.3'
+          ghc-version: '9.2.5'
           cabal-version: '3.8.1.0'
 
+      # todo: move this into its own job
       - name: "Set up HLint"
         uses: rwe/actions-hlint-setup@v1
         with:
-          version: "3.1.6"
+          version: "3.4.1"
 
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
@@ -73,17 +72,14 @@ jobs:
           path: compiler/src/
           fail-on: warning
 
-      - name: cabal update
-        run: cd compiler && cabal update
-
       - name: Run cabal test
-        run: yarn global add typescript@4.4 ts-node@10.4.0 & cd compiler && make test
+        run: yarn global add typescript@4.4 ts-node@10.4.0 & make test
 
       - name: Run cabal build
-        run: cd compiler && make build 
+        run: make build
 
       - name: Run cabal bench
-        run: cd compiler && make bench 
+        run: make bench
 
       - name: Generate swagger json
-        run: cd compiler && make install && $(cabal list-bin mimsa-server) generate-swagger
+        run: make generate-swagger

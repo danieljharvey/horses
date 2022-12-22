@@ -1,12 +1,9 @@
 #!/bin/bash
 
-pushd compiler
-make install
-mimsa-server generate-swagger > swagger.json
-popd
+make generate-swagger > swagger.json
 
-pushd ui
+pushd ui || exit
 yarn
 yarn typegen
 yarn format
-popd
+popd || return
