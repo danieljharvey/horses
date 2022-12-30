@@ -1,4 +1,6 @@
-packages: mimsa.cabal
+packages:
+  compiler/mimsa.cabal,
+  server/server.cabal
 
 package diagnose
   flags: +megaparsec-compat

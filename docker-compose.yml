@@ -17,7 +17,8 @@ services:
 
   api:
     container_name: mimsa-api
-    build: ./compiler/.
+    build:
+      dockerfile: ./docker/Dockerfile.server
     image: danieljamesharvey/mimsa-api:local
     ports:
       - '8999:8999'
