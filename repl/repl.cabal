@@ -1,0 +1,82 @@
+cabal-version: 2.2
+
+name:           repl
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
+homepage:       https://github.com/danieljharvey/mimsa#readme
+bug-reports:    https://github.com/danieljharvey/mimsa/issues
+author:         Daniel J Harvey
+maintainer:     danieljamesharvey@gmail.com
+copyright:      2021 Daniel J Harvey
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/danieljharvey/mimsa
+
+common common-all
+  ghc-options:
+    -Wall -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
+executable mimsa-repl
+  import: common-all
+  main-is: Main.hs
+  other-modules:
+      Check.Main
+      Compile.Main
+      Eval.Main
+      Init.Main
+      ReplNew.Actions
+      ReplNew.Actions.Bindings
+      ReplNew.Actions.Compile
+      ReplNew.Actions.Evaluate
+      ReplNew.Actions.ListModules
+      ReplNew.Helpers
+      ReplNew.Main
+      ReplNew.Parser
+      ReplNew.Persistence
+      ReplNew.ReplM
+      ReplNew.Types
+      Shared.LoadProject
+  hs-source-dirs:
+      repl
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , bifunctors
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , diagnose
+    , directory
+    , exceptions
+    , file-embed
+    , hashable
+    , haskeline
+    , megaparsec
+    , memory
+    , mimsa
+    , monad-logger
+    , mtl
+    , openapi3
+    , optparse-applicative
+    , parallel
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-server
+    , text
+    , transformers
+    , wasm
+    , zip-archive
+  default-language: Haskell2010
