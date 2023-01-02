@@ -11,7 +11,7 @@ ghcid-test:
 
 .PHONY: ghcid-repl
 ghcid-repl:
-	ghcid -c "cabal repl mimsa:exe:mimsa" -l=hlint
+	ghcid -c "cabal repl repl:exe:mimsa-repl" -l=hlint
 
 .PHONY: ghcid-server
 ghcid-server:
@@ -22,24 +22,24 @@ update:
 	cabal update
 
 .PHONY: build
-build: update
+build:
 	cabal build all
 
 .PHONY: install
-install: update
-	cabal install mimsa:exe:mimsa --overwrite-policy=always
+install:
+	cabal install repl:exe:mimsa-repl --overwrite-policy=always
 	cabal install server:exe:mimsa-server --overwrite-policy=always
 
 .PHONY: run-server
-run-server: update
+run-server:
 	cabal run server:exe:mimsa-server
 
 .PHONY: test
-test: update
+test:
 	cabal run mimsa:test:mimsa-test
 
 .PHONY: test-watch
-test-watch: update
+test-watch:
 	ghcid -c "cabal repl mimsa:test:mimsa-test" -l=hlint --test="main"
 
 .PHONY: freeze
