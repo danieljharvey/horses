@@ -32,7 +32,7 @@ import Language.Mimsa.Types.Store
 import System.Directory
 
 saveRootPath :: String
-saveRootPath = "./test/golden"
+saveRootPath = "./compiler/test/golden"
 
 createOutputFolder :: FilePath -> IO FilePath
 createOutputFolder folder = do
