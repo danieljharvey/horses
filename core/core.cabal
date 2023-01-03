@@ -1,0 +1,153 @@
+cabal-version: 2.2
+
+name:           core
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
+homepage:       https://github.com/danieljharvey/mimsa#readme
+bug-reports:    https://github.com/danieljharvey/mimsa/issues
+author:         Daniel J Harvey
+maintainer:     danieljamesharvey@gmail.com
+copyright:      2021 Daniel J Harvey
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/danieljharvey/mimsa
+
+common common-all
+  ghc-options:
+    -Wall -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
+library
+  import: common-all
+  exposed-modules:
+      Language.Mimsa.Core,
+      Language.Mimsa.ExprUtils,
+      Language.Mimsa.Parser,
+      Language.Mimsa.Parser.Helpers,
+      Language.Mimsa.Parser.Identifier,
+      Language.Mimsa.Parser.Identifiers,
+      Language.Mimsa.Parser.Language,
+      Language.Mimsa.Parser.Lexeme,
+      Language.Mimsa.Parser.Literal,
+      Language.Mimsa.Parser.Module,
+      Language.Mimsa.Parser.MonoType,
+      Language.Mimsa.Parser.Pattern,
+      Language.Mimsa.Parser.TypeDecl,
+      Language.Mimsa.Parser.Types,
+      Language.Mimsa.Printer,
+      Language.Mimsa.TypeUtils,
+      Language.Mimsa.Types.AST,
+      Language.Mimsa.Types.AST.Annotation,
+      Language.Mimsa.Types.AST.DataType,
+      Language.Mimsa.Types.AST.Expr,
+      Language.Mimsa.Types.AST.Identifier,
+      Language.Mimsa.Types.AST.InfixOp,
+      Language.Mimsa.Types.AST.Literal,
+      Language.Mimsa.Types.AST.Operator,
+      Language.Mimsa.Types.AST.Pattern,
+      Language.Mimsa.Types.AST.Spread,
+      Language.Mimsa.Types.AST.StringPart,
+      Language.Mimsa.Types.AST.StringType,
+      Language.Mimsa.Types.Identifiers,
+      Language.Mimsa.Types.Identifiers.Name,
+      Language.Mimsa.Types.Identifiers.TyCon,
+      Language.Mimsa.Types.Identifiers.TyVar,
+      Language.Mimsa.Types.Identifiers.TypeIdentifier,
+      Language.Mimsa.Types.Identifiers.TypeName,
+      Language.Mimsa.Types.Module,
+      Language.Mimsa.Types.Module.DefIdentifier,
+      Language.Mimsa.Types.Module.Entity,
+      Language.Mimsa.Types.Module.Module,
+      Language.Mimsa.Types.Module.ModuleHash,
+      Language.Mimsa.Types.Module.ModuleName,
+      Language.Mimsa.Types.NullUnit,
+      Language.Mimsa.Types.Tests,
+      Language.Mimsa.Types.Tests.TestName,
+      Language.Mimsa.Types.Type,
+      Language.Mimsa.Types.Type.MonoType,
+      Language.Mimsa.Utils
+  hs-source-dirs:
+      src
+  default-extensions:
+      Strict
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , bifunctors
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , diagnose
+    , directory
+    , exceptions
+    , file-embed
+    , hashable
+    , megaparsec
+    , memory
+    , monad-logger
+    , mtl
+    , openapi3
+    , parallel
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-server
+    , text
+    , transformers
+    , wasm
+    , zip-archive
+  default-language: Haskell2010
+
+test-suite core-test
+  import: common-all
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Test.Parser.DataTypes
+      Test.Parser.MonoTypeParser
+      Test.Parser.Pattern
+      Test.Parser.Syntax
+      Test.Prettier
+      Test.Utils.Helpers
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , bifunctors
+    , binary
+    , bytestring
+    , containers
+    , cryptonite
+    , diagnose
+    , directory
+    , exceptions
+    , file-embed
+    , hashable
+    , hspec
+    , megaparsec
+    , memory
+    , core
+    , monad-logger
+    , mtl
+    , openapi3
+    , parallel
+    , parser-combinators
+    , prettyprinter
+    , servant
+    , servant-server
+    , text
+    , transformers
+    , typed-process
+    , wasm
+    , zip-archive
+  default-language: Haskell2010
