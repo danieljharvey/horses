@@ -21,14 +21,14 @@ import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.DefIdentifier

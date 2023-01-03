@@ -28,24 +28,9 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Store
 import Prettyprinter
-
-newtype TestName = TestName Text
-  deriving newtype
-    ( Eq,
-      Ord,
-      Show,
-      JSON.ToJSON,
-      JSON.FromJSON,
-      ToSchema
-    )
-
-instance Printer TestName where
-  prettyPrint (TestName n) = n
 
 newtype UnitTestSuccess = UnitTestSuccess Bool
   deriving newtype

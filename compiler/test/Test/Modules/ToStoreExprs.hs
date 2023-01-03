@@ -11,9 +11,9 @@ import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Parse
 import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Modules.Typecheck
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Store
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Module

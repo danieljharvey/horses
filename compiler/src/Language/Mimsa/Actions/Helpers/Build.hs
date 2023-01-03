@@ -8,7 +8,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Printer
+import Language.Mimsa.Core (Printer(..))
 
 -- a thing we want to do
 data Plan k input = Plan

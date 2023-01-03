@@ -10,10 +10,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Unify
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleHash
-import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker
 
 createEnv ::

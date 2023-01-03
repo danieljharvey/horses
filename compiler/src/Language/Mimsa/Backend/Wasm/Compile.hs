@@ -13,8 +13,8 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import GHC.Natural
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker
 import qualified Language.Wasm.Structure as Wasm
 

@@ -4,9 +4,7 @@
 module Language.Mimsa.Types.Typechecker.Scheme where
 
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker.MonoType
+import Language.Mimsa.Core
 
 data Scheme = Scheme [TypeIdentifier] MonoType
   deriving stock (Eq, Ord, Show)

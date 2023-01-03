@@ -5,7 +5,7 @@
 module Language.Mimsa.Types.Typechecker.UniVar where
 
 import GHC.Generics
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Prettyprinter
 
 newtype UniVar = UniVar Int

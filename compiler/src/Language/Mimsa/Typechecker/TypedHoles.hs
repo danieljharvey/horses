@@ -16,7 +16,7 @@ import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 

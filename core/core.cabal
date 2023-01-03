@@ -55,6 +55,7 @@ library
       Language.Mimsa.Core.Types.AST.StringType,
       Language.Mimsa.Core.Types.Identifiers,
       Language.Mimsa.Core.Types.Identifiers.Name,
+      Language.Mimsa.Core.Types.Identifiers.TestName,
       Language.Mimsa.Core.Types.Identifiers.TyCon,
       Language.Mimsa.Core.Types.Identifiers.TyVar,
       Language.Mimsa.Core.Types.Identifiers.TypeIdentifier,
@@ -65,9 +66,6 @@ library
       Language.Mimsa.Core.Types.Module.Module,
       Language.Mimsa.Core.Types.Module.ModuleHash,
       Language.Mimsa.Core.Types.Module.ModuleName,
-      Language.Mimsa.Core.Types.NullUnit,
-      Language.Mimsa.Core.Types.Tests,
-      Language.Mimsa.Core.Types.Tests.TestName,
       Language.Mimsa.Core.Types.Type,
       Language.Mimsa.Core.Types.Type.MonoType,
       Language.Mimsa.Core.Utils

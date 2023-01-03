@@ -13,7 +13,7 @@ import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Parser
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
 

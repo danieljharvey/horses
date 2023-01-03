@@ -7,11 +7,11 @@ import Data.Bifunctor
 import Data.Map.Strict (Map)
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Typechecker.Elaborate
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules

@@ -34,10 +34,10 @@ import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
 import Language.Mimsa.ExprUtils
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project
 import Language.Mimsa.Store.ResolveDataTypes
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store

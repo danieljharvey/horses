@@ -2,7 +2,7 @@ module Language.Mimsa.Interpreter.SimpleExpr (simpleExpr) where
 
 import Data.Bifunctor
 import Data.Functor
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 
 -- | simpleExpr
 simpleExpr :: Expr var ann -> Expr var ()

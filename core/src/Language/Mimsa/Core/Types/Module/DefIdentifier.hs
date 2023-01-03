@@ -13,7 +13,6 @@ import GHC.Generics
 import Language.Mimsa.Core.Printer
 import Language.Mimsa.Core.Types.AST.InfixOp
 import Language.Mimsa.Core.Types.Identifiers
-import Language.Mimsa.Core.Types.Tests
 
 -- | different kinds of top-level definitions
 data DefIdentifier

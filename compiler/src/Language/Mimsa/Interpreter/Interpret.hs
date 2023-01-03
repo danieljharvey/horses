@@ -11,8 +11,7 @@ import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.RecordAccess
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash

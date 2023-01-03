@@ -4,17 +4,7 @@
 module Language.Mimsa.Types.Typechecker.Environment where
 
 import Data.Map.Strict (Map)
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST (DataType)
-import Language.Mimsa.Types.AST.InfixOp
-import Language.Mimsa.Types.Identifiers
-  ( Name,
-    TyVar,
-    TypeIdentifier,
-  )
-import Language.Mimsa.Types.Identifiers.TypeName
-import Language.Mimsa.Types.Modules.ModuleHash
-import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 import Prettyprinter
 

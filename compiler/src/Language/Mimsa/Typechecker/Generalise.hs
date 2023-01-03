@@ -8,15 +8,14 @@ where
 import Data.List ((\\))
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Language.Mimsa.TypeUtils
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker
 
 freeTypeVars :: MonoType -> S.Set TypeIdentifier
 freeTypeVars ty = case ty of
   MTVar _ var ->
     S.singleton var
-  other -> withMonoid freeTypeVars other
+  other -> withMonoidType freeTypeVars other
 
 freeTypeVarsScheme :: Scheme -> [TypeIdentifier]
 freeTypeVarsScheme (Scheme vars t) =

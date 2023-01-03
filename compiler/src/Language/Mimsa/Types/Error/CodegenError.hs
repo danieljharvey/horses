@@ -3,8 +3,7 @@
 
 module Language.Mimsa.Types.Error.CodegenError where
 
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Prettyprinter
 
 data CodegenError

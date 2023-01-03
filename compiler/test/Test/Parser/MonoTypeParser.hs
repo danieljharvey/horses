@@ -13,7 +13,7 @@ import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.Parser.Helpers
 import Language.Mimsa.Parser.MonoType
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers ()
 import Language.Mimsa.Types.Typechecker

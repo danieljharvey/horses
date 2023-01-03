@@ -9,8 +9,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 
 typeNameToTSName :: Int -> TSType -> TSName
 typeNameToTSName _ (TSTypeVar a) = coerce (T.toLower a)

@@ -4,11 +4,9 @@ import Control.Monad.Except
 import Data.Text (Text)
 import Language.Mimsa.Actions.Types
 import qualified Language.Mimsa.Modules.Parse as Module
-import qualified Language.Mimsa.Parser as Parser
-import Language.Mimsa.Types.AST
+import qualified Language.Mimsa.Core as Parser
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
+import Language.Mimsa.Core (Expr, Name, Annotation, DataType, Module)
 
 parseExpr :: Text -> ActionM (Expr Name Annotation)
 parseExpr

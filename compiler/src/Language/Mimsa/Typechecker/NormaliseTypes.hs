@@ -3,8 +3,7 @@ module Language.Mimsa.Typechecker.NormaliseTypes (normaliseType) where
 import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import Language.Mimsa.TypeUtils
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker
 
 data NormaliseState = NormaliseState
@@ -31,4 +30,4 @@ normaliseType' :: (Monoid ann) => Type ann -> State NormaliseState (Type ann)
 normaliseType' (MTVar ann tyIdent) = do
   index <- findVar tyIdent
   pure $ MTVar ann (TVUnificationVar index)
-normaliseType' other = bindMonoType normaliseType' other
+normaliseType' other = bindType normaliseType' other

@@ -14,9 +14,9 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker

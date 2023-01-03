@@ -10,7 +10,7 @@ import Data.Text (Text)
 import Language.Mimsa.Backend.Wasm.Compile
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import qualified Language.Wasm as Wasm

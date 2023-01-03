@@ -24,7 +24,7 @@ import Language.Mimsa.Transform.Inliner
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Transform.SimplifyPatterns
 import Language.Mimsa.Transform.TrimDeps
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Store
 
 inlineExpression :: (Ord ann, Ord var) => Expr var ann -> Expr var ann

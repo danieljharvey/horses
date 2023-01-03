@@ -16,7 +16,7 @@ import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules

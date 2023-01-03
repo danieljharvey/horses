@@ -18,7 +18,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.DataType
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 
 printDataType :: TSDataType -> Text
 printDataType dt =

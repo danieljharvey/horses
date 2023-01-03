@@ -34,7 +34,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Types as Actions
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules

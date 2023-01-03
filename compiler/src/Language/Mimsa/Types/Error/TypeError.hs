@@ -25,16 +25,12 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
 import GHC.Natural
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.SourceSpan
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Project.SourceSpan
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Typechecker.FoundPath
-import Language.Mimsa.Types.Typechecker.MonoType
 import Prettyprinter
 import Text.Megaparsec
 

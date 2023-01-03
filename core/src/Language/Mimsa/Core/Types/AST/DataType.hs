@@ -19,7 +19,6 @@ import Language.Mimsa.Core.Types.Identifiers
     renderName,
   )
 import Language.Mimsa.Core.Types.Identifiers.TypeName
-import Language.Mimsa.Core.Types.NullUnit
 import Language.Mimsa.Core.Types.Type.MonoType
 import Prettyprinter
 
@@ -32,7 +31,7 @@ data DataType = DataType
     -- | The type variables for the data type, ie `e`, `a`
     dtVars :: [Name],
     -- | map from constructor name to it's arguments, ie "`Left` -> [`e`]" or "`Right` -> [`a`]"
-    dtConstructors :: Map TyCon [Type NullUnit]
+    dtConstructors :: Map TyCon [Type ()]
   }
   deriving stock
     ( Eq,

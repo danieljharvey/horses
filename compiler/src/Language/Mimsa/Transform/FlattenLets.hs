@@ -1,7 +1,6 @@
 module Language.Mimsa.Transform.FlattenLets (flattenLets) where
 
-import Language.Mimsa.ExprUtils
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 
 -- | We don't want `let a = (let b = 1 in b + 1) in a + 1`
 -- instead we want `let b = 1; let a = b + 1; a + 1

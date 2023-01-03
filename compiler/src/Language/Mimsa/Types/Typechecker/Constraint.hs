@@ -3,8 +3,7 @@
 
 module Language.Mimsa.Types.Typechecker.Constraint (Constraint (..)) where
 
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Typechecker.MonoType
+import Language.Mimsa.Core
 
 data Constraint
   = ShouldEqual MonoType MonoType

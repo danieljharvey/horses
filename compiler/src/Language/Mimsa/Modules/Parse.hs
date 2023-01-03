@@ -8,10 +8,9 @@ import Data.Bifunctor
 import Data.Map.Strict (Map)
 import Data.Text (Text)
 import Language.Mimsa.Modules.FromParts
-import qualified Language.Mimsa.Parser.Module as Parser
-import Language.Mimsa.Types.AST
+import qualified Language.Mimsa.Core as Parser
+import Language.Mimsa.Core (Annotation, ModuleHash, Module)
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
 
 parseModule ::
   (MonadError (Error Annotation) m) =>

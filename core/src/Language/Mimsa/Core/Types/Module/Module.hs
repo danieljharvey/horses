@@ -27,7 +27,6 @@ import Language.Mimsa.Core.Types.Identifiers
 import Language.Mimsa.Core.Types.Module.DefIdentifier
 import Language.Mimsa.Core.Types.Module.ModuleHash
 import Language.Mimsa.Core.Types.Module.ModuleName
-import Language.Mimsa.Core.Types.Tests
 import Language.Mimsa.Core.Types.Type.MonoType
 import Prettyprinter
 

@@ -16,7 +16,7 @@ import Data.FileEmbed
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Store
 
 -- these are saved in a file that is included in compilation

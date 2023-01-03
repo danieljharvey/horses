@@ -26,7 +26,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Text.Lazy (fromStrict)
 import Data.Text.Lazy.Encoding
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Store
 import Language.Mimsa.Types.Store
 import System.Directory

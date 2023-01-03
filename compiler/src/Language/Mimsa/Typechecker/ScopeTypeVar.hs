@@ -10,9 +10,8 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Store.ExtractTypes
-import Language.Mimsa.TypeUtils
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.TcMonad
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 
 -- | if we've seen these type vars before, they're the same
@@ -61,4 +60,4 @@ freshenNamedTypeVars known =
         Nothing -> pure mtV -- leave it
         Just i -> do
           pure (MTVar ann (TVScopedVar i tv))
-    freshen other = bindMonoType freshen other
+    freshen other = bindType freshen other

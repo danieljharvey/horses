@@ -11,10 +11,10 @@ import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
 import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Tests

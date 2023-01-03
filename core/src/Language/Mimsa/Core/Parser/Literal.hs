@@ -19,7 +19,7 @@ import Language.Mimsa.Core.Parser.Helpers
 import Language.Mimsa.Core.Parser.Lexeme
 import Language.Mimsa.Core.Parser.Types
 import Language.Mimsa.Core.Types.AST
-import Language.Mimsa.Core.Types.Tests
+import Language.Mimsa.Core.Types.Identifiers
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L

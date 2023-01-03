@@ -16,11 +16,8 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error.TypeError
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleHash
-import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker.Unique
 

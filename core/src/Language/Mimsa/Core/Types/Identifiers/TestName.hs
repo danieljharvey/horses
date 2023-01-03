@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
-module Language.Mimsa.Core.Types.Tests.TestName
+module Language.Mimsa.Core.Types.Identifiers.TestName
   (
 
     TestName (..),

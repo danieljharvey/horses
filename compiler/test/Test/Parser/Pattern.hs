@@ -10,7 +10,7 @@ import Data.List (isInfixOf)
 import Data.Text (Text)
 import Language.Mimsa.Parser
 import Language.Mimsa.Parser.Pattern
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Identifiers
 import Test.Hspec
 import Text.Megaparsec

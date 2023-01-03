@@ -27,7 +27,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Parser
 import Language.Mimsa.Typechecker.DataTypes
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.MonoType
 import Test.Utils.Helpers

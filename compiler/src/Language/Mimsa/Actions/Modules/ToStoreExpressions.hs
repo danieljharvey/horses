@@ -12,7 +12,7 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.ToStoreExprs (CompiledModule (..))
 import qualified Language.Mimsa.Modules.ToStoreExprs as Modules
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store

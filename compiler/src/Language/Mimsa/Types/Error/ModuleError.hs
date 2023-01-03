@@ -6,11 +6,8 @@ module Language.Mimsa.Types.Error.ModuleError (ModuleError (..), moduleErrorDiag
 import Data.Set (Set)
 import Data.Text (Text)
 import qualified Error.Diagnose as Diag
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error.TypeError
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
 
 data ModuleError
   = DuplicateDefinition DefIdentifier

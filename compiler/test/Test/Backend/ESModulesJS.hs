@@ -22,9 +22,9 @@ import Language.Mimsa.Backend.Typescript.FromExpr
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Backend.RunNode hiding (spec)

@@ -15,7 +15,7 @@ import qualified Language.Mimsa.Actions.Optimise as Actions
 import Language.Mimsa.Interpreter.Interpret
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Store
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Interpreter.Stack

@@ -8,7 +8,7 @@ where
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Text.IO as T
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker

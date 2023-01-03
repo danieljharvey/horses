@@ -18,8 +18,8 @@ import qualified Language.Mimsa.Actions.Modules.Bind as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Prelude
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project

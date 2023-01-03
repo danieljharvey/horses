@@ -8,7 +8,7 @@ import Data.Functor
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Modules.DefIdentifier
 import Language.Mimsa.Types.Modules.Module

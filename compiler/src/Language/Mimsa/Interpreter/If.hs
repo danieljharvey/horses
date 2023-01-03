@@ -2,7 +2,7 @@ module Language.Mimsa.Interpreter.If (interpretIf) where
 
 import Control.Monad.Except
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 

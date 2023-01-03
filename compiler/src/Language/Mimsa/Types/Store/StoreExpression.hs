@@ -8,10 +8,7 @@ module Language.Mimsa.Types.Store.StoreExpression where
 import qualified Data.Aeson as JSON
 import Data.Map.Strict (Map)
 import GHC.Generics
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.ExprHash
 
 -- a storeExpression contains the AST Expr

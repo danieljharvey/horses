@@ -14,7 +14,7 @@ import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.Project

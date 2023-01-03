@@ -6,8 +6,7 @@ module Language.Mimsa.Types.Error.ProjectError (ProjectError (..)) where
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Modules
+import Language.Mimsa.Core
 
 -- | things that could happen
 data ProjectError

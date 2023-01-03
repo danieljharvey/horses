@@ -6,8 +6,7 @@ module Language.Mimsa.Types.Typechecker.FoundPath (FoundPath (..), appendNameToF
 import qualified Data.List.NonEmpty as NE
 import Data.String
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers.Name
+import Language.Mimsa.Core
 
 -- | path to found item, ie ["state","map"]
 newtype FoundPath = FoundPath (NE.NonEmpty Name)

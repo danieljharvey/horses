@@ -7,7 +7,7 @@ where
 
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Core
 
 resultIsBoolean :: MonoType -> Either TypeError ()
 resultIsBoolean mt = do

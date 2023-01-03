@@ -11,7 +11,7 @@ import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Parse
 import Language.Mimsa.Modules.Typecheck
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Tests
 import Language.Mimsa.Types.Typechecker

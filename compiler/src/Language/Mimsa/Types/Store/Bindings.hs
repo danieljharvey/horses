@@ -8,8 +8,7 @@ import qualified Data.Aeson as JSON
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.ExprHash
 
 -- a list of names to hashes

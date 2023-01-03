@@ -3,7 +3,7 @@ module Language.Mimsa.Interpreter.Let (interpretLet) where
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Transform.FindUses
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Typechecker.Unique
 
