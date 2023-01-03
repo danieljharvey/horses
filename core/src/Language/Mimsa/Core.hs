@@ -1,20 +1,20 @@
 module Language.Mimsa.Core
-  ( module Language.Mimsa.Parser,
-    module Language.Mimsa.Types.AST,
-    module Language.Mimsa.Types.Type,
-    module Language.Mimsa.Types.Identifiers,
-    module Language.Mimsa.Types.Module,
-    module Language.Mimsa.Printer,
-    module Language.Mimsa.TypeUtils,
-    module Language.Mimsa.ExprUtils
+  ( module Language.Mimsa.Core.Parser,
+    module Language.Mimsa.Core.Types.AST,
+    module Language.Mimsa.Core.Types.Type,
+    module Language.Mimsa.Core.Types.Identifiers,
+    module Language.Mimsa.Core.Types.Module,
+    module Language.Mimsa.Core.Printer,
+    module Language.Mimsa.Core.TypeUtils,
+    module Language.Mimsa.Core.ExprUtils
   )
 where
 
-import Language.Mimsa.TypeUtils
-import Language.Mimsa.ExprUtils
-import Language.Mimsa.Parser
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Type
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Module
-import Language.Mimsa.Printer
+import Language.Mimsa.Core.TypeUtils
+import Language.Mimsa.Core.ExprUtils
+import Language.Mimsa.Core.Parser
+import Language.Mimsa.Core.Types.AST
+import Language.Mimsa.Core.Types.Type
+import Language.Mimsa.Core.Types.Identifiers
+import Language.Mimsa.Core.Types.Module
+import Language.Mimsa.Core.Printer
