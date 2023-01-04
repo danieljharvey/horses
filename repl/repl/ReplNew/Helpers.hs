@@ -14,8 +14,8 @@ import Control.Monad.Reader
 import Data.Foldable (traverse_)
 import Error.Diagnose hiding (Annotation)
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Store
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store

@@ -18,13 +18,12 @@ import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as LBS
 import Data.Functor
 import Data.Map.Strict (Map)
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Store.Persistence
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Server.ServerConfig

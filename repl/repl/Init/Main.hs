@@ -8,9 +8,9 @@ where
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Text as T
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Store.Storage
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath

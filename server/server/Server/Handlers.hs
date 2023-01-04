@@ -30,12 +30,11 @@ import Data.Text (Text)
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Actions.Types
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store
 import Language.Mimsa.Store.Persistence
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant

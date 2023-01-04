@@ -11,12 +11,10 @@ import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Pretty
-import Language.Mimsa.Printer
 import Language.Mimsa.Project
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import ReplNew.Helpers
 import ReplNew.ReplM

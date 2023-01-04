@@ -16,8 +16,7 @@ import Data.OpenApi hiding (Server)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Modules
+import Language.Mimsa.Core
 import Servant
 import Server.Handlers
 import Server.Helpers.ModuleData

@@ -19,7 +19,7 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Servant

@@ -15,9 +15,8 @@ import Data.Map.Strict (Map)
 import Data.OpenApi (ToSchema)
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Servant
 import Server.Helpers

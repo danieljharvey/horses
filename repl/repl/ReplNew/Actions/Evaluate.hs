@@ -6,12 +6,9 @@ module ReplNew.Actions.Evaluate
 where
 
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Typechecker
 import Prettyprinter
 import ReplNew.Helpers
 import ReplNew.ReplM

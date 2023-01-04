@@ -10,7 +10,7 @@ import Control.Monad.Except
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store.RootPath
 import ReplNew.Helpers

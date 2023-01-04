@@ -63,6 +63,7 @@ executable mimsa-server
     , binary
     , bytestring
     , containers
+    , core
     , cryptonite
     , diagnose
     , directory

@@ -18,12 +18,10 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.SourceSpan
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import qualified Language.Mimsa.Types.Error.TypeError as TE
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project.SourceSpan
 import Language.Mimsa.Types.Typechecker
 

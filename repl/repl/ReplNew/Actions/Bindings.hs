@@ -8,10 +8,9 @@ where
 
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Modules.Bind as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Pretty
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import ReplNew.Helpers
 import ReplNew.ReplM

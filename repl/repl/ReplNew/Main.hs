@@ -10,8 +10,7 @@ import Control.Monad.Except
 import Control.Monad.Logger
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath

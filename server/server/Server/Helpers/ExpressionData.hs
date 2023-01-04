@@ -21,16 +21,12 @@ import qualified Data.Map.Strict as M
 import Data.OpenApi hiding (get)
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Store
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.OutputTypes
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Project.SourceItem
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import Server.Helpers.TestData
 
 data ExpressionData = ExpressionData

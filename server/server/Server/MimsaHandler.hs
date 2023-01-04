@@ -20,7 +20,7 @@ module Server.MimsaHandler
 where
 
 import Control.Monad.Except
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Servant
 import Server.Errors.UserErrorResponse
