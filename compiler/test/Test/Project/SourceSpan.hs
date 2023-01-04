@@ -2,8 +2,8 @@
 
 module Test.Project.SourceSpan (spec) where
 
-import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Core
+import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.Project.SourceSpan
 import Test.Hspec
 

@@ -12,6 +12,7 @@ import Data.Either (isLeft, isRight)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Language.Mimsa.Core
 import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Tests.Generate
 import Language.Mimsa.Tests.Helpers
@@ -19,7 +20,6 @@ import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store

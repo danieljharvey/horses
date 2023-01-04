@@ -5,10 +5,10 @@ module CoreTest.Parser.Pattern
   )
 where
 
-import Language.Mimsa.Core
 import Data.Functor
 import Data.List (isInfixOf)
 import Data.Text (Text)
+import Language.Mimsa.Core
 import Test.Hspec
 import Text.Megaparsec
 

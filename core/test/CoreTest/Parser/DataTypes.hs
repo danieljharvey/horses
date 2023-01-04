@@ -5,12 +5,12 @@ module CoreTest.Parser.DataTypes
   )
 where
 
+import CoreTest.Utils.Helpers
 import Data.Either (isRight)
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Language.Mimsa.Core
 import Test.Hspec
-import CoreTest.Utils.Helpers
 import Text.Megaparsec
 
 -- specialisation of parseExpr

@@ -22,8 +22,8 @@ import qualified Language.Mimsa.Actions.Types as Actions
 import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Core
+import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Test.Data.Project

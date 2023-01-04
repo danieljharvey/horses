@@ -1,12 +1,36 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CoreTest.Utils.Helpers (joinLines, fromRight, fromLeft, fromJust, 
-      unsafeParseExpr', int, bool, unknown, str', textErrorContains, str, unsafeParseExpr, mtBool, mtString, mtVar, mtInt, unsafeParseDataType, tvNamed, tvNum, typeName, unsafeParseModuleItem, mtFun, unsafeParseMonoType) where
+module CoreTest.Utils.Helpers
+  ( joinLines,
+    fromRight,
+    fromLeft,
+    fromJust,
+    unsafeParseExpr',
+    int,
+    bool,
+    unknown,
+    str',
+    textErrorContains,
+    str,
+    unsafeParseExpr,
+    mtBool,
+    mtString,
+    mtVar,
+    mtInt,
+    unsafeParseDataType,
+    tvNamed,
+    tvNum,
+    typeName,
+    unsafeParseModuleItem,
+    mtFun,
+    unsafeParseMonoType,
+  )
+where
 
-import Language.Mimsa.Core
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Core
 
 joinLines :: [Text] -> Text
 joinLines = T.intercalate "\n"
@@ -104,4 +128,3 @@ mtVar n = MTVar mempty (tvNamed n)
 
 mtFun :: (Monoid ann) => Type ann -> Type ann -> Type ann
 mtFun = MTFunction mempty
-

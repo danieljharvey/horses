@@ -7,8 +7,8 @@ module Test.Transform.FindUnused
 where
 
 import qualified Data.Set as S
-import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Core
+import Language.Mimsa.Transform.FindUnused
 import Test.Hspec
 import Test.Utils.Helpers
 

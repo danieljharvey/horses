@@ -5,12 +5,12 @@ module CoreTest.Prettier
   )
 where
 
+import CoreTest.Utils.Helpers
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Text.IO as T
 import Language.Mimsa.Core
 import Test.Hspec
-import CoreTest.Utils.Helpers
 
 spec :: Spec
 spec =

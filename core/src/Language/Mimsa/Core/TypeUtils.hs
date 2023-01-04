@@ -1,13 +1,18 @@
 module Language.Mimsa.Core.TypeUtils (dataTypeWithVars, withMonoidType, mapType, bindType) where
 
-import Language.Mimsa.Core.Types.Module
-import qualified Data.Map.Strict as M
-import Language.Mimsa.Core.Types.Type
-import Language.Mimsa.Core.Types.Identifiers
 import Data.Foldable (foldl')
+import qualified Data.Map.Strict as M
+import Language.Mimsa.Core.Types.Identifiers
+import Language.Mimsa.Core.Types.Module
+import Language.Mimsa.Core.Types.Type
 
-dataTypeWithVars :: (Monoid ann) => ann ->
-    Maybe ModuleName -> TypeName -> [Type ann] -> Type ann
+dataTypeWithVars ::
+  (Monoid ann) =>
+  ann ->
+  Maybe ModuleName ->
+  TypeName ->
+  [Type ann] ->
+  Type ann
 dataTypeWithVars ann modName tyName =
   foldl'
     (MTTypeApp mempty)

@@ -3,15 +3,7 @@
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
 module Language.Mimsa.Core.Types.Identifiers.TestName
-  (
-
-    TestName (..),
-
-
-
-
-
-
+  ( TestName (..),
   )
 where
 
@@ -32,5 +24,3 @@ newtype TestName = TestName Text
 
 instance Printer TestName where
   prettyPrint (TestName n) = n
-
-

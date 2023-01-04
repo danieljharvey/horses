@@ -1,4 +1,3 @@
-
 HS_FILES = $(shell git ls-files '*.hs')
 
 .PHONY: ghcid
@@ -64,7 +63,7 @@ bench:
 
 .PHONY: format
 format:
-	@ormolu --mode inplace --no-cabal $(HS_FILES) && echo "Ormolu success!"
+	@ormolu --mode inplace $(HS_FILES) && echo "Ormolu success!"
 
 .PHONY: generate-swagger
 generate-swagger: install

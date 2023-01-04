@@ -5,15 +5,15 @@ module CoreTest.Parser.MonoTypeParser
   )
 where
 
-import Language.Mimsa.Core
 import Control.Monad.Except
+import CoreTest.Utils.Helpers
 import Data.Either (isRight)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
+import Language.Mimsa.Core
 import Test.Hspec
-import CoreTest.Utils.Helpers
 
 testParser :: Text -> Either Text MonoType
 testParser input = do
