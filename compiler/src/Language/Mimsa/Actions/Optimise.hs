@@ -13,6 +13,7 @@ import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
 import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Store
 import Language.Mimsa.Transform.BetaReduce
 import Language.Mimsa.Transform.EtaReduce
@@ -24,7 +25,6 @@ import Language.Mimsa.Transform.Inliner
 import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Transform.SimplifyPatterns
 import Language.Mimsa.Transform.TrimDeps
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Store
 
 inlineExpression :: (Ord ann, Ord var) => Expr var ann -> Expr var ann

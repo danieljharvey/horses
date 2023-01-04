@@ -13,8 +13,8 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Language.Mimsa.Typechecker.FlattenRow
 import Language.Mimsa.Core
+import Language.Mimsa.Typechecker.FlattenRow
 
 ---
 

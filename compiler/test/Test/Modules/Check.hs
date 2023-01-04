@@ -17,14 +17,10 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
-import Language.Mimsa.Core
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Typechecker
 import Test.Data.Prelude
 import Test.Hspec
 import Test.Utils.Helpers

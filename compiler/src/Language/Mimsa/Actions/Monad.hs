@@ -35,12 +35,9 @@ import Language.Mimsa.Actions.Types
 import Language.Mimsa.Core
 import Language.Mimsa.Project
 import Language.Mimsa.Store
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import Prettyprinter
 
 emptyState :: Project Annotation -> ActionState

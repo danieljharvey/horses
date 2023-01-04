@@ -24,9 +24,6 @@ import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Core
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Core
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker
 import Test.Backend.RunNode hiding (spec)
 import Test.Data.Project
 import Test.Hspec

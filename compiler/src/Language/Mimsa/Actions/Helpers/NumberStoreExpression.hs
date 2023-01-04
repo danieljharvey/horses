@@ -5,8 +5,8 @@ module Language.Mimsa.Actions.Helpers.NumberStoreExpression (numberStoreExpressi
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)
-import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Core
+import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker.Unique

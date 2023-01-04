@@ -20,15 +20,11 @@ import Data.Maybe
 import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Core
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Utils
 
 data DepType ann

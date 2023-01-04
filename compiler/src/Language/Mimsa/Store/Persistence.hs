@@ -15,10 +15,10 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Store.Storage
 import Language.Mimsa.Types.Error.StoreError
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Store.RootPath

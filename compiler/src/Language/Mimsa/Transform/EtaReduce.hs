@@ -1,7 +1,7 @@
 module Language.Mimsa.Transform.EtaReduce (etaReduce) where
 
-import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Core
+import Language.Mimsa.Transform.Shared
 
 etaReduce :: (Eq ann, Eq var) => Expr var ann -> Expr var ann
 etaReduce = repeatUntilEq etaReduceInternal

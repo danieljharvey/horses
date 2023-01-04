@@ -11,12 +11,8 @@ import Language.Mimsa.Core
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Typechecker.Elaborate
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Tests
-import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Utils
 
 filterTests :: Map DefIdentifier (Expr Name ann) -> Map TestName (Expr Name ann)

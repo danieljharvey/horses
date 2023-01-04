@@ -1,8 +1,8 @@
 module Language.Mimsa.Transform.BetaReduce (betaReduce) where
 
 import qualified Data.Map.Strict as M
-import Language.Mimsa.Transform.Shared
 import Language.Mimsa.Core
+import Language.Mimsa.Transform.Shared
 
 betaReduce :: (Eq ann, Eq var) => Expr var ann -> Expr var ann
 betaReduce = repeatUntilEq betaReduceInternal

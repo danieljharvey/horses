@@ -13,10 +13,8 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
-
 import Language.Mimsa.Core
+import Language.Mimsa.Types.Error
 
 consToTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
 consToTSType mt =

@@ -22,7 +22,6 @@ import Data.Monoid
 import qualified Data.Set as S
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Environment
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Typechecker.Environment
 

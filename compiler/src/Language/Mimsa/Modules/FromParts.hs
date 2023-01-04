@@ -11,11 +11,9 @@ import Data.Coerce
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Core
+import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Tests
-import Language.Mimsa.Types.Typechecker
 
 moduleFromModuleParts ::
   ( MonadError (Error Annotation) m,

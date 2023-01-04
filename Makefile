@@ -64,7 +64,7 @@ bench:
 
 .PHONY: format
 format:
-	@ormolu --mode inplace $(HS_FILES) && echo "Ormolu success!"
+	@ormolu --mode inplace --no-cabal $(HS_FILES) && echo "Ormolu success!"
 
 .PHONY: generate-swagger
 generate-swagger: install

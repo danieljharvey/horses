@@ -13,7 +13,6 @@ import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Core
 import Language.Mimsa.Store
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store

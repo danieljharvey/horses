@@ -4,7 +4,6 @@ import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Typechecker
 
 data NormaliseState = NormaliseState
   { _nsNext :: Int,

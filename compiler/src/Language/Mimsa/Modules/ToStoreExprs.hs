@@ -18,18 +18,13 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Core
 import Language.Mimsa.Store
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Modules.Entity
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 
 data CompiledModule ann = CompiledModule
   { cmStore :: Store ann,

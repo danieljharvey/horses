@@ -3,9 +3,9 @@ module Language.Mimsa.Transform.FindUnused (findUnused, removeBindings, removeUn
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Core
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
-import Language.Mimsa.Core
 
 removeUnused :: (Ord ann, Ord var) => Expr var ann -> Expr var ann
 removeUnused = repeatUntilEq removeUnusedInternal

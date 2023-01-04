@@ -9,8 +9,7 @@ import Data.Coerce
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Language.Mimsa.Typechecker.NormaliseTypes
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Core
 import Test.Hspec
 
 mkVar :: Int -> MonoType

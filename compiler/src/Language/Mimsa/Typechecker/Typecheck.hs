@@ -10,13 +10,12 @@ import Control.Monad.Except
 import Control.Monad.State (State, runState)
 import Control.Monad.Writer
 import Data.Map.Strict (Map)
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.TypedHoles
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 import Language.Mimsa.Types.Typechecker.Unique

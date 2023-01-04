@@ -14,16 +14,16 @@ import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor
 import Data.Coerce
-import Data.Foldable (foldl', traverse_)
+import Data.Foldable (traverse_)
 import Data.Functor (($>))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.TcMonad
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Typechecker
 

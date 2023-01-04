@@ -10,7 +10,7 @@ import Data.Either (isRight)
 import qualified Language.Mimsa.Actions.Modules.Bind as Actions
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Core
 import Test.Data.Project
 import Test.Hspec
 import Test.Utils.Helpers

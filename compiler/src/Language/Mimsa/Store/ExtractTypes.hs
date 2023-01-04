@@ -8,7 +8,6 @@ import Data.Coerce
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Typechecker
 
 -- these functions don't really feel Store-specific anymore
 

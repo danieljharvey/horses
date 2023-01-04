@@ -15,8 +15,6 @@ import qualified Data.Set as S
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error.TypeError
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Typechecker.Unique
 import Test.Hspec

@@ -33,9 +33,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Core
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
 
 type TypescriptM =
   ExceptT

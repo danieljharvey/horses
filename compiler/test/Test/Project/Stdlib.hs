@@ -16,8 +16,6 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Core
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Test.Hspec
 

@@ -11,15 +11,12 @@ import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Core
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Core
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Tests
-import Language.Mimsa.Types.Typechecker
 
 -- add/update a module
 bindModule ::

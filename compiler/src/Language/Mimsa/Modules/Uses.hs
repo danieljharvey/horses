@@ -11,7 +11,6 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Typechecker
 
 extractUses :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses expr =

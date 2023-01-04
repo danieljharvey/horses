@@ -21,7 +21,6 @@ import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 
 newtype SavePath = SavePath Text
   deriving newtype (Eq, Ord, Hashable)

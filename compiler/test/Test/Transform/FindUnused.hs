@@ -9,7 +9,6 @@ where
 import qualified Data.Set as S
 import Language.Mimsa.Transform.FindUnused
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Identifiers
 import Test.Hspec
 import Test.Utils.Helpers
 

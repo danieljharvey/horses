@@ -12,12 +12,11 @@ import qualified Language.Mimsa.Actions.Helpers.GetDepsForStoreExpression as Act
 import qualified Language.Mimsa.Actions.Helpers.NumberStoreExpression as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import qualified Language.Mimsa.Actions.Optimise as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Interpret
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Store
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
 

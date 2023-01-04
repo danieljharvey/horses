@@ -151,6 +151,7 @@ library
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.StoreError
       Language.Mimsa.Types.Error.TypeError
+      Language.Mimsa.Types.Interpreter.Stack
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project
       Language.Mimsa.Types.Project.ProjectHash
@@ -179,6 +180,7 @@ library
       Language.Mimsa.Types.Typechecker.TypeConstructor
       Language.Mimsa.Types.Typechecker.Unique
       Language.Mimsa.Types.Typechecker.UniVar
+      Language.Mimsa.Utils
   hs-source-dirs:
       src
   default-extensions:
@@ -235,11 +237,6 @@ test-suite mimsa-test
       Test.Modules.Test
       Test.Modules.ToStoreExprs
       Test.Modules.Uses
-      Test.Parser.DataTypes
-      Test.Parser.MonoTypeParser
-      Test.Parser.Pattern
-      Test.Parser.Syntax
-      Test.Prettier
       Test.Project.NormaliseType
       Test.Project.SourceSpan
       Test.Project.Stdlib
@@ -277,6 +274,7 @@ test-suite mimsa-test
     , binary
     , bytestring
     , containers
+    , core
     , cryptonite
     , diagnose
     , directory

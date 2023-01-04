@@ -14,8 +14,6 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import GHC.Natural
 import Language.Mimsa.Core
-import Language.Mimsa.Core
-import Language.Mimsa.Types.Typechecker
 import qualified Language.Wasm.Structure as Wasm
 
 type WasmModule = Wasm.Module

@@ -1,0 +1,2 @@
+
+export type Either<E, A> = { type: "Left", vars: [E] } | { type: "Right", vars: [A] }; export const Left = <E>(e: E): Either<E,never> => ({ type: "Left", vars: [e] }); export const Right = <A>(a: A): Either<never,A> => ({ type: "Right", vars: [a] }); 

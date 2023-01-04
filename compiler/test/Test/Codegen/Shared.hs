@@ -25,11 +25,7 @@ import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Parser
-import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker.MonoType
 import Test.Utils.Helpers
 
 -- | has no constructors, we can do nothing with this

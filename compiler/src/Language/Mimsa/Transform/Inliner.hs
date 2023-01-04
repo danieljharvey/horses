@@ -16,9 +16,9 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import Language.Mimsa.Core
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
-import Language.Mimsa.Core
 
 type InlineM var ann a =
   StateT (InlineState var ann) (Reader (InlineEnv var)) a

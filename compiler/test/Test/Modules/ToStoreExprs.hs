@@ -7,18 +7,14 @@ where
 
 import Data.Functor
 import qualified Data.Map.Strict as M
+import Language.Mimsa.Core hiding (parseModule)
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Parse
 import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Modules.Typecheck
-import Language.Mimsa.Core
 import Language.Mimsa.Store
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.Module
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 

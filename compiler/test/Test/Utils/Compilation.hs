@@ -24,11 +24,8 @@ import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 import Test.Data.Project
 import Test.Utils.Helpers
 import Test.Utils.Serialisation

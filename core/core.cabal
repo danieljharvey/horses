@@ -108,12 +108,12 @@ test-suite core-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Test.Parser.DataTypes
-      Test.Parser.MonoTypeParser
-      Test.Parser.Pattern
-      Test.Parser.Syntax
-      Test.Prettier
-      Test.Utils.Helpers
+      CoreTest.Parser.DataTypes
+      CoreTest.Parser.MonoTypeParser
+      CoreTest.Parser.Pattern
+      CoreTest.Parser.Syntax
+      CoreTest.Prettier
+      CoreTest.Utils.Helpers
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N

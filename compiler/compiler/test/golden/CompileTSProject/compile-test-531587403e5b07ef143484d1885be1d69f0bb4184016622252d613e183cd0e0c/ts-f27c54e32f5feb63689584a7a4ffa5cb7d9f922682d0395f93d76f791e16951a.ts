@@ -1,0 +1,2 @@
+
+export type Maybe<A> = { type: "Just", vars: [A] } | { type: "Nothing", vars: [] }; export const Just = <A>(a: A): Maybe<A> => ({ type: "Just", vars: [a] }); export const Nothing: Maybe<never> = { type: "Nothing", vars: [] }; 

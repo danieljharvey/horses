@@ -14,13 +14,10 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Project.Helpers
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Modules.Entity
 
 -- we need to bind our new expression to _something_
 -- so we make a `Name` which is strictly broken, but it means

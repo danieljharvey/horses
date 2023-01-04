@@ -12,10 +12,9 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Language.Mimsa.Core
 import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker.FlattenRow
-import Language.Mimsa.Core
-import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 import Test.QuickCheck
 

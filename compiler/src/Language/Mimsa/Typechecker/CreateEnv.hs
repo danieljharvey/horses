@@ -8,9 +8,9 @@ import Data.Coerce
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Unify
-import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker
 
 createEnv ::

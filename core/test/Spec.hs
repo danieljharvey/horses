@@ -4,17 +4,17 @@ module Main
 where
 
 import Test.Hspec
-import qualified Test.Parser.DataTypes
-import qualified Test.Parser.MonoTypeParser
-import qualified Test.Parser.Pattern
-import qualified Test.Parser.Syntax
-import qualified Test.Prettier
+import qualified CoreTest.Parser.DataTypes
+import qualified CoreTest.Parser.MonoTypeParser
+import qualified CoreTest.Parser.Pattern
+import qualified CoreTest.Parser.Syntax
+import qualified CoreTest.Prettier
 
 main :: IO ()
 main =
   hspec $ do
-    Test.Parser.DataTypes.spec
-    Test.Parser.MonoTypeParser.spec
-    Test.Parser.Pattern.spec
-    Test.Parser.Syntax.spec
-    Test.Prettier.spec
+    CoreTest.Parser.DataTypes.spec
+    CoreTest.Parser.MonoTypeParser.spec
+    CoreTest.Parser.Pattern.spec
+    CoreTest.Parser.Syntax.spec
+    CoreTest.Prettier.spec

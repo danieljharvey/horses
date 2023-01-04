@@ -9,8 +9,8 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Core
+import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.Typechecker
 
