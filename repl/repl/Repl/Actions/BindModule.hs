@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Repl.Actions.BindModule
-  ( doBindModule
+  ( doBindModule,
   )
 where
 
@@ -22,7 +23,9 @@ doBindModule project modName = do
   let untypedModule = getAnnotationForType <$> typedModule
 
   -- add the new binding
-  (newProject, _) <- toReplM project
+  (newProject, _) <-
+    toReplM
+      project
       (Actions.bindModule untypedModule modName (prettyPrint typedModule))
 
   replOutput $ "Stored repl module to " <> prettyPrint modName
@@ -33,4 +36,3 @@ doBindModule project modName = do
   setStoredModule mempty
 
   pure newProject
-
