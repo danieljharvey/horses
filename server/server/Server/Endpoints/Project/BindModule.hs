@@ -17,8 +17,8 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Language.Mimsa.Actions.Modules.Bind as Actions
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Elaborate
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Servant
 import Server.Handlers

@@ -10,7 +10,7 @@ import Data.OpenApi
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Servant.API
 
 -- because of the size of the ints

@@ -7,11 +7,10 @@ import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)
 import Data.Text (Text)
+import Language.Mimsa.Core (Annotation, Module, ModuleHash)
+import qualified Language.Mimsa.Core as Parser
 import Language.Mimsa.Modules.FromParts
-import qualified Language.Mimsa.Parser.Module as Parser
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
 
 parseModule ::
   (MonadError (Error Annotation) m) =>

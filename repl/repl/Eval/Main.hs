@@ -8,8 +8,8 @@ import Data.Either
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store.RootPath
 import ReplNew.Helpers

@@ -14,9 +14,7 @@ where
 
 import Data.Set (Set)
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Prettyprinter
 import Text.Megaparsec
 

@@ -7,16 +7,12 @@ import Data.Bifunctor
 import Data.Map.Strict (Map)
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Typechecker.Elaborate
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Tests
-import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Utils
 
 filterTests :: Map DefIdentifier (Expr Name ann) -> Map TestName (Expr Name ann)

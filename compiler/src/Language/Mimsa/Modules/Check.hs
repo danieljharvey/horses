@@ -15,11 +15,8 @@ where
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Elaborate
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Utils
 
 lookupModuleDef :: Module (Type Annotation) -> DefIdentifier -> Maybe (Expr Name (Type Annotation))

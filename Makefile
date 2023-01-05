@@ -1,9 +1,16 @@
-
 HS_FILES = $(shell git ls-files '*.hs')
 
 .PHONY: ghcid
 ghcid:
 	ghcid -c "cabal repl mimsa" -l=hlint
+
+.PHONY: ghcid-core
+ghcid-core:
+	ghcid -c "cabal repl core" -l=hlint
+
+.PHONY: ghcid-core-test
+ghcid-core-test:
+	ghcid -c "cabal repl core:test:core-test" -l=hlint
 
 .PHONY: ghcid-test
 ghcid-test:
@@ -37,6 +44,10 @@ run-server:
 .PHONY: test
 test:
 	cabal run mimsa:test:mimsa-test
+
+.PHONY: test-core
+test-core:
+	cabal run core:test:core-test
 
 .PHONY: test-watch
 test-watch:

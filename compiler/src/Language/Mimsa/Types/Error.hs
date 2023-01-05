@@ -28,9 +28,8 @@ import qualified Data.Text as T
 import Data.Void
 import qualified Error.Diagnose as Diag
 import Error.Diagnose.Compat.Megaparsec
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.DisplayError
-import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Error.BackendError
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Error.InterpreterError
@@ -40,7 +39,6 @@ import Language.Mimsa.Types.Error.ProjectError
 import Language.Mimsa.Types.Error.ResolverError
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Error.TypeError
-import Language.Mimsa.Types.Identifiers
 import Text.Megaparsec
 
 instance HasHints Void msg where

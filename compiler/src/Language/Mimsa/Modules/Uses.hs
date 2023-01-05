@@ -10,11 +10,7 @@ where
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import qualified Language.Mimsa.TypeUtils as MT
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.Entity
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Core
 
 extractUses :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses expr =
@@ -135,7 +131,7 @@ extractTypeUses (MTConstructor _ (Just modName) typeName) =
   S.singleton (ENamespacedType modName typeName)
 extractTypeUses (MTConstructor _ Nothing typeName) =
   S.singleton (EType typeName)
-extractTypeUses other = MT.withMonoid extractTypeUses other
+extractTypeUses other = withMonoidType extractTypeUses other
 
 -- | find other types used in the declaration of a datatype
 extractDataTypeUses :: DataType -> Set Entity

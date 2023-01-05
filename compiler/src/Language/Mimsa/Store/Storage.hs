@@ -33,12 +33,10 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Types as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Printer
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.NullUnit
 import Language.Mimsa.Types.Project.ProjectHash
 import Language.Mimsa.Types.Store
 import Language.Mimsa.Types.Store.RootPath
@@ -99,9 +97,9 @@ getModuleHash = snd . serializeModule
 
 -- | check a loaded store expression matches its hash
 validateModule ::
-  Module NullUnit ->
+  Module () ->
   ModuleHash ->
-  Either StoreError (Module NullUnit)
+  Either StoreError (Module ())
 validateModule mod' moduleHash =
   if getModuleHash mod' == moduleHash
     then pure mod'
@@ -116,9 +114,9 @@ getStoreExpressionHash = snd . serialiseStoreExpression
 
 -- | check a loaded store expression matches its hash
 validateStoreExpression ::
-  StoreExpression NullUnit ->
+  StoreExpression () ->
   ExprHash ->
-  Either StoreError (StoreExpression NullUnit)
+  Either StoreError (StoreExpression ())
 validateStoreExpression storeExpr exprHash =
   if getStoreExpressionHash storeExpr == exprHash
     then pure storeExpr
@@ -134,13 +132,13 @@ saveExpr ::
   StoreExpression ann ->
   m ExprHash
 saveExpr rootPath se =
-  saveExpr' rootPath (se $> NullUnit)
+  saveExpr' rootPath (se $> ())
 
 -- take an expression, save it, return ExprHash
 saveExpr' ::
   (MonadIO m, MonadLogger m) =>
   RootPath ->
-  StoreExpression NullUnit ->
+  StoreExpression () ->
   m ExprHash
 saveExpr' rootPath storeExpr = do
   storePath <- getExpressionFolder rootPath
@@ -162,13 +160,13 @@ saveModule ::
   Module ann ->
   m ModuleHash
 saveModule rootPath mod' =
-  saveModule' rootPath (mod' $> NullUnit)
+  saveModule' rootPath (mod' $> ())
 
 -- take an expression, save it, return ExprHash
 saveModule' ::
   (MonadIO m, MonadLogger m) =>
   RootPath ->
-  Module NullUnit ->
+  Module () ->
   m ModuleHash
 saveModule' rootPath mod' = do
   storePath <- getModuleFolder rootPath
@@ -184,10 +182,10 @@ saveModule' rootPath mod' = do
 
 -- this is the only encode we should be doing
 serialiseStoreExpression :: StoreExpression ann -> (BS.ByteString, ExprHash)
-serialiseStoreExpression se = coerce $ contentAndHash (se $> NullUnit)
+serialiseStoreExpression se = coerce $ contentAndHash (se $> ())
 
 -- this is the only json decode we should be doing
-deserialiseStoreExpression :: BS.ByteString -> Maybe (StoreExpression NullUnit)
+deserialiseStoreExpression :: BS.ByteString -> Maybe (StoreExpression ())
 deserialiseStoreExpression =
   JSON.decode
 
@@ -203,7 +201,7 @@ findExprInLocalStore ::
   (MonadIO m, MonadError StoreError m, MonadLogger m) =>
   RootPath ->
   ExprHash ->
-  m (StoreExpression NullUnit)
+  m (StoreExpression ())
 findExprInLocalStore rootPath hash = do
   storePath <- getExpressionFolder rootPath
   json <- liftIO $ try $ BS.readFile (filePath storePath hash)
@@ -231,7 +229,7 @@ findModuleInLocalStore ::
   (MonadIO m, MonadError StoreError m, MonadLogger m) =>
   RootPath ->
   ModuleHash ->
-  m (Module NullUnit)
+  m (Module ())
 findModuleInLocalStore rootPath hash = do
   storePath <- getModuleFolder rootPath
   json <- liftIO $ try $ BS.readFile (filePath storePath (coerce hash))

@@ -9,11 +9,10 @@ where
 import Control.Monad.Except
 import Control.Monad.Identity
 import Control.Monad.State.Strict
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker
 import Test.Codegen.Shared
 import Test.Hspec
 import Test.Utils.Helpers

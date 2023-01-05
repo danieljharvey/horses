@@ -6,8 +6,7 @@ where
 import Data.Functor
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 

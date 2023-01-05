@@ -16,7 +16,7 @@ import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Backend.ZipFile
-import Language.Mimsa.Types.Modules.ModuleHash
+import Language.Mimsa.Core
 import Servant
 import Server.Handlers
 import Server.Helpers.ProjectData

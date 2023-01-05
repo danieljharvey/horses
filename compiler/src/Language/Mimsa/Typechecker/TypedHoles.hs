@@ -12,12 +12,11 @@ import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
+import Language.Mimsa.Core
 import Language.Mimsa.Project.TypeSearch
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 
 typedHolesCheck ::

@@ -4,10 +4,7 @@
 module Language.Mimsa.Types.Error.StoreError (StoreError (..), FileType (..)) where
 
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST.InfixOp
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Store
 
 data FileType = ProjectFile | StoreExprFile | ModuleFile

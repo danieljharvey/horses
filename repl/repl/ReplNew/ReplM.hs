@@ -25,9 +25,7 @@ import Control.Monad.Logger
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Data.Text.IO as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Modules
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Core
 import Prettyprinter
 import ReplNew.Types
 

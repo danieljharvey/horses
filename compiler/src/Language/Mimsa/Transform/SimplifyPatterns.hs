@@ -3,9 +3,7 @@ module Language.Mimsa.Transform.SimplifyPatterns where
 import Data.Foldable
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import Language.Mimsa.ExprUtils
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers.TyCon
+import Language.Mimsa.Core
 
 {-
 

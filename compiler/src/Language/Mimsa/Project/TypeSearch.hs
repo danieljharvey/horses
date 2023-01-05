@@ -17,14 +17,11 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Monoid
 import Data.Text (Text)
-import Language.Mimsa.Parser.Language
-import Language.Mimsa.TypeUtils
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.NormaliseTypes
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
-import Language.Mimsa.Types.AST.Annotation
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 
@@ -50,7 +47,7 @@ isSimple =
     isSimple' (MTVar _ _) = All False
     isSimple' (MTPrim _ _) = All True
     isSimple' MTConstructor {} = All True
-    isSimple' other = withMonoid isSimple' other
+    isSimple' other = withMonoidType isSimple' other
 
 unify' :: MonoType -> MonoType -> Either TypeError Substitutions
 unify' mtA mtB = runUnifyM (unify mtA mtB)

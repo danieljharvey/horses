@@ -12,9 +12,8 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Modules.Check as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Stdlib
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath

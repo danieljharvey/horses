@@ -28,9 +28,7 @@ import Data.Set (Set)
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers.TyCon
-import Language.Mimsa.Types.Identifiers.TypeName
+import Language.Mimsa.Core (Printer (..), TyCon (..), TypeName (..))
 
 data TSImport
   = TSImportValue Text

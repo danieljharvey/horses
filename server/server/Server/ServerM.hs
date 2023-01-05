@@ -20,7 +20,7 @@ import Control.Monad.Logger
   )
 import Control.Monad.Reader
 import qualified Data.Text.IO as T
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Server.ServerConfig
 
 -- | Although we are lucky and can keep much of our work

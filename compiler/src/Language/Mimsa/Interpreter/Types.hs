@@ -11,7 +11,7 @@ where
 
 import Control.Monad.Reader
 import Data.Map.Strict (Map)
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash

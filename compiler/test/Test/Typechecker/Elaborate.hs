@@ -6,12 +6,10 @@ module Test.Typechecker.Elaborate
 where
 
 import Data.Bifunctor
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 

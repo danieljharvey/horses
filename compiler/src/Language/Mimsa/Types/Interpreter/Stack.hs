@@ -6,8 +6,7 @@ module Language.Mimsa.Types.Interpreter.Stack (StackFrame (..), ExprData (..)) w
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker.Unique
 
 data StackFrame var ann = StackFrame

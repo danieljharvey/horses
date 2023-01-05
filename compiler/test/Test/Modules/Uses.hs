@@ -6,11 +6,8 @@ module Test.Modules.Uses
 where
 
 import qualified Data.Set as S
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.Entity
-import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 
 spec :: Spec

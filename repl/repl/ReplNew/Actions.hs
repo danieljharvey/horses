@@ -9,7 +9,7 @@ where
 
 import Data.Functor
 import Data.Text (Text)
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import ReplNew.Actions.Bindings

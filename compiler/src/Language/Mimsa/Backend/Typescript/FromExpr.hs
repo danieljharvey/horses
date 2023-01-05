@@ -13,11 +13,8 @@ import Language.Mimsa.Backend.Typescript.FromType
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.ExprUtils
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker
 
 bimapMap :: (Ord j) => (k -> j) -> (a -> b) -> Map k a -> Map j b
 bimapMap f g = M.fromList . fmap (bimap f g) . M.toList

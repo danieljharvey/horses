@@ -17,7 +17,7 @@ import Control.Monad.Except
 import Data.Bifunctor
 import Data.Text.Lazy (fromStrict)
 import Data.Text.Lazy.Encoding (encodeUtf8)
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Servant
 import Server.ServerConfig
 import Server.ServerM

@@ -22,8 +22,7 @@ import Data.OpenApi hiding (get)
 import qualified Data.Set as S
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Tests
 
 data TestData = TestData

@@ -1,6 +1,6 @@
 module Language.Mimsa.Transform.Shared (extractIdentVar, repeatUntilEq, repeatUntilEqM) where
 
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 
 repeatUntilEq :: (Eq a) => (a -> a) -> a -> a
 repeatUntilEq f =

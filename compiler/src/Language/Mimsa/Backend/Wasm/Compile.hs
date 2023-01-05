@@ -13,9 +13,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import GHC.Natural
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Core
 import qualified Language.Wasm.Structure as Wasm
 
 type WasmModule = Wasm.Module

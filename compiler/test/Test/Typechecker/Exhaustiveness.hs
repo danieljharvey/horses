@@ -10,10 +10,9 @@ import Control.Monad.Identity
 import Data.Either
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Exhaustiveness
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Test.Codegen.Shared
 import Test.Hspec

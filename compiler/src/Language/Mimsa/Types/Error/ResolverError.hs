@@ -5,8 +5,7 @@ module Language.Mimsa.Types.Error.ResolverError where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import Language.Mimsa.Printer (Printer (prettyPrint))
-import Language.Mimsa.Types.Identifiers (Name, TyCon)
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.Bindings (Bindings (Bindings))
 import Language.Mimsa.Types.Store.TypeBindings
   ( TypeBindings (TypeBindings),

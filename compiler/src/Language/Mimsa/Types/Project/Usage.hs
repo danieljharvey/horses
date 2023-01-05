@@ -7,8 +7,7 @@ module Language.Mimsa.Types.Project.Usage where
 
 import qualified Data.Aeson as JSON
 import GHC.Generics
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.ExprHash
 
 data Usage

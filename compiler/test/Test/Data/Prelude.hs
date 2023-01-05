@@ -7,13 +7,8 @@ module Test.Data.Prelude (prelude, preludeHash) where
 import Data.Functor
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.Module
-import Language.Mimsa.Types.Modules.ModuleHash
-import Language.Mimsa.Types.Typechecker
 import Test.Utils.Helpers
 
 preludeHash :: ModuleHash

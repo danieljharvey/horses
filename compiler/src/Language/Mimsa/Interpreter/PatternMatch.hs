@@ -11,11 +11,10 @@ import Data.Maybe (fromMaybe)
 import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker.Unique
 
 interpretLetPattern ::

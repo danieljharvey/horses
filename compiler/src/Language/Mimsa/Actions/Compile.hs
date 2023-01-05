@@ -26,19 +26,15 @@ import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Output
 import Language.Mimsa.Backend.Shared
 import Language.Mimsa.Backend.Types
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.ToStoreExprs
-import Language.Mimsa.Printer
 import Language.Mimsa.Project
 import Language.Mimsa.Store
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 
 -- | given a pile of StoreExpressions, turn them all into TS/JS etc
 compileStoreExpressions ::

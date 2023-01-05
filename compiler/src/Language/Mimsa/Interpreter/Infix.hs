@@ -1,10 +1,10 @@
 module Language.Mimsa.Interpreter.Infix (interpretInfix) where
 
 import Control.Monad.Except
+import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.SimpleExpr
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
 
 -- | this assumes that

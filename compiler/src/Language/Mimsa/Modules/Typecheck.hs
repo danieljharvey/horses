@@ -17,24 +17,17 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Printer
-import Language.Mimsa.TypeUtils
 import Language.Mimsa.Typechecker.CreateEnv
 import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.DefIdentifier
-import Language.Mimsa.Types.Modules.Module
-import Language.Mimsa.Types.Modules.ModuleHash
-import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Utils
@@ -150,7 +143,7 @@ addNamespaceToType modName swapTypes =
       if S.member typeName swapTypes
         then MTConstructor ann (Just modName) typeName
         else old
-    addNS other = mapMonoType addNS other
+    addNS other = mapType addNS other
 
 -- pass types to the typechecker
 makeTypeDeclMap ::
@@ -386,13 +379,13 @@ lookupDepKind deps defId =
 getVariablesInType :: Type ann -> Set Name
 getVariablesInType (MTVar _ (TVScopedVar _ name)) = S.singleton name
 getVariablesInType (MTVar _ (TVName n)) = S.singleton (coerce n)
-getVariablesInType other = withMonoid getVariablesInType other
+getVariablesInType other = withMonoidType getVariablesInType other
 
 -- TODO: this is wrong
 getConstructorUses :: Type ann -> Set (Maybe ModuleName, TypeName, Int)
 getConstructorUses (MTConstructor _ modName typeName) =
   S.singleton (modName, typeName, 0)
-getConstructorUses other = withMonoid getConstructorUses other
+getConstructorUses other = withMonoidType getConstructorUses other
 
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::

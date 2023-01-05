@@ -1,11 +1,9 @@
 module Language.Mimsa.Transform.FloatDown (floatDown) where
 
 import Data.Bifunctor (second)
-import Language.Mimsa.ExprUtils
+import Language.Mimsa.Core
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Transform.Shared
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 
 -- if a let is above a pattern, it pushes it down into each branch of the
 -- pattern match

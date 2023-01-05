@@ -11,6 +11,8 @@ output/
 *.hie
 swagger.json
 
+compiler/
+
 # files generated during tests
 
 # typescript tests

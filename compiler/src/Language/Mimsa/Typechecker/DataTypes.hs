@@ -6,7 +6,6 @@ module Language.Mimsa.Typechecker.DataTypes
     storeDataDeclaration,
     inferDataConstructor,
     inferConstructorTypes,
-    dataTypeWithVars,
     validateDataType,
   )
 where
@@ -15,20 +14,17 @@ import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor
 import Data.Coerce
-import Data.Foldable (foldl', traverse_)
+import Data.Foldable (traverse_)
 import Data.Functor (($>))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.TypeUtils
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.TcMonad
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
 
 -- on declaring a datatype, basically is it ok
@@ -90,7 +86,7 @@ inferDataConstructor env ann modName tyCon = do
 getVariablesForField :: Type ann -> Set Name
 getVariablesForField (MTVar _ (TVScopedVar _ name)) = S.singleton name
 getVariablesForField (MTVar _ (TVName n)) = S.singleton (coerce n)
-getVariablesForField other = withMonoid getVariablesForField other
+getVariablesForField other = withMonoidType getVariablesForField other
 
 -- when adding a new datatype, check none of the constructors already exist
 validateConstructors ::
@@ -180,7 +176,7 @@ inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = 
            in pure (MTConstructor mempty newModName tn)
         MTVar _ (TVUnificationVar _) ->
           throwError UnknownTypeError -- should not happen but yolo
-        other -> bindMonoType findType other
+        other -> bindType findType other
   let inferConstructor (consName, tyArgs) = do
         tyCons <- traverse findType tyArgs
         let constructor = TypeConstructor modName typeName (snd <$> tyVars) tyCons
@@ -190,12 +186,6 @@ inferConstructorTypes ann modName (DataType typeName tyVarNames constructors) = 
   cons' <- traverse inferConstructor mtConstructors
   let dt = dataTypeWithVars mempty modName typeName (snd <$> tyVars)
   pure (dt, mconcat cons')
-
-dataTypeWithVars :: (Monoid ann) => ann -> Maybe ModuleName -> TypeName -> [Type ann] -> Type ann
-dataTypeWithVars ann modName tyName =
-  foldl'
-    (MTTypeApp mempty)
-    (MTConstructor ann modName tyName)
 
 -----
 

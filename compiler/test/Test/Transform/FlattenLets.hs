@@ -5,8 +5,8 @@ module Test.Transform.FlattenLets
   )
 where
 
+import Language.Mimsa.Core
 import Language.Mimsa.Transform.FlattenLets
-import Language.Mimsa.Types.AST
 import Test.Hspec
 import Test.Utils.Helpers
 

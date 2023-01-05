@@ -12,14 +12,10 @@ import qualified Language.Mimsa.Actions.Modules.Imports as Actions
 import qualified Language.Mimsa.Actions.Modules.ToStoreExpressions as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.ToStoreExprs
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 
 -- when we evaluate an expression, really we are adding it to an open module
 -- then evaluating the expression in the context of that module

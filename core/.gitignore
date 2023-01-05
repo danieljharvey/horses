@@ -1,0 +1,18 @@
+.direnv/
+
+.stack-work/
+*~
+store/*.json
+result
+result/
+
+output/
+
+*.hie
+swagger.json
+
+# .prof files generated for profiling
+*.prof
+
+# cabal shit
+dist-newstyle

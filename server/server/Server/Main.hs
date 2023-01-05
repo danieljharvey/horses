@@ -10,10 +10,9 @@ import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Text.IO as T
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Store
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Network.HTTP.Types.Header

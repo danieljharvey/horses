@@ -5,9 +5,9 @@ module Language.Mimsa.Tests.UnitTest
   )
 where
 
+import Language.Mimsa.Core
 import Language.Mimsa.Tests.Helpers
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
 
 resultIsBoolean :: MonoType -> Either TypeError ()
 resultIsBoolean mt = do

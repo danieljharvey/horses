@@ -32,11 +32,8 @@ import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker
 
 type TypescriptM =
   ExceptT

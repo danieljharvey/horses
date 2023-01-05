@@ -5,10 +5,9 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe)
 import GHC.Natural
+import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Interpreter.Stack
 
 interpretRecordAccess ::

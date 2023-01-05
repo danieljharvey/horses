@@ -5,10 +5,8 @@ module Language.Mimsa.Typechecker.Environment (lookupConstructor) where
 import Control.Monad.Except
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleName
 import Language.Mimsa.Types.Typechecker
 
 -- given a constructor name, return the type it lives in

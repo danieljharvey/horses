@@ -5,10 +5,8 @@ import qualified Data.Text as T
 import Language.Mimsa.Backend.Typescript.FromType
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
 
 fromDataType ::
   TSReaderState ->

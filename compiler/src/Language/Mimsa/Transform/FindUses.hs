@@ -6,9 +6,7 @@ module Language.Mimsa.Transform.FindUses (findUses, memberInUses, numberOfUses, 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Monoid
-import Language.Mimsa.ExprUtils
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Modules.ModuleName
+import Language.Mimsa.Core
 
 newtype Uses var = Uses (Map (Maybe ModuleName, var) (Sum Int))
   deriving newtype (Eq, Ord, Show)

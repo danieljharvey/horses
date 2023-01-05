@@ -17,15 +17,10 @@ import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.ExprUtils
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Stdlib (buildStdlib)
-import Language.Mimsa.Typechecker.DataTypes
 import Language.Mimsa.Typechecker.NormaliseTypes
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Typechecker
 import Test.Hspec
 import Test.Utils.Helpers
 

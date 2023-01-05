@@ -6,7 +6,7 @@ module Language.Mimsa.Typechecker.FlattenRow
   )
 where
 
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Core
 
 -- these are tricky to deal with, so flatten them on the way in
 flattenRow :: Type ann -> Type ann

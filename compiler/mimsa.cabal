@@ -12,8 +12,6 @@ license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
-    README.md
-    ChangeLog.md
     static/backend/es-modules-js/stdlib.mjs
     static/backend/typescript/stdlib.ts
     static/modules/Maybe.mimsa
@@ -73,7 +71,6 @@ library
       Language.Mimsa.Backend.Typescript.Types
       Language.Mimsa.Backend.Wasm.Compile
       Language.Mimsa.Backend.ZipFile
-      Language.Mimsa.ExprUtils
       Language.Mimsa.Interpreter.App
       Language.Mimsa.Interpreter.If
       Language.Mimsa.Interpreter.Infix
@@ -96,19 +93,6 @@ library
       Language.Mimsa.Modules.ToStoreExprs
       Language.Mimsa.Modules.Typecheck
       Language.Mimsa.Modules.Uses
-      Language.Mimsa.Parser
-      Language.Mimsa.Parser.Helpers
-      Language.Mimsa.Parser.Identifier
-      Language.Mimsa.Parser.Identifiers
-      Language.Mimsa.Parser.Language
-      Language.Mimsa.Parser.Lexeme
-      Language.Mimsa.Parser.Literal
-      Language.Mimsa.Parser.Module
-      Language.Mimsa.Parser.MonoType
-      Language.Mimsa.Parser.Pattern
-      Language.Mimsa.Parser.TypeDecl
-      Language.Mimsa.Parser.Types
-      Language.Mimsa.Printer
       Language.Mimsa.Project
       Language.Mimsa.Project.Helpers
       Language.Mimsa.Project.SourceSpan
@@ -155,18 +139,6 @@ library
       Language.Mimsa.Typechecker.Typecheck
       Language.Mimsa.Typechecker.TypedHoles
       Language.Mimsa.Typechecker.Unify
-      Language.Mimsa.Types.AST
-      Language.Mimsa.Types.AST.Annotation
-      Language.Mimsa.Types.AST.DataType
-      Language.Mimsa.Types.AST.Expr
-      Language.Mimsa.Types.AST.Identifier
-      Language.Mimsa.Types.AST.InfixOp
-      Language.Mimsa.Types.AST.Literal
-      Language.Mimsa.Types.AST.Operator
-      Language.Mimsa.Types.AST.Pattern
-      Language.Mimsa.Types.AST.Spread
-      Language.Mimsa.Types.AST.StringPart
-      Language.Mimsa.Types.AST.StringType
       Language.Mimsa.Types.Error
       Language.Mimsa.Types.Error.BackendError
       Language.Mimsa.Types.Error.CodegenError
@@ -177,20 +149,7 @@ library
       Language.Mimsa.Types.Error.ResolverError
       Language.Mimsa.Types.Error.StoreError
       Language.Mimsa.Types.Error.TypeError
-      Language.Mimsa.Types.Identifiers
-      Language.Mimsa.Types.Identifiers.Name
-      Language.Mimsa.Types.Identifiers.TyCon
-      Language.Mimsa.Types.Identifiers.TypeIdentifier
-      Language.Mimsa.Types.Identifiers.TypeName
-      Language.Mimsa.Types.Identifiers.TyVar
       Language.Mimsa.Types.Interpreter.Stack
-      Language.Mimsa.Types.Modules
-      Language.Mimsa.Types.Modules.DefIdentifier
-      Language.Mimsa.Types.Modules.Entity
-      Language.Mimsa.Types.Modules.Module
-      Language.Mimsa.Types.Modules.ModuleHash
-      Language.Mimsa.Types.Modules.ModuleName
-      Language.Mimsa.Types.NullUnit
       Language.Mimsa.Types.Project
       Language.Mimsa.Types.Project.Project
       Language.Mimsa.Types.Project.ProjectHash
@@ -214,13 +173,11 @@ library
       Language.Mimsa.Types.Typechecker.Constraint
       Language.Mimsa.Types.Typechecker.Environment
       Language.Mimsa.Types.Typechecker.FoundPath
-      Language.Mimsa.Types.Typechecker.MonoType
       Language.Mimsa.Types.Typechecker.Scheme
       Language.Mimsa.Types.Typechecker.Substitutions
       Language.Mimsa.Types.Typechecker.TypeConstructor
       Language.Mimsa.Types.Typechecker.Unique
       Language.Mimsa.Types.Typechecker.UniVar
-      Language.Mimsa.TypeUtils
       Language.Mimsa.Utils
   hs-source-dirs:
       src
@@ -234,6 +191,7 @@ library
     , binary
     , bytestring
     , containers
+    , core
     , cryptonite
     , diagnose
     , directory
@@ -277,11 +235,6 @@ test-suite mimsa-test
       Test.Modules.Test
       Test.Modules.ToStoreExprs
       Test.Modules.Uses
-      Test.Parser.DataTypes
-      Test.Parser.MonoTypeParser
-      Test.Parser.Pattern
-      Test.Parser.Syntax
-      Test.Prettier
       Test.Project.NormaliseType
       Test.Project.SourceSpan
       Test.Project.Stdlib
@@ -319,6 +272,7 @@ test-suite mimsa-test
     , binary
     , bytestring
     , containers
+    , core
     , cryptonite
     , diagnose
     , directory
@@ -359,6 +313,7 @@ benchmark mimsa-benchmark
     , binary
     , bytestring
     , containers
+    , core
     , criterion
     , cryptonite
     , diagnose

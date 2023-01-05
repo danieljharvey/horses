@@ -13,16 +13,12 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Modules.Imports as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Core
 import Language.Mimsa.Modules.Check
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Typecheck
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
-import Language.Mimsa.Types.Typechecker
 
 typecheckModules ::
   Text ->

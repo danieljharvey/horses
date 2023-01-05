@@ -9,9 +9,7 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import Language.Mimsa.Backend.Types
-import Language.Mimsa.Parser
-import Language.Mimsa.Parser.Identifiers
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import ReplNew.Types
 import Text.Megaparsec
 

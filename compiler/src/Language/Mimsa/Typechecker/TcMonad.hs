@@ -19,10 +19,9 @@ import Data.Functor
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Generalise
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error.TypeError
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 import Language.Mimsa.Types.Typechecker.Unique

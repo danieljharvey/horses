@@ -2,7 +2,7 @@ module Language.Mimsa.Project.SourceSpan where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Types.AST.Annotation
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Project.SourceSpan
 
 lineLengths :: Text -> [Int]

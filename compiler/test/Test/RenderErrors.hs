@@ -14,9 +14,8 @@ import Error.Diagnose hiding (Annotation)
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
 import qualified Language.Mimsa.Actions.Modules.Evaluate as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.Stdlib (buildStdlib)
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Test.Hspec

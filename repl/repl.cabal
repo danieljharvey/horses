@@ -11,9 +11,6 @@ copyright:      2021 Daniel J Harvey
 license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
-extra-source-files:
-    README.md
-    ChangeLog.md
 
 source-repository head
   type: git
@@ -56,6 +53,7 @@ executable mimsa-repl
     , binary
     , bytestring
     , containers
+    , core
     , cryptonite
     , diagnose
     , directory

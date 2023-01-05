@@ -3,12 +3,9 @@
 module Language.Mimsa.Typechecker.OutputTypes (getExpressionSourceItems) where
 
 import Data.Text (Text)
-import Language.Mimsa.Printer
+import Language.Mimsa.Core
 import Language.Mimsa.Project.SourceSpan
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Language.Mimsa.Types.Project.SourceItem
-import Language.Mimsa.Types.Typechecker
 
 -- return types inside spans for server
 

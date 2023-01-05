@@ -6,9 +6,7 @@ module Language.Mimsa.Types.Error.BackendError where
 
 import Language.Mimsa.Backend.Typescript.Printer
 import Language.Mimsa.Backend.Typescript.Types
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
+import Language.Mimsa.Core
 import Prettyprinter
 
 data BackendError ann

@@ -7,14 +7,12 @@ import Data.Map.Strict (Map)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
+import Language.Mimsa.Core hiding (parseModule)
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Parse
 import Language.Mimsa.Modules.Typecheck
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Tests
-import Language.Mimsa.Types.Typechecker
 
 -- | This is where we load a file and check that it is "OK" as such
 --  so far this entails:

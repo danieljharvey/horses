@@ -1,8 +1,8 @@
 module Language.Mimsa.Interpreter.App (interpretApp) where
 
+import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Types.AST
 import Language.Mimsa.Types.Interpreter.Stack
 
 varFromIdent :: Identifier var ann -> var

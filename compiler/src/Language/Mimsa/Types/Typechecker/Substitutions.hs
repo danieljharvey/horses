@@ -13,12 +13,8 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Language.Mimsa.Printer
-import Language.Mimsa.TypeUtils
+import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.FlattenRow
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Typechecker.MonoType
 
 ---
 
@@ -56,7 +52,7 @@ instance Substitutable (Type ann) where
       fromMaybe
         (MTVar ann var)
         (substLookup ann subst var)
-    other -> mapMonoType (applySubst subst) other
+    other -> mapType (applySubst subst) other
 
 instance (Substitutable a) => Substitutable (Map k a) where
   applySubst subst as = applySubst subst <$> as

@@ -17,12 +17,10 @@ import Data.Hashable
 import Data.Map.Strict (Map)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Types.AST
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Modules
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker
 
 newtype SavePath = SavePath Text
   deriving newtype (Eq, Ord, Hashable)

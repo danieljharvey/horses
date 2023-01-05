@@ -7,9 +7,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import GHC.Natural
-import Language.Mimsa.Printer
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers.Name
+import Language.Mimsa.Core
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
