@@ -20,6 +20,7 @@ replParser =
   try helpParser
     <|> listModulesParser
     <|> listBindingsParser
+    <|> bindModuleParser
     <|> try addBindingParser
     <|> try outputJSModuleParser
     <|> evalParser
@@ -56,6 +57,11 @@ addBindingParser = AddBinding <$> singleModuleItemParser
         [] -> explode "Expected a module binding"
         [a] -> pure a
         _other -> explode "Expected a single module binding"
+
+bindModuleParser :: Parser ReplActionAnn
+bindModuleParser = do
+  _ <- myString ":save"
+  BindModule <$> moduleNameParser
 
 backendParser :: Parser (Maybe Backend)
 backendParser =

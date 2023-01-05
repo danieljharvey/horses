@@ -18,6 +18,7 @@ data ReplAction ann
   | AddBinding (ModuleItem ann)
   | ListModules (Maybe ModuleName)
   | ListBindings
+  | BindModule ModuleName
   | OutputModuleJS (Maybe Backend) ModuleName
 
 data ReplConfig = ReplConfig

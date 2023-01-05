@@ -32,6 +32,7 @@ executable mimsa-repl
       Init.Main
       Repl.Actions
       Repl.Actions.Bindings
+      Repl.Actions.BindModule
       Repl.Actions.Compile
       Repl.Actions.Evaluate
       Repl.Actions.ListModules

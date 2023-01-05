@@ -37,6 +37,6 @@ makeModuleData typedModule input =
    in ModuleData
         { mdModuleHash = prettyPrint moduleHash,
           mdModulePretty = prettyPrint typedModule,
-          mdModuleType = renderWithWidth 40 (modulePretty typedModule),
+          mdModuleType = renderWithWidth 40 (modulePretty (filterExported typedModule)),
           mdInput = input
         }

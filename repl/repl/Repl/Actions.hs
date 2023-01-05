@@ -12,6 +12,7 @@ import Data.Text (Text)
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
+import Repl.Actions.BindModule
 import Repl.Actions.Bindings
 import Repl.Actions.Compile
 import Repl.Actions.Evaluate
@@ -33,6 +34,8 @@ doReplAction prj action =
       catchMimsaError prj (doListModules prj modName $> prj)
     ListBindings ->
       catchMimsaError prj (doListBindings $> prj)
+    BindModule modName ->
+      catchMimsaError prj (doBindModule prj modName)
     (Evaluate expr) ->
       catchMimsaError prj (doEvaluate prj expr $> prj)
     (AddBinding modItem) ->
@@ -52,6 +55,7 @@ doHelp = do
   replOutput @Text ":modules <moduleName> - show a list of modules in the project or details of a module"
   replOutput @Text ":list - show a list of bindings created in this repl session"
   replOutput @Text ":bind <binding> - bind an expression, infix or type"
+  replOutput @Text ":save <moduleName> - save everything created in this repl session into a new module"
   replOutput @Text "<expr> - Evaluate <expr>, returning it's simplified form and type"
   replOutput @Text ":compile <typescript|javascript> <moduleName> - compile module"
   replOutput @Text ":quit - give up and leave"
