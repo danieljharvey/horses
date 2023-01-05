@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module ReplNew.Parser
+module Repl.Parser
   ( replParser,
   )
 where
@@ -10,7 +10,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Core
-import ReplNew.Types
+import Repl.Types
 import Text.Megaparsec
 
 type ReplActionAnn = ReplAction Annotation

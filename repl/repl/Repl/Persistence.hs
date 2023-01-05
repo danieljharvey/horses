@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module ReplNew.Persistence
+module Repl.Persistence
   ( loadProject,
     saveProject,
   )
@@ -24,7 +24,7 @@ import Language.Mimsa.Store.Persistence
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath
-import ReplNew.Types
+import Repl.Types
 
 projectFilePath :: RootPath -> String
 projectFilePath (RootPath rp) = rp <> "/mimsa.json"

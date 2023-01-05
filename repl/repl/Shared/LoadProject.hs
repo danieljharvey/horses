@@ -7,8 +7,8 @@ import Control.Monad.Except
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
-import qualified ReplNew.Persistence as Repl
-import ReplNew.ReplM
+import qualified Repl.Persistence as Repl
+import Repl.ReplM
 
 loadProject ::
   ReplM

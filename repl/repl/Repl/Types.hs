@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 
-module ReplNew.Types
+module Repl.Types
   ( ReplAction (..),
     ReplConfig (..),
   )

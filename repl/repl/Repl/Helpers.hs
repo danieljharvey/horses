@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module ReplNew.Helpers
+module Repl.Helpers
   ( saveExpression,
     toReplM,
     catchMimsaError,
@@ -19,8 +19,8 @@ import Language.Mimsa.Store
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
-import ReplNew.ReplM
-import ReplNew.Types
+import Repl.ReplM
+import Repl.Types
 
 -- | if an error has been thrown, log it and return default value
 catchMimsaError ::

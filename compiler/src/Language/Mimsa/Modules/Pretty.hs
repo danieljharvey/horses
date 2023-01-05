@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Modules.Pretty (modulePretty) where
+module Language.Mimsa.Modules.Pretty (modulePretty, filterExported) where
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M

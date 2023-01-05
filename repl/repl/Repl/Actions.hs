@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module ReplNew.Actions
+module Repl.Actions
   ( doReplAction,
     doHelp,
   )
@@ -12,13 +12,13 @@ import Data.Text (Text)
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
-import ReplNew.Actions.Bindings
-import ReplNew.Actions.Compile
-import ReplNew.Actions.Evaluate
-import ReplNew.Actions.ListModules
-import ReplNew.Helpers
-import ReplNew.ReplM
-import ReplNew.Types
+import Repl.Actions.Bindings
+import Repl.Actions.Compile
+import Repl.Actions.Evaluate
+import Repl.Actions.ListModules
+import Repl.Helpers
+import Repl.ReplM
+import Repl.Types
 
 doReplAction ::
   Project Annotation ->

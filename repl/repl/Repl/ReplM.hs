@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
-module ReplNew.ReplM
+module Repl.ReplM
   ( ReplM (..),
     ReplState (..),
     runReplM,
@@ -27,7 +27,7 @@ import Control.Monad.State
 import qualified Data.Text.IO as T
 import Language.Mimsa.Core
 import Prettyprinter
-import ReplNew.Types
+import Repl.Types
 
 -- | to allow us to do 'bindings' in the repl,
 -- we maintain a current Module and add to it
