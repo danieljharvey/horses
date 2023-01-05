@@ -12,8 +12,6 @@ license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
-    README.md
-    ChangeLog.md
     static/backend/es-modules-js/stdlib.mjs
     static/backend/typescript/stdlib.ts
     static/modules/Maybe.mimsa
