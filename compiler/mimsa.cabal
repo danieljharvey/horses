@@ -315,6 +315,7 @@ benchmark mimsa-benchmark
     , binary
     , bytestring
     , containers
+    , core
     , criterion
     , cryptonite
     , diagnose
