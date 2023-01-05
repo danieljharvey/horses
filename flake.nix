@@ -11,7 +11,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         
-        compilerVersion = "ghc944";
+        compilerVersion = "ghc925";
 
         # fix things
         haskell = pkgs.haskell // {
