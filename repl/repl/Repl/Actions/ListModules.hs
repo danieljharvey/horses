@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module ReplNew.Actions.ListModules
+module Repl.Actions.ListModules
   ( doListModules,
   )
 where
@@ -16,8 +16,8 @@ import Language.Mimsa.Modules.Pretty
 import Language.Mimsa.Project
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
-import ReplNew.Helpers
-import ReplNew.ReplM
+import Repl.Helpers
+import Repl.ReplM
 
 -- | get module from project
 -- | typecheck it

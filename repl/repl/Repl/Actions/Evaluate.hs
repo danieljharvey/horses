@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module ReplNew.Actions.Evaluate
+module Repl.Actions.Evaluate
   ( doEvaluate,
   )
 where
@@ -10,8 +10,8 @@ import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Prettyprinter
-import ReplNew.Helpers
-import ReplNew.ReplM
+import Repl.Helpers
+import Repl.ReplM
 
 doEvaluate ::
   Project Annotation ->

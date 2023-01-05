@@ -8,7 +8,7 @@ import qualified Eval.Main as Eval
 import qualified Init.Main as Init
 import Language.Mimsa.Backend.Types
 import qualified Options.Applicative as Opt
-import qualified ReplNew.Main as ReplNew
+import qualified Repl.Main as Repl
 import System.IO
 
 -- | this runs the repl
@@ -18,7 +18,7 @@ parseShowLogs =
     <|> pure False
 
 data AppAction
-  = ReplNew
+  = Repl
   | Init
   | Check Text -- check if a file is `ok`
   | Eval Text -- evaluate an expression
@@ -30,7 +30,7 @@ parseAppAction =
     ( Opt.command
         "repl"
         ( Opt.info
-            (pure ReplNew)
+            (pure Repl)
             (Opt.progDesc "Start new module-based Mimsa repl")
         )
         <> Opt.command
@@ -108,7 +108,7 @@ main = do
       (Opt.info (optionsParse <**> Opt.helper) Opt.fullDesc)
   case action of
     Init -> Init.init showLogs
-    ReplNew -> ReplNew.repl showLogs
+    Repl -> Repl.repl showLogs
     Check filePath -> Check.check showLogs filePath
     Eval expr -> Eval.eval showLogs expr
     Compile be -> Compile.compile be showLogs

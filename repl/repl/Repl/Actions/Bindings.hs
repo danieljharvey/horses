@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module ReplNew.Actions.Bindings
+module Repl.Actions.Bindings
   ( doAddBinding,
     doListBindings,
   )
@@ -12,8 +12,8 @@ import Language.Mimsa.Core
 import Language.Mimsa.Modules.Pretty
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
-import ReplNew.Helpers
-import ReplNew.ReplM
+import Repl.Helpers
+import Repl.ReplM
 
 -- | add a binding to the global repl module
 doAddBinding ::

@@ -30,17 +30,18 @@ executable mimsa-repl
       Compile.Main
       Eval.Main
       Init.Main
-      ReplNew.Actions
-      ReplNew.Actions.Bindings
-      ReplNew.Actions.Compile
-      ReplNew.Actions.Evaluate
-      ReplNew.Actions.ListModules
-      ReplNew.Helpers
-      ReplNew.Main
-      ReplNew.Parser
-      ReplNew.Persistence
-      ReplNew.ReplM
-      ReplNew.Types
+      Repl.Actions
+      Repl.Actions.Bindings
+      Repl.Actions.BindModule
+      Repl.Actions.Compile
+      Repl.Actions.Evaluate
+      Repl.Actions.ListModules
+      Repl.Helpers
+      Repl.Main
+      Repl.Parser
+      Repl.Persistence
+      Repl.ReplM
+      Repl.Types
       Shared.LoadProject
   hs-source-dirs:
       repl

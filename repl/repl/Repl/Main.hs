@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module ReplNew.Main
+module Repl.Main
   ( repl,
   )
 where
@@ -14,12 +14,12 @@ import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath
-import ReplNew.Actions (doReplAction)
-import ReplNew.Helpers
-import ReplNew.Parser (replParser)
-import ReplNew.Persistence
-import ReplNew.ReplM
-import ReplNew.Types
+import Repl.Actions (doReplAction)
+import Repl.Helpers
+import Repl.Parser (replParser)
+import Repl.Persistence
+import Repl.ReplM
+import Repl.Types
 import qualified Shared.LoadProject as Shared
 import System.Console.Haskeline
 import System.Directory

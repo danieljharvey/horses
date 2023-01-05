@@ -17,9 +17,9 @@ import Language.Mimsa.Project.Stdlib
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store.RootPath
-import ReplNew.Helpers
-import ReplNew.ReplM
-import ReplNew.Types
+import Repl.Helpers
+import Repl.ReplM
+import Repl.Types
 import qualified Shared.LoadProject as Shared
 import System.Directory
 import System.Exit

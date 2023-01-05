@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module ReplNew.Parser
+module Repl.Parser
   ( replParser,
   )
 where
@@ -10,7 +10,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Core
-import ReplNew.Types
+import Repl.Types
 import Text.Megaparsec
 
 type ReplActionAnn = ReplAction Annotation
@@ -20,6 +20,7 @@ replParser =
   try helpParser
     <|> listModulesParser
     <|> listBindingsParser
+    <|> bindModuleParser
     <|> try addBindingParser
     <|> try outputJSModuleParser
     <|> evalParser
@@ -56,6 +57,11 @@ addBindingParser = AddBinding <$> singleModuleItemParser
         [] -> explode "Expected a module binding"
         [a] -> pure a
         _other -> explode "Expected a single module binding"
+
+bindModuleParser :: Parser ReplActionAnn
+bindModuleParser = do
+  _ <- myString ":save"
+  BindModule <$> moduleNameParser
 
 backendParser :: Parser (Maybe Backend)
 backendParser =

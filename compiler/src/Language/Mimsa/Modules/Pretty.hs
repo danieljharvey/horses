@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Modules.Pretty (modulePretty) where
+module Language.Mimsa.Modules.Pretty (modulePretty, filterExported) where
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -13,8 +13,7 @@ import Prettyprinter
 -- | display types for module in a nice way
 modulePretty :: Module (Type Annotation) -> Doc a
 modulePretty mod' =
-  let useful = filterExported mod'
-      prettyExp (k, a) = indentMulti 2 (prettyDoc k <> ":" <+> prettyDoc (getTypeFromAnn a))
+  let prettyExp (k, a) = indentMulti 2 (prettyDoc k <> ":" <+> prettyDoc (getTypeFromAnn a))
       prettyType (k, a) = indentMulti 2 (prettyDoc k <> ":" <+> prettyDoc a)
    in align
         ( encloseSep
@@ -22,10 +21,10 @@ modulePretty mod' =
             rbrace
             comma
             ( ( prettyExp
-                  <$> M.toList (moExpressions useful)
+                  <$> M.toList (moExpressions mod')
               )
                 <> ( prettyType
-                       <$> M.toList (moDataTypes useful)
+                       <$> M.toList (moDataTypes mod')
                    )
             )
         )

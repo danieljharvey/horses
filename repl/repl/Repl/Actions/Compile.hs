@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module ReplNew.Actions.Compile
+module Repl.Actions.Compile
   ( doOutputModuleJS,
   )
 where
@@ -15,8 +15,8 @@ import Language.Mimsa.Backend.Types
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
-import ReplNew.Helpers
-import ReplNew.ReplM
+import Repl.Helpers
+import Repl.ReplM
 
 doOutputModuleJS ::
   Project Annotation ->
