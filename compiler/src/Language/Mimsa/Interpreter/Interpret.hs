@@ -41,11 +41,11 @@ interpretExpr' ::
   InterpreterM ann (InterpretExpr ann)
 interpretExpr' (HOAS.MyLiteral _ val) = pure (HOAS.MyLiteral mempty val)
 interpretExpr' (HOAS.MyAnnotation _ _ expr) = interpretExpr' expr
-interpretExpr' origVar@(HOAS.MyVar _ _ var) = do
+interpretExpr' (HOAS.MyVar _ _ var) = do
   val <- lookupVar var
   case val of
     Just next -> pure next
-    Nothing -> pure origVar
+    Nothing -> error ("Could not find " <> show var) -- should not be actual variables
 interpretExpr' (HOAS.MyLambda exprData ident body) =
   -- return it
   pure

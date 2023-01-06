@@ -31,27 +31,30 @@ interpretApp interpretFn ann func value = do
       debugPrettyM "value" (fromHOAS value)
       debugPrettyM "identifier" ident
       debugPrettyM "recursion identifier" recIdent
---thing@(HOAS.MyRecursiveLambda _ _ident recI@(Identifier _ recIdent) body)
---
+
       -- here `value` is the inner value
       -- interpret arg first
       intValue <- interpretFn value
 
-      -- run the func
+      traceShowM intValue
+
+      -- run the func, but don't interpret the result yet
+      -- because it won't be there
       let result = body intValue
+
       traceShowM result
+
       debugPrettyM "recursion result" (fromHOAS result)
       debugPrettyM "recursion identifier" recIdent
-      --let withRecursiveFunc = toHOAS (MyLet ann recIdent (MyLambda lambdaAnn argIdent@(Identifier _ aIdent) lBody) rest)
 
-      let withRecursiveFunc = toHOAS (MyLet ann recIdent (fromHOAS intValue) (fromHOAS result))
-
+      --let withRecursiveFunc = toHOAS (MyLet ann recIdent (fromHOAS intValue) (fromHOAS result))
+      let withRecursiveFunc = HOAS.MyApp ann func result
 
       --debugPrettyM "recursion func to push" withRecursiveFunc
       debugPrettyM "recursion func to push (munged)" (fromHOAS withRecursiveFunc)
       --debugPrettyM "recursion func to push new" (fromHOAS withRecursiveFunc2)
       pure withRecursiveFunc
-      --interpretFn withRecursiveFunc
+      --interpretFn withRecursiveFunc >>= interpretFn
     (HOAS.MyConstructor ann' modName const') ->
       HOAS.MyApp ann (HOAS.MyConstructor ann' modName const')
         <$> interpretFn value

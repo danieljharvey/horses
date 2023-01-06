@@ -172,11 +172,11 @@ fromHOAS (HOAS.MyApp ann (HOAS.MyRecursiveLambda _ (Identifier _ _ident) (Identi
   MyLet ann (Identifier iAnn recIdent) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing recIdent))
 fromHOAS (HOAS.MyApp ann (HOAS.MyLambda _ (Identifier iAnn ident) rest) expr) =
   MyLet ann (Identifier iAnn ident) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
-fromHOAS (HOAS.MyRecursiveLambda ann _ ident@(Identifier _ identInner)  rest) =
+fromHOAS (HOAS.MyRecursiveLambda ann _ recIdent@(Identifier _ recIdentInner) rest) =
   MyLambda
     ann
-    ident
-    (fromHOAS $ rest (HOAS.MyVar ann Nothing identInner))
+    recIdent
+    (fromHOAS $ rest (HOAS.MyVar ann Nothing recIdentInner))
 fromHOAS (HOAS.MyApp ann fn arg) = MyApp ann (fromHOAS fn) (fromHOAS arg)
 fromHOAS (HOAS.MyRecord ann as) = MyRecord ann (fromHOAS <$> as)
 fromHOAS (HOAS.MyRecordAccess ann a name) = MyRecordAccess ann (fromHOAS a) name

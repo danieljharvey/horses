@@ -17,9 +17,6 @@ import Language.Mimsa.Core
 instance Show (HOASExpr var ann -> HOASExpr var ann) where
   show _ = "some function"
 
-instance Show (HOASExpr var ann -> HOASExpr var ann -> HOASExpr var ann) where
-  show _ = "some recursive function"
-
 -- |
 -- version of Expr where functions are represented as functions
 -- for interpreting but ZOOM
