@@ -10,13 +10,7 @@ where
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import GHC.Natural
-import Language.Mimsa.Types.AST.Identifier
-import Language.Mimsa.Types.AST.Literal (Literal)
-import Language.Mimsa.Types.AST.Operator
-import Language.Mimsa.Types.AST.Pattern
-import Language.Mimsa.Types.Identifiers
-import Language.Mimsa.Types.Modules.ModuleName
-import Language.Mimsa.Types.Typechecker.MonoType
+import Language.Mimsa.Core
 
 -------
 

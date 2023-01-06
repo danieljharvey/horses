@@ -14,7 +14,6 @@ import Data.Map.Strict (Map)
 import Language.Mimsa.Core
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Identifiers.Name
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
 
@@ -32,7 +31,7 @@ data InterpretReaderEnv ann = InterpretReaderEnv
 type InterpretExpr ann = HOAS.HOASExpr (Name, Unique) ann
 
 type InterpretPattern ann =
-  Pattern (Name, Unique) ann
+  Pattern (Name,Unique) ann
 
 type InterpretFn ann =
   InterpretExpr ann ->

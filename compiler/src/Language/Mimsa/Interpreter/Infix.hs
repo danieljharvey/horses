@@ -2,16 +2,13 @@ module Language.Mimsa.Interpreter.Infix (interpretInfix) where
 
 import Language.Mimsa.Logging
 import Control.Monad.Except
-import Language.Mimsa.Core
+import Language.Mimsa.Core hiding (Expr(..))
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.SimpleExpr
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST.HOASExpr
-
-import Debug.Trace
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Identifiers
 
 interpretInfix ::
   (Monoid ann ) =>

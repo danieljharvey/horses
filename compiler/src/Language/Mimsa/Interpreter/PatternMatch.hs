@@ -13,13 +13,10 @@ import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Core
-import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Types.Error.InterpreterError
-import Language.Mimsa.Types.Typechecker.Unique
-import Language.Mimsa.Types.Identifiers
 
 interpretLetPattern ::
   ann ->

@@ -8,7 +8,6 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import GHC.Natural
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
 

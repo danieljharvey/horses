@@ -8,24 +8,8 @@ import qualified Data.List.NonEmpty as NE
 import Data.Monoid
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.ExprUtils
-import Language.Mimsa.Types.AST.Expr
 import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
-import Language.Mimsa.Types.AST.Identifier
-import Language.Mimsa.Types.AST.Pattern
-import Language.Mimsa.Types.AST.Spread
-import Language.Mimsa.Types.AST.Literal
-import Language.Mimsa.Types.AST.StringPart
-import Language.Mimsa.Types.Identifiers
-
-import Data.Monoid
-
-import Language.Mimsa.Types.AST.StringPart
-
--- does an expression contain itself, ie, is it a recursive function?
-import Language.Mimsa.Types.AST.Literal
-
-import Language.Mimsa.Types.AST.StringPart
+import Language.Mimsa.Core
 
 
 -- does an expression contain itself, ie, is it a recursive function?

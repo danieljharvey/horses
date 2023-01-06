@@ -5,7 +5,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe)
 import GHC.Natural
-import Language.Mimsa.Core
+import Language.Mimsa.Core hiding (Expr(..))
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.AST.HOASExpr

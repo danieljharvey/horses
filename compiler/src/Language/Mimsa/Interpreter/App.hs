@@ -1,8 +1,5 @@
 module Language.Mimsa.Interpreter.App (interpretApp) where
 
-import Language.Mimsa.Core
-import Language.Mimsa.Interpreter.Monad
-import Debug.Trace
 import Language.Mimsa.Logging
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types

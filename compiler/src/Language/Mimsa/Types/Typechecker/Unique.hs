@@ -9,7 +9,6 @@ import qualified Data.Aeson as JSON
 import GHC.Generics
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.ExprHash
-import Language.Mimsa.Printer
 
 data Unique
   = Unique Int
