@@ -2,15 +2,14 @@
 
 module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS, replaceVars) where
 
-import Data.Maybe
 import Data.Bifunctor (second)
 import qualified Data.List.NonEmpty as NE
+import Data.Maybe
 import Data.Monoid
 import Data.Set (Set)
 import qualified Data.Set as S
-import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Core
-
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 
 -- does an expression contain itself, ie, is it a recursive function?
 hasVar ::
@@ -40,7 +39,7 @@ toHOAS (MyLet ann recIdent@(Identifier _ rIdent) (MyLambda lambdaAnn argIdent@(I
               ( \arg ->
                   replaceVars aIdent arg (toHOAS lBody)
               )
-       in HOAS.MyApp ann (HOAS.MyRecursiveLambda ann recIdent argIdent (\arg -> replaceVars aIdent arg (toHOAS rest))) hoasLambda
+       in HOAS.MyApp ann (HOAS.MyRecursiveLambda ann argIdent recIdent (\arg -> replaceVars aIdent arg (toHOAS rest))) hoasLambda
 toHOAS (MyLet ann ident expr body) =
   toHOAS (MyApp ann (MyLambda ann ident body) expr)
 toHOAS (MyLetPattern ann pat expr body) =
@@ -168,16 +167,15 @@ fromHOAS (HOAS.MyIf ann a b c) = MyIf ann (fromHOAS a) (fromHOAS b) (fromHOAS c)
 fromHOAS (HOAS.MyTuple ann a as) = MyTuple ann (fromHOAS a) (fromHOAS <$> as)
 fromHOAS (HOAS.MyLambda ann (Identifier iAnn ident) f) =
   MyLambda ann (Identifier iAnn ident) (fromHOAS $ f (HOAS.MyVar ann Nothing ident))
-fromHOAS (HOAS.MyApp ann (HOAS.MyRecursiveLambda _ (Identifier iAnn ident) _ rest) expr) =
-  MyLet ann (Identifier iAnn ident) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
-
+fromHOAS (HOAS.MyApp ann (HOAS.MyRecursiveLambda _ (Identifier _ ident) (Identifier iAnn recIdent)  rest) expr) =
+  MyLet ann (Identifier iAnn recIdent) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
 fromHOAS (HOAS.MyApp ann (HOAS.MyLambda _ (Identifier iAnn ident) rest) expr) =
   MyLet ann (Identifier iAnn ident) (fromHOAS expr) (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
-fromHOAS (HOAS.MyRecursiveLambda ann (Identifier iAnn ident) _ rest) =
+fromHOAS (HOAS.MyRecursiveLambda ann (Identifier _ recIdentInner) ident rest) =
   MyLambda
     ann
-    (Identifier iAnn ident)
-    (fromHOAS $ rest (HOAS.MyVar ann Nothing ident))
+    ident
+    (fromHOAS $ rest (HOAS.MyVar ann Nothing recIdentInner))
 fromHOAS (HOAS.MyApp ann fn arg) = MyApp ann (fromHOAS fn) (fromHOAS arg)
 fromHOAS (HOAS.MyRecord ann as) = MyRecord ann (fromHOAS <$> as)
 fromHOAS (HOAS.MyRecordAccess ann a name) = MyRecordAccess ann (fromHOAS a) name
@@ -206,32 +204,18 @@ swapOutVar matchIdent new =
 -- removes all the waste and tidies up again
 -- | given `('a", 1), turn any ("a",..).1 into "a"
 -- | given ('b', 2), turn (_, "b",...).2 into "b"
-reduceTuples :: (Eq var) => (var ,Int) -> Expr var ann -> Expr var ann
-reduceTuples (ident,index) =
-  go 
-  where
-    go expr@(MyTupleAccess ann (MyTuple _ a as) accessIdent) | 
-        index + 1 == fromIntegral accessIdent =
-      let allAs = [a] <> NE.toList as
-       in case listToMaybe (drop index allAs) of
-            Just (MyVar _ Nothing var)
-              | var == ident -> MyVar ann Nothing var
-            _ -> expr
-    go other = mapExpr go other
-
-  {-
-reduceRecords :: (Name, x) -> Expr (Name, x) ann -> Expr (Name, x) ann
-reduceRecords ident =
+reduceTuples :: (Eq var) => (var, Int) -> Expr var ann -> Expr var ann
+reduceTuples (ident, index) =
   go
   where
-    go expr@(MyRecordAccess ann (MyRecord _ items) accessIdent)
-      | fst ident == accessIdent =
-          case M.lookup (fst ident) items of
-            Just (MyVar _ Nothing var)
-              | fst var == fst ident -> MyVar ann Nothing var
-            _ -> expr
+    go expr@(MyTupleAccess ann (MyTuple _ a as) accessIdent)
+      | index + 1 == fromIntegral accessIdent =
+          let allAs = [a] <> NE.toList as
+           in case listToMaybe (drop index allAs) of
+                Just (MyVar _ Nothing var)
+                  | var == ident -> MyVar ann Nothing var
+                _ -> expr
     go other = mapExpr go other
--}
 
 patternVars :: (Ord var) => Pattern var ann -> Set var
 patternVars (PVar _ v) = S.singleton v

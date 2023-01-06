@@ -1,17 +1,18 @@
 {-# LANGUAGE FlexibleContexts #-}
+
 module Language.Mimsa.Interpreter.Interpret (interpret) where
 
 import Control.Monad.Reader
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.App
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.If
 import Language.Mimsa.Interpreter.Infix
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.PatternMatch
 import Language.Mimsa.Interpreter.RecordAccess
 import Language.Mimsa.Interpreter.Types
-import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Store.ExprHash
 
@@ -31,7 +32,7 @@ interpretExpr ::
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
 interpretExpr expr = do
-  --debugPrettyM "interpret" (first fst $ fromHOAS expr)
+  -- debugPrettyM "interpret" (first fst $ fromHOAS expr)
   interpretExpr' expr
 
 interpretExpr' ::

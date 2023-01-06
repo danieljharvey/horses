@@ -72,6 +72,7 @@ library
       Language.Mimsa.Backend.Wasm.Compile
       Language.Mimsa.Backend.ZipFile
       Language.Mimsa.Interpreter.App
+      Language.Mimsa.Interpreter.HOASExpr
       Language.Mimsa.Interpreter.If
       Language.Mimsa.Interpreter.Infix
       Language.Mimsa.Interpreter.Interpret

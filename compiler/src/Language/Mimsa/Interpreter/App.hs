@@ -1,42 +1,56 @@
 module Language.Mimsa.Interpreter.App (interpretApp) where
 
-import Language.Mimsa.Logging
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
-import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
+import Language.Mimsa.Logging
+import Language.Mimsa.Core
 
 interpretApp ::
-  (Eq ann ) =>
+  (Eq ann ,Show ann) =>
   InterpretFn ann ->
   ann ->
   InterpretExpr ann ->
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
-interpretApp interpretFn ann myFn value = do
-  debugPrettyM "function" (fromHOAS myFn)
-  case myFn of
+interpretApp interpretFn ann func value = do
+  case func of
     (HOAS.MyLambda _ ident body) -> do
-      debugPrettyM "lambda" ident
+      debugPrettyM "regular function" (fromHOAS func)
+      debugPrettyM "value" (fromHOAS value)
+      debugPrettyM "identifier" ident
 
       -- interpret arg first
       intValue <- interpretFn value
+
       -- run it
       interpretFn (body intValue) >>= interpretFn
-    _recursiveFunc@(HOAS.MyRecursiveLambda _ ident recIdent body) -> do
-      debugPrettyM "recursive lambda" ident
-
+    (HOAS.MyRecursiveLambda _ ident@(Identifier _ _innerIdent) recIdent@(Identifier _ _innerRecIdent) body) -> do
+      debugPrettyM "recursive function" (fromHOAS func)
+      debugPrettyM "value" (fromHOAS value)
+      debugPrettyM "identifier" ident
+      debugPrettyM "recursion identifier" recIdent
+--thing@(HOAS.MyRecursiveLambda _ _ident recI@(Identifier _ recIdent) body)
+--
+      -- here `value` is the inner value
       -- interpret arg first
       intValue <- interpretFn value
+
       -- run the func
-      result <- interpretFn (body intValue)
+      let result = body intValue
 
       debugPrettyM "recursion result" (fromHOAS result)
       debugPrettyM "recursion identifier" recIdent
+      --let withRecursiveFunc = toHOAS (MyLet ann recIdent (MyLambda lambdaAnn argIdent@(Identifier _ aIdent) lBody) rest)
 
-      let withRecursiveFunc = HOAS.MyApp ann result (HOAS.MyLambda ann recIdent body)
-      debugPrettyM "recursion func to push" (fromHOAS withRecursiveFunc)
+      let withRecursiveFunc = toHOAS (MyLet ann recIdent (fromHOAS intValue) (fromHOAS result))
 
-      interpretFn withRecursiveFunc >>= interpretFn
+
+      --debugPrettyM "recursion func to push" withRecursiveFunc
+      debugPrettyM "recursion func to push (munged)" (fromHOAS withRecursiveFunc)
+      --debugPrettyM "recursion func to push new" (fromHOAS withRecursiveFunc2)
+
+      pure withRecursiveFunc
     (HOAS.MyConstructor ann' modName const') ->
       HOAS.MyApp ann (HOAS.MyConstructor ann' modName const')
         <$> interpretFn value

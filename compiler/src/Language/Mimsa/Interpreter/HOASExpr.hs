@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Language.Mimsa.Types.AST.HOASExpr
+module Language.Mimsa.Interpreter.HOASExpr
   ( HOASExpr (..),
   )
 where

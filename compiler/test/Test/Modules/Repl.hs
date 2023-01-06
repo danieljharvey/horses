@@ -450,7 +450,7 @@ spec =
             "let loop = (\\as -> match as with Zero -> 0 | (Suc as2) -> (loop as2) + 1) in loop (Suc (Suc (Suc Zero)))"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
-      fit "Recursively converts bigger Nat to integer" $ do
+      it "Recursively converts bigger Nat to integer" $ do
         result <-
           evalWithDefs
             (Just "type Nat = Zero | Suc Nat")

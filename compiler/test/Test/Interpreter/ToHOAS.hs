@@ -6,12 +6,11 @@ module Test.Interpreter.ToHOAS
   )
 where
 
-import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Data.Bifunctor
 import Data.Text
+import Language.Mimsa.Core hiding (parseExpr)
 import Language.Mimsa.Interpreter.ToHOAS
-import Language.Mimsa.Types.AST
-import Language.Mimsa.Types.Identifiers
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -34,7 +33,6 @@ spec = do
         result `shouldSatisfy` \case
           (HOAS.MyApp _ (HOAS.MyLambda {} ) (HOAS.MyRecursiveLambda {})) -> True
           _ -> False
-
 
     fdescribe "There and back again" $ do
       it "Infixes, literals" $ do
@@ -66,7 +64,7 @@ spec = do
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
       it "Recursive function" $ do
-        let input = parseExpr "let loop = \\a -> if a > 0 then loop (a - 1) else 0; True"
+        let input = parseExpr "let loop = \\a -> if a > 0 then loop (a - 1) else 0; let b = loop 100 in b"
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
       it "A pattern match appears" $ do

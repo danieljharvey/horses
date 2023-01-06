@@ -13,9 +13,9 @@ import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Core
-import Language.Mimsa.Interpreter.Types
-import qualified Language.Mimsa.Types.AST.HOASExpr as HOAS
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.ToHOAS
+import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.Error.InterpreterError
 
 interpretLetPattern ::
