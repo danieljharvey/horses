@@ -1,10 +1,11 @@
-name: Compiler - Docker build and release
+name: Server - Docker build and release
 
 on:
   push:
     branches:
       - trunk
     paths:
+      - "core/**"
       - "compiler/**"
       - "server/**"
 

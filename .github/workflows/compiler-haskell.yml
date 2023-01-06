@@ -7,6 +7,8 @@ on:
     paths:
       - "compiler/**"
       - "server/**"
+      - "repl/**"
+      - "core/**"
 
   pull_request:
     branches:
@@ -14,6 +16,8 @@ on:
     paths:
       - "compiler/**"
       - "server/**"
+      - "repl/**"
+      - "core/**"
 
 jobs:
   ormolu:
@@ -78,13 +82,16 @@ jobs:
           ghc-version: '9.2.5'
           cabal-version: '3.8.1.0'
 
-      - name: Run cabal test
+      - name: Test core
+        run: make test-core
+
+      - name: Test compiler
         run: yarn global add typescript@4.4 ts-node@10.4.0 & make test
 
-      - name: Run cabal build
+      - name: Build all things
         run: make build
 
-      - name: Run cabal bench
+      - name: Run benchmarks
         run: make bench
 
       - name: Generate swagger json
