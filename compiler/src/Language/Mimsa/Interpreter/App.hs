@@ -1,5 +1,6 @@
 module Language.Mimsa.Interpreter.App (interpretApp) where
 
+import Debug.Trace
 import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
@@ -38,7 +39,7 @@ interpretApp interpretFn ann func value = do
 
       -- run the func
       let result = body intValue
-
+      traceShowM result
       debugPrettyM "recursion result" (fromHOAS result)
       debugPrettyM "recursion identifier" recIdent
       --let withRecursiveFunc = toHOAS (MyLet ann recIdent (MyLambda lambdaAnn argIdent@(Identifier _ aIdent) lBody) rest)
@@ -49,8 +50,8 @@ interpretApp interpretFn ann func value = do
       --debugPrettyM "recursion func to push" withRecursiveFunc
       debugPrettyM "recursion func to push (munged)" (fromHOAS withRecursiveFunc)
       --debugPrettyM "recursion func to push new" (fromHOAS withRecursiveFunc2)
-
       pure withRecursiveFunc
+      --interpretFn withRecursiveFunc
     (HOAS.MyConstructor ann' modName const') ->
       HOAS.MyApp ann (HOAS.MyConstructor ann' modName const')
         <$> interpretFn value
