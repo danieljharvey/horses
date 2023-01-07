@@ -20,7 +20,7 @@ interpretApp interpretFn ann func arg = do
       intArg <- interpretFn arg
 
       -- run it
-      interpretFn (body intArg) >>= interpretFn
+      interpretFn (body intArg)
     (HOAS.MyRecursiveLambda _ _ident (Identifier _ innerRecIdent) body) -> do
       -- here `arg` is the inner arg
       -- interpret arg first
@@ -28,7 +28,8 @@ interpretApp interpretFn ann func arg = do
 
       -- the trick is that we make 'arg' available in context
       -- so we can reuse it in recursion
-      withVar innerRecIdent intArg (interpretFn (body intArg))
+      withVar innerRecIdent intArg (interpretFn (body intArg) >>=
+          interpretFn)
     (HOAS.MyConstructor ann' modName const') ->
       HOAS.MyApp ann (HOAS.MyConstructor ann' modName const')
         <$> interpretFn arg

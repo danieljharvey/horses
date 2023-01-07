@@ -34,7 +34,7 @@ spec = do
           (HOAS.MyApp _ (HOAS.MyLambda {} ) (HOAS.MyRecursiveLambda {})) -> True
           _ -> False
 
-    fdescribe "There and back again" $ do
+    describe "There and back again" $ do
       it "Infixes, literals" $ do
         let input = parseExpr "1 + 2 + 3"
             result = fromHOAS (toHOAS input)

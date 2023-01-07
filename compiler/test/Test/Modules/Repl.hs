@@ -443,7 +443,7 @@ spec =
         result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000" -- this seems to be the limit on my current machine
         result `shouldSatisfy` isRight
 
-      fit "Recursively converts Nat to integer" $ do
+      it "Recursively converts Nat to integer" $ do
         result <-
           evalWithDefs
             (Just "type Nat = Zero | Suc Nat")
