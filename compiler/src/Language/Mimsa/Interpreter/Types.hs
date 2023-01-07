@@ -25,6 +25,7 @@ type InterpreterM ann a =
 
 data InterpretReaderEnv ann = InterpretReaderEnv
   { ireGlobals :: Map ExprHash (InterpretExpr ann),
+    ireVars :: Map (Name, Unique) (InterpretExpr ann), -- used for recursion
     ireInfixes :: Map InfixOp ExprHash
   }
 

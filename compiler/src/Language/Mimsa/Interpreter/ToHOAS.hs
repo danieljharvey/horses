@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS, replaceVars) where
+module Language.Mimsa.Interpreter.ToHOAS (toHOAS, fromHOAS, replaceVars, hasVar) where
 
 import Data.Bifunctor (second)
 import qualified Data.List.NonEmpty as NE

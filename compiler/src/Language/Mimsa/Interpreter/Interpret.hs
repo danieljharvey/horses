@@ -23,7 +23,7 @@ interpret ::
   InterpretExpr ann ->
   Either (InterpreterError Name ann) (InterpretExpr ann)
 interpret deps infixes expr =
-  runReaderT (interpretExpr expr) (InterpretReaderEnv deps infixes)
+  runReaderT (interpretExpr expr) (InterpretReaderEnv deps mempty infixes )
 
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
@@ -32,7 +32,6 @@ interpretExpr ::
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
 interpretExpr expr = do
-  -- debugPrettyM "interpret" (first fst $ fromHOAS expr)
   interpretExpr' expr
 
 interpretExpr' ::
@@ -42,10 +41,14 @@ interpretExpr' ::
 interpretExpr' (HOAS.MyLiteral _ val) = pure (HOAS.MyLiteral mempty val)
 interpretExpr' (HOAS.MyAnnotation _ _ expr) = interpretExpr' expr
 interpretExpr' (HOAS.MyVar _ _ var) = do
-  val <- lookupVar var
-  case val of
+  global <- lookupGlobal var
+  case global of
     Just next -> pure next
-    Nothing -> error ("Could not find " <> show var) -- should not be actual variables
+    Nothing -> do
+      value <- lookupVar var
+      case value of
+        Just next -> pure next
+        Nothing -> error $ "Could not find " <> show var
 interpretExpr' (HOAS.MyLambda exprData ident body) =
   -- return it
   pure

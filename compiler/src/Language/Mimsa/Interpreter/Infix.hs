@@ -7,7 +7,6 @@ import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.SimpleExpr
 import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
-import Language.Mimsa.Logging
 import Language.Mimsa.Types.Error.InterpreterError
 
 interpretInfix ::
@@ -18,7 +17,6 @@ interpretInfix ::
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
 interpretInfix interpretFn operator a b = do
-  debugPrettyM "infix" (fromHOAS a, fromHOAS b)
   plainA <- interpretFn a
   plainB <- interpretFn b
   case operator of

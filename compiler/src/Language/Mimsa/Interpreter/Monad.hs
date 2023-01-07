@@ -1,6 +1,8 @@
 module Language.Mimsa.Interpreter.Monad
   ( findOperator,
-    lookupVar,
+    lookupGlobal,
+    withVar,
+    lookupVar
   )
 where
 
@@ -14,13 +16,24 @@ import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
 
+lookupGlobal ::
+  (Name, Unique) ->
+  InterpreterM ann (Maybe (InterpretExpr ann))
+lookupGlobal (_, Dependency exprHash) = Just <$> lookupInGlobals exprHash
+lookupGlobal _ = pure Nothing
+
 lookupVar ::
   (Name, Unique) ->
   InterpreterM ann (Maybe (InterpretExpr ann))
-lookupVar (_, Dependency exprHash) = Just <$> lookupInGlobals exprHash
-lookupVar _ = pure Nothing
+lookupVar var = do
+  vars <- asks ireVars
+  case M.lookup var vars of
+    Just found -> pure (Just found)
+    _ -> pure Nothing
 
--- lookupVar  other  = error $ "looking up " <> show other
+withVar :: (Name, Unique) -> InterpretExpr ann -> InterpreterM ann a -> InterpreterM ann a
+withVar var value
+  = local (\ire -> ire { ireVars = ireVars ire <> M.singleton var value })
 
 lookupInGlobals :: ExprHash -> InterpreterM ann (InterpretExpr ann)
 lookupInGlobals exprHash = do
