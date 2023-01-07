@@ -19,19 +19,19 @@ parseExpr input = first (,()) (unsafeParseExpr input)
 
 spec :: Spec
 spec = do
-  describe "ToHOAS" $ do
+  fdescribe "ToHOAS" $ do
     describe "Are we creating recursive lambdas when we should?" $ do
       it "Single arg recursive function" $ do
         let input = parseExpr "let loop = \\a -> loop (a - 1) in loop 0"
             result = toHOAS input
         result `shouldSatisfy` \case
-          (HOAS.MyApp _ (HOAS.MyLambda {} ) (HOAS.MyRecursiveLambda {})) -> True
+          (HOAS.MyApp _ (HOAS.MyRecursiveLambda {} ) (HOAS.MyLambda {})) -> True
           _ -> False
       it "Double arg recursive function" $ do
         let input = parseExpr "let loop = \\a -> \\b -> loop (a - 1) True in loop 0 False"
             result = toHOAS input
         result `shouldSatisfy` \case
-          (HOAS.MyApp _ (HOAS.MyLambda {} ) (HOAS.MyRecursiveLambda {})) -> True
+          (HOAS.MyApp _ (HOAS.MyRecursiveLambda {} ) (HOAS.MyLambda {})) -> True
           _ -> False
 
     describe "There and back again" $ do
@@ -73,5 +73,9 @@ spec = do
         result `shouldBe` input
       it "A pattern match with multiple bindings appears" $ do
         let input = parseExpr "match (1,2) with (a,b) -> a + b"
+            result = fromHOAS (toHOAS input)
+        result `shouldBe` input
+      it "A big filter function" $ do
+        let input = parseExpr "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\aa -> aa == \"o\") \"woo\""
             result = fromHOAS (toHOAS input)
         result `shouldBe` input

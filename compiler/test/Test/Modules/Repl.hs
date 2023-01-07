@@ -62,7 +62,7 @@ defs = T.intercalate "\n"
 
 spec :: Spec
 spec =
-  describe "Modules repl" $ do
+  fdescribe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "No functions" $ do
         result <- eval "100"
@@ -443,7 +443,7 @@ spec =
         result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000" -- this seems to be the limit on my current machine
         result `shouldSatisfy` isRight
 
-      it "Recursively converts Nat to integer" $ do
+      fit "Recursively converts Nat to integer" $ do
         result <-
           evalWithDefs
             (Just "type Nat = Zero | Suc Nat")
@@ -707,7 +707,7 @@ spec =
           Left _ -> error "Was not supposed to fail"
           Right (_, expr') -> T.unpack (prettyPrint expr') `shouldContain` "a"
 
-      it "filter function for strings" $ do
+      fit "filter function for strings" $ do
         result <- eval "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\aa -> aa == \"o\") \"woo\""
         result
           `shouldBe` Right

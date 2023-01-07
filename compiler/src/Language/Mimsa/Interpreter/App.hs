@@ -1,5 +1,6 @@
 module Language.Mimsa.Interpreter.App (interpretApp) where
 
+import Language.Mimsa.Logging
 import  Language.Mimsa.Interpreter.Monad
 import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.ToHOAS
@@ -21,14 +22,16 @@ interpretApp interpretFn ann func arg = do
 
       -- run it
       interpretFn (body intArg)
-    (HOAS.MyRecursiveLambda _ _ident (Identifier _ innerRecIdent) body) -> do
-      -- here `arg` is the inner arg
-      -- interpret arg first
-      intArg <- interpretFn arg
+    (HOAS.MyRecursiveLambda _ ident (Identifier _ innerRecIdent) body) -> do
+      debugPrettyM "function (recursive)" (fromHOAS func)
+      debugPrettyM "ident" ident
+      debugPrettyM "recIdent" innerRecIdent
+
+      debugPrettyM "the function itself" (fromHOAS arg)
 
       -- the trick is that we make 'arg' available in context
       -- so we can reuse it in recursion
-      withVar innerRecIdent intArg (interpretFn (body intArg) >>=
+      withVar innerRecIdent arg (interpretFn (body arg) >>=
           interpretFn)
     (HOAS.MyConstructor ann' modName const') ->
       HOAS.MyApp ann (HOAS.MyConstructor ann' modName const')
