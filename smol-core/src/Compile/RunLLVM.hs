@@ -1,6 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Compile.RunLLVM (run, moduleFromExpr, RunResult (..)) where
+
+import Data.FileEmbed
+import qualified Data.Text.Encoding as T
 
 import Control.Exception (bracket)
 import Data.String.Conversions
@@ -18,6 +22,11 @@ import System.Posix.Temp
 import System.Process
 import qualified Text.Printf as Printf
 import qualified Types as Smol
+
+-- these are saved in a file that is included in compilation
+cRuntime :: Text
+cRuntime =
+  T.decodeUtf8 $(makeRelativeToProject "static/runtime.c" >>= embedFile)
 
 moduleFromExpr :: Smol.Expr (Smol.Type Smol.Annotation) -> Module
 moduleFromExpr = irToLLVM . irFromExpr
@@ -38,15 +47,19 @@ compile llvmModule outfile =
     withCurrentDirectory buildDir $ do
       -- create temporary file for "output.ll"
       (llvm, llvmHandle) <- mkstemps "output" ".ll"
+      (runtime, runtimeHandle) <- mkstemps "runtime" ".c"
 
-      let runtime = "../static/runtime.c"
-      let moduleText = cs (ppllvm llvmModule)
+      let
+          moduleText = cs (ppllvm llvmModule)
 
       -- T.putStrLn moduleText
 
       -- write the llvmModule to a file
       T.hPutStrLn llvmHandle moduleText
+      T.hPutStrLn runtimeHandle cRuntime
+
       hClose llvmHandle
+      hClose runtimeHandle
       -- link the runtime with the assembly
       callProcess
         "clang"

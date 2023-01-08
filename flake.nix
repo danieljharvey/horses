@@ -48,12 +48,14 @@
             cabal-install
             pkgs.zlib # used by `digest` package
             pkgs.nodejs-18_x
+            pkgs.clang_14
+            pkgs.llvmPackages_14.llvm
           ];
 
           # put clang_14 on the path
-          #shellHook = with pkgs; ''
-          #  export PATH="${clang_14}/bin:$PATH"
-          #'';
+          shellHook = with pkgs; ''
+            export PATH="${clang_14}/bin:$PATH"
+          '';
 
           inputsFrom = builtins.attrValues self.packages.${system};
         };
