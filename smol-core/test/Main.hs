@@ -8,11 +8,11 @@ import qualified Test.IR.IRSpec
 import qualified Test.IR.PatternSpec
 import qualified Test.Interpreter.InterpreterSpec
 import qualified Test.ParserSpec
+import qualified Test.Transform.FlattenPatternSpec
+import qualified Test.Typecheck.ExhaustivenessSpec
 import qualified Test.Typecheck.NestingMonadSpec
 import qualified Test.Typecheck.SubtypeSpec
 import qualified Test.TypecheckSpec
-import qualified Test.Typecheck.ExhaustivenessSpec
-import qualified Test.Transform.FlattenPatternSpec
 
 main :: IO ()
 main = hspec $ do

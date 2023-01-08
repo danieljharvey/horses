@@ -350,7 +350,7 @@ checkPattern checkTy checkPat = do
     (ty, PWildcard _) -> pure (PWildcard ty, mempty)
     (ty@(TLiteral _ tPrim), PLiteral _ pPrim)
       | tPrim == typeLiteralFromPrim pPrim ->
-        pure (PLiteral ty pPrim, mempty)
+          pure (PLiteral ty pPrim, mempty)
     (ty@(TPrim _ TPBool), PLiteral _ (PBool b)) ->
       pure (PLiteral ty (PBool b), mempty)
     (ty@(TPrim _ TPNat), PLiteral _ (PNat b)) ->

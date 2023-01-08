@@ -7,7 +7,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
---import Data.Either
+-- import Data.Either
 import qualified Data.List.NonEmpty as NE
 import Test.Helpers
 import Test.Hspec

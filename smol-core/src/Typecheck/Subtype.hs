@@ -80,10 +80,10 @@ combine a b =
     asUnion = case (a, b) of
       (TLiteral ann (TLInt bA), TLiteral _ (TLInt bB))
         | bA /= bB ->
-          pure $ TUnion ann a b
+            pure $ TUnion ann a b
       (TLiteral ann (TLBool bA), TLiteral _ (TLBool bB))
         | bA /= bB ->
-          pure $ TPrim ann TPBool -- don't have True | False, it's silly
+            pure $ TPrim ann TPBool -- don't have True | False, it's silly
       _ -> throwError (TCTypeMismatch a b)
 
 typeEquals :: Type ann -> Type ann -> Bool

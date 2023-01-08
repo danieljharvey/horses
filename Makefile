@@ -1,4 +1,4 @@
-HS_FILES = $(shell git ls-files '*.hs')
+HS_FILES = $(shell git ls-files '*.hs' | grep -v '^vendored/')
 
 .PHONY: ghcid
 ghcid:

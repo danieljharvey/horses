@@ -149,8 +149,8 @@ _generateMany = undefined
 -- | Given a type, generate patterns, useful for literals where the type is
 -- most important
 generateFromType ::
-  ( MonadError (TCError Annotation) m --,
-  --MonadReader (TCEnv Annotation) m
+  ( MonadError (TCError Annotation) m -- ,
+  -- MonadReader (TCEnv Annotation) m
   ) =>
   Type Annotation ->
   m [Pattern (Type Annotation)]
@@ -166,7 +166,8 @@ generateFromType ty@(TPrim _ TPInt) =
 generateFromType ty@(TPrim _ TPNat) =
   pure [PWildcard ty]
 generateFromType (TUnion _ a b) =
-  mappend <$> generateFromType a
+  mappend
+    <$> generateFromType a
     <*> generateFromType b
 generateFromType _ = pure mempty
 

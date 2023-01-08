@@ -1,8 +1,9 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeApplications #-}
+
 module Typecheck.Shared
   ( getExprAnnotation,
     getPatternAnnotation,
@@ -28,7 +29,7 @@ module Typecheck.Shared
     tellGlobal,
     listenGlobals,
     freshen,
-    primFromTypeLiteral
+    primFromTypeLiteral,
   )
 where
 
@@ -47,8 +48,7 @@ import Typecheck.Types
 import Types
 
 lookupTypeName ::
-  (
-    MonadReader (TCEnv ann) m
+  ( MonadReader (TCEnv ann) m
   ) =>
   TypeName ->
   m (DataType ann)
@@ -96,7 +96,7 @@ getTypeAnnotation (TRecord ann _) = ann
 getTypeAnnotation (TUnion ann _ _) = ann
 
 primFromTypeLiteral :: TypeLiteral -> Prim
-primFromTypeLiteral (TLInt i) =  PInt i
+primFromTypeLiteral (TLInt i) = PInt i
 primFromTypeLiteral (TLBool b) = PBool b
 primFromTypeLiteral TLUnit = PUnit
 

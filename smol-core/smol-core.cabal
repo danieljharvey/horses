@@ -124,9 +124,24 @@ test-suite smol-core-tests
   build-depends:
       hspec >=2.8.3 && <3
     , hspec-core >=2.8.3 && <3
-  exposed-modules:
-    Main
-   , Compile.RunLLVM
+  other-modules:
+     Compile.RunLLVM
+   , Test.Helpers
+   , Test.IR.CompileSpec
+   , Test.IR.DataTypesSpec
+   , Test.IR.FromExprSpec
+   , Test.IR.IRSpec
+   , Test.IR.PatternSpec
+   , Test.IR.RawSamples
+   , Test.IR.Samples
+   , Test.Interpreter.InterpreterSpec
+   , Test.ParserSpec
+   , Test.Transform.FlattenPatternSpec
+   , Test.Typecheck.ExhaustivenessSpec
+   , Test.Typecheck.NestingMonadSpec
+   , Test.Typecheck.SubtypeSpec
+   , Test.TypecheckSpec
+
    , ExprUtils
    , Helpers
    , IR.FromExpr.DataTypes
@@ -150,21 +165,6 @@ test-suite smol-core-tests
    , Parser.Type
    , Printer
    , SourceSpan
-   , Test.Helpers
-   , Test.IR.CompileSpec
-   , Test.IR.DataTypesSpec
-   , Test.IR.FromExprSpec
-   , Test.IR.IRSpec
-   , Test.IR.PatternSpec
-   , Test.IR.RawSamples
-   , Test.IR.Samples
-   , Test.Interpreter.InterpreterSpec
-   , Test.ParserSpec
-   , Test.Transform.FlattenPatternSpec
-   , Test.Typecheck.ExhaustivenessSpec
-   , Test.Typecheck.NestingMonadSpec
-   , Test.Typecheck.SubtypeSpec
-   , Test.TypecheckSpec
    , Transform.FlattenPattern
    , TypeUtils
    , Typecheck

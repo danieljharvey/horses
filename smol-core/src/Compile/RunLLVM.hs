@@ -3,13 +3,12 @@
 
 module Compile.RunLLVM (run, moduleFromExpr, RunResult (..)) where
 
-import Data.FileEmbed
-import qualified Data.Text.Encoding as T
-
 import Control.Exception (bracket)
+import Data.FileEmbed
 import Data.String.Conversions
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import IR.FromExpr.Expr
 import IR.ToLLVM.ToLLVM
@@ -49,8 +48,7 @@ compile llvmModule outfile =
       (llvm, llvmHandle) <- mkstemps "output" ".ll"
       (runtime, runtimeHandle) <- mkstemps "runtime" ".c"
 
-      let
-          moduleText = cs (ppllvm llvmModule)
+      let moduleText = cs (ppllvm llvmModule)
 
       -- T.putStrLn moduleText
 
