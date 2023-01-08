@@ -77,6 +77,10 @@ bench:
 format:
 	@ormolu --mode inplace $(HS_FILES) && echo "Ormolu success!"
 
+.PHONY: hlint
+hlint:
+	@hlint $(HS_FILES)
+
 .PHONY: generate-swagger
 generate-swagger: install
 	$(shell cabal list-bin server:exe:mimsa-server) generate-swagger
