@@ -45,5 +45,5 @@ jobs:
           cabal-version: '3.8.1.0'
 
       - name: Test smol 
-        run: make test-core
+        run: make test-smol
 
