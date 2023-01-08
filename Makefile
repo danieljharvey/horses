@@ -1,4 +1,4 @@
-HS_FILES = $(shell git ls-files '*.hs')
+HS_FILES = $(shell git ls-files '*.hs' | grep -v '^vendored/')
 
 .PHONY: ghcid
 ghcid:
@@ -24,6 +24,14 @@ ghcid-repl:
 ghcid-server:
 	ghcid -c "cabal repl server:exe:mimsa-server" -l=hlint
 
+.PHONY: ghcid-smol
+ghcid-smol:
+	ghcid -c "cabal repl smol-core"
+
+.PHONY: ghcid-smol-test
+ghcid-smol-test:
+	ghcid -c "cabal repl smol-core:test:smol-core-tests" --test "main"
+
 .PHONY: update
 update:
 	cabal update
@@ -45,6 +53,10 @@ run-server:
 test:
 	cabal run mimsa:test:mimsa-test
 
+.PHONY: test-smol
+test-smol:
+	cabal run smol-core:test:smol-core-tests
+
 .PHONY: test-core
 test-core:
 	cabal run core:test:core-test
@@ -64,6 +76,10 @@ bench:
 .PHONY: format
 format:
 	@ormolu --mode inplace $(HS_FILES) && echo "Ormolu success!"
+
+.PHONY: hlint
+hlint:
+	@hlint $(HS_FILES)
 
 .PHONY: generate-swagger
 generate-swagger: install
