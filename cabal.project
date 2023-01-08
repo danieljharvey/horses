@@ -3,7 +3,8 @@ packages:
   server/server.cabal,
   repl/repl.cabal,
   core/core.cabal,
-  smol-core/smol-core.cabal
+  smol-core/smol-core.cabal,
+  vendored/**/*.cabal
 
 package diagnose
   flags: +megaparsec-compat

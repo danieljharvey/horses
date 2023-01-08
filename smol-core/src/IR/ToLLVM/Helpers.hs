@@ -183,7 +183,7 @@ callClosure opFunc opArg = do
 -- | call a function that returns a struct, initialising a struct for it to
 -- fill, then passing that to the function
 callWithReturnStruct ::
-  L.MonadIRBuilder m =>
+  (L.MonadModuleBuilder m, L.MonadIRBuilder m) =>
   Op.Operand ->
   Type ->
   [Op.Operand] ->

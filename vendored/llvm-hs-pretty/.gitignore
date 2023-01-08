@@ -1,0 +1,14 @@
+*.sw[klmnop]
+*.o
+*.so
+cabal.sandbox.config
+.cabal-sandbox
+dist/
+*.hi
+.stack-work
+tests/output/*.ll
+*.s
+dist-newstyle/
+cabal.project.local
+*~
+.ghc.environment.*
