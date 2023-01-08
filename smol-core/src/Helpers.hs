@@ -10,12 +10,14 @@ module Helpers
     mapToNumbered,
     tryError,
     fromRight,
+    foldMapM,
   )
 where
 
 import Control.Monad
 import Control.Monad.Except
 import Data.Bifunctor
+import Data.Foldable (foldlM)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -68,3 +70,29 @@ fromRight :: (Show e) => Either e a -> a
 fromRight = \case
   Right a -> a
   Left e -> error (show e)
+
+-------
+
+-- from https://hackage.haskell.org/package/rio-0.1.22.0/docs/src/RIO.Prelude.Extra.html#foldMapM
+
+-- | Extend 'foldMap' to allow side effects.
+--
+-- Internally, this is implemented using a strict left fold. This is used for
+-- performance reasons. It also necessitates that this function has a @Monad@
+-- constraint and not just an @Applicative@ constraint. For more information,
+-- see
+-- <https://github.com/commercialhaskell/rio/pull/99#issuecomment-394179757>.
+--
+-- @since 0.1.3.0
+foldMapM ::
+  (Monad m, Monoid w, Foldable t) =>
+  (a -> m w) ->
+  t a ->
+  m w
+foldMapM f =
+  foldlM
+    ( \acc a -> do
+        w <- f a
+        return $! mappend acc w
+    )
+    mempty

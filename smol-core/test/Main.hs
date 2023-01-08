@@ -12,12 +12,12 @@ import qualified Test.Typecheck.NestingMonadSpec
 import qualified Test.Typecheck.SubtypeSpec
 import qualified Test.TypecheckSpec
 import qualified Test.Typecheck.ExhaustivenessSpec
+import qualified Test.Transform.FlattenPatternSpec
 
 main :: IO ()
 main = hspec $ do
   Test.IR.DataTypesSpec.spec
   Test.IR.PatternSpec.spec
-
   Test.TypecheckSpec.spec
   Test.Typecheck.SubtypeSpec.spec
   Test.Typecheck.NestingMonadSpec.spec
@@ -27,3 +27,4 @@ main = hspec $ do
   Test.IR.CompileSpec.spec
   Test.IR.IRSpec.spec
   Test.Interpreter.InterpreterSpec.spec
+  Test.Transform.FlattenPatternSpec.spec

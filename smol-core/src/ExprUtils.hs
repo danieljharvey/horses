@@ -2,6 +2,7 @@ module ExprUtils
   ( typeIsStruct,
     mapOuterExprAnnotation,
     mapExpr,
+    bindExpr,
     mapPattern,
     patternMonoid,
   )
@@ -59,6 +60,27 @@ mapExpr f (ERecordAccess ann expr ident) =
   ERecordAccess ann (f expr) ident
 mapExpr f (EPatternMatch ann patExpr pats) =
   EPatternMatch ann (f patExpr) (second f <$> pats)
+
+bindExpr :: (Applicative m) => (Expr ann -> m (Expr ann)) -> Expr ann -> m (Expr ann)
+bindExpr f (EInfix ann op a b) = EInfix ann op <$> f a <*> f b
+bindExpr f (EAnn ann mt expr) = EAnn ann mt <$> f expr
+bindExpr _ (EPrim ann a) = pure $ EPrim ann a
+bindExpr _ (EVar ann a) = pure $ EVar ann a
+bindExpr _ (EConstructor ann a) = pure $ EConstructor ann a
+bindExpr f (ELet ann ident expr rest) = ELet ann ident <$> f expr <*> f rest
+bindExpr f (ELambda ann ident body) = ELambda ann ident <$> f body
+bindExpr f (EApp ann fn arg) = EApp ann <$> f fn <*> f arg
+bindExpr f (EIf ann predExp thenExp elseExp) =
+  EIf ann <$> f predExp <*> f thenExp <*> f elseExp
+bindExpr f (ETuple ann a as) = ETuple ann <$> f a <*> traverse f as
+bindExpr _ (EGlobal ann ident) = pure $ EGlobal ann ident
+bindExpr f (EGlobalLet ann ident expr rest) =
+  EGlobalLet ann ident <$> f expr <*> f rest
+bindExpr f (ERecord ann as) = ERecord ann <$> traverse f as
+bindExpr f (ERecordAccess ann expr ident) =
+  ERecordAccess ann <$> f expr <*> pure ident
+bindExpr f (EPatternMatch ann patExpr pats) =
+  EPatternMatch ann <$> f patExpr <*> traverse (\(a, b) -> (,) a <$> f b) pats
 
 mapPattern :: (Pattern ann -> Pattern ann) -> Pattern ann -> Pattern ann
 mapPattern _ (PLiteral ann l) = PLiteral ann l
