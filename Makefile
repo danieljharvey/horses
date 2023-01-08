@@ -53,6 +53,11 @@ run-server:
 test:
 	cabal run mimsa:test:mimsa-test
 
+.PHONY: test-smol
+test-smol:
+	cabal run smol-core:test:smol-core-tests
+
+
 .PHONY: test-core
 test-core:
 	cabal run core:test:core-test
