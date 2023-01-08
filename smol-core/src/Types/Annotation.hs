@@ -7,12 +7,6 @@ module Types.Annotation
   )
 where
 
-import Prettyprinter
-import Printer
-
-instance Printer Annotation where
-  prettyDoc (Location a b) = "(" <> pretty a <> "," <> pretty b <> ")"
-
 data Annotation = Location Int Int
   deriving stock (Eq, Ord, Show)
 

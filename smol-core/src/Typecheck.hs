@@ -170,6 +170,12 @@ inferInfix ann OpEquals a b = do
     (throwError (TCCompoundTypeInEquality tyB))
   pure (EInfix (TPrim ann TPBool) OpEquals elabA elabB)
 
+typeLiteralFromPrim :: Prim -> TypeLiteral
+typeLiteralFromPrim (PBool b) = TLBool b
+typeLiteralFromPrim (PInt a) = TLInt a
+typeLiteralFromPrim (PNat a) = TLInt (fromIntegral a)
+typeLiteralFromPrim PUnit = TLUnit
+
 -- | infer synthesizes values
 -- from introduction forms
 infer ::

@@ -45,7 +45,6 @@ data TCError ann
   | TCInfixMismatch Smol.Op (Smol.Type ann) (Smol.Type ann)
   | TCPatternMismatch (Smol.Pattern ann) (Smol.Type ann)
   | TCUnknownConstructor Smol.Constructor [Smol.Constructor]
-  | TCUnknownTypeName Smol.TypeName [Smol.TypeName]
   | TCConstructorArgumentMismatch Smol.Constructor Int Int -- expected, actual
   | TCExpectedConstructorType (Smol.Type ann)
   | TCCompoundTypeInEquality (Smol.Type ann) -- for now we only do primitive equality

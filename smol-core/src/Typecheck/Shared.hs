@@ -1,13 +1,12 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeApplications #-}
 module Typecheck.Shared
   ( getExprAnnotation,
     getPatternAnnotation,
     getTypeAnnotation,
-    typeLiteralFromPrim,
-    primFromTypeLiteral,
     getUnknown,
     getClosureType,
     reduceType,
@@ -29,6 +28,7 @@ module Typecheck.Shared
     tellGlobal,
     listenGlobals,
     freshen,
+    primFromTypeLiteral
   )
 where
 
@@ -45,6 +45,18 @@ import Typecheck.FreeVars
 import Typecheck.Substitute
 import Typecheck.Types
 import Types
+
+lookupTypeName ::
+  (
+    MonadReader (TCEnv ann) m
+  ) =>
+  TypeName ->
+  m (DataType ann)
+lookupTypeName tn = do
+  maybeDt <- asks (M.lookup tn . tceDataTypes)
+  case maybeDt of
+    Just dt -> pure dt
+    Nothing -> error $ "couldn't find datatype for " <> show tn
 
 getExprAnnotation :: Expr ann -> ann
 getExprAnnotation (EInfix ann _ _ _) = ann
@@ -83,15 +95,9 @@ getTypeAnnotation (TLiteral ann _) = ann
 getTypeAnnotation (TRecord ann _) = ann
 getTypeAnnotation (TUnion ann _ _) = ann
 
-typeLiteralFromPrim :: Prim -> TypeLiteral
-typeLiteralFromPrim (PBool b) = TLBool b
-typeLiteralFromPrim (PInt a) = TLInt a
-typeLiteralFromPrim (PNat a) = TLInt (fromIntegral a)
-typeLiteralFromPrim PUnit = TLUnit
-
 primFromTypeLiteral :: TypeLiteral -> Prim
+primFromTypeLiteral (TLInt i) =  PInt i
 primFromTypeLiteral (TLBool b) = PBool b
-primFromTypeLiteral (TLInt a) = PInt a
 primFromTypeLiteral TLUnit = PUnit
 
 getUnknown :: (MonadState (TCState ann) m) => ann -> m (Type ann)
@@ -161,20 +167,6 @@ lookupConstructor constructor = do
       allDataTypes <- asks tceDataTypes
       let availableConstructors = concatMap (\(DataType _ _ as) -> M.keys as) (M.elems allDataTypes)
       throwError (TCUnknownConstructor constructor availableConstructors)
-
-lookupTypeName ::
-  ( MonadReader (TCEnv ann) m,
-    MonadError (TCError ann) m
-  ) =>
-  TypeName ->
-  m (DataType ann)
-lookupTypeName typeName = do
-  maybeDt <- asks (M.lookup typeName . tceDataTypes)
-  case maybeDt of
-    Just dt -> pure dt
-    Nothing -> do
-      allTypeNames <- asks (M.keys . tceDataTypes)
-      throwError (TCUnknownTypeName typeName allTypeNames)
 
 dataTypeWithVars ::
   ann ->
