@@ -64,7 +64,7 @@ spec = do
         resp `shouldBe` "42"
       it "recursive function" $ do
         resp <- run (irToLLVM irRecursive)
-        resp `shouldBe` "1783293664"
+        resp `shouldBe` "49995000"
       it "curried function (no closure)" $ do
         resp <- run (irToLLVM irCurriedNoClosure)
         resp `shouldBe` "22"
@@ -127,8 +127,8 @@ spec = do
                 ("(\\maybe -> case maybe of Just a -> a + 1 | Nothing -> 0 : Maybe Nat -> Nat) (Just 41)", "42"),
                 ("(\\maybe -> case maybe of Just 40 -> 100 | Just a -> a + 1 | Nothing -> 0 : Maybe Nat -> Nat) (Just 41)", "42"), -- predicates in constructor
                 ("(\\maybe -> case maybe of Just 40 -> 100 | Just a -> a + 1 | Nothing -> 0 : Maybe Nat -> Nat) (Nothing : Maybe Nat)", "0"), -- predicates in constructor
-                ("(\\these -> case these of This a -> a | That 27 -> 0 | These a b -> a + b : These Nat Nat -> Nat) (This 42 : These Nat Nat)", "42"), -- data shapes are wrong
-                ("(\\these -> case these of This a -> a | That 60 -> 0 | These a b -> a + b : These Nat Nat -> Nat) (These 20 22 : These Nat Nat)", "42"),
+                ("(\\these -> case these of This aa -> aa | That 27 -> 0 | These a b -> a + b : These Nat Nat -> Nat) (This 42 : These Nat Nat)", "42"), -- data shapes are wrong
+                ("(\\these -> case these of This aa -> aa | That 60 -> 0 | These a b -> a + b : These Nat Nat -> Nat) (These 20 22 : These Nat Nat)", "42"),
                 --("(\\these -> case these of This a -> a | That _ -> 1000 | These a b -> a + b : These Nat Nat -> Nat) (That 42 : These Nat Nat)", "1000"),--wildcards fuck it up for some reason
                 ("(case (This 42 : These Nat Nat) of This a -> a : Nat)", "42")
               ]

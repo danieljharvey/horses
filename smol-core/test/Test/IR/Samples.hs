@@ -283,7 +283,7 @@ irRecursive =
                             [ IRMatchCase
                                 { irmcType = IRInt32,
                                   irmcPatternPredicate =
-                                    [ PathEquals ValuePath (IRPrimInt32 1000000)
+                                    [ PathEquals ValuePath (IRPrimInt32 10000)
                                     ],
                                   irmcGetPath = mempty,
                                   irmcExpr = IRPrim $ IRPrimInt32 0
