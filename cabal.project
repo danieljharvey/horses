@@ -2,9 +2,16 @@ packages:
   compiler/mimsa.cabal,
   server/server.cabal,
   repl/repl.cabal,
-  core/core.cabal
+  core/core.cabal,
+  smol-core/smol-core.cabal
 
 package diagnose
   flags: +megaparsec-compat
+
+source-repository-package
+  type: git
+  location: https://github.com/novadiscovery/llvm-hs.git
+  tag: 5942a8b750a5754abdb2e978e7bff746db746d49
+  subdir: llvm-hs-pure
 
 allow-newer: all
