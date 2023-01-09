@@ -1,4 +1,5 @@
 HS_FILES = $(shell git ls-files '*.hs' | grep -v 'vendored/')
+CABAL_FILES = $(shell git ls-files '*.cabal' | grep -v 'vendored/')
 
 .PHONY: ghcid
 ghcid:
@@ -33,14 +34,6 @@ ghcid-smol:
 .PHONY: ghcid-smol-test
 ghcid-smol-test:
 	ghcid -c "cabal repl smol-core:test:smol-core-tests" --test "main"
-
-.PHONY: ghcid-smol-compiler
-ghcid-smol-compiler:
-	ghcid -c "cabal repl smol-compiler" -l=hlint
-
-.PHONY: ghcid-smol-compiler-test
-ghcid-smol-compiler-test:
-	ghcid -c "cabal repl smol-compiler:test:smol-compiler-test" -l=hlint
 
 .PHONY: update
 update:
@@ -94,3 +87,7 @@ hlint:
 .PHONY: generate-swagger
 generate-swagger: install
 	$(shell cabal list-bin server:exe:mimsa-server) generate-swagger
+
+.PHONY: format-cabal
+format-cabal:
+	@cabal-fmt $(CABAL_FILES)

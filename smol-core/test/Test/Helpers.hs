@@ -28,8 +28,7 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import GHC.Natural
-import Parser
-import Types
+import Smol.Core
 
 tyBool :: (Monoid ann) => Type ann
 tyBool = TPrim mempty TPBool

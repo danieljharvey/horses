@@ -69,52 +69,58 @@ library
     hs-source-dirs:   src
     default-language: Haskell2010
     exposed-modules:
-      Compile.RunLLVM
-      ExprUtils
-      Helpers
-      Interpreter.Convert
-      Interpreter.Interpret
-      Interpreter.Types
-      IR.FromExpr.DataTypes
-      IR.FromExpr.Expr
-      IR.FromExpr.Helpers
-      IR.FromExpr.Pattern
-      IR.FromExpr.Type
-      IR.FromExpr.Types
-      IR.ToLLVM.Patterns
-      IR.ToLLVM.Helpers
-      IR.ToLLVM.ToLLVM
-      Parser
-      Parser.Identifiers
-      Parser.Pattern
-      Parser.Primitives
-      Parser.Shared
-      Parser.Type
-      Printer
-      SourceSpan
-      Typecheck
-      Typecheck.FreeVars
-      Typecheck.Shared
-      Typecheck.Types
-      Typecheck.Errors
-      Typecheck.Substitute
-      Typecheck.Subtype
-      Types.Annotation
-      Types.DataType
-      Types.Expr
-      Types.GetPath
-      Types.Pattern
-      Types.PatternMatchError
-      Types.PatternPredicate
-      Types.Prim
-      Types.SourceSpan
-      Types.Type
-      Types.TypeName
-      Types
-      Types.Constructor
-      Types.Identifier
-      TypeUtils
-      IR.IRExpr
+      Smol.Core
+      Smol.Core.Compile.RunLLVM
+      Smol.Core.ExprUtils
+      Smol.Core.Helpers
+      Smol.Core.Interpreter.Convert
+      Smol.Core.Interpreter.Interpret
+      Smol.Core.Interpreter.Types
+      Smol.Core.IR.FromExpr.DataTypes
+      Smol.Core.IR.FromExpr.Expr
+      Smol.Core.IR.FromExpr.Helpers
+      Smol.Core.IR.FromExpr.Pattern
+      Smol.Core.IR.FromExpr.Type
+      Smol.Core.IR.FromExpr.Types
+      Smol.Core.IR.ToLLVM.Patterns
+      Smol.Core.IR.ToLLVM.Helpers
+      Smol.Core.IR.ToLLVM.ToLLVM
+      Smol.Core.Parser
+      Smol.Core.Parser.Identifiers
+      Smol.Core.Parser.Pattern
+      Smol.Core.Parser.Primitives
+      Smol.Core.Parser.Shared
+      Smol.Core.Parser.Type
+      Smol.Core.Printer
+      Smol.Core.SourceSpan
+      Smol.Core.Typecheck
+      Smol.Core.Typecheck.FreeVars
+      Smol.Core.Typecheck.Shared
+      Smol.Core.Typecheck.Types
+      Smol.Core.Typecheck.Errors
+      Smol.Core.Typecheck.Substitute
+      Smol.Core.Typecheck.Subtype
+      Smol.Core.Types.Annotation
+      Smol.Core.Types.DataType
+      Smol.Core.Types.Expr
+      Smol.Core.Types.GetPath
+      Smol.Core.Types.Pattern
+      Smol.Core.Types.PatternMatchError
+      Smol.Core.Types.PatternPredicate
+      Smol.Core.Types.Prim
+      Smol.Core.Types.SourceSpan
+      Smol.Core.Types.Type
+      Smol.Core.Types.TypeName
+      Smol.Core.Types
+      Smol.Core.Types.Constructor
+      Smol.Core.Types.Identifier
+      Smol.Core.TypeUtils
+      Smol.Core.IR.IRExpr
+      Smol.Core.Interpreter
+      Smol.Core.Transform
+      Smol.Core.Transform.FlattenPattern
+      Smol.Core.Typecheck.Elaborate
+      Smol.Core.Typecheck.Exhaustiveness
 
 test-suite smol-core-tests
   import: shared
@@ -125,7 +131,7 @@ test-suite smol-core-tests
       hspec >=2.8.3 && <3
     , hspec-core >=2.8.3 && <3
   other-modules:
-     Compile.RunLLVM
+     Smol.Core.Compile.RunLLVM
    , Test.Helpers
    , Test.IR.CompileSpec
    , Test.IR.DataTypesSpec
@@ -142,53 +148,7 @@ test-suite smol-core-tests
    , Test.Typecheck.SubtypeSpec
    , Test.TypecheckSpec
 
-   , ExprUtils
-   , Helpers
-   , IR.FromExpr.DataTypes
-   , IR.FromExpr.Expr
-   , IR.FromExpr.Helpers
-   , IR.FromExpr.Pattern
-   , IR.FromExpr.Type
-   , IR.FromExpr.Types
-   , IR.IRExpr
-   , IR.ToLLVM.Helpers
-   , IR.ToLLVM.Patterns
-   , IR.ToLLVM.ToLLVM
-   , Interpreter.Convert
-   , Interpreter.Interpret
-   , Interpreter.Types
-   , Parser
-   , Parser.Identifiers
-   , Parser.Pattern
-   , Parser.Primitives
-   , Parser.Shared
-   , Parser.Type
-   , Printer
-   , SourceSpan
-   , Transform.FlattenPattern
-   , TypeUtils
-   , Typecheck
-   , Typecheck.Errors
-   , Typecheck.Exhaustiveness
-   , Typecheck.FreeVars
-   , Typecheck.Shared
-   , Typecheck.Substitute
-   , Typecheck.Subtype
-   , Typecheck.Types
-   , Types
-   , Types.Annotation
-   , Types.Constructor
-   , Types.DataType
-   , Types.Expr
-   , Types.GetPath
-   , Types.Identifier
-   , Types.Pattern
-   , Types.PatternMatchError
-   , Types.PatternPredicate
-   , Types.Prim
-   , Types.SourceSpan
-   , Types.Type
-   , Types.TypeName
+   , Smol.Core
   main-is: Main.hs
   default-language: Haskell2010
 

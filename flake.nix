@@ -45,6 +45,7 @@
             hlint
             ormolu
             ghcid
+            cabal-fmt
             cabal-install
             pkgs.zlib # used by `digest` package
             pkgs.nodejs-18_x

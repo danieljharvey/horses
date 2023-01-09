@@ -17,7 +17,7 @@ module Test.IR.RawSamples
   )
 where
 
-import IR.ToLLVM.Helpers
+import Smol.Core.IR.ToLLVM.Helpers
 import LLVM.AST hiding (function)
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Operand as Op

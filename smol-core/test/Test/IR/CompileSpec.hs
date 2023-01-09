@@ -2,7 +2,7 @@
 
 module Test.IR.CompileSpec (spec) where
 
-import qualified Compile.RunLLVM as Run
+import qualified Smol.Core.Compile.RunLLVM as Run
 import Data.Text (Text)
 import LLVM.AST hiding (function)
 import Test.Hspec

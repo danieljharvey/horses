@@ -6,12 +6,9 @@ import Control.Monad.Reader
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
-import Interpreter.Convert
-import Interpreter.Interpret
-import Interpreter.Types
+import Smol.Core
 import Test.Helpers
 import Test.Hspec
-import Types
 
 doInterpret :: Text -> Expr ()
 doInterpret =

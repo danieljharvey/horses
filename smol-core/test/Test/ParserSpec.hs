@@ -7,10 +7,9 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import Parser
 import Test.Helpers
 import Test.Hspec
-import Types
+import Smol.Core
 
 spec :: Spec
 spec = do

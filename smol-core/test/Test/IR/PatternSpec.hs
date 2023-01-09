@@ -2,24 +2,30 @@
 
 module Test.IR.PatternSpec (spec) where
 
-import Control.Monad.State
+import Control.Monad.State ( evalState )
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
-import IR.FromExpr.Pattern
-import IR.ToLLVM.Patterns
-import Test.Helpers
-import Test.Hspec
-import Typecheck (builtInTypes)
-import Types
-import qualified Types as Smol
+import Smol.Core.IR.FromExpr.Pattern ( predicatesFromPattern )
+import Smol.Core.Types.GetPath ( GetPath(StructPath, ValuePath) )
+import Smol.Core.Types.PatternPredicate
+    ( PatternPredicate(PathEquals) )
+import Test.Helpers ( tyBool, tyCons )
+import Test.Hspec ( Spec, describe, it, shouldBe )
+import Smol.Core.Typecheck.Elaborate ( builtInTypes )
+import Smol.Core.Types.Prim ( Prim(PInt, PNat, PBool) )
+import Smol.Core.Types.Type ( Type(TPrim), TypePrim(TPInt) )
+import qualified Smol.Core.Types.DataType as Smol ( DataType )
+import qualified Smol.Core.Types.Pattern as Smol
+    ( Pattern(PConstructor, PWildcard, PTuple, PLiteral) )
+import qualified Smol.Core.Types.TypeName as Smol ( TypeName )
 
 newtype Env ann = Env
   { dataTypes :: Map Smol.TypeName (Smol.DataType ann)
   }
 
-emptyEnv :: (Monoid ann) => Env ann
-emptyEnv =
+env :: (Monoid ann) => Env ann
+env =
   Env
     { dataTypes = builtInTypes
     }
@@ -60,7 +66,7 @@ spec = do
           ]
     traverse_
       ( \(input, result) -> it (show input) $ do
-          let predResult = evalState (predicatesFromPattern id input) emptyEnv
+          let predResult = evalState (predicatesFromPattern id input) env
           predResult `shouldBe` result
       )
       testVals

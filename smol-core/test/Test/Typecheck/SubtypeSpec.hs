@@ -7,9 +7,7 @@ import Data.Either
 import Data.Foldable (traverse_)
 import Test.Helpers
 import Test.Hspec
-import Typecheck.Substitute
-import Typecheck.Subtype
-import Types
+import Smol.Core
 
 -- Repeat after me, Duck is a subtype of Bird
 -- so Duck <: Bird

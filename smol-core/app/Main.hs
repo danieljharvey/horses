@@ -9,10 +9,10 @@ import Error.Diagnose
 import qualified Interpreter.Convert as Interpret
 import qualified Interpreter.Interpret as Interpret
 import Parser
-import Printer
+import Smol.Core.Printer
 import Typecheck
 import Typecheck.Errors
-import Types.Expr
+import Smol.Core.Types.Expr
 
 doInterpret :: Expr ann -> Expr ()
 doInterpret =
