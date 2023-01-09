@@ -36,6 +36,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: ["compiler/", "core/", "server/", "repl/", "smol-core/"]
+          path: '["compiler/", "core/", "server/", "repl/", "smol-core/"]'
           fail-on: warning
 
