@@ -20,135 +20,139 @@ maintainer:         danieljamesharvey@gmail.com
 -- copyright:
 -- category:
 extra-source-files:
-    CHANGELOG.md
-  , static/runtime.c
+  CHANGELOG.md
+  static/runtime.c
 
 common shared
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wno-unticked-promoted-constructors -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wmissing-deriving-strategies
+  ghc-options:
+    -threaded -rtsopts -with-rtsopts=-N -Wall
+    -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
   build-depends:
-      base
-    , containers
-    , file-embed
-    , mtl
-    , text
-    , megaparsec
-    , parser-combinators
-    , llvm-hs-pure
-    , llvm-hs-pretty
-    , string-conversions
-    , directory
-    , process
-    , unix
-    , bytestring
-    , prettyprinter
     , array
+    , base
+    , bytestring
+    , containers
     , diagnose
+    , directory
+    , file-embed
+    , llvm-hs-pretty
+    , llvm-hs-pure
+    , megaparsec
+    , mtl
+    , parser-combinators
+    , prettyprinter
+    , process
+    , string-conversions
+    , text
+    , unix
 
 executable smol-core
-    import: shared
-    main-is:          Main.hs
-    build-depends:
-      smol-core
+  import:           shared
+  main-is:          Main.hs
+  build-depends:    smol-core
 
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
 
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    hs-source-dirs:   app
-    default-language: Haskell2010
-
-library 
-    import: shared
-
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    hs-source-dirs:   src
-    default-language: Haskell2010
-    exposed-modules:
-      Smol.Core
-      Smol.Core.Compile.RunLLVM
-      Smol.Core.ExprUtils
-      Smol.Core.Helpers
-      Smol.Core.Interpreter.Convert
-      Smol.Core.Interpreter.Interpret
-      Smol.Core.Interpreter.Types
-      Smol.Core.IR.FromExpr.DataTypes
-      Smol.Core.IR.FromExpr.Expr
-      Smol.Core.IR.FromExpr.Helpers
-      Smol.Core.IR.FromExpr.Pattern
-      Smol.Core.IR.FromExpr.Type
-      Smol.Core.IR.FromExpr.Types
-      Smol.Core.IR.ToLLVM.Patterns
-      Smol.Core.IR.ToLLVM.Helpers
-      Smol.Core.IR.ToLLVM.ToLLVM
-      Smol.Core.Parser
-      Smol.Core.Parser.Identifiers
-      Smol.Core.Parser.Pattern
-      Smol.Core.Parser.Primitives
-      Smol.Core.Parser.Shared
-      Smol.Core.Parser.Type
-      Smol.Core.Printer
-      Smol.Core.SourceSpan
-      Smol.Core.Typecheck
-      Smol.Core.Typecheck.FreeVars
-      Smol.Core.Typecheck.Shared
-      Smol.Core.Typecheck.Types
-      Smol.Core.Typecheck.Errors
-      Smol.Core.Typecheck.Substitute
-      Smol.Core.Typecheck.Subtype
-      Smol.Core.Types.Annotation
-      Smol.Core.Types.DataType
-      Smol.Core.Types.Expr
-      Smol.Core.Types.GetPath
-      Smol.Core.Types.Pattern
-      Smol.Core.Types.PatternMatchError
-      Smol.Core.Types.PatternPredicate
-      Smol.Core.Types.Prim
-      Smol.Core.Types.SourceSpan
-      Smol.Core.Types.Type
-      Smol.Core.Types.TypeName
-      Smol.Core.Types
-      Smol.Core.Types.Constructor
-      Smol.Core.Types.Identifier
-      Smol.Core.TypeUtils
-      Smol.Core.IR.IRExpr
-      Smol.Core.Interpreter
-      Smol.Core.Transform
-      Smol.Core.Transform.FlattenPattern
-      Smol.Core.Typecheck.Elaborate
-      Smol.Core.Typecheck.Exhaustiveness
-
-test-suite smol-core-tests
-  import: shared
-  type: exitcode-stdio-1.0
-  hs-source-dirs: test
-  hs-source-dirs: src
-  build-depends:
-      hspec >=2.8.3 && <3
-    , hspec-core >=2.8.3 && <3
-  other-modules:
-     Smol.Core.Compile.RunLLVM
-   , Test.Helpers
-   , Test.IR.CompileSpec
-   , Test.IR.DataTypesSpec
-   , Test.IR.FromExprSpec
-   , Test.IR.IRSpec
-   , Test.IR.PatternSpec
-   , Test.IR.RawSamples
-   , Test.IR.Samples
-   , Test.Interpreter.InterpreterSpec
-   , Test.ParserSpec
-   , Test.Transform.FlattenPatternSpec
-   , Test.Typecheck.ExhaustivenessSpec
-   , Test.Typecheck.NestingMonadSpec
-   , Test.Typecheck.SubtypeSpec
-   , Test.TypecheckSpec
-
-   , Smol.Core
-  main-is: Main.hs
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   app
   default-language: Haskell2010
 
+library
+  import:           shared
+
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+  exposed-modules:
+    Smol.Core
+    Smol.Core.Compile.RunLLVM
+    Smol.Core.ExprUtils
+    Smol.Core.Helpers
+    Smol.Core.Interpreter
+    Smol.Core.Interpreter.Convert
+    Smol.Core.Interpreter.Interpret
+    Smol.Core.Interpreter.Types
+    Smol.Core.IR.FromExpr.DataTypes
+    Smol.Core.IR.FromExpr.Expr
+    Smol.Core.IR.FromExpr.Helpers
+    Smol.Core.IR.FromExpr.Pattern
+    Smol.Core.IR.FromExpr.Type
+    Smol.Core.IR.FromExpr.Types
+    Smol.Core.IR.IRExpr
+    Smol.Core.IR.ToLLVM.Helpers
+    Smol.Core.IR.ToLLVM.Patterns
+    Smol.Core.IR.ToLLVM.ToLLVM
+    Smol.Core.Parser
+    Smol.Core.Parser.Identifiers
+    Smol.Core.Parser.Pattern
+    Smol.Core.Parser.Primitives
+    Smol.Core.Parser.Shared
+    Smol.Core.Parser.Type
+    Smol.Core.Printer
+    Smol.Core.SourceSpan
+    Smol.Core.Transform
+    Smol.Core.Transform.FlattenPattern
+    Smol.Core.Typecheck
+    Smol.Core.Typecheck.Elaborate
+    Smol.Core.Typecheck.Errors
+    Smol.Core.Typecheck.Exhaustiveness
+    Smol.Core.Typecheck.FreeVars
+    Smol.Core.Typecheck.Shared
+    Smol.Core.Typecheck.Substitute
+    Smol.Core.Typecheck.Subtype
+    Smol.Core.Typecheck.Types
+    Smol.Core.Types
+    Smol.Core.Types.Annotation
+    Smol.Core.Types.Constructor
+    Smol.Core.Types.DataType
+    Smol.Core.Types.Expr
+    Smol.Core.Types.GetPath
+    Smol.Core.Types.Identifier
+    Smol.Core.Types.Pattern
+    Smol.Core.Types.PatternMatchError
+    Smol.Core.Types.PatternPredicate
+    Smol.Core.Types.Prim
+    Smol.Core.Types.SourceSpan
+    Smol.Core.Types.Type
+    Smol.Core.Types.TypeName
+    Smol.Core.TypeUtils
+
+test-suite smol-core-tests
+  import:           shared
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  hs-source-dirs:   src
+  build-depends:
+    , hspec       >=2.8.3 && <3
+    , hspec-core  >=2.8.3 && <3
+
+  other-modules:
+    Smol.Core
+    Smol.Core.Compile.RunLLVM
+    Test.Helpers
+    Test.Interpreter.InterpreterSpec
+    Test.IR.CompileSpec
+    Test.IR.DataTypesSpec
+    Test.IR.FromExprSpec
+    Test.IR.IRSpec
+    Test.IR.PatternSpec
+    Test.IR.RawSamples
+    Test.IR.Samples
+    Test.ParserSpec
+    Test.Transform.FlattenPatternSpec
+    Test.Typecheck.ExhaustivenessSpec
+    Test.Typecheck.NestingMonadSpec
+    Test.Typecheck.SubtypeSpec
+    Test.TypecheckSpec
+
+  main-is:          Main.hs
+  default-language: Haskell2010

@@ -90,4 +90,4 @@ generate-swagger: install
 
 .PHONY: format-cabal
 format-cabal:
-	@cabal-fmt $(CABAL_FILES)
+	@cabal-fmt -i $(CABAL_FILES)
