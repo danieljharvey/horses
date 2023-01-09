@@ -16,8 +16,8 @@ where
 
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import IR.IRExpr
-import IR.ToLLVM.Patterns
+import Smol.Core.IR.IRExpr
+import Smol.Core.IR.ToLLVM.Patterns
 
 irPrintInt :: IRModulePart
 irPrintInt =

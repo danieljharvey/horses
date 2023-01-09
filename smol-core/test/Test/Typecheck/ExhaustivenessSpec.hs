@@ -7,17 +7,13 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
--- import Data.Either
 import qualified Data.List.NonEmpty as NE
+import Smol.Core
 import Test.Helpers
 import Test.Hspec
-import Typecheck
-import Typecheck.Exhaustiveness
-import Typecheck.Types
-import Types
 
-emptyEnv :: (Monoid ann) => TCEnv ann
-emptyEnv = TCEnv mempty mempty builtInTypes
+env :: (Monoid ann) => TCEnv ann
+env = TCEnv mempty mempty builtInTypes
 
 type PatternM = ExceptT (TCError Annotation) (Reader (TCEnv Annotation))
 
@@ -28,7 +24,7 @@ runPatternM ::
   PatternM a ->
   Either (TCError Annotation) a
 runPatternM value =
-  runReader (runExceptT value) emptyEnv
+  runReader (runExceptT value) env
 
 exhaustiveCheck ::
   [Pattern (Type Annotation)] ->

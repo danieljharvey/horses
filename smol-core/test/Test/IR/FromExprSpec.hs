@@ -9,14 +9,14 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.Text (Text)
-import qualified IR.FromExpr.Expr as IR
-import IR.IRExpr
-import IR.ToLLVM.Patterns
+import qualified Smol.Core.IR.FromExpr.Expr as IR
+import Smol.Core.IR.IRExpr
+import Smol.Core.IR.ToLLVM.Patterns
+import Smol.Core.Typecheck
+import qualified Smol.Core.Typecheck as Smol
+import qualified Smol.Core.Types as Smol
 import Test.Helpers
 import Test.Hspec
-import Typecheck
-import qualified Typecheck as Smol
-import qualified Types as Smol
 
 evalExpr :: Text -> Smol.Expr (Smol.Type Smol.Annotation)
 evalExpr input =

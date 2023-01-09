@@ -4,20 +4,17 @@ module Test.Transform.FlattenPatternSpec (spec) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Smol.Core
 import Test.Helpers
 import Test.Hspec
-import Transform.FlattenPattern
-import Typecheck (builtInTypes)
-import Typecheck.Types
-import Types
 
 flattenPatterns' ::
   (Monoid ann, Show ann) =>
   Expr ann ->
   Either (TCError ann) (Expr ann)
 flattenPatterns' patterns =
-  let emptyEnv = TCEnv mempty mempty builtInTypes
-   in runExcept $ runReaderT (flattenPatterns patterns) emptyEnv
+  let env = TCEnv mempty mempty builtInTypes
+   in runExcept $ runReaderT (flattenPatterns patterns) env
 
 -- this is all so fucked but want to hold on to it
 

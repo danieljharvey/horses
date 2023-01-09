@@ -3,8 +3,10 @@ packages:
   server/server.cabal,
   repl/repl.cabal,
   core/core.cabal,
-  smol-core/smol-core.cabal,
+  smol-core/smol-core.cabal
   vendored/**/*.cabal
+
+with-compiler: ghc-9.2.5
 
 package diagnose
   flags: +megaparsec-compat

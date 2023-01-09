@@ -13,16 +13,9 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
-import Parser
+import Smol.Core
 import Test.Helpers
 import Test.Hspec
-import TypeUtils
-import Typecheck
-import Typecheck.Errors
-import Typecheck.FreeVars
-import Typecheck.Shared
-import Typecheck.Types
-import Types
 
 evalExpr :: Text -> Either (TCError Annotation) (Expr (Type Annotation))
 evalExpr input = case parseExprAndFormatError input of
