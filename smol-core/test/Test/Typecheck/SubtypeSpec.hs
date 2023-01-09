@@ -5,9 +5,9 @@ module Test.Typecheck.SubtypeSpec (spec) where
 import Control.Monad.Writer
 import Data.Either
 import Data.Foldable (traverse_)
+import Smol.Core
 import Test.Helpers
 import Test.Hspec
-import Smol.Core
 
 -- Repeat after me, Duck is a subtype of Bird
 -- so Duck <: Bird

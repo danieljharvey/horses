@@ -17,14 +17,15 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Smol.Core.Types.Constructor as Smol
-    ( Constructor )
-import qualified Smol.Core.Types.DataType as Smol ( DataType )
-import qualified Smol.Core.Types.Expr as Smol ( Op )
-import qualified Smol.Core.Types.Identifier as Smol ( Identifier )
-import qualified Smol.Core.Types.Pattern as Smol ( Pattern )
-import qualified Smol.Core.Types.Type as Smol ( Type )
-import qualified Smol.Core.Types.TypeName as Smol ( TypeName )
-import Smol.Core.Types.PatternMatchError ( PatternMatchError )
+  ( Constructor,
+  )
+import qualified Smol.Core.Types.DataType as Smol (DataType)
+import qualified Smol.Core.Types.Expr as Smol (Op)
+import qualified Smol.Core.Types.Identifier as Smol (Identifier)
+import qualified Smol.Core.Types.Pattern as Smol (Pattern)
+import Smol.Core.Types.PatternMatchError (PatternMatchError)
+import qualified Smol.Core.Types.Type as Smol (Type)
+import qualified Smol.Core.Types.TypeName as Smol (TypeName)
 
 newtype GlobalMap ann = GlobalMap {getGlobalMap :: Map Smol.Identifier (Smol.Type ann)}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)

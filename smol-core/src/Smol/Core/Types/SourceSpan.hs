@@ -3,7 +3,7 @@
 
 module Smol.Core.Types.SourceSpan (SourceSpan (..)) where
 
-import GHC.Generics ( Generic )
+import GHC.Generics (Generic)
 
 data SourceSpan = SourceSpan
   { ssRowStart :: Int,

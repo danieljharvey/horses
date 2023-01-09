@@ -6,12 +6,12 @@ import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Smol.Core.IR.FromExpr.DataTypes as DT
-import Test.Helpers
-import Test.Hspec
 import qualified Smol.Core.Typecheck as TC
 import qualified Smol.Core.Typecheck.Types as Smol
 import Smol.Core.Types
 import qualified Smol.Core.Types as Smol
+import Test.Helpers
+import Test.Hspec
 
 newtype DataTypesState ann = DataTypesState {dataTypes :: Map TypeName (DataType ann)}
 

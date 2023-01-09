@@ -12,9 +12,9 @@ import Data.Void
 import qualified Smol.Core.Parser.Identifiers as Identifiers
 import Smol.Core.Parser.Primitives
 import Smol.Core.Parser.Shared
+import Smol.Core.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import Smol.Core.Types
 
 type Parser = Parsec Void Text
 

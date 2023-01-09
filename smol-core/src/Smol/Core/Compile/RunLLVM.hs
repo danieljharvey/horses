@@ -10,17 +10,17 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
-import Smol.Core.IR.FromExpr.Expr
-import Smol.Core.IR.ToLLVM.ToLLVM
 import LLVM.AST hiding (function)
 import LLVM.Pretty
+import Smol.Core.IR.FromExpr.Expr
+import Smol.Core.IR.ToLLVM.ToLLVM
+import qualified Smol.Core.Types as Smol
 import System.CPUTime
 import System.Directory
 import System.IO
 import System.Posix.Temp
 import System.Process
 import qualified Text.Printf as Printf
-import qualified Smol.Core.Types as Smol
 
 -- these are saved in a file that is included in compilation
 cRuntime :: Text
@@ -70,8 +70,8 @@ data RunResult = RunResult
   }
 
 -- run the code, get the output, die
-run :: Module -> IO RunResult 
-run llvmModule = do 
+run :: Module -> IO RunResult
+run llvmModule = do
   (compTime, _) <- time (compile llvmModule "./a.out")
   (runTime, result) <- time (cs <$> readProcess "./a.out" [] [])
   removePathForcibly "./a.out"

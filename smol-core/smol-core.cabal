@@ -138,6 +138,56 @@ test-suite smol-core-tests
   other-modules:
     Smol.Core
     Smol.Core.Compile.RunLLVM
+    Smol.Core.ExprUtils
+    Smol.Core.Helpers
+    Smol.Core.Interpreter
+    Smol.Core.Interpreter.Convert
+    Smol.Core.Interpreter.Interpret
+    Smol.Core.Interpreter.Types
+    Smol.Core.IR.FromExpr.DataTypes
+    Smol.Core.IR.FromExpr.Expr
+    Smol.Core.IR.FromExpr.Helpers
+    Smol.Core.IR.FromExpr.Pattern
+    Smol.Core.IR.FromExpr.Type
+    Smol.Core.IR.FromExpr.Types
+    Smol.Core.IR.IRExpr
+    Smol.Core.IR.ToLLVM.Helpers
+    Smol.Core.IR.ToLLVM.Patterns
+    Smol.Core.IR.ToLLVM.ToLLVM
+    Smol.Core.Parser
+    Smol.Core.Parser.Identifiers
+    Smol.Core.Parser.Pattern
+    Smol.Core.Parser.Primitives
+    Smol.Core.Parser.Shared
+    Smol.Core.Parser.Type
+    Smol.Core.Printer
+    Smol.Core.SourceSpan
+    Smol.Core.Transform
+    Smol.Core.Transform.FlattenPattern
+    Smol.Core.Typecheck
+    Smol.Core.Typecheck.Elaborate
+    Smol.Core.Typecheck.Errors
+    Smol.Core.Typecheck.Exhaustiveness
+    Smol.Core.Typecheck.FreeVars
+    Smol.Core.Typecheck.Shared
+    Smol.Core.Typecheck.Substitute
+    Smol.Core.Typecheck.Subtype
+    Smol.Core.Typecheck.Types
+    Smol.Core.Types
+    Smol.Core.Types.Annotation
+    Smol.Core.Types.Constructor
+    Smol.Core.Types.DataType
+    Smol.Core.Types.Expr
+    Smol.Core.Types.GetPath
+    Smol.Core.Types.Identifier
+    Smol.Core.Types.Pattern
+    Smol.Core.Types.PatternMatchError
+    Smol.Core.Types.PatternPredicate
+    Smol.Core.Types.Prim
+    Smol.Core.Types.SourceSpan
+    Smol.Core.Types.Type
+    Smol.Core.Types.TypeName
+    Smol.Core.TypeUtils
     Test.Helpers
     Test.Interpreter.InterpreterSpec
     Test.IR.CompileSpec

@@ -6,17 +6,17 @@ module Smol.Core.Typecheck.Errors
   ( typeErrorDiagnostic,
   )
 where
-import Smol.Core.SourceSpan (sourceSpan)
 
-import Data.Maybe ( catMaybes, mapMaybe )
+import Data.Maybe (catMaybes, mapMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Error.Diagnose
 import Smol.Core.Printer
-import Smol.Core.Types.SourceSpan
+import Smol.Core.SourceSpan (sourceSpan)
 import qualified Smol.Core.Typecheck.Shared as Smol
 import Smol.Core.Typecheck.Types
 import qualified Smol.Core.Types as Smol
+import Smol.Core.Types.SourceSpan
 
 -- use the derived Foldable instance to get all annotations in an error
 getAllAnnotations :: TCError ann -> [ann]

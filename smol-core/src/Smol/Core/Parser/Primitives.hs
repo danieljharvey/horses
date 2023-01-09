@@ -16,10 +16,10 @@ import Data.Text (Text)
 import Data.Void
 import GHC.Num.Natural
 import Smol.Core.Parser.Shared
+import Smol.Core.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Smol.Core.Types
 
 type Parser = Parsec Void Text
 

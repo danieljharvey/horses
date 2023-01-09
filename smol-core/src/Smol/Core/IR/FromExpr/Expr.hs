@@ -107,7 +107,7 @@ lookupVar ident = do
 -- combined
 irFromExpr :: (Show ann, Monoid ann) => Smol.Expr (Smol.Type ann) -> IRModule
 irFromExpr expr =
-  IRModule $ 
+  IRModule $
     [getPrinter (Smol.getExprAnnotation expr)]
       <> modulePartsFromExpr expr
 

@@ -2,9 +2,11 @@
 
 module Smol.Core.Parser.Type (parseTypeAndFormatError, parseType, typeParser) where
 
-import Control.Monad ( (>=>) )
+import Control.Monad ((>=>))
 import Control.Monad.Combinators.Expr
-    ( makeExprParser, Operator(InfixR) )
+  ( Operator (InfixR),
+    makeExprParser,
+  )
 import Data.Bifunctor (first)
 import qualified Data.Char as Char
 import Data.Foldable (foldl')
@@ -16,36 +18,50 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Void ( Void )
+import Data.Void (Void)
 import Smol.Core.Parser.Identifiers
-    ( identifierParser, constructorParserInternal )
+  ( constructorParserInternal,
+    identifierParser,
+  )
 import qualified Smol.Core.Parser.Primitives as Prim
 import Smol.Core.Parser.Shared
-    ( withLocation,
-      inBrackets,
-      orInBrackets,
-      maybePred,
-      chainl1,
-      myLexeme,
-      myString,
-      commaSep )
-import Text.Megaparsec
-    ( (<|>),
-      ParseErrorBundle,
-      parse,
-      errorBundlePretty,
-      sepBy,
-      some,
-      Parsec,
-      MonadParsec(takeWhile1P, eof, try, label) )
-import Text.Megaparsec.Char ( space )
-import Smol.Core.Types.Annotation ( Annotation )
-import Smol.Core.Types.Type
-    ( Type(TConstructor, TLiteral, TPrim, TApp, TRecord, TFunc, TTuple,
-           TUnion, TVar),
-      TypePrim(TPNat, TPBool, TPInt) )
-import Smol.Core.Types.TypeName ( TypeName(..) )
+  ( chainl1,
+    commaSep,
+    inBrackets,
+    maybePred,
+    myLexeme,
+    myString,
+    orInBrackets,
+    withLocation,
+  )
+import Smol.Core.Types.Annotation (Annotation)
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Type
+  ( Type
+      ( TApp,
+        TConstructor,
+        TFunc,
+        TLiteral,
+        TPrim,
+        TRecord,
+        TTuple,
+        TUnion,
+        TVar
+      ),
+    TypePrim (TPBool, TPInt, TPNat),
+  )
+import Smol.Core.Types.TypeName (TypeName (..))
+import Text.Megaparsec
+  ( MonadParsec (eof, label, takeWhile1P, try),
+    ParseErrorBundle,
+    Parsec,
+    errorBundlePretty,
+    parse,
+    sepBy,
+    some,
+    (<|>),
+  )
+import Text.Megaparsec.Char (space)
 
 type Parser = Parsec Void Text
 

@@ -2,17 +2,12 @@
 
 module Main where
 
-import Compile.RunLLVM
 import Control.Monad.Reader
 import qualified Data.Text.IO as T
 import Error.Diagnose
-import qualified Interpreter.Convert as Interpret
-import qualified Interpreter.Interpret as Interpret
-import Parser
-import Smol.Core.Printer
-import Typecheck
-import Typecheck.Errors
-import Smol.Core.Types.Expr
+import Smol.Core
+import qualified Smol.Core.Interpreter.Convert as Interpret
+import qualified Smol.Core.Interpreter.Interpret as Interpret
 
 doInterpret :: Expr ann -> Expr ()
 doInterpret =

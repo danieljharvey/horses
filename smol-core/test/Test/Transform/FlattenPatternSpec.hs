@@ -4,9 +4,9 @@ module Test.Transform.FlattenPatternSpec (spec) where
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Smol.Core
 import Test.Helpers
 import Test.Hspec
-import Smol.Core
 
 flattenPatterns' ::
   (Monoid ann, Show ann) =>

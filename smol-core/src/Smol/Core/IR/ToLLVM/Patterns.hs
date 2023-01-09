@@ -17,14 +17,14 @@ import Control.Monad.Except
 import qualified Data.ByteString.Short as SBS
 import qualified Data.List.NonEmpty as NE
 import Data.String
-import Smol.Core.IR.IRExpr
-import Smol.Core.IR.ToLLVM.Helpers
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.Operand as Op
 import qualified LLVM.IRBuilder.Constant as C
 import qualified LLVM.IRBuilder.Instruction as L
-import qualified LLVM.IRBuilder.Module as L 
+import qualified LLVM.IRBuilder.Module as L
 import qualified LLVM.IRBuilder.Monad as L
+import Smol.Core.IR.IRExpr
+import Smol.Core.IR.ToLLVM.Helpers
 import Smol.Core.Types.GetPath
 import Smol.Core.Types.PatternPredicate
 

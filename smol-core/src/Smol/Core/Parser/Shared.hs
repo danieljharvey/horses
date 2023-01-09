@@ -8,10 +8,10 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
 import Smol.Core.ExprUtils
+import Smol.Core.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Smol.Core.Types
 
 type Parser = Parsec Void Text
 

@@ -8,9 +8,9 @@ where
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.List.NonEmpty as NE
+import Smol.Core
 import Test.Helpers
 import Test.Hspec
-import Smol.Core
 
 env :: (Monoid ann) => TCEnv ann
 env = TCEnv mempty mempty builtInTypes

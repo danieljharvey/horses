@@ -9,16 +9,15 @@ module Smol.Core.IR.ToLLVM.ToLLVM
 where
 
 import Control.Monad.State
-    ( MonadFix, StateT(runStateT), MonadState )
-import Data.Bifunctor ( Bifunctor(bimap) )
+  ( MonadFix,
+    MonadState,
+    StateT (runStateT),
+  )
+import Data.Bifunctor (Bifunctor (bimap))
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import Smol.Core.Helpers ( traverseIndNe )
-import Smol.Core.IR.IRExpr
-import Smol.Core.IR.ToLLVM.Helpers
-import Smol.Core.IR.ToLLVM.Patterns
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.Constant as LLVM
 import qualified LLVM.AST.IntegerPredicate as LLVM
@@ -26,6 +25,10 @@ import qualified LLVM.IRBuilder.Constant as LLVM
 import qualified LLVM.IRBuilder.Instruction as LLVM
 import qualified LLVM.IRBuilder.Module as LLVM
 import qualified LLVM.IRBuilder.Monad as LLVM
+import Smol.Core.Helpers (traverseIndNe)
+import Smol.Core.IR.IRExpr
+import Smol.Core.IR.ToLLVM.Helpers
+import Smol.Core.IR.ToLLVM.Patterns
 
 irToLLVM :: IRModule -> LLVM.Module
 irToLLVM (IRModule bits) =

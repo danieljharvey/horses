@@ -12,11 +12,11 @@ import Data.Text (Text)
 import qualified Smol.Core.IR.FromExpr.Expr as IR
 import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.Patterns
-import Test.Helpers
-import Test.Hspec
 import Smol.Core.Typecheck
 import qualified Smol.Core.Typecheck as Smol
 import qualified Smol.Core.Types as Smol
+import Test.Helpers
+import Test.Hspec
 
 evalExpr :: Text -> Smol.Expr (Smol.Type Smol.Annotation)
 evalExpr input =

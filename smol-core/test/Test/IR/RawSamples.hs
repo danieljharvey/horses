@@ -17,7 +17,6 @@ module Test.IR.RawSamples
   )
 where
 
-import Smol.Core.IR.ToLLVM.Helpers
 import LLVM.AST hiding (function)
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Operand as Op
@@ -27,6 +26,7 @@ import LLVM.IRBuilder.Instruction
 import qualified LLVM.IRBuilder.Instruction as L
 import LLVM.IRBuilder.Module
 import qualified LLVM.IRBuilder.Monad as L
+import Smol.Core.IR.ToLLVM.Helpers
 
 -- print the number 42
 print42 :: Module

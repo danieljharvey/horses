@@ -2,21 +2,21 @@
 
 module Test.IR.IRSpec (spec) where
 
-import qualified Smol.Core.Compile.RunLLVM as Run
 import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text.IO as T
+import LLVM.AST hiding (function)
+import qualified Smol.Core.Compile.RunLLVM as Run
 import Smol.Core.IR.FromExpr.Expr
 import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.ToLLVM
-import LLVM.AST hiding (function)
+import Smol.Core.Typecheck
+import qualified Smol.Core.Types as Smol
 import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec
 import Test.IR.Samples
-import Smol.Core.Typecheck
-import qualified Smol.Core.Types as Smol
 
 -- run the code, get the output, die
 run :: Module -> IO Text

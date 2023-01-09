@@ -46,8 +46,6 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.String
 import GHC.Records (HasField (..))
-import Smol.Core.Helpers
-import Smol.Core.IR.IRExpr
 import qualified LLVM.AST as AST
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.AddrSpace as AST
@@ -59,10 +57,12 @@ import qualified LLVM.IRBuilder.Constant as C
 import qualified LLVM.IRBuilder.Constant as LLVM
 import qualified LLVM.IRBuilder.Instruction as LLVM
 import LLVM.IRBuilder.Module
-import qualified LLVM.IRBuilder.Module as L 
-import qualified LLVM.IRBuilder.Module as LLVM 
+import qualified LLVM.IRBuilder.Module as L
+import qualified LLVM.IRBuilder.Module as LLVM
 import qualified LLVM.IRBuilder.Monad as L
 import qualified LLVM.IRBuilder.Monad as LLVM
+import Smol.Core.Helpers
+import Smol.Core.IR.IRExpr
 import qualified Smol.Core.Types as Smol
 import Smol.Core.Types.GetPath
 

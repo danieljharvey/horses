@@ -12,9 +12,9 @@ where
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
-import Smol.Core.Helpers
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
+import Smol.Core.Helpers
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier

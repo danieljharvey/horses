@@ -15,8 +15,8 @@ import Data.Set (Set)
 import qualified Data.Text as T
 import Prettyprinter
 import Smol.Core.Printer
-import Text.Megaparsec
 import Smol.Core.Types
+import Text.Megaparsec
 
 data PatternMatchError ann
   = -- | No patterns provided

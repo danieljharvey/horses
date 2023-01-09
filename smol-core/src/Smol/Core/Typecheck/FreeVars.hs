@@ -11,10 +11,10 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Smol.Core.TypeUtils ( monoidType )
-import qualified Smol.Core.Types.Expr as Smol ( Expr(..) )
-import qualified Smol.Core.Types.Identifier as Smol ( Identifier )
-import qualified Smol.Core.Types.Type as Smol ( Type(TVar) )
+import Smol.Core.TypeUtils (monoidType)
+import qualified Smol.Core.Types.Expr as Smol (Expr (..))
+import qualified Smol.Core.Types.Identifier as Smol (Identifier)
+import qualified Smol.Core.Types.Type as Smol (Type (TVar))
 
 freeVars ::
   (Ord ann) =>
