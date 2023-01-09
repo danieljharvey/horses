@@ -150,7 +150,7 @@ toRepresentation ::
 toRepresentation (Smol.TPrim _ prim) = pure $ DTPrim prim
 toRepresentation (Smol.TLiteral _ (Smol.TLInt _)) = pure $ DTPrim Smol.TPInt
 toRepresentation (Smol.TLiteral _ (Smol.TLBool _)) = pure $ DTPrim Smol.TPBool
-toRepresentation ty@(Smol.TApp {}) = do
+toRepresentation ty@Smol.TApp {} = do
   result <- typeToDataTypeInMemory ty
   case result of
     Right dtInMem -> pure dtInMem
