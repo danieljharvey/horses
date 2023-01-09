@@ -40,7 +40,7 @@ fromType (Smol.TFunc _ env tArg tBody) = do
   pure (IRStruct [IRPointer irFunc, envType])
 fromType (Smol.TTuple _ tHead tTail) =
   IRStruct <$> traverse fromType ([tHead] <> NE.toList tTail)
-fromType ty@(Smol.TApp {}) = do
+fromType ty@Smol.TApp {} = do
   (typeName, typeArgs) <- Compile.flattenConstructorType ty
   dt <- Compile.lookupTypeName typeName
   getIrTypeForDataType dt typeArgs

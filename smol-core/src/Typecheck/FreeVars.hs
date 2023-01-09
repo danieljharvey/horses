@@ -19,11 +19,11 @@ freeVars ::
   Smol.Expr (Smol.Type ann) ->
   Set Smol.Identifier
 freeVars (Smol.EVar _ a) = S.singleton a
-freeVars (Smol.EConstructor {}) = mempty
+freeVars Smol.EConstructor {} = mempty
 freeVars (Smol.ELambda _ ident body) = S.delete ident (freeVars body)
 freeVars (Smol.ELet _ ident expr body) = freeVars expr <> S.delete ident (freeVars body)
 freeVars (Smol.EInfix _ _ a b) = freeVars a <> freeVars b
-freeVars (Smol.EPrim {}) = mempty
+freeVars Smol.EPrim {} = mempty
 freeVars (Smol.EApp _ f a) = freeVars f <> freeVars a
 freeVars (Smol.EIf _ a b c) = freeVars a <> freeVars b <> freeVars c
 freeVars (Smol.EAnn _ _ a) = freeVars a
