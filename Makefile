@@ -24,6 +24,8 @@ ghcid-repl:
 ghcid-server:
 	ghcid -c "cabal repl server:exe:mimsa-server" -l=hlint
 
+# EXCITING NEW WORLD
+
 .PHONY: ghcid-smol
 ghcid-smol:
 	ghcid -c "cabal repl smol-core"
@@ -31,6 +33,14 @@ ghcid-smol:
 .PHONY: ghcid-smol-test
 ghcid-smol-test:
 	ghcid -c "cabal repl smol-core:test:smol-core-tests" --test "main"
+
+.PHONY: ghcid-smol-compiler
+ghcid-smol-compiler:
+	ghcid -c "cabal repl smol-compiler" -l=hlint
+
+.PHONY: ghcid-smol-compiler-test
+ghcid-smol-compiler-test:
+	ghcid -c "cabal repl smol-compiler:test:smol-compiler-test" -l=hlint
 
 .PHONY: update
 update:
