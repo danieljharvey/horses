@@ -163,7 +163,6 @@ library
     Language.Mimsa.Types.Store.Bindings
     Language.Mimsa.Types.Store.ExprHash
     Language.Mimsa.Types.Store.ResolvedDeps
-    Language.Mimsa.Types.Store.ResolvedTypeDeps
     Language.Mimsa.Types.Store.RootPath
     Language.Mimsa.Types.Store.Store
     Language.Mimsa.Types.Store.StoreExpression

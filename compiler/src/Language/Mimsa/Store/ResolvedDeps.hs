@@ -58,10 +58,10 @@ extractDataType _ = Nothing
 resolveTypeDeps ::
   Store ann ->
   Map (Maybe ModuleName, TyCon) ExprHash ->
-  Either StoreError ResolvedTypeDeps
+  Either StoreError (Map (Maybe ModuleName, TyCon) DataType)
 resolveTypeDeps (Store items) typeBindings =
   case partitionEithers foundItems of
-    ([], found) -> Right (ResolvedTypeDeps (M.fromList found))
+    ([], found) -> Right (M.fromList found)
     (fails, _) -> Left $ CouldNotFindExprHashForTypeBindings (snd <$> fails)
   where
     foundItems =

@@ -8,7 +8,9 @@ module Language.Mimsa.Actions.Compile (compileModule, compileProject) where
 -- work out what to compile for it
 -- compile it to Text
 -- compile stdLib to Text
-
+import Language.Mimsa.Store.ResolveDataTypes
+import Data.Functor (($>))
+import Data.Text (Text)
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Coerce
@@ -189,3 +191,33 @@ compileModule be compModule = do
 
   -- great job
   pure (moduleHash, exportMap, exportTypeMap)
+
+
+-- | Need to also include any types mentioned but perhaps not explicitly used
+outputStoreExpression ::
+  Backend ->
+  Map (Maybe ModuleName, TyCon) DataType ->
+  Store any ->
+  StoreExpression MonoType ->
+  BackendM MonoType Text
+outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) =  do
+  let typeBindings = typeBindingsByType store (storeTypeBindings se)
+  renderExprWithDeps be dataTypes typeBindings (storeInfixes se) (storeBindings se) (storeTypes se) expr
+outputStoreExpression be dataTypes _store (StoreDataType dt types) =
+  renderDataTypeWithDeps be dataTypes dt types
+
+-- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
+typeBindingsByType :: Store a -> Map (Maybe ModuleName, TyCon) ExprHash -> Map TypeName ExprHash
+typeBindingsByType store tb =
+  let getTypeName' exprHash =
+        case lookupExprHashFromStore store exprHash of
+          Just se -> storeExprToDataTypes se $> exprHash
+          Nothing -> mempty
+   in stripModules $ mconcat (getTypeName' <$> M.elems tb)
+
+-- remove moduleName from type. will probably need these later when we come to
+-- fix TS but for now YOLO
+stripModules :: (Ord b) => Map (a, b) c -> Map b c
+stripModules = M.fromList . fmap (first snd) . M.toList
+
+

@@ -17,7 +17,6 @@ import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Language.Mimsa.Backend.Types
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Store
 
 -- these are saved in a file that is included in compilation
 typescriptStandardLibrary :: Text
@@ -33,7 +32,7 @@ outputStdlib :: Backend -> Text
 outputStdlib Typescript = typescriptStandardLibrary
 outputStdlib ESModulesJS = esModulesJSStandardLibrary
 
-indexOutputFilename :: Backend -> ExprHash -> Text
+indexOutputFilename :: (Printer hash) => Backend -> hash -> Text
 indexOutputFilename ESModulesJS exprHash =
   "index-" <> prettyPrint exprHash <> ".mjs"
 indexOutputFilename Typescript exprHash =
@@ -52,7 +51,7 @@ fileExtension :: Backend -> Text
 fileExtension Typescript = ".ts"
 fileExtension _ = ""
 
-storeExprFilename :: Backend -> ExprHash -> Text
+storeExprFilename :: (Printer hash) => Backend -> hash -> Text
 storeExprFilename ESModulesJS hash' =
   "ejs-" <> prettyPrint hash' <> ".mjs"
 storeExprFilename Typescript hash' =
