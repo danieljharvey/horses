@@ -4,7 +4,7 @@ module Language.Mimsa.Types.Store
     module Language.Mimsa.Types.Store.StoreExpression,
     module Language.Mimsa.Types.Store.Bindings,
     module Language.Mimsa.Types.Store.TypeBindings,
-    module Language.Mimsa.Types.Store.ResolvedDeps
+    module Language.Mimsa.Types.Store.ResolvedDeps,
   )
 where
 

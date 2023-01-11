@@ -3,8 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Mimsa.Backend.Output
-  (
-    renderDataTypeWithDeps,
+  ( renderDataTypeWithDeps,
     renderExprWithDeps,
     outputIndexFile,
     indexFilename,
@@ -49,7 +48,6 @@ nameInfixes infixes =
       toInfixToName = tsInfixName . fst <$> numbered
    in (toNameToHash numbered, toInfixToName)
 
-
 -- | Need to also include any types mentioned but perhaps not explicitly used
 renderExprWithDeps ::
   (Printer hash) =>
@@ -61,10 +59,8 @@ renderExprWithDeps ::
   Map (Maybe ModuleName, TypeName) hash ->
   Expr Name MonoType ->
   BackendM MonoType Text
-renderExprWithDeps be dataTypes typeBindings infixes bindings types expr  = do
-  let
-
-      (infixHashes, infixNames) =
+renderExprWithDeps be dataTypes typeBindings infixes bindings types expr = do
+  let (infixHashes, infixNames) =
         nameInfixes infixes
 
       deps =
@@ -107,10 +103,12 @@ renderExprWithDeps be dataTypes typeBindings infixes bindings types expr  = do
           ]
       )
 
-renderDataTypeWithDeps :: (Printer hash) =>Backend ->
+renderDataTypeWithDeps ::
+  (Printer hash) =>
+  Backend ->
   Map (Maybe ModuleName, TyCon) DataType ->
-
-  DataType -> Map (Maybe ModuleName, TypeName) hash ->
+  DataType ->
+  Map (Maybe ModuleName, TypeName) hash ->
   BackendM MonoType Text
 renderDataTypeWithDeps be dataTypes dt types = do
   let directTypeDeps = renderDirectTypeImport be <$> M.toList types
@@ -125,7 +123,6 @@ renderDataTypeWithDeps be dataTypes dt types = do
             prettyDataType
           ]
       )
-
 
 -- | given the fns used in a store expression
 -- return an import
@@ -185,8 +182,8 @@ renderDataType be dataTypes dt = do
 
 -- map of `Just` -> `Maybe`, `Nothing` -> `Maybe`..
 makeTypeDepMap ::
-    Map (Maybe ModuleName, TyCon) DataType ->
-    Map TyCon TypeName
+  Map (Maybe ModuleName, TyCon) DataType ->
+  Map TyCon TypeName
 makeTypeDepMap rtd =
   (\(DataType typeName _ _) -> typeName) <$> first snd rtd
 
@@ -353,6 +350,3 @@ moduleFilename be modHash =
       moduleImport be modHash
     Typescript ->
       moduleImport be modHash <> ".ts"
-
-
-

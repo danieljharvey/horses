@@ -15,11 +15,11 @@ import GHC.Generics
 import qualified Language.Mimsa.Actions.Compile as Actions
 import qualified Language.Mimsa.Actions.Monad as Actions
 import Language.Mimsa.Backend.Types
-import Server.Helpers.ZipFile
 import Language.Mimsa.Core
 import Servant
 import Server.Handlers
 import Server.Helpers.ProjectData
+import Server.Helpers.ZipFile
 import Server.Types
 
 -----

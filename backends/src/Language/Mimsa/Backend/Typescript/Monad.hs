@@ -31,9 +31,9 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
+import Language.Mimsa.Backend.BackendError
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Core
-import Language.Mimsa.Backend.BackendError
 
 type TypescriptM =
   ExceptT

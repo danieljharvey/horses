@@ -11,10 +11,10 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Language.Mimsa.Backend.BackendError
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Core
-import Language.Mimsa.Backend.BackendError
 
 consToTSType :: Type ann -> TypescriptM (TSType, Set TSGeneric)
 consToTSType mt =

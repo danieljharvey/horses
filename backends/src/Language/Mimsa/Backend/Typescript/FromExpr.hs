@@ -9,12 +9,12 @@ import Data.Coerce (coerce)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Language.Mimsa.Backend.BackendError
 import Language.Mimsa.Backend.Typescript.FromType
 import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Core
-import Language.Mimsa.Backend.BackendError
 
 bimapMap :: (Ord j) => (k -> j) -> (a -> b) -> Map k a -> Map j b
 bimapMap f g = M.fromList . fmap (bimap f g) . M.toList
