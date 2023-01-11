@@ -71,7 +71,6 @@ library
     Language.Mimsa.Backend.Typescript.Printer
     Language.Mimsa.Backend.Typescript.Types
     Language.Mimsa.Backend.Wasm.Compile
-    Language.Mimsa.Backend.ZipFile
     Language.Mimsa.Interpreter.App
     Language.Mimsa.Interpreter.If
     Language.Mimsa.Interpreter.Infix
@@ -211,7 +210,6 @@ library
     , text
     , transformers
     , wasm
-    , zip-archive
 
   default-language:   Haskell2010
 

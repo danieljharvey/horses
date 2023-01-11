@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Backend.ZipFile
+module Server.Helpers.ZipFile
   ( zipFromSavedFiles,
     encodeZipFile,
   )

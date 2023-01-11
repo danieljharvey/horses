@@ -42,6 +42,7 @@ executable mimsa-server
     Server.Helpers.ModuleData
     Server.Helpers.ProjectData
     Server.Helpers.TestData
+    Server.Helpers.ZipFile
     Server.Main
     Server.MimsaHandler
     Server.Persistence
@@ -61,22 +62,15 @@ executable mimsa-server
     , bytestring
     , containers
     , core
-    , cryptonite
-    , diagnose
     , directory
     , exceptions
-    , file-embed
     , hashable
     , http-types
-    , megaparsec
-    , memory
     , mimsa
     , monad-logger
     , mtl
     , openapi3
     , optparse-applicative
-    , parallel
-    , parser-combinators
     , prettyprinter
     , prometheus-client
     , prometheus-metrics-ghc
@@ -91,7 +85,6 @@ executable mimsa-server
     , wai-cors
     , wai-middleware-prometheus
     , warp
-    , wasm
     , zip-archive
 
   default-language: Haskell2010

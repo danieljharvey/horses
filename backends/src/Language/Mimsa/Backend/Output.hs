@@ -34,13 +34,13 @@ import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
 import Language.Mimsa.Core
-import Language.Mimsa.Project
-import Language.Mimsa.Store.ResolveDataTypes
-import Language.Mimsa.Types.Store
+--import Language.Mimsa.Project
+--import Language.Mimsa.Store.ResolveDataTypes
+--import Language.Mimsa.Types.Store
 import Language.Mimsa.Utils
 
 -- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
-typeBindingsByType :: Store a -> Map (Maybe ModuleName, TyCon) ExprHash -> Map TypeName ExprHash
+typeBindingsByType :: Store a -> Map (Maybe ModuleName, TyCon) hash -> Map TypeName hash
 typeBindingsByType store tb =
   let getTypeName' exprHash =
         case lookupExprHashFromStore store exprHash of
@@ -56,7 +56,7 @@ stripModules = M.fromList . fmap (first snd) . M.toList
 -- | Numbers each infix operator, and names them `_infix0`, `_infix1` etc
 -- these are then used to create both imports and the mapping from infix
 -- operator to the variable to use in the TS code
-nameInfixes :: Map InfixOp ExprHash -> (Map Name ExprHash, Map InfixOp TSName)
+nameInfixes :: Map InfixOp hash -> (Map Name hash, Map InfixOp TSName)
 nameInfixes infixes =
   let numbered = addNumbersToMap infixes
       infixName i = Name $ "_infix" <> T.pack (show i)
@@ -65,26 +65,26 @@ nameInfixes infixes =
       toInfixToName = tsInfixName . fst <$> numbered
    in (toNameToHash numbered, toInfixToName)
 
+type Store  a = [Int]
+type ResolvedTypeDeps = ()
+type StoreExpression a = ()
 
 -- | Need to also include any types mentioned but perhaps not explicitly used
-renderExprWithDeps :: 
+outputStoreExpression ::
   Backend ->
   ResolvedTypeDeps ->
-  Map TypeName ExprHash ->
-  Map InfixOp ExprHash ->
-  Map (Maybe ModuleName, Name) ExprHash ->
-  Map (Maybe ModuleName, TypeName) ExprHash ->
-  Expr Name MonoType ->
+  Store any ->
+  StoreExpression MonoType ->
   BackendM MonoType Text
-renderExprWithDeps be dataTypes typeBindings infixes bindings types expr  = do
-  let 
+outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) = do
+  let typeBindings = typeBindingsByType store (storeTypeBindings se)
 
       (infixHashes, infixNames) =
-        nameInfixes infixes 
+        nameInfixes (storeInfixes se)
 
       deps =
         renderImport' be
-          <$> M.toList bindings 
+          <$> M.toList (storeBindings se)
 
       typeDeps =
         renderTypeImport' be
@@ -98,7 +98,58 @@ renderExprWithDeps be dataTypes typeBindings infixes bindings types expr  = do
       -- we import types where they are used transitively, so we don't need
       -- them if they are imported explicitly
       requiredTypeImports =
-        M.filterWithKey (\(_, tn) _ -> S.notMember tn (M.keysSet typeBindings)) types 
+        M.filterWithKey (\(_, tn) _ -> S.notMember tn (M.keysSet typeBindings)) (storeTypes se)
+
+      directTypeDeps = renderDirectTypeImport be <$> M.toList requiredTypeImports
+
+  pure $ renderExpressionWithDeps _ _ _
+outputStoreExpression be dataTypes _store (StoreDataType dt types) =
+  renderDataTypeWithDeps be dataTypes dt types
+
+renderDataTypeWithDeps be dataTypes dt types = do
+  let directTypeDeps = renderDirectTypeImport be <$> M.toList types
+
+  prettyDataType <- renderDataType be dataTypes dt
+
+  pure $
+    mconcat
+      ( intersperse
+          (renderNewline' be)
+          [ mconcat directTypeDeps,
+            prettyDataType
+          ]
+      )
+
+
+-- | Need to also include any types mentioned but perhaps not explicitly used
+renderExpressionWithDeps ::
+  Backend ->
+  ResolvedTypeDeps ->
+  Map TypeName hash ->
+  Expr MonoType ->
+  BackendM MonoType Text
+renderExpressionWithDeps be dataTypes typeBindings expr = do
+  let
+      (infixHashes, infixNames) =
+        nameInfixes (storeInfixes se)
+
+      deps =
+        renderImport' be
+          <$> M.toList (storeBindings se)
+
+      typeDeps =
+        renderTypeImport' be
+          <$> M.toList typeBindings
+
+      infixDeps =
+        renderInfixImport be
+          <$> M.toList infixHashes
+
+      mt = getAnnotation expr
+      -- we import types where they are used transitively, so we don't need
+      -- them if they are imported explicitly
+      requiredTypeImports =
+        M.filterWithKey (\(_, tn) _ -> S.notMember tn (M.keysSet typeBindings)) (storeTypes se)
 
       directTypeDeps = renderDirectTypeImport be <$> M.toList requiredTypeImports
 
@@ -122,35 +173,7 @@ renderExprWithDeps be dataTypes typeBindings infixes bindings types expr  = do
           ]
       )
 
-renderDataTypeWithDeps :: Backend -> ResolvedTypeDeps -> DataType -> Map (Maybe ModuleName, TypeName) ExprHash -> 
-  BackendM MonoType Text
-renderDataTypeWithDeps be dataTypes dt types = do
-  let directTypeDeps = renderDirectTypeImport be <$> M.toList types
 
-  prettyDataType <- renderDataType be dataTypes dt
-
-  pure $
-    mconcat
-      ( intersperse
-          (renderNewline' be)
-          [ mconcat directTypeDeps,
-            prettyDataType
-          ]
-      )
-
-
--- | Need to also include any types mentioned but perhaps not explicitly used
-outputStoreExpression ::
-  Backend ->
-  ResolvedTypeDeps ->
-  Store any ->
-  StoreExpression MonoType ->
-  BackendM MonoType Text
-outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) =  do
-  let typeBindings = typeBindingsByType store (storeTypeBindings se)
-  renderExprWithDeps be dataTypes typeBindings (storeInfixes se) (storeBindings se) (storeTypes se) expr
-outputStoreExpression be dataTypes _store (StoreDataType dt types) =
-  renderDataTypeWithDeps be dataTypes dt types
 
 -- | given the fns used in a store expression
 -- return an import
@@ -213,7 +236,7 @@ makeTypeDepMap :: ResolvedTypeDeps -> Map TyCon TypeName
 makeTypeDepMap (ResolvedTypeDeps rtd) =
   (\(DataType typeName _ _) -> typeName) <$> first snd rtd
 
-renderImport' :: Backend -> ((a, Name), ExprHash) -> Text
+renderImport' :: Backend -> ((a, Name), hash) -> Text
 renderImport' Typescript ((_, name), hash') =
   "import { main as "
     <> printTSName (coerce name)
@@ -227,7 +250,7 @@ renderImport' ESModulesJS ((_, name), hash') =
     <> storeExprFilename ESModulesJS hash'
     <> "\";\n"
 
-renderInfixImport :: Backend -> (Name, ExprHash) -> Text
+renderInfixImport :: Backend -> (Name, hash) -> Text
 renderInfixImport Typescript (name, hash') =
   "import { main as "
     <> printTSName (coerce name)
@@ -241,7 +264,7 @@ renderInfixImport ESModulesJS (name, hash') =
     <> storeExprFilename ESModulesJS hash'
     <> "\";\n"
 
-renderTypeImport' :: Backend -> (TypeName, ExprHash) -> Text
+renderTypeImport' :: Backend -> (TypeName, hash) -> Text
 renderTypeImport' Typescript (typeName, hash') =
   "import * as "
     <> coerce typeName
@@ -256,7 +279,7 @@ renderTypeImport' ESModulesJS (typeName, hash') =
     <> "\";\n"
 
 -- | 10x-ing hard right now, could be rekt
-renderDirectTypeImport :: Backend -> ((Maybe ModuleName, TypeName), ExprHash) -> Text
+renderDirectTypeImport :: Backend -> ((Maybe ModuleName, TypeName), hash) -> Text
 renderDirectTypeImport Typescript ((_, typeName), hash') =
   "import type { "
     <> coerce typeName
@@ -274,9 +297,9 @@ renderNewline' _ = "\n"
 
 outputIndexFile ::
   Backend ->
-  Map Name ExprHash ->
+  Map Name hash ->
   Map ModuleName ModuleHash ->
-  Map TypeName ExprHash ->
+  Map TypeName hash ->
   Text
 outputIndexFile be exportMap exportModuleMap exportTypeMap =
   let exportExpression (name, exprHash) = case be of
@@ -326,7 +349,7 @@ outputIndexFile be exportMap exportModuleMap exportTypeMap =
    in T.intercalate "\n" allExports
 
 -- | file name of index file (no extension for ts)
-indexImport :: Backend -> ExprHash -> Text
+indexImport :: Backend -> hash -> Text
 indexImport be hash' =
   case be of
     ESModulesJS ->
@@ -338,7 +361,7 @@ indexImport be hash' =
         <> prettyPrint hash'
 
 -- | filename of index file (including extension always)
-indexFilename :: Backend -> ExprHash -> Text
+indexFilename :: Backend -> hash -> Text
 indexFilename be hash' =
   case be of
     ESModulesJS ->

@@ -25,6 +25,10 @@ ghcid-repl:
 ghcid-server:
 	ghcid -c "cabal repl server:exe:mimsa-server" -l=hlint
 
+.PHONY: ghcid-backends
+ghcid-backends:
+	ghcid -c "cabal repl backends:lib:backends" -l=hlint
+
 # EXCITING NEW WORLD
 
 .PHONY: ghcid-smol
