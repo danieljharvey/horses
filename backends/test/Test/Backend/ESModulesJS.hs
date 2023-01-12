@@ -20,7 +20,6 @@ import Language.Mimsa.Backend.Typescript.Monad
 import Language.Mimsa.Backend.Typescript.Patterns
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Core
-
 import Test.Hspec
 import Test.Utils.Helpers
 
@@ -277,4 +276,3 @@ spec = do
                          "const That = (b) => ({ type: \"That\", vars: [b] }); ",
                          "const These = (a) => (b) => ({ type: \"These\", vars: [a,b] }); "
                        ]
-

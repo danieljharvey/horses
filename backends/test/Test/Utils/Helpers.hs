@@ -1,4 +1,3 @@
-
 module Test.Utils.Helpers (int, bool, unknown, str', str, mtBool, mtString, mtVar, mtInt, tvNamed, tvNum, typeName, mtFun) where
 
 import Data.Text (Text)
@@ -49,4 +48,3 @@ mtFun :: (Monoid ann) => Type ann -> Type ann -> Type ann
 mtFun = MTFunction mempty
 
 ----
-

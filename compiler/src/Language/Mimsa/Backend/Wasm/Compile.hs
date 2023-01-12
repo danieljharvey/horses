@@ -7,6 +7,10 @@
 
 module Language.Mimsa.Backend.Wasm.Compile where
 
+-- this stays in the main compiler for now because the tests use the
+-- typechecker
+-- once those are moved, it can go into `backends`
+
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Map (Map)

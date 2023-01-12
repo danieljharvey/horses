@@ -30,7 +30,7 @@ import qualified Error.Diagnose as Diag
 import Error.Diagnose.Compat.Megaparsec
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.DisplayError
-import Language.Mimsa.Types.Error.BackendError
+import Language.Mimsa.Backend.BackendError
 import Language.Mimsa.Types.Error.CodegenError
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Error.ModuleError

@@ -76,6 +76,10 @@ test-smol:
 test-core:
 	cabal run core:test:core-test
 
+.PHONY: test-backends
+test-backends:
+	cabal run backends:test:backends-tests
+
 .PHONY: test-watch
 test-watch:
 	ghcid -c "cabal repl mimsa:test:mimsa-test" -l=hlint --test="main"
