@@ -177,7 +177,6 @@ library
     Language.Mimsa.Types.Typechecker.TypeConstructor
     Language.Mimsa.Types.Typechecker.Unique
     Language.Mimsa.Types.Typechecker.UniVar
-    Language.Mimsa.Utils
 
   hs-source-dirs:     src
   default-extensions: Strict
@@ -221,9 +220,9 @@ test-suite mimsa-test
     Test.Actions.Build
     Test.Actions.Compile
     Test.Actions.Evaluate
-    Test.Backend.ESModulesJS
+    Test.Backend.ESModulesJSEndToEnd
     Test.Backend.RunNode
-    Test.Backend.Typescript
+    Test.Backend.TypescriptEndToEnd
     Test.Backend.Wasm
     Test.Codegen.Shared
     Test.Data.Prelude

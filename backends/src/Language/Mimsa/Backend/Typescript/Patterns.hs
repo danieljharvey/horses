@@ -13,7 +13,6 @@ import Data.Foldable (foldl')
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Backend.Typescript.Types
 import Language.Mimsa.Core
-import Language.Mimsa.Utils (mapWithIndex)
 
 isUseful :: TSExpr -> Bool
 isUseful TSUnderscore = False

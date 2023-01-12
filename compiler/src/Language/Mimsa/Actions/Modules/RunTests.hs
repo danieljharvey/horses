@@ -13,7 +13,6 @@ import Language.Mimsa.Tests.UnitTest
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Tests
-import Language.Mimsa.Utils
 
 filterTests :: Map DefIdentifier (Expr Name ann) -> Map TestName (Expr Name ann)
 filterTests =

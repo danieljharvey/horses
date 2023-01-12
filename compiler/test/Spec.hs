@@ -7,9 +7,9 @@ import qualified Test.Actions.BindModule
 import qualified Test.Actions.Build
 import qualified Test.Actions.Compile
 import qualified Test.Actions.Evaluate
-import qualified Test.Backend.ESModulesJS
+import qualified Test.Backend.ESModulesJSEndToEnd
 import qualified Test.Backend.RunNode
-import qualified Test.Backend.Typescript
+import qualified Test.Backend.TypescriptEndToEnd
 import qualified Test.Backend.Wasm
 import Test.Hspec
 import qualified Test.Modules.Check
@@ -48,9 +48,9 @@ main =
     Test.Actions.Build.spec
     Test.Actions.Compile.spec
     Test.Actions.Evaluate.spec
-    Test.Backend.ESModulesJS.spec
+    Test.Backend.ESModulesJSEndToEnd.spec
     Test.Backend.RunNode.spec
-    Test.Backend.Typescript.spec
+    Test.Backend.TypescriptEndToEnd.spec
     Test.Backend.Wasm.spec
     Test.Modules.Check.spec
     Test.Modules.Repl.spec

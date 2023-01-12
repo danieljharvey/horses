@@ -34,7 +34,6 @@ import qualified Language.Mimsa.Backend.Typescript.Printer as TS
 import Language.Mimsa.Backend.Typescript.Types
 import qualified Language.Mimsa.Backend.Typescript.Types as TS
 import Language.Mimsa.Core
-import Language.Mimsa.Utils
 
 -- | Numbers each infix operator, and names them `_infix0`, `_infix1` etc
 -- these are then used to create both imports and the mapping from infix

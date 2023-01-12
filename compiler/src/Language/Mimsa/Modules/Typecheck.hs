@@ -30,7 +30,6 @@ import Language.Mimsa.Typechecker.Typecheck
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.Utils
 
 -- given the upstream modules, typecheck a module
 -- 1. recursively fetch imports from Reader environment

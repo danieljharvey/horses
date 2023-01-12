@@ -29,6 +29,10 @@ ghcid-server:
 ghcid-backends:
 	ghcid -c "cabal repl backends:lib:backends" -l=hlint
 
+.PHONY: ghcid-backends-test
+ghcid-backends-test:
+	ghcid -c "cabal repl backends:test:backends-tests" --test "main"
+
 # EXCITING NEW WORLD
 
 .PHONY: ghcid-smol

@@ -15,18 +15,6 @@ build-type:         Simple
 extra-source-files:
   static/backend/es-modules-js/stdlib.mjs
   static/backend/typescript/stdlib.ts
-  static/modules/Array.mimsa
-  static/modules/Either.mimsa
-  static/modules/Maybe.mimsa
-  static/modules/Monoid.mimsa
-  static/modules/NonEmptyArray.mimsa
-  static/modules/Parser.mimsa
-  static/modules/Prelude.mimsa
-  static/modules/Reader.mimsa
-  static/modules/State.mimsa
-  static/modules/String.mimsa
-  static/modules/These.mimsa
-  static/modules/Tree.mimsa
 
 source-repository head
   type:     git
@@ -53,7 +41,6 @@ library
     Language.Mimsa.Backend.Typescript.Patterns
     Language.Mimsa.Backend.Typescript.Printer
     Language.Mimsa.Backend.Typescript.Types
-    Language.Mimsa.Backend.Wasm.Compile
     Language.Mimsa.Backend.BackendError
 
   hs-source-dirs:     src
@@ -85,21 +72,17 @@ library
     , servant-server
     , text
     , transformers
-    , wasm
 
   default-language:   Haskell2010
 
-test-suite backends-test
+test-suite backends-tests
   import:           common-all
   type:             exitcode-stdio-1.0
   main-is:          Spec.hs
   other-modules:
     Test.Backend.ESModulesJS
-    Test.Backend.RunNode
     Test.Backend.Typescript
-    Test.Backend.Wasm
     Test.Codegen.Shared
-    Test.Data.Prelude
     Test.Utils.Helpers
 
   hs-source-dirs:   test
@@ -112,30 +95,14 @@ test-suite backends-test
     , bytestring
     , containers
     , core
-    , cryptonite
-    , diagnose
-    , directory
     , exceptions
     , file-embed
-    , hashable
     , hspec
-    , megaparsec
-    , memory
     , backends
-    , monad-logger
     , mtl
-    , openapi3
-    , parallel
-    , parser-combinators
     , prettyprinter
-    , QuickCheck
-    , servant
-    , servant-server
     , text
     , transformers
-    , typed-process
-    , wasm
-    , zip-archive
 
   default-language: Haskell2010
 

@@ -25,7 +25,6 @@ import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Types.Error
-import Language.Mimsa.Utils
 
 data DepType ann
   = DTExpr (Expr Name ann)
