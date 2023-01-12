@@ -10,9 +10,13 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Core
-import Language.Mimsa.Store.ExtractTypes
 import Language.Mimsa.Typechecker.TcMonad
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Typechecker.Types.Environment
+
+extractNamedTypeVars :: Type ann -> Set TyVar
+extractNamedTypeVars (MTVar _ (TVName tv)) = S.singleton tv
+extractNamedTypeVars (MTVar _ (TVScopedVar _ name)) = S.singleton (coerce name)
+extractNamedTypeVars other = withMonoidType extractNamedTypeVars other
 
 -- | if we've seen these type vars before, they're the same
 -- if not, return fresh versions and a set of things we've now seen

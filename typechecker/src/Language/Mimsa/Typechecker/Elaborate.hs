@@ -29,10 +29,14 @@ import Language.Mimsa.Typechecker.ScopeTypeVar
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.Types.Typechecker.Substitutions
-import Language.Mimsa.Types.Typechecker.Unique
+import Language.Mimsa.Typechecker.Error.TypeError
+import Language.Mimsa.Typechecker.Error.PatternMatchError
+import Language.Mimsa.Typechecker.Types.Substitutions
+import Language.Mimsa.Typechecker.Types.Unique
+import Language.Mimsa.Typechecker.Types.Constraint
+import Language.Mimsa.Typechecker.Types.Environment
+import Language.Mimsa.Typechecker.Types.Scheme
+import Language.Mimsa.Typechecker.Types.TypeConstructor
 
 type ElabM =
   ExceptT
@@ -42,7 +46,7 @@ type ElabM =
         (State TypecheckState)
     )
 
-type TcExpr = Expr (Name, Unique) Annotation
+type TcExpr hash = Expr (Name, Unique hash) Annotation
 
 recoverAnn :: MonoType -> Annotation
 recoverAnn = getAnnotationForType
@@ -50,7 +54,7 @@ recoverAnn = getAnnotationForType
 getTypeFromAnn :: Expr var MonoType -> MonoType
 getTypeFromAnn = getAnnotation
 
-getPatternTypeFromAnn :: Pattern (Name, Unique) MonoType -> MonoType
+getPatternTypeFromAnn :: Pattern (Name, Unique hash) MonoType -> MonoType
 getPatternTypeFromAnn pat =
   case pat of
     PLit ann _ -> ann
@@ -62,15 +66,15 @@ getPatternTypeFromAnn pat =
     PArray ann _ _ -> ann
     PString ann _ _ -> ann
 
-getSpreadTypeFromAnn :: Spread (Name, Unique) MonoType -> Maybe MonoType
+getSpreadTypeFromAnn :: Spread (Name, Unique hash) MonoType -> Maybe MonoType
 getSpreadTypeFromAnn (SpreadValue ann _) = Just ann
 getSpreadTypeFromAnn _ = Nothing
 
-type ElabExpr = Expr (Name, Unique) MonoType
+type ElabExpr hash = Expr (Name, Unique hash) MonoType
 
 --------------
 
-inferLiteral :: Annotation -> Literal -> ElabM ElabExpr
+inferLiteral :: Annotation -> Literal -> ElabM (ElabExpr hash)
 inferLiteral ann lit =
   let tyLit = case lit of
         (MyInt _) -> MTInt
@@ -78,7 +82,7 @@ inferLiteral ann lit =
         (MyString _) -> MTString
    in pure (MyLiteral (MTPrim ann tyLit) lit)
 
-lookupInEnv :: (Name, Unique) -> Environment -> Maybe Scheme
+lookupInEnv :: (Name, Unique hash) -> Environment -> Maybe Scheme
 lookupInEnv (name, ModuleDep mHash) env =
   M.lookup mHash (getNamespacedSchemes env) >>= M.lookup name
 lookupInEnv (name, unique) env =
@@ -88,7 +92,7 @@ lookupInEnv (name, unique) env =
 inferVarFromScope ::
   Environment ->
   Annotation ->
-  (Name, Unique) ->
+  (Name, Unique hash) ->
   ElabM MonoType
 inferVarFromScope env ann var' =
   case lookupInEnv var' env of
@@ -101,7 +105,7 @@ inferVarFromScope env ann var' =
           (M.keysSet $ getSchemes env)
           (fst var')
 
-envFromVar :: (Name, Unique) -> Scheme -> Environment
+envFromVar :: (Name, Unique hash) -> Scheme -> Environment
 envFromVar binder scheme =
   Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty mempty
 
@@ -123,11 +127,12 @@ lookupInfixOp env ann infixOp = do
 
 -- let's pattern match on exactly what's inside more clearly
 inferApplication ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  TcExpr ->
-  TcExpr ->
-  ElabM ElabExpr
+  TcExpr hash ->
+  TcExpr hash ->
+  ElabM (ElabExpr hash)
 inferApplication env ann function argument = do
   tyRes <- getUnknown ann
   argument' <- infer env argument
@@ -163,7 +168,7 @@ inferApplication env ann function argument = do
     ]
   pure (MyApp tyRes elabFunction argument')
 
-bindingIsRecursive :: Identifier (Name, Unique) ann -> TcExpr -> Bool
+bindingIsRecursive :: (Eq hash) => Identifier (Name, Unique hash) ann -> TcExpr hash -> Bool
 bindingIsRecursive ident = getAny . withMonoid findBinding
   where
     variable = case ident of
@@ -182,12 +187,13 @@ annotationFromIdentifier = \case
 -- if type is recursive we make it monomorphic
 -- if not, we make it polymorphic
 inferLetBinding ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  Identifier (Name, Unique) Annotation ->
-  TcExpr ->
-  TcExpr ->
-  ElabM ElabExpr
+  Identifier (Name, Unique hash) Annotation ->
+  TcExpr hash ->
+  TcExpr hash ->
+  ElabM (ElabExpr hash)
 inferLetBinding env ann ident expr body = do
   if bindingIsRecursive ident expr
     then inferRecursiveLetBinding env ann ident expr body
@@ -211,12 +217,13 @@ inferLetBinding env ann ident expr body = do
         )
 
 inferRecursiveLetBinding ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  Identifier (Name, Unique) Annotation ->
-  TcExpr ->
-  TcExpr ->
-  ElabM ElabExpr
+  Identifier (Name, Unique hash) Annotation ->
+  TcExpr hash ->
+  TcExpr hash ->
+  ElabM (ElabExpr hash)
 inferRecursiveLetBinding env ann ident expr body = do
   let bindName = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
@@ -245,7 +252,8 @@ unifyTypeOrError got expected typeErr =
     _ <- unify got expected `catchError` \_ -> throwError typeErr
     pure ()
 
-inferIf :: Environment -> Annotation -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
+inferIf :: (Eq hash) =>
+    Environment -> Annotation -> TcExpr hash -> TcExpr hash -> TcExpr hash -> ElabM (ElabExpr hash)
 inferIf env ann condition thenExpr elseExpr = do
   condExpr <- infer env condition
 
@@ -298,11 +306,12 @@ matchList mts = do
 -- check patterns are complete
 -- check output types are the same
 inferPatternMatch ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  TcExpr ->
-  [(Pattern (Name, Unique) Annotation, TcExpr)] ->
-  ElabM ElabExpr
+  TcExpr hash ->
+  [(Pattern (Name, Unique hash) Annotation, TcExpr hash)] ->
+  ElabM (ElabExpr hash)
 inferPatternMatch env ann expr patterns = do
   -- ensure we even have any patterns to match on
   nePatterns <- checkEmptyPatterns ann patterns
@@ -347,9 +356,10 @@ checkEmptyPatterns ann as = case as of
   other -> pure (NE.fromList other)
 
 inferPattern ::
+  (Eq hash) =>
   Environment ->
-  Pattern (Name, Unique) Annotation ->
-  ElabM (Pattern (Name, Unique) MonoType, Environment)
+  Pattern (Name, Unique hash) Annotation ->
+  ElabM (Pattern (Name, Unique hash) MonoType, Environment)
 inferPattern env (PLit ann lit) = do
   inferExpr <- infer env (MyLiteral ann lit)
   pure
@@ -489,12 +499,13 @@ checkArgsLength ann (DataType _ _ cons) tyCon args = do
     Nothing -> throwError UnknownTypeError -- shouldn't happen (but will)
 
 inferOperator ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
   Operator ->
-  TcExpr ->
-  TcExpr ->
-  ElabM ElabExpr
+  TcExpr hash ->
+  TcExpr hash ->
+  ElabM (ElabExpr hash)
 inferOperator env ann Equals a b = do
   inferA <- infer env a
   inferB <- infer env b
@@ -582,11 +593,12 @@ inferOperator env ann (Custom infixOp) a b = do
 
 -- | infix operator where inputs and output are the same
 inferInfix ::
+  (Eq hash) =>
   Environment ->
   MonoType ->
-  TcExpr ->
-  TcExpr ->
-  ElabM (MonoType, ElabExpr, ElabExpr)
+  TcExpr hash ->
+  TcExpr hash ->
+  ElabM (MonoType, ElabExpr hash, ElabExpr hash)
 inferInfix env mt a b = do
   inferA <- infer env a
   inferB <- infer env b
@@ -598,12 +610,13 @@ inferInfix env mt a b = do
 -- | infix operator where inputs match but output could be different
 -- | for instance, 1 < 2 == True would be `Int -> Int -> Bool`
 inferComparison ::
+  (Eq hash) =>
   Environment ->
   MonoType ->
   MonoType ->
-  TcExpr ->
-  TcExpr ->
-  ElabM (MonoType, ElabExpr, ElabExpr)
+  TcExpr hash ->
+  TcExpr hash ->
+  ElabM (MonoType, ElabExpr hash, ElabExpr hash)
 inferComparison env inputMt outputMt a b = do
   inferA <- infer env a
   inferB <- infer env b
@@ -617,11 +630,12 @@ inferComparison env inputMt outputMt a b = do
   pure (outputMt, inferA, inferB)
 
 inferRecordAccess ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  TcExpr ->
+  TcExpr hash ->
   Name ->
-  ElabM ElabExpr
+  ElabM (ElabExpr hash)
 inferRecordAccess env ann a name = do
   inferItems <- infer env a
   let inferRow = \case
@@ -652,11 +666,12 @@ inferRecordAccess env ann a name = do
   pure (MyRecordAccess mt inferItems name)
 
 inferTupleAccess ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  TcExpr ->
+  TcExpr hash ->
   Natural ->
-  ElabM ElabExpr
+  ElabM (ElabExpr hash)
 inferTupleAccess env ann expr index = do
   inferItems <- infer env expr
   -- bin off stupid numbers
@@ -676,12 +691,13 @@ inferTupleAccess env ann expr index = do
   pure (MyTupleAccess mt inferItems index)
 
 inferLetPattern ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  Pattern (Name, Unique) Annotation ->
-  TcExpr ->
-  TcExpr ->
-  ElabM ElabExpr
+  Pattern (Name, Unique hash) Annotation ->
+  TcExpr hash ->
+  TcExpr hash ->
+  ElabM (ElabExpr hash)
 inferLetPattern env ann pat expr body = do
   inferExpr <- infer env expr
   (inferPat, newEnv) <- inferPattern env pat
@@ -696,11 +712,12 @@ inferLetPattern env ann pat expr body = do
   pure (MyLetPattern (getTypeFromAnn inferBody) inferPat inferExpr inferBody)
 
 inferLambda ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  Identifier (Name, Unique) Annotation ->
-  TcExpr ->
-  ElabM ElabExpr
+  Identifier (Name, Unique hash) Annotation ->
+  TcExpr hash ->
+  ElabM (ElabExpr hash)
 inferLambda env ann ident body = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
@@ -720,10 +737,11 @@ inferLambda env ann ident body = do
     )
 
 inferArray ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  [TcExpr] ->
-  ElabM ElabExpr
+  [TcExpr hash] ->
+  ElabM (ElabExpr hash)
 inferArray env ann items = do
   inferItems <- traverse (infer env) items
   tyItems <- case NE.nonEmpty inferItems of
@@ -731,17 +749,19 @@ inferArray env ann items = do
     Nothing -> getUnknown ann
   pure (MyArray (MTArray ann tyItems) inferItems)
 
-elab :: Environment -> TcExpr -> ElabM ElabExpr
+elab :: (Eq hash) =>
+    Environment -> TcExpr hash -> ElabM (ElabExpr hash)
 elab = infer
 
 checkLambda ::
+  (Eq hash) =>
   Environment ->
   Annotation ->
-  Identifier (Name, Unique) Annotation ->
-  TcExpr ->
+  Identifier (Name, Unique hash) Annotation ->
+  TcExpr hash ->
   MonoType ->
   MonoType ->
-  ElabM ElabExpr
+  ElabM (ElabExpr hash)
 checkLambda env ann ident body tyBinder tyBody = do
   let binder = binderFromIdentifier ident
       bindAnn = annotationFromIdentifier ident
@@ -765,7 +785,7 @@ checkLambda env ann ident body tyBinder tyBody = do
         inferBody
     )
 
-check :: Environment -> TcExpr -> MonoType -> ElabM ElabExpr
+check :: (Eq hash) => Environment -> TcExpr hash -> MonoType -> ElabM (ElabExpr hash)
 check env expr mt =
   case (expr, mt) of
     (MyLambda ann ident body, MTFunction _ tyBinder tyBody) ->
@@ -776,9 +796,10 @@ check env expr mt =
       pure (applySubst subs typedExpr)
 
 infer ::
+  (Eq hash) =>
   Environment ->
-  TcExpr ->
-  ElabM ElabExpr
+  TcExpr hash ->
+  ElabM (ElabExpr hash)
 infer env inferExpr =
   case inferExpr of
     (MyLiteral ann a) -> inferLiteral ann a

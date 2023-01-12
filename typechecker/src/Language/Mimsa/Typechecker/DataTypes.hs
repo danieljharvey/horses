@@ -24,8 +24,9 @@ import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Environment
 import Language.Mimsa.Typechecker.TcMonad
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Typechecker.Error.TypeError
+import Language.Mimsa.Typechecker.Types.Environment
+import Language.Mimsa.Typechecker.Types.TypeConstructor
 
 -- on declaring a datatype, basically is it ok
 validateDataType ::

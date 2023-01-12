@@ -11,7 +11,8 @@ import qualified Data.Set as S
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.BuiltIns
 import Language.Mimsa.Typechecker.Unify
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Typechecker.Types.Environment
+import Language.Mimsa.Typechecker.Types.Scheme
 
 createEnv ::
   Map Name MonoType ->
