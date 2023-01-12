@@ -13,8 +13,6 @@ license:            BSD-3-Clause
 license-file:       LICENSE
 build-type:         Simple
 extra-source-files:
-  static/backend/es-modules-js/stdlib.mjs
-  static/backend/typescript/stdlib.ts
   static/modules/Array.mimsa
   static/modules/Either.mimsa
   static/modules/Maybe.mimsa
@@ -58,20 +56,7 @@ library
     Language.Mimsa.Actions.Monad
     Language.Mimsa.Actions.Optimise
     Language.Mimsa.Actions.Types
-    Language.Mimsa.Backend.Javascript.Printer
-    Language.Mimsa.Backend.Output
-    Language.Mimsa.Backend.Shared
-    Language.Mimsa.Backend.Types
-    Language.Mimsa.Backend.Typescript.DataType
-    Language.Mimsa.Backend.Typescript.FromDataType
-    Language.Mimsa.Backend.Typescript.FromExpr
-    Language.Mimsa.Backend.Typescript.FromType
-    Language.Mimsa.Backend.Typescript.Monad
-    Language.Mimsa.Backend.Typescript.Patterns
-    Language.Mimsa.Backend.Typescript.Printer
-    Language.Mimsa.Backend.Typescript.Types
     Language.Mimsa.Backend.Wasm.Compile
-    Language.Mimsa.Backend.ZipFile
     Language.Mimsa.Interpreter.App
     Language.Mimsa.Interpreter.If
     Language.Mimsa.Interpreter.Infix
@@ -141,7 +126,6 @@ library
     Language.Mimsa.Typechecker.TypedHoles
     Language.Mimsa.Typechecker.Unify
     Language.Mimsa.Types.Error
-    Language.Mimsa.Types.Error.BackendError
     Language.Mimsa.Types.Error.CodegenError
     Language.Mimsa.Types.Error.InterpreterError
     Language.Mimsa.Types.Error.ModuleError
@@ -164,7 +148,6 @@ library
     Language.Mimsa.Types.Store.Bindings
     Language.Mimsa.Types.Store.ExprHash
     Language.Mimsa.Types.Store.ResolvedDeps
-    Language.Mimsa.Types.Store.ResolvedTypeDeps
     Language.Mimsa.Types.Store.RootPath
     Language.Mimsa.Types.Store.Store
     Language.Mimsa.Types.Store.StoreExpression
@@ -179,12 +162,12 @@ library
     Language.Mimsa.Types.Typechecker.TypeConstructor
     Language.Mimsa.Types.Typechecker.Unique
     Language.Mimsa.Types.Typechecker.UniVar
-    Language.Mimsa.Utils
 
   hs-source-dirs:     src
   default-extensions: Strict
   build-depends:
     , aeson
+    , backends
     , base                >=4.7 && <5
     , bifunctors
     , binary
@@ -211,7 +194,6 @@ library
     , text
     , transformers
     , wasm
-    , zip-archive
 
   default-language:   Haskell2010
 
@@ -224,9 +206,9 @@ test-suite mimsa-test
     Test.Actions.Build
     Test.Actions.Compile
     Test.Actions.Evaluate
-    Test.Backend.ESModulesJS
+    Test.Backend.ESModulesJSEndToEnd
     Test.Backend.RunNode
-    Test.Backend.Typescript
+    Test.Backend.TypescriptEndToEnd
     Test.Backend.Wasm
     Test.Codegen.Shared
     Test.Data.Prelude
@@ -267,6 +249,7 @@ test-suite mimsa-test
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     , aeson
+    , backends
     , base                >=4.7 && <5
     , bifunctors
     , binary
@@ -296,7 +279,6 @@ test-suite mimsa-test
     , transformers
     , typed-process
     , wasm
-    , zip-archive
 
   default-language: Haskell2010
 
@@ -336,6 +318,5 @@ benchmark mimsa-benchmark
     , text
     , transformers
     , wasm
-    , zip-archive
 
   default-language: Haskell2010

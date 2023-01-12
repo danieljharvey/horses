@@ -25,6 +25,14 @@ ghcid-repl:
 ghcid-server:
 	ghcid -c "cabal repl server:exe:mimsa-server" -l=hlint
 
+.PHONY: ghcid-backends
+ghcid-backends:
+	ghcid -c "cabal repl backends:lib:backends" -l=hlint
+
+.PHONY: ghcid-backends-test
+ghcid-backends-test:
+	ghcid -c "cabal repl backends:test:backends-tests" --test "main"
+
 # EXCITING NEW WORLD
 
 .PHONY: ghcid-smol
@@ -67,6 +75,10 @@ test-smol:
 .PHONY: test-core
 test-core:
 	cabal run core:test:core-test
+
+.PHONY: test-backends
+test-backends:
+	cabal run backends:test:backends-tests
 
 .PHONY: test-watch
 test-watch:

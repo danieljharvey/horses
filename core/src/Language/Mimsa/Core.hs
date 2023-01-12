@@ -7,6 +7,7 @@ module Language.Mimsa.Core
     module Language.Mimsa.Core.Printer,
     module Language.Mimsa.Core.TypeUtils,
     module Language.Mimsa.Core.ExprUtils,
+    module Language.Mimsa.Core.Utils,
   )
 where
 
@@ -18,3 +19,4 @@ import Language.Mimsa.Core.Types.AST
 import Language.Mimsa.Core.Types.Identifiers
 import Language.Mimsa.Core.Types.Module
 import Language.Mimsa.Core.Types.Type
+import Language.Mimsa.Core.Utils

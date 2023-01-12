@@ -13,10 +13,12 @@ import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Coerce
 import Data.Foldable (traverse_)
+import Data.Functor (($>))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Text (Text)
 import qualified Data.Text as T
 -- import qualified Language.Mimsa.Actions.Optimise as Actions
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
@@ -32,6 +34,7 @@ import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.ToStoreExprs
 import Language.Mimsa.Project
 import Language.Mimsa.Store
+import Language.Mimsa.Store.ResolveDataTypes
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project
 import Language.Mimsa.Types.Store
@@ -189,3 +192,30 @@ compileModule be compModule = do
 
   -- great job
   pure (moduleHash, exportMap, exportTypeMap)
+
+-- | Need to also include any types mentioned but perhaps not explicitly used
+outputStoreExpression ::
+  Backend ->
+  Map (Maybe ModuleName, TyCon) DataType ->
+  Store any ->
+  StoreExpression MonoType ->
+  BackendM MonoType Text
+outputStoreExpression be dataTypes store se@(StoreExpression expr _ _ _ _) = do
+  let typeBindings = typeBindingsByType store (storeTypeBindings se)
+  renderExprWithDeps be dataTypes typeBindings (storeInfixes se) (storeBindings se) (storeTypes se) expr
+outputStoreExpression be dataTypes _store (StoreDataType dt types) =
+  renderDataTypeWithDeps be dataTypes dt types
+
+-- returns [Maybe, hash], [These, hash], [Either, hash] - used for imports
+typeBindingsByType :: Store a -> Map (Maybe ModuleName, TyCon) ExprHash -> Map TypeName ExprHash
+typeBindingsByType store tb =
+  let getTypeName' exprHash =
+        case lookupExprHashFromStore store exprHash of
+          Just se -> storeExprToDataTypes se $> exprHash
+          Nothing -> mempty
+   in stripModules $ mconcat (getTypeName' <$> M.elems tb)
+
+-- remove moduleName from type. will probably need these later when we come to
+-- fix TS but for now YOLO
+stripModules :: (Ord b) => Map (a, b) c -> Map b c
+stripModules = M.fromList . fmap (first snd) . M.toList
