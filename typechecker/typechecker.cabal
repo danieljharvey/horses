@@ -1,0 +1,225 @@
+cabal-version:      2.2
+name:               typechecker
+version:            0.1.0.0
+description:
+  Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
+
+homepage:           https://github.com/danieljharvey/mimsa#readme
+bug-reports:        https://github.com/danieljharvey/mimsa/issues
+author:             Daniel J Harvey
+maintainer:         danieljamesharvey@gmail.com
+copyright:          2021 Daniel J Harvey
+license:            BSD-3-Clause
+license-file:       LICENSE
+build-type:         Simple
+extra-source-files:
+  static/backend/es-modules-js/stdlib.mjs
+  static/backend/typescript/stdlib.ts
+  static/modules/Array.mimsa
+  static/modules/Either.mimsa
+  static/modules/Maybe.mimsa
+  static/modules/Monoid.mimsa
+  static/modules/NonEmptyArray.mimsa
+  static/modules/Parser.mimsa
+  static/modules/Prelude.mimsa
+  static/modules/Reader.mimsa
+  static/modules/State.mimsa
+  static/modules/String.mimsa
+  static/modules/These.mimsa
+  static/modules/Tree.mimsa
+
+source-repository head
+  type:     git
+  location: https://github.com/danieljharvey/mimsa
+
+common common-all
+  ghc-options:
+    -Wall -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
+library
+  import:             common-all
+  exposed-modules:
+    Language.Mimsa.Logging
+    Language.Mimsa.Modules.Check
+    Language.Mimsa.Modules.Dependencies
+    Language.Mimsa.Modules.FromParts
+    Language.Mimsa.Modules.HashModule
+    Language.Mimsa.Modules.Monad
+    Language.Mimsa.Modules.Parse
+    Language.Mimsa.Modules.Prelude
+    Language.Mimsa.Modules.Pretty
+    Language.Mimsa.Modules.ToStoreExprs
+    Language.Mimsa.Modules.Typecheck
+    Language.Mimsa.Modules.Uses
+    Language.Mimsa.Typechecker
+    Language.Mimsa.Typechecker.BuiltIns
+    Language.Mimsa.Typechecker.CreateEnv
+    Language.Mimsa.Typechecker.DataTypes
+    Language.Mimsa.Typechecker.DisplayError
+    Language.Mimsa.Typechecker.Elaborate
+    Language.Mimsa.Typechecker.Environment
+    Language.Mimsa.Typechecker.Exhaustiveness
+    Language.Mimsa.Typechecker.FlattenRow
+    Language.Mimsa.Typechecker.Generalise
+    Language.Mimsa.Typechecker.NormaliseTypes
+    Language.Mimsa.Typechecker.NumberVars
+    Language.Mimsa.Typechecker.OutputTypes
+    Language.Mimsa.Typechecker.ScopeTypeVar
+    Language.Mimsa.Typechecker.Solve
+    Language.Mimsa.Typechecker.TcMonad
+    Language.Mimsa.Typechecker.Typecheck
+    Language.Mimsa.Typechecker.TypedHoles
+    Language.Mimsa.Typechecker.Unify
+    Language.Mimsa.Types.Error
+    Language.Mimsa.Types.Error.BackendError
+    Language.Mimsa.Types.Error.CodegenError
+    Language.Mimsa.Types.Error.InterpreterError
+    Language.Mimsa.Types.Error.ModuleError
+    Language.Mimsa.Types.Error.PatternMatchError
+    Language.Mimsa.Types.Error.ProjectError
+    Language.Mimsa.Types.Error.ResolverError
+    Language.Mimsa.Types.Error.StoreError
+    Language.Mimsa.Types.Error.TypeError
+    Language.Mimsa.Types.Interpreter.Stack
+    Language.Mimsa.Types.Project
+    Language.Mimsa.Types.Project.Project
+    Language.Mimsa.Types.Project.ProjectHash
+    Language.Mimsa.Types.Project.SaveProject
+    Language.Mimsa.Types.Project.SourceItem
+    Language.Mimsa.Types.Project.SourceSpan
+    Language.Mimsa.Types.Project.Usage
+    Language.Mimsa.Types.Project.Versioned
+    Language.Mimsa.Types.Project.VersionedMap
+    Language.Mimsa.Types.Tests
+    Language.Mimsa.Types.Typechecker
+    Language.Mimsa.Types.Typechecker.Constraint
+    Language.Mimsa.Types.Typechecker.Environment
+    Language.Mimsa.Types.Typechecker.FoundPath
+    Language.Mimsa.Types.Typechecker.Scheme
+    Language.Mimsa.Types.Typechecker.Substitutions
+    Language.Mimsa.Types.Typechecker.TypeConstructor
+    Language.Mimsa.Types.Typechecker.Unique
+    Language.Mimsa.Types.Typechecker.UniVar
+    Language.Mimsa.Utils
+
+  hs-source-dirs:     src
+  default-extensions: Strict
+  build-depends:
+    , aeson
+    , base                >=4.7 && <5
+    , bifunctors
+    , binary
+    , bytestring
+    , containers
+    , core
+    , cryptonite
+    , diagnose
+    , directory
+    , exceptions
+    , file-embed
+    , hashable
+    , megaparsec
+    , memory
+    , monad-logger
+    , mtl
+    , openapi3
+    , parallel
+    , parser-combinators
+    , prettyprinter
+    , QuickCheck
+    , servant
+    , servant-server
+    , text
+    , transformers
+    , wasm
+    , zip-archive
+
+  default-language:   Haskell2010
+
+test-suite typechecker-test
+  import:           common-all
+  type:             exitcode-stdio-1.0
+  main-is:          Spec.hs
+  other-modules:
+    Test.Actions.BindModule
+    Test.Actions.Build
+    Test.Actions.Compile
+    Test.Actions.Evaluate
+    Test.Backend.ESModulesJS
+    Test.Backend.RunNode
+    Test.Backend.Typescript
+    Test.Backend.Wasm
+    Test.Codegen.Shared
+    Test.Data.Prelude
+    Test.Data.Project
+    Test.Modules.Check
+    Test.Modules.Repl
+    Test.Modules.Test
+    Test.Modules.ToStoreExprs
+    Test.Modules.Uses
+    Test.Project.NormaliseType
+    Test.Project.SourceSpan
+    Test.Project.Stdlib
+    Test.RenderErrors
+    Test.Serialisation
+    Test.Tests.Properties
+    Test.Transform.BetaReduce
+    Test.Transform.EtaReduce
+    Test.Transform.FindUnused
+    Test.Transform.FindUses
+    Test.Transform.FlattenLets
+    Test.Transform.FloatDown
+    Test.Transform.FloatUp
+    Test.Transform.Inliner
+    Test.Transform.SimplifyPatterns
+    Test.Typechecker.DataTypes
+    Test.Typechecker.Elaborate
+    Test.Typechecker.Exhaustiveness
+    Test.Typechecker.NumberVars
+    Test.Typechecker.ScopeTypeVar
+    Test.Typechecker.Substitutions
+    Test.Typechecker.Typecheck
+    Test.Typechecker.Unify
+    Test.Utils.Compilation
+    Test.Utils.Helpers
+    Test.Utils.Serialisation
+
+  hs-source-dirs:   test
+  ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    , aeson
+    , base                >=4.7 && <5
+    , bifunctors
+    , binary
+    , bytestring
+    , containers
+    , core
+    , cryptonite
+    , diagnose
+    , directory
+    , exceptions
+    , file-embed
+    , hashable
+    , hspec
+    , megaparsec
+    , memory
+    , typechecker
+    , monad-logger
+    , mtl
+    , openapi3
+    , parallel
+    , parser-combinators
+    , prettyprinter
+    , QuickCheck
+    , servant
+    , servant-server
+    , text
+    , transformers
+    , typed-process
+    , wasm
+    , zip-archive
+
+  default-language: Haskell2010
+

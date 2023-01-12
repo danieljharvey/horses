@@ -2,6 +2,7 @@ packages:
   compiler/mimsa.cabal,
   server/server.cabal,
   backends/backends.cabal,
+  typechecker/typechecker.cabal,
   repl/repl.cabal,
   core/core.cabal,
   smol-core/smol-core.cabal

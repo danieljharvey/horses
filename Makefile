@@ -13,6 +13,14 @@ ghcid-core:
 ghcid-core-test:
 	ghcid -c "cabal repl core:test:core-test" -l=hlint
 
+.PHONY: ghcid-typechecker
+ghcid-typechecker:
+	ghcid -c "cabal repl typechecker:lib:typechecker" -l=hlint
+
+.PHONY: ghcid-typechecker-test
+ghcid-typechecker-test:
+	ghcid -c "cabal repl typechecker:test:typechecker-test" -l=hlint
+
 .PHONY: ghcid-test
 ghcid-test:
 	ghcid -c "cabal repl mimsa:test:mimsa-test" -l=hlint
