@@ -8,9 +8,10 @@ import Control.Monad.Except
 import Control.Monad.State
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.Types.Typechecker.Substitutions
+import Language.Mimsa.Typechecker.Types.Substitutions
+import Language.Mimsa.Typechecker.Error.TypeError
+import Language.Mimsa.Typechecker.Error.PatternMatchError
+import Language.Mimsa.Typechecker.Types.Constraint
 
 type SolveM = ExceptT TypeError (State TypecheckState)
 

@@ -66,6 +66,8 @@ library
     Language.Mimsa.Core.Types.Module.Module
     Language.Mimsa.Core.Types.Module.ModuleHash
     Language.Mimsa.Core.Types.Module.ModuleName
+    Language.Mimsa.Core.Types.Source
+    Language.Mimsa.Core.Types.Source.SourceSpan
     Language.Mimsa.Core.Types.Type
     Language.Mimsa.Core.Types.Type.MonoType
     Language.Mimsa.Core.TypeUtils
@@ -104,6 +106,7 @@ test-suite core-test
     CoreTest.Parser.Syntax
     CoreTest.Prettier
     CoreTest.Utils.Helpers
+    CoreTest.Source.SourceSpan
 
   hs-source-dirs:   test
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N

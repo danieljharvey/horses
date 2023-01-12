@@ -6,8 +6,8 @@ import Control.Monad.Except
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker
+import Language.Mimsa.Typechecker.Error.TypeError
+import Language.Mimsa.Typechecker.Types.Environment
 
 -- given a constructor name, return the type it lives in
 lookupConstructor ::

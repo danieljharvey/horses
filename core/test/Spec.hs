@@ -3,6 +3,7 @@ module Main
   )
 where
 
+import qualified CoreTest.Source.SourceSpan
 import qualified CoreTest.Parser.DataTypes
 import qualified CoreTest.Parser.MonoTypeParser
 import qualified CoreTest.Parser.Pattern
@@ -18,3 +19,4 @@ main =
     CoreTest.Parser.Pattern.spec
     CoreTest.Parser.Syntax.spec
     CoreTest.Prettier.spec
+    CoreTest.Source.SourceSpan.spec

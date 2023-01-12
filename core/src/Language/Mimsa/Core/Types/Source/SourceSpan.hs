@@ -1,9 +1,24 @@
-module Language.Mimsa.Project.SourceSpan where
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 
+module Language.Mimsa.Core.Types.Source.SourceSpan (SourceSpan (..), sourceSpan) where
+
+import qualified Data.Aeson as JSON
+import Data.OpenApi
+import GHC.Generics
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Core
-import Language.Mimsa.Types.Project.SourceSpan
+import Language.Mimsa.Core.Types.AST.Annotation
+
+data SourceSpan = SourceSpan
+  { ssRowStart :: Int,
+    ssRowEnd :: Int,
+    ssColStart :: Int,
+    ssColEnd :: Int
+  }
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (JSON.ToJSON, ToSchema)
 
 lineLengths :: Text -> [Int]
 lineLengths tx = T.length <$> T.lines tx

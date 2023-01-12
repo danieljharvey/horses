@@ -9,7 +9,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Mimsa.Types.Error.TypeError
+import Language.Mimsa.Typechecker.Error.TypeError
 import Text.Megaparsec
 
 displayError :: Text -> TypeError -> Text

@@ -17,35 +17,35 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Error.TypeError
-import Language.Mimsa.Types.Store
-import Language.Mimsa.Types.Typechecker.Unique
+import Language.Mimsa.Typechecker.Error.TypeError
+-- import Language.Mimsa.Types.Store
+import Language.Mimsa.Typechecker.Types.Unique
 
 newtype SubsState var ann = SubsState
   { ssCounter :: Int
   }
   deriving newtype (Eq, Ord, Show)
 
-newtype SubsEnv var ann = SubsEnv
-  { seScope :: Map (var, Maybe ModuleName) Unique
+newtype SubsEnv hash var ann = SubsEnv
+  { seScope :: Map (var, Maybe ModuleName) (Unique hash)
   }
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
-type App var ann =
+type App hash var ann =
   ExceptT
     (TypeErrorF var ann)
     ( ReaderT
-        (SubsEnv var ann)
+        (SubsEnv hash var ann)
         (State (SubsState var ann))
     )
 
-type NumberedExpr var ann = Expr (var, Unique) ann
+type NumberedExpr hash var ann = Expr (var, Unique hash) ann
 
 addNumbersToStoreExpression ::
   (Show ann) =>
   Expr Name ann ->
-  Map (Maybe ModuleName, Name) ExprHash ->
-  Either (TypeErrorF Name ann) (NumberedExpr Name ann)
+  Map (Maybe ModuleName, Name) hash ->
+  Either (TypeErrorF Name ann) (NumberedExpr hash Name ann)
 addNumbersToStoreExpression expr bindings =
   let action = do
         -- add dependencies to scope
@@ -69,10 +69,10 @@ addNumbersToStoreExpression expr bindings =
 addNumbersToExpression ::
   (Show ann) =>
   Set Name ->
-  Map Name ExprHash ->
+  Map Name hash ->
   Map ModuleName (ModuleHash, Set Name) ->
   Expr Name ann ->
-  Either (TypeErrorF Name ann) (NumberedExpr Name ann)
+  Either (TypeErrorF Name ann) (NumberedExpr hash Name ann)
 addNumbersToExpression locals imports modules expr =
   let action = do
         -- add dependencies to scope
@@ -132,18 +132,19 @@ varsFromPattern (PString _ sHead sTail) =
 freshVarsFromPattern ::
   (Ord var) =>
   Pattern var ann ->
-  App var ann (Map (var, Maybe ModuleName) Unique)
+  App hash var ann (Map (var, Maybe ModuleName) (Unique hash))
 freshVarsFromPattern pat =
   M.fromList
     <$> traverse
       (\var -> (,) (var, Nothing) <$> nextNum)
       (S.toList (varsFromPattern pat))
 
-withLambda :: (Ord var) => Map (var, Maybe ModuleName) Unique -> App var ann a -> App var ann a
+withLambda :: (Ord var) =>
+  Map (var, Maybe ModuleName) (Unique hash) -> App hash var ann a -> App hash var ann a
 withLambda newVars =
   local (\env -> env {seScope = newVars <> seScope env})
 
-nextNum :: App var ann Unique
+nextNum :: App hash var ann (Unique hash)
 nextNum = do
   unique <- gets ssCounter
   modify
@@ -158,12 +159,13 @@ lookupVar ::
   (Ord var) =>
   var ->
   Maybe ModuleName ->
-  App var ann (Maybe Unique)
+  App hash var ann (Maybe (Unique hash))
 lookupVar var maybeMod =
   asks (M.lookup (var, maybeMod) . seScope)
 
 -- given a var, given it a fresh number unless we already have a number for it
-getVar :: (Ord var) => ann -> var -> Maybe ModuleName -> App var ann (var, Unique)
+getVar :: (Ord var) => ann -> var -> Maybe ModuleName ->
+    App hash var ann (var, Unique hash)
 getVar ann var maybeMod = do
   found <- lookupVar var maybeMod
   case found of
@@ -176,7 +178,7 @@ getVar ann var maybeMod = do
 markImports ::
   (Ord var, Show var, Show ann) =>
   Expr var ann ->
-  App var ann (NumberedExpr var ann)
+  App hash var ann (NumberedExpr hash var ann)
 markImports (MyVar ann modName var) =
   MyVar ann modName <$> getVar ann var modName
 markImports (MyAnnotation ann mt expr) =
@@ -249,7 +251,7 @@ markImports (MyTypedHole ann name) = do
 markPatternImports ::
   (Ord var, Show var, Show ann) =>
   Pattern var ann ->
-  App var ann (Pattern (var, Unique) ann)
+  App hash var ann (Pattern (var, Unique hash) ann)
 markPatternImports pat =
   case pat of
     (PVar ann from) ->
@@ -281,7 +283,7 @@ markPatternImports pat =
 markSpreadNameImports ::
   (Ord var) =>
   Spread var ann ->
-  App var ann (Spread (var, Unique) ann)
+  App hash var ann (Spread (var, Unique hash) ann)
 markSpreadNameImports (SpreadValue ann from') =
   SpreadValue ann <$> getVar ann from' Nothing
 markSpreadNameImports (SpreadWildcard ann) = pure (SpreadWildcard ann)
@@ -290,14 +292,14 @@ markSpreadNameImports NoSpread = pure NoSpread
 markStringPartImports ::
   (Ord var) =>
   StringPart var ann ->
-  App var ann (StringPart (var, Unique) ann)
+  App hash var ann (StringPart (var, Unique hash) ann)
 markStringPartImports (StrValue ann from') =
   StrValue ann <$> getVar ann from' Nothing
 markStringPartImports (StrWildcard ann) = pure (StrWildcard ann)
 
 markIdentImports ::
   Identifier var ann ->
-  Unique ->
-  Identifier (var, Unique) ann
+  Unique hash ->
+  Identifier (var, Unique hash) ann
 markIdentImports (Identifier ann from') unique =
   Identifier ann (from', unique)

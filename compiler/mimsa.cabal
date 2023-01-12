@@ -81,7 +81,6 @@ library
     Language.Mimsa.Modules.Uses
     Language.Mimsa.Project
     Language.Mimsa.Project.Helpers
-    Language.Mimsa.Project.SourceSpan
     Language.Mimsa.Project.Stdlib
     Language.Mimsa.Project.TypeSearch
     Language.Mimsa.Store
@@ -118,7 +117,6 @@ library
     Language.Mimsa.Typechecker.Generalise
     Language.Mimsa.Typechecker.NormaliseTypes
     Language.Mimsa.Typechecker.NumberVars
-    Language.Mimsa.Typechecker.OutputTypes
     Language.Mimsa.Typechecker.ScopeTypeVar
     Language.Mimsa.Typechecker.Solve
     Language.Mimsa.Typechecker.TcMonad
@@ -140,7 +138,6 @@ library
     Language.Mimsa.Types.Project.ProjectHash
     Language.Mimsa.Types.Project.SaveProject
     Language.Mimsa.Types.Project.SourceItem
-    Language.Mimsa.Types.Project.SourceSpan
     Language.Mimsa.Types.Project.Usage
     Language.Mimsa.Types.Project.Versioned
     Language.Mimsa.Types.Project.VersionedMap
@@ -219,7 +216,6 @@ test-suite mimsa-test
     Test.Modules.ToStoreExprs
     Test.Modules.Uses
     Test.Project.NormaliseType
-    Test.Project.SourceSpan
     Test.Project.Stdlib
     Test.RenderErrors
     Test.Serialisation

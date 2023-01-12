@@ -21,10 +21,12 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Generalise
-import Language.Mimsa.Types.Error.TypeError
-import Language.Mimsa.Types.Typechecker
-import Language.Mimsa.Types.Typechecker.Substitutions
-import Language.Mimsa.Types.Typechecker.Unique
+import Language.Mimsa.Typechecker.Error.TypeError
+import Language.Mimsa.Typechecker.Types.Substitutions
+import Language.Mimsa.Typechecker.Types.Unique
+import Language.Mimsa.Typechecker.Types.Scheme
+import Language.Mimsa.Typechecker.Types.Environment
+
 
 data TypecheckState = TypecheckState
   { tcsNum :: Int,
@@ -120,7 +122,7 @@ getTypedHoles subs'@(Substitutions subs) = do
             )
   pure $ M.mapWithKey getMonoType holes
 
-variableToTypeIdentifier :: (Name, Unique) -> TypeIdentifier
+variableToTypeIdentifier :: (Name, Unique hash) -> TypeIdentifier
 variableToTypeIdentifier (name, Unique i) = TVScopedVar i name
 variableToTypeIdentifier (name, _) =
   TVName (coerce name)

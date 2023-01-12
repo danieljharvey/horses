@@ -5,7 +5,7 @@ module Language.Mimsa.Typechecker.Types.Environment where
 
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
-import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
+import Language.Mimsa.Typechecker.Types.Scheme (Scheme)
 import Prettyprinter
 
 -- everything we need in typechecking environment

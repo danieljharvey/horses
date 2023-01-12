@@ -18,7 +18,6 @@ import qualified Test.Modules.Test
 import qualified Test.Modules.ToStoreExprs
 import qualified Test.Modules.Uses
 import qualified Test.Project.NormaliseType
-import qualified Test.Project.SourceSpan
 import qualified Test.Project.Stdlib
 import qualified Test.RenderErrors
 import qualified Test.Serialisation
@@ -58,7 +57,6 @@ main =
     Test.Modules.ToStoreExprs.spec
     Test.Modules.Uses.spec
     Test.Project.NormaliseType.spec
-    Test.Project.SourceSpan.spec
     Test.Project.Stdlib.spec
     Test.RenderErrors.spec
     Test.Serialisation.spec

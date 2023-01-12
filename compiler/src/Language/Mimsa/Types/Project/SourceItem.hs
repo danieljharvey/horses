@@ -10,7 +10,7 @@ import qualified Data.Aeson as JSON
 import Data.OpenApi
 import Data.Text (Text)
 import GHC.Generics
-import Language.Mimsa.Types.Project
+import Language.Mimsa.Core
 
 -- SourceItem is any interesting thing in the response, with a location
 data SourceItem = SourceItem

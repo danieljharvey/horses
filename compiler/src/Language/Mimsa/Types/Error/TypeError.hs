@@ -26,9 +26,7 @@ import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
 import GHC.Natural
 import Language.Mimsa.Core
-import Language.Mimsa.Project.SourceSpan
 import Language.Mimsa.Types.Error.PatternMatchError (PatternMatchErrorF (..))
-import Language.Mimsa.Types.Project.SourceSpan
 import Language.Mimsa.Types.Typechecker.Environment (Environment (getDataTypes))
 import Language.Mimsa.Types.Typechecker.FoundPath
 import Prettyprinter

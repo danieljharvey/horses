@@ -41,18 +41,6 @@ common common-all
 library
   import:             common-all
   exposed-modules:
-    Language.Mimsa.Logging
-    Language.Mimsa.Modules.Check
-    Language.Mimsa.Modules.Dependencies
-    Language.Mimsa.Modules.FromParts
-    Language.Mimsa.Modules.HashModule
-    Language.Mimsa.Modules.Monad
-    Language.Mimsa.Modules.Parse
-    Language.Mimsa.Modules.Prelude
-    Language.Mimsa.Modules.Pretty
-    Language.Mimsa.Modules.ToStoreExprs
-    Language.Mimsa.Modules.Typecheck
-    Language.Mimsa.Modules.Uses
     Language.Mimsa.Typechecker
     Language.Mimsa.Typechecker.BuiltIns
     Language.Mimsa.Typechecker.CreateEnv
@@ -65,12 +53,10 @@ library
     Language.Mimsa.Typechecker.Generalise
     Language.Mimsa.Typechecker.NormaliseTypes
     Language.Mimsa.Typechecker.NumberVars
-    Language.Mimsa.Typechecker.OutputTypes
     Language.Mimsa.Typechecker.ScopeTypeVar
     Language.Mimsa.Typechecker.Solve
     Language.Mimsa.Typechecker.TcMonad
     Language.Mimsa.Typechecker.Typecheck
-    Language.Mimsa.Typechecker.TypedHoles
     Language.Mimsa.Typechecker.Unify
     Language.Mimsa.Typechecker.Error.PatternMatchError
     Language.Mimsa.Typechecker.Error.TypeError
@@ -93,27 +79,19 @@ library
     , bytestring
     , containers
     , core
-    , cryptonite
     , diagnose
     , directory
     , exceptions
-    , file-embed
     , hashable
     , megaparsec
-    , memory
-    , monad-logger
     , mtl
     , openapi3
     , parallel
-    , parser-combinators
     , prettyprinter
-    , QuickCheck
     , servant
     , servant-server
     , text
     , transformers
-    , wasm
-    , zip-archive
 
   default-language:   Haskell2010
 

@@ -22,8 +22,9 @@ import Data.Monoid
 import qualified Data.Set as S
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Environment
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Typechecker.Environment
+import Language.Mimsa.Typechecker.Types.Environment
+import Language.Mimsa.Typechecker.Error.TypeError
+import Language.Mimsa.Typechecker.Error.PatternMatchError
 
 validatePatterns ::
   ( MonadError (TypeErrorF var Annotation) m,
