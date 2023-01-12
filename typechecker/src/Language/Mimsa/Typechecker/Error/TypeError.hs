@@ -6,7 +6,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Language.Mimsa.Types.Error.TypeError
+module Language.Mimsa.Typechecker.Error.TypeError
   ( TypeErrorF (..),
     TypeError,
     getErrorPos,

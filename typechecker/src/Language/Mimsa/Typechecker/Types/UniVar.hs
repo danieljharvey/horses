@@ -2,7 +2,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Mimsa.Types.Typechecker.UniVar where
+module Language.Mimsa.Typechecker.Types.UniVar where
 
 import GHC.Generics
 import Language.Mimsa.Core

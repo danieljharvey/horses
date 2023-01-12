@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Language.Mimsa.Types.Error.PatternMatchError
+module Language.Mimsa.Typechecker.Error.PatternMatchError
   ( PatternMatchErrorF (..),
     PatternMatchError,
     renderPatternMatchError,

@@ -72,37 +72,16 @@ library
     Language.Mimsa.Typechecker.Typecheck
     Language.Mimsa.Typechecker.TypedHoles
     Language.Mimsa.Typechecker.Unify
-    Language.Mimsa.Types.Error
-    Language.Mimsa.Types.Error.BackendError
-    Language.Mimsa.Types.Error.CodegenError
-    Language.Mimsa.Types.Error.InterpreterError
-    Language.Mimsa.Types.Error.ModuleError
-    Language.Mimsa.Types.Error.PatternMatchError
-    Language.Mimsa.Types.Error.ProjectError
-    Language.Mimsa.Types.Error.ResolverError
-    Language.Mimsa.Types.Error.StoreError
-    Language.Mimsa.Types.Error.TypeError
-    Language.Mimsa.Types.Interpreter.Stack
-    Language.Mimsa.Types.Project
-    Language.Mimsa.Types.Project.Project
-    Language.Mimsa.Types.Project.ProjectHash
-    Language.Mimsa.Types.Project.SaveProject
-    Language.Mimsa.Types.Project.SourceItem
-    Language.Mimsa.Types.Project.SourceSpan
-    Language.Mimsa.Types.Project.Usage
-    Language.Mimsa.Types.Project.Versioned
-    Language.Mimsa.Types.Project.VersionedMap
-    Language.Mimsa.Types.Tests
-    Language.Mimsa.Types.Typechecker
-    Language.Mimsa.Types.Typechecker.Constraint
-    Language.Mimsa.Types.Typechecker.Environment
-    Language.Mimsa.Types.Typechecker.FoundPath
-    Language.Mimsa.Types.Typechecker.Scheme
-    Language.Mimsa.Types.Typechecker.Substitutions
-    Language.Mimsa.Types.Typechecker.TypeConstructor
-    Language.Mimsa.Types.Typechecker.Unique
-    Language.Mimsa.Types.Typechecker.UniVar
-    Language.Mimsa.Utils
+    Language.Mimsa.Typechecker.Error.PatternMatchError
+    Language.Mimsa.Typechecker.Error.TypeError
+    Language.Mimsa.Typechecker.Types.Constraint
+    Language.Mimsa.Typechecker.Types.Environment
+    Language.Mimsa.Typechecker.Types.FoundPath
+    Language.Mimsa.Typechecker.Types.Scheme
+    Language.Mimsa.Typechecker.Types.Substitutions
+    Language.Mimsa.Typechecker.Types.TypeConstructor
+    Language.Mimsa.Typechecker.Types.Unique
+    Language.Mimsa.Typechecker.Types.UniVar
 
   hs-source-dirs:     src
   default-extensions: Strict

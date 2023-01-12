@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Typechecker.Substitutions
+module Language.Mimsa.Typechecker.Types.Substitutions
   ( Substitutions (..),
     applySubst,
   )

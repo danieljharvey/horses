@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Typechecker.Constraint (Constraint (..)) where
+module Language.Mimsa.Typechecker.Types.Constraint (Constraint (..)) where
 
 import Language.Mimsa.Core
 

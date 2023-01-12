@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Typechecker.TypeConstructor where
+module Language.Mimsa.Typechecker.Types.TypeConstructor where
 
 import qualified Data.Text as T
 import Language.Mimsa.Core

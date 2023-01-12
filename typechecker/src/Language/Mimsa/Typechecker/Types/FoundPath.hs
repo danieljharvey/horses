@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Typechecker.FoundPath (FoundPath (..), appendNameToFoundPath) where
+module Language.Mimsa.Typechecker.Types.FoundPath (FoundPath (..), appendNameToFoundPath) where
 
 import qualified Data.List.NonEmpty as NE
 import Data.String

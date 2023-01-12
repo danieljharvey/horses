@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 
-module Language.Mimsa.Types.Typechecker.Unique (Unique (..), getExprHash) where
+module Language.Mimsa.Typechecker.Types.Unique (Unique (..), getExprHash) where
 
 import qualified Data.Aeson as JSON
 import GHC.Generics

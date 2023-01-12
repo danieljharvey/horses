@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Types.Typechecker.Environment where
+module Language.Mimsa.Typechecker.Types.Environment where
 
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
