@@ -7,7 +7,7 @@ module Language.Mimsa.Core
     module Language.Mimsa.Core.Printer,
     module Language.Mimsa.Core.TypeUtils,
     module Language.Mimsa.Core.ExprUtils,
-    module Language.Mimsa.Core.Utils
+    module Language.Mimsa.Core.Utils,
   )
 where
 
