@@ -120,7 +120,7 @@ getTypedHoles subs'@(Substitutions subs) = do
             )
   pure $ M.mapWithKey getMonoType holes
 
-variableToTypeIdentifier :: (Name, Unique) -> TypeIdentifier
+variableToTypeIdentifier :: (Name, Unique hash) -> TypeIdentifier
 variableToTypeIdentifier (name, Unique i) = TVScopedVar i name
 variableToTypeIdentifier (name, _) =
   TVName (coerce name)

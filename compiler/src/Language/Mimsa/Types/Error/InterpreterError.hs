@@ -12,7 +12,7 @@ import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
 
-type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
+type InterpretExpr var ann = Expr (var, Unique ExprHash) (ExprData var ann)
 
 data InterpreterError var ann
   = UnknownInterpreterError

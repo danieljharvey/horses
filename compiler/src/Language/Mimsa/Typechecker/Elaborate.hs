@@ -42,7 +42,7 @@ type ElabM =
         (State TypecheckState)
     )
 
-type TcExpr = Expr (Name, Unique) Annotation
+type TcExpr = Expr (Name, Unique ModuleHash) Annotation
 
 recoverAnn :: MonoType -> Annotation
 recoverAnn = getAnnotationForType
@@ -50,7 +50,7 @@ recoverAnn = getAnnotationForType
 getTypeFromAnn :: Expr var MonoType -> MonoType
 getTypeFromAnn = getAnnotation
 
-getPatternTypeFromAnn :: Pattern (Name, Unique) MonoType -> MonoType
+getPatternTypeFromAnn :: Pattern (Name, Unique ModuleHash) MonoType -> MonoType
 getPatternTypeFromAnn pat =
   case pat of
     PLit ann _ -> ann
@@ -62,11 +62,11 @@ getPatternTypeFromAnn pat =
     PArray ann _ _ -> ann
     PString ann _ _ -> ann
 
-getSpreadTypeFromAnn :: Spread (Name, Unique) MonoType -> Maybe MonoType
+getSpreadTypeFromAnn :: Spread (Name, Unique ModuleHash) MonoType -> Maybe MonoType
 getSpreadTypeFromAnn (SpreadValue ann _) = Just ann
 getSpreadTypeFromAnn _ = Nothing
 
-type ElabExpr = Expr (Name, Unique) MonoType
+type ElabExpr = Expr (Name, Unique ModuleHash) MonoType
 
 --------------
 
@@ -78,8 +78,8 @@ inferLiteral ann lit =
         (MyString _) -> MTString
    in pure (MyLiteral (MTPrim ann tyLit) lit)
 
-lookupInEnv :: (Name, Unique) -> Environment -> Maybe Scheme
-lookupInEnv (name, ModuleDep mHash) env =
+lookupInEnv :: (Name, Unique ModuleHash) -> Environment -> Maybe Scheme
+lookupInEnv (name, Dependency mHash) env = -- we'll need to look in schemes AND namespaced schemes
   M.lookup mHash (getNamespacedSchemes env) >>= M.lookup name
 lookupInEnv (name, unique) env =
   let look v = M.lookup v (getSchemes env)
@@ -88,7 +88,7 @@ lookupInEnv (name, unique) env =
 inferVarFromScope ::
   Environment ->
   Annotation ->
-  (Name, Unique) ->
+  (Name, Unique ModuleHash) ->
   ElabM MonoType
 inferVarFromScope env ann var' =
   case lookupInEnv var' env of
@@ -101,7 +101,7 @@ inferVarFromScope env ann var' =
           (M.keysSet $ getSchemes env)
           (fst var')
 
-envFromVar :: (Name, Unique) -> Scheme -> Environment
+envFromVar :: (Name, Unique ModuleHash) -> Scheme -> Environment
 envFromVar binder scheme =
   Environment (M.singleton (variableToTypeIdentifier binder) scheme) mempty mempty mempty mempty
 
