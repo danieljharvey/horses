@@ -16,6 +16,7 @@ import qualified Data.Text as T
 import Prettyprinter
 import Smol.Core.Printer
 import Smol.Core.Types
+import Smol.Core.Types.ParseDep
 import Text.Megaparsec
 
 data PatternMatchError ann
@@ -26,9 +27,9 @@ data PatternMatchError ann
     ConstructorArgumentLengthMismatch ann Constructor Int Int
   | -- | Cases not covered in pattern matches
     -- | ann, [missing patterns]
-    MissingPatterns ann [Pattern ann]
+    MissingPatterns ann [Pattern ParseDep ann]
   | -- | Unnecessary cases covered by previous matches
-    RedundantPatterns ann [Pattern ann]
+    RedundantPatterns ann [Pattern ParseDep ann]
   | -- | Multiple instances of the same variable
     DuplicateVariableUse ann (Set Identifier)
   deriving stock (Eq, Ord, Show, Foldable)

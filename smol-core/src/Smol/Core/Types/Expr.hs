@@ -10,8 +10,8 @@
 module Smol.Core.Types.Expr
   ( Expr (..),
     Op (..),
-    ParseDep (..),
     ParsedExpr,
+    ResolvedExpr,
   )
 where
 
@@ -26,22 +26,23 @@ import Smol.Core.Helpers
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.ModuleName
+import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Pattern
 import Smol.Core.Types.Prim
+import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
 
-data ParseDep identifier = ParseDep
-  { pdIdentifier :: identifier,
-    pdModules :: [ModuleName]
-  }
-  deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON)
-
-instance (Printer identifier) => Printer (ParseDep identifier) where
-  prettyDoc (ParseDep ident _) = prettyDoc ident -- we'll print modules later
+---------------------------
 
 type ParsedExpr ann = Expr ParseDep ann
+
+---------------------------
+
+type ResolvedExpr ann = Expr ResolvedDep ann
+
+---------------------------
 
 data Op = OpAdd | OpEquals
   deriving stock (Eq, Ord, Show, Generic)
@@ -52,8 +53,8 @@ instance Printer Op where
   prettyDoc OpEquals = "=="
 
 data Expr dep ann
-  = ELambda ann Identifier (Expr dep ann)
-  | ELet ann Identifier (Expr dep ann) (Expr dep ann)
+  = ELambda ann (dep Identifier) (Expr dep ann)
+  | ELet ann (dep Identifier) (Expr dep ann) (Expr dep ann)
   | EInfix ann Op (Expr dep ann) (Expr dep ann)
   | EPrim ann Prim
   | EApp ann (Expr dep ann) (Expr dep ann)
@@ -66,7 +67,12 @@ data Expr dep ann
   | EGlobalLet ann Identifier (Expr dep ann) (Expr dep ann)
   | ERecord ann (Map Identifier (Expr dep ann))
   | ERecordAccess ann (Expr dep ann) Identifier
-  | EPatternMatch ann (Expr dep ann) (NE.NonEmpty (Pattern ann, Expr dep ann))
+  | EPatternMatch
+      ann
+      (Expr dep ann)
+      ( NE.NonEmpty
+          (Pattern dep ann, Expr dep ann)
+      )
   deriving stock (Functor, Foldable, Generic, Traversable)
 
 deriving stock instance
@@ -132,7 +138,7 @@ indentMulti :: Integer -> PP.Doc style -> PP.Doc style
 indentMulti i doc = PP.flatAlt (PP.indent (fromIntegral i) doc) doc
 
 prettyLet ::
-  Identifier ->
+  ParseDep Identifier ->
   ParsedExpr ann ->
   ParsedExpr ann ->
   PP.Doc style
@@ -184,7 +190,7 @@ prettyTuple a as =
     )
 
 prettyLambda ::
-  Identifier ->
+  ParseDep Identifier ->
   ParsedExpr ann ->
   PP.Doc style
 prettyLambda binder expr =
@@ -265,7 +271,7 @@ prettyIf if' then' else' =
 
 prettyPatternMatch ::
   ParsedExpr ann ->
-  NE.NonEmpty (Pattern ann, ParsedExpr ann) ->
+  NE.NonEmpty (Pattern ParseDep ann, ParsedExpr ann) ->
   PP.Doc style
 prettyPatternMatch sumExpr matches =
   "match"

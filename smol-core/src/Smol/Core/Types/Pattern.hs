@@ -3,7 +3,9 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Smol.Core.Types.Pattern
   ( Pattern (..),
@@ -18,27 +20,57 @@ import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Prim
 
-data Pattern ann
+data Pattern dep ann
   = PWildcard ann
-  | PVar ann Identifier
-  | PTuple ann (Pattern ann) (NE.NonEmpty (Pattern ann))
+  | PVar ann (dep Identifier)
+  | PTuple ann (Pattern dep ann) (NE.NonEmpty (Pattern dep ann))
   | PLiteral ann Prim
-  | PConstructor ann Constructor [Pattern ann]
-  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic, Traversable)
-  deriving anyclass (FromJSON, ToJSON)
+  | PConstructor ann Constructor [Pattern dep ann]
+  deriving stock (Functor, Foldable, Generic, Traversable)
+
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier)
+  ) =>
+  Eq (Pattern dep ann)
+
+deriving stock instance
+  ( Ord ann,
+    Ord (dep Identifier)
+  ) =>
+  Ord (Pattern dep ann)
+
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier)
+  ) =>
+  Show (Pattern dep ann)
+
+deriving anyclass instance
+  ( FromJSON ann,
+    FromJSON (dep Identifier)
+  ) =>
+  FromJSON (Pattern dep ann)
+
+deriving anyclass instance
+  ( ToJSON ann,
+    ToJSON (dep Identifier)
+  ) =>
+  ToJSON (Pattern dep ann)
 
 inParens :: (Printer a) => a -> PP.Doc style
 inParens = PP.parens . prettyDoc
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubPattern :: Pattern ann -> PP.Doc style
+printSubPattern :: Pattern ParseDep ann -> PP.Doc style
 printSubPattern pat = case pat of
   all'@PConstructor {} -> inParens all'
   a -> prettyDoc a
 
-instance Printer (Pattern ann) where
+instance Printer (Pattern ParseDep ann) where
   prettyDoc (PWildcard _) = "_"
   prettyDoc (PVar _ a) = prettyDoc a
   prettyDoc (PLiteral _ lit) = prettyDoc lit

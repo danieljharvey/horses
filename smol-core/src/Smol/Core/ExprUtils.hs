@@ -21,7 +21,7 @@ typeIsStruct _ = True
 
 -- | modify the outer annotation of an expression
 -- useful for adding line numbers during parsing
-mapOuterExprAnnotation :: (ann -> ann) -> Expr ann -> Expr ann
+mapOuterExprAnnotation :: (ann -> ann) -> Expr dep ann -> Expr dep ann
 mapOuterExprAnnotation f expr' =
   case expr' of
     EInfix ann a b c -> EInfix (f ann) a b c
@@ -40,7 +40,7 @@ mapOuterExprAnnotation f expr' =
     ERecordAccess ann b c -> ERecordAccess (f ann) b c
     EPatternMatch ann a b -> EPatternMatch (f ann) a b
 
-mapExpr :: (Expr ann -> Expr ann) -> Expr ann -> Expr ann
+mapExpr :: (Expr dep ann -> Expr dep ann) -> Expr dep ann -> Expr dep ann
 mapExpr f (EInfix ann op a b) = EInfix ann op (f a) (f b)
 mapExpr f (EAnn ann mt expr) = EAnn ann mt (f expr)
 mapExpr _ (EPrim ann a) = EPrim ann a
@@ -61,7 +61,7 @@ mapExpr f (ERecordAccess ann expr ident) =
 mapExpr f (EPatternMatch ann patExpr pats) =
   EPatternMatch ann (f patExpr) (second f <$> pats)
 
-bindExpr :: (Applicative m) => (Expr ann -> m (Expr ann)) -> Expr ann -> m (Expr ann)
+bindExpr :: (Applicative m) => (Expr dep ann -> m (Expr dep ann)) -> Expr dep ann -> m (Expr dep ann)
 bindExpr f (EInfix ann op a b) = EInfix ann op <$> f a <*> f b
 bindExpr f (EAnn ann mt expr) = EAnn ann mt <$> f expr
 bindExpr _ (EPrim ann a) = pure $ EPrim ann a
@@ -82,7 +82,7 @@ bindExpr f (ERecordAccess ann expr ident) =
 bindExpr f (EPatternMatch ann patExpr pats) =
   EPatternMatch ann <$> f patExpr <*> traverse (\(a, b) -> (,) a <$> f b) pats
 
-mapPattern :: (Pattern ann -> Pattern ann) -> Pattern ann -> Pattern ann
+mapPattern :: (Pattern dep ann -> Pattern dep ann) -> Pattern dep ann -> Pattern dep ann
 mapPattern _ (PLiteral ann l) = PLiteral ann l
 mapPattern _ (PWildcard a) = PWildcard a
 mapPattern _ (PVar ann a) = PVar ann a
@@ -90,7 +90,7 @@ mapPattern f (PTuple ann a as) = PTuple ann (f a) (f <$> as)
 mapPattern f (PConstructor ann constructor as) =
   PConstructor ann constructor (f <$> as)
 
-patternMonoid :: (Monoid a) => (Pattern ann -> a) -> Pattern ann -> a
+patternMonoid :: (Monoid a) => (Pattern dep ann -> a) -> Pattern dep ann -> a
 patternMonoid _ PLiteral {} = mempty
 patternMonoid _ PWildcard {} = mempty
 patternMonoid _ PVar {} = mempty

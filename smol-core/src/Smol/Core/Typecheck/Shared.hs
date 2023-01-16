@@ -44,6 +44,8 @@ import Smol.Core.Typecheck.FreeVars
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
+import Smol.Core.Types.Expr
+import Smol.Core.Types.ResolvedDep
 
 lookupTypeName ::
   ( MonadReader (TCEnv ann) m
@@ -56,7 +58,7 @@ lookupTypeName tn = do
     Just dt -> pure dt
     Nothing -> error $ "couldn't find datatype for " <> show tn
 
-getExprAnnotation :: Expr ann -> ann
+getExprAnnotation :: ResolvedExpr ann -> ann
 getExprAnnotation (EInfix ann _ _ _) = ann
 getExprAnnotation (EConstructor ann _) = ann
 getExprAnnotation (ELet ann _ _ _) = ann
@@ -73,7 +75,7 @@ getExprAnnotation (ERecord ann _) = ann
 getExprAnnotation (ERecordAccess ann _ _) = ann
 getExprAnnotation (EPatternMatch ann _ _) = ann
 
-getPatternAnnotation :: Pattern ann -> ann
+getPatternAnnotation :: Pattern dep ann -> ann
 getPatternAnnotation (PVar ann _) = ann
 getPatternAnnotation (PWildcard ann) = ann
 getPatternAnnotation (PTuple ann _ _) = ann
@@ -110,8 +112,8 @@ getClosureType ::
     MonadError (TCError ann) m,
     Ord ann
   ) =>
-  Expr (Type ann) ->
-  m (Map Identifier (Type ann))
+  ResolvedExpr (Type ann) ->
+  m (Map (ResolvedDep Identifier) (Type ann))
 getClosureType body =
   mconcat
     <$> traverse
@@ -148,7 +150,7 @@ lookupConstructor ::
   ( MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m
   ) =>
-  Constructor ->
+  ResolvedDep Constructor ->
   m (TypeName, [Identifier], [Constructor], [Type ann])
 lookupConstructor constructor = do
   maybeDt <-
@@ -196,17 +198,17 @@ typeForConstructor ann typeName vars args = do
 
 lookupVar ::
   (MonadReader (TCEnv ann) m, MonadError (TCError ann) m) =>
-  Identifier ->
+  ResolvedDep Identifier ->
   m (Type ann)
 lookupVar ident = do
   maybeVar <- asks (M.lookup ident . tceVars)
   case maybeVar of
     Just expr -> pure expr
-    Nothing -> throwError (TCCouldNotFindVar Variable ident)
+    Nothing -> throwError (TCCouldNotFindVar ident)
 
 withVar ::
   (MonadReader (TCEnv ann) m) =>
-  Identifier ->
+  ResolvedDep Identifier ->
   Type ann ->
   m a ->
   m a
@@ -236,7 +238,7 @@ lookupGlobal ident = do
   maybeVar <- asks (M.lookup ident . tceGlobals)
   case maybeVar of
     Just expr -> pure expr
-    Nothing -> throwError (TCCouldNotFindVar Global ident)
+    Nothing -> throwError (TCCouldNotFindGlobal ident)
 
 pushArg ::
   (MonadState (TCState ann) m) =>
@@ -300,7 +302,8 @@ flattenConstructorType ty = throwError (TCExpectedConstructorType ty)
 
 -- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
 -- to make it easier to match up with patterns
-flattenConstructorApplication :: Expr ann -> Maybe (Constructor, [Expr ann])
+flattenConstructorApplication ::
+  ResolvedExpr ann -> Maybe (ResolvedDep Constructor, [ResolvedExpr ann])
 flattenConstructorApplication (EApp _ f a) = do
   (constructor, as) <- flattenConstructorApplication f
   pure (constructor, as <> [a])
@@ -313,7 +316,7 @@ flattenConstructorApplication _ = Nothing
 -- we add in the bound variables (but they don't exist outside this context)
 withNewVars ::
   (MonadReader (TCEnv ann) m) =>
-  Map Identifier (Type ann) ->
+  Map (ResolvedDep Identifier) (Type ann) ->
   m a ->
   m a
 withNewVars vars =

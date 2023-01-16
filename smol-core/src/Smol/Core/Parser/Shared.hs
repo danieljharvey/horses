@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Parser.Shared (inBrackets, orInBrackets, myLexeme, withLocation, myString, addLocation, mapOuterExprAnnotation, maybePred, chainl1, commaSep) where
+module Smol.Core.Parser.Shared (emptyParseDep,
+      inBrackets, orInBrackets, myLexeme, withLocation, myString, addLocation, mapOuterExprAnnotation, maybePred, chainl1, commaSep) where
 
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
@@ -12,10 +13,14 @@ import Smol.Core.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
+import Smol.Core.Types.ParseDep
 
 type Parser = Parsec Void Text
 
-type ParserExpr = Expr Annotation
+type ParserExpr = Expr ParseDep Annotation
+
+emptyParseDep :: a -> ParseDep a
+emptyParseDep a = ParseDep a mempty
 
 between2 :: Char -> Char -> Parser a -> Parser a
 between2 a b parser = do
