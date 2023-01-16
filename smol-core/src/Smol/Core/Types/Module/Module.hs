@@ -12,14 +12,15 @@ module Smol.Core.Types.Module.Module
   )
 where
 
-import Smol.Core.Types.TypeName
-import qualified Data.Aeson as JSON
+import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import GHC.Generics
+import Prettyprinter
 import Smol.Core.Printer
+import Smol.Core.Types.Annotated
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
@@ -27,8 +28,7 @@ import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.ModuleName
 import Smol.Core.Types.Type
-import Prettyprinter
-import Smol.Core.Types.Annotated
+import Smol.Core.Types.TypeName
 
 -- a module is, broadly, one file
 -- it defines some datatypes, infixes and definitions
@@ -50,11 +50,11 @@ data DefPart ann
 -- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
   = ModuleExpression Identifier [DefPart ann] (ParsedExpr ann)
-  | ModuleDataType DataType
+  | ModuleDataType (DataType ann)
   | ModuleExport (ModuleItem ann)
   | ModuleImport Import
---  | ModuleInfix InfixOp (ParsedExpr ann)
---  | ModuleTest TestName (ParsedExpr ann)
+  --  | ModuleInfix InfixOp (ParsedExpr ann)
+  --  | ModuleTest TestName (ParsedExpr ann)
   deriving stock (Functor)
 
 -- going to want way more granularity here in future but _shrug_
@@ -68,13 +68,13 @@ data Module ann = Module
   { moExpressions :: Map DefIdentifier (ParsedExpr ann),
     moExpressionExports :: Set DefIdentifier,
     moExpressionImports :: Map DefIdentifier ModuleHash, -- what we imported, where it's from
-    moDataTypes :: Map TypeName DataType,
+    moDataTypes :: Map TypeName (DataType ann),
     moDataTypeExports :: Set TypeName, -- which types to export
     moDataTypeImports :: Map TypeName ModuleHash, -- what we imported, where its from,
     moNamedImports :: Map ModuleName ModuleHash -- `import sdfsdf as Prelude`..
   }
   deriving stock (Eq, Ord, Show, Functor, Generic)
-  deriving anyclass (JSON.ToJSON, JSON.FromJSON)
+  deriving anyclass (ToJSON, FromJSON)
 
 instance (Show ann) => Printer (Module ann) where
   prettyDoc mod' =
@@ -109,7 +109,7 @@ uniq = S.toList . S.fromList
 indentMulti :: Int -> Doc style -> Doc style
 indentMulti i doc = flatAlt (indent i doc) doc
 
-printNamedImport :: (ModuleName, ModuleHash) -> Doc a
+printNamedImport :: (ModuleName, ModuleHash) -> Doc style
 printNamedImport (modName, modHash) =
   "import" <+> prettyDoc modName <+> "from" <+> prettyDoc modHash
 
@@ -117,7 +117,7 @@ printImport :: ModuleHash -> Doc a
 printImport modHash =
   "import * from" <+> prettyDoc modHash
 
-printTypeDef :: Module ann -> TypeName -> DataType -> Doc a
+printTypeDef :: Module ann -> TypeName -> DataType ann -> Doc style
 printTypeDef mod' tn dt =
   let prettyExp =
         if S.member tn (moDataTypeExports mod')
@@ -126,8 +126,8 @@ printTypeDef mod' tn dt =
    in prettyExp <> prettyDoc dt
 
 -- given annotation and expr, pair annotation types with lambdas
-printPaired :: Type ann -> ParsedExpr ann -> Doc a
-printPaired (MTFunction _ fn arg) (MyLambda _ ident body) =
+printPaired :: Type ann -> ParsedExpr ann -> Doc style
+printPaired (TFunc _ _ fn arg) (ELambda _ ident body) =
   "(" <> prettyDoc ident
     <+> ":"
     <+> prettyDoc fn
@@ -149,7 +149,7 @@ printDefinition mod' def expr =
           else ""
    in prettyExp <> case def of
         DIName name -> case expr of
-          (MyAnnotation _ mt rest) ->
+          (EAnn _ mt rest) ->
             "def"
               <+> prettyDoc name
                 <> line
@@ -160,11 +160,13 @@ printDefinition mod' def expr =
               <+> "="
                 <> line
                 <> indentMulti 2 (prettyDoc other)
-        DIInfix infixOp ->
-          "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
         DIType _ -> error "printDefinition is printing type oh no"
+
+{- DIInfix infixOp ->
+          "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr
         DITest testName ->
           "test" <+> "\"" <> prettyDoc testName <> "\"" <+> "=" <+> prettyDoc expr
+-}
 
 instance Semigroup (Module ann) where
   (Module a b c d e f g) <> (Module a' b' c' d' e' f' g') =

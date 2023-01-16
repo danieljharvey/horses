@@ -9,8 +9,8 @@ import qualified Data.Aeson as JSON
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
-import Smol.Core.Printer
 import Prettyprinter
+import Smol.Core.Printer
 
 -- because of the size of the ints
 -- and JS's limitations in the browser

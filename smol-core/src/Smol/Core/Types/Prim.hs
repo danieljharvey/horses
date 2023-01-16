@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -7,6 +9,8 @@ module Smol.Core.Types.Prim
   )
 where
 
+import Data.Aeson (FromJSON, ToJSON)
+import GHC.Generics (Generic)
 import GHC.Natural
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
@@ -16,7 +20,8 @@ data Prim
   | PNat Natural
   | PInt Integer
   | PBool Bool
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 instance Printer Prim where
   prettyDoc = renderPrim

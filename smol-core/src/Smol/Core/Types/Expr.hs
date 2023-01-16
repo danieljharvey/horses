@@ -1,46 +1,51 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE StandaloneDeriving #-}
-    {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 module Smol.Core.Types.Expr
   ( Expr (..),
     Op (..),
     ParseDep (..),
-    ParsedExpr
+    ParsedExpr,
   )
 where
 
-import Smol.Core.Types.Module.ModuleName
+import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
+import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
 import Smol.Core.Helpers
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Module.ModuleName
 import Smol.Core.Types.Pattern
 import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
 
-
-data ParseDep identifier =
-    ParseDep {
-     pdIdentifier :: identifier,
-     pdModules :: [ModuleName]
-             }
-  deriving (Eq,Ord,Show)
+data ParseDep identifier = ParseDep
+  { pdIdentifier :: identifier,
+    pdModules :: [ModuleName]
+  }
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 instance (Printer identifier) => Printer (ParseDep identifier) where
-  prettyDoc (ParseDep id _) = prettyDoc id -- we'll print modules later
+  prettyDoc (ParseDep ident _) = prettyDoc ident -- we'll print modules later
 
 type ParsedExpr ann = Expr ParseDep ann
 
 data Op = OpAdd | OpEquals
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 instance Printer Op where
   prettyDoc OpAdd = "+"
@@ -62,14 +67,42 @@ data Expr dep ann
   | ERecord ann (Map Identifier (Expr dep ann))
   | ERecordAccess ann (Expr dep ann) Identifier
   | EPatternMatch ann (Expr dep ann) (NE.NonEmpty (Pattern ann, Expr dep ann))
-  deriving stock (  Functor, Foldable, Traversable)
+  deriving stock (Functor, Foldable, Generic, Traversable)
 
-deriving stock instance (Eq ann, Eq (dep Identifier),
-    Eq (dep Constructor)) => Eq (Expr dep ann)
-deriving stock instance (Ord ann, Ord (dep Identifier),
-  Ord (dep Constructor)) => Ord (Expr dep ann)
-deriving stock instance (Show ann, Show (dep Identifier),
-    Show (dep Constructor)) => Show (Expr dep ann)
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier),
+    Eq (dep Constructor)
+  ) =>
+  Eq (Expr dep ann)
+
+deriving stock instance
+  ( Ord ann,
+    Ord (dep Identifier),
+    Ord (dep Constructor)
+  ) =>
+  Ord (Expr dep ann)
+
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep Constructor)
+  ) =>
+  Show (Expr dep ann)
+
+deriving anyclass instance
+  ( ToJSON ann,
+    ToJSON (dep Identifier),
+    ToJSON (dep Constructor)
+  ) =>
+  ToJSON (Expr dep ann)
+
+deriving anyclass instance
+  ( FromJSON ann,
+    FromJSON (dep Identifier),
+    FromJSON (dep Constructor)
+  ) =>
+  FromJSON (Expr dep ann)
 
 instance Printer (Expr ParseDep ann) where
   prettyDoc = prettyExpr
@@ -77,7 +110,7 @@ instance Printer (Expr ParseDep ann) where
 ------ printing shit
 
 data InfixBit ann
-  = IfStart (ParsedExpr  ann)
+  = IfStart (ParsedExpr ann)
   | IfMore Op (ParsedExpr ann)
   deriving stock (Show)
 

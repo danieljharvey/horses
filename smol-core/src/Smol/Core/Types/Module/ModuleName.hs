@@ -17,8 +17,8 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
-import Smol.Core.Printer
 import Prettyprinter
+import Smol.Core.Printer
 
 -- | A ModuleName is like `Either` or `Maybe`.
 -- It must start with a capital letter.

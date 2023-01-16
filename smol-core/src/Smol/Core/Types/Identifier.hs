@@ -19,7 +19,15 @@ import qualified Prettyprinter as PP
 import Smol.Core.Printer
 
 newtype Identifier = Identifier Text
-  deriving newtype (Eq, Ord, Show, JSON.ToJSON, JSON.FromJSON)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      JSON.ToJSON,
+      JSON.ToJSONKey,
+      JSON.FromJSON,
+      JSON.FromJSONKey
+    )
 
 instance Printer Identifier where
   prettyDoc (Identifier i) = PP.pretty i

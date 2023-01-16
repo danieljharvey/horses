@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -9,7 +11,9 @@ module Smol.Core.Types.Pattern
   )
 where
 
+import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.List.NonEmpty as NE
+import GHC.Generics (Generic)
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
@@ -22,7 +26,8 @@ data Pattern ann
   | PTuple ann (Pattern ann) (NE.NonEmpty (Pattern ann))
   | PLiteral ann Prim
   | PConstructor ann Constructor [Pattern ann]
-  deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable)
+  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic, Traversable)
+  deriving anyclass (FromJSON, ToJSON)
 
 inParens :: (Printer a) => a -> PP.Doc style
 inParens = PP.parens . prettyDoc
