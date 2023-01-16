@@ -31,6 +31,7 @@ common shared
     -Wredundant-constraints -Wmissing-deriving-strategies
 
   build-depends:
+    , aeson
     , array
     , base
     , bytestring
@@ -117,6 +118,11 @@ library
     Smol.Core.Types.Expr
     Smol.Core.Types.GetPath
     Smol.Core.Types.Identifier
+    Smol.Core.Types.Module.Module
+    Smol.Core.Types.Module.Entity
+    Smol.Core.Types.Module.ModuleName
+    Smol.Core.Types.Module.ModuleHash
+    Smol.Core.Types.Module.DefIdentifier
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError
     Smol.Core.Types.PatternPredicate
@@ -188,6 +194,7 @@ test-suite smol-core-tests
     Smol.Core.Types.Type
     Smol.Core.Types.TypeName
     Smol.Core.TypeUtils
+
     Test.Helpers
     Test.Interpreter.InterpreterSpec
     Test.IR.CompileSpec
