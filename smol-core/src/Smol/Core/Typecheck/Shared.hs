@@ -106,6 +106,9 @@ getUnknown ann = do
   modify (\s -> s {tcsUnknown = count + 1})
   pure (TUnknown ann count)
 
+-- | this needs some thought. Our closures shouldn't contain any external deps,
+-- but we do want to ensure uniqueness, so our Identifier type should probably
+-- be `(Identifier, Maybe Int)` or something
 getClosureType ::
   ( MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
@@ -113,12 +116,12 @@ getClosureType ::
     Ord ann
   ) =>
   ResolvedExpr (Type ann) ->
-  m (Map (ResolvedDep Identifier) (Type ann))
+  m (Map Identifier (Type ann))
 getClosureType body =
   mconcat
     <$> traverse
       ( \ident ->
-          M.singleton ident <$> lookupVar ident
+          M.singleton (rdIdentifier ident) <$> lookupVar ident
       )
       (S.toList (freeVars body))
 
@@ -157,7 +160,7 @@ lookupConstructor constructor = do
     asks
       ( mapFind
           ( \(DataType typeName vars constructors) ->
-              (,,,) typeName vars (M.keys constructors) <$> M.lookup constructor constructors
+              (,,,) typeName vars (M.keys constructors) <$> M.lookup (rdIdentifier constructor) constructors
           )
           . tceDataTypes
       )

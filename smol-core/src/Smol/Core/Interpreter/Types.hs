@@ -9,6 +9,7 @@ where
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import Smol.Core.Types
+import Control.Monad.Identity
 
 -- | An IExpr is an Expr with a function Lambda
 data IExpr ann
@@ -34,4 +35,4 @@ data IExpr ann
   | IPatternMatch
       ann
       (IExpr ann)
-      (NE.NonEmpty (Pattern ann, IExpr ann -> IExpr ann))
+      (NE.NonEmpty (Pattern Identity ann, IExpr ann -> IExpr ann))

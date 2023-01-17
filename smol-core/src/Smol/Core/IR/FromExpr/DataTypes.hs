@@ -23,13 +23,14 @@ import Smol.Core.IR.FromExpr.Helpers
 import Smol.Core.Typecheck.Substitute
 import qualified Smol.Core.Typecheck.Types as Smol
 import qualified Smol.Core.Types as Smol
+import Control.Monad.Identity
 
 patternTypeInMemory ::
   ( Show ann,
     HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
     MonadState s m
   ) =>
-  Smol.Pattern (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type ann) ->
   m DataTypeInMemory
 patternTypeInMemory (Smol.PLiteral ty _) =
   toRepresentation ty
@@ -40,7 +41,7 @@ patternTypeInMemory (Smol.PTuple ty _ _) =
 patternTypeInMemory (Smol.PWildcard ty) =
   toRepresentation ty
 patternTypeInMemory (Smol.PConstructor ty c _) =
-  snd <$> constructorTypeInMemory ty c
+  snd <$> constructorTypeInMemory ty (runIdentity c)
 
 constructorTypeInMemory ::
   ( MonadState s m,

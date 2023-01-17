@@ -28,36 +28,41 @@ data Pattern dep ann
   | PVar ann (dep Identifier)
   | PTuple ann (Pattern dep ann) (NE.NonEmpty (Pattern dep ann))
   | PLiteral ann Prim
-  | PConstructor ann Constructor [Pattern dep ann]
+  | PConstructor ann (dep Constructor) [Pattern dep ann]
   deriving stock (Functor, Foldable, Generic, Traversable)
 
 deriving stock instance
   ( Eq ann,
-    Eq (dep Identifier)
+    Eq (dep Identifier),
+    Eq (dep Constructor)
   ) =>
   Eq (Pattern dep ann)
 
 deriving stock instance
   ( Ord ann,
-    Ord (dep Identifier)
+    Ord (dep Identifier),
+    Ord (dep Constructor)
   ) =>
   Ord (Pattern dep ann)
 
 deriving stock instance
   ( Show ann,
-    Show (dep Identifier)
+    Show (dep Identifier),
+    Show (dep Constructor)
   ) =>
   Show (Pattern dep ann)
 
 deriving anyclass instance
   ( FromJSON ann,
-    FromJSON (dep Identifier)
+    FromJSON (dep Identifier),
+    FromJSON (dep Constructor)
   ) =>
   FromJSON (Pattern dep ann)
 
 deriving anyclass instance
   ( ToJSON ann,
-    ToJSON (dep Identifier)
+    ToJSON (dep Identifier),
+    ToJSON (dep Constructor)
   ) =>
   ToJSON (Pattern dep ann)
 

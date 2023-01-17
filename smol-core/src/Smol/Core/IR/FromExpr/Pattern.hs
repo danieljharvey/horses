@@ -19,7 +19,7 @@ import Smol.Core.IR.FromExpr.Helpers
 import qualified Smol.Core.Types as Smol
 import Smol.Core.Types.GetPath
 import Smol.Core.Types.PatternPredicate
-
+import Control.Monad.Identity
 -- | given a pattern, pull out all the vars we're interested in and how to get
 -- to them
 destructurePattern ::
@@ -27,7 +27,7 @@ destructurePattern ::
     Ord p
   ) =>
   (Smol.Identifier -> p) ->
-  Smol.Pattern (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type ann) ->
   m (Map p GetPath)
 destructurePattern fromIdentifier =
   destructInner []
@@ -44,8 +44,8 @@ destructurePattern fromIdentifier =
       mconcat <$> traverseInd (\pat i -> destructInner (path <> [i + 1]) pat) pArgs
     destructInner path (Smol.PVar _ ident) =
       case NE.nonEmpty path of
-        Just nePath -> pure $ M.singleton (fromIdentifier ident) (StructPath nePath)
-        Nothing -> pure $ M.singleton (fromIdentifier ident) ValuePath
+        Just nePath -> pure $ M.singleton (fromIdentifier (runIdentity ident)) (StructPath nePath)
+        Nothing -> pure $ M.singleton (fromIdentifier (runIdentity ident)) ValuePath
 
 predicatesFromPattern ::
   ( MonadState s m,
@@ -53,7 +53,7 @@ predicatesFromPattern ::
     Show ann
   ) =>
   (Smol.Prim -> p) ->
-  Smol.Pattern (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type ann) ->
   m [PatternPredicate p]
 predicatesFromPattern fromPrim =
   predicatesInner []
@@ -74,13 +74,13 @@ predicatesFromPattern fromPrim =
       case tyArgs of
         -- if no args, it's a primitive
         [] -> do
-          prim <- primFromConstructor constructor
+          prim <- primFromConstructor (runIdentity constructor)
           case NE.nonEmpty path of
             Just nePath -> pure [PathEquals (StructPath nePath) (fromPrim prim)]
             Nothing -> pure [PathEquals ValuePath (fromPrim prim)]
         _ -> do
           -- if there's args it's a struct
-          prim <- primFromConstructor constructor
+          prim <- primFromConstructor (runIdentity constructor)
           let constructorPath = case NE.nonEmpty path of
                 Just nePath -> PathEquals (StructPath $ nePath <> NE.singleton 0) (fromPrim prim)
                 Nothing -> PathEquals (StructPath (NE.singleton 0)) (fromPrim prim)

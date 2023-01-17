@@ -56,7 +56,7 @@ data TCError ann
   | TCInfixMismatch Op (Type ann) (Type ann)
   | TCPatternMismatch (Pattern ResolvedDep ann) (Type ann)
   | TCUnknownConstructor (ResolvedDep Constructor) [Constructor]
-  | TCConstructorArgumentMismatch Constructor Int Int -- expected, actual
+  | TCConstructorArgumentMismatch (ResolvedDep Constructor) Int Int -- expected, actual
   | TCExpectedConstructorType (Type ann)
   | TCCompoundTypeInEquality (Type ann) -- for now we only do primitive equality
   | TCPatternMatchError (PatternMatchError (Type ann))
