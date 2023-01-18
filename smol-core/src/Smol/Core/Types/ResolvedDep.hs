@@ -26,6 +26,8 @@ data ResolvedDep identifier
       }
   deriving stock (Eq, Ord, Show, Generic)
 
-instance (Printer identifier) =>
-    Printer (ResolvedDep identifier) where
+instance
+  (Printer identifier) =>
+  Printer (ResolvedDep identifier)
+  where
   prettyDoc rd = prettyDoc (rdIdentifier rd)

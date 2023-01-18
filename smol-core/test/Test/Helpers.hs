@@ -23,13 +23,15 @@ module Test.Helpers
   )
 where
 
-import Smol.Core.Types.ParseDep
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import GHC.Natural
 import Smol.Core
+import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Types.Expr
+import Smol.Core.Types.ParseDep
 
 tyBool :: (Monoid ann) => Type ann
 tyBool = TPrim mempty TPBool
@@ -103,7 +105,7 @@ unsafeParseType input = case parseTypeAndFormatError input of
   Left e -> error (show e)
 
 -- | parse a typed expr, ie parse it and fill the type with crap
-unsafeParseTypedExpr :: Text -> Expr ParseDep (Type Annotation)
+unsafeParseTypedExpr :: Text -> ResolvedExpr (Type Annotation)
 unsafeParseTypedExpr input = case parseExprAndFormatError input of
-  Right expr -> expr $> TPrim mempty TPBool
+  Right expr -> fromParsedExpr expr $> TPrim mempty TPBool
   Left e -> error (show e)

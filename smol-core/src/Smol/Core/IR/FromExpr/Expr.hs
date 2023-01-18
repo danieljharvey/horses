@@ -24,15 +24,15 @@ import Smol.Core.IR.FromExpr.Pattern
 import Smol.Core.IR.FromExpr.Type
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.IRExpr
-import Smol.Core.Typecheck (flattenConstructorApplication, builtInTypes)
+import Smol.Core.Typecheck (builtInTypes, flattenConstructorApplication)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
-import Smol.Core.Types.Prim
 import Smol.Core.Types.Constructor
-import Smol.Core.Types.Identifier
 import Smol.Core.Types.Expr
-import Smol.Core.Types.Type
 import Smol.Core.Types.GetPath
+import Smol.Core.Types.Identifier
 import Smol.Core.Types.PatternPredicate
+import Smol.Core.Types.Prim
+import Smol.Core.Types.Type
 
 irPrintInt :: IRModulePart
 irPrintInt =
@@ -111,8 +111,10 @@ lookupVar ident = do
 -- we should create the main function, which always prints its result
 -- a side effect will be that it adds IRModuleParts to the state, these are all
 -- combined
-irFromExpr :: (Show ann, Monoid ann) =>
-  IdentityExpr (Type ann) -> IRModule
+irFromExpr ::
+  (Show ann, Monoid ann) =>
+  IdentityExpr (Type ann) ->
+  IRModule
 irFromExpr expr =
   IRModule $
     [getPrinter (getExprAnnotation expr)]

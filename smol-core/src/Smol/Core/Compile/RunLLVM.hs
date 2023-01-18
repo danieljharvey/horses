@@ -10,7 +10,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
-import LLVM.AST hiding (function, Type)
+import LLVM.AST hiding (Type, function)
 import LLVM.Pretty
 import Smol.Core.IR.FromExpr.Expr
 import Smol.Core.IR.ToLLVM.ToLLVM

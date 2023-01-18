@@ -5,7 +5,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Smol.Core.Types.ParseDep
-  ( ParseDep (..),emptyParseDep
+  ( ParseDep (..),
+    emptyParseDep,
   )
 where
 
@@ -28,5 +29,3 @@ instance (Printer identifier) => Printer (ParseDep identifier) where
 
 emptyParseDep :: a -> ParseDep a
 emptyParseDep a = ParseDep a mempty
-
-

@@ -14,14 +14,18 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
+import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Types.Expr
 import Test.Helpers
 import Test.Hspec
 
-evalExpr :: Text -> Either (TCError Annotation) (Expr (Type Annotation))
+evalExpr ::
+  Text ->
+  Either (TCError Annotation) (ResolvedExpr (Type Annotation))
 evalExpr input = case parseExprAndFormatError input of
   Left e -> error (show e)
   Right expr -> do
-    case elaborate expr of
+    case elaborate (fromParsedExpr expr) of
       Right typedExpr -> pure typedExpr
       Left e -> Left e
 

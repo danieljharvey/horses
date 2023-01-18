@@ -10,22 +10,24 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.Text (Text)
 import qualified Smol.Core.IR.FromExpr.Expr as IR
+import Smol.Core.IR.FromResolvedExpr
 import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.Patterns
 import Smol.Core.Typecheck
-import qualified Smol.Core.Typecheck as Smol
-import qualified Smol.Core.Types as Smol
+import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Types
+import Smol.Core.Types.Expr
 import Test.Helpers
 import Test.Hspec
 
-evalExpr :: Text -> Smol.Expr (Smol.Type Smol.Annotation)
+evalExpr :: Text -> IdentityExpr (Type Annotation)
 evalExpr input =
   case elaborate (unsafeParseTypedExpr input $> mempty) of
-    Right typedExpr -> typedExpr
+    Right typedExpr -> fromResolvedExpr typedExpr
     Left e -> error (show e)
 
 testEnv :: (Monoid ann) => IR.FromExprState ann
-testEnv = IR.FromExprState mempty Smol.builtInTypes 1 mempty
+testEnv = IR.FromExprState mempty builtInTypes 1 mempty
 
 getMainExpr :: Text -> IRExpr
 getMainExpr = fst . createIR

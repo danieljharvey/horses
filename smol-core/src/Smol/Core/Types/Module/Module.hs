@@ -12,7 +12,7 @@ module Smol.Core.Types.Module.Module
   )
 where
 
-import Data.Aeson (FromJSON, ToJSON )
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)

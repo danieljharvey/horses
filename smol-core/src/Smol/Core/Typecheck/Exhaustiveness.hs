@@ -12,9 +12,9 @@ module Smol.Core.Typecheck.Exhaustiveness
   )
 where
 
-import Data.Bifunctor (first)
 import Control.Monad.Except
 import Control.Monad.Reader
+import Data.Bifunctor (first)
 import Data.Foldable
 import Data.Functor
 import Data.List (nub)

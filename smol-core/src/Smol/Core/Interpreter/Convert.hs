@@ -2,13 +2,13 @@
 
 module Smol.Core.Interpreter.Convert (fromExpr, toExpr) where
 
+import Control.Monad.Identity
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core.ExprUtils
 import Smol.Core.Interpreter.Types
 import Smol.Core.Types
-import Control.Monad.Identity
 
 swapOutVar :: Identifier -> Expr Identity ann -> Expr Identity ann -> Expr Identity ann
 swapOutVar matchIdent new =

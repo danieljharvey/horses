@@ -12,7 +12,7 @@ module Smol.Core.Types.Expr
     Op (..),
     ParsedExpr,
     ResolvedExpr,
-    IdentityExpr
+    IdentityExpr,
   )
 where
 
