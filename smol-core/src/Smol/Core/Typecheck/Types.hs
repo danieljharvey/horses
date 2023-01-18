@@ -22,7 +22,6 @@ import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType (DataType)
 import Smol.Core.Types.Expr (Op)
 import Smol.Core.Types.Identifier (Identifier)
-import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Pattern (Pattern)
 import Smol.Core.Types.PatternMatchError (PatternMatchError)
 import Smol.Core.Types.ResolvedDep

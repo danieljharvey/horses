@@ -58,7 +58,7 @@ lookupTypeName tn = do
     Just dt -> pure dt
     Nothing -> error $ "couldn't find datatype for " <> show tn
 
-getExprAnnotation :: ResolvedExpr ann -> ann
+getExprAnnotation :: Expr dep ann -> ann
 getExprAnnotation (EInfix ann _ _ _) = ann
 getExprAnnotation (EConstructor ann _) = ann
 getExprAnnotation (ELet ann _ _ _) = ann
@@ -306,7 +306,7 @@ flattenConstructorType ty = throwError (TCExpectedConstructorType ty)
 -- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
 -- to make it easier to match up with patterns
 flattenConstructorApplication ::
-  ResolvedExpr ann -> Maybe (ResolvedDep Constructor, [ResolvedExpr ann])
+  Expr dep ann -> Maybe (dep Constructor, [Expr dep ann])
 flattenConstructorApplication (EApp _ f a) = do
   (constructor, as) <- flattenConstructorApplication f
   pure (constructor, as <> [a])

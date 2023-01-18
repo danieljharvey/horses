@@ -9,6 +9,7 @@ module Smol.Core.IR.FromExpr.Pattern
   )
 where
 
+import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -19,7 +20,7 @@ import Smol.Core.IR.FromExpr.Helpers
 import qualified Smol.Core.Types as Smol
 import Smol.Core.Types.GetPath
 import Smol.Core.Types.PatternPredicate
-import Control.Monad.Identity
+
 -- | given a pattern, pull out all the vars we're interested in and how to get
 -- to them
 destructurePattern ::

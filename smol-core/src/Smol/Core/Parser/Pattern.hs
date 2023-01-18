@@ -15,10 +15,11 @@ import Smol.Core.Parser.Shared
 import Smol.Core.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
+import Smol.Core.Types.ParseDep
 
 type Parser = Parsec Void Text
 
-type ParserPattern = Pattern Annotation
+type ParserPattern = Pattern ParseDep Annotation
 
 patternParser :: Parser ParserPattern
 patternParser =
@@ -49,7 +50,7 @@ wildcardParser =
 
 variableParser :: Parser ParserPattern
 variableParser =
-  myLexeme $ withLocation PVar Identifiers.identifierParser
+  myLexeme $ withLocation PVar (emptyParseDep <$> Identifiers.identifierParser)
 
 ----
 
@@ -103,7 +104,7 @@ argsParser = try someP <|> pure []
 constructorParser :: Parser ParserPattern
 constructorParser =
   let parser = do
-        cons <- myLexeme Identifiers.constructorParserInternal
+        cons <- myLexeme (emptyParseDep <$> Identifiers.constructorParserInternal)
         args <- try argsParser
         pure (cons, args)
    in withLocation

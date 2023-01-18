@@ -17,12 +17,13 @@ import Smol.Core.Parser.Type
 import Smol.Core.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
+import Smol.Core.Types.ParseDep
 
 type Parser = Parsec Void Text
 
 type ParseErrorType = ParseErrorBundle Text Void
 
-type ParserExpr = Expr Annotation
+type ParserExpr = Expr ParseDep Annotation
 
 parseAndFormat :: Parser a -> Text -> Either Text a
 parseAndFormat p = first (T.pack . errorBundlePretty) . parse (p <* eof) "repl"
@@ -72,7 +73,7 @@ lambdaParser =
   label "lambda" $
     addLocation $ do
       _ <- myString "\\"
-      ident <- identifierParser
+      ident <- emptyParseDep <$> identifierParser
       _ <- myString "->"
       ELambda mempty ident <$> expressionParser
 
@@ -194,7 +195,7 @@ boolParser =
 letParser :: Parser ParserExpr
 letParser = addLocation $ do
   _ <- myString "let"
-  ident <- identifierParser
+  ident <- emptyParseDep <$> identifierParser
   _ <- myString "="
   boundExpr <- expressionParser
   _ <- try (myString ";") <|> myString "in"
@@ -252,7 +253,7 @@ recordItemParser = do
 punnedRecordItemParser :: Parser (Identifier, ParserExpr)
 punnedRecordItemParser = do
   name <- identifierParser
-  pure (name, EVar mempty name)
+  pure (name, EVar mempty (emptyParseDep name))
 
 -----
 

@@ -6,10 +6,10 @@ module Smol.Core.Interpreter.Types
   )
 where
 
+import Control.Monad.Identity
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import Smol.Core.Types
-import Control.Monad.Identity
 
 -- | An IExpr is an Expr with a function Lambda
 data IExpr ann

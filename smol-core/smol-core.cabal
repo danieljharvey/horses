@@ -100,8 +100,6 @@ library
     Smol.Core.Parser.Type
     Smol.Core.Printer
     Smol.Core.SourceSpan
-    Smol.Core.Transform
-    Smol.Core.Transform.FlattenPattern
     Smol.Core.Typecheck
     Smol.Core.Typecheck.Elaborate
     Smol.Core.Typecheck.Errors
@@ -168,8 +166,6 @@ test-suite smol-core-tests
     Smol.Core.Parser.Type
     Smol.Core.Printer
     Smol.Core.SourceSpan
-    Smol.Core.Transform
-    Smol.Core.Transform.FlattenPattern
     Smol.Core.Typecheck
     Smol.Core.Typecheck.Elaborate
     Smol.Core.Typecheck.Errors
@@ -205,7 +201,6 @@ test-suite smol-core-tests
     Test.IR.RawSamples
     Test.IR.Samples
     Test.ParserSpec
-    Test.Transform.FlattenPatternSpec
     Test.Typecheck.ExhaustivenessSpec
     Test.Typecheck.NestingMonadSpec
     Test.Typecheck.SubtypeSpec

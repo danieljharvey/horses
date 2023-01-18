@@ -20,7 +20,6 @@ import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Prim
 
 data Pattern dep ann
@@ -70,12 +69,22 @@ inParens :: (Printer a) => a -> PP.Doc style
 inParens = PP.parens . prettyDoc
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubPattern :: Pattern ParseDep ann -> PP.Doc style
+printSubPattern ::
+  ( Printer (dep Constructor),
+    Printer (dep Identifier)
+  ) =>
+  Pattern dep ann ->
+  PP.Doc style
 printSubPattern pat = case pat of
   all'@PConstructor {} -> inParens all'
   a -> prettyDoc a
 
-instance Printer (Pattern ParseDep ann) where
+instance
+  ( Printer (dep Constructor),
+    Printer (dep Identifier)
+  ) =>
+  Printer (Pattern dep ann)
+  where
   prettyDoc (PWildcard _) = "_"
   prettyDoc (PVar _ a) = prettyDoc a
   prettyDoc (PLiteral _ lit) = prettyDoc lit

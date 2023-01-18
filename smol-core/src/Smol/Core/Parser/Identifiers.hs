@@ -19,8 +19,8 @@ import Smol.Core.Parser.Shared
 import Smol.Core.Types
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
-import Text.Megaparsec
 import Smol.Core.Types.ParseDep
+import Text.Megaparsec
 
 type Parser = Parsec Void Text
 

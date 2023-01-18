@@ -5,9 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Smol.Core.Types.ParseDep
-  (
-
-    ParseDep (..)
+  ( ParseDep (..),emptyParseDep
   )
 where
 
@@ -27,5 +25,8 @@ data ParseDep identifier = ParseDep
 
 instance (Printer identifier) => Printer (ParseDep identifier) where
   prettyDoc (ParseDep ident _) = prettyDoc ident -- we'll print modules later
+
+emptyParseDep :: a -> ParseDep a
+emptyParseDep a = ParseDep a mempty
 
 

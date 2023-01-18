@@ -12,7 +12,7 @@ module Smol.Core.Types.Module.Module
   )
 where
 
-import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
+import Data.Aeson (FromJSON, ToJSON )
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -76,7 +76,7 @@ data Module ann = Module
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
-instance (Show ann) => Printer (Module ann) where
+instance Printer (Module ann) where
   prettyDoc mod' =
     let printedDefs =
           uncurry (printDefinition mod')

@@ -18,8 +18,7 @@ import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type (Type (TVar))
 
 freeVars ::
-  ( Ord ann,
-    Ord (ResolvedDep Identifier)
+  ( Ord ann
   ) =>
   ResolvedExpr (Type ann) ->
   Set (ResolvedDep Identifier)
