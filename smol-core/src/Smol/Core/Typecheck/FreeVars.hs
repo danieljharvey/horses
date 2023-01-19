@@ -12,16 +12,16 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core.TypeUtils (monoidType)
-import Smol.Core.Types.Expr (Expr (..), ResolvedExpr)
+import Smol.Core.Types.Expr (Expr (..))
 import Smol.Core.Types.Identifier (Identifier)
-import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type (Type (TVar))
 
 freeVars ::
-  ( Ord ann
+  ( Ord ann,
+    Ord (dep Identifier)
   ) =>
-  ResolvedExpr (Type ann) ->
-  Set (ResolvedDep Identifier)
+  Expr dep (Type ann) ->
+  Set (dep Identifier)
 freeVars (EVar _ a) = S.singleton a
 freeVars EConstructor {} = mempty
 freeVars (ELambda _ ident body) = S.delete ident (freeVars body)

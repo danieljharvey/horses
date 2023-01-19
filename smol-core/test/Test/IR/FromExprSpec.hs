@@ -14,7 +14,6 @@ import Smol.Core.IR.FromResolvedExpr
 import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.Patterns
 import Smol.Core.Typecheck
-import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Types
 import Smol.Core.Types.Expr
 import Test.Helpers

@@ -5,9 +5,11 @@
 
 module Smol.Core.Types.ResolvedDep
   ( ResolvedDep (..),
+    emptyResolvedDep,
   )
 where
 
+import Data.String
 import GHC.Generics (Generic)
 import Smol.Core.Printer
 import Smol.Core.Types.Module.ModuleHash
@@ -31,3 +33,9 @@ instance
   Printer (ResolvedDep identifier)
   where
   prettyDoc rd = prettyDoc (rdIdentifier rd)
+
+instance (IsString a) => IsString (ResolvedDep a) where
+  fromString = emptyResolvedDep . fromString
+
+emptyResolvedDep :: a -> ResolvedDep a
+emptyResolvedDep = LocalDefinition

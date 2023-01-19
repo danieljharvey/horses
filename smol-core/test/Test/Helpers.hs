@@ -15,6 +15,7 @@ module Test.Helpers
     var,
     tuple,
     unit,
+    identifier,
     constructor,
     patternMatch,
     unsafeParseExpr,
@@ -83,6 +84,9 @@ tuple a as = ETuple mempty a (NE.fromList as)
 
 constructor :: (Monoid ann) => Text -> Expr ParseDep ann
 constructor lbl = EConstructor mempty (emptyParseDep (Constructor lbl))
+
+identifier :: Text -> ParseDep Identifier
+identifier = emptyParseDep . Identifier
 
 patternMatch ::
   (Monoid ann) =>
