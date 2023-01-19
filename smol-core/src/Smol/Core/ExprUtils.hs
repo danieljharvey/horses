@@ -14,8 +14,6 @@ where
 import Data.Bifunctor
 import qualified Data.List.NonEmpty as NE
 import Smol.Core.Types
-import Smol.Core.Types.Expr
-import Smol.Core.Types.Pattern
 
 -- helper functions for manipulating Expr types
 --
