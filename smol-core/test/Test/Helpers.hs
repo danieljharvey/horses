@@ -15,6 +15,7 @@ module Test.Helpers
     var,
     tuple,
     unit,
+    identifier,
     constructor,
     patternMatch,
     unsafeParseExpr,
@@ -29,6 +30,9 @@ import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import GHC.Natural
 import Smol.Core
+import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Types.Expr
+import Smol.Core.Types.ParseDep
 
 tyBool :: (Monoid ann) => Type ann
 tyBool = TPrim mempty TPBool
@@ -60,38 +64,41 @@ tyUnion = TUnion mempty
 tyCons :: (Monoid ann) => TypeName -> [Type ann] -> Type ann
 tyCons typeName = foldl' (TApp mempty) (TConstructor mempty typeName)
 
-unit :: (Monoid ann) => Expr ann
+unit :: (Monoid ann) => Expr dep ann
 unit = EPrim mempty PUnit
 
-bool :: (Monoid ann) => Bool -> Expr ann
+bool :: (Monoid ann) => Bool -> Expr dep ann
 bool = EPrim mempty . PBool
 
-int :: (Monoid ann) => Integer -> Expr ann
+int :: (Monoid ann) => Integer -> Expr dep ann
 int = EPrim mempty . PInt
 
-nat :: (Monoid ann) => Natural -> Expr ann
+nat :: (Monoid ann) => Natural -> Expr dep ann
 nat = EPrim mempty . PNat
 
-var :: (Monoid ann) => Text -> Expr ann
-var = EVar mempty . Identifier
+var :: (Monoid ann) => Text -> Expr ParseDep ann
+var = EVar mempty . emptyParseDep . Identifier
 
-tuple :: (Monoid ann) => Expr ann -> [Expr ann] -> Expr ann
+tuple :: (Monoid ann) => Expr dep ann -> [Expr dep ann] -> Expr dep ann
 tuple a as = ETuple mempty a (NE.fromList as)
 
-constructor :: (Monoid ann) => Text -> Expr ann
-constructor lbl = EConstructor mempty (Constructor lbl)
+constructor :: (Monoid ann) => Text -> Expr ParseDep ann
+constructor lbl = EConstructor mempty (emptyParseDep (Constructor lbl))
+
+identifier :: Text -> ParseDep Identifier
+identifier = emptyParseDep . Identifier
 
 patternMatch ::
   (Monoid ann) =>
-  Expr ann ->
-  [(Pattern ann, Expr ann)] ->
-  Expr ann
+  Expr dep ann ->
+  [(Pattern dep ann, Expr dep ann)] ->
+  Expr dep ann
 patternMatch expr pats =
   EPatternMatch mempty expr (NE.fromList pats)
 
 ------
 
-unsafeParseExpr :: Text -> Expr ()
+unsafeParseExpr :: Text -> Expr ParseDep ()
 unsafeParseExpr input = case parseExprAndFormatError input of
   Right expr -> expr $> ()
   Left e -> error (show e)
@@ -102,7 +109,7 @@ unsafeParseType input = case parseTypeAndFormatError input of
   Left e -> error (show e)
 
 -- | parse a typed expr, ie parse it and fill the type with crap
-unsafeParseTypedExpr :: Text -> Expr (Type Annotation)
+unsafeParseTypedExpr :: Text -> ResolvedExpr (Type Annotation)
 unsafeParseTypedExpr input = case parseExprAndFormatError input of
-  Right expr -> expr $> TPrim mempty TPBool
+  Right expr -> fromParsedExpr expr $> TPrim mempty TPBool
   Left e -> error (show e)

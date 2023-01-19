@@ -10,6 +10,7 @@ module Smol.Core.IR.FromExpr.Expr
   )
 where
 
+import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bifunctor
 import qualified Data.List.NonEmpty as NE
@@ -23,10 +24,15 @@ import Smol.Core.IR.FromExpr.Pattern
 import Smol.Core.IR.FromExpr.Type
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.IRExpr
-import qualified Smol.Core.Typecheck as Smol
-import qualified Smol.Core.Types as Smol
+import Smol.Core.Typecheck (builtInTypes, flattenConstructorApplication)
+import Smol.Core.Typecheck.Shared (getExprAnnotation)
+import Smol.Core.Types.Constructor
+import Smol.Core.Types.Expr
 import Smol.Core.Types.GetPath
+import Smol.Core.Types.Identifier
 import Smol.Core.Types.PatternPredicate
+import Smol.Core.Types.Prim
+import Smol.Core.Types.Type
 
 irPrintInt :: IRModulePart
 irPrintInt =
@@ -48,21 +54,21 @@ irPrintBool =
         }
     )
 
-getPrinter :: (Show ann) => Smol.Type ann -> IRModulePart
-getPrinter (Smol.TPrim _ Smol.TPInt) = irPrintInt
-getPrinter (Smol.TPrim _ Smol.TPNat) = irPrintInt
-getPrinter (Smol.TPrim _ Smol.TPBool) = irPrintBool
-getPrinter (Smol.TLiteral _ (Smol.TLBool _)) = irPrintBool
-getPrinter (Smol.TLiteral _ (Smol.TLInt _)) = irPrintInt
+getPrinter :: (Show ann) => Type ann -> IRModulePart
+getPrinter (TPrim _ TPInt) = irPrintInt
+getPrinter (TPrim _ TPNat) = irPrintInt
+getPrinter (TPrim _ TPBool) = irPrintBool
+getPrinter (TLiteral _ (TLBool _)) = irPrintBool
+getPrinter (TLiteral _ (TLInt _)) = irPrintInt
 getPrinter other = error ("could not find a printer for type " <> show other)
 
-getPrintFuncName :: (Show ann) => Smol.Type ann -> IRFunctionName
+getPrintFuncName :: (Show ann) => Type ann -> IRFunctionName
 getPrintFuncName ty =
   case getPrinter ty of
     (IRExternDef (IRExtern n _ _)) -> n
     other -> error (show other)
 
-getPrintFuncType :: (Show ann) => Smol.Type ann -> IRType
+getPrintFuncType :: (Show ann) => Type ann -> IRType
 getPrintFuncType ty =
   case getPrinter ty of
     (IRExternDef (IRExtern _ fnArgs fnReturn)) -> IRFunctionType fnArgs fnReturn
@@ -105,28 +111,31 @@ lookupVar ident = do
 -- we should create the main function, which always prints its result
 -- a side effect will be that it adds IRModuleParts to the state, these are all
 -- combined
-irFromExpr :: (Show ann, Monoid ann) => Smol.Expr (Smol.Type ann) -> IRModule
+irFromExpr ::
+  (Show ann, Monoid ann) =>
+  IdentityExpr (Type ann) ->
+  IRModule
 irFromExpr expr =
   IRModule $
-    [getPrinter (Smol.getExprAnnotation expr)]
+    [getPrinter (getExprAnnotation expr)]
       <> modulePartsFromExpr expr
 
-fromPrim :: Smol.Prim -> IRPrim
-fromPrim (Smol.PInt i) = IRPrimInt32 i
-fromPrim (Smol.PNat i) = IRPrimInt32 (fromIntegral i)
-fromPrim (Smol.PBool b) = IRPrimInt2 b
-fromPrim Smol.PUnit = IRPrimInt2 False -- Unit is represented the same as False
+fromPrim :: Prim -> IRPrim
+fromPrim (PInt i) = IRPrimInt32 i
+fromPrim (PNat i) = IRPrimInt32 (fromIntegral i)
+fromPrim (PBool b) = IRPrimInt2 b
+fromPrim PUnit = IRPrimInt2 False -- Unit is represented the same as False
 
 fromInfix ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Smol.Op ->
-  Smol.Expr (Smol.Type ann) ->
-  Smol.Expr (Smol.Type ann) ->
+  Op ->
+  IdentityExpr (Type ann) ->
+  IdentityExpr (Type ann) ->
   m IRExpr
 fromInfix op a b = do
   let irOp = case op of
-        Smol.OpAdd -> IRAdd
-        Smol.OpEquals -> IREquals
+        OpAdd -> IRAdd
+        OpEquals -> IREquals
   IRInfix irOp <$> fromExpr a <*> fromExpr b
 
 functionReturnType :: IRType -> ([IRType], IRType)
@@ -136,12 +145,12 @@ functionReturnType other = error ("non-function " <> show other)
 
 fromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Smol.Expr (Smol.Type ann) ->
+  IdentityExpr (Type ann) ->
   m IRExpr
-fromExpr (Smol.EPrim _ prim) = pure (IRPrim $ fromPrim prim)
-fromExpr (Smol.EInfix _ op a b) = fromInfix op a b
-fromExpr (Smol.EAnn _ _ inner) = fromExpr inner
-fromExpr (Smol.EIf ty predExpr thenExpr elseExpr) = do
+fromExpr (EPrim _ prim) = pure (IRPrim $ fromPrim prim)
+fromExpr (EInfix _ op a b) = fromInfix op a b
+fromExpr (EAnn _ _ inner) = fromExpr inner
+fromExpr (EIf ty predExpr thenExpr elseExpr) = do
   irPred <- fromExpr predExpr
   irThen <- fromExpr thenExpr
   irElse <- fromExpr elseExpr
@@ -165,7 +174,7 @@ fromExpr (Smol.EIf ty predExpr thenExpr elseExpr) = do
               }
           ]
       )
-fromExpr (Smol.EPatternMatch ty matchExpr pats) = do
+fromExpr (EPatternMatch ty matchExpr pats) = do
   irMatch <- fromExpr matchExpr
   let withPat (p, pExpr) = do
         irExpr <- fromExpr pExpr
@@ -186,18 +195,18 @@ fromExpr (Smol.EPatternMatch ty matchExpr pats) = do
       irMatch
       responseType
       irPats
-fromExpr (Smol.ELambda ty ident body) =
-  lambdaFromExpr ty ident body
-fromExpr (Smol.EApp ty fn val) =
+fromExpr (ELambda ty ident body) =
+  lambdaFromExpr ty (runIdentity ident) body
+fromExpr (EApp ty fn val) =
   appFromExpr ty fn val
-fromExpr (Smol.EVar _ var) =
-  pure $ IRVar (fromIdentifier var)
-fromExpr (Smol.ETuple ty tHead tTail) = do
+fromExpr (EVar _ var) =
+  pure $ IRVar (fromIdentifier (runIdentity var))
+fromExpr (ETuple ty tHead tTail) = do
   statements <-
     traverseInd
       ( \expr i -> do
           irExpr <- fromExpr expr
-          exprType <- fromType (Smol.getExprAnnotation expr)
+          exprType <- fromType (getExprAnnotation expr)
           pure $ IRSetTo [i] exprType irExpr
       )
       ([tHead] <> NE.toList tTail)
@@ -208,25 +217,25 @@ fromExpr (Smol.ETuple ty tHead tTail) = do
       structType
       structType
       statements
-fromExpr (Smol.ELet _ ident expr body) = do
+fromExpr (ELet _ ident expr body) = do
   irExpr <- fromExpr expr
-  addVar (fromIdentifier ident) irExpr -- remember pls
+  addVar (fromIdentifier (runIdentity ident)) irExpr -- remember pls
   irBody <- fromExpr body
-  pure (IRLet (fromIdentifier ident) irExpr irBody)
-fromExpr (Smol.EConstructor ty constructor) = do
+  pure (IRLet (fromIdentifier (runIdentity ident)) irExpr irBody)
+fromExpr (EConstructor ty constructor) = do
   tyResult <- Compile.flattenConstructorType ty
   case tyResult of
     -- genuine enum, return number
-    (_typeName, []) -> IRPrim <$> getConstructorNumber constructor
+    (_typeName, []) -> IRPrim <$> getConstructorNumber (runIdentity constructor)
     (_typeName, _) -> do
       (structType, specificStructType) <-
         bimap
           fromDataTypeInMemory
           fromDataTypeInMemory
-          <$> constructorTypeInMemory ty constructor
+          <$> constructorTypeInMemory ty (runIdentity constructor)
 
       -- get number for constructor
-      consNum <- getConstructorNumber constructor
+      consNum <- getConstructorNumber (runIdentity constructor)
 
       let setConsNum = IRSetTo [0] IRInt32 (IRPrim consNum)
 
@@ -240,7 +249,7 @@ fromExpr expr = error ("fuck: " <> show expr)
 
 -- | given an env type, put all it's items in scope
 -- replaces "a" with a reference it's position in scope
-bindingsFromEnv :: Map Smol.Identifier (Smol.Type ann) -> IRExpr -> IRExpr
+bindingsFromEnv :: Map Identifier (Type ann) -> IRExpr -> IRExpr
 bindingsFromEnv env inner =
   foldr
     ( \(ident, i) irExpr ->
@@ -281,9 +290,9 @@ lambdaFromExpr ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Smol.Type ann ->
-  Smol.Identifier ->
-  Smol.Expr (Smol.Type ann) ->
+  Type ann ->
+  Identifier ->
+  IdentityExpr (Type ann) ->
   m IRExpr
 lambdaFromExpr ty ident body = do
   irType <- fromType ty
@@ -292,7 +301,7 @@ lambdaFromExpr ty ident body = do
         (a : _) -> a
         _ -> error "why don't we have any args to this function?"
   let envArgs = case ty of
-        Smol.TFunc _ env _ _ -> env
+        TFunc _ env _ _ -> env
         _ -> error "type is not lambda wtf"
 
   funcName <- getFreshFunctionName
@@ -340,7 +349,7 @@ structFromEnv ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Map Smol.Identifier (Smol.Type ann) ->
+  Map Identifier (Type ann) ->
   m [IRSetTo]
 structFromEnv env =
   traverseInd
@@ -356,9 +365,9 @@ constructorAppFromExpr ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Smol.Type ann ->
-  Smol.Constructor ->
-  [Smol.Expr (Smol.Type ann)] ->
+  Type ann ->
+  Constructor ->
+  [IdentityExpr (Type ann)] ->
   m IRExpr
 constructorAppFromExpr ty constructor cnArgs = do
   -- the constructor case, build up everything we need pls
@@ -377,7 +386,7 @@ constructorAppFromExpr ty constructor cnArgs = do
     traverseInd
       ( \expr i -> do
           irExpr <- fromExpr expr
-          exprType <- fromType (Smol.getExprAnnotation expr)
+          exprType <- fromType (getExprAnnotation expr)
           pure $
             IRSetTo
               [i + 1]
@@ -398,19 +407,19 @@ constructorAppFromExpr ty constructor cnArgs = do
 -- that into something ok
 appFromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Smol.Type ann ->
-  Smol.Expr (Smol.Type ann) ->
-  Smol.Expr (Smol.Type ann) ->
+  Type ann ->
+  IdentityExpr (Type ann) ->
+  IdentityExpr (Type ann) ->
   m IRExpr
 appFromExpr ty fn val = do
-  case Smol.flattenConstructorApplication (Smol.EApp ty fn val) of
+  case flattenConstructorApplication (EApp ty fn val) of
     Just (constructor, cnArgs) ->
-      constructorAppFromExpr ty constructor cnArgs
+      constructorAppFromExpr ty (runIdentity constructor) cnArgs
     Nothing -> do
       -- regular function application (`id True` for instance)
       irFn <- fromExpr fn
       irVal <- fromExpr val
-      fnType <- fromType (Smol.getExprAnnotation fn)
+      fnType <- fromType (getExprAnnotation fn)
       closureName <- getFreshClosureName
 
       -- arguably we could look into trashing the env
@@ -428,24 +437,24 @@ appFromExpr ty fn val = do
             )
         )
 
-fromIdentifier :: Smol.Identifier -> IRIdentifier
-fromIdentifier (Smol.Identifier ident) = IRIdentifier (T.unpack ident)
+fromIdentifier :: Identifier -> IRIdentifier
+fromIdentifier (Identifier ident) = IRIdentifier (T.unpack ident)
 
 pushModulePart :: (MonadState (FromExprState ann) m) => IRModulePart -> m ()
 pushModulePart part =
   modify (\s -> s {fesModuleParts = fesModuleParts s <> [part]})
 
 -- | given an expr, return the `main` function, as well as adding any extra
--- module Smol.Core.parts to the State
+-- module Core.parts to the State
 modulePartsFromExpr ::
   (Show ann, Monoid ann) =>
-  Smol.Expr (Smol.Type ann) ->
+  IdentityExpr (Type ann) ->
   [IRModulePart]
 modulePartsFromExpr expr =
   let (mainExpr, FromExprState otherParts _ _ _) =
-        runState (fromExpr expr) (FromExprState mempty Smol.builtInTypes 1 mempty)
-      printFuncName = getPrintFuncName (Smol.getExprAnnotation expr)
-      printFuncType = getPrintFuncType (Smol.getExprAnnotation expr)
+        runState (fromExpr expr) (FromExprState mempty builtInTypes 1 mempty)
+      printFuncName = getPrintFuncName (getExprAnnotation expr)
+      printFuncType = getPrintFuncType (getExprAnnotation expr)
    in otherParts
         <> [ IRFunctionDef
                ( IRFunction
@@ -462,7 +471,7 @@ modulePartsFromExpr expr =
 
 getConstructorNumber ::
   (MonadState (FromExprState ann) m) =>
-  Smol.Constructor ->
+  Constructor ->
   m IRPrim
 getConstructorNumber =
   fmap fromPrim . Compile.primFromConstructor

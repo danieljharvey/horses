@@ -9,6 +9,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.List.NonEmpty as NE
 import Smol.Core
+import Smol.Core.Types.ResolvedDep
 import Test.Helpers
 import Test.Hspec
 
@@ -27,17 +28,17 @@ runPatternM value =
   runReader (runExceptT value) env
 
 exhaustiveCheck ::
-  [Pattern (Type Annotation)] ->
-  Either (TCError Annotation) [Pattern (Type Annotation)]
+  [Pattern ResolvedDep (Type Annotation)] ->
+  Either (TCError Annotation) [Pattern ResolvedDep (Type Annotation)]
 exhaustiveCheck pats = runPatternM $ isExhaustive pats
 
 _redundantCasesCheck ::
-  [Pattern (Type Annotation)] ->
-  Either (TCError Annotation) [Pattern (Type Annotation)]
+  [Pattern ResolvedDep (Type Annotation)] ->
+  Either (TCError Annotation) [Pattern ResolvedDep (Type Annotation)]
 _redundantCasesCheck pats = runPatternM $ redundantCases pats
 
 _noDuplicatesCheck ::
-  Pattern (Type Annotation) ->
+  Pattern ResolvedDep (Type Annotation) ->
   Either (TCError Annotation) ()
 _noDuplicatesCheck = runPatternM . noDuplicateVariables
 

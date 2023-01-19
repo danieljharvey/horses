@@ -1,63 +1,130 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Smol.Core.Types.Expr
   ( Expr (..),
     Op (..),
+    ParsedExpr,
+    ResolvedExpr,
+    IdentityExpr,
   )
 where
 
+import Control.Monad.Identity
+import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
+import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
 import Smol.Core.Helpers
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Pattern
 import Smol.Core.Types.Prim
+import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
 
+---------------------------
+
+type ParsedExpr ann = Expr ParseDep ann
+
+---------------------------
+
+type ResolvedExpr ann = Expr ResolvedDep ann
+
+---------------------------
+
+type IdentityExpr ann = Expr Identity ann
+
+---------------------------
+
 data Op = OpAdd | OpEquals
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 instance Printer Op where
   prettyDoc OpAdd = "+"
   prettyDoc OpEquals = "=="
 
-data Expr ann
-  = ELambda ann Identifier (Expr ann)
-  | ELet ann Identifier (Expr ann) (Expr ann)
-  | EInfix ann Op (Expr ann) (Expr ann)
+data Expr dep ann
+  = ELambda ann (dep Identifier) (Expr dep ann)
+  | ELet ann (dep Identifier) (Expr dep ann) (Expr dep ann)
+  | EInfix ann Op (Expr dep ann) (Expr dep ann)
   | EPrim ann Prim
-  | EApp ann (Expr ann) (Expr ann)
-  | EIf ann (Expr ann) (Expr ann) (Expr ann)
-  | EAnn ann (Type ann) (Expr ann)
-  | EVar ann Identifier
-  | EConstructor ann Constructor
-  | ETuple ann (Expr ann) (NE.NonEmpty (Expr ann))
+  | EApp ann (Expr dep ann) (Expr dep ann)
+  | EIf ann (Expr dep ann) (Expr dep ann) (Expr dep ann)
+  | EAnn ann (Type ann) (Expr dep ann)
+  | EVar ann (dep Identifier)
+  | EConstructor ann (dep Constructor)
+  | ETuple ann (Expr dep ann) (NE.NonEmpty (Expr dep ann))
   | EGlobal ann Identifier
-  | EGlobalLet ann Identifier (Expr ann) (Expr ann)
-  | ERecord ann (Map Identifier (Expr ann))
-  | ERecordAccess ann (Expr ann) Identifier
-  | EPatternMatch ann (Expr ann) (NE.NonEmpty (Pattern ann, Expr ann))
-  deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable)
+  | EGlobalLet ann Identifier (Expr dep ann) (Expr dep ann)
+  | ERecord ann (Map Identifier (Expr dep ann))
+  | ERecordAccess ann (Expr dep ann) Identifier
+  | EPatternMatch
+      ann
+      (Expr dep ann)
+      ( NE.NonEmpty
+          (Pattern dep ann, Expr dep ann)
+      )
+  deriving stock (Functor, Foldable, Generic, Traversable)
 
-instance Printer (Expr ann) where
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier),
+    Eq (dep Constructor)
+  ) =>
+  Eq (Expr dep ann)
+
+deriving stock instance
+  ( Ord ann,
+    Ord (dep Identifier),
+    Ord (dep Constructor)
+  ) =>
+  Ord (Expr dep ann)
+
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep Constructor)
+  ) =>
+  Show (Expr dep ann)
+
+deriving anyclass instance
+  ( ToJSON ann,
+    ToJSON (dep Identifier),
+    ToJSON (dep Constructor)
+  ) =>
+  ToJSON (Expr dep ann)
+
+deriving anyclass instance
+  ( FromJSON ann,
+    FromJSON (dep Identifier),
+    FromJSON (dep Constructor)
+  ) =>
+  FromJSON (Expr dep ann)
+
+instance Printer (Expr ParseDep ann) where
   prettyDoc = prettyExpr
 
 ------ printing shit
 
 data InfixBit ann
-  = IfStart (Expr ann)
-  | IfMore Op (Expr ann)
+  = IfStart (ParsedExpr ann)
+  | IfMore Op (ParsedExpr ann)
   deriving stock (Show)
 
-getInfixList :: Expr ann -> NE.NonEmpty (InfixBit ann)
+getInfixList :: ParsedExpr ann -> NE.NonEmpty (InfixBit ann)
 getInfixList expr = case expr of
   (EInfix _ op a b) ->
     let start = getInfixList a
@@ -75,9 +142,9 @@ indentMulti :: Integer -> PP.Doc style -> PP.Doc style
 indentMulti i doc = PP.flatAlt (PP.indent (fromIntegral i) doc) doc
 
 prettyLet ::
-  Identifier ->
-  Expr ann ->
-  Expr ann ->
+  ParseDep Identifier ->
+  ParsedExpr ann ->
+  ParsedExpr ann ->
   PP.Doc style
 prettyLet var expr1 expr2 =
   let (args, letExpr, maybeMt) = splitExpr expr1
@@ -112,7 +179,7 @@ prettyLet var expr1 expr2 =
 newlineOrIn :: PP.Doc style
 newlineOrIn = PP.flatAlt (";" <> PP.line <> PP.line) " in "
 
-prettyTuple :: Expr ann -> NE.NonEmpty (Expr ann) -> PP.Doc style
+prettyTuple :: ParsedExpr ann -> NE.NonEmpty (ParsedExpr ann) -> PP.Doc style
 prettyTuple a as =
   PP.group
     ( "("
@@ -127,8 +194,8 @@ prettyTuple a as =
     )
 
 prettyLambda ::
-  Identifier ->
-  Expr ann ->
+  ParseDep Identifier ->
+  ParsedExpr ann ->
   PP.Doc style
 prettyLambda binder expr =
   PP.group
@@ -142,14 +209,14 @@ prettyLambda binder expr =
     )
 
 prettyRecord ::
-  Map Identifier (Expr ann) ->
+  Map Identifier (ParsedExpr ann) ->
   PP.Doc style
 prettyRecord map' =
   let items = M.toList map'
       printRow (name, val) i =
         let item = case val of
               (EVar _ vName)
-                | vName == name ->
+                | pdIdentifier vName == name ->
                     prettyDoc name
               _ ->
                 prettyDoc name
@@ -170,7 +237,7 @@ prettyRecord map' =
                 )
 
 {-
-prettyArray :: [Expr ann] -> PP.Doc style
+prettyArray :: [ParsedExpr ann] -> PP.Doc style
 prettyArray items =
   let printRow i val =
         printSubExpr val
@@ -190,9 +257,9 @@ prettyArray items =
 -}
 
 prettyIf ::
-  Expr ann ->
-  Expr ann ->
-  Expr ann ->
+  ParsedExpr ann ->
+  ParsedExpr ann ->
+  ParsedExpr ann ->
   PP.Doc style
 prettyIf if' then' else' =
   PP.group
@@ -207,8 +274,8 @@ prettyIf if' then' else' =
     )
 
 prettyPatternMatch ::
-  Expr ann ->
-  NE.NonEmpty (Pattern ann, Expr ann) ->
+  ParsedExpr ann ->
+  NE.NonEmpty (Pattern ParseDep ann, ParsedExpr ann) ->
   PP.Doc style
 prettyPatternMatch sumExpr matches =
   "match"
@@ -232,7 +299,7 @@ prettyPatternMatch sumExpr matches =
         <+> PP.line
           <> indentMulti 4 (printSubExpr expr')
 
-prettyExpr :: Expr ann -> PP.Doc doc
+prettyExpr :: ParsedExpr ann -> PP.Doc doc
 prettyExpr (EPrim _ l) =
   prettyDoc l
 prettyExpr (EAnn _ mt expr) =
@@ -263,16 +330,16 @@ prettyExpr (EGlobal _ global) =
   prettyDoc global <> "!"
 prettyExpr _ = error "missing globals pretty printer"
 
-wrapInfix :: Expr ann -> PP.Doc style
+wrapInfix :: ParsedExpr ann -> PP.Doc style
 wrapInfix val = case val of
   val'@EInfix {} -> inParens val'
   other -> printSubExpr other
 
-inParens :: Expr ann -> PP.Doc style
+inParens :: ParsedExpr ann -> PP.Doc style
 inParens = PP.parens . prettyExpr
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubExpr :: Expr ann -> PP.Doc style
+printSubExpr :: ParsedExpr ann -> PP.Doc style
 printSubExpr expr = case expr of
   all'@ELet {} -> inParens all'
   all'@ELambda {} -> inParens all'

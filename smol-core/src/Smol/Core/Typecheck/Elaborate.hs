@@ -26,6 +26,8 @@ import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
+import Smol.Core.Types.Expr
+import Smol.Core.Types.ResolvedDep
 
 builtInTypes :: (Monoid ann) => Map TypeName (DataType ann)
 builtInTypes =
@@ -80,8 +82,8 @@ elaborate ::
     Monoid ann,
     MonadError (TCError ann) m
   ) =>
-  Expr ann ->
-  m (Expr (Type ann))
+  ResolvedExpr ann ->
+  m (ResolvedExpr (Type ann))
 elaborate expr =
   fst
     <$> runReaderT
@@ -114,8 +116,8 @@ collectGlobals ::
     Eq ann,
     Show ann
   ) =>
-  m (Expr (Type ann)) ->
-  m (Expr (Type ann))
+  m (ResolvedExpr (Type ann)) ->
+  m (ResolvedExpr (Type ann))
 collectGlobals f = do
   (expr, combinedGlobs) <- listenToGlobals f
   let ty = getExprAnnotation expr
@@ -139,9 +141,9 @@ inferInfix ::
   ) =>
   ann ->
   Op ->
-  Expr ann ->
-  Expr ann ->
-  m (Expr (Type ann))
+  ResolvedExpr ann ->
+  ResolvedExpr ann ->
+  m (ResolvedExpr (Type ann))
 inferInfix _ann OpAdd a b = do
   elabA <- infer a
   elabB <- infer b
@@ -186,8 +188,8 @@ infer ::
     MonadState (TCState ann) m,
     MonadWriter [Substitution ann] m
   ) =>
-  Expr ann ->
-  m (Expr (Type ann))
+  ResolvedExpr ann ->
+  m (ResolvedExpr (Type ann))
 infer inferExpr = do
   case inferExpr of
     (EPrim ann prim) ->
@@ -276,9 +278,9 @@ inferApplication ::
     MonadWriter [Substitution ann] m
   ) =>
   Maybe (Type ann) ->
-  Expr ann ->
-  Expr ann ->
-  m (Expr (Type ann))
+  ResolvedExpr ann ->
+  ResolvedExpr ann ->
+  m (ResolvedExpr (Type ann))
 inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
   typedArg <- infer arg
   -- if we are applying to a variable, then we need to be a bit clever and
@@ -319,8 +321,8 @@ inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
 -- body, for recursion
 withRecursiveFn ::
   (MonadReader (TCEnv ann) m) =>
-  Expr ann ->
-  Expr ann ->
+  ResolvedExpr ann ->
+  ResolvedExpr ann ->
   m a ->
   m a
 withRecursiveFn (ELambda _ ident _) (EAnn _ fnTyp _) =
@@ -335,8 +337,8 @@ checkPattern ::
     MonadReader (TCEnv ann) m
   ) =>
   Type ann ->
-  Pattern ann ->
-  m (Pattern (Type ann), Map Identifier (Type ann))
+  Pattern ResolvedDep ann ->
+  m (Pattern ResolvedDep (Type ann), Map (ResolvedDep Identifier) (Type ann))
 checkPattern checkTy checkPat = do
   case (checkTy, checkPat) of
     (TTuple _ tA tRest, PTuple ann pA pRest) | length tRest == length pRest -> do
@@ -414,9 +416,9 @@ checkLambda ::
     Ord ann
   ) =>
   Type ann ->
-  Identifier ->
-  Expr ann ->
-  m (Expr (Type ann))
+  ResolvedDep Identifier ->
+  ResolvedExpr ann ->
+  m (ResolvedExpr (Type ann))
 checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
   maybeArg <- popArg
   realFrom <- case maybeArg of
@@ -424,7 +426,7 @@ checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
     Nothing -> pure tFrom
   (typedBody, typedClosure, subs) <- withVar ident realFrom $ do
     (tBody, subs) <- listen (check tTo body)
-    tClosure <- M.delete ident <$> getClosureType tBody
+    tClosure <- M.delete (rdIdentifier ident) <$> getClosureType tBody
     pure (tBody, tClosure, subs)
   let lambdaType =
         substituteMany
@@ -448,9 +450,9 @@ inferLambda ::
     MonadWriter [Substitution ann] m
   ) =>
   ann ->
-  Identifier ->
-  Expr ann ->
-  m (Expr (Type ann))
+  ResolvedDep Identifier ->
+  ResolvedExpr ann ->
+  m (ResolvedExpr (Type ann))
 inferLambda ann ident body = do
   maybeTyp <- popArg
   tyArg <- case maybeTyp of
@@ -458,7 +460,7 @@ inferLambda ann ident body = do
     Nothing -> getUnknown ann
   (typedBody, typedClosure, subs) <- withVar ident tyArg $ do
     (tBody, subs) <- listen (infer body)
-    tClosure <- M.delete ident <$> getClosureType tBody
+    tClosure <- M.delete (rdIdentifier ident) <$> getClosureType tBody
     pure (tBody, tClosure, subs)
   let lambdaType =
         substituteMany
@@ -477,8 +479,8 @@ check ::
     MonadWriter [Substitution ann] m
   ) =>
   Type ann ->
-  Expr ann ->
-  m (Expr (Type ann))
+  ResolvedExpr ann ->
+  m (ResolvedExpr (Type ann))
 check typ expr = do
   case expr of
     ELambda _ ident body ->

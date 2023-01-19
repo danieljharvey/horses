@@ -3,6 +3,7 @@
 
 module Smol.Core.Interpreter.Interpret (interpret, emptyEnv, InterpretEnv (..)) where
 
+import Control.Monad.Identity
 import Control.Monad.Reader
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -109,7 +110,7 @@ interpretPatternMatch ::
     Show ann
   ) =>
   IExpr ann ->
-  NE.NonEmpty (Pattern ann, IExpr ann -> IExpr ann) ->
+  NE.NonEmpty (Pattern Identity ann, IExpr ann -> IExpr ann) ->
   m (IExpr ann)
 interpretPatternMatch expr' patterns = do
   -- interpret match expression
@@ -131,11 +132,11 @@ interpretPatternMatch expr' patterns = do
 
 -- pull vars out of expr to match patterns
 patternMatches ::
-  Pattern ann ->
+  Pattern Identity ann ->
   IExpr ann ->
   Maybe [(Identifier, IExpr ann)]
 patternMatches (PWildcard _) _ = pure []
-patternMatches (PVar _ name) expr = pure [(name, expr)]
+patternMatches (PVar _ name) expr = pure [(runIdentity name, expr)]
 {-
 patternMatches (PPair _ pA pB) (MyPair _ a b) = do
   as <- patternMatches pA a
@@ -154,7 +155,7 @@ patternMatches (PConstructor _ _pTyCon []) (IConstructor _ _tyCon) =
   pure mempty
 patternMatches (PConstructor _ pTyCon pArgs) (IApp ann fn val) = do
   (tyCon, args) <- consAppToPattern (IApp ann fn val)
-  if tyCon /= pTyCon
+  if tyCon /= runIdentity pTyCon
     then Nothing
     else do
       let allPairs = zip pArgs args

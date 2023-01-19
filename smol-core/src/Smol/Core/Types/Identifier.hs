@@ -10,6 +10,7 @@ module Smol.Core.Types.Identifier
   )
 where
 
+import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.String
 import Data.Text (Text)
@@ -18,7 +19,15 @@ import qualified Prettyprinter as PP
 import Smol.Core.Printer
 
 newtype Identifier = Identifier Text
-  deriving newtype (Eq, Ord, Show)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      JSON.ToJSON,
+      JSON.ToJSONKey,
+      JSON.FromJSON,
+      JSON.FromJSONKey
+    )
 
 instance Printer Identifier where
   prettyDoc (Identifier i) = PP.pretty i

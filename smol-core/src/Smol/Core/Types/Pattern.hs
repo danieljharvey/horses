@@ -1,7 +1,11 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Smol.Core.Types.Pattern
   ( Pattern (..),
@@ -9,31 +13,78 @@ module Smol.Core.Types.Pattern
   )
 where
 
+import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.List.NonEmpty as NE
+import GHC.Generics (Generic)
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Prim
 
-data Pattern ann
+data Pattern dep ann
   = PWildcard ann
-  | PVar ann Identifier
-  | PTuple ann (Pattern ann) (NE.NonEmpty (Pattern ann))
+  | PVar ann (dep Identifier)
+  | PTuple ann (Pattern dep ann) (NE.NonEmpty (Pattern dep ann))
   | PLiteral ann Prim
-  | PConstructor ann Constructor [Pattern ann]
-  deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable)
+  | PConstructor ann (dep Constructor) [Pattern dep ann]
+  deriving stock (Functor, Foldable, Generic, Traversable)
+
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier),
+    Eq (dep Constructor)
+  ) =>
+  Eq (Pattern dep ann)
+
+deriving stock instance
+  ( Ord ann,
+    Ord (dep Identifier),
+    Ord (dep Constructor)
+  ) =>
+  Ord (Pattern dep ann)
+
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep Constructor)
+  ) =>
+  Show (Pattern dep ann)
+
+deriving anyclass instance
+  ( FromJSON ann,
+    FromJSON (dep Identifier),
+    FromJSON (dep Constructor)
+  ) =>
+  FromJSON (Pattern dep ann)
+
+deriving anyclass instance
+  ( ToJSON ann,
+    ToJSON (dep Identifier),
+    ToJSON (dep Constructor)
+  ) =>
+  ToJSON (Pattern dep ann)
 
 inParens :: (Printer a) => a -> PP.Doc style
 inParens = PP.parens . prettyDoc
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubPattern :: Pattern ann -> PP.Doc style
+printSubPattern ::
+  ( Printer (dep Constructor),
+    Printer (dep Identifier)
+  ) =>
+  Pattern dep ann ->
+  PP.Doc style
 printSubPattern pat = case pat of
   all'@PConstructor {} -> inParens all'
   a -> prettyDoc a
 
-instance Printer (Pattern ann) where
+instance
+  ( Printer (dep Constructor),
+    Printer (dep Identifier)
+  ) =>
+  Printer (Pattern dep ann)
+  where
   prettyDoc (PWildcard _) = "_"
   prettyDoc (PVar _ a) = prettyDoc a
   prettyDoc (PLiteral _ lit) = prettyDoc lit

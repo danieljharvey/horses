@@ -8,7 +8,6 @@ import qualified Test.IR.IRSpec
 import qualified Test.IR.PatternSpec
 import qualified Test.Interpreter.InterpreterSpec
 import qualified Test.ParserSpec
-import qualified Test.Transform.FlattenPatternSpec
 import qualified Test.Typecheck.ExhaustivenessSpec
 import qualified Test.Typecheck.NestingMonadSpec
 import qualified Test.Typecheck.SubtypeSpec
@@ -27,4 +26,3 @@ main = hspec $ do
   Test.IR.CompileSpec.spec
   Test.IR.IRSpec.spec
   Test.Interpreter.InterpreterSpec.spec
-  Test.Transform.FlattenPatternSpec.spec

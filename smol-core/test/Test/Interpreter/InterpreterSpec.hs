@@ -7,12 +7,23 @@ import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Smol.Core
+import Smol.Core.IR.FromResolvedExpr
+import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Types.Expr
 import Test.Helpers
 import Test.Hspec
 
-doInterpret :: Text -> Expr ()
+toIdentity :: ParsedExpr ann -> IdentityExpr ann
+toIdentity = fromResolvedExpr . fromParsedExpr
+
+doInterpret :: Text -> IdentityExpr ()
 doInterpret =
-  toExpr . flip runReader emptyEnv . interpret . fromExpr . unsafeParseExpr
+  toExpr
+    . flip runReader emptyEnv
+    . interpret
+    . fromExpr
+    . toIdentity
+    . unsafeParseExpr
 
 spec :: Spec
 spec = do
@@ -38,9 +49,10 @@ spec = do
         ( \(input, expect) ->
             it (show input <> " = " <> show expect) $ do
               doInterpret input
-                `shouldBe` unsafeParseExpr expect
+                `shouldBe` toIdentity (unsafeParseExpr expect)
         )
         cases
+
     describe "toExpr" $ do
       it "Converts from lambda" $ do
         let from = ILambda () "a" id
@@ -52,7 +64,7 @@ spec = do
         toExpr from `shouldBe` to
       it "Converts pattern match" $ do
         let from = IPatternMatch () (IVar () "a") (NE.fromList [(PVar () "b", \env -> IRecordAccess () env "b")])
-            to = unsafeParseExpr "case a of b -> b"
+            to = toIdentity $ unsafeParseExpr "case a of b -> b"
         toExpr from `shouldBe` to
 
     describe "fromExpr" $ do
@@ -63,8 +75,8 @@ spec = do
         let from = ELambda () "a" (ELambda () "b" (EVar () "a"))
         (toExpr . fromExpr) from `shouldBe` from
       it "Converts let to lambda" $ do
-        let from = unsafeParseExpr "let a = 41 in a + 1"
+        let from = toIdentity $ unsafeParseExpr "let a = 41 in a + 1"
         (toExpr . fromExpr) from `shouldBe` from
       it "Converts pattern matches" $ do
-        let from = unsafeParseExpr "case Just 1 of Just a -> a | Nothing -> 0"
+        let from = toIdentity $ unsafeParseExpr "case Just 1 of Just a -> a | Nothing -> 0"
         (toExpr . fromExpr) from `shouldBe` from

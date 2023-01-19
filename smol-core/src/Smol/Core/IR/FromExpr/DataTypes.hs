@@ -12,6 +12,7 @@ module Smol.Core.IR.FromExpr.DataTypes
 where
 
 import Control.Monad.Except
+import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -29,7 +30,7 @@ patternTypeInMemory ::
     HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
     MonadState s m
   ) =>
-  Smol.Pattern (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type ann) ->
   m DataTypeInMemory
 patternTypeInMemory (Smol.PLiteral ty _) =
   toRepresentation ty
@@ -40,7 +41,7 @@ patternTypeInMemory (Smol.PTuple ty _ _) =
 patternTypeInMemory (Smol.PWildcard ty) =
   toRepresentation ty
 patternTypeInMemory (Smol.PConstructor ty c _) =
-  snd <$> constructorTypeInMemory ty c
+  snd <$> constructorTypeInMemory ty (runIdentity c)
 
 constructorTypeInMemory ::
   ( MonadState s m,

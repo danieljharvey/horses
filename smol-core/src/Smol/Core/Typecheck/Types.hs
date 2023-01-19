@@ -16,24 +16,25 @@ where
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
-import qualified Smol.Core.Types.Constructor as Smol
+import Smol.Core.Types.Constructor
   ( Constructor,
   )
-import qualified Smol.Core.Types.DataType as Smol (DataType)
-import qualified Smol.Core.Types.Expr as Smol (Op)
-import qualified Smol.Core.Types.Identifier as Smol (Identifier)
-import qualified Smol.Core.Types.Pattern as Smol (Pattern)
+import Smol.Core.Types.DataType (DataType)
+import Smol.Core.Types.Expr (Op)
+import Smol.Core.Types.Identifier (Identifier)
+import Smol.Core.Types.Pattern (Pattern)
 import Smol.Core.Types.PatternMatchError (PatternMatchError)
-import qualified Smol.Core.Types.Type as Smol (Type)
-import qualified Smol.Core.Types.TypeName as Smol (TypeName)
+import Smol.Core.Types.ResolvedDep
+import Smol.Core.Types.Type (Type)
+import Smol.Core.Types.TypeName (TypeName)
 
-newtype GlobalMap ann = GlobalMap {getGlobalMap :: Map Smol.Identifier (Smol.Type ann)}
+newtype GlobalMap ann = GlobalMap {getGlobalMap :: Map Identifier (Type ann)}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
 globalMapIsNull :: GlobalMap ann -> Bool
 globalMapIsNull (GlobalMap m) = M.null m
 
-filterIdent :: Smol.Identifier -> GlobalMap ann -> GlobalMap ann
+filterIdent :: Identifier -> GlobalMap ann -> GlobalMap ann
 filterIdent ident (GlobalMap m) =
   GlobalMap $
     M.delete ident m
@@ -43,30 +44,31 @@ data VarType = Variable | Global
 
 data TCError ann
   = TCUnknownError
-  | TCCouldNotFindVar VarType Smol.Identifier
-  | TCTypeMismatch (Smol.Type ann) (Smol.Type ann)
-  | TCExpectedFunction (Smol.Type ann)
-  | TCTupleSizeMismatch Int (Smol.Type ann)
-  | TCExpectedTuple (Smol.Type ann)
-  | TCRecordMissingItems (Set Smol.Identifier)
-  | TCExpectedRecord (Smol.Type ann)
-  | TCInfixMismatch Smol.Op (Smol.Type ann) (Smol.Type ann)
-  | TCPatternMismatch (Smol.Pattern ann) (Smol.Type ann)
-  | TCUnknownConstructor Smol.Constructor [Smol.Constructor]
-  | TCConstructorArgumentMismatch Smol.Constructor Int Int -- expected, actual
-  | TCExpectedConstructorType (Smol.Type ann)
-  | TCCompoundTypeInEquality (Smol.Type ann) -- for now we only do primitive equality
-  | TCPatternMatchError (PatternMatchError (Smol.Type ann))
+  | TCCouldNotFindVar (ResolvedDep Identifier)
+  | TCCouldNotFindGlobal Identifier
+  | TCTypeMismatch (Type ann) (Type ann)
+  | TCExpectedFunction (Type ann)
+  | TCTupleSizeMismatch Int (Type ann)
+  | TCExpectedTuple (Type ann)
+  | TCRecordMissingItems (Set Identifier)
+  | TCExpectedRecord (Type ann)
+  | TCInfixMismatch Op (Type ann) (Type ann)
+  | TCPatternMismatch (Pattern ResolvedDep ann) (Type ann)
+  | TCUnknownConstructor (ResolvedDep Constructor) [Constructor]
+  | TCConstructorArgumentMismatch (ResolvedDep Constructor) Int Int -- expected, actual
+  | TCExpectedConstructorType (Type ann)
+  | TCCompoundTypeInEquality (Type ann) -- for now we only do primitive equality
+  | TCPatternMatchError (PatternMatchError (Type ann))
   deriving stock (Eq, Ord, Show, Foldable)
 
 data TCEnv ann = TCEnv
-  { tceVars :: Map Smol.Identifier (Smol.Type ann),
-    tceGlobals :: Map Smol.Identifier (Smol.Type ann),
-    tceDataTypes :: Map Smol.TypeName (Smol.DataType ann)
+  { tceVars :: Map (ResolvedDep Identifier) (Type ann),
+    tceGlobals :: Map Identifier (Type ann),
+    tceDataTypes :: Map TypeName (DataType ann)
   }
 
 data TCState ann = TCState
-  { tcsArgStack :: [Smol.Type ann],
+  { tcsArgStack :: [Type ann],
     tcsUnknown :: Integer,
     tcsGlobals :: [GlobalMap ann]
   }

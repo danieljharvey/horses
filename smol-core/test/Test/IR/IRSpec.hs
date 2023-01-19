@@ -6,32 +6,34 @@ import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text.IO as T
-import LLVM.AST hiding (function)
+import qualified LLVM.AST as LLVM
 import qualified Smol.Core.Compile.RunLLVM as Run
 import Smol.Core.IR.FromExpr.Expr
+import Smol.Core.IR.FromResolvedExpr
 import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.ToLLVM
 import Smol.Core.Typecheck
-import qualified Smol.Core.Types as Smol
+import Smol.Core.Types
+import Smol.Core.Types.Expr
 import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec
 import Test.IR.Samples
 
 -- run the code, get the output, die
-run :: Module -> IO Text
+run :: LLVM.Module -> IO Text
 run = fmap Run.rrResult . Run.run
 
-evalExpr :: Text -> Smol.Expr (Smol.Type Smol.Annotation)
+evalExpr :: Text -> ResolvedExpr (Type Annotation)
 evalExpr input =
   case elaborate (unsafeParseTypedExpr input $> mempty) of
     Right typedExpr -> typedExpr
     Left e -> error (show e)
 
-createModule :: Text -> Module
+createModule :: Text -> LLVM.Module
 createModule input = do
   let expr = evalExpr input
-      irModule = irFromExpr expr
+      irModule = irFromExpr (fromResolvedExpr expr)
   irToLLVM irModule
 
 _printModule :: IRModule -> IRModule

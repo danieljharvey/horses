@@ -14,6 +14,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Data.Bifunctor (first)
 import Data.Foldable
 import Data.Functor
 import Data.List (nub)
@@ -26,13 +27,14 @@ import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 import Smol.Core.Types.PatternMatchError
+import Smol.Core.Types.ResolvedDep
 
 validatePatterns ::
   ( MonadError (TCError Annotation) m,
     MonadReader (TCEnv Annotation) m
   ) =>
   Type Annotation ->
-  [Pattern (Type Annotation)] ->
+  [Pattern ResolvedDep (Type Annotation)] ->
   m ()
 validatePatterns ann patterns = do
   traverse_ noDuplicateVariables patterns
@@ -50,7 +52,7 @@ validatePatterns ann patterns = do
 noDuplicateVariables ::
   ( MonadError (TCError Annotation) m
   ) =>
-  Pattern (Type Annotation) ->
+  Pattern ResolvedDep (Type Annotation) ->
   m ()
 noDuplicateVariables pat = do
   let dupes =
@@ -69,8 +71,8 @@ noDuplicateVariables pat = do
             )
 
 getVariables ::
-  Pattern (Type Annotation) ->
-  Map Identifier Int
+  Pattern ResolvedDep (Type Annotation) ->
+  Map (ResolvedDep Identifier) Int
 getVariables (PWildcard _) = mempty
 getVariables (PLiteral _ _) = mempty
 getVariables (PVar _ a) = M.singleton a 1
@@ -103,8 +105,8 @@ isExhaustive ::
   ( MonadError (TCError Annotation) m,
     MonadReader (TCEnv Annotation) m
   ) =>
-  [Pattern (Type Annotation)] ->
-  m [Pattern (Type Annotation)]
+  [Pattern ResolvedDep (Type Annotation)] ->
+  m [Pattern ResolvedDep (Type Annotation)]
 isExhaustive patterns = do
   generated <- mconcat <$> traverse generate patterns
   pure $ filterMissing patterns generated
@@ -113,8 +115,8 @@ generate ::
   ( MonadError (TCError Annotation) m,
     MonadReader (TCEnv Annotation) m
   ) =>
-  Pattern (Type Annotation) ->
-  m [Pattern (Type Annotation)]
+  Pattern ResolvedDep (Type Annotation) ->
+  m [Pattern ResolvedDep (Type Annotation)]
 generate pat = (<>) [pat] <$> generateFromPattern pat
 
 -- | Given a pattern, generate others required for it
@@ -122,8 +124,8 @@ generateFromPattern ::
   ( MonadError (TCError Annotation) m,
     MonadReader (TCEnv Annotation) m
   ) =>
-  Pattern (Type Annotation) ->
-  m [Pattern (Type Annotation)]
+  Pattern ResolvedDep (Type Annotation) ->
+  m [Pattern ResolvedDep (Type Annotation)]
 generateFromPattern (PLiteral ty _) = generateFromType ty
 generateFromPattern (PWildcard _) = pure mempty
 generateFromPattern (PVar _ _) = pure mempty
@@ -143,7 +145,9 @@ generateFromPattern (PConstructor ty _constructor args) = do
 -- (any "product" really)
 -- given (a,b) , return [(a, gennedForB1), (a, gennedForB), (gennedForA1, b),
 -- (gennedForA2, b)]
-_generateMany :: NE.NonEmpty (Pattern (Type Annotation)) -> m [NE.NonEmpty (Pattern (Type Annotation))]
+_generateMany ::
+  NE.NonEmpty (Pattern ResolvedDep (Type Annotation)) ->
+  m [NE.NonEmpty (Pattern ResolvedDep (Type Annotation))]
 _generateMany = undefined
 
 -- | Given a type, generate patterns, useful for literals where the type is
@@ -153,7 +157,7 @@ generateFromType ::
   -- MonadReader (TCEnv Annotation) m
   ) =>
   Type Annotation ->
-  m [Pattern (Type Annotation)]
+  m [Pattern ResolvedDep (Type Annotation)]
 generateFromType ty@(TLiteral _ literal) =
   pure [PLiteral ty (primFromTypeLiteral literal)]
 generateFromType ty@(TPrim _ TPBool) =
@@ -174,8 +178,8 @@ generateFromType _ = pure mempty
 generateAlways ::
   (MonadError (TCError Annotation) m, MonadReader (TCEnv Annotation) m) =>
   Type Annotation ->
-  Pattern (Type Annotation) ->
-  m (NE.NonEmpty (Pattern (Type Annotation)))
+  Pattern ResolvedDep (Type Annotation) ->
+  m (NE.NonEmpty (Pattern ResolvedDep (Type Annotation)))
 generateAlways ty pat = do
   generated <- generateFromPattern pat
   case NE.nonEmpty generated of
@@ -193,7 +197,7 @@ smallerListVersions aas =
 requiredFromDataType ::
   (MonadError (TCError Annotation) m) =>
   DataType Annotation ->
-  m [Pattern (Type Annotation)]
+  m [Pattern ResolvedDep (Type Annotation)]
 requiredFromDataType (DataType _ _ cons) =
   if length cons < 2 -- if there is only one constructor don't generate more
     then pure mempty
@@ -205,14 +209,14 @@ requiredFromDataType (DataType _ _ cons) =
                 n
                 (PWildcard wrongValueThatTypechecks <$ as)
             ]
-      pure $ mconcat (new <$> M.toList cons)
+      pure $ mconcat (new . first LocalDefinition <$> M.toList cons)
 
 -- filter outstanding items
 filterMissing ::
   (Eq ann) =>
-  [Pattern (Type ann)] ->
-  [Pattern (Type ann)] ->
-  [Pattern (Type ann)]
+  [Pattern ResolvedDep (Type ann)] ->
+  [Pattern ResolvedDep (Type ann)] ->
+  [Pattern ResolvedDep (Type ann)]
 filterMissing patterns required =
   nub $ foldr annihiliatePattern required patterns
   where
@@ -224,12 +228,12 @@ filterMissing patterns required =
             . removeAnn
         )
 
-removeAnn :: Pattern ann -> Pattern ()
+removeAnn :: Pattern ResolvedDep ann -> Pattern ResolvedDep ()
 removeAnn p = p $> ()
 
 -- does left pattern satisfy right pattern?
 annihilateAll ::
-  [(Pattern (), Pattern ())] ->
+  [(Pattern ResolvedDep (), Pattern ResolvedDep ())] ->
   Bool
 annihilateAll =
   foldr
@@ -237,7 +241,7 @@ annihilateAll =
     True
 
 -- | if left is on the right, should we get rid?
-annihilate :: Pattern () -> Pattern () -> Bool
+annihilate :: Pattern ResolvedDep () -> Pattern ResolvedDep () -> Bool
 annihilate l r =
   case (l, r) of
     (a, b) | a == b -> True
@@ -255,7 +259,7 @@ annihilate l r =
     _ -> False
 
 -- is this item total, as such, ie, is it always true?
-isComplete :: Pattern ann -> Bool
+isComplete :: Pattern ResolvedDep ann -> Bool
 isComplete (PWildcard _) = True
 isComplete (PVar _ _) = True
 isComplete (PTuple _ a as) = isComplete a && getAll (foldMap (All . isComplete) (NE.toList as))
@@ -265,8 +269,8 @@ redundantCases ::
   ( MonadError (TCError Annotation) m,
     MonadReader (TCEnv Annotation) m
   ) =>
-  [Pattern (Type Annotation)] ->
-  m [Pattern (Type Annotation)]
+  [Pattern ResolvedDep (Type Annotation)] ->
+  m [Pattern ResolvedDep (Type Annotation)]
 redundantCases patterns = do
   generated <- mconcat <$> traverse generate patterns
   let annihiliatePattern pat =

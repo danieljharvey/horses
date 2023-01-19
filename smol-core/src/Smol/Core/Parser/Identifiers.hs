@@ -19,11 +19,12 @@ import Smol.Core.Parser.Shared
 import Smol.Core.Types
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.ParseDep
 import Text.Megaparsec
 
 type Parser = Parsec Void Text
 
-type ParserExpr = Expr Annotation
+type ParserExpr = Expr ParseDep Annotation
 
 protectedNames :: Set Text
 protectedNames =
@@ -56,7 +57,7 @@ filterProtectedNames tx =
 -- `dog`, `log`, `a`
 varParser :: Parser ParserExpr
 varParser =
-  myLexeme (withLocation EVar identifierParser)
+  myLexeme (withLocation EVar (emptyParseDep <$> identifierParser))
 
 -- `dog!`, `log!`, `a!`
 globalParser :: Parser ParserExpr
@@ -66,7 +67,7 @@ globalParser =
 -- `Dog`, `Log`, `A`
 constructorParser :: Parser ParserExpr
 constructorParser =
-  myLexeme (withLocation EConstructor constructorParserInternal)
+  myLexeme (withLocation EConstructor (emptyParseDep <$> constructorParserInternal))
 
 -- identifier
 

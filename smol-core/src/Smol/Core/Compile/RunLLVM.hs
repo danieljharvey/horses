@@ -10,11 +10,12 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
-import LLVM.AST hiding (function)
+import LLVM.AST hiding (Type, function)
 import LLVM.Pretty
 import Smol.Core.IR.FromExpr.Expr
 import Smol.Core.IR.ToLLVM.ToLLVM
-import qualified Smol.Core.Types as Smol
+import Smol.Core.Types
+import Smol.Core.Types.Expr
 import System.CPUTime
 import System.Directory
 import System.IO
@@ -27,7 +28,7 @@ cRuntime :: Text
 cRuntime =
   T.decodeUtf8 $(makeRelativeToProject "static/runtime.c" >>= embedFile)
 
-moduleFromExpr :: Smol.Expr (Smol.Type Smol.Annotation) -> Module
+moduleFromExpr :: IdentityExpr (Type Annotation) -> Module
 moduleFromExpr = irToLLVM . irFromExpr
 
 time :: IO t -> IO (Text, t)

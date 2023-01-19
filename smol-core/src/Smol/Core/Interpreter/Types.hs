@@ -6,6 +6,7 @@ module Smol.Core.Interpreter.Types
   )
 where
 
+import Control.Monad.Identity
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import Smol.Core.Types
@@ -34,4 +35,4 @@ data IExpr ann
   | IPatternMatch
       ann
       (IExpr ann)
-      (NE.NonEmpty (Pattern ann, IExpr ann -> IExpr ann))
+      (NE.NonEmpty (Pattern Identity ann, IExpr ann -> IExpr ann))

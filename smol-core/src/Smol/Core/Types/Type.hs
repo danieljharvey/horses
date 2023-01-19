@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -11,9 +13,11 @@ module Smol.Core.Types.Type
   )
 where
 
+import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
+import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
@@ -21,7 +25,8 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.TypeName
 
 data TypePrim = TPNat | TPInt | TPBool
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 instance Printer TypePrim where
   prettyDoc TPNat = "Nat"
@@ -29,7 +34,8 @@ instance Printer TypePrim where
   prettyDoc TPBool = "Bool"
 
 data TypeLiteral = TLBool Bool | TLInt Integer | TLUnit
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 instance Printer TypeLiteral where
   prettyDoc (TLBool b) = PP.pretty b
@@ -48,7 +54,8 @@ data Type ann
   | TUnion ann (Type ann) (Type ann)
   | TApp ann (Type ann) (Type ann)
   | TConstructor ann TypeName
-  deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable)
+  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic, Traversable)
+  deriving anyclass (FromJSON, FromJSONKey, ToJSON)
 
 instance Printer (Type ann) where
   prettyDoc = renderType

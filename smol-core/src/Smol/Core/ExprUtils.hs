@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Smol.Core.ExprUtils
   ( typeIsStruct,
     mapOuterExprAnnotation,
@@ -5,6 +7,7 @@ module Smol.Core.ExprUtils
     bindExpr,
     mapPattern,
     patternMonoid,
+    mapExprDep,
   )
 where
 
@@ -21,7 +24,7 @@ typeIsStruct _ = True
 
 -- | modify the outer annotation of an expression
 -- useful for adding line numbers during parsing
-mapOuterExprAnnotation :: (ann -> ann) -> Expr ann -> Expr ann
+mapOuterExprAnnotation :: (ann -> ann) -> Expr dep ann -> Expr dep ann
 mapOuterExprAnnotation f expr' =
   case expr' of
     EInfix ann a b c -> EInfix (f ann) a b c
@@ -40,7 +43,7 @@ mapOuterExprAnnotation f expr' =
     ERecordAccess ann b c -> ERecordAccess (f ann) b c
     EPatternMatch ann a b -> EPatternMatch (f ann) a b
 
-mapExpr :: (Expr ann -> Expr ann) -> Expr ann -> Expr ann
+mapExpr :: (Expr dep ann -> Expr dep ann) -> Expr dep ann -> Expr dep ann
 mapExpr f (EInfix ann op a b) = EInfix ann op (f a) (f b)
 mapExpr f (EAnn ann mt expr) = EAnn ann mt (f expr)
 mapExpr _ (EPrim ann a) = EPrim ann a
@@ -61,7 +64,7 @@ mapExpr f (ERecordAccess ann expr ident) =
 mapExpr f (EPatternMatch ann patExpr pats) =
   EPatternMatch ann (f patExpr) (second f <$> pats)
 
-bindExpr :: (Applicative m) => (Expr ann -> m (Expr ann)) -> Expr ann -> m (Expr ann)
+bindExpr :: (Applicative m) => (Expr dep ann -> m (Expr dep ann)) -> Expr dep ann -> m (Expr dep ann)
 bindExpr f (EInfix ann op a b) = EInfix ann op <$> f a <*> f b
 bindExpr f (EAnn ann mt expr) = EAnn ann mt <$> f expr
 bindExpr _ (EPrim ann a) = pure $ EPrim ann a
@@ -82,7 +85,7 @@ bindExpr f (ERecordAccess ann expr ident) =
 bindExpr f (EPatternMatch ann patExpr pats) =
   EPatternMatch ann <$> f patExpr <*> traverse (\(a, b) -> (,) a <$> f b) pats
 
-mapPattern :: (Pattern ann -> Pattern ann) -> Pattern ann -> Pattern ann
+mapPattern :: (Pattern dep ann -> Pattern dep ann) -> Pattern dep ann -> Pattern dep ann
 mapPattern _ (PLiteral ann l) = PLiteral ann l
 mapPattern _ (PWildcard a) = PWildcard a
 mapPattern _ (PVar ann a) = PVar ann a
@@ -90,7 +93,7 @@ mapPattern f (PTuple ann a as) = PTuple ann (f a) (f <$> as)
 mapPattern f (PConstructor ann constructor as) =
   PConstructor ann constructor (f <$> as)
 
-patternMonoid :: (Monoid a) => (Pattern ann -> a) -> Pattern ann -> a
+patternMonoid :: (Monoid a) => (Pattern dep ann -> a) -> Pattern dep ann -> a
 patternMonoid _ PLiteral {} = mempty
 patternMonoid _ PWildcard {} = mempty
 patternMonoid _ PVar {} = mempty
@@ -98,3 +101,43 @@ patternMonoid f (PTuple _ a as) =
   f a <> foldMap f (NE.toList as)
 patternMonoid f (PConstructor _ _ as) =
   foldMap f as
+
+-- | `ParsedExpr` has module names
+-- | `ResolvedExpr` has module hashes and unique ids
+-- this is like NumberVars from main `mimsa`, but for now we'll bodge it
+-- to get things typechecking
+mapExprDep :: (forall a. depA a -> depB a) -> Expr depA ann -> Expr depB ann
+mapExprDep resolve = go
+  where
+    go (EInfix ann op a b) = EInfix ann op (go a) (go b)
+    go (EAnn ann mt expr) = EAnn ann mt (go expr)
+    go (EPrim ann a) = EPrim ann a
+    go (EVar ann a) =
+      EVar ann (resolve a)
+    go (EConstructor ann a) =
+      EConstructor ann (resolve a)
+    go (ELet ann ident expr rest) =
+      ELet ann (resolve ident) (go expr) (go rest)
+    go (ELambda ann ident body) = ELambda ann (resolve ident) (go body)
+    go (EApp ann fn arg) = EApp ann (go fn) (go arg)
+    go (EIf ann predExp thenExp elseExp) =
+      EIf ann (go predExp) (go thenExp) (go elseExp)
+    go (ETuple ann a as) = ETuple ann (go a) (go <$> as)
+    go (EGlobal ann ident) = EGlobal ann ident
+    go (EGlobalLet ann ident expr rest) =
+      EGlobalLet ann ident (go expr) (go rest)
+    go (ERecord ann as) = ERecord ann (go <$> as)
+    go (ERecordAccess ann expr ident) =
+      ERecordAccess ann (go expr) ident
+    go (EPatternMatch ann patExpr pats) =
+      EPatternMatch ann (go patExpr) (bimap (mapPatternDep resolve) go <$> pats)
+
+mapPatternDep :: (forall a. depA a -> depB a) -> Pattern depA ann -> Pattern depB ann
+mapPatternDep resolve = go
+  where
+    go (PLiteral ann l) = PLiteral ann l
+    go (PWildcard a) = PWildcard a
+    go (PVar ann a) = PVar ann (resolve a)
+    go (PTuple ann a as) = PTuple ann (go a) (go <$> as)
+    go (PConstructor ann constructor as) =
+      PConstructor ann (resolve constructor) (go <$> as)

@@ -10,6 +10,7 @@ module Smol.Core.Types.Constructor
   )
 where
 
+import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.String
 import Data.Text (Text)
@@ -18,7 +19,15 @@ import qualified Prettyprinter as PP
 import Smol.Core.Printer
 
 newtype Constructor = Constructor Text
-  deriving newtype (Eq, Ord, Show)
+  deriving newtype
+    ( Eq,
+      Ord,
+      Show,
+      JSON.ToJSON,
+      JSON.ToJSONKey,
+      JSON.FromJSON,
+      JSON.FromJSONKey
+    )
 
 instance Printer Constructor where
   prettyDoc (Constructor c) = PP.pretty c
