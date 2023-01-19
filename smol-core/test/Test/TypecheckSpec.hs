@@ -47,7 +47,7 @@ testElaborate expr = do
 
 spec :: Spec
 spec = do
-  fdescribe "TypecheckSpec" $ do
+  describe "TypecheckSpec" $ do
     describe "Parse and typecheck" $ do
       let inputs =
             [ ("True", "True"),
