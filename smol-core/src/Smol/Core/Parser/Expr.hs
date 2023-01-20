@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Parser (parseExpr, parseExprAndFormatError, parseTypeAndFormatError, parseType, parseModule) where
+module Smol.Core.Parser.Expr (expressionParser) where
 
-import Smol.Core.Parser.Module
 import Data.Bifunctor (first)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
@@ -26,16 +25,6 @@ type Parser = Parsec Void Text
 type ParseErrorType = ParseErrorBundle Text Void
 
 type ParserExpr = Expr ParseDep Annotation
-
-parseAndFormat :: Parser a -> Text -> Either Text a
-parseAndFormat p = first (T.pack . errorBundlePretty) . parse (p <* eof) "repl"
-
--- parse expr, using it all up
-parseExpr :: Text -> Either ParseErrorType ParserExpr
-parseExpr = parse (space *> expressionParser <* eof) "repl"
-
-parseExprAndFormatError :: Text -> Either Text ParserExpr
-parseExprAndFormatError = parseAndFormat (space *> expressionParser <* eof)
 
 expressionParser :: Parser ParserExpr
 expressionParser =
@@ -374,3 +363,7 @@ patternCaseParser = do
   myString "->"
   patExpr <- expressionParser
   pure (pat, patExpr)
+
+
+
+

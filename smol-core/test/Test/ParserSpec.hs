@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-
+  {-# LANGUAGE TemplateHaskell #-}
 module Test.ParserSpec (spec) where
 
 import Data.Foldable (traverse_)
@@ -10,10 +10,24 @@ import qualified Data.Text as T
 import Smol.Core
 import Test.Helpers
 import Test.Hspec
+import Data.Either (isRight)
+import Data.FileEmbed
+import Data.Text (Text)
+import qualified Data.Text.Encoding as T
+
+-- these are saved in a file that is included in compilation
+preludeInput :: Text
+preludeInput =
+  T.decodeUtf8 $(makeRelativeToProject "test/static/Prelude.smol" >>= embedFile)
+
 
 spec :: Spec
 spec = do
-  describe "Parser" $ do
+  fdescribe "Parser" $ do
+    describe "Module" $ do
+      it "Parses Prelude" $ do
+        let result = parseModule preludeInput
+        result `shouldSatisfy` isRight
     describe "Expr" $ do
       let strings =
             [ ("True", bool True),

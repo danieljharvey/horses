@@ -94,11 +94,11 @@ simpleTypeParser =
           <|> try tyPrimitiveParser
           <|> try tyRecordParser
           --        <|> try arrayParser
-          <|> try dataTypeParser
+          <|> try adtParser
    in orInBrackets parsers
 
-dataTypeParser :: Parser (Type Annotation)
-dataTypeParser =
+adtParser :: Parser (Type Annotation)
+adtParser =
   try multiDataTypeParser
     <|> monoDataTypeParser
 

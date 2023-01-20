@@ -6,9 +6,11 @@ module Smol.Core.Parser.Identifiers
     constructorParser,
     constructorParserInternal,
     globalParser,
+    moduleNameParser
   )
 where
 
+import Smol.Core.Types.Module.ModuleName
 import Control.Monad
 import qualified Data.Char as Char
 import Data.Set (Set)
@@ -98,3 +100,14 @@ constructorParserInternal =
     (filterProtectedNames >=> safeMkConstructor)
 
 ----
+
+moduleName :: Parser Text
+moduleName = takeWhile1P (Just "constructor") Char.isAlphaNum
+
+moduleNameParser :: Parser ModuleName
+moduleNameParser =
+  myLexeme $ maybePred
+    constructor
+    (filterProtectedNames >=> safeMkModuleName)
+
+
