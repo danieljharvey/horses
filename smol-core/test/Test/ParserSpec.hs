@@ -1,33 +1,47 @@
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module Test.ParserSpec (spec) where
 
+import Data.Bifunctor (second)
+import Data.Either (isRight)
+import Data.FileEmbed
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Smol.Core
 import Test.Helpers
 import Test.Hspec
-import Data.Either (isRight)
-import Data.FileEmbed
-import Data.Text (Text)
-import qualified Data.Text.Encoding as T
 
 -- these are saved in a file that is included in compilation
-preludeInput :: Text
-preludeInput =
-  T.decodeUtf8 $(makeRelativeToProject "test/static/Prelude.smol" >>= embedFile)
-
+testInputs :: [(FilePath, Text)]
+testInputs =
+  fmap (second T.decodeUtf8) $(makeRelativeToProject "test/static/" >>= embedDir)
 
 spec :: Spec
 spec = do
   fdescribe "Parser" $ do
     describe "Module" $ do
-      it "Parses Prelude" $ do
-        let result = parseModule preludeInput
+      it "Parses a single type" $ do
+        let result = parseModuleAndFormatError "type Dog a = Woof String | Other a"
         result `shouldSatisfy` isRight
+
+      it "Parses a single definition" $ do
+        let result = parseModuleAndFormatError "def id a = a"
+        result `shouldSatisfy` isRight
+
+      traverse_
+        ( \(filename, contents) ->
+            it ("Parses " <> filename) $ do
+              let result = parseModuleAndFormatError contents
+              result `shouldSatisfy` isRight
+        )
+        testInputs
+
     describe "Expr" $ do
       let strings =
             [ ("True", bool True),

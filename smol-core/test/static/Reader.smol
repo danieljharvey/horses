@@ -1,0 +1,21 @@
+
+export type Reader r a = Reader (r -> a)
+
+export def run reader r =
+  case reader of (Reader ra) -> ra r
+
+export def ask = Reader (Prelude.id)
+
+export def local envF reader = 
+  Reader (\r -> run reader (envF r))
+
+export def ap readerF readerA = 
+  case (readerF, readerA) of
+    (Reader rToF, Reader rToA) ->
+      Reader (\r -> rToF r (rToA r))
+
+export def monoid innerM = 
+  { mappend: \rA -> \rB -> Reader (\r -> innerM.append (run rA r) (run rB r)),
+    mempty: Reader (\r -> innerM.empty)
+  }
+

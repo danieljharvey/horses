@@ -55,12 +55,13 @@ data ModuleItem ann
   | ModuleImport Import
   --  | ModuleInfix InfixOp (ParsedExpr ann)
   --  | ModuleTest TestName (ParsedExpr ann)
-  deriving stock (Functor)
+  deriving stock (Eq, Ord, Show, Functor)
 
 -- going to want way more granularity here in future but _shrug_
 data Import
   = ImportAllFromHash ModuleHash
   | ImportNamedFromHash ModuleHash ModuleName
+  deriving stock (Eq, Ord, Show)
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering

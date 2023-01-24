@@ -2,34 +2,26 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Parser.Module
-  ( parseModule,
-    moduleParser,
+  ( moduleParser,
     DefPart (..),
   )
 where
 
-
-import Smol.Core.Parser.Expr
 import Data.Char as Char
 import Data.Text (Text)
-import Smol.Core.Types.Module.ModuleItem
+import Data.Void
+import Smol.Core.Parser.DataType (dataTypeParser)
+import Smol.Core.Parser.Expr
+import Smol.Core.Parser.Identifiers
+import Smol.Core.Parser.Shared
+import Smol.Core.Parser.Type
+import Smol.Core.Types
+import Smol.Core.Types.Annotated
+import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
 import Text.Megaparsec hiding (parseTest)
-import Text.Megaparsec.Char
-import Data.Void
-import Smol.Core.Types
-import Smol.Core.Parser.Shared
-import Smol.Core.Parser.Identifiers
-import Smol.Core.Parser.Type
-import Smol.Core.Parser.DataType (dataTypeParser)
-import Smol.Core.Types.Annotated
 
 type Parser = Parsec Void Text
-
-type ParseErrorType = ParseErrorBundle Text Void
-
-parseModule :: Text -> Either ParseErrorType [ModuleItem Annotation]
-parseModule = parse (space *> moduleParser <* eof) "repl"
 
 -- currently fails at the first hurdle
 -- since we can parse each thing separately, maybe
@@ -50,6 +42,7 @@ parseModuleItem =
   moduleDefinitionParser
     <|> try moduleTypeDeclarationParser
     <|> parseImport
+
 --    <|> parseInfix
 --    <|> parseTest
 
@@ -156,4 +149,3 @@ parseTest = do
   boundExpr <- expressionParser
   pure [ModuleTest testName boundExpr]
 -}
-

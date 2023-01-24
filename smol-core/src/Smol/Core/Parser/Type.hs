@@ -20,8 +20,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void (Void)
 import Smol.Core.Parser.Identifiers
-  ( constructorParserInternal,
-    identifierParser,
+  ( identifierParser,
+    typeNameParser,
   )
 import qualified Smol.Core.Parser.Primitives as Prim
 import Smol.Core.Parser.Shared
@@ -112,9 +112,6 @@ monoDataTypeParser :: Parser (Type Annotation)
 monoDataTypeParser = do
   tyName <- typeNameParser
   pure (dataTypeWithVars mempty tyName mempty)
-
-typeNameParser :: Parser TypeName
-typeNameParser = myLexeme (TypeName <$> constructorParserInternal)
 
 dataTypeWithVars ::
   (Monoid ann) =>

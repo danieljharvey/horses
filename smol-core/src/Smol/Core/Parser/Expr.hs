@@ -2,12 +2,10 @@
 
 module Smol.Core.Parser.Expr (expressionParser) where
 
-import Data.Bifunctor (first)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
-import qualified Data.Text as T
 import Data.Void
 import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Pattern
@@ -17,12 +15,8 @@ import Smol.Core.Parser.Type
 import Smol.Core.Types
 import Smol.Core.Types.ParseDep
 import Text.Megaparsec
-import Text.Megaparsec.Char
-import Smol.Core.Types.Module.Module
 
 type Parser = Parsec Void Text
-
-type ParseErrorType = ParseErrorBundle Text Void
 
 type ParserExpr = Expr ParseDep Annotation
 
@@ -363,7 +357,3 @@ patternCaseParser = do
   myString "->"
   patExpr <- expressionParser
   pure (pat, patExpr)
-
-
-
-

@@ -1,0 +1,37 @@
+export type State s a =
+  State (s -> (a, s))
+
+export def get = State (\s -> (s, s))
+
+export def put s = State (Prelude.const (Prelude.Unit, s))
+
+export def pure a =
+  State (\s -> (a, s))
+
+export def fmap (f: a -> b) (state: State s a): State s b = 
+  case state of (State sas) ->
+    State (\s -> 
+        case sas s of (a, s) -> (f a, s)
+    )
+
+export def ap (stateF: State s (a -> b)) (stateA: State s a): State s b = 
+  State (\s -> match stateF with (State sfs) ->
+    let fs = sfs s;
+    case fs of (f, ss) ->
+      case stateA of (State sas) ->
+        let as = sas ss;
+        case as of (a, sss) -> (f a, sss))
+
+export def bind f state = State (\s ->
+  case state of (State sas) ->
+    case (sas s) of (a, ss) ->
+      case f a of (State sbs) -> sbs ss)
+
+export def run state s = case state of (State sas) -> sas s
+
+export def exec state = Prelude.compose Prelude.snd (run state)
+
+export def eval state =  Prelude.compose Prelude.fst (run state)
+
+export def liftA2 f stateA stateB = ap (fmap f stateA) stateB
+

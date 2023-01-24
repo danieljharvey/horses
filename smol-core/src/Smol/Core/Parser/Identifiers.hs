@@ -6,11 +6,11 @@ module Smol.Core.Parser.Identifiers
     constructorParser,
     constructorParserInternal,
     globalParser,
-    moduleNameParser
+    moduleNameParser,
+    typeNameParser,
   )
 where
 
-import Smol.Core.Types.Module.ModuleName
 import Control.Monad
 import qualified Data.Char as Char
 import Data.Set (Set)
@@ -21,6 +21,7 @@ import Smol.Core.Parser.Shared
 import Smol.Core.Types
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Module.ModuleName
 import Smol.Core.Types.ParseDep
 import Text.Megaparsec
 
@@ -71,6 +72,10 @@ constructorParser :: Parser ParserExpr
 constructorParser =
   myLexeme (withLocation EConstructor (emptyParseDep <$> constructorParserInternal))
 
+-- `Maybe`, `Either` etc
+typeNameParser :: Parser TypeName
+typeNameParser = myLexeme (TypeName <$> constructorParserInternal)
+
 -- identifier
 
 identifier :: Parser Text
@@ -106,8 +111,7 @@ moduleName = takeWhile1P (Just "constructor") Char.isAlphaNum
 
 moduleNameParser :: Parser ModuleName
 moduleNameParser =
-  myLexeme $ maybePred
-    constructor
-    (filterProtectedNames >=> safeMkModuleName)
-
-
+  myLexeme $
+    maybePred
+      moduleName
+      (filterProtectedNames >=> safeMkModuleName)
