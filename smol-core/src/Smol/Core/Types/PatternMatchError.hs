@@ -16,7 +16,6 @@ import qualified Data.Text as T
 import Prettyprinter
 import Smol.Core.Printer
 import Smol.Core.Types
-import Smol.Core.Types.ResolvedDep
 import Text.Megaparsec
 
 data PatternMatchError ann

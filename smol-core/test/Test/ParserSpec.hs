@@ -56,6 +56,7 @@ spec = do
               ("(True,True)", tuple (bool True) [bool True]),
               ("(100, 200, 300)", tuple (nat 100) [nat 200, nat 300]),
               ("log", var "log"),
+              ("Prelude.log", EVar () (ParseDep "log" (Just "Prelude"))),
               ("\\a -> True", ELambda () "a" (bool True)),
               ( "(\\a -> True : Int -> Bool)",
                 EAnn () (TFunc () mempty tyInt tyBool) (ELambda () "a" (bool True))
@@ -66,6 +67,7 @@ spec = do
               ("dog!", EGlobal () "dog"),
               ("{ a: 1, b: True }", ERecord () (M.fromList [("a", nat 1), ("b", bool True)])),
               ("Just", constructor "Just"),
+              ("Maybe.Just", EConstructor () (ParseDep "Just" (Just "Maybe"))),
               ("Just True", EApp () (constructor "Just") (bool True)),
               ("These 1 False", EApp () (EApp () (constructor "These") (nat 1)) (bool False)),
               ( "case a of (b, c) -> b + c",

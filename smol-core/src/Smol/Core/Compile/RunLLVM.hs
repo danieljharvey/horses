@@ -15,7 +15,6 @@ import LLVM.Pretty
 import Smol.Core.IR.FromExpr.Expr
 import Smol.Core.IR.ToLLVM.ToLLVM
 import Smol.Core.Types
-import Smol.Core.Types.Expr
 import System.CPUTime
 import System.Directory
 import System.IO

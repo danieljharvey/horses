@@ -13,7 +13,6 @@ import Smol.Core.Parser.Primitives
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
 import Smol.Core.Types
-import Smol.Core.Types.ParseDep
 import Text.Megaparsec
 
 type Parser = Parsec Void Text

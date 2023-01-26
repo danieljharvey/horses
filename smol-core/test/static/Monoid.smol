@@ -1,6 +1,6 @@
   
 export def maybe innerM = {
-  mappend: \a -> \b -> match (a,b) with
+  mappend: \a -> \b -> case (a,b) of
                     (Maybe.Just iA, Maybe.Just iB) -> Maybe.Just (innerM.mappend iA iB)
                   | (Maybe.Just iA, Maybe.Nothing) -> (Maybe.Just iA) 
                   | (Maybe.Nothing, Maybe.Just iB) -> (Maybe.Just iB) 
@@ -8,12 +8,6 @@ export def maybe innerM = {
   mempty: Maybe.Nothing
   }
 
-export def concat monoid = 
-  Array.reduce (monoid.mappend) monoid.mempty
-  
-export def foldMap monoid f = 
-    Array.reduce (\a -> \total -> monoid.mappend total (f a)) monoid.mempty
-  
 export def any = { mappend: Prelude.or, mempty: False } 
  
 export def all = { mappend: Prelude.and, mempty: True }
@@ -21,14 +15,14 @@ export def all = { mappend: Prelude.and, mempty: True }
 export def sum = { mappend: \a -> \b -> a + b, mempty: 0 }
 
 export def first = { mappend: \a -> \b -> 
-                        match (a, b) with 
+                        case (a, b) of
                             (Maybe.Just a, _) -> (Maybe.Just a)
                           | (_, b) -> b,
                      mempty: Maybe.Nothing
                     }
 
  export def last = { mappend: \a -> \b -> 
-                        match (a, b) with 
+                        case (a, b) of
                             (_, Maybe.Just b) -> (Maybe.Just b)
                           | (a, _) -> a,
                      mempty: Maybe.Nothing

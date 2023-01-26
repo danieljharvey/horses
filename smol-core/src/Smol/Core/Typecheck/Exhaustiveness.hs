@@ -27,7 +27,6 @@ import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 import Smol.Core.Types.PatternMatchError
-import Smol.Core.Types.ResolvedDep
 
 validatePatterns ::
   ( MonadError (TCError Annotation) m,

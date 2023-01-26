@@ -14,7 +14,6 @@ import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.ToLLVM
 import Smol.Core.Typecheck
 import Smol.Core.Types
-import Smol.Core.Types.Expr
 import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec

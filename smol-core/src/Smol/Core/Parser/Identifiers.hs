@@ -19,10 +19,7 @@ import Data.Text (Text)
 import Data.Void
 import Smol.Core.Parser.Shared
 import Smol.Core.Types
-import Smol.Core.Types.Constructor
-import Smol.Core.Types.Identifier
 import Smol.Core.Types.Module.ModuleName
-import Smol.Core.Types.ParseDep
 import Text.Megaparsec
 
 type Parser = Parsec Void Text
@@ -57,20 +54,51 @@ filterProtectedNames tx =
     then Nothing
     else Just tx
 
--- `dog`, `log`, `a`
+-- `dog`, `log`, `a`, `Prelude.id`
 varParser :: Parser ParserExpr
 varParser =
-  myLexeme (withLocation EVar (emptyParseDep <$> identifierParser))
+  try namespacedVarParser <|> try plainVarParser
+
+-- `dog`, `log`, `a`
+plainVarParser :: Parser ParserExpr
+plainVarParser =
+  myLexeme (withLocation (\ann var ->
+      EVar ann  (ParseDep var Nothing)) identifierParser)
+
+-- `Dog.log`, `Maybe.fmap`
+namespacedVarParser :: Parser ParserExpr
+namespacedVarParser =
+  let inner = do
+        (var, mName) <- withNamespace identifierParser
+        pure $ EVar mempty (ParseDep var (Just mName))
+   in myLexeme (addLocation inner)
+
 
 -- `dog!`, `log!`, `a!`
 globalParser :: Parser ParserExpr
 globalParser =
   myLexeme (withLocation EGlobal $ identifierParser <* myString "!")
 
+---------------------
+
 -- `Dog`, `Log`, `A`
 constructorParser :: Parser ParserExpr
 constructorParser =
+  try namespacedConstructorParser <|> try plainConstructorParser
+
+plainConstructorParser :: Parser ParserExpr
+plainConstructorParser =
   myLexeme (withLocation EConstructor (emptyParseDep <$> constructorParserInternal))
+
+-- `Maybe.Just`, `Either.Right`
+namespacedConstructorParser :: Parser ParserExpr
+namespacedConstructorParser =
+  let inner = do
+        (cons, mName) <- withNamespace constructorParserInternal
+        pure $ EConstructor mempty (ParseDep cons (Just mName))
+   in myLexeme (addLocation inner)
+
+-----------------------
 
 -- `Maybe`, `Either` etc
 typeNameParser :: Parser TypeName
@@ -115,3 +143,15 @@ moduleNameParser =
     maybePred
       moduleName
       (filterProtectedNames >=> safeMkModuleName)
+
+--------
+
+withNamespace :: Parser a -> Parser (a, ModuleName)
+withNamespace p = do
+        mName <- moduleNameParser
+        myString "."
+        a <- p
+        pure (a, mName)
+
+
+

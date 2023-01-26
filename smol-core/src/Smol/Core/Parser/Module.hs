@@ -16,7 +16,6 @@ import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
 import Smol.Core.Types
-import Smol.Core.Types.Annotated
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
 import Text.Megaparsec hiding (parseTest)

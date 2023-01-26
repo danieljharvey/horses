@@ -20,7 +20,7 @@ import Smol.Core.Types.Module.ModuleName
 
 data ParseDep identifier = ParseDep
   { pdIdentifier :: identifier,
-    pdModules :: [ModuleName]
+    pdModules :: Maybe ModuleName
   }
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
@@ -32,4 +32,4 @@ instance (IsString a) => IsString (ParseDep a) where
   fromString = emptyParseDep . fromString
 
 emptyParseDep :: a -> ParseDep a
-emptyParseDep a = ParseDep a mempty
+emptyParseDep a = ParseDep a Nothing

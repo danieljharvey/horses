@@ -26,8 +26,6 @@ import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
-import Smol.Core.Types.Expr
-import Smol.Core.Types.ResolvedDep
 
 builtInTypes :: (Monoid ann) => Map TypeName (DataType ann)
 builtInTypes =

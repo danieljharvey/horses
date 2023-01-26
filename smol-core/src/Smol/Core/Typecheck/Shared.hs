@@ -44,8 +44,6 @@ import Smol.Core.Typecheck.FreeVars
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
-import Smol.Core.Types.Expr
-import Smol.Core.Types.ResolvedDep
 
 lookupTypeName ::
   ( MonadReader (TCEnv ann) m
