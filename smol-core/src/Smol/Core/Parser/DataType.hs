@@ -9,6 +9,7 @@ import Data.Void (Void)
 import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
+import Smol.Core.Types
 import Smol.Core.Types.Annotation (Annotation)
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
@@ -17,20 +18,20 @@ import Text.Megaparsec
 
 type Parser = Parsec Void Text
 
-dataTypeParser :: Parser (DataType Annotation)
+dataTypeParser :: Parser (DataType ParseDep Annotation)
 dataTypeParser =
   try typeDeclParserWithCons
     <|> typeDeclParserEmpty
 
 -- it's your "type Void in ..."
-typeDeclParserEmpty :: Parser (DataType Annotation)
+typeDeclParserEmpty :: Parser (DataType ParseDep Annotation)
 typeDeclParserEmpty = do
   myString "type"
   tyName <- typeNameParser
   pure (DataType tyName mempty mempty)
 
 -- it's your more complex cases
-typeDeclParserWithCons :: Parser (DataType Annotation)
+typeDeclParserWithCons :: Parser (DataType ParseDep Annotation)
 typeDeclParserWithCons = do
   myString "type"
   tyName <- typeNameParser
@@ -40,7 +41,7 @@ typeDeclParserWithCons = do
 
 --------
 
-manyTypeConstructors :: Parser (Map Constructor [Type Annotation])
+manyTypeConstructors :: Parser (Map Constructor [ParsedType Annotation])
 manyTypeConstructors = do
   tyCons <-
     sepBy
@@ -50,7 +51,7 @@ manyTypeConstructors = do
 
 -----
 
-oneTypeConstructor :: Parser (Map Constructor [Type Annotation])
+oneTypeConstructor :: Parser (Map Constructor [ParsedType Annotation])
 oneTypeConstructor = do
   constructor <- myLexeme constructorParserInternal
   args <-

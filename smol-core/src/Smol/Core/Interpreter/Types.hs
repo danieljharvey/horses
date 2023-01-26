@@ -21,7 +21,7 @@ data IExpr ann
   | IPrim ann Prim
   | IApp ann (IExpr ann) (IExpr ann)
   | IIf ann (IExpr ann) (IExpr ann) (IExpr ann)
-  | IAnn ann (Type ann) (IExpr ann)
+  | IAnn ann (Type Identity ann) (IExpr ann)
   | IVar ann Identifier
   | IConstructor ann Constructor
   | ITuple

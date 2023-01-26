@@ -49,7 +49,7 @@ lookupTypeName ::
   ( MonadReader (TCEnv ann) m
   ) =>
   TypeName ->
-  m (DataType ann)
+  m (DataType ResolvedDep ann)
 lookupTypeName tn = do
   maybeDt <- asks (M.lookup tn . tceDataTypes)
   case maybeDt of
@@ -80,7 +80,7 @@ getPatternAnnotation (PTuple ann _ _) = ann
 getPatternAnnotation (PLiteral ann _) = ann
 getPatternAnnotation (PConstructor ann _ _) = ann
 
-getTypeAnnotation :: Type ann -> ann
+getTypeAnnotation :: Type dep ann -> ann
 getTypeAnnotation (TPrim ann _) = ann
 getTypeAnnotation (TUnknown ann _) = ann
 getTypeAnnotation (TConstructor ann _) = ann
@@ -98,7 +98,7 @@ primFromTypeLiteral (TLInt i) = PInt i
 primFromTypeLiteral (TLBool b) = PBool b
 primFromTypeLiteral TLUnit = PUnit
 
-getUnknown :: (MonadState (TCState ann) m) => ann -> m (Type ann)
+getUnknown :: (MonadState (TCState ann) m) => ann -> m (ResolvedType ann)
 getUnknown ann = do
   count <- gets tcsUnknown
   modify (\s -> s {tcsUnknown = count + 1})
@@ -113,8 +113,8 @@ getClosureType ::
     MonadError (TCError ann) m,
     Ord ann
   ) =>
-  ResolvedExpr (Type ann) ->
-  m (Map Identifier (Type ann))
+  ResolvedExpr (ResolvedType ann) ->
+  m (Map Identifier (ResolvedType ann))
 getClosureType body =
   mconcat
     <$> traverse
@@ -124,7 +124,7 @@ getClosureType body =
       (S.toList (freeVars body))
 
 -- reduce TApp (TFunc a b) etc
-reduceType :: Type ann -> Type ann
+reduceType :: ResolvedType ann -> ResolvedType ann
 reduceType = reduceTypeInner
   where
     reduceTypeInner (TApp ann (TApp _ (TFunc _ _ (TVar _ varA) body) a) b) =
@@ -139,8 +139,8 @@ reduceType = reduceTypeInner
 
 getApplyReturnType ::
   (MonadError (TCError ann) m) =>
-  Type ann ->
-  m (Type ann)
+  ResolvedType ann ->
+  m (ResolvedType ann)
 getApplyReturnType (TFunc _ _ _ typ) = pure typ
 getApplyReturnType tApp@TApp {} = pure tApp
 getApplyReturnType other =
@@ -152,7 +152,7 @@ lookupConstructor ::
     MonadError (TCError ann) m
   ) =>
   ResolvedDep Constructor ->
-  m (TypeName, [Identifier], [Constructor], [Type ann])
+  m (TypeName, [Identifier], [Constructor], [ResolvedType ann])
 lookupConstructor constructor = do
   maybeDt <-
     asks
@@ -172,8 +172,8 @@ lookupConstructor constructor = do
 dataTypeWithVars ::
   ann ->
   TypeName ->
-  [Type ann] ->
-  Type ann
+  [ResolvedType ann] ->
+  ResolvedType ann
 dataTypeWithVars ann tyName =
   foldl'
     (TApp ann)
@@ -184,8 +184,8 @@ typeForConstructor ::
   ann ->
   TypeName ->
   [Identifier] ->
-  [Type ann] ->
-  m (Type ann)
+  [ResolvedType ann] ->
+  m (ResolvedType ann)
 typeForConstructor ann typeName vars args = do
   -- replace variables with fresh boys
   subs <- traverse (\var -> Substitution (SubId var) <$> getUnknown ann) vars
@@ -200,7 +200,7 @@ typeForConstructor ann typeName vars args = do
 lookupVar ::
   (MonadReader (TCEnv ann) m, MonadError (TCError ann) m) =>
   ResolvedDep Identifier ->
-  m (Type ann)
+  m (ResolvedType ann)
 lookupVar ident = do
   maybeVar <- asks (M.lookup ident . tceVars)
   case maybeVar of
@@ -210,7 +210,7 @@ lookupVar ident = do
 withVar ::
   (MonadReader (TCEnv ann) m) =>
   ResolvedDep Identifier ->
-  Type ann ->
+  ResolvedType ann ->
   m a ->
   m a
 withVar ident expr =
@@ -222,7 +222,7 @@ withVar ident expr =
 withGlobal ::
   (MonadReader (TCEnv ann) m) =>
   Identifier ->
-  Type ann ->
+  ResolvedType ann ->
   m a ->
   m a
 withGlobal ident expr =
@@ -234,7 +234,7 @@ withGlobal ident expr =
 lookupGlobal ::
   (MonadReader (TCEnv ann) m, MonadError (TCError ann) m) =>
   Identifier ->
-  m (Type ann)
+  m (ResolvedType ann)
 lookupGlobal ident = do
   maybeVar <- asks (M.lookup ident . tceGlobals)
   case maybeVar of
@@ -243,7 +243,7 @@ lookupGlobal ident = do
 
 pushArg ::
   (MonadState (TCState ann) m) =>
-  Type ann ->
+  ResolvedType ann ->
   m ()
 pushArg typ = do
   modify
@@ -252,7 +252,7 @@ pushArg typ = do
     )
 
 -- | pass stack arg to action and remove it
-popArg :: (MonadState (TCState ann) m) => m (Maybe (Type ann))
+popArg :: (MonadState (TCState ann) m) => m (Maybe (ResolvedType ann))
 popArg = do
   topVal <- gets (listToMaybe . tcsArgStack)
   modify
@@ -266,7 +266,7 @@ popArg = do
   pure topVal
 
 -- | replace TVar with new TUnknown
-freshen :: (MonadState (TCState ann) m) => Type ann -> m (Type ann)
+freshen :: (MonadState (TCState ann) m) => ResolvedType ann -> m (ResolvedType ann)
 freshen ty = do
   subs <-
     traverse
@@ -278,7 +278,7 @@ freshen ty = do
   pure $ substituteMany subs ty
 
 -- | pass stack arg to action and remove it
-popArgs :: (Show ann, MonadState (TCState ann) m) => Int -> m [Type ann]
+popArgs :: (Show ann, MonadState (TCState ann) m) => Int -> m [ResolvedType ann]
 popArgs 0 = pure mempty
 popArgs maxArgs = do
   maybeArg <- popArg
@@ -292,8 +292,8 @@ popArgs maxArgs = do
 -- to make it easier to match up with patterns
 flattenConstructorType ::
   (MonadError (TCError ann) m) =>
-  Type ann ->
-  m (TypeName, [Type ann])
+  ResolvedType ann ->
+  m (TypeName, [ResolvedType ann])
 flattenConstructorType (TApp _ f a) = do
   (typeName, as) <- flattenConstructorType f
   pure (typeName, as <> [a])
@@ -317,7 +317,7 @@ flattenConstructorApplication _ = Nothing
 -- we add in the bound variables (but they don't exist outside this context)
 withNewVars ::
   (MonadReader (TCEnv ann) m) =>
-  Map (ResolvedDep Identifier) (Type ann) ->
+  Map (ResolvedDep Identifier) (ResolvedType ann) ->
   m a ->
   m a
 withNewVars vars =

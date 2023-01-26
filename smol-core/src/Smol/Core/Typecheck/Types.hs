@@ -13,9 +13,11 @@ module Smol.Core.Typecheck.Types
   )
 where
 
+import Control.Monad.Identity
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
+import Smol.Core.Types
 import Smol.Core.Types.Constructor
   ( Constructor,
   )
@@ -28,7 +30,7 @@ import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type (Type)
 import Smol.Core.Types.TypeName (TypeName)
 
-newtype GlobalMap ann = GlobalMap {getGlobalMap :: Map Identifier (Type ann)}
+newtype GlobalMap ann = GlobalMap {getGlobalMap :: Map Identifier (ResolvedType ann)}
   deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
 globalMapIsNull :: GlobalMap ann -> Bool
@@ -46,29 +48,29 @@ data TCError ann
   = TCUnknownError
   | TCCouldNotFindVar (ResolvedDep Identifier)
   | TCCouldNotFindGlobal Identifier
-  | TCTypeMismatch (Type ann) (Type ann)
-  | TCExpectedFunction (Type ann)
-  | TCTupleSizeMismatch Int (Type ann)
-  | TCExpectedTuple (Type ann)
+  | TCTypeMismatch (ResolvedType ann) (ResolvedType ann)
+  | TCExpectedFunction (ResolvedType ann)
+  | TCTupleSizeMismatch Int (ResolvedType ann)
+  | TCExpectedTuple (ResolvedType ann)
   | TCRecordMissingItems (Set Identifier)
-  | TCExpectedRecord (Type ann)
-  | TCInfixMismatch Op (Type ann) (Type ann)
-  | TCPatternMismatch (Pattern ResolvedDep ann) (Type ann)
+  | TCExpectedRecord (ResolvedType ann)
+  | TCInfixMismatch Op (ResolvedType ann) (ResolvedType ann)
+  | TCPatternMismatch (Pattern ResolvedDep ann) (ResolvedType ann)
   | TCUnknownConstructor (ResolvedDep Constructor) [Constructor]
   | TCConstructorArgumentMismatch (ResolvedDep Constructor) Int Int -- expected, actual
-  | TCExpectedConstructorType (Type ann)
-  | TCCompoundTypeInEquality (Type ann) -- for now we only do primitive equality
-  | TCPatternMatchError (PatternMatchError (Type ann))
+  | TCExpectedConstructorType (ResolvedType ann)
+  | TCCompoundTypeInEquality (ResolvedType ann) -- for now we only do primitive equality
+  | TCPatternMatchError (PatternMatchError (ResolvedType ann))
   deriving stock (Eq, Ord, Show, Foldable)
 
 data TCEnv ann = TCEnv
-  { tceVars :: Map (ResolvedDep Identifier) (Type ann),
-    tceGlobals :: Map Identifier (Type ann),
-    tceDataTypes :: Map TypeName (DataType ann)
+  { tceVars :: Map (ResolvedDep Identifier) (ResolvedType ann),
+    tceGlobals :: Map Identifier (ResolvedType ann),
+    tceDataTypes :: Map TypeName (DataType ResolvedDep ann)
   }
 
 data TCState ann = TCState
-  { tcsArgStack :: [Type ann],
+  { tcsArgStack :: [ResolvedType ann],
     tcsUnknown :: Integer,
     tcsGlobals :: [GlobalMap ann]
   }

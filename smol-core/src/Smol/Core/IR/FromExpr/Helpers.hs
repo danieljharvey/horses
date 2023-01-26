@@ -11,6 +11,7 @@ module Smol.Core.IR.FromExpr.Helpers
   )
 where
 
+import Control.Monad.Identity
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Map.Strict (Map)
@@ -22,8 +23,8 @@ import qualified Smol.Core.Types as Smol
 
 flattenConstructorType ::
   (Monad m, Show ann) =>
-  Smol.Type ann ->
-  m (Smol.TypeName, [Smol.Type ann])
+  Smol.Type dep ann ->
+  m (Smol.TypeName, [Smol.Type dep ann])
 flattenConstructorType ty = do
   result <-
     runExceptT $ TC.flattenConstructorType ty
@@ -33,7 +34,7 @@ flattenConstructorType ty = do
 -- we'll use this to create datatype etc
 primFromConstructor ::
   ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
   ) =>
   Smol.Constructor ->
   m Smol.Prim
@@ -46,10 +47,10 @@ primFromConstructor constructor = do
 -- we'll use this to create datatype etc
 lookupConstructor ::
   ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
   ) =>
   Smol.Constructor ->
-  m (Smol.DataType ann)
+  m (Smol.DataType Identity ann)
 lookupConstructor constructor = do
   maybeDt <-
     gets
@@ -65,17 +66,17 @@ lookupConstructor constructor = do
 
 lookupTypeName ::
   ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
   ) =>
   Smol.TypeName ->
-  m (Smol.DataType ann)
+  m (Smol.DataType Identity ann)
 lookupTypeName tn = do
   maybeDt <- gets (M.lookup tn . getField @"dataTypes")
   case maybeDt of
     Just dt -> pure dt
     Nothing -> error $ "couldn't find datatype for " <> show tn
 
-getConstructorNumber :: Smol.DataType ann -> Smol.Constructor -> Integer
+getConstructorNumber :: Smol.DataType Identity ann -> Smol.Constructor -> Integer
 getConstructorNumber (Smol.DataType _ _ constructors) constructor =
   case M.lookup constructor (mapToNumbered constructors) of
     Just i -> i

@@ -63,7 +63,7 @@ data Expr dep ann
   | EPrim ann Prim
   | EApp ann (Expr dep ann) (Expr dep ann)
   | EIf ann (Expr dep ann) (Expr dep ann) (Expr dep ann)
-  | EAnn ann (Type ann) (Expr dep ann)
+  | EAnn ann (Type dep ann) (Expr dep ann)
   | EVar ann (dep Identifier)
   | EConstructor ann (dep Constructor)
   | ETuple ann (Expr dep ann) (NE.NonEmpty (Expr dep ann))

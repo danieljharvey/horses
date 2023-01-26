@@ -3,17 +3,23 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Types.Type
   ( Type (..),
     TypePrim (..),
     TypeLiteral (..),
+    ParsedType,
+    ResolvedType,
     renderType,
   )
 where
 
+import Control.Monad.Identity
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
+import qualified Data.Kind as Kind
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
@@ -22,7 +28,13 @@ import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.ParseDep
+import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.TypeName
+
+type ParsedType ann = Type ParseDep ann
+
+type ResolvedType ann = Type ResolvedDep ann
 
 data TypePrim = TPNat | TPInt | TPBool
   deriving stock (Eq, Ord, Show, Generic)
@@ -42,25 +54,25 @@ instance Printer TypeLiteral where
   prettyDoc (TLInt i) = PP.pretty i
   prettyDoc TLUnit = "Unit"
 
-data Type ann
+data Type (dep :: Kind.Type -> Kind.Type) ann
   = TLiteral ann TypeLiteral
   | TPrim ann TypePrim
-  | TFunc ann (Map Identifier (Type ann)) (Type ann) (Type ann)
-  | TTuple ann (Type ann) (NE.NonEmpty (Type ann))
+  | TFunc ann (Map Identifier (Type dep ann)) (Type dep ann) (Type dep ann)
+  | TTuple ann (Type dep ann) (NE.NonEmpty (Type dep ann))
   | TVar ann Identifier
   | TUnknown ann Integer
-  | TGlobals ann (Map Identifier (Type ann)) (Type ann)
-  | TRecord ann (Map Identifier (Type ann))
-  | TUnion ann (Type ann) (Type ann)
-  | TApp ann (Type ann) (Type ann)
+  | TGlobals ann (Map Identifier (Type dep ann)) (Type dep ann)
+  | TRecord ann (Map Identifier (Type dep ann))
+  | TUnion ann (Type dep ann) (Type dep ann)
+  | TApp ann (Type dep ann) (Type dep ann)
   | TConstructor ann TypeName
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic, Traversable)
   deriving anyclass (FromJSON, FromJSONKey, ToJSON)
 
-instance Printer (Type ann) where
+instance Printer (Type dep ann) where
   prettyDoc = renderType
 
-renderType :: Type ann -> PP.Doc style
+renderType :: Type dep ann -> PP.Doc style
 renderType (TPrim _ a) = prettyDoc a
 renderType (TLiteral _ l) = prettyDoc l
 renderType (TUnknown _ i) = "U" <> PP.pretty i
@@ -85,7 +97,7 @@ renderType mt@(TApp _ func arg) =
 renderType (TGlobals _ parts expr) =
   renderRecord parts <> " => " <> renderType expr
 
-renderRecord :: Map Identifier (Type ann) -> PP.Doc style
+renderRecord :: Map Identifier (Type dep ann) -> PP.Doc style
 renderRecord as =
   PP.group $
     "{"
@@ -107,7 +119,7 @@ renderRecord as =
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)
-varsFromDataType :: Type ann -> Maybe (TypeName, [Type ann])
+varsFromDataType :: Type dep ann -> Maybe (TypeName, [Type dep ann])
 varsFromDataType mt =
   let getInner mt' =
         case mt' of
@@ -121,7 +133,7 @@ varsFromDataType mt =
           _ -> Nothing
    in getInner mt
 
-withParens :: Type ann -> PP.Doc a
+withParens :: Type dep ann -> PP.Doc a
 withParens ma@TFunc {} = PP.parens (renderType ma)
 withParens mta@TApp {} = PP.parens (renderType mta)
 withParens other = renderType other

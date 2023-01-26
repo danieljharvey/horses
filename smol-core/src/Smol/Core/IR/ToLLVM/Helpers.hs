@@ -40,6 +40,7 @@ module Smol.Core.IR.ToLLVM.Helpers
   )
 where
 
+import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -70,7 +71,7 @@ import Smol.Core.Types.GetPath
 -- we'll use this to create datatype etc
 primFromConstructor ::
   ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
   ) =>
   Smol.Constructor ->
   m Smol.Prim
@@ -83,10 +84,10 @@ primFromConstructor constructor = do
 -- we'll use this to create datatype etc
 lookupConstructor ::
   ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
   ) =>
   Smol.Constructor ->
-  m (Smol.DataType ann)
+  m (Smol.DataType Identity ann)
 lookupConstructor constructor = do
   maybeDt <-
     gets
@@ -100,7 +101,7 @@ lookupConstructor constructor = do
     Just (dt, _) -> pure dt
     Nothing -> error "cant find, what the hell man"
 
-getConstructorNumber :: Smol.DataType ann -> Smol.Constructor -> Integer
+getConstructorNumber :: Smol.DataType Identity ann -> Smol.Constructor -> Integer
 getConstructorNumber (Smol.DataType _ _ constructors) constructor =
   case M.lookup constructor (mapToNumbered constructors) of
     Just i -> i

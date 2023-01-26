@@ -40,8 +40,8 @@ combineTypeMaps (GlobalMap mapA) (GlobalMap mapB) = do
 
 -- given a number literal, get the smallest non-literal
 generaliseLiteral ::
-  Type ann ->
-  Type ann
+  ResolvedType ann ->
+  ResolvedType ann
 generaliseLiteral (TLiteral ann (TLInt tlA)) =
   if tlA >= 0
     then TPrim ann TPNat
@@ -56,8 +56,8 @@ combineMany ::
     Show ann,
     Eq ann
   ) =>
-  NE.NonEmpty (Type ann) ->
-  m (Type ann)
+  NE.NonEmpty (ResolvedType ann) ->
+  m (ResolvedType ann)
 combineMany types =
   foldrM combine (NE.head types) (NE.tail types)
 
@@ -69,9 +69,9 @@ combine ::
     MonadError (TCError ann) m,
     MonadWriter [Substitution ann] m
   ) =>
-  Type ann ->
-  Type ann ->
-  m (Type ann)
+  ResolvedType ann ->
+  ResolvedType ann ->
+  m (ResolvedType ann)
 combine a b =
   isSubtypeOf a b
     `catchError` const (isSubtypeOf b a)
@@ -86,16 +86,16 @@ combine a b =
             pure $ TPrim ann TPBool -- don't have True | False, it's silly
       _ -> throwError (TCTypeMismatch a b)
 
-typeEquals :: Type ann -> Type ann -> Bool
+typeEquals :: ResolvedType ann -> ResolvedType ann -> Bool
 typeEquals a b = (a $> ()) == (b $> ())
 
-memberOf :: Type ann -> Type ann -> Bool
+memberOf :: ResolvedType ann -> ResolvedType ann -> Bool
 memberOf a (TUnion _ l r) = memberOf a l || memberOf a r
 memberOf a b = typeEquals a b
 
 -- | is the RHS an equal or more general expression of the LHS?
 -- | expressed like this so we can try both sides quickly
-isLiteralSubtypeOf :: Type ann -> Type ann -> Bool
+isLiteralSubtypeOf :: ResolvedType ann -> ResolvedType ann -> Bool
 isLiteralSubtypeOf a b | a `typeEquals` b = True
 isLiteralSubtypeOf (TLiteral _ (TLBool _)) (TPrim _ TPBool) = True -- a Bool literal is a Bool
 isLiteralSubtypeOf (TLiteral _ (TLInt a)) (TPrim _ TPNat) = a >= 0 -- a Int literal is a Nat if its non-negative
@@ -116,9 +116,9 @@ isSubtypeOf ::
     Eq ann,
     Show ann
   ) =>
-  Type ann ->
-  Type ann ->
-  m (Type ann)
+  ResolvedType ann ->
+  ResolvedType ann ->
+  m (ResolvedType ann)
 isSubtypeOf a b | isLiteralSubtypeOf a b = pure b -- choose the more general of the two types
 isSubtypeOf (TGlobals annA globsA restA) (TGlobals _annB globsB restB) = do
   tyRest <- isSubtypeOf restA restB

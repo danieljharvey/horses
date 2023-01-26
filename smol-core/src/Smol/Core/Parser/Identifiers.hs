@@ -62,8 +62,13 @@ varParser =
 -- `dog`, `log`, `a`
 plainVarParser :: Parser ParserExpr
 plainVarParser =
-  myLexeme (withLocation (\ann var ->
-      EVar ann  (ParseDep var Nothing)) identifierParser)
+  myLexeme
+    ( withLocation
+        ( \ann var ->
+            EVar ann (ParseDep var Nothing)
+        )
+        identifierParser
+    )
 
 -- `Dog.log`, `Maybe.fmap`
 namespacedVarParser :: Parser ParserExpr
@@ -72,7 +77,6 @@ namespacedVarParser =
         (var, mName) <- withNamespace identifierParser
         pure $ EVar mempty (ParseDep var (Just mName))
    in myLexeme (addLocation inner)
-
 
 -- `dog!`, `log!`, `a!`
 globalParser :: Parser ParserExpr
@@ -148,10 +152,7 @@ moduleNameParser =
 
 withNamespace :: Parser a -> Parser (a, ModuleName)
 withNamespace p = do
-        mName <- moduleNameParser
-        myString "."
-        a <- p
-        pure (a, mName)
-
-
-
+  mName <- moduleNameParser
+  myString "."
+  a <- p
+  pure (a, mName)

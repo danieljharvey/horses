@@ -10,9 +10,11 @@ import Data.Map.Strict (Map)
 import Smol.Core.IR.IRExpr
 import qualified Smol.Core.Types as Smol
 
+import Control.Monad.Identity
+
 data FromExprState ann = FromExprState
   { fesModuleParts :: [IRModulePart],
-    dataTypes :: Map Smol.TypeName (Smol.DataType ann),
+    dataTypes :: Map Smol.TypeName (Smol.DataType Identity ann),
     freshInt :: Int,
     vars :: Map IRIdentifier IRExpr
   }

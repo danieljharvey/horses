@@ -37,19 +37,6 @@ import Smol.Core.Parser.Shared
 import Smol.Core.Types.Annotation (Annotation)
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Type
-  ( Type
-      ( TApp,
-        TConstructor,
-        TFunc,
-        TLiteral,
-        TPrim,
-        TRecord,
-        TTuple,
-        TUnion,
-        TVar
-      ),
-    TypePrim (TPBool, TPInt, TPNat),
-  )
 import Smol.Core.Types.TypeName (TypeName (..))
 import Text.Megaparsec
   ( MonadParsec (eof, label, takeWhile1P, try),
@@ -70,21 +57,21 @@ type ParseErrorType = ParseErrorBundle Text Void
 parseAndFormat :: Parser a -> Text -> Either Text a
 parseAndFormat p = first (T.pack . errorBundlePretty) . parse (p <* eof) "repl"
 
-parseType :: Text -> Either ParseErrorType (Type Annotation)
+parseType :: Text -> Either ParseErrorType (ParsedType Annotation)
 parseType = parse (space *> typeParser <* eof) "type"
 
-parseTypeAndFormatError :: Text -> Either Text (Type Annotation)
+parseTypeAndFormatError :: Text -> Either Text (ParsedType Annotation)
 parseTypeAndFormatError = parseAndFormat (space *> typeParser <* eof)
 
 -- | top-level parser for type signatures
-typeParser :: Parser (Type Annotation)
+typeParser :: Parser (ParsedType Annotation)
 typeParser =
   try (orInBrackets tyFunctionParser)
     <|> try tyUnionParser
     <|> simpleTypeParser
 
 -- | all the types except functions
-simpleTypeParser :: Parser (Type Annotation)
+simpleTypeParser :: Parser (ParsedType Annotation)
 simpleTypeParser =
   let parsers =
         try tyTupleParser
@@ -97,18 +84,18 @@ simpleTypeParser =
           <|> try adtParser
    in orInBrackets parsers
 
-adtParser :: Parser (Type Annotation)
+adtParser :: Parser (ParsedType Annotation)
 adtParser =
   try multiDataTypeParser
     <|> monoDataTypeParser
 
-multiDataTypeParser :: Parser (Type Annotation)
+multiDataTypeParser :: Parser (ParsedType Annotation)
 multiDataTypeParser = do
   tyName <- typeNameParser
   tyArgs <- some subParser
   pure (dataTypeWithVars mempty tyName tyArgs)
 
-monoDataTypeParser :: Parser (Type Annotation)
+monoDataTypeParser :: Parser (ParsedType Annotation)
 monoDataTypeParser = do
   tyName <- typeNameParser
   pure (dataTypeWithVars mempty tyName mempty)
@@ -117,26 +104,26 @@ dataTypeWithVars ::
   (Monoid ann) =>
   ann ->
   TypeName ->
-  [Type ann] ->
-  Type ann
+  [ParsedType ann] ->
+  ParsedType ann
 dataTypeWithVars ann tyName =
   foldl'
     (TApp mempty)
     (TConstructor ann tyName)
 
 ----
-typeLiteralParser :: Parser (Type Annotation)
+typeLiteralParser :: Parser (ParsedType Annotation)
 typeLiteralParser =
   label "type literal" $ myLexeme (withLocation TLiteral Prim.typeLiteralParser)
 
 -- | used where a function must be inside brackets for clarity
-subParser :: Parser (Type Annotation)
+subParser :: Parser (ParsedType Annotation)
 subParser =
   try simpleTypeParser
     <|> try (inBrackets tyFunctionParser)
     <|> try (inBrackets tyUnionParser)
 
-tyPrimitiveParser :: Parser (Type Annotation)
+tyPrimitiveParser :: Parser (ParsedType Annotation)
 tyPrimitiveParser = TPrim mempty <$> tyPrimParser
   where
     tyPrimParser =
@@ -145,17 +132,17 @@ tyPrimitiveParser = TPrim mempty <$> tyPrimParser
         <|> try (myString "Int" $> TPInt)
         <|> try (myString "Nat" $> TPNat)
 
-tyAppParser :: Parser (Type Annotation)
+tyAppParser :: Parser (ParsedType Annotation)
 tyAppParser = label "type app" $ do
   func <- orInBrackets (TVar mempty <$> tyVarParser)
-  let argParser' :: Parser [Type Annotation]
+  let argParser' :: Parser [ParsedType Annotation]
       argParser' = (: []) <$> subParser
   args <- chainl1 argParser' (pure (<>))
   pure $ foldl (TApp mempty) func args
 
-tyFunctionParser :: Parser (Type Annotation)
+tyFunctionParser :: Parser (ParsedType Annotation)
 tyFunctionParser = do
-  let arrParse :: Operator Parser (Type Annotation)
+  let arrParse :: Operator Parser (ParsedType Annotation)
       arrParse = InfixR $ do
         myString "->"
         pure (TFunc mempty mempty)
@@ -165,7 +152,7 @@ tyFunctionParser = do
     TFunc {} -> pure val
     _ -> fail "don't use function for parsing non-function values"
 
-tyTupleParser :: Parser (Type Annotation)
+tyTupleParser :: Parser (ParsedType Annotation)
 tyTupleParser = do
   myString "("
   neArgs <- commaSep typeParser
@@ -178,7 +165,7 @@ tyTupleParser = do
 tyIdentifier :: Parser Text
 tyIdentifier = myLexeme (takeWhile1P (Just "type variable name") Char.isAlphaNum)
 
-tyUnionParser :: Parser (Type Annotation)
+tyUnionParser :: Parser (ParsedType Annotation)
 tyUnionParser = do
   chainl1
     simpleTypeParser
@@ -217,23 +204,23 @@ tyVarParser =
       tyIdentifier
       (inProtectedTypes >=> safeMkIdentifier)
 
-tVarParser :: Parser (Type Annotation)
+tVarParser :: Parser (ParsedType Annotation)
 tVarParser = do
   TVar mempty <$> tyVarParser
 
-tyRecordParser :: Parser (Type Annotation)
+tyRecordParser :: Parser (ParsedType Annotation)
 tyRecordParser = withLocation TRecord $ do
   args <- tyRecordArgs
   myString "}"
   pure args
 
-tyRecordArgs :: Parser (Map Identifier (Type Annotation))
+tyRecordArgs :: Parser (Map Identifier (ParsedType Annotation))
 tyRecordArgs = do
   myString "{"
   args <- sepBy tyRecordItemParser (myString ",")
   pure (M.fromList args)
 
-tyRecordItemParser :: Parser (Identifier, Type Annotation)
+tyRecordItemParser :: Parser (Identifier, ParsedType Annotation)
 tyRecordItemParser = do
   name <- identifierParser
   myString ":"
@@ -241,7 +228,7 @@ tyRecordItemParser = do
   pure (name, expr)
 
 {-
-tyRecordRowParser :: Parser (Type Annotation)
+tyRecordRowParser :: Parser (ParsedType Annotation)
 tyRecordRowParser =
   withLocation
     (\loc (args, rest) -> TRecordRow loc args rest)

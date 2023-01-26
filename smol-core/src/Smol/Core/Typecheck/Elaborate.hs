@@ -27,7 +27,7 @@ import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
-builtInTypes :: (Monoid ann) => Map TypeName (DataType ann)
+builtInTypes :: (Monoid ann) => Map TypeName (DataType ResolvedDep ann)
 builtInTypes =
   let identityDt =
         DataType
@@ -91,7 +91,7 @@ elaborate ::
     MonadError (TCError ann) m
   ) =>
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 elaborate expr =
   fst
     <$> runReaderT
@@ -124,8 +124,8 @@ collectGlobals ::
     Eq ann,
     Show ann
   ) =>
-  m (ResolvedExpr (Type ann)) ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann)) ->
+  m (ResolvedExpr (ResolvedType ann))
 collectGlobals f = do
   (expr, combinedGlobs) <- listenToGlobals f
   let ty = getExprAnnotation expr
@@ -151,7 +151,7 @@ inferInfix ::
   Op ->
   ResolvedExpr ann ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 inferInfix _ann OpAdd a b = do
   elabA <- infer a
   elabB <- infer b
@@ -197,7 +197,7 @@ infer ::
     MonadWriter [Substitution ann] m
   ) =>
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 infer inferExpr = do
   case inferExpr of
     (EPrim ann prim) ->
@@ -285,10 +285,10 @@ inferApplication ::
     MonadState (TCState ann) m,
     MonadWriter [Substitution ann] m
   ) =>
-  Maybe (Type ann) ->
+  Maybe (ResolvedType ann) ->
   ResolvedExpr ann ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
   typedArg <- infer arg
   -- if we are applying to a variable, then we need to be a bit clever and
@@ -344,9 +344,9 @@ checkPattern ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m
   ) =>
-  Type ann ->
+  ResolvedType ann ->
   Pattern ResolvedDep ann ->
-  m (Pattern ResolvedDep (Type ann), Map (ResolvedDep Identifier) (Type ann))
+  m (Pattern ResolvedDep (ResolvedType ann), Map (ResolvedDep Identifier) (ResolvedType ann))
 checkPattern checkTy checkPat = do
   case (checkTy, checkPat) of
     (TTuple _ tA tRest, PTuple ann pA pRest) | length tRest == length pRest -> do
@@ -423,10 +423,10 @@ checkLambda ::
     Show ann,
     Ord ann
   ) =>
-  Type ann ->
+  ResolvedType ann ->
   ResolvedDep Identifier ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
   maybeArg <- popArg
   realFrom <- case maybeArg of
@@ -460,7 +460,7 @@ inferLambda ::
   ann ->
   ResolvedDep Identifier ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 inferLambda ann ident body = do
   maybeTyp <- popArg
   tyArg <- case maybeTyp of
@@ -486,9 +486,9 @@ check ::
     MonadState (TCState ann) m,
     MonadWriter [Substitution ann] m
   ) =>
-  Type ann ->
+  ResolvedType ann ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 check typ expr = do
   case expr of
     ELambda _ ident body ->

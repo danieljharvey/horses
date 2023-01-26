@@ -4,6 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Smol.Core.Types.DataType
   ( DataType (..),
@@ -21,18 +22,21 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
 
-data DataType ann = DataType
+data DataType dep ann = DataType
   { dtName :: TypeName,
     dtVars :: [Identifier],
-    dtConstructors :: Map Constructor [Type ann]
+    dtConstructors :: Map Constructor [Type dep ann]
   }
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
-instance Printer (DataType ann) where
+instance (Printer (Type dep ann)) => Printer (DataType dep ann) where
   prettyDoc = renderDataType
 
-renderDataType :: DataType ann -> Doc style
+renderDataType ::
+  (Printer (Type dep ann)) =>
+  DataType dep ann ->
+  Doc style
 renderDataType (DataType tyCon vars' constructors') =
   "type"
     <+> prettyDoc tyCon

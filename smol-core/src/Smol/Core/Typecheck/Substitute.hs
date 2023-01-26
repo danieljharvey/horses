@@ -11,10 +11,14 @@ where
 
 import Smol.Core.Types
 
-data SubstitutionMatcher ann = SubId Identifier | SubUnknown Integer | SubType (Type ann)
+data SubstitutionMatcher ann
+  = SubId Identifier
+  | SubUnknown Integer
+  | SubType (ResolvedType ann)
   deriving stock (Eq, Ord, Show)
 
-data Substitution ann = Substitution (SubstitutionMatcher ann) (Type ann)
+data Substitution ann
+  = Substitution (SubstitutionMatcher ann) (ResolvedType ann)
   deriving stock (Eq, Ord, Show)
 
 getSubId :: SubstitutionMatcher ann -> Maybe Identifier
@@ -25,11 +29,11 @@ getUnknownId :: SubstitutionMatcher ann -> Maybe Integer
 getUnknownId (SubUnknown i) = Just i
 getUnknownId _ = Nothing
 
-substituteMany :: [Substitution ann] -> Type ann -> Type ann
+substituteMany :: [Substitution ann] -> ResolvedType ann -> ResolvedType ann
 substituteMany subs ty =
   foldl (flip substitute) ty subs
 
-substitute :: Substitution ann -> Type ann -> Type ann
+substitute :: Substitution ann -> ResolvedType ann -> ResolvedType ann
 substitute sub@(Substitution i ty) = \case
   TVar _ a | Just a == getSubId i -> ty
   TVar ann a -> TVar ann a
