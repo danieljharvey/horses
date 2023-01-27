@@ -194,6 +194,9 @@ library
     , text
     , transformers
     , wasm
+    , ki-unlifted
+    , stm
+    , unliftio-core
 
   default-language:   Haskell2010
 

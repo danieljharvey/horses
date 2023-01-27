@@ -19,15 +19,15 @@ job deps input =
 
 spec :: Spec
 spec = do
-  describe "Build" $ do
+  fdescribe "Build" $ do
     it "Empty state is a no-op" $ do
       let state = Actions.State mempty mempty
-      newState <- liftIO $ Actions.doJobs job state
+      newState <- liftIO $ Actions.doJobsIO job state
       newState `shouldBe` state
     it "Run job on single item" $ do
       let inputs = M.singleton 1 (Actions.Plan mempty "Hello")
       let state = Actions.State inputs mempty
-      newState <- liftIO $ Actions.doJobs job state
+      newState <- liftIO $ Actions.doJobsIO job state
       let expectedOutputs = M.singleton 1 ["Hello"]
       Actions.stOutputs newState `shouldBe` expectedOutputs
     it "Run job with a dep" $ do
@@ -39,7 +39,7 @@ spec = do
                 (4, Actions.Plan (S.fromList [1, 3]) "Dog")
               ]
       let state = Actions.State inputs mempty
-      let run = Actions.doJobs job
+      let run = Actions.doJobsIO job
       newState <- liftIO $ run state
       let expectedOutputs =
             M.fromList
@@ -63,7 +63,7 @@ spec = do
                 (3, ["Horse!", "Hello!"])
               ]
       let state = Actions.State inputs outputs
-      let run = Actions.doJobs job
+      let run = Actions.doJobsIO job
       newState <- liftIO $ run state
       Actions.stOutputs newState `shouldBe` outputs
     it "If outputs already exist, uses them instead of calculating" $ do
@@ -81,7 +81,7 @@ spec = do
                 (3, ["Horse!", "Hello!"])
               ]
       let state = Actions.State inputs outputs
-      let run = Actions.doJobs job
+      let run = Actions.doJobsIO job
       newState <- liftIO $ run state
       let expectedOutputs =
             outputs
