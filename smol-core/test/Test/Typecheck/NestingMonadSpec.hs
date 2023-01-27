@@ -2,7 +2,7 @@
 
 module Test.Typecheck.NestingMonadSpec (spec) where
 
-import Control.Monad.Writer
+import Control.Monad.Writer.Strict
 import Test.Hspec
 
 spec :: Spec
