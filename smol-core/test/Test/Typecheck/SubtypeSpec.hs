@@ -2,7 +2,7 @@
 
 module Test.Typecheck.SubtypeSpec (spec) where
 
-import Control.Monad.Writer
+import Control.Monad.Writer.Strict
 import Data.Either
 import Data.Foldable (traverse_)
 import Smol.Core

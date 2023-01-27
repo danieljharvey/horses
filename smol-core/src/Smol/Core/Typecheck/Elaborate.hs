@@ -12,7 +12,7 @@ where
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
-import Control.Monad.Writer
+import Control.Monad.Writer.Strict
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
