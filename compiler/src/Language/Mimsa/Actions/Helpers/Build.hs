@@ -4,7 +4,11 @@
     {-# LANGUAGE ScopedTypeVariables #-}
 module Language.Mimsa.Actions.Helpers.Build (doJobs, doJobsIO, getMissing, Plan (..), State (..), Job, Inputs) where
 
-import Control.Monad.IO.Unlift
+import Unsafe.Coerce
+import Basement.Monad
+import Control.Monad.IO.Class
+import Control.Monad
+import System.IO.Unsafe
 import Data.Foldable (traverse_)
 import qualified Control.Concurrent.STM as STM
 import Control.Parallel.Strategies
@@ -13,7 +17,7 @@ import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Language.Mimsa.Core (Printer (..))
-import qualified Ki.Unlifted as Ki
+import qualified Ki
 
 -- a thing we want to do
 data Plan k input = Plan
@@ -98,19 +102,19 @@ getMissing (State inputs outputs) =
 
 -- run through a list of jobs and do them
 doJobs ::
+  forall k m input output.
   (Ord k, Show k, Monad m, Eq input, Eq output) =>
   Job m k input output ->
   State k input output ->
   m (State k input output)
-doJobs fn st = do
-  let missingDeps = getMissing st
-  if not (S.null missingDeps)
-    then error ("Missing deps in build: " <> show missingDeps)
-    else do
-      newState <- runBuilder fn st
-      if M.null (stInputs newState) || newState == st -- no more inputs, or there was no change (to stop infinite loop)
-        then pure newState
-        else doJobs fn newState
+doJobs fn st =
+  let ioFn :: Job IO k input output
+      ioFn a b = pure $ fn a b
+
+      result :: State k input output
+      result = unsafePerformIO (doJobsIO ioFn st)
+
+        in pure result
 
 -- some stuff might already be completed, don't need to do it
 filterDoneWork :: (Ord k) => State k input output -> State k input output
@@ -138,7 +142,7 @@ markJobAsDone k output st =
 -- run through a list of jobs and do them
 doJobsIO ::
   forall m k input output.
-  (Ord k, Show k, MonadUnliftIO m) =>
+  (Ord k, Show k, MonadIO m, PrimMonad m) =>
   Job m k input output ->
   State k input output ->
   m (State k input output)
@@ -147,16 +151,16 @@ doJobsIO fn st = do
   if not (S.null missingDeps)
     then error ("Missing deps in build: " <> show missingDeps)
     else do
-      Ki.scoped $ \scope -> do
+      liftIO $ Ki.scoped $ \scope -> do
         mutableState <- liftIO $ STM.newTVarIO st
         inFlight <- liftIO $ STM.newTVarIO mempty -- list of keys currently being built
 
-        let getReadyJobsIO = liftIO $ getReadyJobs <$> STM.readTVarIO mutableState <*> STM.readTVarIO inFlight
+        let getReadyJobsIO = getReadyJobs <$> STM.readTVarIO mutableState <*> STM.readTVarIO inFlight
 
         readyJobs <- getReadyJobsIO
 
         let doJob :: (k, Plan k input) -> m ()
-            doJob (k, plan) = do
+            doJob (k, plan) =  do
               -- mark this job as inflight
               filteredOutput <- liftIO $ STM.atomically $ do
                 STM.modifyTVar' inFlight (S.insert k)
@@ -174,13 +178,13 @@ doJobsIO fn st = do
                 STM.modifyTVar' inFlight (S.delete k)
 
               -- get the resulting jobs
-              newReadyJobs <- getReadyJobsIO
+              newReadyJobs <- liftIO getReadyJobsIO
 
               -- run them
-              traverse_ (Ki.fork scope . doJob) (M.toList newReadyJobs)
+              traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList newReadyJobs)
 
         -- start first jobs
-        traverse_ (Ki.fork scope . doJob) (M.toList readyJobs)
+        traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList readyJobs)
 
         -- wait for all the sillyness to stop
         liftIO $ STM.atomically $ Ki.awaitAll scope
