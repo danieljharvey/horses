@@ -4,11 +4,8 @@
     {-# LANGUAGE ScopedTypeVariables #-}
 module Language.Mimsa.Actions.Helpers.Build (doJobs, doJobsIO, getMissing, Plan (..), State (..), Job, Inputs) where
 
-import Unsafe.Coerce
 import Basement.Monad
 import Control.Monad.IO.Class
-import Control.Monad
-import System.IO.Unsafe
 import Data.Foldable (traverse_)
 import qualified Control.Concurrent.STM as STM
 import Control.Parallel.Strategies
@@ -100,21 +97,22 @@ getMissing (State inputs outputs) =
           deps
    in mconcat (getMissingDeps <$> M.elems inputs)
 
+
 -- run through a list of jobs and do them
 doJobs ::
-  forall k m input output.
   (Ord k, Show k, Monad m, Eq input, Eq output) =>
   Job m k input output ->
   State k input output ->
   m (State k input output)
-doJobs fn st =
-  let ioFn :: Job IO k input output
-      ioFn a b = pure $ fn a b
-
-      result :: State k input output
-      result = unsafePerformIO (doJobsIO ioFn st)
-
-        in pure result
+doJobs fn st = do
+  let missingDeps = getMissing st
+  if not (S.null missingDeps)
+    then error ("Missing deps in build: " <> show missingDeps)
+    else do
+      newState <- runBuilder fn st
+      if M.null (stInputs newState) || newState == st -- no more inputs, or there was no change (to stop infinite loop)
+        then pure newState
+        else doJobs fn newState
 
 -- some stuff might already be completed, don't need to do it
 filterDoneWork :: (Ord k) => State k input output -> State k input output
