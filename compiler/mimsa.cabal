@@ -206,9 +206,14 @@ test-suite mimsa-test
     Test.Actions.Build
     Test.Actions.Compile
     Test.Actions.Evaluate
+    Test.Backend.ESModulesJSEndToEnd
+    Test.Backend.RunNode
+    Test.Backend.TypescriptEndToEnd
+    Test.Backend.Wasm
     Test.Codegen.Shared
     Test.Data.Prelude
     Test.Data.Project
+    Test.Interpreter.ToHOAS
     Test.Modules.Check
     Test.Modules.Repl
     Test.Modules.Test

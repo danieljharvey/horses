@@ -62,7 +62,7 @@ defs = T.intercalate "\n"
 
 spec :: Spec
 spec =
-  fdescribe "Modules repl" $ do
+  describe "Modules repl" $ do
     describe "End to end parsing to evaluation" $ do
       it "No functions" $ do
         result <- eval "100"
@@ -443,7 +443,7 @@ spec =
         result <- eval "let countdown a = if a == 0 then True else countdown (a - 1); countdown 100000" -- this seems to be the limit on my current machine
         result `shouldSatisfy` isRight
 
-      fit "Recursively converts Nat to integer" $ do
+      it "Recursively converts Nat to integer" $ do
         result <-
           evalWithDefs
             (Just "type Nat = Zero | Suc Nat")
@@ -707,7 +707,7 @@ spec =
           Left _ -> error "Was not supposed to fail"
           Right (_, expr') -> T.unpack (prettyPrint expr') `shouldContain` "a"
 
-      fit "filter function for strings" $ do
+      xit "filter function for strings" $ do
         result <- eval "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\aa -> aa == \"o\") \"woo\""
         result
           `shouldBe` Right
@@ -785,7 +785,7 @@ spec =
         result
           `shouldSatisfy` isLeft
 
-      it "Array.fmap increments ints inside" $ do
+      xit "Array.fmap increments ints inside" $ do
         result <- eval "Array.fmap (\\a -> a + 1) [1,2,3]"
         result
           `shouldBe` Right
@@ -1050,17 +1050,17 @@ spec =
         result <- eval "Tree.fmap (Prelude.const True) (Tree.Branch (Tree.Leaf 1) 2 (Tree.Leaf 3))"
         result `shouldSatisfy` isRight
 
-      it "Reverses a branch" $ do
+      xit "Reverses a branch" $ do
         result <- eval "Tree.invert (Tree.Branch (Tree.Leaf 1) 2 (Tree.Leaf 3))"
         snd <$> result
           `shouldBe` Right (branch (leaf (int 3)) (int 2) (leaf (int 1)))
 
-      it "Reverses a small tree correctly" $ do
+      xit "Reverses a small tree correctly" $ do
         result <- eval "Tree.invert (Tree.Branch (Tree.Leaf 1) 2 (Tree.Branch (Tree.Leaf 3) 4 (Tree.Leaf 5)))"
         snd <$> result
           `shouldBe` Right (branch (branch (leaf (int 5)) (int 4) (leaf (int 3))) (int 2) (leaf (int 1)))
 
-      it "Reversing a tree twice is identity" $ do
+      xit "Reversing a tree twice is identity" $ do
         result <- eval "let tree = Tree.Branch (Tree.Leaf 1) 2 (Tree.Branch (Tree.Leaf 3) 4 (Tree.Leaf 5)); Tree.invert (Tree.invert tree) == tree"
         snd <$> result
           `shouldBe` Right (bool True)

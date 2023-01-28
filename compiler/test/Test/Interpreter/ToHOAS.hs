@@ -19,7 +19,7 @@ parseExpr input = first (,()) (unsafeParseExpr input)
 
 spec :: Spec
 spec = do
-  fdescribe "ToHOAS" $ do
+  describe "ToHOAS" $ do
     describe "Are we creating recursive lambdas when we should?" $ do
       it "Single arg recursive function" $ do
         let input = parseExpr "let loop = \\a -> loop (a - 1) in loop 0"
@@ -51,6 +51,10 @@ spec = do
         let input = parseExpr "let a = 1 in a"
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
+      it "var with module" $ do
+        let input = parseExpr "let a = Prelude.id 1 in a"
+            result = fromHOAS (toHOAS input)
+        result `shouldBe` input
       it "A let pattern" $ do
         let input = parseExpr "let (a,b,c) = (1,2,3) in a + b + c"
             result = fromHOAS (toHOAS input)
@@ -75,6 +79,11 @@ spec = do
         let input = parseExpr "match (1,2) with (a,b) -> a + b"
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
+      it "A pattern match with multiple bindings appears" $ do
+        let input = parseExpr "match (1,2) with (a,b) -> Prelude.id (a + b)"
+            result = fromHOAS (toHOAS input)
+        result `shouldBe` input
+
       it "A big filter function" $ do
         let input = parseExpr "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\aa -> aa == \"o\") \"woo\""
             result = fromHOAS (toHOAS input)

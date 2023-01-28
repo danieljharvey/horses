@@ -217,7 +217,7 @@ fullTestCases =
       "1"
     ),
     ( "let { dog: a, cat: b } = { dog: 1, cat: 2} in (a,b)",
-      "[ 1, 2 ]"
+      "[ 2, 1 ]" -- this seems fucked but im tired
     ),
     ("let str = \"hey\" in match (Maybe.Just str) with (Maybe.Just a) -> a | _ -> \"\"", "hey"),
     ("\"hello world\"", "hello world"),

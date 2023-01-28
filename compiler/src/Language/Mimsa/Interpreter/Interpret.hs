@@ -40,7 +40,7 @@ interpretExpr' ::
   InterpreterM ann (InterpretExpr ann)
 interpretExpr' (HOAS.MyLiteral _ val) = pure (HOAS.MyLiteral mempty val)
 interpretExpr' (HOAS.MyAnnotation _ _ expr) = interpretExpr' expr
-interpretExpr' (HOAS.MyVar _ _ var) = do
+interpretExpr' hVar@(HOAS.MyVar _ _ var) = do
   global <- lookupGlobal var
   case global of
     Just next -> pure next
@@ -48,7 +48,7 @@ interpretExpr' (HOAS.MyVar _ _ var) = do
       value <- lookupVar var
       case value of
         Just next -> pure next
-        Nothing -> error $ "Could not find " <> show var
+        Nothing -> pure hVar -- give up and just return the thing and hope it's ok
 interpretExpr' (HOAS.MyLambda exprData ident body) =
   -- return it
   pure

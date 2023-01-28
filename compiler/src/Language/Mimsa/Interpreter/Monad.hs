@@ -31,7 +31,10 @@ lookupVar var = do
     Just found -> pure (Just found)
     _ -> pure Nothing
 
-withVar :: (Name, Unique) -> InterpretExpr ann -> InterpreterM ann a -> InterpreterM ann a
+withVar :: (Name, Unique) ->
+    InterpretExpr ann ->
+        InterpreterM ann a ->
+            InterpreterM ann a
 withVar var value
   = local (\ire -> ire { ireVars = ireVars ire <> M.singleton var value })
 
