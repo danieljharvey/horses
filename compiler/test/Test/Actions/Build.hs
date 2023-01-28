@@ -17,14 +17,13 @@ job :: Actions.Job IO Int Text [Text]
 job deps input =
   pure ([input] <> mconcat (M.elems deps))
 
-
 doJobs :: Actions.Job IO Int Text [Text] -> Actions.State Int Text [Text] -> IO (Actions.State Int Text [Text])
 doJobs thisJob state = do
   ioResponse <- liftIO $ Actions.doJobsIO thisJob state
   pureResponse <- liftIO $ Actions.doJobs thisJob state
   if ioResponse == pureResponse
-      then pure ioResponse
-      else error $ "Responses don't match: " <> show ioResponse <> " and " <> show pureResponse
+    then pure ioResponse
+    else error $ "Responses don't match: " <> show ioResponse <> " and " <> show pureResponse
 
 spec :: Spec
 spec = do

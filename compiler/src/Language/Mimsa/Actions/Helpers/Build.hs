@@ -1,20 +1,21 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE RankNTypes #-}
-    {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Language.Mimsa.Actions.Helpers.Build (doJobs, doJobsIO, getMissing, Plan (..), State (..), Job, Inputs) where
 
 import Basement.Monad
-import Control.Monad.IO.Class
-import Data.Foldable (traverse_)
 import qualified Control.Concurrent.STM as STM
+import Control.Monad.IO.Class
 import Control.Parallel.Strategies
+import Data.Foldable (traverse_)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Core (Printer (..))
 import qualified Ki
+import Language.Mimsa.Core (Printer (..))
 
 -- a thing we want to do
 data Plan k input = Plan
@@ -97,7 +98,6 @@ getMissing (State inputs outputs) =
           deps
    in mconcat (getMissingDeps <$> M.elems inputs)
 
-
 -- run through a list of jobs and do them
 doJobs ::
   (Ord k, Show k, Monad m, Eq input, Eq output) =>
@@ -117,25 +117,25 @@ doJobs fn st = do
 -- some stuff might already be completed, don't need to do it
 filterDoneWork :: (Ord k) => State k input output -> State k input output
 filterDoneWork st =
-  st { stInputs = M.filterWithKey (\k _ -> M.notMember k (stOutputs st)) (stInputs st) }
+  st {stInputs = M.filterWithKey (\k _ -> M.notMember k (stOutputs st)) (stInputs st)}
 
 getReadyJobs :: (Ord k) => State k input output -> Set k -> Inputs k input
 getReadyJobs st inFlight =
   -- disregard any jobs that are inflight
   let inputs = M.filterWithKey (\k _ -> S.notMember k inFlight) (stInputs st)
-  -- get jobs we are ready to do
-   in
-        M.filter
-          ( \plan ->
-              let requiredKeys = jbDeps plan
-               in and ((\depK -> M.member depK (stOutputs st)) <$> S.toList requiredKeys)
-          )
-          inputs
+   in -- get jobs we are ready to do
+
+      M.filter
+        ( \plan ->
+            let requiredKeys = jbDeps plan
+             in and ((\depK -> M.member depK (stOutputs st)) <$> S.toList requiredKeys)
+        )
+        inputs
 
 -- | remove job from input, add it to output
 markJobAsDone :: (Ord k) => k -> output -> State k input output -> State k input output
 markJobAsDone k output st =
-  State (M.delete k (stInputs st)) (stOutputs st <> M.singleton k output )
+  State (M.delete k (stInputs st)) (stOutputs st <> M.singleton k output)
 
 -- run through a list of jobs and do them
 doJobsIO ::
@@ -152,20 +152,20 @@ doJobsIO fn st = do
       liftIO $ Ki.scoped $ \scope -> do
         mutableState <- liftIO $ STM.newTVarIO st
         inFlight <- liftIO $ STM.newTVarIO mempty -- list of keys currently being built
-
         let getReadyJobsIO = getReadyJobs <$> STM.readTVarIO mutableState <*> STM.readTVarIO inFlight
 
         readyJobs <- getReadyJobsIO
 
         let doJob :: (k, Plan k input) -> m ()
-            doJob (k, plan) =  do
+            doJob (k, plan) = do
               -- mark this job as inflight
               filteredOutput <- liftIO $ STM.atomically $ do
                 STM.modifyTVar' inFlight (S.insert k)
                 state <- STM.readTVar mutableState
-                pure $ M.filterWithKey
-                      (\depK _ -> S.member depK (jbDeps plan))
-                      (stOutputs state)
+                pure $
+                  M.filterWithKey
+                    (\depK _ -> S.member depK (jbDeps plan))
+                    (stOutputs state)
 
               -- do the work
               newOutput <- fn filteredOutput (jbInput plan)
@@ -190,8 +190,7 @@ doJobsIO fn st = do
         -- read the var and give up
         liftIO $ STM.readTVarIO mutableState
 
-        -- get jobs available to start, fork them, and add key to `inFlight`
-        -- each one, when done, updates state, and then checks again what can
-        -- be started, and forks those
-        -- when no more inputs (and nothing else in flight, return state)
-
+-- get jobs available to start, fork them, and add key to `inFlight`
+-- each one, when done, updates state, and then checks again what can
+-- be started, and forks those
+-- when no more inputs (and nothing else in flight, return state)
