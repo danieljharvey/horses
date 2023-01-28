@@ -57,11 +57,12 @@ library
     Language.Mimsa.Actions.Optimise
     Language.Mimsa.Actions.Types
     Language.Mimsa.Backend.Wasm.Compile
+    Language.Mimsa.Interpreter.HOASExpr
+    Language.Mimsa.Interpreter.ToHOAS
     Language.Mimsa.Interpreter.App
     Language.Mimsa.Interpreter.If
     Language.Mimsa.Interpreter.Infix
     Language.Mimsa.Interpreter.Interpret
-    Language.Mimsa.Interpreter.Let
     Language.Mimsa.Interpreter.Monad
     Language.Mimsa.Interpreter.PatternMatch
     Language.Mimsa.Interpreter.RecordAccess
@@ -205,10 +206,6 @@ test-suite mimsa-test
     Test.Actions.Build
     Test.Actions.Compile
     Test.Actions.Evaluate
-    Test.Backend.ESModulesJSEndToEnd
-    Test.Backend.RunNode
-    Test.Backend.TypescriptEndToEnd
-    Test.Backend.Wasm
     Test.Codegen.Shared
     Test.Data.Prelude
     Test.Data.Project

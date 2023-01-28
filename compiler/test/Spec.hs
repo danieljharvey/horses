@@ -11,20 +11,6 @@ import qualified Test.Backend.TypescriptEndToEnd
 import qualified Test.Backend.Wasm
 import qualified Test.Actions.BindModule
 import qualified Test.Actions.Build
-import qualified Test.Actions.Compile
-import qualified Test.Actions.Evaluate
-import qualified Test.Backend.ESModulesJS
-import qualified Test.Backend.RunNode
-import qualified Test.Backend.Typescript
-import qualified Test.Backend.Wasm
-import qualified Test.Actions.BindModule 
-import qualified Test.Actions.Build 
-import qualified Test.Actions.Compile 
-import qualified Test.Actions.Evaluate 
-import qualified Test.Backend.ESModulesJS 
-import qualified Test.Backend.RunNode 
-import qualified Test.Backend.Typescript 
-import qualified Test.Backend.Wasm 
 import Test.Hspec
 import qualified Test.Interpreter.ToHOAS 
 import qualified Test.Modules.Check 
