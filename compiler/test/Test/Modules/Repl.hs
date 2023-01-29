@@ -142,6 +142,10 @@ spec =
         result <- eval "let addInt a b = a + b; addInt 1 2"
         result `shouldBe` Right (MTPrim mempty MTInt, int 3)
 
+      it "Uses a recursive function inside a pattern match" $ do
+        result <- eval "let outerFn outerArg = let go c a = match a with (Maybe.Just b) -> go c Maybe.Nothing | Maybe.Nothing -> Maybe.Nothing; go True (Maybe.Just outerArg); outerFn 1"
+        result `shouldSatisfy` isRight
+
       it "(\\a -> a) 1" $ do
         result <- eval "(\\a -> a) 1"
         result `shouldBe` Right (MTPrim mempty MTInt, int 1)
@@ -717,6 +721,10 @@ spec =
 
       it "Parse any character" $ do
         result <- eval "Parser.run Parser.anyChar \"dog\""
+        result `shouldSatisfy` isRight
+
+      fit "Parser test from benchmark" $ do
+        result <- eval "let p = Parser.many Parser.anyChar; Parser.run p \"a\""
         result `shouldSatisfy` isRight
 
       it "Parser.fmap works correctly" $ do

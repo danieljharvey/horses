@@ -89,3 +89,8 @@ spec = do
         let input = parseExpr "let filter = \\pred -> \\str -> let fn = (\\s -> match s with a ++ as -> let rest = fn as; if pred a then a ++ rest else rest | _ -> \"\") in fn str; filter (\\aa -> aa == \"o\") \"woo\""
             result = fromHOAS (toHOAS input)
         result `shouldBe` input
+
+      it "Parser.many" $ do
+        let input = parseExpr "\\parser -> let (Parser innerP) = parser; (Parser (\\input -> let go items i = match (innerP i) with (Maybe.Just (a, i2)) -> (go (items <> [ a ]) i2) | (Maybe.Nothing) -> (Maybe.Just ((items, i))); go [] input))"
+            result = fromHOAS (toHOAS input)
+        result `shouldBe` input

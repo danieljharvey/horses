@@ -1,5 +1,6 @@
 module Language.Mimsa.Interpreter.App (interpretApp) where
 
+import Debug.Trace
 import Language.Mimsa.Core
 import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.Monad
@@ -7,7 +8,7 @@ import Language.Mimsa.Interpreter.ToHOAS
 import Language.Mimsa.Interpreter.Types
 
 interpretApp ::
-  (Eq ann) =>
+  (Eq ann, Show ann) =>
   InterpretFn ann ->
   ann ->
   InterpretExpr ann ->
@@ -21,7 +22,9 @@ interpretApp interpretFn ann func arg = do
 
       -- run it
       interpretFn (body intArg)
-    (HOAS.MyRecursiveLambda _ _ident (Identifier _ innerRecIdent) body) -> do
+    (HOAS.MyRecursiveLambda _ ident (Identifier _ innerRecIdent) body) -> do
+      traceShowM ident
+      traceShowM innerRecIdent
       -- the trick is that we make 'arg' available in context
       -- so we can reuse it in recursion
       withVar

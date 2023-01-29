@@ -4,6 +4,7 @@ module Language.Mimsa.Interpreter.Interpret (interpret) where
 
 import Control.Monad.Reader
 import Data.Map.Strict (Map)
+import Debug.Trace
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.App
 import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
@@ -32,7 +33,7 @@ interpretExpr ::
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
 interpretExpr expr = do
-  interpretExpr' expr
+  interpretExpr' (traceShowId expr)
 
 interpretExpr' ::
   (Eq ann, Monoid ann, Show ann) =>
@@ -48,7 +49,9 @@ interpretExpr' hVar@(HOAS.MyVar _ _ var) = do
       value <- lookupVar var
       case value of
         Just next -> pure next
-        Nothing -> pure hVar -- give up and just return the thing and hope it's ok
+        Nothing -> do
+          vars <- asks ireVars
+          error $ "oh " <> show hVar <> "\n" <> show vars -- pure hVar -- give up and just return the thing and hope it's ok
 interpretExpr' (HOAS.MyLambda exprData ident body) =
   -- return it
   pure
