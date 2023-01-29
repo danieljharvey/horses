@@ -1,15 +1,16 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
-  {-# LANGUAGE LambdaCase #-}
+
 module Test.Interpreter.ToHOAS
   ( spec,
   )
 where
 
-import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Data.Bifunctor
 import Data.Text
 import Language.Mimsa.Core hiding (parseExpr)
+import qualified Language.Mimsa.Interpreter.HOASExpr as HOAS
 import Language.Mimsa.Interpreter.ToHOAS
 import Test.Hspec
 import Test.Utils.Helpers
@@ -25,13 +26,13 @@ spec = do
         let input = parseExpr "let loop = \\a -> loop (a - 1) in loop 0"
             result = toHOAS input
         result `shouldSatisfy` \case
-          (HOAS.MyApp _ (HOAS.MyRecursiveLambda {} ) (HOAS.MyLambda {})) -> True
+          (HOAS.MyApp _ HOAS.MyRecursiveLambda {} HOAS.MyLambda {}) -> True
           _ -> False
       it "Double arg recursive function" $ do
         let input = parseExpr "let loop = \\a -> \\b -> loop (a - 1) True in loop 0 False"
             result = toHOAS input
         result `shouldSatisfy` \case
-          (HOAS.MyApp _ (HOAS.MyRecursiveLambda {} ) (HOAS.MyLambda {})) -> True
+          (HOAS.MyApp _ HOAS.MyRecursiveLambda {} HOAS.MyLambda {}) -> True
           _ -> False
 
     describe "There and back again" $ do

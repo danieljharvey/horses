@@ -23,7 +23,7 @@ interpret ::
   InterpretExpr ann ->
   Either (InterpreterError Name ann) (InterpretExpr ann)
 interpret deps infixes expr =
-  runReaderT (interpretExpr expr) (InterpretReaderEnv deps mempty infixes )
+  runReaderT (interpretExpr expr) (InterpretReaderEnv deps mempty infixes)
 
 -- somewhat pointless separate function to make debug logging each value out
 -- easier

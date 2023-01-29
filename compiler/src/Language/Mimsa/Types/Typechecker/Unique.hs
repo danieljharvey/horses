@@ -1,14 +1,15 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-  {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Language.Mimsa.Types.Typechecker.Unique (Unique (..), getExprHash) where
 
-import Prettyprinter
 import qualified Data.Aeson as JSON
 import GHC.Generics
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.ExprHash
+import Prettyprinter
 
 data Unique
   = Unique Int

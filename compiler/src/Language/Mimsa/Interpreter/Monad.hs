@@ -2,7 +2,7 @@ module Language.Mimsa.Interpreter.Monad
   ( findOperator,
     lookupGlobal,
     withVar,
-    lookupVar
+    lookupVar,
   )
 where
 
@@ -31,12 +31,13 @@ lookupVar var = do
     Just found -> pure (Just found)
     _ -> pure Nothing
 
-withVar :: (Name, Unique) ->
-    InterpretExpr ann ->
-        InterpreterM ann a ->
-            InterpreterM ann a
-withVar var value
-  = local (\ire -> ire { ireVars = ireVars ire <> M.singleton var value })
+withVar ::
+  (Name, Unique) ->
+  InterpretExpr ann ->
+  InterpreterM ann a ->
+  InterpreterM ann a
+withVar var value =
+  local (\ire -> ire {ireVars = ireVars ire <> M.singleton var value})
 
 lookupInGlobals :: ExprHash -> InterpreterM ann (InterpretExpr ann)
 lookupInGlobals exprHash = do
