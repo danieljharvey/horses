@@ -42,6 +42,9 @@ freeVars (EPatternMatch _ expr pats) =
         mempty -- fucked - skipped test because cant be arsed right now
    in freeVars expr <> mconcat (NE.toList $ getPatRequire <$> pats)
 
-freeTypeVars :: Type dep ann -> Set Identifier
+freeTypeVars ::
+  (Ord (dep Identifier)) =>
+  Type dep ann ->
+  Set (dep Identifier)
 freeTypeVars (TVar _ ident) = S.singleton ident
 freeTypeVars other = monoidType freeTypeVars other

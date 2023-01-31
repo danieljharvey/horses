@@ -6,6 +6,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Smol.Core.Types.Type
   ( Type (..),
@@ -53,25 +54,74 @@ instance Printer TypeLiteral where
   prettyDoc (TLInt i) = PP.pretty i
   prettyDoc TLUnit = "Unit"
 
-data Type (dep :: Kind.Type -> Kind.Type) ann
+data Type dep ann
   = TLiteral ann TypeLiteral
   | TPrim ann TypePrim
   | TFunc ann (Map Identifier (Type dep ann)) (Type dep ann) (Type dep ann)
   | TTuple ann (Type dep ann) (NE.NonEmpty (Type dep ann))
-  | TVar ann Identifier
+  | TVar ann (dep Identifier)
   | TUnknown ann Integer
   | TGlobals ann (Map Identifier (Type dep ann)) (Type dep ann)
   | TRecord ann (Map Identifier (Type dep ann))
   | TUnion ann (Type dep ann) (Type dep ann)
   | TApp ann (Type dep ann) (Type dep ann)
-  | TConstructor ann TypeName
-  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic, Traversable)
-  deriving anyclass (FromJSON, FromJSONKey, ToJSON)
+  | TConstructor ann (dep TypeName)
+  deriving stock (Functor, Foldable, Generic, Traversable)
 
-instance Printer (Type dep ann) where
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier),
+    Eq (dep TypeName)
+  ) =>
+  Eq (Type dep ann)
+
+deriving stock instance
+  ( Ord ann,
+    Ord (dep Identifier),
+    Ord (dep TypeName)
+  ) =>
+  Ord (Type dep ann)
+
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep TypeName)
+  ) =>
+  Show (Type dep ann)
+
+deriving anyclass instance
+  ( FromJSON ann,
+    FromJSON (dep Identifier),
+    FromJSON (dep TypeName)
+  ) =>
+  FromJSON (Type dep ann)
+
+deriving anyclass instance
+  ( ToJSON ann,
+    ToJSON (dep Identifier),
+    ToJSON (dep TypeName)
+  ) =>
+  ToJSON (Type dep ann)
+
+deriving anyclass instance
+  ( FromJSON ann,
+    FromJSON (dep Identifier),
+    FromJSON (dep TypeName),
+    FromJSONKey ann,
+    FromJSONKey (dep Identifier),
+    FromJSONKey (dep TypeName)
+  ) =>
+  FromJSONKey (Type dep ann)
+
+instance (Printer (dep Identifier), Printer (dep TypeName)) => Printer (Type dep ann) where
   prettyDoc = renderType
 
-renderType :: Type dep ann -> PP.Doc style
+renderType ::
+  ( Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
+  Type dep ann ->
+  PP.Doc style
 renderType (TPrim _ a) = prettyDoc a
 renderType (TLiteral _ l) = prettyDoc l
 renderType (TUnknown _ i) = "U" <> PP.pretty i
@@ -96,7 +146,10 @@ renderType mt@(TApp _ func arg) =
 renderType (TGlobals _ parts expr) =
   renderRecord parts <> " => " <> renderType expr
 
-renderRecord :: Map Identifier (Type dep ann) -> PP.Doc style
+renderRecord ::
+  (Printer (dep Identifier), Printer (dep TypeName)) =>
+  Map Identifier (Type dep ann) ->
+  PP.Doc style
 renderRecord as =
   PP.group $
     "{"
@@ -118,7 +171,7 @@ renderRecord as =
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)
-varsFromDataType :: Type dep ann -> Maybe (TypeName, [Type dep ann])
+varsFromDataType :: Type dep ann -> Maybe (dep TypeName, [Type dep ann])
 varsFromDataType mt =
   let getInner mt' =
         case mt' of
@@ -132,7 +185,7 @@ varsFromDataType mt =
           _ -> Nothing
    in getInner mt
 
-withParens :: Type dep ann -> PP.Doc a
+withParens :: (Printer (dep Identifier), Printer (dep TypeName)) => Type dep ann -> PP.Doc a
 withParens ma@TFunc {} = PP.parens (renderType ma)
 withParens mta@TApp {} = PP.parens (renderType mta)
 withParens other = renderType other

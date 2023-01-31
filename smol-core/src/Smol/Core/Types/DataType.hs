@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Smol.Core.Types.DataType
@@ -28,13 +29,32 @@ data DataType dep ann = DataType
     dtVars :: [Identifier],
     dtConstructors :: Map Constructor [Type dep ann]
   }
-  deriving stock (Eq, Ord, Show, Functor, Generic)
-  deriving anyclass (FromJSON, ToJSON)
+  deriving stock (Functor, Generic)
 
-instance Printer (DataType dep ann) where
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier),
+    Eq (dep TypeName)
+  ) =>
+  Eq (DataType dep ann)
+
+deriving stock instance
+  ( Ord ann,
+    Ord (dep Identifier),
+    Ord (dep TypeName)
+  ) =>
+  Ord (DataType dep ann)
+
+instance
+  ( Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
+  Printer (DataType dep ann)
+  where
   prettyDoc = renderDataType
 
 renderDataType ::
+  (Printer (dep Identifier), Printer (dep TypeName)) =>
   DataType dep ann ->
   Doc style
 renderDataType (DataType tyCon vars' constructors') =

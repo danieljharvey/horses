@@ -12,23 +12,48 @@ where
 
 import Smol.Core.Types
 
--- | will need to become `dep Identifier`
 data SubstitutionMatcher dep ann
-  = SubId Identifier
+  = SubId (dep Identifier)
   | SubUnknown Integer
   | SubType (Type dep ann)
 
-deriving stock instance (Eq ann) => Eq (SubstitutionMatcher dep ann)
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier),
+    Eq (dep TypeName)
+  ) =>
+  Eq (SubstitutionMatcher dep ann)
 
-deriving stock instance (Ord ann) => Ord (SubstitutionMatcher dep ann)
+deriving stock instance
+  ( Ord ann,
+    Ord (dep Identifier),
+    Ord (dep TypeName)
+  ) =>
+  Ord (SubstitutionMatcher dep ann)
 
-deriving stock instance (Show ann) => Show (SubstitutionMatcher dep ann)
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep TypeName)
+  ) =>
+  Show (SubstitutionMatcher dep ann)
 
 data Substitution dep ann
   = Substitution (SubstitutionMatcher dep ann) (Type dep ann)
-  deriving stock (Eq, Ord, Show)
 
-getSubId :: SubstitutionMatcher dep ann -> Maybe Identifier
+deriving stock instance
+  (Eq ann, Eq (dep Identifier), Eq (dep TypeName)) =>
+  Eq (Substitution dep ann)
+
+deriving stock instance
+  (Ord ann, Ord (dep Identifier), Ord (dep TypeName)) =>
+  Ord (Substitution dep ann)
+
+deriving stock instance
+  (Show ann, Show (dep Identifier), Show (dep TypeName)) =>
+  Show (Substitution dep ann)
+
+getSubId :: SubstitutionMatcher dep ann -> Maybe (dep Identifier)
 getSubId (SubId subId) = Just subId
 getSubId _ = Nothing
 
@@ -36,11 +61,11 @@ getUnknownId :: SubstitutionMatcher dep ann -> Maybe Integer
 getUnknownId (SubUnknown i) = Just i
 getUnknownId _ = Nothing
 
-substituteMany :: [Substitution dep ann] -> Type dep ann -> Type dep ann
+substituteMany :: (Eq (dep Identifier)) => [Substitution dep ann] -> Type dep ann -> Type dep ann
 substituteMany subs ty =
   foldl (flip substitute) ty subs
 
-substitute :: Substitution dep ann -> Type dep ann -> Type dep ann
+substitute :: (Eq (dep Identifier)) => Substitution dep ann -> Type dep ann -> Type dep ann
 substitute sub@(Substitution i ty) = \case
   TVar _ a | Just a == getSubId i -> ty
   TVar ann a -> TVar ann a

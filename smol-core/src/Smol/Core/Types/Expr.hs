@@ -33,6 +33,7 @@ import Smol.Core.Types.Pattern
 import Smol.Core.Types.Prim
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
+import Smol.Core.Types.TypeName
 
 ---------------------------
 
@@ -82,35 +83,40 @@ data Expr dep ann
 deriving stock instance
   ( Eq ann,
     Eq (dep Identifier),
-    Eq (dep Constructor)
+    Eq (dep Constructor),
+    Eq (dep TypeName)
   ) =>
   Eq (Expr dep ann)
 
 deriving stock instance
   ( Ord ann,
     Ord (dep Identifier),
-    Ord (dep Constructor)
+    Ord (dep Constructor),
+    Ord (dep TypeName)
   ) =>
   Ord (Expr dep ann)
 
 deriving stock instance
   ( Show ann,
     Show (dep Identifier),
-    Show (dep Constructor)
+    Show (dep Constructor),
+    Show (dep TypeName)
   ) =>
   Show (Expr dep ann)
 
 deriving anyclass instance
   ( ToJSON ann,
     ToJSON (dep Identifier),
-    ToJSON (dep Constructor)
+    ToJSON (dep Constructor),
+    ToJSON (dep TypeName)
   ) =>
   ToJSON (Expr dep ann)
 
 deriving anyclass instance
   ( FromJSON ann,
     FromJSON (dep Identifier),
-    FromJSON (dep Constructor)
+    FromJSON (dep Constructor),
+    FromJSON (dep TypeName)
   ) =>
   FromJSON (Expr dep ann)
 
