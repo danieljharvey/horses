@@ -27,7 +27,7 @@ import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
-builtInTypes :: (Monoid ann) => Map TypeName (DataType ResolvedDep ann)
+builtInTypes :: (Monoid ann) => Map TypeName (DataType dep ann)
 builtInTypes =
   let identityDt =
         DataType
@@ -106,7 +106,7 @@ elaborate expr =
 listenToGlobals ::
   ( MonadState (TCState ann) m,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m,
+    MonadWriter [Substitution ResolvedDep ann] m,
     Eq ann,
     Show ann
   ) =>
@@ -119,7 +119,7 @@ listenToGlobals f = do
 
 collectGlobals ::
   ( MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m,
+    MonadWriter [Substitution ResolvedDep ann] m,
     MonadError (TCError ann) m,
     Eq ann,
     Show ann
@@ -145,7 +145,7 @@ inferInfix ::
     MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ann ->
   Op ->
@@ -194,7 +194,7 @@ infer ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
@@ -283,7 +283,7 @@ inferApplication ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   Maybe (ResolvedType ann) ->
   ResolvedExpr ann ->
@@ -378,7 +378,7 @@ checkPattern checkTy checkPat = do
         Right _ -> pure (PLiteral ty lit, mempty)
     (ty, PConstructor ann constructor args) -> do
       -- we don't check the constructor is valid yet
-      flattened <- runExceptT $ flattenConstructorType ty
+      let flattened = flattenConstructorType ty
 
       -- lookup the constructor itself (ie, `Just`, `Nothing`)
       (patTypeName, _, otherConstructors, consArgs) <- lookupConstructor constructor
@@ -417,7 +417,7 @@ checkPattern checkTy checkPat = do
 
 checkLambda ::
   ( MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m,
+    MonadWriter [Substitution ResolvedDep ann] m,
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     Show ann,
@@ -455,7 +455,7 @@ inferLambda ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ann ->
   ResolvedDep Identifier ->
@@ -484,7 +484,7 @@ check ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ResolvedType ann ->
   ResolvedExpr ann ->

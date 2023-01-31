@@ -124,7 +124,7 @@ getClosureType body =
       (S.toList (freeVars body))
 
 -- reduce TApp (TFunc a b) etc
-reduceType :: ResolvedType ann -> ResolvedType ann
+reduceType :: Type dep ann -> Type dep ann
 reduceType = reduceTypeInner
   where
     reduceTypeInner (TApp ann (TApp _ (TFunc _ _ (TVar _ varA) body) a) b) =
@@ -291,15 +291,14 @@ popArgs maxArgs = do
 -- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
 -- to make it easier to match up with patterns
 flattenConstructorType ::
-  (MonadError (TCError ann) m) =>
-  ResolvedType ann ->
-  m (TypeName, [ResolvedType ann])
+  Type dep ann ->
+  Either (Type dep ann) (TypeName, [Type dep ann])
 flattenConstructorType (TApp _ f a) = do
   (typeName, as) <- flattenConstructorType f
   pure (typeName, as <> [a])
 flattenConstructorType (TConstructor _ typeName) =
   pure (typeName, mempty)
-flattenConstructorType ty = throwError (TCExpectedConstructorType ty)
+flattenConstructorType ty = throwError ty
 
 -- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
 -- to make it easier to match up with patterns

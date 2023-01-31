@@ -1,9 +1,10 @@
-module Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr) where
+module Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr, fromParsedType) where
 
 import Smol.Core.ExprUtils
 import Smol.Core.Types.Expr
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.ResolvedDep
+import Smol.Core.Types.Type
 
 resolve :: ParseDep a -> ResolvedDep a
 resolve (ParseDep a _) = emptyResolvedDep a
@@ -14,3 +15,6 @@ resolve (ParseDep a _) = emptyResolvedDep a
 -- to get things typechecking
 fromParsedExpr :: ParsedExpr ann -> ResolvedExpr ann
 fromParsedExpr = mapExprDep resolve
+
+fromParsedType :: Type ParseDep ann -> Type ResolvedDep ann
+fromParsedType = mapTypeDep resolve

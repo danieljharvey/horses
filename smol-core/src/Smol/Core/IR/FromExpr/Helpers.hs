@@ -26,8 +26,7 @@ flattenConstructorType ::
   Smol.Type dep ann ->
   m (Smol.TypeName, [Smol.Type dep ann])
 flattenConstructorType ty = do
-  result <-
-    runExceptT $ TC.flattenConstructorType ty
+  let result = TC.flattenConstructorType ty
   pure (fromRight result)
 
 -- | lookup constructor, get number for it and expected number of args

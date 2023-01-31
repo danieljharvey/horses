@@ -21,13 +21,14 @@ import System.IO
 import System.Posix.Temp
 import System.Process
 import qualified Text.Printf as Printf
+import Control.Monad.Identity
 
 -- these are saved in a file that is included in compilation
 cRuntime :: Text
 cRuntime =
   T.decodeUtf8 $(makeRelativeToProject "static/runtime.c" >>= embedFile)
 
-moduleFromExpr :: IdentityExpr (Type Annotation) -> Module
+moduleFromExpr :: IdentityExpr (Type Identity Annotation) -> Module
 moduleFromExpr = irToLLVM . irFromExpr
 
 time :: IO t -> IO (Text, t)

@@ -28,7 +28,7 @@ destructurePattern ::
     Ord p
   ) =>
   (Smol.Identifier -> p) ->
-  Smol.Pattern Identity (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type Identity ann) ->
   m (Map p GetPath)
 destructurePattern fromIdentifier =
   destructInner []
@@ -50,11 +50,11 @@ destructurePattern fromIdentifier =
 
 predicatesFromPattern ::
   ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann)),
     Show ann
   ) =>
   (Smol.Prim -> p) ->
-  Smol.Pattern Identity (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type Identity ann) ->
   m [PatternPredicate p]
 predicatesFromPattern fromPrim =
   predicatesInner []

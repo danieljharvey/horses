@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-
+  {-# LANGUAGE StandaloneDeriving #-}
 module Smol.Core.Typecheck.Substitute
   ( Substitution (..),
     SubstitutionMatcher (..),
@@ -11,29 +11,33 @@ where
 
 import Smol.Core.Types
 
-data SubstitutionMatcher ann
+-- | will need to become `dep Identifier`
+data SubstitutionMatcher dep ann
   = SubId Identifier
   | SubUnknown Integer
-  | SubType (ResolvedType ann)
+  | SubType (Type dep ann)
+
+deriving instance (Eq ann) => Eq (SubstitutionMatcher dep ann)
+deriving instance (Ord ann) => Ord (SubstitutionMatcher dep ann)
+deriving instance (Show ann) => Show (SubstitutionMatcher dep ann)
+
+data Substitution dep ann
+  = Substitution (SubstitutionMatcher dep ann) (Type dep ann)
   deriving stock (Eq, Ord, Show)
 
-data Substitution ann
-  = Substitution (SubstitutionMatcher ann) (ResolvedType ann)
-  deriving stock (Eq, Ord, Show)
-
-getSubId :: SubstitutionMatcher ann -> Maybe Identifier
+getSubId :: SubstitutionMatcher dep ann -> Maybe Identifier
 getSubId (SubId subId) = Just subId
 getSubId _ = Nothing
 
-getUnknownId :: SubstitutionMatcher ann -> Maybe Integer
+getUnknownId :: SubstitutionMatcher dep ann -> Maybe Integer
 getUnknownId (SubUnknown i) = Just i
 getUnknownId _ = Nothing
 
-substituteMany :: [Substitution ann] -> ResolvedType ann -> ResolvedType ann
+substituteMany :: [Substitution dep ann] -> Type dep ann -> Type dep ann
 substituteMany subs ty =
   foldl (flip substitute) ty subs
 
-substitute :: Substitution ann -> ResolvedType ann -> ResolvedType ann
+substitute :: Substitution dep ann -> Type dep ann -> Type dep ann
 substitute sub@(Substitution i ty) = \case
   TVar _ a | Just a == getSubId i -> ty
   TVar ann a -> TVar ann a

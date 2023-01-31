@@ -10,6 +10,7 @@ module Smol.Core.Typecheck.Subtype
   )
 where
 
+import Data.Bifunctor (first)
 import Control.Monad.Except
 import Control.Monad.Writer.Strict
 import Data.Foldable (foldl', foldrM)
@@ -26,7 +27,7 @@ combineTypeMaps ::
   ( Eq ann,
     Show ann,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   GlobalMap ann ->
   GlobalMap ann ->
@@ -52,7 +53,7 @@ generaliseLiteral a = a
 
 combineMany ::
   ( MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m,
+    MonadWriter [Substitution ResolvedDep ann] m,
     Show ann,
     Eq ann
   ) =>
@@ -67,7 +68,7 @@ combine ::
   ( Eq ann,
     Show ann,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ResolvedType ann ->
   ResolvedType ann ->
@@ -109,9 +110,8 @@ isLiteralSubtypeOf _ _ = False
 -- 1 is a subtype of 1 | 2
 -- 1 | 2 is a subtype of Nat
 -- Nat is a subtype of Int
--- THIS IS ALL BACK TO FRONT OH FOR FUCKS SAKE
 isSubtypeOf ::
-  ( MonadWriter [Substitution ann] m,
+  ( MonadWriter [Substitution ResolvedDep ann] m,
     MonadError (TCError ann) m,
     Eq ann,
     Show ann
@@ -159,9 +159,8 @@ isSubtypeOf (TTuple annA fstA restA) (TTuple _annB fstB restB) =
     pure (TTuple annA tyFst tyRest)
 isSubtypeOf tA@(TApp tyAnn lA lB) tB@(TApp _ rA rB) = do
   -- need to check for variables in here
-  result <-
-    runExceptT
-      ((,) <$> flattenConstructorType tA <*> flattenConstructorType tB)
+  let result = first TCExpectedConstructorType
+                ((,) <$> flattenConstructorType tA <*> flattenConstructorType tB)
   case result of
     Right ((typeNameA, argsA), (typeNameB, argsB)) -> do
       when (typeNameA /= typeNameB) $ throwError (TCTypeMismatch tA tB)

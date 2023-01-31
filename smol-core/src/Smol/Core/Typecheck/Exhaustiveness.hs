@@ -133,7 +133,7 @@ generateFromPattern (PTuple ty a as) = do
   let tuple ne = PTuple ty (NE.head ne) (NE.fromList $ NE.tail ne)
   pure (tuple <$> sequence genAs)
 generateFromPattern (PConstructor ty _constructor args) = do
-  (typeName, _args) <- flattenConstructorType ty
+  (typeName, _args) <- liftEither $ first TCExpectedConstructorType $ flattenConstructorType ty
   dt <- lookupTypeName typeName
   _newFromArgs <- traverse generateFromPattern args
   newDataTypes <- requiredFromDataType dt

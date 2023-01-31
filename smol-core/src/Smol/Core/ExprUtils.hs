@@ -8,6 +8,7 @@ module Smol.Core.ExprUtils
     mapPattern,
     patternMonoid,
     mapExprDep,
+    mapTypeDep
   )
 where
 

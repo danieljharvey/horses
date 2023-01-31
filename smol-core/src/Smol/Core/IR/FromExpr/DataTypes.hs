@@ -27,10 +27,10 @@ import qualified Smol.Core.Types as Smol
 
 patternTypeInMemory ::
   ( Show ann,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann)),
     MonadState s m
   ) =>
-  Smol.Pattern Identity (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type Identity ann) ->
   m DataTypeInMemory
 patternTypeInMemory (Smol.PLiteral ty _) =
   toRepresentation ty
@@ -45,10 +45,10 @@ patternTypeInMemory (Smol.PConstructor ty c _) =
 
 constructorTypeInMemory ::
   ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann)),
     Show ann
   ) =>
-  Smol.Type ann ->
+  Smol.Type Identity ann ->
   Smol.Constructor ->
   m (DataTypeInMemory, DataTypeInMemory)
 constructorTypeInMemory ty constructor = do
@@ -68,10 +68,10 @@ constructorTypeInMemory ty constructor = do
 
 typeToDataTypeInMemory ::
   ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann)),
     Show ann
   ) =>
-  Smol.Type ann ->
+  Smol.Type Identity ann ->
   m (Either (Smol.TCError ann) DataTypeInMemory)
 typeToDataTypeInMemory ty = do
   result <- runExceptT $ flattenConstructorType ty
@@ -88,10 +88,10 @@ typeToDataTypeInMemory ty = do
 getDataTypeInMemory ::
   ( Show ann,
     MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
   ) =>
-  Smol.DataType ann ->
-  [Smol.Type ann] ->
+  Smol.DataType Identity ann ->
+  [Smol.Type Identity ann] ->
   m DataTypeInMemory
 getDataTypeInMemory (Smol.DataType _ [] _constructors) [] =
   pure DTEnum
@@ -130,11 +130,11 @@ howManyInts (DTDataType whole _) = howManyInts whole -- wrong?
 resolveDataType ::
   ( Show ann,
     MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
   ) =>
   [Smol.Identifier] ->
-  [Smol.Type ann] ->
-  [Smol.Type ann] ->
+  [Smol.Type Identity ann] ->
+  [Smol.Type Identity ann] ->
   m [DataTypeInMemory]
 resolveDataType vars constructorArgs args =
   let substitutions = zipWith Substitution (SubId <$> vars) args
@@ -143,9 +143,9 @@ resolveDataType vars constructorArgs args =
 toRepresentation ::
   ( Show ann,
     MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
   ) =>
-  Smol.Type ann ->
+  Smol.Type Identity ann ->
   m DataTypeInMemory
 toRepresentation (Smol.TPrim _ prim) = pure $ DTPrim prim
 toRepresentation (Smol.TLiteral _ (Smol.TLInt _)) = pure $ DTPrim Smol.TPInt
