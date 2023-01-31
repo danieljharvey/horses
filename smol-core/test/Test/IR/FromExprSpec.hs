@@ -3,6 +3,7 @@
 
 module Test.IR.FromExprSpec (spec) where
 
+import Control.Monad.Identity
 import Control.Monad.State
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
@@ -18,10 +19,10 @@ import Smol.Core.Types
 import Test.Helpers
 import Test.Hspec
 
-evalExpr :: Text -> IdentityExpr (Type Annotation)
+evalExpr :: Text -> IdentityExpr (Type Identity Annotation)
 evalExpr input =
   case elaborate (unsafeParseTypedExpr input $> mempty) of
-    Right typedExpr -> fromResolvedExpr typedExpr
+    Right typedExpr -> fromResolvedType <$> fromResolvedExpr typedExpr
     Left e -> error (show e)
 
 testEnv :: (Monoid ann) => IR.FromExprState ann

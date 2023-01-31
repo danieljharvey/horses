@@ -23,7 +23,7 @@ import Test.IR.Samples
 run :: LLVM.Module -> IO Text
 run = fmap Run.rrResult . Run.run
 
-evalExpr :: Text -> ResolvedExpr (Type Annotation)
+evalExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
 evalExpr input =
   case elaborate (unsafeParseTypedExpr input $> mempty) of
     Right typedExpr -> typedExpr
@@ -32,7 +32,7 @@ evalExpr input =
 createModule :: Text -> LLVM.Module
 createModule input = do
   let expr = evalExpr input
-      irModule = irFromExpr (fromResolvedExpr expr)
+      irModule = irFromExpr (fromResolvedType <$> fromResolvedExpr expr)
   irToLLVM irModule
 
 _printModule :: IRModule -> IRModule

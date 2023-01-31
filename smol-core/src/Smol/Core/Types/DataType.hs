@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -30,11 +31,10 @@ data DataType dep ann = DataType
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
-instance (Printer (Type dep ann)) => Printer (DataType dep ann) where
+instance Printer (DataType dep ann) where
   prettyDoc = renderDataType
 
 renderDataType ::
-  (Printer (Type dep ann)) =>
   DataType dep ann ->
   Doc style
 renderDataType (DataType tyCon vars' constructors') =

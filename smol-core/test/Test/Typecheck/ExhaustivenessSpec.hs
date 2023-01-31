@@ -27,17 +27,17 @@ runPatternM value =
   runReader (runExceptT value) env
 
 exhaustiveCheck ::
-  [Pattern ResolvedDep (Type Annotation)] ->
-  Either (TCError Annotation) [Pattern ResolvedDep (Type Annotation)]
+  [Pattern ResolvedDep (Type ResolvedDep Annotation)] ->
+  Either (TCError Annotation) [Pattern ResolvedDep (Type ResolvedDep Annotation)]
 exhaustiveCheck pats = runPatternM $ isExhaustive pats
 
 _redundantCasesCheck ::
-  [Pattern ResolvedDep (Type Annotation)] ->
-  Either (TCError Annotation) [Pattern ResolvedDep (Type Annotation)]
+  [Pattern ResolvedDep (Type ResolvedDep Annotation)] ->
+  Either (TCError Annotation) [Pattern ResolvedDep (Type ResolvedDep Annotation)]
 _redundantCasesCheck pats = runPatternM $ redundantCases pats
 
 _noDuplicatesCheck ::
-  Pattern ResolvedDep (Type Annotation) ->
+  Pattern ResolvedDep (Type ResolvedDep Annotation) ->
   Either (TCError Annotation) ()
 _noDuplicatesCheck = runPatternM . noDuplicateVariables
 

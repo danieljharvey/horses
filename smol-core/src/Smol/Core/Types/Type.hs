@@ -17,7 +17,6 @@ module Smol.Core.Types.Type
   )
 where
 
-import Control.Monad.Identity
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
 import qualified Data.Kind as Kind
 import qualified Data.List.NonEmpty as NE

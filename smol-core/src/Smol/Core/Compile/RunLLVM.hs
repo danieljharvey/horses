@@ -4,6 +4,7 @@
 module Smol.Core.Compile.RunLLVM (run, moduleFromExpr, RunResult (..)) where
 
 import Control.Exception (bracket)
+import Control.Monad.Identity
 import Data.FileEmbed
 import Data.String.Conversions
 import Data.Text (Text)
@@ -21,7 +22,6 @@ import System.IO
 import System.Posix.Temp
 import System.Process
 import qualified Text.Printf as Printf
-import Control.Monad.Identity
 
 -- these are saved in a file that is included in compilation
 cRuntime :: Text

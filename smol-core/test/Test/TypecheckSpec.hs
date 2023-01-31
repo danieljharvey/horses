@@ -112,9 +112,9 @@ spec = do
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
             case (,) <$> first (T.pack . show) (evalExpr inputExpr) <*> parseTypeAndFormatError expectedType of
               Right (te, typ) ->
-                  let result = removeLambdaEnv (getExprAnnotation te) $> ()
-                      expected = fromParsedType (removeLambdaEnv typ $> ())
-                  in result `shouldBe` expected
+                let result = removeLambdaEnv (getExprAnnotation te) $> ()
+                    expected = fromParsedType (removeLambdaEnv typ $> ())
+                 in result `shouldBe` expected
               other -> error (show other)
         )
         inputs
@@ -155,20 +155,20 @@ spec = do
           `shouldBe` Right expected
 
       it "Nested function" $ do
-        let input = unsafeParseType "Nat -> Int -> Bool"
-            expected = unsafeParseType "Int -> Bool"
+        let input = fromParsedType $ unsafeParseType "Nat -> Int -> Bool"
+            expected = fromParsedType $ unsafeParseType "Int -> Bool"
         runExcept (getApplyReturnType input)
           `shouldBe` Right expected
 
       it "Nested function with constructors" $ do
-        let input = unsafeParseType "Nat -> Maybe Int -> Maybe Bool"
-            expected = unsafeParseType "Maybe Int -> Maybe Bool"
+        let input = fromParsedType $ unsafeParseType "Nat -> Maybe Int -> Maybe Bool"
+            expected = fromParsedType $ unsafeParseType "Maybe Int -> Maybe Bool"
         runExcept (getApplyReturnType input)
           `shouldBe` Right expected
 
       it "Nested higher-order function with constructors" $ do
-        let input = unsafeParseType "(a -> b) -> Maybe a -> Maybe b"
-            expected = unsafeParseType "Maybe a -> Maybe b"
+        let input = fromParsedType $ unsafeParseType "(a -> b) -> Maybe a -> Maybe b"
+            expected = fromParsedType $ unsafeParseType "Maybe a -> Maybe b"
         runExcept (getApplyReturnType input)
           `shouldBe` Right expected
 
@@ -721,46 +721,45 @@ spec = do
         let input =
               unsafeParseExpr
                 "let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing"
-            expected = unsafeParseType "Maybe 1"
+            expected = fromParsedType $ unsafeParseType "Maybe 1"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right
             expected
 
       it "id function" $ do
         let input = unsafeParseExpr "let id = (\\a -> a : a -> a); id True"
-            expected = unsafeParseType "True"
+            expected = fromParsedType $ unsafeParseType "True"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected
 
       it "const function" $ do
         let input = unsafeParseExpr "let const = (\\a -> \\b -> a : a -> b -> a); const True 100"
-            expected = unsafeParseType "True"
+            expected = fromParsedType $ unsafeParseType "True"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected
 
       it "Weird boys 0" $ do
         let input = unsafeParseExpr "let fmap = (\\f -> case (Just (1 : Nat)) of Just a -> Just (f a) : (Nat -> b) -> Maybe b); let id = (\\i -> i : Nat -> Nat); fmap id"
-            expected = unsafeParseType "Maybe Nat"
+            expected = fromParsedType $ unsafeParseType "Maybe Nat"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Weird boys 4" $ do
         let input =
               unsafeParseExpr
                 "let fmap = (\\f -> \\val -> case val of Just aa -> Just (f aa) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : Nat -> Nat); fmap id (Just 1000)"
-
-            expected = unsafeParseType "Maybe Nat"
+            expected = fromParsedType $ unsafeParseType "Maybe Nat"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Weird boys 5" $ do
         let input =
               unsafeParseExpr
                 "let fmap = (\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : c -> c); (fmap id (Just 1) : Maybe 1)"
-            expected = unsafeParseType "Maybe 1"
+            expected = fromParsedType $ unsafeParseType "Maybe 1"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Applying with a polymorphic function as arg" $ do
         let input =
               unsafeParseExpr "let apply = (\\f -> \\a -> f a : (a -> b) -> a -> b); let id = (\\c -> c : zz -> zz); apply id 1"
-            expected = unsafeParseType "1"
+            expected = fromParsedType $ unsafeParseType "1"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected

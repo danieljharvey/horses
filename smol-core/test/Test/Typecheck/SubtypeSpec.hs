@@ -6,6 +6,7 @@ import Control.Monad.Writer.Strict
 import Data.Either
 import Data.Foldable (traverse_)
 import Smol.Core
+import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
 import Test.Hspec
 
@@ -106,8 +107,8 @@ spec = do
               fst
                 <$> runWriterT
                   ( isSubtypeOf
-                      (unsafeParseType lhs)
-                      (unsafeParseType rhs)
+                      (fromParsedType $ unsafeParseType lhs)
+                      (fromParsedType $ unsafeParseType rhs)
                   )
                 `shouldSatisfy` isRight
           )

@@ -10,10 +10,6 @@ import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
 import Smol.Core.Types
-import Smol.Core.Types.Annotation (Annotation)
-import Smol.Core.Types.Constructor
-import Smol.Core.Types.DataType
-import Smol.Core.Types.Type
 import Text.Megaparsec
 
 type Parser = Parsec Void Text

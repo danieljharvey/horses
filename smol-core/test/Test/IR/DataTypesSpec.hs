@@ -2,6 +2,7 @@
 
 module Test.IR.DataTypesSpec (spec, DataTypesState (..)) where
 
+import Control.Monad.Identity
 import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -13,10 +14,10 @@ import qualified Smol.Core.Types as Smol
 import Test.Helpers
 import Test.Hspec
 
-newtype DataTypesState ann = DataTypesState {dataTypes :: Map TypeName (DataType ann)}
+newtype DataTypesState ann = DataTypesState {dataTypes :: Map TypeName (DataType Identity ann)}
 
 typeToDataType ::
-  Smol.Type () ->
+  Smol.Type Identity () ->
   Either (Smol.TCError ()) DT.DataTypeInMemory
 typeToDataType ty =
   evalState (DT.typeToDataTypeInMemory ty) (DataTypesState TC.builtInTypes)

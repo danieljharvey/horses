@@ -6,11 +6,10 @@ module Smol.Core.IR.FromExpr.Types
   )
 where
 
+import Control.Monad.Identity
 import Data.Map.Strict (Map)
 import Smol.Core.IR.IRExpr
 import qualified Smol.Core.Types as Smol
-
-import Control.Monad.Identity
 
 data FromExprState ann = FromExprState
   { fesModuleParts :: [IRModulePart],

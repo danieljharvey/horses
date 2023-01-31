@@ -12,7 +12,6 @@ module Smol.Core.IR.FromExpr.Helpers
 where
 
 import Control.Monad.Identity
-import Control.Monad.Except
 import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M

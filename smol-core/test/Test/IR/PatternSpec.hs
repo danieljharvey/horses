@@ -2,6 +2,7 @@
 
 module Test.IR.PatternSpec (spec) where
 
+import Control.Monad.Identity
 import Control.Monad.State (evalState)
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
@@ -23,7 +24,7 @@ import Test.Helpers (tyBool, tyCons)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
 newtype Env ann = Env
-  { dataTypes :: Map Smol.TypeName (Smol.DataType ann)
+  { dataTypes :: Map Smol.TypeName (Smol.DataType Identity ann)
   }
 
 env :: (Monoid ann) => Env ann

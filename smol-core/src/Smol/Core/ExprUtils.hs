@@ -8,7 +8,7 @@ module Smol.Core.ExprUtils
     mapPattern,
     patternMonoid,
     mapExprDep,
-    mapTypeDep
+    mapTypeDep,
   )
 where
 
@@ -144,6 +144,16 @@ mapPatternDep resolve = go
       PConstructor ann (resolve constructor) (go <$> as)
 
 mapTypeDep :: (forall a. depA a -> depB a) -> Type depA ann -> Type depB ann
-mapTypeDep resolve = go
+mapTypeDep _resolve = go
   where
+    go (TVar ann v) = TVar ann v -- (resolve v)
     go (TTuple ann a as) = TTuple ann (go a) (go <$> as)
+    go (TLiteral ann a) = TLiteral ann a
+    go (TPrim ann p) = TPrim ann p
+    go (TFunc ann env a b) = TFunc ann (go <$> env) (go a) (go b)
+    go (TUnknown ann i) = TUnknown ann i
+    go (TGlobals ann env inner) = TGlobals ann (go <$> env) (go inner)
+    go (TRecord ann as) = TRecord ann (go <$> as)
+    go (TUnion ann a b) = TUnion ann (go a) (go b)
+    go (TApp ann a b) = TApp ann (go a) (go b)
+    go (TConstructor ann constructor) = TConstructor ann constructor

@@ -1,7 +1,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-  {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 module Smol.Core.Typecheck.Substitute
   ( Substitution (..),
     SubstitutionMatcher (..),
@@ -17,9 +18,11 @@ data SubstitutionMatcher dep ann
   | SubUnknown Integer
   | SubType (Type dep ann)
 
-deriving instance (Eq ann) => Eq (SubstitutionMatcher dep ann)
-deriving instance (Ord ann) => Ord (SubstitutionMatcher dep ann)
-deriving instance (Show ann) => Show (SubstitutionMatcher dep ann)
+deriving stock instance (Eq ann) => Eq (SubstitutionMatcher dep ann)
+
+deriving stock instance (Ord ann) => Ord (SubstitutionMatcher dep ann)
+
+deriving stock instance (Show ann) => Show (SubstitutionMatcher dep ann)
 
 data Substitution dep ann
   = Substitution (SubstitutionMatcher dep ann) (Type dep ann)

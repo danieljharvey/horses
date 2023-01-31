@@ -10,9 +10,9 @@ module Smol.Core.Typecheck.Subtype
   )
 where
 
-import Data.Bifunctor (first)
 import Control.Monad.Except
 import Control.Monad.Writer.Strict
+import Data.Bifunctor (first)
 import Data.Foldable (foldl', foldrM)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
@@ -159,8 +159,10 @@ isSubtypeOf (TTuple annA fstA restA) (TTuple _annB fstB restB) =
     pure (TTuple annA tyFst tyRest)
 isSubtypeOf tA@(TApp tyAnn lA lB) tB@(TApp _ rA rB) = do
   -- need to check for variables in here
-  let result = first TCExpectedConstructorType
-                ((,) <$> flattenConstructorType tA <*> flattenConstructorType tB)
+  let result =
+        first
+          TCExpectedConstructorType
+          ((,) <$> flattenConstructorType tA <*> flattenConstructorType tB)
   case result of
     Right ((typeNameA, argsA), (typeNameB, argsB)) -> do
       when (typeNameA /= typeNameB) $ throwError (TCTypeMismatch tA tB)
