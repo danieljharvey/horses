@@ -2,7 +2,10 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Smol.Core.Types.Module.Module
   ( Module (..),
@@ -56,7 +59,13 @@ data ModuleItem ann
   | ModuleImport Import
   --  | ModuleInfix InfixOp (ParsedExpr ann)
   --  | ModuleTest TestName (ParsedExpr ann)
-  deriving stock (Eq, Ord, Show, Functor)
+  deriving stock (Eq, Ord, Functor)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (ModuleItem ann)
 
 -- going to want way more granularity here in future but _shrug_
 data Import
@@ -75,8 +84,23 @@ data Module ann = Module
     moDataTypeImports :: Map TypeName ModuleHash, -- what we imported, where its from,
     moNamedImports :: Map ModuleName ModuleHash -- `import sdfsdf as Prelude`..
   }
-  deriving stock (Eq, Ord, Show, Functor, Generic)
-  deriving anyclass (ToJSON, FromJSON)
+  deriving stock (Eq, Ord, Functor, Generic)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (Module ann)
+
+deriving anyclass instance
+  ( ToJSON ann,
+    ToJSON (DataType ParseDep ann)
+  ) =>
+  ToJSON (Module ann)
+
+deriving anyclass instance
+  (FromJSON ann, FromJSON (DataType ParseDep ann)) =>
+  FromJSON (Module ann)
 
 instance Printer (Module ann) where
   prettyDoc mod' =

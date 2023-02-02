@@ -21,14 +21,14 @@ import Data.Semigroup
 import Data.Word (Word64)
 import GHC.Records (HasField (..))
 import Smol.Core.IR.FromExpr.Helpers
+import Smol.Core.IR.FromExpr.Types
 import Smol.Core.Typecheck.Substitute
 import qualified Smol.Core.Typecheck.Types as Smol
 import qualified Smol.Core.Types as Smol
 
 patternTypeInMemory ::
   ( Show ann,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann)),
-    MonadState s m
+    MonadState (FromExprState ann) m
   ) =>
   Smol.Pattern Identity (Smol.Type Identity ann) ->
   m DataTypeInMemory
@@ -44,8 +44,7 @@ patternTypeInMemory (Smol.PConstructor ty c _) =
   snd <$> constructorTypeInMemory ty (runIdentity c)
 
 constructorTypeInMemory ::
-  ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann)),
+  ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
   Smol.Type Identity ann ->
@@ -67,8 +66,7 @@ constructorTypeInMemory ty constructor = do
     _ -> error "unexpected memory explanation"
 
 typeToDataTypeInMemory ::
-  ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann)),
+  ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
   Smol.Type Identity ann ->
@@ -87,8 +85,7 @@ typeToDataTypeInMemory ty = do
 -- we need to get concrete, people
 getDataTypeInMemory ::
   ( Show ann,
-    MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
+    MonadState (FromExprState ann) m
   ) =>
   Smol.DataType Identity ann ->
   [Smol.Type Identity ann] ->
@@ -129,21 +126,19 @@ howManyInts (DTDataType whole _) = howManyInts whole -- wrong?
 -- putting each arg into place
 resolveDataType ::
   ( Show ann,
-    MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
+    MonadState (FromExprState ann) m
   ) =>
   [Smol.Identifier] ->
   [Smol.Type Identity ann] ->
   [Smol.Type Identity ann] ->
   m [DataTypeInMemory]
 resolveDataType vars constructorArgs args =
-  let substitutions = zipWith Substitution (SubId <$> vars) args
+  let substitutions = zipWith Substitution (SubId . Identity <$> vars) args
    in traverse toRepresentation $ substituteMany substitutions <$> constructorArgs
 
 toRepresentation ::
   ( Show ann,
-    MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
+    MonadState (FromExprState ann) m
   ) =>
   Smol.Type Identity ann ->
   m DataTypeInMemory

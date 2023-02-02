@@ -1,33 +1,39 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.IR.DataTypesSpec (spec, DataTypesState (..)) where
+module Test.IR.DataTypesSpec (spec) where
 
 import Control.Monad.Identity
 import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Smol.Core.IR.FromExpr.DataTypes as DT
+import Smol.Core.IR.FromExpr.Types
+import Smol.Core.IR.FromResolvedExpr
 import qualified Smol.Core.Typecheck as TC
+import Smol.Core.Typecheck.FromParsedExpr
 import qualified Smol.Core.Typecheck.Types as Smol
 import Smol.Core.Types
 import qualified Smol.Core.Types as Smol
 import Test.Helpers
 import Test.Hspec
 
-newtype DataTypesState ann = DataTypesState {dataTypes :: Map TypeName (DataType Identity ann)}
-
 typeToDataType ::
   Smol.Type Identity () ->
   Either (Smol.TCError ()) DT.DataTypeInMemory
 typeToDataType ty =
-  evalState (DT.typeToDataTypeInMemory ty) (DataTypesState TC.builtInTypes)
+  evalState
+    (DT.typeToDataTypeInMemory ty)
+    (FromExprState mempty (TC.builtInTypes Identity) 0 mempty)
+
+parseToIdentity :: Type ParseDep a -> Type Identity a
+parseToIdentity = fromResolvedType . fromParsedType
 
 spec :: Spec
 spec = do
   describe "Data types in memory" $ do
     it "Enum shaped datatype" $ do
       let ty = tyCons "Ord" []
-      typeToDataType ty
+      typeToDataType (parseToIdentity ty)
         `shouldBe` Right DT.DTEnum
 
     it "Maybe Int" $ do
@@ -41,7 +47,7 @@ spec = do
                       ("Nothing", [])
                     ]
               }
-      typeToDataType ty
+      typeToDataType (parseToIdentity ty)
         `shouldBe` Right expected
 
     it "Either Int Bool" $ do
@@ -55,7 +61,7 @@ spec = do
                       ("Right", [DT.DTPrim TPBool])
                     ]
               }
-      typeToDataType ty
+      typeToDataType (parseToIdentity ty)
         `shouldBe` Right expected
 
     it "These Int Bool" $ do
@@ -70,5 +76,5 @@ spec = do
                       ("These", [DT.DTPrim TPInt, DT.DTPrim TPBool])
                     ]
               }
-      typeToDataType ty
+      typeToDataType (parseToIdentity ty)
         `shouldBe` Right expected

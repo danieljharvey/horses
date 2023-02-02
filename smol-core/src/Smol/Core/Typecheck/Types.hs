@@ -55,7 +55,7 @@ data TCError ann
 data TCEnv ann = TCEnv
   { tceVars :: Map (ResolvedDep Identifier) (ResolvedType ann),
     tceGlobals :: Map Identifier (ResolvedType ann),
-    tceDataTypes :: Map TypeName (DataType ResolvedDep ann)
+    tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann)
   }
 
 data TCState ann = TCState

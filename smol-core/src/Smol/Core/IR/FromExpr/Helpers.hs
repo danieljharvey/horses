@@ -17,13 +17,18 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Records (HasField (..))
 import Smol.Core.Helpers
+import Smol.Core.IR.FromExpr.Types
 import qualified Smol.Core.Typecheck.Shared as TC
 import qualified Smol.Core.Types as Smol
 
 flattenConstructorType ::
-  (Monad m, Show ann) =>
+  ( Monad m,
+    Show ann,
+    Show (dep Smol.Identifier),
+    Show (dep Smol.TypeName)
+  ) =>
   Smol.Type dep ann ->
-  m (Smol.TypeName, [Smol.Type dep ann])
+  m (dep Smol.TypeName, [Smol.Type dep ann])
 flattenConstructorType ty = do
   let result = TC.flattenConstructorType ty
   pure (fromRight result)
@@ -31,8 +36,7 @@ flattenConstructorType ty = do
 -- | lookup constructor, get number for it and expected number of args
 -- we'll use this to create datatype etc
 primFromConstructor ::
-  ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
+  ( MonadState (FromExprState ann) m
   ) =>
   Smol.Constructor ->
   m Smol.Prim
@@ -44,8 +48,7 @@ primFromConstructor constructor = do
 -- | lookup constructor, get number for it and expected number of args
 -- we'll use this to create datatype etc
 lookupConstructor ::
-  ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
+  ( MonadState (FromExprState ann) m
   ) =>
   Smol.Constructor ->
   m (Smol.DataType Identity ann)
@@ -63,10 +66,9 @@ lookupConstructor constructor = do
     Nothing -> error "cant find, what the hell man"
 
 lookupTypeName ::
-  ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType Identity ann))
+  ( MonadState (FromExprState ann) m
   ) =>
-  Smol.TypeName ->
+  Identity Smol.TypeName ->
   m (Smol.DataType Identity ann)
 lookupTypeName tn = do
   maybeDt <- gets (M.lookup tn . getField @"dataTypes")

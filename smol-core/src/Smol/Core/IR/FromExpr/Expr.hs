@@ -33,6 +33,7 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.PatternPredicate
 import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
+import Smol.Core.Types.TypeName
 
 irPrintInt :: IRModulePart
 irPrintInt =
@@ -54,7 +55,10 @@ irPrintBool =
         }
     )
 
-getPrinter :: (Show ann) => Type dep ann -> IRModulePart
+getPrinter ::
+  (Show ann, Show (dep Identifier), Show (dep TypeName)) =>
+  Type dep ann ->
+  IRModulePart
 getPrinter (TPrim _ TPInt) = irPrintInt
 getPrinter (TPrim _ TPNat) = irPrintInt
 getPrinter (TPrim _ TPBool) = irPrintBool
@@ -62,13 +66,25 @@ getPrinter (TLiteral _ (TLBool _)) = irPrintBool
 getPrinter (TLiteral _ (TLInt _)) = irPrintInt
 getPrinter other = error ("could not find a printer for type " <> show other)
 
-getPrintFuncName :: (Show ann) => Type dep ann -> IRFunctionName
+getPrintFuncName ::
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep TypeName)
+  ) =>
+  Type dep ann ->
+  IRFunctionName
 getPrintFuncName ty =
   case getPrinter ty of
     (IRExternDef (IRExtern n _ _)) -> n
     other -> error (show other)
 
-getPrintFuncType :: (Show ann) => Type dep ann -> IRType
+getPrintFuncType ::
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep TypeName)
+  ) =>
+  Type dep ann ->
+  IRType
 getPrintFuncType ty =
   case getPrinter ty of
     (IRExternDef (IRExtern _ fnArgs fnReturn)) -> IRFunctionType fnArgs fnReturn
@@ -452,7 +468,7 @@ modulePartsFromExpr ::
   [IRModulePart]
 modulePartsFromExpr expr =
   let (mainExpr, FromExprState otherParts _ _ _) =
-        runState (fromExpr expr) (FromExprState mempty builtInTypes 1 mempty)
+        runState (fromExpr expr) (FromExprState mempty (builtInTypes Identity) 1 mempty)
       printFuncName = getPrintFuncName (getExprAnnotation expr)
       printFuncType = getPrintFuncType (getExprAnnotation expr)
    in otherParts

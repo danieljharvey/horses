@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Smol.Core.Typecheck.Elaborate
   ( elaborate,
@@ -27,26 +28,28 @@ import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
-builtInTypes :: (Monoid ann) => Map TypeName (DataType dep ann)
-builtInTypes =
+builtInTypes ::
+  (Monoid ann, Ord (dep TypeName)) =>
+  (forall a. a -> dep a) ->
+  Map (dep TypeName) (DataType dep ann)
+builtInTypes liftDep =
   let identityDt =
         DataType
           "Identity"
           ["a"]
-          (M.singleton "Identity" [TVar mempty "a"])
+          (M.singleton "Identity" [TVar mempty $ liftDep "a"])
       maybeDt =
         DataType
           "Maybe"
           ["a"]
-          (M.fromList [("Just", [TVar mempty "a"]), ("Nothing", [])])
-
+          (M.fromList [("Just", [TVar mempty $ liftDep "a"]), ("Nothing", [])])
       eitherDt =
         DataType
           "Either"
           ["e", "a"]
           ( M.fromList
-              [ ("Left", [TVar mempty "e"]),
-                ("Right", [TVar mempty "a"])
+              [ ("Left", [TVar mempty $ liftDep "e"]),
+                ("Right", [TVar mempty $ liftDep "a"])
               ]
           )
 
@@ -55,9 +58,9 @@ builtInTypes =
           "These"
           ["a", "b"]
           ( M.fromList
-              [ ("This", [TVar mempty "a"]),
-                ("That", [TVar mempty "b"]),
-                ("These", [TVar mempty "a", TVar mempty "b"])
+              [ ("This", [TVar mempty $ liftDep "a"]),
+                ("That", [TVar mempty $ liftDep "b"]),
+                ("These", [TVar mempty $ liftDep "a", TVar mempty $ liftDep "b"])
               ]
           )
       ordDt =
@@ -76,12 +79,12 @@ builtInTypes =
               ]
           )
    in M.fromList
-        [ ("Maybe", maybeDt),
-          ("Either", eitherDt),
-          ("Ord", ordDt),
-          ("These", theseDt),
-          ("Identity", identityDt),
-          ("List", listDt)
+        [ (liftDep "Maybe", maybeDt),
+          (liftDep "Either", eitherDt),
+          (liftDep "Ord", ordDt),
+          (liftDep "These", theseDt),
+          (liftDep "Identity", identityDt),
+          (liftDep "List", listDt)
         ]
 
 elaborate ::
@@ -101,7 +104,7 @@ elaborate expr =
               (TCState mempty 0 mempty)
           )
       )
-      (TCEnv mempty mempty builtInTypes)
+      (TCEnv mempty mempty (builtInTypes emptyResolvedDep))
 
 listenToGlobals ::
   ( MonadState (TCState ann) m,

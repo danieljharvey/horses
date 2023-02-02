@@ -36,6 +36,7 @@ import Smol.Core.Parser.Shared
   )
 import Smol.Core.Types.Annotation (Annotation)
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName (TypeName (..))
 import Text.Megaparsec
@@ -91,19 +92,19 @@ adtParser =
 
 multiDataTypeParser :: Parser (ParsedType Annotation)
 multiDataTypeParser = do
-  tyName <- typeNameParser
+  tyName <- emptyParseDep <$> typeNameParser
   tyArgs <- some subParser
   pure (dataTypeWithVars mempty tyName tyArgs)
 
 monoDataTypeParser :: Parser (ParsedType Annotation)
 monoDataTypeParser = do
-  tyName <- typeNameParser
+  tyName <- emptyParseDep <$> typeNameParser
   pure (dataTypeWithVars mempty tyName mempty)
 
 dataTypeWithVars ::
   (Monoid ann) =>
   ann ->
-  TypeName ->
+  ParseDep TypeName ->
   [ParsedType ann] ->
   ParsedType ann
 dataTypeWithVars ann tyName =
@@ -134,7 +135,7 @@ tyPrimitiveParser = TPrim mempty <$> tyPrimParser
 
 tyAppParser :: Parser (ParsedType Annotation)
 tyAppParser = label "type app" $ do
-  func <- orInBrackets (TVar mempty <$> tyVarParser)
+  func <- orInBrackets (TVar mempty . emptyParseDep <$> tyVarParser)
   let argParser' :: Parser [ParsedType Annotation]
       argParser' = (: []) <$> subParser
   args <- chainl1 argParser' (pure (<>))
@@ -206,7 +207,7 @@ tyVarParser =
 
 tVarParser :: Parser (ParsedType Annotation)
 tVarParser = do
-  TVar mempty <$> tyVarParser
+  TVar mempty . emptyParseDep <$> tyVarParser
 
 tyRecordParser :: Parser (ParsedType Annotation)
 tyRecordParser = withLocation TRecord $ do

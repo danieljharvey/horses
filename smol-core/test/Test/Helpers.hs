@@ -47,20 +47,33 @@ tyIntLit = TLiteral mempty . TLInt
 tyNat :: (Monoid ann) => Type dep ann
 tyNat = TPrim mempty TPNat
 
-tyVar :: (Monoid ann) => Text -> Type dep ann
-tyVar = TVar mempty . Identifier
+tyVar :: (Monoid ann) => Text -> Type ParseDep ann
+tyVar = TVar mempty . emptyParseDep . Identifier
 
 tyUnknown :: (Monoid ann) => Integer -> Type dep ann
 tyUnknown = TUnknown mempty
 
-tyTuple :: (Monoid ann) => Type dep ann -> [Type dep ann] -> Type dep ann
+tyTuple ::
+  (Monoid ann) =>
+  Type dep ann ->
+  [Type dep ann] ->
+  Type dep ann
 tyTuple a as = TTuple mempty a (NE.fromList as)
 
-tyUnion :: (Monoid ann) => Type dep ann -> Type dep ann -> Type dep ann
+tyUnion ::
+  (Monoid ann) =>
+  Type dep ann ->
+  Type dep ann ->
+  Type dep ann
 tyUnion = TUnion mempty
 
-tyCons :: (Monoid ann) => TypeName -> [Type dep ann] -> Type dep ann
-tyCons typeName = foldl' (TApp mempty) (TConstructor mempty typeName)
+tyCons ::
+  (Monoid ann) =>
+  TypeName ->
+  [Type ParseDep ann] ->
+  Type ParseDep ann
+tyCons typeName =
+  foldl' (TApp mempty) (TConstructor mempty (emptyParseDep typeName))
 
 unit :: (Monoid ann) => Expr dep ann
 unit = EPrim mempty PUnit
@@ -77,10 +90,17 @@ nat = EPrim mempty . PNat
 var :: (Monoid ann) => Text -> Expr ParseDep ann
 var = EVar mempty . emptyParseDep . Identifier
 
-tuple :: (Monoid ann) => Expr dep ann -> [Expr dep ann] -> Expr dep ann
+tuple ::
+  (Monoid ann) =>
+  Expr dep ann ->
+  [Expr dep ann] ->
+  Expr dep ann
 tuple a as = ETuple mempty a (NE.fromList as)
 
-constructor :: (Monoid ann) => Text -> Expr ParseDep ann
+constructor ::
+  (Monoid ann) =>
+  Text ->
+  Expr ParseDep ann
 constructor lbl = EConstructor mempty (emptyParseDep (Constructor lbl))
 
 identifier :: Text -> ParseDep Identifier

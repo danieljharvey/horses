@@ -143,7 +143,7 @@ spec = do
         evalState (freshen input) emptyState `shouldBe` expected
 
       it "A -> A becomes 1 -> 1" $ do
-        let input = TFunc () mempty (tyVar "A") (tyVar "A")
+        let input = fromParsedType $ TFunc () mempty (tyVar "A") (tyVar "A")
             expected = TFunc () mempty (tyUnknown 0) (tyUnknown 0)
         evalState (freshen input) emptyState `shouldBe` expected
 

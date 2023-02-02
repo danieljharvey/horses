@@ -48,7 +48,7 @@ import Smol.Core.Types
 lookupTypeName ::
   ( MonadReader (TCEnv ann) m
   ) =>
-  TypeName ->
+  ResolvedDep TypeName ->
   m (DataType ResolvedDep ann)
 lookupTypeName tn = do
   maybeDt <- asks (M.lookup tn . tceDataTypes)
@@ -124,7 +124,7 @@ getClosureType body =
       (S.toList (freeVars body))
 
 -- reduce TApp (TFunc a b) etc
-reduceType :: Type dep ann -> Type dep ann
+reduceType :: (Eq (dep Identifier)) => Type dep ann -> Type dep ann
 reduceType = reduceTypeInner
   where
     reduceTypeInner (TApp ann (TApp _ (TFunc _ _ (TVar _ varA) body) a) b) =
@@ -152,13 +152,13 @@ lookupConstructor ::
     MonadError (TCError ann) m
   ) =>
   ResolvedDep Constructor ->
-  m (TypeName, [Identifier], [Constructor], [ResolvedType ann])
+  m (ResolvedDep TypeName, [Identifier], [Constructor], [ResolvedType ann])
 lookupConstructor constructor = do
   maybeDt <-
     asks
       ( mapFind
           ( \(DataType typeName vars constructors) ->
-              (,,,) typeName vars (M.keys constructors) <$> M.lookup (rdIdentifier constructor) constructors
+              (,,,) (emptyResolvedDep typeName) vars (M.keys constructors) <$> M.lookup (rdIdentifier constructor) constructors
           )
           . tceDataTypes
       )
@@ -171,7 +171,7 @@ lookupConstructor constructor = do
 
 dataTypeWithVars ::
   ann ->
-  TypeName ->
+  ResolvedDep TypeName ->
   [ResolvedType ann] ->
   ResolvedType ann
 dataTypeWithVars ann tyName =
@@ -182,19 +182,19 @@ dataTypeWithVars ann tyName =
 typeForConstructor ::
   (MonadState (TCState ann) m) =>
   ann ->
-  TypeName ->
+  ResolvedDep TypeName ->
   [Identifier] ->
   [ResolvedType ann] ->
   m (ResolvedType ann)
 typeForConstructor ann typeName vars args = do
   -- replace variables with fresh boys
-  subs <- traverse (\var -> Substitution (SubId var) <$> getUnknown ann) vars
+  subs <- traverse (\var -> Substitution (SubId (emptyResolvedDep var)) <$> getUnknown ann) vars
 
   pure $
     substituteMany subs $
       foldr
         (TFunc ann mempty)
-        (dataTypeWithVars ann typeName (TVar ann <$> vars))
+        (dataTypeWithVars ann typeName (TVar ann . emptyResolvedDep <$> vars))
         args
 
 lookupVar ::
@@ -292,7 +292,7 @@ popArgs maxArgs = do
 -- to make it easier to match up with patterns
 flattenConstructorType ::
   Type dep ann ->
-  Either (Type dep ann) (TypeName, [Type dep ann])
+  Either (Type dep ann) (dep TypeName, [Type dep ann])
 flattenConstructorType (TApp _ f a) = do
   (typeName, as) <- flattenConstructorType f
   pure (typeName, as <> [a])

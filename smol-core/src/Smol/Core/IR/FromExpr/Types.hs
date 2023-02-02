@@ -13,7 +13,7 @@ import qualified Smol.Core.Types as Smol
 
 data FromExprState ann = FromExprState
   { fesModuleParts :: [IRModulePart],
-    dataTypes :: Map Smol.TypeName (Smol.DataType Identity ann),
+    dataTypes :: Map (Identity Smol.TypeName) (Smol.DataType Identity ann),
     freshInt :: Int,
     vars :: Map IRIdentifier IRExpr
   }
