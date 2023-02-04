@@ -679,10 +679,13 @@ spec = do
       it "Infers Nothing with fresh var" $ do
         let input = unsafeParseExpr "Nothing"
             expected =
-              EConstructor
-                ( tyCons "Maybe" [tyUnknown 0]
-                )
-                "Nothing"
+              fromParsedType
+                <$> fromParsedExpr
+                  ( EConstructor
+                      ( tyCons "Maybe" [tyUnknown 0]
+                      )
+                      "Nothing"
+                  )
         testElaborate input `shouldBe` Right expected
 
       it "Basic let binding" $ do

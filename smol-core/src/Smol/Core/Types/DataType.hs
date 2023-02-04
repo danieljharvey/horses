@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -13,7 +12,6 @@ module Smol.Core.Types.DataType
   )
 where
 
-import Data.Aeson (FromJSON, ToJSON)
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
 import GHC.Generics (Generic)
@@ -44,6 +42,13 @@ deriving stock instance
     Ord (dep TypeName)
   ) =>
   Ord (DataType dep ann)
+
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep TypeName)
+  ) =>
+  Show (DataType dep ann)
 
 instance
   ( Printer (dep Identifier),

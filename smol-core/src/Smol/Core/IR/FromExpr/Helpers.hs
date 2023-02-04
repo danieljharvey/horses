@@ -13,7 +13,6 @@ where
 
 import Control.Monad.Identity
 import Control.Monad.State
-import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Records (HasField (..))
 import Smol.Core.Helpers

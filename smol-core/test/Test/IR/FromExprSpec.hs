@@ -26,7 +26,7 @@ evalExpr input =
     Left e -> error (show e)
 
 testEnv :: (Monoid ann) => IR.FromExprState ann
-testEnv = IR.FromExprState mempty builtInTypes 1 mempty
+testEnv = IR.FromExprState mempty (builtInTypes Identity) 1 mempty
 
 getMainExpr :: Text -> IRExpr
 getMainExpr = fst . createIR

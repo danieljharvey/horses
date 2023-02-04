@@ -9,11 +9,12 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.List.NonEmpty as NE
 import Smol.Core
+import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
 import Test.Hspec
 
 env :: (Monoid ann) => TCEnv ann
-env = TCEnv mempty mempty builtInTypes
+env = TCEnv mempty mempty (builtInTypes emptyResolvedDep)
 
 type PatternM = ExceptT (TCError Annotation) (Reader (TCEnv Annotation))
 
@@ -288,11 +289,11 @@ spec = do
         -- same as above
         xit "A pair with complete coverage of Right and Left is exhaustive" $ do
           let either' = tyCons "Either" [tyVar "e", tyVar "a"]
-              leftE = PConstructor either' "Left" [PVar (tyVar "e") "e"]
-              rightF = PConstructor either' "Right" [PVar (tyVar "a") "f"]
-              rightA = PConstructor either' "Right" [PVar (tyVar "a") "a"]
-              wildcard = PWildcard either'
-              tuple' = tyTuple either' [either']
+              leftE = fromParsedType <$> PConstructor either' "Left" [PVar (tyVar "e") "e"]
+              rightF = fromParsedType <$> PConstructor either' "Right" [PVar (tyVar "a") "f"]
+              rightA = fromParsedType <$> PConstructor either' "Right" [PVar (tyVar "a") "a"]
+              wildcard = fromParsedType <$> PWildcard either'
+              tuple' = fromParsedType $ tyTuple either' [either']
           exhaustiveCheck
             [ PTuple tuple' rightF (NE.singleton rightA),
               PTuple tuple' leftE (NE.singleton wildcard),

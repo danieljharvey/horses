@@ -19,7 +19,6 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Semigroup
 import Data.Word (Word64)
-import GHC.Records (HasField (..))
 import Smol.Core.IR.FromExpr.Helpers
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.Typecheck.Substitute
@@ -92,11 +91,11 @@ getDataTypeInMemory ::
   m DataTypeInMemory
 getDataTypeInMemory (Smol.DataType _ [] _constructors) [] =
   pure DTEnum
-getDataTypeInMemory (Smol.DataType _ vars constructors) args = do
+getDataTypeInMemory (Smol.DataType _ dtVars constructors) args = do
   consDts <-
     traverse
       ( \cnArgs ->
-          resolveDataType vars cnArgs args
+          resolveDataType dtVars cnArgs args
       )
       constructors
   let arraySize =
@@ -132,8 +131,8 @@ resolveDataType ::
   [Smol.Type Identity ann] ->
   [Smol.Type Identity ann] ->
   m [DataTypeInMemory]
-resolveDataType vars constructorArgs args =
-  let substitutions = zipWith Substitution (SubId . Identity <$> vars) args
+resolveDataType dtVars constructorArgs args =
+  let substitutions = zipWith Substitution (SubId . Identity <$> dtVars) args
    in traverse toRepresentation $ substituteMany substitutions <$> constructorArgs
 
 toRepresentation ::

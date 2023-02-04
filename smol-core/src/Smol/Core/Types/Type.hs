@@ -19,7 +19,6 @@ module Smol.Core.Types.Type
 where
 
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
-import qualified Data.Kind as Kind
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
