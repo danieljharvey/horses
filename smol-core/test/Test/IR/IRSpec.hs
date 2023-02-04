@@ -14,7 +14,6 @@ import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.ToLLVM
 import Smol.Core.Typecheck
 import Smol.Core.Types
-import Smol.Core.Types.Expr
 import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec
@@ -24,7 +23,7 @@ import Test.IR.Samples
 run :: LLVM.Module -> IO Text
 run = fmap Run.rrResult . Run.run
 
-evalExpr :: Text -> ResolvedExpr (Type Annotation)
+evalExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
 evalExpr input =
   case elaborate (unsafeParseTypedExpr input $> mempty) of
     Right typedExpr -> typedExpr
@@ -33,7 +32,7 @@ evalExpr input =
 createModule :: Text -> LLVM.Module
 createModule input = do
   let expr = evalExpr input
-      irModule = irFromExpr (fromResolvedExpr expr)
+      irModule = irFromExpr (fromResolvedType <$> fromResolvedExpr expr)
   irToLLVM irModule
 
 _printModule :: IRModule -> IRModule

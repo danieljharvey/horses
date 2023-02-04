@@ -19,18 +19,17 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Semigroup
 import Data.Word (Word64)
-import GHC.Records (HasField (..))
 import Smol.Core.IR.FromExpr.Helpers
+import Smol.Core.IR.FromExpr.Types
 import Smol.Core.Typecheck.Substitute
 import qualified Smol.Core.Typecheck.Types as Smol
 import qualified Smol.Core.Types as Smol
 
 patternTypeInMemory ::
   ( Show ann,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
-    MonadState s m
+    MonadState (FromExprState ann) m
   ) =>
-  Smol.Pattern Identity (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type Identity ann) ->
   m DataTypeInMemory
 patternTypeInMemory (Smol.PLiteral ty _) =
   toRepresentation ty
@@ -44,11 +43,10 @@ patternTypeInMemory (Smol.PConstructor ty c _) =
   snd <$> constructorTypeInMemory ty (runIdentity c)
 
 constructorTypeInMemory ::
-  ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
+  ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Smol.Type ann ->
+  Smol.Type Identity ann ->
   Smol.Constructor ->
   m (DataTypeInMemory, DataTypeInMemory)
 constructorTypeInMemory ty constructor = do
@@ -67,11 +65,10 @@ constructorTypeInMemory ty constructor = do
     _ -> error "unexpected memory explanation"
 
 typeToDataTypeInMemory ::
-  ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
+  ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Smol.Type ann ->
+  Smol.Type Identity ann ->
   m (Either (Smol.TCError ann) DataTypeInMemory)
 typeToDataTypeInMemory ty = do
   result <- runExceptT $ flattenConstructorType ty
@@ -87,19 +84,18 @@ typeToDataTypeInMemory ty = do
 -- we need to get concrete, people
 getDataTypeInMemory ::
   ( Show ann,
-    MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    MonadState (FromExprState ann) m
   ) =>
-  Smol.DataType ann ->
-  [Smol.Type ann] ->
+  Smol.DataType Identity ann ->
+  [Smol.Type Identity ann] ->
   m DataTypeInMemory
 getDataTypeInMemory (Smol.DataType _ [] _constructors) [] =
   pure DTEnum
-getDataTypeInMemory (Smol.DataType _ vars constructors) args = do
+getDataTypeInMemory (Smol.DataType _ dtVars constructors) args = do
   consDts <-
     traverse
       ( \cnArgs ->
-          resolveDataType vars cnArgs args
+          resolveDataType dtVars cnArgs args
       )
       constructors
   let arraySize =
@@ -129,23 +125,21 @@ howManyInts (DTDataType whole _) = howManyInts whole -- wrong?
 -- putting each arg into place
 resolveDataType ::
   ( Show ann,
-    MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    MonadState (FromExprState ann) m
   ) =>
   [Smol.Identifier] ->
-  [Smol.Type ann] ->
-  [Smol.Type ann] ->
+  [Smol.Type Identity ann] ->
+  [Smol.Type Identity ann] ->
   m [DataTypeInMemory]
-resolveDataType vars constructorArgs args =
-  let substitutions = zipWith Substitution (SubId <$> vars) args
+resolveDataType dtVars constructorArgs args =
+  let substitutions = zipWith Substitution (SubId . Identity <$> dtVars) args
    in traverse toRepresentation $ substituteMany substitutions <$> constructorArgs
 
 toRepresentation ::
   ( Show ann,
-    MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann))
+    MonadState (FromExprState ann) m
   ) =>
-  Smol.Type ann ->
+  Smol.Type Identity ann ->
   m DataTypeInMemory
 toRepresentation (Smol.TPrim _ prim) = pure $ DTPrim prim
 toRepresentation (Smol.TLiteral _ (Smol.TLInt _)) = pure $ DTPrim Smol.TPInt

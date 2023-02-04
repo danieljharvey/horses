@@ -12,6 +12,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Writer.Strict
+import Data.Bifunctor (first)
 import Data.Foldable (foldl', foldrM)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
@@ -26,7 +27,7 @@ combineTypeMaps ::
   ( Eq ann,
     Show ann,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   GlobalMap ann ->
   GlobalMap ann ->
@@ -40,8 +41,8 @@ combineTypeMaps (GlobalMap mapA) (GlobalMap mapB) = do
 
 -- given a number literal, get the smallest non-literal
 generaliseLiteral ::
-  Type ann ->
-  Type ann
+  ResolvedType ann ->
+  ResolvedType ann
 generaliseLiteral (TLiteral ann (TLInt tlA)) =
   if tlA >= 0
     then TPrim ann TPNat
@@ -52,12 +53,12 @@ generaliseLiteral a = a
 
 combineMany ::
   ( MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m,
+    MonadWriter [Substitution ResolvedDep ann] m,
     Show ann,
     Eq ann
   ) =>
-  NE.NonEmpty (Type ann) ->
-  m (Type ann)
+  NE.NonEmpty (ResolvedType ann) ->
+  m (ResolvedType ann)
 combineMany types =
   foldrM combine (NE.head types) (NE.tail types)
 
@@ -67,11 +68,11 @@ combine ::
   ( Eq ann,
     Show ann,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
-  Type ann ->
-  Type ann ->
-  m (Type ann)
+  ResolvedType ann ->
+  ResolvedType ann ->
+  m (ResolvedType ann)
 combine a b =
   isSubtypeOf a b
     `catchError` const (isSubtypeOf b a)
@@ -86,16 +87,16 @@ combine a b =
             pure $ TPrim ann TPBool -- don't have True | False, it's silly
       _ -> throwError (TCTypeMismatch a b)
 
-typeEquals :: Type ann -> Type ann -> Bool
+typeEquals :: ResolvedType ann -> ResolvedType ann -> Bool
 typeEquals a b = (a $> ()) == (b $> ())
 
-memberOf :: Type ann -> Type ann -> Bool
+memberOf :: ResolvedType ann -> ResolvedType ann -> Bool
 memberOf a (TUnion _ l r) = memberOf a l || memberOf a r
 memberOf a b = typeEquals a b
 
 -- | is the RHS an equal or more general expression of the LHS?
 -- | expressed like this so we can try both sides quickly
-isLiteralSubtypeOf :: Type ann -> Type ann -> Bool
+isLiteralSubtypeOf :: ResolvedType ann -> ResolvedType ann -> Bool
 isLiteralSubtypeOf a b | a `typeEquals` b = True
 isLiteralSubtypeOf (TLiteral _ (TLBool _)) (TPrim _ TPBool) = True -- a Bool literal is a Bool
 isLiteralSubtypeOf (TLiteral _ (TLInt a)) (TPrim _ TPNat) = a >= 0 -- a Int literal is a Nat if its non-negative
@@ -109,16 +110,15 @@ isLiteralSubtypeOf _ _ = False
 -- 1 is a subtype of 1 | 2
 -- 1 | 2 is a subtype of Nat
 -- Nat is a subtype of Int
--- THIS IS ALL BACK TO FRONT OH FOR FUCKS SAKE
 isSubtypeOf ::
-  ( MonadWriter [Substitution ann] m,
+  ( MonadWriter [Substitution ResolvedDep ann] m,
     MonadError (TCError ann) m,
     Eq ann,
     Show ann
   ) =>
-  Type ann ->
-  Type ann ->
-  m (Type ann)
+  ResolvedType ann ->
+  ResolvedType ann ->
+  m (ResolvedType ann)
 isSubtypeOf a b | isLiteralSubtypeOf a b = pure b -- choose the more general of the two types
 isSubtypeOf (TGlobals annA globsA restA) (TGlobals _annB globsB restB) = do
   tyRest <- isSubtypeOf restA restB
@@ -159,9 +159,10 @@ isSubtypeOf (TTuple annA fstA restA) (TTuple _annB fstB restB) =
     pure (TTuple annA tyFst tyRest)
 isSubtypeOf tA@(TApp tyAnn lA lB) tB@(TApp _ rA rB) = do
   -- need to check for variables in here
-  result <-
-    runExceptT
-      ((,) <$> flattenConstructorType tA <*> flattenConstructorType tB)
+  let result =
+        first
+          TCExpectedConstructorType
+          ((,) <$> flattenConstructorType tA <*> flattenConstructorType tB)
   case result of
     Right ((typeNameA, argsA), (typeNameB, argsB)) -> do
       when (typeNameA /= typeNameB) $ throwError (TCTypeMismatch tA tB)

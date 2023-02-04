@@ -1,16 +1,17 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Smol.Core.Types.DataType
   ( DataType (..),
   )
 where
 
-import Data.Aeson (FromJSON, ToJSON)
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
 import GHC.Generics (Generic)
@@ -21,18 +22,46 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
 
-data DataType ann = DataType
+data DataType dep ann = DataType
   { dtName :: TypeName,
     dtVars :: [Identifier],
-    dtConstructors :: Map Constructor [Type ann]
+    dtConstructors :: Map Constructor [Type dep ann]
   }
-  deriving stock (Eq, Ord, Show, Functor, Generic)
-  deriving anyclass (FromJSON, ToJSON)
+  deriving stock (Functor, Generic)
 
-instance Printer (DataType ann) where
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier),
+    Eq (dep TypeName)
+  ) =>
+  Eq (DataType dep ann)
+
+deriving stock instance
+  ( Ord ann,
+    Ord (dep Identifier),
+    Ord (dep TypeName)
+  ) =>
+  Ord (DataType dep ann)
+
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep TypeName)
+  ) =>
+  Show (DataType dep ann)
+
+instance
+  ( Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
+  Printer (DataType dep ann)
+  where
   prettyDoc = renderDataType
 
-renderDataType :: DataType ann -> Doc style
+renderDataType ::
+  (Printer (dep Identifier), Printer (dep TypeName)) =>
+  DataType dep ann ->
+  Doc style
 renderDataType (DataType tyCon vars' constructors') =
   "type"
     <+> prettyDoc tyCon

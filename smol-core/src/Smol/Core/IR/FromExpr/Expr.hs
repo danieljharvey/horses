@@ -33,6 +33,7 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.PatternPredicate
 import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
+import Smol.Core.Types.TypeName
 
 irPrintInt :: IRModulePart
 irPrintInt =
@@ -54,7 +55,10 @@ irPrintBool =
         }
     )
 
-getPrinter :: (Show ann) => Type ann -> IRModulePart
+getPrinter ::
+  (Show ann, Show (dep Identifier), Show (dep TypeName)) =>
+  Type dep ann ->
+  IRModulePart
 getPrinter (TPrim _ TPInt) = irPrintInt
 getPrinter (TPrim _ TPNat) = irPrintInt
 getPrinter (TPrim _ TPBool) = irPrintBool
@@ -62,13 +66,25 @@ getPrinter (TLiteral _ (TLBool _)) = irPrintBool
 getPrinter (TLiteral _ (TLInt _)) = irPrintInt
 getPrinter other = error ("could not find a printer for type " <> show other)
 
-getPrintFuncName :: (Show ann) => Type ann -> IRFunctionName
+getPrintFuncName ::
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep TypeName)
+  ) =>
+  Type dep ann ->
+  IRFunctionName
 getPrintFuncName ty =
   case getPrinter ty of
     (IRExternDef (IRExtern n _ _)) -> n
     other -> error (show other)
 
-getPrintFuncType :: (Show ann) => Type ann -> IRType
+getPrintFuncType ::
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep TypeName)
+  ) =>
+  Type dep ann ->
+  IRType
 getPrintFuncType ty =
   case getPrinter ty of
     (IRExternDef (IRExtern _ fnArgs fnReturn)) -> IRFunctionType fnArgs fnReturn
@@ -113,7 +129,7 @@ lookupVar ident = do
 -- combined
 irFromExpr ::
   (Show ann, Monoid ann) =>
-  IdentityExpr (Type ann) ->
+  IdentityExpr (Type Identity ann) ->
   IRModule
 irFromExpr expr =
   IRModule $
@@ -129,8 +145,8 @@ fromPrim PUnit = IRPrimInt2 False -- Unit is represented the same as False
 fromInfix ::
   (Show ann, MonadState (FromExprState ann) m) =>
   Op ->
-  IdentityExpr (Type ann) ->
-  IdentityExpr (Type ann) ->
+  IdentityExpr (Type Identity ann) ->
+  IdentityExpr (Type Identity ann) ->
   m IRExpr
 fromInfix op a b = do
   let irOp = case op of
@@ -145,7 +161,7 @@ functionReturnType other = error ("non-function " <> show other)
 
 fromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  IdentityExpr (Type ann) ->
+  IdentityExpr (Type Identity ann) ->
   m IRExpr
 fromExpr (EPrim _ prim) = pure (IRPrim $ fromPrim prim)
 fromExpr (EInfix _ op a b) = fromInfix op a b
@@ -249,7 +265,7 @@ fromExpr expr = error ("fuck: " <> show expr)
 
 -- | given an env type, put all it's items in scope
 -- replaces "a" with a reference it's position in scope
-bindingsFromEnv :: Map Identifier (Type ann) -> IRExpr -> IRExpr
+bindingsFromEnv :: Map Identifier (Type Identity ann) -> IRExpr -> IRExpr
 bindingsFromEnv env inner =
   foldr
     ( \(ident, i) irExpr ->
@@ -290,9 +306,9 @@ lambdaFromExpr ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Type ann ->
+  Type Identity ann ->
   Identifier ->
-  IdentityExpr (Type ann) ->
+  IdentityExpr (Type Identity ann) ->
   m IRExpr
 lambdaFromExpr ty ident body = do
   irType <- fromType ty
@@ -349,7 +365,7 @@ structFromEnv ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Map Identifier (Type ann) ->
+  Map Identifier (Type Identity ann) ->
   m [IRSetTo]
 structFromEnv env =
   traverseInd
@@ -365,9 +381,9 @@ constructorAppFromExpr ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Type ann ->
+  Type Identity ann ->
   Constructor ->
-  [IdentityExpr (Type ann)] ->
+  [IdentityExpr (Type Identity ann)] ->
   m IRExpr
 constructorAppFromExpr ty constructor cnArgs = do
   -- the constructor case, build up everything we need pls
@@ -407,9 +423,9 @@ constructorAppFromExpr ty constructor cnArgs = do
 -- that into something ok
 appFromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Type ann ->
-  IdentityExpr (Type ann) ->
-  IdentityExpr (Type ann) ->
+  Type Identity ann ->
+  IdentityExpr (Type Identity ann) ->
+  IdentityExpr (Type Identity ann) ->
   m IRExpr
 appFromExpr ty fn val = do
   case flattenConstructorApplication (EApp ty fn val) of
@@ -448,11 +464,11 @@ pushModulePart part =
 -- module Core.parts to the State
 modulePartsFromExpr ::
   (Show ann, Monoid ann) =>
-  IdentityExpr (Type ann) ->
+  IdentityExpr (Type Identity ann) ->
   [IRModulePart]
 modulePartsFromExpr expr =
   let (mainExpr, FromExprState otherParts _ _ _) =
-        runState (fromExpr expr) (FromExprState mempty builtInTypes 1 mempty)
+        runState (fromExpr expr) (FromExprState mempty (builtInTypes Identity) 1 mempty)
       printFuncName = getPrintFuncName (getExprAnnotation expr)
       printFuncType = getPrintFuncType (getExprAnnotation expr)
    in otherParts

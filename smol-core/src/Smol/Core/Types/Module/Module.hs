@@ -2,7 +2,11 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Smol.Core.Types.Module.Module
   ( Module (..),
@@ -27,6 +31,7 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.ModuleName
+import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
 
@@ -38,9 +43,9 @@ data DefPart ann
   = -- | typeless argument `a`
     DefArg (Annotated Identifier ann)
   | -- | argument with type `(a: String) ->`
-    DefTypedArg (Annotated Identifier ann) (Type ann)
+    DefTypedArg (Annotated Identifier ann) (ParsedType ann)
   | -- | type with no binding `String`
-    DefType (Type ann)
+    DefType (ParsedType ann)
   deriving stock (Eq, Ord, Show, Functor)
 
 -- item parsed from file, kept like this so we can order them and have
@@ -50,17 +55,24 @@ data DefPart ann
 -- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
   = ModuleExpression Identifier [DefPart ann] (ParsedExpr ann)
-  | ModuleDataType (DataType ann)
+  | ModuleDataType (DataType ParseDep ann)
   | ModuleExport (ModuleItem ann)
   | ModuleImport Import
   --  | ModuleInfix InfixOp (ParsedExpr ann)
   --  | ModuleTest TestName (ParsedExpr ann)
-  deriving stock (Functor)
+  deriving stock (Eq, Ord, Functor)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (ModuleItem ann)
 
 -- going to want way more granularity here in future but _shrug_
 data Import
   = ImportAllFromHash ModuleHash
   | ImportNamedFromHash ModuleHash ModuleName
+  deriving stock (Eq, Ord, Show)
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
@@ -68,13 +80,28 @@ data Module ann = Module
   { moExpressions :: Map DefIdentifier (ParsedExpr ann),
     moExpressionExports :: Set DefIdentifier,
     moExpressionImports :: Map DefIdentifier ModuleHash, -- what we imported, where it's from
-    moDataTypes :: Map TypeName (DataType ann),
+    moDataTypes :: Map TypeName (DataType ParseDep ann),
     moDataTypeExports :: Set TypeName, -- which types to export
     moDataTypeImports :: Map TypeName ModuleHash, -- what we imported, where its from,
     moNamedImports :: Map ModuleName ModuleHash -- `import sdfsdf as Prelude`..
   }
-  deriving stock (Eq, Ord, Show, Functor, Generic)
-  deriving anyclass (ToJSON, FromJSON)
+  deriving stock (Eq, Ord, Functor, Generic)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (Module ann)
+
+deriving anyclass instance
+  ( ToJSON ann,
+    ToJSON (DataType ParseDep ann)
+  ) =>
+  ToJSON (Module ann)
+
+deriving anyclass instance
+  (FromJSON ann, FromJSON (DataType ParseDep ann)) =>
+  FromJSON (Module ann)
 
 instance Printer (Module ann) where
   prettyDoc mod' =
@@ -117,7 +144,7 @@ printImport :: ModuleHash -> Doc a
 printImport modHash =
   "import * from" <+> prettyDoc modHash
 
-printTypeDef :: Module ann -> TypeName -> DataType ann -> Doc style
+printTypeDef :: Module ann -> TypeName -> DataType ParseDep ann -> Doc style
 printTypeDef mod' tn dt =
   let prettyExp =
         if S.member tn (moDataTypeExports mod')
@@ -126,7 +153,7 @@ printTypeDef mod' tn dt =
    in prettyExp <> prettyDoc dt
 
 -- given annotation and expr, pair annotation types with lambdas
-printPaired :: Type ann -> ParsedExpr ann -> Doc style
+printPaired :: ParsedType ann -> ParsedExpr ann -> Doc style
 printPaired (TFunc _ _ fn arg) (ELambda _ ident body) =
   "(" <> prettyDoc ident
     <+> ":"

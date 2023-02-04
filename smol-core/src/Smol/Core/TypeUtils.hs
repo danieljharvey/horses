@@ -3,7 +3,7 @@ module Smol.Core.TypeUtils (mapType, monoidType) where
 import Smol.Core.Types
 
 -- helper functions for manipulating Types
-mapType :: (Type ann -> Type ann) -> Type ann -> Type ann
+mapType :: (Type dep ann -> Type dep ann) -> Type dep ann -> Type dep ann
 mapType f (TFunc ann env fn arg) =
   TFunc ann (mapType f <$> env) (f fn) (f arg)
 mapType f (TTuple ann tHead tTail) =
@@ -21,7 +21,7 @@ mapType f (TUnion ann a b) =
   TUnion ann (f a) (f b)
 mapType _ (TConstructor ann c) = TConstructor ann c
 
-monoidType :: (Monoid a) => (Type ann -> a) -> Type ann -> a
+monoidType :: (Monoid a) => (Type dep ann -> a) -> Type dep ann -> a
 monoidType _ TVar {} = mempty
 monoidType _ TLiteral {} = mempty
 monoidType _ TPrim {} = mempty

@@ -1,9 +1,10 @@
-module Smol.Core.IR.FromResolvedExpr (fromResolvedExpr) where
+module Smol.Core.IR.FromResolvedExpr (fromResolvedExpr, fromResolvedType) where
 
 import Control.Monad.Identity
 import Smol.Core.ExprUtils
 import Smol.Core.Types.Expr
 import Smol.Core.Types.ResolvedDep
+import Smol.Core.Types.Type
 
 -- for now, throw extra info away
 resolve :: ResolvedDep a -> Identity a
@@ -16,3 +17,6 @@ resolve (UniqueDefinition a _) = pure a
 -- choice but fuck it
 fromResolvedExpr :: ResolvedExpr ann -> IdentityExpr ann
 fromResolvedExpr = mapExprDep resolve
+
+fromResolvedType :: Type ResolvedDep ann -> Type Identity ann
+fromResolvedType = mapTypeDep resolve

@@ -31,38 +31,49 @@ import Data.Text (Text)
 import GHC.Natural
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
-import Smol.Core.Types.Expr
-import Smol.Core.Types.ParseDep
 
-tyBool :: (Monoid ann) => Type ann
+tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
 
-tyBoolLit :: (Monoid ann) => Bool -> Type ann
+tyBoolLit :: (Monoid ann) => Bool -> Type dep ann
 tyBoolLit = TLiteral mempty . TLBool
 
-tyInt :: (Monoid ann) => Type ann
+tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
 
-tyIntLit :: (Monoid ann) => Integer -> Type ann
+tyIntLit :: (Monoid ann) => Integer -> Type dep ann
 tyIntLit = TLiteral mempty . TLInt
 
-tyNat :: (Monoid ann) => Type ann
+tyNat :: (Monoid ann) => Type dep ann
 tyNat = TPrim mempty TPNat
 
-tyVar :: (Monoid ann) => Text -> Type ann
-tyVar = TVar mempty . Identifier
+tyVar :: (Monoid ann) => Text -> Type ParseDep ann
+tyVar = TVar mempty . emptyParseDep . Identifier
 
-tyUnknown :: (Monoid ann) => Integer -> Type ann
+tyUnknown :: (Monoid ann) => Integer -> Type dep ann
 tyUnknown = TUnknown mempty
 
-tyTuple :: (Monoid ann) => Type ann -> [Type ann] -> Type ann
+tyTuple ::
+  (Monoid ann) =>
+  Type dep ann ->
+  [Type dep ann] ->
+  Type dep ann
 tyTuple a as = TTuple mempty a (NE.fromList as)
 
-tyUnion :: (Monoid ann) => Type ann -> Type ann -> Type ann
+tyUnion ::
+  (Monoid ann) =>
+  Type dep ann ->
+  Type dep ann ->
+  Type dep ann
 tyUnion = TUnion mempty
 
-tyCons :: (Monoid ann) => TypeName -> [Type ann] -> Type ann
-tyCons typeName = foldl' (TApp mempty) (TConstructor mempty typeName)
+tyCons ::
+  (Monoid ann) =>
+  TypeName ->
+  [Type ParseDep ann] ->
+  Type ParseDep ann
+tyCons typeName =
+  foldl' (TApp mempty) (TConstructor mempty (emptyParseDep typeName))
 
 unit :: (Monoid ann) => Expr dep ann
 unit = EPrim mempty PUnit
@@ -79,10 +90,17 @@ nat = EPrim mempty . PNat
 var :: (Monoid ann) => Text -> Expr ParseDep ann
 var = EVar mempty . emptyParseDep . Identifier
 
-tuple :: (Monoid ann) => Expr dep ann -> [Expr dep ann] -> Expr dep ann
+tuple ::
+  (Monoid ann) =>
+  Expr dep ann ->
+  [Expr dep ann] ->
+  Expr dep ann
 tuple a as = ETuple mempty a (NE.fromList as)
 
-constructor :: (Monoid ann) => Text -> Expr ParseDep ann
+constructor ::
+  (Monoid ann) =>
+  Text ->
+  Expr ParseDep ann
 constructor lbl = EConstructor mempty (emptyParseDep (Constructor lbl))
 
 identifier :: Text -> ParseDep Identifier
@@ -103,13 +121,13 @@ unsafeParseExpr input = case parseExprAndFormatError input of
   Right expr -> expr $> ()
   Left e -> error (show e)
 
-unsafeParseType :: Text -> Type ()
+unsafeParseType :: Text -> Type ParseDep ()
 unsafeParseType input = case parseTypeAndFormatError input of
   Right ty -> ty $> ()
   Left e -> error (show e)
 
 -- | parse a typed expr, ie parse it and fill the type with crap
-unsafeParseTypedExpr :: Text -> ResolvedExpr (Type Annotation)
+unsafeParseTypedExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
 unsafeParseTypedExpr input = case parseExprAndFormatError input of
   Right expr -> fromParsedExpr expr $> TPrim mempty TPBool
   Left e -> error (show e)

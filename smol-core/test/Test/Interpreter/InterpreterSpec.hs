@@ -9,7 +9,6 @@ import Data.Text (Text)
 import Smol.Core
 import Smol.Core.IR.FromResolvedExpr
 import Smol.Core.Typecheck.FromParsedExpr
-import Smol.Core.Types.Expr
 import Test.Helpers
 import Test.Hspec
 

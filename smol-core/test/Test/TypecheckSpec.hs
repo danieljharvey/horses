@@ -15,15 +15,12 @@ import qualified Data.Text as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
-import Smol.Core.Types.Expr
-import Smol.Core.Types.ParseDep
-import Smol.Core.Types.ResolvedDep
 import Test.Helpers
 import Test.Hspec
 
 evalExpr ::
   Text ->
-  Either (TCError Annotation) (ResolvedExpr (Type Annotation))
+  Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
 evalExpr input = case parseExprAndFormatError input of
   Left e -> error (show e)
   Right expr -> testElaborate expr
@@ -32,14 +29,15 @@ getLeft :: (Show a) => Either e a -> e
 getLeft (Left e) = e
 getLeft (Right a) = error (show a)
 
-removeLambdaEnv :: Type ann -> Type ann
-removeLambdaEnv (TFunc ann _ fn arg) = TFunc ann mempty (removeLambdaEnv fn) (removeLambdaEnv arg)
+removeLambdaEnv :: Type dep ann -> Type dep ann
+removeLambdaEnv (TFunc ann _ fn arg) =
+  TFunc ann mempty (removeLambdaEnv fn) (removeLambdaEnv arg)
 removeLambdaEnv other = mapType removeLambdaEnv other
 
 testElaborate ::
   (Ord ann, Show ann, Monoid ann) =>
   Expr ParseDep ann ->
-  Either (TCError ann) (Expr ResolvedDep (Type ann))
+  Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
 testElaborate expr = do
   case elaborate (fromParsedExpr expr) of
     Right typedExpr -> pure typedExpr
@@ -113,7 +111,10 @@ spec = do
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
             case (,) <$> first (T.pack . show) (evalExpr inputExpr) <*> parseTypeAndFormatError expectedType of
-              Right (te, typ) -> removeLambdaEnv (getExprAnnotation te) $> () `shouldBe` (removeLambdaEnv typ $> ())
+              Right (te, typ) ->
+                let result = removeLambdaEnv (getExprAnnotation te) $> ()
+                    expected = fromParsedType (removeLambdaEnv typ $> ())
+                 in result `shouldBe` expected
               other -> error (show other)
         )
         inputs
@@ -137,37 +138,37 @@ spec = do
     describe "freshen" $ do
       let emptyState = TCState mempty 0 mempty
       it "No unknowns" $ do
-        let input = unsafeParseType "Int -> Int"
+        let input = fromParsedType $ unsafeParseType "Int -> Int"
             expected = input
         evalState (freshen input) emptyState `shouldBe` expected
 
       it "A -> A becomes 1 -> 1" $ do
-        let input = TFunc () mempty (tyVar "A") (tyVar "A")
+        let input = fromParsedType $ TFunc () mempty (tyVar "A") (tyVar "A")
             expected = TFunc () mempty (tyUnknown 0) (tyUnknown 0)
         evalState (freshen input) emptyState `shouldBe` expected
 
     describe "getApplyReturnType" $ do
       it "Simple function" $ do
-        let input = unsafeParseType "Nat -> Int"
-            expected = unsafeParseType "Int"
+        let input = fromParsedType $ unsafeParseType "Nat -> Int"
+            expected = fromParsedType $ unsafeParseType "Int"
         runExcept (getApplyReturnType input)
           `shouldBe` Right expected
 
       it "Nested function" $ do
-        let input = unsafeParseType "Nat -> Int -> Bool"
-            expected = unsafeParseType "Int -> Bool"
+        let input = fromParsedType $ unsafeParseType "Nat -> Int -> Bool"
+            expected = fromParsedType $ unsafeParseType "Int -> Bool"
         runExcept (getApplyReturnType input)
           `shouldBe` Right expected
 
       it "Nested function with constructors" $ do
-        let input = unsafeParseType "Nat -> Maybe Int -> Maybe Bool"
-            expected = unsafeParseType "Maybe Int -> Maybe Bool"
+        let input = fromParsedType $ unsafeParseType "Nat -> Maybe Int -> Maybe Bool"
+            expected = fromParsedType $ unsafeParseType "Maybe Int -> Maybe Bool"
         runExcept (getApplyReturnType input)
           `shouldBe` Right expected
 
       it "Nested higher-order function with constructors" $ do
-        let input = unsafeParseType "(a -> b) -> Maybe a -> Maybe b"
-            expected = unsafeParseType "Maybe a -> Maybe b"
+        let input = fromParsedType $ unsafeParseType "(a -> b) -> Maybe a -> Maybe b"
+            expected = fromParsedType $ unsafeParseType "Maybe a -> Maybe b"
         runExcept (getApplyReturnType input)
           `shouldBe` Right expected
 
@@ -298,13 +299,13 @@ spec = do
                     (unsafeParseExpr "\\a -> a")
                 )
                 (bool True)
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyBool
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Application with annotation" $ do
         let input = EAnn () tyBool (unsafeParseExpr "(\\a -> a) True")
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyBool
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
@@ -314,13 +315,13 @@ spec = do
 
       it "Application with no annotation" $ do
         let input = unsafeParseExpr "(\\a -> a) True"
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyBoolLit True
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Two arg application with no annotation" $ do
         let input = unsafeParseExpr "(\\a -> \\b -> a) True 1"
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyBoolLit True
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
@@ -330,13 +331,13 @@ spec = do
                 ()
                 tyInt
                 (unsafeParseExpr "if ((\\a -> a) True) then 1 else 2")
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyInt
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Function use in if no annotation" $ do
         let input = unsafeParseExpr "if ((\\a -> a) True) then 1 else 2"
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyUnion (tyIntLit 1) (tyIntLit 2)
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
@@ -347,7 +348,7 @@ spec = do
                 (unsafeParseExpr "(\\a -> a) True")
                 (EAnn () tyInt (int 1))
                 (int 2)
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyInt
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
@@ -357,14 +358,14 @@ spec = do
                 ()
                 (tyTuple tyInt [tyBool, tyInt])
                 (tuple (int 1) [bool True, int 2])
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyTuple tyInt [tyBool, tyInt]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Infers unannotated tuple" $ do
         let input =
               tuple (int 1) [bool True, int 2]
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyTuple (tyIntLit 1) [tyBoolLit True, tyIntLit 2]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
@@ -399,7 +400,7 @@ spec = do
                 tyInt
                 (EApp () lambda (int 1))
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyInt
 
         getExprAnnotation <$> testElaborate input
@@ -413,7 +414,7 @@ spec = do
                 (ELambda () "a" (var "a"))
             input = EApp () argInput (int 1)
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyIntLit 1
 
         getExprAnnotation <$> testElaborate input
@@ -431,7 +432,7 @@ spec = do
                 "f"
                 (EApp () (var "f") (int 1))
             input = EApp () fnInput argInput
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyIntLit 1
 
         getExprAnnotation <$> testElaborate input
@@ -445,7 +446,7 @@ spec = do
                 (ELambda () "a" (var "a"))
             fnInput = unsafeParseExpr "\\f -> (f 1, f True)"
             input = EApp () fnInput argInput
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyTuple (tyIntLit 1) [tyBoolLit True]
 
         getExprAnnotation <$> testElaborate input
@@ -498,7 +499,7 @@ spec = do
       it "Global with annotation is OK" $ do
         let input = EAnn () tyInt (EGlobal () "numberOfDogs")
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected = TGlobals () (M.singleton "numberOfDogs" tyInt) tyInt
 
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
@@ -510,7 +511,7 @@ spec = do
                 (tyTuple tyInt [tyBool])
                 (tuple (EGlobal () "numberOfDogs") [bool True])
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected =
               TGlobals
                 ()
@@ -532,7 +533,7 @@ spec = do
                 )
                 (int 1)
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected =
               TGlobals
                 ()
@@ -566,7 +567,7 @@ spec = do
                 (bool True)
                 (EAnn () tyBool (EGlobal () "dog"))
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyBool
 
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
@@ -579,7 +580,7 @@ spec = do
                 (bool True)
                 (EGlobal () "dog")
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected = tyBoolLit True
 
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
@@ -587,7 +588,7 @@ spec = do
       it "Empty record" $ do
         let input = ERecord () mempty
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected = TRecord () mempty
 
         getExprAnnotation <$> testElaborate input
@@ -596,7 +597,7 @@ spec = do
       it "Record with literals in" $ do
         let input = ERecord () (M.fromList [("a", bool True), ("b", int 1)])
 
-            expected :: Type ()
+            expected :: Type dep ()
             expected =
               TRecord
                 ()
@@ -678,10 +679,13 @@ spec = do
       it "Infers Nothing with fresh var" $ do
         let input = unsafeParseExpr "Nothing"
             expected =
-              EConstructor
-                ( tyCons "Maybe" [tyUnknown 0]
-                )
-                "Nothing"
+              fromParsedType
+                <$> fromParsedExpr
+                  ( EConstructor
+                      ( tyCons "Maybe" [tyUnknown 0]
+                      )
+                      "Nothing"
+                  )
         testElaborate input `shouldBe` Right expected
 
       it "Basic let binding" $ do
@@ -720,46 +724,45 @@ spec = do
         let input =
               unsafeParseExpr
                 "let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing"
-            expected = unsafeParseType "Maybe 1"
+            expected = fromParsedType $ unsafeParseType "Maybe 1"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right
             expected
 
       it "id function" $ do
         let input = unsafeParseExpr "let id = (\\a -> a : a -> a); id True"
-            expected = unsafeParseType "True"
+            expected = fromParsedType $ unsafeParseType "True"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected
 
       it "const function" $ do
         let input = unsafeParseExpr "let const = (\\a -> \\b -> a : a -> b -> a); const True 100"
-            expected = unsafeParseType "True"
+            expected = fromParsedType $ unsafeParseType "True"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected
 
       it "Weird boys 0" $ do
         let input = unsafeParseExpr "let fmap = (\\f -> case (Just (1 : Nat)) of Just a -> Just (f a) : (Nat -> b) -> Maybe b); let id = (\\i -> i : Nat -> Nat); fmap id"
-            expected = unsafeParseType "Maybe Nat"
+            expected = fromParsedType $ unsafeParseType "Maybe Nat"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Weird boys 4" $ do
         let input =
               unsafeParseExpr
                 "let fmap = (\\f -> \\val -> case val of Just aa -> Just (f aa) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : Nat -> Nat); fmap id (Just 1000)"
-
-            expected = unsafeParseType "Maybe Nat"
+            expected = fromParsedType $ unsafeParseType "Maybe Nat"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Weird boys 5" $ do
         let input =
               unsafeParseExpr
                 "let fmap = (\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : c -> c); (fmap id (Just 1) : Maybe 1)"
-            expected = unsafeParseType "Maybe 1"
+            expected = fromParsedType $ unsafeParseType "Maybe 1"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Applying with a polymorphic function as arg" $ do
         let input =
               unsafeParseExpr "let apply = (\\f -> \\a -> f a : (a -> b) -> a -> b); let id = (\\c -> c : zz -> zz); apply id 1"
-            expected = unsafeParseType "1"
+            expected = fromParsedType $ unsafeParseType "1"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected

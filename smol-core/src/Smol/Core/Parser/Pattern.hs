@@ -13,7 +13,6 @@ import qualified Smol.Core.Parser.Identifiers as Identifiers
 import Smol.Core.Parser.Primitives
 import Smol.Core.Parser.Shared
 import Smol.Core.Types
-import Smol.Core.Types.ParseDep
 import Text.Megaparsec
 import Text.Megaparsec.Char
 

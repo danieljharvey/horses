@@ -1,19 +1,47 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Test.ParserSpec (spec) where
 
+import Data.Bifunctor (second)
+import Data.Either (isRight)
+import Data.FileEmbed
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Smol.Core
 import Test.Helpers
 import Test.Hspec
 
+-- these are saved in a file that is included in compilation
+testInputs :: [(FilePath, Text)]
+testInputs =
+  fmap (second T.decodeUtf8) $(makeRelativeToProject "test/static/" >>= embedDir)
+
 spec :: Spec
 spec = do
   describe "Parser" $ do
+    describe "Module" $ do
+      it "Parses a single type" $ do
+        let result = parseModuleAndFormatError "type Dog a = Woof String | Other a"
+        result `shouldSatisfy` isRight
+
+      it "Parses a single definition" $ do
+        let result = parseModuleAndFormatError "def id a = a"
+        result `shouldSatisfy` isRight
+
+      traverse_
+        ( \(filename, contents) ->
+            xit ("Parses " <> filename) $ do
+              let result = parseModuleAndFormatError contents
+              result `shouldSatisfy` isRight
+        )
+        testInputs
+
     describe "Expr" $ do
       let strings =
             [ ("True", bool True),
@@ -28,6 +56,7 @@ spec = do
               ("(True,True)", tuple (bool True) [bool True]),
               ("(100, 200, 300)", tuple (nat 100) [nat 200, nat 300]),
               ("log", var "log"),
+              ("Prelude.log", EVar () (ParseDep "log" (Just "Prelude"))),
               ("\\a -> True", ELambda () "a" (bool True)),
               ( "(\\a -> True : Int -> Bool)",
                 EAnn () (TFunc () mempty tyInt tyBool) (ELambda () "a" (bool True))
@@ -38,6 +67,7 @@ spec = do
               ("dog!", EGlobal () "dog"),
               ("{ a: 1, b: True }", ERecord () (M.fromList [("a", nat 1), ("b", bool True)])),
               ("Just", constructor "Just"),
+              ("Maybe.Just", EConstructor () (ParseDep "Just" (Just "Maybe"))),
               ("Just True", EApp () (constructor "Just") (bool True)),
               ("These 1 False", EApp () (EApp () (constructor "These") (nat 1)) (bool False)),
               ( "case a of (b, c) -> b + c",

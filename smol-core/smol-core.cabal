@@ -69,13 +69,13 @@ library
     Smol.Core.Interpreter.Convert
     Smol.Core.Interpreter.Interpret
     Smol.Core.Interpreter.Types
-    Smol.Core.IR.FromResolvedExpr
     Smol.Core.IR.FromExpr.DataTypes
     Smol.Core.IR.FromExpr.Expr
     Smol.Core.IR.FromExpr.Helpers
     Smol.Core.IR.FromExpr.Pattern
     Smol.Core.IR.FromExpr.Type
     Smol.Core.IR.FromExpr.Types
+    Smol.Core.IR.FromResolvedExpr
     Smol.Core.IR.IRExpr
     Smol.Core.IR.ToLLVM.Helpers
     Smol.Core.IR.ToLLVM.Patterns
@@ -106,11 +106,11 @@ library
     Smol.Core.Types.Expr
     Smol.Core.Types.GetPath
     Smol.Core.Types.Identifier
-    Smol.Core.Types.Module.Module
-    Smol.Core.Types.Module.Entity
-    Smol.Core.Types.Module.ModuleName
-    Smol.Core.Types.Module.ModuleHash
     Smol.Core.Types.Module.DefIdentifier
+    Smol.Core.Types.Module.Entity
+    Smol.Core.Types.Module.Module
+    Smol.Core.Types.Module.ModuleHash
+    Smol.Core.Types.Module.ModuleName
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError
@@ -140,19 +140,22 @@ test-suite smol-core-tests
     Smol.Core.Interpreter.Convert
     Smol.Core.Interpreter.Interpret
     Smol.Core.Interpreter.Types
-    Smol.Core.IR.FromResolvedExpr
     Smol.Core.IR.FromExpr.DataTypes
     Smol.Core.IR.FromExpr.Expr
     Smol.Core.IR.FromExpr.Helpers
     Smol.Core.IR.FromExpr.Pattern
     Smol.Core.IR.FromExpr.Type
     Smol.Core.IR.FromExpr.Types
+    Smol.Core.IR.FromResolvedExpr
     Smol.Core.IR.IRExpr
     Smol.Core.IR.ToLLVM.Helpers
     Smol.Core.IR.ToLLVM.Patterns
     Smol.Core.IR.ToLLVM.ToLLVM
     Smol.Core.Parser
+    Smol.Core.Parser.DataType
+    Smol.Core.Parser.Expr
     Smol.Core.Parser.Identifiers
+    Smol.Core.Parser.Module
     Smol.Core.Parser.Pattern
     Smol.Core.Parser.Primitives
     Smol.Core.Parser.Shared
@@ -177,17 +180,22 @@ test-suite smol-core-tests
     Smol.Core.Types.Expr
     Smol.Core.Types.GetPath
     Smol.Core.Types.Identifier
+    Smol.Core.Types.Module
+    Smol.Core.Types.Module.DefIdentifier
+    Smol.Core.Types.Module.Entity
+    Smol.Core.Types.Module.Module
+    Smol.Core.Types.Module.ModuleHash
+    Smol.Core.Types.Module.ModuleName
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError
     Smol.Core.Types.PatternPredicate
     Smol.Core.Types.Prim
-    Smol.Core.Types.SourceSpan
     Smol.Core.Types.ResolvedDep
+    Smol.Core.Types.SourceSpan
     Smol.Core.Types.Type
     Smol.Core.Types.TypeName
     Smol.Core.TypeUtils
-
     Test.Helpers
     Test.Interpreter.InterpreterSpec
     Test.IR.CompileSpec

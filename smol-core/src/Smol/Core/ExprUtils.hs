@@ -8,6 +8,7 @@ module Smol.Core.ExprUtils
     mapPattern,
     patternMonoid,
     mapExprDep,
+    mapTypeDep,
   )
 where
 
@@ -17,7 +18,7 @@ import Smol.Core.Types
 
 -- helper functions for manipulating Expr types
 --
-typeIsStruct :: Type ann -> Bool
+typeIsStruct :: Type dep ann -> Bool
 typeIsStruct TPrim {} = False
 typeIsStruct TLiteral {} = False
 typeIsStruct _ = True
@@ -110,7 +111,7 @@ mapExprDep :: (forall a. depA a -> depB a) -> Expr depA ann -> Expr depB ann
 mapExprDep resolve = go
   where
     go (EInfix ann op a b) = EInfix ann op (go a) (go b)
-    go (EAnn ann mt expr) = EAnn ann mt (go expr)
+    go (EAnn ann mt expr) = EAnn ann (mapTypeDep resolve mt) (go expr)
     go (EPrim ann a) = EPrim ann a
     go (EVar ann a) =
       EVar ann (resolve a)
@@ -141,3 +142,18 @@ mapPatternDep resolve = go
     go (PTuple ann a as) = PTuple ann (go a) (go <$> as)
     go (PConstructor ann constructor as) =
       PConstructor ann (resolve constructor) (go <$> as)
+
+mapTypeDep :: (forall a. depA a -> depB a) -> Type depA ann -> Type depB ann
+mapTypeDep resolve = go
+  where
+    go (TVar ann v) = TVar ann (resolve v)
+    go (TTuple ann a as) = TTuple ann (go a) (go <$> as)
+    go (TLiteral ann a) = TLiteral ann a
+    go (TPrim ann p) = TPrim ann p
+    go (TFunc ann env a b) = TFunc ann (go <$> env) (go a) (go b)
+    go (TUnknown ann i) = TUnknown ann i
+    go (TGlobals ann env inner) = TGlobals ann (go <$> env) (go inner)
+    go (TRecord ann as) = TRecord ann (go <$> as)
+    go (TUnion ann a b) = TUnion ann (go a) (go b)
+    go (TApp ann a b) = TApp ann (go a) (go b)
+    go (TConstructor ann constructor) = TConstructor ann (resolve constructor)

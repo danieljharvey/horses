@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Smol.Core.Typecheck.Elaborate
   ( elaborate,
@@ -26,29 +27,29 @@ import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
-import Smol.Core.Types.Expr
-import Smol.Core.Types.ResolvedDep
 
-builtInTypes :: (Monoid ann) => Map TypeName (DataType ann)
-builtInTypes =
+builtInTypes ::
+  (Monoid ann, Ord (dep TypeName)) =>
+  (forall a. a -> dep a) ->
+  Map (dep TypeName) (DataType dep ann)
+builtInTypes liftDep =
   let identityDt =
         DataType
           "Identity"
           ["a"]
-          (M.singleton "Identity" [TVar mempty "a"])
+          (M.singleton "Identity" [TVar mempty $ liftDep "a"])
       maybeDt =
         DataType
           "Maybe"
           ["a"]
-          (M.fromList [("Just", [TVar mempty "a"]), ("Nothing", [])])
-
+          (M.fromList [("Just", [TVar mempty $ liftDep "a"]), ("Nothing", [])])
       eitherDt =
         DataType
           "Either"
           ["e", "a"]
           ( M.fromList
-              [ ("Left", [TVar mempty "e"]),
-                ("Right", [TVar mempty "a"])
+              [ ("Left", [TVar mempty $ liftDep "e"]),
+                ("Right", [TVar mempty $ liftDep "a"])
               ]
           )
 
@@ -57,9 +58,9 @@ builtInTypes =
           "These"
           ["a", "b"]
           ( M.fromList
-              [ ("This", [TVar mempty "a"]),
-                ("That", [TVar mempty "b"]),
-                ("These", [TVar mempty "a", TVar mempty "b"])
+              [ ("This", [TVar mempty $ liftDep "a"]),
+                ("That", [TVar mempty $ liftDep "b"]),
+                ("These", [TVar mempty $ liftDep "a", TVar mempty $ liftDep "b"])
               ]
           )
       ordDt =
@@ -73,17 +74,21 @@ builtInTypes =
           "List"
           ["a"]
           ( M.fromList
-              [ ("Cons", [TVar mempty "a", TApp mempty (TConstructor mempty "List") (TVar mempty "a")]),
+              [ ( "Cons",
+                  [ TVar mempty (liftDep "a"),
+                    TApp mempty (TConstructor mempty (liftDep "List")) (TVar mempty (liftDep "a"))
+                  ]
+                ),
                 ("Nil", mempty)
               ]
           )
    in M.fromList
-        [ ("Maybe", maybeDt),
-          ("Either", eitherDt),
-          ("Ord", ordDt),
-          ("These", theseDt),
-          ("Identity", identityDt),
-          ("List", listDt)
+        [ (liftDep "Maybe", maybeDt),
+          (liftDep "Either", eitherDt),
+          (liftDep "Ord", ordDt),
+          (liftDep "These", theseDt),
+          (liftDep "Identity", identityDt),
+          (liftDep "List", listDt)
         ]
 
 elaborate ::
@@ -93,7 +98,7 @@ elaborate ::
     MonadError (TCError ann) m
   ) =>
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 elaborate expr =
   fst
     <$> runReaderT
@@ -103,12 +108,12 @@ elaborate expr =
               (TCState mempty 0 mempty)
           )
       )
-      (TCEnv mempty mempty builtInTypes)
+      (TCEnv mempty mempty (builtInTypes emptyResolvedDep))
 
 listenToGlobals ::
   ( MonadState (TCState ann) m,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m,
+    MonadWriter [Substitution ResolvedDep ann] m,
     Eq ann,
     Show ann
   ) =>
@@ -121,13 +126,13 @@ listenToGlobals f = do
 
 collectGlobals ::
   ( MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m,
+    MonadWriter [Substitution ResolvedDep ann] m,
     MonadError (TCError ann) m,
     Eq ann,
     Show ann
   ) =>
-  m (ResolvedExpr (Type ann)) ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann)) ->
+  m (ResolvedExpr (ResolvedType ann))
 collectGlobals f = do
   (expr, combinedGlobs) <- listenToGlobals f
   let ty = getExprAnnotation expr
@@ -147,13 +152,13 @@ inferInfix ::
     MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ann ->
   Op ->
   ResolvedExpr ann ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 inferInfix _ann OpAdd a b = do
   elabA <- infer a
   elabB <- infer b
@@ -196,10 +201,10 @@ infer ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 infer inferExpr = do
   case inferExpr of
     (EPrim ann prim) ->
@@ -285,12 +290,12 @@ inferApplication ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
-  Maybe (Type ann) ->
+  Maybe (ResolvedType ann) ->
   ResolvedExpr ann ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
   typedArg <- infer arg
   -- if we are applying to a variable, then we need to be a bit clever and
@@ -346,9 +351,9 @@ checkPattern ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m
   ) =>
-  Type ann ->
+  ResolvedType ann ->
   Pattern ResolvedDep ann ->
-  m (Pattern ResolvedDep (Type ann), Map (ResolvedDep Identifier) (Type ann))
+  m (Pattern ResolvedDep (ResolvedType ann), Map (ResolvedDep Identifier) (ResolvedType ann))
 checkPattern checkTy checkPat = do
   case (checkTy, checkPat) of
     (TTuple _ tA tRest, PTuple ann pA pRest) | length tRest == length pRest -> do
@@ -380,7 +385,7 @@ checkPattern checkTy checkPat = do
         Right _ -> pure (PLiteral ty lit, mempty)
     (ty, PConstructor ann constructor args) -> do
       -- we don't check the constructor is valid yet
-      flattened <- runExceptT $ flattenConstructorType ty
+      let flattened = flattenConstructorType ty
 
       -- lookup the constructor itself (ie, `Just`, `Nothing`)
       (patTypeName, _, otherConstructors, consArgs) <- lookupConstructor constructor
@@ -419,16 +424,16 @@ checkPattern checkTy checkPat = do
 
 checkLambda ::
   ( MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m,
+    MonadWriter [Substitution ResolvedDep ann] m,
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     Show ann,
     Ord ann
   ) =>
-  Type ann ->
+  ResolvedType ann ->
   ResolvedDep Identifier ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
   maybeArg <- popArg
   realFrom <- case maybeArg of
@@ -457,12 +462,12 @@ inferLambda ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ann ->
   ResolvedDep Identifier ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 inferLambda ann ident body = do
   maybeTyp <- popArg
   tyArg <- case maybeTyp of
@@ -486,11 +491,11 @@ check ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ann] m
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
-  Type ann ->
+  ResolvedType ann ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (Type ann))
+  m (ResolvedExpr (ResolvedType ann))
 check typ expr = do
   case expr of
     ELambda _ ident body ->

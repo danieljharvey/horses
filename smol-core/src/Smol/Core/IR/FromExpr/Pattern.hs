@@ -14,9 +14,9 @@ import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import GHC.Records (HasField (..))
 import Smol.Core.Helpers
 import Smol.Core.IR.FromExpr.Helpers
+import Smol.Core.IR.FromExpr.Types
 import qualified Smol.Core.Types as Smol
 import Smol.Core.Types.GetPath
 import Smol.Core.Types.PatternPredicate
@@ -28,7 +28,7 @@ destructurePattern ::
     Ord p
   ) =>
   (Smol.Identifier -> p) ->
-  Smol.Pattern Identity (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type Identity ann) ->
   m (Map p GetPath)
 destructurePattern fromIdentifier =
   destructInner []
@@ -49,12 +49,11 @@ destructurePattern fromIdentifier =
         Nothing -> pure $ M.singleton (fromIdentifier (runIdentity ident)) ValuePath
 
 predicatesFromPattern ::
-  ( MonadState s m,
-    HasField "dataTypes" s (Map Smol.TypeName (Smol.DataType ann)),
+  ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
   (Smol.Prim -> p) ->
-  Smol.Pattern Identity (Smol.Type ann) ->
+  Smol.Pattern Identity (Smol.Type Identity ann) ->
   m [PatternPredicate p]
 predicatesFromPattern fromPrim =
   predicatesInner []
