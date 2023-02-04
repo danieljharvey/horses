@@ -138,6 +138,19 @@ spec = do
         describe "IR compile" $ do
           traverse_ testCompileIR testVals
 
+      xdescribe "Nested datatypes (manually split cases)" $ do
+        let testVals =
+              [ ("let maybe = Just (Just 41) in 42", "42"),
+                ("let oneList = Cons 1 Nil in 42", "42"),
+                ("let twoList = Cons 1 (Cons 2 Nil) in 42", "42"),
+                ("(\\maybe -> case maybe of Just a -> (case a of Just aa -> aa + 1 | _ -> 0) | _ -> 0 : Maybe (Maybe Nat) -> Nat) (Just (Just 41))", "42") -- ,
+                -- ("let nested = (20, (11,11)) in 42", "42"),
+                -- ("(\\nested -> case nested of (a,(b,c)) -> a + b + c : (Nat, (Nat, Nat)) -> Nat) (20,(11,11))", "42"),
+                -- ("(\\maybe -> case maybe of Just (a,b,c) -> a + b + c | Nothing -> 0 : Maybe (Nat,Nat,Nat) -> Nat) (Just (1,2,3))", "6")
+              ]
+
+        describe "IR compile" $ do
+          traverse_ testCompileIR testVals
       xdescribe "Nested datatypes (currently broken)" $ do
         let testVals =
               [ ("let maybe = Just (Just 41) in 42", "42"),

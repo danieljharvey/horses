@@ -123,8 +123,7 @@ howManyInts (DTPrim Smol.TPBool) = 1
 howManyInts (DTPrim Smol.TPNat) = 1
 howManyInts (DTTuple as) = getSum $ foldMap (Sum . howManyInts) as
 howManyInts (DTArray size a) = size * howManyInts a
-howManyInts (DTMany _) = error "soon to be deleted"
-howManyInts (DTDataType _ _) = error "this will probably be 1 as we'll box any subtypes"
+howManyInts (DTDataType whole _) = howManyInts whole -- wrong?
 
 -- given ['e','a'], [TVar _ "a", TVar _ "e"] and [Int, Bool] return [Bool, Int]
 -- putting each arg into place
@@ -165,7 +164,6 @@ data DataTypeInMemory
   | DTPrim Smol.TypePrim -- a primitive llvm type
   | DTTuple [DataTypeInMemory]
   | DTArray Word64 DataTypeInMemory
-  | DTMany (Map Smol.Constructor [DataTypeInMemory]) -- the old way, we'll delete this when we're done
   | DTDataType
       { dtWhole :: DataTypeInMemory, -- a big enough allocation to fill all the constructors
         dtConstructors :: Map Smol.Constructor [DataTypeInMemory] -- the actual constructors (these don't contain the discriminator int)

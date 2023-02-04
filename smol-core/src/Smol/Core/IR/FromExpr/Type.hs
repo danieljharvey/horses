@@ -72,10 +72,6 @@ fromDataTypeInMemory = \case
     IRArray size (fromDataTypeInMemory tyInner)
   DTPrim prim -> fromTypePrim prim
   DTDataType whole _ -> fromDataTypeInMemory whole
-  DTMany mems ->
-    -- combine all items from all sums for now
-    let allItems = mconcat $ (fmap . fmap) fromDataTypeInMemory (M.elems mems)
-     in IRStruct ([IRInt32] <> allItems)
 
 fromTypePrim :: Smol.TypePrim -> IRType
 fromTypePrim Smol.TPBool = IRInt2

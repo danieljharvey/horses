@@ -68,12 +68,22 @@ builtInTypes =
           []
           ( M.fromList [("LT", mempty), ("EQ", mempty), ("GT", mempty)]
           )
+      listDt =
+        DataType
+          "List"
+          ["a"]
+          ( M.fromList
+              [ ("Cons", [TVar mempty "a", TApp mempty (TConstructor mempty "List") (TVar mempty "a")]),
+                ("Nil", mempty)
+              ]
+          )
    in M.fromList
         [ ("Maybe", maybeDt),
           ("Either", eitherDt),
           ("Ord", ordDt),
           ("These", theseDt),
-          ("Identity", identityDt)
+          ("Identity", identityDt),
+          ("List", listDt)
         ]
 
 elaborate ::
