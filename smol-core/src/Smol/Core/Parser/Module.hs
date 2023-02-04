@@ -58,7 +58,7 @@ moduleTypeDeclarationParser = do
 -------
 
 annotatedIdentifier :: Parser (Annotated Identifier Annotation)
-annotatedIdentifier = withLocation (\a b -> Annotated a b) identifierParser
+annotatedIdentifier = withLocation Annotated identifierParser
 
 -- definitions
 -- def oneHundred = 100

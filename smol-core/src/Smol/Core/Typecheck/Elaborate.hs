@@ -74,7 +74,11 @@ builtInTypes liftDep =
           "List"
           ["a"]
           ( M.fromList
-              [ ("Cons", [TVar mempty "a", TApp mempty (TConstructor mempty "List") (TVar mempty "a")]),
+              [ ( "Cons",
+                  [ TVar mempty (liftDep "a"),
+                    TApp mempty (TConstructor mempty (liftDep "List")) (TVar mempty (liftDep "a"))
+                  ]
+                ),
                 ("Nil", mempty)
               ]
           )
