@@ -72,8 +72,11 @@ builtInTypes =
         DataType
           "List"
           ["a"]
-          (M.fromList [("Cons", [TVar mempty "a", TApp mempty (TConstructor mempty "List") (TVar mempty "a")]),
-                        ("Nil", mempty)])
+          ( M.fromList
+              [ ("Cons", [TVar mempty "a", TApp mempty (TConstructor mempty "List") (TVar mempty "a")]),
+                ("Nil", mempty)
+              ]
+          )
    in M.fromList
         [ ("Maybe", maybeDt),
           ("Either", eitherDt),
