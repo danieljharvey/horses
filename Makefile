@@ -72,6 +72,10 @@ test-smol:
 test-core:
 	cabal run core:test:core-test
 
+.PHONY: test-llvm-calc
+test-llvm-calc:
+	cabal run llvm-calc:tests
+
 .PHONY: test-backends
 test-backends:
 	cabal run backends:test:backends-tests

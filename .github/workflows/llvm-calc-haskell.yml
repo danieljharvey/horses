@@ -1,0 +1,54 @@
+name: LLVM calculator - build
+
+on:
+  push:
+    branches:
+      - trunk
+    paths:
+      - "llvm-calc/**"
+      - "vendored/**"
+
+  pull_request:
+    branches:
+      - trunk
+    paths:
+      - "llvm-calc/**"
+      - "vendored/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "14.0"
+
+      - name: Cache cabal global package db
+        id: cabal-global
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal
+          key: ${{ runner.os }}-1-llvm-calc-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-llvm-calc-cabal-global-${{ matrix.plan.ghc }}
+
+      - name: Cache .cabal-work
+        uses: actions/cache@v3
+        with:
+          path: dist-newstyle
+          key: ${{ runner.os }}-1-llvm-calc-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-llvm-calc-cabal-work-${{ matrix.plan.ghc }}
+
+      - uses: haskell/actions/setup@v2
+        with:
+          ghc-version: '9.2.5'
+          cabal-version: '3.8.1.0'
+
+      - name: Test llvm-calc
+        run: make test-llvm-calc
+
