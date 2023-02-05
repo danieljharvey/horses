@@ -10,8 +10,6 @@ on:
       - "repl/**"
       - "core/**"
       - "backends/**"
-      - "smol-core/**"
-      - "llvm-calc/**"
 
   pull_request:
     branches:
@@ -22,8 +20,6 @@ on:
       - "repl/**"
       - "core/**"
       - "backends/**"
-      - "smol-core/**"
-      - "llvm-calc/**"
 
 jobs:
   build:
