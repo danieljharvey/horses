@@ -31,12 +31,8 @@ common shared
     -Wredundant-constraints -Wmissing-deriving-strategies
 
   build-depends:
-    , aeson
-    , array
     , base
-    , bytestring
     , containers
-    , diagnose
     , directory
     , file-embed
     , llvm-hs-pretty
@@ -44,7 +40,6 @@ common shared
     , megaparsec
     , mtl
     , parser-combinators
-    , prettyprinter
     , process
     , string-conversions
     , text
@@ -63,10 +58,16 @@ library
   exposed-modules:
     Calc
     Calc.Compile.RunLLVM
+    Calc.ExprUtils
+    Calc.Interpreter
     Calc.Parser
+    Calc.Parser.Expr
+    Calc.Parser.Primitives
     Calc.Parser.Shared
-    Calc.SourceSpan
+    Calc.Parser.Types
+    Calc.Types
     Calc.Types.Annotation
+    Calc.Types.Expr
     Calc.Types.Prim
     Calc.Types.SourceSpan
 
@@ -82,21 +83,21 @@ test-suite smol-core-tests
   other-modules:
     Calc
     Calc.Compile.RunLLVM
+    Calc.Compile.ToLLVM
     Calc.ExprUtils
     Calc.Interpreter
-    Calc.Interpreter.Interpret
     Calc.Parser
     Calc.Parser.Expr
+    Calc.Parser.Primitives
     Calc.Parser.Types
     Calc.Parser.Shared
-    Calc.SourceSpan
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Prim
-    Calc.Types.SourceSpan
     Test.Interpreter.InterpreterSpec
     Test.Parser.ParserSpec
+    Test.LLVM.LLVMSpec
 
   main-is:          Main.hs
   default-language: Haskell2010
