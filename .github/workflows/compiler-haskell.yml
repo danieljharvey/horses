@@ -10,6 +10,8 @@ on:
       - "repl/**"
       - "core/**"
       - "backends/**"
+      - "smol-core/**"
+      - "llvm-calc/**"
 
   pull_request:
     branches:
@@ -20,6 +22,8 @@ on:
       - "repl/**"
       - "core/**"
       - "backends/**"
+      - "smol-core/**"
+      - "llvm-calc/**"
 
 jobs:
   build:
@@ -59,6 +63,9 @@ jobs:
           ghc-version: '9.2.5'
           cabal-version: '3.8.1.0'
 
+      - name: Build all things
+        run: make build
+
       - name: Test core
         run: make test-core
 
@@ -67,9 +74,6 @@ jobs:
 
       - name: Test compiler
         run: yarn global add typescript@4.4 ts-node@10.4.0 & make test
-
-      - name: Build all things
-        run: make build
 
       - name: Run benchmarks
         run: make bench
