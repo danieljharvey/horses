@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               smol-core
+name:               llvm-calc
 version:            0.1.0.0
 
 -- A short (one-line) description of the package.
@@ -35,6 +35,7 @@ common shared
     , containers
     , directory
     , file-embed
+    , haskeline
     , llvm-hs-pretty
     , llvm-hs-pure
     , megaparsec
@@ -58,6 +59,7 @@ library
   exposed-modules:
     Calc
     Calc.Compile.RunLLVM
+    Calc.Compile.ToLLVM
     Calc.ExprUtils
     Calc.Interpreter
     Calc.Parser
@@ -65,11 +67,11 @@ library
     Calc.Parser.Primitives
     Calc.Parser.Shared
     Calc.Parser.Types
+    Calc.Repl
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Prim
-    Calc.Types.SourceSpan
 
 test-suite smol-core-tests
   import:           shared
@@ -100,4 +102,44 @@ test-suite smol-core-tests
     Test.LLVM.LLVMSpec
 
   main-is:          Main.hs
+  default-language: Haskell2010
+
+executable llvm-calc
+  main-is:          Main.hs
+  other-modules:
+    Calc
+    Calc.Compile.RunLLVM
+    Calc.Compile.ToLLVM
+    Calc.ExprUtils
+    Calc.Interpreter
+    Calc.Parser
+    Calc.Parser.Expr
+    Calc.Parser.Primitives
+    Calc.Parser.Shared
+    Calc.Parser.Types
+    Calc.Repl
+    Calc.Types
+    Calc.Types.Annotation
+    Calc.Types.Expr
+    Calc.Types.Prim
+
+  hs-source-dirs:   app
+  hs-source-dirs:   src
+
+  ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    , llvm-calc
+    , base
+    , haskeline
+    , llvm-hs-pretty
+    , llvm-hs-pure
+    , process
+    , directory
+    , text
+    , unix
+    , file-embed
+    , string-conversions
+    , megaparsec
+    , parser-combinators
+
   default-language: Haskell2010

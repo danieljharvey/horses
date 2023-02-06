@@ -4,6 +4,7 @@ module Calc
     module Calc.ExprUtils,
     module Calc.Compile.RunLLVM,
     module Calc.Interpreter,
+    module Calc.Repl
   )
 where
 
@@ -12,3 +13,4 @@ import Calc.ExprUtils
 import Calc.Interpreter
 import Calc.Parser
 import Calc.Types
+import Calc.Repl
