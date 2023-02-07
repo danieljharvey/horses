@@ -23,6 +23,7 @@ jobs:
             server/**/*.hs
             repl/**/*.hs
             smol-core/**/*.hs
+            llvm-calc/**/*.hs
 
   hlint:
     runs-on: ubuntu-latest
@@ -37,6 +38,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: '["backends/", "compiler/", "core/", "server/", "repl/", "smol-core/"]'
+          path: '["backends/", "compiler/", "core/", "server/", "repl/", "smol-core/", "llvm-calc/"]'
           fail-on: warning
 
