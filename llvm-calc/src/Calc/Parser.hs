@@ -3,6 +3,7 @@
 module Calc.Parser
   ( parseExpr,
     parseExprAndFormatError,
+    replFilename,
   )
 where
 
@@ -13,6 +14,11 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Text.Megaparsec
 import Text.Megaparsec.Char
+
+-- | which file are we parsing?
+-- we use this to show the right text in errors
+replFilename :: FilePath
+replFilename = "repl"
 
 parseAndFormat :: Parser a -> Text -> Either Text a
 parseAndFormat p =

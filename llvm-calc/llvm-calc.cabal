@@ -33,6 +33,7 @@ common shared
   build-depends:
     , base
     , containers
+    , diagnose
     , directory
     , file-embed
     , haskeline
@@ -130,6 +131,7 @@ executable llvm-calc
   build-depends:
     , llvm-calc
     , base
+    , diagnose
     , haskeline
     , llvm-hs-pretty
     , llvm-hs-pure
