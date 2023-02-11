@@ -25,7 +25,8 @@ table =
   [ [binary "*" (EInfix mempty OpMultiply)],
     [ binary "+" (EInfix mempty OpAdd),
       binary "-" (EInfix mempty OpSubtract)
-    ]
+    ],
+    [ binary "==" (EInfix mempty OpEquals)]
   ]
 
 binary :: Text -> (a -> a -> a) -> Operator Parser a

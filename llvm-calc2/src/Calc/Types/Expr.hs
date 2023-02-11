@@ -10,5 +10,9 @@ data Expr ann
   | EInfix ann Op (Expr ann) (Expr ann)
   deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable)
 
-data Op = OpAdd | OpMultiply | OpSubtract
+data Op
+  = OpAdd
+  | OpMultiply
+  | OpSubtract
+  | OpEquals
   deriving stock (Eq, Ord, Show)

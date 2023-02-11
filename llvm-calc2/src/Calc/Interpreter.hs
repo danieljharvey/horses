@@ -15,6 +15,8 @@ interpretInfix ann OpSubtract (EPrim _ (PInt a)) (EPrim _ (PInt b)) =
   pure $ EPrim ann (PInt $ a - b)
 interpretInfix ann OpMultiply (EPrim _ (PInt a)) (EPrim _ (PInt b)) =
   pure $ EPrim ann (PInt $ a * b)
+interpretInfix ann OpEquals (EPrim _ a) (EPrim _ b) =
+  pure $ EPrim ann (PBool $ a == b)
 interpretInfix ann op a b = do
   iA <- interpret a
   iB <- interpret b

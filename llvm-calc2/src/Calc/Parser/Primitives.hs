@@ -9,11 +9,11 @@ where
 import Calc.Parser.Shared
 import Calc.Parser.Types
 import Calc.Types.Expr
+import Calc.Types.Prim
+import Control.Applicative
 import Data.Functor (($>))
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Calc.Types.Prim
-import Control.Applicative
 
 ----
 
@@ -38,9 +38,9 @@ falseParser = stringLiteral "False" $> False
 ---
 
 primParser :: Parser ParserExpr
-primParser = myLexeme $ addLocation $
+primParser =
+  myLexeme $
+    addLocation $
       EPrim mempty . PInt <$> intParser
         <|> EPrim mempty <$> truePrimParser
         <|> EPrim mempty <$> falsePrimParser
-
-

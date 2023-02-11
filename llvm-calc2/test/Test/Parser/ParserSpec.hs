@@ -31,7 +31,8 @@ spec = do
                       (int 2)
                   )
                   (int 3)
-              )
+              ),
+              ("1 == 2", EInfix () OpEquals (int 1) (int 2))
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do
