@@ -4,7 +4,7 @@ module Calc.Parser.Shared
     withLocation,
     stringLiteral,
     addLocation,
-    mapOuterExprAnnotation,
+    addTypeLocation
   )
 where
 
@@ -16,6 +16,7 @@ import Data.Text (Text)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
+import Calc.TypeUtils
 
 between2 :: Char -> Char -> Parser a -> Parser a
 between2 a b parser = do
@@ -34,6 +35,10 @@ withLocation withP p = do
 -- | wraps any parser of Exprs and adds location information
 addLocation :: Parser ParserExpr -> Parser ParserExpr
 addLocation = withLocation (mapOuterExprAnnotation . const)
+
+-- | wraps any parser of Type and adds location information
+addTypeLocation :: Parser ParserType -> Parser ParserType
+addTypeLocation = withLocation (mapOuterTypeAnnotation . const)
 
 inBrackets :: Parser a -> Parser a
 inBrackets = between2 '(' ')'

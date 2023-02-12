@@ -2,6 +2,7 @@
 
 module Test.Parser.ParserSpec (spec) where
 
+import Calc.Types.Type
 import Calc
 import Data.Foldable (traverse_)
 import Data.Functor
@@ -14,6 +15,20 @@ int = EPrim mempty . PInt
 spec :: Spec
 spec = do
   describe "ParserSpec" $ do
+    describe "Type" $ do
+      let strings =
+            [ ("Boolean", TPrim () TBool),
+              ("Integer", TPrim () TInt)
+            ]
+      traverse_
+        ( \(str, expr) -> it (T.unpack str) $ do
+            case parseTypeAndFormatError str of
+              Right parsedExp -> parsedExp $> () `shouldBe` expr
+              Left e -> error (T.unpack e)
+        )
+        strings
+
+
     describe "Expr" $ do
       let strings =
             [ ("-1", int (-1)),
