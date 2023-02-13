@@ -2,6 +2,7 @@
 
 module Test.Typecheck.TypecheckSpec (spec) where
 
+import Control.Monad
 import Data.Foldable (traverse_)
 import Test.Hspec
 import Calc.Typecheck.Elaborate
@@ -14,14 +15,19 @@ testTypecheck (input, result) = it (show input) $ do
   case (,) <$> parseExprAndFormatError input <*> parseTypeAndFormatError result of
     Left e -> error (show e)
     Right (expr,tyResult) -> do
-      getOuterAnnotation <$> elaborate expr `shouldBe` Right tyResult
+      getOuterAnnotation <$> elaborate (void expr)
+        `shouldBe` Right (void tyResult)
 
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
     let testVals =
           [ ("42", "Integer"),
-            ("True", "Boolean")
+            ("True", "Boolean"),
+            ("1 + 1", "Integer"),
+            ("6 * 9", "Integer"),
+            ("1 - 10", "Integer"),
+            ("2 == 2", "Boolean")
           ]
 
     describe "Successfully typechecking expressions" $ do
