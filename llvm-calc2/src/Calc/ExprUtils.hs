@@ -3,7 +3,7 @@
 module Calc.ExprUtils
   ( mapOuterExprAnnotation,
     mapExpr,
-    getOuterAnnotation
+    getOuterAnnotation,
   )
 where
 
@@ -14,6 +14,7 @@ import Calc.Types
 getOuterAnnotation :: Expr ann -> ann
 getOuterAnnotation (EInfix ann _ _ _) = ann
 getOuterAnnotation (EPrim ann _) = ann
+getOuterAnnotation (EIf ann _ _ _) = ann
 
 -- | modify the outer annotation of an expression
 -- useful for adding line numbers during parsing
@@ -22,9 +23,12 @@ mapOuterExprAnnotation f expr' =
   case expr' of
     EInfix ann a b c -> EInfix (f ann) a b c
     EPrim ann a -> EPrim (f ann) a
+    EIf ann a b c -> EIf (f ann) a b c
 
 -- | Given a function that changes `Expr` values, apply it throughout
 -- an AST tree
 mapExpr :: (Expr ann -> Expr ann) -> Expr ann -> Expr ann
 mapExpr f (EInfix ann op a b) = EInfix ann op (f a) (f b)
 mapExpr _ (EPrim ann a) = EPrim ann a
+mapExpr f (EIf ann predExpr thenExpr elseExpr) =
+  EIf ann (f predExpr) (f thenExpr) (f elseExpr)

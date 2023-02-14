@@ -6,8 +6,8 @@ module Calc.Compile.ToLLVM (toLLVM) where
 
 import Calc.Types
 import qualified LLVM.AST as LLVM hiding (function)
-import qualified LLVM.AST.Type as LLVM
 import qualified LLVM.AST.IntegerPredicate as LLVM
+import qualified LLVM.AST.Type as LLVM
 import qualified LLVM.IRBuilder.Constant as LLVM
 import qualified LLVM.IRBuilder.Instruction as LLVM
 import qualified LLVM.IRBuilder.Module as LLVM
@@ -40,6 +40,7 @@ exprToLLVM ::
   Expr ann ->
   m LLVM.Operand
 exprToLLVM (EPrim _ prim) = pure $ primToLLVM prim
+exprToLLVM (EIf {}) = error "if to llvm"
 exprToLLVM (EInfix _ OpAdd a b) = do
   lhs <- exprToLLVM a
   rhs <- exprToLLVM b

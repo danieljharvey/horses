@@ -31,3 +31,4 @@ interpret ::
 interpret (EPrim ann p) = pure (EPrim ann p)
 interpret (EInfix ann op a b) =
   interpretInfix ann op a b
+interpret (EIf _ann _pred _then _else) = error "if!"

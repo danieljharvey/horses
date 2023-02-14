@@ -2,8 +2,8 @@
 
 module Test.Parser.ParserSpec (spec) where
 
-import Calc.Types.Type
 import Calc
+import Calc.Types.Type
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.Text as T
@@ -11,6 +11,9 @@ import Test.Hspec
 
 int :: (Monoid ann) => Integer -> Expr ann
 int = EPrim mempty . PInt
+
+bool :: (Monoid ann) => Bool -> Expr ann
+bool = EPrim mempty . PBool
 
 spec :: Spec
 spec = do
@@ -27,7 +30,6 @@ spec = do
               Left e -> error (T.unpack e)
         )
         strings
-
 
     describe "Expr" $ do
       let strings =
@@ -47,7 +49,8 @@ spec = do
                   )
                   (int 3)
               ),
-              ("1 == 2", EInfix () OpEquals (int 1) (int 2))
+              ("1 == 2", EInfix () OpEquals (int 1) (int 2)),
+              ("if True then 1 else 2", EIf () (bool True) (int 1) (int 2))
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do

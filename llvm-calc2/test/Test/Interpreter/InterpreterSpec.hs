@@ -33,7 +33,6 @@ spec = do
             ("(3 * 3) + (6 * 6)", "45"),
             ("1 + 1 == 2", "True"),
             ("2 + 2 == 5", "False")
-
           ]
     traverse_
       ( \(input, expect) ->

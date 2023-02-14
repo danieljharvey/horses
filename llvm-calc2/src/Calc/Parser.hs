@@ -9,8 +9,8 @@ module Calc.Parser
   )
 where
 
-import Calc.Parser.Type
 import Calc.Parser.Expr
+import Calc.Parser.Type
 import Calc.Parser.Types
 import Data.Bifunctor (first)
 import Data.Text (Text)

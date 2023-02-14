@@ -2,22 +2,18 @@
 
 module Calc.Parser.Type (typeParser) where
 
-import Data.Functor (($>))
 import Calc.Parser.Shared
-  (
-
-
-
-
+  ( addTypeLocation,
+    myLexeme,
     stringLiteral,
-  addTypeLocation, myLexeme
   )
+import Calc.Parser.Types
 import Calc.Types.Type
+import Data.Functor (($>))
 import Text.Megaparsec
   ( MonadParsec (try),
     (<|>),
   )
-import Calc.Parser.Types
 
 -- | top-level parser for type signatures
 typeParser :: Parser ParserType

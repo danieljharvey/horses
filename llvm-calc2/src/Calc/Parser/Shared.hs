@@ -4,19 +4,19 @@ module Calc.Parser.Shared
     withLocation,
     stringLiteral,
     addLocation,
-    addTypeLocation
+    addTypeLocation,
   )
 where
 
 import Calc.ExprUtils
 import Calc.Parser.Types
+import Calc.TypeUtils
 import Calc.Types.Annotation
 import Data.Functor (($>))
 import Data.Text (Text)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Calc.TypeUtils
 
 between2 :: Char -> Char -> Parser a -> Parser a
 between2 a b parser = do

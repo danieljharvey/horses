@@ -2,13 +2,13 @@ module Calc.Parser.Types
   ( Parser,
     ParseErrorType,
     ParserExpr,
-    ParserType
+    ParserType,
   )
 where
 
 import Calc.Types.Annotation
-import Calc.Types.Type
 import Calc.Types.Expr
+import Calc.Types.Type
 import Data.Text (Text)
 import Data.Void
 import Text.Megaparsec
