@@ -2,8 +2,8 @@
 
 module Test.Interpreter.InterpreterSpec (spec) where
 
+import Control.Monad.Except
 import Calc
-import Control.Monad.Identity
 import Data.Foldable (traverse_)
 import Data.Functor (($>))
 import Data.Text (Text)
@@ -16,10 +16,10 @@ unsafeParseExpr input = case parseExprAndFormatError input of
   Left e -> error (show e)
 
 -- | function for testing the interpreter
-testInterpret :: Text -> Expr ()
+testInterpret :: Text -> Either (InterpreterError ()) (Expr ())
 testInterpret =
-  void -- throw away the `Annotation`s and replace with `()`
-    . runIdentity -- unwrap the Identity Monad
+  fmap void -- throw away the `Annotation`s and replace with `()`
+    . runExcept -- unwrap the ExceptT monad
     . interpret -- run the actual function
     . unsafeParseExpr -- parse the input (and explode if it's invalid)
 
@@ -32,12 +32,14 @@ spec = do
             ("3 * 3 + 1", "10"),
             ("(3 * 3) + (6 * 6)", "45"),
             ("1 + 1 == 2", "True"),
-            ("2 + 2 == 5", "False")
+            ("2 + 2 == 5", "False"),
+            ("if False then True else False", "False"),
+            ("if 1 == 1 then 6 else 5", "6")
           ]
     traverse_
       ( \(input, expect) ->
           it (show input <> " = " <> show expect) $ do
             testInterpret input
-              `shouldBe` unsafeParseExpr expect
+              `shouldBe` Right (unsafeParseExpr expect)
       )
       cases

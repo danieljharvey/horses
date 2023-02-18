@@ -1,9 +1,16 @@
-module Calc.Interpreter (interpret) where
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
+module Calc.Interpreter (interpret, InterpreterError(..)) where
 
+import Control.Monad.Except
 import Calc.Types
 
+data InterpreterError ann
+  = NonBooleanPredicate ann (Expr ann)
+  deriving stock (Eq,Ord,Show)
+
 interpretInfix ::
-  (Monad m) =>
+  (MonadError (InterpreterError ann) m) =>
   ann ->
   Op ->
   Expr ann ->
@@ -24,11 +31,16 @@ interpretInfix ann op a b = do
 
 -- | just keep reducing the thing until the smallest thing
 interpret ::
-  ( Monad m
+  ( MonadError (InterpreterError ann) m
   ) =>
   Expr ann ->
   m (Expr ann)
 interpret (EPrim ann p) = pure (EPrim ann p)
 interpret (EInfix ann op a b) =
   interpretInfix ann op a b
-interpret (EIf _ann _pred _then _else) = error "if!"
+interpret (EIf ann predExpr thenExpr elseExpr) = do
+  predA <- interpret predExpr
+  case predA of
+    (EPrim _ (PBool True)) -> interpret thenExpr
+    (EPrim _ (PBool False)) -> interpret elseExpr
+    other -> throwError (NonBooleanPredicate ann other)

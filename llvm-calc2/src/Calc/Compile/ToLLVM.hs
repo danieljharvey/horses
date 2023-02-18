@@ -1,9 +1,10 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-
+  {-# LANGUAGE RecursiveDo #-}
 module Calc.Compile.ToLLVM (toLLVM) where
 
+import Control.Monad.Fix
 import Calc.Types
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.IntegerPredicate as LLVM
@@ -33,14 +34,52 @@ toLLVM expr =
       -- return success exit code of `0`
       LLVM.ret (LLVM.int32 0)
 
+irTypeToLLVM :: a -> LLVM.Type
+irTypeToLLVM _ = LLVM.i32
+
 exprToLLVM ::
   ( LLVM.MonadIRBuilder m,
-    LLVM.MonadModuleBuilder m
+    LLVM.MonadModuleBuilder m,
+    MonadFix m
   ) =>
   Expr ann ->
   m LLVM.Operand
 exprToLLVM (EPrim _ prim) = pure $ primToLLVM prim
-exprToLLVM (EIf {}) = error "if to llvm"
+exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) = mdo
+  -- create IR for predicate
+  irPred <- exprToLLVM predExpr
+
+  -- make variable for return value
+  irReturnValue <- LLVM.alloca (irTypeToLLVM tyReturn) Nothing 0
+
+  -- this does the switching
+  -- we haven't created these blocks yet but RecursiveDo lets us do this with
+  -- MonadFix magic
+  LLVM.condBr irPred thenBlock elseBlock
+
+  -- create a block for the 'then` branch
+  thenBlock <- LLVM.block `LLVM.named` "then"
+  -- create ir for the then branch
+  irThen <- exprToLLVM thenExpr
+  -- store the result in irResultValue
+  LLVM.store irReturnValue 0 irThen
+  -- branch back to the 'done' block
+  LLVM.br doneBlock
+
+  -- create a block for the 'else' branch
+  elseBlock <- LLVM.block `LLVM.named` "else"
+  -- create ir for the else branch
+  irElse <- exprToLLVM elseExpr
+  -- store the result in irReturnValue
+  LLVM.store irReturnValue 0 irElse
+  -- branch back to the `done` block
+  LLVM.br doneBlock
+
+  -- create a block for 'done' that we always branch to
+  doneBlock <- LLVM.block `LLVM.named` "done"
+  -- load the result and return it
+  LLVM.load irReturnValue 0
+
 exprToLLVM (EInfix _ OpAdd a b) = do
   lhs <- exprToLLVM a
   rhs <- exprToLLVM b

@@ -30,7 +30,9 @@ spec = do
             ("(1 + 1)", "2"),
             ("1 + 2 + 3 + 4 + 5 + 6", "21"),
             ("6 * 6", "36"),
-            ("100 - 1", "99")
+            ("100 - 1", "99"),
+            ("if False then 1 else 2", "2"),
+            ("if 1 == 1 then 7 else 10", "7")
           ]
 
     describe "From expressions" $ do
