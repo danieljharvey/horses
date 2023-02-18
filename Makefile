@@ -76,6 +76,10 @@ test-core:
 test-llvm-calc:
 	cabal run llvm-calc:tests
 
+.PHONY: test-llvm-calc2
+test-llvm-calc2:
+	cabal run llvm-calc2:tests
+
 .PHONY: test-backends
 test-backends:
 	cabal run backends:test:backends-tests

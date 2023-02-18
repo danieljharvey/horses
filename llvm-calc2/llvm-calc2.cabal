@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               llvm-calc
+name:               llvm-calc2
 version:            0.1.0.0
 
 -- A short (one-line) description of the package.
@@ -42,6 +42,7 @@ common shared
     , megaparsec
     , mtl
     , parser-combinators
+    , prettyprinter
     , process
     , string-conversions
     , text
@@ -67,12 +68,18 @@ library
     Calc.Parser.Expr
     Calc.Parser.Primitives
     Calc.Parser.Shared
+    Calc.Parser.Type
     Calc.Parser.Types
     Calc.Repl
+    Calc.SourceSpan
+    Calc.Typecheck.Elaborate
+    Calc.Typecheck.Error
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Prim
+    Calc.Types.Type
+    Calc.TypeUtils
 
 test-suite smol-core-tests
   import:           shared
@@ -93,19 +100,27 @@ test-suite smol-core-tests
     Calc.Parser.Expr
     Calc.Parser.Primitives
     Calc.Parser.Shared
+    Calc.Parser.Type
     Calc.Parser.Types
+    Calc.SourceSpan
+    Calc.Repl
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Prim
+    Calc.Types.Type
+    Calc.TypeUtils
+    Calc.Typecheck.Elaborate
+    Calc.Typecheck.Error
     Test.Interpreter.InterpreterSpec
     Test.LLVM.LLVMSpec
     Test.Parser.ParserSpec
+    Test.Typecheck.TypecheckSpec
 
   main-is:          Main.hs
   default-language: Haskell2010
 
-executable llvm-calc
+executable llvm-calc2
   main-is:          Main.hs
   other-modules:
     Calc
@@ -117,12 +132,18 @@ executable llvm-calc
     Calc.Parser.Expr
     Calc.Parser.Primitives
     Calc.Parser.Shared
+    Calc.Parser.Type
     Calc.Parser.Types
     Calc.Repl
+    Calc.SourceSpan
+    Calc.Typecheck.Elaborate
+    Calc.Typecheck.Error
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Prim
+    Calc.Types.Type
+    Calc.TypeUtils
 
   hs-source-dirs:   app
   hs-source-dirs:   src
@@ -133,11 +154,13 @@ executable llvm-calc
     , directory
     , file-embed
     , haskeline
-    , llvm-calc
+    , llvm-calc2
     , llvm-hs-pretty
     , llvm-hs-pure
     , megaparsec
+    , mtl
     , parser-combinators
+    , prettyprinter
     , process
     , string-conversions
     , text

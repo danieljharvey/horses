@@ -6,6 +6,7 @@ packages:
   core/core.cabal,
   smol-core/smol-core.cabal,
   llvm-calc/llvm-calc.cabal,
+  llvm-calc2/llvm-calc2.cabal,
   vendored/**/*.cabal
 
 with-compiler: ghc-9.2.5
