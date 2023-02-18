@@ -1,10 +1,11 @@
-{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
+
 module Calc.SourceSpan (sourceSpan, SourceSpan (..)) where
 
+import Calc.Types.Annotation
 import Data.Text (Text)
 import qualified Data.Text as T
-import Calc.Types.Annotation
 import GHC.Generics (Generic)
 
 data SourceSpan = SourceSpan

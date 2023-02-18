@@ -6,6 +6,7 @@ import Calc.ExprUtils
 import Calc.Parser
 import Calc.Typecheck.Elaborate
 import Calc.Typecheck.Error
+import Calc.Types.Expr
 import Calc.Types.Type
 import Control.Monad
 import Data.Foldable (traverse_)
@@ -46,9 +47,12 @@ spec = do
       traverse_ testTypecheck succeeding
 
     let failing =
-          [ ("1 + True", TypeMismatch (TPrim () TInt) (TPrim () TBool)),
-            ("if 1 then 1 else 2", PredicateIsNotBoolean ()  (TPrim () TInt)),
-            ("if True then 1 else True", TypeMismatch (TPrim () TInt) (TPrim () TBool))
+          [ ("if 1 then 1 else 2", PredicateIsNotBoolean () (TPrim () TInt)),
+            ("if True then 1 else True", TypeMismatch (TPrim () TInt) (TPrim () TBool)),
+            ("1 + True", ExpectedType (TPrim () TInt) (TPrim () TBool)),
+            ("True + False", InfixTypeMismatch (TPrim () TInt, TPrim () TBool) OpAdd (TPrim () TInt, TPrim () TBool)),
+            ("1 * False", ExpectedType (TPrim () TInt) (TPrim () TBool)),
+            ("True - 1", ExpectedType (TPrim () TInt) (TPrim () TBool))
           ]
 
     describe "Failing typechecking expressions" $ do

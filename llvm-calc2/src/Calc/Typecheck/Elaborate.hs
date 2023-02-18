@@ -3,6 +3,7 @@
 module Calc.Typecheck.Elaborate (elaborate) where
 
 import Calc.ExprUtils
+import Calc.TypeUtils
 import Calc.Typecheck.Error
 import Calc.Types.Expr
 import Calc.Types.Prim
@@ -50,9 +51,26 @@ infer (EInfix ann op a b) = do
     (TPrim _ TInt, TPrim _ TInt) ->
       -- if the types are the same, then great! it's an int!
       pure (TPrim ann TInt)
+    (TPrim _ TInt, other) ->
+      throwError
+        ( ExpectedType
+            (TPrim (getOuterTypeAnnotation other) TInt)
+            other
+        )
+    (other, TPrim _ TInt) ->
+      throwError
+        ( ExpectedType
+            (TPrim (getOuterTypeAnnotation other) TInt)
+            other
+        )
     (otherA, otherB) ->
       -- otherwise, error!
-      throwError (TypeMismatch otherA otherB)
+      throwError
+        ( InfixTypeMismatch
+            (TPrim (getOuterTypeAnnotation otherA) TInt, otherA)
+            op
+            (TPrim (getOuterTypeAnnotation otherB) TInt, otherB)
+        )
   pure (EInfix ty op elabA elabB)
 
 typeFromPrim :: ann -> Prim -> Type ann

@@ -1,21 +1,27 @@
 {-# LANGUAGE DerivingStrategies #-}
-    {-# LANGUAGE OverloadedStrings #-}
-      {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Calc.Typecheck.Error (TypeError (..), typeErrorDiagnostic) where
 
-import Calc.TypeUtils
-import qualified Prettyprinter as PP
 import Calc.SourceSpan
-import Data.Maybe (catMaybes)
+import Calc.TypeUtils
+import Calc.Types.Annotation
+import Calc.Types.Expr
 import Calc.Types.Type
+import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Calc.Types.Annotation
 import qualified Error.Diagnose as Diag
+import Prettyprinter ((<+>))
+import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Text as PP
 
-data TypeError ann = PredicateIsNotBoolean ann (Type ann) |
-    TypeMismatch (Type ann) (Type ann)
+data TypeError ann
+  = PredicateIsNotBoolean ann (Type ann)
+  | InfixTypeMismatch (Type ann, Type ann) Op (Type ann, Type ann)
+  | TypeMismatch (Type ann) (Type ann)
+  | ExpectedType (Type ann) (Type ann)
   deriving stock (Eq, Ord, Show)
 
 positionFromAnnotation ::
@@ -41,62 +47,111 @@ typeErrorDiagnostic ::
 typeErrorDiagnostic input e =
   let filename = "<repl>"
       diag = Diag.addFile Diag.def filename (T.unpack input)
-   in case e of
-       (PredicateIsNotBoolean _ foundType) ->
-          let report =
-                Diag.Err
-                  Nothing
-                  ( prettyPrint $ "Predicate for an if statement should be a Boolean type, but instead found "
-                      <> PP.pretty foundType
-                      <> "."
-                  )
-                  ( catMaybes
-                      [ (,)
-                          <$> positionFromAnnotation
-                            filename
-                            input
-                            (getOuterTypeAnnotation foundType)
-                          <*> pure
-                            ( Diag.This (prettyPrint $ "This has type " <> PP.pretty foundType <> " but should have type Boolean")
-                            )
-                      ]
-                  )
-                  ["These two values should be of the same type"]
-            in Diag.addReport diag report
-
-       (TypeMismatch a b) ->
-          let report =
-                Diag.Err
-                  Nothing
-                  ( prettyPrint $ "Unification error! Expected matching types but found "
-                      <> PP.pretty a
-                      <> " and "
-                      <> PP.pretty b
-                      <> "."
-                  )
-                  ( catMaybes
-                      [ (,)
-                          <$> positionFromAnnotation
-                            filename
-                            input
-                            (getOuterTypeAnnotation a)
-                          <*> pure
-                            ( Diag.This (prettyPrint $ "This has type " <> PP.pretty a)
-                            ),
-                        (,)
-                          <$> positionFromAnnotation
-                            filename
-                            input
-                            (getOuterTypeAnnotation b)
-                          <*> pure (Diag.Where (prettyPrint $ "This has type " <> PP.pretty b))
-                      ]
-                  )
-                  ["These two values should be of the same type"]
-           in Diag.addReport diag report
+      report = case e of
+        (PredicateIsNotBoolean _ foundType) ->
+          Diag.Err
+            Nothing
+            ( prettyPrint $
+                "Predicate for an if statement should be a Boolean type, but instead found "
+                  <> PP.pretty foundType
+                  <> "."
+            )
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      (getOuterTypeAnnotation foundType)
+                    <*> pure
+                      ( Diag.This (prettyPrint $ "This has type " <> PP.pretty foundType <> " but should have type Boolean")
+                      )
+                ]
+            )
+            []
+        (ExpectedType expected actual) ->
+          Diag.Err
+            Nothing
+            ( prettyPrint $
+                "Expected "
+                  <> PP.pretty expected
+                  <> " but got "
+                  <> PP.pretty actual
+                  <> "."
+            )
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      (getOuterTypeAnnotation actual)
+                    <*> pure
+                      ( Diag.This (prettyPrint $ "This has type " <> PP.pretty actual)
+                      )
+                ]
+            )
+            ["These two values should be of the same type"]
+        (TypeMismatch a b) ->
+          Diag.Err
+            Nothing
+            ( prettyPrint $
+                "Unification error! Expected matching types but found "
+                  <> PP.pretty a
+                  <> " and "
+                  <> PP.pretty b
+                  <> "."
+            )
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      (getOuterTypeAnnotation a)
+                    <*> pure
+                      ( Diag.This (prettyPrint $ "This has type " <> PP.pretty a)
+                      ),
+                  (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      (getOuterTypeAnnotation b)
+                    <*> pure (Diag.Where (prettyPrint $ "This has type " <> PP.pretty b))
+                ]
+            )
+            ["These two values should be of the same type"]
+        (InfixTypeMismatch (expectA, actualA) op (expectB, actualB)) ->
+          Diag.Err
+            Nothing
+            "Type mismatch for infix operator"
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      (getOuterTypeAnnotation actualA)
+                    <*> pure
+                      ( Diag.This (prettyPrint $ "This has type " <> PP.pretty actualA <> " but should have type " <> PP.pretty expectA)
+                      ),
+                  (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      (getOuterTypeAnnotation actualB)
+                    <*> pure (Diag.Where (prettyPrint $ "This has type " <> PP.pretty actualB <> " but should have type " <> PP.pretty expectB))
+                ]
+            )
+            [ Diag.Note $
+                prettyPrint $
+                  "Expected " <> PP.pretty expectA
+                    <+> PP.pretty op
+                    <+> PP.pretty expectB
+                    <+> "but found "
+                      <> PP.pretty actualA
+                    <+> PP.pretty op
+                    <+> PP.pretty actualB
+            ]
+   in Diag.addReport diag report
 
 renderWithWidth :: Int -> PP.Doc ann -> Text
 renderWithWidth w doc = PP.renderStrict (PP.layoutPretty layoutOptions (PP.unAnnotate doc))
   where
     layoutOptions = PP.LayoutOptions {PP.layoutPageWidth = PP.AvailablePerLine w 1}
-
-
