@@ -8,6 +8,7 @@ module Smol.Core.Parser.Identifiers
     globalParser,
     moduleNameParser,
     typeNameParser,
+    plainTypeNameParser,
   )
 where
 
@@ -104,9 +105,20 @@ namespacedConstructorParser =
 
 -----------------------
 
+typeNameParser :: Parser (ParseDep TypeName)
+typeNameParser =
+  try namespacedTypeNameParser <|> try (emptyParseDep <$> plainTypeNameParser)
+
 -- `Maybe`, `Either` etc
-typeNameParser :: Parser TypeName
-typeNameParser = myLexeme (TypeName <$> constructorParserInternal)
+plainTypeNameParser :: Parser TypeName
+plainTypeNameParser = myLexeme (TypeName <$> constructorParserInternal)
+
+namespacedTypeNameParser :: Parser (ParseDep TypeName)
+namespacedTypeNameParser =
+  let inner = do
+        (cons, mName) <- withNamespace (TypeName <$> constructorParserInternal)
+        pure $ ParseDep cons (Just mName)
+   in myLexeme inner
 
 -- identifier
 
