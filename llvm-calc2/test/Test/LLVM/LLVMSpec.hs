@@ -5,6 +5,7 @@ module Test.LLVM.LLVMSpec (spec) where
 import qualified Calc.Compile.RunLLVM as Run
 import Calc.Compile.ToLLVM
 import Calc.Parser
+import Calc.Typecheck.Elaborate
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import qualified LLVM.AST as LLVM
@@ -18,9 +19,12 @@ testCompileIR :: (Text, Text) -> Spec
 testCompileIR (input, result) = it (show input) $ do
   case parseExprAndFormatError input of
     Left e -> error (show e)
-    Right expr -> do
-      resp <- run (toLLVM expr)
-      resp `shouldBe` result
+    Right expr ->
+      case elaborate expr of
+        Left e -> error (show e)
+        Right typedExpr -> do
+          resp <- run (toLLVM typedExpr)
+          resp `shouldBe` result
 
 spec :: Spec
 spec = do
@@ -32,7 +36,8 @@ spec = do
             ("6 * 6", "36"),
             ("100 - 1", "99"),
             ("if False then 1 else 2", "2"),
-            ("if 1 == 1 then 7 else 10", "7")
+            ("if 1 == 1 then 7 else 10", "7"),
+            ("if 2 == 1 then True else False", "False")
           ]
 
     describe "From expressions" $ do

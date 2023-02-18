@@ -42,6 +42,7 @@ common shared
     , megaparsec
     , mtl
     , parser-combinators
+    , prettyprinter
     , process
     , string-conversions
     , text
@@ -67,12 +68,16 @@ library
     Calc.Parser.Expr
     Calc.Parser.Primitives
     Calc.Parser.Shared
+    Calc.Parser.Type
     Calc.Parser.Types
     Calc.Repl
+    Calc.Typecheck.Elaborate
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Prim
+    Calc.Types.Type
+    Calc.TypeUtils
 
 test-suite smol-core-tests
   import:           shared
@@ -117,12 +122,16 @@ executable llvm-calc2
     Calc.Parser.Expr
     Calc.Parser.Primitives
     Calc.Parser.Shared
+    Calc.Parser.Type
     Calc.Parser.Types
     Calc.Repl
+    Calc.Typecheck.Elaborate
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Prim
+    Calc.Types.Type
+    Calc.TypeUtils
 
   hs-source-dirs:   app
   hs-source-dirs:   src
@@ -141,7 +150,9 @@ executable llvm-calc2
     , unix
     , file-embed
     , string-conversions
+    , prettyprinter
     , megaparsec
     , parser-combinators
+    , mtl
 
   default-language: Haskell2010

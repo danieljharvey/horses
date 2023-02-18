@@ -2,8 +2,8 @@
 
 module Test.Interpreter.InterpreterSpec (spec) where
 
-import Control.Monad.Except
 import Calc
+import Control.Monad.Except
 import Data.Foldable (traverse_)
 import Data.Functor (($>))
 import Data.Text (Text)

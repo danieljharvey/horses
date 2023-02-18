@@ -5,6 +5,7 @@ module Test.Typecheck.TypecheckSpec (spec) where
 import Calc.ExprUtils
 import Calc.Parser
 import Calc.Typecheck.Elaborate
+import Calc.Typecheck.Error
 import Calc.Types.Type
 import Control.Monad
 import Data.Foldable (traverse_)
@@ -46,7 +47,7 @@ spec = do
 
     let failing =
           [ ("1 + True", TypeMismatch (TPrim () TInt) (TPrim () TBool)),
-            ("if 1 then 1 else 2", TypeMismatch (TPrim () TBool) (TPrim () TInt)),
+            ("if 1 then 1 else 2", PredicateIsNotBoolean ()  (TPrim () TInt)),
             ("if True then 1 else True", TypeMismatch (TPrim () TInt) (TPrim () TBool))
           ]
 

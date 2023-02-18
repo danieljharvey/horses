@@ -1,13 +1,14 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-module Calc.Interpreter (interpret, InterpreterError(..)) where
 
-import Control.Monad.Except
+module Calc.Interpreter (interpret, InterpreterError (..)) where
+
 import Calc.Types
+import Control.Monad.Except
 
 data InterpreterError ann
   = NonBooleanPredicate ann (Expr ann)
-  deriving stock (Eq,Ord,Show)
+  deriving stock (Eq, Ord, Show)
 
 interpretInfix ::
   (MonadError (InterpreterError ann) m) =>

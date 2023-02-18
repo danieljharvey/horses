@@ -1,11 +1,13 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE RecursiveDo #-}
+
 module Calc.Compile.ToLLVM (toLLVM) where
 
-import Control.Monad.Fix
+import Calc.ExprUtils
 import Calc.Types
+import Control.Monad.Fix
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.IntegerPredicate as LLVM
 import qualified LLVM.AST.Type as LLVM
@@ -14,13 +16,18 @@ import qualified LLVM.IRBuilder.Instruction as LLVM
 import qualified LLVM.IRBuilder.Module as LLVM
 import qualified LLVM.IRBuilder.Monad as LLVM
 
+-- import the correct output function from our standard library
+-- depending on the output type of our expression
+printFunction :: (LLVM.MonadModuleBuilder m) => Type ann -> m LLVM.Operand
+printFunction (TPrim _ TInt) = LLVM.extern "printint" [LLVM.i32] LLVM.void
+printFunction (TPrim _ TBool) = LLVM.extern "printbool" [LLVM.i1] LLVM.void
+
 -- | given our `Expr` type, turn it into an LLVM module
-toLLVM :: Expr ann -> LLVM.Module
+toLLVM :: Expr (Type ann) -> LLVM.Module
 toLLVM expr =
   LLVM.buildModule "example" $ do
-    -- import `printint` from our standard library
-    -- it takes an `i32` and returns an `i32`
-    printInt <- LLVM.extern "printint" [LLVM.i32] LLVM.i32
+    -- get the printing function for our `expr`'s return type
+    printFn <- printFunction (getOuterAnnotation expr)
 
     -- create a function called `main` that will be the entry point to our
     -- program
@@ -29,20 +36,21 @@ toLLVM expr =
       ourExpression <- exprToLLVM expr
 
       -- print our result to stdout
-      _ <- LLVM.call printInt [(ourExpression, [])]
+      _ <- LLVM.call printFn [(ourExpression, [])]
 
       -- return success exit code of `0`
       LLVM.ret (LLVM.int32 0)
 
-irTypeToLLVM :: a -> LLVM.Type
-irTypeToLLVM _ = LLVM.i32
+typeToLLVM :: Type ann -> LLVM.Type
+typeToLLVM (TPrim _ TBool) = LLVM.i1
+typeToLLVM (TPrim _ TInt) = LLVM.i32
 
 exprToLLVM ::
   ( LLVM.MonadIRBuilder m,
     LLVM.MonadModuleBuilder m,
     MonadFix m
   ) =>
-  Expr ann ->
+  Expr (Type ann) ->
   m LLVM.Operand
 exprToLLVM (EPrim _ prim) = pure $ primToLLVM prim
 exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) = mdo
@@ -50,7 +58,7 @@ exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) = mdo
   irPred <- exprToLLVM predExpr
 
   -- make variable for return value
-  irReturnValue <- LLVM.alloca (irTypeToLLVM tyReturn) Nothing 0
+  irReturnValue <- LLVM.alloca (typeToLLVM tyReturn) Nothing 0
 
   -- this does the switching
   -- we haven't created these blocks yet but RecursiveDo lets us do this with
@@ -79,7 +87,6 @@ exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) = mdo
   doneBlock <- LLVM.block `LLVM.named` "done"
   -- load the result and return it
   LLVM.load irReturnValue 0
-
 exprToLLVM (EInfix _ OpAdd a b) = do
   lhs <- exprToLLVM a
   rhs <- exprToLLVM b

@@ -3,7 +3,6 @@
 module Test.Parser.ParserSpec (spec) where
 
 import Calc
-import Calc.Types.Type
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.Text as T

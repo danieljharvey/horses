@@ -1,16 +1,14 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Calc.Typecheck.Elaborate (elaborate, TypeError (..)) where
+module Calc.Typecheck.Elaborate (elaborate) where
 
 import Calc.ExprUtils
+import Calc.Typecheck.Error
 import Calc.Types.Expr
 import Calc.Types.Prim
 import Calc.Types.Type
 import Control.Monad.Except
 import Data.Functor
-
-data TypeError ann = TypeMismatch (Type ann) (Type ann)
-  deriving stock (Eq, Ord, Show)
 
 elaborate :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
 elaborate = infer
@@ -26,7 +24,10 @@ infer :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
 infer (EPrim ann prim) =
   pure (EPrim (typeFromPrim ann prim) prim)
 infer (EIf ann predExpr thenExpr elseExpr) = do
-  predA <- check (TPrim ann TBool) predExpr
+  predA <- infer predExpr
+  case getOuterAnnotation predA of
+    (TPrim _ TBool) -> pure ()
+    otherType -> throwError (PredicateIsNotBoolean ann otherType)
   thenA <- infer thenExpr
   elseA <- check (getOuterAnnotation thenA) elseExpr
   pure (EIf (getOuterAnnotation elseA) predA thenA elseA)
