@@ -6,6 +6,7 @@ on:
       - trunk
     paths:
       - "llvm-calc/**"
+      - "llvm-calc2/**"
       - "vendored/**"
 
   pull_request:
@@ -13,6 +14,7 @@ on:
       - trunk
     paths:
       - "llvm-calc/**"
+      - "llvm-calc2/**"
       - "vendored/**"
 
 jobs:
@@ -51,4 +53,7 @@ jobs:
 
       - name: Test llvm-calc
         run: make test-llvm-calc
+
+      - name: Test llvm-calc2
+        run: make test-llvm-calc2
 
