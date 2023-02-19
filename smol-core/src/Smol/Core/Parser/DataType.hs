@@ -23,14 +23,14 @@ dataTypeParser =
 typeDeclParserEmpty :: Parser (DataType ParseDep Annotation)
 typeDeclParserEmpty = do
   myString "type"
-  tyName <- typeNameParser
+  tyName <- plainTypeNameParser
   pure (DataType tyName mempty mempty)
 
 -- it's your more complex cases
 typeDeclParserWithCons :: Parser (DataType ParseDep Annotation)
 typeDeclParserWithCons = do
   myString "type"
-  tyName <- typeNameParser
+  tyName <- plainTypeNameParser
   tyArgs <- many identifierParser
   myString "="
   DataType tyName tyArgs <$> manyTypeConstructors

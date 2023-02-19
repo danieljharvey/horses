@@ -92,13 +92,13 @@ adtParser =
 
 multiDataTypeParser :: Parser (ParsedType Annotation)
 multiDataTypeParser = do
-  tyName <- emptyParseDep <$> typeNameParser
+  tyName <- typeNameParser
   tyArgs <- some subParser
   pure (dataTypeWithVars mempty tyName tyArgs)
 
 monoDataTypeParser :: Parser (ParsedType Annotation)
 monoDataTypeParser = do
-  tyName <- emptyParseDep <$> typeNameParser
+  tyName <- typeNameParser
   pure (dataTypeWithVars mempty tyName mempty)
 
 dataTypeWithVars ::

@@ -36,7 +36,7 @@ spec = do
 
       traverse_
         ( \(filename, contents) ->
-            xit ("Parses " <> filename) $ do
+            it ("Parses " <> filename) $ do
               let result = parseModuleAndFormatError contents
               result `shouldSatisfy` isRight
         )
@@ -126,7 +126,8 @@ spec = do
                       (TApp () (TVar () "m") (TVar () "a"))
                       (TApp () (TVar () "m") (TVar () "b"))
                   )
-              )
+              ),
+              ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe")))
             ]
       traverse_
         ( \(str, ty) -> it (T.unpack str) $ do

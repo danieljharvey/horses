@@ -65,8 +65,8 @@ lambdaParser =
 
 appFunc :: Parser ParserExpr
 appFunc =
-  --  try recordAccessParser
-  try globalParser
+  try recordAccessParser
+    <|> try globalParser
     <|> try varParser
     <|> constructorParser
     <|> try annotationParser

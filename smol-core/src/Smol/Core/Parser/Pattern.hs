@@ -103,7 +103,7 @@ argsParser = try someP <|> pure []
 constructorParser :: Parser ParserPattern
 constructorParser =
   let parser = do
-        cons <- myLexeme (emptyParseDep <$> Identifiers.constructorParserInternal)
+        cons <- myLexeme Identifiers.innerConstructorParser
         args <- try argsParser
         pure (cons, args)
    in withLocation
