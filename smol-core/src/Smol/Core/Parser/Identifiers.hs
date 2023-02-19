@@ -5,6 +5,7 @@ module Smol.Core.Parser.Identifiers
     varParser,
     constructorParser,
     constructorParserInternal,
+    innerConstructorParser,
     globalParser,
     moduleNameParser,
     typeNameParser,
@@ -102,6 +103,17 @@ namespacedConstructorParser =
         (cons, mName) <- withNamespace constructorParserInternal
         pure $ EConstructor mempty (ParseDep cons (Just mName))
    in myLexeme (addLocation inner)
+
+-- just the constructor (you'll need to add Lexeme, location etc)
+innerConstructorParser :: Parser (ParseDep Constructor)
+innerConstructorParser =
+  try withModule <|> try withoutModule
+  where
+    withModule = do
+      (cons, mName) <- withNamespace constructorParserInternal
+      pure $ ParseDep cons (Just mName)
+    withoutModule =
+      emptyParseDep <$> constructorParserInternal
 
 -----------------------
 

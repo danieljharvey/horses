@@ -1,9 +1,11 @@
 export type State s a =
   State (s -> (a, s))
 
-export def get = State (\s -> (s, s))
+export def get =
+  State (\s -> (s, s))
 
-export def put s = State (Prelude.const (Prelude.Unit, s))
+export def put s =
+  State (Prelude.const (Unit, s))
 
 export def pure a =
   State (\s -> (a, s))
@@ -15,7 +17,7 @@ export def fmap (f: a -> b) (state: State s a): State s b =
     )
 
 export def ap (stateF: State s (a -> b)) (stateA: State s a): State s b = 
-  State (\s -> match stateF with (State sfs) ->
+  State (\s -> case stateF of (State sfs) ->
     let fs = sfs s;
     case fs of (f, ss) ->
       case stateA of (State sas) ->
