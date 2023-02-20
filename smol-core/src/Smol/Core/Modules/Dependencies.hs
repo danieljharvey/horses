@@ -20,7 +20,7 @@ import Data.Maybe
 import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
-import Language.Mimsa.Core
+import Smol.Core
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Monad
 import Language.Mimsa.Modules.Uses

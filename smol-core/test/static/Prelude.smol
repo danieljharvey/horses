@@ -15,3 +15,5 @@ export def snd pair = case pair of (_,b) -> b
 export def const a b = a
 
 export type Identity a = Identity a
+
+export def runIdentity identity = case identity of Identity a -> a

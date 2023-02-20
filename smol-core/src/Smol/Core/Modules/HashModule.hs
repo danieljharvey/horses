@@ -5,7 +5,7 @@ import Data.Bifunctor
 import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
 import Data.Functor
-import Language.Mimsa.Core
+import Smol.Core
 import Language.Mimsa.Store.Hashing
 import Language.Mimsa.Types.Project.ProjectHash
 

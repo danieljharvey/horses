@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Language.Mimsa.Modules.Monad
+module Smol.Core.Modules.Monad
   ( lookupModule,
     lookupModuleDep,
     lookupModuleType,
@@ -18,49 +18,52 @@ import Data.Foldable
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Language.Mimsa.Core
-import Language.Mimsa.Types.Error
+import Smol.Core
+import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.ModuleHash
+import Smol.Core.Types.Module.DefIdentifier
+import Smol.Core.Modules.ModuleError
 
 lookupModule ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Map ModuleHash (Module ann) ->
   ModuleHash ->
   m (Module ann)
 lookupModule mods modHash = do
   case M.lookup modHash mods of
     Just foundModule -> pure foundModule
-    _ -> throwError (ModuleErr (MissingModule modHash))
+    _ -> throwError (MissingModule modHash)
 
 lookupModuleDep ::
-  (MonadError (Error Annotation) m) =>
-  Map ModuleHash (Module (Type Annotation)) ->
+  (MonadError ModuleError m) =>
+  Map ModuleHash (Module (Type ParseDep Annotation)) ->
   DefIdentifier ->
   ModuleHash ->
-  m (Expr Name (Type Annotation))
+  m (Expr ParseDep (Type ParseDep Annotation))
 lookupModuleDep typecheckedModules def modHash = do
   case M.lookup modHash typecheckedModules of
     Just mod' ->
       case M.lookup def (moExpressions mod') of
         Just expr -> pure expr
-        _ -> throwError (ModuleErr (MissingModuleDep def modHash))
-    _ -> throwError (ModuleErr (MissingModule modHash))
+        _ -> throwError (MissingModuleDep def modHash)
+    _ -> throwError (MissingModule modHash)
 
 lookupModuleType ::
-  (MonadError (Error Annotation) m) =>
-  Map ModuleHash (Module (Type Annotation)) ->
+  (MonadError ModuleError m) =>
+  Map ModuleHash (Module (Type ParseDep Annotation)) ->
   TypeName ->
   ModuleHash ->
-  m DataType
+  m (DataType ParseDep Annotation)
 lookupModuleType typecheckedModules typeName modHash = do
   case M.lookup modHash typecheckedModules of
     Just mod' ->
       case M.lookup typeName (moDataTypes mod') of
-        Just dt -> pure dt
-        _ -> throwError (ModuleErr (MissingModuleTypeDep typeName modHash))
-    _ -> throwError (ModuleErr (MissingModule modHash))
+        Just _dt -> pure undefined -- dt
+        _ -> throwError (MissingModuleTypeDep typeName modHash)
+    _ -> throwError (MissingModule modHash)
 
 errorIfExpressionAlreadyDefined ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
   DefIdentifier ->
   m ()
@@ -69,19 +72,19 @@ errorIfExpressionAlreadyDefined mod' def =
     ( M.member def (moExpressions mod')
         || M.member def (moExpressionImports mod')
     )
-    (throwError (ModuleErr $ DuplicateDefinition def))
+    (throwError (DuplicateDefinition def))
 
 checkDataType ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
-  DataType ->
+  DataType ParseDep ann ->
   m ()
 checkDataType mod' (DataType typeName _ constructors) = do
   errorIfTypeAlreadyDefined mod' (coerce typeName)
   traverse_ (errorIfConstructorAlreadyDefined mod') (M.keys constructors)
 
 errorIfTypeAlreadyDefined ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
   TypeName ->
   m ()
@@ -90,21 +93,21 @@ errorIfTypeAlreadyDefined mod' typeName =
     ( M.member typeName (moDataTypes mod')
         || M.member typeName (moDataTypeImports mod')
     )
-    (throwError (ModuleErr $ DuplicateTypeName typeName))
+    (throwError (DuplicateTypeName typeName))
 
 errorIfConstructorAlreadyDefined ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
-  TyCon ->
+  Constructor ->
   m ()
 errorIfConstructorAlreadyDefined mod' tyCon =
   let allCons = mconcat (M.keysSet . dtConstructors <$> M.elems (moDataTypes mod'))
    in when
         (S.member tyCon allCons)
-        (throwError (ModuleErr $ DuplicateConstructor tyCon))
+        (throwError (DuplicateConstructor tyCon))
 
 errorIfImportAlreadyDefined ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
   DefIdentifier ->
   ModuleHash ->
@@ -114,10 +117,10 @@ errorIfImportAlreadyDefined mod' def moduleHash =
     ( M.member def (moExpressions mod')
         || M.member def (moExpressionImports mod')
     )
-    (throwError (ModuleErr $ DefinitionConflictsWithImport def moduleHash))
+    (throwError (DefinitionConflictsWithImport def moduleHash))
 
 errorIfTypeImportAlreadyDefined ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
   TypeName ->
   ModuleHash ->
@@ -127,4 +130,4 @@ errorIfTypeImportAlreadyDefined mod' typeName moduleHash =
     ( M.member typeName (moDataTypes mod')
         || M.member typeName (moDataTypeImports mod')
     )
-    (throwError (ModuleErr $ TypeConflictsWithImport typeName moduleHash))
+    (throwError (TypeConflictsWithImport typeName moduleHash))

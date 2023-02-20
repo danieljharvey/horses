@@ -12,6 +12,7 @@ import qualified Test.Typecheck.ExhaustivenessSpec
 import qualified Test.Typecheck.NestingMonadSpec
 import qualified Test.Typecheck.SubtypeSpec
 import qualified Test.TypecheckSpec
+import qualified Test.Modules.ModulesSpec
 
 main :: IO ()
 main = hspec $ do
@@ -26,3 +27,4 @@ main = hspec $ do
   Test.IR.CompileSpec.spec
   Test.IR.IRSpec.spec
   Test.Interpreter.InterpreterSpec.spec
+  Test.Modules.ModulesSpec.spec

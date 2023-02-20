@@ -1,22 +1,24 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module Language.Mimsa.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
+module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad.Except
 import Data.Coerce
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Language.Mimsa.Core
-import Language.Mimsa.Modules.Monad
-import Language.Mimsa.Types.Error
+import Smol.Core
+import Smol.Core.Modules.Monad
+import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.ModuleHash
+import Smol.Core.Modules.ModuleError
+import Smol.Core.Types.Module.DefIdentifier
 
 moduleFromModuleParts ::
-  ( MonadError (Error Annotation) m,
+  ( MonadError ModuleError m,
     Monoid ann
   ) =>
   Map ModuleHash (Module Annotation) ->
@@ -29,7 +31,7 @@ moduleFromModuleParts modules parts =
    in foldr addPart (pure mempty) parts
 
 addModulePart ::
-  (MonadError (Error Annotation) m, Monoid ann) =>
+  (MonadError ModuleError m, Monoid ann) =>
   Map ModuleHash (Module Annotation) ->
   ModuleItem ann ->
   Module ann ->
@@ -53,34 +55,13 @@ addModulePart modules part mod' =
               M.singleton typeName dt
                 <> moDataTypes mod'
           }
-    ModuleInfix infixOp expr -> do
-      errorIfExpressionAlreadyDefined mod' (DIInfix infixOp)
-      pure $
-        mod'
-          { moExpressions =
-              M.singleton (DIInfix infixOp) expr
-                <> moExpressions mod'
-          }
-    ModuleTest testName expr -> do
-      errorIfExpressionAlreadyDefined mod' (DITest testName)
-      when
-        (testName == TestName "")
-        ( throwError (ModuleErr (EmptyTestName $ void expr))
-        )
 
-      pure $
-        mod'
-          { moExpressions =
-              M.singleton (DITest testName) expr
-                <> moExpressions mod'
-          }
     ModuleExport modItem -> do
       -- get whatever is inside
       innerModule <- addModulePart modules modItem mod'
       -- get the keys, add them to exports
       let defExports = case modItem of
             ModuleExpression name _ _ -> S.singleton (DIName name)
-            ModuleInfix infixOp _ -> S.singleton (DIInfix infixOp)
             _ -> mempty
       let typeExports = case modItem of
             ModuleDataType (DataType tn _ _) -> S.singleton (coerce tn)
@@ -132,13 +113,13 @@ addModulePart modules part mod' =
                 <> moDataTypeImports mod'
           }
 
-addAnnotation :: Maybe (Type ann) -> Expr Name ann -> Expr Name ann
+addAnnotation :: Maybe (Type ParseDep ann) -> Expr ParseDep ann -> Expr ParseDep ann
 addAnnotation mt expr =
   -- add type annotation to expression
   case mt of
     Just typeAnnotation ->
-      MyAnnotation
-        (getAnnotationForType typeAnnotation)
+      EAnn 
+        (getTypeAnnotation typeAnnotation)
         typeAnnotation
         expr
     _ -> expr
@@ -164,17 +145,17 @@ includesReturnType =
 -- 2) if so - ensure we have a full set (error if not) and create annotation
 -- 3) if not, just return expr
 exprAndTypeFromParts ::
-  (MonadError (Error Annotation) m, Monoid ann) =>
+  (MonadError ModuleError m, Monoid ann) =>
   DefIdentifier ->
   [DefPart ann] ->
-  Expr Name ann ->
-  m (Expr Name ann)
+  Expr ParseDep ann ->
+  m (Expr ParseDep ann)
 exprAndTypeFromParts def parts expr = do
   let expr' =
         foldr
           ( \part rest -> case part of
-              (DefArg ident) -> MyLambda mempty ident rest
-              (DefTypedArg ident _) -> MyLambda mempty ident rest
+              (DefArg (Annotated _ ident)) -> ELambda mempty (emptyParseDep ident) rest
+              (DefTypedArg (Annotated _ ident) _) -> ELambda mempty (emptyParseDep ident) rest
               (DefType _) -> rest
           )
           expr
@@ -186,23 +167,23 @@ exprAndTypeFromParts def parts expr = do
     else do
       if includesReturnType parts
         then pure ()
-        else throwError (ModuleErr (DefMissingReturnType def))
+        else throwError (DefMissingReturnType def)
       mt <-
         foldr
           ( \part mRest -> do
               rest <- mRest
               case part of
-                (DefArg (Identifier _ name)) ->
-                  throwError (ModuleErr (DefMissingTypeAnnotation def name))
+                (DefArg (Annotated _ name)) ->
+                  throwError (DefMissingTypeAnnotation def name)
                 (DefTypedArg _ thisMt) -> pure $ case rest of
                   Just rest' ->
                     Just
-                      (MTFunction mempty thisMt rest')
+                      (TFunc mempty mempty thisMt rest')
                   _ -> Just thisMt
                 (DefType thisMt) -> pure $ case rest of
                   Just rest' ->
                     Just
-                      (MTFunction mempty rest' thisMt)
+                      (TFunc mempty mempty rest' thisMt)
                   _ -> Just thisMt
           )
           (pure Nothing)

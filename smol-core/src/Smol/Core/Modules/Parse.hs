@@ -7,8 +7,8 @@ import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)
 import Data.Text (Text)
-import Language.Mimsa.Core (Annotation, Module, ModuleHash)
-import qualified Language.Mimsa.Core as Parser
+import Smol.Core (Annotation, Module, ModuleHash)
+import qualified Smol.Core as Parser
 import Language.Mimsa.Modules.FromParts
 import Language.Mimsa.Types.Error
 
