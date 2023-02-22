@@ -13,12 +13,22 @@ import Data.Text (Text)
 import qualified Builder
 import Test.Hspec
 
-job :: Builder.Job IO Int Text [Text]
+job :: Builder.Job IO Error Int Text [Text]
 job deps input =
-  pure ([input] <> mconcat (M.elems deps))
+  pure $ Right ([input] <> mconcat (M.elems deps))
 
-doJobs :: Builder.Job IO Int Text [Text] ->
-  Builder.State Int Text [Text] -> IO (Builder.State Int Text [Text])
+-- error on Egg
+jobWithError :: Builder.Job IO Error Int Text [Text]
+jobWithError _ "Egg" =
+  pure (Left OhNo)
+jobWithError deps input =
+  pure $ Right ([input] <> mconcat (M.elems deps))
+
+data Error = OhNo
+  deriving (Eq,Ord,Show)
+
+doJobs :: Builder.Job IO Error Int Text [Text] ->
+  Builder.State Int Text [Text] -> IO (Either Error (Builder.State Int Text [Text]))
 doJobs thisJob state = do
   ioResponse <- liftIO $ Builder.doJobsIO thisJob state
   pureResponse <- liftIO $ Builder.doJobsIO thisJob state -- todo: replace this with the unsafe perform io version
@@ -32,13 +42,13 @@ spec = do
     it "Empty state is a no-op" $ do
       let state = Builder.State mempty mempty
       newState <- liftIO $ doJobs job state
-      newState `shouldBe` state
+      newState `shouldBe` Right state
     it "Run job on single item" $ do
       let inputs = M.singleton 1 (Builder.Plan mempty "Hello")
       let state = Builder.State inputs mempty
       newState <- liftIO $ doJobs job state
       let expectedOutputs = M.singleton 1 ["Hello"]
-      Builder.stOutputs newState `shouldBe` expectedOutputs
+      Builder.stOutputs <$> newState `shouldBe` Right expectedOutputs
     it "Run job with a dep" $ do
       let inputs =
             M.fromList
@@ -57,7 +67,20 @@ spec = do
                 (3, ["Horse", "Hello"]),
                 (4, ["Dog", "Hello", "Horse", "Hello"])
               ]
-      Builder.stOutputs newState `shouldBe` expectedOutputs
+      Builder.stOutputs <$> newState `shouldBe` Right expectedOutputs
+    it "Run job with a dep that 'throws'" $ do
+      let inputs =
+            M.fromList
+              [ (1, Builder.Plan mempty "Hello"),
+                (2, Builder.Plan (S.singleton 1) "Egg"),
+                (3, Builder.Plan (S.singleton 1) "Horse"),
+                (4, Builder.Plan (S.fromList [1, 3]) "Dog")
+              ]
+      let state = Builder.State inputs mempty
+      let run = doJobs jobWithError
+      newState <- liftIO $ run state
+      Builder.stOutputs <$> newState `shouldBe` Left OhNo
+
     it "If all work is done, just return it" $ do
       let inputs =
             M.fromList
@@ -74,7 +97,7 @@ spec = do
       let state = Builder.State inputs outputs
       let run = doJobs job
       newState <- liftIO $ run state
-      Builder.stOutputs newState `shouldBe` outputs
+      Builder.stOutputs <$> newState `shouldBe` Right outputs
     it "If outputs already exist, uses them instead of calculating" $ do
       let inputs =
             M.fromList
@@ -97,7 +120,7 @@ spec = do
               <> M.fromList
                 [ (4, ["Dog", "Hello!", "Horse!", "Hello!"])
                 ]
-      Builder.stOutputs newState `shouldBe` expectedOutputs
+      Builder.stOutputs <$> newState `shouldBe` Right expectedOutputs
     it "Detects missing deps" $ do
       let inputs =
             M.fromList

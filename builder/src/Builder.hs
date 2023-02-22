@@ -23,9 +23,11 @@ data Plan k input = Plan
   deriving stock (Eq, Ord, Show)
 
 -- how we're going to do it
-type Job m k input output = Map k output -> input -> m output
+type Job m e k input output =
+  Map k output -> input -> m (Either e output)
 
-type Inputs k input = Map k (Plan k input)
+type Inputs k input =
+  Map k (Plan k input)
 
 -- state of the job
 data State k input output = State
@@ -44,8 +46,9 @@ getMissing (State inputs outputs) =
           deps
    in mconcat (getMissingDeps <$> M.elems inputs)
 
-getReadyJobs :: (Ord k) => State k input output -> Set k -> Inputs k input
-getReadyJobs st inFlight =
+getReadyJobs :: (Ord k) => Either e (State k input output) -> Set k -> Inputs k input
+getReadyJobs (Left _) _= mempty
+getReadyJobs (Right st) inFlight =
   -- disregard any jobs that are inflight
   let inputs = M.filterWithKey (\k _ -> S.notMember k inFlight) (stInputs st)
    in -- get jobs we are ready to do
@@ -58,26 +61,29 @@ getReadyJobs st inFlight =
         inputs
 
 -- | remove job from input, add it to output
-markJobAsDone :: (Ord k) => k -> output -> State k input output -> State k input output
-markJobAsDone k output st =
+markJobAsDone :: (Ord k) => k -> output -> Either e (State k input output) ->
+    Either e (State k input output)
+markJobAsDone _ _ (Left e) = Left e
+markJobAsDone k output (Right st) = Right $
   State (M.delete k (stInputs st)) (stOutputs st <> M.singleton k output)
 
 -- run through a list of jobs and do them
 doJobsIO ::
-  forall m k input output.
+  forall m e k input output.
   (Ord k, Show k, MonadIO m, PrimMonad m) =>
-  Job m k input output ->
+  Job m e k input output ->
   State k input output ->
-  m (State k input output)
+  IO (Either e (State k input output))
 doJobsIO fn st = do
   let missingDeps = getMissing st
   if not (S.null missingDeps)
     then error ("Missing deps in build: " <> show missingDeps)
     else do
       liftIO $ Ki.scoped $ \scope -> do
-        mutableState <- liftIO $ STM.newTVarIO st
+        mutableState <- liftIO $ STM.newTVarIO (Right st)
         inFlight <- liftIO $ STM.newTVarIO mempty -- list of keys currently being built
-        let getReadyJobsIO = getReadyJobs <$> STM.readTVarIO mutableState <*> STM.readTVarIO inFlight
+        let getReadyJobsIO =
+                getReadyJobs <$> STM.readTVarIO mutableState <*> STM.readTVarIO inFlight
 
         readyJobs <- getReadyJobsIO
 
@@ -86,25 +92,30 @@ doJobsIO fn st = do
               -- mark this job as inflight
               filteredOutput <- liftIO $ STM.atomically $ do
                 STM.modifyTVar' inFlight (S.insert k)
-                state <- STM.readTVar mutableState
-                pure $
-                  M.filterWithKey
-                    (\depK _ -> S.member depK (jbDeps plan))
-                    (stOutputs state)
+                eitherState <- STM.readTVar mutableState
+                pure $ case eitherState of
+                         Left _ -> mempty
+                         Right state ->
+                            M.filterWithKey
+                              (\depK _ -> S.member depK (jbDeps plan))
+                              (stOutputs state)
 
               -- do the work
               newOutput <- fn filteredOutput (jbInput plan)
 
-              -- update the state
-              _ <- liftIO $ STM.atomically $ do
-                STM.modifyTVar' mutableState (markJobAsDone k newOutput)
-                STM.modifyTVar' inFlight (S.delete k)
+              case newOutput of
+                Left e -> STM.atomically $ STM.writeTVar mutableState (Left e)
+                Right success -> do
+                  -- update the state
+                  _ <- liftIO $ STM.atomically $ do
+                    STM.modifyTVar' mutableState (markJobAsDone k success)
+                    STM.modifyTVar' inFlight (S.delete k)
 
-              -- get the resulting jobs
-              newReadyJobs <- liftIO getReadyJobsIO
+                  -- get the resulting jobs
+                  newReadyJobs <- liftIO getReadyJobsIO
 
-              -- run them
-              traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList newReadyJobs)
+                  -- run them
+                  traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList newReadyJobs)
 
         -- start first jobs
         traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList readyJobs)
