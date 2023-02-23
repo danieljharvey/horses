@@ -49,10 +49,10 @@ spec = do
     let failing =
           [ ("if 1 then 1 else 2", PredicateIsNotBoolean () (TPrim () TInt)),
             ("if True then 1 else True", TypeMismatch (TPrim () TInt) (TPrim () TBool)),
-            ("1 + True", ExpectedType (TPrim () TInt) (TPrim () TBool)),
-            ("True + False", InfixTypeMismatch (TPrim () TInt, TPrim () TBool) OpAdd (TPrim () TInt, TPrim () TBool)),
-            ("1 * False", ExpectedType (TPrim () TInt) (TPrim () TBool)),
-            ("True - 1", ExpectedType (TPrim () TInt) (TPrim () TBool))
+            ("1 + True", InfixTypeMismatch OpAdd [(TPrim () TInt, TPrim () TBool)]),
+            ("True + False", InfixTypeMismatch OpAdd [(TPrim () TInt, TPrim () TBool), (TPrim () TInt, TPrim () TBool)]),
+            ("1 * False", InfixTypeMismatch OpMultiply [(TPrim () TInt, TPrim () TBool)]),
+            ("True - 1", InfixTypeMismatch OpSubtract [(TPrim () TInt, TPrim () TBool)])
           ]
 
     describe "Failing typechecking expressions" $ do

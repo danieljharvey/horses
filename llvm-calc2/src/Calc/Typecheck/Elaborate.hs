@@ -53,23 +53,30 @@ infer (EInfix ann op a b) = do
       pure (TPrim ann TInt)
     (TPrim _ TInt, other) ->
       throwError
-        ( ExpectedType
-            (TPrim (getOuterTypeAnnotation other) TInt)
-            other
+        ( InfixTypeMismatch
+            op
+            [ ( TPrim (getOuterTypeAnnotation other) TInt,
+                other
+              )
+            ]
         )
     (other, TPrim _ TInt) ->
       throwError
-        ( ExpectedType
-            (TPrim (getOuterTypeAnnotation other) TInt)
-            other
+        ( InfixTypeMismatch
+            op
+            [ ( TPrim (getOuterTypeAnnotation other) TInt,
+                other
+              )
+            ]
         )
     (otherA, otherB) ->
       -- otherwise, error!
       throwError
         ( InfixTypeMismatch
-            (TPrim (getOuterTypeAnnotation otherA) TInt, otherA)
             op
-            (TPrim (getOuterTypeAnnotation otherB) TInt, otherB)
+            [ (TPrim (getOuterTypeAnnotation otherA) TInt, otherA),
+              (TPrim (getOuterTypeAnnotation otherB) TInt, otherB)
+            ]
         )
   pure (EInfix ty op elabA elabB)
 
