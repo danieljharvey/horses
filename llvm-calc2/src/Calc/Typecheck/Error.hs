@@ -9,19 +9,17 @@ import Calc.TypeUtils
 import Calc.Types.Annotation
 import Calc.Types.Expr
 import Calc.Types.Type
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, mapMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
-import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Text as PP
 
 data TypeError ann
   = PredicateIsNotBoolean ann (Type ann)
-  | InfixTypeMismatch (Type ann, Type ann) Op (Type ann, Type ann)
+  | InfixTypeMismatch Op [(Type ann, Type ann)]
   | TypeMismatch (Type ann) (Type ann)
-  | ExpectedType (Type ann) (Type ann)
   deriving stock (Eq, Ord, Show)
 
 positionFromAnnotation ::
@@ -68,28 +66,6 @@ typeErrorDiagnostic input e =
                 ]
             )
             []
-        (ExpectedType expected actual) ->
-          Diag.Err
-            Nothing
-            ( prettyPrint $
-                "Expected "
-                  <> PP.pretty expected
-                  <> " but got "
-                  <> PP.pretty actual
-                  <> "."
-            )
-            ( catMaybes
-                [ (,)
-                    <$> positionFromAnnotation
-                      filename
-                      input
-                      (getOuterTypeAnnotation actual)
-                    <*> pure
-                      ( Diag.This (prettyPrint $ "This has type " <> PP.pretty actual)
-                      )
-                ]
-            )
-            ["These two values should be of the same type"]
         (TypeMismatch a b) ->
           Diag.Err
             Nothing
@@ -118,37 +94,22 @@ typeErrorDiagnostic input e =
                 ]
             )
             ["These two values should be of the same type"]
-        (InfixTypeMismatch (expectA, actualA) op (expectB, actualB)) ->
-          Diag.Err
-            Nothing
-            "Type mismatch for infix operator"
-            ( catMaybes
-                [ (,)
-                    <$> positionFromAnnotation
-                      filename
-                      input
-                      (getOuterTypeAnnotation actualA)
-                    <*> pure
-                      ( Diag.This (prettyPrint $ "This has type " <> PP.pretty actualA <> " but should have type " <> PP.pretty expectA)
-                      ),
-                  (,)
-                    <$> positionFromAnnotation
-                      filename
-                      input
-                      (getOuterTypeAnnotation actualB)
-                    <*> pure (Diag.Where (prettyPrint $ "This has type " <> PP.pretty actualB <> " but should have type " <> PP.pretty expectB))
-                ]
-            )
-            [ Diag.Note $
-                prettyPrint $
-                  "Expected " <> PP.pretty expectA
-                    <+> PP.pretty op
-                    <+> PP.pretty expectB
-                    <+> "but found "
-                      <> PP.pretty actualA
-                    <+> PP.pretty op
-                    <+> PP.pretty actualB
-            ]
+        (InfixTypeMismatch _op pairs) ->
+          let makeThis (expect, actual) =
+                (,)
+                  <$> positionFromAnnotation
+                    filename
+                    input
+                    (getOuterTypeAnnotation actual)
+                  <*> pure
+                    ( Diag.This (prettyPrint $ "This has type " <> PP.pretty actual <> " but should have type " <> PP.pretty expect)
+                    )
+           in Diag.Err
+                Nothing
+                "Type mismatch for infix operator"
+                ( mapMaybe makeThis pairs
+                )
+                []
    in Diag.addReport diag report
 
 renderWithWidth :: Int -> PP.Doc ann -> Text
