@@ -194,9 +194,6 @@ library
     , text
     , transformers
     , wasm
-    , ki
-    , stm
-    , basement
 
   default-language:   Haskell2010
 

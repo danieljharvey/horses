@@ -17,25 +17,17 @@ job :: Actions.Job IO Int Text [Text]
 job deps input =
   pure ([input] <> mconcat (M.elems deps))
 
-doJobs :: Actions.Job IO Int Text [Text] -> Actions.State Int Text [Text] -> IO (Actions.State Int Text [Text])
-doJobs thisJob state = do
-  ioResponse <- liftIO $ Actions.doJobsIO thisJob state
-  pureResponse <- liftIO $ Actions.doJobs thisJob state
-  if ioResponse == pureResponse
-    then pure ioResponse
-    else error $ "Responses don't match: " <> show ioResponse <> " and " <> show pureResponse
-
 spec :: Spec
 spec = do
   describe "Build" $ do
     it "Empty state is a no-op" $ do
       let state = Actions.State mempty mempty
-      newState <- liftIO $ doJobs job state
+      newState <- liftIO $ Actions.doJobs job state
       newState `shouldBe` state
     it "Run job on single item" $ do
       let inputs = M.singleton 1 (Actions.Plan mempty "Hello")
       let state = Actions.State inputs mempty
-      newState <- liftIO $ doJobs job state
+      newState <- liftIO $ Actions.doJobs job state
       let expectedOutputs = M.singleton 1 ["Hello"]
       Actions.stOutputs newState `shouldBe` expectedOutputs
     it "Run job with a dep" $ do
@@ -47,7 +39,7 @@ spec = do
                 (4, Actions.Plan (S.fromList [1, 3]) "Dog")
               ]
       let state = Actions.State inputs mempty
-      let run = doJobs job
+      let run = Actions.doJobs job
       newState <- liftIO $ run state
       let expectedOutputs =
             M.fromList
@@ -71,7 +63,7 @@ spec = do
                 (3, ["Horse!", "Hello!"])
               ]
       let state = Actions.State inputs outputs
-      let run = doJobs job
+      let run = Actions.doJobs job
       newState <- liftIO $ run state
       Actions.stOutputs newState `shouldBe` outputs
     it "If outputs already exist, uses them instead of calculating" $ do
@@ -89,7 +81,7 @@ spec = do
                 (3, ["Horse!", "Hello!"])
               ]
       let state = Actions.State inputs outputs
-      let run = doJobs job
+      let run = Actions.doJobs job
       newState <- liftIO $ run state
       let expectedOutputs =
             outputs

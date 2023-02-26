@@ -1,20 +1,13 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
-module Language.Mimsa.Actions.Helpers.Build (doJobs, doJobsIO, getMissing, Plan (..), State (..), Job, Inputs) where
+module Language.Mimsa.Actions.Helpers.Build (doJobs, getMissing, Plan (..), State (..), Job, Inputs) where
 
-import Basement.Monad
-import qualified Control.Concurrent.STM as STM
-import Control.Monad.IO.Class
 import Control.Parallel.Strategies
-import Data.Foldable (traverse_)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import qualified Ki
 import Language.Mimsa.Core (Printer (..))
 
 -- a thing we want to do
@@ -52,8 +45,7 @@ runBuilder ::
   m (State k input output)
 runBuilder fn st = do
   -- filter out finished stuff from inputs (lets us start with cached results)
-  let newState = filterDoneWork st
-
+  let inputs = M.filterWithKey (\k _ -> M.notMember k (stOutputs st)) (stInputs st)
   -- get jobs we are ready to do
   let readyJobs =
         M.filter
@@ -61,7 +53,7 @@ runBuilder fn st = do
               let requiredKeys = jbDeps plan
                in and ((\depK -> M.member depK (stOutputs st)) <$> S.toList requiredKeys)
           )
-          (stInputs newState)
+          inputs
 
   -- do the jobs
   done <-
@@ -83,7 +75,7 @@ runBuilder fn st = do
   let newInputs =
         M.filterWithKey
           (\k _ -> S.notMember k (M.keysSet readyJobs))
-          (stInputs newState)
+          inputs
 
   -- add them to outputs
   pure (State newInputs (stOutputs st <> M.fromList reallyDone))
@@ -113,84 +105,3 @@ doJobs fn st = do
       if M.null (stInputs newState) || newState == st -- no more inputs, or there was no change (to stop infinite loop)
         then pure newState
         else doJobs fn newState
-
--- some stuff might already be completed, don't need to do it
-filterDoneWork :: (Ord k) => State k input output -> State k input output
-filterDoneWork st =
-  st {stInputs = M.filterWithKey (\k _ -> M.notMember k (stOutputs st)) (stInputs st)}
-
-getReadyJobs :: (Ord k) => State k input output -> Set k -> Inputs k input
-getReadyJobs st inFlight =
-  -- disregard any jobs that are inflight
-  let inputs = M.filterWithKey (\k _ -> S.notMember k inFlight) (stInputs st)
-   in -- get jobs we are ready to do
-
-      M.filter
-        ( \plan ->
-            let requiredKeys = jbDeps plan
-             in and ((\depK -> M.member depK (stOutputs st)) <$> S.toList requiredKeys)
-        )
-        inputs
-
--- | remove job from input, add it to output
-markJobAsDone :: (Ord k) => k -> output -> State k input output -> State k input output
-markJobAsDone k output st =
-  State (M.delete k (stInputs st)) (stOutputs st <> M.singleton k output)
-
--- run through a list of jobs and do them
-doJobsIO ::
-  forall m k input output.
-  (Ord k, Show k, MonadIO m, PrimMonad m) =>
-  Job m k input output ->
-  State k input output ->
-  m (State k input output)
-doJobsIO fn st = do
-  let missingDeps = getMissing st
-  if not (S.null missingDeps)
-    then error ("Missing deps in build: " <> show missingDeps)
-    else do
-      liftIO $ Ki.scoped $ \scope -> do
-        mutableState <- liftIO $ STM.newTVarIO st
-        inFlight <- liftIO $ STM.newTVarIO mempty -- list of keys currently being built
-        let getReadyJobsIO = getReadyJobs <$> STM.readTVarIO mutableState <*> STM.readTVarIO inFlight
-
-        readyJobs <- getReadyJobsIO
-
-        let doJob :: (k, Plan k input) -> m ()
-            doJob (k, plan) = do
-              -- mark this job as inflight
-              filteredOutput <- liftIO $ STM.atomically $ do
-                STM.modifyTVar' inFlight (S.insert k)
-                state <- STM.readTVar mutableState
-                pure $
-                  M.filterWithKey
-                    (\depK _ -> S.member depK (jbDeps plan))
-                    (stOutputs state)
-
-              -- do the work
-              newOutput <- fn filteredOutput (jbInput plan)
-
-              -- update the state
-              _ <- liftIO $ STM.atomically $ do
-                STM.modifyTVar' mutableState (markJobAsDone k newOutput)
-                STM.modifyTVar' inFlight (S.delete k)
-
-              -- get the resulting jobs
-              newReadyJobs <- liftIO getReadyJobsIO
-
-              -- run them
-              traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList newReadyJobs)
-
-        -- start first jobs
-        traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList readyJobs)
-
-        -- wait for all the sillyness to stop
-        liftIO $ STM.atomically $ Ki.awaitAll scope
-
-        -- read the var and give up
-        liftIO $ STM.readTVarIO mutableState
-
--- get jobs available to start, fork them, and add key to `inFlight`
--- each one, when done, updates state, and then checks again what can
--- be started, and forks those
--- when no more inputs (and nothing else in flight, return state)
