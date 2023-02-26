@@ -21,10 +21,8 @@ check ty expr = do
     then pure (expr $> ty)
     else throwError (TypeMismatch ty (getOuterAnnotation exprA))
 
-infer :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
-infer (EPrim ann prim) =
-  pure (EPrim (typeFromPrim ann prim) prim)
-infer (EIf ann predExpr thenExpr elseExpr) = do
+inferIf :: ann -> Expr ann -> Expr ann -> Expr ann -> Either (TypeError ann) (Expr (Type ann))
+inferIf ann predExpr thenExpr elseExpr = do
   predA <- infer predExpr
   case getOuterAnnotation predA of
     (TPrim _ TBool) -> pure ()
@@ -32,7 +30,14 @@ infer (EIf ann predExpr thenExpr elseExpr) = do
   thenA <- infer thenExpr
   elseA <- check (getOuterAnnotation thenA) elseExpr
   pure (EIf (getOuterAnnotation elseA) predA thenA elseA)
-infer (EInfix ann OpEquals a b) = do
+
+inferInfix ::
+  ann ->
+  Op ->
+  Expr ann ->
+  Expr ann ->
+  Either (TypeError ann) (Expr (Type ann))
+inferInfix ann OpEquals a b = do
   elabA <- infer a
   elabB <- infer b
   ty <- case (getOuterAnnotation elabA, getOuterAnnotation elabB) of
@@ -44,9 +49,10 @@ infer (EInfix ann OpEquals a b) = do
       -- otherwise, error!
       throwError (TypeMismatch otherA otherB)
   pure (EInfix ty OpEquals elabA elabB)
-infer (EInfix ann op a b) = do
+inferInfix ann op a b = do
   elabA <- infer a
   elabB <- infer b
+  -- all the other infix operators need to be Int -> Int -> Int
   ty <- case (getOuterAnnotation elabA, getOuterAnnotation elabB) of
     (TPrim _ TInt, TPrim _ TInt) ->
       -- if the types are the same, then great! it's an int!
@@ -79,6 +85,14 @@ infer (EInfix ann op a b) = do
             ]
         )
   pure (EInfix ty op elabA elabB)
+
+infer :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
+infer (EPrim ann prim) =
+  pure (EPrim (typeFromPrim ann prim) prim)
+infer (EIf ann predExpr thenExpr elseExpr) =
+  inferIf ann predExpr thenExpr elseExpr
+infer (EInfix ann op a b) =
+  inferInfix ann op a b
 
 typeFromPrim :: ann -> Prim -> Type ann
 typeFromPrim ann (PInt _) = TPrim ann TInt
