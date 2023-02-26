@@ -3,17 +3,17 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Builder (doJobsIO, getMissing, Plan (..), State (..), Job, Inputs) where
+module Builder (doJobsIO, doJobsPure, getMissing, Plan (..), State (..), Job, Inputs) where
 
-import Basement.Monad
 import qualified Control.Concurrent.STM as STM
-import Control.Monad.IO.Class
+import Control.Monad.Identity
 import Data.Foldable (traverse_)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Ki
+import System.IO.Unsafe
 
 -- a thing we want to do
 data Plan k input = Plan
@@ -47,7 +47,7 @@ getMissing (State inputs outputs) =
    in mconcat (getMissingDeps <$> M.elems inputs)
 
 getReadyJobs :: (Ord k) => Either e (State k input output) -> Set k -> Inputs k input
-getReadyJobs (Left _) _= mempty
+getReadyJobs (Left _) _ = mempty
 getReadyJobs (Right st) inFlight =
   -- disregard any jobs that are inflight
   let inputs = M.filterWithKey (\k _ -> S.notMember k inFlight) (stInputs st)
@@ -61,17 +61,35 @@ getReadyJobs (Right st) inFlight =
         inputs
 
 -- | remove job from input, add it to output
-markJobAsDone :: (Ord k) => k -> output -> Either e (State k input output) ->
-    Either e (State k input output)
+markJobAsDone ::
+  (Ord k) =>
+  k ->
+  output ->
+  Either e (State k input output) ->
+  Either e (State k input output)
 markJobAsDone _ _ (Left e) = Left e
-markJobAsDone k output (Right st) = Right $
-  State (M.delete k (stInputs st)) (stOutputs st <> M.singleton k output)
+markJobAsDone k output (Right st) =
+  Right $
+    State (M.delete k (stInputs st)) (stOutputs st <> M.singleton k output)
+
+-- unsafely do the things
+doJobsPure ::
+  forall e k input output.
+  (Ord k, Show k) =>
+  Job Identity e k input output ->
+  State k input output ->
+  Either e (State k input output)
+doJobsPure fn st =
+  unsafePerformIO (doJobsIO ioFn st)
+  where
+    ioFn dep input =
+      pure $ runIdentity $ fn dep input
 
 -- run through a list of jobs and do them
 doJobsIO ::
-  forall m e k input output.
-  (Ord k, Show k, MonadIO m, PrimMonad m) =>
-  Job m e k input output ->
+  forall e k input output.
+  (Ord k, Show k) =>
+  Job IO e k input output ->
   State k input output ->
   IO (Either e (State k input output))
 doJobsIO fn st = do
@@ -79,26 +97,26 @@ doJobsIO fn st = do
   if not (S.null missingDeps)
     then error ("Missing deps in build: " <> show missingDeps)
     else do
-      liftIO $ Ki.scoped $ \scope -> do
-        mutableState <- liftIO $ STM.newTVarIO (Right st)
-        inFlight <- liftIO $ STM.newTVarIO mempty -- list of keys currently being built
+      Ki.scoped $ \scope -> do
+        mutableState <- STM.newTVarIO (Right st)
+        inFlight <- STM.newTVarIO mempty -- list of keys currently being built
         let getReadyJobsIO =
-                getReadyJobs <$> STM.readTVarIO mutableState <*> STM.readTVarIO inFlight
+              getReadyJobs <$> STM.readTVarIO mutableState <*> STM.readTVarIO inFlight
 
         readyJobs <- getReadyJobsIO
 
-        let doJob :: (k, Plan k input) -> m ()
+        let doJob :: (k, Plan k input) -> IO ()
             doJob (k, plan) = do
               -- mark this job as inflight
-              filteredOutput <- liftIO $ STM.atomically $ do
+              filteredOutput <- STM.atomically $ do
                 STM.modifyTVar' inFlight (S.insert k)
                 eitherState <- STM.readTVar mutableState
                 pure $ case eitherState of
-                         Left _ -> mempty
-                         Right state ->
-                            M.filterWithKey
-                              (\depK _ -> S.member depK (jbDeps plan))
-                              (stOutputs state)
+                  Left _ -> mempty
+                  Right state ->
+                    M.filterWithKey
+                      (\depK _ -> S.member depK (jbDeps plan))
+                      (stOutputs state)
 
               -- do the work
               newOutput <- fn filteredOutput (jbInput plan)
@@ -107,27 +125,26 @@ doJobsIO fn st = do
                 Left e -> STM.atomically $ STM.writeTVar mutableState (Left e)
                 Right success -> do
                   -- update the state
-                  _ <- liftIO $ STM.atomically $ do
+                  _ <- STM.atomically $ do
                     STM.modifyTVar' mutableState (markJobAsDone k success)
                     STM.modifyTVar' inFlight (S.delete k)
 
                   -- get the resulting jobs
-                  newReadyJobs <- liftIO getReadyJobsIO
+                  newReadyJobs <- getReadyJobsIO
 
                   -- run them
-                  traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList newReadyJobs)
+                  traverse_ (Ki.fork scope . doJob) (M.toList newReadyJobs)
 
         -- start first jobs
-        traverse_ (liftIO . Ki.fork scope . unsafePrimToIO . doJob) (M.toList readyJobs)
+        traverse_ (Ki.fork scope . doJob) (M.toList readyJobs)
 
         -- wait for all the sillyness to stop
-        liftIO $ STM.atomically $ Ki.awaitAll scope
+        STM.atomically $ Ki.awaitAll scope
 
         -- read the var and give up
-        liftIO $ STM.readTVarIO mutableState
+        STM.readTVarIO mutableState
 
 -- get jobs available to start, fork them, and add key to `inFlight`
 -- each one, when done, updates state, and then checks again what can
 -- be started, and forks those
 -- when no more inputs (and nothing else in flight, return state)
-

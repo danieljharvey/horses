@@ -6,32 +6,37 @@ module Test.Builder.BuilderSpec
   )
 where
 
+import qualified Builder
 import Control.Monad.IO.Class
+import Control.Monad.Identity
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Builder
 import Test.Hspec
 
-job :: Builder.Job IO Error Int Text [Text]
+job :: (Applicative m) => Builder.Job m Error Int Text [Text]
 job deps input =
   pure $ Right ([input] <> mconcat (M.elems deps))
 
 -- error on Egg
-jobWithError :: Builder.Job IO Error Int Text [Text]
+jobWithError :: (Applicative m) => Builder.Job m Error Int Text [Text]
 jobWithError _ "Egg" =
   pure (Left OhNo)
 jobWithError deps input =
   pure $ Right ([input] <> mconcat (M.elems deps))
 
 data Error = OhNo
-  deriving (Eq,Ord,Show)
+  deriving (Eq, Ord, Show)
 
-doJobs :: Builder.Job IO Error Int Text [Text] ->
-  Builder.State Int Text [Text] -> IO (Either Error (Builder.State Int Text [Text]))
+doJobs ::
+  Builder.Job Identity Error Int Text [Text] ->
+  Builder.State Int Text [Text] ->
+  IO (Either Error (Builder.State Int Text [Text]))
 doJobs thisJob state = do
-  ioResponse <- liftIO $ Builder.doJobsIO thisJob state
-  pureResponse <- liftIO $ Builder.doJobsIO thisJob state -- todo: replace this with the unsafe perform io version
+  let ioJob a b =
+        pure (runIdentity (thisJob a b))
+  ioResponse <- liftIO $ Builder.doJobsIO ioJob state
+  let pureResponse = Builder.doJobsPure thisJob state
   if ioResponse == pureResponse
     then pure ioResponse
     else error $ "Responses don't match: " <> show ioResponse <> " and " <> show pureResponse

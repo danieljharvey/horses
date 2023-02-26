@@ -69,8 +69,8 @@ library
 
     -- Other library packages from which modules are imported.
     build-depends:    base ^>=4.16.4.0
-                    , basement
                     , stm
+                    , mtl
                     , containers
                     , ki
 
@@ -107,7 +107,7 @@ test-suite builder-test
         base ^>=4.16.4.0,
         hspec,
         builder,
-        basement,
         containers,
+        mtl,
         ki,
         text
