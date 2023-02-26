@@ -5,6 +5,7 @@ on:
     branches:
       - trunk
     paths:
+      - "builder/**"
       - "compiler/**"
       - "server/**"
       - "repl/**"
@@ -15,6 +16,7 @@ on:
     branches:
       - trunk
     paths:
+      - "builder/**"
       - "compiler/**"
       - "server/**"
       - "repl/**"

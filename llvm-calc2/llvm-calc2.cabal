@@ -102,16 +102,16 @@ test-suite smol-core-tests
     Calc.Parser.Shared
     Calc.Parser.Type
     Calc.Parser.Types
-    Calc.SourceSpan
     Calc.Repl
+    Calc.SourceSpan
+    Calc.Typecheck.Elaborate
+    Calc.Typecheck.Error
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Prim
     Calc.Types.Type
     Calc.TypeUtils
-    Calc.Typecheck.Elaborate
-    Calc.Typecheck.Error
     Test.Interpreter.InterpreterSpec
     Test.LLVM.LLVMSpec
     Test.Parser.ParserSpec

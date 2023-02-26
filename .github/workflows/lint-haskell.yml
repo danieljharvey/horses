@@ -18,6 +18,7 @@ jobs:
         with:
           pattern: |
             backends/**/*.hs
+            builder/**/*.hs
             compiler/**/*.hs
             core/**/*.hs
             server/**/*.hs
@@ -38,6 +39,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: '["backends/", "compiler/", "core/", "server/", "repl/", "smol-core/", "llvm-calc/"]'
+          path: '["backends/", "builder/", "compiler/", "core/", "server/", "repl/", "smol-core/", "llvm-calc/"]'
           fail-on: warning
 

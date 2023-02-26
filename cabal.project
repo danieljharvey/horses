@@ -1,4 +1,5 @@
 packages:
+  builder/builder.cabal,
   compiler/mimsa.cabal,
   server/server.cabal,
   backends/backends.cabal,
