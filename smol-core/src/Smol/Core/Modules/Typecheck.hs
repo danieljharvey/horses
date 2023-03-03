@@ -16,20 +16,20 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Language.Mimsa.Actions.Helpers.Build as Build
+import qualified Builder as Build
 import Smol.Core
-import Language.Mimsa.Modules.Dependencies
-import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Modules.Monad
-import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Typechecker.CreateEnv
-import Language.Mimsa.Typechecker.DataTypes
-import Language.Mimsa.Typechecker.Elaborate
-import Language.Mimsa.Typechecker.NumberVars
-import Language.Mimsa.Typechecker.Typecheck
-import Language.Mimsa.Types.Error
-import Language.Mimsa.Types.Store.ExprHash
-import Language.Mimsa.Types.Typechecker
+import Smol.Core.Modules.Dependencies
+import Smol.Core.Modules.HashModule
+import Smol.Core.Modules.Monad
+import Smol.Core.Modules.Uses
+import Smol.Core.Typechecker.CreateEnv
+import Smol.Core.Typechecker.DataTypes
+import Smol.Core.Typechecker.Elaborate
+import Smol.Core.Typechecker.NumberVars
+import Smol.Core.Typechecker.Typecheck
+import Smol.Core.Types.Error
+import Smol.Core.Types.Store.ExprHash
+import Smol.Core.Types.Typechecker
 
 -- given the upstream modules, typecheck a module
 -- 1. recursively fetch imports from Reader environment

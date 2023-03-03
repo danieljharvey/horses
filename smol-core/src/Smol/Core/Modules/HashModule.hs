@@ -1,13 +1,17 @@
-module Language.Mimsa.Modules.HashModule (serializeModule, deserializeModule) where
+module Smol.Core.Modules.HashModule (serializeModule, deserializeModule) where
 
-import qualified Data.Aeson as JSON
 import Data.Bifunctor
-import qualified Data.ByteString.Lazy as LBS
 import Data.Coerce
 import Data.Functor
 import Smol.Core
-import Language.Mimsa.Store.Hashing
-import Language.Mimsa.Types.Project.ProjectHash
+import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.ModuleHash
+import Crypto.Hash (SHA256 (..), hashWith)
+import qualified Data.Aeson as JSON
+import Data.ByteArray.Encoding (Base (Base16), convertToBase)
+import qualified Data.ByteString.Lazy as LBS
+import Data.ByteString.Lazy.Char8 (toStrict)
+import Data.Text.Encoding
 
 -- we remove annotations before producing the hash
 -- so formatting does not affect it
@@ -22,3 +26,15 @@ serializeModule = hashModule
 deserializeModule :: LBS.ByteString -> Maybe (Module ())
 deserializeModule =
   JSON.decode
+
+contentAndHash :: (JSON.ToJSON a) => a -> (LBS.ByteString, ModuleHash)
+contentAndHash a =
+  let json' = JSON.encode a
+      hash' =
+        ModuleHash
+          . decodeUtf8
+          . convertToBase Base16
+          . hashWith SHA256
+          . toStrict
+          $ json'
+   in (json', hash')

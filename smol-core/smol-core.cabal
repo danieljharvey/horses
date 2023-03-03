@@ -34,14 +34,17 @@ common shared
     , aeson
     , array
     , base
+    , builder
     , bytestring
     , containers
+    , cryptonite
     , diagnose
     , directory
     , file-embed
     , llvm-hs-pretty
     , llvm-hs-pure
     , megaparsec
+    , memory
     , mtl
     , nonempty-containers
     , parser-combinators

@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Modules.Dependencies
+module Smol.Core.Modules.Dependencies
   ( getDependencies,
     getModuleDeps,
     filterExprs,
@@ -21,10 +21,10 @@ import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
-import Language.Mimsa.Modules.HashModule
-import Language.Mimsa.Modules.Monad
-import Language.Mimsa.Modules.Uses
-import Language.Mimsa.Types.Error
+import Smol.Core.Modules.HashModule
+import Smol.Core.Modules.Monad
+import Smol.Core.Modules.Uses
+import Smol.Core.Types.Error
 
 data DepType ann
   = DTExpr (Expr Name ann)

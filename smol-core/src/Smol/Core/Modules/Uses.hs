@@ -1,18 +1,19 @@
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Mimsa.Modules.Uses
+module Smol.Core.Modules.Uses
   ( extractUses,
     extractUsesTyped,
     extractDataTypeUses,
   )
 where
 
-import qualified Data.Map.Strict as M
+import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
+import qualified Smol.Core.Types.Module.Entity as E
 
-extractUses :: (Eq ann) => Expr Name ann -> Set Entity
+extractUses :: (Eq ann) => Expr ParseDep ann -> Set E.Entity
 extractUses expr =
   let typeNames = dataTypeNames expr
    in S.filter
@@ -21,7 +22,7 @@ extractUses expr =
         )
 
 -- | extract uses in an expression annotated with types
-extractUsesTyped :: (Eq ann) => Expr Name (Type ann) -> Set Entity
+extractUsesTyped :: (Eq ann) => Expr ParseDep (Type ParseDep ann) -> Set E.Entity
 extractUsesTyped expr =
   let typeNames = dataTypeNames expr
    in S.filter
@@ -34,113 +35,92 @@ extractUsesTyped expr =
 -- used in dependency analysis
 -- important - we must not count variables brought in via lambdas or let
 -- bindings as those aren't external deps
-extractUses_ :: (Eq ann) => Expr Name ann -> Set Entity
-extractUses_ (MyVar _ (Just modName) a) = S.singleton (ENamespacedName modName a)
-extractUses_ (MyVar _ _ a) = S.singleton (EName a)
-extractUses_ (MyAnnotation _ mt expr) =
+extractUses_ :: (Eq ann) => Expr ParseDep ann -> Set E.Entity
+extractUses_ (EVar _ (ParseDep a (Just modName) )) =
+  S.singleton (E.ENamespacedVar modName a)
+extractUses_ (EVar _ (ParseDep a Nothing  )) =
+  S.singleton (E.EVar a)
+extractUses_ (EAnn _ mt expr) =
   extractUses_ expr <> extractTypeUses mt
-extractUses_ (MyIf _ a b c) =
+extractUses_ (EIf _ a b c) =
   extractUses_ a <> extractUses_ b <> extractUses_ c
-extractUses_ (MyLet _ ident a b) =
-  S.difference (extractUses_ a <> extractUses_ b) (extractIdentUses ident)
-extractUses_ (MyLetPattern _ pat expr body) =
-  let patUses = extractPatternUses pat
-   in filterVarsIntroducedInPatterns
-        patUses
-        (extractUses_ expr <> extractUses_ body)
-extractUses_ (MyInfix _ op a b) =
-  let infixUses = case op of
-        Custom infixOp -> S.singleton (EInfix infixOp)
-        _ -> mempty
-   in infixUses
-        <> extractUses_ a
+extractUses_ (ELet _ ident a b) =
+  S.difference (extractUses_ a <> extractUses_ b)
+                    (extractIdentUses ident)
+extractUses_ (EInfix _ _ a b) =
+        extractUses_ a
         <> extractUses_ b
-extractUses_ (MyLambda _ ident a) =
+extractUses_ (ELambda _ ident a) =
   S.difference (extractUses_ a) (extractIdentUses ident)
-extractUses_ (MyApp _ a b) = extractUses_ a <> extractUses_ b
-extractUses_ (MyLiteral _ _) = mempty
-extractUses_ (MyTuple _ a as) = extractUses_ a <> foldMap extractUses_ as
-extractUses_ (MyRecord _ map') = foldMap extractUses_ map'
-extractUses_ (MyRecordAccess _ a _) = extractUses_ a
-extractUses_ (MyTupleAccess _ a _) = extractUses_ a
-extractUses_ (MyArray _ map') = foldMap extractUses_ map'
-extractUses_ (MyConstructor _ (Just modName) tyCon) =
-  S.singleton (ENamespacedConstructor modName tyCon)
-extractUses_ (MyConstructor _ Nothing tyCon) =
-  S.singleton (EConstructor tyCon)
-extractUses_ (MyTypedHole _ _) = mempty
-extractUses_ (MyPatternMatch _ match patterns) =
+extractUses_ (EApp _ a b) = extractUses_ a <> extractUses_ b
+extractUses_ (EPrim _ _) = mempty
+extractUses_ (ETuple _ a as) = extractUses_ a <> foldMap extractUses_ as
+extractUses_ (ERecord _ map') = foldMap extractUses_ map'
+extractUses_ (ERecordAccess _ a _) = extractUses_ a
+extractUses_ (EConstructor _ (ParseDep tyCon (Just modName) )) =
+  S.singleton (E.ENamespacedConstructor modName tyCon)
+extractUses_ (EConstructor _ (ParseDep tyCon Nothing )) =
+  S.singleton (E.EConstructor tyCon)
+extractUses_ (EPatternMatch _ match patterns) =
   extractUses match <> mconcat patternUses
   where
-    patternUses :: [Set Entity]
+    patternUses :: [Set E.Entity]
     patternUses =
       ( \(pat, expr) ->
           filterVarsIntroducedInPatterns
             (extractPatternUses pat)
             (extractUses expr)
       )
-        <$> patterns
+        <$> NE.toList patterns
+extractUses_ (EGlobal {}) = error "extract from global"
+extractUses_ (EGlobalLet {}) = error "extract from global let"
 
 -- for vars, remove any vars introduced in patterns in the expressions
 -- for everything else, keep both
-filterVarsIntroducedInPatterns :: Set Entity -> Set Entity -> Set Entity
+filterVarsIntroducedInPatterns :: Set E.Entity -> Set E.Entity -> Set E.Entity
 filterVarsIntroducedInPatterns patUses exprUses =
   let patVarUses =
         S.filter
           ( \case
-              EName _ -> True
-              EInfix _ -> True
+              E.EVar _ -> True
               _ -> False
           )
           patUses
    in S.filter (`S.notMember` patVarUses) (patUses <> exprUses)
 
-extractIdentUses :: Identifier Name ann -> Set Entity
-extractIdentUses (Identifier _ name) = S.singleton (EName name)
+extractIdentUses :: ParseDep Identifier -> Set E.Entity
+extractIdentUses (ParseDep name _) = S.singleton (E.EVar name)
 
-extractPatternUses :: (Eq ann) => Pattern Name ann -> Set Entity
+
+
+extractPatternUses :: (Eq ann) => Pattern ParseDep ann -> Set E.Entity
 extractPatternUses (PWildcard _) = mempty
-extractPatternUses (PLit _ _) = mempty
-extractPatternUses (PVar _ a) = S.singleton (EName a)
-extractPatternUses (PRecord _ as) =
-  mconcat (extractPatternUses <$> M.elems as)
+extractPatternUses (PLiteral _ _) = mempty
+extractPatternUses (PVar _ (ParseDep a _)) = S.singleton (E.EVar a)
 extractPatternUses (PTuple _ a as) =
   extractPatternUses a <> foldMap extractPatternUses as
-extractPatternUses (PConstructor _ maybeMod tyCon args) =
+extractPatternUses (PConstructor _ (ParseDep tyCon maybeMod) args) =
   let modEntity = case maybeMod of
-        Just modName -> S.singleton (ENamespacedConstructor modName tyCon)
-        _ -> S.singleton (EConstructor tyCon)
+        Just modName -> S.singleton (E.ENamespacedConstructor modName tyCon)
+        _ -> S.singleton (E.EConstructor tyCon)
    in modEntity <> mconcat (extractPatternUses <$> args)
-extractPatternUses (PArray _ as spread) =
-  mconcat (extractPatternUses <$> as) <> extractSpreadUses spread
-extractPatternUses (PString _ a as) =
-  extractStringPart a <> extractStringPart as
-
-extractSpreadUses :: Spread Name ann -> Set Entity
-extractSpreadUses NoSpread = mempty
-extractSpreadUses (SpreadWildcard _) = mempty
-extractSpreadUses (SpreadValue _ a) = S.singleton (EName a)
-
-extractStringPart :: StringPart Name ann -> Set Entity
-extractStringPart (StrWildcard _) = mempty
-extractStringPart (StrValue _ a) = S.singleton (EName a)
 
 -- extract uses in a type
-extractTypeUses :: Type ann -> Set Entity
-extractTypeUses (MTConstructor _ (Just modName) typeName) =
-  S.singleton (ENamespacedType modName typeName)
-extractTypeUses (MTConstructor _ Nothing typeName) =
-  S.singleton (EType typeName)
-extractTypeUses other = withMonoidType extractTypeUses other
+extractTypeUses :: Type ParseDep ann -> Set E.Entity
+extractTypeUses (TConstructor _ (ParseDep typeName (Just modName))) =
+  S.singleton (E.ENamespacedType modName typeName)
+extractTypeUses (TConstructor _ (ParseDep typeName Nothing) ) =
+  S.singleton (E.EType typeName)
+extractTypeUses other = monoidType extractTypeUses other
 
 -- | find other types used in the declaration of a datatype
-extractDataTypeUses :: DataType -> Set Entity
+extractDataTypeUses :: DataType ParseDep ann -> Set E.Entity
 extractDataTypeUses (DataType typeName _ constructors) =
   S.filter
-    (\entity -> entity /= EType typeName)
+    (\entity -> entity /= E.EType typeName)
     ( foldMap (foldMap extractTypeUses) constructors
     )
 
-dataTypeNames :: Expr Name ann -> Set Entity
-dataTypeNames (MyLet _ _ expr body) = dataTypeNames expr <> dataTypeNames body
+dataTypeNames :: Expr ParseDep ann -> Set E.Entity
+dataTypeNames (ELet _ _ expr body) = dataTypeNames expr <> dataTypeNames body
 dataTypeNames _ = mempty

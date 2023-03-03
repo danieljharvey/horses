@@ -23,7 +23,7 @@ data Entity
     -}
 
     -- | a namespaced var, `Prelude.id`
-    ENamespacedName ModuleName Identifier
+    ENamespacedVar ModuleName Identifier
   | -- | a typename, `Maybe`
     EType TypeName
   | -- | a namespaced typename, `Prelude.Either`
@@ -42,8 +42,7 @@ data Entity
 
 instance Printer Entity where
   prettyDoc (EVar name) = prettyDoc name
-  -- prettyDoc (EInfix infixOp) = prettyDoc infixOp
-  prettyDoc (ENamespacedName modName name) =
+  prettyDoc (ENamespacedVar modName name) =
     prettyDoc modName <> "." <> prettyDoc name
   prettyDoc (EType typeName) = prettyDoc typeName
   prettyDoc (ENamespacedType modName typeName) =
