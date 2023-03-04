@@ -11,6 +11,8 @@ on:
       - "repl/**"
       - "core/**"
       - "backends/**"
+      - "cabal.project"
+      - "cabal.project.freeze"
 
   pull_request:
     branches:
@@ -22,6 +24,8 @@ on:
       - "repl/**"
       - "core/**"
       - "backends/**"
+      - "cabal.project"
+      - "cabal.project.freeze"
 
 jobs:
   build:

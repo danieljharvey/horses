@@ -7,6 +7,8 @@ on:
     paths:
       - "smol-core/**"
       - "vendored/**"
+      - "cabal.project"
+      - "cabal.project.freeze"
 
   pull_request:
     branches:
@@ -14,6 +16,8 @@ on:
     paths:
       - "smol-core/**"
       - "vendored/**"
+      - "cabal.project"
+      - "cabal.project.freeze"
 
 jobs:
   build:
