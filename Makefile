@@ -49,7 +49,7 @@ update:
 
 .PHONY: build
 build:
-	cabal build all
+	cabal build all -j4
 
 .PHONY: install
 install:

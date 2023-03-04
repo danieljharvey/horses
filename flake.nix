@@ -11,7 +11,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         
-        compilerVersion = "ghc925";
+        compilerVersion = "ghc944";
 
         # fix things
         haskell = pkgs.haskell // {
@@ -20,7 +20,7 @@
               pkgs.haskell.packages."${compilerVersion}".override {
                 overrides = self: super: {
                   # On aarch64-darwin, this creates a cycle for some reason; didn't look too much into it.
-                  ghcid = pkgs.haskell.lib.overrideCabal super.ghcid (drv: { enableSeparateBinOutput = false; });
+                  ghcid = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.overrideCabal super.ghcid (drv: { enableSeparateBinOutput = false; }));
                 };
 
               };
