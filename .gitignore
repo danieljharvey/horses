@@ -7,6 +7,9 @@ store/*.json
 result
 result/
 
+# output by benchmarks
+compiler/performance.json
+
 .mimsa/
 swagger.json
 environment.json
