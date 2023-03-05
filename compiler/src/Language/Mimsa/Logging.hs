@@ -6,6 +6,8 @@ import qualified Data.Text as T
 import Debug.Trace
 import Language.Mimsa.Core (Printer (..))
 
+-- useless change to trigger CI
+
 debugLog :: (Show b) => String -> b -> b
 debugLog title item = snd (traceShowId (title, item))
 
