@@ -79,6 +79,15 @@ jobs:
           ghc-version: '9.4.4'
           cabal-version: '3.8.1.0'
 
+      - name: Cache cabal global package db
+        id: cabal-global
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal
+          key: ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
+
 
       - name: Cache .cabal-work
         uses: actions/cache@v3
@@ -120,6 +129,16 @@ jobs:
         with:
           ghc-version: '9.4.4'
           cabal-version: '3.8.1.0'
+
+      - name: Cache cabal global package db
+        id: cabal-global
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal
+          key: ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
+
 
       - name: Cache cabal-installed programs in ~/.local/bin
         id: cabal-programs
