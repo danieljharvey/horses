@@ -4,6 +4,8 @@ on:
     branches:
       - trunk
 
+  pull_request:
+
 permissions:
   # deployments permission to deploy GitHub pages website
   deployments: write
