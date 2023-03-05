@@ -5,8 +5,8 @@ module Main
   )
 where
 
-import Criterion.Types (Config(..))
 import Criterion.Main
+import Criterion.Types (Config (..))
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -47,12 +47,17 @@ evaluateThing input =
         Left e -> error (show e)
 
 benchConfig :: Config
-benchConfig = defaultConfig { jsonFile = Just "performance.json"}
+benchConfig =
+  defaultConfig
+    { jsonFile = Just "performance.json",
+      reportFile = Just "performance.txt"
+    }
 
 -- Our benchmark harness.
 main :: IO ()
 main =
-  defaultMainWith benchConfig
+  defaultMainWith
+    benchConfig
     [ bgroup
         "build stdlib"
         [ bench "allFns" $ whnf (buildThing stdModules) mempty
