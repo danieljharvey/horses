@@ -1,4 +1,3 @@
-
 module Smol.Core.Interpreter.Convert (fromExpr, toExpr) where
 
 import Control.Monad.Identity
