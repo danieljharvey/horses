@@ -84,7 +84,8 @@ jobs:
         run: cat compiler/performance.txt >> $GITHUB_STEP_SUMMARY
 
       - make: Create benchmark file
-        run: jq '.[2] | map({name: .reportName, unit: "Time (ms)", value: .reportAnalysis.anRegress[0].regCoeffs.iters.estPoint })' compiler/performance.json | tee sorted-results.json
+        run: |
+          jq '.[2] | map({name: .reportName, unit: "Time (ms)", value: .reportAnalysis.anRegress[0].regCoeffs.iters.estPoint })' compiler/performance.json | tee sorted-results.json
 
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
