@@ -1,5 +1,6 @@
 module Language.Mimsa.Interpreter.Infix (interpretInfix) where
 
+import Control.Monad ((<=<))
 import Control.Monad.Except
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad

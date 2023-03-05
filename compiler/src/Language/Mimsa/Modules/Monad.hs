@@ -12,6 +12,7 @@ module Language.Mimsa.Modules.Monad
   )
 where
 
+import Control.Monad (when)
 import Control.Monad.Except
 import Data.Coerce
 import Data.Foldable

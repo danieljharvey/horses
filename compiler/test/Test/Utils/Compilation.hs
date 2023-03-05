@@ -7,7 +7,7 @@ module Test.Utils.Compilation
   )
 where
 
-import Control.Monad.Except
+import Control.Monad.IO.Class
 import Data.Foldable
 import Data.Hashable
 import qualified Data.Map.Strict as M

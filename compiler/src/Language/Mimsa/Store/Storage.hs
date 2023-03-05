@@ -22,6 +22,7 @@ where
 
 import Control.Exception
 import Control.Monad.Except
+import Control.Monad.IO.Class
 import Control.Monad.Logger
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
