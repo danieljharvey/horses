@@ -80,10 +80,10 @@ jobs:
       - name: Run benchmarks
         run: make bench
 
-      - make: Output report
+      - name: Output report
         run: cat compiler/performance.txt >> $GITHUB_STEP_SUMMARY
 
-      - make: Create benchmark file
+      - name: Create benchmark file
         run: |
           jq '.[2] | map({name: .reportName, unit: "Time (ms)", value: .reportAnalysis.anRegress[0].regCoeffs.iters.estPoint })' compiler/performance.json | tee sorted-results.json
 
