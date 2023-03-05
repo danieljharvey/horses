@@ -49,8 +49,7 @@ evaluateThing input =
 benchConfig :: Config
 benchConfig =
   defaultConfig
-    { jsonFile = Just "performance.json",
-      reportFile = Just "performance.txt"
+    { jsonFile = Just "performance.json"
     }
 
 -- Our benchmark harness.

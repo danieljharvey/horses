@@ -68,6 +68,21 @@ jobs:
       - name: Build all things
         run: make build
 
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache cabal-installed programs in ~/.local/bin
+        id: cabal-programs
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal/bin
+          key: ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}
+
       - name: Test core
         run: make test-core
 
@@ -77,11 +92,24 @@ jobs:
       - name: Test compiler
         run: yarn global add typescript@4.4 ts-node@10.4.0 & make test
 
+      - name: Generate swagger json
+        run: make generate-swagger
+
+  bench:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Cache cabal-installed programs in ~/.local/bin
+        id: cabal-programs
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal/bin
+          key: ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}
+
       - name: Run benchmarks
         run: make bench
-
-      - name: Output report
-        run: cat compiler/performance.txt >> $GITHUB_STEP_SUMMARY
 
       - name: Create benchmark file
         run: |
@@ -107,6 +135,3 @@ jobs:
           # Workflow will fail when an alert happens
           fail-on-alert: true
 
-      # Upload the updated cache file for the next job by actions/cache
-      - name: Generate swagger json
-        run: make generate-swagger
