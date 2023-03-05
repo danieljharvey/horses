@@ -5,7 +5,7 @@ module Check.Main
   )
 where
 
-import Control.Monad.Except
+import Control.Monad.IO.Class
 import Data.Either
 import Data.Text (Text)
 import qualified Data.Text as T

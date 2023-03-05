@@ -15,7 +15,7 @@ module Repl.ReplM
 where
 
 import Control.Monad.Catch
-import Control.Monad.Except
+import Control.Monad.Except (ExceptT (..), MonadError, liftEither, runExceptT, withExceptT)
 import Control.Monad.Logger
   ( LoggingT,
     MonadLogger,

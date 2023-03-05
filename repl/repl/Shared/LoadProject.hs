@@ -3,7 +3,7 @@ module Shared.LoadProject
   )
 where
 
-import Control.Monad.Except
+import Control.Monad.Except (catchError)
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Project

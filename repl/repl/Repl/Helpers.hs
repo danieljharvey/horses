@@ -9,7 +9,7 @@ module Repl.Helpers
   )
 where
 
-import Control.Monad.Except
+import Control.Monad.Except hiding (mapError)
 import Control.Monad.Reader
 import Data.Foldable (traverse_)
 import Error.Diagnose hiding (Annotation)

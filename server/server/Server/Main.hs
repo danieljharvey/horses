@@ -7,7 +7,8 @@ module Server.Main
 where
 
 import qualified Control.Concurrent.STM as STM
-import Control.Monad.Except
+import Control.Monad (void)
+import Control.Monad.Except hiding (mapError)
 import Control.Monad.Reader
 import qualified Data.Text.IO as T
 import Language.Mimsa.Core

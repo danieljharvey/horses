@@ -11,7 +11,7 @@ module Server.ServerM
 where
 
 import Control.Monad.Catch
-import Control.Monad.Except
+import Control.Monad.Except hiding (mapError)
 import Control.Monad.Logger
   ( LoggingT,
     MonadLogger,

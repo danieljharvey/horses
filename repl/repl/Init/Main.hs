@@ -5,7 +5,6 @@ module Init.Main
   )
 where
 
-import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Text as T
 import Language.Mimsa.Core

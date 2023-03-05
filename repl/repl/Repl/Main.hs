@@ -6,8 +6,10 @@ module Repl.Main
   )
 where
 
-import Control.Monad.Except
+import Control.Monad.Except hiding (mapError)
+import Control.Monad.IO.Class
 import Control.Monad.Logger
+import Control.Monad.Trans.Class (lift)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Core

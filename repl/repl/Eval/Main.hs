@@ -4,6 +4,7 @@ module Eval.Main
 where
 
 import Control.Monad.Except
+import Control.Monad.IO.Class
 import Data.Either
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions
