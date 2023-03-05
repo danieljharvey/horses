@@ -68,6 +68,45 @@ jobs:
       - name: Build all things
         run: make build
 
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: haskell/actions/setup@v2
+        with:
+          ghc-version: '9.4.4'
+          cabal-version: '3.8.1.0'
+
+      - name: Cache cabal global package db
+        id: cabal-global
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal
+          key: ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
+
+
+      - name: Cache .cabal-work
+        uses: actions/cache@v3
+        with:
+          path: dist-newstyle
+          key: ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
+
+
+      - name: Cache cabal-installed programs in ~/.local/bin
+        id: cabal-programs
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal/bin
+          key: ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}
+
       - name: Test core
         run: make test-core
 
@@ -77,8 +116,77 @@ jobs:
       - name: Test compiler
         run: yarn global add typescript@4.4 ts-node@10.4.0 & make test
 
+      - name: Generate swagger json
+        run: make generate-swagger
+
+  bench:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: haskell/actions/setup@v2
+        with:
+          ghc-version: '9.4.4'
+          cabal-version: '3.8.1.0'
+
+      - name: Cache cabal global package db
+        id: cabal-global
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal
+          key: ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
+
+
+      - name: Cache cabal-installed programs in ~/.local/bin
+        id: cabal-programs
+        uses: actions/cache@v3
+        with:
+          path: ~/.cabal/bin
+          key: ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}
+
+      - name: Cache .cabal-work
+        uses: actions/cache@v3
+        with:
+          path: dist-newstyle
+          key: ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
+
+
       - name: Run benchmarks
         run: make bench
 
-      - name: Generate swagger json
-        run: make generate-swagger
+      - name: Create benchmark file
+        run: |
+          jq '.[2] | map({name: .reportName, unit: "Time (ms)", value: .reportAnalysis.anRegress[0].regCoeffs.iters.estPoint })' compiler/performance.json | tee sorted-results.json
+
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          # What benchmark tool the output.txt came from
+          tool: 'customSmallerIsBetter'
+          # Where the output from the benchmark tool is stored
+          output-file-path: sorted-results.json
+          # Where the previous data file is stored
+          external-data-json-path: ./cache/benchmark-data.json
+          # Workflow will fail when an alert happens
+          fail-on-alert: true
+          # GitHub API token to make a commit comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Enable alert commit comment
+          comment-on-alert: true
+          # Mention @danieljharvey in the commit comment
+          alert-comment-cc-users: '@danieljharvey'

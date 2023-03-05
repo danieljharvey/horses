@@ -6,6 +6,7 @@ module Main
 where
 
 import Criterion.Main
+import Criterion.Types (Config (..))
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -45,10 +46,17 @@ evaluateThing input =
         Right (_, _, res) -> res
         Left e -> error (show e)
 
+benchConfig :: Config
+benchConfig =
+  defaultConfig
+    { jsonFile = Just "performance.json"
+    }
+
 -- Our benchmark harness.
 main :: IO ()
 main =
-  defaultMain
+  defaultMainWith
+    benchConfig
     [ bgroup
         "build stdlib"
         [ bench "allFns" $ whnf (buildThing stdModules) mempty
