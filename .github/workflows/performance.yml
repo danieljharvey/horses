@@ -12,9 +12,8 @@ permissions:
 
 jobs:
   benchmark:
-    name: Performance regression check
+    name: Compiler performance regression check
     runs-on: ubuntu-latest
-    steps:
     steps:
       - uses: actions/checkout@v3
 
